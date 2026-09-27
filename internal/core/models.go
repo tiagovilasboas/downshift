@@ -41,6 +41,7 @@ func (t Tier) String() string {
 // not in Go source. This struct is the value type shared between core and catalog.
 type Model struct {
 	ID      string  // canonical model id used by the harness
+	Family  string  // stable family prefix (version-agnostic); empty when unknown
 	Tier    Tier    // capability/cost bucket
 	InputM  float64 // USD per 1M input tokens (approximate)
 	OutputM float64 // USD per 1M output tokens (approximate)

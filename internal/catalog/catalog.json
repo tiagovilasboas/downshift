@@ -4,7 +4,7 @@
   "_doc3": "'family' is the stable prefix for version-agnostic matching. A model whose ID starts with the family string matches this entry's tier even if the exact version is unknown.",
   "_doc4": "OpenRouter model IDs arrive as 'provider/model-id' (e.g. 'anthropic/claude-opus-4-8'). The router normalises these before lookup, so family matching works transparently.",
   "version": "2",
-  "updated": "2026-09-20",
+  "updated": "2026-09-27",
   "entries": [
 
     { "_section": "claude-code — native Anthropic models" },
@@ -64,9 +64,9 @@
     { "_section": "cursor — native Anthropic models" },
 
     {
-      "id": "claude-haiku-4",
-      "aliases": ["claude-haiku"],
-      "family": "claude-haiku",
+      "id": "claude-4.5-haiku-thinking",
+      "aliases": ["claude-haiku-4", "claude-haiku"],
+      "family": "claude-4.5-haiku",
       "provider": "anthropic",
       "harness": "cursor",
       "tier": "small",
@@ -76,9 +76,9 @@
       "output_cost_per_1m": 4.00
     },
     {
-      "id": "claude-sonnet-4.6",
-      "aliases": ["claude-sonnet"],
-      "family": "claude-sonnet",
+      "id": "claude-4.5-sonnet-thinking",
+      "aliases": ["claude-sonnet-4.6", "claude-sonnet"],
+      "family": "claude-4.5-sonnet",
       "provider": "anthropic",
       "harness": "cursor",
       "tier": "mid",
@@ -88,9 +88,10 @@
       "output_cost_per_1m": 15.00
     },
     {
-      "id": "claude-opus-4.8",
-      "aliases": ["claude-opus"],
+      "id": "claude-opus-5-thinking-high",
+      "aliases": ["claude-opus-4.8", "claude-opus"],
       "family": "claude-opus",
+      "effort": "high",
       "provider": "anthropic",
       "harness": "cursor",
       "tier": "frontier",
@@ -103,8 +104,8 @@
     { "_section": "cursor — xAI Grok (installed via model picker)" },
 
     {
-      "id": "grok-4.6",
-      "aliases": ["grok-4", "grok"],
+      "id": "grok-4.7-high-fast",
+      "aliases": ["grok-4.6", "grok-4", "grok", "cursor-grok-4.6-high"],
       "family": "grok",
       "provider": "xai",
       "harness": "cursor",
@@ -113,6 +114,75 @@
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
       "input_cost_per_1m": 2.00,
       "output_cost_per_1m": 6.00
+    },
+
+    { "_section": "cursor — Option A: family + effort variants (effort-tagged, no per-harness versioning)" },
+
+    {
+      "id": "gemini-3.8-flash-high",
+      "aliases": ["gemini-3.8-flash"],
+      "family": "gemini",
+      "effort": "high",
+      "provider": "google",
+      "harness": "cursor",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 0.75,
+      "output_cost_per_1m": 3.50
+    },
+    {
+      "id": "muse-spark-1.3-high",
+      "aliases": ["muse-spark"],
+      "family": "muse-spark",
+      "effort": "high",
+      "provider": "cursor",
+      "harness": "cursor",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 1.25,
+      "output_cost_per_1m": 4.25
+    },
+    {
+      "id": "claude-opus-5.5-medium",
+      "aliases": ["claude-opus-5.5"],
+      "family": "claude-opus",
+      "effort": "medium",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 4.00,
+      "output_cost_per_1m": 20.00
+    },
+    {
+      "id": "gpt-5.6-sol-medium",
+      "aliases": ["gpt-sol-medium"],
+      "family": "gpt-5.6-sol",
+      "effort": "medium",
+      "provider": "openai",
+      "harness": "cursor",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 4.00,
+      "output_cost_per_1m": 20.00
+    },
+    {
+      "id": "claude-fable-5.1-high",
+      "aliases": ["claude-fable"],
+      "family": "claude-fable",
+      "effort": "high",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "frontier",
+      "routing": "explicit_only",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 10.00,
+      "output_cost_per_1m": 50.00
     },
 
     { "_section": "codex — native OpenAI models" },

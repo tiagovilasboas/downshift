@@ -50,3 +50,24 @@ type Resolver interface {
 	// target. When the ID is unknown, returns false (fail-open).
 	IsExplicitOnly(harness, modelID string) bool
 }
+
+// FamilyEffortResolver is an optional extension of Resolver for
+// effort-based routing inside one model family (Option A).
+//
+// Instead of mapping (harness, tier) to a versioned model ID, callers keep
+// the current model's family and only switch the effort level — e.g. stay
+// on claude-opus but move from a high-effort to a medium-effort variant.
+// Catalog data (not Go source) owns the family → effort → model ID mapping.
+//
+// Adapters must type-assert to this interface and fall back to plain
+// ModelFor when the resolver does not implement it, so harnesses adopt
+// family+effort routing incrementally without breaking other harnesses.
+type FamilyEffortResolver interface {
+	Resolver
+
+	// FamilyModelFor returns the automatic routing target for the given
+	// harness, model family, and reasoning effort. Explicit-only entries
+	// are never returned. Returns false when the family has no variant
+	// for that effort (caller falls back to ModelFor).
+	FamilyModelFor(harness, family string, effort Effort) (Model, bool)
+}

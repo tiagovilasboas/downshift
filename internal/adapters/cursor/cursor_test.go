@@ -189,3 +189,82 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 		t.Error("task field was dropped from updated_input")
 	}
 }
+
+// --- Option A: in-family effort switch (prototype: cursor) ---
+
+func TestHandle_PreservesFamilySwitchesEffortDown(t *testing.T) {
+	// Current opus high, SIMPLE task (mid/medium) → opus-5.5-medium:
+	// same family, medium effort, instead of the tier-default sonnet.
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "add a status field to the orders table",
+			"model": "claude-opus-5-thinking-high"
+		}`),
+	}
+	out, note, _ := cursor.Handle(ev, cat)
+	if note == "" {
+		t.Fatal("expected an in-family effort note, got none")
+	}
+	m := decodeUpdated(t, out)
+	if m["model"] != "claude-opus-5.5-medium" {
+		t.Errorf("model = %v, want claude-opus-5.5-medium (same family, medium effort)", m["model"])
+	}
+}
+
+func TestHandle_PreservesFamilySwitchesEffortUp(t *testing.T) {
+	// Current opus medium, COMPLEX task (frontier/high) → opus-5-thinking-high.
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "rearchitect the payment flow across services with a data migration",
+			"model": "claude-opus-5.5-medium"
+		}`),
+	}
+	out, note, _ := cursor.Handle(ev, cat)
+	if note == "" {
+		t.Fatal("expected an in-family effort note, got none")
+	}
+	m := decodeUpdated(t, out)
+	if m["model"] != "claude-opus-5-thinking-high" {
+		t.Errorf("model = %v, want claude-opus-5-thinking-high (same family, high effort)", m["model"])
+	}
+}
+
+func TestHandle_FamilyWithoutVariantFallsBackToTierDefault(t *testing.T) {
+	// Grok has no effort-tagged variants: a confidently trivial task falls
+	// back to the tier-default small model, exactly like the legacy path.
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "fix a typo in the readme",
+			"model": "grok-4.7-high-fast"
+		}`),
+	}
+	out, _, _ := cursor.Handle(ev, cat)
+	m := decodeUpdated(t, out)
+	wantID := catID(core.TierSmall)
+	if m["model"] != wantID {
+		t.Errorf("model = %v, want tier default %s", m["model"], wantID)
+	}
+}
+
+func TestHandle_UnknownFamilyFallsBackToTierDefault(t *testing.T) {
+	// Model the catalog never listed: unknown family → tier default.
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "rename the userId variable to userIdentifier",
+			"model": "some-future-model-9"
+		}`),
+	}
+	out, note, _ := cursor.Handle(ev, cat)
+	if note == "" {
+		t.Fatal("expected a routing note, got none")
+	}
+	m := decodeUpdated(t, out)
+	wantID := catID(core.TierSmall)
+	if m["model"] != wantID {
+		t.Errorf("model = %v, want tier default %s", m["model"], wantID)
+	}
+}

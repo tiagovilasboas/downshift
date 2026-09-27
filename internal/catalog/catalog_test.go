@@ -255,9 +255,9 @@ func TestLookupByID_OpenRouterTrulyUnknown(t *testing.T) {
 
 func TestLookupByID_GrokInCursor(t *testing.T) {
 	c := Load()
-	m, ok := c.LookupByID("cursor", "grok-4.6")
+	m, ok := c.LookupByID("cursor", "grok-4.7-high-fast")
 	if !ok {
-		t.Fatal("grok-4.6 should be found in cursor catalog")
+		t.Fatal("grok-4.7-high-fast should be found in cursor catalog")
 	}
 	if m.Tier != core.TierFrontier {
 		t.Errorf("grok in cursor tier = %s, want frontier", m.Tier)
@@ -266,7 +266,7 @@ func TestLookupByID_GrokInCursor(t *testing.T) {
 
 func TestLookupByID_GrokVersionBumpInCursor(t *testing.T) {
 	c := Load()
-	// grok-4.7 not in catalog → family "grok" → frontier
+	// grok-4.7 is not an exact id → family "grok" → frontier
 	m, ok := c.LookupByID("cursor", "grok-4.7")
 	if !ok {
 		t.Fatal("grok-4.7 should match via family 'grok' in cursor")
@@ -505,5 +505,138 @@ func TestEffortValue_NilEffortMap_FallsBackToEffortString(t *testing.T) {
 	got := EffortValue(e, core.EffortHigh)
 	if got != "high" {
 		t.Errorf("EffortValue with nil map = %q, want 'high'", got)
+	}
+}
+
+// --- Option A: family + effort routing ---
+
+func TestFamilyModelFor_OpusHighEffort(t *testing.T) {
+	c := Load()
+	m, ok := c.FamilyModelFor("cursor", "claude-opus", core.EffortHigh)
+	if !ok {
+		t.Fatal("FamilyModelFor(cursor, claude-opus, high) should hit")
+	}
+	if m.ID != "claude-opus-5-thinking-high" {
+		t.Errorf("got %q, want claude-opus-5-thinking-high", m.ID)
+	}
+}
+
+func TestFamilyModelFor_OpusMediumEffort(t *testing.T) {
+	c := Load()
+	m, ok := c.FamilyModelFor("cursor", "claude-opus", core.EffortMid)
+	if !ok {
+		t.Fatal("FamilyModelFor(cursor, claude-opus, medium) should hit the 5.5 variant")
+	}
+	if m.ID != "claude-opus-5.5-medium" {
+		t.Errorf("got %q, want claude-opus-5.5-medium", m.ID)
+	}
+}
+
+func TestFamilyModelFor_GeminiHigh(t *testing.T) {
+	c := Load()
+	m, ok := c.FamilyModelFor("cursor", "gemini", core.EffortHigh)
+	if !ok {
+		t.Fatal("FamilyModelFor(cursor, gemini, high) should hit")
+	}
+	if m.ID != "gemini-3.8-flash-high" {
+		t.Errorf("got %q, want gemini-3.8-flash-high", m.ID)
+	}
+	if m.Tier != core.TierSmall {
+		t.Errorf("gemini tier = %s, want small", m.Tier)
+	}
+}
+
+func TestFamilyModelFor_UnknownFamilyReturnsFalse(t *testing.T) {
+	c := Load()
+	if _, ok := c.FamilyModelFor("cursor", "no-such-family", core.EffortLow); ok {
+		t.Error("unknown family should return false (caller falls back to ModelFor)")
+	}
+}
+
+func TestFamilyModelFor_FamilyWithoutEffortVariantReturnsFalse(t *testing.T) {
+	c := Load()
+	// gemini only has a high variant — low must miss, not silently substitute.
+	if _, ok := c.FamilyModelFor("cursor", "gemini", core.EffortLow); ok {
+		t.Error("gemini+low should return false")
+	}
+}
+
+func TestFamilyModelFor_ExplicitOnlyNeverReturned(t *testing.T) {
+	c := Load()
+	// claude-fable is explicit_only: valid when selected, never an auto target.
+	if _, ok := c.FamilyModelFor("cursor", "claude-fable", core.EffortHigh); ok {
+		t.Error("explicit_only fable must never be returned by FamilyModelFor")
+	}
+}
+
+func TestFamilyModelFor_CaseInsensitive(t *testing.T) {
+	c := Load()
+	m, ok := c.FamilyModelFor("cursor", "Claude-Opus", core.EffortHigh)
+	if !ok {
+		t.Fatal("family lookup should be case-insensitive")
+	}
+	if m.ID != "claude-opus-5-thinking-high" {
+		t.Errorf("got %q, want claude-opus-5-thinking-high", m.ID)
+	}
+}
+
+func TestFamilyModelFor_EmptyFamilyReturnsFalse(t *testing.T) {
+	c := Load()
+	if _, ok := c.FamilyModelFor("cursor", "", core.EffortHigh); ok {
+		t.Error("empty family should return false")
+	}
+}
+
+func TestValidate_AllowsSameFamilyDifferentEffort(t *testing.T) {
+	data := []byte(`{"entries":[
+		{"id":"opus-high","family":"claude-opus","harness":"cursor","tier":"frontier","effort":"high"},
+		{"id":"opus-medium","family":"claude-opus","harness":"cursor","tier":"frontier","effort":"medium"}
+	]}`)
+	if _, err := parse(data); err != nil {
+		t.Fatalf("same family with differing efforts should validate: %v", err)
+	}
+}
+
+func TestValidate_RejectsSameFamilySameEffort(t *testing.T) {
+	data := []byte(`{"entries":[
+		{"id":"opus-high-a","family":"claude-opus","harness":"cursor","tier":"frontier","effort":"high"},
+		{"id":"opus-high-b","family":"claude-opus","harness":"cursor","tier":"frontier","effort":"high"}
+	]}`)
+	if _, err := parse(data); err == nil {
+		t.Fatal("same family with same effort must stay a validation error")
+	}
+}
+
+func TestValidate_RejectsOverlapWhenOneEntryUntagged(t *testing.T) {
+	data := []byte(`{"entries":[
+		{"id":"grok-base","family":"grok","harness":"cursor","tier":"frontier"},
+		{"id":"grok-fast","family":"grok-4.7","harness":"cursor","tier":"frontier","effort":"high"}
+	]}`)
+	if _, err := parse(data); err == nil {
+		t.Fatal("overlapping families with an untagged entry must stay a validation error")
+	}
+}
+
+func TestLookupByID_ReturnsFamily(t *testing.T) {
+	c := Load()
+	m, ok := c.LookupByID("cursor", "grok-4.7-high-fast")
+	if !ok {
+		t.Fatal("grok-4.7-high-fast should be found")
+	}
+	if m.Family != "grok" {
+		t.Errorf("Family = %q, want grok", m.Family)
+	}
+}
+
+func TestLookupByID_FamilyFallbackCarriesFamily(t *testing.T) {
+	c := Load()
+	// Version-bumped ID: family prefix match must still report the family so
+	// adapters can do in-family effort routing on unknown versions.
+	m, ok := c.LookupByID("cursor", "gemini-3.9-flash-high")
+	if !ok {
+		t.Fatal("gemini-3.9-flash-high should match via family 'gemini'")
+	}
+	if m.Family != "gemini" {
+		t.Errorf("Family = %q, want gemini", m.Family)
 	}
 }

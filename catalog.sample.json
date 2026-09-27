@@ -2,6 +2,7 @@
   "_doc": "Copy this file to ~/.harness-downshift/catalog.json and fill in real values.",
   "_doc2": "Run 'downshift models pull' with an API key to discover models from provider APIs.",
   "_doc3": "Objects without 'id' and 'harness' (like _section comments) are silently skipped by the parser.",
+  "_doc4": "Option A (family + effort): add an 'effort' tag (low|medium|high) to entries of the same family to offer effort variants (e.g. opus high vs opus medium). Same-family entries with differing efforts are allowed; anything else overlapping stays an error.",
   "version": "2",
   "entries": [
     { "_section": "claude-code — Anthropic native models" },

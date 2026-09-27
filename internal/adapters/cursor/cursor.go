@@ -11,6 +11,7 @@ package cursor
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
@@ -79,11 +80,43 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 
 	plan := decision.Plan(core.CursorCaps, res)
-	if plan.PreserveExplicit || !plan.RewriteModel {
+	if plan.PreserveExplicit {
 		return allow(), "", decision
 	}
 
-	ti["model"] = plan.Model.ID
+	// Option A: stay in the current model's family, switch only the effort.
+	// The family comes from the catalog (exact, alias, or prefix match), so
+	// this works even for version-bumped IDs the catalog never listed. When
+	// the family has no variant at the needed effort, fall back to the tier
+	// default below. Other harnesses keep their existing path until they
+	// opt into FamilyEffortResolver.
+	//
+	// Safety rule: the family variant must meet or exceed the needed tier.
+	// An in-family move that preserves capability needs no confidence gate;
+	// anything weaker (or no variant at all) goes through the normal rewrite
+	// gate, which already blocks downgrades on uncertain classifications.
+	target := plan.Model
+	note := decision.Summary()
+	familyHit := false
+	if res != nil && decision.CurrentModel.Family != "" {
+		if fer, ok := res.(core.FamilyEffortResolver); ok {
+			if fm, ok := fer.FamilyModelFor(harnessID, decision.CurrentModel.Family, decision.Effort); ok &&
+				fm.ID != "" && fm.ID != decision.CurrentModel.ID && fm.Tier >= decision.Tier {
+				target = fm
+				note = familyNote(decision, fm, res)
+				familyHit = true
+			}
+		}
+	}
+
+	if target.ID == "" || target.ID == decision.CurrentModel.ID {
+		return allow(), "", decision
+	}
+	if !familyHit && !plan.RewriteModel {
+		return allow(), "", decision
+	}
+
+	ti["model"] = target.ID
 	updated, err := json.Marshal(ti)
 	if err != nil {
 		return allow(), "", decision
@@ -92,8 +125,22 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	return Output{
 		Permission:   "allow",
 		UpdatedInput: updated,
-		AgentMessage: "downshift: " + decision.Summary(),
-	}, decision.Summary(), decision
+		AgentMessage: "downshift: " + note,
+	}, note, decision
+}
+
+// familyNote renders the one-line readout for an in-family effort switch.
+// It mirrors Decision.Summary: cheaper targets show the savings ratio,
+// pricier ones are framed as upshifts needing more torque.
+func familyNote(d core.Decision, fm core.Model, res core.Resolver) string {
+	if res != nil {
+		if s := res.SavingsRatio(d.CurrentModel, fm); s > 0 {
+			return fmt.Sprintf("%s task → stay on %s family at %s effort: %s (~%.0f%% cheaper)",
+				d.Complexity, d.CurrentModel.Family, d.Effort, fm.ID, s*100)
+		}
+	}
+	return fmt.Sprintf("%s task → stay on %s family at %s effort: %s (needs more torque)",
+		d.Complexity, d.CurrentModel.Family, d.Effort, fm.ID)
 }
 
 func isTaskTool(name string) bool {
