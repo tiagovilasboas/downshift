@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tiagovilasboas/harness-downshift/internal/adapters/antigravity"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/cursor"
@@ -47,14 +48,22 @@ func main() {
 	// Load the effective catalog once at startup — embedded JSON with optional
 	// user override at ~/.harness-downshift/catalog.json. Fail-open: if the
 	// user file is invalid, the embedded catalog is used automatically.
-	cat := catalog.Load()
+	catalog := catalog.Load()
 
 	switch args[0] {
+	case "antigravity":
+		os.Exit(runHookAdapter(
+			os.Stdin,
+			func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) },
+			func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, catalog) },
+			func() { fmt.Println(`{"decision":"allow"}`) },
+			func(e antigravity.Event) string { return e.TaskText() },
+		))
 	case "claude-code":
 		os.Exit(runHookAdapter(
 			os.Stdin,
 			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
-			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cat) },
+			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, catalog) },
 			printAllow,
 			func(e claudecode.Event) string { return e.TaskText() },
 		))
@@ -62,7 +71,7 @@ func main() {
 		os.Exit(runHookAdapter(
 			os.Stdin,
 			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
-			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cat) },
+			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, catalog) },
 			printCursorAllow,
 			func(e cursor.Event) string { return e.TaskText() },
 		))
@@ -70,14 +79,14 @@ func main() {
 		os.Exit(runHookAdapter(
 			os.Stdin,
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
-			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cat) },
+			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, catalog) },
 			printCodexAllow,
 			func(e codex.Event) string { return e.TaskText() },
 		))
 	case "try":
-		os.Exit(runTry(cat, args[1:]))
+		os.Exit(runTry(catalog, args[1:]))
 	case "models":
-		os.Exit(runModels(cat, args[1:]))
+		os.Exit(runModels(catalog, args[1:]))
 	case "stats":
 		os.Exit(runStats(args[1:]))
 	case "benchmark":
@@ -147,7 +156,7 @@ func runHookAdapter[E any](
 }
 
 // runTry classifies a prompt from the command line for quick testing.
-func runTry(cat core.Resolver, args []string) int {
+func runTry(catalog core.Resolver, args []string) int {
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: downshift try \"<task prompt>\" [harness] [current-model]")
 		return 2
@@ -176,7 +185,7 @@ func runTry(cat core.Resolver, args []string) int {
 		return 0
 	}
 
-	d := core.Route(prompt, harness, current, cat)
+	d := core.Route(prompt, harness, current, catalog)
 	fmt.Printf("Task:       %s\n", prompt)
 	fmt.Printf("Complexity: %s\n", d.Complexity)
 	fmt.Printf("Intent:     %s\n", d.Intent)
@@ -191,19 +200,19 @@ func runTry(cat core.Resolver, args []string) int {
 }
 
 // runModels dispatches the 'models' subcommands: list, check, pull.
-func runModels(cat models.CatalogReader, args []string) int {
+func runModels(catalog models.CatalogReader, args []string) int {
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: downshift models <list|check|pull>")
 		return 2
 	}
 	switch args[0] {
 	case "list":
-		models.List(cat, os.Stdout)
+		models.List(catalog, os.Stdout)
 		return 0
 	case "check":
-		return models.Check(cat, os.Stdout, os.Stderr)
+		return models.Check(catalog, os.Stdout, os.Stderr)
 	case "pull":
-		return models.Pull(cat, os.Stdout, os.Stderr)
+		return models.Pull(catalog, os.Stdout, os.Stderr)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown models subcommand %q\n", args[0])
 		return 2
@@ -725,6 +734,7 @@ Usage:
   downshift cursor               Run as a Cursor preToolUse hook (reads stdin)
   downshift codex                Run as a Codex PreToolUse hook (reads stdin)
   downshift try "<task>" [harness] [model]   Test classification from the terminal
+  downshift antigravity          Run as an Antigravity PreToolUse hook
   downshift models list          Show the effective catalog (embedded or override)
   downshift models check         Query provider APIs and report new/untiered models
   downshift models pull          Write ~/.harness-downshift/catalog.json from APIs
