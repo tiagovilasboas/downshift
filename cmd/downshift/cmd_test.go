@@ -40,6 +40,19 @@ func captureStdout(fn func()) string {
 
 var cmdCat = catalog.Load()
 
+func setSessionAllowlist(t *testing.T, harness string, ids []string) {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "session-models.json")
+	data, err := json.Marshal(map[string][]string{harness: ids})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DOWNSHIFT_SESSION_MODELS", path)
+}
+
 func TestLegacyTasksForComparisonMapsV2Tiers(t *testing.T) {
 	tasks, err := legacyTasksForComparison([]training.Example{
 		{Prompt: "rename a variable", Label: "small"},
@@ -220,6 +233,11 @@ func hookEvent(toolName, modelID, prompt string) []byte {
 
 func TestRunHookAdapter_ClaudeCode_Downshift(t *testing.T) {
 	frontierID := claudeCodeFrontierID()
+	setSessionAllowlist(t, "claude-code", []string{
+		cmdCat.ModelFor("claude-code", core.TierSmall).ID,
+		cmdCat.ModelFor("claude-code", core.TierMid).ID,
+		frontierID,
+	})
 	event := hookEvent("Task", frontierID, "rename the userId variable")
 
 	out := captureStdout(func() {
@@ -261,6 +279,11 @@ func TestRunHookAdapter_Cursor_Downshift(t *testing.T) {
 
 func TestRunHookAdapter_Codex_Downshift(t *testing.T) {
 	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
+	setSessionAllowlist(t, "codex", []string{
+		cmdCat.ModelFor("codex", core.TierSmall).ID,
+		cmdCat.ModelFor("codex", core.TierMid).ID,
+		frontierID,
+	})
 	event := []byte(`{"hook_event_name":"PreToolUse","tool_name":"spawn_agent","model":"` +
 		frontierID + `","tool_input":{"message":"rename the userId variable","model":"` + frontierID + `"}}`)
 
@@ -286,8 +309,13 @@ func TestRunHookAdapter_Codex_Downshift(t *testing.T) {
 func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
+	setSessionAllowlist(t, "codex", []string{
+		cmdCat.ModelFor("codex", core.TierSmall).ID,
+		cmdCat.ModelFor("codex", core.TierMid).ID,
+		frontierID,
+	})
 	privatePrompt := "review private incident token abc123"
-	event := []byte(`{"hook_event_name":"PreToolUse","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"` + privatePrompt + `"}}`)
+	event := []byte(`{"hook_event_name":"PreToolUse","session_id":"codex-session-privacy-test","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"` + privatePrompt + `"}}`)
 	captureStdout(func() {
 		runHookAdapter(
 			bytes.NewReader(event),
@@ -303,6 +331,17 @@ func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
 	}
 	if strings.Contains(string(data), privatePrompt) || strings.Contains(string(data), "abc123") {
 		t.Fatal("hook feedback log persisted raw prompt content")
+	}
+	eventData, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), ".harness-downshift", "events.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var eventRecord map[string]any
+	if err := json.Unmarshal(bytes.TrimSpace(eventData), &eventRecord); err != nil {
+		t.Fatalf("decode telemetry event: %v", err)
+	}
+	if eventRecord["session_id"] != "codex-session-privacy-test" {
+		t.Fatalf("session_id = %v, want Codex session identifier", eventRecord["session_id"])
 	}
 	events, err := training.NewEventStore(training.DefaultEventsPath()).Load()
 	if err != nil {

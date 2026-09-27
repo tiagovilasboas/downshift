@@ -145,7 +145,11 @@ func runHookAdapter[E any](
 	// Record telemetry only when a real routing decision was made.
 	// A zero Decision (Harness == "") means the event was not a subagent spawn.
 	if decision.Harness != "" {
-		telemetry.Record(telemetry.FromDecision(decision))
+		event := telemetry.FromDecision(decision)
+		if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
+			event.SessionID = identified.SessionIdentifier()
+		}
+		telemetry.Record(event)
 		if len(taskText) > 0 {
 			if id, err := training.RecordRoutedDecision(taskText[0](ev), decision); err == nil && id != "" {
 				fmt.Fprintf(os.Stderr, "downshift: feedback id %s (run `downshift feedback %s success|retry|failed` after review)\n", id, id)
@@ -730,11 +734,11 @@ func usage() {
 	fmt.Fprint(os.Stderr, `downshift — right-sized models for every subagent task
 
 Usage:
+  downshift antigravity          Run as an Antigravity PreToolUse hook
   downshift claude-code          Run as a Claude Code PreToolUse hook (reads stdin)
   downshift cursor               Run as a Cursor preToolUse hook (reads stdin)
   downshift codex                Run as a Codex PreToolUse hook (reads stdin)
   downshift try "<task>" [harness] [model]   Test classification from the terminal
-  downshift antigravity          Run as an Antigravity PreToolUse hook
   downshift models list          Show the effective catalog (embedded or override)
   downshift models check         Query provider APIs and report new/untiered models
   downshift models pull          Write ~/.harness-downshift/catalog.json from APIs
