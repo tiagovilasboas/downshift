@@ -22,6 +22,27 @@ func TestLoad_ReturnsEmbedded(t *testing.T) {
 	}
 }
 
+func TestCodexGPT6ModelsAreRoutable(t *testing.T) {
+	c := Load()
+	for _, tc := range []struct {
+		id         string
+		wantTier   core.Tier
+		wantInput  float64
+		wantOutput float64
+	}{
+		{id: "gpt-6-luna", wantTier: core.TierSmall, wantInput: 0.05, wantOutput: 0.25},
+		{id: "gpt-6-sol", wantTier: core.TierFrontier, wantInput: 1, wantOutput: 5},
+	} {
+		m, ok := c.LookupByID("codex", tc.id)
+		if !ok {
+			t.Fatalf("LookupByID(codex, %q) not found", tc.id)
+		}
+		if m.Tier != tc.wantTier || m.InputM != tc.wantInput || m.OutputM != tc.wantOutput {
+			t.Errorf("%s = tier %s, input %v, output %v; want tier %s, input %v, output %v", tc.id, m.Tier, m.InputM, m.OutputM, tc.wantTier, tc.wantInput, tc.wantOutput)
+		}
+	}
+}
+
 func TestModelFor_KnownHarness(t *testing.T) {
 	c := Load()
 	harnesses := []string{"claude-code", "cursor", "codex"}

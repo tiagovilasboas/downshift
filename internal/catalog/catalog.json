@@ -188,6 +188,30 @@
     { "_section": "codex — native OpenAI models" },
 
     {
+      "id": "gpt-6-luna",
+      "aliases": ["luna"],
+      "family": "gpt-6-luna",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 0.05,
+      "output_cost_per_1m": 0.25
+    },
+    {
+      "id": "gpt-6-sol",
+      "aliases": [],
+      "family": "gpt-6-sol",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 1.00,
+      "output_cost_per_1m": 5.00
+    },
+    {
       "id": "gpt-5.6-luna",
       "aliases": [],
       "family": "gpt-5.6-luna",
