@@ -39,19 +39,83 @@ type RewritePlan struct {
 // given harness. It consults the Resolver to detect explicit_only models so
 // the plan can signal that no rewrite should happen.
 //
-// Passing a nil Resolver disables explicit-only detection (used in tests that
-// don't need a catalog).
+// When the classified downgrade cannot be applied (confidence gate, empty
+// target, or a target that is not a catalog id for this harness), Plan
+// routes to the smallest catalog model for the same harness. Adapters stay
+// harness-agnostic: they already honor RewriteModel and Model.ID.
+//
+// Passing a nil Resolver disables explicit-only detection and the smallest-
+// model fallback (used in tests that don't need a catalog).
 func (d Decision) Plan(c HarnessCapabilities, r ...Resolver) RewritePlan {
-	var preserve bool
+	var res Resolver
 	if len(r) > 0 && r[0] != nil {
-		preserve = d.ShouldPreserveExplicitModel(d.CurrentModel.ID, r[0])
+		res = r[0]
 	}
-	if preserve {
+	currentID := d.CurrentModel.ID
+	if res != nil && d.ShouldPreserveExplicitModel(currentID, res) {
 		return RewritePlan{Model: d.Model, PreserveExplicit: true}
 	}
-	return RewritePlan{
-		Model:        d.Model,
-		RewriteModel: c.CanRewriteModel && d.ShouldRewriteModel(),
-		ApplyEffort:  c.CanApplyEffort && d.ShouldApplyEffort(),
+
+	model := d.Model
+	rewrite := c.CanRewriteModel && d.ShouldRewriteModel()
+	if res != nil {
+		if fb, ok := smallestCatalogFallback(d, res); ok && fb.ID != currentID {
+			model = fb
+			rewrite = c.CanRewriteModel
+		} else if model.ID != "" && !canonicalCatalogID(res, d.Harness, model.ID) {
+			// Never emit an alias or another harness's id.
+			rewrite = false
+			if canonicalCatalogID(res, d.Harness, currentID) {
+				model = d.CurrentModel
+			} else {
+				model = Model{Tier: d.Tier, Harness: d.Harness}
+			}
+		}
 	}
+	if model.ID == "" || model.ID == currentID {
+		rewrite = false
+	}
+
+	return RewritePlan{
+		Model:        model,
+		RewriteModel: rewrite,
+		ApplyEffort:  c.CanApplyEffort && model.ID != "",
+	}
+}
+
+// smallestCatalogFallback is the shared safety net for every harness.
+// A blocked downgrade, an empty target, or a target that is not a real
+// catalog id for this harness resolves to ModelFor(harness, TierSmall).
+// The returned id is always that harness's catalog id, never an alias and
+// never a model borrowed from another harness.
+func smallestCatalogFallback(d Decision, res Resolver) (Model, bool) {
+	if res == nil || d.Harness == "" {
+		return Model{}, false
+	}
+	blockedDowngrade := d.Verdict == VerdictDownshift && !d.ShouldRewriteModel()
+	emptyTarget := d.Model.ID == ""
+	foreignTarget := d.Model.ID != "" && !canonicalCatalogID(res, d.Harness, d.Model.ID)
+	if !blockedDowngrade && !emptyTarget && !foreignTarget {
+		return Model{}, false
+	}
+
+	small := res.ModelFor(d.Harness, TierSmall)
+	if small.ID == "" || res.IsExplicitOnly(d.Harness, small.ID) {
+		return Model{}, false
+	}
+	if !canonicalCatalogID(res, d.Harness, small.ID) {
+		return Model{}, false
+	}
+	return small, true
+}
+
+// canonicalCatalogID reports whether id is the catalog's own id for harness.
+// Alias matches and family-prefix matches are not catalog ids: emitting them
+// sends another harness's slug (for example claude-haiku-4 on Cursor).
+func canonicalCatalogID(res Resolver, harness, id string) bool {
+	if res == nil || id == "" {
+		return false
+	}
+	looked, ok := res.LookupByID(harness, id)
+	return ok && looked.ID == id
 }

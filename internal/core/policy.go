@@ -173,8 +173,9 @@ func (d Decision) ShouldRewriteModel() bool {
 	if d.Model.ID == "" {
 		return false
 	}
-	// An uncertain classifier result must never trigger an automatic downgrade.
-	// Keep the harness-selected model in place until the task has a clear signal.
+	// An uncertain classifier result must not apply the classified downgrade
+	// target. Plan still falls back to the harness smallest catalog model
+	// so a blocked downshift does not keep a stronger model or a foreign id.
 	if d.Verdict == VerdictDownshift && !d.Confident {
 		return false
 	}
