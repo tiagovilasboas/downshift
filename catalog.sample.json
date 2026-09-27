@@ -49,6 +49,30 @@
     {
       "id": "YOUR_CODEX_SMALL_ID",
       "aliases": [],
+      "family": "gpt-6-luna",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 0.00,
+      "output_cost_per_1m": 0.00
+    },
+    {
+      "id": "YOUR_CODEX_FRONTIER_ID",
+      "aliases": [],
+      "family": "gpt-6-sol",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 0.00,
+      "output_cost_per_1m": 0.00
+    },
+    {
+      "id": "YOUR_CODEX_SMALL_ID",
+      "aliases": [],
       "family": "gpt-5.6-luna",
       "provider": "openai",
       "harness": "codex",
