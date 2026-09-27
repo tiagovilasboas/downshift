@@ -27,6 +27,12 @@ type Event struct {
 	ToolInput     json.RawMessage `json:"tool_input"`
 	Model         string          `json:"model"`
 	ModelID       string          `json:"model_id"`
+	// SessionModels and AvailableModels are optional hook allowlists.
+	// Nil means the payload did not include a list. A non-nil slice is
+	// the session and skips the user file. Cursor's preToolUse payload
+	// does not send either field today.
+	SessionModels   *[]string `json:"session_models,omitempty"`
+	AvailableModels *[]string `json:"available_models,omitempty"`
 }
 
 // TaskText returns the task content used for local, prompt-free feature
@@ -79,7 +85,8 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 
-	plan := decision.Plan(core.CursorCaps, res)
+	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
+	plan := decision.PlanForSession(core.CursorCaps, res, session)
 	if plan.PreserveExplicit {
 		return allow(), "", decision
 	}
@@ -101,7 +108,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if res != nil && decision.CurrentModel.Family != "" {
 		if fer, ok := res.(core.FamilyEffortResolver); ok {
 			if fm, ok := fer.FamilyModelFor(harnessID, decision.CurrentModel.Family, decision.Effort); ok &&
-				fm.ID != "" && fm.ID != decision.CurrentModel.ID && fm.Tier >= decision.Tier {
+				fm.ID != "" && session.Contains(fm.ID) && fm.ID != decision.CurrentModel.ID && fm.Tier >= decision.Tier {
 				target = fm
 				note = familyNote(decision, fm, res)
 				familyHit = true
@@ -113,6 +120,9 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", decision
 	}
 	if !familyHit && !plan.RewriteModel {
+		return allow(), "", decision
+	}
+	if !session.Contains(target.ID) {
 		return allow(), "", decision
 	}
 

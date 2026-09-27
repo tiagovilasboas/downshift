@@ -5,124 +5,136 @@
 package core_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
 )
 
-// TestPlan_FallbackToHarnessSmallest proves the shared safety net: a blocked
-// downgrade or an unknown target id lands on that harness's smallest catalog
-// model, and never on another harness's slug.
-func TestPlan_FallbackToHarnessSmallest(t *testing.T) {
-	harnesses := []struct {
-		name string
-		caps core.HarnessCapabilities
+func TestMain(m *testing.M) {
+	os.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(os.TempDir(), "downshift-session-models-absent.json"))
+	os.Exit(m.Run())
+}
+
+// TestPlanForSession_OnlySessionIDs covers every harness with the same rule:
+// the emitted id is a session member, a catalog-only id is never emitted, and
+// a missing session list does not rewrite.
+func TestPlanForSession_OnlySessionIDs(t *testing.T) {
+	cases := []struct {
+		harness      string
+		caps         core.HarnessCapabilities
+		frontier     string
+		catalogSmall string
+		session      []string
+		want         string
 	}{
-		{name: "cursor", caps: core.CursorCaps},
-		{name: "claude-code", caps: core.ClaudeCodeCaps},
-		{name: "codex", caps: core.CodexCaps},
+		{
+			harness: "cursor", caps: core.CursorCaps,
+			frontier: "claude-opus-5-thinking-high", catalogSmall: "claude-4.5-haiku-thinking",
+			session: []string{"claude-4.5-sonnet-thinking", "claude-opus-5-thinking-high", "composer-2.5"},
+			want:    "claude-4.5-sonnet-thinking",
+		},
+		{
+			harness: "claude-code", caps: core.ClaudeCodeCaps,
+			frontier: "claude-opus-4-8", catalogSmall: "claude-haiku-4",
+			session: []string{"claude-sonnet-4-6", "claude-opus-4-8"},
+			want:    "claude-sonnet-4-6",
+		},
+		{
+			harness: "codex", caps: core.CodexCaps,
+			frontier: "gpt-5.6-sol", catalogSmall: "gpt-5.6-luna",
+			session: []string{"gpt-5.6-terra", "gpt-5.6-sol"},
+			want:    "gpt-5.6-terra",
+		},
 	}
-
-	for _, h := range harnesses {
-		t.Run(h.name+"/blocked-downshift", func(t *testing.T) {
-			current := cat.ModelFor(h.name, core.TierFrontier)
-			small := cat.ModelFor(h.name, core.TierSmall)
-			if small.ID == "" || small.ID == current.ID {
-				t.Fatalf("catalog fixture: small=%q current=%q", small.ID, current.ID)
-			}
+	for _, tc := range cases {
+		t.Run(tc.harness, func(t *testing.T) {
 			d := core.Decision{
-				Harness:      h.name,
+				Harness:      tc.harness,
 				Verdict:      core.VerdictDownshift,
-				Confident:    false,
+				Confident:    true,
 				Tier:         core.TierSmall,
-				Model:        core.Model{ID: "not-a-catalog-id", Tier: core.TierSmall, Harness: h.name},
-				CurrentModel: current,
+				Model:        core.Model{ID: tc.catalogSmall, Tier: core.TierSmall, Harness: tc.harness},
+				CurrentModel: core.Model{ID: tc.frontier, Tier: core.TierFrontier, Harness: tc.harness},
 			}
-			if d.ShouldRewriteModel() {
-				t.Fatal("precondition: classified downgrade must stay blocked")
+			plan := d.PlanForSession(tc.caps, cat, core.KnownSession(tc.session))
+			if !plan.RewriteModel {
+				t.Fatal("expected a rewrite to a session model")
 			}
-			plan := d.Plan(h.caps, cat)
-			assertSmallest(t, h.name, plan, small.ID)
+			if plan.Model.ID != tc.want {
+				t.Fatalf("model = %q, want %q", plan.Model.ID, tc.want)
+			}
+			if plan.Model.ID == tc.catalogSmall {
+				t.Fatal("emitted the catalog smallest id, which is not in the session")
+			}
+			for _, id := range tc.session {
+				if id == plan.Model.ID {
+					return
+				}
+			}
+			t.Fatalf("emitted %q is not in the session", plan.Model.ID)
 		})
+	}
+}
 
-		t.Run(h.name+"/empty-target", func(t *testing.T) {
-			current := cat.ModelFor(h.name, core.TierFrontier)
-			small := cat.ModelFor(h.name, core.TierSmall)
+func TestPlanForSession_MissingSessionDoesNotRewrite(t *testing.T) {
+	for _, harness := range []string{"cursor", "claude-code"} {
+		t.Run(harness, func(t *testing.T) {
 			d := core.Decision{
-				Harness:      h.name,
-				Verdict:      core.VerdictUnknown,
-				Confident:    false,
+				Harness:      harness,
+				Verdict:      core.VerdictDownshift,
+				Confident:    true,
 				Tier:         core.TierSmall,
-				Model:        core.Model{Tier: core.TierSmall, Harness: h.name},
-				CurrentModel: current,
+				Model:        cat.ModelFor(harness, core.TierSmall),
+				CurrentModel: cat.ModelFor(harness, core.TierFrontier),
 			}
-			plan := d.Plan(h.caps, cat)
-			assertSmallest(t, h.name, plan, small.ID)
+			plan := d.Plan(core.CursorCaps, cat)
+			if plan.RewriteModel {
+				t.Fatalf("%s: missing session rewrote to %q", harness, plan.Model.ID)
+			}
 		})
 	}
 }
 
-// TestPlan_CursorRejectsForeignAlias ensures Cursor emits its catalog small
-// id (claude-4.5-haiku-thinking), not the claude-code slug claude-haiku-4,
-// which is only an alias on the cursor row.
-func TestPlan_CursorRejectsForeignAlias(t *testing.T) {
-	current := cat.ModelFor("cursor", core.TierFrontier)
-	d := core.Decision{
-		Harness:      "cursor",
-		Verdict:      core.VerdictDownshift,
-		Confident:    true,
-		Tier:         core.TierSmall,
-		Model:        core.Model{ID: "claude-haiku-4", Tier: core.TierSmall, Harness: "cursor"},
-		CurrentModel: current,
-	}
-	plan := d.Plan(core.CursorCaps, cat)
-	if plan.Model.ID != "claude-4.5-haiku-thinking" {
-		t.Fatalf("model = %q, want claude-4.5-haiku-thinking", plan.Model.ID)
-	}
-	if plan.Model.ID == "claude-haiku-4" {
-		t.Fatal("cursor must not emit the claude-code catalog id")
-	}
-	if !plan.RewriteModel {
-		t.Fatal("foreign target must still rewrite to the cursor catalog id")
-	}
-}
-
-// TestPlan_ExplicitOnlySkipsSmallestFallback keeps a deliberate model even
-// when the classified downgrade is blocked.
-func TestPlan_ExplicitOnlySkipsSmallestFallback(t *testing.T) {
+func TestPlan_ExplicitOnlySkipsSessionRouting(t *testing.T) {
+	session := core.KnownSession([]string{"gpt-5.6-luna", "gpt-6-astra"})
 	d := core.Decision{
 		Harness:      "codex",
 		Verdict:      core.VerdictDownshift,
-		Confident:    false,
+		Confident:    true,
 		Tier:         core.TierSmall,
-		Model:        core.Model{ID: "", Tier: core.TierSmall, Harness: "codex"},
+		Model:        core.Model{ID: "gpt-5.6-luna", Tier: core.TierSmall, Harness: "codex"},
 		CurrentModel: core.Model{ID: "gpt-6-astra", Tier: core.TierFrontier, Harness: "codex"},
 	}
-	plan := d.Plan(core.CodexCaps, cat)
+	plan := d.PlanForSession(core.CodexCaps, cat, session)
 	if !plan.PreserveExplicit {
 		t.Fatal("explicit_only current model must be preserved")
 	}
 	if plan.RewriteModel {
-		t.Fatal("explicit_only model must not fall back to the smallest catalog id")
+		t.Fatal("explicit_only model must not be rewritten")
 	}
 }
 
-func assertSmallest(t *testing.T, harness string, plan core.RewritePlan, wantID string) {
-	t.Helper()
-	if plan.PreserveExplicit {
-		t.Fatalf("%s: fallback must not set PreserveExplicit", harness)
+func TestLoadSessionFile_PerHarness(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "session-models.json")
+	body := []byte(`{
+		"_comment": "example only",
+		"cursor": ["composer-2.5", "claude-4.5-sonnet-thinking"],
+		"codex": ["gpt-5.6-luna"]
+	}`)
+	if err := os.WriteFile(path, body, 0o600); err != nil {
+		t.Fatal(err)
 	}
-	if !plan.RewriteModel {
-		t.Fatalf("%s: fallback must rewrite when the smallest id differs from current", harness)
+	got := core.LoadSessionFile("cursor", path)
+	if !got.Known || len(got.IDs) != 2 || got.IDs[0] != "composer-2.5" {
+		t.Fatalf("cursor session = %+v", got)
 	}
-	if plan.Model.ID != wantID {
-		t.Fatalf("%s: model = %q, want %q", harness, plan.Model.ID, wantID)
+	if core.LoadSessionFile("claude-code", path).Known {
+		t.Fatal("missing harness key must stay unknown")
 	}
-	if harness == "cursor" && plan.Model.ID == "claude-haiku-4" {
-		t.Fatal("cursor fell back to another harness id")
-	}
-	looked, ok := cat.LookupByID(harness, plan.Model.ID)
-	if !ok || looked.ID != plan.Model.ID {
-		t.Fatalf("%s: emitted %q is not a catalog id for this harness", harness, plan.Model.ID)
+	if core.LoadSessionFile("cursor", filepath.Join(dir, "missing.json")).Known {
+		t.Fatal("missing file must stay unknown")
 	}
 }

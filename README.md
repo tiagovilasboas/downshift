@@ -216,6 +216,12 @@ hook to `.cursor/hooks.json` (project level) or `~/.cursor/hooks.json` (global):
 The `matcher: "Task"` scopes the hook to subagent spawns only. Cursor watches
 the config and reloads it on save.
 
+## Session allowlist
+
+Downshift writes a model id only when that id is in the current session. The catalog supplies tier, cost, family, and effort for ids that are also in the session. It never adds an id the session does not have. If the session list cannot be determined, the hook leaves the current model unchanged.
+
+Cursor, Claude Code, and Codex hooks send the current model, not the allowlist. Record the ids this session can select in `~/.harness-downshift/session-models.json`, one array per harness (`cursor`, `claude-code`, `codex`). If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. Details and evidence: [docs/session-models.md](docs/session-models.md). [docs/examples/session-models.example.json](docs/examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
+
 ## Install (Codex)
 
 Codex spawns subagents through a reserved `spawn_agent` tool under
