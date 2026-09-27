@@ -268,3 +268,33 @@ func TestHandle_UnknownFamilyFallsBackToTierDefault(t *testing.T) {
 		t.Errorf("model = %v, want tier default %s", m["model"], wantID)
 	}
 }
+
+func TestHandle_BlockedDownshiftUsesHarnessSmallestID(t *testing.T) {
+	// lint=2 (trivial), module=1 (medium), nine words: trivial wins by 1,
+	// under the confidence margin. The classified downgrade is blocked.
+	// The hook must still emit Cursor's catalog small id, not claude-haiku-4.
+	frontierID := catID(core.TierFrontier)
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "please lint the module that we discussed yesterday afternoon",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, _, decision := cursor.Handle(ev, cat)
+	if decision.Verdict != core.VerdictDownshift || decision.Confident {
+		t.Fatalf("precondition: want blocked downshift, verdict=%s confident=%v complexity=%s",
+			decision.Verdict, decision.Confident, decision.Complexity)
+	}
+	m := decodeUpdated(t, out)
+	if m == nil {
+		t.Fatal("blocked downshift must still rewrite to the harness smallest model")
+	}
+	const wantID = "claude-4.5-haiku-thinking"
+	if m["model"] != wantID {
+		t.Errorf("model = %v, want %s", m["model"], wantID)
+	}
+	if m["model"] == "claude-haiku-4" {
+		t.Error("must not emit another harness catalog id")
+	}
+}
