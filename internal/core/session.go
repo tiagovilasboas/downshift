@@ -70,15 +70,27 @@ func DefaultSessionModelsPath() string {
 // DOWNSHIFT_SESSION_MODELS overrides the path (tests and operators).
 // A missing file, invalid JSON, or a missing harness key is an unknown session.
 func LoadUserSession(harness string) SessionList {
+	return LoadUserSessionForID(harness, "")
+}
+
+// LoadUserSessionForID prefers an allowlist scoped to the exact harness
+// session, then falls back to the harness-wide allowlist for compatibility.
+func LoadUserSessionForID(harness, sessionID string) SessionList {
 	path := os.Getenv("DOWNSHIFT_SESSION_MODELS")
 	if path == "" {
 		path = DefaultSessionModelsPath()
 	}
-	return LoadSessionFile(harness, path)
+	return LoadSessionFileForID(harness, sessionID, path)
 }
 
 // LoadSessionFile reads one harness allowlist from path.
 func LoadSessionFile(harness, path string) SessionList {
+	return LoadSessionFileForID(harness, "", path)
+}
+
+// LoadSessionFileForID checks sessions.<harness>.<session-id> first, then
+// the legacy top-level <harness> list.
+func LoadSessionFileForID(harness, sessionID, path string) SessionList {
 	if harness == "" || path == "" {
 		return UnknownSession()
 	}
@@ -89,6 +101,14 @@ func LoadSessionFile(harness, path string) SessionList {
 	var raw map[string]json.RawMessage
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return UnknownSession()
+	}
+	if sessionID != "" {
+		var byHarness map[string]map[string][]string
+		if sessions, ok := raw["sessions"]; ok && json.Unmarshal(sessions, &byHarness) == nil {
+			if ids, ok := byHarness[harness][sessionID]; ok && ids != nil {
+				return KnownSession(ids)
+			}
+		}
 	}
 	msg, ok := raw[harness]
 	if !ok {
@@ -104,8 +124,14 @@ func LoadSessionFile(harness, path string) SessionList {
 // ResolveSession prefers a hook allowlist. When the payload has none, it
 // reads the user file. Every harness uses this order.
 func ResolveSession(harness string, hookLists ...*[]string) SessionList {
+	return ResolveSessionForID(harness, "", hookLists...)
+}
+
+// ResolveSessionForID prefers a hook-provided allowlist, then a per-session
+// user allowlist, then the harness-wide user allowlist.
+func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) SessionList {
 	if session, ok := SessionFromHook(hookLists...); ok {
 		return session
 	}
-	return LoadUserSession(harness)
+	return LoadUserSessionForID(harness, sessionID)
 }

@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -25,11 +26,18 @@ func TestCodexHook_NamespacedSpawnAgentWithoutCurrentModel(t *testing.T) {
 
 	event := []byte(`{
 		"hook_event_name":"PreToolUse",
+		"session_id":"codex-session-smoke",
 		"tool_name":"collaboration.spawn_agent",
 		"tool_input":{"task_name":"review_go","message":"list the Go files and do a code review without changing anything"}
 	}`)
 	cmd := exec.Command(binary, "codex")
 	cmd.Stdin = bytes.NewReader(event)
+	home := t.TempDir()
+	modelConfig := filepath.Join(t.TempDir(), "session-models.json")
+	if err := os.WriteFile(modelConfig, []byte(`{"codex":["gpt-6-luna","gpt-6-sol","gpt-5.6-luna","gpt-5.6-terra","gpt-5.6-sol"]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cmd.Env = []string{"HOME=" + home, "DOWNSHIFT_SESSION_MODELS=" + modelConfig}
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -60,13 +68,20 @@ func TestCodexHook_NamespacedSpawnAgentWithoutCurrentModel(t *testing.T) {
 	if err := json.Unmarshal(response.HookSpecificOutput.UpdatedInput, &updated); err != nil {
 		t.Fatalf("decode updatedInput: %v", err)
 	}
-	if updated["model"] != "gpt-5.6-sol" {
-		t.Errorf("model = %v, want gpt-5.6-sol", updated["model"])
+	if updated["model"] != "gpt-6-sol" {
+		t.Errorf("model = %v, want gpt-6-sol", updated["model"])
 	}
 	if updated["reasoning_effort"] != "high" {
 		t.Errorf("reasoning_effort = %v, want high", updated["reasoning_effort"])
 	}
-	if !bytes.Contains(stderr.Bytes(), []byte("gpt-5.6-sol")) {
-		t.Errorf("stderr = %q, want routing diagnostic for gpt-5.6-sol", stderr.String())
+	if !bytes.Contains(stderr.Bytes(), []byte("gpt-6-sol")) {
+		t.Errorf("stderr = %q, want routing diagnostic for gpt-6-sol", stderr.String())
+	}
+	telemetry, err := os.ReadFile(filepath.Join(home, ".harness-downshift", "events.jsonl"))
+	if err != nil {
+		t.Fatalf("read hook telemetry: %v", err)
+	}
+	if !bytes.Contains(telemetry, []byte(`"session_id":"codex-session-smoke"`)) {
+		t.Errorf("telemetry did not identify the Codex session: %s", telemetry)
 	}
 }

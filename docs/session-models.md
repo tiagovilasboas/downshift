@@ -12,9 +12,9 @@ Checked against the adapter structs and local telemetry on 2026-09-27. No secret
 |---|---|---|
 | Cursor | `hook_event_name`, `tool_name`, `tool_input`, `model`, `model_id` | No. Current model only. |
 | Claude Code | `hook_event_name`, `tool_name`, `tool_input`, `model`, `prompt` | No. Current model only. |
-| Codex | `hook_event_name`, `tool_name`, `tool_input`, `model` | No. Current model only. |
+| Codex | `hook_event_name`, `session_id`, `tool_name`, `tool_input`, `model` | No. Current model and session id only. |
 
-`~/.harness-downshift/events.jsonl` (263 rows) stores routing outcomes: `complexity`, `estimated_savings`, `from`, `harness`, `timestamp`, `to`, `verdict`. `loop-events.jsonl` (195 rows) stores `confident`, `features`, `harness`, `id`, `record_type`, `selected_tier`, `timestamp`. Neither file is a copy of hook stdin and neither lists the models the picker offered.
+`~/.harness-downshift/events.jsonl` stores routing outcomes: `complexity`, `estimated_savings`, `from`, `harness`, optional `session_id`, `timestamp`, `to`, `verdict`. Codex's `session_id` is the stable session identifier from the hook payload. This allows decisions and observed active model IDs to be grouped by Codex session; it does not reveal the full model picker or prove the child executor honored a rewritten model. `loop-events.jsonl` stores classifier feedback metadata. Neither file is a copy of hook stdin and neither lists the models the picker offered.
 
 Native config is not a session allowlist either:
 
@@ -29,7 +29,22 @@ Antigravity is unfinished local work and is not part of this path.
 Same order for every harness:
 
 1. Hook payload, if it includes `session_models` or `available_models` (a JSON array of strings). A present field wins, including an empty array. The file is not read.
-2. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). The harness key must be present (`cursor`, `claude-code`, or `codex`). A missing file or a missing key means the session is unknown.
+2. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key (`cursor`, `claude-code`, or `codex`) is used as a compatibility fallback. A missing file or missing key means the session is unknown.
+
+The file is operator-curated. For Codex, `model` identifies the active model in that event and `session_id` identifies its session. Downshift does not call a picker API, discover account entitlements, or assume every catalog entry is selectable. Verify the session's actual choices before adding them to the allowlist.
+
+Example with a per-session override (replace the session ID with the value in Codex hook input):
+
+```json
+{
+  "codex": ["gpt-6-luna", "gpt-6-sol"],
+  "sessions": {
+    "codex": {
+      "replace-with-session_id": ["gpt-6-luna", "gpt-6-sol"]
+    }
+  }
+}
+```
 
 There is no built-in default list. `docs/examples/session-models.example.json` records one Cursor session from 2026-09-27. Copy it and edit it. Do not expect the binary to load that example on its own.
 

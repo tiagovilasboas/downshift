@@ -18,9 +18,32 @@ import (
 var cat = catalog.Load()
 
 func TestEventTaskText(t *testing.T) {
-	ev := codex.Event{ToolInput: json.RawMessage(`{"message":"private task","task_name":"security review"}`)}
+	ev := codex.Event{SessionID: "session-123", ToolInput: json.RawMessage(`{"message":"private task","task_name":"security review"}`)}
 	if got := ev.TaskText(); got != "private task security review" {
 		t.Fatalf("TaskText() = %q", got)
+	}
+	if got := ev.SessionIdentifier(); got != "session-123" {
+		t.Fatalf("SessionIdentifier() = %q", got)
+	}
+}
+
+func TestHandle_UsesSessionScopedAllowlist(t *testing.T) {
+	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "session-models.json"))
+	path := os.Getenv("DOWNSHIFT_SESSION_MODELS")
+	data := []byte(`{"codex":["gpt-5.6-sol"],"sessions":{"codex":{"session-123":["gpt-6-luna","gpt-6-sol"]}}}`)
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ev := codex.Event{
+		SessionID: "session-123",
+		ToolName:  "spawn_agent",
+		Model:     "gpt-6-sol",
+		ToolInput: json.RawMessage(`{"message":"rename a local variable"}`),
+	}
+	out, _, _ := codex.Handle(ev, cat)
+	m := decodeUpdated(t, out)
+	if m["model"] != "gpt-6-luna" {
+		t.Fatalf("session-scoped model = %v, want gpt-6-luna", m["model"])
 	}
 }
 
