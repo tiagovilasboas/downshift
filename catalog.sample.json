@@ -2,6 +2,7 @@
   "_doc": "Copy this file to ~/.harness-downshift/catalog.json and fill in real values.",
   "_doc2": "Run 'downshift models pull' with an API key to discover models from provider APIs.",
   "_doc3": "Objects without 'id' and 'harness' (like _section comments) are silently skipped by the parser.",
+  "_doc4": "Option A (family + effort): add an 'effort' tag (low|medium|high) to entries of the same family to offer effort variants (e.g. opus high vs opus medium). Same-family entries with differing efforts are allowed; anything else overlapping stays an error.",
   "version": "2",
   "entries": [
     { "_section": "claude-code — Anthropic native models" },
@@ -45,6 +46,30 @@
 
     { "_section": "codex — OpenAI models (multi_agent_v2)" },
 
+    {
+      "id": "YOUR_CODEX_SMALL_ID",
+      "aliases": [],
+      "family": "gpt-6-luna",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 0.00,
+      "output_cost_per_1m": 0.00
+    },
+    {
+      "id": "YOUR_CODEX_FRONTIER_ID",
+      "aliases": [],
+      "family": "gpt-6-sol",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 0.00,
+      "output_cost_per_1m": 0.00
+    },
     {
       "id": "YOUR_CODEX_SMALL_ID",
       "aliases": [],

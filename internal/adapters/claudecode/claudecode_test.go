@@ -6,6 +6,8 @@ package claudecode_test
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/claudecode"
@@ -25,6 +27,17 @@ func TestEventTaskText(t *testing.T) {
 
 func catID(tier core.Tier) string {
 	return cat.ModelFor("claude-code", tier).ID
+}
+
+func withCatalogSession(ev claudecode.Event) claudecode.Event {
+	ids := make([]string, 0)
+	for _, e := range cat.Entries() {
+		if e.Harness == "claude-code" && e.ID != "" {
+			ids = append(ids, e.ID)
+		}
+	}
+	ev.SessionModels = &ids
+	return ev
 }
 
 func decodeUpdated(t *testing.T, out claudecode.Output) map[string]any {
@@ -50,7 +63,7 @@ func TestHandle_DownshiftsTrivialSubagent(t *testing.T) {
 			"model": "` + frontierID + `"
 		}`),
 	}
-	out, note, _ := claudecode.Handle(ev, cat)
+	out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected a downshift note, got none")
 	}
@@ -80,7 +93,7 @@ func TestHandle_UpshiftsComplexSubagent(t *testing.T) {
 			"model": "` + smallID + `"
 		}`),
 	}
-	out, note, _ := claudecode.Handle(ev, cat)
+	out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected an upshift note, got none")
 	}
@@ -101,7 +114,7 @@ func TestHandle_NoChangeWhenAlreadyRightGear(t *testing.T) {
 			"model": "` + midID + `"
 		}`),
 	}
-	out, note, _ := claudecode.Handle(ev, cat)
+	out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
 	if note != "" {
 		t.Errorf("expected no change note, got %q", note)
 	}
@@ -116,7 +129,7 @@ func TestHandle_IgnoresNonTaskTools(t *testing.T) {
 		Model:     catID(core.TierFrontier),
 		ToolInput: json.RawMessage(`{"command": "rm -rf /tmp/x"}`),
 	}
-	out, note, _ := claudecode.Handle(ev, cat)
+	out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
 	if note != "" {
 		t.Errorf("expected no note for non-Task tool, got %q", note)
 	}
@@ -132,7 +145,7 @@ func TestHandle_FallsBackToSessionModel(t *testing.T) {
 		Model:     frontierID, // session model, no model on tool input
 		ToolInput: json.RawMessage(`{"prompt": "fix a typo in the readme"}`),
 	}
-	out, note, _ := claudecode.Handle(ev, cat)
+	out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected downshift using session model as current")
 	}
@@ -150,7 +163,7 @@ func TestHandle_AgentToolAlias(t *testing.T) {
 		Model:     frontierID,
 		ToolInput: json.RawMessage(`{"prompt": "rename the variable", "model": "` + frontierID + `"}`),
 	}
-	_, note, _ := claudecode.Handle(ev, cat)
+	_, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Error("expected Agent tool to be treated as a subagent spawn")
 	}
@@ -162,7 +175,7 @@ func TestHandle_MalformedInputFailsOpen(t *testing.T) {
 		Model:     catID(core.TierFrontier),
 		ToolInput: json.RawMessage(`{not valid`),
 	}
-	out, note, _ := claudecode.Handle(ev, cat)
+	out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
 	if note != "" {
 		t.Errorf("malformed input must fail-open, got note %q", note)
 	}
@@ -190,7 +203,7 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 			"run_in_background":  false
 		}`),
 	}
-	out, _, _ := claudecode.Handle(ev, cat)
+	out, _, _ := claudecode.Handle(withCatalogSession(ev), cat)
 	m := decodeUpdated(t, out)
 	if m == nil {
 		t.Fatal("expected updatedInput")
@@ -212,5 +225,49 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 	}
 	if m["prompt"] == nil {
 		t.Error("prompt field was dropped from updatedInput")
+	}
+}
+
+func TestMain(m *testing.M) {
+	os.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(os.TempDir(), "downshift-session-models-absent.json"))
+	os.Exit(m.Run())
+}
+
+func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	session := []string{"claude-sonnet-4-6", frontierID}
+	ev := claudecode.Event{
+		ToolName:      "Task",
+		SessionModels: &session,
+		ToolInput: json.RawMessage(`{
+			"prompt": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, _, _ := claudecode.Handle(ev, cat)
+	m := decodeUpdated(t, out)
+	if m == nil {
+		t.Fatal("expected a rewrite to a session model")
+	}
+	if m["model"] != "claude-sonnet-4-6" {
+		t.Fatalf("model = %v, want claude-sonnet-4-6", m["model"])
+	}
+	if m["model"] == "claude-haiku-4" {
+		t.Fatal("emitted a catalog id that is not in the session")
+	}
+}
+
+func TestHandle_MissingSessionDoesNotRewrite(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	ev := claudecode.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"prompt": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, note, _ := claudecode.Handle(ev, cat)
+	if note != "" || (out.HookSpecificOutput != nil && out.HookSpecificOutput.UpdatedInput != nil) {
+		t.Fatalf("missing session must not rewrite, note=%q", note)
 	}
 }

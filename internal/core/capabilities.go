@@ -35,23 +35,13 @@ type RewritePlan struct {
 	PreserveExplicit bool // current model is explicit_only; skip all rewrites
 }
 
-// Plan translates a harness-agnostic Decision into protocol actions for the
-// given harness. It consults the Resolver to detect explicit_only models so
-// the plan can signal that no rewrite should happen.
-//
-// Passing a nil Resolver disables explicit-only detection (used in tests that
-// don't need a catalog).
+// Plan translates a harness-agnostic Decision into protocol actions.
+// Without a session list it does not rewrite: the catalog is not an allowlist.
+// Adapters that know the session call PlanForSession instead.
 func (d Decision) Plan(c HarnessCapabilities, r ...Resolver) RewritePlan {
-	var preserve bool
+	var res Resolver
 	if len(r) > 0 && r[0] != nil {
-		preserve = d.ShouldPreserveExplicitModel(d.CurrentModel.ID, r[0])
+		res = r[0]
 	}
-	if preserve {
-		return RewritePlan{Model: d.Model, PreserveExplicit: true}
-	}
-	return RewritePlan{
-		Model:        d.Model,
-		RewriteModel: c.CanRewriteModel && d.ShouldRewriteModel(),
-		ApplyEffort:  c.CanApplyEffort && d.ShouldApplyEffort(),
-	}
+	return d.PlanForSession(c, res, UnknownSession())
 }

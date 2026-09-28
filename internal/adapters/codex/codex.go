@@ -27,10 +27,19 @@ const harnessID = "codex"
 // Event is the JSON Codex sends on stdin for a PreToolUse hook.
 type Event struct {
 	HookEventName string          `json:"hook_event_name"`
+	SessionID     string          `json:"session_id"`
 	ToolName      string          `json:"tool_name"`
 	ToolInput     json.RawMessage `json:"tool_input"`
 	Model         string          `json:"model"`
+	// Optional allowlist. Nil means the payload did not include one.
+	// Codex PreToolUse does not send this field today.
+	SessionModels   *[]string `json:"session_models,omitempty"`
+	AvailableModels *[]string `json:"available_models,omitempty"`
 }
+
+// SessionIdentifier exposes Codex's stable session ID to the shared hook
+// runner without coupling core routing decisions to harness metadata.
+func (ev Event) SessionIdentifier() string { return ev.SessionID }
 
 // TaskText returns task content for local feature extraction. Raw text is
 // never returned from the shared loop's persistence layer.
@@ -93,8 +102,12 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 
-	plan := decision.Plan(core.CodexCaps, res)
-	if plan.PreserveExplicit || !plan.ApplyEffort {
+	session := core.ResolveSessionForID(harnessID, ev.SessionID, ev.SessionModels, ev.AvailableModels)
+	plan := decision.PlanForSession(core.CodexCaps, res, session)
+	if plan.PreserveExplicit || (!plan.RewriteModel && !plan.ApplyEffort) {
+		return allow(), "", decision
+	}
+	if plan.RewriteModel && !session.Contains(plan.Model.ID) {
 		return allow(), "", decision
 	}
 
@@ -103,9 +116,12 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		effortValue = res.EffortFor(harnessID, plan.Model.ID, decision.Effort)
 	}
 
-	targetModel := plan.Model.ID
-	ti["model"] = targetModel
-	ti["reasoning_effort"] = effortValue
+	if plan.RewriteModel {
+		ti["model"] = plan.Model.ID
+	}
+	if plan.ApplyEffort {
+		ti["reasoning_effort"] = effortValue
+	}
 	updated, err := json.Marshal(ti)
 	if err != nil {
 		return allow(), "", decision
