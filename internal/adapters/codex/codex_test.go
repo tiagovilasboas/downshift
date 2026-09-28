@@ -6,6 +6,8 @@ package codex_test
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/codex"
@@ -16,14 +18,48 @@ import (
 var cat = catalog.Load()
 
 func TestEventTaskText(t *testing.T) {
-	ev := codex.Event{ToolInput: json.RawMessage(`{"message":"private task","task_name":"security review"}`)}
+	ev := codex.Event{SessionID: "session-123", ToolInput: json.RawMessage(`{"message":"private task","task_name":"security review"}`)}
 	if got := ev.TaskText(); got != "private task security review" {
 		t.Fatalf("TaskText() = %q", got)
+	}
+	if got := ev.SessionIdentifier(); got != "session-123" {
+		t.Fatalf("SessionIdentifier() = %q", got)
+	}
+}
+
+func TestHandle_UsesSessionScopedAllowlist(t *testing.T) {
+	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "session-models.json"))
+	path := os.Getenv("DOWNSHIFT_SESSION_MODELS")
+	data := []byte(`{"codex":["gpt-5.6-sol"],"sessions":{"codex":{"session-123":["gpt-6-luna","gpt-6-sol"]}}}`)
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ev := codex.Event{
+		SessionID: "session-123",
+		ToolName:  "spawn_agent",
+		Model:     "gpt-6-sol",
+		ToolInput: json.RawMessage(`{"message":"rename a local variable"}`),
+	}
+	out, _, _ := codex.Handle(ev, cat)
+	m := decodeUpdated(t, out)
+	if m["model"] != "gpt-6-luna" {
+		t.Fatalf("session-scoped model = %v, want gpt-6-luna", m["model"])
 	}
 }
 
 func catID(tier core.Tier) string {
 	return cat.ModelFor("codex", tier).ID
+}
+
+func withCatalogSession(ev codex.Event) codex.Event {
+	ids := make([]string, 0)
+	for _, e := range cat.Entries() {
+		if e.Harness == "codex" && e.ID != "" {
+			ids = append(ids, e.ID)
+		}
+	}
+	ev.SessionModels = &ids
+	return ev
 }
 
 func decodeUpdated(t *testing.T, out codex.Output) map[string]any {
@@ -49,7 +85,7 @@ func TestHandle_DownshiftsTrivialSubagent(t *testing.T) {
 			"fork_turns": "none"
 		}`),
 	}
-	out, note, _ := codex.Handle(ev, cat)
+	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected a downshift note, got none")
 	}
@@ -80,7 +116,7 @@ func TestHandle_UpshiftsComplexSubagent(t *testing.T) {
 			"message": "rearchitect the payment flow across multiple services and migrate the schema"
 		}`),
 	}
-	out, note, _ := codex.Handle(ev, cat)
+	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected an upshift note, got none")
 	}
@@ -101,7 +137,7 @@ func TestHandle_OKRewritesReasoningEffort(t *testing.T) {
 			"model": "` + midID + `"
 		}`),
 	}
-	out, note, _ := codex.Handle(ev, cat)
+	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Error("expected an effort-routing note")
 	}
@@ -120,7 +156,7 @@ func TestHandle_IgnoresNonSpawnTools(t *testing.T) {
 		Model:     catID(core.TierFrontier),
 		ToolInput: json.RawMessage(`{"command":"ls"}`),
 	}
-	_, note, _ := codex.Handle(ev, cat)
+	_, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note != "" {
 		t.Errorf("expected no note for non-spawn tool, got %q", note)
 	}
@@ -133,7 +169,7 @@ func TestHandle_MatchesFlattenedNamespacedToolName(t *testing.T) {
 		Model:     frontierID,
 		ToolInput: json.RawMessage(`{"message": "fix a typo in the readme"}`),
 	}
-	out, note, _ := codex.Handle(ev, cat)
+	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected downshift for flattened namespaced tool name")
 	}
@@ -151,7 +187,7 @@ func TestHandle_MatchesAgentToolName(t *testing.T) {
 		Model:     frontierID,
 		ToolInput: json.RawMessage(`{"message": "rename a private helper method"}`),
 	}
-	_, note, _ := codex.Handle(ev, cat)
+	_, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected downshift for Agent tool name")
 	}
@@ -167,7 +203,7 @@ func TestHandle_TaskNameAddsSignal(t *testing.T) {
 			"message": "typo fix"
 		}`),
 	}
-	out, note, _ := codex.Handle(ev, cat)
+	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected a routing decision")
 	}
@@ -184,7 +220,7 @@ func TestHandle_FallsBackToEventModel(t *testing.T) {
 		Model:     frontierID,
 		ToolInput: json.RawMessage(`{"message": "rename the variable"}`),
 	}
-	out, note, _ := codex.Handle(ev, cat)
+	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected downshift using event model as current")
 	}
@@ -197,7 +233,7 @@ func TestHandle_FallsBackToEventModel(t *testing.T) {
 
 func TestHandle_UnknownCurrentModelStillRoutes(t *testing.T) {
 	ev := codex.Event{ToolName: "spawn_agent", ToolInput: json.RawMessage(`{"message":"do a code review"}`)}
-	out, note, _ := codex.Handle(ev, cat)
+	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected a routing note")
 	}
@@ -213,7 +249,7 @@ func TestHandle_MalformedInputFailsOpen(t *testing.T) {
 		Model:     catID(core.TierFrontier),
 		ToolInput: json.RawMessage(`{not valid json`),
 	}
-	out, note, _ := codex.Handle(ev, cat)
+	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note != "" {
 		t.Errorf("expected fail-open (no note), got %q", note)
 	}
@@ -228,7 +264,7 @@ func TestHandle_UsesSupportedCodexPreToolUseEnvelope(t *testing.T) {
 		Model:     catID(core.TierFrontier),
 		ToolInput: json.RawMessage(`{"message": "rename the variable"}`),
 	}
-	out, _, _ := codex.Handle(ev, cat)
+	out, _, _ := codex.Handle(withCatalogSession(ev), cat)
 	raw, err := json.Marshal(out)
 	if err != nil {
 		t.Fatalf("marshal output: %v", err)
@@ -248,7 +284,7 @@ func TestHandle_EmptyMessageFailsOpen(t *testing.T) {
 		Model:     catID(core.TierFrontier),
 		ToolInput: json.RawMessage(`{"fork_turns":"none"}`),
 	}
-	out, note, _ := codex.Handle(ev, cat)
+	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note != "" {
 		t.Errorf("expected no decision for empty message, got %q", note)
 	}
@@ -274,7 +310,7 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 			"background":       false
 		}`),
 	}
-	out, _, _ := codex.Handle(ev, cat)
+	out, _, _ := codex.Handle(withCatalogSession(ev), cat)
 	m := decodeUpdated(t, out)
 	if m == nil {
 		t.Fatal("expected updatedInput")
@@ -291,5 +327,43 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 		if m[field] == nil {
 			t.Errorf("field %q was dropped from updatedInput", field)
 		}
+	}
+}
+
+func TestMain(m *testing.M) {
+	os.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(os.TempDir(), "downshift-session-models-absent.json"))
+	os.Exit(m.Run())
+}
+
+func TestHandle_MissingSessionDoesNotRewrite(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	ev := codex.Event{
+		ToolName: "spawn_agent",
+		ToolInput: json.RawMessage(`{
+			"message": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, note, _ := codex.Handle(ev, cat)
+	if note != "" || (out.HookSpecificOutput != nil && out.HookSpecificOutput.UpdatedInput != nil) {
+		t.Fatalf("missing session must not rewrite, note=%q", note)
+	}
+}
+
+func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	session := []string{"gpt-5.6-terra", frontierID}
+	ev := codex.Event{
+		ToolName:      "spawn_agent",
+		SessionModels: &session,
+		ToolInput: json.RawMessage(`{
+			"message": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, _, _ := codex.Handle(ev, cat)
+	m := decodeUpdated(t, out)
+	if m == nil || m["model"] != "gpt-5.6-terra" {
+		t.Fatalf("model = %v, want gpt-5.6-terra", m)
 	}
 }

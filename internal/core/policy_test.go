@@ -168,7 +168,7 @@ func TestDecisionRewritePolicy(t *testing.T) {
 func TestDecisionRewritePolicy_UncertainDowngradePreservesCurrentModel(t *testing.T) {
 	d := core.Decision{Model: core.Model{ID: "small"}, Verdict: core.VerdictDownshift, Confident: false}
 	if d.ShouldRewriteModel() {
-		t.Fatal("uncertain downgrade must preserve the harness-selected model")
+		t.Fatal("uncertain downgrade must not apply the classified target")
 	}
 }
 

@@ -31,13 +31,14 @@ import (
 // Event is one routing decision persisted to the event log.
 // Prompt text is intentionally excluded — only routing metadata is stored.
 type Event struct {
-	Timestamp        string  `json:"timestamp"`         // RFC3339
-	Harness          string  `json:"harness"`           // e.g. "claude-code"
-	Complexity       string  `json:"complexity"`        // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
-	FromModel        string  `json:"from"`              // model that would have run
-	ToModel          string  `json:"to"`                // model that will run
-	Verdict          string  `json:"verdict"`           // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
-	EstimatedSavings float64 `json:"estimated_savings"` // normalised fraction 0–1
+	Timestamp        string  `json:"timestamp"`            // RFC3339
+	Harness          string  `json:"harness"`              // e.g. "claude-code"
+	SessionID        string  `json:"session_id,omitempty"` // Codex session identifier, when provided
+	Complexity       string  `json:"complexity"`           // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
+	FromModel        string  `json:"from"`                 // model that would have run
+	ToModel          string  `json:"to"`                   // model that will run
+	Verdict          string  `json:"verdict"`              // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
+	EstimatedSavings float64 `json:"estimated_savings"`    // normalised fraction 0–1
 }
 
 // FromDecision builds an Event from a core.Decision.

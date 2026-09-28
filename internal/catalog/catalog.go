@@ -37,6 +37,7 @@ type Entry struct {
 	ID          string            `json:"id"`
 	Aliases     []string          `json:"aliases"`
 	Family      string            `json:"family"` // stable prefix for version-agnostic matching
+	Effort      string            `json:"effort"` // optional: low|medium|high — effort variant inside the family (Option A)
 	Provider    string            `json:"provider"`
 	Harness     string            `json:"harness"`
 	Tier        string            `json:"tier"`    // "small" | "mid" | "frontier" | "unknown"
@@ -66,6 +67,10 @@ type Catalog struct {
 	byID map[string]map[string]core.Model
 	// byFamily: harness → family prefix → Model (version-agnostic fallback)
 	byFamily map[string][]familyEntry
+	// byFamEff: harness → family (lowercased) → effort (lowercased) → Model.
+	// Only entries with an explicit effort tag that are not explicit_only are
+	// indexed here. Powers FamilyModelFor (Option A: family + effort routing).
+	byFamEff map[string]map[string]map[string]core.Model
 	// entries: all raw entries (for list/check/pull commands)
 	entries []Entry
 }
@@ -74,6 +79,14 @@ type Catalog struct {
 type familyEntry struct {
 	prefix string
 	model  core.Model
+}
+
+// familyEffortTag pairs a family prefix with its effort variant tag for
+// overlap validation: same-family entries with differing efforts are effort
+// variants (Option A), not configuration errors.
+type familyEffortTag struct {
+	prefix string
+	effort string // normalised low|medium|high, or "" when untagged
 }
 
 // Load returns the effective Catalog. Load priority:
@@ -154,6 +167,7 @@ func build(f catalogFile) *Catalog {
 		harnesses: make(map[string]struct{}),
 		byID:      make(map[string]map[string]core.Model),
 		byFamily:  make(map[string][]familyEntry),
+		byFamEff:  make(map[string]map[string]map[string]core.Model),
 		entries:   f.Entries,
 	}
 
@@ -167,6 +181,7 @@ func build(f catalogFile) *Catalog {
 		}
 		m := core.Model{
 			ID:      e.ID,
+			Family:  e.Family,
 			Tier:    tier,
 			InputM:  e.InputCostM,
 			OutputM: e.OutputCostM,
@@ -180,6 +195,21 @@ func build(f catalogFile) *Catalog {
 		if e.Routing != "explicit_only" {
 			if _, exists := c.index[e.Harness][tier]; !exists {
 				c.index[e.Harness][tier] = m
+			}
+			// Effort-tagged entries feed the family+effort index (Option A).
+			// Explicit-only entries are skipped here as well: they must never
+			// be chosen automatically, only preserved when already selected.
+			if eff := normalizeEffort(e.Effort); eff != "" && e.Family != "" {
+				fam := strings.ToLower(e.Family)
+				if c.byFamEff[e.Harness] == nil {
+					c.byFamEff[e.Harness] = make(map[string]map[string]core.Model)
+				}
+				if c.byFamEff[e.Harness][fam] == nil {
+					c.byFamEff[e.Harness][fam] = make(map[string]core.Model)
+				}
+				if _, exists := c.byFamEff[e.Harness][fam][eff]; !exists {
+					c.byFamEff[e.Harness][fam][eff] = m
+				}
 			}
 		}
 
@@ -215,6 +245,22 @@ func parseTier(s string) (core.Tier, bool) {
 	}
 }
 
+// normalizeEffort maps the JSON effort tag to its canonical lowercase form.
+// Returns "" for empty or unrecognised values; untagged entries keep the
+// legacy tier-only behaviour and never enter the family+effort index.
+func normalizeEffort(s string) string {
+	switch strings.ToLower(strings.TrimSpace(s)) {
+	case "low":
+		return "low"
+	case "medium":
+		return "medium"
+	case "high":
+		return "high"
+	default:
+		return ""
+	}
+}
+
 // --- core.Resolver implementation ---
 
 // ModelFor returns the model for the given harness and tier.
@@ -240,6 +286,47 @@ func (c *Catalog) ModelFor(harness string, tier core.Tier) core.Model {
 	}
 	// Last resort: zero model (should never happen with embedded catalog).
 	return core.Model{Tier: tier, Harness: harness}
+}
+
+// FamilyModelFor implements core.FamilyEffortResolver: it returns the
+// automatic routing target for one model family at one effort level,
+// without versioning the choice per harness (Option A).
+//
+// Lookup order: exact family key first, then longest-prefix fallback across
+// effort-tagged families of the same harness (keeps version-agnostic
+// behaviour for bumped IDs). Explicit-only entries are never indexed here,
+// so they are never returned. Unknown family or effort returns false and
+// the caller falls back to ModelFor.
+func (c *Catalog) FamilyModelFor(harness, family string, effort core.Effort) (core.Model, bool) {
+	fam := strings.ToLower(strings.TrimSpace(family))
+	if fam == "" {
+		return core.Model{}, false
+	}
+	eff := strings.ToLower(effort.String())
+	fams, ok := c.byFamEff[harness]
+	if !ok {
+		return core.Model{}, false
+	}
+	if variants, ok := fams[fam]; ok {
+		if m, ok := variants[eff]; ok {
+			return m, true
+		}
+		return core.Model{}, false
+	}
+	// Longest-prefix fallback: a bumped family ID still lands on its base
+	// family (e.g. "claude-opus-5" → "claude-opus") when that family has an
+	// effort variant.
+	best := ""
+	for prefix := range fams {
+		if strings.HasPrefix(fam, prefix) && len(prefix) > len(best) {
+			best = prefix
+		}
+	}
+	if best == "" {
+		return core.Model{}, false
+	}
+	m, ok := fams[best][eff]
+	return m, ok
 }
 
 // LookupByID resolves a model ID to a catalog entry using three strategies,

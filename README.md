@@ -217,6 +217,12 @@ hook to `.cursor/hooks.json` (project level) or `~/.cursor/hooks.json` (global):
 The `matcher: "Task"` scopes the hook to subagent spawns only. Cursor watches
 the config and reloads it on save.
 
+## Session allowlist
+
+Downshift writes a model id only when that id is in the current session. The catalog supplies tier, cost, family, and effort for ids that are also in the session. It never adds an id the session does not have. If the session list cannot be determined, the hook leaves the current model unchanged.
+
+Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift records that ID alongside the routing decision so model usage can be inspected per session. Record selectable model ids in `~/.harness-downshift/session-models.json`. A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. Details and evidence: [docs/session-models.md](docs/session-models.md). [docs/examples/session-models.example.json](docs/examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
+
 ## Install (Codex)
 
 Codex spawns subagents through a reserved `spawn_agent` tool under
@@ -268,9 +274,10 @@ before asking Codex to spawn a subagent. Until the hook is trusted, Codex skips
 it and the subagent keeps the session model unchanged.
 
 On Codex, downshift routes **two axes at once**: the model tier and the
-reasoning effort (`low` for trivial work, up to `high` for the frontier tier).
-A trivial subagent drops from `gpt-5.6-sol` at high effort to `gpt-5.6-luna`
-at low effort — cheap on both counts.
+reasoning effort (`low` for trivial work, up to `high` for frontier work).
+For a session that offers GPT-6 Sol and Luna, a trivial subagent can route
+from `gpt-6-sol` to `gpt-6-luna` at low effort — subject to the session
+allowlist and Codex accepting the rewritten input.
 
 Downshift always applies the selected reasoning effort. A code review is a
 frontier task, so a `gpt-5.6-terra` session routes its subagent to
@@ -281,7 +288,8 @@ the user's deliberate choice. To mark any other model as explicit-only, add
 `"routing": "explicit_only"` to its entry in `~/.harness-downshift/catalog.json`.
 
 A purely mechanical prompt such as `Use a subagent to only list the .go files`
-is routed to `gpt-5.6-luna` at low effort.
+is routed to `gpt-6-luna` at low effort when that exact id is in the session
+allowlist.
 
 > Codex's `multi_agent_v2` spawn schema is still evolving. downshift preserves
 > the reserved fields and fails open, but pin the exact Codex build you deploy

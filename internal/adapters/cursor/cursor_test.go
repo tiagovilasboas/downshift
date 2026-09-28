@@ -6,6 +6,8 @@ package cursor_test
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/cursor"
@@ -24,6 +26,17 @@ func TestEventTaskText(t *testing.T) {
 
 func catID(tier core.Tier) string {
 	return cat.ModelFor("cursor", tier).ID
+}
+
+func withCatalogSession(ev cursor.Event) cursor.Event {
+	ids := make([]string, 0)
+	for _, e := range cat.Entries() {
+		if e.Harness == "cursor" && e.ID != "" {
+			ids = append(ids, e.ID)
+		}
+	}
+	ev.SessionModels = &ids
+	return ev
 }
 
 func decodeUpdated(t *testing.T, out cursor.Output) map[string]any {
@@ -48,7 +61,7 @@ func TestHandle_DownshiftsTrivialSubagent(t *testing.T) {
 			"model": "` + frontierID + `"
 		}`),
 	}
-	out, note, _ := cursor.Handle(ev, cat)
+	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected a downshift note, got none")
 	}
@@ -75,7 +88,7 @@ func TestHandle_UpshiftsComplexSubagent(t *testing.T) {
 			"model": "` + smallID + `"
 		}`),
 	}
-	out, note, _ := cursor.Handle(ev, cat)
+	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected an upshift note, got none")
 	}
@@ -96,7 +109,7 @@ func TestHandle_OKKeepsGear(t *testing.T) {
 			"model": "` + midID + `"
 		}`),
 	}
-	out, note, _ := cursor.Handle(ev, cat)
+	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
 	if note != "" {
 		t.Errorf("expected no change, got %q", note)
 	}
@@ -111,7 +124,7 @@ func TestHandle_IgnoresNonTaskTools(t *testing.T) {
 		ModelID:   catID(core.TierFrontier),
 		ToolInput: json.RawMessage(`{"command":"ls"}`),
 	}
-	_, note, _ := cursor.Handle(ev, cat)
+	_, note, _ := cursor.Handle(withCatalogSession(ev), cat)
 	if note != "" {
 		t.Errorf("expected no note for non-Task tool, got %q", note)
 	}
@@ -127,7 +140,7 @@ func TestHandle_FallsBackToPromptField(t *testing.T) {
 			"model": "` + frontierID + `"
 		}`),
 	}
-	out, note, _ := cursor.Handle(ev, cat)
+	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected downshift using prompt field")
 	}
@@ -145,7 +158,7 @@ func TestHandle_FallsBackToEventModel(t *testing.T) {
 		ModelID:   frontierID,
 		ToolInput: json.RawMessage(`{"task": "rename the variable"}`),
 	}
-	out, note, _ := cursor.Handle(ev, cat)
+	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
 	if note == "" {
 		t.Fatal("expected downshift using event model_id as current")
 	}
@@ -170,7 +183,7 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 			"run_in_background": true
 		}`),
 	}
-	out, _, _ := cursor.Handle(ev, cat)
+	out, _, _ := cursor.Handle(withCatalogSession(ev), cat)
 	m := decodeUpdated(t, out)
 	if m == nil {
 		t.Fatal("expected updated_input")
@@ -188,4 +201,147 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 	if m["task"] == nil {
 		t.Error("task field was dropped from updated_input")
 	}
+}
+
+// --- Option A: in-family effort switch (prototype: cursor) ---
+
+func TestHandle_PreservesFamilySwitchesEffortDown(t *testing.T) {
+	// Current opus high, SIMPLE task (mid/medium) → opus-5.5-medium:
+	// same family, medium effort, instead of the tier-default sonnet.
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "add a status field to the orders table",
+			"model": "claude-opus-5-thinking-high"
+		}`),
+	}
+	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
+	if note == "" {
+		t.Fatal("expected an in-family effort note, got none")
+	}
+	m := decodeUpdated(t, out)
+	if m["model"] != "claude-opus-5.5-medium" {
+		t.Errorf("model = %v, want claude-opus-5.5-medium (same family, medium effort)", m["model"])
+	}
+}
+
+func TestHandle_PreservesFamilySwitchesEffortUp(t *testing.T) {
+	// Current opus medium, COMPLEX task (frontier/high) → opus-5-thinking-high.
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "rearchitect the payment flow across services with a data migration",
+			"model": "claude-opus-5.5-medium"
+		}`),
+	}
+	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
+	if note == "" {
+		t.Fatal("expected an in-family effort note, got none")
+	}
+	m := decodeUpdated(t, out)
+	if m["model"] != "claude-opus-5-thinking-high" {
+		t.Errorf("model = %v, want claude-opus-5-thinking-high (same family, high effort)", m["model"])
+	}
+}
+
+func TestHandle_FamilyWithoutVariantFallsBackToTierDefault(t *testing.T) {
+	// Grok has no effort-tagged variants: a confidently trivial task falls
+	// back to the tier-default small model, exactly like the legacy path.
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "fix a typo in the readme",
+			"model": "grok-4.7-high-fast"
+		}`),
+	}
+	out, _, _ := cursor.Handle(withCatalogSession(ev), cat)
+	m := decodeUpdated(t, out)
+	wantID := catID(core.TierSmall)
+	if m["model"] != wantID {
+		t.Errorf("model = %v, want tier default %s", m["model"], wantID)
+	}
+}
+
+func TestHandle_UnknownFamilyFallsBackToTierDefault(t *testing.T) {
+	// Model the catalog never listed: unknown family → tier default.
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "rename the userId variable to userIdentifier",
+			"model": "some-future-model-9"
+		}`),
+	}
+	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
+	if note == "" {
+		t.Fatal("expected a routing note, got none")
+	}
+	m := decodeUpdated(t, out)
+	wantID := catID(core.TierSmall)
+	if m["model"] != wantID {
+		t.Errorf("model = %v, want tier default %s", m["model"], wantID)
+	}
+}
+
+func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
+	// Catalog smallest is claude-4.5-haiku-thinking. This session does not
+	// have it. The emitted id must be the cheapest model that is in the session.
+	frontierID := catID(core.TierFrontier)
+	session := []string{"claude-4.5-sonnet-thinking", frontierID, "composer-2.5"}
+	ev := cursor.Event{
+		ToolName:      "Task",
+		SessionModels: &session,
+		ToolInput: json.RawMessage(`{
+			"task": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, _, _ := cursor.Handle(ev, cat)
+	m := decodeUpdated(t, out)
+	if m == nil {
+		t.Fatal("expected a rewrite to a session model")
+	}
+	if m["model"] != "claude-4.5-sonnet-thinking" {
+		t.Fatalf("model = %v, want claude-4.5-sonnet-thinking", m["model"])
+	}
+	if m["model"] == "claude-4.5-haiku-thinking" || m["model"] == "claude-haiku-4" {
+		t.Fatal("emitted a catalog id that is not in the session")
+	}
+}
+
+func TestHandle_MissingSessionDoesNotRewrite(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, note, _ := cursor.Handle(ev, cat)
+	if note != "" || out.UpdatedInput != nil {
+		t.Fatalf("missing session must not rewrite, note=%q updated=%s", note, out.UpdatedInput)
+	}
+}
+
+func TestHandle_UnlabeledSessionIDIsEligible(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	session := []string{"composer-2.5"}
+	ev := cursor.Event{
+		ToolName:      "Task",
+		SessionModels: &session,
+		ToolInput: json.RawMessage(`{
+			"task": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, _, _ := cursor.Handle(ev, cat)
+	m := decodeUpdated(t, out)
+	if m == nil || m["model"] != "composer-2.5" {
+		t.Fatalf("model = %v, want composer-2.5", m)
+	}
+}
+
+func TestMain(m *testing.M) {
+	os.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(os.TempDir(), "downshift-session-models-absent.json"))
+	os.Exit(m.Run())
 }

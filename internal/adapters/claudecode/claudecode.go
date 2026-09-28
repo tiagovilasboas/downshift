@@ -26,6 +26,10 @@ type Event struct {
 	ToolInput     json.RawMessage `json:"tool_input"`
 	Model         string          `json:"model"`
 	Prompt        string          `json:"prompt"`
+	// Optional allowlist. Nil means the payload did not include one.
+	// Claude Code PreToolUse does not send this field today.
+	SessionModels   *[]string `json:"session_models,omitempty"`
+	AvailableModels *[]string `json:"available_models,omitempty"`
 }
 
 // TaskText returns the task content used for local, prompt-free feature
@@ -81,8 +85,9 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 
-	plan := decision.Plan(core.ClaudeCodeCaps, res)
-	if plan.PreserveExplicit || !plan.RewriteModel {
+	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
+	plan := decision.PlanForSession(core.ClaudeCodeCaps, res, session)
+	if plan.PreserveExplicit || !plan.RewriteModel || !session.Contains(plan.Model.ID) {
 		return allow(), "", decision
 	}
 

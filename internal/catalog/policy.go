@@ -68,8 +68,8 @@ func mergeEntries(base, override []Entry) []Entry {
 //
 // Section/comment entries (empty ID or Harness) are silently skipped.
 func validateEntries(entries []Entry) error {
-	used := make(map[string]string)      // normalised "harness\x00name" → first id that claimed it
-	families := make(map[string][]string) // normalised harness → list of family prefixes
+	used := make(map[string]string)                // normalised "harness\x00name" → first id that claimed it
+	families := make(map[string][]familyEffortTag) // normalised harness → family prefixes with effort tags
 
 	for _, e := range entries {
 		if e.ID == "" || e.Harness == "" {
@@ -89,18 +89,28 @@ func validateEntries(entries []Entry) error {
 		}
 
 		// Check for overlapping family prefixes.
+		//
+		// Exception (Option A): overlapping families are allowed when both
+		// entries carry an explicit, differing effort tag — they are effort
+		// variants inside one family (e.g. opus high vs opus medium), resolved
+		// via FamilyModelFor instead of prefix order. Same effort (or an
+		// untagged entry) stays an error to keep lookup deterministic.
 		if e.Family != "" {
 			harnessKey := strings.ToLower(e.Harness)
 			family := strings.ToLower(e.Family)
+			eff := normalizeEffort(e.Effort)
 			for _, prior := range families[harnessKey] {
-				if strings.HasPrefix(family, prior) || strings.HasPrefix(prior, family) {
+				if strings.HasPrefix(family, prior.prefix) || strings.HasPrefix(prior.prefix, family) {
+					if eff != "" && prior.effort != "" && eff != prior.effort {
+						continue
+					}
 					return fmt.Errorf(
 						"catalog: overlapping model families %q and %q for harness %q",
-						family, prior, e.Harness,
+						family, prior.prefix, e.Harness,
 					)
 				}
 			}
-			families[harnessKey] = append(families[harnessKey], family)
+			families[harnessKey] = append(families[harnessKey], familyEffortTag{prefix: family, effort: eff})
 		}
 	}
 	return nil
