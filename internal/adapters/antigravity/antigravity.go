@@ -29,7 +29,12 @@ func (ev Event) TaskText() string {
 	if err := json.Unmarshal(ev.ToolCall.Args, &ti); err != nil {
 		return ""
 	}
-	return hookutil.TaskText(ti, "Subagents")
+	if subagentsRaw, ok := ti["Subagents"].([]any); ok && len(subagentsRaw) > 0 {
+		if subagent, ok := subagentsRaw[0].(map[string]any); ok {
+			return hookutil.TaskText(subagent, "Prompt", "prompt", "task", "Task")
+		}
+	}
+	return hookutil.TaskText(ti, "Prompt", "prompt", "task", "Task")
 }
 
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
