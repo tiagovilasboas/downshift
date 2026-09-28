@@ -22,7 +22,7 @@ Native config is not a session allowlist either:
 - Codex `config.toml` holds the active model and feature flags, not the session's selectable set.
 - Cursor's model picker is UI state. This repo does not call a Cursor API to read it.
 
-Antigravity is unfinished local work and is not part of this path.
+- Antigravity uses the `Subagents` array in `invoke_subagent` calls, where subagent models (`flash_lite`, `flash`, `pro`, `inherit`) are mapped directly according to routing decisions.
 
 ## Where the list comes from
 

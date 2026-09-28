@@ -25,7 +25,7 @@ prices for work a cheap model does just as well.**
 to the cheap model. Hard thinking gets the frontier model. You stop burning
 budget on the routine tasks and keep frontier power for the ones that need it.
 
-Hook adapters for Claude Code, Cursor, and Codex today, plus a config recipe for
+Hook adapters for Claude Code, Cursor, Codex, and Antigravity today, plus a config recipe for
 Grok CLI. Any harness with controllable subagents next.
 
 **Keywords:** Claude Code subagent cost · LLM model routing · agent harness ·
@@ -295,6 +295,25 @@ allowlist.
 > the reserved fields and fails open, but pin the exact Codex build you deploy
 > and keep an acceptance test on a real spawn.
 
+## Antigravity (Google DeepMind)
+
+Antigravity executes subagents via `invoke_subagent` and supports arguments modification in its `PreToolUse` hook protocol via `overwrite`.
+
+Register the hook in `~/.gemini/config/hooks.json`:
+
+```json
+{
+  "PreToolUse": [
+    {
+      "matcher": "invoke_subagent",
+      "command": "downshift antigravity"
+    }
+  ]
+}
+```
+
+When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, inspects the prompt inside `Subagents[0].Prompt`, and dynamically rewrites `Subagents[0].Model` to `flash` or `flash_lite` for mechanical tasks, logging the routing event to `~/.harness-downshift/events.jsonl`.
+
 ## Grok CLI (config, not hook)
 
 Grok CLI is the honest exception, and it's worth being precise about why.
@@ -470,6 +489,7 @@ That's the one place model selection is genuinely controllable from the outside
 | **Claude Code** | ✅ Task tool (paid plans only) | `PreToolUse` hook → `updatedInput.model` | ✅ shipped |
 | **Cursor** | ✅ Task tool | `preToolUse` hook → `updated_input.model` | ✅ shipped |
 | **Codex** | ✅ `spawn_agent` (multi_agent_v2) | `PreToolUse` hook → `updatedInput.model` + `reasoning_effort` | ✅ shipped |
+| **Antigravity** | ✅ `invoke_subagent` | `PreToolUse` hook → `overwrite.Subagents` | ✅ shipped |
 | **Grok CLI** | ✅ `spawn_subagent` | **config**, not hook — `[subagents.roles/models]` in `config.toml` | ⚙️ config-based (see below) |
 | Kiro (single-thread) | ❌ no subagents | — | not applicable |
 | Claude.ai / ChatGPT web | ❌ closed | — | not possible |
