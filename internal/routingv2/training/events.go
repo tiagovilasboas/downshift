@@ -177,6 +177,9 @@ func (s *EventStore) AddOutcome(eventID string, outcome Outcome) error {
 	if outcome.Retry && outcome.RetryTier <= found.SelectedTier {
 		return fmt.Errorf("retry tier must be stronger than selected tier %s", found.SelectedTier)
 	}
+	if outcome.Success && outcome.RequiredTier == nil {
+		outcome.RequiredTier = &found.SelectedTier
+	}
 	if outcome.RequiredTier != nil && (*outcome.RequiredTier < core.TierSmall || *outcome.RequiredTier > core.TierFrontier) {
 		return fmt.Errorf("required tier must be SMALL, MID, or FRONTIER")
 	}

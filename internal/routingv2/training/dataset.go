@@ -30,12 +30,12 @@ type Example struct {
 
 // Tier returns the core.Tier for this example's label.
 func (e Example) Tier() core.Tier {
-	switch strings.ToUpper(e.Label) {
-	case "SMALL":
+	switch strings.ToUpper(strings.TrimSpace(e.Label)) {
+	case "SMALL", "TRIVIAL":
 		return core.TierSmall
-	case "MID":
+	case "MID", "SIMPLE", "MEDIUM":
 		return core.TierMid
-	case "FRONTIER":
+	case "FRONTIER", "COMPLEX":
 		return core.TierFrontier
 	default:
 		return core.TierMid // Fail-safe
@@ -80,16 +80,23 @@ func LoadDataset(path string) (*Dataset, error) {
 }
 
 func validateExamples(examples []Example) error {
-	for i, example := range examples {
-		switch strings.ToUpper(strings.TrimSpace(example.Label)) {
+	for i := range examples {
+		switch strings.ToUpper(strings.TrimSpace(examples[i].Label)) {
 		case "SMALL", "MID", "FRONTIER":
+			examples[i].Label = strings.ToUpper(strings.TrimSpace(examples[i].Label))
+		case "TRIVIAL":
+			examples[i].Label = "SMALL"
+		case "SIMPLE", "MEDIUM":
+			examples[i].Label = "MID"
+		case "COMPLEX":
+			examples[i].Label = "FRONTIER"
 		default:
-			return fmt.Errorf("invalid label %q at example %d: use SMALL, MID, or FRONTIER", example.Label, i+1)
+			return fmt.Errorf("invalid label %q at example %d: use SMALL, MID, or FRONTIER", examples[i].Label, i+1)
 		}
-		if strings.TrimSpace(example.Prompt) == "" {
+		if strings.TrimSpace(examples[i].Prompt) == "" {
 			return fmt.Errorf("empty prompt at example %d", i+1)
 		}
-		if err := validateFeatures(example.Features); err != nil {
+		if err := validateFeatures(examples[i].Features); err != nil {
 			return fmt.Errorf("invalid features at example %d: %w", i+1, err)
 		}
 	}

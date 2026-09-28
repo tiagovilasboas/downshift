@@ -23,6 +23,14 @@ func TestExample_Tier(t *testing.T) {
 		{"Mid", core.TierMid},
 		{"FRONTIER", core.TierFrontier},
 		{"frontier", core.TierFrontier},
+		{"TRIVIAL", core.TierSmall},
+		{"trivial", core.TierSmall},
+		{"SIMPLE", core.TierMid},
+		{"simple", core.TierMid},
+		{"MEDIUM", core.TierMid},
+		{"medium", core.TierMid},
+		{"COMPLEX", core.TierFrontier},
+		{"complex", core.TierFrontier},
 		{"unknown", core.TierMid}, // Tier helper remains fail-safe; loaders validate labels.
 	}
 
@@ -30,6 +38,46 @@ func TestExample_Tier(t *testing.T) {
 		ex := Example{Label: tc.label}
 		if got := ex.Tier(); got != tc.want {
 			t.Errorf("Example{Label: %q}.Tier() = %v, want %v", tc.label, got, tc.want)
+		}
+	}
+}
+
+func TestLoadDataset_ComplexityLabels(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dataset.json")
+	content := `[
+		{"prompt": "trivial task", "label": "TRIVIAL"},
+		{"prompt": "simple task", "label": "SIMPLE"},
+		{"prompt": "medium task", "label": "MEDIUM"},
+		{"prompt": "complex task", "label": "COMPLEX"}
+	]`
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	ds, err := LoadDataset(path)
+	if err != nil {
+		t.Fatalf("LoadDataset: %v", err)
+	}
+	if ds.Size() != 4 {
+		t.Fatalf("ds.Size() = %d, want 4", ds.Size())
+	}
+
+	expected := []struct {
+		label string
+		tier  core.Tier
+	}{
+		{"SMALL", core.TierSmall},
+		{"MID", core.TierMid},
+		{"MID", core.TierMid},
+		{"FRONTIER", core.TierFrontier},
+	}
+
+	for i, exp := range expected {
+		if ds.Examples[i].Label != exp.label {
+			t.Errorf("Examples[%d].Label = %q, want %q", i, ds.Examples[i].Label, exp.label)
+		}
+		if ds.Examples[i].Tier() != exp.tier {
+			t.Errorf("Examples[%d].Tier() = %v, want %v", i, ds.Examples[i].Tier(), exp.tier)
 		}
 	}
 }
