@@ -89,6 +89,51 @@ func TestEventStore_AddOutcomeAndReplayLatestFeedback(t *testing.T) {
 	}
 }
 
+func TestEventStore_AddOutcome_SuccessDefaultsRequiredTier(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "events.jsonl")
+	store := NewEventStore(path)
+	event := Event{ID: "route-mid", Timestamp: time.Now().UTC(), Features: domain.FeatureVector{Coding: 0.5}, SelectedTier: core.TierMid, Harness: "claude-code"}
+	if err := store.Record(event); err != nil {
+		t.Fatal(err)
+	}
+
+	// Add outcome with Success: true, RequiredTier: nil
+	if err := store.AddOutcome("route-mid", Outcome{Success: true}); err != nil {
+		t.Fatalf("AddOutcome: %v", err)
+	}
+
+	// Verify loaded event has RequiredTier defaulted to SelectedTier (core.TierMid)
+	reloaded := NewEventStore(path)
+	events, err := reloaded.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 {
+		t.Fatalf("Loaded %d events, want 1", len(events))
+	}
+	if events[0].Outcome == nil {
+		t.Fatal("Outcome is nil")
+	}
+	if !events[0].Outcome.Success {
+		t.Fatal("Outcome.Success is false, want true")
+	}
+	if events[0].Outcome.RequiredTier == nil {
+		t.Fatal("Outcome.RequiredTier is nil, want default to SelectedTier")
+	}
+	if *events[0].Outcome.RequiredTier != core.TierMid {
+		t.Fatalf("Outcome.RequiredTier = %v, want TierMid", *events[0].Outcome.RequiredTier)
+	}
+
+	// Verify it yields a trainable event in ToDataset()
+	ds := reloaded.ToDataset()
+	if ds.Size() != 1 {
+		t.Fatalf("Dataset size = %d, want 1", ds.Size())
+	}
+	if ds.Examples[0].Label != "MID" {
+		t.Fatalf("Dataset example label = %q, want MID", ds.Examples[0].Label)
+	}
+}
+
 func TestEventStore_AddOutcomeValidatesReview(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.jsonl")
 	store := NewEventStore(path)
