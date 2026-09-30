@@ -885,6 +885,19 @@ no data leaves your machine. Use `downshift stats --days=7` for a weekly view.
 > with your before/after cost, task volume, and false-downshift observations.
 > First real dataset goes into this README with credit.
 
+### Real session data
+
+Measured with `downshift stats` on 430 local routing events (Sep 21–30, 2026):
+
+| Window | Decisions | Downshifted | Upshifted | OK | Unknown* |
+|---|---|---|---|---|---|
+| 30 days | 430 | 170 (39.5%) | 18 (4.2%) | 90 (20.9%) | 152 (35.3%) |
+| 7 days | 352 | 122 (34.7%) | 18 (5.1%) | 90 (25.6%) | 122 (34.7%) |
+
+\* Unknown split (152 in the 30-day window): 117 legacy-schema events (verdict only, no model fields) · 20 error-outcome events with no verdict (`INVALID_EVENT` ×10, `PAYLOAD_TOO_LARGE` ×10, fail-open by design) · 15 genuine unknown-model events (`requested_model` unknown, `rewrite_emitted` with a sensible final model).
+
+> **Important caveat.** Single-user dogfood, not a controlled study: no provider billing to compare against, normalised units only (the real-cost section still reports zero until the PostToolUse hook lands), and the downshift rate follows the task mix. Treat these as directional. The most reliable data is your provider's billing dashboard before and after deploying downshift.
+
 ---
 
 ## Classifier benchmark
@@ -1136,9 +1149,9 @@ Being honest: the router and adapters work today. These are the gaps between "wo
 | Gap | Why it matters | Status |
 |---|---|---|
 | **Real token counts via PostToolUse hook** | Every savings figure today is estimated from routing decisions, not from actual provider usage data. A PostToolUse hook that reads `tool_response.usage.input_tokens` would make the dashboard show real numbers. Event, API (`real_saved_usd`/`real_cost_events`) and `downshift stats` real-cost plumbing is already shipped — only the usage supplier is missing. | Foundation shipped, hook pending |
-| **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Needs real data |
-| **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. | Not yet |
-| **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verify |
+| **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Shipped (this week) — see [Real session data](#real-session-data) |
+| **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. Hook-layer E2E is covered (`TestHookE2E_RewriteEventStats`: hook stdin → adapter rewrite → JSONL event → stats aggregation). | Partial: hook-layer E2E in CI, real spawn pending |
+| **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verified (430-event log, Sep 2026) |
 | **Per-session before/after comparison** | "How much did this session cost without routing?" requires a baseline run. That needs a `--no-route` flag or a session where routing was disabled for comparison. | Planned |
 | **Feedback loop closing** | The `downshift feedback` command collects outcomes but the training pipeline (`downshift train --from-events`) needs a curated dataset to improve the classifier. The first labelled dataset from real use is the highest-value contribution. | Waiting for data |
 
