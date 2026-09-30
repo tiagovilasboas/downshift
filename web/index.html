@@ -173,9 +173,16 @@ main {
         <div class="stats-line" id="monitor-stats"><span class="dim">—</span></div>
       </div>
 
-      <div style="color:var(--muted);font-size:10px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border)">
-        <a href="https://github.com/tiagovilasboas/harness-downshift" target="_blank" rel="noopener noreferrer" style="color:var(--muted)">harness-downshift</a>
-        · start <code style="color:var(--muted)">./dsmon-server</code> for live data
+      <div style="color:var(--muted);font-size:10px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border);line-height:1.6">
+        <span style="color:var(--warn)">⚠</span>
+        dados registrados <strong>apenas quando subagentes são despachados</strong>
+        via <code style="color:var(--muted)">spawn_run</code> /
+        <code style="color:var(--muted)">spawn_sub_agents</code>
+        e o hook <code style="color:var(--muted)">downshift</code> está ativo.
+        <br>
+        <strong>não representa</strong> consumo total de tokens da sessão,
+        uso direto de modelos, ou chamadas fora do KiroCrew.
+        Economia estimada com base em custo médio de spawn — não é dado de faturamento real.
       </div>
     </div>
 
