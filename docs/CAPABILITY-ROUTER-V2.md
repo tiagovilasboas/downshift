@@ -3,6 +3,8 @@
 > harness-downshift by Tiago de Carvalho Vilas Boas
 > https://github.com/tiagovilasboas/harness-downshift
 
+![Capability Router v2 — offline pipeline, not the production hook path](brand/downshift-capability-router-v2.png)
+
 ---
 
 ## 1. Contexto e Motivação

@@ -33,9 +33,7 @@ Subagent task: "diagnose the race condition in the webhook handler"
 
 **Works today with Claude Code, Cursor, Codex, Antigravity, and KiroCrew.** Single binary, no runtime dependencies, no network calls, no API keys.
 
-![Downshift — One harness. Any model.](docs/brand/downshift-social-preview-1280x640.png)
-
-![Routing — how downshift classifies and rewrites the subagent model](docs/img/hero.svg)
+![Downshift — One harness. Any model.](docs/brand/downshift-one-harness-any-model.png)
 
 > **⚠️ Beta — practical testing phase.** The router and adapters work. The
 > gap is the harnesses themselves: model selection for subagents is an
@@ -53,6 +51,8 @@ The `orchestration/` Python package is kept as a **reference and training artifa
 (same contract, same tests) but is not the execution path. See
 [LangGraph reference design](docs/LANGGRAPH-ORCHESTRATION.md) for the design
 notes behind the Go port.
+
+![Orchestration planner — adjacent, not involved in model routing](docs/brand/downshift-orchestration-planner.png)
 
 **Keywords:** Claude Code subagent cost · LLM model routing · agent harness ·
 cost optimization · Claude Code hooks · Cursor subagents · Codex model selection
@@ -211,6 +211,8 @@ the spawn details to `downshift`, which:
    subagent process starts.
 
 The main session keeps the model you chose. Only the subagents get right-sized.
+
+![How Downshift works — intercept, classify, route, rewrite](docs/brand/downshift-how-it-works.png)
 
 ```
 $ downshift try "rename the userId variable across auth.ts" claude-code claude-opus-4-8
@@ -560,6 +562,8 @@ The default classifier is deterministic (regex scoring). The **CapabilityRouter 
 
 The router is **completely model-agnostic**: no model names, no provider strings in the routing logic. It decides tiers; the catalog decides models.
 
+![Capability Router v2 — offline pipeline, not the production hook path](docs/brand/downshift-capability-router-v2.png)
+
 ### Try it
 
 ```bash
@@ -624,7 +628,7 @@ was the cheapest adequate choice. Candidate evaluation never activates weights.
 
 ## Architecture
 
-![Architecture](docs/img/architecture.svg?v=2)
+![Architecture — runtime path, supporting systems, adjacent components](docs/brand/downshift-architecture-overview.png)
 
 Dependency direction is one-way: `catalog → core`, never reversed. Model IDs
 and costs live in `catalog.json` — no Go recompile needed to add or update a
@@ -746,6 +750,8 @@ On free plans or legacy Cursor pricing, the hook runs but model rewrites may be 
 This is the core of the project — and the most important thing to understand before deploying it.
 
 **There is no LLM in the routing loop.** Classification is local pattern-matching in Go, runs in < 1ms, adds zero tokens to any session, and produces the same output for the same input every time. It's a function you can read, test, and audit. Not a black box.
+
+![Runtime routing path — what executes today in the hook path](docs/brand/downshift-runtime-routing-path.png)
 
 ### The algorithm, step by step
 
@@ -1210,7 +1216,7 @@ with the prompt, what `downshift try` returned, and what you expected.
 
 ## Brand
 
-Downshift identity lives in [`docs/brand/`](docs/brand/) — mark, logos (dark/light/mono), favicon, social preview (`downshift-social-preview-1280x640.png`), and design tokens (`downshift-brand-tokens.css` / `.json`).
+Downshift identity lives in [`docs/brand/`](docs/brand/) — mark, logos (dark/light/mono), favicon, social assets (`downshift-one-harness-any-model.png`, `downshift-social-preview.png`, `downshift-github-social-preview.svg`), docs diagrams (architecture, how-it-works, runtime path, capability-router-v2, orchestration-planner), canonical routing SVGs, and design tokens (`downshift-brand-tokens.css` / `.json`). Asset guide (GitHub vs docs vs diagrams): [`downshift-brand-kit/docs/ASSET-GUIDE.md`](https://github.com/tiagovilasboas/downshift-brand-kit).
 
 - Palette: Background `#0D1117` · Surface `#161B22` · Text `#F9FAFB` · Muted `#9CA3AF` · Accent `#22C55E`
 - Tagline: **ONE HARNESS. ANY MODEL.**
