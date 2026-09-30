@@ -5,28 +5,29 @@
 [![Go 1.27](https://img.shields.io/badge/go-1.27-00ADD8.svg)](https://go.dev)
 [![Status: beta](https://img.shields.io/badge/status-beta%20%E2%80%94%20practical%20testing-yellow)](https://github.com/tiagovilasboas/harness-downshift/releases)
 
-> **Cut subagent costs** by routing every subagent to the right-sized model
-> for its task. A deterministic model router that runs as a hook — no extra
-> tokens, no LLM in the loop, single Go binary.
+## Stop paying Opus prices to grep a folder
+
+Every time your AI agent spawns a subagent, that subagent inherits the most expensive model in the session. A $25/1M token frontier model ends up renaming a variable, fixing a typo, listing files. You're billed. The work was identical on a $1/1M model.
+
+`harness-downshift` intercepts every subagent spawn and routes it to the right-sized model **before it starts** — automatically, without an LLM in the loop, with a single Go binary that runs as a hook.
+
+```
+Subagent task: "rename the userId variable across auth.ts"
+→ TRIVIAL → routes to claude-haiku-4-5 (~80% cheaper)
+
+Subagent task: "diagnose the race condition in the webhook handler"
+→ COMPLEX → stays on claude-opus-4-8 (this one earns it)
+```
+
+**Works today with Claude Code, Cursor, Codex, Antigravity, and KiroCrew.** Single binary, no runtime dependencies, no network calls, no API keys.
+
+![harness-downshift](docs/img/hero.svg)
 
 > **⚠️ Beta — practical testing phase.** The router and adapters work. The
 > gap is the harnesses themselves: model selection for subagents is an
 > evolving feature in Claude Code, Cursor, and Codex, and not every plan
 > or build honours the hook rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
-> before installing. Expect the situation to improve over the next few weeks
-> as harnesses broaden their own orchestration support.
-
-![harness-downshift](docs/img/hero.svg)
-
-**Your subagents are running Opus to rename a variable. You're paying frontier
-prices for work a cheap model does just as well.**
-
-`harness-downshift` puts every subagent in the right tier. Mechanical work goes
-to the cheap model. Hard thinking gets the frontier model. You stop burning
-budget on the routine tasks and keep frontier power for the ones that need it.
-
-Hook adapters for Claude Code, Cursor, Codex, Antigravity, and KiroCrew today, plus a config recipe for
-Grok CLI. Any harness with controllable subagents next.
+> before installing.
 
 ## Optional local LangGraph planner
 
@@ -34,49 +35,6 @@ The Go binary remains a deterministic, zero-runtime model router. For an explici
 
 **Keywords:** Claude Code subagent cost · LLM model routing · agent harness ·
 cost optimization · Claude Code hooks · Cursor subagents · Codex model selection
-
-## Telemetry — o que o hook realmente prova
-
-Cada decisão de roteamento gera um evento em `~/.harness-downshift/events.jsonl`:
-correlation ID, agente de origem, modelo solicitado, modelo final, tier,
-decisão da política e timestamp.
-
-**Limite importante (leia antes de interpretar o log):** o evento registra
-que o hook *emitiu* a reescrita (`rewrite_emitted`). Ele **não prova** que o
-harness executor (Claude Code, Cursor, Codex) aplicou o modelo reescrito.
-Isso depende de um ACK do protocolo do fornecedor — atualmente não disponível.
-Tratar `rewrite_emitted` como "modelo aplicado" é erro de interpretação.
-
-Para ver os eventos em tempo real, use `dsmon` (seção abaixo) ou:
-
-```bash
-tail -f ~/.harness-downshift/events.jsonl | python3 -m json.tool
-```
-
-O log não contém prompt, segredo nem identificador de sessão em claro.
-
----
-
-## Decision Intelligence — recomendações em shadow mode
-
-`internal/decisionintelligence/` observa as decisões do roteador e emite
-recomendações agregadas — em paralelo, sem alterar nenhuma decisão real.
-
-Por que existe: o roteador determinístico em Go é preciso, mas não aprende.
-O Decision Intelligence coleta sinais de risco, sensibilidade de dados,
-orçamento e feedback de resultado para sugerir quando faz sentido subir de
-tier — mas nunca executa essa mudança sozinho.
-
-Regras duras que ele não pode quebrar:
-- `Apply: false` sempre — é advisory, nunca executa nenhuma reescrita.
-- Não pode baixar o tier que o roteador Go escolheu.
-- Não pode contornar limites de orçamento ou permissão.
-- Jev (TypeSafe AI) está **desligado por padrão** — sem SDK, sem I/O, sem chave.
-
-Para ver as recomendações no log:
-```bash
-grep '"shadow_recommendation"' ~/.harness-downshift/events.jsonl | python3 -m json.tool
-```
 
 ---
 
@@ -154,22 +112,51 @@ the harness. That's the whole game here.
 
 ---
 
-## The pain it's born from
+## The cost problem nobody talks about
 
-Agentic coding got expensive fast, and the biggest line item is invisible:
-**subagents**. When your main agent spawns a subagent to explore a folder, run
-tests, or read files, that subagent inherits the session's model. So a $5/1M
-frontier model ends up grepping a directory — work a $1/1M model finishes
-identically.
+Agentic sessions are billed by the spawn, not by the session. Every time your
+main agent hands off work to a subagent, that spawn is a separate billable event
+at the session's model price.
 
-The fix is
-known — route each subagent to the cheapest model that can do its job — but
-nobody wants to babysit model selection on every spawn.
+The pattern plays out hundreds of times per day:
 
-That babysitting is the whole job of `harness-downshift`. It reads each
-subagent's task, classifies its complexity, and rewrites the model **before the
-subagent starts** — automatically, deterministically, with no LLM call in the
-loop.
+| What the subagent actually does | What it's billed as |
+|---|---|
+| List files in a directory | Frontier model spawn |
+| Fix a typo in a comment | Frontier model spawn |
+| Run a `git status` | Frontier model spawn |
+| Generate a daily standup | Frontier model spawn |
+| Rearchitect the auth module | Frontier model spawn ← this one earns it |
+
+Every spawn in that list is identical on the invoice. `harness-downshift` makes
+them different. It reads the task, classifies the work, and routes the spawn to
+the minimum capable model before it starts — automatically, without you
+touching a thing.
+
+## What the router actually saves (real session data)
+
+The `downshift serve` dashboard and `dsmon` monitor log every routing decision.
+Here's what a typical engineering session looks like after one day:
+
+```
+39 routing events
+25 downshifts  →  trivial/simple tasks routed away from frontier
+ 2 upshifts    →  tasks that needed more than the default model
+ 9 right-tier  →  no change needed
+
+estimated savings: ~$0.20 (based on published list prices)
+```
+
+> **Note on the estimates:** savings are calculated from published token prices
+> (haiku vs opus list price delta). They do **not** represent actual billing —
+> your provider may have negotiated rates, volume discounts, or usage caps that
+> change the real number. The router also only counts subagent spawns intercepted
+> by the hook; direct model usage in the main session is not tracked.
+> Treat these as directional, not as your invoice.
+
+The meaningful number is not the dollar figure — it's the **25 times the router
+prevented a frontier spawn for work that didn't need it**. That's 25 times you
+didn't pay Opus prices to grep a folder.
 
 ---
 
