@@ -85,14 +85,47 @@ func (e event) isRecent() bool {
 	return time.Since(t) < window24h
 }
 
+// ── agent event (agents.jsonl from dsmon-hook) ────────────────────────────────
+
+type agentEvent struct {
+	Timestamp string `json:"timestamp"`
+	Tool      string `json:"tool"`
+	Session   string `json:"session"`
+	Task      string `json:"task"`
+	Model     string `json:"model"`
+}
+
+func (a agentEvent) isRecent() bool {
+	t, err := time.Parse(time.RFC3339Nano, a.Timestamp)
+	return err == nil && time.Since(t) < window24h
+}
+
+func (a agentEvent) age() string {
+	t, err := time.Parse(time.RFC3339Nano, a.Timestamp)
+	if err != nil {
+		return "?"
+	}
+	d := time.Since(t)
+	switch {
+	case d < 60*time.Second:
+		return fmt.Sprintf("%2ds", int(d.Seconds()))
+	case d < 3600*time.Second:
+		return fmt.Sprintf("%2dm", int(d.Minutes()))
+	default:
+		return t.Local().Format("15:04")
+	}
+}
+
 // ── state (polling tail) ──────────────────────────────────────────────────────
 
 type state struct {
-	all      []event
-	size     int64
-	modTime  time.Time
-	lastEvent time.Time // when the most recent event arrived
-	tick     int        // frame counter for animations
+	all       []event
+	agents    []agentEvent
+	size      int64
+	modTime   time.Time
+	agentSize int64
+	lastEvent time.Time
+	tick      int
 }
 
 func (s *state) reload(path string) {
@@ -115,6 +148,46 @@ func (s *state) reload(path string) {
 	if len(s.all) > 0 {
 		s.lastEvent = time.Now()
 	}
+}
+
+func (s *state) pollAgents(path string) {
+	fi, err := os.Stat(path)
+	if err != nil || fi.Size() == s.agentSize {
+		return
+	}
+	if fi.Size() < s.agentSize {
+		// file rotated — reload from scratch
+		s.agents = nil
+		s.agentSize = 0
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	f.Seek(s.agentSize, 0) //nolint:errcheck
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		var ae agentEvent
+		if json.Unmarshal(sc.Bytes(), &ae) == nil && ae.Task != "" {
+			s.agents = append(s.agents, ae)
+		}
+	}
+	s.agentSize = fi.Size()
+}
+
+func (s *state) recentAgents() []agentEvent {
+	var out []agentEvent
+	for _, a := range s.agents {
+		if a.isRecent() {
+			out = append(out, a)
+		}
+	}
+	// last 6
+	if len(out) > 6 {
+		out = out[len(out)-6:]
+	}
+	return out
 }
 
 func (s *state) poll(path string) {
@@ -330,6 +403,32 @@ func render(s *state) {
 	}
 
 	b.WriteString(row("") + "\n")
+
+	// ── agents section (from agents.jsonl / dsmon-hook) ────────────────────────
+	recentAgents := s.recentAgents()
+	b.WriteString(divider("agents (24h)") + "\n")
+	if len(recentAgents) == 0 {
+		b.WriteString(row(fmt.Sprintf("  %sno spawns yet — hook: dsmon-agent-lifecycle%s", dim, rst)) + "\n")
+	} else {
+		for _, a := range recentAgents {
+			model := a.Model
+			if model == "" {
+				model = "default"
+			}
+			if len([]rune(model)) > 6 {
+				model = string([]rune(model)[:6])
+			}
+			task := a.Task
+			if len([]rune(task)) > 28 {
+				task = string([]rune(task)[:28]) + "…"
+			}
+			line := fmt.Sprintf("  %s  %s%-7s%s  %s%s%s",
+				a.age(), cyn, model, rst, dim, task, rst)
+			b.WriteString(row(line) + "\n")
+		}
+	}
+
+	b.WriteString(row("") + "\n")
 	b.WriteString(divider("stats") + "\n")
 	b.WriteString(row(fmt.Sprintf(
 		"  %d events   %s%d↓%s  %s%d↑%s  %s%d✓%s",
@@ -356,6 +455,7 @@ func render(s *state) {
 func main() {
 	home, _ := os.UserHomeDir()
 	path := filepath.Join(home, eventsFile)
+	agentPath := filepath.Join(home, ".harness-downshift", "agents.jsonl")
 
 	fmt.Print(hideCur)
 	sig := make(chan os.Signal, 1)
@@ -369,10 +469,12 @@ func main() {
 	fmt.Print(clrScr)
 	s := &state{}
 	s.reload(path)
+	s.pollAgents(agentPath)
 	render(s)
 
 	for range time.NewTicker(refreshMs * time.Millisecond).C {
 		s.poll(path)
+		s.pollAgents(agentPath)
 		render(s)
 	}
 }
