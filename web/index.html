@@ -78,9 +78,22 @@ main {
 .chip.hi { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,.08); }
 .sub-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
 .row { display: grid; grid-template-columns: 30px 52px 1fr; gap: 8px; padding: 2px 0; align-items: baseline; }
+.row.new { animation: flash .8s ease-out; }
+@keyframes flash { 0%{background:rgba(88,166,255,.18)} 100%{background:transparent} }
 .t   { color: var(--muted); text-align: right; font-size: 11px; }
 .m   { color: var(--info); }
 .desc { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.active-dot { color: var(--ok); margin-right: 3px; animation: p 1.2s infinite; }
+.economy-bar {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: rgba(63,185,80,.08);
+  border: 1px solid rgba(63,185,80,.2);
+  font-size: 11px;
+}
+.economy-bar .big { font-size: 18px; font-weight: 700; color: var(--ok); line-height: 1; }
+.economy-bar .sub { font-size: 9px; color: var(--muted); margin-top: 2px; }
 .dim  { color: var(--muted); }
 .ok   { color: var(--ok); }
 .warn { color: var(--warn); }
@@ -159,7 +172,12 @@ main {
       </div>
 
       <div>
-        <div class="sub-label">last switches</div>
+        <div class="sub-label">agents ativos <span style="font-size:9px;color:var(--muted)">(últimos 5min)</span></div>
+        <div id="monitor-active-agents"><span class="dim">—</span></div>
+      </div>
+
+      <div>
+        <div class="sub-label">último switch</div>
         <div id="monitor-switches"><span class="dim">—</span></div>
       </div>
 
@@ -172,6 +190,8 @@ main {
         <div class="sub-label">stats</div>
         <div class="stats-line" id="monitor-stats"><span class="dim">—</span></div>
       </div>
+
+      <div id="economy-bar"></div>
 
       <div style="color:var(--muted);font-size:10px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border);line-height:1.6">
         <span style="color:var(--warn)">⚠</span>

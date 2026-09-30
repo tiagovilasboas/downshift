@@ -44,6 +44,7 @@ async function fetchStatus() {
 // ── harness tab filter ────────────────────────────────────────────────────────
 
 let activeHarness = null; // null = show all
+let _justUpdated  = false; // true briefly after SSE update → triggers flash CSS
 
 function setActiveHarness(h) {
   activeHarness = activeHarness === h ? null : h; // toggle off if same
@@ -77,11 +78,28 @@ function renderMonitor(data) {
     ? agents.filter(a => a.session && activeHarness === 'kirocrew' ? true : false) // agents don't have harness field yet
     : agents;
 
-  const swRows = filteredSwitches.slice(-6).map(e => {
+  // ── active agents (spawns < 5min ago = likely still running) ──
+  const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+  const active = agents.filter(a => new Date(a.timestamp).getTime() > fiveMinAgo);
+  if (active.length === 0) {
+    set('monitor-active-agents', dim('nenhum nos últimos 5min'));
+  } else {
+    set('monitor-active-agents', active.map(a =>
+      `<div class="row">
+        <span class="t">${ageStr(a.timestamp)}</span>
+        <span class="m"><span class="active-dot">●</span>${shortModel(a.model)}</span>
+        <span class="desc">${a.task.slice(0, 44)}</span>
+      </div>`
+    ).join(''));
+  }
+
+  // ── switches (last 6, newest first with flash) ──
+  const swRows = filteredSwitches.slice(-6).reverse().map((e, i) => {
     const v = e.verdict === 'DOWNSHIFT' ? ok(`↓ ${e.complexity.toLowerCase()} −${Math.round(e.estimated_savings*100)}%`)
             : e.verdict === 'UPSHIFT'   ? warn(`↑ ${e.complexity.toLowerCase()}`)
             : dim(`✓ ${e.complexity.toLowerCase()}`);
-    return `<div class="row"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${shortModel(e.final_model)}</span>${v}</div>`;
+    const isNew = i === 0 && _justUpdated;
+    return `<div class="row${isNew?' new':''}"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${shortModel(e.final_model)}</span>${v}</div>`;
   }).join('') || dim(activeHarness ? `no switches for ${activeHarness}` : 'no switches yet');
   set('monitor-switches', swRows);
 
@@ -90,15 +108,33 @@ function renderMonitor(data) {
   ).join('') || dim('no agents yet');
   set('monitor-agents', agRows);
 
-  // Stats filtered
+  // ── stats ──
   const src = activeHarness ? switches.filter(e => e.harness === activeHarness) : switches;
   const down = src.filter(e => e.verdict === 'DOWNSHIFT');
   const up   = src.filter(e => e.verdict === 'UPSHIFT');
   const estUSD = down.reduce((s,e) => s + e.estimated_savings * 0.01, 0);
+  // Token estimate: savings_USD / ($0.025 per 1K output tokens at frontier)
+  const estTokensK = Math.round(estUSD / 0.000025 / 1000);
   set('monitor-stats',
-    `${info(src.length)} spawns &nbsp; ${ok(`${down.length}↓`)} &nbsp; ${warn(`${up.length}↑`)} &nbsp; ${ok(`$${estUSD.toFixed(2)}`)} est. saved`
-    + (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '')
+    `${info(src.length)} spawns &nbsp; ${ok(`${down.length}↓`)} &nbsp; ${warn(`${up.length}↑`)}` +
+    (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '')
   );
+
+  // ── economy bar ──
+  if (down.length > 0) {
+    set('economy-bar', `
+<div class="economy-bar">
+  <div style="display:flex;align-items:baseline;gap:10px">
+    <div><div class="big">$${estUSD.toFixed(2)}</div><div class="sub">est. savings · ${down.length} downshift${down.length!==1?'s':''}</div></div>
+    <div style="border-left:1px solid rgba(63,185,80,.2);padding-left:10px">
+      <div class="big" style="font-size:14px">~${estTokensK}K</div>
+      <div class="sub">tokens rerouted (est.)</div>
+    </div>
+  </div>
+</div>`);
+  } else {
+    set('economy-bar', '');
+  }
 }
 
 // ── SSE: push updates from server ────────────────────────────────────────────
@@ -112,7 +148,9 @@ function connectSSE() {
 
   es.addEventListener('update', async () => {
     const data = await fetchStatus();
+    _justUpdated = true;
     renderMonitor(data); // renderMonitor sets latestData internally
+    setTimeout(() => { _justUpdated = false; }, 1000);
   });
 
   es.addEventListener('open', () => {
