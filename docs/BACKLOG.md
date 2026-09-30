@@ -24,7 +24,7 @@ It is not proof that a capability has been accepted by an executor.
 | --- | --- | --- | --- | --- | --- |
 | DS-01 | P0 | Accepted as local `rewrite_emitted` | — | Full-stack + AppSec | — |
 | DS-02 | P1 | Accepted; shadow-only telemetry integrated with `Apply:false` | DS-01 event schema | AI/FinOps + Full-stack | any proposal to bypass hard gates |
-| DS-03 | P1 | Accepted; local opt-in graph with correlation-preserving CLI sensors | DS-01 | Full-stack + AppSec | runtime requires provider-specific behaviour not in contract |
+| DS-03 | P1 | ✅ Ported to Go (internal/orchestration/); Python graph is reference only | DS-01 | Full-stack + AppSec | — |
 | HC-01 | P1 | Accepted as local provider-neutral foundation | DS-01 accepted | AI/FinOps + Full-stack + AppSec | provider/retrieval integration requested |
 | KB-01 | P2 | Accepted local structured summary/telemetry instrumentation | HC-01 accepted | AI/FinOps + Full-stack | retrieval boundary cannot be evidenced prompt-free |
 | KB-02 | P2 | Accepted local boundary fixtures/guardrails | KB-01 contract and AppSec review | AppSec + AI/FinOps | personal/corporate boundary would be weakened |
@@ -55,14 +55,12 @@ It is not proof that a capability has been accepted by an executor.
 - **Acceptance:** recommendation/correlation evidence exists; a hard-gate test proves advisory data cannot lower a final tier or authorize a route; sensitivity never chooses a provider.
 - **Fowler:** guia computacional / behaviour: typed monotonic contract; sensor computacional / behaviour: schema + E2E tests; sensor inferencial / architecture fitness: periodic decision-quality review.
 
-## DS-03 — P1 LangGraph acceptance
+## DS-03 — P1 LangGraph acceptance (✅ ported to Go)
 
-- **Files:** `orchestration/`, `docs/LANGGRAPH-ORCHESTRATION.md`, CI workflow and LangGraph tests only.
-- **Scope:** validate the existing opt-in, provider-neutral graph contract and its prompt-free event boundary.
-- **Exclusions:** no provider client, agent model default or mandatory Python runtime in a Go hook.
-- **Commands:** `uv run --directory orchestration --locked python -m unittest discover -s tests -v`; `go test -race ./...`; `go vet ./...`; `git diff --check`.
-- **Acceptance:** accepted. Locked dependency tests, CLI correlation preservation, reject telemetry, opt-in boundary and no claim of provider model application are verified.
-- **Fowler:** guia inferencial / architecture fitness: graph contract; sensor computacional / maintainability: locked tests; sensor computacional / behaviour: opt-in and timeout tests.
+- **Files:** `internal/orchestration/planner.go`, `docs/LANGGRAPH-ORCHESTRATION.md`. Python reference kept at `orchestration/`.
+- **Scope:** fan-out delegation planning (dedup, ordering, max_delegates, capability limits) ported to Go. 14/14 tests green. Zero Python, zero latency overhead.
+- **Exclusions:** Python LangGraph kept as reference/training artifact — not the execution path. Provider, model, LLM calls remain outside this package.
+- **Acceptance:** ✅ Go planner validated 2026-09-30. Python graph is reference only.
 
 ## HC-01 — P1 LangChain in Harness Central
 

@@ -29,9 +29,16 @@ Subagent task: "diagnose the race condition in the webhook handler"
 > or build honours the hook rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
 > before installing.
 
-## Optional local LangGraph planner
+## Native Go orchestration planner
 
-The Go binary remains a deterministic, zero-runtime model router. For an explicitly opted-in local delegation-planning graph, see [Local LangGraph orchestration](docs/LANGGRAPH-ORCHESTRATION.md). It never chooses a tier/model or contacts an LLM; those decisions remain in Go.
+The Go binary is fully self-contained — no Python, no runtime dependencies.
+Fan-out delegation planning (dedup, ordering, `max_delegates`, capability limits)
+lives in `internal/orchestration/` alongside the classifier and adapters.
+
+The `orchestration/` Python package is kept as a **reference and training artifact**
+(same contract, same tests) but is not the execution path. See
+[LangGraph reference design](docs/LANGGRAPH-ORCHESTRATION.md) for the design
+notes behind the Go port.
 
 **Keywords:** Claude Code subagent cost · LLM model routing · agent harness ·
 cost optimization · Claude Code hooks · Cursor subagents · Codex model selection

@@ -1,24 +1,40 @@
-# Local LangGraph orchestration
+# Orchestration planner — design notes
 
-`harness-downshift` by Tiago de Carvalho Vilas Boas
+`harness-downshift` by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/harness-downshift
 
-## Boundary
+## Execution path: Go (`internal/orchestration/`)
 
-`orchestration/` is an opt-in Python package that uses LangGraph only to validate and plan a bounded delegation cycle. It is local-only: it makes no LLM, tool, network, credential, or subprocess call, and it never spawns an agent.
+Fan-out delegation planning lives natively in Go, in `internal/orchestration/planner.go`.
+Zero Python, zero runtime overhead (~0ms). Same contract as the reference design below.
 
-Its direct dependency is exactly pinned in `pyproject.toml`; `uv.lock` resolves the full transitive set and CI uses `uv run --locked` so dependency drift fails the build rather than changing the planner silently.
-
-The existing Go hook path remains the sole authority for task classification, tier selection, model choice, and hook rewrites.
-
-Install it deliberately, separate from the zero-runtime Go binary:
-
-```bash
-python3 -m pip install -e orchestration
-printf '%s' '{"source":"cli","task":"review a small change","delegate_tasks":["inspect code","run tests"],"max_delegates":2}' | python3 -m harness_downshift_orchestration
+```go
+plan := orchestration.Orchestrate(orchestration.Request{
+    Source:        "hook",
+    Task:          "review a small change",
+    DelegateTasks: []string{"inspect code", "run tests"},
+    MaxDelegates:  2,
+})
+// plan.Status == "planned"
+// plan.Delegations == [{1, "inspect code"}, {2, "run tests"}]
 ```
 
-The CLI accepts exactly one JSON object on stdin (at most 1 MiB) and emits one JSON object on stdout. `status: planned` is advisory only: callers may submit each returned task to their harness, where Downshift's Go policy independently decides whether and how its model input can be rewritten. Rejected valid JSON requests return a JSON response with `status: rejected`; malformed input exits with code 2.
+## Reference design: Python / LangGraph (`orchestration/`)
+
+The `orchestration/` Python package is kept as a **reference artifact and training baseline**.
+It implements the identical contract using LangGraph StateGraph, which makes it
+useful for visualising the decision graph and experimenting with future extensions
+(e.g. weighted ordering, dataset-driven policy). It is **not** the execution path.
+
+Its direct dependency is exactly pinned in `pyproject.toml`; `uv.lock` resolves the
+full transitive set and CI uses `uv run --locked`.
+
+Run it standalone for debugging or comparison:
+
+```bash
+printf '%s' '{"source":"cli","task":"review a small change","delegate_tasks":["inspect code","run tests"],"max_delegates":2}' \
+  | python3 -m harness_downshift_orchestration
+```
 
 ## Contract v1
 
