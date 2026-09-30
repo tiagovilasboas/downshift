@@ -54,6 +54,49 @@ type Event struct {
 	ErrorCode            string                `json:"error_code,omitempty"`
 	DecisionIntelligence *ShadowRecommendation `json:"decision_intelligence,omitempty"`
 	EstimatedSavings     float64               `json:"estimated_savings"` // normalised fraction 0–1
+
+	// Optional real-cost fields (nil = provider usage not tracked for this event).
+	// When absent, fall back to the normalised estimate above; never fake dollars.
+	InputTokens     *int64   `json:"input_tokens,omitempty"`      // provider-reported input tokens
+	OutputTokens    *int64   `json:"output_tokens,omitempty"`     // provider-reported output tokens
+	CachedTokens    *int64   `json:"cached_tokens,omitempty"`     // provider-reported cached input tokens
+	ActualCostUSD   *float64 `json:"actual_cost_usd,omitempty"`   // real routed cost in USD
+	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"` // real baseline cost in USD
+}
+
+// HasRealCost reports whether the event carries real provider costs.
+// Both cost pointers must be non-nil; token counts alone are not enough.
+func (e Event) HasRealCost() bool {
+	return e.ActualCostUSD != nil && e.BaselineCostUSD != nil
+}
+
+// RealSavedUSD returns baseline minus actual cost clamped at zero.
+// Returns 0 when real costs are missing or when the routed model cost more.
+func (e Event) RealSavedUSD() float64 {
+	if !e.HasRealCost() {
+		return 0
+	}
+	saved := *e.BaselineCostUSD - *e.ActualCostUSD
+	if saved < 0 {
+		return 0
+	}
+	return saved
+}
+
+// TokenUsageOrZero returns the event token usage, nil-safe.
+// Missing pointers and negative values are clamped to 0.
+func (e Event) TokenUsageOrZero() TokenUsage {
+	var u TokenUsage
+	if e.InputTokens != nil && *e.InputTokens > 0 {
+		u.InputTokens = *e.InputTokens
+	}
+	if e.OutputTokens != nil && *e.OutputTokens > 0 {
+		u.OutputTokens = *e.OutputTokens
+	}
+	if e.CachedTokens != nil && *e.CachedTokens > 0 {
+		u.CachedTokens = *e.CachedTokens
+	}
+	return u
 }
 
 // ShadowRecommendation is advisory metadata emitted beside, never into, the
@@ -228,6 +271,11 @@ type Stats struct {
 	NormBaseline float64
 	NormRouted   float64
 
+	// RealSavedUSD is the sum of Event.RealSavedUSD over events with real cost.
+	// RealCostEvents counts events where HasRealCost is true.
+	RealSavedUSD   float64
+	RealCostEvents int
+
 	// ByComplexity counts decisions per complexity class.
 	ByComplexity map[string]int
 }
@@ -318,6 +366,11 @@ func Aggregate(events []Event) Stats {
 		} else {
 			s.NormRouted += 1.0
 		}
+		// Real provider cost: only events with token usage contribute.
+		if ev.HasRealCost() {
+			s.RealCostEvents++
+			s.RealSavedUSD += ev.RealSavedUSD()
+		}
 	}
 	return s
 }
@@ -375,6 +428,13 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 			fmt.Fprintf(w, "Note: 1 unit = cost of one unrouted event. Not real dollars.\n")
 			fmt.Fprintf(w, "For dollar figures: downshift stats --cost-per-unit=<USD-per-unit>\n")
 		}
+	}
+	if s.RealCostEvents > 0 {
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "Real provider cost (%d events with token usage)\n", s.RealCostEvents)
+		fmt.Fprintf(w, "Real saved            $%10.2f\n", s.RealSavedUSD)
+	} else {
+		fmt.Fprintf(w, "Real cost: no events with token usage yet (PostToolUse hook planned).\n")
 	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
 }
