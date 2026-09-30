@@ -31,6 +31,13 @@ var (
 	// rewrite path. So the model cannot be replaced in place; the adapter blocks
 	// a mismatched spawn and instructs the agent to respawn at the right tier.
 	KiroCrewCaps = HarnessCapabilities{CanRewriteModel: false, CanApplyEffort: false}
+
+	// AntigravityCaps — the Antigravity hook accepts a model override on the
+	// subagent payload. The wire format carries tier aliases (flash_lite,
+	// flash, pro), not catalog ids, so the adapter maps the routed tier to
+	// the alias and writes it only when the session plan allows a rewrite.
+	// Effort is not supported: there is no reasoning-effort field.
+	AntigravityCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false}
 )
 
 // RewritePlan is the concrete set of protocol actions an adapter should take.

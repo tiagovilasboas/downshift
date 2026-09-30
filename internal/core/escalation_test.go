@@ -13,41 +13,6 @@ import (
 
 var escalCat = catalog.Load()
 
-// --- EscalationIntent.Tier() and Effort() ---
-
-func TestEscalationIntent_TrivialTierAndEffort(t *testing.T) {
-	if core.TrivialIntent.Tier() != core.TierSmall {
-		t.Errorf("TrivialIntent.Tier() = %s, want small", core.TrivialIntent.Tier())
-	}
-	if core.TrivialIntent.Effort() != core.EffortLow {
-		t.Errorf("TrivialIntent.Effort() = %s, want low", core.TrivialIntent.Effort())
-	}
-}
-
-func TestEscalationIntent_NormalTierAndEffort(t *testing.T) {
-	if core.NormalIntent.Tier() != core.TierMid {
-		t.Errorf("NormalIntent.Tier() = %s, want mid", core.NormalIntent.Tier())
-	}
-	if core.NormalIntent.Effort() != core.EffortMid {
-		t.Errorf("NormalIntent.Effort() = %s, want medium", core.NormalIntent.Effort())
-	}
-}
-
-func TestEscalationIntent_ReviewTierAndEffort(t *testing.T) {
-	if core.ReviewIntent.Tier() != core.TierFrontier {
-		t.Errorf("ReviewIntent.Tier() = %s, want frontier", core.ReviewIntent.Tier())
-	}
-	if core.ReviewIntent.Effort() != core.EffortHigh {
-		t.Errorf("ReviewIntent.Effort() = %s, want high", core.ReviewIntent.Effort())
-	}
-}
-
-func TestEscalationIntent_PreservedEffort(t *testing.T) {
-	if core.PreservedIntent.Effort() != core.EffortHigh {
-		t.Errorf("PreservedIntent.Effort() = %s, want high", core.PreservedIntent.Effort())
-	}
-}
-
 // --- Route produces correct Intent ---
 
 func TestRoute_TrivialPrompt_TrivialIntent(t *testing.T) {

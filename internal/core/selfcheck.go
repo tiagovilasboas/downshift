@@ -17,6 +17,7 @@ package core
 // every adapter using PlanForSession inherits it with no code changes.
 // Deliberate session fallbacks (e.g. cheapest-session-model on a blocked
 // downgrade) are untouched — Check only observes and records those paths.
+// Rule IDs are stable telemetry history and are never renumbered: R3 was retired/reserved, so numbering runs R1, R2, R4 by design.
 const (
 	// RuleUnconfidentDowngrade fires when a DOWNSHIFT verdict rests on a
 	// low-confidence classification. Acting on doubt trades quality for

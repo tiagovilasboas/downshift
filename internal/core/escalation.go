@@ -49,34 +49,6 @@ func (i EscalationIntent) String() string {
 	}
 }
 
-// Tier returns the recommended model tier for this intent.
-// For PreservedIntent the caller must use the Decision's existing model tier.
-func (i EscalationIntent) Tier() Tier {
-	switch i {
-	case TrivialIntent:
-		return TierSmall
-	case ReviewIntent:
-		return TierFrontier
-	case PreservedIntent:
-		return TierFrontier // preserve means frontier-or-above; caller checks explicit model
-	default: // NormalIntent and unknown
-		return TierMid
-	}
-}
-
-// Effort returns the recommended reasoning effort for this intent.
-// For PreservedIntent the caller must use the Decision's existing effort.
-func (i EscalationIntent) Effort() Effort {
-	switch i {
-	case TrivialIntent:
-		return EffortLow
-	case ReviewIntent, PreservedIntent:
-		return EffortHigh
-	default: // NormalIntent and unknown
-		return EffortMid
-	}
-}
-
 // reviewSignals is the set of complexity signals that, when dominant, indicate
 // a deep-analysis task that deserves the ReviewIntent escalation.
 // These are a subset of Complex signals — the ones that imply reading and

@@ -208,10 +208,13 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 func TestHandle_PreservesFamilySwitchesEffortDown(t *testing.T) {
 	// Current opus high, SIMPLE task (mid/medium) → opus-5.5-medium:
 	// same family, medium effort, instead of the tier-default sonnet.
+	// The prompt must classify confident and held-free: an R1-held
+	// downshift (e.g. "add a status field...") must NOT take the family
+	// shortcut — it falls through to the session-target fallback instead.
 	ev := cursor.Event{
 		ToolName: "Task",
 		ToolInput: json.RawMessage(`{
-			"task": "add a status field to the orders table",
+			"task": "implement the CSV export feature",
 			"model": "claude-opus-5-thinking-high"
 		}`),
 	}
@@ -344,4 +347,59 @@ func TestHandle_UnlabeledSessionIDIsEligible(t *testing.T) {
 func TestMain(m *testing.M) {
 	os.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(os.TempDir(), "downshift-session-models-absent.json"))
 	os.Exit(m.Run())
+}
+
+// --- Held decisions must not rewrite via the family path ---
+
+// foreignFamilyResolver recommends a foreign-harness model (R4 hold) while
+// still offering an in-session same-family variant, isolating the family gate.
+type foreignFamilyResolver struct {
+	core.Resolver
+	target core.Model
+	family core.Model
+}
+
+func (s foreignFamilyResolver) ModelFor(harness string, tier core.Tier) core.Model {
+	return s.target
+}
+
+func (s foreignFamilyResolver) FamilyModelFor(harness, family string, effort core.Effort) (core.Model, bool) {
+	if s.family.ID == "" {
+		return core.Model{}, false
+	}
+	return s.family, true
+}
+
+func TestHandle_HeldDecisionDoesNotRewriteViaFamilyPath(t *testing.T) {
+	// Current opus high, COMPLEX task: tiers match (OK gear), but the
+	// recommended model is foreign-harness, so the decision is held (R4)
+	// and the session plan says "do not rewrite". Before the hold gate,
+	// the in-family medium variant rewrote anyway.
+	familyTarget, ok := cat.LookupByID("cursor", "claude-opus-5.5-medium")
+	if !ok {
+		t.Fatal("catalog missing claude-opus-5.5-medium")
+	}
+	res := foreignFamilyResolver{
+		Resolver: cat,
+		target:   core.Model{ID: "foreign-opus-9", Harness: "codex", Tier: core.TierFrontier},
+		family:   familyTarget,
+	}
+	ev := cursor.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"task": "rearchitect the payment flow across services with a data migration",
+			"model": "claude-opus-5-thinking-high"
+		}`),
+	}
+	out, note, decision := cursor.Handle(withCatalogSession(ev), res)
+	if len(decision.Corrections) == 0 {
+		t.Fatal("expected a held decision (R4), got none — test is vacuous")
+	}
+	if out.UpdatedInput != nil {
+		m := decodeUpdated(t, out)
+		t.Errorf("held decision must not rewrite via family path, got model=%v", m["model"])
+	}
+	if note != "" {
+		t.Errorf("expected no note when a held decision falls through to allow, got %q", note)
+	}
 }
