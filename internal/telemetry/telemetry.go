@@ -62,6 +62,13 @@ type Event struct {
 	CachedTokens    *int64   `json:"cached_tokens,omitempty"`     // provider-reported cached input tokens
 	ActualCostUSD   *float64 `json:"actual_cost_usd,omitempty"`   // real routed cost in USD
 	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"` // real baseline cost in USD
+
+	// Optional self-correction record. Verdict keeps the classified value;
+	// SafeVerdict carries the action adapters were allowed to apply, and
+	// Corrections lists the guardrail rule IDs that held the decision.
+	// Absent on clean decisions and on events written before self-check.
+	SafeVerdict string   `json:"safe_verdict,omitempty"`
+	Corrections []string `json:"corrections,omitempty"`
 }
 
 // HasRealCost reports whether the event carries real provider costs.
@@ -166,8 +173,10 @@ func HashSessionID(sessionID string) string {
 }
 
 // FromDecision builds an Event from a core.Decision and hook runtime context.
+// Self-correction fields are recorded only for held decisions, keeping clean
+// events compact and old log readers unaffected.
 func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
-	return Event{
+	ev := Event{
 		CorrelationID:    correlationID,
 		Timestamp:        time.Now().UTC().Format(time.RFC3339Nano),
 		Source:           "hook",
@@ -185,6 +194,11 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		Outcome:          "rewrite_emitted",
 		EstimatedSavings: d.Savings,
 	}
+	if len(d.Corrections) > 0 {
+		ev.SafeVerdict = d.SafeVerdict.String()
+		ev.Corrections = d.Corrections
+	}
+	return ev
 }
 
 // Failure records a hook fail-open path without accepting raw input or errors
@@ -275,6 +289,11 @@ type Stats struct {
 	// RealCostEvents counts events where HasRealCost is true.
 	RealSavedUSD   float64
 	RealCostEvents int
+
+	// Corrected counts events where a guardrail held the decision: the
+	// classified verdict stands in the log, but adapters applied the safe
+	// action (see Event.Corrections for the rule IDs).
+	Corrected int
 
 	// ByComplexity counts decisions per complexity class.
 	ByComplexity map[string]int
@@ -371,6 +390,10 @@ func Aggregate(events []Event) Stats {
 			s.RealCostEvents++
 			s.RealSavedUSD += ev.RealSavedUSD()
 		}
+		// Self-correction: the verdict stands, the safe action applied.
+		if len(ev.Corrections) > 0 {
+			s.Corrected++
+		}
 	}
 	return s
 }
@@ -428,6 +451,9 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 			fmt.Fprintf(w, "Note: 1 unit = cost of one unrouted event. Not real dollars.\n")
 			fmt.Fprintf(w, "For dollar figures: downshift stats --cost-per-unit=<USD-per-unit>\n")
 		}
+	}
+	if s.Corrected > 0 {
+		fmt.Fprintf(w, "Safety-held           %8d  (guardrail applied, see corrections)\n", s.Corrected)
 	}
 	if s.RealCostEvents > 0 {
 		fmt.Fprintf(w, "\n")
