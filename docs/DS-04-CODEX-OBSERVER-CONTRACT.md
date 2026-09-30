@@ -83,3 +83,38 @@ counted observation, not as routing evidence.
 | Privacy | Allowlist, HMAC and retention contract | Fixture rejects transcript/free-text/raw-ID fields | Guia computacional, behaviour; sensor computacional, behaviour |
 | Concurrency | Explicit ambiguous/unavailable state | Fixture rejects guessed correlation | Guia inferencial, architecture fitness; sensor computacional, behaviour |
 | Future enablement | Disabled-by-default and capability criteria | AppSec/vendor-contract review before adapter | Guia inferencial, architecture fitness; sensor inferencial, architecture fitness |
+
+## Claude Code lifecycle adapter (Sep 2026)
+
+`internal/adapters/claudecode/lifecycleadapter.go` maps Claude Code's
+`SubagentStart` and `SubagentStop` hook payloads to `lifecycleobserver.Event`.
+
+### Documented source fields (Claude Code hooks reference, Sep 2026)
+
+| Hook | Fields decoded |
+| --- | --- |
+| `SubagentStart` | `hook_event_name`, `session_id`, `turn_id`, `agent_id`, `agent_type` |
+| `SubagentStop`  | `hook_event_name`, `session_id`, `turn_id`, `agent_id`, `agent_type` |
+
+No correlation ID is present in the Claude Code lifecycle schema as of Sep 2026.
+The adapter therefore produces `association_state: "unavailable"` or
+`"ambiguous"`, never `"matched"`. This is the same limitation as the Codex POC.
+
+### Fields NOT decoded (explicitly absent from lifecycle contract)
+
+`prompt`, `messages`, `transcript`, `model`, `reasoning_effort`, `tool_input`,
+`correlation_id`. Extra fields in the JSON payload are silently ignored by
+`encoding/json` (no `DisallowUnknownFields`), which is intentional.
+
+### isSpawnTool update
+
+`lifecycleobserver.isSpawnTool` was extended to recognise `"task"` (Claude Code)
+alongside `"agent"` and `"spawn_agent"` (Codex). This lets the observer accept a
+`PreToolUse{ToolName:"Task"}` fixture from a Claude Code session, which is
+required for the three-event lifecycle (PreToolUse → SubagentStart → SubagentStop)
+to reach `lifecycle: "completed"` in the integration test.
+
+### Evidence boundary (unchanged)
+
+`evidence_state: "observed"` only. Never `executor_acknowledged`, `model_applied`,
+or any claim that the rewrite was accepted by the executor.

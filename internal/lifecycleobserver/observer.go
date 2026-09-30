@@ -140,7 +140,8 @@ func eventKey(event Event) (key, bool) {
 }
 
 func isSpawnTool(toolName string) bool {
-	return toolName == "Agent" || strings.HasSuffix(toolName, "spawn_agent")
+	lower := strings.ToLower(toolName)
+	return lower == "agent" || lower == "task" || strings.HasSuffix(lower, "spawn_agent")
 }
 
 func (observer Observer) observeKey(key key, preToolUses, starts, stops []Event) Observation {
