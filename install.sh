@@ -21,21 +21,35 @@ REPO="tiagovilasboas/harness-downshift"
 BINARY="downshift"
 
 # ── Resolve version ───────────────────────────────────────────────────────────
-# /releases/latest ignores prereleases and returns 404 while only betas exist,
-# so fall back to the newest entry of /releases (which includes prereleases).
-API="https://api.github.com/repos/${REPO}"
-tag_name() {
-  grep '"tag_name"' | head -n 1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/'
+# No GitHub API: anonymous api.github.com calls are rate-limited (60/h per IP),
+# which broke the one-liner on shared networks and CI. Instead:
+#   1. https://github.com/<repo>/releases/latest redirects to
+#      /releases/tag/<tag> for the newest stable release; read the tag from
+#      the final URL.
+#   2. While only prereleases exist, that URL redirects to /releases instead.
+#      Fall back to the releases Atom feed, which lists every release
+#      (prereleases included), newest first.
+# An explicit version argument skips both lookups.
+GH="https://github.com/${REPO}"
+latest_tag() {
+  final_url=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "${GH}/releases/latest" 2>/dev/null || true)
+  case "$final_url" in
+    */releases/tag/?*)
+      echo "${final_url##*/releases/tag/}"
+      return 0
+      ;;
+  esac
+  curl -fsSL "${GH}/releases.atom" 2>/dev/null \
+    | grep -o '/releases/tag/[^"<]*' \
+    | head -n 1 \
+    | sed 's#.*/releases/tag/##' || true
 }
 VERSION="${1:-}"
 if [ -z "$VERSION" ]; then
-  VERSION=$(curl -fsSL "${API}/releases/latest" 2>/dev/null | tag_name || true)
+  VERSION=$(latest_tag)
 fi
 if [ -z "$VERSION" ]; then
-  VERSION=$(curl -fsSL "${API}/releases?per_page=1" 2>/dev/null | tag_name || true)
-fi
-if [ -z "$VERSION" ]; then
-  echo "error: could not determine latest version (no release found, or GitHub API unreachable or rate-limited)." >&2
+  echo "error: could not determine latest version (no release found, or github.com unreachable)." >&2
   echo "Pass a version explicitly:" >&2
   echo "  sh install.sh v0.1.0-beta.1" >&2
   exit 1
