@@ -462,8 +462,8 @@ in real time. It reads `~/.harness-downshift/events.jsonl` and refreshes every
 │  04:01  opus   → sonnet  medium   -40%               │
 │ stats ──────────────────────────────────────────────  │
 │  35 events   22↓  2↑  8✓                             │
-│  est. saved  $0.18  ~7K tokens ¹                     │
-│  ¹ estimated · actual tokens not yet tracked         │
+│  est. saved  ~$0.18 est.  ~7K units ¹                │
+│  ¹ estimate · provider tokens not yet tracked        │
 ╰──────────────────────────────────────────────────────╯
   04:03:51 · ctrl+c to quit
 ```
@@ -488,14 +488,20 @@ go build -o dsmon ./cmd/dsmon
 | Harness | `events.jsonl` → `harness` field | Last harness seen today |
 | Switches | `events.jsonl` → `verdict` + model fields | Last 7 routing decisions |
 | Events / ↓ ↑ ✓ | `events.jsonl` | Today's counts by verdict |
-| Est. saved ($) | `estimated_savings` × $0.01 avg spawn cost | Rough estimate, not actual billing |
-| Est. tokens | Derived from $ saved ÷ frontier output cost | Estimated, not from provider |
+| Est. saved (~$ est.) | `estimated_savings` × $0.01 placeholder (`estimatedCostPerUnitUSD`) | Rough estimate, not actual billing |
+| Est. units | Sum of `estimated_savings` fractions (`est_units` in `/api/status`) | Estimated, not from provider |
+| Real saved ($) | `baseline_cost_usd` − `actual_cost_usd`, only for events with token usage | Real dollars when present; absent until PostToolUse hook lands |
 
 **Token consumption note.** The router has no access to provider-reported token
 counts — it only sees what the harness passes to the preToolUse hook, which
 does not include usage data. The estimates are directionally correct (more
 downshifts = more savings) but not a substitute for your provider's billing
-dashboard. Actual token tracking is planned for a future PostToolUse hook pass.
+dashboard. Events optionally carry `input_tokens`, `output_tokens`,
+`cached_tokens`, `actual_cost_usd` and `baseline_cost_usd` (see
+`internal/telemetry/cost.go`); when present, `/api/status` exposes
+`real_saved_usd`/`real_cost_events` and `downshift stats` prints a real-cost
+section alongside the estimate. Actual token tracking is planned for a future
+PostToolUse hook pass.
 
 ## Grok CLI (config, not hook)
 
@@ -865,8 +871,11 @@ Normalised savings      951 units  (51.6%)
 For dollar figures once you have real data: `downshift stats --cost-per-unit=<USD>`.
 
 **Privacy note:** prompt contents are never stored. Each event records only
-routing metadata — harness, complexity class, model IDs, verdict, and a
-normalised savings fraction. Safe for corporate environments where task
+routing metadata — harness, complexity class, model IDs, verdict, a
+normalised savings fraction, and optionally provider token counts
+(`input_tokens`, `output_tokens`, `cached_tokens`) plus derived
+`actual_cost_usd`/`baseline_cost_usd` when a future PostToolUse hook supplies
+usage. Safe for corporate environments where task
 prompts may contain sensitive information.
 
 Each decision is recorded locally at `~/.harness-downshift/events.jsonl` —
@@ -1110,6 +1119,12 @@ downshift stats --days=7 --cost-per-unit=0.05
 # → Estimated saved: $25.45 (509 routed spawns × $0.05)
 ```
 
+When events carry provider token usage, `downshift stats` additionally prints
+a `Real provider cost (N events with token usage)` section with real saved
+USD — computed from catalog list prices via `internal/telemetry/cost.go`.
+Until the PostToolUse hook lands, that section reports no events and the
+normalised estimate above remains the primary signal.
+
 **Important caveat.** These estimates are based on list prices and the number of routing decisions — not on actual provider billing. Token counts per spawn vary by task and model. Your actual savings may be higher (long frontier prompts avoided) or lower (very short spawns where the per-call overhead dominates). Treat these as directional. The most reliable data is your provider's billing dashboard before and after deploying downshift.
 
 ---
@@ -1120,7 +1135,7 @@ Being honest: the router and adapters work today. These are the gaps between "wo
 
 | Gap | Why it matters | Status |
 |---|---|---|
-| **Real token counts via PostToolUse hook** | Every savings figure today is estimated from routing decisions, not from actual provider usage data. A PostToolUse hook that reads `tool_response.usage.input_tokens` would make the dashboard show real numbers. | Planned |
+| **Real token counts via PostToolUse hook** | Every savings figure today is estimated from routing decisions, not from actual provider usage data. A PostToolUse hook that reads `tool_response.usage.input_tokens` would make the dashboard show real numbers. Event, API (`real_saved_usd`/`real_cost_events`) and `downshift stats` real-cost plumbing is already shipped — only the usage supplier is missing. | Foundation shipped, hook pending |
 | **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Needs real data |
 | **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. | Not yet |
 | **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verify |
