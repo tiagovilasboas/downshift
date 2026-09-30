@@ -31,6 +31,11 @@ const (
 	window24h  = 24 * time.Hour
 )
 
+// estimatedCostPerUnitUSD is a placeholder conversion rate from normalised
+// savings units to dollars. It is NOT billing; it matches the
+// --cost-per-unit default semantics. Real billing needs provider token counts.
+const estimatedCostPerUnitUSD = 0.01
+
 // ── ANSI ──────────────────────────────────────────────────────────────────────
 
 const (
@@ -56,6 +61,16 @@ type event struct {
 	To         string  `json:"final_model"`
 	Verdict    string  `json:"verdict"`
 	Savings    float64 `json:"estimated_savings"`
+	// InputTokens carries provider-reported input tokens (nil when untracked).
+	InputTokens *int64 `json:"input_tokens,omitempty"`
+	// OutputTokens carries provider-reported output tokens (nil when untracked).
+	OutputTokens *int64 `json:"output_tokens,omitempty"`
+	// CachedTokens carries provider-reported cached input tokens (nil when untracked).
+	CachedTokens *int64 `json:"cached_tokens,omitempty"`
+	// ActualCostUSD is the real routed cost in USD (nil when untracked).
+	ActualCostUSD *float64 `json:"actual_cost_usd,omitempty"`
+	// BaselineCostUSD is the real baseline cost in USD (nil when untracked).
+	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"`
 }
 
 func (e event) localTime() string {
@@ -227,6 +242,12 @@ func (s *state) poll(path string) {
 type stats struct {
 	total, down, up, ok int
 	totalSavings        float64
+	// totalSavingsUnits accumulates the normalised savings fraction per DOWNSHIFT event.
+	totalSavingsUnits float64
+	// realSavedUSD accumulates baseline minus actual cost for events with real costs.
+	realSavedUSD float64
+	// realCostEvents counts events that carried both real cost fields.
+	realCostEvents  int
 	harnesses           []string // all distinct harnesses active today, most-recent first
 }
 
@@ -243,6 +264,13 @@ func compute(all []event) (stats, []event) {
 		case "DOWNSHIFT":
 			st.down++
 			st.totalSavings += e.Savings
+			st.totalSavingsUnits += e.Savings
+			if e.ActualCostUSD != nil && e.BaselineCostUSD != nil {
+				if saved := *e.BaselineCostUSD - *e.ActualCostUSD; saved > 0 {
+					st.realSavedUSD += saved
+					st.realCostEvents++
+				}
+			}
 		case "UPSHIFT":
 			st.up++
 		case "OK":
@@ -376,7 +404,7 @@ func render(s *state) {
 	}
 
 	// Estimated savings
-	estUSD := st.totalSavings * 0.01
+	estUSD := st.totalSavingsUnits * estimatedCostPerUnitUSD
 	estTokensK := int(estUSD / 0.000025)
 
 	hr := strings.Repeat("─", boxWidth-2)
@@ -436,12 +464,18 @@ func render(s *state) {
 	)) + "\n")
 	if st.down > 0 {
 		b.WriteString(row(fmt.Sprintf(
-			"  est. saved  %s$%.2f%s  ~%dK tokens %s¹%s",
+			"  est. saved  %s~$%.2f est.%s  ~%dK units %s¹%s",
 			grn, estUSD, rst, estTokensK, dim, rst,
 		)) + "\n")
 		b.WriteString(row(fmt.Sprintf(
-			"  %s¹ estimated · actual tokens not yet tracked%s", dim, rst,
+			"  %s¹ estimate · provider tokens not yet tracked%s", dim, rst,
 		)) + "\n")
+		if st.realCostEvents > 0 {
+			b.WriteString(row(fmt.Sprintf(
+				"  real saved  %s$%.2f%s  (%d events with usage)",
+				grn, st.realSavedUSD, rst, st.realCostEvents,
+			)) + "\n")
+		}
 	}
 	b.WriteString(row("") + "\n")
 	b.WriteString(bot + "\n")

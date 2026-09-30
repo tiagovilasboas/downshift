@@ -14,6 +14,11 @@ import (
 
 const DefaultPort = "7474"
 
+// estimatedCostPerUnitUSD is a placeholder conversion rate from normalised
+// savings units to dollars. It is NOT billing; it matches the
+// --cost-per-unit default semantics. Real billing needs provider token counts.
+const estimatedCostPerUnitUSD = 0.01
+
 type rawEvent struct {
 	Timestamp  string  `json:"timestamp"`
 	Harness    string  `json:"harness"`
@@ -22,6 +27,16 @@ type rawEvent struct {
 	Verdict    string  `json:"verdict"`
 	Complexity string  `json:"complexity"`
 	Savings    float64 `json:"estimated_savings"`
+	// InputTokens carries provider-reported input tokens (nil when untracked).
+	InputTokens *int64 `json:"input_tokens,omitempty"`
+	// OutputTokens carries provider-reported output tokens (nil when untracked).
+	OutputTokens *int64 `json:"output_tokens,omitempty"`
+	// CachedTokens carries provider-reported cached input tokens (nil when untracked).
+	CachedTokens *int64 `json:"cached_tokens,omitempty"`
+	// ActualCostUSD is the real routed cost in USD (nil when untracked).
+	ActualCostUSD *float64 `json:"actual_cost_usd,omitempty"`
+	// BaselineCostUSD is the real baseline cost in USD (nil when untracked).
+	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"`
 }
 
 type agentEntry struct {
@@ -45,6 +60,14 @@ type statsBlock struct {
 	Up     int     `json:"up"`
 	OK     int     `json:"ok"`
 	EstUSD float64 `json:"est_usd"`
+	// EstUnits accumulates the normalised savings fraction per DOWNSHIFT event.
+	EstUnits float64 `json:"est_units"`
+	// RealSavedUSD accumulates baseline minus actual cost for events with real costs.
+	RealSavedUSD float64 `json:"real_saved_usd"`
+	// RealCostEvents counts events that carried both real cost fields.
+	RealCostEvents int `json:"real_cost_events"`
+	// IsEstimate is always true: dollar figures are estimates, not billing.
+	IsEstimate bool `json:"is_estimate"`
 }
 
 var window = 24 * time.Hour
@@ -167,9 +190,20 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 
 	var st statsBlock
 	st.Total = len(events)
+	// IsEstimate is always true: dollar figures are estimates, not provider billing.
+	st.IsEstimate = true
 	for _, e := range events {
 		switch e.Verdict {
-		case "DOWNSHIFT": st.Down++; st.EstUSD += e.Savings * 0.01
+		case "DOWNSHIFT":
+			st.Down++
+			st.EstUnits += e.Savings
+			st.EstUSD = st.EstUnits * estimatedCostPerUnitUSD
+			if e.ActualCostUSD != nil && e.BaselineCostUSD != nil {
+				if saved := *e.BaselineCostUSD - *e.ActualCostUSD; saved > 0 {
+					st.RealSavedUSD += saved
+					st.RealCostEvents++
+				}
+			}
 		case "UPSHIFT":   st.Up++
 		case "OK":        st.OK++
 		}
