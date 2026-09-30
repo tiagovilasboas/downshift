@@ -64,7 +64,24 @@ func complexityFromString(s string) (core.Complexity, bool) {
 	}
 }
 
+// normalizePrompt returns the canonical form of a prompt used for
+// duplicate detection: trimmed of surrounding whitespace and lowercased.
+// Two prompts that differ only in case or surrounding whitespace are
+// considered the same task.
+func normalizePrompt(s string) string {
+	return strings.ToLower(strings.TrimSpace(s))
+}
+
 // LoadDataset reads a JSON task dataset from path.
+//
+// Validation: LoadDataset rejects files that cannot be read, files that
+// are not valid JSON, and datasets containing duplicate prompts
+// (compared case-insensitively after trimming whitespace). Unknown labels
+// and empty prompts are intentionally NOT rejected here: unknown labels
+// are skipped later by Run (with a log line) so a single bad row never
+// fails the whole run, and empty prompts are surfaced via DatasetHealth
+// instead of hard-failing. This keeps LoadDataset backward compatible
+// with the current 30-task seed file.
 func LoadDataset(path string) ([]Task, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -74,7 +91,72 @@ func LoadDataset(path string) ([]Task, error) {
 	if err := json.Unmarshal(data, &tasks); err != nil {
 		return nil, fmt.Errorf("parsing dataset: %w", err)
 	}
+	// Reject duplicate prompts: the same prompt twice would double-count
+	// one task and silently skew accuracy, so fail fast with the index.
+	seen := make(map[string]int, len(tasks))
+	for i, t := range tasks {
+		norm := normalizePrompt(t.Prompt)
+		if norm == "" {
+			continue
+		}
+		if first, ok := seen[norm]; ok {
+			return nil, fmt.Errorf("duplicate prompt at index %d: %q (first seen at index %d)", i, t.Prompt, first)
+		}
+		seen[norm] = i
+	}
 	return tasks, nil
+}
+
+// HealthReport summarises the structural health of a task dataset without
+// running the classifier. Use it to audit a dataset before trusting its
+// accuracy numbers: an imbalanced label mix or duplicated rows can make
+// the KPIs misleading.
+type HealthReport struct {
+	Total int
+	// CountsByLabel holds per-label counts keyed by normalised label
+	// (TRIVIAL, SIMPLE, MEDIUM, COMPLEX). Rows with any other label
+	// (including empty) are counted in Unknown instead.
+	CountsByLabel map[string]int
+	// Unknown counts rows whose label is not one of the four known labels.
+	Unknown int
+	// EmptyCount counts rows whose prompt is empty or whitespace-only.
+	EmptyCount int
+	// DuplicateCount counts rows whose normalised prompt (case-insensitive
+	// trim) already appeared at an earlier index. Only the repeats are
+	// counted, not the first occurrence.
+	DuplicateCount int
+}
+
+// DatasetHealth reports label distribution, empty prompts, and duplicate
+// prompts for tasks. It never returns an error and never skips rows: every
+// input task is counted exactly once, so callers can audit raw datasets
+// (including ones LoadDataset would reject for duplicates).
+func DatasetHealth(tasks []Task) HealthReport {
+	report := HealthReport{
+		Total:         len(tasks),
+		CountsByLabel: map[string]int{"TRIVIAL": 0, "SIMPLE": 0, "MEDIUM": 0, "COMPLEX": 0},
+	}
+	seen := make(map[string]struct{}, len(tasks))
+	for _, t := range tasks {
+		if strings.TrimSpace(t.Prompt) == "" {
+			report.EmptyCount++
+		} else {
+			norm := normalizePrompt(t.Prompt)
+			if _, ok := seen[norm]; ok {
+				report.DuplicateCount++
+			} else {
+				seen[norm] = struct{}{}
+			}
+		}
+		label := strings.ToUpper(strings.TrimSpace(t.Label))
+		switch label {
+		case "TRIVIAL", "SIMPLE", "MEDIUM", "COMPLEX":
+			report.CountsByLabel[label]++
+		default:
+			report.Unknown++
+		}
+	}
+	return report
 }
 
 // Run classifies every task and returns the per-task results.

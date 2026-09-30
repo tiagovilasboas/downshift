@@ -37,11 +37,14 @@ Subagent task: "diagnose the race condition in the webhook handler"
 
 ![Downshift — One harness. Any model.](docs/brand/downshift-one-harness-any-model.png)
 
-> **⚠️ Beta — practical testing phase.** The router and adapters work. The
-> gap is the harnesses themselves: model selection for subagents is an
-> evolving feature in Claude Code, Cursor, and Codex, and not every plan
-> or build honours the hook rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
-> before installing.
+> **⚠️ Beta with measured evidence.** The router and adapters work — 430 local
+> routing events measured ([Real session data](#real-session-data)), hook-layer
+> E2E in CI, full test suite green. The remaining gap is the harnesses
+> themselves: model selection for subagents is an evolving feature in Claude
+> Code, Cursor, and Codex, and not every plan or build honours the hook
+> rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
+> before installing, and [Status](#status) for what beta means here and the
+> graduation criteria.
 
 ## Native Go orchestration planner
 
@@ -466,8 +469,8 @@ in real time. It reads `~/.harness-downshift/events.jsonl` and refreshes every
 │  04:01  opus   → sonnet  medium   -40%               │
 │ stats ──────────────────────────────────────────────  │
 │  35 events   22↓  2↑  8✓                             │
-│  est. saved  $0.18  ~7K tokens ¹                     │
-│  ¹ estimated · actual tokens not yet tracked         │
+│  est. saved  ~$0.18 est.  ~7K units ¹                │
+│  ¹ estimate · provider tokens not yet tracked        │
 ╰──────────────────────────────────────────────────────╯
   04:03:51 · ctrl+c to quit
 ```
@@ -492,14 +495,20 @@ go build -o dsmon ./cmd/dsmon
 | Harness | `events.jsonl` → `harness` field | Last harness seen today |
 | Switches | `events.jsonl` → `verdict` + model fields | Last 7 routing decisions |
 | Events / ↓ ↑ ✓ | `events.jsonl` | Today's counts by verdict |
-| Est. saved ($) | `estimated_savings` × $0.01 avg spawn cost | Rough estimate, not actual billing |
-| Est. tokens | Derived from $ saved ÷ frontier output cost | Estimated, not from provider |
+| Est. saved (~$ est.) | `estimated_savings` × $0.01 placeholder (`estimatedCostPerUnitUSD`) | Rough estimate, not actual billing |
+| Est. units | Sum of `estimated_savings` fractions (`est_units` in `/api/status`) | Estimated, not from provider |
+| Real saved ($) | `baseline_cost_usd` − `actual_cost_usd`, only for events with token usage | Real dollars when present; absent until PostToolUse hook lands |
 
 **Token consumption note.** The router has no access to provider-reported token
 counts — it only sees what the harness passes to the preToolUse hook, which
 does not include usage data. The estimates are directionally correct (more
 downshifts = more savings) but not a substitute for your provider's billing
-dashboard. Actual token tracking is planned for a future PostToolUse hook pass.
+dashboard. Events optionally carry `input_tokens`, `output_tokens`,
+`cached_tokens`, `actual_cost_usd` and `baseline_cost_usd` (see
+`internal/telemetry/cost.go`); when present, `/api/status` exposes
+`real_saved_usd`/`real_cost_events` and `downshift stats` prints a real-cost
+section alongside the estimate. Actual token tracking is planned for a future
+PostToolUse hook pass.
 
 ## Grok CLI (config, not hook)
 
@@ -873,8 +882,11 @@ Normalised savings      951 units  (51.6%)
 For dollar figures once you have real data: `downshift stats --cost-per-unit=<USD>`.
 
 **Privacy note:** prompt contents are never stored. Each event records only
-routing metadata — harness, complexity class, model IDs, verdict, and a
-normalised savings fraction. Safe for corporate environments where task
+routing metadata — harness, complexity class, model IDs, verdict, a
+normalised savings fraction, and optionally provider token counts
+(`input_tokens`, `output_tokens`, `cached_tokens`) plus derived
+`actual_cost_usd`/`baseline_cost_usd` when a future PostToolUse hook supplies
+usage. Safe for corporate environments where task
 prompts may contain sensitive information.
 
 Each decision is recorded locally at `~/.harness-downshift/events.jsonl` —
@@ -883,6 +895,19 @@ no data leaves your machine. Use `downshift stats --days=7` for a weekly view.
 > **Want to contribute real numbers?** Run downshift for a sprint, open an issue
 > with your before/after cost, task volume, and false-downshift observations.
 > First real dataset goes into this README with credit.
+
+### Real session data
+
+Measured with `downshift stats` on 430 local routing events (Sep 21–30, 2026):
+
+| Window | Decisions | Downshifted | Upshifted | OK | Unknown* |
+|---|---|---|---|---|---|
+| 30 days | 430 | 170 (39.5%) | 18 (4.2%) | 90 (20.9%) | 152 (35.3%) |
+| 7 days | 352 | 122 (34.7%) | 18 (5.1%) | 90 (25.6%) | 122 (34.7%) |
+
+\* Unknown split (152 in the 30-day window): 117 legacy-schema events (verdict only, no model fields) · 20 error-outcome events with no verdict (`INVALID_EVENT` ×10, `PAYLOAD_TOO_LARGE` ×10, fail-open by design) · 15 genuine unknown-model events (`requested_model` unknown, `rewrite_emitted` with a sensible final model).
+
+> **Important caveat.** Single-user dogfood, not a controlled study: no provider billing to compare against, normalised units only (the real-cost section still reports zero until the PostToolUse hook lands), and the downshift rate follows the task mix. Treat these as directional. The most reliable data is your provider's billing dashboard before and after deploying downshift.
 
 ---
 
@@ -1118,6 +1143,12 @@ downshift stats --days=7 --cost-per-unit=0.05
 # → Estimated saved: $25.45 (509 routed spawns × $0.05)
 ```
 
+When events carry provider token usage, `downshift stats` additionally prints
+a `Real provider cost (N events with token usage)` section with real saved
+USD — computed from catalog list prices via `internal/telemetry/cost.go`.
+Until the PostToolUse hook lands, that section reports no events and the
+normalised estimate above remains the primary signal.
+
 **Important caveat.** These estimates are based on list prices and the number of routing decisions — not on actual provider billing. Token counts per spawn vary by task and model. Your actual savings may be higher (long frontier prompts avoided) or lower (very short spawns where the per-call overhead dominates). Treat these as directional. The most reliable data is your provider's billing dashboard before and after deploying downshift.
 
 ---
@@ -1128,10 +1159,10 @@ Being honest: the router and adapters work today. These are the gaps between "wo
 
 | Gap | Why it matters | Status |
 |---|---|---|
-| **Real token counts via PostToolUse hook** | Every savings figure today is estimated from routing decisions, not from actual provider usage data. A PostToolUse hook that reads `tool_response.usage.input_tokens` would make the dashboard show real numbers. | Planned |
-| **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Needs real data |
-| **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. | Not yet |
-| **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verify |
+| **Real token counts via PostToolUse hook** | Every savings figure today is estimated from routing decisions, not from actual provider usage data. A PostToolUse hook that reads `tool_response.usage.input_tokens` would make the dashboard show real numbers. Event, API (`real_saved_usd`/`real_cost_events`) and `downshift stats` real-cost plumbing is already shipped — only the usage supplier is missing. | Foundation shipped, hook pending |
+| **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Shipped (this week) — see [Real session data](#real-session-data) |
+| **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. Hook-layer E2E is covered (`TestHookE2E_RewriteEventStats`: hook stdin → adapter rewrite → JSONL event → stats aggregation). | Partial: hook-layer E2E in CI, real spawn pending |
+| **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verified (430-event log, Sep 2026) |
 | **Per-session before/after comparison** | "How much did this session cost without routing?" requires a baseline run. That needs a `--no-route` flag or a session where routing was disabled for comparison. | Planned |
 | **Feedback loop closing** | The `downshift feedback` command collects outcomes but the training pipeline (`downshift train --from-events`) needs a curated dataset to improve the classifier. The first labelled dataset from real use is the highest-value contribution. | Waiting for data |
 
@@ -1182,7 +1213,7 @@ that actually need it.
 
 ## Status
 
-**Beta — practical testing phase.**
+**Beta — practical testing phase, with measured evidence.**
 
 The router is built and tested: adapters for Claude Code, Cursor, and Codex,
 deterministic classifier covering 40+ documented prompts, catalog with
@@ -1215,6 +1246,35 @@ harness, that is a harness limitation documented in
 
 **Feedback most wanted:** prompts the classifier gets wrong. Open an issue
 with the prompt, what `downshift try` returned, and what you expected.
+
+### What beta means here
+
+Beta is a scope statement, not a quality apology. Proven so far, all measured
+rather than claimed:
+
+| Proven | Evidence |
+|---|---|
+| Routing works on real sessions | 430 local events, 39.5% downshifted ([Real session data](#real-session-data)) |
+| Downgrades are conservative | `FRONTIER→SMALL` 0% on seed; uncertain calls never downshift (`ShouldRewriteModel`) |
+| Hook contract holds end to hook-layer | `TestHookE2E_RewriteEventStats` in CI: stdin → rewrite → event → stats |
+| Estimates are labeled estimates | `~$ est.` + `is_estimate` everywhere; real-cost plumbing shipped, zero real dollars claimed |
+
+Not yet proven — the graduation criteria for leaving beta:
+
+1. **Real-spawn verification** — proof a harness executor honored the rewrite, not just `rewrite_emitted`.
+2. **Multi-user data** — today's 430 events are single-user dogfood; graduation needs independent sessions.
+3. **Billing before/after** — provider-dashboard comparison, replacing normalised units.
+4. **Larger benchmark** — 500+ labeled tasks with statistical reporting (seed is 30; protocol in `benchmark/README.md`).
+5. **Harness coverage** — rewrites honored across plans/builds, not silently discarded (the external dependency).
+
+When those five hold, the beta label goes. Until then it stays — with the numbers above updated as evidence grows.
+
+The good news: no new invention is required to get there. Four of the five
+criteria are fed by mileage — every routed session appends events, shrinks the
+legacy share, and builds the dataset a billing comparison needs. The price of
+graduation is mostly tokens spent dogfooding, plus one human task: curating
+benchmark labels (real prompts from your stack; see `benchmark/README.md`).
+Use it more, and beta ends itself.
 
 ## Brand
 

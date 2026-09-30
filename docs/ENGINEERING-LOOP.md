@@ -61,10 +61,15 @@ go build -o dsmon ./cmd/dsmon && ./dsmon
 
 It shows the current harness, the last seven routing decisions (verdicts,
 models, tiers, savings), and today's aggregate statistics (events, downshifts,
-upshifts, estimated cost savings). Estimated savings are derived from the
+upshifts, estimated cost savings shown as `~$ est.` with a footnote).
+Estimated savings are derived from the
 `estimated_savings` fraction in each event and a rough average spawn cost;
 they are directionally correct but not provider billing data. Actual token
-counts are not available at the hook layer.
+counts are not available at the hook layer. Events may optionally carry
+`input_tokens`/`output_tokens`/`cached_tokens` plus
+`actual_cost_usd`/`baseline_cost_usd`; when present, dsmon renders an
+additional `real saved` line and `/api/status` exposes
+`real_saved_usd`/`real_cost_events`.
 
 Fowler loop: this section is the **guia inferencial** for architecture fitness
 and behaviour; the hook E2E JSONL correlation test and fail-open deadline test
