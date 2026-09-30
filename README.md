@@ -1261,6 +1261,13 @@ Not yet proven — the graduation criteria for leaving beta:
 
 When those five hold, the beta label goes. Until then it stays — with the numbers above updated as evidence grows.
 
+The good news: no new invention is required to get there. Four of the five
+criteria are fed by mileage — every routed session appends events, shrinks the
+legacy share, and builds the dataset a billing comparison needs. The price of
+graduation is mostly tokens spent dogfooding, plus one human task: curating
+benchmark labels (real prompts from your stack; see `benchmark/README.md`).
+Use it more, and beta ends itself.
+
 ## Brand
 
 Downshift identity lives in [`docs/brand/`](docs/brand/) — mark, logos (dark/light/mono), favicon, social preview (`downshift-social-preview-1280x640.png`), and design tokens (`downshift-brand-tokens.css` / `.json`).
