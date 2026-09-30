@@ -52,3 +52,11 @@ The CLI fails closed after two seconds waiting for stdin and emits `INPUT_TIMEOU
 | Preserve a usable planner | Local-only/opt-in usage and documented install command | CI installs the package and runs its unit tests | Guia inferencial, maintainability; sensor computacional, maintainability |
 
 Continuous operational signals are intentionally deferred: the planner has no execution or completion event. If an executor is added, it must keep the opt-in/fail-open boundary and add prompt-free, local observability before it claims a closed loop.
+
+## See also
+
+For a complete, beginner-friendly explanation of how LangGraph fits here and
+how LangChain fits in Harness Central — including what each framework does, what
+it does not do, and how the two relate — see
+[docs/LANGCHAIN-LANGGRAPH-EXPLAINER.md](https://github.com/tiagovilasboas/agent-harness/blob/main/docs/LANGCHAIN-LANGGRAPH-EXPLAINER.md)
+in `harness-core`.
