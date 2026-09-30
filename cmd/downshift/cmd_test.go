@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/codex"
@@ -23,6 +24,7 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/classifier"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/training"
+	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
 )
 
 // captureStdout redirects os.Stdout to a buffer for the duration of fn.
@@ -39,6 +41,13 @@ func captureStdout(fn func()) string {
 }
 
 var cmdCat = catalog.Load()
+
+type delayedReader struct{ release <-chan struct{} }
+
+func (r delayedReader) Read(_ []byte) (int, error) {
+	<-r.release
+	return 0, io.EOF
+}
 
 func setSessionAllowlist(t *testing.T, harness string, ids []string) {
 	t.Helper()
@@ -340,8 +349,8 @@ func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
 	if err := json.Unmarshal(bytes.TrimSpace(eventData), &eventRecord); err != nil {
 		t.Fatalf("decode telemetry event: %v", err)
 	}
-	if eventRecord["session_id"] != "codex-session-privacy-test" {
-		t.Fatalf("session_id = %v, want Codex session identifier", eventRecord["session_id"])
+	if eventRecord["session_id"] != telemetry.HashSessionID("codex-session-privacy-test") {
+		t.Fatalf("session_id = %v, want hashed Codex session identifier", eventRecord["session_id"])
 	}
 	events, err := training.NewEventStore(training.DefaultEventsPath()).Load()
 	if err != nil {
@@ -349,6 +358,115 @@ func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
 	}
 	if len(events) != 1 || events[0].ID == "" || events[0].Harness != "codex" {
 		t.Fatalf("expected a routed codex event with feedback ID, got %#v", events)
+	}
+}
+
+// TestHookTelemetryEndToEnd proves that a realistic Codex PreToolUse payload
+// reaches the JSONL sensor with a correlation ID and routing metadata, while
+// its private task content remains outside the event.
+func TestHookTelemetryEndToEnd(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "hook-events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
+	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
+	setSessionAllowlist(t, "codex", []string{
+		cmdCat.ModelFor("codex", core.TierSmall).ID,
+		cmdCat.ModelFor("codex", core.TierMid).ID,
+		frontierID,
+	})
+	privatePrompt := "private customer incident secret-should-not-persist"
+	correlationID := "0123456789abcdef0123456789abcdef"
+	event := []byte(`{"hook_event_name":"PreToolUse","correlation_id":"` + correlationID + `","session_id":"session-e2e","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"` + privatePrompt + `","model":"` + frontierID + `","reasoning_effort":"high"}}`)
+	captureStdout(func() {
+		if rc := runHookAdapter(
+			bytes.NewReader(event),
+			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
+			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
+			printCodexAllow,
+		); rc != 0 {
+			t.Fatalf("hook rc = %d", rc)
+		}
+	})
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(data), privatePrompt) || strings.Contains(string(data), "secret-should-not-persist") {
+		t.Fatal("hook telemetry persisted task content")
+	}
+	var recorded telemetry.Event
+	if err := json.Unmarshal(bytes.TrimSpace(data), &recorded); err != nil {
+		t.Fatal(err)
+	}
+	if recorded.CorrelationID != correlationID || recorded.Timestamp == "" || recorded.Source != "hook" || recorded.Agent != "subagent" {
+		t.Fatalf("missing hook correlation metadata: %#v", recorded)
+	}
+	if recorded.Harness != "codex" || recorded.SessionID != telemetry.HashSessionID("session-e2e") || recorded.FromModel != frontierID || recorded.ToModel == "" {
+		t.Fatalf("unexpected model/harness telemetry: %#v", recorded)
+	}
+	if recorded.RequestedEffort != "high" || recorded.FinalEffort == "" || recorded.Tier == "" || recorded.Verdict == "" || recorded.PolicyVersion == "" || recorded.BinaryVersion == "" || recorded.Outcome != "rewrite_emitted" {
+		t.Fatalf("missing routing decision telemetry: %#v", recorded)
+	}
+	if recorded.DecisionIntelligence == nil || recorded.DecisionIntelligence.Apply || recorded.DecisionIntelligence.Tier != recorded.Tier || len(recorded.DecisionIntelligence.Reasons) == 0 {
+		t.Fatalf("shadow recommendation must be present and advisory: %#v", recorded.DecisionIntelligence)
+	}
+}
+
+// Requested model provenance must remain unknown when the hook did not supply
+// a catalog-allowlisted original value. The policy recommendation is not an
+// observation and must never fill this field.
+func TestHookTelemetryDoesNotBackfillRequestedModel(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "hook-events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
+	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
+	setSessionAllowlist(t, "codex", []string{frontierID})
+	event := []byte(`{"hook_event_name":"PreToolUse","tool_name":"spawn_agent","model":"untrusted-model","tool_input":{"message":"review a small change"}}`)
+	captureStdout(func() {
+		runHookAdapter(
+			bytes.NewReader(event),
+			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
+			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
+			printCodexAllow,
+		)
+	})
+	events, err := telemetry.ReadEventsFrom(path)
+	if err != nil || len(events) != 1 {
+		t.Fatalf("events=%#v err=%v", events, err)
+	}
+	if events[0].FromModel != "unknown" {
+		t.Fatalf("requested_model = %q, want unknown without allowlisted input", events[0].FromModel)
+	}
+	if events[0].ToModel == "unknown" || events[0].ToModel == "" {
+		t.Fatalf("final model should remain policy output: %#v", events[0])
+	}
+}
+
+func TestRunHookAdapter_InputDeadlineFailsOpenAndRecordsNoPayload(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "timeout-events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
+	previousTimeout := hookReadTimeout
+	hookReadTimeout = 10 * time.Millisecond
+	t.Cleanup(func() { hookReadTimeout = previousTimeout })
+	release := make(chan struct{})
+	out := captureStdout(func() {
+		if rc := runHookAdapter(
+			delayedReader{release: release},
+			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
+			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
+			printAllow,
+		); rc != 0 {
+			t.Fatalf("timeout rc = %d", rc)
+		}
+	})
+	close(release)
+	if !strings.Contains(out, `"permissionDecision":"allow"`) {
+		t.Fatalf("timeout must fail open: %s", out)
+	}
+	events, err := telemetry.ReadEventsFrom(path)
+	if err != nil || len(events) != 1 {
+		t.Fatalf("timeout events=%#v err=%v", events, err)
+	}
+	if events[0].Outcome != "error" || events[0].ErrorCode != "INPUT_TIMEOUT" || events[0].CorrelationID == "" {
+		t.Fatalf("unexpected timeout telemetry: %#v", events[0])
 	}
 }
 
