@@ -78,7 +78,7 @@ function renderMonitor(data) {
   set('monitor-agents', agRows);
 
   set('monitor-stats',
-    `${info(stats.total||0)} events &nbsp; ${ok(`${stats.down||0}↓`)} &nbsp; ${warn(`${stats.up||0}↑`)} &nbsp; ${ok(`$${(stats.est_usd||0).toFixed(2)}`)} saved`
+    `${info(stats.total||0)} events &nbsp; ${ok(`${stats.down||0}↓`)} &nbsp; ${warn(`${stats.up||0}↑`)} &nbsp; ${ok(`<span title="estimate from routing fraction, not provider billing">~$${(stats.est_usd||0).toFixed(2)} est.</span>`)} saved (est.)`
   );
 
   // ── gear tier breakdown ──────────────────────────────────────────────────
@@ -91,7 +91,7 @@ function renderMonitor(data) {
     tiers[tier].saved += e.estimated_savings || 0;
   }
 
-  const fmtSaved = v => v > 0 ? `$${v.toFixed(2)} saved` : '';
+  const fmtSaved = v => v > 0 ? `<span title="estimate from routing fraction, not provider billing">~$${v.toFixed(2)} est.</span>` : '';
   set('count-trivial', tiers.trivial.count || '0');
   set('saved-trivial', fmtSaved(tiers.trivial.saved));
   set('count-simple',  tiers.simple.count  || '0');
@@ -99,7 +99,7 @@ function renderMonitor(data) {
   set('count-complex', tiers.complex.count || '0');
   set('saved-complex', fmtSaved(tiers.complex.saved));
 
-  set('total-saved',  `$${(stats.est_usd||0).toFixed(2)}`);
+  set('total-saved',  `<span title="estimate from routing fraction, not provider billing">~$${(stats.est_usd||0).toFixed(2)} est.</span>`);
   set('total-events', `${stats.total||0} events`);
 }
 
