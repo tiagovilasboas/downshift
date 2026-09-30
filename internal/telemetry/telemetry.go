@@ -353,8 +353,20 @@ func FilterByDays(events []Event, days int) []Event {
 	cutoff := time.Now().UTC().Add(-time.Duration(days) * 24 * time.Hour)
 	var out []Event
 	for _, ev := range events {
-		t, err := time.Parse(time.RFC3339, ev.Timestamp)
-		if err != nil || t.After(cutoff) {
+		// Events are written with time.RFC3339Nano (FromDecision, Failure);
+		// time.RFC3339 cannot parse fractional seconds, so try the nano
+		// layout first and accept the legacy layout for older log lines.
+		// A timestamp that parses in neither layout is excluded
+		// (fail-closed for windowing: a dateless event belongs to no
+		// window, and silently including it would inflate every window).
+		t, err := time.Parse(time.RFC3339Nano, ev.Timestamp)
+		if err != nil {
+			t, err = time.Parse(time.RFC3339, ev.Timestamp)
+		}
+		if err != nil {
+			continue
+		}
+		if t.After(cutoff) {
 			out = append(out, ev)
 		}
 	}

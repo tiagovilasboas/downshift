@@ -198,6 +198,51 @@ func TestFilterByDays_NegativeReturnsAll(t *testing.T) {
 	}
 }
 
+func TestFilterByDays_TimestampFormats(t *testing.T) {
+	// Fixed reference times with margins avoid flakiness: 6d23h is safely
+	// inside a 7-day window, 7d1h is safely outside.
+	now := time.Now().UTC()
+	insideNano := now.Add(-(6*24*time.Hour + 23*time.Hour)).Format(time.RFC3339Nano)
+	outsideNano := now.Add(-(7*24*time.Hour + 1*time.Hour)).Format(time.RFC3339Nano)
+	insideLegacy := now.Add(-(6*24*time.Hour + 23*time.Hour)).Format(time.RFC3339)
+	outsideLegacy := now.Add(-(7*24*time.Hour + 1*time.Hour)).Format(time.RFC3339)
+
+	mk := func(ts string) telemetry.Event {
+		return telemetry.Event{
+			Timestamp:  ts,
+			Harness:    "cc",
+			Complexity: "TRIVIAL",
+			Verdict:    "DOWNSHIFT",
+		}
+	}
+
+	tests := []struct {
+		name   string
+		events []telemetry.Event
+		days   int
+		want   int
+	}{
+		{name: "nano timestamp inside window kept", events: []telemetry.Event{mk(insideNano)}, days: 7, want: 1},
+		{name: "nano timestamp outside window excluded", events: []telemetry.Event{mk(outsideNano)}, days: 7, want: 0},
+		{name: "legacy RFC3339 inside window kept", events: []telemetry.Event{mk(insideLegacy)}, days: 7, want: 1},
+		{name: "legacy RFC3339 outside window excluded", events: []telemetry.Event{mk(outsideLegacy)}, days: 7, want: 0},
+		{name: "garbage timestamp excluded", events: []telemetry.Event{mk("not-a-timestamp")}, days: 7, want: 0},
+		{name: "empty timestamp excluded", events: []telemetry.Event{mk("")}, days: 7, want: 0},
+		{name: "days<=0 returns all including garbage", events: []telemetry.Event{mk(insideNano), mk(outsideNano), mk("garbage")}, days: 0, want: 3},
+		{name: "days<0 returns all including garbage", events: []telemetry.Event{mk(outsideNano), mk("garbage")}, days: -1, want: 2},
+		{name: "mixed window keeps only inside", events: []telemetry.Event{mk(insideNano), mk(outsideNano), mk(insideLegacy), mk(outsideLegacy), mk("garbage")}, days: 7, want: 2},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := telemetry.FilterByDays(tt.events, tt.days)
+			if len(got) != tt.want {
+				t.Errorf("FilterByDays(%q, days=%d) = %d events, want %d", tt.name, tt.days, len(got), tt.want)
+			}
+		})
+	}
+}
+
 // --- Aggregate ---
 
 func TestAggregate_CountsVerdicts(t *testing.T) {
