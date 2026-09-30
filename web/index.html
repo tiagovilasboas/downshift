@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#161b22">
+<meta name="description" content="Engineering dashboard for AI agent workflows">
+<title>harness-hub</title>
+<link rel="manifest" href="manifest.json">
+<style>
+/* ── reset + tokens ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0d1117;
+  --bg2:     #161b22;
+  --bg3:     #21262d;
+  --border:  #30363d;
+  --text:    #c9d1d9;
+  --muted:   #8b949e;
+  --accent:  #58a6ff;
+  --ok:      #3fb950;
+  --warn:    #d29922;
+  --info:    #79c0ff;
+  --danger:  #f85149;
+  --font:    ui-monospace, 'SF Mono', Menlo, 'Cascadia Code', monospace;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+  min-height: 100svh;
+}
+
+/* ── layout ── */
+.app { display: grid; grid-template-rows: auto 1fr; min-height: 100svh; }
+header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 10;
+}
+.logo { font-weight: 700; font-size: 15px; color: var(--accent); }
+.logo span { color: var(--muted); font-weight: 400; }
+.clock { color: var(--muted); font-size: 11px; }
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+}
+@media (max-width: 700px) { main { grid-template-columns: 1fr; } }
+
+/* ── panels ── */
+.panel {
+  background: var(--bg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.panel-title {
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+/* ── monitor ── */
+.status-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.pulse { color: var(--ok); animation: p 1.4s infinite; display: inline-block; }
+@keyframes p { 0%,100%{opacity:1} 50%{opacity:.2} }
+.chip  { border: 1px solid var(--border); border-radius: 10px; padding: 1px 9px; font-size: 10px; color: var(--muted); }
+.chip.hi { border-color: var(--accent); color: var(--accent); }
+.sub-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+.row { display: grid; grid-template-columns: 30px 52px 1fr; gap: 8px; padding: 2px 0; align-items: baseline; }
+.t   { color: var(--muted); text-align: right; font-size: 11px; }
+.m   { color: var(--info); }
+.desc { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dim  { color: var(--muted); }
+.ok   { color: var(--ok); }
+.warn { color: var(--warn); }
+.info { color: var(--info); }
+.stats-line { color: var(--text); font-size: 12px; }
+
+/* ── github panel ── */
+.gh-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  background: var(--bg2);
+  margin-bottom: 8px;
+}
+.gh-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.gh-name { color: var(--accent); text-decoration: none; font-weight: 600; }
+.gh-name:hover { text-decoration: underline; }
+.gh-meta { font-size: 10px; color: var(--muted); }
+.gh-desc { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.gh-files { display: flex; gap: 5px; flex-wrap: wrap; }
+.file-chip { font-size: 10px; border: 1px solid var(--border); border-radius: 4px; padding: 1px 7px; color: var(--muted); }
+.gh-detail { margin-top: 8px; }
+.gh-detail summary { font-size: 10px; color: var(--muted); cursor: pointer; }
+.gh-detail pre { margin-top: 6px; font-size: 10px; color: var(--muted); white-space: pre-wrap; overflow-x: auto; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; padding: 8px; background: var(--bg3); }
+
+/* ── pwa install banner ── */
+#install-banner {
+  display: none;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+#install-banner.show { display: flex; }
+#install-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--font);
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span class="logo">harness<span>-hub</span></span>
+    <span class="clock" id="clock"></span>
+  </header>
+
+  <main>
+    <!-- ── routing monitor ── -->
+    <div class="panel">
+      <div class="panel-title">routing monitor · last 24h</div>
+
+      <div id="install-banner">
+        📲 Install harness-hub as an app
+        <button id="install-btn">Install</button>
+      </div>
+
+      <div>
+        <div class="sub-label">harnesses</div>
+        <div class="status-row" id="monitor-status">
+          <span class="dim">connecting…</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="sub-label">last switches</div>
+        <div id="monitor-switches"><span class="dim">—</span></div>
+      </div>
+
+      <div>
+        <div class="sub-label">agents</div>
+        <div id="monitor-agents"><span class="dim">—</span></div>
+      </div>
+
+      <div>
+        <div class="sub-label">stats</div>
+        <div class="stats-line" id="monitor-stats"><span class="dim">—</span></div>
+      </div>
+
+      <div style="color:var(--muted);font-size:10px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border)">
+        <a href="https://github.com/tiagovilasboas/harness-downshift" target="_blank" rel="noopener noreferrer" style="color:var(--muted)">harness-downshift</a>
+        · start <code style="color:var(--muted)">./dsmon-server</code> for live data
+      </div>
+    </div>
+
+    <!-- ── github explorer ── -->
+    <div class="panel">
+      <div class="panel-title">harness stack · github</div>
+
+      <span id="gh-status" class="dim"></span>
+      <div id="gh-repos"></div>
+
+      <div style="color:var(--muted);font-size:10px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border)">
+        data from
+        <a href="https://github.com/tiagovilasboas" target="_blank" rel="noopener noreferrer" style="color:var(--muted)">github.com/tiagovilasboas</a>
+        via public API
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// PWA install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+document.getElementById('install-btn')?.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const {outcome} = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') document.getElementById('install-banner').classList.remove('show');
+  deferredPrompt = null;
+});
+</script>
+<script src="app.js"></script>
+</body>
+</html>
