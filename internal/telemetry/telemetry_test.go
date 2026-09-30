@@ -67,6 +67,24 @@ func TestAppendAndRead_RoundTrip(t *testing.T) {
 	}
 }
 
+func TestUntrustedIdentifiersAreBoundedBeforePersistence(t *testing.T) {
+	if got := telemetry.ModelOrUnknown("model; private prompt"); got != "unknown" {
+		t.Fatalf("ModelOrUnknown = %q", got)
+	}
+	if got := telemetry.EffortOrUnknown("ignore-guardrails"); got != "unknown" {
+		t.Fatalf("EffortOrUnknown = %q", got)
+	}
+	if got := telemetry.HashSessionID(strings.Repeat("x", 257)); got != "" {
+		t.Fatalf("HashSessionID oversized = %q", got)
+	}
+	if got := telemetry.HashSessionID("session id containing spaces"); got != "" {
+		t.Fatalf("HashSessionID unvalidated = %q", got)
+	}
+	if got := telemetry.HashSessionID("session-safe_123"); got == "" {
+		t.Fatal("HashSessionID rejected a valid opaque identifier")
+	}
+}
+
 func TestAppendTo_UsesPrivateFilePermissions(t *testing.T) {
 	path := tmpLog(t)
 	if err := telemetry.AppendTo(path, makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.8)); err != nil {

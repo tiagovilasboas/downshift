@@ -17,11 +17,15 @@ package telemetry
 
 import (
 	"bufio"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"time"
 
@@ -31,35 +35,135 @@ import (
 // Event is one routing decision persisted to the event log.
 // Prompt text is intentionally excluded — only routing metadata is stored.
 type Event struct {
-	Timestamp        string  `json:"timestamp"`            // RFC3339
-	Harness          string  `json:"harness"`              // e.g. "claude-code"
-	SessionID        string  `json:"session_id,omitempty"` // Codex session identifier, when provided
-	Complexity       string  `json:"complexity"`           // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
-	FromModel        string  `json:"from"`                 // model that would have run
-	ToModel          string  `json:"to"`                   // model that will run
-	Verdict          string  `json:"verdict"`              // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
-	EstimatedSavings float64 `json:"estimated_savings"`    // normalised fraction 0–1
+	CorrelationID        string                `json:"correlation_id"`             // opaque ID generated per hook invocation
+	Timestamp            string                `json:"timestamp"`                  // RFC3339Nano
+	Source               string                `json:"source"`                     // hook|cli
+	Agent                string                `json:"agent"`                      // subagent, never task text
+	Harness              string                `json:"harness"`                    // e.g. "claude-code"
+	SessionID            string                `json:"session_id,omitempty"`       // Codex session identifier, when provided
+	Complexity           string                `json:"complexity"`                 // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
+	FromModel            string                `json:"requested_model"`            // model supplied by the harness
+	ToModel              string                `json:"final_model"`                // selected model after policy
+	RequestedEffort      string                `json:"requested_reasoning_effort"` // absent from most hook protocols
+	FinalEffort          string                `json:"final_reasoning_effort"`     // policy recommendation
+	Verdict              string                `json:"verdict"`                    // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
+	Tier                 string                `json:"tier"`                       // SMALL|MID|FRONTIER
+	PolicyVersion        string                `json:"policy_version"`
+	BinaryVersion        string                `json:"binary_version"`
+	Outcome              string                `json:"outcome"` // routed|allow|error
+	ErrorCode            string                `json:"error_code,omitempty"`
+	DecisionIntelligence *ShadowRecommendation `json:"decision_intelligence,omitempty"`
+	EstimatedSavings     float64               `json:"estimated_savings"` // normalised fraction 0–1
 }
 
-// FromDecision builds an Event from a core.Decision.
-func FromDecision(d core.Decision) Event {
-	from := d.CurrentModel.ID
-	if from == "" {
-		from = d.Model.ID // unknown current → use recommended as baseline
+// ShadowRecommendation is advisory metadata emitted beside, never into, the
+// deterministic hook rewrite. It contains no task text or provider selection.
+type ShadowRecommendation struct {
+	Tier              string   `json:"tier"`
+	Confidence        float64  `json:"confidence"`
+	Reasons           []string `json:"reasons"`
+	RequiresReview    bool     `json:"requires_review"`
+	BudgetConstrained bool     `json:"budget_constrained"`
+	Apply             bool     `json:"apply"`
+}
+
+const PolicyVersion = "core-route-v1"
+
+var correlationIDPattern = regexp.MustCompile(`^[a-f0-9]{16,64}$`)
+var modelIDPattern = regexp.MustCompile(`^[A-Za-z0-9._:/-]{1,128}$`)
+var effortPattern = regexp.MustCompile(`^(none|minimal|low|medium|high|xhigh|max|ultra)$`)
+
+// Session IDs are untrusted hook input. Validate a deliberately small opaque
+// identifier vocabulary before hashing so arbitrary user-controlled payloads
+// never enter even a derived local record.
+var sessionIDPattern = regexp.MustCompile(`^[A-Za-z0-9._:-]{1,128}$`)
+
+// NewCorrelationID returns an opaque, prompt-free ID that joins one hook
+// invocation to its event-log record.
+func NewCorrelationID() string {
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		return fmt.Sprintf("fallback-%d", time.Now().UnixNano())
 	}
+	return hex.EncodeToString(bytes)
+}
+
+// CorrelationIDOrNew accepts only the opaque hexadecimal format. Invalid
+// caller input is replaced rather than copied into local observability data.
+func CorrelationIDOrNew(candidate string) string {
+	if correlationIDPattern.MatchString(candidate) {
+		return candidate
+	}
+	return NewCorrelationID()
+}
+
+// ModelOrUnknown bounds untrusted hook metadata before durable logging.
+func ModelOrUnknown(candidate string) string {
+	if modelIDPattern.MatchString(candidate) {
+		return candidate
+	}
+	return "unknown"
+}
+
+// EffortOrUnknown accepts only the cross-harness effort vocabulary.
+func EffortOrUnknown(candidate string) string {
+	if effortPattern.MatchString(candidate) {
+		return candidate
+	}
+	return "unknown"
+}
+
+// HashSessionID avoids persisting a harness-provided session identifier.
+func HashSessionID(sessionID string) string {
+	if !sessionIDPattern.MatchString(sessionID) {
+		return ""
+	}
+	sum := sha256.Sum256([]byte("harness-downshift-session-v1:" + sessionID))
+	return hex.EncodeToString(sum[:])
+}
+
+// FromDecision builds an Event from a core.Decision and hook runtime context.
+func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 	return Event{
-		Timestamp:        time.Now().UTC().Format(time.RFC3339),
+		CorrelationID:    correlationID,
+		Timestamp:        time.Now().UTC().Format(time.RFC3339Nano),
+		Source:           "hook",
+		Agent:            "subagent",
 		Harness:          d.Harness,
 		Complexity:       d.Complexity.String(),
-		FromModel:        from,
-		ToModel:          d.Model.ID,
+		FromModel:        ModelOrUnknown(d.CurrentModel.ID),
+		ToModel:          ModelOrUnknown(d.Model.ID),
+		RequestedEffort:  "unknown",
+		FinalEffort:      EffortOrUnknown(d.Effort.String()),
 		Verdict:          d.Verdict.String(),
+		Tier:             d.Tier.String(),
+		PolicyVersion:    PolicyVersion,
+		BinaryVersion:    binaryVersion,
+		Outcome:          "rewrite_emitted",
 		EstimatedSavings: d.Savings,
+	}
+}
+
+// Failure records a hook fail-open path without accepting raw input or errors
+// that could contain prompt content.
+func Failure(correlationID, binaryVersion, errorCode string) Event {
+	return Event{
+		CorrelationID: correlationID,
+		Timestamp:     time.Now().UTC().Format(time.RFC3339Nano),
+		Source:        "hook",
+		Agent:         "subagent",
+		PolicyVersion: PolicyVersion,
+		BinaryVersion: binaryVersion,
+		Outcome:       "error",
+		ErrorCode:     errorCode,
 	}
 }
 
 // defaultEventPath returns ~/.harness-downshift/events.jsonl.
 func defaultEventPath() string {
+	if path := os.Getenv("DOWNSHIFT_EVENT_LOG"); path != "" {
+		return path
+	}
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".harness-downshift", "events.jsonl")
 }
