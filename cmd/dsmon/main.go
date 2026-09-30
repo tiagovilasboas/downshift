@@ -25,9 +25,10 @@ import (
 
 const (
 	eventsFile = ".harness-downshift/events.jsonl"
-	maxRecent  = 7
-	refreshMs  = 800
-	boxWidth   = 56
+	maxRecent  = 8
+	refreshMs  = 250  // fast enough to feel live
+	boxWidth   = 58
+	window24h  = 24 * time.Hour
 )
 
 // ── ANSI ──────────────────────────────────────────────────────────────────────
@@ -62,16 +63,26 @@ func (e event) localTime() string {
 	if err != nil || len(e.Timestamp) < 16 {
 		return "??:??"
 	}
-	return t.Local().Format("15:04")
+	// Show relative time for recent events so the list feels live
+	age := time.Since(t)
+	switch {
+	case age < 60*time.Second:
+		return fmt.Sprintf("%2ds", int(age.Seconds()))
+	case age < 3600*time.Second:
+		return fmt.Sprintf("%2dm", int(age.Minutes()))
+	default:
+		return t.Local().Format("15:04")
+	}
 }
 
-func (e event) isToday() bool {
+// isRecent returns true for events within the last 24 hours.
+// Using 24h instead of "today" avoids timezone edge cases and midnight cutoffs.
+func (e event) isRecent() bool {
 	t, err := time.Parse(time.RFC3339Nano, e.Timestamp)
 	if err != nil {
 		return false
 	}
-	now := time.Now()
-	return t.Local().Year() == now.Year() && t.Local().YearDay() == now.YearDay()
+	return time.Since(t) < window24h
 }
 
 // ── state (polling tail) ──────────────────────────────────────────────────────
@@ -151,7 +162,7 @@ func compute(all []event) (stats, []event) {
 	var recent []event
 	seen := map[string]bool{}
 	for _, e := range all {
-		if !e.isToday() {
+		if !e.isRecent() {
 			continue
 		}
 		st.total++
@@ -309,7 +320,7 @@ func render(s *state) {
 		harnessDisplay, liveIcon, lastEventStr)) + "\n")
 	b.WriteString(row("") + "\n")
 
-	b.WriteString(divider("switches today") + "\n")
+	b.WriteString(divider("last 24h") + "\n")
 	if len(recent) == 0 {
 		b.WriteString(row(fmt.Sprintf("  %sno events yet%s", dim, rst)) + "\n")
 	} else {
