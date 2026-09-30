@@ -69,6 +69,21 @@ downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~80% cheaper)
 
 That line in stderr means the hook fired and rewrote the model before the subagent started.
 
+**Step 5 — (Optional) Open the live monitor.** `dsmon` is a floating terminal widget built into the same repo that tails `~/.harness-downshift/events.jsonl` and shows model switches, tier distribution and estimated savings in real time:
+
+```bash
+# Build the monitor binary (separate from the hook binary)
+go build -o dsmon ./cmd/dsmon
+
+# Open directly in your current terminal
+./dsmon
+
+# Or open a new floating window (auto-detects iTerm2 / kitty / Ghostty / Terminal.app)
+./cmd/dsmon/launch.sh
+```
+
+See [dsmon — live monitor widget](#dsmon--live-monitor-widget) for the full widget reference.
+
 > **⚠️ Claude Code Pro/Max/Teams/API only.** Free plan has no real subagents and blocks network installs. See [Plan compatibility](#plan-compatibility--read-before-installing) before proceeding.
 
 ---
@@ -376,6 +391,58 @@ automatic.
 When the hook blocks, KiroCrew relays the stderr to the agent, which respawns
 the subagent at the recommended tier. Routing events are logged to
 `~/.harness-downshift/events.jsonl` like every other adapter.
+
+## dsmon — live monitor widget
+
+`cmd/dsmon` is a separate command inside this repo — a floating terminal widget
+that shows model switches, harness, tier distribution and estimated cost savings
+in real time. It reads `~/.harness-downshift/events.jsonl` and refreshes every
+800 ms. Zero external dependencies; pure stdlib Go.
+
+```
+╭──────────────────────────────────────────────────────╮
+│  dsmon  downshift monitor                            │
+│  harness  kirocrew        ◉ live                     │
+│ switches today ────────────────────────────────────  │
+│  04:03  opus   → haiku   trivial  -80%               │
+│  04:02  haiku  → opus    complex  ↑                  │
+│  04:01  opus   → sonnet  medium   -40%               │
+│ stats ──────────────────────────────────────────────  │
+│  35 events   22↓  2↑  8✓                             │
+│  est. saved  $0.18  ~7K tokens ¹                     │
+│  ¹ estimated · actual tokens not yet tracked         │
+╰──────────────────────────────────────────────────────╯
+  04:03:51 · ctrl+c to quit
+```
+
+### Build and run
+
+```bash
+# Build the monitor binary (separate from the hook binary `downshift`)
+go build -o dsmon ./cmd/dsmon
+
+# Run in the current terminal
+./dsmon
+
+# Open a floating terminal window (auto-detects iTerm2 / kitty / Ghostty / Terminal.app)
+./cmd/dsmon/launch.sh
+```
+
+### What it shows
+
+| Field | Source | Notes |
+|---|---|---|
+| Harness | `events.jsonl` → `harness` field | Last harness seen today |
+| Switches | `events.jsonl` → `verdict` + model fields | Last 7 routing decisions |
+| Events / ↓ ↑ ✓ | `events.jsonl` | Today's counts by verdict |
+| Est. saved ($) | `estimated_savings` × $0.01 avg spawn cost | Rough estimate, not actual billing |
+| Est. tokens | Derived from $ saved ÷ frontier output cost | Estimated, not from provider |
+
+**Token consumption note.** The router has no access to provider-reported token
+counts — it only sees what the harness passes to the preToolUse hook, which
+does not include usage data. The estimates are directionally correct (more
+downshifts = more savings) but not a substitute for your provider's billing
+dashboard. Actual token tracking is planned for a future PostToolUse hook pass.
 
 ## Grok CLI (config, not hook)
 

@@ -877,6 +877,10 @@ Usage:
   downshift models pull          Write ~/.harness-downshift/catalog.json from APIs
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
   downshift stats --cost-per-unit=<USD>   Convert normalised units to dollars
+
+Monitor (separate binary — cmd/dsmon):
+  go build -o dsmon ./cmd/dsmon  Build the live terminal widget
+  ./cmd/dsmon/launch.sh          Open dsmon in a floating terminal window
   downshift benchmark <file>     Run classifier against a labelled dataset; print confusion matrix
   downshift benchmark <file> --compare  Compare Legacy vs CapabilityRouter v2 side by side
   downshift train <file>         Train capability-router v2 on a labelled dataset

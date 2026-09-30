@@ -34,6 +34,44 @@ The loop does not receive completion signals from harnesses automatically.
   validated for finite bounded coefficients and saved atomically with private
   file permissions.
 
+## Runtime routing evidence
+
+Every hook invocation receives an opaque `correlation_id`: an allowlisted
+hexadecimal ID from the hook payload is preserved, otherwise Downshift creates
+one. The routing event at `~/.harness-downshift/events.jsonl` records that ID,
+an RFC3339 timestamp, hook source/agent, hashed session identifier, requested
+and final model/reasoning effort, verdict/tier, policy and binary versions,
+and an outcome/error code. It never records task text, prompts, or secrets.
+
+`outcome: "rewrite_emitted"` means only that Downshift emitted a compatible
+hook rewrite. It is **not** proof that a vendor harness accepted or used it.
+That needs a harness-specific acknowledgement carrying the same correlation
+ID; no such acknowledgement contract is assumed today. Input timeout and parse
+failures are recorded as prompt-free error events and fail open, preserving the
+subagent spawn.
+
+### Observing the loop live — dsmon
+
+`cmd/dsmon` is a floating terminal widget that tails `events.jsonl` in real
+time and renders routing decisions as they arrive:
+
+```bash
+go build -o dsmon ./cmd/dsmon && ./dsmon
+```
+
+It shows the current harness, the last seven routing decisions (verdicts,
+models, tiers, savings), and today's aggregate statistics (events, downshifts,
+upshifts, estimated cost savings). Estimated savings are derived from the
+`estimated_savings` fraction in each event and a rough average spawn cost;
+they are directionally correct but not provider billing data. Actual token
+counts are not available at the hook layer.
+
+Fowler loop: this section is the **guia inferencial** for architecture fitness
+and behaviour; the hook E2E JSONL correlation test and fail-open deadline test
+are **sensores computacionais** in CI. Local JSONL is a continuous,
+prompt-free operational signal, not proof of an effective provider-side model
+change.
+
 ## Promotion loop
 
 1. Collect routing metadata locally; never collect prompts by default.
