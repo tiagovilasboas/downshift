@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#161b22">
-<meta name="description" content="Engineering dashboard for AI agent workflows">
-<title>harness-hub</title>
+<meta name="theme-color" content="#0d1117">
+<meta name="description" content="harness-downshift · routing monitor">
+<title>harness-downshift</title>
 <link rel="manifest" href="manifest.json">
 <style>
 /* ── reset + tokens ── */
@@ -15,14 +15,17 @@
   --bg2:     #161b22;
   --bg3:     #21262d;
   --border:  #30363d;
-  --text:    #c9d1d9;
+  --text:    #e6edf3;
   --muted:   #8b949e;
   --accent:  #58a6ff;
   --ok:      #3fb950;
+  --ok-bg:   #0d2818;
   --warn:    #d29922;
   --info:    #79c0ff;
   --danger:  #f85149;
-  --font:    ui-monospace, 'SF Mono', Menlo, 'Cascadia Code', monospace;
+  --mid-bg:  #0d1d35;
+  --lo-bg:   #2d1117;
+  --font:    'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace;
 }
 body {
   background: var(--bg);
@@ -34,6 +37,7 @@ body {
 
 /* ── layout ── */
 .app { display: grid; grid-template-rows: auto 1fr; min-height: 100svh; }
+
 header {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
@@ -45,14 +49,18 @@ header {
 }
 .logo { font-weight: 700; font-size: 15px; color: var(--accent); }
 .logo span { color: var(--muted); font-weight: 400; }
+.header-right { display: flex; align-items: center; gap: 16px; }
 .clock { color: var(--muted); font-size: 11px; }
+#sse-indicator { font-size: 11px; }
+
 main {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1px;
   background: var(--border);
+  align-items: start;
 }
-@media (max-width: 700px) { main { grid-template-columns: 1fr; } }
+@media (max-width: 800px) { main { grid-template-columns: 1fr; } }
 
 /* ── panels ── */
 .panel {
@@ -60,98 +68,177 @@ main {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  min-height: 100%;
 }
 .panel-title {
-  font-size: 10px;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 1.5px;
   color: var(--muted);
+  text-transform: uppercase;
   border-bottom: 1px solid var(--border);
   padding-bottom: 8px;
 }
+.panel-footer {
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.panel-footer a { color: var(--muted); }
 
-/* ── monitor ── */
-.status-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.pulse { color: var(--ok); animation: p 1.4s infinite; display: inline-block; }
-@keyframes p { 0%,100%{opacity:1} 50%{opacity:.2} }
-.chip  { border: 1px solid var(--border); border-radius: 10px; padding: 1px 9px; font-size: 10px; color: var(--muted); }
-.chip.hi { border-color: var(--accent); color: var(--accent); }
-.sub-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
-.row { display: grid; grid-template-columns: 30px 52px 1fr; gap: 8px; padding: 2px 0; align-items: baseline; }
-.t   { color: var(--muted); text-align: right; font-size: 11px; }
-.m   { color: var(--info); }
-.desc { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dim  { color: var(--muted); }
+/* ── section labels ── */
+.sub-label {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+/* ── GEAR CARDS (tier rows) ── */
+.gear-cards { display: flex; flex-direction: column; gap: 6px; }
+
+.gear-card {
+  display: grid;
+  grid-template-columns: 52px 1px 1fr auto;
+  align-items: center;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.gear-card.hi  { background: var(--ok-bg); }
+.gear-card.mid { background: var(--mid-bg); }
+.gear-card.lo  { background: var(--lo-bg); }
+
+.gear-num {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 10px 6px;
+  gap: 2px;
+}
+.gear-n  { font-size: 22px; font-weight: 700; line-height: 1; }
+.gear-lbl{ font-size: 9px; letter-spacing: 1px; }
+.hi  .gear-n, .hi  .gear-lbl { color: var(--ok); }
+.mid .gear-n, .mid .gear-lbl { color: var(--accent); }
+.lo  .gear-n, .lo  .gear-lbl { color: var(--danger); }
+
+.gear-div { width: 1px; background: var(--border); align-self: stretch; }
+
+.gear-body { padding: 10px 12px; }
+.gear-type { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+.hi  .gear-type { color: var(--ok); }
+.mid .gear-type { color: var(--accent); }
+.lo  .gear-type { color: var(--danger); }
+
+.gear-examples { color: var(--muted); font-size: 11px; }
+.gear-model    { color: var(--muted); font-size: 10px; margin-top: 3px; }
+
+.gear-stats {
+  padding: 10px 14px;
+  text-align: right;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+}
+.gear-count { font-size: 18px; font-weight: 700; }
+.hi  .gear-count { color: var(--ok); }
+.mid .gear-count { color: var(--accent); }
+.lo  .gear-count { color: var(--danger); }
+.gear-saved { font-size: 10px; color: var(--muted); }
+
+/* ── big stat ── */
+.big-stat { display: flex; align-items: baseline; gap: 8px; }
+.big-num { font-size: 26px; font-weight: 700; color: var(--ok); }
+.big-label { font-size: 13px; color: var(--muted); }
+
+/* ── event rows ── */
+.row {
+  display: grid;
+  grid-template-columns: 36px 72px 1fr;
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--bg3);
+  align-items: center;
+}
+.row:last-child { border-bottom: none; }
+.t    { color: var(--muted); font-size: 10px; }
+.m    { color: var(--info);  font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desc { color: var(--text);  font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── status chips ── */
+.chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  margin: 2px 2px 2px 0;
+}
+.chip.hi { border-color: var(--ok); color: var(--ok); background: var(--ok-bg); }
+
+/* ── pulse dot ── */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.pulse { animation: pulse 1.8s ease-in-out infinite; color: var(--ok); }
+
+/* ── spans ── */
 .ok   { color: var(--ok); }
 .warn { color: var(--warn); }
 .info { color: var(--info); }
-.stats-line { color: var(--text); font-size: 12px; }
+.dim  { color: var(--muted); }
+.stats-line { display: flex; gap: 12px; flex-wrap: wrap; }
 
-/* ── github panel ── */
+/* ── GitHub cards ── */
 .gh-card {
+  background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 12px;
-  background: var(--bg2);
-  margin-bottom: 8px;
+  display: flex; flex-direction: column; gap: 6px;
 }
-.gh-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-.gh-name { color: var(--accent); text-decoration: none; font-weight: 600; }
+.gh-top { display: flex; justify-content: space-between; align-items: center; }
+.gh-name { color: var(--accent); font-weight: 700; text-decoration: none; font-size: 13px; }
 .gh-name:hover { text-decoration: underline; }
-.gh-meta { font-size: 10px; color: var(--muted); }
-.gh-desc { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-.gh-files { display: flex; gap: 5px; flex-wrap: wrap; }
-.file-chip { font-size: 10px; border: 1px solid var(--border); border-radius: 4px; padding: 1px 7px; color: var(--muted); }
-.gh-detail { margin-top: 8px; }
-.gh-detail summary { font-size: 10px; color: var(--muted); cursor: pointer; }
-.gh-detail pre { margin-top: 6px; font-size: 10px; color: var(--muted); white-space: pre-wrap; overflow-x: auto; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; padding: 8px; background: var(--bg3); }
+.gh-meta { color: var(--muted); font-size: 11px; }
+.gh-desc { color: var(--muted); font-size: 11px; line-height: 1.5; }
+.gh-detail summary { color: var(--muted); font-size: 11px; cursor: pointer; }
+.gh-detail pre { margin-top: 6px; font-size: 10px; color: var(--muted); white-space: pre-wrap; background: var(--bg3); padding: 8px; border-radius: 4px; max-height: 200px; overflow-y: auto; }
 
-/* ── pwa install banner ── */
+/* ── install banner ── */
 #install-banner {
-  display: none;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px 14px;
-  margin-bottom: 8px;
-  font-size: 11px;
-  color: var(--muted);
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
+  display: none; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; padding: 8px 10px; font-size: 11px; color: var(--muted);
 }
 #install-banner.show { display: flex; }
 #install-btn {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 4px 12px;
-  font-size: 11px;
-  cursor: pointer;
-  font-family: var(--font);
-  white-space: nowrap;
+  background: var(--bg3); border: 1px solid var(--border); color: var(--accent);
+  border-radius: 4px; padding: 4px 12px; font-size: 11px; cursor: pointer;
+  font-family: var(--font); white-space: nowrap;
 }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <span class="logo">harness<span>-hub</span></span>
-    <span class="clock" id="clock"></span>
+    <span class="logo">harness<span>-downshift</span></span>
+    <div class="header-right">
+      <span id="sse-indicator"><span class="dim">○ connecting…</span></span>
+      <span class="clock" id="clock"></span>
+    </div>
   </header>
 
   <main>
-    <!-- ── routing monitor ── -->
+    <!-- ── LEFT: routing monitor ── -->
     <div class="panel">
-      <div class="panel-title">routing monitor · last 24h</div>
+      <div class="panel-title">routing monitor · live</div>
 
       <div id="install-banner">
-        📲 Install harness-hub as an app
+        📲 Install as app
         <button id="install-btn">Install</button>
       </div>
 
+      <!-- harness status -->
       <div>
         <div class="sub-label">harnesses</div>
         <div class="status-row" id="monitor-status">
@@ -159,38 +246,100 @@ main {
         </div>
       </div>
 
+      <!-- gear tier cards -->
+      <div>
+        <div class="sub-label">tier breakdown</div>
+        <div class="gear-cards" id="gear-cards">
+          <!-- rendered by JS -->
+          <div class="gear-card hi">
+            <div class="gear-num"><span class="gear-n">1</span><span class="gear-lbl">HIGH</span></div>
+            <div class="gear-div"></div>
+            <div class="gear-body">
+              <div class="gear-type">TRIVIAL</div>
+              <div class="gear-examples">rename · format · git commit · fix typo</div>
+              <div class="gear-model">haiku / grok / luna</div>
+            </div>
+            <div class="gear-stats">
+              <span class="gear-count" id="count-trivial">—</span>
+              <span class="gear-saved" id="saved-trivial"></span>
+            </div>
+          </div>
+          <div class="gear-card mid">
+            <div class="gear-num"><span class="gear-n">2</span><span class="gear-lbl">MID</span></div>
+            <div class="gear-div"></div>
+            <div class="gear-body">
+              <div class="gear-type">SIMPLE · MEDIUM</div>
+              <div class="gear-examples">add field · fix bug · implement feature</div>
+              <div class="gear-model">sonnet / terra</div>
+            </div>
+            <div class="gear-stats">
+              <span class="gear-count" id="count-simple">—</span>
+              <span class="gear-saved" id="saved-simple"></span>
+            </div>
+          </div>
+          <div class="gear-card lo">
+            <div class="gear-num"><span class="gear-n">L</span><span class="gear-lbl">LOW</span></div>
+            <div class="gear-div"></div>
+            <div class="gear-body">
+              <div class="gear-type">COMPLEX</div>
+              <div class="gear-examples">rearchitect · migrate · RFC · race condition</div>
+              <div class="gear-model">opus / frontier</div>
+            </div>
+            <div class="gear-stats">
+              <span class="gear-count" id="count-complex">—</span>
+              <span class="gear-saved" id="saved-complex"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- total savings -->
+      <div>
+        <div class="sub-label">estimated savings</div>
+        <div class="big-stat">
+          <span class="big-num" id="total-saved">$0.00</span>
+          <span class="big-label" id="total-events">0 events</span>
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <a href="https://github.com/tiagovilasboas/harness-downshift" target="_blank" rel="noopener noreferrer">harness-downshift</a>
+        · run <code>./dsmon-server</code> for live data
+      </div>
+    </div>
+
+    <!-- ── RIGHT: switches + agents + github ── -->
+    <div class="panel">
+      <div class="panel-title">activity</div>
+
+      <!-- last switches -->
       <div>
         <div class="sub-label">last switches</div>
         <div id="monitor-switches"><span class="dim">—</span></div>
       </div>
 
+      <!-- active agents -->
       <div>
         <div class="sub-label">agents</div>
         <div id="monitor-agents"><span class="dim">—</span></div>
       </div>
 
+      <!-- raw stats line -->
       <div>
-        <div class="sub-label">stats</div>
+        <div class="sub-label">totals</div>
         <div class="stats-line" id="monitor-stats"><span class="dim">—</span></div>
       </div>
 
-      <div style="color:var(--muted);font-size:10px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border)">
-        <a href="https://github.com/tiagovilasboas/harness-downshift" target="_blank" rel="noopener noreferrer" style="color:var(--muted)">harness-downshift</a>
-        · start <code style="color:var(--muted)">./dsmon-server</code> for live data
+      <!-- github repos -->
+      <div>
+        <div class="sub-label">harness stack · github</div>
+        <span id="gh-status" class="dim"></span>
+        <div id="gh-repos" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
       </div>
-    </div>
 
-    <!-- ── github explorer ── -->
-    <div class="panel">
-      <div class="panel-title">harness stack · github</div>
-
-      <span id="gh-status" class="dim"></span>
-      <div id="gh-repos"></div>
-
-      <div style="color:var(--muted);font-size:10px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border)">
-        data from
-        <a href="https://github.com/tiagovilasboas" target="_blank" rel="noopener noreferrer" style="color:var(--muted)">github.com/tiagovilasboas</a>
-        via public API
+      <div class="panel-footer">
+        <a href="https://github.com/tiagovilasboas" target="_blank" rel="noopener noreferrer">github.com/tiagovilasboas</a>
+        · public API
       </div>
     </div>
   </main>

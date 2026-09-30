@@ -49,6 +49,11 @@ function renderMonitor(data) {
     set('monitor-switches', dim('no data'));
     set('monitor-agents',   dim('no data'));
     set('monitor-stats',    dim('—'));
+    // gear cards: offline state
+    set('count-trivial', '—'); set('saved-trivial', '');
+    set('count-simple',  '—'); set('saved-simple',  '');
+    set('count-complex', '—'); set('saved-complex', '');
+    set('total-saved', '$0.00'); set('total-events', 'offline');
     return;
   }
 
@@ -75,6 +80,27 @@ function renderMonitor(data) {
   set('monitor-stats',
     `${info(stats.total||0)} events &nbsp; ${ok(`${stats.down||0}↓`)} &nbsp; ${warn(`${stats.up||0}↑`)} &nbsp; ${ok(`$${(stats.est_usd||0).toFixed(2)}`)} saved`
   );
+
+  // ── gear tier breakdown ──────────────────────────────────────────────────
+  // Group switches by complexity tier and compute counts + savings per tier
+  const tiers = { trivial: {count:0, saved:0}, simple: {count:0, saved:0}, complex: {count:0, saved:0} };
+  for (const e of switches) {
+    const c = (e.complexity || '').toLowerCase();
+    const tier = c === 'trivial' ? 'trivial' : c === 'complex' ? 'complex' : 'simple';
+    tiers[tier].count++;
+    tiers[tier].saved += e.estimated_savings || 0;
+  }
+
+  const fmtSaved = v => v > 0 ? `$${v.toFixed(2)} saved` : '';
+  set('count-trivial', tiers.trivial.count || '0');
+  set('saved-trivial', fmtSaved(tiers.trivial.saved));
+  set('count-simple',  tiers.simple.count  || '0');
+  set('saved-simple',  fmtSaved(tiers.simple.saved));
+  set('count-complex', tiers.complex.count || '0');
+  set('saved-complex', fmtSaved(tiers.complex.saved));
+
+  set('total-saved',  `$${(stats.est_usd||0).toFixed(2)}`);
+  set('total-events', `${stats.total||0} events`);
 }
 
 // ── SSE: push updates from server ────────────────────────────────────────────
