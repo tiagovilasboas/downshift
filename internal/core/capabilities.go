@@ -25,6 +25,12 @@ var (
 
 	// CodexCaps — PreToolUse hook accepts updatedInput.model + reasoning_effort.
 	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true}
+
+	// KiroCrewCaps — KiroCrew's preToolUse hook is policy-only: its contract is
+	// exit 0 (allow) / exit 2 (block + stderr to the LLM), with NO updated_input
+	// rewrite path. So the model cannot be replaced in place; the adapter blocks
+	// a mismatched spawn and instructs the agent to respawn at the right tier.
+	KiroCrewCaps = HarnessCapabilities{CanRewriteModel: false, CanApplyEffort: false}
 )
 
 // RewritePlan is the concrete set of protocol actions an adapter should take.
