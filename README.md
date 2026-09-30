@@ -25,8 +25,12 @@ prices for work a cheap model does just as well.**
 to the cheap model. Hard thinking gets the frontier model. You stop burning
 budget on the routine tasks and keep frontier power for the ones that need it.
 
-Hook adapters for Claude Code, Cursor, Codex, and Antigravity today, plus a config recipe for
+Hook adapters for Claude Code, Cursor, Codex, Antigravity, and KiroCrew today, plus a config recipe for
 Grok CLI. Any harness with controllable subagents next.
+
+## Optional local LangGraph planner
+
+The Go binary remains a deterministic, zero-runtime model router. For an explicitly opted-in local delegation-planning graph, see [Local LangGraph orchestration](docs/LANGGRAPH-ORCHESTRATION.md). It never chooses a tier/model or contacts an LLM; those decisions remain in Go.
 
 **Keywords:** Claude Code subagent cost · LLM model routing · agent harness ·
 cost optimization · Claude Code hooks · Cursor subagents · Codex model selection
@@ -221,7 +225,7 @@ the config and reloads it on save.
 
 Downshift writes a model id only when that id is in the current session. The catalog supplies tier, cost, family, and effort for ids that are also in the session. It never adds an id the session does not have. If the session list cannot be determined, the hook leaves the current model unchanged.
 
-Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift records that ID alongside the routing decision so model usage can be inspected per session. Record selectable model ids in `~/.harness-downshift/session-models.json`. A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. Details and evidence: [docs/session-models.md](docs/session-models.md). [docs/examples/session-models.example.json](docs/examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
+Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift validates and hashes that ID before recording it, so local routing decisions can be grouped without persisting the raw session identifier. Record selectable model ids in `~/.harness-downshift/session-models.json`. A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. Details and evidence: [docs/session-models.md](docs/session-models.md). [docs/examples/session-models.example.json](docs/examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
 
 ## Install (Codex)
 
@@ -313,6 +317,65 @@ Register the hook in `~/.gemini/config/hooks.json`:
 ```
 
 When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, inspects the prompt inside `Subagents[0].Prompt`, and dynamically rewrites `Subagents[0].Model` to `flash` or `flash_lite` for mechanical tasks, logging the routing event to `~/.harness-downshift/events.jsonl`.
+
+## KiroCrew (policy mode: block-and-instruct, not rewrite)
+
+KiroCrew has subagents (`spawn_run`, `spawn_sub_agents`) and each spawn accepts
+a per-child `model` — so the material the router needs is there. What it does
+*not* have is a rewrite channel: its `preToolUse` hook contract is binary,
+`exit 0` allows the tool and `exit 2` blocks it and relays stderr to the agent.
+There is no `updated_input`, so the hook cannot swap the child's model in place
+the way it does on Claude Code, Cursor, or Codex.
+
+So the KiroCrew adapter runs in **policy mode** — the same lever Grok exposes,
+used deliberately. It classifies the pending spawn and:
+
+- **right tier already** → `exit 0`, allow silently;
+- **confident tier mismatch** → `exit 2`, block with a message naming the model
+  to respawn with (and, for a small tier, a reminder to trim context so the
+  child fits the smaller window);
+- **uncertain downshift, unknown model, or non-subagent tool** → `exit 0`,
+  fail-open. The router never blocks a spawn on its own doubt.
+
+The classifier is the same deterministic, prompt-free core — no LLM in the
+loop. The difference from rewrite mode is that the agent respawns at the right
+tier instead of the hook doing it silently; the discipline is forced, not
+automatic.
+
+### Setup
+
+1. Build the binary:
+   ```bash
+   go build -o downshift ./cmd/downshift
+   ```
+2. Add a `preToolUse` hook scoped to the subagent tool. KiroCrew reads hook
+   files from `~/.kiro/hooks/*.json`:
+   ```json
+   {
+     "name": "downshift-subagent-router",
+     "version": "1",
+     "enabled": true,
+     "hooks": {
+       "preToolUse": [
+         {
+           "matcher": "subagent",
+           "command": "/absolute/path/to/downshift kirocrew",
+           "timeout_ms": 5000
+         }
+       ]
+     }
+   }
+   ```
+3. Test it from the terminal (no spawn needed):
+   ```bash
+   echo '{"tool_name":"spawn_run","tool_input":{"task":"rename a variable","model":"opus"}}' \
+     | ./downshift kirocrew ; echo "exit=$?"
+   # exit=2, stderr: "TRIVIAL task → downshift to claude-haiku-4-5 … Respawn with model=…"
+   ```
+
+When the hook blocks, KiroCrew relays the stderr to the agent, which respawns
+the subagent at the recommended tier. Routing events are logged to
+`~/.harness-downshift/events.jsonl` like every other adapter.
 
 ## Grok CLI (config, not hook)
 
@@ -491,8 +554,23 @@ That's the one place model selection is genuinely controllable from the outside
 | **Codex** | ✅ `spawn_agent` (multi_agent_v2) | `PreToolUse` hook → `updatedInput.model` + `reasoning_effort` | ✅ shipped |
 | **Antigravity** | ✅ `invoke_subagent` | `PreToolUse` hook → `overwrite.Subagents` | ✅ shipped |
 | **Grok CLI** | ✅ `spawn_subagent` | **config**, not hook — `[subagents.roles/models]` in `config.toml` | ⚙️ config-based (see below) |
-| Kiro (single-thread) | ❌ no subagents | — | not applicable |
+| **KiroCrew** | ✅ `spawn_run` / `spawn_sub_agents` | `preToolUse` hook → **policy mode** (exit 0 allow / exit 2 block + stderr; no rewrite path) | ✅ shipped |
+| Kiro CLI (single-thread) | ❌ no subagents | — | not applicable |
 | Claude.ai / ChatGPT web | ❌ closed | — | not possible |
+
+**Policy mode vs rewrite mode.** The four rewrite adapters (Claude Code,
+Cursor, Codex, Antigravity) swap the child's model *in place* via
+`updated_input`. KiroCrew's `preToolUse` contract has no such channel — it is
+binary: `exit 0` allows the spawn, `exit 2` blocks it and relays stderr to the
+agent. So the KiroCrew adapter runs in **policy mode**: it classifies the
+pending spawn and, on a *confident* tier mismatch, blocks with an actionable
+message naming the model to respawn with. Downshifts require classifier
+confidence (blocking on doubt would demote a task that needed the bigger
+model); upshifts and non-subagent tools follow the shared fail-open rule. This
+is why KiroCrew integration is *feature-complete, not automatic-rewrite*: the
+gap was never the router, it was the harness's rewrite channel — KiroCrew
+simply exposes allow/deny, so the router forces the discipline instead of
+silently rewriting.
 
 The classifier and policy are harness-agnostic — one brain. Each adapter
 translates the decision into that harness's own mechanism.
