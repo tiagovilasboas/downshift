@@ -11,6 +11,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+
+	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
 )
 
 // TestCodexHook_NamespacedSpawnAgentWithoutCurrentModel exercises the actual
@@ -77,11 +79,11 @@ func TestCodexHook_NamespacedSpawnAgentWithoutCurrentModel(t *testing.T) {
 	if !bytes.Contains(stderr.Bytes(), []byte("gpt-6-sol")) {
 		t.Errorf("stderr = %q, want routing diagnostic for gpt-6-sol", stderr.String())
 	}
-	telemetry, err := os.ReadFile(filepath.Join(home, ".harness-downshift", "events.jsonl"))
+	eventLog, err := os.ReadFile(filepath.Join(home, ".harness-downshift", "events.jsonl"))
 	if err != nil {
 		t.Fatalf("read hook telemetry: %v", err)
 	}
-	if !bytes.Contains(telemetry, []byte(`"session_id":"codex-session-smoke"`)) {
-		t.Errorf("telemetry did not identify the Codex session: %s", telemetry)
+	if !bytes.Contains(eventLog, []byte(`"session_id":"`+telemetry.HashSessionID("codex-session-smoke")+`"`)) {
+		t.Errorf("telemetry did not identify the Codex session: %s", eventLog)
 	}
 }
