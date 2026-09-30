@@ -16,26 +16,36 @@ import (
 )
 
 // fakeCurl stands in for curl so install.sh can be exercised offline.
-// FAKE_LATEST / FAKE_LIST hold the tag served by /releases/latest and
-// /releases?per_page=1; an empty value simulates an HTTP error (curl -f → 22).
+// It models github.com, not the API: FAKE_LATEST is the stable tag that
+// /releases/latest redirects to (empty = only prereleases exist, so GitHub
+// redirects to /releases); FAKE_LIST is the newest tag in releases.atom
+// (empty = feed unavailable, curl -f → 22). FAKE_OFFLINE=1 fails every call.
 // Downloads copy FAKE_TARBALL to the -o path. Every URL is appended to FAKE_LOG.
 const fakeCurl = `#!/bin/sh
-url=""; out=""
+url=""; out=""; write=""
 while [ $# -gt 0 ]; do
   case "$1" in
     -o) out="$2"; shift ;;
+    -w) write="$2"; shift ;;
     http*) url="$1" ;;
   esac
   shift
 done
 echo "$url" >> "$FAKE_LOG"
+[ "$FAKE_OFFLINE" = 1 ] && exit 6
 case "$url" in
+  https://api.github.com/*)
+    echo "API must not be called" >&2; exit 22 ;;
   */releases/latest)
-    [ -n "$FAKE_LATEST" ] || exit 22
-    printf '{\n  "tag_name": "%s",\n  "prerelease": false\n}\n' "$FAKE_LATEST" ;;
-  *"/releases?per_page=1")
+    base="${url%/latest}"
+    if [ -n "$FAKE_LATEST" ]; then final="$base/tag/$FAKE_LATEST"; else final="$base"; fi
+    [ "$write" = '%{url_effective}' ] && printf '%s' "$final" ;;
+  */releases.atom)
     [ -n "$FAKE_LIST" ] || exit 22
-    printf '[\n  {\n    "tag_name": "%s",\n    "prerelease": true\n  }\n]\n' "$FAKE_LIST" ;;
+    base="${url%.atom}"
+    printf '<feed>\n  <link rel="alternate" href="%s"/>\n' "$base"
+    printf '  <entry>\n    <link rel="alternate" type="text/html" href="%s/tag/%s"/>\n  </entry>\n' "$base" "$FAKE_LIST"
+    printf '  <entry>\n    <link rel="alternate" type="text/html" href="%s/tag/v0.0.1-alpha.1"/>\n  </entry>\n</feed>\n' "$base" ;;
   */releases/download/*)
     cp "$FAKE_TARBALL" "$out" ;;
   *) exit 22 ;;
@@ -50,6 +60,11 @@ type installResult struct {
 }
 
 func runInstall(t *testing.T, latest, list string, args ...string) installResult {
+	t.Helper()
+	return runInstallEnv(t, latest, list, nil, args...)
+}
+
+func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ...string) installResult {
 	t.Helper()
 	if runtime.GOOS == "windows" {
 		t.Skip("install.sh targets macOS/Linux")
@@ -80,6 +95,7 @@ func runInstall(t *testing.T, latest, list string, args ...string) installResult
 		"FAKE_TARBALL=" + tarball,
 		"FAKE_LOG=" + logFile,
 	}
+	cmd.Env = append(cmd.Env, extraEnv...)
 	out, err := cmd.CombinedOutput()
 	code := 0
 	if err != nil {
@@ -143,11 +159,21 @@ func assertInstalled(t *testing.T, r installResult) {
 	}
 }
 
-// Regression: while only prereleases exist, /releases/latest returns 404 and
-// the one-line installer exited 1 for every user.
+func assertNoAPICalls(t *testing.T, r installResult) {
+	t.Helper()
+	for _, u := range r.urls {
+		if strings.Contains(u, "api.github.com") {
+			t.Errorf("install.sh called the rate-limited GitHub API: %v", r.urls)
+		}
+	}
+}
+
+// Regression: while only prereleases exist, /releases/latest does not point at
+// a tag and the one-line installer exited 1 for every user.
 func TestInstallFallsBackToPrereleaseWhenNoStableRelease(t *testing.T) {
 	r := runInstall(t, "", "v0.1.0-beta.1")
 	assertInstalled(t, r)
+	assertNoAPICalls(t, r)
 	u := downloadURL(t, r)
 	if !strings.Contains(u, "/releases/download/v0.1.0-beta.1/downshift_0.1.0-beta.1_") {
 		t.Errorf("download URL = %s, want the v0.1.0-beta.1 archive", u)
@@ -157,28 +183,51 @@ func TestInstallFallsBackToPrereleaseWhenNoStableRelease(t *testing.T) {
 func TestInstallPrefersLatestStableRelease(t *testing.T) {
 	r := runInstall(t, "v1.0.0", "v1.1.0-beta.1")
 	assertInstalled(t, r)
+	assertNoAPICalls(t, r)
 	if u := downloadURL(t, r); !strings.Contains(u, "/releases/download/v1.0.0/") {
 		t.Errorf("download URL = %s, want v1.0.0", u)
 	}
 	for _, u := range r.urls {
-		if strings.Contains(u, "per_page") {
-			t.Errorf("release list queried although /releases/latest answered: %v", r.urls)
+		if strings.Contains(u, "releases.atom") {
+			t.Errorf("release feed read although /releases/latest answered: %v", r.urls)
 		}
 	}
 }
 
-func TestInstallExplicitVersionSkipsAPI(t *testing.T) {
+// Regression: the installer resolved "latest" through api.github.com, whose
+// anonymous rate limit (60 requests/hour per IP) made it fail on shared IPs.
+func TestInstallResolvesLatestWithoutGitHubAPI(t *testing.T) {
+	r := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, r)
+	assertNoAPICalls(t, r)
+	if len(r.urls) == 0 || r.urls[0] != "https://github.com/tiagovilasboas/harness-downshift/releases/latest" {
+		t.Errorf("first lookup = %v, want the github.com /releases/latest redirect", r.urls)
+	}
+}
+
+func TestInstallExplicitVersionSkipsLookup(t *testing.T) {
 	r := runInstall(t, "", "", "v0.1.0-beta.1")
 	assertInstalled(t, r)
-	for _, u := range r.urls {
-		if strings.Contains(u, "api.github.com") {
-			t.Errorf("explicit version should not query the API: %v", r.urls)
-		}
+	if len(r.urls) != 1 {
+		t.Errorf("explicit version should only download, got curl calls: %v", r.urls)
+	}
+	if u := downloadURL(t, r); !strings.Contains(u, "/releases/download/v0.1.0-beta.1/downshift_0.1.0-beta.1_") {
+		t.Errorf("download URL = %s, want the v0.1.0-beta.1 archive", u)
 	}
 }
 
-func TestInstallFailsClearlyWhenAPIUnavailable(t *testing.T) {
+func TestInstallFailsClearlyWhenNoReleaseFound(t *testing.T) {
 	r := runInstall(t, "", "")
+	if r.code != 1 {
+		t.Fatalf("install.sh exit %d, want 1\noutput:\n%s", r.code, r.output)
+	}
+	if !strings.Contains(r.output, "could not determine latest version") {
+		t.Errorf("missing actionable error, got:\n%s", r.output)
+	}
+}
+
+func TestInstallFailsClearlyWhenOffline(t *testing.T) {
+	r := runInstallEnv(t, "v1.0.0", "v1.0.0", []string{"FAKE_OFFLINE=1"})
 	if r.code != 1 {
 		t.Fatalf("install.sh exit %d, want 1\noutput:\n%s", r.code, r.output)
 	}
