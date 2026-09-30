@@ -143,12 +143,13 @@ func (s *state) poll(path string) {
 type stats struct {
 	total, down, up, ok int
 	totalSavings        float64
-	lastHarness         string
+	harnesses           []string // all distinct harnesses active today, most-recent first
 }
 
 func compute(all []event) (stats, []event) {
 	var st stats
 	var recent []event
+	seen := map[string]bool{}
 	for _, e := range all {
 		if !e.isToday() {
 			continue
@@ -163,8 +164,9 @@ func compute(all []event) (stats, []event) {
 		case "OK":
 			st.ok++
 		}
-		if e.Harness != "" {
-			st.lastHarness = e.Harness
+		if e.Harness != "" && !seen[e.Harness] {
+			seen[e.Harness] = true
+			st.harnesses = append(st.harnesses, e.Harness)
 		}
 		recent = append(recent, e)
 	}
@@ -250,9 +252,20 @@ func switchLine(e event) string {
 
 func render(s *state) {
 	st, recent := compute(s.all)
-	harness := st.lastHarness
-	if harness == "" {
-		harness = "—"
+
+	// Build harness display: all distinct harnesses active today
+	harnessDisplay := dim + "—" + rst
+	if len(st.harnesses) > 0 {
+		parts := make([]string, len(st.harnesses))
+		for i, h := range st.harnesses {
+			// highlight the most recent (last in slice)
+			if i == len(st.harnesses)-1 {
+				parts[i] = cyn + h + rst
+			} else {
+				parts[i] = dim + h + rst
+			}
+		}
+		harnessDisplay = strings.Join(parts, dim+"·"+rst)
 	}
 	now := time.Now().Local().Format("15:04:05")
 
@@ -292,8 +305,8 @@ func render(s *state) {
 	b.WriteString(row("") + "\n")
 	b.WriteString(row(fmt.Sprintf("  %sdsmon%s  downshift monitor", bold, rst)) + "\n")
 	b.WriteString(row("") + "\n")
-	b.WriteString(row(fmt.Sprintf("  harness  %s%-14s%s  %s  last: %s",
-		cyn, harness, rst, liveIcon, lastEventStr)) + "\n")
+	b.WriteString(row(fmt.Sprintf("  harnesses  %s  %s  last: %s",
+		harnessDisplay, liveIcon, lastEventStr)) + "\n")
 	b.WriteString(row("") + "\n")
 
 	b.WriteString(divider("switches today") + "\n")
