@@ -37,11 +37,14 @@ Subagent task: "diagnose the race condition in the webhook handler"
 
 ![Routing — how downshift classifies and rewrites the subagent model](docs/img/hero.svg)
 
-> **⚠️ Beta — practical testing phase.** The router and adapters work. The
-> gap is the harnesses themselves: model selection for subagents is an
-> evolving feature in Claude Code, Cursor, and Codex, and not every plan
-> or build honours the hook rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
-> before installing.
+> **⚠️ Beta with measured evidence.** The router and adapters work — 430 local
+> routing events measured ([Real session data](#real-session-data)), hook-layer
+> E2E in CI, full test suite green. The remaining gap is the harnesses
+> themselves: model selection for subagents is an evolving feature in Claude
+> Code, Cursor, and Codex, and not every plan or build honours the hook
+> rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
+> before installing, and [Status](#status) for what beta means here and the
+> graduation criteria.
 
 ## Native Go orchestration planner
 
@@ -1202,7 +1205,7 @@ that actually need it.
 
 ## Status
 
-**Beta — practical testing phase.**
+**Beta — practical testing phase, with measured evidence.**
 
 The router is built and tested: adapters for Claude Code, Cursor, and Codex,
 deterministic classifier covering 40+ documented prompts, catalog with
@@ -1235,6 +1238,28 @@ harness, that is a harness limitation documented in
 
 **Feedback most wanted:** prompts the classifier gets wrong. Open an issue
 with the prompt, what `downshift try` returned, and what you expected.
+
+### What beta means here
+
+Beta is a scope statement, not a quality apology. Proven so far, all measured
+rather than claimed:
+
+| Proven | Evidence |
+|---|---|
+| Routing works on real sessions | 430 local events, 39.5% downshifted ([Real session data](#real-session-data)) |
+| Downgrades are conservative | `FRONTIER→SMALL` 0% on seed; uncertain calls never downshift (`ShouldRewriteModel`) |
+| Hook contract holds end to hook-layer | `TestHookE2E_RewriteEventStats` in CI: stdin → rewrite → event → stats |
+| Estimates are labeled estimates | `~$ est.` + `is_estimate` everywhere; real-cost plumbing shipped, zero real dollars claimed |
+
+Not yet proven — the graduation criteria for leaving beta:
+
+1. **Real-spawn verification** — proof a harness executor honored the rewrite, not just `rewrite_emitted`.
+2. **Multi-user data** — today's 430 events are single-user dogfood; graduation needs independent sessions.
+3. **Billing before/after** — provider-dashboard comparison, replacing normalised units.
+4. **Larger benchmark** — 500+ labeled tasks with statistical reporting (seed is 30; protocol in `benchmark/README.md`).
+5. **Harness coverage** — rewrites honored across plans/builds, not silently discarded (the external dependency).
+
+When those five hold, the beta label goes. Until then it stays — with the numbers above updated as evidence grows.
 
 ## Brand
 
