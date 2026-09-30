@@ -17,6 +17,10 @@ type ToolCall struct {
 
 type Event struct {
 	ToolCall ToolCall `json:"toolCall"`
+	// Optional allowlist. Nil means the payload did not include one.
+	// ResolveSession falls back to the user file when both are nil.
+	SessionModels   *[]string `json:"session_models,omitempty"`
+	AvailableModels *[]string `json:"available_models,omitempty"`
 }
 
 type Output struct {
@@ -57,6 +61,8 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		res = r[0]
 	}
 
+	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
+
 	changed := false
 	var lastDecision core.Decision
 
@@ -75,6 +81,25 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		decision := core.Route(prompt, harnessID, currentModel, res)
 		lastDecision = decision
 
+		// Gate the rewrite on the session plan: unknown session, empty
+		// target, explicit-only current model, or a rewrite the plan
+		// forbids all fail open (allow, no write).
+		plan := decision.PlanForSession(core.AntigravityCaps, res, session)
+		if plan.PreserveExplicit || !plan.RewriteModel || !session.Contains(plan.Model.ID) {
+			continue
+		}
+		// A decision held by a guardrail (self-correction recorded a
+		// violation) must never be applied, even when the plan names a
+		// session target. Note: the embedded catalog has no Antigravity
+		// entries yet, so ModelFor falls back to another harness and every
+		// decision carries R4_FOREIGN_MODEL until native flash_lite/flash/
+		// pro entries with real pricing land in catalog.json. Until then
+		// this adapter observes and logs but never rewrites — the safe
+		// posture for a catalog gap.
+		if len(decision.Corrections) > 0 {
+			continue
+		}
+
 		var mappedModel string
 		switch decision.Tier {
 		case core.TierSmall:
@@ -87,11 +112,17 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 			mappedModel = "inherit"
 		}
 
-		plan := decision.Plan(core.CursorCaps, res)
-		if !plan.PreserveExplicit {
-			subagent["Model"] = mappedModel
-			changed = true
+		// The alias written must itself be a session member and must not
+		// be an explicit-only model.
+		if mappedModel == "" || !session.Contains(mappedModel) {
+			continue
 		}
+		if res != nil && res.IsExplicitOnly(harnessID, mappedModel) {
+			continue
+		}
+
+		subagent["Model"] = mappedModel
+		changed = true
 	}
 
 	if !changed {
