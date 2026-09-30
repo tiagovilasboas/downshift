@@ -93,6 +93,65 @@ func cors(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// handleEvents streams Server-Sent Events whenever the data files change.
+// Each update event tells the client to re-fetch /api/status.
+func handleEvents(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	evPath := filepath.Join(home(), ".harness-downshift", "events.jsonl")
+	agPath := filepath.Join(home(), ".harness-downshift", "agents.jsonl")
+
+	lastEvSize  := fileSize(evPath)
+	lastAgSize  := fileSize(agPath)
+
+	// Send a keep-alive comment every 25s; check for changes every 500ms.
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	keepalive := time.NewTicker(25 * time.Second)
+	defer keepalive.Stop()
+
+	send := func(event string) {
+		fmt.Fprintf(w, "event: %s\ndata: {\"type\":\"%s\"}\n\n", event, event)
+		flusher.Flush()
+	}
+	send("connected")
+
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case <-keepalive.C:
+			fmt.Fprintf(w, ": keep-alive\n\n")
+			flusher.Flush()
+		case <-ticker.C:
+			evSize := fileSize(evPath)
+			agSize := fileSize(agPath)
+			if evSize != lastEvSize || agSize != lastAgSize {
+				lastEvSize = evSize
+				lastAgSize = agSize
+				send("update")
+			}
+		}
+	}
+}
+
+func fileSize(path string) int64 {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return -1
+	}
+	return fi.Size()
+}
+
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	events := readEvents()
 	agents := readAgents()
@@ -130,6 +189,7 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 func Run(port, webDir string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/status", cors(handleStatus))
+	mux.HandleFunc("/events",     cors(handleEvents))
 	mux.HandleFunc("/health", cors(func(w http.ResponseWriter, _ *http.Request) {
 		fmt.Fprintf(w, `{"ok":true,"ts":"%s"}`, time.Now().UTC().Format(time.RFC3339))
 	}))
