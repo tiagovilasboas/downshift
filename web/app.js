@@ -1,12 +1,10 @@
 // harness-hub · app.js
+// downshift web dashboard · app.js
 // ─────────────────────────────────────────────────────────────────────────────
-// Two data sources:
-//   1. Local server (/api/status, /events SSE) — relative URLs, same origin
-//   2. GitHub API — direct from browser (public repos, no auth needed)
+// Data source: local server (/api/status, /events SSE) — relative URLs.
+// Shows routing decisions only when subagents are dispatched via spawn_run
+// and the downshift hook is active. Not total token consumption.
 // ─────────────────────────────────────────────────────────────────────────────
-
-const GH_USER  = 'tiagovilasboas';
-const GH_REPOS = ['harness-downshift', 'agent-harness'];
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -141,53 +139,6 @@ function updateTimestamps() {
   renderMonitor(latestData);
 }
 
-// ── github explorer ──────────────────────────────────────────────────────────
-
-async function fetchRepoFile(repo, path) {
-  try {
-    const res = await fetch(`https://api.github.com/repos/${GH_USER}/${repo}/contents/${path}`);
-    if (!res.ok) return null;
-    const {content} = await res.json();
-    return atob(content.replace(/\n/g,''));
-  } catch { return null; }
-}
-
-async function fetchRepoInfo(repo) {
-  try {
-    const res = await fetch(`https://api.github.com/repos/${GH_USER}/${repo}`);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch { return null; }
-}
-
-async function renderGithub() {
-  set('gh-status', dim('loading repos…'));
-  const results = await Promise.all(GH_REPOS.map(async repo => {
-    const [info, claude] = await Promise.all([
-      fetchRepoInfo(repo),
-      fetchRepoFile(repo, 'CLAUDE.md'),
-    ]);
-    return { repo, info, claude };
-  }));
-
-  set('gh-status', '');
-  const cards = results.map(({repo, info, claude}) => {
-    const desc  = info?.description || '';
-    const stars = info?.stargazers_count ?? 0;
-    const url   = `https://github.com/${GH_USER}/${repo}`;
-    return `
-<div class="gh-card">
-  <div class="gh-top">
-    <a class="gh-name" href="${url}" target="_blank" rel="noopener noreferrer">${repo}</a>
-    <span class="gh-meta">${stars ? `★ ${stars}` : ''} · ${info?.language||''}</span>
-  </div>
-  ${desc ? `<div class="gh-desc">${desc}</div>` : ''}
-  ${claude ? `<details class="gh-detail"><summary>CLAUDE.md</summary><pre>${claude.slice(0,600)}…</pre></details>` : ''}
-</div>`;
-  }).join('');
-  set('gh-repos', cards || dim('no repos found'));
-}
-
 // ── init ─────────────────────────────────────────────────────────────────────
 
 if ('serviceWorker' in navigator) {
@@ -196,7 +147,6 @@ if ('serviceWorker' in navigator) {
 
 // First paint
 fetchStatus().then(data => { latestData = data; renderMonitor(data); });
-renderGithub();
 
 // Connect SSE for push updates
 connectSSE();
