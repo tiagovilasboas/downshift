@@ -77,9 +77,11 @@ func (e event) isToday() bool {
 // ── state (polling tail) ──────────────────────────────────────────────────────
 
 type state struct {
-	all     []event
-	size    int64
-	modTime time.Time
+	all      []event
+	size     int64
+	modTime  time.Time
+	lastEvent time.Time // when the most recent event arrived
+	tick     int        // frame counter for animations
 }
 
 func (s *state) reload(path string) {
@@ -99,11 +101,15 @@ func (s *state) reload(path string) {
 			s.all = append(s.all, e)
 		}
 	}
+	if len(s.all) > 0 {
+		s.lastEvent = time.Now()
+	}
 }
 
 func (s *state) poll(path string) {
 	fi, err := os.Stat(path)
 	if err != nil || (fi.Size() == s.size && fi.ModTime().Equal(s.modTime)) {
+		s.tick++
 		return
 	}
 	if fi.Size() < s.size {
@@ -116,14 +122,20 @@ func (s *state) poll(path string) {
 	}
 	defer f.Close()
 	f.Seek(s.size, 0) //nolint:errcheck
+	added := 0
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		var e event
 		if json.Unmarshal(sc.Bytes(), &e) == nil && e.Harness != "" {
 			s.all = append(s.all, e)
+			added++
 		}
 	}
+	if added > 0 {
+		s.lastEvent = time.Now()
+	}
 	s.size, s.modTime = fi.Size(), fi.ModTime()
+	s.tick++
 }
 
 // ── stats ─────────────────────────────────────────────────────────────────────
@@ -244,10 +256,31 @@ func render(s *state) {
 	}
 	now := time.Now().Local().Format("15:04:05")
 
-	// Estimated savings: sum(savings_ratio per downshift) × avg_cost_at_frontier
-	// avg frontier spawn ≈ $0.01 (500 in + 200 out tokens, rough)
+	// Animated live indicator: pulses ◉/○ every frame
+	liveIcon := grn + "◉" + rst
+	if s.tick%2 == 0 {
+		liveIcon = dim + "○" + rst
+	}
+
+	// Last-event age counter — always ticking even when no new data
+	lastEventStr := dim + "no events yet" + rst
+	if !s.lastEvent.IsZero() {
+		age := time.Since(s.lastEvent).Round(time.Second)
+		switch {
+		case age < 5*time.Second:
+			lastEventStr = grn + "just now" + rst
+		case age < 60*time.Second:
+			lastEventStr = fmt.Sprintf("%s%ds ago%s", cyn, int(age.Seconds()), rst)
+		case age < 3600*time.Second:
+			lastEventStr = fmt.Sprintf("%s%dm ago%s", dim, int(age.Minutes()), rst)
+		default:
+			lastEventStr = fmt.Sprintf("%s%dh ago%s", dim, int(age.Hours()), rst)
+		}
+	}
+
+	// Estimated savings
 	estUSD := st.totalSavings * 0.01
-	estTokensK := int(estUSD / 0.000025) // at frontier output cost $25/1M
+	estTokensK := int(estUSD / 0.000025)
 
 	hr := strings.Repeat("─", boxWidth-2)
 	top := bold + cyn + "╭" + hr + "╮" + rst
@@ -259,8 +292,8 @@ func render(s *state) {
 	b.WriteString(row("") + "\n")
 	b.WriteString(row(fmt.Sprintf("  %sdsmon%s  downshift monitor", bold, rst)) + "\n")
 	b.WriteString(row("") + "\n")
-	b.WriteString(row(fmt.Sprintf("  harness  %s%-14s%s  %s◉ live%s",
-		cyn, harness, rst, grn, rst)) + "\n")
+	b.WriteString(row(fmt.Sprintf("  harness  %s%-14s%s  %s  last: %s",
+		cyn, harness, rst, liveIcon, lastEventStr)) + "\n")
 	b.WriteString(row("") + "\n")
 
 	b.WriteString(divider("switches today") + "\n")
