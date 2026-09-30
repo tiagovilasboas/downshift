@@ -1,3 +1,15 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="docs/brand/downshift-logo-light.svg">
+    <img src="docs/brand/downshift-logo-dark.svg" alt="Downshift — One harness. Any model." width="480">
+  </picture>
+</p>
+
+<p align="center">
+  <strong>ONE HARNESS. ANY MODEL.</strong><br>
+  A unified harness for routing across AI models, tools, and data. Build once. Ship anywhere.
+</p>
+
 # harness-downshift
 
 [![Build](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml)
@@ -21,7 +33,9 @@ Subagent task: "diagnose the race condition in the webhook handler"
 
 **Works today with Claude Code, Cursor, Codex, Antigravity, and KiroCrew.** Single binary, no runtime dependencies, no network calls, no API keys.
 
-![harness-downshift](docs/img/hero.svg)
+![Downshift — One harness. Any model.](docs/brand/downshift-social-preview-1280x640.png)
+
+![Routing — how downshift classifies and rewrites the subagent model](docs/img/hero.svg)
 
 > **⚠️ Beta — practical testing phase.** The router and adapters work. The
 > gap is the harnesses themselves: model selection for subagents is an
@@ -1193,6 +1207,14 @@ harness, that is a harness limitation documented in
 
 **Feedback most wanted:** prompts the classifier gets wrong. Open an issue
 with the prompt, what `downshift try` returned, and what you expected.
+
+## Brand
+
+Downshift identity lives in [`docs/brand/`](docs/brand/) — mark, logos (dark/light/mono), favicon, social preview (`downshift-social-preview-1280x640.png`), and design tokens (`downshift-brand-tokens.css` / `.json`).
+
+- Palette: Background `#0D1117` · Surface `#161B22` · Text `#F9FAFB` · Muted `#9CA3AF` · Accent `#22C55E`
+- Tagline: **ONE HARNESS. ANY MODEL.**
+- Clear space: keep at least the width of the green terminal lane around the mark. No glows, gradients, or extra motifs on the core mark.
 
 ## License
 
