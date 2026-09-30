@@ -38,6 +38,14 @@ type Decision struct {
 	Verdict      Verdict
 	Savings      float64 // fraction cheaper vs current (0 if not cheaper / unknown)
 	Confident    bool
+	// Self-correction outcome, computed by Check inside Route. Verdict
+	// keeps the classified value for diagnostics; SafeVerdict carries the
+	// action adapters may apply. Checked is true for Route decisions and
+	// false for hand-built ones, so ShouldRewriteModel stays backward
+	// compatible with Decision literals that predate self-correction.
+	SafeVerdict Verdict
+	Corrections []string // guardrail rule IDs that held this decision, empty when clean
+	Checked     bool
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -97,6 +105,15 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		Confident:    Classify(prompt).Confident,
 	}
 	d.Intent = IntentFor(prompt, Classify(prompt), d, res)
+	// Self-correction validates the decision against the guardrails before
+	// any adapter acts. The classified verdict is preserved for telemetry;
+	// the safe action is exposed separately.
+	report := Check(d)
+	d.SafeVerdict = report.Safe
+	d.Checked = true
+	for _, v := range report.Violations {
+		d.Corrections = append(d.Corrections, v.Rule)
+	}
 	return d
 }
 
@@ -169,17 +186,26 @@ func (d Decision) Summary() string {
 // ShouldRewriteModel reports whether an adapter should replace the harness
 // model input. It is deliberately harness-agnostic: every adapter receives
 // the same behavior for upshifts, downshifts, and missing source models.
+//
+// The gate consults the self-corrected action, so a decision held by a
+// guardrail is never applied even when the classified verdict suggests a
+// rewrite. Hand-built Decisions without a Check report fall back to the
+// classified verdict for backward compatibility.
 func (d Decision) ShouldRewriteModel() bool {
 	if d.Model.ID == "" {
 		return false
 	}
+	action := d.Verdict
+	if d.Checked {
+		action = d.SafeVerdict
+	}
 	// An uncertain classifier result must not apply the classified downgrade
 	// target. Plan still falls back to the harness smallest catalog model
 	// so a blocked downshift does not keep a stronger model or a foreign id.
-	if d.Verdict == VerdictDownshift && !d.Confident {
+	if action == VerdictDownshift && !d.Confident {
 		return false
 	}
-	return d.Verdict == VerdictDownshift || d.Verdict == VerdictUpshift || d.Verdict == VerdictUnknown
+	return action == VerdictDownshift || action == VerdictUpshift || action == VerdictUnknown
 }
 
 // ShouldApplyEffort reports whether a harness with native effort controls
