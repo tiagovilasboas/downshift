@@ -54,7 +54,7 @@ function setActiveHarness(h) {
 function renderMonitor(data) {
   latestData = data; // always keep latest snapshot
   if (!data) {
-    set('monitor-status', `<span class="dim">◯</span> ${dim('server offline — run: downshift serve')}`);
+    set('monitor-status', `<span class="dim">○</span> ${dim('server offline — run: downshift serve')}`);
     set('monitor-switches', dim('no data'));
     set('monitor-agents',   dim('no data'));
     set('monitor-stats',    dim('—'));
@@ -64,11 +64,11 @@ function renderMonitor(data) {
   const { harnesses=[], switches=[], agents=[], stats={} } = data;
 
   // Harness chips — clickable tabs
-  const allChip = `<span class="chip${activeHarness===null?' hi':''}" onclick="setActiveHarness(null)" style="cursor:pointer">all</span>`;
+  const allChip = `<span class="chip${activeHarness===null?' hi':''}" onclick="setActiveHarness(null)">all</span>`;
   const hchips = harnesses.map(h =>
-    `<span class="chip${h===activeHarness?' hi':''}" onclick="setActiveHarness('${h}')" style="cursor:pointer">${h}</span>`
+    `<span class="chip${h===activeHarness?' hi':''}" onclick="setActiveHarness('${h}')">${h}</span>`
   ).join('');
-  set('monitor-status', `<span id="sse-indicator"></span> ${allChip}${hchips}`);
+  set('monitor-status', allChip + hchips);
 
   // Filter by active harness
   const filteredSwitches = activeHarness
@@ -82,7 +82,7 @@ function renderMonitor(data) {
   const fiveMinAgo = Date.now() - 5 * 60 * 1000;
   const active = agents.filter(a => new Date(a.timestamp).getTime() > fiveMinAgo);
   if (active.length === 0) {
-    set('monitor-active-agents', dim('nenhum nos últimos 5min'));
+    set('monitor-active-agents', dim('none in the last 5 min'));
   } else {
     set('monitor-active-agents', active.map(a =>
       `<div class="row">
@@ -122,17 +122,23 @@ function renderMonitor(data) {
 
   // ── economy bar ──
   if (down.length > 0) {
+    const sec = document.getElementById('economy-section');
+    if (sec) sec.style.display = '';
     set('economy-bar', `
 <div class="economy-bar">
-  <div style="display:flex;align-items:baseline;gap:10px">
-    <div><div class="big">$${estUSD.toFixed(2)}</div><div class="sub">est. savings · ${down.length} downshift${down.length!==1?'s':''}</div></div>
-    <div style="border-left:1px solid rgba(63,185,80,.2);padding-left:10px">
-      <div class="big" style="font-size:14px">~${estTokensK}K</div>
-      <div class="sub">tokens rerouted (est.)</div>
-    </div>
+  <div>
+    <div class="big">$${estUSD.toFixed(2)}</div>
+    <div class="sub">est. saved · ${down.length} downshift${down.length!==1?'s':''}</div>
+  </div>
+  <div class="economy-divider"></div>
+  <div>
+    <div class="big" style="font-size:14px">~${estTokensK}K</div>
+    <div class="sub">tokens rerouted (est.)</div>
   </div>
 </div>`);
   } else {
+    const sec = document.getElementById('economy-section');
+    if (sec) sec.style.display = 'none';
     set('economy-bar', '');
   }
 }
