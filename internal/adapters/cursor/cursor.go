@@ -23,6 +23,7 @@ const harnessID = "cursor"
 // Event is the JSON Cursor sends on stdin for a preToolUse hook.
 type Event struct {
 	HookEventName string          `json:"hook_event_name"`
+	CorrelationID string          `json:"correlation_id,omitempty"`
 	ToolName      string          `json:"tool_name"`
 	ToolInput     json.RawMessage `json:"tool_input"`
 	Model         string          `json:"model"`
@@ -33,6 +34,32 @@ type Event struct {
 	// does not send either field today.
 	SessionModels   *[]string `json:"session_models,omitempty"`
 	AvailableModels *[]string `json:"available_models,omitempty"`
+}
+
+// CorrelationIdentifier returns the optional opaque ID supplied by a caller.
+func (ev Event) CorrelationIdentifier() string { return ev.CorrelationID }
+
+// RequestedReasoningEffort reads an optional input field for future-compatible telemetry.
+func (ev Event) RequestedReasoningEffort() string {
+	var ti map[string]any
+	if json.Unmarshal(ev.ToolInput, &ti) != nil {
+		return ""
+	}
+	return hookutil.StringField(ti, "reasoning_effort")
+}
+
+// RequestedModel returns the model received before Downshift emitted a rewrite.
+func (ev Event) RequestedModel() string {
+	var ti map[string]any
+	if json.Unmarshal(ev.ToolInput, &ti) == nil {
+		if model := hookutil.StringField(ti, "model"); model != "" {
+			return model
+		}
+	}
+	if ev.ModelID != "" {
+		return ev.ModelID
+	}
+	return ev.Model
 }
 
 // TaskText returns the task content used for local, prompt-free feature
