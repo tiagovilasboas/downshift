@@ -1,0 +1,13 @@
+{
+  "name": "Downshift",
+  "tagline": "One harness. Any model.",
+  "colors": {
+    "background": "#0D1117",
+    "surface": "#161B22",
+    "text": "#F9FAFB",
+    "muted": "#9CA3AF",
+    "accent": "#22C55E",
+    "black": "#0D1117",
+    "white": "#F9FAFB"
+  }
+}
