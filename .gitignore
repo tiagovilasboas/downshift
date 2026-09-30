@@ -40,3 +40,5 @@ __pycache__/
 /dsmon
 # Built dsmon-hook binary
 /dsmon-hook
+# Built dsmon-server binary
+/dsmon-server
