@@ -3,22 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0d1117">
-<meta name="description" content="harness-downshift · routing monitor">
-<title>harness-downshift</title>
+<meta name="theme-color" content="#0D1117">
+<meta name="description" content="Downshift — One harness. Any model. Live routing monitor.">
+<title>Downshift — routing monitor</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Downshift — One harness. Any model.">
+<meta property="og:description" content="A unified harness for routing across AI models, tools, and data.">
+<meta property="og:image" content="../docs/brand/downshift-social-preview-1280x640.png">
 <link rel="manifest" href="manifest.json">
 <style>
 /* ── reset + tokens ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:      #0d1117;
-  --bg2:     #161b22;
+  --bg:      #0D1117;
+  --bg2:     #161B22;
   --bg3:     #21262d;
   --border:  #30363d;
-  --text:    #e6edf3;
-  --muted:   #8b949e;
-  --accent:  #58a6ff;
-  --ok:      #3fb950;
+  --text:    #F9FAFB;
+  --muted:   #9CA3AF;
+  --accent:  #22C55E;
+  --ok:      #22C55E;
   --ok-bg:   #0d2818;
   --warn:    #d29922;
   --info:    #79c0ff;
@@ -47,8 +51,10 @@ header {
   justify-content: space-between;
   position: sticky; top: 0; z-index: 10;
 }
-.logo { font-weight: 700; font-size: 15px; color: var(--accent); }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--text); }
+.logo img { height: 28px; width: auto; display: block; }
 .logo span { color: var(--muted); font-weight: 400; }
+.logo .tagline { font-size: 10px; letter-spacing: 1.5px; color: var(--muted); font-weight: 400; }
 .header-right { display: flex; align-items: center; gap: 16px; }
 .clock { color: var(--muted); font-size: 11px; }
 #sse-indicator { font-size: 11px; }
@@ -221,7 +227,7 @@ main {
 <body>
 <div class="app">
   <header>
-    <span class="logo">harness<span>-downshift</span></span>
+    <span class="logo"><img src="brand/downshift-mark-darkbg.svg" alt="Downshift mark">DOWNSHIFT <span>· routing monitor</span></span>
     <div class="header-right">
       <span id="sse-indicator"><span class="dim">○ connecting…</span></span>
       <span class="clock" id="clock"></span>
@@ -303,7 +309,7 @@ main {
       </div>
 
       <div class="panel-footer">
-        <a href="https://github.com/tiagovilasboas/harness-downshift" target="_blank" rel="noopener noreferrer">harness-downshift</a>
+        <a href="https://github.com/tiagovilasboas/harness-downshift" target="_blank" rel="noopener noreferrer">Downshift — One harness. Any model.</a>
         · run <code>./dsmon-server</code> for live data
       </div>
     </div>

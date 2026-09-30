@@ -104,3 +104,19 @@ It is not proof that a capability has been accepted by an executor.
 - **Fowler:** guia inferencial / architecture fitness: per-vendor evidence
   contract; sensor computacional / behaviour: concurrent-spawn correlation test;
   sensor inferencial / behaviour: privacy/AppSec review.
+
+## DS-05 — P2 Graphify codebase-graph escalation
+
+- **Current state:** ✅ `internal/graphify/` package implemented and tested (9/9 green, 2026-09-30). Interface-driven: `GraphFetcher` decouples the Go logic from the MCP transport.
+- **Files:** `internal/graphify/graphify.go`, `internal/graphify/graphify_test.go`, `docs/GRAPHIFY-INTEGRATION.md`.
+- **Scope:** when a task prompt mentions a file path (`src/**/*.php`) or a PascalCase symbol (e.g. `CreateSubscriptionStructureService`), query the Graphify knowledge graph and escalate to COMPLEX if the node has ≥ 20 edges or lives in a high-risk community (payment, KYC, subscription). Zero-latency when no file/symbol is detected.
+- **Exclusions:** no graph call on every spawn; no MCP bridge yet (KiroCrewFetcher is a pending adapter task); no caching layer yet.
+- **What remains:**
+  1. `KiroCrewFetcher` — MCP bridge that calls `graphify::get_node` and maps the result to `NodeInfo` (adapter layer, not this package).
+  2. Integration into `Route()` or the Kiro hook — pass the hint result to override the text-only classifier.
+  3. `downshift graphify-check` CLI subcommand (optional, for hook integration).
+- **Active graph snapshot (2026-09-30):** 4934 nodes, 9028 edges, 183 communities. Top god node: Controller (186 edges). High-risk communities confirmed: "Client & Subscription State", "User & Consent".
+- **Commands:** `go test ./internal/graphify/... -v`; `go vet ./...`.
+- **Acceptance:** `KiroCrewFetcher` integrated and at least one spawn with a file path confirmed to escalate via graph evidence (not just text signals).
+- **Fowler:** guia computacional / architecture fitness: file/symbol extraction; guia inferencial / behaviour: community-based escalation criteria; sensor computacional / behaviour: 9 unit tests with stub fetcher; sensor inferencial / architecture fitness: graphify doc with active god_nodes data.
+
