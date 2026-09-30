@@ -43,7 +43,17 @@ async function fetchStatus() {
   }
 }
 
+// ── harness tab filter ────────────────────────────────────────────────────────
+
+let activeHarness = null; // null = show all
+
+function setActiveHarness(h) {
+  activeHarness = activeHarness === h ? null : h; // toggle off if same
+  if (latestData) renderMonitor(latestData);
+}
+
 function renderMonitor(data) {
+  latestData = data; // always keep latest snapshot
   if (!data) {
     set('monitor-status', `<span class="dim">◯</span> ${dim('server offline — run: downshift serve')}`);
     set('monitor-switches', dim('no data'));
@@ -54,26 +64,42 @@ function renderMonitor(data) {
 
   const { harnesses=[], switches=[], agents=[], stats={} } = data;
 
-  const hchips = harnesses.map((h,i) =>
-    `<span class="${i===harnesses.length-1?'chip hi':'chip'}">${h}</span>`
+  // Harness chips — clickable tabs
+  const allChip = `<span class="chip${activeHarness===null?' hi':''}" onclick="setActiveHarness(null)" style="cursor:pointer">all</span>`;
+  const hchips = harnesses.map(h =>
+    `<span class="chip${h===activeHarness?' hi':''}" onclick="setActiveHarness('${h}')" style="cursor:pointer">${h}</span>`
   ).join('');
-  set('monitor-status', `<span class="pulse">◉</span> ${hchips}`);
+  set('monitor-status', `<span id="sse-indicator"></span> ${allChip}${hchips}`);
 
-  const swRows = switches.slice(-6).map(e => {
+  // Filter by active harness
+  const filteredSwitches = activeHarness
+    ? switches.filter(e => e.harness === activeHarness)
+    : switches;
+  const filteredAgents = activeHarness
+    ? agents.filter(a => a.session && activeHarness === 'kirocrew' ? true : false) // agents don't have harness field yet
+    : agents;
+
+  const swRows = filteredSwitches.slice(-6).map(e => {
     const v = e.verdict === 'DOWNSHIFT' ? ok(`↓ ${e.complexity.toLowerCase()} −${Math.round(e.estimated_savings*100)}%`)
             : e.verdict === 'UPSHIFT'   ? warn(`↑ ${e.complexity.toLowerCase()}`)
             : dim(`✓ ${e.complexity.toLowerCase()}`);
     return `<div class="row"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${shortModel(e.final_model)}</span>${v}</div>`;
-  }).join('') || dim('no switches yet');
+  }).join('') || dim(activeHarness ? `no switches for ${activeHarness}` : 'no switches yet');
   set('monitor-switches', swRows);
 
-  const agRows = agents.slice(-4).map(a =>
+  const agRows = filteredAgents.slice(-4).map(a =>
     `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="desc">${a.task.slice(0,44)}</span></div>`
   ).join('') || dim('no agents yet');
   set('monitor-agents', agRows);
 
+  // Stats filtered
+  const src = activeHarness ? switches.filter(e => e.harness === activeHarness) : switches;
+  const down = src.filter(e => e.verdict === 'DOWNSHIFT');
+  const up   = src.filter(e => e.verdict === 'UPSHIFT');
+  const estUSD = down.reduce((s,e) => s + e.estimated_savings * 0.01, 0);
   set('monitor-stats',
-    `${info(stats.total||0)} events &nbsp; ${ok(`${stats.down||0}↓`)} &nbsp; ${warn(`${stats.up||0}↑`)} &nbsp; ${ok(`$${(stats.est_usd||0).toFixed(2)}`)} saved`
+    `${info(src.length)} events &nbsp; ${ok(`${down.length}↓`)} &nbsp; ${warn(`${up.length}↑`)} &nbsp; ${ok(`$${estUSD.toFixed(2)}`)} saved`
+    + (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '')
   );
 }
 
@@ -88,28 +114,25 @@ function connectSSE() {
 
   es.addEventListener('update', async () => {
     const data = await fetchStatus();
-    renderMonitor(data);
-    // Tick relative timestamps on existing rows
-    updateTimestamps();
+    renderMonitor(data); // renderMonitor sets latestData internally
   });
 
   es.addEventListener('open', () => {
     sseConnected = true;
-    set('sse-indicator', `<span class="ok">◉ live</span>`);
+    set('sse-indicator', `<span class="pulse">◉</span>`);
   });
 
   es.addEventListener('error', () => {
     sseConnected = false;
-    set('sse-indicator', `<span class="dim">○ reconnecting…</span>`);
+    set('sse-indicator', `<span class="dim">○</span>`);
     es.close();
-    // Retry in 3s
     setTimeout(connectSSE, 3000);
   });
 }
 
 // ── age counters update every second ─────────────────────────────────────────
-// The rows already rendered have fixed timestamps; we re-render age strings
-// so "5s" → "6s" → "1m" without a full re-fetch.
+// renderMonitor() stores latestData internally; the 1s ticker re-renders it
+// so age strings tick ("5s" → "6s") without a new fetch.
 
 let latestData = null;
 

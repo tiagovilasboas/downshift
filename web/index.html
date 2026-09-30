@@ -75,8 +75,9 @@ main {
 .status-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .pulse { color: var(--ok); animation: p 1.4s infinite; display: inline-block; }
 @keyframes p { 0%,100%{opacity:1} 50%{opacity:.2} }
-.chip  { border: 1px solid var(--border); border-radius: 10px; padding: 1px 9px; font-size: 10px; color: var(--muted); }
-.chip.hi { border-color: var(--accent); color: var(--accent); }
+.chip  { border: 1px solid var(--border); border-radius: 10px; padding: 1px 9px; font-size: 10px; color: var(--muted); transition: border-color .15s, color .15s; }
+.chip:hover { border-color: var(--accent); color: var(--text); }
+.chip.hi { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,.08); }
 .sub-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
 .row { display: grid; grid-template-columns: 30px 52px 1fr; gap: 8px; padding: 2px 0; align-items: baseline; }
 .t   { color: var(--muted); text-align: right; font-size: 11px; }
