@@ -24,6 +24,9 @@ go.work.sum
 
 # Local
 *.log
+__pycache__/
+*.egg-info/
+.venv/
 
 # Catalog overrides — the user's ~/.harness-downshift/catalog.json and any
 # project-level override are personal data, NOT committed to the repository.
@@ -32,3 +35,10 @@ go.work.sum
 # Override path: ~/.harness-downshift/catalog.json (auto-loaded at runtime).
 /catalog.json
 .harness-downshift/
+
+# Built dsmon binary (source in cmd/dsmon)
+/dsmon
+# Built dsmon-hook binary
+/dsmon-hook
+# Built dsmon-server binary
+/dsmon-server

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -31,6 +32,7 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/kirocrew"
+	dsserver "github.com/tiagovilasboas/harness-downshift/internal/server"
 	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
 	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
@@ -95,6 +97,17 @@ func main() {
 		))
 	case "kirocrew":
 		os.Exit(runKiroCrewHook(os.Stdin, catalog))
+	case "serve":
+		// Find web/ next to the binary, then fall back to CWD/web
+		exe, _ := os.Executable()
+		webDir := filepath.Join(filepath.Dir(exe), "web")
+		if _, err := os.Stat(webDir); err != nil {
+			webDir = "web"
+		}
+		if err := dsserver.Run(dsserver.DefaultPort, webDir); err != nil {
+			fmt.Fprintf(os.Stderr, "serve: %v\n", err)
+			os.Exit(1)
+		}
 	case "try":
 		os.Exit(runTry(catalog, args[1:]))
 	case "models":
@@ -871,6 +884,7 @@ Usage:
   downshift cursor               Run as a Cursor preToolUse hook (reads stdin)
   downshift codex                Run as a Codex PreToolUse hook (reads stdin)
   downshift kirocrew             Run as a KiroCrew preToolUse hook (policy mode: exit 0/2)
+  downshift serve                Start the web dashboard at http://localhost:7474 (serves web/)
   downshift try "<task>" [harness] [model]   Test classification from the terminal
   downshift models list          Show the effective catalog (embedded or override)
   downshift models check         Query provider APIs and report new/untiered models

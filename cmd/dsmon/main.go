@@ -25,9 +25,10 @@ import (
 
 const (
 	eventsFile = ".harness-downshift/events.jsonl"
-	maxRecent  = 7
-	refreshMs  = 800
-	boxWidth   = 56
+	maxRecent  = 8
+	refreshMs  = 250  // fast enough to feel live
+	boxWidth   = 58
+	window24h  = 24 * time.Hour
 )
 
 // ── ANSI ──────────────────────────────────────────────────────────────────────
@@ -62,26 +63,69 @@ func (e event) localTime() string {
 	if err != nil || len(e.Timestamp) < 16 {
 		return "??:??"
 	}
-	return t.Local().Format("15:04")
+	// Show relative time for recent events so the list feels live
+	age := time.Since(t)
+	switch {
+	case age < 60*time.Second:
+		return fmt.Sprintf("%2ds", int(age.Seconds()))
+	case age < 3600*time.Second:
+		return fmt.Sprintf("%2dm", int(age.Minutes()))
+	default:
+		return t.Local().Format("15:04")
+	}
 }
 
-func (e event) isToday() bool {
+// isRecent returns true for events within the last 24 hours.
+// Using 24h instead of "today" avoids timezone edge cases and midnight cutoffs.
+func (e event) isRecent() bool {
 	t, err := time.Parse(time.RFC3339Nano, e.Timestamp)
 	if err != nil {
 		return false
 	}
-	now := time.Now()
-	return t.Local().Year() == now.Year() && t.Local().YearDay() == now.YearDay()
+	return time.Since(t) < window24h
+}
+
+// ── agent event (agents.jsonl from dsmon-hook) ────────────────────────────────
+
+type agentEvent struct {
+	Timestamp string `json:"timestamp"`
+	Tool      string `json:"tool"`
+	Session   string `json:"session"`
+	Task      string `json:"task"`
+	Model     string `json:"model"`
+}
+
+func (a agentEvent) isRecent() bool {
+	t, err := time.Parse(time.RFC3339Nano, a.Timestamp)
+	return err == nil && time.Since(t) < window24h
+}
+
+func (a agentEvent) age() string {
+	t, err := time.Parse(time.RFC3339Nano, a.Timestamp)
+	if err != nil {
+		return "?"
+	}
+	d := time.Since(t)
+	switch {
+	case d < 60*time.Second:
+		return fmt.Sprintf("%2ds", int(d.Seconds()))
+	case d < 3600*time.Second:
+		return fmt.Sprintf("%2dm", int(d.Minutes()))
+	default:
+		return t.Local().Format("15:04")
+	}
 }
 
 // ── state (polling tail) ──────────────────────────────────────────────────────
 
 type state struct {
-	all      []event
-	size     int64
-	modTime  time.Time
-	lastEvent time.Time // when the most recent event arrived
-	tick     int        // frame counter for animations
+	all       []event
+	agents    []agentEvent
+	size      int64
+	modTime   time.Time
+	agentSize int64
+	lastEvent time.Time
+	tick      int
 }
 
 func (s *state) reload(path string) {
@@ -104,6 +148,46 @@ func (s *state) reload(path string) {
 	if len(s.all) > 0 {
 		s.lastEvent = time.Now()
 	}
+}
+
+func (s *state) pollAgents(path string) {
+	fi, err := os.Stat(path)
+	if err != nil || fi.Size() == s.agentSize {
+		return
+	}
+	if fi.Size() < s.agentSize {
+		// file rotated — reload from scratch
+		s.agents = nil
+		s.agentSize = 0
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	f.Seek(s.agentSize, 0) //nolint:errcheck
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		var ae agentEvent
+		if json.Unmarshal(sc.Bytes(), &ae) == nil && ae.Task != "" {
+			s.agents = append(s.agents, ae)
+		}
+	}
+	s.agentSize = fi.Size()
+}
+
+func (s *state) recentAgents() []agentEvent {
+	var out []agentEvent
+	for _, a := range s.agents {
+		if a.isRecent() {
+			out = append(out, a)
+		}
+	}
+	// last 6
+	if len(out) > 6 {
+		out = out[len(out)-6:]
+	}
+	return out
 }
 
 func (s *state) poll(path string) {
@@ -143,14 +227,15 @@ func (s *state) poll(path string) {
 type stats struct {
 	total, down, up, ok int
 	totalSavings        float64
-	lastHarness         string
+	harnesses           []string // all distinct harnesses active today, most-recent first
 }
 
 func compute(all []event) (stats, []event) {
 	var st stats
 	var recent []event
+	seen := map[string]bool{}
 	for _, e := range all {
-		if !e.isToday() {
+		if !e.isRecent() {
 			continue
 		}
 		st.total++
@@ -163,8 +248,9 @@ func compute(all []event) (stats, []event) {
 		case "OK":
 			st.ok++
 		}
-		if e.Harness != "" {
-			st.lastHarness = e.Harness
+		if e.Harness != "" && !seen[e.Harness] {
+			seen[e.Harness] = true
+			st.harnesses = append(st.harnesses, e.Harness)
 		}
 		recent = append(recent, e)
 	}
@@ -250,9 +336,20 @@ func switchLine(e event) string {
 
 func render(s *state) {
 	st, recent := compute(s.all)
-	harness := st.lastHarness
-	if harness == "" {
-		harness = "—"
+
+	// Build harness display: all distinct harnesses active today
+	harnessDisplay := dim + "—" + rst
+	if len(st.harnesses) > 0 {
+		parts := make([]string, len(st.harnesses))
+		for i, h := range st.harnesses {
+			// highlight the most recent (last in slice)
+			if i == len(st.harnesses)-1 {
+				parts[i] = cyn + h + rst
+			} else {
+				parts[i] = dim + h + rst
+			}
+		}
+		harnessDisplay = strings.Join(parts, dim+"·"+rst)
 	}
 	now := time.Now().Local().Format("15:04:05")
 
@@ -292,16 +389,42 @@ func render(s *state) {
 	b.WriteString(row("") + "\n")
 	b.WriteString(row(fmt.Sprintf("  %sdsmon%s  downshift monitor", bold, rst)) + "\n")
 	b.WriteString(row("") + "\n")
-	b.WriteString(row(fmt.Sprintf("  harness  %s%-14s%s  %s  last: %s",
-		cyn, harness, rst, liveIcon, lastEventStr)) + "\n")
+	b.WriteString(row(fmt.Sprintf("  harnesses  %s  %s  last: %s",
+		harnessDisplay, liveIcon, lastEventStr)) + "\n")
 	b.WriteString(row("") + "\n")
 
-	b.WriteString(divider("switches today") + "\n")
+	b.WriteString(divider("last 24h") + "\n")
 	if len(recent) == 0 {
 		b.WriteString(row(fmt.Sprintf("  %sno events yet%s", dim, rst)) + "\n")
 	} else {
 		for _, e := range recent {
 			b.WriteString(row(switchLine(e)) + "\n")
+		}
+	}
+
+	b.WriteString(row("") + "\n")
+
+	// ── agents section (from agents.jsonl / dsmon-hook) ────────────────────────
+	recentAgents := s.recentAgents()
+	b.WriteString(divider("agents (24h)") + "\n")
+	if len(recentAgents) == 0 {
+		b.WriteString(row(fmt.Sprintf("  %sno spawns yet — hook: dsmon-agent-lifecycle%s", dim, rst)) + "\n")
+	} else {
+		for _, a := range recentAgents {
+			model := a.Model
+			if model == "" {
+				model = "default"
+			}
+			if len([]rune(model)) > 6 {
+				model = string([]rune(model)[:6])
+			}
+			task := a.Task
+			if len([]rune(task)) > 28 {
+				task = string([]rune(task)[:28]) + "…"
+			}
+			line := fmt.Sprintf("  %s  %s%-7s%s  %s%s%s",
+				a.age(), cyn, model, rst, dim, task, rst)
+			b.WriteString(row(line) + "\n")
 		}
 	}
 
@@ -332,6 +455,7 @@ func render(s *state) {
 func main() {
 	home, _ := os.UserHomeDir()
 	path := filepath.Join(home, eventsFile)
+	agentPath := filepath.Join(home, ".harness-downshift", "agents.jsonl")
 
 	fmt.Print(hideCur)
 	sig := make(chan os.Signal, 1)
@@ -345,10 +469,12 @@ func main() {
 	fmt.Print(clrScr)
 	s := &state{}
 	s.reload(path)
+	s.pollAgents(agentPath)
 	render(s)
 
 	for range time.NewTicker(refreshMs * time.Millisecond).C {
 		s.poll(path)
+		s.pollAgents(agentPath)
 		render(s)
 	}
 }
