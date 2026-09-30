@@ -17,6 +17,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -29,14 +30,23 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/harness-downshift/internal/adapters/kirocrew"
 	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
 	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/harness-downshift/internal/decisionintelligence"
 	"github.com/tiagovilasboas/harness-downshift/internal/models"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/classifier"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/training"
 	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
 )
+
+// buildVersion can be set by release builds with -ldflags. It is included in
+// prompt-free routing telemetry to make policy incidents reproducible.
+var buildVersion = "dev"
+
+var hookReadTimeout = 2 * time.Second
+var errHookReadTimeout = errors.New("hook input timeout")
 
 func main() {
 	args := os.Args[1:]
@@ -83,6 +93,8 @@ func main() {
 			printCodexAllow,
 			func(e codex.Event) string { return e.TaskText() },
 		))
+	case "kirocrew":
+		os.Exit(runKiroCrewHook(os.Stdin, catalog))
 	case "try":
 		os.Exit(runTry(catalog, args[1:]))
 	case "models":
@@ -117,37 +129,75 @@ func runHookAdapter[E any](
 	failOpen func(),
 	taskText ...func(E) string,
 ) int {
+	correlationID := telemetry.NewCorrelationID()
+	fail := func(code string) int {
+		telemetry.Record(telemetry.Failure(correlationID, buildVersion, code))
+		failOpen()
+		return 0
+	}
 	// Harness hook payloads contain task text. Bound the read so a malformed or
 	// hostile stdin cannot make the persistent harness process exhaust memory.
 	const maxHookPayloadBytes = 1 << 20
-	data, err := io.ReadAll(io.LimitReader(in, maxHookPayloadBytes+1))
+	data, err := readHookPayload(in, maxHookPayloadBytes+1)
 	if err != nil {
-		failOpen()
-		return 0
+		if errors.Is(err, errHookReadTimeout) {
+			return fail("INPUT_TIMEOUT")
+		}
+		return fail("READ_ERROR")
 	}
 	if len(data) > maxHookPayloadBytes {
-		failOpen()
-		return 0
+		return fail("PAYLOAD_TOO_LARGE")
 	}
 	ev, err := parse(data)
 	if err != nil {
-		failOpen()
-		return 0
+		return fail("INVALID_EVENT")
+	}
+	if identified, ok := any(ev).(interface{ CorrelationIdentifier() string }); ok {
+		correlationID = telemetry.CorrelationIDOrNew(identified.CorrelationIdentifier())
 	}
 	out, note, decision := handle(ev)
 	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
-		failOpen()
-		return 0
+		return fail("OUTPUT_ENCODE_ERROR")
 	}
 	if note != "" {
-		fmt.Fprintln(os.Stderr, "downshift: "+note)
+		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
 	}
 	// Record telemetry only when a real routing decision was made.
 	// A zero Decision (Harness == "") means the event was not a subagent spawn.
 	if decision.Harness != "" {
-		event := telemetry.FromDecision(decision)
+		event := telemetry.FromDecision(decision, correlationID, buildVersion)
+		shadow := decisionintelligence.Evaluate(decisionintelligence.Signals{
+			BaseTier:             decision.Tier,
+			ClassifierConfidence: confidenceValue(decision.Confident),
+		})
+		event.DecisionIntelligence = &telemetry.ShadowRecommendation{
+			Tier:              shadow.Tier.String(),
+			Confidence:        shadow.Confidence,
+			Reasons:           shadow.Reasons,
+			RequiresReview:    shadow.RequiresReview,
+			BudgetConstrained: shadow.BudgetConstrained,
+			Apply:             shadow.Apply,
+		}
+		// Provenance is stricter than routing: never replace an absent or
+		// unrecognised requested model with the policy recommendation in the
+		// evidence record. A catalog lookup is the local allowlist.
+		event.FromModel = "unknown"
+		if requested, ok := any(ev).(interface{ RequestedModel() string }); ok {
+			candidate := requested.RequestedModel()
+			if candidate != "" {
+				// Route only populates CurrentModel when its resolver recognized
+				// the original candidate. That makes this a catalog allowlist
+				// check without coupling the shared hook runner to a catalog type.
+				if decision.CurrentModel.ID != "" {
+					event.FromModel = telemetry.ModelOrUnknown(candidate)
+				}
+			}
+		}
 		if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
-			event.SessionID = identified.SessionIdentifier()
+			event.SessionID = telemetry.HashSessionID(identified.SessionIdentifier())
+		}
+		if requested, ok := any(ev).(interface{ RequestedReasoningEffort() string }); ok {
+			event.RequestedEffort = telemetry.EffortOrUnknown(requested.RequestedReasoningEffort())
 		}
 		telemetry.Record(event)
 		if len(taskText) > 0 {
@@ -157,6 +207,88 @@ func runHookAdapter[E any](
 		}
 	}
 	return 0
+}
+
+func confidenceValue(confident bool) float64 {
+	if confident {
+		return 1
+	}
+	return 0
+}
+
+// runKiroCrewHook is the exit-code runner for KiroCrew. Unlike runHookAdapter,
+// KiroCrew's preToolUse contract has no updated_input channel: the only levers
+// are exit 0 (allow) and exit 2 (block + stderr relayed to the LLM). So this
+// runner never prints a rewrite to stdout — it classifies the spawn and, on a
+// confident tier mismatch, returns exit 2 with an actionable respawn message.
+// Fail-open is absolute: any read/parse error, or an allow decision, exits 0.
+func runKiroCrewHook(in io.Reader, catalog core.Resolver) int {
+	correlationID := telemetry.NewCorrelationID()
+	fail := func(code string) int {
+		telemetry.Record(telemetry.Failure(correlationID, buildVersion, code))
+		return 0 // fail-open: never block a spawn on a router error
+	}
+
+	const maxHookPayloadBytes = 1 << 20
+	data, err := readHookPayload(in, maxHookPayloadBytes+1)
+	if err != nil {
+		if errors.Is(err, errHookReadTimeout) {
+			return fail("INPUT_TIMEOUT")
+		}
+		return fail("READ_ERROR")
+	}
+	if len(data) > maxHookPayloadBytes {
+		return fail("PAYLOAD_TOO_LARGE")
+	}
+
+	var ev kirocrew.Event
+	if err := json.Unmarshal(data, &ev); err != nil {
+		return fail("INVALID_EVENT")
+	}
+	correlationID = telemetry.CorrelationIDOrNew(ev.CorrelationIdentifier())
+
+	out, note, decision := kirocrew.Handle(ev, catalog)
+
+	// Telemetry only when a real routing decision was made (Harness != "").
+	if decision.Harness != "" {
+		event := telemetry.FromDecision(decision, correlationID, buildVersion)
+		telemetry.Record(event)
+		if id, err := training.RecordRoutedDecision(ev.TaskText(), decision); err == nil && id != "" {
+			fmt.Fprintf(os.Stderr, "downshift: feedback id %s (run `downshift feedback %s success|retry|failed` after review)\n", id, id)
+		}
+	}
+
+	if out.Block {
+		// stderr is what KiroCrew relays to the LLM on exit 2.
+		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, out.Message)
+		return 2
+	}
+	if note != "" {
+		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
+	}
+	return 0
+}
+
+// readHookPayload prevents an unresponsive hook stdin from blocking a spawn.
+// The reader goroutine may remain blocked until process exit, but the hook
+// returns its fail-open response at the deadline and the short-lived process
+// is then reclaimed by the harness OS process lifecycle.
+func readHookPayload(in io.Reader, limit int64) ([]byte, error) {
+	type result struct {
+		data []byte
+		err  error
+	}
+	done := make(chan result, 1)
+	go func() {
+		data, err := io.ReadAll(io.LimitReader(in, limit))
+		done <- result{data: data, err: err}
+	}()
+	select {
+	case result := <-done:
+		return result.data, result.err
+	case <-time.After(hookReadTimeout):
+		return nil, errHookReadTimeout
+	}
 }
 
 // runTry classifies a prompt from the command line for quick testing.
@@ -738,6 +870,7 @@ Usage:
   downshift claude-code          Run as a Claude Code PreToolUse hook (reads stdin)
   downshift cursor               Run as a Cursor preToolUse hook (reads stdin)
   downshift codex                Run as a Codex PreToolUse hook (reads stdin)
+  downshift kirocrew             Run as a KiroCrew preToolUse hook (policy mode: exit 0/2)
   downshift try "<task>" [harness] [model]   Test classification from the terminal
   downshift models list          Show the effective catalog (embedded or override)
   downshift models check         Query provider APIs and report new/untiered models
