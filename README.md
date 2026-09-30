@@ -12,6 +12,8 @@
 
 # harness-downshift
 
+**Downshift, the agent harness for model routing** — stop paying frontier prices for trivial subagent work. Right-sized models for every subagent task across Claude Code, Cursor, Codex, Antigravity, and KiroCrew.
+
 [![Build](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml)
 [![License: BUSL-1.1](https://img.shields.io/badge/license-BUSL--1.1-orange.svg)](LICENSE)
 [![Go 1.27](https://img.shields.io/badge/go-1.27-00ADD8.svg)](https://go.dev)
