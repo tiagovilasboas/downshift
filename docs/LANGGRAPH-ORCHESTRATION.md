@@ -3,6 +3,8 @@
 `harness-downshift` by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/harness-downshift
 
+![Orchestration planner — adjacent, not involved in model routing](brand/downshift-orchestration-planner.png)
+
 ## Execution path: Go (`internal/orchestration/`)
 
 Fan-out delegation planning lives natively in Go, in `internal/orchestration/planner.go`.
