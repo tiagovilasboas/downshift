@@ -98,7 +98,7 @@ function renderMonitor(data) {
   const up   = src.filter(e => e.verdict === 'UPSHIFT');
   const estUSD = down.reduce((s,e) => s + e.estimated_savings * 0.01, 0);
   set('monitor-stats',
-    `${info(src.length)} events &nbsp; ${ok(`${down.length}↓`)} &nbsp; ${warn(`${up.length}↑`)} &nbsp; ${ok(`$${estUSD.toFixed(2)}`)} saved`
+    `${info(src.length)} spawns &nbsp; ${ok(`${down.length}↓`)} &nbsp; ${warn(`${up.length}↑`)} &nbsp; ${ok(`$${estUSD.toFixed(2)}`)} est. saved`
     + (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '')
   );
 }
