@@ -1096,10 +1096,10 @@ A typical engineering session spawns ~50 subagents per day. Roughly half are mec
 
 | Team size | Without downshift | With downshift | Monthly savings |
 |---|---|---|---|
-| 1 dev | ~$2.50/day | ~$0.80/day | **~$51/month** |
-| 10 devs | ~$25/day | ~$8/day | **~$510/month** |
-| 50 devs | ~$125/day | ~$40/day | **~$2,550/month** |
-| 100 devs | ~$250/day | ~$80/day | **~$5,100/month** |
+| 1 dev | ~$2.50/day | ~$1.50/day | **~$20/month** |
+| 10 devs | ~$25/day | ~$15/day | **~$200/month** |
+| 50 devs | ~$125/day | ~$75/day | **~$1,000/month** |
+| 100 devs | ~$250/day | ~$150/day | **~$2,000/month** |
 
 **Assumptions:** 50 spawns/dev/day, 50% trivial (routed to small tier), 80% cost reduction on routed spawns, 20 working days/month. List prices September 2026.
 

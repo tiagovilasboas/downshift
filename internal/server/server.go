@@ -76,16 +76,22 @@ func home() string { h, _ := os.UserHomeDir(); return h }
 
 func readEvents() []rawEvent {
 	f, err := os.Open(filepath.Join(home(), ".harness-downshift", "events.jsonl"))
-	if err != nil { return nil }
+	if err != nil {
+		return nil
+	}
 	defer f.Close()
 	cutoff := time.Now().UTC().Add(-window)
 	var out []rawEvent
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		var e rawEvent
-		if json.Unmarshal(sc.Bytes(), &e) != nil || e.Harness == "" { continue }
+		if json.Unmarshal(sc.Bytes(), &e) != nil || e.Harness == "" {
+			continue
+		}
 		t, err := time.Parse(time.RFC3339Nano, e.Timestamp)
-		if err != nil || t.Before(cutoff) { continue }
+		if err != nil || t.Before(cutoff) {
+			continue
+		}
 		out = append(out, e)
 	}
 	return out
@@ -93,16 +99,25 @@ func readEvents() []rawEvent {
 
 func readAgents() []agentEntry {
 	f, err := os.Open(filepath.Join(home(), ".harness-downshift", "agents.jsonl"))
-	if err != nil { return nil }
+	if err != nil {
+		return nil
+	}
 	defer f.Close()
 	cutoff := time.Now().UTC().Add(-window)
 	var out []agentEntry
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		var a agentEntry
-		if json.Unmarshal(sc.Bytes(), &a) != nil || a.Task == "" { continue }
+		// Privacy-compatible filter: new hook events carry an empty task
+		// (no prompt storage) but always carry a tool name. Skip only
+		// lines with neither, so new events stay visible on the dashboard.
+		if json.Unmarshal(sc.Bytes(), &a) != nil || (a.Task == "" && a.Tool == "") {
+			continue
+		}
 		t, err := time.Parse(time.RFC3339Nano, a.Timestamp)
-		if err != nil || t.Before(cutoff) { continue }
+		if err != nil || t.Before(cutoff) {
+			continue
+		}
 		out = append(out, a)
 	}
 	return out
@@ -111,7 +126,10 @@ func readAgents() []agentEntry {
 func cors(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		if r.Method == http.MethodOptions { w.WriteHeader(http.StatusNoContent); return }
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		next(w, r)
 	}
 }
@@ -133,8 +151,8 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 	evPath := filepath.Join(home(), ".harness-downshift", "events.jsonl")
 	agPath := filepath.Join(home(), ".harness-downshift", "agents.jsonl")
 
-	lastEvSize  := fileSize(evPath)
-	lastAgSize  := fileSize(agPath)
+	lastEvSize := fileSize(evPath)
+	lastAgSize := fileSize(agPath)
 
 	// Send a keep-alive comment every 25s; check for changes every 500ms.
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -204,15 +222,21 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 					st.RealCostEvents++
 				}
 			}
-		case "UPSHIFT":   st.Up++
-		case "OK":        st.OK++
+		case "UPSHIFT":
+			st.Up++
+		case "OK":
+			st.OK++
 		}
 	}
 
 	sw := events
-	if len(sw) > 8 { sw = sw[len(sw)-8:] }
+	if len(sw) > 8 {
+		sw = sw[len(sw)-8:]
+	}
 	ag := agents
-	if len(ag) > 6 { ag = ag[len(ag)-6:] }
+	if len(ag) > 6 {
+		ag = ag[len(ag)-6:]
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(statusResponse{Harnesses: harnesses, Switches: sw, Agents: ag, Stats: st})
@@ -223,7 +247,7 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 func Run(port, webDir string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/status", cors(handleStatus))
-	mux.HandleFunc("/events",     cors(handleEvents))
+	mux.HandleFunc("/events", cors(handleEvents))
 	mux.HandleFunc("/health", cors(func(w http.ResponseWriter, _ *http.Request) {
 		fmt.Fprintf(w, `{"ok":true,"ts":"%s"}`, time.Now().UTC().Format(time.RFC3339))
 	}))
