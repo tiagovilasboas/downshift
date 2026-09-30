@@ -337,6 +337,26 @@ func TestEmbeddedClaudeCodeSavingsMatchesREADME(t *testing.T) {
 	}
 }
 
+// v0.1.0-beta.1 shipped "claude-haiku-4" as the small-tier id, and the release
+// binary prints it. Anthropic has no such model: the Claude API ID is
+// claude-haiku-4-5-20251001 with the alias claude-haiku-4-5
+// (https://docs.anthropic.com/en/docs/about-claude/models). An alias may keep
+// the old name so existing configs still match, but no entry may emit it.
+func TestEmbeddedCatalogNeverEmitsNonexistentHaikuID(t *testing.T) {
+	c, err := parse(embeddedJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range c.Entries() {
+		if e.ID == "claude-haiku-4" {
+			t.Errorf("harness %q emits nonexistent model id %q; use claude-haiku-4-5", e.Harness, e.ID)
+		}
+	}
+	if small := c.ModelFor("claude-code", core.TierSmall); small.ID != "claude-haiku-4-5" {
+		t.Errorf("claude-code small = %q, want claude-haiku-4-5", small.ID)
+	}
+}
+
 func TestSavingsRatio_MoreExpensiveTarget(t *testing.T) {
 	c := Load()
 	small := c.ModelFor("claude-code", core.TierSmall)
