@@ -27,6 +27,7 @@ const harnessID = "codex"
 // Event is the JSON Codex sends on stdin for a PreToolUse hook.
 type Event struct {
 	HookEventName string          `json:"hook_event_name"`
+	CorrelationID string          `json:"correlation_id,omitempty"`
 	SessionID     string          `json:"session_id"`
 	ToolName      string          `json:"tool_name"`
 	ToolInput     json.RawMessage `json:"tool_input"`
@@ -40,6 +41,31 @@ type Event struct {
 // SessionIdentifier exposes Codex's stable session ID to the shared hook
 // runner without coupling core routing decisions to harness metadata.
 func (ev Event) SessionIdentifier() string { return ev.SessionID }
+
+// CorrelationIdentifier returns the optional opaque ID supplied by a caller.
+func (ev Event) CorrelationIdentifier() string { return ev.CorrelationID }
+
+// RequestedReasoningEffort reads an optional hook input field for telemetry.
+func (ev Event) RequestedReasoningEffort() string {
+	var ti map[string]any
+	if json.Unmarshal(ev.ToolInput, &ti) != nil {
+		return ""
+	}
+	return hookutil.StringField(ti, "reasoning_effort")
+}
+
+// RequestedModel returns the original model field, never a routing
+// recommendation. Tool input takes precedence because it is what the child
+// request actually carried before this hook rewrote it.
+func (ev Event) RequestedModel() string {
+	var ti map[string]any
+	if json.Unmarshal(ev.ToolInput, &ti) == nil {
+		if model := hookutil.StringField(ti, "model"); model != "" {
+			return model
+		}
+	}
+	return ev.Model
+}
 
 // TaskText returns task content for local feature extraction. Raw text is
 // never returned from the shared loop's persistence layer.

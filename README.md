@@ -35,6 +35,51 @@ The Go binary remains a deterministic, zero-runtime model router. For an explici
 **Keywords:** Claude Code subagent cost · LLM model routing · agent harness ·
 cost optimization · Claude Code hooks · Cursor subagents · Codex model selection
 
+## Telemetry — o que o hook realmente prova
+
+Cada decisão de roteamento gera um evento em `~/.harness-downshift/events.jsonl`:
+correlation ID, agente de origem, modelo solicitado, modelo final, tier,
+decisão da política e timestamp.
+
+**Limite importante (leia antes de interpretar o log):** o evento registra
+que o hook *emitiu* a reescrita (`rewrite_emitted`). Ele **não prova** que o
+harness executor (Claude Code, Cursor, Codex) aplicou o modelo reescrito.
+Isso depende de um ACK do protocolo do fornecedor — atualmente não disponível.
+Tratar `rewrite_emitted` como "modelo aplicado" é erro de interpretação.
+
+Para ver os eventos em tempo real, use `dsmon` (seção abaixo) ou:
+
+```bash
+tail -f ~/.harness-downshift/events.jsonl | python3 -m json.tool
+```
+
+O log não contém prompt, segredo nem identificador de sessão em claro.
+
+---
+
+## Decision Intelligence — recomendações em shadow mode
+
+`internal/decisionintelligence/` observa as decisões do roteador e emite
+recomendações agregadas — em paralelo, sem alterar nenhuma decisão real.
+
+Por que existe: o roteador determinístico em Go é preciso, mas não aprende.
+O Decision Intelligence coleta sinais de risco, sensibilidade de dados,
+orçamento e feedback de resultado para sugerir quando faz sentido subir de
+tier — mas nunca executa essa mudança sozinho.
+
+Regras duras que ele não pode quebrar:
+- `Apply: false` sempre — é advisory, nunca executa nenhuma reescrita.
+- Não pode baixar o tier que o roteador Go escolheu.
+- Não pode contornar limites de orçamento ou permissão.
+- Jev (TypeSafe AI) está **desligado por padrão** — sem SDK, sem I/O, sem chave.
+
+Para ver as recomendações no log:
+```bash
+grep '"shadow_recommendation"' ~/.harness-downshift/events.jsonl | python3 -m json.tool
+```
+
+---
+
 ## Quickstart — zero to working hook in 2 minutes
 
 **Step 1 — Install** (macOS / Linux):
