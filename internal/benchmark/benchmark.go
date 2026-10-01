@@ -159,9 +159,14 @@ func DatasetHealth(tasks []Task) HealthReport {
 	return report
 }
 
-// Run classifies every task and returns the per-task results.
+// Run classifies every task with ClassifyWithSemantic (regex + optional MiniLM).
 // Tasks with unrecognised labels are skipped (logged to w).
 func Run(tasks []Task, w io.Writer) []Result {
+	return RunWithClassifier(tasks, core.ClassifyWithSemantic, w)
+}
+
+// RunWithClassifier evaluates tasks using a custom classify function.
+func RunWithClassifier(tasks []Task, classify func(string) core.Classification, w io.Writer) []Result {
 	var results []Result
 	skipped := 0
 	for _, t := range tasks {
@@ -171,7 +176,7 @@ func Run(tasks []Task, w io.Writer) []Result {
 			skipped++
 			continue
 		}
-		cls := core.ClassifyWithSemantic(t.Prompt)
+		cls := classify(t.Prompt)
 		results = append(results, Result{
 			Task:      t,
 			Predicted: cls.Complexity,

@@ -53,6 +53,11 @@ func MaybeAugment(prompt string, label string, confident bool) (string, bool) {
 	if !ok {
 		return label, false
 	}
+	return AugmentWith(prompt, label, confident, store, emb)
+}
+
+// AugmentWith runs semantic fusion with explicit store and embedder (for tests and tools).
+func AugmentWith(prompt, label string, confident bool, store PrototypeStore, emb Embedder) (string, bool) {
 	vec, err := emb.Embed(prompt)
 	if err != nil {
 		return label, false
@@ -66,7 +71,7 @@ func MaybeAugment(prompt string, label string, confident bool) (string, bool) {
 	if semRank <= baseRank {
 		return label, false
 	}
-	if confident && semRank <= baseRank {
+	if confident {
 		return label, false
 	}
 	return semLabel, true

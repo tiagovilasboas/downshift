@@ -43,6 +43,16 @@ Real MiniLM (better quality, needs `sentence-transformers`):
 python3 tools/minilm/train_prototypes.py
 ```
 
+## Tests
+
+```bash
+go test ./internal/semantic ./internal/core ./internal/benchmark -run MiniLM -v
+go test ./internal/benchmark -run TestSeedDataset_MiniLM -v
+```
+
+`TestSeedDataset_MiniLM_ImprovesTierOrSafety` locks regression: with `DOWNSHIFT_MINILM=1`
+tier accuracy must not drop vs regex-only and FRONTIER→MID must not worsen.
+
 ## Beta tasks
 
 - **P4.9** — shipped (opt-in env, hash prototypes)
