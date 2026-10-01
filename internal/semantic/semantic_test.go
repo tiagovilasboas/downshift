@@ -5,6 +5,7 @@ package semantic_test
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/semantic"
@@ -17,16 +18,82 @@ func TestMaybeAugment_DisabledByDefault(t *testing.T) {
 	}
 }
 
-func TestMaybeAugment_MonotonicWhenEnabled(t *testing.T) {
+func TestAugmentWith_EscalatesWhenUnconfident(t *testing.T) {
+	store := semantic.PrototypeStore{
+		Dim: 3,
+		Centroids: map[string][]float64{
+			semantic.LabelTrivial: {1, 0, 0},
+			semantic.LabelComplex: {0, 0, 1},
+		},
+	}
+	emb := semantic.StaticEmbedder{Vector: []float64{0, 0, 1}}
+
+	out, ok := semantic.AugmentWith("any", semantic.LabelTrivial, false, store, emb)
+	if !ok || out != semantic.LabelComplex {
+		t.Fatalf("expected COMPLEX escalation, got %q ok=%v", out, ok)
+	}
+}
+
+func TestAugmentWith_NoEscalateWhenConfident(t *testing.T) {
+	store := semantic.PrototypeStore{
+		Dim: 2,
+		Centroids: map[string][]float64{
+			semantic.LabelTrivial: {1, 0},
+			semantic.LabelComplex: {0, 1},
+		},
+	}
+	emb := semantic.StaticEmbedder{Vector: []float64{0, 1}}
+
+	out, ok := semantic.AugmentWith("any", semantic.LabelTrivial, true, store, emb)
+	if ok {
+		t.Fatalf("confident base should block augment, got %q", out)
+	}
+}
+
+func TestAugmentWith_NeverDowngrades(t *testing.T) {
+	store := semantic.PrototypeStore{
+		Dim: 2,
+		Centroids: map[string][]float64{
+			semantic.LabelTrivial: {1, 0},
+			semantic.LabelMedium:  {0.9, 0.1},
+		},
+	}
+	emb := semantic.StaticEmbedder{Vector: []float64{1, 0}}
+
+	out, ok := semantic.AugmentWith("any", semantic.LabelComplex, false, store, emb)
+	if ok || out != semantic.LabelComplex {
+		t.Fatalf("expected no downgrade from COMPLEX, got %q ok=%v", out, ok)
+	}
+}
+
+func TestAugmentWith_BelowSimilarityThreshold(t *testing.T) {
+	store := semantic.PrototypeStore{
+		Dim: 3,
+		Centroids: map[string][]float64{
+			semantic.LabelTrivial: {1, 0, 0},
+			semantic.LabelComplex: {0, 0, 1},
+		},
+	}
+	// Orthogonal to both centroids → cosine 0, below MinSimilarity.
+	emb := semantic.StaticEmbedder{Vector: []float64{0, 1, 0}}
+
+	out, ok := semantic.AugmentWith("any", semantic.LabelTrivial, false, store, emb)
+	if ok {
+		t.Fatalf("expected no augment below threshold, got %q", out)
+	}
+}
+
+func TestMaybeAugment_EnabledWithHashOnSeedComplex(t *testing.T) {
 	t.Setenv("DOWNSHIFT_MINILM", "1")
 	t.Setenv("DOWNSHIFT_MINILM_EMBED", "hash")
 
-	out, ok := semantic.MaybeAugment("rearchitect the payment monolith for multi-tenant compliance", semantic.LabelTrivial, false)
+	prompt := "design and implement gRPC service mesh with service discovery"
+	out, ok := semantic.MaybeAugment(prompt, semantic.LabelMedium, false)
 	if !ok {
-		t.Skip("hash prototypes did not escalate this prompt")
+		t.Fatal("expected semantic boost for complex-shaped prompt classified as MEDIUM")
 	}
-	if semantic.LabelRank(out) < semantic.LabelRank(semantic.LabelTrivial) {
-		t.Fatalf("semantic downgraded to %q", out)
+	if semantic.LabelRank(out) <= semantic.LabelRank(semantic.LabelMedium) {
+		t.Fatalf("expected rank above MEDIUM, got %q", out)
 	}
 }
 
@@ -38,6 +105,41 @@ func TestHashEmbed_UnitNorm(t *testing.T) {
 	}
 	if sum < 0.99 || sum > 1.01 {
 		t.Fatalf("expected unit norm, got %f", sum)
+	}
+}
+
+func TestPrototypeStore_Nearest(t *testing.T) {
+	store := semantic.PrototypeStore{
+		Dim: 2,
+		Centroids: map[string][]float64{
+			"A": {1, 0},
+			"B": {0, 1},
+		},
+	}
+	label, score := store.Nearest([]float64{0.1, 0.9})
+	if label != "B" || score < 0.9 {
+		t.Fatalf("nearest = %q score=%f", label, score)
+	}
+}
+
+func TestBuildHashPrototypes_FromTinyDataset(t *testing.T) {
+	store := semantic.BuildHashPrototypes(map[string][]string{
+		semantic.LabelTrivial: {"rename x"},
+		semantic.LabelComplex: {"rearchitect entire platform"},
+	}, 16)
+	if store.Dim != 16 || len(store.Centroids) != 2 {
+		t.Fatalf("unexpected store: dim=%d centroids=%d", store.Dim, len(store.Centroids))
+	}
+}
+
+func TestLoadPrototypesFromFile(t *testing.T) {
+	path := filepath.Join("data", "prototypes.json")
+	p, err := semantic.LoadPrototypesFromFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p.Dim == 0 || len(p.Centroids) < 4 {
+		t.Fatalf("embedded prototypes invalid: dim=%d labels=%d", p.Dim, len(p.Centroids))
 	}
 }
 
