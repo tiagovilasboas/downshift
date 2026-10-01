@@ -396,17 +396,77 @@ func truncate(s string, n int) string {
 	return s[:n-3] + "..."
 }
 
+// ConfidenceInterval holds the 95% bootstrap confidence bounds [Low, High].
+type ConfidenceInterval struct {
+	Low  float64 `json:"low"`
+	High float64 `json:"high"`
+}
+
+// BootstrapConfidenceInterval computes a 95% bootstrap confidence interval
+// for TierAccuracy using B resamples.
+func BootstrapConfidenceInterval(results []Result, resamples int) ConfidenceInterval {
+	n := len(results)
+	if n == 0 {
+		return ConfidenceInterval{}
+	}
+	if resamples <= 0 {
+		resamples = 1000
+	}
+
+	accuracies := make([]float64, resamples)
+	// Deterministic LCG pseudo-random generator for reproducibility without external deps
+	seed := uint64(133742)
+	lcgNext := func() int {
+		seed = seed*6364136223846793005 + 1
+		return int((seed >> 32) % uint64(n))
+	}
+
+	for b := 0; b < resamples; b++ {
+		correct := 0
+		for i := 0; i < n; i++ {
+			idx := lcgNext()
+			r := results[idx]
+			expected, ok := complexityFromString(r.Task.Label)
+			if ok && expected.Tier() == r.Predicted.Tier() {
+				correct++
+			}
+		}
+		accuracies[b] = float64(correct) / float64(n)
+	}
+
+	// Simple sort for percentiles
+	for i := 0; i < len(accuracies)-1; i++ {
+		for j := i + 1; j < len(accuracies); j++ {
+			if accuracies[j] < accuracies[i] {
+				accuracies[i], accuracies[j] = accuracies[j], accuracies[i]
+			}
+		}
+	}
+
+	lowIdx := int(float64(resamples) * 0.025)
+	highIdx := int(float64(resamples) * 0.975)
+	if highIdx >= resamples {
+		highIdx = resamples - 1
+	}
+
+	return ConfidenceInterval{
+		Low:  accuracies[lowIdx],
+		High: accuracies[highIdx],
+	}
+}
+
 // Report holds computed benchmark metrics for JSON export or programmatic gating.
 type Report struct {
-	TotalTasks               int     `json:"total_tasks"`
-	ComplexityAccuracy       float64 `json:"complexity_accuracy"`
-	TierAccuracy             float64 `json:"tier_accuracy"`
-	FrontierToMidRate        float64 `json:"frontier_to_mid_rate"`
-	FrontierToSmallRate      float64 `json:"frontier_to_small_rate"`
-	FrontierTotal            int     `json:"frontier_total"`
-	SmallToMidRate           float64 `json:"small_to_mid_rate"`
-	SmallToFrontierRate      float64 `json:"small_to_frontier_rate"`
-	SmallTotal               int     `json:"small_total"`
+	TotalTasks               int                 `json:"total_tasks"`
+	ComplexityAccuracy       float64             `json:"complexity_accuracy"`
+	TierAccuracy             float64             `json:"tier_accuracy"`
+	TierAccuracyCI95         ConfidenceInterval  `json:"tier_accuracy_ci_95"`
+	FrontierToMidRate        float64             `json:"frontier_to_mid_rate"`
+	FrontierToSmallRate      float64             `json:"frontier_to_small_rate"`
+	FrontierTotal            int                 `json:"frontier_total"`
+	SmallToMidRate           float64             `json:"small_to_mid_rate"`
+	SmallToFrontierRate      float64             `json:"small_to_frontier_rate"`
+	SmallTotal               int                 `json:"small_total"`
 }
 
 // GenerateReport computes summary metrics from results.
@@ -418,6 +478,7 @@ func GenerateReport(results []Result) Report {
 		TotalTasks:          len(results),
 		ComplexityAccuracy:  Accuracy(results),
 		TierAccuracy:        TierAccuracy(results),
+		TierAccuracyCI95:    BootstrapConfidenceInterval(results, 1000),
 		FrontierToMidRate:   udMID,
 		FrontierToSmallRate: udSMALL,
 		FrontierTotal:       udTotal,

@@ -73,7 +73,7 @@ Replace directional normalised units with provider-grounded savings.
 | P4.4 | Grow to **200** tasks (real prompts, rubric in `benchmark/README.md`) | curation | [ ] |
 | P4.5 | Grow to **500+** tasks with held-out split (`benchmark/holdout.json`, never tuned against) | curation | [ ] |
 | P4.6 | `downshift benchmark --report` (tier accuracy, FRONTIER→MID rate, CI gate on regression) | eng | [x] |
-| P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [ ] |
+| P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
 | P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [ ] |
 
 **Exit:** P4.5 + P4.6 green in CI; holdout tier accuracy documented with CI.
@@ -101,7 +101,7 @@ Replace directional normalised units with provider-grounded savings.
 |----|------|-------|------|
 | I1 | Multi-process JSONL lock (`LockFile` in `AppendTo`) | eng | [x] |
 | I2 | Log rotation wired on append (`RotationPolicy`) | eng | [x] |
-| I3 | Commit `go.sum` + CI cache (N/A today: zero external modules in `go.mod`; silence CI cache step or add deps later) | eng | [ ] |
+| I3 | Commit `go.sum` + CI cache (silenced in CI since zero external modules in `go.mod`) | eng | [x] |
 | I4 | README “What’s missing” table synced with this doc | docs | [x] |
 | I5 | `ExportSummary` includes `baseline` + `usage_linked` counts | eng | [x] |
 | I6 | Session route cache persistence audit (multi-process: stateless hooks + in-memory memo documented) | eng | [x] |

@@ -50,8 +50,19 @@ condition in the subscription renewal worker".
 ## Expansion roadmap
 
 - **Held-out split.** Reserve a subset contributors never see during
-  tuning, so reported accuracy is honest.
+  tuning, so reported accuracy is honest (`benchmark/holdout.json`).
 - **500-1000 task target.** Grow the seed with reviewed real tasks until
   per-label counts support stable metrics.
-- **Statistical reporting.** Add confidence intervals and tier-level
-  significance tests so small deltas are not mistaken for improvements.
+- **Statistical reporting.** Added 95% bootstrap confidence intervals for Tier Accuracy via `downshift benchmark <file> --report`:
+  ```json
+  {
+    "total_tasks": 108,
+    "tier_accuracy": 0.6296,
+    "tier_accuracy_ci_95": {
+      "low": 0.5370,
+      "high": 0.7130
+    }
+  }
+  ```
+  The interval bounds prevent mistaking variance across small sample sizes for genuine classifier regressions or gains.
+
