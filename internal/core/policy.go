@@ -126,7 +126,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 // classifyTask scores the prompt and returns the target tier and complexity.
 // Returns (escalated bool) as third return value to track if graphify triggered.
 func classifyTask(prompt string) (Tier, Complexity, bool) {
-	cls := Classify(prompt)
+	cls := classifyWithSemantic(prompt, Classify(prompt))
 	complexity := cls.Complexity
 	escalated := false
 
