@@ -388,3 +388,24 @@ func TestAppendTo_ConcurrentWrites_NoDataLoss(t *testing.T) {
 		t.Errorf("concurrent writes: got %d events, want %d", len(got), want)
 	}
 }
+
+func TestAppendAndRead_RewriteHonored(t *testing.T) {
+	path := tmpLog(t)
+	honored := true
+	ev := makeEvent("antigravity", "TRIVIAL", "DOWNSHIFT", 0.90)
+	ev.RewriteHonored = &honored
+
+	if err := telemetry.AppendTo(path, ev); err != nil {
+		t.Fatalf("AppendTo: %v", err)
+	}
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("ReadEventsFrom: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len(events) = %d, want 1", len(got))
+	}
+	if got[0].RewriteHonored == nil || !*got[0].RewriteHonored {
+		t.Errorf("RewriteHonored = %v, want true", got[0].RewriteHonored)
+	}
+}

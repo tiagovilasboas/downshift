@@ -19,10 +19,10 @@ Proof that the harness executor applied the hook’s model, not only that
 | P1.1 | Document “emission vs honored” in install guide (`docs/session-models.md` + matrix) | eng | [x] |
 | P1.2 | Hook-layer E2E in CI (`TestHookE2E_RewriteEventStats`) | eng | [x] |
 | P1.3 | **Manual protocol**: one paid Claude Code session, trivial Task, capture stderr + child model in UI/logs | dogfood | [ ] |
-| P1.4 | **Automated smoke** (optional CI nightly): script that runs `downshift try` + adapter golden JSON; tag `spawn-honored` as manual gate | eng | [ ] |
+| P1.4 | **Automated smoke** (CI gate): script that runs `downshift try` + adapter golden JSON payloads (`scripts/smoke-test.sh`) | eng | [x] |
 | P1.5 | Codex `multi_agent_v2`: repeat P1.3 on a known-good build; record in `docs/HARNESS-MATRIX.md` | dogfood | [ ] |
 | P1.6 | Cursor Pro/Ultra usage-based: repeat P1.3; update matrix row | dogfood | [ ] |
-| P1.7 | Telemetry field `rewrite_honored: bool` (only when harness exposes post-spawn model) — schema + privacy review | eng | [ ] |
+| P1.7 | Telemetry field `rewrite_honored: bool` (only when harness exposes post-spawn model) — schema + privacy review | eng | [x] |
 
 **Exit:** at least **one** harness with P1.3 write-up + matrix row **Yes** with date; P1.7 optional until upstream exposes signal.
 
@@ -56,7 +56,7 @@ Replace directional normalised units with provider-grounded savings.
 | P3.4 | **≥50** `outcome: "usage"` events linked to prior PreToolUse decisions | dogfood | [ ] |
 | P3.5 | `downshift stats` shows `Real provider cost` section with non-zero saved USD | dogfood | [ ] |
 | P3.6 | **Control group**: `DOWNSHIFT_NO_ROUTE=1` / `--no-route` baseline events | eng | [x] |
-| P3.7 | Report template: same calendar week, Anthropic/OpenAI dashboard vs `stats --export` | docs | [ ] |
+| P3.7 | Report template: same calendar week, Anthropic/OpenAI dashboard vs `stats --export` (`docs/billing-comparison-template.md`) | docs | [x] |
 | P3.8 | PostToolUse for Codex/Cursor when harness exposes usage (track upstream) | eng | — |
 
 **Exit:** P3.4 + P3.5 + P3.7 filled for **one** billing period (maintainer sign-off).
