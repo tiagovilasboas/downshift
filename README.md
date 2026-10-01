@@ -257,7 +257,7 @@ go install github.com/tiagovilasboas/harness-downshift/cmd/downshift@latest
 Pre-built binaries for macOS (arm64/amd64), Linux (arm64/amd64), and Windows (amd64)
 are available on the [Releases](https://github.com/tiagovilasboas/harness-downshift/releases) page.
 
-Add the hook to `~/.claude/settings.json`:
+Add the hooks to `~/.claude/settings.json`:
 
 ```json
 {
@@ -269,12 +269,20 @@ Add the hook to `~/.claude/settings.json`:
           { "type": "command", "command": "downshift claude-code" }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Task",
+        "hooks": [
+          { "type": "command", "command": "downshift claude-code-post-tool-use" }
+        ]
+      }
     ]
   }
 }
 ```
 
-That's it. Every subagent your session spawns now runs on the right-sized model.
+That's it. Every subagent your session spawns runs on the right-sized model (`PreToolUse`), and actual token spend and provider cost are recorded for verifiable savings reporting (`PostToolUse`).
 
 ## Install (Cursor)
 

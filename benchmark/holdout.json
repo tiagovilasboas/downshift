@@ -1,0 +1,1202 @@
+[
+  {
+    "prompt": "rename the variable auth.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable user_service.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable config.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable README.md",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable styles.css",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable main.py",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable schema.prisma",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable Dockerfile",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable package.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable index.html",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable constants.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable Makefile",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable server.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable routes.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable utils.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable database.sql",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable app.tsx",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable deploy.yaml",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable manifest.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable env.example",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable types.d.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the variable test_helper.rb",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel auth.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel user_service.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel config.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel README.md",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel styles.css",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel main.py",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel schema.prisma",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel Dockerfile",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel package.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel index.html",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel constants.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel Makefile",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel server.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel routes.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel utils.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel database.sql",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel app.tsx",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel deploy.yaml",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel manifest.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel env.example",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel types.d.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear a variavel test_helper.rb",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file auth.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file user_service.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file config.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file README.md",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file styles.css",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file main.py",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file schema.prisma",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file Dockerfile",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file package.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file index.html",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file constants.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file Makefile",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file server.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file routes.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file utils.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file database.sql",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file app.tsx",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file deploy.yaml",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file manifest.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file env.example",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file types.d.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format the file test_helper.rb",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent the file auth.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent the file user_service.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent the file config.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent the file README.md",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent the file styles.css",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent the file main.py",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent the file schema.prisma",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent the file Dockerfile",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent the file package.json",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the User struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the Account struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the Customer struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the Invoice struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the Profile struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the PaymentMethod struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the Organization struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the Device struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the Order struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field phoneNumber to the Member struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the User struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the Account struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the Customer struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the Invoice struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the Profile struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the PaymentMethod struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the Organization struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the Device struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the Order struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field billingAddress to the Member struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the User struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the Account struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the Customer struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the Invoice struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the Profile struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the PaymentMethod struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the Organization struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the Device struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the Order struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field taxId to the Member struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the User struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the Account struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the Customer struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the Invoice struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the Profile struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the PaymentMethod struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the Organization struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the Device struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the Order struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field avatarUrl to the Member struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the User struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the Account struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the Customer struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the Invoice struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the Profile struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the PaymentMethod struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the Organization struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the Device struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the Order struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field preferredLanguage to the Member struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the User struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the Account struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the Customer struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the Invoice struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the Profile struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the PaymentMethod struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the Organization struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the Device struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the Order struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field lastLoginAt to the Member struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the User struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the Account struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the Customer struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the Invoice struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the Profile struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the PaymentMethod struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the Organization struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the Device struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the Order struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field ipAddress to the Member struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field roleCode to the User struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field roleCode to the Account struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field roleCode to the Customer struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field roleCode to the Invoice struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new field roleCode to the Profile struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the billing module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the notifications module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the inventory module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the checkout module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the authentication module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the orders module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the analytics module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the search module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the export module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement caching layer with Redis for the webhooks module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the billing module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the notifications module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the inventory module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the checkout module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the authentication module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the orders module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the analytics module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the search module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the export module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware for the webhooks module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the billing module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the notifications module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the inventory module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the checkout module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the authentication module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the orders module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the analytics module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the search module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the export module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotency key verification for the webhooks module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the billing module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the notifications module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the inventory module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the checkout module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the authentication module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the orders module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the analytics module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the search module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the export module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement event publishing to Kafka for the webhooks module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the billing module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the notifications module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the inventory module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the checkout module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the authentication module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the orders module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the analytics module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the search module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the export module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement batch processing endpoint for the webhooks module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the billing module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the notifications module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the inventory module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the checkout module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the authentication module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the orders module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the analytics module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the search module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the export module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement healthcheck probe for the webhooks module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the billing module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the notifications module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the inventory module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the checkout module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the authentication module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the orders module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the analytics module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the search module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the export module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement graceful shutdown handler for the webhooks module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement request logging middleware for the billing module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement request logging middleware for the notifications module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement request logging middleware for the inventory module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement request logging middleware for the checkout module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement request logging middleware for the authentication module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "rearchitect the core payment settlement engine to support active-active multi-datacenter failover",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the core payment settlement engine to support 50000 transactions per second throughput",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the core payment settlement engine to support zero-downtime database schema migrations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the core payment settlement engine to support distributed multi-tenant organizations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the core payment settlement engine to support strict linearizability guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the core payment settlement engine to support tamper-proof cryptographic validation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the identity and access management subsystem to support active-active multi-datacenter failover",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the identity and access management subsystem to support 50000 transactions per second throughput",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the identity and access management subsystem to support zero-downtime database schema migrations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the identity and access management subsystem to support distributed multi-tenant organizations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the identity and access management subsystem to support strict linearizability guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the identity and access management subsystem to support tamper-proof cryptographic validation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the multi-region data synchronization pipeline to support active-active multi-datacenter failover",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the multi-region data synchronization pipeline to support 50000 transactions per second throughput",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the multi-region data synchronization pipeline to support zero-downtime database schema migrations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the multi-region data synchronization pipeline to support distributed multi-tenant organizations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the multi-region data synchronization pipeline to support strict linearizability guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the multi-region data synchronization pipeline to support tamper-proof cryptographic validation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the order state machine to support active-active multi-datacenter failover",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the order state machine to support 50000 transactions per second throughput",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the order state machine to support zero-downtime database schema migrations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the order state machine to support distributed multi-tenant organizations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the order state machine to support strict linearizability guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the order state machine to support tamper-proof cryptographic validation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the event sourcing and audit logging architecture to support active-active multi-datacenter failover",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the event sourcing and audit logging architecture to support 50000 transactions per second throughput",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the event sourcing and audit logging architecture to support zero-downtime database schema migrations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the event sourcing and audit logging architecture to support distributed multi-tenant organizations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the event sourcing and audit logging architecture to support strict linearizability guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the event sourcing and audit logging architecture to support tamper-proof cryptographic validation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the user session management across clusters to support active-active multi-datacenter failover",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the user session management across clusters to support 50000 transactions per second throughput",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the user session management across clusters to support zero-downtime database schema migrations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the user session management across clusters to support distributed multi-tenant organizations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the user session management across clusters to support strict linearizability guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rearchitect the user session management across clusters to support tamper-proof cryptographic validation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed lock manager with etcd raft integration",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed lock manager with two-phase commit guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed lock manager with paxos leader election",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed lock manager with dynamic cluster membership",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed lock manager with automatic split-brain prevention",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed lock manager with high-cardinality distributed tracing",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed consensus protocol with etcd raft integration",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed consensus protocol with two-phase commit guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed consensus protocol with paxos leader election",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed consensus protocol with dynamic cluster membership",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed consensus protocol with automatic split-brain prevention",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed consensus protocol with high-cardinality distributed tracing",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed transaction coordinator with etcd raft integration",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed transaction coordinator with two-phase commit guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed transaction coordinator with paxos leader election",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed transaction coordinator with dynamic cluster membership",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed transaction coordinator with automatic split-brain prevention",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed transaction coordinator with high-cardinality distributed tracing",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed sharding coordinator with etcd raft integration",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed sharding coordinator with two-phase commit guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed sharding coordinator with paxos leader election",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed sharding coordinator with dynamic cluster membership",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed sharding coordinator with automatic split-brain prevention",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed sharding coordinator with high-cardinality distributed tracing",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed service mesh router with etcd raft integration",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed service mesh router with two-phase commit guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed service mesh router with paxos leader election",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed service mesh router with dynamic cluster membership",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed service mesh router with automatic split-brain prevention",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed service mesh router with high-cardinality distributed tracing",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed cache invalidation system with etcd raft integration",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed cache invalidation system with two-phase commit guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed cache invalidation system with paxos leader election",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed cache invalidation system with dynamic cluster membership",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed cache invalidation system with automatic split-brain prevention",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed cache invalidation system with high-cardinality distributed tracing",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "conduct end-to-end security audit of OAuth token exchange and refresh flows against OWASP ASVS 5.0 Level 3 requirements",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "conduct end-to-end security audit of OAuth token exchange and refresh flows against replay and injection attacks",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "conduct end-to-end security audit of OAuth token exchange and refresh flows against timing and side-channel vulnerabilities",
+    "label": "COMPLEX"
+  }
+]

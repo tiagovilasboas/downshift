@@ -52,7 +52,7 @@ Replace directional normalised units with provider-grounded savings.
 |----|------|-------|------|
 | P3.1 | Event schema + `CostUSD` / `FillRealCost` plumbing | eng | [x] |
 | P3.2 | Claude Code **PostToolUse** hook + usage linkage | eng | [x] |
-| P3.3 | Wire PostToolUse in maintainer `settings.json` + document in README quickstart | dogfood | [ ] |
+| P3.3 | Wire PostToolUse in maintainer `settings.json` + document in README quickstart | dogfood | [x] |
 | P3.4 | **≥50** `outcome: "usage"` events linked to prior PreToolUse decisions | dogfood | [ ] |
 | P3.5 | `downshift stats` shows `Real provider cost` section with non-zero saved USD | dogfood | [ ] |
 | P3.6 | **Control group**: `DOWNSHIFT_NO_ROUTE=1` / `--no-route` baseline events | eng | [x] |
@@ -71,7 +71,7 @@ Replace directional normalised units with provider-grounded savings.
 | P4.2 | Expand curated set **30 → 108** tasks | eng | [x] |
 | P4.3 | Graphify offline escalation in `core.Route` | eng | [x] |
 | P4.4 | Grow to **200** tasks (real prompts, rubric in `benchmark/README.md`) | curation | [x] |
-| P4.5 | Grow to **500+** tasks with held-out split (`benchmark/holdout.json`, never tuned against) | curation | [ ] |
+| P4.5 | Grow to **500+** tasks with held-out split (`benchmark/holdout.json`, never tuned against) | curation | [x] |
 | P4.6 | `downshift benchmark --report` (tier accuracy, FRONTIER→MID rate, CI gate on regression) | eng | [x] |
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
 
