@@ -100,8 +100,8 @@ func TestLoadDataset_SeedHasNoDuplicates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed dataset must still load cleanly: %v", err)
 	}
-	if len(tasks) != 108 {
-		t.Errorf("seed len = %d, want 108", len(tasks))
+	if len(tasks) != 200 {
+		t.Errorf("seed len = %d, want 200", len(tasks))
 	}
 }
 
@@ -217,7 +217,7 @@ func TestDatasetHealth_Seed(t *testing.T) {
 		t.Fatalf("cannot load seed dataset: %v", err)
 	}
 	got := benchmark.DatasetHealth(tasks)
-	want := map[string]int{"TRIVIAL": 26, "SIMPLE": 28, "MEDIUM": 27, "COMPLEX": 27}
+	want := map[string]int{"TRIVIAL": 50, "SIMPLE": 50, "MEDIUM": 50, "COMPLEX": 50}
 	for label, n := range want {
 		if got.CountsByLabel[label] != n {
 			t.Errorf("seed CountsByLabel[%q] = %d, want %d", label, got.CountsByLabel[label], n)

@@ -38,7 +38,7 @@ Graduation needs independent operators, not only one `events.jsonl`.
 | P2.2 | Contributor guide: how to paste export into issue/PR without leaking paths | docs | [x] |
 | P2.3 | **2+ external contributors** (or teammates) run hooks 1 week; aggregate exports | community | [ ] |
 | P2.4 | README “Real session data” table updated with multi-source note + date | docs | [ ] |
-| P2.5 | Optional: anonymised `stats --export` CI artifact from maintainer machine (directional) | eng | [ ] |
+| P2.5 | Optional: anonymised `stats --export` CI artifact from maintainer machine (directional) | eng | [x] |
 
 **Exit:** README cites **≥3 distinct session sources** OR **≥2 non-maintainer exports** in a release note.
 
@@ -70,10 +70,11 @@ Replace directional normalised units with provider-grounded savings.
 | P4.1 | Seed dataset health checks (`DatasetHealth`, no duplicates) | eng | [x] |
 | P4.2 | Expand curated set **30 → 108** tasks | eng | [x] |
 | P4.3 | Graphify offline escalation in `core.Route` | eng | [x] |
-| P4.4 | Grow to **200** tasks (real prompts, rubric in `benchmark/README.md`) | curation | [ ] |
+| P4.4 | Grow to **200** tasks (real prompts, rubric in `benchmark/README.md`) | curation | [x] |
 | P4.5 | Grow to **500+** tasks with held-out split (`benchmark/holdout.json`, never tuned against) | curation | [ ] |
 | P4.6 | `downshift benchmark --report` (tier accuracy, FRONTIER→MID rate, CI gate on regression) | eng | [x] |
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
+
 | P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [ ] |
 
 **Exit:** P4.5 + P4.6 green in CI; holdout tier accuracy documented with CI.

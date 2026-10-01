@@ -2,15 +2,15 @@
 
 ## What this is
 
-`tasks.json` is a 30-task seed (9 TRIVIAL, 7 SIMPLE, 7 MEDIUM, 7 COMPLEX)
+`tasks.json` is a curated 200-task seed dataset (50 TRIVIAL, 50 SIMPLE, 50 MEDIUM, 50 COMPLEX)
 used as a **regression net** for the downshift classifier: it catches
 accidental behaviour changes between edits. Each entry is a
 `{prompt, label}` pair; run it with `downshift benchmark benchmark/tasks.json`.
 
 ## What this is not
 
-It is **not proof of generalisation**. Thirty hand-picked prompts cannot
-represent real-world traffic, and accuracy on this file says nothing about
+It is **not proof of generalisation**. Curated prompts cannot
+represent all real-world traffic, and accuracy on this file says nothing about
 unseen tasks. Do not quote seed accuracy as a quality claim; treat a green
 run as "no obvious regression", nothing more.
 
