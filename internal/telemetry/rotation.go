@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -32,6 +33,24 @@ func DefaultRotationPolicy() RotationPolicy {
 		MaxSizeMB:  100,
 		MaxBackups: 10,
 	}
+}
+
+// RotationPolicyFromEnv returns the effective rotation policy.
+// DOWNSHIFT_LOG_MAX_MB (default 100) and DOWNSHIFT_LOG_MAX_BACKUPS (default 10)
+// override sizes; set max MB to 0 to disable rotation.
+func RotationPolicyFromEnv() RotationPolicy {
+	p := DefaultRotationPolicy()
+	if v := os.Getenv("DOWNSHIFT_LOG_MAX_MB"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+			p.MaxSizeMB = n
+		}
+	}
+	if v := os.Getenv("DOWNSHIFT_LOG_MAX_BACKUPS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			p.MaxBackups = n
+		}
+	}
+	return p
 }
 
 // MaybeRotate checks if the log file at path needs rotation and performs it.
