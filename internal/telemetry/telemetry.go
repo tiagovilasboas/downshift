@@ -258,6 +258,10 @@ func AppendTo(path string, ev Event) error {
 	}
 	defer lock.Close()
 
+	if _, err := RotationPolicyFromEnv().MaybeRotate(path); err != nil {
+		return fmt.Errorf("log rotation failed for %s: %w", path, err)
+	}
+
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err

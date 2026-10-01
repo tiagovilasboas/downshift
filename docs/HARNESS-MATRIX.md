@@ -13,7 +13,7 @@ rewrite to the child subagent, not just that downshift emitted one.
 | cursor | Pro / Ultra usage-based | Yes (TBD) | Works where selection expanded (README.md:738); TBD: re-check per Cursor release |
 | codex | multi_agent_v2 + hooks on | Yes (TBD) | Model + reasoning_effort honored (README.md:744); TBD: v2 schema still evolving (README.md:373) |
 | kirocrew | any (`spawn_run` / `spawn_sub_agents`) | No: policy/block only | No `updated_input` channel; exit 0/2 only (README.md:399-404) |
-| antigravity | `invoke_subagent` build | Gated: rewrites only with native catalog entries (pending — none in catalog.json yet, so R4 holds every decision and the adapter observes fail-open) | Session-gated alias flash/flash_lite (README.md:379-384); TBD: re-check alias set per build |
+| antigravity | `invoke_subagent` build | Gated: Yes when session lists `flash_lite` / `flash` / `pro` and guardrails clean (catalog shipped 2026-10-01) | Session-gated aliases; R4 no longer blocks native Gemini tiers; TBD: honor rewrite on real spawn (P5.5) |
 | grok | any (single model grok-4.6) | No hook rewrite: config only | PreToolUse is allow/deny; pin `reasoning_effort` in config.toml (README.md:520-531) |
 
 ## Revalidation
