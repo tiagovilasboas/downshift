@@ -33,11 +33,24 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 }
 
 // selectSessionTarget picks the id to write. The classified catalog id is
-// used only when that same model is in the session. Otherwise a downgrade
-// (or a blocked one) uses the cheapest session model, and an upshift uses
-// the strongest session model. Unlabeled session ids stay eligible: when
-// none of the session ids are in the catalog, the first id is the cheapest
-// (operators list cheapest-first) and upshifts do not guess.
+// used only when that same model is in the session. Otherwise routing
+// depends on the verdict:
+//
+//   - VerdictUpshift: use strongest session model (never downgrade if escalation fails).
+//   - VerdictDownshift: use cheapest session model (fallback when blocked, or blocked
+//     downshifts in VerdictOK state due to SafeVerdict correction, remain on current
+//     model by returning false, so PlanForSession applies effort only without rewrite).
+//   - VerdictUnknown or Model.ID=="": use cheapest session model.
+//   - Otherwise (VerdictOK): do not rewrite.
+//
+// Unlabeled session ids stay eligible: when none are in the catalog, the first id
+// is the cheapest (operators list cheapest-first) and upshifts do not guess.
+//
+// NOTE: When self-correction blocks a downshift via SafeVerdict, the classified
+// Verdict remains VerdictDownshift but ShouldRewriteModel() returns false (gates
+// on SafeVerdict when Checked=true). So blocked downshifts never reach the
+// cheapest-model logic here — PlanForSession detects ShouldRewriteModel() == false
+// and skips selectSessionTarget entirely, returning the current model.
 func selectSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool) {
 	if d.ShouldRewriteModel() && d.Model.ID != "" {
 		if id, model, ok := sessionForm(d.Harness, d.Model.ID, session, res); ok {
