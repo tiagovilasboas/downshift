@@ -52,6 +52,7 @@ jobs:
       - name: Benchmark Regression Gate
         run: |
           go run ./cmd/downshift benchmark benchmark/tasks.json --min-tier-accuracy=0.60
+          go run ./cmd/downshift benchmark benchmark/holdout.json --min-tier-accuracy=0.80
 
       - name: Adapter Smoke Tests
         run: |
