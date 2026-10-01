@@ -38,6 +38,8 @@ func TestClassify(t *testing.T) {
 		{"race condition", "there is a race condition in the observer, find it", Complex},
 		{"redesign", "redesign the checkout to support multi-tenant", Complex},
 		{"code review", "list the Go files and do a code review without changing anything", Complex},
+		{"upshift retry build", "fix the build because compilation failed", Complex},
+		{"upshift retry subagent", "o subagente falhou na tentativa anterior", Complex},
 
 		// Default — no signal
 		{"empty", "", Medium},
