@@ -72,7 +72,7 @@ Replace directional normalised units with provider-grounded savings.
 | P4.3 | Graphify offline escalation in `core.Route` | eng | [x] |
 | P4.4 | Grow to **200** tasks (real prompts, rubric in `benchmark/README.md`) | curation | [ ] |
 | P4.5 | Grow to **500+** tasks with held-out split (`benchmark/holdout.json`, never tuned against) | curation | [ ] |
-| P4.6 | `downshift benchmark --report` (tier accuracy, FRONTIER→MID rate, CI gate on regression) | eng | [ ] |
+| P4.6 | `downshift benchmark --report` (tier accuracy, FRONTIER→MID rate, CI gate on regression) | eng | [x] |
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [ ] |
 | P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [ ] |
 
@@ -89,7 +89,7 @@ Replace directional normalised units with provider-grounded savings.
 | P5.3 | Revalidate Cursor free/legacy discard quarterly | dogfood | [ ] |
 | P5.4 | Revalidate Codex `multi_agent_v2` schema quarterly | dogfood | [ ] |
 | P5.5 | Antigravity rewrite honored on real `invoke_subagent` session | dogfood | [ ] |
-| P5.6 | Issue template: “plan compatibility” checklist for bug reports | docs | [ ] |
+| P5.6 | Issue template: “plan compatibility” checklist for bug reports | docs | [x] |
 
 **Exit:** matrix has **no stale TBD** for harnesses you ship support for; known “No” rows stay honest.
 
@@ -104,7 +104,7 @@ Replace directional normalised units with provider-grounded savings.
 | I3 | Commit `go.sum` + CI cache (N/A today: zero external modules in `go.mod`; silence CI cache step or add deps later) | eng | [ ] |
 | I4 | README “What’s missing” table synced with this doc | docs | [x] |
 | I5 | `ExportSummary` includes `baseline` + `usage_linked` counts | eng | [x] |
-| I6 | Session route cache persistence audit (multi-process) | eng | [ ] |
+| I6 | Session route cache persistence audit (multi-process: stateless hooks + in-memory memo documented) | eng | [x] |
 
 ---
 

@@ -48,6 +48,10 @@ jobs:
       - name: Test
         run: go test -race -cover ./...
 
+      - name: Benchmark Regression Gate
+        run: |
+          go run ./cmd/downshift benchmark benchmark/tasks.json --min-tier-accuracy=0.60
+
   release:
     needs: test
     runs-on: ubuntu-latest

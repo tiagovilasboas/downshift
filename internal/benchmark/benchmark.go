@@ -395,3 +395,34 @@ func truncate(s string, n int) string {
 	}
 	return s[:n-3] + "..."
 }
+
+// Report holds computed benchmark metrics for JSON export or programmatic gating.
+type Report struct {
+	TotalTasks               int     `json:"total_tasks"`
+	ComplexityAccuracy       float64 `json:"complexity_accuracy"`
+	TierAccuracy             float64 `json:"tier_accuracy"`
+	FrontierToMidRate        float64 `json:"frontier_to_mid_rate"`
+	FrontierToSmallRate      float64 `json:"frontier_to_small_rate"`
+	FrontierTotal            int     `json:"frontier_total"`
+	SmallToMidRate           float64 `json:"small_to_mid_rate"`
+	SmallToFrontierRate      float64 `json:"small_to_frontier_rate"`
+	SmallTotal               int     `json:"small_total"`
+}
+
+// GenerateReport computes summary metrics from results.
+func GenerateReport(results []Result) Report {
+	udMID, udSMALL, _, _, udTotal := UnsafeDowngradeRates(results)
+	worMID, worFrontier, _, _, worTotal := WastefulOverRoutingRates(results)
+
+	return Report{
+		TotalTasks:          len(results),
+		ComplexityAccuracy:  Accuracy(results),
+		TierAccuracy:        TierAccuracy(results),
+		FrontierToMidRate:   udMID,
+		FrontierToSmallRate: udSMALL,
+		FrontierTotal:       udTotal,
+		SmallToMidRate:      worMID,
+		SmallToFrontierRate: worFrontier,
+		SmallTotal:          worTotal,
+	}
+}
