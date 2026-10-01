@@ -72,9 +72,14 @@ function renderMonitor(data) {
   }).join('') || dim('no switches yet');
   set('monitor-switches', swRows);
 
-  const agRows = agents.slice(-4).map(a =>
-    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="desc">${a.task.slice(0,44)}</span></div>`
-  ).join('') || dim('no agents yet');
+  const agRows = agents.slice(-4).map(a => {
+    // Privacy-safe lines have an empty task (no prompt storage). Fall back
+    // to the tool name so the row still identifies the spawn; old lines
+    // with task text render as before.
+    const label = (a.task && a.task.slice(0,44)) || a.tool || 'no task text (privacy)';
+    const desc = a.task ? label : `<span class="dim">${label}</span>`;
+    return `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="desc">${desc}</span></div>`;
+  }).join('') || dim('no agents yet');
   set('monitor-agents', agRows);
 
   set('monitor-stats',

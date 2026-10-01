@@ -129,10 +129,13 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// An in-family move that preserves capability needs no confidence gate;
 	// anything weaker (or no variant at all) goes through the normal rewrite
 	// gate, which already blocks downgrades on uncertain classifications.
+	// A decision held by a guardrail (Corrections non-empty) never takes
+	// this shortcut: it falls through to the normal gate below so SafeVerdict
+	// holds and session-target selection still apply.
 	target := plan.Model
 	note := decision.Summary()
 	familyHit := false
-	if res != nil && decision.CurrentModel.Family != "" {
+	if res != nil && decision.CurrentModel.Family != "" && len(decision.Corrections) == 0 {
 		if fer, ok := res.(core.FamilyEffortResolver); ok {
 			if fm, ok := fer.FamilyModelFor(harnessID, decision.CurrentModel.Family, decision.Effort); ok &&
 				fm.ID != "" && session.Contains(fm.ID) && fm.ID != decision.CurrentModel.ID && fm.Tier >= decision.Tier {
