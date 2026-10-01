@@ -465,25 +465,36 @@ func runStats(args []string) int {
 
 // runBenchmark runs the classifier against a labelled task dataset and prints
 // a confusion matrix + false-downshift rate.
-// Usage: downshift benchmark <dataset.json> [--compare]
+// Usage: downshift benchmark <dataset.json> [--compare] [--report] [--min-tier-accuracy=0.60]
 func runBenchmark(args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: downshift benchmark <dataset.json> [--compare]")
+		fmt.Fprintln(os.Stderr, "usage: downshift benchmark <dataset.json> [--compare] [--report] [--min-tier-accuracy=0.60]")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "The dataset is a JSON array of {\"prompt\":\"...\",\"label\":\"TRIVIAL|SIMPLE|MEDIUM|COMPLEX\"} objects.")
 		fmt.Fprintln(os.Stderr, "A seed dataset is available at benchmark/tasks.json in the repository.")
 		fmt.Fprintln(os.Stderr, "Use --compare --candidate-weights=<file> to evaluate a candidate without activating it.")
 		fmt.Fprintln(os.Stderr, "")
-		fmt.Fprintln(os.Stderr, "  --compare    Run both Legacy and CapabilityRouter v2 side by side")
+		fmt.Fprintln(os.Stderr, "  --compare                Run both Legacy and CapabilityRouter v2 side by side")
+		fmt.Fprintln(os.Stderr, "  --report                 Emit machine-readable JSON metrics summary to stdout")
+		fmt.Fprintln(os.Stderr, "  --min-tier-accuracy=0.60 Exit with error (1) if tier routing accuracy is below threshold")
 		return 2
 	}
 
 	compare := false
+	reportJSON := false
+	minTierAccuracy := 0.0
 	path := ""
 	candidateWeights := ""
 	for _, arg := range args {
 		if arg == "--compare" {
 			compare = true
+		} else if arg == "--report" {
+			reportJSON = true
+		} else if strings.HasPrefix(arg, "--min-tier-accuracy=") {
+			valStr := strings.TrimPrefix(arg, "--min-tier-accuracy=")
+			if val, err := strconv.ParseFloat(valStr, 64); err == nil {
+				minTierAccuracy = val
+			}
 		} else if strings.HasPrefix(arg, "--candidate-weights=") {
 			candidateWeights = strings.TrimPrefix(arg, "--candidate-weights=")
 		} else {
@@ -507,8 +518,29 @@ func runBenchmark(args []string) int {
 	}
 
 	results := benchmark.Run(tasks, os.Stderr)
-	matrix := benchmark.Build(results)
-	benchmark.Print(results, matrix, os.Stdout)
+
+	if reportJSON {
+		report := benchmark.GenerateReport(results)
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(report); err != nil {
+			fmt.Fprintf(os.Stderr, "error encoding report: %v\n", err)
+			return 1
+		}
+	} else {
+		matrix := benchmark.Build(results)
+		benchmark.Print(results, matrix, os.Stdout)
+	}
+
+	if minTierAccuracy > 0 {
+		tierAcc := benchmark.TierAccuracy(results)
+		if tierAcc < minTierAccuracy {
+			fmt.Fprintf(os.Stderr, "benchmark gate failed: tier accuracy %.1f%% below minimum required %.1f%%\n",
+				tierAcc*100, minTierAccuracy*100)
+			return 1
+		}
+	}
+
 	return 0
 }
 
