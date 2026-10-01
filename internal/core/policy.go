@@ -4,7 +4,11 @@
 
 package core
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/tiagovilasboas/harness-downshift/internal/graphify"
+)
 
 // Tier maps a complexity to the minimum capable tier — the gearbox rule:
 // which gear does this stretch of road need? Lives here because it is routing
@@ -43,9 +47,10 @@ type Decision struct {
 	// action adapters may apply. Checked is true for Route decisions and
 	// false for hand-built ones, so ShouldRewriteModel stays backward
 	// compatible with Decision literals that predate self-correction.
-	SafeVerdict Verdict
-	Corrections []string // guardrail rule IDs that held this decision, empty when clean
-	Checked     bool
+	SafeVerdict    Verdict
+	Corrections    []string // guardrail rule IDs that held this decision, empty when clean
+	Checked        bool
+	GraphEscalated bool // true when graphify escalated the classification to Complex
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -88,21 +93,22 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		res = r[0]
 	}
 
-	tier, cls := classifyTask(prompt)
+	tier, cls, graphEscalated := classifyTask(prompt)
 	effort := EffortFor(tier)
 	recommended := resolveModel(harness, tier, res)
 	verdict, savings, current := compareToCurrentModel(harness, currentModelID, recommended, res)
 
 	d := Decision{
-		Complexity:   cls,
-		Tier:         tier,
-		Effort:       effort,
-		Harness:      harness,
-		Model:        recommended,
-		CurrentModel: current,
-		Verdict:      verdict,
-		Savings:      savings,
-		Confident:    Classify(prompt).Confident,
+		Complexity:     cls,
+		Tier:           tier,
+		Effort:         effort,
+		Harness:        harness,
+		Model:          recommended,
+		CurrentModel:   current,
+		Verdict:        verdict,
+		Savings:        savings,
+		Confident:      Classify(prompt).Confident,
+		GraphEscalated: graphEscalated,
 	}
 	d.Intent = IntentFor(prompt, Classify(prompt), d, res)
 	// Self-correction validates the decision against the guardrails before
@@ -118,9 +124,24 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 }
 
 // classifyTask scores the prompt and returns the target tier and complexity.
-func classifyTask(prompt string) (Tier, Complexity) {
+// Returns (escalated bool) as third return value to track if graphify triggered.
+func classifyTask(prompt string) (Tier, Complexity, bool) {
 	cls := Classify(prompt)
-	return cls.Complexity.Tier(), cls.Complexity
+	complexity := cls.Complexity
+	escalated := false
+
+	// Graphify escalation: if the text classifier is uncertain but the prompt
+	// mentions critical files/symbols, escalate to Complex for safer handling.
+	// Only escalate if not already Complex.
+	if complexity != Complex {
+		hint := graphifyHint(prompt)
+		if hint.ShouldEscalate {
+			complexity = Complex
+			escalated = true
+		}
+	}
+
+	return complexity.Tier(), complexity, escalated
 }
 
 // resolveModel returns the catalog model for the given harness and tier.
@@ -227,4 +248,13 @@ func (d Decision) ShouldPreserveExplicitModel(currentModelID string, r Resolver)
 		return false
 	}
 	return r.IsExplicitOnly(d.Harness, currentModelID)
+}
+
+// graphifyHint wraps the graphify.Hint call with a nil fetcher (offline mode).
+// It returns an escalation hint based on text-only signals and high-risk
+// community detection (no MCP call). When the prompt mentions critical files
+// or symbols from high-risk communities, the hint recommends escalation to
+// Complex for safer handling.
+func graphifyHint(prompt string) graphify.EscalationHint {
+	return graphify.Hint(prompt, graphify.DefaultCriteria(), nil)
 }
