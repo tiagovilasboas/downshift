@@ -1,7 +1,7 @@
 # MiniLM semantic boost (P4.9)
 
-Optional **local embedding** layer beside the regex classifier — same role as a
-small decision model (Jev/Laya): finite labels, no LLM in the routing path.
+Local embedding layer beside the regex classifier — on by default, no LLM.
+Same role as a small decision model (Jev/Laya): finite labels only.
 
 ## Paths
 
@@ -12,21 +12,23 @@ small decision model (Jev/Laya): finite labels, no LLM in the routing path.
 | `internal/core/semantic_fuse.go` | Wires boost into `Route` / `ClassifyWithSemantic` |
 | `tools/minilm/README.md` | Train real MiniLM centroids + embed script |
 
-## Enable
+## Default
+
+Semantic boost is **on**. The shipped hash embedder runs in-process (no Python, no network).
 
 ```bash
-export DOWNSHIFT_MINILM=1
-# Default embedder: deterministic hash (shipped prototypes)
-export DOWNSHIFT_MINILM_EMBED=hash
+# turn off
+export DOWNSHIFT_MINILM=0
 
-# Or real MiniLM (Python):
-# export DOWNSHIFT_MINILM_EMBED="python3 tools/minilm/embed_stdin.py"
+# optional neural MiniLM; hash is used if this command fails
+export DOWNSHIFT_MINILM_EMBED="python3 tools/minilm/embed_stdin.py"
 ```
 
 Rules:
 
-- **Fail-open** — if embed fails, regex result stands.
-- **Monotonic** — semantic never downgrades; only raises when regex is unconfident or lower rank.
+- **Local first** — hash prototypes are embedded in the binary.
+- **Fallback** — external embed failure returns to hash; hash or store failure leaves the regex label.
+- **Monotonic** — semantic never downgrades; only raises when regex is unconfident.
 - **No prompts in telemetry** — unchanged privacy contract.
 
 ## Refresh prototypes

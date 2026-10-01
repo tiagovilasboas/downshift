@@ -6,9 +6,9 @@
 // semantic signal may only preserve or raise the class when regex confidence
 // is low (Jev/Laya-style decision layer beside generation).
 //
-// Enable at runtime with DOWNSHIFT_MINILM=1 and DOWNSHIFT_MINILM_EMBED pointing
-// to tools/minilm/embed_stdin.py (or any command that reads prompt on stdin
-// and prints a JSON array of floats).
+// On by default. Opt out with DOWNSHIFT_MINILM=0.
+// The local hash embedder always runs. DOWNSHIFT_MINILM_EMBED may point at
+// tools/minilm/embed_stdin.py; if that command fails, hash is the fallback.
 package semantic
 
 // Label names match benchmark complexity labels.

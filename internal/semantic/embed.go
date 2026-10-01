@@ -43,19 +43,43 @@ func (c CmdEmbedder) Embed(prompt string) ([]float64, error) {
 	return vec, nil
 }
 
-// EmbedderFromEnv returns a CmdEmbedder when DOWNSHIFT_MINILM_EMBED is set.
-func EmbedderFromEnv() (Embedder, bool) {
-	cmd := strings.TrimSpace(os.Getenv("DOWNSHIFT_MINILM_EMBED"))
-	if cmd == "" {
-		return HashEmbedder{}, true
-	}
-	if cmd == "hash" {
-		return HashEmbedder{}, true
-	}
-	return CmdEmbedder{Cmd: cmd}, true
+// fallbackEmbedder tries primary (optional external MiniLM) then the local hash embedder.
+type fallbackEmbedder struct {
+	primary  Embedder
+	fallback Embedder
 }
 
+func (f fallbackEmbedder) Embed(prompt string) ([]float64, error) {
+	if f.primary != nil {
+		if vec, err := f.primary.Embed(prompt); err == nil && len(vec) > 0 {
+			return vec, nil
+		}
+	}
+	if f.fallback == nil {
+		return nil, fmt.Errorf("no embedder")
+	}
+	return f.fallback.Embed(prompt)
+}
+
+// EmbedderFromEnv returns the local hash embedder by default.
+// DOWNSHIFT_MINILM_EMBED=<cmd> tries that command first and falls back to hash
+// when the command is missing, fails, or returns an empty vector.
+func EmbedderFromEnv() (Embedder, bool) {
+	hash := HashEmbedder{}
+	cmd := strings.TrimSpace(os.Getenv("DOWNSHIFT_MINILM_EMBED"))
+	if cmd == "" || cmd == "hash" {
+		return hash, true
+	}
+	return fallbackEmbedder{primary: CmdEmbedder{Cmd: cmd}, fallback: hash}, true
+}
+
+// enabled is on unless DOWNSHIFT_MINILM is 0, false, or off.
 func enabled() bool {
-	v := strings.TrimSpace(os.Getenv("DOWNSHIFT_MINILM"))
-	return v == "1" || strings.EqualFold(v, "true")
+	v := strings.ToLower(strings.TrimSpace(os.Getenv("DOWNSHIFT_MINILM")))
+	switch v {
+	case "0", "false", "off", "no":
+		return false
+	default:
+		return true
+	}
 }

@@ -10,6 +10,7 @@ import (
 )
 
 func TestClassifyWithSemantic_DisabledMatchesClassify(t *testing.T) {
+	t.Setenv("DOWNSHIFT_MINILM", "0")
 	prompt := "rename the userId variable to user_id"
 	base := core.Classify(prompt)
 	sem := core.ClassifyWithSemantic(prompt)

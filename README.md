@@ -23,7 +23,7 @@
 
 Every time your AI agent spawns a subagent, that subagent inherits the most expensive model in the session. A $25/1M token frontier model ends up renaming a variable, fixing a typo, listing files. You're billed. The work was identical on a $1/1M model.
 
-`harness-downshift` intercepts every subagent spawn and routes it to the right-sized model **before it starts** — automatically, without an LLM in the loop, with a single Go binary that runs as a hook.
+`harness-downshift` intercepts every subagent spawn and routes it to the right-sized model **before it starts** — automatically, without an LLM in the loop, with a single Go binary that runs as a hook. A local semantic boost (hash centroids, MiniLM-compatible) runs by default and only raises uncertain regex labels; set `DOWNSHIFT_MINILM=0` to use regex only. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
 
 ```
 Subagent task: "rename the userId variable across auth.ts"
@@ -1167,7 +1167,7 @@ Being honest: the router and adapters work today. These are the gaps between "wo
 
 | Gap | Why it matters | Status |
 |---|---|---|
-| **Real token counts via PostToolUse hook** | Link provider usage to routing decisions for real USD in `downshift stats`. | Hook shipped for Claude Code — wire PostToolUse in settings and dogfood until `real_cost_events` > 0 ([beta exit P3](docs/BETA-EXIT.md)) |
+| **Real token counts via PostToolUse hook** | Link provider usage to routing decisions for real USD in `downshift stats`. | Hook and quickstart shipped — dogfood until `real_cost_events` > 0 ([beta exit P3](docs/BETA-EXIT.md)) |
 | **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Shipped (this week) — see [Real session data](#real-session-data) |
 | **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. Hook-layer E2E is covered (`TestHookE2E_RewriteEventStats`: hook stdin → adapter rewrite → JSONL event → stats aggregation). | Partial: hook-layer E2E in CI, real spawn pending |
 | **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verified (430-event log, Sep 2026) |
@@ -1272,7 +1272,7 @@ Not yet proven — the graduation criteria for leaving beta:
 1. **Real-spawn verification** — proof a harness executor honored the rewrite, not just `rewrite_emitted`.
 2. **Multi-user data** — today's 430 events are single-user dogfood; graduation needs independent sessions.
 3. **Billing before/after** — provider-dashboard comparison, replacing normalised units.
-4. **Larger benchmark** — 500+ labeled tasks with statistical reporting (108 curated today; protocol in `benchmark/README.md`, task map in [docs/BETA-EXIT.md](docs/BETA-EXIT.md)).
+4. **Larger benchmark** — holdout split and CI gates are in tree (`benchmark/holdout.json`, `downshift benchmark --gate`); keep quoting seed accuracy as a regression net, not a quality claim ([docs/BETA-EXIT.md](docs/BETA-EXIT.md)).
 5. **Harness coverage** — rewrites honored across plans/builds, not silently discarded (the external dependency).
 
 When those five hold, the beta label goes. Until then it stays — with the numbers above updated as evidence grows.
