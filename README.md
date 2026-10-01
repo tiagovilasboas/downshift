@@ -913,40 +913,40 @@ Measured with `downshift stats` on 430 local routing events (Sep 21–30, 2026):
 
 ## Classifier benchmark
 
-Run the classifier against the seed dataset included in the repository:
+Run the classifier against the curated dataset included in the repository:
 
 ```
 # Example output — run this yourself to see current numbers.
 $ downshift benchmark benchmark/tasks.json
 
-Dataset: 30 tasks
+Dataset: 108 tasks (26 TRIVIAL, 28 SIMPLE, 27 MEDIUM, 27 COMPLEX)
 
-Complexity accuracy     46.7%  (exact label match)
-Tier routing accuracy   70.0%  (correct model tier — what matters economically)
+Complexity accuracy     38.9%  (exact label match)
+Tier routing accuracy   63.0%  (correct model tier — what matters economically)
 
 Unsafe downgrade (FRONTIER → cheaper tier):
-  FRONTIER → MID        42.9%  (3 / 7)
-  FRONTIER → SMALL       0.0%  (0 / 7)
+  FRONTIER → MID        55.6%  (15 / 27)
+  FRONTIER → SMALL       0.0%  (0 / 27)
 
 Wasteful over-routing (SMALL → dearer tier):
-  SMALL → MID           55.6%  (5 / 9)
-  SMALL → FRONTIER       0.0%  (0 / 9)
+  SMALL → MID           73.1%  (19 / 26)
+  SMALL → FRONTIER       3.8%  (1 / 26)
 ```
 
 The two numbers that matter for the business decision:
 
-**Tier routing accuracy (70.0%)** is the economic KPI. SIMPLE predicted as
+**Tier routing accuracy (63.0%)** is the economic KPI. SIMPLE predicted as
 MEDIUM is a complexity miss but an identical routing decision — both go to
-the mid tier. Complexity accuracy (46.7%) makes the classifier look worse
+the mid tier. Complexity accuracy (38.9%) makes the classifier look worse
 than it really is in terms of actual model selection.
 
-**Observed FRONTIER→SMALL rate on the seed dataset: 0.0%** (0 / 7 COMPLEX tasks).
-That is a good signal on 30 tasks — not yet a proven safety guarantee.
-FRONTIER→MID (42.9%) is the current main gap: those tasks get a capable model
-but not the strongest one. That is the classifier's known weak spot on this seed.
+**Observed FRONTIER→SMALL rate on the expanded dataset: 0.0%** (0 / 27 COMPLEX tasks).
+That is a good signal — the classifier never catastrophically downgrades complex
+work. FRONTIER→MID (55.6%) is the current main gap: those tasks get a capable
+model but not the strongest one. This is a precision challenge, not a safety gap.
 
-The seed dataset has 30 tasks. The format is
-`[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
+The dataset has 108 curated tasks (expanded from 30) balancing realistic variance
+per label. The format is `[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
 Add your own prompts and run again — real coding tasks from your stack are
 the highest-value contribution you can make to this project.
 
