@@ -482,22 +482,26 @@ func runBenchmark(args []string) int {
 
 	compare := false
 	reportJSON := false
+	gate := false
 	minTierAccuracy := 0.0
 	path := ""
 	candidateWeights := ""
 	for _, arg := range args {
-		if arg == "--compare" {
+		switch {
+		case arg == "--compare":
 			compare = true
-		} else if arg == "--report" {
+		case arg == "--report":
 			reportJSON = true
-		} else if strings.HasPrefix(arg, "--min-tier-accuracy=") {
+		case arg == "--gate":
+			gate = true
+		case strings.HasPrefix(arg, "--min-tier-accuracy="):
 			valStr := strings.TrimPrefix(arg, "--min-tier-accuracy=")
 			if val, err := strconv.ParseFloat(valStr, 64); err == nil {
 				minTierAccuracy = val
 			}
-		} else if strings.HasPrefix(arg, "--candidate-weights=") {
+		case strings.HasPrefix(arg, "--candidate-weights="):
 			candidateWeights = strings.TrimPrefix(arg, "--candidate-weights=")
-		} else {
+		default:
 			path = arg
 		}
 	}
@@ -518,27 +522,36 @@ func runBenchmark(args []string) int {
 	}
 
 	results := benchmark.Run(tasks, os.Stderr)
+	report := benchmark.GenerateReport(results)
 
 	if reportJSON {
-		report := benchmark.GenerateReport(results)
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
 		if err := enc.Encode(report); err != nil {
 			fmt.Fprintf(os.Stderr, "error encoding report: %v\n", err)
 			return 1
 		}
-	} else {
+	} else if !gate {
 		matrix := benchmark.Build(results)
 		benchmark.Print(results, matrix, os.Stdout)
 	}
 
+	gates := benchmark.DefaultGateThresholds()
 	if minTierAccuracy > 0 {
-		tierAcc := benchmark.TierAccuracy(results)
-		if tierAcc < minTierAccuracy {
-			fmt.Fprintf(os.Stderr, "benchmark gate failed: tier accuracy %.1f%% below minimum required %.1f%%\n",
-				tierAcc*100, minTierAccuracy*100)
+		gates.MinTierAccuracy = minTierAccuracy
+	}
+	if gate {
+		ok, reasons := benchmark.EvaluateGates(report, gates)
+		if !ok {
+			for _, r := range reasons {
+				fmt.Fprintf(os.Stderr, "benchmark gate failed: %s\n", r)
+			}
 			return 1
 		}
+	} else if minTierAccuracy > 0 && report.TierAccuracy < minTierAccuracy {
+		fmt.Fprintf(os.Stderr, "benchmark gate failed: tier accuracy %.1f%% below minimum required %.1f%%\n",
+			report.TierAccuracy*100, minTierAccuracy*100)
+		return 1
 	}
 
 	return 0

@@ -51,7 +51,7 @@ jobs:
 
       - name: Benchmark Regression Gate
         run: |
-          go run ./cmd/downshift benchmark benchmark/tasks.json --min-tier-accuracy=0.60
+          go run ./cmd/downshift benchmark benchmark/tasks.json --gate --min-tier-accuracy=0.60
           go run ./cmd/downshift benchmark benchmark/holdout.json --min-tier-accuracy=0.80
 
       - name: Adapter Smoke Tests
@@ -60,7 +60,7 @@ jobs:
 
       - name: Export Directional Stats
         run: |
-          ./downshift stats --days=30 --export > stats-export.json
+          go run ./cmd/downshift stats --days=30 --export > stats-export.json
 
       - name: Upload Stats Export Artifact
         uses: actions/upload-artifact@v4

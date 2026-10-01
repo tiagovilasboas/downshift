@@ -171,7 +171,7 @@ func Run(tasks []Task, w io.Writer) []Result {
 			skipped++
 			continue
 		}
-		cls := core.Classify(t.Prompt)
+		cls := core.ClassifyWithSemantic(t.Prompt)
 		results = append(results, Result{
 			Task:      t,
 			Predicted: cls.Complexity,
@@ -467,6 +467,37 @@ type Report struct {
 	SmallToMidRate           float64             `json:"small_to_mid_rate"`
 	SmallToFrontierRate      float64             `json:"small_to_frontier_rate"`
 	SmallTotal               int                 `json:"small_total"`
+}
+
+// GateThresholds defines CI regression limits.
+type GateThresholds struct {
+	MinTierAccuracy          float64
+	MaxFrontierToMIDRate     float64
+	MaxFrontierToSmallRate   float64
+}
+
+// DefaultGateThresholds is the seed-dataset regression bar (directional).
+func DefaultGateThresholds() GateThresholds {
+	return GateThresholds{
+		MinTierAccuracy:        0.55,
+		MaxFrontierToMIDRate:   0.70,
+		MaxFrontierToSmallRate: 0.0,
+	}
+}
+
+// EvaluateGates returns false and reasons when metrics violate thresholds.
+func EvaluateGates(rep Report, gates GateThresholds) (bool, []string) {
+	var reasons []string
+	if rep.TierAccuracy < gates.MinTierAccuracy {
+		reasons = append(reasons, fmt.Sprintf("tier_accuracy %.3f < min %.3f", rep.TierAccuracy, gates.MinTierAccuracy))
+	}
+	if rep.FrontierToSmallRate > gates.MaxFrontierToSmallRate {
+		reasons = append(reasons, fmt.Sprintf("frontier_to_small_rate %.3f > max %.3f", rep.FrontierToSmallRate, gates.MaxFrontierToSmallRate))
+	}
+	if rep.FrontierToMidRate > gates.MaxFrontierToMIDRate {
+		reasons = append(reasons, fmt.Sprintf("frontier_to_mid_rate %.3f > max %.3f", rep.FrontierToMidRate, gates.MaxFrontierToMIDRate))
+	}
+	return len(reasons) == 0, reasons
 }
 
 // GenerateReport computes summary metrics from results.
