@@ -69,6 +69,11 @@ type Event struct {
 	// Absent on clean decisions and on events written before self-check.
 	SafeVerdict string   `json:"safe_verdict,omitempty"`
 	Corrections []string `json:"corrections,omitempty"`
+
+	// Optional post-spawn verification. Non-nil only when the harness or
+	// an observer exposes the actual post-spawn child model or confirmation.
+	// Privacy note: boolean only, no prompt or execution payloads stored.
+	RewriteHonored *bool `json:"rewrite_honored,omitempty"`
 }
 
 // HasRealCost reports whether the event carries real provider costs.
