@@ -290,6 +290,14 @@ type Stats struct {
 	RealSavedUSD   float64
 	RealCostEvents int
 
+	// UsageLinked counts post-hoc cost records (outcome "usage").
+	// Baseline counts control-group events recorded with routing disabled
+	// (outcome "baseline", see DOWNSHIFT_NO_ROUTE): classified but never
+	// applied, excluded from decision counts so before/after comparison
+	// stays honest.
+	UsageLinked int
+	Baseline    int
+
 	// Corrected counts events where a guardrail held the decision: the
 	// classified verdict stands in the log, but adapters applied the safe
 	// action (see Event.Corrections for the rule IDs).
@@ -377,6 +385,22 @@ func FilterByDays(events []Event, days int) []Event {
 func Aggregate(events []Event) Stats {
 	s := Stats{ByComplexity: make(map[string]int)}
 	for _, ev := range events {
+		if IsCostOnlyOutcome(ev.Outcome) {
+			// Post-hoc cost records ("usage") and control-group events
+			// ("baseline") are not decisions: they must not move Total,
+			// verdict counts, complexity counts, or normalised units.
+			// Usage records contribute real-dollar savings below.
+			if ev.Outcome == OutcomeBaseline {
+				s.Baseline++
+				continue
+			}
+			s.UsageLinked++
+			if ev.HasRealCost() {
+				s.RealCostEvents++
+				s.RealSavedUSD += ev.RealSavedUSD()
+			}
+			continue
+		}
 		s.Total++
 		s.ByComplexity[ev.Complexity]++
 		switch ev.Verdict {
@@ -472,7 +496,13 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Real provider cost (%d events with token usage)\n", s.RealCostEvents)
 		fmt.Fprintf(w, "Real saved            $%10.2f\n", s.RealSavedUSD)
 	} else {
-		fmt.Fprintf(w, "Real cost: no events with token usage yet (PostToolUse hook planned).\n")
+		fmt.Fprintf(w, "Real cost: no events with token usage yet (wire the PostToolUse hook to populate them).\n")
+	}
+	if s.UsageLinked > 0 {
+		fmt.Fprintf(w, "Usage linked          %8d  (PostToolUse real-cost records)\n", s.UsageLinked)
+	}
+	if s.Baseline > 0 {
+		fmt.Fprintf(w, "Baseline (no-route)   %8d  (control group, excluded from rates)\n", s.Baseline)
 	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
 }
