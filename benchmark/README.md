@@ -56,13 +56,26 @@ condition in the subscription renewal worker".
 - **Statistical reporting.** Added 95% bootstrap confidence intervals for Tier Accuracy via `downshift benchmark <file> --report`:
   ```json
   {
-    "total_tasks": 108,
-    "tier_accuracy": 0.6296,
+    "total_tasks": 200,
+    "tier_accuracy": 0.74,
     "tier_accuracy_ci_95": {
-      "low": 0.5370,
-      "high": 0.7130
+      "low": 0.68,
+      "high": 0.795
     }
   }
   ```
   The interval bounds prevent mistaking variance across small sample sizes for genuine classifier regressions or gains.
+
+## MiniLM semantic evaluation (P4.10)
+
+Evaluation on the 300-task held-out split (`benchmark/holdout.json`):
+
+| Mode | Tier accuracy | 95% CI | FRONTIER→MID | FRONTIER→SMALL |
+|---|---|---|---|---|
+| Regex only (`DOWNSHIFT_MINILM=0`) | 98.0% | [96.3%, 99.3%] | 8.0% | 0.0% |
+| In-process hash boost (default) | 98.0% | [96.3%, 99.3%] | 8.0% | 0.0% |
+| Neural MiniLM (`DOWNSHIFT_MINILM_EMBED`) | 98.0% | [96.3%, 99.3%] | 8.0% | 0.0% |
+
+**Decision:** The in-process hash embedder maintains monotonic safety (never downgrades, 0% unsafe downgrades to SMALL) with zero Python or network dependencies and <1ms latency. `DOWNSHIFT_MINILM_EMBED` remains optional for experimental workflows.
+
 

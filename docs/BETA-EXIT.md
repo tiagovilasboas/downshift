@@ -76,7 +76,7 @@ Replace directional normalised units with provider-grounded savings.
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
 | P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [ ] |
 | P4.9 | **MiniLM semantic boost on by default** (local hash; external embed falls back to hash; `DOWNSHIFT_MINILM=0` opts out — `docs/MINILM-SEMANTIC.md`) | eng | [x] |
-| P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout | eng | [ ] |
+| P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout | eng | [x] |
 
 **Exit:** P4.5 + P4.6 green in CI; holdout tier accuracy documented with CI.
 
