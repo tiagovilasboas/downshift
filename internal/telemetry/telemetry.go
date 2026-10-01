@@ -237,13 +237,12 @@ func Record(ev Event) {
 // directories as needed. Returns any write error.
 //
 // Concurrency note: the in-process mutex (mu) prevents data races between
-// goroutines in the same binary. It does NOT protect against concurrent
-// writes from multiple downshift processes (e.g. two harnesses firing hooks
-// in parallel). On POSIX systems, O_APPEND writes smaller than PIPE_BUF
-// (~4 KB) are atomic at the kernel level, so interleaved JSON lines are
-// unlikely in normal use. A future version should use file locking (flock)
-// or migrate to SQLite for full multi-process correctness.
-// TODO: replace with SQLite for multi-process safety and richer queries.
+// goroutines in the same binary (mutex). Multi-process safety is provided
+// by file locking (LockFile) which works on both Unix and Windows. The lock
+// file is created atomically; multiple processes will serialize writes.
+// On POSIX systems, once a process owns the lock, O_APPEND writes are
+// atomic at the kernel level for sizes < PIPE_BUF (~4 KB), so JSON lines
+// will not interleave even under contention.
 func AppendTo(path string, ev Event) error {
 	mu.Lock()
 	defer mu.Unlock()
@@ -251,6 +250,14 @@ func AppendTo(path string, ev Event) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
+
+	// Acquire exclusive lock (multi-process safe).
+	lock, err := LockFile(path, 5*time.Second)
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock on %s: %w", path, err)
+	}
+	defer lock.Close()
+
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
@@ -269,7 +276,7 @@ func AppendTo(path string, ev Event) error {
 	if _, err := fmt.Fprintf(f, "%s\n", line); err != nil {
 		return err
 	}
-	return f.Sync() // flush to OS before releasing the lock
+	return f.Sync() // flush to OS before releasing lock
 }
 
 // Stats is the aggregated view of all recorded events.
