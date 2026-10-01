@@ -26,7 +26,7 @@ import (
 const (
 	eventsFile = ".harness-downshift/events.jsonl"
 	maxRecent  = 8
-	refreshMs  = 250  // fast enough to feel live
+	refreshMs  = 250 // fast enough to feel live
 	boxWidth   = 58
 	window24h  = 24 * time.Hour
 )
@@ -184,7 +184,9 @@ func (s *state) pollAgents(path string) {
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		var ae agentEvent
-		if json.Unmarshal(sc.Bytes(), &ae) == nil && ae.Task != "" {
+		// Keep privacy-safe lines: new hook events have an empty task but
+		// always carry a tool name. Skip only lines with neither.
+		if json.Unmarshal(sc.Bytes(), &ae) == nil && (ae.Task != "" || ae.Tool != "") {
 			s.agents = append(s.agents, ae)
 		}
 	}
@@ -247,8 +249,8 @@ type stats struct {
 	// realSavedUSD accumulates baseline minus actual cost for events with real costs.
 	realSavedUSD float64
 	// realCostEvents counts events that carried both real cost fields.
-	realCostEvents  int
-	harnesses           []string // all distinct harnesses active today, most-recent first
+	realCostEvents int
+	harnesses      []string // all distinct harnesses active today, most-recent first
 }
 
 func compute(all []event) (stats, []event) {
@@ -447,6 +449,15 @@ func render(s *state) {
 				model = string([]rune(model)[:6])
 			}
 			task := a.Task
+			if task == "" {
+				// Privacy-safe line: no task text stored. Fall back to the
+				// tool name so the row still identifies the spawn.
+				if a.Tool != "" {
+					task = a.Tool
+				} else {
+					task = "no task text (privacy)"
+				}
+			}
 			if len([]rune(task)) > 28 {
 				task = string([]rune(task)[:28]) + "…"
 			}

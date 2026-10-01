@@ -23,6 +23,7 @@ package graphify
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -129,8 +130,8 @@ func Hint(prompt string, criteria Criteria, fetcher GraphFetcher) EscalationHint
 		if info.Edges >= criteria.EdgeThreshold {
 			return EscalationHint{
 				ShouldEscalate: true,
-				Reason: "node '" + info.Label + "' has " + itoa(info.Edges) +
-					" graph edges (threshold: " + itoa(criteria.EdgeThreshold) + ")" +
+				Reason: "node '" + info.Label + "' has " + strconv.Itoa(info.Edges) +
+					" graph edges (threshold: " + strconv.Itoa(criteria.EdgeThreshold) + ")" +
 					" — high blast radius",
 				TriggeringNode: info.Label,
 			}
@@ -171,27 +172,4 @@ func extractCandidates(prompt string) []string {
 		}
 	}
 	return out
-}
-
-// itoa is a tiny int→string helper to avoid importing strconv.
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	neg := n < 0
-	if neg {
-		n = -n
-	}
-	buf := make([]byte, 20)
-	pos := len(buf)
-	for n > 0 {
-		pos--
-		buf[pos] = byte('0' + n%10)
-		n /= 10
-	}
-	if neg {
-		pos--
-		buf[pos] = '-'
-	}
-	return string(buf[pos:])
 }

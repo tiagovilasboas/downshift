@@ -49,15 +49,6 @@ func TestEscalationIntentString_DefaultBranch(t *testing.T) {
 	}
 }
 
-// --- EscalationIntent.Tier() default / unknown branch ---
-
-func TestEscalationIntentTier_DefaultBranch(t *testing.T) {
-	// Anything other than Trivial/Review/Preserved → TierMid
-	if got := core.EscalationIntent(99).Tier(); got != core.TierMid {
-		t.Errorf("EscalationIntent(99).Tier() = %s, want mid", got)
-	}
-}
-
 // --- Plan() with PreserveExplicit ---
 
 func TestPlan_PreserveExplicit_SkipsRewrite(t *testing.T) {

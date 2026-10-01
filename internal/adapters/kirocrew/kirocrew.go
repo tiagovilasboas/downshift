@@ -16,8 +16,11 @@
 // blocks the spawn with an actionable message telling the agent to respawn at
 // the right tier. The classification stays deterministic and prompt-free — the
 // shared core engine, no LLM in the loop. Fail-open is absolute: an empty task,
-// a non-subagent tool, an unknown current model, or a low-confidence downshift
-// all allow the spawn. The router must never block a spawn on its own doubt.
+// a non-subagent tool, an unknown current model, a low-confidence downshift,
+// a target outside the session, a guardrail-held decision, or an
+// explicit-only target all allow the spawn. The router must never block a
+// spawn on its own doubt, and a block must never name a model id the session
+// does not have.
 package kirocrew
 
 import (
@@ -34,10 +37,10 @@ const harnessID = "kirocrew"
 // preToolUse matcher already scopes the hook, but the adapter re-checks so a
 // broad matcher (e.g. "*") never blocks an unrelated tool.
 var subagentTools = map[string]bool{
-	"subagent":      true,
-	"agent_crew":    true,
-	"use_subagent":  true,
-	"spawn_run":     true,
+	"subagent":         true,
+	"agent_crew":       true,
+	"use_subagent":     true,
+	"spawn_run":        true,
 	"spawn_sub_agents": true,
 }
 
@@ -46,7 +49,6 @@ var subagentTools = map[string]bool{
 type Event struct {
 	HookEventName string          `json:"hook_event_name"`
 	CorrelationID string          `json:"correlation_id,omitempty"`
-	CWD           string          `json:"cwd,omitempty"`
 	ToolName      string          `json:"tool_name"`
 	ToolInput     json.RawMessage `json:"tool_input"`
 }
@@ -114,7 +116,9 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 	// An uncertain downshift must never block: blocking on doubt would trade
 	// a real spawn for a wrong-way demotion. Upshifts are safe to enforce even
-	// when confidence is soft — under-powering a subagent is the costlier error.
+	// when confidence is soft — under-powering a subagent is the costlier error —
+	// but like every block they still need an actionable, held-free,
+	// in-session target (see the policy-mode gate below).
 	if decision.Verdict == core.VerdictDownshift && !decision.Confident {
 		return allow(), "", decision
 	}
@@ -125,8 +129,25 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", decision
 	}
 
-	// Mismatch we are confident about (downshift or upshift): block and tell
-	// the agent exactly which model to respawn with.
+	// Policy-mode gate: the block message names decision.Model.ID, so only
+	// block when that id is actionable in this session. A target outside the
+	// session, held by a guardrail, or marked explicit-only fails open —
+	// blocking would tell the agent to respawn with an id it cannot (or must
+	// not) use. Same ResolveSession order as the rewrite adapters; without a
+	// known session there is nothing safe to name.
+	session := core.ResolveSession(harnessID)
+	if !session.Contains(decision.Model.ID) {
+		return allow(), "", decision
+	}
+	if len(decision.Corrections) > 0 {
+		return allow(), "", decision
+	}
+	if res != nil && res.IsExplicitOnly(harnessID, decision.Model.ID) {
+		return allow(), "", decision
+	}
+
+	// A confident mismatch with an actionable in-session target (downshift or
+	// upshift): block and tell the agent exactly which model to respawn with.
 	note := decision.Summary()
 	msg := fmt.Sprintf("downshift: %s\nRespawn this subagent with model=%s (tier %s).",
 		note, decision.Model.ID, decision.Tier)
