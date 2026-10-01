@@ -32,7 +32,6 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/harness-downshift/internal/adapters/kirocrew"
-	dsserver "github.com/tiagovilasboas/harness-downshift/internal/server"
 	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
 	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
@@ -40,6 +39,7 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/models"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/classifier"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/training"
+	dsserver "github.com/tiagovilasboas/harness-downshift/internal/server"
 	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
 )
 
@@ -79,6 +79,8 @@ func main() {
 			printAllow,
 			func(e claudecode.Event) string { return e.TaskText() },
 		))
+	case "claude-code-post-tool-use":
+		os.Exit(runClaudePostToolUse(os.Stdin, catalog))
 	case "cursor":
 		os.Exit(runHookAdapter(
 			os.Stdin,
@@ -169,7 +171,13 @@ func runHookAdapter[E any](
 		correlationID = telemetry.CorrelationIDOrNew(identified.CorrelationIdentifier())
 	}
 	out, note, decision := handle(ev)
-	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
+	// Control-group mode for before/after comparison: classify as usual
+	// but allow the spawn untouched, recording the decision as a
+	// "baseline" event that stats excludes from routed rates.
+	noRoute := os.Getenv("DOWNSHIFT_NO_ROUTE") == "1"
+	if noRoute {
+		failOpen()
+	} else if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
 		return fail("OUTPUT_ENCODE_ERROR")
 	}
 	if note != "" {
@@ -179,6 +187,9 @@ func runHookAdapter[E any](
 	// A zero Decision (Harness == "") means the event was not a subagent spawn.
 	if decision.Harness != "" {
 		event := telemetry.FromDecision(decision, correlationID, buildVersion)
+		if noRoute {
+			event.Outcome = telemetry.OutcomeBaseline
+		}
 		shadow := decisionintelligence.Evaluate(decisionintelligence.Signals{
 			BaseTier:             decision.Tier,
 			ClassifierConfidence: confidenceValue(decision.Confident),
@@ -218,6 +229,31 @@ func runHookAdapter[E any](
 				fmt.Fprintf(os.Stderr, "downshift: feedback id %s (run `downshift feedback %s success|retry|failed` after review)\n", id, id)
 			}
 		}
+	}
+	return 0
+}
+
+// runClaudePostToolUse is the PostToolUse hook runner for Claude Code. It
+// mirrors runHookAdapter's fail-open contract: the spawn already completed,
+// so any read/parse/encode failure prints the neutral PostToolUse response
+// ({}) and exits 0. Telemetry goes to the hermetic event log
+// (DOWNSHIFT_EVENT_LOG respected inside the telemetry package).
+func runClaudePostToolUse(in io.Reader, catalog core.Resolver) int {
+	neutral := func() int {
+		fmt.Println(`{}`)
+		return 0
+	}
+	const maxHookPayloadBytes = 1 << 20
+	data, err := readHookPayload(in, maxHookPayloadBytes+1)
+	if err != nil || len(data) > maxHookPayloadBytes {
+		return neutral()
+	}
+	out, note, _ := claudecode.HandlePostToolUse(data, buildVersion, catalog)
+	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
+		return neutral()
+	}
+	if note != "" {
+		fmt.Fprintf(os.Stderr, "downshift: %s\n", note)
 	}
 	return 0
 }
@@ -263,15 +299,19 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) int {
 	out, note, decision := kirocrew.Handle(ev, catalog)
 
 	// Telemetry only when a real routing decision was made (Harness != "").
+	// DOWNSHIFT_NO_ROUTE=1 records a control-group baseline and never blocks.
 	if decision.Harness != "" {
 		event := telemetry.FromDecision(decision, correlationID, buildVersion)
+		if os.Getenv("DOWNSHIFT_NO_ROUTE") == "1" {
+			event.Outcome = telemetry.OutcomeBaseline
+		}
 		telemetry.Record(event)
 		if id, err := training.RecordRoutedDecision(ev.TaskText(), decision); err == nil && id != "" {
 			fmt.Fprintf(os.Stderr, "downshift: feedback id %s (run `downshift feedback %s success|retry|failed` after review)\n", id, id)
 		}
 	}
 
-	if out.Block {
+	if out.Block && os.Getenv("DOWNSHIFT_NO_ROUTE") != "1" {
 		// stderr is what KiroCrew relays to the LLM on exit 2.
 		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, out.Message)
 		return 2
@@ -369,14 +409,18 @@ func runModels(catalog models.CatalogReader, args []string) int {
 }
 
 // runStats reads the local event log and prints a savings summary.
-// Usage: downshift stats [--days=N] [--cost-per-unit=USD]
+// Usage: downshift stats [--days=N] [--cost-per-unit=USD] [--export]
 //
 // --days=N           time window in days (default 30; 0 = all time)
 // --cost-per-unit=X  convert normalised units to dollars at rate X per unit
+// --export           print a pasteable JSON summary for multi-user evidence
 func runStats(args []string) int {
 	opts := telemetry.StatsOptions{Days: 30}
+	export := false
 	for _, arg := range args {
 		switch {
+		case arg == "--export":
+			export = true
 		case len(arg) > 7 && arg[:7] == "--days=":
 			n, err := strconv.ParseFloat(arg[7:], 64)
 			if err != nil || n < 0 {
@@ -401,6 +445,15 @@ func runStats(args []string) int {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error reading event log: %v\n", err)
 		return 1
+	}
+	if export {
+		out, err := telemetry.ExportJSON(telemetry.ExportSummary(events, opts.Days, time.Now().UTC()))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error exporting summary: %v\n", err)
+			return 1
+		}
+		fmt.Println(out)
+		return 0
 	}
 	if len(events) == 0 {
 		fmt.Fprintln(os.Stderr, "no events recorded yet — run some subagent tasks first.")

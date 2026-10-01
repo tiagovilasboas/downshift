@@ -27,6 +27,10 @@ type Event struct {
 	ToolInput     json.RawMessage `json:"tool_input"`
 	Model         string          `json:"model"`
 	Prompt        string          `json:"prompt"`
+	// Optional opaque session id. Persisted only as a hash by runHookAdapter
+	// (SessionIdentifier); empty when the harness omits it, keeping old logs
+	// byte-identical. Enables PostToolUse cost linkage by session.
+	SessionID string `json:"session_id,omitempty"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// Claude Code PreToolUse does not send this field today.
 	SessionModels   *[]string `json:"session_models,omitempty"`

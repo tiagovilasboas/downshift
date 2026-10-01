@@ -216,7 +216,7 @@ func TestPrintStats_RealCostSection(t *testing.T) {
 
 	var buf2 strings.Builder
 	telemetry.PrintStats([]telemetry.Event{makeEvent("cc", "TRIVIAL", "OK", 0)}, telemetry.StatsOptions{Days: 0}, &buf2)
-	if !strings.Contains(buf2.String(), "Real cost: no events with token usage yet (PostToolUse hook planned).") {
+	if !strings.Contains(buf2.String(), "Real cost: no events with token usage yet (wire the PostToolUse hook to populate them).") {
 		t.Errorf("missing no-real-cost line, got:\n%s", buf2.String())
 	}
 }
