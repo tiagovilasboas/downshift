@@ -57,6 +57,17 @@ jobs:
         run: |
           ./scripts/smoke-test.sh
 
+      - name: Export Directional Stats
+        run: |
+          ./downshift stats --days=30 --export > stats-export.json
+
+      - name: Upload Stats Export Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stats-export
+          path: stats-export.json
+          if-no-files-found: ignore
+
   release:
     needs: test
     runs-on: ubuntu-latest
