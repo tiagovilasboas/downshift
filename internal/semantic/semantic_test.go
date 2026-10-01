@@ -11,10 +11,23 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/semantic"
 )
 
-func TestMaybeAugment_DisabledByDefault(t *testing.T) {
-	out, ok := semantic.MaybeAugment("rename userId", semantic.LabelTrivial, true)
+func TestMaybeAugment_OptOut(t *testing.T) {
+	t.Setenv("DOWNSHIFT_MINILM", "0")
+	out, ok := semantic.MaybeAugment("rename userId", semantic.LabelTrivial, false)
 	if ok || out != semantic.LabelTrivial {
-		t.Fatalf("expected no change, got %q ok=%v", out, ok)
+		t.Fatalf("expected no change when opted out, got %q ok=%v", out, ok)
+	}
+}
+
+func TestEmbedderFromEnv_FallsBackWhenCommandFails(t *testing.T) {
+	t.Setenv("DOWNSHIFT_MINILM_EMBED", "downshift-missing-embed-binary")
+	emb, ok := semantic.EmbedderFromEnv()
+	if !ok {
+		t.Fatal("expected embedder")
+	}
+	vec, err := emb.Embed("rename the variable")
+	if err != nil || len(vec) == 0 {
+		t.Fatalf("fallback hash embed failed: %v len=%d", err, len(vec))
 	}
 }
 
