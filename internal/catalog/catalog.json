@@ -262,6 +262,45 @@
       "output_cost_per_1m": 25.00
     },
 
+    { "_section": "antigravity — Google Gemini models (native Antigravity spawn_agent / invoke_subagent)" },
+
+    {
+      "id": "flash_lite",
+      "aliases": ["gemini-3.8-flash-lite", "gemini-flash-lite"],
+      "family": "gemini-lite",
+      "provider": "google",
+      "harness": "antigravity",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 0.075,
+      "output_cost_per_1m": 0.30
+    },
+    {
+      "id": "flash",
+      "aliases": ["gemini-3.8-flash", "gemini-flash"],
+      "family": "gemini-mid",
+      "provider": "google",
+      "harness": "antigravity",
+      "tier": "mid",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 0.075,
+      "output_cost_per_1m": 0.30
+    },
+    {
+      "id": "pro",
+      "aliases": ["gemini-3.8-pro", "gemini-pro"],
+      "family": "gemini-premium",
+      "provider": "google",
+      "harness": "antigravity",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 1.50,
+      "output_cost_per_1m": 6.00
+    },
+
     { "_section": "kirocrew — spawn_run models (Anthropic families; Crew accepts canonical key or provider id)" },
 
     {
