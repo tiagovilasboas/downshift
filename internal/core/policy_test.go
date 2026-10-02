@@ -172,6 +172,20 @@ func TestDecisionRewritePolicy_UncertainDowngradePreservesCurrentModel(t *testin
 	}
 }
 
+func TestDecisionRewritePolicy_UncertainUpshiftPreservesCurrentModel(t *testing.T) {
+	d := core.Decision{Model: core.Model{ID: "mid"}, Verdict: core.VerdictUpshift, Confident: false}
+	if d.ShouldRewriteModel() {
+		t.Fatal("uncertain upshift must not replace the current model with a dearer tier")
+	}
+}
+
+func TestDecisionRewritePolicy_ConfidentUpshiftCanProceed(t *testing.T) {
+	d := core.Decision{Model: core.Model{ID: "mid"}, Verdict: core.VerdictUpshift, Confident: true}
+	if !d.ShouldRewriteModel() {
+		t.Fatal("confident upshift should be allowed")
+	}
+}
+
 func TestDecisionRewritePolicy_ConfidentDowngradeCanProceed(t *testing.T) {
 	d := core.Decision{Model: core.Model{ID: "small"}, Verdict: core.VerdictDownshift, Confident: true}
 	if !d.ShouldRewriteModel() {
