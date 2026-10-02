@@ -18,7 +18,7 @@ func (c Complexity) Tier() Tier {
 	case Trivial:
 		return TierSmall // flat straight: high gear, cheap
 	case Simple:
-		return TierMid
+		return TierSmall // one isolated change stays on the cheap tier
 	case Medium:
 		return TierMid
 	case Complex:

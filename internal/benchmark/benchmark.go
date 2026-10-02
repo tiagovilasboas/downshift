@@ -7,7 +7,7 @@
 //
 //   - Complexity accuracy — exact label match (TRIVIAL/SIMPLE/MEDIUM/COMPLEX)
 //   - Tier routing accuracy — what matters economically: did the task get the
-//     right model tier? SIMPLE→MID and MEDIUM→MID are both correct routing.
+//     right model tier? TRIVIAL and SIMPLE are small. MEDIUM is mid. COMPLEX is frontier.
 //   - Unsafe downgrade rate — FRONTIER tasks sent to a cheaper tier; the
 //     safety-critical metric. A COMPLEX task on a weak model can produce wrong
 //     output worth far more in rework than the cost saved.
@@ -223,8 +223,9 @@ func Accuracy(results []Result) float64 {
 
 // TierAccuracy returns the fraction of tasks where the predicted complexity
 // maps to the correct model tier. This is the economically meaningful metric:
-// SIMPLE→MID and MEDIUM→MID are different complexity labels but identical
-// routing decisions, so both count as correct tier routing.
+// TRIVIAL and SIMPLE share the small tier. MEDIUM is mid. A label miss
+// inside the same tier counts as correct routing. SIMPLE predicted as
+// MEDIUM does not.
 func TierAccuracy(results []Result) float64 {
 	if len(results) == 0 {
 		return 0
@@ -391,7 +392,7 @@ func Print(results []Result, m Matrix, w io.Writer) {
 		fmt.Fprintf(w, "\n")
 	}
 	fmt.Fprintf(w, "\nT=TRIVIAL  S=SIMPLE  M=MEDIUM  C=COMPLEX\n")
-	fmt.Fprintf(w, "Tiers: TRIVIAL→SMALL  SIMPLE→MID  MEDIUM→MID  COMPLEX→FRONTIER\n")
+	fmt.Fprintf(w, "Tiers: TRIVIAL→SMALL  SIMPLE→SMALL  MEDIUM→MID  COMPLEX→FRONTIER\n")
 }
 
 func truncate(s string, n int) string {
