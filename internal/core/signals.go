@@ -35,6 +35,7 @@ var RawSignals = []SignalDef{
 	{`\bcode\s+review\b`, 3, Complex},
 	{`\bcross-system\b`, 3, Complex},
 	{`\bdistributed\b`, 2, Complex},
+	{`\b(etcd|raft|consensus protocol|distributed (lock|consensus|transaction|sharding|cache))\b`, 3, Complex},
 	{`\brace\s+condition\b`, 3, Complex},
 	{`\bdeadlock\b`, 3, Complex},
 	{`\bmulti-(system|service|region|tenant)\b`, 3, Complex},

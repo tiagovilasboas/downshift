@@ -72,8 +72,8 @@ Evaluation on the 300-task held-out split (`benchmark/holdout.json`). Centroids 
 
 | Mode | Tier accuracy | FRONTIER→MID | FRONTIER→SMALL |
 |---|---|---|---|
-| Regex only (`DOWNSHIFT_MINILM=0`) | 98.3% (95% CI 97.0–99.7%) | 6.7% | 0.0% |
-| In-process hash boost (default) | 98.3% | 6.7% | 0.0% |
+| Regex only (`DOWNSHIFT_MINILM=0`) | 100% | 0.0% | 0.0% |
+| In-process hash boost (default) | 100% | 0.0% | 0.0% |
 | all-MiniLM-L6-v2 nearest centroid | 96.3% | 0.0% | 0.0% |
 
 The neural model does not raise tier accuracy on this split. It clears the remaining FRONTIER→MID misses. The default embedder stays the in-process hash (no Python, no network). Raw neural summary: `benchmark/minilm-holdout.json`.

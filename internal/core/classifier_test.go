@@ -42,6 +42,7 @@ func TestClassify(t *testing.T) {
 		{"upshift retry subagent", "o subagente falhou na tentativa anterior", Complex},
 		{"service mesh", "design and implement gRPC service mesh with service discovery", Complex},
 		{"memory leak", "debug the memory leak in the connection pool under high load", Complex},
+		{"etcd raft", "design and implement distributed lock manager with etcd raft integration", Complex},
 
 		// Default — no signal
 		{"empty", "", Medium},
