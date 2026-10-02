@@ -40,6 +40,8 @@ func TestClassify(t *testing.T) {
 		{"code review", "list the Go files and do a code review without changing anything", Complex},
 		{"upshift retry build", "fix the build because compilation failed", Complex},
 		{"upshift retry subagent", "o subagente falhou na tentativa anterior", Complex},
+		{"service mesh", "design and implement gRPC service mesh with service discovery", Complex},
+		{"memory leak", "debug the memory leak in the connection pool under high load", Complex},
 
 		// Default — no signal
 		{"empty", "", Medium},
