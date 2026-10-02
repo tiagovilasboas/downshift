@@ -1,11 +1,9 @@
 # Entrada do fluxo
 
-O Downshift não vê a conversa inteira. Ele vê o spawn de um subagente.
+O Downshift só entra quando um subagente vai nascer. Um chat comum, sem ferramenta de spawn, não passa por ele. Por isso um “pong” escrito na própria conversa não aparece no relatório.
 
-O harness (Claude Code, Codex, Cursor, Antigravity ou KiroCrew) chama o binário como hook, com um JSON no stdin. O comando depende do harness. No Claude Code é `downshift claude-code` antes da ferramenta Task e `downshift claude-code-post-tool-use` depois. No Codex é `downshift codex` no `PreToolUse` de `Agent` ou `spawn_agent`.
+**Produto.** O pedido do subagente é o insumo. O histórico da conversa, os arquivos já lidos e o transcript não entram. O que sai, se a troca for permitida, é outro modelo e, às vezes, outro esforço de raciocínio. O Downshift não implementa a tarefa.
 
-O adapter extrai só o texto da tarefa (`prompt`, `description`, `task` ou `message`, conforme o harness) e o modelo atual. Histórico, arquivos lidos e transcript não entram na classificação.
+**Técnico.** O harness chama o binário no stdin. Claude Code: `downshift claude-code` no PreToolUse da ferramenta Task, e `downshift claude-code-post-tool-use` depois. Codex: `downshift codex` em `Agent` ou `spawn_agent`. O adapter lê `prompt`, `description`, `task` ou `message` e o modelo atual. JSON acima de 1 MB vira `PAYLOAD_TOO_LARGE` e não classifica: a interface do Codex, quando manda o fio inteiro, cai nesse teto. `downshift try` usa o mesmo `core.Route` sem esse payload.
 
-Se o JSON passar de 1 MB, o hook para com `PAYLOAD_TOO_LARGE` e não escolhe modelo. A interface do Codex, quando manda o fio inteiro da conversa, cai nesse teto. Um `downshift try "..." codex gpt-6-luna` no terminal usa o mesmo `core.Route` sem esse payload.
-
-O que sai do hook, quando a troca é permitida, é um modelo que já existe na sessão e, se o harness tiver effort nativo, um esforço. O spawn segue. O Downshift não escreve o código da tarefa.
+**Trade-off.** Classificar só o pedido deixa o log limpo e barato. O custo é perder contexto: um jogo 3D descrito em uma frase pode parecer simples, e uma conversa longa no Codex pode nem chegar à classificação.

@@ -1,13 +1,11 @@
 # MiniLM e a decisão local
 
-O Downshift não usa o Jev no caminho crítico. O Jev é um modelo de decisão remoto: manda o texto para uma API. O contrato daqui é o contrário: sem rede, sem chave, sem texto saindo da máquina.
+A triagem não sai da máquina. Não é um SLM escrevendo texto e não é o Jev numa API.
 
-O que roda no binário:
+**Produto.** O Downshift decide com o que já está no binário. O texto da tarefa não vai para um classificador pago. Se a camada extra falhar, o regex permanece. Você desliga tudo com `DOWNSHIFT_MINILM=0`.
 
-- Regex, sempre.
-- Hash embutido (`internal/semantic/data/prototypes.json`), ligado por padrão. Compara o vetor do prompt com centroides das quatro classes e só sobe a classe.
-- MiniLM neural (`all-MiniLM-L6-v2`) só se `DOWNSHIFT_MINILM_EMBED` apontar para um comando. Os centroides estão em `internal/semantic/data/minilm.json`. Se o comando falha, o hash assume.
+**Técnico.** Regex sempre. Hash embutido (`internal/semantic/data/prototypes.json`) ligado por padrão: vetor do prompt contra centroides das quatro classes, só sobe. MiniLM neural (`all-MiniLM-L6-v2`) só com `DOWNSHIFT_MINILM_EMBED` apontando para um comando; centroides em `internal/semantic/data/minilm.json`. Comando falhou, hash assume. Holdout de 300 tarefas, treino só em `tasks.json`: neural 96,3% de acerto de tier e 0% FRONTIER→MID. Regex, na mesma época, na casa dos 98% com alguns FRONTIER→MID. Por isso o neural não é o padrão.
 
-Medição no holdout de 300 tarefas, centroides treinados só em `benchmark/tasks.json` (`benchmark/minilm-holdout.json`): o centroide neural fez 96,3% de acerto de tier e 0% de FRONTIER→MID. O regex, na mesma época, estava na casa dos 98% com alguns FRONTIER→MID. O neural não virou o padrão porque não ganhou acerto de tier e exige Python. O padrão continua o hash, dentro do processo.
+`downshift try` mostra a decisão. `Rewrite: yes/no` é o que o hook faria, não só o veredito.
 
-`downshift try` é o jeito de ver a decisão sem harness. A linha `Rewrite: yes/no` diz se o hook trocaria o modelo, não só qual foi o veredito.
+**Trade-off.** Jev acertaria classe com um serviço remoto e um protocolo de decisão. Quebraria o “nada sai da máquina” e o custo zero da triagem. Hash cabe no binário e erra diferente do regex: às vezes sobe um cubo para `MEDIUM` sem confiança. O freio da marcha segura o modelo barato.

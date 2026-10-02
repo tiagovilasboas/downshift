@@ -1,16 +1,9 @@
 # Telemetria
 
-Tudo fica em `~/.harness-downshift/`, com permissão só do usuário. Não vai para o git.
+O relatório existe para você ver a rota, não o trabalho.
 
-`events.jsonl` guarda complexidade, tier, veredito, modelos pedido e final, harness, esforço, outcome e um hash de sessão. Não guarda prompt, path nem o id cru da sessão.
+**Produto.** Os eventos ficam na sua máquina, em `~/.harness-downshift/`. Dá para exportar um resumo sem o texto das tarefas. Economia em dólar só aparece quando o harness manda tokens. Até lá o número é estimativa de tabela, marcada como estimativa.
 
-Outcomes que importam:
+**Técnico.** `events.jsonl` guarda complexidade, tier, veredito, modelos pedido e final, harness, esforço, outcome e hash de sessão. Não guarda prompt, path nem o id cru. `rewrite_emitted` é emissão. `baseline` é `DOWNSHIFT_NO_ROUTE=1`. `usage` são tokens ligados a uma decisão anterior. `error` cobre `PAYLOAD_TOO_LARGE`, JSON inválido e timeout. `downshift stats --export` resume sem o texto.
 
-| Outcome | Significado |
-|---|---|
-| `rewrite_emitted` | o hook emitiu uma decisão de modelo |
-| `baseline` | `DOWNSHIFT_NO_ROUTE=1`, classificou e não trocou |
-| `usage` | tokens reais ligados a uma decisão anterior |
-| `error` | `PAYLOAD_TOO_LARGE`, JSON inválido, timeout |
-
-`downshift stats --export` resume isso sem o texto das tarefas. Custo em dólar só aparece quando existe `usage` com tokens. Até lá o número é estimativa de lista, marcada como estimativa.
+**Trade-off.** Sem prompt no log, o arquivo pode ir para um issue. Sem prompt, também não dá para reler a tarefa original a partir do JSONL. A prova de conteúdo continua sendo a sessão do harness, não o Downshift.

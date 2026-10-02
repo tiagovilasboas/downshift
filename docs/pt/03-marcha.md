@@ -1,28 +1,20 @@
 # Marcha
 
-A classe vira tier em `Complexity.Tier()`, igual em todo harness:
+A marcha diz se o modelo atual está caro demais, barato demais ou no tamanho certo. A regra é a mesma em Claude, Codex, Cursor, Antigravity e KiroCrew. Mudam os nomes dos modelos.
 
-| Classe | Tier | Ideia |
+**Produto.**
+
+| Tarefa | Tamanho | O que o Downshift faz se você está no modelo barato |
 |---|---|---|
-| TRIVIAL | small | trabalho mecânico |
-| SIMPLE | small | uma mudança isolada, continua no modelo barato |
-| MEDIUM | mid | feature de verdade |
-| COMPLEX | frontier | desenho de sistema, risco alto |
+| TRIVIAL | small | fica |
+| SIMPLE | small | fica |
+| MEDIUM | mid | sobe para o modelo do meio |
+| COMPLEX | frontier | sobe para o modelo forte |
 
-Antes, `SIMPLE` também ia para `mid`. Um campo novo ou um cubo three.js saía do Luna e ia para o Terra, ~25 vezes mais caro na entrada do catálogo Codex. Isso era conservador demais. `SIMPLE` agora fica em `small`. `MEDIUM` continua subindo.
+No Codex, barato é `gpt-6-luna`, o meio é `gpt-5.6-terra` e o forte é `gpt-6-sol`. Um cubo three.js fica no Luna. Um export CSV sobe para o Terra. Um `rearchitect` sobe para o Sol.
 
-O veredito compara o tier do modelo atual com o tier pedido:
+Antes, `SIMPLE` ia para o meio. Campo novo e cubo 3D saíam do Luna para o Terra, cerca de 25 vezes mais caro na entrada do catálogo. Isso era conservador demais para o produto.
 
-- atual acima do pedido: `DOWNSHIFT`
-- igual: `OK`
-- atual abaixo: `UPSHIFT`
-- modelo atual desconhecido: `UNKNOWN`
+**Técnico.** `Complexity.Tier()` em `internal/core/policy.go` mapeia a classe. O veredito compara o tier atual com o pedido: `DOWNSHIFT`, `OK`, `UPSHIFT` ou `UNKNOWN`. `ShouldRewriteModel` só autoriza a troca em downshift ou upshift **com confiança**. Sem os 2 pontos de margem, o veredito aparece no log e o modelo atual permanece. `explicit_only` no catálogo nunca é substituído.
 
-A troca só acontece se `ShouldRewriteModel` for verdadeiro.
-
-- `OK` não troca.
-- `DOWNSHIFT` ou `UPSHIFT` sem confiança não troca. O veredito fica no log. O modelo atual permanece.
-- Com confiança, a troca segue.
-- Modelo marcado `explicit_only` no catálogo não é substituído.
-
-No Codex, com o catálogo atual: small é `gpt-6-luna`, mid é `gpt-5.6-terra`, frontier é `gpt-6-sol`. Um cubo three.js (`SIMPLE`) no Luna fica no Luna. Um export CSV (`MEDIUM`) no Luna sobe para o Terra. Um `rearchitect` sobe para o Sol.
+**Trade-off.** O freio de confiança vale para os dois lados. Uma tarefa `MEDIUM` incerta no Luna fica no Luna, mesmo com veredito `UPSHIFT`. O produto paga menos token. Engenheiro lê a intenção no relatório. Se o Luna for fraco demais para um `SIMPLE` limítrofe, o erro é para o barato.

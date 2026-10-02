@@ -1,22 +1,20 @@
 # Classificador
 
-O classificador é determinístico. Está em `internal/core/signals.go` e `internal/core/classifier.go`. Não chama rede.
+O classificador responde uma pergunta de produto: esta tarefa é mecânica, isolada, uma feature ou um desenho de sistema?
 
-Cada sinal é uma regex, um peso e uma classe: `TRIVIAL`, `SIMPLE`, `MEDIUM` ou `COMPLEX`. O texto é passado para minúsculas. Os pesos da mesma classe somam. Empate fica com a classe mais alta. Sem nenhum sinal, o resultado é `MEDIUM` sem confiança.
+**Produto.**
 
-Confiança existe quando a classe vencedora ganha da segunda por pelo menos 2 pontos.
-
-Exemplos que o código trata hoje:
-
-| Texto | Classe | Por quê |
+| Classe | Em português | Exemplo |
 |---|---|---|
-| rename, typo, git status | TRIVIAL | sinal mecânico, peso 3 |
-| add a field, write a function, rotating cube, three.js scene | SIMPLE | uma mudança isolada |
-| implement the feature, debug sem sinal mais forte | MEDIUM | `implement` e `feature` pesam 2 cada |
-| rearchitect, service mesh, etcd, raft, multi-tenant | COMPLEX | sinal de sistema, peso 3, ganha de `implement` |
+| TRIVIAL | trabalho mecânico | rename, typo, git status |
+| SIMPLE | uma mudança só | um campo, um cubo three.js, um arquivo |
+| MEDIUM | uma feature | export CSV, um fluxo com vários arquivos |
+| COMPLEX | desenho de sistema | rearchitect, service mesh, etcd, raft |
 
-`implement` sozinho não é complexo. `implement` mais `service mesh` ou `raft` é complexo, porque esses sinais pesam mais.
+Se nada disso bater, a tarefa vira `MEDIUM` e o Downshift desconfia. Desconfiado, ele prefere não mexer no modelo.
 
-O Graphify (`internal/graphify`) pode subir uma classe que ainda não é `COMPLEX` quando o texto cita arquivo ou símbolo de um grafo. No hook de produção o fetcher é nulo: só vale o que está escrito no prompt. Não há chamada MCP no caminho padrão.
+**Técnico.** Os votos estão em `internal/core/signals.go`. Cada regex tem um peso. A classe vencedora é a de maior soma. Empate sobe. Confiança exige pelo menos 2 pontos de diferença para a segunda. `implement` pesa 2 em `MEDIUM`. `three.js scene` ou `rotating cube` pesam 3 em `SIMPLE` e vencem o `implement`. `service mesh` e `raft` pesam 3 em `COMPLEX` e vencem o `implement`.
 
-O boost semântico (`internal/semantic`) pode subir a classe, nunca descer. Está ligado por padrão. `DOWNSHIFT_MINILM=0` desliga.
+O Graphify pode subir para `COMPLEX` se o texto citar arquivo ou símbolo. No caminho padrão o fetcher é nulo: só vale o que está escrito. O boost semântico (`internal/semantic`) só sobe a classe. `DOWNSHIFT_MINILM=0` desliga.
+
+**Trade-off.** Regex é auditável e não pede GPU. Não entende intenção além das palavras. Por isso o cubo e o service mesh precisam de sinais explícitos, em vez de um modelo de linguagem no meio do hook.
