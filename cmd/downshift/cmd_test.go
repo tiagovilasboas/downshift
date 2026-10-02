@@ -317,6 +317,7 @@ func TestRunHookAdapter_Codex_Downshift(t *testing.T) {
 
 func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
+	t.Setenv("DOWNSHIFT_EVENT_LOG", "")
 	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
 	setSessionAllowlist(t, "codex", []string{
 		cmdCat.ModelFor("codex", core.TierSmall).ID,

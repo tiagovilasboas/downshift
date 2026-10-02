@@ -18,13 +18,15 @@ Proof that the harness executor applied the hook’s model, not only that
 |----|------|-------|------|
 | P1.1 | Document “emission vs honored” in install guide (`docs/session-models.md` + matrix) | eng | [x] |
 | P1.2 | Hook-layer E2E in CI (`TestHookE2E_RewriteEventStats`) | eng | [x] |
-| P1.3 | **Manual protocol**: one paid Claude Code session, trivial Task, capture stderr + child model in UI/logs | dogfood | [ ] |
+| P1.3 | **Manual protocol**: one paid Claude Code session, trivial Task, capture stderr + child model in UI/logs | dogfood | [ ] protocol in `docs/evidence/rewrite-honored-protocol.md` |
 | P1.4 | **Automated smoke** (CI gate): script that runs `downshift try` + adapter golden JSON payloads (`scripts/smoke-test.sh`) | eng | [x] |
-| P1.5 | Codex `multi_agent_v2`: repeat P1.3 on a known-good build; record in `docs/HARNESS-MATRIX.md` | dogfood | [ ] |
+| P1.5 | Codex `multi_agent_v2`: repeat P1.3 on a known-good build; record in `docs/HARNESS-MATRIX.md` | dogfood | [x] `docs/evidence/codex-rewrite-honored-2026-10-02.md` |
 | P1.6 | Cursor Pro/Ultra usage-based: repeat P1.3; update matrix row | dogfood | [ ] |
 | P1.7 | Telemetry field `rewrite_honored: bool` (only when harness exposes post-spawn model) — schema + privacy review | eng | [x] |
 
 **Exit:** at least **one** harness with P1.3 write-up + matrix row **Yes** with date; P1.7 optional until upstream exposes signal.
+
+Codex P1.5 write-up landed 2026-10-02. Claude Code paid (P1.3) still open.
 
 ---
 
@@ -74,7 +76,7 @@ Replace directional normalised units with provider-grounded savings.
 | P4.5 | Grow to **500+** tasks with held-out split (`benchmark/holdout.json`, never tuned against) | curation | [x] |
 | P4.6 | `downshift benchmark --report` + `--gate` (tier accuracy, FRONTIER→MID rate, CI regression) | eng | [x] |
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
-| P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [ ] |
+| P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [~] `DOWNSHIFT_GRAPHIFY_CMD` command fetcher, fail-open; native MCP socket still optional |
 | P4.9 | **MiniLM semantic boost on by default** (local hash; external embed falls back to hash; `DOWNSHIFT_MINILM=0` opts out — `docs/MINILM-SEMANTIC.md`) | eng | [x] |
 | P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout (`benchmark/minilm-holdout.json`) | eng | [x] |
 
@@ -112,10 +114,10 @@ Replace directional normalised units with provider-grounded savings.
 
 ## Suggested execution order (sprints)
 
-1. **Code done:** P4.9 default local hash boost, P4.10 neural holdout measurement, P3.3 PostToolUse command shipped.
-2. **Dogfood now:** P3.4–P3.5 (usage events with tokens), P1.3 (one honored rewrite), P3.7 (fill the billing template).
+1. **Code done:** P4.9 default local hash boost, P4.10 neural holdout measurement, P3.3 PostToolUse command shipped, inferred honor in stats, Graphify command fetcher.
+2. **Dogfood now:** P3.4–P3.5 (usage events with tokens), P1.3 (Claude Code paid), P3.7 (fill the billing template).
 3. **Community:** P2.3–P2.4 exports from other operators.
-4. **Before label removal:** P1.5/P1.6, P5.3–P5.5, all five pillar exit checks signed in a release note.
+4. **Before label removal:** P1.6, P5.3–P5.5, all five pillar exit checks signed in a release note. Codex P1.5 recorded 2026-10-02.
 
 ---
 

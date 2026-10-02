@@ -27,7 +27,7 @@ A primeira linha de classificação opera em `internal/core/signals.go`, atravé
 2. **Desempate Seguro:** Em caso de empate entre classes vizinhas, a regra do sistema sempre prioriza o tier de maior capacidade (nunca subdimensiona).
 3. **Margem de Confiança:** Para uma classificação ser considerada "confiante", a classe vencedora precisa abrir pelo menos **2 pontos de vantagem** sobre a segunda colocada.
    * Exemplo: Um termo genérico como `implement` soma 2 pontos em `MEDIUM`. No entanto, `three.js scene` soma 3 pontos em `SIMPLE`, superando o verbo genérico. Da mesma forma, termos como `service mesh` ou `raft` somam 3 pontos em `COMPLEX`, vencendo a disputa com folga.
-4. **Graphify (Opcional):** Se o componente Graphify estiver ativado e o texto citar arquivos ou símbolos críticos do repositório, a tarefa pode ser escalada para `COMPLEX`.
+4. **Graphify (Opcional):** Sem `DOWNSHIFT_GRAPHIFY_CMD`, o fetcher é nulo. Com o comando, o label vai no stdin e o JSON do nó volta no stdout; falha, timeout ou JSON inválido não sobem a classe. `DOWNSHIFT_GRAPHIFY=0` desliga o fetcher.
 5. **Boost Semântico (MiniLM):** Localizado em `internal/semantic`, este módulo calcula distâncias de centróides em espaço vetorial. Ele é estritamente monotônico: pode confirmar ou elevar a classe quando o regex está hesitante, mas **nunca rebaixa**. Pode ser desativado via `DOWNSHIFT_MINILM=0`.
 
 ---

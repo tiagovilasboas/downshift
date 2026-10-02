@@ -9,6 +9,7 @@ O subsistema de telemetria do Downshift foi projetado para registrar o **comport
 * **Armazenamento Seguro:** Todos os eventos são gravados exclusivamente no diretório local do usuário em `~/.harness-downshift/events.jsonl` com permissões restritas (`0700`).
 * **Compartilhamento Seguro de Métricas:** O comando `downshift stats --export` gera um resumo consolidado das métricas de economia e distribuição de tiers sem expor nenhum caminho de arquivo, nome de projeto ou texto de prompt.
 * **Métricas em Dólares Reais:** Cálculos baseados em dólares reais (`Real provider cost`) são calculados quando o harness fornece o consumo real de tokens no pós-execução (`PostToolUse`). Na ausência desses dados, o sistema apresenta a economia normalizada em unidades adimensionais baseadas nos preços de tabela dos modelos.
+* **Honor inferido:** `rewrite_honored_inferred` no export conta quando o spawn seguinte da mesma sessão chega no modelo que o hook tinha pedido (ou quando `rewrite_honored` veio preenchido). O JSONL original não é alterado.
 
 ---
 

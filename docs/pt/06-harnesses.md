@@ -22,7 +22,7 @@ O Downshift atua como uma ponte universal: a lógica que decide que "renomear um
 
 ### Validação de Reescrita (`rewrite_emitted` vs Honrado)
 * O status `rewrite_emitted` no log de eventos comprova que o Downshift interceptou a requisição e devolveu o payload reescrito para o harness.
-* No Codex, a validação de que a instrução foi acatada pelo sistema operacional ocorre quando o turno subsequente da mesma sessão chega informando o modelo reescrito no campo `requested_model`.
+* No Codex, em 2026-10-02, o spawn seguinte da mesma sessão chegou com `requested_model` igual ao `final_model` anterior ([evidência](../evidence/codex-rewrite-honored-2026-10-02.md)). `downshift stats --export` conta isso em `rewrite_honored_inferred` sem reescrever o JSONL.
 * No Claude Code, o hook `PostToolUse` captura métricas reais de consumo (`input_tokens`, `output_tokens`) emitidas pelo provedor após a finalização da sub-tarefa.
 
 ---

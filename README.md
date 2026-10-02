@@ -1164,7 +1164,7 @@ Being honest: the router and adapters work today. These are the gaps between "wo
 |---|---|---|
 | **Real token counts via PostToolUse hook** | Link provider usage to routing decisions for real USD in `downshift stats`. | Hook and quickstart shipped — dogfood until `real_cost_events` > 0 ([beta exit P3](docs/BETA-EXIT.md)) |
 | **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Shipped (this week) — see [Real session data](#real-session-data) |
-| **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. Hook-layer E2E is covered (`TestHookE2E_RewriteEventStats`: hook stdin → adapter rewrite → JSONL event → stats aggregation). | Partial: hook-layer E2E in CI, real spawn pending |
+| **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. Hook-layer E2E is covered (`TestHookE2E_RewriteEventStats`: hook stdin → adapter rewrite → JSONL event → stats aggregation). | Partial: hook-layer E2E in CI; Codex real spawn honored 2026-10-02 ([evidence](docs/evidence/codex-rewrite-honored-2026-10-02.md)); Claude Code paid still pending |
 | **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verified (430-event log, Sep 2026) |
 | **Per-session before/after comparison** | Compare routed vs control-group sessions. | `DOWNSHIFT_NO_ROUTE=1` / baseline outcomes shipped — run alternating weeks and export ([docs/BETA-EXIT.md](docs/BETA-EXIT.md)) |
 | **Feedback loop closing** | The `downshift feedback` command collects outcomes but the training pipeline (`downshift train --from-events`) needs a curated dataset to improve the classifier. The first labelled dataset from real use is the highest-value contribution. | Waiting for data |
@@ -1234,8 +1234,10 @@ Model selection for subagents is an evolving feature in every harness:
 - **Cursor** — the hook fires, but on free and legacy request-based plans
   `updated_input.model` is silently discarded. Works on Pro/Ultra with
   expanded model selection.
-- **Codex** — works with `multi_agent_v2` enabled. The v2 spawn schema is
-  still evolving upstream.
+- **Codex** — works with `multi_agent_v2` enabled. A local session on 2026-10-02
+  showed the next spawn arriving on the model the hook had written
+  ([evidence](docs/evidence/codex-rewrite-honored-2026-10-02.md)). The v2 spawn
+  schema is still evolving upstream.
 - **Grok** — hook is allow/deny only; routing is via `config.toml`.
 
 Over the next few weeks, as harnesses broaden their own orchestration support,

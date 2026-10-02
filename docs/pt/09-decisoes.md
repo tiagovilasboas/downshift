@@ -17,6 +17,8 @@ O design do Downshift é pautado pelo equilíbrio deliberado entre requisitos de
 | **Sem chamadas a serviços remotos (Jev/APIs)** | Zero latência de rede, custo marginal zero na classificação e privacidade absoluta. | Não se utiliza modelos de raciocínio de ponta apenas para triagem. |
 | **Separação entre Catálogo e Permissões** | Impossibilita erros onde o subagente falharia por tentar usar um modelo não contratado pela conta. | Exige manutenção do arquivo de permissões da sessão (`session-models.json`). |
 | **Distinção entre Emissão e Aplicação** | Transparência nos relatórios: a telemetria não assume falsamente que o cliente acatou a instrução. | A confirmação final de uso depende do ecossistema do harness. |
+| **Honor inferido na mesma sessão** | Codex já conta o follow-up sem reescrever o log. | Claude sem `session_id` não entra nessa conta. |
+| **Graphify via comando** | Dá para ligar um grafo depois, fail-open. | Não é socket MCP nativo. |
 | **Zero-Leakage no log de eventos** | Logs seguros para compartilhamento público e relatórios de auditoria. | Não é possível recuperar o texto original do prompt a partir dos arquivos de telemetria. |
 
 ---
@@ -25,5 +27,5 @@ O design do Downshift é pautado pelo equilíbrio deliberado entre requisitos de
 
 Para consolidar a graduação formal para a versão 1.0 (conforme mapeado em [`docs/BETA-EXIT.md`](../BETA-EXIT.md)), os passos finais são puramente empíricos:
 1. **Acúmulo de Eventos com Custo Real (P3.4 e P3.5):** Atingir pelo menos 50 eventos com telemetria de tokens via `PostToolUse` no Claude Code para reportar a economia real em dólares.
-2. **Confirmação em Produção (P1.3):** Registrar a confirmação visual na interface do Claude Code demonstrando o executor filho rodando no modelo econômico reescrito.
+2. **Confirmação em Produção (P1.3):** Registrar a confirmação visual na interface do Claude Code demonstrando o executor filho rodando no modelo econômico reescrito. O Codex (P1.5) já tem evidência em 2026-10-02.
 3. **Evidência Multi-Ambiente (P2.3):** Incorporar dados consolidados anônimos de 2 ou mais desenvolvedores utilizando o roteador em suas rotinas diárias.

@@ -24,6 +24,7 @@ O ecossistema trata cenários de borda sem recorrer a chamadas externas a LLMs:
 | **Modelo recomendado fora da sessão** | Modelo não consta no allowlist ativo | Preserva o modelo original da sessão |
 | **Transição com baixa confiança** | Margem de pontuação menor que 2 | Mantém o modelo da sessão inalterado |
 | **Falha do embedder externo (MiniLM)** | Fallback instantâneo para centróides de hash local | Classificação segue com embeddings locais |
+| **Falha do comando Graphify** | `Found=false`, sem escalada | Classificação segue no regex |
 | **Falha no cálculo de embeddings** | Fallback para as heurísticas de regex | Classificação concluída com sinais estáticos |
 | **Modo de controle (`DOWNSHIFT_NO_ROUTE=1`)** | Avalia a rota, gera evento `baseline`, mas não altera | Permite testes comparativos A/B |
 
