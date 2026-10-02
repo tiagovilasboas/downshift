@@ -1,16 +1,18 @@
 # Decisões técnicas
 
-| Decisão | Por quê |
-|---|---|
-| Go, um binário, sem módulo externo no `go.mod` | o hook tem que subir rápido e não depender de rede |
-| Regex primeiro | auditável, estável, sem GPU |
-| Empate vai para a classe mais alta | errar para cima numa classe era mais seguro do que deixar um `rearchitect` no modelo barato |
-| `SIMPLE` no tier small | uma mudança isolada não justifica o modelo do meio; o pulo Luna → Terra era conservador demais |
-| Upshift e downshift exigem confiança | sem margem, o modelo atual fica. Antes só o downshift tinha esse freio, e o upshift encarecia fácil |
-| MiniLM não é o padrão neural | o hash cabe no binário; o neural não melhorou o tier no holdout o bastante para pagar Python |
-| Jev fica de fora do caminho | decisão remota quebra privacidade e o custo zero da triagem |
-| Catálogo não é entitlement | a conta recusar `gpt-6-luna` é problema do Codex, não do roteador |
-| `rewrite_emitted` não é ACK | o harness pode ignorar o modelo pedido |
-| Prompt não entra no log | o evento prova a rota, não o conteúdo do trabalho |
+Cada linha é uma escolha de produto com um custo de engenharia, ou o contrário.
 
-O que ainda não está provado: uma semana de `usage` com dólar de provedor, e o Claude Code honrando o rewrite numa conta com a ferramenta Task. O Codex já mostrou, numa sessão local, o spawn seguinte chegar no modelo que o hook tinha emitido.
+| Escolha | O que o produto ganha | O que se perde |
+|---|---|---|
+| Um binário Go, sem módulo externo | hook rápido, sem rede | menos ecossistema de ML no processo |
+| Regex primeiro | decisão auditável | não “entende” a tarefa além das palavras |
+| Empate sobe a classe | um `rearchitect` não cai no modelo barato | um empate duvidoso pode encarecer |
+| `SIMPLE` no small | cubo e campo novo ficam no Luna | um `SIMPLE` difícil pode ficar curto de modelo |
+| Confiança nos dois lados | a dúvida não gasta o Terra | um `MEDIUM` incerto no Luna não sobe |
+| MiniLM neural opcional | holdout com 0% FRONTIER→MID se você ligar | Python, e o acerto de tier não ganhou do regex |
+| Jev fora do caminho | texto não sai, triagem a custo zero | menos “modelo de decisão” de mercado |
+| Catálogo ≠ entitlement | nunca escreve um id que a sessão não tem | não conserta um modelo pai recusado pela conta |
+| Emissão ≠ ACK | o relatório não mente | a prova completa ainda depende do harness |
+| Prompt fora do log | dá para exportar o resumo | não dá para recuperar a tarefa pelo JSONL |
+
+O que ainda falta para o produto fechar a história: uma semana de `usage` com dólar de provedor, e o Claude Code honrando o rewrite numa conta com a ferramenta Task. O Codex já mostrou, numa sessão desta máquina, o spawn seguinte chegar no modelo que o hook tinha pedido.

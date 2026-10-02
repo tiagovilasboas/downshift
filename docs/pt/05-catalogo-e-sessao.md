@@ -1,13 +1,9 @@
 # Catálogo e sessão
 
-O catálogo (`internal/catalog/catalog.json`) não é a lista do que a conta pode abrir. Ele diz, para um id conhecido, o tier, a família, o effort e o preço de lista por 1M tokens.
+Há duas listas, e elas não são a mesma coisa.
 
-A sessão é a lista do que este spawn pode receber. A ordem de leitura está em `docs/session-models.md`:
+**Produto.** O catálogo diz quanto um modelo custa na tabela e se ele é pequeno, médio ou forte. A sessão diz o que a sua conta, neste momento, pode realmente usar. O Downshift só escreve um nome que a sessão já conhece. Ele não pergunta à OpenAI ou à Anthropic o que você tem direito de abrir.
 
-1. `session_models` ou `available_models` no payload, se o campo existir.
-2. Senão `~/.harness-downshift/session-models.json`.
-3. Se não houver lista, a sessão é desconhecida e o hook não troca o modelo.
+**Técnico.** `internal/catalog/catalog.json` traz id, família, effort e preço de lista por 1M. A sessão vem, nesta ordem, de `session_models` ou `available_models` no payload, senão de `~/.harness-downshift/session-models.json`. Se não houver lista, a sessão é desconhecida e não há troca (`docs/session-models.md`). Codex, Claude Code e Cursor mandam o modelo atual, não o picker. Upshift, quando o id do catálogo não está na sessão, usa o mais forte da lista. Downshift usa o mais barato.
 
-O Codex, o Claude Code e o Cursor não mandam o picker inteiro. Mandam o modelo atual. Por isso um `-m gpt-5.4` recusado pela conta ChatGPT morre antes do hook: o Downshift não escolhe o modelo pai e não consulta a API da OpenAI.
-
-Quando a troca é permitida, o id escrito é um membro da sessão. Se o id do catálogo não estiver na sessão, upshift usa o mais forte da lista e downshift o mais barato, nunca um id inventado.
+**Trade-off.** Não inventar modelo evita um id que o harness recusa. O custo: se o processo pai do Codex já morreu porque a conta ChatGPT não aceita `gpt-6-luna`, o hook nem chega a rodar. Isso não é um bug da marcha. É entitlement da conta.

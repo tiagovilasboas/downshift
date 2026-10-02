@@ -1,17 +1,23 @@
 # Fallbacks
 
-A regra de ouro é não impedir o spawn.
+Se algo der errado, o subagente ainda nasce. O Downshift não segura o trabalho para “pensar melhor”.
 
-| Falha | O que acontece |
+**Produto.** Na dúvida, o modelo da sessão permanece. Você não perde o spawn por causa do roteador. O que você perde, nesses casos, é a economia ou a proteção de um modelo mais forte.
+
+**Técnico.**
+
+| Falha | Resultado |
 |---|---|
-| JSON inválido | `INVALID_EVENT`, o harness segue com o modelo que já ia usar |
-| stdin estourou 1 MB | `PAYLOAD_TOO_LARGE`, sem classificação |
+| JSON inválido | `INVALID_EVENT`, spawn segue |
+| stdin > 1 MB | `PAYLOAD_TOO_LARGE`, sem classificação |
 | timeout de leitura | `INPUT_TIMEOUT` |
-| sessão sem lista de modelos | não reescreve; o modelo atual fica |
-| id recomendado fora da sessão | não escreve um id que a sessão não tem |
+| sessão sem lista de modelos | não reescreve |
+| id recomendado fora da sessão | não escreve id inventado |
 | upshift ou downshift sem confiança | não reescreve |
-| embedder externo falha | volta para o hash local |
-| hash ou protótipo falha | fica a classe do regex |
-| `DOWNSHIFT_NO_ROUTE=1` | classifica e grava `baseline`, mas não troca o modelo |
+| embedder externo falha | hash local |
+| hash ou protótipo falha | fica o regex |
+| `DOWNSHIFT_NO_ROUTE=1` | classifica, grava `baseline`, não troca |
 
-Nenhum desses caminhos chama um LLM para decidir. O único modelo generativo é o que o harness vai usar depois, no subagente.
+Nenhum desses caminhos chama um LLM para decidir.
+
+**Trade-off.** Fail-open protege o fluxo. Um payload enorme no Codex simplesmente não é roteado, em vez de derrubar a sessão. O preço é um spawn no modelo da sessão, que pode ser o caro.
