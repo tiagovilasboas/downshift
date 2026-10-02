@@ -112,10 +112,10 @@ Replace directional normalised units with provider-grounded savings.
 
 ## Suggested execution order (sprints)
 
-1. **Now (code/docs):** P4.9 MiniLM dogfood, P3.3 PostToolUse doc, P4.10 real MiniLM centroids.
-2. **Dogfood week 1:** P3.3, P3.4, P1.3 (Claude), P6 baseline sessions with `DOWNSHIFT_NO_ROUTE` alternate days.
-3. **Dogfood week 2–4:** P3.5, P3.7, P4.4, invite P2.3.
-4. **Before label removal:** P4.5–P4.7, P2.4, all five pillar exit checks signed in a release note.
+1. **Code done:** P4.9 default local hash boost, P4.10 neural holdout measurement, P3.3 PostToolUse command shipped.
+2. **Dogfood now:** P3.4–P3.5 (usage events with tokens), P1.3 (one honored rewrite), P3.7 (fill the billing template).
+3. **Community:** P2.3–P2.4 exports from other operators.
+4. **Before label removal:** P1.5/P1.6, P5.3–P5.5, all five pillar exit checks signed in a release note.
 
 ---
 
