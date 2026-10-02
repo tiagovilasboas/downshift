@@ -1,20 +1,38 @@
-# Classificador
+# 02 · Classificador
 
-O classificador responde uma pergunta de produto: esta tarefa é mecânica, isolada, uma feature ou um desenho de sistema?
+O classificador resolve a questão central da delegação: **esta tarefa é um trabalho mecânico trivial, uma alteração isolada de código, uma funcionalidade completa ou o desenho de um sistema de alta complexidade?**
 
-**Produto.**
+---
 
-| Classe | Em português | Exemplo |
+## Perspectiva de Produto
+
+A taxonomia de complexidade do Downshift é dividida em quatro classes bem delimitadas:
+
+| Classe | Natureza da Tarefa | Exemplos Práticos |
 |---|---|---|
-| TRIVIAL | trabalho mecânico | rename, typo, git status |
-| SIMPLE | uma mudança só | um campo, um cubo three.js, um arquivo |
-| MEDIUM | uma feature | export CSV, um fluxo com vários arquivos |
-| COMPLEX | desenho de sistema | rearchitect, service mesh, etcd, raft |
+| **TRIVIAL** | Trabalho mecânico de baixo risco | Renomear variável, formatar arquivo, ajustar `git status`, corrigir typo no README |
+| **SIMPLE** | Alteração pontual e isolada | Adicionar campo em struct, criar cena básica (ex: cubo Three.js), editar um arquivo |
+| **MEDIUM** | Implementação de funcionalidade | Criação de export CSV, fluxo de validação tocando múltiplos arquivos |
+| **COMPLEX** | Arquitetura, concorrência e infraestrutura | Re-arquitetura multi-tenant, service mesh, eleição de líder (Raft/etcd), migração de banco |
 
-Se nada disso bater, a tarefa vira `MEDIUM` e o Downshift desconfia. Desconfiado, ele prefere não mexer no modelo.
+Se os padrões do prompt não apresentarem correspondência clara com nenhuma classe, a tarefa é classificada preventivamente como **`MEDIUM`** com indicador de baixa confiança. Diante de incerteza, a política de roteamento opta pela segurança e **não altera** o modelo ativo.
 
-**Técnico.** Os votos estão em `internal/core/signals.go`. Cada regex tem um peso. A classe vencedora é a de maior soma. Empate sobe. Confiança exige pelo menos 2 pontos de diferença para a segunda. `implement` pesa 2 em `MEDIUM`. `three.js scene` ou `rotating cube` pesam 3 em `SIMPLE` e vencem o `implement`. `service mesh` e `raft` pesam 3 em `COMPLEX` e vencem o `implement`.
+---
 
-O Graphify pode subir para `COMPLEX` se o texto citar arquivo ou símbolo. No caminho padrão o fetcher é nulo: só vale o que está escrito. O boost semântico (`internal/semantic`) só sobe a classe. `DOWNSHIFT_MINILM=0` desliga.
+## Detalhes de Engenharia
 
-**Trade-off.** Regex é auditável e não pede GPU. Não entende intenção além das palavras. Por isso o cubo e o service mesh precisam de sinais explícitos, em vez de um modelo de linguagem no meio do hook.
+A primeira linha de classificação opera em `internal/core/signals.go`, através de um sistema de pontuação ponderada por expressões regulares:
+
+1. **Votação Ponderada:** Cada regex possui um peso associado. A classe com o maior somatório de pontos vence a disputa.
+2. **Desempate Seguro:** Em caso de empate entre classes vizinhas, a regra do sistema sempre prioriza o tier de maior capacidade (nunca subdimensiona).
+3. **Margem de Confiança:** Para uma classificação ser considerada "confiante", a classe vencedora precisa abrir pelo menos **2 pontos de vantagem** sobre a segunda colocada.
+   * Exemplo: Um termo genérico como `implement` soma 2 pontos em `MEDIUM`. No entanto, `three.js scene` soma 3 pontos em `SIMPLE`, superando o verbo genérico. Da mesma forma, termos como `service mesh` ou `raft` somam 3 pontos em `COMPLEX`, vencendo a disputa com folga.
+4. **Graphify (Opcional):** Se o componente Graphify estiver ativado e o texto citar arquivos ou símbolos críticos do repositório, a tarefa pode ser escalada para `COMPLEX`.
+5. **Boost Semântico (MiniLM):** Localizado em `internal/semantic`, este módulo calcula distâncias de centróides em espaço vetorial. Ele é estritamente monotônico: pode confirmar ou elevar a classe quando o regex está hesitante, mas **nunca rebaixa**. Pode ser desativado via `DOWNSHIFT_MINILM=0`.
+
+---
+
+## Compensações Técnicas (Trade-offs)
+
+* **Vantagem:** Heurísticas de regex são determinísticas, 100% auditáveis, livres de GPU e executam em frações de milissegundo.
+* **Custo:** Regex avalia vocabulário e padrões explícitos, não intenção latente profunda. Por essa razão, termos como cubos interativos ou protocolos distribuídos contam com regras semânticas direcionadas para garantir que a categoria correta seja atribuída.

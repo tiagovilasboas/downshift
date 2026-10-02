@@ -1,23 +1,35 @@
-# Fallbacks
+# 04 · Fallbacks e Tolerância a Falhas
 
-Se algo der errado, o subagente ainda nasce. O Downshift não segura o trabalho para “pensar melhor”.
+O princípio fundamental de confiabilidade do Downshift é a **falha aberta (*fail-open*)**: aconteça o que acontecer, a inicialização do subagente jamais pode ser travada pelo roteador. O Downshift nunca bloqueia o fluxo do desenvolvedor para tentar "pensar melhor".
 
-**Produto.** Na dúvida, o modelo da sessão permanece. Você não perde o spawn por causa do roteador. O que você perde, nesses casos, é a economia ou a proteção de um modelo mais forte.
+---
 
-**Técnico.**
+## Perspectiva de Produto
 
-| Falha | Resultado |
-|---|---|
-| JSON inválido | `INVALID_EVENT`, spawn segue |
-| stdin > 1 MB | `PAYLOAD_TOO_LARGE`, sem classificação |
-| timeout de leitura | `INPUT_TIMEOUT` |
-| sessão sem lista de modelos | não reescreve |
-| id recomendado fora da sessão | não escreve id inventado |
-| upshift ou downshift sem confiança | não reescreve |
-| embedder externo falha | hash local |
-| hash ou protótipo falha | fica o regex |
-| `DOWNSHIFT_NO_ROUTE=1` | classifica, grava `baseline`, não troca |
+* **Continuidade Operacional:** Em qualquer situação de dúvida, erro de leitura ou incompatibilidade de dados, o subagente é executado normalmente com o modelo original herdado da sessão.
+* **Impacto da Falha:** O desenvolvedor não perde a execução do seu comando; o único impacto é a perda temporária da oportunidade de otimização de custo (ou da elevação automática para um modelo superior).
 
-Nenhum desses caminhos chama um LLM para decidir.
+---
 
-**Trade-off.** Fail-open protege o fluxo. Um payload enorme no Codex simplesmente não é roteado, em vez de derrubar a sessão. O preço é um spawn no modelo da sessão, que pode ser o caro.
+## Detalhes de Engenharia
+
+O ecossistema trata cenários de borda sem recorrer a chamadas externas a LLMs:
+
+| Situação de Exceção | Comportamento do Downshift | Consequência |
+|---|---|---|
+| **JSON malformado no stdin** | Registra erro `INVALID_EVENT` na telemetria | O hook libera o spawn sem alterações (`allow`) |
+| **Payload acima de 1 MB** | Emite `PAYLOAD_TOO_LARGE` | O processo não tenta desserializar o buffer |
+| **Timeout de leitura no stdin** | Emite `INPUT_TIMEOUT` | Libera a execução imediatamente |
+| **Sessão sem lista de modelos** | Sessão tratada como desconhecida (`unknown`) | Não reescreve o modelo |
+| **Modelo recomendado fora da sessão** | Modelo não consta no allowlist ativo | Preserva o modelo original da sessão |
+| **Transição com baixa confiança** | Margem de pontuação menor que 2 | Mantém o modelo da sessão inalterado |
+| **Falha do embedder externo (MiniLM)** | Fallback instantâneo para centróides de hash local | Classificação segue com embeddings locais |
+| **Falha no cálculo de embeddings** | Fallback para as heurísticas de regex | Classificação concluída com sinais estáticos |
+| **Modo de controle (`DOWNSHIFT_NO_ROUTE=1`)** | Avalia a rota, gera evento `baseline`, mas não altera | Permite testes comparativos A/B |
+
+---
+
+## Compensações Técnicas (Trade-offs)
+
+* **Vantagem:** Resiliência absoluta. O desenvolvedor nunca tem seu trabalho interrompido por falhas transitórias do Downshift.
+* **Custo:** Um evento que exceda limites (como payloads gigantescos com transcripts inteiros) deixa de ser otimizado e roda no modelo padrão, podendo ter um custo mais elevado na fatura daquele turno específico.
