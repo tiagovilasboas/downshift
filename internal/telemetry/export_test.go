@@ -173,7 +173,7 @@ func TestExportJSON_RoundTrip(t *testing.T) {
 	if !strings.Contains(raw, "\n") || !strings.Contains(raw, `"window_days"`) {
 		t.Fatalf("expected indented JSON with window_days, got: %s", raw)
 	}
-	for _, field := range []string{`"total"`, `"downshifted"`, `"downshift_rate"`, `"note"`, `"by_complexity"`, `"generated_at"`} {
+	for _, field := range []string{`"total"`, `"downshifted"`, `"downshift_rate"`, `"note"`, `"by_complexity"`, `"generated_at"`, `"rewrite_honored_inferred"`} {
 		if !strings.Contains(raw, field) {
 			t.Errorf("JSON missing field %s: %s", field, raw)
 		}

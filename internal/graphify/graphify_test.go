@@ -1,6 +1,8 @@
 package graphify_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/graphify"
@@ -162,5 +164,24 @@ func TestExtractCandidates_OnlyFilePaths(t *testing.T) {
 	h := graphify.Hint("rename the userId variable", graphify.DefaultCriteria(), stub(nil))
 	if h.ShouldEscalate {
 		t.Error("pure text prompt should not trigger graph lookup or escalation")
+	}
+}
+
+func TestCmdFetcher_EscalatesOnHighEdges(t *testing.T) {
+	script := filepath.Join(t.TempDir(), "fetch.sh")
+	body := "#!/bin/sh\ncat >/dev/null\nprintf '%s\\n' '{\"label\":\"AuthService\",\"community\":\"erp controllers\",\"edges\":30,\"found\":true}'\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	h := graphify.Hint("debug CreateSaleService", graphify.DefaultCriteria(), graphify.CmdFetcher{Cmd: script})
+	if !h.ShouldEscalate {
+		t.Fatalf("expected escalation from command fetcher, got %+v", h)
+	}
+}
+
+func TestCmdFetcher_FailOpen(t *testing.T) {
+	h := graphify.Hint("debug CreateSaleService", graphify.DefaultCriteria(), graphify.CmdFetcher{Cmd: "false"})
+	if h.ShouldEscalate {
+		t.Fatalf("failed command must not escalate, got %+v", h)
 	}
 }

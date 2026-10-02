@@ -321,6 +321,13 @@ type Stats struct {
 
 	// ByComplexity counts decisions per complexity class.
 	ByComplexity map[string]int
+
+	// RewriteShifted counts rewrite_emitted events that asked for a different model.
+	// RewriteHonored counts those later confirmed: explicit rewrite_honored, or
+	// the next same-session spawn arriving with requested_model equal to the
+	// previous final_model. Inference never writes the log.
+	RewriteShifted int
+	RewriteHonored int
 }
 
 // NormSaved returns normalised savings: absolute units saved and fraction.
@@ -447,6 +454,7 @@ func Aggregate(events []Event) Stats {
 			s.Corrected++
 		}
 	}
+	s.RewriteShifted, s.RewriteHonored = CountInferredHonored(events)
 	return s
 }
 
@@ -519,6 +527,9 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	}
 	if s.Baseline > 0 {
 		fmt.Fprintf(w, "Baseline (no-route)   %8d  (control group, excluded from rates)\n", s.Baseline)
+	}
+	if s.RewriteShifted > 0 {
+		fmt.Fprintf(w, "Rewrite honored       %8d  / %d shifted (same-session follow-up or rewrite_honored)\n", s.RewriteHonored, s.RewriteShifted)
 	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
 }

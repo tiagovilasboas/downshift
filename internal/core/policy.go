@@ -252,11 +252,7 @@ func (d Decision) ShouldPreserveExplicitModel(currentModelID string, r Resolver)
 	return r.IsExplicitOnly(d.Harness, currentModelID)
 }
 
-// graphifyHint wraps the graphify.Hint call with a nil fetcher (offline mode).
-// It returns an escalation hint based on text-only signals and high-risk
-// community detection (no MCP call). When the prompt mentions critical files
-// or symbols from high-risk communities, the hint recommends escalation to
-// Complex for safer handling.
+// graphifyHint uses DOWNSHIFT_GRAPHIFY_CMD when set; otherwise offline (nil fetcher).
 func graphifyHint(prompt string) graphify.EscalationHint {
-	return graphify.Hint(prompt, graphify.DefaultCriteria(), nil)
+	return graphify.Hint(prompt, graphify.DefaultCriteria(), graphify.FetcherFromEnv())
 }
