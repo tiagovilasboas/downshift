@@ -1,9 +1,34 @@
-# Entrada do fluxo
+# 01 · Entrada do Fluxo
 
-O Downshift só entra quando um subagente vai nascer. Um chat comum, sem ferramenta de spawn, não passa por ele. Por isso um “pong” escrito na própria conversa não aparece no relatório.
+O **Downshift** atua exclusivamente no momento exato em que um **subagente está prestes a ser instanciado**. Um chat comum de turno único, sem invocação de ferramentas de delegação, não passa pelo roteador.
 
-**Produto.** O pedido do subagente é o insumo. O histórico da conversa, os arquivos já lidos e o transcript não entram. O que sai, se a troca for permitida, é outro modelo e, às vezes, outro esforço de raciocínio. O Downshift não implementa a tarefa.
+---
 
-**Técnico.** O harness chama o binário no stdin. Claude Code: `downshift claude-code` no PreToolUse da ferramenta Task, e `downshift claude-code-post-tool-use` depois. Codex: `downshift codex` em `Agent` ou `spawn_agent`. O adapter lê `prompt`, `description`, `task` ou `message` e o modelo atual. JSON acima de 1 MB vira `PAYLOAD_TOO_LARGE` e não classifica: a interface do Codex, quando manda o fio inteiro, cai nesse teto. `downshift try` usa o mesmo `core.Route` sem esse payload.
+## Perspectiva de Produto
 
-**Trade-off.** Classificar só o pedido deixa o log limpo e barato. O custo é perder contexto: um jogo 3D descrito em uma frase pode parecer simples, e uma conversa longa no Codex pode nem chegar à classificação.
+* **Insumo Estrito:** O único dado processado é o texto descritivo da tarefa delegada ao subagente (`prompt`, `description`, `task` ou `message`).
+* **Isolamento de Contexto:** Histórico acumulado da conversa, arquivos lidos anteriormente pelo agente principal e transcrições completas da sessão são totalmente ignorados.
+* **Resultado Gerado:** Caso a reescrita seja aprovada pela política de segurança, o Downshift retorna a indicação de um modelo mais econômico (e, quando suportado pelo harness, o nível de esforço de raciocínio / *reasoning effort*). O Downshift **nunca** executa a tarefa nem gera código.
+
+---
+
+## Detalhes de Engenharia
+
+O harness cliente invoca o binário localmente via `stdin`:
+
+* **Claude Code:** `downshift claude-code` configurado como hook `PreToolUse` na ferramenta `Task`, e opcionalmente `downshift claude-code-post-tool-use` no `PostToolUse` para telemetria de consumo real de tokens.
+* **Codex:** `downshift codex` configurado para as ferramentas `Agent` ou `spawn_agent` sob o protocolo `multi_agent_v2`.
+* **Cursor:** `downshift cursor` interceptando requisições da ferramenta `Task`.
+* **Antigravity:** `downshift antigravity` interceptando chamadas de `invoke_subagent`.
+* **KiroCrew:** `downshift kirocrew` operando em modo de política e bloqueio orientativo (`exit 0` / `exit 2`).
+
+### Limites e Proteções Operacionais
+* **Teto de Carga (Max Payload):** Payloads via `stdin` com tamanho superior a 1 MB são rejeitados com `PAYLOAD_TOO_LARGE` e não passam por classificação. Em clientes como o Codex, quando a interface tenta enviar a árvore inteira da conversa, essa barreira impede o consumo excessivo de memória do processo.
+* **Execução Rápida:** O comando de terminal `downshift try` executa o mesmo pipeline de `core.Route` sem o overhead de payload do harness.
+
+---
+
+## Compensações Técnicas (Trade-offs)
+
+* **Vantagem:** Analisar apenas o pedido da tarefa mantém o processamento ultrarrápido (sub-2ms), o log estritamente anônimo e elimina o vazamento de código proprietário.
+* **Custo:** A perda do histórico global pode reduzir a contextualização em prompts extremamente curtos (ex: "faça um jogo 3D" sem detalhes pode soar como uma alteração simples em um primeiro momento).

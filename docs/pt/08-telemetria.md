@@ -1,9 +1,39 @@
-# Telemetria
+# 08 · Telemetria e Observabilidade Local
 
-O relatório existe para você ver a rota, não o trabalho.
+O subsistema de telemetria do Downshift foi projetado para registrar o **comportamento da rota**, nunca o conteúdo do trabalho executado.
 
-**Produto.** Os eventos ficam na sua máquina, em `~/.harness-downshift/`. Dá para exportar um resumo sem o texto das tarefas. Economia em dólar só aparece quando o harness manda tokens. Até lá o número é estimativa de tabela, marcada como estimativa.
+---
 
-**Técnico.** `events.jsonl` guarda complexidade, tier, veredito, modelos pedido e final, harness, esforço, outcome e hash de sessão. Não guarda prompt, path nem o id cru. `rewrite_emitted` é emissão. `baseline` é `DOWNSHIFT_NO_ROUTE=1`. `usage` são tokens ligados a uma decisão anterior. `error` cobre `PAYLOAD_TOO_LARGE`, JSON inválido e timeout. `downshift stats --export` resume sem o texto.
+## Perspectiva de Produto
 
-**Trade-off.** Sem prompt no log, o arquivo pode ir para um issue. Sem prompt, também não dá para reler a tarefa original a partir do JSONL. A prova de conteúdo continua sendo a sessão do harness, não o Downshift.
+* **Armazenamento Seguro:** Todos os eventos são gravados exclusivamente no diretório local do usuário em `~/.harness-downshift/events.jsonl` com permissões restritas (`0700`).
+* **Compartilhamento Seguro de Métricas:** O comando `downshift stats --export` gera um resumo consolidado das métricas de economia e distribuição de tiers sem expor nenhum caminho de arquivo, nome de projeto ou texto de prompt.
+* **Métricas em Dólares Reais:** Cálculos baseados em dólares reais (`Real provider cost`) são calculados quando o harness fornece o consumo real de tokens no pós-execução (`PostToolUse`). Na ausência desses dados, o sistema apresenta a economia normalizada em unidades adimensionais baseadas nos preços de tabela dos modelos.
+
+---
+
+## Detalhes de Engenharia
+
+Cada entrada registrada no arquivo `events.jsonl` obedece a um esquema estrito:
+
+| Campo | Descrição e Papel |
+|---|---|
+| `correlation_id` | Identificador único opaco gerado para cada chamada do hook |
+| `timestamp` | Horário UTC no formato RFC3339Nano |
+| `complexity` | Complexidade identificada (`TRIVIAL`, `SIMPLE`, `MEDIUM`, `COMPLEX`) |
+| `requested_model` | Modelo de origem informado pelo cliente (ou `unknown` se omitido) |
+| `final_model` | Modelo final atribuído para a execução do subagente |
+| `verdict` | Decisão de roteamento (`DOWNSHIFT`, `OK`, `UPSHIFT` ou `UNKNOWN`) |
+| `tier` | Tier selecionado (`small`, `mid`, `frontier`) |
+| `outcome` | Estado do ciclo: `rewrite_emitted`, `baseline`, `usage` ou `error` |
+| `session_id` | Hash criptográfico anônimo da sessão (o ID bruto nunca é persistido) |
+| `input_tokens` / `actual_cost_usd` | Métricas reais de consumo populadas caso o `PostToolUse` seja capturado |
+
+> **Garantia de Privacidade:** Os campos `prompt`, `task`, nomes de repositórios e parâmetros de ferramentas são explicitamente omitidos do struct de serialização do evento.
+
+---
+
+## Compensações Técnicas (Trade-offs)
+
+* **Vantagem:** O arquivo de telemetria pode ser compartilhado em relatórios de auditoria, issues do GitHub ou pull requests sem qualquer risco de vazamento de propriedade intelectual ou credenciais.
+* **Custo:** Como o texto do prompt não é persistido, não é possível reclassificar retroativamente uma tarefa do passado a partir do arquivo de log; a depuração precisa ser realizada inspecionando diretamente as sessões dos harnesses ou usando o comando `downshift try`.

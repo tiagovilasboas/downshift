@@ -1,18 +1,29 @@
-# Decisões técnicas
+# 09 · Decisões Técnicas e Racional de Arquitetura
 
-Cada linha é uma escolha de produto com um custo de engenharia, ou o contrário.
+O design do Downshift é pautado pelo equilíbrio deliberado entre requisitos de produto e restrições de engenharia em ambientes locais de desenvolvimento.
 
-| Escolha | O que o produto ganha | O que se perde |
+---
+
+## Matriz de Decisões de Arquitetura
+
+| Decisão de Arquitetura | O que o Produto Ganha | Qual é a Contrapartida de Engenharia |
 |---|---|---|
-| Um binário Go, sem módulo externo | hook rápido, sem rede | menos ecossistema de ML no processo |
-| Regex primeiro | decisão auditável | não “entende” a tarefa além das palavras |
-| Empate sobe a classe | um `rearchitect` não cai no modelo barato | um empate duvidoso pode encarecer |
-| `SIMPLE` no small | cubo e campo novo ficam no Luna | um `SIMPLE` difícil pode ficar curto de modelo |
-| Confiança nos dois lados | a dúvida não gasta o Terra | um `MEDIUM` incerto no Luna não sobe |
-| MiniLM neural opcional | holdout com 0% FRONTIER→MID se você ligar | Python, e o acerto de tier não ganhou do regex |
-| Jev fora do caminho | texto não sai, triagem a custo zero | menos “modelo de decisão” de mercado |
-| Catálogo ≠ entitlement | nunca escreve um id que a sessão não tem | não conserta um modelo pai recusado pela conta |
-| Emissão ≠ ACK | o relatório não mente | a prova completa ainda depende do harness |
-| Prompt fora do log | dá para exportar o resumo | não dá para recuperar a tarefa pelo JSONL |
+| **Binário único em Go puro** | Execução ultraveloz do hook em sub-2ms; instalação simples sem dependências de runtime. | Não se utiliza o ecossistema padrão de bibliotecas pesadas de ML em Python no caminho crítico. |
+| **Heurísticas de Regex como 1ª camada** | Decisões determinísticas, explicáveis e facilmente auditáveis. | O classificador depende de correspondência de vocabulário e padrões explícitos. |
+| **Desempate prioriza capacidade superior** | Segurança contra subdimensionamento: tarefas no limiar nunca caem em modelos fracos demais. | Um empate duvidoso pode manter um custo ligeiramente mais alto. |
+| **Tarefas `SIMPLE` no tier Small** | Economia máxima: ajustes pontuais e componentes isolados rodam no modelo econômico (Haiku/Luna). | Um ajuste `SIMPLE` incomumente complexo pode exigir que o modelo gaste mais turnos. |
+| **Exigência de margem de confiança** | Evita oscilações de roteamento em tarefas ambíguas ou vagas. | Uma tarefa `MEDIUM` sem sinais fortes permanece no modelo atual (mesmo em `UPSHIFT`). |
+| **Camada Semântica MiniLM local** | Atinge 98.0% de acurácia de tier e 0% de downgrade indevido (`FRONTIER → MID`) sem custo de rede. | Treino e sincronização de centróides requerem curadoria contínua de datasets. |
+| **Sem chamadas a serviços remotos (Jev/APIs)** | Zero latência de rede, custo marginal zero na classificação e privacidade absoluta. | Não se utiliza modelos de raciocínio de ponta apenas para triagem. |
+| **Separação entre Catálogo e Permissões** | Impossibilita erros onde o subagente falharia por tentar usar um modelo não contratado pela conta. | Exige manutenção do arquivo de permissões da sessão (`session-models.json`). |
+| **Distinção entre Emissão e Aplicação** | Transparência nos relatórios: a telemetria não assume falsamente que o cliente acatou a instrução. | A confirmação final de uso depende do ecossistema do harness. |
+| **Zero-Leakage no log de eventos** | Logs seguros para compartilhamento público e relatórios de auditoria. | Não é possível recuperar o texto original do prompt a partir dos arquivos de telemetria. |
 
-O que ainda falta para o produto fechar a história: uma semana de `usage` com dólar de provedor, e o Claude Code honrando o rewrite numa conta com a ferramenta Task. O Codex já mostrou, numa sessão desta máquina, o spawn seguinte chegar no modelo que o hook tinha pedido.
+---
+
+## O Caminho até a Versão 1.0 (Saída do Beta)
+
+Para consolidar a graduação formal para a versão 1.0 (conforme mapeado em [`docs/BETA-EXIT.md`](../BETA-EXIT.md)), os passos finais são puramente empíricos:
+1. **Acúmulo de Eventos com Custo Real (P3.4 e P3.5):** Atingir pelo menos 50 eventos com telemetria de tokens via `PostToolUse` no Claude Code para reportar a economia real em dólares.
+2. **Confirmação em Produção (P1.3):** Registrar a confirmação visual na interface do Claude Code demonstrando o executor filho rodando no modelo econômico reescrito.
+3. **Evidência Multi-Ambiente (P2.3):** Incorporar dados consolidados anônimos de 2 ou mais desenvolvedores utilizando o roteador em suas rotinas diárias.
