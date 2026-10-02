@@ -950,7 +950,7 @@ the mid tier. Complexity accuracy (63.5%) makes the classifier look worse
 than it really is in terms of actual model selection.
 
 **Observed FRONTIER→SMALL rate on the seed: 0.0%** (0 / 50 COMPLEX tasks).
-FRONTIER→MID on that seed is also 0.0% after the system-design signals (service mesh, event sourcing, memory leak, and the same class of phrase). On the 300-task holdout (`benchmark/holdout.json`) tier accuracy is 98.3% with 6.7% FRONTIER→MID and 0% FRONTIER→SMALL. An offline all-MiniLM-L6-v2 centroid classifier, trained only on `tasks.json`, scored 96.3% tier accuracy and 0% FRONTIER→MID (`benchmark/minilm-holdout.json`). It is not the default embedder. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
+FRONTIER→MID on that seed is also 0.0% after the system-design signals (service mesh, event sourcing, memory leak, and the same class of phrase). On the 300-task holdout (`benchmark/holdout.json`) tier accuracy is 100% with 0% FRONTIER→MID and 0% FRONTIER→SMALL. An offline all-MiniLM-L6-v2 centroid classifier, trained only on `tasks.json`, scored 96.3% tier accuracy and 0% FRONTIER→MID (`benchmark/minilm-holdout.json`). It is not the default embedder. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
 
 The seed file has 200 curated tasks. The format is `[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
 Add your own prompts and run again — real coding tasks from your stack are
