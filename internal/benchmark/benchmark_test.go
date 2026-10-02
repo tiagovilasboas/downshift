@@ -171,19 +171,19 @@ func TestTierAccuracy_GreaterOrEqualToComplexityAccuracy(t *testing.T) {
 	}
 }
 
-func TestTierAccuracy_SimplePredictedAsMedium_CountsAsCorrect(t *testing.T) {
-	// Build a synthetic result where SIMPLE was predicted as MEDIUM.
-	// Both map to TierMid, so tier accuracy should be 1.0.
+func TestTierAccuracy_SimplePredictedAsMedium_IsATierMiss(t *testing.T) {
+	// SIMPLE is the small tier. MEDIUM is mid. Predicting one as the other
+	// is a real routing miss, not just a label miss.
 	results := []benchmark.Result{
 		{
 			Task:      benchmark.Task{Prompt: "add a field", Label: "SIMPLE"},
-			Predicted: core.Medium, // classifier said Medium
-			Correct:   false,       // complexity miss
+			Predicted: core.Medium,
+			Correct:   false,
 		},
 	}
 	tierAcc := benchmark.TierAccuracy(results)
-	if math.Abs(tierAcc-1.0) > 1e-9 {
-		t.Errorf("SIMPLE→MEDIUM is a tier hit, tier accuracy = %f, want 1.0", tierAcc)
+	if tierAcc != 0 {
+		t.Errorf("SIMPLE→MEDIUM is a tier miss, tier accuracy = %f, want 0", tierAcc)
 	}
 }
 

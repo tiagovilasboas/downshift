@@ -384,6 +384,12 @@ func runTry(catalog core.Resolver, args []string) int {
 		fmt.Printf("Current:    %s\n", d.CurrentModel.ID)
 	}
 	fmt.Printf("Verdict:    %s\n", d.Verdict)
+	fmt.Printf("Confident:  %t\n", d.Confident)
+	if d.ShouldRewriteModel() {
+		fmt.Printf("Rewrite:    yes → %s\n", d.Model.ID)
+	} else {
+		fmt.Printf("Rewrite:    no (keep current model)\n")
+	}
 	fmt.Printf("→ %s\n", d.Summary())
 	return 0
 }

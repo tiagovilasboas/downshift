@@ -22,6 +22,7 @@ func TestClassify(t *testing.T) {
 
 		// Simple — one isolated change
 		{"add field", "add a field email to the User struct", Simple},
+		{"three.js scene", "implement a three.js scene with a rotating cube", Simple},
 		{"fix bug", "fix the bug where login fails on empty password", Simple},
 		{"write function", "write a function that validates a CPF", Simple},
 		{"explain", "explain what this regex does", Simple},
@@ -76,7 +77,7 @@ func TestComplexityTier(t *testing.T) {
 		tier Tier
 	}{
 		{Trivial, TierSmall},
-		{Simple, TierMid},
+		{Simple, TierSmall},
 		{Medium, TierMid},
 		{Complex, TierFrontier},
 	}

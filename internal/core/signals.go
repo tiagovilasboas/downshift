@@ -73,6 +73,7 @@ var RawSignals = []SignalDef{
 	{`\bexplain\b`, 2, Simple},
 	{`\bwhat\s+(is|does|are)\b`, 1, Simple},
 	{`\bsingle\s+(file|function)\b`, 2, Simple},
+	{`\b(rotating cube|three\.js scene|hello world|landing page|one file|one function|one component)\b`, 3, Simple},
 
 	// ── TRIVIAL — mechanical ──────────────────────────────────────────────
 

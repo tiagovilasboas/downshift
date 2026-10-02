@@ -23,7 +23,7 @@
 
 Every time your AI agent spawns a subagent, that subagent inherits the most expensive model in the session. A $25/1M token frontier model ends up renaming a variable, fixing a typo, listing files. You're billed. The work was identical on a $1/1M model.
 
-`harness-downshift` intercepts every subagent spawn and routes it to the right-sized model **before it starts** — automatically, without an LLM in the loop, with a single Go binary that runs as a hook. A local semantic boost (hash centroids, MiniLM-compatible) runs by default and only raises uncertain regex labels; set `DOWNSHIFT_MINILM=0` to use regex only. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
+`harness-downshift` intercepts every subagent spawn and routes it to the right-sized model **before it starts** — automatically, without an LLM in the loop, with a single Go binary that runs as a hook. A local semantic boost (hash centroids, MiniLM-compatible) runs by default and only raises uncertain regex labels; set `DOWNSHIFT_MINILM=0` to use regex only. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md). Architecture in Portuguese, by domain: [docs/pt/README.md](docs/pt/README.md).
 
 ```
 Subagent task: "rename the userId variable across auth.ts"
@@ -944,10 +944,7 @@ Wasteful over-routing (SMALL → dearer tier):
 
 The two numbers that matter for the business decision:
 
-**Tier routing accuracy (81.0% on the 200-task seed)** is the economic KPI. SIMPLE predicted as
-MEDIUM is a complexity miss but an identical routing decision — both go to
-the mid tier. Complexity accuracy (63.5%) makes the classifier look worse
-than it really is in terms of actual model selection.
+**Tier routing accuracy on the 200-task seed** is the economic KPI. `TRIVIAL` and `SIMPLE` share the small tier. `MEDIUM` is mid. `COMPLEX` is frontier. A `SIMPLE` predicted as `MEDIUM` is a real tier miss. Run `downshift benchmark benchmark/tasks.json` for the current percentages.
 
 **Observed FRONTIER→SMALL rate on the seed: 0.0%** (0 / 50 COMPLEX tasks).
 FRONTIER→MID on that seed is also 0.0% after the system-design signals (service mesh, event sourcing, memory leak, and the same class of phrase). On the 300-task holdout (`benchmark/holdout.json`) tier accuracy is 100% with 0% FRONTIER→MID and 0% FRONTIER→SMALL. An offline all-MiniLM-L6-v2 centroid classifier, trained only on `tasks.json`, scored 96.3% tier accuracy and 0% FRONTIER→MID (`benchmark/minilm-holdout.json`). It is not the default embedder. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
