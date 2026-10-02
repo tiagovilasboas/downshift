@@ -505,7 +505,7 @@ go build -o dsmon ./cmd/dsmon
 | Events / ↓ ↑ ✓ | `events.jsonl` | Today's counts by verdict |
 | Est. saved (~$ est.) | `estimated_savings` × $0.01 placeholder (`estimatedCostPerUnitUSD`) | Rough estimate, not actual billing |
 | Est. units | Sum of `estimated_savings` fractions (`est_units` in `/api/status`) | Estimated, not from provider |
-| Real saved ($) | `baseline_cost_usd` − `actual_cost_usd`, only for events with token usage | Real dollars when present; absent until PostToolUse hook lands |
+| Real saved ($) | `baseline_cost_usd` − `actual_cost_usd`, only for events with token usage | Real dollars when a PostToolUse payload includes token counts; zero until then |
 
 **Token consumption note.** The router has no access to provider-reported token
 counts — it only sees what the harness passes to the preToolUse hook, which
@@ -515,8 +515,9 @@ dashboard. Events optionally carry `input_tokens`, `output_tokens`,
 `cached_tokens`, `actual_cost_usd` and `baseline_cost_usd` (see
 `internal/telemetry/cost.go`); when present, `/api/status` exposes
 `real_saved_usd`/`real_cost_events` and `downshift stats` prints a real-cost
-section alongside the estimate. Actual token tracking is planned for a future
-PostToolUse hook pass.
+section alongside the estimate. The Claude Code PostToolUse command is
+`downshift claude-code-post-tool-use`. It records `outcome: "usage"` only when
+the payload carries `input_tokens` or `output_tokens`.
 
 ## Grok CLI (config, not hook)
 
@@ -915,7 +916,7 @@ Measured with `downshift stats` on 430 local routing events (Sep 21–30, 2026):
 
 \* Unknown split (152 in the 30-day window): 117 legacy-schema events (verdict only, no model fields) · 20 error-outcome events with no verdict (`INVALID_EVENT` ×10, `PAYLOAD_TOO_LARGE` ×10, fail-open by design) · 15 genuine unknown-model events (`requested_model` unknown, `rewrite_emitted` with a sensible final model).
 
-> **Important caveat.** Single-user dogfood, not a controlled study: no provider billing to compare against, normalised units only (the real-cost section still reports zero until the PostToolUse hook lands), and the downshift rate follows the task mix. Treat these as directional. The most reliable data is your provider's billing dashboard before and after deploying downshift.
+> **Important caveat.** Single-user dogfood, not a controlled study: no provider billing to compare against, normalised units only (no `outcome: "usage"` rows in the published window), and the downshift rate follows the task mix. Treat these as directional. The most reliable data is your provider's billing dashboard before and after deploying downshift.
 
 ---
 
@@ -924,37 +925,34 @@ Measured with `downshift stats` on 430 local routing events (Sep 21–30, 2026):
 Run the classifier against the curated dataset included in the repository:
 
 ```
-# Example output — run this yourself to see current numbers.
+# Example output — default classifier (regex + local hash boost), 2026-10-01.
 $ downshift benchmark benchmark/tasks.json
 
-Dataset: 108 tasks (26 TRIVIAL, 28 SIMPLE, 27 MEDIUM, 27 COMPLEX)
+Dataset: 200 tasks
 
-Complexity accuracy     38.9%  (exact label match)
-Tier routing accuracy   63.0%  (correct model tier — what matters economically)
+Complexity accuracy     58.0%  (exact label match)
+Tier routing accuracy   75.5%  (correct model tier — what matters economically)
 
 Unsafe downgrade (FRONTIER → cheaper tier):
-  FRONTIER → MID        55.6%  (15 / 27)
-  FRONTIER → SMALL       0.0%  (0 / 27)
+  FRONTIER → MID        24.0%  (12 / 50)
+  FRONTIER → SMALL       0.0%  (0 / 50)
 
 Wasteful over-routing (SMALL → dearer tier):
-  SMALL → MID           73.1%  (19 / 26)
-  SMALL → FRONTIER       3.8%  (1 / 26)
+  SMALL → MID           46.0%  (23 / 50)
+  SMALL → FRONTIER      10.0%  (5 / 50)
 ```
 
 The two numbers that matter for the business decision:
 
-**Tier routing accuracy (63.0%)** is the economic KPI. SIMPLE predicted as
+**Tier routing accuracy (75.5% on the 200-task seed)** is the economic KPI. SIMPLE predicted as
 MEDIUM is a complexity miss but an identical routing decision — both go to
-the mid tier. Complexity accuracy (38.9%) makes the classifier look worse
+the mid tier. Complexity accuracy (58.0%) makes the classifier look worse
 than it really is in terms of actual model selection.
 
-**Observed FRONTIER→SMALL rate on the expanded dataset: 0.0%** (0 / 27 COMPLEX tasks).
-That is a good signal — the classifier never catastrophically downgrades complex
-work. FRONTIER→MID (55.6%) is the current main gap: those tasks get a capable
-model but not the strongest one. This is a precision challenge, not a safety gap.
+**Observed FRONTIER→SMALL rate on the seed: 0.0%** (0 / 50 COMPLEX tasks).
+FRONTIER→MID is 24% on that seed. On the 300-task holdout (`benchmark/holdout.json`), regex and the default hash boost both sit at 98.0% tier accuracy with 8% FRONTIER→MID and 0% FRONTIER→SMALL. An offline all-MiniLM-L6-v2 centroid classifier, trained only on `tasks.json`, scored 96.3% tier accuracy and 0% FRONTIER→MID (`benchmark/minilm-holdout.json`). It is not the default embedder. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
 
-The dataset has 108 curated tasks (expanded from 30) balancing realistic variance
-per label. The format is `[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
+The seed file has 200 curated tasks. The format is `[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
 Add your own prompts and run again — real coding tasks from your stack are
 the highest-value contribution you can make to this project.
 
@@ -1154,7 +1152,7 @@ downshift stats --days=7 --cost-per-unit=0.05
 When events carry provider token usage, `downshift stats` additionally prints
 a `Real provider cost (N events with token usage)` section with real saved
 USD — computed from catalog list prices via `internal/telemetry/cost.go`.
-Until the PostToolUse hook lands, that section reports no events and the
+Until a session reports token counts, that section stays empty and the
 normalised estimate above remains the primary signal.
 
 **Important caveat.** These estimates are based on list prices and the number of routing decisions — not on actual provider billing. Token counts per spawn vary by task and model. Your actual savings may be higher (long frontier prompts avoided) or lower (very short spawns where the per-call overhead dominates). Treat these as directional. The most reliable data is your provider's billing dashboard before and after deploying downshift.
@@ -1272,7 +1270,7 @@ Not yet proven — the graduation criteria for leaving beta:
 1. **Real-spawn verification** — proof a harness executor honored the rewrite, not just `rewrite_emitted`.
 2. **Multi-user data** — today's 430 events are single-user dogfood; graduation needs independent sessions.
 3. **Billing before/after** — provider-dashboard comparison, replacing normalised units.
-4. **Larger benchmark** — holdout split and CI gates are in tree (`benchmark/holdout.json`, `downshift benchmark --gate`); keep quoting seed accuracy as a regression net, not a quality claim ([docs/BETA-EXIT.md](docs/BETA-EXIT.md)).
+4. **Benchmark honesty** — seed (200) and holdout (300) are in tree with CI gates. Quote them as a regression net, not as proof on your traffic ([docs/BETA-EXIT.md](docs/BETA-EXIT.md)).
 5. **Harness coverage** — rewrites honored across plans/builds, not silently discarded (the external dependency).
 
 When those five hold, the beta label goes. Until then it stays — with the numbers above updated as evidence grows.

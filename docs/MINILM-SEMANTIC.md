@@ -64,7 +64,7 @@ go test ./internal/semantic ./internal/core ./internal/benchmark -run MiniLM -v
 go test ./internal/benchmark -run TestSeedDataset_MiniLM -v
 ```
 
-`TestSeedDataset_MiniLM_ImprovesTierOrSafety` locks regression: with `DOWNSHIFT_MINILM=1`
+`TestSeedDataset_MiniLM_ImprovesTierOrSafety` locks regression: with the hash boost on,
 tier accuracy must not drop vs regex-only and FRONTIER→MID must not worsen.
 
 ## Beta tasks
