@@ -18,7 +18,9 @@ MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 def main() -> int:
     root = Path(__file__).resolve().parents[2]
     tasks_path = root / "benchmark" / "tasks.json"
-    out_path = root / "internal" / "semantic" / "data" / "prototypes.json"
+    # Neural centroids must not replace the hash prototypes the binary uses
+    # by default. They are loaded only when DOWNSHIFT_MINILM_EMBED is a command.
+    out_path = root / "internal" / "semantic" / "data" / "minilm.json"
 
     tasks = json.loads(tasks_path.read_text())
     try:

@@ -66,16 +66,15 @@ condition in the subscription renewal worker".
   ```
   The interval bounds prevent mistaking variance across small sample sizes for genuine classifier regressions or gains.
 
-## MiniLM semantic evaluation (P4.10)
+## MiniLM holdout (P4.10)
 
-Evaluation on the 300-task held-out split (`benchmark/holdout.json`):
+Evaluation on the 300-task held-out split (`benchmark/holdout.json`). Centroids for the neural row were fit only on `benchmark/tasks.json` by `tools/minilm/eval_holdout.py`.
 
-| Mode | Tier accuracy | 95% CI | FRONTIER→MID | FRONTIER→SMALL |
-|---|---|---|---|---|
-| Regex only (`DOWNSHIFT_MINILM=0`) | 98.0% | [96.3%, 99.3%] | 8.0% | 0.0% |
-| In-process hash boost (default) | 98.0% | [96.3%, 99.3%] | 8.0% | 0.0% |
-| Neural MiniLM (`DOWNSHIFT_MINILM_EMBED`) | 98.0% | [96.3%, 99.3%] | 8.0% | 0.0% |
+| Mode | Tier accuracy | FRONTIER→MID | FRONTIER→SMALL |
+|---|---|---|---|
+| Regex only (`DOWNSHIFT_MINILM=0`) | 98.0% (95% CI 96.3–99.3%) | 8.0% | 0.0% |
+| In-process hash boost (default) | 98.0% | 8.0% | 0.0% |
+| all-MiniLM-L6-v2 nearest centroid | 96.3% | 0.0% | 0.0% |
 
-**Decision:** The in-process hash embedder maintains monotonic safety (never downgrades, 0% unsafe downgrades to SMALL) with zero Python or network dependencies and <1ms latency. `DOWNSHIFT_MINILM_EMBED` remains optional for experimental workflows.
-
+The neural model does not raise tier accuracy on this split. It clears the remaining FRONTIER→MID misses. The default embedder stays the in-process hash (no Python, no network). Raw neural summary: `benchmark/minilm-holdout.json`.
 

@@ -39,11 +39,23 @@ Hash (zero deps, CI-friendly):
 go run ./tools/minilm/refresh_hash_prototypes.go
 ```
 
-Real MiniLM (better quality, needs `sentence-transformers`):
+Neural centroids (not the default embedder; used only when `DOWNSHIFT_MINILM_EMBED` is a command):
 
 ```bash
 python3 tools/minilm/train_prototypes.py
+python3 tools/minilm/eval_holdout.py
 ```
+
+`train_prototypes.py` writes `internal/semantic/data/minilm.json`. It does not replace the hash file `prototypes.json`.
+
+Holdout measurement (2026-10-01, centroids fit on `benchmark/tasks.json` only):
+
+| Classifier | Holdout tier accuracy | FRONTIER→MID |
+|---|---|---|
+| Regex (`DOWNSHIFT_MINILM=0`) | 98.0% | 8% (75 frontier tasks) |
+| all-MiniLM-L6-v2 nearest centroid | 96.3% | 0% |
+
+The neural model did not raise tier accuracy on this split. It removed the remaining frontier-to-mid misses. The shipped default stays the local hash embedder. Numbers are in `benchmark/minilm-holdout.json`.
 
 ## Tests
 
@@ -57,7 +69,7 @@ tier accuracy must not drop vs regex-only and FRONTIER→MID must not worsen.
 
 ## Beta tasks
 
-- **P4.9** — shipped (opt-in env, hash prototypes)
-- **P4.10** — retrain with MiniLM + report tier-accuracy delta on holdout
+- **P4.9** — shipped, on by default, hash embedder
+- **P4.10** — measured; neural centroids are optional and do not replace the default
 
 See [BETA-EXIT.md](BETA-EXIT.md).
