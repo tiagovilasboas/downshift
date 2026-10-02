@@ -930,11 +930,11 @@ $ downshift benchmark benchmark/tasks.json
 
 Dataset: 200 tasks
 
-Complexity accuracy     58.0%  (exact label match)
-Tier routing accuracy   75.5%  (correct model tier — what matters economically)
+Complexity accuracy     63.5%  (exact label match)
+Tier routing accuracy   81.0%  (correct model tier — what matters economically)
 
 Unsafe downgrade (FRONTIER → cheaper tier):
-  FRONTIER → MID        24.0%  (12 / 50)
+  FRONTIER → MID         0.0%  (0 / 50)
   FRONTIER → SMALL       0.0%  (0 / 50)
 
 Wasteful over-routing (SMALL → dearer tier):
@@ -944,13 +944,13 @@ Wasteful over-routing (SMALL → dearer tier):
 
 The two numbers that matter for the business decision:
 
-**Tier routing accuracy (75.5% on the 200-task seed)** is the economic KPI. SIMPLE predicted as
+**Tier routing accuracy (81.0% on the 200-task seed)** is the economic KPI. SIMPLE predicted as
 MEDIUM is a complexity miss but an identical routing decision — both go to
-the mid tier. Complexity accuracy (58.0%) makes the classifier look worse
+the mid tier. Complexity accuracy (63.5%) makes the classifier look worse
 than it really is in terms of actual model selection.
 
 **Observed FRONTIER→SMALL rate on the seed: 0.0%** (0 / 50 COMPLEX tasks).
-FRONTIER→MID is 24% on that seed. On the 300-task holdout (`benchmark/holdout.json`), regex and the default hash boost both sit at 98.0% tier accuracy with 8% FRONTIER→MID and 0% FRONTIER→SMALL. An offline all-MiniLM-L6-v2 centroid classifier, trained only on `tasks.json`, scored 96.3% tier accuracy and 0% FRONTIER→MID (`benchmark/minilm-holdout.json`). It is not the default embedder. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
+FRONTIER→MID on that seed is also 0.0% after the system-design signals (service mesh, event sourcing, memory leak, and the same class of phrase). On the 300-task holdout (`benchmark/holdout.json`) tier accuracy is 98.3% with 6.7% FRONTIER→MID and 0% FRONTIER→SMALL. An offline all-MiniLM-L6-v2 centroid classifier, trained only on `tasks.json`, scored 96.3% tier accuracy and 0% FRONTIER→MID (`benchmark/minilm-holdout.json`). It is not the default embedder. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
 
 The seed file has 200 curated tasks. The format is `[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
 Add your own prompts and run again — real coding tasks from your stack are
