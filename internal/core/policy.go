@@ -220,10 +220,12 @@ func (d Decision) ShouldRewriteModel() bool {
 	if d.Checked {
 		action = d.SafeVerdict
 	}
-	// An uncertain classifier result must not apply the classified downgrade
-	// target. Plan still falls back to the harness smallest catalog model
-	// so a blocked downshift does not keep a stronger model or a foreign id.
-	if action == VerdictDownshift && !d.Confident {
+	// An uncertain classifier result must not spend money in either direction.
+	// A downgrade stays put so a hard task is not underpowered. An upshift
+	// stays put so a small model is not replaced by a dearer tier on a weak
+	// signal. Confident rewrites still apply. Plan falls back when this
+	// returns false.
+	if (action == VerdictDownshift || action == VerdictUpshift) && !d.Confident {
 		return false
 	}
 	return action == VerdictDownshift || action == VerdictUpshift || action == VerdictUnknown
