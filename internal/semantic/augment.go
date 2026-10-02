@@ -14,6 +14,9 @@ import (
 //go:embed data/prototypes.json
 var embeddedPrototypes []byte
 
+//go:embed data/minilm.json
+var embeddedMiniLM []byte
+
 var (
 	loadOnce   sync.Once
 	storeCache PrototypeStore
@@ -45,15 +48,35 @@ func MaybeAugment(prompt string, label string, confident bool) (string, bool) {
 	if !enabled() {
 		return label, false
 	}
-	store, ok := loadStore()
-	if !ok {
-		return label, false
-	}
 	emb, ok := EmbedderFromEnv()
 	if !ok {
 		return label, false
 	}
+	store, ok := storeFor(emb)
+	if !ok {
+		return label, false
+	}
 	return AugmentWith(prompt, label, confident, store, emb)
+}
+
+func storeFor(emb Embedder) (PrototypeStore, bool) {
+	if _, cmd := emb.(fallbackEmbedder); cmd {
+		if s, ok := loadMiniLM(); ok {
+			return s, true
+		}
+	}
+	return loadStore()
+}
+
+func loadMiniLM() (PrototypeStore, bool) {
+	var p PrototypeStore
+	if err := json.Unmarshal(embeddedMiniLM, &p); err != nil {
+		return PrototypeStore{}, false
+	}
+	if p.Dim == 0 || len(p.Centroids) == 0 {
+		return PrototypeStore{}, false
+	}
+	return p, true
 }
 
 // AugmentWith runs semantic fusion with explicit store and embedder (for tests and tools).
