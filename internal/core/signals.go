@@ -67,9 +67,12 @@ var RawSignals = []SignalDef{
 
 	// ── SIMPLE — one isolated change ─────────────────────────────────────
 
-	{`\badd\s+(a\s+)?(field|param|flag|method|function)\b`, 2, Simple},
+	// The member being added may carry an article, modifiers or its own name
+	// first: "add a new field", "add an optional retries argument",
+	// "add verbose boolean flag". Up to three words, no punctuation.
+	{`\badd\s+([\w-]+\s+){0,3}?(field|param|parameter|flag|property|column|attribute|argument|method|function)s?\b`, 2, Simple},
 	{`\bfix\s+(the\s+)?bug\b`, 2, Simple},
-	{`\bwrite\s+(a\s+)?(function|tests?\b|helper)\b`, 2, Simple},
+	{`\bwrite\s+(an?\s+)?(single\s+|unit\s+)*(function|tests?\b|helper)\b`, 2, Simple},
 	{`\bexplain\b`, 2, Simple},
 	{`\bwhat\s+(is|does|are)\b`, 1, Simple},
 	{`\bsingle\s+(file|function)\b`, 2, Simple},

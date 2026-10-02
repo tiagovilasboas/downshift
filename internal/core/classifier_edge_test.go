@@ -132,6 +132,44 @@ func TestClassify_EdgeCases(t *testing.T) {
 			note: "multiple strong complex signals + long-prompt nudge",
 		},
 
+		// --- Adding one member: modifiers or a name may precede the noun ---
+		{
+			name:   "add member with modifiers before the noun",
+			prompt: "add a new nullable field deletedAt to the Comment entity",
+			want:   Simple,
+			note:   "article + modifiers between add and field; no signal used to fall to the Medium default",
+		},
+		{
+			name:   "add member named before the noun",
+			prompt: "add verbose boolean flag to the export command",
+			want:   Simple,
+			note:   "the member's own name precedes the noun",
+		},
+		{
+			name:   "add column",
+			prompt: "add a lastLogin column to the sessions table",
+			want:   Simple,
+			note:   "a single column is one isolated change",
+		},
+		{
+			name:   "write unit test",
+			prompt: "write a unit test for the slugify function",
+			want:   Simple,
+			note:   "\"unit\" between write and test is still one test",
+		},
+		{
+			name:   "add member inside a feature stays medium",
+			prompt: "implement a search feature and add a query param to the products endpoint",
+			want:   Medium,
+			note:   "implement/feature/endpoint outweigh the simple add-param signal",
+		},
+		{
+			name:   "add member inside a migration stays complex",
+			prompt: "migrate the user table to the new schema and add a tenant_id column everywhere",
+			want:   Complex,
+			note:   "a migration is never downgraded by an add-column signal",
+		},
+
 		// --- Confident flag ---
 		{
 			name:  "high confidence trivial",
