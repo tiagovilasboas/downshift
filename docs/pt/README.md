@@ -1,43 +1,71 @@
 # Downshift
 
-Você pede um subagente. Sem o Downshift, ele herda o modelo da sessão, em geral o mais caro. Com o Downshift, a tarefa pequena vai para o modelo barato e a tarefa pesada fica no modelo forte. A escolha acontece antes do subagente começar. Você não precisa escolher o modelo na hora.
+O **Downshift** é um roteador cirúrgico de modelos para fluxos de trabalho com agentes de IA.
 
-Isso não é um segundo chat e não escreve o código por você. É um roteador: lê o pedido, decide o tamanho certo e, se a troca for segura, troca.
+Quando você dispara um subagente em ferramentas como **Claude Code**, **Cursor**, **Codex**, **Antigravity** ou **KiroCrew**, o comportamento padrão do ambiente é fazer com que o subprocesso herde o modelo mais avançado e caro da sessão ativa (como Claude Opus ou GPT-4o/5). Na prática, gasta-se orçamento de fronteira em tarefas estritamente mecânicas — renomear variáveis, corrigir digitação, listar diretórios ou rodar comandos de terminal.
 
-Esta pasta explica o produto e, nos arquivos seguintes, o fluxo com o suficiente de código para produto e engenharia lerem juntos. A instalação continua no README da raiz. O mapa de saída do beta está em `docs/BETA-EXIT.md`.
+Com o Downshift, cada subagente é direcionado para a categoria de modelo ideal para a complexidade da demanda **antes da execução começar**. O desenvolvedor continua operando normalmente, sem precisar alternar modelos manualmente na interface.
 
-## O que você ganha
+O Downshift não é um chat secundário e não gera código. É um **roteador de infraestrutura**: intercepta o pedido no hook de spawn, classifica a demanda em milissegundos na CPU local, valida se a alteração é segura e, quando aplicável, reescreve o modelo do subagente de forma transparente.
 
-Menos token no trabalho mecânico. O modelo caro só entra quando a tarefa pede desenho, risco ou muita incerteza. A decisão fica na sua máquina: sem API, sem chave, sem o texto da tarefa saindo no log.
+---
 
-O que você não ganha ainda: uma fatura em dólar só porque o hook rodou. Dólar de verdade só aparece quando o harness manda a quantidade de tokens depois da tarefa. E `rewrite_emitted` no log significa “o Downshift pediu a troca”, não “o harness obedeceu”.
+## O Que Você Ganha
 
-## Como isso se parece no dia a dia
+* **Eficiência Real de Tokens:** Tarefas triviais e mecânicas rodam em modelos econômicos (~80% mais baratos na tabela de preços dos provedores), reservando os modelos de fronteira para desafios arquiteturais, concorrência e alto risco.
+* **Privacidade Absoluta (Zero-Leakage):** A classificação e o roteamento ocorrem 100% na máquina local. Nenhum texto de prompt, caminho de arquivo ou código sai para serviços externos ou é persistido em arquivos de log.
+* **Velocidade na CPU:** Sem LLM no loop de classificação e sem chamadas de rede adicionais. A inferência híbrida (regex + centróides vetoriais) decide em menos de 2 milissegundos.
+* **Segurança e Continuidade (Fail-Open):** Na dúvida ou em caso de qualquer falha técnica, o Downshift não interrompe o trabalho: o fluxo segue normalmente com o modelo original da sessão.
 
-| Pedido | O que o Downshift tenta fazer |
-|---|---|
-| Renomear uma variável | Ficar no modelo barato |
-| Um cubo 3D pequeno em um arquivo | Ficar no modelo barato |
-| Uma feature com vários arquivos | Subir para o modelo do meio |
-| Reescrever autenticação multi-tenant | Subir para o modelo forte |
-| Um pedido vago, sem pista | Não trocar. O modelo da sessão permanece |
+> **⚠️ Nota de Transparência:** `rewrite_emitted` na telemetria indica que o Downshift emitiu com sucesso a instrução de troca de modelo. Métricas em dólares reais dependem do reporte de tokens retornado pelo harness no hook posterior (`PostToolUse`). Para detalhes dos critérios de saída do beta, consulte [`docs/BETA-EXIT.md`](../BETA-EXIT.md).
 
-No Codex, barato é o Luna, o meio é o Terra e o forte é o Sol. No Claude Code, a mesma ideia vale com Haiku, Sonnet e Opus. A regra não muda de ferramenta. Mudam os nomes.
+---
 
-## O que cada arquivo cobre
+## Comportamento Prático no Dia a Dia
 
-O índice abaixo é o caminho do pedido. Cada um mistura o que o produto precisa saber e o ponto do código em que isso vive.
+| Tarefa do Subagente | Complexidade | Decisão do Downshift | Modelo Típico |
+|---|---|---|---|
+| Renomear uma variável ou corrigir typo | **TRIVIAL** | Mantém/reduz para modelo econômico | `haiku`, `luna`, `flash_lite` |
+| Ajuste pontual em arquivo ou componente isolado | **SIMPLE** | Mantém no modelo econômico | `haiku`, `luna`, `flash_lite` |
+| Implementar feature completa em vários arquivos | **MEDIUM** | Direciona para modelo intermediário | `sonnet`, `terra`, `flash` |
+| Re-arquitetura de sistema, auth multi-tenant ou concorrência | **COMPLEX** | Direciona/mantém no modelo de fronteira | `opus`, `sol`, `pro` |
+| Pedido vago ou sem sinais claros de intenção | *Ambíguo* | Não altera. Preserva o modelo original da sessão | Modelo ativo |
 
-| Arquivo | Para quem lê |
-|---|---|
-| [01-entrada](01-entrada.md) | O que o Downshift enxerga e o que ignora |
-| [02-classificador](02-classificador.md) | Como ele julga se a tarefa é pequena ou pesada |
-| [03-marcha](03-marcha.md) | Quando sobe, quando desce, quando não mexe |
-| [04-fallbacks](04-fallbacks.md) | O que acontece quando algo falha |
-| [05-catalogo-e-sessao](05-catalogo-e-sessao.md) | Preço de lista versus o que a sua conta abre |
-| [06-harnesses](06-harnesses.md) | Claude, Codex, Cursor e os outros |
-| [07-minilm](07-minilm.md) | A decisão local, sem mandar o texto para fora |
-| [08-telemetria](08-telemetria.md) | O que o relatório mostra e o que nunca grava |
-| [09-decisoes](09-decisoes.md) | Por que foi feito assim |
+As faixas de capacidade permanecem equivalentes entre os ambientes suportados:
+* **Codex:** `gpt-6-luna` (Small) · `gpt-5.6-terra` (Mid) · `gpt-6-sol` (Frontier)
+* **Claude Code:** `claude-haiku-4-5` (Small) · `claude-sonnet-4-6` (Mid) · `claude-opus-4-8` (Frontier)
+* **Antigravity:** `flash_lite` (Small) · `flash` (Mid) · `pro` (Frontier)
 
-Para ver a decisão sem abrir um harness: `downshift try "renomeie a variável" codex gpt-6-luna`. A linha `Rewrite` diz se o hook trocaria o modelo.
+---
+
+## Navegação da Documentação
+
+A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinando os objetivos de arquitetura de produto com os respectivos pontos de código:
+
+| Documento | Foco | O que cobre |
+|---|---|---|
+| [01 · Entrada do Fluxo](01-entrada.md) | Ciclo de Vida | O que o Downshift intercepta no stdin, limites de payload e o que é ignorado |
+| [02 · Classificador](02-classificador.md) | Decisão | Heurísticas de regex, matriz de sinais ponderados e o limiar de confiança |
+| [03 · Gestão de Marchas](03-marcha.md) | Política | As faixas de capacidade (Small/Mid/Frontier), regras de downshift e upshift seguro |
+| [04 · Fallbacks e Tolerância](04-fallbacks.md) | Resiliência | O contrato fail-open: como o sistema reage a erros sem quebrar o fluxo do dev |
+| [05 · Catálogo e Sessão](05-catalogo-e-sessao.md) | Permissões | Preço de lista versus modelos realmente autorizados na sessão ativa (`session-models.json`) |
+| [06 · Adapters de Harness](06-harnesses.md) | Integração | Especificidades de integração: Claude Code, Codex, Cursor, Antigravity e KiroCrew |
+| [07 · Camada Semântica MiniLM](07-minilm.md) | Inteligência | Classificação local por centróides vetoriais, boost semântico e privacidade |
+| [08 · Telemetria e Métricas](08-telemetria.md) | Observabilidade | Estrutura do `events.jsonl`, métricas normalizadas e auditoria sem vazamento de prompt |
+| [09 · Decisões Técnicas e Trade-offs](09-decisoes.md) | Engenharia | Racional de arquitetura, compensações técnicas e próximos passos do projeto |
+
+---
+
+## Testando a Tomada de Decisão no Terminal
+
+Você pode simular e inspecionar qualquer decisão diretamente pela linha de comando, sem precisar abrir uma sessão de agente:
+
+```bash
+# Simular uma tarefa trivial no Codex partindo de um modelo de fronteira
+downshift try "renomeie a variável userId em auth.go" codex gpt-6-sol
+
+# Simular uma tarefa complexa de arquitetura no Claude Code
+downshift try "rearchitect auth module to support multi-tenant" claude-code claude-haiku-4-5
+```
+
+A saída exibe a complexidade detectada, o tier recomendado, a variação de custo estimada e a confirmação se o modelo seria reescrito pelo hook. Para o guia completo de instalação e configuração nos clientes, consulte o [README principal da raiz](../../README.md).
