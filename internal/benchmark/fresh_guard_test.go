@@ -220,6 +220,7 @@ func TestFreshGuardScript(t *testing.T) {
 		{"benchmark/blind-vitrine.json\nbenchmark/blind-vitrine.README.md\n", false},
 		{"benchmark/blind-vitrine.json\ninternal/core/signals.go\n", true},
 		{"tools/baseline/nb_tier.py\nbenchmark/blind-vitrine.json\n", true},
+		{"internal/nbtier/train.json\nbenchmark/fresh.json\n", true},
 	}
 	for _, tc := range cases {
 		cmd := exec.Command("bash", filepath.Join(repoRoot, "scripts", "fresh-guard.sh"))

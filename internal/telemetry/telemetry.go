@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -74,6 +75,20 @@ type Event struct {
 	// an observer exposes the actual post-spawn child model or confirmation.
 	// Privacy note: boolean only, no prompt or execution payloads stored.
 	RewriteHonored *bool `json:"rewrite_honored,omitempty"`
+
+	// Optional naive-Bayes second opinion, present only when NB would have
+	// raised the tier. Applied is false in shadow mode (the default), where
+	// the routing decision above is unchanged.
+	NBUpshift *NBUpshiftRecord `json:"nb_upshift,omitempty"`
+}
+
+// NBUpshiftRecord is the upshift the naive-Bayes second opinion would make
+// (or made, when DOWNSHIFT_NB_UPSHIFT=1). Tiers only; no prompt text.
+type NBUpshiftRecord struct {
+	FromTier string  `json:"from_tier"`
+	ToTier   string  `json:"to_tier"`
+	Margin   float64 `json:"margin"`
+	Applied  bool    `json:"applied"`
 }
 
 // HasRealCost reports whether the event carries real provider costs.
@@ -212,6 +227,14 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 	if len(d.Corrections) > 0 {
 		ev.SafeVerdict = d.SafeVerdict.String()
 		ev.Corrections = d.Corrections
+	}
+	if d.NBUpshift.Would {
+		ev.NBUpshift = &NBUpshiftRecord{
+			FromTier: d.NBUpshift.From.String(),
+			ToTier:   d.NBUpshift.To.String(),
+			Margin:   math.Round(d.NBUpshift.Margin*1e4) / 1e4,
+			Applied:  d.NBUpshift.Applied,
+		}
 	}
 	return ev
 }

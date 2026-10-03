@@ -54,6 +54,10 @@ type Decision struct {
 	// RiskFloor is true when a risk signal (risk.go) lifted the task off the
 	// small tier. Such a task is never downshifted and may be upshifted.
 	RiskFloor bool
+	// NBUpshift records the naive-Bayes upshift-only second opinion. It is
+	// always computed (shadow mode); it changes the tier only when
+	// DOWNSHIFT_NB_UPSHIFT=1, and then only upward.
+	NBUpshift NBUpshift
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -96,7 +100,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		res = r[0]
 	}
 
-	tier, cls, graphEscalated := classifyTask(prompt)
+	tier, cls, graphEscalated, nbUp := classifyTask(prompt)
 	effort := EffortFor(tier)
 	recommended := resolveModel(harness, tier, res)
 	verdict, savings, current := compareToCurrentModel(harness, currentModelID, recommended, res)
@@ -113,6 +117,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		Confident:      cls.Confident,
 		GraphEscalated: graphEscalated,
 		RiskFloor:      cls.RiskFloor,
+		NBUpshift:      nbUp,
 	}
 	d.Intent = IntentFor(prompt, cls, d, res)
 	// Self-correction validates the decision against the guardrails before
@@ -131,7 +136,8 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 // graphify escalation) and returns the target tier, the final
 // classification and whether graphify escalated it. Route uses this single
 // result for complexity, confidence and intent so they never disagree.
-func classifyTask(prompt string) (Tier, Classification, bool) {
+// The naive-Bayes second opinion runs last, on the final tier.
+func classifyTask(prompt string) (Tier, Classification, bool, NBUpshift) {
 	cls := classifyWithSemantic(prompt, Classify(prompt))
 	escalated := false
 
@@ -145,7 +151,12 @@ func classifyTask(prompt string) (Tier, Classification, bool) {
 		}
 	}
 
-	return cls.Complexity.Tier(), cls, escalated
+	nbUp := nbSecondOpinion(prompt, cls.Complexity.Tier())
+	if nbUp.Applied {
+		cls.Complexity = complexityForTier(nbUp.To)
+		cls.Confident = false
+	}
+	return cls.Complexity.Tier(), cls, escalated, nbUp
 }
 
 // resolveModel returns the catalog model for the given harness and tier.
@@ -230,8 +241,9 @@ func (d Decision) ShouldRewriteModel() bool {
 	// signal. Confident rewrites still apply. Plan falls back when this
 	// returns false.
 	// Exception: a risk-floored or graphify-escalated task may move up — both
-	// are deterministic rules, not weak signals.
-	if action == VerdictUpshift && (d.RiskFloor || d.GraphEscalated) {
+	// are deterministic rules, not weak signals — and so may an NB upshift the
+	// user opted into with DOWNSHIFT_NB_UPSHIFT=1.
+	if action == VerdictUpshift && (d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied) {
 		return true
 	}
 	if (action == VerdictDownshift || action == VerdictUpshift) && !d.Confident {
