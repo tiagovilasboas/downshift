@@ -64,6 +64,10 @@ var RawSignals = []SignalDef{
 	{`\bacross\s+\w+\s+files\b`, 2, Medium},
 	{`\bdebug\b`, 2, Medium},
 	{`\brevis(?:ar|e|ão|oes|ões)\b`, 2, Medium},
+	// Changing a live schema without downtime takes multi-step planning
+	// (backfill, concurrent index builds, lock timeouts) even when the edit
+	// itself is "add a column".
+	{`\b(zero[\s-]downtime|no[\s-]downtime|without\s+(any\s+)?downtime|without\s+(locking|blocking)\s+(writes|reads|the\s+table)|online\s+schema\s+change)\b`, 3, Medium},
 
 	// ── SIMPLE — one isolated change ─────────────────────────────────────
 
@@ -73,7 +77,10 @@ var RawSignals = []SignalDef{
 	{`\badd\s+([\w-]+\s+){0,3}?(field|param|parameter|flag|property|column|attribute|argument|method|function)s?\b`, 2, Simple},
 	{`\bfix\s+(the\s+)?bug\b`, 2, Simple},
 	{`\bwrite\s+(an?\s+)?(single\s+|unit\s+)*(function|tests?\b|helper)\b`, 2, Simple},
-	{`\bexplain\b`, 2, Simple},
+	// "explain" marks a simple request only when it leads the prompt ("explain
+	// what X does"). Inside a long analysis ("... and explain the fix in terms
+	// of happens-before") it is not evidence of a simple task.
+	{`^\W*((can|could)\s+you\s+|please\s+)?explain\b`, 2, Simple},
 	{`\bwhat\s+(is|does|are)\b`, 1, Simple},
 	{`\bsingle\s+(file|function)\b`, 2, Simple},
 	{`\b(rotating cube|three\.js scene|hello world|landing page|one file|one function|one component)\b`, 3, Simple},
