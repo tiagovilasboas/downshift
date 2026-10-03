@@ -169,6 +169,21 @@ columns are predicted small/mid/frontier.
    evaluation needs a fresh independently authored split, because blind-vitrine
    has now been looked at.
 
+## Implementation: shadow mode, default OFF
+
+- `internal/nbtier` is a Go port of `nb_tier.py`. It trains at first use on
+  an embedded copy of `benchmark/tasks.json`, so there is no Python at
+  runtime. A test reproduces the Python labels, margins and decisions on all
+  500 seed + holdout prompts.
+- `core.Route` always computes the opinion on the final tier, after the risk
+  floor and graphify, and stores it in `Decision.NBUpshift`. Hook telemetry
+  records `nb_upshift {from_tier, to_tier, margin, applied}` whenever NB would
+  raise the tier.
+- With `DOWNSHIFT_NB_UPSHIFT=1` the tier is raised (never lowered). With it
+  unset (the default) routing is identical to before; a test checks this tier
+  by tier on seed + holdout.
+- `internal/nbtier/` counts as a tuning path for `scripts/fresh-guard.sh`.
+
 ## Reproduce
 
 ```sh
