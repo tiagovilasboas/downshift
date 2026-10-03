@@ -6,9 +6,12 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -123,15 +126,34 @@ func readAgents() []agentEntry {
 	return out
 }
 
-func cors(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
+// isLocalHost reports whether a host[:port] names this machine's loopback.
+func isLocalHost(hostport string) bool {
+	host := hostport
+	if h, _, err := net.SplitHostPort(hostport); err == nil {
+		host = h
+	}
+	host = strings.Trim(host, "[]")
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
+}
+
+// localOnly rejects requests that did not come from a page served by this
+// machine: a non-loopback Host (DNS rebinding) or a foreign Origin. The
+// bundled dashboard is same-origin, so no CORS headers are sent.
+func localOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !isLocalHost(r.Host) {
+			http.Error(w, "forbidden host", http.StatusForbidden)
 			return
 		}
-		next(w, r)
-	}
+		if o := r.Header.Get("Origin"); o != "" {
+			u, err := url.Parse(o)
+			if err != nil || !isLocalHost(u.Host) {
+				http.Error(w, "forbidden origin", http.StatusForbidden)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // handleEvents streams Server-Sent Events whenever the data files change.
@@ -140,7 +162,6 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -245,17 +266,20 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 // Run starts the dashboard server on the given port.
 // webDir is the path to the static web/ directory; pass "" to skip file serving.
 func Run(port, webDir string) error {
+	addr := "127.0.0.1:" + port
+	fmt.Printf("downshift serve · http://%s\n", addr)
+	return http.ListenAndServe(addr, newHandler(webDir))
+}
+
+func newHandler(webDir string) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/status", cors(handleStatus))
-	mux.HandleFunc("/events", cors(handleEvents))
-	mux.HandleFunc("/health", cors(func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc("/api/status", handleStatus)
+	mux.HandleFunc("/events", handleEvents)
+	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		fmt.Fprintf(w, `{"ok":true,"ts":"%s"}`, time.Now().UTC().Format(time.RFC3339))
-	}))
+	})
 	if webDir != "" {
 		mux.Handle("/", http.FileServer(http.Dir(webDir)))
 	}
-
-	addr := "127.0.0.1:" + port
-	fmt.Printf("downshift serve · http://%s\n", addr)
-	return http.ListenAndServe(addr, mux)
+	return localOnly(mux)
 }
