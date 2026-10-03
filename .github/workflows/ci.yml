@@ -54,6 +54,18 @@ jobs:
           go run ./cmd/downshift benchmark benchmark/tasks.json --gate --min-tier-accuracy=0.60
           go run ./cmd/downshift benchmark benchmark/holdout.json --min-tier-accuracy=0.80
 
+      # Evaluation-only split: reported, never gated, never tuned against.
+      - name: Fresh split report
+        run: go run ./cmd/downshift benchmark benchmark/fresh.json
+
+      - name: Fresh split guard
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          git diff --name-only "$BASE_SHA" HEAD | ./scripts/fresh-guard.sh
+
       - name: Adapter Smoke Tests
         run: |
           ./scripts/smoke-test.sh
