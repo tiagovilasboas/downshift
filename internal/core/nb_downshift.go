@@ -19,7 +19,9 @@ const NBDownshiftEnv = "DOWNSHIFT_NB_DOWNSHIFT"
 // classifier keyword fired. Would is true only when the classifier fell back
 // to its Medium default, graphify did not escalate, the risk floor would not
 // hold the task at Trivial, and NB labels it TRIVIAL with a margin of at
-// least nbtier.DownshiftMargin. Applied is true only when the flag is on.
+// least nbtier.DownshiftMargin. Applied is true only when the flag is on;
+// even then guardrail R1 (unconfident downshift) holds the move, so the flag
+// changes the recorded tier but never rewrites a spawn on its own.
 type NBDownshift struct {
 	Would   bool
 	Applied bool
