@@ -123,6 +123,8 @@ func main() {
 		os.Exit(runStats(args[1:]))
 	case "benchmark":
 		os.Exit(runBenchmark(args[1:]))
+	case "eval-outcome":
+		os.Exit(runEvalOutcome(args[1:], os.Stdout, os.Stderr))
 	case "train":
 		os.Exit(runTrain(args[1:]))
 	case "feedback":
@@ -1020,6 +1022,7 @@ Monitor (separate binary — cmd/dsmon):
   ./cmd/dsmon/launch.sh          Open dsmon in a floating terminal window
   downshift benchmark <file>     Run classifier against a labelled dataset; print confusion matrix
   downshift benchmark <file> --compare  Compare Legacy vs CapabilityRouter v2 side by side
+  downshift eval-outcome --verify|--report  Outcome eval: executable checks, small vs frontier pass rate
   downshift train <file>         Train capability-router v2 on a labelled dataset
   downshift train --from-events  Train from engineer-reviewed local feedback
   downshift feedback list        List routing IDs awaiting engineer review

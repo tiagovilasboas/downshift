@@ -1,0 +1,5 @@
+{
+  "id": "t05-contains",
+  "label": "TRIVIAL",
+  "prompt": "add Contains(xs []string, s string) bool that reports whether s is in xs"
+}

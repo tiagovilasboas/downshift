@@ -66,6 +66,13 @@ jobs:
           git fetch --no-tags --depth=1 origin "$BASE_SHA"
           git diff --name-only "$BASE_SHA" HEAD | bash scripts/fresh-guard.sh
 
+      # Offline only: no model calls. --record refuses to run when CI is set.
+      - name: Outcome eval checks (offline)
+        run: go run ./cmd/downshift eval-outcome --verify
+
+      - name: README numbers match the generated report
+        run: go run ./cmd/downshift eval-outcome --report --check README.md
+
       - name: Adapter Smoke Tests
         run: |
           ./scripts/smoke-test.sh

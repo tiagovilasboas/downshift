@@ -1,0 +1,5 @@
+{
+  "id": "m01-lru",
+  "label": "MEDIUM",
+  "prompt": "implement an LRU cache: NewLRU(capacity int) *LRU with Get(key string) (int, bool) and Put(key string, value int); Get marks the key as recently used and Put evicts the least recently used key when full"
+}
