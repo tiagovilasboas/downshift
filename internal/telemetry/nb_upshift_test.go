@@ -34,3 +34,17 @@ func TestFromDecision_OmitsNBWhenNoUpshift(t *testing.T) {
 		t.Fatalf("unexpected nb_upshift: %s", b)
 	}
 }
+
+// A shadow NB TRIVIAL downshift is recorded as mid -> small, not applied.
+func TestFromDecision_RecordsNBShadowDownshift(t *testing.T) {
+	d := core.Decision{Tier: core.TierMid, NBDownshift: core.NBDownshift{Would: true, Margin: 0.31234}}
+	ev := FromDecision(d, "0123456789abcdef", "test")
+	want := NBUpshiftRecord{FromTier: "mid", ToTier: "small", Margin: 0.3123, Applied: false}
+	if ev.Tier != "mid" || ev.NBDownshift == nil || *ev.NBDownshift != want {
+		t.Fatalf("event tier=%s nb_downshift=%+v, want %+v", ev.Tier, ev.NBDownshift, want)
+	}
+	clean := FromDecision(core.Decision{Tier: core.TierMid}, "0123456789abcdef", "test")
+	if clean.NBDownshift != nil {
+		t.Fatalf("unexpected nb_downshift on a clean decision: %+v", clean.NBDownshift)
+	}
+}
