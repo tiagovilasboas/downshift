@@ -57,3 +57,17 @@ func TestRoute_UnconfidentPromptWithoutGraphStaysPut(t *testing.T) {
 		t.Fatalf("unconfident prompt without graph signal was upshifted to %s", d.Tier)
 	}
 }
+
+// Graphify only escalates an uncertain classification. A confident one
+// (here a clear rename) keeps its class even when the named file is a hub.
+func TestRoute_GraphDoesNotEscalateConfidentClassification(t *testing.T) {
+	stubGraphify(t)
+	prompt := "rename the variable userId to userID in internal/text/strings.go"
+	if c := core.ClassifyWithSemantic(prompt); !c.Confident || c.Complexity == core.Complex {
+		t.Fatalf("precondition: want a confident non-complex classification, got %+v", c)
+	}
+	d := core.Route(prompt, "claude-code", "claude-haiku-4-5", cat)
+	if d.GraphEscalated || d.Complexity == core.Complex {
+		t.Fatalf("confident classification escalated: escalated=%v complexity=%s", d.GraphEscalated, d.Complexity)
+	}
+}
