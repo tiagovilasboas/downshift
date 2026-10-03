@@ -104,3 +104,28 @@ func TestNoKnownFeatureIsSafe(t *testing.T) {
 		t.Fatalf("unknown-vocabulary prompt: %+v", s)
 	}
 }
+
+// Trivial reproduces the Python TRIVIAL-downshift opinion (label TRIVIAL and
+// small-vs-rest margin >= 0.2) on all 500 seed + holdout prompts.
+func TestTrivialMatchesPython(t *testing.T) {
+	b, err := os.ReadFile(filepath.Join("testdata", "trivial_golden.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var golden []struct {
+		Split   string  `json:"split"`
+		I       int     `json:"i"`
+		Trivial bool    `json:"trivial"`
+		Margin  float64 `json:"margin"`
+	}
+	if err := json.Unmarshal(b, &golden); err != nil {
+		t.Fatal(err)
+	}
+	prompts := map[string][]string{"seed": loadPrompts(t, "tasks.json"), "holdout": loadPrompts(t, "holdout.json")}
+	for _, g := range golden {
+		ok, m := Trivial(prompts[g.Split][g.I])
+		if ok != g.Trivial || math.Abs(m-g.Margin) > 1e-9 {
+			t.Errorf("%s[%d] Trivial=%v margin %.12f, python %v %.12f", g.Split, g.I, ok, m, g.Trivial, g.Margin)
+		}
+	}
+}

@@ -80,10 +80,16 @@ type Event struct {
 	// raised the tier. Applied is false in shadow mode (the default), where
 	// the routing decision above is unchanged.
 	NBUpshift *NBUpshiftRecord `json:"nb_upshift,omitempty"`
+
+	// Optional naive-Bayes TRIVIAL downshift opinion, present only when NB
+	// would have lowered a no-signal MEDIUM default to small. Applied is false
+	// in shadow mode (the default).
+	NBDownshift *NBUpshiftRecord `json:"nb_downshift,omitempty"`
 }
 
-// NBUpshiftRecord is the upshift the naive-Bayes second opinion would make
-// (or made, when DOWNSHIFT_NB_UPSHIFT=1). Tiers only; no prompt text.
+// NBUpshiftRecord is a tier change a naive-Bayes opinion would make (or made,
+// when its flag is on): the upshift second opinion or the TRIVIAL downshift.
+// Tiers only; no prompt text.
 type NBUpshiftRecord struct {
 	FromTier string  `json:"from_tier"`
 	ToTier   string  `json:"to_tier"`
@@ -234,6 +240,15 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 			ToTier:   d.NBUpshift.To.String(),
 			Margin:   math.Round(d.NBUpshift.Margin*1e4) / 1e4,
 			Applied:  d.NBUpshift.Applied,
+		}
+	}
+	if d.NBDownshift.Would {
+		// The opinion only exists for the Medium default, so it is mid -> small.
+		ev.NBDownshift = &NBUpshiftRecord{
+			FromTier: core.TierMid.String(),
+			ToTier:   core.TierSmall.String(),
+			Margin:   math.Round(d.NBDownshift.Margin*1e4) / 1e4,
+			Applied:  d.NBDownshift.Applied,
 		}
 	}
 	return ev

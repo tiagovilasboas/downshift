@@ -72,6 +72,9 @@ type Classification struct {
 	// Medium (see risk.go); Risk lists the matched categories.
 	RiskFloor bool
 	Risk      []string
+	// NoSignal is true when no content signal fired and Medium is only the
+	// safe default.
+	NoSignal bool
 }
 
 // Classify scores a task prompt against all complexity classes and returns
@@ -109,7 +112,7 @@ func Classify(prompt string) Classification {
 
 	// No content signal at all => safe default (the harness's usual model).
 	if !contentMatched {
-		return Classification{Complexity: Medium, Scores: scores, Confident: false}
+		return Classification{Complexity: Medium, Scores: scores, Confident: false, NoSignal: true}
 	}
 
 	// Pick the top score. Iterate high→low so ties favor higher complexity.

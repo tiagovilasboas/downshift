@@ -55,7 +55,9 @@ type Report struct {
 func Check(d Decision) Report {
 	var violations []Violation
 
-	if d.Verdict == VerdictDownshift && !d.Confident {
+	// An opted-in NB TRIVIAL downshift carries its own confidence gate (margin,
+	// no-signal only, no risk floor), so R1 does not hold it. R2 and R5 do.
+	if d.Verdict == VerdictDownshift && !d.Confident && !d.NBDownshift.Applied {
 		violations = append(violations, Violation{
 			Rule:   RuleUnconfidentDowngrade,
 			Detail: "downshift verdict without confident classification",

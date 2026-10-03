@@ -183,6 +183,17 @@ columns are predicted small/mid/frontier.
   unset (the default) routing is identical to before; a test checks this tier
   by tier on seed + holdout.
 - `internal/nbtier/` counts as a tuning path for `scripts/fresh-guard.sh`.
+- **TRIVIAL downshift (NBD-T), also default OFF.** `Decision.NBDownshift`
+  is computed when:
+  - no classifier keyword fired (`Classification.NoSignal`);
+  - the final class is the Medium default;
+  - graphify did not escalate;
+  - the risk floor would not lift the task at Trivial;
+  - NB labels the prompt TRIVIAL with a small-vs-rest margin ≥ 0.2.
+
+  Telemetry records `nb_downshift {mid→small, margin, applied}`. With
+  `DOWNSHIFT_NB_DOWNSHIFT=1` the task moves to small; R1 (unconfident
+  downshift) does not hold that opt-in move, while R2 and R5 still apply.
 
 ## Small over-routing (2026-10-03)
 
