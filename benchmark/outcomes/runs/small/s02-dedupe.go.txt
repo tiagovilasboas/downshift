@@ -1,0 +1,15 @@
+package task
+
+func Dedupe(xs []string) []string {
+	seen := make(map[string]bool)
+	result := []string{}
+
+	for _, x := range xs {
+		if !seen[x] {
+			seen[x] = true
+			result = append(result, x)
+		}
+	}
+
+	return result
+}

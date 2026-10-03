@@ -1,0 +1,50 @@
+package task
+
+import "container/list"
+
+type entry struct {
+	key   string
+	value int
+}
+
+type LRU struct {
+	capacity int
+	items    map[string]*list.Element
+	order    *list.List
+}
+
+func NewLRU(capacity int) *LRU {
+	return &LRU{
+		capacity: capacity,
+		items:    make(map[string]*list.Element),
+		order:    list.New(),
+	}
+}
+
+func (c *LRU) Get(key string) (int, bool) {
+	if elem, ok := c.items[key]; ok {
+		c.order.MoveToFront(elem)
+		return elem.Value.(*entry).value, true
+	}
+	return 0, false
+}
+
+func (c *LRU) Put(key string, value int) {
+	if elem, ok := c.items[key]; ok {
+		c.order.MoveToFront(elem)
+		elem.Value.(*entry).value = value
+		return
+	}
+
+	if c.order.Len() >= c.capacity {
+		back := c.order.Back()
+		if back != nil {
+			e := back.Value.(*entry)
+			delete(c.items, e.key)
+			c.order.Remove(back)
+		}
+	}
+
+	elem := c.order.PushFront(&entry{key: key, value: value})
+	c.items[key] = elem
+}

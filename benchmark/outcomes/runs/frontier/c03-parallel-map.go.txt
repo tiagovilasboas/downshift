@@ -1,0 +1,93 @@
+package task
+
+import (
+	"context"
+	"sync"
+)
+
+// ParallelMap applies fn to every input using at most workers concurrent
+// goroutines. Results are returned in input order. On the first error, the
+// context passed to remaining calls is cancelled and that error is returned.
+func ParallelMap(ctx context.Context, inputs []int, workers int, fn func(context.Context, int) (int, error)) ([]int, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	n := len(inputs)
+	results := make([]int, n)
+	if n == 0 {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		return results, nil
+	}
+	if workers <= 0 {
+		workers = 1
+	}
+	if workers > n {
+		workers = n
+	}
+
+	cctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	var (
+		once     sync.Once
+		firstErr error
+		mu       sync.Mutex
+		skipped  bool
+	)
+	setErr := func(err error) {
+		once.Do(func() {
+			firstErr = err
+			cancel()
+		})
+	}
+
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	wg.Add(workers)
+	for w := 0; w < workers; w++ {
+		go func() {
+			defer wg.Done()
+			for i := range jobs {
+				if cctx.Err() != nil {
+					mu.Lock()
+					skipped = true
+					mu.Unlock()
+					continue
+				}
+				v, err := fn(cctx, inputs[i])
+				if err != nil {
+					setErr(err)
+					continue
+				}
+				results[i] = v
+			}
+		}()
+	}
+
+feed:
+	for i := 0; i < n; i++ {
+		select {
+		case jobs <- i:
+		case <-cctx.Done():
+			mu.Lock()
+			skipped = true
+			mu.Unlock()
+			break feed
+		}
+	}
+	close(jobs)
+	wg.Wait()
+
+	if firstErr != nil {
+		return nil, firstErr
+	}
+	if skipped {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		return nil, context.Canceled
+	}
+	return results, nil
+}

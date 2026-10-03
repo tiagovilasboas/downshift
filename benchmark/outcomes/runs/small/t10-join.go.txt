@@ -1,0 +1,14 @@
+package task
+
+func JoinComma(xs []string) string {
+	if len(xs) == 0 {
+		return ""
+	}
+	
+	result := xs[0]
+	for i := 1; i < len(xs); i++ {
+		result += ", " + xs[i]
+	}
+	
+	return result
+}

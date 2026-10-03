@@ -1,0 +1,183 @@
+package task
+
+import (
+	"errors"
+	"strconv"
+	"strings"
+	"time"
+)
+
+func Next(spec string, after time.Time) (time.Time, error) {
+	parts := strings.Split(strings.TrimSpace(spec), " ")
+	if len(parts) != 5 {
+		return time.Time{}, errors.New("invalid cron spec")
+	}
+
+	minute, err := parseField(parts[0], 0, 59)
+	if err != nil {
+		return time.Time{}, err
+	}
+	hour, err := parseField(parts[1], 0, 23)
+	if err != nil {
+		return time.Time{}, err
+	}
+	day, err := parseField(parts[2], 1, 31)
+	if err != nil {
+		return time.Time{}, err
+	}
+	month, err := parseField(parts[3], 1, 12)
+	if err != nil {
+		return time.Time{}, err
+	}
+	dow, err := parseField(parts[4], 0, 6)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	// Start from the next minute
+	next := after.Add(time.Minute)
+	next = time.Date(next.Year(), next.Month(), next.Day(), next.Hour(), next.Minute(), 0, 0, next.Location())
+
+	for {
+		// Check if this time matches all criteria
+		if !matchesField(next.Minute(), minute) {
+			next = next.Add(time.Minute)
+			continue
+		}
+		if !matchesField(next.Hour(), hour) {
+			next = next.Add(time.Hour)
+			continue
+		}
+		if !matchesField(next.Day(), day) {
+			next = next.AddDate(0, 0, 1)
+			continue
+		}
+		if !matchesField(int(next.Month()), month) {
+			next = next.AddDate(0, 1, 0)
+			continue
+		}
+		if !matchesField(int(next.Weekday()), dow) {
+			next = next.AddDate(0, 0, 1)
+			continue
+		}
+
+		// If we get here, we found a match
+		return next, nil
+	}
+}
+
+func parseField(field string, min, max int) ([]int, error) {
+	if field == "*" {
+		result := make([]int, 0, max-min+1)
+		for i := min; i <= max; i++ {
+			result = append(result, i)
+		}
+		return result, nil
+	}
+
+	var result []int
+	parts := strings.Split(field, ",")
+	for _, part := range parts {
+		if strings.Contains(part, "-") {
+			// Handle ranges like 1-10
+			rangeParts := strings.Split(part, "-")
+			if len(rangeParts) != 2 {
+				return nil, errors.New("invalid range format")
+			}
+			start, err := strconv.Atoi(rangeParts[0])
+			if err != nil {
+				return nil, err
+			}
+			end, err := strconv.Atoi(rangeParts[1])
+			if err != nil {
+				return nil, err
+			}
+			if start < min || end > max || start > end {
+				return nil, errors.New("invalid range")
+			}
+			for i := start; i <= end; i++ {
+				result = append(result, i)
+			}
+		} else if strings.Contains(part, "/") {
+			// Handle steps like */15 or 1-10/3
+			stepParts := strings.Split(part, "/")
+			if len(stepParts) != 2 {
+				return nil, errors.New("invalid step format")
+			}
+			step, err := strconv.Atoi(stepParts[1])
+			if err != nil {
+				return nil, err
+			}
+			if step <= 0 {
+				return nil, errors.New("invalid step")
+			}
+
+			var start, end int
+			if stepParts[0] == "*" {
+				start = min
+				end = max
+			} else if strings.Contains(stepParts[0], "-") {
+				rangeParts := strings.Split(stepParts[0], "-")
+				if len(rangeParts) != 2 {
+					return nil, errors.New("invalid range format")
+				}
+				start, err = strconv.Atoi(rangeParts[0])
+				if err != nil {
+					return nil, err
+				}
+				end, err = strconv.Atoi(rangeParts[1])
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				start, err = strconv.Atoi(stepParts[0])
+				if err != nil {
+					return nil, err
+				}
+				end = start
+			}
+			if start < min || end > max || start > end {
+				return nil, errors.New("invalid range")
+			}
+			for i := start; i <= end; i += step {
+				result = append(result, i)
+			}
+		} else {
+			// Handle single numbers
+			num, err := strconv.Atoi(part)
+			if err != nil {
+				return nil, err
+			}
+			if num < min || num > max {
+				return nil, errors.New("number out of range")
+			}
+			result = append(result, num)
+		}
+	}
+
+	// Remove duplicates and sort
+	unique := make(map[int]bool)
+	var sorted []int
+	for _, num := range result {
+		if !unique[num] {
+			unique[num] = true
+			sorted = append(sorted, num)
+		}
+	}
+	return sorted, nil
+}
+
+func matchesField(value int, field []int) bool {
+	// If field is empty, it means no restriction
+	if len(field) == 0 {
+		return true
+	}
+	
+	// If field contains *, it matches everything
+	for _, v := range field {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}

@@ -1,0 +1,21 @@
+package task
+
+func Chunk(xs []int, n int) [][]int {
+	if n <= 0 {
+		return nil
+	}
+
+	if len(xs) == 0 {
+		return [][]int{}
+	}
+
+	result := make([][]int, 0, (len(xs)+n-1)/n)
+	for i := 0; i < len(xs); i += n {
+		end := i + n
+		if end > len(xs) {
+			end = len(xs)
+		}
+		result = append(result, xs[i:end])
+	}
+	return result
+}

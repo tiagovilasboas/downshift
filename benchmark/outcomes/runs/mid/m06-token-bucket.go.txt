@@ -1,0 +1,40 @@
+package task
+
+import (
+	"time"
+)
+
+type Bucket struct {
+	capacity     int
+	refillPerSec float64
+	now          func() time.Time
+	tokens       float64
+	lastTime     time.Time
+}
+
+func NewBucket(capacity int, refillPerSec float64, now func() time.Time) *Bucket {
+	return &Bucket{
+		capacity:     capacity,
+		refillPerSec: refillPerSec,
+		now:          now,
+		tokens:       float64(capacity),
+		lastTime:     now(),
+	}
+}
+
+func (b *Bucket) Allow() bool {
+	nowTime := b.now()
+	elapsed := nowTime.Sub(b.lastTime).Seconds()
+	// Refill tokens based on elapsed time, capped at capacity
+	b.tokens += elapsed * b.refillPerSec
+	if b.tokens > float64(b.capacity) {
+		b.tokens = float64(b.capacity)
+	}
+	b.lastTime = nowTime
+
+	if b.tokens >= 1.0 {
+		b.tokens -= 1.0
+		return true
+	}
+	return false
+}

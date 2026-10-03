@@ -1,0 +1,37 @@
+package task
+
+import "sort"
+
+func Merge(intervals [][2]int) [][2]int {
+	if len(intervals) == 0 {
+		return [][2]int{}
+	}
+
+	// Copy to avoid mutating the input slice.
+	sorted := make([][2]int, len(intervals))
+	copy(sorted, intervals)
+
+	// Sort by start, then by end.
+	sort.Slice(sorted, func(i, j int) bool {
+		if sorted[i][0] != sorted[j][0] {
+			return sorted[i][0] < sorted[j][0]
+		}
+		return sorted[i][1] < sorted[j][1]
+	})
+
+	merged := [][2]int{}
+	for _, interval := range sorted {
+		n := len(merged)
+		if n == 0 || merged[n-1][1] < interval[0] {
+			// No overlap or touching: append as is.
+			merged = append(merged, interval)
+		} else {
+			// Overlap or touching: merge by extending the end if needed.
+			if interval[1] > merged[n-1][1] {
+				merged[n-1][1] = interval[1]
+			}
+		}
+	}
+
+	return merged
+}

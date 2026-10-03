@@ -1,0 +1,111 @@
+package task
+
+import (
+	"container/heap"
+)
+
+// Item represents a node in the priority queue
+type Item struct {
+	node    int
+	distance int
+	index   int
+}
+
+// PriorityQueue implements heap.Interface and holds Items
+type PriorityQueue []*Item
+
+func (pq PriorityQueue) Len() int { return len(pq) }
+
+func (pq PriorityQueue) Less(i, j int) bool {
+	return pq[i].distance < pq[j].distance
+}
+
+func (pq PriorityQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+	pq[i].index = i
+	pq[j].index = j
+}
+
+func (pq *PriorityQueue) Push(x interface{}) {
+	n := len(*pq)
+	item := x.(*Item)
+	item.index = n
+	*pq = append(*pq, item)
+}
+
+func (pq *PriorityQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	old[n-1] = nil // avoid memory leak
+	item.index = -1 // for safety
+	*pq = old[0 : n-1]
+	return item
+}
+
+func ShortestPath(n int, edges [][3]int, src, dst int) (int, []int, bool) {
+	// Build adjacency list
+	graph := make([][][2]int, n)
+	for _, edge := range edges {
+		from, to, weight := edge[0], edge[1], edge[2]
+		graph[from] = append(graph[from], [2]int{to, weight})
+	}
+
+	// Distance array
+	dist := make([]int, n)
+	for i := range dist {
+		dist[i] = -1
+	}
+	dist[src] = 0
+
+	// Previous node array for path reconstruction
+	prev := make([]int, n)
+	for i := range prev {
+		prev[i] = -1
+	}
+
+	// Priority queue for Dijkstra
+	pq := make(PriorityQueue, 0)
+	heap.Init(&pq)
+	
+	// Add source to queue
+	item := &Item{node: src, distance: 0}
+	heap.Push(&pq, item)
+
+	for pq.Len() > 0 {
+		current := heap.Pop(&pq).(*Item)
+		
+		// Skip if already processed
+		if dist[current.node] != -1 && dist[current.node] < current.distance {
+			continue
+		}
+		
+		// Process neighbors
+		for _, edge := range graph[current.node] {
+			to, weight := edge[0], edge[1]
+			newDist := dist[current.node] + weight
+			
+			// If we found a shorter path to 'to'
+			if dist[to] == -1 || newDist < dist[to] {
+				dist[to] = newDist
+				prev[to] = current.node
+				heap.Push(&pq, &Item{node: to, distance: newDist})
+			}
+		}
+	}
+
+	// If destination is unreachable
+	if dist[dst] == -1 {
+		return -1, nil, false
+	}
+
+	// Reconstruct path
+	path := []int{dst}
+	current := dst
+	for current != src {
+		current = prev[current]
+		path = append([]int{current}, path...)
+	}
+
+	return dist[dst], path, true
+}

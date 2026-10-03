@@ -1,0 +1,43 @@
+package task
+
+func ToSnake(s string) string {
+	if s == "" {
+		return ""
+	}
+
+	var result []byte
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+
+		// Handle uppercase letters
+		if c >= 'A' && c <= 'Z' {
+			// Convert to lowercase
+			lower := c + ('a' - 'A')
+
+			// Add underscore before uppercase if:
+			// - Not the first character
+			// - Previous character is lowercase or digit
+			// - Previous character is uppercase and next character is lowercase (acronym boundary)
+			if i > 0 {
+				prev := s[i-1]
+				next := byte(0)
+				if i+1 < len(s) {
+					next = s[i+1]
+				}
+
+				prevIsLowerOrDigit := (prev >= 'a' && prev <= 'z') || (prev >= '0' && prev <= '9')
+				nextIsLower := next >= 'a' && next <= 'z'
+
+				if prevIsLowerOrDigit || (prev >= 'A' && prev <= 'Z' && nextIsLower) {
+					result = append(result, '_')
+				}
+			}
+
+			result = append(result, lower)
+		} else {
+			result = append(result, c)
+		}
+	}
+
+	return string(result)
+}

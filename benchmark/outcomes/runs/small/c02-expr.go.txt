@@ -1,0 +1,145 @@
+package task
+
+import (
+	"errors"
+	"strconv"
+	"strings"
+	"unicode"
+)
+
+func Eval(expr string) (float64, error) {
+	expr = strings.TrimSpace(expr)
+	if expr == "" {
+		return 0, errors.New("empty expression")
+	}
+	
+	var pos int
+	var err error
+	
+	result, err := parseExpression(expr, &pos)
+	if err != nil {
+		return 0, err
+	}
+	
+	// Check if we've consumed the entire expression
+	if pos < len(expr) {
+		return 0, errors.New("invalid syntax")
+	}
+	
+	return result, nil
+}
+
+func parseExpression(expr string, pos *int) (float64, error) {
+	left, err := parseTerm(expr, pos)
+	if err != nil {
+		return 0, err
+	}
+	
+	for *pos < len(expr) {
+		char := expr[*pos]
+		if char != '+' && char != '-' {
+			break
+		}
+		*pos++
+		
+		right, err := parseTerm(expr, pos)
+		if err != nil {
+			return 0, err
+		}
+		
+		if char == '+' {
+			left += right
+		} else {
+			left -= right
+		}
+	}
+	
+	return left, nil
+}
+
+func parseTerm(expr string, pos *int) (float64, error) {
+	left, err := parseFactor(expr, pos)
+	if err != nil {
+		return 0, err
+	}
+	
+	for *pos < len(expr) {
+		char := expr[*pos]
+		if char != '*' && char != '/' {
+			break
+		}
+		*pos++
+		
+		right, err := parseFactor(expr, pos)
+		if err != nil {
+			return 0, err
+		}
+		
+		if char == '*' {
+			left *= right
+		} else {
+			if right == 0 {
+				return 0, errors.New("division by zero")
+			}
+			left /= right
+		}
+	}
+	
+	return left, nil
+}
+
+func parseFactor(expr string, pos *int) (float64, error) {
+	if *pos >= len(expr) {
+		return 0, errors.New("unexpected end of expression")
+	}
+	
+	char := expr[*pos]
+	
+	// Handle unary minus
+	if char == '-' {
+		*pos++
+		value, err := parseFactor(expr, pos)
+		if err != nil {
+			return 0, err
+		}
+		return -value, nil
+	}
+	
+	// Handle parentheses
+	if char == '(' {
+		*pos++
+		result, err := parseExpression(expr, pos)
+		if err != nil {
+			return 0, err
+		}
+		
+		// Expect closing parenthesis
+		if *pos >= len(expr) || expr[*pos] != ')' {
+			return 0, errors.New("missing closing parenthesis")
+		}
+		*pos++
+		return result, nil
+	}
+	
+	// Handle number
+	if unicode.IsDigit(char) || char == '.' {
+		numStr := ""
+		for *pos < len(expr) {
+			c := expr[*pos]
+			if unicode.IsDigit(rune(c)) || c == '.' {
+				numStr += string(c)
+				*pos++
+			} else {
+				break
+			}
+		}
+		
+		num, err := strconv.ParseFloat(numStr, 64)
+		if err != nil {
+			return 0, errors.New("invalid number")
+		}
+		return num, nil
+	}
+	
+	return 0, errors.New("unexpected character")
+}

@@ -117,6 +117,13 @@ func ExtractGo(out string) string {
 	return out
 }
 
+// SolutionFile is the name of a recorded solution under runs/<tier>/. The
+// ".go.txt" suffix keeps recorded model output out of the repository's Go
+// build: a ".go" file there would be compiled by `go vet ./...` and
+// `go test ./...`, and answers that are not valid Go, or several answers
+// declaring the same symbol, would break CI.
+func SolutionFile(id string) string { return id + ".go.txt" }
+
 // Record solves every task with solver (run through `sh -c`, prompt on stdin,
 // answer on stdout), stores each solution as <runsDir>/<tier>/<id>.go, checks
 // it and writes run.json next to the solutions.
@@ -139,7 +146,7 @@ func Record(ctx context.Context, tasks []Task, tier, model, solver, runsDir stri
 			return run, fmt.Errorf("solver failed on %s: %w", t.ID, err)
 		}
 		sol := []byte(ExtractGo(stdout.String()))
-		if err := os.WriteFile(filepath.Join(dir, t.ID+".go"), sol, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, SolutionFile(t.ID)), sol, 0o644); err != nil {
 			return run, err
 		}
 		pass, err := Check(ctx, t, sol)
@@ -194,7 +201,7 @@ func Verify(ctx context.Context, tasks []Task, runsDir string) ([]string, error)
 			job{t, filepath.Join(t.Dir, "reference.go"), true, "reference"})
 		for _, r := range runs {
 			if want, ok := r.Results[t.ID]; ok {
-				jobs = append(jobs, job{t, filepath.Join(runsDir, r.Tier, t.ID+".go"), want, "recorded " + r.Tier})
+				jobs = append(jobs, job{t, filepath.Join(runsDir, r.Tier, SolutionFile(t.ID)), want, "recorded " + r.Tier})
 			}
 		}
 	}

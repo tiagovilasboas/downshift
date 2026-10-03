@@ -1,0 +1,42 @@
+package task
+
+import (
+	"context"
+	"fmt"
+	"time"
+)
+
+func Retry(ctx context.Context, attempts int, base time.Duration, sleep func(time.Duration), fn func() error) error {
+	if attempts <= 0 {
+		return nil
+	}
+
+	var lastErr error
+	for i := 0; i < attempts; i++ {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		err := fn()
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+
+		if i == attempts-1 {
+			break
+		}
+
+		// Stop early if the context is done before sleeping/retrying.
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+
+		delay := base << uint(i) // base, 2*base, 4*base, ...
+		if sleep != nil {
+			sleep(delay)
+		}
+	}
+
+	return fmt.Errorf("retry failed: %w", lastErr)
+}

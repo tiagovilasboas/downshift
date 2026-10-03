@@ -1,0 +1,71 @@
+package task
+
+import (
+	"container/heap"
+	"errors"
+)
+
+type strHeap []string
+
+func (h strHeap) Len() int            { return len(h) }
+func (h strHeap) Less(i, j int) bool  { return h[i] < h[j] }
+func (h strHeap) Swap(i, j int)       { h[i], h[j] = h[j], h[i] }
+func (h *strHeap) Push(x interface{}) { *h = append(*h, x.(string)) }
+func (h *strHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[:n-1]
+	return x
+}
+
+// TopoSort returns an ordering where every dependency appears before its
+// dependents, choosing the alphabetically smallest ready node at each step.
+// It returns an error if the dependency graph contains a cycle.
+func TopoSort(deps map[string][]string) ([]string, error) {
+	indeg := make(map[string]int)
+	dependents := make(map[string][]string)
+
+	for x, ds := range deps {
+		if _, ok := indeg[x]; !ok {
+			indeg[x] = 0
+		}
+		seen := make(map[string]bool, len(ds))
+		for _, d := range ds {
+			if seen[d] {
+				continue
+			}
+			seen[d] = true
+			if _, ok := indeg[d]; !ok {
+				indeg[d] = 0
+			}
+			indeg[x]++
+			dependents[d] = append(dependents[d], x)
+		}
+	}
+
+	h := &strHeap{}
+	for n, c := range indeg {
+		if c == 0 {
+			*h = append(*h, n)
+		}
+	}
+	heap.Init(h)
+
+	result := make([]string, 0, len(indeg))
+	for h.Len() > 0 {
+		n := heap.Pop(h).(string)
+		result = append(result, n)
+		for _, m := range dependents[n] {
+			indeg[m]--
+			if indeg[m] == 0 {
+				heap.Push(h, m)
+			}
+		}
+	}
+
+	if len(result) != len(indeg) {
+		return nil, errors.New("cycle detected in dependencies")
+	}
+	return result, nil
+}

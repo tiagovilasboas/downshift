@@ -1,0 +1,27 @@
+package task
+
+import "strings"
+
+func Wrap(text string, width int) []string {
+	words := strings.Fields(text)
+	if len(words) == 0 {
+		return []string{}
+	}
+
+	var lines []string
+	line := ""
+	for _, w := range words {
+		if line == "" {
+			line = w
+		} else if len(line)+1+len(w) <= width {
+			line += " " + w
+		} else {
+			lines = append(lines, line)
+			line = w
+		}
+	}
+	if line != "" {
+		lines = append(lines, line)
+	}
+	return lines
+}

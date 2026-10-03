@@ -1,0 +1,33 @@
+package task
+
+import (
+	"unicode"
+)
+
+// IsAnagram reports whether a and b are anagrams of each other,
+// ignoring case and whitespace.
+func IsAnagram(a, b string) bool {
+	counts := make(map[rune]int)
+	for _, r := range a {
+		if unicode.IsSpace(r) {
+			continue
+		}
+		counts[unicode.ToLower(r)]++
+	}
+	for _, r := range b {
+		if unicode.IsSpace(r) {
+			continue
+		}
+		lr := unicode.ToLower(r)
+		counts[lr]--
+		if counts[lr] < 0 {
+			return false
+		}
+	}
+	for _, c := range counts {
+		if c != 0 {
+			return false
+		}
+	}
+	return true
+}

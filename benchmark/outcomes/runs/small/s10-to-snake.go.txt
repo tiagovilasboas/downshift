@@ -1,0 +1,44 @@
+package task
+
+import (
+	"strings"
+	"unicode"
+)
+
+func ToSnake(s string) string {
+	if s == "" {
+		return ""
+	}
+
+	var result strings.Builder
+	prevIsUpper := false
+	prevIsLower := false
+
+	for i, r := range s {
+		if unicode.IsUpper(r) {
+			if i > 0 && prevIsLower {
+				result.WriteRune('_')
+			}
+			result.WriteRune(unicode.ToLower(r))
+			prevIsUpper = true
+			prevIsLower = false
+		} else if unicode.IsLower(r) {
+			result.WriteRune(r)
+			prevIsLower = true
+			prevIsUpper = false
+		} else if unicode.IsDigit(r) {
+			if i > 0 && prevIsUpper && !prevIsLower {
+				result.WriteRune('_')
+			}
+			result.WriteRune(r)
+			prevIsLower = false
+			prevIsUpper = false
+		} else {
+			result.WriteRune('_')
+			prevIsLower = false
+			prevIsUpper = false
+		}
+	}
+
+	return result.String()
+}

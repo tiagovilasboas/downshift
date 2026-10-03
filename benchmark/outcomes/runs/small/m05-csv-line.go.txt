@@ -1,0 +1,50 @@
+package task
+
+import (
+	"errors"
+	"strings"
+)
+
+func ParseCSVLine(line string) ([]string, error) {
+	var fields []string
+	var currentField strings.Builder
+	inQuotes := false
+	
+	for i := 0; i < len(line); {
+		r := line[i]
+		
+		if r == '"' {
+			if inQuotes {
+				// Check if this is an escaped quote
+				if i+1 < len(line) && line[i+1] == '"' {
+					currentField.WriteRune('"')
+					i += 2
+					continue
+				}
+				// End of quoted field
+				inQuotes = false
+			} else {
+				// Start of quoted field
+				inQuotes = true
+			}
+		} else if r == ',' && !inQuotes {
+			// End of field
+			fields = append(fields, currentField.String())
+			currentField.Reset()
+		} else {
+			currentField.WriteRune(r)
+		}
+		
+		i++
+	}
+	
+	// Add the last field
+	fields = append(fields, currentField.String())
+	
+	// Check for unterminated quote
+	if inQuotes {
+		return nil, errors.New("unterminated quote")
+	}
+	
+	return fields, nil
+}
