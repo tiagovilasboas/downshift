@@ -23,7 +23,8 @@ func TestClassify(t *testing.T) {
 		// Simple — one isolated change
 		{"add field", "add a field email to the User struct", Simple},
 		{"three.js scene", "implement a three.js scene with a rotating cube", Simple},
-		{"fix bug", "fix the bug where login fails on empty password", Simple},
+		{"fix bug", "fix the bug where the export fails on an empty file", Simple},
+		{"fix auth bug (risk floor)", "fix the bug where login fails on empty password", Medium},
 		{"write function", "write a function that validates a CPF", Simple},
 		{"explain", "explain what this regex does", Simple},
 

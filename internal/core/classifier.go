@@ -68,6 +68,10 @@ type Classification struct {
 	Complexity Complexity
 	Scores     map[Complexity]int
 	Confident  bool // true when the top class clearly beat the rest
+	// RiskFloor is true when a risk signal lifted a Trivial/Simple result to
+	// Medium (see risk.go); Risk lists the matched categories.
+	RiskFloor bool
+	Risk      []string
 }
 
 // Classify scores a task prompt against all complexity classes and returns
@@ -131,9 +135,9 @@ func Classify(prompt string) Classification {
 	}
 	confident := topScore > 0 && topScore-second >= 2
 
-	return Classification{
+	return applyRiskFloor(prompt, Classification{
 		Complexity: top,
 		Scores:     scores,
 		Confident:  confident,
-	}
+	})
 }
