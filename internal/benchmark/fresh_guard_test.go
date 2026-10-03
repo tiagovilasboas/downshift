@@ -114,7 +114,7 @@ func TestFresh_NoLeakage(t *testing.T) {
 	}
 
 	var others []string
-	for _, name := range []string{"tasks.json", "holdout.json"} {
+	for _, name := range []string{"tasks.json", "holdout.json", "train-extra.json"} {
 		ds, err := benchmark.LoadDataset(filepath.Join(repoRoot, "benchmark", name))
 		if err != nil {
 			t.Fatal(err)
