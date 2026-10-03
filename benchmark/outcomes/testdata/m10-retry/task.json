@@ -1,0 +1,5 @@
+{
+  "id": "m10-retry",
+  "label": "MEDIUM",
+  "prompt": "write Retry(ctx context.Context, attempts int, base time.Duration, sleep func(time.Duration), fn func() error) error that calls fn up to attempts times with exponential backoff (base, 2*base, 4*base, ...) via the injected sleep, stops on the first success, returns ctx.Err() if the context is done before an attempt, and otherwise returns an error wrapping the last failure"
+}

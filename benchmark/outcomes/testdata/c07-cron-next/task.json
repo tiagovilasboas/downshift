@@ -1,0 +1,5 @@
+{
+  "id": "c07-cron-next",
+  "label": "COMPLEX",
+  "prompt": "write Next(spec string, after time.Time) (time.Time, error) for standard 5-field cron expressions (minute hour day-of-month month day-of-week, Sunday=0) supporting *, numbers, comma lists, ranges a-b and steps like */15 or 1-10/3; return the first matching minute strictly after `after` in its location; when both day-of-month and day-of-week are restricted a day matches if either matches; return an error for invalid specs"
+}

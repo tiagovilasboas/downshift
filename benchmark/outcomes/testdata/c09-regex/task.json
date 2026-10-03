@@ -1,0 +1,5 @@
+{
+  "id": "c09-regex",
+  "label": "COMPLEX",
+  "prompt": "write Match(pattern, s string) bool that reports whether the whole string matches a pattern supporting literal characters, '.', and the postfix operators '*', '+' and '?' applied to the previous character or '.', without using the regexp package"
+}

@@ -1,0 +1,5 @@
+{
+  "id": "s01-word-freq",
+  "label": "SIMPLE",
+  "prompt": "write WordFreq(text string) map[string]int that counts lowercase words, splitting on any non-letter character"
+}

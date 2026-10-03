@@ -1,0 +1,5 @@
+{
+  "id": "m06-token-bucket",
+  "label": "MEDIUM",
+  "prompt": "implement a token bucket rate limiter: NewBucket(capacity int, refillPerSec float64, now func() time.Time) *Bucket with Allow() bool; the bucket starts full, refills continuously based on the injected clock, and never exceeds capacity"
+}

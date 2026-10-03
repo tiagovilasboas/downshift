@@ -1,0 +1,5 @@
+{
+  "id": "s10-to-snake",
+  "label": "SIMPLE",
+  "prompt": "write ToSnake(s string) string converting CamelCase or camelCase identifiers to snake_case, keeping acronyms together (HTTPServer becomes http_server, userID becomes user_id)"
+}

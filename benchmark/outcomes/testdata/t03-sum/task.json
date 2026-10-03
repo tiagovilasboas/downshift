@@ -1,0 +1,5 @@
+{
+  "id": "t03-sum",
+  "label": "TRIVIAL",
+  "prompt": "add a Sum(xs []int) int function that returns the total of the slice"
+}

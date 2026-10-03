@@ -1,0 +1,5 @@
+{
+  "id": "c03-parallel-map",
+  "label": "COMPLEX",
+  "prompt": "implement ParallelMap(ctx context.Context, inputs []int, workers int, fn func(context.Context, int) (int, error)) ([]int, error) that runs fn with at most workers goroutines in flight, returns results in input order, and on the first error cancels the context passed to the remaining calls and returns that error"
+}
