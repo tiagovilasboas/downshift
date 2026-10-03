@@ -40,13 +40,18 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 //     on a downshift): do not rewrite. The classified verdict must never be
 //     used to bypass the safe action.
 //   - VerdictUpshift: use strongest session model (never downgrade if escalation fails).
-//   - VerdictDownshift: use cheapest session model when the catalog target is
-//     not in the session.
-//   - VerdictUnknown or Model.ID=="": use cheapest session model.
+//   - VerdictDownshift: use the cheapest session model at or above the
+//     classified tier when the catalog target is not in the session.
+//   - VerdictUnknown or Model.ID=="": same, cheapest at or above the tier.
+//
+// The fallback never goes below the classified tier: a MEDIUM (or
+// risk-floored) task is never written to a small model just because the mid
+// catalog model is missing from the session.
 //   - Otherwise (VerdictOK): do not rewrite.
 //
-// Unlabeled session ids stay eligible: when none are in the catalog, the first id
-// is the cheapest (operators list cheapest-first) and upshifts do not guess.
+// Unlabeled session ids stay eligible only for small-tier targets: when none
+// are in the catalog, the first id is the cheapest (operators list
+// cheapest-first). Upshifts and mid/frontier targets do not guess.
 func selectSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool) {
 	if d.ShouldRewriteModel() && d.Model.ID != "" {
 		if id, model, ok := sessionForm(d.Harness, d.Model.ID, session, res); ok {
@@ -61,10 +66,10 @@ func selectSessionTarget(d Decision, res Resolver, session SessionList) (string,
 	case VerdictUpshift:
 		return strongestSessionModel(d.Harness, session, res)
 	case VerdictDownshift, VerdictUnknown:
-		return cheapestSessionModel(d.Harness, session, res)
+		return cheapestSessionModel(d.Harness, session, res, d.Tier)
 	default:
 		if d.Model.ID == "" && d.Verdict != VerdictOK {
-			return cheapestSessionModel(d.Harness, session, res)
+			return cheapestSessionModel(d.Harness, session, res, d.Tier)
 		}
 		return "", Model{}, false
 	}
@@ -117,13 +122,20 @@ type ranked struct {
 	cost  float64
 }
 
-func cheapestSessionModel(harness string, session SessionList, res Resolver) (string, Model, bool) {
+// cheapestSessionModel returns the cheapest session model whose tier is at
+// least minTier. Unlabeled ids are a fallback only for small-tier targets.
+func cheapestSessionModel(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool) {
 	labeled, unlabeled := rankSession(harness, session, res)
-	best, ok := pickRanked(labeled, true)
-	if ok {
+	var eligible []ranked
+	for _, r := range labeled {
+		if r.model.Tier >= minTier {
+			eligible = append(eligible, r)
+		}
+	}
+	if best, ok := pickRanked(eligible, true); ok {
 		return best.id, best.model, true
 	}
-	if len(unlabeled) > 0 {
+	if len(labeled) == 0 && minTier == TierSmall && len(unlabeled) > 0 {
 		return unlabeled[0].id, unlabeled[0].model, true
 	}
 	return "", Model{}, false
