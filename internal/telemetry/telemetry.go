@@ -50,7 +50,7 @@ type Event struct {
 	Tier                 string                `json:"tier"`                       // SMALL|MID|FRONTIER
 	PolicyVersion        string                `json:"policy_version"`
 	BinaryVersion        string                `json:"binary_version"`
-	Outcome              string                `json:"outcome"` // routed|allow|error
+	Outcome              string                `json:"outcome"` // rewrite_emitted|allow|error|usage|baseline
 	ErrorCode            string                `json:"error_code,omitempty"`
 	DecisionIntelligence *ShadowRecommendation `json:"decision_intelligence,omitempty"`
 	EstimatedSavings     float64               `json:"estimated_savings"` // normalised fraction 0–1
@@ -177,7 +177,17 @@ func HashSessionID(sessionID string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+// Outcome values for hook routing events.
+const (
+	// OutcomeRewriteEmitted marks a hook response that changed the spawn's model.
+	OutcomeRewriteEmitted = "rewrite_emitted"
+	// OutcomeAllow marks a routing decision whose hook response left the spawn unchanged.
+	OutcomeAllow = "allow"
+)
+
 // FromDecision builds an Event from a core.Decision and hook runtime context.
+// It assumes a rewrite was emitted; callers set OutcomeAllow when the adapter
+// returned the spawn unchanged.
 // Self-correction fields are recorded only for held decisions, keeping clean
 // events compact and old log readers unaffected.
 func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
@@ -196,7 +206,7 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		Tier:             d.Tier.String(),
 		PolicyVersion:    PolicyVersion,
 		BinaryVersion:    binaryVersion,
-		Outcome:          "rewrite_emitted",
+		Outcome:          OutcomeRewriteEmitted,
 		EstimatedSavings: d.Savings,
 	}
 	if len(d.Corrections) > 0 {
