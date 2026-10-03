@@ -109,7 +109,7 @@ func writeRun(t *testing.T, runs string, task Task, src string, claimed bool) {
 		t.Fatal(err)
 	}
 	b, _ := os.ReadFile(filepath.Join(task.Dir, src))
-	_ = os.WriteFile(filepath.Join(dir, task.ID+".go"), b, 0o644)
+	_ = os.WriteFile(filepath.Join(dir, SolutionFile(task.ID)), b, 0o644)
 	run, _ := json.Marshal(Run{Tier: "small", Model: "fake", Results: map[string]bool{task.ID: claimed}})
 	_ = os.WriteFile(filepath.Join(dir, "run.json"), run, 0o644)
 }
@@ -147,5 +147,13 @@ func TestRecord_FakeSolver(t *testing.T) {
 	loaded, err := LoadRuns(runs)
 	if err != nil || len(loaded) != 1 || loaded[0].Model != "fake" || !loaded[0].Results[task.ID] {
 		t.Fatalf("LoadRuns: %+v %v", loaded, err)
+	}
+	// Recorded solutions must not be .go files, or the repo's own go build
+	// would compile model output committed under benchmark/outcomes/runs.
+	if _, err := os.Stat(filepath.Join(runs, "small", task.ID+".go")); err == nil {
+		t.Fatalf("Record wrote %s.go; recorded solutions must use %s", task.ID, SolutionFile(task.ID))
+	}
+	if _, err := os.Stat(filepath.Join(runs, "small", SolutionFile(task.ID))); err != nil {
+		t.Fatalf("recorded solution missing: %v", err)
 	}
 }

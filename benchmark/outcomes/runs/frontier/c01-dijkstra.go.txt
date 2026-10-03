@@ -1,0 +1,90 @@
+package task
+
+import "container/heap"
+
+type item struct {
+	node int
+	dist int
+}
+
+type minHeap []item
+
+func (h minHeap) Len() int            { return len(h) }
+func (h minHeap) Less(i, j int) bool  { return h[i].dist < h[j].dist }
+func (h minHeap) Swap(i, j int)       { h[i], h[j] = h[j], h[i] }
+func (h *minHeap) Push(x interface{}) { *h = append(*h, x.(item)) }
+func (h *minHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[:n-1]
+	return x
+}
+
+type edge struct {
+	to, w int
+}
+
+// ShortestPath computes the shortest path from src to dst in a directed graph
+// with non-negative edge weights using Dijkstra's algorithm with a binary heap.
+func ShortestPath(n int, edges [][3]int, src, dst int) (int, []int, bool) {
+	if n <= 0 || src < 0 || src >= n || dst < 0 || dst >= n {
+		return 0, nil, false
+	}
+	adj := make([][]edge, n)
+	for _, e := range edges {
+		u, v, w := e[0], e[1], e[2]
+		if u < 0 || u >= n || v < 0 || v >= n || w < 0 {
+			continue
+		}
+		adj[u] = append(adj[u], edge{v, w})
+	}
+
+	dist := make([]int, n)
+	prev := make([]int, n)
+	reached := make([]bool, n)
+	done := make([]bool, n)
+	for i := range prev {
+		prev[i] = -1
+	}
+	reached[src] = true
+	dist[src] = 0
+
+	h := &minHeap{{src, 0}}
+	for h.Len() > 0 {
+		cur := heap.Pop(h).(item)
+		u := cur.node
+		if done[u] {
+			continue
+		}
+		done[u] = true
+		if u == dst {
+			break
+		}
+		for _, e := range adj[u] {
+			nd := dist[u] + e.w
+			if !reached[e.to] || nd < dist[e.to] {
+				reached[e.to] = true
+				dist[e.to] = nd
+				prev[e.to] = u
+				heap.Push(h, item{e.to, nd})
+			}
+		}
+	}
+
+	if !reached[dst] {
+		return 0, nil, false
+	}
+
+	var path []int
+	for v := dst; v != -1; v = prev[v] {
+		path = append(path, v)
+		if v == src {
+			break
+		}
+	}
+	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+		path[i], path[j] = path[j], path[i]
+	}
+	return dist[dst], path, true
+}

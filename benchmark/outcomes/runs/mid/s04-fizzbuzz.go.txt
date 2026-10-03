@@ -1,0 +1,18 @@
+package task
+
+func FizzBuzz(n int) []string {
+    result := new string[n]
+    for i := 0; i < n; i++ {
+        num := i + 1
+        if num % 15 == 0 {
+            result[i] = "FizzBuzz"
+        } else if num % 3 == 0 {
+            result[i] = "Fizz"
+        } else if num % 5 == 0 {
+            result[i] = "Buzz"
+        } else {
+            result[i] = string(num)
+        }
+    }
+    return result[0:n]
+}

@@ -1,0 +1,80 @@
+package task
+
+import (
+	"crypto/sha256"
+	"encoding/binary"
+	"sort"
+	"strconv"
+)
+
+type virtualNode struct {
+	hash uint32
+	node string
+}
+
+type Ring struct {
+	replicas int
+	nodes    []virtualNode
+	nodeMap  map[string][]uint32 // node -> its virtual nodes' hashes
+}
+
+func NewRing(replicas int) *Ring {
+	return &Ring{
+		replicas: replicas,
+		nodeMap:  make(map[string][]uint32),
+	}
+}
+
+func (r *Ring) Add(node string) {
+	hashes := make([]uint32, r.replicas)
+	for i := 0; i < r.replicas; i++ {
+		h := hash(node + "#" + strconv.Itoa(i))
+		hashes[i] = h
+		r.nodes = append(r.nodes, virtualNode{hash: h, node: node})
+	}
+	r.nodeMap[node] = hashes
+	sort.Slice(r.nodes, func(i, j int) bool {
+		return r.nodes[i].hash < r.nodes[j].hash
+	})
+}
+
+func (r *Ring) Remove(node string) {
+	hashes, ok := r.nodeMap[node]
+	if !ok {
+		return
+	}
+	delete(r.nodeMap, node)
+
+	// Filter out virtual nodes belonging to this node
+	filtered := make([]virtualNode, 0, len(r.nodes)-len(hashes))
+	hashSet := make(map[uint32]struct{}, len(hashes))
+	for _, h := range hashes {
+		hashSet[h] = struct{}{}
+	}
+	for _, vn := range r.nodes {
+		if _, exists := hashSet[vn.hash]; !exists {
+			filtered = append(filtered, vn)
+		}
+	}
+	r.nodes = filtered
+	// No need to re-sort because we preserve order
+}
+
+func (r *Ring) Get(key string) string {
+	if len(r.nodes) == 0 {
+		return ""
+	}
+	h := hash(key)
+	idx := sort.Search(len(r.nodes), func(i int) bool {
+		return r.nodes[i].hash >= h
+	})
+	if idx == len(r.nodes) {
+		idx = 0
+	}
+	return r.nodes[idx].node
+}
+
+func hash(key string) uint32 {
+	h := sha256.Sum256([]byte(key))
+	return binary.BigEndian.Uint32(h[:4])
+}

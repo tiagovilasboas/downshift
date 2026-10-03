@@ -1,0 +1,51 @@
+package task
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"math"
+	"time"
+)
+
+// Retry calls fn up to attempts times, sleeping with exponential backoff
+// (base, 2*base, 4*base, ...) between attempts via the injected sleep func.
+// It returns nil on the first success, ctx.Err() if the context is done
+// before an attempt, and otherwise an error wrapping the last failure.
+func Retry(ctx context.Context, attempts int, base time.Duration, sleep func(time.Duration), fn func() error) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if attempts <= 0 {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		return errors.New("retry: no attempts made (attempts <= 0)")
+	}
+
+	var last error
+	delay := base
+	for i := 0; i < attempts; i++ {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		err := fn()
+		if err == nil {
+			return nil
+		}
+		last = err
+		if i == attempts-1 {
+			break
+		}
+		if sleep != nil {
+			sleep(delay)
+		}
+		// Double the delay, saturating to avoid overflow.
+		if delay > 0 && delay > time.Duration(math.MaxInt64/2) {
+			delay = time.Duration(math.MaxInt64)
+		} else {
+			delay *= 2
+		}
+	}
+	return fmt.Errorf("retry: all %d attempts failed: %w", attempts, last)
+}

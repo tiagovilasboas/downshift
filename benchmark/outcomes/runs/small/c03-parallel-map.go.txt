@@ -1,0 +1,113 @@
+package task
+
+import (
+	"context"
+	"sync"
+)
+
+func ParallelMap(ctx context.Context, inputs []int, workers int, fn func(context.Context, int) (int, error)) ([]int, error) {
+	if len(inputs) == 0 {
+		return []int{}, nil
+	}
+
+	// Limit the number of concurrent workers
+	if workers <= 0 {
+		workers = 1
+	} else if workers > len(inputs) {
+		workers = len(inputs)
+	}
+
+	// Create a channel to receive results
+	results := make(chan struct {
+		index int
+		value int
+		err   error
+	}, len(inputs))
+
+	// Start workers
+	var wg sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					// This will be handled by the main goroutine
+				}
+			}
+		}()
+	}
+
+	// Process inputs
+	var mu sync.Mutex
+	var firstErr error
+	cancelled := false
+
+	// Use a buffered channel to limit concurrency
+	semaphore := make(chan struct{}, workers)
+	
+	for i, input := range inputs {
+		semaphore <- struct{}{} // Acquire semaphore
+		
+		go func(index int, value int) {
+			defer func() { <-semaphore }() // Release semaphore
+			
+			select {
+			case <-ctx.Done():
+				results <- struct {
+					index int
+					value int
+					err   error
+				}{index: index, value: 0, err: ctx.Err()}
+				return
+			default:
+			}
+			
+			result, err := fn(ctx, value)
+			
+			select {
+			case <-ctx.Done():
+				results <- struct {
+					index int
+					value int
+					err   error
+				}{index: index, value: 0, err: ctx.Err()}
+			default:
+				results <- struct {
+					index int
+					value int
+					err   error
+				}{index: index, value: result, err: err}
+			}
+		}(i, input)
+	}
+
+	// Close results channel when all goroutines finish
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// Collect results
+	output := make([]int, len(inputs))
+	
+	for result := range results {
+		if result.err != nil {
+			// Cancel context on first error
+			if !cancelled {
+				ctx.Done() // This is just to signal cancellation
+				cancelled = true
+			}
+			if firstErr == nil {
+				firstErr = result.err
+			}
+		} else {
+			output[result.index] = result.value
+		}
+	}
+
+	return output, firstErr
+}

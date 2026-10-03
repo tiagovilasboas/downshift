@@ -1,0 +1,19 @@
+package task
+
+// Dedupe returns a new slice containing the elements of xs with duplicates
+// removed, preserving the order in which each element was first seen.
+func Dedupe(xs []string) []string {
+	if xs == nil {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(xs))
+	out := make([]string, 0, len(xs))
+	for _, x := range xs {
+		if _, ok := seen[x]; ok {
+			continue
+		}
+		seen[x] = struct{}{}
+		out = append(out, x)
+	}
+	return out
+}

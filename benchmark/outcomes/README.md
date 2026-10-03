@@ -36,7 +36,8 @@ downshift eval-outcome --record --tier=frontier --model=claude-opus-4-8  --solve
 downshift eval-outcome --report --write README.md   # or: make report
 ```
 
-`--record` writes `runs/<tier>/<id>.go` plus `runs/<tier>/run.json`. Commit both:
+`--record` writes `runs/<tier>/<id>.go.txt` plus `runs/<tier>/run.json`. Commit both
+(the `.go.txt` suffix keeps model output out of the repo's own `go build`/`go vet`):
 `--verify` re-runs every recorded solution, so a result that does not reproduce
 fails CI. The report shows pass rates only for runs that were actually recorded.
 Until then it says "not measured".

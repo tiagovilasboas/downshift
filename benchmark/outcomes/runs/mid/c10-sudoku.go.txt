@@ -1,0 +1,127 @@
+package task
+
+// Board type alias for a 9x9 Sudoku grid.
+type Board = [9][9]int
+
+// Result holds the solved board and a flag indicating success.
+struct Result {
+    board Board
+    solved bool
+}
+
+// Solve attempts to solve the given Sudoku board.
+// It returns a Result containing the solved board (or the original if unsolvable)
+// and a boolean indicating whether a solution was found.
+func Solve(board Board) Result {
+    // Work on a copy to avoid mutating the input.
+    var b Board = board
+
+    // If the initial board violates Sudoku rules, return immediately.
+    if !isValidBoard(b) {
+        return Result{board: b, solved: false}
+    }
+
+    if solve(b) {
+        return Result{board: b, solved: true}
+    } else {
+        return Result{board: b, solved: false}
+    }
+}
+
+// solve recursively fills empty cells using backtracking.
+// It modifies the board in place and returns true if a solution is found.
+func solve(b Board) bool {
+    for i := 0; i < 9; i++ {
+        for j := 0; j < 9; j++ {
+            if b[i][j] == 0 {
+                for num := 1; num <= 9; num++ {
+                    if isValid(b, i, j, num) {
+                        b[i][j] = num
+                        if solve(b) {
+                            return true
+                        }
+                        b[i][j] = 0
+                    }
+                }
+                return false // no valid number for this cell
+            }
+        }
+    }
+    return true // all cells filled
+}
+
+// isValid checks whether placing num at (row, col) violates Sudoku rules.
+func isValid(b Board, row int, col int, num int) bool {
+    // Check row
+    for j := 0; j < 9; j++ {
+        if b[row][j] == num {
+            return false
+        }
+    }
+    // Check column
+    for i := 0; i < 9; i++ {
+        if b[i][col] == num {
+            return false
+        }
+    }
+    // Check 3x3 box
+    startRow := (row / 3) * 3
+    startCol := (col / 3) * 3
+    for i := startRow; i < startRow + 3; i++ {
+        for j := startCol; j < startCol + 3; j++ {
+            if b[i][j] == num {
+                return false
+            }
+        }
+    }
+    return true
+}
+
+// isValidBoard checks the entire board for duplicate numbers in rows, columns, and boxes.
+// It returns false if any duplicate non-zero value is found.
+func isValidBoard(b Board) bool {
+    // Check rows
+    for i := 0; i < 9; i++ {
+        var seen [10]bool
+        for j := 0; j < 9; j++ {
+            val := b[i][j]
+            if val != 0 {
+                if seen[val] {
+                    return false
+                }
+                seen[val] = true
+            }
+        }
+    }
+    // Check columns
+    for j := 0; j < 9; j++ {
+        var seen [10]bool
+        for i := 0; i < 9; i++ {
+            val := b[i][j]
+            if val != 0 {
+                if seen[val] {
+                    return false
+                }
+                seen[val] = true
+            }
+        }
+    }
+    // Check 3x3 boxes
+    for boxRow := 0; boxRow < 3; boxRow++ {
+        for boxCol := 0; boxCol < 3; boxCol++ {
+            var seen [10]bool
+            for i := boxRow * 3; i < boxRow * 3 + 3; i++ {
+                for j := boxCol * 3; j < boxCol * 3 + 3; j++ {
+                    val := b[i][j]
+                    if val != 0 {
+                        if seen[val] {
+                            return false
+                        }
+                        seen[val] = true
+                    }
+                }
+            }
+        }
+    }
+    return true
+}

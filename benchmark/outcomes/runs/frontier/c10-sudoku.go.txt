@@ -1,0 +1,86 @@
+package task
+
+import "math/bits"
+
+// Solve solves a sudoku puzzle using backtracking. Empty cells are 0.
+// It returns the solved board and true, or the original board and false
+// if the board is invalid or has no solution.
+func Solve(board [9][9]int) ([9][9]int, bool) {
+	var rows, cols, boxes [9]uint16
+	b := board
+
+	for r := 0; r < 9; r++ {
+		for c := 0; c < 9; c++ {
+			v := b[r][c]
+			if v == 0 {
+				continue
+			}
+			if v < 0 || v > 9 {
+				return board, false
+			}
+			bit := uint16(1) << uint(v-1)
+			bx := (r/3)*3 + c/3
+			if rows[r]&bit != 0 || cols[c]&bit != 0 || boxes[bx]&bit != 0 {
+				return board, false
+			}
+			rows[r] |= bit
+			cols[c] |= bit
+			boxes[bx] |= bit
+		}
+	}
+
+	const full = uint16(0x1FF)
+
+	var solve func() bool
+	solve = func() bool {
+		bestR, bestC := -1, -1
+		bestCount := 10
+		var bestMask uint16
+		for r := 0; r < 9; r++ {
+			for c := 0; c < 9; c++ {
+				if b[r][c] != 0 {
+					continue
+				}
+				mask := full &^ (rows[r] | cols[c] | boxes[(r/3)*3+c/3])
+				n := bits.OnesCount16(mask)
+				if n == 0 {
+					return false
+				}
+				if n < bestCount {
+					bestCount = n
+					bestR, bestC = r, c
+					bestMask = mask
+					if n == 1 {
+						goto found
+					}
+				}
+			}
+		}
+	found:
+		if bestR == -1 {
+			return true
+		}
+		bx := (bestR/3)*3 + bestC/3
+		for m := bestMask; m != 0; m &= m - 1 {
+			bit := m & -m
+			d := bits.TrailingZeros16(bit) + 1
+			b[bestR][bestC] = d
+			rows[bestR] |= bit
+			cols[bestC] |= bit
+			boxes[bx] |= bit
+			if solve() {
+				return true
+			}
+			rows[bestR] &^= bit
+			cols[bestC] &^= bit
+			boxes[bx] &^= bit
+			b[bestR][bestC] = 0
+		}
+		return false
+	}
+
+	if solve() {
+		return b, true
+	}
+	return board, false
+}

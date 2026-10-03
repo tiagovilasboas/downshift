@@ -1,0 +1,42 @@
+package task
+
+import "sort"
+
+// Merge merges overlapping or touching closed intervals and returns them
+// sorted by start. The input slice is not mutated.
+func Merge(intervals [][2]int) [][2]int {
+	if len(intervals) == 0 {
+		return [][2]int{}
+	}
+
+	cp := make([][2]int, len(intervals))
+	for i, iv := range intervals {
+		a, b := iv[0], iv[1]
+		if a > b {
+			a, b = b, a
+		}
+		cp[i] = [2]int{a, b}
+	}
+
+	sort.Slice(cp, func(i, j int) bool {
+		if cp[i][0] != cp[j][0] {
+			return cp[i][0] < cp[j][0]
+		}
+		return cp[i][1] < cp[j][1]
+	})
+
+	result := make([][2]int, 0, len(cp))
+	cur := cp[0]
+	for _, iv := range cp[1:] {
+		if iv[0] <= cur[1] {
+			if iv[1] > cur[1] {
+				cur[1] = iv[1]
+			}
+		} else {
+			result = append(result, cur)
+			cur = iv
+		}
+	}
+	result = append(result, cur)
+	return result
+}

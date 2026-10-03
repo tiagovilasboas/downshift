@@ -1,0 +1,22 @@
+package task
+
+import "strings"
+
+// ToRoman converts an integer in the range 1..3999 to its Roman numeral
+// representation. For values outside that range it returns an empty string.
+func ToRoman(n int) string {
+	if n < 1 || n > 3999 {
+		return ""
+	}
+	values := []int{1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1}
+	symbols := []string{"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"}
+
+	var b strings.Builder
+	for i, v := range values {
+		for n >= v {
+			b.WriteString(symbols[i])
+			n -= v
+		}
+	}
+	return b.String()
+}

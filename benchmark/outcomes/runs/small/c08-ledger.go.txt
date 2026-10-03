@@ -1,0 +1,58 @@
+package task
+
+import (
+	"errors"
+	"sync"
+)
+
+type Ledger struct {
+	balances map[string]int64
+	mutex    sync.RWMutex
+}
+
+func NewLedger(balances map[string]int64) *Ledger {
+	return &Ledger{
+		balances: balances,
+	}
+}
+
+func (l *Ledger) Balance(account string) int64 {
+	l.mutex.RLock()
+	defer l.mutex.RUnlock()
+	
+	return l.balances[account]
+}
+
+func (l *Ledger) Transfer(from, to string, amount int64) error {
+	if amount <= 0 {
+		return errors.New("amount must be positive")
+	}
+	
+	if from == to {
+		return errors.New("cannot transfer to self")
+	}
+	
+	l.mutex.Lock()
+	
+	// Check if accounts exist
+	fromBalance, fromExists := l.balances[from]
+	toBalance, toExists := l.balances[to]
+	
+	if !fromExists || !toExists {
+		l.mutex.Unlock()
+		return errors.New("unknown account")
+	}
+	
+	// Check for overdraft
+	if fromBalance < amount {
+		l.mutex.Unlock()
+		return errors.New("overdraft")
+	}
+	
+	// Perform transfer
+	l.balances[from] = fromBalance - amount
+	l.balances[to] = toBalance + amount
+	
+	l.mutex.Unlock()
+	return nil
+}

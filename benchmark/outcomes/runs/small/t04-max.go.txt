@@ -1,0 +1,16 @@
+package task
+
+func MaxInt(xs []int) (int, bool) {
+	if len(xs) == 0 {
+		return 0, false
+	}
+	
+	max := xs[0]
+	for _, x := range xs {
+		if x > max {
+			max = x
+		}
+	}
+	
+	return max, true
+}

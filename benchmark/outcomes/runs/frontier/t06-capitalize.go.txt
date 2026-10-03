@@ -1,0 +1,23 @@
+package task
+
+import (
+	"unicode"
+	"unicode/utf8"
+)
+
+// Capitalize returns s with its first letter converted to upper case.
+// The rest of the string is left unchanged.
+func Capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	r, size := utf8.DecodeRuneInString(s)
+	if r == utf8.RuneError && size <= 1 {
+		return s
+	}
+	upper := unicode.ToUpper(r)
+	if upper == r {
+		return s
+	}
+	return string(upper) + s[size:]
+}
