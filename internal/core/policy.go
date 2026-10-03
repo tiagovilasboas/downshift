@@ -96,13 +96,13 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		res = r[0]
 	}
 
-	tier, cls, graphEscalated, riskFloor := classifyTask(prompt)
+	tier, cls, graphEscalated := classifyTask(prompt)
 	effort := EffortFor(tier)
 	recommended := resolveModel(harness, tier, res)
 	verdict, savings, current := compareToCurrentModel(harness, currentModelID, recommended, res)
 
 	d := Decision{
-		Complexity:     cls,
+		Complexity:     cls.Complexity,
 		Tier:           tier,
 		Effort:         effort,
 		Harness:        harness,
@@ -110,11 +110,11 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		CurrentModel:   current,
 		Verdict:        verdict,
 		Savings:        savings,
-		Confident:      Classify(prompt).Confident,
+		Confident:      cls.Confident,
 		GraphEscalated: graphEscalated,
-		RiskFloor:      riskFloor,
+		RiskFloor:      cls.RiskFloor,
 	}
-	d.Intent = IntentFor(prompt, Classify(prompt), d, res)
+	d.Intent = IntentFor(prompt, cls, d, res)
 	// Self-correction validates the decision against the guardrails before
 	// any adapter acts. The classified verdict is preserved for telemetry;
 	// the safe action is exposed separately.
@@ -127,25 +127,25 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 	return d
 }
 
-// classifyTask scores the prompt and returns the target tier and complexity.
-// Returns (escalated bool) as third return value to track if graphify triggered.
-func classifyTask(prompt string) (Tier, Complexity, bool, bool) {
+// classifyTask classifies the prompt once (regex, semantic boost, risk floor,
+// graphify escalation) and returns the target tier, the final
+// classification and whether graphify escalated it. Route uses this single
+// result for complexity, confidence and intent so they never disagree.
+func classifyTask(prompt string) (Tier, Classification, bool) {
 	cls := classifyWithSemantic(prompt, Classify(prompt))
-	complexity := cls.Complexity
 	escalated := false
 
-	// Graphify escalation: if the text classifier is uncertain but the prompt
-	// mentions critical files/symbols, escalate to Complex for safer handling.
-	// Only escalate if not already Complex.
-	if complexity != Complex {
+	// Graphify escalation: if the prompt mentions critical files/symbols,
+	// escalate to Complex for safer handling. Only escalate if not already Complex.
+	if cls.Complexity != Complex {
 		hint := graphifyHint(prompt)
 		if hint.ShouldEscalate {
-			complexity = Complex
+			cls.Complexity = Complex
 			escalated = true
 		}
 	}
 
-	return complexity.Tier(), complexity, escalated, cls.RiskFloor
+	return cls.Complexity.Tier(), cls, escalated
 }
 
 // resolveModel returns the catalog model for the given harness and tier.
@@ -229,9 +229,9 @@ func (d Decision) ShouldRewriteModel() bool {
 	// stays put so a small model is not replaced by a dearer tier on a weak
 	// signal. Confident rewrites still apply. Plan falls back when this
 	// returns false.
-	// Exception: a risk-floored task may move up off the small tier — the
-	// floor is a deterministic rule, not a weak signal.
-	if action == VerdictUpshift && d.RiskFloor {
+	// Exception: a risk-floored or graphify-escalated task may move up — both
+	// are deterministic rules, not weak signals.
+	if action == VerdictUpshift && (d.RiskFloor || d.GraphEscalated) {
 		return true
 	}
 	if (action == VerdictDownshift || action == VerdictUpshift) && !d.Confident {
