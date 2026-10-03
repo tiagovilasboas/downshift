@@ -1,0 +1,11 @@
+package task
+
+// Sum returns the total of all integers in xs.
+// It returns 0 for a nil or empty slice.
+func Sum(xs []int) int {
+	total := 0
+	for _, x := range xs {
+		total += x
+	}
+	return total
+}

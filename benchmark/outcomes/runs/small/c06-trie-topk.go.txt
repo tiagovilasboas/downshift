@@ -1,0 +1,115 @@
+package task
+
+import (
+	"container/heap"
+	"sort"
+)
+
+type Trie struct {
+	root *TrieNode
+}
+
+type TrieNode struct {
+	children map[rune]*TrieNode
+	word     string
+	weight   int
+	isWord   bool
+}
+
+type PriorityQueue struct {
+	items []Item
+}
+
+type Item struct {
+	word   string
+	weight int
+}
+
+func (pq *PriorityQueue) Len() int { return len(pq.items) }
+
+func (pq *PriorityQueue) Less(i, j int) bool {
+	if pq.items[i].weight == pq.items[j].weight {
+		return pq.items[i].word < pq.items[j].word
+	}
+	return pq.items[i].weight > pq.items[j].weight
+}
+
+func (pq *PriorityQueue) Swap(i, j int) {
+	pq.items[i], pq.items[j] = pq.items[j], pq.items[i]
+}
+
+func (pq *PriorityQueue) Push(x interface{}) {
+	pq.items = append(pq.items, x.(Item))
+}
+
+func (pq *PriorityQueue) Pop() interface{} {
+	old := pq.items
+	n := len(old)
+	item := old[n-1]
+	pq.items = old[0 : n-1]
+	return item
+}
+
+func NewTrie() *Trie {
+	return &Trie{
+		root: &TrieNode{
+			children: make(map[rune]*TrieNode),
+		},
+	}
+}
+
+func (t *Trie) Insert(word string, weight int) {
+	node := t.root
+	for _, char := range word {
+		if _, exists := node.children[char]; !exists {
+			node.children[char] = &TrieNode{
+				children: make(map[rune]*TrieNode),
+			}
+		}
+		node = node.children[char]
+	}
+	node.word = word
+	node.weight = weight
+	node.isWord = true
+}
+
+func (t *Trie) Top(prefix string, k int) []string {
+	node := t.root
+	for _, char := range prefix {
+		if child, exists := node.children[char]; exists {
+			node = child
+		} else {
+			return []string{}
+		}
+	}
+
+	pq := &PriorityQueue{}
+	heap.Init(pq)
+	
+	// DFS to collect all words with the given prefix
+	var dfs func(*TrieNode)
+	dfs = func(node *TrieNode) {
+		if node.isWord {
+			heap.Push(pq, Item{word: node.word, weight: node.weight})
+			if pq.Len() > k {
+				heap.Pop(pq)
+			}
+		}
+		
+		for _, child := range node.children {
+			dfs(child)
+		}
+	}
+	
+	// Start DFS from the node after the prefix
+	dfs(node)
+	
+	// Extract results and sort them
+	result := make([]string, pq.Len())
+	for i := pq.Len() - 1; i >= 0; i-- {
+		item := heap.Pop(pq).(Item)
+		result[i] = item.word
+	}
+	
+	return result
+}

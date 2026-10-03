@@ -1,0 +1,70 @@
+package task
+
+import std.collections.ArrayList
+
+// CSVResult holds the parsed fields and an optional error message.
+struct CSVResult {
+    Fields []string
+    Err    string
+}
+
+// ParseCSVLine splits a single CSV record into fields.
+// It supports double-quoted fields that may contain commas and escaped quotes ("").
+// Returns an error if a quoted field is not terminated before the end of the line.
+func ParseCSVLine(line string) CSVResult {
+    fields := ArrayList<string>{}   // dynamic list of fields
+    field := ""                     // current field being built
+    inQuotes := false               // are we inside a quoted field?
+    i := 0
+    n := len(line)
+
+    while i < n {
+        c := line[i]
+
+        if inQuotes {
+            if c == '"' {
+                // Check for escaped quote ("")
+                if i + 1 < n && line[i + 1] == '"' {
+                    field += string('"')
+                    i += 2
+                    continue
+                } else {
+                    // Closing quote
+                    inQuotes = false
+                    i += 1
+                    continue
+                }
+            } else {
+                field += string(c)
+                i += 1
+            }
+        } else {
+            if c == '"' && len(field) == 0 {
+                // Start of a quoted field
+                inQuotes = true
+                i += 1
+                continue
+            } else if c == ',' {
+                // End of a field
+                fields.add(field)
+                field = ""
+                i += 1
+                continue
+            } else {
+                field += string(c)
+                i += 1
+            }
+        }
+    }
+
+    // After processing all characters
+    if inQuotes {
+        // Unterminated quoted field
+        return CSVResult{Fields: []string{}, Err: "unterminated quote"}
+    }
+
+    // Add the last field
+    fields.add(field)
+
+    return CSVResult{Fields: fields.toArray(), Err: ""}
+}

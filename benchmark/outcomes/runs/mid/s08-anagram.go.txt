@@ -1,0 +1,33 @@
+package task
+
+import "unicode"
+
+func IsAnagram(a, b string) bool {
+	count := make(map[rune]int)
+
+	for _, r := range a {
+		if unicode.IsSpace(r) {
+			continue
+		}
+		r = unicode.ToLower(r)
+		count[r]++
+	}
+
+	for _, r := range b {
+		if unicode.IsSpace(r) {
+			continue
+		}
+		r = unicode.ToLower(r)
+		count[r]--
+		if count[r] < 0 {
+			return false
+		}
+	}
+
+	for _, v := range count {
+		if v != 0 {
+			return false
+		}
+	}
+	return true
+}

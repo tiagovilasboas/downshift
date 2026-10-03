@@ -1,0 +1,35 @@
+package task
+
+// Spiral returns the elements of a rectangular matrix in clockwise spiral
+// order starting at the top-left corner.
+func Spiral(m [][]int) []int {
+	if len(m) == 0 || len(m[0]) == 0 {
+		return []int{}
+	}
+	rows, cols := len(m), len(m[0])
+	res := make([]int, 0, rows*cols)
+	top, bottom, left, right := 0, rows-1, 0, cols-1
+	for top <= bottom && left <= right {
+		for j := left; j <= right; j++ {
+			res = append(res, m[top][j])
+		}
+		top++
+		for i := top; i <= bottom; i++ {
+			res = append(res, m[i][right])
+		}
+		right--
+		if top <= bottom {
+			for j := right; j >= left; j-- {
+				res = append(res, m[bottom][j])
+			}
+			bottom--
+		}
+		if left <= right {
+			for i := bottom; i >= top; i-- {
+				res = append(res, m[i][left])
+			}
+			left++
+		}
+	}
+	return res
+}

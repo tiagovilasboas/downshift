@@ -1,0 +1,28 @@
+package task
+
+import "strings"
+
+func ParseKV(s string) map[string]string {
+	result := make(map[string]string)
+	if s == "" {
+		return result
+	}
+	pairs := strings.Split(s, ";")
+	for _, pair := range pairs {
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+		idx := strings.Index(pair, "=")
+		if idx == -1 {
+			continue
+		}
+		key := strings.TrimSpace(pair[:idx])
+		value := strings.TrimSpace(pair[idx+1:])
+		if key == "" {
+			continue
+		}
+		result[key] = value
+	}
+	return result
+}

@@ -1,0 +1,11 @@
+package task
+
+// Abs returns the absolute value of x.
+// Note: for the minimum int value, the result overflows and remains negative,
+// consistent with two's complement arithmetic.
+func Abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}

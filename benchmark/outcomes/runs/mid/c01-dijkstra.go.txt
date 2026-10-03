@@ -1,0 +1,96 @@
+package task
+
+import (
+	"container/heap"
+	"math"
+)
+
+// ShortestPath finds the shortest path from src to dst in a directed graph
+// with non-negative edge weights using Dijkstra's algorithm with a binary heap.
+// It returns the distance, the path (list of nodes from src to dst inclusive),
+// and a boolean indicating whether dst is reachable from src.
+func ShortestPath(n int, edges [][3]int, src, dst int) (int, []int, bool) {
+	// Build adjacency list: for each node, list of (neighbor, weight)
+	adj := make([][][2]int, n)
+	for _, e := range edges {
+		from, to, w := e[0], e[1], e[2]
+		adj[from] = append(adj[from], [2]int{to, w})
+	}
+
+	// Distance and parent arrays
+	dist := make([]int, n)
+	parent := make([]int, n)
+	for i := 0; i < n; i++ {
+		dist[i] = math.MaxInt
+		parent[i] = -1
+	}
+	dist[src] = 0
+
+	// Min-heap initialization
+	h := &minHeap{}
+	heap.Init(h)
+	heap.Push(h, item{node: src, dist: 0})
+
+	// Dijkstra's algorithm
+	for h.Len() > 0 {
+		cur := heap.Pop(h).(item)
+		u := cur.node
+		if cur.dist > dist[u] {
+			continue // stale entry
+		}
+		if u == dst {
+			break // we found the shortest distance to dst
+		}
+		for _, edge := range adj[u] {
+			v, w := edge[0], edge[1]
+			newDist := dist[u] + w
+			if newDist < dist[v] {
+				dist[v] = newDist
+				parent[v] = u
+				heap.Push(h, item{node: v, dist: newDist})
+			}
+		}
+	}
+
+	// Check if dst is reachable
+	if dist[dst] == math.MaxInt {
+		return 0, nil, false
+	}
+
+	// Reconstruct path from dst to src
+	path := []int{}
+	for cur := dst; cur != -1; cur = parent[cur] {
+		path = append(path, cur)
+	}
+	// Reverse to get src -> dst order
+	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+		path[i], path[j] = path[j], path[i]
+	}
+
+	return dist[dst], path, true
+}
+
+// item represents a node with its current distance for the heap.
+type item struct {
+	node int
+	dist int
+}
+
+// minHeap implements heap.Interface for items.
+type minHeap []item
+
+func (h minHeap) Len() int           { return len(h) }
+func (h minHeap) Less(i, j int) bool { return h[i].dist < h[j].dist }
+func (h minHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+
+func (h *minHeap) Push(x interface{}) {
+	*h = append(*h, x.(item))
+}
+
+func (h *minHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}

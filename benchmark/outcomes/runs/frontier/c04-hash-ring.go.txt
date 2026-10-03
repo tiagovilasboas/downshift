@@ -1,0 +1,92 @@
+package task
+
+import (
+	"hash/fnv"
+	"sort"
+	"strconv"
+	"sync"
+)
+
+type point struct {
+	hash uint32
+	node string
+}
+
+type Ring struct {
+	mu       sync.RWMutex
+	replicas int
+	points   []point
+	nodes    map[string]struct{}
+}
+
+func NewRing(replicas int) *Ring {
+	if replicas <= 0 {
+		replicas = 1
+	}
+	return &Ring{
+		replicas: replicas,
+		nodes:    make(map[string]struct{}),
+	}
+}
+
+func hashString(s string) uint32 {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return h.Sum32()
+}
+
+func (r *Ring) Add(node string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.nodes[node]; ok {
+		return
+	}
+	r.nodes[node] = struct{}{}
+	for i := 0; i < r.replicas; i++ {
+		r.points = append(r.points, point{
+			hash: hashString(strconv.Itoa(i) + "#" + node),
+			node: node,
+		})
+	}
+	sort.Slice(r.points, func(i, j int) bool {
+		if r.points[i].hash != r.points[j].hash {
+			return r.points[i].hash < r.points[j].hash
+		}
+		return r.points[i].node < r.points[j].node
+	})
+}
+
+func (r *Ring) Remove(node string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, ok := r.nodes[node]; !ok {
+		return
+	}
+	delete(r.nodes, node)
+	kept := r.points[:0]
+	for _, p := range r.points {
+		if p.node != node {
+			kept = append(kept, p)
+		}
+	}
+	for i := len(kept); i < len(r.points); i++ {
+		r.points[i] = point{}
+	}
+	r.points = kept
+}
+
+func (r *Ring) Get(key string) string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if len(r.points) == 0 {
+		return ""
+	}
+	h := hashString(key)
+	idx := sort.Search(len(r.points), func(i int) bool {
+		return r.points[i].hash >= h
+	})
+	if idx == len(r.points) {
+		idx = 0
+	}
+	return r.points[idx].node
+}

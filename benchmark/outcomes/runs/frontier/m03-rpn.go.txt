@@ -1,0 +1,53 @@
+package task
+
+import (
+	"errors"
+	"fmt"
+	"strconv"
+)
+
+// EvalRPN evaluates a reverse Polish notation expression consisting of
+// integers and the binary operators + - * /. Division truncates toward zero.
+// It returns an error for malformed input or division by zero.
+func EvalRPN(tokens []string) (int, error) {
+	if len(tokens) == 0 {
+		return 0, errors.New("empty expression")
+	}
+	stack := make([]int, 0, len(tokens))
+	for i, tok := range tokens {
+		switch tok {
+		case "+", "-", "*", "/":
+			if len(stack) < 2 {
+				return 0, fmt.Errorf("insufficient operands for operator %q at position %d", tok, i)
+			}
+			b := stack[len(stack)-1]
+			a := stack[len(stack)-2]
+			stack = stack[:len(stack)-2]
+			var r int
+			switch tok {
+			case "+":
+				r = a + b
+			case "-":
+				r = a - b
+			case "*":
+				r = a * b
+			case "/":
+				if b == 0 {
+					return 0, errors.New("division by zero")
+				}
+				r = a / b // Go integer division truncates toward zero
+			}
+			stack = append(stack, r)
+		default:
+			n, err := strconv.Atoi(tok)
+			if err != nil {
+				return 0, fmt.Errorf("invalid token %q at position %d", tok, i)
+			}
+			stack = append(stack, n)
+		}
+	}
+	if len(stack) != 1 {
+		return 0, fmt.Errorf("malformed expression: %d values left on stack", len(stack))
+	}
+	return stack[0], nil
+}

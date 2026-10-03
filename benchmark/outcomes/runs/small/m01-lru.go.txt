@@ -1,0 +1,56 @@
+package task
+
+import "container/list"
+
+type LRU struct {
+	capacity int
+	cache    map[string]*list.Element
+	list     *list.List
+}
+
+type entry struct {
+	key   string
+	value int
+}
+
+func NewLRU(capacity int) *LRU {
+	return &LRU{
+		capacity: capacity,
+		cache:    make(map[string]*list.Element),
+		list:     list.New(),
+	}
+}
+
+func (c *LRU) Get(key string) (int, bool) {
+	if elem, exists := c.cache[key]; exists {
+		// Move to front (most recently used)
+		c.list.MoveToFront(elem)
+		return elem.Value.(*entry).value, true
+	}
+	return 0, false
+}
+
+func (c *LRU) Put(key string, value int) {
+	if elem, exists := c.cache[key]; exists {
+		// Update existing key
+		elem.Value.(*entry).value = value
+		// Move to front (most recently used)
+		c.list.MoveToFront(elem)
+		return
+	}
+
+	// Add new key
+	if c.list.Len() >= c.capacity {
+		// Remove least recently used (back of list)
+		oldest := c.list.Back()
+		if oldest != nil {
+			delete(c.cache, oldest.Value.(*entry).key)
+			c.list.Remove(oldest)
+		}
+	}
+
+	// Add new entry
+	newEntry := &entry{key: key, value: value}
+	elem := c.list.PushFront(newEntry)
+	c.cache[key] = elem
+}

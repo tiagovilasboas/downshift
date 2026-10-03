@@ -1,0 +1,21 @@
+package task
+
+import (
+	"strings"
+	"unicode"
+)
+
+func Capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	
+	// Convert string to rune slice to handle Unicode properly
+	runes := []rune(s)
+	
+	// Uppercase only the first letter
+	runes[0] = unicode.ToUpper(runes[0])
+	
+	// Convert back to string
+	return string(runes)
+}

@@ -1,0 +1,42 @@
+package task
+
+import (
+	"strings"
+	"unicode"
+)
+
+// ToSnake converts CamelCase or camelCase identifiers to snake_case,
+// keeping acronyms together (HTTPServer -> http_server, userID -> user_id).
+func ToSnake(s string) string {
+	runes := []rune(s)
+	var b strings.Builder
+	b.Grow(len(s) + 4)
+
+	lastUnderscore := func() bool {
+		str := b.String()
+		return len(str) == 0 || str[len(str)-1] == '_'
+	}
+
+	for i, r := range runes {
+		if r == '-' || r == ' ' || r == '_' {
+			if !lastUnderscore() {
+				b.WriteRune('_')
+			}
+			continue
+		}
+		if unicode.IsUpper(r) {
+			if i > 0 && !lastUnderscore() {
+				prev := runes[i-1]
+				if unicode.IsLower(prev) || unicode.IsDigit(prev) {
+					b.WriteRune('_')
+				} else if unicode.IsUpper(prev) && i+1 < len(runes) && unicode.IsLower(runes[i+1]) {
+					b.WriteRune('_')
+				}
+			}
+			b.WriteRune(unicode.ToLower(r))
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
