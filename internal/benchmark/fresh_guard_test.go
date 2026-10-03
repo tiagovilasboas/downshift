@@ -20,11 +20,16 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
 )
 
-// benchmark/fresh.json and benchmark/heldout2.json are evaluation-only
-// splits: never used to write or tune signals. These tests keep them honest.
+// benchmark/fresh.json, benchmark/heldout2.json and benchmark/blind-vitrine.json
+// are evaluation-only splits: never used to write or tune signals. These tests
+// keep them honest.
 
 // evalOnlySplits are the evaluation-only files under benchmark/.
-var evalOnlySplits = []string{"fresh.json", "heldout2.json"}
+var evalOnlySplits = []string{"fresh.json", "heldout2.json", "blind-vitrine.json"}
+
+// minSplitSize is the smallest acceptable size per split. blind-vitrine is an
+// externally authored set of 60 (20 per tier label); the others are 100+.
+var minSplitSize = map[string]int{"blind-vitrine.json": 60}
 
 const repoRoot = "../.."
 
@@ -69,8 +74,12 @@ func TestFresh_ShapeAndNotTemplated(t *testing.T) {
 }
 
 func checkShape(t *testing.T, name string, tasks []benchmark.Task) {
-	if len(tasks) < 100 {
-		t.Fatalf("%s has %d tasks, want >= 100", name, len(tasks))
+	want := 100
+	if n, ok := minSplitSize[name]; ok {
+		want = n
+	}
+	if len(tasks) < want {
+		t.Fatalf("%s has %d tasks, want >= %d", name, len(tasks), want)
 	}
 	byLabel := map[string][]string{}
 	for _, tk := range tasks {
@@ -176,7 +185,7 @@ func TestFresh_NotReadByTuningCode(t *testing.T) {
 		if !d.Type().IsRegular() { // symlinks (e.g. .venv/lib64), sockets
 			return nil
 		}
-		if allowed[rel] || strings.HasSuffix(rel, ".md") || rel == "benchmark/fresh.json" || rel == "benchmark/heldout2.json" {
+		if allowed[rel] || strings.HasSuffix(rel, ".md") || isEvalOnlySplit(rel) {
 			return nil
 		}
 		b, err := os.ReadFile(path)
@@ -208,6 +217,9 @@ func TestFreshGuardScript(t *testing.T) {
 		{"benchmark/heldout2.json\ndocs/design/router-generalization.md\n", false},
 		{"benchmark/heldout2.json\ninternal/core/classifier.go\n", true},
 		{"tools/baseline/nb_tier.py\nbenchmark/heldout2.json\n", true},
+		{"benchmark/blind-vitrine.json\nbenchmark/blind-vitrine.README.md\n", false},
+		{"benchmark/blind-vitrine.json\ninternal/core/signals.go\n", true},
+		{"tools/baseline/nb_tier.py\nbenchmark/blind-vitrine.json\n", true},
 	}
 	for _, tc := range cases {
 		cmd := exec.Command("bash", filepath.Join(repoRoot, "scripts", "fresh-guard.sh"))
@@ -217,4 +229,13 @@ func TestFreshGuardScript(t *testing.T) {
 			t.Errorf("changed=%q: err=%v, wantErr=%t", tc.changed, err, tc.wantErr)
 		}
 	}
+}
+
+func isEvalOnlySplit(rel string) bool {
+	for _, name := range evalOnlySplits {
+		if rel == "benchmark/"+name {
+			return true
+		}
+	}
+	return false
 }
