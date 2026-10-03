@@ -153,10 +153,16 @@ func TestFresh_NotReadByTuningCode(t *testing.T) {
 		}
 		rel, _ := filepath.Rel(repoRoot, path)
 		if d.IsDir() {
-			switch rel {
-			case ".git", "web", "node_modules", ".venv", "dist":
+			switch d.Name() {
+			case ".git", "node_modules", ".venv", "venv", "__pycache__", "dist":
 				return filepath.SkipDir
 			}
+			if rel == "web" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !d.Type().IsRegular() { // symlinks (e.g. .venv/lib64), sockets
 			return nil
 		}
 		if allowed[rel] || strings.HasSuffix(rel, ".md") || rel == "benchmark/fresh.json" {
