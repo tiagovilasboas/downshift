@@ -141,9 +141,10 @@ func classifyTask(prompt string) (Tier, Classification, bool, NBUpshift) {
 	cls := classifyWithSemantic(prompt, Classify(prompt))
 	escalated := false
 
-	// Graphify escalation: if the prompt mentions critical files/symbols,
-	// escalate to Complex for safer handling. Only escalate if not already Complex.
-	if cls.Complexity != Complex {
+	// Graphify escalation: if the text classifier is uncertain but the prompt
+	// mentions critical files/symbols, escalate to Complex for safer handling.
+	// A confident classification is left alone; Complex needs no escalation.
+	if cls.Complexity != Complex && !cls.Confident {
 		hint := graphifyHint(prompt)
 		if hint.ShouldEscalate {
 			cls.Complexity = Complex
