@@ -29,7 +29,9 @@ type RiskSignalDef struct {
 var RawRiskSignals = []RiskSignalDef{
 	{"secret", `\b(secrets?|passwords?|passphrases?|credentials?|api[ _-]?keys?|private[ _-]?keys?|signing[ _-]?keys?|(access|refresh|bearer|session|auth) tokens?|tokens? validation|jwts?|oauth\w*|saml|sso|2fa|mfa|totp)\b`},
 	{"authz", `\b(permissions?|privileges?|is[ _]?admin|admin (role|rights|access)|rbac|acls?|authori[sz]ation|authenticat\w*|access control)\b`},
-	{"crypto", `\b(crypto\w*|encrypt\w*|decrypt\w*|hmac|tls|ssl|certificates?|signatures?)\b`},
+	// "signature" alone is not crypto ("function signature", "type signature",
+	// "email signature"); only verification and signed-message contexts are.
+	{"crypto", `\b(crypto\w*|encrypt\w*|decrypt\w*|hmac|tls|ssl|certificates?|(webhook|request|payload|message|digital|cryptographic|jwt|jws|hmac|rsa|ecdsa|ed25519|gpg|pgp) signatures?|signatures? (verification|validation|check|header|secret)s?|(verify|verifies|verifying|validate|validating|check|checking|skip|skipping) (the |a |an |its )?signatures?|signing (secrets?|certificates?))\b`},
 	{"payment", `\b(payments? (processing|logic|flow|handler|service|gateway|capture)|process(ing)? payments?|charg(e|es|ing) (the )?(customer|card|user)s?|double[- ]charg\w*|refunds?|settlements?|payouts?|stripe|pci|billing (logic|flow|cycle|calculation|engine))\b`},
 	{"vuln", `\b(sql injection|injection|xss|csrf|ssrf|rce|sanitiz\w*|vulnerab\w*|cve-\d+|exploit\w*|security)\b`},
 	{"pii", `\b(pii|gdpr|lgpd|personal data|ssn|social security|credit cards?)\b`},
