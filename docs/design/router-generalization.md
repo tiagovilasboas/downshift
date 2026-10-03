@@ -184,6 +184,107 @@ columns are predicted small/mid/frontier.
   by tier on seed + holdout.
 - `internal/nbtier/` counts as a tuning path for `scripts/fresh-guard.sh`.
 
+## Small over-routing (2026-10-03)
+
+On blind, 16/20 small tasks were routed to mid or frontier. The goal was to
+reduce that without any FRONTIER→SMALL and without touching the risk floor.
+
+### Root cause
+
+Most small→higher errors come from prompts where **no regex content signal
+fires**, so the classifier returns its MEDIUM default:
+
+| Set | small tasks routed up | of which no signal fired |
+|---|---|---|
+| seed | 56/100 | 41 |
+| fresh | 39/50 | 36 |
+| heldout2 | 55/60 | 51 |
+| blind | 16/20 | 13 |
+
+The MEDIUM default cannot simply become SMALL. No-signal prompts include
+frontier work on every set (seed 6, fresh 14, heldout2 19, blind 3 frontier
+items without a signal).
+
+**Outcome data says what over-routing actually costs.** Pass rates on the
+40 outcome tasks, by task label:
+
+| Run tier | trivial | simple | medium | complex |
+|---|---|---|---|---|
+| small | 9/10 | 7/10 | 6/10 | 5/10 |
+| mid | 8/10 | 9/10 | 9/10 | 5/10 |
+| frontier | 10/10 | 10/10 | 10/10 | 10/10 |
+
+Moving a trivial task to small is free. A simple task loses about 2/10. A
+medium task wrongly sent to small loses about 3/10. So every MID→SMALL a fix
+introduces costs more than the SMALL→higher it removes.
+
+### Method
+
+- **Tuning data:** seed, holdout and `benchmark/train-extra.json`, 60 new
+  prompts (20 per tier) that I wrote at 07:28 BRT and keep out of the eval
+  splits.
+- **Bias caveat:** I wrote them knowing the classifier vocabulary. They found
+  real failures, but they are not independent evidence.
+- **Freeze:** the plan was frozen at 07:29:11 BRT, before fresh, heldout2 or
+  blind were scored, including a ship rule for production changes: ship only
+  if no read-only set gains a FRONTIER→SMALL and none loses more than 2pp
+  accuracy.
+
+### Variants
+
+- **E3 + MIG** (shipped as a production fix, see the PR):
+  - **E3:** the `explain` simple signal counts only when "explain" leads the
+    prompt. Inside a long analysis ("…explain the fix in terms of
+    happens-before") it pulled frontier work down to small (3/20 frontier
+    prompts in train-extra).
+  - **MIG:** a medium signal for zero-downtime, no-downtime,
+    without-locking-writes and online-schema-change wording. Regression: a
+    *paraphrase* of the zero-downtime column migration case.
+- **NBD** (design only, not shipped):
+  - Applies only when no content signal fired, the final tier is the MEDIUM
+    default, and the risk floor would not hold the task.
+  - Route to small when NB says TRIVIAL/SIMPLE with a small-vs-rest
+    per-feature margin ≥ 0.2. m = 0.2 was chosen on train-extra.
+  - **NBD-T:** the same, but only when NB says TRIVIAL.
+
+### Results
+
+Tier accuracy, FRONTIER→lower (with FRONTIER→SMALL), SMALL→higher, MID→SMALL:
+
+| Set | main | E3+MIG | E3+MIG+NBD (m=0.2) | E3+MIG+NBD-T |
+|---|---|---|---|---|
+| seed (tuning; NB in-sample) | 69.0%, F↓0 (0), S↑56/100, M→S 1 | 69.0%, same | 87.0%, F↓0 (0), S↑20, M→S 1 | 79.5%, S↑35 |
+| holdout (tuning) | 100%, 0/0/0 | 100% | 100% | 100% |
+| train-extra (tuning) | 33.3%, F↓10 (**3**), S↑19/20, M→S 1 | 36.7%, F↓8 (0), S↑19, M→S 1 | 50.0%, F↓8 (0), S↑10, M→S 2 | 41.7%, S↑16, M→S 1 |
+| fresh (read-only) | 50.0%, F↓5 (0), S↑39/50, M→S 0 | 50.0%, same | **79.0%**, F↓5 (0), S↑**10**, M→S 0 | 66.0%, S↑23 |
+| heldout2 (read-only) | 40.0%, F↓14 (0), S↑55/60, M→S 0 | 40.0%, same | **63.3%**, F↓14 (0), S↑**25**, M→S **2** | 53.3%, S↑39, M→S 0 |
+| blind (read-only, now seen) | 46.7%, F↓5 (**1**), S↑16/20, M→S 5 | 50.0%, F↓4 (0), S↑18, M→S 0 | **65.0%**, F↓4 (0), S↑**7**, M→S 2 | 58.3%, S↑13, M→S 0 |
+
+### Reading
+
+- **E3 + MIG** passes the frozen ship rule. FRONTIER→SMALL is now 0 on every
+  set; production was at 1 on blind and 3 on train-extra. Seed and holdout
+  are unchanged.
+- **NBD roughly halves or better SMALL→higher on every read-only set** (fresh
+  39→10, heldout2 55→25, blind 18→7) with no FRONTIER→SMALL anywhere. It does
+  add MID→SMALL (heldout2 +2, blind +2), which the outcome data prices at
+  about −3/10 pass rate each.
+- NBD stays design-only, as the freeze required:
+  - Its seed gain is in-sample.
+  - Its tuning set is author-written.
+  - Its cost is MID→SMALL.
+- **NBD-T** has no MID→SMALL on any read-only set but only about half the
+  gain.
+
+### Recommendation (needs a GO; no default change)
+
+1. Ship NBD-T (TRIVIAL-only no-signal downshift, m = 0.2) the same way as
+   the upshift: computed in shadow mode, logged to telemetry, applied only
+   behind a default-OFF flag. Trivial is the class where small matches mid
+   on outcomes.
+2. Treat full NBD as a candidate once shadow telemetry or a new independent
+   split shows its MID→SMALL rate. Price it with the outcome table above.
+
 ## Reproduce
 
 ```sh
