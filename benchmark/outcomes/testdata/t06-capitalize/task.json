@@ -1,0 +1,5 @@
+{
+  "id": "t06-capitalize",
+  "label": "TRIVIAL",
+  "prompt": "add Capitalize(s string) string that uppercases only the first letter"
+}

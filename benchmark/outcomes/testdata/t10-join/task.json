@@ -1,0 +1,5 @@
+{
+  "id": "t10-join",
+  "label": "TRIVIAL",
+  "prompt": "add JoinComma(xs []string) string that joins items with a comma and a space"
+}

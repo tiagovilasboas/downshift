@@ -1,0 +1,5 @@
+{
+  "id": "m07-topo-sort",
+  "label": "MEDIUM",
+  "prompt": "write TopoSort(deps map[string][]string) ([]string, error) where deps[x] lists what x depends on; return an order in which every dependency appears before its dependents, choosing the alphabetically smallest ready node at each step, and return an error when there is a cycle"
+}

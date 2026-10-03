@@ -1,0 +1,5 @@
+{
+  "id": "m05-csv-line",
+  "label": "MEDIUM",
+  "prompt": "write ParseCSVLine(line string) ([]string, error) that splits one CSV record, supporting double-quoted fields that contain commas and escaped quotes (\"\"), and returns an error on an unterminated quote; do not use encoding/csv"
+}

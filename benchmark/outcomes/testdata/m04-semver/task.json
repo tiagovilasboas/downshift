@@ -1,0 +1,5 @@
+{
+  "id": "m04-semver",
+  "label": "MEDIUM",
+  "prompt": "write CompareSemver(a, b string) (int, error) for MAJOR.MINOR.PATCH versions with an optional -prerelease suffix, following semver precedence rules (prerelease sorts before the release; numeric identifiers compare numerically and sort before alphanumeric ones; a shorter identifier list sorts first); return an error for invalid versions"
+}

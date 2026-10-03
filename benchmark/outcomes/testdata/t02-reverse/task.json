@@ -1,0 +1,5 @@
+{
+  "id": "t02-reverse",
+  "label": "TRIVIAL",
+  "prompt": "write Reverse(s string) string that reverses a string rune by rune"
+}

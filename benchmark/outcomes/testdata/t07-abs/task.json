@@ -1,0 +1,5 @@
+{
+  "id": "t07-abs",
+  "label": "TRIVIAL",
+  "prompt": "add an Abs(x int) int helper"
+}

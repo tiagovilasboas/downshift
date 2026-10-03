@@ -1,4 +1,4 @@
-.PHONY: build test lint vet install build-all clean
+.PHONY: build test lint vet install build-all clean report
 
 BINARY=downshift
 LDFLAGS=-ldflags "-s -w"
@@ -26,6 +26,10 @@ build-all:
 	GOOS=linux   GOARCH=amd64 go build $(LDFLAGS) -o dist/$(BINARY)-linux-amd64   ./cmd/downshift
 	GOOS=linux   GOARCH=arm64 go build $(LDFLAGS) -o dist/$(BINARY)-linux-arm64   ./cmd/downshift
 	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o dist/$(BINARY)-windows-amd64.exe ./cmd/downshift
+
+## report: regenerate the README numbers block (benchmark + outcome eval)
+report:
+	go run ./cmd/downshift eval-outcome --report --write README.md
 
 ## clean: remove build artifacts
 clean:

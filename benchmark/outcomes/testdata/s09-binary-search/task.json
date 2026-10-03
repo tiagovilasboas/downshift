@@ -1,0 +1,5 @@
+{
+  "id": "s09-binary-search",
+  "label": "SIMPLE",
+  "prompt": "write BinarySearch(xs []int, target int) int that returns the index of target in a sorted slice or -1"
+}
