@@ -23,6 +23,10 @@ Accepted misroutes become test cases in `classifier_edge_test.go`, then the
 signals are tuned until they pass. Your prompt becomes a permanent regression
 guard.
 
+Never tune against `benchmark/fresh.json`: it is the evaluation-only split.
+Don't copy its prompts into tests or the seed, and don't change it in the same
+PR as signals (see `benchmark/README.md`; CI enforces this).
+
 ## Project layout
 
 ```

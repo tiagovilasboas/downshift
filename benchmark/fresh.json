@@ -1,0 +1,402 @@
+[
+  {
+    "prompt": "run go mod tidy and commit the result",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "fix the misspelled word \"recieve\" in the error message of the uploader",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "delete the unused helper file scripts/old_deploy.sh",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "bump the copyright year in the LICENSE header to 2026",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the CLI flag --outdir to --out-dir in the help text",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "remove the trailing whitespace in config.yaml",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "sort the imports in server.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "change the log level of the startup message from info to debug",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "replace tabs with spaces in the Makefile comments",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "update the link to the contributing guide in the docs index",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "delete the TODO comment above the retry loop in client.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "move the constant DefaultTimeout from main.go to constants.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the test file parser_spec.go to parser_test.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "fix the indentation in the docker-compose file",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "regenerate the mocks with mockgen",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add a missing newline at the end of version.txt",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "remove the console.log calls from the settings page",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the package folder utils to util and update the import paths",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "run prettier on the frontend source folder",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "correct the wrong year in the changelog entry for 1.4.0",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "delete the commented out debug print in the scheduler",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "update the badge URL in the docs landing page to the new CI workflow name",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the struct field Usr to User in the request type",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "remove the duplicated blank lines in handlers.py",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "change the default port in the example env file from 3000 to 8080",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "store the time of the last edit on each comment record",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write a test that checks parseDuration rejects negative values",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add input validation so the quantity field cannot be zero",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "fix the off-by-one error in the pagination helper's last page calculation",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a --dry-run flag to the cleanup command that only prints what it would delete",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "return a 404 instead of 500 when the project id does not exist",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add an index on the email column in the users migration",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "make the date formatter handle nil times without panicking",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a String method to the Status enum",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write a table test for the slugify function with unicode input",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a default value of 10 for the page size query parameter",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "handle the empty list case in the average calculator",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a helper that converts cents to a formatted price string",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "make the config loader trim spaces around keys",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a timeout to the HTTP client used by the weather fetcher",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "fix the wrong HTTP status code returned when the body is too large",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a max length check to the username field in the signup form",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write a unit test for the retry backoff that asserts the delays double",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add an optional description field to the Tag type and its JSON tags",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "make the CSV parser skip lines that start with a hash",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "expose the version number on the /healthz response",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a getter for the item count on the Cart struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "fix the null pointer when the profile image is missing",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a case-insensitive comparison to the search filter",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "make the logger include the request id in each line",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add pagination to every list endpoint in the orders API using the existing cursor helper",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement export to PDF for the monthly report using the current templating code",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "move the email sending into a background job queue with retries",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add rate limiting middleware to the public API routes and configure it per route",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement a settings page where users can change their notification preferences",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor the inventory service to use the repository pattern like the users module",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add structured logging across the worker, the API and the scheduler",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement soft delete for projects, including restore and filtering in queries",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add an audit trail table and record create, update and delete for documents",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "introduce feature flags for the new checkout UI using the existing config service",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add i18n support with English and Portuguese for the dashboard screens",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement file upload with progress bar and size limits for attachments",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "build a CLI subcommand that imports products from a CSV and reports errors per row",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add caching with TTL to the exchange rate lookups and invalidate on config change",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "replace the hand-written SQL in the reports module with the query builder",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add webhook delivery with signature headers and a retry schedule for failed calls",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement a dark mode theme toggle that persists across sessions",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add search with filters and sorting to the admin customer list",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "split the monolithic main.go into cmd, config and server packages",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add OpenAPI documentation generation for the REST handlers",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement optimistic locking on the article editor to avoid lost updates",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add end to end tests for the signup and onboarding flow",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement bulk edit for tags on the media library page",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add graceful shutdown to the API server and the background workers",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "create a metrics endpoint with request counts and latency histograms",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "design a multi-region active-active deployment for the order service with conflict resolution",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "find out why p99 latency spikes every hour in production and fix the root cause",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "migrate the monolith's user data from MySQL to Postgres with zero downtime",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "redesign the plugin system so third-party plugins run sandboxed and versioned",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "investigate the intermittent deadlock between the cache refresher and the writer goroutines",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "build an event sourcing model for the ledger and replay old transactions into it",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design the sharding strategy for the messages table as it approaches a billion rows",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "replace the polling sync with a CRDT based offline-first sync for the mobile app",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "track down the memory growth in the ingestion pipeline that only happens under sustained load",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design a consensus based leader election for the scheduler cluster",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rework the build system to support incremental builds across forty packages",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "plan and execute the split of the billing domain out of the monolith into its own service",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "diagnose the data corruption reported after the last failover and design a prevention",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design a query planner for the custom search DSL with cost based optimisation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "architect a streaming analytics platform that handles late and out of order events",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "make the job runner exactly-once across worker crashes and network partitions",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design the permission model for a multi-tenant SaaS with nested organisations and delegation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "rewrite the rendering engine to support incremental layout without regressions",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "evaluate and migrate the message bus from RabbitMQ to Kafka keeping ordering guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "investigate why the distributed cache returns stale values after a partition heals",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design a schema evolution strategy for the event store that keeps old consumers working",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "build a deterministic replay debugger for the workflow engine",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "re-architect the notification system to fan out to ten million users within a minute",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design backpressure across the gateway, the queue and the consumers for traffic spikes",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "untangle the circular dependencies between the core, billing and auth packages and define clear boundaries",
+    "label": "COMPLEX"
+  }
+]

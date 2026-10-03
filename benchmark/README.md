@@ -66,6 +66,28 @@ condition in the subscription renewal worker".
   ```
   The interval bounds prevent mistaking variance across small sample sizes for genuine classifier regressions or gains.
 
+## Fresh split (`fresh.json`): evaluation only
+
+`fresh.json` holds 100 hand-written, non-templated prompts (25 per label, same
+rubric) that are **never used to write or tune signals**. It measures how the
+router generalises; `holdout.json` stays as a templated regression net.
+
+Rules, enforced by `internal/benchmark/fresh_guard_test.go`, the CI step
+`Fresh split guard` and `scripts/fresh-guard.sh`:
+
+- No fresh prompt may appear, even as a near-duplicate (token Jaccard ≥ 0.6),
+  in `tasks.json`, `holdout.json` or the classifier/semantic test cases.
+- No label may be templated (more than 20% sharing a 4-word prefix).
+- No code or tool may read `fresh.json`; only CI (report step) and docs name it.
+- A PR that edits `fresh.json` must not also touch `internal/core/{signals,risk,classifier}.go`,
+  `internal/semantic/data/`, learned weights or `tools/minilm/`.
+- CI prints its numbers (`go run ./cmd/downshift benchmark benchmark/fresh.json`)
+  but does not gate on them: a gate would invite tuning against it.
+
+A misroute found on `fresh.json` is fixed by writing a **new** prompt that shows
+the same pattern into `tasks.json` or the edge tests, never by copying the
+fresh prompt.
+
 ## MiniLM holdout (P4.10)
 
 Evaluation on the 300-task held-out split (`benchmark/holdout.json`). Centroids for the neural row were fit only on `benchmark/tasks.json` by `tools/minilm/eval_holdout.py`.
