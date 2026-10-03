@@ -58,6 +58,10 @@ type Decision struct {
 	// always computed (shadow mode); it changes the tier only when
 	// DOWNSHIFT_NB_UPSHIFT=1, and then only upward.
 	NBUpshift NBUpshift
+	// NBDownshift records the naive-Bayes TRIVIAL downshift opinion for
+	// no-signal prompts. Always computed (shadow mode); it lowers the tier
+	// only when DOWNSHIFT_NB_DOWNSHIFT=1.
+	NBDownshift NBDownshift
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -100,7 +104,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		res = r[0]
 	}
 
-	tier, cls, graphEscalated, nbUp := classifyTask(prompt)
+	tier, cls, graphEscalated, nbUp, nbDown := classifyTask(prompt)
 	effort := EffortFor(tier)
 	recommended := resolveModel(harness, tier, res)
 	verdict, savings, current := compareToCurrentModel(harness, currentModelID, recommended, res)
@@ -118,6 +122,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		GraphEscalated: graphEscalated,
 		RiskFloor:      cls.RiskFloor,
 		NBUpshift:      nbUp,
+		NBDownshift:    nbDown,
 	}
 	d.Intent = IntentFor(prompt, cls, d, res)
 	// Self-correction validates the decision against the guardrails before
@@ -137,7 +142,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 // classification and whether graphify escalated it. Route uses this single
 // result for complexity, confidence and intent so they never disagree.
 // The naive-Bayes second opinion runs last, on the final tier.
-func classifyTask(prompt string) (Tier, Classification, bool, NBUpshift) {
+func classifyTask(prompt string) (Tier, Classification, bool, NBUpshift, NBDownshift) {
 	cls := classifyWithSemantic(prompt, Classify(prompt))
 	escalated := false
 
@@ -152,12 +157,17 @@ func classifyTask(prompt string) (Tier, Classification, bool, NBUpshift) {
 		}
 	}
 
+	nbDown := nbTrivialOpinion(prompt, cls, escalated)
+	if nbDown.Applied {
+		cls.Complexity = Trivial
+		cls.Confident = false
+	}
 	nbUp := nbSecondOpinion(prompt, cls.Complexity.Tier())
 	if nbUp.Applied {
 		cls.Complexity = complexityForTier(nbUp.To)
 		cls.Confident = false
 	}
-	return cls.Complexity.Tier(), cls, escalated, nbUp
+	return cls.Complexity.Tier(), cls, escalated, nbUp, nbDown
 }
 
 // resolveModel returns the catalog model for the given harness and tier.
@@ -245,6 +255,12 @@ func (d Decision) ShouldRewriteModel() bool {
 	// are deterministic rules, not weak signals — and so may an NB upshift the
 	// user opted into with DOWNSHIFT_NB_UPSHIFT=1.
 	if action == VerdictUpshift && (d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied) {
+		return true
+	}
+	// An NB TRIVIAL downshift the user opted into (DOWNSHIFT_NB_DOWNSHIFT=1)
+	// is gated by its own margin and exclusions; guardrails still apply via
+	// SafeVerdict above.
+	if action == VerdictDownshift && d.NBDownshift.Applied {
 		return true
 	}
 	if (action == VerdictDownshift || action == VerdictUpshift) && !d.Confident {

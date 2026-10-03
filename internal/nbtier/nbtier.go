@@ -168,3 +168,21 @@ func Suggest(prompt string, prodTier int) Suggestion {
 	s.Upshift = s.Margin >= Margin
 	return s
 }
+
+// DownshiftMargin is the small-vs-rest margin a TRIVIAL opinion needs before
+// it may be used as a downshift. Chosen on the tuning prompts only
+// (docs/design/router-generalization.md, "Small over-routing").
+const DownshiftMargin = 0.20
+
+// Trivial reports whether NB labels the prompt TRIVIAL with a small-vs-rest
+// margin of at least DownshiftMargin. The margin is the per-feature
+// log-likelihood gap between the best small-tier label and the best
+// mid/frontier label. No known feature means no opinion.
+func Trivial(prompt string) (bool, float64) {
+	ll, n := scores(prompt)
+	if n == 0 {
+		return false, 0
+	}
+	margin := (math.Max(ll[0], ll[1]) - math.Max(ll[2], ll[3])) / float64(n)
+	return Predict(prompt) == "TRIVIAL" && margin >= DownshiftMargin, margin
+}
