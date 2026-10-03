@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
@@ -66,9 +67,9 @@ func TestNBDownshift_OffKeepsRoutingAndRecordsShadow(t *testing.T) {
 	}
 }
 
-// Flag ON: exactly the reference set moves mid -> small, nothing else moves,
-// no frontier task reaches small, and the rewrite is allowed for the applied
-// downshifts only.
+// Flag ON: exactly the reference set gets the small tier recorded, nothing
+// else moves, no frontier task reaches small, and guardrail R1 holds every
+// applied downshift, so no spawn is rewritten.
 func TestNBDownshift_OnAppliesTrivialOnly(t *testing.T) {
 	offlineRouting(t)
 	t.Setenv(core.NBUpshiftEnv, "")
@@ -92,12 +93,42 @@ func TestNBDownshift_OnAppliesTrivialOnly(t *testing.T) {
 			if d.RiskFloor || d.Complexity != core.Trivial {
 				t.Errorf("applied downshift: riskFloor=%v complexity=%s for %q", d.RiskFloor, d.Complexity, g.Prompt)
 			}
-			if !d.ShouldRewriteModel() || d.SafeVerdict != core.VerdictDownshift {
-				t.Errorf("applied downshift not rewritten: safe=%s corrections=%v for %q", d.SafeVerdict, d.Corrections, g.Prompt)
+			if d.ShouldRewriteModel() || d.SafeVerdict != core.VerdictOK || !slices.Contains(d.Corrections, core.RuleUnconfidentDowngrade) {
+				t.Errorf("R1 did not hold the NB downshift: safe=%s corrections=%v for %q", d.SafeVerdict, d.Corrections, g.Prompt)
 			}
 		}
 	}
 	if applied != 21 {
 		t.Errorf("applied downshifts = %d, want 21", applied)
+	}
+}
+
+// R1 holds an NB-eligible downshift whether the current model is a known
+// frontier model (DOWNSHIFT verdict) or unknown (no model to compare): the
+// spawn keeps its model. Before, the NB gate skipped R1 and the spawn was
+// rewritten to the small model.
+func TestNBDownshift_R1HoldsWithFlagOn(t *testing.T) {
+	offlineRouting(t)
+	t.Setenv(core.NBUpshiftEnv, "")
+	t.Setenv(core.NBDownshiftEnv, "1")
+	golden, would := loadNBGolden(t), loadTrivialWould(t)
+	var prompt string
+	for i, g := range golden {
+		if would[i] {
+			prompt = g.Prompt
+			break
+		}
+	}
+	for _, current := range []string{"claude-opus-4-8", ""} {
+		d := core.Route(prompt, "claude-code", current, cat)
+		if !d.NBDownshift.Applied {
+			t.Fatalf("precondition: NB downshift not applied for %q", prompt)
+		}
+		if d.SafeVerdict != core.VerdictOK || !slices.Contains(d.Corrections, core.RuleUnconfidentDowngrade) {
+			t.Errorf("current=%q: safe=%s corrections=%v, want R1 hold", current, d.SafeVerdict, d.Corrections)
+		}
+		if d.ShouldRewriteModel() {
+			t.Errorf("current=%q: held NB downshift would rewrite to %s", current, d.Model.ID)
+		}
 	}
 }

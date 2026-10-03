@@ -257,12 +257,6 @@ func (d Decision) ShouldRewriteModel() bool {
 	if action == VerdictUpshift && (d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied) {
 		return true
 	}
-	// An NB TRIVIAL downshift the user opted into (DOWNSHIFT_NB_DOWNSHIFT=1)
-	// is gated by its own margin and exclusions; guardrails still apply via
-	// SafeVerdict above.
-	if action == VerdictDownshift && d.NBDownshift.Applied {
-		return true
-	}
 	if (action == VerdictDownshift || action == VerdictUpshift) && !d.Confident {
 		return false
 	}

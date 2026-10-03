@@ -192,8 +192,12 @@ columns are predicted small/mid/frontier.
   - NB labels the prompt TRIVIAL with a small-vs-rest margin ≥ 0.2.
 
   Telemetry records `nb_downshift {mid→small, margin, applied}`. With
-  `DOWNSHIFT_NB_DOWNSHIFT=1` the task moves to small; R1 (unconfident
-  downshift) does not hold that opt-in move, while R2 and R5 still apply.
+  `DOWNSHIFT_NB_DOWNSHIFT=1` the recorded tier becomes small, but guardrail
+  R1 (unconfident downshift) holds it like any other unconfident downshift,
+  including when no current model is known. With the flag on, 0 of the 21
+  seed opinions (and 0 on every other set) rewrite a spawn, so the flag is
+  effectively a no-op for routing; only the shadow telemetry is useful until
+  the opinion can be made a confident classification.
 
 ## Small over-routing (2026-10-03)
 
