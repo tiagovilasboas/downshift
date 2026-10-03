@@ -207,8 +207,12 @@ func runHookAdapter[E any](
 	// A zero Decision (Harness == "") means the event was not a subagent spawn.
 	if decision.Harness != "" {
 		event := telemetry.FromDecision(decision, correlationID, buildVersion)
-		if noRoute {
+		switch {
+		case noRoute:
 			event.Outcome = telemetry.OutcomeBaseline
+		case note == "":
+			// Adapters return a note only when they rewrote the spawn.
+			event.Outcome = telemetry.OutcomeAllow
 		}
 		shadow := decisionintelligence.Evaluate(decisionintelligence.Signals{
 			BaseTier:             decision.Tier,

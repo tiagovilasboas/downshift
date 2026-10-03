@@ -16,7 +16,7 @@ func CountInferredHonored(events []Event) (shifted, honored int) {
 	type key struct{ harness, session string }
 	groups := make(map[key][]int)
 	for i, ev := range events {
-		if ev.Outcome != "rewrite_emitted" || ev.Harness == "" || ev.SessionID == "" {
+		if ev.Outcome != OutcomeRewriteEmitted || ev.Harness == "" || ev.SessionID == "" {
 			continue
 		}
 		k := key{ev.Harness, ev.SessionID}
