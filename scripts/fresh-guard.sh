@@ -14,7 +14,7 @@ changed=$(cat)
 split=$(grep -xE 'benchmark/(fresh|heldout2|blind-vitrine)\.json' <<<"$changed" || true)
 [ -n "$split" ] || exit 0
 
-tuning=$(grep -E '^(internal/core/(signals|risk|classifier)\.go|internal/semantic/data/|internal/routingv2/classifier/weights/|tools/minilm/|tools/baseline/)' <<<"$changed" || true)
+tuning=$(grep -E '^(internal/core/(signals|risk|classifier)\.go|internal/semantic/data/|internal/routingv2/classifier/weights/|tools/minilm/|tools/baseline/|internal/nbtier/)' <<<"$changed" || true)
 if [ -n "$tuning" ]; then
   echo "fresh-guard: $(echo $split) changed together with router tuning files:" >&2
   echo "$tuning" | sed 's/^/  /' >&2

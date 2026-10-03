@@ -1,0 +1,802 @@
+[
+  {
+    "prompt": "rename the variable userId to userID across auth.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "fix the typo in the README",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "run git status",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format this file with prettier",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add a missing semicolon on line 42",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "move the file utils.ts to src/lib/utils.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "delete the commented-out code in payment.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "run the test suite and report failures",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "list all .go files in the internal directory",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "update the package.json version to 2.0.1",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "fix import statement sorting in auth.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add .env.local to .gitignore",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "remove the TODO comment from session.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "reformat the SQL migration file with proper indentation",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add a new field email to the User struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "fix the off-by-one error in the pagination logic",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add input validation for the email field in the signup form",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write a unit test for the formatDate function",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add error handling to the fetchUser function",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement the missing getByID method on UserRepository",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new endpoint GET /api/health that returns 200 OK",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement an isEmail validator function that checks RFC 5322 format",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a CreatedAt timestamp to the Post model",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement role-based access control check on the admin dashboard route",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "fix the null pointer dereference when User.Profile is not set",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add caching headers to the static asset middleware",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement the missing deleteByID method for ProductRepository",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a new database index on the email column of the users table",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement dark mode toggle using the existing theme context",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor the auth module to extract token validation into a separate service",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add pagination support to the list users endpoint",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement a retry mechanism with exponential backoff for the HTTP client",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add caching layer using Redis to the product catalog queries",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "migrate the user preferences feature from localStorage to the database",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor the checkout flow to support multiple payment providers",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "extract the email notification logic into a separate service with queue support",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement search filtering with full-text search on the product catalog",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add request logging and metrics collection to all HTTP endpoints",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor state management from Redux to Zustand across all pages",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement soft delete support for users with timestamp tracking",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add GraphQL API layer on top of existing REST endpoints",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor the notification system to support multiple channels (email, SMS, push)",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "rearchitect the authentication system to support multi-tenant organisations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "investigate and fix the race condition in the subscription renewal worker",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement a distributed rate limiter across multiple pods",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "migrate the monolith payment module to a microservice with backward compatibility",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "implement end-to-end encryption for the messaging feature across web and mobile",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "debug the memory leak in the WebSocket connection pool under high load",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "implement a CQRS pattern for the order management domain replacing the current CRUD approach",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design a real-time collaborative editing system with operational transformation for documents",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "architect a federated learning pipeline for model training across distributed devices",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "implement consensus-based sharding strategy for the distributed cache cluster",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "debug the cascading failure in the service mesh after introducing circuit breakers",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "implement event sourcing with full audit trail for compliance requirements",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and build a financial reconciliation engine handling multi-currency settlements",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "implement zero-downtime migration from PostgreSQL to distributed NoSQL across production",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "architect a machine learning feature store with real-time feature computation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "add missing return type annotation in utils.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "capitalize constant names in config.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "remove trailing whitespace from index.html",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "sort imports alphabetically in main.py",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "update copyright year to 2026 in all files",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename private variable from _ctx to ctx_private",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add boilerplate license header to new file",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rebase feature branch on main",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "cherry-pick commit abc123 from develop",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "tag release v3.5.0 on current branch",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "update CHANGELOG.md with new version",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "restore deleted test fixtures",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add phone number field to UserProfile model",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement string interpolation in error messages",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write tests for the calculateDiscount function",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add optional timeout parameter to HTTPClient",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "refactor switch statement into lookup table",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add rate limiting check before API call",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement missing equals method for ProductID",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add memoization to recursive fibonacci function",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "extract SQL query constants to separate file",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add JSDoc comments to exported functions",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement equals and hashCode for User class",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add unit test coverage for edge cases in date parser",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement toString method for Order entity",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add SQL constraint for non-nullable email",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement session storage persisting across browser restarts",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor logging to use structured JSON format everywhere",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add integration tests for the payment gateway adapter",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement feature flag system using Redis",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor database queries to use parameterized statements",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add distributed tracing with OpenTelemetry",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement custom error codes and error handling across the API",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor ORM models to use lazy loading pattern",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add circuit breaker pattern to third-party API calls",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement JWT token refresh mechanism with sliding window",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor controller methods to use dependency injection",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add database migration rollback support",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement bulkhead isolation for resource pools",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement blockchain consensus protocol for distributed ledger",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and build a recommendation engine using collaborative filtering",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "architect multi-region failover with data consistency guarantees",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "implement chaos engineering framework for resilience testing",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement gRPC service mesh with service discovery",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "build real-time collaboration platform with operational transformation",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "implement machine learning model serving with A/B testing framework",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "architect audit system with tamper-proof logging across services",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design database sharding strategy for 100M+ record tables",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "implement streaming pipeline for processing 1M events/sec",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "redesign payment system to support crypto and fiat settlement",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "implement serverless data lake with data lineage tracking",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "run git diff to inspect local changes",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "git stash changes and switch branch",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "git checkout main and pull latest",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format python files using ruff format",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "run eslint --fix across the project",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "indent json configuration files with 2 spaces",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the function calculateTotal to computeTotal",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "renomear o parametro customerID para clientId",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "fix typo in contributing guidelines doc",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add code comment explaining regex pattern",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "bump docker image tag to v1.4.2",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "delete deprecated mock files in test/mocks",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "remove unused import statements in handlers.go",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "listar arquivos na pasta config",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "list all yaml files under .github workflows",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "git commit -m 'chore: cleanup dead code'",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "format markdown documentation table",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add a newline at end of file",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "remove console.log debug statements from index.ts",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "run prettier --write on styling css files",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "move images from assets/ to public/images/",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "delete empty temporary log files",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "rename the field createdAt to created_at in schema",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "bump node version in .nvmrc to 22.0.0",
+    "label": "TRIVIAL"
+  },
+  {
+    "prompt": "add phoneNumber validation helper function",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write a unit test for password hashing helper",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "explain what this SQL query execution plan means",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "what does this error message mean in go runtime",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add a timeout flag to the CLI command",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write function to parse ISO 8601 timestamps",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "fix the bug where empty email throws null pointer exception",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add country code field to Address struct",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write a unit test for currency conversion utility",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "explain how this token bucket rate limiter works",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add validation check for positive integers on quantity param",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "fix off-by-one error in pagination slice",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write helper function to sanitize user input strings",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add retryCount property to RequestConfig interface",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write single test asserting 404 response on missing item",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "fix bug where nil pointer dereference happens on empty payload",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "explain what this regex capture group does",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add isActive boolean flag to Organization model",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write function to truncate long text with ellipsis",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "add custom error type for invalid credentials",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "fix bug with leap year date parsing in date parser",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "write unit test verifying json serialization of UserProfile",
+    "label": "SIMPLE"
+  },
+  {
+    "prompt": "implement caching layer with redis for product catalog",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor user authentication controller into clean service pattern",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add batch export endpoint for downloading orders as CSV",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "integrate stripe webhook receiver for invoice payment success",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement rate limiting middleware across API endpoints",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor database repository queries across multiple models",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add prometheus metrics endpoint for request durations",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "revisar a implementacao do modulo de notificacoes por email",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement optimistic concurrency control on inventory updates",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "debug why background worker drops websocket connection after 5 minutes",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement full-text search feature for blog articles",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "integrate sendgrid api for transactional email delivery",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor graphql resolver to avoid n+1 database queries",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement idempotent payment charge processing with idempotency keys",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "add open telemetry tracing span to outgoing http calls",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "revisar os handlers de autenticacao e sessao",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement circuit breaker pattern around third-party weather service",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "refactor file upload pipeline to stream directly to S3 bucket",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "integrate oauth2 provider login with github",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement server-sent events endpoint for live dashboard updates",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "debug memory leak in event emitter listener registrations",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "implement dynamic feature flag checks across billing routes",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "revisar logica de split de pagamentos entre vendedores",
+    "label": "MEDIUM"
+  },
+  {
+    "prompt": "rearchitect authentication and authorization layer to support multi-tenant organizations",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design and implement distributed lock manager using etcd with leader election",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "investigate and fix race condition in concurrent inventory decrement under high load",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "plan database migration from postgresql to distributed spanner without downtime",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "security review of payment processing flow for owasp asvs compliance",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "architect event-driven data sync pipeline across multi-region clusters",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "debug deadlock in postgres transaction pool when executing concurrent bulk transfers",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design consensus algorithm for cross-datacenter state machine replication",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "re-design payment gateway architecture to handle 50000 transactions per second",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "investigate why memory grows monotonically in worker pool under distributed workloads",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "conduct security audit of OAuth token exchange and refresh flow",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "architect zero-downtime database schema migration strategy for multi-terabyte tables",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "debug distributed transaction failure during two-phase commit across microservices",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design end-to-end encryption key management system with hardware security module integration",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "re-architect core order processing pipeline from monolith to event choreography",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "analyze trade-offs between eventual consistency and linearizability in global ledger",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "security audit of session token generation and storage against session hijacking",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "investigate cascading failure in kubernetes service mesh under network partition",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "re-design multi-region active-active disaster recovery failover mechanism",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "think through the trade-offs of sharding vs distributed sql for billing ledger",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "design telemetry architecture for high-cardinality distributed tracing",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "conduct security review of user impersonation and privilege escalation vectors",
+    "label": "COMPLEX"
+  },
+  {
+    "prompt": "debug silent data corruption occurring during cross-cluster replication",
+    "label": "COMPLEX"
+  }
+]
