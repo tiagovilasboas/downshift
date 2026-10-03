@@ -20,8 +20,11 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
 )
 
-// benchmark/fresh.json is the evaluation-only split: never used to write or
-// tune signals. These tests keep it honest.
+// benchmark/fresh.json and benchmark/heldout2.json are evaluation-only
+// splits: never used to write or tune signals. These tests keep them honest.
+
+// evalOnlySplits are the evaluation-only files under benchmark/.
+var evalOnlySplits = []string{"fresh.json", "heldout2.json"}
 
 const repoRoot = "../.."
 
@@ -49,20 +52,25 @@ func jaccard(a, b map[string]bool) float64 {
 	return float64(inter) / float64(union)
 }
 
-func loadFresh(t *testing.T) []benchmark.Task {
+func loadSplit(t *testing.T, name string) []benchmark.Task {
 	t.Helper()
-	tasks, err := benchmark.LoadDataset(filepath.Join(repoRoot, "benchmark", "fresh.json"))
+	tasks, err := benchmark.LoadDataset(filepath.Join(repoRoot, "benchmark", name))
 	if err != nil {
-		t.Fatalf("fresh.json: %v", err)
+		t.Fatalf("%s: %v", name, err)
 	}
 	return tasks
 }
 
 // Fresh must be big enough to report, balanced, and not templated.
 func TestFresh_ShapeAndNotTemplated(t *testing.T) {
-	tasks := loadFresh(t)
+	for _, name := range evalOnlySplits {
+		checkShape(t, name, loadSplit(t, name))
+	}
+}
+
+func checkShape(t *testing.T, name string, tasks []benchmark.Task) {
 	if len(tasks) < 100 {
-		t.Fatalf("fresh.json has %d tasks, want >= 100", len(tasks))
+		t.Fatalf("%s has %d tasks, want >= 100", name, len(tasks))
 	}
 	byLabel := map[string][]string{}
 	for _, tk := range tasks {
@@ -70,7 +78,7 @@ func TestFresh_ShapeAndNotTemplated(t *testing.T) {
 	}
 	for label, prompts := range byLabel {
 		if len(prompts) < 20 {
-			t.Errorf("%s: %d tasks, want >= 20", label, len(prompts))
+			t.Errorf("%s %s: %d tasks, want >= 20", name, label, len(prompts))
 		}
 		prefixes := map[string]int{}
 		for _, p := range prompts {
@@ -82,7 +90,7 @@ func TestFresh_ShapeAndNotTemplated(t *testing.T) {
 		}
 		for prefix, n := range prefixes {
 			if float64(n) > 0.2*float64(len(prompts)) {
-				t.Errorf("%s: %d/%d prompts share the prefix %q (templated)", label, n, len(prompts), prefix)
+				t.Errorf("%s %s: %d/%d prompts share the prefix %q (templated)", name, label, n, len(prompts), prefix)
 			}
 		}
 	}
@@ -91,7 +99,10 @@ func TestFresh_ShapeAndNotTemplated(t *testing.T) {
 // No fresh prompt may appear (exactly or as a near-duplicate) in the seed,
 // the regression set, or any classifier/semantic test case.
 func TestFresh_NoLeakage(t *testing.T) {
-	fresh := loadFresh(t)
+	var fresh []benchmark.Task
+	for _, name := range evalOnlySplits {
+		fresh = append(fresh, loadSplit(t, name)...)
+	}
 
 	var others []string
 	for _, name := range []string{"tasks.json", "holdout.json"} {
@@ -165,15 +176,17 @@ func TestFresh_NotReadByTuningCode(t *testing.T) {
 		if !d.Type().IsRegular() { // symlinks (e.g. .venv/lib64), sockets
 			return nil
 		}
-		if allowed[rel] || strings.HasSuffix(rel, ".md") || rel == "benchmark/fresh.json" {
+		if allowed[rel] || strings.HasSuffix(rel, ".md") || rel == "benchmark/fresh.json" || rel == "benchmark/heldout2.json" {
 			return nil
 		}
 		b, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		if strings.Contains(string(b), "fresh.json") {
-			t.Errorf("%s references fresh.json; the fresh split is evaluation-only", rel)
+		for _, name := range evalOnlySplits {
+			if strings.Contains(string(b), name) {
+				t.Errorf("%s references %s; that split is evaluation-only", rel, name)
+			}
 		}
 		return nil
 	})
@@ -192,6 +205,9 @@ func TestFreshGuardScript(t *testing.T) {
 		{"benchmark/fresh.json\ninternal/core/signals.go\n", true},
 		{"benchmark/fresh.json\ninternal/semantic/data/minilm.json\n", true},
 		{"tools/minilm/train_prototypes.py\nbenchmark/fresh.json\n", true},
+		{"benchmark/heldout2.json\ndocs/design/router-generalization.md\n", false},
+		{"benchmark/heldout2.json\ninternal/core/classifier.go\n", true},
+		{"tools/baseline/nb_tier.py\nbenchmark/heldout2.json\n", true},
 	}
 	for _, tc := range cases {
 		cmd := exec.Command("bash", filepath.Join(repoRoot, "scripts", "fresh-guard.sh"))
