@@ -4,6 +4,16 @@ Evaluation-only. Guarded like `fresh.json` and `heldout2.json`: no tuning code
 may read it, and CI (`scripts/fresh-guard.sh`) rejects a change set that edits
 it together with router tuning files. Report it, never fit to it.
 
+## Status: seen (no longer blind)
+
+This set was scored on 2026-10-03: once for the upshift-only design (#35)
+and once per frozen variant of the small over-routing cut, with plans
+frozen beforehand on tuning data (`docs/design/router-generalization.md`).
+Its aggregate results and a few individual items have been read, so it is
+**no longer a blind test** for future router decisions. It stays
+evaluation-only under the guard: report it, never fit to it. The next
+decision needs a new, independently authored split.
+
 ## Provenance
 
 - **Author:** a separate AI agent that never saw this repository. It did not
