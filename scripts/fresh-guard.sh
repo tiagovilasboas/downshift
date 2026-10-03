@@ -2,15 +2,16 @@
 # Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 # SPDX-License-Identifier: BUSL-1.1
 #
-# fresh-guard.sh: benchmark/fresh.json and benchmark/heldout2.json are
-# evaluation-only. A change set that edits either together with anything that tunes the router (signals, risk
+# fresh-guard.sh: benchmark/fresh.json, benchmark/heldout2.json and
+# benchmark/blind-vitrine.json are evaluation-only. A change set that edits
+# any of them together with anything that tunes the router (signals, risk
 # table, classifier, semantic prototypes, learned weights, prototype tools)
 # is rejected: fresh numbers stop meaning anything once rules are fitted to
 # them. Reads changed paths (one per line) on stdin; exit 1 on violation.
 set -euo pipefail
 
 changed=$(cat)
-split=$(grep -xE 'benchmark/(fresh|heldout2)\.json' <<<"$changed" || true)
+split=$(grep -xE 'benchmark/(fresh|heldout2|blind-vitrine)\.json' <<<"$changed" || true)
 [ -n "$split" ] || exit 0
 
 tuning=$(grep -E '^(internal/core/(signals|risk|classifier)\.go|internal/semantic/data/|internal/routingv2/classifier/weights/|tools/minilm/|tools/baseline/)' <<<"$changed" || true)
