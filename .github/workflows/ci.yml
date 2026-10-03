@@ -64,7 +64,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           git fetch --no-tags --depth=1 origin "$BASE_SHA"
-          git diff --name-only "$BASE_SHA" HEAD | ./scripts/fresh-guard.sh
+          git diff --name-only "$BASE_SHA" HEAD | bash scripts/fresh-guard.sh
 
       - name: Adapter Smoke Tests
         run: |
