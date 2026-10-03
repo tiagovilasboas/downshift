@@ -1,0 +1,242 @@
+[
+  {
+    "prompt": "Review this Spring Boot controller. List concrete problems (correctness, security, API design, error handling) in priority order and show a corrected version.\n\n```java\n@RestController\npublic class AccountController {\n    @Autowired AccountRepository repo;\n\n    @GetMapping(\"/accounts\")\n    public List<Account> search(@RequestParam String name) {\n        return repo.findAll().stream()\n            .filter(a -> a.getName().contains(name))\n            .collect(Collectors.toList());\n    }\n\n    @PostMapping(\"/accounts/{id}/withdraw\")\n    public Account withdraw(@PathVariable Long id, @RequestParam double amount) {\n        Account a = repo.findById(id).get();\n        a.setBalance(a.getBalance() - amount);\n        return repo.save(a);\n    }\n}\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "This Tokio service compiles only after we replaced `tokio::spawn` with `block_on` in one place, and in production it sometimes freezes completely under load with all worker threads idle-blocked. Explain why the original `tokio::spawn` version did not compile, why the current code can deadlock/stall the runtime, and rewrite it correctly. Discuss when `std::sync::Mutex` is acceptable in async code and when `tokio::sync::Mutex` is needed.\n\n```rust\nuse std::sync::{Arc, Mutex};\n\nstruct State { sessions: HashMap<u64, Session> }\n\nasync fn handle(state: Arc<Mutex<State>>, id: u64) -> Result<(), Error> {\n    let mut guard = state.lock().unwrap();\n    let session = guard.sessions.get_mut(&id).ok_or(Error::NotFound)?;\n    let token = refresh_token(&session.refresh).await?; // network call, ~100ms\n    session.token = token;\n    Ok(())\n}\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Implement a generic `debounce` function in TypeScript: `debounce<T extends (...args: any[]) => void>(fn: T, waitMs: number): (...args: Parameters<T>) => void`. Each call resets the timer; `fn` runs with the latest arguments after `waitMs` of no calls.",
+    "label": "small"
+  },
+  {
+    "prompt": "We use cache-aside with Redis in front of PostgreSQL. After deploys and during traffic spikes, users occasionally see stale product prices for up to the full TTL (1 hour) even after an update succeeded, and the database CPU spikes to 100% for ~30 seconds when popular keys expire. Explain every race/interleaving that can cause the stale reads (with a timeline), explain the CPU spike, and redesign the read and write paths to fix both. Discuss the tradeoffs of your approach.\n\n```python\ndef get_product(pid):\n    v = redis.get(f\"p:{pid}\")\n    if v:\n        return json.loads(v)\n    row = db.fetch_one(\"SELECT * FROM products WHERE id=%s\", pid)\n    redis.set(f\"p:{pid}\", json.dumps(row), ex=3600)\n    return row\n\ndef update_price(pid, price):\n    redis.delete(f\"p:{pid}\")\n    db.execute(\"UPDATE products SET price=%s WHERE id=%s\", price, pid)\n    # read replicas lag 0-2s behind the primary; get_product reads from a replica\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "This pandas code emits `SettingWithCopyWarning` and the `df` DataFrame's `discounted` column ends up all NaN for some rows. Explain what is happening and rewrite it correctly and idiomatically.\n\n```python\nimport pandas as pd\n\ndf = pd.read_csv(\"sales.csv\")  # columns: region, price, vip\nvip = df[df[\"vip\"] == True]\nvip[\"discounted\"] = vip[\"price\"] * 0.9\ndf[\"discounted\"] = vip[\"discounted\"]\ndf.loc[df[\"vip\"] == False][\"discounted\"] = df[\"price\"]\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "This PostgreSQL query is slow on a table with 50M rows. Rewrite it without the correlated subquery, and recommend the index(es) you would add, explaining why.\n\n```sql\nSELECT e.id, e.user_id, e.created_at, e.payload\nFROM events e\nWHERE e.created_at = (\n  SELECT MAX(e2.created_at) FROM events e2 WHERE e2.user_id = e.user_id\n)\nAND e.type = 'login';\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "This script breaks on filenames that contain spaces. Fix it.\n\n```bash\n#!/bin/bash\nfor f in $(ls *.log); do\n  gzip $f\ndone\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "Do a security review of this Express file-serving endpoint. It is meant to let authenticated users download files only from their own folder under `/srv/uploads/<userId>/`. List every vulnerability you can find with a concrete exploit input for each, rate severity, and give a hardened version.\n\n```ts\napp.get(\"/files/:name\", requireAuth, async (req, res) => {\n  const name = decodeURIComponent(req.params.name);\n  if (name.includes(\"../\")) return res.status(400).send(\"bad name\");\n  const userDir = path.join(\"/srv/uploads\", req.user.id);\n  const full = path.join(userDir, name);\n  if (!full.startsWith(userDir)) return res.status(403).end();\n  const stat = await fs.promises.stat(full).catch(() => null);\n  if (!stat) return res.status(404).send(`Not found: ${name}`);\n  res.setHeader(\"Content-Disposition\", `attachment; filename=\"${name}\"`);\n  fs.createReadStream(full).pipe(res);\n});\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "We need to add a non-nullable column `status TEXT NOT NULL DEFAULT 'active'` and an index on it to a PostgreSQL 15 table `subscriptions` with 80M rows that receives constant writes. Write the migration steps (SQL) that avoid long table locks or blocking writes, and explain which statements are safe on PG15 and why. Include how to make it safe if a step fails halfway.",
+    "label": "mid"
+  },
+  {
+    "prompt": "This cache is used by hundreds of goroutines. Under `go test -race` it occasionally reports races, and in production we sometimes see the loader called multiple times for the same key and rare \"concurrent map read and map write\" crashes. Identify every concurrency bug, explain the interleaving that triggers each, and provide a corrected implementation that guarantees at most one concurrent load per key, does not hold the global lock during `load`, and does not cache errors.\n\n```go\ntype Cache struct {\n    mu    sync.RWMutex\n    data  map[string]*entry\n    load  func(string) (string, error)\n}\n\ntype entry struct {\n    once sync.Once\n    val  string\n    err  error\n}\n\nfunc (c *Cache) Get(k string) (string, error) {\n    c.mu.RLock()\n    e, ok := c.data[k]\n    c.mu.RUnlock()\n    if !ok {\n        e = &entry{}\n        c.mu.Lock()\n        c.data[k] = e\n        c.mu.Unlock()\n    }\n    e.once.Do(func() {\n        e.val, e.err = c.load(k)\n        if e.err != nil {\n            delete(c.data, k)\n        }\n    })\n    return e.val, e.err\n}\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Write a table-driven Go test for this function, covering positive, negative, zero, and math.MinInt64 (document what you expect it to return for MinInt64).\n\n```go\nfunc Abs(x int64) int64 {\n    if x < 0 {\n        return -x\n    }\n    return x\n}\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "Give me a single Bash command that counts the total number of lines across all `.py` files under the current directory, recursively, excluding anything inside `venv/` or `.git/` directories. It must handle filenames containing spaces.",
+    "label": "small"
+  },
+  {
+    "prompt": "Add TypeScript types to this function: define an interface `CartItem` with `price: number` and `qty: number`, and an optional `discount` parameter (a fraction between 0 and 1, default 0). Return the typed function.\n\n```js\nfunction cartTotal(items, discount) {\n  const sum = items.reduce((acc, it) => acc + it.price * it.qty, 0);\n  return sum * (1 - (discount || 0));\n}\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "Write an Express middleware in TypeScript `requireRole(...roles: string[])` that: reads a Bearer token from the Authorization header, verifies it with `jsonwebtoken` using an HS256 secret from `process.env.JWT_SECRET` (reject other algorithms), returns 401 for missing/invalid/expired tokens, returns 403 if the token's `roles` claim contains none of the required roles, and otherwise attaches the decoded payload to `req.user` and calls `next()`. Include the type augmentation for `req.user`.",
+    "label": "mid"
+  },
+  {
+    "prompt": "This asyncio service occasionally (a) hangs during shutdown, (b) silently loses some background \"audit\" writes, and (c) under load, all requests stall for seconds at a time. Review the code, identify the root cause of each symptom with the specific lines responsible, and provide a corrected version.\n\n```python\nimport asyncio\n\nlock = asyncio.Lock()\ncache = {}\n\nasync def audit(event):\n    await db.insert(\"audit\", event)\n\nasync def handle(req):\n    asyncio.create_task(audit({\"path\": req.path}))\n    async with lock:\n        if req.key not in cache:\n            cache[req.key] = await asyncio.wait_for(fetch_remote(req.key), timeout=10)\n    return cache[req.key]\n\nasync def worker(queue):\n    while True:\n        try:\n            item = await queue.get()\n            await process(item)\n        except Exception:\n            continue\n        except BaseException:\n            pass\n\nasync def shutdown(workers):\n    for w in workers:\n        w.cancel()\n    await asyncio.gather(*workers)\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Review this \"link preview\" endpoint for SSRF and related issues. The service runs in a cloud VPC with an instance metadata endpoint at 169.254.169.254 and internal services on 10.0.0.0/8. List every bypass of the current protection with a concrete example URL or technique, and write a robust implementation (Python, `requests` or `httpx`) that actually prevents them.\n\n```python\nimport ipaddress, socket, requests\nfrom urllib.parse import urlparse\n\nBLOCKED = [ipaddress.ip_network(n) for n in (\"10.0.0.0/8\", \"127.0.0.0/8\", \"169.254.169.254/32\")]\n\ndef preview(url: str) -> str:\n    host = urlparse(url).hostname\n    ip = ipaddress.ip_address(socket.gethostbyname(host))\n    if any(ip in net for net in BLOCKED):\n        raise PermissionError(\"blocked\")\n    r = requests.get(url, timeout=5, allow_redirects=True)\n    return r.text[:2000]\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "This Go function should return the sum of all elements but panics with \"index out of range\". Fix it and explain the bug in one sentence.\n\n```go\nfunc Sum(nums []int) int {\n    total := 0\n    for i := 0; i <= len(nums); i++ {\n        total += nums[i]\n    }\n    return total\n}\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "Our PostgreSQL logs show periodic deadlocks between these two code paths, which run concurrently with many instances. Explain exactly how the deadlock arises (which locks, in what order), why it only happens under load, and propose at least two fixes with their tradeoffs. Then pick one and show the corrected SQL.\n\nPath A (transfer):\n```sql\nBEGIN;\nUPDATE accounts SET balance = balance - $amount WHERE id = $from;\nUPDATE accounts SET balance = balance + $amount WHERE id = $to;\nINSERT INTO ledger(from_id, to_id, amount) VALUES ($from, $to, $amount);\nCOMMIT;\n```\n\nPath B (nightly interest, runs per batch of 500 account ids):\n```sql\nBEGIN;\nUPDATE accounts SET balance = balance * 1.0001\nWHERE id = ANY($ids) AND balance > 0;\nCOMMIT;\n```\n\n`ledger` has a foreign key `from_id REFERENCES accounts(id)` and `to_id REFERENCES accounts(id)`.",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Implement in Go a function `ProcessAll(ctx context.Context, jobs []Job, workers int, fn func(context.Context, Job) (Result, error)) ([]Result, error)` that runs `fn` over all jobs with a fixed pool of `workers` goroutines. Requirements: results must be in the same order as `jobs`; on the first error, cancel the remaining work and return that error; respect cancellation of the parent ctx; no goroutine leaks. You may use golang.org/x/sync/errgroup or plain sync primitives.",
+    "label": "mid"
+  },
+  {
+    "prompt": "Modify this GitHub Actions workflow so the test job runs on Node.js 18, 20 and 22 using a matrix. Return the full YAML.\n\n```yaml\nname: ci\non: [push]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - run: npm ci\n      - run: npm test\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "This counter is incremented from many threads and the final value is lower than expected. Explain why, then give three fixed versions (synchronized, AtomicLong, LongAdder) and say when you would choose each.\n\n```java\npublic class HitCounter {\n    private long hits = 0;\n    public void hit() { hits++; }\n    public long get() { return hits; }\n}\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "Write a TypeScript async generator `listAllInvoices(client)` that iterates through a REST endpoint `GET /v1/invoices?limit=100&cursor=<c>` which returns `{ data: Invoice[], next_cursor: string | null }`. Requirements: yield invoices one at a time; stop when `next_cursor` is null; on HTTP 429, wait for the number of seconds in the `Retry-After` header (default 1s) and retry the same page, max 5 retries per page; throw on other non-2xx responses with the status and body in the message. Use the global `fetch`.",
+    "label": "mid"
+  },
+  {
+    "prompt": "Write a Bash script `rotate-logs.sh DIR` that, for the given directory:\n1. gzips every `*.log` file older than 1 day that is not already compressed,\n2. deletes `*.log.gz` files older than 30 days,\n3. prints a summary line with counts of compressed and deleted files,\n4. exits non-zero with a usage message if DIR is missing or not a directory.\nIt must be safe for filenames with spaces/newlines, use `set -euo pipefail`, and be idempotent when run repeatedly from cron.",
+    "label": "mid"
+  },
+  {
+    "prompt": "Refactor this Node.js code from callbacks to async/await using `fs/promises`. Preserve behavior: if the config file is missing, fall back to defaults; any other error must propagate. Keep the exported function name.\n\n```ts\nimport fs from \"fs\";\nconst DEFAULTS = { port: 3000, debug: false };\n\nexport function loadConfig(path: string, cb: (err: Error | null, cfg?: any) => void) {\n  fs.readFile(path, \"utf8\", (err, data) => {\n    if (err) {\n      if ((err as any).code === \"ENOENT\") return cb(null, DEFAULTS);\n      return cb(err);\n    }\n    try {\n      cb(null, { ...DEFAULTS, ...JSON.parse(data) });\n    } catch (e) {\n      cb(e as Error);\n    }\n  });\n}\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "Given `orders(id, customer_id, amount_cents, created_at)`, write a SQL query that returns each customer_id with their number of orders and total amount in cents, only for customers with at least 3 orders, sorted by total amount descending.",
+    "label": "small"
+  },
+  {
+    "prompt": "Table `users(id SERIAL PRIMARY KEY, email TEXT, created_at TIMESTAMPTZ)` in PostgreSQL. Write a query that returns the id and email of users created in the last 7 days, newest first.",
+    "label": "small"
+  },
+  {
+    "prompt": "Our payment provider delivers webhooks at-least-once, possibly out of order, with retries for up to 72 hours. Each webhook (payment.succeeded, payment.refunded, payment.disputed, etc.) must update an `orders` table in PostgreSQL, publish an event to a message broker for downstream services (fulfillment, email, accounting), and must never double-ship or double-refund. Downstream consumers are also at-least-once. Design the end-to-end processing: idempotency keys and storage, handling out-of-order events (e.g. refunded arriving before succeeded), the transactional outbox or alternative, how consumers dedupe, what happens if the broker or DB is down, and how to reprocess safely after a bug. Provide the key table schemas and pseudocode for the webhook handler and the outbox relay.",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Review this `unsafe` Rust code for soundness. Identify every way safe code calling this API can trigger undefined behavior (consider panics, drop order, aliasing, and uninitialized memory), explain each, and provide a sound version.\n\n```rust\npub struct FixedVec<T> {\n    buf: Box<[MaybeUninit<T>]>,\n    len: usize,\n}\n\nimpl<T> FixedVec<T> {\n    pub fn with_capacity(n: usize) -> Self {\n        let mut v = Vec::with_capacity(n);\n        unsafe { v.set_len(n); }\n        Self { buf: v.into_boxed_slice(), len: 0 }\n    }\n    pub fn push(&mut self, x: T) {\n        self.buf[self.len] = MaybeUninit::new(x);\n        self.len += 1;\n    }\n    pub fn extend_from_fn(&mut self, n: usize, mut f: impl FnMut(usize) -> T) {\n        let start = self.len;\n        self.len += n;\n        for i in 0..n {\n            self.buf[start + i] = MaybeUninit::new(f(i));\n        }\n    }\n    pub fn as_slice(&self) -> &[T] {\n        unsafe { std::slice::from_raw_parts(self.buf.as_ptr() as *const T, self.buf.len()) }\n    }\n}\n\nimpl<T> Drop for FixedVec<T> {\n    fn drop(&mut self) {\n        for i in 0..self.len {\n            unsafe { self.buf[i].assume_init_drop(); }\n        }\n    }\n}\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "We run a single PostgreSQL primary (6 TB, ~30k writes/s at peak) for a multi-tenant SaaS; the largest 1% of tenants produce 60% of the load. We must move to a sharded setup within two quarters with zero planned downtime and the ability to roll back at every step. Write a migration plan: shard key choice (and how to handle the giant tenants), how cross-tenant/admin queries and global uniqueness constraints will work, the data-copy and cutover mechanism (e.g. logical replication vs dual writes vs CDC), how you verify consistency, the rollback plan for each phase, and the top risks with mitigations. Be explicit about tradeoffs you are accepting.",
+    "label": "frontier"
+  },
+  {
+    "prompt": "PostgreSQL tables: `products(id, category_id, name)` and `order_items(order_id, product_id, quantity, unit_price_cents)`. Write a query returning, for each category, the top 3 products by total revenue (quantity * unit_price_cents). If products tie on revenue, include all tied products (so a category may return more than 3 rows). Output: category_id, product name, revenue, rank. Explain why you chose your ranking function.",
+    "label": "mid"
+  },
+  {
+    "prompt": "Rewrite this as a single list comprehension with identical behavior:\n\n```python\nresult = []\nfor order in orders:\n    if order[\"status\"] == \"paid\":\n        result.append(order[\"total\"] * 1.1)\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "This code runs fine in tests but in production, on a multi-core server, a worker thread occasionally never stops after `shutdown()` is called, and other threads sometimes see a `Config` object whose `endpoints` list is null even though `getConfig()` returned non-null. Explain precisely, in terms of the Java Memory Model (happens-before, reordering, safe publication), why each symptom can occur, and fix both with minimal changes. Also explain why adding `volatile` to only one of the fields would or would not be sufficient.\n\n```java\npublic class Service {\n    private boolean running = true;\n    private Config config;\n\n    public Config getConfig() {\n        if (config == null) {\n            synchronized (this) {\n                if (config == null) {\n                    config = new Config(loadEndpoints());\n                }\n            }\n        }\n        return config;\n    }\n\n    public void workLoop() {\n        while (running) { process(getConfig()); }\n    }\n\n    public void shutdown() { running = false; }\n}\n\nclass Config {\n    List<String> endpoints;\n    Config(List<String> e) { this.endpoints = e; }\n}\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Refactor this component: extract the data loading into a reusable custom hook `useFetch<T>(url)` returning `{ data, error, loading }`, avoid recomputing the filtered list on every render, and make sure the click handler passed to the memoized child does not change identity between renders.\n\n```tsx\nconst Row = React.memo(({ user, onSelect }: { user: User; onSelect: (id: string) => void }) => (\n  <li onClick={() => onSelect(user.id)}>{user.name}</li>\n));\n\nexport function UserList({ filter }: { filter: string }) {\n  const [users, setUsers] = useState<User[]>([]);\n  const [selected, setSelected] = useState<string | null>(null);\n  useEffect(() => { fetch(\"/api/users\").then(r => r.json()).then(setUsers); }, []);\n  const visible = users.filter(u => u.name.toLowerCase().includes(filter.toLowerCase()));\n  return (\n    <ul>\n      {visible.map(u => <Row key={u.id} user={u} onSelect={id => setSelected(id)} />)}\n      {selected && <p>Selected: {selected}</p>}\n    </ul>\n  );\n}\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "Every time we do a rolling deployment of our Go HTTP API on Kubernetes, clients see a burst of 502s and \"connection reset by peer\" errors for ~10-20 seconds, even though readiness probes pass and the app handles SIGTERM by calling `server.Shutdown(ctx)` with a 30s timeout. Traffic goes: cloud L7 load balancer -> ingress-nginx -> Service -> pods. Clients use HTTP keep-alive. Explain all the plausible causes (consider endpoint propagation timing, preStop, terminationGracePeriodSeconds, keep-alive/idle timeouts at each hop, readiness during shutdown, maxSurge/maxUnavailable), how you'd confirm each one, and give the concrete Deployment YAML and Go code changes to achieve zero-error deploys.",
+    "label": "frontier"
+  },
+  {
+    "prompt": "This single-producer/single-consumer lock-free ring buffer passes tests on x86 but occasionally returns garbage values on ARM. Identify all memory-ordering and correctness bugs, explain why x86 masks them, and provide a corrected implementation with the weakest correct memory orders, justifying each one. Also comment on false sharing.\n\n```cpp\ntemplate <typename T, size_t N>\nclass SpscQueue {\n    T buf[N];\n    std::atomic<size_t> head{0}; // consumer reads here\n    std::atomic<size_t> tail{0}; // producer writes here\npublic:\n    bool push(const T& v) {\n        size_t t = tail.load(std::memory_order_relaxed);\n        size_t next = (t + 1) % N;\n        if (next == head.load(std::memory_order_relaxed)) return false;\n        tail.store(next, std::memory_order_relaxed);\n        buf[t] = v;\n        return true;\n    }\n    bool pop(T& out) {\n        size_t h = head.load(std::memory_order_relaxed);\n        if (h == tail.load(std::memory_order_relaxed)) return false;\n        out = buf[h];\n        head.store((h + 1) % N, std::memory_order_relaxed);\n        return true;\n    }\n};\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "This function takes minutes for 100k records. Explain the time complexity, why it is slow, and rewrite it to be fast while producing the exact same output (including order).\n\n```python\ndef unique_emails(records):\n    seen = []\n    out = []\n    for r in records:\n        e = r[\"email\"].strip().lower()\n        if e not in seen:\n            seen.append(e)\n            out.append(e)\n    return out\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "Calling `add_tag(\"a\")` then `add_tag(\"b\")` returns `[\"a\", \"b\"]` on the second call instead of `[\"b\"]`. Explain why and fix it.\n\n```python\ndef add_tag(tag, tags=[]):\n    tags.append(tag)\n    return tags\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "Given an array `a` of n integers (n up to 2*10^5, values up to 10^9) and q queries (q up to 2*10^5), each query (l, r) asks for the number of distinct values in a[l..r] (1-indexed, inclusive). The naive solution below is too slow. Implement an O((n + q) log n) solution in Python that runs within a few seconds for the max input, explain the algorithm and why it is correct, and include a randomized test comparing it against the naive version.\n\n```python\ndef distinct_queries(a, queries):\n    return [len(set(a[l-1:r])) for l, r in queries]\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Write pytest tests for this function without making real HTTP calls or sleeping. Cover: success on first try, success after one 503, and giving up after 3 failures (assert the exception and number of calls). Use `unittest.mock`.\n\n```python\nimport time, requests\n\ndef get_with_retry(url, attempts=3, delay=2.0):\n    last = None\n    for i in range(attempts):\n        resp = requests.get(url, timeout=5)\n        if resp.status_code < 500:\n            return resp.json()\n        last = resp\n        time.sleep(delay * (2 ** i))\n    raise RuntimeError(f\"failed after {attempts}: {last.status_code}\")\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "This method throws a NullPointerException when the user has no nickname. Fix it so it falls back to the user's first name. Keep the signature.\n\n```java\npublic String displayName(User user) {\n    return user.getNickname().trim();\n}\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "Write a Rust function `fn reverse_words(s: &str) -> String` that reverses the order of whitespace-separated words, collapsing multiple spaces into one. Example: `\"  hello   big world \"` -> `\"world big hello\"`. Include a `#[test]` for the example.",
+    "label": "small"
+  },
+  {
+    "prompt": "Security-review this JWT verification helper used by several internal services. Identify all vulnerabilities (including ones that depend on how keys are configured), describe a concrete attack for each, and rewrite it securely using PyJWT.\n\n```python\nimport jwt, json, base64, hmac, hashlib\n\nPUBLIC_KEY = open(\"/etc/keys/auth_pub.pem\").read()\n\ndef verify(token: str) -> dict:\n    header_b64, payload_b64, sig_b64 = token.split(\".\")\n    header = json.loads(base64.urlsafe_b64decode(header_b64 + \"==\"))\n    alg = header.get(\"alg\", \"HS256\")\n    if alg == \"none\":\n        return json.loads(base64.urlsafe_b64decode(payload_b64 + \"==\"))\n    claims = jwt.decode(token, PUBLIC_KEY, algorithms=[alg], options={\"verify_exp\": False})\n    if \"kid\" in header:\n        secret = open(f\"/etc/keys/{header['kid']}\").read()\n        expected = hmac.new(secret.encode(), f\"{header_b64}.{payload_b64}\".encode(), hashlib.sha256).digest()\n        if expected != base64.urlsafe_b64decode(sig_b64 + \"==\"):\n            raise ValueError(\"bad signature\")\n    return claims\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Implement an LRU cache in Rust: `struct LruCache<K, V>` with `new(capacity: usize)`, `get(&mut self, k: &K) -> Option<&V>` and `put(&mut self, k: K, v: V)`, where both operations are O(1) average and the least recently used entry is evicted when capacity is exceeded. Use only the standard library (no `unsafe`). Include tests for eviction order and for `get` refreshing recency.",
+    "label": "mid"
+  },
+  {
+    "prompt": "Design a rate limiting system for a public API deployed in 3 regions (each with its own Redis cluster, ~40ms cross-region latency). Requirements: per-API-key limits like \"1000 requests/minute globally\" plus burst limits of \"50 requests/second per region\"; p99 overhead under 2ms; keep serving if a region's Redis is down; customers on the enterprise plan must never be throttled below their purchased limit by more than 5%. Compare at least two algorithms and two global-coordination strategies, state the consistency/accuracy tradeoffs numerically where possible, describe failure modes, and recommend one design with justification.",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Our public REST API returns `user.name` as a single string. We need to replace it with structured `given_name` / `family_name` fields (some cultures have no family name, some put it first), and the old field must eventually go away because it causes data-quality problems. Constraints: there are ~40 third-party integrators we can contact but not force; our own mobile apps have versions in the wild up to 2 years old that we cannot force-update; writes from old clients still send `name`. Produce a deprecation and migration plan: API versioning approach, how old and new fields stay consistent on read and on write (including writes from old clients after a user set structured names on a new client), data backfill strategy for existing names, telemetry to decide when removal is safe, communication timeline, and what you would do about the long tail of clients that never upgrade.",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Write pytest unit tests for this pure function. Cover: normal text, extra whitespace, punctuation, uppercase, and empty string. Use `@pytest.mark.parametrize`.\n\n```python\nimport re\n\ndef slugify(text: str) -> str:\n    text = text.strip().lower()\n    text = re.sub(r\"[^a-z0-9\\s-]\", \"\", text)\n    return re.sub(r\"[\\s-]+\", \"-\", text).strip(\"-\")\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "Every code change makes this Dockerfile reinstall all npm dependencies. Reorder it so the dependency layer is cached when only source files change. Return the fixed Dockerfile.\n\n```dockerfile\nFROM node:20-alpine\nWORKDIR /app\nCOPY . .\nRUN npm ci\nCMD [\"node\", \"server.js\"]\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "We are building an offline-first notes app (web + mobile, TypeScript everywhere). Users edit rich-text notes on multiple devices that can be offline for days; notes can be shared with collaborators; we need history and the ability to restore old versions; storage on the server is PostgreSQL. Product says \"edits should never be lost\" but also \"users must never see garbled merged text\". These requirements conflict in some scenarios. Propose a sync architecture: data model, conflict resolution strategy (compare last-write-wins, three-way merge with conflict copies, and CRDTs such as Yjs/Automerge), sync protocol, how deletes and sharing permission changes interact with offline edits, and storage growth. Explicitly identify where the requirements conflict and what you would recommend telling product.",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Users report that when they type quickly in the search box, the results sometimes show matches for an older query. Explain the bug and fix it.\n\n```tsx\nfunction Search() {\n  const [q, setQ] = useState(\"\");\n  const [results, setResults] = useState<string[]>([]);\n\n  useEffect(() => {\n    if (!q) return;\n    fetch(`/api/search?q=${q}`)\n      .then(r => r.json())\n      .then(data => setResults(data.items));\n  }, [q]);\n\n  return (\n    <>\n      <input value={q} onChange={e => setQ(e.target.value)} />\n      <ul>{results.map(r => <li key={r}>{r}</li>)}</ul>\n    </>\n  );\n}\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "This function counts, for each of n points in 2D, how many other points lie within Euclidean distance d. It is used with n up to 1,000,000 points spread over a 10km x 10km area with d = 50m, and is far too slow. Rewrite it to run in a few seconds in Python (NumPy allowed, no SciPy), explain the expected complexity given the density, handle the case where points are heavily clustered (worst-case density), and include a test that verifies it against the naive version on random data.\n\n```python\ndef neighbor_counts(points, d):\n    out = []\n    for i, (x1, y1) in enumerate(points):\n        c = 0\n        for j, (x2, y2) in enumerate(points):\n            if i != j and (x1 - x2) ** 2 + (y1 - y2) ** 2 <= d * d:\n                c += 1\n        out.append(c)\n    return out\n```",
+    "label": "frontier"
+  },
+  {
+    "prompt": "Write a React function component `ThemeToggle` in TypeScript that renders a button. It keeps a `\"light\" | \"dark\"` state (default \"light\"), toggles it on click, and the button label reads \"Switch to dark\" or \"Switch to light\" accordingly. Use hooks only, no external libraries.",
+    "label": "small"
+  },
+  {
+    "prompt": "Memory and goroutine count of this service grow steadily under load. Find the leak, explain it, and fix it.\n\n```go\nfunc firstResponse(urls []string) string {\n    ch := make(chan string)\n    for _, u := range urls {\n        go func(u string) {\n            resp, err := http.Get(u)\n            if err != nil {\n                return\n            }\n            defer resp.Body.Close()\n            ch <- u\n        }(u)\n    }\n    select {\n    case u := <-ch:\n        return u\n    case <-time.After(2 * time.Second):\n        return \"\"\n    }\n}\n```",
+    "label": "mid"
+  },
+  {
+    "prompt": "This Rust code fails to compile with \"borrow of moved value: `name`\". Fix it with the smallest change so both prints work.\n\n```rust\nfn greet(n: String) {\n    println!(\"Hello, {}\", n);\n}\n\nfn main() {\n    let name = String::from(\"Ana\");\n    greet(name);\n    println!(\"Goodbye, {}\", name);\n}\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "Write a GitHub Actions workflow for a Python project that:\n- runs lint (ruff) and tests (pytest) on pushes and pull requests to `main`, across Python 3.11 and 3.12,\n- caches pip dependencies keyed on `requirements*.txt`,\n- builds and pushes a Docker image to GHCR only when a tag matching `v*` is pushed, and only if tests passed,\n- tags the image with both the git tag and `latest`.\nUse least-privilege `permissions`.",
+    "label": "mid"
+  },
+  {
+    "prompt": "The ticket just says: \"Search is too slow, make it faster.\" Context: a marketplace web app with 4M listings in PostgreSQL; search currently uses `ILIKE '%term%'` across title and description plus filters on category, price range and location radius; p95 latency is 3.8s; the team is 4 engineers with no dedicated ops person; some users complain results are \"irrelevant\", not just slow. Write what you would do: the clarifying questions you'd ask first (and why each matters), how you'd measure, the options (pg_trgm, Postgres full-text search, a dedicated search engine, caching, etc.) with costs and risks for this team, a phased plan with what you'd ship first, and how you'd know you're done.",
+    "label": "frontier"
+  },
+  {
+    "prompt": "What does this JavaScript print, line by line, and why?\n\n```js\nconsole.log(0 == \"\");\nconsole.log(0 === \"\");\nconsole.log(null == undefined);\nconsole.log(null === undefined);\nconsole.log([] == false);\n```",
+    "label": "small"
+  },
+  {
+    "prompt": "Write an asyncio-based Python function `fetch_all(urls: list[str]) -> dict[str, str | None]` using `httpx.AsyncClient` that:\n- fetches at most 5 URLs concurrently,\n- retries each URL up to 3 times on connection errors or 5xx with exponential backoff (0.5s, 1s, 2s),\n- returns a dict mapping url -> response text, or None if all attempts failed,\n- never lets one failing URL cancel the others.",
+    "label": "mid"
+  },
+  {
+    "prompt": "Write a Python function `is_iso_date(s: str) -> bool` that returns True only if `s` matches the format YYYY-MM-DD with a 4-digit year, month 01-12 and day 01-31 (do not validate days-per-month). Use a single regular expression with `re.fullmatch`. Include 3 example calls with expected output.",
+    "label": "small"
+  },
+  {
+    "prompt": "Write a Python script that reads `transactions.csv` (columns: `id,user_id,amount,currency,timestamp`) and outputs `summary.json` with total amount per user per currency. Requirements: skip and count malformed rows (wrong column count, non-numeric amount, unparseable ISO timestamp); drop duplicate `id`s keeping the first occurrence; amounts must be summed with `Decimal` to avoid float errors; print a final line \"processed=N skipped=M duplicates=K\". Use only the standard library.",
+    "label": "mid"
+  },
+  {
+    "prompt": "Rename the function `getUsr` to `getUser` and the parameter `uid` to `userId` everywhere in this file. Return the full updated file, no other changes.\n\n```ts\nexport async function getUsr(uid: string) {\n  const res = await fetch(`/api/users/${uid}`);\n  return res.json();\n}\n\nexport async function loadProfile(uid: string) {\n  const u = await getUsr(uid);\n  return { name: u.name, id: uid };\n}\n```",
+    "label": "small"
+  }
+]
