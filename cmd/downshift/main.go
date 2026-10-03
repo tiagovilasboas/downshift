@@ -43,9 +43,14 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
 )
 
-// buildVersion can be set by release builds with -ldflags. It is included in
-// prompt-free routing telemetry to make policy incidents reproducible.
-var buildVersion = "dev"
+// buildVersion, buildCommit and buildDate are set by release builds with
+// -ldflags (see .goreleaser.yml). buildVersion is included in prompt-free
+// routing telemetry to make policy incidents reproducible.
+var (
+	buildVersion = "dev"
+	buildCommit  = ""
+	buildDate    = ""
+)
 
 var hookReadTimeout = 2 * time.Second
 var errHookReadTimeout = errors.New("hook input timeout")
@@ -122,6 +127,8 @@ func main() {
 		os.Exit(runTrain(args[1:]))
 	case "feedback":
 		os.Exit(runFeedback(args[1:]))
+	case "version", "--version":
+		os.Exit(runVersion(os.Stdout))
 	case "-h", "--help", "help":
 		usage()
 		os.Exit(0)
@@ -130,6 +137,17 @@ func main() {
 		usage()
 		os.Exit(2)
 	}
+}
+
+// runVersion prints the binary version, plus commit and build date when the
+// release build stamped them.
+func runVersion(w io.Writer) int {
+	line := "downshift " + buildVersion
+	if buildCommit != "" || buildDate != "" {
+		line += fmt.Sprintf(" (commit %s, built %s)", buildCommit, buildDate)
+	}
+	fmt.Fprintln(w, line)
+	return 0
 }
 
 // runHookAdapter is the single hook-runner template shared by all harness
@@ -990,6 +1008,7 @@ Usage:
   downshift kirocrew             Run as a KiroCrew preToolUse hook (policy mode: exit 0/2)
   downshift serve                Start the web dashboard at http://localhost:7474 (serves web/)
   downshift try "<task>" [harness] [model]   Test classification from the terminal
+  downshift version              Print the binary version (also --version)
   downshift models list          Show the effective catalog (embedded or override)
   downshift models check         Query provider APIs and report new/untiered models
   downshift models pull          Write ~/.harness-downshift/catalog.json from APIs
