@@ -107,6 +107,39 @@ func TestRiskSignals_NoFalsePositives(t *testing.T) {
 	}
 }
 
+// "signature" in a code or prose sense must not trip the crypto floor, while
+// verification and signed-message contexts still do.
+func TestRiskSignals_SignatureContext(t *testing.T) {
+	for _, p := range []string{
+		"update the function signature of parseConfig to accept a context",
+		"fix the type signature in utils.ts",
+		"rename the method signature in the Store interface",
+		"add the company signature to the email footer template",
+		"change the signature of NewClient so options come last",
+		"check the function signature matches the interface",
+	} {
+		if cats := core.RiskCategories(p); len(cats) > 0 {
+			t.Errorf("%q matched risk categories %v", p, cats)
+		}
+		if cls := core.Classify(p); cls.RiskFloor {
+			t.Errorf("%q was risk-floored", p)
+		}
+	}
+	for _, p := range []string{
+		"rename the webhook signature header constant",
+		"skip signature verification when running locally",
+		"format the function that verifies the request signature",
+		"rename the HMAC signature helper",
+		"move the signature check before the body is parsed",
+		"verify the Stripe-style payload signature on the callback",
+		"rotate the signing secret used for webhooks",
+	} {
+		if cats := core.RiskCategories(p); !slices.Contains(cats, "crypto") && !slices.Contains(cats, "secret") {
+			t.Errorf("RiskCategories(%q) = %v, want crypto or secret", p, cats)
+		}
+	}
+}
+
 func TestRiskCategories_Identifiers(t *testing.T) {
 	for p, want := range map[string]string{
 		"add a field creditCardNumber to the Order struct": "pii",
