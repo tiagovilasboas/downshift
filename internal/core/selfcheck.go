@@ -30,6 +30,10 @@ const (
 	// different harness than the decision. Adapters must never write a
 	// model ID that does not belong to the calling harness.
 	RuleForeignModel = "R4_FOREIGN_MODEL"
+	// RuleRiskDowngrade fires when a task that touches a risk category
+	// (secrets, auth, crypto, payments, PII, destructive ops, prompt
+	// injection; see risk.go) would be downshifted.
+	RuleRiskDowngrade = "R5_RISK_DOWNSHIFT"
 )
 
 // Violation is one guardrail breach found in a Decision.
@@ -61,6 +65,12 @@ func Check(d Decision) Report {
 		violations = append(violations, Violation{
 			Rule:   RuleComplexDowngrade,
 			Detail: "complex task must not move to a cheaper tier",
+		})
+	}
+	if d.Verdict == VerdictDownshift && d.RiskFloor {
+		violations = append(violations, Violation{
+			Rule:   RuleRiskDowngrade,
+			Detail: "task touches a risk category and must not move to a cheaper tier",
 		})
 	}
 	if d.Model.ID != "" && d.Model.Harness != "" && d.Harness != "" &&

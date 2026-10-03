@@ -51,6 +51,9 @@ type Decision struct {
 	Corrections    []string // guardrail rule IDs that held this decision, empty when clean
 	Checked        bool
 	GraphEscalated bool // true when graphify escalated the classification to Complex
+	// RiskFloor is true when a risk signal (risk.go) lifted the task off the
+	// small tier. Such a task is never downshifted and may be upshifted.
+	RiskFloor bool
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -93,7 +96,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		res = r[0]
 	}
 
-	tier, cls, graphEscalated := classifyTask(prompt)
+	tier, cls, graphEscalated, riskFloor := classifyTask(prompt)
 	effort := EffortFor(tier)
 	recommended := resolveModel(harness, tier, res)
 	verdict, savings, current := compareToCurrentModel(harness, currentModelID, recommended, res)
@@ -109,6 +112,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		Savings:        savings,
 		Confident:      Classify(prompt).Confident,
 		GraphEscalated: graphEscalated,
+		RiskFloor:      riskFloor,
 	}
 	d.Intent = IntentFor(prompt, Classify(prompt), d, res)
 	// Self-correction validates the decision against the guardrails before
@@ -125,7 +129,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 
 // classifyTask scores the prompt and returns the target tier and complexity.
 // Returns (escalated bool) as third return value to track if graphify triggered.
-func classifyTask(prompt string) (Tier, Complexity, bool) {
+func classifyTask(prompt string) (Tier, Complexity, bool, bool) {
 	cls := classifyWithSemantic(prompt, Classify(prompt))
 	complexity := cls.Complexity
 	escalated := false
@@ -141,7 +145,7 @@ func classifyTask(prompt string) (Tier, Complexity, bool) {
 		}
 	}
 
-	return complexity.Tier(), complexity, escalated
+	return complexity.Tier(), complexity, escalated, cls.RiskFloor
 }
 
 // resolveModel returns the catalog model for the given harness and tier.
@@ -225,6 +229,11 @@ func (d Decision) ShouldRewriteModel() bool {
 	// stays put so a small model is not replaced by a dearer tier on a weak
 	// signal. Confident rewrites still apply. Plan falls back when this
 	// returns false.
+	// Exception: a risk-floored task may move up off the small tier — the
+	// floor is a deterministic rule, not a weak signal.
+	if action == VerdictUpshift && d.RiskFloor {
+		return true
+	}
 	if (action == VerdictDownshift || action == VerdictUpshift) && !d.Confident {
 		return false
 	}
