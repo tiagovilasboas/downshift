@@ -48,14 +48,18 @@ python3 tools/minilm/eval_holdout.py
 
 `train_prototypes.py` writes `internal/semantic/data/minilm.json`. It does not replace the hash file `prototypes.json`.
 
-Holdout measurement (2026-10-01, centroids fit on `benchmark/tasks.json` only):
+Neural holdout row in `benchmark/minilm-holdout.json` (model `sentence-transformers/all-MiniLM-L6-v2`, centroids fit on `benchmark/tasks.json`, evaluated on `benchmark/holdout.json`):
 
-| Classifier | Holdout tier accuracy | FRONTIER→MID |
-|---|---|---|
-| Regex (`DOWNSHIFT_MINILM=0`) | 98.0% | 8% (75 frontier tasks) |
-| all-MiniLM-L6-v2 nearest centroid | 96.3% | 0% |
+| Field | Value |
+|---|---|
+| `tier_accuracy` | 0.963333 (96.3%) |
+| `frontier_to_mid` | 0 |
+| `frontier_total` | 75 |
+| `tasks` | 300 |
 
-The neural model did not raise tier accuracy on this split. It removed the remaining frontier-to-mid misses. The shipped default stays the local hash embedder. Numbers are in `benchmark/minilm-holdout.json`.
+The regex regression net on that same `benchmark/holdout.json` reports 100% tier accuracy with 0% FRONTIER→MID and 0% FRONTIER→SMALL after signal edits that used this file. The neural row does not beat that net. A 2026-10-01 note in this doc listed regex at 98.0% tier accuracy and 8% FRONTIER→MID. That snapshot is historical. It is not the current burned-net result.
+
+The shipped default stays the local hash embedder.
 
 ## Tests
 

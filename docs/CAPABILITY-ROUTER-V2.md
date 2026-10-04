@@ -3,6 +3,8 @@
 > harness-downshift by Tiago de Carvalho Vilas Boas
 > https://github.com/tiagovilasboas/harness-downshift
 
+> **Status (2026-10-04).** O padrão do hook continua sendo o `core.Route` legado: regex mais boost semântico monotônico. A v2 é CLI experimental (`downshift train` e `downshift benchmark --compare`). Ela não está promovida e não está no hook. O shadow da fase 2 nos adapters não foi feito. Pacotes em `internal/routingv2/` já existem, e várias caixas abaixo continuam abertas: esta checklist está desatualizada. Não trate caixas desmarcadas como ordem de trabalho para colocar a v2 no hook.
+
 ![Capability Router v2 — offline pipeline, not the production hook path](brand/downshift-capability-router-v2.png)
 
 ---

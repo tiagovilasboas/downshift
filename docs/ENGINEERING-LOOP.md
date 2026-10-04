@@ -85,12 +85,15 @@ change.
    minimum required tier. A successful run alone proves sufficiency, not a
    minimal tier.
 3. Train a candidate with `downshift train --from-events --output=candidate.json`.
-4. Compare candidate weights with the legacy policy on a separate held-out
-   dataset using `downshift benchmark holdout.json --compare
-   --candidate-weights=candidate.json`. Track
+4. Compare candidate weights with the legacy policy on a labelled set that
+   was not used to edit signals, using `downshift benchmark <file> --compare
+   --candidate-weights=candidate.json`. `benchmark/holdout.json` does not
+   qualify: it was tuned against. Track
    unsafe downgrades, missed upshifts, task success, rework, and cost separately.
-5. Promote only after the candidate improves cost without regressing the
-   agreed quality and safety gates; retain the previous router for rollback.
+5. Do not promote v2 onto the hook from this loop. A later promotion would
+   require a fresh set that was not used to edit signals, no regression on
+   the agreed quality and safety gates, and a retained rollback to
+   `core.Route`. That switch is not implemented.
 
 There are no online weight updates from a single run. A hook decision is not
 evidence that the selected model succeeded, and an unreviewed label can teach
@@ -100,11 +103,11 @@ through the CLI.
 
 ## Current promotion decision
 
-The small seed benchmark is not a promotion-grade held-out set. Its latest
-comparison showed the candidate router v2 at 43.3% tier accuracy versus 70.0%
-for the legacy router, with unsafe downgrades at 71.4% versus 42.9%. Keep the
-legacy router as the default and treat v2 as experimental until a reviewed,
-independent dataset and per-harness quality results show improvement.
+The hook path is `core.Route`: legacy regex scoring plus a monotonic semantic boost. `routingv2` is CLI-only (`downshift train`, `downshift benchmark --compare`). It is not promoted and it is not on the hook.
+
+Historical comparison, not the current 500-task split (`benchmark/tasks.json` 200 plus `benchmark/holdout.json` 300): on a small seed, candidate router v2 scored 43.3% tier accuracy versus 70.0% for the legacy router, with unsafe downgrades at 71.4% versus 42.9%. Do not cite those percentages as the result of the 500-task split.
+
+v2 stays off the hook until a fresh comparison on a set that was not used to edit signals. `benchmark/holdout.json` is burned. Reported tier accuracy of 100% there is the regression net after signal edits, not a promotion result.
 
 ## Remaining work for a closed-loop system
 

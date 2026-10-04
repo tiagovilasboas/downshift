@@ -71,16 +71,18 @@ Replace directional normalised units with provider-grounded savings.
 |----|------|-------|------|
 | P4.1 | Seed dataset health checks (`DatasetHealth`, no duplicates) | eng | [x] |
 | P4.2 | Expand curated set **30 → 108** tasks | eng | [x] |
-| P4.3 | Graphify offline escalation in `core.Route` | eng | [x] |
+| P4.3 | `internal/graphify` library. A nil fetcher never escalates. `core.Route` does not escalate via the graph. | eng | [x] |
 | P4.4 | Grow to **200** tasks (real prompts, rubric in `benchmark/README.md`) | curation | [x] |
-| P4.5 | Grow to **500+** tasks with held-out split (`benchmark/holdout.json`, never tuned against) | curation | [x] |
-| P4.6 | `downshift benchmark --report` + `--gate` (tier accuracy, FRONTIER→MID rate, CI regression) | eng | [x] |
+| P4.5 | 500 task files exist (`benchmark/tasks.json` 200 + `benchmark/holdout.json` 300). The "never tuned against" clause failed. | curation | [x] |
+| P4.6 | `downshift benchmark --report` + `--gate` exist and can pass on the in-tree files. They gate the burned net, not unseen traffic. | eng | [x] |
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
 | P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [~] `DOWNSHIFT_GRAPHIFY_CMD` command fetcher, fail-open; native MCP socket still optional |
 | P4.9 | **MiniLM semantic boost on by default** (local hash; external embed falls back to hash; `DOWNSHIFT_MINILM=0` opts out — `docs/MINILM-SEMANTIC.md`) | eng | [x] |
 | P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout (`benchmark/minilm-holdout.json`) | eng | [x] |
 
-**Exit:** P4.5 + P4.6 green in CI; holdout tier accuracy documented with CI.
+**Exit (not met on this dataset):** the P4.5 files are in tree. CI (`.github/workflows/ci.yml`) runs `benchmark/tasks.json --gate --min-tier-accuracy=0.60` and `benchmark/holdout.json --min-tier-accuracy=0.80`. A green job on those commands is this burned net. That is not the generalization exit. Measured on 2026-10-04 (`main` `dc90076`): exact overlap between seed and holdout is 0, but 147/300 holdout tasks share 20 repeated stems (template paraphrases such as "implement caching layer with ..." and "rearchitect ... to support ..."). All 75 COMPLEX holdout prompts contain a COMPLEX keyword. Commits after the holdout landed (raft/etcd, system-design signals) tuned the classifier until reported tier accuracy hit 100%. The holdout is burned. It is a regression net, not proof of generalization. Do not remove the beta label on this dataset.
+
+P4.3's checked box is the library, not graph-aware routing on the hook. `TestHint_NilFetcher_OfflineMode` shows a nil fetcher never escalates. See [GRAPHIFY-INTEGRATION.md](GRAPHIFY-INTEGRATION.md).
 
 ---
 

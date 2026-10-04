@@ -329,6 +329,24 @@ func (c *Catalog) FamilyModelFor(harness, family string, effort core.Effort) (co
 	return m, ok
 }
 
+// IsExactID reports an exact catalog id or a declared alias for this harness.
+// Family-prefix matches are not exact. core uses this so a foreign harness
+// version string is not treated as local ownership.
+func (c *Catalog) IsExactID(harness, id string) bool {
+	if c == nil || harness == "" || id == "" {
+		return false
+	}
+	h, ok := c.byID[harness]
+	if !ok {
+		return false
+	}
+	if _, ok := h[id]; ok {
+		return true
+	}
+	_, ok = h[normaliseModelID(id)]
+	return ok
+}
+
 // LookupByID resolves a model ID to a catalog entry using three strategies,
 // in priority order:
 //

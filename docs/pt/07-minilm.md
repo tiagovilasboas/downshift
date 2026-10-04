@@ -22,7 +22,7 @@ O módulo semântico opera sob um pipeline híbrido e escalonado em `internal/se
 2. **Modo Neural Opcional (MiniLM Real):**
    * Caso o desenvolvedor aponte a variável `DOWNSHIFT_MINILM_EMBED` para um script (ex: `python3 tools/minilm/embed_stdin.py`), o Downshift utiliza embeddings gerados pelo modelo `sentence-transformers/all-MiniLM-L6-v2`.
    * Centróides neurais em `internal/semantic/data/minilm.json`.
-   * **Resultados no Benchmark Holdout (300 tarefas inéditas):** O classificador neural atingiu **98.0% de acurácia de tier**, com **0% de erros críticos** do tipo `FRONTIER → MID` (ou seja, tarefas de alta complexidade nunca foram rebaixadas indevidamente).
+   * **Resultados no holdout (`benchmark/minilm-holdout.json`, 300 tarefas):** o modelo `sentence-transformers/all-MiniLM-L6-v2`, treinado apenas em `benchmark/tasks.json`, atingiu **96.3% de acurácia de tier** (`tier_accuracy` 0.963333) e **0% de `FRONTIER → MID`**. A linha neural não supera a rede de regressão por regex nesse mesmo arquivo. A acurácia de 100% da regex foi medida depois que os sinais foram ajustados contra o holdout. Esse conjunto está queimado: é rede de regressão, não prova de generalização.
    * Caso o comando externo falhe ou demore, o sistema faz fallback imediato para os centróides de hash locais sem travar a thread.
 
 ---

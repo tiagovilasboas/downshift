@@ -39,9 +39,12 @@ type Decision struct {
 	Harness      string
 	Model        Model // the model we recommend for this task
 	CurrentModel Model // the model currently in effect (may be zero if unknown)
-	Verdict      Verdict
-	Savings      float64 // fraction cheaper vs current (0 if not cheaper / unknown)
-	Confident    bool
+	// RequestedID is the model string from the hook payload, before catalog
+	// normalisation. Adapters set it so a foreign harness id is not rewritten.
+	RequestedID string
+	Verdict     Verdict
+	Savings     float64 // fraction cheaper vs current (0 if not cheaper / unknown)
+	Confident   bool
 	// Self-correction outcome, computed by Check inside Route. Verdict
 	// keeps the classified value for diagnostics; SafeVerdict carries the
 	// action adapters may apply. Checked is true for Route decisions and

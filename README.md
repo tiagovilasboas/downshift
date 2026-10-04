@@ -308,7 +308,7 @@ the config and reloads it on save.
 
 Downshift writes a model id only when that id is in the current session. The catalog supplies tier, cost, family, and effort for ids that are also in the session. It never adds an id the session does not have. If the session list cannot be determined, the hook leaves the current model unchanged.
 
-Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift validates and hashes that ID before recording it, so local routing decisions can be grouped without persisting the raw session identifier. Record selectable model ids in `~/.harness-downshift/session-models.json`. A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. Details and evidence: [docs/session-models.md](docs/session-models.md). [docs/examples/session-models.example.json](docs/examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
+Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift validates and hashes that ID before recording it, so local routing decisions can be grouped without persisting the raw session identifier. Record selectable model ids in `~/.harness-downshift/session-models.json`. A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. A model id from another harness is left unchanged. Optional `quota` marks which session ids still have token budget (`included`) and which are exhausted (`exhausted`). The hook never emits an exhausted id. Details and evidence: [docs/session-models.md](docs/session-models.md). [docs/examples/session-models.example.json](docs/examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
 
 ## Install (Codex)
 
@@ -573,12 +573,14 @@ to a role's reasoning effort in config once.
 
 ## Capability Router v2
 
-The default classifier is deterministic (regex scoring). The **CapabilityRouter v2** is a statistical, opt-in upgrade that adds:
+The hook path is `core.Route`: legacy regex scoring plus a monotonic semantic boost. **CapabilityRouter v2** is an experimental CLI (`downshift train`, `downshift benchmark --compare`). It is not promoted and it is not on the hook. Copying weights to `~/.harness-downshift/weights.json` does not change hook decisions.
 
-- **13 extracted signals** — mechanical, coding, security, concurrency, migration, planning, etc.
-- **Deterministic safety floor** — high-risk tasks (auth, migration, race conditions) are pinned to Frontier regardless of the classifier.
-- **Risk-weighted loss** — under-routing is penalised 5–10× harder than over-routing. `FRONTIER→SMALL` is catastrophic; `SMALL→MID` is cheap.
-- **Personalised weights** — train on your own prompts, compare against legacy, activate manually.
+Offline, v2 adds:
+
+- **13 extracted signals:** mechanical, coding, security, concurrency, migration, planning, and related features.
+- **Deterministic safety floor:** high-risk tasks (auth, migration, race conditions) are pinned to Frontier regardless of the classifier.
+- **Risk-weighted loss:** under-routing is penalised 5-10x harder than over-routing. `FRONTIER→SMALL` is catastrophic; `SMALL→MID` is cheap.
+- **Candidate weights:** train on labelled data and compare against legacy. Comparison does not install v2 on the hook.
 
 The router is **completely model-agnostic**: no model names, no provider strings in the routing logic. It decides tiers; the catalog decides models.
 
@@ -604,11 +606,11 @@ downshift feedback <id> failed
 # Train a candidate from explicitly reviewed local feedback
 downshift train --from-events --output=candidate.json
 
-# Evaluate candidate weights on an independent labelled holdout
-downshift benchmark holdout.json --compare --candidate-weights=candidate.json
+# Compare on a labelled set that was not used to edit classifier signals.
+# benchmark/holdout.json is a burned regression net. Do not use it as this set.
+downshift benchmark path/to/labelled.json --compare --candidate-weights=candidate.json
 
-# Promotion stays manual after reviewing safety and quality metrics
-cp candidate.json ~/.harness-downshift/weights.json
+# Writing a weights file does not put v2 on the hook. Promotion is not available.
 ```
 
 ### Dataset format
@@ -777,7 +779,7 @@ This is the core of the project — and the most important thing to understand b
 
 Given a task prompt, the classifier:
 
-1. **Extracts signals** — 13 weighted indicators across mechanical, coding, security, concurrency, migration, and planning dimensions. Each signal is a scored pattern match (keywords, structural patterns, verb classes).
+1. **Extracts regex signals** from `internal/core/signals.go` (keyword and structural patterns with a weight per complexity class). An uncertain label can only be raised by the monotonic semantic boost. This step is not the 13-feature extractor in `internal/routingv2/extractor`.
 
 2. **Scores four complexity classes simultaneously:**
 
@@ -844,7 +846,7 @@ The classifier is conservative by design:
 - **Never underpower hard tasks.** High-risk signals (auth, migration, race condition, security) pin the task to `COMPLEX` regardless of other scores. A task involving `"the race condition in the auth middleware"` goes to frontier even if it also contains trivial signals.
 - **Ties go up, not down.** When the score difference is below the confidence threshold, the router routes *up* or does nothing. It never downgrades a task on doubt.
 - **Fail-open everywhere.** Parse errors, unknown models, missing catalog entries, harness exceptions — the subagent runs unchanged. The cost optimizer is never an availability risk.
-- **FRONTIER→SMALL is the one case the classifier should never produce for genuinely complex tasks.** See the generated table in [Classifier benchmark](#classifier-benchmark) for the observed rate, and run `downshift benchmark benchmark/tasks.json` to verify on your own prompts.
+- **FRONTIER→SMALL is the one case the classifier should never produce for genuinely complex tasks.** See the generated table in [Classifier benchmark](#classifier-benchmark) for the observed rate, and run `downshift benchmark benchmark/tasks.json` to verify on your own prompts. That rate is a regression check, not live traffic.
 
 ### Why deterministic matters
 
@@ -949,7 +951,7 @@ The two numbers that matter for the business decision:
 
 **Tier routing accuracy on the 200-task seed** is the economic KPI. `TRIVIAL` and `SIMPLE` share the small tier. `MEDIUM` is mid. `COMPLEX` is frontier. A `SIMPLE` predicted as `MEDIUM` is a real tier miss. Run `downshift benchmark benchmark/tasks.json` for the current percentages.
 
-**FRONTIER→SMALL** is the one error the router must never make; the table above shows the observed rate on each dataset. The holdout is templated (one template per label in places), so its row is a regression check, not a generalisation estimate. The **outcome eval** row measures what the labels cannot: whether the task actually passes its executable check on each tier (`benchmark/outcomes/README.md`). An offline all-MiniLM-L6-v2 centroid classifier, trained only on `tasks.json`, has its recorded results in `benchmark/minilm-holdout.json`. It is not the default embedder. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
+**FRONTIER→SMALL** is the one error the router must never make; the table above shows the observed rate on each dataset. The holdout is templated (one template per label in places), so its row is a regression check, not a generalisation estimate. The **outcome eval** row measures what the labels cannot: whether the task actually passes its executable check on each tier (`benchmark/outcomes/README.md`). An offline all-MiniLM-L6-v2 centroid classifier, trained only on `tasks.json`, scored 96.3% tier accuracy and 0% FRONTIER→MID on `benchmark/holdout.json` (`benchmark/minilm-holdout.json`). The neural row does not beat the regex regression net on that file. It is not the default embedder. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
 
 The seed file has 200 curated tasks. The format is `[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
 Add your own prompts and run again — real coding tasks from your stack are
@@ -1223,10 +1225,11 @@ that actually need it.
 The router is built and tested: adapters for Claude Code, Cursor, and Codex,
 deterministic classifier covering 40+ documented prompts, catalog with
 version-agnostic family matching, OpenRouter normalisation, and
-`explicit_only` model preservation. The **CapabilityRouter v2** pipeline —
-13-signal extractor, deterministic safety floor, risk-weighted softmax
-classifier, offline training, and event collection — is complete and
-available via `downshift train` and `downshift benchmark --compare`.
+`explicit_only` model preservation. The **CapabilityRouter v2** pipeline
+(13-signal extractor, deterministic safety floor, risk-weighted softmax
+classifier, offline training, and event collection) is available via
+`downshift train` and `downshift benchmark --compare`. It is not the hook.
+The hook remains `core.Route`. Phase-2 shadow mode on the adapters is not done.
 
 **The real gap is at the harness level, not in this tool.**
 Model selection for subagents is an evolving feature in every harness:
@@ -1262,7 +1265,7 @@ rather than claimed:
 | Proven | Evidence |
 |---|---|
 | Routing works on real sessions | 430 local events, 39.5% downshifted ([Real session data](#real-session-data)) |
-| Downgrades are conservative | `FRONTIER→SMALL` 0% on seed; uncertain calls never downshift (`ShouldRewriteModel`) |
+| Downgrades are conservative | `FRONTIER→SMALL` 0% on the 200-task seed regression net (0 / 50 COMPLEX), not on live traffic; uncertain calls never downshift (`ShouldRewriteModel`) |
 | Hook contract holds end to hook-layer | `TestHookE2E_RewriteEventStats` in CI: stdin → rewrite → event → stats |
 | Estimates are labeled estimates | `~$ est.` + `is_estimate` everywhere; real-cost plumbing shipped, zero real dollars claimed |
 
@@ -1271,19 +1274,14 @@ Not yet proven — the graduation criteria for leaving beta:
 1. **Real-spawn verification** — proof a harness executor honored the rewrite, not just `rewrite_emitted`.
 2. **Multi-user data** — today's 430 events are single-user dogfood; graduation needs independent sessions.
 3. **Billing before/after** — provider-dashboard comparison, replacing normalised units.
-4. **Benchmark honesty** — seed (200) and holdout (300) are in tree with CI gates. Quote them as a regression net, not as proof on your traffic ([docs/BETA-EXIT.md](docs/BETA-EXIT.md)).
+4. **Benchmark honesty.** Seed (200) and holdout (300) are in tree with CI gates. The holdout is burned: signals were edited until reported tier accuracy hit 100%. Quote that 100% as the regression net, not as traffic quality or a beta-exit proof ([docs/BETA-EXIT.md](docs/BETA-EXIT.md)).
 5. **Harness coverage** — rewrites honored across plans/builds, not silently discarded (the external dependency).
 
 When those five hold, the beta label goes. Until then it stays — with the numbers above updated as evidence grows.
 
 **Task map:** track every open item in [docs/BETA-EXIT.md](docs/BETA-EXIT.md) (pillars P1–P5 + infrastructure).
 
-The good news: no new invention is required to get there. Four of the five
-criteria are fed by mileage — every routed session appends events, shrinks the
-legacy share, and builds the dataset a billing comparison needs. The price of
-graduation is mostly tokens spent dogfooding, plus one human task: curating
-benchmark labels (real prompts from your stack; see `benchmark/README.md`).
-Use it more, and beta ends itself.
+Mileage feeds the session, billing, and harness criteria: every routed session appends events and builds the dataset a billing comparison needs. Curating real misroutes (see `benchmark/README.md`) is separate from quoting the in-tree 100%. That 100% is the burned holdout. It does not end beta.
 
 ## Brand
 
