@@ -51,7 +51,7 @@ type Event struct {
 	Tier                 string                `json:"tier"`                       // SMALL|MID|FRONTIER
 	PolicyVersion        string                `json:"policy_version"`
 	BinaryVersion        string                `json:"binary_version"`
-	Outcome              string                `json:"outcome"` // rewrite_emitted|allow|error|usage|baseline
+	Outcome              string                `json:"outcome"` // rewrite_emitted|allow|blocked|error|usage|baseline
 	ErrorCode            string                `json:"error_code,omitempty"`
 	DecisionIntelligence *ShadowRecommendation `json:"decision_intelligence,omitempty"`
 	EstimatedSavings     float64               `json:"estimated_savings"` // normalised fraction 0–1
@@ -214,6 +214,10 @@ const (
 	OutcomeRewriteEmitted = "rewrite_emitted"
 	// OutcomeAllow marks a routing decision whose hook response left the spawn unchanged.
 	OutcomeAllow = "allow"
+	// OutcomeBlocked marks a policy-mode hook (KiroCrew) that denied the
+	// spawn and asked the agent to respawn on another model. Nothing was
+	// rewritten.
+	OutcomeBlocked = "blocked"
 )
 
 // AppliedRewrite reports whether a decision event changed the spawn: the
