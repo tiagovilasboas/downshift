@@ -17,10 +17,17 @@
 //
 // Linkage rule (approximation — documented limitations below): the usage
 // record attaches to the most recent decision event that (a) belongs to
-// harness "claude-code", (b) has no real cost yet, (c) parses to a timestamp
+// harness "claude-code", (b) has not been priced by an earlier usage record
+// (linked_decision, keyed by correlation id), (c) parses to a timestamp
 // within the 24h before the hook fires, and (d) matches by hashed session id
 // when the payload carries one, else by harness + final model. The verdict is
 // copied from the matched decision, or "UNKNOWN" when nothing matches.
+//
+// Pricing follows what actually ran. Only a decision whose rewrite was
+// applied (outcome rewrite_emitted, no guardrail correction) is priced as
+// routed-vs-requested. An allow, held or blocked decision left the spawn on
+// its requested model, so routed = baseline = requested model and real
+// savings are zero. A model reported by the payload always wins as routed.
 //
 // Known limitations:
 //   - Session matching is mostly future-proofing today: the PreToolUse path
@@ -76,14 +83,20 @@ func parseEventTime(ts string) (time.Time, bool) {
 // modelID is the model reported by the payload ("" when absent). Returns nil
 // when nothing matches.
 func linkTarget(prior []telemetry.Event, sessionHash, modelID string, now time.Time) *telemetry.Event {
+	priced := make(map[string]bool)
+	for _, ev := range prior {
+		if ev.Outcome == telemetry.OutcomeUsage && ev.LinkedDecision != "" {
+			priced[ev.LinkedDecision] = true
+		}
+	}
 	var best *telemetry.Event
 	var bestTime time.Time
 	for i := range prior {
 		ev := &prior[i]
-		if telemetry.IsCostOnlyOutcome(ev.Outcome) {
-			continue // cost records never link to each other
+		if telemetry.IsCostOnlyOutcome(ev.Outcome) || ev.Outcome == "error" {
+			continue // cost records and fail-open errors are not decisions
 		}
-		if ev.HasRealCost() {
+		if ev.HasRealCost() || priced[decisionKey(*ev)] {
 			continue // already priced — one decision prices once
 		}
 		if ev.Harness != harnessID {
@@ -101,7 +114,7 @@ func linkTarget(prior []telemetry.Event, sessionHash, modelID string, now time.T
 				continue
 			}
 		} else if modelID != "" {
-			if ev.ToModel != modelID {
+			if ranModel(*ev) != modelID {
 				continue
 			}
 		}
@@ -111,6 +124,25 @@ func linkTarget(prior []telemetry.Event, sessionHash, modelID string, now time.T
 		}
 	}
 	return best
+}
+
+// decisionKey identifies a decision event for once-only pricing: its
+// correlation id, or timestamp+session for lines written without one.
+func decisionKey(ev telemetry.Event) string {
+	if ev.CorrelationID != "" {
+		return ev.CorrelationID
+	}
+	return ev.Timestamp + "|" + ev.SessionID
+}
+
+// ranModel is the model the child actually ran on according to the decision
+// record: the rewrite target when the rewrite was applied, otherwise the
+// requested model.
+func ranModel(ev telemetry.Event) string {
+	if ev.Outcome == telemetry.OutcomeRewriteEmitted && telemetry.AppliedRewrite(ev.Outcome, ev.Corrections) {
+		return ev.ToModel
+	}
+	return ev.FromModel
 }
 
 // buildUsageEvent assembles the NEW cost record. Provenance (harness,
@@ -137,10 +169,14 @@ func buildUsageEvent(usage telemetry.TokenUsage, payloadModel, sessionHash, bina
 		ev.Harness = target.Harness
 		ev.Complexity = target.Complexity
 		ev.FromModel = target.FromModel
-		ev.ToModel = target.ToModel
+		ev.ToModel = ranModel(*target)
 		ev.Verdict = target.Verdict
 		ev.Tier = target.Tier
 		ev.SessionID = target.SessionID
+		ev.LinkedDecision = decisionKey(*target)
+		if payloadModel != "" {
+			ev.ToModel = telemetry.ModelOrUnknown(payloadModel)
+		}
 	}
 	if ev.SessionID == "" {
 		ev.SessionID = sessionHash
@@ -161,7 +197,7 @@ func buildUsageEvent(usage telemetry.TokenUsage, payloadModel, sessionHash, bina
 	// Price only real spend against a catalog-resolved routed model.
 	routedID := payloadModel
 	if routedID == "" && target != nil {
-		routedID = target.ToModel
+		routedID = ranModel(*target)
 	}
 	if r == nil || routedID == "" || routedID == "unknown" {
 		return ev // tokens without prices: counted as neither real nor fake
