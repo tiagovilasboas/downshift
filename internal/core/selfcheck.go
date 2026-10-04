@@ -78,7 +78,10 @@ func Check(d Decision) Report {
 			Detail: "complex task must not move to a cheaper tier",
 		})
 	}
-	if d.Verdict == VerdictDownshift && d.RiskFloor {
+	// R5 covers every downshift of a task that touches a risk category, not
+	// only tasks the risk floor lifted off the small tier: a confident MEDIUM
+	// crypto or auth task must not move from frontier to mid either.
+	if d.Verdict == VerdictDownshift && (d.RiskFloor || len(d.Risk) > 0) {
 		violations = append(violations, Violation{
 			Rule:   RuleRiskDowngrade,
 			Detail: "task touches a risk category and must not move to a cheaper tier",

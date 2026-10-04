@@ -57,6 +57,9 @@ type Decision struct {
 	// RiskFloor is true when a risk signal (risk.go) lifted the task off the
 	// small tier. Such a task is never downshifted and may be upshifted.
 	RiskFloor bool
+	// Risk lists the risk categories (risk.go) the prompt touches, whatever
+	// its complexity. Guardrail R5 holds any downshift of such a task.
+	Risk []string
 	// NBUpshift records the naive-Bayes upshift-only second opinion. It is
 	// always computed (shadow mode); it changes the tier only when
 	// DOWNSHIFT_NB_UPSHIFT=1, and then only upward.
@@ -128,6 +131,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		Confident:      cls.Confident,
 		GraphEscalated: graphEscalated,
 		RiskFloor:      cls.RiskFloor,
+		Risk:           RiskCategories(prompt),
 		NBUpshift:      nbUp,
 		NBDownshift:    nbDown,
 	}
