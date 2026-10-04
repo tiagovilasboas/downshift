@@ -38,26 +38,59 @@ echo "$out" | grep -q "TRIVIAL"
 echo "OK: downshift try (codex)"
 
 echo "=== 3. Hook adapters payload smoke tests ==="
+# Hermetic HOME: never touch the runner's real ~/.harness-downshift, and
+# give every harness a session allowlist so a rewrite can actually happen.
+SMOKE_HOME="$(mktemp -d)"
+trap 'rm -rf "$SMOKE_HOME"' EXIT
+mkdir -p "$SMOKE_HOME/.harness-downshift"
+cat > "$SMOKE_HOME/.harness-downshift/session-models.json" <<'JSON'
+{
+  "claude-code": ["claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"],
+  "codex": ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"],
+  "cursor": ["composer-2.5", "claude-4.5-sonnet-thinking", "claude-4.5-opus-high-thinking"],
+  "antigravity": ["flash_lite", "flash", "pro"]
+}
+JSON
+hook() { HOME="$SMOKE_HOME" "$BIN" "$@" 2>/dev/null; }
+expect() { # expect <label> <output> <fixed string>
+  if ! printf '%s' "$2" | grep -qF -- "$3"; then
+    echo "FAIL: $1: expected [$3] in: $2" >&2
+    exit 1
+  fi
+}
 
-# Claude Code adapter
-cc_res=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename variable x to y"}}' | "$BIN" claude-code)
-echo "$cc_res" | grep -q '"permissionDecision":"allow"'
-echo "OK: claude-code hook response format"
+# Claude Code: a trivial Task on opus must be rewritten to the small model.
+cc_res=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | hook claude-code)
+expect "claude-code rewrite" "$cc_res" '"updatedInput":{'
+expect "claude-code rewrite" "$cc_res" '"model":"claude-haiku-4-5"'
+echo "OK: claude-code rewrites updatedInput.model"
 
-# Antigravity adapter
-ag_res=$(echo '{"toolCall":{"name":"invoke_subagent","args":{"Subagents":[{"Model":"flash","Prompt":"rename variable x to y"}]}}}' | "$BIN" antigravity)
-echo "$ag_res" | grep -q '"decision":"allow"'
-echo "OK: antigravity hook response format"
+# Claude Code without a session allowlist: allow, no rewrite.
+cc_none=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+expect "claude-code no session" "$cc_none" '"permissionDecision":"allow"'
+if printf '%s' "$cc_none" | grep -qF updatedInput; then
+  echo "FAIL: claude-code rewrote without a session allowlist: $cc_none" >&2
+  exit 1
+fi
+echo "OK: claude-code without session does not rewrite"
 
-# Cursor adapter
-cur_res=$(echo '{"tool_name":"task","tool_input":{"prompt":"fix typo"}}' | "$BIN" cursor)
-echo "$cur_res" | grep -q '"permission":"allow"'
-echo "OK: cursor hook response format"
+# Antigravity: trivial subagent on flash must move to flash_lite.
+ag_res=$(echo '{"toolCall":{"name":"invoke_subagent","args":{"Subagents":[{"Model":"flash","Prompt":"rename the userId variable to userIdentifier"}]}}}' | hook antigravity)
+expect "antigravity rewrite" "$ag_res" '"overwrite":{'
+expect "antigravity rewrite" "$ag_res" '"Model":"flash_lite"'
+echo "OK: antigravity overwrites Subagents[0].Model"
 
-# Codex adapter
-codex_res=$(echo '{"tool_name":"spawn_subagent","tool_input":{"task":"lint code"}}' | "$BIN" codex)
-echo "$codex_res" | grep -q '"permissionDecision":"allow"'
-echo "OK: codex hook response format"
+# Cursor: trivial task on the frontier model must be rewritten.
+cur_res=$(echo '{"tool_name":"Task","tool_input":{"task":"rename the userId variable to userIdentifier","model":"claude-4.5-opus-high-thinking"}}' | hook cursor)
+expect "cursor rewrite" "$cur_res" '"updated_input":{'
+expect "cursor rewrite" "$cur_res" '"permission":"allow"'
+echo "OK: cursor rewrites updated_input.model"
+
+# Codex: trivial spawn on sol must move to luna with low effort.
+codex_res=$(echo '{"tool_name":"spawn_agent","tool_input":{"message":"rename the userId variable to userIdentifier","model":"gpt-5.6-sol"}}' | hook codex)
+expect "codex rewrite" "$codex_res" '"updatedInput":{'
+expect "codex rewrite" "$codex_res" '"model":"gpt-5.6-luna"'
+echo "OK: codex rewrites updatedInput.model"
 
 echo "=== 4. Benchmark CLI and report gate smoke test ==="
 "$BIN" benchmark "$REPO_ROOT/benchmark/tasks.json" --report >/dev/null
