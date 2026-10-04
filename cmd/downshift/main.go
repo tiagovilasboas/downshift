@@ -700,7 +700,8 @@ func runBenchmark(args []string) int {
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: downshift benchmark <dataset.json> [--compare] [--report] [--min-tier-accuracy=0.60]")
 		fmt.Fprintln(os.Stderr, "")
-		fmt.Fprintln(os.Stderr, "The dataset is a JSON array of {\"prompt\":\"...\",\"label\":\"TRIVIAL|SIMPLE|MEDIUM|COMPLEX\"} objects.")
+		fmt.Fprintln(os.Stderr, "The dataset is a JSON array of {\"prompt\":\"...\",\"label\":\"TRIVIAL|SIMPLE|MEDIUM|COMPLEX\"} objects")
+		fmt.Fprintln(os.Stderr, "(tier labels SMALL|MID|FRONTIER are accepted too).")
 		fmt.Fprintln(os.Stderr, "A seed dataset is available at benchmark/tasks.json in the repository.")
 		fmt.Fprintln(os.Stderr, "Use --compare --candidate-weights=<file> to evaluate a candidate without activating it.")
 		fmt.Fprintln(os.Stderr, "")
@@ -726,9 +727,13 @@ func runBenchmark(args []string) int {
 			gate = true
 		case strings.HasPrefix(arg, "--min-tier-accuracy="):
 			valStr := strings.TrimPrefix(arg, "--min-tier-accuracy=")
-			if val, err := strconv.ParseFloat(valStr, 64); err == nil {
-				minTierAccuracy = val
+			val, err := strconv.ParseFloat(valStr, 64)
+			if err != nil || val < 0 || val > 1 {
+				// A typo must not silently disable the gate.
+				fmt.Fprintf(os.Stderr, "error: --min-tier-accuracy=%q must be a number between 0 and 1\n", valStr)
+				return 2
 			}
+			minTierAccuracy = val
 		case strings.HasPrefix(arg, "--candidate-weights="):
 			candidateWeights = strings.TrimPrefix(arg, "--candidate-weights=")
 		default:
@@ -752,6 +757,12 @@ func runBenchmark(args []string) int {
 	}
 
 	results := benchmark.Run(tasks, os.Stderr)
+	if len(results) == 0 {
+		// Every row was skipped (unknown labels) or the file is empty: a
+		// report of zeros must not pass as a successful run.
+		fmt.Fprintf(os.Stderr, "error: %s has no tasks with a recognised label (TRIVIAL|SIMPLE|MEDIUM|COMPLEX|SMALL|MID|FRONTIER)\n", path)
+		return 1
+	}
 	report := benchmark.GenerateReport(results)
 
 	if reportJSON {
