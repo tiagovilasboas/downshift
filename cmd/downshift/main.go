@@ -708,6 +708,8 @@ func runBenchmark(args []string) int {
 		fmt.Fprintln(os.Stderr, "  --compare                Run both Legacy and CapabilityRouter v2 side by side")
 		fmt.Fprintln(os.Stderr, "  --report                 Emit machine-readable JSON metrics summary to stdout")
 		fmt.Fprintln(os.Stderr, "  --min-tier-accuracy=0.60 Exit with error (1) if tier routing accuracy is below threshold")
+		fmt.Fprintln(os.Stderr, "  --gate                   Apply all gates (tier accuracy, FRONTIER→SMALL = 0, FRONTIER→MID max)")
+		fmt.Fprintln(os.Stderr, "  --max-frontier-to-mid=0  With --gate: maximum FRONTIER→MID rate (default 0.70)")
 		return 2
 	}
 
@@ -715,6 +717,7 @@ func runBenchmark(args []string) int {
 	reportJSON := false
 	gate := false
 	minTierAccuracy := 0.0
+	maxFrontierToMid := -1.0
 	path := ""
 	candidateWeights := ""
 	for _, arg := range args {
@@ -734,6 +737,14 @@ func runBenchmark(args []string) int {
 				return 2
 			}
 			minTierAccuracy = val
+		case strings.HasPrefix(arg, "--max-frontier-to-mid="):
+			valStr := strings.TrimPrefix(arg, "--max-frontier-to-mid=")
+			val, err := strconv.ParseFloat(valStr, 64)
+			if err != nil || val < 0 || val > 1 {
+				fmt.Fprintf(os.Stderr, "error: --max-frontier-to-mid=%q must be a number between 0 and 1\n", valStr)
+				return 2
+			}
+			maxFrontierToMid = val
 		case strings.HasPrefix(arg, "--candidate-weights="):
 			candidateWeights = strings.TrimPrefix(arg, "--candidate-weights=")
 		default:
@@ -780,6 +791,9 @@ func runBenchmark(args []string) int {
 	gates := benchmark.DefaultGateThresholds()
 	if minTierAccuracy > 0 {
 		gates.MinTierAccuracy = minTierAccuracy
+	}
+	if maxFrontierToMid >= 0 {
+		gates.MaxFrontierToMIDRate = maxFrontierToMid
 	}
 	if gate {
 		ok, reasons := benchmark.EvaluateGates(report, gates)

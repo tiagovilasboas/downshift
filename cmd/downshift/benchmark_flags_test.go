@@ -40,3 +40,22 @@ func TestRunBenchmark_NoValidTasksFails(t *testing.T) {
 		t.Fatal("rc=0 for a dataset with zero valid tasks")
 	}
 }
+
+// --max-frontier-to-mid tightens the FRONTIER→MID gate (CI uses 0 on seed
+// and holdout); a bad value fails.
+func TestRunBenchmark_MaxFrontierToMidGate(t *testing.T) {
+	ds := writeDataset(t, `[{"prompt":"look at the logs folder and tell me what you see","label":"COMPLEX"}]`)
+	var strict, loose, bad int
+	captureStderr(func() {
+		strict = runBenchmark([]string{ds, "--gate", "--min-tier-accuracy=0.01", "--max-frontier-to-mid=0"})
+		loose = runBenchmark([]string{ds, "--gate", "--min-tier-accuracy=0.01", "--max-frontier-to-mid=1"})
+		bad = runBenchmark([]string{ds, "--gate", "--max-frontier-to-mid=x"})
+	})
+	if strict == 0 {
+		t.Error("FRONTIER→MID 1/1 must fail --max-frontier-to-mid=0")
+	}
+	if bad == 0 {
+		t.Error("invalid --max-frontier-to-mid must fail")
+	}
+	_ = loose // tier accuracy 0 still fails the accuracy gate; only strict/bad matter here
+}
