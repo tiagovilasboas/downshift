@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
 )
 
 const DefaultPort = "7474"
@@ -30,6 +32,10 @@ type rawEvent struct {
 	Verdict    string  `json:"verdict"`
 	Complexity string  `json:"complexity"`
 	Savings    float64 `json:"estimated_savings"`
+	// Outcome and Corrections decide whether the decision changed the spawn
+	// (telemetry.AppliedRewrite); only applied downshifts count as savings.
+	Outcome     string   `json:"outcome,omitempty"`
+	Corrections []string `json:"corrections,omitempty"`
 	// InputTokens carries provider-reported input tokens (nil when untracked).
 	InputTokens *int64 `json:"input_tokens,omitempty"`
 	// OutputTokens carries provider-reported output tokens (nil when untracked).
@@ -62,6 +68,9 @@ type statsBlock struct {
 	Down   int     `json:"down"`
 	Up     int     `json:"up"`
 	OK     int     `json:"ok"`
+	// NotApplied counts classified shifts the hook left unchanged
+	// (allow, held by a guardrail, or blocked).
+	NotApplied int `json:"not_applied"`
 	EstUSD float64 `json:"est_usd"`
 	// EstUnits accumulates the normalised savings fraction per DOWNSHIFT event.
 	EstUnits float64 `json:"est_units"`
@@ -228,27 +237,38 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	var st statsBlock
-	st.Total = len(events)
 	// IsEstimate is always true: dollar figures are estimates, not provider billing.
 	st.IsEstimate = true
+	var decisions []rawEvent
 	for _, e := range events {
-		switch e.Verdict {
-		case "DOWNSHIFT":
+		if telemetry.IsCostOnlyOutcome(e.Outcome) {
+			// Usage records carry real cost; baseline (no-route) records
+			// are control-group events. Neither is a routing decision.
+			if e.Outcome == telemetry.OutcomeUsage && e.ActualCostUSD != nil && e.BaselineCostUSD != nil {
+				if saved := *e.BaselineCostUSD - *e.ActualCostUSD; saved > 0 {
+					st.RealSavedUSD += saved
+				}
+				st.RealCostEvents++
+			}
+			continue
+		}
+		decisions = append(decisions, e)
+		applied := telemetry.AppliedRewrite(e.Outcome, e.Corrections)
+		switch {
+		case e.Verdict == "DOWNSHIFT" && applied:
 			st.Down++
 			st.EstUnits += e.Savings
 			st.EstUSD = st.EstUnits * estimatedCostPerUnitUSD
-			if e.ActualCostUSD != nil && e.BaselineCostUSD != nil {
-				if saved := *e.BaselineCostUSD - *e.ActualCostUSD; saved > 0 {
-					st.RealSavedUSD += saved
-					st.RealCostEvents++
-				}
-			}
-		case "UPSHIFT":
+		case e.Verdict == "UPSHIFT" && applied:
 			st.Up++
-		case "OK":
+		case e.Verdict == "DOWNSHIFT" || e.Verdict == "UPSHIFT":
+			st.NotApplied++
+		case e.Verdict == "OK":
 			st.OK++
 		}
 	}
+	st.Total = len(decisions)
+	events = decisions
 
 	sw := events
 	if len(sw) > 8 {

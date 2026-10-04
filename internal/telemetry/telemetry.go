@@ -206,6 +206,18 @@ const (
 	OutcomeAllow = "allow"
 )
 
+// AppliedRewrite reports whether a decision event changed the spawn: the
+// hook emitted a rewrite and no guardrail held the decision. Allow events,
+// held decisions (corrections present) and blocks never count as savings.
+// Lines written before the outcome field existed (empty outcome) count as
+// emitted for backward compatibility.
+func AppliedRewrite(outcome string, corrections []string) bool {
+	if len(corrections) > 0 {
+		return false
+	}
+	return outcome == OutcomeRewriteEmitted || outcome == ""
+}
+
 // FromDecision builds an Event from a core.Decision and hook runtime context.
 // It assumes a rewrite was emitted; callers set OutcomeAllow when the adapter
 // returned the spawn unchanged.
@@ -379,6 +391,11 @@ type Stats struct {
 	// action (see Event.Corrections for the rule IDs).
 	Corrected int
 
+	// NotApplied counts DOWNSHIFT/UPSHIFT decisions the hook did not apply
+	// (outcome allow, blocked, or held by a guardrail). They are excluded
+	// from Downshifted/Upshifted and from normalised savings.
+	NotApplied int
+
 	// ByComplexity counts decisions per complexity class.
 	ByComplexity map[string]int
 
@@ -486,20 +503,24 @@ func Aggregate(events []Event) Stats {
 		}
 		s.Total++
 		s.ByComplexity[ev.Complexity]++
-		switch ev.Verdict {
-		case "DOWNSHIFT":
+		applied := AppliedRewrite(ev.Outcome, ev.Corrections)
+		switch {
+		case ev.Verdict == "DOWNSHIFT" && applied:
 			s.Downshifted++
-		case "UPSHIFT":
+		case ev.Verdict == "UPSHIFT" && applied:
 			s.Upshifted++
-		case "OK":
+		case ev.Verdict == "DOWNSHIFT" || ev.Verdict == "UPSHIFT":
+			s.NotApplied++
+		case ev.Verdict == "OK":
 			s.OK++
 		default:
 			s.Unknown++
 		}
 		// Normalised cost: baseline = 1.0 per event; routed = 1 - savings.
-		// This is a dimensionless proxy. Multiply by --cost-per-unit to get dollars.
+		// Only an applied downshift saves anything. This is a dimensionless
+		// proxy. Multiply by --cost-per-unit to get dollars.
 		s.NormBaseline += 1.0
-		if ev.EstimatedSavings > 0 && ev.EstimatedSavings < 1 {
+		if ev.Verdict == "DOWNSHIFT" && applied && ev.EstimatedSavings > 0 && ev.EstimatedSavings < 1 {
 			s.NormRouted += 1 - ev.EstimatedSavings
 		} else {
 			s.NormRouted += 1.0
@@ -539,8 +560,9 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
 	fmt.Fprintf(w, "Subagent decisions    %8d\n", s.Total)
 	fmt.Fprintf(w, "\n")
-	fmt.Fprintf(w, "  Downshifted         %8d  %5.1f%%\n", s.Downshifted, pct(s.Downshifted, s.Total))
-	fmt.Fprintf(w, "  Upshifted           %8d  %5.1f%%\n", s.Upshifted, pct(s.Upshifted, s.Total))
+	fmt.Fprintf(w, "  Downshifted         %8d  %5.1f%%  (rewrite applied)\n", s.Downshifted, pct(s.Downshifted, s.Total))
+	fmt.Fprintf(w, "  Upshifted           %8d  %5.1f%%  (rewrite applied)\n", s.Upshifted, pct(s.Upshifted, s.Total))
+	fmt.Fprintf(w, "  Not applied         %8d  %5.1f%%  (classified shift, spawn unchanged: allow/held/blocked)\n", s.NotApplied, pct(s.NotApplied, s.Total))
 	fmt.Fprintf(w, "  Unchanged (OK)      %8d  %5.1f%%\n", s.OK, pct(s.OK, s.Total))
 	fmt.Fprintf(w, "  Unknown             %8d  %5.1f%%\n", s.Unknown, pct(s.Unknown, s.Total))
 	fmt.Fprintf(w, "\n")
@@ -564,9 +586,9 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 			fmt.Fprintf(w, "Rate: $%.4f / unit  (--cost-per-unit=%.4f)\n", opts.CostPerUnit, opts.CostPerUnit)
 		} else {
 			// Unit mode: dimensionless proxy, no dollar claim.
-			fmt.Fprintf(w, "Normalised baseline   %8.0f units\n", s.NormBaseline)
-			fmt.Fprintf(w, "Normalised routed     %8.0f units\n", s.NormRouted)
-			fmt.Fprintf(w, "Normalised savings    %8.0f units  (%4.1f%%)\n", normSaved, normFrac*100)
+			fmt.Fprintf(w, "Normalised baseline   %8.1f units\n", s.NormBaseline)
+			fmt.Fprintf(w, "Normalised routed     %8.1f units\n", s.NormRouted)
+			fmt.Fprintf(w, "Normalised savings    %8.1f units  (%4.1f%%)\n", normSaved, normFrac*100)
 			fmt.Fprintf(w, "\n")
 			fmt.Fprintf(w, "Note: 1 unit = cost of one unrouted event. Not real dollars.\n")
 			fmt.Fprintf(w, "For dollar figures: downshift stats --cost-per-unit=<USD-per-unit>\n")

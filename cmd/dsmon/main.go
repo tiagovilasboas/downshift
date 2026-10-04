@@ -19,6 +19,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
 )
 
 // ── config ────────────────────────────────────────────────────────────────────
@@ -61,6 +63,9 @@ type event struct {
 	To         string  `json:"final_model"`
 	Verdict    string  `json:"verdict"`
 	Savings    float64 `json:"estimated_savings"`
+	// Outcome and Corrections decide whether the decision changed the spawn.
+	Outcome     string   `json:"outcome,omitempty"`
+	Corrections []string `json:"corrections,omitempty"`
 	// InputTokens carries provider-reported input tokens (nil when untracked).
 	InputTokens *int64 `json:"input_tokens,omitempty"`
 	// OutputTokens carries provider-reported output tokens (nil when untracked).
@@ -243,6 +248,8 @@ func (s *state) poll(path string) {
 
 type stats struct {
 	total, down, up, ok int
+	// held counts classified shifts the hook left unchanged.
+	held int
 	totalSavings        float64
 	// totalSavingsUnits accumulates the normalised savings fraction per DOWNSHIFT event.
 	totalSavingsUnits float64
@@ -261,21 +268,30 @@ func compute(all []event) (stats, []event) {
 		if !e.isRecent() {
 			continue
 		}
+		if telemetry.IsCostOnlyOutcome(e.Outcome) {
+			// Usage records carry real cost; baseline records are the
+			// no-route control group. Neither is a routing decision.
+			if e.Outcome == telemetry.OutcomeUsage && e.ActualCostUSD != nil && e.BaselineCostUSD != nil {
+				if saved := *e.BaselineCostUSD - *e.ActualCostUSD; saved > 0 {
+					st.realSavedUSD += saved
+				}
+				st.realCostEvents++
+			}
+			continue
+		}
 		st.total++
-		switch e.Verdict {
-		case "DOWNSHIFT":
+		applied := telemetry.AppliedRewrite(e.Outcome, e.Corrections)
+		switch {
+		case e.Verdict == "DOWNSHIFT" && applied:
 			st.down++
 			st.totalSavings += e.Savings
 			st.totalSavingsUnits += e.Savings
-			if e.ActualCostUSD != nil && e.BaselineCostUSD != nil {
-				if saved := *e.BaselineCostUSD - *e.ActualCostUSD; saved > 0 {
-					st.realSavedUSD += saved
-					st.realCostEvents++
-				}
-			}
-		case "UPSHIFT":
+		case e.Verdict == "UPSHIFT" && applied:
 			st.up++
-		case "OK":
+		case e.Verdict == "DOWNSHIFT" || e.Verdict == "UPSHIFT":
+			st.held++
+			e.Verdict = "HELD" // displayed as unchanged, never as a switch
+		case e.Verdict == "OK":
 			st.ok++
 		}
 		if e.Harness != "" && !seen[e.Harness] {
@@ -358,6 +374,9 @@ func switchLine(e event) string {
 		return fmt.Sprintf("  %s  %s%s%s→%s%s%s  %s%s%s  %s↑%s",
 			e.localTime(), dim, from, rst, ylw, to, rst,
 			dim, comp, rst, ylw, rst)
+	case "HELD":
+		return fmt.Sprintf("  %s  %s%s%s  %s%s%s  %sheld%s",
+			e.localTime(), cyn, from, rst, dim, comp, rst, dim, rst)
 	default: // OK
 		return fmt.Sprintf("  %s  %s%s%s  %s%s%s  %s✓%s",
 			e.localTime(), cyn, from, rst, dim, comp, rst, grn, rst)
