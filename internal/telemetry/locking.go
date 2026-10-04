@@ -11,62 +11,69 @@ import (
 	"time"
 )
 
-// FileLock provides multi-process safe file operations using OS-level locking.
-// On Unix systems, it uses flock(2). On Windows, it falls back to file
-// rename-based locking (atomic, but slower).
+// lockPollInterval is how often a waiting process retries the lock.
+const lockPollInterval = 5 * time.Millisecond
+
+// FileLock is an exclusive, multi-process lock guarding one log file.
+//
+// On Unix it is an flock(2) on "<path>.lock": the kernel releases it when the
+// holder exits for any reason (including SIGKILL from a harness hook
+// timeout), so a crashed hook can never leave a lock that blocks later hooks.
+// The lock file itself is left in place; only the flock matters.
+//
+// On other platforms it falls back to an O_EXCL lock file holding the owner
+// PID. A lock file older than staleLockAge is treated as orphaned (the
+// critical section is a single append) and removed before retrying.
 type FileLock struct {
 	path   string
 	lockfd *os.File
+	// removeOnUnlock is true for the O_EXCL fallback, where the file's
+	// existence is the lock.
+	removeOnUnlock bool
 }
 
-// LockFile acquires an exclusive lock on the file at path.
-// The lock is advisory (processes must cooperate) but prevents concurrent writes.
-// Timeout is the maximum time to wait for the lock before giving up.
-// Returns the lock handle; call Close() to release it.
-func LockFile(path string, timeout time.Duration) (*FileLock, error) {
-	lockPath := path + ".lock"
-	deadline := time.Now().Add(timeout)
+// staleLockAge bounds how long an O_EXCL fallback lock may be held before it
+// is considered orphaned. Appends take milliseconds.
+const staleLockAge = 2 * time.Second
 
-	// Ensure parent directory exists.
+// LockFile acquires an exclusive lock for path, waiting at most timeout.
+func LockFile(path string, timeout time.Duration) (*FileLock, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return nil, err
 	}
-
+	deadline := time.Now().Add(timeout)
 	for {
-		// Try to open the lock file exclusively (fail if exists).
-		// On Unix, this is O_CREAT|O_EXCL which is atomic.
-		f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
-		if err == nil {
-			// Lock acquired immediately.
-			return &FileLock{path: path, lockfd: f}, nil
-		}
-
-		if !os.IsExist(err) {
-			// Real error, not "file exists".
+		lock, busy, err := tryLock(path)
+		if err != nil {
 			return nil, err
 		}
-
-		// Lock file exists; another process holds the lock.
-		// Wait a bit and retry.
-		if time.Now().After(deadline) {
-			return nil, fmt.Errorf("could not acquire lock on %s (timeout)", path)
+		if !busy {
+			return lock, nil
 		}
-		time.Sleep(10 * time.Millisecond)
+		if time.Now().After(deadline) {
+			return nil, fmt.Errorf("could not acquire lock on %s (timeout %s)", path, timeout)
+		}
+		time.Sleep(lockPollInterval)
 	}
 }
 
-// Unlock releases the file lock by removing the lock file.
-// Safe to call even if the lock was never acquired.
+// Unlock releases the lock.
 func (l *FileLock) Unlock() error {
 	if l == nil || l.lockfd == nil {
 		return nil
 	}
+	err := unlockFD(l.lockfd)
 	l.lockfd.Close()
-	lockPath := l.path + ".lock"
-	return os.Remove(lockPath)
+	l.lockfd = nil
+	if l.removeOnUnlock {
+		if rmErr := os.Remove(l.path + ".lock"); rmErr != nil && !os.IsNotExist(rmErr) {
+			return rmErr
+		}
+	}
+	return err
 }
 
-// Close is an alias for Unlock() for convenience with defer.
+// Close releases the lock (alias of Unlock).
 func (l *FileLock) Close() error {
 	return l.Unlock()
 }

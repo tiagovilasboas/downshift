@@ -280,19 +280,31 @@ func defaultEventPath() string {
 
 var mu sync.Mutex
 
-// Record appends ev to the default event log. Errors are silently dropped —
-// a telemetry failure must never interrupt a hook execution.
+// lockTimeout bounds how long a hook waits for the event-log lock. It stays
+// well below every harness hook budget; a lost event is reported, never
+// allowed to stall a spawn.
+const lockTimeout = 500 * time.Millisecond
+
+// recordErrOut receives the one-line warning when an event cannot be
+// written. Tests replace it.
+var recordErrOut io.Writer = os.Stderr
+
+// Record appends ev to the default event log. A telemetry failure never
+// interrupts a hook, but it is not silent either: one short line goes to
+// stderr so a lost event is visible.
 func Record(ev Event) {
-	_ = AppendTo(defaultEventPath(), ev)
+	if err := AppendTo(defaultEventPath(), ev); err != nil {
+		fmt.Fprintf(recordErrOut, "downshift: telemetry event not recorded: %v\n", err)
+	}
 }
 
 // AppendTo appends ev to the given path, creating the file and parent
 // directories as needed. Returns any write error.
 //
 // Concurrency note: the in-process mutex (mu) prevents data races between
-// goroutines in the same binary (mutex). Multi-process safety is provided
-// by file locking (LockFile) which works on both Unix and Windows. The lock
-// file is created atomically; multiple processes will serialize writes.
+// goroutines in the same binary. Multi-process safety comes from LockFile:
+// flock(2) on Unix (released by the kernel when a holder dies, so a killed
+// hook cannot orphan it) and a PID lock file with stale detection elsewhere.
 // On POSIX systems, once a process owns the lock, O_APPEND writes are
 // atomic at the kernel level for sizes < PIPE_BUF (~4 KB), so JSON lines
 // will not interleave even under contention.
@@ -305,7 +317,7 @@ func AppendTo(path string, ev Event) error {
 	}
 
 	// Acquire exclusive lock (multi-process safe).
-	lock, err := LockFile(path, 5*time.Second)
+	lock, err := LockFile(path, lockTimeout)
 	if err != nil {
 		return fmt.Errorf("failed to acquire lock on %s: %w", path, err)
 	}

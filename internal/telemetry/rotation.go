@@ -125,7 +125,8 @@ func cleanupOldBackups(logPath string, maxBackups int) error {
 
 	var backups []os.DirEntry
 	for _, e := range entries {
-		if !e.IsDir() && strings.HasPrefix(e.Name(), base+".") {
+		// The lock file shares the prefix but is not a backup.
+		if !e.IsDir() && strings.HasPrefix(e.Name(), base+".") && e.Name() != base+".lock" {
 			backups = append(backups, e)
 		}
 	}

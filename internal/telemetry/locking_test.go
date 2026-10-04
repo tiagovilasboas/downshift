@@ -38,10 +38,13 @@ func TestLockFile_AcquireAndRelease(t *testing.T) {
 		t.Fatalf("Close failed: %v", err)
 	}
 
-	// Lock file should be removed.
-	if _, err := os.Stat(lockPath); !os.IsNotExist(err) {
-		t.Fatal("lock file not removed after Close")
+	// After Close the lock must be immediately re-acquirable. (On Unix the
+	// lock file stays in place; only the flock on it matters.)
+	again, err := telemetry.LockFile(path, 50*time.Millisecond)
+	if err != nil {
+		t.Fatalf("re-acquire after Close failed: %v", err)
 	}
+	again.Close()
 }
 
 func TestLockFile_ExclusiveAccess(t *testing.T) {
