@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
+	"time"
+
+	"github.com/tiagovilasboas/harness-downshift/internal/hookctx"
 )
 
 // Embedder produces a dense vector for a prompt.
@@ -23,16 +25,12 @@ type CmdEmbedder struct {
 }
 
 func (c CmdEmbedder) Embed(prompt string) ([]float64, error) {
-	if c.Cmd == "" {
+	if strings.TrimSpace(c.Cmd) == "" {
 		return nil, fmt.Errorf("empty embed command")
 	}
-	parts := strings.Fields(c.Cmd)
-	if len(parts) == 0 {
-		return nil, fmt.Errorf("invalid embed command")
-	}
-	cmd := exec.Command(parts[0], parts[1:]...)
-	cmd.Stdin = strings.NewReader(prompt)
-	out, err := cmd.Output()
+	// Bounded by embedCmdTimeout and the hook's global deadline; output is
+	// capped. A hung helper falls back instead of stalling the spawn.
+	out, err := hookctx.RunCommand(c.Cmd, prompt, embedCmdTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("embed command failed: %w", err)
 	}
@@ -43,7 +41,9 @@ func (c CmdEmbedder) Embed(prompt string) ([]float64, error) {
 	return vec, nil
 }
 
-// fallbackEmbedder tries primary (optional external MiniLM) then the local hash embedder.
+// embedCmdTimeout bounds one DOWNSHIFT_MINILM_EMBED call.
+const embedCmdTimeout = time.Second
+
 type fallbackEmbedder struct {
 	primary  Embedder
 	fallback Embedder

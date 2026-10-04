@@ -16,6 +16,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,6 +37,7 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
 	"github.com/tiagovilasboas/harness-downshift/internal/decisionintelligence"
+	"github.com/tiagovilasboas/harness-downshift/internal/hookctx"
 	"github.com/tiagovilasboas/harness-downshift/internal/models"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/classifier"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/training"
@@ -200,6 +202,7 @@ func runHookAdapter[E any](
 	if err != nil {
 		return fail("INVALID_EVENT")
 	}
+	defer withHookDeadline()()
 	if identified, ok := any(ev).(interface{ CorrelationIdentifier() string }); ok {
 		correlationID = telemetry.CorrelationIDOrNew(identified.CorrelationIdentifier())
 	}
@@ -359,6 +362,7 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
 	if err := json.Unmarshal(data, &ev); err != nil {
 		return fail("INVALID_EVENT")
 	}
+	defer withHookDeadline()()
 	correlationID = telemetry.CorrelationIDOrNew(ev.CorrelationIdentifier())
 
 	out, note, decision := kirocrew.Handle(ev, catalog)
@@ -399,6 +403,17 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
 		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
 	}
 	return 0
+}
+
+// withHookDeadline installs the global classification deadline that bounds
+// every external helper command, and returns its cleanup.
+func withHookDeadline() func() {
+	ctx, cancel := context.WithTimeout(context.Background(), hookctx.HookBudget)
+	restore := hookctx.Set(ctx)
+	return func() {
+		restore()
+		cancel()
+	}
 }
 
 // warnSessionUnknown prints one stderr line per hook call when the adapter
