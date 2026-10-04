@@ -97,12 +97,9 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		}
 		// A decision held by a guardrail (self-correction recorded a
 		// violation) must never be applied, even when the plan names a
-		// session target. Note: the embedded catalog has no Antigravity
-		// entries yet, so ModelFor falls back to another harness and every
-		// decision carries R4_FOREIGN_MODEL until native flash_lite/flash/
-		// pro entries with real pricing land in catalog.json. Until then
-		// this adapter observes and logs but never rewrites — the safe
-		// posture for a catalog gap.
+		// session target. The embedded catalog carries native flash_lite /
+		// flash / pro entries, so R4 (foreign model) no longer fires for
+		// Antigravity; R1/R2/R5/R6 still hold decisions here.
 		if len(decision.Corrections) > 0 {
 			continue
 		}
