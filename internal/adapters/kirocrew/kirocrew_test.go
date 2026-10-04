@@ -167,3 +167,22 @@ func TestMain(m *testing.M) {
 	os.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(os.TempDir(), "downshift-session-models-absent.json"))
 	os.Exit(m.Run())
 }
+
+// A current model marked explicit_only is the user's deliberate choice: the
+// hook must neither block it nor ask for a respawn on another model.
+func TestHandle_AllowsExplicitOnlyCurrentModel(t *testing.T) {
+	writeSessionFile(t, []string{smallID, midID, frontierID})
+	res := fixedResolver{
+		Resolver:     cat,
+		explicitOnly: map[string]bool{frontierID: true},
+	}
+	ev := spawnEvent("rename the userId variable to userIdentifier", frontierID)
+
+	out, _, decision := kirocrew.Handle(ev, res)
+	if decision.Intent != core.PreservedIntent {
+		t.Fatalf("precondition: want preserved intent, got %v", decision.Intent)
+	}
+	if out.Block {
+		t.Fatalf("must not block an explicit_only current model (message=%q)", out.Message)
+	}
+}

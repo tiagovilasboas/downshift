@@ -106,6 +106,12 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	session := core.ResolveSession(harnessID)
 	decision.SessionUnknown = !session.Known
 
+	// The user deliberately picked an explicit_only model: never block it or
+	// ask for a respawn on another model.
+	if decision.ShouldPreserveExplicitModel(currentModel, res) {
+		return allow(), "", decision
+	}
+
 	// Right gear already: nothing to do.
 	if decision.Verdict == core.VerdictOK {
 		return allow(), "", decision
