@@ -367,3 +367,21 @@ func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
 		t.Fatalf("model = %v, want gpt-5.6-terra", m)
 	}
 }
+
+// A spawn without a model and an unconfident small-tier classification must
+// leave both the model and the effort untouched (guardrail R6).
+func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
+	session := []string{"gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"}
+	ev := codex.Event{
+		ToolName:      "spawn_agent",
+		SessionModels: &session,
+		ToolInput:     json.RawMessage(`{"message": "write a function to parse dates"}`),
+	}
+	out, note, d := codex.Handle(ev, cat)
+	if d.Confident || d.Tier != core.TierSmall {
+		t.Fatalf("precondition: want unconfident small, got tier=%v confident=%v", d.Tier, d.Confident)
+	}
+	if m := decodeUpdated(t, out); m != nil || note != "" {
+		t.Fatalf("unconfident small without a model must not rewrite, got %v note=%q", m, note)
+	}
+}

@@ -284,3 +284,19 @@ func TestHandle_MissingSessionDoesNotRewrite(t *testing.T) {
 		t.Fatalf("missing session must not rewrite, note=%q", note)
 	}
 }
+
+// A Task payload without a model field and an unconfident small-tier
+// classification must not be rewritten: the child keeps the harness default.
+func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
+	ev := withCatalogSession(claudecode.Event{
+		ToolName:  "Task",
+		ToolInput: json.RawMessage(`{"prompt": "write a function to parse dates"}`),
+	})
+	out, note, d := claudecode.Handle(ev, cat)
+	if d.Confident || d.Tier != core.TierSmall {
+		t.Fatalf("precondition: want unconfident small, got tier=%v confident=%v", d.Tier, d.Confident)
+	}
+	if m := decodeUpdated(t, out); m != nil || note != "" {
+		t.Fatalf("unconfident small without a model must not rewrite, got %v note=%q", m, note)
+	}
+}

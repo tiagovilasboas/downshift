@@ -34,6 +34,13 @@ const (
 	// (secrets, auth, crypto, payments, PII, destructive ops, prompt
 	// injection; see risk.go) would be downshifted.
 	RuleRiskDowngrade = "R5_RISK_DOWNSHIFT"
+	// RuleUnconfidentUnknownSmall fires when no current model is known
+	// (VerdictUnknown), the classification is not confident, and the
+	// recommended tier is below mid. The child would otherwise inherit the
+	// harness default (often the parent's model), so writing a small model
+	// on doubt is an unconfident downshift in disguise. The safe action
+	// leaves the spawn unchanged.
+	RuleUnconfidentUnknownSmall = "R6_UNCONFIDENT_UNKNOWN_SMALL"
 )
 
 // Violation is one guardrail breach found in a Decision.
@@ -77,6 +84,13 @@ func Check(d Decision) Report {
 			Detail: "task touches a risk category and must not move to a cheaper tier",
 		})
 	}
+	if unconfidentUnknownBelowMid(d) && !d.NBDownshift.Applied {
+		// An applied NB downshift is already held by R1 above.
+		violations = append(violations, Violation{
+			Rule:   RuleUnconfidentUnknownSmall,
+			Detail: "no current model known and the small-tier recommendation is not confident",
+		})
+	}
 	if d.Model.ID != "" && d.Model.Harness != "" && d.Harness != "" &&
 		d.Model.Harness != d.Harness {
 		violations = append(violations, Violation{
@@ -89,4 +103,10 @@ func Check(d Decision) Report {
 		return Report{Safe: d.Verdict}
 	}
 	return Report{Violations: violations, Safe: VerdictOK, Corrected: true}
+}
+
+// unconfidentUnknownBelowMid reports the R6 condition: no comparable current
+// model, an unconfident classification, and a target below the mid tier.
+func unconfidentUnknownBelowMid(d Decision) bool {
+	return d.Verdict == VerdictUnknown && !d.Confident && d.Tier < TierMid
 }
