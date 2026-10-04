@@ -31,6 +31,7 @@ type Summary struct {
 	OK             int            `json:"ok"`
 	Unknown        int            `json:"unknown"`
 	Corrected      int            `json:"corrected"`
+	NotApplied     int            `json:"not_applied"`
 	RealCostEvents int            `json:"real_cost_events"`
 	RealSavedUSD   float64        `json:"real_saved_usd"`
 	UsageLinked    int            `json:"usage_linked"`
@@ -79,6 +80,7 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		OK:             stats.OK,
 		Unknown:        stats.Unknown,
 		Corrected:      stats.Corrected,
+		NotApplied:     stats.NotApplied,
 		RealCostEvents: stats.RealCostEvents,
 		RealSavedUSD:   stats.RealSavedUSD,
 		UsageLinked:    stats.UsageLinked,

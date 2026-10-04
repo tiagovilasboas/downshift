@@ -7,6 +7,7 @@ package telemetry_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
 	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
@@ -45,8 +46,32 @@ func TestAggregate_CountsCorrected(t *testing.T) {
 	if s.Corrected != 1 {
 		t.Errorf("Corrected = %d, want 1", s.Corrected)
 	}
-	if s.Downshifted != 2 {
-		t.Errorf("Downshifted = %d, want 2 (verdict stands)", s.Downshifted)
+	// A held decision never changed the spawn: it is not a downshift and
+	// saves nothing. It is reported separately as not applied.
+	if s.Downshifted != 1 {
+		t.Errorf("Downshifted = %d, want 1 (held decision is not applied)", s.Downshifted)
+	}
+	if s.NotApplied != 1 {
+		t.Errorf("NotApplied = %d, want 1", s.NotApplied)
+	}
+	if s.NormRouted < 1.19 || s.NormRouted > 1.21 {
+		t.Errorf("NormRouted = %.3f, want 1.2 (only the applied downshift saves)", s.NormRouted)
+	}
+}
+
+func TestAggregate_AllowOutcomeIsNotSavings(t *testing.T) {
+	allowed := makeEvent("cc", "MEDIUM", "DOWNSHIFT", 0.4)
+	allowed.Outcome = telemetry.OutcomeAllow
+	s := telemetry.Aggregate([]telemetry.Event{allowed})
+	if s.Downshifted != 0 || s.NotApplied != 1 {
+		t.Fatalf("Downshifted=%d NotApplied=%d, want 0/1", s.Downshifted, s.NotApplied)
+	}
+	if saved, _ := s.NormSaved(); saved != 0 {
+		t.Fatalf("allow event must not save units, got %.3f", saved)
+	}
+	sum := telemetry.ExportSummary([]telemetry.Event{allowed}, 0, time.Now())
+	if sum.DownshiftRate != 0 || sum.NotApplied != 1 {
+		t.Fatalf("export downshift_rate=%.2f not_applied=%d, want 0/1", sum.DownshiftRate, sum.NotApplied)
 	}
 }
 
