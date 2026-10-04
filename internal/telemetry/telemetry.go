@@ -76,6 +76,11 @@ type Event struct {
 	// Privacy note: boolean only, no prompt or execution payloads stored.
 	RewriteHonored *bool `json:"rewrite_honored,omitempty"`
 
+	// LinkedDecision is set on "usage" records: the correlation id of the
+	// decision event the usage was priced against. A decision is priced at
+	// most once; later usage records skip it.
+	LinkedDecision string `json:"linked_decision,omitempty"`
+
 	// Optional naive-Bayes second opinion, present only when NB would have
 	// raised the tier. Applied is false in shadow mode (the default), where
 	// the routing decision above is unchanged.

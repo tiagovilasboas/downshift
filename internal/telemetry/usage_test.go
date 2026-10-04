@@ -393,3 +393,81 @@ func TestPrintStats_ShowsBaseline(t *testing.T) {
 		t.Errorf("stats must show Baseline line, got:\n%s", buf.String())
 	}
 }
+
+// An allow or held decision left the spawn on its requested model, so usage
+// linked to it must price routed = requested and save nothing.
+func TestHandlePostToolUse_HeldDecisionSavesNothing(t *testing.T) {
+	cat := usageTestCatalog(t)
+	midID := cat.ModelFor("claude-code", core.TierMid).ID
+	frontierID := cat.ModelFor("claude-code", core.TierFrontier).ID
+	for name, mutate := range map[string]func(*telemetry.Event){
+		"allow": func(ev *telemetry.Event) { ev.Outcome = telemetry.OutcomeAllow },
+		"held": func(ev *telemetry.Event) {
+			ev.Corrections = []string{core.RuleUnconfidentDowngrade}
+			ev.SafeVerdict = "OK"
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			eventLog := filepath.Join(t.TempDir(), "events.jsonl")
+			t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)
+			sessionHash := telemetry.HashSessionID("sess-held")
+			ev := makeEvent("claude-code", "MEDIUM", "DOWNSHIFT", 0.4)
+			ev.Timestamp = time.Now().UTC().Format(time.RFC3339Nano)
+			ev.CorrelationID = telemetry.NewCorrelationID()
+			ev.Outcome = telemetry.OutcomeRewriteEmitted
+			ev.FromModel, ev.ToModel, ev.SessionID = frontierID, midID, sessionHash
+			mutate(&ev)
+			if err := telemetry.AppendTo(eventLog, ev); err != nil {
+				t.Fatal(err)
+			}
+			payload, _ := json.Marshal(map[string]any{
+				"session_id": "sess-held",
+				"usage":      map[string]any{"input_tokens": float64(100000), "output_tokens": float64(20000)},
+			})
+			if _, _, linked := claudecode.HandlePostToolUse(payload, "test", cat); !linked {
+				t.Fatal("usage should link to the session's decision")
+			}
+			events, _ := telemetry.ReadEventsFrom(eventLog)
+			s := telemetry.Aggregate(events)
+			if s.RealSavedUSD != 0 {
+				t.Fatalf("RealSavedUSD = %.2f, want 0 (the spawn ran on %s)", s.RealSavedUSD, frontierID)
+			}
+			if u := events[len(events)-1]; u.ToModel != frontierID {
+				t.Fatalf("usage ToModel = %q, want requested %q", u.ToModel, frontierID)
+			}
+		})
+	}
+}
+
+// A decision is priced once: a second usage record for the same session
+// must not link to (and re-price) the same decision.
+func TestHandlePostToolUse_DecisionPricedOnce(t *testing.T) {
+	cat := usageTestCatalog(t)
+	smallID := cat.ModelFor("claude-code", core.TierSmall).ID
+	frontierID := cat.ModelFor("claude-code", core.TierFrontier).ID
+	eventLog := filepath.Join(t.TempDir(), "events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)
+	sessionHash := telemetry.HashSessionID("sess-once")
+	seedDecision(t, eventLog, sessionHash, frontierID, smallID)
+
+	payload, _ := json.Marshal(map[string]any{
+		"session_id": "sess-once",
+		"usage":      map[string]any{"input_tokens": float64(1000), "output_tokens": float64(500)},
+	})
+	if _, _, linked := claudecode.HandlePostToolUse(payload, "test", cat); !linked {
+		t.Fatal("first usage must link")
+	}
+	if _, _, linked := claudecode.HandlePostToolUse(payload, "test", cat); linked {
+		t.Fatal("second usage must not re-price the same decision")
+	}
+	events, _ := telemetry.ReadEventsFrom(eventLog)
+	priced := 0
+	for _, ev := range events {
+		if ev.Outcome == telemetry.OutcomeUsage && ev.RealSavedUSD() > 0 {
+			priced++
+		}
+	}
+	if priced != 1 {
+		t.Fatalf("decision priced %d times, want 1", priced)
+	}
+}
