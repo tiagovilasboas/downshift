@@ -640,7 +640,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Baseline (no-route)   %8d  (control group, excluded from rates)\n", s.Baseline)
 	}
 	if s.RewriteShifted > 0 {
-		fmt.Fprintf(w, "Rewrite honored       %8d  / %d shifted (same-session follow-up or rewrite_honored)\n", s.RewriteHonored, s.RewriteShifted)
+		fmt.Fprintf(w, "Rewrite honored (inferred) %3d  / %d applied shifts (later same-session spawn asked for the written model, or rewrite_honored; not proof)\n", s.RewriteHonored, s.RewriteShifted)
 	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
 }
