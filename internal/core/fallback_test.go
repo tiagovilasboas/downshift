@@ -32,7 +32,7 @@ func TestPlanForSession_OnlySessionIDs(t *testing.T) {
 		{
 			harness: "cursor", caps: core.CursorCaps,
 			frontier: "claude-opus-5-thinking-high", catalogSmall: "claude-4.5-haiku-thinking",
-			session: []string{"claude-4.5-sonnet-thinking", "claude-opus-5-thinking-high", "composer-2.5"},
+			session: []string{"claude-4.5-sonnet-thinking", "claude-opus-5-thinking-high"},
 			want:    "claude-4.5-sonnet-thinking",
 		},
 		{

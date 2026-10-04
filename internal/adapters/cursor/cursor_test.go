@@ -223,8 +223,8 @@ func TestHandle_PreservesFamilySwitchesEffortDown(t *testing.T) {
 		t.Fatal("expected an in-family effort note, got none")
 	}
 	m := decodeUpdated(t, out)
-	if m["model"] != "claude-opus-5.5-medium" {
-		t.Errorf("model = %v, want claude-opus-5.5-medium (same family, medium effort)", m["model"])
+	if m["model"] != "claude-opus-5-5-medium" {
+		t.Errorf("model = %v, want claude-opus-5-5-medium (same family, medium effort)", m["model"])
 	}
 }
 
@@ -265,8 +265,9 @@ func TestHandle_FamilyWithoutVariantFallsBackToTierDefault(t *testing.T) {
 	}
 }
 
-func TestHandle_UnknownFamilyFallsBackToTierDefault(t *testing.T) {
-	// Model the catalog never listed: unknown family → tier default.
+func TestHandle_UnknownIDIsNotRewritten(t *testing.T) {
+	// An id this harness does not own stays put. Replacing it with a
+	// catalog id from another namespace is what broke Cursor Task calls.
 	ev := cursor.Event{
 		ToolName: "Task",
 		ToolInput: json.RawMessage(`{
@@ -275,19 +276,14 @@ func TestHandle_UnknownFamilyFallsBackToTierDefault(t *testing.T) {
 		}`),
 	}
 	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
-	if note == "" {
-		t.Fatal("expected a routing note, got none")
-	}
-	m := decodeUpdated(t, out)
-	wantID := catID(core.TierSmall)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want tier default %s", m["model"], wantID)
+	if note != "" || out.UpdatedInput != nil {
+		t.Fatalf("foreign id must not be rewritten, note=%q updated=%s", note, out.UpdatedInput)
 	}
 }
 
 func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
 	// Catalog smallest is claude-4.5-haiku-thinking. This session does not
-	// have it. The emitted id must be the cheapest model that is in the session.
+	// have it. composer-2.5 is the cheapest labeled id that is in the session.
 	frontierID := catID(core.TierFrontier)
 	session := []string{"claude-4.5-sonnet-thinking", frontierID, "composer-2.5"}
 	ev := cursor.Event{
@@ -303,8 +299,8 @@ func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
 	if m == nil {
 		t.Fatal("expected a rewrite to a session model")
 	}
-	if m["model"] != "claude-4.5-sonnet-thinking" {
-		t.Fatalf("model = %v, want claude-4.5-sonnet-thinking", m["model"])
+	if m["model"] != "composer-2.5" {
+		t.Fatalf("model = %v, want composer-2.5", m["model"])
 	}
 	if m["model"] == "claude-4.5-haiku-thinking" || m["model"] == "claude-haiku-4" {
 		t.Fatal("emitted a catalog id that is not in the session")

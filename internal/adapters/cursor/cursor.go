@@ -34,6 +34,10 @@ type Event struct {
 	// does not send either field today.
 	SessionModels   *[]string `json:"session_models,omitempty"`
 	AvailableModels *[]string `json:"available_models,omitempty"`
+	// IncludedModels and UnavailableModels are optional quota marks.
+	// Nil leaves the user file. A non-nil slice replaces it for this call.
+	IncludedModels    *[]string `json:"included_models,omitempty"`
+	UnavailableModels *[]string `json:"unavailable_models,omitempty"`
 }
 
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
@@ -111,10 +115,12 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		res = r[0]
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
+	decision.RequestedID = currentModel
 
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
+	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	plan := decision.PlanForSession(core.CursorCaps, res, session)
-	if plan.PreserveExplicit {
+	if plan.HoldForeign || plan.PreserveExplicit {
 		return allow(), "", decision
 	}
 
@@ -138,7 +144,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if res != nil && decision.CurrentModel.Family != "" && len(decision.Corrections) == 0 {
 		if fer, ok := res.(core.FamilyEffortResolver); ok {
 			if fm, ok := fer.FamilyModelFor(harnessID, decision.CurrentModel.Family, decision.Effort); ok &&
-				fm.ID != "" && session.Contains(fm.ID) && fm.ID != decision.CurrentModel.ID && fm.Tier >= decision.Tier {
+				fm.ID != "" && session.Contains(fm.ID) && !session.Blocks(fm.ID) && fm.ID != decision.CurrentModel.ID && fm.Tier >= decision.Tier {
 				target = fm
 				note = familyNote(decision, fm, res)
 				familyHit = true
@@ -152,8 +158,12 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if !familyHit && !plan.RewriteModel {
 		return allow(), "", decision
 	}
-	if !session.Contains(target.ID) {
+	if !core.CanWriteCatalogID(harnessID, target.ID, session, res) {
 		return allow(), "", decision
+	}
+	decision.Model = target
+	if !familyHit {
+		note = decision.Summary()
 	}
 
 	ti["model"] = target.ID

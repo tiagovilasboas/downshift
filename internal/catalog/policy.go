@@ -113,6 +113,41 @@ func validateEntries(entries []Entry) error {
 			families[harnessKey] = append(families[harnessKey], familyEffortTag{prefix: family, effort: eff})
 		}
 	}
+	if err := rejectForeignCanonicalAlias(entries); err != nil {
+		return err
+	}
+	return nil
+}
+
+// rejectForeignCanonicalAlias stops harness B from listing harness A's
+// canonical id as an alias. Two harnesses may each own the same canonical
+// id (their own catalog row). They may not borrow it.
+func rejectForeignCanonicalAlias(entries []Entry) error {
+	owners := make(map[string]map[string]struct{})
+	for _, e := range entries {
+		if e.ID == "" || e.Harness == "" {
+			continue
+		}
+		if owners[e.ID] == nil {
+			owners[e.ID] = make(map[string]struct{})
+		}
+		owners[e.ID][e.Harness] = struct{}{}
+	}
+	for _, e := range entries {
+		if e.ID == "" || e.Harness == "" {
+			continue
+		}
+		for _, alias := range e.Aliases {
+			harnesses := owners[alias]
+			if len(harnesses) == 0 {
+				continue
+			}
+			if _, own := harnesses[e.Harness]; own {
+				continue
+			}
+			return fmt.Errorf("catalog: alias %q on harness %q is another harness's canonical id", alias, e.Harness)
+		}
+	}
 	return nil
 }
 

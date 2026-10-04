@@ -46,7 +46,7 @@ Example with a per-session override (replace the session ID with the value in Co
 }
 ```
 
-There is no built-in default list. `docs/examples/session-models.example.json` records one Cursor session from 2026-09-27. Copy it and edit it. Do not expect the binary to load that example on its own.
+There is no built-in default list. `docs/examples/session-models.example.json` records one Cursor session from 2026-10-04. Copy it and edit it. Do not expect the binary to load that example on its own.
 
 ## How a target is chosen
 
@@ -57,5 +57,9 @@ Candidates are the session ids. For each id, catalog lookup adds tier and cost w
 - If no session id is in the catalog, a downgrade uses the first id in the file. List cheapest models first. An upshift does not guess among unlabeled ids.
 - `routing: explicit_only` is never an automatic target. If the current model is explicit-only, it stays.
 - Unknown session: no rewrite.
+- The id written is a canonical id from that harness's own catalog entry. An alias, a family prefix, or another harness's canonical id is not written. The catalog loader rejects an alias that copies another harness's canonical id.
+- `inherit` may sit in the session list so the payload is recognised. It is never selected as the target.
+- Optional `quota.<harness>.included` lists ids that still have token budget. When one of them shares the target tier, it wins over a metered id.
+- Optional `quota.<harness>.exhausted` lists ids with no remaining budget. They are never selected. If the current id is exhausted, the hook moves to another session id that can still run. A hook payload may send `included_models` or `unavailable_models` and those arrays replace the file for that call.
 
 So if the catalog smallest model is `claude-4.5-haiku-thinking` and the session only has `claude-4.5-sonnet-thinking` and a frontier id, the target is the sonnet id. If the session list is missing, the frontier model stays.

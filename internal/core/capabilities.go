@@ -46,6 +46,9 @@ type RewritePlan struct {
 	RewriteModel     bool // write Model.ID into the hook output
 	ApplyEffort      bool // write effort value into the hook output
 	PreserveExplicit bool // current model is explicit_only; skip all rewrites
+	// HoldForeign means the requested id is not in this harness's session
+	// or exact catalog. Adapters must not write a model.
+	HoldForeign bool
 }
 
 // Plan translates a harness-agnostic Decision into protocol actions.

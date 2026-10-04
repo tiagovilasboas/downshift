@@ -20,6 +20,12 @@ import (
 type SessionList struct {
 	IDs   []string
 	Known bool
+	// Included ids have a stable token budget in this session. Empty means
+	// the operator did not mark any, and ranking stays cost-based.
+	Included []string
+	// Exhausted ids are in the session but must not be selected. The user
+	// has no remaining token budget for them.
+	Exhausted []string
 }
 
 // UnknownSession is the fail-open list: no rewrite.
@@ -33,15 +39,44 @@ func KnownSession(ids []string) SessionList {
 
 // Contains reports whether id is an exact member of a known session list.
 func (s SessionList) Contains(id string) bool {
+	return s.has(s.IDs, id)
+}
+
+// IsIncluded reports an operator mark: this id still has token budget.
+func (s SessionList) IsIncluded(id string) bool {
+	return s.has(s.Included, id)
+}
+
+// Blocks reports an operator mark: this id has no remaining token budget.
+func (s SessionList) Blocks(id string) bool {
+	return s.has(s.Exhausted, id)
+}
+
+func (s SessionList) has(ids []string, id string) bool {
 	if !s.Known || id == "" {
 		return false
 	}
-	for _, candidate := range s.IDs {
+	for _, candidate := range ids {
 		if candidate == id {
 			return true
 		}
 	}
 	return false
+}
+
+// WithHookQuota replaces included and exhausted lists when the hook sent them.
+// A nil slice leaves the file value in place. A non-nil slice is authoritative.
+func (s SessionList) WithHookQuota(included, exhausted *[]string) SessionList {
+	if !s.Known {
+		return s
+	}
+	if included != nil {
+		s.Included = append([]string(nil), (*included)...)
+	}
+	if exhausted != nil {
+		s.Exhausted = append([]string(nil), (*exhausted)...)
+	}
+	return s
 }
 
 // SessionFromHook returns the first non-nil allowlist from the hook payload.
@@ -106,7 +141,7 @@ func LoadSessionFileForID(harness, sessionID, path string) SessionList {
 		var byHarness map[string]map[string][]string
 		if sessions, ok := raw["sessions"]; ok && json.Unmarshal(sessions, &byHarness) == nil {
 			if ids, ok := byHarness[harness][sessionID]; ok && ids != nil {
-				return KnownSession(ids)
+				return withFileQuota(KnownSession(ids), harness, raw)
 			}
 		}
 	}
@@ -118,7 +153,35 @@ func LoadSessionFileForID(harness, sessionID, path string) SessionList {
 	if err := json.Unmarshal(msg, &ids); err != nil {
 		return UnknownSession()
 	}
-	return KnownSession(ids)
+	return withFileQuota(KnownSession(ids), harness, raw)
+}
+
+// withFileQuota reads the optional quota.<harness> object.
+// included: models that still have token budget.
+// exhausted: models the user cannot run until the budget resets.
+func withFileQuota(session SessionList, harness string, raw map[string]json.RawMessage) SessionList {
+	msg, ok := raw["quota"]
+	if !ok {
+		return session
+	}
+	var quota map[string]struct {
+		Included  []string `json:"included"`
+		Exhausted []string `json:"exhausted"`
+	}
+	if json.Unmarshal(msg, &quota) != nil {
+		return session
+	}
+	q, ok := quota[harness]
+	if !ok {
+		return session
+	}
+	if q.Included != nil {
+		session.Included = append([]string(nil), q.Included...)
+	}
+	if q.Exhausted != nil {
+		session.Exhausted = append([]string(nil), q.Exhausted...)
+	}
+	return session
 }
 
 // ResolveSession prefers a hook allowlist. When the payload has none, it

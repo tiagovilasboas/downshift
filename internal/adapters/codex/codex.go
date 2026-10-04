@@ -36,6 +36,10 @@ type Event struct {
 	// Codex PreToolUse does not send this field today.
 	SessionModels   *[]string `json:"session_models,omitempty"`
 	AvailableModels *[]string `json:"available_models,omitempty"`
+	// IncludedModels and UnavailableModels are optional quota marks.
+	// Nil leaves the user file. A non-nil slice replaces it for this call.
+	IncludedModels    *[]string `json:"included_models,omitempty"`
+	UnavailableModels *[]string `json:"unavailable_models,omitempty"`
 }
 
 // SessionIdentifier exposes Codex's stable session ID to the shared hook
@@ -127,14 +131,19 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		res = r[0]
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
+	decision.RequestedID = currentModel
 
 	session := core.ResolveSessionForID(harnessID, ev.SessionID, ev.SessionModels, ev.AvailableModels)
+	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	plan := decision.PlanForSession(core.CodexCaps, res, session)
-	if plan.PreserveExplicit || (!plan.RewriteModel && !plan.ApplyEffort) {
+	if plan.HoldForeign || plan.PreserveExplicit || (!plan.RewriteModel && !plan.ApplyEffort) {
 		return allow(), "", decision
 	}
-	if plan.RewriteModel && !session.Contains(plan.Model.ID) {
+	if plan.RewriteModel && !core.CanWriteCatalogID(harnessID, plan.Model.ID, session, res) {
 		return allow(), "", decision
+	}
+	if plan.RewriteModel {
+		decision.Model = plan.Model
 	}
 
 	effortValue := decision.Effort.String()

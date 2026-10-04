@@ -1,29 +1,44 @@
-# Graphify Integration — Codebase-Graph-Aware Escalation
+# Graphify integration: library, not hook escalation
 
-The `internal/graphify` package connects the Downshift classifier to the
-[Graphify](https://graphify.dev) knowledge graph via the Kiro Crew MCP tools
-(`query_graph`, `get_node`, `god_nodes`).
+harness-downshift by Tiago de Carvalho Vilas Boas
+https://github.com/tiagovilasboas/harness-downshift
 
-## What it does
+`internal/graphify` is a library. `core.Route` does not escalate via the graph.
+The hook path stays legacy regex scoring plus a monotonic semantic boost.
+Escalation happens only when a caller injects a `GraphFetcher` and applies
+`Hint` itself. The adapters do not do that.
 
-The standard Downshift classifier scores task prompts using **text signals**
-(regex patterns). It is deterministic and fast but cannot know whether the
-file mentioned in a prompt is a God Node with 186 edges or a tiny utility
-with 3.
+A nil fetcher never escalated. `TestHint_NilFetcher_OfflineMode` in
+`internal/graphify/graphify_test.go` passes a file path and a symbol with a
+nil fetcher and expects `ShouldEscalate == false`. A nil fetcher is replaced
+by `noopFetcher`, whose `FetchNode` returns `Found: false`, so edge and
+community rules do not fire. A leftover nil call inside `core.Route`, while
+it remains, still cannot change the tier.
 
-The graphify adapter adds a second layer: if the prompt mentions a **file path
-or a PascalCase symbol**, it queries the graph and can **escalate to COMPLEX**
-before the text-based tier is applied.
+The library can talk to the [Graphify](https://graphify.dev) knowledge graph
+through Kiro Crew MCP tools (`query_graph`, `get_node`, `god_nodes`) only
+after a caller supplies a fetcher.
+
+## What the library does
+
+`core.Route` scores task prompts with text signals. It does not know whether
+a mentioned file is a God Node with 186 edges or a tiny utility with 3, and
+it does not ask the graph.
+
+If a caller injects a `GraphFetcher`, `Hint` can return `ShouldEscalate` when
+the prompt mentions a file path or a PascalCase symbol and the fetcher finds
+a node over the edge threshold or in a high-risk community. Applying that
+hint is the caller's decision. `core.Route` does not apply it.
 
 ```
-prompt → extractCandidates() → GraphFetcher.FetchNode() → EscalationHint
-                                                              │
-                    ┌─────────────────────────────────────────┘
-                    ↓
-         edges ≥ 20  OR  community in [payment, KYC, subscription]
-                    │
-                    ↓
-          Route() overrides Complexity → COMPLEX
+caller prompt → extractCandidates() → injected GraphFetcher.FetchNode()
+                                              │
+                                              ↓
+                         edges ≥ 20  OR  high-risk community
+                                              │
+                                              ↓
+                         EscalationHint.ShouldEscalate
+                         (core.Route does not read this)
 ```
 
 ## Escalation criteria (defaults)
@@ -35,42 +50,44 @@ prompt → extractCandidates() → GraphFetcher.FetchNode() → EscalationHint
 
 ## Zero-latency by design
 
+These traces apply only when a caller injected a `GraphFetcher`. `core.Route` does not run them. A nil fetcher extracts candidates and does not escalate.
+
 **No graph call is made when the prompt contains no file path or symbol.**
 A rename or git commit prompt never touches the network.
 
 ```
 "rename userId"          → 0 candidates → no fetch → no escalation (fast)
-"fix CreateSaleService"  → 1 symbol     → FetchNode → Community match → COMPLEX
-"refactor src/app/..."   → 1 file path  → FetchNode → 33 edges → COMPLEX
+"fix CreateSaleService"  → 1 symbol     → FetchNode → community match → ShouldEscalate
+"refactor src/app/..."   → 1 file path  → FetchNode → 33 edges → ShouldEscalate
 ```
 
 ## Integration points
 
-### 1. Policy layer (Go — no MCP)
+### 1. Caller-owned hint (not `core.Route`)
 
-Use `graphify.Hint(prompt, criteria, fetcher)` **before** `core.Route()`:
+`graphify.Hint` escalates only when the caller passes a `GraphFetcher`.
+Do not add this call to `core.Route`.
 
 ```go
 import "github.com/tiagovilasboas/harness-downshift/internal/graphify"
 
 hint := graphify.Hint(prompt, graphify.DefaultCriteria(), myFetcher)
 if hint.ShouldEscalate {
-    // Force Complex tier regardless of text-only classification.
-    decision := core.Route(prompt+" [graphify-escalated]", harness, currentModelID, resolver)
-    // Or: use a wrapper that accepts a complexity override.
+    // Caller-owned. core.Route does not apply this hint and does not
+    // escalate via the graph.
 }
 ```
 
 ### 2. GraphFetcher implementations
 
-The package is interface-driven. Two implementations are expected:
+The package is interface-driven. Tests use `stubFetcher`. `KiroCrewFetcher` is not in this repo and is not on the hook.
 
 | Impl | Used in | How |
 |---|---|---|
-| `stubFetcher` | Tests | Returns deterministic `NodeInfo` from a map |
-| `KiroCrewFetcher` | Kiro Crew hooks | Calls graphify MCP `get_node` / `query_graph` via the MCP bridge |
+| `stubFetcher` | `graphify_test.go` | Returns deterministic `NodeInfo` from a map |
+| `KiroCrewFetcher` | Not shipped | Would call graphify MCP `get_node` / `query_graph` |
 
-The `KiroCrewFetcher` (not included here — lives in the adapter layer) calls:
+The unshipped fetcher would call:
 
 ```json
 {
@@ -79,13 +96,13 @@ The `KiroCrewFetcher` (not included here — lives in the adapter layer) calls:
 }
 ```
 
-And maps the result to `NodeInfo{Label, Community, Edges, Found}`.
+A caller would map that result to `NodeInfo{Label, Community, Edges, Found}`.
 
-### 3. Kiro hook (`preToolUse` or `promptSubmit`)
+### 3. Not the hook
 
-The hook can call `downshift graphify-check --prompt="..."` (new subcommand,
-not yet implemented) which runs `Hint()` with the `KiroCrewFetcher` and exits
-with code 2 if escalation is needed.
+The production hook does not call `graphify.Hint` with a real fetcher.
+`downshift graphify-check` is not implemented. Do not treat that gap as a
+work order to escalate inside `core.Route`.
 
 ## Active graph data (2026-09-30)
 
@@ -98,14 +115,17 @@ Top God Nodes (highest blast radius):
 | Symbol | Edges | Community |
 |---|---|---|
 | Controller | 186 | Community 69 |
-| moment() | 61 | — |
+| moment() | 61 | (none recorded) |
 | CreateSubscriptionStructureService | 40 | Client & Subscription State |
 | SalesPublishPostGraduateCosmosService | 37 | Client & Subscription State |
 | CreateSaleService | 33 | Client & Subscription State |
 
 ## What's NOT implemented yet
 
-- `KiroCrewFetcher` — the production MCP bridge (adapter layer task)
+These items are not a request to put graph escalation on the hook:
+
+- `KiroCrewFetcher`: a production MCP bridge does not ship in this repo
 - `downshift graphify-check` CLI subcommand
 - Graph data caching (TTL-based, to avoid repeated MCP calls per session)
 - PR impact integration (`get_pr_impact` in Guardian hook)
+- Graph escalation inside `core.Route` (intentionally absent: a nil fetcher never escalated)

@@ -342,6 +342,16 @@ func TestEmbeddedClaudeCodeSavingsMatchesREADME(t *testing.T) {
 // claude-haiku-4-5-20251001 with the alias claude-haiku-4-5
 // (https://docs.anthropic.com/en/docs/about-claude/models). An alias may keep
 // the old name so existing configs still match, but no entry may emit it.
+func TestValidate_RejectsAliasOfAnotherHarnessCanonicalID(t *testing.T) {
+	data := []byte(`{"entries":[
+		{"id":"claude-haiku-4-5","harness":"claude-code","tier":"small","family":"claude-haiku"},
+		{"id":"claude-4.5-haiku-thinking","aliases":["claude-haiku-4-5"],"harness":"cursor","tier":"small","family":"claude-4.5-haiku"}
+	]}`)
+	if _, err := parse(data); err == nil {
+		t.Fatal("alias of another harness canonical id must be rejected")
+	}
+}
+
 func TestEmbeddedCatalogNeverEmitsNonexistentHaikuID(t *testing.T) {
 	c, err := parse(embeddedJSON)
 	if err != nil {
@@ -587,8 +597,8 @@ func TestFamilyModelFor_OpusMediumEffort(t *testing.T) {
 	if !ok {
 		t.Fatal("FamilyModelFor(cursor, claude-opus, medium) should hit the 5.5 variant")
 	}
-	if m.ID != "claude-opus-5.5-medium" {
-		t.Errorf("got %q, want claude-opus-5.5-medium", m.ID)
+	if m.ID != "claude-opus-5-5-medium" {
+		t.Errorf("got %q, want claude-opus-5-5-medium", m.ID)
 	}
 }
 

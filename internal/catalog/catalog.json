@@ -66,7 +66,7 @@
 
     {
       "id": "claude-4.5-haiku-thinking",
-      "aliases": ["claude-haiku-4-5", "claude-haiku-4", "claude-haiku"],
+      "aliases": ["claude-haiku-4", "claude-haiku"],
       "family": "claude-4.5-haiku",
       "provider": "anthropic",
       "harness": "cursor",
@@ -105,8 +105,8 @@
     { "_section": "cursor — xAI Grok (installed via model picker)" },
 
     {
-      "id": "grok-4.7-high-fast",
-      "aliases": ["grok-4.6", "grok-4", "grok", "cursor-grok-4.6-high"],
+      "id": "grok-4.7-xhigh",
+      "aliases": ["grok-4.7-high-fast", "grok-4.7-high", "grok-4", "grok", "cursor-grok-4.6-high"],
       "family": "grok",
       "provider": "xai",
       "harness": "cursor",
@@ -115,6 +115,85 @@
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
       "input_cost_per_1m": 2.00,
       "output_cost_per_1m": 6.00
+    },
+
+    { "_section": "cursor — session slugs observed 2026-10-04. Costs rank models inside a session. They are not a provider invoice." },
+
+    {
+      "id": "composer-2.5-fast",
+      "aliases": [],
+      "family": "composer-fast",
+      "provider": "cursor",
+      "harness": "cursor",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 1.10,
+      "output_cost_per_1m": 5.10
+    },
+    {
+      "id": "composer-2.5",
+      "aliases": [],
+      "family": "composer-std",
+      "provider": "cursor",
+      "harness": "cursor",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 1.25,
+      "output_cost_per_1m": 5.25
+    },
+    {
+      "id": "claude-4.5-opus-high-thinking",
+      "aliases": [],
+      "family": "claude-4.5-opus",
+      "effort": "high",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 5.00,
+      "output_cost_per_1m": 25.00
+    },
+    {
+      "id": "claude-sonnet-5-5-high",
+      "aliases": [],
+      "family": "claude-sonnet-5",
+      "effort": "high",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
+      "input_cost_per_1m": 3.00,
+      "output_cost_per_1m": 15.00
+    },
+    {
+      "id": "cursor-grok-4.6-medium",
+      "aliases": [],
+      "family": "cursor-grok",
+      "effort": "medium",
+      "provider": "xai",
+      "harness": "cursor",
+      "tier": "mid",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 2.00,
+      "output_cost_per_1m": 6.00
+    },
+    {
+      "id": "glm-5.2-high",
+      "aliases": [],
+      "family": "glm",
+      "effort": "high",
+      "provider": "zhipu",
+      "harness": "cursor",
+      "tier": "mid",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 2.00,
+      "output_cost_per_1m": 8.00
     },
 
     { "_section": "cursor — Option A: family + effort variants (effort-tagged, no per-harness versioning)" },
@@ -146,8 +225,8 @@
       "output_cost_per_1m": 4.25
     },
     {
-      "id": "claude-opus-5.5-medium",
-      "aliases": ["claude-opus-5.5"],
+      "id": "claude-opus-5-5-medium",
+      "aliases": ["claude-opus-5.5-medium", "claude-opus-5.5"],
       "family": "claude-opus",
       "effort": "medium",
       "provider": "anthropic",
@@ -159,8 +238,8 @@
       "output_cost_per_1m": 20.00
     },
     {
-      "id": "gpt-5.6-sol-medium",
-      "aliases": ["gpt-sol-medium"],
+      "id": "gpt-5.6-sol-high",
+      "aliases": ["gpt-5.6-sol-medium", "gpt-sol-medium"],
       "family": "gpt-5.6-sol",
       "effort": "medium",
       "provider": "openai",
@@ -172,8 +251,8 @@
       "output_cost_per_1m": 20.00
     },
     {
-      "id": "claude-fable-5.1-high",
-      "aliases": ["claude-fable"],
+      "id": "claude-fable-5-1-thinking-high",
+      "aliases": ["claude-fable-5.1-high", "claude-fable"],
       "family": "claude-fable",
       "effort": "high",
       "provider": "anthropic",

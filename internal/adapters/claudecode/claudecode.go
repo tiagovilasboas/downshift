@@ -35,6 +35,10 @@ type Event struct {
 	// Claude Code PreToolUse does not send this field today.
 	SessionModels   *[]string `json:"session_models,omitempty"`
 	AvailableModels *[]string `json:"available_models,omitempty"`
+	// IncludedModels and UnavailableModels are optional quota marks.
+	// Nil leaves the user file. A non-nil slice replaces it for this call.
+	IncludedModels    *[]string `json:"included_models,omitempty"`
+	UnavailableModels *[]string `json:"unavailable_models,omitempty"`
 }
 
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
@@ -112,12 +116,15 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		res = r[0]
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
+	decision.RequestedID = currentModel
 
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
+	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	plan := decision.PlanForSession(core.ClaudeCodeCaps, res, session)
-	if plan.PreserveExplicit || !plan.RewriteModel || !session.Contains(plan.Model.ID) {
+	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !core.CanWriteCatalogID(harnessID, plan.Model.ID, session, res) {
 		return allow(), "", decision
 	}
+	decision.Model = plan.Model
 
 	ti["model"] = plan.Model.ID
 	updated, err := json.Marshal(ti)

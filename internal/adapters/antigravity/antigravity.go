@@ -21,6 +21,10 @@ type Event struct {
 	// ResolveSession falls back to the user file when both are nil.
 	SessionModels   *[]string `json:"session_models,omitempty"`
 	AvailableModels *[]string `json:"available_models,omitempty"`
+	// IncludedModels and UnavailableModels are optional quota marks.
+	// Nil leaves the user file. A non-nil slice replaces it for this call.
+	IncludedModels    *[]string `json:"included_models,omitempty"`
+	UnavailableModels *[]string `json:"unavailable_models,omitempty"`
 }
 
 type Output struct {
@@ -62,6 +66,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
+	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 
 	changed := false
 	var lastDecision core.Decision
@@ -79,13 +84,14 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 		currentModel := hookutil.StringField(subagent, "Model")
 		decision := core.Route(prompt, harnessID, currentModel, res)
+		decision.RequestedID = currentModel
 		lastDecision = decision
 
 		// Gate the rewrite on the session plan: unknown session, empty
 		// target, explicit-only current model, or a rewrite the plan
 		// forbids all fail open (allow, no write).
 		plan := decision.PlanForSession(core.AntigravityCaps, res, session)
-		if plan.PreserveExplicit || !plan.RewriteModel || !session.Contains(plan.Model.ID) {
+		if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !session.Contains(plan.Model.ID) {
 			continue
 		}
 		// A decision held by a guardrail (self-correction recorded a
@@ -112,12 +118,8 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 			mappedModel = "inherit"
 		}
 
-		// The alias written must itself be a session member and must not
-		// be an explicit-only model.
-		if mappedModel == "" || !session.Contains(mappedModel) {
-			continue
-		}
-		if res != nil && res.IsExplicitOnly(harnessID, mappedModel) {
+		// The string written must be this harness's canonical catalog id.
+		if !core.CanWriteCatalogID(harnessID, mappedModel, session, res) {
 			continue
 		}
 

@@ -47,13 +47,27 @@ condition in the subscription renewal worker".
 5. Run `downshift benchmark` before and after your change and paste both
    confusion matrices in the PR description.
 
+## Holdout file: burned regression net
+
+`benchmark/holdout.json` has 300 tasks. Measured on 2026-10-04 (`main` `dc90076`):
+
+- Exact overlap with `benchmark/tasks.json` is 0.
+- 147 of 300 share 20 repeated stems with the seed. Those stems are template paraphrases such as "implement caching layer with ..." and "rearchitect ... to support ...".
+- All 75 COMPLEX holdout prompts contain a COMPLEX keyword.
+- Commits after the holdout landed (raft/etcd, system-design signals) tuned the classifier until reported tier accuracy hit 100%.
+
+That 100% is this file after the signals were edited against it. It is a regression net. It is not proof of generalization and it is not traffic quality.
+
+### Protocol
+
+Do not add regex signals to make `benchmark/holdout.json` pass. New labels must be real misroutes, not paraphrases of stems already in the seed or the holdout. Do not add a synthetic task list, and do not create `benchmark/prospective.json` filled with made-up prompts.
+
 ## Expansion roadmap
 
-- **Held-out split.** Reserve a subset contributors never see during
-  tuning, so reported accuracy is honest (`benchmark/holdout.json`).
+- **Held-out split.** `benchmark/holdout.json` is in tree and is the burned regression net above. It is not an untouched set.
 - **500-1000 task target.** Grow the seed with reviewed real tasks until
   per-label counts support stable metrics.
-- **Statistical reporting.** Added 95% bootstrap confidence intervals for Tier Accuracy via `downshift benchmark <file> --report`:
+- **Statistical reporting.** `downshift benchmark <file> --report` can emit a 95% bootstrap confidence interval for tier accuracy. The JSON below is a format sample. Those figures are not a current measurement of the seed or the holdout:
   ```json
   {
     "total_tasks": 200,
@@ -88,9 +102,9 @@ A misroute found on `fresh.json` is fixed by writing a **new** prompt that shows
 the same pattern into `tasks.json` or the edge tests, never by copying the
 fresh prompt.
 
-## MiniLM holdout (P4.10)
+## MiniLM row on the burned holdout (P4.10)
 
-Evaluation on the 300-task held-out split (`benchmark/holdout.json`). Centroids for the neural row were fit only on `benchmark/tasks.json` by `tools/minilm/eval_holdout.py`.
+Neural centroids evaluated on `benchmark/holdout.json`, the burned regression net above. Centroids for the neural row were fit only on `benchmark/tasks.json` by `tools/minilm/eval_holdout.py`.
 
 | Mode | Tier accuracy | FRONTIER→MID | FRONTIER→SMALL |
 |---|---|---|---|
@@ -98,5 +112,5 @@ Evaluation on the 300-task held-out split (`benchmark/holdout.json`). Centroids 
 | In-process hash boost (default) | 100% | 0.0% | 0.0% |
 | all-MiniLM-L6-v2 nearest centroid | 96.3% | 0.0% | 0.0% |
 
-The neural model does not raise tier accuracy on this split. It clears the remaining FRONTIER→MID misses. The default embedder stays the in-process hash (no Python, no network). Raw neural summary: `benchmark/minilm-holdout.json`.
+The 100% rows are the burned regression net described above. The neural row does not beat that net (`tier_accuracy` 0.963333 in `benchmark/minilm-holdout.json`). The default embedder stays the in-process hash (no Python, no network).
 

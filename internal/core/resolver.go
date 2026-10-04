@@ -51,6 +51,14 @@ type Resolver interface {
 	IsExplicitOnly(harness, modelID string) bool
 }
 
+// ExactIDResolver is an optional extension of Resolver.
+// IsExactID reports an exact id or a declared alias for this harness.
+// A family-prefix match must return false: another harness's version string
+// is not ownership.
+type ExactIDResolver interface {
+	IsExactID(harness, id string) bool
+}
+
 // FamilyEffortResolver is an optional extension of Resolver for
 // effort-based routing inside one model family (Option A).
 //
