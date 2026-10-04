@@ -146,3 +146,34 @@ func TestDefaultRotationPolicy(t *testing.T) {
 		t.Errorf("MaxAgeDays = %d, want 0", policy.MaxAgeDays)
 	}
 }
+
+// The lock file shares the log prefix but must never count as a backup.
+func TestCleanupOldBackups_IgnoresLockFile(t *testing.T) {
+	dir := t.TempDir()
+	log := filepath.Join(dir, "events.jsonl")
+	for _, name := range []string{"events.jsonl.2026-01-01T00-00-00", "events.jsonl.lock"} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	p := telemetry.RotationPolicy{MaxSizeMB: 1, MaxBackups: 1}
+	if err := os.WriteFile(log, make([]byte, 2*1024*1024), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := p.MaybeRotate(log); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "events.jsonl.lock")); err != nil {
+		t.Fatalf("lock file was removed by backup cleanup: %v", err)
+	}
+	entries, _ := os.ReadDir(dir)
+	backups := 0
+	for _, e := range entries {
+		if e.Name() != "events.jsonl.lock" && len(e.Name()) > len("events.jsonl.") {
+			backups++
+		}
+	}
+	if backups != 1 {
+		t.Fatalf("want exactly 1 backup kept, got %d (%v)", backups, entries)
+	}
+}
