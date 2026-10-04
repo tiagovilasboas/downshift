@@ -118,6 +118,19 @@ echo ""
 echo "✓ harness-downshift ${VERSION} installed to ${INSTALL_DIR}/downshift"
 echo ""
 
+# Session allowlist: the hook only writes model ids listed here. Without the
+# file it never rewrites anything, so say so instead of installing a silent
+# no-op. The list is operator-curated (it depends on your plan), so it is not
+# created automatically.
+SESSION_FILE="$HOME/.harness-downshift/session-models.json"
+if [ ! -f "$SESSION_FILE" ]; then
+  echo "Next: list the models your session can use, or the hook will not rewrite anything:"
+  echo "  mkdir -p \"$HOME/.harness-downshift\""
+  echo "  echo '{ \"claude-code\": [\"claude-haiku-4-5\", \"claude-sonnet-4-6\", \"claude-opus-4-8\"] }' > \"$SESSION_FILE\""
+  echo "  (edit the ids to match your plan; see docs/session-models.md)"
+  echo ""
+fi
+
 # Verify
 if command -v downshift >/dev/null 2>&1; then
   downshift --help 2>/dev/null | head -3 || true

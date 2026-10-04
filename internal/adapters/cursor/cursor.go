@@ -119,6 +119,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
+	decision.SessionUnknown = !session.Known
 	plan := decision.PlanForSession(core.CursorCaps, res, session)
 	if plan.HoldForeign || plan.PreserveExplicit {
 		return allow(), "", decision

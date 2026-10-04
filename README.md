@@ -75,12 +75,23 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/harness-downshift/ma
 ```bash
 downshift try "rename the userId variable" claude-code
 # → TRIVIAL task → use claude-haiku-4-5 (small tier)
+# Rewrite: no: session unknown …   (until step 3 is done)
 
 downshift try "rearchitect the auth module to support multi-tenant" claude-code
 # → COMPLEX task → use claude-opus-4-8 (frontier tier)
 ```
 
-**Step 3 — Add the hook** to `~/.claude/settings.json`:
+**Step 3 — List the models your session can use.** The hook only ever writes a model id that is in this list; without it, it never rewrites anything (it prints `no session allowlist` on stderr). Put the ids your plan actually offers in `~/.harness-downshift/session-models.json`:
+```bash
+mkdir -p ~/.harness-downshift
+cat > ~/.harness-downshift/session-models.json <<'JSON'
+{ "claude-code": ["claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"] }
+JSON
+downshift try "rename the userId variable" claude-code   # now: Rewrite: yes → claude-haiku-4-5
+```
+Details (per-session lists, quotas, other harnesses): [docs/session-models.md](docs/session-models.md).
+
+**Step 4 — Add the hook** to `~/.claude/settings.json`:
 ```json
 {
   "hooks": {
@@ -91,14 +102,14 @@ downshift try "rearchitect the auth module to support multi-tenant" claude-code
 }
 ```
 
-**Step 4 — Confirm it's working.** Open Claude Code, ask it to spawn a subagent for a trivial task. You'll see this in the terminal:
+**Step 5 — Confirm it's working.** Open Claude Code, ask it to spawn a subagent for a trivial task. With Claude Code's verbose output you'll see a line like:
 ```
-downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~80% cheaper)
+downshift: correlation_id=… TRIVIAL task → use claude-haiku-4-5 (small tier)
 ```
 
-That line in stderr means the hook fired and rewrote the model before the subagent started.
+That line means the hook emitted a rewrite before the subagent started. It proves emission, not that Claude Code honored it (see [docs/session-models.md](docs/session-models.md)). If you see `no session allowlist` instead, redo step 3. Unconfident classifications never move a spawn to the small tier, so some trivial-looking tasks are left unchanged by design.
 
-**Step 5 — (Optional) Open the live monitor.** `dsmon` is a floating terminal widget built into the same repo that tails `~/.harness-downshift/events.jsonl` and shows model switches, tier distribution and estimated savings in real time:
+**Step 6 — (Optional) Open the live monitor.** `dsmon` is a floating terminal widget built into the same repo that tails `~/.harness-downshift/events.jsonl` and shows model switches, tier distribution and estimated savings in real time:
 
 ```bash
 # Build the monitor binary (separate from the hook binary)

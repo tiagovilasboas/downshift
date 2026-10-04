@@ -103,6 +103,8 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		res = r[0]
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
+	session := core.ResolveSession(harnessID)
+	decision.SessionUnknown = !session.Known
 
 	// Right gear already: nothing to do.
 	if decision.Verdict == core.VerdictOK {
@@ -135,7 +137,6 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// blocking would tell the agent to respawn with an id it cannot (or must
 	// not) use. Same ResolveSession order as the rewrite adapters; without a
 	// known session there is nothing safe to name.
-	session := core.ResolveSession(harnessID)
 	if !session.Contains(decision.Model.ID) {
 		return allow(), "", decision
 	}
