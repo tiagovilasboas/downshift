@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// SPDX-License-Identifier: BUSL-1.1
+// Commercial use requires a licence — see LICENSE for terms.
+
 // dsmon — downshift monitor
 // Floating terminal widget. Lives in cmd/dsmon/ as a standalone command
 // inside harness-downshift — reads events.jsonl, renders live in the terminal.

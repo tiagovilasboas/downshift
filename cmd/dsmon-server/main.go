@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// SPDX-License-Identifier: BUSL-1.1
+// Commercial use requires a licence — see LICENSE for terms.
+
 // dsmon-server — standalone binary for the harness-hub dashboard.
 // Prefer `downshift serve` for the integrated experience.
 //
