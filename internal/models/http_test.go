@@ -302,3 +302,32 @@ func TestPull_HTTP500FallsOpen(t *testing.T) {
 		t.Errorf("HTTP 500 must fail-open, got rc=%d", rc)
 	}
 }
+
+// The Anthropic models API authenticates API keys with x-api-key, not a
+// Bearer header; OpenAI-style providers use Bearer and get no Anthropic
+// headers.
+func TestCheck_ProviderAuthHeaders(t *testing.T) {
+	type seen struct{ apiKey, bearer, version string }
+	got := map[string]seen{}
+	handler := func(name, body string) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			got[name] = seen{r.Header.Get("x-api-key"), r.Header.Get("Authorization"), r.Header.Get("anthropic-version")}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(body))
+		}
+	}
+	a := httptest.NewServer(handler("anthropic", anthropicResponse("claude-haiku-4-5")))
+	defer a.Close()
+	o := httptest.NewServer(handler("openai", openAIResponse("gpt-5.6-sol")))
+	defer o.Close()
+	t.Setenv("ANTHROPIC_API_KEY", "ak-test")
+	t.Setenv("OPENAI_API_KEY", "ok-test")
+	var out, errOut bytes.Buffer
+	models.CheckWithProviders(cat, mockProviders(a.URL, o.URL), &http.Client{}, &out, &errOut)
+	if g := got["anthropic"]; g.apiKey != "ak-test" || g.bearer != "" || g.version == "" {
+		t.Errorf("anthropic headers = %+v, want x-api-key + anthropic-version, no Bearer", g)
+	}
+	if g := got["openai"]; g.bearer != "Bearer ok-test" || g.apiKey != "" || g.version != "" {
+		t.Errorf("openai headers = %+v, want Bearer only", g)
+	}
+}

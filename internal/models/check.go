@@ -93,8 +93,7 @@ func fetchModelIDs(client *http.Client, p ProviderConfig, apiKey string) ([]stri
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-	req.Header.Set("anthropic-version", "2023-06-01")
+	setAuth(req, p, apiKey)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -157,4 +156,17 @@ func isInternalModel(id string) bool {
 		}
 	}
 	return false
+}
+
+// setAuth applies the provider's authentication scheme. The Anthropic API
+// takes the key in x-api-key (plus anthropic-version); a Bearer header is
+// for OAuth tokens and is rejected for API keys. OpenAI and xAI use Bearer.
+// Each provider receives only its own headers.
+func setAuth(req *http.Request, p ProviderConfig, apiKey string) {
+	if strings.EqualFold(p.Name, "Anthropic") {
+		req.Header.Set("x-api-key", apiKey)
+		req.Header.Set("anthropic-version", "2023-06-01")
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
 }
