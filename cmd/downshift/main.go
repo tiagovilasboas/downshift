@@ -163,13 +163,26 @@ func runHookAdapter[E any](
 	handle func(E) (any, string, core.Decision),
 	failOpen func(),
 	taskText ...func(E) string,
-) int {
+) (rc int) {
 	correlationID := telemetry.NewCorrelationID()
+	responded := false
 	fail := func(code string) int {
 		telemetry.Record(telemetry.Failure(correlationID, buildVersion, code))
-		failOpen()
+		if !responded {
+			failOpen()
+			responded = true
+		}
 		return 0
 	}
+	// A Go panic exits with status 2, which Claude Code and Codex treat as
+	// "block this tool call". Recover so a router bug can never block a
+	// spawn: answer with the fail-open response (once) and exit 0.
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintln(os.Stderr, "downshift: internal error, spawn allowed unchanged")
+			rc = fail("PANIC")
+		}
+	}()
 	// Harness hook payloads contain task text. Bound the read so a malformed or
 	// hostile stdin cannot make the persistent harness process exhaust memory.
 	const maxHookPayloadBytes = 1 << 20
@@ -197,8 +210,14 @@ func runHookAdapter[E any](
 	noRoute := os.Getenv("DOWNSHIFT_NO_ROUTE") == "1"
 	if noRoute {
 		failOpen()
-	} else if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
-		return fail("OUTPUT_ENCODE_ERROR")
+		responded = true
+	} else {
+		encoded, err := json.Marshal(out)
+		if err != nil {
+			return fail("OUTPUT_ENCODE_ERROR")
+		}
+		responded = true
+		fmt.Fprintf(os.Stdout, "%s\n", encoded)
 	}
 	if note != "" {
 		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
@@ -264,20 +283,33 @@ func runHookAdapter[E any](
 // so any read/parse/encode failure prints the neutral PostToolUse response
 // ({}) and exits 0. Telemetry goes to the hermetic event log
 // (DOWNSHIFT_EVENT_LOG respected inside the telemetry package).
-func runClaudePostToolUse(in io.Reader, catalog core.Resolver) int {
+func runClaudePostToolUse(in io.Reader, catalog core.Resolver) (rc int) {
+	responded := false
 	neutral := func() int {
-		fmt.Println(`{}`)
+		if !responded {
+			fmt.Println(`{}`)
+			responded = true
+		}
 		return 0
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintln(os.Stderr, "downshift: internal error in PostToolUse, ignored")
+			rc = neutral()
+		}
+	}()
 	const maxHookPayloadBytes = 1 << 20
 	data, err := readHookPayload(in, maxHookPayloadBytes+1)
 	if err != nil || len(data) > maxHookPayloadBytes {
 		return neutral()
 	}
 	out, note, _ := claudecode.HandlePostToolUse(data, buildVersion, catalog)
-	if err := json.NewEncoder(os.Stdout).Encode(out); err != nil {
+	encoded, err := json.Marshal(out)
+	if err != nil {
 		return neutral()
 	}
+	responded = true
+	fmt.Fprintf(os.Stdout, "%s\n", encoded)
 	if note != "" {
 		fmt.Fprintf(os.Stderr, "downshift: %s\n", note)
 	}
@@ -297,12 +329,19 @@ func confidenceValue(confident bool) float64 {
 // runner never prints a rewrite to stdout — it classifies the spawn and, on a
 // confident tier mismatch, returns exit 2 with an actionable respawn message.
 // Fail-open is absolute: any read/parse error, or an allow decision, exits 0.
-func runKiroCrewHook(in io.Reader, catalog core.Resolver) int {
+func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
 	correlationID := telemetry.NewCorrelationID()
 	fail := func(code string) int {
 		telemetry.Record(telemetry.Failure(correlationID, buildVersion, code))
 		return 0 // fail-open: never block a spawn on a router error
 	}
+	// A Go panic exits with status 2, which KiroCrew treats as "block".
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintln(os.Stderr, "downshift: internal error, spawn allowed unchanged")
+			rc = fail("PANIC")
+		}
+	}()
 
 	const maxHookPayloadBytes = 1 << 20
 	data, err := readHookPayload(in, maxHookPayloadBytes+1)
