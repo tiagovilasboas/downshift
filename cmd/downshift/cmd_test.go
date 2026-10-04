@@ -404,7 +404,7 @@ func TestHookTelemetryEndToEnd(t *testing.T) {
 	if recorded.Harness != "codex" || recorded.SessionID != telemetry.HashSessionID("session-e2e") || recorded.FromModel != frontierID || recorded.ToModel == "" {
 		t.Fatalf("unexpected model/harness telemetry: %#v", recorded)
 	}
-	if recorded.RequestedEffort != "high" || recorded.FinalEffort == "" || recorded.Tier == "" || recorded.Verdict == "" || recorded.PolicyVersion == "" || recorded.BinaryVersion == "" || recorded.Outcome != "rewrite_emitted" {
+	if recorded.RequestedEffort != "high" || recorded.FinalEffort == "" || recorded.Tier == "" || recorded.Verdict == "" || recorded.PolicyVersion == "" || recorded.BinaryVersion == "" || recorded.Outcome != "allow" || recorded.ToModel != recorded.FromModel {
 		t.Fatalf("missing routing decision telemetry: %#v", recorded)
 	}
 	if recorded.DecisionIntelligence == nil || recorded.DecisionIntelligence.Apply || recorded.DecisionIntelligence.Tier != recorded.Tier || len(recorded.DecisionIntelligence.Reasons) == 0 {
@@ -436,8 +436,10 @@ func TestHookTelemetryDoesNotBackfillRequestedModel(t *testing.T) {
 	if events[0].FromModel != "unknown" {
 		t.Fatalf("requested_model = %q, want unknown without allowlisted input", events[0].FromModel)
 	}
-	if events[0].ToModel == "unknown" || events[0].ToModel == "" {
-		t.Fatalf("final model should remain policy output: %#v", events[0])
+	// The spawn was left unchanged: final_model is what the child runs on
+	// (unknown here) and the policy output moves to recommended_model.
+	if events[0].Outcome != "allow" || events[0].ToModel != "unknown" || events[0].RecommendedModel == "" {
+		t.Fatalf("allow event must record the unchanged model and keep the recommendation: %#v", events[0])
 	}
 }
 

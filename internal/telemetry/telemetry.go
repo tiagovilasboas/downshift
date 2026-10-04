@@ -81,6 +81,11 @@ type Event struct {
 	// most once; later usage records skip it.
 	LinkedDecision string `json:"linked_decision,omitempty"`
 
+	// RecommendedModel is the classifier's recommendation on events whose
+	// spawn was left unchanged (allow, baseline, blocked). final_model on
+	// those events is the model the child actually runs on.
+	RecommendedModel string `json:"recommended_model,omitempty"`
+
 	// Optional naive-Bayes second opinion, present only when NB would have
 	// raised the tier. Applied is false in shadow mode (the default), where
 	// the routing decision above is unchanged.
@@ -221,6 +226,21 @@ func AppliedRewrite(outcome string, corrections []string) bool {
 		return false
 	}
 	return outcome == OutcomeRewriteEmitted || outcome == ""
+}
+
+// MarkUnchanged rewrites final_model/final_reasoning_effort on an event
+// whose hook response left the spawn unchanged (allow or baseline), so the
+// log records what the child actually runs on. The recommendation moves to
+// recommended_model. Rewrite and blocked events are left as they are.
+func MarkUnchanged(ev *Event) {
+	if ev.Outcome != OutcomeAllow && ev.Outcome != OutcomeBaseline {
+		return
+	}
+	if ev.ToModel != ev.FromModel {
+		ev.RecommendedModel = ev.ToModel
+	}
+	ev.ToModel = ev.FromModel
+	ev.FinalEffort = ev.RequestedEffort
 }
 
 // FromDecision builds an Event from a core.Decision and hook runtime context.

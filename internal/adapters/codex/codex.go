@@ -16,6 +16,7 @@ package codex
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
@@ -143,19 +144,29 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if plan.RewriteModel && !core.CanWriteCatalogID(harnessID, plan.Model.ID, session, res) {
 		return allow(), "", decision
 	}
-	if plan.RewriteModel {
-		decision.Model = plan.Model
-	}
-
 	effortValue := decision.Effort.String()
 	if res != nil {
 		effortValue = res.EffortFor(harnessID, plan.Model.ID, decision.Effort)
 	}
-
-	if plan.RewriteModel {
-		ti["model"] = plan.Model.ID
+	requestedEffort := hookutil.StringField(ti, "reasoning_effort")
+	applyEffort := plan.ApplyEffort && effortAllowed(decision, requestedEffort, effortValue, plan.RewriteModel)
+	if !plan.RewriteModel && (!applyEffort || effortValue == requestedEffort) {
+		return allow(), "", decision
 	}
-	if plan.ApplyEffort {
+
+	note := ""
+	if plan.RewriteModel {
+		decision.Model = plan.Model
+		ti["model"] = plan.Model.ID
+		note = decision.Summary()
+	} else {
+		// Effort-only change: the model stays as requested, and the event
+		// must record the model the child actually runs on.
+		decision.Model = decision.CurrentModel
+		note = fmt.Sprintf("%s task → keep %s, reasoning effort %s → %s",
+			decision.Complexity, decision.CurrentModel.ID, effortOrInherit(requestedEffort), effortValue)
+	}
+	if applyEffort {
 		ti["reasoning_effort"] = effortValue
 	}
 	updated, err := json.Marshal(ti)
@@ -170,7 +181,40 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 			UpdatedInput:       updated,
 		},
 	}
-	return out, decision.Summary(), decision
+	return out, note, decision
+}
+
+// effortRank orders the cross-harness effort vocabulary. Unknown values
+// rank -1.
+func effortRank(v string) int {
+	for i, e := range []string{"none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"} {
+		if v == e {
+			return i
+		}
+	}
+	return -1
+}
+
+// effortAllowed reports whether the hook may write effort value over the
+// requested one. A confident, unheld decision may set any effort. An
+// unconfident or guardrail-held decision may only raise effort: lowering it
+// would be a downshift on doubt. With no (or an unrecognised) requested
+// effort, it may only write effort alongside a model rewrite.
+func effortAllowed(d core.Decision, requested, value string, modelRewritten bool) bool {
+	if d.Confident && len(d.Corrections) == 0 {
+		return true
+	}
+	if effortRank(requested) < 0 {
+		return modelRewritten
+	}
+	return effortRank(value) >= effortRank(requested)
+}
+
+func effortOrInherit(v string) string {
+	if v == "" {
+		return "inherit"
+	}
+	return v
 }
 
 func isSpawnTool(name string) bool {
