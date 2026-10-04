@@ -203,6 +203,7 @@ func runHookAdapter[E any](
 	if note != "" {
 		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
 	}
+	warnSessionUnknown(decision)
 	// Record telemetry only when a real routing decision was made.
 	// A zero Decision (Harness == "") means the event was not a subagent spawn.
 	if decision.Harness != "" {
@@ -321,6 +322,7 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) int {
 	correlationID = telemetry.CorrelationIDOrNew(ev.CorrelationIdentifier())
 
 	out, note, decision := kirocrew.Handle(ev, catalog)
+	warnSessionUnknown(decision)
 
 	// Telemetry only when a real routing decision was made (Harness != "").
 	// DOWNSHIFT_NO_ROUTE=1 records a control-group baseline and never blocks.
@@ -344,6 +346,25 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) int {
 		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
 	}
 	return 0
+}
+
+// warnSessionUnknown prints one stderr line per hook call when the adapter
+// could not resolve a session allowlist: without it the hook never rewrites,
+// which otherwise looks like a silent no-op install.
+func warnSessionUnknown(d core.Decision) {
+	if d.Harness == "" || !d.SessionUnknown {
+		return
+	}
+	fmt.Fprintf(os.Stderr, "downshift: no session allowlist for %s, so no model is rewritten. "+
+		"Add \"%s\": [<model ids>] to %s (see docs/session-models.md)\n",
+		d.Harness, d.Harness, sessionModelsPathForDisplay())
+}
+
+func sessionModelsPathForDisplay() string {
+	if p := os.Getenv("DOWNSHIFT_SESSION_MODELS"); p != "" {
+		return p
+	}
+	return "~/.harness-downshift/session-models.json"
 }
 
 // readHookPayload prevents an unresponsive hook stdin from blocking a spawn.
@@ -398,7 +419,11 @@ func runTry(catalog core.Resolver, args []string) int {
 		return 0
 	}
 
-	d := core.Route(prompt, harness, current, catalog)
+	res, known := tryHook(harness, prompt, current, catalog)
+	d := res.decision
+	if !known {
+		d = core.Route(prompt, harness, current, catalog)
+	}
 	fmt.Printf("Task:       %s\n", prompt)
 	fmt.Printf("Complexity: %s\n", d.Complexity)
 	fmt.Printf("Intent:     %s\n", d.Intent)
@@ -409,13 +434,120 @@ func runTry(catalog core.Resolver, args []string) int {
 	}
 	fmt.Printf("Verdict:    %s\n", d.Verdict)
 	fmt.Printf("Confident:  %t\n", d.Confident)
-	if d.ShouldRewriteModel() {
-		fmt.Printf("Rewrite:    yes → %s\n", d.Model.ID)
-	} else {
+	if len(d.Corrections) > 0 {
+		fmt.Printf("Held by:    %s\n", strings.Join(d.Corrections, ", "))
+	}
+	switch {
+	case !known:
+		fmt.Printf("Rewrite:    unknown harness %q (no hook adapter)\n", harness)
+	case res.blocked:
+		fmt.Printf("Hook:       block (exit 2) → respawn with %s\n", res.written)
+	case res.written != "":
+		fmt.Printf("Rewrite:    yes → %s\n", res.written)
+	case d.SessionUnknown:
+		fmt.Printf("Rewrite:    no: session unknown. Add \"%s\": [<model ids>] to %s (see docs/session-models.md)\n",
+			harness, sessionModelsPathForDisplay())
+	case d.Intent == core.PreservedIntent:
+		fmt.Printf("Rewrite:    no (current model is explicit_only)\n")
+	case len(d.Corrections) > 0:
+		fmt.Printf("Rewrite:    no (held by guardrail)\n")
+	default:
 		fmt.Printf("Rewrite:    no (keep current model)\n")
+	}
+	if res.effort != "" {
+		fmt.Printf("Effort:     → %s\n", res.effort)
 	}
 	fmt.Printf("→ %s\n", d.Summary())
 	return 0
+}
+
+// tryResult is what the real hook adapter would emit for a prompt.
+type tryResult struct {
+	decision core.Decision
+	written  string // model id the hook would write ("" for none)
+	effort   string // reasoning effort the hook would write ("" for none)
+	blocked  bool   // KiroCrew policy mode: exit 2
+}
+
+// tryHook runs the harness's real adapter on a synthetic payload so `try`
+// reports exactly what the hook would do, including the session allowlist
+// and every guardrail. known is false for a harness without an adapter.
+func tryHook(harness, prompt, current string, catalog core.Resolver) (tryResult, bool) {
+	input := func(promptKey string) json.RawMessage {
+		m := map[string]any{promptKey: prompt}
+		if current != "" {
+			m["model"] = current
+		}
+		raw, _ := json.Marshal(m)
+		return raw
+	}
+	written := func(raw json.RawMessage, key string) string {
+		if len(raw) == 0 {
+			return ""
+		}
+		var m map[string]any
+		if json.Unmarshal(raw, &m) != nil {
+			return ""
+		}
+		v, _ := m[key].(string)
+		return v
+	}
+	switch harness {
+	case "claude-code":
+		out, _, d := claudecode.Handle(claudecode.Event{ToolName: "Task", ToolInput: input("prompt")}, catalog)
+		r := tryResult{decision: d}
+		if out.HookSpecificOutput != nil {
+			if w := written(out.HookSpecificOutput.UpdatedInput, "model"); w != current {
+				r.written = w
+			}
+		}
+		return r, true
+	case "cursor":
+		out, _, d := cursor.Handle(cursor.Event{ToolName: "Task", ToolInput: input("task")}, catalog)
+		r := tryResult{decision: d}
+		if w := written(out.UpdatedInput, "model"); w != current {
+			r.written = w
+		}
+		return r, true
+	case "codex":
+		out, _, d := codex.Handle(codex.Event{ToolName: "spawn_agent", ToolInput: input("message")}, catalog)
+		r := tryResult{decision: d}
+		if out.HookSpecificOutput != nil {
+			if w := written(out.HookSpecificOutput.UpdatedInput, "model"); w != current {
+				r.written = w
+			}
+			r.effort = written(out.HookSpecificOutput.UpdatedInput, "reasoning_effort")
+		}
+		return r, true
+	case "kirocrew":
+		out, _, d := kirocrew.Handle(kirocrew.Event{ToolName: "spawn_run", ToolInput: input("task")}, catalog)
+		r := tryResult{decision: d, blocked: out.Block}
+		if out.Block {
+			r.written = d.Model.ID
+		}
+		return r, true
+	case "antigravity":
+		sub := map[string]any{"Prompt": prompt}
+		if current != "" {
+			sub["Model"] = current
+		}
+		args, _ := json.Marshal(map[string]any{"Subagents": []any{sub}})
+		out, _, d := antigravity.Handle(antigravity.Event{ToolCall: antigravity.ToolCall{Name: "invoke_subagent", Args: args}}, catalog)
+		r := tryResult{decision: d}
+		if len(out.Overwrite) > 0 {
+			var m struct {
+				Subagents []map[string]any `json:"Subagents"`
+			}
+			if json.Unmarshal(out.Overwrite, &m) == nil && len(m.Subagents) > 0 {
+				if w, _ := m.Subagents[0]["Model"].(string); w != current {
+					r.written = w
+				}
+			}
+		}
+		return r, true
+	default:
+		return tryResult{}, false
+	}
 }
 
 // runModels dispatches the 'models' subcommands: list, check, pull.

@@ -85,6 +85,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		currentModel := hookutil.StringField(subagent, "Model")
 		decision := core.Route(prompt, harnessID, currentModel, res)
 		decision.RequestedID = currentModel
+		decision.SessionUnknown = !session.Known
 		lastDecision = decision
 
 		// Gate the rewrite on the session plan: unknown session, empty

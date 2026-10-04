@@ -65,6 +65,10 @@ type Decision struct {
 	// no-signal prompts. Always computed (shadow mode); it lowers the tier
 	// only when DOWNSHIFT_NB_DOWNSHIFT=1.
 	NBDownshift NBDownshift
+	// SessionUnknown is set by adapters when no session allowlist could be
+	// resolved (no hook list, no session-models.json entry). The hook then
+	// never rewrites; runners use it to warn the operator once per call.
+	SessionUnknown bool
 }
 
 // Verdict tells the caller what to do about the current model.

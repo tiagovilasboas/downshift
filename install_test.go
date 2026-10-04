@@ -245,3 +245,13 @@ func TestInstallScriptShellcheck(t *testing.T) {
 		t.Fatalf("shellcheck install.sh: %v\n%s", err, out)
 	}
 }
+
+// Without a session allowlist the hook never rewrites, so the installer must
+// tell the user to create one instead of finishing a silent no-op install.
+func TestInstallExplainsSessionAllowlist(t *testing.T) {
+	r := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, r)
+	if !strings.Contains(r.output, "session-models.json") {
+		t.Fatalf("installer must explain session-models.json, output:\n%s", r.output)
+	}
+}
