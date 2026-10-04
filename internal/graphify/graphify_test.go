@@ -1,11 +1,15 @@
 package graphify_test
 
 import (
+	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/graphify"
+	"github.com/tiagovilasboas/harness-downshift/internal/hookctx"
 )
 
 // stubFetcher returns pre-configured NodeInfo per label for deterministic tests.
@@ -183,5 +187,25 @@ func TestCmdFetcher_FailOpen(t *testing.T) {
 	h := graphify.Hint("debug CreateSaleService", graphify.DefaultCriteria(), graphify.CmdFetcher{Cmd: "false"})
 	if h.ShouldEscalate {
 		t.Fatalf("failed command must not escalate, got %+v", h)
+	}
+}
+
+// A hung DOWNSHIFT_GRAPHIFY_CMD must not stall routing past the hook
+// deadline, even with several candidate labels in the prompt.
+func TestCmdFetcher_HungCommandBoundedByHookDeadline(t *testing.T) {
+	if _, err := exec.LookPath("sleep"); err != nil {
+		t.Skip("sleep not available")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer cancel()
+	defer hookctx.Set(ctx)()
+	prompt := "fix src/a.go src/b.go src/c.go PaymentService UserController"
+	start := time.Now()
+	hint := graphify.Hint(prompt, graphify.DefaultCriteria(), graphify.CmdFetcher{Cmd: "sleep 10"})
+	if hint.ShouldEscalate {
+		t.Fatal("a failed fetch must never escalate")
+	}
+	if d := time.Since(start); d > time.Second {
+		t.Fatalf("graphify lookups took %s past a 300ms deadline", d)
 	}
 }

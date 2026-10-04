@@ -4,10 +4,14 @@
 package semantic_test
 
 import (
+	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
+	"github.com/tiagovilasboas/harness-downshift/internal/hookctx"
 	"github.com/tiagovilasboas/harness-downshift/internal/semantic"
 )
 
@@ -163,5 +167,23 @@ func TestRefreshHashPrototypesFromBenchmark(t *testing.T) {
 	err := semantic.RefreshHashPrototypesFromBenchmark("../../benchmark/tasks.json", "data/prototypes.json")
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+// A hung DOWNSHIFT_MINILM_EMBED helper used to block the hook forever (no
+// timeout). It must now fail within the hook deadline.
+func TestCmdEmbedder_HungCommandBoundedByHookDeadline(t *testing.T) {
+	if _, err := exec.LookPath("sleep"); err != nil {
+		t.Skip("sleep not available")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer cancel()
+	defer hookctx.Set(ctx)()
+	start := time.Now()
+	if _, err := (semantic.CmdEmbedder{Cmd: "sleep 10"}).Embed("prompt"); err == nil {
+		t.Fatal("hung embed command must fail")
+	}
+	if d := time.Since(start); d > time.Second {
+		t.Fatalf("embed waited %s past a 300ms deadline", d)
 	}
 }

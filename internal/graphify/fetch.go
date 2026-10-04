@@ -4,12 +4,12 @@
 package graphify
 
 import (
-	"context"
 	"encoding/json"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/tiagovilasboas/harness-downshift/internal/hookctx"
 )
 
 const graphifyCmdTimeout = 3 * time.Second
@@ -25,15 +25,9 @@ func (c CmdFetcher) FetchNode(label string) NodeInfo {
 	if strings.TrimSpace(c.Cmd) == "" || label == "" {
 		return NodeInfo{Found: false}
 	}
-	parts := strings.Fields(c.Cmd)
-	if len(parts) == 0 {
-		return NodeInfo{Found: false}
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), graphifyCmdTimeout)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, parts[0], parts[1:]...)
-	cmd.Stdin = strings.NewReader(label)
-	out, err := cmd.Output()
+	// Bounded by graphifyCmdTimeout and the hook's global deadline; output
+	// is capped. Once the deadline passes, later labels return at once.
+	out, err := hookctx.RunCommand(c.Cmd, label, graphifyCmdTimeout)
 	if err != nil {
 		return NodeInfo{Found: false}
 	}
