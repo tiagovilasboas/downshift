@@ -428,8 +428,13 @@ used deliberately. It classifies the pending spawn and:
 - **confident tier mismatch** → `exit 2`, block with a message naming the model
   to respawn with (and, for a small tier, a reminder to trim context so the
   child fits the smaller window);
-- **uncertain downshift, unknown model, or non-subagent tool** → `exit 0`,
-  fail-open. The router never blocks a spawn on its own doubt.
+- **uncertain downshift, unknown model, explicit_only current model, target
+  outside the session allowlist, guardrail-held decision, or non-subagent
+  tool** → `exit 0`, fail-open. The router never blocks a spawn on its own
+  doubt.
+
+Telemetry records `outcome: "blocked"` for exit 2 and `outcome: "allow"` for
+exit 0; KiroCrew events are never `rewrite_emitted`.
 
 The classifier is the same deterministic, prompt-free core — no LLM in the
 loop. The difference from rewrite mode is that the agent respawns at the right
@@ -460,11 +465,19 @@ automatic.
      }
    }
    ```
-3. Test it from the terminal (no spawn needed):
+3. List the models the session may respawn with (the hook only names an id
+   from this list; without it every spawn is allowed):
+   ```bash
+   mkdir -p ~/.harness-downshift
+   echo '{ "kirocrew": ["claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"] }' \
+     > ~/.harness-downshift/session-models.json
+   ```
+4. Test it from the terminal (no spawn needed):
    ```bash
    echo '{"tool_name":"spawn_run","tool_input":{"task":"rename a variable","model":"opus"}}' \
      | ./downshift kirocrew ; echo "exit=$?"
    # exit=2, stderr: "TRIVIAL task → downshift to claude-haiku-4-5 … Respawn with model=…"
+   # without step 3: exit=0 and "no session allowlist for kirocrew"
    ```
 
 When the hook blocks, KiroCrew relays the stderr to the agent, which respawns

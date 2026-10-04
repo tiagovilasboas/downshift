@@ -13,7 +13,7 @@
 1. Spawn arrived as `gpt-6-luna`. Downshift classified `MEDIUM` and emitted `gpt-5.6-terra` (`outcome: rewrite_emitted`, verdict `UPSHIFT`).
 2. The next spawn on the **same hashed session** arrived with `requested_model: gpt-5.6-terra` and stayed on Terra (`verdict: OK`).
 
-That follow-up is the honor signal Codex exposes today: the child executor used the model the hook wrote, not only that the hook printed a rewrite.
+That follow-up is the honor signal Codex exposes today. It is an **inference**: a later spawn asked for the model the hook wrote. Downshift does not read the model the child actually ran on, so this is correlation, not direct observation.
 
 `PAYLOAD_TOO_LARGE` still happens when the Codex UI sends the whole thread over 1 MB. Those events are fail-open, not a failed rewrite.
 
