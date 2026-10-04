@@ -154,8 +154,14 @@ func TestDecisionSummary_OK(t *testing.T) {
 }
 
 func TestDecisionRewritePolicy(t *testing.T) {
-	if !(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown}).ShouldRewriteModel() {
-		t.Error("unknown source model must be routed")
+	if !(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Confident: true}).ShouldRewriteModel() {
+		t.Error("unknown source model must be routed on a confident classification")
+	}
+	if !(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierMid}).ShouldRewriteModel() {
+		t.Error("unknown source model may be routed to mid or above on doubt")
+	}
+	if (core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierSmall}).ShouldRewriteModel() {
+		t.Error("unknown source model must not be routed to small on an unconfident classification")
 	}
 	if (core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictOK}).ShouldRewriteModel() {
 		t.Error("same-tier model must not be replaced by generic adapters")

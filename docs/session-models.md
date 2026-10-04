@@ -4,6 +4,16 @@ Downshift may write only a model id that exists in the current harness session. 
 
 If the session list cannot be determined, the hook does not rewrite the model.
 
+## Payload without a model field
+
+Claude Code often spawns a Task without `tool_input.model`; the child then inherits the harness default (usually the parent's model). The router has no current model to compare against (`verdict: UNKNOWN`), so it applies guardrail **R6** (`R6_UNCONFIDENT_UNKNOWN_SMALL`):
+
+- confident classification → the recommended model is written (any tier);
+- unconfident classification with a **mid or frontier** recommendation → written (never below mid);
+- unconfident classification with a **small** recommendation → not written; the event records `safe_verdict: OK` and `corrections: ["R6_UNCONFIDENT_UNKNOWN_SMALL"]`.
+
+Uncertain calls therefore never move a spawn to the small tier, with or without a current model.
+
 ## What the hook actually sends
 
 Checked against the adapter structs and local telemetry on 2026-09-27. No secrets below.
