@@ -200,7 +200,8 @@ func TestHandle_TaskNameAddsSignal(t *testing.T) {
 		Model:    frontierID,
 		ToolInput: json.RawMessage(`{
 			"task_name": "review_agent",
-			"message": "typo fix"
+			"message": "typo fix",
+			"reasoning_effort": "low"
 		}`),
 	}
 	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
@@ -383,5 +384,52 @@ func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
 	}
 	if m := decodeUpdated(t, out); m != nil || note != "" {
 		t.Fatalf("unconfident small without a model must not rewrite, got %v note=%q", m, note)
+	}
+}
+
+// A downshift held by guardrail R1 must not lower the requested effort on
+// the kept model, and the decision must record the model actually kept.
+func TestHandle_HeldDownshiftKeepsRequestedEffort(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	ev := withCatalogSession(codex.Event{
+		ToolName:  "spawn_agent",
+		ToolInput: json.RawMessage(`{"message": "look at the logs folder and tell me what you see", "model": "` + frontierID + `", "reasoning_effort": "high"}`),
+	})
+	out, note, d := codex.Handle(ev, cat)
+	if len(d.Corrections) == 0 {
+		t.Fatalf("precondition: want a held decision, got %+v", d)
+	}
+	if m := decodeUpdated(t, out); m != nil {
+		t.Fatalf("held downshift must leave the spawn unchanged, got %v (note %q)", m, note)
+	}
+}
+
+// An unconfident same-tier decision must not lower an explicit effort.
+func TestHandle_UnconfidentOKDoesNotLowerEffort(t *testing.T) {
+	midID := catID(core.TierMid)
+	ev := withCatalogSession(codex.Event{
+		ToolName:  "spawn_agent",
+		ToolInput: json.RawMessage(`{"message": "look into why the build is slow", "model": "` + midID + `", "reasoning_effort": "xhigh"}`),
+	})
+	out, _, d := codex.Handle(ev, cat)
+	if d.Confident || d.Verdict != core.VerdictOK {
+		t.Fatalf("precondition: want unconfident OK, got verdict=%v confident=%v", d.Verdict, d.Confident)
+	}
+	if m := decodeUpdated(t, out); m != nil && m["reasoning_effort"] != "xhigh" {
+		t.Fatalf("effort lowered on doubt: %v", m["reasoning_effort"])
+	}
+}
+
+// A confident decision may still set effort (unchanged behaviour).
+func TestHandle_ConfidentDownshiftSetsLowEffort(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	ev := withCatalogSession(codex.Event{
+		ToolName:  "spawn_agent",
+		ToolInput: json.RawMessage(`{"message": "rename the userId variable to userIdentifier", "model": "` + frontierID + `", "reasoning_effort": "high"}`),
+	})
+	out, _, _ := codex.Handle(ev, cat)
+	m := decodeUpdated(t, out)
+	if m == nil || m["reasoning_effort"] == "high" {
+		t.Fatalf("confident downshift should lower effort, got %v", m)
 	}
 }

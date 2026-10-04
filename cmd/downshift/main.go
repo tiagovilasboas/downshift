@@ -248,6 +248,7 @@ func runHookAdapter[E any](
 		if requested, ok := any(ev).(interface{ RequestedReasoningEffort() string }); ok {
 			event.RequestedEffort = telemetry.EffortOrUnknown(requested.RequestedReasoningEffort())
 		}
+		telemetry.MarkUnchanged(&event)
 		telemetry.Record(event)
 		if len(taskText) > 0 {
 			if id, err := training.RecordRoutedDecision(taskText[0](ev), decision); err == nil && id != "" {
