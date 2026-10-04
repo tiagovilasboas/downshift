@@ -21,7 +21,8 @@
 //	  { "prompt": "rearchitect the auth module", "label": "COMPLEX" }
 //	]
 //
-// Labels are case-insensitive: TRIVIAL, SIMPLE, MEDIUM, COMPLEX.
+// Labels are case-insensitive: TRIVIAL, SIMPLE, MEDIUM, COMPLEX, or the tier
+// labels SMALL, MID, FRONTIER.
 package benchmark
 
 import (
@@ -49,19 +50,35 @@ type Result struct {
 
 // complexityFromString parses a label string into a Complexity.
 // Returns Medium and false when the label is unknown.
+//
+// Tier labels (SMALL, MID, FRONTIER; used by tier-labelled splits) are accepted
+// too and map to a complexity of the same tier (SIMPLE, MEDIUM, COMPLEX), so
+// every tier metric is exact. For those rows the complexity "match" is a
+// tier match (see isTierLabel), and in the confusion matrix SMALL rows
+// appear under SIMPLE.
 func complexityFromString(s string) (core.Complexity, bool) {
 	switch strings.ToUpper(strings.TrimSpace(s)) {
 	case "TRIVIAL":
 		return core.Trivial, true
-	case "SIMPLE":
+	case "SIMPLE", "SMALL":
 		return core.Simple, true
-	case "MEDIUM":
+	case "MEDIUM", "MID":
 		return core.Medium, true
-	case "COMPLEX":
+	case "COMPLEX", "FRONTIER":
 		return core.Complex, true
 	default:
 		return core.Medium, false
 	}
+}
+
+// isTierLabel reports a tier label (SMALL, MID, FRONTIER) rather than a
+// complexity label.
+func isTierLabel(s string) bool {
+	switch strings.ToUpper(strings.TrimSpace(s)) {
+	case "SMALL", "MID", "FRONTIER":
+		return true
+	}
+	return false
 }
 
 // normalizePrompt returns the canonical form of a prompt used for
@@ -177,10 +194,14 @@ func RunWithClassifier(tasks []Task, classify func(string) core.Classification, 
 			continue
 		}
 		cls := classify(t.Prompt)
+		correct := cls.Complexity == expected
+		if isTierLabel(t.Label) {
+			correct = cls.Complexity.Tier() == expected.Tier()
+		}
 		results = append(results, Result{
 			Task:      t,
 			Predicted: cls.Complexity,
-			Correct:   cls.Complexity == expected,
+			Correct:   correct,
 		})
 	}
 	if skipped > 0 {
