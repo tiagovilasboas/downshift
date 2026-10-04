@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// SPDX-License-Identifier: BUSL-1.1
+// Commercial use requires a licence — see LICENSE for terms.
+
 // Package graphify provides codebase-graph-aware escalation hints for the
 // Downshift classifier. It detects when a task prompt references a file or
 // symbol that, according to the knowledge graph, is highly connected or lives

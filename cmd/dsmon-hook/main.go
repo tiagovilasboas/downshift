@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// SPDX-License-Identifier: BUSL-1.1
+// Commercial use requires a licence — see LICENSE for terms.
+
 // dsmon-hook — KiroCrew preToolUse lifecycle tracker
 // Writes a line to ~/.harness-downshift/agents.jsonl for every subagent spawn
 // so dsmon can show active agents. Always exits 0 (never blocks a spawn).
