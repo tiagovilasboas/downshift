@@ -49,14 +49,23 @@ jobs:
       - name: Test
         run: go test -race -cover ./...
 
+      # Regression nets only: the seed is the curated set and the holdout is
+      # burned (tuned to 100%). Both must keep FRONTIER→SMALL and
+      # FRONTIER→MID at zero. Passing them says nothing about unseen traffic.
       - name: Benchmark Regression Gate
         run: |
-          go run ./cmd/downshift benchmark benchmark/tasks.json --gate --min-tier-accuracy=0.60
-          go run ./cmd/downshift benchmark benchmark/holdout.json --min-tier-accuracy=0.80
+          go run ./cmd/downshift benchmark benchmark/tasks.json --gate --min-tier-accuracy=0.60 --max-frontier-to-mid=0
+          go run ./cmd/downshift benchmark benchmark/holdout.json --gate --min-tier-accuracy=0.80 --max-frontier-to-mid=0
 
-      # Evaluation-only split: reported, never gated, never tuned against.
+      # Evaluation-only splits: reported, never gated, never tuned against.
       - name: Fresh split report
         run: go run ./cmd/downshift benchmark benchmark/fresh.json
+
+      - name: Heldout2 split report
+        run: go run ./cmd/downshift benchmark benchmark/heldout2.json
+
+      - name: Blind-vitrine split report (tier labels)
+        run: go run ./cmd/downshift benchmark benchmark/blind-vitrine.json
 
       - name: Fresh split guard
         if: github.event_name == 'pull_request'

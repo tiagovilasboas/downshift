@@ -1,3 +1,7 @@
+// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// SPDX-License-Identifier: BUSL-1.1
+// Commercial use requires a licence — see LICENSE for terms.
+
 package main
 
 import (
@@ -12,8 +16,8 @@ import (
 )
 
 var reportDatasets = []outcome.Dataset{
-	{Path: "benchmark/tasks.json", Name: "`benchmark/tasks.json` (seed)"},
-	{Path: "benchmark/holdout.json", Name: "`benchmark/holdout.json` (templated regression set)"},
+	{Path: "benchmark/tasks.json", Name: "`benchmark/tasks.json` (seed, CI gate)"},
+	{Path: "benchmark/holdout.json", Name: "`benchmark/holdout.json` (burned: tuned to 100%, regression net only)"},
 }
 
 // buildReport renders the generated README block from paths relative to root.
