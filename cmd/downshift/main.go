@@ -329,9 +329,22 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) int {
 	// DOWNSHIFT_NO_ROUTE=1 records a control-group baseline and never blocks.
 	if decision.Harness != "" {
 		event := telemetry.FromDecision(decision, correlationID, buildVersion)
-		if os.Getenv("DOWNSHIFT_NO_ROUTE") == "1" {
+		// Policy mode never rewrites: a spawn is either blocked (exit 2) or
+		// allowed unchanged (exit 0).
+		switch {
+		case os.Getenv("DOWNSHIFT_NO_ROUTE") == "1":
 			event.Outcome = telemetry.OutcomeBaseline
+		case out.Block:
+			event.Outcome = telemetry.OutcomeBlocked
+		default:
+			event.Outcome = telemetry.OutcomeAllow
 		}
+		if currentID := decision.CurrentModel.ID; currentID != "" {
+			event.FromModel = telemetry.ModelOrUnknown(currentID)
+		} else {
+			event.FromModel = "unknown"
+		}
+		telemetry.MarkUnchanged(&event)
 		telemetry.Record(event)
 		if id, err := training.RecordRoutedDecision(ev.TaskText(), decision); err == nil && id != "" {
 			fmt.Fprintf(os.Stderr, "downshift: feedback id %s (run `downshift feedback %s success|retry|failed` after review)\n", id, id)
