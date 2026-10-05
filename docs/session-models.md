@@ -1,6 +1,8 @@
 # Session models
 
-Downshift may write only a model id that exists in the current harness session. The catalog is metadata (tier, cost, family, effort) for an id that is also in that session. It is not the candidate set.
+Downshift may write only a model id that exists in the current harness session. The session list is the complete candidate set for every harness; the catalog is optional metadata (tier, cost, family, effort), never a source of candidate IDs.
+
+Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier), skips exhausted or catalog-known `explicit_only` entries, and never parses model names or relies on prices to pick a target. For downshifts, an `included` candidate within the eligible range may be preferred; upshifts always choose the strongest eligible session model. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
 
 If the session list cannot be determined, the hook does not rewrite the model.
 
@@ -60,16 +62,15 @@ There is no built-in default list. `docs/examples/session-models.example.json` r
 
 ## How a target is chosen
 
-Candidates are the session ids. For each id, catalog lookup adds tier and cost when the id (or its alias) belongs to that harness. Ids the catalog does not know stay eligible. They are not replaced by a catalog id.
+The session list alone determines candidates and their relative capability. Catalog lookup may enrich a known ID with metadata or preserve `routing: explicit_only`; unknown IDs are not filtered, ranked by guessed names, or replaced.
 
-- If the classified catalog model is in the session, that session string is the target.
-- If it is not, a downgrade uses the cheapest catalog-labeled session id (lower tier, then lower input+output cost). An upshift uses the strongest labeled session id.
-- If no session id is in the catalog, a downgrade uses the first id in the file. List cheapest models first. An upshift does not guess among unlabeled ids.
-- `routing: explicit_only` is never an automatic target. If the current model is explicit-only, it stays.
+- Downshift or unknown verdict: choose the least capable, non-exhausted session ID at or above the abstract task tier's list-position threshold.
+- Upshift: choose the strongest non-exhausted session ID.
+- Guardrail hold (`Checked` and `SafeVerdict == OK`): do not rewrite.
 - Unknown session: no rewrite.
-- The id written is a canonical id from that harness's own catalog entry. An alias, a family prefix, or another harness's canonical id is not written. The catalog loader rejects an alias that copies another harness's canonical id.
+- Any exact session ID can be written, even when the catalog does not know it. Sentinels such as `inherit`, exhausted IDs, and catalog-known `explicit_only` IDs cannot be selected.
 - `inherit` may sit in the session list so the payload is recognised. It is never selected as the target.
 - Optional `quota.<harness>.included` lists ids that still have token budget. When one of them shares the target tier, it wins over a metered id.
 - Optional `quota.<harness>.exhausted` lists ids with no remaining budget. They are never selected. If the current id is exhausted, the hook moves to another session id that can still run. A hook payload may send `included_models` or `unavailable_models` and those arrays replace the file for that call.
 
-So if the catalog smallest model is `claude-4.5-haiku-thinking` and the session only has `claude-4.5-sonnet-thinking` and a frontier id, the target is the sonnet id. If the session list is missing, the frontier model stays.
+For example, a list `["session-small", "session-mid", "session-frontier"]` makes those three positions available to all routing decisions without requiring any of the IDs or their prices in Downshift's catalog. If the session list is missing, the active model stays.

@@ -7,8 +7,8 @@ O Downshift opera com uma distinção estrita entre duas fontes de informação:
 ## Perspectiva de Produto
 
 * **O Catálogo (`catalog.json`):** Uma tabela de metadados de referência. Ele define quanto cada modelo custa por 1M de tokens, a qual família pertence e qual é o seu tier de capacidade (Small, Mid ou Frontier).
-* **A Sessão Ativa (`session-models.json`):** O conjunto real de modelos autorizados e disponíveis para a conta do usuário naquele exato momento.
-* **Regra de Ouro:** O Downshift **nunca** injeta um modelo que a sessão não possua. Ele não consulta APIs remotas da OpenAI ou Anthropic para adivinhar planos de assinatura; se um modelo não estiver na lista autorizada da sessão, ele não será escolhido como destino de reescrita.
+* **A Sessão Ativa (`session-models.json`):** O inventário dos IDs que aquela sessão pode selecionar. Quando o harness envia uma lista no payload, ela prevalece; caso contrário, o arquivo local é um snapshot mantido pelo operador, não uma descoberta automática.
+* **Regra de Ouro:** O Downshift **nunca** injeta um modelo que não esteja no inventário da sessão. Os IDs aparecem no inventário porque são as escolhas reais do picker, mas nenhum nome de modelo é embutido na lógica de seleção.
 
 ---
 
@@ -23,14 +23,15 @@ O Downshift opera com uma distinção estrita entre duas fontes de informação:
    2. Configuração local por ID de sessão em `~/.harness-downshift/session-models.json` (`sessions.<harness>.<session_id>`).
    3. Configuração geral por harness em `~/.harness-downshift/session-models.json` (ex: chaves `"claude-code"`, `"cursor"`, `"codex"`, `"antigravity"`).
    4. Se nenhuma lista for localizada, a sessão é declarada como desconhecida (`Known = false`) e o Downshift falha aberto sem realizar reescritas.
-3. **Seleção de Alvos em Cenários de Incompatibilidade:**
-   * Se o modelo sugerido pelo catálogo não constar na lista da sessão:
-     * Em um **upshift**, o sistema seleciona o modelo mais potente entre os que estão disponíveis na sessão.
-     * Em um **downshift**, o sistema seleciona o modelo mais barato entre os disponíveis.
+3. **Seleção agnóstica de alvos:**
+   * Cada lista deve estar ordenada por capacidade crescente (menos potente → mais potente).
+   * O Downshift usa apenas IDs listados: pequenas tarefas partem do primeiro, tarefas médias do ponto central, tarefas de fronteira do último; upshift seleciona o mais potente elegível.
+   * Preços, nomes, famílias e IDs do catálogo não escolhem nem substituem candidatos. O catálogo pode enriquecer metadados e manter compatibilidade com `explicit_only` conhecido.
+   * O `session-models.json` ainda contém IDs, por necessidade: se o hook não fornece a lista do picker, é impossível saber quais modelos a sessão aceita sem uma integração nativa do harness. Lista ausente ou vazia continua sem rewrite.
 
 ---
 
 ## Compensações Técnicas (Trade-offs)
 
 * **Vantagem:** Evita quebras catastróficas onde um subagente falharia imediatamente porque a API do provedor recusou um ID de modelo que a conta não tem direito de acessar (*entitlement error*).
-* **Custo:** Se o usuário possui acesso a um novo modelo lançado recentemente, mas não atualizou seu `session-models.json` ou catálogo local, o Downshift não utilizará esse novo ID até que ele seja incluído na configuração.
+* **Custo:** Nos harnesses que não enviam o inventário do picker, o snapshot local precisa ser atualizado e ordenado pelo operador quando as opções da sessão mudarem. O catálogo não precisa conhecer um ID novo para que ele seja elegível.

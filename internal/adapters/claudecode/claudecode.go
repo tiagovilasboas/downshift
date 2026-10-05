@@ -118,11 +118,11 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 	decision.RequestedID = currentModel
 
-	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
+	session := core.ResolveSessionForID(harnessID, ev.SessionID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	decision.SessionUnknown = !session.Known
 	plan := decision.PlanForSession(core.ClaudeCodeCaps, res, session)
-	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !core.CanWriteCatalogID(harnessID, plan.Model.ID, session, res) {
+	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !core.CanWriteSessionID(harnessID, plan.Model.ID, session, res) {
 		return allow(), "", decision
 	}
 	decision.Model = plan.Model

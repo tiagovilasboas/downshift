@@ -47,10 +47,14 @@ var subagentTools = map[string]bool{
 // Event is the JSON KiroCrew sends on stdin for a preToolUse hook.
 // Field names follow KiroCrew's documented hook event schema.
 type Event struct {
-	HookEventName string          `json:"hook_event_name"`
-	CorrelationID string          `json:"correlation_id,omitempty"`
-	ToolName      string          `json:"tool_name"`
-	ToolInput     json.RawMessage `json:"tool_input"`
+	HookEventName     string          `json:"hook_event_name"`
+	CorrelationID     string          `json:"correlation_id,omitempty"`
+	ToolName          string          `json:"tool_name"`
+	ToolInput         json.RawMessage `json:"tool_input"`
+	SessionModels     *[]string       `json:"session_models,omitempty"`
+	AvailableModels   *[]string       `json:"available_models,omitempty"`
+	IncludedModels    *[]string       `json:"included_models,omitempty"`
+	UnavailableModels *[]string       `json:"unavailable_models,omitempty"`
 }
 
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
@@ -103,7 +107,9 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		res = r[0]
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
-	session := core.ResolveSession(harnessID)
+	decision.RequestedID = currentModel
+	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
+	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	decision.SessionUnknown = !session.Known
 
 	// The user deliberately picked an explicit_only model: never block it or
@@ -114,11 +120,6 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 	// Right gear already: nothing to do.
 	if decision.Verdict == core.VerdictOK {
-		return allow(), "", decision
-	}
-
-	// We can only act when we know a concrete target model to send back.
-	if decision.Model.ID == "" {
 		return allow(), "", decision
 	}
 
@@ -137,27 +138,26 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", decision
 	}
 
-	// Policy-mode gate: the block message names decision.Model.ID, so only
-	// block when that id is actionable in this session. A target outside the
-	// session, held by a guardrail, or marked explicit-only fails open —
-	// blocking would tell the agent to respawn with an id it cannot (or must
-	// not) use. Same ResolveSession order as the rewrite adapters; without a
-	// known session there is nothing safe to name.
-	if !session.Contains(decision.Model.ID) {
+	// Policy-mode gate: use the same session-only target plan as rewrite
+	// adapters. KiroCrew cannot rewrite in place, but may ask for a respawn
+	// only when the exact target is selectable in this session.
+	plan := decision.PlanForSession(core.KiroCrewCaps, res, session)
+	if plan.HoldForeign || plan.PreserveExplicit || plan.Model.ID == "" || plan.Model.ID == currentModel || !session.Contains(plan.Model.ID) {
 		return allow(), "", decision
 	}
 	if len(decision.Corrections) > 0 {
 		return allow(), "", decision
 	}
-	if res != nil && res.IsExplicitOnly(harnessID, decision.Model.ID) {
+	if res != nil && res.IsExplicitOnly(harnessID, plan.Model.ID) {
 		return allow(), "", decision
 	}
 
 	// A confident mismatch with an actionable in-session target (downshift or
 	// upshift): block and tell the agent exactly which model to respawn with.
+	decision.Model = plan.Model
 	note := decision.Summary()
 	msg := fmt.Sprintf("downshift: %s\nRespawn this subagent with model=%s (tier %s).",
-		note, decision.Model.ID, decision.Tier)
+		note, plan.Model.ID, decision.Tier)
 	// The context-trim hint only applies when moving DOWN to a small window;
 	// an upshift to a frontier model has room to spare.
 	if decision.Tier == core.TierSmall {

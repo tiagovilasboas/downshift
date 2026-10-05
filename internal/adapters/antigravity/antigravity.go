@@ -108,20 +108,10 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 			continue
 		}
 
-		var mappedModel string
-		switch decision.Tier {
-		case core.TierSmall:
-			mappedModel = "flash_lite"
-		case core.TierMid:
-			mappedModel = "flash"
-		case core.TierFrontier:
-			mappedModel = "pro"
-		default:
-			mappedModel = "inherit"
-		}
+		mappedModel := plan.Model.ID
 
-		// The string written must be this harness's canonical catalog id.
-		if !core.CanWriteCatalogID(harnessID, mappedModel, session, res) {
+		// The string written must be one of this session's selectable model IDs.
+		if !core.CanWriteSessionID(harnessID, mappedModel, session, res) {
 			continue
 		}
 

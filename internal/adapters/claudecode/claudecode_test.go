@@ -30,12 +30,7 @@ func catID(tier core.Tier) string {
 }
 
 func withCatalogSession(ev claudecode.Event) claudecode.Event {
-	ids := make([]string, 0)
-	for _, e := range cat.Entries() {
-		if e.Harness == "claude-code" && e.ID != "" {
-			ids = append(ids, e.ID)
-		}
-	}
+	ids := []string{cat.ModelFor("claude-code", core.TierSmall).ID, cat.ModelFor("claude-code", core.TierMid).ID, cat.ModelFor("claude-code", core.TierFrontier).ID}
 	ev.SessionModels = &ids
 	return ev
 }

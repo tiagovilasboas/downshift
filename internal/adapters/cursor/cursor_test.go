@@ -29,12 +29,7 @@ func catID(tier core.Tier) string {
 }
 
 func withCatalogSession(ev cursor.Event) cursor.Event {
-	ids := make([]string, 0)
-	for _, e := range cat.Entries() {
-		if e.Harness == "cursor" && e.ID != "" {
-			ids = append(ids, e.ID)
-		}
-	}
+	ids := []string{cat.ModelFor("cursor", core.TierSmall).ID, cat.ModelFor("cursor", core.TierMid).ID, cat.ModelFor("cursor", core.TierFrontier).ID}
 	ev.SessionModels = &ids
 	return ev
 }
@@ -203,14 +198,9 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 	}
 }
 
-// --- Option A: in-family effort switch (prototype: cursor) ---
-
-func TestHandle_PreservesFamilySwitchesEffortDown(t *testing.T) {
-	// Current opus high, SIMPLE task (mid/medium) → opus-5.5-medium:
-	// same family, medium effort, instead of the tier-default sonnet.
-	// The prompt must classify confident and held-free: an R1-held
-	// downshift (e.g. "add a status field...") must NOT take the family
-	// shortcut — it falls through to the session-target fallback instead.
+// Session candidates, not catalog family aliases, determine every harness target.
+func TestHandle_UsesSessionTierForModelFamily(t *testing.T) {
+	// Current opus high, MEDIUM task → midpoint of the ordered session list.
 	ev := cursor.Event{
 		ToolName: "Task",
 		ToolInput: json.RawMessage(`{
@@ -220,16 +210,16 @@ func TestHandle_PreservesFamilySwitchesEffortDown(t *testing.T) {
 	}
 	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
 	if note == "" {
-		t.Fatal("expected an in-family effort note, got none")
+		t.Fatal("expected a session-target routing note, got none")
 	}
 	m := decodeUpdated(t, out)
-	if m["model"] != "claude-opus-5-5-medium" {
-		t.Errorf("model = %v, want claude-opus-5-5-medium (same family, medium effort)", m["model"])
+	if m["model"] != cat.ModelFor("cursor", core.TierMid).ID {
+		t.Errorf("model = %v, want session mid-tier id %s", m["model"], cat.ModelFor("cursor", core.TierMid).ID)
 	}
 }
 
-func TestHandle_PreservesFamilySwitchesEffortUp(t *testing.T) {
-	// Current opus medium, COMPLEX task (frontier/high) → opus-5-thinking-high.
+func TestHandle_DoesNotSwitchModelForCatalogFamilyEffort(t *testing.T) {
+	// A family/effort variant in the catalog is not a session-tier rewrite.
 	ev := cursor.Event{
 		ToolName: "Task",
 		ToolInput: json.RawMessage(`{
@@ -238,12 +228,8 @@ func TestHandle_PreservesFamilySwitchesEffortUp(t *testing.T) {
 		}`),
 	}
 	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
-	if note == "" {
-		t.Fatal("expected an in-family effort note, got none")
-	}
-	m := decodeUpdated(t, out)
-	if m["model"] != "claude-opus-5-thinking-high" {
-		t.Errorf("model = %v, want claude-opus-5-thinking-high (same family, high effort)", m["model"])
+	if note != "" || out.UpdatedInput != nil {
+		t.Fatalf("catalog family/effort variant caused a model rewrite: note=%q input=%s", note, out.UpdatedInput)
 	}
 }
 
@@ -282,10 +268,10 @@ func TestHandle_UnknownIDIsNotRewritten(t *testing.T) {
 }
 
 func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
-	// Catalog smallest is claude-4.5-haiku-thinking. This session does not
-	// have it. composer-2.5 is the cheapest labeled id that is in the session.
+	// This session is ordered least to most capable; composer is the first
+	// selectable ID for a small task.
 	frontierID := catID(core.TierFrontier)
-	session := []string{"claude-4.5-sonnet-thinking", frontierID, "composer-2.5"}
+	session := []string{"composer-2.5", "claude-4.5-sonnet-thinking", frontierID}
 	ev := cursor.Event{
 		ToolName:      "Task",
 		SessionModels: &session,

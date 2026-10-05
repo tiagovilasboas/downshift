@@ -36,7 +36,7 @@ func TestCodexHook_NamespacedSpawnAgentWithoutCurrentModel(t *testing.T) {
 	cmd.Stdin = bytes.NewReader(event)
 	home := t.TempDir()
 	modelConfig := filepath.Join(t.TempDir(), "session-models.json")
-	if err := os.WriteFile(modelConfig, []byte(`{"codex":["gpt-6-luna","gpt-6-sol","gpt-5.6-luna","gpt-5.6-terra","gpt-5.6-sol"]}`), 0o600); err != nil {
+	if err := os.WriteFile(modelConfig, []byte(`{"codex":["gpt-6-luna","gpt-5.6-luna","gpt-5.6-terra","gpt-5.6-sol","gpt-6-sol"]}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	cmd.Env = []string{"HOME=" + home, "DOWNSHIFT_SESSION_MODELS=" + modelConfig}
