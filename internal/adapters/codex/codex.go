@@ -141,7 +141,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if plan.HoldForeign || plan.PreserveExplicit || (!plan.RewriteModel && !plan.ApplyEffort) {
 		return allow(), "", decision
 	}
-	if plan.RewriteModel && !core.CanWriteCatalogID(harnessID, plan.Model.ID, session, res) {
+	if plan.RewriteModel && !core.CanWriteSessionID(harnessID, plan.Model.ID, session, res) {
 		return allow(), "", decision
 	}
 	effortValue := decision.Effort.String()

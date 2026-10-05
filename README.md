@@ -81,7 +81,7 @@ downshift try "rearchitect the auth module to support multi-tenant" claude-code
 # → COMPLEX task → use claude-opus-4-8 (frontier tier)
 ```
 
-**Step 3 — List the models your session can use.** The hook only ever writes a model id that is in this list; without it, it never rewrites anything (it prints `no session allowlist` on stderr). Put the ids your plan actually offers in `~/.harness-downshift/session-models.json`:
+**Step 3 — List the models your session can use.** The hook only ever writes a model id that is in this list; without it, it never rewrites anything (it prints `no session allowlist` on stderr). Put the IDs your plan actually offers in `~/.harness-downshift/session-models.json`, ordered from least to most capable. This applies to every harness; Downshift does not require those IDs to exist in its catalog:
 ```bash
 mkdir -p ~/.harness-downshift
 cat > ~/.harness-downshift/session-models.json <<'JSON'
@@ -317,7 +317,7 @@ the config and reloads it on save.
 
 ## Session allowlist
 
-Downshift writes a model id only when that id is in the current session. The catalog supplies tier, cost, family, and effort for ids that are also in the session. It never adds an id the session does not have. If the session list cannot be determined, the hook leaves the current model unchanged.
+Downshift writes a model id only when that id is in the current session. The session list is the only candidate source and its order is least-to-most capable; the catalog may add metadata but cannot add, rank, or replace a candidate. Unknown catalog IDs remain eligible. If the session list cannot be determined, the hook leaves the current model unchanged.
 
 Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift validates and hashes that ID before recording it, so local routing decisions can be grouped without persisting the raw session identifier. Record selectable model ids in `~/.harness-downshift/session-models.json`. A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. A model id from another harness is left unchanged. Optional `quota` marks which session ids still have token budget (`included`) and which are exhausted (`exhausted`). The hook never emits an exhausted id. Details and evidence: [docs/session-models.md](docs/session-models.md). [docs/examples/session-models.example.json](docs/examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
 
@@ -606,7 +606,7 @@ Offline, v2 adds:
 - **Risk-weighted loss:** under-routing is penalised 5-10x harder than over-routing. `FRONTIER→SMALL` is catastrophic; `SMALL→MID` is cheap.
 - **Candidate weights:** train on labelled data and compare against legacy. Comparison does not install v2 on the hook.
 
-The router is **completely model-agnostic**: no model names, no provider strings in the routing logic. It decides tiers; the catalog decides models.
+The router is model-agnostic: no model or provider names are embedded in selection logic. It classifies task tiers, then selects only from the current session's ordered candidates. The catalog is optional metadata, not a model picker.
 
 ![Capability Router v2 — offline pipeline, not the production hook path](docs/brand/downshift-capability-router-v2.png)
 
@@ -824,7 +824,7 @@ Given a task prompt, the classifier:
    | MEDIUM | `mid` | sonnet-class: capable, balanced |
    | COMPLEX | `frontier` | opus-class: maximum reasoning |
 
-5. **Translates tier → model** — via the catalog (`internal/catalog/catalog.json`). Model IDs, prices, and family mappings live there. No Go recompile to add a new model or update a price.
+5. **Selects a session model** — from the exact current-session list, ordered least-to-most capable. Catalog metadata may enrich known IDs but cannot introduce candidates or determine their selection rank.
 
 6. **Decides: allow, rewrite, or block** — depending on the harness's capability:
    - Claude Code / Cursor / Codex / Antigravity: **rewrite** the model in `updated_input` before the subagent starts.

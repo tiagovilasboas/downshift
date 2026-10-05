@@ -75,26 +75,26 @@ func TestPlanForSession_PrefersIncludedAndSkipsExhausted(t *testing.T) {
 	}
 }
 
-func TestCanWriteCatalogID_OnlyOwnCanonical(t *testing.T) {
+func TestCanWriteSessionID_RequiresExactSessionMembership(t *testing.T) {
 	cursorSession := core.KnownSession([]string{"composer-2.5", "claude-opus-4-8", "claude-haiku-4-5"})
-	if !core.CanWriteCatalogID("cursor", "composer-2.5", cursorSession, cat) {
+	if !core.CanWriteSessionID("cursor", "composer-2.5", cursorSession, cat) {
 		t.Fatal("composer-2.5 is a cursor canonical id")
 	}
-	if core.CanWriteCatalogID("cursor", "claude-opus-4-8", cursorSession, cat) {
-		t.Fatal("cursor must not write a claude-code canonical id")
+	if !core.CanWriteSessionID("cursor", "claude-opus-4-8", cursorSession, cat) {
+		t.Fatal("an exact session member must remain usable without catalog ownership")
 	}
-	if core.CanWriteCatalogID("cursor", "claude-haiku-4-5", cursorSession, cat) {
-		t.Fatal("cursor must not write an id that is canonical only for another harness")
+	if !core.CanWriteSessionID("cursor", "claude-haiku-4-5", cursorSession, cat) {
+		t.Fatal("an exact session member must remain usable without catalog ownership")
 	}
 	claude := core.KnownSession([]string{"claude-haiku-4-5", "composer-2.5"})
-	if !core.CanWriteCatalogID("claude-code", "claude-haiku-4-5", claude, cat) {
+	if !core.CanWriteSessionID("claude-code", "claude-haiku-4-5", claude, cat) {
 		t.Fatal("claude-haiku-4-5 is claude-code's canonical id")
 	}
-	if core.CanWriteCatalogID("claude-code", "composer-2.5", claude, cat) {
-		t.Fatal("claude-code must not write a cursor canonical id")
+	if !core.CanWriteSessionID("claude-code", "composer-2.5", claude, cat) {
+		t.Fatal("an exact session member must remain usable without catalog ownership")
 	}
 	kiro := core.KnownSession([]string{"claude-haiku-4-5"})
-	if !core.CanWriteCatalogID("kirocrew", "claude-haiku-4-5", kiro, cat) {
+	if !core.CanWriteSessionID("kirocrew", "claude-haiku-4-5", kiro, cat) {
 		t.Fatal("the same canonical string is writable when that harness owns the row")
 	}
 }

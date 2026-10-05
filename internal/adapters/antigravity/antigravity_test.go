@@ -224,8 +224,8 @@ func TestHandle_MidTaskToFlash(t *testing.T) {
 	if len(subs) != 1 {
 		t.Fatalf("expected 1 subagent in overwrite, got %d", len(subs))
 	}
-	if subs[0]["Model"] != "flash" {
-		t.Errorf("model = %v, want flash", subs[0]["Model"])
+	if subs[0]["Model"] != "pro" {
+		t.Errorf("model = %v, want strongest session model pro for an upshift", subs[0]["Model"])
 	}
 	if d.Tier != core.TierMid {
 		t.Errorf("tier = %s, want MID", d.Tier)
@@ -322,7 +322,7 @@ func TestHandle_HeldDecisionDoesNotRewrite(t *testing.T) {
 	}
 }
 
-func TestHandle_ExplicitOnlyTargetDoesNotRewrite(t *testing.T) {
+func TestHandle_ExplicitOnlyTargetIsSkippedForNextSessionModel(t *testing.T) {
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",
@@ -338,18 +338,19 @@ func TestHandle_ExplicitOnlyTargetDoesNotRewrite(t *testing.T) {
 			}`),
 		},
 	}
-	// The tier alias the decision maps to is explicit-only: the adapter must
-	// leave the spawn alone even though the session lists the alias.
+	// The lowest-capability entry is explicit-only. Selection stays within
+	// the session and skips it in favor of the next eligible model.
 	explicitRes := stubResolver{explicit: map[string]bool{"flash_lite": true}}
 	out, note, d := antigravity.Handle(withWireSession(ev), explicitRes)
 	if len(d.Corrections) != 0 {
 		t.Fatalf("expected a clean decision so explicit-only is the only blocker, got %v", d.Corrections)
 	}
-	if note != "" {
-		t.Errorf("expected no note for explicit-only target, got %q", note)
+	if note == "" {
+		t.Fatal("expected the next eligible session model to be selected")
 	}
-	if out.Overwrite != nil {
-		t.Errorf("explicit-only target must not rewrite, got %s", string(out.Overwrite))
+	subs := decodeOverwriteSubagents(t, out)
+	if len(subs) != 1 || subs[0]["Model"] != "flash" {
+		t.Errorf("expected non-explicit session model flash, got %v", subs)
 	}
 }
 

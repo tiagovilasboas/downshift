@@ -133,7 +133,7 @@ func TestHandle_AllowsHeldDecision(t *testing.T) {
 	}
 }
 
-func TestHandle_AllowsExplicitOnlyTarget(t *testing.T) {
+func TestHandle_SkipsExplicitOnlyTargetForNextSessionModel(t *testing.T) {
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	res := fixedResolver{
 		Resolver:     cat,
@@ -145,8 +145,8 @@ func TestHandle_AllowsExplicitOnlyTarget(t *testing.T) {
 	if len(decision.Corrections) != 0 {
 		t.Fatalf("expected a held-free decision, got %v", decision.Corrections)
 	}
-	if out.Block {
-		t.Errorf("must not block toward an explicit-only target (message=%q)", out.Message)
+	if !out.Block || !strings.Contains(out.Message, "model="+midID) {
+		t.Errorf("must use the next non-explicit session model, got block=%t message=%q", out.Block, out.Message)
 	}
 }
 
