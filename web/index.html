@@ -3,33 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0D1117">
-<meta name="description" content="Downshift, the agent harness for model routing — live routing monitor.">
-<title>Downshift — routing monitor</title>
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<meta property="og:title" content="Downshift — One harness. Any model.">
-<meta property="og:description" content="A unified harness for routing across AI models, tools, and data.">
-<meta property="og:image" content="../docs/brand/downshift-social-preview.png">
+<meta name="theme-color" content="#161b22">
+<meta name="description" content="downshift · AI subagent model router — live dashboard">
+<title>downshift</title>
 <link rel="manifest" href="manifest.json">
 <style>
 /* ── reset + tokens ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:      #0D1117;
-  --bg2:     #161B22;
+  --bg:      #0d1117;
+  --bg2:     #161b22;
   --bg3:     #21262d;
   --border:  #30363d;
-  --text:    #F9FAFB;
-  --muted:   #9CA3AF;
-  --accent:  #22C55E;
-  --ok:      #22C55E;
-  --ok-bg:   #0d2818;
+  --text:    #c9d1d9;
+  --muted:   #8b949e;
+  --accent:  #58a6ff;
+  --ok:      #3fb950;
   --warn:    #d29922;
   --info:    #79c0ff;
   --danger:  #f85149;
-  --mid-bg:  #0d1d35;
-  --lo-bg:   #2d1117;
-  --font:    'SF Mono','Fira Code','Cascadia Code',ui-monospace,monospace;
+  --sponsor: #ea6045;
+  --font:    ui-monospace, 'SF Mono', Menlo, 'Cascadia Code', monospace;
 }
 body {
   background: var(--bg);
@@ -42,6 +36,7 @@ body {
 /* ── layout ── */
 .app { display: grid; grid-template-rows: auto 1fr; min-height: 100svh; }
 
+/* ── header ── */
 header {
   background: var(--bg2);
   border-bottom: 1px solid var(--border);
@@ -50,302 +45,285 @@ header {
   align-items: center;
   justify-content: space-between;
   position: sticky; top: 0; z-index: 10;
+  gap: 12px;
 }
-.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--text); }
-.logo img { height: 28px; width: auto; display: block; }
+.logo { font-weight: 700; font-size: 15px; color: var(--accent); flex-shrink: 0; }
 .logo span { color: var(--muted); font-weight: 400; }
-.logo .tagline { font-size: 10px; letter-spacing: 1.5px; color: var(--muted); font-weight: 400; }
-.header-right { display: flex; align-items: center; gap: 16px; }
-.clock { color: var(--muted); font-size: 11px; }
-#sse-indicator { font-size: 11px; }
-
-main {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1px;
-  background: var(--border);
-  align-items: start;
-}
-@media (max-width: 800px) { main { grid-template-columns: 1fr; } }
-
-/* ── panels ── */
-.panel {
-  background: var(--bg);
-  padding: 16px;
+.header-right {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 100%;
-}
-.panel-title {
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  color: var(--muted);
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
-}
-.panel-footer {
-  color: var(--muted);
-  font-size: 10px;
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-.panel-footer a { color: var(--muted); }
-
-/* ── section labels ── */
-.sub-label {
-  font-size: 10px;
-  letter-spacing: 1.2px;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-/* ── GEAR CARDS (tier rows) ── */
-.gear-cards { display: flex; flex-direction: column; gap: 6px; }
-
-.gear-card {
-  display: grid;
-  grid-template-columns: 52px 1px 1fr auto;
   align-items: center;
-  border-radius: 6px;
-  overflow: hidden;
+  gap: 10px;
+  font-size: 11px;
+}
+.header-clock { color: var(--muted); }
+.gh-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  text-decoration: none;
   border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 9px;
+  font-size: 10px;
+  transition: border-color .15s, color .15s;
 }
-.gear-card.hi  { background: var(--ok-bg); }
-.gear-card.mid { background: var(--mid-bg); }
-.gear-card.lo  { background: var(--lo-bg); }
-
-.gear-num {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 10px 6px;
-  gap: 2px;
+.gh-link:hover { border-color: var(--accent); color: var(--text); }
+.gh-link svg { width: 12px; height: 12px; fill: currentColor; flex-shrink: 0; }
+.sponsor-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--sponsor);
+  text-decoration: none;
+  border: 1px solid rgba(234,96,69,.3);
+  border-radius: 5px;
+  padding: 3px 9px;
+  font-size: 10px;
+  transition: border-color .15s, background .15s;
 }
-.gear-n  { font-size: 22px; font-weight: 700; line-height: 1; }
-.gear-lbl{ font-size: 9px; letter-spacing: 1px; }
-.hi  .gear-n, .hi  .gear-lbl { color: var(--ok); }
-.mid .gear-n, .mid .gear-lbl { color: var(--accent); }
-.lo  .gear-n, .lo  .gear-lbl { color: var(--danger); }
+.sponsor-link:hover { border-color: var(--sponsor); background: rgba(234,96,69,.06); }
 
-.gear-div { width: 1px; background: var(--border); align-self: stretch; }
-
-.gear-body { padding: 10px 12px; }
-.gear-type { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
-.hi  .gear-type { color: var(--ok); }
-.mid .gear-type { color: var(--accent); }
-.lo  .gear-type { color: var(--danger); }
-
-.gear-examples { color: var(--muted); font-size: 11px; }
-.gear-model    { color: var(--muted); font-size: 10px; margin-top: 3px; }
-
-.gear-stats {
-  padding: 10px 14px;
-  text-align: right;
-  display: flex; flex-direction: column; align-items: flex-end; gap: 3px;
+/* ── main ── */
+main {
+  display: flex;
+  justify-content: center;
+  padding: 24px 20px;
 }
-.gear-count { font-size: 18px; font-weight: 700; }
-.hi  .gear-count { color: var(--ok); }
-.mid .gear-count { color: var(--accent); }
-.lo  .gear-count { color: var(--danger); }
-.gear-saved { font-size: 10px; color: var(--muted); }
 
-/* ── big stat ── */
-.big-stat { display: flex; align-items: baseline; gap: 8px; }
-.big-num { font-size: 26px; font-weight: 700; color: var(--ok); }
-.big-label { font-size: 13px; color: var(--muted); }
+/* ── card shell ── */
+.card {
+  width: 100%;
+  max-width: 660px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.card-header {
+  padding: 12px 16px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.section:last-child { border-bottom: none; }
+.section-label {
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.section-label .note {
+  font-size: 9px;
+  color: var(--muted);
+  opacity: .6;
+  letter-spacing: 0;
+  text-transform: none;
+}
 
-/* ── event rows ── */
+/* ── harness chips ── */
+.status-row { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.pulse { color: var(--ok); animation: p 1.4s infinite; display: inline-block; }
+@keyframes p { 0%,100%{opacity:1} 50%{opacity:.2} }
+.chip {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+  user-select: none;
+}
+.chip:hover { border-color: var(--accent); color: var(--text); }
+.chip.hi {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(88,166,255,.08);
+}
+
+/* ── rows ── */
 .row {
   display: grid;
-  grid-template-columns: 36px 72px 1fr;
-  gap: 6px;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--bg3);
+  grid-template-columns: 30px 58px 1fr;
+  gap: 8px;
+  padding: 3px 0;
+  align-items: baseline;
+}
+.row.new { animation: flash .9s ease-out; }
+@keyframes flash { 0%{background:rgba(88,166,255,.15)} 100%{background:transparent} }
+.t    { color: var(--muted); text-align: right; font-size: 11px; }
+.m    { color: var(--info); font-size: 11px; }
+.desc { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.active-dot { color: var(--ok); margin-right: 2px; animation: p 1.2s infinite; }
+
+/* ── stats inline ── */
+.stats-line { color: var(--text); font-size: 12px; }
+
+/* ── economy bar ── */
+.economy-bar {
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(63,185,80,.08) 0%, rgba(63,185,80,.04) 100%);
+  border: 1px solid rgba(63,185,80,.2);
+  padding: 10px 14px;
+  display: flex;
+  gap: 16px;
   align-items: center;
 }
-.row:last-child { border-bottom: none; }
-.t    { color: var(--muted); font-size: 10px; }
-.m    { color: var(--info);  font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.desc { color: var(--text);  font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.economy-bar .big  { font-size: 20px; font-weight: 700; color: var(--ok); line-height: 1; }
+.economy-bar .sub  { font-size: 9px; color: var(--muted); margin-top: 2px; }
+.economy-divider { width: 1px; background: rgba(63,185,80,.2); align-self: stretch; }
 
-/* ── status chips ── */
-.chip {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 10px;
+/* ── notice footer ── */
+.notice {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.6;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.notice code {
+  color: var(--muted);
   background: var(--bg3);
   border: 1px solid var(--border);
-  font-size: 11px;
-  color: var(--muted);
-  margin: 2px 2px 2px 0;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 9px;
 }
-.chip.hi { border-color: var(--ok); color: var(--ok); background: var(--ok-bg); }
 
-/* ── pulse dot ── */
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-.pulse { animation: pulse 1.8s ease-in-out infinite; color: var(--ok); }
-
-/* ── spans ── */
+/* ── utility ── */
+.dim  { color: var(--muted); }
 .ok   { color: var(--ok); }
 .warn { color: var(--warn); }
 .info { color: var(--info); }
-.dim  { color: var(--muted); }
-.stats-line { display: flex; gap: 12px; flex-wrap: wrap; }
 
-/* ── GitHub cards ── */
-.gh-card {
-  background: var(--bg2);
+/* ── pwa install banner ── */
+#install-banner {
+  display: none;
+  background: var(--bg3);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 12px;
-  display: flex; flex-direction: column; gap: 6px;
-}
-.gh-top { display: flex; justify-content: space-between; align-items: center; }
-.gh-name { color: var(--accent); font-weight: 700; text-decoration: none; font-size: 13px; }
-.gh-name:hover { text-decoration: underline; }
-.gh-meta { color: var(--muted); font-size: 11px; }
-.gh-desc { color: var(--muted); font-size: 11px; line-height: 1.5; }
-.gh-detail summary { color: var(--muted); font-size: 11px; cursor: pointer; }
-.gh-detail pre { margin-top: 6px; font-size: 10px; color: var(--muted); white-space: pre-wrap; background: var(--bg3); padding: 8px; border-radius: 4px; max-height: 200px; overflow-y: auto; }
-
-/* ── install banner ── */
-#install-banner {
-  display: none; align-items: center; gap: 8px;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 4px; padding: 8px 10px; font-size: 11px; color: var(--muted);
+  padding: 10px 14px;
+  font-size: 11px;
+  color: var(--muted);
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
 }
 #install-banner.show { display: flex; }
 #install-btn {
-  background: var(--bg3); border: 1px solid var(--border); color: var(--accent);
-  border-radius: 4px; padding: 4px 12px; font-size: 11px; cursor: pointer;
-  font-family: var(--font); white-space: nowrap;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--font);
+  white-space: nowrap;
 }
 </style>
 </head>
 <body>
 <div class="app">
+  <!-- ── header ── -->
   <header>
-    <span class="logo"><img src="brand/downshift-mark-darkbg.svg" alt="Downshift mark">DOWNSHIFT <span>· routing monitor</span></span>
+    <span class="logo">downshift<span> · dashboard</span></span>
+
     <div class="header-right">
-      <span id="sse-indicator"><span class="dim">○ connecting…</span></span>
-      <span class="clock" id="clock"></span>
+      <span class="header-clock" id="clock"></span>
+
+      <!-- GitHub author link -->
+      <a class="gh-link"
+         href="https://github.com/tiagovilasboas/harness-downshift"
+         target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        tiagovilasboas
+      </a>
+
+      <!-- Sponsor link -->
+      <a class="sponsor-link"
+         href="https://github.com/sponsors/tiagovilasboas"
+         target="_blank" rel="noopener">
+        ♥ Sponsor
+      </a>
     </div>
   </header>
 
+  <!-- ── main ── -->
   <main>
-    <!-- ── LEFT: routing monitor ── -->
-    <div class="panel">
-      <div class="panel-title">routing monitor · live</div>
-
-      <div id="install-banner">
-        📲 Install as app
-        <button id="install-btn">Install</button>
+    <div class="card">
+      <div class="card-header">
+        <span>routing monitor · last 24h</span>
+        <span id="sse-indicator" style="font-size:10px"></span>
       </div>
 
-      <!-- harness status -->
-      <div>
-        <div class="sub-label">harnesses</div>
+      <div class="section">
+        <div id="install-banner">
+          📲 Install as an app
+          <button id="install-btn">Install</button>
+        </div>
+        <div class="section-label">harnesses</div>
         <div class="status-row" id="monitor-status">
           <span class="dim">connecting…</span>
         </div>
       </div>
 
-      <!-- gear tier cards -->
-      <div>
-        <div class="sub-label">tier breakdown</div>
-        <div class="gear-cards" id="gear-cards">
-          <!-- rendered by JS -->
-          <div class="gear-card hi">
-            <div class="gear-num"><span class="gear-n">1</span><span class="gear-lbl">HIGH</span></div>
-            <div class="gear-div"></div>
-            <div class="gear-body">
-              <div class="gear-type">TRIVIAL</div>
-              <div class="gear-examples">rename · format · git commit · fix typo</div>
-              <div class="gear-model">haiku / grok / luna</div>
-            </div>
-            <div class="gear-stats">
-              <span class="gear-count" id="count-trivial">—</span>
-              <span class="gear-saved" id="saved-trivial"></span>
-            </div>
-          </div>
-          <div class="gear-card mid">
-            <div class="gear-num"><span class="gear-n">2</span><span class="gear-lbl">MID</span></div>
-            <div class="gear-div"></div>
-            <div class="gear-body">
-              <div class="gear-type">SIMPLE · MEDIUM</div>
-              <div class="gear-examples">add field · fix bug · implement feature</div>
-              <div class="gear-model">sonnet / terra</div>
-            </div>
-            <div class="gear-stats">
-              <span class="gear-count" id="count-simple">—</span>
-              <span class="gear-saved" id="saved-simple"></span>
-            </div>
-          </div>
-          <div class="gear-card lo">
-            <div class="gear-num"><span class="gear-n">L</span><span class="gear-lbl">LOW</span></div>
-            <div class="gear-div"></div>
-            <div class="gear-body">
-              <div class="gear-type">COMPLEX</div>
-              <div class="gear-examples">rearchitect · migrate · RFC · race condition</div>
-              <div class="gear-model">opus / frontier</div>
-            </div>
-            <div class="gear-stats">
-              <span class="gear-count" id="count-complex">—</span>
-              <span class="gear-saved" id="saved-complex"></span>
-            </div>
-          </div>
+      <div class="section">
+        <div class="section-label">
+          active agents
+          <span class="note">(spawned in the last 5 min)</span>
         </div>
+        <div id="monitor-active-agents"><span class="dim">—</span></div>
       </div>
 
-      <!-- total savings -->
-      <div>
-        <div class="sub-label">estimated savings</div>
-        <div class="big-stat">
-          <span class="big-num" id="total-saved">$0.00</span>
-          <span class="big-label" id="total-events">0 events</span>
-        </div>
-      </div>
-
-      <div class="panel-footer">
-        <a href="https://github.com/tiagovilasboas/harness-downshift" target="_blank" rel="noopener noreferrer">Downshift — One harness. Any model.</a>
-        · run <code>./dsmon-server</code> for live data
-      </div>
-    </div>
-
-    <!-- ── RIGHT: switches + agents + github ── -->
-    <div class="panel">
-      <div class="panel-title">activity</div>
-
-      <!-- last switches -->
-      <div>
-        <div class="sub-label">last switches</div>
+      <div class="section">
+        <div class="section-label">last switch</div>
         <div id="monitor-switches"><span class="dim">—</span></div>
       </div>
 
-      <!-- active agents -->
-      <div>
-        <div class="sub-label">agents</div>
+      <div class="section">
+        <div class="section-label">agents</div>
         <div id="monitor-agents"><span class="dim">—</span></div>
       </div>
 
-      <!-- raw stats line -->
-      <div>
-        <div class="sub-label">totals</div>
+      <div class="section">
+        <div class="section-label">stats</div>
         <div class="stats-line" id="monitor-stats"><span class="dim">—</span></div>
       </div>
 
-      <!-- github repos -->
-      <div>
-        <div class="sub-label">harness stack · github</div>
-        <span id="gh-status" class="dim"></span>
-        <div id="gh-repos" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
+      <div class="section" id="economy-section" style="display:none">
+        <div class="section-label">estimated savings</div>
+        <div id="economy-bar"></div>
       </div>
 
-      <div class="panel-footer">
-        <a href="https://github.com/tiagovilasboas" target="_blank" rel="noopener noreferrer">github.com/tiagovilasboas</a>
-        · public API
+      <div class="notice">
+        <span style="color:var(--warn)">⚠</span>
+        Data is recorded <strong>only when subagents are dispatched</strong>
+        via <code>spawn_run</code> / <code>spawn_sub_agents</code> with the
+        <code>downshift</code> hook active.
+        <br>
+        <strong>Does not represent</strong> total session token consumption,
+        direct model calls, or activity outside KiroCrew.
+        Savings are estimated from average spawn cost — not actual billing data.
       </div>
     </div>
   </main>
