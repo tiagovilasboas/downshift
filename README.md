@@ -1,18 +1,4 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/brand/downshift-logo-light.svg">
-    <img src="docs/brand/downshift-logo-dark.svg" alt="Downshift — One harness. Any model." width="480">
-  </picture>
-</p>
-
-<p align="center">
-  <strong>ONE HARNESS. ANY MODEL.</strong><br>
-  A unified harness for routing across AI models, tools, and data. Build once. Ship anywhere.
-</p>
-
 # harness-downshift
-
-**Downshift, the agent harness for model routing** — stop paying frontier prices for trivial subagent work. Right-sized models for every subagent task across Claude Code, Cursor, Codex, Antigravity, and KiroCrew.
 
 [![Build](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml)
 [![License: BUSL-1.1](https://img.shields.io/badge/license-BUSL--1.1-orange.svg)](LICENSE)
@@ -23,7 +9,7 @@
 
 Every time your AI agent spawns a subagent, that subagent inherits the most expensive model in the session. A $25/1M token frontier model ends up renaming a variable, fixing a typo, listing files. You're billed. The work was identical on a $1/1M model.
 
-`harness-downshift` intercepts every subagent spawn and routes it to the right-sized model **before it starts** — automatically, without an LLM in the loop, with a single Go binary that runs as a hook. A local semantic boost (hash centroids, MiniLM-compatible) runs by default and only raises uncertain regex labels; set `DOWNSHIFT_MINILM=0` to use regex only. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md). Architecture in Portuguese, by domain: [docs/pt/README.md](docs/pt/README.md).
+`harness-downshift` intercepts every subagent spawn and routes it to the right-sized model **before it starts** — automatically, without an LLM in the loop, with a single Go binary that runs as a hook.
 
 ```
 Subagent task: "rename the userId variable across auth.ts"
@@ -35,29 +21,17 @@ Subagent task: "diagnose the race condition in the webhook handler"
 
 **Works today with Claude Code, Cursor, Codex, Antigravity, and KiroCrew.** Single binary, no runtime dependencies, no network calls, no API keys.
 
-![Downshift — One harness. Any model.](docs/brand/downshift-one-harness-any-model.png)
+![harness-downshift](docs/img/hero.svg)
 
-> **⚠️ Beta with measured evidence.** The router and adapters work — 430 local
-> routing events measured ([Real session data](#real-session-data)), hook-layer
-> E2E in CI, full test suite green. The remaining gap is the harnesses
-> themselves: model selection for subagents is an evolving feature in Claude
-> Code, Cursor, and Codex, and not every plan or build honours the hook
-> rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
-> before installing, and [Status](#status) for what beta means here and the
-> graduation criteria.
+> **⚠️ Beta — practical testing phase.** The router and adapters work. The
+> gap is the harnesses themselves: model selection for subagents is an
+> evolving feature in Claude Code, Cursor, and Codex, and not every plan
+> or build honours the hook rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
+> before installing.
 
-## Native Go orchestration planner
+## Optional local LangGraph planner
 
-The Go binary is fully self-contained — no Python, no runtime dependencies.
-Fan-out delegation planning (dedup, ordering, `max_delegates`, capability limits)
-lives in `internal/orchestration/` alongside the classifier and adapters.
-
-The `orchestration/` Python package is kept as a **reference and training artifact**
-(same contract, same tests) but is not the execution path. See
-[LangGraph reference design](docs/LANGGRAPH-ORCHESTRATION.md) for the design
-notes behind the Go port.
-
-![Orchestration planner — adjacent, not involved in model routing](docs/brand/downshift-orchestration-planner.png)
+The Go binary remains a deterministic, zero-runtime model router. For an explicitly opted-in local delegation-planning graph, see [Local LangGraph orchestration](docs/LANGGRAPH-ORCHESTRATION.md). It never chooses a tier/model or contacts an LLM; those decisions remain in Go.
 
 **Keywords:** Claude Code subagent cost · LLM model routing · agent harness ·
 cost optimization · Claude Code hooks · Cursor subagents · Codex model selection
@@ -75,23 +49,12 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/harness-downshift/ma
 ```bash
 downshift try "rename the userId variable" claude-code
 # → TRIVIAL task → use claude-haiku-4-5 (small tier)
-# Rewrite: no: session unknown …   (until step 3 is done)
 
 downshift try "rearchitect the auth module to support multi-tenant" claude-code
 # → COMPLEX task → use claude-opus-4-8 (frontier tier)
 ```
 
-**Step 3 — List the models your session can use.** The hook only ever writes a model id that is in this list; without it, it never rewrites anything (it prints `no session allowlist` on stderr). Put the IDs your plan actually offers in `~/.harness-downshift/session-models.json`, ordered from least to most capable. This applies to every harness; Downshift does not require those IDs to exist in its catalog:
-```bash
-mkdir -p ~/.harness-downshift
-cat > ~/.harness-downshift/session-models.json <<'JSON'
-{ "claude-code": ["claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"] }
-JSON
-downshift try "rename the userId variable" claude-code   # now: Rewrite: yes → claude-haiku-4-5
-```
-Details (per-session lists, quotas, other harnesses): [docs/session-models.md](docs/session-models.md).
-
-**Step 4 — Add the hook** to `~/.claude/settings.json`:
+**Step 3 — Add the hook** to `~/.claude/settings.json`:
 ```json
 {
   "hooks": {
@@ -102,14 +65,14 @@ Details (per-session lists, quotas, other harnesses): [docs/session-models.md](d
 }
 ```
 
-**Step 5 — Confirm it's working.** Open Claude Code, ask it to spawn a subagent for a trivial task. With Claude Code's verbose output you'll see a line like:
+**Step 4 — Confirm it's working.** Open Claude Code, ask it to spawn a subagent for a trivial task. You'll see this in the terminal:
 ```
-downshift: correlation_id=… TRIVIAL task → use claude-haiku-4-5 (small tier)
+downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~80% cheaper)
 ```
 
-That line means the hook emitted a rewrite before the subagent started. It proves emission, not that Claude Code honored it (see [docs/session-models.md](docs/session-models.md)). If you see `no session allowlist` instead, redo step 3. Unconfident classifications never move a spawn to the small tier, so some trivial-looking tasks are left unchanged by design.
+That line in stderr means the hook fired and rewrote the model before the subagent started.
 
-**Step 6 — (Optional) Open the live monitor.** `dsmon` is a floating terminal widget built into the same repo that tails `~/.harness-downshift/events.jsonl` and shows model switches, tier distribution and estimated savings in real time:
+**Step 5 — (Optional) Open the live monitor.** `dsmon` is a floating terminal widget built into the same repo that tails `~/.harness-downshift/events.jsonl` and shows model switches, tier distribution and estimated savings in real time:
 
 ```bash
 # Build the monitor binary (separate from the hook binary)
@@ -228,8 +191,6 @@ the spawn details to `downshift`, which:
 
 The main session keeps the model you chose. Only the subagents get right-sized.
 
-![How Downshift works — intercept, classify, route, rewrite](docs/brand/downshift-how-it-works.png)
-
 ```
 $ downshift try "rename the userId variable across auth.ts" claude-code claude-opus-4-8
 Task:       rename the userId variable across auth.ts
@@ -268,7 +229,7 @@ go install github.com/tiagovilasboas/harness-downshift/cmd/downshift@latest
 Pre-built binaries for macOS (arm64/amd64), Linux (arm64/amd64), and Windows (amd64)
 are available on the [Releases](https://github.com/tiagovilasboas/harness-downshift/releases) page.
 
-Add the hooks to `~/.claude/settings.json`:
+Add the hook to `~/.claude/settings.json`:
 
 ```json
 {
@@ -280,20 +241,12 @@ Add the hooks to `~/.claude/settings.json`:
           { "type": "command", "command": "downshift claude-code" }
         ]
       }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Task",
-        "hooks": [
-          { "type": "command", "command": "downshift claude-code-post-tool-use" }
-        ]
-      }
     ]
   }
 }
 ```
 
-That's it. Every subagent your session spawns runs on the right-sized model (`PreToolUse`), and actual token spend and provider cost are recorded for verifiable savings reporting (`PostToolUse`).
+That's it. Every subagent your session spawns now runs on the right-sized model.
 
 ## Install (Cursor)
 
@@ -317,9 +270,9 @@ the config and reloads it on save.
 
 ## Session allowlist
 
-Downshift writes a model id only when that id is in the current session. The session list is the only candidate source and its order is least-to-most capable; the catalog may add metadata but cannot add, rank, or replace a candidate. Unknown catalog IDs remain eligible. If the session list cannot be determined, the hook leaves the current model unchanged.
+Downshift writes a model id only when that id is in the current session. The catalog supplies tier, cost, family, and effort for ids that are also in the session. It never adds an id the session does not have. If the session list cannot be determined, the hook leaves the current model unchanged.
 
-Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift validates and hashes that ID before recording it, so local routing decisions can be grouped without persisting the raw session identifier. Record selectable model ids in `~/.harness-downshift/session-models.json`. A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. A model id from another harness is left unchanged. Optional `quota` marks which session ids still have token budget (`included`) and which are exhausted (`exhausted`). The hook never emits an exhausted id. Details and evidence: [docs/session-models.md](docs/session-models.md). [docs/examples/session-models.example.json](docs/examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
+Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift validates and hashes that ID before recording it, so local routing decisions can be grouped without persisting the raw session identifier. Record selectable model ids in `~/.harness-downshift/session-models.json`. A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. Details and evidence: [docs/session-models.md](docs/session-models.md). [docs/examples/session-models.example.json](docs/examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
 
 ## Install (Codex)
 
@@ -428,13 +381,8 @@ used deliberately. It classifies the pending spawn and:
 - **confident tier mismatch** → `exit 2`, block with a message naming the model
   to respawn with (and, for a small tier, a reminder to trim context so the
   child fits the smaller window);
-- **uncertain downshift, unknown model, explicit_only current model, target
-  outside the session allowlist, guardrail-held decision, or non-subagent
-  tool** → `exit 0`, fail-open. The router never blocks a spawn on its own
-  doubt.
-
-Telemetry records `outcome: "blocked"` for exit 2 and `outcome: "allow"` for
-exit 0; KiroCrew events are never `rewrite_emitted`.
+- **uncertain downshift, unknown model, or non-subagent tool** → `exit 0`,
+  fail-open. The router never blocks a spawn on its own doubt.
 
 The classifier is the same deterministic, prompt-free core — no LLM in the
 loop. The difference from rewrite mode is that the agent respawns at the right
@@ -465,19 +413,11 @@ automatic.
      }
    }
    ```
-3. List the models the session may respawn with (the hook only names an id
-   from this list; without it every spawn is allowed):
-   ```bash
-   mkdir -p ~/.harness-downshift
-   echo '{ "kirocrew": ["claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"] }' \
-     > ~/.harness-downshift/session-models.json
-   ```
-4. Test it from the terminal (no spawn needed):
+3. Test it from the terminal (no spawn needed):
    ```bash
    echo '{"tool_name":"spawn_run","tool_input":{"task":"rename a variable","model":"opus"}}' \
      | ./downshift kirocrew ; echo "exit=$?"
    # exit=2, stderr: "TRIVIAL task → downshift to claude-haiku-4-5 … Respawn with model=…"
-   # without step 3: exit=0 and "no session allowlist for kirocrew"
    ```
 
 When the hook blocks, KiroCrew relays the stderr to the agent, which respawns
@@ -501,8 +441,8 @@ in real time. It reads `~/.harness-downshift/events.jsonl` and refreshes every
 │  04:01  opus   → sonnet  medium   -40%               │
 │ stats ──────────────────────────────────────────────  │
 │  35 events   22↓  2↑  8✓                             │
-│  est. saved  ~$0.18 est.  ~7K units ¹                │
-│  ¹ estimate · provider tokens not yet tracked        │
+│  est. saved  $0.18  ~7K tokens ¹                     │
+│  ¹ estimated · actual tokens not yet tracked         │
 ╰──────────────────────────────────────────────────────╯
   04:03:51 · ctrl+c to quit
 ```
@@ -527,21 +467,14 @@ go build -o dsmon ./cmd/dsmon
 | Harness | `events.jsonl` → `harness` field | Last harness seen today |
 | Switches | `events.jsonl` → `verdict` + model fields | Last 7 routing decisions |
 | Events / ↓ ↑ ✓ | `events.jsonl` | Today's counts by verdict |
-| Est. saved (~$ est.) | `estimated_savings` × $0.01 placeholder (`estimatedCostPerUnitUSD`) | Rough estimate, not actual billing |
-| Est. units | Sum of `estimated_savings` fractions (`est_units` in `/api/status`) | Estimated, not from provider |
-| Real saved ($) | `baseline_cost_usd` − `actual_cost_usd`, only for events with token usage | Real dollars when a PostToolUse payload includes token counts; zero until then |
+| Est. saved ($) | `estimated_savings` × $0.01 avg spawn cost | Rough estimate, not actual billing |
+| Est. tokens | Derived from $ saved ÷ frontier output cost | Estimated, not from provider |
 
 **Token consumption note.** The router has no access to provider-reported token
 counts — it only sees what the harness passes to the preToolUse hook, which
 does not include usage data. The estimates are directionally correct (more
 downshifts = more savings) but not a substitute for your provider's billing
-dashboard. Events optionally carry `input_tokens`, `output_tokens`,
-`cached_tokens`, `actual_cost_usd` and `baseline_cost_usd` (see
-`internal/telemetry/cost.go`); when present, `/api/status` exposes
-`real_saved_usd`/`real_cost_events` and `downshift stats` prints a real-cost
-section alongside the estimate. The Claude Code PostToolUse command is
-`downshift claude-code-post-tool-use`. It records `outcome: "usage"` only when
-the payload carries `input_tokens` or `output_tokens`.
+dashboard. Actual token tracking is planned for a future PostToolUse hook pass.
 
 ## Grok CLI (config, not hook)
 
@@ -597,18 +530,14 @@ to a role's reasoning effort in config once.
 
 ## Capability Router v2
 
-The hook path is `core.Route`: legacy regex scoring plus a monotonic semantic boost. **CapabilityRouter v2** is an experimental CLI (`downshift train`, `downshift benchmark --compare`). It is not promoted and it is not on the hook. Copying weights to `~/.harness-downshift/weights.json` does not change hook decisions.
+The default classifier is deterministic (regex scoring). The **CapabilityRouter v2** is a statistical, opt-in upgrade that adds:
 
-Offline, v2 adds:
+- **13 extracted signals** — mechanical, coding, security, concurrency, migration, planning, etc.
+- **Deterministic safety floor** — high-risk tasks (auth, migration, race conditions) are pinned to Frontier regardless of the classifier.
+- **Risk-weighted loss** — under-routing is penalised 5–10× harder than over-routing. `FRONTIER→SMALL` is catastrophic; `SMALL→MID` is cheap.
+- **Personalised weights** — train on your own prompts, compare against legacy, activate manually.
 
-- **13 extracted signals:** mechanical, coding, security, concurrency, migration, planning, and related features.
-- **Deterministic safety floor:** high-risk tasks (auth, migration, race conditions) are pinned to Frontier regardless of the classifier.
-- **Risk-weighted loss:** under-routing is penalised 5-10x harder than over-routing. `FRONTIER→SMALL` is catastrophic; `SMALL→MID` is cheap.
-- **Candidate weights:** train on labelled data and compare against legacy. Comparison does not install v2 on the hook.
-
-The router is model-agnostic: no model or provider names are embedded in selection logic. It classifies task tiers, then selects only from the current session's ordered candidates. The catalog is optional metadata, not a model picker.
-
-![Capability Router v2 — offline pipeline, not the production hook path](docs/brand/downshift-capability-router-v2.png)
+The router is **completely model-agnostic**: no model names, no provider strings in the routing logic. It decides tiers; the catalog decides models.
 
 ### Try it
 
@@ -630,11 +559,11 @@ downshift feedback <id> failed
 # Train a candidate from explicitly reviewed local feedback
 downshift train --from-events --output=candidate.json
 
-# Compare on a labelled set that was not used to edit classifier signals.
-# benchmark/holdout.json is a burned regression net. Do not use it as this set.
-downshift benchmark path/to/labelled.json --compare --candidate-weights=candidate.json
+# Evaluate candidate weights on an independent labelled holdout
+downshift benchmark holdout.json --compare --candidate-weights=candidate.json
 
-# Writing a weights file does not put v2 on the hook. Promotion is not available.
+# Promotion stays manual after reviewing safety and quality metrics
+cp candidate.json ~/.harness-downshift/weights.json
 ```
 
 ### Dataset format
@@ -674,7 +603,7 @@ was the cheapest adequate choice. Candidate evaluation never activates weights.
 
 ## Architecture
 
-![Architecture — runtime path, supporting systems, adjacent components](docs/brand/downshift-architecture-overview.png)
+![Architecture](docs/img/architecture.svg?v=2)
 
 Dependency direction is one-way: `catalog → core`, never reversed. Model IDs
 and costs live in `catalog.json` — no Go recompile needed to add or update a
@@ -797,13 +726,11 @@ This is the core of the project — and the most important thing to understand b
 
 **There is no LLM in the routing loop.** Classification is local pattern-matching in Go, runs in < 1ms, adds zero tokens to any session, and produces the same output for the same input every time. It's a function you can read, test, and audit. Not a black box.
 
-![Runtime routing path — what executes today in the hook path](docs/brand/downshift-runtime-routing-path.png)
-
 ### The algorithm, step by step
 
 Given a task prompt, the classifier:
 
-1. **Extracts regex signals** from `internal/core/signals.go` (keyword and structural patterns with a weight per complexity class). An uncertain label can only be raised by the monotonic semantic boost. This step is not the 13-feature extractor in `internal/routingv2/extractor`.
+1. **Extracts signals** — 13 weighted indicators across mechanical, coding, security, concurrency, migration, and planning dimensions. Each signal is a scored pattern match (keywords, structural patterns, verb classes).
 
 2. **Scores four complexity classes simultaneously:**
 
@@ -824,7 +751,7 @@ Given a task prompt, the classifier:
    | MEDIUM | `mid` | sonnet-class: capable, balanced |
    | COMPLEX | `frontier` | opus-class: maximum reasoning |
 
-5. **Selects a session model** — from the exact current-session list, ordered least-to-most capable. Catalog metadata may enrich known IDs but cannot introduce candidates or determine their selection rank.
+5. **Translates tier → model** — via the catalog (`internal/catalog/catalog.json`). Model IDs, prices, and family mappings live there. No Go recompile to add a new model or update a price.
 
 6. **Decides: allow, rewrite, or block** — depending on the harness's capability:
    - Claude Code / Cursor / Codex / Antigravity: **rewrite** the model in `updated_input` before the subagent starts.
@@ -870,7 +797,7 @@ The classifier is conservative by design:
 - **Never underpower hard tasks.** High-risk signals (auth, migration, race condition, security) pin the task to `COMPLEX` regardless of other scores. A task involving `"the race condition in the auth middleware"` goes to frontier even if it also contains trivial signals.
 - **Ties go up, not down.** When the score difference is below the confidence threshold, the router routes *up* or does nothing. It never downgrades a task on doubt.
 - **Fail-open everywhere.** Parse errors, unknown models, missing catalog entries, harness exceptions — the subagent runs unchanged. The cost optimizer is never an availability risk.
-- **FRONTIER→SMALL is the one case the classifier should never produce for genuinely complex tasks.** See the generated table in [Classifier benchmark](#classifier-benchmark) for the observed rate, and run `downshift benchmark benchmark/tasks.json` to verify on your own prompts. That rate is a regression check, not live traffic.
+- **FRONTIER→SMALL is the one case the classifier should never produce for genuinely complex tasks.** On the seed dataset: 0.0% observed (0 / 7 COMPLEX tasks). Run `downshift benchmark benchmark/tasks.json` to verify on your own prompts.
 
 ### Why deterministic matters
 
@@ -917,11 +844,8 @@ Normalised savings      951 units  (51.6%)
 For dollar figures once you have real data: `downshift stats --cost-per-unit=<USD>`.
 
 **Privacy note:** prompt contents are never stored. Each event records only
-routing metadata — harness, complexity class, model IDs, verdict, a
-normalised savings fraction, and optionally provider token counts
-(`input_tokens`, `output_tokens`, `cached_tokens`) plus derived
-`actual_cost_usd`/`baseline_cost_usd` when a future PostToolUse hook supplies
-usage. Safe for corporate environments where task
+routing metadata — harness, complexity class, model IDs, verdict, and a
+normalised savings fraction. Safe for corporate environments where task
 prompts may contain sensitive information.
 
 Each decision is recorded locally at `~/.harness-downshift/events.jsonl` —
@@ -931,66 +855,44 @@ no data leaves your machine. Use `downshift stats --days=7` for a weekly view.
 > with your before/after cost, task volume, and false-downshift observations.
 > First real dataset goes into this README with credit.
 
-### Real session data
-
-Measured with `downshift stats` on 430 local routing events (Sep 21–30, 2026).
-
-> **Counting caveat.** These numbers were produced by the pre-2026-10-04 `stats`, which counted every *classified* DOWNSHIFT verdict, including decisions the hook allowed unchanged or a guardrail held. Current `stats` counts only applied rewrites and reports the rest as `not_applied`, so the "Downshifted" share below is an upper bound until the same log is re-run.
-
-
-| Window | Decisions | Downshifted | Upshifted | OK | Unknown* |
-|---|---|---|---|---|---|
-| 30 days | 430 | 170 (39.5%) | 18 (4.2%) | 90 (20.9%) | 152 (35.3%) |
-| 7 days | 352 | 122 (34.7%) | 18 (5.1%) | 90 (25.6%) | 122 (34.7%) |
-
-\* Unknown split (152 in the 30-day window): 117 legacy-schema events (verdict only, no model fields) · 20 error-outcome events with no verdict (`INVALID_EVENT` ×10, `PAYLOAD_TOO_LARGE` ×10, fail-open by design) · 15 genuine unknown-model events (`requested_model` unknown, `rewrite_emitted` with a sensible final model).
-
-> **Important caveat.** Single-user dogfood, not a controlled study: no provider billing to compare against, normalised units only (no `outcome: "usage"` rows in the published window), and the downshift rate follows the task mix. Treat these as directional. The most reliable data is your provider's billing dashboard before and after deploying downshift.
-
 ---
 
 ## Classifier benchmark
 
-Every number in this block is generated by `downshift eval-outcome --report` (CI fails if it drifts). Reproduce any row with `downshift benchmark <dataset>`.
+Run the classifier against the seed dataset included in the repository:
 
-<!-- downshift-report:begin -->
-<!-- Generated by `downshift eval-outcome --report --write README.md`. Do not edit by hand: CI fails when this block drifts. -->
+```
+# Example output — run this yourself to see current numbers.
+$ downshift benchmark benchmark/tasks.json
 
-**Classifier benchmark** (default classifier; labels are a human complexity rubric, not measured outcomes):
+Dataset: 30 tasks
 
-| Dataset | Tasks | Tier accuracy (95% CI) | FRONTIER→MID | FRONTIER→SMALL | SMALL→MID | SMALL→FRONTIER |
-|---|---|---|---|---|---|---|
-| `benchmark/tasks.json` (seed, CI gate) | 200 | 69.0% (62.5–75.5%) | 0.0% (0/50) | 0.0% (0/50) | 49.0% (49/100) | 7.0% (7/100) |
-| `benchmark/holdout.json` (burned: tuned to 100%, regression net only) | 300 | 100.0% (100.0–100.0%) | 0.0% (0/75) | 0.0% (0/75) | 0.0% (0/150) | 0.0% (0/150) |
+Complexity accuracy     46.7%  (exact label match)
+Tier routing accuracy   70.0%  (correct model tier — what matters economically)
 
-**Outcome eval** (`benchmark/outcomes`: 40 Go tasks, each with an executable check; CI verifies every stub fails and every reference passes). The router sends 0 tasks to small, 29 to mid and 11 to frontier; 9 of 10 COMPLEX-labelled tasks are routed below frontier.
+Unsafe downgrade (FRONTIER → cheaper tier):
+  FRONTIER → MID        42.9%  (3 / 7)
+  FRONTIER → SMALL       0.0%  (0 / 7)
 
-| Run tier | Model | Date | Pass, all tasks (95% CI) | Pass, TRIVIAL+SIMPLE labels (95% CI) | Pass, routed to small (95% CI) |
-|---|---|---|---|---|---|
-| frontier | `anthropic/claude-opus-5.5` | 2026-10-03 | 40/40 = 100.0% (91.2–100.0%) | 20/20 = 100.0% (83.9–100.0%) | n/a |
-| mid | `deepseek/deepseek-v4-flash` | 2026-10-03 | 31/40 = 77.5% (62.5–87.7%) | 17/20 = 85.0% (64.0–94.8%) | n/a |
-| small | `qwen/qwen3-coder-30b-a3b-instruct` | 2026-10-03 | 27/40 = 67.5% (52.0–79.9%) | 16/20 = 80.0% (58.4–91.9%) | n/a |
-
-Small minus frontier pass rate, TRIVIAL+SIMPLE labels: -20.0pp (revisit the downshift below −5pp).
-<!-- downshift-report:end -->
-
-**Evaluation-only splits** (never tuned against, never gated; reported by CI on every run). These are the closest thing to unseen traffic in the repo, and they are much weaker than the two rows above. Measured 2026-10-04 with `downshift benchmark <file> --report`:
-
-| Dataset | Tasks | Tier accuracy (95% CI) | FRONTIER→MID | FRONTIER→SMALL | SMALL→MID | SMALL→FRONTIER |
-|---|---|---|---|---|---|---|
-| `benchmark/heldout2.json` | 120 | 40.0% (31.7–49.2%) | 46.7% (14/30) | 0.0% (0/30) | 75.0% (45/60) | 16.7% (10/60) |
-| `benchmark/fresh.json` | 100 | 50.0% (40.0–60.0%) | 20.0% (5/25) | 0.0% (0/25) | 70.0% (35/50) | 8.0% (4/50) |
-| `benchmark/blind-vitrine.json` (tier labels, external author; already seen) | 60 | 50.0% (36.7–63.3%) | 20.0% (4/20) | 0.0% (0/20) | 65.0% (13/20) | 25.0% (5/20) |
-
-Read together: no split sends a frontier task to the small tier, but on unseen prompts 20–47% of frontier tasks are classified mid, and most small tasks are over-routed. The 69% seed and 100% holdout numbers do not carry over. In the hook, guardrails hold most of those mid calls when the current model is known (unconfident downshifts, risk categories), but a Task with no `model` field may still be written to the mid tier on doubt (R6 only blocks the small tier).
+Wasteful over-routing (SMALL → dearer tier):
+  SMALL → MID           55.6%  (5 / 9)
+  SMALL → FRONTIER       0.0%  (0 / 9)
+```
 
 The two numbers that matter for the business decision:
 
-**Tier routing accuracy on the 200-task seed** is the economic KPI. `TRIVIAL` and `SIMPLE` share the small tier. `MEDIUM` is mid. `COMPLEX` is frontier. A `SIMPLE` predicted as `MEDIUM` is a real tier miss. Run `downshift benchmark benchmark/tasks.json` for the current percentages.
+**Tier routing accuracy (70.0%)** is the economic KPI. SIMPLE predicted as
+MEDIUM is a complexity miss but an identical routing decision — both go to
+the mid tier. Complexity accuracy (46.7%) makes the classifier look worse
+than it really is in terms of actual model selection.
 
-**FRONTIER→SMALL** is the one error the router must never make; the tables above show the observed rate on each dataset (0 everywhere today). **FRONTIER→MID** is not zero on unseen splits (20–47%), so "never underpowers a complex task" is not a supported claim. The holdout is templated and was tuned to 100%, so its row is a regression check, not a generalisation estimate. The **outcome eval** row measures what the labels cannot: whether the task actually passes its executable check on each tier (`benchmark/outcomes/README.md`). An offline all-MiniLM-L6-v2 centroid classifier, trained only on `tasks.json`, scored 96.3% tier accuracy and 0% FRONTIER→MID on `benchmark/holdout.json` (`benchmark/minilm-holdout.json`). The neural row does not beat the regex regression net on that file. It is not the default embedder. See [docs/MINILM-SEMANTIC.md](docs/MINILM-SEMANTIC.md).
+**Observed FRONTIER→SMALL rate on the seed dataset: 0.0%** (0 / 7 COMPLEX tasks).
+That is a good signal on 30 tasks — not yet a proven safety guarantee.
+FRONTIER→MID (42.9%) is the current main gap: those tasks get a capable model
+but not the strongest one. That is the classifier's known weak spot on this seed.
 
-The seed file has 200 curated tasks. The format is `[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
+The seed dataset has 30 tasks. The format is
+`[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
 Add your own prompts and run again — real coding tasks from your stack are
 the highest-value contribution you can make to this project.
 
@@ -1140,10 +1042,10 @@ A typical engineering session spawns ~50 subagents per day. Roughly half are mec
 
 | Team size | Without downshift | With downshift | Monthly savings |
 |---|---|---|---|
-| 1 dev | ~$2.50/day | ~$1.50/day | **~$20/month** |
-| 10 devs | ~$25/day | ~$15/day | **~$200/month** |
-| 50 devs | ~$125/day | ~$75/day | **~$1,000/month** |
-| 100 devs | ~$250/day | ~$150/day | **~$2,000/month** |
+| 1 dev | ~$2.50/day | ~$0.80/day | **~$51/month** |
+| 10 devs | ~$25/day | ~$8/day | **~$510/month** |
+| 50 devs | ~$125/day | ~$40/day | **~$2,550/month** |
+| 100 devs | ~$250/day | ~$80/day | **~$5,100/month** |
 
 **Assumptions:** 50 spawns/dev/day, 50% trivial (routed to small tier), 80% cost reduction on routed spawns, 20 working days/month. List prices September 2026.
 
@@ -1187,12 +1089,6 @@ downshift stats --days=7 --cost-per-unit=0.05
 # → Estimated saved: $25.45 (509 routed spawns × $0.05)
 ```
 
-When events carry provider token usage, `downshift stats` additionally prints
-a `Real provider cost (N events with token usage)` section with real saved
-USD — computed from catalog list prices via `internal/telemetry/cost.go`.
-Until a session reports token counts, that section stays empty and the
-normalised estimate above remains the primary signal.
-
 **Important caveat.** These estimates are based on list prices and the number of routing decisions — not on actual provider billing. Token counts per spawn vary by task and model. Your actual savings may be higher (long frontier prompts avoided) or lower (very short spawns where the per-call overhead dominates). Treat these as directional. The most reliable data is your provider's billing dashboard before and after deploying downshift.
 
 ---
@@ -1203,11 +1099,11 @@ Being honest: the router and adapters work today. These are the gaps between "wo
 
 | Gap | Why it matters | Status |
 |---|---|---|
-| **Real token counts via PostToolUse hook** | Link provider usage to routing decisions for real USD in `downshift stats`. | Hook and quickstart shipped — dogfood until `real_cost_events` > 0 ([beta exit P3](docs/BETA-EXIT.md)) |
-| **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Shipped (this week) — see [Real session data](#real-session-data) |
-| **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. Hook-layer E2E is covered (`TestHookE2E_RewriteEventStats`: hook stdin → adapter rewrite → JSONL event → stats aggregation). | Partial: hook-layer E2E in CI; Codex real spawn honored 2026-10-02 ([evidence](docs/evidence/codex-rewrite-honored-2026-10-02.md)); Claude Code paid still pending |
-| **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verified (430-event log, Sep 2026) |
-| **Per-session before/after comparison** | Compare routed vs control-group sessions. | `DOWNSHIFT_NO_ROUTE=1` / baseline outcomes shipped — run alternating weeks and export ([docs/BETA-EXIT.md](docs/BETA-EXIT.md)) |
+| **Real token counts via PostToolUse hook** | Every savings figure today is estimated from routing decisions, not from actual provider usage data. A PostToolUse hook that reads `tool_response.usage.input_tokens` would make the dashboard show real numbers. | Planned |
+| **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Needs real data |
+| **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. | Not yet |
+| **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verify |
+| **Per-session before/after comparison** | "How much did this session cost without routing?" requires a baseline run. That needs a `--no-route` flag or a session where routing was disabled for comparison. | Planned |
 | **Feedback loop closing** | The `downshift feedback` command collects outcomes but the training pipeline (`downshift train --from-events`) needs a curated dataset to improve the classifier. The first labelled dataset from real use is the highest-value contribution. | Waiting for data |
 
 The infrastructure for all of these exists. What they need is time and real usage data — which is the honest state of every router project before it gets enough traffic to tune against.
@@ -1257,16 +1153,15 @@ that actually need it.
 
 ## Status
 
-**Beta — practical testing phase, with measured evidence.**
+**Beta — practical testing phase.**
 
 The router is built and tested: adapters for Claude Code, Cursor, and Codex,
 deterministic classifier covering 40+ documented prompts, catalog with
 version-agnostic family matching, OpenRouter normalisation, and
-`explicit_only` model preservation. The **CapabilityRouter v2** pipeline
-(13-signal extractor, deterministic safety floor, risk-weighted softmax
-classifier, offline training, and event collection) is available via
-`downshift train` and `downshift benchmark --compare`. It is not the hook.
-The hook remains `core.Route`. Phase-2 shadow mode on the adapters is not done.
+`explicit_only` model preservation. The **CapabilityRouter v2** pipeline —
+13-signal extractor, deterministic safety floor, risk-weighted softmax
+classifier, offline training, and event collection — is complete and
+available via `downshift train` and `downshift benchmark --compare`.
 
 **The real gap is at the harness level, not in this tool.**
 Model selection for subagents is an evolving feature in every harness:
@@ -1276,10 +1171,8 @@ Model selection for subagents is an evolving feature in every harness:
 - **Cursor** — the hook fires, but on free and legacy request-based plans
   `updated_input.model` is silently discarded. Works on Pro/Ultra with
   expanded model selection.
-- **Codex** — works with `multi_agent_v2` enabled. A local session on 2026-10-02
-  showed the next spawn arriving on the model the hook had written
-  ([evidence](docs/evidence/codex-rewrite-honored-2026-10-02.md)). The v2 spawn
-  schema is still evolving upstream.
+- **Codex** — works with `multi_agent_v2` enabled. The v2 spawn schema is
+  still evolving upstream.
 - **Grok** — hook is allow/deny only; routing is via `config.toml`.
 
 Over the next few weeks, as harnesses broaden their own orchestration support,
@@ -1293,40 +1186,6 @@ harness, that is a harness limitation documented in
 
 **Feedback most wanted:** prompts the classifier gets wrong. Open an issue
 with the prompt, what `downshift try` returned, and what you expected.
-
-### What beta means here
-
-Beta is a scope statement, not a quality apology. Proven so far, all measured
-rather than claimed:
-
-| Proven | Evidence |
-|---|---|
-| Routing works on real sessions | 430 local events; 39.5% classified as downshift, counted before applied-only stats (upper bound; see [Real session data](#real-session-data)) |
-| No frontier task sent to the small tier | `FRONTIER→SMALL` 0 on every split: seed 0/50, burned holdout 0/75, heldout2 0/30, fresh 0/25, blind-vitrine 0/20. Not live traffic. `FRONTIER→MID` on the unseen splits is 20–47%, so downgrades to mid do happen. An uncertain call never moves a spawn to the small tier (guardrails R1 and R6); risk-category tasks are never downshifted (R5) |
-| Hook contract holds end to hook-layer | `TestHookE2E_RewriteEventStats` in CI: stdin → rewrite → event → stats |
-| Estimates are labeled estimates | `~$ est.` + `is_estimate` everywhere; real-cost plumbing shipped, zero real dollars claimed |
-
-Not yet proven — the graduation criteria for leaving beta:
-
-1. **Real-spawn verification** — proof a harness executor honored the rewrite, not just `rewrite_emitted`.
-2. **Multi-user data** — today's 430 events are single-user dogfood; graduation needs independent sessions.
-3. **Billing before/after** — provider-dashboard comparison, replacing normalised units.
-4. **Benchmark honesty.** Seed (200) and holdout (300) are in tree with CI gates. The holdout is burned: signals were edited until reported tier accuracy hit 100%. Quote that 100% as the regression net, not as traffic quality or a beta-exit proof ([docs/BETA-EXIT.md](docs/BETA-EXIT.md)).
-5. **Harness coverage** — rewrites honored across plans/builds, not silently discarded (the external dependency).
-
-When those five hold, the beta label goes. Until then it stays — with the numbers above updated as evidence grows.
-
-**Task map:** track every open item in [docs/BETA-EXIT.md](docs/BETA-EXIT.md) (pillars P1–P5 + infrastructure).
-
-Mileage feeds the session, billing, and harness criteria: every routed session appends events and builds the dataset a billing comparison needs. Curating real misroutes (see `benchmark/README.md`) is separate from quoting the in-tree 100%. That 100% is the burned holdout. It does not end beta.
-
-## Brand
-
-Downshift identity lives in [`docs/brand/`](docs/brand/) — mark, logos (dark/light/mono), favicon, social assets (`downshift-one-harness-any-model.png`, `downshift-social-preview.png`, `downshift-github-social-preview.svg`), docs diagrams (architecture, how-it-works, runtime path, capability-router-v2, orchestration-planner), canonical routing SVGs, and design tokens (`downshift-brand-tokens.css` / `.json`). Asset guide (GitHub vs docs vs diagrams): [`downshift-brand-kit/docs/ASSET-GUIDE.md`](https://github.com/tiagovilasboas/downshift-brand-kit).
-
-- Palette: Background `#0D1117` · Surface `#161B22` · Text `#F9FAFB` · Muted `#9CA3AF` · Accent `#22C55E`
-- Tagline: **ONE HARNESS. ANY MODEL.**
-- Clear space: keep at least the width of the green terminal lane around the mark. No glows, gradients, or extra motifs on the core mark.
 
 ## License
 

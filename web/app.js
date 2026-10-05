@@ -1,12 +1,10 @@
 // harness-hub · app.js
+// downshift web dashboard · app.js
 // ─────────────────────────────────────────────────────────────────────────────
-// Two data sources:
-//   1. Local server (/api/status, /events SSE) — relative URLs, same origin
-//   2. GitHub API — direct from browser (public repos, no auth needed)
+// Data source: local server (/api/status, /events SSE) — relative URLs.
+// Shows routing decisions only when subagents are dispatched via spawn_run
+// and the downshift hook is active. Not total token consumption.
 // ─────────────────────────────────────────────────────────────────────────────
-
-const GH_USER  = 'tiagovilasboas';
-const GH_REPOS = ['harness-downshift', 'agent-harness'];
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -43,69 +41,106 @@ async function fetchStatus() {
   }
 }
 
+// ── harness tab filter ────────────────────────────────────────────────────────
+
+let activeHarness = null; // null = show all
+let _justUpdated  = false; // true briefly after SSE update → triggers flash CSS
+
+function setActiveHarness(h) {
+  activeHarness = activeHarness === h ? null : h; // toggle off if same
+  if (latestData) renderMonitor(latestData);
+}
+
 function renderMonitor(data) {
+  latestData = data; // always keep latest snapshot
   if (!data) {
-    set('monitor-status', `<span class="dim">◯</span> ${dim('server offline — run: downshift serve')}`);
+    set('monitor-status', `<span class="dim">○</span> ${dim('server offline — run: downshift serve')}`);
     set('monitor-switches', dim('no data'));
     set('monitor-agents',   dim('no data'));
     set('monitor-stats',    dim('—'));
-    // gear cards: offline state
-    set('count-trivial', '—'); set('saved-trivial', '');
-    set('count-simple',  '—'); set('saved-simple',  '');
-    set('count-complex', '—'); set('saved-complex', '');
-    set('total-saved', '$0.00'); set('total-events', 'offline');
     return;
   }
 
   const { harnesses=[], switches=[], agents=[], stats={} } = data;
 
-  const hchips = harnesses.map((h,i) =>
-    `<span class="${i===harnesses.length-1?'chip hi':'chip'}">${h}</span>`
+  // Harness chips — clickable tabs
+  const allChip = `<span class="chip${activeHarness===null?' hi':''}" onclick="setActiveHarness(null)">all</span>`;
+  const hchips = harnesses.map(h =>
+    `<span class="chip${h===activeHarness?' hi':''}" onclick="setActiveHarness('${h}')">${h}</span>`
   ).join('');
-  set('monitor-status', `<span class="pulse">◉</span> ${hchips}`);
+  set('monitor-status', allChip + hchips);
 
-  const swRows = switches.slice(-6).map(e => {
+  // Filter by active harness
+  const filteredSwitches = activeHarness
+    ? switches.filter(e => e.harness === activeHarness)
+    : switches;
+  const filteredAgents = activeHarness
+    ? agents.filter(a => a.session && activeHarness === 'kirocrew' ? true : false) // agents don't have harness field yet
+    : agents;
+
+  // ── active agents (spawns < 5min ago = likely still running) ──
+  const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+  const active = agents.filter(a => new Date(a.timestamp).getTime() > fiveMinAgo);
+  if (active.length === 0) {
+    set('monitor-active-agents', dim('none in the last 5 min'));
+  } else {
+    set('monitor-active-agents', active.map(a =>
+      `<div class="row">
+        <span class="t">${ageStr(a.timestamp)}</span>
+        <span class="m"><span class="active-dot">●</span>${shortModel(a.model)}</span>
+        <span class="desc">${a.task.slice(0, 44)}</span>
+      </div>`
+    ).join(''));
+  }
+
+  // ── switches (last 6, newest first with flash) ──
+  const swRows = filteredSwitches.slice(-6).reverse().map((e, i) => {
     const v = e.verdict === 'DOWNSHIFT' ? ok(`↓ ${e.complexity.toLowerCase()} −${Math.round(e.estimated_savings*100)}%`)
             : e.verdict === 'UPSHIFT'   ? warn(`↑ ${e.complexity.toLowerCase()}`)
             : dim(`✓ ${e.complexity.toLowerCase()}`);
-    return `<div class="row"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${shortModel(e.final_model)}</span>${v}</div>`;
-  }).join('') || dim('no switches yet');
+    const isNew = i === 0 && _justUpdated;
+    return `<div class="row${isNew?' new':''}"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${shortModel(e.final_model)}</span>${v}</div>`;
+  }).join('') || dim(activeHarness ? `no switches for ${activeHarness}` : 'no switches yet');
   set('monitor-switches', swRows);
 
-  const agRows = agents.slice(-4).map(a => {
-    // Privacy-safe lines have an empty task (no prompt storage). Fall back
-    // to the tool name so the row still identifies the spawn; old lines
-    // with task text render as before.
-    const label = (a.task && a.task.slice(0,44)) || a.tool || 'no task text (privacy)';
-    const desc = a.task ? label : `<span class="dim">${label}</span>`;
-    return `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="desc">${desc}</span></div>`;
-  }).join('') || dim('no agents yet');
+  const agRows = filteredAgents.slice(-4).map(a =>
+    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="desc">${a.task.slice(0,44)}</span></div>`
+  ).join('') || dim('no agents yet');
   set('monitor-agents', agRows);
 
+  // ── stats ──
+  const src = activeHarness ? switches.filter(e => e.harness === activeHarness) : switches;
+  const down = src.filter(e => e.verdict === 'DOWNSHIFT');
+  const up   = src.filter(e => e.verdict === 'UPSHIFT');
+  const estUSD = down.reduce((s,e) => s + e.estimated_savings * 0.01, 0);
+  // Token estimate: savings_USD / ($0.025 per 1K output tokens at frontier)
+  const estTokensK = Math.round(estUSD / 0.000025 / 1000);
   set('monitor-stats',
-    `${info(stats.total||0)} events &nbsp; ${ok(`${stats.down||0}↓`)} &nbsp; ${warn(`${stats.up||0}↑`)} &nbsp; ${ok(`<span title="estimate from routing fraction, not provider billing">~$${(stats.est_usd||0).toFixed(2)} est.</span>`)} saved (est.)`
+    `${info(src.length)} spawns &nbsp; ${ok(`${down.length}↓`)} &nbsp; ${warn(`${up.length}↑`)}` +
+    (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '')
   );
 
-  // ── gear tier breakdown ──────────────────────────────────────────────────
-  // Group switches by complexity tier and compute counts + savings per tier
-  const tiers = { trivial: {count:0, saved:0}, simple: {count:0, saved:0}, complex: {count:0, saved:0} };
-  for (const e of switches) {
-    const c = (e.complexity || '').toLowerCase();
-    const tier = c === 'trivial' ? 'trivial' : c === 'complex' ? 'complex' : 'simple';
-    tiers[tier].count++;
-    tiers[tier].saved += e.estimated_savings || 0;
+  // ── economy bar ──
+  if (down.length > 0) {
+    const sec = document.getElementById('economy-section');
+    if (sec) sec.style.display = '';
+    set('economy-bar', `
+<div class="economy-bar">
+  <div>
+    <div class="big">$${estUSD.toFixed(2)}</div>
+    <div class="sub">est. saved · ${down.length} downshift${down.length!==1?'s':''}</div>
+  </div>
+  <div class="economy-divider"></div>
+  <div>
+    <div class="big" style="font-size:14px">~${estTokensK}K</div>
+    <div class="sub">tokens rerouted (est.)</div>
+  </div>
+</div>`);
+  } else {
+    const sec = document.getElementById('economy-section');
+    if (sec) sec.style.display = 'none';
+    set('economy-bar', '');
   }
-
-  const fmtSaved = v => v > 0 ? `<span title="estimate from routing fraction, not provider billing">~$${v.toFixed(2)} est.</span>` : '';
-  set('count-trivial', tiers.trivial.count || '0');
-  set('saved-trivial', fmtSaved(tiers.trivial.saved));
-  set('count-simple',  tiers.simple.count  || '0');
-  set('saved-simple',  fmtSaved(tiers.simple.saved));
-  set('count-complex', tiers.complex.count || '0');
-  set('saved-complex', fmtSaved(tiers.complex.saved));
-
-  set('total-saved',  `<span title="estimate from routing fraction, not provider billing">~$${(stats.est_usd||0).toFixed(2)} est.</span>`);
-  set('total-events', `${stats.total||0} events`);
 }
 
 // ── SSE: push updates from server ────────────────────────────────────────────
@@ -119,81 +154,33 @@ function connectSSE() {
 
   es.addEventListener('update', async () => {
     const data = await fetchStatus();
-    renderMonitor(data);
-    // Tick relative timestamps on existing rows
-    updateTimestamps();
+    _justUpdated = true;
+    renderMonitor(data); // renderMonitor sets latestData internally
+    setTimeout(() => { _justUpdated = false; }, 1000);
   });
 
   es.addEventListener('open', () => {
     sseConnected = true;
-    set('sse-indicator', `<span class="ok">◉ live</span>`);
+    set('sse-indicator', `<span class="pulse">◉</span>`);
   });
 
   es.addEventListener('error', () => {
     sseConnected = false;
-    set('sse-indicator', `<span class="dim">○ reconnecting…</span>`);
+    set('sse-indicator', `<span class="dim">○</span>`);
     es.close();
-    // Retry in 3s
     setTimeout(connectSSE, 3000);
   });
 }
 
 // ── age counters update every second ─────────────────────────────────────────
-// The rows already rendered have fixed timestamps; we re-render age strings
-// so "5s" → "6s" → "1m" without a full re-fetch.
+// renderMonitor() stores latestData internally; the 1s ticker re-renders it
+// so age strings tick ("5s" → "6s") without a new fetch.
 
 let latestData = null;
 
 function updateTimestamps() {
   if (!latestData) return;
   renderMonitor(latestData);
-}
-
-// ── github explorer ──────────────────────────────────────────────────────────
-
-async function fetchRepoFile(repo, path) {
-  try {
-    const res = await fetch(`https://api.github.com/repos/${GH_USER}/${repo}/contents/${path}`);
-    if (!res.ok) return null;
-    const {content} = await res.json();
-    return atob(content.replace(/\n/g,''));
-  } catch { return null; }
-}
-
-async function fetchRepoInfo(repo) {
-  try {
-    const res = await fetch(`https://api.github.com/repos/${GH_USER}/${repo}`);
-    if (!res.ok) return null;
-    return await res.json();
-  } catch { return null; }
-}
-
-async function renderGithub() {
-  set('gh-status', dim('loading repos…'));
-  const results = await Promise.all(GH_REPOS.map(async repo => {
-    const [info, claude] = await Promise.all([
-      fetchRepoInfo(repo),
-      fetchRepoFile(repo, 'CLAUDE.md'),
-    ]);
-    return { repo, info, claude };
-  }));
-
-  set('gh-status', '');
-  const cards = results.map(({repo, info, claude}) => {
-    const desc  = info?.description || '';
-    const stars = info?.stargazers_count ?? 0;
-    const url   = `https://github.com/${GH_USER}/${repo}`;
-    return `
-<div class="gh-card">
-  <div class="gh-top">
-    <a class="gh-name" href="${url}" target="_blank" rel="noopener noreferrer">${repo}</a>
-    <span class="gh-meta">${stars ? `★ ${stars}` : ''} · ${info?.language||''}</span>
-  </div>
-  ${desc ? `<div class="gh-desc">${desc}</div>` : ''}
-  ${claude ? `<details class="gh-detail"><summary>CLAUDE.md</summary><pre>${claude.slice(0,600)}…</pre></details>` : ''}
-</div>`;
-  }).join('');
-  set('gh-repos', cards || dim('no repos found'));
 }
 
 // ── init ─────────────────────────────────────────────────────────────────────
@@ -204,7 +191,6 @@ if ('serviceWorker' in navigator) {
 
 // First paint
 fetchStatus().then(data => { latestData = data; renderMonitor(data); });
-renderGithub();
 
 // Connect SSE for push updates
 connectSSE();
