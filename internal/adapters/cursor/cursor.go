@@ -10,7 +10,6 @@ package cursor
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
@@ -86,15 +85,13 @@ type Output struct {
 // Returns the hook output, a human-readable note, and the full routing Decision
 // so callers can record telemetry without re-classifying the prompt.
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
-	if !isTaskTool(ev.ToolName) {
-		return allow(), "", core.Decision{}
-	}
-
 	var ti map[string]any
 	if err := json.Unmarshal(ev.ToolInput, &ti); err != nil {
 		return allow(), "", core.Decision{}
 	}
 
+	// Structural detection: a subagent spawn carries task text in tool_input.
+	// Tool name is deliberately not checked.
 	subPrompt := hookutil.TaskText(ti, "task", "prompt", "description")
 	if subPrompt == "" {
 		return allow(), "", core.Decision{}
@@ -148,10 +145,6 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		UpdatedInput: updated,
 		AgentMessage: "downshift: " + note,
 	}, note, decision
-}
-
-func isTaskTool(name string) bool {
-	return strings.EqualFold(name, "task")
 }
 
 func allow() Output {

@@ -10,7 +10,6 @@ package claudecode
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
@@ -91,15 +90,14 @@ type HookSpecificOutput struct {
 // Returns the hook output, a human-readable note, and the full routing Decision
 // so callers can record telemetry without re-classifying the prompt.
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
-	if !isTaskTool(ev.ToolName) {
-		return allow(), "", core.Decision{}
-	}
-
 	var ti map[string]any
 	if err := json.Unmarshal(ev.ToolInput, &ti); err != nil {
 		return allow(), "", core.Decision{}
 	}
 
+	// Structural detection: a subagent spawn has task text in tool_input.
+	// Tool name is deliberately not checked — the hook JSON matcher scopes
+	// which tools reach this handler; the adapter stays harness-agnostic.
 	subPrompt := hookutil.TaskText(ti, "prompt", "description")
 	if subPrompt == "" {
 		return allow(), "", core.Decision{}
@@ -144,11 +142,6 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		SystemMessage: "downshift: " + decision.Summary(),
 	}
 	return out, decision.Summary(), decision
-}
-
-func isTaskTool(name string) bool {
-	n := strings.ToLower(name)
-	return n == "task" || n == "agent"
 }
 
 func allow() Output {

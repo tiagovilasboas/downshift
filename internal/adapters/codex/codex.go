@@ -104,15 +104,13 @@ type HookSpecificOutput struct {
 // Returns the hook output, a human-readable note, and the full routing Decision
 // so callers can record telemetry without re-classifying the prompt.
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
-	if !isSpawnTool(ev.ToolName) {
-		return allow(), "", core.Decision{}
-	}
-
 	var ti map[string]any
 	if err := json.Unmarshal(ev.ToolInput, &ti); err != nil {
 		return allow(), "", core.Decision{}
 	}
 
+	// Structural detection: a Codex subagent spawn carries "message" and/or
+	// "task_name" in tool_input. Tool name is deliberately not checked.
 	subPrompt := hookutil.StringField(ti, "message")
 	if tn := hookutil.StringField(ti, "task_name"); tn != "" {
 		subPrompt = strings.TrimSpace(subPrompt + " " + tn)
@@ -216,13 +214,6 @@ func effortOrInherit(v string) string {
 	return v
 }
 
-func isSpawnTool(name string) bool {
-	n := strings.ToLower(strings.TrimSpace(name))
-	if n == "" {
-		return false
-	}
-	return n == "agent" || n == "spawn_agent" || strings.HasSuffix(n, "spawn_agent")
-}
 
 func allow() Output {
 	return Output{

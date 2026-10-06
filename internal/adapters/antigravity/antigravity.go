@@ -5,7 +5,6 @@ package antigravity
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
@@ -49,15 +48,14 @@ func (ev Event) TaskText() string {
 }
 
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
-	if !strings.EqualFold(ev.ToolCall.Name, "invoke_subagent") && !strings.EqualFold(ev.ToolCall.Name, "spawn_agent") {
-		return allow(), "", core.Decision{}
-	}
-
 	var ti map[string]any
 	if err := json.Unmarshal(ev.ToolCall.Args, &ti); err != nil {
 		return allow(), "", core.Decision{}
 	}
 
+	// Structural detection: Antigravity subagent spawns carry a non-empty
+	// "Subagents" array in the tool args. Tool name is not checked so the
+	// adapter stays agnostic to harness-specific naming.
 	subagentsRaw, ok := ti["Subagents"].([]any)
 	if !ok || len(subagentsRaw) == 0 {
 		return allow(), "", core.Decision{}

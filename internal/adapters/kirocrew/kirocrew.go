@@ -15,11 +15,19 @@
 // blocks the spawn with an actionable message telling the agent to respawn at
 // the right tier. The classification stays deterministic and prompt-free — the
 // shared core engine, no LLM in the loop. Fail-open is absolute: an empty task,
-// a non-subagent tool, an unknown current model, a low-confidence downshift,
-// a target outside the session, a guardrail-held decision, or an
+// no model field in the input, an unknown current model, a low-confidence
+// downshift, a target outside the session, a guardrail-held decision, or an
 // explicit-only target all allow the spawn. The router must never block a
 // spawn on its own doubt, and a block must never name a model id the session
 // does not have.
+//
+// Tool-name agnosticism: the adapter does NOT maintain a list of known subagent
+// tool names. The hook JSON's matcher field is the right place to scope which
+// tools are intercepted. The adapter detects a spawn structurally: a tool_input
+// that contains both a model field and a task/prompt/description field is
+// treated as a subagent spawn, regardless of the tool name. A tool_input with
+// no model field is passed through silently (not a routable spawn). This makes
+// the adapter work with any harness tool name without code changes.
 package kirocrew
 
 import (
@@ -32,24 +40,15 @@ import (
 
 const harnessID = "kirocrew"
 
-// subagentTools are the tool names KiroCrew uses to spawn a subagent. The
-// preToolUse matcher already scopes the hook, but the adapter re-checks so a
-// broad matcher (e.g. "*") never blocks an unrelated tool.
-var subagentTools = map[string]bool{
-	"subagent":         true,
-	"agent_crew":       true,
-	"use_subagent":     true,
-	"spawn_run":        true,
-	"spawn_sub_agents": true,
-}
-
-// Event is the JSON KiroCrew sends on stdin for a preToolUse hook.
-// Field names follow KiroCrew's documented hook event schema.
+// Event is the JSON a harness sends on stdin for a hook.
+// Field names follow KiroCrew's documented hook event schema; the same
+// structure is used for preToolUse and postToolUse events.
 type Event struct {
 	HookEventName     string          `json:"hook_event_name"`
 	CorrelationID     string          `json:"correlation_id,omitempty"`
 	ToolName          string          `json:"tool_name"`
 	ToolInput         json.RawMessage `json:"tool_input"`
+	ToolResponse      json.RawMessage `json:"tool_response,omitempty"` // postToolUse only
 	SessionModels     *[]string       `json:"session_models,omitempty"`
 	AvailableModels   *[]string       `json:"available_models,omitempty"`
 	IncludedModels    *[]string       `json:"included_models,omitempty"`
@@ -60,13 +59,28 @@ type Event struct {
 func (ev Event) CorrelationIdentifier() string { return ev.CorrelationID }
 
 // TaskText returns the subagent task content used for prompt-free feature
-// extraction. spawn_run uses "task"; spawn_sub_agents nests it under "prompt".
+// extraction. Common field names across harnesses: "task", "prompt",
+// "description". The first non-empty value wins.
 func (ev Event) TaskText() string {
 	var ti map[string]any
 	if json.Unmarshal(ev.ToolInput, &ti) != nil {
 		return ""
 	}
 	return hookutil.TaskText(ti, "task", "prompt", "description")
+}
+
+// isSubagentSpawn reports whether the tool_input looks like a subagent spawn
+// that the router should classify. Detection is structural: the input must
+// carry a model field (something to route) and a task/prompt/description field
+// (something to classify). The tool name is deliberately ignored so the adapter
+// stays agnostic to harness-specific naming.
+func isSubagentSpawn(ti map[string]any) bool {
+	model := hookutil.StringField(ti, "model")
+	if model == "" {
+		return false
+	}
+	task := hookutil.TaskText(ti, "task", "prompt", "description")
+	return task != ""
 }
 
 // Output is what the runner needs to pick an exit code. Unlike the rewrite
@@ -83,22 +97,20 @@ type Output struct {
 // Handle classifies a preToolUse event and decides allow vs block.
 // Returns the policy output, a human-readable note for telemetry/stderr, and
 // the full routing Decision so the runner can record telemetry without
-// re-classifying. A zero Decision (Harness == "") means "not a subagent spawn".
+// re-classifying. A zero Decision (Harness == "") means "not a routable spawn".
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
-	if !subagentTools[ev.ToolName] {
-		return allow(), "", core.Decision{}
-	}
-
 	var ti map[string]any
 	if err := json.Unmarshal(ev.ToolInput, &ti); err != nil {
 		return allow(), "", core.Decision{}
 	}
 
-	subPrompt := hookutil.TaskText(ti, "task", "prompt", "description")
-	if subPrompt == "" {
+	// Structural detection: only route tool calls that look like subagent
+	// spawns (have both model and task text). Everything else passes through.
+	if !isSubagentSpawn(ti) {
 		return allow(), "", core.Decision{}
 	}
 
+	subPrompt := hookutil.TaskText(ti, "task", "prompt", "description")
 	currentModel := hookutil.StringField(ti, "model")
 
 	var res core.Resolver
