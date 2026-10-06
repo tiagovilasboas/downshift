@@ -136,7 +136,7 @@ Stubs: `BACKLOG.md`, `NEXT-STEPS.md` (root + internal) — no moat leak.
 | Path | Mode | MOAT |
 |------|------|------|
 | `examples/` | USE | No |
-| `hook-input.json` (root) | USE | No |
+| `examples/claude-code-pretooluse-session.json` (was root `hook-input.json`) | USE | No |
 | `docs/examples/session-models.example.json` | USE | No |
 
 ---

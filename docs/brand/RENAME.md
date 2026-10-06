@@ -238,7 +238,7 @@ Manual:
 
 - [ ] `curl -fsSL .../downshift/main/install.sh | sh` on clean VM
 - [ ] `go install github.com/tiagovilasboas/downshift/cmd/downshift@latest`
-- [ ] Hook smoke: `downshift claude-code < hook-input.json` still rewrites model
+- [ ] Hook smoke: `downshift claude-code < examples/claude-code-pretooluse-session.json` still rewrites model
 - [ ] `dsmon` reads events from effective state dir
 - [ ] Legacy install with only `~/.harness-downshift/` still works (Phase 1)
 

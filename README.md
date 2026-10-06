@@ -120,12 +120,12 @@ downshift try "implement the CSV export" claude-code
 
 **Test 2 — Full hook (JSON):**
 ```bash
-downshift claude-code < hook-input.json
+downshift claude-code < examples/claude-code-pretooluse-session.json
 ```
 
 This mimics exactly what Claude Code will send. The output is the JSON the harness will apply, plus stderr feedback with the decision and a feedback ID for tracking.
 
-See [examples/](examples/README.md) (or root `hook-input.json`) for sample payloads.
+See [examples/](examples/README.md) for sample payloads. `claude-code-pretooluse-session.json` carries a `session_models` list, so it shows a real rewrite.
 
 > **⚠️ Claude Code Pro/Max/Teams/API only.** Free plan has no real subagents and blocks network installs. See [Plan compatibility](#plan-compatibility--read-before-installing) before proceeding.
 
