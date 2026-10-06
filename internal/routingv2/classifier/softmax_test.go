@@ -101,10 +101,10 @@ func TestClassifier_AllProbsValid(t *testing.T) {
 	c := NewSoftmaxClassifier(DefaultWeights())
 
 	testCases := []domain.FeatureVector{
-		{},                                  // zero features
-		{Mechanical: 1.0},                   // single high
-		{Security: 1.0, Migration: 1.0},     // multiple high
-		{Coding: 0.5, Debugging: 0.5},       // balanced
+		{},                              // zero features
+		{Mechanical: 1.0},               // single high
+		{Security: 1.0, Migration: 1.0}, // multiple high
+		{Coding: 0.5, Debugging: 0.5},   // balanced
 	}
 
 	for i, fv := range testCases {

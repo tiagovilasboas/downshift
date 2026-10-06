@@ -21,8 +21,8 @@ const (
 
 // PrototypeStore holds centroid embeddings per complexity label.
 type PrototypeStore struct {
-	Model   string              `json:"model"`
-	Dim     int                 `json:"dim"`
+	Model     string               `json:"model"`
+	Dim       int                  `json:"dim"`
 	Centroids map[string][]float64 `json:"centroids"`
 }
 

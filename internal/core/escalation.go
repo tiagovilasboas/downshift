@@ -107,4 +107,3 @@ func IntentFor(prompt string, cls Classification, d Decision, r Resolver) Escala
 		return NormalIntent
 	}
 }
-

@@ -12,111 +12,111 @@ import "testing"
 // mind on one of these, a test failure surfaces the regression immediately.
 func TestClassify_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name    string
-		prompt  string
-		want    Complexity
-		note    string // why this classification is correct
+		name   string
+		prompt string
+		want   Complexity
+		note   string // why this classification is correct
 	}{
 		// --- Short prompts ---
 		{
-			name:  "single word rename",
+			name:   "single word rename",
 			prompt: "rename",
-			want:  Trivial,
-			note:  "single strong trivial signal with short-prompt nudge",
+			want:   Trivial,
+			note:   "single strong trivial signal with short-prompt nudge",
 		},
 		{
-			name:  "two words fix typo",
+			name:   "two words fix typo",
 			prompt: "fix typo",
-			want:  Trivial,
-			note:  "trivial signal wins even without article",
+			want:   Trivial,
+			note:   "trivial signal wins even without article",
 		},
 		{
-			name:  "single word refactor",
+			name:   "single word refactor",
 			prompt: "refactor",
-			want:  Medium,
-			note:  "medium signal; short-prompt nudge alone can't make it trivial",
+			want:   Medium,
+			note:   "medium signal; short-prompt nudge alone can't make it trivial",
 		},
 		{
-			name:  "one word prompt no signal",
+			name:   "one word prompt no signal",
 			prompt: "help",
-			want:  Medium,
-			note:  "no content signal → safe Medium default",
+			want:   Medium,
+			note:   "no content signal → safe Medium default",
 		},
 
 		// --- Mixed signals: tie must break toward higher complexity ---
 		{
-			name:  "rename inside migration",
+			name:   "rename inside migration",
 			prompt: "rename the table as part of the migration",
-			want:  Complex,
-			note:  "rename (trivial 3) vs migration (complex 3) → tie → complex",
+			want:   Complex,
+			note:   "rename (trivial 3) vs migration (complex 3) → tie → complex",
 		},
 		{
-			name:  "format inside architecture",
+			name:   "format inside architecture",
 			prompt: "format the output of the rearchitected pipeline",
-			want:  Complex,
-			note:  "format (trivial 3) vs rearchitect (complex 3) → complex wins",
+			want:   Complex,
+			note:   "format (trivial 3) vs rearchitect (complex 3) → complex wins",
 		},
 		{
-			name:  "fix bug in distributed system",
+			name:   "fix bug in distributed system",
 			prompt: "fix the bug in the distributed payment processor",
-			want:  Complex,
-			note:  "fix bug (simple 2) vs distributed (complex 2) → tie → complex",
+			want:   Complex,
+			note:   "fix bug (simple 2) vs distributed (complex 2) → tie → complex",
 		},
 		{
-			name:  "implement with multi-tenant",
+			name:   "implement with multi-tenant",
 			prompt: "implement multi-tenant support across services",
-			want:  Complex,
-			note:  "implement (medium 2), multi-tenant (complex 3) → complex wins",
+			want:   Complex,
+			note:   "implement (medium 2), multi-tenant (complex 3) → complex wins",
 		},
 
 		// --- Ambiguous real-world prompts ---
 		{
-			name:  "investigate performance",
+			name:   "investigate performance",
 			prompt: "investigate why the checkout is slow",
-			want:  Medium,
-			note:  "why+slow has no fail/crash/hang pattern — Medium is correct; only why+fail/crash triggers Complex",
+			want:   Medium,
+			note:   "why+slow has no fail/crash/hang pattern — Medium is correct; only why+fail/crash triggers Complex",
 		},
 		{
-			name:  "add logging to service",
+			name:   "add logging to service",
 			prompt: "add logging to the payment service",
-			want:  Medium,
-			note:  "add signal requires field/param/flag/method/function; 'logging' doesn't match — Medium default is correct",
+			want:   Medium,
+			note:   "add signal requires field/param/flag/method/function; 'logging' doesn't match — Medium default is correct",
 		},
 		{
-			name:  "update a dependency",
+			name:   "update a dependency",
 			prompt: "update the lodash dependency to fix the vulnerability",
-			want:  Medium,
-			note:  "no strong trivial/complex signals → Medium default with some medium weight",
+			want:   Medium,
+			note:   "no strong trivial/complex signals → Medium default with some medium weight",
 		},
 		{
-			name:  "write tests for module",
+			name:   "write tests for module",
 			prompt: "write tests for the auth module",
-			want:  Simple,
-			note:  "write test (simple 2) fires; module nudges medium but simple wins",
+			want:   Simple,
+			note:   "write test (simple 2) fires; module nudges medium but simple wins",
 		},
 		{
-			name:  "run prettier on all files",
+			name:   "run prettier on all files",
 			prompt: "run prettier on all files in the src folder",
-			want:  Trivial,
-			note:  "prettier (trivial 3) is the dominant signal",
+			want:   Trivial,
+			note:   "prettier (trivial 3) is the dominant signal",
 		},
 		{
-			name:  "explain the race condition",
+			name:   "explain the race condition",
 			prompt: "explain the race condition in the payment observer",
-			want:  Complex,
-			note:  "race condition (complex 3) beats explain (simple 2)",
+			want:   Complex,
+			note:   "race condition (complex 3) beats explain (simple 2)",
 		},
 		{
-			name:  "design doc for new feature",
+			name:   "design doc for new feature",
 			prompt: "write a design doc for the new checkout flow",
-			want:  Complex,
-			note:  "design doc (complex 3) dominates write function (simple 2)",
+			want:   Complex,
+			note:   "design doc (complex 3) dominates write function (simple 2)",
 		},
 		{
-			name:  "git push after refactor",
+			name:   "git push after refactor",
 			prompt: "git push the refactor branch",
-			want:  Trivial,
-			note:  "git push (trivial 3) beats refactor (medium 2)",
+			want:   Trivial,
+			note:   "git push (trivial 3) beats refactor (medium 2)",
 		},
 
 		// --- Long prompts nudge complex ---
@@ -172,16 +172,16 @@ func TestClassify_EdgeCases(t *testing.T) {
 
 		// --- Confident flag ---
 		{
-			name:  "high confidence trivial",
+			name:   "high confidence trivial",
 			prompt: "rename the variable userID to userId in auth.ts",
-			want:  Trivial,
-			note:  "strong single signal → confident=true expected",
+			want:   Trivial,
+			note:   "strong single signal → confident=true expected",
 		},
 		{
-			name:  "low confidence vague",
+			name:   "low confidence vague",
 			prompt: "look at this",
-			want:  Medium,
-			note:  "no content signal → not confident",
+			want:   Medium,
+			note:   "no content signal → not confident",
 		},
 	}
 

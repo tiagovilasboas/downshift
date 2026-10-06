@@ -484,23 +484,23 @@ func BootstrapConfidenceInterval(results []Result, resamples int) ConfidenceInte
 
 // Report holds computed benchmark metrics for JSON export or programmatic gating.
 type Report struct {
-	TotalTasks               int                 `json:"total_tasks"`
-	ComplexityAccuracy       float64             `json:"complexity_accuracy"`
-	TierAccuracy             float64             `json:"tier_accuracy"`
-	TierAccuracyCI95         ConfidenceInterval  `json:"tier_accuracy_ci_95"`
-	FrontierToMidRate        float64             `json:"frontier_to_mid_rate"`
-	FrontierToSmallRate      float64             `json:"frontier_to_small_rate"`
-	FrontierTotal            int                 `json:"frontier_total"`
-	SmallToMidRate           float64             `json:"small_to_mid_rate"`
-	SmallToFrontierRate      float64             `json:"small_to_frontier_rate"`
-	SmallTotal               int                 `json:"small_total"`
+	TotalTasks          int                `json:"total_tasks"`
+	ComplexityAccuracy  float64            `json:"complexity_accuracy"`
+	TierAccuracy        float64            `json:"tier_accuracy"`
+	TierAccuracyCI95    ConfidenceInterval `json:"tier_accuracy_ci_95"`
+	FrontierToMidRate   float64            `json:"frontier_to_mid_rate"`
+	FrontierToSmallRate float64            `json:"frontier_to_small_rate"`
+	FrontierTotal       int                `json:"frontier_total"`
+	SmallToMidRate      float64            `json:"small_to_mid_rate"`
+	SmallToFrontierRate float64            `json:"small_to_frontier_rate"`
+	SmallTotal          int                `json:"small_total"`
 }
 
 // GateThresholds defines CI regression limits.
 type GateThresholds struct {
-	MinTierAccuracy          float64
-	MaxFrontierToMIDRate     float64
-	MaxFrontierToSmallRate   float64
+	MinTierAccuracy        float64
+	MaxFrontierToMIDRate   float64
+	MaxFrontierToSmallRate float64
 }
 
 // DefaultGateThresholds is the seed-dataset regression bar (directional).

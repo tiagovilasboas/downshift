@@ -46,7 +46,7 @@ var RawSignals = []SignalDef{
 	{`\bthink\s+through\b`, 2, Complex},
 	{`\b(service mesh|event sourcing|cqrs|chaos engineering|end-to-end encryption|data lineage|cross-cluster|memory leak|cascading failure|streaming pipeline|model serving|key management)\b`, 3, Complex},
 	{`\bwhy\s+.{0,40}(fail|crash|hang|break|regress)\w*`, 2, Complex},
-	
+
 	// Upshift heurístico automático para retentativas de falhas (Sensor feedback)
 	{`\b(previous\s+attempt|tentativa\s+anterior)\b`, 3, Complex},
 	{`\b(compilation\s+failed|falha\s+de\s+compilação|erro\s+de\s+compilação|failed\s+to\s+compile)\b`, 3, Complex},

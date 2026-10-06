@@ -68,14 +68,14 @@ type statusResponse struct {
 }
 
 type statsBlock struct {
-	Total  int     `json:"total"`
-	Down   int     `json:"down"`
-	Up     int     `json:"up"`
-	OK     int     `json:"ok"`
+	Total int `json:"total"`
+	Down  int `json:"down"`
+	Up    int `json:"up"`
+	OK    int `json:"ok"`
 	// NotApplied counts classified shifts the hook left unchanged
 	// (allow, held by a guardrail, or blocked).
-	NotApplied int `json:"not_applied"`
-	EstUSD float64 `json:"est_usd"`
+	NotApplied int     `json:"not_applied"`
+	EstUSD     float64 `json:"est_usd"`
 	// EstUnits accumulates the normalised savings fraction per DOWNSHIFT event.
 	EstUnits float64 `json:"est_units"`
 	// RealSavedUSD accumulates baseline minus actual cost for events with real costs.

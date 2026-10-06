@@ -12,19 +12,19 @@ import "github.com/tiagovilasboas/harness-downshift/internal/core"
 // All values are in [0, 1]. Zero means the signal is absent; 1 means
 // maximum confidence that the signal is present.
 type FeatureVector struct {
-	Mechanical  float64 `json:"mechanical"`   // rename, format, lint
-	Coding      float64 `json:"coding"`       // produce code
-	Debugging   float64 `json:"debugging"`    // investigate bugs
-	Refactoring float64 `json:"refactoring"`  // restructure code
+	Mechanical   float64 `json:"mechanical"`   // rename, format, lint
+	Coding       float64 `json:"coding"`       // produce code
+	Debugging    float64 `json:"debugging"`    // investigate bugs
+	Refactoring  float64 `json:"refactoring"`  // restructure code
 	Architecture float64 `json:"architecture"` // system design
-	Migration   float64 `json:"migration"`    // data/schema migration
-	Security    float64 `json:"security"`     // auth, crypto, access
-	Concurrency float64 `json:"concurrency"`  // races, deadlocks
-	Planning    float64 `json:"planning"`     // multi-step decomposition
-	ToolUse     float64 `json:"tool_use"`     // external tools
-	Ambiguity   float64 `json:"ambiguity"`    // vague requirements
-	CrossModule float64 `json:"cross_module"` // multiple modules
-	ContextSize float64 `json:"context_size"` // estimated context needs
+	Migration    float64 `json:"migration"`    // data/schema migration
+	Security     float64 `json:"security"`     // auth, crypto, access
+	Concurrency  float64 `json:"concurrency"`  // races, deadlocks
+	Planning     float64 `json:"planning"`     // multi-step decomposition
+	ToolUse      float64 `json:"tool_use"`     // external tools
+	Ambiguity    float64 `json:"ambiguity"`    // vague requirements
+	CrossModule  float64 `json:"cross_module"` // multiple modules
+	ContextSize  float64 `json:"context_size"` // estimated context needs
 }
 
 // AsSlice returns the feature vector as a slice of float64 in canonical order.
