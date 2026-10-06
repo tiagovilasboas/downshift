@@ -53,7 +53,30 @@ func mergeEntries(base, override []Entry) []Entry {
 		return entryKey(appended[i]) < entryKey(appended[j])
 	})
 
-	return append(merged, appended...)
+	return inheritNativeNames(append(merged, appended...), base, override)
+}
+
+// inheritNativeNames fills a missing native_name from another entry of the same
+// harness and family. The name is a family-level fact ("haiku" stays "haiku"
+// across versions), so a replaced or newly pulled version keeps working
+// without the override having to repeat it.
+func inheritNativeNames(entries []Entry, sources ...[]Entry) []Entry {
+	// Read the names from the inputs, not the result: replacing a base entry
+	// would otherwise discard the only place the name was declared.
+	byFamily := make(map[string]string)
+	for _, src := range sources {
+		for _, e := range src {
+			if e.NativeName != "" && e.Family != "" {
+				byFamily[e.Harness+"\x00"+strings.ToLower(e.Family)] = e.NativeName
+			}
+		}
+	}
+	for i, e := range entries {
+		if e.NativeName == "" && e.Family != "" {
+			entries[i].NativeName = byFamily[e.Harness+"\x00"+strings.ToLower(e.Family)]
+		}
+	}
+	return entries
 }
 
 // validateEntries checks the entry slice for two classes of policy violation:

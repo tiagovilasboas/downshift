@@ -710,3 +710,23 @@ func TestLookupByID_FamilyFallbackCarriesFamily(t *testing.T) {
 		t.Errorf("Family = %q, want gemini", m.Family)
 	}
 }
+
+// native_name is a family-level fact: a replaced or newly added version of the
+// same family inherits it, so overrides and `models pull` never lose it.
+func TestMergeEntries_InheritsNativeNameByFamily(t *testing.T) {
+	base := []Entry{{ID: "claude-haiku-4-5", Family: "claude-haiku", NativeName: "haiku", Harness: "claude-code", Tier: "small"}}
+	override := []Entry{
+		{ID: "claude-haiku-4-5", Family: "claude-haiku", Harness: "claude-code", Tier: "small"},
+		{ID: "claude-haiku-9", Family: "claude-haiku", Harness: "claude-code", Tier: "small"},
+		{ID: "other-1", Family: "other", Harness: "claude-code", Tier: "small"},
+	}
+	for _, e := range mergeEntries(base, override) {
+		want := "haiku"
+		if e.Family == "other" {
+			want = ""
+		}
+		if e.NativeName != want {
+			t.Errorf("%s native_name = %q, want %q", e.ID, e.NativeName, want)
+		}
+	}
+}

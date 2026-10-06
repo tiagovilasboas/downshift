@@ -57,8 +57,12 @@ func TestRunTry_SessionKnownReportsHookRewrite(t *testing.T) {
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code"})
 	})
-	if !strings.Contains(out, "Rewrite:    yes → "+frontierID) {
-		t.Fatalf("want rewrite to %s:\n%s", frontierID, out)
+	want := cmdCat.ModelFor("claude-code", core.TierFrontier).Native
+	if want == "" {
+		want = frontierID
+	}
+	if !strings.Contains(out, "Rewrite:    yes → "+want) {
+		t.Fatalf("want rewrite to %s:\n%s", want, out)
 	}
 }
 
