@@ -36,3 +36,5 @@ A primeira linha de classificação opera em `internal/core/signals.go`, atravé
 
 * **Vantagem:** Heurísticas de regex são determinísticas, 100% auditáveis, livres de GPU e executam em frações de milissegundo.
 * **Custo:** Regex avalia vocabulário e padrões explícitos, não intenção latente profunda. Por essa razão, termos como cubos interativos ou protocolos distribuídos contam com regras semânticas direcionadas para garantir que a categoria correta seja atribuída.
+
+O candidato estatístico da v2 fica fora deste caminho. Ele só observa, com `DOWNSHIFT_SHADOW_WEIGHTS`, e o relatório é `downshift shadow-report`. Ver [10 · Candidato em shadow](10-candidato-shadow.md).

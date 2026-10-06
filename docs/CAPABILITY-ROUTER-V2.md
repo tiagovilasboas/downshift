@@ -3,7 +3,7 @@
 > harness-downshift by Tiago de Carvalho Vilas Boas
 > https://github.com/tiagovilasboas/harness-downshift
 
-> **Status (2026-10-04).** O padrão do hook continua sendo o `core.Route` legado: regex mais boost semântico monotônico. A v2 é CLI experimental (`downshift train` e `downshift benchmark --compare`). Ela não está promovida e não está no hook. O shadow da fase 2 nos adapters não foi feito. Pacotes em `internal/routingv2/` já existem, e várias caixas abaixo continuam abertas: esta checklist está desatualizada. Não trate caixas desmarcadas como ordem de trabalho para colocar a v2 no hook.
+> **Status (2026-10-06).** O padrão do hook continua sendo o `core.Route` legado: regex mais boost semântico monotônico. A v2 segue experimental no CLI (`downshift train`, `downshift benchmark --compare`). Ela não está promovida e não substitui o hook. Desde o [PR #52](https://github.com/tiagovilasboas/harness-downshift/pull/52) existe observação opt-in: `DOWNSHIFT_SHADOW_WEIGHTS` grava o candidato ao lado da recomendação de produção, e `downshift shadow-report` compara isso com rótulos revisados. Isso não ativa a v2 no hook. O guia operacional é [`CLASSIFIER-SHADOW.md`](CLASSIFIER-SHADOW.md). Pacotes em `internal/routingv2/` já existem, e várias caixas abaixo continuam abertas: esta checklist está desatualizada. Não trate caixas desmarcadas como ordem de trabalho para colocar a v2 no hook.
 
 ![Capability Router v2 — offline pipeline, not the production hook path](brand/downshift-capability-router-v2.png)
 

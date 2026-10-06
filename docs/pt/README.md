@@ -53,6 +53,7 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 | [07 · Camada Semântica MiniLM](07-minilm.md) | Inteligência | Classificação local por centróides vetoriais, boost semântico e privacidade |
 | [08 · Telemetria e Métricas](08-telemetria.md) | Observabilidade | Estrutura do `events.jsonl`, métricas normalizadas e auditoria sem vazamento de prompt |
 | [09 · Decisões Técnicas e Trade-offs](09-decisoes.md) | Engenharia | Racional de arquitetura, compensações técnicas e próximos passos do projeto |
+| [10 · Candidato em shadow](10-candidato-shadow.md) | Avaliação | Observar um candidato softmax sem trocar o roteamento de produção |
 
 ---
 
