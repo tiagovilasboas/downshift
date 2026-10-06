@@ -49,13 +49,13 @@
 
 | ID | Task | Arquivos / ação | Done |
 |----|------|-----------------|------|
-| W1-1 | Aplicar hero **Versão A** de `README-HERO.md` (substituir H1 + primeiras seções) | `README.md` | [ ] |
-| W1-2 | Título README: `# Downshift` (subtítulo “formerly harness-downshift” uma linha) | `README.md` | [ ] |
-| W1-3 | Seção **When to use Downshift** vs LiteLLM / OpenRouter / chamada direta (honesta) | `README.md` ou `docs/WHEN-TO-USE.md` | [ ] |
-| W1-4 | GitHub **description** + **topics** (ver RENAME.md §17) | UI GitHub | [ ] |
+| W1-1 | Aplicar hero **Versão A** de `README-HERO.md` (substituir H1 + primeiras seções) | `README.md` | [x] |
+| W1-2 | Título README: `# Downshift` (subtítulo “formerly harness-downshift” uma linha) | `README.md` | [x] |
+| W1-3 | Seção **When to use Downshift** vs LiteLLM / OpenRouter / chamada direta (honesta) | `README.md` ou `docs/WHEN-TO-USE.md` | [x] |
+| W1-4 | GitHub **description** + **topics** (ver RENAME.md §17) | UI GitHub | [x] |
 | W1-5 | Social preview: `docs/brand/downshift-github-social-preview.svg` | Settings GitHub | [ ] |
-| W1-6 | Atualizar `llms.txt` com nome Downshift + one-liner model router | `llms.txt` | [ ] |
-| W1-7 | `docs/pt/README.md`: alinhar nome e primeira dobra | `docs/pt/README.md` | [ ] |
+| W1-6 | Atualizar `llms.txt` com nome Downshift + one-liner model router | `llms.txt` | [x] |
+| W1-7 | `docs/pt/README.md`: alinhar nome e primeira dobra | `docs/pt/README.md` | [x] |
 
 **PR sugerido:** `docs: reposition as Downshift model router`
 

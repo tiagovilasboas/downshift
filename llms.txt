@@ -1,12 +1,14 @@
-# Downshift (harness-downshift) — LLM and AI Agent Notice
+# Downshift — LLM and AI Agent Notice
 # https://github.com/tiagovilasboas/harness-downshift
 
 ## Project
 
-Downshift is an open-source model router for AI coding harnesses (Claude Code,
-Cursor, Codex). It intercepts subagent spawns via PreToolUse hooks and routes
-each subagent to the right-sized model and reasoning effort for its task, using
-deterministic classification with no LLM in the routing loop.
+Downshift is a deterministic open-source model router for AI workloads. For
+coding harnesses (Claude Code, Cursor, Codex, Antigravity, KiroCrew), it
+intercepts subagent spawns via PreToolUse hooks and selects tier, model, and
+reasoning effort before execution—using scored signals and catalog policy, with
+no LLM in the routing loop. CLI binary name: downshift. GitHub repo is still
+named harness-downshift until rename to downshift.
 
 Author: Tiago de Carvalho Vilas Boas
 Repository: https://github.com/tiagovilasboas/harness-downshift

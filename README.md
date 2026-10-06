@@ -1,44 +1,56 @@
-# harness-downshift
+# Downshift
+
+*GitHub repo: [`harness-downshift`](https://github.com/tiagovilasboas/harness-downshift) (CLI: `downshift`). Repository rename to `downshift` is planned; URLs will follow.*
 
 [![Build](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Go 1.27](https://img.shields.io/badge/go-1.27-00ADD8.svg)](https://go.dev)
 [![Status: beta](https://img.shields.io/badge/status-beta%20%E2%80%94%20practical%20testing-yellow)](https://github.com/tiagovilasboas/harness-downshift/releases)
 
-## Stop paying Opus prices to grep a folder
+**Deterministic model routing for AI workloads.**
 
-Every time your AI agent spawns a subagent, that subagent inherits the most expensive model in the session. A $25/1M token frontier model ends up renaming a variable, fixing a typo, listing files. You're billed. The work was identical on a $1/1M model.
-
-`harness-downshift` intercepts every subagent spawn and routes it to the right-sized model **before it starts** — automatically, without an LLM in the loop, with a single Go binary that runs as a hook.
+Downshift classifies each workload, applies catalog policy, and selects model tier and reasoning effort **before execution**—without an LLM in the routing loop. One Go binary: use it as a **coding harness hook** today; the same core is gateway-shaped for tomorrow.
 
 ```
-Subagent task: "rename the userId variable across auth.ts"
-→ TRIVIAL → routes to claude-haiku-4-5 (~75% cheaper)
-
-Subagent task: "diagnose the race condition in the webhook handler"
-→ COMPLEX → stays on claude-opus-5-5 (this one earns it)
+Subagent / request
+       ↓
+  classify (rules + optional semantic boost)
+       ↓
+  policy + catalog → tier & model
+       ↓
+  execute on the chosen model
 ```
 
-**Works today with Claude Code, Cursor, Codex, Antigravity, and KiroCrew.** Single binary, no runtime dependencies, no network calls, no API keys.
+**Works today with Claude Code, Cursor, Codex, Antigravity, and KiroCrew.** Single binary, no runtime dependencies, no network calls for routing, no API keys to pick a tier.
 
-![harness-downshift](docs/img/hero.svg)
+![Downshift routing](docs/brand/downshift-routing-runtime-light.svg)
 
-> **⚠️ Beta — practical testing phase.** The router and adapters work. The
-> gap is the harnesses themselves: model selection for subagents is an
-> evolving feature in Claude Code, Cursor, and Codex, and not every plan
-> or build honours the hook rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
-> before installing.
+> **Beta — practical testing phase.** Hooks and adapters are production-minded; harness plans and builds vary in how faithfully they honor `updatedInput.model`. See [Plan compatibility](#plan-compatibility--read-before-installing) before installing.
 
-**Project docs:** [Architecture](docs/ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Governance](GOVERNANCE.md) · [Full doc index](docs/README.md) · [Launch waves](docs/brand/LAUNCH-WAVES.md)
+### Why Downshift?
+
+| | |
+|---|---|
+| **Right-sized models** | Trivial tasks downshift to small tiers; complex work stays on frontier. |
+| **Deterministic** | Scored signals, not an LLM classifier, on the hot path. |
+| **Testable** | `downshift try`, outcome benchmarks, optional shadow classifier (`DOWNSHIFT_SHADOW_WEIGHTS`). |
+| **Observable** | Local telemetry (`events.jsonl`), feedback with explicit `--required-tier` for training labels. |
+| **Harness-agnostic core** | Adapters only encode I/O; routing lives in `internal/core`. |
+
+**Project docs:** [Architecture](docs/ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Governance](GOVERNANCE.md) · [When to use](docs/WHEN-TO-USE.md) · [Full doc index](docs/README.md) · [Launch waves](docs/brand/LAUNCH-WAVES.md)
 
 **License:** [Apache 2.0](LICENSE) — commercial use allowed. Optional hosted/support: [MONETIZATION.md](MONETIZATION.md).
+
+### When to use Downshift
+
+Use it for **subagent spawn routing** in coding harnesses when you want offline, deterministic tier selection. It is **not** an HTTP gateway like LiteLLM or a hosted marketplace like OpenRouter—those solve provider transport; Downshift solves **which model this spawn should run**. Full comparison: [docs/WHEN-TO-USE.md](docs/WHEN-TO-USE.md).
 
 ## Optional local LangGraph planner
 
 The Go binary remains a deterministic, zero-runtime model router. For an explicitly opted-in local delegation-planning graph, see [Local LangGraph orchestration](docs/LANGGRAPH-ORCHESTRATION.md). It never chooses a tier/model or contacts an LLM; those decisions remain in Go.
 
-**Keywords:** Claude Code subagent cost · LLM model routing · agent harness ·
-cost optimization · Claude Code hooks · Cursor subagents · Codex model selection
+**Keywords:** model routing · LLM cost optimization · agent hooks · Claude Code ·
+Cursor · Codex · deterministic router · Downshift
 
 ---
 

@@ -1,6 +1,8 @@
 # Downshift
 
-O **Downshift** é um roteador cirúrgico de modelos para fluxos de trabalho com agentes de IA.
+*Repositório GitHub: [`harness-downshift`](https://github.com/tiagovilasboas/harness-downshift) · CLI `downshift` · licença Apache 2.0.*
+
+O **Downshift** é um roteador determinístico de modelos para fluxos de trabalho com agentes de IA (hooks em harnesses de código; não é gateway HTTP tipo LiteLLM). Quando usar ou não: [WHEN-TO-USE em inglês](../WHEN-TO-USE.md).
 
 Quando você dispara um subagente em ferramentas como **Claude Code**, **Cursor**, **Codex**, **Antigravity** ou **KiroCrew**, o comportamento padrão do ambiente é fazer com que o subprocesso herde o modelo mais avançado e caro da sessão ativa (como Claude Opus ou GPT-4o/5). Na prática, gasta-se orçamento de fronteira em tarefas estritamente mecânicas — renomear variáveis, corrigir digitação, listar diretórios ou rodar comandos de terminal.
 
