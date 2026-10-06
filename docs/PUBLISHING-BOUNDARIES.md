@@ -12,7 +12,7 @@ belongs in a **private** repo later ([OC-1 in LAUNCH-WAVES](internal/LAUNCH-WAVE
 | Tier | Audience | Location | Goal |
 |------|----------|----------|------|
 | **Public (product)** | Installers, contributors, press | `README`, `docs/*` (indexed in [docs/README.md](README.md)) | Trust, install, misroutes, honest limits |
-| **Public (maintainer, unlisted)** | You + co-maintainers; curious diggers | `docs/internal/` | Execution backlog, launch checklist, long v2 archive |
+| **Public (maintainer, unlisted)** | You + co-maintainers; curious diggers | `docs/internal/` | Launch checklist, v2 archive, coverage tables (stubs for private ops) |
 | **Private** | Solo / company strategy not ready to share | e.g. `downshift-labs` (planned) | Open-core SKU detail, agent handoff at scale, unreleased research |
 
 **Important:** `docs/internal/` is still in the public git clone. It is “unlisted”
@@ -45,13 +45,38 @@ in the default path.
 
 | File | Content |
 |------|---------|
-| [BACKLOG.md](internal/BACKLOG.md) | DS/HC/KB autonomous execution contract |
-| [NEXT-STEPS.md](internal/NEXT-STEPS.md) | Short-horizon maintainer checklist |
+| [BACKLOG.md](internal/BACKLOG.md) | **Stub** — full backlog in private `downshift-labs` |
+| [NEXT-STEPS.md](internal/NEXT-STEPS.md) | **Stub** — maintainer checklist off-repo |
 | [LAUNCH-WAVES.md](internal/LAUNCH-WAVES.md) | Rebrand/OSS wave execution, metrics, open-core backlog |
 | [CAPABILITY-ROUTER-V2-FULL.md](internal/CAPABILITY-ROUTER-V2-FULL.md) | Long v2 design archive |
 | [TEST-COVERAGE.md](internal/TEST-COVERAGE.md) | Coverage tables for maintainers |
+| [ENGINEERING-LOOP-MAINTAINER.md](internal/ENGINEERING-LOOP-MAINTAINER.md) | Promotion loop, dsmon, historical eval notes |
+| [downshift-labs-README.template.md](internal/downshift-labs-README.template.md) | Scaffold for private repo layout |
 
 Stubs at old paths (e.g. `docs/brand/LAUNCH-WAVES.md`) redirect here.
+
+---
+
+## Competitive sensitivity (green / yellow / red)
+
+Use this when writing or reviewing docs. **Red** never ships in the public repo
+(current content). **Yellow** may ship in shortened form or under `docs/internal/`
+knowing git history and clones are public.
+
+| Class | Examples | Tier |
+|-------|----------|------|
+| **Green** | Install, CONFIG, adapters, fail-open, benchmarks, contrib classifier, Apache licence | Public `docs/` |
+| **Green** | “We may offer hosted/support” without SKU detail | [MONETIZATION.md](../MONETIZATION.md) |
+| **Yellow** | Launch wave checklists, coverage tables, long v2 archive | `docs/internal/` |
+| **Yellow** | Promotion thresholds, shadow/train workflow (no live production numbers) | `docs/internal/` or shortened [ENGINEERING-LOOP.md](ENGINEERING-LOOP.md) |
+| **Red** | Autonomous agent squad contracts, DS/HC/KB handoff playbooks, personal repo paths | Private `downshift-labs` |
+| **Red** | Production-derived labels, unredacted stats exports, enterprise pipeline | Private only |
+| **Red** | Employer or personal KB dumps, embargoed partnerships | Never in Downshift git |
+
+**Fork reality (Apache 2.0):** anyone can fork the **router code**. The moat is
+not hiding the classifier; it is **harness coverage**, **eval discipline**,
+**release quality**, and **ops you choose not to publish**. Do not treat
+`docs/internal/` as a vault.
 
 ---
 

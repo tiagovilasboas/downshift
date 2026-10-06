@@ -59,5 +59,6 @@ Not required for install. See [PUBLISHING-BOUNDARIES.md](PUBLISHING-BOUNDARIES.m
 |-----|--------|
 | [internal/README.md](internal/README.md) | Index |
 | [internal/LAUNCH-WAVES.md](internal/LAUNCH-WAVES.md) | Launch execution checklist |
-| [internal/BACKLOG.md](internal/BACKLOG.md) | Workstream backlog |
-| [internal/NEXT-STEPS.md](internal/NEXT-STEPS.md) | Near-term tasks |
+| [internal/BACKLOG.md](internal/BACKLOG.md) | Maintainer backlog (stub) |
+| [internal/NEXT-STEPS.md](internal/NEXT-STEPS.md) | Maintainer checklist (stub) |
+| [internal/ENGINEERING-LOOP-MAINTAINER.md](internal/ENGINEERING-LOOP-MAINTAINER.md) | Promotion / dsmon appendix |
