@@ -13,7 +13,7 @@
 
 Same prompt twice: *rename the userId variable to userIdentifier in auth.ts* (no `auth.ts` exists in the repo; the task only needs to classify).
 
-1. **08:59Z, build `local-4ba5a71`: rewrite rejected, spawn blocked.** The hook classified `TRIVIAL` and wrote `claude-haiku-4-5` into `updatedInput.model`. The harness validates that field against a fixed enum of family names and refused it:
+1. **08:59Z, build `local-447df39`: rewrite rejected, spawn blocked.** The hook classified `TRIVIAL` and wrote `claude-haiku-4-5` into `updatedInput.model`. The harness validates that field against a fixed enum of family names and refused it:
 
    ```
    PreToolUse hook for Agent returned updatedInput that failed schema validation:
@@ -21,8 +21,8 @@ Same prompt twice: *rename the userId variable to userIdentifier in auth.ts* (no
    ```
 
    The event was still logged as `rewrite_emitted`. Emission is not honor, and a rejected rewrite here fails the spawn instead of running it unchanged.
-2. **Fix `9476873`:** the catalog now carries a family-level `native_name`; the Claude Code adapter writes it instead of the full id and allows the spawn unchanged when an entry has none.
-3. **09:06Z, build `local-9476873`: rewrite accepted.** The hook wrote `haiku`. The spawn ran on `claude-haiku-4-5-20251001`, while the parent session is Sonnet 5.5, so the child did not inherit the session model.
+2. **Fix `a70fe08`:** the catalog now carries a family-level `native_name`; the Claude Code adapter writes it instead of the full id and allows the spawn unchanged when an entry has none.
+3. **09:06Z, build `local-a70fe08`: rewrite accepted.** The hook wrote `haiku`. The spawn ran on `claude-haiku-4-5-20251001`, while the parent session is Sonnet 5.5, so the child did not inherit the session model.
 4. **Cross-check from the subagent transcript.** Each assistant message in the child's transcript (`tool_response.outputFile`) carries the `message.model` the API returned. For this spawn all 12 assistant records say `claude-haiku-4-5-20251001`; a second spawn (4 records) says the same. The same file carries per-message token usage, which no hook payload does.
 
 ## Strength of the evidence
