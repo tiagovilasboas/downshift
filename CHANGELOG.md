@@ -9,7 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-beta.6] — 2026-10-06
+
 ### Changed
+- **Docs:** Maintainer backlog/checklist stubs; competitive sensitivity matrix in
+  [PUBLISHING-BOUNDARIES.md](docs/PUBLISHING-BOUNDARIES.md); public
+  [ENGINEERING-LOOP.md](docs/ENGINEERING-LOOP.md) trimmed (detail in
+  `docs/internal/ENGINEERING-LOOP-MAINTAINER.md`).
 - **Docs:** [PUBLISHING-BOUNDARIES.md](docs/PUBLISHING-BOUNDARIES.md) (public vs
   `docs/internal/` vs private). Launch waves and test coverage moved under
   `docs/internal/` with stubs at old paths.

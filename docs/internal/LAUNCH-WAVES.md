@@ -113,7 +113,7 @@
 | W4-5 | `LICENSE` Licensed Work: Downshift | `LICENSE` | [ ] |
 | W4-6 | `orchestration/pyproject.toml` → `downshift-orchestration` (opcional mesma onda) | `orchestration/` | [ ] |
 | W4-7 | **GitHub:** Settings → Rename repository → `downshift` | GitHub UI | [x] |
-| W4-8 | Release note “Harness Downshift is now Downshift” (texto em RENAME.md §23) | GitHub Release | [ ] |
+| W4-8 | Release note “Harness Downshift is now Downshift” (texto em RENAME.md §23) | GitHub Release | [x] |
 | W4-9 | Atualizar `docs/brand/RENAME.md` status para “executed” + data | `docs/brand/RENAME.md` | [x] |
 
 **PR(s):** código primeiro; rename GitHub no merge day.
@@ -147,7 +147,7 @@
 
 | ID | Task | Done |
 |----|------|------|
-| W6-1 | Tag semver (ex. `v0.2.0` ou `v1.0.0-beta.2`) + Goreleaser | [ ] |
+| W6-1 | Tag semver (ex. `v0.2.0` ou `v1.0.0-beta.2`) + Goreleaser | [x] |
 | W6-2 | GitHub Discussion pinned: anúncio rename + COMMERCIAL link | [ ] |
 | W6-3 | Habilitar **Discussions** (Q&A, Show and tell) | [ ] |
 | W6-4 | Dev.to: artigo problema (subagent cost) — não propaganda | [ ] |
@@ -222,7 +222,7 @@ Não bloqueia launch; ordem sugerida:
 | 1 | `d6f0e0b` hero + WHEN-TO-USE | 2026-10-06 | W1-5 social PNG manual |
 | 2 | (pending) doc trim + contrib/classifier | 2026-10-06 | |
 | 3 | `64e2295` internal/paths + doctor | 2026-10-06 | merged com onda 4 |
-| 4 | `64e2295`/`660f276` module + GitHub rename | 2026-10-06 | W4-8 release note pendente |
+| 4 | `64e2295`/`660f276` module + GitHub rename | 2026-10-06 | W4-8 via `v0.1.0-beta.6` |
 | 5 | template `stats-export` | 2026-10-06 | P2.3 exports ainda 0/2 |
 | 6 | | | |
 | 7 | | | |
