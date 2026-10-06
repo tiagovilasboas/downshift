@@ -2,10 +2,10 @@
   "_doc": "harness-downshift embedded catalog — model data lives here, not in Go source.",
   "_doc2": "Override at ~/.harness-downshift/catalog.json. Run 'downshift models pull' to refresh.",
   "_doc3": "'family' is the stable prefix for version-agnostic matching. A model whose ID starts with the family string matches this entry's tier even if the exact version is unknown.",
-  "_doc4": "OpenRouter model IDs arrive as 'provider/model-id' (e.g. 'anthropic/claude-opus-4-8'). The router normalises these before lookup, so family matching works transparently.",
-  "_doc5": "Anthropic IDs and base input/output prices per 1M tokens: https://docs.anthropic.com/en/docs/about-claude/models/overview and https://docs.anthropic.com/en/docs/about-claude/pricing (accessed 2026-09-26).",
+  "_doc4": "OpenRouter model IDs arrive as 'provider/model-id' (e.g. 'anthropic/claude-opus-5-5'). The router normalises these before lookup, so family matching works transparently.",
+  "_doc5": "Anthropic IDs and base input/output prices per 1M tokens: https://docs.anthropic.com/en/docs/about-claude/models/overview and https://docs.anthropic.com/en/docs/about-claude/pricing (accessed 2026-10-06).",
   "version": "2",
-  "updated": "2026-09-28",
+  "updated": "2026-10-06",
   "entries": [
 
     { "_section": "claude-code — native Anthropic models" },
@@ -35,16 +35,16 @@
       "output_cost_per_1m": 15.00
     },
     {
-      "id": "claude-opus-4-8",
-      "aliases": ["claude-opus"],
+      "id": "claude-opus-5-5",
+      "aliases": ["claude-opus", "claude-opus-5.5", "claude-opus-4-8"],
       "family": "claude-opus",
       "provider": "anthropic",
       "harness": "claude-code",
       "tier": "frontier",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
-      "input_cost_per_1m": 5.00,
-      "output_cost_per_1m": 25.00
+      "input_cost_per_1m": 4.00,
+      "output_cost_per_1m": 20.00
     },
 
     { "_section": "claude-code — xAI Grok (installed via custom model config)" },
@@ -407,16 +407,16 @@
       "output_cost_per_1m": 15.00
     },
     {
-      "id": "claude-opus-4-8",
-      "aliases": ["opus", "claude-opus-4.8", "claude-opus"],
+      "id": "claude-opus-5-5",
+      "aliases": ["opus", "claude-opus-5.5", "claude-opus-4-8", "claude-opus-4.8", "claude-opus"],
       "family": "claude-opus",
       "provider": "anthropic",
       "harness": "kirocrew",
       "tier": "frontier",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
-      "input_cost_per_1m": 5.00,
-      "output_cost_per_1m": 25.00
+      "input_cost_per_1m": 4.00,
+      "output_cost_per_1m": 20.00
     }
   ]
 }

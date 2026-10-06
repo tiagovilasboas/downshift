@@ -12,7 +12,7 @@ O Downshift não é um chat secundário e não gera código. É um **roteador de
 
 ## O Que Você Ganha
 
-* **Eficiência Real de Tokens:** Tarefas triviais e mecânicas rodam em modelos econômicos (~80% mais baratos na tabela de preços dos provedores), reservando os modelos de fronteira para desafios arquiteturais, concorrência e alto risco.
+* **Eficiência Real de Tokens:** Tarefas triviais e mecânicas rodam em modelos econômicos (~75% mais baratos na tabela de preços dos provedores), reservando os modelos de fronteira para desafios arquiteturais, concorrência e alto risco.
 * **Privacidade Absoluta (Zero-Leakage):** A classificação e o roteamento ocorrem 100% na máquina local. Nenhum texto de prompt, caminho de arquivo ou código sai para serviços externos ou é persistido em arquivos de log.
 * **Velocidade na CPU:** Sem LLM no loop de classificação e sem chamadas de rede adicionais. A inferência híbrida (regex + centróides vetoriais) decide em menos de 2 milissegundos.
 * **Segurança e Continuidade (Fail-Open):** Na dúvida ou em caso de qualquer falha técnica, o Downshift não interrompe o trabalho: o fluxo segue normalmente com o modelo original da sessão.
@@ -33,7 +33,7 @@ O Downshift não é um chat secundário e não gera código. É um **roteador de
 
 As faixas de capacidade permanecem equivalentes entre os ambientes suportados:
 * **Codex:** `gpt-6-luna` (Small) · `gpt-5.6-terra` (Mid) · `gpt-6-sol` (Frontier)
-* **Claude Code:** `claude-haiku-4-5` (Small) · `claude-sonnet-4-6` (Mid) · `claude-opus-4-8` (Frontier)
+* **Claude Code:** `claude-haiku-4-5` (Small) · `claude-sonnet-4-6` (Mid) · `claude-opus-5-5` (Frontier)
 * **Antigravity:** `flash_lite` (Small) · `flash` (Mid) · `pro` (Frontier)
 
 ---
