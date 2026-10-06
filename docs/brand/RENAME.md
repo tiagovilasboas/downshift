@@ -215,7 +215,7 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 
 After rename to `downshift`:
 
-- [ ] **Description:** `Deterministic open-source model router — right-sized LLMs per workload. Agent hooks, catalog policy, shadow mode, outcome benchmarks.`
+- [ ] **Description:** `Deterministic open-source model router — right-sized LLMs per workload. Agent hooks, catalog policy, shadow mode, published eval summary.`
 - [ ] **Website:** optional — link to README or future docs site
 - [ ] **Topics:** `model-routing`, `llm`, `ai`, `cost-optimization`, `agents`, `golang`, `open-source`, `developer-tools`
 - [ ] **Social preview (PNG only on GitHub):** upload `docs/brand/downshift-github-social-preview.png` (1280×640; edit `downshift-github-social-preview.svg` and re-export with `rsvg-convert -w 1280 -h 640 …`)
@@ -296,7 +296,7 @@ CLI:                downshift
 Primary category:   Model Router
 Secondary category: AI infrastructure
 Tagline:            Deterministic model routing for AI workloads.
-GitHub description: Deterministic open-source model router — right-sized LLMs per workload. Agent hooks, catalog policy, shadow mode, outcome benchmarks.
+GitHub description: Deterministic open-source model router — right-sized LLMs per workload. Agent hooks, catalog policy, shadow mode, published eval summary.
 State directory:    ~/.downshift (with legacy fallback)
 Go module:          github.com/tiagovilasboas/downshift
 ```

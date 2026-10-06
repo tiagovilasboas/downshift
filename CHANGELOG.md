@@ -9,19 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-beta.7] — 2026-10-06
+
 ### Changed
 - **Benchmarks & training ops:** Public repo no longer ships benchmark JSON,
   outcome suite, or `tools/minilm` / `tools/baseline`. Curated metrics:
   [benchmark/REPORT.md](benchmark/REPORT.md). Maintainer eval and regression gates
   run in private **downshift-labs** ([#57](https://github.com/tiagovilasboas/downshift/pull/57)).
-- **README:** Trimmed MOAT sections; pointers to [ARCHITECTURE.md](docs/ARCHITECTURE.md)
-  and [contrib/classifier.md](docs/contrib/classifier.md). Classifier metrics
-  link to `benchmark/REPORT.md` (not CI-generated blocks).
+- **README / docs:** Messaging aligned with labs split (REPORT, not in-repo outcome
+  CI); [BETA-EXIT](docs/BETA-EXIT.md) P4.5 note; `Makefile report` no longer
+  overwrites README ([#58](https://github.com/tiagovilasboas/downshift/pull/58) hygiene).
 - **Docs:** Maintainer shadow/engineering/v2 long form stubbed in OSS; full copies
-  intended for downshift-labs. [CLASSIFIER-SHADOW.md](docs/CLASSIFIER-SHADOW.md)
-  shortened for adopters.
+  in downshift-labs. [CLASSIFIER-SHADOW.md](docs/CLASSIFIER-SHADOW.md) shortened.
 - **CI:** Public `ci` / `ci-full` run `go test` and adapter smoke only (sample
-  fixture). No in-repo benchmark gates or `eval-outcome --verify` on GitHub.
+  fixture). Removed obsolete outcome-scope scripts.
 
 ### Added
 - **Docs:** [CONTENT-CLASSIFICATION.md](docs/CONTENT-CLASSIFICATION.md) (A/B/C/D
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MOAT flags for README, docs, benchmarks, examples).
 - **Docs:** [benchmark/EVAL-PRIVATE.md](benchmark/EVAL-PRIVATE.md) policy for
   public vs maintainer eval.
+- **Docs:** [docs/brand/SOCIAL-PREVIEW.md](docs/brand/SOCIAL-PREVIEW.md) (W1-5 upload steps).
 
 ## [0.1.0-beta.6] — 2026-10-06
 

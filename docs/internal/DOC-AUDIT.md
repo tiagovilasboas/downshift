@@ -120,9 +120,8 @@ Stubs: `BACKLOG.md`, `NEXT-STEPS.md` (root + internal) — no moat leak.
 
 | Path | Mode | MOAT |
 |------|------|------|
-| `benchmark/README.md`, `tasks.json` rubric | **OK-B** | No |
-| `benchmark/fresh.json`, `heldout2.json` | **OK-B** | Public eval splits by design |
-| `benchmark/outcomes/` | **OK-B** | Executable tasks — not prod dumps |
+| `benchmark/REPORT.md`, `EVAL-PRIVATE.md` | **USE** | Published metrics + policy only |
+| Eval datasets / outcomes (labs) | **C** | Not in public clone |
 | `ROADMAP.md` | USE | No |
 | `docs/internal/LAUNCH-WAVES.md` | C / planning | No router secret |
 | `CHANGELOG.md` | USE + history | No |

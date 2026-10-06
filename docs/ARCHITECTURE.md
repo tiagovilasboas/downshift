@@ -55,7 +55,7 @@ Optional PostToolUse / SubagentStop → telemetry (usage, honor)
 | `internal/telemetry` | Append-only local JSONL; prompt-free events |
 | `internal/semantic` | Optional monotonic semantic boost |
 | `internal/routingv2/*` | Experimental / shadow classifier and training |
-| `internal/outcome` | Executable coding benchmark tasks (CI) |
+| `internal/outcome` | Outcome-eval library; minimal fixtures in OSS; full suite in downshift-labs |
 | `cmd/downshift` | CLI, subcommands, hook dispatch |
 
 **Invariant:** adapters do not embed routing rules; they only map wire formats.
@@ -67,7 +67,7 @@ Optional PostToolUse / SubagentStop → telemetry (usage, honor)
 Default state directory (migration in progress — see
 [RENAME.md](brand/RENAME.md)):
 
-- `~/.harness-downshift/` today: `catalog.json`, `events.jsonl`,
+- `~/.downshift/` (legacy `~/.harness-downshift/`): `catalog.json`, `events.jsonl`,
   `session-models.json`, `loop-events.jsonl`, optional weights
 
 Overrides: `DOWNSHIFT_EVENT_LOG`, `DOWNSHIFT_SESSION_MODELS`, feature flags

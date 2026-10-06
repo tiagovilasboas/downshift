@@ -51,7 +51,7 @@ Subagent / request
 |---|---|
 | **Right-sized models** | Trivial tasks downshift to small tiers; complex work stays on frontier. |
 | **Deterministic** | Scored signals, not an LLM classifier, on the hot path. |
-| **Testable** | `downshift try`, outcome benchmarks, optional shadow classifier (`DOWNSHIFT_SHADOW_WEIGHTS`). |
+| **Testable** | `downshift try`, [benchmark/REPORT.md](../../benchmark/REPORT.md), optional shadow classifier (`DOWNSHIFT_SHADOW_WEIGHTS`). |
 | **Observable** | Local telemetry (`events.jsonl`), feedback with explicit `--required-tier` for training labels. |
 | **Harness-agnostic core** | Adapters only encode I/O; routing lives in `internal/core`. |
 
@@ -161,7 +161,7 @@ When applying Version A, **keep** existing sections below the hero without rewri
 ## GitHub repository description (copy-paste)
 
 ```text
-Deterministic open-source model router — right-sized LLMs per workload. Agent hooks, catalog policy, shadow mode, outcome benchmarks.
+Deterministic open-source model router — right-sized LLMs per workload. Agent hooks, catalog policy, shadow mode, published eval summary.
 ```
 
 ## One-line tagline options (pick one under H1)

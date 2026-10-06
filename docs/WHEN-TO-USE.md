@@ -7,7 +7,7 @@ Downshift is a **deterministic model router** that runs **locally** and hooks in
 - You run **agentic coding sessions** where subagents inherit the session’s most expensive model.
 - You want **rule-based routing** (classifier + catalog policy) with **no LLM in the routing loop**.
 - You need **offline, keyless tier selection** for hooks: classify on CPU, pick model from your catalog, rewrite `updatedInput` before the child starts.
-- You care about **testability**: `downshift try`, outcome benchmarks, optional shadow classifier (`DOWNSHIFT_SHADOW_WEIGHTS`).
+- You care about **testability**: `downshift try`, [benchmark/REPORT.md](../benchmark/REPORT.md), optional shadow classifier (`DOWNSHIFT_SHADOW_WEIGHTS`).
 - You want **local telemetry** (`events.jsonl`) and explicit training labels (`--required-tier`), not a hosted analytics product.
 
 ## Consider something else when
