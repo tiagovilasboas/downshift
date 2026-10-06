@@ -89,7 +89,7 @@ func TestEventStore_AddOutcomeAndReplayLatestFeedback(t *testing.T) {
 	}
 }
 
-func TestEventStore_AddOutcome_SuccessDefaultsRequiredTier(t *testing.T) {
+func TestEventStore_AddOutcome_SuccessDoesNotInferMinimumTier(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.jsonl")
 	store := NewEventStore(path)
 	event := Event{ID: "route-mid", Timestamp: time.Now().UTC(), Features: domain.FeatureVector{Coding: 0.5}, SelectedTier: core.TierMid, Harness: "claude-code"}
@@ -102,7 +102,7 @@ func TestEventStore_AddOutcome_SuccessDefaultsRequiredTier(t *testing.T) {
 		t.Fatalf("AddOutcome: %v", err)
 	}
 
-	// Verify loaded event has RequiredTier defaulted to SelectedTier (core.TierMid)
+	// Success alone proves sufficiency, not the minimum capable tier.
 	reloaded := NewEventStore(path)
 	events, err := reloaded.Load()
 	if err != nil {
@@ -117,20 +117,14 @@ func TestEventStore_AddOutcome_SuccessDefaultsRequiredTier(t *testing.T) {
 	if !events[0].Outcome.Success {
 		t.Fatal("Outcome.Success is false, want true")
 	}
-	if events[0].Outcome.RequiredTier == nil {
-		t.Fatal("Outcome.RequiredTier is nil, want default to SelectedTier")
-	}
-	if *events[0].Outcome.RequiredTier != core.TierMid {
-		t.Fatalf("Outcome.RequiredTier = %v, want TierMid", *events[0].Outcome.RequiredTier)
+	if events[0].Outcome.RequiredTier != nil {
+		t.Fatal("success must not create a supervised minimum-tier label")
 	}
 
-	// Verify it yields a trainable event in ToDataset()
+	// Quality feedback remains stored, but cannot enter supervised training.
 	ds := reloaded.ToDataset()
-	if ds.Size() != 1 {
-		t.Fatalf("Dataset size = %d, want 1", ds.Size())
-	}
-	if ds.Examples[0].Label != "MID" {
-		t.Fatalf("Dataset example label = %q, want MID", ds.Examples[0].Label)
+	if ds.Size() != 0 {
+		t.Fatalf("Dataset size = %d, want 0", ds.Size())
 	}
 }
 

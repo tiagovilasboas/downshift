@@ -588,8 +588,9 @@ downshift train --from-events --output=candidate.json
 # Evaluate candidate weights on an independent labelled holdout
 downshift benchmark holdout.json --compare --candidate-weights=candidate.json
 
-# Promotion stays manual after reviewing safety and quality metrics
-cp candidate.json ~/.harness-downshift/weights.json
+# Observe a candidate alongside production hooks, without activating it
+export DOWNSHIFT_SHADOW_WEIGHTS=/absolute/path/candidate.json
+downshift shadow-report
 ```
 
 ### Dataset format
@@ -603,6 +604,10 @@ cp candidate.json ~/.harness-downshift/weights.json
 ```
 
 Labels: `SMALL`, `MID`, `FRONTIER`. Features are extracted automatically if absent.
+
+See [candidate shadow evaluation](docs/CLASSIFIER-SHADOW.md) for the complete
+review loop, report interpretation and semantic model roadmap. Production hooks
+remain on `core.Route`; the V2 weights override does not switch those hooks.
 
 The go/no-go criterion: **`FRONTIER→SMALL` must fall vs legacy**. Everything else is secondary.
 
