@@ -33,7 +33,7 @@ O Downshift não é um chat secundário e não gera código. É um **roteador de
 
 As faixas de capacidade permanecem equivalentes entre os ambientes suportados:
 * **Codex:** `gpt-6-luna` (Small) · `gpt-5.6-terra` (Mid) · `gpt-6-sol` (Frontier)
-* **Claude Code:** `claude-haiku-4-5` (Small) · `claude-sonnet-4-6` (Mid) · `claude-opus-5-5` (Frontier)
+* **Claude Code:** `claude-haiku-4-5` (Small) · `claude-sonnet-5-5` (Mid) · `claude-opus-5-5` (Frontier)
 * **Antigravity:** `flash_lite` (Small) · `flash` (Mid) · `pro` (Frontier)
 
 ---
