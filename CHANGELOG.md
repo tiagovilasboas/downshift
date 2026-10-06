@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **CI:** Fast `ci` workflow (path classification, single CLI build, scoped
+  `eval-outcome`); heavy checks moved to scheduled `ci-full`. Cross-platform
+  matrix only on pull requests; tags no longer duplicate builds before GoReleaser.
+
 ## [0.1.0-beta.6] — 2026-10-06
 
 ### Changed
