@@ -6,7 +6,7 @@ package training
 import (
 	"sort"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // ShadowReport evaluates observations made before feedback. It does not

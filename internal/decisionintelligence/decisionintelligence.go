@@ -6,7 +6,7 @@
 // permission, or budget gates owned by the routing policy.
 package decisionintelligence
 
-import "github.com/tiagovilasboas/harness-downshift/internal/core"
+import "github.com/tiagovilasboas/downshift/internal/core"
 
 // Risk is a structured assessment supplied by a trusted caller. It is not
 // inferred from, or a place to retain, task text.

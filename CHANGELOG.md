@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Rename:** GitHub repository and Go module are `tiagovilasboas/downshift`
+  (`go install github.com/tiagovilasboas/downshift/cmd/downshift@latest`). State
+  directory: `~/.downshift` with legacy fallback `~/.harness-downshift`; `downshift doctor`.
+  See [docs/CONFIG.md](docs/CONFIG.md).
 - **Docs:** README repositioned as **Downshift** (deterministic model router hero),
   plus [docs/WHEN-TO-USE.md](docs/WHEN-TO-USE.md) (vs LiteLLM, OpenRouter, direct SDK).
   `llms.txt` and `docs/pt/README.md` aligned. GitHub repo name remains

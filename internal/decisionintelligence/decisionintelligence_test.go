@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 func TestEvaluate_NoSignalPreservesTierAndIsAdvisory(t *testing.T) {

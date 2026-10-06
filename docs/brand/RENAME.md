@@ -1,12 +1,13 @@
 # Harness Downshift → Downshift — migration guide
 
-> **Status:** planning document (no renames applied yet).  
-> **Target brand:** Downshift  
-> **Target repository:** `tiagovilasboas/downshift`  
-> **CLI (unchanged):** `downshift`
+> **Status:** executed 2026-10-06 (module path, state dir, GitHub rename).  
+> **Brand:** Downshift  
+> **Repository:** `tiagovilasboas/downshift`  
+> **CLI:** `downshift`  
+> **Legacy module:** `github.com/tiagovilasboas/harness-downshift` (last tag before rename).
 
-harness-downshift by Tiago de Carvalho Vilas Boas  
-https://github.com/tiagovilasboas/harness-downshift
+Downshift by Tiago de Carvalho Vilas Boas  
+https://github.com/tiagovilasboas/downshift
 
 ---
 
@@ -63,14 +64,14 @@ Add `downshift doctor` or extend `downshift try --verbose` to print **effective 
 ### Phase 2 — Go module path (breaking for importers)
 
 1. `go.mod`: `module github.com/tiagovilasboas/downshift`
-2. Mechanical replace: `github.com/tiagovilasboas/harness-downshift` → `github.com/tiagovilasboas/downshift` (~**150+** import lines across `cmd/`, `internal/`, tests).
+2. Mechanical replace: `github.com/tiagovilasboas/downshift` → `github.com/tiagovilasboas/downshift` (~**150+** import lines across `cmd/`, `internal/`, tests).
 3. Tag **`v0.x.0`** with CHANGELOG “Module path change; old path frozen at last harness-downshift tag”.
 4. Leave a **README stub** on old module path only if you publish a final tag from old name pointing users forward (optional).
 
 ### Phase 3 — GitHub repository rename
 
 1. Settings → Rename repository: `harness-downshift` → `downshift`.
-2. GitHub redirects `tiagovilasboas/harness-downshift` → `tiagovilasboas/downshift` (stars/forks/issues preserved).
+2. GitHub redirects `tiagovilasboas/downshift` → `tiagovilasboas/downshift` (stars/forks/issues preserved).
 3. Update in same commit or immediately after:
    - `.goreleaser.yml` — `release.github.name`, header/footer URLs
    - `install.sh` — `REPO=tiagovilasboas/downshift`
@@ -143,7 +144,7 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 
 | Pattern | ~Files |
 |---------|--------|
-| `github.com/tiagovilasboas/harness-downshift/...` imports | All `internal/*`, `cmd/*` tests |
+| `github.com/tiagovilasboas/downshift/...` imports | All `internal/*`, `cmd/*` tests |
 | `go.mod` module line | 1 |
 | `install_test.go` | install URL assertions |
 | Panic strings `harness-downshift: embedded catalog` | `internal/catalog/catalog.go` |
@@ -230,7 +231,7 @@ After rename to `downshift`:
 go test ./...
 ./scripts/smoke-test.sh
 rg -n 'harness-downshift' --glob '!CHANGELOG.md' --glob '!docs/brand/RENAME.md'   # trend to zero in user-facing files
-rg -n 'tiagovilasboas/harness-downshift'                                          # should be zero after Phase 2+3
+rg -n 'tiagovilasboas/downshift'                                          # should be zero after Phase 2+3
 ```
 
 Manual:

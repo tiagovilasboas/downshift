@@ -6,7 +6,8 @@ package core
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
+
+	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 // SessionList is the only set of model ids a hook may write.
@@ -90,14 +91,14 @@ func SessionFromHook(lists ...*[]string) (SessionList, bool) {
 	return SessionList{}, false
 }
 
-// DefaultSessionModelsPath is ~/.harness-downshift/session-models.json.
+// DefaultSessionModelsPath is under the Downshift state dir (see internal/paths).
 // The file is operator config. The binary does not embed a default allowlist.
 func DefaultSessionModelsPath() string {
-	home, err := os.UserHomeDir()
+	p, err := paths.SessionModelsPath()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".harness-downshift", "session-models.json")
+	return p
 }
 
 // LoadUserSession reads the harness key from the user file.

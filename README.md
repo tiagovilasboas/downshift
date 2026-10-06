@@ -1,11 +1,9 @@
 # Downshift
 
-*GitHub repo: [`harness-downshift`](https://github.com/tiagovilasboas/harness-downshift) (CLI: `downshift`). Repository rename to `downshift` is planned; URLs will follow.*
-
-[![Build](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml)
+[![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Go 1.27](https://img.shields.io/badge/go-1.27-00ADD8.svg)](https://go.dev)
-[![Status: beta](https://img.shields.io/badge/status-beta%20%E2%80%94%20practical%20testing-yellow)](https://github.com/tiagovilasboas/harness-downshift/releases)
+[![Status: beta](https://img.shields.io/badge/status-beta%20%E2%80%94%20practical%20testing-yellow)](https://github.com/tiagovilasboas/downshift/releases)
 
 **Deterministic model routing for AI workloads.**
 
@@ -58,7 +56,7 @@ Cursor · Codex · deterministic router · Downshift
 
 **Step 1 — Install** (macOS / Linux):
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/harness-downshift/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 ```
 
 **Step 2 — Verify the classifier** on your own prompts before wiring the hook:
@@ -254,10 +252,10 @@ Build or install the single binary (no runtime, no dependencies):
 ```bash
 # Recommended — one-liner installer (macOS / Linux, detects arch automatically)
 # Installs to /usr/local/bin/downshift — no PATH changes needed
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/harness-downshift/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 
 # Alternative — Go toolchain (any platform)
-go install github.com/tiagovilasboas/harness-downshift/cmd/downshift@latest
+go install github.com/tiagovilasboas/downshift/cmd/downshift@latest
 ```
 
 > **Go toolchain note:** `go install` places the binary in `~/go/bin`.
@@ -269,7 +267,7 @@ go install github.com/tiagovilasboas/harness-downshift/cmd/downshift@latest
 > The `curl` installer above avoids this by installing directly to `/usr/local/bin`.
 
 Pre-built binaries for macOS (arm64/amd64), Linux (arm64/amd64), and Windows (amd64)
-are available on the [Releases](https://github.com/tiagovilasboas/harness-downshift/releases) page.
+are available on the [Releases](https://github.com/tiagovilasboas/downshift/releases) page.
 
 Add the hook to `~/.claude/settings.json`:
 

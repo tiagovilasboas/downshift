@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 // List prints the effective catalog as a formatted table to w.
@@ -57,13 +58,12 @@ func List(cat CatalogReader, w io.Writer) {
 
 // catalogSource returns a human-readable description of which catalog is active.
 func catalogSource() string {
-	home, err := os.UserHomeDir()
+	override, err := paths.CatalogPath()
 	if err != nil {
 		return "embedded (default)"
 	}
-	override := filepath.Join(home, ".harness-downshift", "catalog.json")
 	if _, err := os.Stat(override); err == nil {
 		return fmt.Sprintf("user override (%s)", override)
 	}
-	return "embedded (default) — override at ~/.harness-downshift/catalog.json"
+	return fmt.Sprintf("embedded (default) — override at %s", override)
 }

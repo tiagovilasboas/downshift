@@ -27,21 +27,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/antigravity"
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/claudecode"
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/codex"
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/cursor"
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/kirocrew"
-	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
-	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/decisionintelligence"
-	"github.com/tiagovilasboas/harness-downshift/internal/hookctx"
-	"github.com/tiagovilasboas/harness-downshift/internal/models"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/classifier"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/training"
-	dsserver "github.com/tiagovilasboas/harness-downshift/internal/server"
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
+	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
+	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
+	"github.com/tiagovilasboas/downshift/internal/benchmark"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/decisionintelligence"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
+	"github.com/tiagovilasboas/downshift/internal/models"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/classifier"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
+	dsserver "github.com/tiagovilasboas/downshift/internal/server"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // buildVersion, buildCommit and buildDate are set by release builds with
@@ -134,6 +135,8 @@ func main() {
 		os.Exit(runTrain(args[1:]))
 	case "feedback":
 		os.Exit(runFeedback(args[1:]))
+	case "doctor":
+		os.Exit(runDoctor(os.Stdout, catalog))
 	case "version", "--version":
 		os.Exit(runVersion(os.Stdout))
 	case "-h", "--help", "help":
@@ -432,10 +435,7 @@ func warnSessionUnknown(d core.Decision) {
 }
 
 func sessionModelsPathForDisplay() string {
-	if p := os.Getenv("DOWNSHIFT_SESSION_MODELS"); p != "" {
-		return p
-	}
-	return "~/.harness-downshift/session-models.json"
+	return paths.DisplaySessionModels()
 }
 
 // readHookPayload prevents an unresponsive hook stdin from blocking a spawn.
@@ -1283,7 +1283,8 @@ Usage:
   downshift version              Print the binary version (also --version)
   downshift models list          Show the effective catalog (embedded or override)
   downshift models check         Query provider APIs and report new/untiered models
-  downshift models pull          Write ~/.harness-downshift/catalog.json from APIs
+  downshift doctor               Print version, state dir, and catalog source
+  downshift models pull          Write user catalog.json under the state dir
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
   downshift stats --cost-per-unit=<USD>   Convert normalised units to dollars
   downshift stats --export       Print a pasteable JSON summary without prompts

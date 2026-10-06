@@ -6,11 +6,11 @@ package main
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // feedStdin swaps os.Stdin with a pipe carrying payload and returns a
@@ -48,7 +48,10 @@ func TestRunWritesPrivacySafeLine(t *testing.T) {
 
 	run()
 
-	path := filepath.Join(home, ".harness-downshift", "agents.jsonl")
+	path, err := paths.AgentsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read agents.jsonl: %v", err)
@@ -102,7 +105,10 @@ func TestRunIgnoresNonSpawnTool(t *testing.T) {
 	feedStdin(t, `{"hook_event_name":"PreToolUse","tool_name":"Read","tool_input":{"path":"main.go"}}`)
 	run()
 
-	path := filepath.Join(home, ".harness-downshift", "agents.jsonl")
+	path, err := paths.AgentsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		t.Fatalf("agents.jsonl should not be created for non-spawn tools")
 	}

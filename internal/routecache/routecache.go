@@ -19,7 +19,7 @@ package routecache
 import (
 	"sync"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // Key scopes a cached decision. Prompts are held in memory only and never

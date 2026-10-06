@@ -6,7 +6,7 @@ Public direction for the open-source project. Timelines are indicative.
 **Execution waves:** [docs/brand/LAUNCH-WAVES.md](docs/brand/LAUNCH-WAVES.md).
 
 Downshift by Tiago de Carvalho Vilas Boas  
-https://github.com/tiagovilasboas/harness-downshift
+https://github.com/tiagovilasboas/downshift
 
 ---
 

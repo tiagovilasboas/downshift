@@ -6,7 +6,7 @@
 // from anywhere in the routing pipeline.
 package domain
 
-import "github.com/tiagovilasboas/harness-downshift/internal/core"
+import "github.com/tiagovilasboas/downshift/internal/core"
 
 // FeatureVector holds the 13 normalized signals extracted from a prompt.
 // All values are in [0, 1]. Zero means the signal is absent; 1 means

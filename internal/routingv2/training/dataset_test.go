@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 func TestExample_Tier(t *testing.T) {

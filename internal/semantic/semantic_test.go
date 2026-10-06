@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/hookctx"
-	"github.com/tiagovilasboas/harness-downshift/internal/semantic"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
+	"github.com/tiagovilasboas/downshift/internal/semantic"
 )
 
 func TestMaybeAugment_OptOut(t *testing.T) {

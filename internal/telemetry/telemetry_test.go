@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // tmpLog returns a fresh temp file path for a test event log.

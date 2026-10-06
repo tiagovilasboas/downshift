@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 func TestLoad_ReturnsEmbedded(t *testing.T) {

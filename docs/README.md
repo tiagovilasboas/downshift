@@ -6,6 +6,7 @@
 |-----|-----|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | What Downshift is and how hooks flow |
 | [WHEN-TO-USE.md](WHEN-TO-USE.md) | Downshift vs gateways and direct SDK |
+| [CONFIG.md](CONFIG.md) | State dir, env vars, migration |
 | [session-models.md](session-models.md) | Session allowlists and Claude usage hooks |
 | [BETA-EXIT.md](BETA-EXIT.md) | Beta graduation criteria |
 | [../ROADMAP.md](../ROADMAP.md) | Public roadmap |

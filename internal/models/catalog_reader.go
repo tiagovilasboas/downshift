@@ -4,8 +4,8 @@
 package models
 
 import (
-	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // CatalogReader is the interface the models subcommands (list, check, pull)

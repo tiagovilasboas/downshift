@@ -14,9 +14,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/cursor"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 func TestHookNoRoute_AllowsWithoutRewrite(t *testing.T) {

@@ -6,7 +6,7 @@ package core
 import (
 	"os"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/nbtier"
+	"github.com/tiagovilasboas/downshift/internal/nbtier"
 )
 
 // NBDownshiftEnv turns the naive-Bayes TRIVIAL downshift on. Default OFF:

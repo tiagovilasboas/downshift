@@ -6,7 +6,7 @@ package core
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/nbtier"
+	"github.com/tiagovilasboas/downshift/internal/nbtier"
 )
 
 // The TRIVIAL downshift never fires below the risk floor, after a keyword

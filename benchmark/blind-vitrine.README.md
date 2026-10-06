@@ -17,7 +17,7 @@ decision needs a new, independently authored split.
 ## Provenance
 
 - **Author:** a separate AI agent that never saw this repository. It did not
-  open, clone, search or read `tiagovilasboas/harness-downshift` (including the
+  open, clone, search or read `tiagovilasboas/downshift` (including the
   other benchmark splits), did not read any downshift-related files, and used
   no web search. The only thing it wrote was its own output directory.
 - **Written:** 2026-10-03, in a single pass from general software-engineering

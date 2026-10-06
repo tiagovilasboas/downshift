@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // cat is the test-scope resolver — same embedded catalog the binary uses.

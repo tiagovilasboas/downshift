@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/outcome"
+	"github.com/tiagovilasboas/downshift/internal/outcome"
 )
 
 var reportDatasets = []outcome.Dataset{

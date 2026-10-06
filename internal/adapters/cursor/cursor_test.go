@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/cursor"
-	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 var cat = catalog.Load()

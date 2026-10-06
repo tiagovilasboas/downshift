@@ -38,12 +38,12 @@ echo "$out" | grep -q "TRIVIAL"
 echo "OK: downshift try (codex)"
 
 echo "=== 3. Hook adapters payload smoke tests ==="
-# Hermetic HOME: never touch the runner's real ~/.harness-downshift, and
-# give every harness a session allowlist so a rewrite can actually happen.
+# Hermetic state dir: never touch the runner's real ~/.downshift / legacy dir.
 SMOKE_HOME="$(mktemp -d)"
+SMOKE_STATE="$SMOKE_HOME/downshift-state"
 trap 'rm -rf "$SMOKE_HOME"' EXIT
-mkdir -p "$SMOKE_HOME/.harness-downshift"
-cat > "$SMOKE_HOME/.harness-downshift/session-models.json" <<'JSON'
+mkdir -p "$SMOKE_STATE"
+cat > "$SMOKE_STATE/session-models.json" <<'JSON'
 {
   "claude-code": ["claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"],
   "codex": ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"],
@@ -51,7 +51,7 @@ cat > "$SMOKE_HOME/.harness-downshift/session-models.json" <<'JSON'
   "antigravity": ["flash_lite", "flash", "pro"]
 }
 JSON
-hook() { HOME="$SMOKE_HOME" "$BIN" "$@" 2>/dev/null; }
+hook() { HOME="$SMOKE_HOME" DOWNSHIFT_STATE_DIR="$SMOKE_STATE" "$BIN" "$@" 2>/dev/null; }
 expect() { # expect <label> <output> <fixed string>
   if ! printf '%s' "$2" | grep -qF -- "$3"; then
     echo "FAIL: $1: expected [$3] in: $2" >&2

@@ -7,7 +7,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 func TestConfusionMatrix_Accuracy(t *testing.T) {

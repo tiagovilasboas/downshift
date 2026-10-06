@@ -4,7 +4,7 @@
 package telemetry
 
 import (
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // TokenUsage carries provider-reported token counts for one routed spawn.

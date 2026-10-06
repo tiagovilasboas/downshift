@@ -6,8 +6,8 @@ package core_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 var escalCat = catalog.Load()

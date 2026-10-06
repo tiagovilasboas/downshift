@@ -4,7 +4,7 @@
 > **Não pule ondas com dependência** sem aceitar o risco (tabela abaixo).  
 > Contexto: [RENAME.md](RENAME.md) · hero: [README-HERO.md](README-HERO.md)
 
-**Estado do repo (baseline):** `tiagovilasboas/harness-downshift` · CLI `downshift` · licença **Apache 2.0** (desde 2026-10-06) · beta ([BETA-EXIT.md](../BETA-EXIT.md)).
+**Estado do repo (baseline):** `tiagovilasboas/downshift` · CLI `downshift` · licença **Apache 2.0** (desde 2026-10-06) · beta ([BETA-EXIT.md](../BETA-EXIT.md)).
 
 ---
 
@@ -59,7 +59,7 @@
 
 **PR sugerido:** `docs: reposition as Downshift model router`
 
-**Exit:** description + README hero alinhados; repo pode continuar `harness-downshift`.
+**Exit:** description + README hero alinhados (repo renomeado para `downshift` na onda 4).
 
 ---
 
@@ -86,13 +86,13 @@
 
 | ID | Task | Arquivos / ação | Done |
 |----|------|-----------------|------|
-| W3-1 | Helper `StateDir()` com precedência: `DOWNSHIFT_STATE_DIR` → `~/.downshift` → legacy `~/.harness-downshift` | novo `internal/paths` ou `internal/config` | [ ] |
-| W3-2 | Refatorar paths: telemetry, catalog user override, session-models, loop-events, weights | `internal/telemetry/telemetry.go`, `internal/catalog/catalog.go`, `internal/core/session.go`, `internal/routingv2/training/events.go`, `internal/server/server.go`, `cmd/downshift/main.go` | [ ] |
-| W3-3 | Comando `downshift doctor` (effective state dir, catalog source, binary version) | `cmd/downshift/` | [ ] |
-| W3-4 | Documentar migração manual + env em `docs/CONFIG.md` | `docs/CONFIG.md` | [ ] |
-| W3-5 | `install.sh`: mensagem pós-install com state dir | `install.sh` | [ ] |
-| W3-6 | Testes: legacy dir only, new dir only, env override | `*_test.go` | [ ] |
-| W3-7 | `scripts/smoke-test.sh` usar `DOWNSHIFT_STATE_DIR` | `scripts/smoke-test.sh` | [ ] |
+| W3-1 | Helper `StateDir()` com precedência: `DOWNSHIFT_STATE_DIR` → `~/.downshift` → legacy `~/.harness-downshift` | novo `internal/paths` ou `internal/config` | [x] |
+| W3-2 | Refatorar paths: telemetry, catalog user override, session-models, loop-events, weights | `internal/telemetry/telemetry.go`, `internal/catalog/catalog.go`, `internal/core/session.go`, `internal/routingv2/training/events.go`, `internal/server/server.go`, `cmd/downshift/main.go` | [x] |
+| W3-3 | Comando `downshift doctor` (effective state dir, catalog source, binary version) | `cmd/downshift/` | [x] |
+| W3-4 | Documentar migração manual + env em `docs/CONFIG.md` | `docs/CONFIG.md` | [x] |
+| W3-5 | `install.sh`: mensagem pós-install com state dir | `install.sh` | [x] |
+| W3-6 | Testes: legacy dir only, new dir only, env override | `*_test.go` | [x] |
+| W3-7 | `scripts/smoke-test.sh` usar `DOWNSHIFT_STATE_DIR` | `scripts/smoke-test.sh` | [x] |
 
 **PR sugerido:** `feat: configurable state dir with legacy fallback`
 
@@ -106,10 +106,10 @@
 
 | ID | Task | Arquivos / ação | Done |
 |----|------|-----------------|------|
-| W4-1 | `go.mod` → `github.com/tiagovilasboas/downshift`; replace imports em massa | `go.mod`, `**/*.go` | [ ] |
-| W4-2 | `install.sh` `REPO=tiagovilasboas/downshift` | `install.sh` | [ ] |
-| W4-3 | `.goreleaser.yml` release name, header/footer URLs | `.goreleaser.yml` | [ ] |
-| W4-4 | Badges e raw URLs no README, SECURITY, docs | vários `.md` | [ ] |
+| W4-1 | `go.mod` → `github.com/tiagovilasboas/downshift`; replace imports em massa | `go.mod`, `**/*.go` | [x] |
+| W4-2 | `install.sh` `REPO=tiagovilasboas/downshift` | `install.sh` | [x] |
+| W4-3 | `.goreleaser.yml` release name, header/footer URLs | `.goreleaser.yml` | [x] |
+| W4-4 | Badges e raw URLs no README, SECURITY, docs | vários `.md` | [x] |
 | W4-5 | `LICENSE` Licensed Work: Downshift | `LICENSE` | [ ] |
 | W4-6 | `orchestration/pyproject.toml` → `downshift-orchestration` (opcional mesma onda) | `orchestration/` | [ ] |
 | W4-7 | **GitHub:** Settings → Rename repository → `downshift` | GitHub UI | [ ] |
@@ -230,4 +230,4 @@ Não bloqueia launch; ordem sugerida:
 ---
 
 harness-downshift by Tiago de Carvalho Vilas Boas  
-https://github.com/tiagovilasboas/harness-downshift
+https://github.com/tiagovilasboas/downshift

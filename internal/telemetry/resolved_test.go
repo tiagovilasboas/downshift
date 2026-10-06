@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/claudecode"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // launchPayload has the shape Claude Code sends to PostToolUse when it

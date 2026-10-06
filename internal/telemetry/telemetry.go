@@ -10,7 +10,7 @@
 // normalised savings fraction). This makes the event log safe for corporate
 // environments where task prompts may contain sensitive information.
 //
-// Event log location: ~/.harness-downshift/events.jsonl
+// Event log location: $DOWNSHIFT_STATE_DIR/events.jsonl or ~/.downshift/ (legacy: ~/.harness-downshift/).
 // Each line is one JSON object written atomically (append + sync).
 package telemetry
 
@@ -29,7 +29,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 // Event is one routing decision persisted to the event log.
@@ -314,13 +315,16 @@ func Failure(correlationID, binaryVersion, errorCode string) Event {
 	}
 }
 
-// defaultEventPath returns ~/.harness-downshift/events.jsonl.
+// defaultEventPath returns the routing telemetry JSONL path under the state dir.
 func defaultEventPath() string {
 	if path := os.Getenv("DOWNSHIFT_EVENT_LOG"); path != "" {
 		return path
 	}
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".harness-downshift", "events.jsonl")
+	p, err := paths.EventsPath()
+	if err != nil {
+		return "events.jsonl"
+	}
+	return p
 }
 
 var mu sync.Mutex

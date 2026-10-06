@@ -1,15 +1,15 @@
 #!/usr/bin/env sh
 # Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0
 #
-# harness-downshift installer
+# Downshift installer
 # Downloads the latest (or a specific) release binary for your OS and arch.
 #
 # Usage:
 #   # Latest release:
-#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/harness-downshift/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 #
 #   # Specific version:
-#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/harness-downshift/main/install.sh | sh -s v0.1.0-beta.1
+#   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh -s v0.1.0-beta.1
 #
 # The binary is installed to /usr/local/bin/downshift (or ~/.local/bin or
 # ~/bin if /usr/local/bin is not writable without sudo). Set
@@ -17,7 +17,7 @@
 
 set -e
 
-REPO="tiagovilasboas/harness-downshift"
+REPO="tiagovilasboas/downshift"
 BINARY="downshift"
 
 # ── Resolve version ───────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ fi
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-echo "Downloading harness-downshift ${VERSION} (${OS}/${ARCH})..."
+echo "Downloading downshift ${VERSION} (${OS}/${ARCH})..."
 curl -fsSL "$URL" -o "$TMP/$ARCHIVE"
 
 echo "Extracting..."
@@ -115,17 +115,20 @@ mv "$TMP/$BINARY" "${INSTALL_DIR}/${BINARY}"
 chmod +x "${INSTALL_DIR}/${BINARY}"
 
 echo ""
-echo "✓ harness-downshift ${VERSION} installed to ${INSTALL_DIR}/downshift"
+echo "✓ downshift ${VERSION} installed to ${INSTALL_DIR}/downshift"
 echo ""
 
 # Session allowlist: the hook only writes model ids listed here. Without the
 # file it never rewrites anything, so say so instead of installing a silent
 # no-op. The list is operator-curated (it depends on your plan), so it is not
 # created automatically.
-SESSION_FILE="$HOME/.harness-downshift/session-models.json"
+SESSION_FILE="$HOME/.downshift/session-models.json"
+if [ ! -f "$SESSION_FILE" ] && [ -f "$HOME/.harness-downshift/session-models.json" ]; then
+  SESSION_FILE="$HOME/.harness-downshift/session-models.json"
+fi
 if [ ! -f "$SESSION_FILE" ]; then
   echo "Next: list the models your session can use, or the hook will not rewrite anything:"
-  echo "  mkdir -p \"$HOME/.harness-downshift\""
+  echo "  mkdir -p \"$HOME/.downshift\""
   echo "  echo '{ \"claude-code\": [\"claude-haiku-4-5\", \"claude-sonnet-4-6\", \"claude-opus-4-8\"] }' > \"$SESSION_FILE\""
   echo "  (edit the ids to match your plan; see docs/session-models.md)"
   echo ""

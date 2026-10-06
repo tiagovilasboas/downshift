@@ -24,7 +24,7 @@ package claudecode
 import (
 	"encoding/json"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/lifecycleobserver"
+	"github.com/tiagovilasboas/downshift/internal/lifecycleobserver"
 )
 
 // LifecycleEvent is the JSON Claude Code sends on stdin for SubagentStart and

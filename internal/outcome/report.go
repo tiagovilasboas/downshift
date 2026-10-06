@@ -9,8 +9,8 @@ import (
 	"math"
 	"strings"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/benchmark"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // README markers delimiting the generated block.

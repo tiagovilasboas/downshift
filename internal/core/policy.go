@@ -6,7 +6,7 @@ package core
 import (
 	"fmt"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/graphify"
+	"github.com/tiagovilasboas/downshift/internal/graphify"
 )
 
 // Tier maps a complexity to the minimum capable tier — the gearbox rule:

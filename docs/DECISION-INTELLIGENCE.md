@@ -1,7 +1,7 @@
 # Decision Intelligence
 
 `harness-downshift` by Tiago de Carvalho Vilas Boas  
-https://github.com/tiagovilasboas/harness-downshift
+https://github.com/tiagovilasboas/downshift
 
 This package adds an explainable, provider-agnostic advisory layer for routing.
 It receives **structured** risk, sensitivity, budget, classifier-confidence and

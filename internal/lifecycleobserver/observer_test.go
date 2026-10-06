@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/lifecycleobserver"
+	"github.com/tiagovilasboas/downshift/internal/lifecycleobserver"
 )
 
 func fixture(event string) lifecycleobserver.Event {

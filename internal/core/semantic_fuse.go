@@ -4,7 +4,7 @@
 package core
 
 import (
-	"github.com/tiagovilasboas/harness-downshift/internal/semantic"
+	"github.com/tiagovilasboas/downshift/internal/semantic"
 )
 
 // ClassifyWithSemantic runs the regex classifier plus optional MiniLM boost.

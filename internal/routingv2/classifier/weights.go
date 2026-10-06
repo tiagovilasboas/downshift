@@ -12,7 +12,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
 )
 
 //go:embed weights/default.json
@@ -39,9 +40,8 @@ type TierWeights struct {
 // 2. Embedded default weights
 func LoadWeights() (*Weights, error) {
 	// Try user override first
-	home, err := os.UserHomeDir()
+	userPath, err := paths.WeightsPath()
 	if err == nil {
-		userPath := filepath.Join(home, ".harness-downshift", "weights.json")
 		if data, err := os.ReadFile(userPath); err == nil {
 			var w Weights
 			if err := json.Unmarshal(data, &w); err == nil && w.Validate() == nil {

@@ -1,7 +1,7 @@
 # Autonomous execution backlog
 
 `harness-downshift` by Tiago de Carvalho Vilas Boas  
-https://github.com/tiagovilasboas/harness-downshift
+https://github.com/tiagovilasboas/downshift
 
 This is the handoff contract for autonomous subagent work. It records the
 current state, order, boundaries and evidence required to advance each item.
@@ -124,7 +124,7 @@ It is not proof that a capability has been accepted by an executor.
 
 ## GH-21 — P1 `downshift try` input validation
 
-- **Source:** https://github.com/tiagovilasboas/harness-downshift/issues/21.
+- **Source:** https://github.com/tiagovilasboas/downshift/issues/21.
 - **Files:** `cmd/downshift/main.go`, `cmd/downshift/cmd_test.go`.
 - **Scope:** reject empty or whitespace-only prompts and reject unknown harness names in `downshift try` before routing. Valid harness names come from catalog entries, plus the special `grok` CLI path.
 - **Exclusions:** do not change `core.Resolver.ModelFor` fallback or hook fail-open behaviour; this is CLI validation only.
@@ -135,7 +135,7 @@ It is not proof that a capability has been accepted by an executor.
 
 ## GH-20 — P1 help text stdout/stderr split
 
-- **Source:** https://github.com/tiagovilasboas/harness-downshift/issues/20.
+- **Source:** https://github.com/tiagovilasboas/downshift/issues/20.
 - **Files:** `cmd/downshift/main.go`, `cmd/downshift/main_test.go`, `docs/BACKLOG.md`.
 - **Scope:** print explicit `downshift --help` to stdout with exit 0, keep error/no-arg usage on stderr with exit 2, move `benchmark`, `train`, and `feedback` back under the main command list, and document `stats --export`.
 - **Exclusions:** no command semantics change beyond usage output and exit-stream split.

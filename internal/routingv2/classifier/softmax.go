@@ -8,7 +8,7 @@ package classifier
 import (
 	"math"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
 )
 
 // SoftmaxClassifier implements domain.Classifier using multinomial logistic regression.

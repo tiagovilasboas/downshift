@@ -6,7 +6,7 @@ package classifier
 import (
 	"math"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // RiskWeights defines asymmetric penalties for routing errors.

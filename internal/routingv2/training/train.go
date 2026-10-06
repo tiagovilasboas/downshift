@@ -6,9 +6,9 @@ package training
 import (
 	"math"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/classifier"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/classifier"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
 )
 
 // TrainConfig holds hyperparameters for training.

@@ -6,7 +6,7 @@ package core_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // An unconfident small-tier decision with no current model must never be

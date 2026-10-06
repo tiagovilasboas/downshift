@@ -1,7 +1,7 @@
 # Graphify integration: library, not hook escalation
 
 harness-downshift by Tiago de Carvalho Vilas Boas
-https://github.com/tiagovilasboas/harness-downshift
+https://github.com/tiagovilasboas/downshift
 
 `internal/graphify` is a library. `core.Route` does not escalate via the graph.
 The hook path stays legacy regex scoring plus a monotonic semantic boost.
@@ -69,7 +69,7 @@ A rename or git commit prompt never touches the network.
 Do not add this call to `core.Route`.
 
 ```go
-import "github.com/tiagovilasboas/harness-downshift/internal/graphify"
+import "github.com/tiagovilasboas/downshift/internal/graphify"
 
 hint := graphify.Hint(prompt, graphify.DefaultCriteria(), myFetcher)
 if hint.ShouldEscalate {

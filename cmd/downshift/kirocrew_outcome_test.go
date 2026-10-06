@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // KiroCrew never rewrites: its events are "blocked" (exit 2) or "allow"

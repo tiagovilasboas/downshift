@@ -23,13 +23,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // ── config ────────────────────────────────────────────────────────────────────
 
 const (
-	eventsFile = ".harness-downshift/events.jsonl"
 	maxRecent  = 8
 	refreshMs  = 250 // fast enough to feel live
 	boxWidth   = 58
@@ -521,8 +521,14 @@ func render(s *state) {
 
 func main() {
 	home, _ := os.UserHomeDir()
-	path := filepath.Join(home, eventsFile)
-	agentPath := filepath.Join(home, ".harness-downshift", "agents.jsonl")
+	path, err := paths.EventsPath()
+	if err != nil {
+		path = filepath.Join(home, paths.DirName, "events.jsonl")
+	}
+	agentPath, err := paths.AgentsPath()
+	if err != nil {
+		agentPath = filepath.Join(home, paths.DirName, "agents.jsonl")
+	}
 
 	fmt.Print(hideCur)
 	sig := make(chan os.Signal, 1)

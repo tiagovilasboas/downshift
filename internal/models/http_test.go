@@ -12,7 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/models"
+	"github.com/tiagovilasboas/downshift/internal/models"
+	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 // mockProviders returns two test providers pointing at the given servers.
@@ -216,7 +217,10 @@ func TestPull_WritesNewModelsToTempDir(t *testing.T) {
 	}
 
 	// Verify the override file was written.
-	catalogPath := tmpHome + "/.harness-downshift/catalog.json"
+	catalogPath, err := paths.CatalogPath()
+	if err != nil {
+		t.Fatal(err)
+	}
 	data, err := os.ReadFile(catalogPath)
 	if err != nil {
 		t.Fatalf("catalog not written: %v", err)
@@ -246,7 +250,8 @@ func TestPull_IsIdempotent(t *testing.T) {
 		}
 	}
 
-	data, _ := os.ReadFile(tmpHome + "/.harness-downshift/catalog.json")
+	catalogPath, _ := paths.CatalogPath()
+	data, _ := os.ReadFile(catalogPath)
 	// Count occurrences of the model ID — must appear exactly once.
 	count := strings.Count(string(data), "gpt-new-idempotent")
 	if count != 1 {
@@ -272,7 +277,8 @@ func TestPull_ExistingTierNotOverwritten(t *testing.T) {
 	// If nothing new was found, the "up to date" message should appear.
 	if !strings.Contains(out.String(), "up to date") {
 		// Otherwise the catalog was written — verify the existing tier is preserved.
-		if data, err := os.ReadFile(tmpHome + "/.harness-downshift/catalog.json"); err == nil {
+		catalogPath, _ := paths.CatalogPath()
+		if data, err := os.ReadFile(catalogPath); err == nil {
 			if strings.Contains(string(data), `"tier": "unknown"`) &&
 				strings.Contains(string(data), "gpt-5.6-luna") {
 				t.Errorf("existing model tier should not be set to unknown; got:\n%s", string(data))
