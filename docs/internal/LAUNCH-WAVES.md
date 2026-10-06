@@ -150,7 +150,7 @@
 | W6-1 | Tag semver (ex. `v0.2.0` ou `v1.0.0-beta.2`) + Goreleaser | [x] |
 | W6-2 | GitHub Discussion pinned: anúncio rename + COMMERCIAL link | [x] [#55](https://github.com/tiagovilasboas/downshift/discussions/55) — pin na UI se ainda não |
 | W6-3 | Habilitar **Discussions** (Q&A, Show and tell) | [x] |
-| W6-0 | CI fast (`ci`) + nightly `ci-full`; path scope outcome eval | [x] |
+| W6-0 | CI fast (`ci`) + nightly `ci-full`; public repo without dataset gates (eval in labs) | [x] |
 | W6-4 | Dev.to: artigo problema (subagent cost) — não propaganda | [ ] |
 | W6-5 | HN: Show HN (técnico, link ARCHITECTURE + honest limits) | [ ] |
 | W6-6 | LinkedIn + X (versões RENAME.md §23) | [ ] |
@@ -164,7 +164,7 @@
 | ID | Task | Semana | Done |
 |----|------|--------|------|
 | W7-1 | Post “emission vs honored” + link evidence docs | +1 | [ ] |
-| W7-2 | Post outcome benchmarks (`downshift eval-outcome`) | +1 | [ ] |
+| W7-2 | Post outcome metrics: link [benchmark/REPORT.md](../benchmark/REPORT.md); full suite só em downshift-labs | +1 | [ ] |
 | W7-3 | Call for misroutes (template já existe) | +1 | [ ] |
 | W7-4 | `docs/ADOPTERS.md` (opt-in) | +2 | [ ] |
 | W7-5 | Reservar npm scope `@downshift` (sem SDK ainda) | +2 | [ ] |
@@ -180,7 +180,7 @@ Não bloqueia launch; ordem sugerida:
 
 | ID | Task | Notas |
 |----|------|--------|
-| OC-1 | Repo privado `downshift-labs` (research, BACKLOG autônomo) | [ ] |
+| OC-1 | Repo privado `downshift-labs` (eval, training ops, BACKLOG autônomo) | [x] 2026-10-06 · `ci-eval` |
 | OC-2 | HTTP gateway sketch (`cmd/downshift serve` ou repo separado) | [ ] |
 | OC-3 | Cloud / analytics (BSL commercial) | [ ] |
 | OC-4 | Enterprise: SSO, audit retention | [ ] |
@@ -221,11 +221,12 @@ Não bloqueia launch; ordem sugerida:
 |------|-------------|------|-------|
 | 0 | `11d6aba` Apache + OSS foundation | 2026-10-06 | |
 | 1 | `d6f0e0b` hero + WHEN-TO-USE | 2026-10-06 | W1-5 social PNG manual |
-| 2 | (pending) doc trim + contrib/classifier | 2026-10-06 | |
+| 2 | doc trim + contrib/classifier + labs stubs | 2026-10-06 | |
 | 3 | `64e2295` internal/paths + doctor | 2026-10-06 | merged com onda 4 |
 | 4 | `64e2295`/`660f276` module + GitHub rename | 2026-10-06 | W4-8 via `v0.1.0-beta.6` |
 | 5 | template `stats-export` | 2026-10-06 | P2.3 exports ainda 0/2 |
 | 6 | `v0.1.0-beta.6` + CI tiers | 2026-10-06 | W6-2/3 manual GitHub UI |
+| — | [#57](https://github.com/tiagovilasboas/downshift/pull/57) labs split | 2026-10-06 | REPORT público; gates no labs |
 | 7 | | | |
 
 ---
