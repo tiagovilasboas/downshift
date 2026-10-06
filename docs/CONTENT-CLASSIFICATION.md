@@ -138,7 +138,7 @@ versions; rotation is not automatic.
 | **Documentation audit (use vs inside vs MOAT)** | Done — [internal/DOC-AUDIT.md](internal/DOC-AUDIT.md) |
 | Private `downshift-labs` repo (OC-1) | **Pending** — only true vault |
 | Per-file audit of all 600+ paths | **Not required** — use audit + checklist |
-| README moat trim (see audit) | **Pending** |
+| README moat trim (see audit) | Done |
 | History rewrite for removed **C** | **Not done** — optional, high cost |
 
 ---
