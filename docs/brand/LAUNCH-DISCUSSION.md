@@ -1,4 +1,6 @@
-# Launch — GitHub Discussion (pin after enabling Discussions)
+# Launch — GitHub Discussion
+
+**Published:** [Discussion #55 — Harness Downshift is now Downshift](https://github.com/tiagovilasboas/downshift/discussions/55) (Announcements). Pin in the Discussions UI if needed.
 
 **Category:** Announcements  
 **Title:** Harness Downshift is now Downshift

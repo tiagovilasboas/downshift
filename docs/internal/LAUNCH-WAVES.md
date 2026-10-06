@@ -148,8 +148,8 @@
 | ID | Task | Done |
 |----|------|------|
 | W6-1 | Tag semver (ex. `v0.2.0` ou `v1.0.0-beta.2`) + Goreleaser | [x] |
-| W6-2 | GitHub Discussion pinned: anúncio rename + COMMERCIAL link | [ ] (draft: `docs/brand/LAUNCH-DISCUSSION.md`) |
-| W6-3 | Habilitar **Discussions** (Q&A, Show and tell) | [ ] |
+| W6-2 | GitHub Discussion pinned: anúncio rename + COMMERCIAL link | [x] [#55](https://github.com/tiagovilasboas/downshift/discussions/55) — pin na UI se ainda não |
+| W6-3 | Habilitar **Discussions** (Q&A, Show and tell) | [x] |
 | W6-0 | CI fast (`ci`) + nightly `ci-full`; path scope outcome eval | [x] |
 | W6-4 | Dev.to: artigo problema (subagent cost) — não propaganda | [ ] |
 | W6-5 | HN: Show HN (técnico, link ARCHITECTURE + honest limits) | [ ] |
