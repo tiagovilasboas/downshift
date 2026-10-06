@@ -10,10 +10,89 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
 )
+
+func TestHelpWritesToStdoutAndErrorsWriteUsageToStderr(t *testing.T) {
+	binary := filepath.Join(t.TempDir(), "downshift")
+	build := exec.Command("go", "build", "-o", binary, ".")
+	if output, err := build.CombinedOutput(); err != nil {
+		t.Fatalf("build downshift binary: %v\n%s", err, output)
+	}
+
+	t.Run("explicit help", func(t *testing.T) {
+		cmd := exec.Command(binary, "--help")
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("downshift --help: %v", err)
+		}
+		help := stdout.String()
+		for _, want := range []string{
+			"downshift stats --export",
+			"downshift benchmark <file>",
+			"downshift train <file>",
+			"downshift feedback list",
+			"Monitor (separate binary",
+		} {
+			if !strings.Contains(help, want) {
+				t.Fatalf("--help stdout missing %q:\n%s", want, help)
+			}
+		}
+		monitorStart := strings.Index(help, "Monitor (separate binary")
+		grokStart := strings.Index(help, "Grok note:")
+		if monitorStart < 0 || grokStart < 0 || grokStart <= monitorStart {
+			t.Fatalf("could not isolate monitor section:\n%s", help)
+		}
+		monitorSection := help[monitorStart:grokStart]
+		for _, notWant := range []string{"downshift benchmark", "downshift train", "downshift feedback"} {
+			if strings.Contains(monitorSection, notWant) {
+				t.Fatalf("monitor section contains %q:\n%s", notWant, monitorSection)
+			}
+		}
+		if stderr.Len() != 0 {
+			t.Fatalf("--help stderr = %q, want empty", stderr.String())
+		}
+	})
+
+	t.Run("no args", func(t *testing.T) {
+		cmd := exec.Command(binary)
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		err := cmd.Run()
+		if exit, ok := err.(*exec.ExitError); !ok || exit.ExitCode() != 2 {
+			t.Fatalf("downshift exit = %v, want code 2", err)
+		}
+		if stdout.Len() != 0 {
+			t.Fatalf("no-args stdout = %q, want empty", stdout.String())
+		}
+		if !strings.Contains(stderr.String(), "Usage:") {
+			t.Fatalf("no-args stderr missing usage:\n%s", stderr.String())
+		}
+	})
+
+	t.Run("unknown command", func(t *testing.T) {
+		cmd := exec.Command(binary, "unknown-command")
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		err := cmd.Run()
+		if exit, ok := err.(*exec.ExitError); !ok || exit.ExitCode() != 2 {
+			t.Fatalf("downshift unknown exit = %v, want code 2", err)
+		}
+		if stdout.Len() != 0 {
+			t.Fatalf("unknown stdout = %q, want empty", stdout.String())
+		}
+		if !strings.Contains(stderr.String(), `unknown command "unknown-command"`) || !strings.Contains(stderr.String(), "Usage:") {
+			t.Fatalf("unknown stderr missing command and usage:\n%s", stderr.String())
+		}
+	})
+}
 
 // TestCodexHook_NamespacedSpawnAgentWithoutCurrentModel exercises the actual
 // hook executable rather than calling the adapter directly. Codex has emitted
