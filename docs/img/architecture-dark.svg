@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="676" viewBox="0 0 900 676" role="img" aria-labelledby="t d">
+<title id="t">Downshift package architecture</title>
+<desc id="d">cmd/downshift wires five harness adapters (claudecode, cursor, codex, antigravity, kirocrew), the catalog and telemetry. Adapters, catalog and telemetry import core; core imports none of them. internal/paths holds the state directory. routingv2, outcome, benchmark, decisionintelligence and models are offline or opt-in.</desc>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9CA3AF"/></marker>
+<marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#22C55E"/></marker>
+</defs>
+<rect width="900" height="676" rx="12" fill="#0D1117"/>
+<text x="40" y="44" fill="#F9FAFB" font-size="20" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Package architecture</text>
+<text x="40" y="64" fill="#9CA3AF" font-size="12.5" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Arrows mean "imports" and point toward core. Dashed: cmd wires catalog and telemetry directly.</text>
+<line x1="40" y1="80" x2="860" y2="80" stroke="#30363D"/>
+<rect x="250" y="96" width="400" height="56" rx="9" fill="#161B22" stroke="#6E7681" stroke-width="1.4"/>
+<text x="450.0" y="120" fill="#F9FAFB" font-size="13" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">cmd/downshift</text>
+<text x="450.0" y="139" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">CLI, hook runners, try, models, stats, benchmark</text>
+<text x="45" y="188" fill="#F59E0B" font-size="12.5" font-weight="700" text-anchor="start" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">internal/adapters/*</text>
+<text x="855" y="188" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="end" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">wire format in, wire format out. No routing rules.</text>
+<rect x="45" y="198" width="150" height="62" rx="9" fill="#161B22" stroke="#F59E0B" stroke-width="1.4"/>
+<text x="120.0" y="222" fill="#F9FAFB" font-size="13" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">claudecode</text>
+<text x="120.0" y="241" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">PreToolUse · Task / Agent</text>
+<text x="120.0" y="257" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">updatedInput.model</text>
+<rect x="210" y="198" width="150" height="62" rx="9" fill="#161B22" stroke="#F59E0B" stroke-width="1.4"/>
+<text x="285.0" y="222" fill="#F9FAFB" font-size="13" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">cursor</text>
+<text x="285.0" y="241" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">preToolUse · Task</text>
+<text x="285.0" y="257" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">updated_input.model</text>
+<rect x="375" y="198" width="150" height="62" rx="9" fill="#161B22" stroke="#F59E0B" stroke-width="1.4"/>
+<text x="450.0" y="222" fill="#F9FAFB" font-size="13" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">codex</text>
+<text x="450.0" y="241" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">PreToolUse · spawn_agent</text>
+<text x="450.0" y="257" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">model + reasoning_effort</text>
+<rect x="540" y="198" width="150" height="62" rx="9" fill="#161B22" stroke="#F59E0B" stroke-width="1.4"/>
+<text x="615.0" y="222" fill="#F9FAFB" font-size="13" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">antigravity</text>
+<text x="615.0" y="241" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">invoke_subagent</text>
+<text x="615.0" y="257" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">flash_lite / flash / pro</text>
+<rect x="705" y="198" width="150" height="62" rx="9" fill="#161B22" stroke="#F59E0B" stroke-width="1.4"/>
+<text x="780.0" y="222" fill="#F9FAFB" font-size="13" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">kirocrew</text>
+<text x="780.0" y="241" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">preToolUse</text>
+<text x="780.0" y="257" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">allow or respawn guidance</text>
+<path d="M450,152 V196" fill="none" stroke="#9CA3AF" stroke-width="1.8" marker-end="url(#a)"/>
+<path d="M120,260 L350,328" fill="none" stroke="#22C55E" stroke-width="1.8" marker-end="url(#g)"/>
+<path d="M285,260 L400,328" fill="none" stroke="#22C55E" stroke-width="1.8" marker-end="url(#g)"/>
+<path d="M450,260 L450,328" fill="none" stroke="#22C55E" stroke-width="1.8" marker-end="url(#g)"/>
+<path d="M615,260 L500,328" fill="none" stroke="#22C55E" stroke-width="1.8" marker-end="url(#g)"/>
+<path d="M780,260 L550,328" fill="none" stroke="#22C55E" stroke-width="1.8" marker-end="url(#g)"/>
+<rect x="45" y="330" width="205" height="92" rx="9" fill="#161B22" stroke="#60A5FA" stroke-width="1.4"/>
+<text x="147.5" y="354" fill="#F9FAFB" font-size="13" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">internal/catalog</text>
+<text x="147.5" y="373" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">embedded catalog.json</text>
+<text x="147.5" y="389" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">user override in state dir</text>
+<text x="147.5" y="405" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">implements core.Resolver</text>
+<rect x="300" y="330" width="300" height="92" rx="9" fill="#10301D" stroke="#22C55E" stroke-width="1.4"/>
+<text x="450.0" y="354" fill="#F9FAFB" font-size="14" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">internal/core</text>
+<text x="450.0" y="373" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">classifier · policy · escalation · Route</text>
+<text x="450.0" y="389" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Tier · Effort · Decision · Resolver iface</text>
+<text x="450.0" y="405" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">helpers: semantic · nbtier · graphify</text>
+<rect x="650" y="330" width="205" height="92" rx="9" fill="#161B22" stroke="#6E7681" stroke-width="1.4"/>
+<text x="752.5" y="354" fill="#F9FAFB" font-size="13" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">internal/telemetry</text>
+<text x="752.5" y="373" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">append-only events.jsonl</text>
+<text x="752.5" y="389" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Record · Stats</text>
+<text x="752.5" y="405" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">prompt-free events</text>
+<path d="M250,376 H298" fill="none" stroke="#22C55E" stroke-width="1.8" marker-end="url(#g)"/>
+<path d="M650,376 H602" fill="none" stroke="#22C55E" stroke-width="1.8" marker-end="url(#g)"/>
+<path d="M250,124 H22 V376 H43" fill="none" stroke="#9CA3AF" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#a)"/>
+<path d="M650,124 H878 V376 H857" fill="none" stroke="#9CA3AF" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#a)"/>
+<rect x="215" y="438" width="470" height="30" rx="9" fill="#0D1117" stroke="#22C55E" stroke-width="1.2"/>
+<text x="450" y="458" fill="#22C55E" font-size="12.5" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">core imports no catalog, adapter or telemetry package</text>
+<rect x="45" y="488" width="810" height="56" rx="9" fill="#161B22" stroke="#6E7681" stroke-width="1.4"/>
+<text x="450.0" y="512" fill="#F9FAFB" font-size="13" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">internal/paths</text>
+<text x="450.0" y="531" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">state dir ~/.downshift, with fallback to legacy ~/.harness-downshift (used by core, catalog, telemetry, models)</text>
+<text x="45" y="574" fill="#9CA3AF" font-size="12" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Offline and opt-in. Run from cmd/downshift subcommands, not on the hook path.</text>
+<rect x="45" y="586" width="150" height="66" rx="9" fill="#161B22" stroke="#30363D" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="120.0" y="610" fill="#F9FAFB" font-size="11.5" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">routingv2</text>
+<text x="120.0" y="629" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">shadow · training</text>
+<text x="120.0" y="645" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">never changes Route()</text>
+<rect x="210" y="586" width="150" height="66" rx="9" fill="#161B22" stroke="#30363D" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="285.0" y="610" fill="#F9FAFB" font-size="11.5" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">outcome</text>
+<text x="285.0" y="629" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">outcome-eval library</text>
+<text x="285.0" y="645" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">reviewed outcomes</text>
+<rect x="375" y="586" width="150" height="66" rx="9" fill="#161B22" stroke="#30363D" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="450.0" y="610" fill="#F9FAFB" font-size="11.5" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">benchmark</text>
+<text x="450.0" y="629" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">tier accuracy</text>
+<text x="450.0" y="645" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">unsafe-downgrade rates</text>
+<rect x="540" y="586" width="150" height="66" rx="9" fill="#161B22" stroke="#30363D" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="615.0" y="610" fill="#F9FAFB" font-size="11.5" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">decisionintelligence</text>
+<text x="615.0" y="629" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">advisory only</text>
+<text x="615.0" y="645" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Apply=false</text>
+<rect x="705" y="586" width="150" height="66" rx="9" fill="#161B22" stroke="#30363D" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="780.0" y="610" fill="#F9FAFB" font-size="11.5" font-weight="700" text-anchor="middle" font-family="'SFMono-Regular',ui-monospace,Consolas,'Liberation Mono',monospace">models</text>
+<text x="780.0" y="629" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">list · check · pull</text>
+<text x="780.0" y="645" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">catalog override</text>
+</svg>
