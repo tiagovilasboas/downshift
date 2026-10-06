@@ -514,6 +514,9 @@ func FilterByDays(events []Event, days int) []Event {
 func Aggregate(events []Event) Stats {
 	s := Stats{ByComplexity: make(map[string]int)}
 	for _, ev := range events {
+		if ev.Outcome == OutcomeResolved {
+			continue // an observation about an earlier decision, not a cost or a decision
+		}
 		if IsCostOnlyOutcome(ev.Outcome) {
 			// Post-hoc cost records ("usage") and control-group events
 			// ("baseline") are not decisions: they must not move Total,
@@ -640,7 +643,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Baseline (no-route)   %8d  (control group, excluded from rates)\n", s.Baseline)
 	}
 	if s.RewriteShifted > 0 {
-		fmt.Fprintf(w, "Rewrite honored (inferred) %3d  / %d applied shifts (later same-session spawn asked for the written model, or rewrite_honored; not proof)\n", s.RewriteHonored, s.RewriteShifted)
+		fmt.Fprintf(w, "Rewrite honored (inferred) %3d  / %d applied shifts (harness-reported resolvedModel matched, or a later same-session spawn asked for the written model; the child's billed model is still not read)\n", s.RewriteHonored, s.RewriteShifted)
 	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
 }

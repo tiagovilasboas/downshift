@@ -63,6 +63,8 @@ Replace directional normalised units with provider-grounded savings.
 
 **Exit:** P3.4 + P3.5 + P3.7 filled for **one** billing period (maintainer sign-off).
 
+P3.4 finding (2026-10-06): the Claude Code PostToolUse payload for an async `Agent` launch carries no token usage (`tool_response` is launch metadata only, `duration_ms` is a few ms), which is why the log has no `usage` events. The payload does carry `transcript_path` and `tool_response.outputFile`; usage would have to come from there or from a harness that reports tokens. The launch payload does carry `resolvedModel`, now recorded as an `outcome: "resolved"` honor observation (P1.7).
+
 ---
 
 ## Pillar 4 — Benchmark & classifier quality
