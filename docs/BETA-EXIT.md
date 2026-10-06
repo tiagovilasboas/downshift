@@ -84,7 +84,7 @@ P3.4 finding (2026-10-06): the Claude Code PostToolUse payload for an async `Age
 | P4.9 | **MiniLM semantic boost on by default** (local hash; external embed falls back to hash; `DOWNSHIFT_MINILM=0` opts out — `docs/MINILM-SEMANTIC.md`) | eng | [x] |
 | P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout (`benchmark/minilm-holdout.json`) | eng | [x] |
 
-**Exit (not met on this dataset):** P4.5 regression files live in private **downshift-labs** (`ci-eval` gates). The public repo ships [benchmark/REPORT.md](../benchmark/REPORT.md) only. Historical note (2026-10-04, `dc90076`): holdout was a burned regression net (template stems, post-holdout signal tuning to 100% tier accuracy), not proof of generalization. Do not remove the beta label on that dataset alone.
+**Exit (not met on this dataset):** P4.5 regression files live in private **downshift-labs** (`ci-eval` gates). The public repo ships [benchmark/REPORT.md](../benchmark/REPORT.md) only. Historical note (2026-10-04, `eb116ed`): holdout was a burned regression net (template stems, post-holdout signal tuning to 100% tier accuracy), not proof of generalization. Do not remove the beta label on that dataset alone.
 
 P4.3's checked box is the library, not graph-aware routing on the hook. `TestHint_NilFetcher_OfflineMode` shows a nil fetcher never escalates. See [GRAPHIFY-INTEGRATION.md](GRAPHIFY-INTEGRATION.md).
 
