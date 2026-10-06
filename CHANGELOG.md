@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Docs:** README repositioned as **Downshift** (deterministic model router hero),
+  plus [docs/WHEN-TO-USE.md](docs/WHEN-TO-USE.md) (vs LiteLLM, OpenRouter, direct SDK).
+  `llms.txt` and `docs/pt/README.md` aligned. GitHub repo name remains
+  `harness-downshift` until wave 4 rename.
 - **Licence:** project relicensed from BUSL 1.1 to **Apache License 2.0**
   (2026-10-06). Archived BUSL text: `LICENSE-BSL-1.1-ARCHIVE.md`. Contributor
   terms: contributions are under Apache 2.0 (see CONTRIBUTING.md).
