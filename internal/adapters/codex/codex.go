@@ -214,7 +214,6 @@ func effortOrInherit(v string) string {
 	return v
 }
 
-
 func allow() Output {
 	return Output{
 		HookSpecificOutput: &HookSpecificOutput{
