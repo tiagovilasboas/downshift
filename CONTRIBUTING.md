@@ -114,9 +114,18 @@ goreleaser check                # validate release config (needs goreleaser inst
 
 Requires Go 1.27+.
 
+### CI tiers
+
+| Workflow | When | What |
+|----------|------|------|
+| `ci` | Every PR / push to `main` / tags | Fast path: `go test`, benchmark **gate**, smoke; outcome eval only when routing/outcome paths change |
+| `ci-full` | Weekdays 09:00 UTC + manual dispatch | Race + cover, govulncheck, all benchmark splits, full outcome verify |
+
+Docs-only diffs skip the Go job. Nightly `ci-full` catches regressions if a PR did not touch scoped paths.
+
 ## Ground rules
 
-- **Keep tests green.** `go test -race -cover ./...` must pass before every commit.
+- **Keep tests green.** Run `go test ./...` before every commit; run `go test -race -cover ./...` before router/core changes (or wait for `ci-full`).
 - **Every classifier change ships a test.** Add a table-driven case in
   `classifier_edge_test.go` that proves the improvement.
 - **Small, focused PRs.** One concern per PR. No "also fixed X" bundling.

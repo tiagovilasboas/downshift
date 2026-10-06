@@ -8,20 +8,136 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+      go: ${{ steps.classify.outputs.go }}
+      python: ${{ steps.classify.outputs.python }}
+      outcome_eval: ${{ steps.scope.outputs.outcome_eval }}
+      readme_check: ${{ steps.scope.outputs.readme_check }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Classify changed paths
+        id: classify
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          eval "$(bash scripts/ci-classify-changes.sh)"
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+          echo "python=$python" >> "$GITHUB_OUTPUT"
+
+      - name: Outcome eval scope
+        id: scope
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          outcome_eval=false
+          readme_check=false
+          if bash scripts/ci-outcome-scope.sh; then
+            outcome_eval=true
+          fi
+          if bash scripts/ci-readme-check-scope.sh; then
+            readme_check=true
+          fi
+          echo "outcome_eval=$outcome_eval" >> "$GITHUB_OUTPUT"
+          echo "readme_check=$readme_check" >> "$GITHUB_OUTPUT"
+
   test:
+    needs: changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
+      - name: Docs-only skip
+        if: needs.changes.outputs.docs_only == '1'
+        run: echo "Docs-only diff; Go CI skipped."
+
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        if: needs.changes.outputs.go == '1'
         with:
           go-version: "1.27"
-          # go.mod has zero external dependencies; disable cache to silence warning (I3)
-          cache: false
+          cache: true
+
+      - name: No Go changes
+        if: needs.changes.outputs.go != '1'
+        run: echo "No Go changes in diff."
+
+      - name: Build downshift CLI
+        if: needs.changes.outputs.go == '1'
+        run: go build -ldflags "-s -w" -o downshift ./cmd/downshift
+
+      - name: Vet
+        if: needs.changes.outputs.go == '1'
+        run: go vet ./...
+
+      - name: Format check
+        if: needs.changes.outputs.go == '1'
+        run: |
+          if gofmt -l . | grep -q .; then
+            echo "The following files need gofmt:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Test
+        if: needs.changes.outputs.go == '1'
+        run: go test ./...
+
+      - name: Benchmark regression gate
+        if: needs.changes.outputs.go == '1'
+        run: |
+          ./downshift benchmark benchmark/tasks.json --gate --min-tier-accuracy=0.60 --max-frontier-to-mid=0
+          ./downshift benchmark benchmark/holdout.json --gate --min-tier-accuracy=0.80 --max-frontier-to-mid=0
+
+      - name: Outcome eval checks (offline)
+        if: needs.changes.outputs.go == '1' && needs.changes.outputs.outcome_eval == 'true'
+        run: ./downshift eval-outcome --verify
+
+      - name: README numbers match the generated report
+        if: needs.changes.outputs.go == '1' && needs.changes.outputs.readme_check == 'true'
+        run: ./downshift eval-outcome --report --check README.md
+
+      - name: Adapter smoke tests
+        if: needs.changes.outputs.go == '1'
+        run: ./scripts/smoke-test.sh
+
+      - name: Fresh split guard
+        if: github.event_name == 'pull_request' && needs.changes.outputs.go == '1'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          git diff --name-only "$BASE_SHA" HEAD | bash scripts/fresh-guard.sh
+
+  python:
+    needs: changes
+    if: needs.changes.outputs.python == '1' || needs.changes.outputs.go == '1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - uses: actions/setup-python@v7
         with:
@@ -30,6 +146,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
 
       - name: Test local LangGraph planner
+        if: needs.changes.outputs.python == '1' || needs.changes.outputs.go == '1'
         run: |
           cd orchestration
           uv run --locked python -m unittest discover -s tests -v
@@ -37,108 +154,15 @@ jobs:
       - name: Test DS-04 observer privacy contract
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/ds04_observer_contract -v
 
-      - name: Build
-        run: go build ./...
-
-      - name: Test disabled Codex lifecycle observer POC
-        run: go test -race ./internal/lifecycleobserver
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Format check
-        run: |
-          if gofmt -l . | grep -q .; then
-            echo "The following files need gofmt:"
-            gofmt -l .
-            exit 1
-          fi
-
-      - name: Security vulnerabilities
-        run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-          ~/go/bin/govulncheck ./...
-
-
-      - name: Test
-        run: go test -race -cover ./...
-
-      # Regression nets only: the seed is the curated set and the holdout is
-      # burned (tuned to 100%). Both must keep FRONTIER→SMALL and
-      # FRONTIER→MID at zero. Passing them says nothing about unseen traffic.
-      - name: Benchmark Regression Gate
-        run: |
-          go run ./cmd/downshift benchmark benchmark/tasks.json --gate --min-tier-accuracy=0.60 --max-frontier-to-mid=0
-          go run ./cmd/downshift benchmark benchmark/holdout.json --gate --min-tier-accuracy=0.80 --max-frontier-to-mid=0
-
-      # Evaluation-only splits: reported, never gated, never tuned against.
-      - name: Fresh split report
-        run: go run ./cmd/downshift benchmark benchmark/fresh.json
-
-      - name: Heldout2 split report
-        run: go run ./cmd/downshift benchmark benchmark/heldout2.json
-
-      - name: Blind-vitrine split report (tier labels)
-        run: go run ./cmd/downshift benchmark benchmark/blind-vitrine.json
-
-      - name: Fresh split guard
-        if: github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          git fetch --no-tags --depth=1 origin "$BASE_SHA"
-          git diff --name-only "$BASE_SHA" HEAD | bash scripts/fresh-guard.sh
-
-      # Offline only: no model calls. --record refuses to run when CI is set.
-      # Pull requests run the 200-solution suite only when the tasks, recorded
-      # solutions, or the checker change. Pushes to main always run it.
-      - name: Outcome eval scope
-        id: outcome_eval
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          run=true
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch --no-tags --depth=1 origin "$BASE_SHA"
-            changed=$(git diff --name-only "$BASE_SHA" HEAD)
-            run=false
-            if echo "$changed" | grep -Eq '^(benchmark/outcomes/|internal/outcome/|cmd/downshift/outcome|\.github/workflows/ci\.yml)'; then
-              run=true
-            fi
-          fi
-          echo "run=$run" >> "$GITHUB_OUTPUT"
-          echo "outcome eval run=$run"
-      - name: Outcome eval checks (offline)
-        if: steps.outcome_eval.outputs.run == 'true'
-        run: go run ./cmd/downshift eval-outcome --verify
-
-      - name: README numbers match the generated report
-        run: go run ./cmd/downshift eval-outcome --report --check README.md
-
-      - name: Adapter Smoke Tests
-        run: |
-          ./scripts/smoke-test.sh
-
-      - name: Export Directional Stats
-        run: |
-          go run ./cmd/downshift stats --days=30 --export > stats-export.json
-
-      - name: Upload Stats Export Artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: stats-export
-          path: stats-export.json
-          if-no-files-found: ignore
-
   build-cross-platform:
-    needs: test
+    needs: [changes, test]
+    if: github.event_name == 'pull_request' && needs.changes.outputs.go == '1'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         goos: [linux, darwin, windows]
         goarch: [amd64, arm64]
         exclude:
-          # Windows ARM64 has limited user base
           - goos: windows
             goarch: arm64
     steps:
@@ -147,7 +171,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "1.27"
-          cache: false
+          cache: true
 
       - name: Build downshift for ${{ matrix.goos }}/${{ matrix.goarch }}
         run: |
@@ -157,20 +181,19 @@ jobs:
 
   release:
     needs: test
-    runs-on: ubuntu-latest
-    # Only run on version tags (v0.1.0-beta.1, v1.0.0, etc.)
     if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
     permissions:
-      contents: write   # needed to create GitHub releases and upload assets
+      contents: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          fetch-depth: 0  # goreleaser needs the full git history for changelog
+          fetch-depth: 0
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "1.27"
-          cache: false
+          cache: true
 
       - name: Run goreleaser
         uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3

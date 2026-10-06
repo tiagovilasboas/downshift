@@ -148,8 +148,9 @@
 | ID | Task | Done |
 |----|------|------|
 | W6-1 | Tag semver (ex. `v0.2.0` ou `v1.0.0-beta.2`) + Goreleaser | [x] |
-| W6-2 | GitHub Discussion pinned: anúncio rename + COMMERCIAL link | [ ] |
+| W6-2 | GitHub Discussion pinned: anúncio rename + COMMERCIAL link | [ ] (draft: `docs/brand/LAUNCH-DISCUSSION.md`) |
 | W6-3 | Habilitar **Discussions** (Q&A, Show and tell) | [ ] |
+| W6-0 | CI fast (`ci`) + nightly `ci-full`; path scope outcome eval | [x] |
 | W6-4 | Dev.to: artigo problema (subagent cost) — não propaganda | [ ] |
 | W6-5 | HN: Show HN (técnico, link ARCHITECTURE + honest limits) | [ ] |
 | W6-6 | LinkedIn + X (versões RENAME.md §23) | [ ] |
@@ -224,7 +225,7 @@ Não bloqueia launch; ordem sugerida:
 | 3 | `64e2295` internal/paths + doctor | 2026-10-06 | merged com onda 4 |
 | 4 | `64e2295`/`660f276` module + GitHub rename | 2026-10-06 | W4-8 via `v0.1.0-beta.6` |
 | 5 | template `stats-export` | 2026-10-06 | P2.3 exports ainda 0/2 |
-| 6 | | | |
+| 6 | `v0.1.0-beta.6` + CI tiers | 2026-10-06 | W6-2/3 manual GitHub UI |
 | 7 | | | |
 
 ---

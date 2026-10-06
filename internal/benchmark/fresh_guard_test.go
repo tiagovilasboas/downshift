@@ -163,6 +163,7 @@ func testStringLiterals(t *testing.T, dir string) []string {
 func TestFresh_NotReadByTuningCode(t *testing.T) {
 	allowed := map[string]bool{
 		".github/workflows/ci.yml":               true,
+		".github/workflows/ci-full.yml":          true,
 		"internal/benchmark/fresh_guard_test.go": true,
 		"scripts/fresh-guard.sh":                 true,
 	}
