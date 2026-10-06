@@ -6,8 +6,8 @@ package routecache_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/routecache"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/routecache"
 )
 
 func testKey(prompt string) routecache.Key {

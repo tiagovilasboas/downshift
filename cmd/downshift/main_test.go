@@ -12,7 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 func TestHelpWritesToStdoutAndErrorsWriteUsageToStderr(t *testing.T) {
@@ -157,7 +158,12 @@ func TestCodexHook_NamespacedSpawnAgentWithoutCurrentModel(t *testing.T) {
 	if !bytes.Contains(stderr.Bytes(), []byte("gpt-6-sol")) {
 		t.Errorf("stderr = %q, want routing diagnostic for gpt-6-sol", stderr.String())
 	}
-	eventLog, err := os.ReadFile(filepath.Join(home, ".harness-downshift", "events.jsonl"))
+	t.Setenv("HOME", home)
+	eventPath, err := paths.EventsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	eventLog, err := os.ReadFile(eventPath)
 	if err != nil {
 		t.Fatalf("read hook telemetry: %v", err)
 	}

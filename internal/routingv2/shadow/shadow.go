@@ -3,7 +3,7 @@
 
 // Package shadow compares candidate classifiers without changing production.
 // Part of harness-downshift by Tiago de Carvalho Vilas Boas.
-// https://github.com/tiagovilasboas/harness-downshift
+// https://github.com/tiagovilasboas/downshift
 package shadow
 
 import (
@@ -16,11 +16,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/classifier"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/policy"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/safety"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/classifier"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/policy"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/safety"
 )
 
 // Input stays in memory. Text lets a future semantic backend consume the task

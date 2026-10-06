@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 func TestLockFile_AcquireAndRelease(t *testing.T) {

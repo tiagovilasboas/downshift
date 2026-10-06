@@ -6,7 +6,7 @@
 // and during offline training to ensure consistency.
 package extractor
 
-import "github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
+import "github.com/tiagovilasboas/downshift/internal/routingv2/domain"
 
 // Extract analyzes the prompt and returns a FeatureVector with 13 signals.
 // Each signal is normalized to [0, 1].

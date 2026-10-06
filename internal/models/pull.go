@@ -9,15 +9,12 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"sort"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/paths"
 )
-
-// overrideCatalogFile is the path (relative to home) that pull writes.
-const overrideCatalogFile = ".harness-downshift/catalog.json"
 
 // pullFile is the JSON structure written to disk.
 type pullFile struct {
@@ -102,24 +99,27 @@ func PullWithProviders(cat CatalogReader, providers []ProviderConfig, client *ht
 		return 1
 	}
 
-	home, _ := os.UserHomeDir()
-	fmt.Fprintf(w, "\n%d new model(s) written to %s\n", added, filepath.Join(home, overrideCatalogFile))
+	catalogPath, _ := paths.CatalogPath()
+	fmt.Fprintf(w, "\n%d new model(s) written to %s\n", added, catalogPath)
 	fmt.Fprintln(w, "Assign a tier (small/mid/frontier) to each 'unknown' entry before use.")
 	return 0
 }
 
 // writeOverride serialises entries to ~/.harness-downshift/catalog.json.
 func writeOverride(entries []catalog.Entry) error {
-	home, err := os.UserHomeDir()
+	dir, err := paths.StateDir()
 	if err != nil {
 		return err
 	}
-	dir := filepath.Join(home, ".harness-downshift")
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
+	catalogPath, err := paths.CatalogPath()
+	if err != nil {
+		return err
+	}
 	f := pullFile{
-		Doc:     "harness-downshift user catalog — edit tier/effort fields and reload.",
+		Doc:     "Downshift user catalog — edit tier/effort fields and reload.",
 		Version: "1",
 		Updated: time.Now().UTC().Format("2006-01-02"),
 		Entries: entries,
@@ -153,7 +153,7 @@ func writeOverride(entries []catalog.Entry) error {
 	if err := tmp.Close(); err != nil {
 		return err
 	}
-	return os.Rename(tmpPath, filepath.Join(dir, "catalog.json"))
+	return os.Rename(tmpPath, catalogPath)
 }
 
 // entryKey builds a unique deduplication key.

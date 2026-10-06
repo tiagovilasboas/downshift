@@ -46,8 +46,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // linkWindow bounds how far back a usage record may reach for its decision.

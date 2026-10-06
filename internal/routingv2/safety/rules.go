@@ -4,8 +4,8 @@
 package safety
 
 import (
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
 )
 
 // Rule represents a deterministic safety rule that may impose a minimum tier.

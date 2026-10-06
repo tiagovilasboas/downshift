@@ -6,7 +6,7 @@ package core_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // A downshift held by the guardrails (R1/R5, SafeVerdict OK) must keep the

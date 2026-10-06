@@ -1,7 +1,7 @@
 # Orchestration planner — design notes
 
 `harness-downshift` by Tiago de Carvalho Vilas Boas  
-https://github.com/tiagovilasboas/harness-downshift
+https://github.com/tiagovilasboas/downshift
 
 ![Orchestration planner — adjacent, not involved in model routing](brand/downshift-orchestration-planner.png)
 

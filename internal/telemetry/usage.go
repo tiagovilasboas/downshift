@@ -6,7 +6,7 @@ package telemetry
 import (
 	"encoding/json"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // Real-cost usage extraction and pricing for PostToolUse hook payloads.

@@ -6,8 +6,8 @@ package safety
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
 )
 
 func TestEvaluate_NoConstraint(t *testing.T) {

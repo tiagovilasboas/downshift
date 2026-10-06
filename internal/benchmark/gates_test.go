@@ -6,8 +6,8 @@ package benchmark_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/benchmark"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 func TestEvaluateGates_FailsOnFrontierToSmall(t *testing.T) {

@@ -7,8 +7,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/benchmark"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // Tier-labelled datasets (small/mid/frontier) are scored on tiers instead

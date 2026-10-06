@@ -7,7 +7,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // riskPrompts touch secrets, auth, crypto, money, PII, destructive ops or try

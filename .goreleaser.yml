@@ -54,13 +54,13 @@ checksum:
 release:
   github:
     owner: tiagovilasboas
-    name: harness-downshift
+    name: downshift
   # Pre-release flag is set automatically for tags containing -beta, -alpha, -rc
   prerelease: auto
   header: |
-    ## harness-downshift {{ .Tag }}
+    ## Downshift {{ .Tag }}
 
-    Harness-native subagent model router for Claude Code, Cursor, Codex, Grok, and OpenRouter.
+    Deterministic model router for coding harnesses (Claude Code, Cursor, Codex, and more).
     Routes each subagent to the right-sized model by task complexity — no LLM in the routing loop.
 
     **⚠️ Beta release** — functional and tested, but APIs and catalog format may still change before v1.0.
@@ -69,12 +69,12 @@ release:
     ---
     **Install** (macOS / Linux):
     ```bash
-    curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/harness-downshift/main/install.sh | sh
+    curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
     ```
 
     **Install** (Go toolchain):
     ```bash
-    go install github.com/tiagovilasboas/harness-downshift/cmd/downshift@{{ .Tag }}
+    go install github.com/tiagovilasboas/downshift/cmd/downshift@{{ .Tag }}
     ```
 
     **Verify checksum:**
@@ -82,7 +82,7 @@ release:
     sha256sum -c checksums.txt
     ```
 
-    **Licence:** Apache License 2.0. See [LICENSE](https://github.com/tiagovilasboas/harness-downshift/blob/main/LICENSE).
+    **Licence:** Apache License 2.0. See [LICENSE](https://github.com/tiagovilasboas/downshift/blob/main/LICENSE).
 
 changelog:
   sort: asc

@@ -10,7 +10,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // loadTrivialWould returns, per golden row (same order as loadNBGolden), whether

@@ -16,9 +16,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/extractor"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/extractor"
 )
 
 // Example represents a single training example.

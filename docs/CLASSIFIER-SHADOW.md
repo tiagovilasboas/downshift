@@ -1,7 +1,7 @@
 # Candidate classifier shadow evaluation
 
 `harness-downshift` by Tiago de Carvalho Vilas Boas
-https://github.com/tiagovilasboas/harness-downshift
+https://github.com/tiagovilasboas/downshift
 
 ## What runs today
 

@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 func int64Ptr(v int64) *int64 { return &v }

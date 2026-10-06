@@ -6,7 +6,7 @@ package claudecode
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/lifecycleobserver"
+	"github.com/tiagovilasboas/downshift/internal/lifecycleobserver"
 )
 
 // Fixture payloads match the documented Claude Code SubagentStart/SubagentStop

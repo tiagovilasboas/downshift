@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/semantic"
+	"github.com/tiagovilasboas/downshift/internal/semantic"
 )
 
 func main() {

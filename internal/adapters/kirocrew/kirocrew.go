@@ -26,8 +26,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/hookutil"
 )
 
 const harnessID = "kirocrew"

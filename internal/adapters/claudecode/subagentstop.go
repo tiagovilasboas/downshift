@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // maxTranscriptBytes bounds how much of a subagent transcript is read. The hook

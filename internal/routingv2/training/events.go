@@ -28,10 +28,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/extractor"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/shadow"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/extractor"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/shadow"
 )
 
 // Event represents a single routing event for later training.
@@ -71,11 +72,11 @@ type EventStore struct {
 
 // DefaultEventsPath returns the default path for event storage.
 func DefaultEventsPath() string {
-	home, err := os.UserHomeDir()
+	p, err := paths.LoopEventsPath()
 	if err != nil {
-		return "events.jsonl"
+		return "loop-events.jsonl"
 	}
-	return filepath.Join(home, ".harness-downshift", "loop-events.jsonl")
+	return p
 }
 
 // RecordRoutedDecision stores only derived features and routing metadata. The

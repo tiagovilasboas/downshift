@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/training"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
 )
 
 func runShadowReport(args []string) int {

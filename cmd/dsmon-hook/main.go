@@ -17,7 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 var spawnTools = map[string]bool{
@@ -93,8 +94,10 @@ func run() {
 		Model:     model,
 	}
 
-	home, _ := os.UserHomeDir()
-	path := filepath.Join(home, ".harness-downshift", "agents.jsonl")
+	path, err := paths.AgentsPath()
+	if err != nil {
+		return
+	}
 	// Mirror telemetry.AppendTo: create parents locked down, tighten
 	// permissions on existing files, and sync before returning.
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {

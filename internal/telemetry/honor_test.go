@@ -6,7 +6,7 @@ package telemetry_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 func TestCountInferredHonored_CodexFollowUp(t *testing.T) {

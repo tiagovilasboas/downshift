@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/hookctx"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
 )
 
 // Embedder produces a dense vector for a prompt.

@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strings"
 
 	_ "embed"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 //go:embed catalog.json
@@ -130,11 +130,10 @@ func load(warning io.Writer) *Catalog {
 // userCatalogPath returns the path to the user override file and whether it
 // exists. Returns false if XDG / home resolution fails.
 func userCatalogPath() (string, bool) {
-	home, err := os.UserHomeDir()
+	p, err := paths.CatalogPath()
 	if err != nil {
 		return "", false
 	}
-	p := filepath.Join(home, ".harness-downshift", "catalog.json")
 	if _, err := os.Stat(p); err != nil {
 		return "", false
 	}

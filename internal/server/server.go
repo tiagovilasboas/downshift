@@ -13,11 +13,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 const DefaultPort = "7474"
@@ -87,10 +87,12 @@ type statsBlock struct {
 
 var window = 24 * time.Hour
 
-func home() string { h, _ := os.UserHomeDir(); return h }
-
 func readEvents() []rawEvent {
-	f, err := os.Open(filepath.Join(home(), ".harness-downshift", "events.jsonl"))
+	evPath, err := paths.EventsPath()
+	if err != nil {
+		return nil
+	}
+	f, err := os.Open(evPath)
 	if err != nil {
 		return nil
 	}
@@ -113,7 +115,11 @@ func readEvents() []rawEvent {
 }
 
 func readAgents() []agentEntry {
-	f, err := os.Open(filepath.Join(home(), ".harness-downshift", "agents.jsonl"))
+	agPath, err := paths.AgentsPath()
+	if err != nil {
+		return nil
+	}
+	f, err := os.Open(agPath)
 	if err != nil {
 		return nil
 	}
@@ -181,8 +187,8 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	evPath := filepath.Join(home(), ".harness-downshift", "events.jsonl")
-	agPath := filepath.Join(home(), ".harness-downshift", "agents.jsonl")
+	evPath, _ := paths.EventsPath()
+	agPath, _ := paths.AgentsPath()
 
 	lastEvSize := fileSize(evPath)
 	lastAgSize := fileSize(agPath)

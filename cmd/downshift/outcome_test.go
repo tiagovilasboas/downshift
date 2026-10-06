@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/outcome"
+	"github.com/tiagovilasboas/downshift/internal/outcome"
 )
 
 // README numbers come from `downshift eval-outcome --report`; this fails when

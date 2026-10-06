@@ -5,10 +5,10 @@ package models
 
 import (
 	"os"
-	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 func TestWriteOverride_AtomicallyWritesPrivateCatalog(t *testing.T) {
@@ -19,12 +19,14 @@ func TestWriteOverride_AtomicallyWritesPrivateCatalog(t *testing.T) {
 		t.Fatalf("writeOverride() error: %v", err)
 	}
 
-	dir, err := os.UserHomeDir()
+	dir, err := paths.StateDir()
 	if err != nil {
-		t.Fatalf("UserHomeDir(): %v", err)
+		t.Fatalf("StateDir(): %v", err)
 	}
-	dir = filepath.Join(dir, ".harness-downshift")
-	path := filepath.Join(dir, "catalog.json")
+	path, err := paths.CatalogPath()
+	if err != nil {
+		t.Fatalf("CatalogPath(): %v", err)
+	}
 	info, err := os.Stat(path)
 	if err != nil {
 		t.Fatalf("Stat(%q): %v", path, err)

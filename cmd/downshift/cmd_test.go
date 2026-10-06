@@ -16,14 +16,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/claudecode"
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/codex"
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/cursor"
-	"github.com/tiagovilasboas/harness-downshift/internal/catalog"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/classifier"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/training"
-	"github.com/tiagovilasboas/harness-downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
+	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
+	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/classifier"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // captureStdout redirects os.Stdout to a buffer for the duration of fn.
@@ -365,7 +366,11 @@ func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
 	if strings.Contains(string(data), privatePrompt) || strings.Contains(string(data), "abc123") {
 		t.Fatal("hook feedback log persisted raw prompt content")
 	}
-	eventData, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), ".harness-downshift", "events.jsonl"))
+	eventPath, err := paths.EventsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	eventData, err := os.ReadFile(eventPath)
 	if err != nil {
 		t.Fatal(err)
 	}

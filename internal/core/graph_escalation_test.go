@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // stubGraphify points DOWNSHIFT_GRAPHIFY_CMD at a script that reports every

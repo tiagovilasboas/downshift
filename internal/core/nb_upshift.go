@@ -6,7 +6,7 @@ package core
 import (
 	"os"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/nbtier"
+	"github.com/tiagovilasboas/downshift/internal/nbtier"
 )
 
 // NBUpshiftEnv turns the naive-Bayes upshift on. Default OFF: the opinion is

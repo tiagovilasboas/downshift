@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/adapters/antigravity"
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // stubResolver is a minimal core.Resolver modeling an Antigravity-native

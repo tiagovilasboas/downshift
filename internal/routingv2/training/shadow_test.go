@@ -7,9 +7,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
-	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/shadow"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
+	"github.com/tiagovilasboas/downshift/internal/routingv2/shadow"
 )
 
 type fixedShadow struct {

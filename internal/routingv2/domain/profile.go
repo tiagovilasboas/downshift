@@ -3,7 +3,7 @@
 
 package domain
 
-import "github.com/tiagovilasboas/harness-downshift/internal/core"
+import "github.com/tiagovilasboas/downshift/internal/core"
 
 // ModelProfile describes a model's capabilities and cost.
 // This is derived from catalog entries but kept separate so the routing

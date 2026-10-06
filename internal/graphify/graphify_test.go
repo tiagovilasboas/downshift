@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/graphify"
-	"github.com/tiagovilasboas/harness-downshift/internal/hookctx"
+	"github.com/tiagovilasboas/downshift/internal/graphify"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
 )
 
 // stubFetcher returns pre-configured NodeInfo per label for deterministic tests.

@@ -16,7 +16,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/benchmark"
+	"github.com/tiagovilasboas/downshift/internal/benchmark"
 )
 
 // benchmark/fresh.json, benchmark/heldout2.json and benchmark/blind-vitrine.json

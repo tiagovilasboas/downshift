@@ -6,7 +6,7 @@ package orchestration_test
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/orchestration"
+	"github.com/tiagovilasboas/downshift/internal/orchestration"
 )
 
 func validReq() orchestration.Request {

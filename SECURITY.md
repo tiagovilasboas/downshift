@@ -10,7 +10,7 @@ This project runs as a PreToolUse hook inside AI coding agents (Claude Code, Cur
 
 ### Reporting process
 
-1. Prefer **[GitHub Private Vulnerability Reporting](https://github.com/tiagovilasboas/harness-downshift/security/advisories/new)** (Security → Advisories → Report a vulnerability).
+1. Prefer **[GitHub Private Vulnerability Reporting](https://github.com/tiagovilasboas/downshift/security/advisories/new)** (Security → Advisories → Report a vulnerability).
 2. Alternatively, contact the maintainer via the channels listed on [github.com/tiagovilasboas](https://github.com/tiagovilasboas) with subject **Downshift security**.
 2. Include:
    - A clear description of the vulnerability.
@@ -38,7 +38,7 @@ Security vulnerabilities in `harness-downshift` include:
 
 ## Fixed and disclosed vulnerabilities
 
-None reported or fixed as of 2026-10-06. See [releases](https://github.com/tiagovilasboas/harness-downshift/releases) for patch history.
+None reported or fixed as of 2026-10-06. See [releases](https://github.com/tiagovilasboas/downshift/releases) for patch history.
 
 ## Building and testing
 

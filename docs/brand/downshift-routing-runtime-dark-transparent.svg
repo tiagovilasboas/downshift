@@ -49,4 +49,4 @@
 <text x="72" y="914" class="m" font-size="10.5">1. Harness emits its hook event → 2. adapter extracts the child task → 3. core.Route classifies and selects a tier/model from the catalog →</text>
 <text x="72" y="936" class="m" font-size="10.5">4. PlanForSession proves the target exists in that session and respects explicit/confidence gates → 5. adapter emits the harness-native rewrite.</text>
 <text x="72" y="963" class="m" font-size="10.5">Every failure path is fail-open: Downshift must not become an availability risk for the coding harness.</text>
-<text x="50" y="1020" class="m" font-size="9">Source: github.com/tiagovilasboas/harness-downshift · main branch read 2026-09-30 · diagram reflects code, not roadmap claims.</text></svg>
+<text x="50" y="1020" class="m" font-size="9">Source: github.com/tiagovilasboas/downshift · main branch read 2026-09-30 · diagram reflects code, not roadmap claims.</text></svg>

@@ -6,7 +6,7 @@ package domain
 import (
 	"testing"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 func TestCapabilities_Satisfies(t *testing.T) {

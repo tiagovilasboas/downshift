@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tiagovilasboas/harness-downshift/internal/server"
+	"github.com/tiagovilasboas/downshift/internal/server"
 )
 
 func main() {

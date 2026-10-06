@@ -199,7 +199,7 @@ func TestInstallResolvesLatestWithoutGitHubAPI(t *testing.T) {
 	r := runInstall(t, "v1.0.0", "")
 	assertInstalled(t, r)
 	assertNoAPICalls(t, r)
-	if len(r.urls) == 0 || r.urls[0] != "https://github.com/tiagovilasboas/harness-downshift/releases/latest" {
+	if len(r.urls) == 0 || r.urls[0] != "https://github.com/tiagovilasboas/downshift/releases/latest" {
 		t.Errorf("first lookup = %v, want the github.com /releases/latest redirect", r.urls)
 	}
 }
