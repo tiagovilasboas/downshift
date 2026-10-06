@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Docs:** Slim [README.md](README.md) (hero + quickstart + index). Full install,
+  per-harness hooks, dsmon, plan compatibility, and troubleshooting moved to
+  [docs/INSTALL.md](docs/INSTALL.md). [AGENTS.md](AGENTS.md) and [llms.txt](llms.txt)
+  point agents at INSTALL. Added [examples/run-all.sh](examples/run-all.sh) adapter smoke.
+
 ## [0.1.0-beta.7] — 2026-10-06
 
 ### Changed

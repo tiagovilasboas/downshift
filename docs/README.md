@@ -4,6 +4,7 @@
 
 | Doc | For |
 |-----|-----|
+| **[INSTALL.md](INSTALL.md)** | Install binary, hooks per harness, troubleshooting (humans + agents) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | What Downshift is and how hooks flow |
 | [WHEN-TO-USE.md](WHEN-TO-USE.md) | Downshift vs gateways and direct SDK |
 | [CONFIG.md](CONFIG.md) | State dir, env vars, migration |

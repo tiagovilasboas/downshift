@@ -13,6 +13,9 @@ Author: Tiago de Carvalho Vilas Boas
 Repository: https://github.com/tiagovilasboas/downshift
 Language: Go 1.27, single binary, zero runtime dependencies.
 
+Install and harness setup (canonical for agents): docs/INSTALL.md
+Contributing / architecture for this repo: AGENTS.md and CONTRIBUTING.md
+
 ## Licence
 
 SPDX-License-Identifier: Apache-2.0

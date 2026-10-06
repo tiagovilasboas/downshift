@@ -3,6 +3,11 @@
 Use these JSON fixtures to test adapters without a live harness session.
 
 ```bash
+# Run all three fixtures (requires downshift on PATH)
+./examples/run-all.sh
+```
+
+```bash
 # From repo root (Claude Code shape)
 downshift claude-code < examples/claude-code-pretooluse-task.json
 

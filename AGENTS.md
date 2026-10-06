@@ -30,6 +30,17 @@ allowed under the licence terms. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
 
 ## Mandatory behaviours for this session
 
+### End-user install (any session)
+
+If the user asks to **install, configure, or debug hooks** on their machine (not to
+change this repository), read **[docs/INSTALL.md](docs/INSTALL.md)** first.
+
+- Use `curl …/install.sh` or [Releases](https://github.com/tiagovilasboas/downshift/releases); then `downshift doctor`.
+- State dir: `~/.downshift` (legacy `~/.harness-downshift/`). See [docs/CONFIG.md](docs/CONFIG.md).
+- Session allowlist: [docs/session-models.md](docs/session-models.md). Rewrites require listed models.
+- Plan / rewrite-honored limits: [docs/HARNESS-MATRIX.md](docs/HARNESS-MATRIX.md).
+- Do not invent hook paths, matchers, or catalog entries without checking INSTALL and examples.
+
 ### Shared RAG memory
 
 The private Logseq vault at `/Users/tiago.boas/Logseq/rag-kb` is durable shared
@@ -151,6 +162,25 @@ When the agent says "do not commit catalog.json", it means the **user override**
 `_section` comment objects (entries with only a `_section` key, no `id` or
 `harness`) are silently skipped by the parser — use them for readability.
 Every real entry must have `id`, `harness`, `tier`, and `family`.
+
+---
+
+## Before declaring a code change done
+
+From the repository root:
+
+```bash
+go test ./...
+make test    # if available — same as go test
+```
+
+Adapter smoke (requires `downshift` on PATH):
+
+```bash
+./examples/run-all.sh
+```
+
+Classifier or signal changes need a table-driven test in `classifier_edge_test.go` (or adjacent `*_test.go`). See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
