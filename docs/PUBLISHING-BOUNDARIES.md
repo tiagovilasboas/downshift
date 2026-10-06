@@ -31,7 +31,8 @@ belong in git; use a private repository.
 | Install & config | [CONFIG.md](CONFIG.md), [session-models.md](session-models.md), `install.sh` | Required to run |
 | Architecture | [ARCHITECTURE.md](ARCHITECTURE.md), [WHEN-TO-USE.md](WHEN-TO-USE.md) | Positioning without over-selling |
 | Harness honesty | [HARNESS-MATRIX.md](HARNESS-MATRIX.md), [BETA-EXIT.md](BETA-EXIT.md) | Beta trust |
-| Contribute | [CONTRIBUTING.md](../CONTRIBUTING.md), [contrib/classifier.md](contrib/classifier.md), `benchmark/` | Community quality |
+| Contribute | [CONTRIBUTING.md](../CONTRIBUTING.md), [contrib/classifier.md](contrib/classifier.md) | Community quality |
+| Published metrics | [benchmark/REPORT.md](../benchmark/REPORT.md) | Final numbers only (raw eval in `downshift-labs`) |
 | Licence & trust | [LICENSE](../LICENSE), [RELICENSE.md](RELICENSE.md), [COMMERCIAL.md](../COMMERCIAL.md), [MONETIZATION.md](../MONETIZATION.md) | Apache 2.0 transparency (not a sales deck) |
 | Experimental (short) | [CAPABILITY-ROUTER-V2.md](CAPABILITY-ROUTER-V2.md), [CLASSIFIER-SHADOW.md](CLASSIFIER-SHADOW.md) | Set expectations: v2 ≠ production hook |
 | Direction | [ROADMAP.md](../ROADMAP.md), [GOVERNANCE.md](../GOVERNANCE.md) | OSS expectations |
@@ -68,7 +69,7 @@ knowing git history and clones are public.
 
 | Class | Examples | Tier |
 |-------|----------|------|
-| **Green** | Install, CONFIG, adapters, fail-open, benchmarks, contrib classifier, Apache licence | Public `docs/` |
+| **Green** | Install, CONFIG, adapters, fail-open, `benchmark/REPORT.md`, contrib classifier, Apache licence | Public `docs/` |
 | **Green** | “We may offer hosted/support” without SKU detail | [MONETIZATION.md](../MONETIZATION.md) |
 | **Yellow** | Launch wave checklists, coverage tables, long v2 archive | `docs/internal/` |
 | **Yellow** | Promotion thresholds, shadow/train workflow (no live production numbers) | `docs/internal/` or shortened [ENGINEERING-LOOP.md](ENGINEERING-LOOP.md) |

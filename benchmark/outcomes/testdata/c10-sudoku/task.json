@@ -1,5 +1,0 @@
-{
-  "id": "c10-sudoku",
-  "label": "COMPLEX",
-  "prompt": "write Solve(board [9][9]int) ([9][9]int, bool) that solves a sudoku (0 = empty cell) with backtracking, keeps the given digits, and returns false for boards that break the rules or have no solution"
-}

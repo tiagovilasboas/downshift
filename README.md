@@ -568,96 +568,26 @@ to a role's reasoning effort in config once.
 
 ---
 
-## Capability Router v2
+## Capability Router v2 (experimental)
 
-The default classifier is deterministic (regex scoring). The **CapabilityRouter v2** is a statistical, opt-in upgrade that adds:
+Production hooks use the **v1 deterministic classifier** (`core.Route`). **v2** is an offline / shadow pipeline (`train`, `benchmark --compare`, `DOWNSHIFT_SHADOW_WEIGHTS`) — it does **not** replace the hook unless you explicitly promote it after review.
 
-- **13 extracted signals** — mechanical, coding, security, concurrency, migration, planning, etc.
-- **Deterministic safety floor** — high-risk tasks (auth, migration, race conditions) are pinned to Frontier regardless of the classifier.
-- **Risk-weighted loss** — under-routing is penalised 5–10× harder than over-routing. `FRONTIER→SMALL` is catastrophic; `SMALL→MID` is cheap.
-- **Personalised weights:** train on labelled data or explicit reviews, compare on a holdout, then observe with `DOWNSHIFT_SHADOW_WEIGHTS`. Copying weights into place does not switch production hooks to v2.
-
-The router is **completely model-agnostic**: no model names, no provider strings in the routing logic. It decides tiers; the catalog decides models.
-
-### Try it
-
-```bash
-# Train on a labelled dataset (SMALL/MID/FRONTIER labels)
-downshift train dataset.json
-
-# Or train from collected routing events (privacy-first: features only, no prompts)
-downshift train --from-events
-
-# Record a reviewed outcome for any harness by using the ID printed by the hook
-downshift feedback list --pending
-downshift feedback stats
-downshift feedback <id> success --required-tier=MID
-# Or record a retry/failure; retry tier describes which stronger tier ran.
-downshift feedback <id> retry --retry-tier=FRONTIER
-downshift feedback <id> failed
-
-# Train a candidate from explicitly reviewed local feedback
-downshift train --from-events --output=candidate.json
-
-# Evaluate candidate weights on an independent labelled holdout
-downshift benchmark holdout.json --compare --candidate-weights=candidate.json
-
-# Observe a candidate alongside production hooks, without activating it
-export DOWNSHIFT_SHADOW_WEIGHTS=/absolute/path/candidate.json
-downshift shadow-report
-```
-
-### Dataset format
-
-```json
-[
-  { "prompt": "rename the variable userId", "label": "SMALL" },
-  { "prompt": "add a retry with exponential backoff", "label": "MID" },
-  { "prompt": "rearchitect the auth module to support multi-tenant", "label": "FRONTIER" }
-]
-```
-
-Labels: `SMALL`, `MID`, `FRONTIER`. Features are extracted automatically if absent.
-
-See [candidate shadow evaluation](docs/CLASSIFIER-SHADOW.md) for the complete
-review loop, report interpretation and semantic model roadmap. Production hooks
-remain on `core.Route`; the V2 weights override does not switch those hooks.
-
-The go/no-go criterion: **`FRONTIER→SMALL` must fall vs legacy**. Everything else is secondary.
-
-### Privacy-first event collection
-
-When collecting routing events for training, only the extracted **feature vector** is stored — never the raw prompt. Each event is:
-
-```json
-{ "record_type": "decision", "id": "<opaque-id>", "timestamp": "...", "features": {...}, "selected_tier": 2, "confident": true, "harness": "claude-code" }
-```
-
-Loop events live at `~/.harness-downshift/loop-events.jsonl`. Nothing leaves your machine.
-The event log stores derived features, routing metadata, and reviewed outcomes;
-it never stores raw task prompts. Feedback IDs work across Claude Code, Cursor,
-and Codex because review is done by the shared CLI, not a harness-specific API.
-
-`success` records that a run completed; `retry` can record a stronger retry tier;
-`failed` records an unusable result. These outcomes alone do not create training
-labels: add `--required-tier=SMALL|MID|FRONTIER` only when an engineer has
-reviewed the minimum tier. This avoids treating “worked” as proof that a model
-was the cheapest adequate choice. Candidate evaluation never activates weights.
+Details: [docs/CAPABILITY-ROUTER-V2.md](docs/CAPABILITY-ROUTER-V2.md) · [docs/CLASSIFIER-SHADOW.md](docs/CLASSIFIER-SHADOW.md) · [docs/ENGINEERING-LOOP.md](docs/ENGINEERING-LOOP.md)
 
 ---
 
 ## Architecture
 
-![Architecture](docs/img/architecture.svg?v=2)
+Package boundaries, hook flow, and experimental systems:
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-Dependency direction is one-way: `catalog → core`, never reversed. Model IDs
-and costs live in `catalog.json` — no Go recompile needed to add or update a
-model.
+![Architecture](docs/img/architecture.svg?v=2)
 
 ### Updating or overriding the catalog
 
-Place a file at `~/.harness-downshift/catalog.json` to override the embedded
-default. Run `downshift models list` to see which catalog is active.
+Default state dir: `~/.downshift` (legacy `~/.harness-downshift` supported).
+Place `catalog.json` there to override the embedded default. Run
+`downshift models list` or `downshift doctor` to see what is active.
 
 ```bash
 # See the current effective catalog
@@ -765,88 +695,19 @@ On free plans or legacy Cursor pricing, the hook runs but model rewrites may be 
 
 ---
 
-## How the deterministic switch works
+## How routing works (summary)
 
-This is the core of the project — and the most important thing to understand before deploying it.
+**No LLM on the hot path:** local scoring in Go, fail-open, same input → same tier
+decision. Complexity (TRIVIAL → COMPLEX) maps to catalog **tiers** (small / mid /
+frontier); adapters rewrite the harness payload or apply policy mode (KiroCrew).
 
-**There is no LLM in the routing loop.** Classification is local pattern-matching in Go, runs in < 1ms, adds zero tokens to any session, and produces the same output for the same input every time. It's a function you can read, test, and audit. Not a black box.
+Before you depend on it: run `downshift try "<your prompt>"` and read
+[Plan compatibility](#plan-compatibility--read-before-installing).
 
-### The algorithm, step by step
-
-Given a task prompt, the classifier:
-
-1. **Extracts signals** — 13 weighted indicators across mechanical, coding, security, concurrency, migration, and planning dimensions. Each signal is a scored pattern match (keywords, structural patterns, verb classes).
-
-2. **Scores four complexity classes simultaneously:**
-
-   | Class | Example signals |
-   |---|---|
-   | TRIVIAL | `rename`, `format`, `git status`, `list files`, `fix typo` |
-   | SIMPLE | `add a field`, `fix this bug`, `write a test for` |
-   | MEDIUM | `refactor`, `add pagination`, `implement feature X` |
-   | COMPLEX | `rearchitect`, `diagnose race condition`, `migrate`, `auth`, `security` |
-
-3. **Picks the winner** — highest total score. Ties break toward higher complexity. No signal at all → `MEDIUM` (the session's default model), so it fails safe.
-
-4. **Maps complexity → tier** — three model tiers, harness-agnostic:
-
-   | Complexity | Tier | What it means |
-   |---|---|---|
-   | TRIVIAL + SIMPLE | `small` | haiku-class: fast, cheap, enough |
-   | MEDIUM | `mid` | sonnet-class: capable, balanced |
-   | COMPLEX | `frontier` | opus-class: maximum reasoning |
-
-5. **Translates tier → model** — via the catalog (`internal/catalog/catalog.json`). Model IDs, prices, and family mappings live there. No Go recompile to add a new model or update a price.
-
-6. **Decides: allow, rewrite, or block** — depending on the harness's capability:
-   - Claude Code / Cursor / Codex / Antigravity: **rewrite** the model in `updated_input` before the subagent starts.
-   - KiroCrew: **policy mode** — allow (`exit 0`) if right tier, block with actionable message (`exit 2`) if confident mismatch.
-   - Unknown tool / non-subagent: **allow** (fail-open, always).
-
-### A real example, end to end
-
-```
-Input:   "rename the userId variable across auth.ts"
-Harness: claude-code
-Model:   claude-opus-5-5 (inherited from session)
-
-Signal extraction:
-  → verb: "rename"         → TRIVIAL +8
-  → object: "variable"     → TRIVIAL +4
-  → scope: single file     → TRIVIAL +2
-  → no security signals
-  → no concurrency signals
-
-Scores:
-  TRIVIAL: 14   ← winner
-  SIMPLE:   2
-  MEDIUM:   0
-  COMPLEX:  0
-
-Confident: YES (gap > threshold)
-Tier:     small
-Model:    claude-haiku-4-5
-
-Decision:
-  DOWNSHIFT  (was: opus-5-5, now: haiku-4-5)
-  Rewrite written to updated_input.model
-  Event logged to ~/.harness-downshift/events.jsonl
-```
-
-The subagent starts on haiku. The session model stays on opus. Total routing overhead: ~0.3ms.
-
-### Safety guarantees
-
-The classifier is conservative by design:
-
-- **Never underpower hard tasks.** High-risk signals (auth, migration, race condition, security) pin the task to `COMPLEX` regardless of other scores. A task involving `"the race condition in the auth middleware"` goes to frontier even if it also contains trivial signals.
-- **Ties go up, not down.** When the score difference is below the confidence threshold, the router routes *up* or does nothing. It never downgrades a task on doubt.
-- **Fail-open everywhere.** Parse errors, unknown models, missing catalog entries, harness exceptions — the subagent runs unchanged. The cost optimizer is never an availability risk.
-- **FRONTIER→SMALL is the one case the classifier should never produce for genuinely complex tasks.** On the seed dataset: 0.0% observed (0 / 7 COMPLEX tasks). Run `downshift benchmark benchmark/tasks.json` to verify on your own prompts.
-
-### Why deterministic matters
-
-The alternative — another LLM deciding which model to use — adds tokens, adds latency, and introduces non-determinism. A classifier that routes correctly 70% of the time but costs tokens to do it can cost *more* than no router at all. Deterministic routing costs zero tokens, runs locally, and is auditable: you can trace every decision back to the exact signals that fired.
+| Need | Doc |
+|------|-----|
+| Hook flow, packages, state dir | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Signals, margin, tuning, misroutes | [docs/contrib/classifier.md](docs/contrib/classifier.md) |
 
 ---
 
@@ -904,48 +765,13 @@ no data leaves your machine. Use `downshift stats --days=7` for a weekly view.
 
 ## Classifier benchmark
 
-Run the classifier against the seed dataset included in the repository:
-
-```
-# Example output — run this yourself to see current numbers.
-$ downshift benchmark benchmark/tasks.json
-
-Dataset: 30 tasks
-
-Complexity accuracy     46.7%  (exact label match)
-Tier routing accuracy   70.0%  (correct model tier — what matters economically)
-
-Unsafe downgrade (FRONTIER → cheaper tier):
-  FRONTIER → MID        42.9%  (3 / 7)
-  FRONTIER → SMALL       0.0%  (0 / 7)
-
-Wasteful over-routing (SMALL → dearer tier):
-  SMALL → MID           55.6%  (5 / 9)
-  SMALL → FRONTIER       0.0%  (0 / 9)
-```
-
-The two numbers that matter for the business decision:
-
-**Tier routing accuracy (70.0%)** is the economic KPI. SIMPLE predicted as
-MEDIUM is a complexity miss but an identical routing decision — both go to
-the mid tier. Complexity accuracy (46.7%) makes the classifier look worse
-than it really is in terms of actual model selection.
-
-**Observed FRONTIER→SMALL rate on the seed dataset: 0.0%** (0 / 7 COMPLEX tasks).
-That is a good signal on 30 tasks — not yet a proven safety guarantee.
-FRONTIER→MID (42.9%) is the current main gap: those tasks get a capable model
-but not the strongest one. That is the classifier's known weak spot on this seed.
-
-The seed dataset has 30 tasks. The format is
-`[{"prompt":"…","label":"TRIVIAL|SIMPLE|MEDIUM|COMPLEX"}]`.
-Add your own prompts and run again — real coding tasks from your stack are
-the highest-value contribution you can make to this project.
-
-To compare legacy vs the CapabilityRouter v2 classifier, use a dataset with `SMALL/MID/FRONTIER` labels and run:
-
 ```bash
-downshift benchmark dataset.json --compare
+downshift benchmark path/to/tasks.json --report
 ```
+
+Maintainer datasets are not in this clone. Published figures:
+[benchmark/REPORT.md](benchmark/REPORT.md). Policy:
+[benchmark/EVAL-PRIVATE.md](benchmark/EVAL-PRIVATE.md).
 
 ---
 
@@ -1234,26 +1060,8 @@ with the prompt, what `downshift try` returned, and what you expected.
 
 ## Classifier & outcome metrics
 
-<!-- downshift-report:begin -->
-<!-- Generated by `downshift eval-outcome --report --write README.md`. Do not edit by hand: CI fails when this block drifts. -->
-
-**Classifier benchmark** (default classifier; labels are a human complexity rubric, not measured outcomes):
-
-| Dataset | Tasks | Tier accuracy (95% CI) | FRONTIER→MID | FRONTIER→SMALL | SMALL→MID | SMALL→FRONTIER |
-|---|---|---|---|---|---|---|
-| `benchmark/tasks.json` (seed, CI gate) | 200 | 69.0% (62.5–75.5%) | 0.0% (0/50) | 0.0% (0/50) | 49.0% (49/100) | 7.0% (7/100) |
-| `benchmark/holdout.json` (burned: tuned to 100%, regression net only) | 300 | 100.0% (100.0–100.0%) | 0.0% (0/75) | 0.0% (0/75) | 0.0% (0/150) | 0.0% (0/150) |
-
-**Outcome eval** (`benchmark/outcomes`: 40 Go tasks, each with an executable check; CI verifies every stub fails and every reference passes). The router sends 0 tasks to small, 29 to mid and 11 to frontier; 9 of 10 COMPLEX-labelled tasks are routed below frontier.
-
-| Run tier | Model | Date | Pass, all tasks (95% CI) | Pass, TRIVIAL+SIMPLE labels (95% CI) | Pass, routed to small (95% CI) |
-|---|---|---|---|---|---|
-| frontier | `anthropic/claude-opus-5.5` | 2026-10-03 | 40/40 = 100.0% (91.2–100.0%) | 20/20 = 100.0% (83.9–100.0%) | n/a |
-| mid | `deepseek/deepseek-v4-flash` | 2026-10-03 | 31/40 = 77.5% (62.5–87.7%) | 17/20 = 85.0% (64.0–94.8%) | n/a |
-| small | `qwen/qwen3-coder-30b-a3b-instruct` | 2026-10-03 | 27/40 = 67.5% (52.0–79.9%) | 16/20 = 80.0% (58.4–91.9%) | n/a |
-
-Small minus frontier pass rate, TRIVIAL+SIMPLE labels: -20.0pp (revisit the downshift below −5pp).
-<!-- downshift-report:end -->
+Curated public summary (maintainer-updated, not CI-generated):
+[benchmark/REPORT.md](benchmark/REPORT.md).
 
 ## License
 

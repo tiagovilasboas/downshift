@@ -1,5 +1,0 @@
-{
-  "id": "s04-fizzbuzz",
-  "label": "SIMPLE",
-  "prompt": "write FizzBuzz(n int) []string returning the classic FizzBuzz sequence for 1..n"
-}

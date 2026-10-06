@@ -1,5 +1,0 @@
-{
-  "id": "m02-merge-intervals",
-  "label": "MEDIUM",
-  "prompt": "write Merge(intervals [][2]int) [][2]int that merges overlapping or touching closed intervals and returns them sorted by start, without mutating the input"
-}

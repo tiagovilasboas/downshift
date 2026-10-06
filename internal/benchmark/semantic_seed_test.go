@@ -12,9 +12,9 @@ import (
 )
 
 func TestSeedDataset_MiniLM_ImprovesTierOrSafety(t *testing.T) {
-	tasks, err := benchmark.LoadDataset("../../benchmark/tasks.json")
+	tasks, err := benchmark.LoadDataset("testdata/sample.json")
 	if err != nil {
-		t.Skip("seed dataset not found")
+		t.Skip("sample dataset not found")
 	}
 
 	regexOnly := benchmark.RunWithClassifier(tasks, core.Classify, io.Discard)

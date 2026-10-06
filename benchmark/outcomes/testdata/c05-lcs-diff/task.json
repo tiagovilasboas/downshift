@@ -1,5 +1,0 @@
-{
-  "id": "c05-lcs-diff",
-  "label": "COMPLEX",
-  "prompt": "write Diff(a, b []string) []string that produces a minimal line diff based on the longest common subsequence; each output line is prefixed with \"  \" (unchanged), \"- \" (only in a) or \"+ \" (only in b), so that the unchanged plus removed lines rebuild a and the unchanged plus added lines rebuild b"
-}

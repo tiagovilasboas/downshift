@@ -1,5 +1,0 @@
-{
-  "id": "t08-ctof",
-  "label": "TRIVIAL",
-  "prompt": "add CToF(c float64) float64 that converts Celsius to Fahrenheit"
-}

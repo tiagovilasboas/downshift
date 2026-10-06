@@ -1,5 +1,0 @@
-{
-  "id": "s05-roman",
-  "label": "SIMPLE",
-  "prompt": "write ToRoman(n int) string that converts 1..3999 to Roman numerals"
-}
