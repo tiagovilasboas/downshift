@@ -31,7 +31,7 @@ Subagent / request
 |---|---|
 | **Right-sized models** | Trivial tasks downshift to small tiers; complex work stays on frontier. |
 | **Deterministic** | Scored signals, not an LLM classifier, on the hot path. |
-| **Testable** | `downshift try`, outcome benchmarks, optional shadow classifier (`DOWNSHIFT_SHADOW_WEIGHTS`). |
+| **Testable** | `downshift try`, published metrics ([benchmark/REPORT.md](benchmark/REPORT.md)), optional shadow (`DOWNSHIFT_SHADOW_WEIGHTS`). |
 | **Observable** | Local telemetry (`events.jsonl`), feedback with explicit `--required-tier` for training labels. |
 | **Harness-agnostic core** | Adapters only encode I/O; routing lives in `internal/core`. |
 

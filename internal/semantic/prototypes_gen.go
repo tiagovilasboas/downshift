@@ -49,7 +49,7 @@ func WritePrototypesJSON(path string, store PrototypeStore) error {
 	return os.WriteFile(path, append(raw, '\n'), 0o644)
 }
 
-// RefreshHashPrototypesFromBenchmark reads benchmark/tasks.json and writes prototypes.
+// RefreshHashPrototypesFromBenchmark reads a maintainer task JSON file and writes prototypes.
 func RefreshHashPrototypesFromBenchmark(tasksJSONPath, outPath string) error {
 	data, err := os.ReadFile(tasksJSONPath)
 	if err != nil {

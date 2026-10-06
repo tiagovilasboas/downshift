@@ -164,7 +164,7 @@ func TestRefreshHashPrototypesFromBenchmark(t *testing.T) {
 	if os.Getenv("REFRESH_PROTOTYPES") != "1" {
 		t.Skip("set REFRESH_PROTOTYPES=1 to rewrite prototypes.json")
 	}
-	err := semantic.RefreshHashPrototypesFromBenchmark("../../benchmark/tasks.json", "data/prototypes.json")
+	err := semantic.RefreshHashPrototypesFromBenchmark("../../internal/benchmark/testdata/sample.json", "data/prototypes.json")
 	if err != nil {
 		t.Fatal(err)
 	}

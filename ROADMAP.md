@@ -29,9 +29,9 @@ HTTP proxy, but that is not the current shipping surface.
 | Harness routing | Stable PreToolUse rewrites + adapter coverage |
 | Honest telemetry | `rewrite_emitted` vs harness-reported honor (`resolved`) |
 | Real cost | SubagentStop usage linkage (Claude Code); expand as harnesses expose usage |
-| Evaluation | Seed/holdout regression gates; outcome tasks; shadow classifier observation |
+| Evaluation | Public [benchmark/REPORT.md](benchmark/REPORT.md); full regression in maintainer downshift-labs; shadow observation |
 | Docs | User docs (install, session models), [classifier contrib](docs/contrib/classifier.md), misroute workflow |
-| Eval rigor | [router-generalization](docs/design/router-generalization.md), shadow + holdout gates |
+| Eval rigor | [router-generalization](docs/design/router-generalization.md) summary; detailed study in labs |
 
 **Beta exit blockers (community / dogfood):** see [BETA-EXIT.md](docs/BETA-EXIT.md)
 pillars P2 (multi-user exports) and P3 (billing evidence).
