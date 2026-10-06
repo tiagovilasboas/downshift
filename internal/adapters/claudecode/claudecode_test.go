@@ -391,8 +391,8 @@ func TestHandle_SessionQuotaRespected(t *testing.T) {
 	smallID := catID(core.TierSmall)
 	included := []string{smallID} // Only small allowed
 	ev := claudecode.Event{
-		ToolName:      "Task",
-		Model:         catID(core.TierFrontier),
+		ToolName:       "Task",
+		Model:          catID(core.TierFrontier),
 		IncludedModels: &included,
 		ToolInput: json.RawMessage(`{
 			"prompt": "rename variable",
