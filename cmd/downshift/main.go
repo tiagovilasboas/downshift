@@ -60,7 +60,7 @@ var errHookReadTimeout = errors.New("hook input timeout")
 func main() {
 	args := os.Args[1:]
 	if len(args) == 0 {
-		usage()
+		usage(os.Stderr)
 		os.Exit(2)
 	}
 
@@ -134,11 +134,11 @@ func main() {
 	case "version", "--version":
 		os.Exit(runVersion(os.Stdout))
 	case "-h", "--help", "help":
-		usage()
+		usage(os.Stdout)
 		os.Exit(0)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", args[0])
-		usage()
+		usage(os.Stderr)
 		os.Exit(2)
 	}
 }
@@ -1266,8 +1266,8 @@ func printCodexAllow() {
 	fmt.Println(`{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}`)
 }
 
-func usage() {
-	fmt.Fprint(os.Stderr, `downshift — right-sized models for every subagent task
+func usage(w io.Writer) {
+	fmt.Fprint(w, `downshift — right-sized models for every subagent task
 
 Usage:
   downshift antigravity          Run as an Antigravity PreToolUse hook
@@ -1283,10 +1283,7 @@ Usage:
   downshift models pull          Write ~/.harness-downshift/catalog.json from APIs
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
   downshift stats --cost-per-unit=<USD>   Convert normalised units to dollars
-
-Monitor (separate binary — cmd/dsmon):
-  go build -o dsmon ./cmd/dsmon  Build the live terminal widget
-  ./cmd/dsmon/launch.sh          Open dsmon in a floating terminal window
+  downshift stats --export       Print a pasteable JSON summary without prompts
   downshift benchmark <file>     Run classifier against a labelled dataset; print confusion matrix
   downshift benchmark <file> --compare  Compare Legacy vs CapabilityRouter v2 side by side
   downshift eval-outcome --verify|--report  Outcome eval: executable checks, small vs frontier pass rate
@@ -1295,6 +1292,10 @@ Monitor (separate binary — cmd/dsmon):
   downshift feedback list        List routing IDs awaiting engineer review
   downshift feedback stats       Summarize outcomes per harness
   downshift feedback <id> <outcome>  Record success, retry, or failed
+
+Monitor (separate binary — cmd/dsmon):
+  go build -o dsmon ./cmd/dsmon  Build the live terminal widget
+  ./cmd/dsmon/launch.sh          Open dsmon in a floating terminal window
 
 Grok note:
   Grok routes subagent models via config, not a hook (its PreToolUse is

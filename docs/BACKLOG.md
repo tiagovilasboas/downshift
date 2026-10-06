@@ -29,6 +29,8 @@ It is not proof that a capability has been accepted by an executor.
 | KB-01 | P2 | Accepted local structured summary/telemetry instrumentation | HC-01 accepted | AI/FinOps + Full-stack | retrieval boundary cannot be evidenced prompt-free |
 | KB-02 | P2 | Accepted local boundary fixtures/guardrails | KB-01 contract and AppSec review | AppSec + AI/FinOps | personal/corporate boundary would be weakened |
 | DS-04 | P3 | POC local em execução: lifecycle observation, sem ACK | contrato de privacidade + lifecycle Codex | Full-stack + AppSec | correlação ambígua ou ausência de contrato suportado |
+| GH-21 | P1 | Merged in PR #50 | catalog entries + hook fail-open boundary | Full-stack + QA | `ModelFor` fallback or hook behaviour would change |
+| GH-20 | P1 | PR implementation in progress | CLI usage writer split | Full-stack + QA | error usage stops writing to stderr |
 
 ## DS-01 — P0 local runtime evidence
 
@@ -120,3 +122,24 @@ It is not proof that a capability has been accepted by an executor.
 - **Acceptance:** `KiroCrewFetcher` integrated and at least one spawn with a file path confirmed to escalate via graph evidence (not just text signals).
 - **Fowler:** guia computacional / architecture fitness: file/symbol extraction; guia inferencial / behaviour: community-based escalation criteria; sensor computacional / behaviour: 9 unit tests with stub fetcher; sensor inferencial / architecture fitness: graphify doc with active god_nodes data.
 
+## GH-21 — P1 `downshift try` input validation
+
+- **Source:** https://github.com/tiagovilasboas/harness-downshift/issues/21.
+- **Files:** `cmd/downshift/main.go`, `cmd/downshift/cmd_test.go`.
+- **Scope:** reject empty or whitespace-only prompts and reject unknown harness names in `downshift try` before routing. Valid harness names come from catalog entries, plus the special `grok` CLI path.
+- **Exclusions:** do not change `core.Resolver.ModelFor` fallback or hook fail-open behaviour; this is CLI validation only.
+- **Commands:** `go test ./cmd/downshift -run 'TestRunTry_(RejectsEmptyPrompt|RejectsUnknownHarness|TrivialTask)'`; `go test ./...`; `go vet ./...`; `git diff --check`.
+- **Acceptance:** empty prompt exits 2 with usage on stderr; unknown harness exits 2 and lists valid names; valid `try` output remains unchanged.
+- **Evidence:** merged 2026-10-06 in PR #50 after focused and full local Go tests, `go vet ./...`, `git diff --check`, and green GitHub CI including cross-platform builds.
+- **Fowler:** guia computacional / behaviour: catalog-derived valid harness set; sensor computacional / behaviour: focused `runTry` regression tests; sensor inferencial / maintainability: review that hook fallback remains untouched.
+
+## GH-20 — P1 help text stdout/stderr split
+
+- **Source:** https://github.com/tiagovilasboas/harness-downshift/issues/20.
+- **Files:** `cmd/downshift/main.go`, `cmd/downshift/main_test.go`, `docs/BACKLOG.md`.
+- **Scope:** print explicit `downshift --help` to stdout with exit 0, keep error/no-arg usage on stderr with exit 2, move `benchmark`, `train`, and `feedback` back under the main command list, and document `stats --export`.
+- **Exclusions:** no command semantics change beyond usage output and exit-stream split.
+- **Commands:** `go test ./cmd/downshift -run TestHelpWritesToStdoutAndErrorsWriteUsageToStderr`; `go test ./...`; `go vet ./...`; `git diff --check`.
+- **Acceptance:** help stdout includes `stats --export`; monitor section only contains `dsmon` commands; no-args and unknown command usage remain stderr exit 2.
+- **Evidence:** 2026-10-06 local focused subprocess test, full `go test ./...`, `go vet ./...` and `git diff --check` passed.
+- **Fowler:** guia inferencial / maintainability: clearer CLI command taxonomy; sensor computacional / behaviour: subprocess stdout/stderr regression test; sensor inferencial / architecture fitness: issue acceptance review against command ownership.
