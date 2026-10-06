@@ -1,5 +1,0 @@
-{
-  "id": "s02-dedupe",
-  "label": "SIMPLE",
-  "prompt": "write Dedupe(xs []string) []string that removes duplicates while keeping first-seen order"
-}

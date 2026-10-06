@@ -1,5 +1,0 @@
-{
-  "id": "m03-rpn",
-  "label": "MEDIUM",
-  "prompt": "write EvalRPN(tokens []string) (int, error) that evaluates a reverse Polish notation expression with + - * / (integer division truncating toward zero), returning an error for malformed input or division by zero"
-}

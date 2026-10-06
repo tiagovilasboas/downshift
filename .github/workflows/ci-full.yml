@@ -2,7 +2,7 @@ name: ci-full
 
 on:
   schedule:
-    # Weekdays 09:00 UTC — race, govulncheck, outcome verify, eval splits.
+    # Weekdays 09:00 UTC — race, govulncheck (benchmark gates run in downshift-labs).
     - cron: "0 9 * * 1-5"
   workflow_dispatch:
 
@@ -67,26 +67,6 @@ jobs:
 
       - name: Build downshift CLI
         run: go build -ldflags "-s -w" -o downshift ./cmd/downshift
-
-      - name: Benchmark regression gate
-        run: |
-          ./downshift benchmark benchmark/tasks.json --gate --min-tier-accuracy=0.60 --max-frontier-to-mid=0
-          ./downshift benchmark benchmark/holdout.json --gate --min-tier-accuracy=0.80 --max-frontier-to-mid=0
-
-      - name: Fresh split report
-        run: ./downshift benchmark benchmark/fresh.json
-
-      - name: Heldout2 split report
-        run: ./downshift benchmark benchmark/heldout2.json
-
-      - name: Blind-vitrine split report (tier labels)
-        run: ./downshift benchmark benchmark/blind-vitrine.json
-
-      - name: Outcome eval checks (offline)
-        run: ./downshift eval-outcome --verify
-
-      - name: README numbers match the generated report
-        run: ./downshift eval-outcome --report --check README.md
 
       - name: Adapter smoke tests
         run: ./scripts/smoke-test.sh

@@ -1,8 +1,0 @@
-package task
-
-import "strings"
-
-// JoinComma joins the given items with a comma and a space.
-func JoinComma(xs []string) string {
-	return strings.Join(xs, ", ")
-}

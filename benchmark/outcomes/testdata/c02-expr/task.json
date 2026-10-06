@@ -1,5 +1,0 @@
-{
-  "id": "c02-expr",
-  "label": "COMPLEX",
-  "prompt": "write Eval(expr string) (float64, error), a recursive-descent parser for arithmetic expressions with + - * /, parentheses, unary minus, decimal numbers and whitespace, honouring operator precedence and left associativity; return errors for malformed input and division by zero"
-}

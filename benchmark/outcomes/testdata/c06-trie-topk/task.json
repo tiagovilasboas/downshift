@@ -1,5 +1,0 @@
-{
-  "id": "c06-trie-topk",
-  "label": "COMPLEX",
-  "prompt": "implement an autocomplete Trie: NewTrie() *Trie, Insert(word string, weight int) (re-inserting a word replaces its weight) and Top(prefix string, k int) []string returning up to k words with that prefix ordered by weight descending, then alphabetically"
-}
