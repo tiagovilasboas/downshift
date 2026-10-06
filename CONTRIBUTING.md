@@ -130,16 +130,13 @@ Requires Go 1.27+.
 
 ## Contributor licence
 
-By submitting a contribution to this repository, you irrevocably assign to
-Tiago de Carvalho Vilas Boas all copyright in that contribution and grant the
-Author the right to use, modify, and relicence it under any terms, including
-proprietary terms. See Section 8 of [LICENSE](LICENSE) for the full terms.
+By submitting a contribution, you agree that your contribution is licensed
+under the [Apache License, Version 2.0](LICENSE), and you have the right to
+license it.
 
-The Author will credit significant contributors in project documentation.
+The maintainer will credit significant contributors in project documentation.
 
 ## Licence
 
-`harness-downshift` is published under the
-[Business Source License 1.1](LICENSE) (BUSL-1.1), not MIT.
-Non-commercial use is free. Commercial use requires a written licence from
-the Author. See [LICENSE](LICENSE).
+Downshift is published under the [Apache License, Version 2.0](LICENSE).
+Prior BUSL text is archived in [LICENSE-BSL-1.1-ARCHIVE.md](LICENSE-BSL-1.1-ARCHIVE.md).

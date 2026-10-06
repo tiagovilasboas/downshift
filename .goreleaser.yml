@@ -1,5 +1,5 @@
 # Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-# SPDX-License-Identifier: BUSL-1.1
+# SPDX-License-Identifier: Apache-2.0
 version: 2
 
 project_name: downshift
@@ -44,6 +44,7 @@ archives:
     files:
       - README.md
       - LICENSE
+      - NOTICE
       - catalog.sample.json
 
 checksum:
@@ -81,9 +82,7 @@ release:
     sha256sum -c checksums.txt
     ```
 
-    **Licence:** Business Source License 1.1 — free for non-commercial use.
-    Commercial use requires a written licence from Tiago de Carvalho Vilas Boas.
-    See [LICENSE](https://github.com/tiagovilasboas/harness-downshift/blob/main/LICENSE).
+    **Licence:** Apache License 2.0. See [LICENSE](https://github.com/tiagovilasboas/harness-downshift/blob/main/LICENSE).
 
 changelog:
   sort: asc

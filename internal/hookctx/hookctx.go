@@ -1,6 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
-// Commercial use requires a licence — see LICENSE for terms.
+// SPDX-License-Identifier: Apache-2.0
 
 // Package hookctx carries the hook's global deadline to the optional
 // external helper commands (DOWNSHIFT_MINILM_EMBED, DOWNSHIFT_GRAPHIFY_CMD)

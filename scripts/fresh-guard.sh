@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-# SPDX-License-Identifier: BUSL-1.1
+# SPDX-License-Identifier: Apache-2.0
 #
 # fresh-guard.sh: benchmark/fresh.json, benchmark/heldout2.json and
 # benchmark/blind-vitrine.json are evaluation-only. A change set that edits

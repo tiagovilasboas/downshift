@@ -74,7 +74,7 @@
 
   <!-- GitHub URL -->
   <text x="52" y="580" fill="#58a6ff" font-size="13">github.com/tiagovilasboas/harness-downshift</text>
-  <text x="52" y="600" fill="#30363d" font-size="11">© 2026 Tiago de Carvalho Vilas Boas · BUSL-1.1</text>
+  <text x="52" y="600" fill="#30363d" font-size="11">© 2026 Tiago de Carvalho Vilas Boas · Apache-2.0</text>
 
   <!-- ── DIVIDER ── -->
   <line x1="596" y1="40" x2="596" y2="590" stroke="#21262d" stroke-width="1"/>
@@ -133,6 +133,6 @@
   <text x="660" y="492" fill="#e6edf3" font-size="12">go install github.com/tiagovilasboas/harness-downshift/cmd/downshift@latest</text>
 
   <!-- bottom tag -->
-  <text x="624" y="580" fill="#6e7681" font-size="12">BSL-1.1 · Harness-native routing · Go 1.27 · single binary</text>
+  <text x="624" y="580" fill="#6e7681" font-size="12">Apache-2.0 · Harness-native routing · Go 1.27 · single binary</text>
 
 </svg>

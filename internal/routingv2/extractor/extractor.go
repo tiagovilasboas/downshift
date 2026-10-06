@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // Package extractor extracts normalized feature signals from a task prompt.
 // All signals are in [0, 1]. The same extraction logic is used at runtime

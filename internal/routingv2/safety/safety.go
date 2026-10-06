@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // Package safety evaluates deterministic safety rules that impose minimum tier floors.
 // These rules run independently of the statistical classifier and act as a hard floor:
