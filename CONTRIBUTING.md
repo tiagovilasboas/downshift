@@ -133,6 +133,39 @@ Docs-only diffs skip the Go job. Nightly `ci-full` catches regressions if a PR d
 - **Fail-open, always.** A cost optimizer must never block a subagent spawn.
 - **Honest in docs.** Don't oversell what a heuristic can do. State the blast radius.
 
+## Commits and attribution
+
+**Humans only in commit history.**
+
+Do not add AI agents (Claude, Cursor, Codex, etc.) as co-authors via the
+`Co-Authored-By` trailer. Permanent commit history should reflect human
+contributors; automated attribution belongs in CI logs and PR descriptions.
+
+✅ **Allowed:**
+```
+Co-Authored-By: Alice Engineer <alice@company.com>
+Co-Authored-By: Bob Developer <bob@company.com>
+Author: Tiago Vilas Boas <tcarvalhovb@gmail.com>
+```
+
+❌ **Not allowed:**
+```
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+Co-Authored-By: Cursor <cursoragent@cursor.com>
+Author: Claude <noreply@anthropic.com>
+```
+
+**Guard rail:** A pre-commit hook validates this automatically. See
+`~/.claude/skills/no-agent-coauthors/SKILL.md` for setup and testing.
+
+**Tool attribution:** Reference the tool in the PR description, commit body, or
+relevant docs. Example:
+
+```
+Developed with Claude Code (model: Sonnet 5.5, session: abc123def456).
+See evidence: [link to P1.3 write-up or transcript].
+```
+
 ## Code style
 
 - Idiomatic Go. `gofmt` before committing.
