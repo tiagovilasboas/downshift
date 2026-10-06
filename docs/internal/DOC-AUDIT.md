@@ -157,6 +157,7 @@ Stubs: `BACKLOG.md`, `NEXT-STEPS.md` (root + internal) — no moat leak.
 2. **`router-generalization.md`:** Add 1-page “findings summary”; optional move detailed tables to private eval notebook.
 3. **`pt/03-marcha.md`:** Shorten engineering block; link `contrib/classifier.md` / `ARCHITECTURE.md`.
 4. **Keep** `contrib/classifier.md`, `benchmark/`, and Go source as **OK-B** (Apache fork surface).
+5. **`pt/03-marcha.md`:** optional trim of engineering block (still MOAT-mild).
 
 ---
 
@@ -167,6 +168,6 @@ Stubs: `BACKLOG.md`, `NEXT-STEPS.md` (root + internal) — no moat leak.
 | Inventory README + `docs/` + benchmarks + examples | Yes (this file) |
 | MOAT flags | Yes |
 | Automated enforcement | No — manual review + `PUBLISHING-BOUNDARIES` checklist |
-| README trim PR | **Pending** |
+| README trim | Yes |
 
 Last review: 2026-10-06.
