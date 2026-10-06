@@ -16,8 +16,8 @@
 [Install](docs/INSTALL.md) · [Docs](docs/README.md) · [Harness support](#harness-support) · [Contributing](#contributing)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/downshift-routing-runtime-dark.svg">
-  <img src="docs/brand/downshift-routing-runtime-light.svg" alt="Downshift classifies a subagent task, applies catalog policy to the session's models, and rewrites the model before the subagent starts." width="860">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/hook-flow-dark.svg">
+  <img src="docs/img/hook-flow.svg" alt="Hook flow: the harness sends a PreToolUse event, Downshift classifies the task, applies policy against the session models, and returns updatedInput with the chosen model, or allows the spawn unchanged." width="860">
 </picture>
 
 </div>
@@ -34,15 +34,10 @@ Downshift is a single Go binary that runs as a **hook** in your coding harness. 
 
 1. **Intercept.** The harness fires a `PreToolUse` hook when a subagent is about to start. Downshift reads the task text in memory only; prompts are never stored.
 2. **Classify.** Scored signals (`internal/core`) map the task to a complexity: trivial through complex.
-3. **Choose.** Policy picks a tier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/session-models.md)). Uncertain calls never move a spawn to the small tier.
+3. **Choose.** Policy picks a tier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/session-models.md)).
 4. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/img/hook-flow-dark.svg">
-  <img src="docs/img/hook-flow.svg" alt="Hook flow: the harness sends a PreToolUse event, Downshift classifies the task, applies policy against the session models, and returns updatedInput with the chosen model, or allows the spawn unchanged." width="860">
-</picture>
-
-Internals: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Internals: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). The full runtime routing diagram is [here](docs/brand/downshift-routing-runtime-light.svg) ([dark](docs/brand/downshift-routing-runtime-dark.svg)).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/architecture-dark.svg">
