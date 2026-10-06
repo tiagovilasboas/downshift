@@ -26,7 +26,19 @@ Checked against the adapter structs and local telemetry on 2026-09-27. No secret
 | Claude Code | `hook_event_name`, `tool_name`, `tool_input`, `model`, `prompt` | No. Current model only. |
 | Codex | `hook_event_name`, `session_id`, `tool_name`, `tool_input`, `model` | No. Current model and session id only. |
 
-`~/.harness-downshift/events.jsonl` stores routing outcomes: `complexity`, `estimated_savings`, `requested_model`, `final_model`, `harness`, optional hashed `session_id`, `timestamp`, `verdict`, and `outcome`, plus optional real-cost fields `input_tokens`, `output_tokens`, `cached_tokens`, `actual_cost_usd` and `baseline_cost_usd` (absent until a PostToolUse hook supplies provider usage; see `internal/telemetry/cost.go`). A raw Codex session ID is validated and hashed before it can be recorded. `requested_model` is `unknown` unless the original hook value is catalog-allowlisted; it is never filled with a policy recommendation. `outcome: "rewrite_emitted"` proves only that Downshift emitted a compatible rewrite, not that a child executor honored it. On Claude Code the PostToolUse hook also appends an `outcome: "resolved"` record that links to the decision (`linked_decision`) and carries the model the harness reports it chose for the child (`tool_response.resolvedModel`), with `rewrite_honored` true or false when the catalog can compare it to the written model. `downshift stats` counts a matching record as honored; a mismatch stays visible in the log. `loop-events.jsonl` stores classifier feedback metadata. Neither file is a copy of hook stdin and neither lists the models the picker offered.
+`~/.harness-downshift/events.jsonl` stores routing outcomes: `complexity`, `estimated_savings`, `requested_model`, `final_model`, `harness`, optional hashed `session_id`, `timestamp`, `verdict`, and `outcome`, plus optional real-cost fields `input_tokens`, `output_tokens`, `cached_tokens`, `actual_cost_usd` and `baseline_cost_usd` (absent until a PostToolUse hook supplies provider usage; see `internal/telemetry/cost.go`). A raw Codex session ID is validated and hashed before it can be recorded. `requested_model` is `unknown` unless the original hook value is catalog-allowlisted; it is never filled with a policy recommendation. `outcome: "rewrite_emitted"` proves only that Downshift emitted a compatible rewrite, not that a child executor honored it. On Claude Code the PostToolUse hook also appends an `outcome: "resolved"` record that links to the decision (`linked_decision`) and carries the model the harness reports it chose for the child (`tool_response.resolvedModel`), with `rewrite_honored` true or false when the catalog can compare it to the written model. `downshift stats` counts a matching record as honored; a mismatch stays visible in the log.
+
+## Claude Code real usage
+
+The PostToolUse payload of an async subagent is launch metadata with no tokens. Real usage is read when the subagent stops, from its own transcript (`agent_transcript_path`), by a second hook next to the PreToolUse one:
+
+```json
+"SubagentStop": [
+  { "hooks": [ { "type": "command", "command": "downshift claude-code-subagent-stop" } ] }
+]
+```
+
+It appends one `outcome: "usage"` record per agent: tokens (the last line per message id, since streaming repeats it), the model the API reported, and real cost. The hashed agent id (`agent_hash`) ties it to the launch-time `resolved` record and, through it, to the routing decision. Savings are real only when the decision knows the model the spawn would otherwise have used; when the original model was `unknown` the spawn is priced as unrouted and saves nothing. It never blocks and skips an agent it has already priced. `loop-events.jsonl` stores classifier feedback metadata. Neither file is a copy of hook stdin and neither lists the models the picker offered.
 
 Native config is not a session allowlist either:
 

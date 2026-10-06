@@ -88,6 +88,8 @@ func main() {
 		))
 	case "claude-code-post-tool-use":
 		os.Exit(runClaudePostToolUse(os.Stdin, catalog))
+	case "claude-code-subagent-stop":
+		os.Exit(runClaudeSubagentStop(os.Stdin, catalog))
 	case "cursor":
 		os.Exit(runHookAdapter(
 			os.Stdin,
@@ -1314,4 +1316,25 @@ Examples:
   downshift stats --days=7
   downshift benchmark benchmark/tasks.json
 `)
+}
+
+// runClaudeSubagentStop is the SubagentStop hook runner for Claude Code. The
+// subagent already finished, so it never blocks: any failure exits 0 with no
+// output, and usage goes to the hermetic event log.
+func runClaudeSubagentStop(in io.Reader, catalog core.Resolver) (rc int) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintln(os.Stderr, "downshift: internal error in SubagentStop, ignored")
+			rc = 0
+		}
+	}()
+	const maxHookPayloadBytes = 1 << 20
+	data, err := readHookPayload(in, maxHookPayloadBytes+1)
+	if err != nil || len(data) > maxHookPayloadBytes {
+		return 0
+	}
+	if note := claudecode.HandleSubagentStop(data, buildVersion, catalog); note != "" {
+		fmt.Fprintf(os.Stderr, "downshift: %s\n", note)
+	}
+	return 0
 }
