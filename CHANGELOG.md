@@ -10,20 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- **README:** Trimmed MOAT sections (full classifier walkthrough, long v2 train
-  loop, stale benchmark sample); pointers to [ARCHITECTURE.md](docs/ARCHITECTURE.md)
-  and [contrib/classifier.md](docs/contrib/classifier.md) only (no `pt/03` engineering block in README).
+- **Benchmarks & training ops:** Public repo no longer ships benchmark JSON,
+  outcome suite, or `tools/minilm` / `tools/baseline`. Curated metrics:
+  [benchmark/REPORT.md](benchmark/REPORT.md). Maintainer eval and regression gates
+  run in private **downshift-labs** ([#57](https://github.com/tiagovilasboas/downshift/pull/57)).
+- **README:** Trimmed MOAT sections; pointers to [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+  and [contrib/classifier.md](docs/contrib/classifier.md). Classifier metrics
+  link to `benchmark/REPORT.md` (not CI-generated blocks).
+- **Docs:** Maintainer shadow/engineering/v2 long form stubbed in OSS; full copies
+  intended for downshift-labs. [CLASSIFIER-SHADOW.md](docs/CLASSIFIER-SHADOW.md)
+  shortened for adopters.
+- **CI:** Public `ci` / `ci-full` run `go test` and adapter smoke only (sample
+  fixture). No in-repo benchmark gates or `eval-outcome --verify` on GitHub.
 
 ### Added
 - **Docs:** [CONTENT-CLASSIFICATION.md](docs/CONTENT-CLASSIFICATION.md) (A/B/C/D
   inventory, code vs docs policy for competitive content).
 - **Docs:** [internal/DOC-AUDIT.md](docs/internal/DOC-AUDIT.md) (use vs inside vs
   MOAT flags for README, docs, benchmarks, examples).
-
-### Changed
-- **CI:** Fast `ci` workflow (path classification, single CLI build, scoped
-  `eval-outcome`); heavy checks moved to scheduled `ci-full`. Cross-platform
-  matrix only on pull requests; tags no longer duplicate builds before GoReleaser.
+- **Docs:** [benchmark/EVAL-PRIVATE.md](benchmark/EVAL-PRIVATE.md) policy for
+  public vs maintainer eval.
 
 ## [0.1.0-beta.6] — 2026-10-06
 
