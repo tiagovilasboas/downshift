@@ -155,16 +155,14 @@ Co-Authored-By: Cursor <cursoragent@cursor.com>
 Author: Claude <noreply@anthropic.com>
 ```
 
-**Guard rail:** A pre-commit hook validates this automatically. See
-`~/.claude/skills/no-agent-coauthors/SKILL.md` for setup and testing.
+Before committing, check your message for an agent `Co-Authored-By` line, and make
+sure your git author is your own identity. If your editor or agent tool appends such
+a trailer by default, remove it. A `commit-msg` hook that rejects agent trailers is
+a one-file addition if you want it locally.
 
-**Tool attribution:** Reference the tool in the PR description, commit body, or
-relevant docs. Example:
-
-```
-Developed with Claude Code (model: Sonnet 5.5, session: abc123def456).
-See evidence: [link to P1.3 write-up or transcript].
-```
+AI-assisted contributions are welcome. You are responsible for what you submit:
+review it, run `go test ./...`, and say in the PR description if a tool wrote
+significant parts. Prose in the PR is enough; no trailer is needed.
 
 ## Code style
 
