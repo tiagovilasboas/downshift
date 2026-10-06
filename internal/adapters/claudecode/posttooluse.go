@@ -4,10 +4,15 @@
 
 // Package claudecode — PostToolUse real-cost linkage (v1).
 //
-// A Claude Code PostToolUse hook fires after a tool (e.g. the Task subagent
-// spawn) completes. Its stdin payload is assumed to carry the model that
-// actually ran plus provider-reported token usage (see the assumed shape in
-// telemetry.TokenUsageFromPayload — unverified in-repo, parsed defensively).
+// A Claude Code PostToolUse hook fires when the Task/Agent tool returns. For an
+// async subagent that is the LAUNCH, not the completion (captured 2026-10-06:
+// tool_response is {isAsync, status, agentId, resolvedModel, ...}, duration_ms
+// a few ms), so the payload carries no token usage and the "usage" path below
+// stays idle until a harness reports tokens. What it does carry is
+// tool_response.resolvedModel, the model the harness chose for the child:
+// recordResolved turns that into an observed honor/refute signal for the
+// rewrite. Token usage is still parsed defensively
+// (see telemetry.TokenUsageFromPayload).
 //
 // v1 writes a NEW event with outcome "usage" and never modifies history in
 // place: the original PreToolUse decision event keeps its normalised savings
@@ -83,9 +88,15 @@ func parseEventTime(ts string) (time.Time, bool) {
 // modelID is the model reported by the payload ("" when absent). Returns nil
 // when nothing matches.
 func linkTarget(prior []telemetry.Event, sessionHash, modelID string, now time.Time) *telemetry.Event {
+	return linkTargetBy(prior, sessionHash, modelID, now, telemetry.OutcomeUsage)
+}
+
+// linkTargetBy is linkTarget where a decision already linked by a record of
+// the given outcome is skipped, so each observation kind links once per decision.
+func linkTargetBy(prior []telemetry.Event, sessionHash, modelID string, now time.Time, linkedBy string) *telemetry.Event {
 	priced := make(map[string]bool)
 	for _, ev := range prior {
-		if ev.Outcome == telemetry.OutcomeUsage && ev.LinkedDecision != "" {
+		if ev.Outcome == linkedBy && ev.LinkedDecision != "" {
 			priced[ev.LinkedDecision] = true
 		}
 	}
@@ -128,12 +139,7 @@ func linkTarget(prior []telemetry.Event, sessionHash, modelID string, now time.T
 
 // decisionKey identifies a decision event for once-only pricing: its
 // correlation id, or timestamp+session for lines written without one.
-func decisionKey(ev telemetry.Event) string {
-	if ev.CorrelationID != "" {
-		return ev.CorrelationID
-	}
-	return ev.Timestamp + "|" + ev.SessionID
-}
+func decisionKey(ev telemetry.Event) string { return telemetry.DecisionKey(ev) }
 
 // ranModel is the model the child actually ran on according to the decision
 // record: the rewrite target when the rewrite was applied, otherwise the
@@ -234,14 +240,15 @@ func HandlePostToolUse(raw []byte, binaryVersion string, r core.Resolver) (Outpu
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return neutral, "", false
 	}
+	sessionHash := telemetry.HashSessionID(stringFieldAny(payload, "session_id", "sessionId", "sessionID"))
+	now := time.Now().UTC()
+	prior, _ := telemetry.ReadEvents() // missing/unreadable log: link nothing
+	recordResolved(payload, sessionHash, binaryVersion, prior, r, now)
 	usage := telemetry.TokenUsageFromPayload(payload)
 	if usage == (telemetry.TokenUsage{}) {
 		return neutral, "", false // nothing billable reported
 	}
 	model := stringFieldAny(payload, "model", "model_id")
-	sessionHash := telemetry.HashSessionID(stringFieldAny(payload, "session_id", "sessionId", "sessionID"))
-	now := time.Now().UTC()
-	prior, _ := telemetry.ReadEvents() // missing/unreadable log: link nothing
 	target := linkTarget(prior, sessionHash, model, now)
 	ev := buildUsageEvent(usage, model, sessionHash, binaryVersion, target, r, now)
 	telemetry.Record(ev)
@@ -249,4 +256,54 @@ func HandlePostToolUse(raw []byte, binaryVersion string, r core.Resolver) (Outpu
 		return neutral, "usage linked to " + target.Verdict + " decision", true
 	}
 	return neutral, "usage recorded without matching decision", false
+}
+
+// resolvedModel reads the model the harness chose for the spawn. Claude Code
+// reports it as tool_response.resolvedModel when it launches a subagent; this
+// is the only post-spawn model signal the hook receives (the launch payload
+// carries no token usage for async subagents).
+func resolvedModel(payload map[string]any) string {
+	resp, _ := payload["tool_response"].(map[string]any)
+	return stringFieldAny(resp, "resolvedModel", "resolved_model")
+}
+
+// recordResolved appends a "resolved" observation for the applied rewrite this
+// spawn belongs to. It records nothing when the payload has no resolved model,
+// the session is unknown, or no applied rewrite matches: there is nothing to
+// confirm or refute. The comparison goes through the catalog so a dated id
+// (claude-haiku-4-5-20251001) matches the id the hook wrote (claude-haiku-4-5);
+// without a catalog match RewriteHonored stays unset rather than guessing.
+func recordResolved(payload map[string]any, sessionHash, binaryVersion string, prior []telemetry.Event, r core.Resolver, now time.Time) {
+	resolved := resolvedModel(payload)
+	if resolved == "" || sessionHash == "" {
+		return
+	}
+	target := linkTargetBy(prior, sessionHash, "", now, telemetry.OutcomeResolved)
+	if target == nil || !telemetry.IsAppliedShift(*target) {
+		return
+	}
+	ev := telemetry.Event{
+		CorrelationID:  telemetry.NewCorrelationID(),
+		Timestamp:      now.UTC().Format(time.RFC3339Nano),
+		Source:         "hook",
+		Agent:          "subagent",
+		Harness:        target.Harness,
+		Outcome:        telemetry.OutcomeResolved,
+		PolicyVersion:  telemetry.PolicyVersion,
+		BinaryVersion:  binaryVersion,
+		Verdict:        "UNKNOWN",
+		FromModel:      target.ToModel,
+		ToModel:        telemetry.ModelOrUnknown(resolved),
+		SessionID:      target.SessionID,
+		LinkedDecision: decisionKey(*target),
+	}
+	if r != nil {
+		got, okGot := r.LookupByID(harnessID, resolved)
+		want, okWant := r.LookupByID(harnessID, target.ToModel)
+		if okGot && okWant {
+			honored := got.ID == want.ID
+			ev.RewriteHonored = &honored
+		}
+	}
+	telemetry.Record(ev)
 }

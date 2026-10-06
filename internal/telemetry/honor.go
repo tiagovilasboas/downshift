@@ -15,8 +15,18 @@ package telemetry
 // later decision event (any outcome) in the same harness + hashed session
 // arrives with requested_model equal to that final_model.
 //
-// Events without a session id cannot be inferred. The log is not rewritten.
+// A later "resolved" record that links to the shift and reports a matching
+// model also counts, and needs no later spawn. Events without a session id
+// cannot be inferred. The log is not rewritten.
 func CountInferredHonored(events []Event) (shifted, honored int) {
+	// A "resolved" record is the harness reporting the model it chose for the
+	// spawn. When it matches the written model it is direct observation.
+	observed := make(map[string]bool)
+	for _, ev := range events {
+		if ev.Outcome == OutcomeResolved && ev.LinkedDecision != "" && ev.RewriteHonored != nil && *ev.RewriteHonored {
+			observed[ev.LinkedDecision] = true
+		}
+	}
 	type key struct{ harness, session string }
 	groups := make(map[key][]int)
 	for i, ev := range events {
@@ -33,7 +43,7 @@ func CountInferredHonored(events []Event) (shifted, honored int) {
 				continue
 			}
 			shifted++
-			if ev.RewriteHonored != nil && *ev.RewriteHonored {
+			if (ev.RewriteHonored != nil && *ev.RewriteHonored) || observed[DecisionKey(ev)] {
 				honored++
 				continue
 			}

@@ -47,17 +47,35 @@ import (
 // Outcome values written by post-hoc cost linkage (v1: PostToolUse hook).
 // The "baseline" value is reserved for a future symmetric hook that records
 // what the unrouted baseline would have cost; Aggregate already excludes it.
+//
+// "resolved" records the model the harness actually chose for a spawn, read
+// from the PostToolUse payload. It is an observation about an earlier decision
+// (LinkedDecision), never a decision itself.
 const (
 	OutcomeUsage    = "usage"
 	OutcomeBaseline = "baseline"
+	OutcomeResolved = "resolved"
 )
 
 // IsCostOnlyOutcome reports whether an outcome value marks a post-hoc cost
 // record rather than a routing decision. Cost records must never inflate
 // decision counts in Aggregate.
 func IsCostOnlyOutcome(outcome string) bool {
-	return outcome == OutcomeUsage || outcome == OutcomeBaseline
+	return outcome == OutcomeUsage || outcome == OutcomeBaseline || outcome == OutcomeResolved
 }
+
+// DecisionKey identifies a decision event for post-hoc linkage: its
+// correlation id, or timestamp+session for lines written without one.
+func DecisionKey(ev Event) string {
+	if ev.CorrelationID != "" {
+		return ev.CorrelationID
+	}
+	return ev.Timestamp + "|" + ev.SessionID
+}
+
+// IsAppliedShift reports a decision event whose rewrite was written and
+// changed the model. These are the only decisions a harness can honor or not.
+func IsAppliedShift(ev Event) bool { return isShift(ev) }
 
 // TokenUsageFromPayload extracts provider-reported token counts from a
 // decoded PostToolUse stdin payload. It never fails: missing or malformed
