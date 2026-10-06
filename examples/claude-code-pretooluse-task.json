@@ -1,0 +1,8 @@
+{
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Task",
+  "tool_input": {
+    "prompt": "rename the userId variable to userIdentifier",
+    "model": "claude-opus-5-5"
+  }
+}

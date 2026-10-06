@@ -125,7 +125,7 @@ downshift claude-code < hook-input.json
 
 This mimics exactly what Claude Code will send. The output is the JSON the harness will apply, plus stderr feedback with the decision and a feedback ID for tracking.
 
-See `hook-input.json` in the repo for an example payload.
+See [examples/](examples/README.md) (or root `hook-input.json`) for sample payloads.
 
 > **⚠️ Claude Code Pro/Max/Teams/API only.** Free plan has no real subagents and blocks network installs. See [Plan compatibility](#plan-compatibility--read-before-installing) before proceeding.
 

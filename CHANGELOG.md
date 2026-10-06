@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Docs (wave 2):** Public [CAPABILITY-ROUTER-V2.md](docs/CAPABILITY-ROUTER-V2.md) condensed;
+  full design moved to [docs/internal/CAPABILITY-ROUTER-V2-FULL.md](docs/internal/CAPABILITY-ROUTER-V2-FULL.md).
+  Contributor classifier guide: [docs/contrib/classifier.md](docs/contrib/classifier.md).
+  ROADMAP and CONTRIBUTING aligned with Downshift branding.
+  `examples/` hook fixtures; GitHub issue template for beta stats exports (P2.3).
 - **Rename:** GitHub repository and Go module are `tiagovilasboas/downshift`
   (`go install github.com/tiagovilasboas/downshift/cmd/downshift@latest`). State
   directory: `~/.downshift` with legacy fallback `~/.harness-downshift`; `downshift doctor`.

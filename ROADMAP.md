@@ -30,7 +30,8 @@ HTTP proxy, but that is not the current shipping surface.
 | Honest telemetry | `rewrite_emitted` vs harness-reported honor (`resolved`) |
 | Real cost | SubagentStop usage linkage (Claude Code); expand as harnesses expose usage |
 | Evaluation | Seed/holdout regression gates; outcome tasks; shadow classifier observation |
-| Docs | User docs (install, session models), contributor misroute workflow |
+| Docs | User docs (install, session models), [classifier contrib](docs/contrib/classifier.md), misroute workflow |
+| Eval rigor | [router-generalization](docs/design/router-generalization.md), shadow + holdout gates |
 
 **Beta exit blockers (community / dogfood):** see [BETA-EXIT.md](docs/BETA-EXIT.md)
 pillars P2 (multi-user exports) and P3 (billing evidence).
@@ -41,9 +42,9 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 
 | Priority | Item |
 |----------|------|
-| P0 | Public positioning and rename to **Downshift** ([RENAME.md](docs/brand/RENAME.md)) |
-| P0 | State directory `~/.downshift` with legacy fallback |
-| P1 | Condensed architecture and “when to use” vs hosted gateways |
+| P0 | ~~Rename to **Downshift**~~ — done ([RENAME.md](docs/brand/RENAME.md)) |
+| P0 | ~~State directory `~/.downshift`~~ — done ([CONFIG.md](docs/CONFIG.md)) |
+| P1 | ~~Condensed docs~~ — [WHEN-TO-USE](docs/WHEN-TO-USE.md), trimmed [CAPABILITY-ROUTER-V2](docs/CAPABILITY-ROUTER-V2.md) |
 | P1 | More harness matrix rows (Cursor paid plans, etc.) |
 | P1 | Optional: container image on GHCR |
 | P2 | Promote routing v2 only with reviewed labels + shadow evidence |

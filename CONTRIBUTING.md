@@ -1,12 +1,14 @@
-# Contributing to harness-downshift
+# Contributing to Downshift
 
 Thanks for helping make agent harnesses cheaper and more predictable. This
 project is small and focused on purpose — contributions that keep it that way
 are the most valuable.
 
+Repository: https://github.com/tiagovilasboas/downshift
+
 ## The most useful contribution: a misrouted prompt
 
-`harness-downshift` classifies a task's complexity with deterministic rules.
+Downshift classifies a task's complexity with deterministic rules.
 Rules are only as good as the prompts they've seen. If you find a prompt it gets
 wrong, that's gold.
 
