@@ -152,7 +152,7 @@ func TestHandle_FallsBackToSessionModel(t *testing.T) {
 }
 
 func TestHandle_CursorSlugIsNotRewritten(t *testing.T) {
-	session := []string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"}
+	session := []string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"}
 	ev := claudecode.Event{
 		ToolName:      "Task",
 		SessionModels: &session,

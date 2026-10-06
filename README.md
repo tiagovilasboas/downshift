@@ -13,10 +13,10 @@ Every time your AI agent spawns a subagent, that subagent inherits the most expe
 
 ```
 Subagent task: "rename the userId variable across auth.ts"
-→ TRIVIAL → routes to claude-haiku-4-5 (~80% cheaper)
+→ TRIVIAL → routes to claude-haiku-4-5 (~75% cheaper)
 
 Subagent task: "diagnose the race condition in the webhook handler"
-→ COMPLEX → stays on claude-opus-4-8 (this one earns it)
+→ COMPLEX → stays on claude-opus-5-5 (this one earns it)
 ```
 
 **Works today with Claude Code, Cursor, Codex, Antigravity, and KiroCrew.** Single binary, no runtime dependencies, no network calls, no API keys.
@@ -51,7 +51,7 @@ downshift try "rename the userId variable" claude-code
 # → TRIVIAL task → use claude-haiku-4-5 (small tier)
 
 downshift try "rearchitect the auth module to support multi-tenant" claude-code
-# → COMPLEX task → use claude-opus-4-8 (frontier tier)
+# → COMPLEX task → use claude-opus-5-5 (frontier tier)
 ```
 
 **Step 3 — Add the hook** to `~/.claude/settings.json`:
@@ -67,7 +67,7 @@ downshift try "rearchitect the auth module to support multi-tenant" claude-code
 
 **Step 4 — Confirm it's working.** Open Claude Code, ask it to spawn a subagent for a trivial task. You'll see this in the terminal:
 ```
-downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~80% cheaper)
+downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper)
 ```
 
 That line in stderr means the hook fired and rewrote the model before the subagent started.
@@ -130,7 +130,7 @@ the model's reasoning; it engineers the **delegation layer** — the exact point
 where a subagent's model is chosen — to optimize three things at once:
 
 - **Token efficiency** — cheap models for cheap work; frontier tokens spent only where they earn it.
-- **Cost reduction** — trivial subagents drop from frontier to small tier (~80% cheaper per call, based on published list prices: claude-haiku-4-5 $1/$5 vs claude-opus-4-8 $5/$25 per 1M input/output tokens). Session-level savings depend on your task mix — see [Cost evidence](#cost-evidence).
+- **Cost reduction** — trivial subagents drop from frontier to small tier (~75% cheaper per call, based on published list prices: claude-haiku-4-5 $1/$5 vs claude-opus-5-5 $4/$20 per 1M input/output tokens). Session-level savings depend on your task mix — see [Cost evidence](#cost-evidence).
 - **Control & predictability** — deterministic, rule-based routing you can read, test, and audit. No "Auto" black box, no LLM guessing in the loop.
 
 Agent = Model + Harness. You can't cheaply swap the model. You *can* engineer
@@ -218,15 +218,15 @@ the spawn details to `downshift`, which:
 The main session keeps the model you chose. Only the subagents get right-sized.
 
 ```
-$ downshift try "rename the userId variable across auth.ts" claude-code claude-opus-4-8
+$ downshift try "rename the userId variable across auth.ts" claude-code claude-opus-5-5
 Task:       rename the userId variable across auth.ts
 Complexity: TRIVIAL
 Intent:     trivial
 Needs tier: small
 Recommend:  claude-haiku-4-5
-Current:    claude-opus-4-8
+Current:    claude-opus-5-5
 Verdict:    DOWNSHIFT
-→ TRIVIAL task → downshift to claude-haiku-4-5 (~80% cheaper)
+→ TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper)
 ```
 
 ---
@@ -789,7 +789,7 @@ Given a task prompt, the classifier:
 ```
 Input:   "rename the userId variable across auth.ts"
 Harness: claude-code
-Model:   claude-opus-4-8 (inherited from session)
+Model:   claude-opus-5-5 (inherited from session)
 
 Signal extraction:
   → verb: "rename"         → TRIVIAL +8
@@ -809,7 +809,7 @@ Tier:     small
 Model:    claude-haiku-4-5
 
 Decision:
-  DOWNSHIFT  (was: opus-4-8, now: haiku-4-5)
+  DOWNSHIFT  (was: opus-5-5, now: haiku-4-5)
   Rewrite written to updated_input.model
   Event logged to ~/.harness-downshift/events.jsonl
 ```
@@ -833,17 +833,17 @@ The alternative — another LLM deciding which model to use — adds tokens, add
 
 ## Cost evidence
 
-**Per-call cost differential (published list prices, September 2026):**
+**Per-call cost differential (published list prices, October 2026):**
 
 | Model | Input ($/1M tokens) | Output ($/1M tokens) |
 |---|---|---|
 | claude-haiku-4-5 (small tier) | $1 | $5 |
 | claude-sonnet-4-6 (mid tier) | $3 | $15 |
-| claude-opus-4-8 (frontier tier) | $5 | $25 |
+| claude-opus-5-5 (frontier tier) | $4 | $20 |
 
-Source: [Anthropic pricing](https://docs.anthropic.com/en/docs/about-claude/pricing), accessed 2026-09-26.
+Source: [Anthropic pricing](https://docs.anthropic.com/en/docs/about-claude/pricing), accessed 2026-10-06.
 
-A single frontier subagent call grepping a directory is roughly 5× more
+A single frontier subagent call grepping a directory is roughly 4× more
 expensive than the same call on haiku. That's the raw per-call case.
 
 **Session-level savings depend on your task mix.** After running downshift
@@ -993,7 +993,7 @@ fire PreToolUse. Confirm with:
 
 ```bash
 # Should print a JSON allow decision immediately
-echo '{"hook_event_name":"PreToolUse","tool_name":"Task","model":"claude-opus-4-8","tool_input":{"prompt":"test"}}' | downshift claude-code
+echo '{"hook_event_name":"PreToolUse","tool_name":"Task","model":"claude-opus-5-5","tool_input":{"prompt":"test"}}' | downshift claude-code
 ```
 
 If that prints JSON, the binary works. If the hook still does not fire in a
@@ -1012,7 +1012,7 @@ your machine, not inside Claude Code's container.
 third argument to `try`:
 
 ```bash
-downshift try "rename the variable" claude-code claude-opus-4-8
+downshift try "rename the variable" claude-code claude-opus-5-5
 # → DOWNSHIFT
 ```
 

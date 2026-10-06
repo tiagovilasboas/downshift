@@ -34,7 +34,7 @@ var stubModels = []core.Model{
 
 func (s stubResolver) ModelFor(harness string, t core.Tier) core.Model {
 	if s.foreign {
-		return core.Model{ID: "claude-opus-4-8", Harness: "claude-code", Tier: t, InputM: 5, OutputM: 25}
+		return core.Model{ID: "claude-opus-5-5", Harness: "claude-code", Tier: t, InputM: 5, OutputM: 25}
 	}
 	for _, m := range stubModels {
 		if m.Tier == t {

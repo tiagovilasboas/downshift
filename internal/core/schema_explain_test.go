@@ -20,7 +20,7 @@ func TestRoute_ZeroDowntimeSchemaChangeIsNotSmall(t *testing.T) {
 		"We need a zero-downtime way to add a required region column to the busy customers table.",
 	}
 	for _, p := range prompts {
-		d := core.Route(p, "claude-code", "claude-opus-4-8", cat)
+		d := core.Route(p, "claude-code", "claude-opus-5-5", cat)
 		if d.Tier != core.TierMid {
 			t.Errorf("tier %s, want mid for %q", d.Tier, p)
 		}
@@ -36,12 +36,12 @@ func TestRoute_ExplainInsideAnalysisIsNotSmall(t *testing.T) {
 		"After a consumer group rebalance some payment events get handled twice. Explain every path that allows this and propose an end-to-end exactly-once scheme.",
 	}
 	for _, p := range prompts {
-		if d := core.Route(p, "claude-code", "claude-opus-4-8", cat); d.Tier == core.TierSmall {
+		if d := core.Route(p, "claude-code", "claude-opus-5-5", cat); d.Tier == core.TierSmall {
 			t.Errorf("routed to small: %q", p)
 		}
 	}
 	for _, p := range []string{"explain what a closure is in JavaScript", "Can you explain how this list comprehension works?"} {
-		if d := core.Route(p, "claude-code", "claude-opus-4-8", cat); d.Tier != core.TierSmall {
+		if d := core.Route(p, "claude-code", "claude-opus-5-5", cat); d.Tier != core.TierSmall {
 			t.Errorf("leading explain should stay small, got %s for %q", d.Tier, p)
 		}
 	}

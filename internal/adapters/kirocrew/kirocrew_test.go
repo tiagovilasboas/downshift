@@ -21,7 +21,7 @@ var cat = catalog.Load()
 const (
 	smallID    = "claude-haiku-4-5"
 	midID      = "claude-sonnet-4-6"
-	frontierID = "claude-opus-4-8"
+	frontierID = "claude-opus-5-5"
 )
 
 // writeSessionFile installs a hermetic kirocrew allowlist for one test.

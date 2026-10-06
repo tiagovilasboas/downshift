@@ -45,7 +45,7 @@ func TestNBDownshift_OffKeepsRoutingAndRecordsShadow(t *testing.T) {
 	}
 	shadow := 0
 	for i, g := range golden {
-		d := core.Route(g.Prompt, "claude-code", "claude-opus-4-8", cat)
+		d := core.Route(g.Prompt, "claude-code", "claude-opus-5-5", cat)
 		if d.Tier.String() != g.Prod {
 			t.Errorf("flag off changed routing: tier %s, main %s for %q", d.Tier, g.Prod, g.Prompt)
 		}
@@ -77,7 +77,7 @@ func TestNBDownshift_OnAppliesTrivialOnly(t *testing.T) {
 	golden, would := loadNBGolden(t), loadTrivialWould(t)
 	applied := 0
 	for i, g := range golden {
-		d := core.Route(g.Prompt, "claude-code", "claude-opus-4-8", cat)
+		d := core.Route(g.Prompt, "claude-code", "claude-opus-5-5", cat)
 		want := g.Prod
 		if would[i] {
 			want = "small"
@@ -119,7 +119,7 @@ func TestNBDownshift_R1HoldsWithFlagOn(t *testing.T) {
 			break
 		}
 	}
-	for _, current := range []string{"claude-opus-4-8", ""} {
+	for _, current := range []string{"claude-opus-5-5", ""} {
 		d := core.Route(prompt, "claude-code", current, cat)
 		if !d.NBDownshift.Applied {
 			t.Fatalf("precondition: NB downshift not applied for %q", prompt)

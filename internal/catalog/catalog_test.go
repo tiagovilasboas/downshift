@@ -207,8 +207,8 @@ func TestLookupByID_ExactWinsOverFamily(t *testing.T) {
 
 func TestLookupByID_OpenRouterExactMatch(t *testing.T) {
 	c := Load()
-	// "anthropic/claude-opus-4-8" → strip prefix → exact match on "claude-opus-4-8"
-	m, ok := c.LookupByID("claude-code", "anthropic/claude-opus-4-8")
+	// "anthropic/claude-opus-5-5" → strip prefix → exact match on "claude-opus-5-5"
+	m, ok := c.LookupByID("claude-code", "anthropic/claude-opus-5-5")
 	if !ok {
 		t.Fatal("OpenRouter-prefixed exact ID should match after normalisation")
 	}
@@ -328,12 +328,12 @@ func TestEmbeddedClaudeCodeSavingsMatchesREADME(t *testing.T) {
 	}
 	frontier := c.ModelFor("claude-code", core.TierFrontier)
 	small := c.ModelFor("claude-code", core.TierSmall)
-	if frontier.ID != "claude-opus-4-8" || small.ID != "claude-haiku-4-5" {
-		t.Fatalf("claude-code frontier/small = %s/%s, want claude-opus-4-8/claude-haiku-4-5", frontier.ID, small.ID)
+	if frontier.ID != "claude-opus-5-5" || small.ID != "claude-haiku-4-5" {
+		t.Fatalf("claude-code frontier/small = %s/%s, want claude-opus-5-5/claude-haiku-4-5", frontier.ID, small.ID)
 	}
-	// (5+25 - (1+5)) / (5+25) = 0.80
-	if got := c.SavingsRatio(frontier, small); got < 0.7999 || got > 0.8001 {
-		t.Errorf("SavingsRatio(frontier→small) = %.4f, want 0.80 (README says ~80%%)", got)
+	// (4+20 - (1+5)) / (4+20) = 0.75
+	if got := c.SavingsRatio(frontier, small); got < 0.7499 || got > 0.7501 {
+		t.Errorf("SavingsRatio(frontier→small) = %.4f, want 0.75 (README says ~75%%)", got)
 	}
 }
 

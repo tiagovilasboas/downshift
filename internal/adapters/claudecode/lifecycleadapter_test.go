@@ -68,7 +68,7 @@ func TestParseLifecycleEvent_IgnoresExtraFields(t *testing.T) {
 		"agent_id":        "agent-xyz",
 		"agent_type":      "claude-code",
 		"prompt":          "should be ignored",
-		"model":           "claude-opus-4-8",
+		"model":           "claude-opus-5-5",
 		"tool_input":      {"task": "ignored"},
 		"transcript":      ["ignored"]
 	}`)

@@ -12,20 +12,20 @@ import (
 )
 
 func TestHarnessOwnsID_RejectsOtherHarnessSlug(t *testing.T) {
-	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"})
+	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"})
 	if core.HarnessOwnsID("claude-code", "composer-2.5", session, cat) {
 		t.Fatal("composer-2.5 is a cursor session id, not a claude-code id")
 	}
 	if core.HarnessOwnsID("claude-code", "grok-4.7-xhigh", session, cat) {
 		t.Fatal("family prefix must not own grok-4.7-xhigh on claude-code")
 	}
-	if !core.HarnessOwnsID("claude-code", "claude-opus-4-8", session, cat) {
-		t.Fatal("claude-opus-4-8 is an exact claude-code id")
+	if !core.HarnessOwnsID("claude-code", "claude-opus-5-5", session, cat) {
+		t.Fatal("claude-opus-5-5 is an exact claude-code id")
 	}
 }
 
 func TestPlanForSession_ForeignIDDoesNotRewrite(t *testing.T) {
-	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"})
+	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"})
 	d := core.Decision{
 		Harness:      "claude-code",
 		RequestedID:  "composer-2.5",
@@ -76,11 +76,11 @@ func TestPlanForSession_PrefersIncludedAndSkipsExhausted(t *testing.T) {
 }
 
 func TestCanWriteSessionID_RequiresExactSessionMembership(t *testing.T) {
-	cursorSession := core.KnownSession([]string{"composer-2.5", "claude-opus-4-8", "claude-haiku-4-5"})
+	cursorSession := core.KnownSession([]string{"composer-2.5", "claude-opus-5-5", "claude-haiku-4-5"})
 	if !core.CanWriteSessionID("cursor", "composer-2.5", cursorSession, cat) {
 		t.Fatal("composer-2.5 is a cursor canonical id")
 	}
-	if !core.CanWriteSessionID("cursor", "claude-opus-4-8", cursorSession, cat) {
+	if !core.CanWriteSessionID("cursor", "claude-opus-5-5", cursorSession, cat) {
 		t.Fatal("an exact session member must remain usable without catalog ownership")
 	}
 	if !core.CanWriteSessionID("cursor", "claude-haiku-4-5", cursorSession, cat) {

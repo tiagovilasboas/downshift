@@ -30,7 +30,7 @@ downshift eval-outcome --verify
 # Makes model calls. Refused when $CI is set, so it never runs in CI.
 # The solver is any shell command that reads the prompt on stdin and prints the answer.
 downshift eval-outcome --record --tier=small    --model=claude-haiku-4-5 --solver='claude -p --model claude-haiku-4-5'
-downshift eval-outcome --record --tier=frontier --model=claude-opus-4-8  --solver='claude -p --model claude-opus-4-8'
+downshift eval-outcome --record --tier=frontier --model=claude-opus-5-5  --solver='claude -p --model claude-opus-5-5'
 
 # Regenerate the README numbers block. CI runs --check and fails when the block is stale.
 downshift eval-outcome --report --write README.md   # or: make report

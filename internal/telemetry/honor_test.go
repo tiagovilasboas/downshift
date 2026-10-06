@@ -40,7 +40,7 @@ func TestCountInferredHonored_NoSessionSkipped(t *testing.T) {
 		{
 			Outcome:   "rewrite_emitted",
 			Harness:   "claude-code",
-			FromModel: "claude-opus-4-8",
+			FromModel: "claude-opus-5-5",
 			ToModel:   "claude-haiku-4-5",
 		},
 	}
