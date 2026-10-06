@@ -40,7 +40,7 @@ toward **no rewrite** when confidence is low).
 1. Reproduce with `downshift try "<prompt>" [harness]`.
 2. Open a `misroute:` issue (see [CONTRIBUTING.md](../../CONTRIBUTING.md)).
 3. Add a case to `internal/core/classifier_edge_test.go` (or related edge tests).
-4. Adjust `RawSignals` in `signals.go`; keep `benchmark/fresh.json` out of training PRs.
+4. Adjust `RawSignals` in `signals.go`; never tune against maintainer eval-only splits (downshift-labs).
 
 ---
 
@@ -58,4 +58,4 @@ It does **not** change hook JSON. Labels for supervised training require explici
 |-------|------|
 | `classifier_edge_test.go` | Regression from misroute reports |
 | `benchmark/seed.json` | Train/tune signals (not in same PR as signal edits + fresh) |
-| `benchmark/fresh.json` | Holdout evaluation only |
+| Eval-only splits (labs) | Never use to edit signals in the same change set |

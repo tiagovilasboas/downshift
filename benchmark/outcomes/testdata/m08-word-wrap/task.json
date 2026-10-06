@@ -1,5 +1,0 @@
-{
-  "id": "m08-word-wrap",
-  "label": "MEDIUM",
-  "prompt": "write Wrap(text string, width int) []string that greedily wraps words into lines of at most width characters, separating words with single spaces; a word longer than width goes on its own line"
-}

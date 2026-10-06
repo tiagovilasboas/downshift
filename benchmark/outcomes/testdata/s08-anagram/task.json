@@ -1,5 +1,0 @@
-{
-  "id": "s08-anagram",
-  "label": "SIMPLE",
-  "prompt": "write IsAnagram(a, b string) bool that ignores case and spaces"
-}

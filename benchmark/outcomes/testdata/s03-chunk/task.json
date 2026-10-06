@@ -1,5 +1,0 @@
-{
-  "id": "s03-chunk",
-  "label": "SIMPLE",
-  "prompt": "write Chunk(xs []int, n int) [][]int that splits a slice into chunks of size n (last one may be shorter) and returns nil when n <= 0"
-}

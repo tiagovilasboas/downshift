@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **README:** Trimmed MOAT sections (full classifier walkthrough, long v2 train
+  loop, stale benchmark sample); pointers to [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+  and [contrib/classifier.md](docs/contrib/classifier.md) only (no `pt/03` engineering block in README).
+
 ### Added
 - **Docs:** [CONTENT-CLASSIFICATION.md](docs/CONTENT-CLASSIFICATION.md) (A/B/C/D
   inventory, code vs docs policy for competitive content).

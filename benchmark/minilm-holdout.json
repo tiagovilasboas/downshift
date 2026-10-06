@@ -1,9 +1,0 @@
-{
-  "tasks": 300,
-  "tier_accuracy": 0.9633333333333334,
-  "frontier_to_mid": 0.0,
-  "frontier_total": 75,
-  "model": "sentence-transformers/all-MiniLM-L6-v2",
-  "trained_on": "benchmark/tasks.json",
-  "evaluated_on": "benchmark/holdout.json"
-}

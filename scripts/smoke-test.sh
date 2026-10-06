@@ -94,9 +94,8 @@ expect "codex rewrite" "$codex_res" '"updatedInput":{'
 expect "codex rewrite" "$codex_res" '"model":"gpt-5.6-luna"'
 echo "OK: codex rewrites updatedInput.model"
 
-echo "=== 4. Benchmark CLI and report gate smoke test ==="
-"$BIN" benchmark "$REPO_ROOT/benchmark/tasks.json" --report >/dev/null
-"$BIN" benchmark "$REPO_ROOT/benchmark/tasks.json" --min-tier-accuracy=0.60 >/dev/null
-echo "OK: benchmark report and gate"
+echo "=== 4. Benchmark CLI smoke (sample fixture) ==="
+"$BIN" benchmark "$REPO_ROOT/internal/benchmark/testdata/sample.json" --report >/dev/null
+echo "OK: benchmark report on sample fixture"
 
 echo "All smoke tests passed successfully!"

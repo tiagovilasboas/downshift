@@ -743,7 +743,7 @@ func runBenchmark(args []string) int {
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "The dataset is a JSON array of {\"prompt\":\"...\",\"label\":\"TRIVIAL|SIMPLE|MEDIUM|COMPLEX\"} objects")
 		fmt.Fprintln(os.Stderr, "(tier labels SMALL|MID|FRONTIER are accepted too).")
-		fmt.Fprintln(os.Stderr, "A seed dataset is available at benchmark/tasks.json in the repository.")
+		fmt.Fprintln(os.Stderr, "Maintainer benchmark files live in downshift-labs; public summary: benchmark/REPORT.md.")
 		fmt.Fprintln(os.Stderr, "Use --compare --candidate-weights=<file> to evaluate a candidate without activating it.")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "  --compare                Run both Legacy and CapabilityRouter v2 side by side")
@@ -1314,7 +1314,7 @@ Examples:
   downshift try "explore the auth module" grok
   downshift stats
   downshift stats --days=7
-  downshift benchmark benchmark/tasks.json
+  downshift benchmark path/to/tasks.json
 `)
 }
 
