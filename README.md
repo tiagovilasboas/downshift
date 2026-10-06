@@ -462,9 +462,9 @@ in real time. It reads `~/.harness-downshift/events.jsonl` and refreshes every
 │  dsmon  downshift monitor                            │
 │  harness  kirocrew        ◉ live                     │
 │ switches today ────────────────────────────────────  │
-│  04:03  opus   → haiku   trivial  -80%               │
+│  04:03  opus   → haiku   trivial  -75%               │
 │  04:02  haiku  → opus    complex  ↑                  │
-│  04:01  opus   → sonnet  medium   -40%               │
+│  04:01  opus   → sonnet  medium   -50%               │
 │ stats ──────────────────────────────────────────────  │
 │  35 events   22↓  2↑  8✓                             │
 │  est. saved  $0.18  ~7K tokens ¹                     │
@@ -838,7 +838,7 @@ The alternative — another LLM deciding which model to use — adds tokens, add
 | Model | Input ($/1M tokens) | Output ($/1M tokens) |
 |---|---|---|
 | claude-haiku-4-5 (small tier) | $1 | $5 |
-| claude-sonnet-4-6 (mid tier) | $3 | $15 |
+| claude-sonnet-5-5 (mid tier) | $2 | $10 |
 | claude-opus-5-5 (frontier tier) | $4 | $20 |
 
 Source: [Anthropic pricing](https://docs.anthropic.com/en/docs/about-claude/pricing), accessed 2026-10-06.
@@ -1068,18 +1068,18 @@ A typical engineering session spawns ~50 subagents per day. Roughly half are mec
 
 | Team size | Without downshift | With downshift | Monthly savings |
 |---|---|---|---|
-| 1 dev | ~$2.50/day | ~$0.80/day | **~$51/month** |
-| 10 devs | ~$25/day | ~$8/day | **~$510/month** |
-| 50 devs | ~$125/day | ~$40/day | **~$2,550/month** |
-| 100 devs | ~$250/day | ~$80/day | **~$5,100/month** |
+| 1 dev | ~$2.50/day | ~$1.56/day | **~$19/month** |
+| 10 devs | ~$25/day | ~$15.60/day | **~$188/month** |
+| 50 devs | ~$125/day | ~$78/day | **~$938/month** |
+| 100 devs | ~$250/day | ~$156/day | **~$1,875/month** |
 
-**Assumptions:** 50 spawns/dev/day, 50% trivial (routed to small tier), 80% cost reduction on routed spawns, 20 working days/month. List prices September 2026.
+**Assumptions:** 50 spawns/dev/day at ~$0.05 each on the frontier model, 50% trivial (routed to small tier), 75% cost reduction on routed spawns (claude-opus-5-5 $4/$20 → claude-haiku-4-5 $1/$5), 20 working days/month. List prices October 2026. The table is derived from these assumptions: `with = without × (1 − 0.5 × 0.75)`.
 
 ### The multiplier effect
 
 The per-spawn savings are small. The volume is not.
 
-A team that runs 1,000 subagents per day and routes 500 of them to a model that's 5× cheaper runs those 500 at 20 cents on the dollar. At scale, the math compounds quickly — not because any single spawn is expensive, but because the pattern repeats thousands of times per week.
+A team that runs 1,000 subagents per day and routes 500 of them to a model that's 4× cheaper runs those 500 at 25 cents on the dollar. At scale, the math compounds quickly — not because any single spawn is expensive, but because the pattern repeats thousands of times per week.
 
 The efficiency gain compounds too. Frontier spawns for complex tasks run faster when they're not queued behind 200 trivial spawns hitting the same rate limits. Routing trivial work away from frontier also means the frontier tier is available when it matters.
 

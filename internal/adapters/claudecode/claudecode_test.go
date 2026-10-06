@@ -152,7 +152,7 @@ func TestHandle_FallsBackToSessionModel(t *testing.T) {
 }
 
 func TestHandle_CursorSlugIsNotRewritten(t *testing.T) {
-	session := []string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"}
+	session := []string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"}
 	ev := claudecode.Event{
 		ToolName:      "Task",
 		SessionModels: &session,
@@ -243,7 +243,7 @@ func TestMain(m *testing.M) {
 
 func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
 	frontierID := catID(core.TierFrontier)
-	session := []string{"claude-sonnet-4-6", frontierID}
+	session := []string{"claude-sonnet-5-5", frontierID}
 	ev := claudecode.Event{
 		ToolName:      "Task",
 		SessionModels: &session,
@@ -257,8 +257,8 @@ func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
 	if m == nil {
 		t.Fatal("expected a rewrite to a session model")
 	}
-	if m["model"] != "claude-sonnet-4-6" {
-		t.Fatalf("model = %v, want claude-sonnet-4-6", m["model"])
+	if m["model"] != "claude-sonnet-5-5" {
+		t.Fatalf("model = %v, want claude-sonnet-5-5", m["model"])
 	}
 	if m["model"] == "claude-haiku-4" {
 		t.Fatal("emitted a catalog id that is not in the session")
