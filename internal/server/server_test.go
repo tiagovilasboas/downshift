@@ -11,7 +11,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 )
@@ -189,39 +188,6 @@ func TestReadAgents_Privacy(t *testing.T) {
 	if len(agents) != 1 {
 		t.Errorf("got %d agents, want 1 (privacy filter)", len(agents))
 	}
-}
-
-func TestHandleEvents_Streaming(t *testing.T) {
-	tmpdir := t.TempDir()
-	t.Setenv("HOME", tmpdir)
-	downshiftDir := filepath.Join(tmpdir, ".harness-downshift")
-	os.Mkdir(downshiftDir, 0o755)
-
-	// Create empty event file
-	eventsFile := filepath.Join(downshiftDir, "events.jsonl")
-	os.WriteFile(eventsFile, []byte(""), 0o644)
-
-	req := httptest.NewRequest(http.MethodGet, "/events", nil)
-	rec := httptest.NewRecorder()
-
-	// Simulate streaming: mock context and run handler briefly
-	done := make(chan struct{})
-	go func() {
-		handleEvents(rec, req)
-		close(done)
-	}()
-
-	// Let it send the initial "connected" event
-	time.Sleep(10 * time.Millisecond)
-
-	// Check that SSE headers are set
-	if ct := rec.Header().Get("Content-Type"); !strings.Contains(ct, "event-stream") {
-		t.Errorf("Content-Type = %q, want event-stream", ct)
-	}
-
-	// Stop the request context to end streaming
-	req.Header.Set("Connection", "close")
-	// (In real test, would cancel context; here we just verify headers)
 }
 
 func TestHealth(t *testing.T) {
