@@ -80,7 +80,7 @@ func TestRunKiroCrewHook_PanicFailsOpen(t *testing.T) {
 	t.Setenv("DOWNSHIFT_EVENT_LOG", filepath.Join(t.TempDir(), "events.jsonl"))
 	var rc int
 	captureStderr(func() {
-		rc = runKiroCrewHook(strings.NewReader(`{"tool_name":"spawn_run","tool_input":{"task":"rename x","model":"claude-opus-4-8"}}`), panicResolver{cmdCat})
+		rc = runKiroCrewHook(strings.NewReader(`{"tool_name":"spawn_run","tool_input":{"task":"rename x","model":"claude-opus-5-5"}}`), panicResolver{cmdCat})
 	})
 	if rc != 0 {
 		t.Fatalf("rc = %d, want 0 (exit 2 would block the spawn)", rc)

@@ -37,8 +37,8 @@ func TestPlanForSession_OnlySessionIDs(t *testing.T) {
 		},
 		{
 			harness: "claude-code", caps: core.ClaudeCodeCaps,
-			frontier: "claude-opus-4-8", catalogSmall: "claude-haiku-4-5",
-			session: []string{"claude-sonnet-4-6", "claude-opus-4-8"},
+			frontier: "claude-opus-5-5", catalogSmall: "claude-haiku-4-5",
+			session: []string{"claude-sonnet-4-6", "claude-opus-5-5"},
 			want:    "claude-sonnet-4-6",
 		},
 		{

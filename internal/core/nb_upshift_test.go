@@ -62,7 +62,7 @@ func TestNBUpshift_OffKeepsRoutingAndRecordsShadow(t *testing.T) {
 	t.Setenv(core.NBUpshiftEnv, "")
 	shadow := 0
 	for _, g := range loadNBGolden(t) {
-		d := core.Route(g.Prompt, "claude-code", "claude-opus-4-8", cat)
+		d := core.Route(g.Prompt, "claude-code", "claude-opus-5-5", cat)
 		if d.Tier.String() != g.Prod {
 			t.Errorf("flag off changed routing: tier %s, main %s for %q", d.Tier, g.Prod, g.Prompt)
 		}

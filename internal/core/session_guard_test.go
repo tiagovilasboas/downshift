@@ -14,7 +14,7 @@ import (
 // current model when the session list is known. It used to fall through to
 // the classified DOWNSHIFT verdict and pick the cheapest session model.
 func TestPlanForSession_GuardrailHoldKeepsCurrentModel(t *testing.T) {
-	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"})
+	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"})
 	held := []string{
 		"rename the token validation function and make it accept unsigned JWTs",
 		"fix typo in the payment settlement reconciliation logic that double-charges customers",
@@ -22,13 +22,13 @@ func TestPlanForSession_GuardrailHoldKeepsCurrentModel(t *testing.T) {
 	}
 	for _, prompt := range held {
 		t.Run(prompt, func(t *testing.T) {
-			d := core.Route(prompt, "claude-code", "claude-opus-4-8", cat)
+			d := core.Route(prompt, "claude-code", "claude-opus-5-5", cat)
 			if !d.Checked || d.SafeVerdict != core.VerdictOK {
 				t.Fatalf("precondition: expected safe verdict OK, got verdict=%s safe=%s corrections=%v",
 					d.Verdict, d.SafeVerdict, d.Corrections)
 			}
 			plan := d.PlanForSession(core.ClaudeCodeCaps, cat, session)
-			if plan.RewriteModel || plan.Model.ID != "claude-opus-4-8" {
+			if plan.RewriteModel || plan.Model.ID != "claude-opus-5-5" {
 				t.Fatalf("held downshift rewrote to %q (rewrite=%v); corrections=%v",
 					plan.Model.ID, plan.RewriteModel, d.Corrections)
 			}
@@ -38,8 +38,8 @@ func TestPlanForSession_GuardrailHoldKeepsCurrentModel(t *testing.T) {
 
 // A confident, unheld downshift still rewrites inside a known session.
 func TestPlanForSession_CleanDownshiftStillRewrites(t *testing.T) {
-	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"})
-	d := core.Route("fix a typo in the README", "claude-code", "claude-opus-4-8", cat)
+	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"})
+	d := core.Route("fix a typo in the README", "claude-code", "claude-opus-5-5", cat)
 	if len(d.Corrections) != 0 || d.Verdict != core.VerdictDownshift {
 		t.Fatalf("precondition: verdict=%s corrections=%v", d.Verdict, d.Corrections)
 	}
