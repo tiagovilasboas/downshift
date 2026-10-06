@@ -7,6 +7,7 @@
 | [ARCHITECTURE.md](ARCHITECTURE.md) | What Downshift is and how hooks flow |
 | [WHEN-TO-USE.md](WHEN-TO-USE.md) | Downshift vs gateways and direct SDK |
 | [CONFIG.md](CONFIG.md) | State dir, env vars, migration |
+| [PUBLISHING-BOUNDARIES.md](PUBLISHING-BOUNDARIES.md) | Public vs internal vs private docs |
 | [session-models.md](session-models.md) | Session allowlists and Claude usage hooks |
 | [BETA-EXIT.md](BETA-EXIT.md) | Beta graduation criteria |
 | [../ROADMAP.md](../ROADMAP.md) | Public roadmap |
@@ -35,12 +36,11 @@
 | [../benchmark/README.md](../benchmark/README.md) | Benchmark splits |
 | [design/router-generalization.md](design/router-generalization.md) | Eval methodology and holdout discipline |
 
-## Brand and launch
+## Brand
 
 | Doc | Topic |
 |-----|--------|
-| [brand/LAUNCH-WAVES.md](brand/LAUNCH-WAVES.md) | Execution plan by wave |
-| [brand/RENAME.md](brand/RENAME.md) | Harness → Downshift rename |
+| [brand/RENAME.md](brand/RENAME.md) | Harness → Downshift rename (done) |
 | [brand/README-HERO.md](brand/README-HERO.md) | README hero drafts |
 
 ## Design (experimental / future)
@@ -53,8 +53,11 @@
 
 ## Internal (maintainers)
 
+Not required for install. See [PUBLISHING-BOUNDARIES.md](PUBLISHING-BOUNDARIES.md).
+
 | Doc | Topic |
 |-----|--------|
 | [internal/README.md](internal/README.md) | Index |
+| [internal/LAUNCH-WAVES.md](internal/LAUNCH-WAVES.md) | Launch execution checklist |
 | [internal/BACKLOG.md](internal/BACKLOG.md) | Workstream backlog |
 | [internal/NEXT-STEPS.md](internal/NEXT-STEPS.md) | Near-term tasks |

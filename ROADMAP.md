@@ -3,7 +3,7 @@
 Public direction for the open-source project. Timelines are indicative.
 
 **Status:** beta — exit criteria in [docs/BETA-EXIT.md](docs/BETA-EXIT.md).  
-**Execution waves:** [docs/brand/LAUNCH-WAVES.md](docs/brand/LAUNCH-WAVES.md).
+**Maintainer execution:** [docs/internal/LAUNCH-WAVES.md](docs/internal/LAUNCH-WAVES.md) (see [publishing boundaries](docs/PUBLISHING-BOUNDARIES.md)).
 
 Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift

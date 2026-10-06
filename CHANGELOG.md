@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Docs:** [PUBLISHING-BOUNDARIES.md](docs/PUBLISHING-BOUNDARIES.md) (public vs
+  `docs/internal/` vs private). Launch waves and test coverage moved under
+  `docs/internal/` with stubs at old paths.
 - **Docs (wave 2):** Public [CAPABILITY-ROUTER-V2.md](docs/CAPABILITY-ROUTER-V2.md) condensed;
   full design moved to [docs/internal/CAPABILITY-ROUTER-V2-FULL.md](docs/internal/CAPABILITY-ROUTER-V2-FULL.md).
   Contributor classifier guide: [docs/contrib/classifier.md](docs/contrib/classifier.md).
@@ -21,8 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   See [docs/CONFIG.md](docs/CONFIG.md).
 - **Docs:** README repositioned as **Downshift** (deterministic model router hero),
   plus [docs/WHEN-TO-USE.md](docs/WHEN-TO-USE.md) (vs LiteLLM, OpenRouter, direct SDK).
-  `llms.txt` and `docs/pt/README.md` aligned. GitHub repo name remains
-  `harness-downshift` until wave 4 rename.
+  `llms.txt` and `docs/pt/README.md` aligned.
 - **Licence:** project relicensed from BUSL 1.1 to **Apache License 2.0**
   (2026-10-06). Archived BUSL text: `LICENSE-BSL-1.1-ARCHIVE.md`. Contributor
   terms: contributions are under Apache 2.0 (see CONTRIBUTING.md).

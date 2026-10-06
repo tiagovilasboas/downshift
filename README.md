@@ -35,7 +35,7 @@ Subagent / request
 | **Observable** | Local telemetry (`events.jsonl`), feedback with explicit `--required-tier` for training labels. |
 | **Harness-agnostic core** | Adapters only encode I/O; routing lives in `internal/core`. |
 
-**Project docs:** [Architecture](docs/ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Governance](GOVERNANCE.md) · [When to use](docs/WHEN-TO-USE.md) · [Full doc index](docs/README.md) · [Launch waves](docs/brand/LAUNCH-WAVES.md)
+**Project docs:** [Architecture](docs/ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Governance](GOVERNANCE.md) · [When to use](docs/WHEN-TO-USE.md) · [Full doc index](docs/README.md)
 
 **License:** [Apache 2.0](LICENSE) — commercial use allowed. Optional hosted/support: [MONETIZATION.md](MONETIZATION.md).
 
