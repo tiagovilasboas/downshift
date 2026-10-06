@@ -1,6 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
-// Commercial use requires a licence — see LICENSE for terms.
+// SPDX-License-Identifier: Apache-2.0
 
 // Command downshift is the harness-downshift binary. It runs as a hook: a
 // harness pipes a JSON event on stdin, downshift classifies the subagent task

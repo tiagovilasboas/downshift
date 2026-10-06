@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // Package nbtier is a Go port of tools/baseline/nb_tier.py: a multinomial
 // naive Bayes over lowercase word unigrams and bigrams (Laplace alpha 1,

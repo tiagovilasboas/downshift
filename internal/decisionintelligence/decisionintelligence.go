@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // Package decisionintelligence provides advisory, provider-agnostic routing
 // signals. It never authorizes an action or replaces deterministic safety,

@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // Package semantic provides an optional local MiniLM embedding boost for the
 // regex classifier. It never calls an LLM and never downgrades complexity:

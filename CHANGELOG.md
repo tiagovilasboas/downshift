@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: BUSL-1.1 -->
+<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # Changelog
 
@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed
+- **Licence:** project relicensed from BUSL 1.1 to **Apache License 2.0**
+  (2026-10-06). Archived BUSL text: `LICENSE-BSL-1.1-ARCHIVE.md`. Contributor
+  terms: contributions are under Apache 2.0 (see CONTRIBUTING.md).
 
 ### Fixed
 - Claude Code: the hook wrote the full catalog id (`claude-haiku-4-5`) into `updatedInput.model`, but the Task/Agent schema accepts only family names, so the harness rejected the rewrite and blocked the spawn. The adapter now writes the catalog's `native_name` and allows the spawn unchanged when an entry has none.
@@ -113,5 +118,4 @@ See [docs/BETA-EXIT.md](docs/BETA-EXIT.md) for detailed tracking.
 
 ---
 
-**License:** Business Source License 1.1 (BUSL-1.1)  
-**Change Date:** 2030-09-20 (converts to Apache 2.0)
+**License:** Apache License 2.0 (from 2026-10-06). Prior: BUSL 1.1 — see LICENSE-BSL-1.1-ARCHIVE.md

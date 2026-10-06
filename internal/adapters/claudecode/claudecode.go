@@ -1,6 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
-// Commercial use requires a licence — see LICENSE for terms.
+// SPDX-License-Identifier: Apache-2.0
 
 // Package claudecode adapts core routing decisions to Claude Code's hook
 // protocol. Claude Code spawns subagents via the Task tool; a PreToolUse hook

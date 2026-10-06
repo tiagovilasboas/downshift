@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: BUSL-1.1 -->
+<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # Security Policy
 
@@ -10,7 +10,8 @@ This project runs as a PreToolUse hook inside AI coding agents (Claude Code, Cur
 
 ### Reporting process
 
-1. Email your report to the project maintainer: visit [github.com/tiagovilasboas](https://github.com/tiagovilasboas) for contact details.
+1. Prefer **[GitHub Private Vulnerability Reporting](https://github.com/tiagovilasboas/harness-downshift/security/advisories/new)** (Security → Advisories → Report a vulnerability).
+2. Alternatively, contact the maintainer via the channels listed on [github.com/tiagovilasboas](https://github.com/tiagovilasboas) with subject **Downshift security**.
 2. Include:
    - A clear description of the vulnerability.
    - Steps to reproduce (if applicable).
@@ -79,9 +80,9 @@ Python tooling (LangGraph orchestration, test helpers) may have dependencies—s
 
 ## License implications
 
-`harness-downshift` is published under BUSL-1.1 (Business Source License 1.1). Free for non-commercial use; commercial use requires a written licence.
+Downshift is published under the Apache License, Version 2.0. See [LICENSE](LICENSE).
 
-Security patches are released for all versions and are available to all users, regardless of commercial licensing status.
+Security patches are released for supported versions under the same licence terms.
 
 ---
 

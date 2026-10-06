@@ -1,6 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
-// Commercial use requires a licence — see LICENSE for terms.
+// SPDX-License-Identifier: Apache-2.0
 
 // Package cursor adapts core routing decisions to Cursor's hook protocol.
 // Cursor exposes a preToolUse hook whose output supports updated_input —

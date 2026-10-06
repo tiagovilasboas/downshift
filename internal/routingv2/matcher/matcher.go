@@ -1,5 +1,5 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: Apache-2.0
 
 // Package matcher selects the cheapest model that satisfies tier and capability requirements.
 // It uses the catalog (via core.Resolver) but makes decisions based on tier and cost,

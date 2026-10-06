@@ -1,7 +1,7 @@
 # harness-downshift
 
 [![Build](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/harness-downshift/actions/workflows/ci.yml)
-[![License: BUSL-1.1](https://img.shields.io/badge/license-BUSL--1.1-orange.svg)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Go 1.27](https://img.shields.io/badge/go-1.27-00ADD8.svg)](https://go.dev)
 [![Status: beta](https://img.shields.io/badge/status-beta%20%E2%80%94%20practical%20testing-yellow)](https://github.com/tiagovilasboas/harness-downshift/releases)
 
@@ -28,6 +28,10 @@ Subagent task: "diagnose the race condition in the webhook handler"
 > evolving feature in Claude Code, Cursor, and Codex, and not every plan
 > or build honours the hook rewrite. See [Plan compatibility](#plan-compatibility--read-before-installing)
 > before installing.
+
+**Project docs:** [Architecture](docs/ARCHITECTURE.md) · [Roadmap](ROADMAP.md) · [Governance](GOVERNANCE.md) · [Full doc index](docs/README.md) · [Launch waves](docs/brand/LAUNCH-WAVES.md)
+
+**License:** [Apache 2.0](LICENSE) — commercial use allowed. Optional hosted/support: [MONETIZATION.md](MONETIZATION.md).
 
 ## Optional local LangGraph planner
 
@@ -1243,43 +1247,21 @@ Small minus frontier pass rate, TRIVIAL+SIMPLE labels: -20.0pp (revisit the down
 
 ## License
 
-`harness-downshift` is published under the **Business Source License 1.1**
-(`SPDX-License-Identifier: BUSL-1.1`).
+**Apache License 2.0** (`SPDX-License-Identifier: Apache-2.0`). See [`LICENSE`](LICENSE)
+and [`NOTICE`](NOTICE). Use in personal, open-source, and **commercial**
+products is allowed under the licence terms.
 
-| Use | Permitted? |
-|---|---|
-| Study, research, learning | ✅ Free |
-| Personal non-commercial use | ✅ Free |
-| Open-source projects with no revenue | ✅ Free |
-| Contributing to this repository | ✅ Free |
-| Internal tooling (no revenue tie) | ✅ Free |
-| SaaS, paid product, managed service | ❌ Commercial licence required |
-| Consulting deliverable sold to a client | ❌ Commercial licence required |
-| Any revenue-generating workflow | ❌ Commercial licence required |
+Versions before 2026-10-06 were under BUSL 1.1 ([archive](LICENSE-BSL-1.1-ARCHIVE.md)).
+Relicense notes: [docs/RELICENSE.md](docs/RELICENSE.md).
 
-**Change Date: 2030-09-20** — on that date the code converts automatically to Apache 2.0.
-
-### Commercial licensing
-
-If your use case falls in the "commercial licence required" row, reach out
-before shipping — not after. Early conversations are straightforward; retroactive
-enforcement is not. Contact: [github.com/tiagovilasboas](https://github.com/tiagovilasboas).
-
-The full terms, including enforcement provisions and the 15-day cure window,
-are in [`LICENSE`](LICENSE).
+How the maintainer plans to sustain the project (hosted, support): [MONETIZATION.md](MONETIZATION.md).
 
 ### AI agent notice
 
 This repository includes [`llms.txt`](llms.txt) and [`AGENTS.md`](AGENTS.md).
-AI coding agents (Claude Code, Codex, Cursor) reading this repository are
-instructed to alert on commercial use and attribute work to the Author.
+AI coding agents should preserve Apache 2.0 headers and attribute the project
+when generating docs or derivatives.
 
-### Copyright registration
+### Copyright
 
-The Author intends to register this work with:
-- **INPI (Brazil)** — Programa de Computador, under Lei 9.609/98
-- **US Copyright Office**
-
-For commercial licensing: [github.com/tiagovilasboas](https://github.com/tiagovilasboas)
-
-© 2026 [Tiago de Carvalho Vilas Boas](https://github.com/tiagovilasboas)
+© 2026 [Tiago de Carvalho Vilas Boas](https://github.com/tiagovilasboas). See [NOTICE](NOTICE).
