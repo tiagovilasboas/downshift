@@ -30,10 +30,10 @@ import (
 // ── config ────────────────────────────────────────────────────────────────────
 
 const (
-	maxRecent  = 8
-	refreshMs  = 250 // fast enough to feel live
-	boxWidth   = 58
-	window24h  = 24 * time.Hour
+	maxRecent = 8
+	refreshMs = 250 // fast enough to feel live
+	boxWidth  = 58
+	window24h = 24 * time.Hour
 )
 
 // estimatedCostPerUnitUSD is a placeholder conversion rate from normalised
