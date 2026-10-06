@@ -62,7 +62,9 @@ expect() { # expect <label> <output> <fixed string>
 # Claude Code: a trivial Task on opus must be rewritten to the small model.
 cc_res=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | hook claude-code)
 expect "claude-code rewrite" "$cc_res" '"updatedInput":{'
-expect "claude-code rewrite" "$cc_res" '"model":"claude-haiku-4-5"'
+# Claude Code accepts the catalog native_name (haiku|sonnet|opus|fable), not the full id.
+expect "claude-code rewrite" "$cc_res" '"model":"haiku"'
+expect "claude-code rewrite" "$cc_res" 'claude-haiku-4-5'
 echo "OK: claude-code rewrites updatedInput.model"
 
 # Claude Code without a session allowlist: allow, no rewrite.

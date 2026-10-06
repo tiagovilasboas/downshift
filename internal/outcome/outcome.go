@@ -12,7 +12,6 @@
 package outcome
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -21,8 +20,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -184,149 +185,55 @@ func LoadRuns(runsDir string) ([]Run, error) {
 	return runs, nil
 }
 
-type verifyJob struct {
-	task     Task
-	file     string
-	want     bool
-	describe string
-}
-
 // Verify proves every check is executable and discriminating (the stub fails,
 // the reference passes) and that every recorded result is reproducible from
 // its recorded solution. It returns one line per problem.
-//
-// All solutions compile inside one module and one `go test` process. A fresh
-// process per solution spent most of CI on compiler startup.
 func Verify(ctx context.Context, tasks []Task, runsDir string) ([]string, error) {
 	runs, err := LoadRuns(runsDir)
 	if err != nil {
 		return nil, err
 	}
-	var jobs []verifyJob
+	type job struct {
+		t        Task
+		file     string
+		want     bool
+		describe string
+	}
+	var jobs []job
 	for _, t := range tasks {
-		jobs = append(jobs, verifyJob{t, filepath.Join(t.Dir, "stub.go"), false, "stub"},
-			verifyJob{t, filepath.Join(t.Dir, "reference.go"), true, "reference"})
+		jobs = append(jobs, job{t, filepath.Join(t.Dir, "stub.go"), false, "stub"},
+			job{t, filepath.Join(t.Dir, "reference.go"), true, "reference"})
 		for _, r := range runs {
 			if want, ok := r.Results[t.ID]; ok {
-				jobs = append(jobs, verifyJob{t, filepath.Join(runsDir, r.Tier, SolutionFile(t.ID)), want, "recorded " + r.Tier})
+				jobs = append(jobs, job{t, filepath.Join(runsDir, r.Tier, SolutionFile(t.ID)), want, "recorded " + r.Tier})
 			}
 		}
 	}
-	passes, err := checkBatch(ctx, jobs)
+	var mu sync.Mutex
 	var problems []string
-	for i, j := range jobs {
-		pass, ok := passes[i]
-		if !ok {
-			continue
-		}
-		if pass != j.want {
-			problems = append(problems, fmt.Sprintf("%s: %s pass=%v, want %v", j.task.ID, j.describe, pass, j.want))
-		}
-	}
-	sort.Strings(problems)
-	return problems, err
-}
-
-// checkBatch reports pass/fail by job index. A job missing from the map was
-// not executed. The first read or runner failure is returned as err.
-func checkBatch(ctx context.Context, jobs []verifyJob) (map[int]bool, error) {
-	passes := map[int]bool{}
-	if len(jobs) == 0 {
-		return passes, nil
-	}
-	root, err := os.MkdirTemp("", "outcome-batch-")
-	if err != nil {
-		return nil, err
-	}
-	defer os.RemoveAll(root)
-	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module outcomebatch\n\ngo 1.22\n"), 0o644); err != nil {
-		return nil, err
-	}
-	checks := map[string][]byte{}
-	dirFor := map[int]string{}
 	var firstErr error
-	for i, j := range jobs {
-		src, err := os.ReadFile(j.file)
-		if err != nil {
-			if firstErr == nil {
+	sem := make(chan struct{}, runtime.NumCPU())
+	var wg sync.WaitGroup
+	for _, j := range jobs {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(j job) {
+			defer func() { <-sem; wg.Done() }()
+			src, err := os.ReadFile(j.file)
+			var pass bool
+			if err == nil {
+				pass, err = Check(ctx, j.t, src)
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			if err != nil && firstErr == nil {
 				firstErr = err
+			} else if err == nil && pass != j.want {
+				problems = append(problems, fmt.Sprintf("%s: %s pass=%v, want %v", j.t.ID, j.describe, pass, j.want))
 			}
-			continue
-		}
-		check, ok := checks[j.task.Dir]
-		if !ok {
-			check, err = os.ReadFile(filepath.Join(j.task.Dir, "check_test.go"))
-			if err != nil {
-				if firstErr == nil {
-					firstErr = err
-				}
-				continue
-			}
-			checks[j.task.Dir] = check
-		}
-		dir := fmt.Sprintf("c%03d", i)
-		pkg := filepath.Join(root, dir)
-		if err := os.Mkdir(pkg, 0o755); err != nil {
-			return nil, err
-		}
-		if err := os.WriteFile(filepath.Join(pkg, "solution.go"), src, 0o644); err != nil {
-			return nil, err
-		}
-		if err := os.WriteFile(filepath.Join(pkg, "check_test.go"), check, 0o644); err != nil {
-			return nil, err
-		}
-		dirFor[i] = dir
+		}(j)
 	}
-	if len(dirFor) == 0 {
-		return passes, firstErr
-	}
-	ctx, cancel := context.WithTimeout(ctx, 8*time.Minute)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, "go", "test", "-json", "-count=1", "./...")
-	cmd.Dir = root
-	cmd.Env = append(os.Environ(), "GOWORK=off", "GOFLAGS=")
-	out, runErr := cmd.CombinedOutput()
-	if runErr != nil {
-		if _, isExit := runErr.(*exec.ExitError); !isExit {
-			if firstErr == nil {
-				firstErr = runErr
-			}
-			return passes, firstErr
-		}
-	}
-	results := parsePackageResults(out)
-	for i, dir := range dirFor {
-		pass, ok := results["outcomebatch/"+dir]
-		if !ok {
-			if firstErr == nil {
-				firstErr = fmt.Errorf("go test did not report outcomebatch/%s", dir)
-			}
-			continue
-		}
-		passes[i] = pass
-	}
-	return passes, firstErr
-}
-
-func parsePackageResults(out []byte) map[string]bool {
-	got := map[string]bool{}
-	sc := bufio.NewScanner(bytes.NewReader(out))
-	sc.Buffer(make([]byte, 0, 64*1024), 10<<20)
-	for sc.Scan() {
-		var ev struct {
-			Action  string
-			Package string
-			Test    string
-		}
-		if json.Unmarshal(sc.Bytes(), &ev) != nil || ev.Test != "" || ev.Package == "" {
-			continue
-		}
-		switch ev.Action {
-		case "pass":
-			got[ev.Package] = true
-		case "fail":
-			got[ev.Package] = false
-		}
-	}
-	return got
+	wg.Wait()
+	sort.Strings(problems)
+	return problems, firstErr
 }
