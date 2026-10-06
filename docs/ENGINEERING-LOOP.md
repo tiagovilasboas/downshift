@@ -30,6 +30,10 @@ The loop does not receive completion signals from harnesses automatically.
   they are separate from the cost telemetry log.
 - Candidate weights can be evaluated with `benchmark --compare
   --candidate-weights=...`; evaluation never activates them.
+- `DOWNSHIFT_SHADOW_WEIGHTS` records candidate predictions alongside hook
+  recommendations without changing them. `downshift shadow-report` compares
+  these observations with explicit reviewed labels. See
+  [the shadow guide](CLASSIFIER-SHADOW.md) for limitations and the semantic roadmap.
 - Train/validation splitting is deterministic and stratified. Weights are
   validated for finite bounded coefficients and saved atomically with private
   file permissions.

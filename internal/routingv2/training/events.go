@@ -31,6 +31,7 @@ import (
 	"github.com/tiagovilasboas/harness-downshift/internal/core"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/domain"
 	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/extractor"
+	"github.com/tiagovilasboas/harness-downshift/internal/routingv2/shadow"
 )
 
 // Event represents a single routing event for later training.
@@ -45,6 +46,7 @@ type Event struct {
 	Confidence   float64              `json:"confidence,omitempty"` // Probability from a statistical router, when available
 	Confident    bool                 `json:"confident,omitempty"`  // Binary signal from the deterministic router
 	Harness      string               `json:"harness"`
+	Shadow       *shadow.Observation  `json:"classifier_shadow,omitempty"`
 
 	// Outcome — attached after engineer review (may be empty initially)
 	Outcome *Outcome `json:"outcome,omitempty"`
@@ -96,6 +98,7 @@ func RecordRoutedDecision(prompt string, decision core.Decision) (string, error)
 		Confident:    decision.Confident,
 		Harness:      decision.Harness,
 	}
+	event.Shadow = shadow.FromEnv(shadow.Input{Text: prompt, Features: event.Features})
 	if err := NewEventStore(DefaultEventsPath()).Record(event); err != nil {
 		return "", err
 	}
@@ -176,9 +179,6 @@ func (s *EventStore) AddOutcome(eventID string, outcome Outcome) error {
 	}
 	if outcome.Retry && outcome.RetryTier <= found.SelectedTier {
 		return fmt.Errorf("retry tier must be stronger than selected tier %s", found.SelectedTier)
-	}
-	if outcome.Success && outcome.RequiredTier == nil {
-		outcome.RequiredTier = &found.SelectedTier
 	}
 	if outcome.RequiredTier != nil && (*outcome.RequiredTier < core.TierSmall || *outcome.RequiredTier > core.TierFrontier) {
 		return fmt.Errorf("required tier must be SMALL, MID, or FRONTIER")

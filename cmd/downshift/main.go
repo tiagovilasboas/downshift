@@ -127,6 +127,8 @@ func main() {
 		os.Exit(runBenchmark(args[1:]))
 	case "eval-outcome":
 		os.Exit(runEvalOutcome(args[1:], os.Stdout, os.Stderr))
+	case "shadow-report":
+		os.Exit(runShadowReport(args[1:]))
 	case "train":
 		os.Exit(runTrain(args[1:]))
 	case "feedback":
@@ -1289,6 +1291,7 @@ Usage:
   downshift eval-outcome --verify|--report  Outcome eval: executable checks, small vs frontier pass rate
   downshift train <file>         Train capability-router v2 on a labelled dataset
   downshift train --from-events  Train from engineer-reviewed local feedback
+  downshift shadow-report       Compare opt-in candidate observations with explicit reviewed labels (JSON)
   downshift feedback list        List routing IDs awaiting engineer review
   downshift feedback stats       Summarize outcomes per harness
   downshift feedback <id> <outcome>  Record success, retry, or failed
