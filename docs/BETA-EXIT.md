@@ -18,7 +18,7 @@ Proof that the harness executor applied the hook’s model, not only that
 |----|------|-------|------|
 | P1.1 | Document “emission vs honored” in install guide (`docs/session-models.md` + matrix) | eng | [x] |
 | P1.2 | Hook-layer E2E in CI (`TestHookE2E_RewriteEventStats`) | eng | [x] |
-| P1.3 | **Manual protocol**: one paid Claude Code session, trivial Task, capture stderr + child model in UI/logs | dogfood | [x] `docs/evidence/claude-code-rewrite-honored-2026-10-06.md` (child self-reported Haiku 4.5 under a Sonnet 5.5 parent; billing cross-check still open under P3) |
+| P1.3 | **Manual protocol**: one paid Claude Code session, trivial Task, capture stderr + child model in UI/logs | dogfood | [x] `docs/evidence/claude-code-rewrite-honored-2026-10-06.md` (child ran on Haiku 4.5 per the API-reported model in its transcript, under a Sonnet 5.5 parent; billing cross-check still open under P3) |
 | P1.4 | **Automated smoke** (CI gate): script that runs `downshift try` + adapter golden JSON payloads (`scripts/smoke-test.sh`) | eng | [x] |
 | P1.5 | Codex `multi_agent_v2`: repeat P1.3 on a known-good build; record in `docs/HARNESS-MATRIX.md` | dogfood | [x] `docs/evidence/codex-rewrite-honored-2026-10-02.md` |
 | P1.6 | Cursor Pro/Ultra usage-based: repeat P1.3; update matrix row | dogfood | [ ] |
@@ -26,7 +26,7 @@ Proof that the harness executor applied the hook’s model, not only that
 
 **Exit:** at least **one** harness with P1.3 write-up + matrix row **Yes** with date; P1.7 optional until upstream exposes signal.
 
-Codex P1.5 write-up landed 2026-10-02. Claude Code P1.3 landed 2026-10-06 after a schema-rejection bug (full id vs family name) was found and fixed; its evidence is a model self-report, not billing.
+Codex P1.5 write-up landed 2026-10-02. Claude Code P1.3 landed 2026-10-06 after a schema-rejection bug (full id vs family name) was found and fixed; its evidence is the API-reported model in the child transcript, not billing.
 
 ---
 
@@ -63,7 +63,7 @@ Replace directional normalised units with provider-grounded savings.
 
 **Exit:** P3.4 + P3.5 + P3.7 filled for **one** billing period (maintainer sign-off).
 
-P3.4 finding (2026-10-06): the Claude Code PostToolUse payload for an async `Agent` launch carries no token usage (`tool_response` is launch metadata only, `duration_ms` is a few ms), which is why the log has no `usage` events. The payload does carry `transcript_path` and `tool_response.outputFile`; usage would have to come from there or from a harness that reports tokens. The launch payload does carry `resolvedModel`, now recorded as an `outcome: "resolved"` honor observation (P1.7).
+P3.4 finding (2026-10-06): the Claude Code PostToolUse payload for an async `Agent` launch carries no token usage (`tool_response` is launch metadata only, `duration_ms` is a few ms), which is why the log has no `usage` events. The subagent transcript at `tool_response.outputFile` does carry per-message `message.model` and `message.usage` (input, output, cache creation/read; the same message id repeats while streaming, so take the last per id). It is not complete at launch time, so usage has to be read after the subagent finishes. The launch payload does carry `resolvedModel`, now recorded as an `outcome: "resolved"` honor observation (P1.7).
 
 ---
 
