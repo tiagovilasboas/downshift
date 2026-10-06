@@ -88,3 +88,76 @@ func TestStringField(t *testing.T) {
 		})
 	}
 }
+
+func TestTaskText(t *testing.T) {
+	tests := []struct {
+		name string
+		m    map[string]any
+		keys []string
+		want string
+	}{
+		{
+			name: "first key match",
+			m:    map[string]any{"prompt": "task description", "description": "fallback"},
+			keys: []string{"prompt", "description"},
+			want: "task description",
+		},
+		{
+			name: "second key match when first absent",
+			m:    map[string]any{"description": "fallback text"},
+			keys: []string{"prompt", "description"},
+			want: "fallback text",
+		},
+		{
+			name: "no keys match returns empty",
+			m:    map[string]any{"other": "value"},
+			keys: []string{"prompt", "description"},
+			want: "",
+		},
+		{
+			name: "empty string trimmed returns empty",
+			m:    map[string]any{"prompt": "   "},
+			keys: []string{"prompt"},
+			want: "",
+		},
+		{
+			name: "whitespace trimmed",
+			m:    map[string]any{"prompt": "  task text  "},
+			keys: []string{"prompt"},
+			want: "task text",
+		},
+		{
+			name: "first non-empty wins even if others exist",
+			m:    map[string]any{"prompt": "main", "description": "ignored", "title": "also ignored"},
+			keys: []string{"prompt", "description", "title"},
+			want: "main",
+		},
+		{
+			name: "skip empty values and use next",
+			m:    map[string]any{"prompt": "", "description": "fallback"},
+			keys: []string{"prompt", "description"},
+			want: "fallback",
+		},
+		{
+			name: "no keys provided returns empty",
+			m:    map[string]any{"prompt": "text"},
+			keys: []string{},
+			want: "",
+		},
+		{
+			name: "nil map returns empty",
+			m:    nil,
+			keys: []string{"prompt"},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := hookutil.TaskText(tt.m, tt.keys...)
+			if got != tt.want {
+				t.Errorf("TaskText(%v, %v) = %q, want %q", tt.m, tt.keys, got, tt.want)
+			}
+		})
+	}
+}
