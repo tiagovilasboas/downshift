@@ -36,8 +36,9 @@ var embeddedJSON []byte
 type Entry struct {
 	ID          string            `json:"id"`
 	Aliases     []string          `json:"aliases"`
-	Family      string            `json:"family"` // stable prefix for version-agnostic matching
-	Effort      string            `json:"effort"` // optional: low|medium|high — effort variant inside the family (Option A)
+	Family      string            `json:"family"`      // stable prefix for version-agnostic matching
+	NativeName  string            `json:"native_name"` // optional: name the harness schema accepts instead of the id (family-level, survives version bumps)
+	Effort      string            `json:"effort"`      // optional: low|medium|high — effort variant inside the family (Option A)
 	Provider    string            `json:"provider"`
 	Harness     string            `json:"harness"`
 	Tier        string            `json:"tier"`    // "small" | "mid" | "frontier" | "unknown"
@@ -182,6 +183,7 @@ func build(f catalogFile) *Catalog {
 		m := core.Model{
 			ID:      e.ID,
 			Family:  e.Family,
+			Native:  e.NativeName,
 			Tier:    tier,
 			InputM:  e.InputCostM,
 			OutputM: e.OutputCostM,

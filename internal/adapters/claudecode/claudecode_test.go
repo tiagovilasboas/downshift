@@ -25,6 +25,12 @@ func TestEventTaskText(t *testing.T) {
 	}
 }
 
+// nativeOf is the name the harness schema accepts for a tier, read from the
+// catalog so a model version bump does not touch the tests.
+func nativeOf(tier core.Tier) string {
+	return cat.ModelFor("claude-code", tier).Native
+}
+
 func catID(tier core.Tier) string {
 	return cat.ModelFor("claude-code", tier).ID
 }
@@ -66,9 +72,8 @@ func TestHandle_DownshiftsTrivialSubagent(t *testing.T) {
 	if m == nil {
 		t.Fatal("expected updatedInput, got none")
 	}
-	wantID := catID(core.TierSmall)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s (small tier)", m["model"], wantID)
+	if m["model"] != nativeOf(core.TierSmall) {
+		t.Errorf("model = %v, want %s (small tier)", m["model"], nativeOf(core.TierSmall))
 	}
 	if m["prompt"] == nil || m["description"] == nil {
 		t.Error("prompt and description must be preserved in updatedInput")
@@ -93,9 +98,8 @@ func TestHandle_UpshiftsComplexSubagent(t *testing.T) {
 		t.Fatal("expected an upshift note, got none")
 	}
 	m := decodeUpdated(t, out)
-	wantID := catID(core.TierFrontier)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s (frontier tier)", m["model"], wantID)
+	if m["model"] != nativeOf(core.TierFrontier) {
+		t.Errorf("model = %v, want %s (frontier tier)", m["model"], nativeOf(core.TierFrontier))
 	}
 }
 
@@ -145,9 +149,8 @@ func TestHandle_FallsBackToSessionModel(t *testing.T) {
 		t.Fatal("expected downshift using session model as current")
 	}
 	m := decodeUpdated(t, out)
-	wantID := catID(core.TierSmall)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s", m["model"], wantID)
+	if m["model"] != nativeOf(core.TierSmall) {
+		t.Errorf("model = %v, want %s", m["model"], nativeOf(core.TierSmall))
 	}
 }
 
@@ -217,9 +220,8 @@ func TestHandle_SiblingFieldsPreserved(t *testing.T) {
 		t.Fatal("expected updatedInput")
 	}
 	// Model must be rewritten.
-	wantID := catID(core.TierSmall)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s", m["model"], wantID)
+	if m["model"] != nativeOf(core.TierSmall) {
+		t.Errorf("model = %v, want %s", m["model"], nativeOf(core.TierSmall))
 	}
 	// All sibling fields must survive the rewrite.
 	if m["timeout"] == nil {
@@ -257,11 +259,8 @@ func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
 	if m == nil {
 		t.Fatal("expected a rewrite to a session model")
 	}
-	if m["model"] != "claude-sonnet-5-5" {
-		t.Fatalf("model = %v, want claude-sonnet-5-5", m["model"])
-	}
-	if m["model"] == "claude-haiku-4" {
-		t.Fatal("emitted a catalog id that is not in the session")
+	if m["model"] != nativeOf(core.TierMid) {
+		t.Fatalf("model = %v, want %s", m["model"], nativeOf(core.TierMid))
 	}
 }
 
@@ -408,4 +407,63 @@ func TestHandle_SessionQuotaRespected(t *testing.T) {
 	if out.HookSpecificOutput.PermissionDecision != "allow" {
 		t.Error("must always return allow permission")
 	}
+}
+
+// Claude Code's Task/Agent schema accepts only family aliases for "model".
+// A full catalog id fails validation and blocks the spawn, so the adapter must
+// write the alias.
+func TestHandle_WritesNativeAliasNotCatalogID(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	ev := claudecode.Event{
+		ToolName: "Task",
+		Model:    frontierID,
+		ToolInput: json.RawMessage(`{
+			"prompt": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, _, d := claudecode.Handle(withCatalogSession(ev), cat)
+	m := decodeUpdated(t, out)
+	if m == nil {
+		t.Fatal("expected a rewrite")
+	}
+	if want := nativeOf(core.TierSmall); want == "" || m["model"] != want {
+		t.Fatalf("model = %v, want the catalog native name %q", m["model"], want)
+	}
+	if d.Model.ID != catID(core.TierSmall) {
+		t.Errorf("decision keeps the catalog id for telemetry, got %q", d.Model.ID)
+	}
+}
+
+// A target whose catalog entry has no native_name must not be written: the
+// harness would reject the whole spawn, so the hook allows it unchanged.
+func TestHandle_NoNativeNameFailsOpen(t *testing.T) {
+	c := &noNativeResolver{Resolver: cat}
+	ev := withCatalogSession(claudecode.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"prompt": "rename the userId variable",
+			"model": "` + catID(core.TierFrontier) + `"
+		}`),
+	})
+	out, note, _ := claudecode.Handle(ev, c)
+	if m := decodeUpdated(t, out); m != nil || note != "" {
+		t.Fatalf("must allow unchanged without a native name, got %v note=%q", m, note)
+	}
+}
+
+// noNativeResolver strips Native from every model, simulating a catalog entry
+// that omits native_name.
+type noNativeResolver struct{ core.Resolver }
+
+func (r *noNativeResolver) ModelFor(h string, t core.Tier) core.Model {
+	m := r.Resolver.ModelFor(h, t)
+	m.Native = ""
+	return m
+}
+
+func (r *noNativeResolver) LookupByID(h, id string) (core.Model, bool) {
+	m, ok := r.Resolver.LookupByID(h, id)
+	m.Native = ""
+	return m, ok
 }

@@ -118,6 +118,19 @@ func writeRun(t *testing.T, runs string, task Task, src string, claimed bool) {
 	_ = os.WriteFile(filepath.Join(dir, "run.json"), run, 0o644)
 }
 
+func TestParsePackageResults_IgnoresTestEvents(t *testing.T) {
+	out := []byte(`{"Action":"fail","Package":"outcomebatch/c000","Test":"TestA"}
+{"Action":"fail","Package":"outcomebatch/c000"}
+{"Action":"pass","Package":"outcomebatch/c001"}
+{"Action":"output","Package":"outcomebatch/c001","Output":"ok\n"}
+not json
+`)
+	got := parsePackageResults(out)
+	if len(got) != 2 || got["outcomebatch/c000"] || !got["outcomebatch/c001"] {
+		t.Fatalf("results=%v", got)
+	}
+}
+
 func TestVerify_ChecksDiscriminateAndRecordsReproduce(t *testing.T) {
 	if testing.Short() {
 		t.Skip("runs go test in throwaway modules")

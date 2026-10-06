@@ -42,6 +42,7 @@ func (t Tier) String() string {
 type Model struct {
 	ID      string  // canonical model id used by the harness
 	Family  string  // stable family prefix (version-agnostic); empty when unknown
+	Native  string  // name the harness's own schema accepts for this model (e.g. a family alias); empty when the id itself is accepted
 	Tier    Tier    // capability/cost bucket
 	InputM  float64 // USD per 1M input tokens (approximate)
 	OutputM float64 // USD per 1M output tokens (approximate)
