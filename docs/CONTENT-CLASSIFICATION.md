@@ -140,8 +140,8 @@ versions; rotation is not automatic.
 | `PUBLISHING-BOUNDARIES` alignment | Done |
 | Sensitive maintainer docs stubbed | Done (`BACKLOG`, `NEXT-STEPS`) |
 | **Documentation audit (use vs inside vs MOAT)** | Done — [internal/DOC-AUDIT.md](internal/DOC-AUDIT.md) |
-| Private `downshift-labs` repo (OC-1) | **In progress** — eval + tools on disk; push private remote |
-| Labs split (benchmarks + training ops) | Done on branch `labs/training-ops` |
+| Private `downshift-labs` repo (OC-1) | **Done** — private GitHub repo + `ci-eval` |
+| Labs split (benchmarks + training ops) | **Done** — merged [#57](https://github.com/tiagovilasboas/downshift/pull/57) |
 | Per-file audit of all 600+ paths | **Not required** — use audit + checklist |
 | README moat trim (see audit) | Done |
 | History rewrite for removed **C** | **Not done** — optional, high cost |
