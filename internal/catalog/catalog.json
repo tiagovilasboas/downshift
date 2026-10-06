@@ -23,16 +23,16 @@
       "output_cost_per_1m": 5.00
     },
     {
-      "id": "claude-sonnet-4-6",
-      "aliases": ["claude-sonnet"],
+      "id": "claude-sonnet-5-5",
+      "aliases": ["claude-sonnet", "claude-sonnet-5.5", "claude-sonnet-4-6"],
       "family": "claude-sonnet",
       "provider": "anthropic",
       "harness": "claude-code",
       "tier": "mid",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
-      "input_cost_per_1m": 3.00,
-      "output_cost_per_1m": 15.00
+      "input_cost_per_1m": 2.00,
+      "output_cost_per_1m": 10.00
     },
     {
       "id": "claude-opus-5-5",
@@ -395,16 +395,16 @@
       "output_cost_per_1m": 5.00
     },
     {
-      "id": "claude-sonnet-4-6",
-      "aliases": ["sonnet", "claude-sonnet-4.6", "claude-sonnet"],
+      "id": "claude-sonnet-5-5",
+      "aliases": ["sonnet", "claude-sonnet-5.5", "claude-sonnet-4-6", "claude-sonnet-4.6", "claude-sonnet"],
       "family": "claude-sonnet",
       "provider": "anthropic",
       "harness": "kirocrew",
       "tier": "mid",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
-      "input_cost_per_1m": 3.00,
-      "output_cost_per_1m": 15.00
+      "input_cost_per_1m": 2.00,
+      "output_cost_per_1m": 10.00
     },
     {
       "id": "claude-opus-5-5",

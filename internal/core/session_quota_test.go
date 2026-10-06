@@ -12,7 +12,7 @@ import (
 )
 
 func TestHarnessOwnsID_RejectsOtherHarnessSlug(t *testing.T) {
-	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"})
+	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
 	if core.HarnessOwnsID("claude-code", "composer-2.5", session, cat) {
 		t.Fatal("composer-2.5 is a cursor session id, not a claude-code id")
 	}
@@ -25,7 +25,7 @@ func TestHarnessOwnsID_RejectsOtherHarnessSlug(t *testing.T) {
 }
 
 func TestPlanForSession_ForeignIDDoesNotRewrite(t *testing.T) {
-	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"})
+	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
 	d := core.Decision{
 		Harness:      "claude-code",
 		RequestedID:  "composer-2.5",

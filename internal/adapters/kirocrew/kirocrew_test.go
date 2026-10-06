@@ -20,7 +20,7 @@ var cat = catalog.Load()
 
 const (
 	smallID    = "claude-haiku-4-5"
-	midID      = "claude-sonnet-4-6"
+	midID      = "claude-sonnet-5-5"
 	frontierID = "claude-opus-5-5"
 )
 

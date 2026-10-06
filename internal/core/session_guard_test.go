@@ -14,7 +14,7 @@ import (
 // current model when the session list is known. It used to fall through to
 // the classified DOWNSHIFT verdict and pick the cheapest session model.
 func TestPlanForSession_GuardrailHoldKeepsCurrentModel(t *testing.T) {
-	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"})
+	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
 	held := []string{
 		"rename the token validation function and make it accept unsigned JWTs",
 		"fix typo in the payment settlement reconciliation logic that double-charges customers",
@@ -38,7 +38,7 @@ func TestPlanForSession_GuardrailHoldKeepsCurrentModel(t *testing.T) {
 
 // A confident, unheld downshift still rewrites inside a known session.
 func TestPlanForSession_CleanDownshiftStillRewrites(t *testing.T) {
-	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-5-5"})
+	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
 	d := core.Route("fix a typo in the README", "claude-code", "claude-opus-5-5", cat)
 	if len(d.Corrections) != 0 || d.Verdict != core.VerdictDownshift {
 		t.Fatalf("precondition: verdict=%s corrections=%v", d.Verdict, d.Corrections)
