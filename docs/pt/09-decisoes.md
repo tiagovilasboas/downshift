@@ -20,6 +20,7 @@ O design do Downshift é pautado pelo equilíbrio deliberado entre requisitos de
 | **Honor inferido na mesma sessão** | Codex já conta o follow-up sem reescrever o log. | Claude sem `session_id` não entra nessa conta. |
 | **Graphify via comando** | Dá para ligar um grafo depois, fail-open. | Não é socket MCP nativo. |
 | **Zero-Leakage no log de eventos** | Logs seguros para compartilhamento público e relatórios de auditoria. | Não é possível recuperar o texto original do prompt a partir dos arquivos de telemetria. |
+| **Candidato softmax só em shadow** | Dá para comparar um candidato com rótulos revisados antes de qualquer promoção. | `DOWNSHIFT_SHADOW_WEIGHTS` não altera o hook. Sucesso sem `--required-tier` não vira treino. Ver [10 · Candidato em shadow](10-candidato-shadow.md). |
 
 ---
 

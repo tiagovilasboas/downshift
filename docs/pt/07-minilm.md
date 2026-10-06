@@ -31,3 +31,5 @@ O módulo semântico opera sob um pipeline híbrido e escalonado em `internal/se
 
 * **Vantagem:** Evita custos por token para classificar tarefas, elimina dependência de conexão de rede externa e mantém latência mediana na faixa de ~1.8 ms em CPU simples.
 * **Custo:** Centróides locais por similaridade operam melhor em vocabulário técnico consistente (inglês/código). Tarefas em outros idiomas ou fora do domínio de desenvolvimento de software dependem primariamente das heurísticas regex do sistema.
+
+Este boost entra no `core.Route`. O candidato softmax da v2 é outra coisa: só observa, e está em [10 · Candidato em shadow](10-candidato-shadow.md).

@@ -561,7 +561,7 @@ The default classifier is deterministic (regex scoring). The **CapabilityRouter 
 - **13 extracted signals** — mechanical, coding, security, concurrency, migration, planning, etc.
 - **Deterministic safety floor** — high-risk tasks (auth, migration, race conditions) are pinned to Frontier regardless of the classifier.
 - **Risk-weighted loss** — under-routing is penalised 5–10× harder than over-routing. `FRONTIER→SMALL` is catastrophic; `SMALL→MID` is cheap.
-- **Personalised weights** — train on your own prompts, compare against legacy, activate manually.
+- **Personalised weights:** train on labelled data or explicit reviews, compare on a holdout, then observe with `DOWNSHIFT_SHADOW_WEIGHTS`. Copying weights into place does not switch production hooks to v2.
 
 The router is **completely model-agnostic**: no model names, no provider strings in the routing logic. It decides tiers; the catalog decides models.
 

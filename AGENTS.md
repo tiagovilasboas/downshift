@@ -124,7 +124,8 @@ internal/adapters/
   codex/             — PreToolUse + spawn_agent + updatedInput.model + reasoning_effort
 
 internal/hookutil/   — shared utilities (StringField)
-internal/routingv2/training/ — prompt-free route outcomes, offline training, metrics
+internal/routingv2/shadow/   — opt-in candidate observation; never changes Route()
+internal/routingv2/training/ — prompt-free route outcomes, shadow-report, offline training
 
 cmd/downshift/       — binary entry point, hook runners, try subcommand,
                        models list/check/pull dispatch
@@ -137,6 +138,9 @@ cmd/downshift/       — binary entry point, hook runners, try subcommand,
   current subagent already runs one, `Plan()` sets `PreserveExplicit=true`.
 - `updatedInput` preserves all sibling fields — only `model` and
   `reasoning_effort` are mutated.
+- `DOWNSHIFT_SHADOW_WEIGHTS` records a candidate beside the production
+  recommendation. It must not change hook output. `success` feedback does not
+  create a `required_tier` label.
 - Every adapter exposes task text to the shared loop only for in-memory feature
   extraction; raw prompts are never persisted.
 - Feedback and training stay harness-agnostic. Harnesses report routing IDs;
