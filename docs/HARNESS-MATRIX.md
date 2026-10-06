@@ -6,7 +6,7 @@ rewrite to the child subagent, not just that downshift emitted one.
 
 | harness | plan / build | rewrite honored? | evidence / limit |
 |---|---|---|---|
-| claude-code | paid: Pro / Max / Teams / API | Emission only (honored not yet recorded) | PreToolUse + `updatedInput` emission covered in CI (`TestHookE2E_RewriteEventStats`). No paid-session write-up yet: P1.3 in `docs/BETA-EXIT.md` is open. Needs `session-models.json` or the hook never rewrites. |
+| claude-code | paid: Pro / Max / Teams / API | Yes, 2026-10-06 (one spawn, model self-reported) | `updatedInput.model` must be a family name (`haiku`/`sonnet`/`opus`/`fable`); a full id is rejected and blocks the spawn. The catalog `native_name` supplies it. Write-up: `docs/evidence/claude-code-rewrite-honored-2026-10-06.md`. Needs `session-models.json` or the hook never rewrites. |
 | claude-code | Free | No: no real subagents | Sandboxed, no egress; subagents need paid (README.md:728) |
 | cursor | Free | No: silently discarded | `updated_input.model` ignored, known issue (README.md:734) |
 | cursor | Pro legacy (request-based) | No: silently dropped | Task model takes only `"fast"` (README.md:735) |
