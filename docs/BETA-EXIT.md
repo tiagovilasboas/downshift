@@ -44,16 +44,7 @@ Graduation needs independent operators, not only one `events.jsonl`.
 
 **Exit:** README cites **≥3 distinct session sources** OR **≥2 non-maintainer exports** in a release note.
 
-**P2 Status (2026-10-06):** Blocked. Waiting for external users to run the hooks and collect data. 
-
-**How to unblock P2:**
-1. Ask a teammate or external user to install `downshift` and wire the hooks in their Claude Code / Cursor / Codex.
-2. They run for 1 week, collect `downshift stats --days=7 --export > my-stats.json`.
-3. Paste the JSON (no prompts, redact paths if needed) into a GitHub issue/PR comment under `P2.3 collected data`.
-4. Aggregate the exports (median/mean across sources), update the README table.
-5. Mark P2.4 done with a date.
-
-For now, `P2.3` and `P2.4` stay open — this is the **only blocker that requires real users**.
+**P2 status (2026-10-06):** open. It needs independent operators, not more data from one machine. If you run Downshift for a week, a `downshift stats --days=7 --export` is the contribution: see [stats-export.md](stats-export.md) and the stats-export issue template.
 
 ---
 
