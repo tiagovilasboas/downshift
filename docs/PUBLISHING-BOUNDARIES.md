@@ -5,6 +5,9 @@ adopters, contributors, or investors reading the default doc path. This page is
 the contract for what stays public, what lives under `docs/internal/`, and what
 belongs in a **private** repo later ([OC-1 in LAUNCH-WAVES](internal/LAUNCH-WAVES.md)).
 
+**Classification labels A / B / C / D** (adoption, community, competitive,
+secret): [CONTENT-CLASSIFICATION.md](CONTENT-CLASSIFICATION.md).
+
 ---
 
 ## Three tiers

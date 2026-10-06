@@ -8,6 +8,7 @@
 | [WHEN-TO-USE.md](WHEN-TO-USE.md) | Downshift vs gateways and direct SDK |
 | [CONFIG.md](CONFIG.md) | State dir, env vars, migration |
 | [PUBLISHING-BOUNDARIES.md](PUBLISHING-BOUNDARIES.md) | Public vs internal vs private docs |
+| [CONTENT-CLASSIFICATION.md](CONTENT-CLASSIFICATION.md) | A/B/C/D content map (adoption → secret) |
 | [session-models.md](session-models.md) | Session allowlists and Claude usage hooks |
 | [BETA-EXIT.md](BETA-EXIT.md) | Beta graduation criteria |
 | [../ROADMAP.md](../ROADMAP.md) | Public roadmap |

@@ -15,6 +15,7 @@ Adopters should start with the [root README](../../README.md), [ARCHITECTURE.md]
 | [TEST-COVERAGE.md](TEST-COVERAGE.md) | Package coverage tables |
 | [ENGINEERING-LOOP-MAINTAINER.md](ENGINEERING-LOOP-MAINTAINER.md) | Promotion loop and maintainer eval notes |
 | [downshift-labs-README.template.md](downshift-labs-README.template.md) | Private repo scaffold |
+| [DOC-AUDIT.md](DOC-AUDIT.md) | Use vs inside vs MOAT (doc audit) |
 
 Sensitive execution detail lives in **private** storage; see
 [PUBLISHING-BOUNDARIES.md](../PUBLISHING-BOUNDARIES.md) (competitive sensitivity).

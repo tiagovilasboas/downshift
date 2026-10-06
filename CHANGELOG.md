@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Docs:** [CONTENT-CLASSIFICATION.md](docs/CONTENT-CLASSIFICATION.md) (A/B/C/D
+  inventory, code vs docs policy for competitive content).
+- **Docs:** [internal/DOC-AUDIT.md](docs/internal/DOC-AUDIT.md) (use vs inside vs
+  MOAT flags for README, docs, benchmarks, examples).
+
 ### Changed
 - **CI:** Fast `ci` workflow (path classification, single CLI build, scoped
   `eval-outcome`); heavy checks moved to scheduled `ci-full`. Cross-platform
