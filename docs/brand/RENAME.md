@@ -217,7 +217,7 @@ After rename to `downshift`:
 - [ ] **Description:** `Deterministic open-source model router — right-sized LLMs per workload. Agent hooks, catalog policy, shadow mode, outcome benchmarks.`
 - [ ] **Website:** optional — link to README or future docs site
 - [ ] **Topics:** `model-routing`, `llm`, `ai`, `cost-optimization`, `agents`, `golang`, `open-source`, `developer-tools`
-- [ ] **Social preview:** `docs/brand/downshift-github-social-preview.svg`
+- [ ] **Social preview (PNG only on GitHub):** upload `docs/brand/downshift-github-social-preview.png` (1280×640; edit `downshift-github-social-preview.svg` and re-export with `rsvg-convert -w 1280 -h 640 …`)
 - [ ] Enable **Discussions** for announcement thread
 - [ ] Release **v0.x.y: The Downshift rename** with migration notes
 
