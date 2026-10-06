@@ -49,6 +49,15 @@ type Model struct {
 	Harness string  // which harness this model id belongs to
 }
 
+// WriteName is the string a hook writes into the harness's model field: the
+// harness-native name when the catalog declares one, otherwise the id.
+func (m Model) WriteName() string {
+	if m.Native != "" {
+		return m.Native
+	}
+	return m.ID
+}
+
 // Effort is the reasoning/compute intensity for a task. It is harness-agnostic:
 // each adapter translates this to the native scale its harness accepts
 // (e.g. Codex "low/medium/high", Grok "low/medium/high").

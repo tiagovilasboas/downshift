@@ -115,7 +115,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 			continue
 		}
 
-		subagent["Model"] = mappedModel
+		subagent["Model"] = plan.WriteName
 		changed = true
 	}
 

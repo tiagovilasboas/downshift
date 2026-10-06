@@ -66,7 +66,15 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 	if model.Harness == "" {
 		model.Harness = d.Harness
 	}
-	return RewritePlan{Model: model, RewriteModel: c.CanRewriteModel, ApplyEffort: c.CanApplyEffort}
+	rewrite := c.CanRewriteModel
+	if c.StrictModelName && model.Native == "" {
+		rewrite = false
+	}
+	plan := RewritePlan{Model: model, RewriteModel: rewrite, ApplyEffort: c.CanApplyEffort}
+	if rewrite {
+		plan.WriteName = model.WriteName()
+	}
+	return plan
 }
 
 func selectSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool) {
