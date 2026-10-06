@@ -457,13 +457,21 @@ func readHookPayload(in io.Reader, limit int64) ([]byte, error) {
 	}
 }
 
+type catalogEntryReader interface {
+	Entries() []catalog.Entry
+}
+
 // runTry classifies a prompt from the command line for quick testing.
-func runTry(catalog core.Resolver, args []string) int {
+func runTry(resolver core.Resolver, args []string) int {
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: downshift try \"<task prompt>\" [harness] [current-model]")
 		return 2
 	}
 	prompt := args[0]
+	if strings.TrimSpace(prompt) == "" {
+		fmt.Fprintln(os.Stderr, "usage: downshift try \"<task prompt>\" [harness] [current-model]")
+		return 2
+	}
 	harness := "claude-code"
 	current := ""
 	if len(args) >= 2 {
@@ -471,6 +479,10 @@ func runTry(catalog core.Resolver, args []string) int {
 	}
 	if len(args) >= 3 {
 		current = args[2]
+	}
+	if !knownTryHarness(resolver, harness) {
+		fmt.Fprintf(os.Stderr, "unknown harness %q; valid harnesses: %s\n", harness, strings.Join(validTryHarnesses(resolver), ", "))
+		return 2
 	}
 
 	// Grok uses a single model with configurable reasoning — report effort
@@ -487,10 +499,10 @@ func runTry(catalog core.Resolver, args []string) int {
 		return 0
 	}
 
-	res, known := tryHook(harness, prompt, current, catalog)
+	res, known := tryHook(harness, prompt, current, resolver)
 	d := res.decision
 	if !known {
-		d = core.Route(prompt, harness, current, catalog)
+		d = core.Route(prompt, harness, current, resolver)
 	}
 	fmt.Printf("Task:       %s\n", prompt)
 	fmt.Printf("Complexity: %s\n", d.Complexity)
@@ -527,6 +539,32 @@ func runTry(catalog core.Resolver, args []string) int {
 	}
 	fmt.Printf("→ %s\n", d.Summary())
 	return 0
+}
+
+func knownTryHarness(resolver core.Resolver, harness string) bool {
+	for _, name := range validTryHarnesses(resolver) {
+		if harness == name {
+			return true
+		}
+	}
+	return false
+}
+
+func validTryHarnesses(resolver core.Resolver) []string {
+	names := map[string]struct{}{"grok": {}}
+	if reader, ok := resolver.(catalogEntryReader); ok {
+		for _, entry := range reader.Entries() {
+			if entry.Harness != "" {
+				names[entry.Harness] = struct{}{}
+			}
+		}
+	}
+	out := make([]string, 0, len(names))
+	for name := range names {
+		out = append(out, name)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // tryResult is what the real hook adapter would emit for a prompt.

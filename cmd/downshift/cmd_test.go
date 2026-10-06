@@ -100,6 +100,30 @@ func TestRunTry_NoArgs(t *testing.T) {
 	}
 }
 
+func TestRunTry_RejectsEmptyPrompt(t *testing.T) {
+	stderr := captureStderr(func() {
+		if rc := runTry(cmdCat, []string{"   "}); rc != 2 {
+			t.Errorf("empty prompt rc = %d, want 2", rc)
+		}
+	})
+	if !strings.Contains(stderr, "usage: downshift try") {
+		t.Fatalf("empty prompt stderr missing usage:\n%s", stderr)
+	}
+}
+
+func TestRunTry_RejectsUnknownHarness(t *testing.T) {
+	stderr := captureStderr(func() {
+		if rc := runTry(cmdCat, []string{"rename the userId variable", "Cursor"}); rc != 2 {
+			t.Errorf("unknown harness rc = %d, want 2", rc)
+		}
+	})
+	for _, want := range []string{`unknown harness "Cursor"`, "antigravity", "claude-code", "codex", "cursor", "grok", "kirocrew"} {
+		if !strings.Contains(stderr, want) {
+			t.Fatalf("unknown harness stderr missing %q:\n%s", want, stderr)
+		}
+	}
+}
+
 func TestRunTry_TrivialTask(t *testing.T) {
 	out := captureStdout(func() {
 		if rc := runTry(cmdCat, []string{"rename the userId variable", "claude-code"}); rc != 0 {
