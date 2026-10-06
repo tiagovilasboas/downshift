@@ -60,7 +60,7 @@ jobs:
           ~/go/bin/govulncheck ./...
 
       - name: Lint
-        uses: golangci/golangci-lint-action@afc8b66c56087e6e92f4da8c72c8f46c40a08b22 # v6.1.0
+        uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           args: --timeout=5m
