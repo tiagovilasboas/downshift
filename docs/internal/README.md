@@ -10,6 +10,7 @@ and [ROADMAP.md](../../ROADMAP.md).
 |------|---------|
 | [BACKLOG.md](BACKLOG.md) | DS/HC/KB workstream contract |
 | [NEXT-STEPS.md](NEXT-STEPS.md) | Short-horizon maintainer checklist |
+| [CAPABILITY-ROUTER-V2-FULL.md](CAPABILITY-ROUTER-V2-FULL.md) | Archived long v2 design (not public roadmap) |
 
 If this content should not be public long term, move it to a private repository
 and replace these paths with a single link in [ROADMAP.md](../../ROADMAP.md).

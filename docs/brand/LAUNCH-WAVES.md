@@ -69,12 +69,12 @@
 
 | ID | Task | Arquivos / ação | Done |
 |----|------|-----------------|------|
-| W2-1 | Condensar `CAPABILITY-ROUTER-V2.md` → ~150 linhas “Vision + status experimental”; mover resto para `docs/internal/` ou apêndice colapsado | `docs/CAPABILITY-ROUTER-V2.md` | [ ] |
-| W2-2 | Criar `docs/contrib/classifier.md`; mover detalhe de pesos/margem de `docs/pt/02-classificador.md` | `docs/pt/02-classificador.md`, novo arquivo | [ ] |
-| W2-3 | Índice `docs/README.md` (user / contrib / design / brand) | `docs/README.md` | [ ] |
-| W2-4 | Manter `router-generalization.md` em `docs/design/`; link no ROADMAP como “rigor de eval” | `ROADMAP.md` | [ ] |
-| W2-5 | `CONTRIBUTING.md` + `AGENTS.md`: marca Downshift, URLs atualizadas quando souber | `CONTRIBUTING.md`, `AGENTS.md` | [ ] |
-| W2-6 | `CHANGELOG.md`: entrada “Repositioning; docs structure” | `CHANGELOG.md` | [ ] |
+| W2-1 | Condensar `CAPABILITY-ROUTER-V2.md` → ~150 linhas “Vision + status experimental”; mover resto para `docs/internal/` ou apêndice colapsado | `docs/CAPABILITY-ROUTER-V2.md` | [x] |
+| W2-2 | Criar `docs/contrib/classifier.md`; mover detalhe de pesos/margem de `docs/pt/02-classificador.md` | `docs/pt/02-classificador.md`, novo arquivo | [x] |
+| W2-3 | Índice `docs/README.md` (user / contrib / design / brand) | `docs/README.md` | [x] |
+| W2-4 | Manter `router-generalization.md` em `docs/design/`; link no ROADMAP como “rigor de eval” | `ROADMAP.md` | [x] |
+| W2-5 | `CONTRIBUTING.md` + `AGENTS.md`: marca Downshift, URLs atualizadas quando souber | `CONTRIBUTING.md`, `AGENTS.md` | [x] |
+| W2-6 | `CHANGELOG.md`: entrada “Repositioning; docs structure” | `CHANGELOG.md` | [x] |
 
 **PR sugerido:** `docs: trim v2 doc and split user vs contributor classifier docs`
 
@@ -153,7 +153,7 @@
 | W6-4 | Dev.to: artigo problema (subagent cost) — não propaganda | [ ] |
 | W6-5 | HN: Show HN (técnico, link ARCHITECTURE + honest limits) | [ ] |
 | W6-6 | LinkedIn + X (versões RENAME.md §23) | [ ] |
-| W6-7 | `examples/` mínimo: `hook-input.json` por harness | [ ] |
+| W6-7 | `examples/` mínimo: `hook-input.json` por harness | [x] |
 | W6-8 | Publicar imagem `ghcr.io/tiagovilasboas/downshift` + doc (P1 se atrasar) | [ ] |
 
 ---
@@ -218,12 +218,12 @@ Não bloqueia launch; ordem sugerida:
 
 | Onda | PR / commit | Data | Notas |
 |------|-------------|------|-------|
-| 0 | (local) COMMERCIAL, ROADMAP, GOVERNANCE, ARCHITECTURE, internal/ | 2026-10-06 | PR pendente |
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
+| 0 | `11d6aba` Apache + OSS foundation | 2026-10-06 | |
+| 1 | `d6f0e0b` hero + WHEN-TO-USE | 2026-10-06 | W1-5 social PNG manual |
+| 2 | (pending) doc trim + contrib/classifier | 2026-10-06 | |
+| 3 | `64e2295` internal/paths + doctor | 2026-10-06 | merged com onda 4 |
+| 4 | `64e2295`/`660f276` module + GitHub rename | 2026-10-06 | W4-8 release note pendente |
+| 5 | template `stats-export` | 2026-10-06 | P2.3 exports ainda 0/2 |
 | 6 | | | |
 | 7 | | | |
 

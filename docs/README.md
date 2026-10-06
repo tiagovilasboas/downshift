@@ -24,14 +24,16 @@
 | [HARNESS-MATRIX.md](HARNESS-MATRIX.md) | Plan compatibility |
 | [LANGGRAPH-ORCHESTRATION.md](LANGGRAPH-ORCHESTRATION.md) | Optional planner |
 | [pt/README.md](pt/README.md) | Documentação em português |
+| [../examples/README.md](../examples/README.md) | Sample hook JSON payloads |
 
 ## Contributors
 
 | Doc | Topic |
 |-----|--------|
 | [../CONTRIBUTING.md](../CONTRIBUTING.md) | Misroutes, layout, tests |
+| [contrib/classifier.md](contrib/classifier.md) | v1 classifier tuning (signals, margin, shadow) |
 | [../benchmark/README.md](../benchmark/README.md) | Benchmark splits |
-| [design/router-generalization.md](design/router-generalization.md) | Eval methodology |
+| [design/router-generalization.md](design/router-generalization.md) | Eval methodology and holdout discipline |
 
 ## Brand and launch
 
@@ -45,7 +47,7 @@
 
 | Doc | Topic |
 |-----|--------|
-| [CAPABILITY-ROUTER-V2.md](CAPABILITY-ROUTER-V2.md) | Router v2 vision (long) |
+| [CAPABILITY-ROUTER-V2.md](CAPABILITY-ROUTER-V2.md) | Router v2 (experimental; short) |
 | [DECISION-INTELLIGENCE.md](DECISION-INTELLIGENCE.md) | Advisory layer |
 | [ENGINEERING-LOOP.md](ENGINEERING-LOOP.md) | Feedback loop |
 
