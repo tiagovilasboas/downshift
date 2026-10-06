@@ -15,11 +15,10 @@
 
 [Install](docs/install.md) · [Docs](docs/README.md) · [Harness support](#harness-support) · [Contributing](#contributing)
 
+<!-- GitHub themed-picture uses the first dark source and ignores max-width, so a mobile source here is stretched to the column width. -->
 <picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/img/hook-flow-mobile-dark.svg">
-  <source media="(max-width: 600px)" srcset="docs/img/hook-flow-mobile.svg">
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/hook-flow-dark.svg">
-  <img src="docs/img/hook-flow.svg" alt="Hook flow: the harness sends a PreToolUse event, Downshift classifies the task, applies policy against the session models, and returns updatedInput with the chosen model, or allows the spawn unchanged." width="860">
+  <img src="docs/img/hook-flow.svg" alt="Hook flow: the harness sends a PreToolUse event, Downshift classifies the task, applies policy against the session models, and returns updatedInput with the chosen model, or allows the spawn unchanged." width="720">
 </picture>
 
 </div>
@@ -28,14 +27,30 @@
 
 ## What it is
 
-Downshift is a single Go binary that runs as a **hook** in your coding harness. When the harness is about to spawn a subagent, Downshift scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites the subagent's model to a right-sized one from the models your session actually offers. Same input, same decision. No network calls, no API keys.
+Downshift is a single Go binary that runs as a **hook** in your coding harness. When the harness is about to spawn a **subagent** (a child task), Downshift scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites **only that subagent's model** to a right-sized one from your session's available models. The parent session model never changes. Same input, same decision. No network calls, no API keys.
 
-**What it is not:** an HTTP gateway or proxy (that is LiteLLM's job), a hosted model marketplace (OpenRouter), or an LLM-based classifier. It only acts on subagent spawns inside harnesses that expose a pre-tool hook. Comparison: [docs/when-to-use.md](docs/when-to-use.md).
+**Example:** Your session runs Claude Sonnet 5.5. You spawn 3 subagents — Downshift may route them to Haiku, Sonnet, and Opus respectively, based on task complexity. Billing and token usage happen at the subagent tier, not the session.
+
+**What it is not:** an HTTP gateway or proxy (that is LiteLLM's job), a hosted model marketplace (OpenRouter), or an LLM-based classifier (Downshift uses deterministic signals + optional local MiniLM semantic scoring). It only acts on subagent spawns inside harnesses that expose a pre-tool hook. Comparison: [docs/when-to-use.md](docs/when-to-use.md).
 
 ## How it works
 
+**Session model stays fixed. Subagent models get routed.**
+
+```
+Parent (e.g. Claude Sonnet 5.5) spawns 3 tasks:
+
+  Task 1: "rename a variable"       → trivial    → Haiku (¢ cheaper)
+  Task 2: "refactor a module"       → normal     → Sonnet (same tier)
+  Task 3: "design a new algorithm"  → complex    → Opus ($ more capable)
+
+Billing and token usage happen at the subagent tier, not the session.
+```
+
+**The routing loop:**
+
 1. **Intercept.** The harness fires a `PreToolUse` hook when a subagent is about to start. Downshift reads the task text in memory only; prompts are never stored.
-2. **Classify.** Scored signals (`internal/core`) map the task to a complexity: trivial through complex.
+2. **Classify.** Deterministic signals (`internal/core`) + optional local MiniLM semantic scoring map the task to a complexity level: trivial, normal, review, or preserved.
 3. **Choose.** Policy picks a tier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/session-models.md)).
 4. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
 
