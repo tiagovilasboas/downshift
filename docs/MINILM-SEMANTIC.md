@@ -59,7 +59,7 @@ Neural holdout row in `benchmark/minilm-holdout.json` (model `sentence-transform
 
 The regex regression net on that same `benchmark/holdout.json` reports 100% tier accuracy with 0% FRONTIER→MID and 0% FRONTIER→SMALL after signal edits that used this file. The neural row does not beat that net. A 2026-10-01 note in this doc listed regex at 98.0% tier accuracy and 8% FRONTIER→MID. That snapshot is historical. It is not the current burned-net result.
 
-The shipped default stays the local hash embedder.
+The shipped default stays the local hash embedder. This boost is inside `core.Route`. It is separate from the opt-in softmax candidate in [CLASSIFIER-SHADOW.md](CLASSIFIER-SHADOW.md), which does not change hook output.
 
 ## Tests
 

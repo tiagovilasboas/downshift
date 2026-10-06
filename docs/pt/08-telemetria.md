@@ -38,3 +38,5 @@ Cada entrada registrada no arquivo `events.jsonl` obedece a um esquema estrito:
 
 * **Vantagem:** O arquivo de telemetria pode ser compartilhado em relatórios de auditoria, issues do GitHub ou pull requests sem qualquer risco de vazamento de propriedade intelectual ou credenciais.
 * **Custo:** Como o texto do prompt não é persistido, não é possível reclassificar retroativamente uma tarefa do passado a partir do arquivo de log; a depuração precisa ser realizada inspecionando diretamente as sessões dos harnesses ou usando o comando `downshift try`.
+
+O arquivo `~/.harness-downshift/events.jsonl` é a telemetria de custo e de rota. O loop de revisão fica em `~/.harness-downshift/loop-events.jsonl`. Com shadow ligado, esse segundo arquivo ganha `classifier_shadow` (números e hash do artefato, sem texto da tarefa). `downshift feedback <id> success` não cria rótulo de tier mínimo. O guia está em [10 · Candidato em shadow](10-candidato-shadow.md).

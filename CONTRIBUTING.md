@@ -48,7 +48,8 @@ internal/adapters/<harness>/   # one adapter per harness
   cursor/                      #   preToolUse + updated_input for Cursor
   codex/                       #   PreToolUse + updatedInput + reasoning_effort for Codex
 internal/hookutil/             # shared utilities (StringField)
-internal/routingv2/training/   # local prompt-free loop events and offline learning
+internal/routingv2/shadow/     # opt-in candidate observation; does not change hooks
+internal/routingv2/training/   # local prompt-free loop events, shadow-report, offline learning
 internal/models/               # models subcommands (list, check, pull)
 ```
 
@@ -70,8 +71,9 @@ Use `internal/adapters/claudecode/` as the template. An adapter:
 The shared hook runner records an opaque review ID for every real routing
 decision. Do not add harness-specific training or completion behavior. Manual
 reviews use `downshift feedback`; only explicit `--required-tier` labels are
-training targets, and candidate weights must be evaluated before manual
-activation.
+training targets. `success` alone is not a minimum-tier label. Observe a
+candidate with `DOWNSHIFT_SHADOW_WEIGHTS` and `downshift shadow-report` before
+any manual activation. See `docs/CLASSIFIER-SHADOW.md`.
 
 Then:
 - Add catalog entries for the new harness in `internal/catalog/catalog.json`
