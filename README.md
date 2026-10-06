@@ -16,6 +16,8 @@
 [Install](docs/INSTALL.md) · [Docs](docs/README.md) · [Harness support](#harness-support) · [Contributing](#contributing)
 
 <picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/img/hook-flow-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="docs/img/hook-flow-mobile.svg">
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/hook-flow-dark.svg">
   <img src="docs/img/hook-flow.svg" alt="Hook flow: the harness sends a PreToolUse event, Downshift classifies the task, applies policy against the session models, and returns updatedInput with the chosen model, or allows the spawn unchanged." width="860">
 </picture>

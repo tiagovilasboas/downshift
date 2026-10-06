@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="340" height="916" viewBox="0 0 340 916" role="img" aria-labelledby="t d">
+<title id="t">Downshift hook flow for Claude Code (compact)</title>
+<desc id="d">Eight steps: a subagent spawn triggers the PreToolUse hook, which classifies the task, picks a tier from the catalog and session allowlist and rewrites the model as a family name. The child runs, PostToolUse records the model the harness resolved, and SubagentStop prices the child from its transcript. Any error lets the spawn through unchanged.</desc>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9CA3AF"/></marker><marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#22C55E"/></marker></defs>
+<rect width="340" height="916" rx="12" fill="#0D1117"/>
+<text x="16" y="34" fill="#F9FAFB" font-size="14.5" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Hook flow for one Claude Code subagent</text>
+<text x="16" y="54" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Deterministic end to end. No LLM, no network call.</text>
+<line x1="16" y1="66" x2="324" y2="66" stroke="#30363D"/>
+<rect x="12" y="84" width="316" height="66" rx="9" fill="#161B22" stroke="#6E7681" stroke-width="1.4"/>
+<circle cx="38" cy="117.0" r="13" fill="#6E7681"/>
+<text x="38" y="121.5" fill="#0D1117" font-size="13" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">1</text>
+<text x="64" y="109" fill="#F9FAFB" font-size="14.5" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Subagent spawn</text>
+<text x="64" y="127" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Claude Code calls the</text>
+<text x="64" y="142" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Task / Agent tool</text>
+<line x1="170.0" y1="151" x2="170.0" y2="168" stroke="#22C55E" stroke-width="1.6" marker-end="url(#g)"/>
+<rect x="12" y="170" width="316" height="66" rx="9" fill="#10301D" stroke="#22C55E" stroke-width="1.4"/>
+<circle cx="38" cy="203.0" r="13" fill="#22C55E"/>
+<text x="38" y="207.5" fill="#0D1117" font-size="13" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">2</text>
+<text x="64" y="195" fill="#F9FAFB" font-size="14.5" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">PreToolUse hook</text>
+<text x="64" y="213" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">downshift claude-code reads</text>
+<text x="64" y="228" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">the payload (stdin)</text>
+<line x1="170.0" y1="237" x2="170.0" y2="254" stroke="#22C55E" stroke-width="1.6" marker-end="url(#g)"/>
+<rect x="12" y="256" width="316" height="66" rx="9" fill="#10301D" stroke="#22C55E" stroke-width="1.4"/>
+<circle cx="38" cy="289.0" r="13" fill="#22C55E"/>
+<text x="38" y="293.5" fill="#0D1117" font-size="13" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">3</text>
+<text x="64" y="281" fill="#F9FAFB" font-size="14.5" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Classify</text>
+<text x="64" y="299" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Scored signals on the task text.</text>
+<text x="64" y="314" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">No LLM.</text>
+<line x1="170.0" y1="323" x2="170.0" y2="340" stroke="#22C55E" stroke-width="1.6" marker-end="url(#g)"/>
+<rect x="12" y="342" width="316" height="66" rx="9" fill="#10301D" stroke="#22C55E" stroke-width="1.4"/>
+<circle cx="38" cy="375.0" r="13" fill="#22C55E"/>
+<text x="38" y="379.5" fill="#0D1117" font-size="13" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">4</text>
+<text x="64" y="367" fill="#F9FAFB" font-size="14.5" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Pick the tier</text>
+<text x="64" y="385" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Catalog + session allowlist</text>
+<text x="64" y="400" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">choose a model</text>
+<line x1="170.0" y1="409" x2="170.0" y2="426" stroke="#22C55E" stroke-width="1.6" marker-end="url(#g)"/>
+<rect x="12" y="428" width="316" height="66" rx="9" fill="#10301D" stroke="#22C55E" stroke-width="1.4"/>
+<circle cx="38" cy="461.0" r="13" fill="#22C55E"/>
+<text x="38" y="465.5" fill="#0D1117" font-size="13" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">5</text>
+<text x="64" y="453" fill="#F9FAFB" font-size="14.5" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Rewrite</text>
+<text x="64" y="471" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">updatedInput.model =</text>
+<text x="64" y="486" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">haiku | sonnet | opus</text>
+<line x1="170.0" y1="495" x2="170.0" y2="512" stroke="#9CA3AF" stroke-width="1.6" marker-end="url(#a)"/>
+<rect x="12" y="514" width="316" height="66" rx="9" fill="#161B22" stroke="#6E7681" stroke-width="1.4"/>
+<circle cx="38" cy="547.0" r="13" fill="#6E7681"/>
+<text x="38" y="551.5" fill="#0D1117" font-size="13" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">6</text>
+<text x="64" y="539" fill="#F9FAFB" font-size="14.5" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Child runs</text>
+<text x="64" y="557" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">On the chosen model</text>
+<text x="64" y="572" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">(or the original one)</text>
+<line x1="170.0" y1="581" x2="170.0" y2="598" stroke="#22C55E" stroke-width="1.6" marker-end="url(#g)"/>
+<rect x="12" y="600" width="316" height="66" rx="9" fill="#10301D" stroke="#22C55E" stroke-width="1.4"/>
+<circle cx="38" cy="633.0" r="13" fill="#22C55E"/>
+<text x="38" y="637.5" fill="#0D1117" font-size="13" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">7</text>
+<text x="64" y="625" fill="#F9FAFB" font-size="14.5" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">PostToolUse hook</text>
+<text x="64" y="643" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Records the model the</text>
+<text x="64" y="658" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">harness resolved</text>
+<line x1="170.0" y1="667" x2="170.0" y2="684" stroke="#22C55E" stroke-width="1.6" marker-end="url(#g)"/>
+<rect x="12" y="686" width="316" height="66" rx="9" fill="#10301D" stroke="#22C55E" stroke-width="1.4"/>
+<circle cx="38" cy="719.0" r="13" fill="#22C55E"/>
+<text x="38" y="723.5" fill="#0D1117" font-size="13" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">8</text>
+<text x="64" y="711" fill="#F9FAFB" font-size="14.5" font-weight="700" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">SubagentStop hook</text>
+<text x="64" y="729" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Prices the child from</text>
+<text x="64" y="744" fill="#9CA3AF" font-size="12" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">its own transcript</text>
+<rect x="12" y="774" width="316" height="52" rx="9" fill="none" stroke="#22C55E" stroke-width="1.4"/>
+<text x="170.0" y="796" fill="#22C55E" font-size="12" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Fail-open: any error, missing field or</text>
+<text x="170.0" y="813" fill="#22C55E" font-size="12" font-weight="700" text-anchor="middle" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">unknown session lets the spawn through.</text>
+<text x="16" y="856" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">Why a family name: Claude Code's schema</text>
+<text x="16" y="872" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">rejects full model ids, so Downshift writes</text>
+<text x="16" y="888" fill="#9CA3AF" font-size="11.5" font-weight="400" text-anchor="start" font-family="Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif">haiku, sonnet or opus.</text>
+</svg>
