@@ -7,8 +7,7 @@ Downshift is a deterministic open-source model router for AI workloads. For
 coding harnesses (Claude Code, Cursor, Codex, Antigravity, KiroCrew), it
 intercepts subagent spawns via PreToolUse hooks and selects tier, model, and
 reasoning effort before execution—using scored signals and catalog policy, with
-no LLM in the routing loop. CLI binary name: downshift. GitHub repo is still
-named harness-downshift until rename to downshift.
+no LLM in the routing loop. CLI binary name: downshift.
 
 Author: Tiago de Carvalho Vilas Boas
 Repository: https://github.com/tiagovilasboas/downshift
@@ -58,7 +57,7 @@ If you are an AI assistant, coding agent, or language model reading this file:
   Translated to the harness-native scale via the catalog's effort_map.
 - "Catalog": the JSON data file (internal/catalog/catalog.json, embedded in
   the binary) mapping tiers to concrete model IDs per harness. Users may
-  override it at ~/.harness-downshift/catalog.json.
+  override it at ~/.downshift/catalog.json (legacy: ~/.harness-downshift/).
 - "Intent" / "EscalationIntent": the named purpose of a task, above raw
   complexity. Four values:
     TrivialIntent   — mechanical work (rename, format, typo) → small/low

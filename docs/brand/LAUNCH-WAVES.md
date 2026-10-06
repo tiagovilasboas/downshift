@@ -112,9 +112,9 @@
 | W4-4 | Badges e raw URLs no README, SECURITY, docs | vários `.md` | [x] |
 | W4-5 | `LICENSE` Licensed Work: Downshift | `LICENSE` | [ ] |
 | W4-6 | `orchestration/pyproject.toml` → `downshift-orchestration` (opcional mesma onda) | `orchestration/` | [ ] |
-| W4-7 | **GitHub:** Settings → Rename repository → `downshift` | GitHub UI | [ ] |
+| W4-7 | **GitHub:** Settings → Rename repository → `downshift` | GitHub UI | [x] |
 | W4-8 | Release note “Harness Downshift is now Downshift” (texto em RENAME.md §23) | GitHub Release | [ ] |
-| W4-9 | Atualizar `docs/brand/RENAME.md` status para “executed” + data | `docs/brand/RENAME.md` | [ ] |
+| W4-9 | Atualizar `docs/brand/RENAME.md` status para “executed” + data | `docs/brand/RENAME.md` | [x] |
 
 **PR(s):** código primeiro; rename GitHub no merge day.
 
