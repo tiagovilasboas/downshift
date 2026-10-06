@@ -90,9 +90,8 @@ jobs:
           git diff --name-only "$BASE_SHA" HEAD | bash scripts/fresh-guard.sh
 
       # Offline only: no model calls. --record refuses to run when CI is set.
-      # Pull requests run this only when the tasks, recorded solutions, or the
-      # checker itself change. The step is one `go test` over every solution,
-      # and unrelated diffs were paying that cost in full.
+      # Pull requests run the 200-solution suite only when the tasks, recorded
+      # solutions, or the checker change. Pushes to main always run it.
       - name: Outcome eval scope
         id: outcome_eval
         env:
@@ -103,7 +102,7 @@ jobs:
             git fetch --no-tags --depth=1 origin "$BASE_SHA"
             changed=$(git diff --name-only "$BASE_SHA" HEAD)
             run=false
-            if echo "$changed" | grep -Eq '^(benchmark/outcomes/|internal/outcome/|cmd/downshift/outcome\.go|\.github/workflows/ci\.yml)'; then
+            if echo "$changed" | grep -Eq '^(benchmark/outcomes/|internal/outcome/|cmd/downshift/outcome|\.github/workflows/ci\.yml)'; then
               run=true
             fi
           fi
