@@ -62,31 +62,16 @@ Optional PostToolUse / SubagentStop → telemetry (usage, honor)
 
 ---
 
-## Classifier and policy (where to read more)
-
-Production routing is **deterministic**: scored patterns (+ optional monotonic
-semantic boost) → complexity → tier → catalog model. There is **no LLM** on the
-hot path. Adapters apply **rewrite** or **policy mode** (KiroCrew); everything
-fail-open.
-
-| Topic | Doc |
-|-------|-----|
-| Signals, confidence margin, tuning, misroutes | [contrib/classifier.md](contrib/classifier.md) |
-| Tier / DOWNSHIFT / UPSHIFT table (product) | [pt/03-marcha.md](pt/03-marcha.md) |
-| Shadow / v2 (not the hook default) | [CAPABILITY-ROUTER-V2.md](CAPABILITY-ROUTER-V2.md) |
-
----
-
 ## Configuration on disk
 
-Effective directory: `~/.downshift` with legacy `~/.harness-downshift` fallback
-— see [CONFIG.md](CONFIG.md) and `downshift doctor`.
+Default state directory (migration in progress — see
+[RENAME.md](brand/RENAME.md)):
 
-Typical files: `catalog.json`, `events.jsonl`, `session-models.json`,
-`loop-events.jsonl`, optional weights.
+- `~/.harness-downshift/` today: `catalog.json`, `events.jsonl`,
+  `session-models.json`, `loop-events.jsonl`, optional weights
 
-Overrides: `DOWNSHIFT_STATE_DIR`, `DOWNSHIFT_EVENT_LOG`, `DOWNSHIFT_SESSION_MODELS`,
-feature flags in [MINILM-SEMANTIC.md](MINILM-SEMANTIC.md).
+Overrides: `DOWNSHIFT_EVENT_LOG`, `DOWNSHIFT_SESSION_MODELS`, feature flags
+documented in README and `docs/MINILM-SEMANTIC.md`.
 
 ---
 

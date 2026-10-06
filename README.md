@@ -708,7 +708,6 @@ Before you depend on it: run `downshift try "<your prompt>"` and read
 |------|-----|
 | Hook flow, packages, state dir | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Signals, margin, tuning, misroutes | [docs/contrib/classifier.md](docs/contrib/classifier.md) |
-| Safety / conservative routing (product) | [docs/pt/03-marcha.md](docs/pt/03-marcha.md) (PT) |
 
 ---
 
