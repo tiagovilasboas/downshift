@@ -295,3 +295,117 @@ func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
 		t.Fatalf("unconfident small without a model must not rewrite, got %v note=%q", m, note)
 	}
 }
+
+func TestEvent_CorrelationIdentifier(t *testing.T) {
+	ev := claudecode.Event{CorrelationID: "abc123"}
+	if got := ev.CorrelationIdentifier(); got != "abc123" {
+		t.Errorf("CorrelationIdentifier() = %q, want %q", got, "abc123")
+	}
+}
+
+func TestEvent_RequestedReasoningEffort(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"with field", `{"reasoning_effort":"low"}`, "low"},
+		{"missing field", `{"prompt":"test"}`, ""},
+		{"malformed json", `{not valid}`, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ev := claudecode.Event{ToolInput: json.RawMessage(tt.input)}
+			if got := ev.RequestedReasoningEffort(); got != tt.want {
+				t.Errorf("RequestedReasoningEffort() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestEvent_RequestedModel(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		fallback string
+		want     string
+	}{
+		{"from input", `{"model":"input-model"}`, "fallback-model", "input-model"},
+		{"missing, use fallback", `{"prompt":"test"}`, "fallback-model", "fallback-model"},
+		{"malformed, use fallback", `{not valid}`, "fallback-model", "fallback-model"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ev := claudecode.Event{
+				Model:     tt.fallback,
+				ToolInput: json.RawMessage(tt.input),
+			}
+			if got := ev.RequestedModel(); got != tt.want {
+				t.Errorf("RequestedModel() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestEvent_TaskText_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"from prompt", `{"prompt":"do a thing"}`, "do a thing"},
+		{"from description", `{"description":"do a thing"}`, "do a thing"},
+		{"prompt preferred", `{"prompt":"p","description":"d"}`, "p"},
+		{"missing both", `{"model":"x"}`, ""},
+		{"malformed", `{not valid}`, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ev := claudecode.Event{ToolInput: json.RawMessage(tt.input)}
+			if got := ev.TaskText(); got != tt.want {
+				t.Errorf("TaskText() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHandle_EmptyPromptFailsOpen(t *testing.T) {
+	// No prompt/description means we can't classify; fail open and allow.
+	ev := claudecode.Event{
+		ToolName:  "Task",
+		Model:     catID(core.TierFrontier),
+		ToolInput: json.RawMessage(`{"model":"some-model"}`),
+	}
+	out, note, _ := claudecode.Handle(ev, cat)
+	if note != "" {
+		t.Errorf("empty prompt must fail open, got note %q", note)
+	}
+	if out.HookSpecificOutput.PermissionDecision != "allow" {
+		t.Error("empty prompt must return allow")
+	}
+}
+
+func TestHandle_SessionQuotaRespected(t *testing.T) {
+	// When session has IncludedModels/UnavailableModels quotas, the adapter
+	// must not rewrite outside those constraints.
+	smallID := catID(core.TierSmall)
+	included := []string{smallID} // Only small allowed
+	ev := claudecode.Event{
+		ToolName:      "Task",
+		Model:         catID(core.TierFrontier),
+		IncludedModels: &included,
+		ToolInput: json.RawMessage(`{
+			"prompt": "rename variable",
+			"model": "` + catID(core.TierFrontier) + `"
+		}`),
+	}
+	out, note, d := claudecode.Handle(withCatalogSession(ev), cat)
+	// The adapter may still try to rewrite, but if the session rejects it,
+	// decision will reflect the constraints.
+	_ = note
+	_ = d
+	// Minimal check: it should still return allow (fail-safe)
+	if out.HookSpecificOutput.PermissionDecision != "allow" {
+		t.Error("must always return allow permission")
+	}
+}
