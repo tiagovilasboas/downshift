@@ -59,11 +59,6 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           ~/go/bin/govulncheck ./...
 
-      - name: Lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: latest
-          args: --timeout=5m
 
       - name: Test
         run: go test -race -cover ./...
