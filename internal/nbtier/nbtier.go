@@ -3,7 +3,7 @@
 
 // Package nbtier is a Go port of tools/baseline/nb_tier.py: a multinomial
 // naive Bayes over lowercase word unigrams and bigrams (Laplace alpha 1,
-// uniform prior), trained once on an embedded copy of benchmark/tasks.json.
+// uniform prior), trained on an embedded copy of the maintainer seed set (refresh via downshift-labs).
 // It is only ever used as an upshift-only second opinion (see
 // docs/design/router-generalization.md); it never lowers a tier.
 package nbtier
