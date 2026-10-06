@@ -125,16 +125,12 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !core.CanWriteSessionID(harnessID, plan.Model.ID, session, res) {
 		return allow(), "", decision
 	}
-	// Claude Code validates "model" against its own enum of family names, so a
-	// full id would block the spawn. The catalog supplies the accepted name;
-	// without one the spawn is allowed unchanged.
-	alias := plan.Model.Native
-	if alias == "" {
-		return allow(), "", decision
-	}
 	decision.Model = plan.Model
 
-	ti["model"] = alias
+	// plan.WriteName is the catalog's native name: Claude Code validates
+	// "model" against family names, and the core plan already declined to
+	// rewrite when the entry has none.
+	ti["model"] = plan.WriteName
 	updated, err := json.Marshal(ti)
 	if err != nil {
 		return allow(), "", decision

@@ -157,7 +157,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	note := ""
 	if plan.RewriteModel {
 		decision.Model = plan.Model
-		ti["model"] = plan.Model.ID
+		ti["model"] = plan.WriteName
 		note = decision.Summary()
 	} else {
 		// Effort-only change: the model stays as requested, and the event
