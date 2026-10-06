@@ -8,7 +8,7 @@ labels: beta-exit
 ## Context
 
 Beta exit pillar **P2.3** asks for at least two independent operators sharing
-`downshift stats --export` output (no prompts). See [BETA-EXIT.md](docs/BETA-EXIT.md).
+`downshift stats --export` output (no prompts). See [beta-exit.md](https://github.com/tiagovilasboas/downshift/blob/main/docs/beta-exit.md).
 
 ## Environment
 

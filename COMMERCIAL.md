@@ -3,7 +3,7 @@
 Downshift is **Apache License 2.0**. You do **not** need a separate commercial
 licence from the maintainer to use it in products or services.
 
-See [LICENSE](LICENSE), [NOTICE](NOTICE), and [docs/RELICENSE.md](docs/RELICENSE.md).
+See [LICENSE](LICENSE), [NOTICE](NOTICE), and [docs/relicense.md](docs/relicense.md).
 
 How the project may offer paid **hosted** or **support** services (optional):
 [MONETIZATION.md](MONETIZATION.md).

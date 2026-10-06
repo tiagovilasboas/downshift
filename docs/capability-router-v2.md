@@ -42,7 +42,7 @@ downshift shadow-report
 
 Guides:
 
-- [CLASSIFIER-SHADOW.md](CLASSIFIER-SHADOW.md) — shadow observation contract
+- [classifier-shadow.md](classifier-shadow.md) — shadow observation contract
 - [contrib/classifier.md](contrib/classifier.md) — how v1 scoring works (tune here)
 - [design/router-generalization.md](design/router-generalization.md) — eval methodology
 
@@ -82,6 +82,6 @@ Dependencies point **inward**; `core` and adapters do not import v2 for routing.
 The original long-form design checklist (675+ lines, partially stale) is kept for
 maintainers:
 
-**[internal/CAPABILITY-ROUTER-V2-FULL.md](internal/CAPABILITY-ROUTER-V2-FULL.md)**
+**[internal/capability-router-v2-full.md](internal/capability-router-v2-full.md)**
 
 Do not treat unchecked boxes in that file as a public roadmap.

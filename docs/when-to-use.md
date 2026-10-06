@@ -25,7 +25,7 @@ Many teams use **LiteLLM or OpenRouter behind the harness** for provider access,
 
 ## Today vs roadmap
 
-- **Today:** PreToolUse hooks, single Go binary, embedded catalog, user override under the [state dir](CONFIG.md) (`~/.downshift`, legacy `~/.harness-downshift`).
+- **Today:** PreToolUse hooks, single Go binary, embedded catalog, user override under the [state dir](config.md) (`~/.downshift`, legacy `~/.harness-downshift`).
 - **Not today:** HTTP gateway, multi-tenant hosted router, or automatic training without reviewed labels.
 
-For roadmap and doc tiers, see [ROADMAP.md](../ROADMAP.md) and [PUBLISHING-BOUNDARIES.md](PUBLISHING-BOUNDARIES.md).
+For roadmap and doc tiers, see [ROADMAP.md](../ROADMAP.md) and [publishing-boundaries.md](publishing-boundaries.md).

@@ -1,6 +1,6 @@
 # Sharing stats without leaking prompts
 
-Use this when contributing evidence for [beta exit](BETA-EXIT.md) (pillar P2).
+Use this when contributing evidence for [beta exit](beta-exit.md) (pillar P2).
 
 ## Generate export
 

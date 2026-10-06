@@ -1,6 +1,6 @@
 # Documentation audit — use vs inside vs competitive exposure
 
-Companion to [CONTENT-CLASSIFICATION.md](../CONTENT-CLASSIFICATION.md) (A/B/C/D).
+Companion to [content-classification.md](../content-classification.md) (A/B/C/D).
 **Audience:** maintainers. Not linked from the public doc hero.
 
 **Legend**
@@ -22,14 +22,14 @@ Companion to [CONTENT-CLASSIFICATION.md](../CONTENT-CLASSIFICATION.md) (A/B/C/D)
 | `docs/` (indexed) | USE + B | **Medium** — design + generalization docs |
 | `docs/internal/` | Maintainer / archive | Expected **C** (still public git) |
 | `docs/pt/` | USE product + **INSIDE** engineering blocks | **Medium** in `03-marcha`, `04–08` |
-| ADRs | No `docs/adr/` — use `pt/09-decisoes.md`, `DECISION-INTELLIGENCE.md` | Low |
+| ADRs | No `docs/adr/` — use `pt/09-decisoes.md`, `decision-intelligence.md` | Low |
 | Diagrams | USE (positioning) | Low |
 | `benchmark/` + `design/` | **OK-B** / eval honesty | **Medium** — detailed numbers in `router-generalization.md` |
 | `ROADMAP.md` | USE direction | Low |
-| Planning / TODO | `docs/internal/LAUNCH-WAVES.md` | **C** — not moat doc, ops |
+| Planning / TODO | `docs/internal/launch-waves.md` | **C** — not moat doc, ops |
 | `examples/` | **USE** | None |
 
-**Formal ADRs:** none. Decision-style docs: `docs/pt/09-decisoes.md`, `docs/DECISION-INTELLIGENCE.md`.
+**Formal ADRs:** none. Decision-style docs: `docs/pt/09-decisoes.md`, `docs/decision-intelligence.md`.
 
 ---
 
@@ -42,13 +42,13 @@ Companion to [CONTENT-CLASSIFICATION.md](../CONTENT-CLASSIFICATION.md) (A/B/C/D)
 | Cost problem / session savings | USE | No | Adoption story |
 | Tier model, what it does | USE | Borderline | High-level OK |
 | **How the deterministic switch works** | **INSIDE** | **Yes** | Step-by-step signals, scores, example weights — **trim or link to `contrib/classifier.md`** |
-| **Capability Router v2** (in README) | INSIDE | **Yes** | Duplicate of `docs/CAPABILITY-ROUTER-V2.md` — shorten to 1 paragraph + link |
-| Architecture (in README) | INSIDE | Mild | Prefer single canonical `docs/ARCHITECTURE.md` |
+| **Capability Router v2** (in README) | INSIDE | **Yes** | Duplicate of `docs/capability-router-v2.md` — shorten to 1 paragraph + link |
+| Architecture (in README) | INSIDE | Mild | Prefer single canonical `docs/architecture.md` |
 | **Classifier benchmark** / outcome metrics | INSIDE + **OK-B** | Mild | Numbers for trust; avoid duplicating `design/router-generalization.md` |
 | Design principles, financial impact | USE + narrative | Low | |
 | dsmon, troubleshooting, contributing | USE | No | |
 
-**Recommendation:** Treat README as **USE funnel**; move deep **INSIDE** blocks to `docs/contrib/classifier.md` + `docs/ARCHITECTURE.md` (follow-up PR).
+**Recommendation:** Treat README as **USE funnel**; move deep **INSIDE** blocks to `docs/contrib/classifier.md` + `docs/architecture.md` (follow-up PR).
 
 ---
 
@@ -58,10 +58,10 @@ Companion to [CONTENT-CLASSIFICATION.md](../CONTENT-CLASSIFICATION.md) (A/B/C/D)
 
 | Document | MOAT |
 |----------|------|
-| `ARCHITECTURE.md` | No — boundary diagram, packages (appropriate high-level **INSIDE**) |
-| `WHEN-TO-USE.md`, `CONFIG.md`, `session-models.md` | No |
-| `HARNESS-MATRIX.md`, `BETA-EXIT.md`, `stats-export.md` | No |
-| `MINILM-SEMANTIC.md` | Mild — paths + flags; not full scoring recipe |
+| `architecture.md` | No — boundary diagram, packages (appropriate high-level **INSIDE**) |
+| `when-to-use.md`, `config.md`, `session-models.md` | No |
+| `harness-matrix.md`, `beta-exit.md`, `stats-export.md` | No |
+| `minilm-semantic.md` | Mild — paths + flags; not full scoring recipe |
 | `evidence/*` | No — honor protocol |
 | `pt/01-entrada.md`, `pt/README.md` | No |
 | `brand/*` (assets) | No |
@@ -71,13 +71,13 @@ Companion to [CONTENT-CLASSIFICATION.md](../CONTENT-CLASSIFICATION.md) (A/B/C/D)
 | Document | MOAT |
 |----------|------|
 | `contrib/classifier.md` | **OK-B** — margin, signals, tuning (intended for contributors) |
-| `CLASSIFIER-SHADOW.md` | **OK-B** |
-| `ENGINEERING-LOOP.md` (short) | No |
-| `CAPABILITY-ROUTER-V2.md` (short) | Mild — offline pipeline overview |
-| `DECISION-INTELLIGENCE.md` | **OK-B** — advisory contract |
-| `LANGGRAPH-ORCHESTRATION.md` | No |
-| `GRAPHIFY-INTEGRATION.md` | Mild — god-node / escalation **library** detail |
-| `DS-04-CODEX-OBSERVER-CONTRACT.md` | No |
+| `classifier-shadow.md` | **OK-B** |
+| `engineering-loop.md` (short) | No |
+| `capability-router-v2.md` (short) | Mild — offline pipeline overview |
+| `decision-intelligence.md` | **OK-B** — advisory contract |
+| `langgraph-orchestration.md` | No |
+| `graphify-integration.md` | Mild — god-node / escalation **library** detail |
+| `ds-04-codex-observer-contract.md` | No |
 | `design/router-generalization.md` | **MOAT** — full split metrics, NB baseline, heldout2 study — **OK-B for eval culture**; consider executive summary in public + move raw tables to `downshift-labs` if you want less competitive teaching |
 | `pt/09-decisoes.md` | **OK-B** — decision matrix |
 | `pt/02-classificador.md` | No — points to `contrib/classifier.md` for engineering |
@@ -97,12 +97,12 @@ Companion to [CONTENT-CLASSIFICATION.md](../CONTENT-CLASSIFICATION.md) (A/B/C/D)
 
 | Document | MOAT |
 |----------|------|
-| `internal/CAPABILITY-ROUTER-V2-FULL.md` | **High** — full v2 blueprint (675 lines) — correct in `internal/` |
-| `internal/ENGINEERING-LOOP-MAINTAINER.md` | **Yes** — promotion / eval |
-| `internal/LAUNCH-WAVES.md` | Ops, not router moat |
-| `internal/TEST-COVERAGE.md` | Low |
+| `internal/capability-router-v2-full.md` | **High** — full v2 blueprint (675 lines) — correct in `internal/` |
+| `internal/engineering-loop-maintainer.md` | **Yes** — promotion / eval |
+| `internal/launch-waves.md` | Ops, not router moat |
+| `internal/test-coverage.md` | Low |
 
-Stubs: `BACKLOG.md`, `NEXT-STEPS.md` (root + internal) — no moat leak.
+Stubs: `backlog.md`, `next-steps.md` (root + internal) — no moat leak.
 
 ---
 
@@ -123,7 +123,7 @@ Stubs: `BACKLOG.md`, `NEXT-STEPS.md` (root + internal) — no moat leak.
 | `benchmark/REPORT.md`, `EVAL-PRIVATE.md` | **USE** | Published metrics + policy only |
 | Eval datasets / outcomes (labs) | **C** | Not in public clone |
 | `ROADMAP.md` | USE | No |
-| `docs/internal/LAUNCH-WAVES.md` | C / planning | No router secret |
+| `docs/internal/launch-waves.md` | C / planning | No router secret |
 | `CHANGELOG.md` | USE + history | No |
 
 **TODO in repo:** no root `TODO.md`; wave checklists in `LAUNCH-WAVES` only.

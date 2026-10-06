@@ -2,8 +2,8 @@
 
 Public direction for the open-source project. Timelines are indicative.
 
-**Status:** beta — exit criteria in [docs/BETA-EXIT.md](docs/BETA-EXIT.md).  
-**Maintainer execution:** [docs/internal/LAUNCH-WAVES.md](docs/internal/LAUNCH-WAVES.md) (see [publishing boundaries](docs/PUBLISHING-BOUNDARIES.md)).
+**Status:** beta — exit criteria in [docs/beta-exit.md](docs/beta-exit.md).  
+**Maintainer execution:** [docs/internal/launch-waves.md](docs/internal/launch-waves.md) (see [publishing boundaries](docs/publishing-boundaries.md)).
 
 Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
@@ -33,7 +33,7 @@ HTTP proxy, but that is not the current shipping surface.
 | Docs | User docs (install, session models), [classifier contrib](docs/contrib/classifier.md), misroute workflow |
 | Eval rigor | [router-generalization](docs/design/router-generalization.md) summary; detailed study in labs |
 
-**Beta exit blockers (community / dogfood):** see [BETA-EXIT.md](docs/BETA-EXIT.md)
+**Beta exit blockers (community / dogfood):** see [beta-exit.md](docs/beta-exit.md)
 pillars P2 (multi-user exports) and P3 (billing evidence).
 
 ---
@@ -42,9 +42,9 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 
 | Priority | Item |
 |----------|------|
-| P0 | ~~Rename to **Downshift**~~ — done ([RENAME.md](docs/brand/RENAME.md)) |
-| P0 | ~~State directory `~/.downshift`~~ — done ([CONFIG.md](docs/CONFIG.md)) |
-| P1 | ~~Condensed docs~~ — [WHEN-TO-USE](docs/WHEN-TO-USE.md), trimmed [CAPABILITY-ROUTER-V2](docs/CAPABILITY-ROUTER-V2.md) |
+| P0 | ~~Rename to **Downshift**~~ — done ([rename.md](docs/brand/rename.md)) |
+| P0 | ~~State directory `~/.downshift`~~ — done ([config.md](docs/config.md)) |
+| P1 | ~~Condensed docs~~ — [WHEN-TO-USE](docs/when-to-use.md), trimmed [CAPABILITY-ROUTER-V2](docs/capability-router-v2.md) |
 | P1 | More harness matrix rows (Cursor paid plans, etc.) |
 | P1 | Optional: container image on GHCR |
 | P2 | Promote routing v2 only with reviewed labels + shadow evidence |

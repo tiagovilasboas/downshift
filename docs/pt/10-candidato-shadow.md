@@ -18,7 +18,7 @@ downshift feedback <id> retry --retry-tier=FRONTIER --required-tier=FRONTIER
 downshift shadow-report
 ```
 
-O procedimento completo, a leitura do relatório e o que ainda não existe (modelo neural/ONNX) estão em [`docs/CLASSIFIER-SHADOW.md`](../CLASSIFIER-SHADOW.md).
+O procedimento completo, a leitura do relatório e o que ainda não existe (modelo neural/ONNX) estão em [`docs/classifier-shadow.md`](../classifier-shadow.md).
 
 ## O que isto não é
 

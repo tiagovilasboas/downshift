@@ -75,7 +75,7 @@ decision. Do not add harness-specific training or completion behavior. Manual
 reviews use `downshift feedback`; only explicit `--required-tier` labels are
 training targets. `success` alone is not a minimum-tier label. Observe a
 candidate with `DOWNSHIFT_SHADOW_WEIGHTS` and `downshift shadow-report` before
-any manual activation. See `docs/CLASSIFIER-SHADOW.md`.
+any manual activation. See `docs/classifier-shadow.md`.
 
 Then:
 - Add catalog entries for the new harness in `internal/catalog/catalog.json`

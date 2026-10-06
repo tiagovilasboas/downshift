@@ -26,7 +26,7 @@ O design do Downshift é pautado pelo equilíbrio deliberado entre requisitos de
 
 ## O Caminho até a Versão 1.0 (Saída do Beta)
 
-Para consolidar a graduação formal para a versão 1.0 (conforme mapeado em [`docs/BETA-EXIT.md`](../BETA-EXIT.md)), os passos finais são puramente empíricos:
+Para consolidar a graduação formal para a versão 1.0 (conforme mapeado em [`docs/beta-exit.md`](../beta-exit.md)), os passos finais são puramente empíricos:
 1. **Acúmulo de Eventos com Custo Real (P3.4 e P3.5):** Atingir pelo menos 50 eventos com telemetria de tokens via `PostToolUse` no Claude Code para reportar a economia real em dólares.
 2. **Confirmação em Produção (P1.3):** Registrar a confirmação visual na interface do Claude Code demonstrando o executor filho rodando no modelo econômico reescrito. O Codex (P1.5) já tem evidência em 2026-10-02.
 3. **Evidência Multi-Ambiente (P2.3):** Incorporar dados consolidados anônimos de 2 ou mais desenvolvedores utilizando o roteador em suas rotinas diárias.

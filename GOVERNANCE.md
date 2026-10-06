@@ -8,7 +8,7 @@ current maintainer and copyright holder (see [LICENSE](LICENSE)).
 ## Decision making
 
 - **Product direction:** maintainer, informed by [ROADMAP.md](ROADMAP.md), issues, and
-  beta-exit evidence in [docs/BETA-EXIT.md](docs/BETA-EXIT.md).
+  beta-exit evidence in [docs/beta-exit.md](docs/beta-exit.md).
 - **Routing policy changes** that affect cost or safety (signals, safety floor,
   default tiers): require benchmark gates in CI and, when possible, a misroute
   issue or design note in `docs/design/`.

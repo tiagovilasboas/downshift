@@ -2,7 +2,7 @@
 
 Canonical guide for humans and coding agents installing Downshift on a user machine.
 
-**Related:** [CONFIG.md](CONFIG.md) · [session-models.md](session-models.md) · [HARNESS-MATRIX.md](HARNESS-MATRIX.md) · [examples/README.md](../examples/README.md) · [Portuguese guides](pt/README.md)
+**Related:** [config.md](config.md) · [session-models.md](session-models.md) · [harness-matrix.md](harness-matrix.md) · [examples/README.md](../examples/README.md) · [Portuguese guides](pt/README.md)
 
 ## Health check
 
@@ -318,6 +318,12 @@ When the hook blocks, KiroCrew relays the stderr to the agent, which respawns
 the subagent at the recommended tier. Routing events are logged to
 `~/.harness-downshift/events.jsonl` like every other adapter.
 
+KiroCrew's `postToolUse` hook is available and can be wired to observe whether
+the agent actually respawned at the recommended tier. The compliance observer
+that reads those events and writes `resolved` records is a private maintainer
+tool (DS-04); wire it by adding a `postToolUse` block alongside `preToolUse` in
+the hook JSON above, pointing to your own observer script.
+
 ## dsmon — live monitor widget
 
 `cmd/dsmon` is a separate command inside this repo — a floating terminal widget
@@ -422,7 +428,7 @@ to a role's reasoning effort in config once.
 ## Plan compatibility — read before installing
 
 **Not every plan supports subagent model routing.** This is a hard constraint
-at the harness level, not a bug in Downshift. Evidence matrix: [HARNESS-MATRIX.md](HARNESS-MATRIX.md).
+at the harness level, not a bug in Downshift. Evidence matrix: [harness-matrix.md](harness-matrix.md).
 
 ### Claude Code
 

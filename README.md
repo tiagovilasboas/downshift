@@ -13,7 +13,7 @@
 [![Release](https://img.shields.io/github/v/release/tiagovilasboas/downshift?include_prereleases&label=release)](https://github.com/tiagovilasboas/downshift/releases)
 [![Status: beta](https://img.shields.io/badge/status-beta-yellow)](#status)
 
-[Install](docs/INSTALL.md) · [Docs](docs/README.md) · [Harness support](#harness-support) · [Contributing](#contributing)
+[Install](docs/install.md) · [Docs](docs/README.md) · [Harness support](#harness-support) · [Contributing](#contributing)
 
 <picture>
   <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/img/hook-flow-mobile-dark.svg">
@@ -24,13 +24,13 @@
 
 </div>
 
-> **Beta.** Whether a rewrite is applied depends on the harness and plan, not only on Downshift. Read [plan compatibility](docs/INSTALL.md#plan-compatibility--read-before-installing) before installing, and see [Harness support](#harness-support) for what has been verified.
+> **Beta.** Whether a rewrite is applied depends on the harness and plan, not only on Downshift. Read [plan compatibility](docs/install.md#plan-compatibility--read-before-installing) before installing, and see [Harness support](#harness-support) for what has been verified.
 
 ## What it is
 
 Downshift is a single Go binary that runs as a **hook** in your coding harness. When the harness is about to spawn a subagent, Downshift scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites the subagent's model to a right-sized one from the models your session actually offers. Same input, same decision. No network calls, no API keys.
 
-**What it is not:** an HTTP gateway or proxy (that is LiteLLM's job), a hosted model marketplace (OpenRouter), or an LLM-based classifier. It only acts on subagent spawns inside harnesses that expose a pre-tool hook. Comparison: [docs/WHEN-TO-USE.md](docs/WHEN-TO-USE.md).
+**What it is not:** an HTTP gateway or proxy (that is LiteLLM's job), a hosted model marketplace (OpenRouter), or an LLM-based classifier. It only acts on subagent spawns inside harnesses that expose a pre-tool hook. Comparison: [docs/when-to-use.md](docs/when-to-use.md).
 
 ## How it works
 
@@ -39,7 +39,7 @@ Downshift is a single Go binary that runs as a **hook** in your coding harness. 
 3. **Choose.** Policy picks a tier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/session-models.md)).
 4. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
 
-Internals: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). The full runtime routing diagram is [here](docs/brand/downshift-routing-runtime-light.svg) ([dark](docs/brand/downshift-routing-runtime-dark.svg)).
+Internals: [docs/architecture.md](docs/architecture.md). The full runtime routing diagram is [here](docs/brand/downshift-routing-runtime-light.svg) ([dark](docs/brand/downshift-routing-runtime-dark.svg)).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/architecture-dark.svg">
@@ -48,7 +48,7 @@ Internals: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). The full runtime routin
 
 ## Quickstart (Claude Code)
 
-**1. Install** (macOS / Linux; see [INSTALL.md](docs/INSTALL.md) for `go install` and Windows):
+**1. Install** (macOS / Linux; see [install.md](docs/install.md) for `go install` and Windows):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
@@ -85,7 +85,7 @@ downshift doctor                                          # version, state dir, 
 downshift try "rename the userId variable" claude-code    # classification and recommended model
 ```
 
-Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshift: TRIVIAL task → downshift to …`. That proves the hook ran. To confirm the harness applied the rewrite, follow [Verify the rewrite was honored](docs/INSTALL.md#quickstart--zero-to-working-hook-in-2-minutes). Other harnesses (Cursor, Codex, Antigravity, KiroCrew, Grok) are in [INSTALL.md](docs/INSTALL.md).
+Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshift: TRIVIAL task → downshift to …`. That proves the hook ran. To confirm the harness applied the rewrite, follow [Verify the rewrite was honored](docs/install.md#quickstart--zero-to-working-hook-in-2-minutes). Other harnesses (Cursor, Codex, Antigravity, KiroCrew, Grok) are in [install.md](docs/install.md).
 
 ## Harness support
 
@@ -95,10 +95,10 @@ Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshif
 | **Codex** | `spawn_agent` (`multi_agent_v2`) | `PreToolUse` → model + `reasoning_effort` | Inferred, not observed, 2026-10-02 ([write-up](docs/evidence/codex-rewrite-honored-2026-10-02.md)) |
 | **Cursor** | `Task` | `preToolUse` → `updated_input.model` | Unconfirmed; discarded on Free and legacy Pro plans |
 | **Antigravity** | `invoke_subagent` | `PreToolUse` overwrite | Not yet observed on a real spawn |
-| **KiroCrew** | `spawn_run` / `spawn_sub_agents` | Policy only (exit 0/2), no rewrite | No rewrite channel |
+| **KiroCrew** | `spawn_run` / `spawn_sub_agents` | `preToolUse` policy (exit 0/2); `postToolUse` wired for compliance observation | Policy mode (no rewrite channel); compliance observer in labs |
 | **Grok CLI** | `spawn_subagent` | Config in `config.toml`, not a hook | No hook rewrite |
 
-Adapters ship for all of the above; the table reports evidence, not just code. Plans, caveats and revalidation rules: [HARNESS-MATRIX.md](docs/HARNESS-MATRIX.md).
+Adapters ship for all of the above; the table reports evidence, not just code. Plans, caveats and revalidation rules: [harness-matrix.md](docs/harness-matrix.md).
 
 ## Cost and metrics
 
@@ -109,11 +109,11 @@ Adapters ship for all of the above; the table reports evidence, not just code. P
 
 ## Documentation
 
-[INSTALL](docs/INSTALL.md) · [CONFIG](docs/CONFIG.md) · [session models](docs/session-models.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) · [HARNESS-MATRIX](docs/HARNESS-MATRIX.md) · [WHEN-TO-USE](docs/WHEN-TO-USE.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
+[INSTALL](docs/install.md) · [CONFIG](docs/config.md) · [session models](docs/session-models.md) · [ARCHITECTURE](docs/architecture.md) · [HARNESS-MATRIX](docs/harness-matrix.md) · [WHEN-TO-USE](docs/when-to-use.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
 
-Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit criteria](docs/BETA-EXIT.md)
+Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit criteria](docs/beta-exit.md)
 
-**For AI agents:** start with [docs/INSTALL.md](docs/INSTALL.md), [AGENTS.md](AGENTS.md) and [llms.txt](llms.txt).
+**For AI agents:** start with [docs/install.md](docs/install.md), [AGENTS.md](AGENTS.md) and [llms.txt](llms.txt).
 
 ## Contributing
 
@@ -121,11 +121,11 @@ The most valuable contribution is a **misrouted prompt**: open an issue with the
 
 ## Status
 
-**Beta.** The adapters ship, but the limiting factor is often harness or plan support rather than the router. Exit criteria are tracked in [docs/BETA-EXIT.md](docs/BETA-EXIT.md).
+**Beta.** The adapters ship, but the limiting factor is often harness or plan support rather than the router. Exit criteria are tracked in [docs/beta-exit.md](docs/beta-exit.md).
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE), [NOTICE](NOTICE) and [docs/RELICENSE.md](docs/RELICENSE.md).
+Apache License 2.0. See [LICENSE](LICENSE), [NOTICE](NOTICE) and [docs/relicense.md](docs/relicense.md).
 
 Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
 

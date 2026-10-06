@@ -16,5 +16,5 @@ private datasets. Regression gates on seed/holdout run in **downshift-labs** CI.
 ## Policy
 
 - Do not commit raw prompts or competitive eval artifacts to this repo.
-- See [PUBLISHING-BOUNDARIES.md](../docs/PUBLISHING-BOUNDARIES.md) and
-  [CONTENT-CLASSIFICATION.md](../docs/CONTENT-CLASSIFICATION.md).
+- See [publishing-boundaries.md](../docs/publishing-boundaries.md) and
+  [content-classification.md](../docs/content-classification.md).

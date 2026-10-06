@@ -25,7 +25,7 @@ https://github.com/tiagovilasboas/downshift
 
 - Renaming the CLI binary (`downshift` stays).
 - Turning the project into an HTTP AI gateway in the same release (positioning only).
-- Project licence: Apache 2.0 (see docs/RELICENSE.md).
+- Project licence: Apache 2.0 (see docs/relicense.md).
 
 ---
 
@@ -35,7 +35,7 @@ Execute in order. Do **not** rename the GitHub repo before a release that suppor
 
 ### Phase 0 — Docs & positioning (safe anytime)
 
-1. Add this file and [`README-HERO.md`](README-HERO.md).
+1. Add this file and [`readme-hero.md`](readme-hero.md).
 2. Update GitHub **description** and **topics** (no repo rename yet).
 3. Pin a Discussion draft: “Harness Downshift is becoming Downshift” (see [Launch messaging](#launch-messaging)).
 
@@ -80,7 +80,7 @@ Add `downshift doctor` or extend `downshift try --verbose` to print **effective 
 
 ### Phase 4 — User-facing copy & Python orchestration
 
-1. Replace README hero from [`README-HERO.md`](README-HERO.md).
+1. Replace README hero from [`readme-hero.md`](readme-hero.md).
 2. Rename Python package (optional separate release):
    - `harness-downshift-orchestration` → `downshift-orchestration` on PyPI
    - `orchestration/src/harness_downshift_orchestration/` → `downshift_orchestration/`
@@ -163,7 +163,7 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 | `cmd/dsmon/main.go`, `cmd/dsmon-hook/main.go` | tail events |
 | `catalog.sample.json`, `internal/catalog/catalog.json` | `_doc` comments |
 | `docs/session-models.md`, `docs/pt/05-catalogo-e-sessao.md`, `docs/pt/08-telemetria.md` | operator docs |
-| `docs/CAPABILITY-ROUTER-V2.md` | `.harness-downshift/weights.json`, repo-local `.harness-downshift/` |
+| `docs/capability-router-v2.md` | `.harness-downshift/weights.json`, repo-local `.harness-downshift/` |
 | `scripts/smoke-test.sh` | hermetic HOME |
 | `.gitignore` | ignore patterns |
 | Brand SVGs under `docs/brand/*routing*.svg` | diagram labels (cosmetic) |
@@ -175,9 +175,9 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 | `AGENTS.md` | Agent contract title and URLs (10 hits) |
 | `CONTRIBUTING.md` | Title, licence blurb |
 | `CHANGELOG.md` | Historical + rename entry |
-| `docs/BETA-EXIT.md`, `docs/ENGINEERING-LOOP.md`, `docs/GRAPHIFY-INTEGRATION.md` | Cross-links |
+| `docs/beta-exit.md`, `docs/engineering-loop.md`, `docs/graphify-integration.md` | Cross-links |
 | `docs/pt/*.md` | PT docs + attribution footer |
-| `docs/CAPABILITY-ROUTER-V2.md`, `docs/CLASSIFIER-SHADOW.md`, `docs/LANGGRAPH-ORCHESTRATION.md` | Technical |
+| `docs/capability-router-v2.md`, `docs/classifier-shadow.md`, `docs/langgraph-orchestration.md` | Technical |
 | `benchmark/blind-vitrine.README.md`, `tools/minilm/README.md` | Secondary |
 | `.github/ISSUE_TEMPLATE/*.md` | Templates |
 
@@ -196,7 +196,7 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 |------|--------|
 | `docs/img/hero.svg` | Title text “harness-downshift” → “Downshift” |
 | `docs/brand/downshift-*.svg` | Some subtitles still say harness-downshift |
-| `docs/brand/README-HERO.md` | New hero (source for README) |
+| `docs/brand/readme-hero.md` | New hero (source for README) |
 | `docs/brand/downshift-brand-tokens.json` | Verify `productName` field |
 
 ### G. Unchanged or low priority
@@ -230,7 +230,7 @@ After rename to `downshift`:
 # From repo root after changes
 go test ./...
 ./scripts/smoke-test.sh
-rg -n 'harness-downshift' --glob '!CHANGELOG.md' --glob '!docs/brand/RENAME.md'   # trend to zero in user-facing files
+rg -n 'harness-downshift' --glob '!CHANGELOG.md' --glob '!docs/brand/rename.md'   # trend to zero in user-facing files
 rg -n 'tiagovilasboas/downshift'                                          # should be zero after Phase 2+3
 ```
 
@@ -271,7 +271,7 @@ The project started as a **coding harness** router (Claude Code, Cursor, Codex h
 - **Harness** is now an **integration category**, not the product name
 - State directory: moving to `~/.downshift` (legacy path supported during deprecation)
 
-Full steps: [docs/brand/RENAME.md](RENAME.md).
+Full steps: [docs/brand/rename.md](rename.md).
 
 ### LinkedIn (PT)
 
@@ -305,6 +305,6 @@ Go module:          github.com/tiagovilasboas/downshift
 
 ## Related
 
-- README hero draft: [`README-HERO.md`](README-HERO.md)
+- README hero draft: [`readme-hero.md`](readme-hero.md)
 - Brand assets: `docs/brand/downshift-logo-*.svg`, `downshift-brand-tokens.json`
 - Collision notes: see rebranding analysis (npm `downshift`, PyPI `downshift`, [downshiftit.com](https://www.downshiftit.com/))

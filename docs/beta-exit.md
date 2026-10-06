@@ -20,7 +20,7 @@ Proof that the harness executor applied the hook’s model, not only that
 | P1.2 | Hook-layer E2E in CI (`TestHookE2E_RewriteEventStats`) | eng | [x] |
 | P1.3 | **Manual protocol**: one paid Claude Code session, trivial Task, capture stderr + child model in UI/logs | dogfood | [x] `docs/evidence/claude-code-rewrite-honored-2026-10-06.md` (child ran on Haiku 4.5 per the API-reported model in its transcript, under a Sonnet 5.5 parent; billing cross-check still open under P3) |
 | P1.4 | **Automated smoke** (CI gate): script that runs `downshift try` + adapter golden JSON payloads (`scripts/smoke-test.sh`) | eng | [x] |
-| P1.5 | Codex `multi_agent_v2`: repeat P1.3 on a known-good build; record in `docs/HARNESS-MATRIX.md` | dogfood | [x] `docs/evidence/codex-rewrite-honored-2026-10-02.md` |
+| P1.5 | Codex `multi_agent_v2`: repeat P1.3 on a known-good build; record in `docs/harness-matrix.md` | dogfood | [x] `docs/evidence/codex-rewrite-honored-2026-10-02.md` |
 | P1.6 | Cursor Pro/Ultra usage-based: repeat P1.3; update matrix row | dogfood | [ ] |
 | P1.7 | Telemetry field `rewrite_honored: bool` (only when harness exposes post-spawn model) — schema + privacy review | eng | [x] |
 
@@ -81,12 +81,12 @@ P3.4 finding (2026-10-06): the Claude Code PostToolUse payload for an async `Age
 | P4.6 | `downshift benchmark --report` + `--gate` exist and can pass on the in-tree files. They gate the burned net, not unseen traffic. | eng | [x] |
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
 | P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [~] `DOWNSHIFT_GRAPHIFY_CMD` command fetcher, fail-open; native MCP socket still optional |
-| P4.9 | **MiniLM semantic boost on by default** (local hash; external embed falls back to hash; `DOWNSHIFT_MINILM=0` opts out — `docs/MINILM-SEMANTIC.md`) | eng | [x] |
+| P4.9 | **MiniLM semantic boost on by default** (local hash; external embed falls back to hash; `DOWNSHIFT_MINILM=0` opts out — `docs/minilm-semantic.md`) | eng | [x] |
 | P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout (`benchmark/minilm-holdout.json`) | eng | [x] |
 
 **Exit (not met on this dataset):** P4.5 regression files live in private **downshift-labs** (`ci-eval` gates). The public repo ships [benchmark/REPORT.md](../benchmark/REPORT.md) only. Historical note (2026-10-04, `eb116ed`): holdout was a burned regression net (template stems, post-holdout signal tuning to 100% tier accuracy), not proof of generalization. Do not remove the beta label on that dataset alone.
 
-P4.3's checked box is the library, not graph-aware routing on the hook. `TestHint_NilFetcher_OfflineMode` shows a nil fetcher never escalates. See [GRAPHIFY-INTEGRATION.md](GRAPHIFY-INTEGRATION.md).
+P4.3's checked box is the library, not graph-aware routing on the hook. `TestHint_NilFetcher_OfflineMode` shows a nil fetcher never escalates. See [graphify-integration.md](graphify-integration.md).
 
 ---
 
@@ -94,7 +94,7 @@ P4.3's checked box is the library, not graph-aware routing on the hook. `TestHin
 
 | ID | Task | Owner | Done |
 |----|------|-------|------|
-| P5.1 | `docs/HARNESS-MATRIX.md` maintained per release | docs | [x] |
+| P5.1 | `docs/harness-matrix.md` maintained per release | docs | [x] |
 | P5.2 | Antigravity catalog entries (`flash_lite` / `flash` / `pro`) | eng | [x] |
 | P5.3 | Revalidate Cursor free/legacy discard quarterly | dogfood | [ ] |
 | P5.4 | Revalidate Codex `multi_agent_v2` schema quarterly | dogfood | [ ] |

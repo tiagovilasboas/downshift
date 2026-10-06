@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 if ! command -v downshift >/dev/null 2>&1; then
-  echo "downshift not in PATH — install first (see docs/INSTALL.md)" >&2
+  echo "downshift not in PATH — install first (see docs/install.md)" >&2
   exit 1
 fi
 

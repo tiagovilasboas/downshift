@@ -3,10 +3,10 @@
 Downshift is an **open-source** repository. Not every markdown file is meant for
 adopters, contributors, or investors reading the default doc path. This page is
 the contract for what stays public, what lives under `docs/internal/`, and what
-belongs in a **private** repo later ([OC-1 in LAUNCH-WAVES](internal/LAUNCH-WAVES.md)).
+belongs in a **private** repo later ([OC-1 in LAUNCH-WAVES](internal/launch-waves.md)).
 
 **Classification labels A / B / C / D** (adoption, community, competitive,
-secret): [CONTENT-CLASSIFICATION.md](CONTENT-CLASSIFICATION.md).
+secret): [content-classification.md](content-classification.md).
 
 ---
 
@@ -28,13 +28,13 @@ belong in git; use a private repository.
 
 | Area | Examples | Why public |
 |------|----------|------------|
-| Install & config | [CONFIG.md](CONFIG.md), [session-models.md](session-models.md), `install.sh` | Required to run |
-| Architecture | [ARCHITECTURE.md](ARCHITECTURE.md), [WHEN-TO-USE.md](WHEN-TO-USE.md) | Positioning without over-selling |
-| Harness honesty | [HARNESS-MATRIX.md](HARNESS-MATRIX.md), [BETA-EXIT.md](BETA-EXIT.md) | Beta trust |
+| Install & config | [config.md](config.md), [session-models.md](session-models.md), `install.sh` | Required to run |
+| Architecture | [architecture.md](architecture.md), [when-to-use.md](when-to-use.md) | Positioning without over-selling |
+| Harness honesty | [harness-matrix.md](harness-matrix.md), [beta-exit.md](beta-exit.md) | Beta trust |
 | Contribute | [CONTRIBUTING.md](../CONTRIBUTING.md), [contrib/classifier.md](contrib/classifier.md) | Community quality |
 | Published metrics | [benchmark/REPORT.md](../benchmark/REPORT.md) | Final numbers only (raw eval in `downshift-labs`) |
-| Licence & trust | [LICENSE](../LICENSE), [RELICENSE.md](RELICENSE.md), [COMMERCIAL.md](../COMMERCIAL.md), [MONETIZATION.md](../MONETIZATION.md) | Apache 2.0 transparency (not a sales deck) |
-| Experimental (short) | [CAPABILITY-ROUTER-V2.md](CAPABILITY-ROUTER-V2.md), [CLASSIFIER-SHADOW.md](CLASSIFIER-SHADOW.md) | Set expectations: v2 ≠ production hook |
+| Licence & trust | [LICENSE](../LICENSE), [relicense.md](relicense.md), [COMMERCIAL.md](../COMMERCIAL.md), [MONETIZATION.md](../MONETIZATION.md) | Apache 2.0 transparency (not a sales deck) |
+| Experimental (short) | [capability-router-v2.md](capability-router-v2.md), [classifier-shadow.md](classifier-shadow.md) | Set expectations: v2 ≠ production hook |
 | Direction | [ROADMAP.md](../ROADMAP.md), [GOVERNANCE.md](../GOVERNANCE.md) | OSS expectations |
 
 **Moat (public framing):** harness integrations + eval discipline + release
@@ -49,15 +49,15 @@ in the default path.
 
 | File | Content |
 |------|---------|
-| [BACKLOG.md](internal/BACKLOG.md) | **Stub** — full backlog in private `downshift-labs` |
-| [NEXT-STEPS.md](internal/NEXT-STEPS.md) | **Stub** — maintainer checklist off-repo |
-| [LAUNCH-WAVES.md](internal/LAUNCH-WAVES.md) | Rebrand/OSS wave execution, metrics, open-core backlog |
-| [CAPABILITY-ROUTER-V2-FULL.md](internal/CAPABILITY-ROUTER-V2-FULL.md) | Long v2 design archive |
-| [TEST-COVERAGE.md](internal/TEST-COVERAGE.md) | Coverage tables for maintainers |
-| [ENGINEERING-LOOP-MAINTAINER.md](internal/ENGINEERING-LOOP-MAINTAINER.md) | Promotion loop, dsmon, historical eval notes |
-| [downshift-labs-README.template.md](internal/downshift-labs-README.template.md) | Scaffold for private repo layout |
+| [backlog.md](internal/backlog.md) | **Stub** — full backlog in private `downshift-labs` |
+| [next-steps.md](internal/next-steps.md) | **Stub** — maintainer checklist off-repo |
+| [launch-waves.md](internal/launch-waves.md) | Rebrand/OSS wave execution, metrics, open-core backlog |
+| [capability-router-v2-full.md](internal/capability-router-v2-full.md) | Long v2 design archive |
+| [test-coverage.md](internal/test-coverage.md) | Coverage tables for maintainers |
+| [engineering-loop-maintainer.md](internal/engineering-loop-maintainer.md) | Promotion loop, dsmon, historical eval notes |
+| [downshift-labs-readme.template.md](internal/downshift-labs-readme.template.md) | Scaffold for private repo layout |
 
-Stubs at old paths (e.g. `docs/brand/LAUNCH-WAVES.md`) redirect here.
+Stubs at old paths (e.g. `docs/brand/launch-waves.md`) redirect here.
 
 ---
 
@@ -72,7 +72,7 @@ knowing git history and clones are public.
 | **Green** | Install, CONFIG, adapters, fail-open, `benchmark/REPORT.md`, contrib classifier, Apache licence | Public `docs/` |
 | **Green** | “We may offer hosted/support” without SKU detail | [MONETIZATION.md](../MONETIZATION.md) |
 | **Yellow** | Launch wave checklists, coverage tables, long v2 archive | `docs/internal/` |
-| **Yellow** | Promotion thresholds, shadow/train workflow (no live production numbers) | `docs/internal/` or shortened [ENGINEERING-LOOP.md](ENGINEERING-LOOP.md) |
+| **Yellow** | Promotion thresholds, shadow/train workflow (no live production numbers) | `docs/internal/` or shortened [engineering-loop.md](engineering-loop.md) |
 | **Red** | Autonomous agent squad contracts, DS/HC/KB handoff playbooks, personal repo paths | Private `downshift-labs` |
 | **Red** | Production-derived labels, unredacted stats exports, enterprise pipeline | Private only |
 | **Red** | Employer or personal KB dumps, embargoed partnerships | Never in Downshift git |

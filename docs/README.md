@@ -4,14 +4,14 @@
 
 | Doc | For |
 |-----|-----|
-| **[INSTALL.md](INSTALL.md)** | Install binary, hooks per harness, troubleshooting (humans + agents) |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | What Downshift is and how hooks flow |
-| [WHEN-TO-USE.md](WHEN-TO-USE.md) | Downshift vs gateways and direct SDK |
-| [CONFIG.md](CONFIG.md) | State dir, env vars, migration |
-| [PUBLISHING-BOUNDARIES.md](PUBLISHING-BOUNDARIES.md) | Public vs internal vs private docs |
-| [CONTENT-CLASSIFICATION.md](CONTENT-CLASSIFICATION.md) | A/B/C/D content map (adoption → secret) |
+| **[install.md](install.md)** | Install binary, hooks per harness, troubleshooting (humans + agents) |
+| [architecture.md](architecture.md) | What Downshift is and how hooks flow |
+| [when-to-use.md](when-to-use.md) | Downshift vs gateways and direct SDK |
+| [config.md](config.md) | State dir, env vars, migration |
+| [publishing-boundaries.md](publishing-boundaries.md) | Public vs internal vs private docs |
+| [content-classification.md](content-classification.md) | A/B/C/D content map (adoption → secret) |
 | [session-models.md](session-models.md) | Session allowlists and Claude usage hooks |
-| [BETA-EXIT.md](BETA-EXIT.md) | Beta graduation criteria |
+| [beta-exit.md](beta-exit.md) | Beta graduation criteria |
 | [../ROADMAP.md](../ROADMAP.md) | Public roadmap |
 | [../LICENSE](../LICENSE) | Apache 2.0 |
 | [../MONETIZATION.md](../MONETIZATION.md) | Optional hosted/support |
@@ -21,11 +21,11 @@
 
 | Doc | Topic |
 |-----|--------|
-| [MINILM-SEMANTIC.md](MINILM-SEMANTIC.md) | Semantic boost |
-| [CLASSIFIER-SHADOW.md](CLASSIFIER-SHADOW.md) | Shadow classifier |
+| [minilm-semantic.md](minilm-semantic.md) | Semantic boost |
+| [classifier-shadow.md](classifier-shadow.md) | Shadow classifier |
 | [stats-export.md](stats-export.md) | Sharing stats safely |
-| [HARNESS-MATRIX.md](HARNESS-MATRIX.md) | Plan compatibility |
-| [LANGGRAPH-ORCHESTRATION.md](LANGGRAPH-ORCHESTRATION.md) | Optional planner |
+| [harness-matrix.md](harness-matrix.md) | Plan compatibility |
+| [langgraph-orchestration.md](langgraph-orchestration.md) | Optional planner |
 | [pt/README.md](pt/README.md) | Documentação em português |
 | [../examples/README.md](../examples/README.md) | Sample hook JSON payloads |
 
@@ -42,25 +42,25 @@
 
 | Doc | Topic |
 |-----|--------|
-| [brand/RENAME.md](brand/RENAME.md) | Harness → Downshift rename (done) |
-| [brand/README-HERO.md](brand/README-HERO.md) | README hero drafts |
+| [brand/rename.md](brand/rename.md) | Harness → Downshift rename (done) |
+| [brand/readme-hero.md](brand/readme-hero.md) | README hero drafts |
 
 ## Design (experimental / future)
 
 | Doc | Topic |
 |-----|--------|
-| [CAPABILITY-ROUTER-V2.md](CAPABILITY-ROUTER-V2.md) | Router v2 (experimental; short) |
-| [DECISION-INTELLIGENCE.md](DECISION-INTELLIGENCE.md) | Advisory layer |
-| [ENGINEERING-LOOP.md](ENGINEERING-LOOP.md) | Feedback loop |
+| [capability-router-v2.md](capability-router-v2.md) | Router v2 (experimental; short) |
+| [decision-intelligence.md](decision-intelligence.md) | Advisory layer |
+| [engineering-loop.md](engineering-loop.md) | Feedback loop |
 
 ## Internal (maintainers)
 
-Not required for install. See [PUBLISHING-BOUNDARIES.md](PUBLISHING-BOUNDARIES.md).
+Not required for install. See [publishing-boundaries.md](publishing-boundaries.md).
 
 | Doc | Topic |
 |-----|--------|
 | [internal/README.md](internal/README.md) | Index |
-| [internal/LAUNCH-WAVES.md](internal/LAUNCH-WAVES.md) | Launch execution checklist |
-| [internal/BACKLOG.md](internal/BACKLOG.md) | Maintainer backlog (stub) |
-| [internal/NEXT-STEPS.md](internal/NEXT-STEPS.md) | Maintainer checklist (stub) |
-| [internal/ENGINEERING-LOOP-MAINTAINER.md](internal/ENGINEERING-LOOP-MAINTAINER.md) | Promotion / dsmon appendix |
+| [internal/launch-waves.md](internal/launch-waves.md) | Launch execution checklist |
+| [internal/backlog.md](internal/backlog.md) | Maintainer backlog (stub) |
+| [internal/next-steps.md](internal/next-steps.md) | Maintainer checklist (stub) |
+| [internal/engineering-loop-maintainer.md](internal/engineering-loop-maintainer.md) | Promotion / dsmon appendix |

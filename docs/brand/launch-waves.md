@@ -3,7 +3,7 @@
 The detailed rebrand and OSS launch checklist is **maintainer-oriented** and
 lives at:
 
-**[docs/internal/LAUNCH-WAVES.md](../internal/LAUNCH-WAVES.md)**
+**[docs/internal/launch-waves.md](../internal/launch-waves.md)**
 
 Public direction: [ROADMAP.md](../../ROADMAP.md) · boundaries:
-[PUBLISHING-BOUNDARIES.md](../PUBLISHING-BOUNDARIES.md).
+[publishing-boundaries.md](../publishing-boundaries.md).

@@ -2,7 +2,7 @@
 
 Canonical map for **what belongs in the public Downshift repo**, what is
 **maintainer-only but still cloned**, and what must live **outside git**.
-Operational rules for adding docs: [PUBLISHING-BOUNDARIES.md](PUBLISHING-BOUNDARIES.md).
+Operational rules for adding docs: [publishing-boundaries.md](publishing-boundaries.md).
 
 ---
 
@@ -30,7 +30,7 @@ and are classified **B** (community / reproducibility), not hidden as C:
 **C applies to documentation and data you choose not to publish**, not to
 pretending the OSS binary is opaque. Competitive moat = harness coverage, eval
 discipline, velocity, and **ops you keep private** — see
-[PUBLISHING-BOUNDARIES.md](PUBLISHING-BOUNDARIES.md).
+[publishing-boundaries.md](publishing-boundaries.md).
 
 | Material | Class | Where |
 |----------|-------|--------|
@@ -53,10 +53,10 @@ discipline, velocity, and **ops you keep private** — see
 | `README.md`, `llms.txt` | Hero, install, hooks |
 | `install.sh`, `catalog.sample.json` | Distribution |
 | `examples/` | Hook JSON fixtures |
-| `docs/ARCHITECTURE.md`, `docs/WHEN-TO-USE.md`, `docs/CONFIG.md` | Core user docs |
-| `docs/session-models.md`, `docs/HARNESS-MATRIX.md` | Integration |
-| `docs/BETA-EXIT.md`, `docs/stats-export.md`, `docs/billing-comparison-template.md` | Trust / beta |
-| `docs/MINILM-SEMANTIC.md`, `docs/pt/` (user track) | Guides |
+| `docs/architecture.md`, `docs/when-to-use.md`, `docs/config.md` | Core user docs |
+| `docs/session-models.md`, `docs/harness-matrix.md` | Integration |
+| `docs/beta-exit.md`, `docs/stats-export.md`, `docs/billing-comparison-template.md` | Trust / beta |
+| `docs/minilm-semantic.md`, `docs/pt/` (user track) | Guides |
 | `docs/evidence/` | Honest harness honor protocol (no secrets) |
 | `LICENSE`, `NOTICE`, `SECURITY.md`, `COMMERCIAL.md`, `MONETIZATION.md` | Legal / trust (high level) |
 | `ROADMAP.md`, `GOVERNANCE.md` | Direction (public, not sales deck) |
@@ -70,10 +70,10 @@ discipline, velocity, and **ops you keep private** — see
 | `CONTRIBUTING.md`, `AGENTS.md`, `CODE_OF_CONDUCT.md` (if present) | Contribute |
 | `docs/contrib/classifier.md` | Tuning v1 classifier |
 | `docs/design/router-generalization.md` | Public summary (full study in labs) |
-| `docs/CLASSIFIER-SHADOW.md`, `docs/ENGINEERING-LOOP.md` | Offline improvement (short); full ops in labs |
-| `docs/CAPABILITY-ROUTER-V2.md` | Short experimental status |
-| `docs/DECISION-INTELLIGENCE.md`, `docs/LANGGRAPH-ORCHESTRATION.md` | Extension points |
-| `docs/DS-04-CODEX-OBSERVER-CONTRACT.md` | Privacy contract |
+| `docs/classifier-shadow.md`, `docs/engineering-loop.md` | Offline improvement (short); full ops in labs |
+| `docs/capability-router-v2.md` | Short experimental status |
+| `docs/decision-intelligence.md`, `docs/langgraph-orchestration.md` | Extension points |
+| `docs/ds-04-codex-observer-contract.md` | Privacy contract |
 | `benchmark/REPORT.md`, `benchmark/EVAL-PRIVATE.md` | Published metrics + policy only |
 | `tools/README.md` | Pointer to labs training scripts |
 | `internal/**` (implementation) | Forkable OSS |
@@ -85,14 +85,14 @@ discipline, velocity, and **ops you keep private** — see
 
 | Path | Notes |
 |------|--------|
-| `docs/internal/LAUNCH-WAVES.md` | Launch execution |
-| `docs/internal/ENGINEERING-LOOP-MAINTAINER.md` | **Stub** → labs |
-| `docs/internal/CAPABILITY-ROUTER-V2-FULL.md` | **Stub** → labs |
-| `docs/internal/TEST-COVERAGE.md` | Maintainer tables |
-| `docs/internal/downshift-labs-README.template.md` | Private repo scaffold |
-| `docs/internal/BACKLOG.md`, `docs/internal/NEXT-STEPS.md` | **Stubs** → real content in `downshift-labs` |
-| `docs/brand/RENAME.md`, `docs/brand/LAUNCH-DISCUSSION.md` | Rebrand ops (low secret, still maintainer) |
-| `docs/internal/LAUNCH-WAVES.md` metrics / open-core rows | Strategy hints |
+| `docs/internal/launch-waves.md` | Launch execution |
+| `docs/internal/engineering-loop-maintainer.md` | **Stub** → labs |
+| `docs/internal/capability-router-v2-full.md` | **Stub** → labs |
+| `docs/internal/test-coverage.md` | Maintainer tables |
+| `docs/internal/downshift-labs-readme.template.md` | Private repo scaffold |
+| `docs/internal/backlog.md`, `docs/internal/next-steps.md` | **Stubs** → real content in `downshift-labs` |
+| `docs/brand/rename.md`, `docs/brand/launch-discussion.md` | Rebrand ops (low secret, still maintainer) |
+| `docs/internal/launch-waves.md` metrics / open-core rows | Strategy hints |
 | **Not in repo** | Prod-derived labels, exports with prompts, pricing SKUs, agent squad contracts |
 
 `docs/internal/` is **public git** — conventionally unlisted, not a vault.
@@ -110,7 +110,7 @@ discipline, velocity, and **ops you keep private** — see
 
 ## Mapping to publishing tiers
 
-| A/B/C/D | [PUBLISHING-BOUNDARIES](PUBLISHING-BOUNDARIES.md) |
+| A/B/C/D | [PUBLISHING-BOUNDARIES](publishing-boundaries.md) |
 |---------|-----------------------------------------------------|
 | **A** | Public product (green) |
 | **B** | Public product or contrib (green) |
@@ -139,7 +139,7 @@ versions; rotation is not automatic.
 | Path inventory (summary table) | Done — refresh when layout changes |
 | `PUBLISHING-BOUNDARIES` alignment | Done |
 | Sensitive maintainer docs stubbed | Done (`BACKLOG`, `NEXT-STEPS`) |
-| **Documentation audit (use vs inside vs MOAT)** | Done — [internal/DOC-AUDIT.md](internal/DOC-AUDIT.md) |
+| **Documentation audit (use vs inside vs MOAT)** | Done — [internal/doc-audit.md](internal/doc-audit.md) |
 | Private `downshift-labs` repo (OC-1) | **Done** — private GitHub repo + `ci-eval` |
 | Labs split (benchmarks + training ops) | **Done** — merged [#57](https://github.com/tiagovilasboas/downshift/pull/57) |
 | Per-file audit of all 600+ paths | **Not required** — use audit + checklist |

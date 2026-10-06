@@ -12,7 +12,7 @@ that must not ship in the public OSS repo.
 | `tools/minilm/`, `tools/baseline/` | Prototype refresh, NB baseline, holdout eval |
 | `training/nbtier/` | `golden.json`, `trivial_golden.json` parity fixtures |
 | `docs/maintainer/` | Full `CLASSIFIER-SHADOW`, `ENGINEERING-LOOP-MAINTAINER`, `CAPABILITY-ROUTER-V2-FULL`, `router-generalization` |
-| `BACKLOG.md`, `NEXT-STEPS.md` | Execution contract, weekly checklist |
+| `backlog.md`, `next-steps.md` | Execution contract, weekly checklist |
 | `eval/labels/` | Production-derived training exports (redacted) |
 | `commercial/` | Cloud SKU drafts, pricing, enterprise pipeline |
 

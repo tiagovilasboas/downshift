@@ -65,13 +65,13 @@ Optional PostToolUse / SubagentStop → telemetry (usage, honor)
 ## Configuration on disk
 
 Default state directory (migration in progress — see
-[RENAME.md](brand/RENAME.md)):
+[rename.md](brand/rename.md)):
 
 - `~/.downshift/` (legacy `~/.harness-downshift/`): `catalog.json`, `events.jsonl`,
   `session-models.json`, `loop-events.jsonl`, optional weights
 
 Overrides: `DOWNSHIFT_EVENT_LOG`, `DOWNSHIFT_SESSION_MODELS`, feature flags
-documented in README and `docs/MINILM-SEMANTIC.md`.
+documented in README and `docs/minilm-semantic.md`.
 
 ---
 
@@ -82,7 +82,7 @@ documented in README and `docs/MINILM-SEMANTIC.md`.
 | `routingv2` + shadow | Observe candidate classifier; does not change `Route()` |
 | `decisionintelligence` | Advisory, monotonic, `Apply: false` |
 | `orchestration/` (Python) | Opt-in LangGraph planner; does not pick models |
-| Capability Router v2 doc | Long-term design; see [CAPABILITY-ROUTER-V2.md](CAPABILITY-ROUTER-V2.md) |
+| Capability Router v2 doc | Long-term design; see [capability-router-v2.md](capability-router-v2.md) |
 
 ---
 
@@ -91,7 +91,7 @@ documented in README and `docs/MINILM-SEMANTIC.md`.
 | Doc | Audience |
 |-----|----------|
 | [session-models.md](session-models.md) | Operators |
-| [CLASSIFIER-SHADOW.md](CLASSIFIER-SHADOW.md) | Shadow mode |
+| [classifier-shadow.md](classifier-shadow.md) | Shadow mode |
 | [benchmark/README.md](../benchmark/README.md) | Benchmark discipline |
 | [design/router-generalization.md](design/router-generalization.md) | Evaluation honesty |
 | [pt/README.md](pt/README.md) | Portuguese doc set |

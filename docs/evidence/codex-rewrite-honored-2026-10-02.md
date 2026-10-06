@@ -1,6 +1,6 @@
 # Codex rewrite honored — 2026-10-02
 
-**P1.5** in `docs/BETA-EXIT.md`. Emission vs honored: `docs/session-models.md`.
+**P1.5** in `docs/beta-exit.md`. Emission vs honored: `docs/session-models.md`.
 
 ## Setup
 

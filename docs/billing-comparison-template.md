@@ -1,6 +1,6 @@
 # Billing Comparison Report Template
 
-Use this template to document real billing comparisons between provider invoices/dashboards and `downshift stats --export` (satisfies **P3.7** in [BETA-EXIT.md](BETA-EXIT.md)).
+Use this template to document real billing comparisons between provider invoices/dashboards and `downshift stats --export` (satisfies **P3.7** in [beta-exit.md](beta-exit.md)).
 
 ---
 

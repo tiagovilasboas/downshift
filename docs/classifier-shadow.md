@@ -37,4 +37,4 @@ with a candidate file.
 Promotion thresholds, full report field guide, and safety boundaries:
 **downshift-labs** (`docs/maintainer/CLASSIFIER-SHADOW-FULL.md`).
 
-User-facing loop: [ENGINEERING-LOOP.md](ENGINEERING-LOOP.md).
+User-facing loop: [engineering-loop.md](engineering-loop.md).

@@ -3,7 +3,7 @@
 Use **Version A** as the default top of `README.md` after the GitHub rename to `downshift`.  
 Versions B and C are alternates for A/B tests or Product Hunt.
 
-Migration context: [RENAME.md](RENAME.md)
+Migration context: [rename.md](rename.md)
 
 ---
 
@@ -146,7 +146,7 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/insta
 
 ## Mapping from current README
 
-**2026-10-06:** Production `README.md` is now a slim hero + quickstart; full install lives in [../INSTALL.md](../INSTALL.md).
+**2026-10-06:** Production `README.md` is now a slim hero + quickstart; full install lives in [../install.md](../install.md).
 
 When applying Version A, **keep** existing sections below the hero without rewriting the whole file in one PR:
 

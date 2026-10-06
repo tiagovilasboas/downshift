@@ -23,7 +23,7 @@ throughout the session.
 
 This project is under the **Apache License, Version 2.0**. Commercial use is
 allowed under the licence terms. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
-[docs/RELICENSE.md](docs/RELICENSE.md). Prior BUSL text:
+[docs/relicense.md](docs/relicense.md). Prior BUSL text:
 [LICENSE-BSL-1.1-ARCHIVE.md](LICENSE-BSL-1.1-ARCHIVE.md).
 
 ---
@@ -33,12 +33,12 @@ allowed under the licence terms. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
 ### End-user install (any session)
 
 If the user asks to **install, configure, or debug hooks** on their machine (not to
-change this repository), read **[docs/INSTALL.md](docs/INSTALL.md)** first.
+change this repository), read **[docs/install.md](docs/install.md)** first.
 
 - Use `curl …/install.sh` or [Releases](https://github.com/tiagovilasboas/downshift/releases); then `downshift doctor`.
-- State dir: `~/.downshift` (legacy `~/.harness-downshift/`). See [docs/CONFIG.md](docs/CONFIG.md).
+- State dir: `~/.downshift` (legacy `~/.harness-downshift/`). See [docs/config.md](docs/config.md).
 - Session allowlist: [docs/session-models.md](docs/session-models.md). Rewrites require listed models.
-- Plan / rewrite-honored limits: [docs/HARNESS-MATRIX.md](docs/HARNESS-MATRIX.md).
+- Plan / rewrite-honored limits: [docs/harness-matrix.md](docs/harness-matrix.md).
 - Do not invent hook paths, matchers, or catalog entries without checking INSTALL and examples.
 
 ### Shared RAG memory
@@ -156,7 +156,7 @@ cmd/downshift/       — binary entry point, hook runners, try subcommand,
    creates it via `downshift models pull` or by copying `catalog.sample.json`.
 
 When the agent says "do not commit catalog.json", it means the **user override**
-(under the state dir; see `docs/CONFIG.md`), not the embedded default.
+(under the state dir; see `docs/config.md`), not the embedded default.
 
 **Adding or updating a model:** edit `internal/catalog/catalog.json`. The
 `_section` comment objects (entries with only a `_section` key, no `id` or
