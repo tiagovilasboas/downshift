@@ -220,6 +220,14 @@ func build(f catalogFile) *Catalog {
 		for _, alias := range e.Aliases {
 			c.byID[e.Harness][alias] = m
 		}
+		// The harness sends its native name back in tool input (Claude Code's
+		// Task schema only accepts "haiku"/"sonnet"/"opus"), so it must resolve
+		// like an alias. The first entry of a family keeps the name.
+		if e.NativeName != "" {
+			if _, taken := c.byID[e.Harness][e.NativeName]; !taken {
+				c.byID[e.Harness][e.NativeName] = m
+			}
+		}
 
 		// Build the family index for version-agnostic fallback.
 		// Each family prefix is added once per (harness, family) pair.
@@ -461,6 +469,9 @@ func (c *Catalog) EntryFor(harness, modelID string) (Entry, bool) {
 				if a == id {
 					return e, true
 				}
+			}
+			if e.NativeName != "" && e.NativeName == id {
+				return e, true
 			}
 		}
 	}

@@ -729,3 +729,23 @@ func TestMergeEntries_InheritsNativeNameByFamily(t *testing.T) {
 		}
 	}
 }
+
+// The harness echoes its native name back in tool input, so it must resolve to
+// the same model as the id and count as an exact identity (not a foreign model).
+func TestNativeNameResolvesLikeAnAlias(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	c := Load()
+	for _, tier := range []core.Tier{core.TierSmall, core.TierMid, core.TierFrontier} {
+		want := c.ModelFor("claude-code", tier)
+		if want.Native == "" {
+			t.Fatalf("tier %v has no native name in the embedded catalog", tier)
+		}
+		got, ok := c.LookupByID("claude-code", want.Native)
+		if !ok || got.ID != want.ID {
+			t.Errorf("LookupByID(%q) = %q ok=%v, want %q", want.Native, got.ID, ok, want.ID)
+		}
+		if !c.IsExactID("claude-code", want.Native) {
+			t.Errorf("IsExactID(%q) = false", want.Native)
+		}
+	}
+}

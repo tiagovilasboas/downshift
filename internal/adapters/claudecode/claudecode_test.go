@@ -466,3 +466,28 @@ func (r *noNativeResolver) LookupByID(h, id string) (core.Model, bool) {
 	m.Native = ""
 	return m, ok
 }
+
+// Claude Code's schema only lets a spawn request "haiku"/"sonnet"/"opus", so
+// every explicit-model request arrives as the native name. It must be routed
+// like the full id, not held as a foreign model.
+func TestHandle_NativeNameRequestIsRouted(t *testing.T) {
+	requested := nativeOf(core.TierFrontier)
+	if requested == "" {
+		t.Fatal("catalog has no native name for the frontier tier")
+	}
+	ev := withCatalogSession(claudecode.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"prompt": "rename the userId variable to userIdentifier",
+			"model": "` + requested + `"
+		}`),
+	})
+	out, _, d := claudecode.Handle(ev, cat)
+	m := decodeUpdated(t, out)
+	if m == nil {
+		t.Fatalf("a trivial task requested as %q must be rewritten, got allow (decision %+v)", requested, d.Verdict)
+	}
+	if m["model"] != nativeOf(core.TierSmall) {
+		t.Fatalf("model = %v, want %s", m["model"], nativeOf(core.TierSmall))
+	}
+}
