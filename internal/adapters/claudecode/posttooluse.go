@@ -262,6 +262,11 @@ func HandlePostToolUse(raw []byte, binaryVersion string, r core.Resolver) (Outpu
 // reports it as tool_response.resolvedModel when it launches a subagent; this
 // is the only post-spawn model signal the hook receives (the launch payload
 // carries no token usage for async subagents).
+func agentID(payload map[string]any) string {
+	resp, _ := payload["tool_response"].(map[string]any)
+	return stringFieldAny(resp, "agentId", "agent_id")
+}
+
 func resolvedModel(payload map[string]any) string {
 	resp, _ := payload["tool_response"].(map[string]any)
 	return stringFieldAny(resp, "resolvedModel", "resolved_model")
@@ -296,6 +301,7 @@ func recordResolved(payload map[string]any, sessionHash, binaryVersion string, p
 		ToModel:        telemetry.ModelOrUnknown(resolved),
 		SessionID:      target.SessionID,
 		LinkedDecision: decisionKey(*target),
+		AgentHash:      telemetry.HashSessionID(agentID(payload)),
 	}
 	if r != nil {
 		got, okGot := r.LookupByID(harnessID, resolved)

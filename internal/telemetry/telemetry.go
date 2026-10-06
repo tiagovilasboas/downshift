@@ -81,6 +81,11 @@ type Event struct {
 	// most once; later usage records skip it.
 	LinkedDecision string `json:"linked_decision,omitempty"`
 
+	// AgentHash is the hashed harness agent id on "resolved" and "usage"
+	// records. It joins the spawn-time observation (PostToolUse) to the
+	// completion-time one (SubagentStop) without storing the raw id.
+	AgentHash string `json:"agent_hash,omitempty"`
+
 	// RecommendedModel is the classifier's recommendation on events whose
 	// spawn was left unchanged (allow, baseline, blocked). final_model on
 	// those events is the model the child actually runs on.

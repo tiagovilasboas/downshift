@@ -500,7 +500,7 @@ go build -o dsmon ./cmd/dsmon
 counts — it only sees what the harness passes to the preToolUse hook, which
 does not include usage data. The estimates are directionally correct (more
 downshifts = more savings) but not a substitute for your provider's billing
-dashboard. Actual token tracking is planned for a future PostToolUse hook pass.
+dashboard. On Claude Code, real token counts come from a `SubagentStop` hook (`downshift claude-code-subagent-stop`), which prices the subagent from its own transcript once it finishes; see [session-models.md](docs/session-models.md#claude-code-real-usage).
 
 ## Grok CLI (config, not hook)
 
@@ -1130,7 +1130,7 @@ Being honest: the router and adapters work today. These are the gaps between "wo
 
 | Gap | Why it matters | Status |
 |---|---|---|
-| **Real token counts via PostToolUse hook** | Every savings figure today is estimated from routing decisions, not from actual provider usage data. A PostToolUse hook that reads `tool_response.usage.input_tokens` would make the dashboard show real numbers. | Planned |
+| **Real token counts** | Every savings figure today is estimated from routing decisions, not from actual provider usage data. The PostToolUse payload of an async subagent has no tokens, so Claude Code usage is read from the subagent transcript by a `SubagentStop` hook. | Claude Code: implemented, needs the SubagentStop hook in `settings.json`; no real-dollar billing period yet |
 | **One week of real session data in the README** | The $0.20 in the current stats section is from a single day of testing. A week of real data from your own sessions would turn a directional estimate into a credible benchmark. | Needs real data |
 | **End-to-end CI with a real spawn** | The test suite runs the classifier and the adapter logic. It does not spawn a real subagent and verify the model rewrite took effect. That integration test is the highest-confidence proof the whole chain works. | Not yet |
 | **`downshift stats` fully functional** | The command exists in the README and in the binary. Verify it against a real `events.jsonl` with a week of data before promoting it as the primary measurement tool. | Verify |
