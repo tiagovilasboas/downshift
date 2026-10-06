@@ -1,5 +1,0 @@
-{
-  "id": "c08-ledger",
-  "label": "COMPLEX",
-  "prompt": "implement a Ledger safe for concurrent use: NewLedger(balances map[string]int64) *Ledger, Balance(account string) int64 and Transfer(from, to string, amount int64) error that rejects non-positive amounts, unknown accounts, self-transfers and overdrafts, never deadlocks when transfers run in opposite directions, and keeps the total balance constant"
-}

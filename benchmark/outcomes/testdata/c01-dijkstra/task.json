@@ -1,5 +1,0 @@
-{
-  "id": "c01-dijkstra",
-  "label": "COMPLEX",
-  "prompt": "implement ShortestPath(n int, edges [][3]int, src, dst int) (dist int, path []int, ok bool) for a directed graph with non-negative weights (edge = from, to, weight) using Dijkstra with a binary heap; return the node path from src to dst and ok=false when dst is unreachable"
-}

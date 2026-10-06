@@ -304,13 +304,13 @@ func TestPrint_TierLegendPresent(t *testing.T) {
 
 // --- seed dataset ---
 
-func TestSeedDataset_Loadable(t *testing.T) {
-	tasks, err := benchmark.LoadDataset("../../benchmark/tasks.json")
+func TestSampleDataset_Loadable(t *testing.T) {
+	tasks, err := benchmark.LoadDataset("testdata/sample.json")
 	if err != nil {
 		t.Fatalf("cannot load seed dataset: %v", err)
 	}
-	if len(tasks) < 10 {
-		t.Errorf("seed dataset has only %d tasks; expected at least 10", len(tasks))
+	if len(tasks) < 4 {
+		t.Errorf("sample dataset has only %d tasks; expected at least 4", len(tasks))
 	}
 	for _, task := range tasks {
 		if task.Prompt == "" {
@@ -325,10 +325,10 @@ func TestSeedDataset_Loadable(t *testing.T) {
 	}
 }
 
-func TestSeedDataset_TierAccuracyBetterThanComplexity(t *testing.T) {
-	tasks, err := benchmark.LoadDataset("../../benchmark/tasks.json")
+func TestSampleDataset_TierAccuracyBetterThanComplexity(t *testing.T) {
+	tasks, err := benchmark.LoadDataset("testdata/sample.json")
 	if err != nil {
-		t.Skip("seed dataset not found")
+		t.Skip("sample dataset not found")
 	}
 	results := benchmark.Run(tasks, io.Discard)
 	complexAcc := benchmark.Accuracy(results)
@@ -340,10 +340,10 @@ func TestSeedDataset_TierAccuracyBetterThanComplexity(t *testing.T) {
 		complexAcc*100, tierAcc*100)
 }
 
-func TestSeedDataset_NoComplexToSmallDowngrade(t *testing.T) {
-	tasks, err := benchmark.LoadDataset("../../benchmark/tasks.json")
+func TestSampleDataset_NoComplexToSmallDowngrade(t *testing.T) {
+	tasks, err := benchmark.LoadDataset("testdata/sample.json")
 	if err != nil {
-		t.Skip("seed dataset not found")
+		t.Skip("sample dataset not found")
 	}
 	results := benchmark.Run(tasks, io.Discard)
 	_, toSMALL, _, cntSMALL, _ := benchmark.UnsafeDowngradeRates(results)

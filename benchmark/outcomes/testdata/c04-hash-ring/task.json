@@ -1,5 +1,0 @@
-{
-  "id": "c04-hash-ring",
-  "label": "COMPLEX",
-  "prompt": "implement a consistent hash ring: NewRing(replicas int) *Ring with Add(node string), Remove(node string) and Get(key string) string; each node gets replicas virtual points, a key maps to the first point clockwise from its hash, and an empty ring returns an empty string"
-}

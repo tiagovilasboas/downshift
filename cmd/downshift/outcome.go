@@ -14,10 +14,8 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/outcome"
 )
 
-var reportDatasets = []outcome.Dataset{
-	{Path: "benchmark/tasks.json", Name: "`benchmark/tasks.json` (seed, CI gate)"},
-	{Path: "benchmark/holdout.json", Name: "`benchmark/holdout.json` (burned: tuned to 100%, regression net only)"},
-}
+// Public OSS has no in-tree benchmark files; maintainer reports use labs paths via flags.
+var reportDatasets []outcome.Dataset
 
 // buildReport renders the generated README block from paths relative to root.
 func buildReport(root, tasksDir, runsDir string) (string, error) {
@@ -39,8 +37,8 @@ func buildReport(root, tasksDir, runsDir string) (string, error) {
 func runEvalOutcome(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("eval-outcome", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	tasksDir := fs.String("tasks", "benchmark/outcomes/testdata", "task directory")
-	runsDir := fs.String("runs", "benchmark/outcomes/runs", "recorded runs directory")
+	tasksDir := fs.String("tasks", "internal/outcome/testdata", "task directory (maintainer suite: downshift-labs eval/outcomes/testdata)")
+	runsDir := fs.String("runs", "", "recorded runs directory (downshift-labs eval/outcomes/runs)")
 	verify := fs.Bool("verify", false, "offline: every stub fails, every reference passes, recorded results reproduce")
 	record := fs.Bool("record", false, "solve every task with --solver (makes model calls; refused when CI is set)")
 	tier := fs.String("tier", "", "tier label for --record: small, mid or frontier")

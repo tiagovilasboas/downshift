@@ -1,5 +1,0 @@
-{
-  "id": "m09-spiral",
-  "label": "MEDIUM",
-  "prompt": "write Spiral(m [][]int) []int that returns the elements of a rectangular matrix in clockwise spiral order starting at the top-left"
-}

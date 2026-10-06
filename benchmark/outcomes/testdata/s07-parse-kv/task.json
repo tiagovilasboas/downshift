@@ -1,5 +1,0 @@
-{
-  "id": "s07-parse-kv",
-  "label": "SIMPLE",
-  "prompt": "write ParseKV(s string) map[string]string that parses \"a=1; b = 2\" style pairs separated by semicolons, trimming spaces and skipping entries without '=' or with an empty key"
-}

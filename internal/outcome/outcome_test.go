@@ -13,28 +13,21 @@ import (
 	"testing"
 )
 
-const tasksRoot = "../../benchmark/outcomes/testdata"
+const tasksRoot = "testdata"
 
 func TestLoad_TaskSetShape(t *testing.T) {
 	tasks, err := Load(tasksRoot)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(tasks) < 40 {
-		t.Fatalf("want at least 40 outcome tasks, got %d", len(tasks))
+	if len(tasks) < 2 {
+		t.Fatalf("want at least 2 outcome fixture tasks, got %d", len(tasks))
 	}
-	perLabel := map[string]int{}
 	for _, task := range tasks {
-		perLabel[task.Label]++
 		for _, f := range []string{"stub.go", "reference.go", "check_test.go"} {
 			if _, err := os.Stat(filepath.Join(task.Dir, f)); err != nil {
 				t.Errorf("%s: %v", task.ID, err)
 			}
-		}
-	}
-	for _, l := range []string{"TRIVIAL", "SIMPLE", "MEDIUM", "COMPLEX"} {
-		if perLabel[l] < 8 {
-			t.Errorf("label %s has %d tasks, want >= 8", l, perLabel[l])
 		}
 	}
 }

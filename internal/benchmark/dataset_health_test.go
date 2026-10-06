@@ -94,13 +94,13 @@ func TestLoadDataset_Duplicates(t *testing.T) {
 	}
 }
 
-func TestLoadDataset_SeedHasNoDuplicates(t *testing.T) {
-	tasks, err := benchmark.LoadDataset("../../benchmark/tasks.json")
+func TestLoadDataset_SampleHasNoDuplicates(t *testing.T) {
+	tasks, err := benchmark.LoadDataset("testdata/sample.json")
 	if err != nil {
-		t.Fatalf("seed dataset must still load cleanly: %v", err)
+		t.Fatalf("sample dataset must load cleanly: %v", err)
 	}
-	if len(tasks) != 200 {
-		t.Errorf("seed len = %d, want 200", len(tasks))
+	if len(tasks) != 8 {
+		t.Errorf("sample len = %d, want 8", len(tasks))
 	}
 }
 
@@ -210,13 +210,13 @@ func TestDatasetHealth(t *testing.T) {
 	}
 }
 
-func TestDatasetHealth_Seed(t *testing.T) {
-	tasks, err := benchmark.LoadDataset("../../benchmark/tasks.json")
+func TestDatasetHealth_Sample(t *testing.T) {
+	tasks, err := benchmark.LoadDataset("testdata/sample.json")
 	if err != nil {
-		t.Fatalf("cannot load seed dataset: %v", err)
+		t.Fatalf("cannot load sample dataset: %v", err)
 	}
 	got := benchmark.DatasetHealth(tasks)
-	want := map[string]int{"TRIVIAL": 50, "SIMPLE": 50, "MEDIUM": 50, "COMPLEX": 50}
+	want := map[string]int{"TRIVIAL": 2, "SIMPLE": 2, "MEDIUM": 2, "COMPLEX": 2}
 	for label, n := range want {
 		if got.CountsByLabel[label] != n {
 			t.Errorf("seed CountsByLabel[%q] = %d, want %d", label, got.CountsByLabel[label], n)

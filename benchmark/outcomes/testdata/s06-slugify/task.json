@@ -1,5 +1,0 @@
-{
-  "id": "s06-slugify",
-  "label": "SIMPLE",
-  "prompt": "write Slugify(s string) string: lowercase, keep ASCII letters and digits, collapse every run of other characters into a single dash, and trim leading and trailing dashes"
-}

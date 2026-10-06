@@ -1,5 +1,0 @@
-{
-  "id": "t04-max",
-  "label": "TRIVIAL",
-  "prompt": "add MaxInt(xs []int) (int, bool) returning the largest element, and false for an empty slice"
-}

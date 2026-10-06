@@ -22,8 +22,6 @@ jobs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
       go: ${{ steps.classify.outputs.go }}
       python: ${{ steps.classify.outputs.python }}
-      outcome_eval: ${{ steps.scope.outputs.outcome_eval }}
-      readme_check: ${{ steps.scope.outputs.readme_check }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -43,27 +41,6 @@ jobs:
           echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
           echo "go=$go" >> "$GITHUB_OUTPUT"
           echo "python=$python" >> "$GITHUB_OUTPUT"
-
-      - name: Outcome eval scope
-        id: scope
-        env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_REF: ${{ github.ref }}
-          GITHUB_SHA: ${{ github.sha }}
-          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          outcome_eval=false
-          readme_check=false
-          if bash scripts/ci-outcome-scope.sh; then
-            outcome_eval=true
-          fi
-          if bash scripts/ci-readme-check-scope.sh; then
-            readme_check=true
-          fi
-          echo "outcome_eval=$outcome_eval" >> "$GITHUB_OUTPUT"
-          echo "readme_check=$readme_check" >> "$GITHUB_OUTPUT"
 
   test:
     needs: changes
@@ -106,31 +83,9 @@ jobs:
         if: needs.changes.outputs.go == '1'
         run: go test ./...
 
-      - name: Benchmark regression gate
-        if: needs.changes.outputs.go == '1'
-        run: |
-          ./downshift benchmark benchmark/tasks.json --gate --min-tier-accuracy=0.60 --max-frontier-to-mid=0
-          ./downshift benchmark benchmark/holdout.json --gate --min-tier-accuracy=0.80 --max-frontier-to-mid=0
-
-      - name: Outcome eval checks (offline)
-        if: needs.changes.outputs.go == '1' && needs.changes.outputs.outcome_eval == 'true'
-        run: ./downshift eval-outcome --verify
-
-      - name: README numbers match the generated report
-        if: needs.changes.outputs.go == '1' && needs.changes.outputs.readme_check == 'true'
-        run: ./downshift eval-outcome --report --check README.md
-
       - name: Adapter smoke tests
         if: needs.changes.outputs.go == '1'
         run: ./scripts/smoke-test.sh
-
-      - name: Fresh split guard
-        if: github.event_name == 'pull_request' && needs.changes.outputs.go == '1'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          git fetch --no-tags --depth=1 origin "$BASE_SHA"
-          git diff --name-only "$BASE_SHA" HEAD | bash scripts/fresh-guard.sh
 
   python:
     needs: changes

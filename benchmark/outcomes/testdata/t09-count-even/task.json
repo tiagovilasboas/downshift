@@ -1,5 +1,0 @@
-{
-  "id": "t09-count-even",
-  "label": "TRIVIAL",
-  "prompt": "add CountEven(xs []int) int that counts the even numbers in the slice"
-}
