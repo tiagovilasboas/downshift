@@ -22,13 +22,14 @@ Same prompt twice: *rename the userId variable to userIdentifier in auth.ts* (no
 
    The event was still logged as `rewrite_emitted`. Emission is not honor, and a rejected rewrite here fails the spawn instead of running it unchanged.
 2. **Fix `9476873`:** the catalog now carries a family-level `native_name`; the Claude Code adapter writes it instead of the full id and allows the spawn unchanged when an entry has none.
-3. **09:06Z, build `local-9476873`: rewrite accepted.** The hook wrote `haiku`. The spawn ran and the subagent reported it was running as `claude-haiku-4-5-20251001`, while the parent session is Sonnet 5.5, so the child did not inherit the session model.
+3. **09:06Z, build `local-9476873`: rewrite accepted.** The hook wrote `haiku`. The spawn ran on `claude-haiku-4-5-20251001`, while the parent session is Sonnet 5.5, so the child did not inherit the session model.
+4. **Cross-check from the subagent transcript.** Each assistant message in the child's transcript (`tool_response.outputFile`) carries the `message.model` the API returned. For this spawn all 12 assistant records say `claude-haiku-4-5-20251001`; a second spawn (4 records) says the same. The same file carries per-message token usage, which no hook payload does.
 
 ## Strength of the evidence
 
-- The model name comes from the subagent's **self-report**. It is consistent with the rewrite and differs from the parent, but it is not a billing or usage record.
-- One session, one spawn after the fix. Not a rate.
-- Downshift still does not read the model the child ran on (see the Codex write-up).
+- The model comes from the API-reported `message.model` in the child's own transcript, read by hand after the run, plus the subagent's self-report. It is not a billing record.
+- One session, two spawns after the fix. Not a rate.
+- The hook now records `tool_response.resolvedModel` (the model the harness chose) as an `outcome: "resolved"` event; it does not yet read the transcript. Reading it would give the model the API actually served and the token usage (P3.4).
 
 ## What this is not
 
