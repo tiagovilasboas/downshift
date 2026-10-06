@@ -72,6 +72,12 @@ downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~80% cheaper)
 
 That line in stderr means the hook fired and rewrote the model before the subagent started.
 
+**Verify the rewrite was honored** (important for beta exit validation):
+- Ask Claude Code: *"spawn a subagent to rename the userId variable in auth.ts"*
+- Open Claude Code's internal logs or monitor (check the subagent's actual model in the UI)
+- Confirm it started on haiku, not the session's default frontier model
+- This proves the hook's rewrite was not just emitted—it was **actually applied** by the harness
+
 **Step 5 — (Optional) Open the live monitor.** `dsmon` is a floating terminal widget built into the same repo that tails `~/.harness-downshift/events.jsonl` and shows model switches, tier distribution and estimated savings in real time:
 
 ```bash
@@ -86,6 +92,26 @@ go build -o dsmon ./cmd/dsmon
 ```
 
 See [dsmon — live monitor widget](#dsmon--live-monitor-widget) for the full widget reference.
+
+## Testing locally before connecting the hook
+
+Before adding the hook to Claude Code, test the classifier and hook logic locally:
+
+**Test 1 — Classifier only (terminal):**
+```bash
+downshift try "rename the userId variable" claude-code
+downshift try "rearchitect the payment flow" claude-code
+downshift try "implement the CSV export" claude-code
+```
+
+**Test 2 — Full hook (JSON):**
+```bash
+downshift claude-code < hook-input.json
+```
+
+This mimics exactly what Claude Code will send. The output is the JSON the harness will apply, plus stderr feedback with the decision and a feedback ID for tracking.
+
+See `hook-input.json` in the repo for an example payload.
 
 > **⚠️ Claude Code Pro/Max/Teams/API only.** Free plan has no real subagents and blocks network installs. See [Plan compatibility](#plan-compatibility--read-before-installing) before proceeding.
 
