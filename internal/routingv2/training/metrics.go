@@ -79,10 +79,10 @@ func (cm *ConfusionMatrix) UnsafeDowngradeRate() float64 {
 // WastefulOverrouting returns the count of unnecessary escalations.
 // Over-routing = SMALL predicted as MID/FRONTIER, or MID predicted as FRONTIER.
 type OverRouting struct {
-	SmallToMid       int
-	SmallToFrontier  int
-	MidToFrontier    int
-	Total            int
+	SmallToMid      int
+	SmallToFrontier int
+	MidToFrontier   int
+	Total           int
 }
 
 // OverRouting computes over-routing statistics.
@@ -123,13 +123,13 @@ func (cm *ConfusionMatrix) String() string {
 
 // Metrics holds all computed metrics for a model evaluation.
 type Metrics struct {
-	Accuracy           float64
+	Accuracy            float64
 	UnsafeDowngradeRate float64
-	OverRoutingRate    float64
-	RiskWeightedLoss   float64
-	ConfusionMatrix    ConfusionMatrix
-	Unsafe             UnsafeDowngrade
-	OverRouting        OverRouting
+	OverRoutingRate     float64
+	RiskWeightedLoss    float64
+	ConfusionMatrix     ConfusionMatrix
+	Unsafe              UnsafeDowngrade
+	OverRouting         OverRouting
 }
 
 // Compute evaluates predictions against actual labels and computes all metrics.
@@ -152,13 +152,13 @@ func Compute(actual, predicted []core.Tier) Metrics {
 	}
 
 	return Metrics{
-		Accuracy:           cm.Accuracy(),
+		Accuracy:            cm.Accuracy(),
 		UnsafeDowngradeRate: cm.UnsafeDowngradeRate(),
-		OverRoutingRate:    cm.OverRoutingRate(),
-		RiskWeightedLoss:   avgLoss,
-		ConfusionMatrix:    cm,
-		Unsafe:             cm.UnsafeDowngrades(),
-		OverRouting:        cm.OverRouting(),
+		OverRoutingRate:     cm.OverRoutingRate(),
+		RiskWeightedLoss:    avgLoss,
+		ConfusionMatrix:     cm,
+		Unsafe:              cm.UnsafeDowngrades(),
+		OverRouting:         cm.OverRouting(),
 	}
 }
 

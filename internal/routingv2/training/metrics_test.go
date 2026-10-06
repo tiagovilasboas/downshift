@@ -150,9 +150,9 @@ func TestRiskWeight(t *testing.T) {
 		{core.TierFrontier, core.TierMid, 5.0},    // Expensive under-route
 		{core.TierMid, core.TierSmall, 2.0},       // Moderate under-route
 
-		{core.TierSmall, core.TierMid, 0.5},       // Cheap over-route
-		{core.TierSmall, core.TierFrontier, 1.0},  // Over-route but safe
-		{core.TierMid, core.TierFrontier, 0.5},    // Over-route but safe
+		{core.TierSmall, core.TierMid, 0.5},      // Cheap over-route
+		{core.TierSmall, core.TierFrontier, 1.0}, // Over-route but safe
+		{core.TierMid, core.TierFrontier, 0.5},   // Over-route but safe
 	}
 
 	for _, tc := range tests {

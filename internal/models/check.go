@@ -106,8 +106,12 @@ func fetchModelIDs(client *http.Client, p ProviderConfig, apiKey string) ([]stri
 	}
 
 	var envelope struct {
-		Data   []struct{ ID string `json:"id"` } `json:"data"`
-		Models []struct{ ID string `json:"id"` } `json:"models"`
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+		Models []struct {
+			ID string `json:"id"`
+		} `json:"models"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
 		return nil, fmt.Errorf("parse response: %w", err)

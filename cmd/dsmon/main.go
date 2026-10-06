@@ -253,8 +253,8 @@ func (s *state) poll(path string) {
 type stats struct {
 	total, down, up, ok int
 	// held counts classified shifts the hook left unchanged.
-	held int
-	totalSavings        float64
+	held         int
+	totalSavings float64
 	// totalSavingsUnits accumulates the normalised savings fraction per DOWNSHIFT event.
 	totalSavingsUnits float64
 	// realSavedUSD accumulates baseline minus actual cost for events with real costs.

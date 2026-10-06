@@ -1,0 +1,23 @@
+# CODEOWNERS — Routing and review
+
+# Maintainer: all code
+* @tiagovilasboas
+
+# Core routing logic — requires review by maintainer
+/internal/core/ @tiagovilasboas
+/internal/routingv2/ @tiagovilasboas
+
+# Harness adapters — requires review by maintainer
+/internal/adapters/ @tiagovilasboas
+
+# Catalog — requires review (model registry changes)
+/internal/catalog/ @tiagovilasboas
+*.json @tiagovilasboas
+
+# Documentation — maintainer
+*.md @tiagovilasboas
+/docs/ @tiagovilasboas
+
+# License and governance
+LICENSE @tiagovilasboas
+AGENTS.md @tiagovilasboas

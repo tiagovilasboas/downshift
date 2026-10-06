@@ -12,10 +12,10 @@ import (
 
 func TestStringField(t *testing.T) {
 	tests := []struct {
-		name  string
-		m     map[string]any
-		key   string
-		want  string
+		name string
+		m    map[string]any
+		key  string
+		want string
 	}{
 		{
 			name: "present string value",

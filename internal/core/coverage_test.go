@@ -129,6 +129,7 @@ func TestShouldPreserveExplicitModel_ExplicitOnly(t *testing.T) {
 		t.Error("explicit_only model must be preserved")
 	}
 }
+
 // A Decision with no recommended model must never trigger a rewrite.
 func TestShouldRewriteModel_EmptyModelID(t *testing.T) {
 	d := core.Decision{}
