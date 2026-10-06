@@ -1,0 +1,16 @@
+{
+  "hook_event_name": "PreToolUse",
+  "correlation_id": "test-123",
+  "tool_name": "Task",
+  "model": "claude-opus-5-5",
+  "prompt": "rename the userId variable to userIdentifier",
+  "tool_input": {
+    "prompt": "rename the userId variable to userIdentifier",
+    "model": "claude-opus-5-5"
+  },
+  "session_models": [
+    "claude-haiku-4-5",
+    "claude-sonnet-5-5",
+    "claude-opus-5-5"
+  ]
+}
