@@ -52,18 +52,34 @@ func MaybeAugment(prompt string, label string, confident bool) (string, bool) {
 	if !ok {
 		return label, false
 	}
-	store, ok := storeFor(emb)
+	vec, neural, err := embedWithSource(emb, prompt)
+	if err != nil {
+		return label, false
+	}
+	store, ok := storeFor(neural)
 	if !ok {
 		return label, false
 	}
-	return AugmentWith(prompt, label, confident, store, emb)
+	return augmentVector(vec, label, confident, store)
 }
 
-func storeFor(emb Embedder) (PrototypeStore, bool) {
-	if _, cmd := emb.(fallbackEmbedder); cmd {
-		if s, ok := loadMiniLM(); ok {
-			return s, true
-		}
+// embedWithSource embeds prompt and reports whether the vector came from the
+// external MiniLM command (true) or the hash embedder (false), including
+// when the command failed and the hash fallback ran.
+func embedWithSource(emb Embedder, prompt string) ([]float64, bool, error) {
+	if f, ok := emb.(fallbackEmbedder); ok {
+		return f.embedSource(prompt)
+	}
+	vec, err := emb.Embed(prompt)
+	return vec, false, err
+}
+
+// storeFor returns the centroids for the space that produced the vector:
+// MiniLM centroids for MiniLM vectors, hash centroids for hash vectors.
+// Embedding spaces are never mixed.
+func storeFor(neural bool) (PrototypeStore, bool) {
+	if neural {
+		return loadMiniLM()
 	}
 	return loadStore()
 }
@@ -85,6 +101,10 @@ func AugmentWith(prompt, label string, confident bool, store PrototypeStore, emb
 	if err != nil {
 		return label, false
 	}
+	return augmentVector(vec, label, confident, store)
+}
+
+func augmentVector(vec []float64, label string, confident bool, store PrototypeStore) (string, bool) {
 	semLabel, sim := store.Nearest(vec)
 	if sim < MinSimilarity {
 		return label, false

@@ -50,15 +50,24 @@ type fallbackEmbedder struct {
 }
 
 func (f fallbackEmbedder) Embed(prompt string) ([]float64, error) {
+	vec, _, err := f.embedSource(prompt)
+	return vec, err
+}
+
+// embedSource is Embed that also reports whether the primary (external)
+// embedder produced the vector, so callers can pick centroids from the same
+// embedding space.
+func (f fallbackEmbedder) embedSource(prompt string) (vec []float64, primary bool, err error) {
 	if f.primary != nil {
-		if vec, err := f.primary.Embed(prompt); err == nil && len(vec) > 0 {
-			return vec, nil
+		if v, perr := f.primary.Embed(prompt); perr == nil && len(v) > 0 {
+			return v, true, nil
 		}
 	}
 	if f.fallback == nil {
-		return nil, fmt.Errorf("no embedder")
+		return nil, false, fmt.Errorf("no embedder")
 	}
-	return f.fallback.Embed(prompt)
+	vec, err = f.fallback.Embed(prompt)
+	return vec, false, err
 }
 
 // EmbedderFromEnv returns the local hash embedder by default.
