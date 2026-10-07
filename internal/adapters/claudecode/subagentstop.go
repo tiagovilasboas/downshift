@@ -142,6 +142,7 @@ func HandleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) strin
 	}
 	ev := buildUsageEvent(got.Usage, got.Model, sessionHash, binaryVersion, target, r, time.Now().UTC())
 	ev.AgentHash = agentHash
+	ev.Verification = readSubagentVerification(path)
 	telemetry.Record(ev)
 	if target != nil {
 		return "usage linked to " + target.Verdict + " decision"

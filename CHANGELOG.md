@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Telemetry:** `verification` (`passed`/`failed`/`none`) on Claude Code `usage`
+  events. `SubagentStop` reads the subagent transcript for a recognised test or
+  lint command and its `is_error` result; the command and output are never stored.
+  It is a local signal, not a quality guarantee: a subagent that runs no check
+  reads as `none`.
+
 ### Changed
 - **Docs:** Slim [README.md](README.md) (hero + quickstart + index). Full install,
   per-harness hooks, dsmon, plan compatibility, and troubleshooting moved to

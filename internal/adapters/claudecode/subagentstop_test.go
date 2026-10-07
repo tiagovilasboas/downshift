@@ -185,3 +185,57 @@ func TestSubagentStop_FailsOpenWithoutWriting(t *testing.T) {
 		t.Fatalf("usage events = %d, want 0", n)
 	}
 }
+
+// writeVerifyTranscript builds a transcript of Bash tool calls. Each step is a
+// command plus whether its tool_result was an error.
+func writeVerifyTranscript(t *testing.T, steps ...[2]any) string {
+	t.Helper()
+	var rows []string
+	for i, s := range steps {
+		id := "toolu_" + string(rune('a'+i))
+		use, _ := json.Marshal(map[string]any{"type": "assistant", "message": map[string]any{
+			"id": "m" + id, "model": "m",
+			"usage": map[string]any{"input_tokens": 10, "output_tokens": 5},
+			"content": []any{map[string]any{"type": "tool_use", "id": id, "name": "Bash",
+				"input": map[string]any{"command": s[0]}}},
+		}})
+		res, _ := json.Marshal(map[string]any{"type": "user", "message": map[string]any{
+			"content": []any{map[string]any{"type": "tool_result", "tool_use_id": id,
+				"is_error": s[1], "content": "never stored"}},
+		}})
+		rows = append(rows, string(use), string(res))
+	}
+	p := filepath.Join(t.TempDir(), "agent-"+stopAgent+".jsonl")
+	if err := os.WriteFile(p, []byte(strings.Join(rows, "\n")+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return p
+}
+
+func TestSubagentStop_RecordsVerificationOutcome(t *testing.T) {
+	cases := []struct {
+		name  string
+		steps [][2]any
+		want  string
+	}{
+		{"no check", [][2]any{{"ls -la", false}}, "none"},
+		{"passing check", [][2]any{{"go test ./...", false}}, "passed"},
+		{"failing check", [][2]any{{"cd x && pytest -q", true}}, "failed"},
+		{"fixed then rerun", [][2]any{{"go vet ./...", true}, {"go vet ./...", false}}, "passed"},
+		{"unrecognised command is not a check", [][2]any{{"echo go testing", true}}, "none"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			log, small, frontier, res := stopSetup(t)
+			seedLaunch(t, log, small, frontier, res)
+			claudecode.HandleSubagentStop(stopPayload(writeVerifyTranscript(t, tc.steps...)), "test", res)
+			got := usageEvents(t)
+			if len(got) != 1 {
+				t.Fatalf("want 1 usage event, got %d", len(got))
+			}
+			if got[0].Verification != tc.want {
+				t.Fatalf("verification = %q, want %q", got[0].Verification, tc.want)
+			}
+		})
+	}
+}

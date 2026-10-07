@@ -81,6 +81,12 @@ type Event struct {
 	// most once; later usage records skip it.
 	LinkedDecision string `json:"linked_decision,omitempty"`
 
+	// Verification is the subagent's own check result on "usage" records:
+	// "passed" or "failed" when its transcript ran a recognised test or lint
+	// command, "none" when it ran none. Absent on events written before this
+	// field. Enum only: the command and its output are never stored.
+	Verification string `json:"verification,omitempty"`
+
 	// AgentHash is the hashed harness agent id on "resolved" and "usage"
 	// records. It joins the spawn-time observation (PostToolUse) to the
 	// completion-time one (SubagentStop) without storing the raw id.
