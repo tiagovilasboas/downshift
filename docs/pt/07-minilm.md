@@ -20,10 +20,12 @@ O módulo semântico opera sob um pipeline híbrido e escalonado em `internal/se
    * O texto do prompt é transformado em vetor de características determinísticas e comparado contra os quatro centróides de classe (`TRIVIAL`, `SIMPLE`, `MEDIUM`, `COMPLEX`).
    * Operação **estritamente monotônica**: a similaridade vetorial só é utilizada para **elevar** a classe quando o classificador de regex está indeciso; ela **nunca** rebaixa uma classificação.
 2. **Modo Neural Opcional (MiniLM Real):**
-   * Caso o desenvolvedor aponte a variável `DOWNSHIFT_MINILM_EMBED` para um script (ex: `python3 tools/minilm/embed_stdin.py`), o Downshift utiliza embeddings gerados pelo modelo `sentence-transformers/all-MiniLM-L6-v2`.
+   * Por padrão (`DOWNSHIFT_MINILM_EMBED` vazia ou igual a `hash`), o Downshift usa apenas o embedding por hash embutido no binário, sem Python.
+   * Para ativar o modo neural, aponte `DOWNSHIFT_MINILM_EMBED` para um comando seu que gere embeddings com o modelo `sentence-transformers/all-MiniLM-L6-v2` (ex: `python3 /caminho/para/embed.py`). Este repositório não traz esse comando: os scripts de treino e avaliação ficam no repositório privado `downshift-labs`.
+   * Contrato do comando: a linha é dividida por espaços e executada sem shell (sem pipes, aspas ou expansão de variáveis); o prompt chega pelo stdin; o stdout deve ser um array JSON de floats com 384 dimensões, a mesma dimensão de `minilm.json` (vetores de outro tamanho não geram boost). O stderr é ignorado.
    * Centróides neurais em `internal/semantic/data/minilm.json`.
    * **Resultados no holdout (`benchmark/minilm-holdout.json`, 300 tarefas):** o modelo `sentence-transformers/all-MiniLM-L6-v2`, treinado apenas em `benchmark/tasks.json`, atingiu **96.3% de acurácia de tier** (`tier_accuracy` 0.963333) e **0% de `FRONTIER → MID`**. A linha neural não supera a rede de regressão por regex nesse mesmo arquivo. A acurácia de 100% da regex foi medida depois que os sinais foram ajustados contra o holdout. Esse conjunto está queimado: é rede de regressão, não prova de generalização.
-   * Caso o comando externo falhe ou demore, o sistema faz fallback imediato para os centróides de hash locais sem travar a thread.
+   * Caso o comando falhe, passe de 1 s, não devolva um array JSON válido ou devolva um vetor vazio, o sistema volta automaticamente para o embedding por hash, sem travar o hook.
 
 ---
 
