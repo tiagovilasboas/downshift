@@ -35,6 +35,32 @@ func TestEmbedderFromEnv_FallsBackWhenCommandFails(t *testing.T) {
 	}
 }
 
+// When the external embed command fails, the hash fallback vector must be
+// scored against the hash centroids, never the MiniLM ones: results must
+// match DOWNSHIFT_MINILM_EMBED=hash exactly.
+func TestMaybeAugment_FailedEmbedCommandUsesHashCentroids(t *testing.T) {
+	t.Setenv("DOWNSHIFT_MINILM", "1")
+	prompts := []string{
+		"design and implement gRPC service mesh with service discovery",
+		"rename the variable userId to accountId",
+		"refactor the payment module and add integration tests",
+	}
+	for _, cmd := range []string{"downshift-missing-embed-binary", "false"} {
+		for _, prompt := range prompts {
+			for _, label := range []string{semantic.LabelTrivial, semantic.LabelSimple, semantic.LabelMedium} {
+				t.Setenv("DOWNSHIFT_MINILM_EMBED", "hash")
+				wantOut, wantOK := semantic.MaybeAugment(prompt, label, false)
+				t.Setenv("DOWNSHIFT_MINILM_EMBED", cmd)
+				gotOut, gotOK := semantic.MaybeAugment(prompt, label, false)
+				if gotOut != wantOut || gotOK != wantOK {
+					t.Errorf("embed=%q prompt=%q label=%s: got (%s,%v), want hash result (%s,%v)",
+						cmd, prompt, label, gotOut, gotOK, wantOut, wantOK)
+				}
+			}
+		}
+	}
+}
+
 func TestAugmentWith_EscalatesWhenUnconfident(t *testing.T) {
 	store := semantic.PrototypeStore{
 		Dim: 3,
