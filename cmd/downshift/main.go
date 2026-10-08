@@ -1296,6 +1296,8 @@ Usage:
   downshift context enable <p>   Enable context optimization provider (e.g. rtk)
   downshift context disable      Disable context optimization and revert configs
   downshift context metrics      Show token reduction metrics from active provider
+  downshift context compress     Compress tool output from stdin (observe/safe)
+  downshift context benchmark    Compare 4 optimization scenarios (routing vs rtk)
   downshift models pull          Write user catalog.json under the state dir
   downshift models discover      Ask each harness which models the account can use; hooks read the result
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)

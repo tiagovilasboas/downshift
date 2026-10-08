@@ -25,7 +25,7 @@ func classifyWithSemantic(prompt string, base Classification) Classification {
 	out := base
 	out.Complexity = c
 	out.Confident = false
-	// The semantic boost may lower the class; the risk floor still holds.
+	// The semantic boost is monotonic and only raises complexity; the risk floor still holds.
 	return applyRiskFloor(prompt, out)
 }
 

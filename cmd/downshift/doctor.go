@@ -50,6 +50,13 @@ func runDoctor(w io.Writer, cat *catalog.Catalog) int {
 		fmt.Fprintf(w, "context_optimization: disabled/unconfigured (run `downshift context status`)\n")
 	}
 
+	cmd := os.Getenv("DOWNSHIFT_MINILM_EMBED")
+	if cmd != "" && cmd != "hash" {
+		fmt.Fprintf(w, "semantic_boost: external command configured (%s, hash fallback on failure)\n", cmd)
+	} else {
+		fmt.Fprintf(w, "semantic_boost: in-process hash embedder (default, zero-dependency)\n")
+	}
+
 	_ = cat // reserved for future: effective harness count, shadow flag, etc.
 	return 0
 }

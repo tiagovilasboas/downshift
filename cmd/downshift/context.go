@@ -13,12 +13,15 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/benchmark"
+	"github.com/tiagovilasboas/downshift/internal/compressor"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
 	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/rtk"
 )
 
 func defaultContextRegistry() *contextopt.Registry {
 	reg := contextopt.NewRegistry()
+	reg.Register(native.NewProvider(compressor.ModeObserve))
 	reg.Register(rtk.NewProvider())
 	return reg
 }
@@ -46,6 +49,8 @@ func runContext(args []string, w, errW io.Writer) int {
 		return runContextDisable(ctx, reg, args[1:], w, errW)
 	case "metrics":
 		return runContextMetrics(ctx, reg, w, errW)
+	case "compress":
+		return runContextCompress(args[1:], w, errW)
 	case "benchmark":
 		if err := benchmark.CompareContextScenarios(w); err != nil {
 			fmt.Fprintf(errW, "benchmark error: %v\n", err)
@@ -72,6 +77,7 @@ Subcommands:
   enable <provider>    Enable context optimization provider (e.g. rtk)
   disable              Disable context optimization and revert harness configurations
   metrics              Show estimated token reduction and command metrics from active provider
+  compress [mode]      Compress stdin tool output (mode: observe, safe, off)
   benchmark            Compare 4 optimization scenarios (baseline, routing, rtk, both)`)
 }
 
@@ -260,5 +266,43 @@ func runContextMetrics(ctx context.Context, reg *contextopt.Registry, w, errW io
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(metrics)
+	return 0
+}
+
+func runContextCompress(args []string, w, errW io.Writer) int {
+	mode := compressor.ModeSafe
+	if len(args) > 0 {
+		switch args[0] {
+		case "observe", "--observe":
+			mode = compressor.ModeObserve
+		case "safe", "--safe":
+			mode = compressor.ModeSafe
+		case "off", "--off":
+			mode = compressor.ModeOff
+		default:
+			fmt.Fprintf(errW, "unknown compress mode %q (use observe, safe, or off)\n", args[0])
+			return 2
+		}
+	}
+
+	data, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		fmt.Fprintf(errW, "error reading stdin: %v\n", err)
+		return 1
+	}
+
+	res := compressor.Compress(data, mode)
+	if mode == compressor.ModeObserve {
+		fmt.Fprintf(errW, "context observe: format=%s original=%d bytes potential_reduced=%d bytes savings=%.1f%% (%s)\n",
+			res.Format, res.OriginalBytes, res.ReducedBytes, res.SavingsRatio(), res.Reason)
+		_, _ = w.Write(res.Output)
+		return 0
+	}
+
+	if res.Applied {
+		fmt.Fprintf(errW, "context compress: %s (reduced from %d to %d bytes, %.1f%% saved)\n",
+			res.Reason, res.OriginalBytes, res.ReducedBytes, res.SavingsRatio())
+	}
+	_, _ = w.Write(res.Output)
 	return 0
 }
