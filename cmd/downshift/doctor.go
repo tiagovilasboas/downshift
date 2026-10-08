@@ -43,6 +43,13 @@ func runDoctor(w io.Writer, cat *catalog.Catalog) int {
 		fmt.Fprintf(w, "events: %s (not created yet)\n", eventsPath)
 	}
 
+	optCfgPath, _ := paths.Join("context-optimization.json")
+	if _, err := os.Stat(optCfgPath); err == nil {
+		fmt.Fprintf(w, "context_optimization: configured (%s)\n", optCfgPath)
+	} else {
+		fmt.Fprintf(w, "context_optimization: disabled/unconfigured (run `downshift context status`)\n")
+	}
+
 	_ = cat // reserved for future: effective harness count, shadow flag, etc.
 	return 0
 }
