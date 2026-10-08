@@ -69,7 +69,7 @@
   <line x1="52" y1="458" x2="560" y2="458" stroke="#21262d" stroke-width="1"/>
 
   <!-- Bottom stat -->
-  <text x="52" y="490" fill="#3fb950" font-size="28" font-weight="700">~80% cheaper</text>
+  <text x="52" y="490" fill="#3fb950" font-size="28" font-weight="700">~97% cheaper</text>
   <text x="52" y="516" fill="#6e7681" font-size="15">on trivial subagents running frontier models</text>
 
   <!-- GitHub URL -->

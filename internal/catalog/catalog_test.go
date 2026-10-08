@@ -317,7 +317,7 @@ func TestSavingsRatio_CheaperTarget(t *testing.T) {
 	}
 }
 
-// The README cost claims (Quickstart "~80% cheaper" and the Cost evidence
+// The README cost claims (the "~97% cheaper" lines in the docs and the Cost evidence
 // table) are computed from these embedded entries. If a price changes, this
 // test fails so the README numbers are recomputed in the same change.
 func TestEmbeddedClaudeCodeSavingsMatchesREADME(t *testing.T) {

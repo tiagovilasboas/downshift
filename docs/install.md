@@ -50,7 +50,7 @@ downshift try "rearchitect the auth module to support multi-tenant" claude-code
 
 **Step 4 — Confirm it's working.** Open Claude Code, ask it to spawn a subagent for a trivial task. You'll see this in the terminal:
 ```
-downshift: TRIVIAL task → downshift to claude-haiku-5-5 (~97% cheaper)
+downshift: TRIVIAL task → downshift to claude-haiku-5-5 (~97% cheaper, prompts up to 100k tokens)
 ```
 
 That line in stderr means the hook fired and rewrote the model before the subagent started.

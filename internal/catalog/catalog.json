@@ -4,7 +4,7 @@
   "_doc3": "'family' is the stable prefix for version-agnostic matching. A model whose ID starts with the family string matches this entry's tier even if the exact version is unknown.",
   "_doc4": "OpenRouter model IDs arrive as 'provider/model-id' (e.g. 'anthropic/claude-opus-5-5'). The router normalises these before lookup, so family matching works transparently.",
   "_doc5": "Anthropic IDs and base input/output prices per 1M tokens: https://docs.anthropic.com/en/docs/about-claude/models/overview and https://docs.anthropic.com/en/docs/about-claude/pricing (accessed 2026-10-08).",
-  "_doc6": "Claude Haiku 5.5 is priced by prompt length: $0.10/$0.50 up to 100k prompt tokens, $0.50/$2.50 above. The catalog stores the up-to-100k price; claude-haiku-4-5 stays as an alias.",
+  "_doc6": "Claude Haiku 5.5 is priced by prompt length: $0.10/$0.50 up to 100k prompt tokens, $0.50/$2.50 above. The catalog stores the up-to-100k price (above 100k the gap to the frontier model is ~87%, not ~97%). Older claude-haiku-4-5 ids match through the claude-haiku family; they are not an alias because KiroCrew owns that canonical id.",
   "version": "2",
   "updated": "2026-10-08",
   "entries": [
