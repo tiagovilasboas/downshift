@@ -186,7 +186,11 @@ func (a AnthropicAPI) Discover(ctx context.Context) ([]Model, error) {
 	}
 	client := a.Client
 	if client == nil {
-		client = &http.Client{Timeout: 10 * time.Second}
+		// Never follow a redirect: Go would forward x-api-key to the new host.
+		client = &http.Client{
+			Timeout:       10 * time.Second,
+			CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+		}
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -251,6 +255,7 @@ func runCLI(ctx context.Context, bin string, args ...string) ([]byte, error) {
 		return nil, fmt.Errorf("%s not installed", bin)
 	}
 	cmd := exec.CommandContext(ctx, bin, args...)
+	cmd.WaitDelay = 2 * time.Second // a child that keeps stdout open must not outlive the timeout
 	var stdout bytes.Buffer
 	cmd.Stdout = &limitedWriter{w: &stdout, n: maxOutput}
 	if err := cmd.Run(); err != nil {

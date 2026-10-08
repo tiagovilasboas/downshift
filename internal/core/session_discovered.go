@@ -66,7 +66,10 @@ func LoadDiscoveredSession(harness string, now time.Time) SessionList {
 		}
 		ttl = d
 	}
-	if ttl > 0 && now.Sub(e.FetchedAt) > ttl {
+	// An entry dated in the future (clock skew or a tampered file) would never
+	// age out, so anything beyond a small skew allowance is treated as expired.
+	age := now.Sub(e.FetchedAt)
+	if age < -5*time.Minute || (ttl > 0 && age > ttl) {
 		return UnknownSession()
 	}
 	return KnownSession(e.Ordered)

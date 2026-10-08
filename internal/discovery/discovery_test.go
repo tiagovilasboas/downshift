@@ -203,3 +203,22 @@ func TestReadInvalidIsEmpty(t *testing.T) {
 		t.Fatalf("got %+v", f)
 	}
 }
+
+func TestAnthropicAPIDoesNotFollowRedirectsWithTheKey(t *testing.T) {
+	var leaked bool
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		leaked = r.Header.Get("x-api-key") != ""
+		_, _ = w.Write([]byte(`{"data":[{"id":"x"}]}`))
+	}))
+	defer other.Close()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, other.URL, http.StatusFound)
+	}))
+	defer srv.Close()
+	if _, err := (AnthropicAPI{URL: srv.URL, Key: "secret"}).Discover(context.Background()); err == nil {
+		t.Fatal("a redirect must be an error, not a followed request")
+	}
+	if leaked {
+		t.Fatal("api key was forwarded to the redirect target")
+	}
+}

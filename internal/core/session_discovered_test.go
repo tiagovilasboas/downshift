@@ -85,3 +85,15 @@ func TestDiscoveredMissingHarnessOrFileIsUnknown(t *testing.T) {
 		t.Error("missing file is unknown")
 	}
 }
+
+func TestFutureDatedDiscoveryEntryExpires(t *testing.T) {
+	t.Setenv(core.EnvDiscovery, "")
+	t.Setenv(core.EnvDiscovered, writeDiscovered(t, time.Now().Add(48*time.Hour), "a"))
+	if core.LoadDiscoveredSession("codex", time.Now()).Known {
+		t.Error("an entry dated in the future must not live forever")
+	}
+	t.Setenv(core.EnvDiscovered, writeDiscovered(t, time.Now().Add(time.Minute), "a"))
+	if !core.LoadDiscoveredSession("codex", time.Now()).Known {
+		t.Error("a small clock skew must be tolerated")
+	}
+}
