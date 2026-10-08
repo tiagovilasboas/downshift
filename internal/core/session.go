@@ -6,6 +6,7 @@ package core
 import (
 	"encoding/json"
 	"os"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
@@ -191,10 +192,14 @@ func ResolveSession(harness string, hookLists ...*[]string) SessionList {
 }
 
 // ResolveSessionForID prefers a hook-provided allowlist, then a per-session
-// user allowlist, then the harness-wide user allowlist.
+// user allowlist, then the harness-wide user allowlist, then the models the
+// harness reported to `downshift models discover` (see LoadDiscoveredSession).
 func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) SessionList {
 	if session, ok := SessionFromHook(hookLists...); ok {
 		return session
 	}
-	return LoadUserSessionForID(harness, sessionID)
+	if session := LoadUserSessionForID(harness, sessionID); session.Known {
+		return session
+	}
+	return LoadDiscoveredSession(harness, time.Now())
 }

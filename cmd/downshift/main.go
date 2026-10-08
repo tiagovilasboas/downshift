@@ -664,7 +664,7 @@ func tryHook(harness, prompt, current string, catalog core.Resolver) (tryResult,
 // runModels dispatches the 'models' subcommands: list, check, pull.
 func runModels(catalog models.CatalogReader, args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: downshift models <list|check|pull>")
+		fmt.Fprintln(os.Stderr, "usage: downshift models <list|check|pull|discover>")
 		return 2
 	}
 	switch args[0] {
@@ -675,6 +675,8 @@ func runModels(catalog models.CatalogReader, args []string) int {
 		return models.Check(catalog, os.Stdout, os.Stderr)
 	case "pull":
 		return models.Pull(catalog, os.Stdout, os.Stderr)
+	case "discover":
+		return runModelsDiscover(catalog, args[1:], os.Stdout, os.Stderr)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown models subcommand %q\n", args[0])
 		return 2
@@ -1287,6 +1289,7 @@ Usage:
   downshift models check         Query provider APIs and report new/untiered models
   downshift doctor               Print version, state dir, and catalog source
   downshift models pull          Write user catalog.json under the state dir
+  downshift models discover      Ask each harness which models the account can use; hooks read the result
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
   downshift stats --cost-per-unit=<USD>   Convert normalised units to dollars
   downshift stats --export       Print a pasteable JSON summary without prompts

@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Session discovery:** `downshift models discover` asks each harness which models the
+  account can use (Codex `models_cache.json`, `kiro-cli chat --list-models`, `grok models`,
+  the Anthropic Models API with a key) and writes a ranked cache that hooks read after the
+  hook payload and `session-models.json`. Newest model per family, ranked by catalog tier
+  and price, never by name. Hooks stay offline. See `docs/session-discovery.md`.
 - **CLI:** `downshift verification-report [--events=<file>]` prints, per tier, how many
   usage events were verified (`passed`/`failed`/`none`), how many predate the field,
   and the priced cost. Read-only. Coverage counts a missing field as unrecorded, never none.

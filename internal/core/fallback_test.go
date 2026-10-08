@@ -13,6 +13,7 @@ import (
 
 func TestMain(m *testing.M) {
 	os.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(os.TempDir(), "downshift-session-models-absent.json"))
+	os.Setenv("DOWNSHIFT_DISCOVERY", "off")
 	os.Exit(m.Run())
 }
 

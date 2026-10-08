@@ -53,7 +53,8 @@ Native config is not a session allowlist either:
 Same order for every harness:
 
 1. Hook payload, if it includes `session_models` or `available_models` (a JSON array of strings). A present field wins, including an empty array. The file is not read.
-2. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key (`cursor`, `claude-code`, or `codex`) is used as a compatibility fallback. A missing file or missing key means the session is unknown.
+2. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key (`cursor`, `claude-code`, or `codex`) is used as a compatibility fallback. A missing file or missing key falls through to the next layer.
+3. Otherwise the models the harness reported to `downshift models discover`, read from the local cache (`discovered.json`). See [session-discovery.md](session-discovery.md).
 
 The file is operator-curated. For Codex, `model` identifies the active model in that event and `session_id` identifies its session. Downshift does not call a picker API, discover account entitlements, or assume every catalog entry is selectable. Verify the session's actual choices before adding them to the allowlist.
 
