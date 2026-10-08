@@ -109,3 +109,4 @@ downshift context benchmark
 | **Cursor** | Telemetria de logs | Instruções do agente | Compactação determinística guiada |
 | **Codex** | Payloads de hook | Execução direta | Filtro Go nativo em processo |
 | **Antigravity** | Ciclo de sessão | Filtro direto | Motor nativo zero-dependência |
+| **KiroCrew** | Policy mode & telemetria | Instruções / pipes de subagentes | Poda de contexto no respawn (`include_memory=false`) e compactação determinística |
