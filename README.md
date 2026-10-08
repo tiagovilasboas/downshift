@@ -117,6 +117,10 @@ Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshif
 
 Adapters ship for all of the above; the table reports evidence, not just code. Plans, caveats and revalidation rules: [harness-matrix.md](docs/harness-matrix.md).
 
+## RTK integration (optional)
+
+RTK can compact supported shell-command output before it reaches the coding agent. It complements Downshift's subagent model routing and remains an optional, separate harness integration. See [the RTK integration guide](docs/rtk-integration.md).
+
 ## Cost and metrics
 
 - **Estimated, not billed.** `downshift stats --days=7` reports savings estimated from routing decisions. They are not a provider invoice, and no billing-period comparison has been published yet.
