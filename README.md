@@ -79,6 +79,8 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/insta
 
 Use the ids your account really offers; the file is yours to maintain. Details and per-session lists: [session-models.md](docs/session-models.md).
 
+Or let Downshift ask the harness: `downshift models discover` reads the models your account can use (Codex, Kiro, Grok, and the Anthropic API with a key) and writes a ranked cache that hooks use after your file. See [session-discovery.md](docs/session-discovery.md).
+
 **3. Add the hook** to `~/.claude/settings.json`:
 
 ```json
@@ -124,7 +126,7 @@ Adapters ship for all of the above; the table reports evidence, not just code. P
 
 ## Documentation
 
-[INSTALL](docs/install.md) · [CONFIG](docs/config.md) · [session models](docs/session-models.md) · [ARCHITECTURE](docs/architecture.md) · [HARNESS-MATRIX](docs/harness-matrix.md) · [WHEN-TO-USE](docs/when-to-use.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
+[INSTALL](docs/install.md) · [CONFIG](docs/config.md) · [session models](docs/session-models.md) · [session discovery](docs/session-discovery.md) · [ARCHITECTURE](docs/architecture.md) · [HARNESS-MATRIX](docs/harness-matrix.md) · [WHEN-TO-USE](docs/when-to-use.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
 
 Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit criteria](docs/beta-exit.md)
 
