@@ -17,7 +17,7 @@ type Capability string
 
 const (
 	CapCommandOutputOptimization Capability = "command_output_optimization"
-	CapToolResponseOptimization   Capability = "tool_response_optimization"
+	CapToolResponseOptimization  Capability = "tool_response_optimization"
 	CapContextRetrieval          Capability = "context_retrieval"
 	CapSessionIntegration        Capability = "session_integration"
 	CapHookSupport               Capability = "hook_support"
@@ -30,10 +30,10 @@ const (
 type IntegrationMethod string
 
 const (
-	MethodHook            IntegrationMethod = "hook"
+	MethodHook             IntegrationMethod = "hook"
 	MethodAgentInstruction IntegrationMethod = "agent_instruction"
-	MethodEnvWrapper      IntegrationMethod = "env_wrapper"
-	MethodConfig          IntegrationMethod = "config"
+	MethodEnvWrapper       IntegrationMethod = "env_wrapper"
+	MethodConfig           IntegrationMethod = "config"
 )
 
 // HarnessSupport details how a harness is supported by a provider.
@@ -46,14 +46,14 @@ type HarnessSupport struct {
 
 // Diagnostics contains operational diagnostics about a provider installation.
 type Diagnostics struct {
-	ProviderID      string           `json:"provider_id"`
-	Installed       bool             `json:"installed"`
-	BinaryPath      string           `json:"binary_path,omitempty"`
-	Version         string           `json:"version,omitempty"`
+	ProviderID         string           `json:"provider_id"`
+	Installed          bool             `json:"installed"`
+	BinaryPath         string           `json:"binary_path,omitempty"`
+	Version            string           `json:"version,omitempty"`
 	SupportedHarnesses []HarnessSupport `json:"supported_harnesses"`
-	ActiveHarnesses []string         `json:"active_harnesses,omitempty"`
-	Issues          []string         `json:"issues,omitempty"`
-	Recommendations []string         `json:"recommendations,omitempty"`
+	ActiveHarnesses    []string         `json:"active_harnesses,omitempty"`
+	Issues             []string         `json:"issues,omitempty"`
+	Recommendations    []string         `json:"recommendations,omitempty"`
 }
 
 // Metrics represents measured and estimated token reduction metrics.
@@ -78,7 +78,7 @@ type Config struct {
 		SpawnedAgents bool `json:"spawned_agents"`
 	} `json:"scope"`
 	Safety struct {
-		PreserveOriginalOutput  bool `json:"preserve_original_output"`
+		PreserveOriginalOutput   bool `json:"preserve_original_output"`
 		AllowFullContextRecovery bool `json:"allow_full_context_recovery"`
 	} `json:"safety"`
 	Observability struct {
