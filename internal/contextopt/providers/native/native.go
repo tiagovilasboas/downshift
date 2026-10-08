@@ -75,6 +75,12 @@ func (p *Provider) SupportedHarnesses() []contextopt.HarnessSupport {
 			Method:    contextopt.MethodAgentInstruction,
 			Notes:     "In-process zero-dependency compression",
 		},
+		{
+			HarnessID: "kirocrew",
+			Supported: true,
+			Method:    contextopt.MethodAgentInstruction,
+			Notes:     "Policy-mode context trim hints on spawn; deterministic tool output compression via pipe or agent instructions",
+		},
 	}
 }
 

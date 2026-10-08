@@ -65,7 +65,7 @@ func DefaultConfig() Config {
 	var cfg Config
 	cfg.Enabled = true
 	cfg.Provider = "native"
-	cfg.ActiveHarness = []string{"claude-code", "cursor", "codex", "antigravity"}
+	cfg.ActiveHarness = []string{"claude-code", "cursor", "codex", "antigravity", "kirocrew"}
 	cfg.Scope.MainAgent = true
 	cfg.Scope.SpawnedAgents = true
 	cfg.Safety.PreserveOriginalOutput = true
