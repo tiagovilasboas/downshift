@@ -387,16 +387,16 @@
     { "_section": "kirocrew — spawn_run models (Anthropic families; Crew accepts canonical key or provider id)" },
 
     {
-      "id": "claude-haiku-5-5",
-      "aliases": ["haiku", "claude-haiku-5.5", "claude-haiku-4-5", "claude-haiku-4.5", "claude-haiku"],
+      "id": "claude-haiku-4-5",
+      "aliases": ["haiku", "claude-haiku-4.5", "claude-haiku"],
       "family": "claude-haiku",
       "provider": "anthropic",
       "harness": "kirocrew",
       "tier": "small",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "5000", "high": "10000" },
-      "input_cost_per_1m": 0.10,
-      "output_cost_per_1m": 0.50
+      "input_cost_per_1m": 1.00,
+      "output_cost_per_1m": 5.00
     },
     {
       "id": "claude-sonnet-5-5",

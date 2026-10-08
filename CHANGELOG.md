@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Catalog:** Claude Haiku 5.5 (`claude-haiku-5-5`, $0.10/$0.50 per 1M tokens for
-  prompts up to 100k; $0.50/$2.50 above) is the Claude Code and KiroCrew small tier.
+  prompts up to 100k; $0.50/$2.50 above) is the Claude Code small tier (KiroCrew keeps `claude-haiku-4-5`: the Kiro account list offers no 5.x model).
   `claude-haiku-4-5` stays as an alias, so existing `session-models.json` files keep
   matching. The small-vs-frontier price gap is now ~97% (was ~75%) at list price.
 
