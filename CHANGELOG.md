@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `claude-haiku` family (not an alias: KiroCrew owns that canonical id). The small-vs-frontier price gap is now ~97% (was ~75%) at list price for prompts up to 100k tokens; above that Haiku 5.5 costs $0.50/$2.50 and the gap is ~87%.
 
 ### Added
+- **Session discovery:** `downshift models discover` asks each harness which models the
+  account can use (Codex `models_cache.json`, `kiro-cli chat --list-models`, `grok models`,
+  the Anthropic Models API with a key) and writes a ranked cache that hooks read after the
+  hook payload and `session-models.json`. Newest model per family, ranked by catalog tier
+  and price, never by name. Hooks stay offline. See `docs/session-discovery.md`.
 - **CLI:** `downshift verification-report [--events=<file>]` prints, per tier, how many
   usage events were verified (`passed`/`failed`/`none`), how many predate the field,
   and the priced cost. Read-only. Coverage counts a missing field as unrecorded, never none.
