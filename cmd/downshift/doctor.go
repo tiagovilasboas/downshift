@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -43,11 +44,11 @@ func runDoctor(w io.Writer, cat *catalog.Catalog) int {
 		fmt.Fprintf(w, "events: %s (not created yet)\n", eventsPath)
 	}
 
-	optCfgPath, _ := paths.Join("context-optimization.json")
-	if _, err := os.Stat(optCfgPath); err == nil {
-		fmt.Fprintf(w, "context_optimization: configured (%s)\n", optCfgPath)
+	optCfg, _ := contextopt.LoadConfig()
+	if optCfg.Enabled {
+		fmt.Fprintf(w, "context_optimization: enabled (provider: %s)\n", optCfg.Provider)
 	} else {
-		fmt.Fprintf(w, "context_optimization: disabled/unconfigured (run `downshift context status`)\n")
+		fmt.Fprintf(w, "context_optimization: disabled (run `downshift context enable`)\n")
 	}
 
 	cmd := os.Getenv("DOWNSHIFT_MINILM_EMBED")

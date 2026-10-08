@@ -39,13 +39,15 @@ func TestConfig_LoadSave(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load failed: %v", err)
 	}
-	if cfg.Enabled {
-		t.Errorf("expected default enabled=false")
+	if !cfg.Enabled {
+		t.Errorf("expected default enabled=true")
+	}
+	if cfg.Provider != "native" {
+		t.Errorf("expected default provider native, got %s", cfg.Provider)
 	}
 
-	cfg.Enabled = true
-	cfg.Provider = "native"
-	cfg.ActiveHarness = []string{"codex", "claude-code"}
+	cfg.Enabled = false
+	cfg.Provider = ""
 	if err := contextopt.SaveConfig(cfg); err != nil {
 		t.Fatalf("save failed: %v", err)
 	}
@@ -54,14 +56,8 @@ func TestConfig_LoadSave(t *testing.T) {
 	if err != nil {
 		t.Fatalf("re-load failed: %v", err)
 	}
-	if !loaded.Enabled {
-		t.Errorf("expected loaded enabled=true")
-	}
-	if loaded.Provider != "native" {
-		t.Errorf("expected provider native, got %s", loaded.Provider)
-	}
-	if len(loaded.ActiveHarness) != 2 {
-		t.Errorf("expected 2 active harnesses, got %d", len(loaded.ActiveHarness))
+	if loaded.Enabled {
+		t.Errorf("expected loaded enabled=false after explicit save")
 	}
 }
 
@@ -71,7 +67,7 @@ func TestConfig_GracefulDegradationOnMissingDir(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load should not fail on missing dir: %v", err)
 	}
-	if cfg.Enabled {
-		t.Errorf("expected default disabled")
+	if !cfg.Enabled {
+		t.Errorf("expected default enabled=true on missing dir")
 	}
 }

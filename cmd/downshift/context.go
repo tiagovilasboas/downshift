@@ -89,8 +89,8 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 
 	fmt.Fprintln(w, "Context Optimization:")
 	if !cfg.Enabled {
-		fmt.Fprintln(w, "  Status: Disabled (opt-in by default)")
-		fmt.Fprintln(w, "  Hint: Run `downshift context enable native` to configure Native Context Compressor")
+		fmt.Fprintln(w, "  Status: Disabled")
+		fmt.Fprintln(w, "  Hint: Run `downshift context enable` to enable Native Context Compressor")
 		return 0
 	}
 
