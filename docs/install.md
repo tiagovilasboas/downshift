@@ -31,7 +31,7 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/insta
 **Step 2 — Verify the classifier** on your own prompts before wiring the hook:
 ```bash
 downshift try "rename the userId variable" claude-code
-# → TRIVIAL task → use claude-haiku-4-5 (small tier)
+# → TRIVIAL task → use claude-haiku-5-5 (small tier)
 
 downshift try "rearchitect the auth module to support multi-tenant" claude-code
 # → COMPLEX task → use claude-opus-5-5 (frontier tier)
@@ -50,7 +50,7 @@ downshift try "rearchitect the auth module to support multi-tenant" claude-code
 
 **Step 4 — Confirm it's working.** Open Claude Code, ask it to spawn a subagent for a trivial task. You'll see this in the terminal:
 ```
-downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper)
+downshift: TRIVIAL task → downshift to claude-haiku-5-5 (~97% cheaper, prompts up to 100k tokens)
 ```
 
 That line in stderr means the hook fired and rewrote the model before the subagent started.
@@ -311,7 +311,7 @@ automatic.
    ```bash
    echo '{"tool_name":"spawn_run","tool_input":{"task":"rename a variable","model":"opus"}}' \
      | ./downshift kirocrew ; echo "exit=$?"
-   # exit=2, stderr: "TRIVIAL task → downshift to claude-haiku-4-5 … Respawn with model=…"
+   # exit=2, stderr: "TRIVIAL task → downshift to claude-haiku-5-5 … Respawn with model=…"
    ```
 
 When the hook blocks, KiroCrew relays the stderr to the agent, which respawns
@@ -336,7 +336,7 @@ in real time. It reads `~/.harness-downshift/events.jsonl` and refreshes every
 │  dsmon  downshift monitor                            │
 │  harness  kirocrew        ◉ live                     │
 │ switches today ────────────────────────────────────  │
-│  04:03  opus   → haiku   trivial  -75%               │
+│  04:03  opus   → haiku   trivial  -97%               │
 │  04:02  haiku  → opus    complex  ↑                  │
 │  04:01  opus   → sonnet  medium   -50%               │
 │ stats ──────────────────────────────────────────────  │

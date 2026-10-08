@@ -45,7 +45,7 @@ trap 'rm -rf "$SMOKE_HOME"' EXIT
 mkdir -p "$SMOKE_STATE"
 cat > "$SMOKE_STATE/session-models.json" <<'JSON'
 {
-  "claude-code": ["claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-8"],
+  "claude-code": ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"],
   "codex": ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"],
   "cursor": ["composer-2.5", "claude-4.5-sonnet-thinking", "claude-4.5-opus-high-thinking"],
   "antigravity": ["flash_lite", "flash", "pro"]
@@ -60,11 +60,11 @@ expect() { # expect <label> <output> <fixed string>
 }
 
 # Claude Code: a trivial Task on opus must be rewritten to the small model.
-cc_res=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | hook claude-code)
+cc_res=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-5-5"}}' | hook claude-code)
 expect "claude-code rewrite" "$cc_res" '"updatedInput":{'
 # Claude Code accepts the catalog native_name (haiku|sonnet|opus|fable), not the full id.
 expect "claude-code rewrite" "$cc_res" '"model":"haiku"'
-expect "claude-code rewrite" "$cc_res" 'claude-haiku-4-5'
+expect "claude-code rewrite" "$cc_res" 'claude-haiku-5-5'
 echo "OK: claude-code rewrites updatedInput.model"
 
 # Claude Code without a session allowlist: allow, no rewrite.
