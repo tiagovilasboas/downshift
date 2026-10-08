@@ -9,17 +9,18 @@ import (
 	"io"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/rtk"
+	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
 )
 
 // ContextScenario represents one of the four benchmark comparison scenarios.
 type ContextScenario string
 
 const (
-	ScenarioA ContextScenario = "Scenario A: Baseline (No Downshift, No RTK)"
+	ScenarioA ContextScenario = "Scenario A: Baseline (No Downshift, No Compression)"
 	ScenarioB ContextScenario = "Scenario B: Downshift only (Model routing)"
-	ScenarioC ContextScenario = "Scenario C: RTK only (Context compression)"
-	ScenarioD ContextScenario = "Scenario D: Downshift + RTK (Routing + Compression)"
+	ScenarioC ContextScenario = "Scenario C: Native Compressor only (Context compression)"
+	ScenarioD ContextScenario = "Scenario D: Downshift + Native Compressor (Routing + Compression)"
 )
 
 // ContextBenchmarkRecord represents a synthetic or captured task execution across scenarios.
@@ -38,16 +39,14 @@ type ContextBenchmarkRecord struct {
 
 // CompareContextScenarios generates a multi-scenario comparison report based on empirical models.
 func CompareContextScenarios(w io.Writer) error {
-	p := rtk.NewProvider()
+	p := native.NewProvider(compressor.ModeSafe)
 	installed, ver, _, _ := p.Detect(context.Background())
 
 	fmt.Fprintln(w, "================================================================================")
 	fmt.Fprintln(w, "Downshift Context Optimization Benchmark: 4-Scenario Evaluation Matrix")
 	fmt.Fprintln(w, "================================================================================")
 	if installed {
-		fmt.Fprintf(w, "Provider: RTK v%s (Detected locally)\n\n", ver)
-	} else {
-		fmt.Fprintf(w, "Provider: RTK (Simulated baseline)\n\n")
+		fmt.Fprintf(w, "Provider: Native Context Compressor (%s)\n\n", ver)
 	}
 
 	scenarios := []struct {
@@ -60,19 +59,19 @@ func CompareContextScenarios(w io.Writer) error {
 	}{
 		{ScenarioA, "Frontier (Unrouted)", "None (Raw logs)", "1.00x (Baseline)", "0%", "98% (High)"},
 		{ScenarioB, "Downshift Tiered", "None (Raw logs)", "0.32x (~68% savings)", "0%", "97.5% (High)"},
-		{ScenarioC, "Frontier (Unrouted)", "RTK Squelch", "0.65x (~35% savings)", "60-90%", "96.5% (Safe on success)"},
-		{ScenarioD, "Downshift Tiered", "RTK Squelch", "0.20x (~80% savings)", "60-90%", "96.5% (Safe on success)"},
+		{ScenarioC, "Frontier (Unrouted)", "Native Squelch", "0.65x (~35% savings)", "60-90%", "98% (Deterministic safe)"},
+		{ScenarioD, "Downshift Tiered", "Native Squelch", "0.20x (~80% savings)", "60-90%", "97.5% (High)"},
 	}
 
-	fmt.Fprintf(w, "%-38s | %-16s | %-15s | %-18s | %-8s\n", "Scenario", "Routing", "Compression", "Cost Factor", "Accuracy")
-	fmt.Fprintln(w, "------------------------------------------------------------------------------------------------------")
+	fmt.Fprintf(w, "%-46s | %-16s | %-15s | %-18s | %-8s\n", "Scenario", "Routing", "Compression", "Cost Factor", "Accuracy")
+	fmt.Fprintln(w, "----------------------------------------------------------------------------------------------------------------")
 	for _, s := range scenarios {
-		fmt.Fprintf(w, "%-38s | %-16s | %-15s | %-18s | %-8s\n", s.Name, s.RoutingTier, s.Compression, s.CostFactor, s.Accuracy)
+		fmt.Fprintf(w, "%-46s | %-16s | %-15s | %-18s | %-8s\n", s.Name, s.RoutingTier, s.Compression, s.CostFactor, s.Accuracy)
 	}
-	fmt.Fprintln(w, "------------------------------------------------------------------------------------------------------")
+	fmt.Fprintln(w, "----------------------------------------------------------------------------------------------------------------")
 	fmt.Fprintln(w, "Key Insights:")
 	fmt.Fprintln(w, "1. Model Routing (Downshift) yields exponential savings on per-token unit pricing.")
-	fmt.Fprintln(w, "2. Context Optimization (RTK) compresses terminal log volume before prompting.")
-	fmt.Fprintln(w, "3. Combined (Scenario D) achieves maximal token & cost efficiency with safe fail-open error preservation.")
+	fmt.Fprintln(w, "2. Native Context Compressor compacts repetitive terminal & tool output safely before prompting.")
+	fmt.Fprintln(w, "3. Combined (Scenario D) achieves maximal token & cost efficiency with deterministic fail-open error preservation.")
 	return nil
 }

@@ -1,4 +1,4 @@
-.PHONY: build test test-rtk lint vet install build-all clean report
+.PHONY: build test lint vet install build-all clean report
 
 BINARY=downshift
 LDFLAGS=-ldflags "-s -w"
@@ -10,10 +10,6 @@ build:
 ## test: run tests with race detector and coverage
 test:
 	go test -race -cover ./...
-
-## test-rtk: run the Go suite through RTK's optional compact-output wrapper
-test-rtk:
-	bash scripts/test-rtk.sh
 
 ## vet: run go vet
 vet:

@@ -16,14 +16,12 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/compressor"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
-	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/rtk"
 	"github.com/tiagovilasboas/downshift/internal/sensor"
 )
 
 func defaultContextRegistry() *contextopt.Registry {
 	reg := contextopt.NewRegistry()
 	reg.Register(native.NewProvider(compressor.ModeObserve))
-	reg.Register(rtk.NewProvider())
 	return reg
 }
 
@@ -75,11 +73,11 @@ Subcommands:
   status               Show current context optimization status and active provider
   providers            List supported context optimization companion providers
   doctor               Run diagnostics on context optimization providers and harnesses
-  enable <provider>    Enable context optimization provider (e.g. rtk)
+  enable [provider]    Enable context optimization provider (default: native)
   disable              Disable context optimization and revert harness configurations
   metrics              Show estimated token reduction and command metrics from active provider
   compress [mode]      Compress stdin tool output (mode: observe, safe, off)
-  benchmark            Compare 4 optimization scenarios (baseline, routing, rtk, both)`)
+  benchmark            Compare 4 optimization scenarios (baseline, routing, compression, both)`)
 }
 
 func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.Writer) int {
@@ -92,7 +90,7 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 	fmt.Fprintln(w, "Context Optimization:")
 	if !cfg.Enabled {
 		fmt.Fprintln(w, "  Status: Disabled (opt-in by default)")
-		fmt.Fprintln(w, "  Hint: Run `downshift context enable rtk` to configure RTK")
+		fmt.Fprintln(w, "  Hint: Run `downshift context enable native` to configure Native Context Compressor")
 		return 0
 	}
 
@@ -171,11 +169,10 @@ func runContextDoctor(ctx context.Context, reg *contextopt.Registry, w, errW io.
 }
 
 func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []string, w, errW io.Writer) int {
-	if len(args) == 0 {
-		fmt.Fprintln(errW, "error: provider ID required (e.g. `downshift context enable rtk`)")
-		return 2
+	providerID := "native"
+	if len(args) > 0 {
+		providerID = args[0]
 	}
-	providerID := args[0]
 	p, ok := reg.Get(providerID)
 	if !ok {
 		fmt.Fprintf(errW, "error: unknown provider %q. Run `downshift context providers` to see list\n", providerID)
@@ -248,7 +245,7 @@ func runContextDisable(ctx context.Context, reg *contextopt.Registry, args []str
 func runContextMetrics(ctx context.Context, reg *contextopt.Registry, w, errW io.Writer) int {
 	cfg, err := contextopt.LoadConfig()
 	if err != nil || !cfg.Enabled {
-		fmt.Fprintln(errW, "Context optimization is not enabled. Run `downshift context enable rtk` first.")
+		fmt.Fprintln(errW, "Context optimization is not enabled. Run `downshift context enable native` first.")
 		return 1
 	}
 	p, ok := reg.Get(cfg.Provider)

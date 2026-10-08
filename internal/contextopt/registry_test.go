@@ -8,19 +8,20 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/compressor"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
-	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/rtk"
+	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 func TestRegistry_RegistrationAndRetrieval(t *testing.T) {
 	reg := contextopt.NewRegistry()
-	p := rtk.NewProvider()
+	p := native.NewProvider(compressor.ModeObserve)
 	reg.Register(p)
 
-	got, ok := reg.Get("rtk")
+	got, ok := reg.Get("native")
 	if !ok {
-		t.Fatalf("expected provider rtk to be found")
+		t.Fatalf("expected provider native to be found")
 	}
 	if got.Name() != p.Name() {
 		t.Errorf("expected name %s, got %s", p.Name(), got.Name())
@@ -43,7 +44,7 @@ func TestConfig_LoadSave(t *testing.T) {
 	}
 
 	cfg.Enabled = true
-	cfg.Provider = "rtk"
+	cfg.Provider = "native"
 	cfg.ActiveHarness = []string{"codex", "claude-code"}
 	if err := contextopt.SaveConfig(cfg); err != nil {
 		t.Fatalf("save failed: %v", err)
@@ -56,8 +57,8 @@ func TestConfig_LoadSave(t *testing.T) {
 	if !loaded.Enabled {
 		t.Errorf("expected loaded enabled=true")
 	}
-	if loaded.Provider != "rtk" {
-		t.Errorf("expected provider rtk, got %s", loaded.Provider)
+	if loaded.Provider != "native" {
+		t.Errorf("expected provider native, got %s", loaded.Provider)
 	}
 	if len(loaded.ActiveHarness) != 2 {
 		t.Errorf("expected 2 active harnesses, got %d", len(loaded.ActiveHarness))
