@@ -17,6 +17,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
 	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/rtk"
+	"github.com/tiagovilasboas/downshift/internal/sensor"
 )
 
 func defaultContextRegistry() *contextopt.Registry {
@@ -259,13 +260,26 @@ func runContextMetrics(ctx context.Context, reg *contextopt.Registry, w, errW io
 	cwd, _ := os.Getwd()
 	metrics, err := p.GetMetrics(ctx, cwd)
 	if err != nil {
-		fmt.Fprintf(errW, "Failed to retrieve metrics: %v\n", err)
-		return 1
+		fmt.Fprintf(errW, "Failed to retrieve provider metrics: %v\n", err)
+	}
+
+	st, _ := sensor.DefaultStore()
+	sensorObservations := map[string]sensor.SessionObservation{}
+	if st != nil {
+		sensorObservations, _ = st.GetSummary()
+	}
+
+	output := struct {
+		ProviderMetrics    *contextopt.Metrics                  `json:"provider_metrics,omitempty"`
+		SensorObservations map[string]sensor.SessionObservation `json:"context_sensor_observations,omitempty"`
+	}{
+		ProviderMetrics:    metrics,
+		SensorObservations: sensorObservations,
 	}
 
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
-	_ = enc.Encode(metrics)
+	_ = enc.Encode(output)
 	return 0
 }
 

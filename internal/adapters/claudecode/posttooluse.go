@@ -47,6 +47,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/sensor"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -243,6 +244,10 @@ func HandlePostToolUse(raw []byte, binaryVersion string, r core.Resolver) (Outpu
 	now := time.Now().UTC()
 	prior, _ := telemetry.ReadEvents() // missing/unreadable log: link nothing
 	recordResolved(payload, sessionHash, binaryVersion, prior, r, now)
+
+	// Context Sensor observation: track tool execution volume safely without prompt text
+	recordSensorToolObservation(payload, sessionHash)
+
 	usage := telemetry.TokenUsageFromPayload(payload)
 	if usage == (telemetry.TokenUsage{}) {
 		return neutral, "", false // nothing billable reported
@@ -311,4 +316,30 @@ func recordResolved(payload map[string]any, sessionHash, binaryVersion string, p
 		}
 	}
 	telemetry.Record(ev)
+}
+
+func recordSensorToolObservation(payload map[string]any, sessionHash string) {
+	if sessionHash == "" {
+		return
+	}
+	st, err := sensor.DefaultStore()
+	if err != nil {
+		return
+	}
+	toolName := stringFieldAny(payload, "tool_name", "toolName")
+	if toolName == "" {
+		toolName = "tool"
+	}
+
+	var outputBytes []byte
+	isError := false
+	if resp, ok := payload["tool_response"].(map[string]any); ok {
+		if content, ok := resp["content"].(string); ok {
+			outputBytes = []byte(content)
+		}
+		if status, ok := resp["status"].(string); ok && (status == "error" || status == "failed") {
+			isError = true
+		}
+	}
+	_ = st.RecordToolOutput(sessionHash, harnessID, toolName, outputBytes, isError)
 }

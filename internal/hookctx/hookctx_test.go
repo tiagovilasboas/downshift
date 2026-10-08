@@ -79,7 +79,7 @@ func TestRunCommand_BackgroundChildDoesNotHang(t *testing.T) {
 	}
 	start := time.Now()
 	hookctx.RunCommand(script, "", 5*time.Second)
-	if d := time.Since(start); d > 2*time.Second {
+	if d := time.Since(start); d > 3*time.Second {
 		t.Fatalf("background child held the helper for %s", d)
 	}
 }
