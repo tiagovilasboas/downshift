@@ -13,7 +13,7 @@
 
     {
       "id": "claude-haiku-5-5",
-      "aliases": ["claude-haiku", "claude-haiku-5.5", "claude-haiku-4-5", "claude-haiku-4.5"],
+      "aliases": ["claude-haiku", "claude-haiku-5.5"],
       "family": "claude-haiku",
       "native_name": "haiku",
       "provider": "anthropic",
