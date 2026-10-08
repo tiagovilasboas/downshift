@@ -60,28 +60,36 @@ func ConfigPath() (string, error) {
 	return paths.Join(DefaultConfigFileName)
 }
 
-// LoadConfig loads the context optimization config, or returns a safe default if not found.
-func LoadConfig() (Config, error) {
+// DefaultConfig returns the safe default configuration with Native Context Compressor enabled.
+func DefaultConfig() Config {
 	var cfg Config
+	cfg.Enabled = true
+	cfg.Provider = "native"
+	cfg.ActiveHarness = []string{"claude-code", "cursor", "codex", "antigravity"}
 	cfg.Scope.MainAgent = true
 	cfg.Scope.SpawnedAgents = true
 	cfg.Safety.PreserveOriginalOutput = true
 	cfg.Safety.AllowFullContextRecovery = true
 	cfg.Observability.Enabled = true
+	return cfg
+}
 
+// LoadConfig loads the context optimization config, or returns the default enabled config if not found.
+func LoadConfig() (Config, error) {
 	p, err := ConfigPath()
 	if err != nil {
-		return cfg, err
+		return DefaultConfig(), err
 	}
 	data, err := os.ReadFile(p)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return cfg, nil
+			return DefaultConfig(), nil
 		}
-		return cfg, err
+		return DefaultConfig(), err
 	}
+	var cfg Config
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return cfg, err
+		return DefaultConfig(), err
 	}
 	return cfg, nil
 }

@@ -6,7 +6,7 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 
 ## 1. Architectural Principles
 
-1. **Zero External Runtime**: Written purely in Go. Runs in-process with zero Python, Rust, Node, network or LLM dependencies.
+1. **Enabled by Default & Zero External Runtime**: Written purely in Go. Runs in-process by default with zero Python, Rust, Node, network or LLM dependencies.
 2. **Deterministic & Fail-Open**: Squelches repetitive success output only. **Never alters errors, stack traces, non-zero exit codes, or failing test suites.**
 3. **Observability vs. Transformability**: Distinguishes observational telemetry (e.g. `PostToolUse` telemetry) from transformational filters (command pipes or tool proxies).
 4. **Epistemic Precision**: Metrics clearly distinguish **Observed** counts from **Estimated** heuristics and **Unavailable** harness channels.
@@ -38,7 +38,7 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 ## 4. CLI Reference
 
 ```bash
-# Check status of context optimization
+# Check status of context optimization (enabled by default)
 downshift context status
 
 # List providers and harness capabilities
@@ -47,8 +47,8 @@ downshift context providers
 # Run diagnostics
 downshift context doctor
 
-# Enable native compressor (opt-in)
-downshift context enable native
+# Re-enable native compressor if previously disabled
+downshift context enable
 
 # Pipe tool output through native compressor
 cat verbose_test_output.txt | downshift context compress safe

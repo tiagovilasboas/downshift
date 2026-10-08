@@ -117,11 +117,11 @@ Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshif
 
 Adapters ship for all of the above; the table reports evidence, not just code. Plans, caveats and revalidation rules: [harness-matrix.md](docs/harness-matrix.md).
 
-## Context optimization & native compression (optional)
+## Context optimization & native compression
 
-Downshift includes a zero-dependency **Native Context Compressor** (`downshift context compress`) and event-driven **Context Sensor** to govern context token volume without altering critical failure traces.
+Downshift includes a built-in, zero-dependency **Native Context Compressor** (`downshift context compress`) and event-driven **Context Sensor** to govern context token volume without altering critical failure traces.
 
-- **Opt-in by default:** Downshift continues to function 100% normally without context compression enabled.
+- **Enabled by default:** Downshift Native Context Compressor runs in-process by default to govern context token volume. Can be disabled at any time (`downshift context disable`).
 - **Zero external dependencies:** Pure in-process Go engine; zero Python, Rust, Node or LLM runtime requirements.
 - **Fail-open & error preservation:** Safe squelch on verbose successes (`go test`, `git status`, logs); never touches errors, stack traces, or failing suites.
 - **Management CLI:**
