@@ -134,6 +134,13 @@ if [ ! -f "$SESSION_FILE" ]; then
   echo ""
 fi
 
+# Optional Context Optimization companion:
+if command -v rtk >/dev/null 2>&1; then
+  echo "Companion tool detected: RTK (Rust Token Killer)."
+  echo "  Enable context token optimization: downshift context enable rtk"
+  echo ""
+fi
+
 # Verify
 if command -v downshift >/dev/null 2>&1; then
   downshift --help 2>/dev/null | head -3 || true

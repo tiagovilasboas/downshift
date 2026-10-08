@@ -137,6 +137,8 @@ func main() {
 		os.Exit(runTrain(args[1:]))
 	case "feedback":
 		os.Exit(runFeedback(args[1:]))
+	case "context":
+		os.Exit(runContext(args[1:], os.Stdout, os.Stderr))
 	case "doctor":
 		os.Exit(runDoctor(os.Stdout, catalog))
 	case "version", "--version":
@@ -1288,6 +1290,12 @@ Usage:
   downshift models list          Show the effective catalog (embedded or override)
   downshift models check         Query provider APIs and report new/untiered models
   downshift doctor               Print version, state dir, and catalog source
+  downshift context status       Show context optimization status and active provider
+  downshift context providers    List supported context optimization companion providers
+  downshift context doctor       Run diagnostics on context optimization providers
+  downshift context enable <p>   Enable context optimization provider (e.g. rtk)
+  downshift context disable      Disable context optimization and revert configs
+  downshift context metrics      Show token reduction metrics from active provider
   downshift models pull          Write user catalog.json under the state dir
   downshift models discover      Ask each harness which models the account can use; hooks read the result
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
