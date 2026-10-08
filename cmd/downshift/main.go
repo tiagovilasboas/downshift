@@ -131,6 +131,8 @@ func main() {
 		os.Exit(runEvalOutcome(args[1:], os.Stdout, os.Stderr))
 	case "shadow-report":
 		os.Exit(runShadowReport(args[1:]))
+	case "verification-report":
+		os.Exit(runVerificationReport(args[1:], os.Stdout, os.Stderr))
 	case "train":
 		os.Exit(runTrain(args[1:]))
 	case "feedback":

@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI:** `downshift verification-report [--events=<file>]` prints, per tier, how many
+  usage events were verified (`passed`/`failed`/`none`), how many predate the field,
+  and the priced cost. Read-only. Coverage counts a missing field as unrecorded, never none.
 - **Telemetry:** `verification` (`passed`/`failed`/`none`) on Claude Code `usage`
   events. `SubagentStop` reads the subagent transcript for a recognised test or
   lint command and its `is_error` result; the command and output are never stored.
