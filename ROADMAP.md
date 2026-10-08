@@ -28,6 +28,7 @@ HTTP proxy, but that is not the current shipping surface.
 |-------|-------------|
 | Harness routing | Stable PreToolUse rewrites + adapter coverage |
 | Honest telemetry | `rewrite_emitted` vs harness-reported honor (`resolved`) |
+| Session discovery | `downshift models discover` per harness ([session-discovery.md](docs/session-discovery.md)); Cursor and Antigravity sources, catalog as an opt-in fallback |
 | Real cost | SubagentStop usage linkage (Claude Code); expand as harnesses expose usage |
 | Evaluation | Public [benchmark/REPORT.md](benchmark/REPORT.md); full regression in maintainer downshift-labs; shadow observation |
 | Docs | User docs (install, session models), [classifier contrib](docs/contrib/classifier.md), misroute workflow |

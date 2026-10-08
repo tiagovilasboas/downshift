@@ -11,6 +11,7 @@
 | [publishing-boundaries.md](publishing-boundaries.md) | Public vs internal vs private docs |
 | [content-classification.md](content-classification.md) | A/B/C/D content map (adoption → secret) |
 | [session-models.md](session-models.md) | Session allowlists and Claude usage hooks |
+| [session-discovery.md](session-discovery.md) | `models discover`: which models each harness offers, and how they are ranked |
 | [beta-exit.md](beta-exit.md) | Beta graduation criteria |
 | [../ROADMAP.md](../ROADMAP.md) | Public roadmap |
 | [../LICENSE](../LICENSE) | Apache 2.0 |
