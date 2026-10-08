@@ -24,6 +24,7 @@
 |-----|--------|
 | [minilm-semantic.md](minilm-semantic.md) | Semantic boost |
 | [classifier-shadow.md](classifier-shadow.md) | Shadow classifier |
+| [context-optimization.md](context-optimization.md) | Native Context Compressor & Context Sensor |
 | [stats-export.md](stats-export.md) | Sharing stats safely |
 | [harness-matrix.md](harness-matrix.md) | Plan compatibility |
 | [langgraph-orchestration.md](langgraph-orchestration.md) | Optional planner |
