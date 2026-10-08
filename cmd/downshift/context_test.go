@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 
@@ -60,6 +61,31 @@ func TestRunContext_Benchmark(t *testing.T) {
 	s := out.String()
 	if !strings.Contains(s, "Scenario A") || !strings.Contains(s, "Scenario D") {
 		t.Errorf("expected scenario A and D in benchmark output:\n%s", s)
+	}
+}
+
+func TestRunContext_Compress(t *testing.T) {
+	// 1. Observe mode prints metrics to stderr and passes output through to stdout
+	in := []byte("ok  github.com/foo/bar  0.1s  coverage: 80%\nok  github.com/foo/baz  0.2s  coverage: 90%\n")
+	origStdin := os.Stdin
+	r, w, _ := os.Pipe()
+	os.Stdin = r
+	go func() {
+		_, _ = w.Write(in)
+		_ = w.Close()
+	}()
+
+	var out, errOut bytes.Buffer
+	rc := runContext([]string{"compress", "observe"}, &out, &errOut)
+	os.Stdin = origStdin
+	if rc != 0 {
+		t.Fatalf("expected rc 0, got %d", rc)
+	}
+	if !bytes.Equal(out.Bytes(), in) {
+		t.Errorf("observe mode must preserve stdout byte-identical")
+	}
+	if !strings.Contains(errOut.String(), "context observe: format=go_test") {
+		t.Errorf("expected format detection in stderr: %s", errOut.String())
 	}
 }
 
