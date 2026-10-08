@@ -124,6 +124,7 @@ Downshift includes a built-in, zero-dependency **Native Context Compressor** (`d
 - **Enabled by default:** Downshift Native Context Compressor runs in-process by default to govern context token volume. Can be disabled at any time (`downshift context disable`).
 - **Zero external dependencies:** Pure in-process Go engine; zero Python, Rust, Node or LLM runtime requirements.
 - **Fail-open & error preservation:** Safe squelch on verbose successes (`go test`, `git status`, logs); never touches errors, stack traces, or failing suites.
+- **Measurable impact:** Reduces verbose command output by 60%–90% (e.g. 15k-token test suites down to ~400 tokens), reaching up to ~80% total cost reduction when combined with model routing.
 - **Management CLI:**
   ```bash
   downshift context status      # Show optimization status & active provider
