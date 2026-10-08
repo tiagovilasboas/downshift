@@ -129,7 +129,7 @@ fi
 if [ ! -f "$SESSION_FILE" ]; then
   echo "Next: list the models your session can use, or the hook will not rewrite anything:"
   echo "  mkdir -p \"$HOME/.downshift\""
-  echo "  echo '{ \"claude-code\": [\"claude-haiku-4-5\", \"claude-sonnet-4-6\", \"claude-opus-4-8\"] }' > \"$SESSION_FILE\""
+  echo "  echo '{ \"claude-code\": [\"claude-haiku-5-5\", \"claude-sonnet-5-5\", \"claude-opus-5-5\"] }' > \"$SESSION_FILE\""
   echo "  (edit the ids to match your plan; see docs/session-models.md)"
   echo ""
 fi

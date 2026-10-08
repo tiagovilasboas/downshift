@@ -327,12 +327,12 @@ func TestEmbeddedClaudeCodeSavingsMatchesREADME(t *testing.T) {
 	}
 	frontier := c.ModelFor("claude-code", core.TierFrontier)
 	small := c.ModelFor("claude-code", core.TierSmall)
-	if frontier.ID != "claude-opus-5-5" || small.ID != "claude-haiku-4-5" {
-		t.Fatalf("claude-code frontier/small = %s/%s, want claude-opus-5-5/claude-haiku-4-5", frontier.ID, small.ID)
+	if frontier.ID != "claude-opus-5-5" || small.ID != "claude-haiku-5-5" {
+		t.Fatalf("claude-code frontier/small = %s/%s, want claude-opus-5-5/claude-haiku-5-5", frontier.ID, small.ID)
 	}
-	// (4+20 - (1+5)) / (4+20) = 0.75
-	if got := c.SavingsRatio(frontier, small); got < 0.7499 || got > 0.7501 {
-		t.Errorf("SavingsRatio(frontier→small) = %.4f, want 0.75 (README says ~75%%)", got)
+	// (4+20 - (0.10+0.50)) / (4+20) = 0.975 (Haiku 5.5, prompts up to 100k tokens)
+	if got := c.SavingsRatio(frontier, small); got < 0.9749 || got > 0.9751 {
+		t.Errorf("SavingsRatio(frontier→small) = %.4f, want 0.975 (docs say ~97%%)", got)
 	}
 }
 
@@ -358,11 +358,11 @@ func TestEmbeddedCatalogNeverEmitsNonexistentHaikuID(t *testing.T) {
 	}
 	for _, e := range c.Entries() {
 		if e.ID == "claude-haiku-4" {
-			t.Errorf("harness %q emits nonexistent model id %q; use claude-haiku-4-5", e.Harness, e.ID)
+			t.Errorf("harness %q emits nonexistent model id %q; use claude-haiku-5-5", e.Harness, e.ID)
 		}
 	}
-	if small := c.ModelFor("claude-code", core.TierSmall); small.ID != "claude-haiku-4-5" {
-		t.Errorf("claude-code small = %q, want claude-haiku-4-5", small.ID)
+	if small := c.ModelFor("claude-code", core.TierSmall); small.ID != "claude-haiku-5-5" {
+		t.Errorf("claude-code small = %q, want claude-haiku-5-5", small.ID)
 	}
 }
 

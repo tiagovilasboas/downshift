@@ -15,7 +15,7 @@ A política de marcha (*gearbox*) compara o modelo que o harness usaria por padr
 
 ### Mapeamento Concreto por Ambiente
 * **Codex:** O modelo econômico é o `gpt-6-luna`, o intermediário é o `gpt-5.6-terra` e o modelo de ponta é o `gpt-6-sol`. Um componente Three.js simples roda no Luna; um export de CSV sobe para o Terra; uma refatoração arquitetural escala para o Sol.
-* **Claude Code:** Econômico é o `claude-haiku-4-5`, intermediário é o `claude-sonnet-5-5` e o de ponta é o `claude-opus-5-5`.
+* **Claude Code:** Econômico é o `claude-haiku-5-5`, intermediário é o `claude-sonnet-5-5` e o de ponta é o `claude-opus-5-5`.
 * **Antigravity:** Econômico é o `flash_lite`, intermediário é o `flash` e o de ponta é o `pro`.
 
 > **Decisão de Produto em `SIMPLE`:** Originalmente, tarefas `SIMPLE` eram direcionadas para o tier intermediário (`Mid`). Isso fazia com que inserções de campos ou pequenos ajustes de interface saíssem do Luna para o Terra (uma diferença de quase 25x no custo por token de entrada no catálogo). O ajuste de política rebaixou `SIMPLE` para o tier `Small`, preservando a economia máxima em tarefas pontuais.
