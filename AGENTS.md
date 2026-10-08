@@ -195,3 +195,5 @@ Classifier or signal changes need a table-driven test in `classifier_edge_test.g
   `routing:"explicit_only"` — use that field instead.
 - The project licence is Apache 2.0. Do not suggest relicensing to proprietary
   terms without explicit instruction from the Author.
+
+@RTK.md
