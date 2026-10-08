@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-// Package contextopt provides an opt-in, extensible framework for external
-// context optimization companions (e.g. RTK, Headroom, Tare).
+// Package contextopt provides an opt-in, extensible framework for
+// context optimization providers (e.g. native, external companions).
 // Downshift remains strictly responsible for model routing and agent orchestration.
-// Optimization providers handle their own command-output or context compression.
+// Optimization providers handle tool-output or context compression.
 package contextopt
 
 import (
@@ -71,7 +71,7 @@ type Metrics struct {
 // Config represents the persisted context optimization settings in Downshift.
 type Config struct {
 	Enabled       bool     `json:"enabled"`
-	Provider      string   `json:"provider"` // e.g. "rtk"
+	Provider      string   `json:"provider"` // e.g. "native"
 	ActiveHarness []string `json:"active_harnesses,omitempty"`
 	Scope         struct {
 		MainAgent     bool `json:"main_agent"`

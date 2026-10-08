@@ -19,8 +19,8 @@ func TestRunContext_ProvidersList(t *testing.T) {
 		t.Fatalf("expected rc 0, got %d, stderr: %s", rc, errOut.String())
 	}
 	s := out.String()
-	if !strings.Contains(s, "RTK (Rust Token Killer)") {
-		t.Errorf("expected RTK provider listed in output:\n%s", s)
+	if !strings.Contains(s, "Downshift Native Context Compressor") {
+		t.Errorf("expected Native compressor listed in output:\n%s", s)
 	}
 	if !strings.Contains(s, "command_output_optimization") {
 		t.Errorf("expected capability listed in output:\n%s", s)
@@ -47,8 +47,8 @@ func TestRunContext_Doctor(t *testing.T) {
 	if rc != 0 {
 		t.Fatalf("expected rc 0, got %d", rc)
 	}
-	if !strings.Contains(out.String(), "Provider: RTK (Rust Token Killer)") {
-		t.Errorf("expected RTK doctor section in output:\n%s", out.String())
+	if !strings.Contains(out.String(), "Provider: Downshift Native Context Compressor") {
+		t.Errorf("expected Native compressor doctor section in output:\n%s", out.String())
 	}
 }
 

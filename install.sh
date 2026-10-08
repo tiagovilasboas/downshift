@@ -131,14 +131,6 @@ if [ ! -f "$SESSION_FILE" ]; then
   echo "  mkdir -p \"$HOME/.downshift\""
   echo "  echo '{ \"claude-code\": [\"claude-haiku-5-5\", \"claude-sonnet-5-5\", \"claude-opus-5-5\"] }' > \"$SESSION_FILE\""
   echo "  (edit the ids to match your plan; see docs/session-models.md)"
-  echo ""
-fi
-
-# Optional Context Optimization companion:
-if command -v rtk >/dev/null 2>&1; then
-  echo "Companion tool detected: RTK (Rust Token Killer)."
-  echo "  Enable context token optimization: downshift context enable rtk"
-  echo ""
 fi
 
 # Verify

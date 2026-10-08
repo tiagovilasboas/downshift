@@ -117,25 +117,26 @@ Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshif
 
 Adapters ship for all of the above; the table reports evidence, not just code. Plans, caveats and revalidation rules: [harness-matrix.md](docs/harness-matrix.md).
 
-## Context optimization & recommended companion tools (optional)
+## Context optimization & native compression (optional)
 
-Downshift governs **model routing and agent orchestration**. Companion tools such as **RTK (Rust Token Killer)** govern **command-output token optimization**.
+Downshift includes a zero-dependency **Native Context Compressor** (`downshift context compress`) and event-driven **Context Sensor** to govern context token volume without altering critical failure traces.
 
-- **Opt-in by default:** Downshift continues to function 100% normally without any companion installed.
-- **Provider-agnostic interface:** Extensible provider architecture ready for RTK, Headroom, Tare, and context-compress.
-- **Safety by design:** Safe squelch on successful commands, fail-open preservation on errors/panics, and task risk-aware compression.
+- **Opt-in by default:** Downshift continues to function 100% normally without context compression enabled.
+- **Zero external dependencies:** Pure in-process Go engine; zero Python, Rust, Node or LLM runtime requirements.
+- **Fail-open & error preservation:** Safe squelch on verbose successes (`go test`, `git status`, logs); never touches errors, stack traces, or failing suites.
 - **Management CLI:**
   ```bash
   downshift context status      # Show optimization status & active provider
-  downshift context providers   # List supported companion tools & capabilities
-  downshift context doctor      # Inspect local companion binaries & harnesses
-  downshift context enable rtk  # Safely configure companion for supported harnesses
+  downshift context providers   # List supported optimization providers
+  downshift context doctor      # Inspect local compressor & harnesses
+  downshift context enable      # Enable built-in native compressor (or specify provider)
   downshift context disable     # Revert configurations back to raw state
-  downshift context metrics     # Inspect estimated terminal token savings
-  downshift context benchmark   # Compare 4 scenarios (baseline vs routing vs rtk vs both)
+  downshift context metrics     # Inspect token savings & sensor observations
+  downshift context compress    # Deterministically compact tool output via stdin
+  downshift context benchmark   # Compare optimization scenarios (baseline vs routing vs compression vs both)
   ```
 
-See [the RTK integration guide](docs/rtk-integration.md) for architecture, harness contracts, and failure handling policies.
+See [the context optimization guide](docs/context-optimization.md) for architecture, harness contracts, and failure handling policies.
 
 ## Cost and metrics
 
