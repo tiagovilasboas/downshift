@@ -146,7 +146,7 @@ function renderMonitor(data) {
 
   const agRows = filteredAgents.slice(-4).map(a =>
     `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${a.model || 'unknown'}</span><span class="tag-spawned">spawned</span><span class="desc">${(a.task || '').slice(0,44)}</span></div>`
-  ).join('') || dim(activeHarness ? `no ${activeHarness} events in the last 24h` : 'no active agent spawned');
+  ).join('') || dim('no spawned agents in the agent log');
   set('monitor-agents', agRows);
 
   // ── stats: 24h totals from the server, unless a harness chip is selected ──
