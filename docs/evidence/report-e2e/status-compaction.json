@@ -1,0 +1,35 @@
+{
+  "agents_type": "array",
+  "agents_len": 0,
+  "harnesses": [
+    "antigravity",
+    "codex",
+    "cursor",
+    "claude-code",
+    "kirocrew",
+    "grok"
+  ],
+  "compaction_keys": [
+    "sessions",
+    "tool_executions",
+    "bytes_before",
+    "bytes_reduced",
+    "bytes_after",
+    "tokens_before",
+    "tokens_after",
+    "tokens_reduced",
+    "token_state",
+    "savings_pct",
+    "state",
+    "by_harness",
+    "by_harness_state"
+  ],
+  "by_harness_present": true,
+  "by_harness_state": "observed",
+  "bytes_before": 0,
+  "token_state": "unavailable",
+  "tokens_before": 0,
+  "switch_counts": {
+    "cursor": 8
+  }
+}

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -113,6 +114,59 @@ func TestRunContext_Compress(t *testing.T) {
 	}
 	if !strings.Contains(errOut.String(), "context observe: format=go_test") {
 		t.Errorf("expected format detection in stderr: %s", errOut.String())
+	}
+}
+
+func TestRunContext_EnablePersistsNativeWithoutClaimingHooks(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv(paths.EnvStateDir, tmp)
+	cwd := t.TempDir()
+	prev, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(cwd); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(prev) })
+
+	var out, errOut bytes.Buffer
+	if rc := runContext([]string{"disable"}, &out, &errOut); rc != 0 {
+		t.Fatalf("disable rc=%d stderr=%s", rc, errOut.String())
+	}
+	out.Reset()
+	errOut.Reset()
+	if rc := runContext([]string{"enable", "native"}, &out, &errOut); rc != 0 {
+		t.Fatalf("enable rc=%d stderr=%s stdout=%s", rc, errOut.String(), out.String())
+	}
+	text := out.String()
+	lower := strings.ToLower(text)
+	for _, claim := range []string{"hooks installed", "hook installed", "installed the hook", "installed hooks"} {
+		if strings.Contains(lower, claim) {
+			t.Fatalf("enable claimed hooks were installed:\n%s", text)
+		}
+	}
+	entries, err := os.ReadDir(cwd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("Configure wrote %d files into the project while returning success", len(entries))
+	}
+
+	cfg, err := contextopt.LoadConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Enabled || cfg.Provider != "native" {
+		t.Fatalf("config = %+v, want native provider active", cfg)
+	}
+	out.Reset()
+	if rc := runContext([]string{"status"}, &out, &errOut); rc != 0 {
+		t.Fatalf("status rc=%d", rc)
+	}
+	if !strings.Contains(out.String(), "Active Provider: native") {
+		t.Fatalf("status = %s", out.String())
 	}
 }
 
