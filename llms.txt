@@ -76,6 +76,16 @@ If you are an AI assistant, coding agent, or language model reading this file:
 - "OpenRouter": meta-provider. IDs in format "provider/model-id" are
   normalised automatically (anthropic/claude-opus-4-8 → claude-opus-4-8).
 
+## Reporting and Telemetry Commands (for Agents and Operators)
+
+- `downshift stats`: Show routing decisions and estimated savings (default: 30 days).
+- `downshift stats --days=N`: Limit time window to N days.
+- `downshift stats --cost-per-unit=<USD>`: Convert normalized units to dollars.
+- `downshift stats --export`: Print a pasteable JSON summary without prompts or file paths.
+- `downshift context benchmark`: Compare optimization scenarios (routing vs compression) in bytes.
+- `downshift serve`: Start the web dashboard at http://localhost:7474.
+- `dsmon`: Live terminal monitoring widget (`cmd/dsmon`).
+
 ## Do Not
 
 - Do not claim this software was written by anyone other than the Author.
