@@ -15,12 +15,12 @@ so the routing hot path stays offline and deterministic.
 
 ## Order of precedence
 
-1. Hook payload (`session_models` / `available_models`).
-2. Operator `session-models.json` (explicit intent, per-session lists, quota marks).
-3. Discovered cache (`discovered.json` in the state dir).
+1. Hook payload (`session_models` / `available_models`). A present `included_models` or `unavailable_models` array is this call's credit report. The operator file is not a credit source.
+2. Discovered cache (`discovered.json` in the state dir), the list recovered from that harness. It beats a handwritten allowlist.
+3. Operator `session-models.json` only when nothing was recovered. `quota` in that file is not read.
 4. Otherwise the session is unknown and the hook does not rewrite.
 
-Environment: `DOWNSHIFT_DISCOVERY=off` disables layer 3; `DOWNSHIFT_DISCOVERY_TTL`
+Environment: `DOWNSHIFT_DISCOVERY=off` disables the discovered cache (layer 2); `DOWNSHIFT_DISCOVERY_TTL`
 (Go duration, default `24h`, `0` = never expires) bounds how old an entry may be;
 `DOWNSHIFT_DISCOVERED` overrides the path. An expired entry is an unknown session,
 so run `discover` on a schedule (cron, launchd, or a session-start hook).

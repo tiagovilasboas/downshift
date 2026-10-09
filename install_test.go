@@ -6,6 +6,7 @@ package installer_test
 import (
 	"archive/tar"
 	"compress/gzip"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -56,6 +57,7 @@ type installResult struct {
 	output string
 	urls   []string
 	binDir string
+	home   string
 }
 
 func runInstall(t *testing.T, latest, list string, args ...string) installResult {
@@ -84,6 +86,25 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 	logFile := filepath.Join(tmp, "curl.log")
 	binDir := filepath.Join(tmp, "bin")
 
+	var seed string
+	keptEnv := make([]string, 0, len(extraEnv))
+	for _, env := range extraEnv {
+		if strings.HasPrefix(env, "SEED_SESSION=") {
+			seed = strings.TrimPrefix(env, "SEED_SESSION=")
+			continue
+		}
+		keptEnv = append(keptEnv, env)
+	}
+	if seed != "" {
+		sessionDir := filepath.Join(tmp, ".downshift")
+		if err := os.MkdirAll(sessionDir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(sessionDir, "session-models.json"), []byte(seed), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	cmd := exec.Command("sh", append([]string{"install.sh"}, args...)...)
 	cmd.Env = []string{
 		"PATH=" + fakeBin + string(os.PathListSeparator) + os.Getenv("PATH"),
@@ -94,7 +115,7 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 		"FAKE_TARBALL=" + tarball,
 		"FAKE_LOG=" + logFile,
 	}
-	cmd.Env = append(cmd.Env, extraEnv...)
+	cmd.Env = append(cmd.Env, keptEnv...)
 	out, err := cmd.CombinedOutput()
 	code := 0
 	if err != nil {
@@ -110,6 +131,7 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 		output: string(out),
 		urls:   strings.Fields(string(logged)),
 		binDir: binDir,
+		home:   tmp,
 	}
 }
 
@@ -242,6 +264,44 @@ func TestInstallScriptShellcheck(t *testing.T) {
 	}
 	if out, err := exec.Command(path, "install.sh").CombinedOutput(); err != nil {
 		t.Fatalf("shellcheck install.sh: %v\n%s", err, out)
+	}
+}
+
+func TestInstallExplicitUpshiftPersistsFlag(t *testing.T) {
+	r := runInstall(t, "v1.0.0", "", "--explicit-upshift")
+	assertInstalled(t, r)
+	body, err := os.ReadFile(filepath.Join(r.home, ".downshift", "session-models.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(body, &doc); err != nil {
+		t.Fatalf("session file %s: %v", body, err)
+	}
+	if doc["explicit_upshift"] != true {
+		t.Fatalf("explicit_upshift = %#v, want true", doc["explicit_upshift"])
+	}
+}
+
+func TestInstallExplicitUpshiftMergesExistingFile(t *testing.T) {
+	r := runInstallEnv(t, "", "", []string{`SEED_SESSION={"codex":["gpt-6-luna","gpt-6-sol"]}`}, "v0.1.0-beta.1", "--explicit-upshift")
+	assertInstalled(t, r)
+	body, err := os.ReadFile(filepath.Join(r.home, ".downshift", "session-models.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc struct {
+		ExplicitUpshift bool     `json:"explicit_upshift"`
+		Codex           []string `json:"codex"`
+	}
+	if err := json.Unmarshal(body, &doc); err != nil {
+		t.Fatalf("session file %s: %v", body, err)
+	}
+	if !doc.ExplicitUpshift {
+		t.Fatalf("explicit_upshift missing in %s", body)
+	}
+	if len(doc.Codex) != 2 || doc.Codex[0] != "gpt-6-luna" || doc.Codex[1] != "gpt-6-sol" {
+		t.Fatalf("codex list = %#v", doc.Codex)
 	}
 }
 

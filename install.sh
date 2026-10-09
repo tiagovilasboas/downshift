@@ -11,6 +11,10 @@
 #   # Specific version:
 #   curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh -s v0.1.0-beta.1
 #
+#   # Allow explicit_only models on upshift (flag may precede or follow the version):
+#   sh install.sh --explicit-upshift
+#   sh install.sh --explicit-upshift v0.1.0-beta.1
+#
 # The binary is installed to /usr/local/bin/downshift (or ~/.local/bin or
 # ~/bin if /usr/local/bin is not writable without sudo). Set
 # DOWNSHIFT_INSTALL_DIR to choose another directory.
@@ -44,7 +48,30 @@ latest_tag() {
     | head -n 1 \
     | sed 's#.*/releases/tag/##' || true
 }
-VERSION="${1:-}"
+# Flags do not consume the version argument. --explicit-upshift may appear
+# before or after it. An unknown flag is an error so a typo is not installed
+# as a version tag.
+EXPLICIT_UPSHIFT=0
+VERSION=""
+for arg in "$@"; do
+  case "$arg" in
+    --explicit-upshift)
+      EXPLICIT_UPSHIFT=1
+      ;;
+    -*)
+      echo "error: unknown option: $arg" >&2
+      echo "Usage: sh install.sh [--explicit-upshift] [version]" >&2
+      exit 1
+      ;;
+    *)
+      if [ -n "$VERSION" ]; then
+        echo "error: unexpected argument: $arg" >&2
+        exit 1
+      fi
+      VERSION="$arg"
+      ;;
+  esac
+done
 if [ -z "$VERSION" ]; then
   VERSION=$(latest_tag)
 fi
@@ -118,6 +145,34 @@ echo ""
 echo "✓ downshift ${VERSION} installed to ${INSTALL_DIR}/downshift"
 echo ""
 
+# set_explicit_upshift writes the operator flag. A missing file is created.
+# An existing JSON object is updated in place so harness lists stay.
+set_explicit_upshift() {
+  file=$1
+  dir=$(dirname "$file")
+  mkdir -p "$dir"
+  if [ ! -f "$file" ]; then
+    printf '%s\n' '{' '  "explicit_upshift": true' '}' > "$file"
+    return 0
+  fi
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "error: python3 is required to set explicit_upshift in an existing $file" >&2
+    return 1
+  fi
+  python3 - "$file" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    data = json.load(fh)
+if not isinstance(data, dict):
+    sys.exit("session-models.json must be a JSON object")
+data["explicit_upshift"] = True
+with open(path, "w", encoding="utf-8") as fh:
+    json.dump(data, fh, indent=2)
+    fh.write("\n")
+PY
+}
+
 # Session allowlist: the hook only writes model ids listed here. Without the
 # file it never rewrites anything, so say so instead of installing a silent
 # no-op. The list is operator-curated (it depends on your plan), so it is not
@@ -126,12 +181,25 @@ SESSION_FILE="$HOME/.downshift/session-models.json"
 if [ ! -f "$SESSION_FILE" ] && [ -f "$HOME/.harness-downshift/session-models.json" ]; then
   SESSION_FILE="$HOME/.harness-downshift/session-models.json"
 fi
-if [ ! -f "$SESSION_FILE" ]; then
+session_existed=0
+if [ -f "$SESSION_FILE" ]; then
+  session_existed=1
+fi
+if [ "$EXPLICIT_UPSHIFT" = 1 ]; then
+  set_explicit_upshift "$SESSION_FILE"
+  echo "Set explicit_upshift true in $SESSION_FILE"
+fi
+if [ "$session_existed" = 0 ]; then
   echo "Next: list the models your session can use, or the hook will not rewrite anything:"
   echo "  mkdir -p \"$HOME/.downshift\""
-  echo "  echo '{ \"claude-code\": [\"claude-haiku-5-5\", \"claude-sonnet-5-5\", \"claude-opus-5-5\"] }' > \"$SESSION_FILE\""
+  if [ "$EXPLICIT_UPSHIFT" = 1 ]; then
+    echo "  Edit $SESSION_FILE and keep \"explicit_upshift\": true when you add harness lists."
+  else
+    echo "  echo '{ \"claude-code\": [\"claude-haiku-5-5\", \"claude-sonnet-5-5\", \"claude-opus-5-5\"] }' > \"$SESSION_FILE\""
+  fi
   echo "  Fable is supported. Leave it out unless you want upshift into that expensive frontier model."
   echo "  To opt in, append \"claude-fable-5-1\" as the last id. See docs/session-models.md."
+  echo "  Cursor claude-fable-5-1-thinking-high and Codex gpt-6-astra stay explicit_only unless you pass --explicit-upshift."
 fi
 
 # Verify

@@ -123,10 +123,10 @@ Adapters ship for all of the above; the table reports evidence, not just code. P
 
 Downshift includes a built-in, zero-dependency **Native Context Compressor** (`downshift context compress`) and event-driven **Context Sensor** to govern context token volume without altering critical failure traces.
 
-- **Not automatic in a session.** `downshift context enable` saves a provider flag. It does not install a harness hook, so enabling the provider does not prove compression is applied during the session. Safe mode also requires `--exit 0`; without that status the original output is preserved.
+- **Enable persists a flag, not a prompt rewrite.** `downshift context enable` saves the native provider as active, plus the exit-code contract. Claude Code PostToolUse then records `CompressExit` in observe mode, using the tool's real exit code. The hook cannot replace tool output, so the model still sees the original result. Prompts are not compressed. Safe mode on the CLI still requires `--exit 0`.
 - **Zero external dependencies:** Pure in-process Go engine; zero Python, Rust, Node or LLM runtime requirements.
 - **Fail-open & error preservation:** Safe squelch on verbose successes (`go test`, `git status`, logs); never touches errors, stack traces, or failing suites.
-- **Not a measured savings claim.** `downshift context benchmark` prints the four scenarios with `not measured` in the cost, token and accuracy cells. There is no savings percentage to cite.
+- **Bytes, not a token claim.** `downshift context benchmark` prints the four routing scenarios with `not measured` for cost and accuracy, then a measured byte table from checked-in fixtures (original bytes, reduced bytes, byte savings). The unit is bytes. The table is not tokens and not dollars.
 - **Management CLI:**
   ```bash
   downshift context status      # Show optimization status & active provider
@@ -136,7 +136,7 @@ Downshift includes a built-in, zero-dependency **Native Context Compressor** (`d
   downshift context disable     # Revert configurations back to raw state
   downshift context metrics     # Sensor counts; token fields stay unavailable
   downshift context compress    # Compact stdin only with --exit 0 in safe mode
-  downshift context benchmark   # Illustrative matrix; percentages are not measured
+  downshift context benchmark   # Measured fixture bytes; routing cost stays not measured
   ```
 
 See [the context optimization guide](docs/context-optimization.md) for architecture, harness contracts, and failure handling policies.

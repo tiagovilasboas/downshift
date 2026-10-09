@@ -34,15 +34,15 @@ func TestDiscoveredSessionIsUsedWhenNothingElseKnows(t *testing.T) {
 	}
 }
 
-func TestOperatorFileBeatsDiscovery(t *testing.T) {
+func TestRecoveredSessionBeatsOperatorFile(t *testing.T) {
 	t.Setenv(core.EnvDiscovery, "")
 	t.Setenv(core.EnvDiscovered, writeDiscovered(t, time.Now(), "gpt-6-luna", "gpt-6-sol"))
 	op := filepath.Join(t.TempDir(), "session-models.json")
 	_ = os.WriteFile(op, []byte(`{"codex":["only-this"]}`), 0o600)
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", op)
 	got := core.ResolveSession("codex")
-	if len(got.IDs) != 1 || got.IDs[0] != "only-this" {
-		t.Fatalf("operator list must win, got %+v", got)
+	if len(got.IDs) != 2 || got.IDs[1] != "gpt-6-sol" {
+		t.Fatalf("recovered session must beat the operator file, got %+v", got)
 	}
 }
 

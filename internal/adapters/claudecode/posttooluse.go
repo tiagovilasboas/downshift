@@ -46,6 +46,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/sensor"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
@@ -319,7 +320,7 @@ func recordResolved(payload map[string]any, sessionHash, binaryVersion string, p
 }
 
 func recordSensorToolObservation(payload map[string]any, sessionHash string) {
-	if sessionHash == "" {
+	if sessionHash == "" || !nativeContextObserveOn() {
 		return
 	}
 	st, err := sensor.DefaultStore()
@@ -346,6 +347,18 @@ func recordSensorToolObservation(payload map[string]any, sessionHash string) {
 		}
 	}
 	_ = st.RecordToolResult(sessionHash, harnessID, toolName, outputBytes, exitCode, isError)
+}
+
+// nativeContextObserveOn is the persisted native-provider flag. Missing
+// config uses the default (enabled, provider native). A read error fails
+// closed. The stored record is observe-mode only; this hook does not
+// replace the tool result the model sees.
+func nativeContextObserveOn() bool {
+	cfg, err := contextopt.LoadConfig()
+	if err != nil || !cfg.Enabled {
+		return false
+	}
+	return cfg.Provider == "" || cfg.Provider == "native"
 }
 
 func exitCodeField(resp map[string]any) (int, bool) {

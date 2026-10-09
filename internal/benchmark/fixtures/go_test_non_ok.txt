@@ -1,0 +1,3 @@
+ok  example.com/a  0.12s
+ok  example.com/b  0.34s
+warning: package example.com/c: no test files

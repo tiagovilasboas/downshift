@@ -23,16 +23,10 @@ function ageStr(ts) {
 }
 
 function modelVersion(e) {
-  const id = (e && (e.final_model || e.model)) || 'unknown';
-  const effort = e && e.final_reasoning_effort;
+  const id = (e && (e.final_model || e.requested_model || e.model)) || 'unknown';
+  const effort = e && (e.final_reasoning_effort || e.requested_reasoning_effort);
   if (effort && effort !== 'unknown') return `${id} · ${effort}`;
   return id;
-}
-
-function shortModel(m) {
-  if (!m) return 'default';
-  for (const k of ['haiku','sonnet','opus','gpt-6-l','gpt-6-s','grok']) if (m.includes(k)) return k;
-  return m.slice(0, 8);
 }
 
 // ── routing monitor ──────────────────────────────────────────────────────────
@@ -72,11 +66,13 @@ function renderMonitor(data) {
   // replace null, and agents.filter then throws after the chips are painted.
   const harnesses = Array.isArray(data.harnesses) ? data.harnesses : [];
   const switches = Array.isArray(data.switches) ? data.switches : [];
-  const agents = Array.isArray(data.agents) ? data.agents : [];
+  const agents = Array.isArray(data.agents)
+    ? data.agents.filter(a => a && typeof a === 'object')
+    : [];
   const stats = data.stats && typeof data.stats === 'object' ? data.stats : {};
 
   // Harness chips — clickable tabs. KiroCrew stays even with an empty 24h window.
-  const chipNames = ['antigravity', 'codex', 'cursor', 'claude-code', 'kirocrew'];
+  const chipNames = ['antigravity', 'codex', 'cursor', 'claude-code', 'kirocrew', 'grok'];
   for (const h of harnesses) {
     if (h && !chipNames.includes(h)) chipNames.push(h);
   }
@@ -145,12 +141,12 @@ function renderMonitor(data) {
             : dim(`✓ ${complexity}`);
     const isNew = i === 0 && _justUpdated;
     return `<div class="row${isNew?' new':''}"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${modelVersion(e)}</span><span class="tag-spawned">spawned</span>${v}</div>`;
-  }).join('') || dim(activeHarness ? `no ${activeHarness} switches in the last 24h` : 'no active agent spawned');
+  }).join('') || dim(activeHarness ? `no ${activeHarness} events in the last 24h` : 'no active agent spawned');
   set('monitor-switches', swRows);
 
   const agRows = filteredAgents.slice(-4).map(a =>
-    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="tag-spawned">spawned</span><span class="desc">${(a.task || '').slice(0,44)}</span></div>`
-  ).join('') || dim('no active agent spawned');
+    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${a.model || 'unknown'}</span><span class="tag-spawned">spawned</span><span class="desc">${(a.task || '').slice(0,44)}</span></div>`
+  ).join('') || dim(activeHarness ? `no ${activeHarness} events in the last 24h` : 'no active agent spawned');
   set('monitor-agents', agRows);
 
   // ── stats: 24h totals from the server, unless a harness chip is selected ──
@@ -187,15 +183,35 @@ function renderMonitor(data) {
   renderCompaction(data.compaction);
 }
 
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
+
 function renderCompaction(c) {
   const before = (c && c.bytes_before) || 0;
   const after = (c && c.bytes_after) || 0;
   const reduced = (c && c.bytes_reduced) || 0;
   const pct = c && typeof c.savings_pct === 'number' ? c.savings_pct : 0;
   const tokenState = (c && c.token_state) || 'unavailable';
+  const harnessState = c && c.by_harness_state;
+  let harnessRows = '';
+  if (harnessState === 'unavailable') {
+    harnessRows = `<div class="dim">by_harness unavailable</div>`;
+  } else if (c && c.by_harness && typeof c.by_harness === 'object') {
+    harnessRows = Object.keys(c.by_harness).sort().map(name => {
+      const row = c.by_harness[name] || {};
+      const bin = Number(row.bytes_before) || 0;
+      const aft = Number(row.bytes_after) || 0;
+      const red = Number(row.bytes_reduced) || 0;
+      return `<div class="row"><span class="m">${escapeHtml(name)}</span> ${bin} bytes in · ${aft} bytes after · ${red} bytes reduced</div>`;
+    }).join('');
+  }
   set('compaction-report',
     `<div class="stats-line">${before} bytes in · ${after} bytes after · ${ok(reduced + ' bytes reduced')} · savings_pct ${pct.toFixed(1)}</div>` +
     `<div class="dim">token_state ${tokenState}</div>` +
+    harnessRows +
     `<div>Bytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.</div>`
   );
 }

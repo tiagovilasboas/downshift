@@ -1,0 +1,138 @@
+{
+  "errors": [],
+  "notes": [
+    {
+      "chip": "all",
+      "file": "tab-all.png",
+      "active": "all",
+      "sentenceInCompaction": true,
+      "sentenceInEconomy": false,
+      "compactionText": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.",
+      "switches": "15m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n15m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n20m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n20m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n24m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n24m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex",
+      "agents": "no active agent spawned",
+      "chips": [
+        "all",
+        "antigravity",
+        "codex",
+        "cursor",
+        "claude-code",
+        "kirocrew",
+        "grok"
+      ]
+    },
+    {
+      "chip": "antigravity",
+      "file": "tab-antigravity.png",
+      "active": "antigravity",
+      "sentenceInCompaction": true,
+      "sentenceInEconomy": false,
+      "compactionText": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.",
+      "switches": "no antigravity switches in the last 24h",
+      "agents": "no active agent spawned",
+      "chips": [
+        "all",
+        "antigravity",
+        "codex",
+        "cursor",
+        "claude-code",
+        "kirocrew",
+        "grok"
+      ]
+    },
+    {
+      "chip": "codex",
+      "file": "tab-codex.png",
+      "active": "codex",
+      "sentenceInCompaction": true,
+      "sentenceInEconomy": false,
+      "compactionText": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.",
+      "switches": "no codex switches in the last 24h",
+      "agents": "no active agent spawned",
+      "chips": [
+        "all",
+        "antigravity",
+        "codex",
+        "cursor",
+        "claude-code",
+        "kirocrew",
+        "grok"
+      ]
+    },
+    {
+      "chip": "cursor",
+      "file": "tab-cursor.png",
+      "active": "cursor",
+      "sentenceInCompaction": true,
+      "sentenceInEconomy": false,
+      "compactionText": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.",
+      "switches": "15m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n16m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n20m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n20m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n24m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n24m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex",
+      "agents": "no active agent spawned",
+      "chips": [
+        "all",
+        "antigravity",
+        "codex",
+        "cursor",
+        "claude-code",
+        "kirocrew",
+        "grok"
+      ]
+    },
+    {
+      "chip": "claude-code",
+      "file": "tab-claude-code.png",
+      "active": "claude-code",
+      "sentenceInCompaction": true,
+      "sentenceInEconomy": false,
+      "compactionText": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.",
+      "switches": "no claude-code switches in the last 24h",
+      "agents": "no active agent spawned",
+      "chips": [
+        "all",
+        "antigravity",
+        "codex",
+        "cursor",
+        "claude-code",
+        "kirocrew",
+        "grok"
+      ]
+    },
+    {
+      "chip": "kirocrew",
+      "file": "tab-kirocrew.png",
+      "active": "kirocrew",
+      "sentenceInCompaction": true,
+      "sentenceInEconomy": false,
+      "compactionText": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.",
+      "switches": "no kirocrew switches in the last 24h",
+      "agents": "no active agent spawned",
+      "chips": [
+        "all",
+        "antigravity",
+        "codex",
+        "cursor",
+        "claude-code",
+        "kirocrew",
+        "grok"
+      ]
+    },
+    {
+      "chip": "grok",
+      "file": "tab-grok.png",
+      "active": "grok",
+      "sentenceInCompaction": true,
+      "sentenceInEconomy": false,
+      "compactionText": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.",
+      "switches": "no grok switches in the last 24h",
+      "agents": "no active agent spawned",
+      "chips": [
+        "all",
+        "antigravity",
+        "codex",
+        "cursor",
+        "claude-code",
+        "kirocrew",
+        "grok"
+      ]
+    }
+  ]
+}

@@ -21,12 +21,16 @@ import (
 type SessionList struct {
 	IDs   []string
 	Known bool
-	// Included ids have a stable token budget in this session. Empty means
-	// the operator did not mark any, and ranking stays cost-based.
+	// Included ids have a stable token budget in this call. Empty means the
+	// hook did not report one. A file on disk is not a credit source.
 	Included []string
 	// Exhausted ids are in the session but must not be selected. The user
-	// has no remaining token budget for them.
+	// has no remaining token budget for them. Only a hook unavailable_models
+	// list sets this.
 	Exhausted []string
+	// CreditsReported is true only when this call's hook payload sent
+	// included_models or unavailable_models. A file on disk is not a credit report.
+	CreditsReported bool
 }
 
 // UnknownSession is the fail-open list: no rewrite.
@@ -68,9 +72,10 @@ func (s SessionList) has(ids []string, id string) bool {
 // WithHookQuota replaces included and exhausted lists when the hook sent them.
 // A nil slice leaves the file value in place. A non-nil slice is authoritative.
 func (s SessionList) WithHookQuota(included, exhausted *[]string) SessionList {
-	if !s.Known {
+	if !s.Known || (included == nil && exhausted == nil) {
 		return s
 	}
+	s.CreditsReported = true
 	if included != nil {
 		s.Included = append([]string(nil), (*included)...)
 	}
@@ -142,7 +147,7 @@ func LoadSessionFileForID(harness, sessionID, path string) SessionList {
 		var byHarness map[string]map[string][]string
 		if sessions, ok := raw["sessions"]; ok && json.Unmarshal(sessions, &byHarness) == nil {
 			if ids, ok := byHarness[harness][sessionID]; ok && ids != nil {
-				return withFileQuota(KnownSession(ids), harness, raw)
+				return KnownSession(ids)
 			}
 		}
 	}
@@ -154,35 +159,7 @@ func LoadSessionFileForID(harness, sessionID, path string) SessionList {
 	if err := json.Unmarshal(msg, &ids); err != nil {
 		return UnknownSession()
 	}
-	return withFileQuota(KnownSession(ids), harness, raw)
-}
-
-// withFileQuota reads the optional quota.<harness> object.
-// included: models that still have token budget.
-// exhausted: models the user cannot run until the budget resets.
-func withFileQuota(session SessionList, harness string, raw map[string]json.RawMessage) SessionList {
-	msg, ok := raw["quota"]
-	if !ok {
-		return session
-	}
-	var quota map[string]struct {
-		Included  []string `json:"included"`
-		Exhausted []string `json:"exhausted"`
-	}
-	if json.Unmarshal(msg, &quota) != nil {
-		return session
-	}
-	q, ok := quota[harness]
-	if !ok {
-		return session
-	}
-	if q.Included != nil {
-		session.Included = append([]string(nil), q.Included...)
-	}
-	if q.Exhausted != nil {
-		session.Exhausted = append([]string(nil), q.Exhausted...)
-	}
-	return session
+	return KnownSession(ids)
 }
 
 // ResolveSession prefers a hook allowlist. When the payload has none, it
@@ -191,15 +168,47 @@ func ResolveSession(harness string, hookLists ...*[]string) SessionList {
 	return ResolveSessionForID(harness, "", hookLists...)
 }
 
-// ResolveSessionForID prefers a hook-provided allowlist, then a per-session
-// user allowlist, then the harness-wide user allowlist, then the models the
-// harness reported to `downshift models discover` (see LoadDiscoveredSession).
+// ResolveSessionForID prefers the hook payload, then the models recovered by
+// `downshift models discover`, then the operator file. The file is not a
+// credit report and does not outrank a recovered session.
 func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) SessionList {
 	if session, ok := SessionFromHook(hookLists...); ok {
 		return session
 	}
-	if session := LoadUserSessionForID(harness, sessionID); session.Known {
+	if session := LoadDiscoveredSession(harness, time.Now()); session.Known {
 		return session
 	}
-	return LoadDiscoveredSession(harness, time.Now())
+	return LoadUserSessionForID(harness, sessionID)
+}
+
+// ExplicitUpshiftEnabled reports whether upshift may select catalog
+// explicit_only ids. The default is off. DOWNSHIFT_EXPLICIT_UPSHIFT=1 or
+// "explicit_upshift": true in session-models.json turns it on. Either source
+// is enough. The flag does not replace a current explicit_only model.
+func ExplicitUpshiftEnabled() bool {
+	if os.Getenv("DOWNSHIFT_EXPLICIT_UPSHIFT") == "1" {
+		return true
+	}
+	return explicitUpshiftFromFile()
+}
+
+func explicitUpshiftFromFile() bool {
+	path := os.Getenv("DOWNSHIFT_SESSION_MODELS")
+	if path == "" {
+		path = DefaultSessionModelsPath()
+	}
+	if path == "" {
+		return false
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	var raw struct {
+		ExplicitUpshift bool `json:"explicit_upshift"`
+	}
+	if json.Unmarshal(data, &raw) != nil {
+		return false
+	}
+	return raw.ExplicitUpshift
 }

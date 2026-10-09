@@ -251,6 +251,15 @@ func summarizeCompactionLogUnlocked(path string) (map[string]HarnessCompaction, 
 	return out, nil
 }
 
+// SummarizeByHarness reads this store's compaction log. A line outside the
+// record contract returns an error and no harness rows.
+func (s *Store) SummarizeByHarness() (map[string]HarnessCompaction, error) {
+	if s == nil || s.compactionPath == "" {
+		return map[string]HarnessCompaction{}, nil
+	}
+	return SummarizeCompactionLog(s.compactionPath)
+}
+
 func withPathLock(path string, fn func() error) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
 		return err

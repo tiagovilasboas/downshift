@@ -4,14 +4,16 @@
 package benchmark
 
 import (
-	"context"
+	"embed"
 	"fmt"
 	"io"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/compressor"
-	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
 )
+
+//go:embed fixtures/go_test_all_ok.txt fixtures/go_test_non_ok.txt fixtures/repetitive_logs.txt fixtures/search_hits.txt
+var compressorFixtures embed.FS
 
 // ContextScenario represents one of the four benchmark comparison scenarios.
 type ContextScenario string
@@ -37,42 +39,64 @@ type ContextBenchmarkRecord struct {
 	ToolCalls       int             `json:"tool_calls"`
 }
 
-// CompareContextScenarios generates a multi-scenario comparison report based on empirical models.
+// CompareContextScenarios prints the routing scenario matrix and a measured
+// compressor byte table. Routing cost and accuracy stay "not measured".
+// The byte table runs the compressor on checked-in fixtures. It reports
+// original bytes, reduced bytes, and byte savings. It does not estimate
+// tokens or dollars.
 func CompareContextScenarios(w io.Writer) error {
-	p := native.NewProvider(compressor.ModeSafe)
-	installed, ver, _, _ := p.Detect(context.Background())
-
 	fmt.Fprintln(w, "================================================================================")
-	fmt.Fprintln(w, "Downshift Context Optimization: illustrative scenario matrix")
-	fmt.Fprintln(w, "NOT MEASURED. The percentages below are placeholders, not a benchmark result.")
+	fmt.Fprintln(w, "Downshift Context Optimization")
+	fmt.Fprintln(w, "Routing cost and accuracy are not measured.")
+	fmt.Fprintln(w, "Compressor rows below are measured bytes from checked-in fixtures.")
 	fmt.Fprintln(w, "================================================================================")
-	if installed {
-		fmt.Fprintf(w, "Provider: Native Context Compressor (%s)\n\n", ver)
-	}
 
 	scenarios := []struct {
 		Name        ContextScenario
 		RoutingTier string
 		Compression string
 		CostFactor  string
-		TokensSaved string
 		Accuracy    string
 	}{
-		{ScenarioA, "Frontier (Unrouted)", "None (Raw logs)", "not measured", "not measured", "not measured"},
-		{ScenarioB, "Downshift Tiered", "None (Raw logs)", "not measured", "not measured", "not measured"},
-		{ScenarioC, "Frontier (Unrouted)", "Native Squelch", "not measured", "not measured", "not measured"},
-		{ScenarioD, "Downshift Tiered", "Native Squelch", "not measured", "not measured", "not measured"},
+		{ScenarioA, "Frontier (Unrouted)", "None (Raw logs)", "not measured", "not measured"},
+		{ScenarioB, "Downshift Tiered", "None (Raw logs)", "not measured", "not measured"},
+		{ScenarioC, "Frontier (Unrouted)", "Native Squelch", "not measured", "not measured"},
+		{ScenarioD, "Downshift Tiered", "Native Squelch", "not measured", "not measured"},
 	}
 
-	fmt.Fprintf(w, "%-46s | %-16s | %-15s | %-18s | %-8s\n", "Scenario", "Routing", "Compression", "Cost Factor", "Accuracy")
+	fmt.Fprintf(w, "%-46s | %-16s | %-15s | %-18s | %-12s\n", "Scenario", "Routing", "Compression", "Cost Factor", "Accuracy")
 	fmt.Fprintln(w, "----------------------------------------------------------------------------------------------------------------")
 	for _, s := range scenarios {
-		fmt.Fprintf(w, "%-46s | %-16s | %-15s | %-18s | %-8s\n", s.Name, s.RoutingTier, s.Compression, s.CostFactor, s.Accuracy)
+		fmt.Fprintf(w, "%-46s | %-16s | %-15s | %-18s | %-12s\n", s.Name, s.RoutingTier, s.Compression, s.CostFactor, s.Accuracy)
 	}
 	fmt.Fprintln(w, "----------------------------------------------------------------------------------------------------------------")
+	fmt.Fprintln(w, "Measured compressor bytes (safe mode, exit 0). Unit: bytes.")
+	fmt.Fprintln(w, "fixture | original bytes | reduced bytes | byte savings")
+	fixtures := []struct {
+		Name string
+		File string
+	}{
+		{"go test all-ok", "fixtures/go_test_all_ok.txt"},
+		{"go test non-ok warning", "fixtures/go_test_non_ok.txt"},
+		{"repetitive logs", "fixtures/repetitive_logs.txt"},
+		{"search hits", "fixtures/search_hits.txt"},
+	}
+	for _, fx := range fixtures {
+		raw, err := compressorFixtures.ReadFile(fx.File)
+		if err != nil {
+			return fmt.Errorf("read fixture %s: %w", fx.File, err)
+		}
+		res := compressor.CompressExit(raw, compressor.ModeSafe, 0)
+		savings := res.OriginalBytes - res.ReducedBytes
+		if savings < 0 {
+			savings = 0
+		}
+		fmt.Fprintf(w, "%s | %d | %d | %d\n", fx.Name, res.OriginalBytes, res.ReducedBytes, savings)
+	}
 	fmt.Fprintln(w, "Key Insights:")
-	fmt.Fprintln(w, "1. Model routing and compression are separate levers. This command does not price either one.")
+	fmt.Fprintln(w, "1. Model routing and compression are separate levers. This command does not price routing.")
 	fmt.Fprintln(w, "2. Safe compression keeps non-ok test lines, search hits, file names, git logs, and any non-zero exit.")
-	fmt.Fprintln(w, "3. Cost, token and accuracy cells are not measured. Do not cite a savings percentage from this command.")
+	fmt.Fprintln(w, "3. Routing cost and accuracy are not measured. tokens: not measured.")
+	fmt.Fprintln(w, "4. The fixture table is bytes only. It is not a token count and not a dollar saving.")
 	return nil
 }
