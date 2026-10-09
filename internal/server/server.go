@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/sensor"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -28,13 +29,15 @@ const DefaultPort = "7474"
 const estimatedCostPerUnitUSD = 0.01
 
 type rawEvent struct {
-	Timestamp  string  `json:"timestamp"`
-	Harness    string  `json:"harness"`
-	From       string  `json:"requested_model"`
-	To         string  `json:"final_model"`
-	Verdict    string  `json:"verdict"`
-	Complexity string  `json:"complexity"`
-	Savings    float64 `json:"estimated_savings"`
+	Timestamp       string  `json:"timestamp"`
+	Harness         string  `json:"harness"`
+	From            string  `json:"requested_model"`
+	To              string  `json:"final_model"`
+	RequestedEffort string  `json:"requested_reasoning_effort,omitempty"`
+	FinalEffort     string  `json:"final_reasoning_effort,omitempty"`
+	Verdict         string  `json:"verdict"`
+	Complexity      string  `json:"complexity"`
+	Savings         float64 `json:"estimated_savings"`
 	// Outcome and Corrections decide whether the decision changed the spawn
 	// (telemetry.AppliedRewrite); only applied downshifts count as savings.
 	Outcome     string   `json:"outcome,omitempty"`
@@ -60,10 +63,11 @@ type agentEntry struct {
 }
 
 type statusResponse struct {
-	Harnesses []string     `json:"harnesses"`
-	Switches  []rawEvent   `json:"switches"`
-	Agents    []agentEntry `json:"agents"`
-	Stats     statsBlock   `json:"stats"`
+	Harnesses  []string                 `json:"harnesses"`
+	Switches   []rawEvent               `json:"switches"`
+	Agents     []agentEntry             `json:"agents"`
+	Stats      statsBlock               `json:"stats"`
+	Compaction sensor.CompactionSummary `json:"compaction"`
 }
 
 type statsBlock struct {
@@ -189,9 +193,11 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 
 	evPath, _ := paths.EventsPath()
 	agPath, _ := paths.AgentsPath()
+	sensorPath, _ := paths.Join("context-sensor.json")
 
 	lastEvSize := fileSize(evPath)
 	lastAgSize := fileSize(agPath)
+	lastSensorSize := fileSize(sensorPath)
 
 	// Send a keep-alive comment every 25s; check for changes every 500ms.
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -215,9 +221,11 @@ func handleEvents(w http.ResponseWriter, r *http.Request) {
 		case <-ticker.C:
 			evSize := fileSize(evPath)
 			agSize := fileSize(agPath)
-			if evSize != lastEvSize || agSize != lastAgSize {
+			sensorSize := fileSize(sensorPath)
+			if evSize != lastEvSize || agSize != lastAgSize || sensorSize != lastSensorSize {
 				lastEvSize = evSize
 				lastAgSize = agSize
+				lastSensorSize = sensorSize
 				send("update")
 			}
 		}
@@ -236,13 +244,20 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	events := readEvents()
 	agents := readAgents()
 
+	// Chips are the product harnesses, not "whoever wrote in the last 24h".
+	// KiroCrew's last event can sit outside the window; the tab still exists.
+	harnesses := []string{"antigravity", "codex", "cursor", "claude-code", "kirocrew"}
 	seen := map[string]bool{}
-	var harnesses []string
+	for _, h := range harnesses {
+		seen[h] = true
+	}
 	for i := len(events) - 1; i >= 0; i-- {
-		if h := events[i].Harness; h != "" && !seen[h] {
-			seen[h] = true
-			harnesses = append([]string{h}, harnesses...)
+		h := events[i].Harness
+		if h == "" || seen[h] {
+			continue
 		}
+		seen[h] = true
+		harnesses = append(harnesses, h)
 	}
 
 	var st statsBlock
@@ -280,16 +295,40 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	events = decisions
 
 	sw := events
+	if sw == nil {
+		sw = []rawEvent{}
+	}
 	if len(sw) > 8 {
 		sw = sw[len(sw)-8:]
 	}
 	ag := agents
+	if ag == nil {
+		ag = []agentEntry{}
+	}
 	if len(ag) > 6 {
 		ag = ag[len(ag)-6:]
 	}
+	if harnesses == nil {
+		harnesses = []string{}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(statusResponse{Harnesses: harnesses, Switches: sw, Agents: ag, Stats: st})
+	json.NewEncoder(w).Encode(statusResponse{
+		Harnesses: harnesses, Switches: sw, Agents: ag, Stats: st,
+		Compaction: compactionSummary(),
+	})
+}
+
+func compactionSummary() sensor.CompactionSummary {
+	st, err := sensor.DefaultStore()
+	if err != nil || st == nil {
+		return sensor.SummarizeCompaction(nil)
+	}
+	obs, err := st.GetSummary()
+	if err != nil {
+		return sensor.SummarizeCompaction(nil)
+	}
+	return sensor.SummarizeCompaction(obs)
 }
 
 // Run starts the dashboard server on the given port.

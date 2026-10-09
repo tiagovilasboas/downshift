@@ -66,6 +66,9 @@ type Metrics struct {
 	SavedTokens   int64     `json:"saved_tokens"`
 	SavingsPct    float64   `json:"savings_pct"`
 	IsEstimated   bool      `json:"is_estimated"`
+	// TokenState is "unavailable" until a harness reports provider usage.
+	// Zero token fields are not a measurement.
+	TokenState string `json:"token_state,omitempty"`
 }
 
 // Config represents the persisted context optimization settings in Downshift.

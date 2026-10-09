@@ -221,8 +221,8 @@ func build(f catalogFile) *Catalog {
 			c.byID[e.Harness][alias] = m
 		}
 		// The harness sends its native name back in tool input (Claude Code's
-		// Task schema only accepts "haiku"/"sonnet"/"opus"), so it must resolve
-		// like an alias. The first entry of a family keeps the name.
+		// Task schema accepts "haiku"/"sonnet"/"opus"/"fable"), so it must
+		// resolve like an alias. The first entry of a family keeps the name.
 		if e.NativeName != "" {
 			if _, taken := c.byID[e.Harness][e.NativeName]; !taken {
 				c.byID[e.Harness][e.NativeName] = m

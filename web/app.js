@@ -22,6 +22,13 @@ function ageStr(ts) {
   return new Date(ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 }
 
+function modelVersion(e) {
+  const id = (e && (e.final_model || e.model)) || 'unknown';
+  const effort = e && e.final_reasoning_effort;
+  if (effort && effort !== 'unknown') return `${id} · ${effort}`;
+  return id;
+}
+
 function shortModel(m) {
   if (!m) return 'default';
   for (const k of ['haiku','sonnet','opus','gpt-6-l','gpt-6-s','grok']) if (m.includes(k)) return k;
@@ -61,12 +68,21 @@ function renderMonitor(data) {
     return;
   }
 
-  const { harnesses=[], switches=[], agents=[], stats={} } = data;
+  // The server encodes a nil slice as null. A default in destructuring does not
+  // replace null, and agents.filter then throws after the chips are painted.
+  const harnesses = Array.isArray(data.harnesses) ? data.harnesses : [];
+  const switches = Array.isArray(data.switches) ? data.switches : [];
+  const agents = Array.isArray(data.agents) ? data.agents : [];
+  const stats = data.stats && typeof data.stats === 'object' ? data.stats : {};
 
-  // Harness chips — clickable tabs
+  // Harness chips — clickable tabs. KiroCrew stays even with an empty 24h window.
+  const chipNames = ['antigravity', 'codex', 'cursor', 'claude-code', 'kirocrew'];
+  for (const h of harnesses) {
+    if (h && !chipNames.includes(h)) chipNames.push(h);
+  }
   const allChip = `<span class="chip${activeHarness===null?' hi':''}" onclick="setActiveHarness(null)">all</span>`;
-  const hchips = harnesses.map(h =>
-    `<span class="chip${h===activeHarness?' hi':''}" onclick="setActiveHarness('${h}')">${h}</span>`
+  const hchips = chipNames.map(h =>
+    `<span class="chip${h===activeHarness?' hi':''}" data-harness="${h}" onclick="setActiveHarness('${h}')">${h}</span>`
   ).join('');
   set('monitor-status', allChip + hchips);
 
@@ -78,62 +94,89 @@ function renderMonitor(data) {
     ? agents.filter(a => a.session && activeHarness === 'kirocrew' ? true : false) // agents don't have harness field yet
     : agents;
 
-  // ── active agents (spawns < 5min ago = likely still running) ──
+  // Spawns live on the routing events. agents.jsonl is often empty, so the
+  // 5-minute list must use switches or it stays "none" while a spawn is on screen.
   const fiveMinAgo = Date.now() - 5 * 60 * 1000;
-  const active = agents.filter(a => new Date(a.timestamp).getTime() > fiveMinAgo);
-  if (active.length === 0) {
+  const recent = (ts) => {
+    const t = new Date(ts).getTime();
+    return Number.isFinite(t) && t > fiveMinAgo;
+  };
+  const activeSwitches = filteredSwitches.filter(e => recent(e.timestamp));
+  // agents.jsonl is outside the routing window and has no harness. The
+  // 5-minute list is switches only.
+  const signal = document.getElementById('spawn-signal');
+  if (signal) {
+    const n = activeSwitches.length;
+    if (n > 0) {
+      signal.className = 'spawn-signal';
+      signal.textContent = `active agent spawned · ${n}`;
+    } else {
+      signal.className = 'spawn-signal off';
+      signal.textContent = 'none in the last 5 min';
+    }
+  }
+  if (activeSwitches.length === 0) {
     set('monitor-active-agents', dim('none in the last 5 min'));
   } else {
-    set('monitor-active-agents', active.map(a =>
-      `<div class="row">
-        <span class="t">${ageStr(a.timestamp)}</span>
-        <span class="m"><span class="active-dot">●</span>${shortModel(a.model)}</span>
-        <span class="desc">${a.task.slice(0, 44)}</span>
-      </div>`
-    ).join(''));
+    const fromSwitches = activeSwitches.slice().reverse().map(e => {
+      const complexity = (e.complexity || 'unknown').toLowerCase();
+      const verdict = e.verdict === 'DOWNSHIFT' ? `↓ ${complexity}`
+        : e.verdict === 'UPSHIFT' ? `↑ ${complexity}`
+        : e.verdict === 'UNKNOWN' ? `? ${complexity}`
+        : `✓ ${complexity}`;
+      const effort = e.final_reasoning_effort && e.final_reasoning_effort !== 'unknown'
+        ? ` · ${e.final_reasoning_effort}` : '';
+      return `<div class="row">
+        <span class="t">${ageStr(e.timestamp)}</span>
+        <span class="m"><span class="active-dot">●</span>${modelVersion(e)}</span>
+        <span class="tag-spawned">spawned</span>
+        <span class="desc">${e.harness || ''} · ${verdict}${effort}</span>
+      </div>`;
+    });
+    set('monitor-active-agents', fromSwitches.join(''));
   }
 
   // ── switches (last 6, newest first with flash) ──
   const swRows = filteredSwitches.slice(-6).reverse().map((e, i) => {
-    const v = e.verdict === 'DOWNSHIFT' ? ok(`↓ ${e.complexity.toLowerCase()} −${Math.round(e.estimated_savings*100)}%`)
-            : e.verdict === 'UPSHIFT'   ? warn(`↑ ${e.complexity.toLowerCase()}`)
-            : dim(`✓ ${e.complexity.toLowerCase()}`);
+    const complexity = (e.complexity || 'unknown').toLowerCase();
+    const v = e.verdict === 'DOWNSHIFT' ? ok(`↓ ${complexity}`)
+            : e.verdict === 'UPSHIFT'   ? warn(`↑ ${complexity}`)
+            : e.verdict === 'UNKNOWN'   ? dim(`? ${complexity}`)
+            : dim(`✓ ${complexity}`);
     const isNew = i === 0 && _justUpdated;
-    return `<div class="row${isNew?' new':''}"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${shortModel(e.final_model)}</span>${v}</div>`;
-  }).join('') || dim(activeHarness ? `no switches for ${activeHarness}` : 'no switches yet');
+    return `<div class="row${isNew?' new':''}"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${modelVersion(e)}</span><span class="tag-spawned">spawned</span>${v}</div>`;
+  }).join('') || dim(activeHarness ? `no ${activeHarness} switches in the last 24h` : 'no active agent spawned');
   set('monitor-switches', swRows);
 
   const agRows = filteredAgents.slice(-4).map(a =>
-    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="desc">${a.task.slice(0,44)}</span></div>`
-  ).join('') || dim('no agents yet');
+    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="tag-spawned">spawned</span><span class="desc">${(a.task || '').slice(0,44)}</span></div>`
+  ).join('') || dim('no active agent spawned');
   set('monitor-agents', agRows);
 
-  // ── stats ──
+  // ── stats: 24h totals from the server, unless a harness chip is selected ──
   const src = activeHarness ? switches.filter(e => e.harness === activeHarness) : switches;
   const down = src.filter(e => e.verdict === 'DOWNSHIFT');
   const up   = src.filter(e => e.verdict === 'UPSHIFT');
-  const estUSD = down.reduce((s,e) => s + e.estimated_savings * 0.01, 0);
-  // Token estimate: savings_USD / ($0.025 per 1K output tokens at frontier)
-  const estTokensK = Math.round(estUSD / 0.000025 / 1000);
+  const totalN = activeHarness ? src.length : (stats.total ?? src.length);
+  const downN = activeHarness ? down.length : (stats.down ?? down.length);
+  const upN = activeHarness ? up.length : (stats.up ?? up.length);
+  const estUSD = activeHarness
+    ? down.reduce((s, e) => s + (e.estimated_savings || 0) * 0.01, 0)
+    : (stats.est_usd ?? 0);
   set('monitor-stats',
-    `${info(src.length)} spawns &nbsp; ${ok(`${down.length}↓`)} &nbsp; ${warn(`${up.length}↑`)}` +
+    `${info(totalN)} events &nbsp; ${ok(`${downN}↓`)} &nbsp; ${warn(`${upN}↑`)}` +
     (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '')
   );
 
   // ── economy bar ──
-  if (down.length > 0) {
+  if (downN > 0) {
     const sec = document.getElementById('economy-section');
     if (sec) sec.style.display = '';
     set('economy-bar', `
 <div class="economy-bar">
   <div>
     <div class="big">$${estUSD.toFixed(2)}</div>
-    <div class="sub">est. saved · ${down.length} downshift${down.length!==1?'s':''}</div>
-  </div>
-  <div class="economy-divider"></div>
-  <div>
-    <div class="big" style="font-size:14px">~${estTokensK}K</div>
-    <div class="sub">tokens rerouted (est.)</div>
+    <div class="sub">est. saved · last 24h · ${downN} downshift${downN!==1?'s':''}</div>
   </div>
 </div>`);
   } else {
@@ -141,6 +184,20 @@ function renderMonitor(data) {
     if (sec) sec.style.display = 'none';
     set('economy-bar', '');
   }
+  renderCompaction(data.compaction);
+}
+
+function renderCompaction(c) {
+  const before = (c && c.bytes_before) || 0;
+  const after = (c && c.bytes_after) || 0;
+  const reduced = (c && c.bytes_reduced) || 0;
+  const pct = c && typeof c.savings_pct === 'number' ? c.savings_pct : 0;
+  const tokenState = (c && c.token_state) || 'unavailable';
+  set('compaction-report',
+    `<div class="stats-line">${before} bytes in · ${after} bytes after · ${ok(reduced + ' bytes reduced')} · savings_pct ${pct.toFixed(1)}</div>` +
+    `<div class="dim">token_state ${tokenState}</div>` +
+    `<div>Bytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.</div>`
+  );
 }
 
 // ── SSE: push updates from server ────────────────────────────────────────────
@@ -185,9 +242,8 @@ function updateTimestamps() {
 
 // ── init ─────────────────────────────────────────────────────────────────────
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
-}
+// Do not register a service worker. A previous one cached a broken app.js
+// and a stale /api/status. sw.js now only unregisters that worker.
 
 // First paint
 fetchStatus().then(data => { latestData = data; renderMonitor(data); });

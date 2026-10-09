@@ -1,0 +1,33 @@
+downshift · dashboard
+3:54:36 AM
+tiagovilasboas
+♥ Sponsor
+ROUTING MONITOR · LAST 24H
+NONE IN THE LAST 5 MIN
+◉
+📲 Install as an app
+Install
+HARNESSES
+all
+antigravity
+codex
+cursor
+claude-code
+kirocrew
+ACTIVE AGENTS
+spawned in the last 5 min
+none in the last 5 min
+ACTIVE AGENT SPAWNED
+hook saw the spawn
+no kirocrew switches in the last 24h
+AGENTS
+no active agent spawned
+STATS
+0 events   0↓   0↑   · kirocrew only
+SESSION COMPACTION
+tool output only
+0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0
+token_state unavailable
+Bytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.
+⚠ These rows are active agents spawned, not the whole session. Each line is a subagent the hook saw on Claude Code, Cursor, Codex, Antigravity, or KiroCrew.
+Dollar figures are estimates, not a provider invoice. A downshift that the hook held (guardrail) stays in the log and does not add savings.

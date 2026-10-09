@@ -5,6 +5,7 @@ package compressor_test
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -105,6 +106,44 @@ func TestCompress_BinaryData_Preserved(t *testing.T) {
 	}
 	if res.Reason != "binary_or_invalid_utf8" {
 		t.Errorf("expected binary_or_invalid_utf8 reason, got %s", res.Reason)
+	}
+}
+
+func TestCompress_GoTest_WarningPreserved(t *testing.T) {
+	in := []byte("ok  github.com/foo/bar  0.1s\nok  github.com/foo/baz  0.2s\n?   	github.com/foo/qux	[no test files]\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if res.Applied {
+		t.Fatal("a non-ok line must keep the original output")
+	}
+	if !bytes.Equal(res.Output, in) {
+		t.Fatalf("output = %q", res.Output)
+	}
+}
+
+func TestCompress_SearchResults_Preserved(t *testing.T) {
+	var b strings.Builder
+	for i := 0; i < 40; i++ {
+		fmt.Fprintf(&b, "file.go:%d:match\n", i)
+	}
+	in := []byte(b.String())
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if res.Applied || !bytes.Equal(res.Output, in) {
+		t.Fatalf("search output was compacted: applied=%v len=%d", res.Applied, len(res.Output))
+	}
+}
+
+func TestCompressExit_NonZeroPreservesPassingText(t *testing.T) {
+	in := []byte("ok  github.com/foo/bar  0.1s\nok  github.com/foo/baz  0.2s\n")
+	res := compressor.CompressExit(in, compressor.ModeSafe, 1)
+	if res.Applied || !bytes.Equal(res.Output, in) {
+		t.Fatalf("nonzero exit was compacted: %+v", res)
+	}
+	if res.Reason != "nonzero_exit_preserved" {
+		t.Fatalf("reason = %s", res.Reason)
+	}
+	ok := compressor.CompressExit(in, compressor.ModeSafe, 0)
+	if !ok.Applied {
+		t.Fatal("exit 0 may compact an all-ok suite")
 	}
 }
 

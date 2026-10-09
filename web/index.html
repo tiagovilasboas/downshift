@@ -155,11 +155,33 @@ main {
   color: var(--accent);
   background: rgba(88,166,255,.08);
 }
+.spawn-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--ok);
+  color: var(--ok);
+  border-radius: 10px;
+  padding: 2px 8px;
+  font-size: 10px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.spawn-signal.off {
+  border-color: var(--border);
+  color: var(--muted);
+}
+.tag-spawned {
+  color: var(--ok);
+  font-size: 9px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
 
 /* ── rows ── */
 .row {
   display: grid;
-  grid-template-columns: 30px 58px 1fr;
+  grid-template-columns: 42px minmax(160px, 1.8fr) auto 1fr;
   gap: 8px;
   padding: 3px 0;
   align-items: baseline;
@@ -273,6 +295,7 @@ main {
     <div class="card">
       <div class="card-header">
         <span>routing monitor · last 24h</span>
+        <span id="spawn-signal" class="spawn-signal off">no active agent spawned</span>
         <span id="sse-indicator" style="font-size:10px"></span>
       </div>
 
@@ -290,13 +313,13 @@ main {
       <div class="section">
         <div class="section-label">
           active agents
-          <span class="note">(spawned in the last 5 min)</span>
+          <span class="note">spawned in the last 5 min</span>
         </div>
         <div id="monitor-active-agents"><span class="dim">—</span></div>
       </div>
 
       <div class="section">
-        <div class="section-label">last switch</div>
+        <div class="section-label">active agent spawned <span class="note">hook saw the spawn</span></div>
         <div id="monitor-switches"><span class="dim">—</span></div>
       </div>
 
@@ -315,15 +338,19 @@ main {
         <div id="economy-bar"></div>
       </div>
 
+      <div class="section" id="compaction-section">
+        <div class="section-label">session compaction <span class="note">tool output only</span></div>
+        <div id="compaction-report"><span class="dim">—</span></div>
+      </div>
+
       <div class="notice">
         <span style="color:var(--warn)">⚠</span>
-        Data is recorded <strong>only when subagents are dispatched</strong>
-        via <code>spawn_run</code> / <code>spawn_sub_agents</code> with the
-        <code>downshift</code> hook active.
+        These rows are <strong>active agents spawned</strong>, not the whole
+        session. Each line is a subagent the hook saw on Claude Code, Cursor,
+        Codex, Antigravity, or KiroCrew.
         <br>
-        <strong>Does not represent</strong> total session token consumption,
-        direct model calls, or activity outside KiroCrew.
-        Savings are estimated from average spawn cost — not actual billing data.
+        Dollar figures are estimates, not a provider invoice. A downshift that
+        the hook held (guardrail) stays in the log and does not add savings.
       </div>
     </div>
   </main>
@@ -345,6 +372,13 @@ document.getElementById('install-btn')?.addEventListener('click', async () => {
   deferredPrompt = null;
 });
 </script>
-<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then((regs) => Promise.all(regs.map((reg) => reg.unregister())))
+    .catch(() => {});
+}
+</script>
+<script src="app.js?v=11"></script>
 </body>
 </html>

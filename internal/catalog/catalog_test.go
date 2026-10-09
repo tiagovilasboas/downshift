@@ -132,6 +132,24 @@ func TestLookupByID_NotFound(t *testing.T) {
 	}
 }
 
+func TestClaudeCodeFableIsOptInNotTheDefaultFrontier(t *testing.T) {
+	c := Load()
+	m, ok := c.LookupByID("claude-code", "fable")
+	if !ok {
+		t.Fatal("native name fable must resolve on claude-code")
+	}
+	if m.ID != "claude-fable-5-1" || m.Native != "fable" {
+		t.Fatalf("fable lookup = %+v, want claude-fable-5-1 native fable", m)
+	}
+	if c.IsExplicitOnly("claude-code", "claude-fable-5-1") {
+		t.Error("claude-code fable is an optional session upshift, not explicit_only")
+	}
+	frontier := c.ModelFor("claude-code", core.TierFrontier)
+	if frontier.ID != "claude-opus-5-5" {
+		t.Errorf("default frontier = %q, want claude-opus-5-5 (fable stays opt-in)", frontier.ID)
+	}
+}
+
 func TestLookupByID_EmptyID(t *testing.T) {
 	c := Load()
 	_, ok := c.LookupByID("claude-code", "")

@@ -9,6 +9,8 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/compressor"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/sensor"
 )
 
 const (
@@ -118,19 +120,27 @@ func (p *Provider) GetDiagnostics(ctx context.Context, targetDir string) (*conte
 		BinaryPath:         "in-process (Go)",
 		Version:            "built-in",
 		SupportedHarnesses: p.SupportedHarnesses(),
-		Recommendations:    []string{"Native compressor runs in-process with zero network, Python, or daemon overhead"},
+		Recommendations:    []string{"Configure does not install a harness hook. Compression runs only when a caller invokes Compress. Token counters from GetMetrics stay unavailable until a sensor log exists; they are not a savings measurement."},
 	}, nil
 }
 
 func (p *Provider) GetMetrics(ctx context.Context, projectDir string) (*contextopt.Metrics, error) {
-	return &contextopt.Metrics{
-		ProviderID:    ProviderID,
-		CapturedAt:    time.Now().UTC(),
-		TotalCommands: 0,
-		InputTokens:   0,
-		OutputTokens:  0,
-		SavedTokens:   0,
-		SavingsPct:    0.0,
-		IsEstimated:   false,
-	}, nil
+	metrics := &contextopt.Metrics{
+		ProviderID:  ProviderID,
+		CapturedAt:  time.Now().UTC(),
+		IsEstimated: false,
+		TokenState:  "unavailable",
+	}
+	path, err := paths.Join("context-compactions.jsonl")
+	if err != nil {
+		return metrics, nil
+	}
+	rows, err := sensor.SummarizeCompactionLog(path)
+	if err != nil || len(rows) == 0 {
+		return metrics, nil
+	}
+	for _, row := range rows {
+		metrics.TotalCommands += row.TotalCommands
+	}
+	return metrics, nil
 }

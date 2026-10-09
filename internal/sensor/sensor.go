@@ -13,6 +13,7 @@ package sensor
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -54,24 +55,49 @@ type SessionObservation struct {
 
 // Store persists aggregated context sensor observations safely under the state dir.
 type Store struct {
-	mu   sync.Mutex
-	path string
+	mu             sync.Mutex
+	path           string
+	compactionPath string
 }
 
 // DefaultStore returns the sensor store at $DOWNSHIFT_STATE_DIR/context-sensor.json.
+// The append-only history is context-compactions.jsonl in the same state dir.
 func DefaultStore() (*Store, error) {
 	p, err := paths.Join("context-sensor.json")
 	if err != nil {
 		return nil, err
 	}
-	return &Store{path: p}, nil
+	logPath, err := paths.Join(compactionLogName)
+	if err != nil {
+		return nil, err
+	}
+	return &Store{path: p, compactionPath: logPath}, nil
 }
 
 // RecordToolOutput observes a tool output event safely without storing the content.
+// The exit code is unknown. A text heuristic may count compression potential,
+// and a non-zero status passed via RecordToolResult never does.
 func (s *Store) RecordToolOutput(sessionHash, harness, toolName string, output []byte, isError bool) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	return s.RecordToolResult(sessionHash, harness, toolName, output, -1, isError)
+}
 
+// RecordToolResult is RecordToolOutput with the process exit code.
+// exitCode < 0 means unknown. exitCode > 0, or isError, preserves the output
+// and does not count a compression opportunity.
+func (s *Store) RecordToolResult(sessionHash, harness, toolName string, output []byte, exitCode int, isError bool) error {
+	if exitCode > 0 {
+		isError = true
+	} else if isError && exitCode <= 0 {
+		exitCode = 1
+	}
+	return s.withStateLock(func() error {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		return s.recordLocked(sessionHash, harness, toolName, output, exitCode, isError)
+	})
+}
+
+func (s *Store) recordLocked(sessionHash, harness, toolName string, output []byte, exitCode int, isError bool) error {
 	data, err := s.loadAll()
 	if err != nil {
 		data = make(map[string]SessionObservation)
@@ -95,8 +121,8 @@ func (s *Store) RecordToolOutput(sessionHash, harness, toolName string, output [
 	}
 	obs.TotalOutputBytes += int64(len(output))
 
-	// Run compressor in observe mode to measure compression potential safely
-	res := compressor.Compress(output, compressor.ModeObserve)
+	// Observe mode measures potential only. A known failure is not potential.
+	res := compressor.CompressExit(output, compressor.ModeObserve, exitCode)
 	if res.Applied {
 		obs.CompressionOpportunities++
 		obs.PotentialReducedBytes += int64(res.OriginalBytes - res.ReducedBytes)
@@ -107,14 +133,93 @@ func (s *Store) RecordToolOutput(sessionHash, harness, toolName string, output [
 	}
 
 	data[sessionHash] = obs
-	return s.saveAll(data)
+	if err := s.saveAll(data); err != nil {
+		return err
+	}
+	// History is append-only and grouped by harness. It never stores the
+	// tool output that the aggregate above already measured.
+	return s.appendCompaction(newCompactionRecord(sessionHash, harness, toolName, output, isError, res, obs.LastSeen))
+}
+
+// CompactionSummary is the tool-output reduction the dashboard may show.
+// Bytes are observed counts. Token counts stay zero and token_state stays
+// unavailable: this package does not apply a bytes-to-token divisor.
+type CompactionSummary struct {
+	Sessions       int     `json:"sessions"`
+	ToolExecutions int64   `json:"tool_executions"`
+	BytesBefore    int64   `json:"bytes_before"`
+	BytesReduced   int64   `json:"bytes_reduced"`
+	BytesAfter     int64   `json:"bytes_after"`
+	TokensBefore   int64   `json:"tokens_before"`
+	TokensAfter    int64   `json:"tokens_after"`
+	TokensReduced  int64   `json:"tokens_reduced"`
+	TokenState     string  `json:"token_state"`
+	SavingsPct     float64 `json:"savings_pct"`
+	State          string  `json:"state"`
+}
+
+// SummarizeCompaction adds tool-output bytes. A session key that is not a
+// 64-hex digest fails the whole summary closed. It does not multiply by
+// later turns: the sensor does not record how many times history was reread.
+func SummarizeCompaction(obs map[string]SessionObservation) CompactionSummary {
+	sum := CompactionSummary{
+		State:      string(StateUnavailable),
+		TokenState: string(StateUnavailable),
+	}
+	if len(obs) == 0 {
+		return sum
+	}
+	for key := range obs {
+		if !sessionDigest(key) {
+			return CompactionSummary{
+				State:      string(StateUnavailable),
+				TokenState: string(StateUnavailable),
+			}
+		}
+	}
+	sum.Sessions = len(obs)
+	for _, o := range obs {
+		sum.ToolExecutions += o.ToolExecutions
+		sum.BytesBefore += o.TotalOutputBytes
+		sum.BytesReduced += o.PotentialReducedBytes
+	}
+	if sum.BytesReduced > sum.BytesBefore {
+		sum.BytesReduced = sum.BytesBefore
+	}
+	sum.BytesAfter = sum.BytesBefore - sum.BytesReduced
+	if sum.BytesBefore > 0 {
+		sum.SavingsPct = float64(sum.BytesReduced) / float64(sum.BytesBefore) * 100
+	}
+	sum.State = string(StateObserved)
+	return sum
+}
+
+func sessionDigest(key string) bool {
+	if len(key) != 64 {
+		return false
+	}
+	for _, c := range key {
+		switch {
+		case c >= '0' && c <= '9':
+		case c >= 'a' && c <= 'f':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // GetSummary returns all session observations without raw content.
 func (s *Store) GetSummary() (map[string]SessionObservation, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.loadAll()
+	var out map[string]SessionObservation
+	err := s.withStateLock(func() error {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		var loadErr error
+		out, loadErr = s.loadAll()
+		return loadErr
+	})
+	return out, err
 }
 
 func (s *Store) loadAll() (map[string]SessionObservation, error) {
@@ -130,16 +235,39 @@ func (s *Store) loadAll() (map[string]SessionObservation, error) {
 }
 
 func (s *Store) saveAll(data map[string]SessionObservation) error {
-	if err := os.MkdirAll(filepath.Dir(s.path), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(s.path), 0700); err != nil {
 		return err
 	}
-	bytes, err := json.MarshalIndent(data, "", "  ")
+	payload, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return err
 	}
-	tmp := s.path + ".tmp"
-	if err := os.WriteFile(tmp, bytes, 0644); err != nil {
+	tmp := fmt.Sprintf("%s.%d.%d.tmp", s.path, os.Getpid(), time.Now().UnixNano())
+	if err := os.WriteFile(tmp, payload, 0600); err != nil {
 		return err
 	}
-	return os.Rename(tmp, s.path)
+	if err := os.Rename(tmp, s.path); err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	return nil
+}
+
+func (s *Store) withStateLock(fn func() error) error {
+	if s.path == "" {
+		return fmt.Errorf("sensor store path is empty")
+	}
+	if err := os.MkdirAll(filepath.Dir(s.path), 0700); err != nil {
+		return err
+	}
+	f, err := os.OpenFile(s.path+".lock", os.O_CREATE|os.O_RDWR, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if err := lockFile(f); err != nil {
+		return err
+	}
+	defer unlockFile(f)
+	return fn()
 }

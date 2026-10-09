@@ -27,7 +27,16 @@ var (
 // Compress evaluates the input according to the policy and selected mode.
 // If mode is ModeOff or ModeObserve, the returned Result.Output is byte-identical
 // to input. In ModeSafe, recognized safe formats are compacted.
+// Compress is CompressExit with an unknown exit code (-1). Text heuristics
+// still fail open on error-shaped output, but a caller that knows the
+// process exit code must use CompressExit.
 func Compress(input []byte, mode Mode) Result {
+	return CompressExit(input, mode, -1)
+}
+
+// CompressExit preserves the raw output when exitCode is non-zero.
+// exitCode < 0 means the caller does not know the status.
+func CompressExit(input []byte, mode Mode, exitCode int) Result {
 	origLen := len(input)
 	res := Result{
 		Output:        input,
@@ -35,6 +44,11 @@ func Compress(input []byte, mode Mode) Result {
 		Format:        FormatUnknown,
 		OriginalBytes: origLen,
 		ReducedBytes:  origLen,
+	}
+
+	if exitCode > 0 {
+		res.Reason = "nonzero_exit_preserved"
+		return res
 	}
 
 	if origLen == 0 {
@@ -147,14 +161,26 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 	}
 }
 
-// compressGoTest aggregates passed packages into a single summary line.
+// compressGoTest summarizes a suite only when every non-empty line is an
+// "ok" package line. Any other line (warning, skip, fail text the detector
+// missed) keeps the original output.
 func compressGoTest(input []byte) ([]byte, bool, string) {
-	matches := reGoTestPass.FindAllSubmatch(input, -1)
-	if len(matches) < 2 {
+	passes := 0
+	for _, line := range strings.Split(string(input), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		if reGoTestPass.MatchString(line) {
+			passes++
+			continue
+		}
+		return input, false, "go_test_preserved_non_pass_lines"
+	}
+	if passes < 2 {
 		return input, false, "go_test_too_few_packages_to_compress"
 	}
-	summary := fmt.Sprintf("Go test: PASS (%d packages ok)\n", len(matches))
-	return []byte(summary), true, fmt.Sprintf("compressed %d passing packages into summary", len(matches))
+	summary := fmt.Sprintf("Go test: PASS (%d packages ok)\n", passes)
+	return []byte(summary), true, fmt.Sprintf("compressed %d passing packages into summary", passes)
 }
 
 // compressGitStatus squelches "nothing to commit" or long untracked blocks.
@@ -171,63 +197,19 @@ func compressGitStatus(input []byte) ([]byte, bool, string) {
 	return input, false, "git_status_has_changes_preserved"
 }
 
-// compressGitLog summarizes multi-commit logs into oneline format.
+// compressGitLog keeps the raw log. An oneline summary drops bodies.
 func compressGitLog(input []byte) ([]byte, bool, string) {
-	lines := strings.Split(string(input), "\n")
-	var oneline []string
-	var curHash, curSubject string
-
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "commit ") && len(trimmed) >= 15 {
-			if curHash != "" {
-				oneline = append(oneline, fmt.Sprintf("%.7s %s", curHash, curSubject))
-			}
-			curHash = strings.TrimPrefix(trimmed, "commit ")
-			curSubject = ""
-		} else if curHash != "" && curSubject == "" && trimmed != "" && !strings.HasPrefix(trimmed, "Author:") && !strings.HasPrefix(trimmed, "Date:") {
-			curSubject = trimmed
-		}
-	}
-	if curHash != "" {
-		oneline = append(oneline, fmt.Sprintf("%.7s %s", curHash, curSubject))
-	}
-
-	if len(oneline) < 3 {
-		return input, false, "git_log_too_short"
-	}
-	out := strings.Join(oneline, "\n") + "\n"
-	return []byte(out), true, fmt.Sprintf("compacted %d commits to oneline", len(oneline))
+	return input, false, "git_log_preserved"
 }
 
-// compressSearchResults limits high-volume search matches to first N lines + total count.
+// compressSearchResults does not drop matches. A prefix would hide hits.
 func compressSearchResults(input []byte) ([]byte, bool, string) {
-	lines := strings.Split(string(input), "\n")
-	if len(lines) <= 25 {
-		return input, false, "search_results_under_threshold"
-	}
-	var b strings.Builder
-	for i := 0; i < 20; i++ {
-		b.WriteString(lines[i])
-		b.WriteByte('\n')
-	}
-	b.WriteString(fmt.Sprintf("... [%d more matches truncated]\n", len(lines)-20))
-	return []byte(b.String()), true, fmt.Sprintf("truncated %d search lines to 20", len(lines))
+	return input, false, "search_results_preserved"
 }
 
-// compressFileList aggregates extensive ls listings.
+// compressFileList does not drop names. A prefix would hide entries.
 func compressFileList(input []byte) ([]byte, bool, string) {
-	lines := strings.Split(string(input), "\n")
-	if len(lines) <= 30 {
-		return input, false, "file_list_under_threshold"
-	}
-	var b strings.Builder
-	for i := 0; i < 15; i++ {
-		b.WriteString(lines[i])
-		b.WriteByte('\n')
-	}
-	b.WriteString(fmt.Sprintf("... [%d entries omitted]\n", len(lines)-15))
-	return []byte(b.String()), true, fmt.Sprintf("truncated %d file entries to 15", len(lines))
+	return input, false, "file_list_preserved"
 }
 
 // isRepetitiveLog checks if successive lines have high duplicate frequency.

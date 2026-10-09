@@ -333,6 +333,7 @@ func recordSensorToolObservation(payload map[string]any, sessionHash string) {
 
 	var outputBytes []byte
 	isError := false
+	exitCode := -1
 	if resp, ok := payload["tool_response"].(map[string]any); ok {
 		if content, ok := resp["content"].(string); ok {
 			outputBytes = []byte(content)
@@ -340,6 +341,20 @@ func recordSensorToolObservation(payload map[string]any, sessionHash string) {
 		if status, ok := resp["status"].(string); ok && (status == "error" || status == "failed") {
 			isError = true
 		}
+		if code, ok := exitCodeField(resp); ok {
+			exitCode = code
+		}
 	}
-	_ = st.RecordToolOutput(sessionHash, harnessID, toolName, outputBytes, isError)
+	_ = st.RecordToolResult(sessionHash, harnessID, toolName, outputBytes, exitCode, isError)
+}
+
+func exitCodeField(resp map[string]any) (int, bool) {
+	for _, key := range []string{"exit_code", "exitCode"} {
+		n, ok := resp[key].(float64)
+		if !ok || n < 0 || n > 255 || n != float64(int(n)) {
+			continue
+		}
+		return int(n), true
+	}
+	return -1, false
 }

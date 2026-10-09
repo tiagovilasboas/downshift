@@ -92,9 +92,20 @@ func TestHandleStatus_OK(t *testing.T) {
 		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
 	}
 
+	body := rec.Body.Bytes()
 	var resp statusResponse
-	if err := json.NewDecoder(rec.Body).Decode(&resp); err != nil {
+	if err := json.Unmarshal(body, &resp); err != nil {
 		t.Fatalf("decode response: %v", err)
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(body, &raw); err != nil {
+		t.Fatalf("decode raw status: %v", err)
+	}
+	comp, _ := raw["compaction"].(map[string]any)
+	for _, key := range []string{"tokens_before", "tokens_after", "tokens_reduced", "state"} {
+		if _, ok := comp[key]; !ok {
+			t.Errorf("compaction missing %q", key)
+		}
 	}
 
 	if len(resp.Harnesses) == 0 {

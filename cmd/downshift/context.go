@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -205,10 +206,8 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 		return 1
 	}
 
-	fmt.Fprintf(w, "✓ Context optimization enabled with provider %s\n", p.Name())
-	if len(configured) > 0 {
-		fmt.Fprintf(w, "  Configured harnesses: %s\n", strings.Join(configured, ", "))
-	}
+	fmt.Fprintf(w, "Context optimization flag saved for provider %s.\n", p.Name())
+	fmt.Fprintln(w, "No harness hook was installed. Compression is not applied automatically during a session.")
 	return 0
 }
 
@@ -282,8 +281,29 @@ func runContextMetrics(ctx context.Context, reg *contextopt.Registry, w, errW io
 
 func runContextCompress(args []string, w, errW io.Writer) int {
 	mode := compressor.ModeSafe
-	if len(args) > 0 {
-		switch args[0] {
+	exitCode := -1
+	exitKnown := false
+	var positional []string
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--exit" {
+			if i+1 >= len(args) {
+				fmt.Fprintln(errW, "context compress: --exit requires a status from 0 to 255")
+				return 2
+			}
+			n, err := strconv.Atoi(args[i+1])
+			if err != nil || n < 0 || n > 255 {
+				fmt.Fprintln(errW, "context compress: --exit requires a status from 0 to 255")
+				return 2
+			}
+			exitCode = n
+			exitKnown = true
+			i++
+			continue
+		}
+		positional = append(positional, args[i])
+	}
+	if len(positional) > 0 {
+		switch positional[0] {
 		case "observe", "--observe":
 			mode = compressor.ModeObserve
 		case "safe", "--safe":
@@ -291,7 +311,7 @@ func runContextCompress(args []string, w, errW io.Writer) int {
 		case "off", "--off":
 			mode = compressor.ModeOff
 		default:
-			fmt.Fprintf(errW, "unknown compress mode %q (use observe, safe, or off)\n", args[0])
+			fmt.Fprintf(errW, "unknown compress mode %q (use observe, safe, or off)\n", positional[0])
 			return 2
 		}
 	}
@@ -302,7 +322,13 @@ func runContextCompress(args []string, w, errW io.Writer) int {
 		return 1
 	}
 
-	res := compressor.Compress(data, mode)
+	if mode == compressor.ModeSafe && !exitKnown {
+		fmt.Fprintln(errW, "context compress: safe mode requires --exit 0. Output preserved.")
+		_, _ = w.Write(data)
+		return 0
+	}
+
+	res := compressor.CompressExit(data, mode, exitCode)
 	if mode == compressor.ModeObserve {
 		fmt.Fprintf(errW, "context observe: format=%s original=%d bytes potential_reduced=%d bytes savings=%.1f%% (%s)\n",
 			res.Format, res.OriginalBytes, res.ReducedBytes, res.SavingsRatio(), res.Reason)
