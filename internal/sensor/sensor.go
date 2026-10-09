@@ -54,17 +54,23 @@ type SessionObservation struct {
 
 // Store persists aggregated context sensor observations safely under the state dir.
 type Store struct {
-	mu   sync.Mutex
-	path string
+	mu             sync.Mutex
+	path           string
+	compactionPath string
 }
 
 // DefaultStore returns the sensor store at $DOWNSHIFT_STATE_DIR/context-sensor.json.
+// The append-only history is context-compactions.jsonl in the same state dir.
 func DefaultStore() (*Store, error) {
 	p, err := paths.Join("context-sensor.json")
 	if err != nil {
 		return nil, err
 	}
-	return &Store{path: p}, nil
+	logPath, err := paths.Join(compactionLogName)
+	if err != nil {
+		return nil, err
+	}
+	return &Store{path: p, compactionPath: logPath}, nil
 }
 
 // RecordToolOutput observes a tool output event safely without storing the content.
@@ -107,7 +113,80 @@ func (s *Store) RecordToolOutput(sessionHash, harness, toolName string, output [
 	}
 
 	data[sessionHash] = obs
-	return s.saveAll(data)
+	if err := s.saveAll(data); err != nil {
+		return err
+	}
+	// History is append-only and grouped by harness. It never stores the
+	// tool output that the aggregate above already measured.
+	return s.appendCompaction(newCompactionRecord(sessionHash, harness, toolName, output, isError, res, obs.LastSeen))
+}
+
+// CompactionSummary is the tool-output reduction the dashboard may show.
+// Bytes are observed counts. Token counts stay zero and token_state stays
+// unavailable: this package does not apply a bytes-to-token divisor.
+type CompactionSummary struct {
+	Sessions       int    `json:"sessions"`
+	ToolExecutions int64  `json:"tool_executions"`
+	BytesBefore    int64  `json:"bytes_before"`
+	BytesReduced   int64  `json:"bytes_reduced"`
+	BytesAfter     int64  `json:"bytes_after"`
+	TokensBefore   int64   `json:"tokens_before"`
+	TokensAfter    int64   `json:"tokens_after"`
+	TokensReduced  int64   `json:"tokens_reduced"`
+	TokenState     string  `json:"token_state"`
+	SavingsPct     float64 `json:"savings_pct"`
+	State          string  `json:"state"`
+}
+
+// SummarizeCompaction adds tool-output bytes. A session key that is not a
+// 64-hex digest fails the whole summary closed. It does not multiply by
+// later turns: the sensor does not record how many times history was reread.
+func SummarizeCompaction(obs map[string]SessionObservation) CompactionSummary {
+	sum := CompactionSummary{
+		State:      string(StateUnavailable),
+		TokenState: string(StateUnavailable),
+	}
+	if len(obs) == 0 {
+		return sum
+	}
+	for key := range obs {
+		if !sessionDigest(key) {
+			return CompactionSummary{
+				State:      string(StateUnavailable),
+				TokenState: string(StateUnavailable),
+			}
+		}
+	}
+	sum.Sessions = len(obs)
+	for _, o := range obs {
+		sum.ToolExecutions += o.ToolExecutions
+		sum.BytesBefore += o.TotalOutputBytes
+		sum.BytesReduced += o.PotentialReducedBytes
+	}
+	if sum.BytesReduced > sum.BytesBefore {
+		sum.BytesReduced = sum.BytesBefore
+	}
+	sum.BytesAfter = sum.BytesBefore - sum.BytesReduced
+	if sum.BytesBefore > 0 {
+		sum.SavingsPct = float64(sum.BytesReduced) / float64(sum.BytesBefore) * 100
+	}
+	sum.State = string(StateObserved)
+	return sum
+}
+
+func sessionDigest(key string) bool {
+	if len(key) != 64 {
+		return false
+	}
+	for _, c := range key {
+		switch {
+		case c >= '0' && c <= '9':
+		case c >= 'a' && c <= 'f':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // GetSummary returns all session observations without raw content.

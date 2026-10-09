@@ -1,0 +1,98 @@
+downshift · dashboard
+3:54:35 AM
+tiagovilasboas
+♥ Sponsor
+ROUTING MONITOR · LAST 24H
+ACTIVE AGENT SPAWNED · 4
+◉
+📲 Install as an app
+Install
+HARNESSES
+all
+antigravity
+codex
+cursor
+claude-code
+kirocrew
+ACTIVE AGENTS
+spawned in the last 5 min
+2m
+●grok-4.7-high
+SPAWNED
+cursor · ↓ medium
+4m
+●grok-4.7-high
+SPAWNED
+cursor · ↓ medium
+4m
+●grok-4.7-high
+SPAWNED
+cursor · ↓ medium
+4m
+●grok-4.7-high
+SPAWNED
+cursor · ↓ medium
+ACTIVE AGENT SPAWNED
+hook saw the spawn
+2m
+grok-4.7-high
+SPAWNED
+↓ medium
+4m
+grok-4.7-high
+SPAWNED
+↓ medium
+4m
+grok-4.7-high
+SPAWNED
+↓ medium
+4m
+grok-4.7-high
+SPAWNED
+↓ medium
+02:41 AM
+muse-spark-1.3-high · high
+SPAWNED
+? complex
+02:33 AM
+grok-4.7-high
+SPAWNED
+↓ medium
+02:29 AM
+claude-opus-5-thinking-high · medium
+SPAWNED
+? medium
+02:09 AM
+grok-4.7-high
+SPAWNED
+↓ medium
+01:49 AM
+grok-4.7-high
+SPAWNED
+↓ medium
+01:37 AM
+claude-opus-5-thinking-high · medium
+SPAWNED
+? medium
+01:05 AM
+grok-4.7-high
+SPAWNED
+↓ medium
+01:04 AM
+claude-opus-5-thinking-high · medium
+SPAWNED
+? medium
+AGENTS
+no active agent spawned
+STATS
+50 events   16↓   11↑   · cursor only
+ESTIMATED SAVINGS
+$0.01
+est. saved · last 24h · 16 downshifts
+SESSION COMPACTION
+tool output only
+0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0
+token_state unavailable
+Bytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.
+⚠ These rows are active agents spawned, not the whole session. Each line is a subagent the hook saw on Claude Code, Cursor, Codex, Antigravity, or KiroCrew.
+Dollar figures are estimates, not a provider invoice. A downshift that the hook held (guardrail) stays in the log and does not add savings.
