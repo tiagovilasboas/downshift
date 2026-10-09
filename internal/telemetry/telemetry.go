@@ -55,6 +55,8 @@ type Event struct {
 	ErrorCode            string                `json:"error_code,omitempty"`
 	DecisionIntelligence *ShadowRecommendation `json:"decision_intelligence,omitempty"`
 	EstimatedSavings     float64               `json:"estimated_savings"` // normalised fraction 0–1
+	QuotaStatus          string                `json:"quota_status,omitempty"`
+	QuotaSource          string                `json:"quota_source,omitempty"`
 
 	// Optional real-cost fields (nil = provider usage not tracked for this event).
 	// When absent, fall back to the normalised estimate above; never fake dollars.
@@ -281,6 +283,8 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		BinaryVersion:    binaryVersion,
 		Outcome:          OutcomeRewriteEmitted,
 		EstimatedSavings: d.Savings,
+		QuotaStatus:      d.QuotaStatus,
+		QuotaSource:      d.QuotaSource,
 	}
 	if len(d.Corrections) > 0 {
 		ev.SafeVerdict = d.SafeVerdict.String()

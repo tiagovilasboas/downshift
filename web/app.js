@@ -151,8 +151,8 @@ function renderMonitor(data) {
 
   // ── stats: 24h totals from the server, unless a harness chip is selected ──
   const src = activeHarness ? switches.filter(e => e.harness === activeHarness) : switches;
-  const down = src.filter(e => e.verdict === 'DOWNSHIFT');
-  const up   = src.filter(e => e.verdict === 'UPSHIFT');
+  const down = src.filter(e => e.verdict === 'DOWNSHIFT' && e.applied === true);
+  const up   = src.filter(e => e.verdict === 'UPSHIFT' && e.applied === true);
   const totalN = activeHarness ? src.length : (stats.total ?? src.length);
   const downN = activeHarness ? down.length : (stats.down ?? down.length);
   const upN = activeHarness ? up.length : (stats.up ?? up.length);

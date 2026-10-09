@@ -17,9 +17,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
 const harnessID = "codex"
@@ -37,9 +39,11 @@ type Event struct {
 	SessionModels   *[]string `json:"session_models,omitempty"`
 	AvailableModels *[]string `json:"available_models,omitempty"`
 	// IncludedModels and UnavailableModels are optional quota marks.
-	// Nil leaves the user file. A non-nil slice replaces it for this call.
-	IncludedModels    *[]string `json:"included_models,omitempty"`
-	UnavailableModels *[]string `json:"unavailable_models,omitempty"`
+	// Absent marks supply no credit evidence. Present marks apply to this call.
+	IncludedModels    *[]string       `json:"included_models,omitempty"`
+	UnavailableModels *[]string       `json:"unavailable_models,omitempty"`
+	UsageQuota        *quota.Snapshot `json:"usage_quota,omitempty"`
+	TranscriptPath    string          `json:"transcript_path,omitempty"`
 }
 
 // SessionIdentifier exposes Codex's stable session ID to the shared hook
@@ -133,8 +137,23 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 	session := core.ResolveSessionForID(harnessID, ev.SessionID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
+	usage := ev.UsageQuota
+	if usage == nil && ev.TranscriptPath != "" {
+		usage = &quota.Snapshot{Harness: harnessID}
+		if observed, err := quota.CollectCodex(ev.TranscriptPath, 5*time.Minute); err == nil {
+			usage = &observed
+		}
+	}
+	session = session.WithUsageQuota(harnessID, usage)
 	decision.SessionUnknown = !session.Known
+	decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
+	if session.Usage != nil {
+		decision.QuotaSource = quota.SourceName(session.Usage.Source)
+	}
 	plan := decision.PlanForSession(core.CodexCaps, res, session)
+	if plan.RewriteModel {
+		decision.QuotaStatus = string(session.QuotaStatus(harnessID, plan.Model.ID))
+	}
 	if plan.HoldForeign || plan.PreserveExplicit || (!plan.RewriteModel && !plan.ApplyEffort) {
 		return allow(), "", decision
 	}

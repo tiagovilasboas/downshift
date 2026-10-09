@@ -83,10 +83,35 @@ The session list alone determines candidates and their relative capability. Cata
 - Unknown session: no rewrite.
 - Any exact session ID inside the filtered set can be written, even when the catalog does not know it. `inherit` and exhausted IDs cannot be selected. A catalog `explicit_only` ID can be written only when `explicit_upshift` is on.
 - `inherit` may sit in the session list so the payload is recognised. It is never selected as the target.
-- Credits come only from this call's `included_models` and `unavailable_models`. There is no compiled-in credit list, and `quota` in `session-models.json` is not read.
+- Hook credit marks come from this call's `included_models` and `unavailable_models`. Native usage observations are separate, with source, scope and expiry; see [quota.md](quota.md). There is no compiled-in credit list, and `quota` in `session-models.json` is not read.
 - An exhausted id from that hook report is never selected, on any harness.
 - When the hook reports `included_models`, downshift and upshift rank only inside that set, in session order, for that harness alone. There is no fallback to a session id outside the set. An empty intersection does not rewrite.
 - When the hook did not report credits, ranking stays the session order minus exhausted ids, `inherit`, and `explicit_only` (unless explicit upshift is on). Downshift does not invent a credit denial.
+
+## Observed usage quota
+
+Availability does not establish remaining quota. When a usage snapshot is
+supplied by the hook or found in the local quota cache, eligible model IDs must
+also have **available** quota evidence for this harness. Unknown, expired,
+future-dated or exhausted evidence cannot authorize a rewrite. A shared native
+window applies to its harness; a model pool applies only to the exact IDs its
+source reports. Percentages never become a guessed list of model names.
+
+`DOWNSHIFT_QUOTA_MODE=required` also holds model rewrites when no quota evidence
+exists. The default retains routing compatibility when there is no usage source;
+its quota status is **unknown**, so that mode is not a claim of included credit.
+A present cache with a missing harness entry remains unknown and holds rewrites.
+Hook credit marks and usage quota are intersected, and availability remains a
+separate requirement. Neither source may introduce an unavailable model ID.
+
+Codex can collect subscription windows from an explicitly supplied
+`transcript_path`, using the event's original timestamp. Collection failures
+cannot prove remaining quota. Claude Code supplies its subscription windows via
+the optional statusline bridge. Context-window utilization and purchased-credit
+balance are distinct from these subscription windows and are not used as quota.
+
+Fresh `used_percent < 100` is an observation of remaining quota; it does not
+reserve capacity for the next call or guarantee zero additional charges.
 
 ## explicit_upshift
 

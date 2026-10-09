@@ -49,6 +49,16 @@ func discoverWith(cat discovery.Catalog, sources []discovery.Source, cachePath s
 			want[h] = true
 		}
 	}
+	available := map[string]bool{}
+	for _, s := range sources {
+		available[s.Harness()] = true
+	}
+	for h := range want {
+		if !available[h] {
+			fmt.Fprintf(errW, "discover: no source for requested harness %s\n", h)
+			return 2
+		}
+	}
 	var picked []discovery.Source
 	for _, s := range sources {
 		if len(want) == 0 || want[s.Harness()] {
@@ -68,7 +78,9 @@ func discoverWith(cat discovery.Catalog, sources []discovery.Source, cachePath s
 		h := o.Source.Harness()
 		if o.Err != nil {
 			failed++
-			if !*asJSON {
+			if *asJSON {
+				fmt.Fprintf(errW, "%s (%s): skipped: %v\n", h, o.Source.Name(), o.Err)
+			} else {
 				fmt.Fprintf(w, "%-12s %-28s skipped: %v\n", h, o.Source.Name(), o.Err)
 			}
 			continue
@@ -100,7 +112,7 @@ func discoverWith(cat discovery.Catalog, sources []discovery.Source, cachePath s
 		return 1
 	}
 	if !*asJSON {
-		fmt.Fprintf(w, "\nwritten to %s (hooks use it after the operator session-models.json)\n", cachePath)
+		fmt.Fprintf(w, "\nwritten to %s (hooks use it before the operator session-models.json; availability only, not credit)\n", cachePath)
 	}
 	return 0
 }

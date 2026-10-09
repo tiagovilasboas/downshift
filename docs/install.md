@@ -19,6 +19,13 @@ Optional adapter smoke (from a clone of this repo):
 ./examples/run-all.sh
 ```
 
+Availability discovery and usage quota are configured separately. See
+[session-discovery.md](session-discovery.md) for model listings and
+[quota.md](quota.md) for the native Claude Code statusline bridge, Codex transcript
+collection, freshness, and required-quota mode. A successful discovery is not
+proof of included credit, and installing a bridge is not proof that it has
+received a live usage observation.
+
 ---
 
 ## Quickstart — zero to working hook in 2 minutes
@@ -527,4 +534,3 @@ downshift try "rename the variable" claude-code claude-opus-5-5
 
 In the live hook this is handled automatically — the event carries the session
 model and the adapter reads it.
-

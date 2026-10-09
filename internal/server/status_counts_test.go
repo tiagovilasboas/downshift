@@ -48,4 +48,15 @@ func TestStatus_CountsOnlyAppliedRewrites(t *testing.T) {
 	if st.EstUnits < 0.79 || st.EstUnits > 0.81 {
 		t.Fatalf("est_units=%.2f, want 0.8 (applied downshift only)", st.EstUnits)
 	}
+	// Per-harness chips consume switches, while All consumes stats. The
+	// API's computed flag must produce the same count in both views.
+	byHarness := map[string]int{}
+	for _, e := range got.Switches {
+		if e.Verdict == "DOWNSHIFT" && e.Applied {
+			byHarness[e.Harness]++
+		}
+	}
+	if byHarness["claude-code"] != 1 || byHarness["codex"] != 0 {
+		t.Fatalf("applied by harness = %v, want claude-code=1 codex=0", byHarness)
+	}
 }

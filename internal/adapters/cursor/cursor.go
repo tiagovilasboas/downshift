@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
 const harnessID = "cursor"
@@ -32,9 +33,10 @@ type Event struct {
 	SessionModels   *[]string `json:"session_models,omitempty"`
 	AvailableModels *[]string `json:"available_models,omitempty"`
 	// IncludedModels and UnavailableModels are optional quota marks.
-	// Nil leaves the user file. A non-nil slice replaces it for this call.
-	IncludedModels    *[]string `json:"included_models,omitempty"`
-	UnavailableModels *[]string `json:"unavailable_models,omitempty"`
+	// Absent marks supply no credit evidence. Present marks apply to this call.
+	IncludedModels    *[]string       `json:"included_models,omitempty"`
+	UnavailableModels *[]string       `json:"unavailable_models,omitempty"`
+	UsageQuota        *quota.Snapshot `json:"usage_quota,omitempty"`
 }
 
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
@@ -114,8 +116,16 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
+	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
 	decision.SessionUnknown = !session.Known
+	decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
+	if session.Usage != nil {
+		decision.QuotaSource = quota.SourceName(session.Usage.Source)
+	}
 	plan := decision.PlanForSession(core.CursorCaps, res, session)
+	if plan.RewriteModel {
+		decision.QuotaStatus = string(session.QuotaStatus(harnessID, plan.Model.ID))
+	}
 	if plan.HoldForeign || plan.PreserveExplicit {
 		return allow(), "", decision
 	}

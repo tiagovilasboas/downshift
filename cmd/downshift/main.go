@@ -123,6 +123,8 @@ func main() {
 		os.Exit(runTry(catalog, args[1:]))
 	case "models":
 		os.Exit(runModels(catalog, args[1:]))
+	case "quota":
+		os.Exit(runQuota(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "stats":
 		os.Exit(runStats(args[1:]))
 	case "benchmark":
@@ -1300,6 +1302,10 @@ Usage:
   downshift context benchmark    Compare 4 optimization scenarios (routing vs compression)
   downshift models pull          Write user catalog.json under the state dir
   downshift models discover      Ask each harness which models the account can use; hooks read the result
+  downshift quota import        Import native subscription quota JSON from stdin
+  downshift quota collect       Collect quota from an explicit local Codex transcript
+  downshift quota status        Inspect budget evidence and freshness for a harness/model
+  downshift quota claude-statusline   Opt-in Claude statusLine quota bridge
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
   downshift stats --cost-per-unit=<USD>   Convert normalised units to dollars
   downshift stats --export       Print a pasteable JSON summary without prompts
