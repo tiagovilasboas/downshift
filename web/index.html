@@ -317,13 +317,11 @@ main {
 
       <div class="notice">
         <span style="color:var(--warn)">⚠</span>
-        Data is recorded <strong>only when subagents are dispatched</strong>
-        via <code>spawn_run</code> / <code>spawn_sub_agents</code> with the
-        <code>downshift</code> hook active.
+        Counts routing decisions from the last 24h on every harness whose hook
+        fired (Claude Code, Cursor, Codex, Antigravity, KiroCrew).
         <br>
-        <strong>Does not represent</strong> total session token consumption,
-        direct model calls, or activity outside KiroCrew.
-        Savings are estimated from average spawn cost — not actual billing data.
+        Dollar figures are estimates, not a provider invoice. A downshift that
+        the hook held (guardrail) stays in the log and does not add savings.
       </div>
     </div>
   </main>
@@ -345,6 +343,13 @@ document.getElementById('install-btn')?.addEventListener('click', async () => {
   deferredPrompt = null;
 });
 </script>
-<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then((regs) => Promise.all(regs.map((reg) => reg.unregister())))
+    .catch(() => {});
+}
+</script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

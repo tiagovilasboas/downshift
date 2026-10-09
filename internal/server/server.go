@@ -280,12 +280,21 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	events = decisions
 
 	sw := events
+	if sw == nil {
+		sw = []rawEvent{}
+	}
 	if len(sw) > 8 {
 		sw = sw[len(sw)-8:]
 	}
 	ag := agents
+	if ag == nil {
+		ag = []agentEntry{}
+	}
 	if len(ag) > 6 {
 		ag = ag[len(ag)-6:]
+	}
+	if harnesses == nil {
+		harnesses = []string{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

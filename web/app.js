@@ -61,7 +61,12 @@ function renderMonitor(data) {
     return;
   }
 
-  const { harnesses=[], switches=[], agents=[], stats={} } = data;
+  // The server encodes a nil slice as null. A default in destructuring does not
+  // replace null, and agents.filter then throws after the chips are painted.
+  const harnesses = Array.isArray(data.harnesses) ? data.harnesses : [];
+  const switches = Array.isArray(data.switches) ? data.switches : [];
+  const agents = Array.isArray(data.agents) ? data.agents : [];
+  const stats = data.stats && typeof data.stats === 'object' ? data.stats : {};
 
   // Harness chips — clickable tabs
   const allChip = `<span class="chip${activeHarness===null?' hi':''}" onclick="setActiveHarness(null)">all</span>`;
@@ -88,52 +93,52 @@ function renderMonitor(data) {
       `<div class="row">
         <span class="t">${ageStr(a.timestamp)}</span>
         <span class="m"><span class="active-dot">●</span>${shortModel(a.model)}</span>
-        <span class="desc">${a.task.slice(0, 44)}</span>
+        <span class="desc">${(a.task || '').slice(0, 44)}</span>
       </div>`
     ).join(''));
   }
 
   // ── switches (last 6, newest first with flash) ──
   const swRows = filteredSwitches.slice(-6).reverse().map((e, i) => {
-    const v = e.verdict === 'DOWNSHIFT' ? ok(`↓ ${e.complexity.toLowerCase()} −${Math.round(e.estimated_savings*100)}%`)
-            : e.verdict === 'UPSHIFT'   ? warn(`↑ ${e.complexity.toLowerCase()}`)
-            : dim(`✓ ${e.complexity.toLowerCase()}`);
+    const complexity = (e.complexity || 'unknown').toLowerCase();
+    const v = e.verdict === 'DOWNSHIFT' ? ok(`↓ ${complexity}`)
+            : e.verdict === 'UPSHIFT'   ? warn(`↑ ${complexity}`)
+            : e.verdict === 'UNKNOWN'   ? dim(`? ${complexity}`)
+            : dim(`✓ ${complexity}`);
     const isNew = i === 0 && _justUpdated;
     return `<div class="row${isNew?' new':''}"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${shortModel(e.final_model)}</span>${v}</div>`;
   }).join('') || dim(activeHarness ? `no switches for ${activeHarness}` : 'no switches yet');
   set('monitor-switches', swRows);
 
   const agRows = filteredAgents.slice(-4).map(a =>
-    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="desc">${a.task.slice(0,44)}</span></div>`
+    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${shortModel(a.model)}</span><span class="desc">${(a.task || '').slice(0,44)}</span></div>`
   ).join('') || dim('no agents yet');
   set('monitor-agents', agRows);
 
-  // ── stats ──
+  // ── stats: 24h totals from the server, unless a harness chip is selected ──
   const src = activeHarness ? switches.filter(e => e.harness === activeHarness) : switches;
   const down = src.filter(e => e.verdict === 'DOWNSHIFT');
   const up   = src.filter(e => e.verdict === 'UPSHIFT');
-  const estUSD = down.reduce((s,e) => s + e.estimated_savings * 0.01, 0);
-  // Token estimate: savings_USD / ($0.025 per 1K output tokens at frontier)
-  const estTokensK = Math.round(estUSD / 0.000025 / 1000);
+  const totalN = activeHarness ? src.length : (stats.total ?? src.length);
+  const downN = activeHarness ? down.length : (stats.down ?? down.length);
+  const upN = activeHarness ? up.length : (stats.up ?? up.length);
+  const estUSD = activeHarness
+    ? down.reduce((s, e) => s + (e.estimated_savings || 0) * 0.01, 0)
+    : (stats.est_usd ?? 0);
   set('monitor-stats',
-    `${info(src.length)} spawns &nbsp; ${ok(`${down.length}↓`)} &nbsp; ${warn(`${up.length}↑`)}` +
+    `${info(totalN)} events &nbsp; ${ok(`${downN}↓`)} &nbsp; ${warn(`${upN}↑`)}` +
     (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '')
   );
 
   // ── economy bar ──
-  if (down.length > 0) {
+  if (downN > 0) {
     const sec = document.getElementById('economy-section');
     if (sec) sec.style.display = '';
     set('economy-bar', `
 <div class="economy-bar">
   <div>
     <div class="big">$${estUSD.toFixed(2)}</div>
-    <div class="sub">est. saved · ${down.length} downshift${down.length!==1?'s':''}</div>
-  </div>
-  <div class="economy-divider"></div>
-  <div>
-    <div class="big" style="font-size:14px">~${estTokensK}K</div>
-    <div class="sub">tokens rerouted (est.)</div>
+    <div class="sub">est. saved · last 24h · ${downN} downshift${downN!==1?'s':''}</div>
   </div>
 </div>`);
   } else {
@@ -185,9 +190,8 @@ function updateTimestamps() {
 
 // ── init ─────────────────────────────────────────────────────────────────────
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
-}
+// Do not register a service worker. A previous one cached a broken app.js
+// and a stale /api/status. sw.js now only unregisters that worker.
 
 // First paint
 fetchStatus().then(data => { latestData = data; renderMonitor(data); });
