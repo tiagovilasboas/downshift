@@ -28,6 +28,12 @@ Every TBD cell must be re-checked per harness release: hook contracts
 evolve upstream and a green cell can regress silently. Failing proof,
 the tool fails open and the spawn runs unchanged (README.md:755).
 
+A 2026-10-09 sample of Codex `spawn_agent` inputs recorded key sets only
+(`agent_type`, `message`, `task_name`, and sometimes `fork_turns`). It did
+not include hook stdin, `transcript_path`, a model field, or executor
+acknowledgement, so the Codex row above is not refreshed. See
+[closeout-recheck-2026-10-09.md](evidence/closeout-recheck-2026-10-09.md).
+
 ## Sources (README/docs only, no vendor claims)
 
 - Claude paid: emission only until P1.3 (docs/evidence/rewrite-honored-protocol.md); plan limits: README § Plan compatibility

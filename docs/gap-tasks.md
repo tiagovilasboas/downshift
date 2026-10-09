@@ -34,7 +34,7 @@ dependency and next action. Fixtures do not establish a live integration.
 - [ ] GAP-CODEX-REVALIDATE / P5.4 — dated schema/runtime recheck.
 - [x] GAP-REPORT-COUNTS — applied counts across dashboard tabs.
 - [x] GAP-FINAL-QA — local integrated gate; remote CI remains separate.
-- [ ] GAP-GRAPHIFY / P4.8 — optional work, separately scoped.
+- [ ] GAP-GRAPHIFY / P4.8 — deferred 2026-10-09; optional and out of this close-out. Not done.
 
 ## Model availability, quota, and executor
 
@@ -46,8 +46,8 @@ dependency and next action. Fixtures do not establish a live integration.
 | GAP-CURSOR-AVAILABILITY | done, code only, 2026-10-09 / Full-stack + QA | Connect valid native export availability to routing. Preserve hook precedence and capability floors; provider order is not capability order. | Implemented consumer uses exact IDs, freshness, complete-list evidence and resolver metadata; unknown capabilities hold. Tests validate the code path. Actual source remains blocked under GAP-CURSOR-SOURCE. |
 | GAP-CURSOR-AUTOLOAD | blocked / root + QA | Bind the verified export to the actual hook; observe fresh quota affecting a call and invalid/stale quota holding it. | Depends on GAP-CURSOR-SOURCE and GAP-CURSOR-AVAILABILITY. No real export was produced. Installed routing binary is older than this implementation; isolated candidate tests cannot prove the installed route. Preserve private configuration and parent defaults. |
 | GAP-CURSOR-HONOR / P1.6 | pending / root + QA | On a supported usage-based plan/build, correlate an emitted model rewrite with the actual child executor model. Record plan/build and mismatch honestly. | Requires the real supported consumer; a balance, parser or export is not executor acknowledgement. |
-| GAP-CODEX-HOOK | pending / root + QA | Prove that the actual running hook supplies `transcript_path`, or connect an outside-hook collector. Verify installed binary and a fresh native observation in that path. | [Current replay](evidence/native-quota-routing-2026-10-09.md) proves ingestion and decision, not the live consumer field or executor acknowledgement. |
-| GAP-CLAUDE-QUOTA | pending / root + QA | Wire the native statusline bridge while preserving an existing statusline; observe real `rate_limits` in cache and real hook consumption. | Bridge shipped. Inspect before wiring, then validate runtime. `context_window` occupancy is not quota. |
+| GAP-CODEX-HOOK | pending / root + QA | Prove that the actual running hook supplies `transcript_path`, or connect an outside-hook collector. Verify installed binary and a fresh native observation in that path. | [Current replay](evidence/native-quota-routing-2026-10-09.md) proves ingestion and decision, not the live consumer field or executor acknowledgement. [2026-10-09 recheck](evidence/closeout-recheck-2026-10-09.md): the hook's installed binary rejects `quota` and has no Codex `transcript_path` collector; recent sessions had no hook payload. Not connected. |
+| GAP-CLAUDE-QUOTA | pending / root + QA | Wire the native statusline bridge while preserving an existing statusline; observe real `rate_limits` in cache and real hook consumption. | Bridge shipped in source. [2026-10-09 recheck](evidence/closeout-recheck-2026-10-09.md): settings have no `statusLine`, the state dir has no `quota.json`, and the installed hook binary has no `quota` command. Not wired. `context_window` occupancy is not quota. |
 
 `used_percent` is the consumed fraction of a reported quota window; `100 -
 used_percent` gives its relative remainder when valid. It is not dollars and
@@ -79,11 +79,11 @@ this computation; the separate beta period-report criterion remains tracked.
 | GAP-EXTERNAL / P2.3 | blocked / community | Obtain two non-maintainer 7-day exports, or satisfy the documented independent-source exit alternative, with dates/provenance. | Needs independent operators and consented exports. More runs on one machine do not qualify. No third-party outreach is authorized here. |
 | GAP-README-DATA / P2.4 | pending / docs | Update real-session data from verified independent exports with dates and limits. | Depends on GAP-EXTERNAL. Maintainer-only data must remain labeled single-user. |
 | GAP-GENERALIZATION / P4 | blocked / curation + QA | Evaluate a frozen classifier on genuinely unseen independently labeled tasks; preserve lineage, rubric, leakage checks and uncertainty. | Historical holdout is a burned regression set. Obtain new data outside tuning exposure; synthetic template variants do not prove generalization. Keep unmeasured routing cost/accuracy explicit. |
-| GAP-CURSOR-REVALIDATE / P5.3 | pending / Full-stack + QA | Revalidate advertised plan/build behavior quarterly and after relevant releases; record evidence date and stale state. | Pair contract guia with schema/stale-evidence sensors and real runtime checks. No recurring automation is created by this task queue. |
-| GAP-CODEX-REVALIDATE / P5.4 | pending / Full-stack + QA | Revalidate actual `multi_agent_v2` hook schema and spawn behavior quarterly and after relevant changes. | Schema fixtures are sensors; a dated runtime sample is needed before refreshing the matrix. |
+| GAP-CURSOR-REVALIDATE / P5.3 | pending / Full-stack + QA | Revalidate advertised plan/build behavior quarterly and after relevant releases; record evidence date and stale state. | Pair contract guia with schema/stale-evidence sensors and real runtime checks. No recurring automation is created by this task queue. [2026-10-09 recheck](evidence/closeout-recheck-2026-10-09.md): Cursor is still 3.24.9 with the same build hash. A same-day repeat does not close this. |
+| GAP-CODEX-REVALIDATE / P5.4 | pending / Full-stack + QA | Revalidate actual `multi_agent_v2` hook schema and spawn behavior quarterly and after relevant changes. | Schema fixtures are sensors; a dated runtime sample of hook schema and spawn behavior is needed before refreshing the matrix. [2026-10-09 recheck](evidence/closeout-recheck-2026-10-09.md) records spawn input keys only. Hook stdin was not observed, so the matrix row stays at 2026-10-02. |
 | GAP-REPORT-COUNTS | done 2026-10-09 / QA | Confirm All and per-harness tabs count applied shifts consistently and held verdicts do not inflate savings. | Fix shipped: server `applied` flag and dashboard filter. Current API/renderer regressions PASS, including held exclusion and empty harness. Historical browser evidence used the old verdict count; no new browser E2E is claimed. |
 | GAP-FINAL-QA | done, local only, 2026-10-09 / QA | Run Go/race/vet, native bridge decoder, precedence/freshness/isolation/tier regressions and adversarial evidence-sensor tests; return PASS/BLOCK with runtime limits. | [Final report](evidence/final-gap-qa.md): PASS for bounded implementation and evidence. Local results do not establish remote CI success or beta graduation. |
-| GAP-GRAPHIFY / P4.8 | pending / optional | Keep optional graph command/MCP work separate and measure routing effect before claiming it. | Not a dependency for quota routing, discovery or executor acknowledgement. No implied expansion to Graphify. |
+| GAP-GRAPHIFY / P4.8 | deferred 2026-10-09 / optional | Keep optional graph command/MCP work separate and measure routing effect before claiming it. | Deferred, not done. Not a dependency for quota routing, discovery or executor acknowledgement. No expansion in this close-out. |
 
 ## Execution record and closure
 
@@ -108,6 +108,14 @@ not produce a quota export. The optional extension was removed and its absence
 verified; the temporary window was closed while preserving the user's existing
 window. This records an executed investigation and vendor
 dependency, not an operational Cursor collector.
+
+Afternoon recheck on 2026-10-09, recorded in
+[closeout-recheck-2026-10-09.md](evidence/closeout-recheck-2026-10-09.md):
+the installed hook binary still rejects `quota`, recent Codex sessions showed
+spawn input keys but no hook stdin, Claude has no statusline and no quota
+cache, and Cursor's build hash is unchanged. No runtime gap closed.
+GAP-GRAPHIFY / P4.8 is deferred, not done. Beta stays on. QA PASS:
+[closeout-recheck-qa.md](evidence/closeout-recheck-qa.md).
 
 Close each task with dated evidence and its acceptance result, then update the
 beta row/public matrix. Configuration, parser tests, and success toasts alone do

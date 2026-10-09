@@ -84,7 +84,7 @@ Historical P3.4 finding (2026-10-06; superseded counts and current provenance in
 | P4.5 | 500-task seed+holdout net existed (200+300); datasets moved to **downshift-labs** since v0.1.0-beta.7; public [benchmark/REPORT.md](../benchmark/REPORT.md). | curation | [x] |
 | P4.6 | `downshift benchmark --report` + `--gate` exist and can pass on the in-tree files. They gate the burned net, not unseen traffic. | eng | [x] |
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
-| P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [~] `DOWNSHIFT_GRAPHIFY_CMD` command fetcher, fail-open; native MCP socket still optional |
+| P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [ ] deferred 2026-10-09, not done. `DOWNSHIFT_GRAPHIFY_CMD` command fetcher stays fail-open; native MCP socket still optional. Out of the quota close-out. |
 | P4.9 | **MiniLM semantic boost on by default** (local hash; external embed falls back to hash; `DOWNSHIFT_MINILM=0` opts out — `docs/minilm-semantic.md`) | eng | [x] |
 | P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout (`benchmark/minilm-holdout.json`) | eng | [x] |
 
