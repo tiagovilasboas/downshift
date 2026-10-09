@@ -49,7 +49,13 @@ func (s SessionList) WithUsageQuota(harness string, supplied *quota.Snapshot) Se
 		return s
 	}
 	var present bool
-	s.Usage, present = quota.Load(harness)
+	// An explicitly configured native export is fresher provider evidence than
+	// the canonical cache. Invalid native input remains present and therefore
+	// closes the gate instead of falling back to a stale cache.
+	s.Usage, present = quota.LoadNative(harness)
+	if !present {
+		s.Usage, present = quota.Load(harness)
+	}
 	s.QuotaRequired = s.QuotaRequired || present
 	return s
 }

@@ -150,6 +150,63 @@ func window(id, scope string, models []string, used *float64, reset int64) Windo
 
 const transcriptTailBytes = 2 << 20
 
+// LoadNative reads an opt-in provider export when no canonical quota cache is
+// present. Hooks remain offline: this only reads a bounded regular file written
+// by a native bridge, and never starts a provider CLI or performs auth.
+// A configured but invalid file is reported as present so callers fail closed
+// instead of silently falling back to an older or handwritten source.
+func LoadNative(harness string) (*Snapshot, bool) {
+	path, source, ok := nativePath(harness)
+	if !ok {
+		return nil, false
+	}
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return nil, true
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, true
+	}
+	defer f.Close()
+	b, err := io.ReadAll(io.LimitReader(f, (1<<20)+1))
+	if err != nil || len(b) > 1<<20 {
+		return nil, true
+	}
+	if source == "cursor-usage" && !hasObservedAt(b) {
+		return nil, true
+	}
+	s, err := ParseNative(source, b, time.Now().UTC(), 5*time.Minute)
+	if err != nil {
+		return nil, true
+	}
+	return &s, true
+}
+
+func hasObservedAt(data []byte) bool {
+	var raw map[string]json.RawMessage
+	if json.Unmarshal(data, &raw) != nil {
+		return false
+	}
+	for _, key := range []string{"observed_at", "observedAt"} {
+		if value, ok := raw[key]; ok {
+			var at time.Time
+			return json.Unmarshal(value, &at) == nil && !at.IsZero()
+		}
+	}
+	return false
+}
+
+func nativePath(harness string) (path, source string, ok bool) {
+	switch harness {
+	case "cursor":
+		path = os.Getenv("DOWNSHIFT_CURSOR_NATIVE_FILE")
+		return path, "cursor-usage", path != ""
+	default:
+		return "", "", false
+	}
+}
+
 // CollectCodex reads only the bounded tail of an explicitly supplied local
 // transcript. It preserves the event timestamp; reading an old file cannot
 // renew a budget. Prompts, responses and credits are never retained.

@@ -81,7 +81,7 @@ Use the ids your account really offers; the file is yours to maintain. Details a
 
 Claude Code is not limited to three models. The example stops at Opus on purpose: upshift writes the **last** id in this list, so an expensive frontier model stays out until you opt in. Append `claude-fable-5-1` (the hook writes the family name `fable`) only if you want that upshift.
 
-Or let Downshift ask the harness: `downshift models discover` reads the models your account can use (Codex, Kiro, Grok, and the Anthropic API with a key) and writes a ranked cache that hooks use after your file. See [session-discovery.md](docs/session-discovery.md).
+Or let Downshift ask the harness: `downshift models discover` reads the models your account can use (Codex, Kiro, Grok, Cursor, and the Anthropic API with a key) and writes a ranked cache that hooks use after your file. Antigravity has no verified discovery source yet. See [session-discovery.md](docs/session-discovery.md).
 
 **3. Add the hook** to `~/.claude/settings.json`:
 
