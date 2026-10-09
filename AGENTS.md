@@ -140,6 +140,20 @@ cmd/downshift/       — binary entry point, hook runners, try subcommand,
 - Binary outcomes alone do not establish minimum model tier. Only explicit
   reviewed `required_tier` labels enter supervised training.
 - Candidate weights are evaluated separately and are never auto-activated.
+- Claude Code is not capped at three models. `fable` is a valid Task family
+  name. The install example omits `claude-fable-5-1` on purpose: upshift
+  writes the last id in `session-models.json`, so that expensive frontier
+  upshift stays off until the operator appends the id. Do not "fix" the
+  example by adding Fable, and do not treat the omission as a missing model.
+
+### Context compressor
+
+Routing is one token lever. The other is the native compressor
+(`downshift context compress`, `internal/compressor`): it compacts safe tool
+output (passing `go test`, clean `git status`, repetitive logs) before that
+text re-enters the prompt, and it leaves errors and stack traces alone.
+Read [docs/context-optimization.md](docs/context-optimization.md) before
+changing context handling or attributing savings to model routing alone.
 
 ---
 

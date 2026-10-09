@@ -50,6 +50,19 @@
       "input_cost_per_1m": 4.00,
       "output_cost_per_1m": 20.00
     },
+    {
+      "id": "claude-fable-5-1",
+      "aliases": ["claude-fable", "claude-fable-5", "claude-fable-5.1"],
+      "family": "claude-fable",
+      "native_name": "fable",
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 10.00,
+      "output_cost_per_1m": 50.00
+    },
 
     { "_section": "claude-code — xAI Grok (installed via custom model config)" },
 
