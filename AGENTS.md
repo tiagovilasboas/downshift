@@ -152,8 +152,9 @@ Routing is one token lever. The other is the native compressor
 (`downshift context compress`, `internal/compressor`): it compacts an all-`ok`
 `go test`, a clean `git status`, and repetitive logs only when safe mode is
 given exit code 0. It preserves non-`ok` lines, search results, file lists,
-git logs, and any non-zero exit. `context benchmark` percentages are
-placeholders, not a measurement.
+git logs, and any non-zero exit. `context benchmark` does not measure
+routing cost or accuracy. The compressor table is bytes from checked-in
+fixtures, not tokens and not dollars.
 Read [docs/context-optimization.md](docs/context-optimization.md) before
 changing context handling or attributing savings to model routing alone.
 
