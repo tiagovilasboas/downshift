@@ -9,9 +9,10 @@ an availability configuration; its `quota` member is ignored.
 
 ## Gate and freshness
 
-A hook-supplied `usage_quota` snapshot takes precedence over `quota.json` in the
-[state directory](config.md). Once either source is present, model rewrites
-require `available` evidence for the candidate's exact harness and scope.
+A hook-supplied `usage_quota` snapshot takes precedence over a configured native
+export and `quota.json` in the [state directory](config.md). The native export
+takes precedence over the canonical cache for that harness. Once either source
+is present, model rewrites require `available` evidence for the candidate's exact harness and scope.
 `exhausted`, `unknown`, and `stale` hold the model rewrite. A malformed cache or a
 cache with no entry for this harness also holds it.
 
@@ -106,6 +107,18 @@ An importer is not a continuous collector. Do not replay a saved native response
 as a new observation: native imports assume freshly captured input. Cursor CLI
 model listing, dashboard usage, and an authenticated collector each require their
 own runtime evidence. See [session-discovery.md](session-discovery.md).
+
+### Hook-side native export
+
+The hook can read a fresh raw Cursor export without running a CLI or touching
+credentials. Set `DOWNSHIFT_CURSOR_NATIVE_FILE` in the hook's environment to the
+file written by the optional bridge. The hook parses that bounded regular file
+on each invocation before the canonical cache. Its
+`observed_at` is preserved, so an old export expires instead of being refreshed.
+If the configured file is malformed, unreadable or too large, the quota gate
+holds the rewrite. The provider still controls the export cadence; Downshift
+does not poll Cursor or claim a balance that the payload does not associate with
+exact model IDs.
 
 ## Operator observations and observability
 

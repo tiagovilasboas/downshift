@@ -114,6 +114,39 @@ func TestCursorPoolsRequireRuntimeMembership(t *testing.T) {
 	}
 }
 
+func TestLoadNativeCursorExportIsBoundedAndFailClosed(t *testing.T) {
+	now := time.Now().UTC()
+	reset := now.Add(time.Hour).UnixMilli()
+	payload, _ := json.Marshal(map[string]any{
+		"observed_at":        now,
+		"plan_usage":         map[string]any{"auto_percent_used": 20},
+		"billing_cycle_end":  reset,
+		"auto_bucket_models": []string{"native-auto"},
+	})
+	path := filepath.Join(t.TempDir(), "cursor-usage.json")
+	if err := os.WriteFile(path, payload, 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", path)
+	t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "missing-quota.json"))
+	s, present := LoadNative("cursor")
+	if !present || s == nil || s.Evaluate("cursor", "native-auto", now) != Available {
+		t.Fatalf("native cursor export was not loaded: present=%v snapshot=%+v", present, s)
+	}
+	if err := os.WriteFile(path, []byte(`{"plan_usage":`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if s, present := LoadNative("cursor"); !present || s != nil {
+		t.Fatalf("invalid configured native export did not fail closed: present=%v snapshot=%+v", present, s)
+	}
+	if err := os.WriteFile(path, []byte(`{"plan_usage":{"auto_percent_used":20},"billing_cycle_end":9999999999999,"auto_bucket_models":["native-auto"]}`), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if s, present := LoadNative("cursor"); !present || s != nil {
+		t.Fatalf("timestamp-free native export renewed quota: present=%v snapshot=%+v", present, s)
+	}
+}
+
 func TestStoreSerializesHarnessesAndRejectsOlderObservation(t *testing.T) {
 	now := time.Now().UTC()
 	path := filepath.Join(t.TempDir(), "quota.json")

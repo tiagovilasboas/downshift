@@ -43,7 +43,8 @@ async function collect(context) {
     const response = await transport.unary(service, method, controller.signal, 10000, {}, {});
     const models = await transport.unary(modelsService, modelsMethod, controller.signal, 10000, {}, {});
     const payload = {...response.message, available_models: models.message, available_models_complete: true};
-    const target = path.join(context.globalStorageUri.fsPath, 'cursor-usage.json');
+    const target = process.env.DOWNSHIFT_CURSOR_NATIVE_FILE ||
+      path.join(context.globalStorageUri.fsPath, 'cursor-usage.json');
     await fs.mkdir(path.dirname(target), {recursive: true, mode: 0o700});
     temporary = target + '.' + crypto.randomBytes(8).toString('hex') + '.tmp';
     await fs.writeFile(temporary, JSON.stringify(payload) + '\n', {mode: 0o600, flag: 'wx'});

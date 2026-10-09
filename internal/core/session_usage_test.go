@@ -4,6 +4,8 @@
 package core
 
 import (
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -46,5 +48,41 @@ func TestQuotaFilteringPreservesOriginalQualityFloor(t *testing.T) {
 	}
 	if CanWriteSessionID("cursor", "cheap", s, nil) {
 		t.Fatal("cross-harness budget leak")
+	}
+}
+
+func TestNativeCursorExportFeedsHookQuotaGate(t *testing.T) {
+	now := time.Now().UTC()
+	path := filepath.Join(t.TempDir(), "cursor-usage.json")
+	payload := map[string]any{
+		"observed_at":        now,
+		"plan_usage":         map[string]any{"auto_percent_used": 20.0},
+		"billing_cycle_end":  now.Add(time.Hour).UnixMilli(),
+		"auto_bucket_models": []string{"candidate"},
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, b, 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", path)
+	t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "missing-quota.json"))
+	s := KnownSession([]string{"candidate"}).WithUsageQuota("cursor", nil)
+	if s.QuotaStatus("cursor", "candidate") != quota.Available || !CanWriteSessionID("cursor", "candidate", s, nil) {
+		t.Fatalf("fresh native export did not authorize candidate: status=%s", s.QuotaStatus("cursor", "candidate"))
+	}
+	payload["observed_at"] = now.Add(-10 * time.Minute)
+	b, err = json.Marshal(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, b, 0600); err != nil {
+		t.Fatal(err)
+	}
+	s = KnownSession([]string{"candidate"}).WithUsageQuota("cursor", nil)
+	if s.QuotaStatus("cursor", "candidate") != quota.Stale || CanWriteSessionID("cursor", "candidate", s, nil) {
+		t.Fatalf("stale native export did not hold candidate: status=%s", s.QuotaStatus("cursor", "candidate"))
 	}
 }
