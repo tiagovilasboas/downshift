@@ -19,11 +19,12 @@ so the routing hot path stays offline and deterministic.
 ## Order of precedence
 
 1. Hook payload (`session_models` / `available_models`). A present `included_models` or `unavailable_models` array is this call's credit report. The operator file is not a credit source.
-2. Discovered cache (`discovered.json` in the state dir), the list recovered from that harness. It beats a handwritten allowlist.
-3. Operator `session-models.json` only when nothing was recovered. `quota` in that file is not read.
-4. Otherwise the session is unknown and the hook does not rewrite.
+2. A configured Cursor native export (`DOWNSHIFT_CURSOR_NATIVE_FILE`) with a complete fresh `available_models` list. A present malformed/stale export holds routing rather than falling back. Provider order is not capability order: this source needs resolver tier metadata and preserves the task's capability floor.
+3. Discovered cache (`discovered.json` in the state dir), the list recovered from that harness. It beats a handwritten allowlist.
+4. Operator `session-models.json` only when nothing was recovered. `quota` in that file is not read.
+5. Otherwise the session is unknown and the hook does not rewrite.
 
-Environment: `DOWNSHIFT_DISCOVERY=off` disables the discovered cache (layer 2); `DOWNSHIFT_DISCOVERY_TTL`
+Environment: `DOWNSHIFT_DISCOVERY=off` disables the discovered cache (layer 3); `DOWNSHIFT_DISCOVERY_TTL`
 (Go duration, default `24h`, `0` = never expires) bounds how old an entry may be;
 `DOWNSHIFT_DISCOVERED` overrides the path. An expired entry is an unknown session,
 so run `discover` on a schedule (cron, launchd, or a session-start hook).
@@ -36,8 +37,8 @@ so run `discover` on a schedule (cron, launchd, or a session-start hook).
 | kirocrew | `kiro-cli chat --list-models --format json` | `auto` is Kiro's router, skipped. |
 | grok | `grok models` | Works without login. Grok has no catalog tiers, so nothing is usable for routing yet. |
 | claude-code | Anthropic Models API | Needs `ANTHROPIC_API_KEY`. Subscription-only sessions have no listing endpoint and are skipped. |
-| cursor | `cursor-agent models`, or verified `agent models` | Uses the CLI's existing login. Parses its account model listing; no login is started and no credentials are read by Downshift. |
-| antigravity | none | No supported model-listing CLI/cache contract verified in the installed Google Antigravity 2.21.1. Explicit hook lists or the operator file remain necessary. |
+| cursor | `cursor-agent models`, or verified `agent models`; native-file consumer | CLI listing needs its own login. The consumer accepts complete fresh native availability, but the experimental external bridge is blocked by Cursor 3.24.9's built-in-only API and produced no export. [Runtime diagnostic](evidence/cursor-gap-diagnostic.md). |
+| antigravity | native `agy` can list parent-picker models; no routing discovery integration | The separate native CLI was verified locally and remains outside PATH. Parent-picker IDs are not proven `invoke_subagent` aliases or pool membership; [source evidence](evidence/antigravity-runtime-source.md). Explicit hook lists or the operator file remain necessary for the routing namespace. |
 
 A source that fails (not installed, offline, no existing login/key), returns no
 models, times out, or emits malformed/incomplete output is reported and leaves
@@ -67,6 +68,8 @@ Cursor's CLI text does not expose the Cursor Models / Other Models balance or
 model-to-pool membership. Do not infer credit from names, provider, catalog
 prices, or discovery. Antigravity's launcher has no verified model-list command;
 its internal authenticated language-server transport is not a supported source.
+The separate native `agy` CLI supplies parent-picker and grouped-usage evidence;
+that does not establish the missing routing alias/pool mapping.
 
 ### Guia and sensor
 

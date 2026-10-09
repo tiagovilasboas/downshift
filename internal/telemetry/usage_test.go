@@ -158,11 +158,13 @@ func TestAggregate_UsageExcludedFromDecisionCounts(t *testing.T) {
 		makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.8),
 		makeEvent("claude-code", "COMPLEX", "OK", 0),
 	}
+	decisions[0].CorrelationID = "linked-decision"
 	before := telemetry.Aggregate(decisions)
 
 	usage := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.8)
 	usage.Outcome = telemetry.OutcomeUsage
 	usage.Verdict = "DOWNSHIFT" // copied verdict must not double-count
+	usage.LinkedDecision = telemetry.DecisionKey(decisions[0])
 	usage.InputTokens = int64Ptr(1000)
 	usage.OutputTokens = int64Ptr(500)
 	usage.ActualCostUSD = float64Ptr(1.0)
@@ -351,11 +353,14 @@ func TestHandlePostToolUse_EndToEnd_Unmatched(t *testing.T) {
 	if events[0].Verdict != "UNKNOWN" {
 		t.Errorf("Verdict = %q, want UNKNOWN", events[0].Verdict)
 	}
-	if !events[0].HasRealCost() {
+	if events[0].ActualCostUSD == nil || *events[0].ActualCostUSD <= 0 {
 		t.Error("unmatched record should still price the routed spend")
 	}
+	if events[0].BaselineCostUSD != nil || events[0].HasRealCost() {
+		t.Error("unmatched record must not invent a requested baseline")
+	}
 	if got := events[0].RealSavedUSD(); got != 0 {
-		t.Errorf("RealSavedUSD = %f, want 0 (baseline falls back to routed)", got)
+		t.Errorf("RealSavedUSD = %f, want 0 (baseline is unknown)", got)
 	}
 }
 
@@ -468,5 +473,44 @@ func TestHandlePostToolUse_DecisionPricedOnce(t *testing.T) {
 	}
 	if priced != 1 {
 		t.Fatalf("decision priced %d times, want 1", priced)
+	}
+}
+
+func TestHandlePostToolUse_UnknownRequestedBaselinePreservesObservedSpend(t *testing.T) {
+	for _, requested := range []string{"unknown", "uncatalogued-requested-model"} {
+		t.Run(requested, func(t *testing.T) {
+			cat := usageTestCatalog(t)
+			smallID := cat.ModelFor("claude-code", core.TierSmall).ID
+			small, _ := cat.LookupByID("claude-code", smallID)
+			eventLog := filepath.Join(t.TempDir(), "events.jsonl")
+			t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)
+			sessionHash := telemetry.HashSessionID("unknown-requested-session")
+			seedDecision(t, eventLog, sessionHash, requested, smallID)
+			payload, _ := json.Marshal(map[string]any{
+				"hook_event_name": "PostToolUse", "model": smallID,
+				"session_id": "unknown-requested-session",
+				"usage":      map[string]any{"input_tokens": 1000, "output_tokens": 500},
+			})
+			_, _, linked := claudecode.HandlePostToolUse(payload, "test", cat)
+			if !linked {
+				t.Fatal("known decision must still link with unknown requested baseline")
+			}
+			events, err := telemetry.ReadEventsFrom(eventLog)
+			if err != nil || len(events) != 2 {
+				t.Fatalf("want decision + usage, got %d err=%v", len(events), err)
+			}
+			usage := events[1]
+			wantCost := telemetry.CostUSD(small, telemetry.TokenUsage{InputTokens: 1000, OutputTokens: 500})
+			if usage.ActualCostUSD == nil || math.Abs(*usage.ActualCostUSD-wantCost) > 1e-9 || wantCost <= 0 {
+				t.Fatalf("observed spend lost: actual=%v, want %f", usage.ActualCostUSD, wantCost)
+			}
+			if usage.BaselineCostUSD != nil || usage.HasRealCost() || usage.RealSavedUSD() != 0 {
+				t.Fatalf("unknown requested baseline was manufactured: %+v", usage)
+			}
+			stats := telemetry.Aggregate(events)
+			if stats.UsageLinked != 1 || stats.ActualCostEvents != 1 || stats.RealCostEvents != 0 || stats.RealSavedUSD != 0 {
+				t.Fatalf("link/spend/comparison counts must remain distinct: %+v", stats)
+			}
+		})
 	}
 }

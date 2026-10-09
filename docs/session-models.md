@@ -1,6 +1,6 @@
 # Session models
 
-Downshift may write only a model id that exists in the current harness session. The session list is the complete candidate set for every harness; the catalog is optional metadata (tier, cost, family, effort), never a source of candidate IDs.
+Downshift may write only a model id that exists in the current harness session. The session list is the complete candidate set for every harness; the catalog never adds candidate IDs. Metadata is optional for capability-ordered hook/operator lists. An unordered native Cursor export requires resolver tier metadata before its exact IDs become routing targets.
 
 Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. Upshift picks the last eligible id, so leaving an expensive frontier model off the list is the install-time opt-out. Claude Code accepts `fable`; the default example omits `claude-fable-5-1` so that upshift stops at Opus unless you append it. That Claude Code id is opt-in by listing it. It is not `explicit_only`. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier) inside the filtered session order, skips exhausted ids, and never parses model names or relies on prices to pick a target. A non-empty credit set for this harness is closed: ranking stays inside it, in session order, with no fallback to an id outside the set. Upshift picks the last remaining id. Catalog `explicit_only` ids are skipped unless `explicit_upshift` is on, and then only for upshift. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
 
@@ -53,8 +53,9 @@ Native config is not a session allowlist either:
 Same order for every harness:
 
 1. Hook payload, if it includes `session_models` or `available_models` (a JSON array of strings). A present field wins, including an empty array.
-2. Otherwise the models recovered for that harness by `downshift models discover` (`discovered.json`). See [session-discovery.md](session-discovery.md). A recovered list beats a handwritten allowlist.
-3. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key is the fallback. This file is not a credit report. `quota` in it is ignored.
+2. For Cursor, a configured native export with complete fresh availability. A stale or invalid configured export holds routing. Its provider order is not a capability ranking: resolver tier metadata is required and unknown capability stays ineligible.
+3. Otherwise the models recovered for that harness by `downshift models discover` (`discovered.json`). See [session-discovery.md](session-discovery.md). A recovered list beats a handwritten allowlist.
+4. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key is the fallback. This file is not a credit report. `quota` in it is ignored.
 
 The file is operator-curated. For Codex, `model` identifies the active model in that event and `session_id` identifies its session. Downshift does not call a picker API, discover account entitlements, or assume every catalog entry is selectable. Verify the session's actual choices before adding them to the allowlist.
 

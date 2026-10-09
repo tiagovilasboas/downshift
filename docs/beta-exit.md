@@ -5,6 +5,10 @@ This document tracks everything required to remove the **beta** label from
 Update checkboxes as work lands; link PRs/commits in the **Done** column when
 closing a task.
 
+The current runtime, quota, cost and evidence queue is [gap-tasks.md](gap-tasks.md),
+with acceptance criteria, dependencies and dated validation status. Close a
+checkbox here only after its corresponding acceptance evidence is verified.
+
 **Legend:** `[ ]` open · `[~]` in progress · `[x]` done · `—` blocked on external harness/vendor
 
 ---
@@ -58,14 +62,14 @@ Replace directional normalised units with provider-grounded savings.
 | P3.2 | Claude Code **PostToolUse** hook + usage linkage | eng | [x] |
 | P3.3 | Wire PostToolUse in maintainer `settings.json` + document in README quickstart | dogfood | [x] |
 | P3.4 | **≥50** `outcome: "usage"` events linked to prior PreToolUse decisions | dogfood | [ ] |
-| P3.5 | `downshift stats` shows `Real provider cost` section with non-zero saved USD | dogfood | [ ] |
+| P3.5 | Non-zero token-derived savings, known baseline and native provenance: [2026-10-09 audit](evidence/billing-gap-audit.md), QA PASS; not an invoice or controlled-period comparison | dogfood | [x] |
 | P3.6 | **Control group**: `DOWNSHIFT_NO_ROUTE=1` / `--no-route` baseline events | eng | [x] |
 | P3.7 | Report template: same calendar week, Anthropic/OpenAI dashboard vs `stats --export` (`docs/billing-comparison-template.md`) | docs | [x] |
 | P3.8 | PostToolUse for Codex/Cursor when harness exposes usage (track upstream) | eng | — |
 
-**Exit:** P3.4 + P3.5 + P3.7 filled for **one** billing period (maintainer sign-off).
+**Exit:** P3.4 + P3.5 + P3.7 filled for **one** billing period (maintainer sign-off). Still open: 5/50 linked agents and no real control-period comparison. P3.5 alone does not close the pillar.
 
-P3.4 finding (2026-10-06): the Claude Code PostToolUse payload for an async `Agent` launch carries no token usage (`tool_response` is launch metadata only, `duration_ms` is a few ms), which is why the log has no `usage` events. The subagent transcript at `tool_response.outputFile` does carry per-message `message.model` and `message.usage` (input, output, cache creation/read; the same message id repeats while streaming, so take the last per id). It is not complete at launch time, so usage is read when the subagent stops: the SubagentStop hook (`downshift claude-code-subagent-stop`, payload `agent_id` + `agent_transcript_path`) prices it from that transcript and links it to the decision through the hashed agent id. Verified 2026-10-06 against a real transcript (18 input, 311 output, 82,900 cache tokens). It is not enabled in the maintainer `settings.json` yet, and savings stay zero while the decision's `requested_model` is `unknown`. The launch payload does carry `resolvedModel`, now recorded as an `outcome: "resolved"` honor observation (P1.7).
+Historical P3.4 finding (2026-10-06; superseded counts and current provenance in the [2026-10-09 audit](evidence/billing-gap-audit.md)): the Claude Code PostToolUse payload for an async `Agent` launch carries no token usage (`tool_response` is launch metadata only, `duration_ms` is a few ms), which is why the log has no `usage` events. The subagent transcript at `tool_response.outputFile` does carry per-message `message.model` and `message.usage` (input, output, cache creation/read; the same message id repeats while streaming, so take the last per id). It is not complete at launch time, so usage is read when the subagent stops: the SubagentStop hook (`downshift claude-code-subagent-stop`, payload `agent_id` + `agent_transcript_path`) prices it from that transcript and links it to the decision through the hashed agent id. Verified 2026-10-06 against a real transcript (18 input, 311 output, 82,900 cache tokens). It is not enabled in the maintainer `settings.json` yet, and savings stay zero while the decision's `requested_model` is `unknown`. The launch payload does carry `resolvedModel`, now recorded as an `outcome: "resolved"` honor observation (P1.7).
 
 ---
 
@@ -98,7 +102,7 @@ P4.3's checked box is the library, not graph-aware routing on the hook. `TestHin
 | P5.2 | Antigravity catalog entries (`flash_lite` / `flash` / `pro`) | eng | [x] |
 | P5.3 | Revalidate Cursor free/legacy discard quarterly | dogfood | [ ] |
 | P5.4 | Revalidate Codex `multi_agent_v2` schema quarterly | dogfood | [ ] |
-| P5.5 | Antigravity rewrite honored on real `invoke_subagent` session | dogfood | [ ] |
+| P5.5 | Antigravity real child observed on desktop 2.21.1, 2026-10-09; [native evidence](evidence/antigravity-executor-ack.md), QA PASS, build-specific scope | dogfood | [x] |
 | P5.6 | Issue template: “plan compatibility” checklist for bug reports | docs | [x] |
 
 **Exit:** matrix has **no stale TBD** for harnesses you ship support for; known “No” rows stay honest.
@@ -121,9 +125,9 @@ P4.3's checked box is the library, not graph-aware routing on the hook. `TestHin
 ## Suggested execution order (sprints)
 
 1. **Code done:** P4.9 default local hash boost, P4.10 neural holdout measurement, P3.3 PostToolUse command shipped, inferred honor in stats, Graphify command fetcher.
-2. **Dogfood now:** P3.4–P3.5 (usage events with tokens), P1.3 (Claude Code paid), P3.7 (fill the billing template).
+2. **Dogfood now:** P3.4 (5/50 genuinely linked agents) and P3.7 (fill the period comparison with real controls). P3.5 technical token-derived criterion passed on 2026-10-09; the period exit remains open.
 3. **Community:** P2.3–P2.4 exports from other operators.
-4. **Before label removal:** P1.6, P5.3–P5.5, all five pillar exit checks signed in a release note. Codex P1.5 recorded 2026-10-02.
+4. **Before label removal:** P1.6, P5.3–P5.4, all five pillar exit checks signed in a release note. P5.5 observed 2026-10-09 on desktop 2.21.1; Codex P1.5 remains inferred, recorded 2026-10-02.
 
 ---
 

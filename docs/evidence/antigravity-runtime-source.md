@@ -117,6 +117,20 @@ alias/pool association. Refresh and import belong outside tool hooks. Hooks
 must continue to read a bounded, expiring cache without starting a native CLI,
 network refresh, or authentication flow. No recurring job was installed.
 
+## Follow-up execution on 2026-10-09
+
+The same verified CLI remained at `/tmp/downshift-antigravity-native/agy`.
+It was outside `PATH`; an unqualified `agy: command not found` did not mean the
+binary had disappeared. Running its absolute path again returned version
+`1.3.2`, `SUCCESS` for 18 parent models, and `SUCCESS` for two quota groups with
+four buckets. The group schema still contained names/descriptions/buckets and
+no structural model membership. No profile or authentication change was needed.
+
+The [native executor observation](antigravity-executor-ack.md) independently
+resolves one real rewritten `flash_lite` child to `gemini-3.5-flash-lite` on
+Antigravity 2.21.1. That observation does not fill the quota membership gap or
+make this CLI listing a discovery source wired into Downshift.
+
 ## Guia and sensor
 
 | Concern | Guia | Sensor | Eixo |

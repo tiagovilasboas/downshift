@@ -34,17 +34,22 @@ async function collect(context) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10000);
   let temporary;
+  let stage = 'workspace';
   try {
     if (!vscode.workspace.isTrusted) throw new Error('A trusted workspace is required');
+    stage = 'transport';
     const transport = vscode.cursor?.connectTransport;
     if (!transport || typeof transport.unary !== 'function') throw new Error('Native Cursor transport is unavailable');
     // The host owns authentication. Empty request and headers; no token API,
     // cookie, Keychain, storage database, network client or browser injection.
+    stage = 'usage';
     const response = await transport.unary(service, method, controller.signal, 10000, {}, {});
+    stage = 'models';
     const models = await transport.unary(modelsService, modelsMethod, controller.signal, 10000, {}, {});
     const payload = {...response.message, available_models: models.message, available_models_complete: true};
     const target = process.env.DOWNSHIFT_CURSOR_NATIVE_FILE ||
       path.join(context.globalStorageUri.fsPath, 'cursor-usage.json');
+    stage = 'write';
     await fs.mkdir(path.dirname(target), {recursive: true, mode: 0o700});
     temporary = target + '.' + crypto.randomBytes(8).toString('hex') + '.tmp';
     await fs.writeFile(temporary, JSON.stringify(payload) + '\n', {mode: 0o600, flag: 'wx'});
@@ -53,7 +58,10 @@ async function collect(context) {
     return target;
   } catch {
     // Transport errors may carry account metadata. Never expose or persist them.
-    await vscode.window.showWarningMessage('Cursor quota export failed. No new quota was stored; check native Cursor login and bridge compatibility.');
+    const hint = stage === 'transport'
+      ? 'The installed host may restrict the native API to built-in extensions.'
+      : 'Check native Cursor login and bridge compatibility.';
+    await vscode.window.showWarningMessage('Cursor quota export failed at ' + stage + '. No new quota was stored. ' + hint);
   } finally {
     clearTimeout(timer);
     if (temporary) await fs.unlink(temporary).catch(() => {});

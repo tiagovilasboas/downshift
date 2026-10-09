@@ -1,5 +1,8 @@
 # Maintainer backlog (private ops)
 
+Current public runtime/evidence tasks: [gap-tasks.md](../gap-tasks.md). That queue
+tracks acceptance and dependencies without exposing private operational detail.
+
 The autonomous execution backlog (DS/HC/KB streams, agent handoff rules, and
 cross-repo integration contracts) is **not published** in this repository.
 

@@ -17,6 +17,15 @@ func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bo
 	if harness == "" || id == "" || id == inheritID || !session.Known || !session.Contains(id) || session.Blocks(id) || !session.quotaAllows(harness, id) {
 		return false
 	}
+	if session.NativeAvailability {
+		if res == nil {
+			return false
+		}
+		m, ok := res.LookupByID(harness, id)
+		if !ok || m.ID == "" || m.Tier < TierSmall || m.Tier > TierFrontier {
+			return false
+		}
+	}
 	if session.CreditsReported && len(session.Included) > 0 && !session.IsIncluded(id) {
 		return false
 	}
@@ -47,8 +56,9 @@ func HarnessOwnsID(harness, id string, session SessionList, res Resolver) bool {
 }
 
 // PlanForSession is the harness-agnostic routing plan. The session list is the
-// only candidate source and is ordered least-to-most capable. Catalog metadata
-// is optional. An unknown session leaves the current model in place.
+// only candidate source. Operator/hook/discovery lists are ordered
+// least-to-most capable; native lists instead require resolver tier metadata.
+// An unknown session leaves the current model in place.
 func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session SessionList) RewritePlan {
 	currentID := d.CurrentModel.ID
 	requested := d.RequestedID
@@ -88,6 +98,9 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 func selectSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool) {
 	if d.Checked && d.SafeVerdict == VerdictOK {
 		return "", Model{}, false
+	}
+	if session.NativeAvailability {
+		return nativeSessionTarget(d, res, session)
 	}
 	if session.Blocks(d.CurrentModel.ID) || session.Blocks(d.RequestedID) {
 		return leastSessionModelAtOrAbove(d.Harness, session, res, d.Tier)

@@ -150,8 +150,8 @@ func window(id, scope string, models []string, used *float64, reset int64) Windo
 
 const transcriptTailBytes = 2 << 20
 
-// LoadNative reads an opt-in provider export when no canonical quota cache is
-// present. Hooks remain offline: this only reads a bounded regular file written
+// LoadNative reads an opt-in provider export before the canonical quota cache.
+// Hooks remain offline: this only reads a bounded regular file written
 // by a native bridge, and never starts a provider CLI or performs auth.
 // A configured but invalid file is reported as present so callers fail closed
 // instead of silently falling back to an older or handwritten source.

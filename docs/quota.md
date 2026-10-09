@@ -112,13 +112,32 @@ own runtime evidence. See [session-discovery.md](session-discovery.md).
 
 The hook can read a fresh raw Cursor export without running a CLI or touching
 credentials. Set `DOWNSHIFT_CURSOR_NATIVE_FILE` in the hook's environment to the
-file written by the optional bridge. The hook parses that bounded regular file
+verified native export. The hook parses that bounded regular file
 on each invocation before the canonical cache. Its
 `observed_at` is preserved, so an old export expires instead of being refreshed.
 If the configured file is malformed, unreadable or too large, the quota gate
 holds the rewrite. The provider still controls the export cadence; Downshift
 does not poll Cursor or claim a balance that the payload does not associate with
 exact model IDs.
+
+The same file supplies native availability when `available_models_complete` is
+true and `observed_at` is fresh. Availability and quota use one observation to
+avoid mixing rotated exports. Hook lists still take precedence; a configured
+invalid native list does not fall back to discovery or a handwritten list.
+Native provider order is not a capability signal. Eligible targets need resolver
+tier metadata, the task's capability floor and valid quota; unknown capabilities
+hold. Equal-tier ties use the catalog output-token price; this does not promise
+lower total cost for every input/output mix. A classified downshift cannot become
+a higher-tier selection, or a higher output-token price within the same tier,
+because another pool exhausted.
+See the [bridge instructions](../internal/cursorbridge/extension/README.md).
+
+Runtime validation on Cursor **3.24.9** found that the proposed `cursor` API is
+restricted to built-in extensions. The external experimental bridge failed at
+transport access even with the explicit per-extension API flag, before any RPC;
+no native file was produced. The file consumer is implemented and tested, but
+this bridge is not an operational collector on that build. A supported source
+remains an open dependency. [Diagnostic](evidence/cursor-gap-diagnostic.md).
 
 ## Operator observations and observability
 

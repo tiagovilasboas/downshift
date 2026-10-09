@@ -213,14 +213,18 @@ func buildUsageEvent(usage telemetry.TokenUsage, payloadModel, sessionHash, bina
 	if !ok {
 		return ev
 	}
-	baseline := routed // fallback: unknown baseline prices as zero savings
-	if target != nil && target.FromModel != "" && target.FromModel != "unknown" {
-		if b, ok := r.LookupByID(harnessID, target.FromModel); ok {
-			baseline = b
-		}
+	if usage == (telemetry.TokenUsage{}) {
+		return ev
 	}
-	if usage.InputTokens+usage.OutputTokens+usage.CachedTokens > 0 {
-		telemetry.FillRealCost(&ev, baseline, routed)
+	actual := telemetry.CostUSD(routed, usage)
+	ev.ActualCostUSD = &actual
+	// Observed routed spend does not establish the requested baseline. Keep
+	// it absent unless the linked decision names a catalog-resolved model.
+	if target != nil && target.FromModel != "" && target.FromModel != "unknown" {
+		if baseline, ok := r.LookupByID(harnessID, target.FromModel); ok {
+			base := telemetry.CostUSD(baseline, usage)
+			ev.BaselineCostUSD = &base
+		}
 	}
 	return ev
 }
