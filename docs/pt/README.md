@@ -60,6 +60,26 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 
 ---
 
+## Relatórios e Auditoria de Economia
+
+Para auditar o histórico de rotas, ver a estimativa de custos e acompanhar as métricas locais de tokens:
+
+```bash
+# Relatório consolidado dos últimos 30 dias
+downshift stats
+
+# Filtrar janela temporal (ex: 7 dias)
+downshift stats --days=7
+
+# Resumo em JSON higienizado para auditorias (sem texto de prompt nem caminhos)
+downshift stats --export
+
+# Iniciar dashboard web local
+downshift serve
+```
+
+---
+
 ## Testando a Tomada de Decisão no Terminal
 
 Você pode simular e inspecionar qualquer decisão diretamente pela linha de comando, sem precisar abrir uma sessão de agente:
