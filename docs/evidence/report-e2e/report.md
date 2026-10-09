@@ -1,33 +1,39 @@
-# Report e2e — 2026-10-09T06:54:33Z
+# Report e2e — PASS
 
-Captura headless do Chrome em `http://127.0.0.1:7474/?e2e=…` (cache desligado, `app.js?v=12`). Um PNG por chip. O texto abaixo é o que a página mostrava nesse instante.
+Captura `2026-10-09T12:12:50.729Z` em `http://127.0.0.1:7474`. Health `200` às `2026-10-09T12:12:20Z` (`{"ok":true}`). O listener já devolvia a janela inteira (76 switches) e foi mantido: PID 28355, `./downshift serve`, iniciado `2026-10-09 08:58:49` local (11:58:49Z). Binário `./downshift` com mtime local `2026-10-09 08:10:51`.
 
-## all.png
+`go test ./internal/core/ ./internal/server/ ./internal/benchmark/ ./cmd/downshift/` — os quatro pacotes `ok` (cache).
 
-Aba **all** com dado, não só título.
+Sensor: `node --experimental-websocket docs/evidence/report-e2e/live-report.check.mjs` (exit 0). `findings.json`: `verdict` PASS, `findings` vazio. PNGs: `all.png`, `antigravity.png`, `codex.png`, `cursor.png`, `claude-code.png`, `kirocrew.png`, `grok.png`. Relógio da tela: 9:12:49 AM local.
 
-- **Active agents / spawned in the last 5 min:** 7 linhas. A de 2 min é só `cursor` / `grok-4.7-high`. As de 4 min ainda são os pares gravados antes da troca do binário.
-- **Switch:** id completo `grok-4.7-high` (não `grok`). Onde a API traz effort de verdade, a linha mostra `muse-spark-1.3-high · high` e `claude-opus-4-8 · medium`. O `↓ medium` ao lado do grok é a complexidade `MEDIUM`; nesses eventos `final_reasoning_effort` é `unknown`.
-- **Stats:** 108 events, 1↓, 9↑.
-- **Estimated savings:** `$0.00`, 1 downshift aplicado nas últimas 24h. Cartão separado da compactação.
-- **Session compaction:** `0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0`, `token_state unavailable`, e a frase “Bytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.” Não há `context-sensor.json`; os zeros são a leitura vazia, não uma economia inventada.
+Log de 24h (`~/.harness-downshift/events.jsonl`, corte na captura): codex 2, cursor 45, claude-code 29. Antigravity, kirocrew e grok: 0. `/api/status` devolve os mesmos 76 switches (`agents` é `[]`). Compactação: `~/.harness-downshift/context-compactions.jsonl` não existe. `compaction.by_harness` veio `{}`. Nenhum nome de harness foi inventado.
 
-## antigravity.png
+## Abas
 
-Chip antigravity. Uma linha, `flash · medium`, stats `1 events · antigravity only`. Nada de cursor nem de claude-code. Janela de 5 min vazia.
+| Aba | O que a tela mostrou | Julgamento |
+|---|---|---|
+| all | chips completos; 2 ativos nos últimos 5 min (`grok-4.7-xhigh`, cursor, 42s e 48s); 6 switches visíveis, os mais novos; agents `no spawned agents in the agent log`; `76 events`, `2↓`, `1↑`; economia `$0.00` / 2 downshifts | conta bate com `stats` (`total` 76, `down` 2, `up` 1, `est_usd` 0.0025, arredondado para `$0.00`) e com o log |
+| antigravity | `no antigravity events in the last 24h`, `0 events`, 5 min vazio | vazio verdadeiro: 0 eventos no log |
+| codex | `2 events`, `0↓`, `1↑`; linhas `gpt-5.5 · medium` (02:57 PM, `2026-10-08T17:57:51Z`, UPSHIFT) e `unknown` (01:04 PM, `2026-10-08T16:04:24Z`); 5 min vazio | bate com o log (2). Não está vazio |
+| cursor | `45 events`, `22↓`, `0↑`; economia `$0.00` / 22 downshifts; 2 ativos (`grok-4.7-xhigh`); agents não nega eventos do cursor | bate com o log (45). Não é o rabo de 8 linhas |
+| claude-code | `29 events`, `14↓`, `0↑`; economia `$0.01` / 14 downshifts; a lista visível inclui `claude-opus-4-8 · medium` (`2026-10-09T05:29:11Z`); 5 min vazio | bate com o log (29). Não está vazio |
+| kirocrew | `no kirocrew events in the last 24h`, `0 events`, 5 min vazio | vazio explícito. Último evento no log: `2026-10-06T11:57:24.855122Z`, fora da janela |
+| grok | `no grok events in the last 24h`, `0 events`, 5 min vazio | vazio verdadeiro: 0 eventos do harness grok na janela |
 
-## codex.png
+## Blocos
 
-Chip codex. Três linhas do harness: `gpt-5.5 · medium`, `unknown`, `gpt-5.6-terra`. Stats `3 events · codex only`. Janela de 5 min vazia.
+- **Chips:** `all`, `antigravity`, `codex`, `cursor`, `claude-code`, `kirocrew`, `grok` em todas as telas. O chip da aba fica selecionado.
+- **Events / downshifts / upshifts:** all usa `stats` (76, 2↓, 1↑). Cada aba de harness conta o próprio recorte de 24h: codex 2/0↓/1↑, cursor 45/22↓/0↑, claude-code 29/14↓/0↑, antigravity, kirocrew e grok em 0.
+- **Switches:** a lista pintada continua sendo as 6 linhas mais novas do recorte. A contagem é a janela. No cursor, essas 6 são `grok-4.7-xhigh` com `final_reasoning_effort=unknown` (`2026-10-09T10:25:23Z` até `2026-10-09T12:12:06Z`), então a tela não acrescenta effort nelas. O `medium` ao lado da seta é complexity. Codex mostra `medium` em `gpt-5.5`. Claude Code mostra `medium` em `claude-opus-4-8`.
+- **Active agents (5 min):** all e cursor listam os dois spawns `2026-10-09T12:12:00Z` e `2026-10-09T12:12:06Z`. As outras abas mostram `none in the last 5 min`.
+- **Economia estimada:** cartão separado da compactação. All `$0.00` / 2 downshifts. Cursor `$0.00` / 22 downshifts (`estimated_savings` somado no recorte = 0.0025). Claude Code `$0.01` / 14 downshifts (0.00925). Abas sem DOWNSHIFT não mostram o cartão.
+- **Compactação:** arquivo ausente. A tela mostra `0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0`, `token_state unavailable`, sem nomes de harness, e a frase `Bytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.`
+- **Agents:** o JSON de `/api/status` é `[]`. O bloco da tela diz `no spawned agents in the agent log`. Não diz que o harness da aba não teve eventos.
 
-## cursor.png
+## Risco residual
 
-Chip cursor. As linhas de 5 min dizem `cursor`. O switch traz `grok-4.7-high` e `claude-opus-5-thinking-high · medium`. Não aparece `claude-opus-4-8`. Stats `50 events · cursor only`.
+`by_harness_state` veio `observed` com `by_harness` vazio porque o arquivo de compactação não existe. A tela não inventou linha de harness.
 
-## claude-code.png
+O `2↓` da aba all conta só DOWNSHIFT com rewrite aplicado (`stats.down`). O `22↓` do cursor e o `14↓` do claude-code contam todo verdict DOWNSHIFT do recorte. São contadores diferentes; o sensor desta captura trata isso como contrato.
 
-Chip claude-code. As 3 linhas de 5 min dizem `claude-code`. O switch traz `grok-4.7-high` e `claude-opus-4-8 · medium`. Não aparece `claude-opus-5-thinking-high` nem `muse-spark-1.3-high`. A linha nova de 2 min (só cursor) não entrou nesta aba. Stats `54 events · claude-code only`.
-
-## kirocrew.png
-
-O chip existe. Estado vazio explícito: “no kirocrew switches in the last 24h”, “none in the last 5 min”, stats `0 events · kirocrew only`. O último evento real no log é `2026-10-06T11:57:24Z`, fora da janela. Nenhuma linha foi inventada.
+A lista visível de switches é a cauda de 6 linhas. Eventos com effort no meio da janela, como `2026-10-09T00:27:58Z` `muse-spark-1.3-high` · `high` no cursor, entram na contagem 45 e não aparecem nessas 6 linhas.

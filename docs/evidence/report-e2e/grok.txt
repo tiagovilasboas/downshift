@@ -1,15 +1,15 @@
-tab: claude-code
-selected: claude-code
+tab: grok
+selected: grok
 chips: all, antigravity, codex, cursor, claude-code, kirocrew, grok
 signal: NONE IN THE LAST 5 MIN
 active agents:
 none in the last 5 min
 switches:
-no claude-code events in the last 24h
+no grok events in the last 24h
 agents:
-no claude-code events in the last 24h
+no grok events in the last 24h
 stats:
-0 events   0↓   0↑   · claude-code only
+0 events   0↓   0↑   · grok only
 economy visible: False
 economy:
 

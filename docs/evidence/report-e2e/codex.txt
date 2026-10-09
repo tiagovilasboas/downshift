@@ -1,44 +1,19 @@
-downshift · dashboard
-3:54:35 AM
-tiagovilasboas
-♥ Sponsor
-ROUTING MONITOR · LAST 24H
-NONE IN THE LAST 5 MIN
-◉
-📲 Install as an app
-Install
-HARNESSES
-all
-antigravity
-codex
-cursor
-claude-code
-kirocrew
-ACTIVE AGENTS
-spawned in the last 5 min
+tab: codex
+selected: codex
+chips: all, antigravity, codex, cursor, claude-code, kirocrew, grok
+signal: NONE IN THE LAST 5 MIN
+active agents:
 none in the last 5 min
-ACTIVE AGENT SPAWNED
-hook saw the spawn
-02:57 PM
-gpt-5.5 · medium
-SPAWNED
-↑ medium
-01:04 PM
-unknown
-SPAWNED
-? complex
-08:26 AM
-gpt-5.6-terra
-SPAWNED
-✓ medium
-AGENTS
-no active agent spawned
-STATS
-3 events   0↓   1↑   · codex only
-SESSION COMPACTION
-tool output only
+switches:
+no codex events in the last 24h
+agents:
+no codex events in the last 24h
+stats:
+0 events   0↓   0↑   · codex only
+economy visible: False
+economy:
+
+compaction:
 0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0
 token_state unavailable
 Bytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.
-⚠ These rows are active agents spawned, not the whole session. Each line is a subagent the hook saw on Claude Code, Cursor, Codex, Antigravity, or KiroCrew.
-Dollar figures are estimates, not a provider invoice. A downshift that the hook held (guardrail) stays in the log and does not add savings.

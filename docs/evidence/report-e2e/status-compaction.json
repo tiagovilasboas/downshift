@@ -9,27 +9,33 @@
     "kirocrew",
     "grok"
   ],
-  "compaction_keys": [
-    "sessions",
-    "tool_executions",
-    "bytes_before",
-    "bytes_reduced",
-    "bytes_after",
-    "tokens_before",
-    "tokens_after",
-    "tokens_reduced",
-    "token_state",
-    "savings_pct",
-    "state",
-    "by_harness",
-    "by_harness_state"
-  ],
-  "by_harness_present": true,
-  "by_harness_state": "observed",
-  "bytes_before": 0,
-  "token_state": "unavailable",
-  "tokens_before": 0,
-  "switch_counts": {
-    "cursor": 8
-  }
+  "stats": {
+    "total": 75,
+    "down": 2,
+    "up": 1,
+    "ok": 15,
+    "not_applied": 32,
+    "est_usd": 0.0025,
+    "est_units": 0.25,
+    "real_saved_usd": 0,
+    "real_cost_events": 0,
+    "is_estimate": true
+  },
+  "switches_len": 8,
+  "compaction": {
+    "sessions": 0,
+    "tool_executions": 0,
+    "bytes_before": 0,
+    "bytes_reduced": 0,
+    "bytes_after": 0,
+    "tokens_before": 0,
+    "tokens_after": 0,
+    "tokens_reduced": 0,
+    "token_state": "unavailable",
+    "savings_pct": 0,
+    "state": "unavailable",
+    "by_harness": {},
+    "by_harness_state": "observed"
+  },
+  "captured_at": "2026-10-09T11:07:16.537Z"
 }

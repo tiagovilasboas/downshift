@@ -1,109 +1,43 @@
-downshift · dashboard
-tiagovilasboas
-♥ Sponsor
-ROUTING MONITOR · LAST 24H
-ACTIVE AGENT SPAWNED · 7
-◉
-📲 Install as an app
-Install
-HARNESSES
-all
-antigravity
-codex
-cursor
-claude-code
-kirocrew
-ACTIVE AGENTS
-spawned in the last 5 min
-2m
-●grok-4.7-high
-SPAWNED
-cursor · ↓ medium
-4m
-●grok-4.7-high
-SPAWNED
-claude-code · ↓ medium
-4m
-●grok-4.7-high
-SPAWNED
-cursor · ↓ medium
-4m
-●grok-4.7-high
-SPAWNED
-cursor · ↓ medium
-4m
-●grok-4.7-high
-SPAWNED
-claude-code · ↓ medium
-4m
-●grok-4.7-high
-SPAWNED
-claude-code · ↓ medium
-4m
-●grok-4.7-high
-SPAWNED
-cursor · ↓ medium
-ACTIVE AGENT SPAWNED
-hook saw the spawn
-2m
-grok-4.7-high
+tab: all
+selected: all
+chips: all, antigravity, codex, cursor, claude-code, kirocrew, grok
+signal: NONE IN THE LAST 5 MIN
+active agents:
+none in the last 5 min
+switches:
+9m
+grok-4.7-xhigh
 SPAWNED
 ↓ medium
-4m
-grok-4.7-high
+9m
+grok-4.7-xhigh
 SPAWNED
 ↓ medium
-4m
-grok-4.7-high
+41m
+grok-4.7-xhigh
+SPAWNED
+✓ complex
+41m
+grok-4.7-xhigh
 SPAWNED
 ↓ medium
-4m
-grok-4.7-high
+46m
+grok-4.7-xhigh
+SPAWNED
+✓ complex
+46m
+grok-4.7-xhigh
 SPAWNED
 ↓ medium
-4m
-grok-4.7-high
-SPAWNED
-↓ medium
-4m
-grok-4.7-high
-SPAWNED
-↓ medium
-4m
-grok-4.7-high
-SPAWNED
-↓ medium
-02:41 AM
-unknown
-SPAWNED
-? complex
-02:41 AM
-muse-spark-1.3-high · high
-SPAWNED
-? complex
-02:33 AM
-grok-4.7-high
-SPAWNED
-↓ medium
-02:33 AM
-grok-4.7-high
-SPAWNED
-↓ medium
-02:29 AM
-claude-opus-4-8 · medium
-SPAWNED
-? medium
-AGENTS
+agents:
 no active agent spawned
-STATS
-108 events   1↓   9↑
-ESTIMATED SAVINGS
+stats:
+75 events   2↓   1↑
+economy visible: True
+economy:
 $0.00
-est. saved · last 24h · 1 downshift
-SESSION COMPACTION
-tool output only
+est. saved · last 24h · 2 downshifts
+compaction:
 0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0
 token_state unavailable
 Bytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.
-⚠ These rows are active agents spawned, not the whole session. Each line is a subagent the hook saw on Claude Code, Cursor, Codex, Antigravity, or KiroCrew.
-Dollar figures are estimates, not a provider invoice. A downshift that the hook held (guardrail) stays in the log and does not add savings.
