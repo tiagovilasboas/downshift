@@ -329,7 +329,12 @@ async function main() {
   } finally {
     if (ws) ws.close();
     chrome.kill('SIGKILL');
-    rmSync(PROFILE, { recursive: true, force: true });
+    await sleep(200);
+    try {
+      rmSync(PROFILE, { recursive: true, force: true, maxRetries: 3 });
+    } catch {
+      // A leftover Chrome profile must not hide the verdict.
+    }
   }
 
   const blockers = findings.filter((f) => f.severity === 'blocker');

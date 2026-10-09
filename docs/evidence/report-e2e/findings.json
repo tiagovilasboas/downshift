@@ -1,35 +1,4 @@
 {
-  "verdict": "BLOCK",
-  "findings": [
-    {
-      "severity": "blocker",
-      "title": "cursor: agents block denies events listed above",
-      "detail": "no cursor events in the last 24h"
-    },
-    {
-      "severity": "blocker",
-      "title": "codex: 24h events missing from the tab",
-      "detail": "events.jsonl has 3 events in the last 24h, /api/status switches has 8 rows and none for codex. The tab says \"no codex events in the last 24h\"."
-    },
-    {
-      "severity": "blocker",
-      "title": "codex: tab is the API tail, not the 24h window",
-      "detail": "events.jsonl has 3 events in the last 24h; /api/status switches includes 0."
-    },
-    {
-      "severity": "blocker",
-      "title": "cursor: tab is the API tail, not the 24h window",
-      "detail": "events.jsonl has 43 events in the last 24h; /api/status switches includes 8."
-    },
-    {
-      "severity": "blocker",
-      "title": "claude-code: 24h events missing from the tab",
-      "detail": "events.jsonl has 29 events in the last 24h, /api/status switches has 8 rows and none for claude-code. The tab says \"no claude-code events in the last 24h\"."
-    },
-    {
-      "severity": "blocker",
-      "title": "claude-code: tab is the API tail, not the 24h window",
-      "detail": "events.jsonl has 29 events in the last 24h; /api/status switches includes 0."
-    }
-  ]
+  "verdict": "PASS",
+  "findings": []
 }
