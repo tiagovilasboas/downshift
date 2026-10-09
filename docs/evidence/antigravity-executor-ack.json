@@ -1,0 +1,87 @@
+{
+  "applied_alias": "flash_lite",
+  "child_id_sha256": "dbb6ff6105a95ef8a05d4cc5553bbd628a9bb5506ebddbb653c831ff47fa6ffe",
+  "child_reference_matches": true,
+  "effective_model": "gemini-3.5-flash-lite",
+  "executor_models": [
+    {
+      "blob_sha256": "8cdd1fa4f54756549844cb1bb9c688056233c0cdc05454dbff023d581ac4b756",
+      "model": "gemini-3.5-flash-lite",
+      "row": 0
+    }
+  ],
+  "field_paths": {
+    "applied_call": "5.29",
+    "child_reference": "140.2.6.2.143.10.1",
+    "executor_model": "10.1.28",
+    "generation_model": "1.19",
+    "original_call": "5.4"
+  },
+  "generation_models": [
+    {
+      "blob_sha256": "7cf29bb43f55197be874ca577e401064b274080153a89325a71e5733fbd70e63",
+      "model": "gemini-3.5-flash-lite",
+      "row": 0
+    },
+    {
+      "blob_sha256": "fca91391036fdb030b474a97c983062d58ff6e01912603bec2238829c8d4565c",
+      "model": "gemini-3.5-flash-lite",
+      "row": 1
+    },
+    {
+      "blob_sha256": "982b4eba918b2dfdd8cc4e715efb3041e0223cb2937d4d615dbe987118095e01",
+      "model": "gemini-3.5-flash-lite",
+      "row": 2
+    },
+    {
+      "blob_sha256": "82503100c8cfb441053db54efc4859b7084d7f368ea0a0f07ab3f8102024e628",
+      "model": "gemini-3.5-flash-lite",
+      "row": 3
+    },
+    {
+      "blob_sha256": "137bcfeb3c85915bd317fb7ebb8dd054854c655b59c3bf334599d007dc3ddb38",
+      "model": "gemini-3.5-flash-lite",
+      "row": 4
+    },
+    {
+      "blob_sha256": "cb94f5aaff86b33cac31b6db145382e700805f40f04423b7e359e3aad915c3b7",
+      "model": "gemini-3.5-flash-lite",
+      "row": 5
+    },
+    {
+      "blob_sha256": "69ff78a2ad1429daac76fa46124d5766599776d240f87e1a536ea1576b18934a",
+      "model": "gemini-3.5-flash-lite",
+      "row": 6
+    },
+    {
+      "blob_sha256": "216321465300950d743a0df749d215b4da51558543a596cbe7bcda51e4d9689c",
+      "model": "gemini-3.5-flash-lite",
+      "row": 7
+    },
+    {
+      "blob_sha256": "37a165b7437f3e5db465bf745f775248a1084783e62ffb2b052bdd2e6d19844c",
+      "model": "gemini-3.5-flash-lite",
+      "row": 8
+    },
+    {
+      "blob_sha256": "bd76266ff3c71113cacebd9b93fd9616a9604205ace1454d97c2c01c0596dc37",
+      "model": "gemini-3.5-flash-lite",
+      "row": 9
+    }
+  ],
+  "limits": [
+    "one observed child; no pool membership or billing proof",
+    "offline manual evidence; does not append honor telemetry",
+    "private schema requires revalidation per app build"
+  ],
+  "observed_at": "2026-10-09T14:46:43.218547+00:00",
+  "parent_id_sha256": "13ceaf6a89b9b1c7d224fe8694559be819005221f8ed92f69e549dad0101dcd8",
+  "parent_step": 8,
+  "parent_step_sha256": "9bd873de0a97179c47c3c97bd5f5d9cae6776d5056ecfe850b62553f2a1a5da3",
+  "project": "harness-downshift by Tiago de Carvalho Vilas Boas",
+  "repository": "https://github.com/tiagovilasboas/downshift",
+  "requested_alias": "pro",
+  "schema_version": 1,
+  "source": "manual_antigravity_sqlite",
+  "storage_contract": "Antigravity 2.21.1; private protobuf field paths"
+}

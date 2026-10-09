@@ -177,10 +177,14 @@ Downshift writes a model id only when that id is in the current session. The cat
 
 Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift validates and hashes that ID before recording it, so local routing decisions can be grouped without persisting the raw session identifier. Record selectable model ids in `~/.downshift/session-models.json` (legacy: `~/.harness-downshift/`). A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. Details and evidence: [session-models.md](session-models.md). [session-models.example.json](examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
 
-For Cursor quota, the experimental bridge can write a fresh native export to a
-path named by `DOWNSHIFT_CURSOR_NATIVE_FILE`; the hook reads that file offline
-when no canonical quota cache is present. A malformed or stale export holds the
-rewrite. The bridge remains opt-in and provider membership remains authoritative.
+For Cursor quota, the hook can read a complete native export named by
+`DOWNSHIFT_CURSOR_NATIVE_FILE` offline before the canonical quota cache. A
+malformed or stale configured export holds routing. The external experimental
+extension was tested on Cursor 3.24.9 and could not access the built-in-only
+`cursor` API, even with an explicit proposed-API flag; no export was produced.
+Installing that extension does not currently enable collection on that build.
+See [the runtime diagnostic](evidence/cursor-gap-diagnostic.md). Provider
+membership remains authoritative; do not replace it with a fixed model list.
 
 ## Install (Codex)
 

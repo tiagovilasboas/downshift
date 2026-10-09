@@ -425,13 +425,22 @@ type Stats struct {
 	RealSavedUSD   float64
 	RealCostEvents int
 
-	// UsageLinked counts post-hoc cost records (outcome "usage").
+	// ActualCost fields include catalog-priced observed spend even when the
+	// requested baseline is unknown and no savings comparison can be made.
+	ActualCostUSD    float64
+	ActualCostEvents int
+
+	// UsageRecords counts all post-hoc usage records, including unmatched ones.
+	// UsageLinked counts distinct usage records whose references resolve to
+	// decisions in the same harness and compatible session. Records are deduped
+	// by agent hash when supplied, otherwise their own event identity.
 	// Baseline counts control-group events recorded with routing disabled
 	// (outcome "baseline", see DOWNSHIFT_NO_ROUTE): classified but never
 	// applied, excluded from decision counts so before/after comparison
 	// stays honest.
-	UsageLinked int
-	Baseline    int
+	UsageRecords int
+	UsageLinked  int
+	Baseline     int
 
 	// Corrected counts events where a guardrail held the decision: the
 	// classified verdict stands in the log, but adapters applied the safe
@@ -531,7 +540,22 @@ func FilterByDays(events []Event, days int) []Event {
 // Aggregate computes Stats from a slice of events.
 func Aggregate(events []Event) Stats {
 	s := Stats{ByComplexity: make(map[string]int)}
+	// Build the index before counting: exported windows may arrive out of order.
+	type linkKey struct {
+		harness, decision string
+	}
+	decisions := make(map[linkKey]Event)
 	for _, ev := range events {
+		if !IsCostOnlyOutcome(ev.Outcome) && ev.Outcome != "error" {
+			decisions[linkKey{ev.Harness, DecisionKey(ev)}] = ev
+		}
+	}
+	linked := make(map[linkKey]bool)
+	for _, ev := range events {
+		if ev.Outcome != OutcomeResolved && ev.Outcome != OutcomeBaseline && ev.ActualCostUSD != nil {
+			s.ActualCostEvents++
+			s.ActualCostUSD += *ev.ActualCostUSD
+		}
 		if ev.Outcome == OutcomeResolved {
 			continue // an observation about an earlier decision, not a cost or a decision
 		}
@@ -544,7 +568,18 @@ func Aggregate(events []Event) Stats {
 				s.Baseline++
 				continue
 			}
-			s.UsageLinked++
+			s.UsageRecords++
+			key := linkKey{ev.Harness, ev.LinkedDecision}
+			identity := "event:" + DecisionKey(ev)
+			if ev.AgentHash != "" {
+				identity = "agent:" + ev.AgentHash
+			}
+			unique := linkKey{ev.Harness, identity}
+			if decision, ok := decisions[key]; ok && ev.LinkedDecision != "" && !linked[unique] &&
+				(ev.SessionID == "" || decision.SessionID == "" || ev.SessionID == decision.SessionID) {
+				s.UsageLinked++
+				linked[unique] = true
+			}
 			if ev.HasRealCost() {
 				s.RealCostEvents++
 				s.RealSavedUSD += ev.RealSavedUSD()
@@ -647,15 +682,21 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	if s.Corrected > 0 {
 		fmt.Fprintf(w, "Safety-held           %8d  (guardrail applied, see corrections)\n", s.Corrected)
 	}
+	if s.ActualCostEvents > 0 {
+		fmt.Fprintf(w, "Observed token cost   $%10.2f  (%d events, catalog pricing)\n", s.ActualCostUSD, s.ActualCostEvents)
+	}
 	if s.RealCostEvents > 0 {
 		fmt.Fprintf(w, "\n")
 		fmt.Fprintf(w, "Real provider cost (%d events with token usage)\n", s.RealCostEvents)
 		fmt.Fprintf(w, "Real saved            $%10.2f\n", s.RealSavedUSD)
+	} else if s.ActualCostEvents > 0 {
+		fmt.Fprintf(w, "Savings comparison: no events with a known requested baseline yet.\n")
 	} else {
 		fmt.Fprintf(w, "Real cost: no events with token usage yet (wire the PostToolUse hook to populate them).\n")
 	}
-	if s.UsageLinked > 0 {
-		fmt.Fprintf(w, "Usage linked          %8d  (PostToolUse real-cost records)\n", s.UsageLinked)
+	if s.UsageRecords > 0 {
+		fmt.Fprintf(w, "Usage records         %8d  (all post-hoc usage records)\n", s.UsageRecords)
+		fmt.Fprintf(w, "Usage linked          %8d  (distinct usage matched to decisions in this window)\n", s.UsageLinked)
 	}
 	if s.Baseline > 0 {
 		fmt.Fprintf(w, "Baseline (no-route)   %8d  (control group, excluded from rates)\n", s.Baseline)

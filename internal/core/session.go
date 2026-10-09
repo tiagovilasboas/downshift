@@ -22,6 +22,9 @@ import (
 type SessionList struct {
 	IDs   []string
 	Known bool
+	// NativeAvailability contains provider IDs without an operator capability
+	// order. These candidates require resolver metadata before selection.
+	NativeAvailability bool
 	// Included ids have a stable token budget in this call. Empty means the
 	// hook did not report one. A file on disk is not a credit source.
 	Included []string
@@ -46,6 +49,12 @@ func (s SessionList) WithUsageQuota(harness string, supplied *quota.Snapshot) Se
 	s.QuotaRequired = os.Getenv("DOWNSHIFT_QUOTA_MODE") == "required"
 	if supplied != nil {
 		s.Usage, s.QuotaRequired = supplied, true
+		return s
+	}
+	// Native availability and quota were read from the same bounded export.
+	// Preserve that observation rather than reopening a file that may rotate.
+	if s.NativeAvailability {
+		s.QuotaRequired = true
 		return s
 	}
 	var present bool
@@ -212,11 +221,14 @@ func ResolveSession(harness string, hookLists ...*[]string) SessionList {
 	return ResolveSessionForID(harness, "", hookLists...)
 }
 
-// ResolveSessionForID prefers the hook payload, then the models recovered by
-// `downshift models discover`, then the operator file. The file is not a
+// ResolveSessionForID prefers the hook payload, a configured native export,
+// models recovered by `downshift models discover`, then the operator file. The file is not a
 // credit report and does not outrank a recovered session.
 func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) SessionList {
 	if session, ok := SessionFromHook(hookLists...); ok {
+		return session
+	}
+	if session, present := LoadNativeSession(harness, time.Now()); present {
 		return session
 	}
 	if session := LoadDiscoveredSession(harness, time.Now()); session.Known {

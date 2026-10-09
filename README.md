@@ -81,7 +81,7 @@ Use the ids your account really offers; the file is yours to maintain. Details a
 
 Claude Code is not limited to three models. The example stops at Opus on purpose: upshift writes the **last** id in this list, so an expensive frontier model stays out until you opt in. Append `claude-fable-5-1` (the hook writes the family name `fable`) only if you want that upshift.
 
-Or let Downshift ask the harness: `downshift models discover` reads the models your account can use (Codex, Kiro, Grok, Cursor, and the Anthropic API with a key) and writes a ranked cache that hooks use after your file. Antigravity has no verified discovery source yet. See [session-discovery.md](docs/session-discovery.md).
+Or let Downshift ask the harness: `downshift models discover` reads the models your account can use (Codex, Kiro, Grok, Cursor, and the Anthropic API with a key) and writes a ranked cache. Precedence is hook allowlist, configured Cursor native export, discovered cache, then operator file. Antigravity's native CLI can list parent-picker models, but their mapping to routing aliases and quota groups remains unresolved. See [session-discovery.md](docs/session-discovery.md) and the [remaining tasks](docs/gap-tasks.md).
 
 **3. Add the hook** to `~/.claude/settings.json`:
 
@@ -113,7 +113,7 @@ Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshif
 | **Claude Code** | `Task` / `Agent`, paid plans | `PreToolUse` → `updatedInput.model` | Yes, observed 2026-10-06 ([write-up](docs/evidence/claude-code-rewrite-honored-2026-10-06.md)) |
 | **Codex** | `spawn_agent` (`multi_agent_v2`) | `PreToolUse` → model + `reasoning_effort` | Inferred, not observed, 2026-10-02 ([write-up](docs/evidence/codex-rewrite-honored-2026-10-02.md)) |
 | **Cursor** | `Task` | `preToolUse` → `updated_input.model` | Unconfirmed; discarded on Free and legacy Pro plans |
-| **Antigravity** | `invoke_subagent` | `PreToolUse` overwrite | Not yet observed on a real spawn |
+| **Antigravity** | `invoke_subagent` | `PreToolUse` overwrite | Observed 2026-10-09, desktop 2.21.1: [native child evidence](docs/evidence/antigravity-executor-ack.md); quota mapping still unresolved |
 | **KiroCrew** | `spawn_run` / `spawn_sub_agents` | `preToolUse` policy (exit 0/2); `postToolUse` wired for compliance observation | Policy mode (no rewrite channel); compliance observer in labs |
 | **Grok CLI** | `spawn_subagent` | Config in `config.toml`, not a hook | No hook rewrite |
 
@@ -143,7 +143,7 @@ See [the context optimization guide](docs/context-optimization.md) for architect
 
 ## Cost and metrics
 
-- **Estimated, not billed.** `downshift stats --days=7` reports savings estimated from routing decisions. They are not a provider invoice, and no billing-period comparison has been published yet.
+- **Estimated, not billed.** Routing-only savings use normalized units. With native tokens, `downshift stats --days=7` also calculates catalog-priced costs and a same-token baseline comparison. A [dated audit](docs/evidence/billing-gap-audit.md) matched five linked Claude Code records to native models/tokens, including both positive-saving records. These estimates are not an invoice; the controlled period comparison remains open.
 - **Real usage on Claude Code (optional).** Add a `SubagentStop` hook running `downshift claude-code-subagent-stop` to record tokens and cost per subagent from its own transcript. Setup and limits: [session-models.md](docs/session-models.md#claude-code-real-usage).
 - **Local only.** Events go to a local `events.jsonl` in the state directory; prompts are not stored. Export format: [stats-export.md](docs/stats-export.md).
 - **Classifier numbers.** Published tier accuracy and outcome-eval results, with their dates and caveats, are in [benchmark/REPORT.md](benchmark/REPORT.md). Tune the classifier with `downshift try` and [docs/contrib/classifier.md](docs/contrib/classifier.md).
@@ -152,7 +152,7 @@ See [the context optimization guide](docs/context-optimization.md) for architect
 
 [INSTALL](docs/install.md) · [CONFIG](docs/config.md) · [session models](docs/session-models.md) · [session discovery](docs/session-discovery.md) · [ARCHITECTURE](docs/architecture.md) · [HARNESS-MATRIX](docs/harness-matrix.md) · [WHEN-TO-USE](docs/when-to-use.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
 
-Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit criteria](docs/beta-exit.md)
+Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit criteria](docs/beta-exit.md) · [remaining tasks](docs/gap-tasks.md)
 
 **For AI agents:** start with [docs/install.md](docs/install.md), [AGENTS.md](AGENTS.md) and [llms.txt](llms.txt).
 
