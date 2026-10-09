@@ -1,12 +1,16 @@
 {
-  "url": "http://127.0.0.1:7474/?e2e=1791528873604",
-  "at": "2026-10-09T06:54:37.114Z",
+  "url": "http://127.0.0.1:7474/",
+  "at": "2026-10-09T11:07:16.537Z",
+  "binary_built": "2026-10-09T10:58:08Z",
+  "commit": "fb55f8a31dc2c5e02417bff1f132f726ce61e8f4",
+  "verdict": "BLOCK",
   "chips": [
     "all",
     "antigravity",
     "codex",
     "cursor",
     "claude-code",
-    "kirocrew"
+    "kirocrew",
+    "grok"
   ]
 }

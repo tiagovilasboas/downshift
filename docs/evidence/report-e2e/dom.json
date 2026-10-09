@@ -1,0 +1,156 @@
+{
+  "all": {
+    "chips": [
+      "all",
+      "antigravity",
+      "codex",
+      "cursor",
+      "claude-code",
+      "kirocrew",
+      "grok"
+    ],
+    "hi": [
+      "all"
+    ],
+    "signal": "NONE IN THE LAST 5 MIN",
+    "active": "none in the last 5 min",
+    "switches": "9m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n9m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n41m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n41m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n46m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n46m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium",
+    "agents": "no active agent spawned",
+    "stats": "75 events   2↓   1↑",
+    "economy": "$0.00\nest. saved · last 24h · 2 downshifts",
+    "economyVisible": true,
+    "compaction": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento."
+  },
+  "antigravity": {
+    "chips": [
+      "all",
+      "antigravity",
+      "codex",
+      "cursor",
+      "claude-code",
+      "kirocrew",
+      "grok"
+    ],
+    "hi": [
+      "antigravity"
+    ],
+    "signal": "NONE IN THE LAST 5 MIN",
+    "active": "none in the last 5 min",
+    "switches": "no antigravity events in the last 24h",
+    "agents": "no antigravity events in the last 24h",
+    "stats": "0 events   0↓   0↑   · antigravity only",
+    "economy": "",
+    "economyVisible": false,
+    "compaction": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento."
+  },
+  "codex": {
+    "chips": [
+      "all",
+      "antigravity",
+      "codex",
+      "cursor",
+      "claude-code",
+      "kirocrew",
+      "grok"
+    ],
+    "hi": [
+      "codex"
+    ],
+    "signal": "NONE IN THE LAST 5 MIN",
+    "active": "none in the last 5 min",
+    "switches": "no codex events in the last 24h",
+    "agents": "no codex events in the last 24h",
+    "stats": "0 events   0↓   0↑   · codex only",
+    "economy": "",
+    "economyVisible": false,
+    "compaction": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento."
+  },
+  "cursor": {
+    "chips": [
+      "all",
+      "antigravity",
+      "codex",
+      "cursor",
+      "claude-code",
+      "kirocrew",
+      "grok"
+    ],
+    "hi": [
+      "cursor"
+    ],
+    "signal": "NONE IN THE LAST 5 MIN",
+    "active": "none in the last 5 min",
+    "switches": "9m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n9m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n41m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n41m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium\n46m\ngrok-4.7-xhigh\nSPAWNED\n✓ complex\n46m\ngrok-4.7-xhigh\nSPAWNED\n↓ medium",
+    "agents": "no cursor events in the last 24h",
+    "stats": "8 events   4↓   0↑   · cursor only",
+    "economy": "$0.00\nest. saved · last 24h · 4 downshifts",
+    "economyVisible": true,
+    "compaction": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento."
+  },
+  "claude-code": {
+    "chips": [
+      "all",
+      "antigravity",
+      "codex",
+      "cursor",
+      "claude-code",
+      "kirocrew",
+      "grok"
+    ],
+    "hi": [
+      "claude-code"
+    ],
+    "signal": "NONE IN THE LAST 5 MIN",
+    "active": "none in the last 5 min",
+    "switches": "no claude-code events in the last 24h",
+    "agents": "no claude-code events in the last 24h",
+    "stats": "0 events   0↓   0↑   · claude-code only",
+    "economy": "",
+    "economyVisible": false,
+    "compaction": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento."
+  },
+  "kirocrew": {
+    "chips": [
+      "all",
+      "antigravity",
+      "codex",
+      "cursor",
+      "claude-code",
+      "kirocrew",
+      "grok"
+    ],
+    "hi": [
+      "kirocrew"
+    ],
+    "signal": "NONE IN THE LAST 5 MIN",
+    "active": "none in the last 5 min",
+    "switches": "no kirocrew events in the last 24h",
+    "agents": "no kirocrew events in the last 24h",
+    "stats": "0 events   0↓   0↑   · kirocrew only",
+    "economy": "",
+    "economyVisible": false,
+    "compaction": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento."
+  },
+  "grok": {
+    "chips": [
+      "all",
+      "antigravity",
+      "codex",
+      "cursor",
+      "claude-code",
+      "kirocrew",
+      "grok"
+    ],
+    "hi": [
+      "grok"
+    ],
+    "signal": "NONE IN THE LAST 5 MIN",
+    "active": "none in the last 5 min",
+    "switches": "no grok events in the last 24h",
+    "agents": "no grok events in the last 24h",
+    "stats": "0 events   0↓   0↑   · grok only",
+    "economy": "",
+    "economyVisible": false,
+    "compaction": "0 bytes in · 0 bytes after · 0 bytes reduced · savings_pct 0.0\ntoken_state unavailable\nBytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento."
+  }
+}
