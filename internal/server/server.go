@@ -303,12 +303,11 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	st.Total = len(decisions)
 	events = decisions
 
+	// The dashboard filters this slice by harness. A tail of the newest
+	// events hides every harness that did not write those last lines.
 	sw := events
 	if sw == nil {
 		sw = []rawEvent{}
-	}
-	if len(sw) > 8 {
-		sw = sw[len(sw)-8:]
 	}
 	ag := agents
 	if ag == nil {
