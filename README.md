@@ -123,10 +123,10 @@ Adapters ship for all of the above; the table reports evidence, not just code. P
 
 Downshift includes a built-in, zero-dependency **Native Context Compressor** (`downshift context compress`) and event-driven **Context Sensor** to govern context token volume without altering critical failure traces.
 
-- **Enabled by default:** Downshift Native Context Compressor runs in-process by default to govern context token volume. Can be disabled at any time (`downshift context disable`).
+- **Not automatic in a session.** `downshift context enable` saves a provider flag. It does not install a harness hook, so enabling the provider does not prove compression is applied during the session. Safe mode also requires `--exit 0`; without that status the original output is preserved.
 - **Zero external dependencies:** Pure in-process Go engine; zero Python, Rust, Node or LLM runtime requirements.
 - **Fail-open & error preservation:** Safe squelch on verbose successes (`go test`, `git status`, logs); never touches errors, stack traces, or failing suites.
-- **Measurable impact:** Reduces verbose command output by 60%–90% (e.g. 15k-token test suites down to ~400 tokens), reaching up to ~80% total cost reduction when combined with model routing.
+- **Not a measured savings claim.** `downshift context benchmark` prints the four scenarios with `not measured` in the cost, token and accuracy cells. There is no savings percentage to cite.
 - **Management CLI:**
   ```bash
   downshift context status      # Show optimization status & active provider
@@ -134,9 +134,9 @@ Downshift includes a built-in, zero-dependency **Native Context Compressor** (`d
   downshift context doctor      # Inspect local compressor & harnesses
   downshift context enable      # Enable built-in native compressor (or specify provider)
   downshift context disable     # Revert configurations back to raw state
-  downshift context metrics     # Inspect token savings & sensor observations
-  downshift context compress    # Deterministically compact tool output via stdin
-  downshift context benchmark   # Compare optimization scenarios (baseline vs routing vs compression vs both)
+  downshift context metrics     # Sensor counts; token fields stay unavailable
+  downshift context compress    # Compact stdin only with --exit 0 in safe mode
+  downshift context benchmark   # Illustrative matrix; percentages are not measured
   ```
 
 See [the context optimization guide](docs/context-optimization.md) for architecture, harness contracts, and failure handling policies.

@@ -43,7 +43,8 @@ func CompareContextScenarios(w io.Writer) error {
 	installed, ver, _, _ := p.Detect(context.Background())
 
 	fmt.Fprintln(w, "================================================================================")
-	fmt.Fprintln(w, "Downshift Context Optimization Benchmark: 4-Scenario Evaluation Matrix")
+	fmt.Fprintln(w, "Downshift Context Optimization: illustrative scenario matrix")
+	fmt.Fprintln(w, "NOT MEASURED. The percentages below are placeholders, not a benchmark result.")
 	fmt.Fprintln(w, "================================================================================")
 	if installed {
 		fmt.Fprintf(w, "Provider: Native Context Compressor (%s)\n\n", ver)
@@ -57,10 +58,10 @@ func CompareContextScenarios(w io.Writer) error {
 		TokensSaved string
 		Accuracy    string
 	}{
-		{ScenarioA, "Frontier (Unrouted)", "None (Raw logs)", "1.00x (Baseline)", "0%", "98% (High)"},
-		{ScenarioB, "Downshift Tiered", "None (Raw logs)", "0.32x (~68% savings)", "0%", "97.5% (High)"},
-		{ScenarioC, "Frontier (Unrouted)", "Native Squelch", "0.65x (~35% savings)", "60-90%", "98% (Deterministic safe)"},
-		{ScenarioD, "Downshift Tiered", "Native Squelch", "0.20x (~80% savings)", "60-90%", "97.5% (High)"},
+		{ScenarioA, "Frontier (Unrouted)", "None (Raw logs)", "not measured", "not measured", "not measured"},
+		{ScenarioB, "Downshift Tiered", "None (Raw logs)", "not measured", "not measured", "not measured"},
+		{ScenarioC, "Frontier (Unrouted)", "Native Squelch", "not measured", "not measured", "not measured"},
+		{ScenarioD, "Downshift Tiered", "Native Squelch", "not measured", "not measured", "not measured"},
 	}
 
 	fmt.Fprintf(w, "%-46s | %-16s | %-15s | %-18s | %-8s\n", "Scenario", "Routing", "Compression", "Cost Factor", "Accuracy")
@@ -70,8 +71,8 @@ func CompareContextScenarios(w io.Writer) error {
 	}
 	fmt.Fprintln(w, "----------------------------------------------------------------------------------------------------------------")
 	fmt.Fprintln(w, "Key Insights:")
-	fmt.Fprintln(w, "1. Model Routing (Downshift) yields exponential savings on per-token unit pricing.")
-	fmt.Fprintln(w, "2. Native Context Compressor compacts repetitive terminal & tool output safely before prompting.")
-	fmt.Fprintln(w, "3. Combined (Scenario D) achieves maximal token & cost efficiency with deterministic fail-open error preservation.")
+	fmt.Fprintln(w, "1. Model routing and compression are separate levers. This command does not price either one.")
+	fmt.Fprintln(w, "2. Safe compression keeps non-ok test lines, search hits, file names, git logs, and any non-zero exit.")
+	fmt.Fprintln(w, "3. Cost, token and accuracy cells are not measured. Do not cite a savings percentage from this command.")
 	return nil
 }

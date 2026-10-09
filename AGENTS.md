@@ -149,9 +149,11 @@ cmd/downshift/       — binary entry point, hook runners, try subcommand,
 ### Context compressor
 
 Routing is one token lever. The other is the native compressor
-(`downshift context compress`, `internal/compressor`): it compacts safe tool
-output (passing `go test`, clean `git status`, repetitive logs) before that
-text re-enters the prompt, and it leaves errors and stack traces alone.
+(`downshift context compress`, `internal/compressor`): it compacts an all-`ok`
+`go test`, a clean `git status`, and repetitive logs only when safe mode is
+given exit code 0. It preserves non-`ok` lines, search results, file lists,
+git logs, and any non-zero exit. `context benchmark` percentages are
+placeholders, not a measurement.
 Read [docs/context-optimization.md](docs/context-optimization.md) before
 changing context handling or attributing savings to model routing alone.
 

@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -212,5 +213,111 @@ func TestRecordToolOutput_AppendsCompactionHistory(t *testing.T) {
 	}
 	if second["output_bytes"] != float64(len(plain)) || second["reduced_bytes"] != float64(0) || second["applied"] != false || second["error"] != true {
 		t.Errorf("second line = %#v", second)
+	}
+}
+
+func TestRecordToolOutput_FileModeAndLock(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv(paths.EnvStateDir, tmp)
+	store, err := sensor.DefaultStore()
+	if err != nil {
+		t.Fatal(err)
+	}
+	aggregate, err := paths.Join("context-sensor.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lockPath := aggregate + ".lock"
+	if err := os.WriteFile(lockPath, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=^TestHoldStateLock$")
+	cmd.Env = append(os.Environ(), "DOWNSHIFT_HOLD_LOCK=1", "DOWNSHIFT_LOCK_PATH="+lockPath)
+	out, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		_ = cmd.Process.Kill()
+		_ = cmd.Wait()
+	}()
+	scan := bufio.NewScanner(out)
+	held := false
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if scan.Scan() && scan.Text() == "held" {
+			held = true
+			break
+		}
+	}
+	if !held {
+		t.Fatal("child did not acquire the lock")
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- store.RecordToolOutput("lock-session", "claude-code", "Bash", []byte("ok\n"), false)
+	}()
+	select {
+	case err := <-done:
+		t.Fatalf("write ran while another process held the state lock: %v", err)
+	case <-time.After(80 * time.Millisecond):
+	}
+	_ = cmd.Process.Kill()
+	_ = cmd.Wait()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("write did not finish after the other process exited")
+	}
+
+	info, err := os.Stat(aggregate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm() != 0o600 {
+		t.Fatalf("aggregate mode = %o, want 600", info.Mode().Perm())
+	}
+	history, err := paths.Join("context-compactions.jsonl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hinfo, err := os.Stat(history)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hinfo.Mode().Perm() != 0o600 {
+		t.Fatalf("history mode = %o, want 600", hinfo.Mode().Perm())
+	}
+}
+
+func TestSummarizeCompactionLog_FailClosedAndCounts(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "context-compactions.jsonl")
+	good := "{\"timestamp\":\"2026-10-09T00:00:00.000000000Z\",\"harness\":\"claude-code\",\"output_bytes\":10,\"reduced_bytes\":4,\"applied\":true,\"error\":false}\n"
+	if err := os.WriteFile(path, []byte(good), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	rows, err := sensor.SummarizeCompactionLog(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	row, ok := rows["claude-code"]
+	if !ok || row.TotalCommands != 1 || row.BytesReduced != 4 || row.TokenState != "unavailable" {
+		t.Fatalf("summary = %+v", rows)
+	}
+
+	bad := good + "{\"timestamp\":\"2026-10-09T00:00:00.000000000Z\",\"harness\":\"claude-code\",\"output_bytes\":1,\"reduced_bytes\":0,\"applied\":false,\"error\":false,\"secret\":\"no\"}\n"
+	if err := os.WriteFile(path, []byte(bad), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := sensor.SummarizeCompactionLog(path); err == nil {
+		t.Fatal("an unknown field must reject the whole log")
 	}
 }
