@@ -78,7 +78,7 @@ Subcommands:
   disable              Disable context optimization and revert harness configurations
   metrics              Show estimated token reduction and command metrics from active provider
   compress [mode]      Compress stdin tool output (mode: observe, safe, off)
-  benchmark            Compare 4 optimization scenarios (baseline, routing, compression, both)`)
+  benchmark            Print the scenario matrix and measured compressor bytes`)
 }
 
 func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.Writer) int {
@@ -201,13 +201,18 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	cfg.Enabled = true
 	cfg.Provider = providerID
 	cfg.ActiveHarness = configured
+	if providerID == "native" {
+		cfg.ExitCodeContract = contextopt.ExitCodeContractObserve
+	}
 	if err := contextopt.SaveConfig(cfg); err != nil {
 		fmt.Fprintf(errW, "error: failed to save config: %v\n", err)
 		return 1
 	}
 
-	fmt.Fprintf(w, "Context optimization flag saved for provider %s.\n", p.Name())
-	fmt.Fprintln(w, "No harness hook was installed. Compression is not applied automatically during a session.")
+	fmt.Fprintf(w, "Context optimization enabled. Provider %s is active.\n", p.Name())
+	fmt.Fprintln(w, "Exit-code contract: observe_only; nonzero_exit_preserved; hook_cannot_replace_tool_output.")
+	fmt.Fprintln(w, "Claude Code PostToolUse records CompressExit in observe mode when this flag is on, using the tool exit code.")
+	fmt.Fprintln(w, "The hook cannot replace tool output. The model still sees the original result. Prompts are not compressed.")
 	return 0
 }
 

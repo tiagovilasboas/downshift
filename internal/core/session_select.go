@@ -9,12 +9,21 @@ const inheritID = "inherit"
 
 // CanWriteSessionID is the write guard for every harness. Current-session
 // membership is authoritative; catalog metadata is optional and never gates
-// a session-provided ID.
+// a session-provided ID. An exhausted id is always refused. A non-empty
+// Included set is closed: an id outside it is refused. An empty Included
+// set is not a credit denial. An explicit_only id is writable only when
+// explicit upshift is on.
 func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bool {
 	if harness == "" || id == "" || id == inheritID || !session.Known || !session.Contains(id) || session.Blocks(id) {
 		return false
 	}
-	return res == nil || !res.IsExplicitOnly(harness, id)
+	if len(session.Included) > 0 && !session.IsIncluded(id) {
+		return false
+	}
+	if res != nil && res.IsExplicitOnly(harness, id) && !ExplicitUpshiftEnabled() {
+		return false
+	}
+	return true
 }
 
 // HarnessOwnsID reports whether id belongs to this harness. Session membership
@@ -109,15 +118,27 @@ func modelForSessionID(harness, id string, res Resolver) Model {
 	return Model{ID: id, Harness: harness}
 }
 
-// selectableSessionIDs keeps the operator's ordering while excluding only
-// sentinels, exhausted IDs, and catalog-known explicit-only models.
-func selectableSessionIDs(harness string, session SessionList, res Resolver) []string {
+// selectableSessionIDs keeps this harness's session order. It drops empty
+// ids, inherit, and exhausted ids. explicit_only ids stay only when
+// allowExplicit is set. A non-empty Included set is closed: ids outside it
+// are dropped, and an empty intersection is an empty result (no fallback).
+// An empty Included set does not invent credits and does not consult another
+// harness. The selector never adds an id the credit set omitted.
+func selectableSessionIDs(harness string, session SessionList, res Resolver, allowExplicit bool) []string {
 	if !session.Known {
 		return nil
 	}
+	creditClosed := len(session.Included) > 0
 	ids := make([]string, 0, len(session.IDs))
 	for _, id := range session.IDs {
-		if id == "" || id == inheritID || session.Blocks(id) || (res != nil && res.IsExplicitOnly(harness, id)) {
+		if id == "" || id == inheritID || session.Blocks(id) {
+			continue
+		}
+		explicit := res != nil && res.IsExplicitOnly(harness, id)
+		if explicit && !allowExplicit {
+			continue
+		}
+		if creditClosed && !session.IsIncluded(id) {
 			continue
 		}
 		ids = append(ids, id)
@@ -125,12 +146,12 @@ func selectableSessionIDs(harness string, session SessionList, res Resolver) []s
 	return ids
 }
 
-// leastSessionModelAtOrAbove maps abstract tiers onto the session's ordered
-// choices. One model serves every tier; with multiple models, small maps to
-// the first, mid to the midpoint, and frontier to the last. It skips exhausted
-// and explicit-only models without consulting names or prices.
+// leastSessionModelAtOrAbove maps abstract tiers onto the filtered session
+// order. One model serves every tier; with multiple models, small maps to
+// the first, mid to the midpoint, and frontier to the last. Downshift and
+// ordinary tier mapping skip explicit_only. It does not consult names or prices.
 func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool) {
-	ids := selectableSessionIDs(harness, session, res)
+	ids := selectableSessionIDs(harness, session, res, false)
 	if len(ids) == 0 {
 		return "", Model{}, false
 	}
@@ -141,18 +162,15 @@ func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolve
 	case TierFrontier:
 		start = len(ids) - 1
 	}
-	for _, id := range ids[start:] {
-		if session.IsIncluded(id) {
-			return id, modelForSessionID(harness, id, res), true
-		}
-	}
-	return ids[start], modelForSessionID(harness, ids[start], res), true
+	id := ids[start]
+	return id, modelForSessionID(harness, id, res), true
 }
 
 func strongestSessionModel(harness string, session SessionList, res Resolver) (string, Model, bool) {
-	ids := selectableSessionIDs(harness, session, res)
+	ids := selectableSessionIDs(harness, session, res, ExplicitUpshiftEnabled())
 	if len(ids) == 0 {
 		return "", Model{}, false
 	}
-	return ids[len(ids)-1], modelForSessionID(harness, ids[len(ids)-1], res), true
+	id := ids[len(ids)-1]
+	return id, modelForSessionID(harness, id, res), true
 }

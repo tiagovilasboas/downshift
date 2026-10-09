@@ -1,0 +1,3 @@
+internal/core/session_select.go:12:func CanWriteSessionID
+internal/core/session_select.go:40:func PlanForSession
+docs/session-models.md:4:Order every list

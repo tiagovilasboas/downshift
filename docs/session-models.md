@@ -2,7 +2,7 @@
 
 Downshift may write only a model id that exists in the current harness session. The session list is the complete candidate set for every harness; the catalog is optional metadata (tier, cost, family, effort), never a source of candidate IDs.
 
-Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. Upshift picks the last eligible id, so leaving an expensive frontier model off the list is the install-time opt-out. Claude Code accepts `fable`; the default example omits `claude-fable-5-1` so that upshift stops at Opus unless you append it. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier), skips exhausted or catalog-known `explicit_only` entries, and never parses model names or relies on prices to pick a target. For downshifts, an `included` candidate within the eligible range may be preferred; upshifts always choose the strongest eligible session model. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
+Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. Upshift picks the last eligible id, so leaving an expensive frontier model off the list is the install-time opt-out. Claude Code accepts `fable`; the default example omits `claude-fable-5-1` so that upshift stops at Opus unless you append it. That Claude Code id is opt-in by listing it. It is not `explicit_only`. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier) inside the filtered session order, skips exhausted ids, and never parses model names or relies on prices to pick a target. A non-empty credit set for this harness is closed: ranking stays inside it, in session order, with no fallback to an id outside the set. Upshift picks the last remaining id. Catalog `explicit_only` ids are skipped unless `explicit_upshift` is on, and then only for upshift. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
 
 If the session list cannot be determined, the hook does not rewrite the model.
 
@@ -52,9 +52,11 @@ Native config is not a session allowlist either:
 
 Same order for every harness:
 
-1. Hook payload, if it includes `session_models` or `available_models` (a JSON array of strings). A present field wins, including an empty array. The file is not read.
-2. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key (`cursor`, `claude-code`, or `codex`) is used as a compatibility fallback. A missing file or missing key falls through to the next layer.
-3. Otherwise the models the harness reported to `downshift models discover`, read from the local cache (`discovered.json`). See [session-discovery.md](session-discovery.md).
+1. Hook payload, if it includes `session_models` or `available_models` (a JSON array of strings). A present field wins, including an empty array.
+2. Otherwise the models recovered for that harness by `downshift models discover` (`discovered.json`). See [session-discovery.md](session-discovery.md). A recovered list beats a handwritten allowlist.
+3. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key is the fallback.
+
+`quota.<harness>` in that file is still this harness's credit set, including when the id list came from the hook or from discovery. A hook `included_models` or `unavailable_models` array replaces the file quota for that call only.
 
 The file is operator-curated. For Codex, `model` identifies the active model in that event and `session_id` identifies its session. Downshift does not call a picker API, discover account entitlements, or assume every catalog entry is selectable. Verify the session's actual choices before adding them to the allowlist.
 
@@ -77,13 +79,29 @@ There is no built-in default list. `docs/examples/session-models.example.json` r
 
 The session list alone determines candidates and their relative capability. Catalog lookup may enrich a known ID with metadata or preserve `routing: explicit_only`; unknown IDs are not filtered, ranked by guessed names, or replaced.
 
-- Downshift or unknown verdict: choose the least capable, non-exhausted session ID at or above the abstract task tier's list-position threshold.
-- Upshift: choose the strongest non-exhausted session ID.
+- Downshift or unknown verdict: choose the list position for the abstract tier (first, midpoint, or last) on the filtered session order.
+- Upshift: choose the last remaining id in that same filtered order.
 - Guardrail hold (`Checked` and `SafeVerdict == OK`): do not rewrite.
 - Unknown session: no rewrite.
-- Any exact session ID can be written, even when the catalog does not know it. Sentinels such as `inherit`, exhausted IDs, and catalog-known `explicit_only` IDs cannot be selected.
+- Any exact session ID inside the filtered set can be written, even when the catalog does not know it. `inherit` and exhausted IDs cannot be selected. A catalog `explicit_only` ID can be written only when `explicit_upshift` is on.
 - `inherit` may sit in the session list so the payload is recognised. It is never selected as the target.
-- Optional `quota.<harness>.included` lists ids that still have token budget. When one of them shares the target tier, it wins over a metered id.
-- Optional `quota.<harness>.exhausted` lists ids with no remaining budget. They are never selected. If the current id is exhausted, the hook moves to another session id that can still run. A hook payload may send `included_models` or `unavailable_models` and those arrays replace the file for that call.
+- `quota.<harness>.included` is that harness's credit set. A hook `included_models` array, when present (including empty), replaces the file list for that call only. `unavailable_models` replaces `quota.<harness>.exhausted` the same way. One harness's list is never copied onto another, and the selector does not add an id the set omitted.
+- An exhausted id is never selected, on any harness.
+- When this harness's credit set is non-empty, downshift and upshift rank only inside its intersection with the session list, in that list's order. There is no fallback to a session id outside the set. An empty intersection does not rewrite.
+- When the credit set is empty, this harness reported no credits. Ranking stays the session order minus exhausted ids, `inherit`, and `explicit_only` (unless explicit upshift is on). Downshift does not invent a credit denial.
+
+## explicit_upshift
+
+Default off. Without it, `explicit_only` models do not participate in upshift. With it, upshift (`VerdictUpshift` only) may select them. The last remaining id in the filtered session order wins. Downshift and ordinary tier mapping still skip `explicit_only`. If the current model is already `explicit_only`, it stays; the flag does not replace it.
+
+An `explicit_only` id is selectable for upshift only when the flag is on and, if a credit set exists, the id is inside that set. `CanWriteSessionID` refuses the write otherwise, so the hook does not emit the upshift.
+
+Turn the flag on with any of:
+
+- `"explicit_upshift": true` in `session-models.json`
+- `DOWNSHIFT_EXPLICIT_UPSHIFT=1`
+- `install.sh --explicit-upshift` (the version argument still works before or after the flag)
+
+Cursor `claude-fable-5-1-thinking-high` and Codex `gpt-6-astra` are `explicit_only`. Claude Code `claude-fable-5-1` is not: list that id in the session when you want upshift to reach it. Do not alias another harness's canonical id.
 
 For example, a list `["session-small", "session-mid", "session-frontier"]` makes those three positions available to all routing decisions without requiring any of the IDs or their prices in Downshift's catalog. If the session list is missing, the active model stays.

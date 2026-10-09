@@ -63,11 +63,20 @@ type agentEntry struct {
 }
 
 type statusResponse struct {
-	Harnesses  []string                 `json:"harnesses"`
-	Switches   []rawEvent               `json:"switches"`
-	Agents     []agentEntry             `json:"agents"`
-	Stats      statsBlock               `json:"stats"`
-	Compaction sensor.CompactionSummary `json:"compaction"`
+	Harnesses  []string         `json:"harnesses"`
+	Switches   []rawEvent       `json:"switches"`
+	Agents     []agentEntry     `json:"agents"`
+	Stats      statsBlock       `json:"stats"`
+	Compaction statusCompaction `json:"compaction"`
+}
+
+// statusCompaction is the dashboard compaction block. ByHarness comes from
+// the append-only log. A line outside that contract zeroes this part and
+// marks it unavailable, so harness names are not returned.
+type statusCompaction struct {
+	sensor.CompactionSummary
+	ByHarness      map[string]sensor.HarnessCompaction `json:"by_harness"`
+	ByHarnessState string                              `json:"by_harness_state"`
 }
 
 type statsBlock struct {
@@ -246,7 +255,7 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 
 	// Chips are the product harnesses, not "whoever wrote in the last 24h".
 	// KiroCrew's last event can sit outside the window; the tab still exists.
-	harnesses := []string{"antigravity", "codex", "cursor", "claude-code", "kirocrew"}
+	harnesses := []string{"antigravity", "codex", "cursor", "claude-code", "kirocrew", "grok"}
 	seen := map[string]bool{}
 	for _, h := range harnesses {
 		seen[h] = true
@@ -319,16 +328,32 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	})
 }
 
-func compactionSummary() sensor.CompactionSummary {
+func compactionSummary() statusCompaction {
+	out := statusCompaction{
+		CompactionSummary: sensor.CompactionSummary{
+			State:      string(sensor.StateUnavailable),
+			TokenState: string(sensor.StateUnavailable),
+		},
+		ByHarness:      map[string]sensor.HarnessCompaction{},
+		ByHarnessState: string(sensor.StateUnavailable),
+	}
 	st, err := sensor.DefaultStore()
 	if err != nil || st == nil {
-		return sensor.SummarizeCompaction(nil)
+		return out
 	}
-	obs, err := st.GetSummary()
-	if err != nil {
-		return sensor.SummarizeCompaction(nil)
+	if obs, obsErr := st.GetSummary(); obsErr == nil {
+		out.CompactionSummary = sensor.SummarizeCompaction(obs)
 	}
-	return sensor.SummarizeCompaction(obs)
+	rows, rowErr := st.SummarizeByHarness()
+	if rowErr != nil || rows == nil {
+		// A line outside the record contract must not return harness names.
+		out.ByHarness = map[string]sensor.HarnessCompaction{}
+		out.ByHarnessState = string(sensor.StateUnavailable)
+		return out
+	}
+	out.ByHarness = rows
+	out.ByHarnessState = string(sensor.StateObserved)
+	return out
 }
 
 // Run starts the dashboard server on the given port.

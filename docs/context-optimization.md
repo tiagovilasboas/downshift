@@ -6,7 +6,7 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 
 ## 1. Architectural Principles
 
-1. **Zero External Runtime**: Written purely in Go, with zero Python, Rust, Node, network or LLM dependencies. `context enable` grava a flag do provider e não instala hook. A compactação roda quando alguém chama o compressor.
+1. **Zero External Runtime**: Written purely in Go, with zero Python, Rust, Node, network or LLM dependencies. `context enable` persiste o provider nativo e o contrato de exit code. O PostToolUse do Claude Code grava `CompressExit` em modo observe, com o exit code real, só quando essa flag está ligada. O hook não substitui a saída da ferramenta e não comprime prompt.
 2. **Deterministic & Fail-Open**: Compacta sucesso repetido só com exit code 0. **Preserva erro, stack trace, exit diferente de zero, linha que não seja `ok`, busca, lista de arquivos e `git log`.**
 3. **Observability vs. Transformability**: Distinguishes observational telemetry (e.g. `PostToolUse` telemetry) from transformational filters (command pipes or tool proxies).
 4. **Epistemic Precision**: Metrics clearly distinguish **Observed** counts from **Estimated** heuristics and **Unavailable** harness channels.
@@ -29,15 +29,15 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 
 ## 3. Economia de tokens
 
-Não há medição reproduzível de economia de tokens neste repositório. Tabelas anteriores com 60–98% e com ~80% combinado eram constantes ilustrativas. Elas foram retiradas. `downshift context metrics` pode contar comandos no log de compactação; os campos de token ficam `unavailable` e não são uma economia medida.
+Não há medição reproduzível de economia de tokens neste repositório. Não cite 68, 35 ou 80 como evidência. Tabelas anteriores com 60–98% e com ~80% combinado eram constantes ilustrativas. Elas foram retiradas. `downshift context benchmark` mede bytes em fixtures versionadas (original, reduzido, economia em bytes). Isso não é token e não é dólar. `downshift context metrics` pode contar comandos no log de compactação; os campos de token ficam `unavailable` e não são uma economia medida.
 
 Releitura de histórico aumenta o contexto quando a saída de uma ferramenta volta no turno seguinte. Isso descreve o mecanismo. Não é um número de tokens evitados.
 
 ---
 
-## 4. Matriz ilustrativa (não é medição)
+## 4. Matriz de roteamento e tabela de bytes
 
-`downshift context benchmark` lista os quatro cenários. Custo, tokens e acurácia saem como `not measured`. Não há percentual de economia para citar.
+`downshift context benchmark` lista os quatro cenários. Custo de roteamento e acurácia saem como `not measured`. Em seguida o comando roda o compressor em fixtures versionadas (`go test` só com `ok`, `go test` com linha que não é `ok`, logs repetidos, hits de busca) e imprime original, reduzido e economia, com unidade bytes. Não inventa tokens nem dólares. Não cite 68, 35 ou 80.
 
 | Cenário | Roteamento de Modelo | Compressão de Contexto | Fator de Custo | Redução de Tokens | Acurácia |
 |---|---|---|:---:|:---:|:---:|
@@ -80,7 +80,7 @@ cat verbose_test_output.txt | downshift context compress safe --exit 0
 # Contadores do sensor. Tokens ficam unavailable.
 downshift context metrics
 
-# Matriz ilustrativa. Os percentuais não são uma medição.
+# Bytes medidos nas fixtures. Custo de roteamento continua not measured.
 downshift context benchmark
 ```
 
@@ -90,7 +90,7 @@ downshift context benchmark
 
 | Harness | Canal de Telemetria | Canal de Transformação | Mecanismo |
 |---|---|---|---|
-| **Claude Code** | `PostToolUse` (duração, ferramenta & bytes) | Pipe explícito ou instrução | Sensor em processo monitora volume; hook não altera saída |
+| **Claude Code** | `PostToolUse` (duração, ferramenta, exit code & bytes) | Pipe explícito ou instrução | Com a flag ligada, o hook grava `CompressExit` em observe; não substitui a saída que o modelo vê |
 | **Cursor** | Telemetria de logs | Instruções do agente | Compactação determinística guiada |
 | **Codex** | Payloads de hook | Execução direta | Filtro Go nativo em processo |
 | **Antigravity** | Ciclo de sessão | Filtro direto | Motor nativo zero-dependência |

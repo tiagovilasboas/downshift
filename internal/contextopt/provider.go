@@ -87,7 +87,15 @@ type Config struct {
 	Observability struct {
 		Enabled bool `json:"enabled"`
 	} `json:"observability"`
+	// ExitCodeContract is the persisted measurement rule. The native hook
+	// records CompressExit in observe mode and preserves a non-zero exit.
+	// It cannot replace the tool result the model sees, and it does not
+	// compress prompts.
+	ExitCodeContract string `json:"exit_code_contract,omitempty"`
 }
+
+// ExitCodeContractObserve is the rule Configure persists for the native provider.
+const ExitCodeContractObserve = "observe_only;nonzero_exit_preserved;hook_cannot_replace_tool_output"
 
 // Provider defines the contract that any context optimization companion must implement.
 type Provider interface {

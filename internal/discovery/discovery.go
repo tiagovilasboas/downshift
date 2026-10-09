@@ -7,7 +7,8 @@
 // it writes, so the routing hot path stays offline and deterministic.
 //
 // Precedence at routing time (see core.ResolveSessionForID):
-// hook payload, then the operator's session-models.json, then this cache.
+// hook payload, then this cache, then the operator's session-models.json.
+// quota.<harness> in that file still applies to the list in use.
 // The embedded catalog is metadata (tier, cost, family) used to rank what was
 // discovered; it never adds an id the harness did not report.
 package discovery

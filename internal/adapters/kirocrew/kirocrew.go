@@ -159,7 +159,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if len(decision.Corrections) > 0 {
 		return allow(), "", decision
 	}
-	if res != nil && res.IsExplicitOnly(harnessID, plan.Model.ID) {
+	if !core.CanWriteSessionID(harnessID, plan.Model.ID, session, res) {
 		return allow(), "", decision
 	}
 

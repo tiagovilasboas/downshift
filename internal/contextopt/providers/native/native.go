@@ -57,7 +57,7 @@ func (p *Provider) SupportedHarnesses() []contextopt.HarnessSupport {
 			HarnessID: "claude-code",
 			Supported: true,
 			Method:    contextopt.MethodHook,
-			Notes:     "Observes tool output volume in PostToolUse; safe transformation via explicit pipe or agent instruction",
+			Notes:     "PostToolUse records CompressExit in observe mode when the native provider is enabled, using the tool exit code. The hook cannot replace tool output.",
 		},
 		{
 			HarnessID: "cursor",
@@ -101,12 +101,46 @@ func (p *Provider) Validate(ctx context.Context) error {
 }
 
 func (p *Provider) Configure(ctx context.Context, targetDir string, harnessID string) error {
-	// Native compressor is configured via Downshift configuration or PostToolUse hook
-	return nil
+	cfg, err := contextopt.LoadConfig()
+	if err != nil {
+		cfg = contextopt.DefaultConfig()
+	}
+	cfg.Enabled = true
+	cfg.Provider = ProviderID
+	cfg.ExitCodeContract = contextopt.ExitCodeContractObserve
+	if harnessID != "" && !containsHarness(cfg.ActiveHarness, harnessID) {
+		cfg.ActiveHarness = append(cfg.ActiveHarness, harnessID)
+	}
+	return contextopt.SaveConfig(cfg)
 }
 
 func (p *Provider) Disable(ctx context.Context, targetDir string, harnessID string) error {
-	return nil
+	cfg, err := contextopt.LoadConfig()
+	if err != nil {
+		return err
+	}
+	next := make([]string, 0, len(cfg.ActiveHarness))
+	for _, id := range cfg.ActiveHarness {
+		if id != harnessID {
+			next = append(next, id)
+		}
+	}
+	cfg.ActiveHarness = next
+	if len(next) == 0 {
+		cfg.Enabled = false
+		cfg.Provider = ""
+		cfg.ExitCodeContract = ""
+	}
+	return contextopt.SaveConfig(cfg)
+}
+
+func containsHarness(ids []string, id string) bool {
+	for _, candidate := range ids {
+		if candidate == id {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *Provider) HealthCheck(ctx context.Context) error {
@@ -114,14 +148,23 @@ func (p *Provider) HealthCheck(ctx context.Context) error {
 }
 
 func (p *Provider) GetDiagnostics(ctx context.Context, targetDir string) (*contextopt.Diagnostics, error) {
-	return &contextopt.Diagnostics{
+	diag := &contextopt.Diagnostics{
 		ProviderID:         ProviderID,
 		Installed:          true,
 		BinaryPath:         "in-process (Go)",
 		Version:            "built-in",
 		SupportedHarnesses: p.SupportedHarnesses(),
-		Recommendations:    []string{"Configure does not install a harness hook. Compression runs only when a caller invokes Compress. Token counters from GetMetrics stay unavailable until a sensor log exists; they are not a savings measurement."},
-	}, nil
+		Recommendations: []string{
+			"The Claude Code PostToolUse hook cannot replace tool output. The model still receives the original tool result.",
+			"When the native provider is enabled, that hook records CompressExit in observe mode using the real exit code. It does not compress prompts.",
+			"Token counters stay unavailable. Byte counts are not a token or dollar measurement.",
+		},
+	}
+	cfg, err := contextopt.LoadConfig()
+	if err == nil && cfg.Enabled && cfg.Provider == ProviderID {
+		diag.ActiveHarnesses = append([]string(nil), cfg.ActiveHarness...)
+	}
+	return diag, nil
 }
 
 func (p *Provider) GetMetrics(ctx context.Context, projectDir string) (*contextopt.Metrics, error) {

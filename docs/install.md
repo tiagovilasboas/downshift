@@ -28,6 +28,8 @@ Optional adapter smoke (from a clone of this repo):
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 ```
 
+`install.sh` still treats a non-flag argument as the release version. `--explicit-upshift` may come before or after that version. It writes `"explicit_upshift": true` into `session-models.json` without dropping harness lists that are already there. The same switch at runtime is `DOWNSHIFT_EXPLICIT_UPSHIFT=1`. Default is off. See [session-models.md](session-models.md#explicit_upshift).
+
 **Step 2 — Verify the classifier** on your own prompts before wiring the hook:
 ```bash
 downshift try "rename the userId variable" claude-code
@@ -227,10 +229,16 @@ allowlist and Codex accepting the rewritten input.
 Downshift always applies the selected reasoning effort. A code review is a
 frontier task, so a `gpt-5.6-terra` session routes its subagent to
 `gpt-5.6-sol` at high effort. `gpt-6-astra` is marked `routing: "explicit_only"`
-in the catalog: downshift **never selects it automatically**, but if the current
-subagent is already running on Astra the model is preserved unchanged — it was
-the user's deliberate choice. To mark any other model as explicit-only, add
-`"routing": "explicit_only"` to its entry in `~/.harness-downshift/catalog.json`.
+in the catalog. With the default `explicit_upshift` off, downshift does not
+select it. If the current subagent is already running on Astra, the model is
+preserved unchanged. Set `"explicit_upshift": true` in `session-models.json`,
+export `DOWNSHIFT_EXPLICIT_UPSHIFT=1`, or run `install.sh --explicit-upshift`
+to let upshift select it when it is inside this harness's credit set (or when
+this harness reported no credit set). Cursor `claude-fable-5-1-thinking-high`
+is the same kind of opt-in. Claude Code `claude-fable-5-1` is not
+`explicit_only`; append that id to the session list to opt in. To mark any
+other model as explicit-only, add `"routing": "explicit_only"` to its entry
+in `~/.harness-downshift/catalog.json`.
 
 A purely mechanical prompt such as `Use a subagent to only list the .go files`
 is routed to `gpt-6-luna` at low effort when that exact id is in the session
