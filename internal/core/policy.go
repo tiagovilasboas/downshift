@@ -71,6 +71,10 @@ type Decision struct {
 	// resolved (no hook list, no session-models.json entry). The hook then
 	// never rewrites; runners use it to warn the operator once per call.
 	SessionUnknown bool
+	// QuotaStatus is provider budget evidence for the proposed/retained model.
+	// unknown is explicit, including legacy routing without a quota source.
+	QuotaStatus string
+	QuotaSource string
 }
 
 // Verdict tells the caller what to do about the current model.

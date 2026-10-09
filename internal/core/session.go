@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
 // SessionList is the only set of model ids a hook may write.
@@ -31,6 +32,42 @@ type SessionList struct {
 	// CreditsReported is true only when this call's hook payload sent
 	// included_models or unavailable_models. A file on disk is not a credit report.
 	CreditsReported bool
+	// Usage evidence is separate from operator allowlists and hook marks.
+	Usage         *quota.Snapshot
+	QuotaRequired bool
+	QuotaTime     time.Time
+}
+
+// WithUsageQuota attaches current provider evidence. A supplied snapshot,
+// cached snapshot (even malformed), or required mode closes the quota gate.
+// Missing evidence in legacy mode retains routing without claiming credit.
+func (s SessionList) WithUsageQuota(harness string, supplied *quota.Snapshot) SessionList {
+	s.QuotaTime = time.Now()
+	s.QuotaRequired = os.Getenv("DOWNSHIFT_QUOTA_MODE") == "required"
+	if supplied != nil {
+		s.Usage, s.QuotaRequired = supplied, true
+		return s
+	}
+	var present bool
+	s.Usage, present = quota.Load(harness)
+	s.QuotaRequired = s.QuotaRequired || present
+	return s
+}
+
+// QuotaStatus never converts inclusion or discovery into a balance claim.
+func (s SessionList) QuotaStatus(harness, id string) quota.Status {
+	if s.Usage == nil {
+		return quota.Unknown
+	}
+	now := s.QuotaTime
+	if now.IsZero() {
+		now = time.Now()
+	}
+	return s.Usage.Evaluate(harness, id, now)
+}
+
+func (s SessionList) quotaAllows(harness, id string) bool {
+	return !s.QuotaRequired || s.QuotaStatus(harness, id) == quota.Available
 }
 
 // UnknownSession is the fail-open list: no rewrite.
@@ -70,7 +107,8 @@ func (s SessionList) has(ids []string, id string) bool {
 }
 
 // WithHookQuota replaces included and exhausted lists when the hook sent them.
-// A nil slice leaves the file value in place. A non-nil slice is authoritative.
+// An absent slice supplies no mark; a present slice is authoritative.
+// Operator files never provide credit evidence.
 func (s SessionList) WithHookQuota(included, exhausted *[]string) SessionList {
 	if !s.Known || (included == nil && exhausted == nil) {
 		return s

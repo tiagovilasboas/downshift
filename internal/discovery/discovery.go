@@ -8,13 +8,15 @@
 //
 // Precedence at routing time (see core.ResolveSessionForID):
 // hook payload, then this cache, then the operator's session-models.json.
-// quota.<harness> in that file still applies to the list in use.
+// quota.<harness> in the operator file is not read. Discovery reports model
+// availability, never remaining credit; live quota is a separate input.
 // The embedded catalog is metadata (tier, cost, family) used to rank what was
 // discovered; it never adds an id the harness did not report.
 package discovery
 
 import (
 	"context"
+	"errors"
 	"time"
 )
 
@@ -52,6 +54,9 @@ func Run(ctx context.Context, sources []Source, perSource time.Duration) []Outco
 		cctx, cancel := context.WithTimeout(ctx, perSource)
 		models, err := s.Discover(cctx)
 		cancel()
+		if err == nil && len(models) == 0 {
+			err = errors.New("source returned no models")
+		}
 		out = append(out, Outcome{Source: s, Models: models, Err: err})
 	}
 	return out

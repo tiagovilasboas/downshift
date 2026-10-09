@@ -1,0 +1,18 @@
+{
+  "name": "downshift-cursor-quota-bridge",
+  "displayName": "Downshift Cursor Quota Bridge (Experimental)",
+  "description": "Opt-in local quota export using Cursor's native authenticated transport. Internal API; compatibility is not guaranteed.",
+  "publisher": "tiagovilasboas",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "engines": { "vscode": "^1.96.0" },
+  "extensionKind": ["ui"],
+  "main": "./extension.cjs",
+  "activationEvents": ["onCommand:downshift.cursorQuota.export"],
+  "contributes": {
+    "commands": [{ "command": "downshift.cursorQuota.export", "title": "Downshift: Export Cursor Quota (Experimental)" }]
+  },
+  "scripts": { "test": "node --test decoder.test.cjs" },
+  "capabilities": { "untrustedWorkspaces": { "supported": false }, "virtualWorkspaces": false }
+}

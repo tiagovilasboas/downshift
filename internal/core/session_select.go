@@ -14,7 +14,7 @@ const inheritID = "inherit"
 // set is not a credit denial. An explicit_only id is writable only when
 // explicit upshift is on.
 func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bool {
-	if harness == "" || id == "" || id == inheritID || !session.Known || !session.Contains(id) || session.Blocks(id) {
+	if harness == "" || id == "" || id == inheritID || !session.Known || !session.Contains(id) || session.Blocks(id) || !session.quotaAllows(harness, id) {
 		return false
 	}
 	if session.CreditsReported && len(session.Included) > 0 && !session.IsIncluded(id) {
@@ -67,7 +67,7 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 
 	id, model, ok := selectSessionTarget(d, res, session)
 	if !ok || id == "" || !session.Contains(id) || id == currentID {
-		apply := c.CanApplyEffort && currentID != "" && session.Contains(currentID) && d.Model.ID != ""
+		apply := c.CanApplyEffort && currentID != "" && session.Contains(currentID) && d.Model.ID != "" && session.quotaAllows(d.Harness, currentID)
 		return RewritePlan{Model: d.CurrentModel, ApplyEffort: apply}
 	}
 	model.ID = id
@@ -94,7 +94,7 @@ func selectSessionTarget(d Decision, res Resolver, session SessionList) (string,
 	}
 	switch d.Verdict {
 	case VerdictUpshift:
-		return strongestSessionModel(d.Harness, session, res)
+		return strongestSessionModel(d.Harness, session, res, d.Tier)
 	case VerdictDownshift, VerdictUnknown:
 		return leastSessionModelAtOrAbove(d.Harness, session, res, d.Tier)
 	default:
@@ -162,15 +162,32 @@ func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolve
 	case TierFrontier:
 		start = len(ids) - 1
 	}
-	id := ids[start]
-	return id, modelForSessionID(harness, id, res), true
+	// Establish the quality floor before filtering quota. Removing an
+	// exhausted frontier model must not reclassify the cheap model as frontier.
+	for _, id := range ids[start:] {
+		if session.quotaAllows(harness, id) {
+			return id, modelForSessionID(harness, id, res), true
+		}
+	}
+	return "", Model{}, false
 }
 
-func strongestSessionModel(harness string, session SessionList, res Resolver) (string, Model, bool) {
+func strongestSessionModel(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool) {
 	ids := selectableSessionIDs(harness, session, res, ExplicitUpshiftEnabled())
 	if len(ids) == 0 {
 		return "", Model{}, false
 	}
-	id := ids[len(ids)-1]
-	return id, modelForSessionID(harness, id, res), true
+	start := 0
+	if minTier == TierMid {
+		start = len(ids) / 2
+	} else if minTier == TierFrontier {
+		start = len(ids) - 1
+	}
+	for i := len(ids) - 1; i >= start; i-- {
+		id := ids[i]
+		if session.quotaAllows(harness, id) {
+			return id, modelForSessionID(harness, id, res), true
+		}
+	}
+	return "", Model{}, false
 }

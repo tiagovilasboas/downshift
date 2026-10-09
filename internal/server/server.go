@@ -42,6 +42,9 @@ type rawEvent struct {
 	// (telemetry.AppliedRewrite); only applied downshifts count as savings.
 	Outcome     string   `json:"outcome,omitempty"`
 	Corrections []string `json:"corrections,omitempty"`
+	// Applied is computed by the server so every dashboard tab uses the
+	// same rewrite rule, including legacy events and held decisions.
+	Applied bool `json:"applied"`
 	// InputTokens carries provider-reported input tokens (nil when untracked).
 	InputTokens *int64 `json:"input_tokens,omitempty"`
 	// OutputTokens carries provider-reported output tokens (nil when untracked).
@@ -285,8 +288,9 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 			}
 			continue
 		}
-		decisions = append(decisions, e)
 		applied := telemetry.AppliedRewrite(e.Outcome, e.Corrections)
+		e.Applied = applied
+		decisions = append(decisions, e)
 		switch {
 		case e.Verdict == "DOWNSHIFT" && applied:
 			st.Down++

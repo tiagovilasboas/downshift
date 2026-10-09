@@ -36,6 +36,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
 const harnessID = "kirocrew"
@@ -53,6 +54,7 @@ type Event struct {
 	AvailableModels   *[]string       `json:"available_models,omitempty"`
 	IncludedModels    *[]string       `json:"included_models,omitempty"`
 	UnavailableModels *[]string       `json:"unavailable_models,omitempty"`
+	UsageQuota        *quota.Snapshot `json:"usage_quota,omitempty"`
 }
 
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
@@ -121,7 +123,12 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	decision.RequestedID = currentModel
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
+	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
 	decision.SessionUnknown = !session.Known
+	decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
+	if session.Usage != nil {
+		decision.QuotaSource = quota.SourceName(session.Usage.Source)
+	}
 
 	// The user deliberately picked an explicit_only model: never block it or
 	// ask for a respawn on another model.

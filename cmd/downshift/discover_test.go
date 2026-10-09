@@ -101,3 +101,68 @@ func TestDiscoverHarnessFilter(t *testing.T) {
 		t.Fatalf("unknown harness exit %d, want 2", code)
 	}
 }
+
+func TestDiscoverEmptySourcePreservesCache(t *testing.T) {
+	cache := filepath.Join(t.TempDir(), "discovered.json")
+	previous := discovery.Entry{Source: "previous", Ranked: discovery.Ranked{IDs: []string{"model-existing"}}}
+	if err := discovery.Merge(cache, map[string]discovery.Entry{"cursor": previous}); err != nil {
+		t.Fatal(err)
+	}
+	before, _ := os.ReadFile(cache)
+	var out, errOut bytes.Buffer
+	if code := discoverWith(catalog.Load(), []discovery.Source{fakeSource{harness: "cursor"}}, cache, []string{"--json"}, &out, &errOut); code != 1 {
+		t.Fatalf("exit %d: %s", code, errOut.String())
+	}
+	after, _ := os.ReadFile(cache)
+	if !bytes.Equal(before, after) {
+		t.Fatal("empty discovery replaced valid cache")
+	}
+	if !strings.Contains(errOut.String(), "source returned no models") {
+		t.Fatalf("JSON mode hid failure: %s", errOut.String())
+	}
+}
+
+func TestDiscoverDoesNotSilentlyDropUnsupportedRequestedHarness(t *testing.T) {
+	cache := filepath.Join(t.TempDir(), "discovered.json")
+	src := fakeSource{harness: "cursor", models: []discovery.Model{{ID: "example-model"}}}
+	var out, errOut bytes.Buffer
+	if code := discoverWith(catalog.Load(), []discovery.Source{src}, cache, []string{"--harness=cursor,antigravity"}, &out, &errOut); code != 2 {
+		t.Fatalf("exit %d: %s", code, errOut.String())
+	}
+	if !strings.Contains(errOut.String(), "antigravity") {
+		t.Fatalf("missing unsupported harness: %s", errOut.String())
+	}
+	if _, err := os.Stat(cache); err == nil {
+		t.Fatal("unsupported requested source still wrote cache")
+	}
+}
+
+func TestDiscoverCursorCLIStoresOnlyItsReportedModels(t *testing.T) {
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "cursor-agent")
+	fixture := "#!/bin/sh\n[ \"$#\" = 1 ] && [ \"$1\" = models ] || exit 9\nprintf '%s\\n' 'Available models' 'future-model - Future Model' 'Tip: use --model <id>'\n"
+	if err := os.WriteFile(bin, []byte(fixture), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	cache := filepath.Join(dir, "discovered.json")
+	var out, errOut bytes.Buffer
+	src := discovery.CursorCLI{Bin: bin}
+	if code := discoverWith(catalog.Load(), []discovery.Source{src}, cache, nil, &out, &errOut); code != 0 {
+		t.Fatalf("exit %d: %s", code, errOut.String())
+	}
+	got := discovery.Read(cache).Harnesses["cursor"]
+	if len(got.Models) != 1 || got.Models[0].ID != "future-model" || len(got.IDs) != 0 {
+		t.Fatalf("discovery invented routable models: %+v", got)
+	}
+	before, _ := os.ReadFile(cache)
+	if err := os.WriteFile(bin, []byte("#!/bin/sh\necho 'Available models'\necho 'partial-model - Partial'\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if code := discoverWith(catalog.Load(), []discovery.Source{src}, cache, nil, &out, &errOut); code != 1 {
+		t.Fatalf("exit %d on incomplete listing", code)
+	}
+	after, _ := os.ReadFile(cache)
+	if !bytes.Equal(before, after) {
+		t.Fatal("incomplete Cursor output replaced the complete cached listing")
+	}
+}
