@@ -29,15 +29,15 @@ const DefaultPort = "7474"
 const estimatedCostPerUnitUSD = 0.01
 
 type rawEvent struct {
-	Timestamp  string  `json:"timestamp"`
-	Harness    string  `json:"harness"`
-	From       string  `json:"requested_model"`
-	To         string  `json:"final_model"`
-	RequestedEffort string `json:"requested_reasoning_effort,omitempty"`
-	FinalEffort     string `json:"final_reasoning_effort,omitempty"`
-	Verdict    string  `json:"verdict"`
-	Complexity string  `json:"complexity"`
-	Savings    float64 `json:"estimated_savings"`
+	Timestamp       string  `json:"timestamp"`
+	Harness         string  `json:"harness"`
+	From            string  `json:"requested_model"`
+	To              string  `json:"final_model"`
+	RequestedEffort string  `json:"requested_reasoning_effort,omitempty"`
+	FinalEffort     string  `json:"final_reasoning_effort,omitempty"`
+	Verdict         string  `json:"verdict"`
+	Complexity      string  `json:"complexity"`
+	Savings         float64 `json:"estimated_savings"`
 	// Outcome and Corrections decide whether the decision changed the spawn
 	// (telemetry.AppliedRewrite); only applied downshifts count as savings.
 	Outcome     string   `json:"outcome,omitempty"`
@@ -63,10 +63,10 @@ type agentEntry struct {
 }
 
 type statusResponse struct {
-	Harnesses []string     `json:"harnesses"`
-	Switches  []rawEvent   `json:"switches"`
-	Agents     []agentEntry            `json:"agents"`
-	Stats      statsBlock              `json:"stats"`
+	Harnesses  []string                 `json:"harnesses"`
+	Switches   []rawEvent               `json:"switches"`
+	Agents     []agentEntry             `json:"agents"`
+	Stats      statsBlock               `json:"stats"`
 	Compaction sensor.CompactionSummary `json:"compaction"`
 }
 
