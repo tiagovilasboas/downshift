@@ -15,9 +15,9 @@ so the routing hot path stays offline and deterministic.
 
 ## Order of precedence
 
-1. Hook payload (`session_models` / `available_models`). A present `included_models` or `unavailable_models` array replaces that harness's file quota for the call.
+1. Hook payload (`session_models` / `available_models`). A present `included_models` or `unavailable_models` array is this call's credit report. The operator file is not a credit source.
 2. Discovered cache (`discovered.json` in the state dir), the list recovered from that harness. It beats a handwritten allowlist.
-3. Operator `session-models.json` only when nothing was recovered. `quota.<harness>` in that file still applies to the list in use.
+3. Operator `session-models.json` only when nothing was recovered. `quota` in that file is not read.
 4. Otherwise the session is unknown and the hook does not rewrite.
 
 Environment: `DOWNSHIFT_DISCOVERY=off` disables the discovered cache (layer 2); `DOWNSHIFT_DISCOVERY_TTL`

@@ -156,11 +156,8 @@ func TestLoadSessionFile_Quota(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := core.LoadSessionFile("cursor", path)
-	if !got.Known || !got.IsIncluded("composer-2.5") || !got.Blocks("claude-sonnet-5-5-high") {
-		t.Fatalf("file quota = %+v, want this harness's included and exhausted sets", got)
-	}
-	if got.IsIncluded("gpt-5.6-sol") {
-		t.Fatal("cursor file quota must not include an id only codex credited")
+	if !got.Known || got.CreditsReported || got.IsIncluded("composer-2.5") || got.Blocks("claude-sonnet-5-5-high") {
+		t.Fatalf("file quota must not become session credit, got %+v", got)
 	}
 	credited := []string{"composer-2.5"}
 	exhausted := []string{"claude-sonnet-5-5-high"}
@@ -169,8 +166,8 @@ func TestLoadSessionFile_Quota(t *testing.T) {
 		t.Fatalf("hook quota = %+v", fromHook)
 	}
 	codex := core.LoadSessionFile("codex", path)
-	if !codex.Known || !codex.IsIncluded("gpt-5.6-sol") || codex.IsIncluded("composer-2.5") {
-		t.Fatalf("codex quota = %+v, want only codex included ids", codex)
+	if !codex.Known || codex.CreditsReported || codex.IsIncluded("gpt-5.6-sol") || codex.IsIncluded("composer-2.5") {
+		t.Fatalf("file quota must not become codex credit, got %+v", codex)
 	}
 }
 

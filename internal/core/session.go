@@ -21,20 +21,15 @@ import (
 type SessionList struct {
 	IDs   []string
 	Known bool
-	// Included is this harness's credit set. It comes from
-	// quota.<harness>.included, or from a hook included_models list that
-	// replaces the file for that call. Empty means this harness reported no
-	// credit set: ranking stays the session order and no credit denial is
-	// invented. A non-empty list is closed.
+	// Included ids have a stable token budget in this call. Empty means the
+	// hook did not report one. A file on disk is not a credit source.
 	Included []string
 	// Exhausted ids are in the session but must not be selected. The user
-	// has no remaining token budget for them. A hook unavailable_models
-	// list replaces the file for that call.
+	// has no remaining token budget for them. Only a hook unavailable_models
+	// list sets this.
 	Exhausted []string
-	// CreditsReported is true when this call's hook payload sent
-	// included_models or unavailable_models. File quota still fills Included
-	// and Exhausted. Selection treats a non-empty Included as the closed set
-	// either way.
+	// CreditsReported is true only when this call's hook payload sent
+	// included_models or unavailable_models. A file on disk is not a credit report.
 	CreditsReported bool
 }
 
@@ -152,7 +147,7 @@ func LoadSessionFileForID(harness, sessionID, path string) SessionList {
 		var byHarness map[string]map[string][]string
 		if sessions, ok := raw["sessions"]; ok && json.Unmarshal(sessions, &byHarness) == nil {
 			if ids, ok := byHarness[harness][sessionID]; ok && ids != nil {
-				return withFileQuota(KnownSession(ids), harness, raw)
+				return KnownSession(ids)
 			}
 		}
 	}
@@ -164,38 +159,7 @@ func LoadSessionFileForID(harness, sessionID, path string) SessionList {
 	if err := json.Unmarshal(msg, &ids); err != nil {
 		return UnknownSession()
 	}
-	return withFileQuota(KnownSession(ids), harness, raw)
-}
-
-// withFileQuota reads the optional quota.<harness> object.
-// included: models that still have token budget for this harness.
-// exhausted: models the user cannot run until the budget resets.
-// A hook non-nil included_models or unavailable_models list replaces these
-// slices for that call only (see WithHookQuota). The selector does not add
-// ids the file omitted.
-func withFileQuota(session SessionList, harness string, raw map[string]json.RawMessage) SessionList {
-	msg, ok := raw["quota"]
-	if !ok {
-		return session
-	}
-	var quota map[string]struct {
-		Included  []string `json:"included"`
-		Exhausted []string `json:"exhausted"`
-	}
-	if json.Unmarshal(msg, &quota) != nil {
-		return session
-	}
-	q, ok := quota[harness]
-	if !ok {
-		return session
-	}
-	if q.Included != nil {
-		session.Included = append([]string(nil), q.Included...)
-	}
-	if q.Exhausted != nil {
-		session.Exhausted = append([]string(nil), q.Exhausted...)
-	}
-	return session
+	return KnownSession(ids)
 }
 
 // ResolveSession prefers a hook allowlist. When the payload has none, it
@@ -204,43 +168,17 @@ func ResolveSession(harness string, hookLists ...*[]string) SessionList {
 	return ResolveSessionForID(harness, "", hookLists...)
 }
 
-// ResolveSessionForID prefers a hook-provided allowlist, then the models the
-// harness reported to `downshift models discover`, then the operator file.
-// quota.<harness> from the operator file still applies to a hook or recovered
-// list. A hook included_models or unavailable_models array replaces that
-// quota for the call (see WithHookQuota).
+// ResolveSessionForID prefers the hook payload, then the models recovered by
+// `downshift models discover`, then the operator file. The file is not a
+// credit report and does not outrank a recovered session.
 func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) SessionList {
 	if session, ok := SessionFromHook(hookLists...); ok {
-		return applyFileQuota(session, harness)
+		return session
 	}
 	if session := LoadDiscoveredSession(harness, time.Now()); session.Known {
-		return applyFileQuota(session, harness)
+		return session
 	}
 	return LoadUserSessionForID(harness, sessionID)
-}
-
-// applyFileQuota copies quota.<harness> onto a session whose ids came from
-// the hook or from discovery. A missing file leaves the session unchanged.
-func applyFileQuota(session SessionList, harness string) SessionList {
-	if !session.Known || harness == "" {
-		return session
-	}
-	path := os.Getenv("DOWNSHIFT_SESSION_MODELS")
-	if path == "" {
-		path = DefaultSessionModelsPath()
-	}
-	if path == "" {
-		return session
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return session
-	}
-	var raw map[string]json.RawMessage
-	if json.Unmarshal(data, &raw) != nil {
-		return session
-	}
-	return withFileQuota(session, harness, raw)
 }
 
 // ExplicitUpshiftEnabled reports whether upshift may select catalog

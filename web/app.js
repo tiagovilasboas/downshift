@@ -23,8 +23,8 @@ function ageStr(ts) {
 }
 
 function modelVersion(e) {
-  const id = (e && (e.final_model || e.model)) || 'unknown';
-  const effort = e && e.final_reasoning_effort;
+  const id = (e && (e.final_model || e.requested_model || e.model)) || 'unknown';
+  const effort = e && (e.final_reasoning_effort || e.requested_reasoning_effort);
   if (effort && effort !== 'unknown') return `${id} · ${effort}`;
   return id;
 }
@@ -141,12 +141,12 @@ function renderMonitor(data) {
             : dim(`✓ ${complexity}`);
     const isNew = i === 0 && _justUpdated;
     return `<div class="row${isNew?' new':''}"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${modelVersion(e)}</span><span class="tag-spawned">spawned</span>${v}</div>`;
-  }).join('') || dim(activeHarness ? `no ${activeHarness} switches in the last 24h` : 'no active agent spawned');
+  }).join('') || dim(activeHarness ? `no ${activeHarness} events in the last 24h` : 'no active agent spawned');
   set('monitor-switches', swRows);
 
   const agRows = filteredAgents.slice(-4).map(a =>
     `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${a.model || 'unknown'}</span><span class="tag-spawned">spawned</span><span class="desc">${(a.task || '').slice(0,44)}</span></div>`
-  ).join('') || dim('no active agent spawned');
+  ).join('') || dim(activeHarness ? `no ${activeHarness} events in the last 24h` : 'no active agent spawned');
   set('monitor-agents', agRows);
 
   // ── stats: 24h totals from the server, unless a harness chip is selected ──

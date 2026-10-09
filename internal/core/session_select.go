@@ -17,7 +17,7 @@ func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bo
 	if harness == "" || id == "" || id == inheritID || !session.Known || !session.Contains(id) || session.Blocks(id) {
 		return false
 	}
-	if len(session.Included) > 0 && !session.IsIncluded(id) {
+	if session.CreditsReported && len(session.Included) > 0 && !session.IsIncluded(id) {
 		return false
 	}
 	if res != nil && res.IsExplicitOnly(harness, id) && !ExplicitUpshiftEnabled() {
@@ -128,7 +128,7 @@ func selectableSessionIDs(harness string, session SessionList, res Resolver, all
 	if !session.Known {
 		return nil
 	}
-	creditClosed := len(session.Included) > 0
+	creditClosed := session.CreditsReported && len(session.Included) > 0
 	ids := make([]string, 0, len(session.IDs))
 	for _, id := range session.IDs {
 		if id == "" || id == inheritID || session.Blocks(id) {

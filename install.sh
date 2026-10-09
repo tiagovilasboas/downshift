@@ -156,8 +156,8 @@ set_explicit_upshift() {
     return 0
   fi
   if ! command -v python3 >/dev/null 2>&1; then
-    echo "warning: python3 is required to set explicit_upshift in an existing $file" >&2
-    return 0
+    echo "error: python3 is required to set explicit_upshift in an existing $file" >&2
+    return 1
   fi
   python3 - "$file" <<'PY'
 import json, sys

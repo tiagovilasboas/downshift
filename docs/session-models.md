@@ -54,9 +54,7 @@ Same order for every harness:
 
 1. Hook payload, if it includes `session_models` or `available_models` (a JSON array of strings). A present field wins, including an empty array.
 2. Otherwise the models recovered for that harness by `downshift models discover` (`discovered.json`). See [session-discovery.md](session-discovery.md). A recovered list beats a handwritten allowlist.
-3. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key is the fallback.
-
-`quota.<harness>` in that file is still this harness's credit set, including when the id list came from the hook or from discovery. A hook `included_models` or `unavailable_models` array replaces the file quota for that call only.
+3. Otherwise `~/.harness-downshift/session-models.json` (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key is the fallback. This file is not a credit report. `quota` in it is ignored.
 
 The file is operator-curated. For Codex, `model` identifies the active model in that event and `session_id` identifies its session. Downshift does not call a picker API, discover account entitlements, or assume every catalog entry is selectable. Verify the session's actual choices before adding them to the allowlist.
 
@@ -85,10 +83,10 @@ The session list alone determines candidates and their relative capability. Cata
 - Unknown session: no rewrite.
 - Any exact session ID inside the filtered set can be written, even when the catalog does not know it. `inherit` and exhausted IDs cannot be selected. A catalog `explicit_only` ID can be written only when `explicit_upshift` is on.
 - `inherit` may sit in the session list so the payload is recognised. It is never selected as the target.
-- `quota.<harness>.included` is that harness's credit set. A hook `included_models` array, when present (including empty), replaces the file list for that call only. `unavailable_models` replaces `quota.<harness>.exhausted` the same way. One harness's list is never copied onto another, and the selector does not add an id the set omitted.
-- An exhausted id is never selected, on any harness.
-- When this harness's credit set is non-empty, downshift and upshift rank only inside its intersection with the session list, in that list's order. There is no fallback to a session id outside the set. An empty intersection does not rewrite.
-- When the credit set is empty, this harness reported no credits. Ranking stays the session order minus exhausted ids, `inherit`, and `explicit_only` (unless explicit upshift is on). Downshift does not invent a credit denial.
+- Credits come only from this call's `included_models` and `unavailable_models`. There is no compiled-in credit list, and `quota` in `session-models.json` is not read.
+- An exhausted id from that hook report is never selected, on any harness.
+- When the hook reports `included_models`, downshift and upshift rank only inside that set, in session order, for that harness alone. There is no fallback to a session id outside the set. An empty intersection does not rewrite.
+- When the hook did not report credits, ranking stays the session order minus exhausted ids, `inherit`, and `explicit_only` (unless explicit upshift is on). Downshift does not invent a credit denial.
 
 ## explicit_upshift
 

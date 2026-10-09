@@ -63,25 +63,25 @@ func (p *Provider) SupportedHarnesses() []contextopt.HarnessSupport {
 			HarnessID: "cursor",
 			Supported: true,
 			Method:    contextopt.MethodAgentInstruction,
-			Notes:     "Observes execution metrics; instruction-based compaction guidance",
+			Notes:     "The hook does not rewrite tool output. Compression runs only when a caller invokes the compressor. Prompts are not compressed automatically.",
 		},
 		{
 			HarnessID: "codex",
 			Supported: true,
 			Method:    contextopt.MethodAgentInstruction,
-			Notes:     "Deterministic Go output filter invoked directly",
+			Notes:     "The hook does not rewrite tool output. Compression runs only when a caller invokes the compressor. Prompts are not compressed automatically.",
 		},
 		{
 			HarnessID: "antigravity",
 			Supported: true,
 			Method:    contextopt.MethodAgentInstruction,
-			Notes:     "In-process zero-dependency compression",
+			Notes:     "The hook does not rewrite tool output. Compression runs only when a caller invokes the compressor. Prompts are not compressed automatically.",
 		},
 		{
 			HarnessID: "kirocrew",
 			Supported: true,
 			Method:    contextopt.MethodAgentInstruction,
-			Notes:     "Policy-mode context trim hints on spawn; deterministic tool output compression via pipe or agent instructions",
+			Notes:     "The hook does not rewrite tool output. Spawn policy may omit memory. Prompts are not compressed automatically.",
 		},
 	}
 }

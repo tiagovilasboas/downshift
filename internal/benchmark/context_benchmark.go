@@ -47,7 +47,7 @@ type ContextBenchmarkRecord struct {
 func CompareContextScenarios(w io.Writer) error {
 	fmt.Fprintln(w, "================================================================================")
 	fmt.Fprintln(w, "Downshift Context Optimization")
-	fmt.Fprintln(w, "Routing cost and accuracy are not measured. Do not cite 68, 35, or 80.")
+	fmt.Fprintln(w, "Routing cost and accuracy are not measured.")
 	fmt.Fprintln(w, "Compressor rows below are measured bytes from checked-in fixtures.")
 	fmt.Fprintln(w, "================================================================================")
 
@@ -71,14 +71,15 @@ func CompareContextScenarios(w io.Writer) error {
 	}
 	fmt.Fprintln(w, "----------------------------------------------------------------------------------------------------------------")
 	fmt.Fprintln(w, "Measured compressor bytes (safe mode, exit 0). Unit: bytes.")
+	fmt.Fprintln(w, "fixture | original bytes | reduced bytes | byte savings")
 	fixtures := []struct {
 		Name string
 		File string
 	}{
-		{"go_test_ok", "fixtures/go_test_all_ok.txt"},
-		{"go_test_warning", "fixtures/go_test_non_ok.txt"},
-		{"repetitive_logs", "fixtures/repetitive_logs.txt"},
-		{"search_hits", "fixtures/search_hits.txt"},
+		{"go test all-ok", "fixtures/go_test_all_ok.txt"},
+		{"go test non-ok warning", "fixtures/go_test_non_ok.txt"},
+		{"repetitive logs", "fixtures/repetitive_logs.txt"},
+		{"search hits", "fixtures/search_hits.txt"},
 	}
 	for _, fx := range fixtures {
 		raw, err := compressorFixtures.ReadFile(fx.File)
@@ -90,12 +91,12 @@ func CompareContextScenarios(w io.Writer) error {
 		if savings < 0 {
 			savings = 0
 		}
-		fmt.Fprintf(w, "%s original=%d bytes reduced=%d bytes savings=%d bytes\n", fx.Name, res.OriginalBytes, res.ReducedBytes, savings)
+		fmt.Fprintf(w, "%s | %d | %d | %d\n", fx.Name, res.OriginalBytes, res.ReducedBytes, savings)
 	}
 	fmt.Fprintln(w, "Key Insights:")
 	fmt.Fprintln(w, "1. Model routing and compression are separate levers. This command does not price routing.")
 	fmt.Fprintln(w, "2. Safe compression keeps non-ok test lines, search hits, file names, git logs, and any non-zero exit.")
-	fmt.Fprintln(w, "3. Routing cost, tokens, and accuracy are not measured. Do not cite 68, 35, or 80 as evidence.")
+	fmt.Fprintln(w, "3. Routing cost and accuracy are not measured. tokens: not measured.")
 	fmt.Fprintln(w, "4. The fixture table is bytes only. It is not a token count and not a dollar saving.")
 	return nil
 }

@@ -29,7 +29,7 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 
 ## 3. Economia de tokens
 
-Não há medição reproduzível de economia de tokens neste repositório. Não cite 68, 35 ou 80 como evidência. Tabelas anteriores com 60–98% e com ~80% combinado eram constantes ilustrativas. Elas foram retiradas. `downshift context benchmark` mede bytes em fixtures versionadas (original, reduzido, economia em bytes). Isso não é token e não é dólar. `downshift context metrics` pode contar comandos no log de compactação; os campos de token ficam `unavailable` e não são uma economia medida.
+Não há medição reproduzível de economia de tokens neste repositório. `downshift context benchmark` mede bytes em fixtures versionadas (original bytes, reduced bytes, byte savings). A unidade é bytes. Custo de roteamento e acurácia saem como `not measured`. Isso não é token e não é dólar. `downshift context metrics` pode contar comandos no log de compactação; os campos de token ficam `unavailable` e não são uma economia medida.
 
 Releitura de histórico aumenta o contexto quando a saída de uma ferramenta volta no turno seguinte. Isso descreve o mecanismo. Não é um número de tokens evitados.
 
@@ -37,7 +37,7 @@ Releitura de histórico aumenta o contexto quando a saída de uma ferramenta vol
 
 ## 4. Matriz de roteamento e tabela de bytes
 
-`downshift context benchmark` lista os quatro cenários. Custo de roteamento e acurácia saem como `not measured`. Em seguida o comando roda o compressor em fixtures versionadas (`go test` só com `ok`, `go test` com linha que não é `ok`, logs repetidos, hits de busca) e imprime original, reduzido e economia, com unidade bytes. Não inventa tokens nem dólares. Não cite 68, 35 ou 80.
+`downshift context benchmark` lista os quatro cenários. Custo de roteamento e acurácia saem como `not measured`. Em seguida o comando roda o compressor em fixtures versionadas (`go test` só com `ok`, `go test` com linha que não é `ok`, logs repetidos, hits de busca) e imprime original bytes, reduced bytes e byte savings. A unidade é bytes. Não inventa tokens nem dólares.
 
 | Cenário | Roteamento de Modelo | Compressão de Contexto | Fator de Custo | Redução de Tokens | Acurácia |
 |---|---|---|:---:|:---:|:---:|
@@ -90,8 +90,8 @@ downshift context benchmark
 
 | Harness | Canal de Telemetria | Canal de Transformação | Mecanismo |
 |---|---|---|---|
-| **Claude Code** | `PostToolUse` (duração, ferramenta, exit code & bytes) | Pipe explícito ou instrução | Com a flag ligada, o hook grava `CompressExit` em observe; não substitui a saída que o modelo vê |
-| **Cursor** | Telemetria de logs | Instruções do agente | Compactação determinística guiada |
-| **Codex** | Payloads de hook | Execução direta | Filtro Go nativo em processo |
-| **Antigravity** | Ciclo de sessão | Filtro direto | Motor nativo zero-dependência |
-| **KiroCrew** | Policy mode & telemetria | Instruções / pipes de subagentes | Poda de contexto no respawn (`include_memory=false`) e compactação determinística |
+| **Claude Code** | `PostToolUse` observa bytes e o exit code | O hook não reescreve a saída da ferramenta | Com a flag ligada, grava `CompressExit` em observe. O modelo continua vendo a saída original. Não comprime prompt. |
+| **Cursor** | Nenhum hook reescreve saída de ferramenta | Não há substituição automática | Compressão só quando alguém chama o compressor |
+| **Codex** | Nenhum hook reescreve saída de ferramenta | Não há filtro automático na sessão | Compressão só quando alguém chama o compressor |
+| **Antigravity** | Nenhum hook reescreve saída de ferramenta | Não há filtro direto na sessão | Compressão só quando alguém chama o compressor |
+| **KiroCrew** | Policy mode no spawn | O hook não reescreve a saída da ferramenta | `include_memory=false` no respawn é política de spawn, não compactação de prompt |
