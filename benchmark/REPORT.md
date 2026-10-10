@@ -87,8 +87,15 @@ leva (no stable repo id on the routing hook without paths).
 | vs baseline | **0.0pp** (matches classifier; gate floor ≥ 38/40 met) |
 
 **What B proves:** with class-scoped keys, shared memory on this suite no longer
-collapses below the classifier. It is not the per-task upper bound (A); further
-scoping (repo, session) may still help cost without hurting pass rate here.
+collapses below the classifier (floor ≥ 38/40). It is not the per-task upper
+bound (A).
+
+The hook does **not** apply B. `routeadapt` writes `AdaptWould` and leaves
+`Tier` on the classifier result. Promotion is blocked until two gaps close:
+an executable outcome suite that is not these 40 tasks, and a cost per
+completed task (failures, retries, escalations). The recorded runs store
+pass/fail only, so that cost is **not measured**. Repo id is not part of the
+key: the hook has no stable repository id that is not a filesystem path.
 
 ## How to cite
 
