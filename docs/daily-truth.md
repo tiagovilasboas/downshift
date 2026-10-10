@@ -82,10 +82,17 @@ from a model name. Do not copy Claude fields (`resolvedModel`,
 - **grok:** no hook field documented for the executed child model or that
   child's tokens.
 
-### 3. Claude statusline — not started
+### 3. Claude statusline — consumer tested; live observation blocked
 
-Observe native `rate_limits` when the operator already has a statusline path.
-Do not install a statusline into `~/.claude/settings.json`.
+The consumer is tested. `SessionList.WithUsageQuota` loads a stored
+`claude-statusline` snapshot when the hook payload has no usage quota. A high
+`used_percentage` holds the Claude rewrite (quota held, not available). A low
+`used_percentage` can leave it available. A `context_window`-only observation
+is not subscription quota and does not authorize a rewrite.
+
+Live observation stays blocked until the operator already has a statusline
+path. This slice does not install a statusline into `~/.claude/settings.json`
+and does not record a live `rate_limits` observation.
 
 ### 4. Codex child usage — not started
 
