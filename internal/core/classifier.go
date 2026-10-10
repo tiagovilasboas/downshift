@@ -50,6 +50,14 @@ type signal struct {
 // safe (never underpower a task).
 var signals = compileSignals()
 
+var (
+	// addStubRE matches one helper added by name. "write" and "implement"
+	// stay with the lexicon: implement is already Medium, and a write-spec
+	// with no other signal keeps the Medium default.
+	addStubRE      = regexp.MustCompile(`(?i)^\s*add\s+[A-Z]\w*\(`)
+	exportedCallRE = regexp.MustCompile(`\b[A-Z]\w*\([^)]*\)`)
+)
+
 func compileSignals() []signal {
 	out := make([]signal, 0, len(RawSignals))
 	for _, r := range RawSignals {
@@ -98,9 +106,24 @@ func Classify(prompt string) Classification {
 	// decide the class — a vague prompt with no real signal stays Medium.
 	contentMatched := scores[Trivial]+scores[Simple]+scores[Medium]+scores[Complex] > 0
 
+	wordCount := len(strings.Fields(prompt))
+
+	// A silent "add Name(...)" stub is one helper. Apply it only when nothing
+	// else matched, and only for a single call, so a write-spec or a multi-step
+	// task is not pushed onto the small tier.
+	if !contentMatched && addStubRE.MatchString(prompt) && wordCount > 0 && wordCount <= 25 &&
+		len(exportedCallRE.FindAllString(prompt, -1)) == 1 {
+		scores[Simple] += 2
+		contentMatched = true
+	}
+	// Multi-method implement specs (NewX/Get/Put style) need frontier torque.
+	if strings.Contains(lower, "implement") && len(exportedCallRE.FindAllString(prompt, -1)) >= 3 {
+		scores[Complex] += 2
+		contentMatched = true
+	}
+
 	// Structural nudge: very short imperative prompts lean trivial — but only
 	// to reinforce an existing trivial signal, never to create one.
-	wordCount := len(strings.Fields(prompt))
 	if contentMatched && wordCount > 0 && wordCount <= 6 {
 		scores[Trivial]++
 	}
