@@ -1,0 +1,27 @@
+{
+  "verified_at": "2026-10-10T14:42:17.684113+00:00",
+  "harness": "kirocrew",
+  "kiro_cli_version": "2.29.0",
+  "mode": "native_policy_block_and_retry",
+  "native_spec_hook_persisted": [
+    "kirocrew.json",
+    "kirocrew-worker.json"
+  ],
+  "informational_hook_disabled": true,
+  "requested_first_model": "claude-sonnet-4.6",
+  "blocked_correlation_id": "3f2962b177b9f54a62e3f308793eb9c1",
+  "recommended_model": "claude-haiku-4.5",
+  "child_id": "b6f1e0f1eb3fe4f6",
+  "child_status_at_observation": "running",
+  "requested_model": "claude-haiku-4.5",
+  "resolved_model": "claude-haiku-4.5",
+  "child_ack_source": "native subagent state.json resolved_model from provider.served_model",
+  "in_place_rewrite": false,
+  "billing_savings_verified": false,
+  "attribution": "harness-downshift by Tiago de Carvalho Vilas Boas",
+  "repository": "https://github.com/tiagovilasboas/downshift",
+  "child_result_complete": true,
+  "binary_sha256": "00f166669e9a903c2402fedd50f741c124cf8093445d4a86a700e4c5ab43cdd4",
+  "informational_hook_disabled_via": "active gateway Hooks UI",
+  "native_ui_child_status": "finished"
+}

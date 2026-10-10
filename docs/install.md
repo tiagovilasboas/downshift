@@ -1,5 +1,8 @@
 # Installation and harness setup
 
+harness-downshift by Tiago de Carvalho Vilas Boas
+https://github.com/tiagovilasboas/downshift
+
 Canonical guide for humans and coding agents installing Downshift on a user machine.
 
 **Related:** [config.md](config.md) · [session-models.md](session-models.md) · [harness-matrix.md](harness-matrix.md) · [examples/README.md](../examples/README.md) · [Portuguese guides](pt/README.md)
@@ -283,17 +286,14 @@ Register the hook in `~/.gemini/config/hooks.json`:
 
 When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, inspects the prompt inside `Subagents[0].Prompt`, and dynamically rewrites `Subagents[0].Model` to `flash` or `flash_lite` for mechanical tasks, logging the routing event to `~/.harness-downshift/events.jsonl`.
 
-## KiroCrew (policy mode: block-and-instruct, not rewrite)
+## KiroCrew (policy mode through the native Kiro CLI hook)
 
-KiroCrew has subagents (`spawn_run`, `spawn_sub_agents`) and each spawn accepts
-a per-child `model` — so the material the router needs is there. What it does
-*not* have is a rewrite channel: its `preToolUse` hook contract is binary,
-`exit 0` allows the tool and `exit 2` blocks it and relays stderr to the agent.
-There is no `updated_input`, so the hook cannot swap the child's model in place
-the way it does on Claude Code, Cursor, or Codex.
-
-So the KiroCrew adapter runs in **policy mode** — the same lever Grok exposes,
-used deliberately. It classifies the pending spawn and:
+For Kiro CLI 2.29, register Downshift through KiroCrew's persistent
+`agent.kiro_hooks` configuration. KiroCrew generates the agent spec consumed
+by Kiro CLI, whose native `preToolUse` hook runs before the tool: `exit 0`
+allows it; `exit 2` blocks it and returns stderr to the agent. There is no
+`updated_input` channel, so the adapter uses **policy mode**. It classifies a
+pending spawn with an explicit child model and:
 
 - **right tier already** → `exit 0`, allow silently;
 - **confident tier mismatch** → `exit 2`, block with a message naming the model
@@ -302,10 +302,11 @@ used deliberately. It classifies the pending spawn and:
 - **uncertain downshift, unknown model, or non-subagent tool** → `exit 0`,
   fail-open. The router never blocks a spawn on its own doubt.
 
-The classifier is the same deterministic, prompt-free core — no LLM in the
-loop. The difference from rewrite mode is that the agent respawns at the right
-tier instead of the hook doing it silently; the discipline is forced, not
-automatic.
+Use the `kirocrew-core` MCP tool `spawn_run` with explicit `task` and `model`
+arguments. The native `use_subagent` / crew pipeline can omit the child model;
+those calls are outside routing coverage. Downshift never infers the child
+model from the parent's model or a UI title. The classifier is deterministic;
+the agent must retry a blocked spawn with the recommended model.
 
 ### Setup
 
@@ -313,40 +314,74 @@ automatic.
    ```bash
    go build -o downshift ./cmd/downshift
    ```
-2. Add a `preToolUse` hook scoped to the subagent tool. KiroCrew reads hook
-   files from `~/.kiro/hooks/*.json`:
+2. Make the checked-in wrapper executable:
+   ```bash
+   chmod +x scripts/kirocrew-pre-tool-use.sh
+   ```
+   The wrapper invokes the repository's `downshift` binary with the `kirocrew`
+   subcommand. Keep it beside this build in the repository checkout.
+3. Merge this entry into `~/.kiro/crew/config.json`, preserving existing
+   configuration and hooks. Replace the example path with the absolute path
+   to the wrapper in your checkout:
    ```json
    {
-     "name": "downshift-subagent-router",
-     "version": "1",
-     "enabled": true,
-     "hooks": {
-       "preToolUse": [
-         {
-           "matcher": "subagent",
-           "command": "/absolute/path/to/downshift kirocrew",
-           "timeout_ms": 5000
-         }
-       ]
+     "agent": {
+       "kiro_hooks": {
+         "preToolUse": [
+           {
+             "matcher": "*",
+             "command": "/absolute/path/to/harness-downshift/scripts/kirocrew-pre-tool-use.sh"
+           }
+         ]
+       }
      }
    }
    ```
-3. Test it from the terminal (no spawn needed):
+   KiroCrew's generation merges these user hooks with bundled hooks. It accepts
+   `command` as an existing absolute executable path, preserves `command` and
+   `matcher`, and drops `timeout_ms`. Commands containing shell arguments are
+   rejected. The wrapper carries the subcommand so it survives generation.
+   Do not edit `~/.kiro/agents/kirocrew.json`: KiroCrew regenerates that file.
+4. Populate the `kirocrew` session model list from the models actually
+   selectable in your installed Kiro CLI. Follow [session-models.md](session-models.md)
+   for ordering and discovery precedence. Without a known eligible target,
+   policy mode allows the spawn unchanged.
+5. Load [kirocrew-routing-guide.md](kirocrew-routing-guide.md) into the agent's
+   instructions and restart KiroCrew so it regenerates its spec. Verify that
+   the generated `preToolUse` includes the wrapper and existing bundled hooks.
+6. Smoke-test the adapter with known available models (no spawn needed):
    ```bash
-   echo '{"tool_name":"spawn_run","tool_input":{"task":"rename a variable","model":"opus"}}' \
-     | ./downshift kirocrew ; echo "exit=$?"
-   # exit=2, stderr: "TRIVIAL task → downshift to claude-haiku-5-5 … Respawn with model=…"
+   printf '%s\n' '{"tool_name":"spawn_run","tool_input":{"task":"rename a variable","model":"YOUR_AVAILABLE_FRONTIER_MODEL"}}' \
+     | ./scripts/kirocrew-pre-tool-use.sh
+   # A confident mismatch with an eligible target returns exit 2 and model=...
    ```
+   Replace the placeholder with a real current model. This checks adapter
+   output only; it does not establish that the harness blocks execution.
 
-When the hook blocks, KiroCrew relays the stderr to the agent, which respawns
-the subagent at the recommended tier. Routing events are logged to
-`~/.harness-downshift/events.jsonl` like every other adapter.
+`~/.kiro/crew/hooks.json` tool-call hooks are informational: they can execute
+after the tool starts, and their exit code does not block that path. A growing
+`run_count` proves invocation only. Do not use that registration as policy
+enforcement or keep an informational duplicate of the native policy hook.
 
-KiroCrew's `postToolUse` hook is available and can be wired to observe whether
-the agent actually respawned at the recommended tier. The compliance observer
-that reads those events and writes `resolved` records is a private maintainer
-tool (DS-04); wire it by adding a `postToolUse` block alongside `preToolUse` in
-the hook JSON above, pointing to your own observer script.
+### Acceptance evidence and coverage
+
+The linked instructions are the **guia inferencial** for the **behaviour**
+eixo. The native pre-tool policy hook is the **sensor computacional** for that
+same concern. Check a real `spawn_run` with a trivial task and an explicit
+frontier model: prove it is blocked before the child starts, then retry once
+with the recommended model. Verify the child's actual model in KiroCrew's
+native subagent record. Missing-model calls must pass through unchanged.
+
+Spec regeneration and a restart followed by these checks are the **sensor
+computacional** for **architecture fitness**, paired with this setup guia.
+Routing decisions in the state directory's `events.jsonl` provide continuous
+local observations (default `~/.downshift`; legacy `~/.harness-downshift`).
+A blocked decision proves enforcement only when paired with the native result;
+it does not prove successful child execution, usage, or savings. A PostToolUse
+compliance observer remains separate maintainer tooling (DS-04); this setup
+does not install one. Native block, retry and served-model acknowledgement were
+observed on 2026-10-10 with Kiro CLI 2.29.0; see
+[the build-specific evidence](evidence/kirocrew-native-hook-2026-10-10.md).
 
 ## dsmon — live monitor widget
 

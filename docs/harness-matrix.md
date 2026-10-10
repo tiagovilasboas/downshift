@@ -1,5 +1,8 @@
 # Harness x plan x rewrite-honored matrix
 
+harness-downshift by Tiago de Carvalho Vilas Boas
+https://github.com/tiagovilasboas/downshift
+
 "Rewrite honored" means the harness executor applied the hook's model
 rewrite to the child subagent, not just that downshift emitted one.
 `outcome: "rewrite_emitted"` proves emission only (docs/session-models.md:17).
@@ -12,7 +15,7 @@ rewrite to the child subagent, not just that downshift emitted one.
 | cursor | Pro legacy (request-based) | No: silently dropped | Task model takes only `"fast"` (README.md:735) |
 | cursor | Pro / Ultra usage-based | Unconfirmed | Actual child-model proof remains P1.6. Separately, Cursor 3.24.9 blocks the external native quota collector before transport; see [diagnostic](evidence/cursor-gap-diagnostic.md). |
 | codex | multi_agent_v2 + hooks on | Yes, inferred (2026-10-02) | Inferred, not observed: same-session follow-up: spawn requested `gpt-5.6-terra` after hook emitted Terra (`docs/evidence/codex-rewrite-honored-2026-10-02.md`). Payload >1MB still fail-open. Schema still evolving upstream. |
-| kirocrew | any (`spawn_run` / `spawn_sub_agents`) | No: policy/block only | No `updated_input` channel; exit 0/2 only (README.md:399-404) |
+| kirocrew | Kiro CLI 2.29 native spec hook; MCP `spawn_run` with explicit `task` + `model` | Policy/block + retry observed 2026-10-10; no in-place rewrite | Persistent `agent.kiro_hooks.preToolUse` + executable wrapper; no `updated_input` channel. Native `use_subagent` without child model is outside coverage. `hooks.json` tool-call hooks are informational and do not enforce blocks. [Native evidence](evidence/kirocrew-native-hook-2026-10-10.md); [setup and limits](install.md#kirocrew-policy-mode-through-the-native-kiro-cli-hook). |
 | antigravity | desktop 2.21.1, `invoke_subagent` | Yes, observed 2026-10-09 | One exact child: original `pro`, executed `flash_lite`, native executor/generation model `gemini-3.5-flash-lite`. [Evidence and QA](evidence/antigravity-executor-ack.md). Manual read-only, build-specific sensor; quota/picker/alias mapping remains unresolved. |
 | grok | any (single model grok-4.6) | No hook rewrite: config only | PreToolUse is allow/deny; pin `reasoning_effort` in config.toml (README.md:520-531) |
 
@@ -39,7 +42,7 @@ acknowledgement, so the Codex row above is not refreshed. See
 - Claude paid: emission only until P1.3 (docs/evidence/rewrite-honored-protocol.md); plan limits: README § Plan compatibility
 - Cursor free/legacy discard: README.md:734-735, README.md:738, README.md:1012-1013
 - Codex flags + honored: README.md:744, README.md:746; evidence 2026-10-02: docs/evidence/codex-rewrite-honored-2026-10-02.md; evolving schema: README.md:373
-- KiroCrew binary contract: README.md:399-404; support row: README.md:692
+- KiroCrew adapter capability and integration limits: [native hook setup](install.md#kirocrew-policy-mode-through-the-native-kiro-cli-hook), [routing guia](kirocrew-routing-guide.md), `internal/adapters/kirocrew/kirocrew.go`. A hook invocation counter or direct adapter smoke test does not prove live enforcement or the served child model.
 - Antigravity observed child, dated build and evidence limits: [native evidence](evidence/antigravity-executor-ack.md) and [final QA](evidence/final-gap-qa.md)
 - Grok config-only: README.md:520-531, README.md:691, README.md:1236
 - Emission vs honored: docs/session-models.md:17; allowlist: docs/session-models.md:34
