@@ -38,17 +38,17 @@ import (
 // Event represents a single routing event for later training.
 // Note: no prompt is stored — only derived features. This is intentional.
 type Event struct {
-	RecordType   string               `json:"record_type,omitempty"`
-	ID           string               `json:"id,omitempty"`
-	EventID      string               `json:"event_id,omitempty"`
-	Timestamp    time.Time            `json:"timestamp"`
+	RecordType      string               `json:"record_type,omitempty"`
+	ID              string               `json:"id,omitempty"`
+	EventID         string               `json:"event_id,omitempty"`
+	Timestamp       time.Time            `json:"timestamp"`
 	Features        domain.FeatureVector `json:"features"`
 	ComplexityClass string               `json:"complexity_class,omitempty"` // TRIVIAL/SIMPLE/MEDIUM/COMPLEX at route time
 	SelectedTier    core.Tier            `json:"selected_tier"`
-	Confidence   float64              `json:"confidence,omitempty"` // Probability from a statistical router, when available
-	Confident    bool                 `json:"confident,omitempty"`  // Binary signal from the deterministic router
-	Harness      string               `json:"harness"`
-	Shadow       *shadow.Observation  `json:"classifier_shadow,omitempty"`
+	Confidence      float64              `json:"confidence,omitempty"` // Probability from a statistical router, when available
+	Confident       bool                 `json:"confident,omitempty"`  // Binary signal from the deterministic router
+	Harness         string               `json:"harness"`
+	Shadow          *shadow.Observation  `json:"classifier_shadow,omitempty"`
 
 	// Outcome — attached after engineer review (may be empty initially)
 	Outcome *Outcome `json:"outcome,omitempty"`
@@ -92,14 +92,14 @@ func RecordRoutedDecision(prompt string, decision core.Decision) (string, error)
 	}
 	id := hex.EncodeToString(rawID[:])
 	event := Event{
-		RecordType:   "decision",
-		ID:           id,
-		Timestamp:    time.Now().UTC(),
+		RecordType:      "decision",
+		ID:              id,
+		Timestamp:       time.Now().UTC(),
 		Features:        extractor.Extract(prompt),
 		ComplexityClass: decision.Complexity.String(),
 		SelectedTier:    decision.Tier,
-		Confident:    decision.Confident,
-		Harness:      decision.Harness,
+		Confident:       decision.Confident,
+		Harness:         decision.Harness,
 	}
 	event.Shadow = shadow.FromEnv(shadow.Input{Text: prompt, Features: event.Features})
 	if err := NewEventStore(DefaultEventsPath()).Record(event); err != nil {
