@@ -22,6 +22,7 @@
 
 | Doc | Topic |
 |-----|--------|
+| [complexity-weights.md](complexity-weights.md) | Signal weights, tier map, and per-harness model choice |
 | [minilm-semantic.md](minilm-semantic.md) | Semantic boost |
 | [classifier-shadow.md](classifier-shadow.md) | Shadow classifier |
 | [context-optimization.md](context-optimization.md) | Native Context Compressor & Context Sensor |

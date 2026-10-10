@@ -21,6 +21,9 @@ toward **no rewrite** when confidence is low).
 
 ---
 
+The full weight table, the structural bonuses, and how each harness turns
+the tier into a model id are in [complexity-weights.md](../complexity-weights.md).
+
 ## Scoring (`internal/core/signals.go` + `classifier.go`)
 
 1. **Weighted regex vote** — each pattern adds to a complexity bucket; highest sum wins.

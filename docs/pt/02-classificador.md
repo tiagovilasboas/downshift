@@ -17,6 +17,8 @@ A taxonomia de complexidade do Downshift é dividida em quatro classes bem delim
 
 Se os padrões do prompt não apresentarem correspondência clara com nenhuma classe, a tarefa pode ficar com baixa confiança. Diante de incerteza, a política de roteamento opta pela segurança e **não altera** o modelo ativo.
 
+A tabela de pesos, os pontos extras e a escolha do modelo em cada harness estão em [complexity-weights.md](../complexity-weights.md).
+
 ---
 
 ## Detalhes de Engenharia
