@@ -37,6 +37,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/decisionintelligence"
 	"github.com/tiagovilasboas/downshift/internal/hookctx"
+	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/models"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/routingv2/classifier"
@@ -86,10 +87,22 @@ func main() {
 			printAllow,
 			func(e claudecode.Event) string { return e.TaskText() },
 		))
+	case "honor":
+		if len(args) != 2 {
+			fmt.Fprint(os.Stderr, "usage: downshift honor <harness>\n")
+			os.Exit(2)
+		}
+		os.Exit(runHonor(os.Stdin, portFor(args[1]), catalog))
+	case "usage":
+		if len(args) != 2 {
+			fmt.Fprint(os.Stderr, "usage: downshift usage <harness>\n")
+			os.Exit(2)
+		}
+		os.Exit(runUsage(os.Stdin, portFor(args[1]), catalog))
 	case "claude-code-post-tool-use":
-		os.Exit(runClaudePostToolUse(os.Stdin, catalog))
+		os.Exit(runHonor(os.Stdin, portFor("claude-code"), catalog))
 	case "claude-code-subagent-stop":
-		os.Exit(runClaudeSubagentStop(os.Stdin, catalog))
+		os.Exit(runUsage(os.Stdin, portFor("claude-code"), catalog))
 	case "cursor":
 		os.Exit(runHookAdapter(
 			os.Stdin,
@@ -293,12 +306,27 @@ func runHookAdapter[E any](
 	return 0
 }
 
-// runClaudePostToolUse is the PostToolUse hook runner for Claude Code. It
-// mirrors runHookAdapter's fail-open contract: the spawn already completed,
-// so any read/parse/encode failure prints the neutral PostToolUse response
-// ({}) and exits 0. Telemetry goes to the hermetic event log
-// (DOWNSHIFT_EVENT_LOG respected inside the telemetry package).
-func runClaudePostToolUse(in io.Reader, catalog core.Resolver) (rc int) {
+// hookPorts registers honor and usage only when that harness's own hook
+// sends the field. Do not copy another harness's payload into this map.
+var hookPorts = map[string]hookport.Port{
+	"claude-code": claudecode.Port(),
+}
+
+// portFor returns the registered observation port. An unknown harness gets
+// nil funcs so the stage stays unobserved instead of borrowing another
+// harness's payload fields.
+func portFor(id string) hookport.Port {
+	if p, ok := hookPorts[id]; ok {
+		return p
+	}
+	return hookport.Port{ID: id}
+}
+
+// runHonor is the post-spawn honor runner. The child already started, so any
+// read, size, panic, or encode failure prints the neutral response ({}) and
+// exits 0. A nil Honor func is unobserved: same stdout, plus one stderr line.
+// Telemetry stays inside the port func (DOWNSHIFT_EVENT_LOG respected there).
+func runHonor(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) {
 	responded := false
 	neutral := func() int {
 		if !responded {
@@ -309,7 +337,7 @@ func runClaudePostToolUse(in io.Reader, catalog core.Resolver) (rc int) {
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintln(os.Stderr, "downshift: internal error in PostToolUse, ignored")
+			fmt.Fprintln(os.Stderr, "downshift: internal error in honor, ignored")
 			rc = neutral()
 		}
 	}()
@@ -318,15 +346,19 @@ func runClaudePostToolUse(in io.Reader, catalog core.Resolver) (rc int) {
 	if err != nil || len(data) > maxHookPayloadBytes {
 		return neutral()
 	}
-	out, note, _ := claudecode.HandlePostToolUse(data, buildVersion, catalog)
-	encoded, err := json.Marshal(out)
+	obs := hookport.ObserveHonor(port, data, buildVersion, catalog)
+	if !obs.Observed {
+		fmt.Fprintf(os.Stderr, "downshift: honor unobserved for %s\n", port.ID)
+		return neutral()
+	}
+	encoded, err := json.Marshal(obs.Stdout)
 	if err != nil {
 		return neutral()
 	}
 	responded = true
 	fmt.Fprintf(os.Stdout, "%s\n", encoded)
-	if note != "" {
-		fmt.Fprintf(os.Stderr, "downshift: %s\n", note)
+	if obs.Note != "" {
+		fmt.Fprintf(os.Stderr, "downshift: %s\n", obs.Note)
 	}
 	return 0
 }
@@ -1286,6 +1318,8 @@ Usage:
   downshift cursor               Run as a Cursor preToolUse hook (reads stdin)
   downshift codex                Run as a Codex PreToolUse hook (reads stdin)
   downshift kirocrew             Run as a KiroCrew preToolUse hook (policy mode: exit 0/2)
+  downshift honor <harness>      Post-spawn honor hook (unobserved unless that harness sends the field)
+  downshift usage <harness>      Post-spawn usage hook (unobserved unless that harness sends the field)
   downshift serve                Start the web dashboard at http://localhost:7474 (serves web/)
   downshift try "<task>" [harness] [model]   Test classification from the terminal
   downshift version              Print the binary version (also --version)
@@ -1339,13 +1373,13 @@ Examples:
 `)
 }
 
-// runClaudeSubagentStop is the SubagentStop hook runner for Claude Code. The
-// subagent already finished, so it never blocks: any failure exits 0 with no
-// output, and usage goes to the hermetic event log.
-func runClaudeSubagentStop(in io.Reader, catalog core.Resolver) (rc int) {
+// runUsage is the post-spawn usage runner. The child already finished, so it
+// never blocks: a read error, an oversized payload, or a panic exits 0 with
+// no stdout. A nil Usage func is unobserved and prints one stderr line.
+func runUsage(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintln(os.Stderr, "downshift: internal error in SubagentStop, ignored")
+			fmt.Fprintln(os.Stderr, "downshift: internal error in usage, ignored")
 			rc = 0
 		}
 	}()
@@ -1354,8 +1388,13 @@ func runClaudeSubagentStop(in io.Reader, catalog core.Resolver) (rc int) {
 	if err != nil || len(data) > maxHookPayloadBytes {
 		return 0
 	}
-	if note := claudecode.HandleSubagentStop(data, buildVersion, catalog); note != "" {
-		fmt.Fprintf(os.Stderr, "downshift: %s\n", note)
+	obs := hookport.ObserveUsage(port, data, buildVersion, catalog)
+	if !obs.Observed {
+		fmt.Fprintf(os.Stderr, "downshift: usage unobserved for %s\n", port.ID)
+		return 0
+	}
+	if obs.Note != "" {
+		fmt.Fprintf(os.Stderr, "downshift: %s\n", obs.Note)
 	}
 	return 0
 }
