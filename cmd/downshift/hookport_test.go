@@ -4,11 +4,14 @@
 package main
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 func TestRunHonorNilCursorPort(t *testing.T) {
@@ -80,5 +83,65 @@ func TestPortForClaudeCodeRegisteredCursorNil(t *testing.T) {
 	}
 	if cursor.Usage != nil {
 		t.Fatal("cursor Usage is set")
+	}
+}
+
+// transcript_path is a Codex quota input (subscription windows). It is not a
+// child-usage field. Absence stays unobserved: records == 0, not a measured
+// zero (records == 1, sum == 0).
+func TestCodexTranscriptPathIsNotObservedChildUsage(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "missing-quota"))
+
+	missingTranscript := filepath.Join(t.TempDir(), "missing-transcript.jsonl")
+	raw, err := json.Marshal(map[string]any{
+		"hook_event_name": "PreToolUse",
+		"session_id":      "sess-codex-child",
+		"tool_name":       "spawn_agent",
+		"transcript_path": missingTranscript,
+		"tool_input": map[string]string{
+			"message":   "rename the userId variable to userIdentifier",
+			"task_name": "worker_agent_rename",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	port := portFor("codex")
+	if port.ID != "codex" {
+		t.Fatalf("port ID = %q, want codex", port.ID)
+	}
+	if port.Usage != nil {
+		t.Fatal("codex Usage is registered")
+	}
+	obs := hookport.ObserveUsage(port, raw, "test", nil)
+	if obs.Observed {
+		t.Fatal("transcript_path counted as observed child usage")
+	}
+
+	var ev codex.Event
+	if err := json.Unmarshal(raw, &ev); err != nil {
+		t.Fatal(err)
+	}
+	_, note, decision := codex.Handle(ev, cmdCat)
+	if decision.Harness == "" {
+		t.Fatal("spawn payload produced no decision")
+	}
+	event := telemetry.FromDecision(decision, "corr-codex-transcript", "test")
+	if note == "" {
+		event.Outcome = telemetry.OutcomeAllow
+	}
+	if event.Outcome == telemetry.OutcomeUsage {
+		t.Fatalf("decision outcome = %q", event.Outcome)
+	}
+	if event.InputTokens != nil || event.OutputTokens != nil || event.CachedTokens != nil {
+		t.Fatalf("decision carried tokens in=%v out=%v cached=%v", event.InputTokens, event.OutputTokens, event.CachedTokens)
+	}
+
+	// The hook records this decision and no usage event.
+	sum, rec := telemetry.ObservedChildTokens([]telemetry.Event{event})
+	if rec != 0 || sum != 0 {
+		t.Fatalf("records=%d sum=%d, want unobserved 0/0", rec, sum)
 	}
 }

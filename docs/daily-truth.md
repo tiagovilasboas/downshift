@@ -94,10 +94,17 @@ Live observation stays blocked until the operator already has a statusline
 path. This slice does not install a statusline into `~/.claude/settings.json`
 and does not record a live `rate_limits` observation.
 
-### 4. Codex child usage — not started
+### 4. Codex child usage — blocked
 
-Read a transcript only when the live hook, or a supported outside collector,
-supplies the path. Do not store prompts. Do not manufacture a paid call.
+`transcript_path` feeds `quota.CollectCodex` (subscription windows). It is
+not child token usage. There is no documented hook field for the executed
+child model or that child's tokens. Absence stays unobserved
+(`ObservedChildTokens` records == 0), not a measured zero (records == 1,
+sum == 0).
+
+`TestCodexTranscriptPathIsNotObservedChildUsage` locks that a Codex payload
+containing `transcript_path` does not count as observed child usage. This is
+not a live child-usage observation.
 
 ### 5. End-of-day number — done (this definition)
 
