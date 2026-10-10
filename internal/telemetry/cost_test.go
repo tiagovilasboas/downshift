@@ -137,9 +137,11 @@ func TestEvent_TokenUsageOrZero(t *testing.T) {
 
 func TestAggregate_RealCostEvents(t *testing.T) {
 	withCost := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.5)
+	withCost.QuotaStatus = "available"
 	withCost.ActualCostUSD = float64Ptr(1.0)
 	withCost.BaselineCostUSD = float64Ptr(4.0) // saves 3.0
 	withCost2 := makeEvent("cc", "SIMPLE", "DOWNSHIFT", 0.5)
+	withCost2.QuotaStatus = "available"
 	withCost2.ActualCostUSD = float64Ptr(2.0)
 	withCost2.BaselineCostUSD = float64Ptr(3.0) // saves 1.0
 	withoutCost := makeEvent("cc", "MEDIUM", "OK", 0)

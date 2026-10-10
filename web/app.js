@@ -22,6 +22,25 @@ function ageStr(ts) {
   return new Date(ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 }
 
+// spawnSurfaceLine is the same three states for every harness tab.
+// An empty tab is unobserved / unknown. Counts come from the events in view.
+// quota unknown or held does not count as available. honor unobserved does
+// not count as observed.
+function spawnSurfaceLine(events) {
+  if (!events.length) {
+    return 'honor unobserved · quota unknown · usage unobserved';
+  }
+  let honorObs = 0, usageObs = 0, available = 0, held = 0, unknown = 0;
+  for (const e of events) {
+    if (e.honor === 'observed') honorObs++;
+    if (e.usage === 'observed') usageObs++;
+    if (e.quota === 'available') available++;
+    else if (e.quota === 'held') held++;
+    else unknown++;
+  }
+  return `honor observed ${honorObs} · quota available ${available} held ${held} unknown ${unknown} · usage observed ${usageObs}`;
+}
+
 function modelVersion(e) {
   const id = (e && (e.final_model || e.requested_model || e.model)) || 'unknown';
   const effort = e && (e.final_reasoning_effort || e.requested_reasoning_effort);
@@ -149,30 +168,32 @@ function renderMonitor(data) {
   ).join('') || dim('no spawned agents in the agent log');
   set('monitor-agents', agRows);
 
-  // ── stats: 24h totals from the server, unless a harness chip is selected ──
+  // ── stats: same rule for all and for one harness chip ──
   const src = activeHarness ? switches.filter(e => e.harness === activeHarness) : switches;
   const down = src.filter(e => e.verdict === 'DOWNSHIFT' && e.applied === true);
   const up   = src.filter(e => e.verdict === 'UPSHIFT' && e.applied === true);
+  // Savings count only an applied downshift whose quota surface is available.
+  const credited = down.filter(e => e.quota === 'available');
   const totalN = activeHarness ? src.length : (stats.total ?? src.length);
   const downN = activeHarness ? down.length : (stats.down ?? down.length);
   const upN = activeHarness ? up.length : (stats.up ?? up.length);
-  const estUSD = activeHarness
-    ? down.reduce((s, e) => s + (e.estimated_savings || 0) * 0.01, 0)
-    : (stats.est_usd ?? 0);
+  const estUSD = credited.reduce((s, e) => s + (e.estimated_savings || 0) * 0.01, 0);
+  const economyN = credited.length;
   set('monitor-stats',
     `${info(totalN)} events &nbsp; ${ok(`${downN}↓`)} &nbsp; ${warn(`${upN}↑`)}` +
-    (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '')
+    (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '') +
+    `<div class="dim">${spawnSurfaceLine(src)}</div>`
   );
 
   // ── economy bar ──
-  if (downN > 0) {
+  if (economyN > 0) {
     const sec = document.getElementById('economy-section');
     if (sec) sec.style.display = '';
     set('economy-bar', `
 <div class="economy-bar">
   <div>
     <div class="big">$${estUSD.toFixed(2)}</div>
-    <div class="sub">est. saved · last 24h · ${downN} downshift${downN!==1?'s':''}</div>
+    <div class="sub">est. saved · last 24h · ${economyN} downshift${economyN!==1?'s':''}</div>
   </div>
 </div>`);
   } else {

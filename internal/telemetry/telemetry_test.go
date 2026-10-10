@@ -272,9 +272,9 @@ func TestAggregate_CountsVerdicts(t *testing.T) {
 
 func TestAggregate_NormSavings_WithDownshift(t *testing.T) {
 	// One event with 50% savings: routed cost = 0.5, baseline = 1.0.
-	events := []telemetry.Event{
-		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.5),
-	}
+	ev := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.5)
+	ev.QuotaStatus = "available"
+	events := []telemetry.Event{ev}
 	s := telemetry.Aggregate(events)
 	saved, frac := s.NormSaved()
 	if math.Abs(saved-0.5) > 1e-9 {

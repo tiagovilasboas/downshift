@@ -21,7 +21,7 @@ func TestStatus_CountsOnlyAppliedRewrites(t *testing.T) {
 	t.Setenv("HOME", home)
 	ts := time.Now().UTC().Format(time.RFC3339Nano)
 	lines := []string{
-		`{"timestamp":"` + ts + `","harness":"claude-code","verdict":"DOWNSHIFT","estimated_savings":0.8,"outcome":"rewrite_emitted"}`,
+		`{"timestamp":"` + ts + `","harness":"claude-code","verdict":"DOWNSHIFT","estimated_savings":0.8,"outcome":"rewrite_emitted","quota_status":"available"}`,
 		`{"timestamp":"` + ts + `","harness":"claude-code","verdict":"DOWNSHIFT","estimated_savings":0.4,"outcome":"allow"}`,
 		`{"timestamp":"` + ts + `","harness":"codex","verdict":"DOWNSHIFT","estimated_savings":0.5,"outcome":"rewrite_emitted","corrections":["R1_UNCONFIDENT_DOWNSHIFT"]}`,
 		`{"timestamp":"` + ts + `","harness":"claude-code","verdict":"DOWNSHIFT","outcome":"usage"}`,

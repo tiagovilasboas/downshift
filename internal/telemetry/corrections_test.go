@@ -38,6 +38,7 @@ func TestFromDecision_RecordsHeldDecision(t *testing.T) {
 
 func TestAggregate_CountsCorrected(t *testing.T) {
 	clean := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8)
+	clean.QuotaStatus = "available"
 	held := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8)
 	held.Corrections = []string{core.RuleUnconfidentDowngrade}
 	held.SafeVerdict = "OK"

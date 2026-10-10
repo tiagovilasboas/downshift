@@ -254,6 +254,9 @@ func runHookAdapter[E any](
 	// Record telemetry only when a real routing decision was made.
 	// A zero Decision (Harness == "") means the event was not a subagent spawn.
 	if decision.Harness != "" {
+		// Spawn-time surface. Honor and usage stay unobserved until that
+		// harness's own post-spawn port records them. One line, spawn events only.
+		fmt.Fprintf(os.Stderr, "downshift: honor=unobserved quota=%s usage=unobserved\n", telemetry.ProjectQuota(decision.QuotaStatus, decision.CreditHeld))
 		event := telemetry.FromDecision(decision, correlationID, buildVersion)
 		switch {
 		case noRoute:

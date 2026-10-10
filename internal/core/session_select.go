@@ -75,10 +75,10 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 		return RewritePlan{Model: d.CurrentModel}
 	}
 
-	id, model, ok := selectSessionTarget(d, res, session)
+	id, model, ok, creditHeld := selectSessionTarget(d, res, session)
 	if !ok || id == "" || !session.Contains(id) || id == currentID {
 		apply := c.CanApplyEffort && currentID != "" && session.Contains(currentID) && d.Model.ID != "" && session.quotaAllows(d.Harness, currentID)
-		return RewritePlan{Model: d.CurrentModel, ApplyEffort: apply}
+		return RewritePlan{Model: d.CurrentModel, ApplyEffort: apply, CreditHeld: creditHeld}
 	}
 	model.ID = id
 	if model.Harness == "" {
@@ -95,9 +95,9 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 	return plan
 }
 
-func selectSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool) {
+func selectSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool, bool) {
 	if d.Checked && d.SafeVerdict == VerdictOK {
-		return "", Model{}, false
+		return "", Model{}, false, false
 	}
 	if session.NativeAvailability {
 		return nativeSessionTarget(d, res, session)
@@ -114,7 +114,7 @@ func selectSessionTarget(d Decision, res Resolver, session SessionList) (string,
 		if d.Model.ID == "" && d.Verdict != VerdictOK {
 			return leastSessionModelAtOrAbove(d.Harness, session, res, d.Tier)
 		}
-		return "", Model{}, false
+		return "", Model{}, false, false
 	}
 }
 
@@ -163,10 +163,10 @@ func selectableSessionIDs(harness string, session SessionList, res Resolver, all
 // order. One model serves every tier; with multiple models, small maps to
 // the first, mid to the midpoint, and frontier to the last. Downshift and
 // ordinary tier mapping skip explicit_only. It does not consult names or prices.
-func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool) {
+func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool, bool) {
 	ids := selectableSessionIDs(harness, session, res, false)
 	if len(ids) == 0 {
-		return "", Model{}, false
+		return "", Model{}, false, false
 	}
 	start := 0
 	switch minTier {
@@ -179,16 +179,17 @@ func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolve
 	// exhausted frontier model must not reclassify the cheap model as frontier.
 	for _, id := range ids[start:] {
 		if session.quotaAllows(harness, id) {
-			return id, modelForSessionID(harness, id, res), true
+			return id, modelForSessionID(harness, id, res), true, false
 		}
 	}
-	return "", Model{}, false
+	// Every id in the tier window was refused by the credit gate.
+	return "", Model{}, false, true
 }
 
-func strongestSessionModel(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool) {
+func strongestSessionModel(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool, bool) {
 	ids := selectableSessionIDs(harness, session, res, ExplicitUpshiftEnabled())
 	if len(ids) == 0 {
-		return "", Model{}, false
+		return "", Model{}, false, false
 	}
 	start := 0
 	if minTier == TierMid {
@@ -199,8 +200,8 @@ func strongestSessionModel(harness string, session SessionList, res Resolver, mi
 	for i := len(ids) - 1; i >= start; i-- {
 		id := ids[i]
 		if session.quotaAllows(harness, id) {
-			return id, modelForSessionID(harness, id, res), true
+			return id, modelForSessionID(harness, id, res), true, false
 		}
 	}
-	return "", Model{}, false
+	return "", Model{}, false, true
 }

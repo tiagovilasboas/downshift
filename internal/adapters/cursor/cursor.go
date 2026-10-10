@@ -123,6 +123,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		decision.QuotaSource = quota.SourceName(session.Usage.Source)
 	}
 	plan := decision.PlanForSession(core.CursorCaps, res, session)
+	decision.CreditHeld = plan.CreditHeld
 	if plan.RewriteModel {
 		decision.QuotaStatus = string(session.QuotaStatus(harnessID, plan.Model.ID))
 	}
