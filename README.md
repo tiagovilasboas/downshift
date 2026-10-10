@@ -27,7 +27,9 @@
 
 ## What it is
 
-Downshift is a single Go binary that runs as a **hook** in your coding harness. When the harness is about to spawn a **subagent** (a child task), Downshift scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites **only that subagent's model** to a right-sized one from your session's available models. The parent session model never changes. Same input, same decision. No network calls, no API keys.
+Downshift is a single Go binary that runs as a **hook** in your coding harness. When the harness is about to spawn a **subagent** (a child task), Downshift scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites **only that subagent's model** to a right-sized one from your session's available models. The parent session model never changes. No network calls, no API keys.
+
+With no tier memory on disk, the same input yields the same decision. After you record a reviewed outcome (`downshift feedback`), a local memory file can move a later spawn of that task shape to the cheapest tier that already succeeded. A missing file changes nothing. On the maintainer suite, memory shared across tasks of the same shape **lowered** pass rate (95% to 75%). Per-task memory is an upper bound (40/40), not what the shared file does. Numbers and limits: [benchmark/REPORT.md](benchmark/REPORT.md). Weights: [docs/complexity-weights.md](docs/complexity-weights.md).
 
 **Example:** Your session runs Claude Sonnet 5.5. You spawn 3 subagents — Downshift may route them to Haiku, Sonnet, and Opus respectively, based on task complexity. Billing and token usage happen at the subagent tier, not the session.
 
@@ -50,9 +52,10 @@ Billing and token usage happen at the subagent tier, not the session.
 **The routing loop:**
 
 1. **Intercept.** The harness fires a `PreToolUse` hook when a subagent is about to start. Downshift reads the task text in memory only; prompts are never stored.
-2. **Classify.** Deterministic signals (`internal/core`) + optional local MiniLM semantic scoring map the task to a complexity level: trivial, normal, review, or preserved.
-3. **Choose.** Policy picks a tier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/session-models.md)).
-4. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
+2. **Classify.** Deterministic signals (`internal/core`) + optional local MiniLM semantic scoring map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX. Weights and the tier map are in [docs/complexity-weights.md](docs/complexity-weights.md).
+3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/session-models.md)).
+4. **Remember, or not.** If `adapt-memory.json` has a reviewed hit or miss for that task shape, the tier can move to the cheapest tier that already succeeded. No file, no change.
+5. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
 
 Internals: [docs/architecture.md](docs/architecture.md). The full runtime routing diagram is [here](docs/brand/downshift-routing-runtime-light.svg) ([dark](docs/brand/downshift-routing-runtime-dark.svg)).
 
@@ -114,7 +117,7 @@ Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshif
 | **Codex** | `spawn_agent` (`multi_agent_v2`) | `PreToolUse` → model + `reasoning_effort` | Inferred, not observed, 2026-10-02 ([write-up](docs/evidence/codex-rewrite-honored-2026-10-02.md)) |
 | **Cursor** | `Task` | `preToolUse` → `updated_input.model` | Unconfirmed; discarded on Free and legacy Pro plans |
 | **Antigravity** | `invoke_subagent` | `PreToolUse` overwrite | Observed 2026-10-09, desktop 2.21.1: [native child evidence](docs/evidence/antigravity-executor-ack.md); quota mapping still unresolved |
-| **KiroCrew** | `spawn_run` / `spawn_sub_agents` | `preToolUse` policy (exit 0/2); `postToolUse` wired for compliance observation | Policy mode (no rewrite channel); compliance observer in labs |
+| **KiroCrew** | `spawn_run` / `spawn_sub_agents` | Native `preToolUse` policy (exit 0/2); no `updated_input` | Block and retry observed 2026-10-10 on Kiro CLI 2.29; not an in-place rewrite ([write-up](docs/evidence/kirocrew-native-hook-2026-10-10.md)) |
 | **Grok CLI** | `spawn_subagent` | Config in `config.toml`, not a hook | No hook rewrite |
 
 Adapters ship for all of the above; the table reports evidence, not just code. Plans, caveats and revalidation rules: [harness-matrix.md](docs/harness-matrix.md).
@@ -146,11 +149,11 @@ See [the context optimization guide](docs/context-optimization.md) for architect
 - **Estimated, not billed.** Routing-only savings use normalized units. With native tokens, `downshift stats --days=7` also calculates catalog-priced costs and a same-token baseline comparison. A [dated audit](docs/evidence/billing-gap-audit.md) matched five linked Claude Code records to native models/tokens, including both positive-saving records. These estimates are not an invoice; the controlled period comparison remains open.
 - **Real usage on Claude Code (optional).** Add a `SubagentStop` hook running `downshift claude-code-subagent-stop` to record tokens and cost per subagent from its own transcript. Setup and limits: [session-models.md](docs/session-models.md#claude-code-real-usage).
 - **Local only.** Events go to a local `events.jsonl` in the state directory; prompts are not stored. Export format: [stats-export.md](docs/stats-export.md).
-- **Classifier numbers.** Published tier accuracy and outcome-eval results, with their dates and caveats, are in [benchmark/REPORT.md](benchmark/REPORT.md). Tune the classifier with `downshift try` and [docs/contrib/classifier.md](docs/contrib/classifier.md).
+- **Classifier numbers.** Published tier accuracy, model pass rates, and the 2026-10-10 adapt comparison (per-task upper bound versus shared-shape memory) are in [benchmark/REPORT.md](benchmark/REPORT.md). Tune the classifier with `downshift try` and [docs/contrib/classifier.md](docs/contrib/classifier.md). Weights: [docs/complexity-weights.md](docs/complexity-weights.md).
 
 ## Documentation
 
-[INSTALL](docs/install.md) · [CONFIG](docs/config.md) · [session models](docs/session-models.md) · [session discovery](docs/session-discovery.md) · [ARCHITECTURE](docs/architecture.md) · [HARNESS-MATRIX](docs/harness-matrix.md) · [WHEN-TO-USE](docs/when-to-use.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
+[INSTALL](docs/install.md) · [CONFIG](docs/config.md) · [session models](docs/session-models.md) · [session discovery](docs/session-discovery.md) · [ARCHITECTURE](docs/architecture.md) · [complexity weights](docs/complexity-weights.md) · [HARNESS-MATRIX](docs/harness-matrix.md) · [WHEN-TO-USE](docs/when-to-use.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
 
 Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit criteria](docs/beta-exit.md) · [remaining tasks](docs/gap-tasks.md)
 
