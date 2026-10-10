@@ -45,8 +45,17 @@ var RawSignals = []SignalDef{
 	{`\bthink\s+through\b`, 2, Complex},
 	{`\b(service mesh|event sourcing|cqrs|chaos engineering|end-to-end encryption|data lineage|cross-cluster|memory leak|cascading failure|streaming pipeline|model serving|key management)\b`, 3, Complex},
 	{`\bwhy\s+.{0,40}(fail|crash|hang|break|regress)\w*`, 2, Complex},
-
-	// Upshift heurístico automático para retentativas de falhas (Sensor feedback)
+	// Algorithmic / interpreter specs (general CS vocabulary, not eval prompts).
+	{`\b(recursive-descent|longest common subsequence|operator precedence|postfix operators?)\b`, 3, Complex},
+	{`\bbacktracking\b`, 3, Complex},
+	{`\bcron\b`, 3, Complex},
+	{`\b(directed )?graph\b`, 2, Complex},
+	{`\bbinary heap\b`, 2, Complex},
+	{`\b(concurrent(?:ly)?|goroutines?)\b`, 2, Complex},
+	{`\bfn\s+func\s*\(`, 3, Complex},
+	{`\[[0-9]+\]\[[0-9]+\]`, 2, Complex},
+	// Reviewed retry wording. These patterns are already part of the shipped
+	// classifier and covered by TestClassify.
 	{`\b(previous\s+attempt|tentativa\s+anterior)\b`, 3, Complex},
 	{`\b(compilation\s+failed|falha\s+de\s+compilação|erro\s+de\s+compilação|failed\s+to\s+compile)\b`, 3, Complex},
 	{`\b(subagent\s+failed|subagente\s+falhou|testes?\s+falharam|tests?\s+failed)\b`, 3, Complex},
