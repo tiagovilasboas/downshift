@@ -117,6 +117,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
+	session = withMuseCatalogInclusion(session, res)
 	decision.SessionUnknown = !session.Known
 	decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
 	if session.Usage != nil {
@@ -128,6 +129,16 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		decision.QuotaStatus = string(session.QuotaStatus(harnessID, plan.Model.ID))
 	}
 	if plan.HoldForeign || plan.PreserveExplicit {
+		return allow(), "", decision
+	}
+	if hold, creditHeld, exhausted := cursorMuseSparkHold(decision, plan, session, res); hold {
+		// Absent marks are not credit. Exhausted and unavailable are.
+		decision.CreditHeld = creditHeld
+		if exhausted {
+			decision.QuotaStatus = string(quota.Exhausted)
+		} else if decision.QuotaStatus == string(quota.Available) {
+			decision.QuotaStatus = string(quota.Unknown)
+		}
 		return allow(), "", decision
 	}
 
@@ -205,4 +216,155 @@ func cursorTaskModel(writeName string, res core.Resolver) (string, bool) {
 		return canonical, true
 	}
 	return writeName, true
+}
+
+// cursorMuseSpark reports whether id is the Cursor muse-spark catalog entry
+// or one of its aliases. Family comes from the catalog, so a later slug in
+// that family is covered without a permanent ban.
+func cursorMuseSpark(id string, res core.Resolver) (core.Model, bool) {
+	if id == "" || res == nil {
+		return core.Model{}, false
+	}
+	m, ok := res.LookupByID(harnessID, id)
+	if !ok || m.Family != "muse-spark" {
+		return core.Model{}, false
+	}
+	return m, true
+}
+
+// withMuseCatalogInclusion lets an included catalog id stand for the session
+// slug Cursor actually listed (often muse-spark-1.3-high). Unavailable still
+// wins: a blocked muse id is not copied onto the allowlist.
+func withMuseCatalogInclusion(session core.SessionList, res core.Resolver) core.SessionList {
+	if !session.Known || len(session.Included) == 0 {
+		return session
+	}
+	extra := make([]string, 0, 1)
+	for _, id := range session.IDs {
+		m, ok := cursorMuseSpark(id, res)
+		if !ok || session.IsIncluded(id) || museBlocked(session, id, m.ID, res) {
+			continue
+		}
+		if session.IsIncluded(m.ID) {
+			extra = append(extra, id)
+		}
+	}
+	if len(extra) == 0 {
+		return session
+	}
+	session.Included = append(append([]string(nil), session.Included...), extra...)
+	return session
+}
+
+// cursorMuseSparkHold stops a Cursor rewrite from naming muse-spark unless
+// this call has positive token-pool evidence. An upshift whose strongest
+// session candidate is muse, and that id is unavailable or exhausted, holds
+// the whole rewrite instead of substituting a weaker model.
+func cursorMuseSparkHold(decision core.Decision, plan core.RewritePlan, session core.SessionList, res core.Resolver) (hold, creditHeld, exhausted bool) {
+	ids := make([]string, 0, 4)
+	strongestMuse := false
+	if decision.Verdict == core.VerdictUpshift {
+		if id := strongestSessionID(session, res); id != "" {
+			if m, ok := cursorMuseSpark(id, res); ok {
+				strongestMuse = true
+				ids = append(ids, id, m.ID)
+			}
+		}
+	}
+	writeMuse := false
+	if plan.RewriteModel {
+		for _, id := range []string{plan.Model.ID, plan.WriteName} {
+			if m, ok := cursorMuseSpark(id, res); ok {
+				writeMuse = true
+				ids = append(ids, id, m.ID)
+			}
+		}
+	}
+	if !strongestMuse && !writeMuse {
+		return false, false, false
+	}
+	ids = uniqueIDs(ids)
+	blocked := false
+	for _, id := range ids {
+		if museBlocked(session, id, id, res) {
+			blocked = true
+		}
+		if session.Usage != nil && session.QuotaStatus(harnessID, id) == quota.Exhausted {
+			exhausted = true
+		}
+	}
+	if blocked || exhausted {
+		return true, true, exhausted
+	}
+	if (writeMuse || strongestMuse) && !musePoolPositive(session, ids) {
+		// Unobserved pool: do not emit muse and do not call the hold credit.
+		// A non-muse rewrite already chosen by core is left alone.
+		if writeMuse || !plan.RewriteModel {
+			return true, false, false
+		}
+	}
+	return false, false, false
+}
+
+func museBlocked(session core.SessionList, sessionID, catalogID string, res core.Resolver) bool {
+	if session.Blocks(sessionID) || (catalogID != "" && catalogID != sessionID && session.Blocks(catalogID)) {
+		return true
+	}
+	for _, id := range session.Exhausted {
+		if id == sessionID || id == catalogID {
+			return true
+		}
+		if m, ok := cursorMuseSpark(id, res); ok && (m.ID == catalogID || m.ID == sessionID || id == sessionID) {
+			return true
+		}
+	}
+	return false
+}
+
+func musePoolPositive(session core.SessionList, ids []string) bool {
+	for _, id := range ids {
+		if session.IsIncluded(id) {
+			return true
+		}
+	}
+	if session.Usage == nil {
+		return false
+	}
+	for _, id := range ids {
+		if session.QuotaStatus(harnessID, id) == quota.Available {
+			return true
+		}
+	}
+	return false
+}
+
+func strongestSessionID(session core.SessionList, res core.Resolver) string {
+	if !session.Known {
+		return ""
+	}
+	allowExplicit := core.ExplicitUpshiftEnabled()
+	last := ""
+	for _, id := range session.IDs {
+		if id == "" || id == "inherit" {
+			continue
+		}
+		if res != nil && res.IsExplicitOnly(harnessID, id) && !allowExplicit {
+			continue
+		}
+		last = id
+	}
+	return last
+}
+
+func uniqueIDs(ids []string) []string {
+	seen := make(map[string]bool, len(ids))
+	out := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if id == "" || seen[id] {
+			continue
+		}
+		seen[id] = true
+		out = append(out, id)
+	}
+	return out
 }
