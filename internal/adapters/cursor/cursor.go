@@ -142,10 +142,20 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if !core.CanWriteSessionID(harnessID, target.ID, session, res) {
 		return allow(), "", decision
 	}
+	writeName, ok := cursorTaskModel(plan.WriteName, res)
+	if !ok {
+		// The selected id is not a slug this Cursor build accepts, and the
+		// catalog has no replacement. Leave the spawn unchanged.
+		return allow(), "", decision
+	}
+	if writeName != plan.WriteName {
+		target.ID = writeName
+		target.Native = ""
+	}
 	decision.Model = target
 	note = decision.Summary()
 
-	ti["model"] = plan.WriteName
+	ti["model"] = writeName
 	updated, err := json.Marshal(ti)
 	if err != nil {
 		return allow(), "", decision
@@ -160,4 +170,39 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 func allow() Output {
 	return Output{Permission: "allow"}
+}
+
+// rejectedCursorSubagentModel is a catalog alias Cursor's Task tool rejects
+// on build cd6d2a1f2e56e9841f0ed9c7c24542087b4e69b0. The accepted slug is the
+// catalog id of the Cursor muse-spark entry.
+const rejectedCursorSubagentModel = "muse-spark-1.3-high"
+
+// cursorTaskModel is the string written into tool_input.model. A session may
+// still carry the rejected alias; the hook writes the catalog id instead.
+// When that id is itself rejected, the rewrite is held.
+func cursorTaskModel(writeName string, res core.Resolver) (string, bool) {
+	if writeName == "" {
+		return "", false
+	}
+	if res == nil {
+		if writeName == rejectedCursorSubagentModel {
+			return "", false
+		}
+		return writeName, true
+	}
+	m, ok := res.LookupByID(harnessID, writeName)
+	if !ok || m.WriteName() == "" {
+		if writeName == rejectedCursorSubagentModel {
+			return "", false
+		}
+		return writeName, true
+	}
+	canonical := m.WriteName()
+	if canonical == rejectedCursorSubagentModel {
+		return "", false
+	}
+	if writeName == rejectedCursorSubagentModel {
+		return canonical, true
+	}
+	return writeName, true
 }

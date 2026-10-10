@@ -307,6 +307,46 @@ func TestHandle_MissingSessionDoesNotRewrite(t *testing.T) {
 	}
 }
 
+func TestHandle_CursorUpshiftDoesNotEmitRejectedMuseSpark(t *testing.T) {
+	const rejected = "muse-spark-1.3-high"
+	muse, ok := cat.LookupByID("cursor", "muse-spark")
+	if !ok {
+		t.Fatal("catalog missing muse-spark alias")
+	}
+	if muse.ID == rejected || muse.WriteName() == rejected {
+		t.Fatalf("catalog WriteName = %q, Cursor Task rejects that slug", muse.WriteName())
+	}
+	if other, found := cat.LookupByID("claude-code", muse.ID); found && other.ID == muse.ID && other.Harness == "claude-code" {
+		t.Fatalf("muse catalog id %s must stay on cursor", muse.ID)
+	}
+	session := []string{"composer-2.5-fast", "composer-2.5", rejected}
+	ev := cursor.Event{
+		ToolName:      "Task",
+		SessionModels: &session,
+		ToolInput: json.RawMessage(`{
+			"task": "rearchitect the payment flow across services",
+			"model": "composer-2.5"
+		}`),
+	}
+	out, note, decision := cursor.Handle(ev, cat)
+	written := ""
+	if m := decodeUpdated(t, out); m != nil {
+		written, _ = m["model"].(string)
+	}
+	if written == rejected || decision.Model.ID == rejected {
+		t.Fatalf("emitted %s", rejected)
+	}
+	if written == "" && note == "" {
+		t.Fatal("upshift left the spawn unchanged; muse-spark-1.3-max is the catalog id Cursor accepts")
+	}
+	if written != muse.ID || muse.WriteName() != muse.ID {
+		t.Fatalf("model = %q, want catalog id %q (WriteName %q) or an unchanged spawn", written, muse.ID, muse.WriteName())
+	}
+	if decision.Model.ID != muse.ID {
+		t.Fatalf("decision model = %q, want catalog id %q", decision.Model.ID, muse.ID)
+	}
+}
+
 func TestHandle_UnlabeledSessionIDIsEligible(t *testing.T) {
 	frontierID := catID(core.TierFrontier)
 	session := []string{"composer-2.5"}

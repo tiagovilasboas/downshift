@@ -229,8 +229,8 @@
       "output_cost_per_1m": 3.50
     },
     {
-      "id": "muse-spark-1.3-high",
-      "aliases": ["muse-spark"],
+      "id": "muse-spark-1.3-max",
+      "aliases": ["muse-spark", "muse-spark-1.3-high"],
       "family": "muse-spark",
       "effort": "high",
       "provider": "cursor",
