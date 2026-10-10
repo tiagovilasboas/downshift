@@ -26,6 +26,26 @@ function ageStr(ts) {
 // An empty tab is unobserved / unknown. Counts come from the events in view.
 // quota unknown or held does not count as available. honor unobserved does
 // not count as observed.
+// observedChildLine reports the end-of-day child token sum for all harnesses
+// or one tab. usage == 0 means unobserved, never a measured zero.
+function observedChildLine(data, harness) {
+  const map = (data && data.observed_child_by_harness) || {};
+  if (harness) {
+    const row = map[harness];
+    if (!row || !row.usage) return 'child tokens unobserved';
+    return `child tokens ${row.tokens} (${row.usage} usage)`;
+  }
+  let tokens = 0;
+  let usage = 0;
+  for (const row of Object.values(map)) {
+    if (!row || !row.usage) continue;
+    tokens += row.tokens || 0;
+    usage += row.usage;
+  }
+  if (usage === 0) return 'child tokens unobserved';
+  return `child tokens ${tokens} (${usage} usage)`;
+}
+
 function spawnSurfaceLine(events) {
   if (!events.length) {
     return 'honor unobserved · quota unknown · usage unobserved';
@@ -182,7 +202,8 @@ function renderMonitor(data) {
   set('monitor-stats',
     `${info(totalN)} events &nbsp; ${ok(`${downN}↓`)} &nbsp; ${warn(`${upN}↑`)}` +
     (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '') +
-    `<div class="dim">${spawnSurfaceLine(src)}</div>`
+    `<div class="dim">${spawnSurfaceLine(src)}</div>` +
+    `<div class="dim">${observedChildLine(data, activeHarness)}</div>`
   );
 
   // ── economy bar ──
@@ -193,7 +214,7 @@ function renderMonitor(data) {
 <div class="economy-bar">
   <div>
     <div class="big">$${estUSD.toFixed(2)}</div>
-    <div class="sub">est. saved · last 24h · ${economyN} downshift${economyN!==1?'s':''}</div>
+    <div class="sub">catalog list-price counterfactual · last 24h · ${economyN} downshift${economyN!==1?'s':''}</div>
   </div>
 </div>`);
   } else {

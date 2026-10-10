@@ -473,6 +473,12 @@ type Stats struct {
 	QuotaAvailable  int
 	QuotaHeld       int
 	QuotaUnknown    int
+
+	// ObservedChildTokens is the sum of input, output, and cached tokens from
+	// usage events that carry token counts. ObservedChildUsage is how many
+	// such usage events contributed. Zero usage means unobserved, not measured zero.
+	ObservedChildTokens int64
+	ObservedChildUsage  int
 }
 
 // NormSaved returns normalised savings: absolute units saved and fraction.
@@ -635,6 +641,7 @@ func Aggregate(events []Event) Stats {
 	}
 	s.RewriteShifted, s.RewriteHonored = CountInferredHonored(events)
 	tallySpawnSurface(events, &s)
+	s.ObservedChildTokens, s.ObservedChildUsage = ObservedChildTokens(events)
 	return s
 }
 
@@ -732,10 +739,15 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	if s.ActualCostEvents > 0 {
 		fmt.Fprintf(w, "Observed token cost   $%10.2f  (%d events, catalog pricing)\n", s.ActualCostUSD, s.ActualCostEvents)
 	}
+	if s.ObservedChildUsage == 0 {
+		fmt.Fprintf(w, "Observed child tokens unobserved\n")
+	} else {
+		fmt.Fprintf(w, "Observed child tokens %12d  (%d usage records)\n", s.ObservedChildTokens, s.ObservedChildUsage)
+	}
 	if s.RealCostEvents > 0 {
 		fmt.Fprintf(w, "\n")
 		fmt.Fprintf(w, "Real provider cost (%d events with token usage)\n", s.RealCostEvents)
-		fmt.Fprintf(w, "Real saved            $%10.2f\n", s.RealSavedUSD)
+		fmt.Fprintf(w, "Real saved            $%10.2f  (catalog list-price counterfactual)\n", s.RealSavedUSD)
 	} else if s.ActualCostEvents > 0 {
 		fmt.Fprintf(w, "Savings comparison: no events with a known requested baseline yet.\n")
 	} else {

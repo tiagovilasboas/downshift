@@ -95,6 +95,29 @@ func hasChildTokens(ev Event) bool {
 	return ev.InputTokens != nil || ev.OutputTokens != nil || ev.CachedTokens != nil
 }
 
+// ObservedChildTokens sums input, output, and cached tokens only from usage
+// events that already count as child tokens (hasChildTokens). records is the
+// count of those usage events. A nil pointer adds nothing. records == 0 means
+// unobserved, not a measured zero. Catalog USD is not tokens.
+func ObservedChildTokens(events []Event) (sum int64, records int) {
+	for _, ev := range events {
+		if ev.Outcome != OutcomeUsage || !hasChildTokens(ev) {
+			continue
+		}
+		records++
+		if ev.InputTokens != nil {
+			sum += *ev.InputTokens
+		}
+		if ev.OutputTokens != nil {
+			sum += *ev.OutputTokens
+		}
+		if ev.CachedTokens != nil {
+			sum += *ev.CachedTokens
+		}
+	}
+	return sum, records
+}
+
 // SavingsCredit reports whether an applied downshift may add estimated savings.
 // unknown and held are not credited routes.
 func SavingsCredit(ev Event) bool {

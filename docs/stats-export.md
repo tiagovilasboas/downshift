@@ -21,6 +21,8 @@ Fields useful for graduation tracking:
 | `actual_cost_usd` | Sum of observed token costs at catalog list prices (not provider invoices) |
 | `real_cost_events` | Events with both actual and baseline catalog-priced USD |
 | `real_saved_usd` | Sum of baseline − actual (catalog pricing) |
+| `observed_child_tokens` | Sum of input, output, and cached tokens from usage events that carry token counts |
+| `observed_child_usage` | Count of those usage events; `0` means unobserved, not a measured zero |
 | `usage_records` | All post-hoc usage records, including unlinked records |
 | `usage_linked` | Distinct usage records matched to routing decisions in this window (same harness and compatible session); duplicate agents/events and orphan references excluded |
 | `baseline_no_route` | Control-group events (`DOWNSHIFT_NO_ROUTE`) |
@@ -61,3 +63,8 @@ contribute neither a comparison to `real_cost_events` nor savings to
 conservative catalog estimates from observed token counts, not cache-discounted
 provider charges. Baseline and routed estimates use the same observed tokens;
 the baseline is a counterfactual, not a second measured execution.
+
+`observed_child_tokens` and `observed_child_usage` are the end-of-day child
+token sum and how many usage records contributed. They are not billing; pair
+`observed_child_usage == 0` with "unobserved" in reports, never as zero tokens
+observed.
