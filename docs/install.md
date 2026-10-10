@@ -367,6 +367,11 @@ the agent must retry a blocked spawn with the recommended model.
    Replace the placeholder with a real current model. This checks adapter
    output only; it does not establish that the harness blocks execution.
 
+`~/.kiro/crew/hooks.json` tool-call hooks are informational: they can execute
+after the tool starts, and their exit code does not block that path. A growing
+`run_count` proves invocation only. Do not use that registration as policy
+enforcement or keep an informational duplicate of the native policy hook.
+
 ### Acceptance evidence and coverage
 
 The linked instructions are the **guia inferencial** for the **behaviour**
