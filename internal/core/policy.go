@@ -153,6 +153,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 	for _, v := range report.Violations {
 		d.Corrections = append(d.Corrections, v.Rule)
 	}
+	applyAdaptMemory(prompt, &d, res)
 	return d
 }
 

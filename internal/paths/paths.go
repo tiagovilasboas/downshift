@@ -83,6 +83,9 @@ func LoopEventsPath() (string, error) { return Join("loop-events.jsonl") }
 // WeightsPath is weights.json for classifier overrides.
 func WeightsPath() (string, error) { return Join("weights.json") }
 
+// AdaptMemoryPath is adapt-memory.json for local tier memory from feedback.
+func AdaptMemoryPath() (string, error) { return Join("adapt-memory.json") }
+
 // DisplaySessionModels returns the path shown in hook warnings.
 func DisplaySessionModels() string {
 	if p := os.Getenv("DOWNSHIFT_SESSION_MODELS"); p != "" {

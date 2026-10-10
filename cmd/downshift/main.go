@@ -40,6 +40,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/models"
 	"github.com/tiagovilasboas/downshift/internal/paths"
+	_ "github.com/tiagovilasboas/downshift/internal/routeadapt"
 	"github.com/tiagovilasboas/downshift/internal/routingv2/classifier"
 	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
 	dsserver "github.com/tiagovilasboas/downshift/internal/server"

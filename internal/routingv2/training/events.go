@@ -190,6 +190,7 @@ func (s *EventStore) AddOutcome(eventID string, outcome Outcome) error {
 	if err := s.appendRecord(Event{RecordType: "outcome", EventID: eventID, Outcome: &outcome}); err != nil {
 		return err
 	}
+	_ = RefreshAdaptMemory(s)
 	return nil
 }
 
