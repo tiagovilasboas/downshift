@@ -115,3 +115,45 @@ test('unobserved harness does not inflate savings or honor counts', () => {
   assert.equal(document.getElementById('economy-section').style.display, 'none');
   assert.equal(text('economy-bar'), '');
 });
+
+test('observed child tokens show sum or unobserved per tab', () => {
+  const elements = new Map();
+  const document = {
+    getElementById(id) {
+      if (!elements.has(id)) elements.set(id, { innerHTML: '', style: {} });
+      return elements.get(id);
+    },
+  };
+  const context = vm.createContext({
+    document,
+    fetch: () => new Promise(() => {}),
+    AbortSignal,
+    EventSource: class { addEventListener() {} },
+    setInterval() {},
+    setTimeout() {},
+  });
+  vm.runInContext(readFileSync(join(__dirname, 'app.js'), 'utf8'), context);
+  const timestamp = new Date().toISOString();
+  context.fixture = {
+    harnesses: ['claude-code', 'cursor'], agents: [],
+    observed_child_by_harness: {
+      'claude-code': { tokens: 150, usage: 1 },
+    },
+    switches: [
+      { timestamp, harness: 'claude-code', verdict: 'OK', applied: false,
+        quota: 'unknown', honor: 'unobserved', usage: 'observed' },
+      { timestamp, harness: 'cursor', verdict: 'OK', applied: false,
+        quota: 'unknown', honor: 'unobserved', usage: 'unobserved' },
+    ],
+    stats: { total: 2, down: 0, up: 0 },
+  };
+  const text = id => document.getElementById(id).innerHTML.replace(/<[^>]*>/g, '');
+  vm.runInContext('renderMonitor(fixture)', context);
+  assert.match(text('monitor-stats'), /child tokens 150 \(1 usage\)/);
+
+  vm.runInContext("setActiveHarness('cursor')", context);
+  assert.match(text('monitor-stats'), /child tokens unobserved/);
+
+  vm.runInContext("setActiveHarness('claude-code')", context);
+  assert.match(text('monitor-stats'), /child tokens 150 \(1 usage\)/);
+});

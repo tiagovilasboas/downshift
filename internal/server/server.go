@@ -75,12 +75,18 @@ type agentEntry struct {
 	Model     string `json:"model"`
 }
 
+type observedChildEntry struct {
+	Tokens int64 `json:"tokens"`
+	Usage  int   `json:"usage"`
+}
+
 type statusResponse struct {
-	Harnesses  []string         `json:"harnesses"`
-	Switches   []rawEvent       `json:"switches"`
-	Agents     []agentEntry     `json:"agents"`
-	Stats      statsBlock       `json:"stats"`
-	Compaction statusCompaction `json:"compaction"`
+	Harnesses              []string                      `json:"harnesses"`
+	Switches               []rawEvent                    `json:"switches"`
+	Agents                 []agentEntry                  `json:"agents"`
+	Stats                  statsBlock                    `json:"stats"`
+	ObservedChildByHarness map[string]observedChildEntry `json:"observed_child_by_harness,omitempty"`
+	Compaction             statusCompaction              `json:"compaction"`
 }
 
 // statusCompaction is the dashboard compaction block. ByHarness comes from
@@ -283,6 +289,7 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	applySpawnSurfaces(events)
+	observedChild := observedChildByHarness(events)
 	var st statsBlock
 	// IsEstimate is always true: dollar figures are estimates, not provider billing.
 	st.IsEstimate = true
@@ -341,8 +348,39 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(statusResponse{
 		Harnesses: harnesses, Switches: sw, Agents: ag, Stats: st,
-		Compaction: compactionSummary(),
+		ObservedChildByHarness: observedChild,
+		Compaction:             compactionSummary(),
 	})
+}
+
+// observedChildByHarness sums child token usage per harness before decision
+// events drop usage rows from the switches feed.
+func observedChildByHarness(events []rawEvent) map[string]observedChildEntry {
+	byHarness := map[string][]telemetry.Event{}
+	for _, e := range events {
+		if e.Outcome != telemetry.OutcomeUsage || e.Harness == "" {
+			continue
+		}
+		byHarness[e.Harness] = append(byHarness[e.Harness], telemetry.Event{
+			Harness:      e.Harness,
+			Outcome:      e.Outcome,
+			InputTokens:  e.InputTokens,
+			OutputTokens: e.OutputTokens,
+			CachedTokens: e.CachedTokens,
+		})
+	}
+	out := map[string]observedChildEntry{}
+	for harness, evs := range byHarness {
+		sum, rec := telemetry.ObservedChildTokens(evs)
+		if rec == 0 {
+			continue
+		}
+		out[harness] = observedChildEntry{Tokens: sum, Usage: rec}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 // applySpawnSurfaces sets honor, quota, and usage on each decision.

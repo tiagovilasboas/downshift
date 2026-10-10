@@ -62,11 +62,25 @@ What changes: the report stops presenting later-spawn inference as honor.
 prints `honor`, `quota`, and `usage` for that decision. At spawn time honor
 and usage stay `unobserved` until that harness's own port records them.
 
-### 2. Honor and usage adapters — not started
+### 2. Honor and usage adapters — blocked
 
 Add a map entry only when that hook documents the field. Do not infer a pool
 from a model name. Do not copy Claude fields (`resolvedModel`,
 `agent_transcript_path`, `rate_limits`) onto another harness.
+
+- **claude-code:** Honor and Usage already registered (`resolvedModel` on
+  PostToolUse; SubagentStop child token usage).
+- **codex:** `transcript_path` feeds `quota.CollectCodex` (subscription
+  windows), not child token usage; no hook field for the executed child model
+  or that child's tokens.
+- **cursor:** no hook field documented for the executed child model or that
+  child's tokens.
+- **antigravity:** no hook field documented for the executed child model or
+  that child's tokens.
+- **kirocrew:** no hook field documented for the executed child model or that
+  child's tokens.
+- **grok:** no hook field documented for the executed child model or that
+  child's tokens.
 
 ### 3. Claude statusline — not started
 
@@ -78,7 +92,10 @@ Do not install a statusline into `~/.claude/settings.json`.
 Read a transcript only when the live hook, or a supported outside collector,
 supplies the path. Do not store prompts. Do not manufacture a paid call.
 
-### 5. End-of-day number — not started
+### 5. End-of-day number — done (this definition)
 
-The number is the sum of observed child tokens. An unobserved harness stays
-unobserved. A catalog counterfactual stays labeled as a counterfactual.
+The number is the sum of observed child tokens (`ObservedChildTokens` /
+`observed_child_tokens`). An unobserved harness contributes nothing and is not
+shown as a measured zero (`observed_child_usage == 0` means unobserved). Catalog
+USD savings stay a list-price counterfactual, not this token sum. This is not an
+invoice or provider billing claim.
