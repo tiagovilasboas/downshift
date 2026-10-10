@@ -234,3 +234,93 @@ func TestNativeUpshiftExplicitFlagKeepsOrdinaryFundedFallback(t *testing.T) {
 		})
 	}
 }
+
+// A stored claude-statusline snapshot is the cache WithUsageQuota loads when
+// the hook sends no usage_quota. Context-window utilization is not that snapshot.
+func TestStoredClaudeStatuslineSnapshotHoldsClaudeRewrite(t *testing.T) {
+	t.Setenv("DOWNSHIFT_QUOTA_MODE", "")
+	t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", "")
+	cheap := Model{ID: "claude-haiku-4-5", Native: "haiku", Harness: "claude-code", Tier: TierSmall}
+	strong := Model{ID: "claude-opus-5-5", Native: "opus", Harness: "claude-code", Tier: TierFrontier}
+	resolver := nativeResolver{models: map[string]Model{cheap.ID: cheap, strong.ID: strong}}
+	decision := Decision{
+		Harness:      "claude-code",
+		Tier:         TierSmall,
+		Verdict:      VerdictDownshift,
+		CurrentModel: strong,
+		RequestedID:  strong.ID,
+	}
+	now := time.Now().UTC().Add(-time.Second)
+	reset := now.Add(time.Hour).Unix()
+	rateLimits := func(used float64) map[string]any {
+		window := map[string]any{"used_percentage": used, "resets_at": reset}
+		return map[string]any{"five_hour": window, "seven_day": window}
+	}
+	for _, tc := range []struct {
+		name         string
+		payload      map[string]any
+		wantStatus   quota.Status
+		wantRewrite  bool
+		wantHeld     bool
+		wantCanWrite bool
+	}{
+		{
+			name:         "high used percentage holds rewrite",
+			payload:      map[string]any{"context_window": map[string]any{"used_percentage": 0}, "rate_limits": rateLimits(100)},
+			wantStatus:   quota.Exhausted,
+			wantRewrite:  false,
+			wantHeld:     true,
+			wantCanWrite: false,
+		},
+		{
+			name:         "low used percentage can be available",
+			payload:      map[string]any{"context_window": map[string]any{"used_percentage": 100}, "rate_limits": rateLimits(20)},
+			wantStatus:   quota.Available,
+			wantRewrite:  true,
+			wantHeld:     false,
+			wantCanWrite: true,
+		},
+		{
+			name:         "context window only does not authorize",
+			payload:      map[string]any{"context_window": map[string]any{"used_percentage": 0}},
+			wantStatus:   quota.Unknown,
+			wantRewrite:  false,
+			wantHeld:     true,
+			wantCanWrite: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			raw, err := json.Marshal(tc.payload)
+			if err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(t.TempDir(), "quota.json")
+			t.Setenv("DOWNSHIFT_QUOTA_FILE", path)
+			snap, err := quota.ParseNative("claude-statusline", raw, now, 5*time.Minute)
+			if err != nil {
+				if err := os.WriteFile(path, raw, 0600); err != nil {
+					t.Fatal(err)
+				}
+			} else if err := quota.Store(path, snap); err != nil {
+				t.Fatal(err)
+			}
+			session := KnownSession([]string{cheap.ID, strong.ID}).WithUsageQuota("claude-code", nil)
+			if got := session.QuotaStatus("claude-code", cheap.ID); got != tc.wantStatus {
+				t.Fatalf("quota status=%s, want %s", got, tc.wantStatus)
+			}
+			if tc.wantStatus == quota.Available && (session.Usage == nil || session.Usage.Source != "claude-statusline") {
+				t.Fatalf("available rewrite did not load stored claude-statusline snapshot: %+v", session.Usage)
+			}
+			plan := decision.PlanForSession(ClaudeCodeCaps, resolver, session)
+			if plan.RewriteModel != tc.wantRewrite || plan.CreditHeld != tc.wantHeld {
+				t.Fatalf("plan=%+v, want rewrite=%v held=%v", plan, tc.wantRewrite, tc.wantHeld)
+			}
+			if tc.wantRewrite && plan.Model.ID != cheap.ID {
+				t.Fatalf("funded rewrite target=%q, want %s", plan.Model.ID, cheap.ID)
+			}
+			if got := CanWriteSessionID("claude-code", cheap.ID, session, resolver); got != tc.wantCanWrite {
+				t.Fatalf("CanWriteSessionID=%v, want %v", got, tc.wantCanWrite)
+			}
+		})
+	}
+}
