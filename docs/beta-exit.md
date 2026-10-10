@@ -109,6 +109,19 @@ P4.3's checked box is the library, not graph-aware routing on the hook. `TestHin
 
 ---
 
+## Adapt tier memory (2026-10-10)
+
+Local `adapt-memory.json` and `AdjustTier` ship on `main` (`internal/adapt`,
+wired by `internal/routeadapt`). Offline efficacy on the maintainer 40-task suite
+is in [benchmark/REPORT.md](../benchmark/REPORT.md) (sections A/B, runs
+2026-10-03). Shared-shape aggregation **underperforms** the classifier on that
+suite; per-task contrafactual is an upper bound only.
+
+This does **not** close beta exit: **P1.6**, **P2.3**, **P3.4**, **P3.7** stay
+open, and the product remains **beta**.
+
+---
+
 ## Infrastructure & honesty (supports all pillars)
 
 | ID | Task | Owner | Done |

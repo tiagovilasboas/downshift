@@ -45,13 +45,13 @@ func TestAdjustTier_NoHigherHitStaysPut(t *testing.T) {
 	}
 }
 
-func TestAdjustTier_FrozenShapeNoChange(t *testing.T) {
+func TestAdjustTier_FrozenShapeUsesCheapestHit(t *testing.T) {
 	mem := &Memory{Shapes: map[string]ShapeRecord{
 		"coding": {Hits: []tierLabel{"SMALL"}},
 	}}
 	got := AdjustTier(TierMid, "coding", mem)
-	if got != TierMid {
-		t.Fatalf("frozen shape changed tier to %v", got)
+	if got != TierSmall {
+		t.Fatalf("got %v want SMALL (hit-only shape still downshifts)", got)
 	}
 }
 

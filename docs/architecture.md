@@ -31,6 +31,7 @@ Adapter (per harness: field names, session models, effort)
     ▼
 core.Plan / Route
     │  classify → escalation intent → policy → catalog Resolver
+    │  optional: internal/adapt (adapt-memory.json) adjusts tier from local feedback
     ▼
 Adapter encodes response (updatedInput / updated_input)
     │  stderr: human-readable decision + feedback id
@@ -50,6 +51,8 @@ Optional PostToolUse / SubagentStop → telemetry (usage, honor)
 | Package | Responsibility |
 |---------|----------------|
 | `internal/core` | Classifier, policy, escalation, session guards — **no** catalog imports |
+| `internal/adapt` | Local tier memory (`adapt-memory.json`); `AdjustTier` after classify — **missing file = no-op** |
+| `internal/routeadapt` | Wires `internal/adapt` into `core.Route` via `MemoryAdjustHook` |
 | `internal/catalog` | Embedded `catalog.json`, user override, `Resolver` |
 | `internal/adapters/*` | Harness-specific I/O only; call `core.Plan` |
 | `internal/hookport` | Optional honor and usage; a nil func is unobserved, not inferred |

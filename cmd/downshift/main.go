@@ -145,6 +145,8 @@ func main() {
 		os.Exit(runBenchmark(args[1:]))
 	case "eval-outcome":
 		os.Exit(runEvalOutcome(args[1:], os.Stdout, os.Stderr))
+	case "eval-adapt":
+		os.Exit(runEvalAdapt(args[1:], os.Stdout, os.Stderr))
 	case "shadow-report":
 		os.Exit(runShadowReport(args[1:]))
 	case "verification-report":
@@ -1350,6 +1352,7 @@ Usage:
   downshift benchmark <file>     Run classifier against a labelled dataset; print confusion matrix
   downshift benchmark <file> --compare  Compare Legacy vs CapabilityRouter v2 side by side
   downshift eval-outcome --verify|--report  Outcome eval: executable checks, small vs frontier pass rate
+  downshift eval-adapt --runs=<dir>  Offline adapt memory efficacy from recorded tier runs (maintainer)
   downshift train <file>         Train capability-router v2 on a labelled dataset
   downshift train --from-events  Train from engineer-reviewed local feedback
   downshift shadow-report       Compare opt-in candidate observations with explicit reviewed labels (JSON)

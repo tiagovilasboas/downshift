@@ -5,15 +5,14 @@ package adapt
 
 // AdjustTier applies local tier memory to the baseline tier from classification.
 // When memory is nil/empty or the shape is unknown, baseline is returned unchanged.
+// A shape with hits only (no misses) still downshifts to the cheapest tier that hit;
+// "frozen" in feedback ingestion stops new experiments, not tier memory.
 func AdjustTier(baseline Tier, shape string, mem *Memory) Tier {
 	if mem == nil || mem.empty() || shape == "" {
 		return baseline
 	}
 	rec, ok := mem.Shapes[shape]
 	if !ok {
-		return baseline
-	}
-	if rec.frozen() {
 		return baseline
 	}
 	hits := rec.hitSet()
