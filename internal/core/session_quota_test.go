@@ -7,8 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
 func TestHarnessOwnsID_RejectsOtherHarnessSlug(t *testing.T) {
@@ -140,7 +142,7 @@ func TestLoadSessionFile_Quota(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "session-models.json")
 	body := []byte(`{
-		"cursor": ["composer-2.5", "claude-sonnet-5-5-high"],
+		"cursor": ["composer-2.5-fast", "composer-2.5", "claude-sonnet-5-5-high"],
 		"codex": ["gpt-5.6-luna", "gpt-5.6-sol"],
 		"quota": {
 			"cursor": {
@@ -156,18 +158,102 @@ func TestLoadSessionFile_Quota(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := core.LoadSessionFile("cursor", path)
-	if !got.Known || got.CreditsReported || got.IsIncluded("composer-2.5") || got.Blocks("claude-sonnet-5-5-high") {
-		t.Fatalf("file quota must not become session credit, got %+v", got)
+	if !got.Known || !got.CreditsReported || !got.IsIncluded("composer-2.5") || !got.Blocks("claude-sonnet-5-5-high") {
+		t.Fatalf("cursor file quota = %+v", got)
 	}
-	credited := []string{"composer-2.5"}
-	exhausted := []string{"claude-sonnet-5-5-high"}
-	fromHook := got.WithHookQuota(&credited, &exhausted)
-	if !fromHook.CreditsReported || !fromHook.IsIncluded("composer-2.5") || !fromHook.Blocks("claude-sonnet-5-5-high") {
-		t.Fatalf("hook quota = %+v", fromHook)
+	if got.IsIncluded("composer-2.5-fast") || got.IsIncluded("gpt-5.6-sol") {
+		t.Fatalf("allowlist or other harness must not become cursor credit, got %+v", got)
+	}
+	if got.QuotaStatus("cursor", "composer-2.5") != quota.Available || got.QuotaStatus("cursor", "claude-sonnet-5-5-high") != quota.Exhausted || got.QuotaStatus("cursor", "composer-2.5-fast") != quota.Unknown {
+		t.Fatalf("cursor quota status included=%s exhausted=%s unmarked=%s", got.QuotaStatus("cursor", "composer-2.5"), got.QuotaStatus("cursor", "claude-sonnet-5-5-high"), got.QuotaStatus("cursor", "composer-2.5-fast"))
+	}
+	hookIncluded := []string{"composer-2.5-fast"}
+	hookExhausted := []string{"composer-2.5"}
+	fromHook := got.WithHookQuota(&hookIncluded, &hookExhausted)
+	if !fromHook.CreditsReported || !fromHook.IsIncluded("composer-2.5-fast") || fromHook.IsIncluded("composer-2.5") || !fromHook.Blocks("composer-2.5") || fromHook.Blocks("claude-sonnet-5-5-high") {
+		t.Fatalf("hook quota must replace file marks, got %+v", fromHook)
 	}
 	codex := core.LoadSessionFile("codex", path)
-	if !codex.Known || codex.CreditsReported || codex.IsIncluded("gpt-5.6-sol") || codex.IsIncluded("composer-2.5") {
-		t.Fatalf("file quota must not become codex credit, got %+v", codex)
+	if !codex.Known || !codex.CreditsReported || !codex.IsIncluded("gpt-5.6-sol") || codex.IsIncluded("gpt-5.6-luna") || codex.IsIncluded("composer-2.5") || codex.Blocks("claude-sonnet-5-5-high") {
+		t.Fatalf("codex file quota = %+v", codex)
+	}
+}
+
+func TestCursorFileQuota_UpshiftSkipsUnknownMuse(t *testing.T) {
+	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
+	dir := t.TempDir()
+	path := filepath.Join(dir, "session-models.json")
+	body := []byte(`{
+		"cursor": ["composer-2.5-fast", "composer-2.5", "muse-spark-1.3-max"],
+		"quota": {
+			"cursor": {"included": ["composer-2.5-fast", "composer-2.5"]}
+		}
+	}`)
+	if err := os.WriteFile(path, body, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	session := core.LoadSessionFile("cursor", path)
+	if session.QuotaStatus("cursor", "composer-2.5") != quota.Available {
+		t.Fatalf("composer-2.5 status = %s, want available", session.QuotaStatus("cursor", "composer-2.5"))
+	}
+	if session.QuotaStatus("cursor", "muse-spark-1.3-max") != quota.Unknown {
+		t.Fatalf("muse-spark status = %s, want unknown", session.QuotaStatus("cursor", "muse-spark-1.3-max"))
+	}
+	plan := upshiftPlan("cursor", "composer-2.5-fast", core.CursorCaps, session)
+	if !plan.RewriteModel || plan.Model.ID != "composer-2.5" {
+		t.Fatalf("plan = %+v, want composer-2.5", plan)
+	}
+	if plan.Model.ID == "muse-spark-1.3-max" || plan.WriteName == "muse-spark-1.3-max" {
+		t.Fatal("upshift emitted muse-spark while its pool is unknown")
+	}
+}
+
+func TestCodexFileQuota_SelectsOnlyIncluded(t *testing.T) {
+	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
+	dir := t.TempDir()
+	path := filepath.Join(dir, "session-models.json")
+	body := []byte(`{
+		"codex": ["gpt-5.6-luna", "gpt-5.6-sol", "grok-4.7-xhigh"],
+		"quota": {
+			"codex": {"included": ["gpt-5.6-sol"]}
+		}
+	}`)
+	if err := os.WriteFile(path, body, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	session := core.LoadSessionFile("codex", path)
+	plan := upshiftPlan("codex", "gpt-5.6-luna", core.CodexCaps, session)
+	if !plan.RewriteModel || plan.Model.ID != "gpt-5.6-sol" {
+		t.Fatalf("plan = %+v, want gpt-5.6-sol", plan)
+	}
+	if plan.Model.ID == "grok-4.7-xhigh" {
+		t.Fatal("codex selected an unmarked stronger id")
+	}
+}
+
+func TestFileQuota_SnapshotStaysAuthoritative(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "session-models.json")
+	body := []byte(`{
+		"cursor": ["composer-2.5"],
+		"quota": {"cursor": {"included": ["composer-2.5"]}}
+	}`)
+	if err := os.WriteFile(path, body, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	session := core.LoadSessionFile("cursor", path)
+	now := time.Now()
+	full := 100.0
+	marked := session.WithUsageQuota("cursor", &quota.Snapshot{
+		Version: 1, Harness: "cursor", Source: "operator-normalized",
+		ObservedAt: now.Add(-time.Second), ExpiresAt: now.Add(time.Minute),
+		Windows: []quota.Window{{
+			ID: "pool", Scope: "models", ModelIDs: []string{"composer-2.5"},
+			UsedPercent: &full, ResetsAt: now.Add(time.Hour),
+		}},
+	})
+	if marked.QuotaStatus("cursor", "composer-2.5") != quota.Exhausted {
+		t.Fatalf("snapshot status = %s, want exhausted", marked.QuotaStatus("cursor", "composer-2.5"))
 	}
 }
 
