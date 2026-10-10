@@ -25,15 +25,17 @@ type SessionList struct {
 	// NativeAvailability contains provider IDs without an operator capability
 	// order. These candidates require resolver metadata before selection.
 	NativeAvailability bool
-	// Included ids have a stable token budget in this call. Empty means the
-	// hook did not report one. A file on disk is not a credit source.
+	// Included ids have a stable token budget in this call. Empty means neither
+	// the hook nor this harness's quota object reported one. Allowlist
+	// membership is not a credit source.
 	Included []string
 	// Exhausted ids are in the session but must not be selected. The user
-	// has no remaining token budget for them. Only a hook unavailable_models
-	// list sets this.
+	// has no remaining token budget for them. A hook unavailable_models list
+	// or this harness's quota.exhausted list sets this.
 	Exhausted []string
-	// CreditsReported is true only when this call's hook payload sent
-	// included_models or unavailable_models. A file on disk is not a credit report.
+	// CreditsReported is true when the hook sent included_models or
+	// unavailable_models, or when this harness's quota object supplied
+	// included and/or exhausted. The allowlist is not a credit report.
 	CreditsReported bool
 	// Usage evidence is separate from operator allowlists and hook marks.
 	Usage         *quota.Snapshot
@@ -69,9 +71,18 @@ func (s SessionList) WithUsageQuota(harness string, supplied *quota.Snapshot) Se
 	return s
 }
 
-// QuotaStatus never converts inclusion or discovery into a balance claim.
+// QuotaStatus reports token budget. A usage snapshot stays authoritative:
+// file or hook marks must not turn it into a false Available. When Usage
+// is nil, Included is available, Exhausted is exhausted, and every other
+// id is unknown. Allowlist membership is not a balance claim.
 func (s SessionList) QuotaStatus(harness, id string) quota.Status {
 	if s.Usage == nil {
+		if s.IsIncluded(id) {
+			return quota.Available
+		}
+		if s.Blocks(id) {
+			return quota.Exhausted
+		}
 		return quota.Unknown
 	}
 	now := s.QuotaTime
@@ -122,8 +133,9 @@ func (s SessionList) has(ids []string, id string) bool {
 }
 
 // WithHookQuota replaces included and exhausted lists when the hook sent them.
-// An absent slice supplies no mark; a present slice is authoritative.
-// Operator files never provide credit evidence.
+// An absent slice supplies no mark; a present slice is authoritative and
+// replaces any mark loaded from quota.<harness>. The allowlist is not
+// credit evidence.
 func (s SessionList) WithHookQuota(included, exhausted *[]string) SessionList {
 	if !s.Known || (included == nil && exhausted == nil) {
 		return s
@@ -200,7 +212,7 @@ func LoadSessionFileForID(harness, sessionID, path string) SessionList {
 		var byHarness map[string]map[string][]string
 		if sessions, ok := raw["sessions"]; ok && json.Unmarshal(sessions, &byHarness) == nil {
 			if ids, ok := byHarness[harness][sessionID]; ok && ids != nil {
-				return KnownSession(ids)
+				return applyFileQuota(KnownSession(ids), raw, harness)
 			}
 		}
 	}
@@ -212,7 +224,45 @@ func LoadSessionFileForID(harness, sessionID, path string) SessionList {
 	if err := json.Unmarshal(msg, &ids); err != nil {
 		return UnknownSession()
 	}
-	return KnownSession(ids)
+	return applyFileQuota(KnownSession(ids), raw, harness)
+}
+
+// harnessQuotaMarks is quota.<harness> inside session-models.json.
+// A missing slice is not a mark. The harness allowlist is a different key.
+type harnessQuotaMarks struct {
+	Included  *[]string `json:"included"`
+	Exhausted *[]string `json:"exhausted"`
+}
+
+// applyFileQuota copies quota.<harness> onto session from the document
+// already unmarshaled by LoadSessionFileForID. Another harness's marks
+// stay on that harness. An absent quota key leaves the allowlist as a
+// known session with no invented credits.
+func applyFileQuota(session SessionList, raw map[string]json.RawMessage, harness string) SessionList {
+	msg, ok := raw["quota"]
+	if !ok || !session.Known || harness == "" {
+		return session
+	}
+	var byHarness map[string]json.RawMessage
+	if json.Unmarshal(msg, &byHarness) != nil {
+		return session
+	}
+	entry, ok := byHarness[harness]
+	if !ok {
+		return session
+	}
+	var marks harnessQuotaMarks
+	if json.Unmarshal(entry, &marks) != nil || (marks.Included == nil && marks.Exhausted == nil) {
+		return session
+	}
+	if marks.Included != nil {
+		session.Included = append([]string(nil), (*marks.Included)...)
+	}
+	if marks.Exhausted != nil {
+		session.Exhausted = append([]string(nil), (*marks.Exhausted)...)
+	}
+	session.CreditsReported = true
+	return session
 }
 
 // ResolveSession prefers a hook allowlist. When the payload has none, it
@@ -222,8 +272,9 @@ func ResolveSession(harness string, hookLists ...*[]string) SessionList {
 }
 
 // ResolveSessionForID prefers the hook payload, a configured native export,
-// models recovered by `downshift models discover`, then the operator file. The file is not a
-// credit report and does not outrank a recovered session.
+// models recovered by `downshift models discover`, then the operator file.
+// The allowlist is not a credit report and does not outrank a recovered
+// session. quota.<harness> on that file is credit evidence for that harness.
 func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) SessionList {
 	if session, ok := SessionFromHook(hookLists...); ok {
 		return session
