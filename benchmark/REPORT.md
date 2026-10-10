@@ -18,8 +18,24 @@ classifier**. They are **not** proof of generalization on unseen traffic and
 | Seed regression net | 200 | 69.0% (62.5–75.5%) | 0.0% (0/50) | 0.0% (0/50) | 49.0% (49/100) | 7.0% (7/100) |
 | Burned holdout (regression net only) | 300 | 100.0% (100.0–100.0%) | 0.0% (0/75) | 0.0% (0/75) | 0.0% (0/150) | 0.0% (0/150) |
 
-Eval-only splits (fresh, heldout2, blind-vitrine) and generalization studies are
-**not** published here. See [EVAL-PRIVATE.md](EVAL-PRIVATE.md).
+Eval-only splits beyond the table below (e.g. blind-vitrine) stay in
+**downshift-labs** only. See [EVAL-PRIVATE.md](EVAL-PRIVATE.md).
+
+## Independent eval (eval-only splits)
+
+Classifier: `ClassifyWithSemantic`, no adapt memory. Commit
+`5a888e7af6b074f46aa7b816944e1d1131f921c9` (2026-10-10). Command:
+`downshift benchmark <split.json> --report` against private JSON in
+downshift-labs (no prompts published here).
+
+| Dataset | Split status | n | Tier accuracy | Wilson 95% CI |
+|---|---|---:|---:|---|
+| `fresh.json` | Eval-only (NOT burned). May cite as a **generalization study** with caveats: read-only guard in labs, not traffic quality. | 100 | 50.0% | 40.0–60.0% |
+| `heldout2.json` | Eval-only **blind** split (NOT `holdout.json` burned regression net). | 120 | 40.0% | 31.7–49.2% |
+
+These numbers are **not** regression-net scores and must not be read as proof
+that production routing is safe. They sit beside the burned holdout and seed
+nets above, not in place of them.
 
 ## Outcome eval — model capacity (recorded runs, 2026-10-03)
 
@@ -93,9 +109,15 @@ bound (A).
 The hook does **not** apply B. `routeadapt` writes `AdaptWould` and leaves
 `Tier` on the classifier result. Promotion is blocked until two gaps close:
 an executable outcome suite that is not these 40 tasks, and a cost per
-completed task (failures, retries, escalations). The recorded runs store
-pass/fail only, so that cost is **not measured**. Repo id is not part of the
-key: the hook has no stable repository id that is not a filesystem path.
+completed task (failures, retries, escalations).
+
+**Issue #100 — Cost per completed task: not measured.** Outcome runs in
+downshift-labs store tier, model, date, and per-task pass/fail in `run.json`
+only; there are no token, retry, or USD fields (verified 2026-10-10 on
+`eval/outcomes/runs/{small,mid,frontier}/run.json`).
+
+Repo id is not part of the key: the hook has no stable repository id that is
+not a filesystem path.
 
 ## How to cite
 
