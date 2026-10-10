@@ -23,3 +23,12 @@ func DominantFeature(f FeatureVector) string {
 	}
 	return names[index]
 }
+
+// MemoryShapeKey scopes adapt memory to classifier complexity plus dominant feature.
+// Empty dominant feature or complexity class yields "" (no learning).
+func MemoryShapeKey(complexityClass, dominantFeature string) string {
+	if dominantFeature == "" || complexityClass == "" || complexityClass == "UNKNOWN" {
+		return ""
+	}
+	return complexityClass + ":" + dominantFeature
+}

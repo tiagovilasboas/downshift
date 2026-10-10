@@ -59,6 +59,7 @@ func (s ShapeRecord) frozen() bool {
 }
 
 // FeedbackEvent is a prompt-free routing outcome used to rebuild memory.
+// Shape holds the memory map key (complexity class + dominant feature), not the feature alone.
 type FeedbackEvent struct {
 	Shape        string
 	SelectedTier Tier

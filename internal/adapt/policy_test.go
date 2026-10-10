@@ -7,9 +7,9 @@ import "testing"
 
 func TestAdjustTier_CheapestHitBelowCurrent(t *testing.T) {
 	mem := &Memory{Shapes: map[string]ShapeRecord{
-		"coding": {Hits: []tierLabel{"SMALL"}, Miss: []tierLabel{"MID"}},
+		"MEDIUM:coding": {Hits: []tierLabel{"SMALL"}, Miss: []tierLabel{"MID"}},
 	}}
-	got := AdjustTier(TierMid, "coding", mem)
+	got := AdjustTier(TierMid, "MEDIUM:coding", mem)
 	if got != TierSmall {
 		t.Fatalf("got %v want SMALL", got)
 	}
@@ -17,9 +17,9 @@ func TestAdjustTier_CheapestHitBelowCurrent(t *testing.T) {
 
 func TestAdjustTier_CurrentHitDoesNotUpshift(t *testing.T) {
 	mem := &Memory{Shapes: map[string]ShapeRecord{
-		"security": {Hits: []tierLabel{"MID"}, Miss: []tierLabel{"SMALL"}},
+		"SIMPLE:security": {Hits: []tierLabel{"MID"}, Miss: []tierLabel{"SMALL"}},
 	}}
-	got := AdjustTier(TierMid, "security", mem)
+	got := AdjustTier(TierMid, "SIMPLE:security", mem)
 	if got != TierMid {
 		t.Fatalf("got %v want MID", got)
 	}
@@ -27,9 +27,9 @@ func TestAdjustTier_CurrentHitDoesNotUpshift(t *testing.T) {
 
 func TestAdjustTier_FailureUsesHigherHit(t *testing.T) {
 	mem := &Memory{Shapes: map[string]ShapeRecord{
-		"debugging": {Hits: []tierLabel{"MID"}, Miss: []tierLabel{"SMALL"}},
+		"SIMPLE:debugging": {Hits: []tierLabel{"MID"}, Miss: []tierLabel{"SMALL"}},
 	}}
-	got := AdjustTier(TierSmall, "debugging", mem)
+	got := AdjustTier(TierSmall, "SIMPLE:debugging", mem)
 	if got != TierMid {
 		t.Fatalf("got %v want MID", got)
 	}
@@ -37,9 +37,9 @@ func TestAdjustTier_FailureUsesHigherHit(t *testing.T) {
 
 func TestAdjustTier_NoHigherHitStaysPut(t *testing.T) {
 	mem := &Memory{Shapes: map[string]ShapeRecord{
-		"debugging": {Miss: []tierLabel{"SMALL"}},
+		"SIMPLE:debugging": {Miss: []tierLabel{"SMALL"}},
 	}}
-	got := AdjustTier(TierSmall, "debugging", mem)
+	got := AdjustTier(TierSmall, "SIMPLE:debugging", mem)
 	if got != TierSmall {
 		t.Fatalf("got %v want SMALL", got)
 	}
@@ -47,9 +47,9 @@ func TestAdjustTier_NoHigherHitStaysPut(t *testing.T) {
 
 func TestAdjustTier_FrozenShapeUsesCheapestHit(t *testing.T) {
 	mem := &Memory{Shapes: map[string]ShapeRecord{
-		"coding": {Hits: []tierLabel{"SMALL"}},
+		"MEDIUM:coding": {Hits: []tierLabel{"SMALL"}},
 	}}
-	got := AdjustTier(TierMid, "coding", mem)
+	got := AdjustTier(TierMid, "MEDIUM:coding", mem)
 	if got != TierSmall {
 		t.Fatalf("got %v want SMALL (hit-only shape still downshifts)", got)
 	}
@@ -57,7 +57,7 @@ func TestAdjustTier_FrozenShapeUsesCheapestHit(t *testing.T) {
 
 func TestAdjustTier_EmptyShapeNoOp(t *testing.T) {
 	mem := &Memory{Shapes: map[string]ShapeRecord{
-		"coding": {Hits: []tierLabel{"SMALL"}},
+		"MEDIUM:coding": {Hits: []tierLabel{"SMALL"}},
 	}}
 	got := AdjustTier(TierMid, "", mem)
 	if got != TierMid {
@@ -67,10 +67,10 @@ func TestAdjustTier_EmptyShapeNoOp(t *testing.T) {
 
 func TestBuildMemory_SuccessAndFailure(t *testing.T) {
 	mem := BuildMemory([]FeedbackEvent{
-		{Shape: "coding", SelectedTier: TierMid, Success: true},
-		{Shape: "coding", SelectedTier: TierSmall, Failed: true},
+		{Shape: "MEDIUM:coding", SelectedTier: TierMid, Success: true},
+		{Shape: "MEDIUM:coding", SelectedTier: TierSmall, Failed: true},
 	})
-	rec := mem.Shapes["coding"]
+	rec := mem.Shapes["MEDIUM:coding"]
 	if len(rec.Hits) != 1 || rec.Hits[0] != "MID" {
 		t.Fatalf("hits = %#v", rec.Hits)
 	}

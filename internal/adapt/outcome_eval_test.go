@@ -35,7 +35,10 @@ func TestEvalContrafactualPerTask_LabsFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if b.Total != 40 || b.BaselinePass != 38 || b.AdjustedPass != 30 || b.Down != 32 || b.Up != 0 || b.Same != 8 {
+	if b.Total != 40 || b.BaselinePass != 38 || b.AdjustedPass != 38 || b.Down != 15 || b.Up != 0 || b.Same != 25 {
 		t.Fatalf("B: got %+v", b)
+	}
+	if b.AdjustedPass < 38 {
+		t.Fatalf("shared memory gate: adjusted pass %d/40 below classifier floor 38/40", b.AdjustedPass)
 	}
 }

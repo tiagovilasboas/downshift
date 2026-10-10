@@ -8,8 +8,6 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/outcome"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/extractor"
 )
 
 // OutcomeEvalReport compares classifier baseline routing to adapt-adjusted tiers
@@ -47,15 +45,15 @@ func EvalContrafactualPerTask(tasks []outcome.Task, runs []outcome.Run) (Outcome
 	}
 	var rep OutcomeEvalReport
 	for _, t := range tasks {
-		shape := shapeForPrompt(t.Prompt)
-		if shape == "" {
+		key := memoryKeyForPrompt(t.Prompt)
+		if key == "" {
 			continue
 		}
-		mem := memoryFromTaskOutcomes(t.ID, shape, byTier)
+		mem := memoryFromTaskOutcomes(t.ID, t.Prompt, byTier)
 		baseline := core.ClassifyWithSemantic(t.Prompt).Complexity.Tier()
 		adjusted := Tier(baseline)
 		if mem != nil {
-			adjusted = AdjustTier(Tier(baseline), shape, mem)
+			adjusted = AdjustTier(Tier(baseline), key, mem)
 		}
 		bPass, okB := passAt(baseline, t.ID, byTier)
 		aPass, okA := passAt(core.Tier(adjusted), t.ID, byTier)
@@ -91,21 +89,21 @@ func EvalSharedShapeMemory(tasks []outcome.Task, runs []outcome.Run) (OutcomeEva
 	}
 	var events []FeedbackEvent
 	for _, t := range tasks {
-		shape := shapeForPrompt(t.Prompt)
-		if shape == "" {
+		key := memoryKeyForPrompt(t.Prompt)
+		if key == "" {
 			continue
 		}
-		events = append(events, feedbackFromTask(t.ID, shape, byTier)...)
+		events = append(events, feedbackFromTask(t.ID, key, byTier)...)
 	}
 	global := BuildMemory(events)
 	var rep OutcomeEvalReport
 	for _, t := range tasks {
-		shape := shapeForPrompt(t.Prompt)
-		if shape == "" {
+		key := memoryKeyForPrompt(t.Prompt)
+		if key == "" {
 			continue
 		}
 		baseline := core.ClassifyWithSemantic(t.Prompt).Complexity.Tier()
-		adjusted := AdjustTier(Tier(baseline), shape, &global)
+		adjusted := AdjustTier(Tier(baseline), key, &global)
 		bPass, okB := passAt(baseline, t.ID, byTier)
 		aPass, okA := passAt(core.Tier(adjusted), t.ID, byTier)
 		if !okB || !okA {
@@ -130,8 +128,8 @@ func EvalSharedShapeMemory(tasks []outcome.Task, runs []outcome.Run) (OutcomeEva
 	return rep, nil
 }
 
-func shapeForPrompt(prompt string) string {
-	return domain.DominantFeature(extractor.Extract(prompt))
+func memoryKeyForPrompt(prompt string) string {
+	return MemoryKeyForPrompt(prompt, "")
 }
 
 type tierResults map[core.Tier]map[string]bool
@@ -172,8 +170,8 @@ func passAt(tier core.Tier, taskID string, by tierResults) (bool, bool) {
 	return pass, ok
 }
 
-func memoryFromTaskOutcomes(taskID, shape string, by tierResults) *Memory {
-	events := feedbackFromTask(taskID, shape, by)
+func memoryFromTaskOutcomes(taskID, prompt string, by tierResults) *Memory {
+	events := feedbackFromTask(taskID, memoryKeyForPrompt(prompt), by)
 	if len(events) == 0 {
 		return nil
 	}
@@ -181,7 +179,7 @@ func memoryFromTaskOutcomes(taskID, shape string, by tierResults) *Memory {
 	return &m
 }
 
-func feedbackFromTask(taskID, shape string, by tierResults) []FeedbackEvent {
+func feedbackFromTask(taskID, memoryKey string, by tierResults) []FeedbackEvent {
 	var events []FeedbackEvent
 	for _, tier := range []struct {
 		core core.Tier
@@ -195,7 +193,7 @@ func feedbackFromTask(taskID, shape string, by tierResults) []FeedbackEvent {
 		if !ok {
 			continue
 		}
-		ev := FeedbackEvent{Shape: shape, SelectedTier: tier.ad}
+		ev := FeedbackEvent{Shape: memoryKey, SelectedTier: tier.ad}
 		if pass {
 			ev.Success = true
 		} else {

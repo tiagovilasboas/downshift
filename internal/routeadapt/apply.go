@@ -7,8 +7,6 @@ package routeadapt
 import (
 	"github.com/tiagovilasboas/downshift/internal/adapt"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/extractor"
 )
 
 func init() {
@@ -21,9 +19,11 @@ func Apply(prompt string, d *core.Decision, res core.Resolver) {
 	if err != nil || mem == nil {
 		return
 	}
-	fv := extractor.Extract(prompt)
-	shape := domain.DominantFeature(fv)
-	newTier := adapt.AdjustTier(adapt.Tier(d.Tier), shape, mem)
+	key := adapt.MemoryKeyForPrompt(prompt, "")
+	if key == "" {
+		return
+	}
+	newTier := adapt.AdjustTier(adapt.Tier(d.Tier), key, mem)
 	if core.Tier(newTier) == d.Tier {
 		return
 	}

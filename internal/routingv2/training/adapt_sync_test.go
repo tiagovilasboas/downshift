@@ -20,11 +20,12 @@ func TestRefreshAdaptMemoryAfterOutcome(t *testing.T) {
 	path := filepath.Join(dir, "loop-events.jsonl")
 	store := NewEventStore(path)
 	event := Event{
-		ID:           "r1",
-		Timestamp:    time.Now().UTC(),
-		Features:     domain.FeatureVector{Coding: 0.8},
-		SelectedTier: core.TierMid,
-		Harness:      "codex",
+		ID:              "r1",
+		Timestamp:       time.Now().UTC(),
+		Features:        domain.FeatureVector{Coding: 0.8},
+		ComplexityClass: "MEDIUM",
+		SelectedTier:    core.TierMid,
+		Harness:         "codex",
 	}
 	if err := store.Record(event); err != nil {
 		t.Fatal(err)
@@ -40,7 +41,7 @@ func TestRefreshAdaptMemoryAfterOutcome(t *testing.T) {
 	if err != nil || mem == nil {
 		t.Fatalf("load adapt memory: %v %#v", err, mem)
 	}
-	if _, ok := mem.Shapes["coding"]; !ok {
+	if _, ok := mem.Shapes["MEDIUM:coding"]; !ok {
 		t.Fatalf("shapes = %#v", mem.Shapes)
 	}
 }

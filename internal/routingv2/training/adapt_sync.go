@@ -5,7 +5,6 @@ package training
 
 import (
 	"github.com/tiagovilasboas/downshift/internal/adapt"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/domain"
 )
 
 // RefreshAdaptMemory rebuilds adapt-memory.json from reviewed events in the store.
@@ -19,12 +18,12 @@ func RefreshAdaptMemory(store *EventStore) error {
 		if e.Outcome == nil || validateOutcome(*e.Outcome) != nil {
 			continue
 		}
-		shape := domain.DominantFeature(e.Features)
-		if shape == "" {
+		key := adapt.MemoryKeyForFeatures(e.ComplexityClass, e.Features, "")
+		if key == "" {
 			continue
 		}
 		fb := adapt.FeedbackEvent{
-			Shape:        shape,
+			Shape:        key,
 			SelectedTier: adapt.Tier(e.SelectedTier),
 			Success:      e.Outcome.Success,
 			Retry:        e.Outcome.Retry,

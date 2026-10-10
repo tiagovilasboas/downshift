@@ -42,8 +42,9 @@ type Event struct {
 	ID           string               `json:"id,omitempty"`
 	EventID      string               `json:"event_id,omitempty"`
 	Timestamp    time.Time            `json:"timestamp"`
-	Features     domain.FeatureVector `json:"features"`
-	SelectedTier core.Tier            `json:"selected_tier"`
+	Features        domain.FeatureVector `json:"features"`
+	ComplexityClass string               `json:"complexity_class,omitempty"` // TRIVIAL/SIMPLE/MEDIUM/COMPLEX at route time
+	SelectedTier    core.Tier            `json:"selected_tier"`
 	Confidence   float64              `json:"confidence,omitempty"` // Probability from a statistical router, when available
 	Confident    bool                 `json:"confident,omitempty"`  // Binary signal from the deterministic router
 	Harness      string               `json:"harness"`
@@ -94,8 +95,9 @@ func RecordRoutedDecision(prompt string, decision core.Decision) (string, error)
 		RecordType:   "decision",
 		ID:           id,
 		Timestamp:    time.Now().UTC(),
-		Features:     extractor.Extract(prompt),
-		SelectedTier: decision.Tier,
+		Features:        extractor.Extract(prompt),
+		ComplexityClass: decision.Complexity.String(),
+		SelectedTier:    decision.Tier,
 		Confident:    decision.Confident,
 		Harness:      decision.Harness,
 	}

@@ -13,3 +13,15 @@ func TestDominantFeature(t *testing.T) {
 		t.Fatalf("got %q want security", got)
 	}
 }
+
+func TestMemoryShapeKey(t *testing.T) {
+	if got := MemoryShapeKey("TRIVIAL", "coding"); got != "TRIVIAL:coding" {
+		t.Fatalf("got %q", got)
+	}
+	if MemoryShapeKey("", "coding") != "" {
+		t.Fatal("empty class")
+	}
+	if MemoryShapeKey("TRIVIAL", "") != "" {
+		t.Fatal("empty feature")
+	}
+}

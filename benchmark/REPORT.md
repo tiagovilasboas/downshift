@@ -5,7 +5,7 @@ prompts, splits, and executable outcome tasks live in **downshift-labs**
 (private). Re-run benchmarks there after router changes; update this file when
 you intentionally publish new figures.
 
-**Last updated:** 2026-10-10 (classifier on `main`, outcome runs 2026-10-03).
+**Last updated:** 2026-10-10 (classifier on `main`, outcome runs 2026-10-03; adapt memory key fix recomputed same day).
 
 These figures describe the **maintainer 40-task Go suite** and the **in-tree
 classifier**. They are **not** proof of generalization on unseen traffic and
@@ -72,21 +72,23 @@ prove production `adapt-memory.json` will do that.
 
 ### B — Shared shape memory (production-shaped aggregation)
 
-Hits/misses are aggregated **across all tasks** that share the same dominant
-shape, then `AdjustTier` runs per task — the same contamination pattern as one
-global `adapt-memory.json`.
+Hits/misses are aggregated **across all tasks** that share the same memory key
+(`<complexity class>:<dominant feature>`, e.g. `TRIVIAL:coding`), then
+`AdjustTier` runs per task. Downshift requires a hit at the cheaper tier with
+**no miss at that same tier** on that key. Repo id in the key is **not** in this
+leva (no stable repo id on the routing hook without paths).
 
 | Metric | Value |
 |---|---|
 | Tasks | 40 |
 | Pass @ classifier tier (before) | 38/40 = **95.0%** |
-| Pass @ adapt-adjusted tier (after) | 30/40 = **75.0%** |
-| Tier moves | 32 down · 0 up · 8 same |
-| vs baseline | **−20.0pp** (cross-task shape collision) |
+| Pass @ adapt-adjusted tier (after) | 38/40 = **95.0%** |
+| Tier moves | 15 down · 0 up · 25 same |
+| vs baseline | **0.0pp** (matches classifier; gate floor ≥ 38/40 met) |
 
-**What B proves:** on this suite, shared shape memory **hurts** versus the
-classifier alone. Do not treat B as efficacy evidence; it documents a **limit**
-until memory is scoped tighter (per-repo, per-session, or higher-fidelity shape).
+**What B proves:** with class-scoped keys, shared memory on this suite no longer
+collapses below the classifier. It is not the per-task upper bound (A); further
+scoping (repo, session) may still help cost without hurting pass rate here.
 
 ## How to cite
 
