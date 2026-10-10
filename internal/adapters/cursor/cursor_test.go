@@ -7,11 +7,14 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
 var cat = catalog.Load()
@@ -319,31 +322,101 @@ func TestHandle_CursorUpshiftDoesNotEmitRejectedMuseSpark(t *testing.T) {
 	if other, found := cat.LookupByID("claude-code", muse.ID); found && other.ID == muse.ID && other.Harness == "claude-code" {
 		t.Fatalf("muse catalog id %s must stay on cursor", muse.ID)
 	}
-	session := []string{"composer-2.5-fast", "composer-2.5", rejected}
-	ev := cursor.Event{
-		ToolName:      "Task",
-		SessionModels: &session,
-		ToolInput: json.RawMessage(`{
-			"task": "rearchitect the payment flow across services",
-			"model": "composer-2.5"
-		}`),
+
+	now := time.Now()
+	window := func(used float64, models []string) *quota.Snapshot {
+		scope := "models"
+		if len(models) == 0 {
+			scope = "harness"
+		}
+		return &quota.Snapshot{
+			Version: 1, Harness: "cursor", Source: "cursor-usage",
+			ObservedAt: now.Add(-time.Minute), ExpiresAt: now.Add(time.Minute),
+			Windows: []quota.Window{{
+				ID: "pool", Scope: scope, ModelIDs: models,
+				UsedPercent: &used, ResetsAt: now.Add(time.Hour),
+			}},
+		}
 	}
-	out, note, decision := cursor.Handle(ev, cat)
-	written := ""
-	if m := decodeUpdated(t, out); m != nil {
-		written, _ = m["model"].(string)
+	includedCatalog := []string{muse.ID}
+	unavailableSlug := []string{rejected}
+
+	tests := []struct {
+		name        string
+		included    *[]string
+		unavailable *[]string
+		usage       *quota.Snapshot
+		missingFile bool
+		wantEmit    bool
+		wantHeld    bool
+		wantUnknown bool
+	}{
+		{name: "unavailable", included: &includedCatalog, unavailable: &unavailableSlug, wantHeld: true},
+		{name: "exhausted", included: &includedCatalog, usage: window(100, []string{rejected}), wantHeld: true},
+		{name: "unknown", missingFile: true, wantUnknown: true},
+		{name: "available", included: &includedCatalog, wantEmit: true},
 	}
-	if written == rejected || decision.Model.ID == rejected {
-		t.Fatalf("emitted %s", rejected)
-	}
-	if written == "" && note == "" {
-		t.Fatal("upshift left the spawn unchanged; muse-spark-1.3-max is the catalog id Cursor accepts")
-	}
-	if written != muse.ID || muse.WriteName() != muse.ID {
-		t.Fatalf("model = %q, want catalog id %q (WriteName %q) or an unchanged spawn", written, muse.ID, muse.WriteName())
-	}
-	if decision.Model.ID != muse.ID {
-		t.Fatalf("decision model = %q, want catalog id %q", decision.Model.ID, muse.ID)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.missingFile {
+				t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", filepath.Join(t.TempDir(), "no-native.json"))
+				t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "no-quota.json"))
+			} else {
+				// A missing native export is treated as present and would close
+				// quotaAllows. Clear it so only this call's marks are evidence.
+				t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", "")
+				t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "no-quota.json"))
+			}
+			session := []string{"composer-2.5-fast", "composer-2.5", rejected}
+			ev := cursor.Event{
+				ToolName:          "Task",
+				SessionModels:     &session,
+				IncludedModels:    tc.included,
+				UnavailableModels: tc.unavailable,
+				UsageQuota:        tc.usage,
+				ToolInput: json.RawMessage(`{
+					"task": "rearchitect the payment flow across services",
+					"model": "composer-2.5"
+				}`),
+			}
+			out, note, decision := cursor.Handle(ev, cat)
+			raw, err := json.Marshal(out)
+			if err != nil {
+				t.Fatalf("marshal output: %v", err)
+			}
+			blob := string(raw) + note
+			if strings.Contains(blob, rejected) {
+				t.Fatalf("emitted %s: %s", rejected, blob)
+			}
+			if !tc.wantEmit && strings.Contains(blob, "muse-spark") {
+				t.Fatalf("emitted muse-spark without pool evidence: %s", blob)
+			}
+			written := ""
+			if m := decodeUpdated(t, out); m != nil {
+				written, _ = m["model"].(string)
+			}
+			if tc.wantEmit {
+				if written != muse.ID || note == "" {
+					t.Fatalf("model = %q note = %q, want catalog id %q and a rewrite note", written, note, muse.ID)
+				}
+				if decision.Model.ID != muse.ID {
+					t.Fatalf("decision model = %q, want catalog id %q", decision.Model.ID, muse.ID)
+				}
+				if decision.CreditHeld {
+					t.Fatal("available pool must not set CreditHeld")
+				}
+				return
+			}
+			if out.UpdatedInput != nil || note != "" {
+				t.Fatalf("spawn rewritten, note=%q updated=%s", note, out.UpdatedInput)
+			}
+			if decision.CreditHeld != tc.wantHeld {
+				t.Fatalf("CreditHeld = %v, want %v", decision.CreditHeld, tc.wantHeld)
+			}
+			if tc.wantUnknown && (decision.QuotaStatus != string(quota.Unknown) || decision.CreditHeld) {
+				t.Fatalf("unobserved pool status=%q creditHeld=%v, want unknown and not held", decision.QuotaStatus, decision.CreditHeld)
+			}
+		})
 	}
 }
 
