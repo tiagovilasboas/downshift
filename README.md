@@ -29,7 +29,7 @@
 
 Downshift is a single Go binary that runs as a **hook** in your coding harness. When the harness is about to spawn a **subagent** (a child task), Downshift scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites **only that subagent's model** to a right-sized one from your session's available models. The parent session model never changes. No network calls, no API keys.
 
-With no tier memory on disk, the same input yields the same decision. After you record a reviewed outcome (`downshift feedback`), a local memory file can move a later spawn with the same **complexity class + dominant feature** to a cheaper tier only when that tier already hit with no miss on that key. A missing file changes nothing. On the maintainer suite, shared memory keyed by class+feature **matches** the classifier pass rate (38/40); per-task memory remains the upper bound (40/40). Numbers: [benchmark/REPORT.md](benchmark/REPORT.md). Weights: [docs/complexity-weights.md](docs/complexity-weights.md).
+With no tier memory on disk, the same input yields the same decision. Reviewed outcomes can be stored by complexity class and dominant feature, but that memory is **shadow**: it records the tier it would pick and does not change the spawn. Promotion needs an independent outcome suite and a measured cost per completed task. Neither exists yet. On the maintainer suite, class-scoped shared memory matches the classifier (38/40) offline; per-task memory is an upper bound (40/40), not production. Numbers: [benchmark/REPORT.md](benchmark/REPORT.md). Weights: [docs/complexity-weights.md](docs/complexity-weights.md).
 
 **Example:** Your session runs Claude Sonnet 5.5. You spawn 3 subagents — Downshift may route them to Haiku, Sonnet, and Opus respectively, based on task complexity. Billing and token usage happen at the subagent tier, not the session.
 
@@ -54,7 +54,7 @@ Billing and token usage happen at the subagent tier, not the session.
 1. **Intercept.** The harness fires a `PreToolUse` hook when a subagent is about to start. Downshift reads the task text in memory only; prompts are never stored.
 2. **Classify.** Deterministic signals (`internal/core`) + optional local MiniLM semantic scoring map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX. Weights and the tier map are in [docs/complexity-weights.md](docs/complexity-weights.md).
 3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/session-models.md)).
-4. **Remember, or not.** If `adapt-memory.json` has a reviewed hit or miss for that task shape, the tier can move to the cheapest tier that already succeeded. No file, no change.
+4. **Remember, in shadow.** If `adapt-memory.json` has a reviewed hit or miss for that class and feature, Downshift records the tier it would use. The spawn still uses the classifier tier.
 5. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
 
 Internals: [docs/architecture.md](docs/architecture.md). The full runtime routing diagram is [here](docs/brand/downshift-routing-runtime-light.svg) ([dark](docs/brand/downshift-routing-runtime-dark.svg)).

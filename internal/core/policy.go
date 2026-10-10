@@ -80,6 +80,11 @@ type Decision struct {
 	// on their own; this flag covers unknown when a present source or
 	// required mode refused the write.
 	CreditHeld bool
+	// AdaptWould is the tier local memory would select. It is shadow-only:
+	// Route does not copy it into Tier until an independent eval promotes it.
+	// AdaptWouldSet is false when memory is absent or agrees with Tier.
+	AdaptWould    Tier
+	AdaptWouldSet bool
 }
 
 // Verdict tells the caller what to do about the current model.
