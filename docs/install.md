@@ -310,6 +310,14 @@ the agent must retry a blocked spawn with the recommended model.
 
 ### Setup
 
+> **Important — two hook paths exist.** `~/.kiro/agents/kirocrew.json` is
+> **generated** by KiroCrew and overwritten on every restart; edits there are
+> lost. The durable registration path is `~/.kiro/crew/config.json` via
+> `agent.kiro_hooks`. `~/.kiro/crew/hooks.json` is a separate, informational
+> hook registry (growing `run_count` proves invocation; exit code does not
+> block the tool path). Use `config.json` for policy enforcement.
+> Confirmed on Kiro CLI 2.29.0, 2026-10-10.
+
 1. Build the binary:
    ```bash
    go build -o downshift ./cmd/downshift
@@ -337,11 +345,12 @@ the agent must retry a blocked spawn with the recommended model.
      }
    }
    ```
-   KiroCrew's generation merges these user hooks with bundled hooks. It accepts
-   `command` as an existing absolute executable path, preserves `command` and
-   `matcher`, and drops `timeout_ms`. Commands containing shell arguments are
-   rejected. The wrapper carries the subcommand so it survives generation.
-   Do not edit `~/.kiro/agents/kirocrew.json`: KiroCrew regenerates that file.
+   KiroCrew merges `kiro_hooks` with its bundled hooks when generating the
+   agent spec. It accepts `command` as an existing absolute executable path,
+   preserves `command` and `matcher`, and drops `timeout_ms`. Commands
+   containing shell arguments are rejected. The wrapper carries the subcommand
+   so it survives generation. **Do not edit `~/.kiro/agents/kirocrew.json`**:
+   KiroCrew regenerates that file and your edits will be lost.
 4. Populate the `kirocrew` session model list from the models actually
    selectable in your installed Kiro CLI. Follow [session-models.md](session-models.md)
    for ordering and discovery precedence. Without a known eligible target,
@@ -357,11 +366,6 @@ the agent must retry a blocked spawn with the recommended model.
    ```
    Replace the placeholder with a real current model. This checks adapter
    output only; it does not establish that the harness blocks execution.
-
-`~/.kiro/crew/hooks.json` tool-call hooks are informational: they can execute
-after the tool starts, and their exit code does not block that path. A growing
-`run_count` proves invocation only. Do not use that registration as policy
-enforcement or keep an informational duplicate of the native policy hook.
 
 ### Acceptance evidence and coverage
 
