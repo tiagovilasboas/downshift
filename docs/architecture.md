@@ -52,6 +52,7 @@ Optional PostToolUse / SubagentStop → telemetry (usage, honor)
 | `internal/core` | Classifier, policy, escalation, session guards — **no** catalog imports |
 | `internal/catalog` | Embedded `catalog.json`, user override, `Resolver` |
 | `internal/adapters/*` | Harness-specific I/O only; call `core.Plan` |
+| `internal/hookport` | Optional honor and usage; a nil func is unobserved, not inferred |
 | `internal/telemetry` | Append-only local JSONL; prompt-free events |
 | `internal/semantic` | Optional monotonic semantic boost |
 | `internal/routingv2/*` | Experimental / shadow classifier and training |
@@ -59,6 +60,27 @@ Optional PostToolUse / SubagentStop → telemetry (usage, honor)
 | `cmd/downshift` | CLI, subcommands, hook dispatch |
 
 **Invariant:** adapters do not embed routing rules; they only map wire formats.
+
+---
+
+## Harness observation port
+
+Every harness hook has four stages: spawn, rewrite, honor, and usage.
+
+Spawn and rewrite stay on `runHookAdapter` plus the per-harness `Handle`.
+The adapter reads task text, the current model, and session or quota marks
+only when that stdin contains them. Missing fields stay missing.
+
+Honor (the model the child actually ran) and usage (child token counts) are
+optional. They go through `internal/hookport`. A nil port func is unobserved:
+the binary does not invent a model, a token count, or a note. Absence is not
+inference.
+
+Escalation stays in `internal/core`. Adapters do not choose tiers and do not
+escalate.
+
+Plug-in rule: a new harness is an adapter package plus one PreToolUse switch
+case. Add an honor/usage map entry only when that hook sends the field.
 
 ---
 
