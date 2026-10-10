@@ -71,9 +71,9 @@ func LoadNativeSession(harness string, now time.Time) (SessionList, bool) {
 // list position, name spelling, or pool membership as a capability estimate.
 // Unknown metadata cannot become a routing target. Equal-tier price ties retain
 // the provider's order without treating that order as a quality signal.
-func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool) {
+func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool, bool) {
 	if res == nil || (d.Verdict == VerdictOK && !session.Blocks(d.CurrentModel.ID) && !session.Blocks(d.RequestedID)) {
-		return "", Model{}, false
+		return "", Model{}, false, false
 	}
 	upshift := d.Verdict == VerdictUpshift
 	var current Model
@@ -85,13 +85,21 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 		var known bool
 		current, known = res.LookupByID(d.Harness, currentID)
 		if !known {
-			return "", Model{}, false
+			return "", Model{}, false, false
 		}
 	}
 	var best Model
 	found := false
+	quotaHeld := false
 	for _, id := range session.IDs {
-		if !CanWriteSessionID(d.Harness, id, session, res) ||
+		// A closed gate is not a write. Opening it only answers whether this
+		// id would have been the target, so a metadata miss is not a credit hold.
+		allowed := session.quotaAllows(d.Harness, id)
+		check := session
+		if !allowed {
+			check.QuotaRequired = false
+		}
+		if !CanWriteSessionID(d.Harness, id, check, res) ||
 			(res.IsExplicitOnly(d.Harness, id) && !upshift) {
 			continue
 		}
@@ -104,6 +112,10 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 			(m.Tier == current.Tier && m.OutputM > current.OutputM)) {
 			continue
 		}
+		if !allowed {
+			quotaHeld = true
+			continue
+		}
 		m.ID, m.Harness, m.Native = id, d.Harness, ""
 		better := !found || (!upshift && m.Tier < best.Tier) || (upshift && m.Tier > best.Tier)
 		if found && m.Tier == best.Tier && m.OutputM < best.OutputM {
@@ -113,5 +125,8 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 			best, found = m, true
 		}
 	}
-	return best.ID, best, found
+	if !found {
+		return "", Model{}, false, quotaHeld
+	}
+	return best.ID, best, true, false
 }

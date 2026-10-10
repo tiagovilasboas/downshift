@@ -55,6 +55,16 @@ type rawEvent struct {
 	ActualCostUSD *float64 `json:"actual_cost_usd,omitempty"`
 	// BaselineCostUSD is the real baseline cost in USD (nil when untracked).
 	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"`
+	CorrelationID   string   `json:"correlation_id,omitempty"`
+	SessionID       string   `json:"session_id,omitempty"`
+	QuotaStatus     string   `json:"quota_status,omitempty"`
+	CreditHeld      bool     `json:"credit_held,omitempty"`
+	RewriteHonored  *bool    `json:"rewrite_honored,omitempty"`
+	LinkedDecision  string   `json:"linked_decision,omitempty"`
+	// Honor, Quota, and Usage are the spawn surface for this decision.
+	Honor string `json:"honor"`
+	Quota string `json:"quota"`
+	Usage string `json:"usage"`
 }
 
 type agentEntry struct {
@@ -272,6 +282,7 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 		harnesses = append(harnesses, h)
 	}
 
+	applySpawnSurfaces(events)
 	var st statsBlock
 	// IsEstimate is always true: dollar figures are estimates, not provider billing.
 	st.IsEstimate = true
@@ -294,8 +305,11 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 		switch {
 		case e.Verdict == "DOWNSHIFT" && applied:
 			st.Down++
-			st.EstUnits += e.Savings
-			st.EstUSD = st.EstUnits * estimatedCostPerUnitUSD
+			// unknown and held are not credited routes and do not add savings.
+			if e.Quota == telemetry.QuotaAvailable {
+				st.EstUnits += e.Savings
+				st.EstUSD = st.EstUnits * estimatedCostPerUnitUSD
+			}
 		case e.Verdict == "UPSHIFT" && applied:
 			st.Up++
 		case e.Verdict == "DOWNSHIFT" || e.Verdict == "UPSHIFT":
@@ -329,6 +343,43 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 		Harnesses: harnesses, Switches: sw, Agents: ag, Stats: st,
 		Compaction: compactionSummary(),
 	})
+}
+
+// applySpawnSurfaces sets honor, quota, and usage on each decision.
+// Honor is observed only from a linked resolved record with rewrite_honored
+// true. Usage is observed only from a linked usage record that carries token
+// counts. A nil port leaves both unobserved.
+func applySpawnSurfaces(events []rawEvent) {
+	honor, usage := map[string]bool{}, map[string]bool{}
+	for _, e := range events {
+		if e.Harness == "" || e.LinkedDecision == "" {
+			continue
+		}
+		key := e.Harness + "\n" + e.LinkedDecision
+		if e.Outcome == telemetry.OutcomeResolved && e.RewriteHonored != nil && *e.RewriteHonored {
+			honor[key] = true
+		}
+		if e.Outcome == telemetry.OutcomeUsage && (e.InputTokens != nil || e.OutputTokens != nil || e.CachedTokens != nil) {
+			usage[key] = true
+		}
+	}
+	for i := range events {
+		if telemetry.IsCostOnlyOutcome(events[i].Outcome) {
+			continue
+		}
+		ev := telemetry.Event{
+			CorrelationID: events[i].CorrelationID,
+			Timestamp:     events[i].Timestamp,
+			SessionID:     events[i].SessionID,
+			Harness:       events[i].Harness,
+			QuotaStatus:   events[i].QuotaStatus,
+			CreditHeld:    events[i].CreditHeld,
+		}
+		surface := telemetry.SurfaceFor(ev, honor[telemetry.SurfaceKey(ev)], usage[telemetry.SurfaceKey(ev)])
+		events[i].Honor = surface.Honor
+		events[i].Quota = surface.Quota
+		events[i].Usage = surface.Usage
+	}
 }
 
 func compactionSummary() statusCompaction {

@@ -94,15 +94,15 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		if session.Usage != nil {
 			decision.QuotaSource = quota.SourceName(session.Usage.Source)
 		}
-		lastDecision = decision
-
 		// Gate the rewrite on the session plan: unknown session, empty
 		// target, explicit-only current model, or a rewrite the plan
 		// forbids all fail open (allow, no write).
 		plan := decision.PlanForSession(core.AntigravityCaps, res, session)
+		decision.CreditHeld = plan.CreditHeld
 		if plan.RewriteModel {
 			decision.QuotaStatus = string(session.QuotaStatus(harnessID, plan.Model.ID))
 		}
+		lastDecision = decision
 		if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !session.Contains(plan.Model.ID) {
 			continue
 		}

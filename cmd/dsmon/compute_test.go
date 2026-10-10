@@ -13,7 +13,7 @@ import (
 func TestCompute_CountsOnlyAppliedRewrites(t *testing.T) {
 	ts := time.Now().UTC().Format(time.RFC3339Nano)
 	all := []event{
-		{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", Savings: 0.8, Outcome: "rewrite_emitted"},
+		{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", Savings: 0.8, Outcome: "rewrite_emitted", QuotaStatus: "available"},
 		{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", Savings: 0.4, Outcome: "allow"},
 		{Timestamp: ts, Harness: "codex", Verdict: "DOWNSHIFT", Savings: 0.5, Outcome: "rewrite_emitted", Corrections: []string{"R1_UNCONFIDENT_DOWNSHIFT"}},
 		{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", Outcome: "usage"},

@@ -57,6 +57,10 @@ type Event struct {
 	EstimatedSavings     float64               `json:"estimated_savings"` // normalised fraction 0–1
 	QuotaStatus          string                `json:"quota_status,omitempty"`
 	QuotaSource          string                `json:"quota_source,omitempty"`
+	// CreditHeld records that the credit gate refused this rewrite. It is
+	// not a guardrail correction. Exhausted and stale status are holds
+	// without this flag.
+	CreditHeld bool `json:"credit_held,omitempty"`
 
 	// Optional real-cost fields (nil = provider usage not tracked for this event).
 	// When absent, fall back to the normalised estimate above; never fake dollars.
@@ -285,6 +289,7 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		EstimatedSavings: d.Savings,
 		QuotaStatus:      d.QuotaStatus,
 		QuotaSource:      d.QuotaSource,
+		CreditHeld:       d.CreditHeld,
 	}
 	if len(d.Corrections) > 0 {
 		ev.SafeVerdict = d.SafeVerdict.String()
@@ -456,11 +461,18 @@ type Stats struct {
 	ByComplexity map[string]int
 
 	// RewriteShifted counts rewrite_emitted events that asked for a different model.
-	// RewriteHonored counts those later confirmed: explicit rewrite_honored, or
-	// the next same-session spawn arriving with requested_model equal to the
-	// previous final_model. Inference never writes the log.
-	RewriteShifted int
-	RewriteHonored int
+	// RewriteHonored is the inferred count from CountInferredHonored. The
+	// report does not print it as honor. HonorObserved counts decisions with
+	// a linked resolved record whose rewrite_honored is true.
+	RewriteShifted  int
+	RewriteHonored  int
+	HonorObserved   int
+	HonorUnobserved int
+	UsageObserved   int
+	UsageUnobserved int
+	QuotaAvailable  int
+	QuotaHeld       int
+	QuotaUnknown    int
 }
 
 // NormSaved returns normalised savings: absolute units saved and fraction.
@@ -602,10 +614,11 @@ func Aggregate(events []Event) Stats {
 			s.Unknown++
 		}
 		// Normalised cost: baseline = 1.0 per event; routed = 1 - savings.
-		// Only an applied downshift saves anything. This is a dimensionless
-		// proxy. Multiply by --cost-per-unit to get dollars.
+		// Only an applied downshift whose quota surface is available saves
+		// anything. unknown and held are not credited routes. This is a
+		// dimensionless proxy. Multiply by --cost-per-unit to get dollars.
 		s.NormBaseline += 1.0
-		if ev.Verdict == "DOWNSHIFT" && applied && ev.EstimatedSavings > 0 && ev.EstimatedSavings < 1 {
+		if ev.Verdict == "DOWNSHIFT" && applied && SavingsCredit(ev) && ev.EstimatedSavings > 0 && ev.EstimatedSavings < 1 {
 			s.NormRouted += 1 - ev.EstimatedSavings
 		} else {
 			s.NormRouted += 1.0
@@ -621,7 +634,41 @@ func Aggregate(events []Event) Stats {
 		}
 	}
 	s.RewriteShifted, s.RewriteHonored = CountInferredHonored(events)
+	tallySpawnSurface(events, &s)
 	return s
+}
+
+// tallySpawnSurface counts observed honor and usage from linked port records,
+// and quota from each decision's own status. It does not treat a later spawn
+// or rewrite_emitted as honor.
+func tallySpawnSurface(events []Event, s *Stats) {
+	honor, usage := ObservedLinks(events)
+	for _, ev := range events {
+		if ev.Harness == "" || IsCostOnlyOutcome(ev.Outcome) || ev.Outcome == "error" {
+			continue
+		}
+		surface := SurfaceFor(ev, honor[SurfaceKey(ev)], usage[SurfaceKey(ev)])
+		switch surface.Honor {
+		case HonorObserved:
+			s.HonorObserved++
+		default:
+			s.HonorUnobserved++
+		}
+		switch surface.Usage {
+		case UsageObserved:
+			s.UsageObserved++
+		default:
+			s.UsageUnobserved++
+		}
+		switch surface.Quota {
+		case QuotaAvailable:
+			s.QuotaAvailable++
+		case QuotaHeld:
+			s.QuotaHeld++
+		default:
+			s.QuotaUnknown++
+		}
+	}
 }
 
 // StatsOptions controls PrintStats output.
@@ -701,8 +748,10 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	if s.Baseline > 0 {
 		fmt.Fprintf(w, "Baseline (no-route)   %8d  (control group, excluded from rates)\n", s.Baseline)
 	}
-	if s.RewriteShifted > 0 {
-		fmt.Fprintf(w, "Rewrite honored (inferred) %3d  / %d applied shifts (harness-reported resolvedModel matched, or a later same-session spawn asked for the written model; the child's billed model is still not read)\n", s.RewriteHonored, s.RewriteShifted)
+	if s.Total > 0 {
+		fmt.Fprintf(w, "Honor                 observed %d  unobserved %d\n", s.HonorObserved, s.HonorUnobserved)
+		fmt.Fprintf(w, "Quota                 available %d  held %d  unknown %d\n", s.QuotaAvailable, s.QuotaHeld, s.QuotaUnknown)
+		fmt.Fprintf(w, "Usage                 observed %d  unobserved %d\n", s.UsageObserved, s.UsageUnobserved)
 	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
 }

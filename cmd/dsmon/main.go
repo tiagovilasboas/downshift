@@ -59,13 +59,15 @@ const (
 // ── event ─────────────────────────────────────────────────────────────────────
 
 type event struct {
-	Timestamp  string  `json:"timestamp"`
-	Harness    string  `json:"harness"`
-	Complexity string  `json:"complexity"`
-	From       string  `json:"requested_model"`
-	To         string  `json:"final_model"`
-	Verdict    string  `json:"verdict"`
-	Savings    float64 `json:"estimated_savings"`
+	Timestamp   string  `json:"timestamp"`
+	Harness     string  `json:"harness"`
+	Complexity  string  `json:"complexity"`
+	From        string  `json:"requested_model"`
+	To          string  `json:"final_model"`
+	Verdict     string  `json:"verdict"`
+	Savings     float64 `json:"estimated_savings"`
+	QuotaStatus string  `json:"quota_status,omitempty"`
+	CreditHeld  bool    `json:"credit_held,omitempty"`
 	// Outcome and Corrections decide whether the decision changed the spawn.
 	Outcome     string   `json:"outcome,omitempty"`
 	Corrections []string `json:"corrections,omitempty"`
@@ -287,8 +289,11 @@ func compute(all []event) (stats, []event) {
 		switch {
 		case e.Verdict == "DOWNSHIFT" && applied:
 			st.down++
-			st.totalSavings += e.Savings
-			st.totalSavingsUnits += e.Savings
+			// unknown and held are not credited routes and do not add savings.
+			if telemetry.ProjectQuota(e.QuotaStatus, e.CreditHeld) == telemetry.QuotaAvailable {
+				st.totalSavings += e.Savings
+				st.totalSavingsUnits += e.Savings
+			}
 		case e.Verdict == "UPSHIFT" && applied:
 			st.up++
 		case e.Verdict == "DOWNSHIFT" || e.Verdict == "UPSHIFT":

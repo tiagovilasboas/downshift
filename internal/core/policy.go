@@ -75,6 +75,11 @@ type Decision struct {
 	// unknown is explicit, including legacy routing without a quota source.
 	QuotaStatus string
 	QuotaSource string
+	// CreditHeld is true when the credit gate refused this rewrite. A
+	// guardrail hold does not set it. Exhausted and stale status are a hold
+	// on their own; this flag covers unknown when a present source or
+	// required mode refused the write.
+	CreditHeld bool
 }
 
 // Verdict tells the caller what to do about the current model.

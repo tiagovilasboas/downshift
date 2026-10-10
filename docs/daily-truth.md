@@ -1,0 +1,84 @@
+# Daily truth
+
+harness-downshift by Tiago de Carvalho Vilas Boas
+https://github.com/tiagovilasboas/downshift
+
+Downshift routes a subagent. It does not orchestrate a session. The daily
+product is three claims. Each claim is absolute only for the spawn whose own
+harness hook observed it. Absence is not inference. The hook stdin is the
+source of truth for that spawn.
+
+This page sequences the surface. It does not close or replace
+[gap-tasks.md](gap-tasks.md), and it does not declare a beta exit.
+
+## Already true
+
+- `internal/hookport` runs optional honor and usage. A nil func returns
+  unobserved. The `honor` and `usage` commands print that line and do not
+  invent a model or a token count.
+- Claude Code registers both funcs. Cursor, Codex, Antigravity, KiroCrew, and
+  Grok get a port id and nil funcs.
+- Escalation stays in `internal/core`. Adapters map wire formats only.
+- Quota evidence has one order for every harness: hook payload, then native
+  export, then discovery, then the operator allowlist. The operator file
+  `quota` member is ignored. `unknown`, `stale`, and `exhausted` are not
+  `available`.
+- The report and the dashboard already exclude a held rewrite from applied
+  savings. A catalog counterfactual is not a child's token count. Context
+  compression records observe-mode bytes and does not replace tool output the
+  model already saw.
+- The report prints honor, quota, and usage as observed, unobserved,
+  available, held, or unknown. A later same-session spawn is not honor.
+  `CountInferredHonored` remains for callers that still want the inference;
+  the report does not print it as honor.
+
+## Surface
+
+One result per decision, on the report and on hook stderr, for every harness
+tab:
+
+| Claim | Values | Observed only when |
+|---|---|---|
+| Honor | `observed` \| `unobserved` | That harness's Honor func recorded the child model for this decision |
+| Quota | `available` \| `held` \| `unknown` | Credit for this spawn was `available` |
+| Usage | `observed` \| `unobserved` | That harness's Usage func recorded this child's tokens |
+
+`held` means the rewrite was not applied because credit was exhausted, stale,
+or required and missing. `unknown` is not a credited route and does not add
+savings. A nil Honor or Usage func is `unobserved`, including Cursor, Codex,
+Antigravity, KiroCrew, and Grok. Claude is `observed` only when its existing
+port recorded honor or child usage.
+
+## Slices
+
+### 1. Truthful spawn surface — this slice
+
+Show the three values above on hook stderr and on the report, including every
+harness tab. Reuse `hookport`, telemetry, and the report. Do not add a
+collector.
+
+What changes: the report stops presenting later-spawn inference as honor.
+`unknown` and `held` stop adding credited routes and savings. Spawn stderr
+prints `honor`, `quota`, and `usage` for that decision. At spawn time honor
+and usage stay `unobserved` until that harness's own port records them.
+
+### 2. Honor and usage adapters — not started
+
+Add a map entry only when that hook documents the field. Do not infer a pool
+from a model name. Do not copy Claude fields (`resolvedModel`,
+`agent_transcript_path`, `rate_limits`) onto another harness.
+
+### 3. Claude statusline — not started
+
+Observe native `rate_limits` when the operator already has a statusline path.
+Do not install a statusline into `~/.claude/settings.json`.
+
+### 4. Codex child usage — not started
+
+Read a transcript only when the live hook, or a supported outside collector,
+supplies the path. Do not store prompts. Do not manufacture a paid call.
+
+### 5. End-of-day number — not started
+
+The number is the sum of observed child tokens. An unobserved harness stays
+unobserved. A catalog counterfactual stays labeled as a counterfactual.

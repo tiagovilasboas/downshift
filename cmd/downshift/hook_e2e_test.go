@@ -20,9 +20,11 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/quota"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -44,10 +46,27 @@ func TestHookE2E_RewriteEventStats(t *testing.T) {
 	setSessionAllowlist(t, "cursor", []string{smallID, midID, frontierID})
 
 	// A trivial task (rename a variable) arriving on a frontier model must
-	// downshift to the small tier.
+	// downshift to the small tier. Available credit is on the hook payload so
+	// the applied rewrite is a credited route; omitted quota would not count.
 	task := "rename the userId variable to userIdentifier"
-	stdin := []byte(`{"hook_event_name":"preToolUse","tool_name":"Task","model_id":"` +
-		frontierID + `","tool_input":{"task":"` + task + `","model":"` + frontierID + `"}}`)
+	now := time.Now().UTC()
+	used := 20.0
+	stdin, err := json.Marshal(map[string]any{
+		"hook_event_name": "preToolUse",
+		"tool_name":       "Task",
+		"model_id":        frontierID,
+		"tool_input":      map[string]any{"task": task, "model": frontierID},
+		"usage_quota": quota.Snapshot{
+			Version: 1, Harness: "cursor", Source: "cursor-usage",
+			ObservedAt: now.Add(-time.Second), ExpiresAt: now.Add(10 * time.Minute),
+			Windows: []quota.Window{{
+				ID: "session", Scope: "harness", UsedPercent: &used, ResetsAt: now.Add(time.Hour),
+			}},
+		},
+	})
+	if err != nil {
+		t.Fatalf("stdin: %v", err)
+	}
 
 	out := captureStdout(func() {
 		rc := runHookAdapter(

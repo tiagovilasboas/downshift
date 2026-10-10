@@ -57,6 +57,10 @@ type RewritePlan struct {
 	// HoldForeign means the requested id is not in this harness's session
 	// or exact catalog. Adapters must not write a model.
 	HoldForeign bool
+	// CreditHeld means the credit gate refused the rewrite: a present source
+	// or required mode left no writable target. Foreign, explicit-preserve,
+	// and risk holds do not set it.
+	CreditHeld bool
 }
 
 // Plan translates a harness-agnostic Decision into protocol actions.
