@@ -32,9 +32,12 @@ This table is **model capability**, not router or adapt memory.
 | mid | `deepseek/deepseek-v4-flash` | 31/40 = 77.5% | 17/20 = 85.0% |
 | small | `qwen/qwen3-coder-30b-a3b-instruct` | 27/40 = 67.5% | 16/20 = 80.0% |
 
-Classifier routing on that suite (no adapt): 0 → small, 29 → mid, 11 → frontier;
-9/10 COMPLEX-labelled tasks routed below frontier. Small minus frontier on
-TRIVIAL+SIMPLE labels: −20.0pp.
+Classifier routing on that suite, recomputed 2026-10-10 with `ClassifyWithSemantic`
+on this `main` and no adapt memory: 6 → small, 14 → mid, 20 → frontier, and
+38/40 tasks passed at the tier the classifier picked. The 2026-10-06 line
+(0 small, 29 mid, 11 frontier) described the classifier before the algorithmic
+signals landed. Small minus frontier on TRIVIAL+SIMPLE labels remains −20.0pp
+on the fixed-model runs above, not on the router.
 
 ## Adapt tier memory — offline efficacy (same runs, recomputed 2026-10-10)
 
