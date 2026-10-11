@@ -43,6 +43,7 @@ acknowledgement, so the Codex row above is not refreshed. See
 - Cursor free/legacy discard: README.md:734-735, README.md:738, README.md:1012-1013
 - Codex flags + honored: README.md:744, README.md:746; evidence 2026-10-02: docs/evidence/codex-rewrite-honored-2026-10-02.md; evolving schema: README.md:373
 - KiroCrew adapter capability and integration limits: [native hook setup](install.md#kirocrew-policy-mode-through-the-native-kiro-cli-hook), [routing guia](kirocrew-routing-guide.md), `internal/adapters/kirocrew/kirocrew.go`. A hook invocation counter or direct adapter smoke test does not prove live enforcement or the served child model.
+- Vendor hook docs vs adapters (search summaries, 2026-10-11): [vendor-hook-docs](evidence/vendor-hook-docs-2026-10-11.md)
 - Antigravity observed child, dated build and evidence limits: [native evidence](evidence/antigravity-executor-ack.md) and [final QA](evidence/final-gap-qa.md)
 - Grok config-only: README.md:520-531, README.md:691, README.md:1236
 - Emission vs honored: docs/session-models.md:17; allowlist: docs/session-models.md:34
