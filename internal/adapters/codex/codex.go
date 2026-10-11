@@ -150,16 +150,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		}
 	}
 	session = session.WithUsageQuota(harnessID, usage)
-	decision.SessionUnknown = !session.Known
-	decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
-	if session.Usage != nil {
-		decision.QuotaSource = quota.SourceName(session.Usage.Source)
-	}
-	plan := decision.PlanForSession(core.CodexCaps, res, session)
-	decision.CreditHeld = plan.CreditHeld
-	if plan.RewriteModel {
-		decision.QuotaStatus = string(session.QuotaStatus(harnessID, plan.Model.ID))
-	}
+	plan := decision.PlanSession(core.CodexCaps, res, session, currentModel)
 	if plan.HoldForeign || plan.PreserveExplicit || (!plan.RewriteModel && !plan.ApplyEffort) {
 		return allow(), "", decision
 	}

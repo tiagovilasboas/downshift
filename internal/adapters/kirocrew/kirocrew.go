@@ -129,11 +129,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
-	decision.SessionUnknown = !session.Known
-	decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
-	if session.Usage != nil {
-		decision.QuotaSource = quota.SourceName(session.Usage.Source)
-	}
+	decision.RecordSession(session, currentModel)
 
 	// The user deliberately picked an explicit_only model: never block it or
 	// ask for a respawn on another model.

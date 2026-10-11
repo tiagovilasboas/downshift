@@ -134,16 +134,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
 	session = withMuseCatalogInclusion(session, res)
-	decision.SessionUnknown = !session.Known
-	decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
-	if session.Usage != nil {
-		decision.QuotaSource = quota.SourceName(session.Usage.Source)
-	}
-	plan := decision.PlanForSession(core.CursorCaps, res, session)
-	decision.CreditHeld = plan.CreditHeld
-	if plan.RewriteModel {
-		decision.QuotaStatus = string(session.QuotaStatus(harnessID, plan.Model.ID))
-	}
+	plan := decision.PlanSession(core.CursorCaps, res, session, currentModel)
 	if plan.HoldForeign || plan.PreserveExplicit {
 		return allow(), "", decision
 	}

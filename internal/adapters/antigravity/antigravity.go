@@ -105,19 +105,10 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		currentModel := hookutil.StringField(subagent, "Model")
 		decision := core.Route(prompt, harnessID, currentModel, res)
 		decision.RequestedID = currentModel
-		decision.SessionUnknown = !session.Known
-		decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
-		if session.Usage != nil {
-			decision.QuotaSource = quota.SourceName(session.Usage.Source)
-		}
 		// Gate the rewrite on the session plan: unknown session, empty
 		// target, explicit-only current model, or a rewrite the plan
 		// forbids all fail open (allow, no write).
-		plan := decision.PlanForSession(core.AntigravityCaps, res, session)
-		decision.CreditHeld = plan.CreditHeld
-		if plan.RewriteModel {
-			decision.QuotaStatus = string(session.QuotaStatus(harnessID, plan.Model.ID))
-		}
+		plan := decision.PlanSession(core.AntigravityCaps, res, session, currentModel)
 		lastDecision = decision
 		if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !session.Contains(plan.Model.ID) {
 			continue
@@ -154,7 +145,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	return Output{
 		Decision:  "allow",
 		Overwrite: updatedArgs,
-	}, "downshift: mapped to antigravity tier " + lastDecision.Tier.String(), lastDecision
+	}, "downshift: " + lastDecision.Summary(), lastDecision
 }
 
 func allow() Output {
