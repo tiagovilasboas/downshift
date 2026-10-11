@@ -3,7 +3,7 @@
 harness-downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
-Execution snapshot: **2026-10-09**. These are the remaining tasks from the runtime
+Execution snapshot: **2026-10-09** (open items from the 2026-10-11 review are listed at the end). These are the remaining tasks from the runtime
 and evidence review, linked to [beta exit](beta-exit.md). Code shipped, native
 data collected, rewrite emitted, and executor model observed are separate states.
 Close a task only with its acceptance evidence and a date.
@@ -28,6 +28,21 @@ dependency and next action. Fixtures do not establish a live integration.
 - [ ] GAP-PERIOD-REPORT / P3.7 — dated comparison.
 - [ ] GAP-USAGE-UPSTREAM / P3.8 — supported child usage sources.
 - [ ] GAP-EXTERNAL / P2.3 — independent operator evidence.
+
+## Open after the 2026-10-11 competitive review
+
+Tracked here at a high level. Experiment designs and numbers live in the maintainer
+research repo. Each item closes only with dated evidence.
+
+- [ ] GAP-SUITE — independent outcome suite (not the 40 development tasks, frozen before any tuning) and a cost per completed task, the gate for promoting tier memory out of shadow. Blocked on suite authoring and a run budget.
+- [ ] GAP-MEMORY-COUNTS — count-based tier memory with a lower confidence bound, evaluated leave-one-task-out. Depends on GAP-SUITE. The set-based memory scores 34/40 leave-one-task-out against 38/40 for the classifier on the development suite, so it must not be promoted.
+- [ ] GAP-PAYLOADS — capture real hook payloads for Cursor, Codex, Kiro and Antigravity under `docs/evidence/` (where the project directory lives, post-spawn status). `docs/config.md` states the evidence level per harness; only Claude Code is vendor-documented.
+- [ ] GAP-CHILD-FAILURE — capture one real `PostToolUseFailure` payload for an Agent/Task call and confirm the field names `child_status` relies on. Needs the owner to register `claude-code-post-tool-use` under that event.
+- [ ] GAP-BOILERPLATE — measure whether harness boilerplate inside spawn prompts changes the classification (needs anonymised real fixtures). Close as "not needed" if fewer than 2% change.
+- [ ] GAP-COORDINATION — measure whether coordination or delegation tasks fail more on the small tier before adding any floor for them.
+- [ ] GAP-CONTEXT-SURFACE — decide the future of the `context` subcommands (observe-only, byte-based) against their weight; no usage data exists, so an opt-in command counter is the proposed way to decide.
+- [ ] GAP-PRICES — keep cost figures tied to a dated OpenRouter list-price snapshot; confirm the mid-tier price before quoting any cost that uses it.
+
 - [ ] GAP-README-DATA / P2.4 — dated independent aggregates.
 - [ ] GAP-GENERALIZATION / P4 — unseen independent evaluation.
 - [ ] GAP-CURSOR-REVALIDATE / P5.3 — dated plan/build recheck.

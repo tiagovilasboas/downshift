@@ -28,6 +28,7 @@ HTTP proxy, but that is not the current shipping surface.
 |-------|-------------|
 | Harness routing | Stable PreToolUse rewrites + adapter coverage |
 | Honest telemetry | `rewrite_emitted` vs harness-reported honor (`resolved`) |
+| Project controls | Optional per-project tier floor (`.downshift/policy.json`), counted in `stats`; how a child ended (`child_ended`) |
 | Session discovery | `downshift models discover` per harness ([session-discovery.md](docs/session-discovery.md)); Cursor and Antigravity sources, catalog as an opt-in fallback |
 | Real cost | SubagentStop usage linkage (Claude Code); expand as harnesses expose usage |
 | Evaluation | Public [benchmark/REPORT.md](benchmark/REPORT.md); full regression in maintainer downshift-labs; shadow observation |
@@ -48,6 +49,8 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 | P1 | ~~Condensed docs~~ — [WHEN-TO-USE](docs/when-to-use.md), trimmed [CAPABILITY-ROUTER-V2](docs/capability-router-v2.md) |
 | P1 | More harness matrix rows (Cursor paid plans, etc.) |
 | P1 | Optional: container image on GHCR |
+| P1 | Independent outcome suite and cost per completed task before any tier-memory promotion ([gap-tasks](docs/gap-tasks.md): GAP-SUITE, GAP-MEMORY-COUNTS) |
+| P1 | Real hook payloads for Cursor, Codex, Kiro, Antigravity, and the Claude Code failure event (GAP-PAYLOADS, GAP-CHILD-FAILURE) |
 | P2 | Promote routing v2 only with reviewed labels + shadow evidence |
 
 ---

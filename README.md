@@ -109,6 +109,10 @@ downshift try "rename the userId variable" claude-code    # classification and r
 
 Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshift: TRIVIAL task → downshift to …`. That proves the hook ran. To confirm the harness applied the rewrite, follow [Verify the rewrite was honored](docs/install.md#quickstart--zero-to-working-hook-in-2-minutes). Other harnesses (Cursor, Codex, Antigravity, KiroCrew, Grok) are in [install.md](docs/install.md).
 
+## Project tier floor (optional)
+
+A project can require a minimum tier with `.downshift/policy.json`. It only raises a tier, never lowers one; a missing or invalid file is ignored and the spawn routes as before. It applies to every harness and still passes the session allowlist and quota gates. Format, evidence per harness for where the project directory comes from, and limits: [config.md](docs/config.md#project-tier-floor-optional). The `stats` output counts the decisions it raised.
+
 ## Harness support
 
 | Harness | Subagent tool | Mechanism | Rewrite honored (evidence) |
@@ -164,6 +168,8 @@ Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit crit
 ## Contributing
 
 The most valuable contribution is a **misrouted prompt**: open an issue with the `downshift try` output and the tier you expected. Evidence that a rewrite was (or was not) honored on your harness and plan is just as welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Every feature must serve every harness: behaviour in shared layers, adapters only parse and emit. Read [docs/contrib/layering.md](docs/contrib/layering.md) before changing code.
 
 ## Status
 

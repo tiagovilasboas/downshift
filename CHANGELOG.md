@@ -10,12 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Architecture:** session and quota planning is one shared step (`Decision.PlanSession`); harness-name branches in `quota` and native sessions are capability fields; one harness registry in `cmd/downshift`. No behaviour change for existing harnesses.
+- **CLI:** `downshift honor|usage <harness>` no longer appear in `help` (still work; documented in `docs/contrib/agent-reference.md`).
 - **Catalog:** Claude Haiku 5.5 (`claude-haiku-5-5`, $0.10/$0.50 per 1M tokens for
   prompts up to 100k; $0.50/$2.50 above) is the Claude Code small tier (KiroCrew keeps `claude-haiku-4-5`: the Kiro account list offers no 5.x model).
   Older `claude-haiku-4-5` ids in `session-models.json` still match through the
   `claude-haiku` family (not an alias: KiroCrew owns that canonical id). The small-vs-frontier price gap is now ~97% (was ~75%) at list price for prompts up to 100k tokens; above that Haiku 5.5 costs $0.50/$2.50 and the gap is ~87%.
 
 ### Added
+- **Project tier floor:** optional `.downshift/policy.json` raises the minimum tier per project, class or risk category. Raise-only and fail-open; applied once in the core, so every adapter inherits it. `stats` and the export count decisions it raised (`policy_floor`). See `docs/config.md`.
+- **How a child ended:** `child_ended` events record a closed status (`completed`, `launched`, `interrupted`, `error`, `stopped`, `unknown`) for Claude Code Agent/Task children, shown in `stats` and the export (`child_status`). The error text is never stored; the event never counts as a decision. Needs `claude-code-post-tool-use` registered under `PostToolUseFailure`; field names are from the vendor docs, not yet captured from a real session.
+- **`baseline_source`** on cost events (`requested` today).
+- **`doctor`** reports model-override variables that a harness declares (`HarnessCapabilities.ModelOverrideEnv`), without claiming the override is verified.
+- **`eval-adapt`** adds leave-one-task-out, cost per completed task, `--price-*`, `--ref-in/--ref-out` and `--fail-penalty` (evaluation only; routing unchanged).
+- **Skill** `skills/downshift-audit`: read-only audit of hook wiring, stats and fixed context size.
+- **Docs:** layering rule (`docs/contrib/layering.md`), agent reference, Portuguese telemetry chapter updated.
 - **Session discovery:** `downshift models discover` asks each harness which models the
   account can use (Codex `models_cache.json`, `kiro-cli chat --list-models`, `grok models`,
   the Anthropic Models API with a key) and writes a ranked cache that hooks read after the

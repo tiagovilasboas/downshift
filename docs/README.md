@@ -7,7 +7,7 @@
 | **[install.md](install.md)** | Install binary, hooks per harness, troubleshooting (humans + agents) |
 | [architecture.md](architecture.md) | What Downshift is and how hooks flow |
 | [when-to-use.md](when-to-use.md) | Downshift vs gateways and direct SDK |
-| [config.md](config.md) | State dir, env vars, migration |
+| [config.md](config.md) | State dir, env vars, project tier floor, migration |
 | [publishing-boundaries.md](publishing-boundaries.md) | Public vs internal vs private docs |
 | [content-classification.md](content-classification.md) | A/B/C/D content map (adoption → secret) |
 | [session-models.md](session-models.md) | Session allowlists and Claude usage hooks |
@@ -32,6 +32,8 @@
 | [pt/README.md](pt/README.md) | Documentação em português |
 | [../examples/README.md](../examples/README.md) | Sample hook JSON payloads |
 | [../skills/downshift-audit/SKILL.md](../skills/downshift-audit/SKILL.md) | Read-only agent skill: audit hook wiring, stats and fixed context size |
+| [contrib/layering.md](contrib/layering.md) | Layering rule: every feature serves every harness (checklists, worked examples) |
+| [contrib/agent-reference.md](contrib/agent-reference.md) | On-demand detail for agents: compressor, telemetry, catalog, honor/usage seam |
 
 ## Contributors
 
