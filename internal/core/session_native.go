@@ -21,8 +21,16 @@ var nativeModelID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/+\-]*$`)
 // is authoritative even on failure: stale/malformed native availability must
 // not silently become an old discovery result or an operator's handwritten list.
 func LoadNativeSession(harness string, now time.Time) (SessionList, bool) {
-	path := os.Getenv("DOWNSHIFT_CURSOR_NATIVE_FILE")
-	if harness != "cursor" || path == "" {
+	caps, _ := CapsFor(harness)
+	return loadNativeSession(caps, now)
+}
+
+func loadNativeSession(caps HarnessCapabilities, now time.Time) (SessionList, bool) {
+	if caps.NativeSessionEnv == "" {
+		return SessionList{}, false
+	}
+	path := os.Getenv(caps.NativeSessionEnv)
+	if path == "" {
 		return SessionList{}, false
 	}
 	hold := UnknownSession()
@@ -57,7 +65,7 @@ func LoadNativeSession(harness string, now time.Time) (SessionList, bool) {
 		}
 		seen[id] = true
 	}
-	usage, err := quota.ParseNative("cursor-usage", data, now, nativeSessionTTL)
+	usage, err := quota.ParseNative(caps.NativeUsageSource, data, now, nativeSessionTTL)
 	if err != nil {
 		return hold, true
 	}

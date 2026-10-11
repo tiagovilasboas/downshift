@@ -19,6 +19,14 @@ type HarnessCapabilities struct {
 	// than Downshift's own evidence, can make the harness ignore a hook's model
 	// rewrite. Empty means none is known, which is not the same as none exists.
 	ModelOverrideEnv string
+	// NativeSessionEnv names the environment variable holding the path of the
+	// harness's native session/usage export. Empty means the harness has none.
+	NativeSessionEnv string
+	// NativeUsageSource is the quota.ParseNative source name for that export.
+	NativeUsageSource string
+	// TranscriptQuota means quota can be collected from an explicit local
+	// transcript (`quota collect --transcript`).
+	TranscriptQuota bool
 }
 
 // Per-harness capability table. Adapters import these instead of
@@ -30,10 +38,10 @@ var (
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.
-	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false}
+	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, NativeSessionEnv: "DOWNSHIFT_CURSOR_NATIVE_FILE", NativeUsageSource: "cursor-usage"}
 
 	// CodexCaps — PreToolUse hook accepts updatedInput.model + reasoning_effort.
-	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true}
+	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true, TranscriptQuota: true}
 
 	// KiroCrewCaps — KiroCrew's preToolUse hook is policy-only: its contract is
 	// exit 0 (allow) / exit 2 (block + stderr to the LLM), with NO updated_input
@@ -59,6 +67,16 @@ func AllHarnessCaps() []NamedCaps {
 		{"kirocrew", KiroCrewCaps},
 		{"antigravity", AntigravityCaps},
 	}
+}
+
+// CapsFor returns the declared capabilities of a harness by id.
+func CapsFor(harness string) (HarnessCapabilities, bool) {
+	for _, n := range AllHarnessCaps() {
+		if n.Harness == harness {
+			return n.Caps, true
+		}
+	}
+	return HarnessCapabilities{}, false
 }
 
 // NamedCaps pairs a harness id with its declared capabilities.

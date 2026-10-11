@@ -197,14 +197,26 @@ func hasObservedAt(data []byte) bool {
 	return false
 }
 
+// nativeSources maps a harness to its native export env var and parser source.
+// quota cannot import core (core imports quota); core's HarnessCapabilities
+// carry the same facts, and a core test keeps the two in step.
+var nativeSources = map[string]struct{ env, source string }{
+	"cursor": {"DOWNSHIFT_CURSOR_NATIVE_FILE", "cursor-usage"},
+}
+
+// NativeSource reports the env var and parser source of a harness's export.
+func NativeSource(harness string) (env, source string, ok bool) {
+	n, ok := nativeSources[harness]
+	return n.env, n.source, ok
+}
+
 func nativePath(harness string) (path, source string, ok bool) {
-	switch harness {
-	case "cursor":
-		path = os.Getenv("DOWNSHIFT_CURSOR_NATIVE_FILE")
-		return path, "cursor-usage", path != ""
-	default:
+	env, source, found := NativeSource(harness)
+	if !found {
 		return "", "", false
 	}
+	path = os.Getenv(env)
+	return path, source, path != ""
 }
 
 // CollectCodex reads only the bounded tail of an explicitly supplied local

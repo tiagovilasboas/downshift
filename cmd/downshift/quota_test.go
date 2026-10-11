@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
@@ -66,5 +67,28 @@ func TestQuotaImportRejectsWrongHarnessAndNormalizesProvenance(t *testing.T) {
 	b, _ = json.Marshal(s)
 	if rc := runQuota([]string{"import", "--harness", "cursor", "--source", "normalized"}, bytes.NewReader(b), &out, &errOut); rc == 0 {
 		t.Fatal("accepted future observation")
+	}
+}
+
+func TestQuotaCollectGatedByCapability(t *testing.T) {
+	run := func(h string) (int, string) {
+		var out, errOut bytes.Buffer
+		rc := runQuota([]string{"collect", "--harness", h, "--transcript", filepath.Join(t.TempDir(), "missing")}, strings.NewReader(""), &out, &errOut)
+		return rc, errOut.String()
+	}
+	const want = "collect requires --harness codex --transcript PATH"
+	if rc, msg := run("cursor"); rc != 2 || !strings.Contains(msg, want) {
+		t.Fatalf("cursor: %d %q", rc, msg)
+	}
+	orig := harnessCaps
+	defer func() { harnessCaps = orig }()
+	harnessCaps = func(h string) (core.HarnessCapabilities, bool) {
+		if h == "newharness" {
+			return core.HarnessCapabilities{TranscriptQuota: true}, true
+		}
+		return orig(h)
+	}
+	if rc, msg := run("newharness"); strings.Contains(msg, want) {
+		t.Fatalf("capable harness rejected: %d %q", rc, msg)
 	}
 }

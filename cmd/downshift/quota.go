@@ -10,8 +10,12 @@ import (
 	"io"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
+
+// harnessCaps is the capability lookup; tests may substitute it.
+var harnessCaps = core.CapsFor
 
 func runQuota(args []string, in io.Reader, out, errOut io.Writer) int {
 	if len(args) == 0 {
@@ -58,7 +62,7 @@ func runQuota(args []string, in io.Reader, out, errOut io.Writer) int {
 	var err error
 	switch args[0] {
 	case "collect":
-		if *h != "codex" || *transcript == "" {
+		if caps, _ := harnessCaps(*h); !caps.TranscriptQuota || *transcript == "" {
 			fmt.Fprintln(errOut, "collect requires --harness codex --transcript PATH")
 			return 2
 		}

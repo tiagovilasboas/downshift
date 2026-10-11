@@ -1,0 +1,49 @@
+// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package core
+
+import (
+	"testing"
+	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/quota"
+)
+
+func TestCapsForMatchesAllHarnessCaps(t *testing.T) {
+	for _, n := range AllHarnessCaps() {
+		got, ok := CapsFor(n.Harness)
+		if !ok || got != n.Caps {
+			t.Fatalf("CapsFor(%q) = %+v, %v", n.Harness, got, ok)
+		}
+	}
+	if _, ok := CapsFor("nope"); ok {
+		t.Fatal("unknown harness found")
+	}
+}
+
+func TestNativeCapsAgreeWithQuotaTable(t *testing.T) {
+	for _, n := range AllHarnessCaps() {
+		env, src, ok := quota.NativeSource(n.Harness)
+		if ok != (n.Caps.NativeSessionEnv != "") || env != n.Caps.NativeSessionEnv || src != n.Caps.NativeUsageSource {
+			t.Fatalf("%s: quota table and caps disagree", n.Harness)
+		}
+	}
+	if !CodexCaps.TranscriptQuota || CursorCaps.TranscriptQuota {
+		t.Fatal("transcript quota must be codex-only")
+	}
+}
+
+// A new harness declaring the capability needs no edit to shared code.
+func TestHypotheticalHarnessNativeSession(t *testing.T) {
+	now := time.Now().UTC()
+	t.Setenv("DOWNSHIFT_FAKE_NATIVE_FILE", writeNativeFixture(t, nativeFixture(now)))
+	caps := HarnessCapabilities{NativeSessionEnv: "DOWNSHIFT_FAKE_NATIVE_FILE", NativeUsageSource: "cursor-usage"}
+	s, ok := loadNativeSession(caps, now)
+	if !ok || !s.Known || !s.NativeAvailability || len(s.IDs) != 4 {
+		t.Fatalf("hypothetical harness not handled: %+v %v", s, ok)
+	}
+	if _, ok := loadNativeSession(HarnessCapabilities{}, now); ok {
+		t.Fatal("harness without the capability must not load")
+	}
+}
