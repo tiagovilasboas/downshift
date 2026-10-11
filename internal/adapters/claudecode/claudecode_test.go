@@ -492,3 +492,60 @@ func TestHandle_NativeNameRequestIsRouted(t *testing.T) {
 		t.Fatalf("model = %v, want %s", m["model"], nativeOf(core.TierSmall))
 	}
 }
+
+func floorEvent(cwd string) claudecode.Event {
+	frontierID := catID(core.TierFrontier)
+	return withCatalogSession(claudecode.Event{
+		ToolName: "Task",
+		Model:    frontierID,
+		Cwd:      cwd,
+		ToolInput: json.RawMessage(`{
+			"description": "cleanup",
+			"prompt": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	})
+}
+
+func writePolicy(t *testing.T, dir, body string) {
+	t.Helper()
+	p := filepath.Join(dir, ".downshift", "policy.json")
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
+	dir := t.TempDir()
+	writePolicy(t, dir, `{"version":1,"min_tier":"mid"}`)
+	out, _, d := claudecode.Handle(floorEvent(dir), cat)
+	m := decodeUpdated(t, out)
+	if m == nil || m["model"] != nativeOf(core.TierMid) {
+		t.Fatalf("model = %v, want mid %s", m, nativeOf(core.TierMid))
+	}
+	if !d.PolicyFloor || d.Tier != core.TierMid {
+		t.Fatalf("decision = tier %v floor %v", d.Tier, d.PolicyFloor)
+	}
+}
+
+func TestHandle_PolicyFloorFailsOpen(t *testing.T) {
+	for name, body := range map[string]string{
+		"invalid": `{"version":1,"min_tier":"huge"}`,
+		"garbage": `not json`,
+	} {
+		dir := t.TempDir()
+		writePolicy(t, dir, body)
+		out, _, d := claudecode.Handle(floorEvent(dir), cat)
+		m := decodeUpdated(t, out)
+		if m == nil || m["model"] != nativeOf(core.TierSmall) || d.PolicyFloor {
+			t.Errorf("%s: bad policy must route as if absent, got %v floor %v", name, m, d.PolicyFloor)
+		}
+	}
+	out, _, d := claudecode.Handle(floorEvent(t.TempDir()), cat)
+	if m := decodeUpdated(t, out); m == nil || m["model"] != nativeOf(core.TierSmall) || d.PolicyFloor {
+		t.Errorf("no policy: expected small, got %v", m)
+	}
+}

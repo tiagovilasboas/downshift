@@ -33,6 +33,27 @@ Override paths:
 - `DOWNSHIFT_EVENT_LOG` — telemetry JSONL (advanced)
 - `DOWNSHIFT_SESSION_MODELS` — session allowlist file
 
+## Project tier floor (optional)
+
+A project can require a minimum tier with `.downshift/policy.json` in the project
+directory or any parent (nearest file wins, at most 8 levels up). A floor only
+**raises** a tier; it never lowers one. Claude Code only for now.
+
+```json
+{
+  "version": 1,
+  "min_tier": "small",
+  "min_tier_by_class": { "COMPLEX": "frontier" },
+  "min_tier_by_risk": { "payment": "frontier" }
+}
+```
+
+- Tiers: `small`, `mid`, `frontier`. Classes: `TRIVIAL`, `SIMPLE`, `MEDIUM`, `COMPLEX`.
+- Risk categories are the names in `internal/core/risk.go` (for example `secret`, `payment`, `destructive`).
+- The highest applicable rule wins.
+- Fail-open: a missing, oversized, symlinked or invalid file (unknown field, tier, class or category) is ignored and the spawn routes as if there were no file. The floor still goes through the session allowlist and quota gates, so it cannot select a model the session does not offer.
+- The hook uses the payload's `cwd`, or the process directory when absent.
+
 ## Migrating from `~/.harness-downshift`
 
 ```bash

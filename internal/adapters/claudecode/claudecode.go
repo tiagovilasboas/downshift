@@ -30,6 +30,8 @@ type Event struct {
 	// (SessionIdentifier); empty when the harness omits it, keeping old logs
 	// byte-identical. Enables PostToolUse cost linkage by session.
 	SessionID string `json:"session_id,omitempty"`
+	// Cwd is the hook's working directory, used to find a project policy file.
+	Cwd string `json:"cwd,omitempty"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// Claude Code PreToolUse does not send this field today.
 	SessionModels   *[]string `json:"session_models,omitempty"`
@@ -116,6 +118,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 	decision.RequestedID = currentModel
+	applyPolicyFloor(&decision, ev.Cwd, currentModel, res)
 
 	session := core.ResolveSessionForID(harnessID, ev.SessionID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
