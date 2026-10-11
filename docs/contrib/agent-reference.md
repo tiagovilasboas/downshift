@@ -77,3 +77,7 @@ in `docs/beta-exit.md` (P1, P3), so keep the seam.
   constant `telemetry.BaselineRequested` is the only producer. `inferred` and
   `declared` are not produced; adding one needs a reviewed design, and `inferred`
   must stay out of headline totals by default.
+
+## Cost per session and subagent
+
+`internal/telemetry/cost_groups.go`: `Aggregate` groups priced `usage` events by hashed `SessionID` and `AgentHash` into `Stats.CostBySession` / `CostBySubagent`. Events without an id are skipped from the groups, not from the totals. `stats` prints the groups only when attributable usage exists; the export carries counts and maxima, never ids. This is reporting: a hook cannot enforce budgets or concurrency.

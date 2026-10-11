@@ -460,6 +460,10 @@ type Stats struct {
 	PolicyFloor int
 	// ChildStatus counts how children ended (child_ended events), by status.
 	ChildStatus map[ChildStatus]int
+	// CostBySession and CostBySubagent group observed catalog-priced cost by the
+	// hashed session id and agent id carried on usage records.
+	CostBySession  map[string]CostGroup
+	CostBySubagent map[string]CostGroup
 
 	// Corrected counts events where a guardrail held the decision: the
 	// classified verdict stands in the log, but adapters applied the safe
@@ -571,7 +575,7 @@ func FilterByDays(events []Event, days int) []Event {
 
 // Aggregate computes Stats from a slice of events.
 func Aggregate(events []Event) Stats {
-	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int)}
+	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int), CostBySession: make(map[string]CostGroup), CostBySubagent: make(map[string]CostGroup)}
 	// Build the index before counting: exported windows may arrive out of order.
 	type linkKey struct {
 		harness, decision string
@@ -587,6 +591,10 @@ func Aggregate(events []Event) Stats {
 		if ev.Outcome != OutcomeResolved && ev.Outcome != OutcomeBaseline && ev.ActualCostUSD != nil {
 			s.ActualCostEvents++
 			s.ActualCostUSD += *ev.ActualCostUSD
+			if ev.Outcome == OutcomeUsage {
+				addGroupCost(s.CostBySession, ev.SessionID, *ev.ActualCostUSD)
+				addGroupCost(s.CostBySubagent, ev.AgentHash, *ev.ActualCostUSD)
+			}
 		}
 		if ev.Outcome == OutcomeChildEnded && ev.ChildStatus != "" {
 			s.ChildStatus[ev.ChildStatus]++
@@ -763,6 +771,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	}
 	if s.ActualCostEvents > 0 {
 		fmt.Fprintf(w, "Observed token cost   $%10.2f  (%d events, catalog pricing)\n", s.ActualCostUSD, s.ActualCostEvents)
+		printCostGroups(w, s.CostBySession, s.CostBySubagent)
 	}
 	if s.ObservedChildUsage == 0 {
 		fmt.Fprintf(w, "Observed child tokens unobserved\n")

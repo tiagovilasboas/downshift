@@ -44,3 +44,5 @@ O arquivo `~/.harness-downshift/events.jsonl` é a telemetria de custo e de rota
 `policy_floor` conta as decisões em que um piso de tier definido pelo operador (`.downshift/policy.json`, veja [config.md](../config.md)) elevou o tier. É registrado pelo executor compartilhado para todos os harnesses.
 
 `child_ended` registra como terminou um subagente do Claude Code (`interrupted`, `error`, `completed`, `launched`, `stopped` ou `unknown`). Não guarda o texto do erro e não conta como decisão. O `downshift stats` mostra a seção "How children ended" quando há esses eventos, e o export traz os totais em `child_status`. Para registrar, o comando `claude-code-post-tool-use` precisa estar também no evento `PostToolUseFailure`. O campo `baseline_source` é sempre `requested` hoje. Detalhes em [stats-export.md](../stats-export.md).
+
+O `stats` agrupa o custo observado, precificado pelo catálogo, por sessão e por subagente quando o registro de uso traz o id (hash). É estimativa, não fatura, e só relata: um hook não consegue impor orçamento nem limite de concorrência. A exportação traz apenas contagens e máximos, nunca os ids.

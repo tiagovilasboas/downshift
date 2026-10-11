@@ -75,3 +75,5 @@ observed.
 `baseline_source` on cost events is `requested` when the baseline is the model the harness asked for. No other source is produced yet, so the field is always `requested` or absent.
 
 `child_ended` events record how a Claude Code Agent/Task child ended. Their `child_status` is one of `completed`, `launched`, `interrupted`, `error`, `stopped` or `unknown`. They are observations, not decisions: they never change `total`, the verdict counts or savings. The error text is never stored. Recording them requires `claude-code-post-tool-use` registered under `PostToolUseFailure` as well as `PostToolUse`; the failure payload was documented but not captured from a real session, so the field names should be checked against one before relying on them.
+
+`cost_sessions`, `cost_subagents`, `max_session_cost_usd` and `max_subagent_cost_usd` summarise observed, catalog-priced cost grouped by the hashed session id and agent id on usage records. Records without an id are in the totals but not in the groups. No individual session id is exported. These are estimates, not invoices.

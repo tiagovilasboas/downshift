@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Project tier floor:** optional `.downshift/policy.json` raises the minimum tier per project, class or risk category. Raise-only and fail-open; applied once in the core, so every adapter inherits it. `stats` and the export count decisions it raised (`policy_floor`). See `docs/config.md`.
 - **How a child ended:** `child_ended` events record a closed status (`completed`, `launched`, `interrupted`, `error`, `stopped`, `unknown`) for Claude Code Agent/Task children, shown in `stats` and the export (`child_status`). The error text is never stored; the event never counts as a decision. Needs `claude-code-post-tool-use` registered under `PostToolUseFailure`; field names are from the vendor docs, not yet captured from a real session.
+- **Cost per session and subagent** in `stats` and the export (`cost_sessions`, `cost_subagents`, `max_session_cost_usd`, `max_subagent_cost_usd`); report only, no budget enforcement.
 - **`baseline_source`** on cost events (`requested` today).
 - **`doctor`** reports model-override variables that a harness declares (`HarnessCapabilities.ModelOverrideEnv`), without claiming the override is verified.
 - **`eval-adapt`** adds leave-one-task-out, cost per completed task, `--price-*`, `--ref-in/--ref-out` and `--fail-penalty` (evaluation only; routing unchanged).

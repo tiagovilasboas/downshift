@@ -47,6 +47,10 @@ type Summary struct {
 	DownshiftRate       float64        `json:"downshift_rate"`
 	ObservedChildTokens int64          `json:"observed_child_tokens"`
 	ObservedChildUsage  int            `json:"observed_child_usage"`
+	CostSessions        int            `json:"cost_sessions"`
+	CostSubagents       int            `json:"cost_subagents"`
+	MaxSessionCostUSD   float64        `json:"max_session_cost_usd"`
+	MaxSubagentCostUSD  float64        `json:"max_subagent_cost_usd"`
 	ChildStatus         map[string]int `json:"child_status"`
 	Note                string         `json:"note"`
 }
@@ -77,6 +81,8 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		byComplexity[key] = count
 	}
 
+	nSessions, _, maxSession := groupStats(stats.CostBySession)
+	nSubagents, _, maxSubagent := groupStats(stats.CostBySubagent)
 	childStatus := make(map[string]int, len(stats.ChildStatus))
 	for st, count := range stats.ChildStatus {
 		if count > 0 {
@@ -110,6 +116,10 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		DownshiftRate:       downshiftRate,
 		ObservedChildTokens: stats.ObservedChildTokens,
 		ObservedChildUsage:  stats.ObservedChildUsage,
+		CostSessions:        nSessions,
+		CostSubagents:       nSubagents,
+		MaxSessionCostUSD:   maxSession,
+		MaxSubagentCostUSD:  maxSubagent,
 		ChildStatus:         childStatus,
 		Note:                note,
 	}
