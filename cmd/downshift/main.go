@@ -1335,8 +1335,6 @@ Usage:
   downshift cursor               Run as a Cursor preToolUse hook (reads stdin)
   downshift codex                Run as a Codex PreToolUse hook (reads stdin)
   downshift kirocrew             Run as a KiroCrew preToolUse hook (policy mode: exit 0/2)
-  downshift honor <harness>      Post-spawn honor hook (unobserved unless that harness sends the field)
-  downshift usage <harness>      Post-spawn usage hook (unobserved unless that harness sends the field)
   downshift serve                Start the web dashboard at http://localhost:7474 (serves web/)
   downshift try "<task>" [harness] [model]   Test classification from the terminal
   downshift version              Print the binary version (also --version)

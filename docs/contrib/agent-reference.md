@@ -50,3 +50,17 @@ When the agent says "do not commit catalog.json", it means the **user override**
 Every real entry must have `id`, `harness`, `tier`, and `family`.
 
 ---
+
+## Post-spawn honor and usage seam
+
+`downshift honor <harness>` and `downshift usage <harness>` are the generic entry points for the
+two post-spawn observations (`internal/hookport`). They are not in `downshift help` because users
+run the Claude Code names instead: `claude-code-post-tool-use` (records the model the child ran,
+`resolved`) and `claude-code-subagent-stop` (child token usage and cost). Both Claude Code commands
+call the same runners.
+
+Only a harness whose own hook sends the field is registered in `hookPorts` (`cmd/downshift/main.go`).
+Every other harness gets a port with nil functions, so the stage stays "unobserved" instead of
+borrowing another harness's payload. To add a harness: implement its `hookport.Port`, register it,
+then document its hook command. These observations feed the honest telemetry and real-cost pillars
+in `docs/beta-exit.md` (P1, P3), so keep the seam.
