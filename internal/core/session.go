@@ -22,6 +22,9 @@ import (
 type SessionList struct {
 	IDs   []string
 	Known bool
+	// Inferred marks a list derived from the current model's catalog tier
+	// ladder rather than learned from the harness.
+	Inferred bool
 	// NativeAvailability contains provider IDs without an operator capability
 	// order. These candidates require resolver metadata before selection.
 	NativeAvailability bool

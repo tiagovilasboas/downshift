@@ -22,6 +22,9 @@ func (d *Decision) RecordSession(session SessionList, currentModelID string) {
 // proposed model. Adapters then only apply their own wire-format rules to the
 // returned plan.
 func (d *Decision) PlanSession(caps HarnessCapabilities, res Resolver, session SessionList, currentModelID string) RewritePlan {
+	if !session.Known {
+		session = InferSessionFromCurrent(d.Harness, currentModelID, res)
+	}
 	d.RecordSession(session, currentModelID)
 	plan := d.PlanForSession(caps, res, session)
 	d.CreditHeld = plan.CreditHeld
