@@ -12,7 +12,7 @@ given exit code 0. It preserves non-`ok` lines, search results, file lists,
 git logs, and any non-zero exit. `context benchmark` does not measure
 routing cost or accuracy. The compressor table is bytes from checked-in
 fixtures, not tokens and not dollars.
-Read [docs/context-optimization.md](docs/context-optimization.md) before
+Read [docs/context-optimization.md](../context-optimization.md) before
 changing context handling or attributing savings to model routing alone.
 
 ## Telemetry and cost reporting
@@ -23,7 +23,7 @@ Commands for agents and operators to audit savings, costs, and optimization:
 - `downshift stats`: display decision counts and estimated token savings (default: 30 days).
 - `downshift stats --days=N`: filter metrics window to the last N days.
 - `downshift stats --cost-per-unit=<USD>`: convert normalised unit savings to estimated USD using list prices.
-- `downshift stats --export`: generate sanitized, prompt-free JSON summary for audits and issues. See [docs/stats-export.md](docs/stats-export.md).
+- `downshift stats --export`: generate sanitized, prompt-free JSON summary for audits and issues. See [docs/stats-export.md](../stats-export.md).
 - `downshift serve`: start local web dashboard at `http://localhost:7474` (serves `web/`).
 - `dsmon`: standalone terminal dashboard widget (`cmd/dsmon/launch.sh`).
 
