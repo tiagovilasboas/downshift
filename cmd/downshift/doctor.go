@@ -11,6 +11,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -59,7 +60,7 @@ func runDoctor(w io.Writer, cat *catalog.Catalog) int {
 		fmt.Fprintf(w, "semantic_boost: in-process hash embedder (default, zero-dependency)\n")
 	}
 
-	if note := subagentModelEnvNote(os.Getenv); note != "" {
+	for _, note := range modelOverrideNotes(core.AllHarnessCaps(), os.Getenv) {
 		fmt.Fprintln(w, note)
 	}
 
@@ -67,19 +68,27 @@ func runDoctor(w io.Writer, cat *catalog.Catalog) int {
 	return 0
 }
 
-// subagentModelEnvNote reports CLAUDE_CODE_SUBAGENT_MODEL when it is set.
-// A harness-level model setting can take precedence over a hook's
-// updatedInput.model, which would make a Downshift rewrite a silent no-op.
-// This is reported by a third-party router and not verified here, so the
-// wording stays conditional. Nothing about routing changes.
-func subagentModelEnvNote(getenv func(string) string) string {
-	const name = "CLAUDE_CODE_SUBAGENT_MODEL"
-	v := strings.TrimSpace(getenv(name))
-	if v == "" {
-		return ""
+// modelOverrideNotes reports every declared model-override variable that is
+// set. A harness-level model setting can take precedence over a hook's model
+// rewrite, which would make a Downshift rewrite a silent no-op. The precedence
+// comes from outside sources and is not verified here, so the wording stays
+// conditional. Nothing about routing changes. Adding a harness's variable is a
+// one-line capability change; doctor needs no edit.
+func modelOverrideNotes(caps []core.NamedCaps, getenv func(string) string) []string {
+	var notes []string
+	for _, c := range caps {
+		name := c.Caps.ModelOverrideEnv
+		if name == "" {
+			continue
+		}
+		v := strings.TrimSpace(getenv(name))
+		if v == "" {
+			continue
+		}
+		if len(v) > 64 {
+			v = v[:64] + "..."
+		}
+		notes = append(notes, fmt.Sprintf("model_override_env: %s=%s; %s may apply it instead of a Downshift rewrite (not verified here). Check the resolved model with the post-tool-use hook.", name, v, c.Harness))
 	}
-	if len(v) > 64 {
-		v = v[:64] + "..."
-	}
-	return fmt.Sprintf("subagent_model_env: %s=%s; Claude Code may apply it instead of a Downshift rewrite (not verified here). Check the resolved model with the post-tool-use hook.", name, v)
+	return notes
 }

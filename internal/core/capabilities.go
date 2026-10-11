@@ -15,6 +15,10 @@ type HarnessCapabilities struct {
 	// the spawn. A target with no native_name in the catalog is then not
 	// written: the spawn runs unchanged.
 	StrictModelName bool
+	// ModelOverrideEnv names an environment variable that, per a source other
+	// than Downshift's own evidence, can make the harness ignore a hook's model
+	// rewrite. Empty means none is known, which is not the same as none exists.
+	ModelOverrideEnv string
 }
 
 // Per-harness capability table. Adapters import these instead of
@@ -22,7 +26,7 @@ type HarnessCapabilities struct {
 var (
 	// ClaudeCodeCaps — PreToolUse hook honors updatedInput.model, but only
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true}
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL"}
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.
@@ -44,6 +48,24 @@ var (
 	// Effort is not supported: there is no reasoning-effort field.
 	AntigravityCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false}
 )
+
+// AllHarnessCaps lists every declared harness in a stable order, so shared
+// tooling (doctor, audits) can iterate harnesses without naming any of them.
+func AllHarnessCaps() []NamedCaps {
+	return []NamedCaps{
+		{"claude-code", ClaudeCodeCaps},
+		{"cursor", CursorCaps},
+		{"codex", CodexCaps},
+		{"kirocrew", KiroCrewCaps},
+		{"antigravity", AntigravityCaps},
+	}
+}
+
+// NamedCaps pairs a harness id with its declared capabilities.
+type NamedCaps struct {
+	Harness string
+	Caps    HarnessCapabilities
+}
 
 // RewritePlan is the concrete set of protocol actions an adapter should take.
 type RewritePlan struct {
