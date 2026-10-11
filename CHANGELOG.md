@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `adapt.CountPredictor` (shrinkage adapted from BerriAI/litellm, MIT; see NOTICE) and evaluator policy `adapt_counts_loo`. Shadow-only.
 - `telemetry.RespawnAfterFailure` and a "Respawned after a failure" line in `stats` (hint only, prompt-free, harness-agnostic). Anchoring on the newest event is inspired by the LiteLLM stall detector (MIT); the code is independent.
 - First held-out outcome tasks and a smoke run recorded (see gap-tasks GAP-SUITE).
+- Evidence note: Workflow-created agents bypass PreToolUse (GAP-WORKFLOW-AGENTS).
 - Test that an empty hook stdin fails open in the shared runner.
 
 ### Changed
