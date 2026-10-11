@@ -40,3 +40,20 @@ func TestRaiseTierLeavesHigherTierAlone(t *testing.T) {
 		t.Fatal("no-op must not touch the decision")
 	}
 }
+
+func TestRaiseTierClearsAppliedNBDownshift(t *testing.T) {
+	d := Decision{
+		Harness:     "claude-code",
+		Tier:        TierSmall,
+		NBDownshift: NBDownshift{Would: true, Applied: true, Margin: 1},
+	}
+	if !d.RaiseTier(TierMid, "", nil) {
+		t.Fatal("expected a change")
+	}
+	if d.NBDownshift.Applied {
+		t.Fatal("a raised tier must not report the NB downshift as applied")
+	}
+	if !d.NBDownshift.Would {
+		t.Fatal("the opinion itself must stay recorded")
+	}
+}

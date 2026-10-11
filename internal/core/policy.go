@@ -182,6 +182,9 @@ func (d *Decision) RaiseTier(t Tier, currentModelID string, r Resolver) bool {
 	d.Model = resolveModel(d.Harness, t, r)
 	d.Verdict, d.Savings, d.CurrentModel = compareToCurrentModel(d.Harness, currentModelID, d.Model, r)
 	d.PolicyFloor = true
+	// A raised tier means any applied naive-Bayes downshift did not take effect.
+	// Keep the opinion (Would) for telemetry, but do not claim it was applied.
+	d.NBDownshift.Applied = false
 	d.Corrections = nil
 	report := Check(*d)
 	d.SafeVerdict = report.Safe
