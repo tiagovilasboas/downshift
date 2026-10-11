@@ -194,6 +194,30 @@ Every real entry must have `id`, `harness`, `tier`, and `family`.
 
 ---
 
+## Layering rule — every feature serves every harness
+
+Owner decision, 2026-10-11. A feature is never built for one harness.
+
+- **Behaviour lives in shared layers:** `internal/core` (policy and `Route`),
+  shared packages (`policyfile`, `adapt`, `quota`, `telemetry`) and the shared
+  hook runner (`runHookAdapter` in `cmd/downshift`). Adapters do not hold policy.
+- **Adapters do three things only:** parse the harness payload, declare what the
+  wire format can carry (`HarnessCapabilities`), and emit the wire response.
+  Where a payload keeps something shared code needs (for example the working
+  directory), the adapter exposes it through a small optional method such as
+  `ProjectDir()`.
+- **Harness knowledge is data, not branches.** Per-harness facts (override
+  variables, rewrite support) go in `HarnessCapabilities` and are read through
+  `core.AllHarnessCaps()`. Shared tools such as `doctor` must not name a harness.
+- **A harness that cannot honor a feature still gets it:** the shared layer
+  computes the decision, the adapter declares it cannot apply it, and
+  `docs/harness-matrix.md` states the evidence.
+- **Test at the shared layer.** New behaviour needs a test through
+  `runHookAdapter` or `core.Route`, not only an adapter test. A policy that
+  appears in more than one adapter is a defect.
+- **Offline tools stay isolated.** `benchmark`, `try` and evals have no project
+  context unless a hook invocation sets it.
+
 ## Before declaring a code change done
 
 From the repository root:

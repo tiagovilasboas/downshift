@@ -10,21 +10,24 @@ Read-only. Never edit settings, hooks or context files without the user's approv
 ## 1. Is it running?
 
 1. `downshift doctor`. Note `state_dir`, `catalog`, and whether `events` exists. "not created yet" means no hook has fired.
-2. Hook wiring: show only the `hooks` block of `~/.claude/settings.json` (or the harness equivalent). Expect `PreToolUse` with matcher `Task` running `downshift claude-code`. Optional: `PostToolUse` and `SubagentStop` for honor and usage.
+2. Hook wiring: find where the user's harness keeps its hooks (`docs/install.md` has one section per harness: Claude Code, Cursor, Codex, Antigravity, KiroCrew; Grok uses config, not a hook) and show only the hooks block. Expect a pre-spawn hook that runs `downshift <harness>`. Optional post-spawn hooks add honor and usage evidence where the harness supports them (`docs/harness-matrix.md`).
 3. Session models: `~/.downshift/session-models.json` (or `DOWNSHIFT_SESSION_MODELS`) must list the user's models least to most capable. Without it the hook never rewrites.
 
 ## 2. What did it do?
 
 - `downshift stats --days=7`: decisions and estimated savings. `--export` gives a prompt-free summary.
 - `downshift quota status --harness <harness>`: only when quota evidence is in use.
+- `downshift doctor` also lists model-override variables that are set (for any harness that declares one).
+- Project floor: if `.downshift/policy.json` exists in the project, read it; an invalid file is ignored (fail-open), so validate its tiers and risk names by eye.
 - `downshift try "<task>" <harness>`: reproduce one decision.
 
 ## 3. Fixed context cost
 
-Measure what loads every session:
+Measure what loads every session. List the files the user's harness loads automatically (the paths below cover the common ones; skip what does not exist):
 
 ```bash
-wc -c CLAUDE.md AGENTS.md .claude/rules/* ~/.claude/CLAUDE.md 2>/dev/null | sort -rn
+wc -c CLAUDE.md AGENTS.md GEMINI.md .claude/rules/* .cursor/rules/* .kiro/steering/* \
+  ~/.claude/CLAUDE.md ~/.codex/AGENTS.md 2>/dev/null | sort -rn
 ```
 
 Add the skill descriptions (the `description:` line of each `SKILL.md`). Estimate tokens as bytes / 4 and say it is an estimate. For each large always-loaded file, ask whether it applies to every project. Content for one domain belongs in a manual or file-matched rule.
