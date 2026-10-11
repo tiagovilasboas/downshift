@@ -61,3 +61,13 @@ func TestPlanSession_NoCurrentModelStillHolds(t *testing.T) {
 		t.Fatalf("no current model must not rewrite: %+v", plan)
 	}
 }
+
+// Harnesses whose model facts do not prove access keep an unknown session
+// unknown: the capability is data, not a branch.
+func TestPlanSession_InferenceIsACapability(t *testing.T) {
+	d := core.Route("rename the userId variable", "cursor", "claude-4.5-opus-high-thinking", cat)
+	plan := d.PlanSession(core.CursorCaps, cat, core.UnknownSession(), "claude-4.5-opus-high-thinking")
+	if plan.RewriteModel || !d.SessionUnknown {
+		t.Fatalf("a harness without InferSession must not infer: %+v", plan)
+	}
+}

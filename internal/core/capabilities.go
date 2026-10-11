@@ -32,6 +32,11 @@ type HarnessCapabilities struct {
 	// SingleModelReasoning means the harness runs one model and exposes only
 	// reasoning effort as a knob, so `try` reports an effort, not a model.
 	SingleModelReasoning bool
+	// InferSession means the current model proves access to the catalog tiers
+	// below it, so an unknown session may be inferred from it (see
+	// InferSessionFromCurrent). False where quota pools or tier aliases make
+	// that unsafe: the session stays unknown and nothing is rewritten.
+	InferSession bool
 }
 
 // Per-harness capability table. Adapters import these instead of
@@ -39,7 +44,7 @@ type HarnessCapabilities struct {
 var (
 	// ClaudeCodeCaps — PreToolUse hook honors updatedInput.model, but only
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL"}
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true}
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.
@@ -119,6 +124,10 @@ type RewritePlan struct {
 	// or required mode left no writable target. Foreign, explicit-preserve,
 	// and risk holds do not set it.
 	CreditHeld bool
+	// Session is the list the plan was made against, including one inferred
+	// from the current model. Adapters pass it to CanWriteSessionID so the
+	// write guard sees the same list as the planner.
+	Session SessionList
 }
 
 // Plan translates a harness-agnostic Decision into protocol actions.

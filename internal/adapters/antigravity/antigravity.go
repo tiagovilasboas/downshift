@@ -125,7 +125,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		mappedModel := plan.Model.ID
 
 		// The string written must be one of this session's selectable model IDs.
-		if !core.CanWriteSessionID(harnessID, mappedModel, session, res) {
+		if !core.CanWriteSessionID(harnessID, mappedModel, plan.Session, res) {
 			continue
 		}
 

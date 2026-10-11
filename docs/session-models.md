@@ -72,6 +72,8 @@ Example with a per-session override (replace the session ID with the value in Co
 }
 ```
 
+5. Otherwise, for a harness with `InferSession` in `HarnessCapabilities` (Claude Code), the list is inferred from the current model: the catalog tier ladder below it, ending at the model itself. The current model proves access, so downshift can descend and upshift never passes it. Without a current model the session stays unknown and nothing is rewritten. `DOWNSHIFT_INFER_SESSION=off` disables it. Quota gates still apply.
+
 There is no built-in default list. `docs/examples/session-models.example.json` records one Cursor session from 2026-10-04. Copy it and edit it. Do not expect the binary to load that example on its own.
 
 ## How a target is chosen

@@ -266,7 +266,9 @@ func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
 	}
 }
 
+// With no session list and inference off, nothing is rewritten.
 func TestHandle_MissingSessionDoesNotRewrite(t *testing.T) {
+	t.Setenv(core.EnvInferSession, "off")
 	frontierID := catID(core.TierFrontier)
 	ev := claudecode.Event{
 		ToolName: "Task",
@@ -551,5 +553,25 @@ func TestHandle_PolicyFloorFailsOpen(t *testing.T) {
 	out, _, d := claudecode.Handle(floorEvent(t, t.TempDir()), cat)
 	if m := decodeUpdated(t, out); m == nil || m["model"] != nativeOf(core.TierSmall) || d.PolicyFloor {
 		t.Errorf("no policy: expected small, got %v", m)
+	}
+}
+
+// With no session list, the current model proves access to the tiers below it:
+// a trivial task on a frontier parent is downshifted inside that ladder.
+func TestHandle_MissingSessionInfersFromCurrentModel(t *testing.T) {
+	frontierID := catID(core.TierFrontier)
+	ev := claudecode.Event{
+		ToolName: "Task",
+		ToolInput: json.RawMessage(`{
+			"prompt": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, note, d := claudecode.Handle(ev, cat)
+	if note == "" || out.HookSpecificOutput == nil || out.HookSpecificOutput.UpdatedInput == nil {
+		t.Fatalf("inferred session should downshift, note=%q", note)
+	}
+	if d.SessionUnknown {
+		t.Fatal("decision must record the inferred session as known")
 	}
 }

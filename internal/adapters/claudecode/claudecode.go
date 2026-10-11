@@ -126,7 +126,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
 	plan := decision.PlanSession(core.ClaudeCodeCaps, res, session, currentModel)
-	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !core.CanWriteSessionID(harnessID, plan.Model.ID, session, res) {
+	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !core.CanWriteSessionID(harnessID, plan.Model.ID, plan.Session, res) {
 		return allow(), "", decision
 	}
 	decision.Model = plan.Model

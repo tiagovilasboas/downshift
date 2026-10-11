@@ -157,7 +157,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if !plan.RewriteModel {
 		return allow(), "", decision
 	}
-	if !core.CanWriteSessionID(harnessID, target.ID, session, res) {
+	if !core.CanWriteSessionID(harnessID, target.ID, plan.Session, res) {
 		return allow(), "", decision
 	}
 	writeName, ok := cursorTaskModel(plan.WriteName, res)
