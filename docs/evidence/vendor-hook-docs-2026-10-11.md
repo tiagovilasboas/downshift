@@ -17,3 +17,8 @@ Forum and third-party items are marked and carry no weight as contract.
 2. Cursor: confirm `model_id` and `workspace_roots` on the page; re-test `updated_input` on `Task` on the current build.
 3. Kiro: capture a real PostToolUse payload (see `kirocrew-native-hook-2026-10-10.md`).
 4. Codex: confirm the no-rewrite path never emits a bare `allow`.
+
+## Antigravity follow-up (search summary, same day)
+- The JSON hook output documents no args-rewrite field. Our `overwrite` carries a `Subagents` array (`internal/adapters/antigravity/antigravity_test.go`), a different shape from any documented field.
+- The Python SDK changelog mentions pre-tool hooks that can transform tool input via `modified_args`. That is the SDK, not the JSON hook, so it does not confirm our field.
+- Status: the rewrite is **observed once** (`antigravity-executor-ack.md`), **not documented**. Keep the existing "build-specific sensor" wording; do not describe it as a supported contract.
