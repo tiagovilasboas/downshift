@@ -22,3 +22,8 @@ Forum and third-party items are marked and carry no weight as contract.
 - The JSON hook output documents no args-rewrite field. Our `overwrite` carries a `Subagents` array (`internal/adapters/antigravity/antigravity_test.go`), a different shape from any documented field.
 - The Python SDK changelog mentions pre-tool hooks that can transform tool input via `modified_args`. That is the SDK, not the JSON hook, so it does not confirm our field.
 - Status: the rewrite is **observed once** (`antigravity-executor-ack.md`), **not documented**. Keep the existing "build-specific sensor" wording; do not describe it as a supported contract.
+
+## Community reports (search, unverified, not contract)
+- Cursor: a live preToolUse payload on 3.13.x carried `model`, `cwd`, `workspace_roots`, `conversation_id`, `generation_id`, `hook_event_name`. `model_id` was not seen anywhere; keep parsing both. Top-level `cwd` can be empty with the real directory only in `workspace_roots` (already our fallback). Hooks have run with **empty stdin** on remote Linux workspaces: covered by `TestRunHookAdapter_EmptyStdinFailsOpen`.
+- Claude Code: several issues (2026-03 to 2026-06) report `updatedInput` ignored for the Agent tool on some versions, and `CLAUDE_CODE_SUBAGENT_MODEL` working as a full override. Matches our `doctor` warning; the rewrite is honored per `claude-code-rewrite-honored-2026-10-06.md`, version-bound.
+- Codex: no source found that settles whether a bare `allow` (no `updatedInput`) is rejected. Still needs a live test.
