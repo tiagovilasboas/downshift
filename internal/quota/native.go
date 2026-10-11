@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -198,15 +199,30 @@ func hasObservedAt(data []byte) bool {
 }
 
 // nativeSources maps a harness to its native export env var and parser source.
-// quota cannot import core (core imports quota); core's HarnessCapabilities
-// carry the same facts, and a core test keeps the two in step.
-var nativeSources = map[string]struct{ env, source string }{
-	"cursor": {"DOWNSHIFT_CURSOR_NATIVE_FILE", "cursor-usage"},
+// The facts are owned by core.HarnessCapabilities; core registers them at init
+// (quota cannot import core, because core imports quota), so there is no second
+// copy of them here.
+var (
+	nativeMu      sync.RWMutex
+	nativeSources = map[string]struct{ env, source string }{}
+)
+
+// RegisterNativeSource declares a harness's native export. Empty values are
+// ignored.
+func RegisterNativeSource(harness, env, source string) {
+	if harness == "" || env == "" || source == "" {
+		return
+	}
+	nativeMu.Lock()
+	nativeSources[harness] = struct{ env, source string }{env, source}
+	nativeMu.Unlock()
 }
 
 // NativeSource reports the env var and parser source of a harness's export.
 func NativeSource(harness string) (env, source string, ok bool) {
+	nativeMu.RLock()
 	n, ok := nativeSources[harness]
+	nativeMu.RUnlock()
 	return n.env, n.source, ok
 }
 

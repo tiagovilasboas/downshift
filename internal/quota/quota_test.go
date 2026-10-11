@@ -51,6 +51,12 @@ func TestEvidenceStatesAndHarnessIsolation(t *testing.T) {
 	}
 }
 
+func init() {
+	// In production core registers these from its capability table; this
+	// package cannot import core, so its tests declare the Cursor export.
+	RegisterNativeSource("cursor", "DOWNSHIFT_CURSOR_NATIVE_FILE", "cursor-usage")
+}
+
 func TestNativeSourcesDoNotConfuseContextOrPurchasedCredits(t *testing.T) {
 	now := time.Now().UTC()
 	reset := now.Add(time.Hour).Unix()

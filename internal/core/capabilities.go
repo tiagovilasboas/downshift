@@ -3,6 +3,8 @@
 
 package core
 
+import "github.com/tiagovilasboas/downshift/internal/quota"
+
 // HarnessCapabilities describes what a harness's hook protocol can carry.
 // Routing policy is shared; adapters only declare what their wire format
 // supports. Add a new harness by adding a named var below — no adapter code
@@ -66,6 +68,14 @@ func AllHarnessCaps() []NamedCaps {
 		{"codex", CodexCaps},
 		{"kirocrew", KiroCrewCaps},
 		{"antigravity", AntigravityCaps},
+	}
+}
+
+func init() {
+	// quota cannot import core, so the native export facts declared here are
+	// handed to it once, at startup.
+	for _, n := range AllHarnessCaps() {
+		quota.RegisterNativeSource(n.Harness, n.Caps.NativeSessionEnv, n.Caps.NativeUsageSource)
 	}
 }
 
