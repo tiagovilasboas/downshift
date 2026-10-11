@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
 )
 
 func write(t *testing.T, dir, body string) string {
@@ -154,5 +155,31 @@ func TestKnownRiskCategoriesMatchCoreTable(t *testing.T) {
 		if !names[want] {
 			t.Errorf("missing category %s", want)
 		}
+	}
+}
+
+func TestHookDoesNothingWithoutProjectDir(t *testing.T) {
+	// A policy in the process directory must not leak into offline tools that
+	// run Route without a hook invocation (benchmark, try).
+	dir := t.TempDir()
+	write(t, dir, `{"version":1,"min_tier":"frontier"}`)
+	old, _ := os.Getwd()
+	if err := os.Chdir(dir); err != nil {
+		t.Skip("cannot chdir")
+	}
+	defer os.Chdir(old)
+	d := core.Route("rename the variable userId to accountId in auth.ts", "claude-code", "")
+	if d.PolicyFloor || d.Tier != core.TierSmall {
+		t.Fatalf("no project dir must mean no floor, got tier %v floor %v", d.Tier, d.PolicyFloor)
+	}
+}
+
+func TestHookAppliesFloorInsideProjectDir(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, `{"version":1,"min_tier":"frontier"}`)
+	defer hookctx.SetProjectDir(dir)()
+	d := core.Route("rename the variable userId to accountId in auth.ts", "claude-code", "")
+	if !d.PolicyFloor || d.Tier != core.TierFrontier {
+		t.Fatalf("expected frontier floor, got tier %v floor %v", d.Tier, d.PolicyFloor)
 	}
 }

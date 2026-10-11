@@ -8,7 +8,6 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
-	"github.com/tiagovilasboas/downshift/internal/policyfile"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
@@ -38,6 +37,9 @@ type Output struct {
 	Decision  string          `json:"decision"`
 	Overwrite json.RawMessage `json:"overwrite,omitempty"`
 }
+
+// ProjectDir returns the working directory the harness reported, if any.
+func (ev Event) ProjectDir() string { return ev.Cwd }
 
 func (ev Event) TaskText() string {
 	var ti map[string]any
@@ -92,7 +94,6 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		currentModel := hookutil.StringField(subagent, "Model")
 		decision := core.Route(prompt, harnessID, currentModel, res)
 		decision.RequestedID = currentModel
-		policyfile.ApplyFloor(&decision, ev.Cwd, currentModel, res)
 		decision.SessionUnknown = !session.Known
 		decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
 		if session.Usage != nil {

@@ -40,6 +40,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/models"
 	"github.com/tiagovilasboas/downshift/internal/paths"
+	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 	_ "github.com/tiagovilasboas/downshift/internal/routeadapt"
 	"github.com/tiagovilasboas/downshift/internal/routingv2/classifier"
 	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
@@ -234,6 +235,16 @@ func runHookAdapter[E any](
 	if identified, ok := any(ev).(interface{ CorrelationIdentifier() string }); ok {
 		correlationID = telemetry.CorrelationIDOrNew(identified.CorrelationIdentifier())
 	}
+	// One shared seam for project context: adapters only say where their
+	// payload keeps the working directory (optional ProjectDir method).
+	projectDir := ""
+	if p, ok := any(ev).(interface{ ProjectDir() string }); ok {
+		projectDir = p.ProjectDir()
+	}
+	if projectDir == "" {
+		projectDir, _ = os.Getwd()
+	}
+	defer hookctx.SetProjectDir(projectDir)()
 	out, note, decision := handle(ev)
 	// Control-group mode for before/after comparison: classify as usual
 	// but allow the spawn untouched, recording the decision as a

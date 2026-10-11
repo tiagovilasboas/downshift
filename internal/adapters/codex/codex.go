@@ -21,7 +21,6 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
-	"github.com/tiagovilasboas/downshift/internal/policyfile"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
@@ -52,6 +51,9 @@ type Event struct {
 // SessionIdentifier exposes Codex's stable session ID to the shared hook
 // runner without coupling core routing decisions to harness metadata.
 func (ev Event) SessionIdentifier() string { return ev.SessionID }
+
+// ProjectDir returns the working directory the harness reported, if any.
+func (ev Event) ProjectDir() string { return ev.Cwd }
 
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
 func (ev Event) CorrelationIdentifier() string { return ev.CorrelationID }
@@ -137,7 +139,6 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 	decision.RequestedID = currentModel
-	policyfile.ApplyFloor(&decision, ev.Cwd, currentModel, res)
 
 	session := core.ResolveSessionForID(harnessID, ev.SessionID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)

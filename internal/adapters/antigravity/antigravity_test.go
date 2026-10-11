@@ -11,6 +11,8 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
+	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 )
 
 // stubResolver is a minimal core.Resolver modeling an Antigravity-native
@@ -392,6 +394,7 @@ func writeFloorPolicy(t *testing.T, dir, tier string) {
 func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
 	dir := t.TempDir()
 	writeFloorPolicy(t, dir, "frontier")
+	t.Cleanup(hookctx.SetProjectDir(dir))
 	ev := antigravity.Event{
 		Cwd: dir,
 		ToolCall: antigravity.ToolCall{

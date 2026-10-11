@@ -17,7 +17,17 @@ import (
 	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
 )
+
+func init() {
+	core.TierFloorHook = func(d *core.Decision, currentModelID string, r core.Resolver) {
+		// Only inside a hook invocation: no project directory, no floor.
+		if dir := hookctx.ProjectDir(); dir != "" {
+			ApplyFloor(d, dir, currentModelID, r)
+		}
+	}
+}
 
 const (
 	// RelPath is the policy file location relative to a project directory.

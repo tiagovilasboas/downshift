@@ -161,6 +161,9 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 	for _, v := range report.Violations {
 		d.Corrections = append(d.Corrections, v.Rule)
 	}
+	// The operator floor runs before adapt memory so the shadow comparison
+	// sees the final tier.
+	applyTierFloor(&d, currentModelID, res)
 	applyAdaptMemory(prompt, &d, res)
 	return d
 }

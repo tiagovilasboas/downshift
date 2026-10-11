@@ -12,6 +12,8 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
+	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 )
 
 var cat = catalog.Load()
@@ -443,6 +445,7 @@ func writeFloorPolicy(t *testing.T, dir, tier string) {
 func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
 	dir := t.TempDir()
 	writeFloorPolicy(t, dir, "mid")
+	t.Cleanup(hookctx.SetProjectDir(dir))
 	ev := codex.Event{
 		ToolName: "spawn_agent",
 		Model:    catID(core.TierFrontier),

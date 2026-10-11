@@ -14,6 +14,8 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
+	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
@@ -513,6 +515,7 @@ func writeFloorPolicy(t *testing.T, dir, tier string) {
 func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
 	dir := t.TempDir()
 	writeFloorPolicy(t, dir, "mid")
+	t.Cleanup(hookctx.SetProjectDir(dir))
 	frontierID := catID(core.TierFrontier)
 	ev := cursor.Event{
 		ToolName: "Task",

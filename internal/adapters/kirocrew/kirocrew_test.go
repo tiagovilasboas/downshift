@@ -13,6 +13,8 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/hookctx"
+	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 )
 
 var cat = catalog.Load()
@@ -201,6 +203,7 @@ func writeFloorPolicy(t *testing.T, dir, tier string) {
 func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
 	dir := t.TempDir()
 	writeFloorPolicy(t, dir, "mid")
+	t.Cleanup(hookctx.SetProjectDir(dir))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	ev := spawnEvent("rename the userId variable to userIdentifier", frontierID)
 	ev.Cwd = dir
