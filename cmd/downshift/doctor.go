@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
@@ -58,6 +59,27 @@ func runDoctor(w io.Writer, cat *catalog.Catalog) int {
 		fmt.Fprintf(w, "semantic_boost: in-process hash embedder (default, zero-dependency)\n")
 	}
 
+	if note := subagentModelEnvNote(os.Getenv); note != "" {
+		fmt.Fprintln(w, note)
+	}
+
 	_ = cat // reserved for future: effective harness count, shadow flag, etc.
 	return 0
+}
+
+// subagentModelEnvNote reports CLAUDE_CODE_SUBAGENT_MODEL when it is set.
+// A harness-level model setting can take precedence over a hook's
+// updatedInput.model, which would make a Downshift rewrite a silent no-op.
+// This is reported by a third-party router and not verified here, so the
+// wording stays conditional. Nothing about routing changes.
+func subagentModelEnvNote(getenv func(string) string) string {
+	const name = "CLAUDE_CODE_SUBAGENT_MODEL"
+	v := strings.TrimSpace(getenv(name))
+	if v == "" {
+		return ""
+	}
+	if len(v) > 64 {
+		v = v[:64] + "..."
+	}
+	return fmt.Sprintf("subagent_model_env: %s=%s; Claude Code may apply it instead of a Downshift rewrite (not verified here). Check the resolved model with the post-tool-use hook.", name, v)
 }
