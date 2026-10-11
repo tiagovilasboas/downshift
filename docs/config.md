@@ -52,7 +52,17 @@ directory or any parent (nearest file wins, at most 8 levels up). A floor only
 - Risk categories are the names in `internal/core/risk.go` (for example `secret`, `payment`, `destructive`).
 - The highest applicable rule wins.
 - Fail-open: a missing, oversized, symlinked or invalid file (unknown field, tier, class or category) is ignored and the spawn routes as if there were no file. The floor still goes through the session allowlist and quota gates, so it cannot select a model the session does not offer.
-- The hook runner uses the payload's `cwd` field when the harness sends one, and the hook process's working directory otherwise. Offline commands such as `benchmark` and `try` have no project directory and never read a policy file. Which harnesses send `cwd` has not been verified here; if yours does not, run the hook from the project directory.
+- The hook runner takes the project directory from the payload, and falls back to the hook process's working directory when the payload has none. Offline commands such as `benchmark` and `try` have no project directory and never read a policy file. Where each harness keeps it (evidence level, 2026-10-11):
+
+  | Harness | Payload field | Evidence |
+  |---|---|---|
+  | Claude Code | `cwd` | Documented by the vendor |
+  | Cursor | `cwd`, else first `workspace_roots` | Third-party and forum reports only; `cwd` is reported empty in places |
+  | Codex | `cwd` | Third-party guides only |
+  | Antigravity | `cwd`, else first `workspacePaths` | IDE docs for `workspacePaths`; CLI `cwd` from a third-party guide |
+  | KiroCrew | `cwd` | Search summary of the vendor page; the Crew hook payload has no captured sample |
+
+  Only Claude Code is confirmed. For the others, capture a real payload under `docs/evidence/` before relying on the floor; if the field is absent the floor is looked up from the process directory, so run the hook from the project directory.
 - A floor changes nothing when the current model already sits at that tier. Where a harness does not honor model rewrites (see the harness matrix), the floor stops a downshift from being attempted but cannot force the model.
 
 ## Migrating from `~/.harness-downshift`

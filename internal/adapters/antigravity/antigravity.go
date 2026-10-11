@@ -22,6 +22,9 @@ type Event struct {
 	ToolCall ToolCall `json:"toolCall"`
 	// Cwd is the working directory, used to find a project policy file.
 	Cwd string `json:"cwd,omitempty"`
+	// WorkspacePaths is the IDE hook field for the open workspaces; fallback
+	// source for the project directory when cwd is absent.
+	WorkspacePaths []string `json:"workspacePaths,omitempty"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// ResolveSession falls back to the user file when both are nil.
 	SessionModels   *[]string `json:"session_models,omitempty"`
@@ -39,7 +42,15 @@ type Output struct {
 }
 
 // ProjectDir returns the working directory the harness reported, if any.
-func (ev Event) ProjectDir() string { return ev.Cwd }
+func (ev Event) ProjectDir() string {
+	if ev.Cwd != "" {
+		return ev.Cwd
+	}
+	if len(ev.WorkspacePaths) > 0 {
+		return ev.WorkspacePaths[0]
+	}
+	return ""
+}
 
 func (ev Event) TaskText() string {
 	var ti map[string]any

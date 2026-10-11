@@ -410,3 +410,19 @@ func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
 		t.Errorf("subagents = %v, want one on pro (frontier)", subs)
 	}
 }
+
+func TestProjectDirFallsBackToWorkspacePaths(t *testing.T) {
+	if got := (antigravity.Event{Cwd: "/a", WorkspacePaths: []string{"/b"}}).ProjectDir(); got != "/a" {
+		t.Errorf("cwd must win, got %q", got)
+	}
+	if got := (antigravity.Event{WorkspacePaths: []string{"/b", "/c"}}).ProjectDir(); got != "/b" {
+		t.Errorf("fallback must use the first workspace path, got %q", got)
+	}
+	if got := (antigravity.Event{}).ProjectDir(); got != "" {
+		t.Errorf("no source must yield empty, got %q", got)
+	}
+	var ev antigravity.Event
+	if err := json.Unmarshal([]byte(`{"workspacePaths":["/w"]}`), &ev); err != nil || ev.ProjectDir() != "/w" {
+		t.Errorf("workspacePaths must parse from the payload, got %q (%v)", ev.ProjectDir(), err)
+	}
+}

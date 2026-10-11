@@ -22,12 +22,15 @@ const harnessID = "cursor"
 type Event struct {
 	HookEventName string `json:"hook_event_name"`
 	// Cwd is the working directory, used to find a project policy file.
-	Cwd           string          `json:"cwd,omitempty"`
-	CorrelationID string          `json:"correlation_id,omitempty"`
-	ToolName      string          `json:"tool_name"`
-	ToolInput     json.RawMessage `json:"tool_input"`
-	Model         string          `json:"model"`
-	ModelID       string          `json:"model_id"`
+	Cwd string `json:"cwd,omitempty"`
+	// WorkspaceRoots is reported by Cursor hooks; cwd is documented but reported
+	// empty in places, so it is the fallback source for the project directory.
+	WorkspaceRoots []string        `json:"workspace_roots,omitempty"`
+	CorrelationID  string          `json:"correlation_id,omitempty"`
+	ToolName       string          `json:"tool_name"`
+	ToolInput      json.RawMessage `json:"tool_input"`
+	Model          string          `json:"model"`
+	ModelID        string          `json:"model_id"`
 	// SessionModels and AvailableModels are optional hook allowlists.
 	// Nil means the payload did not include a list. A non-nil slice is
 	// the session and skips the user file. Cursor's preToolUse payload
@@ -42,7 +45,15 @@ type Event struct {
 }
 
 // ProjectDir returns the working directory the harness reported, if any.
-func (ev Event) ProjectDir() string { return ev.Cwd }
+func (ev Event) ProjectDir() string {
+	if ev.Cwd != "" {
+		return ev.Cwd
+	}
+	if len(ev.WorkspaceRoots) > 0 {
+		return ev.WorkspaceRoots[0]
+	}
+	return ""
+}
 
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
 func (ev Event) CorrelationIdentifier() string { return ev.CorrelationID }

@@ -534,3 +534,24 @@ func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
 		t.Errorf("model = %v, want %s", m["model"], catID(core.TierMid))
 	}
 }
+
+func TestProjectDirFallsBackToWorkspaceRoots(t *testing.T) {
+	cases := []struct {
+		name string
+		ev   cursor.Event
+		want string
+	}{
+		{"cwd wins", cursor.Event{Cwd: "/a", WorkspaceRoots: []string{"/b"}}, "/a"},
+		{"empty cwd uses first root", cursor.Event{Cwd: "", WorkspaceRoots: []string{"/b", "/c"}}, "/b"},
+		{"none", cursor.Event{}, ""},
+	}
+	for _, c := range cases {
+		if got := c.ev.ProjectDir(); got != c.want {
+			t.Errorf("%s: ProjectDir() = %q, want %q", c.name, got, c.want)
+		}
+	}
+	var ev cursor.Event
+	if err := json.Unmarshal([]byte(`{"workspace_roots":["/w"]}`), &ev); err != nil || ev.ProjectDir() != "/w" {
+		t.Errorf("workspace_roots must parse from the payload, got %q (%v)", ev.ProjectDir(), err)
+	}
+}
