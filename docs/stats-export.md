@@ -68,3 +68,5 @@ the baseline is a counterfactual, not a second measured execution.
 token sum and how many usage records contributed. They are not billing; pair
 `observed_child_usage == 0` with "unobserved" in reports, never as zero tokens
 observed.
+
+`policy_floor` counts decisions an operator tier floor raised (`.downshift/policy.json`, see [config.md](config.md)); it is recorded by the shared runner for every harness.

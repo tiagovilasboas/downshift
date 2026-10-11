@@ -20,7 +20,8 @@ import (
 // routed to the floor tier instead of the small tier.
 func TestHookE2E_ProjectFloorThroughSharedRunner(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	t.Setenv("DOWNSHIFT_EVENT_LOG", filepath.Join(t.TempDir(), "events.jsonl"))
+	eventLog := filepath.Join(t.TempDir(), "events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)
 	smallID := cmdCat.ModelFor("cursor", core.TierSmall).ID
 	midID := cmdCat.ModelFor("cursor", core.TierMid).ID
 	frontierID := cmdCat.ModelFor("cursor", core.TierFrontier).ID
@@ -69,5 +70,18 @@ func TestHookE2E_ProjectFloorThroughSharedRunner(t *testing.T) {
 	}
 	if got := run(t.TempDir()); got != smallID {
 		t.Errorf("without policy: model = %s, want small %s", got, smallID)
+	}
+
+	// Telemetry marks only the decision the floor raised.
+	raw, err := os.ReadFile(eventLog)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := bytes.Split(bytes.TrimSpace(raw), []byte("\n"))
+	if len(lines) != 2 {
+		t.Fatalf("want 2 events, got %d", len(lines))
+	}
+	if !bytes.Contains(lines[0], []byte(`"policy_floor":true`)) || bytes.Contains(lines[1], []byte("policy_floor")) {
+		t.Errorf("policy_floor must be recorded only on the raised decision:\n%s", raw)
 	}
 }

@@ -61,6 +61,9 @@ type Event struct {
 	// not a guardrail correction. Exhausted and stale status are holds
 	// without this flag.
 	CreditHeld bool `json:"credit_held,omitempty"`
+	// PolicyFloor records that an operator tier floor raised this decision
+	// above the classifier tier. Absent on old logs and when no floor applied.
+	PolicyFloor bool `json:"policy_floor,omitempty"`
 
 	// Optional real-cost fields (nil = provider usage not tracked for this event).
 	// When absent, fall back to the normalised estimate above; never fake dollars.
@@ -290,6 +293,7 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		QuotaStatus:      d.QuotaStatus,
 		QuotaSource:      d.QuotaSource,
 		CreditHeld:       d.CreditHeld,
+		PolicyFloor:      d.PolicyFloor,
 	}
 	if len(d.Corrections) > 0 {
 		ev.SafeVerdict = d.SafeVerdict.String()
@@ -446,6 +450,9 @@ type Stats struct {
 	UsageRecords int
 	UsageLinked  int
 	Baseline     int
+
+	// PolicyFloor counts decisions an operator tier floor raised.
+	PolicyFloor int
 
 	// Corrected counts events where a guardrail held the decision: the
 	// classified verdict stands in the log, but adapters applied the safe
@@ -605,6 +612,9 @@ func Aggregate(events []Event) Stats {
 			continue
 		}
 		s.Total++
+		if ev.PolicyFloor {
+			s.PolicyFloor++
+		}
 		s.ByComplexity[ev.Complexity]++
 		applied := AppliedRewrite(ev.Outcome, ev.Corrections)
 		switch {
@@ -704,6 +714,9 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	fmt.Fprintf(w, "  Not applied         %8d  %5.1f%%  (classified shift, spawn unchanged: allow/held/blocked)\n", s.NotApplied, pct(s.NotApplied, s.Total))
 	fmt.Fprintf(w, "  Unchanged (OK)      %8d  %5.1f%%\n", s.OK, pct(s.OK, s.Total))
 	fmt.Fprintf(w, "  Unknown             %8d  %5.1f%%\n", s.Unknown, pct(s.Unknown, s.Total))
+	if s.PolicyFloor > 0 {
+		fmt.Fprintf(w, "  Raised by project floor %6d  %5.1f%%  (.downshift/policy.json)\n", s.PolicyFloor, pct(s.PolicyFloor, s.Total))
+	}
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "By complexity\n")
 	for _, cls := range []string{"TRIVIAL", "SIMPLE", "MEDIUM", "COMPLEX"} {

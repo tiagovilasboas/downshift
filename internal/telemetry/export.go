@@ -31,6 +31,7 @@ type Summary struct {
 	Unknown             int            `json:"unknown"`
 	Corrected           int            `json:"corrected"`
 	NotApplied          int            `json:"not_applied"`
+	PolicyFloor         int            `json:"policy_floor"`
 	ActualCostEvents    int            `json:"actual_cost_events"`
 	ActualCostUSD       float64        `json:"actual_cost_usd"`
 	RealCostEvents      int            `json:"real_cost_events"`
@@ -85,6 +86,7 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		Unknown:             stats.Unknown,
 		Corrected:           stats.Corrected,
 		NotApplied:          stats.NotApplied,
+		PolicyFloor:         stats.PolicyFloor,
 		ActualCostEvents:    stats.ActualCostEvents,
 		ActualCostUSD:       stats.ActualCostUSD,
 		RealCostEvents:      stats.RealCostEvents,
