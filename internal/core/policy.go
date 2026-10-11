@@ -85,6 +85,9 @@ type Decision struct {
 	// AdaptWouldSet is false when memory is absent or agrees with Tier.
 	AdaptWould    Tier
 	AdaptWouldSet bool
+	// PolicyFloor is true when an operator tier floor (internal/policyfile)
+	// raised Tier above what the classifier chose.
+	PolicyFloor bool
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -160,6 +163,30 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 	}
 	applyAdaptMemory(prompt, &d, res)
 	return d
+}
+
+// RaiseTier lifts the decision to at least tier t and recomputes everything
+// derived from the tier: effort, recommended model, verdict against the current
+// model, and the self-correction check. It never lowers a tier and reports
+// whether it changed anything. currentModelID is the model in the payload, the
+// same value passed to Route.
+func (d *Decision) RaiseTier(t Tier, currentModelID string, r Resolver) bool {
+	if t <= d.Tier {
+		return false
+	}
+	d.Tier = t
+	d.Effort = EffortFor(t)
+	d.Model = resolveModel(d.Harness, t, r)
+	d.Verdict, d.Savings, d.CurrentModel = compareToCurrentModel(d.Harness, currentModelID, d.Model, r)
+	d.PolicyFloor = true
+	d.Corrections = nil
+	report := Check(*d)
+	d.SafeVerdict = report.Safe
+	d.Checked = true
+	for _, v := range report.Violations {
+		d.Corrections = append(d.Corrections, v.Rule)
+	}
+	return true
 }
 
 // classifyTask classifies the prompt once (regex, semantic boost, risk floor,
