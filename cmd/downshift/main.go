@@ -59,7 +59,7 @@ var errHookReadTimeout = errors.New("hook input timeout")
 func main() {
 	args := os.Args[1:]
 	if len(args) == 0 {
-		usage(os.Stderr)
+		usageShort(os.Stderr)
 		os.Exit(2)
 	}
 
@@ -129,11 +129,15 @@ func main() {
 	case "version", "--version":
 		os.Exit(runVersion(os.Stdout))
 	case "-h", "--help", "help":
-		usage(os.Stdout)
+		if wantsAllHelp(args[1:]) {
+			usage(os.Stdout)
+		} else {
+			usageShort(os.Stdout)
+		}
 		os.Exit(0)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", args[0])
-		usage(os.Stderr)
+		usageShort(os.Stderr)
 		os.Exit(2)
 	}
 }

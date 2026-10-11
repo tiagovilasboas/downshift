@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `downshift help` now shows only the commands a user needs, grouped by task; `downshift help --all` lists every command, including maintainer tools. No command was renamed or removed.
+
 ### Added
 
 - Test that `Route` is a fixed point on its own output (hook coexistence).
