@@ -70,3 +70,7 @@ token sum and how many usage records contributed. They are not billing; pair
 observed.
 
 `policy_floor` counts decisions an operator tier floor raised (`.downshift/policy.json`, see [config.md](config.md)); it is recorded by the shared runner for every harness.
+
+`baseline_source` on cost events is `requested` when the baseline is the model the harness asked for. No other source is produced yet, so the field is always `requested` or absent.
+
+`child_ended` events record how a Claude Code Agent/Task child ended. Their `child_status` is one of `completed`, `launched`, `interrupted`, `error`, `stopped` or `unknown`. They are observations, not decisions: they never change `total`, the verdict counts or savings. The error text is never stored. Recording them requires `claude-code-post-tool-use` registered under `PostToolUseFailure` as well as `PostToolUse`; the failure payload was documented but not captured from a real session, so the field names should be checked against one before relying on them.

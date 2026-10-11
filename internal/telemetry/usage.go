@@ -60,7 +60,7 @@ const (
 // record rather than a routing decision. Cost records must never inflate
 // decision counts in Aggregate.
 func IsCostOnlyOutcome(outcome string) bool {
-	return outcome == OutcomeUsage || outcome == OutcomeBaseline || outcome == OutcomeResolved
+	return outcome == OutcomeUsage || outcome == OutcomeBaseline || outcome == OutcomeResolved || outcome == OutcomeChildEnded
 }
 
 // DecisionKey identifies a decision event for post-hoc linkage: its
@@ -147,6 +147,10 @@ func numberToInt64(v any) int64 {
 	}
 }
 
+// BaselineRequested marks a baseline taken from the model the harness asked
+// for. It is the only source produced today; other sources need a reviewed design.
+const BaselineRequested = "requested"
+
 // FillRealCost prices the token usage already stored on ev and fills both
 // cost pointers via CostUSD. Usage is read with TokenUsageOrZero, so missing
 // or negative token fields contribute zero, never garbage.
@@ -164,4 +168,5 @@ func FillRealCost(ev *Event, baseline, routed core.Model) {
 	base := CostUSD(baseline, usage)
 	ev.ActualCostUSD = &actual
 	ev.BaselineCostUSD = &base
+	ev.BaselineSource = BaselineRequested
 }

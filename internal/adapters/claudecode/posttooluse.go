@@ -224,6 +224,7 @@ func buildUsageEvent(usage telemetry.TokenUsage, payloadModel, sessionHash, bina
 		if baseline, ok := r.LookupByID(harnessID, target.FromModel); ok {
 			base := telemetry.CostUSD(baseline, usage)
 			ev.BaselineCostUSD = &base
+			ev.BaselineSource = telemetry.BaselineRequested
 		}
 	}
 	return ev
@@ -249,6 +250,7 @@ func HandlePostToolUse(raw []byte, binaryVersion string, r core.Resolver) (Outpu
 	now := time.Now().UTC()
 	prior, _ := telemetry.ReadEvents() // missing/unreadable log: link nothing
 	recordResolved(payload, sessionHash, binaryVersion, prior, r, now)
+	recordChildEnd(payload, sessionHash, binaryVersion, prior, now)
 
 	// Context Sensor observation: track tool execution volume safely without prompt text
 	recordSensorToolObservation(payload, sessionHash)
@@ -374,4 +376,45 @@ func exitCodeField(resp map[string]any) (int, bool) {
 		return int(n), true
 	}
 	return -1, false
+}
+
+// recordChildEnd records how a spawned child ended (E8). It runs for PostToolUse
+// (completed or async_launched) and PostToolUseFailure (error or interrupted) on
+// Agent/Task calls only. Only the closed status is stored: the error text and any
+// tool output are never read, so nothing prompt-like reaches telemetry.
+func recordChildEnd(payload map[string]any, sessionHash, binaryVersion string, prior []telemetry.Event, now time.Time) {
+	tool := stringFieldAny(payload, "tool_name")
+	if tool != "Agent" && tool != "Task" || sessionHash == "" {
+		return
+	}
+	toolStatus := ""
+	if resp, ok := payload["tool_response"].(map[string]any); ok {
+		toolStatus, _ = resp["status"].(string)
+	}
+	isInterrupt, _ := payload["is_interrupt"].(bool)
+	status := telemetry.ClassifyChildEnd(stringFieldAny(payload, "hook_event_name"), toolStatus, isInterrupt)
+	if status == telemetry.ChildUnknown {
+		return
+	}
+	target := linkTargetBy(prior, sessionHash, "", now, telemetry.OutcomeChildEnded)
+	if target == nil || !telemetry.IsAppliedShift(*target) {
+		return
+	}
+	telemetry.Record(telemetry.Event{
+		CorrelationID:  telemetry.NewCorrelationID(),
+		Timestamp:      now.UTC().Format(time.RFC3339Nano),
+		Source:         "hook",
+		Agent:          "subagent",
+		Harness:        target.Harness,
+		Outcome:        telemetry.OutcomeChildEnded,
+		PolicyVersion:  telemetry.PolicyVersion,
+		BinaryVersion:  binaryVersion,
+		Verdict:        "UNKNOWN",
+		FromModel:      target.ToModel,
+		ToModel:        telemetry.ModelOrUnknown(""),
+		SessionID:      target.SessionID,
+		LinkedDecision: decisionKey(*target),
+		AgentHash:      telemetry.HashSessionID(agentID(payload)),
+		ChildStatus:    status,
+	})
 }

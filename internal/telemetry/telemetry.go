@@ -72,6 +72,11 @@ type Event struct {
 	CachedTokens    *int64   `json:"cached_tokens,omitempty"`     // provider-reported cached input tokens
 	ActualCostUSD   *float64 `json:"actual_cost_usd,omitempty"`   // real routed cost in USD
 	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"` // real baseline cost in USD
+	// BaselineSource says where the baseline model came from: "requested" (the
+	// model the harness asked for). Absent when no baseline was computed.
+	BaselineSource string `json:"baseline_source,omitempty"`
+	// ChildStatus is set on child_ended events (see child_outcome.go).
+	ChildStatus ChildStatus `json:"child_status,omitempty"`
 
 	// Optional self-correction record. Verdict keeps the classified value;
 	// SafeVerdict carries the action adapters were allowed to apply, and
@@ -453,6 +458,8 @@ type Stats struct {
 
 	// PolicyFloor counts decisions an operator tier floor raised.
 	PolicyFloor int
+	// ChildStatus counts how children ended (child_ended events), by status.
+	ChildStatus map[ChildStatus]int
 
 	// Corrected counts events where a guardrail held the decision: the
 	// classified verdict stands in the log, but adapters applied the safe
@@ -564,7 +571,7 @@ func FilterByDays(events []Event, days int) []Event {
 
 // Aggregate computes Stats from a slice of events.
 func Aggregate(events []Event) Stats {
-	s := Stats{ByComplexity: make(map[string]int)}
+	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int)}
 	// Build the index before counting: exported windows may arrive out of order.
 	type linkKey struct {
 		harness, decision string
@@ -580,6 +587,10 @@ func Aggregate(events []Event) Stats {
 		if ev.Outcome != OutcomeResolved && ev.Outcome != OutcomeBaseline && ev.ActualCostUSD != nil {
 			s.ActualCostEvents++
 			s.ActualCostUSD += *ev.ActualCostUSD
+		}
+		if ev.Outcome == OutcomeChildEnded && ev.ChildStatus != "" {
+			s.ChildStatus[ev.ChildStatus]++
+			continue // how a child ended: an observation, not a decision or cost
 		}
 		if ev.Outcome == OutcomeResolved {
 			continue // an observation about an earlier decision, not a cost or a decision

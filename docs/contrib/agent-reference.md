@@ -64,3 +64,15 @@ Every other harness gets a port with nil functions, so the stage stays "unobserv
 borrowing another harness's payload. To add a harness: implement its `hookport.Port`, register it,
 then document its hook command. These observations feed the honest telemetry and real-cost pillars
 in `docs/beta-exit.md` (P1, P3), so keep the seam.
+
+## Child end status and baseline source (E8, E7)
+
+- `child_ended` (`internal/telemetry/child_outcome.go`): a closed `ChildStatus` from
+  `ClassifyChildEnd(event, tool_response.status, is_interrupt)`. The error text is
+  never read. Recorded by `recordChildEnd` in the Claude Code adapter for Agent/Task
+  calls only. It is in `IsCostOnlyOutcome` and skipped in `Aggregate` before the
+  decision count, so it can never move `total`.
+- `baseline_source`: set to `requested` wherever a baseline cost is computed. The
+  constant `telemetry.BaselineRequested` is the only producer. `inferred` and
+  `declared` are not produced; adding one needs a reviewed design, and `inferred`
+  must stay out of headline totals by default.
