@@ -29,6 +29,9 @@ type HarnessCapabilities struct {
 	// TranscriptQuota means quota can be collected from an explicit local
 	// transcript (`quota collect --transcript`).
 	TranscriptQuota bool
+	// SingleModelReasoning means the harness runs one model and exposes only
+	// reasoning effort as a knob, so `try` reports an effort, not a model.
+	SingleModelReasoning bool
 }
 
 // Per-harness capability table. Adapters import these instead of
@@ -57,6 +60,11 @@ var (
 	// the alias and writes it only when the session plan allows a rewrite.
 	// Effort is not supported: there is no reasoning-effort field.
 	AntigravityCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false}
+
+	// GrokCaps — one model with configurable reasoning in config.toml; there
+	// is no hook, so it is deliberately not in AllHarnessCaps (doctor output
+	// is unchanged).
+	GrokCaps = HarnessCapabilities{SingleModelReasoning: true}
 )
 
 // AllHarnessCaps lists every declared harness in a stable order, so shared

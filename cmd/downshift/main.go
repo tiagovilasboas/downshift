@@ -27,10 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
-	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
-	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
-	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
 	"github.com/tiagovilasboas/downshift/internal/benchmark"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
@@ -72,23 +68,11 @@ func main() {
 	// user file is invalid, the embedded catalog is used automatically.
 	catalog := catalog.Load()
 
+	if h, ok := harnessRegistry[args[0]]; ok && h.Hook != nil {
+		os.Exit(h.Hook(os.Stdin, catalog))
+	}
+
 	switch args[0] {
-	case "antigravity":
-		os.Exit(runHookAdapter(
-			os.Stdin,
-			func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) },
-			func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, catalog) },
-			func() { fmt.Println(`{"decision":"allow"}`) },
-			func(e antigravity.Event) string { return e.TaskText() },
-		))
-	case "claude-code":
-		os.Exit(runHookAdapter(
-			os.Stdin,
-			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
-			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, catalog) },
-			printAllow,
-			func(e claudecode.Event) string { return e.TaskText() },
-		))
 	case "honor":
 		if len(args) != 2 {
 			fmt.Fprint(os.Stderr, "usage: downshift honor <harness>\n")
@@ -105,24 +89,6 @@ func main() {
 		os.Exit(runHonor(os.Stdin, portFor("claude-code"), catalog))
 	case "claude-code-subagent-stop":
 		os.Exit(runUsage(os.Stdin, portFor("claude-code"), catalog))
-	case "cursor":
-		os.Exit(runHookAdapter(
-			os.Stdin,
-			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
-			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, catalog) },
-			printCursorAllow,
-			func(e cursor.Event) string { return e.TaskText() },
-		))
-	case "codex":
-		os.Exit(runHookAdapter(
-			os.Stdin,
-			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
-			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, catalog) },
-			printCodexAllow,
-			func(e codex.Event) string { return e.TaskText() },
-		))
-	case "kirocrew":
-		os.Exit(runKiroCrewHook(os.Stdin, catalog))
 	case "serve":
 		// Find web/ next to the binary, then fall back to CWD/web
 		exe, _ := os.Executable()
@@ -325,16 +291,12 @@ func runHookAdapter[E any](
 
 // hookPorts registers honor and usage only when that harness's own hook
 // sends the field. Do not copy another harness's payload into this map.
-var hookPorts = map[string]hookport.Port{
-	"claude-code": claudecode.Port(),
-}
-
 // portFor returns the registered observation port. An unknown harness gets
 // nil funcs so the stage stays unobserved instead of borrowing another
 // harness's payload fields.
 func portFor(id string) hookport.Port {
-	if p, ok := hookPorts[id]; ok {
-		return p
+	if e, ok := harnessRegistry[id]; ok && e.Port != nil {
+		return *e.Port
 	}
 	return hookport.Port{ID: id}
 }
@@ -545,7 +507,7 @@ func runTry(resolver core.Resolver, args []string) int {
 
 	// Grok uses a single model with configurable reasoning — report effort
 	// instead of a model ID, and point at the config-based mechanism.
-	if harness == "grok" {
+	if harnessRegistry[harness].Caps.SingleModelReasoning {
 		cls := core.Classify(prompt)
 		tier := cls.Complexity.Tier()
 		effort := core.EffortFor(tier)
@@ -609,7 +571,13 @@ func knownTryHarness(resolver core.Resolver, harness string) bool {
 }
 
 func validTryHarnesses(resolver core.Resolver) []string {
-	names := map[string]struct{}{"grok": {}}
+	names := map[string]struct{}{}
+	for _, id := range harnessIDs() {
+		names[id] = struct{}{}
+	}
+	for _, c := range core.AllHarnessCaps() {
+		names[c.Harness] = struct{}{}
+	}
 	if reader, ok := resolver.(catalogEntryReader); ok {
 		for _, entry := range reader.Entries() {
 			if entry.Harness != "" {
@@ -637,81 +605,11 @@ type tryResult struct {
 // reports exactly what the hook would do, including the session allowlist
 // and every guardrail. known is false for a harness without an adapter.
 func tryHook(harness, prompt, current string, catalog core.Resolver) (tryResult, bool) {
-	input := func(promptKey string) json.RawMessage {
-		m := map[string]any{promptKey: prompt}
-		if current != "" {
-			m["model"] = current
-		}
-		raw, _ := json.Marshal(m)
-		return raw
-	}
-	written := func(raw json.RawMessage, key string) string {
-		if len(raw) == 0 {
-			return ""
-		}
-		var m map[string]any
-		if json.Unmarshal(raw, &m) != nil {
-			return ""
-		}
-		v, _ := m[key].(string)
-		return v
-	}
-	switch harness {
-	case "claude-code":
-		out, _, d := claudecode.Handle(claudecode.Event{ToolName: "Task", ToolInput: input("prompt")}, catalog)
-		r := tryResult{decision: d}
-		if out.HookSpecificOutput != nil {
-			if w := written(out.HookSpecificOutput.UpdatedInput, "model"); w != current {
-				r.written = w
-			}
-		}
-		return r, true
-	case "cursor":
-		out, _, d := cursor.Handle(cursor.Event{ToolName: "Task", ToolInput: input("task")}, catalog)
-		r := tryResult{decision: d}
-		if w := written(out.UpdatedInput, "model"); w != current {
-			r.written = w
-		}
-		return r, true
-	case "codex":
-		out, _, d := codex.Handle(codex.Event{ToolName: "spawn_agent", ToolInput: input("message")}, catalog)
-		r := tryResult{decision: d}
-		if out.HookSpecificOutput != nil {
-			if w := written(out.HookSpecificOutput.UpdatedInput, "model"); w != current {
-				r.written = w
-			}
-			r.effort = written(out.HookSpecificOutput.UpdatedInput, "reasoning_effort")
-		}
-		return r, true
-	case "kirocrew":
-		out, _, d := kirocrew.Handle(kirocrew.Event{ToolName: "spawn_run", ToolInput: input("task")}, catalog)
-		r := tryResult{decision: d, blocked: out.Block}
-		if out.Block {
-			r.written = d.Model.ID
-		}
-		return r, true
-	case "antigravity":
-		sub := map[string]any{"Prompt": prompt}
-		if current != "" {
-			sub["Model"] = current
-		}
-		args, _ := json.Marshal(map[string]any{"Subagents": []any{sub}})
-		out, _, d := antigravity.Handle(antigravity.Event{ToolCall: antigravity.ToolCall{Name: "invoke_subagent", Args: args}}, catalog)
-		r := tryResult{decision: d}
-		if len(out.Overwrite) > 0 {
-			var m struct {
-				Subagents []map[string]any `json:"Subagents"`
-			}
-			if json.Unmarshal(out.Overwrite, &m) == nil && len(m.Subagents) > 0 {
-				if w, _ := m.Subagents[0]["Model"].(string); w != current {
-					r.written = w
-				}
-			}
-		}
-		return r, true
-	default:
+	e, ok := harnessRegistry[harness]
+	if !ok || e.Try == nil {
 		return tryResult{}, false
 	}
+	return e.Try(prompt, current, catalog), true
 }
 
 // runModels dispatches the 'models' subcommands: list, check, pull.
