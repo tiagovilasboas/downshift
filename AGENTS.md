@@ -87,6 +87,8 @@ Every Go source file carries a copyright header:
 
 When creating new Go files: always include this header. Never remove it.
 
+**Exception:** evaluation fixtures under `internal/outcome/testdata/` carry no header. `stub.go` is pasted into the model prompt (`internal/outcome/outcome.go`), so a header would change what the suite measures.
+
 ### 3. Contributions
 
 By contributing, you license your contribution under Apache 2.0. See

@@ -5,6 +5,8 @@ Versions B and C are alternates for A/B tests or Product Hunt.
 
 Migration context: [rename.md](rename.md)
 
+> The links below are written relative to the repository root, for pasting into `README.md`. They do not resolve from this folder.
+
 ---
 
 ## Shared badges (update URLs after repo rename)
