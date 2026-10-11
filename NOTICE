@@ -7,3 +7,30 @@ This product includes software developed by Tiago de Carvalho Vilas Boas
 Previous public releases were distributed under the Business Source License 1.1.
 See LICENSE-BSL-1.1-ARCHIVE.md for the archived text. Effective 2026-10-06,
 new distributions use the Apache License, Version 2.0 (see LICENSE).
+
+Portions of internal/adapt/count_predictor.go are adapted from
+litellm/router_strategy/complexity_router/tier_predictor.py in BerriAI/litellm
+(commit 4b8a846), MIT License, Copyright (c) 2023 Berri AI. The MIT notice is
+retained below.
+
+MIT License
+
+Copyright (c) 2023 Berri AI
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Test that `Route` is a fixed point on its own output (hook coexistence).
 - `docs/evidence/vendor-hook-docs-2026-10-11.md`: vendor hook docs compared with the adapters.
+- `adapt.CountPredictor` (shrinkage adapted from BerriAI/litellm, MIT; see NOTICE) and evaluator policy `adapt_counts_loo`. Shadow-only.
 - Test that an empty hook stdin fails open in the shared runner.
 
 ### Changed

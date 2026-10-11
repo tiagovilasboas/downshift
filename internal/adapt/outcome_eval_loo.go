@@ -151,6 +151,7 @@ func EvalSharedShapeMemoryLOO(tasks []outcome.Task, runs []outcome.Run) (Outcome
 //	adapt_loo         start at the leave-one-task-out memory tier
 //	small_first       start at small
 //	frontier_only     start at frontier
+//	adapt_counts_loo  start at the count-based predictor tier, leave-one-task-out
 func EvalCost(tasks []outcome.Task, runs []outcome.Run, cm CostModel) ([]CostRow, error) {
 	if err := cm.Validate(); err != nil {
 		return nil, err
@@ -163,7 +164,7 @@ func EvalCost(tasks []outcome.Task, runs []outcome.Run, cm CostModel) ([]CostRow
 	prompts := promptByID(tasks)
 	global := BuildMemory(allEvents(shapes))
 
-	names := []string{"classifier", "adapt_in_sample", "adapt_loo", "small_first", "frontier_only"}
+	names := []string{"classifier", "adapt_in_sample", "adapt_loo", "small_first", "frontier_only", "adapt_counts_loo"}
 	rows := make([]CostRow, len(names))
 	for i, n := range names {
 		rows[i].Name = n
@@ -177,6 +178,7 @@ func EvalCost(tasks []outcome.Task, runs []outcome.Run, cm CostModel) ([]CostRow
 			AdjustTier(baseline, s.key, &loo),
 			TierSmall,
 			TierFrontier,
+			NewCountPredictor(looEvents(shapes, i), countPriorMass, countThreshold).RequiredTier(s.key),
 		}
 		for p, start := range starts {
 			if err := scoreAttempts(&rows[p], s.id, start, by, cm); err != nil {
@@ -208,6 +210,23 @@ func scoreAttempts(row *CostRow, id string, start Tier, by tierResults, cm CostM
 		}
 	}
 	return nil
+}
+
+// Count-predictor settings for the evaluator. Chosen for the tiny development
+// suite, not taken from upstream; they must be re-tuned on an independent suite.
+const (
+	countPriorMass = 2.0
+	countThreshold = 0.75
+)
+
+func looEvents(shapes []taskShape, skip int) []FeedbackEvent {
+	var out []FeedbackEvent
+	for i, s := range shapes {
+		if i != skip {
+			out = append(out, s.events...)
+		}
+	}
+	return out
 }
 
 func allEvents(shapes []taskShape) []FeedbackEvent {
