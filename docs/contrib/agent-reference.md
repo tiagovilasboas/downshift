@@ -1,0 +1,52 @@
+# Agent reference (on demand)
+
+Detail moved out of `AGENTS.md` so every agent session loads fewer tokens. Read the
+section you need; the mandatory rules stay in `AGENTS.md`.
+
+## Context compressor
+
+Routing is one token lever. The other is the native compressor
+(`downshift context compress`, `internal/compressor`): it compacts an all-`ok`
+`go test`, a clean `git status`, and repetitive logs only when safe mode is
+given exit code 0. It preserves non-`ok` lines, search results, file lists,
+git logs, and any non-zero exit. `context benchmark` does not measure
+routing cost or accuracy. The compressor table is bytes from checked-in
+fixtures, not tokens and not dollars.
+Read [docs/context-optimization.md](docs/context-optimization.md) before
+changing context handling or attributing savings to model routing alone.
+
+## Telemetry and cost reporting
+
+Downshift records local routing decisions to `events.jsonl` in the state directory (`~/.downshift/events.jsonl`). Tasks, prompts, and file paths are never stored.
+
+Commands for agents and operators to audit savings, costs, and optimization:
+- `downshift stats`: display decision counts and estimated token savings (default: 30 days).
+- `downshift stats --days=N`: filter metrics window to the last N days.
+- `downshift stats --cost-per-unit=<USD>`: convert normalised unit savings to estimated USD using list prices.
+- `downshift stats --export`: generate sanitized, prompt-free JSON summary for audits and issues. See [docs/stats-export.md](docs/stats-export.md).
+- `downshift serve`: start local web dashboard at `http://localhost:7474` (serves `web/`).
+- `dsmon`: standalone terminal dashboard widget (`cmd/dsmon/launch.sh`).
+
+---
+
+## catalog.json — embedded vs user override
+
+**Two distinct files:**
+
+1. `internal/catalog/catalog.json` — the **embedded default**, committed to
+   the repository and compiled into the binary via `go:embed`. This IS in the
+   repo and IS versioned. Edit it to update model data for all users.
+
+2. `~/.downshift/catalog.json` (legacy: `~/.harness-downshift/`) — the **user override**, personal data
+   that lives outside the repo. This is excluded by `.gitignore`. The user
+   creates it via `downshift models pull` or by copying `catalog.sample.json`.
+
+When the agent says "do not commit catalog.json", it means the **user override**
+(under the state dir; see `docs/config.md`), not the embedded default.
+
+**Adding or updating a model:** edit `internal/catalog/catalog.json`. The
+`_section` comment objects (entries with only a `_section` key, no `id` or
+`harness`) are silently skipped by the parser — use them for readability.
+Every real entry must have `id`, `harness`, `tier`, and `family`.
+
+---
