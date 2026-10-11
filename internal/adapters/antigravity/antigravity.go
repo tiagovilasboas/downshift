@@ -8,6 +8,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift/internal/policyfile"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
@@ -20,6 +21,8 @@ type ToolCall struct {
 
 type Event struct {
 	ToolCall ToolCall `json:"toolCall"`
+	// Cwd is the working directory, used to find a project policy file.
+	Cwd string `json:"cwd,omitempty"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// ResolveSession falls back to the user file when both are nil.
 	SessionModels   *[]string `json:"session_models,omitempty"`
@@ -89,6 +92,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		currentModel := hookutil.StringField(subagent, "Model")
 		decision := core.Route(prompt, harnessID, currentModel, res)
 		decision.RequestedID = currentModel
+		policyfile.ApplyFloor(&decision, ev.Cwd, currentModel, res)
 		decision.SessionUnknown = !session.Known
 		decision.QuotaStatus = string(session.QuotaStatus(harnessID, currentModel))
 		if session.Usage != nil {

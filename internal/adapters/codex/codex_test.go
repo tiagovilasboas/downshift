@@ -428,3 +428,33 @@ func TestHandle_ConfidentDownshiftSetsLowEffort(t *testing.T) {
 		t.Fatalf("confident downshift should lower effort, got %v", m)
 	}
 }
+
+func writeFloorPolicy(t *testing.T, dir, tier string) {
+	t.Helper()
+	p := filepath.Join(dir, ".downshift", "policy.json")
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte(`{"version":1,"min_tier":"`+tier+`"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
+	dir := t.TempDir()
+	writeFloorPolicy(t, dir, "mid")
+	ev := codex.Event{
+		ToolName: "spawn_agent",
+		Model:    catID(core.TierFrontier),
+		Cwd:      dir,
+		ToolInput: json.RawMessage(`{
+			"task_name": "worker_agent_rename",
+			"message": "rename the userId variable to userIdentifier",
+			"fork_turns": "none"
+		}`),
+	}
+	_, _, d := codex.Handle(withCatalogSession(ev), cat)
+	if !d.PolicyFloor || d.Tier != core.TierMid {
+		t.Fatalf("decision tier %v floor %v, want mid with floor", d.Tier, d.PolicyFloor)
+	}
+}

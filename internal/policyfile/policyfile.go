@@ -187,3 +187,21 @@ func (p *Policy) Floor(class string, risks []string) (core.Tier, bool) {
 	}
 	return best, found
 }
+
+// ApplyFloor raises d to the project's tier floor when a valid policy file
+// applies. Any problem (no file, invalid file, no usable directory) leaves the
+// decision untouched, so callers fail open. cwd is the hook payload's working
+// directory; when empty the process directory is used. currentModel is the
+// model in the payload, as passed to core.Route.
+func ApplyFloor(d *core.Decision, cwd, currentModel string, res core.Resolver) {
+	if cwd == "" {
+		cwd, _ = os.Getwd()
+	}
+	p, _, err := LoadNearest(cwd)
+	if err != nil || p == nil {
+		return
+	}
+	if tier, ok := p.Floor(d.Complexity.String(), d.Risk); ok {
+		d.RaiseTier(tier, currentModel, res)
+	}
+}

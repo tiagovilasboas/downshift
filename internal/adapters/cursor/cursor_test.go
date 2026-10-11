@@ -498,3 +498,36 @@ func TestHandle_HeldDecisionDoesNotRewriteViaFamilyPath(t *testing.T) {
 		t.Errorf("expected no note when a held decision falls through to allow, got %q", note)
 	}
 }
+
+func writeFloorPolicy(t *testing.T, dir, tier string) {
+	t.Helper()
+	p := filepath.Join(dir, ".downshift", "policy.json")
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte(`{"version":1,"min_tier":"`+tier+`"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
+	dir := t.TempDir()
+	writeFloorPolicy(t, dir, "mid")
+	frontierID := catID(core.TierFrontier)
+	ev := cursor.Event{
+		ToolName: "Task",
+		ModelID:  frontierID,
+		Cwd:      dir,
+		ToolInput: json.RawMessage(`{
+			"task": "rename the userId variable to userIdentifier",
+			"model": "` + frontierID + `"
+		}`),
+	}
+	out, _, d := cursor.Handle(withCatalogSession(ev), cat)
+	if !d.PolicyFloor || d.Tier != core.TierMid {
+		t.Fatalf("decision tier %v floor %v, want mid with floor", d.Tier, d.PolicyFloor)
+	}
+	if m := decodeUpdated(t, out); m["model"] != catID(core.TierMid) {
+		t.Errorf("model = %v, want %s", m["model"], catID(core.TierMid))
+	}
+}

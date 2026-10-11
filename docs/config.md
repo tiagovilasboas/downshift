@@ -37,7 +37,7 @@ Override paths:
 
 A project can require a minimum tier with `.downshift/policy.json` in the project
 directory or any parent (nearest file wins, at most 8 levels up). A floor only
-**raises** a tier; it never lowers one. Claude Code only for now.
+**raises** a tier; it never lowers one. Applied by the Claude Code, Cursor, Codex, Antigravity and KiroCrew adapters.
 
 ```json
 {
@@ -52,7 +52,8 @@ directory or any parent (nearest file wins, at most 8 levels up). A floor only
 - Risk categories are the names in `internal/core/risk.go` (for example `secret`, `payment`, `destructive`).
 - The highest applicable rule wins.
 - Fail-open: a missing, oversized, symlinked or invalid file (unknown field, tier, class or category) is ignored and the spawn routes as if there were no file. The floor still goes through the session allowlist and quota gates, so it cannot select a model the session does not offer.
-- The hook uses the payload's `cwd`, or the process directory when absent.
+- The hook uses the payload's `cwd` field when the harness sends one, and the hook process's working directory otherwise. Which harnesses send `cwd` has not been verified here; if yours does not, run the hook from the project directory.
+- A floor changes nothing when the current model already sits at that tier. Where a harness does not honor model rewrites (see the harness matrix), the floor stops a downshift from being attempted but cannot force the model.
 
 ## Migrating from `~/.harness-downshift`
 

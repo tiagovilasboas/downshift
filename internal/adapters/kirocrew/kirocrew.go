@@ -36,6 +36,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
+	"github.com/tiagovilasboas/downshift/internal/policyfile"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
@@ -45,7 +46,9 @@ const harnessID = "kirocrew"
 // Field names follow KiroCrew's documented hook event schema; the same
 // structure is used for preToolUse and postToolUse events.
 type Event struct {
-	HookEventName     string          `json:"hook_event_name"`
+	HookEventName string `json:"hook_event_name"`
+	// Cwd is the working directory, used to find a project policy file.
+	Cwd               string          `json:"cwd,omitempty"`
 	CorrelationID     string          `json:"correlation_id,omitempty"`
 	ToolName          string          `json:"tool_name"`
 	ToolInput         json.RawMessage `json:"tool_input"`
@@ -121,6 +124,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 	decision.RequestedID = currentModel
+	policyfile.ApplyFloor(&decision, ev.Cwd, currentModel, res)
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)

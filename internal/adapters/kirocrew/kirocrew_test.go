@@ -186,3 +186,26 @@ func TestHandle_AllowsExplicitOnlyCurrentModel(t *testing.T) {
 		t.Fatalf("must not block an explicit_only current model (message=%q)", out.Message)
 	}
 }
+
+func writeFloorPolicy(t *testing.T, dir, tier string) {
+	t.Helper()
+	p := filepath.Join(dir, ".downshift", "policy.json")
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte(`{"version":1,"min_tier":"`+tier+`"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
+	dir := t.TempDir()
+	writeFloorPolicy(t, dir, "mid")
+	writeSessionFile(t, []string{smallID, midID, frontierID})
+	ev := spawnEvent("rename the userId variable to userIdentifier", frontierID)
+	ev.Cwd = dir
+	_, _, d := kirocrew.Handle(ev, cat)
+	if !d.PolicyFloor || d.Tier != core.TierMid {
+		t.Fatalf("decision tier %v floor %v, want mid with floor", d.Tier, d.PolicyFloor)
+	}
+}

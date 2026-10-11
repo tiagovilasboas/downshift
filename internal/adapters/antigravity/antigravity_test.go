@@ -377,3 +377,33 @@ func TestHandle_ExplicitOnlyCurrentModelDoesNotRewrite(t *testing.T) {
 		t.Errorf("explicit-only current model must not rewrite, got %s", string(out.Overwrite))
 	}
 }
+
+func writeFloorPolicy(t *testing.T, dir, tier string) {
+	t.Helper()
+	p := filepath.Join(dir, ".downshift", "policy.json")
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(p, []byte(`{"version":1,"min_tier":"`+tier+`"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
+	dir := t.TempDir()
+	writeFloorPolicy(t, dir, "frontier")
+	ev := antigravity.Event{
+		Cwd: dir,
+		ToolCall: antigravity.ToolCall{
+			Name: "invoke_subagent",
+			Args: json.RawMessage(`{"Subagents":[{"Role":"Typo Fixer","TypeName":"research","Prompt":"fix typo in README","Model":"inherit"}]}`),
+		},
+	}
+	out, _, d := antigravity.Handle(withWireSession(ev), res)
+	if !d.PolicyFloor || d.Tier != core.TierFrontier {
+		t.Fatalf("decision tier %v floor %v, want frontier with floor", d.Tier, d.PolicyFloor)
+	}
+	if subs := decodeOverwriteSubagents(t, out); len(subs) != 1 || subs[0]["Model"] != "pro" {
+		t.Errorf("subagents = %v, want one on pro (frontier)", subs)
+	}
+}
