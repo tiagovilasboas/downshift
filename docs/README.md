@@ -31,6 +31,7 @@
 | [langgraph-orchestration.md](langgraph-orchestration.md) | Optional planner |
 | [pt/README.md](pt/README.md) | Documentação em português |
 | [../examples/README.md](../examples/README.md) | Sample hook JSON payloads |
+| [../skills/downshift-audit/SKILL.md](../skills/downshift-audit/SKILL.md) | Read-only agent skill: audit hook wiring, stats and fixed context size |
 
 ## Contributors
 
