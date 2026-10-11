@@ -460,6 +460,9 @@ type Stats struct {
 	PolicyFloor int
 	// ChildStatus counts how children ended (child_ended events), by status.
 	ChildStatus map[ChildStatus]int
+	// RespawnAfterFailure counts failed children followed by another spawn in
+	// the same session within respawnWindow. A hint, not a verdict.
+	RespawnAfterFailure int
 	// CostBySession and CostBySubagent group observed catalog-priced cost by the
 	// hashed session id and agent id carried on usage records.
 	CostBySession  map[string]CostGroup
@@ -573,6 +576,10 @@ func FilterByDays(events []Event, days int) []Event {
 	return out
 }
 
+// respawnWindow is how soon after a failed child a new spawn in the same
+// session counts as a respawn.
+const respawnWindow = 10 * time.Minute
+
 // Aggregate computes Stats from a slice of events.
 func Aggregate(events []Event) Stats {
 	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int), CostBySession: make(map[string]CostGroup), CostBySubagent: make(map[string]CostGroup)}
@@ -671,6 +678,7 @@ func Aggregate(events []Event) Stats {
 	s.RewriteShifted, s.RewriteHonored = CountInferredHonored(events)
 	tallySpawnSurface(events, &s)
 	s.ObservedChildTokens, s.ObservedChildUsage = ObservedChildTokens(events)
+	s.RespawnAfterFailure = len(RespawnAfterFailure(events, respawnWindow))
 	return s
 }
 
@@ -737,6 +745,9 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "  Raised by project floor %6d  %5.1f%%  (.downshift/policy.json)\n", s.PolicyFloor, pct(s.PolicyFloor, s.Total))
 	}
 	printChildStatus(w, s.ChildStatus)
+	if s.RespawnAfterFailure > 0 {
+		fmt.Fprintf(w, "  Respawned after a failure  %5d  (hint only: may be unrelated work)\n", s.RespawnAfterFailure)
+	}
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "By complexity\n")
 	for _, cls := range []string{"TRIVIAL", "SIMPLE", "MEDIUM", "COMPLEX"} {
