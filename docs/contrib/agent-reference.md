@@ -67,6 +67,7 @@ in `docs/beta-exit.md` (P1, P3), so keep the seam.
 
 ## Child end status and baseline source (E8, E7)
 
+- `stats` prints "How children ended" and the export carries `child_status`, both from `Aggregate` (shared layer, only when non-zero).
 - `child_ended` (`internal/telemetry/child_outcome.go`): a closed `ChildStatus` from
   `ClassifyChildEnd(event, tool_response.status, is_interrupt)`. The error text is
   never read. Recorded by `recordChildEnd` in the Claude Code adapter for Agent/Task

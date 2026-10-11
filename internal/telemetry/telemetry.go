@@ -728,6 +728,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	if s.PolicyFloor > 0 {
 		fmt.Fprintf(w, "  Raised by project floor %6d  %5.1f%%  (.downshift/policy.json)\n", s.PolicyFloor, pct(s.PolicyFloor, s.Total))
 	}
+	printChildStatus(w, s.ChildStatus)
 	fmt.Fprintf(w, "\n")
 	fmt.Fprintf(w, "By complexity\n")
 	for _, cls := range []string{"TRIVIAL", "SIMPLE", "MEDIUM", "COMPLEX"} {
@@ -797,4 +798,27 @@ func pct(n, total int) float64 {
 		return 0
 	}
 	return float64(n) / float64(total) * 100
+}
+
+// childStatusOrder is the fixed print order for "How children ended".
+var childStatusOrder = []ChildStatus{ChildCompleted, ChildLaunched, ChildInterrupted, ChildError, ChildStopped, ChildUnknown}
+
+// printChildStatus writes the "How children ended" section. It prints nothing
+// when no child_ended events were counted, so output without them is unchanged.
+func printChildStatus(w io.Writer, counts map[ChildStatus]int) {
+	sum := 0
+	for _, n := range counts {
+		sum += n
+	}
+	if sum == 0 {
+		return
+	}
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "How children ended\n")
+	for _, st := range childStatusOrder {
+		if n := counts[st]; n > 0 {
+			fmt.Fprintf(w, "  %-11s         %8d\n", st, n)
+		}
+	}
+	fmt.Fprintf(w, "  Note: launched is a background start, not a success.\n")
 }

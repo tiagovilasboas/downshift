@@ -25,6 +25,7 @@ Fields useful for graduation tracking:
 | `observed_child_usage` | Count of those usage events; `0` means unobserved, not a measured zero |
 | `usage_records` | All post-hoc usage records, including unlinked records |
 | `usage_linked` | Distinct usage records matched to routing decisions in this window (same harness and compatible session); duplicate agents/events and orphan references excluded |
+| `child_status` | Map of child end status (`completed`, `launched`, `interrupted`, `error`, `stopped`, `unknown`) to count, from `child_ended` events; `{}` when none. Observations only: never part of `total` |
 | `baseline_no_route` | Control-group events (`DOWNSHIFT_NO_ROUTE`) |
 
 ## Before you paste
