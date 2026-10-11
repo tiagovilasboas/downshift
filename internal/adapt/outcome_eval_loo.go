@@ -25,6 +25,10 @@ type CostModel struct {
 	Prices       [3]TierPrice // indexed by Tier (small, mid, frontier)
 	RefInputTok  int
 	RefOutputTok int
+	// FailurePenalty is the operator's USD cost of one failed attempt beyond
+	// its tokens (lost time, rework). Zero means escalation is free, which
+	// favours cheap-first policies by construction.
+	FailurePenalty float64
 }
 
 // Attempt returns the USD cost of one attempt on tier t.
@@ -35,6 +39,9 @@ func (c CostModel) Attempt(t Tier) float64 {
 
 // Validate rejects a model that cannot produce a meaningful comparison.
 func (c CostModel) Validate() error {
+	if c.FailurePenalty < 0 {
+		return fmt.Errorf("adapt: failure penalty must not be negative")
+	}
 	if c.RefInputTok < 0 || c.RefOutputTok < 0 || c.RefInputTok+c.RefOutputTok == 0 {
 		return fmt.Errorf("adapt: reference request must have tokens")
 	}
@@ -189,6 +196,9 @@ func scoreAttempts(row *CostRow, id string, start Tier, by tierResults, cm CostM
 		}
 		row.Attempts++
 		row.Cost += cm.Attempt(t)
+		if !pass {
+			row.Cost += cm.FailurePenalty
+		}
 		if pass {
 			if t == clampTier(start) {
 				row.FirstPass++

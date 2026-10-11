@@ -25,6 +25,7 @@ func runEvalAdapt(args []string, stdout, stderr io.Writer) int {
 	priceFrontier := fs.String("price-frontier", "", "frontier tier USD per 1M tokens as in,out")
 	refIn := fs.Int("ref-in", 20000, "reference request input tokens per attempt")
 	refOut := fs.Int("ref-out", 1000, "reference request output tokens per attempt")
+	failPenalty := fs.Float64("fail-penalty", 0, "USD cost of one failed attempt beyond tokens (0 = escalation is free)")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -69,12 +70,17 @@ func runEvalAdapt(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, err)
 		return 2
 	}
+	cm.FailurePenalty = *failPenalty
+	if err := cm.Validate(); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
 	rows, err := adapt.EvalCost(tasks, runs, cm)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	fmt.Fprintf(stdout, "cost ref_in=%d ref_out=%d (USD, escalate one tier up on failure)\n", *refIn, *refOut)
+	fmt.Fprintf(stdout, "cost ref_in=%d ref_out=%d fail_penalty=%.4f (USD, escalate one tier up on failure)\n", *refIn, *refOut, *failPenalty)
 	for _, r := range rows {
 		fmt.Fprintf(stdout, "%-16s total=%d first_pass=%d completed=%d attempts=%d cost=%.4f per_completed=%.4f\n",
 			r.Name, r.Total, r.FirstPass, r.Completed, r.Attempts, r.Cost, r.PerCompleted())

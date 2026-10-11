@@ -92,3 +92,25 @@ func TestLooMemoryExcludesSkippedTask(t *testing.T) {
 		t.Fatalf("skipping task a must leave only b's hit, got %+v", rec)
 	}
 }
+
+func TestFailurePenaltyAppliesPerFailedAttempt(t *testing.T) {
+	by := tierResults{
+		core.TierSmall:    {"a": false},
+		core.TierMid:      {"a": false},
+		core.TierFrontier: {"a": true},
+	}
+	cm := testCostModel()
+	cm.FailurePenalty = 100
+	var row CostRow
+	if err := scoreAttempts(&row, "a", TierSmall, by, cm); err != nil {
+		t.Fatal(err)
+	}
+	want := cm.Attempt(TierSmall) + cm.Attempt(TierMid) + cm.Attempt(TierFrontier) + 200
+	if math.Abs(row.Cost-want) > 1e-9 {
+		t.Fatalf("cost = %v, want %v", row.Cost, want)
+	}
+	cm.FailurePenalty = -1
+	if cm.Validate() == nil {
+		t.Fatal("negative penalty must be rejected")
+	}
+}
