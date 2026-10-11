@@ -60,6 +60,16 @@ func splitIdentifiers(prompt string) string {
 	return strings.ReplaceAll(camelBoundary.ReplaceAllString(prompt, "$1 $2"), "_", " ")
 }
 
+// RiskCategoryNames returns the set of known risk category names, so a
+// configuration can be validated against the table without duplicating it.
+func RiskCategoryNames() map[string]bool {
+	out := make(map[string]bool, len(RawRiskSignals))
+	for _, r := range RawRiskSignals {
+		out[r.Category] = true
+	}
+	return out
+}
+
 // RiskCategories returns the sorted risk categories the prompt touches.
 func RiskCategories(prompt string) []string {
 	text := splitIdentifiers(prompt)
