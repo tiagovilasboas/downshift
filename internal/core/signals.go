@@ -25,9 +25,9 @@ var RawSignals = []SignalDef{
 
 	// ── COMPLEX — architecture, cross-system, security, migrations ────────
 
-	{`\barchitect\w*\b`, 3, Complex},
-	{`\bre-?architect\w*\b`, 3, Complex},
-	{`\bmigrat\w*\b`, 3, Complex},
+	// One pattern per stem: "re-architect" used to match both an architect and
+	// a re-architect row and score twice for a single mention.
+	{`\b(re-?)?architect\w*\b`, 3, Complex},
 	{`\bre-?write\b`, 2, Complex},
 	{`\bre-?design\b`, 3, Complex},
 	{`\bsecurity\s+(audit|review)\b`, 3, Complex},
@@ -44,11 +44,25 @@ var RawSignals = []SignalDef{
 	{`\brfc\b`, 3, Complex},
 	{`\bthink\s+through\b`, 2, Complex},
 	{`\b(service mesh|event sourcing|cqrs|chaos engineering|end-to-end encryption|data lineage|cross-cluster|memory leak|cascading failure|streaming pipeline|model serving|key management)\b`, 3, Complex},
+	// Distributed-data vocabulary: partitioning, agreement and copying state
+	// across nodes, and concurrent multi-user editing.
+	// "replication" only: "replicate the bug" is a reproduction, not a design.
+	// "sharding" only: "shard the test suite across runners" is CI config.
+	{`\b(sharding|consensus|replication|real[- ]?time collaborat\w*|operational transform\w*)\b`, 3, Complex},
+	// Designing or building a whole system rather than a part of one: the verb
+	// takes a system-sized noun as its object ("design a real-time collaborative
+	// editing system", "design and build a reconciliation engine", "build a
+	// collaboration platform"). Up to three modifiers, no punctuation. "build"
+	// alone is narrower: building a system, strategy or algorithm is often a
+	// routine feature. One row, so "design and build an engine" scores once.
+	{`\b((design|architect)\s+(and\s+(build|implement)\s+)?(an?\s+|the\s+)?([\w-]+\s+){0,3}?(system|engine|platform|protocol|strategy|algorithm)|build\s+(an?\s+|the\s+)?([\w-]+\s+){0,3}?(engine|platform))s?\b`, 2, Complex},
 	{`\bwhy\s+.{0,40}(fail|crash|hang|break|regress)\w*`, 2, Complex},
 	// Portuguese mirror of the COMPLEX vocabulary above. Without it, hard PT-BR
 	// work stays on mid. Go's \b and \w are ASCII-only, so stems stop before
 	// the first accented letter and carry no trailing \b.
 	{`\b(re-?desenh|re-?arquitet|arquitet)\w*`, 3, Complex},
+	// Migration, EN and PT-BR in one row: the stem covers migrate, migration,
+	// migre, migração. A separate English row scored one mention twice.
 	{`\bmigr[aeo]\w*`, 3, Complex},
 	{`\b(auditoria|revis\S{1,3}o)\s+de\s+seguran`, 3, Complex},
 	{`\bcondi\S{1,4}o\s+de\s+corrida\b`, 3, Complex},

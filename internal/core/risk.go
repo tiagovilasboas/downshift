@@ -26,8 +26,14 @@ type RiskSignalDef struct {
 // (a billingAddress field). To extend it, add a row and a table-driven case
 // in risk_test.go.
 var RawRiskSignals = []RiskSignalDef{
-	{"secret", `\b(secrets?|passwords?|passphrases?|credentials?|api[ _-]?keys?|private[ _-]?keys?|signing[ _-]?keys?|(access|refresh|bearer|session|auth) tokens?|tokens? validation|jwts?|oauth\w*|saml|sso|2fa|mfa|totp)\b`},
-	{"authz", `\b(permissions?|privileges?|is[ _]?admin|admin (role|rights|access)|rbac|acls?|authori[sz]ation|authenticat\w*|access control)\b`},
+	// PT-BR terms follow the English ones. Go's \b is ASCII-only, so stems that
+	// continue into an accented letter use \S* and carry no trailing \b.
+	{"secret", `\b(secrets?|passwords?|passphrases?|credentials?|api[ _-]?keys?|private[ _-]?keys?|signing[ _-]?keys?|(access|refresh|bearer|session|auth) tokens?|tokens? validation|jwts?|oauth\w*|saml|sso|2fa|mfa|totp|senhas?|credencia(l|is))\b`},
+	// Bare "auth" (the auth middleware, authMiddleware) is the same surface as
+	// authentication or authorization, so a rename there is not mechanical.
+	// Only as a standalone word: inside a path, file or hyphenated name
+	// (auth.ts, auth/session.ts, auth-7d9f) it is a location, not the subject.
+	{"authz", `(^|[^/.\w-])(auth|authn|authz)([^/.\w-]|$)|\b(permissions?|privileges?|is[ _]?admin|admin (role|rights|access)|rbac|acls?|authori[sz]ation|authenticat\w*|access control)\b|\b(autentica|autoriza)\S*`},
 	// "signature" alone is not crypto ("function signature", "type signature",
 	// "email signature"); only verification and signed-message contexts are.
 	{"crypto", `\b(crypto\w*|encrypt\w*|decrypt\w*|hmac|tls|ssl|certificates?|(webhook|request|payload|message|digital|cryptographic|jwt|jws|hmac|rsa|ecdsa|ed25519|gpg|pgp) signatures?|signatures? (verification|validation|check|header|secret)s?|(verify|verifies|verifying|validate|validating|check|checking|skip|skipping) (the |a |an |its )?signatures?|signing (secrets?|certificates?))\b`},

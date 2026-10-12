@@ -56,7 +56,39 @@ var (
 	// with no other signal keeps the Medium default.
 	addStubRE      = regexp.MustCompile(`(?i)^\s*add\s+[A-Z]\w*\(`)
 	exportedCallRE = regexp.MustCompile(`\b[A-Z]\w*\([^)]*\)`)
+
+	// A documentation edit: the prompt opens with an edit verb and its target
+	// is prose (README, docs, comments), not code. "fix a typo in the
+	// migrations README", "rename cron to scheduler in the docs", "add a graph
+	// of weekly usage to the README", and the PT-BR equivalents. Architectural
+	// words in such a prompt name the topic of the text, not the work.
+	docEditVerbRE = regexp.MustCompile(`(?i)^\W*` + docEditVerb + `\b`)
+	// The prose is the target either after a preposition ("in the docs", "ao
+	// README") or as the verb's direct object ("update the comment on ...").
+	docTargetRE = regexp.MustCompile(`(?i)\b(in|to|into|on|from|inside|within|em|no|na|nos|nas|ao|aos)\s+(the\s+|our\s+|this\s+|o\s+|a\s+)?([\w.-]+\s+){0,2}?` + docNoun + `\b`)
+	docObjectRE = regexp.MustCompile(`(?i)^\W*` + docEditVerb + `\s+(the\s+|a\s+|an\s+|our\s+|o\s+|os\s+|as\s+|um\s+|uma\s+)?([\w.-]+\s+)?` + docNoun + `\b`)
+	// A second clause may carry real work ("... in the docs and migrate the
+	// scheduler"), so only a single short clause is treated as prose-only.
+	multiClauseRE = regexp.MustCompile(`(?i)\b(and|then|also|plus|e|depois|tamb\S*m)\b|[;\n]`)
 )
+
+const (
+	// maxDocEditWords bounds the prose-only damper to short requests.
+	maxDocEditWords = 25
+	docEditVerb     = `(please\s+|por\s+favor,?\s+)?(rename|fix\s+(a\s+|the\s+|some\s+)?typos?|correct|add|insert|put|update|edit|reword|rephrase|remove|delete|move|mention|renomei\w*|renomear|corrij\w*|corrigir|adicion\w*|acrescent\w*|inclua|incluir|atualiz\w*|remova|remover|insira|inserir|coloque|colocar|mencion\w*)`
+	docNoun         = `(readme(\.md)?|docs|documentation|documenta\w*|changelog|docstrings?|comments?|coment\w*|wiki)`
+)
+
+// docEditOnly reports whether the prompt is a single short edit whose target
+// is documentation or comments. Classify drops Complex keyword hits for it, so
+// the word "migration", "cron" or "graph" in a README edit does not buy a
+// frontier model. It never raises a class.
+func docEditOnly(prompt string, wordCount int) bool {
+	return wordCount <= maxDocEditWords &&
+		docEditVerbRE.MatchString(prompt) &&
+		(docTargetRE.MatchString(prompt) || docObjectRE.MatchString(prompt)) &&
+		!multiClauseRE.MatchString(prompt)
+}
 
 func compileSignals() []signal {
 	out := make([]signal, 0, len(RawSignals))
@@ -102,11 +134,17 @@ func Classify(prompt string) Classification {
 		}
 	}
 
+	wordCount := len(strings.Fields(prompt))
+
+	// Architectural vocabulary inside a prose-only edit is the topic of the
+	// text, not the size of the work (see docEditOnly).
+	if docEditOnly(prompt, wordCount) {
+		scores[Complex] = 0
+	}
+
 	// Track whether any content signal fired. Structural nudges alone must not
 	// decide the class — a vague prompt with no real signal stays Medium.
 	contentMatched := scores[Trivial]+scores[Simple]+scores[Medium]+scores[Complex] > 0
-
-	wordCount := len(strings.Fields(prompt))
 
 	// A silent "add Name(...)" stub is one helper. Apply it only when nothing
 	// else matched, and only for a single call, so a write-spec or a multi-step
