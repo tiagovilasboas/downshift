@@ -26,6 +26,8 @@ func stubGraphify(t *testing.T) {
 	}
 	t.Setenv("DOWNSHIFT_GRAPHIFY", "")
 	t.Setenv("DOWNSHIFT_GRAPHIFY_CMD", script)
+	// A slow shell start under load must not turn into a silent Found:false.
+	t.Setenv("DOWNSHIFT_GRAPHIFY_TIMEOUT", "30s")
 }
 
 // A graphify escalation is a deterministic signal: an unconfident prompt that
