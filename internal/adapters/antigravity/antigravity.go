@@ -65,6 +65,24 @@ func (ev Event) TaskText() string {
 	return hookutil.TaskText(ti, "Prompt", "prompt", "task", "Task")
 }
 
+// RequestedModel returns the Model of the subagent whose decision Handle
+// returns: the last one with a prompt. That keeps the telemetry row's
+// requested model and its decision about the same child.
+func (ev Event) RequestedModel() string {
+	var ti map[string]any
+	if json.Unmarshal(ev.ToolCall.Args, &ti) != nil {
+		return ""
+	}
+	subagents, _ := ti["Subagents"].([]any)
+	model := ""
+	for _, raw := range subagents {
+		if subagent, ok := raw.(map[string]any); ok && hookutil.StringField(subagent, "Prompt") != "" {
+			model = hookutil.StringField(subagent, "Model")
+		}
+	}
+	return model
+}
+
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	var ti map[string]any
 	if err := json.Unmarshal(ev.ToolCall.Args, &ti); err != nil {
