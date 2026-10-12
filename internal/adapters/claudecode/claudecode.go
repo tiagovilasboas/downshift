@@ -32,6 +32,9 @@ type Event struct {
 	SessionID string `json:"session_id,omitempty"`
 	// Cwd is the hook's working directory, used to find a project policy file.
 	Cwd string `json:"cwd,omitempty"`
+	// TranscriptPath is the parent session transcript. Read only to learn the
+	// session model a Task call without "model" inherits.
+	TranscriptPath string `json:"transcript_path,omitempty"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// Claude Code PreToolUse does not send this field today.
 	SessionModels   *[]string `json:"session_models,omitempty"`
@@ -61,12 +64,25 @@ func (ev Event) RequestedReasoningEffort() string {
 // RequestedModel returns the model received before Downshift emitted a rewrite.
 func (ev Event) RequestedModel() string {
 	var ti map[string]any
-	if json.Unmarshal(ev.ToolInput, &ti) == nil {
-		if model := hookutil.StringField(ti, "model"); model != "" {
-			return model
-		}
+	if json.Unmarshal(ev.ToolInput, &ti) != nil {
+		return ev.Model
 	}
-	return ev.Model
+	return ev.currentModel(ti)
+}
+
+// currentModel is the model the subagent would run on without a rewrite: the
+// Task "model", the payload "model", then the inherited session model.
+func (ev Event) currentModel(ti map[string]any) string {
+	if model := hookutil.StringField(ti, "model"); model != "" {
+		return model
+	}
+	if ev.Model != "" {
+		return ev.Model
+	}
+	if inheritsSessionModel(ti) {
+		return sessionModelFromTranscript(ev.TranscriptPath)
+	}
+	return ""
 }
 
 // TaskText returns the task content used for local, prompt-free feature
@@ -110,10 +126,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", core.Decision{}
 	}
 
-	currentModel := hookutil.StringField(ti, "model")
-	if currentModel == "" {
-		currentModel = ev.Model
-	}
+	currentModel := ev.currentModel(ti)
 
 	var res core.Resolver
 	if len(r) > 0 {

@@ -5,6 +5,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Keep fixture decisions out of the operator's real stats.
+SMOKE_DIR="$(mktemp -d)"
+trap 'rm -rf "$SMOKE_DIR"' EXIT
+export DOWNSHIFT_EVENT_LOG="${DOWNSHIFT_EVENT_LOG:-$SMOKE_DIR/events.jsonl}"
+
 if ! command -v downshift >/dev/null 2>&1; then
   echo "downshift not in PATH — install first (see docs/install.md)" >&2
   exit 1
