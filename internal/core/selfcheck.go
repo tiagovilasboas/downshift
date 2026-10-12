@@ -12,8 +12,11 @@ package core
 // classified value so telemetry shows what the classifier said, while
 // Decision.SafeVerdict carries what adapters are allowed to apply.
 //
-// Enforcement note: the safe action flows through ShouldRewriteModel, so
-// every adapter using PlanForSession inherits it with no code changes.
+// Enforcement note: the safe action is enforced by selectSessionTarget
+// (session_select.go), which returns no target when SafeVerdict is OK, so
+// every adapter using PlanForSession inherits it with no code changes;
+// adapters that inspect Corrections directly (antigravity, kirocrew) add
+// their own holds on top.
 // Deliberate session fallbacks (e.g. cheapest-session-model on a blocked
 // downgrade) are untouched — Check only observes and records those paths.
 // Rule IDs are stable telemetry history and are never renumbered: R3 was retired/reserved, so numbering runs R1, R2, R4 by design.

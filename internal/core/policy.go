@@ -47,8 +47,8 @@ type Decision struct {
 	// Self-correction outcome, computed by Check inside Route. Verdict
 	// keeps the classified value for diagnostics; SafeVerdict carries the
 	// action adapters may apply. Checked is true for Route decisions and
-	// false for hand-built ones, so ShouldRewriteModel stays backward
-	// compatible with Decision literals that predate self-correction.
+	// false for hand-built ones; selectSessionTarget only honours a
+	// SafeVerdict of OK when Checked is true.
 	SafeVerdict    Verdict
 	Corrections    []string // guardrail rule IDs that held this decision, empty when clean
 	Checked        bool
@@ -290,55 +290,6 @@ func (d Decision) Summary() string {
 		return fmt.Sprintf("%s task%s → use %s (%s tier)",
 			d.Complexity, intentSuffix, d.Model.ID, d.Tier)
 	}
-}
-
-// ShouldRewriteModel reports whether an adapter should replace the harness
-// model input. It is deliberately harness-agnostic: every adapter receives
-// the same behavior for upshifts, downshifts, and missing source models.
-//
-// The gate consults the self-corrected action, so a decision held by a
-// guardrail is never applied even when the classified verdict suggests a
-// rewrite. Hand-built Decisions without a Check report fall back to the
-// classified verdict for backward compatibility.
-func (d Decision) ShouldRewriteModel() bool {
-	if d.Model.ID == "" {
-		return false
-	}
-	action := d.Verdict
-	if d.Checked {
-		action = d.SafeVerdict
-	}
-	// An uncertain classifier result must not spend money in either direction.
-	// A downgrade stays put so a hard task is not underpowered. An upshift
-	// stays put so a small model is not replaced by a dearer tier on a weak
-	// signal. Confident rewrites still apply. Plan falls back when this
-	// returns false.
-	// Exception: a risk-floored or graphify-escalated task may move up — both
-	// are deterministic rules, not weak signals — and so may an NB upshift the
-	// user opted into with DOWNSHIFT_NB_UPSHIFT=1.
-	if action == VerdictUpshift && (d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied) {
-		return true
-	}
-	if (action == VerdictDownshift || action == VerdictUpshift) && !d.Confident {
-		return false
-	}
-	// No current model known: the child would inherit the harness default
-	// (often the parent's model). An unconfident small-tier recommendation
-	// must not be written over that default (guardrail R6), and neither may an
-	// unconfident mid (R9) or frontier (R7): a doubtful result must not spend
-	// money, or save it, in either direction. Confident results and tasks a
-	// deterministic rule lifted still apply.
-	if action == VerdictUnknown && (unconfidentUnknownBelowMid(d) || unconfidentUnknownMid(d) || unconfidentUnknownFrontier(d)) {
-		return false
-	}
-	return action == VerdictDownshift || action == VerdictUpshift || action == VerdictUnknown
-}
-
-// ShouldApplyEffort reports whether a harness with native effort controls
-// should inject the selected effort. This includes VerdictOK so a child does
-// not accidentally inherit a lower effort from a same-tier parent.
-func (d Decision) ShouldApplyEffort() bool {
-	return d.Model.ID != ""
 }
 
 // ShouldPreserveExplicitModel returns true when the user's current model is

@@ -29,8 +29,8 @@ func TestCodexGPT6ModelsAreRoutable(t *testing.T) {
 		wantInput  float64
 		wantOutput float64
 	}{
-		{id: "gpt-6-luna", wantTier: core.TierSmall, wantInput: 0.05, wantOutput: 0.25},
-		{id: "gpt-6-sol", wantTier: core.TierFrontier, wantInput: 1, wantOutput: 5},
+		{id: "gpt-6-luna", wantTier: core.TierSmall, wantInput: 0.1, wantOutput: 0.5},
+		{id: "gpt-6-sol", wantTier: core.TierFrontier, wantInput: 2, wantOutput: 10},
 	} {
 		m, ok := c.LookupByID("codex", tc.id)
 		if !ok {
@@ -784,5 +784,16 @@ func TestAllowedEfforts_VerifiedOnlyAndExact(t *testing.T) {
 	unknown := strings.Join(c.EffortUnknownModels(), " ")
 	if !strings.Contains(unknown, "codex/gpt-6-sol") || strings.Contains(unknown, "claude-code/claude-opus-5-5") {
 		t.Errorf("EffortUnknownModels = %s", unknown)
+	}
+}
+
+func TestCatalog_CachePricesOnlyWhereSnapshotHasThem(t *testing.T) {
+	c := Load()
+	opus, ok := c.LookupByID("claude-code", "claude-opus-5-5")
+	if !ok || opus.CacheReadM != 0.2 {
+		t.Fatalf("claude-opus-5-5 cache read = %v (ok=%v), want 0.2", opus.CacheReadM, ok)
+	}
+	if cur, ok := c.LookupByID("cursor", "claude-opus-5-5-medium"); ok && cur.CacheReadM != 0 {
+		t.Errorf("cursor entry has no snapshot id match; cache read = %v, want 0", cur.CacheReadM)
 	}
 }

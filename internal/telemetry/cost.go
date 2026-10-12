@@ -17,20 +17,29 @@ type TokenUsage struct {
 	CachedTokens int64
 }
 
-// CostUSD computes the real provider cost for one spawn from catalog list
-// prices (USD per 1M tokens). Cached tokens are billed at the input rate:
-// most providers discount them, so this is a conservative upper bound and
-// is documented as such wherever it is displayed.
+// CostUSD computes the provider cost for one spawn from catalog list prices
+// (USD per 1M tokens). Cached tokens are billed at the model's cache-read
+// price when the catalog has one. When it has none (CacheReadM == 0) they are
+// billed at the input rate, which is an upper bound: most providers discount
+// cached reads. No cache price is ever invented.
 func CostUSD(model core.Model, usage TokenUsage) float64 {
-	input := float64(usage.InputTokens+usage.CachedTokens) * model.InputM / 1_000_000.0
+	cachedRate := model.CacheReadM
+	if cachedRate <= 0 {
+		cachedRate = model.InputM
+	}
+	input := float64(usage.InputTokens) * model.InputM / 1_000_000.0
+	cached := float64(usage.CachedTokens) * cachedRate / 1_000_000.0
 	output := float64(usage.OutputTokens) * model.OutputM / 1_000_000.0
-	if input < 0 {
+	if usage.InputTokens < 0 {
 		input = 0
+	}
+	if usage.CachedTokens < 0 {
+		cached = 0
 	}
 	if output < 0 {
 		output = 0
 	}
-	return input + output
+	return input + cached + output
 }
 
 // RealSavingsUSD returns baseline minus routed cost for the same usage.
