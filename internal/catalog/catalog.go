@@ -44,6 +44,7 @@ type Entry struct {
 	Routing     string            `json:"routing"` // "automatic" (default) | "explicit_only"
 	EffortScale string            `json:"effort_scale"`
 	EffortMap   map[string]string `json:"effort_map"` // "low"|"medium"|"high" → native string
+	Efforts     []string          `json:"efforts"`    // optional: effort levels the model accepts; absent = unknown, no restriction
 	InputCostM  float64           `json:"input_cost_per_1m"`
 	OutputCostM float64           `json:"output_cost_per_1m"`
 }
@@ -511,4 +512,42 @@ func (c *Catalog) EffortFor(harness, modelID string, effort core.Effort) string 
 		return EffortValue(entry, effort)
 	}
 	return effort.String()
+}
+
+// AllowedEfforts implements core.EffortLister. It returns the effort levels the
+// catalog declares for the exact model id (id, alias or native name). A family
+// prefix match never counts: a list is only trusted for the model it was
+// verified on. Nil means unknown.
+func (c *Catalog) AllowedEfforts(harness, modelID string) []string {
+	if c == nil || modelID == "" {
+		return nil
+	}
+	for _, id := range uniqueStrings(modelID, normaliseModelID(modelID)) {
+		for _, e := range c.entries {
+			if e.Harness != harness || len(e.Efforts) == 0 {
+				continue
+			}
+			if e.ID == id || e.NativeName == id {
+				return e.Efforts
+			}
+			for _, a := range e.Aliases {
+				if a == id {
+					return e.Efforts
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// EffortUnknownModels lists "harness/id" for every entry that declares no
+// efforts list, so doctor can show where effort values are not constrained.
+func (c *Catalog) EffortUnknownModels() []string {
+	var out []string
+	for _, e := range c.entries {
+		if e.ID != "" && len(e.Efforts) == 0 {
+			out = append(out, e.Harness+"/"+e.ID)
+		}
+	}
+	return out
 }

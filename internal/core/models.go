@@ -100,3 +100,36 @@ func EffortFor(t Tier) Effort {
 		return EffortMid
 	}
 }
+
+// EffortLister is an optional Resolver extension exposing the effort levels a
+// model is known to accept. A nil list means unknown: no restriction applies.
+type EffortLister interface {
+	AllowedEfforts(harness, modelID string) []string
+}
+
+// RuleEffortUnsupported is the Decision correction recorded when the
+// recommended effort is not in the model's allowed list.
+const RuleEffortUnsupported = "effort_unsupported"
+
+// ConstrainEffort fits e to the model's allowed list. It returns the effort to
+// use, ok=false when no allowed level at or below e exists (omit the effort),
+// and changed=true when e was lowered or dropped. With no resolver, no list or
+// an empty list the effort is returned unchanged.
+func ConstrainEffort(res Resolver, harness, modelID string, e Effort) (out Effort, ok, changed bool) {
+	l, isLister := res.(EffortLister)
+	if !isLister {
+		return e, true, false
+	}
+	allowed := l.AllowedEfforts(harness, modelID)
+	if len(allowed) == 0 {
+		return e, true, false
+	}
+	for c := e; c >= EffortLow; c-- {
+		for _, a := range allowed {
+			if a == c.String() {
+				return c, true, c != e
+			}
+		}
+	}
+	return e, false, true
+}

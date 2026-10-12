@@ -157,12 +157,16 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if plan.RewriteModel && !core.CanWriteSessionID(harnessID, plan.Model.ID, plan.Session, res) {
 		return allow(), "", decision
 	}
-	effortValue := decision.Effort.String()
+	effort, effortOK, effortChanged := core.ConstrainEffort(res, harnessID, plan.Model.ID, decision.Effort)
+	effortValue := effort.String()
 	if res != nil {
-		effortValue = res.EffortFor(harnessID, plan.Model.ID, decision.Effort)
+		effortValue = res.EffortFor(harnessID, plan.Model.ID, effort)
 	}
 	requestedEffort := hookutil.StringField(ti, "reasoning_effort")
-	applyEffort := plan.ApplyEffort && effortAllowed(decision, requestedEffort, effortValue, plan.RewriteModel)
+	applyEffort := plan.ApplyEffort && effortOK && effortAllowed(decision, requestedEffort, effortValue, plan.RewriteModel)
+	if plan.ApplyEffort && effortChanged {
+		decision.Corrections = append(decision.Corrections, core.RuleEffortUnsupported)
+	}
 	if !plan.RewriteModel && (!applyEffort || effortValue == requestedEffort) {
 		return allow(), "", decision
 	}

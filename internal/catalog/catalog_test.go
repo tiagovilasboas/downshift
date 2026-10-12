@@ -767,3 +767,22 @@ func TestNativeNameResolvesLikeAnAlias(t *testing.T) {
 		}
 	}
 }
+
+func TestAllowedEfforts_VerifiedOnlyAndExact(t *testing.T) {
+	c := Load()
+	if got := c.AllowedEfforts("claude-code", "claude-opus-5-5"); len(got) != 5 {
+		t.Errorf("claude-opus-5-5 efforts = %v, want five levels", got)
+	}
+	if got := c.AllowedEfforts("claude-code", "claude-opus-9-9"); got != nil {
+		t.Errorf("family-prefix match must not inherit a list, got %v", got)
+	}
+	for _, id := range []string{"gpt-6-luna", "gpt-6-sol", "gpt-6-astra", "gpt-5.6-sol"} {
+		if got := c.AllowedEfforts("codex", id); got != nil {
+			t.Errorf("%s has unverified efforts, want nil, got %v", id, got)
+		}
+	}
+	unknown := strings.Join(c.EffortUnknownModels(), " ")
+	if !strings.Contains(unknown, "codex/gpt-6-sol") || strings.Contains(unknown, "claude-code/claude-opus-5-5") {
+		t.Errorf("EffortUnknownModels = %s", unknown)
+	}
+}
