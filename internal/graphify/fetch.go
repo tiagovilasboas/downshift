@@ -12,7 +12,18 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/hookctx"
 )
 
-const graphifyCmdTimeout = 3 * time.Second
+const defaultGraphifyCmdTimeout = 3 * time.Second
+
+// graphifyCmdTimeout returns the per-command timeout. DOWNSHIFT_GRAPHIFY_TIMEOUT
+// (a Go duration such as "30s") overrides the 3s default, mainly so tests with
+// shell stubs do not flake under load. Invalid or non-positive values fall back
+// to the default.
+func graphifyCmdTimeout() time.Duration {
+	if d, err := time.ParseDuration(strings.TrimSpace(os.Getenv("DOWNSHIFT_GRAPHIFY_TIMEOUT"))); err == nil && d > 0 {
+		return d
+	}
+	return defaultGraphifyCmdTimeout
+}
 
 // CmdFetcher runs an external command that reads a node label on stdin and
 // prints a NodeInfo JSON object on stdout. Missing command, timeout, or bad
@@ -25,9 +36,9 @@ func (c CmdFetcher) FetchNode(label string) NodeInfo {
 	if strings.TrimSpace(c.Cmd) == "" || label == "" {
 		return NodeInfo{Found: false}
 	}
-	// Bounded by graphifyCmdTimeout and the hook's global deadline; output
+	// Bounded by graphifyCmdTimeout() and the hook's global deadline; output
 	// is capped. Once the deadline passes, later labels return at once.
-	out, err := hookctx.RunCommand(c.Cmd, label, graphifyCmdTimeout)
+	out, err := hookctx.RunCommand(c.Cmd, label, graphifyCmdTimeout())
 	if err != nil {
 		return NodeInfo{Found: false}
 	}
