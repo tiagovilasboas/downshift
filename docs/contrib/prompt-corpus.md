@@ -55,3 +55,16 @@ score 3 + 3. Removing the double count alone worsened `hard â†’ frontier` (43 â†
 50) and broke `HARD-04`, so several hard cases rely on it today. Deciding what a bare
 migration word should mean is a design choice for the owner.
 
+## Tried and rejected: swapping the semantic embedder for character trigrams
+The embedder in `internal/semantic` hashes whole words, so it knows only vocabulary it
+has seen. A character-trigram hash (no model, no download) separated generator
+difficulty about 7 points better in `scripts/embed_eval.py` (4-way centroid accuracy
+0.47 against 0.40, held in Portuguese). Wired in as an option with centroids built from
+the same training set, it changed the tier of **3 of 1000 prompts** and left the
+benchmark sets equal (tasks 70.5 / 70.0, holdout 100, heldout2 39.2, fresh 50.0). The
+semantic layer can only raise a class, fires only when the regex is unconfident, and
+needs cosine 0.45, so it barely moves routing whichever embedder feeds it. Not adopted:
+the lever for multi-language coverage is the signal table and structural signals, not
+the embedder. A multilingual static model (potion-multilingual-128M) is untested here
+(huggingface.co is blocked from the build container).
+
