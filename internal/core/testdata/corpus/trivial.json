@@ -1,0 +1,246 @@
+[
+ {
+  "id": "trivial-01",
+  "prompt": "Fix the typo 'recieve' in README.md",
+  "want_tier": "small",
+  "note": "single typo"
+ },
+ {
+  "id": "trivial-02",
+  "prompt": "Rename the constant MAX_RETRY to MAX_RETRIES in config.ts",
+  "want_tier": "small",
+  "note": "one-file constant rename"
+ },
+ {
+  "id": "trivial-03",
+  "prompt": "Corrija o erro de digitação 'conexao' para 'conexão' no comentário de db.go",
+  "want_tier": "small",
+  "note": "pt typo"
+ },
+ {
+  "id": "trivial-04",
+  "prompt": "Run prettier on src/components/Button.tsx",
+  "want_tier": "small",
+  "note": "formatting"
+ },
+ {
+  "id": "trivial-05",
+  "prompt": "git add -A and commit with the message 'chore: bump deps'",
+  "want_tier": "small",
+  "note": "simple git op"
+ },
+ {
+  "id": "trivial-06",
+  "prompt": "Move utils/date.js to lib/date.js and update the one import in app.js",
+  "want_tier": "small",
+  "note": "move one file"
+ },
+ {
+  "id": "trivial-07",
+  "prompt": "Remove the unused import of 'os' from scripts/clean.py",
+  "want_tier": "small",
+  "note": "unused import"
+ },
+ {
+  "id": "trivial-08",
+  "prompt": "Renomeie a variável tmp para resultado em calcular.py",
+  "want_tier": "small",
+  "note": "pt rename"
+ },
+ {
+  "id": "trivial-09",
+  "prompt": "Add a comment above the retry loop saying it backs off exponentially",
+  "want_tier": "small",
+  "note": "add comment"
+ },
+ {
+  "id": "trivial-10",
+  "prompt": "Change the default port from 8080 to 9090 in server.go",
+  "want_tier": "small",
+  "note": "one-line constant"
+ },
+ {
+  "id": "trivial-11",
+  "prompt": "Delete the trailing whitespace in docs/setup.md",
+  "want_tier": "small",
+  "note": "whitespace"
+ },
+ {
+  "id": "trivial-12",
+  "prompt": "git checkout -b feature/login-page",
+  "want_tier": "small",
+  "note": "create branch"
+ },
+ {
+  "id": "trivial-13",
+  "prompt": "Bump the version in package.json from 1.4.2 to 1.4.3",
+  "want_tier": "small",
+  "note": "version bump"
+ },
+ {
+  "id": "trivial-14",
+  "prompt": "Sort the imports in api/handlers.go alphabetically",
+  "want_tier": "small",
+  "note": "import sorting"
+ },
+ {
+  "id": "trivial-15",
+  "prompt": "Mude o texto do botão de 'Enviar' para 'Salvar' em Form.vue",
+  "want_tier": "small",
+  "note": "pt string change"
+ },
+ {
+  "id": "trivial-16",
+  "prompt": "Add a .gitignore entry for node_modules and dist",
+  "want_tier": "small",
+  "note": "gitignore"
+ },
+ {
+  "id": "trivial-17",
+  "prompt": "Fix indentation in the YAML file deploy/values.yaml (tabs to two spaces)",
+  "want_tier": "small",
+  "note": "indentation"
+ },
+ {
+  "id": "trivial-18",
+  "prompt": "Rename the file helpers.test.js to helpers.spec.js",
+  "want_tier": "small",
+  "note": "file rename"
+ },
+ {
+  "id": "trivial-19",
+  "prompt": "Replace the magic number 86400 with a SECONDS_PER_DAY constant in cache.py",
+  "want_tier": "small",
+  "note": "extract constant"
+ },
+ {
+  "id": "trivial-20",
+  "prompt": "Remova o console.log esquecido em src/index.js",
+  "want_tier": "small",
+  "note": "pt remove log"
+ },
+ {
+  "id": "trivial-21",
+  "prompt": "Update the copyright year to 2026 in the LICENSE file",
+  "want_tier": "small",
+  "note": "one-line edit"
+ },
+ {
+  "id": "trivial-22",
+  "prompt": "git stash",
+  "want_tier": "small",
+  "note": "bare git command"
+ },
+ {
+  "id": "trivial-23",
+  "prompt": "Fix the broken link to CONTRIBUTING in the footer of README.md",
+  "want_tier": "small",
+  "note": "link fix"
+ },
+ {
+  "id": "trivial-24",
+  "prompt": "Add a trailing newline to every .go file in cmd/",
+  "want_tier": "small",
+  "note": "mechanical formatting"
+ },
+ {
+  "id": "trivial-25",
+  "prompt": "Rename the CSS class .btn-primary to .button-primary in styles/main.css",
+  "want_tier": "small",
+  "note": "one-file class rename"
+ },
+ {
+  "id": "trivial-26",
+  "prompt": "Delete the commented-out block at the bottom of routes.rb",
+  "want_tier": "small",
+  "note": "remove dead comments"
+ },
+ {
+  "id": "trivial-27",
+  "prompt": "Troque aspas simples por aspas duplas em utils/strings.js",
+  "want_tier": "small",
+  "note": "pt quote style"
+ },
+ {
+  "id": "trivial-28",
+  "prompt": "Copy .env.example to .env",
+  "want_tier": "small",
+  "note": "copy file"
+ },
+ {
+  "id": "trivial-29",
+  "prompt": "The function name is spelled wrongly: calcuateTotal should be calculateTotal. Please rename it in billing.js and the two places in billing.test.js that call it.",
+  "want_tier": "small",
+  "note": "short rename with two call sites"
+ },
+ {
+  "id": "trivial-30",
+  "prompt": "Add a TODO comment in parser.ts reminding us to handle nested arrays",
+  "want_tier": "small",
+  "note": "TODO comment"
+ },
+ {
+  "id": "trivial-31",
+  "prompt": "we renamed our product from 'Orbit' to 'Helix' last week, and marketing wants every user-facing string, README mention, docs page, HTML title, and test fixture updated. This is a pure find-and-replace of the literal word Orbit with Helix across the repo (about 60 files). No logic changes, no API changes, no identifiers involved, just the text. Run the replace, then confirm git diff only shows that word changing.",
+  "want_tier": "small",
+  "note": "looks big, mechanical literal replace"
+ },
+ {
+  "id": "trivial-32",
+  "prompt": "Estamos migrando o nome do pacote de 'acme-utils' para '@acme/utils'. Preciso que você atualize todos os imports em todos os arquivos do monorepo (são uns 120 arquivos espalhados em vários módulos) trocando exatamente a string 'acme-utils' por '@acme/utils'. É só substituição textual, não mexa em nenhuma outra coisa, não precisa alterar lógica nem testes além do import.",
+  "want_tier": "small",
+  "note": "pt, many files but pure text replace",
+  "known_gap": true
+ },
+ {
+  "id": "trivial-33",
+  "prompt": "Across the whole codebase, rename the constant DEFAULT_TIMEOUT_MS to REQUEST_TIMEOUT_MS. It shows up in roughly forty files: configs, handlers, tests, docs and a couple of shell scripts. The value does not change and there is no behaviour change, so a sed over the repo followed by a build should be enough. Just make sure nothing else with a similar prefix gets touched.",
+  "want_tier": "small",
+  "note": "looks big, mechanical rename"
+ },
+ {
+  "id": "trivial-34",
+  "prompt": "Run gofmt -w on the entire repository and commit the result as 'style: gofmt'. A lot of files will change because nobody has run the formatter in months, but it is only whitespace and import ordering. Don't hand edit anything and don't try to fix lint warnings, just format and commit.",
+  "want_tier": "small",
+  "note": "big diff, purely formatter"
+ },
+ {
+  "id": "trivial-35",
+  "prompt": "Precisamos mover todos os arquivos de src/legacy/ para src/old/ preservando a estrutura de pastas. São muitas pastas e dezenas de arquivos, e os imports relativos dentro deles continuam iguais porque a estrutura interna não muda. Só use git mv e depois atualize o único alias 'legacy' em tsconfig.json para 'old'. Nada além disso.",
+  "want_tier": "small",
+  "note": "pt, big move but mechanical"
+ },
+ {
+  "id": "trivial-36",
+  "prompt": "Our license header changed. Replace the old two-line header 'Copyright (c) 2024 Acme Inc.' with 'Copyright (c) 2026 Acme Inc.' at the top of every source file in the repository, which is something like 300 files in Go, TypeScript and Python. Do not alter anything else in any file, only that line, and keep each language's comment style.",
+  "want_tier": "small",
+  "note": "looks big, mechanical header edit"
+ },
+ {
+  "id": "trivial-37",
+  "prompt": "fix typo",
+  "want_tier": "small",
+  "want_hold": false,
+  "note": "vague, no target; hold | relabelled: an explicit \"fix typo\" is a trivial signal, writing small is acceptable"
+ },
+ {
+  "id": "trivial-38",
+  "prompt": "clean this up",
+  "want_tier": "small",
+  "want_hold": true,
+  "note": "vague, no signal; hold"
+ },
+ {
+  "id": "trivial-39",
+  "prompt": "Arruma isso aí",
+  "want_tier": "small",
+  "want_hold": true,
+  "note": "pt vague, no signal; hold"
+ },
+ {
+  "id": "trivial-40",
+  "prompt": "Delete the file tmp/debug.log and add tmp/ to .gitignore",
+  "want_tier": "small",
+  "note": "delete file and ignore"
+ }
+]

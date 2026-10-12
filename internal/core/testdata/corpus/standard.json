@@ -1,0 +1,249 @@
+[
+ {
+  "id": "STD-01",
+  "prompt": "Add a GET /api/v1/invoices/:id endpoint to the Express service. It should load the invoice via InvoiceRepository, return 404 when missing, and serialise using the existing InvoiceDTO. Add a route test next to the other invoice tests.",
+  "want_tier": "mid",
+  "note": "normal endpoint with tests"
+ },
+ {
+  "id": "STD-02",
+  "prompt": "Crie um componente React `UserAvatar` que receba `name` e `imageUrl`, mostre as iniciais quando a imagem falhar e tenha testes com Testing Library.",
+  "want_tier": "mid",
+  "note": "component plus tests, pt-BR"
+ },
+ {
+  "id": "STD-03",
+  "prompt": "Write unit tests for the `parseDuration` helper in utils/time.ts covering '1h30m', '90s', empty string, negative values and overflow.",
+  "want_tier": "mid",
+  "note": "unit tests for a helper",
+  "known_gap": true
+ },
+ {
+  "id": "STD-04",
+  "prompt": "Fix this crash:\n\nTypeError: Cannot read properties of undefined (reading 'map')\n    at renderRows (src/components/Table.tsx:42:18)\n    at Table (src/components/Table.tsx:20:5)\n\nIt happens when the API returns an empty payload on the orders page.",
+  "want_tier": "mid",
+  "note": "bug fix with stack trace"
+ },
+ {
+  "id": "STD-05",
+  "prompt": "Refatore o módulo de pagamentos em `billing/` separando a lógica de cálculo de impostos em um arquivo próprio, mantendo a API pública e os testes passando.",
+  "want_tier": "mid",
+  "note": "module refactor, pt-BR"
+ },
+ {
+  "id": "STD-06",
+  "prompt": "Add input validation to the signup form: email format, password at least 10 chars with one digit, and show inline error messages. Update the existing form tests.",
+  "want_tier": "mid",
+  "note": "validation across form and tests"
+ },
+ {
+  "id": "STD-07",
+  "prompt": "Read the docs for the pgx connection pool and summarise which settings control max connections, idle timeout and health checks. Keep it under 200 words.",
+  "want_tier": "mid",
+  "note": "research docs summary"
+ },
+ {
+  "id": "STD-08",
+  "prompt": "Explain what the `retryWithBackoff` function in lib/http/retry.go does and why it caches the last error.",
+  "want_tier": "mid",
+  "note": "explain code",
+  "known_gap": true
+ },
+ {
+  "id": "STD-09",
+  "prompt": "Rename the variable `tmp` to `parsedConfig` in loadConfig().",
+  "want_tier": "small",
+  "note": "single rename"
+ },
+ {
+  "id": "STD-10",
+  "prompt": "Fix the typo 'recieve' in README.md.",
+  "want_tier": "small",
+  "note": "typo fix"
+ },
+ {
+  "id": "STD-11",
+  "prompt": "Corrija o import não utilizado em src/utils/date.ts.",
+  "want_tier": "small",
+  "note": "tiny fix, pt-BR"
+ },
+ {
+  "id": "STD-12",
+  "prompt": "Add a `isEmpty(s string) bool` helper to the strings package that returns true for empty or whitespace-only input.",
+  "want_tier": "small",
+  "note": "single small function"
+ },
+ {
+  "id": "STD-13",
+  "prompt": "Change the default page size constant from 20 to 50 in pagination.py.",
+  "want_tier": "small",
+  "note": "one-line constant edit"
+ },
+ {
+  "id": "STD-14",
+  "prompt": "Run prettier on the files under src/components and commit nothing.",
+  "want_tier": "small",
+  "note": "formatting"
+ },
+ {
+  "id": "STD-15",
+  "prompt": "Mova o arquivo `helpers.js` para a pasta `src/lib` e atualize o import em `index.js`.",
+  "want_tier": "small",
+  "note": "move file, pt-BR"
+ },
+ {
+  "id": "STD-16",
+  "prompt": "Add a docstring to the `normalize_phone` function describing its arguments and return value.",
+  "want_tier": "small",
+  "note": "docstring only"
+ },
+ {
+  "id": "STD-17",
+  "prompt": "Implement pagination for the /users list endpoint using limit and cursor query params. Update the OpenAPI spec and add tests for the first page, last page and invalid cursor.",
+  "want_tier": "mid",
+  "note": "feature across a few files"
+ },
+ {
+  "id": "STD-18",
+  "prompt": "Os testes de `CartService` estão falhando depois que mudamos o formato do preço para centavos. Descubra o que quebrou e conserte.",
+  "want_tier": "mid",
+  "note": "bug fix with some investigation, pt-BR"
+ },
+ {
+  "id": "STD-19",
+  "prompt": "Add a dark mode toggle to the settings page that persists to localStorage and applies a `dark` class on the root element. Include a test.",
+  "want_tier": "mid",
+  "note": "small feature with persistence and test"
+ },
+ {
+  "id": "STD-20",
+  "prompt": "Extract the duplicated date-formatting logic from reports/weekly.ts and reports/monthly.ts into a shared formatter and make sure existing snapshots still match.",
+  "want_tier": "mid",
+  "note": "refactor with context"
+ },
+ {
+  "id": "STD-21",
+  "prompt": "Investigate why `npm run lint` reports 'no-floating-promises' in worker.ts and fix all occurrences in that file.",
+  "want_tier": "mid",
+  "note": "lint fix requiring understanding",
+  "known_gap": true
+ },
+ {
+  "id": "STD-22",
+  "prompt": "Escreva testes unitários para o hook `useDebounce`, cobrindo atraso, cancelamento ao desmontar e mudança rápida de valor.",
+  "want_tier": "mid",
+  "note": "unit tests, pt-BR"
+ },
+ {
+  "id": "STD-23",
+  "prompt": "Add a CSV export button to the admin users table. It should download the currently filtered rows with columns id, email, role, created_at.",
+  "want_tier": "mid",
+  "note": "UI feature"
+ },
+ {
+  "id": "STD-24",
+  "prompt": "Summarise the changes in the last release notes of the `zod` library that could affect our schema definitions in src/schemas.",
+  "want_tier": "mid",
+  "note": "research"
+ },
+ {
+  "id": "STD-25",
+  "prompt": "Implemente um middleware de logging para o servidor Fastify que registre método, rota, status e tempo de resposta, sem logar o corpo da requisição.",
+  "want_tier": "mid",
+  "note": "middleware feature, pt-BR"
+ },
+ {
+  "id": "STD-26",
+  "prompt": "The `OrderList` component re-renders on every keystroke in the search box. Find the cause and memoise what is needed.",
+  "want_tier": "mid",
+  "note": "moderate perf bug in one component"
+ },
+ {
+  "id": "STD-27",
+  "prompt": "Add a new column `archived_at` to the projects table with a migration, update the model, and filter archived projects out of the default list query.",
+  "want_tier": "mid",
+  "note": "simple migration plus model",
+  "known_gap": true
+ },
+ {
+  "id": "STD-28",
+  "prompt": "Explique como funciona o fluxo de refresh de token em `auth/session.ts`, só leitura, sem alterar nada.",
+  "want_tier": "mid",
+  "note": "explain code, pt-BR"
+ },
+ {
+  "id": "STD-29",
+  "prompt": "Convert the callback-based `readConfig(path, cb)` in config.js to return a Promise and update its three call sites.",
+  "want_tier": "mid",
+  "note": "small refactor with call sites"
+ },
+ {
+  "id": "STD-30",
+  "prompt": "Add rate limiting of 60 requests per minute per IP to the public /search route, with a 429 response and Retry-After header. Cover it with a test.",
+  "want_tier": "mid",
+  "note": "feature with test"
+ },
+ {
+  "id": "STD-31",
+  "prompt": "Atualize a documentação da API: adicione exemplos de request e response para os endpoints de /orders no docs/api.md.",
+  "want_tier": "mid",
+  "note": "documentation across endpoints"
+ },
+ {
+  "id": "STD-32",
+  "prompt": "Panic in production logs:\n\npanic: runtime error: index out of range [3] with length 3\ngoroutine 18 [running]:\nmain.splitFields(...)\n\tparser/fields.go:57 +0x1a5\n\nReproduce with a test and fix it.",
+  "want_tier": "mid",
+  "note": "bug fix with stack trace and test",
+  "known_gap": true
+ },
+ {
+  "id": "STD-33",
+  "prompt": "Add a loading skeleton to the dashboard cards while the stats query is pending.",
+  "want_tier": "mid",
+  "note": "small UI feature"
+ },
+ {
+  "id": "STD-34",
+  "prompt": "Write a Python script that reads users.csv, deduplicates by email keeping the latest row, and writes users_clean.csv. Include a couple of pytest cases.",
+  "want_tier": "mid",
+  "note": "script with tests"
+ },
+ {
+  "id": "STD-35",
+  "prompt": "Compare how our two HTTP clients (internal/http/client.go and pkg/fetch/fetch.go) handle timeouts and write a short summary of the differences.",
+  "want_tier": "mid",
+  "note": "code research"
+ },
+ {
+  "id": "STD-36",
+  "prompt": "Troque o texto do botão de 'Enviar' para 'Salvar' em ProfileForm.tsx.",
+  "want_tier": "small",
+  "note": "one-line text change, pt-BR"
+ },
+ {
+  "id": "STD-37",
+  "prompt": "Bump the version in package.json to 2.4.1.",
+  "want_tier": "small",
+  "note": "one-line edit"
+ },
+ {
+  "id": "STD-38",
+  "prompt": "Add a missing semicolon on line 18 of server.js and run the linter.",
+  "want_tier": "small",
+  "note": "tiny fix"
+ },
+ {
+  "id": "STD-39",
+  "prompt": "make it faster",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "too vague to be confident"
+ },
+ {
+  "id": "STD-40",
+  "prompt": "olha isso pra mim",
+  "want_tier": "mid",
+  "want_hold": true,
+  "note": "no signal at all, pt-BR"
+ }
+]

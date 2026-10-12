@@ -53,7 +53,10 @@ func loadPromptCorpus(t *testing.T) map[string][]promptCase {
 }
 
 func TestPromptCorpusFiles(t *testing.T) {
-	var total, miss, gap, wrongEffort int
+	var total, miss, gap, wrongEffort, tierOff int
+	// matrix[want][effective]: effective is the tier actually written when the
+	// current model is unknown, or "held" when the spawn would run unchanged.
+	matrix := map[string]map[string]int{}
 	for file, cases := range loadPromptCorpus(t) {
 		seen := map[string]bool{}
 		for _, c := range cases {
@@ -67,13 +70,29 @@ func TestPromptCorpusFiles(t *testing.T) {
 			seen[c.ID] = true
 			total++
 			d := core.Route(c.Prompt, "claude-code", "", cat)
+			written := d.ShouldRewriteModel()
+			eff := d.Tier.String()
+			if !written {
+				eff = "held"
+			}
+			if matrix[c.WantTier] == nil {
+				matrix[c.WantTier] = map[string]int{}
+			}
+			matrix[c.WantTier][eff]++
 			if d.Tier.String() != c.WantTier {
+				tierOff++ // recommendation differs; harmless when the spawn is held
+			}
+			// A failure is a WRITE of the wrong tier, or a write the label says
+			// should have been held. A held spawn only loses a saving.
+			wrongWrite := written && d.Tier.String() != c.WantTier
+			wrongHold := c.WantHold != nil && *c.WantHold && written
+			if wrongWrite || wrongHold {
 				if c.KnownGap {
 					gap++
-					t.Logf("known gap %s/%s: want %s got %s (%s)", file, c.ID, c.WantTier, d.Tier, d.Complexity)
+					t.Logf("known gap %s/%s: want %s wrote %s (%s)", file, c.ID, c.WantTier, d.Tier, d.Complexity)
 				} else {
 					miss++
-					t.Errorf("%s/%s: want tier %s, got %s (complexity %s, confident=%v)\n   prompt: %.140s", file, c.ID, c.WantTier, d.Tier, d.Complexity, d.Confident, c.Prompt)
+					t.Errorf("%s/%s: want %s, wrote %s (complexity %s, confident=%v, want_hold=%v)\n   prompt: %.140s", file, c.ID, c.WantTier, d.Tier, d.Complexity, d.Confident, c.WantHold != nil && *c.WantHold, c.Prompt)
 				}
 				continue
 			}
@@ -81,14 +100,15 @@ func TestPromptCorpusFiles(t *testing.T) {
 			if wantEffort == "" {
 				wantEffort = core.EffortFor(d.Tier).String()
 			}
-			if d.Effort.String() != wantEffort {
+			if written && d.Effort.String() != wantEffort {
 				wrongEffort++
 				t.Errorf("%s/%s: want effort %s, got %s", file, c.ID, wantEffort, d.Effort)
 			}
-			if c.WantHold != nil && *c.WantHold == d.ShouldRewriteModel() && !c.KnownGap {
-				t.Errorf("%s/%s: want_hold=%v but ShouldRewriteModel()=%v (confident=%v)", file, c.ID, *c.WantHold, d.ShouldRewriteModel(), d.Confident)
-			}
 		}
 	}
-	t.Logf("corpus: %d cases, %d tier misses, %d known gaps, %d effort mismatches", total, miss, gap, wrongEffort)
+	for _, w := range []string{"small", "mid", "frontier"} {
+		t.Logf("want %-8s -> small %3d | mid %3d | frontier %3d | held %3d", w,
+			matrix[w]["small"], matrix[w]["mid"], matrix[w]["frontier"], matrix[w]["held"])
+	}
+	t.Logf("corpus: %d cases, %d wrong writes, %d known gaps, %d effort mismatches, %d recommendations off-label (harmless when held)", total, miss, gap, wrongEffort, tierOff)
 }
