@@ -24,7 +24,8 @@ judged on.
 3. Change `RawSignals`; add a table-driven case with look-alikes that must NOT match.
 4. Re-run the report. Accept only if the control half improves **and** the harm
    count (medium/hard prompts reaching small) does not rise.
-5. Run `go test ./...` and `downshift benchmark` against a baseline built from the
+5. Regenerate the report with `go test -count=1` (Go caches a test whose inputs are unchanged and then does not rewrite the output file).
+6. Run `go test ./...` and `downshift benchmark` against a baseline built from the
    commit **before** the change, never an old binary.
 
 ## Result of the first round (mechanical edits and commands, EN + PT-BR)
