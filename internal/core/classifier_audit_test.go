@@ -30,6 +30,22 @@ func TestClassify_SingleMentionScoresOnce(t *testing.T) {
 			t.Errorf("%q: Complex score %d, want 3 (one mention, one hit)", p, got)
 		}
 	}
+	// "distributed lock" used to hit both the bare-word row and a phrase row.
+	for _, p := range []string{"distributed", "distributed lock", "distributed cache", "distributed transaction"} {
+		if got := core.Classify(p).Scores[core.Complex]; got != 2 {
+			t.Errorf("%q: Complex score %d, want 2 (one mention, one hit)", p, got)
+		}
+	}
+	// Scoring once must not drop real distributed-systems work off frontier.
+	for _, p := range []string{
+		"implement a distributed lock",
+		"design a distributed cache",
+		"projete um sistema distribuído de filas",
+	} {
+		if got := core.Classify(p).Complexity; got != core.Complex {
+			t.Errorf("%q: %v, want COMPLEX", p, got)
+		}
+	}
 }
 
 // A short edit whose target is documentation or comments is not
