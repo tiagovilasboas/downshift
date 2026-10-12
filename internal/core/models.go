@@ -45,7 +45,11 @@ type Model struct {
 	Tier    Tier    // capability/cost bucket
 	InputM  float64 // USD per 1M input tokens (approximate)
 	OutputM float64 // USD per 1M output tokens (approximate)
-	Harness string  // which harness this model id belongs to
+	// CacheReadM / CacheWriteM: USD per 1M cached-input tokens read / written.
+	// Zero means the catalog has no cache price (unknown, not free).
+	CacheReadM  float64
+	CacheWriteM float64
+	Harness     string // which harness this model id belongs to
 }
 
 // WriteName is the string a hook writes into the harness's model field: the

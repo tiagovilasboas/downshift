@@ -36,6 +36,9 @@ __pycache__/
 /catalog.json
 .harness-downshift/
 
+# Claude Code agent worktrees
+.claude/worktrees/
+
 # Built dsmon binary (source in cmd/dsmon)
 /dsmon
 # Built dsmon-hook binary
