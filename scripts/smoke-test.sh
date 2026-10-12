@@ -67,14 +67,29 @@ expect "claude-code rewrite" "$cc_res" '"model":"haiku"'
 expect "claude-code rewrite" "$cc_res" 'claude-haiku-5-5'
 echo "OK: claude-code rewrites updatedInput.model"
 
-# Claude Code without a session allowlist: allow, no rewrite.
-cc_none=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
-expect "claude-code no session" "$cc_none" '"permissionDecision":"allow"'
+# Claude Code without a session allowlist: the current model proves access to
+# the tiers below it, so a trivial Task on opus is still downshifted (inferred).
+cc_inf=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+expect "claude-code inferred session" "$cc_inf" '"updatedInput":{'
+expect "claude-code inferred session" "$cc_inf" '"model":"haiku"'
+echo "OK: claude-code without allowlist infers the session from the current model"
+
+# Without a current model there is nothing to infer from: allow, no rewrite.
+cc_none=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+expect "claude-code no model" "$cc_none" '"permissionDecision":"allow"'
 if printf '%s' "$cc_none" | grep -qF updatedInput; then
-  echo "FAIL: claude-code rewrote without a session allowlist: $cc_none" >&2
+  echo "FAIL: claude-code rewrote with no session and no current model: $cc_none" >&2
   exit 1
 fi
-echo "OK: claude-code without session does not rewrite"
+echo "OK: claude-code with no session and no model does not rewrite"
+
+# A harness without InferSession (codex) never rewrites on an unknown session.
+cx_none=$(echo '{"tool_name":"spawn_agent","tool_input":{"message":"rename the userId variable to userIdentifier","model":"gpt-5.6-sol"}}' | HOME="$(mktemp -d)" "$BIN" codex 2>/dev/null)
+if printf '%s' "$cx_none" | grep -qF updatedInput; then
+  echo "FAIL: codex rewrote without a session allowlist: $cx_none" >&2
+  exit 1
+fi
+echo "OK: codex without session does not rewrite"
 
 # Antigravity: trivial subagent on flash must move to flash_lite.
 ag_res=$(echo '{"toolCall":{"name":"invoke_subagent","args":{"Subagents":[{"Model":"flash","Prompt":"rename the userId variable to userIdentifier"}]}}}' | hook antigravity)
