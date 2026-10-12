@@ -38,3 +38,19 @@ analysis and "run X and summarise by root cause") and were limited to short prom
 656 of 1000 prompts match no signal (default MEDIUM). The remaining families are
 topic words that override scope ("migration" in a file name), hard work without
 vocabulary (CRDT, SSA, JIT), and PII outside the risk floor. See `known_gap` cases.
+
+## Tried and rejected: migration as Medium unless scale words appear
+Hypothesis: `migrat*` alone is not architecture (a migration file, a library swap).
+Making it Medium and Complex only with scale words (several services, production
+data, zero downtime, backfill, dual write, cutover, planning) halved the unnecessary
+frontier writes (development 45 → 22, control 35 → 19) but lost real hard work
+(hard prompts reaching frontier 43 → 30 and 51 → 34) and broke three tests that fix
+the owner's intent: "rename + migration" ties to Complex, "migrate the orders table
+… with zero downtime" is frontier, and a hard corpus case. A narrower damper for
+"a migration file" context catches about 11 development prompts and also hit 2 hard
+ones. Not adopted. Note a latent bug found on the way: the PT-BR pattern
+`\bmigr[aeo]\w*` also matches English "migration/migrate", so English migration words
+score 3 + 3. Removing the double count alone worsened `hard → frontier` (43 → 42, 51 →
+50) and broke `HARD-04`, so several hard cases rely on it today. Deciding what a bare
+migration word should mean is a design choice for the owner.
+
