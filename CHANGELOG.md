@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `downshift stats --by-harness`: Markdown review table of spawns, tier, effort, held-by-guardrail and linked tokens per harness (prompt-free).
+- Prompt corpus harness (`internal/core/prompt_corpus_test.go`) reading hand-labelled files from `internal/core/testdata/corpus/`.
+
 - Test that `Route` is a fixed point on its own output (hook coexistence).
 - `docs/evidence/vendor-hook-docs-2026-10-11.md`: vendor hook docs compared with the adapters.
 - `adapt.CountPredictor` (shrinkage adapted from BerriAI/litellm, MIT; see NOTICE) and evaluator policy `adapt_counts_loo`. Shadow-only.

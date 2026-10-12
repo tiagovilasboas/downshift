@@ -644,13 +644,17 @@ func runModels(catalog models.CatalogReader, args []string) int {
 // --days=N           time window in days (default 30; 0 = all time)
 // --cost-per-unit=X  convert normalised units to dollars at rate X per unit
 // --export           print a pasteable JSON summary for multi-user evidence
+// --by-harness       Markdown review table: spawns, tier, effort and linked tokens per harness
 func runStats(args []string) int {
 	opts := telemetry.StatsOptions{Days: 30}
 	export := false
+	byHarness := false
 	for _, arg := range args {
 		switch {
 		case arg == "--export":
 			export = true
+		case arg == "--by-harness":
+			byHarness = true
 		case len(arg) > 7 && arg[:7] == "--days=":
 			n, err := strconv.ParseFloat(arg[7:], 64)
 			if err != nil || n < 0 {
@@ -675,6 +679,10 @@ func runStats(args []string) int {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error reading event log: %v\n", err)
 		return 1
+	}
+	if byHarness {
+		telemetry.PrintCuration(os.Stdout, telemetry.BuildCuration(telemetry.FilterByDays(events, opts.Days)))
+		return 0
 	}
 	if export {
 		out, err := telemetry.ExportJSON(telemetry.ExportSummary(events, opts.Days, time.Now().UTC()))
