@@ -120,6 +120,16 @@ type Event struct {
 	// would have lowered a no-signal MEDIUM default to small. Applied is false
 	// in shadow mode (the default).
 	NBDownshift *NBUpshiftRecord `json:"nb_downshift,omitempty"`
+
+	// RoutingPolicy and ReasonCodes are the prompt-free decision trace:
+	// the deterministic policy version and the sorted codes of the signals
+	// and rules that shaped this decision (see reason_codes.go). Absent on
+	// events written before the trace existed and on non-decision records.
+	RoutingPolicy string   `json:"routing_policy,omitempty"`
+	ReasonCodes   []string `json:"reason_codes,omitempty"`
+	// Confidence is reserved and never set: the router has no calibrated
+	// probability, so the key stays absent rather than carry a made-up number.
+	Confidence *float64 `json:"confidence,omitempty"`
 }
 
 // NBUpshiftRecord is a tier change a naive-Bayes opinion would make (or made,
@@ -299,6 +309,8 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		QuotaSource:      d.QuotaSource,
 		CreditHeld:       d.CreditHeld,
 		PolicyFloor:      d.PolicyFloor,
+		RoutingPolicy:    RoutingPolicy,
+		ReasonCodes:      ReasonCodes(d),
 	}
 	if len(d.Corrections) > 0 {
 		ev.SafeVerdict = d.SafeVerdict.String()
@@ -468,6 +480,10 @@ type Stats struct {
 	CostBySession  map[string]CostGroup
 	CostBySubagent map[string]CostGroup
 
+	// ReasonCodes counts decisions per reason code. Events written before
+	// the decision trace carry no codes and add nothing here.
+	ReasonCodes map[string]int
+
 	// Corrected counts events where a guardrail held the decision: the
 	// classified verdict stands in the log, but adapters applied the safe
 	// action (see Event.Corrections for the rule IDs).
@@ -582,7 +598,7 @@ const respawnWindow = 10 * time.Minute
 
 // Aggregate computes Stats from a slice of events.
 func Aggregate(events []Event) Stats {
-	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int), CostBySession: make(map[string]CostGroup), CostBySubagent: make(map[string]CostGroup)}
+	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int), CostBySession: make(map[string]CostGroup), CostBySubagent: make(map[string]CostGroup), ReasonCodes: make(map[string]int)}
 	// Build the index before counting: exported windows may arrive out of order.
 	type linkKey struct {
 		harness, decision string
@@ -642,6 +658,9 @@ func Aggregate(events []Event) Stats {
 			s.PolicyFloor++
 		}
 		s.ByComplexity[ev.Complexity]++
+		for _, code := range ev.ReasonCodes {
+			s.ReasonCodes[code]++
+		}
 		applied := AppliedRewrite(ev.Outcome, ev.Corrections)
 		switch {
 		case ev.Verdict == "DOWNSHIFT" && applied:

@@ -84,4 +84,8 @@ func TestHookE2E_ProjectFloorThroughSharedRunner(t *testing.T) {
 	if !bytes.Contains(lines[0], []byte(`"policy_floor":true`)) || bytes.Contains(lines[1], []byte("policy_floor")) {
 		t.Errorf("policy_floor must be recorded only on the raised decision:\n%s", raw)
 	}
+	// The shared runner records the decision trace for every harness.
+	if !bytes.Contains(lines[0], []byte(`"routing_policy":"deterministic-v1"`)) || !bytes.Contains(lines[0], []byte(`"TIER_FLOOR"`)) || bytes.Contains(lines[1], []byte(`"TIER_FLOOR"`)) {
+		t.Errorf("decision trace must carry TIER_FLOOR only on the raised decision:\n%s", raw)
+	}
 }

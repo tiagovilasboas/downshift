@@ -88,6 +88,9 @@ type Decision struct {
 	// PolicyFloor is true when an operator tier floor (internal/policyfile)
 	// raised Tier above what the classifier chose.
 	PolicyFloor bool
+	// NoSignal is true when the classifier matched no content signal and the
+	// complexity is only the safe Medium default (Classification.NoSignal).
+	NoSignal bool
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -150,6 +153,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		Risk:           RiskCategories(prompt),
 		NBUpshift:      nbUp,
 		NBDownshift:    nbDown,
+		NoSignal:       cls.NoSignal,
 	}
 	d.Intent = IntentFor(prompt, cls, d, res)
 	// Self-correction validates the decision against the guardrails before

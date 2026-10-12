@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Decision trace on every routing event: `routing_policy` (`deterministic-v1`) and `reason_codes`, sorted stable codes for the signals and guardrails behind the decision (for example `RISK_FLOOR`, `HELD_UNCONFIDENT_UNKNOWN_MID`, `TIER_FLOOR`, `NO_SIGNAL`). Prompt-free, recorded by the shared runner for every harness, counted in the export. No probability is logged; older events parse unchanged. See `docs/stats-export.md`.
 - `downshift stats --by-harness`: Markdown review table of spawns, tier, effort, held-by-guardrail and linked tokens per harness (prompt-free).
 - Prompt corpus harness (`internal/core/prompt_corpus_test.go`) reading hand-labelled files from `internal/core/testdata/corpus/`.
 

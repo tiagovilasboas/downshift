@@ -52,6 +52,7 @@ type Summary struct {
 	MaxSessionCostUSD   float64        `json:"max_session_cost_usd"`
 	MaxSubagentCostUSD  float64        `json:"max_subagent_cost_usd"`
 	ChildStatus         map[string]int `json:"child_status"`
+	ReasonCodes         map[string]int `json:"reason_codes,omitempty"`
 	Note                string         `json:"note"`
 }
 
@@ -121,6 +122,7 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		MaxSessionCostUSD:   maxSession,
 		MaxSubagentCostUSD:  maxSubagent,
 		ChildStatus:         childStatus,
+		ReasonCodes:         stats.ReasonCodes,
 		Note:                note,
 	}
 }
