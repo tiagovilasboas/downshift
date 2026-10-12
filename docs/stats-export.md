@@ -72,6 +72,8 @@ observed.
 
 `policy_floor` counts decisions an operator tier floor raised (`.downshift/policy.json`, see [config.md](config.md)); it is recorded by the shared runner for every harness.
 
+`reason_codes` counts decisions per reason code (absent when no event in the window carries codes). Each decision event records `routing_policy` (currently `deterministic-v1`) and `reason_codes`, a sorted list of stable codes derived from the decision: `CLASSIFIER_CONFIDENT` or `CLASSIFIER_UNCONFIDENT`, `NO_SIGNAL`, `RISK_CATEGORY`, `RISK_FLOOR`, `GRAPH_ESCALATION`, `NB_UPSHIFT_APPLIED`, `NB_DOWNSHIFT_APPLIED`, `TIER_FLOOR`, `CREDIT_HELD`, and one `HELD_*` code per guardrail in `corrections` (for example `HELD_UNCONFIDENT_UNKNOWN_MID` for R9). Codes never carry prompt text, matched words, risk category names or paths. There is no top-level `confidence`: the router has no calibrated probability. Events written before the trace have neither key and are counted as before.
+
 `baseline_source` on cost events is `requested` when the baseline is the model the harness asked for. No other source is produced yet, so the field is always `requested` or absent.
 
 `child_ended` events record how a Claude Code Agent/Task child ended. Their `child_status` is one of `completed`, `launched`, `interrupted`, `error`, `stopped` or `unknown`. They are observations, not decisions: they never change `total`, the verdict counts or savings. The error text is never stored. Recording them requires `claude-code-post-tool-use` registered under `PostToolUseFailure` as well as `PostToolUse`; the failure payload was documented but not captured from a real session, so the field names should be checked against one before relying on them.
