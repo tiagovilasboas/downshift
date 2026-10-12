@@ -39,6 +39,29 @@ func TestCostUSD_CachedBilledAtInputRate(t *testing.T) {
 	}
 }
 
+func TestCostUSD_CachedAtCacheReadRateWhenKnown(t *testing.T) {
+	m := core.Model{ID: "m", InputM: 4, OutputM: 20, CacheReadM: 0.2}
+	u := telemetry.TokenUsage{InputTokens: 1_000_000, CachedTokens: 1_000_000, OutputTokens: 1_000_000}
+	// 4 input + 0.2 cached + 20 output.
+	if got := telemetry.CostUSD(m, u); math.Abs(got-24.2) > 1e-9 {
+		t.Errorf("CostUSD with cache price = %f, want 24.2", got)
+	}
+	// Same usage, no cache price: cached billed at input rate (upper bound).
+	m.CacheReadM = 0
+	if got := telemetry.CostUSD(m, u); math.Abs(got-28.0) > 1e-9 {
+		t.Errorf("CostUSD without cache price = %f, want 28.0", got)
+	}
+}
+
+func TestCostUSD_NoCachedTokensUnchangedByCachePrice(t *testing.T) {
+	u := telemetry.TokenUsage{InputTokens: 300_000, OutputTokens: 100_000}
+	a := telemetry.CostUSD(core.Model{InputM: 2, OutputM: 10}, u)
+	b := telemetry.CostUSD(core.Model{InputM: 2, OutputM: 10, CacheReadM: 0.1}, u)
+	if a != b {
+		t.Errorf("cache price changed a cost with no cached tokens: %f vs %f", a, b)
+	}
+}
+
 func TestCostUSD_NegativeClamped(t *testing.T) {
 	m := core.Model{ID: "m", InputM: 1, OutputM: 5}
 	u := telemetry.TokenUsage{InputTokens: -100, OutputTokens: -50, CachedTokens: -10}

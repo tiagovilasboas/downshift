@@ -47,6 +47,11 @@ type Entry struct {
 	Efforts     []string          `json:"efforts"`    // optional: effort levels the model accepts; absent = unknown, no restriction
 	InputCostM  float64           `json:"input_cost_per_1m"`
 	OutputCostM float64           `json:"output_cost_per_1m"`
+	// CacheReadCostM / CacheWriteCostM are optional list prices for cached
+	// input tokens (USD per 1M). Zero means "not in the catalog": never a
+	// real free price. Filled by scripts/sync_catalog_prices.py from a snapshot.
+	CacheReadCostM  float64 `json:"cache_read_cost_per_1m"`
+	CacheWriteCostM float64 `json:"cache_write_cost_per_1m"`
 }
 
 // catalogFile is the structure of the JSON file on disk.
@@ -180,13 +185,15 @@ func build(f catalogFile) *Catalog {
 			continue
 		}
 		m := core.Model{
-			ID:      e.ID,
-			Family:  e.Family,
-			Native:  e.NativeName,
-			Tier:    tier,
-			InputM:  e.InputCostM,
-			OutputM: e.OutputCostM,
-			Harness: e.Harness,
+			ID:          e.ID,
+			Family:      e.Family,
+			Native:      e.NativeName,
+			Tier:        tier,
+			InputM:      e.InputCostM,
+			OutputM:     e.OutputCostM,
+			CacheReadM:  e.CacheReadCostM,
+			CacheWriteM: e.CacheWriteCostM,
+			Harness:     e.Harness,
 		}
 
 		if c.index[e.Harness] == nil {
