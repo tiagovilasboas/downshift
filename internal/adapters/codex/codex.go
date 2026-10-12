@@ -77,12 +77,22 @@ func (ev Event) RequestedReasoningEffort() string {
 // request actually carried before this hook rewrote it.
 func (ev Event) RequestedModel() string {
 	var ti map[string]any
-	if json.Unmarshal(ev.ToolInput, &ti) == nil {
-		if model := hookutil.StringField(ti, "model"); model != "" {
-			return model
-		}
+	if json.Unmarshal(ev.ToolInput, &ti) != nil {
+		return ev.Model
 	}
-	return ev.Model
+	return ev.currentModel(ti)
+}
+
+// currentModel is the model the child would run on without a rewrite: the
+// spawn "model", the payload "model", then the parent session model.
+func (ev Event) currentModel(ti map[string]any) string {
+	if model := hookutil.StringField(ti, "model"); model != "" {
+		return model
+	}
+	if ev.Model != "" {
+		return ev.Model
+	}
+	return sessionModelFromTranscript(ev.TranscriptPath)
 }
 
 // TaskText returns task content for local feature extraction. Raw text is
@@ -133,10 +143,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", core.Decision{}
 	}
 
-	currentModel := hookutil.StringField(ti, "model")
-	if currentModel == "" {
-		currentModel = ev.Model
-	}
+	currentModel := ev.currentModel(ti)
 
 	var res core.Resolver
 	if len(r) > 0 {

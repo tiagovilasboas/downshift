@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/tiagovilasboas/downshift/internal/hookutil"
 )
 
 func writeTranscript(t *testing.T, body string) string {
@@ -46,7 +48,7 @@ func TestSessionModelFromTranscript(t *testing.T) {
 // Only the tail is read; the partial first line after the seek is skipped.
 func TestSessionModelFromTranscript_ReadsTailOfLargeFile(t *testing.T) {
 	filler := `{"type":"assistant","message":{"model":"m-head","content":"` + strings.Repeat("x", 4096) + `"}}` + "\n"
-	body := strings.Repeat(filler, (sessionTailBytes/len(filler))+64) + `{"type":"assistant","message":{"model":"m-tail"}}` + "\n"
+	body := strings.Repeat(filler, (hookutil.TranscriptTailBytes/len(filler))+64) + `{"type":"assistant","message":{"model":"m-tail"}}` + "\n"
 	if got := sessionModelFromTranscript(writeTranscript(t, body)); got != "m-tail" {
 		t.Errorf("got %q, want m-tail", got)
 	}

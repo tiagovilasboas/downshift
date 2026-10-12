@@ -4,20 +4,12 @@
 package claudecode
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
-	"io"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
 )
-
-// sessionTailBytes bounds how much of the parent transcript is read. The last
-// assistant message sits at the end, and parent transcripts grow without bound.
-const sessionTailBytes = 1 << 20
 
 // inheritingAgentTypes run on the parent session's model when the Task call
 // sets no model. Other agent types may pin their own model in their
@@ -34,45 +26,23 @@ func inheritsSessionModel(ti map[string]any) bool {
 // transcript path but not the session model. Only the model id is kept; the
 // message content is never stored.
 func sessionModelFromTranscript(path string) string {
-	if path == "" || filepath.Ext(path) != ".jsonl" {
+	return hookutil.LastInTranscriptTail(path, assistantModel)
+}
+
+// assistantModel reads message.model from an assistant line. Claude Code marks
+// locally generated messages with "<synthetic>"; those are skipped.
+func assistantModel(line []byte) string {
+	if !bytes.Contains(line, []byte(`"assistant"`)) {
 		return ""
 	}
-	f, err := os.Open(path)
-	if err != nil {
+	var row struct {
+		Type    string `json:"type"`
+		Message struct {
+			Model string `json:"model"`
+		} `json:"message"`
+	}
+	if json.Unmarshal(line, &row) != nil || row.Type != "assistant" || strings.HasPrefix(row.Message.Model, "<") {
 		return ""
 	}
-	defer f.Close()
-	fi, err := f.Stat()
-	if err != nil || !fi.Mode().IsRegular() {
-		return ""
-	}
-	if off := fi.Size() - sessionTailBytes; off > 0 {
-		if _, err := f.Seek(off, io.SeekStart); err != nil {
-			return ""
-		}
-	}
-	var model string
-	sc := bufio.NewScanner(f)
-	sc.Buffer(make([]byte, 0, 64<<10), sessionTailBytes)
-	for sc.Scan() {
-		line := sc.Bytes()
-		if !bytes.Contains(line, []byte(`"assistant"`)) {
-			continue
-		}
-		var row struct {
-			Type    string `json:"type"`
-			Message struct {
-				Model string `json:"model"`
-			} `json:"message"`
-		}
-		// The first line after a mid-file seek is partial and fails to parse.
-		if json.Unmarshal(line, &row) != nil || row.Type != "assistant" {
-			continue
-		}
-		// Claude Code marks locally generated messages with "<synthetic>".
-		if m := row.Message.Model; m != "" && !strings.HasPrefix(m, "<") {
-			model = m
-		}
-	}
-	return model
+	return row.Message.Model
 }
