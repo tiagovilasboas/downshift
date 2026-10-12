@@ -87,7 +87,7 @@ jobs:
         if: needs.changes.outputs.go == '1'
         run: ./scripts/smoke-test.sh
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         if: needs.changes.outputs.docs_only != '1'
         with:
           node-version: "22"
