@@ -105,7 +105,7 @@ internal/core/
   escalation.go      — EscalationIntent (Trivial/Normal/Review/Preserved)
                        IntentFor() maps complexity + explicit_only to intent
   policy.go          — Tier, Effort, Verdict, Decision, Route()
-                       ShouldRewriteModel/Effort/PreserveExplicitModel
+                       ShouldPreserveExplicitModel
   capabilities.go    — HarnessCapabilities per harness; RewritePlan; Plan()
   resolver.go        — Resolver interface (ModelFor, LookupByID, EffortFor,
                        SavingsRatio, IsExplicitOnly)
