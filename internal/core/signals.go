@@ -121,4 +121,26 @@ var RawSignals = []SignalDef{
 	{`\bbump\s+.{0,15}version\b`, 3, Trivial},
 	{`\bremove\s+(unused|dead)\b`, 2, Trivial},
 	{`\blist(?:ar|e)?\b.{0,40}\barquivos?\b`, 3, Trivial},
+
+	// ── TRIVIAL / SIMPLE — mechanical edits and commands, EN + PT-BR ─────
+	// Mined from the development half of the 1000-prompt exploration set
+	// (docs/contrib/prompt-corpus.md); the other half is the control.
+	// Removing clutter: commented-out code, unused imports, leftovers.
+	{`\b(delete|remove|apague|apaga|remova|exclua|tire)\b.{0,40}\b(commented[- ]out|leftover|trailing|debugger|console\.log|dead code|comentad\w*|n[aã]o usad\w*)`, 3, Trivial},
+	// Changing one configuration value: verb + setting + "to"/"para" + value.
+	{`\b(set|change|update|troque|troca|trocar|muda|mude|altere|atualize|ajuste|bump)\b.{0,40}\b(default|padr[aã]o|port|porta|timeout|ttl|title|t[ií]tulo|font-size|label|icon|[ií]cone|constant|constante|version|vers[aã]o|deployment target|minsdkversion|batch size|pin)\b.{0,30}\b(to|para|=)\s+\S`, 3, Trivial},
+	{`\bbump\s+\S+\s+to\s+v?\d`, 3, Trivial},
+	// Mechanical file hygiene.
+	{`\b(chmod|shebang|trailing (whitespace|newline)|single quotes|aspas simples|barrel file)\b|\.gitignore\b`, 3, Trivial},
+	// Running a tool and reporting the result.
+	{`^\W*(run|rode|rodar|execute|executar)\b.{0,30}\b(npm|npx|yarn|pnpm|pytest|cargo|go test|make|jest|vitest|eslint|tsc|terraform fmt|mvn|gradle|the tests?|os testes?)\b.{0,45}$`, 3, Trivial},
+	{`\b(cargo (fmt|clippy)|terraform fmt|npm (audit|outdated|ls))\b`, 3, Trivial},
+	// Showing something that already exists.
+	{`^\W*(list|show|print|mostre|liste|imprima|exiba)\b.{0,40}\b(files|logs?|commits?|versions|vers[oõ]es|packages|pacotes|pods|arquivos)\b`, 2, Trivial},
+	// PT-BR counterparts of the leading "explain" (short prompts only: a long
+	// one is an analysis) and a translation request. The run-a-tool signal above
+	// is likewise limited to short prompts; "run X and summarise by root cause"
+	// is not mechanical.
+	{`^\W*(explica|explique|qual (a )?diferen[cç]a|o que [eé])\b.{0,60}$`, 2, Simple},
+	{`\b(traduza|translate)\b`, 2, Simple},
 }

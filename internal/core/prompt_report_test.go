@@ -27,19 +27,21 @@ func TestPromptReport(t *testing.T) {
 	files, _ := filepath.Glob(filepath.Join(in, "*.json"))
 	sort.Strings(files)
 	type row struct {
-		ID            string   `json:"id"`
-		File          string   `json:"file"`
-		Prompt        string   `json:"prompt"`
-		DevDifficulty string   `json:"dev_difficulty,omitempty"`
-		Complexity    string   `json:"complexity"`
-		Tier          string   `json:"tier"`
-		Effort        string   `json:"effort"`
-		Confident     bool     `json:"confident"`
-		Written       bool     `json:"written_when_model_unknown"`
-		HeldBy        []string `json:"held_by,omitempty"`
-		RiskFloor     bool     `json:"risk_floor,omitempty"`
-		GraphEsc      bool     `json:"graph_escalated,omitempty"`
-		Chars         int      `json:"prompt_chars"`
+		ID            string         `json:"id"`
+		File          string         `json:"file"`
+		Prompt        string         `json:"prompt"`
+		DevDifficulty string         `json:"dev_difficulty,omitempty"`
+		Complexity    string         `json:"complexity"`
+		Tier          string         `json:"tier"`
+		Effort        string         `json:"effort"`
+		Confident     bool           `json:"confident"`
+		Written       bool           `json:"written_when_model_unknown"`
+		HeldBy        []string       `json:"held_by,omitempty"`
+		RiskFloor     bool           `json:"risk_floor,omitempty"`
+		GraphEsc      bool           `json:"graph_escalated,omitempty"`
+		NoSignal      bool           `json:"no_signal"`
+		Scores        map[string]int `json:"scores"`
+		Chars         int            `json:"prompt_chars"`
 	}
 	var rows []row
 	for _, f := range files {
@@ -60,11 +62,13 @@ func TestPromptReport(t *testing.T) {
 		}
 		for _, c := range in {
 			d := core.Route(c.Prompt, "claude-code", "", cat)
+			cls := core.Classify(c.Prompt)
 			rows = append(rows, row{
 				ID: c.ID, File: filepath.Base(f), Prompt: c.Prompt, DevDifficulty: c.DevDifficulty,
 				Complexity: d.Complexity.String(), Tier: d.Tier.String(), Effort: d.Effort.String(),
 				Confident: d.Confident, Written: d.ShouldRewriteModel(), HeldBy: d.Corrections,
 				RiskFloor: d.RiskFloor, GraphEsc: d.GraphEscalated, Chars: len(c.Prompt),
+				NoSignal: cls.NoSignal, Scores: scoreMap(cls.Scores),
 			})
 		}
 	}
@@ -73,4 +77,12 @@ func TestPromptReport(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Logf("wrote %d rows to %s", len(rows), out)
+}
+
+func scoreMap(m map[core.Complexity]int) map[string]int {
+	out := map[string]int{}
+	for k, v := range m {
+		out[k.String()] = v
+	}
+	return out
 }
