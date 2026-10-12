@@ -59,6 +59,9 @@ func costExpectedRules(d core.Decision) []string {
 	if d.Verdict == core.VerdictUpshift && !d.Confident && !override {
 		rules = append(rules, core.RuleUnconfidentUpshift) // R8
 	}
+	if d.Verdict == core.VerdictUnknown && !d.Confident && d.Tier == core.TierMid && !override {
+		rules = append(rules, core.RuleUnconfidentUnknownMid) // R9
+	}
 	sort.Strings(rules)
 	return rules
 }
@@ -70,8 +73,8 @@ func costExpectedRules(d core.Decision) []string {
 //	DOWNSHIFT → only confident, non-complex, non-risk (R1/R2/R5 hold the rest).
 //	UPSHIFT   → a deterministic lift may move up; otherwise only when confident.
 //	UNKNOWN   → confident always writes; unconfident small is held (R6),
-//	            unconfident mid writes, unconfident frontier writes only with a
-//	            deterministic lift (R7).
+//	            unconfident mid and frontier write only with a deterministic
+//	            lift (R9, R7).
 func costExpectedRewrite(v core.Verdict, confident bool, tier core.Tier, override, riskFloor bool) bool {
 	switch v {
 	case core.VerdictOK:
@@ -88,7 +91,7 @@ func costExpectedRewrite(v core.Verdict, confident bool, tier core.Tier, overrid
 		case core.TierSmall:
 			return false
 		case core.TierMid:
-			return true
+			return override
 		default:
 			return override
 		}
@@ -107,6 +110,7 @@ func TestCostRuleIDsStable(t *testing.T) {
 		core.RuleUnconfidentUnknownSmall:    "R6_UNCONFIDENT_UNKNOWN_SMALL",
 		core.RuleUnconfidentUnknownFrontier: "R7_UNCONFIDENT_UNKNOWN_FRONTIER",
 		core.RuleUnconfidentUpshift:         "R8_UNCONFIDENT_UPSHIFT",
+		core.RuleUnconfidentUnknownMid:      "R9_UNCONFIDENT_UNKNOWN_MID",
 	}
 	for got, w := range want {
 		if got != w {

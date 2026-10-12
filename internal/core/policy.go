@@ -320,9 +320,11 @@ func (d Decision) ShouldRewriteModel() bool {
 	}
 	// No current model known: the child would inherit the harness default
 	// (often the parent's model). An unconfident small-tier recommendation
-	// must not be written over that default (guardrail R6). Mid and above
-	// may still be written: they never move a task below the mid tier.
-	if action == VerdictUnknown && (unconfidentUnknownBelowMid(d) || unconfidentUnknownFrontier(d)) {
+	// must not be written over that default (guardrail R6), and neither may an
+	// unconfident mid (R9) or frontier (R7): a doubtful result must not spend
+	// money, or save it, in either direction. Confident results and tasks a
+	// deterministic rule lifted still apply.
+	if action == VerdictUnknown && (unconfidentUnknownBelowMid(d) || unconfidentUnknownMid(d) || unconfidentUnknownFrontier(d)) {
 		return false
 	}
 	return action == VerdictDownshift || action == VerdictUpshift || action == VerdictUnknown

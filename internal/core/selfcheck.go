@@ -54,6 +54,15 @@ const (
 	// the current model. A task the deterministic rules lifted (risk floor,
 	// graph escalation, an opted-in NB upshift) is not a weak signal.
 	RuleUnconfidentUpshift = "R8_UNCONFIDENT_UPSHIFT"
+	// RuleUnconfidentUnknownMid fires when no current model is known, the
+	// classification is not confident and the recommendation is the mid tier.
+	// A prompt with no recognised signal falls to MEDIUM by default, and the
+	// child would inherit the harness default, so writing mid on doubt can
+	// move a task up for no reason (an unnecessary upshift in disguise). The
+	// safe action leaves the spawn unchanged. A task a deterministic rule lifted
+	// (risk floor, graph escalation, an opted-in NB upshift, an operator tier
+	// floor) is not a weak signal and stays writable.
+	RuleUnconfidentUnknownMid = "R9_UNCONFIDENT_UNKNOWN_MID"
 )
 
 // Violation is one guardrail breach found in a Decision.
@@ -120,6 +129,12 @@ func Check(d Decision) Report {
 			Detail: "no current model known and the frontier recommendation is not confident",
 		})
 	}
+	if unconfidentUnknownMid(d) {
+		violations = append(violations, Violation{
+			Rule:   RuleUnconfidentUnknownMid,
+			Detail: "no current model known and the mid-tier recommendation is not confident",
+		})
+	}
 	if d.Model.ID != "" && d.Model.Harness != "" && d.Harness != "" &&
 		d.Model.Harness != d.Harness {
 		violations = append(violations, Violation{
@@ -146,4 +161,13 @@ func unconfidentUnknownBelowMid(d Decision) bool {
 func unconfidentUnknownFrontier(d Decision) bool {
 	return d.Verdict == VerdictUnknown && !d.Confident && d.Tier >= TierFrontier &&
 		!d.RiskFloor && !d.GraphEscalated && !d.NBUpshift.Applied
+}
+
+// unconfidentUnknownMid reports the R9 condition: no comparable current model,
+// an unconfident classification, a mid target, and no deterministic rule
+// (risk floor, graph escalation, opted-in NB upshift, operator tier floor)
+// behind the tier.
+func unconfidentUnknownMid(d Decision) bool {
+	return d.Verdict == VerdictUnknown && !d.Confident && d.Tier == TierMid &&
+		!d.RiskFloor && !d.GraphEscalated && !d.NBUpshift.Applied && !d.PolicyFloor
 }

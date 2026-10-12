@@ -38,18 +38,25 @@ func TestRoute_UnknownModelUnconfidentSmallIsHeld(t *testing.T) {
 	}
 }
 
-// Mid-tier recommendations stay writable on doubt: they never move a task
-// below the mid tier.
-func TestRoute_UnknownModelUnconfidentMidStillRoutes(t *testing.T) {
+// An unconfident mid recommendation is held (R9): a prompt with no recognised
+// signal falls to MEDIUM by default, and writing mid over the harness default
+// can be an unnecessary upshift. The spawn is left unchanged.
+func TestRoute_UnknownModelUnconfidentMidIsHeld(t *testing.T) {
 	d := core.Route("look at the logs folder and tell me what you see", "claude-code", "", cat)
 	if d.Tier != core.TierMid || d.Confident {
 		t.Fatalf("precondition: want unconfident mid, got tier=%v confident=%v", d.Tier, d.Confident)
 	}
-	if !d.ShouldRewriteModel() {
-		t.Fatal("unconfident mid recommendation may be written")
+	if d.ShouldRewriteModel() {
+		t.Fatal("unconfident mid recommendation must not be written")
 	}
-	if len(d.Corrections) != 0 {
-		t.Fatalf("unexpected corrections %v", d.Corrections)
+	found := false
+	for _, r := range d.Corrections {
+		if r == core.RuleUnconfidentUnknownMid {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("Corrections = %v, want %s", d.Corrections, core.RuleUnconfidentUnknownMid)
 	}
 }
 

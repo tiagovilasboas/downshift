@@ -156,8 +156,11 @@ func TestDecisionRewritePolicy(t *testing.T) {
 	if !(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Confident: true}).ShouldRewriteModel() {
 		t.Error("unknown source model must be routed on a confident classification")
 	}
-	if !(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierMid}).ShouldRewriteModel() {
-		t.Error("unknown source model may be routed to mid or above on doubt")
+	if (core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierMid}).ShouldRewriteModel() {
+		t.Error("unknown source model must not be routed to mid on an unconfident classification (R9)")
+	}
+	if !(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierMid, RiskFloor: true}).ShouldRewriteModel() {
+		t.Error("a deterministic lift (risk floor) keeps an unconfident mid writable")
 	}
 	if (core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierSmall}).ShouldRewriteModel() {
 		t.Error("unknown source model must not be routed to small on an unconfident classification")
