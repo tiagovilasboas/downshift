@@ -55,7 +55,7 @@ change this repository), read **[docs/install.md](docs/install.md)** first.
 
 ### Shared RAG memory
 
-The private Logseq vault at `/Users/tiago.boas/Logseq/rag-kb` is durable shared
+The private Logseq vault at `/Users/tiago.boas/Logseq/knowledge-hub` is durable shared
 context for Codex, Cursor, Kiro, and Claude Code. Its contract is
 `pages/meta/harness-memory.md`.
 
