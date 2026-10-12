@@ -273,6 +273,8 @@ func runHookAdapter[E any](
 				// check without coupling the shared hook runner to a catalog type.
 				if decision.CurrentModel.ID != "" {
 					event.FromModel = telemetry.ModelOrUnknown(candidate)
+				} else {
+					event.RequestedModelRaw = telemetry.RawModelOrInvalid(candidate)
 				}
 			}
 		}

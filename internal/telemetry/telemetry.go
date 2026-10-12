@@ -64,6 +64,11 @@ type Event struct {
 	// PolicyFloor records that an operator tier floor raised this decision
 	// above the classifier tier. Absent on old logs and when no floor applied.
 	PolicyFloor bool `json:"policy_floor,omitempty"`
+	// RequestedModelRaw keeps a non-empty requested model the catalog did not
+	// recognise (requested_model is then "unknown"), so "auto" or an unlisted
+	// id is distinguishable from an absent field. Bounded by RawModelOrInvalid;
+	// absent when the harness sent no model or the catalog recognised it.
+	RequestedModelRaw string `json:"requested_model_raw,omitempty"`
 
 	// Optional real-cost fields (nil = provider usage not tracked for this event).
 	// When absent, fall back to the normalised estimate above; never fake dollars.
@@ -197,6 +202,7 @@ const PolicyVersion = "core-route-v1"
 
 var correlationIDPattern = regexp.MustCompile(`^[a-f0-9]{16,64}$`)
 var modelIDPattern = regexp.MustCompile(`^[A-Za-z0-9._:/-]{1,128}$`)
+var rawModelPattern = regexp.MustCompile(`^[A-Za-z0-9._:/-]{1,64}$`)
 var effortPattern = regexp.MustCompile(`^(none|minimal|low|medium|high|xhigh|max|ultra)$`)
 
 // Session IDs are untrusted hook input. Validate a deliberately small opaque
@@ -229,6 +235,16 @@ func ModelOrUnknown(candidate string) string {
 		return candidate
 	}
 	return "unknown"
+}
+
+// RawModelOrInvalid bounds an unrecognised requested model before logging.
+// Anything that does not look like a short model identifier (for example
+// text with spaces) becomes "invalid", so prompt text never reaches the log.
+func RawModelOrInvalid(candidate string) string {
+	if rawModelPattern.MatchString(candidate) {
+		return candidate
+	}
+	return "invalid"
 }
 
 // EffortOrUnknown accepts only the cross-harness effort vocabulary.

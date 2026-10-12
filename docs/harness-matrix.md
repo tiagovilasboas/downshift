@@ -43,6 +43,26 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
 - **Other harnesses.** cursor and codex expose `tool_use_id` on decisions
   (documented in their hook payloads). Neither has a post-spawn cost hook yet,
   so nothing joins on it there today.
+- **codex current model.** A `spawn_agent` call without `model` runs on the
+  parent's current model: 22 of 24 such spawns in the operator's rollouts
+  (2026-10-12; the other mismatches were Downshift's own rewrites). The
+  adapter reads the last `turn_context.payload.model` from the tail of
+  `transcript_path`. `gpt-6.1-sol` and `gpt-reserve` are not in the catalog
+  yet, so they still log as `unknown` with `requested_model_raw` set.
+- **antigravity current model.** `Subagents[].Model` arrives in the payload
+  (2026-10-09 run asked for `pro`) but was never exposed to telemetry; it is
+  now, for the subagent whose decision is recorded (the last with a prompt).
+  The documented top-level `modelName` is not read until a real payload
+  confirms it.
+- **cursor current model.** In 144 captured Task payloads (2026-10-09/10) the
+  top-level `model` was always empty; the subagent `model` was a real id,
+  `inherit` (28) or absent (30). Cursor sends no transcript path, so
+  `inherit` cannot be resolved to the session model; it is logged as
+  `requested_model_raw: "inherit"`.
+- **Unrecognised models (all harnesses).** When the requested model is
+  non-empty but not in the catalog, the shared runner records it in
+  `requested_model_raw` if it looks like a model id (64 chars,
+  `[A-Za-z0-9._:/-]`), else `invalid`.
 
 ## Revalidation
 
