@@ -89,9 +89,15 @@ func TestClassify_EdgeCases(t *testing.T) {
 		},
 		{
 			name:   "write tests for module",
-			prompt: "write tests for the auth module",
+			prompt: "write tests for the parser module",
 			want:   Simple,
 			note:   "write test (simple 2) fires; module nudges medium but simple wins",
+		},
+		{
+			name:   "write tests for the auth module",
+			prompt: "write tests for the auth module",
+			want:   Medium,
+			note:   "scores as SIMPLE, but bare auth is a risk category: the floor lifts it to MEDIUM",
 		},
 		{
 			name:   "run prettier on all files",

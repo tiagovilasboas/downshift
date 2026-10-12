@@ -162,8 +162,7 @@
   "id": "STD-27",
   "prompt": "Add a new column `archived_at` to the projects table with a migration, update the model, and filter archived projects out of the default list query.",
   "want_tier": "mid",
-  "note": "simple migration plus model",
-  "known_gap": true
+  "note": "simple migration plus model"
  },
  {
   "id": "STD-28",
