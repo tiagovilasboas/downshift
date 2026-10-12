@@ -4,6 +4,7 @@
   "_doc3": "'family' is the stable prefix for version-agnostic matching. A model whose ID starts with the family string matches this entry's tier even if the exact version is unknown.",
   "_doc4": "OpenRouter model IDs arrive as 'provider/model-id' (e.g. 'anthropic/claude-opus-5-5'). The router normalises these before lookup, so family matching works transparently.",
   "_doc5": "Anthropic IDs and base input/output prices per 1M tokens: https://docs.anthropic.com/en/docs/about-claude/models/overview and https://docs.anthropic.com/en/docs/about-claude/pricing (accessed 2026-10-08).",
+  "_doc7": "Optional 'efforts': allowed effort values for the model, listed ONLY where verified against vendor docs on 2026-10-12. Absent means unknown: no restriction is applied and nothing is assumed.",
   "_doc6": "Claude Haiku 5.5 is priced by prompt length: $0.10/$0.50 up to 100k prompt tokens, $0.50/$2.50 above. The catalog stores the up-to-100k price (above 100k the gap to the frontier model is ~87%, not ~97%). Older claude-haiku-4-5 ids match through the claude-haiku family; they are not an alias because KiroCrew owns that canonical id.",
   "version": "2",
   "updated": "2026-10-08",
@@ -21,6 +22,7 @@
       "tier": "small",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "5000", "high": "10000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"],
       "input_cost_per_1m": 0.10,
       "output_cost_per_1m": 0.50
     },
@@ -34,6 +36,7 @@
       "tier": "mid",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"],
       "input_cost_per_1m": 2.00,
       "output_cost_per_1m": 10.00
     },
@@ -47,6 +50,7 @@
       "tier": "frontier",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"],
       "input_cost_per_1m": 4.00,
       "output_cost_per_1m": 20.00
     },
@@ -60,6 +64,7 @@
       "tier": "frontier",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"],
       "input_cost_per_1m": 10.00,
       "output_cost_per_1m": 50.00
     },
@@ -225,6 +230,7 @@
       "tier": "small",
       "effort_scale": "reasoning_effort",
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "efforts": ["low", "medium", "high"],
       "input_cost_per_1m": 0.75,
       "output_cost_per_1m": 3.50
     },

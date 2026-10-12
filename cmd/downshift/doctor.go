@@ -64,7 +64,12 @@ func runDoctor(w io.Writer, cat *catalog.Catalog) int {
 		fmt.Fprintln(w, note)
 	}
 
-	_ = cat // reserved for future: effective harness count, shadow flag, etc.
+	if cat != nil {
+		if unknown := cat.EffortUnknownModels(); len(unknown) > 0 {
+			fmt.Fprintf(w, "effort_unknown: %d models without a verified efforts list (effort not constrained): %s\n",
+				len(unknown), strings.Join(unknown, ", "))
+		}
+	}
 	return 0
 }
 

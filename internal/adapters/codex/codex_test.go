@@ -461,3 +461,43 @@ func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
 		t.Fatalf("decision tier %v floor %v, want mid with floor", d.Tier, d.PolicyFloor)
 	}
 }
+
+// effortCat wraps the real catalog with a declared efforts list, standing in
+// for a future VERIFIED codex entry.
+type effortCat struct {
+	*catalog.Catalog
+	allowed []string
+}
+
+func (e effortCat) AllowedEfforts(_, _ string) []string { return e.allowed }
+
+func midEffortEvent() codex.Event {
+	midID := catID(core.TierMid)
+	return withCatalogSession(codex.Event{
+		ToolName:  "spawn_agent",
+		Model:     midID,
+		ToolInput: json.RawMessage(`{"message":"implement the CSV export feature","model":"` + midID + `"}`),
+	})
+}
+
+func TestHandle_NeverEmitsRejectedEffort(t *testing.T) {
+	// medium is recommended, but the model only accepts low and high.
+	out, _, d := codex.Handle(midEffortEvent(), effortCat{cat, []string{"low", "high"}})
+	if m := decodeUpdated(t, out); m != nil && m["reasoning_effort"] == "medium" {
+		t.Fatalf("emitted rejected effort medium: %v", m)
+	}
+	found := false
+	for _, c := range d.Corrections {
+		found = found || c == core.RuleEffortUnsupported
+	}
+	if !found {
+		t.Errorf("corrections = %v, want %s", d.Corrections, core.RuleEffortUnsupported)
+	}
+}
+
+func TestHandle_AllowedEffortStillApplied(t *testing.T) {
+	out, _, _ := codex.Handle(midEffortEvent(), effortCat{cat, []string{"low", "medium", "high"}})
+	if m := decodeUpdated(t, out); m["reasoning_effort"] != "medium" {
+		t.Fatalf("reasoning_effort = %v, want medium", m["reasoning_effort"])
+	}
+}
