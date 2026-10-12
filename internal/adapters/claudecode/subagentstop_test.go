@@ -239,3 +239,41 @@ func TestSubagentStop_RecordsVerificationOutcome(t *testing.T) {
 		})
 	}
 }
+
+// A held spawn (allow) has no rewrite, but its exact tool_use_id still links
+// the launch and the final cost to its decision, without claiming honor.
+func TestSubagentStop_HeldSpawnLinksByToolUseID(t *testing.T) {
+	log, _, frontier, res := stopSetup(t)
+	dec := telemetry.Event{
+		CorrelationID: "held-1", Timestamp: time.Now().UTC().Format(time.RFC3339Nano),
+		Harness: "claude-code", Outcome: "allow", Verdict: "DOWNSHIFT", Corrections: []string{"R1_UNCONFIDENT_DOWNSHIFT"},
+		Complexity: "MEDIUM", Tier: "mid", FromModel: frontier, ToModel: frontier,
+		SessionID: telemetry.HashSessionID("sess-stop"), ToolUseHash: telemetry.HashSessionID("toolu_held"),
+	}
+	if err := telemetry.AppendTo(log, dec); err != nil {
+		t.Fatal(err)
+	}
+	launch, _ := json.Marshal(map[string]any{
+		"session_id": "sess-stop", "tool_name": "Agent", "tool_use_id": "toolu_held",
+		"tool_response": map[string]any{"isAsync": true, "status": "async_launched", "agentId": stopAgent, "resolvedModel": frontier},
+	})
+	claudecode.HandlePostToolUse(launch, "test", res)
+	claudecode.HandleSubagentStop(stopPayload(writeTranscript(t, frontier)), "test", res)
+
+	events, _ := telemetry.ReadEventsFrom(log)
+	var resolved, usage *telemetry.Event
+	for i := range events {
+		switch events[i].Outcome {
+		case telemetry.OutcomeResolved:
+			resolved = &events[i]
+		case telemetry.OutcomeUsage:
+			usage = &events[i]
+		}
+	}
+	if resolved == nil || resolved.LinkedDecision != "held-1" || resolved.RewriteHonored != nil {
+		t.Fatalf("resolved = %+v, want linked to held-1 with no honor claim", resolved)
+	}
+	if usage == nil || usage.LinkedDecision != "held-1" || usage.ToModel != frontier {
+		t.Fatalf("usage = %+v, want linked to held-1 on %s", usage, frontier)
+	}
+}

@@ -30,12 +30,14 @@ const harnessID = "codex"
 type Event struct {
 	HookEventName string `json:"hook_event_name"`
 	// Cwd is the working directory, used to find a project policy file.
-	Cwd           string          `json:"cwd,omitempty"`
-	CorrelationID string          `json:"correlation_id,omitempty"`
-	SessionID     string          `json:"session_id"`
-	ToolName      string          `json:"tool_name"`
-	ToolInput     json.RawMessage `json:"tool_input"`
-	Model         string          `json:"model"`
+	Cwd           string `json:"cwd,omitempty"`
+	CorrelationID string `json:"correlation_id,omitempty"`
+	// ToolUseID is the harness id of this tool call (documented in its hook payload).
+	ToolUseID string          `json:"tool_use_id,omitempty"`
+	SessionID string          `json:"session_id"`
+	ToolName  string          `json:"tool_name"`
+	ToolInput json.RawMessage `json:"tool_input"`
+	Model     string          `json:"model"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// Codex PreToolUse does not send this field today.
 	SessionModels   *[]string `json:"session_models,omitempty"`
@@ -47,6 +49,9 @@ type Event struct {
 	UsageQuota        *quota.Snapshot `json:"usage_quota,omitempty"`
 	TranscriptPath    string          `json:"transcript_path,omitempty"`
 }
+
+// ToolUseIdentifier returns the harness id of this tool call, if any.
+func (ev Event) ToolUseIdentifier() string { return ev.ToolUseID }
 
 // SessionIdentifier exposes Codex's stable session ID to the shared hook
 // runner without coupling core routing decisions to harness metadata.

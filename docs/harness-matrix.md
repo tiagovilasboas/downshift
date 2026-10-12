@@ -25,6 +25,25 @@ correlation, not a read of the child's actual model. Only applied rewrites
 (outcome `rewrite_emitted`, no guardrail correction) count; allow, blocked
 and held events never do.
 
+## Decision linkage (current model and post-spawn cost)
+
+Observed on claude-code 2026-10-12: the PreToolUse payload carries
+`tool_use_id` and `transcript_path` but no session model.
+
+- **Current model.** A Task call without `model` (agent type empty,
+  `general-purpose` or `claude`) runs on the session model. The adapter reads
+  it from the last assistant message in the tail of `transcript_path` (1 MiB,
+  model id only). Other agent types may pin their own model and stay
+  `unknown`.
+- **Cost linkage.** Every decision records `tool_use_hash`. PostToolUse
+  repeats the id, so `resolved`, `child_ended` and, through the agent id,
+  `usage` attach to the exact decision even with parallel spawns, including
+  held and allow decisions (no `rewrite_honored` claim for those). Lines
+  written before this field fall back to the session heuristic.
+- **Other harnesses.** cursor and codex expose `tool_use_id` on decisions
+  (documented in their hook payloads). Neither has a post-spawn cost hook yet,
+  so nothing joins on it there today.
+
 ## Revalidation
 
 Every TBD cell must be re-checked per harness release: hook contracts

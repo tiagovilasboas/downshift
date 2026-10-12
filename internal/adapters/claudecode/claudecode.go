@@ -35,6 +35,8 @@ type Event struct {
 	// TranscriptPath is the parent session transcript. Read only to learn the
 	// session model a Task call without "model" inherits.
 	TranscriptPath string `json:"transcript_path,omitempty"`
+	// ToolUseID is the harness id of this Task call; PostToolUse repeats it.
+	ToolUseID string `json:"tool_use_id,omitempty"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// Claude Code PreToolUse does not send this field today.
 	SessionModels   *[]string `json:"session_models,omitempty"`
@@ -48,6 +50,9 @@ type Event struct {
 
 // ProjectDir returns the working directory the harness reported, if any.
 func (ev Event) ProjectDir() string { return ev.Cwd }
+
+// ToolUseIdentifier returns the harness id of this tool call, if any.
+func (ev Event) ToolUseIdentifier() string { return ev.ToolUseID }
 
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
 func (ev Event) CorrelationIdentifier() string { return ev.CorrelationID }

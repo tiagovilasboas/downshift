@@ -25,12 +25,14 @@ type Event struct {
 	Cwd string `json:"cwd,omitempty"`
 	// WorkspaceRoots is reported by Cursor hooks; cwd is documented but reported
 	// empty in places, so it is the fallback source for the project directory.
-	WorkspaceRoots []string        `json:"workspace_roots,omitempty"`
-	CorrelationID  string          `json:"correlation_id,omitempty"`
-	ToolName       string          `json:"tool_name"`
-	ToolInput      json.RawMessage `json:"tool_input"`
-	Model          string          `json:"model"`
-	ModelID        string          `json:"model_id"`
+	WorkspaceRoots []string `json:"workspace_roots,omitempty"`
+	CorrelationID  string   `json:"correlation_id,omitempty"`
+	// ToolUseID is the harness id of this tool call (documented in its hook payload).
+	ToolUseID string          `json:"tool_use_id,omitempty"`
+	ToolName  string          `json:"tool_name"`
+	ToolInput json.RawMessage `json:"tool_input"`
+	Model     string          `json:"model"`
+	ModelID   string          `json:"model_id"`
 	// SessionModels and AvailableModels are optional hook allowlists.
 	// Nil means the payload did not include a list. A non-nil slice is
 	// the session and skips the user file. Cursor's preToolUse payload
@@ -43,6 +45,9 @@ type Event struct {
 	UnavailableModels *[]string       `json:"unavailable_models,omitempty"`
 	UsageQuota        *quota.Snapshot `json:"usage_quota,omitempty"`
 }
+
+// ToolUseIdentifier returns the harness id of this tool call, if any.
+func (ev Event) ToolUseIdentifier() string { return ev.ToolUseID }
 
 // ProjectDir returns the working directory the harness reported, if any.
 func (ev Event) ProjectDir() string {

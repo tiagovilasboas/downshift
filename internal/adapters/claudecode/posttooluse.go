@@ -24,7 +24,9 @@
 // harness "claude-code", (b) has not been priced by an earlier usage record
 // (linked_decision, keyed by correlation id), (c) parses to a timestamp
 // within the 24h before the hook fires, and (d) matches by hashed session id
-// when the payload carries one, else by harness + final model. The verdict is
+// when the payload carries one, else by harness + final model. When the payload
+// carries tool_use_id, the decision recorded for that same call wins outright
+// and decisions recorded for other calls are never candidates. The verdict is
 // copied from the matched decision, or "UNKNOWN" when nothing matches.
 //
 // Pricing follows what actually ran. Only a decision whose rewrite was
@@ -38,8 +40,9 @@
 //     only recently started persisting hashed session ids (Event.SessionID),
 //     so older log lines match via the harness+final_model fallback, which
 //     can misattribute usage when several spawns share one model.
-//   - Matching is heuristic, not causal: concurrent same-model spawns in one
-//     session link to the latest decision, which may be the wrong sibling.
+//   - Without tool_use_id (older decision lines, or a payload that omits it)
+//     matching is heuristic: concurrent spawns in one session link to the
+//     latest decision, which may be the wrong sibling.
 package claudecode
 
 import (
@@ -88,17 +91,32 @@ func parseEventTime(ts string) (time.Time, bool) {
 // sessionHash is the already-hashed payload session ("" when absent);
 // modelID is the model reported by the payload ("" when absent). Returns nil
 // when nothing matches.
-func linkTarget(prior []telemetry.Event, sessionHash, modelID string, now time.Time) *telemetry.Event {
-	return linkTargetBy(prior, sessionHash, modelID, now, telemetry.OutcomeUsage)
+func linkTarget(prior []telemetry.Event, sessionHash, toolUseHash, modelID string, now time.Time) *telemetry.Event {
+	return linkTargetBy(prior, sessionHash, toolUseHash, modelID, now, telemetry.OutcomeUsage)
+}
+
+// toolUseHash is the hashed tool_use_id of a post-spawn payload ("" when absent).
+func toolUseHash(payload map[string]any) string {
+	return telemetry.HashSessionID(stringFieldAny(payload, "tool_use_id", "toolUseId"))
 }
 
 // linkTargetBy is linkTarget where a decision already linked by a record of
 // the given outcome is skipped, so each observation kind links once per decision.
-func linkTargetBy(prior []telemetry.Event, sessionHash, modelID string, now time.Time, linkedBy string) *telemetry.Event {
+func linkTargetBy(prior []telemetry.Event, sessionHash, callHash, modelID string, now time.Time, linkedBy string) *telemetry.Event {
 	priced := make(map[string]bool)
 	for _, ev := range prior {
 		if ev.Outcome == linkedBy && ev.LinkedDecision != "" {
 			priced[ev.LinkedDecision] = true
+		}
+	}
+	// Once any decision carries this call's id, only that decision may match.
+	callSeen := false
+	if callHash != "" {
+		for _, ev := range prior {
+			if ev.ToolUseHash == callHash && !telemetry.IsCostOnlyOutcome(ev.Outcome) {
+				callSeen = true
+				break
+			}
 		}
 	}
 	var best *telemetry.Event
@@ -120,6 +138,12 @@ func linkTargetBy(prior []telemetry.Event, sessionHash, modelID string, now time
 		}
 		if age := now.Sub(t); age < 0 || age > linkWindow {
 			continue
+		}
+		if callHash != "" && (ev.ToolUseHash != "" || callSeen) {
+			if ev.ToolUseHash == callHash {
+				return ev // the decision made for this exact call
+			}
+			continue // a sibling call's decision
 		}
 		if sessionHash != "" {
 			if ev.SessionID == "" || ev.SessionID != sessionHash {
@@ -260,7 +284,7 @@ func HandlePostToolUse(raw []byte, binaryVersion string, r core.Resolver) (Outpu
 		return neutral, "", false // nothing billable reported
 	}
 	model := stringFieldAny(payload, "model", "model_id")
-	target := linkTarget(prior, sessionHash, model, now)
+	target := linkTarget(prior, sessionHash, toolUseHash(payload), model, now)
 	ev := buildUsageEvent(usage, model, sessionHash, binaryVersion, target, r, now)
 	telemetry.Record(ev)
 	if target != nil {
@@ -283,10 +307,13 @@ func resolvedModel(payload map[string]any) string {
 	return stringFieldAny(resp, "resolvedModel", "resolved_model")
 }
 
-// recordResolved appends a "resolved" observation for the applied rewrite this
-// spawn belongs to. It records nothing when the payload has no resolved model,
-// the session is unknown, or no applied rewrite matches: there is nothing to
-// confirm or refute. The comparison goes through the catalog so a dated id
+// recordResolved appends a "resolved" observation for the decision this spawn
+// belongs to. It records nothing when the payload has no resolved model, the
+// session is unknown, or no decision matches. A decision found by the session
+// heuristic must be an applied rewrite; one found by its exact tool_use_id may
+// be any decision (allow, held), so the child's later cost still links to it.
+// RewriteHonored is set only for applied rewrites: there is nothing to confirm
+// or refute otherwise. The comparison goes through the catalog so a dated id
 // (claude-haiku-4-5-20251001) matches the id the hook wrote (claude-haiku-4-5);
 // without a catalog match RewriteHonored stays unset rather than guessing.
 func recordResolved(payload map[string]any, sessionHash, binaryVersion string, prior []telemetry.Event, r core.Resolver, now time.Time) {
@@ -294,10 +321,12 @@ func recordResolved(payload map[string]any, sessionHash, binaryVersion string, p
 	if resolved == "" || sessionHash == "" {
 		return
 	}
-	target := linkTargetBy(prior, sessionHash, "", now, telemetry.OutcomeResolved)
-	if target == nil || !telemetry.IsAppliedShift(*target) {
+	call := toolUseHash(payload)
+	target := linkTargetBy(prior, sessionHash, call, "", now, telemetry.OutcomeResolved)
+	if !linkable(target, call) {
 		return
 	}
+	applied := telemetry.IsAppliedShift(*target)
 	ev := telemetry.Event{
 		CorrelationID:  telemetry.NewCorrelationID(),
 		Timestamp:      now.UTC().Format(time.RFC3339Nano),
@@ -308,13 +337,13 @@ func recordResolved(payload map[string]any, sessionHash, binaryVersion string, p
 		PolicyVersion:  telemetry.PolicyVersion,
 		BinaryVersion:  binaryVersion,
 		Verdict:        "UNKNOWN",
-		FromModel:      target.ToModel,
+		FromModel:      ranModel(*target),
 		ToModel:        telemetry.ModelOrUnknown(resolved),
 		SessionID:      target.SessionID,
 		LinkedDecision: decisionKey(*target),
 		AgentHash:      telemetry.HashSessionID(agentID(payload)),
 	}
-	if r != nil {
+	if r != nil && applied {
 		got, okGot := r.LookupByID(harnessID, resolved)
 		want, okWant := r.LookupByID(harnessID, target.ToModel)
 		if okGot && okWant {
@@ -323,6 +352,19 @@ func recordResolved(payload map[string]any, sessionHash, binaryVersion string, p
 		}
 	}
 	telemetry.Record(ev)
+}
+
+// linkable reports whether a post-spawn observation may attach to target: an
+// exact tool_use_id match always may; a heuristic match only for an applied
+// rewrite, where a wrong sibling is least likely to matter.
+func linkable(target *telemetry.Event, call string) bool {
+	if target == nil {
+		return false
+	}
+	if call != "" && target.ToolUseHash == call {
+		return true
+	}
+	return telemetry.IsAppliedShift(*target)
 }
 
 func recordSensorToolObservation(payload map[string]any, sessionHash string) {
@@ -396,8 +438,9 @@ func recordChildEnd(payload map[string]any, sessionHash, binaryVersion string, p
 	if status == telemetry.ChildUnknown {
 		return
 	}
-	target := linkTargetBy(prior, sessionHash, "", now, telemetry.OutcomeChildEnded)
-	if target == nil || !telemetry.IsAppliedShift(*target) {
+	call := toolUseHash(payload)
+	target := linkTargetBy(prior, sessionHash, call, "", now, telemetry.OutcomeChildEnded)
+	if !linkable(target, call) {
 		return
 	}
 	telemetry.Record(telemetry.Event{
@@ -410,7 +453,7 @@ func recordChildEnd(payload map[string]any, sessionHash, binaryVersion string, p
 		PolicyVersion:  telemetry.PolicyVersion,
 		BinaryVersion:  binaryVersion,
 		Verdict:        "UNKNOWN",
-		FromModel:      target.ToModel,
+		FromModel:      ranModel(*target),
 		ToModel:        telemetry.ModelOrUnknown(""),
 		SessionID:      target.SessionID,
 		LinkedDecision: decisionKey(*target),

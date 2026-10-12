@@ -106,6 +106,11 @@ type Event struct {
 	// completion-time one (SubagentStop) without storing the raw id.
 	AgentHash string `json:"agent_hash,omitempty"`
 
+	// ToolUseHash is the hashed harness tool-call id on decision records. The
+	// post-spawn observations carry the same id, so they join the exact
+	// decision instead of the latest sibling in the session.
+	ToolUseHash string `json:"tool_use_hash,omitempty"`
+
 	// RecommendedModel is the classifier's recommendation on events whose
 	// spawn was left unchanged (allow, baseline, blocked). final_model on
 	// those events is the model the child actually runs on.
