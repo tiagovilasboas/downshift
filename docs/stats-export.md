@@ -60,9 +60,11 @@ Their observed spend remains in `actual_cost_usd`/`actual_cost_events`, but they
 contribute neither a comparison to `real_cost_events` nor savings to
 `real_saved_usd`. Existing historical cost values are preserved.
 
-`CostUSD` prices cached input at the full input rate. These amounts are
-conservative catalog estimates from observed token counts, not cache-discounted
-provider charges. Baseline and routed estimates use the same observed tokens;
+`CostUSD` prices cached input at the model's cache-read price when the catalog
+has one (`cache_read_cost_per_1m`, taken from a dated price snapshot). When the
+catalog has no cache price for a model, cached tokens fall back to the full
+input rate, which is an upper bound. These amounts are catalog-list-price
+estimates from observed token counts, not provider invoices. Baseline and routed estimates use the same observed tokens;
 the baseline is a counterfactual, not a second measured execution.
 
 `observed_child_tokens` and `observed_child_usage` are the end-of-day child

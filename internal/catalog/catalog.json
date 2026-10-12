@@ -4,6 +4,7 @@
   "_doc3": "'family' is the stable prefix for version-agnostic matching. A model whose ID starts with the family string matches this entry's tier even if the exact version is unknown.",
   "_doc4": "OpenRouter model IDs arrive as 'provider/model-id' (e.g. 'anthropic/claude-opus-5-5'). The router normalises these before lookup, so family matching works transparently.",
   "_doc5": "Anthropic IDs and base input/output prices per 1M tokens: https://docs.anthropic.com/en/docs/about-claude/models/overview and https://docs.anthropic.com/en/docs/about-claude/pricing (accessed 2026-10-08).",
+  "_doc8": "Optional cache_read_cost_per_1m / cache_write_cost_per_1m come from the OpenRouter price snapshot dated 2026-10-12 (research/prices/effort-capabilities-2026-10-12.json), written by scripts/sync_catalog_prices.py for entries whose id matches a snapshot model id exactly. Absent means no cache price: cost then bills cached tokens at the input rate, an upper bound. Codex input/output prices were aligned to the same snapshot where the id matches.",
   "_doc7": "Optional 'efforts': allowed effort values for the model, listed ONLY where verified against vendor docs on 2026-10-12. Absent means unknown: no restriction is applied and nothing is assumed.",
   "_doc6": "Claude Haiku 5.5 is priced by prompt length: $0.10/$0.50 up to 100k prompt tokens, $0.50/$2.50 above. The catalog stores the up-to-100k price (above 100k the gap to the frontier model is ~87%, not ~97%). Older claude-haiku-4-5 ids match through the claude-haiku family; they are not an alias because KiroCrew owns that canonical id.",
   "version": "2",
@@ -24,7 +25,9 @@
       "effort_map": { "low": "0", "medium": "5000", "high": "10000" },
       "efforts": ["low", "medium", "high", "xhigh", "max"],
       "input_cost_per_1m": 0.10,
-      "output_cost_per_1m": 0.50
+      "output_cost_per_1m": 0.50,
+      "cache_read_cost_per_1m": 0.01,
+      "cache_write_cost_per_1m": 0.125
     },
     {
       "id": "claude-sonnet-5-5",
@@ -38,7 +41,9 @@
       "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
       "efforts": ["low", "medium", "high", "xhigh", "max"],
       "input_cost_per_1m": 2.00,
-      "output_cost_per_1m": 10.00
+      "output_cost_per_1m": 10.00,
+      "cache_read_cost_per_1m": 0.10,
+      "cache_write_cost_per_1m": 2.50
     },
     {
       "id": "claude-opus-5-5",
@@ -52,7 +57,9 @@
       "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
       "efforts": ["low", "medium", "high", "xhigh", "max"],
       "input_cost_per_1m": 4.00,
-      "output_cost_per_1m": 20.00
+      "output_cost_per_1m": 20.00,
+      "cache_read_cost_per_1m": 0.20,
+      "cache_write_cost_per_1m": 5.00
     },
     {
       "id": "claude-fable-5-1",
@@ -66,7 +73,9 @@
       "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
       "efforts": ["low", "medium", "high", "xhigh", "max"],
       "input_cost_per_1m": 10.00,
-      "output_cost_per_1m": 50.00
+      "output_cost_per_1m": 50.00,
+      "cache_read_cost_per_1m": 0.25,
+      "cache_write_cost_per_1m": 12.50
     },
 
     { "_section": "claude-code — xAI Grok (installed via custom model config)" },
@@ -81,7 +90,8 @@
       "effort_scale": "reasoning_effort",
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
       "input_cost_per_1m": 2.00,
-      "output_cost_per_1m": 6.00
+      "output_cost_per_1m": 6.00,
+      "cache_read_cost_per_1m": 0.50
     },
 
     { "_section": "cursor — native Anthropic models" },
@@ -299,8 +309,10 @@
       "tier": "small",
       "effort_scale": "reasoning_effort",
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 0.05,
-      "output_cost_per_1m": 0.25
+      "input_cost_per_1m": 0.10,
+      "output_cost_per_1m": 0.50,
+      "cache_read_cost_per_1m": 0.01,
+      "cache_write_cost_per_1m": 0.125
     },
     {
       "id": "gpt-6-sol",
@@ -311,8 +323,10 @@
       "tier": "frontier",
       "effort_scale": "reasoning_effort",
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 1.00,
-      "output_cost_per_1m": 5.00
+      "input_cost_per_1m": 2.00,
+      "output_cost_per_1m": 10.00,
+      "cache_read_cost_per_1m": 0.20,
+      "cache_write_cost_per_1m": 2.50
     },
     {
       "id": "gpt-5.6-luna",
@@ -323,8 +337,10 @@
       "tier": "small",
       "effort_scale": "reasoning_effort",
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 0.15,
-      "output_cost_per_1m": 0.60
+      "input_cost_per_1m": 0.20,
+      "output_cost_per_1m": 1.20,
+      "cache_read_cost_per_1m": 0.02,
+      "cache_write_cost_per_1m": 0.25
     },
     {
       "id": "gpt-5.6-terra",
@@ -335,8 +351,10 @@
       "tier": "mid",
       "effort_scale": "reasoning_effort",
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 1.25,
-      "output_cost_per_1m": 5.00
+      "input_cost_per_1m": 2.00,
+      "output_cost_per_1m": 12.00,
+      "cache_read_cost_per_1m": 0.20,
+      "cache_write_cost_per_1m": 2.50
     },
     {
       "id": "gpt-5.6-sol",
@@ -348,7 +366,9 @@
       "effort_scale": "reasoning_effort",
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
       "input_cost_per_1m": 2.00,
-      "output_cost_per_1m": 10.00
+      "output_cost_per_1m": 10.00,
+      "cache_read_cost_per_1m": 0.20,
+      "cache_write_cost_per_1m": 2.50
     },
     {
       "id": "gpt-6-astra",
@@ -360,8 +380,10 @@
       "routing": "explicit_only",
       "effort_scale": "reasoning_effort",
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 5.00,
-      "output_cost_per_1m": 25.00
+      "input_cost_per_1m": 10.00,
+      "output_cost_per_1m": 50.00,
+      "cache_read_cost_per_1m": 1.00,
+      "cache_write_cost_per_1m": 12.50
     },
 
     { "_section": "antigravity — Google Gemini models (native Antigravity spawn_agent / invoke_subagent)" },
@@ -427,7 +449,9 @@
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
       "input_cost_per_1m": 2.00,
-      "output_cost_per_1m": 10.00
+      "output_cost_per_1m": 10.00,
+      "cache_read_cost_per_1m": 0.10,
+      "cache_write_cost_per_1m": 2.50
     },
     {
       "id": "claude-opus-5-5",
@@ -439,7 +463,9 @@
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
       "input_cost_per_1m": 4.00,
-      "output_cost_per_1m": 20.00
+      "output_cost_per_1m": 20.00,
+      "cache_read_cost_per_1m": 0.20,
+      "cache_write_cost_per_1m": 5.00
     }
   ]
 }
