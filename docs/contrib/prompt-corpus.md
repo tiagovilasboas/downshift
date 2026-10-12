@@ -49,11 +49,35 @@ frontier writes (development 45 → 22, control 35 → 19) but lost real hard wo
 the owner's intent: "rename + migration" ties to Complex, "migrate the orders table
 … with zero downtime" is frontier, and a hard corpus case. A narrower damper for
 "a migration file" context catches about 11 development prompts and also hit 2 hard
-ones. Not adopted. Note a latent bug found on the way: the PT-BR pattern
-`\bmigr[aeo]\w*` also matches English "migration/migrate", so English migration words
-score 3 + 3. Removing the double count alone worsened `hard → frontier` (43 → 42, 51 →
-50) and broke `HARD-04`, so several hard cases rely on it today. Deciding what a bare
-migration word should mean is a design choice for the owner.
+ones. Not adopted. A latent bug found on the way: the PT-BR pattern
+`\bmigr[aeo]\w*` also matched English "migration/migrate", so English migration words
+scored 3 + 3. At the time, removing the double count alone worsened `hard → frontier`
+(43 → 42, 51 → 50) and broke `HARD-04`.
+
+## Fixed: one mention of a stem scores once
+- `migrat` / `migr[aeo]` and `architect` / `re-architect`: one row each since commit
+  `6c57719`, which in the same change added system-design and distributed-data
+  vocabulary. `TestClassify_SingleMentionScoresOnce` pins it.
+- `distributed`: a bare-word row (2) and a phrase row (`distributed lock|consensus|
+  transaction|sharding|cache`, 3) both matched one mention, so "distributed lock"
+  scored 5. The phrase alternatives were dropped; the bare word still covers them and
+  `etcd|raft|consensus protocol` keep their own row. Measured against the commit
+  before: no tier change on the 200-case corpus, the 1000-prompt set, or any
+  benchmark set (tasks 73.5, holdout 100, fresh 53.0, heldout2 41.7, blind-vitrine
+  46.7 tier accuracy; both gates pass). These sets are in-sample for the signal
+  table, so "no change" shows no regression, not a gain. Two-word phrases that name
+  two concepts ("distributed consensus" also hits `consensus`) still score twice.
+
+## Tried and rejected: ignore Complex keywords inside quoted text
+Hypothesis: a keyword inside a quoted error or log line names text, not work
+(`fix the typo in the error message "non-replication"`). Dropping Complex hits found
+only inside a `"..."` span (with or without backticks) changed 1 of 1000 prompts
+(`mobile-023`, "Undefined symbols for architecture arm64", frontier → mid, correctly)
+and no benchmark set. Not adopted: quoted errors often carry the real difficulty
+(`fix "ERROR: deadlock detected" in the orders worker` would drop from frontier to
+mid, the unsafe direction), and the case that motivated it, `database-026`, is an
+unquoted log line ("reserved for non-replication superuser connections"), which
+needs log-line detection rather than a small quoting rule.
 
 ## Tried and rejected: swapping the semantic embedder for character trigrams
 The embedder in `internal/semantic` hashes whole words, so it knows only vocabulary it

@@ -33,8 +33,11 @@ var RawSignals = []SignalDef{
 	{`\bsecurity\s+(audit|review)\b`, 3, Complex},
 	{`\bcode\s+review\b`, 3, Complex},
 	{`\bcross-system\b`, 3, Complex},
+	// One row for "distributed": a second row for "distributed lock",
+	// "distributed cache" and similar phrases scored one mention twice. The
+	// bare word still covers those phrases.
 	{`\bdistributed\b`, 2, Complex},
-	{`\b(etcd|raft|consensus protocol|distributed (lock|consensus|transaction|sharding|cache))\b`, 3, Complex},
+	{`\b(etcd|raft|consensus protocol)\b`, 3, Complex},
 	{`\brace\s+condition\b`, 3, Complex},
 	{`\bdeadlock\b`, 3, Complex},
 	{`\bmulti-(system|service|region|tenant)\b`, 3, Complex},
