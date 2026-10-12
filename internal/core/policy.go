@@ -322,7 +322,7 @@ func (d Decision) ShouldRewriteModel() bool {
 	// (often the parent's model). An unconfident small-tier recommendation
 	// must not be written over that default (guardrail R6). Mid and above
 	// may still be written: they never move a task below the mid tier.
-	if action == VerdictUnknown && unconfidentUnknownBelowMid(d) {
+	if action == VerdictUnknown && (unconfidentUnknownBelowMid(d) || unconfidentUnknownFrontier(d)) {
 		return false
 	}
 	return action == VerdictDownshift || action == VerdictUpshift || action == VerdictUnknown

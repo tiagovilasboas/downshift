@@ -45,6 +45,16 @@ var RawSignals = []SignalDef{
 	{`\bthink\s+through\b`, 2, Complex},
 	{`\b(service mesh|event sourcing|cqrs|chaos engineering|end-to-end encryption|data lineage|cross-cluster|memory leak|cascading failure|streaming pipeline|model serving|key management)\b`, 3, Complex},
 	{`\bwhy\s+.{0,40}(fail|crash|hang|break|regress)\w*`, 2, Complex},
+	// Portuguese mirror of the COMPLEX vocabulary above. Without it, hard PT-BR
+	// work stays on mid. Go's \b and \w are ASCII-only, so stems stop before
+	// the first accented letter and carry no trailing \b.
+	{`\b(re-?desenh|re-?arquitet|arquitet)\w*`, 3, Complex},
+	{`\bmigr[aeo]\w*`, 3, Complex},
+	{`\b(auditoria|revis\S{1,3}o)\s+de\s+seguran`, 3, Complex},
+	{`\bcondi\S{1,4}o\s+de\s+corrida\b`, 3, Complex},
+	{`\bsem\s+downtime\b`, 3, Complex},
+	{`\bsistemas?\s+distribu`, 3, Complex},
+	{`\b(toda|todo)\s+(a\s+|o\s+)?(base\s+de\s+c\S+digo|sistema|plataforma)\b`, 3, Complex},
 	// Algorithmic / interpreter specs (general CS vocabulary, not eval prompts).
 	{`\b(recursive-descent|longest common subsequence|operator precedence|postfix operators?)\b`, 3, Complex},
 	{`\bbacktracking\b`, 3, Complex},

@@ -40,6 +40,20 @@ const (
 	// on doubt is an unconfident downshift in disguise. The safe action
 	// leaves the spawn unchanged.
 	RuleUnconfidentUnknownSmall = "R6_UNCONFIDENT_UNKNOWN_SMALL"
+	// RuleUnconfidentUnknownFrontier fires when no current model is known, the
+	// classification is not confident and the recommendation is the frontier
+	// tier. The child would inherit the harness default, so writing the most
+	// expensive tier on doubt is an unconfident upshift in disguise: an
+	// uncertain result must not spend money in either direction. A task the
+	// deterministic rules lifted (risk floor, graph escalation, an opted-in NB
+	// upshift) is not a weak signal and stays writable.
+	RuleUnconfidentUnknownFrontier = "R7_UNCONFIDENT_UNKNOWN_FRONTIER"
+	// RuleUnconfidentUpshift fires when an UPSHIFT verdict rests on a
+	// low-confidence classification. It is the mirror of R1: acting on doubt
+	// spends money for a quality the task may not need. The safe action holds
+	// the current model. A task the deterministic rules lifted (risk floor,
+	// graph escalation, an opted-in NB upshift) is not a weak signal.
+	RuleUnconfidentUpshift = "R8_UNCONFIDENT_UPSHIFT"
 )
 
 // Violation is one guardrail breach found in a Decision.
@@ -93,6 +107,19 @@ func Check(d Decision) Report {
 			Detail: "no current model known and the small-tier recommendation is not confident",
 		})
 	}
+	if d.Verdict == VerdictUpshift && !d.Confident &&
+		!d.RiskFloor && !d.GraphEscalated && !d.NBUpshift.Applied {
+		violations = append(violations, Violation{
+			Rule:   RuleUnconfidentUpshift,
+			Detail: "upshift verdict without confident classification",
+		})
+	}
+	if unconfidentUnknownFrontier(d) {
+		violations = append(violations, Violation{
+			Rule:   RuleUnconfidentUnknownFrontier,
+			Detail: "no current model known and the frontier recommendation is not confident",
+		})
+	}
 	if d.Model.ID != "" && d.Model.Harness != "" && d.Harness != "" &&
 		d.Model.Harness != d.Harness {
 		violations = append(violations, Violation{
@@ -111,4 +138,12 @@ func Check(d Decision) Report {
 // model, an unconfident classification, and a target below the mid tier.
 func unconfidentUnknownBelowMid(d Decision) bool {
 	return d.Verdict == VerdictUnknown && !d.Confident && d.Tier < TierMid
+}
+
+// unconfidentUnknownFrontier reports the R7 condition: no comparable current
+// model, an unconfident classification, a frontier target, and no deterministic
+// rule (risk floor, graph escalation, opted-in NB upshift) behind the tier.
+func unconfidentUnknownFrontier(d Decision) bool {
+	return d.Verdict == VerdictUnknown && !d.Confident && d.Tier >= TierFrontier &&
+		!d.RiskFloor && !d.GraphEscalated && !d.NBUpshift.Applied
 }
