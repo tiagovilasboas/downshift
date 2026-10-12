@@ -15,6 +15,7 @@ import (
 // flaky on shared runners); it catches order-of-magnitude regressions such as
 // backtracking, not small drifts. Measured times are logged for the record.
 func TestClassifyLatencyLargePrompts(t *testing.T) {
+	skipUnderRace(t)
 	filler := "refactor the payment module and update the tests for the token handler. "
 	cases := []struct {
 		name  string
@@ -40,6 +41,7 @@ func TestClassifyLatencyLargePrompts(t *testing.T) {
 // TestClassifyLatencyAdversarialInput covers repeated delimiters and long
 // unbroken tokens, the usual triggers for regex backtracking.
 func TestClassifyLatencyAdversarialInput(t *testing.T) {
+	skipUnderRace(t)
 	inputs := map[string]string{
 		"unclosed_tags": strings.Repeat("<system-reminder>", 20000),
 		"one_long_word": strings.Repeat("a", 500<<10),
@@ -53,5 +55,14 @@ func TestClassifyLatencyAdversarialInput(t *testing.T) {
 		if elapsed > 5*time.Second {
 			t.Errorf("%s took %v", name, elapsed)
 		}
+	}
+}
+
+// skipUnderRace skips wall-clock bounds when the race detector is on; the
+// plain `go test` run in ci still enforces them.
+func skipUnderRace(t *testing.T) {
+	t.Helper()
+	if raceEnabled {
+		t.Skip("latency bounds do not apply under -race")
 	}
 }
