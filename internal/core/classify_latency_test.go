@@ -24,7 +24,10 @@ func TestClassifyLatencyLargePrompts(t *testing.T) {
 	}{
 		{"1KB", 1 << 10, 200 * time.Millisecond},
 		{"100KB", 100 << 10, 1 * time.Second},
-		{"900KB", 900 << 10, 5 * time.Second},
+		// 10 s: the shared CI runner is about 3x slower than a laptop (5.0-5.2 s
+		// measured for this size against 1.7 s locally), so 5 s sat on the edge.
+		// Backtracking would be orders of magnitude over this.
+		{"900KB", 900 << 10, 10 * time.Second},
 	}
 	for _, c := range cases {
 		prompt := strings.Repeat(filler, c.bytes/len(filler)+1)[:c.bytes]
