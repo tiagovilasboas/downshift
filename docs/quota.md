@@ -87,6 +87,34 @@ publishes `rate_limits.five_hour/seven_day.used_percentage` and `resets_at`.
 rate limits may be absent before the first response. Missing fresh input does
 not renew a previous observation; it expires at its original deadline.
 
+### Routing summary on the same line
+
+The same command also prints a routing summary for the current session, after
+the quota windows:
+
+```text
+5h 25% · 7d 40% │ ◆ downshift · 6 subagents · 4 on haiku · saved $0.42 · 0 on doubt
+```
+
+- The statusline input carries `session_id`. It is hashed with the same function
+  the event log uses (`telemetry.HashSessionID`) and only that session's events
+  count. An unknown or invalid session prints no summary.
+- Only the last 2 MB of `events.jsonl` is read (a cut first line is dropped), so
+  rendering does not grow with the log: about 7 ms on a 50 MB log. Spawns older
+  than that window are not counted.
+- `N subagents`: routing decisions. `N on haiku`: the model most children ran on.
+  `saved $x` / `over $x`: the signed real delta (baseline minus actual) over
+  priced children; a net loss shows as `over`. `N on doubt`: frontier decisions
+  that rest on an unconfident classification with no deterministic lift.
+  Segments with no data are left out; a session with no spawns prints no summary.
+- Each part fails on its own. With no event log the quota windows print alone;
+  with no `rate_limits` the summary prints alone; on any other failure nothing
+  prints and the exit code stays 0.
+- The text comes from `telemetry.SessionSummary(events, hash).Line()`; the
+  bridge only parses stdin, calls it and prints.
+- `DOWNSHIFT_QUIET=1` does not change the statusline: it is a surface you
+  configured yourself.
+
 ## Cursor pools
 
 ```bash

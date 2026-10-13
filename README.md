@@ -27,7 +27,7 @@
 
 ## What it is
 
-Downshift is a single Go binary that runs as a **hook** in your coding harness. When the harness is about to spawn a **subagent** (a child task), Downshift scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites **only that subagent's model** to a right-sized one from your session's available models. The parent session model never changes. No network calls, no API keys.
+Downshift is a single Go binary that runs as a **hook** in your coding harness. When the harness is about to spawn a **subagent** (a child task), Downshift scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites **only that subagent's model** to a right-sized one from your session's available models. The parent session model never changes. The routing decision makes no network calls and needs no API keys; the only network call is the optional, at-most-daily refresh of public capability scores ([docs/scores.md](docs/scores.md)).
 
 With no tier memory on disk, the same input yields the same decision. Reviewed outcomes can be stored by complexity class and dominant feature, but that memory is **shadow**: it records the tier it would pick and does not change the spawn. Promotion needs an independent outcome suite and a measured cost per completed task. A first independent set exists (6 tasks, one smoke run across three tiers: pass rate rose with tier, 2/6, 4/6, 6/6); it is too small, unreviewed and unfrozen to promote anything, and no cost per completed task has been measured on it yet. On the maintainer suite, class-scoped shared memory scores 38/40 in-sample but 34/40 leave-one-task-out, below the classifier (38/40), so it stays in shadow; per-task memory (40/40) is an in-sample upper bound, not production. Numbers: [benchmark/REPORT.md](benchmark/REPORT.md). Weights: [docs/complexity-weights.md](docs/complexity-weights.md).
 
@@ -112,6 +112,10 @@ Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshif
 ## Project tier floor (optional)
 
 A project can require a minimum tier with `.downshift/policy.json`. It only raises a tier, never lowers one; a missing or invalid file is ignored and the spawn routes as before. It applies to every harness and still passes the session allowlist and quota gates. Format, evidence per harness for where the project directory comes from, and limits: [config.md](docs/config.md#project-tier-floor-optional). The `stats` output counts the decisions it raised.
+
+## Public capability scores (optional)
+
+Downshift keeps a local cache of public capability scores (Epoch AI ECI, CC BY 4.0; Artificial Analysis via OpenRouter, local cache only) for the session models of each harness. Hooks refresh it in the background, at most once a day, and never wait for it. `DOWNSHIFT_SCORES=off` turns all of it off. Selection by score is shadow by default and changes routing only with `DOWNSHIFT_SCORE_ROUTING=1`. Sources, licences, privacy, the id map and the telemetry fields: [docs/scores.md](docs/scores.md).
 
 ## Harness support
 

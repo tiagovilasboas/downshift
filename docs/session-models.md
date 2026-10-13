@@ -2,7 +2,7 @@
 
 Downshift may write only a model id that exists in the current harness session. The session list is the complete candidate set for every harness; the catalog never adds candidate IDs. Metadata is optional for capability-ordered hook/operator lists. An unordered native Cursor export requires resolver tier metadata before its exact IDs become routing targets.
 
-Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. Upshift picks the last eligible id, so leaving an expensive frontier model off the list is the install-time opt-out. Claude Code accepts `fable`; the default example omits `claude-fable-5-1` so that upshift stops at Opus unless you append it. That Claude Code id is opt-in by listing it. It is not `explicit_only`. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier) inside the filtered session order, skips exhausted ids, and never parses model names or relies on prices to pick a target. A non-empty credit set for this harness is closed: ranking stays inside it, in session order, with no fallback to an id outside the set. Upshift picks the last remaining id. Catalog `explicit_only` ids are skipped unless `explicit_upshift` is on, and then only for upshift. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
+Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. Upshift picks the last eligible id, so leaving an expensive frontier model off the list is the install-time opt-out. Claude Code accepts `fable`; the default example omits `claude-fable-5-1` so that upshift stops at Opus unless you append it. That Claude Code id is opt-in by listing it. It is not `explicit_only`. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier) inside the filtered session order, skips exhausted ids, and never parses model names. On the catalog-tier path prices do not pick a target; the optional capability path (below) uses catalog prices only to choose the cheapest candidate that already passes its score. A non-empty credit set for this harness is closed: ranking stays inside it, in session order, with no fallback to an id outside the set. Upshift picks the last remaining id. Catalog `explicit_only` ids are skipped unless `explicit_upshift` is on, and then only for upshift. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
 
 If the session list cannot be determined, the hook does not rewrite the model.
 
@@ -122,6 +122,43 @@ balance are distinct from these subscription windows and are not used as quota.
 
 Fresh `used_percent < 100` is an observation of remaining quota; it does not
 reserve capacity for the next call or guarantee zero additional charges.
+
+## What Downshift shows while it works
+
+Claude Code shows `systemMessage` text from hooks. Downshift uses it twice:
+
+- when it rewrites a spawn: `downshift: TRIVIAL task → downshift to claude-haiku-5-5 (~98% cheaper)`;
+- when a subagent ends and its tokens are known (SubagentStop, or a PostToolUse
+  that reports usage): `↳ downshift: finished on haiku · 14k tokens · $0.01 (opus would be $0.38)`.
+  The model is the one the child ran on; the would-be cost is the requested
+  model's price for the same tokens, and appears only when that model is known
+  and differs. Missing parts are left out, never guessed. An async launch has no
+  tokens yet, so it prints nothing.
+
+`DOWNSHIFT_QUIET=1` silences both lines. Routing, telemetry and the stderr notes
+are unchanged. The line never blocks, never changes the subagent result, and a
+failed hook prints nothing. The harness fact is `CanShowChildLine` in
+`HarnessCapabilities` (true for Claude Code only, false elsewhere until a
+harness is shown to display it); the line is built by `telemetry.ChildEndLine`
+for every harness. Not yet verified: that a given Claude Code release displays
+`systemMessage` from PostToolUse and SubagentStop (documented as a common hook
+output field, not observed on a live session).
+
+## Capability path (public scores)
+
+An optional second way to pick a model from the same session list. It chooses
+the cheapest candidate whose public capability score reaches the level the task
+tier needs, measured across the session's own range. It never adds a candidate
+id, it sits behind the same guardrails and quota gates, and it abstains on
+COMPLEX work, any risk signal, any deterministic lift, and when any candidate
+lacks a score. Full rules, sources and privacy: [scores.md](scores.md).
+
+- Default: shadow. The pick is recorded (`score_would`, `score_differs`,
+  `score_would_cost_ratio`) and the routed model does not change.
+- `DOWNSHIFT_SCORE_ROUTING=1`: the pick is applied when the plan rewrites the
+  model, with reason code `SCORE_ROUTED`.
+- `DOWNSHIFT_SCORES=off`: no scores are read, so the capability path never picks.
+- Which session ids have a score today: [harness-matrix.md](harness-matrix.md#public-score-coverage-capability-path).
 
 ## explicit_upshift
 

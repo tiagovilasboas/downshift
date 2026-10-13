@@ -84,6 +84,34 @@ safe; every other harness needs a real list (hook payload, discovery cache or
 the operator file). Quota stays `unknown` everywhere except through the Claude
 Code statusline bridge and operator imports. Re-verify per release.
 
+## Child-end line (U2, 2026-10-13)
+
+`HarnessCapabilities.CanShowChildLine` says whether the hook protocol can show
+one line when a subagent ends. Claude Code: true (`systemMessage` on
+PostToolUse and SubagentStop), pending a live check. cursor, codex, antigravity,
+kirocrew: false; the line is still computed by `telemetry.ChildEndLine` and no
+adapter prints it. `DOWNSHIFT_QUIET=1` turns it off. See
+[session-models.md](session-models.md#what-downshift-shows-while-it-works).
+
+## Public score coverage (capability path)
+
+Mapped means an entry in `internal/scoreindex/idmap.json` names the session id.
+Whether a score row exists at runtime also depends on the public source listing
+that model at the last refresh; that is not checked here. Live state:
+`downshift models scores --status`. Method: [scores.md](scores.md#the-id-map).
+
+| harness | session ids with an id-map entry | not mapped (reported `uncovered`) |
+|---|---|---|
+| claude-code | `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`, `claude-fable-5-1`, `grok-4.6` | any other id |
+| cursor | `claude-sonnet-5-5-high`, `claude-opus-5-5-medium`, `claude-fable-5-1-thinking-high`, `claude-opus-5-thinking-high`, `claude-4.5-haiku-thinking`, `claude-4.5-sonnet-thinking`, `claude-4.5-opus-high-thinking`, `cursor-grok-4.6-medium`, `grok-4.7-xhigh`, `gpt-5.6-sol-high`, `gemini-3.8-flash-high`, `glm-5.2-high`, `muse-spark-1.3-max` | any other id, including `composer-2.5` |
+| kirocrew | `claude-sonnet-5-5`, `claude-opus-5-5`, `claude-haiku-4-5` | any other id |
+| codex | `gpt-6-luna`, `gpt-6-sol`, `gpt-6-astra`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` | any other id |
+| antigravity | `flash` | `flash_lite`, `pro` (no entry) |
+
+`composer-2.5`, `flash_lite` and `pro` have no entry anywhere in `idmap.json`, so
+they are reported uncovered rather than guessed. An uncovered candidate makes the
+capability path abstain for that decision (see [scores.md](scores.md#when-it-abstains)).
+
 ## Revalidation
 
 Every TBD cell must be re-checked per harness release: hook contracts

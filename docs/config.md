@@ -27,12 +27,15 @@ downshift doctor
 | `session-models.json` | Per-harness session allowlists |
 | `loop-events.jsonl` | Routing v2 training events |
 | `weights.json` | Classifier weight override |
+| `scores.json` | Public capability score cache (sources, selected source, rows); see [scores.md](scores.md) |
 
 Override paths:
 
 - `DOWNSHIFT_EVENT_LOG` — telemetry JSONL (advanced)
 - `DOWNSHIFT_SESSION_MODELS` — session allowlist file
 - `DOWNSHIFT_INFER_SESSION=off` — disable the inferred session (Claude Code); an unknown session then never rewrites
+- `DOWNSHIFT_SCORES=off` — no network for public capability scores: no hook, install or doctor refresh, and the router ignores `scores.json`. Details: [scores.md](scores.md)
+- `DOWNSHIFT_SCORE_ROUTING=1` — let the public-score pick change the routed model (default: shadow only, recorded in telemetry as `score_would`). Details: [scores.md](scores.md#capability-selection)
 
 ## Project tier floor (optional)
 
