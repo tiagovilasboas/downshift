@@ -254,7 +254,9 @@ func TestSession_FastOnALargeLog(t *testing.T) {
 		}
 	}
 	t.Logf("session tree on a 50 MB log: %v", best)
-	if best > 50*time.Millisecond {
-		t.Fatalf("session tree took %v on a 50 MB log, want < 50ms (it must read only the tail)", best)
+	// Locally this is ~25ms; decoding the whole 50 MB log takes ~400ms. 200ms
+	// leaves shared-runner headroom and still catches a full read.
+	if best > 200*time.Millisecond {
+		t.Fatalf("session tree took %v on a 50 MB log, want < 200ms (it must read only the tail)", best)
 	}
 }
