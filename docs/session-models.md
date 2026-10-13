@@ -17,6 +17,10 @@ Claude Code often spawns a Task without `tool_input.model`; the child then inher
 
 With a known current model, **R8** (`R8_UNCONFIDENT_UPSHIFT`) is the mirror of R1: an upshift on an unconfident classification is held. Uncertain calls therefore never spend money, or save it, in either direction, with or without a current model. The semantic boost cannot create a COMPLEX classification on its own: Complex needs regex evidence, the risk floor or graph escalation.
 
+### Baseline model when the call has no `model` (Claude Code)
+
+For a Task call without `model` on an inheriting agent type (no `subagent_type`, `general-purpose` or `claude`), the model the child would run on is resolved in the order Claude Code uses: the per-call `model`, the payload `model`, then the variable named by `HarnessCapabilities.ModelOverrideEnv` (`CLAUDE_CODE_SUBAGENT_MODEL`) when set and not `inherit`, then the last assistant model in the parent transcript. Verdict and savings are computed against that baseline. Other agent types may pin a model in their frontmatter, so they get no inferred baseline.
+
 ## What the hook actually sends
 
 Checked against the adapter structs and local telemetry on 2026-09-27. No secrets below.
@@ -79,10 +83,12 @@ There is no built-in default list. `docs/examples/session-models.example.json` r
 
 ## How a target is chosen
 
-The session list alone determines candidates and their relative capability. Catalog lookup may enrich a known ID with metadata or preserve `routing: explicit_only`; unknown IDs are not filtered, ranked by guessed names, or replaced.
+The session list determines which ids are candidates and their order (least to most capable). Catalog lookup enriches a known ID with metadata, supplies its tier, and preserves `routing: explicit_only`; unknown IDs are not filtered, ranked by guessed names, or replaced.
 
-- Downshift or unknown verdict: choose the list position for the abstract tier (first, midpoint, or last) on the filtered session order.
-- Upshift: choose the last remaining id in that same filtered order.
+- Downshift or unknown verdict, catalog path: when every id left after filtering resolves in the catalog (`LookupByID`, which includes family-prefix matches), choose the first id in list order whose catalog tier is at or above the tier the task needs. The position in the list does not matter, so adding a frontier model at the end does not stop a mid task from landing on the mid model. If no id reaches the needed tier, nothing is rewritten; the selector never goes below the floor.
+- Downshift or unknown verdict, fallback path: if any id has no catalog tier (an operator id the catalog does not know), the tier cannot rank the list and the position mapping applies on the filtered order: first for small, midpoint for mid, last for frontier.
+- The quality floor is set before the quota filter. An exhausted id is skipped, but it never lowers the floor: the next id at or above the needed tier wins, and if every such id is exhausted nothing is rewritten.
+- Upshift: choose the last remaining id in that same filtered order. TODO: upshift still maps by list position; moving it to the catalog tier is an open owner decision.
 - Guardrail hold (`Checked` and `SafeVerdict == OK`): do not rewrite.
 - Unknown session: no rewrite.
 - Any exact session ID inside the filtered set can be written, even when the catalog does not know it. `inherit` and exhausted IDs cannot be selected. A catalog `explicit_only` ID can be written only when `explicit_upshift` is on.

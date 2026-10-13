@@ -6,8 +6,10 @@ package claudecode
 import (
 	"bytes"
 	"encoding/json"
+	"os"
 	"strings"
 
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
 )
 
@@ -19,6 +21,23 @@ var inheritingAgentTypes = map[string]bool{"": true, "general-purpose": true, "c
 // inheritsSessionModel reports whether this Task call runs on the session model.
 func inheritsSessionModel(ti map[string]any) bool {
 	return hookutil.StringField(ti, "model") == "" && inheritingAgentTypes[hookutil.StringField(ti, "subagent_type")]
+}
+
+// subagentModelFromEnv returns the model the harness override variable pins for
+// subagents (name declared in core.ClaudeCodeCaps.ModelOverrideEnv). Claude
+// Code resolves a subagent model as: per-call model, agent frontmatter, this
+// variable, then the main conversation model. Empty when unset, blank or
+// "inherit", which means the parent model applies.
+func subagentModelFromEnv() string {
+	name := core.ClaudeCodeCaps.ModelOverrideEnv
+	if name == "" {
+		return ""
+	}
+	v := strings.TrimSpace(os.Getenv(name))
+	if strings.EqualFold(v, "inherit") {
+		return ""
+	}
+	return v
 }
 
 // sessionModelFromTranscript returns the model of the last assistant message in

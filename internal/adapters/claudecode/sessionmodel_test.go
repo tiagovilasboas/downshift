@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
 )
 
@@ -68,5 +69,39 @@ func TestInheritsSessionModel(t *testing.T) {
 		if got := inheritsSessionModel(c.ti); got != c.want {
 			t.Errorf("inheritsSessionModel(%v) = %v, want %v", c.ti, got, c.want)
 		}
+	}
+}
+
+func TestCurrentModel_SubagentModelEnv(t *testing.T) {
+	env := core.ClaudeCodeCaps.ModelOverrideEnv
+	tr := writeTranscript(t, `{"type":"assistant","message":{"model":"m-parent"}}`+"\n")
+	cases := []struct {
+		name, envVal string
+		set          bool
+		ti           map[string]any
+		want         string
+	}{
+		{"env set beats transcript", "m-env", true, map[string]any{}, "m-env"},
+		{"env set, general-purpose", "m-env", true, map[string]any{"subagent_type": "general-purpose"}, "m-env"},
+		{"env inherit falls to transcript", "inherit", true, map[string]any{}, "m-parent"},
+		{"env INHERIT is case-insensitive", "Inherit", true, map[string]any{}, "m-parent"},
+		{"env blank falls to transcript", "  ", true, map[string]any{}, "m-parent"},
+		{"env unset falls to transcript", "", false, map[string]any{}, "m-parent"},
+		{"explicit model wins", "m-env", true, map[string]any{"model": "haiku"}, "haiku"},
+		{"non-inheriting type untouched", "m-env", true, map[string]any{"subagent_type": "Explore"}, ""},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if c.set {
+				t.Setenv(env, c.envVal)
+			} else {
+				t.Setenv(env, "")
+				os.Unsetenv(env)
+			}
+			ev := Event{TranscriptPath: tr}
+			if got := ev.currentModel(c.ti); got != c.want {
+				t.Errorf("got %q, want %q", got, c.want)
+			}
+		})
 	}
 }
