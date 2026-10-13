@@ -17,6 +17,25 @@ Check the effective path:
 downshift doctor
 ```
 
+## Effective settings: `downshift config`
+
+`downshift config [--json]` prints every effective setting with its value and where
+it comes from. It is read-only: it reads what the hooks read and writes nothing.
+
+| Source | Meaning |
+|--------|---------|
+| `env` | An environment variable set for the process (named in `env` in the JSON) |
+| `file` | A file under the state dir, or one an environment variable points at |
+| `default` | Nothing configured: the built-in behaviour |
+| `legacy` | `state_dir` only: the pre-rename `~/.harness-downshift` |
+
+Settings shown: `state_dir`; `session_models` per harness (native export, discovery
+cache, `session-models.json`, inferred from the current model, or none); `quota_mode`;
+`scores` on/off and `score_routing` (shadow or live); `control_share`; `quiet`;
+`catalog` (embedded or user override); `semantic_boost` and `semantic_embedder`;
+`infer_session`. The session lists reflect the files on this machine; a list in a
+hook payload overrides them at spawn time.
+
 ## Files under the state dir
 
 | File | Purpose |

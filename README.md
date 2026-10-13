@@ -5,7 +5,9 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift" width="320">
 </picture>
 
-**Deterministic model routing for coding-agent subagents. No LLM in the routing loop.**
+**Cheaper subagents for your coding agent. Doubt never spends money.**
+
+harness-downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 [![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -15,27 +17,101 @@
 
 [Install](docs/install.md) · [Docs](docs/README.md) · [Harness support](#harness-support) · [Contributing](#contributing)
 
-<!-- GitHub themed-picture uses the first dark source and ignores max-width, so a mobile source here is stretched to the column width. -->
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/img/hook-flow-dark.svg">
-  <img src="docs/img/hook-flow.svg" alt="Hook flow: the harness sends a PreToolUse event, Downshift classifies the task, applies policy against the session models, and returns updatedInput with the chosen model, or allows the spawn unchanged." width="720">
-</picture>
-
 </div>
+
+Downshift is a hook for your coding harness. When Claude Code starts a subagent, it picks a right-sized model for that task: easy work runs on Haiku, hard work keeps Opus. Your session model never changes. Start with two commands:
+
+- **Cheaper easy subagents.** A trivial rename runs on Haiku 5.5. The list-price gap to Opus 5.5 is about 97% ($0.10 vs $4.00 per 1M input tokens). Your real saving depends on your task mix; `downshift stats` estimates it from your runs.
+- **Guardrails.** Unsure upshifts are held, risky tasks keep a floor, and anything unknown leaves the spawn unchanged.
+- **Visible.** A statusline, a stderr line per routed subagent, and `downshift session --tree` (or `/downshift`) show what was routed and why.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+downshift setup
+```
+
+`setup` prints a diff and asks before it writes. Preview with `downshift setup --dry-run` first, then open a new Claude Code session.
 
 > **Beta.** Whether a rewrite is applied depends on the harness and plan, not only on Downshift. Read [plan compatibility](docs/install.md#plan-compatibility--read-before-installing) before installing, and see [Harness support](#harness-support) for what has been verified.
 
+## Quickstart (Claude Code)
+
+1. **Install.** Use the one-liner above (macOS / Linux). `go install` and Windows are in [install.md](docs/install.md).
+2. **Preview, then apply.**
+   ```bash
+   downshift setup --dry-run   # prints the settings diff; writes nothing
+   downshift setup             # asks, backs up your settings, then wires the hooks
+   ```
+   `setup` merges the hooks into `~/.claude/settings.json` using this binary's absolute path, keeps your other keys, and is idempotent. `downshift setup --undo` restores the latest backup. It also finds Cursor, Codex and Antigravity if they are installed.
+3. **Open a new session.** Subagents it spawns now go through the hook.
+4. **Check it.**
+   ```bash
+   downshift doctor                              # checklist: binary, hooks, state, scores
+   downshift try "rename the userId variable"    # what would be picked, and why
+   ```
+
+### What you will see
+
+- **A stderr line per routed subagent**, for example `downshift: TRIVIAL task → downshift to claude-haiku-5-5`.
+- **A statusline**, set by `setup` when none exists. It shows Claude's quota windows and, when data exists, the current session's routing summary.
+- **Child endings.** The `PostToolUseFailure` and `SubagentStop` hooks record how each child ended (`completed`, `error`, `interrupted`, ...). `stats` prints them under "How children ended"; error text is never stored.
+- **`downshift try`** (real output, trimmed):
+  ```text
+  assumed current: claude-opus-5-5 (harness default)
+  → small: opus → haiku
+  why: trivial task, no risk, confident
+  ```
+- **`downshift stats --days=1`** (real output, trimmed; estimates from catalog prices, not a bill):
+  ```text
+  Last 1 day · 77 subagents · net saved $15.51 (saved $33.72, cost more $18.21)
+  Guardrails held 35 risky moves · frontier rewrites on doubt: 0
+  Models: sonnet 39 · opus 29 · haiku 8
+  ```
+- **`downshift session --tree`**, also `/downshift` in Claude Code once the optional command is copied ([install.md](docs/install.md#the-downshift-command-claude-code)). Real output, trimmed. This sample session cost $4.72 more than the no-routing baseline, so savings are not guaranteed:
+  ```text
+  session · 30 subagents · $55.62 (without downshift: $50.90) · over $4.72
+  ├─ subagent 1   opus    …       -  COMPLEX
+  ├─ subagent 10  sonnet  ✓   $0.07  MEDIUM, unsure, risk floor
+  ├─ subagent 22  haiku   ✓   $0.04  TRIVIAL, confident
+  └─ subagent 30  haiku   …       -  TRIVIAL, confident
+  ```
+
+### Commands
+
+| Command | Use it to |
+|---|---|
+| `downshift setup [--dry-run] [--undo]` | wire, preview or undo the hooks |
+| `downshift doctor [--verbose] [--json]` | check binary, hooks, state and scores |
+| `downshift try "<task>"` | see what would be picked, before any spawn |
+| `downshift stats [--days=N]` | decisions and estimated savings |
+| `downshift session --tree` | this session's subagents as a tree |
+
+More: `downshift help --all` lists every command. `downshift watch` (live tree) and `downshift config` are being built.
+
+<details>
+<summary>Manual setup</summary>
+
+Prefer to edit `~/.claude/settings.json` yourself? Follow [Manual setup in install.md](docs/install.md#manual-setup-claude-code). The PreToolUse matcher is `Agent|Task`.
+
+</details>
+
+The session model list is optional on Claude Code: without one, Downshift infers the session from your current model and never upshifts past it. To set the list yourself, see [session-models.md](docs/session-models.md).
+
 ## What it is
 
-Downshift is a single Go binary that runs as a **hook** in your coding harness. When the harness is about to spawn a **subagent** (a child task), Downshift scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites **only that subagent's model** to a right-sized one from your session's available models. The parent session model never changes. The routing decision makes no network calls and needs no API keys; the only network call is the optional, at-most-daily refresh of public capability scores ([docs/scores.md](docs/scores.md)).
+Downshift is a single Go binary. Before a subagent spawns, it scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites **only that subagent's model** to one from your session's list. The parent session model never changes. The decision is deterministic, makes no network calls and needs no API keys; the only network call is the optional, at-most-daily refresh of public capability scores ([docs/scores.md](docs/scores.md)).
 
-With no tier memory on disk, the same input yields the same decision. Reviewed outcomes can be stored by complexity class and dominant feature, but that memory is **shadow**: it records the tier it would pick and does not change the spawn. Promotion needs an independent outcome suite and a measured cost per completed task. A first independent set exists (6 tasks, one smoke run across three tiers: pass rate rose with tier, 2/6, 4/6, 6/6); it is too small, unreviewed and unfrozen to promote anything, and no cost per completed task has been measured on it yet. On the maintainer suite, class-scoped shared memory scores 38/40 in-sample but 34/40 leave-one-task-out, below the classifier (38/40), so it stays in shadow; per-task memory (40/40) is an in-sample upper bound, not production. Numbers: [benchmark/REPORT.md](benchmark/REPORT.md). Weights: [docs/complexity-weights.md](docs/complexity-weights.md).
+Learned tier memory stays in **shadow**: it is recorded for review and never changes a spawn. Maintainer eval numbers are in [benchmark/REPORT.md](benchmark/REPORT.md); weights are in [docs/complexity-weights.md](docs/complexity-weights.md).
 
-**Example:** Your session runs Claude Sonnet 5.5. You spawn 3 subagents — Downshift may route them to Haiku, Sonnet, and Opus respectively, based on task complexity. Billing and token usage happen at the subagent tier, not the session.
+**Example:** Your session runs Claude Sonnet 5.5. You spawn 3 subagents. Downshift may route them to Haiku, Sonnet and Opus based on task complexity. Billing and token usage happen at the subagent tier, not the session.
 
 **What it is not:** an HTTP gateway or proxy (that is LiteLLM's job), a hosted model marketplace (OpenRouter), or an LLM-based classifier (Downshift uses deterministic signals + optional local MiniLM semantic scoring). It only acts on subagent spawns inside harnesses that expose a pre-tool hook. Comparison: [docs/when-to-use.md](docs/when-to-use.md).
 
 ## How it works
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/hook-flow-dark.svg">
+  <img src="docs/img/hook-flow.svg" alt="Hook flow: the harness sends a PreToolUse event, Downshift classifies the task, applies policy against the session models, and returns updatedInput with the chosen model, or allows the spawn unchanged." width="720">
+</picture>
 
 **Session model stays fixed. Subagent models get routed.**
 
@@ -63,51 +139,6 @@ Internals: [docs/architecture.md](docs/architecture.md). The full runtime routin
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/architecture-dark.svg">
   <img src="docs/img/architecture.svg" alt="Architecture: harness adapters call a harness-agnostic core, which uses a model catalog and the session model list to produce a routing decision." width="860">
 </picture>
-
-## Quickstart (Claude Code)
-
-**1. Install** (macOS / Linux; see [install.md](docs/install.md) for `go install` and Windows):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
-```
-
-**2. Tell Downshift which models your session can use.** On Claude Code this step is optional: with no list from any source, Downshift infers the session from the current model (the tiers below it, ending at that model), so it can downshift but never upshift past what you already run. On every other harness, without a list the hook never rewrites anything. List the model ids from your picker, **least to most capable**, in `~/.downshift/session-models.json` (or point `DOWNSHIFT_SESSION_MODELS` at a file):
-
-```json
-{
-  "claude-code": ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"]
-}
-```
-
-Use the ids your account really offers; the file is yours to maintain. Details and per-session lists: [session-models.md](docs/session-models.md).
-
-Claude Code is not limited to three models. The example stops at Opus on purpose: upshift writes the **last** id in this list, so an expensive frontier model stays out until you opt in. Append `claude-fable-5-1` (the hook writes the family name `fable`) only if you want that upshift.
-
-Or let Downshift ask the harness: `downshift models discover` reads the models your account can use (Codex, Kiro, Grok, Cursor, and the Anthropic API with a key) and writes a ranked cache. Precedence is hook allowlist, configured Cursor native export, discovered cache, then operator file. Antigravity's native CLI can list parent-picker models, but their mapping to routing aliases and quota groups remains unresolved. See [session-discovery.md](docs/session-discovery.md) and the [remaining tasks](docs/gap-tasks.md).
-
-**3. Add the hook** to `~/.claude/settings.json`:
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      { "matcher": "Task", "hooks": [{ "type": "command", "command": "downshift claude-code" }] }
-    ]
-  }
-}
-```
-
-Claude Code's `Task` schema accepts only family names (`haiku`, `sonnet`, `opus`, `fable`) in `model`. Downshift writes the catalog's family name for you and leaves the spawn alone when a model has none.
-
-**4. Verify.**
-
-```bash
-downshift doctor                                          # version, state dir, catalog source
-downshift try "rename the userId variable" claude-code    # classification and recommended model
-```
-
-Then spawn a trivial subagent in Claude Code; stderr shows a line like `downshift: TRIVIAL task → downshift to …`. That proves the hook ran. To confirm the harness applied the rewrite, follow [Verify the rewrite was honored](docs/install.md#quickstart--zero-to-working-hook-in-2-minutes). Other harnesses (Cursor, Codex, Antigravity, KiroCrew, Grok) are in [install.md](docs/install.md).
 
 ## Project tier floor (optional)
 

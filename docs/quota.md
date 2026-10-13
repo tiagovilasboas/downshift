@@ -16,8 +16,23 @@ is present, model rewrites require `available` evidence for the candidate's exac
 `exhausted`, `unknown`, and `stale` hold the model rewrite. A malformed cache or a
 cache with no entry for this harness also holds it.
 
-Without a usage source, routing retains its existing behaviour and records quota
-as `unknown`. Set `DOWNSHIFT_QUOTA_MODE=required` to hold rewrites in that case too.
+### Stale snapshots stop holding after 1 hour
+
+A snapshot is `stale` once past `expires_at`, and holds rewrites for up to 1 hour
+after that. Past 1 hour the snapshot is treated as absent: the status is
+`unknown` and routing behaves as for a user without quota. Before this rule a
+single expired statusline snapshot held every rewrite forever and silently
+disabled routing. `DOWNSHIFT_QUOTA_MODE=required` is the explicit opt-in that
+keeps holding at any age. A malformed cache or native export is not a stale
+snapshot and keeps holding. A snapshot supplied in the hook payload is not
+subject to the grace: it is evaluated as sent.
+
+While a stale snapshot holds, `downshift doctor` warns (`quota snapshot`, with its
+age and when it clears) and the Claude Code statusline summary ends with
+`· quota stale`. Both come from `core.StaleQuotaHold`, the same rule as the gate.
+
+Without a usage source (or, outside required mode, with one that expired more than
+1 hour ago), routing retains its existing behaviour and records quota as `unknown`. Set `DOWNSHIFT_QUOTA_MODE=required` to hold rewrites in that case too.
 This setting never invents credit. Hook `included_models` and
 `unavailable_models` marks are intersected with quota evidence and the session
 availability list. `explicit_upshift` stays off by default.

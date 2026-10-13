@@ -28,7 +28,8 @@ Columns: subagent, the model it ran on, status, cost, and a short reason.
 | `✓` | ended (completed, or a usage record exists) |
 | `↻` | redone: it failed and the session spawned again within 10 minutes; the redo is nested under it |
 | `✗` | failed, interrupted or blocked, and not redone |
-| `…` | running, or no end was observed |
+| `…` | running: spawned less than 2 hours ago, no end or usage record yet |
+| `?` | unknown end: still no end, usage or error record 2 hours after the spawn (the harness never said it finished) |
 
 Cost is real when the harness reported usage (`$0.22`), an estimate when only
 tokens were seen and the catalog has a price (`~$0.22`), and `-` otherwise.
@@ -55,6 +56,20 @@ the shared hook runner routes like the control group (`DOWNSHIFT_NO_ROUTE=1`):
 it classifies and logs, never rewrites, and records the decision with outcome
 `baseline` and reason `PAUSED`. The check is one `stat`, fails open and never
 blocks a spawn. A marker expires after 12 hours.
+
+## Live: `downshift watch`
+
+```
+downshift watch [--session=<id>] [--interval=1s]
+```
+
+The same tree, redrawn every interval (minimum 200 ms) from a bounded tail of
+the event log, with plain ANSI and no dependencies. Without `--session` it
+follows the newest session, so it keeps working when a new session starts; with
+an empty log it shows `no subagents yet` and waits. Ctrl-C quits. `--once` draws
+a single frame without clearing the screen. It works for every harness and
+writes nothing. It replaces the separate `dsmon` build for watching a session
+(`dsmon` stays buildable).
 
 ## Which session
 

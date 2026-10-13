@@ -28,7 +28,7 @@ Fields useful for graduation tracking:
 | `usage_records` | All post-hoc usage records, including unlinked records |
 | `usage_linked` | Distinct usage records matched to routing decisions in this window (same harness and compatible session); duplicate agents/events and orphan references excluded |
 | `child_status` | Map of child end status (`completed`, `launched`, `interrupted`, `error`, `stopped`, `unknown`) to count, from `child_ended` events; `{}` when none. Observations only: never part of `total` |
-| `baseline_no_route` | Control-group events (`DOWNSHIFT_NO_ROUTE`) |
+| `baseline_no_route` | Unrouted events: `DOWNSHIFT_NO_ROUTE`, a session pause, and the built-in control group (`outcome: baseline`; the control group also carries reason code `CONTROL`) |
 
 ## Before you paste
 
@@ -36,9 +36,18 @@ Fields useful for graduation tracking:
 - Do **not** attach raw `events.jsonl` publicly unless you have reviewed every field.
 - Note harness + plan (e.g. Claude Code Max, Cursor Pro usage-based).
 
+## Built-in control group
+
+Since the control group is on by default, a share of spawns (`DOWNSHIFT_CONTROL_SHARE`, default
+`0.10`, `0` disables) is classified and logged but never rewritten, with reason code `CONTROL`.
+`downshift report` compares those spawns with the routed ones: cost per completed task, rework
+rate and savings with a 95% bootstrap interval. Reason code `CONTROL` is documented in
+[report.md](report.md); it is not counted under `reason_codes`, because baseline events are
+excluded from decision counts.
+
 ## Control-group week (pillar P3)
 
-Alternate routing on/off:
+Hand-run alternative when you want a whole week unrouted. Alternate routing on/off:
 
 ```bash
 # Week A — normal routing (default)

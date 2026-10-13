@@ -28,6 +28,7 @@
 | [classifier-shadow.md](classifier-shadow.md) | Shadow classifier |
 | [context-optimization.md](context-optimization.md) | Native Context Compressor & Context Sensor |
 | [stats-export.md](stats-export.md) | Sharing stats safely |
+| [report.md](report.md) | `downshift report`: routed vs control group, savings with CI |
 | [harness-matrix.md](harness-matrix.md) | Plan compatibility |
 | [scores.md](scores.md) | Public capability scores: sources, licences, cache, refresh, privacy, shadow selection |
 | [langgraph-orchestration.md](langgraph-orchestration.md) | Optional planner |

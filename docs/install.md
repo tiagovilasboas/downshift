@@ -40,32 +40,26 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/insta
 
 `install.sh` still treats a non-flag argument as the release version. `--explicit-upshift` may come before or after that version. It writes `"explicit_upshift": true` into `session-models.json` without dropping harness lists that are already there. The same switch at runtime is `DOWNSHIFT_EXPLICIT_UPSHIFT=1`. Default is off. See [session-models.md](session-models.md#explicit_upshift).
 
-**Step 2 — Verify the classifier** on your own prompts before wiring the hook:
+**Step 2 — Preview, then wire the hooks:**
 ```bash
-downshift try "rename the userId variable" claude-code
-# → TRIVIAL task → use claude-haiku-5-5 (small tier)
-
-downshift try "rearchitect the auth module to support multi-tenant" claude-code
-# → COMPLEX task → use claude-opus-5-5 (frontier tier)
+downshift setup --dry-run   # prints the diff for each harness found; writes nothing
+downshift setup             # asks first, backs up the files, then merges the hooks
 ```
 
-**Step 3 — Add the hook** to `~/.claude/settings.json`:
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      { "matcher": "Task", "hooks": [{ "type": "command", "command": "downshift claude-code" }] }
-    ]
-  }
-}
+For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, and sets the statusline when none exists. It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
+
+**Step 3 — Check the classifier** on your own prompts:
+```bash
+downshift doctor                                          # checklist: binary, hooks per harness, state, scores
+downshift try "rename the userId variable" claude-code    # what would be picked, and why
 ```
 
-**Step 4 — Confirm it's working.** Open Claude Code, ask it to spawn a subagent for a trivial task. You'll see this in the terminal:
+**Step 4 — Confirm it's working.** Open a new Claude Code session and ask it to spawn a subagent for a trivial task. You'll see a line like this in stderr:
 ```
-downshift: TRIVIAL task → downshift to claude-haiku-5-5 (~97% cheaper, prompts up to 100k tokens)
+downshift: TRIVIAL task → downshift to claude-haiku-5-5
 ```
 
-That line in stderr means the hook fired and rewrote the model before the subagent started.
+That line means the hook fired and rewrote the model before the subagent started.
 
 **Verify the rewrite was honored** (important for beta exit validation):
 - Ask Claude Code: *"spawn a subagent to rename the userId variable in auth.ts"*
@@ -73,20 +67,26 @@ That line in stderr means the hook fired and rewrote the model before the subage
 - Confirm it started on haiku, not the session's default frontier model
 - This proves the hook's rewrite was not just emitted—it was **actually applied** by the harness
 
-**Step 5 — (Optional) Open the live monitor.** `dsmon` is a floating terminal widget built into the same repo that tails `~/.harness-downshift/events.jsonl` and shows model switches, tier distribution and estimated savings in real time:
+**Step 5 — See what happened.** `downshift stats --days=1` shows decisions and estimated savings; `downshift session --tree` shows this session's subagents as a tree. The optional `/downshift` slash command is set up in [The /downshift command](#the-downshift-command-claude-code).
 
-```bash
-# Build the monitor binary (separate from the hook binary)
-go build -o dsmon ./cmd/dsmon
+**Step 6 — (Optional) Watch it live.** `downshift watch` redraws the current session's subagent tree (model, end status, cost, why) every second, for every harness; `downshift session --tree` prints it once, and `/downshift` shows it inside Claude Code. The older floating widget is still available: [dsmon — live monitor widget](#dsmon--live-monitor-widget).
 
-# Open directly in your current terminal
-./dsmon
+### Manual setup (Claude Code)
 
-# Or open a new floating window (auto-detects iTerm2 / kitty / Ghostty / Terminal.app)
-./cmd/dsmon/launch.sh
+Use this instead of `setup` if you prefer to edit `~/.claude/settings.json` yourself. The PreToolUse matcher is `Agent|Task`. Claude Code's `Task` schema accepts only family names (`haiku`, `sonnet`, `opus`, `fable`) in `model`. Downshift writes the catalog's family name for you and leaves the spawn alone when a model has none.
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Agent|Task", "hooks": [{ "type": "command", "command": "downshift claude-code" }] }
+    ]
+  }
+}
 ```
 
-See [dsmon — live monitor widget](#dsmon--live-monitor-widget) for the full widget reference.
+For child status and real usage, also add `PostToolUse` and `PostToolUseFailure` (`downshift claude-code-post-tool-use`) and `SubagentStop` (`downshift claude-code-subagent-stop`), as `setup` does.
+
 
 ## Testing locally before connecting the hook
 
@@ -411,6 +411,10 @@ observed on 2026-10-10 with Kiro CLI 2.29.0; see
 [the build-specific evidence](evidence/kirocrew-native-hook-2026-10-10.md).
 
 ## dsmon — live monitor widget
+
+> **Prefer `downshift watch`.** The live session tree is built into the `downshift`
+> binary (no separate build, every harness): see [session-view.md](session-view.md#live-downshift-watch).
+> `dsmon` stays buildable and is documented below.
 
 `cmd/dsmon` is a separate command inside this repo — a floating terminal widget
 that shows model switches, harness, tier distribution and estimated cost savings
