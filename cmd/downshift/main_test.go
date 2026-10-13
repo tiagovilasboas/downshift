@@ -24,6 +24,9 @@ func TestMain(m *testing.M) {
 		os.Unsetenv(k)
 	}
 	os.Setenv("HOME", root)
+	// Keep the built-in control group off so hook tests see a rewrite every
+	// time; control-group tests set DOWNSHIFT_CONTROL_SHARE themselves.
+	os.Setenv("DOWNSHIFT_CONTROL_SHARE", "0")
 	code := m.Run()
 	os.RemoveAll(root)
 	os.Exit(code)

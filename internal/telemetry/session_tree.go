@@ -29,7 +29,13 @@ const (
 	markRedone  = "↻"
 	markError   = "✗"
 	markRunning = "…"
+	markUnknown = "?"
 )
+
+// RunningTimeout is how long a child with no end, usage or error record is
+// shown as running. After it the end is unknown ("?"): the child may have
+// finished without the harness telling us, and a stale "…" would lie.
+const RunningTimeout = 2 * time.Hour
 
 // TreeOptions tunes SessionTree. The zero value is valid.
 type TreeOptions struct {
@@ -39,6 +45,8 @@ type TreeOptions struct {
 	// Paused adds the pause flag to the header: routing is paused for the
 	// session (see SessionPaused).
 	Paused bool
+	// Now is the clock for the RunningTimeout. The zero value means time.Now().
+	Now time.Time
 }
 
 // TreeRow is one subagent of the session.
@@ -47,7 +55,7 @@ type TreeRow struct {
 	Depth    int      `json:"depth"` // 0 for a first attempt, +1 for each redo level
 	Label    string   `json:"label"`
 	Model    string   `json:"model"`
-	Status   string   `json:"status"` // done|redone|error|blocked|running
+	Status   string   `json:"status"` // done|redone|error|blocked|running|unknown
 	CostUSD  *float64 `json:"cost_usd,omitempty"`
 	CostKind string   `json:"cost_kind"` // real|estimate|none
 	OverUSD  float64  `json:"over_usd,omitempty"`
@@ -224,6 +232,14 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 		row.Status, row.mark = "error", markError
 	case f.usage != nil || f.done:
 		row.Status, row.mark = "done", markDone
+	default:
+		now := opt.Now
+		if now.IsZero() {
+			now = time.Now()
+		}
+		if t := evTime(d); !t.IsZero() && now.Sub(t) > RunningTimeout {
+			row.Status, row.mark = "unknown", markUnknown
+		}
 	}
 	if u := f.usage; u != nil {
 		switch {

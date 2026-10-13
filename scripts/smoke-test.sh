@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# The built-in control group would leave ~10% of spawns unrouted on purpose; the smoke
+# asserts routing, so it turns the control group off.
+export DOWNSHIFT_CONTROL_SHARE=0
 # Smoke test script for downshift adapters and CLI commands (Task P1.4)
 set -euo pipefail
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+export DOWNSHIFT_CONTROL_SHARE=0  # the control group would leave ~10% of spawns unrouted
 # Adapter smoke: pipe example PreToolUse payloads through downshift (no live harness).
 set -euo pipefail
 

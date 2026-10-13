@@ -92,3 +92,7 @@ func enabled() bool {
 		return true
 	}
 }
+
+// Enabled reports whether the semantic boost runs (DOWNSHIFT_MINILM is not
+// 0, false, off or no). It is read-only, for `downshift config`.
+func Enabled() bool { return enabled() }

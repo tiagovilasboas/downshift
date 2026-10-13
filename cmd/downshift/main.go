@@ -108,8 +108,12 @@ func main() {
 		os.Exit(runQuota(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "stats":
 		os.Exit(runStats(args[1:]))
+	case "report":
+		os.Exit(runReport(args[1:], os.Stdout, os.Stderr))
 	case "session":
 		os.Exit(runSession(args[1:], os.Stdout, os.Stderr, catalog))
+	case "watch":
+		os.Exit(runWatch(args[1:], os.Stdout, os.Stderr, catalog))
 	case "benchmark":
 		os.Exit(runBenchmark(args[1:]))
 	case "eval-outcome":
@@ -130,6 +134,8 @@ func main() {
 		os.Exit(runSetup(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "doctor":
 		os.Exit(runDoctor(args[1:], os.Stdout, os.Stderr, catalog))
+	case "config":
+		os.Exit(runConfig(args[1:], os.Stdout, os.Stderr, catalog))
 	case "version", "--version":
 		os.Exit(runVersion(os.Stdout))
 	case "-h", "--help", "help":
@@ -236,6 +242,12 @@ func runHookAdapter[E any](
 	}
 	paused := !noRoute && telemetry.SessionPaused(sessionHash)
 	noRoute = noRoute || paused
+	// Built-in control group (`downshift report`): a deterministic share of
+	// real spawn decisions, picked by a hash of the routing id, is classified
+	// and logged but never rewritten. Same seam as no-route, same fail-open.
+	control := !noRoute && decision.Harness != "" &&
+		telemetry.InControlGroup(correlationID, telemetry.ControlShare())
+	noRoute = noRoute || control
 	if noRoute {
 		failOpen()
 		responded = true
@@ -249,6 +261,8 @@ func runHookAdapter[E any](
 	}
 	if paused {
 		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s routing paused for this session, spawn unchanged (downshift session --resume)\n", correlationID)
+	} else if control {
+		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s control group, spawn unchanged (DOWNSHIFT_CONTROL_SHARE=0 disables)\n", correlationID)
 	} else if note != "" {
 		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
 	}
@@ -265,6 +279,10 @@ func runHookAdapter[E any](
 			event.Outcome = telemetry.OutcomeBaseline
 			if paused {
 				event.ReasonCodes = append(event.ReasonCodes, telemetry.ReasonPaused)
+				sort.Strings(event.ReasonCodes)
+			}
+			if control {
+				event.ReasonCodes = append(event.ReasonCodes, telemetry.ReasonControl)
 				sort.Strings(event.ReasonCodes)
 			}
 		case note == "":
@@ -420,6 +438,9 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
 
 	out, note, decision := kirocrew.Handle(ev, catalog)
 	warnSessionUnknown(decision)
+	// Built-in control group, same rule as runHookAdapter: never block.
+	control := os.Getenv("DOWNSHIFT_NO_ROUTE") != "1" && decision.Harness != "" &&
+		telemetry.InControlGroup(correlationID, telemetry.ControlShare())
 
 	// Telemetry only when a real routing decision was made (Harness != "").
 	// DOWNSHIFT_NO_ROUTE=1 records a control-group baseline and never blocks.
@@ -430,6 +451,10 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
 		switch {
 		case os.Getenv("DOWNSHIFT_NO_ROUTE") == "1":
 			event.Outcome = telemetry.OutcomeBaseline
+		case control:
+			event.Outcome = telemetry.OutcomeBaseline
+			event.ReasonCodes = append(event.ReasonCodes, telemetry.ReasonControl)
+			sort.Strings(event.ReasonCodes)
 		case out.Block:
 			event.Outcome = telemetry.OutcomeBlocked
 		default:
@@ -447,7 +472,7 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
 		}
 	}
 
-	if out.Block && os.Getenv("DOWNSHIFT_NO_ROUTE") != "1" {
+	if out.Block && os.Getenv("DOWNSHIFT_NO_ROUTE") != "1" && !control {
 		// stderr is what KiroCrew relays to the LLM on exit 2.
 		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, out.Message)
 		return 2
@@ -1243,6 +1268,7 @@ Usage:
   downshift models list          Show the effective catalog (embedded or override)
   downshift models check         Query provider APIs and report new/untiered models
   downshift doctor [--verbose] [--json]  Checklist with a fix command per failure
+  downshift config [--json]        Every effective setting with its value and source
   downshift context status       Show context optimization status and active provider
   downshift context providers    List supported context optimization companion providers
   downshift context doctor       Run diagnostics on context optimization providers
@@ -1259,9 +1285,11 @@ Usage:
   downshift quota status        Inspect budget evidence and freshness for a harness/model
   downshift quota claude-statusline   Opt-in Claude statusLine quota bridge
   downshift session [--why|--pause|--resume] [--json]  This session's subagents as a tree (every harness)
+  downshift watch [--session=<id>] [--interval=1s]      Live session tree, redrawn every interval (Ctrl-C to quit)
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
   downshift stats --cost-per-unit=<USD>   Convert normalised units to dollars
   downshift stats --export       Print a pasteable JSON summary without prompts
+  downshift report [--days=N] [--json]   Routed vs control cost per completed task, rework, savings with 95% CI
   downshift benchmark <file>     Run classifier against a labelled dataset; print confusion matrix
   downshift benchmark <file> --compare  Compare Legacy vs CapabilityRouter v2 side by side
   downshift eval-outcome --verify|--report  Outcome eval: executable checks, small vs frontier pass rate

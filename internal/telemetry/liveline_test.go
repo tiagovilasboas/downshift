@@ -141,3 +141,15 @@ func TestQuietAndChildLineEnabled(t *testing.T) {
 		t.Fatal("DOWNSHIFT_QUIET=1 must silence the line")
 	}
 }
+
+func TestSessionRoutingLineQuotaStale(t *testing.T) {
+	if got := (SessionRouting{QuotaStale: true}).Line(); got != "◆ downshift · quota stale" {
+		t.Errorf("no spawns: %q", got)
+	}
+	if got := (SessionRouting{Spawns: 1, QuotaStale: true}).Line(); !strings.HasSuffix(got, " · 0 on doubt · quota stale") {
+		t.Errorf("with spawns: %q", got)
+	}
+	if got := (SessionRouting{}).Line(); got != "" {
+		t.Errorf("empty: %q", got)
+	}
+}

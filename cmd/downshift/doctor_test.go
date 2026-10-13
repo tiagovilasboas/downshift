@@ -28,7 +28,7 @@ func newDoctorFixture(t *testing.T) *doctorFixture {
 	t.Helper()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	for _, k := range []string{paths.EnvStateDir, "DOWNSHIFT_EVENT_LOG", "DOWNSHIFT_SESSION_MODELS", "DOWNSHIFT_DISCOVERED", "DOWNSHIFT_CURSOR_NATIVE_FILE", "CLAUDE_CODE_SUBAGENT_MODEL"} {
+	for _, k := range []string{paths.EnvStateDir, "DOWNSHIFT_EVENT_LOG", "DOWNSHIFT_SESSION_MODELS", "DOWNSHIFT_DISCOVERED", "DOWNSHIFT_CURSOR_NATIVE_FILE", "CLAUDE_CODE_SUBAGENT_MODEL", "DOWNSHIFT_QUOTA_FILE", "DOWNSHIFT_QUOTA_MODE"} {
 		t.Setenv(k, "")
 	}
 	t.Setenv("DOWNSHIFT_SCORES", "off") // never start a refresh from a test

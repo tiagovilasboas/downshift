@@ -226,3 +226,17 @@ func TestCodexCollectOriginalTimeAndLatestInvalidCloses(t *testing.T) {
 		}
 	}
 }
+
+func TestAbandonedBoundary(t *testing.T) {
+	now := time.Now().UTC()
+	s := Snapshot{Version: 1, Harness: "h", Source: "operator-normalized", ObservedAt: now.Add(-time.Hour - time.Minute), ExpiresAt: now.Add(-time.Hour)}
+	if s.Abandoned(now) {
+		t.Fatal("exactly one hour after expiry must still hold")
+	}
+	if !s.Abandoned(now.Add(time.Nanosecond)) {
+		t.Fatal("past one hour after expiry must be abandoned")
+	}
+	if (Snapshot{Version: 1, Harness: "h", Source: "bogus"}).Abandoned(now) {
+		t.Fatal("malformed snapshot must never be abandoned")
+	}
+}

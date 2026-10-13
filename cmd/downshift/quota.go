@@ -161,28 +161,42 @@ func statuslineQuota(b []byte) string {
 
 // statuslineRouting renders the routing summary for the statusline's session
 // ("" when the session is unknown, the log is missing or unreadable, or the
-// session has no routing activity). It reads a bounded tail of the log.
+// session has no routing activity). It reads a bounded tail of the log. While an
+// expired quota snapshot still holds rewrites it appends "· quota stale", even
+// when the session summary itself is unavailable.
 func statuslineRouting(b []byte) (line string) {
+	var sum telemetry.SessionRouting
 	defer func() {
 		if recover() != nil {
 			line = ""
 		}
 	}()
+	sum.QuotaStale = statuslineQuotaStale()
 	var in struct {
 		SessionID string `json:"session_id"`
 	}
 	if json.Unmarshal(b, &in) != nil {
-		return ""
+		return sum.Line()
 	}
 	hash := telemetry.HashSessionID(in.SessionID)
 	if hash == "" {
-		return ""
+		return sum.Line()
 	}
 	events, err := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
 	if err != nil {
-		return ""
+		return sum.Line()
 	}
-	return telemetry.SessionSummary(events, hash).Line()
+	stale := sum.QuotaStale
+	sum = telemetry.SessionSummary(events, hash)
+	sum.QuotaStale = stale
+	return sum.Line()
+}
+
+// statuslineQuotaStale is the bridge's one harness fact: its input is Claude
+// Code's statusline, so it reads that harness's snapshot.
+func statuslineQuotaStale() bool {
+	_, held := core.StaleQuotaHold("claude-code", time.Now())
+	return held
 }
 
 func nonEmpty(parts ...string) []string {

@@ -63,15 +63,40 @@ func (s SessionList) WithUsageQuota(harness string, supplied *quota.Snapshot) Se
 		return s
 	}
 	var present bool
-	// An explicitly configured native export is fresher provider evidence than
-	// the canonical cache. Invalid native input remains present and therefore
-	// closes the gate instead of falling back to a stale cache.
-	s.Usage, present = quota.LoadNative(harness)
-	if !present {
-		s.Usage, present = quota.Load(harness)
+	s.Usage, present = loadUsage(harness)
+	// A snapshot that expired more than quota.StaleGrace ago is treated as
+	// absent, like a user without quota. Required mode keeps holding.
+	if present && s.Usage != nil && !s.QuotaRequired && s.Usage.Abandoned(s.QuotaTime) {
+		s.Usage, present = nil, false
 	}
 	s.QuotaRequired = s.QuotaRequired || present
 	return s
+}
+
+// loadUsage reads the provider evidence for a harness. An explicitly configured
+// native export is fresher than the canonical cache. Invalid native input
+// remains present and therefore closes the gate instead of falling back to a
+// stale cache.
+func loadUsage(harness string) (*quota.Snapshot, bool) {
+	if s, present := quota.LoadNative(harness); present {
+		return s, true
+	}
+	return quota.Load(harness)
+}
+
+// StaleQuotaHold reports whether a loaded snapshot for harness has expired but
+// still holds model rewrites, and for how long it has been expired. It follows
+// the same rule as WithUsageQuota, so doctor and the statusline never disagree
+// with the gate. Malformed evidence is not "stale" and reports false.
+func StaleQuotaHold(harness string, now time.Time) (expiredFor time.Duration, held bool) {
+	s, present := loadUsage(harness)
+	if !present || s == nil || s.Validate() != nil || now.Before(s.ExpiresAt) {
+		return 0, false
+	}
+	if os.Getenv("DOWNSHIFT_QUOTA_MODE") != "required" && s.Abandoned(now) {
+		return 0, false
+	}
+	return now.Sub(s.ExpiresAt), true
 }
 
 // QuotaStatus reports token budget. A usage snapshot stays authoritative:

@@ -52,7 +52,14 @@ type SessionRouting struct {
 	HasCost   bool    // at least one child was priced against its baseline
 	DeltaUSD  float64 // signed real delta: baseline minus actual, summed
 	OnDoubt   int     // frontier decisions resting on an unconfident classification
+	// QuotaStale marks that an expired quota snapshot is still holding model
+	// rewrites (core.StaleQuotaHold). The caller sets it; the event log has no
+	// say in it.
+	QuotaStale bool
 }
+
+// QuotaStaleMarker is the segment appended while a stale snapshot holds.
+const QuotaStaleMarker = "quota stale"
 
 // SessionSummary folds the events that belong to sessionHash (see
 // HashSessionID). An empty hash matches nothing: a summary must never mix
@@ -103,9 +110,13 @@ func SessionSummary(events []Event, sessionHash string) SessionRouting {
 }
 
 // Line renders the statusline summary, or "" when the session has no routing
-// activity. Segments without data are omitted.
+// activity and no stale quota to flag. Segments without data are omitted.
 func (s SessionRouting) Line() string {
 	if s.Spawns == 0 {
+		// Nothing routed yet, but a holding snapshot is the reason nothing will.
+		if s.QuotaStale {
+			return "◆ downshift · " + QuotaStaleMarker
+		}
 		return ""
 	}
 	noun := "subagents"
@@ -124,6 +135,9 @@ func (s SessionRouting) Line() string {
 		}
 	}
 	parts = append(parts, fmt.Sprintf("%d on doubt", s.OnDoubt))
+	if s.QuotaStale {
+		parts = append(parts, QuotaStaleMarker)
+	}
 	return strings.Join(parts, " · ")
 }
 

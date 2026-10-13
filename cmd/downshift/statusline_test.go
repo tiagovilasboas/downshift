@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/quota"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -121,5 +122,41 @@ func TestStatusline_FastOnALargeLogAndReadsOnlyTheTail(t *testing.T) {
 	}
 	if took > 250*time.Millisecond { // target is 50 ms; this bound only catches a full scan
 		t.Errorf("render took %v on a 50 MB log, tail read expected", took)
+	}
+}
+
+func TestStatusline_QuotaStaleMarkerWhileSnapshotHolds(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "quota.json")
+	t.Setenv("DOWNSHIFT_QUOTA_FILE", path)
+	t.Setenv("DOWNSHIFT_QUOTA_MODE", "")
+	log := filepath.Join(t.TempDir(), "events.jsonl")
+	t.Setenv("DOWNSHIFT_EVENT_LOG", log)
+	seedSession(t, log, "sess-ui")
+	storeAged := func(expiredAgo time.Duration) {
+		_ = os.Remove(path) // Store refuses an older observation
+		expires := time.Now().Add(-expiredAgo)
+		used := 10.0
+		if err := quota.Store(path, quota.Snapshot{Version: 1, Harness: "claude-code", Source: "claude-statusline",
+			ObservedAt: expires.Add(-time.Minute), ExpiresAt: expires,
+			Windows: []quota.Window{{ID: "5h", Scope: "harness", UsedPercent: &used, ResetsAt: time.Now().Add(time.Hour)}}}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	storeAged(10 * time.Minute)
+	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 on haiku · saved $0.42 · 0 on doubt · quota stale\n" {
+		t.Errorf("holding snapshot: %q", got)
+	}
+	// No spawns and an unusable session still flag the hold.
+	if got := renderStatusline(t, statusInput("nobody", false)); got != "◆ downshift · quota stale\n" {
+		t.Errorf("no spawns: %q", got)
+	}
+	// Past one hour the snapshot is absent: no marker.
+	storeAged(2 * time.Hour)
+	if got := renderStatusline(t, statusInput("sess-ui", false)); strings.Contains(got, "stale") {
+		t.Errorf("abandoned snapshot must not be flagged: %q", got)
+	}
+	// A fresh native update replaces the snapshot and clears the marker.
+	if got := renderStatusline(t, statusInput("sess-ui", true)); strings.Contains(got, "stale") {
+		t.Errorf("fresh snapshot flagged stale: %q", got)
 	}
 }

@@ -94,8 +94,8 @@ func TestSessionTree_StatusRunningErrorDone(t *testing.T) {
 		td("d3", sessA, 3*time.Hour, "claude-haiku-5-5"),
 		tend("d3", sessA, ChildCompleted, 3*time.Hour+time.Minute),
 	}
-	got := lines(SessionTree(ev, sessA, TreeOptions{}))
-	wantMarks := []string{markRunning, markError, markDone}
+	got := lines(SessionTree(ev, sessA, TreeOptions{Now: evTime(td("x", sessA, 3*time.Hour+2*time.Minute, ""))}))
+	wantMarks := []string{markUnknown, markError, markDone}
 	for i, m := range wantMarks {
 		if !strings.Contains(got[i+1], "  "+m+"  ") {
 			t.Errorf("row %d want mark %s: %q", i+1, m, got[i+1])
@@ -103,6 +103,28 @@ func TestSessionTree_StatusRunningErrorDone(t *testing.T) {
 	}
 	if strings.Contains(strings.Join(got, "\n"), markRedone) {
 		t.Fatalf("no respawn within the window, nothing is redone:\n%s", strings.Join(got, "\n"))
+	}
+}
+
+func TestSessionTree_RunningTimesOutToUnknown(t *testing.T) {
+	ev := []Event{td("d1", sessA, 0, "claude-haiku-5-5")}
+	at := func(d time.Duration) TreeOptions { return TreeOptions{Now: evTime(ev[0]).Add(d)} }
+
+	fresh := BuildSessionTree(ev, sessA, at(RunningTimeout))
+	if r := fresh.Rows[0]; r.Status != "running" || r.mark != markRunning {
+		t.Fatalf("exactly at the timeout it still runs: %+v", r)
+	}
+	stale := BuildSessionTree(ev, sessA, at(RunningTimeout+time.Second))
+	if r := stale.Rows[0]; r.Status != "unknown" || r.mark != markUnknown {
+		t.Fatalf("past the timeout the end is unknown: %+v", r)
+	}
+	if out := stale.Render(); !strings.Contains(out, "  ?  ") {
+		t.Fatalf("render lacks ?:\n%s", out)
+	}
+	// An end record after the timeout still wins: the child did finish.
+	ev = append(ev, tend("d1", sessA, ChildCompleted, 5*time.Hour))
+	if r := BuildSessionTree(ev, sessA, at(6*time.Hour)).Rows[0]; r.Status != "done" {
+		t.Fatalf("a recorded end must beat the timeout: %+v", r)
 	}
 }
 

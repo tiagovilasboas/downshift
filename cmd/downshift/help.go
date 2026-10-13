@@ -34,9 +34,12 @@ See the effect
   downshift stats [--days=N]       Decisions and estimated savings (default 30 days)
   downshift stats --detail         Full report: units, honor, quota, usage, per-session cost
   downshift stats --export         Pasteable JSON summary, no prompts
+  downshift report [--days=N]      Routed vs control group: cost per completed task, savings with CI
   downshift session [--why|--pause|--resume]  This session's subagents as a tree
+  downshift watch [--session=<id>] [--interval=1s]  The same tree, live (Ctrl-C to quit)
 
 Fix things
+  downshift config [--json]        Every effective setting with its value and source
   downshift models list            The model catalog in effect
   downshift models discover        Ask each harness which models your account can use
   downshift models scores          Public capability scores: --refresh, --status, --quiet, --json

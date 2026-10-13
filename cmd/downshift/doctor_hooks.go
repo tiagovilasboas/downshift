@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/discovery"
+	"github.com/tiagovilasboas/downshift/internal/quota"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -225,6 +226,9 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	// Session list.
 	checkSessionList(add, env, nc)
 
+	// Quota snapshot that expired but still holds rewrites.
+	checkQuotaHold(add, env, h)
+
 	// Last hook event and rewrite honored, from the shared event log.
 	var mine []telemetry.Event
 	for _, ev := range events {
@@ -321,6 +325,23 @@ func checkSessionList(add func(id, status, detail, fix string), env doctorEnv, n
 		}
 	}
 	add("session list", doctorWarn, "none: no hook list, discovery or file; rewrites are held", fix)
+}
+
+// checkQuotaHold warns while an expired quota snapshot still holds rewrites. It
+// uses core.StaleQuotaHold, the same rule as the gate: after quota.StaleGrace
+// the snapshot is treated as absent and nothing is reported.
+func checkQuotaHold(add func(id, status, detail, fix string), env doctorEnv, h string) {
+	age, held := core.StaleQuotaHold(h, env.Now())
+	if !held {
+		return
+	}
+	left := "held until you refresh it"
+	if env.Getenv("DOWNSHIFT_QUOTA_MODE") != "required" {
+		left = "rewrites resume on their own in " + humanAge(quota.StaleGrace-age)
+	}
+	fix := fmt.Sprintf("downshift quota status --harness %s  (refresh the snapshot with the harness statusline bridge or `quota import`; to drop it, delete the %s entry in quota.json)", h, h)
+	add("quota snapshot", doctorWarn,
+		fmt.Sprintf("expired %s ago and still holding model rewrites; %s", humanAge(age), left), fix)
 }
 
 const lastEventStale = 7 * 24 * time.Hour

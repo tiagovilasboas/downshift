@@ -19,11 +19,14 @@ import (
 type Status string
 
 const (
-	MaxTTL           = 15 * time.Minute
-	Available Status = "available"
-	Exhausted Status = "exhausted"
-	Unknown   Status = "unknown"
-	Stale     Status = "stale"
+	MaxTTL = 15 * time.Minute
+	// StaleGrace is how long a valid snapshot keeps holding rewrites after
+	// expires_at. Past it the snapshot is treated as absent (see Abandoned).
+	StaleGrace        = time.Hour
+	Available  Status = "available"
+	Exhausted  Status = "exhausted"
+	Unknown    Status = "unknown"
+	Stale      Status = "stale"
 )
 
 // Window is a provider-reported budget, never a catalog or session mark.
@@ -62,6 +65,14 @@ func (s Snapshot) Validate() error {
 		}
 	}
 	return nil
+}
+
+// Abandoned reports a structurally valid snapshot that expired more than
+// StaleGrace ago. Callers treat it as absent evidence unless the operator
+// opted into DOWNSHIFT_QUOTA_MODE=required. A malformed snapshot is never
+// abandoned: it keeps holding.
+func (s Snapshot) Abandoned(now time.Time) bool {
+	return s.Validate() == nil && now.After(s.ExpiresAt.Add(StaleGrace))
 }
 
 func validSource(source string) bool {
