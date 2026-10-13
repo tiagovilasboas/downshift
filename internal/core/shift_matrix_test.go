@@ -58,7 +58,7 @@ func TestShiftMatrix(t *testing.T) {
 			if d.Model.ID != wantID {
 				t.Fatalf("recommended = %s, want %s", d.Model.ID, wantID)
 			}
-			rewrite := d.ShouldRewriteModel()
+			rewrite := checkWrites(d)
 			switch d.Verdict {
 			case core.VerdictOK:
 				if rewrite {

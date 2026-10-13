@@ -153,19 +153,19 @@ func TestDecisionSummary_OK(t *testing.T) {
 }
 
 func TestDecisionRewritePolicy(t *testing.T) {
-	if !(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Confident: true}).ShouldRewriteModel() {
+	if !checkWrites(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Confident: true}) {
 		t.Error("unknown source model must be routed on a confident classification")
 	}
-	if (core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierMid}).ShouldRewriteModel() {
+	if checkWrites(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierMid}) {
 		t.Error("unknown source model must not be routed to mid on an unconfident classification (R9)")
 	}
-	if !(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierMid, RiskFloor: true}).ShouldRewriteModel() {
+	if !checkWrites(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierMid, RiskFloor: true}) {
 		t.Error("a deterministic lift (risk floor) keeps an unconfident mid writable")
 	}
-	if (core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierSmall}).ShouldRewriteModel() {
+	if checkWrites(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictUnknown, Tier: core.TierSmall}) {
 		t.Error("unknown source model must not be routed to small on an unconfident classification")
 	}
-	if (core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictOK}).ShouldRewriteModel() {
+	if checkWrites(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictOK}) {
 		t.Error("same-tier model must not be replaced by generic adapters")
 	}
 	if !(core.Decision{Model: core.Model{ID: "target"}, Verdict: core.VerdictOK}).ShouldApplyEffort() {
@@ -175,28 +175,28 @@ func TestDecisionRewritePolicy(t *testing.T) {
 
 func TestDecisionRewritePolicy_UncertainDowngradePreservesCurrentModel(t *testing.T) {
 	d := core.Decision{Model: core.Model{ID: "small"}, Verdict: core.VerdictDownshift, Confident: false}
-	if d.ShouldRewriteModel() {
+	if checkWrites(d) {
 		t.Fatal("uncertain downgrade must not apply the classified target")
 	}
 }
 
 func TestDecisionRewritePolicy_UncertainUpshiftPreservesCurrentModel(t *testing.T) {
 	d := core.Decision{Model: core.Model{ID: "mid"}, Verdict: core.VerdictUpshift, Confident: false}
-	if d.ShouldRewriteModel() {
+	if checkWrites(d) {
 		t.Fatal("uncertain upshift must not replace the current model with a dearer tier")
 	}
 }
 
 func TestDecisionRewritePolicy_ConfidentUpshiftCanProceed(t *testing.T) {
 	d := core.Decision{Model: core.Model{ID: "mid"}, Verdict: core.VerdictUpshift, Confident: true}
-	if !d.ShouldRewriteModel() {
+	if !checkWrites(d) {
 		t.Fatal("confident upshift should be allowed")
 	}
 }
 
 func TestDecisionRewritePolicy_ConfidentDowngradeCanProceed(t *testing.T) {
 	d := core.Decision{Model: core.Model{ID: "small"}, Verdict: core.VerdictDownshift, Confident: true}
-	if !d.ShouldRewriteModel() {
+	if !checkWrites(d) {
 		t.Fatal("confident downgrade should be allowed")
 	}
 }

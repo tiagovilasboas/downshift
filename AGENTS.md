@@ -143,8 +143,8 @@ cmd/downshift/       — binary entry point, hook runners, try subcommand,
 - Doubt never spends money. An unconfident UPSHIFT (R8) and an unconfident
   frontier recommendation with no known current model (R7) are held in
   `Check`; only deterministic lifts (risk floor, graph escalation, opted-in NB
-  upshift, tier floor) may move up. `ShouldRewriteModel` has no production
-  caller, so new holds belong in `Check`, not there.
+  upshift, tier floor; one `deterministicLift` helper in `selfcheck.go`) may move
+  up. New holds belong in `Check`.
 - The semantic boost is ignored for no-signal prompts and never creates
   COMPLEX alone; it is recorded as `SEMANTIC_BOOST` and surfaced by `stats`.
 - `HarnessCapabilities.InferSession` (Claude Code only) lets an unknown

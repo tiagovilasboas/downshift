@@ -87,7 +87,19 @@ func TestRoute_SelfCheckWired(t *testing.T) {
 	}
 }
 
-func TestShouldRewriteModel_HeldDecision(t *testing.T) {
+// checkWrites reports whether the guardrails let a recommended model be
+// written: there is a model, and the safe action is not OK. A Route decision
+// carries the safe action Check computed (SafeVerdict); a hand-built one is
+// run through Check.
+func checkWrites(d core.Decision) bool {
+	safe := core.Check(d).Safe
+	if d.Checked {
+		safe = d.SafeVerdict
+	}
+	return d.Model.ID != "" && safe != core.VerdictOK
+}
+
+func TestCheckWrites_HeldDecision(t *testing.T) {
 	held := core.Decision{
 		Model:       core.Model{ID: "small", Harness: "claude-code"},
 		Harness:     "claude-code",
@@ -97,7 +109,7 @@ func TestShouldRewriteModel_HeldDecision(t *testing.T) {
 		Checked:     true,
 		Confident:   true,
 	}
-	if held.ShouldRewriteModel() {
+	if checkWrites(held) {
 		t.Error("held decision must not rewrite even when confident")
 	}
 }

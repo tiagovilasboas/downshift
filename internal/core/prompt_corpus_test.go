@@ -70,7 +70,7 @@ func TestPromptCorpusFiles(t *testing.T) {
 			seen[c.ID] = true
 			total++
 			d := core.Route(c.Prompt, "claude-code", "", cat)
-			written := d.ShouldRewriteModel()
+			written := checkWrites(d)
 			eff := d.Tier.String()
 			if !written {
 				eff = "held"

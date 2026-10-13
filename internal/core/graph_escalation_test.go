@@ -41,7 +41,7 @@ func TestRoute_GraphEscalationUpshiftsUnconfidentPrompt(t *testing.T) {
 		t.Fatalf("precondition: escalated=%v confident=%v verdict=%s complexity=%s",
 			d.GraphEscalated, d.Confident, d.Verdict, d.Complexity)
 	}
-	if !d.ShouldRewriteModel() {
+	if !checkWrites(d) {
 		t.Fatalf("graph-escalated upshift was not rewritten (tier %s, corrections %v)",
 			d.Tier, d.Corrections)
 	}
@@ -54,7 +54,7 @@ func TestRoute_UnconfidentPromptWithoutGraphStaysPut(t *testing.T) {
 	if d.GraphEscalated || d.Confident {
 		t.Fatalf("precondition: escalated=%v confident=%v", d.GraphEscalated, d.Confident)
 	}
-	if d.Verdict == core.VerdictUpshift && d.ShouldRewriteModel() {
+	if d.Verdict == core.VerdictUpshift && checkWrites(d) {
 		t.Fatalf("unconfident prompt without graph signal was upshifted to %s", d.Tier)
 	}
 }

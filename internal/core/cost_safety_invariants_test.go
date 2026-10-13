@@ -39,7 +39,7 @@ func costTierComplexity(t core.Tier) core.Complexity {
 // rule comments in selfcheck.go (Risk and NBDownshift are left empty, and the
 // model always belongs to the decision's harness, so R4 never fires here).
 func costExpectedRules(d core.Decision) []string {
-	override := d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied
+	override := d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied || d.PolicyFloor
 	var rules []string
 	if d.Verdict == core.VerdictDownshift && !d.Confident {
 		rules = append(rules, core.RuleUnconfidentDowngrade) // R1
@@ -66,8 +66,8 @@ func costExpectedRules(d core.Decision) []string {
 	return rules
 }
 
-// costExpectedRewrite is the explicit expected table for ShouldRewriteModel
-// on a checked decision, written from the policy.go / selfcheck.go comments:
+// costExpectedRewrite is the explicit expected table for whether Check lets a
+// checked decision's model be written, written from the policy.go / selfcheck.go comments:
 //
 //	OK        → never rewrites.
 //	DOWNSHIFT → only confident, non-complex, non-risk (R1/R2/R5 hold the rest).
@@ -120,7 +120,7 @@ func TestCostRuleIDsStable(t *testing.T) {
 }
 
 // TestCostTruthTable sweeps every combination of verdict, confidence, tier and
-// the three deterministic lifts on hand-built decisions.
+// the four deterministic lifts on hand-built decisions.
 func TestCostTruthTable(t *testing.T) {
 	verdicts := []core.Verdict{core.VerdictOK, core.VerdictDownshift, core.VerdictUpshift, core.VerdictUnknown}
 	tiers := []core.Tier{core.TierSmall, core.TierMid, core.TierFrontier}
@@ -132,59 +132,62 @@ func TestCostTruthTable(t *testing.T) {
 				for _, rf := range bools {
 					for _, ge := range bools {
 						for _, nb := range bools {
-							n++
-							d := core.Decision{
-								Complexity:     costTierComplexity(tier),
-								Tier:           tier,
-								Harness:        ccHarness,
-								Model:          core.Model{ID: catID(ccHarness, tier), Tier: tier, Harness: ccHarness},
-								Verdict:        v,
-								Confident:      conf,
-								RiskFloor:      rf,
-								GraphEscalated: ge,
-								NBUpshift:      core.NBUpshift{Applied: nb},
-							}
-							rep := core.Check(d)
-							d.SafeVerdict = rep.Safe
-							d.Checked = true
-							name := fmt.Sprintf("%s/conf=%v/%s/rf=%v/ge=%v/nb=%v", v, conf, tier, rf, ge, nb)
-							override := rf || ge || nb
+							for _, pf := range bools {
+								n++
+								d := core.Decision{
+									Complexity:     costTierComplexity(tier),
+									Tier:           tier,
+									Harness:        ccHarness,
+									Model:          core.Model{ID: catID(ccHarness, tier), Tier: tier, Harness: ccHarness},
+									Verdict:        v,
+									Confident:      conf,
+									RiskFloor:      rf,
+									GraphEscalated: ge,
+									NBUpshift:      core.NBUpshift{Applied: nb},
+									PolicyFloor:    pf,
+								}
+								rep := core.Check(d)
+								d.SafeVerdict = rep.Safe
+								d.Checked = true
+								name := fmt.Sprintf("%s/conf=%v/%s/rf=%v/ge=%v/nb=%v/pf=%v", v, conf, tier, rf, ge, nb, pf)
+								override := rf || ge || nb || pf
 
-							var gotRules []string
-							for _, x := range rep.Violations {
-								gotRules = append(gotRules, x.Rule)
-							}
-							sort.Strings(gotRules)
-							wantRules := costExpectedRules(d)
-							if strings.Join(gotRules, ",") != strings.Join(wantRules, ",") {
-								t.Errorf("%s: Check rules=%v want %v", name, gotRules, wantRules)
-							}
-							// A clean report keeps the verdict; any violation holds.
-							wantSafe := v
-							if len(wantRules) > 0 {
-								wantSafe = core.VerdictOK
-							}
-							if rep.Safe != wantSafe || rep.Corrected != (len(wantRules) > 0) {
-								t.Errorf("%s: Safe=%s Corrected=%v, want Safe=%s", name, rep.Safe, rep.Corrected, wantSafe)
-							}
+								var gotRules []string
+								for _, x := range rep.Violations {
+									gotRules = append(gotRules, x.Rule)
+								}
+								sort.Strings(gotRules)
+								wantRules := costExpectedRules(d)
+								if strings.Join(gotRules, ",") != strings.Join(wantRules, ",") {
+									t.Errorf("%s: Check rules=%v want %v", name, gotRules, wantRules)
+								}
+								// A clean report keeps the verdict; any violation holds.
+								wantSafe := v
+								if len(wantRules) > 0 {
+									wantSafe = core.VerdictOK
+								}
+								if rep.Safe != wantSafe || rep.Corrected != (len(wantRules) > 0) {
+									t.Errorf("%s: Safe=%s Corrected=%v, want Safe=%s", name, rep.Safe, rep.Corrected, wantSafe)
+								}
 
-							got := d.ShouldRewriteModel()
-							if want := costExpectedRewrite(v, conf, tier, override, rf); got != want {
-								t.Errorf("%s: ShouldRewriteModel=%v want %v", name, got, want)
-							}
-							// Core invariant: doubt never spends money upward.
-							if !conf && !override && (v == core.VerdictUpshift ||
-								(v == core.VerdictUnknown && tier == core.TierFrontier)) && got {
-								t.Errorf("%s: unconfident decision without deterministic lift rewrites upward", name)
-							}
-							// R7 fires exactly on unknown + unconfident + frontier + no lift.
-							hasR7 := false
-							for _, r := range gotRules {
-								hasR7 = hasR7 || r == core.RuleUnconfidentUnknownFrontier
-							}
-							wantR7 := v == core.VerdictUnknown && !conf && tier == core.TierFrontier && !override
-							if hasR7 != wantR7 {
-								t.Errorf("%s: R7=%v want %v", name, hasR7, wantR7)
+								got := checkWrites(d)
+								if want := costExpectedRewrite(v, conf, tier, override, rf); got != want {
+									t.Errorf("%s: Check lets the model be written=%v want %v", name, got, want)
+								}
+								// Core invariant: doubt never spends money upward.
+								if !conf && !override && (v == core.VerdictUpshift ||
+									(v == core.VerdictUnknown && tier == core.TierFrontier)) && got {
+									t.Errorf("%s: unconfident decision without deterministic lift rewrites upward", name)
+								}
+								// R7 fires exactly on unknown + unconfident + frontier + no lift.
+								hasR7 := false
+								for _, r := range gotRules {
+									hasR7 = hasR7 || r == core.RuleUnconfidentUnknownFrontier
+								}
+								wantR7 := v == core.VerdictUnknown && !conf && tier == core.TierFrontier && !override
+								if hasR7 != wantR7 {
+									t.Errorf("%s: R7=%v want %v", name, hasR7, wantR7)
+								}
 							}
 						}
 					}
@@ -192,8 +195,8 @@ func TestCostTruthTable(t *testing.T) {
 			}
 		}
 	}
-	if n != 192 {
-		t.Fatalf("truth table size %d, want 192", n)
+	if n != 384 {
+		t.Fatalf("truth table size %d, want 384", n)
 	}
 	t.Logf("truth table: %d decisions", n)
 }
@@ -345,8 +348,8 @@ func costAboveCurrent(t *testing.T, c costCase) bool {
 // costUnconfidentUpshiftGap is the reproduced product gap: an unconfident
 // UPSHIFT with no deterministic lift passes Check clean (no rule covers it),
 // and PlanForSession/selectSessionTarget only consults SafeVerdict, never
-// ShouldRewriteModel, so a known session list above the current model is
-// written. ShouldRewriteModel would return false for the same decision.
+// the decision's rules, so a known session list above the current model was
+// written (since closed by R8).
 func costUnconfidentUpshiftGap(c costCase) bool {
 	return c.d.Verdict == core.VerdictUpshift && !c.d.Confident && !costDeterministicLift(c.d) &&
 		!c.plan.Session.Inferred

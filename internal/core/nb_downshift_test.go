@@ -92,7 +92,7 @@ func TestNBDownshift_OnAppliesTrivialOnly(t *testing.T) {
 			if d.RiskFloor || d.Complexity != core.Trivial {
 				t.Errorf("applied downshift: riskFloor=%v complexity=%s for %q", d.RiskFloor, d.Complexity, g.Prompt)
 			}
-			if d.ShouldRewriteModel() || d.SafeVerdict != core.VerdictOK || !slices.Contains(d.Corrections, core.RuleUnconfidentDowngrade) {
+			if checkWrites(d) || d.SafeVerdict != core.VerdictOK || !slices.Contains(d.Corrections, core.RuleUnconfidentDowngrade) {
 				t.Errorf("R1 did not hold the NB downshift: safe=%s corrections=%v for %q", d.SafeVerdict, d.Corrections, g.Prompt)
 			}
 		}
@@ -126,7 +126,7 @@ func TestNBDownshift_R1HoldsWithFlagOn(t *testing.T) {
 		if d.SafeVerdict != core.VerdictOK || !slices.Contains(d.Corrections, core.RuleUnconfidentDowngrade) {
 			t.Errorf("current=%q: safe=%s corrections=%v, want R1 hold", current, d.SafeVerdict, d.Corrections)
 		}
-		if d.ShouldRewriteModel() {
+		if checkWrites(d) {
 			t.Errorf("current=%q: held NB downshift would rewrite to %s", current, d.Model.ID)
 		}
 	}

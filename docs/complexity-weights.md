@@ -35,6 +35,12 @@ vulnerability, PII, destructive command, or prompt injection) is lifted to
 MEDIUM. MEDIUM and COMPLEX are not lifted further by risk. The risk table is
 `internal/core/risk.go`. It sets a floor. It does not add to the vote.
 
+**Input cap.** The regex table, the risk floor and the structural rules read at
+most the first 32 KB of the prompt (cut on a rune boundary), so cost stays flat
+for the 1 MiB the hook accepts. A signal past byte 32 768 is ignored by design.
+The word-count rules (6 and 80 words, the `add Name(` stub, the doc-edit damper)
+still count words over the full prompt.
+
 Optional later steps can only raise the class: graph context when the
 classifier is not confident, and the local MiniLM boost. Neither lowers a
 class. The MiniLM boost is ignored for no-signal prompts and cannot create

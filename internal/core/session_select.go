@@ -159,14 +159,33 @@ func selectableSessionIDs(harness string, session SessionList, res Resolver, all
 	return ids
 }
 
-// leastSessionModelAtOrAbove maps abstract tiers onto the filtered session
-// order. One model serves every tier; with multiple models, small maps to
-// the first, mid to the midpoint, and frontier to the last. Downshift and
-// ordinary tier mapping skip explicit_only. It does not consult names or prices.
+// leastSessionModelAtOrAbove picks the first id, in session order (least to
+// most capable), whose catalog tier is at or above minTier. When any filtered
+// id has no catalog tier (operator ids the catalog does not know), the catalog
+// cannot rank the list and the index mapping applies instead: one model serves
+// every tier; with several, small maps to the first, mid to the midpoint and
+// frontier to the last. Both paths skip explicit_only and establish the quality
+// floor before the quota filter, so an exhausted id never lowers the floor.
+// It does not consult names or prices.
 func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool, bool) {
 	ids := selectableSessionIDs(harness, session, res, false)
 	if len(ids) == 0 {
 		return "", Model{}, false, false
+	}
+	if tiers, ok := catalogTiers(harness, ids, res); ok {
+		found := false
+		for i, id := range ids {
+			if tiers[i] < minTier {
+				continue
+			}
+			found = true
+			if session.quotaAllows(harness, id) {
+				return id, modelForSessionID(harness, id, res), true, false
+			}
+		}
+		// found: every id at or above the floor was refused by the credit gate.
+		// Otherwise nothing in the list reaches the floor: hold, never go below.
+		return "", Model{}, false, found
 	}
 	start := 0
 	switch minTier {
@@ -175,8 +194,6 @@ func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolve
 	case TierFrontier:
 		start = len(ids) - 1
 	}
-	// Establish the quality floor before filtering quota. Removing an
-	// exhausted frontier model must not reclassify the cheap model as frontier.
 	for _, id := range ids[start:] {
 		if session.quotaAllows(harness, id) {
 			return id, modelForSessionID(harness, id, res), true, false
@@ -186,6 +203,26 @@ func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolve
 	return "", Model{}, false, true
 }
 
+// catalogTiers returns the catalog tier of every id, or ok=false when any id
+// does not resolve to a valid tier.
+func catalogTiers(harness string, ids []string, res Resolver) ([]Tier, bool) {
+	if res == nil {
+		return nil, false
+	}
+	tiers := make([]Tier, len(ids))
+	for i, id := range ids {
+		m, ok := res.LookupByID(harness, id)
+		if !ok || m.ID == "" || m.Tier < TierSmall || m.Tier > TierFrontier {
+			return nil, false
+		}
+		tiers[i] = m.Tier
+	}
+	return tiers, true
+}
+
+// TODO(owner): strongestSessionModel still maps tiers to list positions. It
+// was left unchanged on purpose (review 2026-10-13 T2); decide whether upshift
+// should also select by catalog tier.
 func strongestSessionModel(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool, bool) {
 	ids := selectableSessionIDs(harness, session, res, ExplicitUpshiftEnabled())
 	if len(ids) == 0 {

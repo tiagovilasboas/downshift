@@ -103,7 +103,7 @@ func TestNBUpshift_OnAppliesUpshiftOnly(t *testing.T) {
 		}
 		if d.NBUpshift.Applied {
 			applied++
-			if d.Verdict == core.VerdictUpshift && !d.ShouldRewriteModel() {
+			if d.Verdict == core.VerdictUpshift && !checkWrites(d) {
 				t.Errorf("applied NB upshift was not rewritten for %q", g.Prompt)
 			}
 		}

@@ -130,10 +130,10 @@ func TestShouldPreserveExplicitModel_ExplicitOnly(t *testing.T) {
 }
 
 // A Decision with no recommended model must never trigger a rewrite.
-func TestShouldRewriteModel_EmptyModelID(t *testing.T) {
+func TestCheckWrites_EmptyModelID(t *testing.T) {
 	d := core.Decision{}
-	if d.ShouldRewriteModel() {
-		t.Error("empty model ID must return false from ShouldRewriteModel")
+	if checkWrites(d) {
+		t.Error("empty model ID must not be written")
 	}
 }
 

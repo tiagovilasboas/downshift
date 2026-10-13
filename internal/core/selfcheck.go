@@ -47,24 +47,23 @@ const (
 	// classification is not confident and the recommendation is the frontier
 	// tier. The child would inherit the harness default, so writing the most
 	// expensive tier on doubt is an unconfident upshift in disguise: an
-	// uncertain result must not spend money in either direction. A task the
-	// deterministic rules lifted (risk floor, graph escalation, an opted-in NB
-	// upshift) is not a weak signal and stays writable.
+	// uncertain result must not spend money in either direction. A task a
+	// deterministic lift put there (deterministicLift) is not a weak signal and
+	// stays writable.
 	RuleUnconfidentUnknownFrontier = "R7_UNCONFIDENT_UNKNOWN_FRONTIER"
 	// RuleUnconfidentUpshift fires when an UPSHIFT verdict rests on a
 	// low-confidence classification. It is the mirror of R1: acting on doubt
 	// spends money for a quality the task may not need. The safe action holds
-	// the current model. A task the deterministic rules lifted (risk floor,
-	// graph escalation, an opted-in NB upshift) is not a weak signal.
+	// the current model. A task a deterministic lift
+	// put there (deterministicLift) is not a weak signal.
 	RuleUnconfidentUpshift = "R8_UNCONFIDENT_UPSHIFT"
 	// RuleUnconfidentUnknownMid fires when no current model is known, the
 	// classification is not confident and the recommendation is the mid tier.
 	// A prompt with no recognised signal falls to MEDIUM by default, and the
 	// child would inherit the harness default, so writing mid on doubt can
 	// move a task up for no reason (an unnecessary upshift in disguise). The
-	// safe action leaves the spawn unchanged. A task a deterministic rule lifted
-	// (risk floor, graph escalation, an opted-in NB upshift, an operator tier
-	// floor) is not a weak signal and stays writable.
+	// safe action leaves the spawn unchanged. A task a deterministic lift put
+	// there (deterministicLift) is not a weak signal and stays writable.
 	RuleUnconfidentUnknownMid = "R9_UNCONFIDENT_UNKNOWN_MID"
 )
 
@@ -119,8 +118,7 @@ func Check(d Decision) Report {
 			Detail: "no current model known and the small-tier recommendation is not confident",
 		})
 	}
-	if d.Verdict == VerdictUpshift && !d.Confident &&
-		!d.RiskFloor && !d.GraphEscalated && !d.NBUpshift.Applied {
+	if d.Verdict == VerdictUpshift && !d.Confident && !deterministicLift(d) {
 		violations = append(violations, Violation{
 			Rule:   RuleUnconfidentUpshift,
 			Detail: "upshift verdict without confident classification",
@@ -158,19 +156,26 @@ func unconfidentUnknownBelowMid(d Decision) bool {
 	return d.Verdict == VerdictUnknown && !d.Confident && d.Tier < TierMid
 }
 
+// deterministicLift reports whether a deterministic rule, not the classifier's
+// doubtful read, put the decision at its tier: the risk floor, a graphify
+// escalation, an opted-in NB upshift or an operator tier floor. R7, R8 and R9
+// all exempt such a decision, so the set lives here and only here.
+func deterministicLift(d Decision) bool {
+	return d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied || d.PolicyFloor
+}
+
 // unconfidentUnknownFrontier reports the R7 condition: no comparable current
 // model, an unconfident classification, a frontier target, and no deterministic
-// rule (risk floor, graph escalation, opted-in NB upshift) behind the tier.
+// lift behind the tier.
 func unconfidentUnknownFrontier(d Decision) bool {
 	return d.Verdict == VerdictUnknown && !d.Confident && d.Tier >= TierFrontier &&
-		!d.RiskFloor && !d.GraphEscalated && !d.NBUpshift.Applied
+		!deterministicLift(d)
 }
 
 // unconfidentUnknownMid reports the R9 condition: no comparable current model,
-// an unconfident classification, a mid target, and no deterministic rule
-// (risk floor, graph escalation, opted-in NB upshift, operator tier floor)
+// an unconfident classification, a mid target, and no deterministic lift
 // behind the tier.
 func unconfidentUnknownMid(d Decision) bool {
 	return d.Verdict == VerdictUnknown && !d.Confident && d.Tier == TierMid &&
-		!d.RiskFloor && !d.GraphEscalated && !d.NBUpshift.Applied && !d.PolicyFloor
+		!deterministicLift(d)
 }

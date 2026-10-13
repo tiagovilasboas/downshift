@@ -16,7 +16,7 @@ func TestRoute_UnknownModelUnconfidentSmallIsHeld(t *testing.T) {
 	if d.Tier != core.TierSmall || d.Confident {
 		t.Fatalf("precondition: want unconfident small, got tier=%v confident=%v", d.Tier, d.Confident)
 	}
-	if d.ShouldRewriteModel() {
+	if checkWrites(d) {
 		t.Fatal("unconfident small recommendation without a current model must not rewrite")
 	}
 	if d.SafeVerdict != core.VerdictOK {
@@ -46,7 +46,7 @@ func TestRoute_UnknownModelUnconfidentMidIsHeld(t *testing.T) {
 	if d.Tier != core.TierMid || d.Confident {
 		t.Fatalf("precondition: want unconfident mid, got tier=%v confident=%v", d.Tier, d.Confident)
 	}
-	if d.ShouldRewriteModel() {
+	if checkWrites(d) {
 		t.Fatal("unconfident mid recommendation must not be written")
 	}
 	found := false
@@ -66,7 +66,7 @@ func TestRoute_UnknownModelConfidentSmallRoutes(t *testing.T) {
 	if d.Tier != core.TierSmall || !d.Confident {
 		t.Fatalf("precondition: want confident small, got tier=%v confident=%v", d.Tier, d.Confident)
 	}
-	if !d.ShouldRewriteModel() {
+	if !checkWrites(d) {
 		t.Fatal("confident small recommendation must rewrite")
 	}
 }

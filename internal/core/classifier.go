@@ -6,7 +6,27 @@ package core
 import (
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
+
+// maxClassifyBytes caps the text the regex table, the risk floor and the
+// structural rules look at. Classification cost is linear in prompt size times
+// about 100 patterns, and the hook reads up to 1 MiB. A signal past the cap is
+// ignored by design; the word count still comes from the full prompt.
+const maxClassifyBytes = 32 << 10
+
+// classifyHead returns at most maxClassifyBytes of prompt, cut on a rune
+// boundary so a multi-byte character is never split.
+func classifyHead(prompt string) string {
+	if len(prompt) <= maxClassifyBytes {
+		return prompt
+	}
+	cut := maxClassifyBytes
+	for cut > 0 && !utf8.RuneStart(prompt[cut]) {
+		cut--
+	}
+	return prompt[:cut]
+}
 
 // Complexity is the difficulty class of a task. It maps directly to a Tier.
 type Complexity int
@@ -127,7 +147,11 @@ type Classification struct {
 //   - Pick the highest-scoring class.
 //   - Tie breaks toward higher complexity (never underpower a task).
 //   - No signal at all => Medium (safe default, the harness's usual model).
+//   - Only the first 32 KB is scored (see maxClassifyBytes); word-count rules
+//     use the full prompt.
 func Classify(prompt string) Classification {
+	wordCount := len(strings.Fields(prompt)) // full text, before the cap
+	prompt = classifyHead(prompt)
 	lower := strings.ToLower(prompt)
 	scores := map[Complexity]int{Trivial: 0, Simple: 0, Medium: 0, Complex: 0}
 
@@ -136,8 +160,6 @@ func Classify(prompt string) Classification {
 			scores[s.class] += s.weight
 		}
 	}
-
-	wordCount := len(strings.Fields(prompt))
 
 	// Architectural vocabulary inside a prose-only edit is the topic of the
 	// text, not the size of the work (see docEditOnly).

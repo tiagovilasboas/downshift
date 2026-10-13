@@ -17,7 +17,7 @@ func TestRoute_RiskCategoryHoldsMediumDownshift(t *testing.T) {
 	if d.Verdict != core.VerdictDownshift || d.RiskFloor {
 		t.Fatalf("precondition: want a classified downshift without risk floor, got verdict=%v floor=%v", d.Verdict, d.RiskFloor)
 	}
-	if d.ShouldRewriteModel() {
+	if checkWrites(d) {
 		t.Fatal("risk-category downshift must be held")
 	}
 	held := false
@@ -34,7 +34,7 @@ func TestRoute_RiskCategoryHoldsMediumDownshift(t *testing.T) {
 // A downshift with no risk category is unaffected.
 func TestRoute_NoRiskCategoryDownshiftStillApplies(t *testing.T) {
 	d := core.Route("rename the userId variable to userIdentifier", "claude-code", catID("claude-code", core.TierFrontier), cat)
-	if len(d.Risk) != 0 || !d.ShouldRewriteModel() {
+	if len(d.Risk) != 0 || !checkWrites(d) {
 		t.Fatalf("plain rename must still downshift, risk=%v corrections=%v", d.Risk, d.Corrections)
 	}
 }

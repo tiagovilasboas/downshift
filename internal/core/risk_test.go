@@ -69,7 +69,7 @@ func TestRiskFloor_BlocksDownshiftAllowsUpshift(t *testing.T) {
 	if !down.RiskFloor {
 		t.Fatalf("expected RiskFloor, got %+v", down)
 	}
-	if down.ShouldRewriteModel() {
+	if checkWrites(down) {
 		t.Errorf("risk task on %s must not be rewritten to %s", frontier, down.Model.ID)
 	}
 	if down.Verdict == core.VerdictDownshift && !slices.Contains(down.Corrections, core.RuleRiskDowngrade) {
@@ -77,8 +77,8 @@ func TestRiskFloor_BlocksDownshiftAllowsUpshift(t *testing.T) {
 	}
 
 	up := core.Route(p, "claude-code", small, escalCat)
-	if up.Verdict != core.VerdictUpshift || !up.ShouldRewriteModel() {
-		t.Errorf("risk task on %s should upshift to mid, got verdict=%s rewrite=%t", small, up.Verdict, up.ShouldRewriteModel())
+	if up.Verdict != core.VerdictUpshift || !checkWrites(up) {
+		t.Errorf("risk task on %s should upshift to mid, got verdict=%s rewrite=%t", small, up.Verdict, checkWrites(up))
 	}
 }
 
