@@ -47,9 +47,13 @@ Checklist and worked examples: [docs/contrib/layering.md](docs/contrib/layering.
 If the user asks to **install, configure, or debug hooks** on their machine (not to
 change this repository), read **[docs/install.md](docs/install.md)** first.
 
-- Use `curl …/install.sh` or [Releases](https://github.com/tiagovilasboas/downshift/releases); then `downshift doctor`.
+- Assisted setup, in order: `curl …/install.sh` (or [Releases](https://github.com/tiagovilasboas/downshift/releases));
+  `downshift setup --dry-run` and show the diff to the user; only after a clear yes, `downshift setup --yes`;
+  then `downshift doctor --json` and handle each failed check with its `fix` (ask before any config write);
+  finally ask the user to open a **new** harness session and check `/downshift` or `downshift session`.
 - State dir: `~/.downshift` (legacy `~/.harness-downshift/`). See [docs/config.md](docs/config.md).
-- Session allowlist: [docs/session-models.md](docs/session-models.md). Rewrites require listed models.
+- Session models: [docs/session-models.md](docs/session-models.md). Claude Code infers them from the current
+  model; other harnesses need a hook list, `downshift models discover` or `session-models.json`.
 - Plan / rewrite-honored limits: [docs/harness-matrix.md](docs/harness-matrix.md).
 - Do not invent hook paths, matchers, or catalog entries without checking INSTALL and examples.
 
