@@ -64,6 +64,26 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   `requested_model_raw` if it looks like a model id (64 chars,
   `[A-Za-z0-9._:/-]`), else `invalid`.
 
+## What each harness exposes for session discovery (2026-10-11/12)
+
+Findings from the official docs plus local read-only inspection. Rows say what a
+hook or local source can tell Downshift; anything not listed was not found.
+`InferSession` (HarnessCapabilities) is on only where the current model proves
+access to the tiers below it.
+
+| harness | current model in hook | available models | quota | session-start hook | InferSession |
+|---|---|---|---|---|---|
+| claude-code | `SessionStart.model` (optional); the Agent `tool_input.model` when the parent set it; `PostToolUse.tool_response.resolvedModel` | No listing for subscriptions; `availableModels`/`deniedModels` exist only in managed settings; the Models API needs `ANTHROPIC_API_KEY` | statusline `rate_limits.five_hour` / `seven_day` (global, Pro/Max only, after the first response); not per model | `SessionStart` (add context, `CLAUDE_ENV_FILE`) | yes |
+| codex | `model` on every payload; effort only if the parent put `reasoning_effort` in `spawn_agent` | `models_cache.json` (offline; `hide` means not shown in the picker, not unusable); app-server `model/list` is experimental | per meter (`codex`, `premium`), never per model | `SessionStart` can only add context | no |
+| cursor | `model`, `model_id`, `model_params`; `subagent_model` on `subagentStart` | `cursor-agent models` (text, needs login; failed here with "Authentication required"); Cloud `/v1/models` needs an API key | Cursor Models vs Other Models pools, UI/dashboard only; CLI `/usage` is interactive | `sessionStart` (env reaches later hooks; not for cloud agents) | no |
+| antigravity | `modelName` (parent) and `conversationId`; the adapter does not read them yet | `agy --output-format json models` (parent picker); no alias-to-model or pool mapping | `agy -p /usage --output-format json` per account, group and window; not tied to an alias | none (Pre/PostToolUse, Pre/PostInvocation, Stop) | no |
+| kirocrew | none in the payload; `session_id` maps to `~/.kiro/sessions/cli/<id>.json` (`agent_name`, `model_id`, undocumented) | `kiro-cli chat --list-models --format json` (10 models plus `auto`, with `rate_multiplier`) | no supported non-interactive credit source | `agentSpawn` (renamed `SessionStart` in V3); stdout goes to the agent context; any non-zero exit blocks | no |
+
+Consequences: Claude Code is the only harness where the inferred ladder is
+safe; every other harness needs a real list (hook payload, discovery cache or
+the operator file). Quota stays `unknown` everywhere except through the Claude
+Code statusline bridge and operator imports. Re-verify per release.
+
 ## Revalidation
 
 Every TBD cell must be re-checked per harness release: hook contracts
