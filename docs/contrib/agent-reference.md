@@ -59,6 +59,14 @@ run the Claude Code names instead: `claude-code-post-tool-use` (records the mode
 `resolved`) and `claude-code-subagent-stop` (child token usage and cost). Both Claude Code commands
 call the same runners.
 
+`downshift end <harness>` is the generic child-end entry (N5, `cmd/downshift/end.go`). The harness
+adapter exposes `ParseChildEnd(payload) (hookport.ChildEnd, bool)` and nothing else; `internal/childend`
+records `resolved`, `child_ended` and `usage` (pricing, linking, dedup, the child-end line) for every
+harness. The two Claude Code commands above parse into the same `ChildEnd` and call the same recorder.
+Declare the end event as data (`HarnessCapabilities.ChildEndEvent`, `UsageSource`) and add the matching
+`setup_targets.go` row; `TestSetupTargetsWireEveryChildEndEvent` and `TestEndParserMatchesDeclaredCapability`
+keep data, parser and setup in step. Where no end event is documented, leave `ChildEndEvent` empty.
+
 Only a harness whose own hook sends the field is registered in `hookPorts` (`cmd/downshift/main.go`).
 Every other harness gets a port with nil functions, so the stage stays "unobserved" instead of
 borrowing another harness's payload. To add a harness: implement its `hookport.Port`, register it,

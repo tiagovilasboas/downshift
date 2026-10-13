@@ -27,6 +27,13 @@ type Port struct {
 	// UsageOut is Usage plus an optional stdout for the hook (the child-end
 	// line). When set it runs instead of Usage.
 	UsageOut UsageOutFunc
+	// ParseChildEnd turns this harness's post-spawn or stop payload into the
+	// shared ChildEnd contract (`downshift end <harness>`). Nil means no end
+	// event is known for this harness: the generic runner records nothing.
+	ParseChildEnd ParseChildEndFunc
+	// EndLine wraps the child-end line in this harness's hook wire output.
+	// Nil means the harness has no way to show it.
+	EndLine func(line string) any
 }
 
 // UsageOutFunc is UsageFunc that may also return the hook's stdout. A nil

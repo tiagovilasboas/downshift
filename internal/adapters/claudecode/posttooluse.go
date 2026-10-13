@@ -1,63 +1,30 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-// Package claudecode — PostToolUse real-cost linkage (v1).
+// Package claudecode — PostToolUse payload parsing (v1).
 //
 // A Claude Code PostToolUse hook fires when the Task/Agent tool returns. For an
 // async subagent that is the LAUNCH, not the completion (captured 2026-10-06:
 // tool_response is {isAsync, status, agentId, resolvedModel, ...}, duration_ms
-// a few ms), so the payload carries no token usage and the "usage" path below
-// stays idle until a harness reports tokens. What it does carry is
-// tool_response.resolvedModel, the model the harness chose for the child:
-// recordResolved turns that into an observed honor/refute signal for the
-// rewrite. Token usage is still parsed defensively
-// (see telemetry.TokenUsageFromPayload).
+// a few ms), so the payload carries no token usage and the "usage" path stays
+// idle until a harness reports tokens. What it does carry is
+// tool_response.resolvedModel, the model the harness chose for the child.
+// Token usage is still parsed defensively (see telemetry.TokenUsageFromPayload).
 //
-// v1 writes a NEW event with outcome "usage" and never modifies history in
-// place: the original PreToolUse decision event keeps its normalised savings
-// estimate, and the usage event carries the priced real dollars. Aggregate
-// excludes "usage"/"baseline" outcomes from every decision count while still
-// accumulating their RealSavedUSD/RealCostEvents.
-//
-// Linkage rule (approximation — documented limitations below): the usage
-// record attaches to the most recent decision event that (a) belongs to
-// harness "claude-code", (b) has not been priced by an earlier usage record
-// (linked_decision, keyed by correlation id), (c) parses to a timestamp
-// within the 24h before the hook fires, and (d) matches by hashed session id
-// when the payload carries one, else by harness + final model. When the payload
-// carries tool_use_id, the decision recorded for that same call wins outright
-// and decisions recorded for other calls are never candidates. The verdict is
-// copied from the matched decision, or "UNKNOWN" when nothing matches.
-//
-// Pricing follows what actually ran. Only a decision whose rewrite was
-// applied (outcome rewrite_emitted, no guardrail correction) is priced as
-// routed-vs-requested. An allow, held or blocked decision left the spawn on
-// its requested model, so routed = baseline = requested model and real
-// savings are zero. A model reported by the payload always wins as routed.
-//
-// Known limitations:
-//   - Session matching is mostly future-proofing today: the PreToolUse path
-//     only recently started persisting hashed session ids (Event.SessionID),
-//     so older log lines match via the harness+final_model fallback, which
-//     can misattribute usage when several spawns share one model.
-//   - Without tool_use_id (older decision lines, or a payload that omits it)
-//     matching is heuristic: concurrent spawns in one session link to the
-//     latest decision, which may be the wrong sibling.
+// This file only parses. Linking to the decision, pricing, dedup and the
+// child-end line are shared by every harness in internal/childend; the adapter
+// hands it a hookport.ChildEnd (see childend.go in this package).
 package claudecode
 
 import (
 	"encoding/json"
-	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/childend"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/sensor"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
-
-// linkWindow bounds how far back a usage record may reach for its decision.
-// Older than this, the spend almost certainly belongs to a previous session.
-const linkWindow = 24 * time.Hour
 
 // SessionIdentifier returns the raw session id supplied by the harness, if
 // any. runHookAdapter hashes it via telemetry.HashSessionID before durable
@@ -74,192 +41,12 @@ func stringFieldAny(m map[string]any, keys ...string) string {
 	return ""
 }
 
-// parseEventTime parses an event timestamp with the same layouts as
-// telemetry.FilterByDays (nano first, legacy fallback). Unparseable
-// timestamps exclude the event from linkage.
-func parseEventTime(ts string) (time.Time, bool) {
-	if t, err := time.Parse(time.RFC3339Nano, ts); err == nil {
-		return t, true
-	}
-	if t, err := time.Parse(time.RFC3339, ts); err == nil {
-		return t, true
-	}
-	return time.Time{}, false
-}
-
-// linkTarget finds the most recent decision event a usage record attaches to.
-// sessionHash is the already-hashed payload session ("" when absent);
-// modelID is the model reported by the payload ("" when absent). Returns nil
-// when nothing matches.
-func linkTarget(prior []telemetry.Event, sessionHash, toolUseHash, modelID string, now time.Time) *telemetry.Event {
-	return linkTargetBy(prior, sessionHash, toolUseHash, modelID, now, telemetry.OutcomeUsage)
-}
-
-// toolUseHash is the hashed tool_use_id of a post-spawn payload ("" when absent).
-func toolUseHash(payload map[string]any) string {
-	return telemetry.HashSessionID(stringFieldAny(payload, "tool_use_id", "toolUseId"))
-}
-
-// linkTargetBy is linkTarget where a decision already linked by a record of
-// the given outcome is skipped, so each observation kind links once per decision.
-func linkTargetBy(prior []telemetry.Event, sessionHash, callHash, modelID string, now time.Time, linkedBy string) *telemetry.Event {
-	priced := make(map[string]bool)
-	for _, ev := range prior {
-		if ev.Outcome == linkedBy && ev.LinkedDecision != "" {
-			priced[ev.LinkedDecision] = true
-		}
-	}
-	// Once any decision carries this call's id, only that decision may match.
-	callSeen := false
-	if callHash != "" {
-		for _, ev := range prior {
-			if ev.ToolUseHash == callHash && !telemetry.IsCostOnlyOutcome(ev.Outcome) {
-				callSeen = true
-				break
-			}
-		}
-	}
-	var best *telemetry.Event
-	var bestTime time.Time
-	for i := range prior {
-		ev := &prior[i]
-		if telemetry.IsCostOnlyOutcome(ev.Outcome) || ev.Outcome == "error" {
-			continue // cost records and fail-open errors are not decisions
-		}
-		if ev.HasRealCost() || priced[decisionKey(*ev)] {
-			continue // already priced — one decision prices once
-		}
-		if ev.Harness != harnessID {
-			continue
-		}
-		t, ok := parseEventTime(ev.Timestamp)
-		if !ok {
-			continue
-		}
-		if age := now.Sub(t); age < 0 || age > linkWindow {
-			continue
-		}
-		if callHash != "" && (ev.ToolUseHash != "" || callSeen) {
-			if ev.ToolUseHash == callHash {
-				return ev // the decision made for this exact call
-			}
-			continue // a sibling call's decision
-		}
-		if sessionHash != "" {
-			if ev.SessionID == "" || ev.SessionID != sessionHash {
-				continue
-			}
-		} else if modelID != "" {
-			if ranModel(*ev) != modelID {
-				continue
-			}
-		}
-		if best == nil || !t.Before(bestTime) {
-			best = ev
-			bestTime = t
-		}
-	}
-	return best
-}
-
-// decisionKey identifies a decision event for once-only pricing: its
-// correlation id, or timestamp+session for lines written without one.
-func decisionKey(ev telemetry.Event) string { return telemetry.DecisionKey(ev) }
-
-// ranModel is the model the child actually ran on according to the decision
-// record: the rewrite target when the rewrite was applied, otherwise the
-// requested model.
-func ranModel(ev telemetry.Event) string {
-	if ev.Outcome == telemetry.OutcomeRewriteEmitted && telemetry.AppliedRewrite(ev.Outcome, ev.Corrections) {
-		return ev.ToModel
-	}
-	return ev.FromModel
-}
-
-// buildUsageEvent assembles the NEW cost record. Provenance (harness,
-// complexity, models, verdict, tier, session) is copied from the matched
-// decision when present; unmatched records use explicit "unknown" markers.
-// Token pointers are set only for positive counts so absent usage stays
-// absent in JSON (omitempty), and costs are filled only when the spend is
-// real (tokens > 0) and the routed model resolved against the catalog.
-func buildUsageEvent(usage telemetry.TokenUsage, payloadModel, sessionHash, binaryVersion string, target *telemetry.Event, r core.Resolver, now time.Time) telemetry.Event {
-	ev := telemetry.Event{
-		CorrelationID: telemetry.NewCorrelationID(),
-		Timestamp:     now.UTC().Format(time.RFC3339Nano),
-		Source:        "hook",
-		Agent:         "subagent",
-		Harness:       harnessID,
-		Outcome:       telemetry.OutcomeUsage,
-		PolicyVersion: telemetry.PolicyVersion,
-		BinaryVersion: binaryVersion,
-		Verdict:       "UNKNOWN",
-		FromModel:     "unknown",
-		ToModel:       telemetry.ModelOrUnknown(payloadModel),
-	}
-	if target != nil {
-		ev.Harness = target.Harness
-		ev.Complexity = target.Complexity
-		ev.FromModel = target.FromModel
-		ev.ToModel = ranModel(*target)
-		ev.Verdict = target.Verdict
-		ev.Tier = target.Tier
-		ev.SessionID = target.SessionID
-		ev.LinkedDecision = decisionKey(*target)
-		if payloadModel != "" {
-			ev.ToModel = telemetry.ModelOrUnknown(payloadModel)
-		}
-	}
-	if ev.SessionID == "" {
-		ev.SessionID = sessionHash
-	}
-	if usage.InputTokens > 0 {
-		v := usage.InputTokens
-		ev.InputTokens = &v
-	}
-	if usage.OutputTokens > 0 {
-		v := usage.OutputTokens
-		ev.OutputTokens = &v
-	}
-	if usage.CachedTokens > 0 {
-		v := usage.CachedTokens
-		ev.CachedTokens = &v
-	}
-
-	// Price only real spend against a catalog-resolved routed model.
-	routedID := payloadModel
-	if routedID == "" && target != nil {
-		routedID = ranModel(*target)
-	}
-	if r == nil || routedID == "" || routedID == "unknown" {
-		return ev // tokens without prices: counted as neither real nor fake
-	}
-	routed, ok := r.LookupByID(harnessID, routedID)
-	if !ok {
-		return ev
-	}
-	if usage == (telemetry.TokenUsage{}) {
-		return ev
-	}
-	actual := telemetry.CostUSD(routed, usage)
-	ev.ActualCostUSD = &actual
-	// Observed routed spend does not establish the requested baseline. Keep
-	// it absent unless the linked decision names a catalog-resolved model.
-	if target != nil && target.FromModel != "" && target.FromModel != "unknown" {
-		if baseline, ok := r.LookupByID(harnessID, target.FromModel); ok {
-			base := telemetry.CostUSD(baseline, usage)
-			ev.BaselineCostUSD = &base
-			ev.BaselineSource = telemetry.BaselineRequested
-		}
-	}
-	return ev
-}
-
-// HandlePostToolUse processes one Claude Code PostToolUse stdin payload:
-// it extracts the reported model, session hint, and token usage, links to
-// the most recent matching decision event, appends a NEW "usage" event to
-// the hermetic event log (DOWNSHIFT_EVENT_LOG respected via telemetry), and
-// returns the neutral PostToolUse response ({} — this hook cannot steer, so
-// there is nothing to rewrite).
+// HandlePostToolUse processes one Claude Code PostToolUse stdin payload: it
+// parses it into the shared hookport.ChildEnd contract, lets childend.Record
+// write the resolved, child_ended and usage records (linked to the matching
+// decision), and returns the neutral PostToolUse response ({}; this hook cannot
+// steer, so there is nothing to rewrite), carrying the child-end line when the
+// call was a child that reported tokens.
 //
 // Fail-open: any parse, lookup, or write failure returns the neutral
 // response with linked=false. The spawn already completed, so nothing is
@@ -270,108 +57,33 @@ func HandlePostToolUse(raw []byte, binaryVersion string, r core.Resolver) (Outpu
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return neutral, "", false
 	}
-	sessionHash := telemetry.HashSessionID(stringFieldAny(payload, "session_id", "sessionId", "sessionID"))
-	now := time.Now().UTC()
-	prior, _ := telemetry.ReadEvents() // missing/unreadable log: link nothing
-	recordResolved(payload, sessionHash, binaryVersion, prior, r, now)
-	recordChildEnd(payload, sessionHash, binaryVersion, prior, now)
-
 	// Context Sensor observation: track tool execution volume safely without prompt text
-	recordSensorToolObservation(payload, sessionHash)
+	recordSensorToolObservation(payload, telemetry.HashSessionID(stringFieldAny(payload, "session_id", "sessionId", "sessionID")))
 
-	usage := telemetry.TokenUsageFromPayload(payload)
-	if usage == (telemetry.TokenUsage{}) {
-		return neutral, "", false // nothing billable reported
+	ce, ok := parsePostToolUse(payload)
+	if !ok {
+		return neutral, "", false
 	}
-	model := stringFieldAny(payload, "model", "model_id")
-	target := linkTarget(prior, sessionHash, toolUseHash(payload), model, now)
-	ev := buildUsageEvent(usage, model, sessionHash, binaryVersion, target, r, now)
-	// The same agent id lets SubagentStop see this child as already priced, so
-	// a foreground child is neither double counted nor announced twice.
-	ev.AgentHash = telemetry.HashSessionID(agentID(payload))
-	telemetry.Record(ev)
-	if tool := stringFieldAny(payload, "tool_name"); (tool == "Agent" || tool == "Task") &&
-		telemetry.ChildLineEnabled(core.ClaudeCodeCaps.CanShowChildLine) {
-		neutral.SystemMessage = telemetry.ChildEndLine(ev)
+	res := childend.Record(ce, binaryVersion, r)
+	if res.Line != "" && telemetry.ChildLineEnabled(core.ClaudeCodeCaps.CanShowChildLine) {
+		neutral.SystemMessage = res.Line
 	}
-	if target != nil {
-		return neutral, "usage linked to " + target.Verdict + " decision", true
-	}
-	return neutral, "usage recorded without matching decision", false
+	return neutral, res.Note, res.Linked
+}
+
+// agentID reads the child's agent id from tool_response.
+func agentID(payload map[string]any) string {
+	resp, _ := payload["tool_response"].(map[string]any)
+	return stringFieldAny(resp, "agentId", "agent_id")
 }
 
 // resolvedModel reads the model the harness chose for the spawn. Claude Code
 // reports it as tool_response.resolvedModel when it launches a subagent; this
 // is the only post-spawn model signal the hook receives (the launch payload
 // carries no token usage for async subagents).
-func agentID(payload map[string]any) string {
-	resp, _ := payload["tool_response"].(map[string]any)
-	return stringFieldAny(resp, "agentId", "agent_id")
-}
-
 func resolvedModel(payload map[string]any) string {
 	resp, _ := payload["tool_response"].(map[string]any)
 	return stringFieldAny(resp, "resolvedModel", "resolved_model")
-}
-
-// recordResolved appends a "resolved" observation for the decision this spawn
-// belongs to. It records nothing when the payload has no resolved model, the
-// session is unknown, or no decision matches. A decision found by the session
-// heuristic must be an applied rewrite; one found by its exact tool_use_id may
-// be any decision (allow, held), so the child's later cost still links to it.
-// RewriteHonored is set only for applied rewrites: there is nothing to confirm
-// or refute otherwise. The comparison goes through the catalog so a dated id
-// (claude-haiku-4-5-20251001) matches the id the hook wrote (claude-haiku-4-5);
-// without a catalog match RewriteHonored stays unset rather than guessing.
-func recordResolved(payload map[string]any, sessionHash, binaryVersion string, prior []telemetry.Event, r core.Resolver, now time.Time) {
-	resolved := resolvedModel(payload)
-	if resolved == "" || sessionHash == "" {
-		return
-	}
-	call := toolUseHash(payload)
-	target := linkTargetBy(prior, sessionHash, call, "", now, telemetry.OutcomeResolved)
-	if !linkable(target, call) {
-		return
-	}
-	applied := telemetry.IsAppliedShift(*target)
-	ev := telemetry.Event{
-		CorrelationID:  telemetry.NewCorrelationID(),
-		Timestamp:      now.UTC().Format(time.RFC3339Nano),
-		Source:         "hook",
-		Agent:          "subagent",
-		Harness:        target.Harness,
-		Outcome:        telemetry.OutcomeResolved,
-		PolicyVersion:  telemetry.PolicyVersion,
-		BinaryVersion:  binaryVersion,
-		Verdict:        "UNKNOWN",
-		FromModel:      ranModel(*target),
-		ToModel:        telemetry.ModelOrUnknown(resolved),
-		SessionID:      target.SessionID,
-		LinkedDecision: decisionKey(*target),
-		AgentHash:      telemetry.HashSessionID(agentID(payload)),
-	}
-	if r != nil && applied {
-		got, okGot := r.LookupByID(harnessID, resolved)
-		want, okWant := r.LookupByID(harnessID, target.ToModel)
-		if okGot && okWant {
-			honored := got.ID == want.ID
-			ev.RewriteHonored = &honored
-		}
-	}
-	telemetry.Record(ev)
-}
-
-// linkable reports whether a post-spawn observation may attach to target: an
-// exact tool_use_id match always may; a heuristic match only for an applied
-// rewrite, where a wrong sibling is least likely to matter.
-func linkable(target *telemetry.Event, call string) bool {
-	if target == nil {
-		return false
-	}
-	if call != "" && target.ToolUseHash == call {
-		return true
-	}
-	return telemetry.IsAppliedShift(*target)
 }
 
 func recordSensorToolObservation(payload map[string]any, sessionHash string) {
@@ -425,46 +137,4 @@ func exitCodeField(resp map[string]any) (int, bool) {
 		return int(n), true
 	}
 	return -1, false
-}
-
-// recordChildEnd records how a spawned child ended (E8). It runs for PostToolUse
-// (completed or async_launched) and PostToolUseFailure (error or interrupted) on
-// Agent/Task calls only. Only the closed status is stored: the error text and any
-// tool output are never read, so nothing prompt-like reaches telemetry.
-func recordChildEnd(payload map[string]any, sessionHash, binaryVersion string, prior []telemetry.Event, now time.Time) {
-	tool := stringFieldAny(payload, "tool_name")
-	if tool != "Agent" && tool != "Task" || sessionHash == "" {
-		return
-	}
-	toolStatus := ""
-	if resp, ok := payload["tool_response"].(map[string]any); ok {
-		toolStatus, _ = resp["status"].(string)
-	}
-	isInterrupt, _ := payload["is_interrupt"].(bool)
-	status := telemetry.ClassifyChildEnd(stringFieldAny(payload, "hook_event_name"), toolStatus, isInterrupt)
-	if status == telemetry.ChildUnknown {
-		return
-	}
-	call := toolUseHash(payload)
-	target := linkTargetBy(prior, sessionHash, call, "", now, telemetry.OutcomeChildEnded)
-	if !linkable(target, call) {
-		return
-	}
-	telemetry.Record(telemetry.Event{
-		CorrelationID:  telemetry.NewCorrelationID(),
-		Timestamp:      now.UTC().Format(time.RFC3339Nano),
-		Source:         "hook",
-		Agent:          "subagent",
-		Harness:        target.Harness,
-		Outcome:        telemetry.OutcomeChildEnded,
-		PolicyVersion:  telemetry.PolicyVersion,
-		BinaryVersion:  binaryVersion,
-		Verdict:        "UNKNOWN",
-		FromModel:      ranModel(*target),
-		ToModel:        telemetry.ModelOrUnknown(""),
-		SessionID:      target.SessionID,
-		LinkedDecision: decisionKey(*target),
-		AgentHash:      telemetry.HashSessionID(agentID(payload)),
-		ChildStatus:    status,
-	})
 }

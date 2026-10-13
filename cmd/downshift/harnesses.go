@@ -73,6 +73,7 @@ var harnessRegistry = map[string]harnessEntry{
 				func(e cursor.Event) string { return e.TaskText() },
 			)
 		},
+		Port: portPtr(cursor.Port()),
 		Try:  tryCursor,
 		Caps: core.CursorCaps,
 	},
@@ -86,6 +87,7 @@ var harnessRegistry = map[string]harnessEntry{
 				func(e codex.Event) string { return e.TaskText() },
 			)
 		},
+		Port: portPtr(codex.Port()),
 		Try:  tryCodex,
 		Caps: core.CodexCaps,
 	},

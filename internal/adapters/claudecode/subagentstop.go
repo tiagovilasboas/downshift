@@ -10,9 +10,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/childend"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -89,17 +90,42 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 	return subagentUsage{Model: model, Usage: total}, true
 }
 
+// parseSubagentStop turns a SubagentStop payload into a ChildEnd: the agent id
+// (hashed by the recorder) joins the usage to the "resolved" observation made at
+// launch, and through it to the routing decision. The usage and the model come
+// from the subagent's own transcript, because the PostToolUse payload of an
+// async launch carries no tokens. ok is false when the payload has no agent id
+// or a readable .jsonl transcript with usage.
+func parseSubagentStop(payload map[string]any) (hookport.ChildEnd, bool) {
+	agent := stringFieldAny(payload, "agent_id", "agentId")
+	path := stringFieldAny(payload, "agent_transcript_path")
+	if agent == "" || path == "" || !strings.HasSuffix(path, ".jsonl") {
+		return hookport.ChildEnd{}, false
+	}
+	got, ok := readSubagentUsage(path)
+	if !ok {
+		return hookport.ChildEnd{}, false
+	}
+	usage := got.Usage
+	return hookport.ChildEnd{
+		Harness:      harnessID,
+		AgentKey:     agent,
+		SessionID:    stringFieldAny(payload, "session_id", "sessionId"),
+		Model:        got.Model,
+		Usage:        &usage,
+		Source:       hookport.SourceTranscript,
+		IsChild:      true,
+		Verification: readSubagentVerification(path),
+	}, true
+}
+
 // HandleSubagentStop prices a finished subagent from its own transcript.
 //
-// The PostToolUse payload of an async launch carries no tokens, so the real
-// spend is read here, once the subagent stops. The agent id (hashed) joins this
-// record to the "resolved" observation made at launch, and through it to the
-// routing decision. A spawn the hook never rewrote has no such observation: its
-// usage is still recorded, unlinked, priced as unrouted.
-//
-// It is fail-open and idempotent: any problem returns "" without writing, and
-// an agent already priced is skipped (SubagentStop can fire more than once).
-// The returned note is for stderr.
+// The real spend is read here, once the subagent stops. A spawn the hook never
+// rewrote has no launch observation: its usage is still recorded, unlinked,
+// priced as unrouted. It is fail-open and idempotent (the shared recorder skips
+// an agent already priced; SubagentStop can fire more than once). The returned
+// note is for stderr.
 func HandleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) string {
 	note, _ := handleSubagentStop(raw, binaryVersion, r)
 	return note
@@ -110,64 +136,22 @@ func HandleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) strin
 // subagent, the harness can show it and DOWNSHIFT_QUIET is not set. The line
 // never changes what the subagent returned and never blocks.
 func HandleSubagentStopOut(raw []byte, binaryVersion string, r core.Resolver) (any, string) {
-	note, ev := handleSubagentStop(raw, binaryVersion, r)
-	if ev == nil || !telemetry.ChildLineEnabled(core.ClaudeCodeCaps.CanShowChildLine) {
+	note, res := handleSubagentStop(raw, binaryVersion, r)
+	if res.Usage == nil || res.Line == "" || !telemetry.ChildLineEnabled(core.ClaudeCodeCaps.CanShowChildLine) {
 		return nil, note
 	}
-	if line := telemetry.ChildEndLine(*ev); line != "" {
-		return Output{SystemMessage: line}, note
-	}
-	return nil, note
+	return Output{SystemMessage: res.Line}, note
 }
 
-// handleSubagentStop is the shared body: the note for stderr and the usage
-// event it recorded (nil when it recorded nothing).
-func handleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) (string, *telemetry.Event) {
+func handleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) (string, childend.Result) {
 	var payload map[string]any
 	if json.Unmarshal(raw, &payload) != nil {
-		return "", nil
+		return "", childend.Result{}
 	}
-	agentHash := telemetry.HashSessionID(stringFieldAny(payload, "agent_id", "agentId"))
-	path := stringFieldAny(payload, "agent_transcript_path")
-	if agentHash == "" || path == "" || !strings.HasSuffix(path, ".jsonl") {
-		return "", nil
-	}
-	sessionHash := telemetry.HashSessionID(stringFieldAny(payload, "session_id", "sessionId"))
-
-	prior, _ := telemetry.ReadEvents()
-	var resolved *telemetry.Event
-	for i := range prior {
-		ev := &prior[i]
-		if ev.AgentHash != agentHash {
-			continue
-		}
-		if ev.Outcome == telemetry.OutcomeUsage {
-			return "", nil // this agent is already priced
-		}
-		if ev.Outcome == telemetry.OutcomeResolved {
-			resolved = ev
-		}
-	}
-
-	got, ok := readSubagentUsage(path)
+	ce, ok := parseSubagentStop(payload)
 	if !ok {
-		return "", nil
+		return "", childend.Result{}
 	}
-
-	var target *telemetry.Event
-	if resolved != nil {
-		for i := range prior {
-			if !telemetry.IsCostOnlyOutcome(prior[i].Outcome) && decisionKey(prior[i]) == resolved.LinkedDecision {
-				target = &prior[i]
-			}
-		}
-	}
-	ev := buildUsageEvent(got.Usage, got.Model, sessionHash, binaryVersion, target, r, time.Now().UTC())
-	ev.AgentHash = agentHash
-	ev.Verification = readSubagentVerification(path)
-	telemetry.Record(ev)
-	if target != nil {
-		return "usage linked to " + target.Verdict + " decision", &ev
-	}
-	return "usage recorded without matching decision", &ev
+	res := childend.Record(ce, binaryVersion, r)
+	return res.Note, res
 }

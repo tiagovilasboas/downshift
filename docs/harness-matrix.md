@@ -41,8 +41,8 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   held and allow decisions (no `rewrite_honored` claim for those). Lines
   written before this field fall back to the session heuristic.
 - **Other harnesses.** cursor and codex expose `tool_use_id` on decisions
-  (documented in their hook payloads). Neither has a post-spawn cost hook yet,
-  so nothing joins on it there today.
+  (documented in their hook payloads). Their end hooks (see "Child end" below)
+  join on it when the end payload repeats the id.
 - **codex current model.** A `spawn_agent` call without `model` runs on the
   parent's current model: 22 of 24 such spawns in the operator's rollouts
   (2026-10-12; the other mismatches were Downshift's own rewrites). The
@@ -84,13 +84,35 @@ safe; every other harness needs a real list (hook payload, discovery cache or
 the operator file). Quota stays `unknown` everywhere except through the Claude
 Code statusline bridge and operator imports. Re-verify per release.
 
+## Child end (N5, 2026-10-13)
+
+One shared recorder (`internal/childend`) writes `resolved`, `child_ended` and
+`usage` for any harness from a `hookport.ChildEnd`. An adapter only parses its
+payload (`ParseChildEnd`); the CLI entry is `downshift end <harness>`, and
+`setup` wires it from `HarnessCapabilities.ChildEndEvent`. `downshift report`
+and `downshift doctor` print, per harness, whether completion is measurable
+(an end event is declared and at least one end record has been seen; a launch is
+not an end). Claude Code keeps `claude-code-post-tool-use` and
+`claude-code-subagent-stop` as aliases of the same runner.
+
+| harness | `ChildEndEvent` | `UsageSource` | status |
+|---|---|---|---|
+| claude-code | `SubagentStop` (launch and failure also on `PostToolUse` / `PostToolUseFailure`) | transcript (`agent_transcript_path`) | verified 2026-10-06 (launch payload, SubagentStop transcript); failure payload still GAP-CHILD-FAILURE |
+| codex | `PostToolUse` for `spawn_agent` | **none** (`UsageSource: none`): end and status are recorded, cost is not. A parser for the rollout `token_count` exists but stays off until a real payload proves `transcript_path` is the child's rollout | **unverified: needs a real payload.** `tool_response.status` / `model` are assumed names; the `token_count` usage shape is from the Codex rollout format, not from a captured hook. A spawn that reports no status is a launch: it records `launched`, reads no usage and does not make completion measurable. `transcript_path` is the parent rollout, so until a real payload shows a child-scoped rollout the tokens may be the parent thread's. |
+| cursor | `subagentStop` | none (no usage field is read) | **unverified: needs a real payload.** Linked only when the payload names the spawn tool call (`tool_use_id` / `tool_call_id`); Cursor sends no session id, so otherwise nothing is recorded. No model is read. |
+| antigravity | none | none | no documented subagent-end payload (PostToolUse exists; its result fields are not documented). Nothing recorded. |
+| kirocrew | none | none | PostToolUse `tool_response` not confirmed (see `evidence/vendor-hook-docs-2026-10-11.md`). Nothing recorded. |
+
+Where `ChildEndEvent` is empty, `downshift end <harness>` exits 0, records nothing
+and says so on stderr.
+
 ## Child-end line (U2, 2026-10-13)
 
 `HarnessCapabilities.CanShowChildLine` says whether the hook protocol can show
 one line when a subagent ends. Claude Code: true (`systemMessage` on
 PostToolUse and SubagentStop), pending a live check. cursor, codex, antigravity,
-kirocrew: false; the line is still computed by `telemetry.ChildEndLine` and no
-adapter prints it. `DOWNSHIFT_QUIET=1` turns it off. See
+kirocrew: false; the line is still computed by `telemetry.ChildEndLine` (by the
+shared recorder, for every harness) and no adapter prints it. `DOWNSHIFT_QUIET=1` turns it off. See
 [session-models.md](session-models.md#what-downshift-shows-while-it-works).
 
 ## Session view (U3, 2026-10-13)

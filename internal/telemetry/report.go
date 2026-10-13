@@ -63,13 +63,17 @@ type Report struct {
 	Enough          bool         `json:"enough_data"`
 	Message         string       `json:"message,omitempty"`
 	Savings         *Savings     `json:"savings,omitempty"`
+	// Completion says, per harness, whether the end of a child is measurable.
+	Completion []HarnessCompletion `json:"completion"`
 }
 
 // BuildReport filters events to the last days (<= 0 means all time) and
 // compares the routed and control groups.
 func BuildReport(events []Event, days int) Report {
 	rep := Report{Days: days, MinTasks: MinReportTasks}
-	tasks := BuildTasks(FilterByDays(events, days))
+	windowed := FilterByDays(events, days)
+	rep.Completion = CompletionByHarness(windowed)
+	tasks := BuildTasks(windowed)
 	for _, t := range tasks {
 		var g *GroupSummary
 		switch t.Group {
@@ -206,6 +210,13 @@ func PrintReport(w io.Writer, r Report) {
 		}
 	} else {
 		fmt.Fprintf(w, "%s.\n", r.Message)
+	}
+	if len(r.Completion) > 0 {
+		fmt.Fprintln(w, "\nCompletion measurable, by harness")
+		for _, c := range r.Completion {
+			fmt.Fprintf(w, "  %-12s %s\n", c.Harness, c.Describe())
+		}
+		fmt.Fprintln(w)
 	}
 	if r.Excluded > 0 {
 		fmt.Fprintf(w, "%d spawn(s) left unrouted by DOWNSHIFT_NO_ROUTE or a session pause are not part of the comparison.\n", r.Excluded)

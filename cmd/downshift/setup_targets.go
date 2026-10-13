@@ -6,8 +6,11 @@ package main
 // Harness hook wiring for `downshift setup` is data. Each row says where a
 // harness keeps its hook file, what shape its entries have and which Downshift
 // subcommand runs on which event. The merge code in setup.go reads this table
-// and never names a harness. Sources: docs/install.md, docs/session-models.md,
-// docs/quota.md.
+// and never names a harness. A harness that declares
+// HarnessCapabilities.ChildEndEvent has a row for that event (checked by
+// TestSetupTargetsWireEveryChildEndEvent); Claude Code keeps its historical
+// aliases for the same runner. Sources: docs/install.md,
+// docs/session-models.md, docs/quota.md.
 
 // setupHook is one Downshift hook: `<binary> <Args>` on Event.
 type setupHook struct {
@@ -81,6 +84,8 @@ var setupTargets = []setupTarget{
 		Defaults:  []setupDefault{{Key: "version", Value: 1}},
 		Hooks: []setupHook{
 			{Event: "preToolUse", Matcher: "Task", Args: "cursor"},
+			// Child end (N5). Unverified: needs a real payload (docs/harness-matrix.md).
+			{Event: "subagentStop", Args: "end cursor"},
 		},
 	},
 	{
@@ -91,6 +96,8 @@ var setupTargets = []setupTarget{
 		Nested:    true,
 		Hooks: []setupHook{
 			{Event: "PreToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "codex"},
+			// Child end (N5). Unverified: needs a real payload (docs/harness-matrix.md).
+			{Event: "PostToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "end codex"},
 		},
 		Notes: []string{
 			"Codex also needs [features] hooks = true and [features.multi_agent_v2] enabled = true in config.toml.",

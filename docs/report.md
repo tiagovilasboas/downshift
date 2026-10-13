@@ -15,6 +15,12 @@ downshift report --json       # same numbers, machine-readable
 Reading the log is all it does. Nothing is written, and nothing in it is a prompt, a task or a
 path: counts, rates and catalog-priced dollars only.
 
+Cost per completed task needs to see a child end. The report ends with a "Completion measurable, by
+harness" section: a harness is measurable once it declares an end event and at least one end record
+(a usage record, or a `child_ended` that is not a launch) is in the window. Harnesses whose end
+event is unverified or unknown say so instead of printing zeros. See
+[harness-matrix.md](harness-matrix.md#child-end-n5-2026-10-13).
+
 ## The control group
 
 The shared hook runner decides per spawn, for every harness (Claude Code, Cursor, Codex,

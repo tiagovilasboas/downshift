@@ -46,21 +46,38 @@ type HarnessCapabilities struct {
 	// (U3, `downshift session`). Empty means the harness exports none, and the
 	// command falls back to the most recent session in the event log.
 	SessionEnv string
+	// ChildEndEvent is the hook event name that carries the end of a child
+	// spawn (N5). Empty means no such event is known; the shared end runner
+	// then records nothing for the harness. Setup wires the end hook from this.
+	ChildEndEvent string
+	// UsageSource says where the child's token usage comes from at that event:
+	// UsagePayload, UsageTranscript or UsageNone (also the empty value).
+	UsageSource string
 }
+
+// UsageSource values for HarnessCapabilities.UsageSource.
+const (
+	UsagePayload    = "payload"
+	UsageTranscript = "transcript"
+	UsageNone       = "none"
+)
 
 // Per-harness capability table. Adapters import these instead of
 // declaring HarnessCapabilities inline.
 var (
 	// ClaudeCodeCaps — PreToolUse hook honors updatedInput.model, but only
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID"}
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript}
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.
-	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, NativeSessionEnv: "DOWNSHIFT_CURSOR_NATIVE_FILE", NativeUsageSource: "cursor-usage"}
+	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, NativeSessionEnv: "DOWNSHIFT_CURSOR_NATIVE_FILE", NativeUsageSource: "cursor-usage", ChildEndEvent: "subagentStop", UsageSource: UsageNone}
 
 	// CodexCaps — PreToolUse hook accepts updatedInput.model + reasoning_effort.
-	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true, TranscriptQuota: true}
+	// Child usage stays UsageNone until a real payload proves transcript_path is
+	// the child's rollout and not the parent's (2026-10-13); the end status is
+	// still recorded.
+	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true, TranscriptQuota: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone}
 
 	// KiroCrewCaps — KiroCrew's preToolUse hook is policy-only: its contract is
 	// exit 0 (allow) / exit 2 (block + stderr to the LLM), with NO updated_input

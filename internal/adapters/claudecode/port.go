@@ -9,8 +9,9 @@ import (
 )
 
 // Port is Claude Code's honor and usage registration. Honor reports the
-// executed child model; usage reports child token usage. Neither func chooses
-// a tier. Escalation stays in core.
+// executed child model; usage reports child token usage; ParseChildEnd feeds
+// the shared `downshift end claude-code` runner and EndLine wraps its line as a
+// systemMessage. None of them chooses a tier. Escalation stays in core.
 func Port() hookport.Port {
 	return hookport.Port{
 		ID: harnessID,
@@ -18,7 +19,9 @@ func Port() hookport.Port {
 			stdout, note, _ := HandlePostToolUse(raw, binaryVersion, r)
 			return stdout, note
 		},
-		Usage:    HandleSubagentStop,
-		UsageOut: HandleSubagentStopOut,
+		Usage:         HandleSubagentStop,
+		UsageOut:      HandleSubagentStopOut,
+		ParseChildEnd: ParseChildEnd,
+		EndLine:       func(line string) any { return Output{SystemMessage: line} },
 	}
 }

@@ -237,6 +237,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 		}
 	}
 	checkLastEvent(add, env, h, mine)
+	checkCompletion(add, h, events)
 	if nc.Caps.CanRewriteModel && len(mine) > 0 {
 		checkHonored(add, mine)
 	}
@@ -364,6 +365,18 @@ func checkLastEvent(add func(id, status, detail, fix string), env doctorEnv, h s
 		return
 	}
 	add("last hook event", doctorOK, humanAge(age)+" ago", "")
+}
+
+// checkCompletion says whether the end of a child spawn is measurable for the
+// harness. It is information, not a failure: a harness with no known end event
+// simply has no cost per completed task.
+func checkCompletion(add func(id, status, detail, fix string), h string, events []telemetry.Event) {
+	for _, c := range telemetry.CompletionByHarness(events) {
+		if c.Harness == h {
+			add("completion", doctorOK, c.Describe(), "")
+			return
+		}
+	}
 }
 
 func humanAge(d time.Duration) string {

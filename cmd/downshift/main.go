@@ -85,6 +85,12 @@ func main() {
 			os.Exit(2)
 		}
 		os.Exit(runUsage(os.Stdin, portFor(args[1]), catalog))
+	case "end":
+		if len(args) != 2 {
+			fmt.Fprint(os.Stderr, "usage: downshift end <harness>\n")
+			os.Exit(2)
+		}
+		os.Exit(runEnd(os.Stdin, portFor(args[1]), catalog))
 	case "claude-code-post-tool-use":
 		os.Exit(runHonor(os.Stdin, portFor("claude-code"), catalog))
 	case "claude-code-subagent-stop":
