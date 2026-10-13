@@ -160,4 +160,19 @@ var RawSignals = []SignalDef{
 	// is not mechanical.
 	{`^\W*(explica|explique|qual (a )?diferen[cç]a|o que [eé])\b.{0,60}$`, 2, Simple},
 	{`\b(traduza|translate)\b`, 2, Simple},
+
+	// ── TRIVIAL / SIMPLE — PT-BR mirror of the English rows above ─────────
+	// Same weights. Go's \b and \w are ASCII-only, so stems stop before the
+	// first accented letter and carry no trailing \b. Risk prompts keep their
+	// floor (risk.go) and the Complex rows above still win on hard work.
+	{`\b(formate|formatar|indente|indentar)\b`, 3, Trivial},
+	{`\b(corrij\w*|corrigir|conserte|consertar)\s+(o\s+|um\s+|os\s+)?(typos?|erros?\s+de\s+digita)`, 3, Trivial},
+	{`\badicion\w*\s+(um\s+|uma\s+)?coment`, 3, Trivial},
+	{`\b(mova|mover|apague|apagar|exclua|excluir|delete)\s+(o\s+)?arquivo`, 3, Trivial},
+	{`\b(remova|remover|apague)\s+(o\s+|os\s+)?(\w+\s+)?(n.o\s+usad|mort)`, 2, Trivial},
+	{`\badicion\w*\s+([\w-]+\s+){0,3}?(campo|par.metro|flag|propriedade|coluna|atributo|argumento|m.todo|fun..o)s?\b`, 2, Simple},
+	{`\b(corrij\w*|corrigir|conserte|consertar)\s+(o\s+|um\s+)?bug\b`, 2, Simple},
+	{`\b(escreva|escrever|crie)\s+(um|uma)\s+(\w+\s+)?(fun..o|teste\b|helper)`, 2, Simple},
+	{`\b(atualiz\w*|altere|ajuste)\s+(a\s+|o\s+)?(descri|texto|mensagem|r.tulo)`, 2, Simple},
+	{`\bresumo\s+(curto|breve)`, 2, Simple},
 }

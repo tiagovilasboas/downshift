@@ -180,6 +180,8 @@ func TestCmdFetcher_EscalatesOnHighEdges(t *testing.T) {
 	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
 		t.Fatal(err)
 	}
+	// A slow shell start under load must not turn into a silent Found:false.
+	t.Setenv("DOWNSHIFT_GRAPHIFY_TIMEOUT", "30s")
 	h := graphify.Hint("debug CreateSaleService", graphify.DefaultCriteria(), graphify.CmdFetcher{Cmd: script})
 	if !h.ShouldEscalate {
 		t.Fatalf("expected escalation from command fetcher, got %+v", h)

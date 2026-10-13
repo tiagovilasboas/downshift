@@ -28,7 +28,7 @@ type RiskSignalDef struct {
 var RawRiskSignals = []RiskSignalDef{
 	// PT-BR terms follow the English ones. Go's \b is ASCII-only, so stems that
 	// continue into an accented letter use \S* and carry no trailing \b.
-	{"secret", `\b(secrets?|passwords?|passphrases?|credentials?|api[ _-]?keys?|private[ _-]?keys?|signing[ _-]?keys?|(access|refresh|bearer|session|auth) tokens?|tokens? validation|jwts?|oauth\w*|saml|sso|2fa|mfa|totp|senhas?|credencia(l|is))\b`},
+	{"secret", `\b(secrets?|passwords?|passphrases?|credentials?|api[ _-]?keys?|private[ _-]?keys?|signing[ _-]?keys?|(access|refresh|bearer|session|auth) tokens?|tokens? validation|jwts?|oauth\w*|saml|sso|2fa|mfa|totp|senhas?|credencia(l|is)|segredos?)\b`},
 	// Bare "auth" (the auth middleware, authMiddleware) is the same surface as
 	// authentication or authorization, so a rename there is not mechanical.
 	// Only as a standalone word: inside a path, file or hyphenated name
@@ -36,8 +36,8 @@ var RawRiskSignals = []RiskSignalDef{
 	{"authz", `(^|[^/.\w-])(auth|authn|authz)([^/.\w-]|$)|\b(permissions?|privileges?|is[ _]?admin|admin (role|rights|access)|rbac|acls?|authori[sz]ation|authenticat\w*|access control)\b|\b(autentica|autoriza)\S*`},
 	// "signature" alone is not crypto ("function signature", "type signature",
 	// "email signature"); only verification and signed-message contexts are.
-	{"crypto", `\b(crypto\w*|encrypt\w*|decrypt\w*|hmac|tls|ssl|certificates?|(webhook|request|payload|message|digital|cryptographic|jwt|jws|hmac|rsa|ecdsa|ed25519|gpg|pgp) signatures?|signatures? (verification|validation|check|header|secret)s?|(verify|verifies|verifying|validate|validating|check|checking|skip|skipping) (the |a |an |its )?signatures?|signing (secrets?|certificates?))\b`},
-	{"payment", `\b(payments? (processing|logic|flow|handler|service|gateway|capture)|process(ing)? payments?|charg(e|es|ing) (the )?(customer|card|user)s?|double[- ]charg\w*|refunds?|settlements?|payouts?|stripe|pci|billing (logic|flow|cycle|calculation|engine))\b`},
+	{"crypto", `\b(crypto\w*|encrypt\w*|decrypt\w*|hmac|tls|ssl|certificates?|(webhook|request|payload|message|digital|cryptographic|jwt|jws|hmac|rsa|ecdsa|ed25519|gpg|pgp) signatures?|signatures? (verification|validation|check|header|secret)s?|(verify|verifies|verifying|validate|validating|check|checking|skip|skipping) (the |a |an |its )?signatures?|signing (secrets?|certificates?))\b|\bcriptograf\S*`},
+	{"payment", `\b(payments? (processing|logic|flow|handler|service|gateway|capture)|process(ing)? payments?|charg(e|es|ing) (the )?(customer|card|user)s?|double[- ]charg\w*|refunds?|settlements?|payouts?|stripe|pci|billing (logic|flow|cycle|calculation|engine)|pagamentos?|reembolsos?|estornos?)\b`},
 	{"vuln", `\b(sql injection|injection|xss|csrf|ssrf|rce|sanitiz\w*|vulnerab\w*|cve-\d+|exploit\w*|security)\b`},
 	{"pii", `\b(pii|gdpr|lgpd|personal data|ssn|social security|credit cards?)\b`},
 	{"destructive", `rm\s+-rf|\bdrop\s+(the\s+)?(table|database|schema|column)s?\b|\btruncate\s+(the\s+)?table\b|\bdelete\s+(all|every)\b|\bforce[- ]push\b|push\s+(-f|--force)\b|reset\s+--hard|\bwipe\b|\bpurge\b|\bprod(uction)? (data|database|db)\b`},
