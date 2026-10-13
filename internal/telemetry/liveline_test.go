@@ -55,9 +55,12 @@ func TestSessionSummaryLine(t *testing.T) {
 		{"allow counts the requested model", []Event{liveDecision(s, OutcomeAllow, opus, opus, "frontier"), rewrite(), rewrite()},
 			"◆ downshift · 3 subagents · 2 on haiku · 0 on doubt"},
 		{"doubt", []Event{
-			liveDecision(s, OutcomeAllow, opus, opus, "frontier", ReasonClassifierUnconfident),
-			liveDecision(s, OutcomeAllow, opus, opus, "frontier", ReasonClassifierUnconfident, ReasonRiskFloor), // lifted: not doubt
+			liveDecision(s, OutcomeRewriteEmitted, "claude-sonnet-5-5", opus, "frontier", ReasonClassifierUnconfident), // written on doubt
+			liveDecision(s, OutcomeAllow, opus, opus, "frontier", ReasonClassifierUnconfident, ReasonRiskFloor),        // lifted: not doubt
 		}, "◆ downshift · 2 subagents · 2 on opus · 1 on doubt"},
+		{"doubt that was not written is not counted", []Event{
+			liveDecision(s, OutcomeAllow, opus, opus, "frontier", ReasonClassifierUnconfident),
+		}, "◆ downshift · 1 subagent · 1 on opus · 0 on doubt"},
 		{"unknown models are not a top model", []Event{liveDecision(s, OutcomeAllow, "unknown", "unknown", "mid")},
 			"◆ downshift · 1 subagent · 0 on doubt"},
 		{"unpriced usage adds no cost segment", []Event{rewrite(), {Outcome: OutcomeUsage, SessionID: s, InputTokens: i64(5)}},

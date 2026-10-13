@@ -227,7 +227,7 @@ func TestPrintStats_ShowsUsageLinked(t *testing.T) {
 	usage.ActualCostUSD = float64Ptr(1.0)
 	usage.BaselineCostUSD = float64Ptr(2.0)
 	var buf strings.Builder
-	telemetry.PrintStats([]telemetry.Event{usage}, telemetry.StatsOptions{Days: 0}, &buf)
+	telemetry.PrintStats([]telemetry.Event{usage}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
 	if !strings.Contains(buf.String(), "Usage linked") {
 		t.Errorf("stats must show Usage linked line, got:\n%s", buf.String())
 	}
@@ -393,7 +393,7 @@ func TestPrintStats_ShowsBaseline(t *testing.T) {
 	base := makeEvent("claude-code", "SIMPLE", "OK", 0)
 	base.Outcome = telemetry.OutcomeBaseline
 	var buf strings.Builder
-	telemetry.PrintStats([]telemetry.Event{base}, telemetry.StatsOptions{Days: 0}, &buf)
+	telemetry.PrintStats([]telemetry.Event{base}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
 	if !strings.Contains(buf.String(), "Baseline (no-route)") {
 		t.Errorf("stats must show Baseline line, got:\n%s", buf.String())
 	}

@@ -34,13 +34,13 @@ func TestRunTry_SessionUnknownSaysNoRewrite(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "absent.json"))
 	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code"})
+		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code", cmdCat.ModelFor("claude-code", core.TierMid).ID, "--detail"})
 	})
 	if strings.Contains(out, "Rewrite:    yes") {
 		t.Fatalf("try claimed a rewrite with no session allowlist:\n%s", out)
 	}
-	if !strings.Contains(out, "no: session unknown") {
-		t.Fatalf("try must say the session is unknown:\n%s", out)
+	if !strings.Contains(out, "Rewrite:    no") || !strings.Contains(out, "note: not rewritten") {
+		t.Fatalf("try must say the spawn is not rewritten:\n%s", out)
 	}
 }
 
@@ -54,7 +54,7 @@ func TestRunTry_SessionKnownReportsHookRewrite(t *testing.T) {
 		frontierID,
 	})
 	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code"})
+		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code", cmdCat.ModelFor("claude-code", core.TierMid).ID, "--detail"})
 	})
 	want := cmdCat.ModelFor("claude-code", core.TierFrontier).Native
 	if want == "" {

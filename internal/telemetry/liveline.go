@@ -85,7 +85,7 @@ func SessionSummary(events []Event, sessionHash string) SessionRouting {
 		if ran != "" && ran != "unknown" {
 			byModel[ShortModel(ran)]++
 		}
-		if strings.EqualFold(ev.Tier, "frontier") && frontierOnDoubt(ev.ReasonCodes) {
+		if spentOnDoubt(ev) {
 			s.OnDoubt++
 		}
 	}

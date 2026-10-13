@@ -134,7 +134,7 @@ func TestExportSummary_LossFieldsRoundTrip(t *testing.T) {
 
 func TestPrintStats_ShowsLoss(t *testing.T) {
 	var sb strings.Builder
-	telemetry.PrintStats([]telemetry.Event{costEvent(6.0, 2.0)}, telemetry.StatsOptions{}, &sb)
+	telemetry.PrintStats([]telemetry.Event{costEvent(6.0, 2.0)}, telemetry.StatsOptions{Detail: true}, &sb)
 	out := sb.String()
 	for _, want := range []string{"Real saved", "Real cost delta", "-4.00", "Real overspend"} {
 		if !strings.Contains(out, want) {

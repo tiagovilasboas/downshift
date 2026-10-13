@@ -23,6 +23,11 @@ type Retry struct {
 	FailedTier string
 	NextTier   string
 	Gap        time.Duration
+	// FailedKey and NextKey are the DecisionKey of the failed decision and of
+	// the decision that followed it, so a view can nest the redo under the
+	// child it redid. Ids only: no prompt or path.
+	FailedKey string
+	NextKey   string
 }
 
 func failedEnd(s ChildStatus) bool { return s == ChildError || s == ChildInterrupted }
@@ -66,9 +71,14 @@ func RespawnAfterFailure(events []Event, window time.Duration) []Retry {
 			if n.ev.SessionID != s.ev.SessionID || n.ev.Outcome == OutcomeChildEnded || n.ev.Outcome == "usage" {
 				continue
 			}
+			next := n.ev.LinkedDecision // an observation of an earlier decision
+			if next == "" {
+				next = DecisionKey(n.ev)
+			}
 			out = append(out, Retry{
 				Session: s.ev.SessionID, Harness: failed.Harness,
 				FailedTier: failed.Tier, NextTier: n.ev.Tier, Gap: n.at.Sub(s.at),
+				FailedKey: DecisionKey(failed), NextKey: next,
 			})
 			break
 		}

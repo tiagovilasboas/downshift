@@ -16,24 +16,25 @@ echo "OK: downshift binary is executable"
 
 echo "=== 2. CLI Try smoke tests across harnesses ==="
 # Test default try
-out=$("$BIN" try "rename variable x to y")
+out=$("$BIN" try "rename variable x to y" --detail)
 echo "$out" | grep -q "TRIVIAL"
 echo "$out" | grep -q "small"
+echo "$out" | grep -q "why:"
 echo "OK: downshift try (default)"
 
 # Test Antigravity
-out=$("$BIN" try "rename variable x to y" antigravity flash)
+out=$("$BIN" try "rename variable x to y" antigravity flash --detail)
 echo "$out" | grep -q "flash_lite"
 echo "$out" | grep -q "DOWNSHIFT"
 echo "OK: downshift try (antigravity)"
 
 # Test Cursor
-out=$("$BIN" try "rearchitect auth service across systems" cursor)
+out=$("$BIN" try "rearchitect auth service across systems" cursor --detail)
 echo "$out" | grep -q "COMPLEX"
 echo "OK: downshift try (cursor)"
 
 # Test Codex
-out=$("$BIN" try "git commit changes" codex)
+out=$("$BIN" try "git commit changes" codex --detail)
 echo "$out" | grep -q "TRIVIAL"
 echo "OK: downshift try (codex)"
 

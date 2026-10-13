@@ -52,6 +52,8 @@ func TestAggregate_FrontierOnDoubt(t *testing.T) {
 		{"nb upshift lift", []telemetry.Event{ev("CLASSIFIER_UNCONFIDENT", "NB_UPSHIFT_APPLIED")}, 1, 0, false},
 		{"tier floor lift", []telemetry.Event{ev("CLASSIFIER_UNCONFIDENT", "TIER_FLOOR")}, 1, 0, false},
 		{"mixed", []telemetry.Event{ev("CLASSIFIER_CONFIDENT"), ev("CLASSIFIER_UNCONFIDENT")}, 2, 1, true},
+		{"held by a guardrail is not counted", []telemetry.Event{{Harness: "claude-code", Outcome: "allow", Verdict: "UPSHIFT", Tier: "frontier", Complexity: "COMPLEX", Corrections: []string{"R8_UNCONFIDENT_UPSHIFT"}, ReasonCodes: []string{"CLASSIFIER_UNCONFIDENT", "HELD_UNCONFIDENT_UPSHIFT"}}}, 1, 0, false},
+		{"unchanged spawn is not counted", []telemetry.Event{{Harness: "claude-code", Outcome: "allow", Verdict: "OK", Tier: "frontier", Complexity: "COMPLEX", ReasonCodes: []string{"CLASSIFIER_UNCONFIDENT"}}}, 1, 0, false},
 		{"mid tier is not counted", []telemetry.Event{{Harness: "claude-code", Outcome: "allow", Tier: "MID", Complexity: "MEDIUM", ReasonCodes: []string{"CLASSIFIER_UNCONFIDENT"}}}, 0, 0, false},
 	}
 	for _, tc := range cases {
@@ -61,7 +63,7 @@ func TestAggregate_FrontierOnDoubt(t *testing.T) {
 				t.Fatalf("frontier=%d onDoubt=%d, want %d/%d", s.FrontierDecisions, s.FrontierOnDoubt, tc.frontier, tc.onDoubt)
 			}
 			var out bytes.Buffer
-			telemetry.PrintStats(tc.events, telemetry.StatsOptions{}, &out)
+			telemetry.PrintStats(tc.events, telemetry.StatsOptions{Detail: true}, &out)
 			if got := strings.Contains(out.String(), "WARNING"); got != tc.wantWarn {
 				t.Fatalf("warning=%v want %v\n%s", got, tc.wantWarn, out.String())
 			}

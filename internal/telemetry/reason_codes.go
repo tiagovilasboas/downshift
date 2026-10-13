@@ -29,6 +29,10 @@ const (
 	ReasonNBDownshiftApplied    = "NB_DOWNSHIFT_APPLIED"
 	ReasonTierFloor             = "TIER_FLOOR"
 	ReasonCreditHeld            = "CREDIT_HELD"
+	// ReasonPaused marks a decision made while the developer had routing paused
+	// for the session (`downshift session --pause`): classified and logged as a
+	// control-group baseline, the spawn left unchanged.
+	ReasonPaused = "PAUSED"
 	// ReasonScoreRouted marks a model chosen by the public-score capability
 	// path (DOWNSHIFT_SCORE_ROUTING=1). A shadow pick is never a reason: it
 	// has its own event field, score_would.

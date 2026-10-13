@@ -574,6 +574,9 @@ type Stats struct {
 
 	// ByComplexity counts decisions per complexity class.
 	ByComplexity map[string]int
+	// ModelMix counts decisions per model the child ended up on (final_model,
+	// short family name). Decisions with no recorded model add nothing.
+	ModelMix map[string]int
 
 	// RewriteShifted counts rewrite_emitted events that asked for a different model.
 	// RewriteHonored is the inferred count from CountInferredHonored. The
@@ -686,7 +689,7 @@ const respawnWindow = 10 * time.Minute
 
 // Aggregate computes Stats from a slice of events.
 func Aggregate(events []Event) Stats {
-	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int), CostBySession: make(map[string]CostGroup), CostBySubagent: make(map[string]CostGroup), ReasonCodes: make(map[string]int)}
+	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int), CostBySession: make(map[string]CostGroup), CostBySubagent: make(map[string]CostGroup), ReasonCodes: make(map[string]int), ModelMix: make(map[string]int)}
 	// Build the index before counting: exported windows may arrive out of order.
 	type linkKey struct {
 		harness, decision string
@@ -746,6 +749,9 @@ func Aggregate(events []Event) Stats {
 			s.PolicyFloor++
 		}
 		s.ByComplexity[ev.Complexity]++
+		if ev.ToModel != "" && ev.ToModel != "unknown" {
+			s.ModelMix[ShortModel(ev.ToModel)]++
+		}
 		if ev.ScoreWould != "" {
 			s.ScoreObserved++
 			if ev.ScoreDiffers {
@@ -761,7 +767,7 @@ func Aggregate(events []Event) Stats {
 		}
 		if strings.EqualFold(ev.Tier, core.TierFrontier.String()) {
 			s.FrontierDecisions++
-			if frontierOnDoubt(ev.ReasonCodes) {
+			if spentOnDoubt(ev) {
 				s.FrontierOnDoubt++
 			}
 		}
@@ -846,6 +852,9 @@ func tallySpawnSurface(events []Event, s *Stats) {
 type StatsOptions struct {
 	Days        int     // time window; <= 0 means all time
 	CostPerUnit float64 // USD per normalised unit; 0 means show units only
+	// Detail adds the full report (normalised units, honor, quota, usage, child
+	// status, per-session cost, complexity breakdown) after the 3-line headline.
+	Detail bool
 }
 
 // PrintStats writes a human-readable stats summary to w.
@@ -859,7 +868,12 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		label = "All time"
 	}
 
-	fmt.Fprintf(w, "%s\n", label)
+	printHeadline(w, s, opts.Days)
+	if !opts.Detail {
+		fmt.Fprintf(w, "\nFull report: downshift stats --detail\n")
+		return
+	}
+	fmt.Fprintf(w, "\n%s\n", label)
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
 	fmt.Fprintf(w, "Subagent decisions    %8d\n", s.Total)
 	fmt.Fprintf(w, "\n")
@@ -938,13 +952,13 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Honor                 observed %d  unobserved %d\n", s.HonorObserved, s.HonorUnobserved)
 		fmt.Fprintf(w, "Quota                 available %d  held %d  unknown %d\n", s.QuotaAvailable, s.QuotaHeld, s.QuotaUnknown)
 		fmt.Fprintf(w, "Usage                 observed %d  unobserved %d\n", s.UsageObserved, s.UsageUnobserved)
-		fmt.Fprintf(w, "Frontier decisions    %d  (on doubt, no deterministic lift: %d)\n", s.FrontierDecisions, s.FrontierOnDoubt)
+		fmt.Fprintf(w, "Frontier decisions    %d  (rewritten on doubt, no deterministic lift: %d)\n", s.FrontierDecisions, s.FrontierOnDoubt)
 		printScoreLine(w, s)
 		if n := s.ReasonCodes[ReasonSemanticBoost]; n > 0 {
 			fmt.Fprintf(w, "Semantic boost        %d of %d decisions (%.0f%%) were raised by the embedder, not a rule\n", n, s.Total, pct(n, s.Total))
 		}
 		if s.FrontierOnDoubt > 0 {
-			fmt.Fprintf(w, "WARNING: %d frontier decision(s) rest on an unconfident classification with no deterministic lift; check for silent overspend.\n", s.FrontierOnDoubt)
+			fmt.Fprintf(w, "WARNING: %d frontier rewrite(s) were applied on an unconfident classification with no deterministic lift; check for silent overspend.\n", s.FrontierOnDoubt)
 		}
 	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
@@ -999,6 +1013,16 @@ func printChildStatus(w io.Writer, counts map[ChildStatus]int) {
 		}
 	}
 	fmt.Fprintf(w, "  Note: launched is a background start, not a success.\n")
+}
+
+// spentOnDoubt reports whether a frontier decision actually wrote the model on
+// an unconfident classification with no deterministic lift. A decision a
+// guardrail held, or one that left the spawn unchanged, spent nothing and is not
+// counted: the alarm must only fire for money that was really spent.
+func spentOnDoubt(ev Event) bool {
+	return strings.EqualFold(ev.Tier, core.TierFrontier.String()) &&
+		ev.Outcome == OutcomeRewriteEmitted && AppliedRewrite(ev.Outcome, ev.Corrections) &&
+		frontierOnDoubt(ev.ReasonCodes)
 }
 
 // frontierOnDoubt reports whether a decision's reason codes show an unconfident

@@ -79,7 +79,7 @@ func TestPrintStats_ShowsSafetyHeld(t *testing.T) {
 	held := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8)
 	held.Corrections = []string{core.RuleUnconfidentDowngrade}
 	var sb strings.Builder
-	telemetry.PrintStats([]telemetry.Event{held}, telemetry.StatsOptions{}, &sb)
+	telemetry.PrintStats([]telemetry.Event{held}, telemetry.StatsOptions{Detail: true}, &sb)
 	if !strings.Contains(sb.String(), "Safety-held") {
 		t.Errorf("stats output must mention safety-held decisions, got:\n%s", sb.String())
 	}

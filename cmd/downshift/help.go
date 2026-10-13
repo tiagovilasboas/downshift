@@ -26,12 +26,15 @@ func usageShort(w io.Writer) {
 	fmt.Fprint(w, `downshift — right-sized models for every subagent task
 
 Get started
-  downshift doctor                 Check the install: version, state dir, catalog
-  downshift try "<task>" [harness] See what Downshift would pick for a task
+  downshift setup [--dry-run]      Wire the hooks into every harness found (backup, diff, --undo)
+  downshift doctor [--verbose] [--json]  Checklist: binary, hooks per harness, state, scores
+  downshift try "<task>" [harness] [model]  What Downshift would pick (--detail: classifier fields)
 
 See the effect
   downshift stats [--days=N]       Decisions and estimated savings (default 30 days)
+  downshift stats --detail         Full report: units, honor, quota, usage, per-session cost
   downshift stats --export         Pasteable JSON summary, no prompts
+  downshift session [--why|--pause|--resume]  This session's subagents as a tree
 
 Fix things
   downshift models list            The model catalog in effect

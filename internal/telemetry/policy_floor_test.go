@@ -39,7 +39,7 @@ func TestAggregateCountsPolicyFloorAcrossHarnesses(t *testing.T) {
 		t.Fatalf("PolicyFloor = %d of %d, want 2 of 3", s.PolicyFloor, s.Total)
 	}
 	var out bytes.Buffer
-	telemetry.PrintStats([]telemetry.Event{a, b, c}, telemetry.StatsOptions{}, &out)
+	telemetry.PrintStats([]telemetry.Event{a, b, c}, telemetry.StatsOptions{Detail: true}, &out)
 	if !strings.Contains(out.String(), "Raised by project floor") {
 		t.Fatalf("stats must show the floor line, got:\n%s", out.String())
 	}
@@ -48,7 +48,7 @@ func TestAggregateCountsPolicyFloorAcrossHarnesses(t *testing.T) {
 		t.Fatalf("export PolicyFloor = %d, want 2", exp.PolicyFloor)
 	}
 	var none bytes.Buffer
-	telemetry.PrintStats([]telemetry.Event{c}, telemetry.StatsOptions{}, &none)
+	telemetry.PrintStats([]telemetry.Event{c}, telemetry.StatsOptions{Detail: true}, &none)
 	if strings.Contains(none.String(), "project floor") {
 		t.Fatal("the line must be hidden when no floor applied")
 	}

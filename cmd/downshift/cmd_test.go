@@ -130,10 +130,53 @@ func TestRunTry_TrivialTask(t *testing.T) {
 			t.Errorf("rc = %d, want 0", rc)
 		}
 	})
-	for _, want := range []string{"TRIVIAL", "trivial", "small"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("expected %q in output; got:\n%s", want, out)
+	lines := strings.Split(out, "\n")
+	if !strings.HasPrefix(lines[0], "assumed current: "+claudeCodeFrontierID()+" (harness default)") {
+		t.Errorf("first line must name the assumed harness default; got:\n%s", out)
+	}
+	if !strings.Contains(lines[1], "→ small:") || !strings.Contains(lines[1], "cheaper") {
+		t.Errorf("second line must be the tier and move; got:\n%s", out)
+	}
+	if !strings.HasPrefix(lines[2], "why: trivial task") {
+		t.Errorf("third line must be the why line; got:\n%s", out)
+	}
+	for _, jargon := range []string{"Complexity:", "Intent:", "Verdict:", "Confident:", "Rewrite:"} {
+		if strings.Contains(out, jargon) {
+			t.Errorf("%q belongs under --detail; got:\n%s", jargon, out)
 		}
+	}
+}
+
+func TestRunTry_TrivialTask_Detail(t *testing.T) {
+	out := captureStdout(func() {
+		runTry(cmdCat, []string{"rename the userId variable", "claude-code", "--detail"})
+	})
+	for _, want := range []string{"→ small:", "Complexity: TRIVIAL", "Intent:     trivial", "Needs tier: small", "Verdict:    DOWNSHIFT", "Confident:  true", "Rewrite:"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("expected %q with --detail; got:\n%s", want, out)
+		}
+	}
+}
+
+func TestRunTry_ExplicitCurrentModel_NoAssumption(t *testing.T) {
+	out := captureStdout(func() {
+		runTry(cmdCat, []string{"rename the userId variable", "claude-code", claudeCodeFrontierID()})
+	})
+	if strings.Contains(out, "assumed current") {
+		t.Errorf("a given current model must not be called assumed; got:\n%s", out)
+	}
+	if !strings.Contains(out, "→ small:") || !strings.Contains(out, "cheaper") {
+		t.Errorf("expected the move line; got:\n%s", out)
+	}
+}
+
+func TestRunTry_CurrentAlreadyRight_StaysOn(t *testing.T) {
+	small := cmdCat.ModelFor("claude-code", core.TierSmall).ID
+	out := captureStdout(func() {
+		runTry(cmdCat, []string{"rename the userId variable", "claude-code", small})
+	})
+	if !strings.Contains(out, "stays on") {
+		t.Errorf("expected 'stays on'; got:\n%s", out)
 	}
 }
 
@@ -141,19 +184,31 @@ func TestRunTry_ComplexTask(t *testing.T) {
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code"})
 	})
-	if !strings.Contains(out, "COMPLEX") {
-		t.Errorf("expected COMPLEX; got:\n%s", out)
+	if !strings.Contains(out, "why: complex task") {
+		t.Errorf("expected a complex why line; got:\n%s", out)
 	}
-	if !strings.Contains(out, "normal") {
+	if !strings.Contains(out, "stays on") {
+		t.Errorf("complex work against the frontier default stays on it; got:\n%s", out)
+	}
+}
+
+func TestRunTry_ComplexTask_Detail(t *testing.T) {
+	out := captureStdout(func() {
+		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code", "--detail"})
+	})
+	if !strings.Contains(out, "Complexity: COMPLEX") {
+		t.Errorf("expected COMPLEX with --detail; got:\n%s", out)
+	}
+	if !strings.Contains(out, "Intent:     normal") {
 		t.Errorf("expected 'normal' intent (construction, not review); got:\n%s", out)
 	}
 }
 
 func TestRunTry_CodeReviewIntent(t *testing.T) {
 	out := captureStdout(func() {
-		runTry(cmdCat, []string{"do a code review of the auth module", "claude-code"})
+		runTry(cmdCat, []string{"do a code review of the auth module", "claude-code", "--detail"})
 	})
-	if !strings.Contains(out, "review") {
+	if !strings.Contains(out, "Intent:     review") {
 		t.Errorf("expected 'review' intent; got:\n%s", out)
 	}
 }
@@ -161,7 +216,7 @@ func TestRunTry_CodeReviewIntent(t *testing.T) {
 func TestRunTry_WithCurrentModel_ShowsVerdict(t *testing.T) {
 	frontierID := claudeCodeFrontierID()
 	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rename the userId variable", "claude-code", frontierID})
+		runTry(cmdCat, []string{"rename the userId variable", "claude-code", frontierID, "--detail"})
 	})
 	if !strings.Contains(out, "DOWNSHIFT") {
 		t.Errorf("expected DOWNSHIFT verdict; got:\n%s", out)

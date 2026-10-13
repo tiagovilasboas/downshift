@@ -40,12 +40,12 @@ func TestAggregateGroupsCostBySessionAndSubagent(t *testing.T) {
 
 func TestCostGroupsPrintedOnlyWithAttributableUsage(t *testing.T) {
 	var none bytes.Buffer
-	telemetry.PrintStats([]telemetry.Event{usageEv("", "", 0.2)}, telemetry.StatsOptions{}, &none)
+	telemetry.PrintStats([]telemetry.Event{usageEv("", "", 0.2)}, telemetry.StatsOptions{Detail: true}, &none)
 	if strings.Contains(none.String(), "Sessions with cost") {
 		t.Fatalf("no attributable usage must print no group section:\n%s", none.String())
 	}
 	var out bytes.Buffer
-	telemetry.PrintStats([]telemetry.Event{usageEv("sessAAAA1", "agent1", 0.4), usageEv("sessBBBB2", "agent2", 0.1)}, telemetry.StatsOptions{}, &out)
+	telemetry.PrintStats([]telemetry.Event{usageEv("sessAAAA1", "agent1", 0.4), usageEv("sessBBBB2", "agent2", 0.1)}, telemetry.StatsOptions{Detail: true}, &out)
 	got := out.String()
 	for _, want := range []string{"Sessions with cost", "Subagents with cost", "session sessAAAA", "catalog-priced"} {
 		if !strings.Contains(got, want) {
@@ -66,8 +66,8 @@ func TestExportCarriesCostGroupAggregatesOnly(t *testing.T) {
 
 func TestUsageWithoutIDsKeepsOutputUnchanged(t *testing.T) {
 	var a, b bytes.Buffer
-	telemetry.PrintStats(nil, telemetry.StatsOptions{}, &a)
-	telemetry.PrintStats([]telemetry.Event{}, telemetry.StatsOptions{}, &b)
+	telemetry.PrintStats(nil, telemetry.StatsOptions{Detail: true}, &a)
+	telemetry.PrintStats([]telemetry.Event{}, telemetry.StatsOptions{Detail: true}, &b)
 	if a.String() != b.String() {
 		t.Fatal("empty inputs must print the same")
 	}

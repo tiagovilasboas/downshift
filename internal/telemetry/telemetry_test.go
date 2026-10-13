@@ -317,7 +317,7 @@ func TestPrintStats_UnitMode_NoUSDClaim(t *testing.T) {
 		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8),
 	}
 	var buf strings.Builder
-	telemetry.PrintStats(events, telemetry.StatsOptions{Days: 30}, &buf)
+	telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true, Days: 30}, &buf)
 	out := buf.String()
 
 	if strings.Contains(out, "$") {
@@ -336,7 +336,7 @@ func TestPrintStats_DollarMode_ShowsUSD(t *testing.T) {
 		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.5),
 	}
 	var buf strings.Builder
-	telemetry.PrintStats(events, telemetry.StatsOptions{Days: 30, CostPerUnit: 0.10}, &buf)
+	telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true, Days: 30, CostPerUnit: 0.10}, &buf)
 	out := buf.String()
 
 	if !strings.Contains(out, "$") {
@@ -350,7 +350,7 @@ func TestPrintStats_DollarMode_ShowsUSD(t *testing.T) {
 func TestPrintStats_AllTimeLabel(t *testing.T) {
 	events := []telemetry.Event{makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.5)}
 	var buf strings.Builder
-	telemetry.PrintStats(events, telemetry.StatsOptions{Days: 0}, &buf)
+	telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
 	if !strings.Contains(buf.String(), "All time") {
 		t.Error("days=0 should show 'All time' label")
 	}

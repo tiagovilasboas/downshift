@@ -41,6 +41,11 @@ type HarnessCapabilities struct {
 	// of text when a subagent ends (U2). Verified per harness; false until a
 	// harness is shown to display it. The line is computed either way.
 	CanShowChildLine bool
+	// SessionEnv names the environment variable that holds the harness's
+	// current session id inside a command the developer runs from the harness
+	// (U3, `downshift session`). Empty means the harness exports none, and the
+	// command falls back to the most recent session in the event log.
+	SessionEnv string
 }
 
 // Per-harness capability table. Adapters import these instead of
@@ -48,7 +53,7 @@ type HarnessCapabilities struct {
 var (
 	// ClaudeCodeCaps — PreToolUse hook honors updatedInput.model, but only
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true}
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID"}
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.

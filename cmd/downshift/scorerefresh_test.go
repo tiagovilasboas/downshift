@@ -186,20 +186,20 @@ func TestDoctor_ScoreStatus(t *testing.T) {
 	dir := scoreStateDir(t)
 	n := scoreFakeSpawn(t, nil)
 	var b bytes.Buffer
-	runDoctor(&b, cmdCat)
-	if !strings.Contains(b.String(), "scores: missing") || *n != 1 {
+	runDoctor(nil, &b, &b, cmdCat)
+	if !strings.Contains(b.String(), "missing") || *n != 1 {
 		t.Errorf("missing cache: want status and one refresh (n=%d):\n%s", *n, b.String())
 	}
 	b.Reset()
 	writeScoreCache(t, dir, time.Hour)
-	runDoctor(&b, cmdCat)
-	if !strings.Contains(b.String(), "scores: fresh") || *n != 1 {
+	runDoctor(nil, &b, &b, cmdCat)
+	if !strings.Contains(b.String(), "fresh") || *n != 1 {
 		t.Errorf("fresh cache: want fresh and no new refresh (n=%d):\n%s", *n, b.String())
 	}
 	b.Reset()
 	t.Setenv("DOWNSHIFT_SCORES", "off")
-	runDoctor(&b, cmdCat)
-	if !strings.Contains(b.String(), "scores: off") {
+	runDoctor(nil, &b, &b, cmdCat)
+	if !strings.Contains(b.String(), "off") {
 		t.Errorf("off: %s", b.String())
 	}
 }

@@ -77,14 +77,14 @@ func TestStats_ScoreLine(t *testing.T) {
 		t.Fatalf("stats = %+v", s)
 	}
 	var out bytes.Buffer
-	PrintStats(events, StatsOptions{}, &out)
+	PrintStats(events, StatsOptions{Detail: true}, &out)
 	want := "Score pick differs    2 of 3 decisions (67%), list price 25% lower on average"
 	if !strings.Contains(out.String(), want) {
 		t.Fatalf("stats lack %q:\n%s", want, out.String())
 	}
 	// No pick anywhere: the report has no score line.
 	out.Reset()
-	PrintStats([]Event{mk("", false, 0)}, StatsOptions{}, &out)
+	PrintStats([]Event{mk("", false, 0)}, StatsOptions{Detail: true}, &out)
 	if strings.Contains(out.String(), "Score pick") {
 		t.Fatalf("score line printed without picks:\n%s", out.String())
 	}

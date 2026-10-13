@@ -108,6 +108,8 @@ func main() {
 		os.Exit(runQuota(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "stats":
 		os.Exit(runStats(args[1:]))
+	case "session":
+		os.Exit(runSession(args[1:], os.Stdout, os.Stderr, catalog))
 	case "benchmark":
 		os.Exit(runBenchmark(args[1:]))
 	case "eval-outcome":
@@ -124,8 +126,10 @@ func main() {
 		os.Exit(runFeedback(args[1:]))
 	case "context":
 		os.Exit(runContext(args[1:], os.Stdout, os.Stderr))
+	case "setup":
+		os.Exit(runSetup(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "doctor":
-		os.Exit(runDoctor(os.Stdout, catalog))
+		os.Exit(runDoctor(args[1:], os.Stdout, os.Stderr, catalog))
 	case "version", "--version":
 		os.Exit(runVersion(os.Stdout))
 	case "-h", "--help", "help":
@@ -223,6 +227,15 @@ func runHookAdapter[E any](
 	// but allow the spawn untouched, recording the decision as a
 	// "baseline" event that stats excludes from routed rates.
 	noRoute := os.Getenv("DOWNSHIFT_NO_ROUTE") == "1"
+	// Per-session pause (`downshift session --pause`) routes like the control
+	// group: one stat, fail open, never a block. Harnesses whose payload has no
+	// session id cannot be paused per session.
+	sessionHash := ""
+	if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
+		sessionHash = telemetry.HashSessionID(identified.SessionIdentifier())
+	}
+	paused := !noRoute && telemetry.SessionPaused(sessionHash)
+	noRoute = noRoute || paused
 	if noRoute {
 		failOpen()
 		responded = true
@@ -234,7 +247,9 @@ func runHookAdapter[E any](
 		responded = true
 		fmt.Fprintf(os.Stdout, "%s\n", encoded)
 	}
-	if note != "" {
+	if paused {
+		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s routing paused for this session, spawn unchanged (downshift session --resume)\n", correlationID)
+	} else if note != "" {
 		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
 	}
 	warnSessionUnknown(decision)
@@ -248,6 +263,10 @@ func runHookAdapter[E any](
 		switch {
 		case noRoute:
 			event.Outcome = telemetry.OutcomeBaseline
+			if paused {
+				event.ReasonCodes = append(event.ReasonCodes, telemetry.ReasonPaused)
+				sort.Strings(event.ReasonCodes)
+			}
 		case note == "":
 			// Adapters return a note only when they rewrote the spawn.
 			event.Outcome = telemetry.OutcomeAllow
@@ -281,9 +300,7 @@ func runHookAdapter[E any](
 				}
 			}
 		}
-		if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
-			event.SessionID = telemetry.HashSessionID(identified.SessionIdentifier())
-		}
+		event.SessionID = sessionHash
 		if call, ok := any(ev).(interface{ ToolUseIdentifier() string }); ok {
 			event.ToolUseHash = telemetry.HashSessionID(call.ToolUseIdentifier())
 		}
@@ -496,6 +513,7 @@ type catalogEntryReader interface {
 
 // runTry classifies a prompt from the command line for quick testing.
 func runTry(resolver core.Resolver, args []string) int {
+	args, detail := stripDetail(args)
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: downshift try \"<task prompt>\" [harness] [current-model]")
 		return 2
@@ -532,46 +550,7 @@ func runTry(resolver core.Resolver, args []string) int {
 		return 0
 	}
 
-	res, known := tryHook(harness, prompt, current, resolver)
-	d := res.decision
-	if !known {
-		d = core.Route(prompt, harness, current, resolver)
-	}
-	fmt.Printf("Task:       %s\n", prompt)
-	fmt.Printf("Complexity: %s\n", d.Complexity)
-	fmt.Printf("Intent:     %s\n", d.Intent)
-	fmt.Printf("Needs tier: %s\n", d.Tier)
-	fmt.Printf("Recommend:  %s\n", d.Model.ID)
-	if d.CurrentModel.ID != "" {
-		fmt.Printf("Current:    %s\n", d.CurrentModel.ID)
-	}
-	fmt.Printf("Verdict:    %s\n", d.Verdict)
-	fmt.Printf("Confident:  %t\n", d.Confident)
-	if len(d.Corrections) > 0 {
-		fmt.Printf("Held by:    %s\n", strings.Join(d.Corrections, ", "))
-	}
-	switch {
-	case !known:
-		fmt.Printf("Rewrite:    unknown harness %q (no hook adapter)\n", harness)
-	case res.blocked:
-		fmt.Printf("Hook:       block (exit 2) → respawn with %s\n", res.written)
-	case res.written != "":
-		fmt.Printf("Rewrite:    yes → %s\n", res.written)
-	case d.SessionUnknown:
-		fmt.Printf("Rewrite:    no: session unknown. Add \"%s\": [<model ids>] to %s (see docs/session-models.md)\n",
-			harness, sessionModelsPathForDisplay())
-	case d.Intent == core.PreservedIntent:
-		fmt.Printf("Rewrite:    no (current model is explicit_only)\n")
-	case len(d.Corrections) > 0:
-		fmt.Printf("Rewrite:    no (held by guardrail)\n")
-	default:
-		fmt.Printf("Rewrite:    no (keep current model)\n")
-	}
-	if res.effort != "" {
-		fmt.Printf("Effort:     → %s\n", res.effort)
-	}
-	fmt.Printf("→ %s\n", d.Summary())
-	return 0
+	return runTryReport(resolver, harness, prompt, current, detail)
 }
 
 func knownTryHarness(resolver core.Resolver, harness string) bool {
@@ -666,6 +645,8 @@ func runStats(args []string) int {
 			export = true
 		case arg == "--by-harness":
 			byHarness = true
+		case arg == "--detail":
+			opts.Detail = true
 		case len(arg) > 7 && arg[:7] == "--days=":
 			n, err := strconv.ParseFloat(arg[7:], 64)
 			if err != nil || n < 0 {
@@ -1261,7 +1242,7 @@ Usage:
   downshift version              Print the binary version (also --version)
   downshift models list          Show the effective catalog (embedded or override)
   downshift models check         Query provider APIs and report new/untiered models
-  downshift doctor               Print version, state dir, and catalog source
+  downshift doctor [--verbose] [--json]  Checklist with a fix command per failure
   downshift context status       Show context optimization status and active provider
   downshift context providers    List supported context optimization companion providers
   downshift context doctor       Run diagnostics on context optimization providers
@@ -1277,6 +1258,7 @@ Usage:
   downshift quota collect       Collect quota from an explicit local Codex transcript
   downshift quota status        Inspect budget evidence and freshness for a harness/model
   downshift quota claude-statusline   Opt-in Claude statusLine quota bridge
+  downshift session [--why|--pause|--resume] [--json]  This session's subagents as a tree (every harness)
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
   downshift stats --cost-per-unit=<USD>   Convert normalised units to dollars
   downshift stats --export       Print a pasteable JSON summary without prompts

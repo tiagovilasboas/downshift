@@ -18,7 +18,7 @@ func childEv(st telemetry.ChildStatus) telemetry.Event {
 
 func printed(evs []telemetry.Event) string {
 	var b bytes.Buffer
-	telemetry.PrintStats(evs, telemetry.StatsOptions{}, &b)
+	telemetry.PrintStats(evs, telemetry.StatsOptions{Detail: true}, &b)
 	return b.String()
 }
 

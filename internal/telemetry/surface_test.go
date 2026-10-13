@@ -146,7 +146,7 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 		}
 
 		var report bytes.Buffer
-		telemetry.PrintStats(events, telemetry.StatsOptions{}, &report)
+		telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true}, &report)
 		if !strings.Contains(report.String(), "Honor                 observed 0  unobserved") {
 			t.Fatalf("report printed inference as honor:\n%s", report.String())
 		}

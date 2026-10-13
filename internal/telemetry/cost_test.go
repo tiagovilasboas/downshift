@@ -230,7 +230,7 @@ func TestPrintStats_RealCostSection(t *testing.T) {
 	withCost.BaselineCostUSD = float64Ptr(4.0)
 
 	var buf strings.Builder
-	telemetry.PrintStats([]telemetry.Event{withCost}, telemetry.StatsOptions{Days: 0}, &buf)
+	telemetry.PrintStats([]telemetry.Event{withCost}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
 	if !strings.Contains(buf.String(), "Real provider cost (1 events with token usage)") {
 		t.Errorf("missing real-cost section, got:\n%s", buf.String())
 	}
@@ -239,7 +239,7 @@ func TestPrintStats_RealCostSection(t *testing.T) {
 	}
 
 	var buf2 strings.Builder
-	telemetry.PrintStats([]telemetry.Event{makeEvent("cc", "TRIVIAL", "OK", 0)}, telemetry.StatsOptions{Days: 0}, &buf2)
+	telemetry.PrintStats([]telemetry.Event{makeEvent("cc", "TRIVIAL", "OK", 0)}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf2)
 	if !strings.Contains(buf2.String(), "Real cost: no events with token usage yet (wire the PostToolUse hook to populate them).") {
 		t.Errorf("missing no-real-cost line, got:\n%s", buf2.String())
 	}
