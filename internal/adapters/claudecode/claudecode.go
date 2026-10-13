@@ -14,6 +14,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
 	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 const harnessID = "claude-code"
@@ -169,7 +170,9 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 			PermissionDecision: "allow",
 			UpdatedInput:       updated,
 		},
-		SystemMessage: "downshift: " + decision.Summary(),
+	}
+	if !telemetry.Quiet() {
+		out.SystemMessage = "downshift: " + decision.Summary()
 	}
 	return out, decision.Summary(), decision
 }

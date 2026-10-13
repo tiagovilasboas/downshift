@@ -94,6 +94,18 @@ type Decision struct {
 	// SemanticLift is true when the semantic boost, not a regex rule, raised
 	// the complexity. Telemetry records it so non-deterministic lifts stay visible.
 	SemanticLift bool
+	// ScoreWould is the session model id the public-score capability path
+	// (score_select.go) would pick for this task, or empty when it abstained.
+	// Shadow by default: it changes the routing only when ScoreApplied is set.
+	// ScoreWouldCostRatio is the list price of that pick over the price of the
+	// model the catalog-tier path leaves the child on (0 when either price is
+	// unknown). ScoreDiffers is true when the pick is a different model.
+	ScoreWould          string
+	ScoreDiffers        bool
+	ScoreWouldCostRatio float64
+	// ScoreApplied is true when DOWNSHIFT_SCORE_ROUTING=1 and the plan
+	// rewrote the model to ScoreWould.
+	ScoreApplied bool
 }
 
 // Verdict tells the caller what to do about the current model.

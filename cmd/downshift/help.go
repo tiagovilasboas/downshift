@@ -36,6 +36,7 @@ See the effect
 Fix things
   downshift models list            The model catalog in effect
   downshift models discover        Ask each harness which models your account can use
+  downshift models scores          Public capability scores: --refresh, --status, --quiet, --json
   downshift quota status           Budget evidence and freshness for a harness/model
   downshift feedback list          Routing ids waiting for your review
 

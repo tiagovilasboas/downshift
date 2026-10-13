@@ -286,7 +286,14 @@ func HandlePostToolUse(raw []byte, binaryVersion string, r core.Resolver) (Outpu
 	model := stringFieldAny(payload, "model", "model_id")
 	target := linkTarget(prior, sessionHash, toolUseHash(payload), model, now)
 	ev := buildUsageEvent(usage, model, sessionHash, binaryVersion, target, r, now)
+	// The same agent id lets SubagentStop see this child as already priced, so
+	// a foreground child is neither double counted nor announced twice.
+	ev.AgentHash = telemetry.HashSessionID(agentID(payload))
 	telemetry.Record(ev)
+	if tool := stringFieldAny(payload, "tool_name"); (tool == "Agent" || tool == "Task") &&
+		telemetry.ChildLineEnabled(core.ClaudeCodeCaps.CanShowChildLine) {
+		neutral.SystemMessage = telemetry.ChildEndLine(ev)
+	}
 	if target != nil {
 		return neutral, "usage linked to " + target.Verdict + " decision", true
 	}

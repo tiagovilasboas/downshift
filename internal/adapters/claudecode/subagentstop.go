@@ -101,14 +101,36 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 // an agent already priced is skipped (SubagentStop can fire more than once).
 // The returned note is for stderr.
 func HandleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) string {
+	note, _ := handleSubagentStop(raw, binaryVersion, r)
+	return note
+}
+
+// HandleSubagentStopOut is HandleSubagentStop that also returns the hook's
+// stdout: a systemMessage with the child-end line when this call priced the
+// subagent, the harness can show it and DOWNSHIFT_QUIET is not set. The line
+// never changes what the subagent returned and never blocks.
+func HandleSubagentStopOut(raw []byte, binaryVersion string, r core.Resolver) (any, string) {
+	note, ev := handleSubagentStop(raw, binaryVersion, r)
+	if ev == nil || !telemetry.ChildLineEnabled(core.ClaudeCodeCaps.CanShowChildLine) {
+		return nil, note
+	}
+	if line := telemetry.ChildEndLine(*ev); line != "" {
+		return Output{SystemMessage: line}, note
+	}
+	return nil, note
+}
+
+// handleSubagentStop is the shared body: the note for stderr and the usage
+// event it recorded (nil when it recorded nothing).
+func handleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) (string, *telemetry.Event) {
 	var payload map[string]any
 	if json.Unmarshal(raw, &payload) != nil {
-		return ""
+		return "", nil
 	}
 	agentHash := telemetry.HashSessionID(stringFieldAny(payload, "agent_id", "agentId"))
 	path := stringFieldAny(payload, "agent_transcript_path")
 	if agentHash == "" || path == "" || !strings.HasSuffix(path, ".jsonl") {
-		return ""
+		return "", nil
 	}
 	sessionHash := telemetry.HashSessionID(stringFieldAny(payload, "session_id", "sessionId"))
 
@@ -120,7 +142,7 @@ func HandleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) strin
 			continue
 		}
 		if ev.Outcome == telemetry.OutcomeUsage {
-			return "" // this agent is already priced
+			return "", nil // this agent is already priced
 		}
 		if ev.Outcome == telemetry.OutcomeResolved {
 			resolved = ev
@@ -129,7 +151,7 @@ func HandleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) strin
 
 	got, ok := readSubagentUsage(path)
 	if !ok {
-		return ""
+		return "", nil
 	}
 
 	var target *telemetry.Event
@@ -145,7 +167,7 @@ func HandleSubagentStop(raw []byte, binaryVersion string, r core.Resolver) strin
 	ev.Verification = readSubagentVerification(path)
 	telemetry.Record(ev)
 	if target != nil {
-		return "usage linked to " + target.Verdict + " decision"
+		return "usage linked to " + target.Verdict + " decision", &ev
 	}
-	return "usage recorded without matching decision"
+	return "usage recorded without matching decision", &ev
 }

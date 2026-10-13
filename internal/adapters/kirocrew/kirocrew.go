@@ -162,6 +162,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// only when the exact target is selectable in this session.
 	plan := decision.PlanForSession(core.KiroCrewCaps, res, session)
 	decision.CreditHeld = plan.CreditHeld
+	decision.RecordScoreWould(res, session)
 	if plan.HoldForeign || plan.PreserveExplicit || plan.Model.ID == "" || plan.Model.ID == currentModel || !session.Contains(plan.Model.ID) {
 		return allow(), "", decision
 	}

@@ -143,6 +143,16 @@ type Event struct {
 	// known and whose target costs more. It lets stats charge the extra cost.
 	// Absent on old logs and when either price is unknown (then neutral).
 	UpshiftCostRatio float64 `json:"upshift_cost_ratio,omitempty"`
+	// ScoreWould is the session model id the public-score capability path
+	// would pick (shadow unless DOWNSHIFT_SCORE_ROUTING=1). Model id only: no
+	// prompt, no score value, not a reason code. Absent when the path
+	// abstained or no score index is linked.
+	ScoreWould string `json:"score_would,omitempty"`
+	// ScoreDiffers is true when ScoreWould is not the model the catalog-tier
+	// path leaves the child on. ScoreWouldCostRatio is the pick's catalog list
+	// price over that model's (input plus output per 1M); absent when unknown.
+	ScoreDiffers        bool    `json:"score_differs,omitempty"`
+	ScoreWouldCostRatio float64 `json:"score_would_cost_ratio,omitempty"`
 	// Confidence is reserved and never set: the router has no calibrated
 	// probability, so the key stays absent rather than carry a made-up number.
 	Confidence *float64 `json:"confidence,omitempty"`
@@ -353,6 +363,13 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 			ev.UpshiftCostRatio = to / from
 		}
 	}
+	if d.ScoreWould != "" {
+		ev.ScoreWould = ModelOrUnknown(d.ScoreWould)
+		ev.ScoreDiffers = d.ScoreDiffers
+		if r := d.ScoreWouldCostRatio; r > 0 && !math.IsInf(r, 0) && !math.IsNaN(r) {
+			ev.ScoreWouldCostRatio = math.Round(r*1e4) / 1e4
+		}
+	}
 	if len(d.Corrections) > 0 {
 		ev.SafeVerdict = d.SafeVerdict.String()
 		ev.Corrections = d.Corrections
@@ -517,6 +534,14 @@ type Stats struct {
 
 	// PolicyFloor counts decisions an operator tier floor raised.
 	PolicyFloor int
+	// ScoreObserved counts decisions the capability path produced a pick for;
+	// ScoreDiffers those where the pick is another model than the catalog
+	// path leaves; ScoreRatioN and ScoreRatioSum average the pick's list price
+	// over that model's price (events where both are known).
+	ScoreObserved int
+	ScoreDiffers  int
+	ScoreRatioN   int
+	ScoreRatioSum float64
 	// ChildStatus counts how children ended (child_ended events), by status.
 	ChildStatus map[ChildStatus]int
 	// RespawnAfterFailure counts failed children followed by another spawn in
@@ -721,6 +746,16 @@ func Aggregate(events []Event) Stats {
 			s.PolicyFloor++
 		}
 		s.ByComplexity[ev.Complexity]++
+		if ev.ScoreWould != "" {
+			s.ScoreObserved++
+			if ev.ScoreDiffers {
+				s.ScoreDiffers++
+			}
+			if ev.ScoreWouldCostRatio > 0 {
+				s.ScoreRatioN++
+				s.ScoreRatioSum += ev.ScoreWouldCostRatio
+			}
+		}
 		for _, code := range ev.ReasonCodes {
 			s.ReasonCodes[code]++
 		}
@@ -904,6 +939,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Quota                 available %d  held %d  unknown %d\n", s.QuotaAvailable, s.QuotaHeld, s.QuotaUnknown)
 		fmt.Fprintf(w, "Usage                 observed %d  unobserved %d\n", s.UsageObserved, s.UsageUnobserved)
 		fmt.Fprintf(w, "Frontier decisions    %d  (on doubt, no deterministic lift: %d)\n", s.FrontierDecisions, s.FrontierOnDoubt)
+		printScoreLine(w, s)
 		if n := s.ReasonCodes[ReasonSemanticBoost]; n > 0 {
 			fmt.Fprintf(w, "Semantic boost        %d of %d decisions (%.0f%%) were raised by the embedder, not a rule\n", n, s.Total, pct(n, s.Total))
 		}
@@ -912,6 +948,27 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		}
 	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
+}
+
+// printScoreLine reports the public-score capability path. It prints nothing
+// when no decision carries a pick, so output without a score index is unchanged.
+func printScoreLine(w io.Writer, s Stats) {
+	if s.ScoreObserved == 0 {
+		return
+	}
+	fmt.Fprintf(w, "Score pick differs    %d of %d decisions (%.0f%%)", s.ScoreDiffers, s.ScoreObserved, pct(s.ScoreDiffers, s.ScoreObserved))
+	if s.ScoreRatioN > 0 {
+		avg := s.ScoreRatioSum / float64(s.ScoreRatioN)
+		switch {
+		case avg < 1:
+			fmt.Fprintf(w, ", list price %.0f%% lower on average", (1-avg)*100)
+		case avg > 1:
+			fmt.Fprintf(w, ", list price %.0f%% higher on average", (avg-1)*100)
+		default:
+			fmt.Fprintf(w, ", same list price on average")
+		}
+	}
+	fmt.Fprintf(w, " (shadow unless DOWNSHIFT_SCORE_ROUTING=1)\n")
 }
 
 func pct(n, total int) float64 {

@@ -18,6 +18,7 @@ func Port() hookport.Port {
 			stdout, note, _ := HandlePostToolUse(raw, binaryVersion, r)
 			return stdout, note
 		},
-		Usage: HandleSubagentStop,
+		Usage:    HandleSubagentStop,
+		UsageOut: HandleSubagentStopOut,
 	}
 }

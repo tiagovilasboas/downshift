@@ -285,8 +285,9 @@ func TestHandlePostToolUse_EndToEnd_Linked(t *testing.T) {
 	if !linked {
 		t.Fatal("HandlePostToolUse linked = false, want true (session match)")
 	}
-	if raw, _ := json.Marshal(out); string(raw) != "{}" {
-		t.Errorf("PostToolUse output = %s, want {}", raw)
+	// The hook cannot steer: only the child-end line (U2), never a decision.
+	if out.HookSpecificOutput != nil || !strings.HasPrefix(out.SystemMessage, "↳ downshift: finished on ") {
+		t.Errorf("PostToolUse output = %+v, want only the child-end line", out)
 	}
 
 	events, err := telemetry.ReadEventsFrom(eventLog)

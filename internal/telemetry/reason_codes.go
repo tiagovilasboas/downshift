@@ -29,6 +29,10 @@ const (
 	ReasonNBDownshiftApplied    = "NB_DOWNSHIFT_APPLIED"
 	ReasonTierFloor             = "TIER_FLOOR"
 	ReasonCreditHeld            = "CREDIT_HELD"
+	// ReasonScoreRouted marks a model chosen by the public-score capability
+	// path (DOWNSHIFT_SCORE_ROUTING=1). A shadow pick is never a reason: it
+	// has its own event field, score_would.
+	ReasonScoreRouted = "SCORE_ROUTED"
 	// ReasonHeldUnmapped stands for a guardrail rule this version has no code
 	// for, so a hold is never silently dropped from the trace.
 	ReasonHeldUnmapped = "HELD_UNMAPPED_RULE"
@@ -83,6 +87,9 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.CreditHeld {
 		set[ReasonCreditHeld] = true
+	}
+	if d.ScoreApplied {
+		set[ReasonScoreRouted] = true
 	}
 	for _, rule := range d.Corrections {
 		if code, ok := heldReason[rule]; ok {

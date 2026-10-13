@@ -165,6 +165,9 @@ func runHookAdapter[E any](
 	failOpen func(),
 	taskText ...func(E) string,
 ) (rc int) {
+	// Registered first so it runs last: after the response is written and
+	// after the panic recovery below. Fail-open, never waits (scorerefresh.go).
+	defer maybeRefreshScores()
 	correlationID := telemetry.NewCorrelationID()
 	responded := false
 	fail := func(code string) int {
@@ -365,6 +368,7 @@ func confidenceValue(confident bool) float64 {
 // confident tier mismatch, returns exit 2 with an actionable respawn message.
 // Fail-open is absolute: any read/parse error, or an allow decision, exits 0.
 func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
+	defer maybeRefreshScores() // same shared trigger as runHookAdapter
 	correlationID := telemetry.NewCorrelationID()
 	fail := func(code string) int {
 		telemetry.Record(telemetry.Failure(correlationID, buildVersion, code))
@@ -624,7 +628,7 @@ func tryHook(harness, prompt, current string, catalog core.Resolver) (tryResult,
 // runModels dispatches the 'models' subcommands: list, check, pull.
 func runModels(catalog models.CatalogReader, args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: downshift models <list|check|pull|discover>")
+		fmt.Fprintln(os.Stderr, "usage: downshift models <list|check|pull|discover|scores>")
 		return 2
 	}
 	switch args[0] {
@@ -637,6 +641,8 @@ func runModels(catalog models.CatalogReader, args []string) int {
 		return models.Pull(catalog, os.Stdout, os.Stderr)
 	case "discover":
 		return runModelsDiscover(catalog, args[1:], os.Stdout, os.Stderr)
+	case "scores":
+		return runModelsScores(args[1:], os.Stdout, os.Stderr)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown models subcommand %q\n", args[0])
 		return 2
@@ -1266,6 +1272,7 @@ Usage:
   downshift context benchmark    Compare 4 optimization scenarios (routing vs compression)
   downshift models pull          Write user catalog.json under the state dir
   downshift models discover      Ask each harness which models the account can use; hooks read the result
+  downshift models scores        Public capability scores cache (--refresh, --status, --quiet, --json)
   downshift quota import        Import native subscription quota JSON from stdin
   downshift quota collect       Collect quota from an explicit local Codex transcript
   downshift quota status        Inspect budget evidence and freshness for a harness/model
@@ -1306,7 +1313,8 @@ Examples:
 
 // runUsage is the post-spawn usage runner. The child already finished, so it
 // never blocks: a read error, an oversized payload, or a panic exits 0 with
-// no stdout. A nil Usage func is unobserved and prints one stderr line.
+// no stdout. A port may return a stdout (the child-end line); otherwise none is
+// printed. A nil Usage func is unobserved and prints one stderr line.
 func runUsage(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1323,6 +1331,11 @@ func runUsage(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) 
 	if !obs.Observed {
 		fmt.Fprintf(os.Stderr, "downshift: usage unobserved for %s\n", port.ID)
 		return 0
+	}
+	if obs.Stdout != nil { // the child-end line, when the port has one to show
+		if encoded, err := json.Marshal(obs.Stdout); err == nil {
+			fmt.Fprintf(os.Stdout, "%s\n", encoded)
+		}
 	}
 	if obs.Note != "" {
 		fmt.Fprintf(os.Stderr, "downshift: %s\n", obs.Note)

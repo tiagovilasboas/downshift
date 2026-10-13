@@ -46,6 +46,8 @@ func runDoctor(w io.Writer, cat *catalog.Catalog) int {
 		fmt.Fprintf(w, "events: %s (not created yet)\n", eventsPath)
 	}
 
+	writeScoreStatus(w)
+
 	optCfg, _ := contextopt.LoadConfig()
 	if optCfg.Enabled {
 		fmt.Fprintf(w, "context_optimization: enabled (provider: %s)\n", optCfg.Provider)

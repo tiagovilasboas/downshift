@@ -24,7 +24,14 @@ type Port struct {
 	ID    string
 	Honor HonorFunc // nil: this harness hook does not report the executed child model
 	Usage UsageFunc // nil: this harness hook does not report child token usage
+	// UsageOut is Usage plus an optional stdout for the hook (the child-end
+	// line). When set it runs instead of Usage.
+	UsageOut UsageOutFunc
 }
+
+// UsageOutFunc is UsageFunc that may also return the hook's stdout. A nil
+// stdout prints nothing.
+type UsageOutFunc func(raw []byte, binaryVersion string, r core.Resolver) (stdout any, note string)
 
 // Observation is the result of running one port func. Observed is false when
 // the func was nil; the caller must not treat that as a measured zero.
@@ -48,10 +55,14 @@ func ObserveHonor(p Port, raw []byte, binaryVersion string, r core.Resolver) Obs
 	return Observation{Observed: true, Stdout: stdout, Note: note}
 }
 
-// ObserveUsage runs p.Usage. A nil func returns Observed false, an empty note,
+// ObserveUsage runs p.UsageOut when set, else p.Usage. A nil func returns Observed false, an empty note,
 // and a nil stdout. A func that ran is observed and keeps the returned note,
 // which may be empty. This function does not invent stdout.
 func ObserveUsage(p Port, raw []byte, binaryVersion string, r core.Resolver) Observation {
+	if p.UsageOut != nil {
+		stdout, note := p.UsageOut(raw, binaryVersion, r)
+		return Observation{Observed: true, Stdout: stdout, Note: note}
+	}
 	if p.Usage == nil {
 		return Observation{}
 	}

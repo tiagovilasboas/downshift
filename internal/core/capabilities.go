@@ -37,6 +37,10 @@ type HarnessCapabilities struct {
 	// InferSessionFromCurrent). False where quota pools or tier aliases make
 	// that unsafe: the session stays unknown and nothing is rewritten.
 	InferSession bool
+	// CanShowChildLine means the hook protocol can show the developer one line
+	// of text when a subagent ends (U2). Verified per harness; false until a
+	// harness is shown to display it. The line is computed either way.
+	CanShowChildLine bool
 }
 
 // Per-harness capability table. Adapters import these instead of
@@ -44,7 +48,7 @@ type HarnessCapabilities struct {
 var (
 	// ClaudeCodeCaps — PreToolUse hook honors updatedInput.model, but only
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true}
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true}
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.

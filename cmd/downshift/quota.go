@@ -8,10 +8,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // harnessCaps is the capability lookup; tests may substitute it.
@@ -115,33 +117,80 @@ func runQuota(args []string, in io.Reader, out, errOut io.Writer) int {
 // prints raw status JSON and never turns a missing window into availability.
 // Operators with an existing statusLine can tee its input to quota import
 // instead; this command deliberately does not install or overwrite settings.
+//
+// It prints the quota windows, then (U1) the routing summary of the current
+// session from the tail of the event log. Each part fails on its own: the
+// statusline is never an error, and a part with no data is left out.
 func runClaudeQuotaStatusline(in io.Reader, out io.Writer) int {
 	b, err := io.ReadAll(io.LimitReader(in, (1<<20)+1))
 	if err != nil || len(b) > 1<<20 {
 		return 0
 	}
+	line := strings.Join(nonEmpty(statuslineQuota(b), statuslineRouting(b)), " │ ")
+	if line != "" {
+		fmt.Fprintln(out, line)
+	}
+	return 0
+}
+
+// statuslineQuota stores the snapshot and renders the quota windows ("" on any
+// failure).
+func statuslineQuota(b []byte) string {
 	s, err := quota.ParseNative("claude-statusline", b, time.Now().UTC(), 5*time.Minute)
 	if err != nil {
-		return 0
+		return ""
 	}
 	p, err := quota.Path()
 	if err != nil || quota.Store(p, s) != nil {
-		return 0
+		return ""
 	}
+	var parts []string
 	for i, w := range s.Windows {
-		if i > 0 {
-			fmt.Fprint(out, " · ")
-		}
 		label := "5h"
 		if i == 1 {
 			label = "7d"
 		}
 		if w.UsedPercent == nil {
-			fmt.Fprintf(out, "%s unknown", label)
+			parts = append(parts, label+" unknown")
 		} else {
-			fmt.Fprintf(out, "%s %.0f%%", label, *w.UsedPercent)
+			parts = append(parts, fmt.Sprintf("%s %.0f%%", label, *w.UsedPercent))
 		}
 	}
-	fmt.Fprintln(out)
-	return 0
+	return strings.Join(parts, " · ")
+}
+
+// statuslineRouting renders the routing summary for the statusline's session
+// ("" when the session is unknown, the log is missing or unreadable, or the
+// session has no routing activity). It reads a bounded tail of the log.
+func statuslineRouting(b []byte) (line string) {
+	defer func() {
+		if recover() != nil {
+			line = ""
+		}
+	}()
+	var in struct {
+		SessionID string `json:"session_id"`
+	}
+	if json.Unmarshal(b, &in) != nil {
+		return ""
+	}
+	hash := telemetry.HashSessionID(in.SessionID)
+	if hash == "" {
+		return ""
+	}
+	events, err := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
+	if err != nil {
+		return ""
+	}
+	return telemetry.SessionSummary(events, hash).Line()
+}
+
+func nonEmpty(parts ...string) []string {
+	var out []string
+	for _, p := range parts {
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
