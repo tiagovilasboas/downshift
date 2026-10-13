@@ -35,6 +35,7 @@ session).
 | # | Milestone | Outcome | Gate to exit |
 |---|-----------|---------|--------------|
 | M0 | Trustworthy core | No silent overspend; metrics can show a loss | done 2026-10-13, see "Done" |
+| MX | Visible in the flow | The developer sees subagents and routing live, inside the harness | U1-U2 live, U3-U4 next |
 | M1 | Proof of value | "Saved $X, quality unchanged" with a CI, automatically | 2 weeks of real data, control group, report |
 | M2 | Self-correcting | Downshift raises its own tier when cheap fails | retry-rate guard live, explainable decisions |
 | M3 | Zero config, every harness | Install and it works; session models and capability learned from public data | S1-S4 live, discovery at session start |
@@ -53,6 +54,19 @@ session).
 | P0.6 | `stats` shows a loss: signed delta, overspend, upshift cost (T3) | done |
 | P0.7 | `CLAUDE_CODE_SUBAGENT_MODEL` baseline; 32 KB classify cap (T4, T5) | done |
 | P0.8 | Final-decision guardrail invariant after every Route layer | done (`8e5cd24`) |
+
+## MX: visible in the flow
+
+Why: the product's work is invisible unless the developer opens a report. Seeing
+each subagent's model, cost and redo inside the harness is what builds trust.
+Specs: `docs/tasks/2026-10-13-ux/`.
+
+| ID | Task | Acceptance | Size | Depends |
+|----|------|------------|------|---------|
+| PX.1 | Statusline session summary (U1) | live line, < 50 ms, never breaks the statusline | S | T3 |
+| PX.2 | Subagent end line (U2) | one line with model, tokens, cost, would-be cost | S | — |
+| PX.3 | `/downshift` command: session tree, why, pause (U3) | tree shows redo (↻) per subagent | M | PX.2 |
+| PX.4 | `downshift watch` replaces the `dsmon` build (U4) | same binary, every harness | M | PX.3 |
 
 ## M1: proof of value
 
