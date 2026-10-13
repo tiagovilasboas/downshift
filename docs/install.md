@@ -135,6 +135,8 @@ go install github.com/tiagovilasboas/downshift/cmd/downshift@latest
 Pre-built binaries for macOS (arm64/amd64), Linux (arm64/amd64), and Windows (amd64)
 are available on the [Releases](https://github.com/tiagovilasboas/downshift/releases) page.
 
+**Fastest path:** `downshift setup` finds Claude Code, Cursor, Codex and Antigravity on this machine and merges every hook (plus the Claude Code statusline when none is set) into their hook files, using this binary's absolute path. It keeps unrelated keys and existing hooks, is idempotent, prints a diff, and saves a timestamped backup. `--dry-run` writes nothing, `--yes` skips the question, `--undo` restores the latest backup. KiroCrew needs its wrapper script and is only reported. The manual JSON follows.
+
 Add the hook to `~/.claude/settings.json`:
 
 ```json
@@ -153,6 +155,22 @@ Add the hook to `~/.claude/settings.json`:
 ```
 
 That's it. Every subagent your session spawns now runs on the right-sized model.
+
+### The /downshift command (Claude Code)
+
+Optional. A slash command that shows what Downshift did in the current session
+(a tree of subagents, why the last one ran where it did, pause and resume):
+
+```bash
+mkdir -p ~/.claude/commands
+cp .claude/commands/downshift.md ~/.claude/commands/downshift.md   # from this repository
+```
+
+Inside this repository the project copy already works. Then in Claude Code:
+`/downshift`, `/downshift --why`, `/downshift --pause`, `/downshift --resume`.
+The command only runs `downshift session` through the Bash tool, which its
+`allowed-tools` line limits to that command. The same `downshift session` works
+in a terminal for any harness. See [session-view.md](session-view.md).
 
 ## Install (Cursor)
 

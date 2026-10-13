@@ -93,6 +93,19 @@ kirocrew: false; the line is still computed by `telemetry.ChildEndLine` and no
 adapter prints it. `DOWNSHIFT_QUIET=1` turns it off. See
 [session-models.md](session-models.md#what-downshift-shows-while-it-works).
 
+## Session view (U3, 2026-10-13)
+
+`downshift session` (tree, `--why`, `--pause`) is shared code; what differs is
+whether a harness gives it a session id. `HarnessCapabilities.SessionEnv` names
+the variable a harness exports to commands run from it: Claude Code
+`CLAUDE_CODE_SESSION_ID` (seen set in a Bash tool call on Claude Code 2.1.289);
+others declare none and the command uses the latest session in the log. The
+hook payload carries a session id for Claude Code and Codex only, so only they
+group in the tree and can be paused per session. Cursor, Antigravity and
+KiroCrew events carry none: computed and logged, not groupable, not pausable
+(the global `DOWNSHIFT_NO_ROUTE=1` still applies). The `/downshift` slash
+command is Claude Code only. See [session-view.md](session-view.md).
+
 ## Public score coverage (capability path)
 
 Mapped means an entry in `internal/scoreindex/idmap.json` names the session id.
