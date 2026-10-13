@@ -34,7 +34,7 @@ the tier into a model id are in [complexity-weights.md](../complexity-weights.md
 4. **Graphify (optional)** — `DOWNSHIFT_GRAPHIFY_CMD` can supply a graph label on stdin;
    failures/timeouts do not escalate complexity. `DOWNSHIFT_GRAPHIFY=0` disables.
 5. **Semantic boost (MiniLM)** — `internal/semantic`: centroid distance can **raise**
-   complexity when regex is hesitant; it **never lowers** a class. `DOWNSHIFT_MINILM=0` disables.
+   complexity when regex is hesitant; it **never lowers** a class. It is ignored for no-signal prompts and cannot create COMPLEX without regex evidence. A lift is recorded as `SEMANTIC_BOOST`. `DOWNSHIFT_MINILM=0` disables.
 
 ---
 

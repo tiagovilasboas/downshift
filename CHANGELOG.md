@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Silent overspend on upshift.** The "doubt must not spend money" gate in `ShouldRewriteModel` had no production caller, so an unconfident UPSHIFT on a known session list was written (a Haiku parent on `"help"` went to Opus). Guardrail R8 (`R8_UNCONFIDENT_UPSHIFT`) now holds it in `Check`; R7 (`R7_UNCONFIDENT_UNKNOWN_FRONTIER`) holds an unconfident frontier recommendation when no current model is known. Deterministic lifts (risk floor, graph escalation, opted-in NB upshift) stay writable. See `docs/session-models.md`.
+- **Semantic boost over-classified to COMPLEX.** The hash-embedder boost lifted prompts with no regex signal to the frontier tier (the word "hook", web research, 8 of 40 trivial eval tasks). The boost is now ignored for no-signal prompts and can never produce COMPLEX without regex evidence. On the recorded outcome runs the pinned classifier floor moves from 38/40 to 37/40; the pin is explicit in `internal/adapt/outcome_eval_test.go`.
+- Hard Portuguese work no longer sits on MEDIUM: PT-BR mirror of the COMPLEX vocabulary (arquitetura, migração, redesenho, auditoria de segurança, sem downtime) and of the TRIVIAL/SIMPLE vocabulary, plus PT-BR risk terms (pagamento, reembolso, estorno, segredo, criptografia).
+
+### Added
+
+- **Inferred session (Claude Code).** With no hook list, native export, discovery cache or operator file, the session list is inferred from the current model: the catalog tier ladder below it, ending at the model itself. Downshift can descend; upshift never passes the current model. New capability `HarnessCapabilities.InferSession` (on for Claude Code only); `DOWNSHIFT_INFER_SESSION=off` disables it. `RewritePlan.Session` carries the planned list to the write guard.
+- **Semantic-boost provenance.** `Decision.SemanticLift` and the reason code `SEMANTIC_BOOST` mark a tier raised by the embedder, not a rule. `downshift stats` prints `Frontier decisions N (on doubt, no deterministic lift: M)`, the semantic-boost share, and a WARNING when M is above zero.
+- `docs/harness-matrix.md`: what each harness exposes for session discovery and quota (hook payload, model listing, quota source, session-start hook).
+- Tests: 178-prompt EN/PT-BR corpus, guardrail truth table, cost sweep, adversarial semantic cases, 63 PT-BR cases, provenance tests.
+
 ### Changed
 
 - Guardrail R9 (`R9_UNCONFIDENT_UNKNOWN_MID`): with no known current model and an unconfident classification, a mid-tier recommendation is no longer written (it could be an unnecessary upshift). Confident results and deterministic lifts (risk floor, graph escalation, NB upshift, operator tier floor) still apply. Previously an unrecognised trivial prompt fell to MEDIUM and was written as Sonnet.

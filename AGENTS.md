@@ -140,6 +140,16 @@ cmd/downshift/       — binary entry point, hook runners, try subcommand,
   current subagent already runs one, `Plan()` sets `PreserveExplicit=true`.
 - `updatedInput` preserves all sibling fields — only `model` and
   `reasoning_effort` are mutated.
+- Doubt never spends money. An unconfident UPSHIFT (R8) and an unconfident
+  frontier recommendation with no known current model (R7) are held in
+  `Check`; only deterministic lifts (risk floor, graph escalation, opted-in NB
+  upshift, tier floor) may move up. `ShouldRewriteModel` has no production
+  caller, so new holds belong in `Check`, not there.
+- The semantic boost is ignored for no-signal prompts and never creates
+  COMPLEX alone; it is recorded as `SEMANTIC_BOOST` and surfaced by `stats`.
+- `HarnessCapabilities.InferSession` (Claude Code only) lets an unknown
+  session be inferred from the current model; adapters pass `plan.Session` to
+  the write guard.
 - `DOWNSHIFT_SHADOW_WEIGHTS` records a candidate beside the production
   recommendation. It must not change hook output. `success` feedback does not
   create a `required_tier` label.

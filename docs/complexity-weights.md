@@ -37,7 +37,8 @@ MEDIUM. MEDIUM and COMPLEX are not lifted further by risk. The risk table is
 
 Optional later steps can only raise the class: graph context when the
 classifier is not confident, and the local MiniLM boost. Neither lowers a
-class. Both can be turned off (`DOWNSHIFT_GRAPHIFY=0`, `DOWNSHIFT_MINILM=0`).
+class. The MiniLM boost is ignored for no-signal prompts and cannot create
+COMPLEX without regex evidence. Both can be turned off (`DOWNSHIFT_GRAPHIFY=0`, `DOWNSHIFT_MINILM=0`).
 
 ## Weights
 

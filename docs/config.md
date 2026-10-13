@@ -32,6 +32,7 @@ Override paths:
 
 - `DOWNSHIFT_EVENT_LOG` — telemetry JSONL (advanced)
 - `DOWNSHIFT_SESSION_MODELS` — session allowlist file
+- `DOWNSHIFT_INFER_SESSION=off` — disable the inferred session (Claude Code); an unknown session then never rewrites
 
 ## Project tier floor (optional)
 
