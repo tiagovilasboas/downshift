@@ -30,6 +30,7 @@ HTTP proxy, but that is not the current shipping surface.
 | Honest telemetry | `rewrite_emitted` vs harness-reported honor (`resolved`) |
 | Project controls | Optional per-project tier floor (`.downshift/policy.json`), counted in `stats`; how a child ended (`child_ended`) |
 | Session discovery | `downshift models discover` per harness ([session-discovery.md](docs/session-discovery.md)); Cursor and Antigravity sources, catalog as an opt-in fallback |
+| Safe by default | Doubt never spends money (R7, R8, semantic boost capped); inferred session on Claude Code; `SEMANTIC_BOOST` provenance and a frontier-on-doubt alarm in `stats` |
 | Real cost | SubagentStop usage linkage (Claude Code); expand as harnesses expose usage |
 | Evaluation | Public [benchmark/REPORT.md](benchmark/REPORT.md); full regression in maintainer downshift-labs; shadow observation |
 | Docs | User docs (install, session models), [classifier contrib](docs/contrib/classifier.md), misroute workflow |
@@ -51,6 +52,9 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 | P1 | Optional: container image on GHCR |
 | P1 | Independent outcome suite and cost per completed task before any tier-memory promotion ([gap-tasks](docs/gap-tasks.md): GAP-SUITE, GAP-MEMORY-COUNTS) |
 | P1 | Real hook payloads for Cursor, Codex, Kiro, Antigravity, and the Claude Code failure event (GAP-PAYLOADS, GAP-CHILD-FAILURE) |
+| P1 | Learned complexity scorer for EN and PT-BR (hashed word and char n-grams plus structural features, embedded JSON under 1 MB, shadow first, abstain to MEDIUM). Needs about 2,400 labelled prompts, at least 40% PT-BR |
+| P1 | Confident upshift targets the smallest model that meets the tier, not the last id in the list (decision pending; `explicit_upshift` keeps the strongest) |
+| P1 | Session-start discovery hooks for harnesses that expose one (Codex, Cursor, Kiro); needs evidence per harness before `InferSession` is enabled there |
 | P2 | Promote routing v2 only with reviewed labels + shadow evidence |
 
 ---

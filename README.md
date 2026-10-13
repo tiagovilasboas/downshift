@@ -52,8 +52,8 @@ Billing and token usage happen at the subagent tier, not the session.
 **The routing loop:**
 
 1. **Intercept.** The harness fires a `PreToolUse` hook when a subagent is about to start. Downshift reads the task text in memory only; prompts are never stored.
-2. **Classify.** Deterministic signals (`internal/core`) + optional local MiniLM semantic scoring map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX. Weights and the tier map are in [docs/complexity-weights.md](docs/complexity-weights.md).
-3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/session-models.md)).
+2. **Classify.** Deterministic signals (`internal/core`) + optional local MiniLM semantic scoring map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX (English and Portuguese vocabulary). The semantic score only raises, needs a regex signal behind it, and cannot create COMPLEX on its own. Weights and the tier map are in [docs/complexity-weights.md](docs/complexity-weights.md).
+3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/session-models.md)). Doubt never spends money: an unconfident upshift, or an unconfident frontier pick with no known current model, is held. Only deterministic rules (risk floor, graph escalation, a tier floor) may move a task up.
 4. **Remember, in shadow.** If `adapt-memory.json` has a reviewed hit or miss for that class and feature, Downshift records the tier it would use. The spawn still uses the classifier tier.
 5. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
 
@@ -72,7 +72,7 @@ Internals: [docs/architecture.md](docs/architecture.md). The full runtime routin
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 ```
 
-**2. Tell Downshift which models your session can use.** Without this the hook never rewrites anything. List the model ids from your picker, **least to most capable**, in `~/.downshift/session-models.json` (or point `DOWNSHIFT_SESSION_MODELS` at a file):
+**2. Tell Downshift which models your session can use.** On Claude Code this step is optional: with no list from any source, Downshift infers the session from the current model (the tiers below it, ending at that model), so it can downshift but never upshift past what you already run. On every other harness, without a list the hook never rewrites anything. List the model ids from your picker, **least to most capable**, in `~/.downshift/session-models.json` (or point `DOWNSHIFT_SESSION_MODELS` at a file):
 
 ```json
 {
@@ -150,6 +150,7 @@ See [the context optimization guide](docs/context-optimization.md) for architect
 
 ## Cost and metrics
 
+- **Silent overspend alarm.** `downshift stats` prints `Frontier decisions N (on doubt, no deterministic lift: M)` and a WARNING when M is above zero. The `SEMANTIC_BOOST` reason code and its share show when the local embedder, not a rule, raised a tier. Both are prompt-free.
 - **Estimated, not billed.** Routing-only savings use normalized units. With native tokens, `downshift stats --days=7` also calculates catalog-priced costs and a same-token baseline comparison. A [dated audit](docs/evidence/billing-gap-audit.md) matched five linked Claude Code records to native models/tokens, including both positive-saving records. These estimates are not an invoice; the controlled period comparison remains open.
 - **Real usage on Claude Code (optional).** Add a `SubagentStop` hook running `downshift claude-code-subagent-stop` to record tokens and cost per subagent from its own transcript. Setup and limits: [session-models.md](docs/session-models.md#claude-code-real-usage).
 - **How a child ended (Claude Code, optional).** Add `downshift claude-code-post-tool-use` under `PostToolUseFailure` too. It then records a closed status per Agent/Task child: `completed`, `launched` (background, not a success), `interrupted`, `error`, `stopped` (the child ended, with no outcome claim), or `unknown`. The field is absent when no status applies. The error text is never stored, and this is an observation, not a decision, so it does not change the decision counts. `downshift stats --by-harness` prints a Markdown review table (spawns, applied, held, upshift/downshift, effort and the linked tokens and estimated cost per harness and tier, plus the guardrail that held each spawn) for curating what the router chose; it holds counts only, no prompts. `downshift stats` prints a "How children ended" section when any are present, and the export carries them as `child_status`. When a failed (`error` or `interrupted`) child is followed by another spawn in the same session within 10 minutes, the same section adds a "Respawned after a failure" count. It is a hint only: the next spawn may be unrelated work, so it never becomes a tier label.
