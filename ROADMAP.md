@@ -3,6 +3,7 @@
 Public direction for the open-source project. Timelines are indicative.
 
 **Status:** beta — exit criteria in [docs/beta-exit.md](docs/beta-exit.md).  
+**Product roadmap (owner, milestones and tasks):** [docs/product/roadmap.md](docs/product/roadmap.md)  
 **Maintainer execution:** [docs/internal/launch-waves.md](docs/internal/launch-waves.md) (see [publishing boundaries](docs/publishing-boundaries.md)).
 
 Downshift by Tiago de Carvalho Vilas Boas  
