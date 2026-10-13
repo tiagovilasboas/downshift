@@ -138,6 +138,11 @@ type Event struct {
 	// events written before the trace existed and on non-decision records.
 	RoutingPolicy string   `json:"routing_policy,omitempty"`
 	ReasonCodes   []string `json:"reason_codes,omitempty"`
+	// UpshiftCostRatio is the catalog list-price ratio (routed over requested,
+	// input plus output per 1M) recorded on an UPSHIFT whose two prices are both
+	// known and whose target costs more. It lets stats charge the extra cost.
+	// Absent on old logs and when either price is unknown (then neutral).
+	UpshiftCostRatio float64 `json:"upshift_cost_ratio,omitempty"`
 	// Confidence is reserved and never set: the router has no calibrated
 	// probability, so the key stays absent rather than carry a made-up number.
 	Confidence *float64 `json:"confidence,omitempty"`
@@ -159,17 +164,24 @@ func (e Event) HasRealCost() bool {
 	return e.ActualCostUSD != nil && e.BaselineCostUSD != nil
 }
 
-// RealSavedUSD returns baseline minus actual cost clamped at zero.
-// Returns 0 when real costs are missing or when the routed model cost more.
-func (e Event) RealSavedUSD() float64 {
+// RealDeltaUSD returns baseline minus actual cost, signed: negative when the
+// routed model cost more than the baseline (an overspend). Returns 0 when real
+// costs are missing.
+func (e Event) RealDeltaUSD() float64 {
 	if !e.HasRealCost() {
 		return 0
 	}
-	saved := *e.BaselineCostUSD - *e.ActualCostUSD
-	if saved < 0 {
-		return 0
+	return *e.BaselineCostUSD - *e.ActualCostUSD
+}
+
+// RealSavedUSD returns baseline minus actual cost clamped at zero.
+// Returns 0 when real costs are missing or when the routed model cost more.
+// Use RealDeltaUSD when an overspend must stay visible.
+func (e Event) RealSavedUSD() float64 {
+	if delta := e.RealDeltaUSD(); delta > 0 {
+		return delta
 	}
-	return saved
+	return 0
 }
 
 // TokenUsageOrZero returns the event token usage, nil-safe.
@@ -334,6 +346,13 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		RoutingPolicy:    RoutingPolicy,
 		ReasonCodes:      ReasonCodes(d),
 	}
+	if d.Verdict == core.VerdictUpshift {
+		from := d.CurrentModel.InputM + d.CurrentModel.OutputM
+		to := d.Model.InputM + d.Model.OutputM
+		if from > 0 && to > from {
+			ev.UpshiftCostRatio = to / from
+		}
+	}
 	if len(d.Corrections) > 0 {
 		ev.SafeVerdict = d.SafeVerdict.String()
 		ev.Corrections = d.Corrections
@@ -472,6 +491,12 @@ type Stats struct {
 	// RealCostEvents counts events where HasRealCost is true.
 	RealSavedUSD   float64
 	RealCostEvents int
+	// RealCostDeltaUSD is the signed sum of Event.RealDeltaUSD (baseline minus
+	// actual): negative when the router cost more than the baseline overall.
+	// RealOverspendUSD is the sum of the negative deltas as a positive number,
+	// the money spent above baseline on individual events.
+	RealCostDeltaUSD float64
+	RealOverspendUSD float64
 
 	// ActualCost fields include catalog-priced observed spend even when the
 	// requested baseline is unknown and no savings comparison can be made.
@@ -544,6 +569,16 @@ type Stats struct {
 	// such usage events contributed. Zero usage means unobserved, not measured zero.
 	ObservedChildTokens int64
 	ObservedChildUsage  int
+}
+
+// addRealDelta folds one real-cost event into the clamped and signed totals.
+func (s *Stats) addRealDelta(ev Event) {
+	s.RealSavedUSD += ev.RealSavedUSD()
+	delta := ev.RealDeltaUSD()
+	s.RealCostDeltaUSD += delta
+	if delta < 0 {
+		s.RealOverspendUSD -= delta
+	}
 }
 
 // NormSaved returns normalised savings: absolute units saved and fraction.
@@ -677,7 +712,7 @@ func Aggregate(events []Event) Stats {
 			}
 			if ev.HasRealCost() {
 				s.RealCostEvents++
-				s.RealSavedUSD += ev.RealSavedUSD()
+				s.addRealDelta(ev)
 			}
 			continue
 		}
@@ -715,13 +750,17 @@ func Aggregate(events []Event) Stats {
 		s.NormBaseline += 1.0
 		if ev.Verdict == "DOWNSHIFT" && applied && SavingsCredit(ev) && ev.EstimatedSavings > 0 && ev.EstimatedSavings < 1 {
 			s.NormRouted += 1 - ev.EstimatedSavings
+		} else if ev.Verdict == "UPSHIFT" && applied && ev.UpshiftCostRatio > 1 {
+			// An applied upshift costs more than the baseline. Charge the
+			// known price ratio; an unknown ratio stays neutral (1.0).
+			s.NormRouted += ev.UpshiftCostRatio
 		} else {
 			s.NormRouted += 1.0
 		}
 		// Real provider cost: only events with token usage contribute.
 		if ev.HasRealCost() {
 			s.RealCostEvents++
-			s.RealSavedUSD += ev.RealSavedUSD()
+			s.addRealDelta(ev)
 		}
 		// Self-correction: the verdict stands, the safe action applied.
 		if len(ev.Corrections) > 0 {
@@ -846,6 +885,8 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "\n")
 		fmt.Fprintf(w, "Real provider cost (%d events with token usage)\n", s.RealCostEvents)
 		fmt.Fprintf(w, "Real saved            $%10.2f  (catalog list-price counterfactual)\n", s.RealSavedUSD)
+		fmt.Fprintf(w, "Real cost delta       $%10.2f  (baseline minus actual; negative means the router cost more)\n", s.RealCostDeltaUSD)
+		fmt.Fprintf(w, "Real overspend        $%10.2f  (events that cost more than their baseline)\n", s.RealOverspendUSD)
 	} else if s.ActualCostEvents > 0 {
 		fmt.Fprintf(w, "Savings comparison: no events with a known requested baseline yet.\n")
 	} else {

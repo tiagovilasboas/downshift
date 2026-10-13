@@ -20,7 +20,9 @@ Fields useful for graduation tracking:
 | `actual_cost_events` | Events with observed token usage priced against a known routed model, including unknown-baseline events |
 | `actual_cost_usd` | Sum of observed token costs at catalog list prices (not provider invoices) |
 | `real_cost_events` | Events with both actual and baseline catalog-priced USD |
-| `real_saved_usd` | Sum of baseline − actual (catalog pricing) |
+| `real_saved_usd` | Sum of baseline − actual (catalog pricing), each event clamped at zero, so it never goes negative |
+| `real_cost_delta_usd` | Signed sum of baseline − actual over the same events. Negative means the router cost more than the baseline overall. Omitted when `0` |
+| `real_overspend_usd` | Sum of the negative per-event deltas as a positive number: money spent above baseline. Omitted when `0` |
 | `observed_child_tokens` | Sum of input, output, and cached tokens from usage events that carry token counts |
 | `observed_child_usage` | Count of those usage events; `0` means unobserved, not a measured zero |
 | `usage_records` | All post-hoc usage records, including unlinked records |
@@ -81,3 +83,7 @@ observed.
 `child_ended` events record how a Claude Code Agent/Task child ended. Their `child_status` is one of `completed`, `launched`, `interrupted`, `error`, `stopped` or `unknown`. They are observations, not decisions: they never change `total`, the verdict counts or savings. The error text is never stored. Recording them requires `claude-code-post-tool-use` registered under `PostToolUseFailure` as well as `PostToolUse`; the failure payload was documented but not captured from a real session, so the field names should be checked against one before relying on them.
 
 `cost_sessions`, `cost_subagents`, `max_session_cost_usd` and `max_subagent_cost_usd` summarise observed, catalog-priced cost grouped by the hashed session id and agent id on usage records. Records without an id are in the totals but not in the groups. No individual session id is exported. These are estimates, not invoices.
+
+`real_cost_delta_usd` and `real_overspend_usd` are additive: older readers ignore them, and older exports lack them. Read `real_saved_usd` together with `real_overspend_usd`, since the first hides overspend by clamping each event. `downshift stats` prints both next to "Real saved".
+
+The normalised units (`norm_baseline`, `norm_routed`) charge an applied UPSHIFT its extra catalog list-price cost (the `upshift_cost_ratio` recorded on the decision event, routed over requested price). When either price is unknown the upshift stays neutral at 1.0, so `norm_routed` can exceed `norm_baseline` and the normalised savings can be negative.
