@@ -144,31 +144,16 @@ cmd/downshift/       — binary entry point, hook runners, try subcommand,
   current subagent already runs one, `Plan()` sets `PreserveExplicit=true`.
 - `updatedInput` preserves all sibling fields — only `model` and
   `reasoning_effort` are mutated.
-- Doubt never spends money. An unconfident UPSHIFT (R8) and an unconfident
-  frontier recommendation with no known current model (R7) are held in
-  `Check`; only deterministic lifts (risk floor, graph escalation, opted-in NB
-  upshift, tier floor; one `deterministicLift` helper in `selfcheck.go`) may move
-  up. New holds belong in `Check`.
-- The semantic boost is ignored for no-signal prompts and never creates
-  COMPLEX alone; it is recorded as `SEMANTIC_BOOST` and surfaced by `stats`.
-- `HarnessCapabilities.InferSession` (Claude Code only) lets an unknown
-  session be inferred from the current model; adapters pass `plan.Session` to
-  the write guard.
-- `DOWNSHIFT_SHADOW_WEIGHTS` records a candidate beside the production
-  recommendation. It must not change hook output. `success` feedback does not
-  create a `required_tier` label.
-- Every adapter exposes task text to the shared loop only for in-memory feature
-  extraction; raw prompts are never persisted.
-- Feedback and training stay harness-agnostic. Harnesses report routing IDs;
-  engineer-reviewed outcomes are recorded through the shared CLI.
-- Binary outcomes alone do not establish minimum model tier. Only explicit
-  reviewed `required_tier` labels enter supervised training.
-- Candidate weights are evaluated separately and are never auto-activated.
-- Claude Code is not capped at three models. `fable` is a valid Task family
-  name. The install example omits `claude-fable-5-1` on purpose: upshift
-  writes the last id in `session-models.json`, so that expensive frontier
-  upshift stays off until the operator appends the id. Do not "fix" the
-  example by adding Fable, and do not treat the omission as a missing model.
+- Doubt never spends money: an unconfident UPSHIFT (R8) and an unconfident frontier pick with no
+  current model (R7) are held in `Check`; only `deterministicLift` (selfcheck.go) may move up.
+- The semantic boost ignores no-signal prompts, never creates COMPLEX alone, and is logged as `SEMANTIC_BOOST`.
+- `InferSession` (Claude Code only) infers an unknown session from the current model; adapters pass
+  `plan.Session` to the write guard.
+- Shadow only, never auto-activated: `DOWNSHIFT_SHADOW_WEIGHTS`, candidate weights, adapt memory, and score
+  selection unless `DOWNSHIFT_SCORE_ROUTING=1`. `success` feedback never creates a `required_tier` label.
+- Task text stays in memory for feature extraction and is never persisted. Feedback and training are
+  harness-agnostic; only explicit reviewed `required_tier` labels enter supervised training.
+- The install example omits `claude-fable-5-1` on purpose (upshift writes the last listed id); do not add it.
 
 ### Reference (read on demand)
 
