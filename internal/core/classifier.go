@@ -114,6 +114,9 @@ type Classification struct {
 	// NoSignal is true when no content signal fired and Medium is only the
 	// safe default.
 	NoSignal bool
+	// SemanticLift is true when the semantic boost raised the complexity above
+	// what the regex rules chose. It makes a non-regex lift visible in telemetry.
+	SemanticLift bool
 }
 
 // Classify scores a task prompt against all complexity classes and returns

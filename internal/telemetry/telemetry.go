@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -504,6 +505,12 @@ type Stats struct {
 	// ReasonCodes counts decisions per reason code. Events written before
 	// the decision trace carry no codes and add nothing here.
 	ReasonCodes map[string]int
+	// FrontierDecisions counts decisions that picked the frontier tier.
+	// FrontierOnDoubt counts those that rest on an unconfident classification
+	// with no deterministic lift (risk floor, graph escalation, NB upshift, tier
+	// floor): the silent-overspend shape. It should stay at zero.
+	FrontierDecisions int
+	FrontierOnDoubt   int
 
 	// Corrected counts events where a guardrail held the decision: the
 	// classified verdict stands in the log, but adapters applied the safe
@@ -682,6 +689,12 @@ func Aggregate(events []Event) Stats {
 		for _, code := range ev.ReasonCodes {
 			s.ReasonCodes[code]++
 		}
+		if strings.EqualFold(ev.Tier, core.TierFrontier.String()) {
+			s.FrontierDecisions++
+			if frontierOnDoubt(ev.ReasonCodes) {
+				s.FrontierOnDoubt++
+			}
+		}
 		applied := AppliedRewrite(ev.Outcome, ev.Corrections)
 		switch {
 		case ev.Verdict == "DOWNSHIFT" && applied:
@@ -849,6 +862,13 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Honor                 observed %d  unobserved %d\n", s.HonorObserved, s.HonorUnobserved)
 		fmt.Fprintf(w, "Quota                 available %d  held %d  unknown %d\n", s.QuotaAvailable, s.QuotaHeld, s.QuotaUnknown)
 		fmt.Fprintf(w, "Usage                 observed %d  unobserved %d\n", s.UsageObserved, s.UsageUnobserved)
+		fmt.Fprintf(w, "Frontier decisions    %d  (on doubt, no deterministic lift: %d)\n", s.FrontierDecisions, s.FrontierOnDoubt)
+		if n := s.ReasonCodes[ReasonSemanticBoost]; n > 0 {
+			fmt.Fprintf(w, "Semantic boost        %d of %d decisions (%.0f%%) were raised by the embedder, not a rule\n", n, s.Total, pct(n, s.Total))
+		}
+		if s.FrontierOnDoubt > 0 {
+			fmt.Fprintf(w, "WARNING: %d frontier decision(s) rest on an unconfident classification with no deterministic lift; check for silent overspend.\n", s.FrontierOnDoubt)
+		}
 	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
 }
@@ -881,4 +901,19 @@ func printChildStatus(w io.Writer, counts map[ChildStatus]int) {
 		}
 	}
 	fmt.Fprintf(w, "  Note: launched is a background start, not a success.\n")
+}
+
+// frontierOnDoubt reports whether a decision's reason codes show an unconfident
+// classification that no deterministic rule lifted.
+func frontierOnDoubt(codes []string) bool {
+	unconfident := false
+	for _, c := range codes {
+		switch c {
+		case ReasonClassifierUnconfident:
+			unconfident = true
+		case ReasonRiskFloor, ReasonGraphEscalation, ReasonNBUpshiftApplied, ReasonTierFloor:
+			return false
+		}
+	}
+	return unconfident
 }

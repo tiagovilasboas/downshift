@@ -91,6 +91,9 @@ type Decision struct {
 	// NoSignal is true when the classifier matched no content signal and the
 	// complexity is only the safe Medium default (Classification.NoSignal).
 	NoSignal bool
+	// SemanticLift is true when the semantic boost, not a regex rule, raised
+	// the complexity. Telemetry records it so non-deterministic lifts stay visible.
+	SemanticLift bool
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -154,6 +157,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		NBUpshift:      nbUp,
 		NBDownshift:    nbDown,
 		NoSignal:       cls.NoSignal,
+		SemanticLift:   cls.SemanticLift,
 	}
 	d.Intent = IntentFor(prompt, cls, d, res)
 	// Self-correction validates the decision against the guardrails before

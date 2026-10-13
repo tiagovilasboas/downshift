@@ -21,6 +21,7 @@ const (
 	ReasonClassifierConfident   = "CLASSIFIER_CONFIDENT"
 	ReasonClassifierUnconfident = "CLASSIFIER_UNCONFIDENT"
 	ReasonNoSignal              = "NO_SIGNAL"
+	ReasonSemanticBoost         = "SEMANTIC_BOOST"
 	ReasonRiskCategory          = "RISK_CATEGORY"
 	ReasonRiskFloor             = "RISK_FLOOR"
 	ReasonGraphEscalation       = "GRAPH_ESCALATION"
@@ -58,6 +59,9 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.NoSignal {
 		set[ReasonNoSignal] = true
+	}
+	if d.SemanticLift {
+		set[ReasonSemanticBoost] = true
 	}
 	if len(d.Risk) > 0 {
 		set[ReasonRiskCategory] = true
