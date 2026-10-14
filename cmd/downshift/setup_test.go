@@ -379,6 +379,31 @@ func TestSetupFlatShapes(t *testing.T) {
 	}
 }
 
+// Antigravity also accepts hooks inside named groups. A Downshift hook there
+// is repointed in place, not duplicated at the root.
+func TestSetupAntigravityNamedGroupIsNotDuplicated(t *testing.T) {
+	e := newSetupEnv(t, ".gemini")
+	e.write(".gemini/config/hooks.json", `{"downshift-model-router":{"enabled":true,"PreToolUse":[{"matcher":"invoke_subagent|spawn_agent","hooks":[{"type":"command","command":"/old/downshift antigravity","timeout":5}]}]},"other-sensor":{"enabled":true,"PreToolUse":[{"matcher":"run_command","hooks":[{"type":"command","command":"/x/sensor"}]}]}}`)
+	if code, out, _ := e.run("--yes"); code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	doc := parseDoc(t, e.read(".gemini/config/hooks.json"))
+	if _, dup := doc["PreToolUse"]; dup {
+		t.Fatalf("duplicate root PreToolUse added: %v", doc["PreToolUse"])
+	}
+	group := doc["downshift-model-router"].(map[string]any)["PreToolUse"].([]any)[0].(map[string]any)
+	if got := group["hooks"].([]any)[0].(map[string]any)["command"]; got != testBin+" antigravity" {
+		t.Errorf("command = %v, want repointed to %s antigravity", got, testBin)
+	}
+	if group["matcher"] != "invoke_subagent|spawn_agent" {
+		t.Errorf("operator matcher changed: %v", group["matcher"])
+	}
+	other := doc["other-sensor"].(map[string]any)["PreToolUse"].([]any)[0].(map[string]any)["hooks"].([]any)[0].(map[string]any)
+	if other["command"] != "/x/sensor" {
+		t.Errorf("unrelated hook changed: %v", other)
+	}
+}
+
 func TestSetupManualHarnessIsReportedNotWritten(t *testing.T) {
 	e := newSetupEnv(t, ".kiro")
 	code, out, _ := e.run("--yes")
