@@ -254,6 +254,9 @@ func TestSession_FastOnALargeLog(t *testing.T) {
 		}
 	}
 	t.Logf("session tree on a 50 MB log: %v", best)
+	if raceEnabled {
+		t.Skip("latency bound does not apply under -race")
+	}
 	// Locally this is ~25ms; decoding the whole 50 MB log takes ~400ms. 200ms
 	// leaves shared-runner headroom and still catches a full read.
 	if best > 200*time.Millisecond {
