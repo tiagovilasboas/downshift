@@ -53,6 +53,14 @@ Native config is not a session allowlist either:
 
 - Antigravity uses the `Subagents` array in `invoke_subagent` calls, where subagent models (`flash_lite`, `flash`, `pro`, `inherit`) are mapped directly according to routing decisions.
 
+## Main session policy: opusplan (Claude Code)
+
+Downshift routes subagents; the main session model is the harness's. For Claude Code, `downshift setup` writes `"model": "opusplan"` to `~/.claude/settings.json` when no model is set: Opus while plan mode is on, Sonnet for execution ([model config](https://code.claude.com/docs/en/model-config)). A pinned `model` is never replaced; setup prints how to switch, and `downshift doctor` shows the policy in effect as `main session`.
+
+The two layers fit together. Claude Code resolves an inheriting subagent's model when it starts it, so a subagent spawned during plan mode would run on Opus. The adapter reads the parent model from the last assistant message in the transcript, which is the resolved model (Opus or Sonnet), not the alias, so the baseline stays known and the subagent is right-sized as usual. This follows from the code path; it has not yet been observed in a live plan-mode spawn.
+
+Opt out by pinning a model (`"model": "claude-sonnet-5-5"`, `/model`, `--model` or `ANTHROPIC_MODEL`). `ANTHROPIC_DEFAULT_MODEL=opusplan` is ignored by Claude Code; use the `model` setting.
+
 ## Where the list comes from
 
 Same order for every harness:

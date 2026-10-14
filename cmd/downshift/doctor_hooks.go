@@ -157,6 +157,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	}
 	var cmds []foundCommand
 	collectCommands(raw, nil, &cmds)
+	checkMainPolicy(add, h, raw)
 
 	// Hooks wired.
 	var found []wiredHook
@@ -402,5 +403,31 @@ func checkHonored(add func(id, status, detail, fix string), mine []telemetry.Eve
 	default:
 		add("rewrite honored", doctorWarn, "no rewrite emitted yet, so none observed",
 			`downshift try "rename a variable"  (shows what would be rewritten), then spawn that task`)
+	}
+}
+
+// checkMainPolicy reports the main-session policy setup writes for a harness
+// (setupDefault entries with a Note, today Claude Code's "model": "opusplan").
+// A pinned model is a valid choice, so it is reported, not warned about.
+func checkMainPolicy(add func(id, status, detail, fix string), harness string, raw any) {
+	doc, _ := raw.(map[string]any)
+	for _, t := range setupTargets {
+		if t.Name != harness {
+			continue
+		}
+		for _, d := range t.Defaults {
+			if d.Note == "" {
+				continue
+			}
+			v, ok := doc[d.Key]
+			switch {
+			case ok && fmt.Sprint(v) == fmt.Sprint(d.Value):
+				add("main session", doctorOK, fmt.Sprintf("%s %v: Downshift routes the subagents under it", d.Key, d.Value), "")
+			case ok:
+				add("main session", doctorOK, fmt.Sprintf("%s %v (pinned)", d.Key, v), d.Note)
+			default:
+				add("main session", doctorOK, fmt.Sprintf("no %s set: harness default", d.Key), d.Note)
+			}
+		}
 	}
 }

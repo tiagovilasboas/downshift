@@ -456,8 +456,13 @@ func asObj(v any) (*jobj, bool) { o, ok := v.(*jobj); return o, ok }
 func mergeTarget(doc *jobj, t setupTarget, binary string) ([]string, error) {
 	var notes []string
 	for _, d := range t.Defaults {
-		if _, ok := doc.get(d.Key); !ok {
+		v, ok := doc.get(d.Key)
+		if !ok {
 			doc.set(d.Key, d.Value)
+			continue
+		}
+		if d.Note != "" && fmt.Sprint(v) != fmt.Sprint(d.Value) {
+			notes = append(notes, d.Note)
 		}
 	}
 	holder := doc

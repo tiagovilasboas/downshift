@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Main-session policy: opusplan on Claude Code.** `downshift setup` writes `"model": "opusplan"` (Opus in plan mode, Sonnet for execution) when `~/.claude/settings.json` has no model; a pinned model is kept and setup prints how to switch. `downshift doctor` reports it as `main session`. Downshift keeps routing the subagents underneath. See `docs/session-models.md`.
+
 ## [0.1.0-beta.8] — 2026-10-14
 
 ### Added
