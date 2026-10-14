@@ -9,8 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-beta.8] — 2026-10-14
+
+### Added
+
+- **Control group and `downshift report`.** A hash-chosen share of spawns is left unrouted on purpose (`outcome: baseline`, reason code `CONTROL`) in every shared runner. `downshift report [--days=N] [--json]` compares routed and control spawns by cost per completed task and rework rate, with a 95% bootstrap interval, and prints `not enough data` below 20 completed, priced tasks per group. See `docs/report.md`.
+- **Team pilot protocol.** `docs/pilot.md` (two weeks, control share 0.5, Claude Code) and the "Pilot weekly report" issue template.
+- `downshift setup [--dry-run]` wires the hooks into every harness found (backup, diff, `--undo`); `downshift doctor` is now a checklist (`--verbose`, `--json`).
+- `downshift watch`: the session tree, live. Children with no end after 2 h show `?`.
+- `downshift config [--json]`: every effective setting with its value and source.
+
+### Changed
+
+- **The control group is on by default.** `DOWNSHIFT_CONTROL_SHARE` defaults to `0.10`, so about 1 in 10 spawns now runs on the model the harness asked for. Set it to `0` to route every spawn. `DOWNSHIFT_NO_ROUTE=1` and session pauses are unchanged and are not counted as control.
+- A stale quota snapshot holds rewrites for at most 1 h past expiry, then counts as absent (required mode keeps holding); `doctor` and the statusline say so.
+
 ### Fixed
 
+- `TestSession_FastOnALargeLog` skips its wall-clock bound under `-race`, which failed the scheduled full CI.
 - **Silent overspend on upshift.** The "doubt must not spend money" gate in `ShouldRewriteModel` had no production caller, so an unconfident UPSHIFT on a known session list was written (a Haiku parent on `"help"` went to Opus). Guardrail R8 (`R8_UNCONFIDENT_UPSHIFT`) now holds it in `Check`; R7 (`R7_UNCONFIDENT_UNKNOWN_FRONTIER`) holds an unconfident frontier recommendation when no current model is known. Deterministic lifts (risk floor, graph escalation, opted-in NB upshift) stay writable. See `docs/session-models.md`.
 - **Semantic boost over-classified to COMPLEX.** The hash-embedder boost lifted prompts with no regex signal to the frontier tier (the word "hook", web research, 8 of 40 trivial eval tasks). The boost is now ignored for no-signal prompts and can never produce COMPLEX without regex evidence. On the recorded outcome runs the pinned classifier floor moves from 38/40 to 37/40; the pin is explicit in `internal/adapt/outcome_eval_test.go`.
 - Hard Portuguese work no longer sits on MEDIUM: PT-BR mirror of the COMPLEX vocabulary (arquitetura, migração, redesenho, auditoria de segurança, sem downtime) and of the TRIVIAL/SIMPLE vocabulary, plus PT-BR risk terms (pagamento, reembolso, estorno, segredo, criptografia).
