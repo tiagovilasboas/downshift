@@ -36,3 +36,29 @@ func TestRequestedModel_Baseline(t *testing.T) {
 		})
 	}
 }
+
+// With several subagents, one routing row describes one child: the last one that
+// has a Prompt. The task text, the requested model and the decision must all be
+// about that same child, or the row pairs one task with another child's tier.
+func TestDecidedSubagentIsTheSameForTextModelAndDecision(t *testing.T) {
+	const trivial = "fix typo in README"
+	const heavy = "rearchitect the distributed consensus protocol and multi-region database replication"
+	for _, tc := range []struct {
+		name, args, wantText, wantModel string
+	}{
+		{"last child decides", `{"Subagents":[{"Prompt":"` + trivial + `","Model":"flash"},{"Prompt":"` + heavy + `","Model":"pro"}]}`, heavy, "pro"},
+		{"last child with no Model: unknown, not the earlier one's", `{"Subagents":[{"Prompt":"` + trivial + `","Model":"flash"},{"Prompt":"` + heavy + `"}]}`, heavy, ""},
+		{"a trailing child with no Prompt is skipped", `{"Subagents":[{"Prompt":"` + heavy + `","Model":"pro"},{"Model":"flash"}]}`, heavy, "pro"},
+		{"one child", `{"Subagents":[{"Prompt":"` + trivial + `","Model":"flash"}]}`, trivial, "flash"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ev := antigravity.Event{ToolCall: antigravity.ToolCall{Name: "invoke_subagent", Args: json.RawMessage(tc.args)}}
+			if got := ev.TaskText(); got != tc.wantText {
+				t.Errorf("TaskText() = %q, want %q", got, tc.wantText)
+			}
+			if got := ev.RequestedModel(); got != tc.wantModel {
+				t.Errorf("RequestedModel() = %q, want %q", got, tc.wantModel)
+			}
+		})
+	}
+}
