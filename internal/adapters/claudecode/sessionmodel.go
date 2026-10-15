@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
@@ -58,12 +59,44 @@ func subagentModelFromEnv(subagentType string) string {
 	return v
 }
 
+// transcriptWaitTotal and transcriptWaitStep bound how long the hook waits for the parent's assistant message
+// to reach the transcript (variables so tests can shorten them).
+//
+// Claude Code writes the transcript asynchronously. On the first spawn of a session the PreToolUse hook can run
+// before the assistant message that carries the session model is on disk: in 3 fresh `claude -p` runs the
+// transcript had no assistant line at the hook in 2 of them, and one 0.5 s later. Reading it once then gave an
+// unknown baseline, and an unknown baseline holds the rewrite, so those spawns were never routed. 400 ms was
+// enough in every measurement and is small next to a hook's own timeout.
+var (
+	transcriptWaitTotal = 400 * time.Millisecond
+	transcriptWaitStep  = 40 * time.Millisecond
+)
+
 // sessionModelFromTranscript returns the model of the last assistant message in
 // the parent session transcript. Claude Code's PreToolUse payload carries the
 // transcript path but not the session model. Only the model id is kept; the
 // message content is never stored.
+//
+// When the file exists but holds no assistant model yet, it is read again for a short, bounded time. A missing
+// file is not waited for: a session run without persistence never writes one, and waiting would only delay
+// every spawn.
 func sessionModelFromTranscript(path string) string {
-	return hookutil.LastInTranscriptTail(path, assistantModel)
+	if m := hookutil.LastInTranscriptTail(path, assistantModel); m != "" {
+		return m
+	}
+	if path == "" {
+		return ""
+	}
+	if _, err := os.Stat(path); err != nil {
+		return ""
+	}
+	for waited := time.Duration(0); waited < transcriptWaitTotal; waited += transcriptWaitStep {
+		time.Sleep(transcriptWaitStep)
+		if m := hookutil.LastInTranscriptTail(path, assistantModel); m != "" {
+			return m
+		}
+	}
+	return ""
 }
 
 // assistantModel reads message.model from an assistant line. Claude Code marks

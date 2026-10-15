@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Claude Code: the first spawn of a session often had no baseline, so it was never routed.** Claude Code writes the transcript asynchronously, and the PreToolUse hook can run before the assistant message that carries the session model is on disk (measured: no assistant line at the hook in 2 of 3 fresh `claude -p` runs, and one 0.5 s later). The decision then read `unknown` and was held (`HELD_UNCONFIDENT_UNKNOWN_MID`). The hook now re-reads an existing transcript for up to 400 ms when it holds no model yet. A missing file is not waited for, so sessions run without persistence (`--no-session-persistence`) are not delayed; they still have no baseline and are not routed.
+
 ### Added
 
 - **The subagent type on every Claude Code decision, and unknown baselines counted by type.** Each decision records `agent_type` as a label: a built-in name, `unspecified`, or `custom` (a custom agent's own name is never stored, because `stats --export` is pasted into public issues). `stats --detail` gains "Baseline by agent type" (decisions and unknown baselines per type, most unknown first) and the export gains `agent_types`. It turns "the unknown rate dropped" into a number that can be attributed, such as the `Explore` and `Plan` fix. Events written before this have no type and are not counted per type.

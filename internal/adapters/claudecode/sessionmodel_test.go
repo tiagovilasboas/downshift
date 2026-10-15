@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
@@ -153,4 +154,75 @@ func TestCurrentModel_ExploreUnderFableStaysUnknown(t *testing.T) {
 			t.Errorf("%s under Fable: got %q, want the main model", typ, got)
 		}
 	}
+}
+
+// Claude Code writes the transcript asynchronously: on the first spawn of a session the PreToolUse hook can
+// run before the assistant message that carries the model reaches the disk (measured: the transcript had no
+// assistant line at the hook in 2 of 3 fresh `claude -p` runs and one 0.5 s later). The baseline must not
+// turn into "unknown" because of that, so a missing model is waited for, briefly.
+func TestSessionModelFromTranscript_WaitsForTheAssistantMessageToLand(t *testing.T) {
+	withTranscriptWait(t, 600*time.Millisecond, 10*time.Millisecond)
+	path := writeTranscript(t, `{"type":"user","message":{"content":"hi"}}`+"\n")
+	go func() {
+		time.Sleep(120 * time.Millisecond)
+		f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o600)
+		if err != nil {
+			return
+		}
+		defer f.Close()
+		f.WriteString(`{"type":"assistant","message":{"model":"m-late"}}` + "\n")
+	}()
+	start := time.Now()
+	if got := sessionModelFromTranscript(path); got != "m-late" {
+		t.Fatalf("got %q, want the model written 120 ms after the hook started", got)
+	}
+	if d := time.Since(start); d > 500*time.Millisecond {
+		t.Errorf("waited %s, it should return as soon as the model appears", d)
+	}
+}
+
+func TestSessionModelFromTranscript_NoWaitWhenTheModelIsAlreadyThere(t *testing.T) {
+	withTranscriptWait(t, 2*time.Second, 50*time.Millisecond)
+	path := writeTranscript(t, `{"type":"assistant","message":{"model":"m-now"}}`+"\n")
+	start := time.Now()
+	if got := sessionModelFromTranscript(path); got != "m-now" {
+		t.Fatalf("got %q", got)
+	}
+	if d := time.Since(start); d > 100*time.Millisecond {
+		t.Errorf("a model already on disk must not be waited for: %s", d)
+	}
+}
+
+// A transcript that never gets a model (a session that has not answered yet) costs a bounded wait, not a hang.
+func TestSessionModelFromTranscript_GivesUpAfterTheBoundedWait(t *testing.T) {
+	withTranscriptWait(t, 150*time.Millisecond, 10*time.Millisecond)
+	path := writeTranscript(t, `{"type":"user","message":{"content":"hi"}}`+"\n")
+	start := time.Now()
+	if got := sessionModelFromTranscript(path); got != "" {
+		t.Fatalf("got %q, want unknown", got)
+	}
+	if d := time.Since(start); d < 120*time.Millisecond || d > 600*time.Millisecond {
+		t.Errorf("waited %s, want about the bound (150 ms)", d)
+	}
+}
+
+// Sessions run without persistence have no file at all: there is nothing to wait for, so no delay.
+func TestSessionModelFromTranscript_NoWaitWithoutAFile(t *testing.T) {
+	withTranscriptWait(t, 2*time.Second, 50*time.Millisecond)
+	start := time.Now()
+	for _, path := range []string{"", filepath.Join(t.TempDir(), "never-written.jsonl")} {
+		if got := sessionModelFromTranscript(path); got != "" {
+			t.Fatalf("%q: got %q", path, got)
+		}
+	}
+	if d := time.Since(start); d > 100*time.Millisecond {
+		t.Errorf("no transcript file means no wait: %s", d)
+	}
+}
+
+func withTranscriptWait(t *testing.T, total, step time.Duration) {
+	t.Helper()
+	oldTotal, oldStep := transcriptWaitTotal, transcriptWaitStep
+	transcriptWaitTotal, transcriptWaitStep = total, step
+	t.Cleanup(func() { transcriptWaitTotal, transcriptWaitStep = oldTotal, oldStep })
 }
