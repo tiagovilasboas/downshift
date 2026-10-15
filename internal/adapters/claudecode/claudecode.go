@@ -77,9 +77,10 @@ func (ev Event) RequestedModel() string {
 }
 
 // currentModel is the model the subagent would run on without a rewrite: the
-// Task "model", the payload "model", then, for agent types that inherit, the
-// harness override env (core.ClaudeCodeCaps.ModelOverrideEnv) and finally the
-// parent session model from the transcript.
+// Task "model", the payload "model", then, for agent types that inherit (see
+// inheritingAgentTypes), the harness override env
+// (core.ClaudeCodeCaps.ModelOverrideEnv; Explore and Plan only when forced) and
+// finally the parent session model from the transcript.
 func (ev Event) currentModel(ti map[string]any) string {
 	if model := hookutil.StringField(ti, "model"); model != "" {
 		return model
@@ -88,10 +89,15 @@ func (ev Event) currentModel(ti map[string]any) string {
 		return ev.Model
 	}
 	if inheritsSessionModel(ti) {
-		if m := subagentModelFromEnv(); m != "" {
+		typ := hookutil.StringField(ti, "subagent_type")
+		if m := subagentModelFromEnv(typ); m != "" {
 			return m
 		}
-		return sessionModelFromTranscript(ev.TranscriptPath)
+		parent := sessionModelFromTranscript(ev.TranscriptPath)
+		if exploreMayLeaveTheMainModel(typ, parent) {
+			return ""
+		}
+		return parent
 	}
 	return ""
 }

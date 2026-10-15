@@ -19,7 +19,7 @@ With a known current model, **R8** (`R8_UNCONFIDENT_UPSHIFT`) is the mirror of R
 
 ### Baseline model when the call has no `model` (Claude Code)
 
-For a Task call without `model` on an inheriting agent type (no `subagent_type`, `general-purpose` or `claude`), the model the child would run on is resolved in the order Claude Code uses: the per-call `model`, the payload `model`, then the variable named by `HarnessCapabilities.ModelOverrideEnv` (`CLAUDE_CODE_SUBAGENT_MODEL`) when set and not `inherit`, then the last assistant model in the parent transcript. Verdict and savings are computed against that baseline. Other agent types may pin a model in their frontmatter, so they get no inferred baseline.
+For a Task call without `model` on an inheriting agent type (no `subagent_type`, `general-purpose`, `claude`, `Explore` or `Plan`), the model the child would run on is resolved in the order Claude Code uses: the per-call `model`, the payload `model`, then the variable named by `HarnessCapabilities.ModelOverrideEnv` (`CLAUDE_CODE_SUBAGENT_MODEL`) when set and not `inherit` (for `Explore` and `Plan` only with `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` on), then the last assistant model in the parent transcript. Verdict and savings are computed against that baseline. Other agent types may pin a model in their frontmatter, so they get no inferred baseline, and `Explore` under a Fable session gets none either.
 
 ## What the hook actually sends
 
