@@ -86,7 +86,7 @@ downshift setup
 | `downshift stats [--days=N]` | decisions and estimated savings |
 | `downshift session --tree` | this session's subagents as a tree |
 
-More: `downshift help --all` lists every command. `downshift watch` (live tree) and `downshift config` are being built.
+More: `downshift help --all` lists every command by group. `downshift watch` is the live tree and `downshift config` shows every effective setting and where it came from.
 
 <details>
 <summary>Manual setup</summary>
