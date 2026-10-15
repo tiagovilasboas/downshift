@@ -190,6 +190,13 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !core.CanWriteSessionID(harnessID, plan.Model.ID, plan.Session, res) {
 		return allow(), "", decision
 	}
+	// A baseline read from settings is a guess: the session may run another
+	// model (--model, /model). Only the small tier is cheaper than anything the
+	// session can run, so a downshift on a guessed baseline is written only to
+	// it; any other target could be an upshift nobody sees.
+	if fromSettings && decision.Verdict == core.VerdictDownshift && plan.Model.Tier != core.TierSmall {
+		return allow(), "", decision
+	}
 	decision.Model = plan.Model
 
 	// plan.WriteName is the catalog's native name: Claude Code validates

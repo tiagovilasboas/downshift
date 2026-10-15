@@ -196,7 +196,7 @@ func TestHandle_TaskNameAddsSignal(t *testing.T) {
 		Model:    frontierID,
 		ToolInput: json.RawMessage(`{
 			"task_name": "review_agent",
-			"message": "typo fix",
+			"message": "rename the userId variable to userIdentifier",
 			"reasoning_effort": "low"
 		}`),
 	}

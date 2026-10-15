@@ -53,7 +53,9 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   one that sets it. A full id passes through, `opusplan` is Opus under `permission_mode` `plan` and Sonnet otherwise, `sonnet`, `opus`,
   `haiku` and `fable` map to the catalog's model of that family, and `default` or anything unrecognised stays unknown. The decision
   carries `BASELINE_FROM_SETTINGS`. The result is an inference: the `--model` flag and a mid-session `/model` are not visible to a
-  hook, so a session started with `--model` or switched with `/model` can be routed against the wrong baseline. A model found in the
+  hook, so a session started with `--model` or switched with `/model` can be routed against the wrong baseline. To keep that guess
+  from turning into a hidden upshift, a downshift on this baseline is written only to the small tier; a downshift to the mid tier is
+  held. A model found in the
   transcript always wins, `Explore` under a Fable setting stays unknown, and agent types that do not inherit get no fallback. The
   native route remains the `agent.spawn` mod event, which hands over `parentModel`.
 - **Baseline still unknown on Cursor and Antigravity.** A spawn with an

@@ -225,13 +225,18 @@ func effortRank(v string) int {
 }
 
 // effortAllowed reports whether the hook may write effort value over the
-// requested one. A confident, unheld decision may set any effort. An
-// unconfident or guardrail-held decision may only raise effort: lowering it
-// would be a downshift on doubt. With no (or an unrecognised) requested
-// effort, it may only write effort alongside a model rewrite.
+// requested one. A confident, unheld decision may set any effort. A decision
+// the guardrails held (its verdict reduced to a safe one) writes no effort:
+// a held change, up or down, leaves the spawn as requested. An unconfident,
+// unheld decision may only raise effort: lowering it would be a downshift on
+// doubt. With no (or an unrecognised) requested effort, it may only write
+// effort alongside a model rewrite.
 func effortAllowed(d core.Decision, requested, value string, modelRewritten bool) bool {
 	if d.Confident && len(d.Corrections) == 0 {
 		return true
+	}
+	if d.Checked && d.SafeVerdict != d.Verdict {
+		return false
 	}
 	if effortRank(requested) < 0 {
 		return modelRewritten
