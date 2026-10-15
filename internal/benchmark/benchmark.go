@@ -45,6 +45,10 @@ type Result struct {
 	Task      Task
 	Predicted core.Complexity
 	Correct   bool
+	// Confident and NoSignal copy the classification. An unconfident result
+	// is an abstention: the router keeps the requested model for it.
+	Confident bool
+	NoSignal  bool
 }
 
 // complexityFromString parses a label string into a Complexity.
@@ -201,6 +205,8 @@ func RunWithClassifier(tasks []Task, classify func(string) core.Classification, 
 			Task:      t,
 			Predicted: cls.Complexity,
 			Correct:   correct,
+			Confident: cls.Confident,
+			NoSignal:  cls.NoSignal,
 		})
 	}
 	if skipped > 0 {
@@ -338,6 +344,40 @@ func OverRoutingRate(results []Result) (rate float64, count int, total int) {
 	return float64(count) / float64(total), count, total
 }
 
+// Split separates confident answers from abstentions. TierAccuracy scores an
+// abstention like a wrong answer; in production an unconfident decision is
+// held (R1, R8) and the spawn keeps its requested model, so the two are
+// reported apart. Tier hits are counted by tier, whatever the label kind.
+type Split struct {
+	ConfidentHit, ConfidentMiss int
+	Abstained, AbstainedHit     int
+	NoSignal                    int
+}
+
+// AbstentionSplit counts results by confidence and tier hit.
+func AbstentionSplit(results []Result) Split {
+	var s Split
+	for _, r := range results {
+		expected, _ := complexityFromString(r.Task.Label)
+		hit := r.Predicted.Tier() == expected.Tier()
+		switch {
+		case r.Confident && hit:
+			s.ConfidentHit++
+		case r.Confident:
+			s.ConfidentMiss++
+		default:
+			s.Abstained++
+			if hit {
+				s.AbstainedHit++
+			}
+			if r.NoSignal {
+				s.NoSignal++
+			}
+		}
+	}
+	return s
+}
+
 var labels = []string{"T", "S", "M", "C"}
 var fullLabels = []string{"TRIVIAL", "SIMPLE", "MEDIUM", "COMPLEX"}
 
@@ -355,6 +395,14 @@ func Print(results []Result, m Matrix, w io.Writer) {
 	// Four KPIs aligned to the routing problem.
 	fmt.Fprintf(w, "Complexity accuracy   %6.1f%%  (exact label match)\n", complexAcc*100)
 	fmt.Fprintf(w, "Tier routing accuracy %6.1f%%  (correct model tier — what matters economically)\n", tierAcc*100)
+	if sp := AbstentionSplit(results); n > 0 {
+		confident := sp.ConfidentHit + sp.ConfidentMiss
+		fmt.Fprintf(w, "  Confident           %6.1f%%  (%d / %d tasks; tier right %d, wrong %d)\n", float64(confident)/float64(n)*100, confident, n, sp.ConfidentHit, sp.ConfidentMiss)
+		if confident > 0 {
+			fmt.Fprintf(w, "  Accuracy if confident %4.1f%%  (tier right / confident)\n", float64(sp.ConfidentHit)/float64(confident)*100)
+		}
+		fmt.Fprintf(w, "  Abstained           %6.1f%%  (%d tasks, %d with no signal; tier right %d, wrong %d; the router keeps the requested model)\n", float64(sp.Abstained)/float64(n)*100, sp.Abstained, sp.NoSignal, sp.AbstainedHit, sp.Abstained-sp.AbstainedHit)
+	}
 	fmt.Fprintf(w, "\n")
 
 	fmt.Fprintf(w, "Unsafe downgrade (FRONTIER → cheaper tier):\n")
