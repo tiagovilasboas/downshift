@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-beta.10] — 2026-10-15
+
 ### Changed
 
 - **`downshift help` shows eight commands** (`setup`, `doctor`, `try`, `stats`, `report`, `session`, `config`, `feedback`), one per step of install, check, use and fix. `watch`, `models`, `quota` and `stats --detail`/`--export` move to `downshift help --all`; nothing is removed or renamed. `help --all` now lists `stats --detail`.
