@@ -41,9 +41,14 @@ type Decision struct {
 	// RequestedID is the model string from the hook payload, before catalog
 	// normalisation. Adapters set it so a foreign harness id is not rewritten.
 	RequestedID string
-	Verdict     Verdict
-	Savings     float64 // fraction cheaper vs current (0 if not cheaper / unknown)
-	Confident   bool
+	// BaselineFromSettings is true when the baseline (CurrentModel) was not seen
+	// in the payload or transcript but inferred from the session's configured
+	// model. A `--model` flag or a mid-session /model is invisible to the hook,
+	// so such a baseline can be wrong.
+	BaselineFromSettings bool
+	Verdict              Verdict
+	Savings              float64 // fraction cheaper vs current (0 if not cheaper / unknown)
+	Confident            bool
 	// Self-correction outcome, computed by Check inside Route. Verdict
 	// keeps the classified value for diagnostics; SafeVerdict carries the
 	// action adapters may apply. Checked is true for Route decisions and

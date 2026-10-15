@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Claude Code: parallel Agent calls in a session's first assistant message are routed again.** When the transcript has no model yet (4 of 5 spawns per run in 3 runs of 5 parallel Agent calls, all held as `HELD_UNCONFIDENT_UNKNOWN_MID`), an inheriting agent type now falls back to the configured model: `ANTHROPIC_MODEL`, then the `model` setting (`.claude/settings.local.json`, `.claude/settings.json`, user `settings.json`), with `opusplan` and the `sonnet`/`opus`/`haiku`/`fable` aliases resolved through the catalog. The decision carries the new reason code `BASELINE_FROM_SETTINGS`. The `--model` flag and `/model` are not visible to a hook, so the baseline is an inference; a model in the transcript always wins.
 - Documented a limit of the Claude Code baseline: several Agent calls in the first assistant message of a session leave all but the last without a baseline (see `docs/harness-matrix.md`).
 
 ## [0.1.0-beta.12] — 2026-10-15
