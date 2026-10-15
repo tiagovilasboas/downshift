@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`downshift help` shows eight commands** (`setup`, `doctor`, `try`, `stats`, `report`, `session`, `config`, `feedback`), one per step of install, check, use and fix. `watch`, `models`, `quota` and `stats --detail`/`--export` move to `downshift help --all`; nothing is removed or renamed. `help --all` now lists `stats --detail`.
+- **`stats` says what its number is.** The headline ends with "Estimated at list price, not an invoice. Measured against a control group: downshift report".
+- **`downshift setup` ends with "What changes for you":** who picks subagent models, the control-group share (and `DOWNSHIFT_CONTROL_SHARE=0` to turn it off), and, only when it was written, the Claude Code session policy with `--no-session-policy` to skip it.
 - **`downshift setup` also starts Claude Code sessions in plan mode.** Next to `"model": "opusplan"`, it sets `"permissions": {"defaultMode": "plan"}` when no `defaultMode` is set, so every session plans before it edits and the opusplan split applies. This replaces Claude Code's built-in starting mode (auto mode on recent versions). Existing values are never replaced, and `downshift doctor` reports both. Opt out with `downshift setup --no-session-policy`, which wires the hooks only. See `docs/session-models.md`.
 
 ## [0.1.0-beta.9] — 2026-10-15

@@ -1294,6 +1294,7 @@ Usage:
   downshift watch [--session=<id>] [--interval=1s]      Live session tree, redrawn every interval (Ctrl-C to quit)
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
   downshift stats --cost-per-unit=<USD>   Convert normalised units to dollars
+  downshift stats --detail       Full report: units, honor, quota, usage, per-session cost
   downshift stats --export       Print a pasteable JSON summary without prompts
   downshift report [--days=N] [--json]   Routed vs control cost per completed task, rework, savings with 95% CI
   downshift benchmark <file>     Run classifier against a labelled dataset; print confusion matrix

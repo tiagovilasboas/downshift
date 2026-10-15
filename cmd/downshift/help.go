@@ -27,30 +27,23 @@ func usageShort(w io.Writer) {
 
 Get started
   downshift setup [--dry-run]      Wire the hooks into every harness found (backup, diff, --undo)
-  downshift doctor [--verbose] [--json]  Checklist: binary, hooks per harness, state, scores
-  downshift try "<task>" [harness] [model]  What Downshift would pick (--detail: classifier fields)
+  downshift doctor                 Checklist: binary, hooks per harness, state, with a fix per failure
+  downshift try "<task>"           What Downshift would pick for a task, without spawning anything
 
 See the effect
-  downshift stats [--days=N]       Decisions and estimated savings (default 30 days)
-  downshift stats --detail         Full report: units, honor, quota, usage, per-session cost
-  downshift stats --export         Pasteable JSON summary, no prompts
-  downshift report [--days=N]      Routed vs control group: cost per completed task, savings with CI
-  downshift session [--why|--pause|--resume]  This session's subagents as a tree
-  downshift watch [--session=<id>] [--interval=1s]  The same tree, live (Ctrl-C to quit)
+  downshift stats                  Decisions and estimated savings (list price, not an invoice)
+  downshift report                 Measured: routed vs control group, cost per completed task, with CI
+  downshift session                This session's subagents as a tree (--why, --pause)
 
 Fix things
-  downshift config [--json]        Every effective setting with its value and source
-  downshift models list            The model catalog in effect
-  downshift models discover        Ask each harness which models your account can use
-  downshift models scores          Public capability scores: --refresh, --status, --quiet, --json
-  downshift quota status           Budget evidence and freshness for a harness/model
+  downshift config                 Every effective setting with its value and source
   downshift feedback list          Routing ids waiting for your review
 
 Hooks (your harness calls these, you do not)
   downshift claude-code | cursor | codex | antigravity | kirocrew
 
 More
-  downshift help --all             Every command, including maintainer tools
+  downshift help --all             Every command: watch, models, quota, context, benchmark and the rest
   downshift version                Print the binary version
 
 Examples
