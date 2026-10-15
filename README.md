@@ -192,7 +192,7 @@ See [the context optimization guide](docs/context-optimization.md) for architect
 - **Cost per session and per subagent.** When priced usage records carry a session or agent id, `stats` shows how many sessions and subagents had cost, the mean and the maximum, and the three costliest sessions (hashed ids, short prefix). It is catalog-priced from recorded usage, an estimate and not a bill, and it reports only: Downshift cannot enforce a budget or a concurrency limit from a hook.
 - **Baseline source.** Cost events carry `baseline_source` when a baseline was computed. Today it is always `requested` (the model the harness asked for). Estimates from other sources are not produced yet.
 - **Local only.** Events go to a local `events.jsonl` in the state directory; prompts are not stored. Export format: [stats-export.md](docs/stats-export.md).
-- **Classifier numbers.** Published tier accuracy, model pass rates, and the 2026-10-10 adapt comparison (per-task upper bound versus shared-shape memory) are in [benchmark/REPORT.md](benchmark/REPORT.md). Tune the classifier with `downshift try` and [docs/contrib/classifier.md](docs/contrib/classifier.md). Weights: [docs/complexity-weights.md](docs/complexity-weights.md).
+- **Classifier numbers.** Published tier accuracy, model pass rates, and the 2026-10-15 adapt comparison (per-task upper bound versus shared-shape memory) are in [benchmark/REPORT.md](benchmark/REPORT.md). Tune the classifier with `downshift try` and [docs/contrib/classifier.md](docs/contrib/classifier.md). Weights: [docs/complexity-weights.md](docs/complexity-weights.md).
 
 ## Documentation
 
