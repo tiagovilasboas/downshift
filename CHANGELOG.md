@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Antigravity: a spawn of several subagents paired one child's task with another child's model.** The routing row's decision and requested model come from the last subagent that has a `Prompt`, but its task text (what the training and feedback record stores) came from the first subagent. A payload of a trivial child followed by a heavy one recorded the trivial task with the heavy child's tier. Task text now follows the same child. Single-subagent payloads are unchanged.
 - **Claude Code `Explore` and `Plan` spawns were never routed.** The hook inferred the session model only for `general-purpose` and `claude`, so for the built-in `Explore` and `Plan` the baseline stayed `unknown` and the guardrail held every one (`HELD_UNCONFIDENT_UNKNOWN_MID`). They run on the session model (sub-agents docs), so they now inherit it like `general-purpose`. `CLAUDE_CODE_SUBAGENT_MODEL` reaches them only with `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` on, and `Explore` under a Fable session stays `unknown` because Claude Code may run it on Opus there. Custom types and the built-ins with their own model (`statusline-setup`, `claude-code-guide`) are unchanged. Before and after, on a trivial `Explore`/`Plan` task under a Sonnet session: no rewrite, then `haiku`.
 
 ## [0.1.0-beta.10] — 2026-10-15

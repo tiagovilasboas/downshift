@@ -52,15 +52,28 @@ func (ev Event) ProjectDir() string {
 	return ""
 }
 
+// decidedSubagent returns the child a routing row is about: the last subagent
+// that has a Prompt, the same one Handle ends up returning a decision for. Task
+// text and requested model both read it, so a row never pairs one child's task
+// with another child's model. Nil when no child has a Prompt.
+func decidedSubagent(ti map[string]any) map[string]any {
+	subagents, _ := ti["Subagents"].([]any)
+	var decided map[string]any
+	for _, raw := range subagents {
+		if subagent, ok := raw.(map[string]any); ok && hookutil.StringField(subagent, "Prompt") != "" {
+			decided = subagent
+		}
+	}
+	return decided
+}
+
 func (ev Event) TaskText() string {
 	var ti map[string]any
 	if err := json.Unmarshal(ev.ToolCall.Args, &ti); err != nil {
 		return ""
 	}
-	if subagentsRaw, ok := ti["Subagents"].([]any); ok && len(subagentsRaw) > 0 {
-		if subagent, ok := subagentsRaw[0].(map[string]any); ok {
-			return hookutil.TaskText(subagent, "Prompt", "prompt", "task", "Task")
-		}
+	if subagent := decidedSubagent(ti); subagent != nil {
+		return hookutil.TaskText(subagent, "Prompt", "prompt", "task", "Task")
 	}
 	return hookutil.TaskText(ti, "Prompt", "prompt", "task", "Task")
 }
@@ -73,14 +86,10 @@ func (ev Event) RequestedModel() string {
 	if json.Unmarshal(ev.ToolCall.Args, &ti) != nil {
 		return ""
 	}
-	subagents, _ := ti["Subagents"].([]any)
-	model := ""
-	for _, raw := range subagents {
-		if subagent, ok := raw.(map[string]any); ok && hookutil.StringField(subagent, "Prompt") != "" {
-			model = hookutil.StringField(subagent, "Model")
-		}
+	if subagent := decidedSubagent(ti); subagent != nil {
+		return hookutil.StringField(subagent, "Model")
 	}
-	return model
+	return ""
 }
 
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
