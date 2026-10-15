@@ -29,6 +29,7 @@ Fields useful for graduation tracking:
 | `usage_linked` | Distinct usage records matched to routing decisions in this window (same harness and compatible session); duplicate agents/events and orphan references excluded |
 | `child_status` | Map of child end status (`completed`, `launched`, `interrupted`, `error`, `stopped`, `unknown`) to count, from `child_ended` events; `{}` when none. Observations only: never part of `total` |
 | `baseline_no_route` | Unrouted events: `DOWNSHIFT_NO_ROUTE`, a session pause, and the built-in control group (`outcome: baseline`; the control group also carries reason code `CONTROL`) |
+| `agent_types` | Decisions per subagent type, `{"Explore": {"decisions": 3, "unknown_baseline": 2}}`, so a gap in the baseline can be pinned on a kind of spawn. Only Claude Code reports a type. Names are limited to the built-in ones (`general-purpose`, `claude`, `Explore`, `Plan`, `statusline-setup`, `claude-code-guide`), plus `unspecified` and `custom`: a custom agent's own name is never stored or exported. Omitted when no event carries a type |
 
 ## Before you paste
 
