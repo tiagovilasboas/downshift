@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-beta.11] — 2026-10-15
+
 ### Fixed
 
 - **Antigravity: a spawn of several subagents paired one child's task with another child's model.** The routing row's decision and requested model come from the last subagent that has a `Prompt`, but its task text (what the training and feedback record stores) came from the first subagent. A payload of a trivial child followed by a heavy one recorded the trivial task with the heavy child's tier. Task text now follows the same child. Single-subagent payloads are unchanged.
