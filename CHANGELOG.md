@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-beta.12] — 2026-10-15
+
 ### Fixed
 
 - **Claude Code: the first spawn of a session often had no baseline, so it was never routed.** Claude Code writes the transcript asynchronously, and the PreToolUse hook can run before the assistant message that carries the session model is on disk (measured: no assistant line at the hook in 2 of 3 fresh `claude -p` runs, and one 0.5 s later). The decision then read `unknown` and was held (`HELD_UNCONFIDENT_UNKNOWN_MID`). The hook now re-reads an existing transcript for up to 400 ms when it holds no model yet. A missing file is not waited for, so sessions run without persistence (`--no-session-persistence`) are not delayed; they still have no baseline and are not routed.
