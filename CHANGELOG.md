@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Documented a limit of the Claude Code baseline: several Agent calls in the first assistant message of a session leave all but the last without a baseline (see `docs/harness-matrix.md`).
+
 ## [0.1.0-beta.12] — 2026-10-15
 
 ### Fixed

@@ -41,6 +41,14 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   providers), and a hook cannot tell which. Until 2026-10-15 `Explore` and
   `Plan` were left out, so every spawn of those types was held as
   `HELD_UNCONFIDENT_UNKNOWN_MID` and never routed.
+- **Claude Code: parallel Agent calls in the first assistant message have no baseline.** The hook gets the session model from the
+  last assistant message in the transcript, and Claude Code only writes a message to the transcript when it has finished streaming.
+  When one message carries several Agent calls and no earlier assistant message exists (a headless run whose first action is to
+  delegate), the hooks of all but the last call see an empty transcript and the decision is held (`HELD_UNCONFIDENT_UNKNOWN_MID`).
+  Measured in 3 runs of 5 parallel Agent calls: 4 of 5 spawns per run had no baseline. After any earlier assistant message (a Read,
+  a text reply) every call has one. The 400 ms wait added for the write race does not help here, because the message closes only after
+  all its tool-use blocks have streamed. `SessionStart` does not carry the model in `claude -p` either (checked 2026-10-15), so the
+  native route is the `agent.spawn` mod event, which hands over `parentModel`.
 - **Baseline still unknown on Cursor and Antigravity.** A spawn with an
   explicit model is known. `inherit` or no model is not: Cursor sends no
   transcript path (58 of 144 captured Task payloads, 2026-10-09/10), and
