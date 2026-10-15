@@ -73,9 +73,21 @@ func TestHookE2E_ClaudeCodeInheritedSessionModel(t *testing.T) {
 		t.Errorf("verdict stayed UNKNOWN with a known session model: %v", ev)
 	}
 
-	// An agent type with its own definition may pin a model: no guess.
-	ev = run(map[string]any{"prompt": "rename the variable userId to userIdentifier", "subagent_type": "Explore"})
+	// The built-in Explore and Plan run on the session model, so they inherit it
+	// and are routed like general-purpose (they were left unknown until 2026-10-15).
+	for _, typ := range []string{"Explore", "Plan"} {
+		ev = run(map[string]any{"prompt": "rename the variable userId to userIdentifier", "subagent_type": typ})
+		if ev["requested_model"] != frontierID {
+			t.Errorf("%s requested_model = %v, want the inherited %s", typ, ev["requested_model"], frontierID)
+		}
+		if ev["verdict"] == "UNKNOWN" {
+			t.Errorf("%s verdict stayed UNKNOWN with a known session model: %v", typ, ev)
+		}
+	}
+
+	// A custom agent type may pin a model in its definition: no guess.
+	ev = run(map[string]any{"prompt": "rename the variable userId to userIdentifier", "subagent_type": "my-custom-reviewer"})
 	if ev["requested_model"] == frontierID {
-		t.Errorf("Explore must not inherit the parent model guess: %v", ev)
+		t.Errorf("a custom agent type must not inherit the parent model guess: %v", ev)
 	}
 }
