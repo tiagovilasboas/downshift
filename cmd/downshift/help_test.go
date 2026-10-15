@@ -31,6 +31,40 @@ func TestUsageShortIsShortAndPointsToAll(t *testing.T) {
 	}
 }
 
+// The default help is a contract for a new user: eight commands, one per step
+// of the install-check-use-fix loop. Everything else is in help --all.
+func TestUsageShortListsTheEightEverydayCommands(t *testing.T) {
+	var short, full bytes.Buffer
+	usageShort(&short)
+	usage(&full)
+	out := short.String()
+	for _, cmd := range []string{"setup", "doctor", "try", "stats", "report", "session", "config", "feedback"} {
+		if !strings.Contains(out, "  downshift "+cmd) {
+			t.Errorf("short help is missing the everyday command %q", cmd)
+		}
+	}
+	for _, rest := range []string{"downshift models ", "downshift quota ", "downshift watch", "stats --detail", "stats --export"} {
+		if strings.Contains(out, rest) {
+			t.Errorf("short help should leave %q to help --all", rest)
+		}
+		if !strings.Contains(full.String(), strings.TrimSpace(rest)) {
+			t.Errorf("help --all lost %q", rest)
+		}
+	}
+	var cmds []string
+	commands, _, _ := strings.Cut(out, "Examples")
+	for _, line := range strings.Split(commands, "\n") {
+		for _, c := range []string{"setup", "doctor", "try", "stats", "report", "session", "config", "feedback"} {
+			if strings.HasPrefix(line, "  downshift "+c+" ") {
+				cmds = append(cmds, c)
+			}
+		}
+	}
+	if len(cmds) != 8 {
+		t.Errorf("short help lists the everyday commands %v, want exactly 8 lines", cmds)
+	}
+}
+
 func TestWantsAllHelp(t *testing.T) {
 	for _, c := range []struct {
 		args []string

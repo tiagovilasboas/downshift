@@ -8,11 +8,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // `downshift setup [harness...] [--dry-run] [--undo] [--yes]` wires every
@@ -177,11 +180,59 @@ func setupRun(o setupOptions) int {
 			fmt.Fprintf(o.Out, "%s: written (new file).\n", p.target.Name)
 		}
 	}
+	fmt.Fprint(o.Out, setupSummary(plans))
 	fmt.Fprintln(o.Out, "Undo with: downshift setup --undo")
 	if failed {
 		return 1
 	}
 	return 0
+}
+
+// setupSummary says, once the files are written, what now applies to the
+// developer. It reads the written Claude Code document so it never claims a
+// session policy that is not in the file.
+func setupSummary(plans []setupPlan) string {
+	wrote := false
+	var policy []string
+	for _, p := range plans {
+		if p.err != nil || !p.changed() {
+			continue
+		}
+		wrote = true
+		if p.target.Name != "claude-code" {
+			continue
+		}
+		doc, err := parseJSONDoc(p.after)
+		if err != nil {
+			continue
+		}
+		if m, _ := doc.get("model"); m == "opusplan" {
+			policy = append(policy, "the main session uses opusplan (Opus plans, Sonnet executes)")
+		}
+		if perms, ok := doc.get("permissions"); ok {
+			if po, isObj := asObj(perms); isObj {
+				if mode, _ := po.get("defaultMode"); mode == "plan" {
+					policy = append(policy, "sessions start in plan mode: Claude plans and you approve before it edits")
+				}
+			}
+		}
+	}
+	if !wrote {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString("\nWhat changes for you\n")
+	b.WriteString("  Subagents: Downshift picks the model for each spawn from the task. Your main session is not touched.\n")
+	if share := telemetry.ControlShare(); share > 0 {
+		fmt.Fprintf(&b, "  Control group: about 1 in %d spawns runs unrouted on purpose, so `downshift report` can measure the savings. DOWNSHIFT_CONTROL_SHARE=0 turns it off.\n", int(math.Round(1/share)))
+	} else {
+		b.WriteString("  Control group: off (DOWNSHIFT_CONTROL_SHARE=0), so `downshift report` has nothing to compare.\n")
+	}
+	if len(policy) > 0 {
+		fmt.Fprintf(&b, "  Claude Code: %s. Skip this with `downshift setup --no-session-policy`.\n", strings.Join(policy, "; "))
+	}
+	b.WriteString("  Check anything with `downshift doctor`, see the effect with `downshift stats`.\n\n")
+	return b.String()
 }
 
 // setupSelect resolves which targets to act on: the named ones, or every

@@ -414,6 +414,46 @@ func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
 	}
 }
 
+// After writing, setup says in plain words what now applies to the developer:
+// who picks subagent models, the control group, and the Claude Code session
+// policy only when it is really in the file.
+func TestSetupSummaryStatesWhatChanges(t *testing.T) {
+	t.Setenv("DOWNSHIFT_CONTROL_SHARE", "")
+	e := newSetupEnv(t, ".claude")
+	_, out, _ := e.run("claude-code", "--yes")
+	for _, want := range []string{"What changes for you", "1 in 10", "downshift report", "plan mode", "opusplan", "--no-session-policy", "downshift setup --undo"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("summary is missing %q:\n%s", want, out)
+		}
+	}
+
+	skipped := newSetupEnv(t, ".claude")
+	_, out, _ = skipped.run("claude-code", "--yes", "--no-session-policy")
+	if strings.Contains(out, "plan mode") || strings.Contains(out, "opusplan") {
+		t.Errorf("summary claims a session policy that was not written:\n%s", out)
+	}
+	if !strings.Contains(out, "1 in 10") {
+		t.Errorf("control group missing from the summary:\n%s", out)
+	}
+
+	t.Setenv("DOWNSHIFT_CONTROL_SHARE", "0")
+	off := newSetupEnv(t, ".claude")
+	_, out, _ = off.run("claude-code", "--yes")
+	if strings.Contains(out, "1 in 10") || !strings.Contains(out, "off") {
+		t.Errorf("control group off should be said as off:\n%s", out)
+	}
+
+	dry := newSetupEnv(t, ".claude")
+	if _, out, _ := dry.run("claude-code", "--dry-run"); strings.Contains(out, "What changes for you") {
+		t.Errorf("a dry run wrote nothing, so it must not summarize changes:\n%s", out)
+	}
+
+	cursorOnly := newSetupEnv(t, ".cursor")
+	if _, out, _ := cursorOnly.run("cursor", "--yes"); strings.Contains(out, "plan mode") {
+		t.Errorf("session policy mentioned without Claude Code:\n%s", out)
+	}
+}
+
 // --no-session-policy wires the hooks and leaves the main-session policy alone.
 func TestSetupNoSessionPolicySkipsThePolicy(t *testing.T) {
 	e := newSetupEnv(t, ".claude")

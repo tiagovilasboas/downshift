@@ -869,6 +869,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	}
 
 	printHeadline(w, s, opts.Days)
+	fmt.Fprintf(w, "Estimated at list price, not an invoice. Measured against a control group: downshift report\n")
 	if !opts.Detail {
 		fmt.Fprintf(w, "\nFull report: downshift stats --detail\n")
 		return
