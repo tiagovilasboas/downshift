@@ -22,40 +22,41 @@ const unknownCautionThreshold float64 = 0.25
 // It carries no prompt text, only counts and cost proxies. JSON field order
 // follows struct order so ExportJSON output is stable across runs.
 type Summary struct {
-	WindowDays          int            `json:"window_days"`
-	GeneratedAt         string         `json:"generated_at"`
-	Total               int            `json:"total"`
-	Downshifted         int            `json:"downshifted"`
-	Upshifted           int            `json:"upshifted"`
-	OK                  int            `json:"ok"`
-	Unknown             int            `json:"unknown"`
-	Corrected           int            `json:"corrected"`
-	NotApplied          int            `json:"not_applied"`
-	PolicyFloor         int            `json:"policy_floor"`
-	ActualCostEvents    int            `json:"actual_cost_events"`
-	ActualCostUSD       float64        `json:"actual_cost_usd"`
-	RealCostEvents      int            `json:"real_cost_events"`
-	RealSavedUSD        float64        `json:"real_saved_usd"`
-	RealCostDeltaUSD    float64        `json:"real_cost_delta_usd,omitempty"`
-	RealOverspendUSD    float64        `json:"real_overspend_usd,omitempty"`
-	UsageRecords        int            `json:"usage_records"`
-	UsageLinked         int            `json:"usage_linked"`
-	Baseline            int            `json:"baseline_no_route"`
-	RewriteShifted      int            `json:"rewrite_shifted"`
-	RewriteHonored      int            `json:"rewrite_honored_inferred"`
-	NormBaseline        float64        `json:"norm_baseline"`
-	NormRouted          float64        `json:"norm_routed"`
-	ByComplexity        map[string]int `json:"by_complexity"`
-	DownshiftRate       float64        `json:"downshift_rate"`
-	ObservedChildTokens int64          `json:"observed_child_tokens"`
-	ObservedChildUsage  int            `json:"observed_child_usage"`
-	CostSessions        int            `json:"cost_sessions"`
-	CostSubagents       int            `json:"cost_subagents"`
-	MaxSessionCostUSD   float64        `json:"max_session_cost_usd"`
-	MaxSubagentCostUSD  float64        `json:"max_subagent_cost_usd"`
-	ChildStatus         map[string]int `json:"child_status"`
-	ReasonCodes         map[string]int `json:"reason_codes,omitempty"`
-	Note                string         `json:"note"`
+	WindowDays          int                       `json:"window_days"`
+	GeneratedAt         string                    `json:"generated_at"`
+	Total               int                       `json:"total"`
+	Downshifted         int                       `json:"downshifted"`
+	Upshifted           int                       `json:"upshifted"`
+	OK                  int                       `json:"ok"`
+	Unknown             int                       `json:"unknown"`
+	Corrected           int                       `json:"corrected"`
+	NotApplied          int                       `json:"not_applied"`
+	PolicyFloor         int                       `json:"policy_floor"`
+	ActualCostEvents    int                       `json:"actual_cost_events"`
+	ActualCostUSD       float64                   `json:"actual_cost_usd"`
+	RealCostEvents      int                       `json:"real_cost_events"`
+	RealSavedUSD        float64                   `json:"real_saved_usd"`
+	RealCostDeltaUSD    float64                   `json:"real_cost_delta_usd,omitempty"`
+	RealOverspendUSD    float64                   `json:"real_overspend_usd,omitempty"`
+	UsageRecords        int                       `json:"usage_records"`
+	UsageLinked         int                       `json:"usage_linked"`
+	Baseline            int                       `json:"baseline_no_route"`
+	RewriteShifted      int                       `json:"rewrite_shifted"`
+	RewriteHonored      int                       `json:"rewrite_honored_inferred"`
+	NormBaseline        float64                   `json:"norm_baseline"`
+	NormRouted          float64                   `json:"norm_routed"`
+	ByComplexity        map[string]int            `json:"by_complexity"`
+	DownshiftRate       float64                   `json:"downshift_rate"`
+	ObservedChildTokens int64                     `json:"observed_child_tokens"`
+	ObservedChildUsage  int                       `json:"observed_child_usage"`
+	CostSessions        int                       `json:"cost_sessions"`
+	CostSubagents       int                       `json:"cost_subagents"`
+	MaxSessionCostUSD   float64                   `json:"max_session_cost_usd"`
+	MaxSubagentCostUSD  float64                   `json:"max_subagent_cost_usd"`
+	ChildStatus         map[string]int            `json:"child_status"`
+	ReasonCodes         map[string]int            `json:"reason_codes,omitempty"`
+	AgentTypes          map[string]AgentTypeCount `json:"agent_types,omitempty"`
+	Note                string                    `json:"note"`
 }
 
 // ExportSummary aggregates events into a Summary without I/O or clock reads.
@@ -127,6 +128,7 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		MaxSubagentCostUSD:  maxSubagent,
 		ChildStatus:         childStatus,
 		ReasonCodes:         stats.ReasonCodes,
+		AgentTypes:          nonEmptyAgentTypes(stats.ByAgentType),
 		Note:                note,
 	}
 }
@@ -163,4 +165,13 @@ func filterByDaysAt(events []Event, days int, now time.Time) []Event {
 		}
 	}
 	return out
+}
+
+// nonEmptyAgentTypes returns nil for no data so the field is omitted from the
+// export, keeping its shape for logs that predate the type label.
+func nonEmptyAgentTypes(m map[string]AgentTypeCount) map[string]AgentTypeCount {
+	if len(m) == 0 {
+		return nil
+	}
+	return m
 }

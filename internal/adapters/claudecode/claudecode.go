@@ -58,6 +58,17 @@ func (ev Event) ToolUseIdentifier() string { return ev.ToolUseID }
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
 func (ev Event) CorrelationIdentifier() string { return ev.CorrelationID }
 
+// AgentTypeIdentifier returns the Task call's subagent_type exactly as sent,
+// empty when the call named none. The runner turns it into a storable label
+// (telemetry.AgentTypeLabel); the raw value never reaches the event log.
+func (ev Event) AgentTypeIdentifier() string {
+	var ti map[string]any
+	if json.Unmarshal(ev.ToolInput, &ti) != nil {
+		return ""
+	}
+	return hookutil.StringField(ti, "subagent_type")
+}
+
 // RequestedReasoningEffort reads an optional input field for future-compatible telemetry.
 func (ev Event) RequestedReasoningEffort() string {
 	var ti map[string]any

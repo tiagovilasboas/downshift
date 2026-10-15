@@ -330,6 +330,9 @@ func runHookAdapter[E any](
 		if call, ok := any(ev).(interface{ ToolUseIdentifier() string }); ok {
 			event.ToolUseHash = telemetry.HashSessionID(call.ToolUseIdentifier())
 		}
+		if typed, ok := any(ev).(interface{ AgentTypeIdentifier() string }); ok {
+			event.AgentType = telemetry.AgentTypeLabel(typed.AgentTypeIdentifier())
+		}
 		if requested, ok := any(ev).(interface{ RequestedReasoningEffort() string }); ok {
 			event.RequestedEffort = telemetry.EffortOrUnknown(requested.RequestedReasoningEffort())
 		}

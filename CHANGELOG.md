@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The subagent type on every Claude Code decision, and unknown baselines counted by type.** Each decision records `agent_type` as a label: a built-in name, `unspecified`, or `custom` (a custom agent's own name is never stored, because `stats --export` is pasted into public issues). `stats --detail` gains "Baseline by agent type" (decisions and unknown baselines per type, most unknown first) and the export gains `agent_types`. It turns "the unknown rate dropped" into a number that can be attributed, such as the `Explore` and `Plan` fix. Events written before this have no type and are not counted per type.
+
+### Added
+
 - **`downshift probe <event>` (maintainer tool).** Wired as a harness hook, it records the field names of a payload, the values of a short list of non-sensitive fields (model ids, tool name, agent type) and an 8-character hash of each id to `probe.jsonl`, and always answers allow. It never records prompts, task text, paths or e-mail addresses. Built to answer, from real payloads, whether Cursor exposes the session model to a hook, which decides the baseline for `inherit` spawns. See `docs/probe.md`.
 
 ## [0.1.0-beta.11] — 2026-10-15

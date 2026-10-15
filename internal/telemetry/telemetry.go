@@ -112,6 +112,12 @@ type Event struct {
 	// completion-time one (SubagentStop) without storing the raw id.
 	AgentHash string `json:"agent_hash,omitempty"`
 
+	// AgentType is the subagent type of a decision, as a label: a built-in
+	// name, "unspecified" or "custom" (see AgentTypeLabel). It lets stats say
+	// which kinds of spawn had no known baseline. Empty on events that predate
+	// the field and on harnesses that do not report a type.
+	AgentType string `json:"agent_type,omitempty"`
+
 	// ToolUseHash is the hashed harness tool-call id on decision records. The
 	// post-spawn observations carry the same id, so they join the exact
 	// decision instead of the latest sibling in the session.
@@ -574,6 +580,9 @@ type Stats struct {
 
 	// ByComplexity counts decisions per complexity class.
 	ByComplexity map[string]int
+	// ByAgentType counts decisions per subagent type, and how many of them had no
+	// known baseline model. Events without a type are not counted here.
+	ByAgentType map[string]AgentTypeCount
 	// ModelMix counts decisions per model the child ended up on (final_model,
 	// short family name). Decisions with no recorded model add nothing.
 	ModelMix map[string]int
@@ -689,7 +698,7 @@ const respawnWindow = 10 * time.Minute
 
 // Aggregate computes Stats from a slice of events.
 func Aggregate(events []Event) Stats {
-	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int), CostBySession: make(map[string]CostGroup), CostBySubagent: make(map[string]CostGroup), ReasonCodes: make(map[string]int), ModelMix: make(map[string]int)}
+	s := Stats{ByComplexity: make(map[string]int), ChildStatus: make(map[ChildStatus]int), CostBySession: make(map[string]CostGroup), CostBySubagent: make(map[string]CostGroup), ReasonCodes: make(map[string]int), ModelMix: make(map[string]int), ByAgentType: make(map[string]AgentTypeCount)}
 	// Build the index before counting: exported windows may arrive out of order.
 	type linkKey struct {
 		harness, decision string
@@ -745,6 +754,14 @@ func Aggregate(events []Event) Stats {
 			continue
 		}
 		s.Total++
+		if ev.AgentType != "" {
+			c := s.ByAgentType[ev.AgentType]
+			c.Decisions++
+			if ev.FromModel == "" || ev.FromModel == "unknown" {
+				c.UnknownBaseline++
+			}
+			s.ByAgentType[ev.AgentType] = c
+		}
 		if ev.PolicyFloor {
 			s.PolicyFloor++
 		}
@@ -887,6 +904,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "  Raised by project floor %6d  %5.1f%%  (.downshift/policy.json)\n", s.PolicyFloor, pct(s.PolicyFloor, s.Total))
 	}
 	printChildStatus(w, s.ChildStatus)
+	printAgentTypes(w, s.ByAgentType)
 	if s.RespawnAfterFailure > 0 {
 		fmt.Fprintf(w, "  Respawned after a failure  %5d  (hint only: may be unrelated work)\n", s.RespawnAfterFailure)
 	}
