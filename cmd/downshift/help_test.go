@@ -65,6 +65,63 @@ func TestUsageShortListsTheEightEverydayCommands(t *testing.T) {
 	}
 }
 
+// help --all is grouped by who needs the command. Reorganising it must not lose
+// a command, and each group has to hold the right ones.
+func TestUsageAllIsGroupedAndComplete(t *testing.T) {
+	var buf bytes.Buffer
+	usage(&buf)
+	out := buf.String()
+
+	order := []string{"Everyday\n", "More about what happened\n", "Models and quota\n", "Plumbing", "Maintainer", "Experimental"}
+	last := -1
+	for _, h := range order {
+		i := strings.Index(out, "\n"+h)
+		if i < 0 {
+			t.Fatalf("help --all has no %q section", strings.TrimSpace(h))
+		}
+		if i < last {
+			t.Errorf("section %q is out of order", strings.TrimSpace(h))
+		}
+		last = i
+	}
+
+	section := func(name string) string {
+		i := strings.Index(out, "\n"+name)
+		rest := out[i+1:]
+		if j := strings.Index(rest, "\n\n"); j >= 0 {
+			rest = rest[:j]
+		}
+		return rest
+	}
+	for name, cmds := range map[string][]string{
+		"Everyday":     {"downshift setup", "downshift doctor", "downshift try", "downshift stats ", "downshift report", "downshift session", "downshift config", "downshift feedback list"},
+		"Plumbing":     {"downshift claude-code", "downshift cursor", "downshift codex", "downshift antigravity", "downshift kirocrew", "downshift quota import", "downshift quota collect", "downshift quota claude-statusline"},
+		"Maintainer":   {"downshift benchmark", "downshift eval-outcome", "downshift eval-adapt", "downshift train", "downshift shadow-report", "downshift models check", "downshift models pull"},
+		"Experimental": {"downshift serve", "downshift context status", "downshift context compress", "dsmon"},
+	} {
+		sec := section(name)
+		for _, c := range cmds {
+			if !strings.Contains(sec, c) {
+				t.Errorf("section %s should list %q", name, c)
+			}
+		}
+	}
+
+	// Every command the earlier flat list had is still here.
+	for _, c := range []string{
+		"downshift setup", "downshift doctor", "downshift try", "downshift stats", "downshift stats --detail", "downshift stats --export",
+		"downshift stats --cost-per-unit", "downshift report", "downshift session", "downshift watch", "downshift config",
+		"downshift models list", "downshift models discover", "downshift models scores", "downshift models check", "downshift models pull",
+		"downshift quota status", "downshift feedback list", "downshift feedback stats", "downshift feedback <id>",
+		"downshift context benchmark", "downshift context metrics", "downshift context providers", "downshift context enable", "downshift context disable",
+		"downshift version", "Grok note",
+	} {
+		if !strings.Contains(out, c) {
+			t.Errorf("help --all lost %q", c)
+		}
+	}
+}
+
 func TestWantsAllHelp(t *testing.T) {
 	for _, c := range []struct {
 		args []string
