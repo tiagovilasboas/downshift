@@ -28,13 +28,17 @@ type setupStatusLine struct {
 	ChainArgs string
 }
 
-// setupDefault is a top-level key setup writes when the file does not have it.
-// An existing value is never replaced; Note, when set, is printed if that
-// value differs from Value.
+// setupDefault is a key setup writes when the file does not have it. Parent,
+// when set, names the top-level object that holds Key. An existing value is
+// never replaced; Note, when set, is printed if that value differs from Value.
+// Optional defaults are the main-session policy and are skipped by
+// --no-session-policy.
 type setupDefault struct {
-	Key   string
-	Value any
-	Note  string
+	Parent   string
+	Key      string
+	Value    any
+	Note     string
+	Optional bool
 }
 
 type setupTarget struct {
@@ -67,14 +71,26 @@ var setupTargets = []setupTarget{
 		File:      ".claude/settings.json",
 		HooksPath: []string{"hooks"},
 		Nested:    true,
-		// Main-session policy: Opus in plan mode, Sonnet for execution. Downshift
-		// routes the subagents underneath; see docs/session-models.md.
-		Defaults: []setupDefault{{
-			Key:   "model",
-			Value: "opusplan",
-			Note: `the main session keeps its pinned "model"; set "model": "opusplan" in ~/.claude/settings.json ` +
-				"(or run /model opusplan) to plan on Opus and execute on Sonnet",
-		}},
+		// Main-session policy: start in plan mode, plan on Opus and execute on
+		// Sonnet (opusplan). Downshift routes the subagents underneath; see
+		// docs/session-models.md. Never replaces a value the user already set.
+		Defaults: []setupDefault{
+			{
+				Key:      "model",
+				Value:    "opusplan",
+				Optional: true,
+				Note: `the main session keeps its pinned "model"; set "model": "opusplan" in ~/.claude/settings.json ` +
+					"(or run /model opusplan) to plan on Opus and execute on Sonnet",
+			},
+			{
+				Parent:   "permissions",
+				Key:      "defaultMode",
+				Value:    "plan",
+				Optional: true,
+				Note: `sessions keep their "permissions.defaultMode"; set it to "plan" in ~/.claude/settings.json ` +
+					"to start every session in plan mode",
+			},
+		},
 		Hooks: []setupHook{
 			{Event: "PreToolUse", Matcher: "Agent|Task", Args: "claude-code"},
 			{Event: "PostToolUse", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},

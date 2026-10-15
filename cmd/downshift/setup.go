@@ -27,12 +27,15 @@ type setupOptions struct {
 	DryRun bool
 	Undo   bool
 	Yes    bool
-	Home   string
-	Binary string
-	Now    func() time.Time
-	In     io.Reader
-	Out    io.Writer
-	Err    io.Writer
+	// NoSessionPolicy skips the optional main-session policy (model opusplan and
+	// plan as the starting mode); hooks are wired as usual.
+	NoSessionPolicy bool
+	Home            string
+	Binary          string
+	Now             func() time.Time
+	In              io.Reader
+	Out             io.Writer
+	Err             io.Writer
 }
 
 // runSetup is the CLI entry: it resolves HOME and the running binary.
@@ -46,6 +49,8 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 			opts.Undo = true
 		case a == "--yes" || a == "-y":
 			opts.Yes = true
+		case a == "--no-session-policy":
+			opts.NoSessionPolicy = true
 		case a == "-h" || a == "--help":
 			fmt.Fprint(out, setupUsage)
 			return 0
@@ -71,12 +76,17 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	return setupRun(opts)
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy]
 
 Wire every Downshift hook into the harnesses found on this machine.
-  --dry-run  show the diff, write nothing
-  --undo     restore the latest backup of each hook file
-  --yes      do not ask before writing
+  --dry-run            show the diff, write nothing
+  --undo               restore the latest backup of each hook file
+  --yes                do not ask before writing
+  --no-session-policy  wire the hooks only: do not set the Claude Code
+                       main-session policy (model opusplan, sessions start in
+                       plan mode)
+
+Claude Code gets the policy by default, only for keys it does not already set.
 `
 
 // setupPlan is the outcome of planning one target.
@@ -278,7 +288,7 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 		p.err = fmt.Errorf("not valid JSON, left untouched: %w", err)
 		return p
 	}
-	notes, err := mergeTarget(doc, t, o.Binary)
+	notes, err := mergeTarget(doc, t, o.Binary, o.NoSessionPolicy)
 	if err != nil {
 		p.err = err
 		return p
@@ -453,12 +463,29 @@ func isDownshiftCommand(command, args string) bool {
 func asObj(v any) (*jobj, bool) { o, ok := v.(*jobj); return o, ok }
 
 // mergeTarget applies every hook (and the status line) of t to doc in place.
-func mergeTarget(doc *jobj, t setupTarget, binary string) ([]string, error) {
+// skipOptional leaves out the optional defaults (the main-session policy).
+func mergeTarget(doc *jobj, t setupTarget, binary string, skipOptional bool) ([]string, error) {
 	var notes []string
 	for _, d := range t.Defaults {
-		v, ok := doc.get(d.Key)
+		if skipOptional && d.Optional {
+			continue
+		}
+		parent := doc
+		if d.Parent != "" {
+			pv, ok := doc.get(d.Parent)
+			if !ok || pv == nil {
+				next := newJobj()
+				doc.set(d.Parent, next)
+				parent = next
+			} else if next, isObj := asObj(pv); isObj {
+				parent = next
+			} else {
+				return nil, fmt.Errorf("%q is not a JSON object, left untouched", d.Parent)
+			}
+		}
+		v, ok := parent.get(d.Key)
 		if !ok {
-			doc.set(d.Key, d.Value)
+			parent.set(d.Key, d.Value)
 			continue
 		}
 		if d.Note != "" && fmt.Sprint(v) != fmt.Sprint(d.Value) {
