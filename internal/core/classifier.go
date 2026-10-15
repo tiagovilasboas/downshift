@@ -12,7 +12,8 @@ import (
 // maxClassifyBytes caps the text the regex table, the risk floor and the
 // structural rules look at. Classification cost is linear in prompt size times
 // about 100 patterns, and the hook reads up to 1 MiB. A signal past the cap is
-// ignored by design; the word count still comes from the full prompt.
+// ignored by the regex table by design; the word count and the risk floor
+// still read the full prompt, so a risk signal past the cap is not lost.
 const maxClassifyBytes = 32 << 10
 
 // classifyHead returns at most maxClassifyBytes of prompt, cut on a rune
@@ -151,6 +152,7 @@ type Classification struct {
 //     use the full prompt.
 func Classify(prompt string) Classification {
 	wordCount := len(strings.Fields(prompt)) // full text, before the cap
+	full := prompt
 	prompt = classifyHead(prompt)
 	lower := strings.ToLower(prompt)
 	scores := map[Complexity]int{Trivial: 0, Simple: 0, Medium: 0, Complex: 0}
@@ -223,7 +225,7 @@ func Classify(prompt string) Classification {
 	}
 	confident := topScore > 0 && topScore-second >= 2
 
-	return applyRiskFloor(prompt, Classification{
+	return applyRiskFloor(full, Classification{
 		Complexity: top,
 		Scores:     scores,
 		Confident:  confident,
