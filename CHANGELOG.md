@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Risk floor reads the full prompt. A risk signal past the 32 KB classification cap no longer lets a trivial head write the small model.
+- Risk signals: `drop the users table` (named table), PT-BR phrasings (charging the card, production data, access token, certificate check), and a new `concurrency` category (race, mutex, atomic, deadlock).
+- Codex: a decision held by the guardrails (R1, R8) no longer raises `reasoning_effort`; a held change leaves the spawn as requested.
+- Claude Code: on a baseline guessed from settings (`BASELINE_FROM_SETTINGS`), a downshift is written only to the small tier; a mid-tier target could be a hidden upshift.
+- Telemetry: a rewrite refuted by a linked `resolved` record is not applied, saves nothing and is never inferred honored. Usage priced on an inferred baseline carries `baseline_source: inferred`, and `stats` says how many events rest on it.
+- `benchmark` prints confident coverage, accuracy when confident and abstentions apart from errors. Accuracy and gates are unchanged.
+
 ### Changed
 
 - **Documentation brought up to date with the first measurements.** README gains "What the evidence shows", the quickstart says that `setup` also sets `opusplan` and plan mode (and `--no-session-policy`), and the status names the open beta-exit pillars. New [evidence page](docs/evidence/subagent-routing-ab-2026-10-15.md): routed versus control on real and mechanical tasks, what it supports and does not, the defects the runs exposed. `beta-exit.md` P2, P3 and P4 statuses and the pilot lessons are updated.
