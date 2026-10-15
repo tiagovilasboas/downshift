@@ -36,6 +36,9 @@ type Event struct {
 	// TranscriptPath is the parent session transcript. Read only to learn the
 	// session model a Task call without "model" inherits.
 	TranscriptPath string `json:"transcript_path,omitempty"`
+	// PermissionMode is the session's permission mode; it decides which model
+	// the "opusplan" setting means (see configuredModel).
+	PermissionMode string `json:"permission_mode,omitempty"`
 	// ToolUseID is the harness id of this Task call; PostToolUse repeats it.
 	ToolUseID string `json:"tool_use_id,omitempty"`
 	// Optional allowlist. Nil means the payload did not include one.
@@ -91,26 +94,42 @@ func (ev Event) RequestedModel() string {
 // Task "model", the payload "model", then, for agent types that inherit (see
 // inheritingAgentTypes), the harness override env
 // (core.ClaudeCodeCaps.ModelOverrideEnv; Explore and Plan only when forced) and
-// finally the parent session model from the transcript.
+// finally the parent session model from the transcript. It never reads the
+// settings fallback, which needs a catalog (see resolveModel).
 func (ev Event) currentModel(ti map[string]any) string {
+	m, _ := ev.resolveModel(ti, nil)
+	return m
+}
+
+// resolveModel is currentModel plus a last resort for an inheriting agent type
+// whose transcript holds no model: the model the session is configured to use
+// (configuredModel), which needs res to turn an alias into a catalog id. The
+// bool reports that the model came from that fallback, so the decision can say
+// the baseline is inferred. A model in the transcript always wins.
+func (ev Event) resolveModel(ti map[string]any, res core.Resolver) (string, bool) {
 	if model := hookutil.StringField(ti, "model"); model != "" {
-		return model
+		return model, false
 	}
 	if ev.Model != "" {
-		return ev.Model
+		return ev.Model, false
 	}
-	if inheritsSessionModel(ti) {
-		typ := hookutil.StringField(ti, "subagent_type")
-		if m := subagentModelFromEnv(typ); m != "" {
-			return m
-		}
-		parent := sessionModelFromTranscript(ev.TranscriptPath)
-		if exploreMayLeaveTheMainModel(typ, parent) {
-			return ""
-		}
-		return parent
+	if !inheritsSessionModel(ti) {
+		return "", false
 	}
-	return ""
+	typ := hookutil.StringField(ti, "subagent_type")
+	if m := subagentModelFromEnv(typ); m != "" {
+		return m, false
+	}
+	parent := sessionModelFromTranscript(ev.TranscriptPath)
+	inferred := false
+	if parent == "" && res != nil {
+		parent = configuredModel(ev.Cwd, ev.PermissionMode, res)
+		inferred = parent != ""
+	}
+	if exploreMayLeaveTheMainModel(typ, parent) {
+		return "", false
+	}
+	return parent, inferred
 }
 
 // TaskText returns the task content used for local, prompt-free feature
@@ -154,14 +173,15 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", core.Decision{}
 	}
 
-	currentModel := ev.currentModel(ti)
-
 	var res core.Resolver
 	if len(r) > 0 {
 		res = r[0]
 	}
+	currentModel, fromSettings := ev.resolveModel(ti, res)
+
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 	decision.RequestedID = currentModel
+	decision.BaselineFromSettings = fromSettings
 
 	session := core.ResolveSessionForID(harnessID, ev.SessionID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)

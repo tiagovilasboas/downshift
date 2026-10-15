@@ -37,6 +37,10 @@ const (
 	// path (DOWNSHIFT_SCORE_ROUTING=1). A shadow pick is never a reason: it
 	// has its own event field, score_would.
 	ReasonScoreRouted = "SCORE_ROUTED"
+	// ReasonBaselineFromSettings marks a decision whose baseline model was
+	// inferred from the configured session model (env or settings) because the
+	// transcript had none; a --model flag or /model can make it wrong.
+	ReasonBaselineFromSettings = "BASELINE_FROM_SETTINGS"
 	// ReasonHeldUnmapped stands for a guardrail rule this version has no code
 	// for, so a hold is never silently dropped from the trace.
 	ReasonHeldUnmapped = "HELD_UNMAPPED_RULE"
@@ -94,6 +98,9 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.ScoreApplied {
 		set[ReasonScoreRouted] = true
+	}
+	if d.BaselineFromSettings {
+		set[ReasonBaselineFromSettings] = true
 	}
 	for _, rule := range d.Corrections {
 		if code, ok := heldReason[rule]; ok {

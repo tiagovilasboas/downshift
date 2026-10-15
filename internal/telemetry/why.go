@@ -24,6 +24,7 @@ var reasonWords = map[string]string{
 	ReasonCreditHeld:            "the credit gate refused the rewrite (quota exhausted, stale or unknown)",
 	ReasonPaused:                "routing was paused for this session: classified and logged, the spawn ran unchanged",
 	ReasonScoreRouted:           "public capability scores picked the model",
+	ReasonBaselineFromSettings:  "the session model was inferred from the configured model (env or settings), not seen in the transcript",
 	ReasonHeldUnmapped:          "a guardrail this version cannot name held the decision",
 
 	"HELD_UNCONFIDENT_DOWNSHIFT":        "a cheaper model was held: the classifier was not confident enough to downshift",

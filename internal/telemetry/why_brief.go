@@ -8,15 +8,16 @@ import "strings"
 // briefWords is each shaping reason code in a few words, for one-line "why"
 // output (`downshift try`). Guardrail codes use ReasonWords instead.
 var briefWords = map[string]string{
-	ReasonNoSignal:           "no clear signal",
-	ReasonSemanticBoost:      "raised by meaning-based matching",
-	ReasonGraphEscalation:    "wide change in the dependency graph",
-	ReasonNBUpshiftApplied:   "raised by the second-opinion model",
-	ReasonNBDownshiftApplied: "lowered by the second-opinion model",
-	ReasonTierFloor:          "project tier floor",
-	ReasonScoreRouted:        "picked by public capability scores",
-	ReasonCreditHeld:         "credit gate held the rewrite",
-	ReasonPaused:             "routing paused",
+	ReasonNoSignal:             "no clear signal",
+	ReasonSemanticBoost:        "raised by meaning-based matching",
+	ReasonGraphEscalation:      "wide change in the dependency graph",
+	ReasonNBUpshiftApplied:     "raised by the second-opinion model",
+	ReasonNBDownshiftApplied:   "lowered by the second-opinion model",
+	ReasonTierFloor:            "project tier floor",
+	ReasonScoreRouted:          "picked by public capability scores",
+	ReasonBaselineFromSettings: "baseline inferred from the configured model",
+	ReasonCreditHeld:           "credit gate held the rewrite",
+	ReasonPaused:               "routing paused",
 }
 
 // ReasonBrief renders reason codes as one short phrase such as

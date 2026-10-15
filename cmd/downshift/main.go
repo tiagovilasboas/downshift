@@ -315,6 +315,10 @@ func runHookAdapter[E any](
 		event.FromModel = "unknown"
 		if requested, ok := any(ev).(interface{ RequestedModel() string }); ok {
 			candidate := requested.RequestedModel()
+			if decision.BaselineFromSettings {
+				// Inferred from settings: the adapter resolved it with the catalog.
+				candidate = decision.RequestedID
+			}
 			if candidate != "" {
 				// Route only populates CurrentModel when its resolver recognized
 				// the original candidate. That makes this a catalog allowlist
