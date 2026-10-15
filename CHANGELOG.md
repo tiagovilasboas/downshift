@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`downshift setup` also starts Claude Code sessions in plan mode.** Next to `"model": "opusplan"`, it sets `"permissions": {"defaultMode": "plan"}` when no `defaultMode` is set, so every session plans before it edits and the opusplan split applies. This replaces Claude Code's built-in starting mode (auto mode on recent versions). Existing values are never replaced, and `downshift doctor` reports both. Opt out with `downshift setup --no-opusplan`, which wires the hooks only. See `docs/session-models.md`.
+
 ## [0.1.0-beta.9] — 2026-10-15
 
 ### Added

@@ -419,14 +419,22 @@ func checkMainPolicy(add func(id, status, detail, fix string), harness string, r
 			if d.Note == "" {
 				continue
 			}
-			v, ok := doc[d.Key]
+			holder := doc
+			if d.Parent != "" {
+				holder, _ = doc[d.Parent].(map[string]any)
+			}
+			v, ok := holder[d.Key]
+			label := d.Key
+			if d.Parent != "" {
+				label = d.Parent + "." + d.Key
+			}
 			switch {
 			case ok && fmt.Sprint(v) == fmt.Sprint(d.Value):
-				add("main session", doctorOK, fmt.Sprintf("%s %v: Downshift routes the subagents under it", d.Key, d.Value), "")
+				add("main session", doctorOK, fmt.Sprintf("%s %v", label, d.Value), "")
 			case ok:
-				add("main session", doctorOK, fmt.Sprintf("%s %v (pinned)", d.Key, v), d.Note)
+				add("main session", doctorOK, fmt.Sprintf("%s %v (set by you)", label, v), d.Note)
 			default:
-				add("main session", doctorOK, fmt.Sprintf("no %s set: harness default", d.Key), d.Note)
+				add("main session", doctorOK, fmt.Sprintf("no %s set: harness default", label), d.Note)
 			}
 		}
 	}

@@ -10,25 +10,33 @@ import (
 
 func TestCheckMainPolicy(t *testing.T) {
 	for _, tc := range []struct {
-		doc     map[string]any
-		detail  string
-		wantFix bool
+		name string
+		doc  map[string]any
+		want []string // one substring per reported line, in order
 	}{
-		{map[string]any{"model": "opusplan"}, "model opusplan", false},
-		{map[string]any{"model": "claude-sonnet-5-5"}, "claude-sonnet-5-5 (pinned)", true},
-		{map[string]any{}, "no model set", true},
+		{"both set", map[string]any{"model": "opusplan", "permissions": map[string]any{"defaultMode": "plan"}},
+			[]string{"model opusplan", "permissions.defaultMode plan"}},
+		{"pinned by the user", map[string]any{"model": "claude-sonnet-5-5", "permissions": map[string]any{"defaultMode": "acceptEdits"}},
+			[]string{"claude-sonnet-5-5 (set by you)", "acceptEdits (set by you)"}},
+		{"nothing set", map[string]any{}, []string{"no model set", "no permissions.defaultMode set"}},
+		{"permissions without a mode", map[string]any{"permissions": map[string]any{"allow": []any{}}},
+			[]string{"no model set", "no permissions.defaultMode set"}},
 	} {
 		var got []string
-		var fix string
-		checkMainPolicy(func(id, status, detail, f string) {
+		checkMainPolicy(func(id, status, detail, _ string) {
 			if status != doctorOK {
-				t.Errorf("%v: status %s, want ok", tc.doc, status)
+				t.Errorf("%s: status %s, want ok", tc.name, status)
 			}
 			got = append(got, detail)
-			fix = f
 		}, "claude-code", tc.doc)
-		if len(got) != 1 || !strings.Contains(got[0], tc.detail) || (fix != "") != tc.wantFix {
-			t.Errorf("%v: got %v fix %q", tc.doc, got, fix)
+		if len(got) != len(tc.want) {
+			t.Errorf("%s: got %v, want %d lines", tc.name, got, len(tc.want))
+			continue
+		}
+		for i, w := range tc.want {
+			if !strings.Contains(got[i], w) {
+				t.Errorf("%s: line %d = %q, want it to contain %q", tc.name, i, got[i], w)
+			}
 		}
 	}
 	checkMainPolicy(func(id, _, _, _ string) { t.Errorf("cursor reported %s", id) }, "cursor", map[string]any{})

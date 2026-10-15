@@ -53,13 +53,22 @@ Native config is not a session allowlist either:
 
 - Antigravity uses the `Subagents` array in `invoke_subagent` calls, where subagent models (`flash_lite`, `flash`, `pro`, `inherit`) are mapped directly according to routing decisions.
 
-## Main session policy: opusplan (Claude Code)
+## Main session policy: plan mode and opusplan (Claude Code)
 
-Downshift routes subagents; the main session model is the harness's. For Claude Code, `downshift setup` writes `"model": "opusplan"` to `~/.claude/settings.json` when no model is set: Opus while plan mode is on, Sonnet for execution ([model config](https://code.claude.com/docs/en/model-config)). A pinned `model` is never replaced; setup prints how to switch, and `downshift doctor` shows the policy in effect as `main session`.
+Downshift routes subagents; the main session is the harness's. For Claude Code, `downshift setup` also sets two keys in `~/.claude/settings.json`, each only when it is not already set:
+
+| Key | Value | Effect |
+|---|---|---|
+| `model` | `opusplan` | Opus while plan mode is on, Sonnet for execution ([model config](https://code.claude.com/docs/en/model-config)) |
+| `permissions.defaultMode` | `plan` | Every terminal session starts in plan mode: Claude reads and plans, and edits stay blocked until you approve the plan ([permission modes](https://code.claude.com/docs/en/permission-modes)) |
+
+Together they make the plan/execute split happen in every session. A value you already set is never replaced; setup prints how to switch, and `downshift doctor` shows both as `main session`. A new `defaultMode` replaces Claude Code's built-in starting mode (auto mode on recent versions), so a session now starts by planning instead of acting. Approving a plan leaves plan mode for the mode you pick in that prompt; `Shift+Tab` or `/plan` plans again.
+
+`downshift setup --no-opusplan` wires the hooks and leaves both keys alone. To undo it later, delete the two keys or run `downshift setup --undo` to restore the last backup. To keep one without the other, set the one you want yourself first: setup keeps it.
 
 The two layers fit together. Claude Code resolves an inheriting subagent's model when it starts it, so a subagent spawned during plan mode would run on Opus. The adapter reads the parent model from the last assistant message in the transcript, which is the resolved model (Opus or Sonnet), not the alias, so the baseline stays known and the subagent is right-sized as usual. This follows from the code path; it has not yet been observed in a live plan-mode spawn.
 
-Opt out by pinning a model (`"model": "claude-sonnet-5-5"`, `/model`, `--model` or `ANTHROPIC_MODEL`). `ANTHROPIC_DEFAULT_MODEL=opusplan` is ignored by Claude Code; use the `model` setting.
+Pinning a model (`"model": "claude-sonnet-5-5"`, `/model`, `--model` or `ANTHROPIC_MODEL`) opts out of opusplan. `ANTHROPIC_DEFAULT_MODEL=opusplan` is ignored by Claude Code; use the `model` setting. The VS Code extension does not read `permissions.defaultMode`; it uses `claudeCode.initialPermissionMode`.
 
 ## Where the list comes from
 
