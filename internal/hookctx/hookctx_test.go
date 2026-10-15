@@ -79,7 +79,9 @@ func TestRunCommand_BackgroundChildDoesNotHang(t *testing.T) {
 	}
 	start := time.Now()
 	hookctx.RunCommand(script, "", 5*time.Second)
-	if d := time.Since(start); d > 3*time.Second {
+	// The helper's own timeout is 5s and its background child sleeps 10s, so a
+	// hang shows as 5s or more. 4s leaves room for a loaded machine.
+	if d := time.Since(start); d > 4*time.Second {
 		t.Fatalf("background child held the helper for %s", d)
 	}
 }

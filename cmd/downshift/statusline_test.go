@@ -120,6 +120,9 @@ func TestStatusline_FastOnALargeLogAndReadsOnlyTheTail(t *testing.T) {
 	if !strings.Contains(got, "2 subagents · 2 on haiku") {
 		t.Errorf("tail lost the current session: %q", got)
 	}
+	if raceEnabled {
+		t.Skip("latency bound does not apply under -race (the tail read still returned the right session)")
+	}
 	if took > 250*time.Millisecond { // target is 50 ms; this bound only catches a full scan
 		t.Errorf("render took %v on a 50 MB log, tail read expected", took)
 	}
