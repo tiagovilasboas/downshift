@@ -48,6 +48,8 @@ Graduation needs independent operators, not only one `events.jsonl`.
 
 **Exit:** README cites **≥3 distinct session sources** OR **≥2 non-maintainer exports** in a release note.
 
+**P2 status (2026-10-15):** open, unchanged since 2026-10-06 (no external export yet).
+
 **P2 status (2026-10-06):** open. It needs independent operators, not more data from one machine. If you run Downshift for a week, a `downshift stats --days=7 --export` is the contribution: see [stats-export.md](stats-export.md) and the stats-export issue template.
 
 ---
@@ -69,6 +71,8 @@ Replace directional normalised units with provider-grounded savings.
 
 **Exit:** P3.4 + P3.5 + P3.7 filled for **one** billing period (maintainer sign-off). Still open: 5/50 linked agents and no real control-period comparison. P3.5 alone does not close the pillar.
 
+**P3 status (2026-10-15):** open. The control group is on by default (10%) and `downshift report` computes cost per completed task, routed versus control, with an interval; the protocol for a team is [pilot.md](pilot.md). A controlled routed-versus-control run (one operator, list price) is in [evidence/subagent-routing-ab-2026-10-15.md](evidence/subagent-routing-ab-2026-10-15.md): it is not a billing period and does not close P3.7.
+
 Historical P3.4 finding (2026-10-06; superseded counts and current provenance in the [2026-10-09 audit](evidence/billing-gap-audit.md)): the Claude Code PostToolUse payload for an async `Agent` launch carries no token usage (`tool_response` is launch metadata only, `duration_ms` is a few ms), which is why the log has no `usage` events. The subagent transcript at `tool_response.outputFile` does carry per-message `message.model` and `message.usage` (input, output, cache creation/read; the same message id repeats while streaming, so take the last per id). It is not complete at launch time, so usage is read when the subagent stops: the SubagentStop hook (`downshift claude-code-subagent-stop`, payload `agent_id` + `agent_transcript_path`) prices it from that transcript and links it to the decision through the hashed agent id. Verified 2026-10-06 against a real transcript (18 input, 311 output, 82,900 cache tokens). It is not enabled in the maintainer `settings.json` yet, and savings stay zero while the decision's `requested_model` is `unknown`. The launch payload does carry `resolvedModel`, now recorded as an `outcome: "resolved"` honor observation (P1.7).
 
 ---
@@ -89,6 +93,8 @@ Historical P3.4 finding (2026-10-06; superseded counts and current provenance in
 | P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout (`benchmark/minilm-holdout.json`) | eng | [x] |
 
 **Exit (not met on this dataset):** P4.5 regression files live in private **downshift-labs** (`ci-eval` gates). The public repo ships [benchmark/REPORT.md](../benchmark/REPORT.md) only. Historical note (2026-10-04, `eb116ed`): holdout was a burned regression net (template stems, post-holdout signal tuning to 100% tier accuracy), not proof of generalization. Do not remove the beta label on that dataset alone.
+
+**P4 status (2026-10-15):** open. The seed and the shared-memory floor are recomputed at 37/40 (the floor moved from 38/40 on purpose when the semantic boost stopped lifting prompts with no regex signal). Two eval-only splits are published as aggregates in [benchmark/REPORT.md](../benchmark/REPORT.md) (`fresh` 50.0%, `heldout2` 40.0%, classifier commit `5a888e7`, 2026-10-10). Still missing: a new blind set of 200 or more tasks that is never tuned against.
 
 P4.3's checked box is the library, not graph-aware routing on the hook. `TestHint_NilFetcher_OfflineMode` shows a nil fetcher never escalates. See [graphify-integration.md](graphify-integration.md).
 

@@ -21,7 +21,7 @@ harness-downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovil
 
 Downshift is a hook for your coding harness. When Claude Code starts a subagent, it picks a right-sized model for that task: easy work runs on Haiku, hard work keeps Opus. Your session model never changes. Start with two commands:
 
-- **Cheaper easy subagents.** A trivial rename runs on Haiku 5.5. The list-price gap to Opus 5.5 is about 97% ($0.10 vs $4.00 per 1M input tokens). Your real saving depends on your task mix; `downshift stats` estimates it from your runs.
+- **Cheaper easy subagents.** A trivial rename runs on Haiku 5.5, about 97% cheaper per token than Opus 5.5 at list price. What that is worth depends on how much of your work is easy and delegated: in a controlled test where a parent hands mechanical pieces to subagents, cost fell about 12% overall (a third on pure renames) with the same tasks passing; on natural, longer tasks the classifier is usually unconfident and keeps the model, so the saving is smaller and not yet measured. See [what the evidence shows](#what-the-evidence-shows).
 - **Guardrails.** Unsure upshifts are held, risky tasks keep a floor, and anything unknown leaves the spawn unchanged.
 - **Visible.** A statusline, a stderr line per routed subagent, and `downshift session --tree` (or `/downshift`) show what was routed and why.
 
@@ -30,7 +30,7 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/insta
 downshift setup
 ```
 
-`setup` prints a diff and asks before it writes. Preview with `downshift setup --dry-run` first, then open a new Claude Code session.
+`setup` prints a diff and asks before it writes. Preview with `downshift setup --dry-run` first, then open a new Claude Code session. For Claude Code it also sets `"model": "opusplan"` (Opus plans, Sonnet executes) and starts sessions in plan mode, only for keys you have not set yourself; `downshift setup --no-session-policy` wires the hooks and leaves both alone.
 
 > **Beta.** Whether a rewrite is applied depends on the harness and plan, not only on Downshift. Read [plan compatibility](docs/install.md#plan-compatibility--read-before-installing) before installing, and see [Harness support](#harness-support) for what has been verified.
 
@@ -148,6 +148,20 @@ A project can require a minimum tier with `.downshift/policy.json`. It only rais
 
 Downshift keeps a local cache of public capability scores (Epoch AI ECI, CC BY 4.0; Artificial Analysis via OpenRouter, local cache only) for the session models of each harness. Hooks refresh it in the background, at most once a day, and never wait for it. `DOWNSHIFT_SCORES=off` turns all of it off. Selection by score is shadow by default and changes routing only with `DOWNSHIFT_SCORE_ROUTING=1`. Sources, licences, privacy, the id map and the telemetry fields: [docs/scores.md](docs/scores.md).
 
+## What the evidence shows
+
+Measured on 2026-10-15, one operator, Claude Code, same tasks and prompts in a routed and a control arm, judged only by hidden tests. Full method, limits and the defects the runs exposed: [docs/evidence/subagent-routing-ab-2026-10-15.md](docs/evidence/subagent-routing-ab-2026-10-15.md).
+
+| Situation | Accepted (routed / control) | Cost (routed / control) | Rewritten down |
+|---|---|---|---|
+| Real fixes, delegation optional (b2) | 7/8 / 7/8 | $0.65 / $0.77, not attributable to routing | 0 spawns |
+| Mechanical pieces, one subagent each (b5): the ceiling | 12/12 / 12/12 | $0.59 / $0.67 (-12%) | 19 of 56 (34%) |
+| Real fixes, at least 3 subagents (b6) | 8/12 / 9/12 | $0.75 / $0.92, not attributable to routing | 3 of 34 (9%) |
+
+- **Supported:** Downshift routes, and where it rewrites down the task still passes; it saves up to about 12% on mechanical delegated work (list price, three runs per cell).
+- **Not supported:** a saving figure for general use. The 64% of subagents that kept their model in the ceiling case were left alone for lack of classifier confidence, and the estimate in `downshift stats` (list price per decision) is not a measurement.
+- **Not measured:** quality beyond the checks, other harnesses, more than one operator. The team protocol in [docs/pilot.md](docs/pilot.md) is how to add data; `downshift report` compares routed and control from your own usage.
+
 ## Harness support
 
 | Harness | Subagent tool | Mechanism | Rewrite honored (evidence) |
@@ -198,6 +212,8 @@ See [the context optimization guide](docs/context-optimization.md) for architect
 
 [INSTALL](docs/install.md) · [CONFIG](docs/config.md) · [session models](docs/session-models.md) · [session discovery](docs/session-discovery.md) · [ARCHITECTURE](docs/architecture.md) · [complexity weights](docs/complexity-weights.md) · [HARNESS-MATRIX](docs/harness-matrix.md) · [WHEN-TO-USE](docs/when-to-use.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
 
+Evidence and method: [subagent routing A/B](docs/evidence/subagent-routing-ab-2026-10-15.md) · [team pilot](docs/pilot.md) · [hook payload probe](docs/probe.md)
+
 Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit criteria](docs/beta-exit.md) · [remaining tasks](docs/gap-tasks.md)
 
 **For AI agents:** start with [docs/install.md](docs/install.md), [AGENTS.md](AGENTS.md) and [llms.txt](llms.txt).
@@ -210,7 +226,7 @@ Every feature must serve every harness: behaviour in shared layers, adapters onl
 
 ## Status
 
-**Beta.** The adapters ship, but the limiting factor is often harness or plan support rather than the router. Exit criteria are tracked in [docs/beta-exit.md](docs/beta-exit.md).
+**Beta (v0.1.0-beta.13).** The adapters ship, but the limiting factor is often harness or plan support rather than the router. As of 2026-10-15 no beta-exit pillar is closed: real spawns are verified on Claude Code (and observed on Antigravity and KiroCrew), there is no external operator yet, usage-linked cost is 5 of 50 records, and the routing-quality benchmark has no new blind set. The first routed-versus-control measurement is in [the evidence](docs/evidence/subagent-routing-ab-2026-10-15.md). Exit criteria are tracked in [docs/beta-exit.md](docs/beta-exit.md).
 
 ## License
 

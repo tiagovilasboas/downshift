@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Documentation brought up to date with the first measurements.** README gains "What the evidence shows", the quickstart says that `setup` also sets `opusplan` and plan mode (and `--no-session-policy`), and the status names the open beta-exit pillars. New [evidence page](docs/evidence/subagent-routing-ab-2026-10-15.md): routed versus control on real and mechanical tasks, what it supports and does not, the defects the runs exposed. `beta-exit.md` P2, P3 and P4 statuses and the pilot lessons are updated.
+
 ## [0.1.0-beta.13] — 2026-10-15
 
 ### Changed

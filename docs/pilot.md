@@ -62,6 +62,16 @@ usage events) and P3.7 (period comparison), if the numbers are there.
 | Interval above zero, rework not higher in the routed group | Saving shown for this team and workload |
 | Interval above zero, rework higher in the routed group | Cheaper per completed task, but at a quality cost. Report both numbers |
 
+## Lessons from the first routed-versus-control runs
+
+From [the first measurements](evidence/subagent-routing-ab-2026-10-15.md); each cost a wasted batch until it was handled.
+
+- **Count the spawns.** Downshift acts only on subagent spawns. A run that spawns none is identical in both arms, so the report is read only over runs with at least 3.
+- **Keep the transcript.** Claude Code's baseline comes from the transcript, with the configured model as a marked fallback (`BASELINE_FROM_SETTINGS`). A run without session persistence has neither a transcript nor a recorded model, so nothing is routed and both arms look the same.
+- **Parallel Agent calls in the first message** have no transcript model yet; the fallback covers them only when the model is configured in settings or `ANTHROPIC_MODEL`, not with `--model` or `/model` (see [harness-matrix.md](harness-matrix.md)).
+- **A usage limit is not a failed task.** A run refused by the account's usage limit has no cost and did no work; drop it from the comparison and rerun it after the limit resets.
+- **Do not credit a gap to routing unless a downshift was applied.** In the first batch the routed arm was cheaper while no downshift was applied: the difference was the agent's own behaviour.
+
 ## Limits to state in the result
 
 - Dollars are catalog list prices applied to recorded tokens, not invoice amounts, unless the
