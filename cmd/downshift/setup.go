@@ -485,6 +485,9 @@ func mergeTarget(doc *jobj, t setupTarget, binary string) ([]string, error) {
 			list = arr
 		}
 		cmd := quoteCommand(binary, h.Args)
+		if repointElsewhere(holder, h, cmd) {
+			continue
+		}
 		if t.Nested {
 			list = ensureNestedHook(list, h, cmd)
 		} else {
@@ -502,6 +505,38 @@ func mergeTarget(doc *jobj, t setupTarget, binary string) ([]string, error) {
 		}
 	}
 	return notes, nil
+}
+
+// repointElsewhere finds a Downshift hook for h outside holder's own h.Event
+// list, such as inside an Antigravity named group, and points it at cmd. It
+// reports whether one was found, so setup does not add a duplicate.
+func repointElsewhere(holder *jobj, h setupHook, cmd string) bool {
+	found := false
+	var walk func(v any, under bool)
+	walk = func(v any, under bool) {
+		switch x := v.(type) {
+		case *jobj:
+			if c, ok := x.vals["command"].(string); ok && under && isDownshiftCommand(c, h.Args) {
+				if c != cmd {
+					x.set("command", cmd)
+				}
+				found = true
+			}
+			for k, child := range x.vals {
+				walk(child, under || k == h.Event)
+			}
+		case []any:
+			for _, item := range x {
+				walk(item, under)
+			}
+		}
+	}
+	for k, child := range holder.vals {
+		if k != h.Event {
+			walk(child, false)
+		}
+	}
+	return found
 }
 
 func hookCommand(o *jobj) string {
