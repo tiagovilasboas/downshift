@@ -62,7 +62,12 @@ func TestInheritsSessionModel(t *testing.T) {
 	}{
 		{map[string]any{}, true},
 		{map[string]any{"subagent_type": "general-purpose"}, true},
-		{map[string]any{"subagent_type": "Explore"}, false},
+		{map[string]any{"subagent_type": "Explore"}, true},
+		{map[string]any{"subagent_type": "Plan"}, true},
+		{map[string]any{"subagent_type": "claude"}, true},
+		{map[string]any{"subagent_type": "my-custom-reviewer"}, false},
+		{map[string]any{"subagent_type": "statusline-setup"}, false},
+		{map[string]any{"subagent_type": "claude-code-guide"}, false},
 		{map[string]any{"model": "haiku"}, false},
 	}
 	for _, c := range cases {
@@ -88,7 +93,14 @@ func TestCurrentModel_SubagentModelEnv(t *testing.T) {
 		{"env blank falls to transcript", "  ", true, map[string]any{}, "m-parent"},
 		{"env unset falls to transcript", "", false, map[string]any{}, "m-parent"},
 		{"explicit model wins", "m-env", true, map[string]any{"model": "haiku"}, "haiku"},
-		{"non-inheriting type untouched", "m-env", true, map[string]any{"subagent_type": "Explore"}, ""},
+		{"custom type untouched", "m-env", true, map[string]any{"subagent_type": "my-custom-reviewer"}, ""},
+		{"built-in with its own model untouched", "m-env", true, map[string]any{"subagent_type": "claude-code-guide"}, ""},
+		// Explore and Plan run on the main model; the variable is only a default
+		// for general-purpose, and reaches them only when forced onto every subagent.
+		{"Explore runs on the main model", "", false, map[string]any{"subagent_type": "Explore"}, "m-parent"},
+		{"Plan runs on the main model", "", false, map[string]any{"subagent_type": "Plan"}, "m-parent"},
+		{"Explore ignores an unforced env default", "m-env", true, map[string]any{"subagent_type": "Explore"}, "m-parent"},
+		{"Plan ignores an unforced env default", "m-env", true, map[string]any{"subagent_type": "Plan"}, "m-parent"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -103,5 +115,42 @@ func TestCurrentModel_SubagentModelEnv(t *testing.T) {
 				t.Errorf("got %q, want %q", got, c.want)
 			}
 		})
+	}
+}
+
+// CLAUDE_CODE_SUBAGENT_MODEL_FORCE puts the variable on every subagent, the
+// built-in Explore and Plan included.
+func TestCurrentModel_ForcedEnvReachesExploreAndPlan(t *testing.T) {
+	tr := writeTranscript(t, `{"type":"assistant","message":{"model":"m-parent"}}`+"\n")
+	t.Setenv(core.ClaudeCodeCaps.ModelOverrideEnv, "m-env")
+	t.Setenv("CLAUDE_CODE_SUBAGENT_MODEL_FORCE", "1")
+	for _, typ := range []string{"Explore", "Plan", "general-purpose"} {
+		ev := Event{TranscriptPath: tr}
+		if got := ev.currentModel(map[string]any{"subagent_type": typ}); got != "m-env" {
+			t.Errorf("%s with the force flag: got %q, want m-env", typ, got)
+		}
+	}
+	t.Setenv("CLAUDE_CODE_SUBAGENT_MODEL_FORCE", "0")
+	ev := Event{TranscriptPath: tr}
+	if got := ev.currentModel(map[string]any{"subagent_type": "Explore"}); got != "m-parent" {
+		t.Errorf("force flag 0: got %q, want m-parent", got)
+	}
+}
+
+// With a Fable main model Claude Code may run Explore on Opus (subscription,
+// Console, gateway) or keep it on the main model (cloud providers), so the
+// baseline is not knowable and stays unknown, which holds the rewrite.
+func TestCurrentModel_ExploreUnderFableStaysUnknown(t *testing.T) {
+	t.Setenv(core.ClaudeCodeCaps.ModelOverrideEnv, "")
+	os.Unsetenv(core.ClaudeCodeCaps.ModelOverrideEnv)
+	tr := writeTranscript(t, `{"type":"assistant","message":{"model":"claude-fable-5-1"}}`+"\n")
+	ev := Event{TranscriptPath: tr}
+	if got := ev.currentModel(map[string]any{"subagent_type": "Explore"}); got != "" {
+		t.Errorf("Explore under Fable: got %q, want unknown", got)
+	}
+	for _, typ := range []string{"Plan", "general-purpose"} {
+		if got := ev.currentModel(map[string]any{"subagent_type": typ}); got != "claude-fable-5-1" {
+			t.Errorf("%s under Fable: got %q, want the main model", typ, got)
+		}
 	}
 }

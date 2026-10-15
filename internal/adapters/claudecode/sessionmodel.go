@@ -14,9 +14,21 @@ import (
 )
 
 // inheritingAgentTypes run on the parent session's model when the Task call
-// sets no model. Other agent types may pin their own model in their
-// definition, so the parent model would be a guess for them.
-var inheritingAgentTypes = map[string]bool{"": true, "general-purpose": true, "claude": true}
+// sets no model: the general-purpose and catch-all types, and the built-in
+// Explore and Plan (sub-agents docs, "Built-in subagents"). Other types may pin
+// their own model in their definition (statusline-setup runs on Sonnet,
+// claude-code-guide on Haiku, a custom type on whatever its frontmatter says),
+// so the parent model would be a guess for them and the baseline stays unknown.
+var inheritingAgentTypes = map[string]bool{"": true, "general-purpose": true, "claude": true, "Explore": true, "Plan": true}
+
+// envDefaultOnlyAgentTypes use CLAUDE_CODE_SUBAGENT_MODEL only when it is forced
+// onto every subagent (CLAUDE_CODE_SUBAGENT_MODEL_FORCE); as a plain default it
+// reaches general-purpose and the catch-all but not these built-ins.
+var envDefaultOnlyAgentTypes = map[string]bool{"Explore": true, "Plan": true}
+
+// subagentModelForceEnv is the variable that makes subagentModelFromEnv win over
+// every definition and per-call choice (Claude Code v2.1.257 and later).
+const subagentModelForceEnv = "CLAUDE_CODE_SUBAGENT_MODEL_FORCE"
 
 // inheritsSessionModel reports whether this Task call runs on the session model.
 func inheritsSessionModel(ti map[string]any) bool {
@@ -28,9 +40,15 @@ func inheritsSessionModel(ti map[string]any) bool {
 // Code resolves a subagent model as: per-call model, agent frontmatter, this
 // variable, then the main conversation model. Empty when unset, blank or
 // "inherit", which means the parent model applies.
-func subagentModelFromEnv() string {
+//
+// subagentType matters for Explore and Plan: they take the variable only when
+// the force flag is on.
+func subagentModelFromEnv(subagentType string) string {
 	name := core.ClaudeCodeCaps.ModelOverrideEnv
 	if name == "" {
+		return ""
+	}
+	if envDefaultOnlyAgentTypes[subagentType] && !envFlagOn(os.Getenv(subagentModelForceEnv)) {
 		return ""
 	}
 	v := strings.TrimSpace(os.Getenv(name))
@@ -64,4 +82,19 @@ func assistantModel(line []byte) string {
 		return ""
 	}
 	return row.Message.Model
+}
+
+// envFlagOn reads a boolean environment flag: unset, empty, "0" and "false" are off.
+func envFlagOn(v string) bool {
+	v = strings.ToLower(strings.TrimSpace(v))
+	return v != "" && v != "0" && v != "false"
+}
+
+// exploreMayLeaveTheMainModel reports a main model under which Claude Code can
+// run the built-in Explore on a different one: on a subscription, Console
+// account or gateway it uses the Opus alias when the main model is Fable, while
+// on Bedrock and similar providers it stays on the main model. Which applies is
+// not visible to a hook, so the baseline is left unknown.
+func exploreMayLeaveTheMainModel(subagentType, mainModel string) bool {
+	return subagentType == "Explore" && strings.Contains(strings.ToLower(mainModel), "fable")
 }

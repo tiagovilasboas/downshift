@@ -31,10 +31,21 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
 `tool_use_id` and `transcript_path` but no session model.
 
 - **Current model.** A Task call without `model` (agent type empty,
-  `general-purpose` or `claude`) runs on the session model. The adapter reads
-  it from the last assistant message in the tail of `transcript_path` (1 MiB,
-  model id only). Other agent types may pin their own model and stay
-  `unknown`.
+  `general-purpose`, `claude`, and the built-in `Explore` and `Plan`) runs on
+  the session model. The adapter reads it from the last assistant message in
+  the tail of `transcript_path` (1 MiB, model id only). Other agent types may
+  pin their own model (`statusline-setup` runs on Sonnet, `claude-code-guide`
+  on Haiku, a custom type on its frontmatter) and stay `unknown`. `Explore`
+  also stays `unknown` when the session model is Fable: Claude Code may run it
+  on Opus (subscription, Console, gateway) or keep it on the main model (cloud
+  providers), and a hook cannot tell which. Until 2026-10-15 `Explore` and
+  `Plan` were left out, so every spawn of those types was held as
+  `HELD_UNCONFIDENT_UNKNOWN_MID` and never routed.
+- **Baseline still unknown on Cursor and Antigravity.** A spawn with an
+  explicit model is known. `inherit` or no model is not: Cursor sends no
+  transcript path (58 of 144 captured Task payloads, 2026-10-09/10), and
+  Antigravity's `inherit` has no parent model in the payload either. Neither is
+  an adapter bug; the hook has no source for the session model there.
 - **Cost linkage.** Every decision records `tool_use_hash`. PostToolUse
   repeats the id, so `resolved`, `child_ended` and, through the agent id,
   `usage` attach to the exact decision even with parallel spawns, including
