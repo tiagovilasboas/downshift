@@ -79,7 +79,8 @@ type Event struct {
 	ActualCostUSD   *float64 `json:"actual_cost_usd,omitempty"`   // real routed cost in USD
 	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"` // real baseline cost in USD
 	// BaselineSource says where the baseline model came from: "requested" (the
-	// model the harness asked for). Absent when no baseline was computed.
+	// model the harness asked for) or "inferred" (the configured model, used
+	// when the harness named none). Absent when no baseline was computed.
 	BaselineSource string `json:"baseline_source,omitempty"`
 	// ChildStatus is set on child_ended events (see child_outcome.go).
 	ChildStatus ChildStatus `json:"child_status,omitempty"`
@@ -514,6 +515,9 @@ type Stats struct {
 	// RealCostEvents counts events where HasRealCost is true.
 	RealSavedUSD   float64
 	RealCostEvents int
+	// RealCostInferred counts the RealCostEvents whose baseline was inferred
+	// from settings, not requested by the harness.
+	RealCostInferred int
 	// RealCostDeltaUSD is the signed sum of Event.RealDeltaUSD (baseline minus
 	// actual): negative when the router cost more than the baseline overall.
 	// RealOverspendUSD is the sum of the negative deltas as a positive number,
@@ -704,9 +708,15 @@ func Aggregate(events []Event) Stats {
 		harness, decision string
 	}
 	decisions := make(map[linkKey]Event)
+	// refuted holds rewrites a linked "resolved" record says the harness did
+	// not run: they are not applied and save nothing.
+	refuted := make(map[linkKey]bool)
 	for _, ev := range events {
 		if !IsCostOnlyOutcome(ev.Outcome) && ev.Outcome != "error" {
 			decisions[linkKey{ev.Harness, DecisionKey(ev)}] = ev
+		}
+		if ev.Outcome == OutcomeResolved && ev.LinkedDecision != "" && ev.RewriteHonored != nil && !*ev.RewriteHonored {
+			refuted[linkKey{ev.Harness, ev.LinkedDecision}] = true
 		}
 	}
 	linked := make(map[linkKey]bool)
@@ -750,6 +760,9 @@ func Aggregate(events []Event) Stats {
 			if ev.HasRealCost() {
 				s.RealCostEvents++
 				s.addRealDelta(ev)
+				if ev.BaselineSource == BaselineInferred || hasReason(decisions[key].ReasonCodes, ReasonBaselineFromSettings) {
+					s.RealCostInferred++
+				}
 			}
 			continue
 		}
@@ -788,7 +801,7 @@ func Aggregate(events []Event) Stats {
 				s.FrontierOnDoubt++
 			}
 		}
-		applied := AppliedRewrite(ev.Outcome, ev.Corrections)
+		applied := AppliedRewrite(ev.Outcome, ev.Corrections) && !refuted[linkKey{ev.Harness, DecisionKey(ev)}]
 		switch {
 		case ev.Verdict == "DOWNSHIFT" && applied:
 			s.Downshifted++
@@ -819,6 +832,9 @@ func Aggregate(events []Event) Stats {
 		if ev.HasRealCost() {
 			s.RealCostEvents++
 			s.addRealDelta(ev)
+			if ev.BaselineSource == BaselineInferred || hasReason(ev.ReasonCodes, ReasonBaselineFromSettings) {
+				s.RealCostInferred++
+			}
 		}
 		// Self-correction: the verdict stands, the safe action applied.
 		if len(ev.Corrections) > 0 {
@@ -955,6 +971,9 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Real saved            $%10.2f  (catalog list-price counterfactual)\n", s.RealSavedUSD)
 		fmt.Fprintf(w, "Real cost delta       $%10.2f  (baseline minus actual; negative means the router cost more)\n", s.RealCostDeltaUSD)
 		fmt.Fprintf(w, "Real overspend        $%10.2f  (events that cost more than their baseline)\n", s.RealOverspendUSD)
+		if s.RealCostInferred > 0 {
+			fmt.Fprintf(w, "Inferred baseline     %8d  of %d events: baseline guessed from settings (BASELINE_FROM_SETTINGS), not requested\n", s.RealCostInferred, s.RealCostEvents)
+		}
 	} else if s.ActualCostEvents > 0 {
 		fmt.Fprintf(w, "Savings comparison: no events with a known requested baseline yet.\n")
 	} else {

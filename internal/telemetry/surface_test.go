@@ -131,9 +131,10 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 			t.Fatalf("nil harness links honor=%v usage=%v, want both false", honor[telemetry.SurfaceKey(decision)], usage[telemetry.SurfaceKey(decision)])
 		}
 
+		// resolvedFalse refutes the shift, so the later spawn no longer infers it.
 		shifted, inferred := telemetry.CountInferredHonored(events)
-		if shifted < 1 || inferred < 1 {
-			t.Fatalf("inference fixture shifted=%d honored=%d, want the later spawn to infer", shifted, inferred)
+		if shifted < 1 || inferred != 0 {
+			t.Fatalf("inference fixture shifted=%d honored=%d, want the refuted shift not inferred", shifted, inferred)
 		}
 
 		stats := telemetry.Aggregate(events)

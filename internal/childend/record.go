@@ -33,6 +33,7 @@
 package childend
 
 import (
+	"slices"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
@@ -326,6 +327,9 @@ func buildUsageEvent(harness string, usage telemetry.TokenUsage, payloadModel, s
 			base := telemetry.CostUSD(baseline, usage)
 			ev.BaselineCostUSD = &base
 			ev.BaselineSource = telemetry.BaselineRequested
+			if slices.Contains(target.ReasonCodes, telemetry.ReasonBaselineFromSettings) {
+				ev.BaselineSource = telemetry.BaselineInferred
+			}
 		}
 	}
 	return ev

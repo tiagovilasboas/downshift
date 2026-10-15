@@ -39,10 +39,14 @@ func headlineMoney(s Stats) string {
 		return "no real cost yet: wire SubagentStop with downshift setup"
 	}
 	net := s.RealCostDeltaUSD
-	if net < 0 {
-		return fmt.Sprintf("net cost $%.2f more (saved $%.2f, cost more $%.2f)", -net, s.RealSavedUSD, s.RealOverspendUSD)
+	inferred := ""
+	if s.RealCostInferred > 0 {
+		inferred = fmt.Sprintf("; %d of %d events on an inferred baseline", s.RealCostInferred, s.RealCostEvents)
 	}
-	return fmt.Sprintf("net saved $%.2f (saved $%.2f, cost more $%.2f)", net, s.RealSavedUSD, s.RealOverspendUSD)
+	if net < 0 {
+		return fmt.Sprintf("net cost $%.2f more (saved $%.2f, cost more $%.2f%s)", -net, s.RealSavedUSD, s.RealOverspendUSD, inferred)
+	}
+	return fmt.Sprintf("net saved $%.2f (saved $%.2f, cost more $%.2f%s)", net, s.RealSavedUSD, s.RealOverspendUSD, inferred)
 }
 
 // headlineMix renders the models children ended up on, most used first.

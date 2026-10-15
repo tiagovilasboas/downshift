@@ -148,8 +148,13 @@ func numberToInt64(v any) int64 {
 }
 
 // BaselineRequested marks a baseline taken from the model the harness asked
-// for. It is the only source produced today; other sources need a reviewed design.
-const BaselineRequested = "requested"
+// for. BaselineInferred marks one guessed from the configured model because
+// the harness named none (reason code BASELINE_FROM_SETTINGS): its saving is a
+// counterfactual against a guess, not against an observed request.
+const (
+	BaselineRequested = "requested"
+	BaselineInferred  = "inferred"
+)
 
 // FillRealCost prices the token usage already stored on ev and fills both
 // cost pointers via CostUSD. Usage is read with TokenUsageOrZero, so missing
