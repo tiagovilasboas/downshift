@@ -9,9 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-beta.9] — 2026-10-15
+
 ### Added
 
 - **Main-session policy: opusplan on Claude Code.** `downshift setup` writes `"model": "opusplan"` (Opus in plan mode, Sonnet for execution) when `~/.claude/settings.json` has no model; a pinned model is kept and setup prints how to switch. `downshift doctor` reports it as `main session`. Downshift keeps routing the subagents underneath. See `docs/session-models.md`.
+
+### Changed
+
+- **New installs now get `"model": "opusplan"`.** Plan mode runs on Opus, which costs more than a Sonnet-only session; execution stays on Sonnet. The saving is not measured yet. To opt out, pin a model (`"model": "claude-sonnet-5-5"`, `/model` or `--model`) before running `downshift setup`.
+
+### Fixed
+
+- `downshift setup` no longer adds a second hook when an Antigravity hook already lives inside a named group of `~/.gemini/config/hooks.json`: it repoints the binary path there.
 
 ## [0.1.0-beta.8] — 2026-10-14
 
