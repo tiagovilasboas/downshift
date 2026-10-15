@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`downshift probe <event>` (maintainer tool).** Wired as a harness hook, it records the field names of a payload, the values of a short list of non-sensitive fields (model ids, tool name, agent type) and an 8-character hash of each id to `probe.jsonl`, and always answers allow. It never records prompts, task text, paths or e-mail addresses. Built to answer, from real payloads, whether Cursor exposes the session model to a hook, which decides the baseline for `inherit` spawns. See `docs/probe.md`.
+
 ## [0.1.0-beta.11] — 2026-10-15
 
 ### Fixed
