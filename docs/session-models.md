@@ -64,7 +64,7 @@ Downshift routes subagents; the main session is the harness's. For Claude Code, 
 
 Together they make the plan/execute split happen in every session. A value you already set is never replaced; setup prints how to switch, and `downshift doctor` shows both as `main session`. A new `defaultMode` replaces Claude Code's built-in starting mode (auto mode on recent versions), so a session now starts by planning instead of acting. Approving a plan leaves plan mode for the mode you pick in that prompt; `Shift+Tab` or `/plan` plans again.
 
-`downshift setup --no-opusplan` wires the hooks and leaves both keys alone. To undo it later, delete the two keys or run `downshift setup --undo` to restore the last backup. To keep one without the other, set the one you want yourself first: setup keeps it.
+`downshift setup --no-session-policy` wires the hooks and leaves both keys alone. To undo it later, delete the two keys or run `downshift setup --undo` to restore the last backup. To keep one without the other, set the one you want yourself first: setup keeps it.
 
 The two layers fit together. Claude Code resolves an inheriting subagent's model when it starts it, so a subagent spawned during plan mode would run on Opus. The adapter reads the parent model from the last assistant message in the transcript, which is the resolved model (Opus or Sonnet), not the alias, so the baseline stays known and the subagent is right-sized as usual. This follows from the code path; it has not yet been observed in a live plan-mode spawn.
 

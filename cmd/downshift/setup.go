@@ -27,15 +27,15 @@ type setupOptions struct {
 	DryRun bool
 	Undo   bool
 	Yes    bool
-	// NoOpusplan skips the optional main-session policy (model opusplan and
+	// NoSessionPolicy skips the optional main-session policy (model opusplan and
 	// plan as the starting mode); hooks are wired as usual.
-	NoOpusplan bool
-	Home       string
-	Binary     string
-	Now        func() time.Time
-	In         io.Reader
-	Out        io.Writer
-	Err        io.Writer
+	NoSessionPolicy bool
+	Home            string
+	Binary          string
+	Now             func() time.Time
+	In              io.Reader
+	Out             io.Writer
+	Err             io.Writer
 }
 
 // runSetup is the CLI entry: it resolves HOME and the running binary.
@@ -49,8 +49,8 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 			opts.Undo = true
 		case a == "--yes" || a == "-y":
 			opts.Yes = true
-		case a == "--no-opusplan":
-			opts.NoOpusplan = true
+		case a == "--no-session-policy":
+			opts.NoSessionPolicy = true
 		case a == "-h" || a == "--help":
 			fmt.Fprint(out, setupUsage)
 			return 0
@@ -76,14 +76,15 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	return setupRun(opts)
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-opusplan]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy]
 
 Wire every Downshift hook into the harnesses found on this machine.
-  --dry-run      show the diff, write nothing
-  --undo         restore the latest backup of each hook file
-  --yes          do not ask before writing
-  --no-opusplan  wire the hooks only: do not set the Claude Code main-session
-                 policy (model opusplan, sessions start in plan mode)
+  --dry-run            show the diff, write nothing
+  --undo               restore the latest backup of each hook file
+  --yes                do not ask before writing
+  --no-session-policy  wire the hooks only: do not set the Claude Code
+                       main-session policy (model opusplan, sessions start in
+                       plan mode)
 
 Claude Code gets the policy by default, only for keys it does not already set.
 `
@@ -287,7 +288,7 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 		p.err = fmt.Errorf("not valid JSON, left untouched: %w", err)
 		return p
 	}
-	notes, err := mergeTarget(doc, t, o.Binary, o.NoOpusplan)
+	notes, err := mergeTarget(doc, t, o.Binary, o.NoSessionPolicy)
 	if err != nil {
 		p.err = err
 		return p

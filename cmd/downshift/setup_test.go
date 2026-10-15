@@ -70,8 +70,8 @@ func (e *setupEnv) run(args ...string) (code int, out, errOut string) {
 			opts.Undo = true
 		case "--yes":
 			opts.Yes = true
-		case "--no-opusplan":
-			opts.NoOpusplan = true
+		case "--no-session-policy":
+			opts.NoSessionPolicy = true
 		default:
 			opts.Names = append(opts.Names, a)
 		}
@@ -414,18 +414,18 @@ func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
 	}
 }
 
-// --no-opusplan wires the hooks and leaves the main-session policy alone.
-func TestSetupNoOpusplanSkipsThePolicy(t *testing.T) {
+// --no-session-policy wires the hooks and leaves the main-session policy alone.
+func TestSetupNoSessionPolicySkipsThePolicy(t *testing.T) {
 	e := newSetupEnv(t, ".claude")
-	if code, out, _ := e.run("claude-code", "--yes", "--no-opusplan"); code != 0 {
+	if code, out, _ := e.run("claude-code", "--yes", "--no-session-policy"); code != 0 {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
 	doc := parseDoc(t, e.read(".claude/settings.json"))
 	if _, ok := doc["model"]; ok {
-		t.Errorf("model written with --no-opusplan: %v", doc["model"])
+		t.Errorf("model written with --no-session-policy: %v", doc["model"])
 	}
 	if _, ok := doc["permissions"]; ok {
-		t.Errorf("permissions written with --no-opusplan: %v", doc["permissions"])
+		t.Errorf("permissions written with --no-session-policy: %v", doc["permissions"])
 	}
 	if _, ok := doc["hooks"].(map[string]any)["PreToolUse"]; !ok {
 		t.Errorf("hooks not wired: %v", doc["hooks"])

@@ -32,7 +32,7 @@ type setupStatusLine struct {
 // when set, names the top-level object that holds Key. An existing value is
 // never replaced; Note, when set, is printed if that value differs from Value.
 // Optional defaults are the main-session policy and are skipped by
-// --no-opusplan.
+// --no-session-policy.
 type setupDefault struct {
 	Parent   string
 	Key      string
