@@ -363,6 +363,37 @@ func TestSetupDetectionAndNames(t *testing.T) {
 	}
 }
 
+// Claude Code gets opusplan as the main-session policy only when no model is
+// pinned; a pinned model is kept and setup says how to switch.
+func TestSetupClaudeCodeOpusplanPolicy(t *testing.T) {
+	fresh := newSetupEnv(t, ".claude")
+	if code, out, _ := fresh.run("claude-code", "--yes"); code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	if got := parseDoc(t, fresh.read(".claude/settings.json"))["model"]; got != "opusplan" {
+		t.Errorf("fresh model = %v, want opusplan", got)
+	}
+
+	pinned := newSetupEnv(t, ".claude")
+	pinned.write(".claude/settings.json", `{"model":"claude-sonnet-5-5"}`)
+	code, out, _ := pinned.run("claude-code", "--yes")
+	if code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	if got := parseDoc(t, pinned.read(".claude/settings.json"))["model"]; got != "claude-sonnet-5-5" {
+		t.Errorf("pinned model = %v, want it kept", got)
+	}
+	if !strings.Contains(out, `"model": "opusplan"`) {
+		t.Errorf("no opusplan note for a pinned model:\n%s", out)
+	}
+
+	already := newSetupEnv(t, ".claude")
+	already.write(".claude/settings.json", `{"model":"opusplan"}`)
+	if _, out, _ := already.run("claude-code", "--yes"); strings.Contains(out, "keeps its pinned") {
+		t.Errorf("note printed although opusplan is already set:\n%s", out)
+	}
+}
+
 func TestSetupFlatShapes(t *testing.T) {
 	e := newSetupEnv(t, ".cursor", ".gemini")
 	e.write(".cursor/hooks.json", `{"version":1,"hooks":{"preToolUse":[{"command":"downshift cursor","matcher":"Task"},{"command":"other"}]}}`)

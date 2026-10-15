@@ -28,10 +28,13 @@ type setupStatusLine struct {
 	ChainArgs string
 }
 
-// setupDefault is a top-level key the harness file needs when it is created.
+// setupDefault is a top-level key setup writes when the file does not have it.
+// An existing value is never replaced; Note, when set, is printed if that
+// value differs from Value.
 type setupDefault struct {
 	Key   string
 	Value any
+	Note  string
 }
 
 type setupTarget struct {
@@ -64,6 +67,14 @@ var setupTargets = []setupTarget{
 		File:      ".claude/settings.json",
 		HooksPath: []string{"hooks"},
 		Nested:    true,
+		// Main-session policy: Opus in plan mode, Sonnet for execution. Downshift
+		// routes the subagents underneath; see docs/session-models.md.
+		Defaults: []setupDefault{{
+			Key:   "model",
+			Value: "opusplan",
+			Note: `the main session keeps its pinned "model"; set "model": "opusplan" in ~/.claude/settings.json ` +
+				"(or run /model opusplan) to plan on Opus and execute on Sonnet",
+		}},
 		Hooks: []setupHook{
 			{Event: "PreToolUse", Matcher: "Agent|Task", Args: "claude-code"},
 			{Event: "PostToolUse", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
