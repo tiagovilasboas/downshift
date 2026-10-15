@@ -5,7 +5,7 @@ prompts, splits, and executable outcome tasks live in **downshift-labs**
 (private). Re-run benchmarks there after router changes; update this file when
 you intentionally publish new figures.
 
-**Last updated:** 2026-10-10 (classifier on `main`, outcome runs 2026-10-03; adapt memory key fix recomputed same day).
+**Last updated:** 2026-10-15 (classifier on `main`, outcome runs 2026-10-03; adapt numbers recomputed 2026-10-15).
 
 These figures describe the **maintainer 40-task Go suite** and the **in-tree
 classifier**. They are **not** proof of generalization on unseen traffic and
@@ -48,14 +48,17 @@ This table is **model capability**, not router or adapt memory.
 | mid | `deepseek/deepseek-v4-flash` | 31/40 = 77.5% | 17/20 = 85.0% |
 | small | `qwen/qwen3-coder-30b-a3b-instruct` | 27/40 = 67.5% | 16/20 = 80.0% |
 
-Classifier routing on that suite, recomputed 2026-10-10 with `ClassifyWithSemantic`
-on this `main` and no adapt memory: 6 → small, 14 → mid, 20 → frontier, and
-38/40 tasks passed at the tier the classifier picked. The 2026-10-06 line
-(0 small, 29 mid, 11 frontier) described the classifier before the algorithmic
-signals landed. Small minus frontier on TRIVIAL+SIMPLE labels remains −20.0pp
+Classifier routing on that suite, recomputed 2026-10-15 with `ClassifyWithSemantic`
+on this `main` and no adapt memory: 6 → small, 22 → mid, 12 → frontier, and
+37/40 tasks passed at the tier the classifier picked. The 2026-10-10 line
+(6 small, 14 mid, 20 frontier, 38/40) predates the change that stopped the
+semantic boost from lifting prompts with no regex signal to the frontier tier;
+the floor moved from 38/40 to 37/40 on purpose, because one small task passed
+only on the frontier tier. The 2026-10-06 line (0 small, 29 mid, 11 frontier)
+described the classifier before the algorithmic signals landed. Small minus frontier on TRIVIAL+SIMPLE labels remains −20.0pp
 on the fixed-model runs above, not on the router.
 
-## Adapt tier memory — offline efficacy (same runs, recomputed 2026-10-10)
+## Adapt tier memory — offline efficacy (same runs, recomputed 2026-10-15)
 
 Recompute with:
 
@@ -78,9 +81,9 @@ does.
 | Metric | Value |
 |---|---|
 | Tasks | 40 |
-| Pass @ classifier tier (before) | 38/40 = **95.0%** |
+| Pass @ classifier tier (before) | 37/40 = **92.5%** |
 | Pass @ adapt-adjusted tier (after) | 40/40 = **100.0%** |
-| Tier moves | 25 down · 2 up · 13 same |
+| Tier moves | 23 down · 3 up · 14 same |
 
 **What A proves:** with task-local outcomes, the policy can reach full pass on
 this suite by downshifting when a cheaper tier already succeeded. It does **not**
@@ -97,13 +100,13 @@ leva (no stable repo id on the routing hook without paths).
 | Metric | Value |
 |---|---|
 | Tasks | 40 |
-| Pass @ classifier tier (before) | 38/40 = **95.0%** |
-| Pass @ adapt-adjusted tier (after) | 38/40 = **95.0%** |
-| Tier moves | 15 down · 0 up · 25 same |
-| vs baseline | **0.0pp** (matches classifier; gate floor ≥ 38/40 met) |
+| Pass @ classifier tier (before) | 37/40 = **92.5%** |
+| Pass @ adapt-adjusted tier (after) | 37/40 = **92.5%** |
+| Tier moves | 11 down · 0 up · 29 same |
+| vs baseline | **0.0pp** (matches classifier; gate floor ≥ 37/40 met) |
 
 **What B proves:** with class-scoped keys, shared memory on this suite no longer
-collapses below the classifier (floor ≥ 38/40). It is not the per-task upper
+collapses below the classifier (floor ≥ 37/40). It is not the per-task upper
 bound (A).
 
 The hook does **not** apply B. `routeadapt` writes `AdaptWould` and leaves
