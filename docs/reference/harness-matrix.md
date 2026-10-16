@@ -58,15 +58,14 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   held. A model found in the
   transcript always wins, `Explore` under a Fable setting stays unknown, and agent types that do not inherit get no fallback. The
   native route remains the `agent.spawn` mod event, which hands over `parentModel`.
-- **Baseline still unknown on Cursor and Antigravity.** A spawn with an
-  explicit model is known. `inherit` or no model is not: Cursor sends no
-  transcript path (58 of 144 captured Task payloads, 2026-10-09/10), and
-  Antigravity's `inherit` has no parent model in the payload either. Neither is
-  an adapter bug; the hook has no source for the session model there. When a
-  Cursor call has no model but the payload carries the parent's `model_id` (or
-  `model`), that is used as the baseline, and a downshift on it is written only
-  to the small tier: Cursor documents `inherit` as the default, but a child can
-  run on Composer or a fast variant, so a mid target could be an upshift.
+- **Baseline still unknown on Antigravity; Cursor `inherit` uses the parent when
+  present.** A spawn with an explicit model is known. Antigravity's `inherit` has
+  no parent model in the payload. Cursor sends no transcript path (58 of 144
+  captured Task payloads, 2026-10-09/10). When a Cursor call has no
+  `tool_input.model` or it is `inherit`, the parent's `model_id` (then payload
+  `model`) is the baseline, and a downshift on it is written only to the small
+  tier: a child can run on Composer or a fast variant, so a mid target could be
+  an upshift. Without `model_id`, `inherit` logs as `unknown`.
 - **Upshift ranking, all harnesses.** An upshift ranks the session ids by catalog tier, not list position, and never goes below the
   current model's tier. The rule and its fallback are in [session-models.md](session-models.md).
 - **Cost linkage.** Every decision records `tool_use_hash`. PostToolUse
@@ -81,8 +80,10 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   parent's current model: 22 of 24 such spawns in the operator's rollouts
   (2026-10-12; the other mismatches were Downshift's own rewrites). The
   adapter reads the last `turn_context.payload.model` from the tail of
-  `transcript_path`. `gpt-6.1-sol` and `gpt-reserve` are not in the catalog
-  yet, so they still log as `unknown` with `requested_model_raw` set.
+  `transcript_path`. `gpt-6.1-sol` is registered for identity and tier; list
+  prices are absent until a vendor snapshot matches exactly, so cost telemetry
+  stays unknown for that id. `gpt-reserve` is not in the catalog yet, so they
+  still log as `unknown` with `requested_model_raw` set.
 - **antigravity current model.** `Subagents[].Model` arrives in the payload
   (2026-10-09 run asked for `pro`) but was never exposed to telemetry; it is
   now, for the subagent whose decision is recorded (the last with a prompt).
@@ -90,9 +91,9 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   confirms it.
 - **cursor current model.** In 144 captured Task payloads (2026-10-09/10) the
   top-level `model` was always empty; the subagent `model` was a real id,
-  `inherit` (28) or absent (30). Cursor sends no transcript path, so
-  `inherit` cannot be resolved to the session model; it is logged as
-  `requested_model_raw: "inherit"`.
+  `inherit` (28) or absent (30). With `model_id` on the payload, `inherit` is
+  resolved like a missing `tool_input.model` and logged as that parent id; without
+  `model_id` it logs as `unknown`.
 - **Unrecognised models (all harnesses).** When the requested model is
   non-empty but not in the catalog, the shared runner records it in
   `requested_model_raw` if it looks like a model id (64 chars,

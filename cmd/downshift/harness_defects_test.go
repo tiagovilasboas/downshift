@@ -8,8 +8,21 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
+
+// Open defect (reproduction, fails on main before catalog entry): the operator's
+// Codex session model is gpt-6.1-sol (config.toml and ~/.codex/models_cache.json
+// both list it), the adapter reads it from turn_context, but the catalog had
+// no entry, so every Codex spawn logged requested_model "unknown" and was held.
+func TestDefect_CodexSessionModelMissingFromCatalog(t *testing.T) {
+	d := core.Route("implement the CSV export feature", "codex", "gpt-6.1-sol", cmdCat)
+	if d.CurrentModel.ID == "" || d.Verdict == core.VerdictUnknown {
+		t.Fatalf("gpt-6.1-sol is not a known codex model: verdict=%v current=%q corrections=%v",
+			d.Verdict, d.CurrentModel.ID, d.Corrections)
+	}
+}
 
 // Open defect (reproduction, fails on main 1c638f7): a hook failure records
 // no harness, so error rows in events.jsonl cannot be attributed (the two
