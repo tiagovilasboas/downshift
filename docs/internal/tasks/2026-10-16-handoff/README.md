@@ -38,7 +38,7 @@ enabled and no request was sent. Human adjudication of the M3 labels is still pe
 | H3 | Done | Cursor: `inherit` uses parent `model_id` baseline (`3015fc9`) |
 | H4 | Done | Hook failure events record harness (`f8acfbf`) |
 | H5 | Done | Long unbounded briefs: negated/quoted TRIVIAL keywords no longer vote (`#130`) |
-| H6 | High | Owner decisions with finished diffs: upshift to the needed tier; risky write with unknown baseline |
+| H6 | In PR | Upshift needed-tier symmetry landed; risky write w/ unknown baseline still owner-gated |
 | H7 | Medium | Fresh routed-versus-control run after the Haiku fix, and the README evidence screenshots |
 | H8 | Low | Outcome suite re-run on the model that actually runs (Haiku 4.5), 40 tasks, about $5 to $6 |
 | H9 | Done | `hookctx` timing test stable under `go test ./...` (`#131`, `#132`; same fix landed twice in parallel) |

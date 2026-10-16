@@ -226,8 +226,8 @@ func TestHandle_MidTaskToFlash(t *testing.T) {
 	if len(subs) != 1 {
 		t.Fatalf("expected 1 subagent in overwrite, got %d", len(subs))
 	}
-	if subs[0]["Model"] != "pro" {
-		t.Errorf("model = %v, want strongest session model pro for an upshift", subs[0]["Model"])
+	if subs[0]["Model"] != "flash" {
+		t.Errorf("model = %v, want least session model at the needed mid tier (flash)", subs[0]["Model"])
 	}
 	if d.Tier != core.TierMid {
 		t.Errorf("tier = %s, want MID", d.Tier)

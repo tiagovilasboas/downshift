@@ -84,6 +84,7 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 		return "", Model{}, false, false
 	}
 	upshift := d.Verdict == VerdictUpshift
+	strongest := upshift && (d.BaselineGuessed || ExplicitUpshiftEnabled())
 	var current Model
 	if d.Verdict == VerdictDownshift {
 		currentID := d.RequestedID
@@ -125,7 +126,7 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 			continue
 		}
 		m.ID, m.Harness, m.Native = id, d.Harness, ""
-		better := !found || (!upshift && m.Tier < best.Tier) || (upshift && m.Tier > best.Tier)
+		better := !found || (!strongest && m.Tier < best.Tier) || (strongest && m.Tier > best.Tier)
 		if found && m.Tier == best.Tier && m.InputM > 0 && m.OutputM > 0 && best.InputM > 0 && best.OutputM > 0 && m.OutputM < best.OutputM {
 			better = true
 		}

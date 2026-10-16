@@ -146,6 +146,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	res = core.ResolveSessionModels(harnessID, session, res)
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 	decision.RequestedID = currentModel
+	decision.BaselineGuessed = fromParent
 
 	session = withMuseCatalogInclusion(session, res)
 	plan := decision.PlanSession(core.CursorCaps, res, session, currentModel)
