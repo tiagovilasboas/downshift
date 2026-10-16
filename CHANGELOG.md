@@ -13,11 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Claude Code: the small tier is `claude-haiku-4-5`, the model the native `haiku` alias runs (Claude Code 2.1.289, observed 2026-10-15). It was `claude-haiku-5-5` ($0.10/$0.50), so a downshift was recorded at Haiku 5.5 prices, about 10x too low, and the decision note promised "~95% cheaper". The note now shows the list-price saving: about 50% from Sonnet, 75% from Opus. Haiku 5.5 keeps its own catalog entry on its exact id and is never the native small target. A session file that lists only `claude-haiku-5-5` no longer downshifts to Haiku, because Claude Code cannot address 5.5 by alias; add `claude-haiku-4-5` to the list.
 - Telemetry: cache-creation tokens are priced at the cache-write price when the catalog has one (Haiku 4.5: $1.25 per 1M, not the $0.10 read price). Claude Code's own cost for one observed Haiku 4.5 run is reproduced exactly.
+- Bounded delegation briefs no longer default to COMPLEX by length alone: a prompt of 80+ words with at least two of a scope limit, a test command and a reply budget drops the length point and counts toward MEDIUM; two different COMPLEX keywords still win, and the risk floor is unchanged. On 79 held-out agent-written briefs COMPLEX fell from 25 to 13 and confident MEDIUM rose from 0 to 26; the five benchmark splits are identical item by item.
 - Language coverage checks now inspect the full task, including unsupported-language text after the 32 KB scoring cap, and record guard hits even when no scoring signal matches.
 - Language-guard abstentions carry the prompt-free `UNSUPPORTED_LANGUAGE` reason code in routing events, `stats` and `why` for every harness.
 - Claude Code: with an empty transcript, the bounded wait for the session model ran twice per hook call (about 850 ms); it now runs once.
 - A downshift held because its baseline was guessed (Claude Code settings, Cursor parent `model_id`) now carries the reason code `HELD_GUESSED_BASELINE` instead of an unexplained `allow`.
-
 - A prompt that mixes an English trivial verb with a risk written in another language (ES, FR, DE, JA) is no longer downshifted: `Classify` marks prompts with non-Latin script or Spanish/French/German markers unconfident, so the guardrails keep the requested model. Portuguese gains risk terms for access control, vulnerabilities, personal data and prompt injection.
 
 ### Changed

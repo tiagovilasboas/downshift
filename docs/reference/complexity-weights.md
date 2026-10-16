@@ -28,7 +28,8 @@ Extra points, applied after the regex table:
 | No regex matched, the prompt is `add Name(` with one call and at most 25 words | +2 SIMPLE |
 | The prompt contains `implement` and at least three exported calls `Name(` | +2 COMPLEX |
 | Some signal already matched and the prompt has at most 6 words | +1 TRIVIAL |
-| Some signal already matched and the prompt has at least 80 words | +1 COMPLEX |
+| Some signal already matched, the prompt has at least 80 words and is not a bounded brief | +1 COMPLEX |
+| Bounded brief: at least 80 words and two of three limits (scope limit such as `read-only` or `edit only`, a test command such as `go test`, a reply budget such as `reply <= 150 words`) | TRIVIAL votes dropped; a single COMPLEX row (other than review or retry wording) dropped; +2 MEDIUM |
 
 A TRIVIAL or SIMPLE task that touches risk (secret, auth, crypto, payment,
 vulnerability, PII, destructive command, prompt injection, or concurrency) is lifted to

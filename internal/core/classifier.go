@@ -111,6 +111,72 @@ func docEditOnly(prompt string, wordCount int) bool {
 		!multiClauseRE.MatchString(prompt)
 }
 
+// A bounded brief is a long delegation prompt that fences its own work. It
+// carries at least two of three limits: a scope limit (read-only, edit only X),
+// a verification command (go test, npm test, pytest), and a reply budget
+// ("reply <= 150 words"). Such a prompt mentions many words ("graph" in the
+// project description, "no git commit", "other agents work concurrently") that
+// describe context or constraints, not the task.
+var (
+	briefScopeRE  = regexp.MustCompile(`(?i)\b(read[- ]only|do not (edit|modify|touch)|don't (edit|modify|touch)|edit nothing|edit only|only edit|write only|work only|n[aã]o edite|somente leitura|apenas leitura)\b`)
+	briefVerifyRE = regexp.MustCompile(`(?i)\b(go (test|vet|build)|npm (run )?(test|build|lint)|pnpm (test|build)|yarn test|pytest|cargo (test|build)|vitest|jest|make (test|check))\b`)
+	briefBudgetRE = regexp.MustCompile(`(?i)\b(reply|respond|answer|report|summary|responda)\b[^.\n]{0,40}?(<=|≤|under|at most|no more than|max(imum)?|até)\s*\d+\s*(words|lines|rows|palavras|linhas)|\b(under|<=|≤)\s*\d+\s*(words|palavras)`)
+	// Review and retry wording names the kind of work even inside a brief, so
+	// it is never discounted (see reviewSignals and the retry rows).
+	briefStrongRE = regexp.MustCompile(`(?i)\b(security\s+(audit|review)|code\s+review|trade-?offs?|design\s+doc|rfc|think\s+through|(auditoria|revis\S{1,3}o)\s+de\s+seguran|previous\s+attempt|tentativa\s+anterior|compilation\s+failed|failed\s+to\s+compile|subagent\s+failed|subagente\s+falhou|tests?\s+failed|testes?\s+falharam|fix\s+(the\s+)?(build|compilation))\b`)
+)
+
+const (
+	// minBriefWords is where a prompt reads as a delegation brief, not a request.
+	minBriefWords = 80
+	// briefMediumWeight is the Medium evidence a bounded brief carries: enough
+	// to beat one keyword mention with a clear margin, not two corroborating
+	// Complex rows.
+	briefMediumWeight = 2
+)
+
+// boundedBrief reports whether the prompt is a long brief with at least two
+// of the three limits above.
+func boundedBrief(prompt string, wordCount int) bool {
+	if wordCount < minBriefWords {
+		return false
+	}
+	n := 0
+	for _, re := range []*regexp.Regexp{briefScopeRE, briefVerifyRE, briefBudgetRE} {
+		if re.MatchString(prompt) {
+			n++
+		}
+	}
+	return n >= 2
+}
+
+// applyBoundedBrief re-weighs the keyword votes of a bounded brief:
+//   - Trivial keywords are constraints or side steps ("do not git commit",
+//     "run gofmt"), not a one-step job, so they do not vote.
+//   - A single Complex row, unless it is review or retry wording, is a mention
+//     and does not vote. Two distinct Complex rows still do; a multi-method
+//     implement spec counts as one row.
+//   - The brief itself is Medium evidence.
+//
+// It never touches the risk floor or the risk categories: a risky brief still
+// cannot be downshifted (selfcheck R5).
+func applyBoundedBrief(prompt, lower string, scores map[Complexity]int, implementSpec bool) {
+	scores[Trivial] = 0
+	rows := 0
+	if implementSpec {
+		rows++
+	}
+	for _, s := range signals {
+		if s.class == Complex && s.re.MatchString(lower) {
+			rows++
+		}
+	}
+	if rows <= 1 && !briefStrongRE.MatchString(prompt) {
+		scores[Complex] = 0
+	}
+	scores[Medium] += briefMediumWeight
+}
+
 func compileSignals() []signal {
 	out := make([]signal, 0, len(RawSignals))
 	for _, r := range RawSignals {
@@ -188,7 +254,8 @@ func Classify(prompt string) Classification {
 		contentMatched = true
 	}
 	// Multi-method implement specs (NewX/Get/Put style) need frontier torque.
-	if strings.Contains(lower, "implement") && len(exportedCallRE.FindAllString(prompt, -1)) >= 3 {
+	implementSpec := strings.Contains(lower, "implement") && len(exportedCallRE.FindAllString(prompt, -1)) >= 3
+	if implementSpec {
 		scores[Complex] += 2
 		contentMatched = true
 	}
@@ -198,8 +265,14 @@ func Classify(prompt string) Classification {
 	if contentMatched && wordCount > 0 && wordCount <= 6 {
 		scores[Trivial]++
 	}
-	// Long, detailed prompts lean toward higher complexity.
-	if contentMatched && wordCount >= 80 {
+	// A bounded delegation brief is long because it lists files, limits and
+	// checks, not because the work is hard: it gets no length nudge and weighs
+	// its keywords as context (applyBoundedBrief). On real subagent briefs the
+	// length nudge alone decided most COMPLEX results. Other long, detailed
+	// prompts still lean toward higher complexity.
+	if contentMatched && boundedBrief(prompt, wordCount) {
+		applyBoundedBrief(prompt, lower, scores, implementSpec)
+	} else if contentMatched && wordCount >= 80 {
 		scores[Complex]++
 	}
 
