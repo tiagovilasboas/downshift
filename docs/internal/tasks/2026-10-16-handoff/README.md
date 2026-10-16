@@ -41,7 +41,7 @@ enabled and no request was sent. Human adjudication of the M3 labels is still pe
 | H6 | High | Owner decisions with finished diffs: upshift to the needed tier; risky write with unknown baseline |
 | H7 | Medium | Fresh routed-versus-control run after the Haiku fix, and the README evidence screenshots |
 | H8 | Low | Outcome suite re-run on the model that actually runs (Haiku 4.5), 40 tasks, about $5 to $6 |
-| H9 | Done | `hookctx` timing test stable under `go test ./...` (`#132`) |
+| H9 | Done | `hookctx` timing test stable under `go test ./...` (`#131`, `#132`; same fix landed twice in parallel) |
 | H10 | Low | Local clean-up: shadowed binaries, three old log lines with prompt text |
 | H11 | Medium | harness-core leftovers found during the renaming |
 | H12 | High | Release beta.15 (needs the owner's approval) |
