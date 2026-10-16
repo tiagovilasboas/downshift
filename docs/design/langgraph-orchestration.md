@@ -76,5 +76,5 @@ Continuous operational signals are intentionally deferred: the planner has no ex
 For a complete, beginner-friendly explanation of how LangGraph fits here and
 how LangChain fits in Harness Central — including what each framework does, what
 it does not do, and how the two relate — see
-[docs/LANGCHAIN-LANGGRAPH-EXPLAINER.md](https://github.com/tiagovilasboas/agent-harness/blob/main/docs/LANGCHAIN-LANGGRAPH-EXPLAINER.md)
+[docs/langchain-langgraph-explainer.md](https://github.com/tiagovilasboas/harness-core/blob/main/docs/langchain-langgraph-explainer.md)
 in `harness-core`.
