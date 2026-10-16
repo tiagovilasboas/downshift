@@ -41,4 +41,5 @@ evaluation splits (`tasks`, `holdout`, `fresh`, `heldout2`, `blind-vitrine`), `g
 
 Evaluation details and limitations: [evaluation-status.md](evaluation-status.md). Session-first model resolution (H13) keeps native metadata apart from catalog prices; discovery records availability only when the harness supplies evidence and does not invent capability, pricing or credit.
 
-Open work is mapped in [2026-10-16-handoff](../2026-10-16-handoff/README.md).
+Open work is mapped in [2026-10-16-handoff](../2026-10-16-handoff/README.md).  
+**Priority initiative (2026-10-16):** [Multilingual semantic intelligence](../2026-10-16-multilingual-semantic-intelligence/README.md) — diagnosis and Phase A–E contract; supersedes non-essential handoff until Phase B baseline exists.
