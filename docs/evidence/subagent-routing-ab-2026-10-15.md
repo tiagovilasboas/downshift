@@ -74,7 +74,7 @@ by a guardrail, 18% with no known baseline. The estimated net saving of `downshi
 | `Explore` and `Plan` had no inferred baseline | their spawns were held and never routed | #117 |
 | The task text of a multi-subagent Antigravity call came from the first child, the decision from the last | a record paired one child's task with another's tier | #119 |
 | The transcript is written asynchronously, so the first spawn of a session often saw no model | 2 of 3 fresh runs had an unknown baseline and nothing was routed | bounded re-read, beta.12 |
-| Parallel Agent calls in the first assistant message have no baseline (the message is written when it finishes streaming) | 4 of 5 spawns per run held | fallback to the configured model, marked `BASELINE_FROM_SETTINGS`, #126; limits in [harness-matrix.md](../harness-matrix.md) |
+| Parallel Agent calls in the first assistant message have no baseline (the message is written when it finishes streaming) | 4 of 5 spawns per run held | fallback to the configured model, marked `BASELINE_FROM_SETTINGS`, #126; limits in [harness-matrix.md](../reference/harness-matrix.md) |
 
 Two defects were in the measuring rig and are recorded because they would have produced false results: a run flag that removed the transcript
 (every baseline unknown, so the arms were identical), and counting usage-limit refusals as failed tasks.
@@ -82,4 +82,4 @@ Two defects were in the measuring rig and are recorded because they would have p
 ## Reproducing
 
 The runner (clone at the base commit, hidden tests, arms, aggregation with Wilson and bootstrap intervals) is in the private downshift-labs repository. The
-protocol for a team is in [pilot.md](../pilot.md); `downshift report` computes routed versus control from real usage.
+protocol for a team is in [pilot.md](../guides/pilot.md); `downshift report` computes routed versus control from real usage.

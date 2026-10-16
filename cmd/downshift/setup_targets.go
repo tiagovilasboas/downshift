@@ -9,8 +9,8 @@ package main
 // and never names a harness. A harness that declares
 // HarnessCapabilities.ChildEndEvent has a row for that event (checked by
 // TestSetupTargetsWireEveryChildEndEvent); Claude Code keeps its historical
-// aliases for the same runner. Sources: docs/install.md,
-// docs/session-models.md, docs/quota.md.
+// aliases for the same runner. Sources: docs/guides/install.md,
+// docs/reference/session-models.md, docs/guides/quota.md.
 
 // setupHook is one Downshift hook: `<binary> <Args>` on Event.
 type setupHook struct {
@@ -73,7 +73,7 @@ var setupTargets = []setupTarget{
 		Nested:    true,
 		// Main-session policy: start in plan mode, plan on Opus and execute on
 		// Sonnet (opusplan). Downshift routes the subagents underneath; see
-		// docs/session-models.md. Never replaces a value the user already set.
+		// docs/reference/session-models.md. Never replaces a value the user already set.
 		Defaults: []setupDefault{
 			{
 				Key:      "model",
@@ -111,7 +111,7 @@ var setupTargets = []setupTarget{
 		Defaults:  []setupDefault{{Key: "version", Value: 1}},
 		Hooks: []setupHook{
 			{Event: "preToolUse", Matcher: "Task", Args: "cursor"},
-			// Child end (N5). Unverified: needs a real payload (docs/harness-matrix.md).
+			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
 			{Event: "subagentStop", Args: "end cursor"},
 		},
 	},
@@ -123,7 +123,7 @@ var setupTargets = []setupTarget{
 		Nested:    true,
 		Hooks: []setupHook{
 			{Event: "PreToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "codex"},
-			// Child end (N5). Unverified: needs a real payload (docs/harness-matrix.md).
+			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
 			{Event: "PostToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "end codex"},
 		},
 		Notes: []string{
@@ -144,6 +144,6 @@ var setupTargets = []setupTarget{
 		ConfigDir: ".kiro",
 		Manual: "KiroCrew accepts only an absolute executable path with no arguments, so it needs the wrapper script " +
 			"scripts/kirocrew-pre-tool-use.sh registered in ~/.kiro/crew/config.json (agent.kiro_hooks.preToolUse). " +
-			"See docs/install.md, section KiroCrew.",
+			"See docs/guides/install.md, section KiroCrew.",
 	},
 }

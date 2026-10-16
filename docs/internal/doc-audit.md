@@ -1,6 +1,6 @@
 # Documentation audit — use vs inside vs competitive exposure
 
-Companion to [content-classification.md](../content-classification.md) (A/B/C/D).
+Companion to [content-classification.md](../reference/content-classification.md) (A/B/C/D).
 **Audience:** maintainers. Not linked from the public doc hero.
 
 **Legend**
@@ -29,7 +29,7 @@ Companion to [content-classification.md](../content-classification.md) (A/B/C/D)
 | Planning / TODO | `docs/internal/launch-waves.md` | **C** — not moat doc, ops |
 | `examples/` | **USE** | None |
 
-**Formal ADRs:** none. Decision-style docs: `docs/pt/09-decisoes.md`, `docs/decision-intelligence.md`.
+**Formal ADRs:** none. Decision-style docs: `docs/pt/09-decisoes.md`, `docs/design/decision-intelligence.md`.
 
 ---
 
@@ -42,13 +42,13 @@ Companion to [content-classification.md](../content-classification.md) (A/B/C/D)
 | Cost problem / session savings | USE | No | Adoption story |
 | Tier model, what it does | USE | Borderline | High-level OK |
 | **How the deterministic switch works** | **INSIDE** | **Yes** | Step-by-step signals, scores, example weights — **trim or link to `contrib/classifier.md`** |
-| **Capability Router v2** (in README) | INSIDE | **Yes** | Duplicate of `docs/capability-router-v2.md` — shorten to 1 paragraph + link |
-| Architecture (in README) | INSIDE | Mild | Prefer single canonical `docs/architecture.md` |
+| **Capability Router v2** (in README) | INSIDE | **Yes** | Duplicate of `docs/design/capability-router-v2.md` — shorten to 1 paragraph + link |
+| Architecture (in README) | INSIDE | Mild | Prefer single canonical `docs/design/architecture.md` |
 | **Classifier benchmark** / outcome metrics | INSIDE + **OK-B** | Mild | Numbers for trust; avoid duplicating `design/router-generalization.md` |
 | Design principles, financial impact | USE + narrative | Low | |
 | dsmon, troubleshooting, contributing | USE | No | |
 
-**Recommendation:** Treat README as **USE funnel**; move deep **INSIDE** blocks to `docs/contrib/classifier.md` + `docs/architecture.md` (follow-up PR).
+**Recommendation:** Treat README as **USE funnel**; move deep **INSIDE** blocks to `docs/contrib/classifier.md` + `docs/design/architecture.md` (follow-up PR).
 
 ---
 
@@ -120,7 +120,7 @@ Stubs: `backlog.md`, `next-steps.md` (root + internal) — no moat leak.
 
 | Path | Mode | MOAT |
 |------|------|------|
-| `benchmark/REPORT.md`, `EVAL-PRIVATE.md` | **USE** | Published metrics + policy only |
+| `benchmark/report.md`, `eval-private.md` | **USE** | Published metrics + policy only |
 | Eval datasets / outcomes (labs) | **C** | Not in public clone |
 | `ROADMAP.md` | USE | No |
 | `docs/internal/launch-waves.md` | C / planning | No router secret |

@@ -53,7 +53,7 @@ Subagent / request
 |---|---|
 | **Right-sized models** | Trivial tasks downshift to small tiers; complex work stays on frontier. |
 | **Deterministic** | Scored signals, not an LLM classifier, on the hot path. |
-| **Testable** | `downshift try`, [benchmark/REPORT.md](../../benchmark/REPORT.md), optional shadow classifier (`DOWNSHIFT_SHADOW_WEIGHTS`). |
+| **Testable** | `downshift try`, [benchmark/report.md](../../benchmark/report.md), optional shadow classifier (`DOWNSHIFT_SHADOW_WEIGHTS`). |
 | **Observable** | Local telemetry (`events.jsonl`), feedback with explicit `--required-tier` for training labels. |
 | **Harness-agnostic core** | Adapters only encode I/O; routing lives in `internal/core`. |
 
@@ -148,7 +148,7 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/insta
 
 ## Mapping from current README
 
-**2026-10-06:** Production `README.md` is now a slim hero + quickstart; full install lives in [../install.md](../install.md).
+**2026-10-06:** Production `README.md` is now a slim hero + quickstart; full install lives in [../install.md](../guides/install.md).
 
 When applying Version A, **keep** existing sections below the hero without rewriting the whole file in one PR:
 

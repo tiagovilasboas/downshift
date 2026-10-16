@@ -88,7 +88,7 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 	case res.written != "":
 		fmt.Fprintf(w, "Rewrite:    yes → %s\n", res.written)
 	case d.SessionUnknown:
-		fmt.Fprintf(w, "Rewrite:    no: session unknown. Add \"%s\": [<model ids>] to %s (see docs/session-models.md)\n",
+		fmt.Fprintf(w, "Rewrite:    no: session unknown. Add \"%s\": [<model ids>] to %s (see docs/reference/session-models.md)\n",
 			harness, sessionModelsPathForDisplay())
 	case d.Intent == core.PreservedIntent:
 		fmt.Fprintf(w, "Rewrite:    no (current model is explicit_only)\n")
@@ -138,7 +138,7 @@ func tryNotApplied(res tryResult, known bool, d core.Decision, harness string) s
 	}
 	switch {
 	case d.SessionUnknown:
-		return fmt.Sprintf("not rewritten: session models unknown for %s (see docs/session-models.md)", harness)
+		return fmt.Sprintf("not rewritten: session models unknown for %s (see docs/reference/session-models.md)", harness)
 	case d.Intent == core.PreservedIntent:
 		return "not rewritten: the current model is explicit_only"
 	case d.CreditHeld:
@@ -146,5 +146,5 @@ func tryNotApplied(res tryResult, known bool, d core.Decision, harness string) s
 	case len(d.Corrections) > 0:
 		return "not rewritten: held by a guardrail"
 	}
-	return "not rewritten: the session's model list does not allow it (see docs/session-models.md)"
+	return "not rewritten: the session's model list does not allow it (see docs/reference/session-models.md)"
 }

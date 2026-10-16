@@ -1,6 +1,6 @@
 # Maintainer backlog (private ops)
 
-Current public runtime/evidence tasks: [gap-tasks.md](../gap-tasks.md). That queue
+Current public runtime/evidence tasks: [gap-tasks.md](gap-tasks.md). That queue
 tracks acceptance and dependencies without exposing private operational detail.
 
 The autonomous execution backlog (DS/HC/KB streams, agent handoff rules, and
@@ -17,8 +17,8 @@ for access.
 **Public substitutes:**
 
 - Direction: [ROADMAP.md](../../ROADMAP.md)
-- Beta evidence: [beta-exit.md](../beta-exit.md)
-- Boundaries: [publishing-boundaries.md](../publishing-boundaries.md)
+- Beta evidence: [beta-exit.md](../reference/beta-exit.md)
+- Boundaries: [publishing-boundaries.md](../reference/publishing-boundaries.md)
 
 Historical copies may exist in git history before this stub; do not treat old
 commits as a current contract.

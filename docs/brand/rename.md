@@ -25,7 +25,7 @@ https://github.com/tiagovilasboas/downshift
 
 - Renaming the CLI binary (`downshift` stays).
 - Turning the project into an HTTP AI gateway in the same release (positioning only).
-- Project licence: Apache 2.0 (see docs/relicense.md).
+- Project licence: Apache 2.0 (see docs/reference/relicense.md).
 
 ---
 
@@ -162,8 +162,8 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 | `cmd/downshift/main.go` | help strings |
 | `cmd/dsmon/main.go`, `cmd/dsmon-hook/main.go` | tail events |
 | `catalog.sample.json`, `internal/catalog/catalog.json` | `_doc` comments |
-| `docs/session-models.md`, `docs/pt/05-catalogo-e-sessao.md`, `docs/pt/08-telemetria.md` | operator docs |
-| `docs/capability-router-v2.md` | `.harness-downshift/weights.json`, repo-local `.harness-downshift/` |
+| `docs/reference/session-models.md`, `docs/pt/05-catalogo-e-sessao.md`, `docs/pt/08-telemetria.md` | operator docs |
+| `docs/design/capability-router-v2.md` | `.harness-downshift/weights.json`, repo-local `.harness-downshift/` |
 | `scripts/smoke-test.sh` | hermetic HOME |
 | `.gitignore` | ignore patterns |
 | Brand SVGs under `docs/brand/*routing*.svg` | diagram labels (cosmetic) |
@@ -175,9 +175,9 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 | `AGENTS.md` | Agent contract title and URLs (10 hits) |
 | `CONTRIBUTING.md` | Title, licence blurb |
 | `CHANGELOG.md` | Historical + rename entry |
-| `docs/beta-exit.md`, `docs/engineering-loop.md`, `docs/graphify-integration.md` | Cross-links |
+| `docs/reference/beta-exit.md`, `docs/design/engineering-loop.md`, `docs/design/graphify-integration.md` | Cross-links |
 | `docs/pt/*.md` | PT docs + attribution footer |
-| `docs/capability-router-v2.md`, `docs/classifier-shadow.md`, `docs/langgraph-orchestration.md` | Technical |
+| `docs/design/capability-router-v2.md`, `docs/design/classifier-shadow.md`, `docs/design/langgraph-orchestration.md` | Technical |
 | `benchmark/blind-vitrine.README.md`, `tools/minilm/README.md` | Secondary |
 | `.github/ISSUE_TEMPLATE/*.md` | Templates |
 

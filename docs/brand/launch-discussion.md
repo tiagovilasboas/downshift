@@ -16,7 +16,7 @@ The project started as a **coding harness** router (Claude Code, Cursor, Codex h
 - **State dir:** `~/.downshift` (legacy `~/.harness-downshift` supported) — `downshift doctor`
 - **Harness** is an integration category, not the product name
 
-**Docs:** [ARCHITECTURE](https://github.com/tiagovilasboas/downshift/blob/main/docs/architecture.md) · [WHEN-TO-USE](https://github.com/tiagovilasboas/downshift/blob/main/docs/when-to-use.md) · [BETA-EXIT](https://github.com/tiagovilasboas/downshift/blob/main/docs/beta-exit.md)
+**Docs:** [ARCHITECTURE](https://github.com/tiagovilasboas/downshift/blob/main/docs/design/architecture.md) · [WHEN-TO-USE](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/when-to-use.md) · [BETA-EXIT](https://github.com/tiagovilasboas/downshift/blob/main/docs/reference/beta-exit.md)
 
 **Install:**
 

@@ -39,6 +39,6 @@ PASTE EVIDENCE (stderr, debug log, UI inspect, or post-tool usage event)
 
 ## Matrix update recommendation
 
-- [ ] Updates an existing row in `docs/harness-matrix.md`
+- [ ] Updates an existing row in `docs/reference/harness-matrix.md`
 - [ ] Proposes a new harness / plan combination
 - **Suggested row entry:**

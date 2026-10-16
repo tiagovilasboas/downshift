@@ -10,7 +10,7 @@ Read-only. Never edit settings, hooks or context files without the user's approv
 ## 1. Is it running?
 
 1. `downshift doctor --json`: a checklist (`ok`/`warn`/`fail`, each with a `fix`). It covers the binary vs the hook command per harness, hooks wired, both state dirs, the session-model source, the last hook event and whether a rewrite was honored. Report the failed checks first.
-2. Hook wiring: find where the user's harness keeps its hooks (`docs/install.md` has one section per harness: Claude Code, Cursor, Codex, Antigravity, KiroCrew; Grok uses config, not a hook) and show only the hooks block. Expect a pre-spawn hook that runs `downshift <harness>`. Optional post-spawn hooks add honor and usage evidence where the harness supports them (`docs/harness-matrix.md`).
+2. Hook wiring: find where the user's harness keeps its hooks (`docs/guides/install.md` has one section per harness: Claude Code, Cursor, Codex, Antigravity, KiroCrew; Grok uses config, not a hook) and show only the hooks block. Expect a pre-spawn hook that runs `downshift <harness>`. Optional post-spawn hooks add honor and usage evidence where the harness supports them (`docs/reference/harness-matrix.md`).
 3. Session models: Claude Code infers them from the current model when no list exists; other harnesses need a hook list, `downshift models discover` or `~/.downshift/session-models.json` (least to most capable). Missing hooks are fixed by `downshift setup --dry-run` then, with the user's approval, `downshift setup`.
 
 ## 2. What did it do?

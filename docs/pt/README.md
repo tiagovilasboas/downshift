@@ -2,7 +2,7 @@
 
 *Repositório GitHub: [`harness-downshift`](https://github.com/tiagovilasboas/downshift) · CLI `downshift` · licença Apache 2.0.*
 
-O **Downshift** é um roteador determinístico de modelos para fluxos de trabalho com agentes de IA (hooks em harnesses de código; não é gateway HTTP tipo LiteLLM). Quando usar ou não: [WHEN-TO-USE em inglês](../when-to-use.md).
+O **Downshift** é um roteador determinístico de modelos para fluxos de trabalho com agentes de IA (hooks em harnesses de código; não é gateway HTTP tipo LiteLLM). Quando usar ou não: [WHEN-TO-USE em inglês](../guides/when-to-use.md).
 
 Quando você dispara um subagente em ferramentas como **Claude Code**, **Cursor**, **Codex**, **Antigravity** ou **KiroCrew**, o comportamento padrão do ambiente é fazer com que o subprocesso herde o modelo mais avançado e caro da sessão ativa (como Claude Opus ou GPT-4o/5). Na prática, gasta-se orçamento de fronteira em tarefas estritamente mecânicas — renomear variáveis, corrigir digitação, listar diretórios ou rodar comandos de terminal.
 
@@ -19,7 +19,7 @@ O Downshift não é um chat secundário e não gera código. É um **roteador de
 * **Velocidade na CPU:** Sem LLM no loop de classificação e sem chamadas de rede adicionais. A inferência híbrida (regex + centróides vetoriais) decide em menos de 2 milissegundos.
 * **Segurança e Continuidade (Fail-Open):** Na dúvida ou em caso de qualquer falha técnica, o Downshift não interrompe o trabalho: o fluxo segue normalmente com o modelo original da sessão.
 
-> **⚠️ Nota de Transparência:** `rewrite_emitted` na telemetria indica que o Downshift emitiu com sucesso a instrução de troca de modelo. Métricas em dólares reais dependem do reporte de tokens retornado pelo harness no hook posterior (`PostToolUse`). Para detalhes dos critérios de saída do beta, consulte [`docs/beta-exit.md`](../beta-exit.md).
+> **⚠️ Nota de Transparência:** `rewrite_emitted` na telemetria indica que o Downshift emitiu com sucesso a instrução de troca de modelo. Métricas em dólares reais dependem do reporte de tokens retornado pelo harness no hook posterior (`PostToolUse`). Para detalhes dos critérios de saída do beta, consulte [`docs/reference/beta-exit.md`](../reference/beta-exit.md).
 
 ---
 
@@ -50,13 +50,13 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 | [02 · Classificador](02-classificador.md) | Decisão | Heurísticas de regex, matriz de sinais ponderados e o limiar de confiança |
 | [03 · Gestão de Marchas](03-marcha.md) | Política | As faixas de capacidade (Small/Mid/Frontier), regras de downshift e upshift seguro |
 | [04 · Fallbacks e Tolerância](04-fallbacks.md) | Resiliência | O contrato fail-open: como o sistema reage a erros sem quebrar o fluxo do dev |
-| [05 · Catálogo e Sessão](05-catalogo-e-sessao.md) | Permissões | Preço de lista versus modelos realmente autorizados na sessão ativa (`session-models.json`) e, desde `downshift models discover`, os modelos que o próprio harness informa ([session-discovery](../session-discovery.md), em inglês) |
+| [05 · Catálogo e Sessão](05-catalogo-e-sessao.md) | Permissões | Preço de lista versus modelos realmente autorizados na sessão ativa (`session-models.json`) e, desde `downshift models discover`, os modelos que o próprio harness informa ([session-discovery](../reference/session-discovery.md), em inglês) |
 | [06 · Adapters de Harness](06-harnesses.md) | Integração | Especificidades de integração: Claude Code, Codex, Cursor, Antigravity e KiroCrew |
 | [07 · Camada Semântica MiniLM](07-minilm.md) | Inteligência | Classificação local por centróides vetoriais, boost semântico e privacidade |
 | [08 · Telemetria e Métricas](08-telemetria.md) | Observabilidade | Estrutura do `events.jsonl`, métricas normalizadas e auditoria sem vazamento de prompt |
 | [09 · Decisões Técnicas e Trade-offs](09-decisoes.md) | Engenharia | Racional de arquitetura, compensações técnicas e próximos passos do projeto |
 | [10 · Candidato em shadow](10-candidato-shadow.md) | Avaliação | Observar um candidato softmax sem trocar o roteamento de produção |
-| [11 · Compressor Nativo de Contexto](../context-optimization.md) | Otimização | Compressor determinístico em Go e sensor de telemetria passiva |
+| [11 · Compressor Nativo de Contexto](../design/context-optimization.md) | Otimização | Compressor determinístico em Go e sensor de telemetria passiva |
 
 ---
 

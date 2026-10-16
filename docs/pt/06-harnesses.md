@@ -34,7 +34,7 @@ arquivo configurado inválido segura a reescrita. A ordem do picker não mede
 capacidade: essa fonte exige metadados de tier do resolver e preserva o piso da
 tarefa. Cota e disponibilidade são requisitos separados. Uma porcentagem de uso
 descreve sua janela ou bolsão, sem determinar quais modelos pertencem a ele.
-Veja [cota](../quota.md) e [tarefas pendentes](../gap-tasks.md).
+Veja [cota](../guides/quota.md) e [tarefas pendentes](../internal/gap-tasks.md).
 
 ---
 

@@ -112,10 +112,10 @@ Continuam abertos: associação estrutural alias/modelo/pool no Antigravity,
 consumidores reais da cota Codex/Claude Code, P3.4 (5 vínculos validados < 50),
 controle/período P3.7, dados independentes, generalização e revalidações trimestrais.
 O preço de saída do catálogo orienta desempate/guard; isso não promete menor custo
-total para qualquer mix de tokens. Veja [fila de tarefas](../gap-tasks.md).
+total para qualquer mix de tokens. Veja [fila de tarefas](../internal/gap-tasks.md).
 
-Guia inferencial: contratos de fonte, escopo, piso e aceites em `docs/quota.md`,
-`docs/session-models.md`, `docs/stats-export.md` e na fila de tarefas. Sensores
+Guia inferencial: contratos de fonte, escopo, piso e aceites em `docs/guides/quota.md`,
+`docs/reference/session-models.md`, `docs/reference/stats-export.md` e na fila de tarefas. Sensores
 computacionais: gates offline, regressões Go/Node/Python e telemetria local;
 sensor inferencial: esta avaliação dos limites de evidência. Eixos: behaviour,
 architecture fitness e maintainability. O workflow contém os comandos Go,

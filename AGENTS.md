@@ -23,7 +23,7 @@ throughout the session.
 
 This project is under the **Apache License, Version 2.0**. Commercial use is
 allowed under the licence terms. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
-[docs/relicense.md](docs/relicense.md). Prior BUSL text:
+[docs/reference/relicense.md](docs/reference/relicense.md). Prior BUSL text:
 [LICENSE-BSL-1.1-ARCHIVE.md](LICENSE-BSL-1.1-ARCHIVE.md).
 
 ---
@@ -36,7 +36,7 @@ Owner decision, 2026-10-11. Never build a feature for one harness.
 2. Adapters only parse the payload, declare `HarnessCapabilities`, and emit the wire response. Shared code needs something from a payload? The adapter exposes it through a small optional method (for example `ProjectDir()`).
 3. Harness facts are data in `HarnessCapabilities` (read via `core.AllHarnessCaps()`), never branches in shared tools.
 4. Test at the shared layer (`runHookAdapter` or `core.Route`). Logic that appears in more than one adapter is a defect.
-5. A harness that cannot honor a feature still gets it computed; say so in `docs/harness-matrix.md`.
+5. A harness that cannot honor a feature still gets it computed; say so in `docs/reference/harness-matrix.md`.
 
 Checklist and worked examples: [docs/contrib/layering.md](docs/contrib/layering.md).
 
@@ -45,16 +45,16 @@ Checklist and worked examples: [docs/contrib/layering.md](docs/contrib/layering.
 ### End-user install (any session)
 
 If the user asks to **install, configure, or debug hooks** on their machine (not to
-change this repository), read **[docs/install.md](docs/install.md)** first.
+change this repository), read **[docs/guides/install.md](docs/guides/install.md)** first.
 
 - Assisted setup, in order: `curl …/install.sh` (or [Releases](https://github.com/tiagovilasboas/downshift/releases));
   `downshift setup --dry-run` and show the diff to the user; only after a clear yes, `downshift setup --yes`;
   then `downshift doctor --json` and handle each failed check with its `fix` (ask before any config write);
   finally ask the user to open a **new** harness session and check `/downshift` or `downshift session`.
-- State dir: `~/.downshift` (legacy `~/.harness-downshift/`). See [docs/config.md](docs/config.md).
-- Session models: [docs/session-models.md](docs/session-models.md). Claude Code infers them from the current
+- State dir: `~/.downshift` (legacy `~/.harness-downshift/`). See [docs/guides/config.md](docs/guides/config.md).
+- Session models: [docs/reference/session-models.md](docs/reference/session-models.md). Claude Code infers them from the current
   model; other harnesses need a hook list, `downshift models discover` or `session-models.json`.
-- Plan / rewrite-honored limits: [docs/harness-matrix.md](docs/harness-matrix.md).
+- Plan / rewrite-honored limits: [docs/reference/harness-matrix.md](docs/reference/harness-matrix.md).
 - Do not invent hook paths, matchers, or catalog entries without checking INSTALL and examples.
 
 ### Shared RAG memory

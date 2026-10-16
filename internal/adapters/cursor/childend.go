@@ -17,7 +17,7 @@ import (
 // present, the id of the spawn tool call.
 //
 // Unverified: needs a real payload. subagentStop is a hook event in Cursor's
-// hooks reference, but no payload was captured here (docs/harness-matrix.md).
+// hooks reference, but no payload was captured here (docs/reference/harness-matrix.md).
 // The names read are status, tool_use_id/tool_call_id, subagent_id and
 // session_id. The model is not read: no field is known to carry the executed
 // model, and a guess would fake an honored rewrite. Cursor events carry no session id today and no

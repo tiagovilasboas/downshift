@@ -1,6 +1,6 @@
 # Claude Code rewrite honored — 2026-10-06
 
-**P1.3** in `docs/beta-exit.md`. Emission vs honored: `docs/session-models.md`.
+**P1.3** in `docs/reference/beta-exit.md`. Emission vs honored: `docs/reference/session-models.md`.
 
 ## Setup
 

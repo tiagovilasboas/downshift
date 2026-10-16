@@ -1,11 +1,11 @@
 ---
 name: Pilot weekly report
-about: Weekly routed-versus-control numbers from a team pilot (docs/pilot.md)
+about: Weekly routed-versus-control numbers from a team pilot (docs/guides/pilot.md)
 title: 'pilot: <team> week <n>'
 labels: beta-exit
 ---
 
-Protocol: [docs/pilot.md](https://github.com/tiagovilasboas/downshift/blob/main/docs/pilot.md).
+Protocol: [docs/guides/pilot.md](https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/pilot.md).
 Paste numbers only. No prompts, task text, paths or account identifiers.
 
 ## Setup

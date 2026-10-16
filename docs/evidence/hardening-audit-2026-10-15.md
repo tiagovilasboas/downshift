@@ -73,7 +73,7 @@ HEAD build; the base build prints the same first lines.
 - **Classifier-level unsafe rates.** These are counted over all items, including abstentions, so they are not what routing does.
   FRONTIER to MID: 44% of frontier items on fresh (11 of 25), 60% on heldout2 (18 of 30), 35% on blind-vitrine (7 of 20); 0% on the
   seed and holdout. FRONTIER to SMALL was 0% on every split.
-- **Earlier published figures.** `benchmark/REPORT.md` publishes fresh 50.0% and heldout2 40.0% at classifier commit `5a888e7`.
+- **Earlier published figures.** `benchmark/report.md` publishes fresh 50.0% and heldout2 40.0% at classifier commit `5a888e7`.
   Both base and HEAD in this range give 52.0% and 40.8%, so that change came before this range. This page does not attribute it.
 - **Outcome suite.** `downshift eval-outcome --verify` (explicit `--tasks` and `--runs` paths in the labs repository) reports
   40 tasks verified: the stub fails, the reference passes, and the recorded results reproduce. It checks reproduction, not pass rates.
@@ -120,7 +120,7 @@ Not in the beta.14 release; listed in the CHANGELOG under Unreleased.
   position first within a tier). That is safe, since it never goes down, but it can spend more than the needed tier. Whether it
   should pick the cheapest model at the needed tier is open.
 - **A confident decision with no baseline may write any tier.** This is the designed behaviour for confident calls. The rules for
-  unconfident calls with no baseline are in [harness-matrix.md](../harness-matrix.md).
+  unconfident calls with no baseline are in [harness-matrix.md](../reference/harness-matrix.md).
 - **Claude Code upshift on a settings-inferred baseline is still written.** The small-tier-only limit applies to downshifts on a guessed
   baseline, not to upshifts.
 - **Export writes a zero for cost that was never measured.** `real_saved_usd` is always present, so 0 reads like a measured zero. Check
@@ -152,5 +152,5 @@ go build -o ds ./cmd/downshift
 ```
 
 The benchmark splits and outcome suite are in the private downshift-labs repository. The public summary is
-[benchmark/REPORT.md](../../benchmark/REPORT.md). The release notes are in [CHANGELOG.md](../../CHANGELOG.md). The earlier
+[benchmark/report.md](../../benchmark/report.md). The release notes are in [CHANGELOG.md](../../CHANGELOG.md). The earlier
 routed-versus-control measurement from the same day is in [subagent-routing-ab-2026-10-15.md](subagent-routing-ab-2026-10-15.md).

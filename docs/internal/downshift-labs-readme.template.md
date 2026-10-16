@@ -28,4 +28,4 @@ regression gates and outcome verify against `eval/`.
 
 ## Public link
 
-[benchmark/REPORT.md](../../benchmark/REPORT.md) and [EVAL-PRIVATE.md](../../benchmark/EVAL-PRIVATE.md).
+[benchmark/report.md](../../benchmark/report.md) and [eval-private.md](../../benchmark/eval-private.md).

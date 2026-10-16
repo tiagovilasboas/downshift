@@ -198,7 +198,7 @@ if [ "$session_existed" = 0 ]; then
     echo "  echo '{ \"claude-code\": [\"claude-haiku-5-5\", \"claude-sonnet-5-5\", \"claude-opus-5-5\"] }' > \"$SESSION_FILE\""
   fi
   echo "  Fable is supported. Leave it out unless you want upshift into that expensive frontier model."
-  echo "  To opt in, append \"claude-fable-5-1\" as the last id. See docs/session-models.md."
+  echo "  To opt in, append \"claude-fable-5-1\" as the last id. See docs/reference/session-models.md."
   echo "  Cursor claude-fable-5-1-thinking-high and Codex gpt-6-astra stay explicit_only unless you pass --explicit-upshift."
 fi
 

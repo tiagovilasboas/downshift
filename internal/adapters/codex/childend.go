@@ -20,7 +20,7 @@ import (
 // usage from the rollout transcript at transcript_path.
 //
 // Unverified: no real Codex PostToolUse payload for spawn_agent was captured
-// (docs/harness-matrix.md). The fields are tool_use_id, session_id, model,
+// (docs/reference/harness-matrix.md). The fields are tool_use_id, session_id, model,
 // transcript_path (documented common fields) and tool_response.status/model
 // (assumed names). A spawn_agent call that reports no status is a launch, not
 // an end, and then no usage is read: the transcript at transcript_path belongs

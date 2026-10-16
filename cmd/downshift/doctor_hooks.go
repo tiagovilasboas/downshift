@@ -399,7 +399,7 @@ func checkHonored(add func(id, status, detail, fix string), mine []telemetry.Eve
 		add("rewrite honored", doctorOK, fmt.Sprintf("seen: %d of %d rewrites", honored, shifted), "")
 	case shifted > 0:
 		add("rewrite honored", doctorWarn, fmt.Sprintf("0 of %d rewrites seen honored; the harness may be ignoring them", shifted),
-			"downshift stats --detail  (then see docs/harness-matrix.md)")
+			"downshift stats --detail  (then see docs/reference/harness-matrix.md)")
 	default:
 		add("rewrite honored", doctorWarn, "no rewrite emitted yet, so none observed",
 			`downshift try "rename a variable"  (shows what would be rewritten), then spawn that task`)

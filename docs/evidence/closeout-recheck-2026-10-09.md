@@ -41,5 +41,5 @@ this close-out. The existing command fetcher is unchanged.
 
 Beta remains on. Pillar exits are unchanged.
 
-Guia: acceptance text in [gap-tasks.md](../gap-tasks.md). Sensor: this dated
+Guia: acceptance text in [gap-tasks.md](../internal/gap-tasks.md). Sensor: this dated
 negative recheck (behaviour). It is an evidence record, not a new CI gate.

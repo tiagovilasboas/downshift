@@ -6,4 +6,4 @@ lives at:
 **[docs/internal/launch-waves.md](../internal/launch-waves.md)**
 
 Public direction: [ROADMAP.md](../../ROADMAP.md) · boundaries:
-[publishing-boundaries.md](../publishing-boundaries.md).
+[publishing-boundaries.md](../reference/publishing-boundaries.md).

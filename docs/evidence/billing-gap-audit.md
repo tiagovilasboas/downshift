@@ -125,8 +125,8 @@ using the same observed token counts.
 
 | Concern | Guia | Sensor | Eixo |
 |---|---|---|---|
-| Linked evidence cannot be replaced by a raw count | `docs/stats-export.md`, inferencial | Deterministic reference join and deduplication in `Aggregate`, plus regression tests, computacional | behaviour |
-| Unknown baseline must stay unknown while observed spend remains visible | `docs/stats-export.md`, inferencial | Adapter end-to-end tests for unknown and uncatalogued requested models; exported actual-cost fields, computacional | behaviour |
+| Linked evidence cannot be replaced by a raw count | `docs/reference/stats-export.md`, inferencial | Deterministic reference join and deduplication in `Aggregate`, plus regression tests, computacional | behaviour |
+| Unknown baseline must stay unknown while observed spend remains visible | `docs/reference/stats-export.md`, inferencial | Adapter end-to-end tests for unknown and uncatalogued requested models; exported actual-cost fields, computacional | behaviour |
 | Count contract remains understandable for consumers | Documented `usage_records` migration and retained field names, inferencial | Export and window tests, computacional | maintainability |
 
 These tests run through the repository's existing `go test ./...` CI command

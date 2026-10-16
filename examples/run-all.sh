@@ -12,7 +12,7 @@ trap 'rm -rf "$SMOKE_DIR"' EXIT
 export DOWNSHIFT_EVENT_LOG="${DOWNSHIFT_EVENT_LOG:-$SMOKE_DIR/events.jsonl}"
 
 if ! command -v downshift >/dev/null 2>&1; then
-  echo "downshift not in PATH — install first (see docs/install.md)" >&2
+  echo "downshift not in PATH — install first (see docs/guides/install.md)" >&2
   exit 1
 fi
 

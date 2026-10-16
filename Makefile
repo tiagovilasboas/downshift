@@ -27,7 +27,7 @@ build-all:
 	GOOS=linux   GOARCH=arm64 go build $(LDFLAGS) -o dist/$(BINARY)-linux-arm64   ./cmd/downshift
 	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o dist/$(BINARY)-windows-amd64.exe ./cmd/downshift
 
-## report: print eval-outcome block (maintainer: full suite in downshift-labs; update benchmark/REPORT.md for public)
+## report: print eval-outcome block (maintainer: full suite in downshift-labs; update benchmark/report.md for public)
 report:
 	go run ./cmd/downshift eval-outcome --report
 

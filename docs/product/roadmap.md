@@ -6,7 +6,7 @@ harness-downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Owner-facing plan. Status as of 2026-10-13. The public summary stays in
-[ROADMAP.md](../../ROADMAP.md); engineering task specs live in `docs/tasks/`.
+[ROADMAP.md](../../ROADMAP.md); engineering task specs live in `docs/internal/tasks/`.
 
 ## Positioning
 
@@ -59,7 +59,7 @@ session).
 
 Why: the product's work is invisible unless the developer opens a report. Seeing
 each subagent's model, cost and redo inside the harness is what builds trust.
-Specs: `docs/tasks/2026-10-13-ux/`.
+Specs: `docs/internal/tasks/2026-10-13-ux/`.
 
 | ID | Task | Acceptance | Size | Depends |
 |----|------|------------|------|---------|
@@ -101,7 +101,7 @@ later milestone needs its numbers.
 | P3.3 | Capability selection (S3), shadow by default | `score_would` in stats; live with `DOWNSHIFT_SCORE_ROUTING=1` | M | done, uncommitted |
 | P3.4 | Promote capability selection to live | shadow data shows lower cost per completed task, no rework increase | S | P1.2, P3.3 |
 | P3.5 | Session-start discovery for Codex, Cursor, Kiro (their session-start hooks) | lists refreshed per session; `InferSession` enabled only with evidence | M | per-harness evidence |
-| P3.6 | Docs for scores (S4) | `docs/scores.md`, attribution, privacy note | S | P3.1 |
+| P3.6 | Docs for scores (S4) | `docs/reference/scores.md`, attribution, privacy note | S | P3.1 |
 
 ## M4: cover where the money goes
 

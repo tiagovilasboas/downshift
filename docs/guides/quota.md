@@ -1,0 +1,200 @@
+# Observed usage quota
+
+harness-downshift by Tiago de Carvalho Vilas Boas
+https://github.com/tiagovilasboas/downshift
+
+Discovery answers which models a harness offers. Quota answers whether a fresh
+usage observation permits an available candidate. `session-models.json` remains
+an availability configuration; its `quota` member is ignored.
+
+## Gate and freshness
+
+A hook-supplied `usage_quota` snapshot takes precedence over a configured native
+export and `quota.json` in the [state directory](config.md). The native export
+takes precedence over the canonical cache for that harness. Once either source
+is present, model rewrites require `available` evidence for the candidate's exact harness and scope.
+`exhausted`, `unknown`, and `stale` hold the model rewrite. A malformed cache or a
+cache with no entry for this harness also holds it.
+
+### Stale snapshots stop holding after 1 hour
+
+A snapshot is `stale` once past `expires_at`, and holds rewrites for up to 1 hour
+after that. Past 1 hour the snapshot is treated as absent: the status is
+`unknown` and routing behaves as for a user without quota. Before this rule a
+single expired statusline snapshot held every rewrite forever and silently
+disabled routing. `DOWNSHIFT_QUOTA_MODE=required` is the explicit opt-in that
+keeps holding at any age. A malformed cache or native export is not a stale
+snapshot and keeps holding. A snapshot supplied in the hook payload is not
+subject to the grace: it is evaluated as sent.
+
+While a stale snapshot holds, `downshift doctor` warns (`quota snapshot`, with its
+age and when it clears) and the Claude Code statusline summary ends with
+`· quota stale`. Both come from `core.StaleQuotaHold`, the same rule as the gate.
+
+Without a usage source (or, outside required mode, with one that expired more than
+1 hour ago), routing retains its existing behaviour and records quota as `unknown`. Set `DOWNSHIFT_QUOTA_MODE=required` to hold rewrites in that case too.
+This setting never invents credit. Hook `included_models` and
+`unavailable_models` marks are intersected with quota evidence and the session
+availability list. `explicit_upshift` stays off by default.
+
+Snapshots have an observation time and expiry, with a maximum lifetime of 15
+minutes. The CLI defaults to 5 minutes. Future observations, elapsed reset times,
+missing percentages and missing required windows cannot authorize a rewrite.
+The writer serializes updates, rejects older observations for a harness, and
+atomically writes a private file. An abandoned `.lock` directory produces an
+explicit writer error; the hook reader does not acquire the writer lock.
+
+Quota is filtered after establishing the task's capability floor. Exhausting a
+frontier candidate cannot promote a remaining cheap candidate into a frontier
+model. An available percentage is an observation, not a capacity reservation or
+a guarantee that the next call incurs no charge.
+
+## Codex native collection
+
+```bash
+downshift quota collect --harness codex --transcript /path/to/session.jsonl
+downshift quota status --harness codex --model exact-model-id
+```
+
+The collector reads a bounded tail of a regular transcript file, extracts native
+`event_msg` / `token_count` subscription windows, and preserves the original event
+timestamp. Re-reading an old transcript does not refresh its quota. It persists
+no prompts, responses, credentials or purchased-credit balance.
+
+When Codex supplies `transcript_path` in the hook event, the adapter collects this
+evidence locally for that call. A supplied path that cannot produce valid usage
+holds the rewrite. Confirm that the actual consumer supplies this field before
+claiming automatic integration; the standalone collector and a simulated hook
+are separate evidence.
+
+Fresh output from the Codex usage-limits tool can also be imported:
+
+```bash
+downshift quota import --harness codex --source codex-usage < fresh-usage.json
+```
+
+This source accepts `rateLimitsByLimitId.codex.primary/secondary.usedPercent`
+and `resetsAt`. Shared subscription windows apply to this harness. A separate
+bucket with `normalModelSlug` applies only to that exact model; only its reported
+windows are used. `credits.hasCredits=false` is not subscription exhaustion.
+
+## Claude Code statusline bridge
+
+For an empty statusline configuration, this optional setting connects native
+usage updates to the local cache and displays a compact percentage line:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "downshift quota claude-statusline"
+  }
+}
+```
+
+Preserve an existing statusline. Its wrapper can pass the same input to
+`downshift quota import --harness claude-code --source claude-statusline` before
+rendering its existing output. The bridge does not edit settings automatically.
+
+The [native statusline contract](https://code.claude.com/docs/en/statusline)
+publishes `rate_limits.five_hour/seven_day.used_percentage` and `resets_at`.
+`context_window.used_percentage` is context occupancy and is never quota. Native
+rate limits may be absent before the first response. Missing fresh input does
+not renew a previous observation; it expires at its original deadline.
+
+### Routing summary on the same line
+
+The same command also prints a routing summary for the current session, after
+the quota windows:
+
+```text
+5h 25% · 7d 40% │ ◆ downshift · 6 subagents · 4 on haiku · saved $0.42 · 0 on doubt
+```
+
+- The statusline input carries `session_id`. It is hashed with the same function
+  the event log uses (`telemetry.HashSessionID`) and only that session's events
+  count. An unknown or invalid session prints no summary.
+- Only the last 2 MB of `events.jsonl` is read (a cut first line is dropped), so
+  rendering does not grow with the log: about 7 ms on a 50 MB log. Spawns older
+  than that window are not counted.
+- `N subagents`: routing decisions. `N on haiku`: the model most children ran on.
+  `saved $x` / `over $x`: the signed real delta (baseline minus actual) over
+  priced children; a net loss shows as `over`. `N on doubt`: frontier decisions
+  that rest on an unconfident classification with no deterministic lift.
+  Segments with no data are left out; a session with no spawns prints no summary.
+- Each part fails on its own. With no event log the quota windows print alone;
+  with no `rate_limits` the summary prints alone; on any other failure nothing
+  prints and the exit code stays 0.
+- The text comes from `telemetry.SessionSummary(events, hash).Line()`; the
+  bridge only parses stdin, calls it and prints.
+- `DOWNSHIFT_QUIET=1` does not change the statusline: it is a surface you
+  configured yourself.
+
+## Cursor pools
+
+```bash
+downshift quota import --harness cursor --source cursor-usage < fresh-usage.json
+```
+
+The native parser accepts the current-period response fields `plan_usage` with
+`auto_percent_used` / `api_percent_used`, `billing_cycle_end`, and
+`auto_bucket_models` (or their camelCase forms). Model membership comes from the
+reported `auto_bucket_models`, never names or a catalog family. Cursor Models
+quota applies only to those exact IDs. Other Models can be computed as the
+complement only when a runtime collector supplies `available_models` and
+`available_models_complete: true`; these are collector metadata, not fields
+published by the current-period endpoint. Otherwise that pool's membership stays
+unknown. A percentage without membership cannot authorize any model.
+
+An importer is not a continuous collector. Do not replay a saved native response
+as a new observation: native imports assume freshly captured input. Cursor CLI
+model listing, dashboard usage, and an authenticated collector each require their
+own runtime evidence. See [session-discovery.md](../reference/session-discovery.md).
+
+### Hook-side native export
+
+The hook can read a fresh raw Cursor export without running a CLI or touching
+credentials. Set `DOWNSHIFT_CURSOR_NATIVE_FILE` in the hook's environment to the
+verified native export. The hook parses that bounded regular file
+on each invocation before the canonical cache. Its
+`observed_at` is preserved, so an old export expires instead of being refreshed.
+If the configured file is malformed, unreadable or too large, the quota gate
+holds the rewrite. The provider still controls the export cadence; Downshift
+does not poll Cursor or claim a balance that the payload does not associate with
+exact model IDs.
+
+The same file supplies native availability when `available_models_complete` is
+true and `observed_at` is fresh. Availability and quota use one observation to
+avoid mixing rotated exports. Hook lists still take precedence; a configured
+invalid native list does not fall back to discovery or a handwritten list.
+Native provider order is not a capability signal. Eligible targets need resolver
+tier metadata, the task's capability floor and valid quota; unknown capabilities
+hold. Equal-tier ties use the catalog output-token price; this does not promise
+lower total cost for every input/output mix. A classified downshift cannot become
+a higher-tier selection, or a higher output-token price within the same tier,
+because another pool exhausted.
+See the [bridge instructions](../../internal/cursorbridge/extension/README.md).
+
+Runtime validation on Cursor **3.24.9** found that the proposed `cursor` API is
+restricted to built-in extensions. The external experimental bridge failed at
+transport access even with the explicit per-extension API flag, before any RPC;
+no native file was produced. The file consumer is implemented and tested, but
+this bridge is not an operational collector on that build. A supported source
+remains an open dependency. [Diagnostic](../evidence/cursor-gap-diagnostic.md).
+
+## Operator observations and observability
+
+`quota import --harness H --source normalized` accepts a version-1 snapshot with
+`harness`, `observed_at`, `expires_at`, and `windows`. Each window has `id`,
+`scope` (`harness` or `models`), optional exact `model_ids`, `used_percent`, and
+`resets_at`. This path always records source `operator-normalized`; it does not
+authenticate the provider or impersonate a native source.
+
+Decision telemetry records `quota_status` and `quota_source`, without raw source
+payloads. `quota status` prints the local snapshot and evaluated status. A model
+rewrite emitted by the hook still requires independent executor acknowledgement
+before it can be called honored.
+
+Guia inferencial: scope, source and freshness contracts in this document.
+Sensors computacionais: validation, the model-write gate, regression tests in CI,
+and prompt-free quota telemetry. Eixos: behaviour and architecture fitness.

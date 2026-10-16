@@ -3,7 +3,7 @@
 Contributor reference for the deterministic classifier that powers **hook routing**.
 User-facing Portuguese overview: [pt/02-classificador.md](../pt/02-classificador.md).
 
-Experimental v2 is documented in [capability-router-v2.md](../capability-router-v2.md).
+Experimental v2 is documented in [capability-router-v2.md](../design/capability-router-v2.md).
 
 ---
 
@@ -22,7 +22,7 @@ toward **no rewrite** when confidence is low).
 ---
 
 The full weight table, the structural bonuses, and how each harness turns
-the tier into a model id are in [complexity-weights.md](../complexity-weights.md).
+the tier into a model id are in [complexity-weights.md](../reference/complexity-weights.md).
 
 ## Scoring (`internal/core/signals.go` + `classifier.go`)
 
@@ -51,7 +51,7 @@ the tier into a model id are in [complexity-weights.md](../complexity-weights.md
 
 `DOWNSHIFT_SHADOW_WEIGHTS` records a v2 candidate next to the production decision.
 It does **not** change hook JSON. Labels for supervised training require explicit
-`--required-tier` on feedback. See [classifier-shadow.md](../classifier-shadow.md).
+`--required-tier` on feedback. See [classifier-shadow.md](../design/classifier-shadow.md).
 
 ---
 

@@ -4,7 +4,7 @@
 > **Não pule ondas com dependência** sem aceitar o risco (tabela abaixo).  
 > Contexto: [rename.md](../brand/rename.md) · hero: [readme-hero.md](../brand/readme-hero.md)
 
-**Estado do repo (baseline):** `tiagovilasboas/downshift` · CLI `downshift` · licença **Apache 2.0** (desde 2026-10-06) · beta ([beta-exit.md](../beta-exit.md)).
+**Estado do repo (baseline):** `tiagovilasboas/downshift` · CLI `downshift` · licença **Apache 2.0** (desde 2026-10-06) · beta ([beta-exit.md](../reference/beta-exit.md)).
 
 ---
 
@@ -32,8 +32,8 @@
 | W0-1 | Criar `COMMERCIAL.md` na raiz (BSL: o que é uso permitido, comercial, contacto, 2030→Apache) | `COMMERCIAL.md` | [x] |
 | W0-2 | Criar `ROADMAP.md` público (3–6 meses; sem handoff de agentes; link BETA-EXIT) | `ROADMAP.md` | [x] |
 | W0-3 | Criar `GOVERNANCE.md` (maintainer, releases, semver, como virar maintainer) | `GOVERNANCE.md` | [x] |
-| W0-4 | Criar `docs/architecture.md` (1 diagrama: harness → adapter → core → catalog; não é gateway HTTP hoje) | `docs/architecture.md` | [x] |
-| W0-5 | Mover conteúdo interno para `docs/internal/` **ou** repo privado; deixar stub com link | `docs/backlog.md`, `docs/next-steps.md` | [x] |
+| W0-4 | Criar `docs/design/architecture.md` (1 diagrama: harness → adapter → core → catalog; não é gateway HTTP hoje) | `docs/design/architecture.md` | [x] |
+| W0-5 | Mover conteúdo interno para `docs/internal/` **ou** repo privado; deixar stub com link | `docs/internal/backlog.md`, `docs/internal/next-steps.md` | [x] |
 | W0-6 | README: link para COMMERCIAL, ROADMAP, ARCHITECTURE no índice de docs | `README.md` (só links) | [x] |
 | W0-7 | `SECURITY.md`: email de report explícito (não só “ver GitHub”) | `SECURITY.md` | [x] |
 
@@ -51,7 +51,7 @@
 |----|------|-----------------|------|
 | W1-1 | Aplicar hero **Versão A** de `readme-hero.md` (substituir H1 + primeiras seções) | `README.md` | [x] |
 | W1-2 | Título README: `# Downshift` (subtítulo “formerly harness-downshift” uma linha) | `README.md` | [x] |
-| W1-3 | Seção **When to use Downshift** vs LiteLLM / OpenRouter / chamada direta (honesta) | `README.md` ou `docs/when-to-use.md` | [x] |
+| W1-3 | Seção **When to use Downshift** vs LiteLLM / OpenRouter / chamada direta (honesta) | `README.md` ou `docs/guides/when-to-use.md` | [x] |
 | W1-4 | GitHub **description** + **topics** (ver rename.md §17) | UI GitHub | [x] |
 | W1-5 | Social preview: upload **`docs/brand/downshift-github-social-preview.png`** (1280×640; [steps](../brand/social-preview.md)) | Settings → General → Social preview | [ ] |
 | W1-6 | Atualizar `llms.txt` com nome Downshift + one-liner model router | `llms.txt` | [x] |
@@ -69,7 +69,7 @@
 
 | ID | Task | Arquivos / ação | Done |
 |----|------|-----------------|------|
-| W2-1 | Condensar `capability-router-v2.md` → ~150 linhas “Vision + status experimental”; mover resto para `docs/internal/` ou apêndice colapsado | `docs/capability-router-v2.md` | [x] |
+| W2-1 | Condensar `capability-router-v2.md` → ~150 linhas “Vision + status experimental”; mover resto para `docs/internal/` ou apêndice colapsado | `docs/design/capability-router-v2.md` | [x] |
 | W2-2 | Criar `docs/contrib/classifier.md`; mover detalhe de pesos/margem de `docs/pt/02-classificador.md` | `docs/pt/02-classificador.md`, novo arquivo | [x] |
 | W2-3 | Índice `docs/README.md` (user / contrib / design / brand) | `docs/README.md` | [x] |
 | W2-4 | Manter `router-generalization.md` em `docs/design/`; link no ROADMAP como “rigor de eval” | `ROADMAP.md` | [x] |
@@ -89,7 +89,7 @@
 | W3-1 | Helper `StateDir()` com precedência: `DOWNSHIFT_STATE_DIR` → `~/.downshift` → legacy `~/.harness-downshift` | novo `internal/paths` ou `internal/config` | [x] |
 | W3-2 | Refatorar paths: telemetry, catalog user override, session-models, loop-events, weights | `internal/telemetry/telemetry.go`, `internal/catalog/catalog.go`, `internal/core/session.go`, `internal/routingv2/training/events.go`, `internal/server/server.go`, `cmd/downshift/main.go` | [x] |
 | W3-3 | Comando `downshift doctor` (effective state dir, catalog source, binary version) | `cmd/downshift/` | [x] |
-| W3-4 | Documentar migração manual + env em `docs/config.md` | `docs/config.md` | [x] |
+| W3-4 | Documentar migração manual + env em `docs/guides/config.md` | `docs/guides/config.md` | [x] |
 | W3-5 | `install.sh`: mensagem pós-install com state dir | `install.sh` | [x] |
 | W3-6 | Testes: legacy dir only, new dir only, env override | `*_test.go` | [x] |
 | W3-7 | `scripts/smoke-test.sh` usar `DOWNSHIFT_STATE_DIR` | `scripts/smoke-test.sh` | [x] |
@@ -132,8 +132,8 @@
 | W5-2 | P2.4: README tabela multi-fonte + data | docs | [ ] |
 | W5-3 | P3.4: ≥50 eventos usage ligados a decisões | dogfood | [ ] |
 | W5-4 | P3.5: `stats` com Real provider cost não zero | dogfood | [ ] |
-| W5-5 | P3.7: preencher `docs/billing-comparison-template.md` uma semana | dogfood | [ ] |
-| W5-6 | P1.6: Cursor Pro/Ultra evidência em `docs/harness-matrix.md` | dogfood | [ ] |
+| W5-5 | P3.7: preencher `docs/guides/billing-comparison-template.md` uma semana | dogfood | [ ] |
+| W5-6 | P1.6: Cursor Pro/Ultra evidência em `docs/reference/harness-matrix.md` | dogfood | [ ] |
 | W5-7 | Habilitar `claude-code-subagent-stop` no settings maintainer + doc | dogfood | [ ] |
 | W5-8 | **Decisão:** se P2/P3 incompletos → README “beta” + BETA-EXIT link; se completos → remover beta | TL | [ ] |
 
@@ -164,13 +164,13 @@
 | ID | Task | Semana | Done |
 |----|------|--------|------|
 | W7-1 | Post “emission vs honored” + link evidence docs | +1 | [ ] |
-| W7-2 | Post outcome metrics: link [benchmark/REPORT.md](../../benchmark/REPORT.md); full suite só em downshift-labs | +1 | [ ] |
+| W7-2 | Post outcome metrics: link [benchmark/report.md](../../benchmark/report.md); full suite só em downshift-labs | +1 | [ ] |
 | W7-3 | Call for misroutes (template já existe) | +1 | [ ] |
 | W7-4 | `docs/ADOPTERS.md` (opt-in) | +2 | [ ] |
 | W7-5 | Reservar npm scope `@downshift` (sem SDK ainda) | +2 | [ ] |
 | W7-6 | Vídeo ou GIF `dsmon` no README | +3 | [ ] |
 | W7-7 | Revisar ROADMAP com feedback de issues | +4 | [ ] |
-| W7-8 | ~~Avaliar licença~~ → **Apache 2.0** (2026-10-06, ver docs/relicense.md) | +4 | [x] |
+| W7-8 | ~~Avaliar licença~~ → **Apache 2.0** (2026-10-06, ver docs/reference/relicense.md) | +4 | [x] |
 
 ---
 

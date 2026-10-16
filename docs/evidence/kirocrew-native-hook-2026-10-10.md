@@ -17,7 +17,7 @@ Hooks-page entry; its invocation counter could not prove enforcement.
 
 Updated only the `kirocrew` allowlist from the installed CLI's actual model
 listing: `claude-haiku-4.5`, `claude-sonnet-4.6`, `claude-opus-4.5`.
-Installed the [routing guia](../kirocrew-routing-guide.md) as a steering
+Installed the [routing guia](../guides/kirocrew-routing-guide.md) as a steering
 resource in the active Crew workspace. Kept the vendor application unchanged.
 
 ## Native observations

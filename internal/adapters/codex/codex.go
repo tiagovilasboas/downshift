@@ -230,7 +230,7 @@ func effortRank(v string) int {
 // a held change, up or down, leaves the spawn as requested. An unconfident,
 // unheld decision writes effort only alongside a model rewrite (a
 // deterministic lift such as the risk floor), and never lowers it: on its
-// own, raising effort would spend more on doubt (docs/session-models.md).
+// own, raising effort would spend more on doubt (docs/reference/session-models.md).
 func effortAllowed(d core.Decision, requested, value string, modelRewritten bool) bool {
 	if d.Confident && len(d.Corrections) == 0 {
 		return true

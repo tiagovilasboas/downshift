@@ -718,6 +718,6 @@ func ensureStatusLine(doc *jobj, sl setupStatusLine, binary string) (string, err
 	if isObj {
 		existing = hookCommand(cur)
 	}
-	return fmt.Sprintf("%s already set (%s): left untouched. To keep Downshift's quota line, pipe its input to `%s` before rendering (docs/quota.md).",
+	return fmt.Sprintf("%s already set (%s): left untouched. To keep Downshift's quota line, pipe its input to `%s` before rendering (docs/guides/quota.md).",
 		sl.Key, existing, quoteCommand(binary, sl.ChainArgs)), nil
 }

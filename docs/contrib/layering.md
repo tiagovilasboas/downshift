@@ -29,7 +29,7 @@ imports none of them. Optional layers plug into core through a hook variable
    `HarnessCapabilities` and read it through `core.AllHarnessCaps()`.
 5. If a harness cannot apply the result (no rewrite path, plan restriction),
    the shared layer still computes it; record the limit in
-   `docs/harness-matrix.md` with evidence and a date.
+   `docs/reference/harness-matrix.md` with evidence and a date.
 
 ## Before you open a change
 
@@ -50,4 +50,4 @@ imports none of them. Optional layers plug into core through a hook variable
 - **Model-override warning.** First version hard-coded one harness's variable
   in `doctor`. Corrected to `HarnessCapabilities.ModelOverrideEnv`.
 - **Audit skill.** First version assumed one harness's settings path. Corrected
-  to point at the per-harness sections of `docs/install.md`.
+  to point at the per-harness sections of `docs/guides/install.md`.

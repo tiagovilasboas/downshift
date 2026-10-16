@@ -12,7 +12,7 @@ given exit code 0. It preserves non-`ok` lines, search results, file lists,
 git logs, and any non-zero exit. `context benchmark` does not measure
 routing cost or accuracy. The compressor table is bytes from checked-in
 fixtures, not tokens and not dollars.
-Read [docs/context-optimization.md](../context-optimization.md) before
+Read [docs/design/context-optimization.md](../design/context-optimization.md) before
 changing context handling or attributing savings to model routing alone.
 
 ## Telemetry and cost reporting
@@ -23,7 +23,7 @@ Commands for agents and operators to audit savings, costs, and optimization:
 - `downshift stats`: display decision counts and estimated token savings (default: 30 days).
 - `downshift stats --days=N`: filter metrics window to the last N days.
 - `downshift stats --cost-per-unit=<USD>`: convert normalised unit savings to estimated USD using list prices.
-- `downshift stats --export`: generate sanitized, prompt-free JSON summary for audits and issues. See [docs/stats-export.md](../stats-export.md).
+- `downshift stats --export`: generate sanitized, prompt-free JSON summary for audits and issues. See [docs/reference/stats-export.md](../reference/stats-export.md).
 - `downshift serve`: start local web dashboard at `http://localhost:7474` (serves `web/`).
 - `dsmon`: standalone terminal dashboard widget (`cmd/dsmon/launch.sh`).
 
@@ -42,7 +42,7 @@ Commands for agents and operators to audit savings, costs, and optimization:
    creates it via `downshift models pull` or by copying `catalog.sample.json`.
 
 When the agent says "do not commit catalog.json", it means the **user override**
-(under the state dir; see `docs/config.md`), not the embedded default.
+(under the state dir; see `docs/guides/config.md`), not the embedded default.
 
 **Adding or updating a model:** edit `internal/catalog/catalog.json`. The
 `_section` comment objects (entries with only a `_section` key, no `id` or
@@ -71,7 +71,7 @@ Only a harness whose own hook sends the field is registered in `hookPorts` (`cmd
 Every other harness gets a port with nil functions, so the stage stays "unobserved" instead of
 borrowing another harness's payload. To add a harness: implement its `hookport.Port`, register it,
 then document its hook command. These observations feed the honest telemetry and real-cost pillars
-in `docs/beta-exit.md` (P1, P3), so keep the seam.
+in `docs/reference/beta-exit.md` (P1, P3), so keep the seam.
 
 ## Child end status and baseline source (E8, E7)
 

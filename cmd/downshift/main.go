@@ -517,7 +517,7 @@ func warnSessionUnknown(d core.Decision) {
 		return
 	}
 	fmt.Fprintf(os.Stderr, "downshift: no session allowlist for %s, so no model is rewritten. "+
-		"Add \"%s\": [<model ids>] to %s (see docs/session-models.md)\n",
+		"Add \"%s\": [<model ids>] to %s (see docs/reference/session-models.md)\n",
 		d.Harness, d.Harness, sessionModelsPathForDisplay())
 }
 
@@ -742,7 +742,7 @@ func runBenchmark(args []string) int {
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "The dataset is a JSON array of {\"prompt\":\"...\",\"label\":\"TRIVIAL|SIMPLE|MEDIUM|COMPLEX\"} objects")
 		fmt.Fprintln(os.Stderr, "(tier labels SMALL|MID|FRONTIER are accepted too).")
-		fmt.Fprintln(os.Stderr, "Maintainer benchmark files live in downshift-labs; public summary: benchmark/REPORT.md.")
+		fmt.Fprintln(os.Stderr, "Maintainer benchmark files live in downshift-labs; public summary: benchmark/report.md.")
 		fmt.Fprintln(os.Stderr, "Use --compare --candidate-weights=<file> to evaluate a candidate without activating it.")
 		fmt.Fprintln(os.Stderr, "")
 		fmt.Fprintln(os.Stderr, "  --compare                Run both Legacy and CapabilityRouter v2 side by side")
@@ -1313,7 +1313,7 @@ Maintainer (needs labelled data, which lives in downshift-labs)
   downshift train <file>         Train capability-router v2 on a labelled dataset
   downshift train --from-events  Train from engineer-reviewed local feedback
   downshift shadow-report        Compare opt-in candidate observations with explicit reviewed labels (JSON)
-  downshift probe <event>        As a hook: record a payload's field names (never prompts or paths) in probe.jsonl; see docs/probe.md
+  downshift probe <event>        As a hook: record a payload's field names (never prompts or paths) in probe.jsonl; see docs/guides/probe.md
   downshift models check         Query provider APIs and report new/untiered models
   downshift models pull          Write user catalog.json under the state dir
 

@@ -108,8 +108,8 @@ still prevents eliminating the handwritten list using this bridge in the actual
 installed host.
 
 The initial pass also found inconsistent native/cache precedence documentation.
-`docs/install.md` and the `LoadNative` comment have since been corrected to
-match `docs/quota.md` and `SessionList.WithUsageQuota`: the configured native
+`docs/guides/install.md` and the `LoadNative` comment have since been corrected to
+match `docs/guides/quota.md` and `SessionList.WithUsageQuota`: the configured native
 source precedes the canonical cache. This documentation finding is closed.
 
 ## Next executable sequence

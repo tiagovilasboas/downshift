@@ -7,7 +7,7 @@ Observed facts only; no classifier tuning in this pass.
 
 | Check | Status |
 |---|---|
-| [Harness matrix](../harness-matrix.md) Cursor Pro/Ultra usage-based | **Unconfirmed** (unchanged) |
+| [Harness matrix](../reference/harness-matrix.md) Cursor Pro/Ultra usage-based | **Unconfirmed** (unchanged) |
 | [cursor-rewrite-honored-2026-10-10.md](cursor-rewrite-honored-2026-10-10.md) | Unchanged: child executor model **not present** in the subagent transcript; `rewrite_honored` absent on the spawn row |
 
 P1.6 and GAP-CURSOR-HONOR remain open.
@@ -32,7 +32,7 @@ Directional dogfood only; not a billing control week.
 
 ## Issue #103 — Billing comparison template (P3.7)
 
-[docs/billing-comparison-template.md](../billing-comparison-template.md) still has empty placeholders (operator, dates, dashboard table at zero). No filled control-week report exists in-repo; the comparison run was **not** executed.
+[docs/guides/billing-comparison-template.md](../guides/billing-comparison-template.md) still has empty placeholders (operator, dates, dashboard table at zero). No filled control-week report exists in-repo; the comparison run was **not** executed.
 
 ## Issue #104 — External operator exports (P2.3)
 

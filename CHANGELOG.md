@@ -182,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Docs:** Slim [README.md](README.md) (hero + quickstart + index). Full install,
   per-harness hooks, dsmon, plan compatibility, and troubleshooting moved to
-  [docs/install.md](docs/install.md). [AGENTS.md](AGENTS.md) and [llms.txt](llms.txt)
+  [docs/install.md](docs/guides/install.md). [AGENTS.md](AGENTS.md) and [llms.txt](llms.txt)
   point agents at INSTALL. Added [examples/run-all.sh](examples/run-all.sh) adapter smoke.
 
 ## [0.1.0-beta.7] — 2026-10-06
@@ -190,22 +190,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Benchmarks & training ops:** Public repo no longer ships benchmark JSON,
   outcome suite, or `tools/minilm` / `tools/baseline`. Curated metrics:
-  [benchmark/REPORT.md](benchmark/REPORT.md). Maintainer eval and regression gates
+  [benchmark/REPORT.md](benchmark/report.md). Maintainer eval and regression gates
   run in private **downshift-labs** ([#57](https://github.com/tiagovilasboas/downshift/pull/57)).
 - **README / docs:** Messaging aligned with labs split (REPORT, not in-repo outcome
-  CI); [BETA-EXIT](docs/beta-exit.md) P4.5 note; `Makefile report` no longer
+  CI); [BETA-EXIT](docs/reference/beta-exit.md) P4.5 note; `Makefile report` no longer
   overwrites README ([#58](https://github.com/tiagovilasboas/downshift/pull/58) hygiene).
 - **Docs:** Maintainer shadow/engineering/v2 long form stubbed in OSS; full copies
-  in downshift-labs. [classifier-shadow.md](docs/classifier-shadow.md) shortened.
+  in downshift-labs. [classifier-shadow.md](docs/design/classifier-shadow.md) shortened.
 - **CI:** Public `ci` / `ci-full` run `go test` and adapter smoke only (sample
   fixture). Removed obsolete outcome-scope scripts.
 
 ### Added
-- **Docs:** [content-classification.md](docs/content-classification.md) (A/B/C/D
+- **Docs:** [content-classification.md](docs/reference/content-classification.md) (A/B/C/D
   inventory, code vs docs policy for competitive content).
 - **Docs:** [internal/doc-audit.md](docs/internal/doc-audit.md) (use vs inside vs
   MOAT flags for README, docs, benchmarks, examples).
-- **Docs:** [benchmark/EVAL-PRIVATE.md](benchmark/EVAL-PRIVATE.md) policy for
+- **Docs:** [benchmark/EVAL-PRIVATE.md](benchmark/eval-private.md) policy for
   public vs maintainer eval.
 - **Docs:** [docs/brand/social-preview.md](docs/brand/social-preview.md) (W1-5 upload steps).
 
@@ -213,13 +213,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Docs:** Maintainer backlog/checklist stubs; competitive sensitivity matrix in
-  [publishing-boundaries.md](docs/publishing-boundaries.md); public
-  [engineering-loop.md](docs/engineering-loop.md) trimmed (detail in
+  [publishing-boundaries.md](docs/reference/publishing-boundaries.md); public
+  [engineering-loop.md](docs/design/engineering-loop.md) trimmed (detail in
   `docs/internal/engineering-loop-maintainer.md`).
-- **Docs:** [publishing-boundaries.md](docs/publishing-boundaries.md) (public vs
+- **Docs:** [publishing-boundaries.md](docs/reference/publishing-boundaries.md) (public vs
   `docs/internal/` vs private). Launch waves and test coverage moved under
   `docs/internal/` with stubs at old paths.
-- **Docs (wave 2):** Public [capability-router-v2.md](docs/capability-router-v2.md) condensed;
+- **Docs (wave 2):** Public [capability-router-v2.md](docs/design/capability-router-v2.md) condensed;
   full design moved to [docs/internal/capability-router-v2-full.md](docs/internal/capability-router-v2-full.md).
   Contributor classifier guide: [docs/contrib/classifier.md](docs/contrib/classifier.md).
   ROADMAP and CONTRIBUTING aligned with Downshift branding.
@@ -227,9 +227,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Rename:** GitHub repository and Go module are `tiagovilasboas/downshift`
   (`go install github.com/tiagovilasboas/downshift/cmd/downshift@latest`). State
   directory: `~/.downshift` with legacy fallback `~/.harness-downshift`; `downshift doctor`.
-  See [docs/config.md](docs/config.md).
+  See [docs/config.md](docs/guides/config.md).
 - **Docs:** README repositioned as **Downshift** (deterministic model router hero),
-  plus [docs/when-to-use.md](docs/when-to-use.md) (vs LiteLLM, OpenRouter, direct SDK).
+  plus [docs/when-to-use.md](docs/guides/when-to-use.md) (vs LiteLLM, OpenRouter, direct SDK).
   `llms.txt` and `docs/pt/README.md` aligned.
 - **Licence:** project relicensed from BUSL 1.1 to **Apache License 2.0**
   (2026-10-06). Archived BUSL text: `LICENSE-BSL-1.1-ARCHIVE.md`. Contributor
@@ -336,7 +336,7 @@ Beta exit requires:
 4. **Benchmark generalization** (P4): New test set, blind, no tuning leakage.
 5. **Harness coverage** (P5): Support matrix up-to-date with no stale TBDs.
 
-See [docs/beta-exit.md](docs/beta-exit.md) for detailed tracking.
+See [docs/beta-exit.md](docs/reference/beta-exit.md) for detailed tracking.
 
 ---
 
