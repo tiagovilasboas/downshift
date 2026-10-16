@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Claude Code: on a baseline guessed from settings (`BASELINE_FROM_SETTINGS`), a downshift is written only to the small tier; a mid-tier target could be a hidden upshift.
 - Telemetry: a rewrite refuted by a linked `resolved` record is not applied, saves nothing and is never inferred honored. Usage priced on an inferred baseline carries `baseline_source: inferred`, and `stats` says how many events rest on it.
 - `benchmark` prints confident coverage, accuracy when confident and abstentions apart from errors. Accuracy and gates are unchanged.
+- Upshift ranks the session by catalog tier and never writes a model weaker than the current one; an unordered session list once wrote haiku over sonnet for a risky COMPLEX task. Opt-in score routing never picks below the decision tier.
+- Risk patterns narrowed (bare race/atomic, `cobra` CLI, course certificates, `base de produtos`) and widened (SQL truncate/`DELETE FROM`, PT table drops, key rotation, thread-safe); `sync.WaitGroup` now matches. The full-prompt risk scan runs once per prompt.
+- Cursor: with the parent's `model_id` as baseline, a downshift is written only to the small tier.
+- Codex: an unconfident decision changes effort only alongside a model rewrite. Antigravity logs a rewrite only for the child it rewrote and records the written model. KiroCrew's respawn message names the target's tier.
+- Telemetry: a refuted rewrite is priced on the model that ran and adds no saving, model-mix entry or frontier-on-doubt count in stats, statusline or session tree. Export adds `real_cost_inferred_baseline`; the session tree and child-end line mark inferred baselines. A spawn with no observed and no requested model is unpriced in both report groups.
+- Post hooks: the context-sensor lock gives up after 500 ms, and SubagentStop no longer blocks on a FIFO transcript path.
 
 ### Changed
 
