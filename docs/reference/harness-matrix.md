@@ -67,7 +67,9 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   tier: a child can run on Composer or a fast variant, so a mid target could be
   an upshift. Without `model_id`, `inherit` logs as `unknown`.
 - **Upshift ranking, all harnesses.** An upshift ranks the session ids by catalog tier, not list position, and never goes below the
-  current model's tier. The rule and its fallback are in [session-models.md](session-models.md).
+  current model's tier. A confident upshift lands on the least model at the needed tier; a guessed baseline (Claude Code settings, Cursor
+  parent `model_id`) or `explicit_upshift` keeps the strongest tier. Codex, Antigravity and KiroCrew never guess a baseline, so they always
+  take the needed-tier pick. The rule and its fallback are in [session-models.md](session-models.md).
 - **Cost linkage.** Every decision records `tool_use_hash`. PostToolUse
   repeats the id, so `resolved`, `child_ended` and, through the agent id,
   `usage` attach to the exact decision even with parallel spawns, including
