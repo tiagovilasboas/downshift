@@ -88,7 +88,8 @@ func cursorSpawn(t *testing.T, usage *quota.Snapshot) (string, []telemetry.Event
 	var rc int
 	captureStdout(func() {
 		stderr = captureStderr(func() {
-			rc = runHookAdapter(
+			runHookAdapter(
+				"cursor",
 				bytes.NewReader(stdin),
 				func(b []byte) (cursor.Event, error) {
 					var e cursor.Event

@@ -29,7 +29,8 @@ func TestAntigravity_HeldLastChildNotLoggedAsRewrite(t *testing.T) {
 		}}},
 	})
 	stdout := captureStdout(func() {
-		runHookAdapter(bytes.NewReader(stdin),
+		runHookAdapter(
+			"antigravity", bytes.NewReader(stdin),
 			func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) },
 			func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, cmdCat) },
 			printAllow)

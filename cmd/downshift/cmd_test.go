@@ -330,6 +330,7 @@ func TestRunHookAdapter_ClaudeCode_Downshift(t *testing.T) {
 
 	out := captureStdout(func() {
 		rc := runHookAdapter(
+			"claude-code",
 			bytes.NewReader(event),
 			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
@@ -354,6 +355,7 @@ func TestRunHookAdapter_Cursor_Downshift(t *testing.T) {
 
 	out := captureStdout(func() {
 		runHookAdapter(
+			"cursor",
 			bytes.NewReader(event),
 			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },
@@ -377,6 +379,7 @@ func TestRunHookAdapter_Codex_Downshift(t *testing.T) {
 
 	out := captureStdout(func() {
 		runHookAdapter(
+			"codex",
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
@@ -407,6 +410,7 @@ func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
 	event := []byte(`{"hook_event_name":"PreToolUse","session_id":"codex-session-privacy-test","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"` + privatePrompt + `"}}`)
 	captureStdout(func() {
 		runHookAdapter(
+			"codex",
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
@@ -462,6 +466,7 @@ func TestHookTelemetryEndToEnd(t *testing.T) {
 	event := []byte(`{"hook_event_name":"PreToolUse","correlation_id":"` + correlationID + `","session_id":"session-e2e","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"` + privatePrompt + `","model":"` + frontierID + `","reasoning_effort":"high"}}`)
 	captureStdout(func() {
 		if rc := runHookAdapter(
+			"codex",
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
@@ -506,6 +511,7 @@ func TestHookTelemetryDoesNotBackfillRequestedModel(t *testing.T) {
 	event := []byte(`{"hook_event_name":"PreToolUse","tool_name":"spawn_agent","model":"untrusted-model","tool_input":{"message":"review a small change"}}`)
 	captureStdout(func() {
 		runHookAdapter(
+			"codex",
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
@@ -535,6 +541,7 @@ func TestRunHookAdapter_InputDeadlineFailsOpenAndRecordsNoPayload(t *testing.T) 
 	release := make(chan struct{})
 	out := captureStdout(func() {
 		if rc := runHookAdapter(
+			"claude-code",
 			delayedReader{release: release},
 			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
@@ -559,6 +566,7 @@ func TestRunHookAdapter_InputDeadlineFailsOpenAndRecordsNoPayload(t *testing.T) 
 func TestRunHookAdapter_MalformedJSON_FailOpen(t *testing.T) {
 	out := captureStdout(func() {
 		rc := runHookAdapter(
+			"claude-code",
 			bytes.NewReader([]byte(`{not valid json`)),
 			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
@@ -577,6 +585,7 @@ func TestRunHookAdapter_OversizedPayload_FailOpen(t *testing.T) {
 	payload := bytes.Repeat([]byte("x"), (1<<20)+1)
 	out := captureStdout(func() {
 		rc := runHookAdapter(
+			"claude-code",
 			bytes.NewReader(payload),
 			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
@@ -642,6 +651,7 @@ func TestEngineeringLoopEndToEnd(t *testing.T) {
 	event := []byte(`{"hook_event_name":"PreToolUse","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"rename the userId variable"}}`)
 	captureStdout(func() {
 		if rc := runHookAdapter(
+			"codex",
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },

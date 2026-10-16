@@ -44,6 +44,7 @@ func spawn(t *testing.T, small, frontier string) (preOut string) {
 	})
 	preOut = captureStdout(func() {
 		runHookAdapter(
+			"claude-code",
 			bytes.NewReader(pre),
 			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },

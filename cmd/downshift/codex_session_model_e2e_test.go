@@ -45,6 +45,7 @@ func TestHookE2E_CodexInheritedSessionModel(t *testing.T) {
 		})
 		captureStdout(func() {
 			runHookAdapter(
+				"codex",
 				bytes.NewReader(stdin),
 				func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 				func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },

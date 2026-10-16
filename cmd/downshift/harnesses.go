@@ -39,6 +39,7 @@ var harnessRegistry = map[string]harnessEntry{
 	"antigravity": {
 		Hook: func(in io.Reader, catalog core.Resolver) int {
 			return runHookAdapter(
+				"antigravity",
 				in,
 				func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) },
 				func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, catalog) },
@@ -52,6 +53,7 @@ var harnessRegistry = map[string]harnessEntry{
 	"claude-code": {
 		Hook: func(in io.Reader, catalog core.Resolver) int {
 			return runHookAdapter(
+				"claude-code",
 				in,
 				func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 				func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, catalog) },
@@ -66,6 +68,7 @@ var harnessRegistry = map[string]harnessEntry{
 	"cursor": {
 		Hook: func(in io.Reader, catalog core.Resolver) int {
 			return runHookAdapter(
+				"cursor",
 				in,
 				func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 				func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, catalog) },
@@ -80,6 +83,7 @@ var harnessRegistry = map[string]harnessEntry{
 	"codex": {
 		Hook: func(in io.Reader, catalog core.Resolver) int {
 			return runHookAdapter(
+				"codex",
 				in,
 				func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 				func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, catalog) },

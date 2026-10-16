@@ -28,6 +28,7 @@ func runCursorSpawn(t *testing.T, eventLog string) (updated map[string]any, even
 		frontierID + `","tool_input":{"task":"rename the userId variable","model":"` + frontierID + `"}}`)
 	out := captureStdout(func() {
 		rc := runHookAdapter(
+			"cursor",
 			bytes.NewReader(stdin),
 			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },

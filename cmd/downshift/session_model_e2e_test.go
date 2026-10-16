@@ -48,6 +48,7 @@ func TestHookE2E_ClaudeCodeInheritedSessionModel(t *testing.T) {
 		})
 		captureStdout(func() {
 			runHookAdapter(
+				"claude-code",
 				bytes.NewReader(stdin),
 				func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 				func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },

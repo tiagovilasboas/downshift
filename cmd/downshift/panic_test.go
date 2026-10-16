@@ -23,7 +23,8 @@ func TestRunHookAdapter_PanicFailsOpen(t *testing.T) {
 	var rc int
 	out := captureStdout(func() {
 		captureStderr(func() {
-			rc = runHookAdapter(
+			runHookAdapter(
+				"claude-code",
 				strings.NewReader(`{"tool_name":"Task","tool_input":{"prompt":"x"}}`),
 				func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 				func(claudecode.Event) (any, string, core.Decision) { panic("boom") },
@@ -50,7 +51,8 @@ func TestRunHookAdapter_PanicAfterResponseDoesNotRespondTwice(t *testing.T) {
 	var rc int
 	out := captureStdout(func() {
 		captureStderr(func() {
-			rc = runHookAdapter(
+			runHookAdapter(
+				"claude-code",
 				strings.NewReader(`{"tool_name":"Task","tool_input":{"prompt":"x"}}`),
 				func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 				func(claudecode.Event) (any, string, core.Decision) {

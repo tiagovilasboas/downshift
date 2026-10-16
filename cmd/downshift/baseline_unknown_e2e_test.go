@@ -33,6 +33,7 @@ func TestHookE2E_BaselineUnknownPerHarness(t *testing.T) {
 
 	runCursor := func(stdin []byte) {
 		runHookAdapter(
+			"cursor",
 			bytes.NewReader(stdin),
 			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },
@@ -41,6 +42,7 @@ func TestHookE2E_BaselineUnknownPerHarness(t *testing.T) {
 	}
 	runAntigravity := func(stdin []byte) {
 		runHookAdapter(
+			"antigravity",
 			bytes.NewReader(stdin),
 			func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) },
 			func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, cmdCat) },
@@ -49,6 +51,7 @@ func TestHookE2E_BaselineUnknownPerHarness(t *testing.T) {
 	}
 	runCodex := func(stdin []byte) {
 		runHookAdapter(
+			"codex",
 			bytes.NewReader(stdin),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },

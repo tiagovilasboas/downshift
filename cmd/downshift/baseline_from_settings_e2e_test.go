@@ -25,6 +25,7 @@ func runClaudeCodeHook(t *testing.T, eventLog string, payload map[string]any) ma
 	stdin, _ := json.Marshal(payload)
 	captureStdout(func() {
 		runHookAdapter(
+			"claude-code",
 			bytes.NewReader(stdin),
 			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
