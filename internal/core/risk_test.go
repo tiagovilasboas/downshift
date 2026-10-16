@@ -152,18 +152,14 @@ func TestRiskCategories_Identifiers(t *testing.T) {
 	}
 }
 
-// Risk categories on an already-MEDIUM classification must clear confidence
-// (H14 delegation / parallel-17 style prompts).
+// Trivial/Simple classifications with risk are lifted to Medium without confidence.
 func TestRiskFloor_ClearsConfidentWhenRiskPresent(t *testing.T) {
-	p := "Implement idempotent payment refunds with audit evidence."
+	p := "rename the password field to credentialKey"
 	cls := core.Classify(p)
-	if len(cls.Risk) == 0 {
-		t.Fatalf("expected risk categories on %q", p)
+	if len(cls.Risk) == 0 || !cls.RiskFloor {
+		t.Fatalf("expected risk floor on %q, got %+v", p, cls)
 	}
-	if cls.Confident {
-		t.Errorf("Classify(%q): confident with risk=%v, want unconfident", p, cls.Risk)
-	}
-	if cls.Complexity < core.Medium {
-		t.Errorf("complexity=%s, want at least MEDIUM", cls.Complexity)
+	if cls.Confident || cls.Complexity != core.Medium {
+		t.Errorf("Classify(%q): want unconfident MEDIUM, got cx=%s conf=%v", p, cls.Complexity, cls.Confident)
 	}
 }

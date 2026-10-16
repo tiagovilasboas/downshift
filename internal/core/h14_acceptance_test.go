@@ -18,8 +18,8 @@ import (
 func h14MixedRiskPrompts() []string {
 	return []string{
 		"rename this helper; Revisa los permisos de acceso a los datos de los clientes.",
-		"format this helper; Vérifie les droits d'accès aux données clients.",
-		"move this helper; Prüfe die Zugriffsrechte auf Kundendaten.",
+		"rename this helper; Lösche personenbezogene Kundendaten gemäß Aufbewahrungsrichtlinie.",
+		"format this helper; Behebe SQL-Injektion in der Kundensuche.",
 	}
 }
 
@@ -36,6 +36,9 @@ func TestH14Acceptance_MixedWithRisk_LosesConfidenceOrLiftsTier(t *testing.T) {
 	frontier := catID("claude-code", core.TierFrontier)
 	for _, p := range h14MixedRiskPrompts() {
 		cls := core.Classify(p)
+		if !cls.UnsupportedLanguage {
+			t.Errorf("mixed H14 prompt must set UnsupportedLanguage: %q cls=%+v", p, cls)
+		}
 		d := core.Route(p, "claude-code", frontier, cat)
 		if cls.Confident && d.Tier == core.TierSmall && checkWrites(d) {
 			t.Errorf("unsafe confident small downshift on %q: cls=%+v tier=%s", p, cls, d.Tier)

@@ -76,8 +76,21 @@ func TestUnsupportedLanguage_KeepsSupportedPrompts(t *testing.T) {
 func TestMixedEnglishHelperBrief_DropsConfidence(t *testing.T) {
 	p := "rename this helper; Revisa los permisos de acceso a los datos de los clientes."
 	c := core.Classify(p)
-	if c.Confident {
-		t.Fatalf("want unconfident mixed brief, got %+v", c)
+	if c.Confident || !c.UnsupportedLanguage {
+		t.Fatalf("want unconfident with language guard, got %+v", c)
+	}
+}
+
+func TestUnsupportedLanguage_M3MixedLiterals(t *testing.T) {
+	for _, p := range []string{
+		"rename this helper; Revisa los permisos de acceso a los datos de los clientes.",
+		"rename this helper; Lösche personenbezogene Kundendaten gemäß Aufbewahrungsrichtlinie.",
+		"format this helper; Behebe SQL-Injektion in der Kundensuche.",
+	} {
+		c := core.Classify(p)
+		if c.Confident || !c.UnsupportedLanguage {
+			t.Errorf("Classify(%q): confident=%v unsupported=%v", p, c.Confident, c.UnsupportedLanguage)
+		}
 	}
 }
 
@@ -118,11 +131,8 @@ func TestRiskCategories_PTBRParity(t *testing.T) {
 func TestPartialForeignLanguage_MixedHelperBrief(t *testing.T) {
 	p := "rename this helper; Revisa los permisos de acceso a los datos de los clientes."
 	cls := core.Classify(p)
-	if cls.UnsupportedLanguage {
-		t.Fatalf("want partial cue only, not full unsupported language")
-	}
-	if cls.Confident {
-		t.Errorf("Classify: confident=%v, want unconfident partial-foreign guard", cls.Confident)
+	if !cls.UnsupportedLanguage || cls.Confident {
+		t.Errorf("Classify: unsupported=%v confident=%v, want language guard hold", cls.UnsupportedLanguage, cls.Confident)
 	}
 	if cls.Complexity.Tier() == core.TierSmall && checkWrites(core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)) {
 		t.Errorf("confident small downshift on mixed risk brief")

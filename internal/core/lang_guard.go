@@ -45,7 +45,7 @@ const foreignLetters = "ñ¿¡üöäßèùëïîûœìò"
 const minNonLatinLetters = 4
 
 // mixedEnglishHelperBrief matches the synthetic M3 mixed brief stub (mixed-01…).
-var mixedEnglishHelperBrief = regexp.MustCompile(`(?i)^(rename|format|move|add)\s+this\s+helper;\s`)
+var mixedEnglishHelperBrief = regexp.MustCompile(`(?i)^(rename|format|move|add|fix)\s+this\s+helper\s*[;\n]\s*`)
 
 // partialForeignAmbiguous lists function words that also appear in English
 // prose (locale codes, Python del, etc.). They still count toward
@@ -54,23 +54,17 @@ var partialForeignAmbiguous = map[string]bool{
 	"en": true, "del": true, "y": true,
 }
 
-// languageGuardState classifies foreign-language coverage in one pass.
-func languageGuardState(prompt string) (unsupported, partialForeign bool) {
-	nonLatin := 0
-	for _, r := range prompt {
+func foreignLanguageCues(text string) (hits, partialCues, nonLatin int) {
+	seen := map[string]bool{}
+	split := func(r rune) bool { return !unicode.IsLetter(r) }
+	for _, r := range text {
 		if unicode.IsLetter(r) && r >= 0x80 && !unicode.Is(unicode.Latin, r) {
 			nonLatin++
 		}
 	}
-	hits := 0
-	partialCues := 0
-	proseLetter := false
-	seen := map[string]bool{}
-	split := func(r rune) bool { return !unicode.IsLetter(r) }
-	for _, w := range strings.FieldsFunc(prompt, split) {
+	for _, w := range strings.FieldsFunc(text, split) {
 		wl := strings.ToLower(w)
-		if !proseLetter && !identifierToken(w) && strings.ContainsAny(wl, foreignLetters) {
-			proseLetter = true
+		if !identifierToken(w) && strings.ContainsAny(wl, foreignLetters) {
 			hits++
 			partialCues++
 		}
@@ -82,7 +76,35 @@ func languageGuardState(prompt string) (unsupported, partialForeign bool) {
 			}
 		}
 	}
+	return hits, partialCues, nonLatin
+}
+
+// mixedTrivialForeignUnsupported flags EN trivial helper stubs with a foreign
+// risk tail (M3 mixed-01/11/27): one foreign cue in the tail is enough.
+func mixedTrivialForeignUnsupported(prompt string) bool {
+	if !mixedEnglishHelperBrief.MatchString(prompt) {
+		return false
+	}
+	sep := strings.IndexAny(prompt, ";\n")
+	if sep < 0 {
+		return false
+	}
+	prefix := strings.TrimSpace(prompt[:sep])
+	tail := strings.TrimSpace(prompt[sep+1:])
+	if tail == "" || len(strings.Fields(prefix)) > 6 {
+		return false
+	}
+	hits, _, nonLatin := foreignLanguageCues(tail)
+	return hits >= 1 || nonLatin >= 1
+}
+
+// languageGuardState classifies foreign-language coverage in one pass.
+func languageGuardState(prompt string) (unsupported, partialForeign bool) {
+	hits, partialCues, nonLatin := foreignLanguageCues(prompt)
 	if nonLatin >= minNonLatinLetters || hits >= 2 {
+		return true, false
+	}
+	if mixedTrivialForeignUnsupported(prompt) {
 		return true, false
 	}
 	return false, partialCues == 1
