@@ -129,7 +129,10 @@ func catalogSessionTarget(d Decision, res Resolver, session SessionList) (string
 		if d.CurrentModel.ID != "" {
 			floor = d.CurrentModel.Tier
 		}
-		return strongestSessionModel(d.Harness, session, res, d.Tier, floor)
+		if d.BaselineGuessed || ExplicitUpshiftEnabled() {
+			return strongestSessionModel(d.Harness, session, res, d.Tier, floor)
+		}
+		return upshiftSessionModel(d.Harness, session, res, d.Tier, floor)
 	case VerdictDownshift, VerdictUnknown:
 		return leastSessionModelAtOrAbove(d.Harness, session, res, d.Tier)
 	default:
@@ -247,6 +250,25 @@ func catalogTiers(harness string, ids []string, res Resolver) ([]Tier, bool) {
 		tiers[i] = m.Tier
 	}
 	return tiers, true
+}
+
+// upshiftSessionModel picks the least tier at or above both the needed tier
+// and the current model's tier (later session position first within a tier),
+// so an upshift lands where a downshift of the same task would. When no
+// quota-allowed id reaches the needed tier, it defers to strongestSessionModel.
+func upshiftSessionModel(harness string, session SessionList, res Resolver, minTier, floor Tier) (string, Model, bool, bool) {
+	ids := selectableSessionIDs(harness, session, res, ExplicitUpshiftEnabled())
+	if tiers, ok := catalogTiers(harness, ids, res); ok && len(ids) > 0 {
+		need := max(minTier, floor)
+		for tier := need; tier <= TierFrontier; tier++ {
+			for i := len(ids) - 1; i >= 0; i-- {
+				if tiers[i] == tier && session.quotaAllows(harness, ids[i]) {
+					return ids[i], modelForSessionID(harness, ids[i], res), true, false
+				}
+			}
+		}
+	}
+	return strongestSessionModel(harness, session, res, minTier, floor)
 }
 
 // strongestSessionModel picks the most capable id for an upshift. When every

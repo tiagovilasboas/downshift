@@ -190,6 +190,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 	decision.RequestedID = currentModel
 	decision.BaselineFromSettings = fromSettings
+	decision.BaselineGuessed = fromSettings
 
 	plan := decision.PlanSession(core.ClaudeCodeCaps, res, session, currentModel)
 	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !core.CanWriteSessionID(harnessID, plan.Model.ID, plan.Session, res) {

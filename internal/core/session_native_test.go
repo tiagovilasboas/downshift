@@ -169,10 +169,11 @@ func TestNativeSelectionUsesRealTierAndQuotaNotProviderOrder(t *testing.T) {
 		t.Fatalf("quota converted downshift into upgrade: %+v", plan)
 	}
 	s.IDs = []string{"strong", "unknown", "cheap", "middle"}
+	d.CurrentModel = r.models["cheap"]
 	d.Tier = TierMid
 	d.Verdict = VerdictUpshift
-	if plan := d.PlanForSession(CursorCaps, r, s); !plan.RewriteModel || plan.Model.ID != "strong" {
-		t.Fatalf("upshift did not choose highest actual tier: %+v", plan)
+	if plan := d.PlanForSession(CursorCaps, r, s); !plan.RewriteModel || plan.Model.ID != "middle" {
+		t.Fatalf("upshift did not choose least model at needed mid tier: %+v", plan)
 	}
 	r.explicit = map[string]bool{"strong": true}
 	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
