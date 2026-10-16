@@ -35,6 +35,14 @@ the tier into a model id are in [complexity-weights.md](../reference/complexity-
    failures/timeouts do not escalate complexity. `DOWNSHIFT_GRAPHIFY=0` disables.
 5. **Semantic boost (MiniLM)** — `internal/semantic`: centroid distance can **raise**
    complexity when regex is hesitant; it **never lowers** a class. It is ignored for no-signal prompts and cannot create COMPLEX without regex evidence. A lift is recorded as `SEMANTIC_BOOST`. `DOWNSHIFT_MINILM=0` disables.
+6. **Language guard** — `lang_guard.go`: unsupported or mixed-helper-brief foreign cues set
+   `UnsupportedLanguage` and clear confidence (M3 mixed bucket).
+7. **Risk floor and abstention** — `risk.go`: Trivial/Simple + risk → Medium with `RiskFloor`.
+   Confident Medium/Simple + risk on bounded delegation briefs or narrow high-stakes patterns
+   → `RiskAbstain` (confidence cleared, tier unchanged); counts as `deterministicLift` for R7/R9.
+
+**E5 shadow (not production routing):** `DOWNSHIFT_E5_SHADOW=1` records multilingual embedding
+observations on `Route()`; see `internal/semantic/e5shadow` and initiative doc §14.
 
 ---
 

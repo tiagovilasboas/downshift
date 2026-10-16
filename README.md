@@ -128,21 +128,40 @@ Billing and token usage happen at the subagent tier, not the session.
 **The routing loop:**
 
 1. **Intercept.** The harness fires a `PreToolUse` hook when a subagent is about to start. Downshift reads the task text in memory only; prompts are never stored.
-2. **Classify.** Deterministic signals (`internal/core`) + optional local MiniLM semantic scoring map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX (English and Portuguese vocabulary). The semantic score only raises, needs a regex signal behind it, and cannot create COMPLEX on its own. Weights and the tier map are in [docs/reference/complexity-weights.md](docs/reference/complexity-weights.md).
-3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/reference/session-models.md)). Doubt never spends money: an unconfident upshift, or an unconfident frontier pick with no known current model, is held. Only deterministic rules (risk floor, graph escalation, a tier floor) may move a task up.
+2. **Classify.** Deterministic signals (`internal/core`) + optional local MiniLM semantic scoring map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX (English and Portuguese vocabulary). A language guard and risk abstention clear confidence on known multilingual failure modes without an LLM in the loop. The semantic score only raises, needs a regex signal behind it, and cannot create COMPLEX on its own. Weights and the tier map are in [docs/reference/complexity-weights.md](docs/reference/complexity-weights.md).
+3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/reference/session-models.md)). Doubt never spends money: an unconfident upshift, or an unconfident frontier pick with no known current model, is held. Only deterministic rules (risk floor, risk abstention, graph escalation, a tier floor) may move a task up or hold a rewrite.
 4. **Remember, in shadow.** If `adapt-memory.json` has a reviewed hit or miss for that class and feature, Downshift records the tier it would use. The spawn still uses the classifier tier.
 5. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
 
 Internals: [docs/design/architecture.md](docs/design/architecture.md). The full runtime routing diagram is [here](docs/brand/downshift-routing-runtime-light.svg) ([dark](docs/brand/downshift-routing-runtime-dark.svg)).
+
+### BDI agentic view (beliefs → intentions)
+
+Downshift is not an LLM planner: it is a **deterministic BDI-style router** on the subagent hook. Each spawn is one cycle—perceive the payload, update beliefs, pursue fixed desires, commit an intention only if guardrails pass, act on the wire, then learn from honor/usage without storing task text.
+
+| BDI | Downshift | Packages / artifacts |
+|-----|-----------|----------------------|
+| **Perception** | Adapter reads PreToolUse JSON (task, model, session facts) | `internal/adapters/*`, `runHookAdapter` |
+| **Beliefs** | Complexity, confidence, risk, language guard, catalog tier, session allowlist, quota | `internal/core`, `internal/catalog`, `session-models.json` |
+| **Desires** | Match tier to task; save cost; never confident upshift on doubt; never unsafe downshift on risk | `EscalationIntent`, R5–R9 in `selfcheck.go` |
+| **Deliberation** | `Route` + `Check` (no LLM, no network on hot path) | `internal/core/policy.go` |
+| **Intention** | `Decision` + `SafeVerdict` + `PlanForSession` → `RewritePlan` | `Decision`, `RewritePlan` |
+| **Action** | `updatedInput.model` / Codex effort / Kiro allow-block | Adapter encode |
+| **Feedback** | Honor, usage, child status → telemetry | `internal/hookport`, `internal/telemetry` |
+
+Shadow observers (E5 multilingual embed, adapt memory, routing v2) update **candidate beliefs** only; they do not change intentions until an owner enables a flag.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/bdi-agentic-dark.svg">
+  <img src="docs/img/bdi-agentic-light.svg" alt="BDI agentic diagram: perception through adapters, beliefs in core, desires as tier and safety goals, deterministic deliberation, guardrail-checked intentions, harness action, and telemetry feedback. Parent LLM sits outside the loop." width="920">
+</picture>
 
 **Languages.** The rules cover English and Portuguese, including Portuguese risk terms.
 When the language guard detects an unsupported language, including mixed-language
 instructions, it drops confidence so uncertain model changes are held. Existing
 deterministic safety floors can still raise an undersized model. With no
 matching signal, routing also abstains. Detection is heuristic; it does not guarantee
-recognition of every foreign-language prompt. Multilingual embeddings and an offline
-LLM reference remain evaluation candidates, with no additional language support enabled.
-See [language coverage and limits](docs/reference/complexity-weights.md#language-coverage).
+recognition of every foreign-language prompt. Optional **E5 multilingual shadow** (`DOWNSHIFT_E5_SHADOW=1`) records embedding observations only; it does not change tier. An offline LLM reference remains an evaluation candidate. See [language coverage and limits](docs/reference/complexity-weights.md#language-coverage).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/architecture-dark.svg">

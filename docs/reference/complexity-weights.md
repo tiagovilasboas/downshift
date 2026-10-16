@@ -58,11 +58,20 @@ the risk floor is shared by every harness.
 The language guard (`internal/core/lang_guard.go`) detects unsupported-language
 indications before a confident routing change can be applied. It looks for distinct
 Spanish, French or German function words, selected foreign Latin letters, or at
-least four non-Latin letters. Mixed-language instructions can trigger the same
-guard even when an English verb matches a cheap-task signal. Detection drops
-confidence without changing the scored class; uncertain changes preserve the
-requested model. Existing deterministic safety floors can still raise an
-undersized model. A prompt with no matching signal also abstains.
+least four non-Latin letters. **Mixed English helper briefs** (`fix|rename|format|move|add this helper;` plus foreign prose) set
+`UnsupportedLanguage` so a confident trivial downshift cannot slip through (M3 / H14).
+Other mixed-language instructions can trigger the same guard even when an English verb
+matches a cheap-task signal. Detection drops confidence without changing the scored
+class; uncertain changes preserve the requested model. Existing deterministic safety
+floors can still raise an undersized model. A prompt with no matching signal also abstains.
+
+**Risk abstention (H14):** when risk categories match and the class stays Medium (or Simple),
+`applyRiskFloor` may set `RiskAbstain` and clear confidence without changing complexity:
+long **bounded delegation briefs** (scope + verify cues such as “stay within these modules”
+and “run the relevant tests”), and narrow **high-stakes** phrases from the M3 parallel bucket
+(for example idempotent payment/refund wording or “Revise as permissões…”). `RiskAbstain`
+counts as a deterministic lift for guardrails R7/R9. Generic short “implement … auth” tasks
+stay confident Medium when the pattern does not match.
 
 This is a conservative heuristic, not a complete language detector. Short foreign
 phrases may escape detection, while identifiers or quoted text may trigger it.
@@ -70,10 +79,10 @@ Scoring inspects a rune-aligned prefix of at most 32 KB; risk and language
 checks inspect the full input. Do not interpret English and Portuguese
 coverage as calibrated accuracy or support for all multilingual prompts.
 
-Multilingual embeddings and a Sonnet reference are offline evaluation candidates.
-They do not extend shipped language coverage or put an LLM in the routing loop.
-Any adoption must satisfy the held-out safety and hook-latency gates in
-[the multilingual tasks](../internal/tasks/2026-10-16-multilang/README.md).
+Multilingual **E5 shadow** (`DOWNSHIFT_E5_SHADOW=1`, `internal/semantic/e5shadow`) records
+observations only; it does not change tier. MiniLM fuse and a Sonnet reference remain offline
+evaluation candidates. They do not extend shipped language coverage or put an LLM in the routing loop.
+Initiative contract: [multilingual semantic intelligence](../internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md).
 
 ## Weights
 

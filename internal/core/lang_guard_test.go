@@ -74,7 +74,7 @@ func TestUnsupportedLanguage_KeepsSupportedPrompts(t *testing.T) {
 // PT-BR risk vocabulary that had no row: permission, privilege, security,
 // injection, a person's CPF and Portuguese instruction-override phrases.
 func TestMixedEnglishHelperBrief_DropsConfidence(t *testing.T) {
-	p := "rename this helper; Revisa los permisos de acceso a los datos de los clientes."
+	p := h14MixedRiskPrompts()[0]
 	c := core.Classify(p)
 	if c.Confident || !c.UnsupportedLanguage {
 		t.Fatalf("want unconfident with language guard, got %+v", c)
@@ -82,11 +82,7 @@ func TestMixedEnglishHelperBrief_DropsConfidence(t *testing.T) {
 }
 
 func TestUnsupportedLanguage_M3MixedLiterals(t *testing.T) {
-	for _, p := range []string{
-		"rename this helper; Revisa los permisos de acceso a los datos de los clientes.",
-		"rename this helper; Lösche personenbezogene Kundendaten gemäß Aufbewahrungsrichtlinie.",
-		"format this helper; Behebe SQL-Injektion in der Kundensuche.",
-	} {
+	for _, p := range h14MixedRiskPrompts() {
 		c := core.Classify(p)
 		if c.Confident || !c.UnsupportedLanguage {
 			t.Errorf("Classify(%q): confident=%v unsupported=%v", p, c.Confident, c.UnsupportedLanguage)
@@ -129,7 +125,7 @@ func TestRiskCategories_PTBRParity(t *testing.T) {
 // One foreign function word in an otherwise English trivial brief (M3 mixed-01)
 // must not stay confident: risk vocabulary in the foreign tail is invisible.
 func TestPartialForeignLanguage_MixedHelperBrief(t *testing.T) {
-	p := "rename this helper; Revisa los permisos de acceso a los datos de los clientes."
+	p := h14MixedRiskPrompts()[0]
 	cls := core.Classify(p)
 	if !cls.UnsupportedLanguage || cls.Confident {
 		t.Errorf("Classify: unsupported=%v confident=%v, want language guard hold", cls.UnsupportedLanguage, cls.Confident)

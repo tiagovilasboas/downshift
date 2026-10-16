@@ -30,7 +30,9 @@ Adapter (per harness: field names, session models, effort)
     │  task text + current model + capabilities
     ▼
 core.Plan / Route
-    │  classify → escalation intent → policy → catalog Resolver
+    │  classify (regex, bounded brief, lang guard) → risk floor / RiskAbstain
+    │  optional semantic fuse · optional E5 shadow (observation only)
+    │  escalation intent → policy → catalog Resolver → Check (R1–R9)
     │  shadow: internal/adapt records a would-be tier; it does not change the route
     ▼
 Adapter encodes response (updatedInput / updated_input)
@@ -43,6 +45,10 @@ Optional PostToolUse / SubagentStop → telemetry (usage, honor)
 ```
 
 ![Architecture](../img/architecture.svg)
+
+BDI agentic loop (beliefs / desires / intentions on the hook path):
+
+![BDI agentic router](../img/bdi-agentic-light.svg)
 
 ---
 
@@ -57,7 +63,7 @@ Optional PostToolUse / SubagentStop → telemetry (usage, honor)
 | `internal/adapters/*` | Harness-specific I/O only; call `core.Plan` |
 | `internal/hookport` | Optional honor and usage; a nil func is unobserved, not inferred |
 | `internal/telemetry` | Append-only local JSONL; prompt-free events |
-| `internal/semantic` | Optional monotonic semantic boost |
+| `internal/semantic` | Optional monotonic semantic boost; `e5shadow` (Phase D, opt-in) |
 | `internal/routingv2/*` | Experimental / shadow classifier and training |
 | `internal/outcome` | Outcome-eval library; minimal fixtures in OSS; full suite in downshift-labs |
 | `cmd/downshift` | CLI, subcommands, hook dispatch |
@@ -104,6 +110,7 @@ documented in README and `docs/design/minilm-semantic.md`.
 
 | System | Role |
 |--------|------|
+| `DOWNSHIFT_E5_SHADOW` | Multilingual E5 ONNX observation on `Route()`; does not change tier |
 | `routingv2` + shadow | Observe candidate classifier; does not change `Route()` |
 | `decisionintelligence` | Advisory, monotonic, `Apply: false` |
 | `orchestration/` (Python) | Opt-in LangGraph planner; does not pick models |

@@ -5,8 +5,8 @@
 harness-downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
-**Status:** Phase A (diagnosis). No runtime integration until Phase D/E gates pass.  
-**Owner decision:** This initiative supersedes non-essential handoff work (H7, H8, H10, H11) until Phase B baseline is frozen; it does **not** pause H14 safety fixes, H12 release when approved, or guardrail integrity work.
+**Status:** Phase A complete; **Phase D (E5 shadow) shipped** on `main` (`831829a`+). Phase E integration remains off.  
+**Owner decision:** This initiative supersedes non-essential handoff work (H7, H8, H10, H11) until Phase B baseline is frozen; it does **not** pause guardrail integrity work or H12 release when approved.
 
 ---
 
@@ -28,11 +28,10 @@ https://github.com/tiagovilasboas/downshift
 
 | Area | State |
 |------|--------|
-| Branch | `main` @ `794b7e0`; clean except untracked `.claude/launch.json` |
+| Branch | `main` @ `a735062` (H14 + E5 shadow); push CI as usual |
 | Open PRs | None |
-| Remote branches | `fix/latency-test-skip-race`, `fix/session-latency-headroom`, stale `feat/h6-upshift-needed-tier` (merged via #134) |
-| Handoff H1–H6, H9, H13 | Done on `main` |
-| Handoff H14 | Inventory on `main` (`h14-unsafe-confident-inventory.md`); fixes not started |
+| Handoff H1–H6, H9, H13, **H14** | Done on `main` |
+| H14 | **M3 unsafe confident = 0** (regex/guard; see [inventory](../2026-10-16-handoff/h14-unsafe-confident-inventory.md)) |
 | Handoff H7, H8, H10, H11, H12 | **Paused** for this initiative (see §8) |
 | Multilang M1–M2 | Done (language guard + PT risk terms) |
 | M3 | 170-row fixture frozen in labs; **human label adjudication pending** |
@@ -49,9 +48,9 @@ https://github.com/tiagovilasboas/downshift
 Prompt
   → Classify (regex signals, bounded-brief rules, 32 KiB scoring cap; full text for risk + lang)
   → unsupportedLanguage? → Confident=false (lang guard)
-  → applyRiskFloor
+  → applyRiskFloor (lift Trivial/Simple; H14 RiskAbstain on bounded/high-stakes risk)
   → ClassifyWithSemantic (optional): semantic.MaybeAugment (MiniLM/hash centroids); monotonic raise only; never Complex without regex Complex score
-  → core.Route → compareToCurrentModel → Decision
+  → core.Route → compareToCurrentModel → Decision (+ optional E5 shadow observation)
   → core.Check (R1–R9, risk downshift, unknown-model holds)
   → Plan / PlanForSession (session + catalog; guardrails win)
 ```
@@ -64,6 +63,7 @@ Prompt
 | Language guard | `internal/core/lang_guard.go` | Abstention for unsupported/mixed script; not full variant detection |
 | Risk floor | `internal/core/risk.go` | Lifts off small; categories EN + PT extensions |
 | Semantic fuse | `internal/core/semantic_fuse.go` | Optional boost via `ClassifyWithSemantic` |
+| E5 shadow | `internal/semantic/e5shadow` + `applyE5Shadow` in `Route` | `DOWNSHIFT_E5_SHADOW=1`; observation only; no tier change |
 | Embedder | `internal/semantic/` (`CmdEmbedder`, `HashEmbedder`, prototypes) | `DOWNSHIFT_MINILM_EMBED`; 1s cmd timeout; hook budget 1500ms |
 | Hook runner | `internal/hookctx` | Bounds external helpers |
 | Shadow v2 | `internal/routingv2/shadow` | Local predictors; no prompt persistence in observations |
@@ -72,8 +72,8 @@ Prompt
 **Linguistic gap (evidence-based, not hypothetical):**
 
 1. **Tables are EN/PT-centric** — ES/FR/DE/JA parallel rows often abstain (`confident=false`) or land on Medium default; tier accuracy on M3 is **34.1%** vs authored labels (labels may be wrong until adjudication).
-2. **Mixed EN + foreign risk** — Three M3 cases (`mixed-01`, `11`, `27`) are **confident TRIVIAL → small** while labels expect frontier; `unsupported_language=false` so guard does not fire ([H14 inventory](../2026-10-16-handoff/h14-unsafe-confident-inventory.md)).
-3. **Risk labelled but class MEDIUM** — Five delegation + two parallel EN/PT-BR cases: confident mid below labelled frontier floor (regex/classifier, not embedding).
+2. **Mixed EN + foreign risk** — Fixed on `main` (`6f11283`): mixed English helper briefs set `UnsupportedLanguage` (M3 mixed bucket **0** unsafe).
+3. **Risk labelled but class MEDIUM** — Fixed (`1ca2b2c`, `a438604`): bounded delegation briefs + parallel high-stakes patterns clear confidence via `RiskAbstain` without legacy-split regression.
 4. **Informal / slang / regional EN** — Not systematically covered; no dedicated eval slice in repo (only M3 + legacy splits).
 5. **M4 embedding path** — Did not improve M3 metrics; cold helper **failed** hook-style timeout (see §5).
 
@@ -142,8 +142,8 @@ Evaluation dimensions: equivalence consistency (formal/informal/slang PT/EN), M3
 
 - [x] Flow map and existing components
 - [x] M3/M4 evidence summary
-- [x] H14 failure buckets linked
-- [ ] Reproduce M3 metrics from `main` via documented command (labs runner or `tools/multilang`)
+- [x] H14 failure buckets linked and **closed** on M3 (unsafe confident 0)
+- [x] Reproduce M3 metrics: `go run ./tools/multilang --input …/m3-v1.json` (labs fixture)
 - [ ] Add **equivalence set spec** (synthetic + anonymized real) in labs only
 
 ### Phase B — Benchmark
@@ -160,9 +160,9 @@ Evaluation dimensions: equivalence consistency (formal/informal/slang PT/EN), M3
 
 ### Phase D — Shadow
 
-- **Encoder:** `intfloat/multilingual-e5-small` via **ONNX Runtime INT8** (Phase C helper); observation only.
-- Env contract: [§14 Phase D env contract](#14-phase-d-env-contract) (`DOWNSHIFT_E5_SHADOW*`). No `Route()` / `ClassifyWithSemantic` change until Phase E.
-- Compare `would_label` / `would_lift` vs production tier on M3 + legacy splits (`downshift-labs` + `events.jsonl` aggregates).
+- [x] **Encoder:** `intfloat/multilingual-e5-small` via **ONNX Runtime INT8** (`internal/semantic/e5shadow`); observation only on `main`.
+- Env contract: [§14 Phase D env contract](#14-phase-d-env-contract) (`DOWNSHIFT_E5_SHADOW*`). **No** `Route()` tier change; telemetry field `e5_shadow`.
+- [ ] Compare `would_label` / `would_lift` vs production tier on M3 + legacy splits (`downshift-labs` + `events.jsonl` aggregates) — ongoing analysis, not a routing gate.
 
 ### Phase E — Integration
 
@@ -184,7 +184,7 @@ Evaluation dimensions: equivalence consistency (formal/informal/slang PT/EN), M3
 | H6 part 2 risky write unknown baseline | Guardrail contract change | After H14 + semantic policy |
 | M5 LLM reference ceiling | Billing | Subscription-only run authorized |
 
-**Continue in parallel (security / correctness):** H14 regex/guard fixes (10 unsafe confident); M3 label adjudication.
+**Continue in parallel:** M3 label adjudication (absolute tier accuracy); Phase B encoder bench (e5 vs MiniLM under hook-realistic latency).
 
 ---
 
@@ -192,7 +192,7 @@ Evaluation dimensions: equivalence consistency (formal/informal/slang PT/EN), M3
 
 Measure before setting targets:
 
-- Unsafe confident on M3 → **0** (or documented label disagreement)
+- Unsafe confident on M3 → **0** ✓ (2026-10-16 on `a735062`; label disagreements may still exist for non-confident rows)
 - Equivalence consistency ≥ **TBD** % across language variants at same intended tier
 - No increase in unsafe raw on legacy splits
 - p95 hook classify path ≤ **TBD** ms with semantic enabled
@@ -213,12 +213,11 @@ Proceed only if Phase B shows representation limit (e.g. e5 fixes equivalence bu
 
 ## 11. Next actions (priority order)
 
-1. **Human adjudication** sample of M3 labels (owner/labs) — blocks interpreting 34% accuracy.
-2. **H14 quick wins** on regex/guard (mixed-01 bucket, delegation risk floor) — may remove 10 unsafe without embedding; re-run M3.
-3. **Phase B harness** in `downshift-labs`: e5-small vs MiniLM, same fuse contract, hook-realistic latency.
-4. **Phase C prototype** ONNX embedder behind `semantic.Embedder`.
-5. **Phase D shadow** wiring; no production tier change.
-6. Resume H12/H7 when owner prioritizes release/evidence over semantic bench.
+1. **Human adjudication** sample of M3 labels (owner/labs) — blocks interpreting 34% tier accuracy.
+2. **Phase B harness** in `downshift-labs`: e5-small vs MiniLM, same fuse contract, hook-realistic latency.
+3. **Phase D analysis** — aggregate E5 shadow vs production on M3 (no auto-routing).
+4. **Phase C** warm ONNX / `downshift serve` path if p95 still above hook budget.
+5. Resume H12/H7 when owner prioritizes release/evidence over semantic bench.
 
 ---
 

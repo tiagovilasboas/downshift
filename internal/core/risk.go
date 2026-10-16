@@ -250,22 +250,29 @@ func scanRiskCategories(prompt string) []string {
 	return cats
 }
 
+// applyRiskAbstention clears confidence on known H14 buckets (bounded delegation
+// briefs, M3 parallel high-stakes patterns) without changing complexity.
+func applyRiskAbstention(prompt string, c Classification) Classification {
+	if len(c.Risk) == 0 || !c.Confident || (c.Complexity != Medium && c.Complexity != Simple) {
+		return c
+	}
+	wc := len(strings.Fields(prompt))
+	if boundedBrief(prompt, wc) || (c.Complexity == Medium && riskHighStakesWorkRE.MatchString(prompt)) {
+		c.Confident = false
+		c.RiskAbstain = true
+	}
+	return c
+}
+
 // applyRiskFloor lifts a Trivial/Simple classification that touches a risk
 // category to Medium (mid tier) and clears Confident, so no adapter acts on
-// a confident downshift for it. A confident Medium or Simple label with risk
-// only clears Confident (abstention) and leaves the complexity unchanged.
+// a confident downshift for it. applyRiskAbstention handles confident Medium/Simple
+// with risk where the tier should stay unchanged.
 func applyRiskFloor(prompt string, c Classification) Classification {
 	cats := RiskCategories(prompt)
 	if len(cats) > 0 {
 		c.Risk = cats
-		wc := len(strings.Fields(prompt))
-		// H14: bounded risk briefs and short high-stakes work abstain without tier change.
-		if c.Confident && (c.Complexity == Medium || c.Complexity == Simple) {
-			if boundedBrief(prompt, wc) || (c.Complexity == Medium && riskHighStakesWorkRE.MatchString(prompt)) {
-				c.Confident = false
-				c.RiskAbstain = true
-			}
-		}
+		c = applyRiskAbstention(prompt, c)
 	}
 	if c.Complexity >= Medium {
 		return c

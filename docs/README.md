@@ -61,6 +61,7 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [design/architecture.md](design/architecture.md) | Architecture overview |
 | [design/engineering-loop.md](design/engineering-loop.md) | Feedback loop |
 | [design/minilm-semantic.md](design/minilm-semantic.md) | Semantic boost |
+| [internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md](internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md) | Multilingual initiative (Phase D E5 shadow, H14, Phase E gate) |
 | [design/classifier-shadow.md](design/classifier-shadow.md) | Shadow classifier |
 | [design/context-optimization.md](design/context-optimization.md) | Native Context Compressor & Context Sensor |
 | [design/router-generalization.md](design/router-generalization.md) | Eval methodology and holdout discipline |

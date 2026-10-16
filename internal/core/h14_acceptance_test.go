@@ -12,25 +12,6 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
-// h14MixedRiskPrompts mirror the M3 mixed-01 bucket: a trivial English stub,
-// one foreign prose cue (partialForeignLanguage, not unsupportedLanguage),
-// and risk vocabulary the EN/PT tables may miss in the foreign tail.
-func h14MixedRiskPrompts() []string {
-	return []string{
-		"rename this helper; Revisa los permisos de acceso a los datos de los clientes.",
-		"rename this helper; Lösche personenbezogene Kundendaten gemäß Aufbewahrungsrichtlinie.",
-		"format this helper; Behebe SQL-Injektion in der Kundensuche.",
-	}
-}
-
-func h14PureEnglishTrivial() []string {
-	return []string{
-		"rename the variable userId to userIdentifier",
-		"rename foo to bar",
-		"format main.go",
-	}
-}
-
 // (1) Mixed EN + foreign risk must not produce a confident small-tier write.
 func TestH14Acceptance_MixedWithRisk_LosesConfidenceOrLiftsTier(t *testing.T) {
 	frontier := catID("claude-code", core.TierFrontier)
@@ -52,7 +33,7 @@ func TestH14Acceptance_MixedWithRisk_LosesConfidenceOrLiftsTier(t *testing.T) {
 // (2) Pure English trivial prompts keep confident classification and may downshift.
 func TestH14Acceptance_PureEnglishTrivial_Unchanged(t *testing.T) {
 	frontier := catID("claude-code", core.TierFrontier)
-	for _, p := range h14PureEnglishTrivial() {
+	for _, p := range h14PureEnglishTrivialPrompts() {
 		cls := core.Classify(p)
 		if !cls.Confident || cls.UnsupportedLanguage || cls.Complexity != core.Trivial {
 			t.Errorf("Classify(%q): want confident TRIVIAL, got cx=%s conf=%v unsupported=%v",
@@ -66,13 +47,36 @@ func TestH14Acceptance_PureEnglishTrivial_Unchanged(t *testing.T) {
 	}
 }
 
+// M3 unsafe confident from a frontier baseline: confident rewrite strictly below frontier tier.
+func TestH14Acceptance_NoUnsafeConfidentAcrossHarnesses(t *testing.T) {
+	for _, h := range core.AllHarnessCaps() {
+		t.Run(h.Harness, func(t *testing.T) {
+			assertH14NoUnsafeConfidentFromFrontier(t, h.Harness, h.Caps, h14UnsafeBucketPrompts())
+		})
+	}
+}
+
+func assertH14NoUnsafeConfidentFromFrontier(t *testing.T, harness string, caps core.HarnessCapabilities, prompts []string) {
+	t.Helper()
+	small := catID(harness, core.TierSmall)
+	mid := catID(harness, core.TierMid)
+	frontier := catID(harness, core.TierFrontier)
+	session := core.KnownSession([]string{small, mid, frontier})
+	for _, p := range prompts {
+		d := core.Route(p, harness, frontier, cat)
+		if d.Confident && d.Tier < core.TierFrontier && checkWrites(d) {
+			t.Errorf("unsafe confident below frontier: prompt=%.50q d=%+v", p, d)
+		}
+		plan := d.PlanForSession(caps, cat, session)
+		if plan.RewriteModel && d.Confident && d.Tier < core.TierFrontier {
+			t.Errorf("plan rewrites below frontier while confident: harness=%s prompt=%.50q plan=%+v", harness, p, plan)
+		}
+	}
+}
+
 // (3) Route tier invariant on H14 prompts (Check matches SafeVerdict/Corrections).
 func TestH14Acceptance_RouteFinalDecisionInvariant(t *testing.T) {
-	prompts := append(h14MixedRiskPrompts(), h14PureEnglishTrivial()...)
-	prompts = append(prompts,
-		"Implement idempotent payment refunds with audit evidence.",
-		"Revise as permissões de acesso aos dados dos clientes.",
-	)
+	prompts := append(h14UnsafeBucketPrompts(), h14PureEnglishTrivialPrompts()...)
 	for _, p := range prompts {
 		for _, cur := range finalInvariantCurrents {
 			d := core.Route(p, "claude-code", cur, cat)

@@ -153,7 +153,7 @@ func TestRiskCategories_Identifiers(t *testing.T) {
 }
 
 func TestRiskFloor_DelegationBriefAbstainsAtMedium(t *testing.T) {
-	p := "You own the bounded authorization boundary workstream. Read src/handler.go, src/service.go, src/repository.go and their adjacent tests before editing. Implement the requested behavior using existing interfaces. Other engineers are working in the repository; preserve their edits. Stay within these three modules, explain any compatibility change, and run the relevant tests. Return the changed files, evidence of the behavior, and unresolved concerns. Do not publish, deploy, or modify unrelated subsystems. Acceptance case delegation-16: return only the bounded module change and a focused regression."
+	p := h14DelegationBriefPrompt
 	if len(core.RiskCategories(p)) == 0 {
 		t.Fatal("expected risk on delegation brief")
 	}
@@ -167,10 +167,7 @@ func TestRiskFloor_DelegationBriefAbstainsAtMedium(t *testing.T) {
 }
 
 func TestRiskFloor_ParallelHighStakesAbstains(t *testing.T) {
-	for _, p := range []string{
-		"Revise as permissões de acesso aos dados dos clientes.",
-		"Implement idempotent payment refunds with audit evidence.",
-	} {
+	for _, p := range h14ParallelHighStakesPrompts() {
 		cls := core.Classify(p)
 		if cls.Complexity != core.Medium || cls.Confident || !cls.RiskAbstain {
 			t.Errorf("Classify(%q): want unconfident MEDIUM with RiskAbstain, got %+v", p, cls)

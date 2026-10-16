@@ -6,7 +6,9 @@ harness-downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovi
 
 M3: authored private corpus frozen before candidate execution in private labs commits `653bfd9` and `c94bcad` (final fixture). It contains 120 aligned EN/PT-BR/ES/FR/DE/JA prompts, 30 mixed-language prompts and 20 synthetic agent delegations. Labels are AI authored, with human adjudication pending. Existing five splits were neither modified nor used for training. The labels, prompts, vectors and detailed reports remain private.
 
-M4: reject this candidate for runtime adoption. Cached `paraphrase-multilingual-MiniLM-L12-v2` was evaluated locally on CPU, using independent multilingual development centroids. M3 tier accuracy remains 34.1% and confident coverage remains 25.3% (baseline and candidate). Relative to the authored labels, both have 10 confident recommendations below the labelled floor on risky/frontier tasks; these are classifier recommendations, **not evidence of 10 executed unsafe rewrites**. The fixture's stricter risk labels require human adjudication before interpreting absolute quality. Zero coverage gain already fails the adoption criterion.
+M4: reject this candidate for runtime adoption. Cached `paraphrase-multilingual-MiniLM-L12-v2` was evaluated locally on CPU, using independent multilingual development centroids. M3 tier accuracy remains 34.1% and confident coverage remains 25.3% (baseline and candidate at M4 time). Relative to the authored labels, both had **10** confident recommendations below the labelled floor on risky/frontier tasks (classifier recommendations, **not** evidence of executed unsafe rewrites).
+
+**Update (2026-10-16, `main` @ `a735062`):** H14 regex/guard work drives **M3 unsafe confident to 0** without changing Route() semantics for legacy splits (`cls-after` stable locally). M4 conclusion unchanged: no runtime adoption of MiniLM centroids. Human adjudication of M3 labels is still pending for absolute tier accuracy.
 
 | Classifier split | Baseline tier accuracy | Candidate tier accuracy | Confident coverage (both) |
 |---|---:|---:|---:|

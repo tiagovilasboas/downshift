@@ -37,7 +37,7 @@ evaluation splits (`tasks`, `holdout`, `fresh`, `heldout2`, `blind-vitrine`), `g
 | M4 | Rejected | no gain over the current classifier on the frozen set (labs `b640e92`) |
 | M5 | Blocked | no request sent; extra usage was enabled on the account |
 | M6 | Partly done | H1 and H5 landed; see [M6 diagnostic evidence](../m6-delegation-evidence-2026-10-16.md) |
-| M7 | Partly done | README and `complexity-weights.md` describe the guard; update after H14 |
+| M7 | Done (core) | Guard + H14 abstention documented in `complexity-weights.md`, README, architecture; M3 adjudication still pending |
 
 Evaluation details and limitations: [evaluation-status.md](evaluation-status.md). Session-first model resolution (H13) keeps native metadata apart from catalog prices; discovery records availability only when the harness supplies evidence and does not invent capability, pricing or credit.
 

@@ -46,7 +46,7 @@ enabled and no request was sent. Human adjudication of the M3 labels is still pe
 | H11 | Medium | harness-core leftovers found during the renaming |
 | H12 | High | Release beta.15 (needs the owner's approval) |
 | H13 | Done | Session metadata resolver + adapter wiring (`#133`) |
-| H14 | High | Unsafe confident recommendations on the multilingual set: 10 of 170, with or without the embedding |
+| H14 | Done | M3 unsafe confident **0** on `main` (`6f11283`–`a735062`); [inventory](h14-unsafe-confident-inventory.md) |
 
 ## H1: bounded-brief classifier change
 
@@ -169,12 +169,16 @@ be rebased onto `main` (the catalog, cost and telemetry files were rewritten on 
 
 ## H14: unsafe confident recommendations on the multilingual set
 
-**Evidence.** On the frozen M3 set the classifier gives 10 unsafe confident recommendations out of 170 and 74 unsafe raw
-recommendations. It is not recorded whether the run included the language guard; check the run manifest against the commit used.
+**Status: done** on `main` (`a735062`).
 
-**Do.** List the 10 by category (mixed-language, risk, tier), find which rule made them confident, and fix with the smallest rule
-that does not weaken any floor. Decide the human adjudication of the labels first, because the count depends on them. Do not use
-the five legacy splits to tune.
+**Evidence (before).** M3 baseline: 10 unsafe confident / 170; buckets in [h14-unsafe-confident-inventory.md](h14-unsafe-confident-inventory.md).
 
-**Done when.** Zero unsafe confident recommendations on the M3 set without a drop of coverage on the legacy splits, or the cases
-are documented as label disagreements.
+**Fixes (smallest rule per bucket).**
+
+| Bucket | Commits | Mechanism |
+|--------|---------|-----------|
+| Mixed EN helper + foreign risk | `6f11283` | `mixedTrivialForeignUnsupported` → `UnsupportedLanguage` |
+| Delegation brief + risk | `1ca2b2c`, `a438604` | `boundedBrief` scope/verify cues + `RiskAbstain` |
+| Parallel high-stakes (PT/EN) | `a438604` | `riskHighStakesWorkRE` + `RiskAbstain`; `deterministicLift` in `selfcheck` |
+
+**Done when (met).** `go run ./tools/multilang --input …/m3-v1.json` → **0** unsafe confident; `go test ./...` green; `TestBenchmarkSplitsMatchClsAfterBaseline` unchanged vs local `cls-after.jsonl`.
