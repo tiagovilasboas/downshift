@@ -372,7 +372,10 @@ func Classify(prompt string) Classification {
 
 	// Outside English and Portuguese a risk word is invisible to risk.go, so
 	// a keyword hit is not enough to act on (see lang_guard.go).
-	if foreign || partialForeign {
+	if foreign {
+		confident = false
+	}
+	if confident && mixedEnglishHelperBrief.MatchString(full) && partialForeign {
 		confident = false
 	}
 

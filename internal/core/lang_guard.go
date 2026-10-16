@@ -4,6 +4,7 @@
 package core
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 )
@@ -42,6 +43,9 @@ const foreignLetters = "ñ¿¡üöäßèùëïîûœìò"
 // prompt while catching a sentence in another script (Japanese, Chinese,
 // Korean, Cyrillic, Arabic...).
 const minNonLatinLetters = 4
+
+// mixedEnglishHelperBrief matches the synthetic M3 mixed brief stub (mixed-01…).
+var mixedEnglishHelperBrief = regexp.MustCompile(`(?i)^(rename|format|move|add)\s+this\s+helper;\s`)
 
 // partialForeignAmbiguous lists function words that also appear in English
 // prose (locale codes, Python del, etc.). They still count toward

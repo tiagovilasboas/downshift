@@ -250,18 +250,16 @@ func scanRiskCategories(prompt string) []string {
 // category to Medium (mid tier) and clears Confident, so no adapter acts on
 // a confident downshift for it. Medium and Complex are left unchanged.
 func applyRiskFloor(prompt string, c Classification) Classification {
-	cats := RiskCategories(prompt)
-	if len(cats) > 0 {
-		c.Risk = cats
-		c.Confident = false
-	}
 	if c.Complexity >= Medium {
 		return c
 	}
+	cats := RiskCategories(prompt)
 	if len(cats) == 0 {
 		return c
 	}
 	c.Complexity = Medium
+	c.Confident = false
 	c.RiskFloor = true
+	c.Risk = cats
 	return c
 }
