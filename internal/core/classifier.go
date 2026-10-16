@@ -283,7 +283,7 @@ func Classify(prompt string) Classification {
 	full := prompt
 	// Like the risk floor, language coverage must include text past the scoring
 	// cap. A foreign-language tail may contain risk the rule table cannot read.
-	foreign := unsupportedLanguage(full)
+	foreign, partialForeign := languageGuardState(full)
 	prompt = classifyHead(prompt)
 	lower := strings.ToLower(prompt)
 	scores := map[Complexity]int{Trivial: 0, Simple: 0, Medium: 0, Complex: 0}
@@ -372,7 +372,7 @@ func Classify(prompt string) Classification {
 
 	// Outside English and Portuguese a risk word is invisible to risk.go, so
 	// a keyword hit is not enough to act on (see lang_guard.go).
-	if foreign {
+	if foreign || partialForeign {
 		confident = false
 	}
 

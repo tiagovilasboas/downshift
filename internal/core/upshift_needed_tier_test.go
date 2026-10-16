@@ -25,7 +25,7 @@ func TestUpshift_WritesLeastModelAtNeededTier(t *testing.T) {
 	cases := []struct{ name, prompt, current, want string }{
 		{"medium from haiku", "implement the feature to export sales as CSV", "claude-haiku-4-5", "claude-sonnet-5-5"},
 		{"medium from opus (same task, downshift)", "implement the feature to export sales as CSV", "claude-opus-5-5", "claude-sonnet-5-5"},
-		{"complex from haiku", "rearchitect the auth module to support multi-tenant organisations", "claude-haiku-4-5", "claude-fable-5-1"},
+		{"complex from haiku", "rearchitect the analytics pipeline to support multi-tenant organisations", "claude-haiku-4-5", "claude-fable-5-1"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

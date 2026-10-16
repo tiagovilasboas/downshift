@@ -36,7 +36,7 @@ var RawRiskSignals = []RiskSignalDef{
 	// authentication or authorization, so a rename there is not mechanical.
 	// Only as a standalone word: inside a path, file or hyphenated name
 	// (auth.ts, auth/session.ts, auth-7d9f) it is a location, not the subject.
-	{"authz", `(^|[^/.\w-])(auth|authn|authz)([^/.\w-]|$)|\b(permissions?|privileges?|is[ _]?admin|admin (role|rights|access)|rbac|acls?|authori[sz]ation|authenticat\w*|access control)\b|\b(autentica|autoriza)\S*|\bpermiss(ão|ao|ões|oes)|\bprivil\S*gios?\b`},
+	{"authz", `(^|[^/.\w-])(auth|authn|authz)([^/.\w-]|$)|\b(permissions?|privileges?|permisos|is[ _]?admin|admin (role|rights|access)|rbac|acls?|authori[sz]ation|authenticat\w*|access control)\b|\b(autentica|autoriza)\S*|\bpermiss(ão|ao|ões|oes)|\bprivil\S*gios?\b|\bacceso a los datos\b`},
 	// "signature" alone is not crypto ("function signature", "type signature",
 	// "email signature"); only verification and signed-message contexts are.
 	{"crypto", `\b(crypto\w*|encrypt\w*|decrypt\w*|hmac|tls|ssl|certificates?|(webhook|request|payload|message|digital|cryptographic|jwt|jws|hmac|rsa|ecdsa|ed25519|gpg|pgp) signatures?|signatures? (verification|validation|check|header|secret)s?|(verify|verifies|verifying|validate|validating|check|checking|skip|skipping) (the |a |an |its )?signatures?|signing (secrets?|certificates?))\b|\bcriptograf\S*|\bcertificad\S*\s+(digital|ssl|tls|x\.?509|raiz|autoassinad\S*|https|do servidor|expirad\S*)|\b(verifica\S*|valida\S*|checagem|renova\S*|rota\S*)\s+(d[oa]s?\s+|[oa]s?\s+|de\s+)?certificad\S*|\bcertifica\S*\s+digital`},
@@ -61,8 +61,8 @@ var riskLiterals = map[string][]string{
 	"secret": {"secret", "password", "passphrase", "credential", "api", "private", "signing",
 		"token", "jwt", "oauth", "saml", "sso", "2fa", "mfa", "totp", "senha", "credencia",
 		"segredo", "rotat", "chave"},
-	"authz": {"auth", "permission", "privilege", "admin", "rbac", "acl", "autentica",
-		"autoriza", "access control", "permiss", "privil"},
+	"authz": {"auth", "permission", "privilege", "permisos", "admin", "rbac", "acl", "autentica",
+		"autoriza", "access control", "permiss", "privil", "acceso a los datos"},
 	"crypto": {"crypt", "hmac", "tls", "ssl", "certifica", "signature", "signing", "criptograf"},
 	"payment": {"payment", "charg", "refund", "settlement", "payout", "stripe", "pci",
 		"billing", "pagamento", "reembolso", "estorno", "cobr"},
@@ -250,16 +250,18 @@ func scanRiskCategories(prompt string) []string {
 // category to Medium (mid tier) and clears Confident, so no adapter acts on
 // a confident downshift for it. Medium and Complex are left unchanged.
 func applyRiskFloor(prompt string, c Classification) Classification {
+	cats := RiskCategories(prompt)
+	if len(cats) > 0 {
+		c.Risk = cats
+		c.Confident = false
+	}
 	if c.Complexity >= Medium {
 		return c
 	}
-	cats := RiskCategories(prompt)
 	if len(cats) == 0 {
 		return c
 	}
 	c.Complexity = Medium
-	c.Confident = false
 	c.RiskFloor = true
-	c.Risk = cats
 	return c
 }

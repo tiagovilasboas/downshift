@@ -151,3 +151,19 @@ func TestRiskCategories_Identifiers(t *testing.T) {
 		}
 	}
 }
+
+// Risk categories on an already-MEDIUM classification must clear confidence
+// (H14 delegation / parallel-17 style prompts).
+func TestRiskFloor_ClearsConfidentWhenRiskPresent(t *testing.T) {
+	p := "Implement idempotent payment refunds with audit evidence."
+	cls := core.Classify(p)
+	if len(cls.Risk) == 0 {
+		t.Fatalf("expected risk categories on %q", p)
+	}
+	if cls.Confident {
+		t.Errorf("Classify(%q): confident with risk=%v, want unconfident", p, cls.Risk)
+	}
+	if cls.Complexity < core.Medium {
+		t.Errorf("complexity=%s, want at least MEDIUM", cls.Complexity)
+	}
+}

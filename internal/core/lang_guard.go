@@ -13,8 +13,9 @@ import (
 // "format") or a code identifier in the same prompt still scores, so the
 // classifier can be confident about a task whose risk it cannot read.
 // unsupportedLanguage spots such prompts so Classify can drop confidence:
-// every guardrail then holds the requested model. It never changes the class
-// and never raises cost.
+// every guardrail then holds the requested model. partialForeignLanguage is
+// the weaker hint (one foreign cue) for mixed briefs that are still mostly
+// English. Neither changes the class and neither raises cost.
 
 // foreignFunctionWords are frequent Spanish, French and German function words
 // that are not English or Portuguese words. Words shared with Portuguese (de,
@@ -42,34 +43,70 @@ const foreignLetters = "ñ¿¡üöäßèùëïîûœìò"
 // Korean, Cyrillic, Arabic...).
 const minNonLatinLetters = 4
 
-// unsupportedLanguage reports whether the prompt reads as a language the
-// signal and risk tables do not cover.
-func unsupportedLanguage(prompt string) bool {
+// partialForeignAmbiguous lists function words that also appear in English
+// prose (locale codes, Python del, etc.). They still count toward
+// unsupportedLanguage at two hits but not toward partialForeignLanguage.
+var partialForeignAmbiguous = map[string]bool{
+	"en": true, "del": true, "y": true,
+}
+
+// languageGuardState classifies foreign-language coverage in one pass.
+func languageGuardState(prompt string) (unsupported, partialForeign bool) {
 	nonLatin := 0
 	for _, r := range prompt {
 		if unicode.IsLetter(r) && r >= 0x80 && !unicode.Is(unicode.Latin, r) {
 			nonLatin++
-			if nonLatin >= minNonLatinLetters {
-				return true
-			}
 		}
 	}
-	lower := strings.ToLower(prompt)
 	hits := 0
-	if strings.ContainsAny(lower, foreignLetters) {
-		hits++
-	}
+	partialCues := 0
+	proseLetter := false
 	seen := map[string]bool{}
-	for _, w := range strings.FieldsFunc(lower, func(r rune) bool {
-		return !unicode.IsLetter(r)
-	}) {
-		if foreignFunctionWords[w] && !seen[w] {
-			seen[w] = true
+	split := func(r rune) bool { return !unicode.IsLetter(r) }
+	for _, w := range strings.FieldsFunc(prompt, split) {
+		wl := strings.ToLower(w)
+		if !proseLetter && !identifierToken(w) && strings.ContainsAny(wl, foreignLetters) {
+			proseLetter = true
 			hits++
-			if hits >= 2 {
-				return true
+			partialCues++
+		}
+		if foreignFunctionWords[wl] && !seen[wl] {
+			seen[wl] = true
+			hits++
+			if !partialForeignAmbiguous[wl] {
+				partialCues++
 			}
 		}
 	}
-	return hits >= 2
+	if nonLatin >= minNonLatinLetters || hits >= 2 {
+		return true, false
+	}
+	return false, partialCues == 1
+}
+
+// identifierToken is true for camelCase or Studly tokens so a stray diacritic
+// in a field name does not count as a foreign-language cue.
+func identifierToken(w string) bool {
+	for i, r := range w {
+		if i > 0 && unicode.IsUpper(r) {
+			return true
+		}
+	}
+	return false
+}
+
+// unsupportedLanguage reports whether the prompt reads as a language the
+// signal and risk tables do not cover.
+func unsupportedLanguage(prompt string) bool {
+	u, _ := languageGuardState(prompt)
+	return u
+}
+
+// partialForeignLanguage is true when the prompt shows a single foreign cue
+// (one function word or one foreign letter in prose) but not enough to flag
+// unsupportedLanguage. Classify drops confidence so mixed EN+foreign risk
+// briefs are not downshifted confidently.
+func partialForeignLanguage(prompt string) bool {
+	u, p := languageGuardState(prompt)
+	return !u && p
 }

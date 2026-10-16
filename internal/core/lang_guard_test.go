@@ -73,6 +73,14 @@ func TestUnsupportedLanguage_KeepsSupportedPrompts(t *testing.T) {
 
 // PT-BR risk vocabulary that had no row: permission, privilege, security,
 // injection, a person's CPF and Portuguese instruction-override phrases.
+func TestMixedEnglishHelperBrief_DropsConfidence(t *testing.T) {
+	p := "rename this helper; Revisa los permisos de acceso a los datos de los clientes."
+	c := core.Classify(p)
+	if c.Confident {
+		t.Fatalf("want unconfident mixed brief, got %+v", c)
+	}
+}
+
 func TestRiskCategories_PTBRParity(t *testing.T) {
 	cases := []struct{ prompt, want string }{
 		{"Corrija o typo na verificação de permissão do painel admin", "authz"},
@@ -102,5 +110,29 @@ func TestRiskCategories_PTBRParity(t *testing.T) {
 	// A CPF validator is a checksum, not personal data.
 	if got := core.RiskCategories("write a function that validates a CPF"); len(got) != 0 {
 		t.Errorf("CPF validator risk = %v, want none", got)
+	}
+}
+
+// One foreign function word in an otherwise English trivial brief (M3 mixed-01)
+// must not stay confident: risk vocabulary in the foreign tail is invisible.
+func TestPartialForeignLanguage_MixedHelperBrief(t *testing.T) {
+	p := "rename this helper; Revisa los permisos de acceso a los datos de los clientes."
+	cls := core.Classify(p)
+	if cls.UnsupportedLanguage {
+		t.Fatalf("want partial cue only, not full unsupported language")
+	}
+	if cls.Confident {
+		t.Errorf("Classify: confident=%v, want unconfident partial-foreign guard", cls.Confident)
+	}
+	if cls.Complexity.Tier() == core.TierSmall && checkWrites(core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)) {
+		t.Errorf("confident small downshift on mixed risk brief")
+	}
+}
+
+// Two foreign cues still flag unsupportedLanguage, not partial alone.
+func TestPartialForeignLanguage_NotWhenFullyUnsupported(t *testing.T) {
+	p := "rename userId a userIdentifier en el módulo que guarda las contraseñas"
+	if c := core.Classify(p); !c.UnsupportedLanguage || c.Confident {
+		t.Errorf("want full unsupported guard: unsupported=%v confident=%v", c.UnsupportedLanguage, c.Confident)
 	}
 }
