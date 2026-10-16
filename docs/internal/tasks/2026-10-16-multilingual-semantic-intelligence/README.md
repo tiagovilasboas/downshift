@@ -160,8 +160,9 @@ Evaluation dimensions: equivalence consistency (formal/informal/slang PT/EN), M3
 
 ### Phase D — Shadow
 
-- Register candidate as `routingv2/shadow.Predictor` or extend semantic shadow logging (no prompt text; hash + id only).
-- Compare tier distributions vs production `Classify` on live hooks (opt-in env).
+- **Encoder:** `intfloat/multilingual-e5-small` via **ONNX Runtime INT8** (Phase C helper); observation only.
+- Env contract: [§14 Phase D env contract](#14-phase-d-env-contract) (`DOWNSHIFT_E5_SHADOW*`). No `Route()` / `ClassifyWithSemantic` change until Phase E.
+- Compare `would_label` / `would_lift` vs production tier on M3 + legacy splits (`downshift-labs` + `events.jsonl` aggregates).
 
 ### Phase E — Integration
 
@@ -241,3 +242,77 @@ No adapter routing logic; no catalog changes for semantic work.
 - Embedding may solve **variant** understanding but not **tier** if fuse stays monotonic raise-only.
 - Hook budget may require **always-warm** sidecar — operational complexity.
 - Overfitting M3 while breaking legacy splits (forbidden by project rules).
+
+---
+
+## 14. Phase D env contract
+
+harness-downshift by Tiago de Carvalho Vilas Boas  
+https://github.com/tiagovilasboas/downshift
+
+**Owner decision (frozen for Phase D):** observe **multilingual E5-small** embeddings through an **ONNX Runtime INT8** helper. Shadow is **opt-in** and **fail-open**. Production **`Route()`**, **`Classify()`**, **`ClassifyWithSemantic()`**, hook rewrites, and **`DOWNSHIFT_MINILM`** behaviour stay unchanged until Phase E.
+
+Implementation surface: `internal/semantic/e5shadow`, wired from `core.Route` via `applyE5Shadow` (telemetry only).
+
+### 14.1 Environment variables
+
+| Variable | Default | When set | Effect |
+|----------|---------|----------|--------|
+| `DOWNSHIFT_E5_SHADOW` | off (unset or any value except `1`) | `1` | Run the E5 shadow path after production classification. Any other spelling (`true`, `yes`, `on`) is treated as **off**. |
+| `DOWNSHIFT_E5_SHADOW_CMD` | empty | Non-empty shell command | **Required** when shadow is on. Invokes the Phase C ONNX embed helper: read task text on **stdin**, write one JSON array of floats on **stdout** (same wire shape as `DOWNSHIFT_MINILM_EMBED`). Expected backend: **intfloat/multilingual-e5-small** exported to ONNX, executed with **ONNX Runtime INT8** on CPU. |
+| `DOWNSHIFT_E5_PROTOTYPES` | empty | Absolute path to a regular file | **Required** when shadow is on. JSON **`semantic.PrototypeStore`** (development centroids in the **same embedding space** as the helper). Max **256 KiB**; symlinks, FIFOs, and oversize files are rejected. |
+
+**Orthogonality:** `DOWNSHIFT_SHADOW_WEIGHTS` (softmax classifier v2) and `DOWNSHIFT_SCORE_ROUTING` are independent. E5 shadow does not load candidate weights or change score routing.
+
+### 14.2 Fail-open behaviour
+
+| Condition | Hook / routing | Shadow / telemetry |
+|-----------|----------------|-------------------|
+| `DOWNSHIFT_E5_SHADOW` not exactly `1` | Unchanged | No E5 work; `e5_shadow` omitted from `events.jsonl` |
+| Shadow on, `DOWNSHIFT_E5_SHADOW_CMD` empty | Unchanged | `error_code`: `missing_cmd` |
+| Shadow on, prototypes missing / invalid / too large | Unchanged | `error_code`: `load_prototypes` |
+| Embed helper missing, slow, non-JSON, or empty vector | Unchanged | `error_code`: `embed_error` (helper stderr is **not** persisted) |
+| Shadow on, full success | Unchanged tier, complexity, confidence, model rewrite | `e5_shadow` populated (see §14.3) |
+
+Boundaries match other hook helpers: each embed call is capped at **1 s** and the hook’s **1500 ms** global budget (`hookctx`). A hung helper is killed; routing never waits indefinitely. Unlike production MiniLM, the E5 path **does not** fall back to the hash embedder—errors stay in `error_code` only.
+
+**Invariant (Phase D gate):** with shadow enabled vs disabled, `Route()` must produce identical `Tier`, `Complexity`, and `Confident` for the same prompt (`TestRouteE5ShadowDoesNotChangeTier`).
+
+### 14.3 Telemetry (`events.jsonl`)
+
+Decision events may include a prompt-free object **`e5_shadow`** (see `telemetry.E5ShadowRecord`). Allowed fields:
+
+| Field | Meaning |
+|-------|---------|
+| `model_id` | Allowlisted artifact id (SHA-256 of prototypes file, optionally prefixed with `store.model`, e.g. `e5:intfloat/multilingual-e5-small:…`) |
+| `nearest_label` | Nearest centroid label in prototype space |
+| `similarity` | Cosine similarity to that centroid (rounded for JSON) |
+| `would_label` | Hypothetical complexity after the **same monotonic fuse** as production (`semantic.AugmentWith`), not an executed tier |
+| `would_lift` | Whether that fuse would have raised complexity vs the production snapshot |
+| `regex_label` | Production complexity string at observation time (after regex, risk, MiniLM fuse, graph, NB—field name is historical) |
+| `regex_confident` | Production `Confident` at observation time |
+| `latency_ms` | Wall time for the shadow path on this hook |
+| `error_code` | `missing_cmd`, `load_prototypes`, or `embed_error` when observation failed |
+
+**Never persisted:** raw prompt, stdin/stderr, embedding vectors, file paths from env, or provider errors that might echo task text. No new **`SEMANTIC_BOOST`** or reason-code changes from E5 in Phase D.
+
+### 14.4 Operator example (labs / local only)
+
+```bash
+export DOWNSHIFT_E5_SHADOW=1
+export DOWNSHIFT_E5_SHADOW_CMD='/absolute/path/downshift-e5-onnx-int8'   # Phase C artifact
+export DOWNSHIFT_E5_PROTOTYPES='/absolute/path/e5-centroids.json'       # labs-built PrototypeStore
+
+# Run harness hooks as usual; compare aggregates offline (labs / stats), not live tier changes.
+unset DOWNSHIFT_E5_SHADOW   # disable — zero shadow overhead
+```
+
+Centroids and ONNX artifacts are built and versioned in **downshift-labs**; do not commit prompt-bearing fixtures into the public repo.
+
+### 14.5 Phase D acceptance criteria
+
+1. **Routing invariant:** `DOWNSHIFT_E5_SHADOW=1` with valid cmd + prototypes does not change `Tier`, `Complexity`, `Confident`, or hook model rewrite vs shadow off (automated: `internal/core/e5_shadow_test.go`).
+2. **Privacy:** No decision or training JSONL record contains prompt text, full embedding vectors, or helper stderr; only §14.3 fields appear under `e5_shadow`.
+3. **Fail-open:** Every misconfiguration and embed failure yields an `error_code` and leaves production routing identical (automated: `internal/semantic/e5shadow/e5shadow_test.go`).
+4. **Eval report:** Labs (or `downshift-labs`) produces a shadow comparison on **M3** and **legacy five splits**: distribution of `would_lift`, disagreement rate vs production complexity, and p50/p95 `latency_ms` under hook-realistic warm ONNX—without promoting Phase E.
+5. **Promotion gate:** Phase E remains blocked until the owner signs off on item 4 and H14/M3 adjudication plan; no env flag may wire `would_label` into `ClassifyWithSemantic` until then.
