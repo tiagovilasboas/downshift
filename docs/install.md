@@ -263,7 +263,7 @@ For a session that offers GPT-6 Sol and Luna, a trivial subagent can route
 from `gpt-6-sol` to `gpt-6-luna` at low effort — subject to the session
 allowlist and Codex accepting the rewritten input.
 
-Downshift always applies the selected reasoning effort. A code review is a
+Downshift applies the selected reasoning effort, except when a guardrail holds the decision (the spawn keeps its requested effort) or when the decision is unconfident and does not rewrite the model. A code review is a
 frontier task, so a `gpt-5.6-terra` session routes its subagent to
 `gpt-5.6-sol` at high effort. `gpt-6-astra` is marked `routing: "explicit_only"`
 in the catalog. With the default `explicit_upshift` off, downshift does not
@@ -275,7 +275,7 @@ this harness reported no credit set). Cursor `claude-fable-5-1-thinking-high`
 is the same kind of opt-in. Claude Code `claude-fable-5-1` is not
 `explicit_only`; append that id to the session list to opt in. To mark any
 other model as explicit-only, add `"routing": "explicit_only"` to its entry
-in `~/.harness-downshift/catalog.json`.
+in `~/.downshift/catalog.json` (the state dir; `~/.harness-downshift/` is read only when it is the legacy dir in use).
 
 A purely mechanical prompt such as `Use a subagent to only list the .go files`
 is routed to `gpt-6-luna` at low effort when that exact id is in the session
@@ -302,7 +302,7 @@ Register the hook in `~/.gemini/config/hooks.json`:
 }
 ```
 
-When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, inspects the prompt inside `Subagents[0].Prompt`, and dynamically rewrites `Subagents[0].Model` to `flash` or `flash_lite` for mechanical tasks, logging the routing event to `~/.harness-downshift/events.jsonl`.
+When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, inspects the prompt inside `Subagents[0].Prompt`, and dynamically rewrites `Subagents[0].Model` to `flash` or `flash_lite` for mechanical tasks, logging the routing event to `~/.downshift/events.jsonl`.
 
 ## KiroCrew (policy mode through the native Kiro CLI hook)
 
@@ -418,7 +418,7 @@ observed on 2026-10-10 with Kiro CLI 2.29.0; see
 
 `cmd/dsmon` is a separate command inside this repo — a floating terminal widget
 that shows model switches, harness, tier distribution and estimated cost savings
-in real time. It reads `~/.harness-downshift/events.jsonl` and refreshes every
+in real time. It reads `~/.downshift/events.jsonl` and refreshes every
 800 ms. Zero external dependencies; pure stdlib Go.
 
 ```

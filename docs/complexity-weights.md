@@ -31,7 +31,7 @@ Extra points, applied after the regex table:
 | Some signal already matched and the prompt has at least 80 words | +1 COMPLEX |
 
 A TRIVIAL or SIMPLE task that touches risk (secret, auth, crypto, payment,
-vulnerability, PII, destructive command, or prompt injection) is lifted to
+vulnerability, PII, destructive command, prompt injection, or concurrency) is lifted to
 MEDIUM. MEDIUM and COMPLEX are not lifted further by risk. The risk table is
 `internal/core/risk.go`. It sets a floor. It does not add to the vote.
 
@@ -110,7 +110,7 @@ the rewrite, not the score:
 | Harness | What the hook can do |
 |---|---|
 | Claude Code | Writes the family name (`haiku`, `sonnet`, `opus`, `fable`) into `updatedInput.model`. A full id is rejected. |
-| Codex | Writes the model id and `reasoning_effort`. |
+| Codex | Writes the model id and `reasoning_effort`. A held decision writes neither; an unconfident one changes effort only together with a model rewrite. |
 | Cursor | Writes `updated_input.model`. Free and legacy Pro plans discard it. Usage-based plans are not yet proven. |
 | Antigravity | Overwrites the subagent model. Observed on desktop 2.21.1 only. |
 | KiroCrew | No rewrite channel. Exit 0 allows, exit 2 blocks and asks for the cheaper model. |

@@ -33,6 +33,14 @@ downshift-labs (no prompts published here).
 | `fresh.json` | Eval-only (NOT burned). May cite as a **generalization study** with caveats: read-only guard in labs, not traffic quality. | 100 | 50.0% | 40.0–60.0% |
 | `heldout2.json` | Eval-only **blind** split (NOT `holdout.json` burned regression net). | 120 | 40.0% | 31.7–49.2% |
 
+Re-run at `3067340` (2026-10-15, same command): `fresh` 53.0% tier accuracy
+(43.0–63.0%), `heldout2` 41.7% (33.3–50.8%). The change from the table came
+before the beta.14 audit range, whose output is identical item by item (see
+[hardening-audit-2026-10-15.md](../docs/evidence/hardening-audit-2026-10-15.md)).
+Most misses are abstentions, where the router keeps the requested model: the
+classifier is confident on 37 of 100 `fresh` items (tier right on 35) and on
+28 of 120 `heldout2` items (tier right on 22).
+
 These numbers are **not** regression-net scores and must not be read as proof
 that production routing is safe. They sit beside the burned holdout and seed
 nets above, not in place of them.

@@ -67,6 +67,8 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   `model`), that is used as the baseline, and a downshift on it is written only
   to the small tier: Cursor documents `inherit` as the default, but a child can
   run on Composer or a fast variant, so a mid target could be an upshift.
+- **Upshift ranking, all harnesses.** An upshift ranks the session ids by catalog tier, not list position, and never goes below the
+  current model's tier. The rule and its fallback are in [session-models.md](session-models.md).
 - **Cost linkage.** Every decision records `tool_use_hash`. PostToolUse
   repeats the id, so `resolved`, `child_ended` and, through the agent id,
   `usage` attach to the exact decision even with parallel spawns, including

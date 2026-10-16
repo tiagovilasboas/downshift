@@ -150,7 +150,7 @@ Downshift keeps a local cache of public capability scores (Epoch AI ECI, CC BY 4
 
 ## What the evidence shows
 
-Measured on 2026-10-15, one operator, Claude Code, same tasks and prompts in a routed and a control arm, judged only by hidden tests. Full method, limits and the defects the runs exposed: [docs/evidence/subagent-routing-ab-2026-10-15.md](docs/evidence/subagent-routing-ab-2026-10-15.md).
+Measured on 2026-10-15, one operator, Claude Code, same tasks and prompts in a routed and a control arm, judged only by hidden tests. Full method, limits and the defects the runs exposed: [docs/evidence/subagent-routing-ab-2026-10-15.md](docs/evidence/subagent-routing-ab-2026-10-15.md). The same day's hardening audit (defects fixed with their regression tests, benchmark before and after, what is still open) is in [docs/evidence/hardening-audit-2026-10-15.md](docs/evidence/hardening-audit-2026-10-15.md).
 
 | Situation | Accepted (routed / control) | Cost (routed / control) | Rewritten down |
 |---|---|---|---|
@@ -199,7 +199,7 @@ See [the context optimization guide](docs/context-optimization.md) for architect
 
 ## Cost and metrics
 
-- **Silent overspend alarm.** `downshift stats` prints `Frontier decisions N (on doubt, no deterministic lift: M)` and a WARNING when M is above zero. The `SEMANTIC_BOOST` reason code and its share show when the local embedder, not a rule, raised a tier. Both are prompt-free.
+- **Silent overspend alarm.** `downshift stats` prints `Frontier decisions N (rewritten on doubt, no deterministic lift: M)` and a WARNING when M is above zero. The `SEMANTIC_BOOST` reason code and its share show when the local embedder, not a rule, raised a tier. Both are prompt-free.
 - **Estimated, not billed.** Routing-only savings use normalized units. With native tokens, `downshift stats --days=7` also calculates catalog-priced costs and a same-token baseline comparison. A [dated audit](docs/evidence/billing-gap-audit.md) matched five linked Claude Code records to native models/tokens, including both positive-saving records. These estimates are not an invoice; the controlled period comparison remains open.
 - **Real usage on Claude Code (optional).** Add a `SubagentStop` hook running `downshift claude-code-subagent-stop` to record tokens and cost per subagent from its own transcript. Setup and limits: [session-models.md](docs/session-models.md#claude-code-real-usage).
 - **How a child ended (Claude Code, optional).** Add `downshift claude-code-post-tool-use` under `PostToolUseFailure` too. It then records a closed status per Agent/Task child: `completed`, `launched` (background, not a success), `interrupted`, `error`, `stopped` (the child ended, with no outcome claim), or `unknown`. The field is absent when no status applies. The error text is never stored, and this is an observation, not a decision, so it does not change the decision counts. `downshift stats --by-harness` prints a Markdown review table (spawns, applied, held, upshift/downshift, effort and the linked tokens and estimated cost per harness and tier, plus the guardrail that held each spawn) for curating what the router chose; it holds counts only, no prompts. `downshift stats` prints a "How children ended" section when any are present, and the export carries them as `child_status`. When a failed (`error` or `interrupted`) child is followed by another spawn in the same session within 10 minutes, the same section adds a "Respawned after a failure" count. It is a hint only: the next spawn may be unrelated work, so it never becomes a tier label.
@@ -212,7 +212,7 @@ See [the context optimization guide](docs/context-optimization.md) for architect
 
 [INSTALL](docs/install.md) · [CONFIG](docs/config.md) · [session models](docs/session-models.md) · [session discovery](docs/session-discovery.md) · [ARCHITECTURE](docs/architecture.md) · [complexity weights](docs/complexity-weights.md) · [HARNESS-MATRIX](docs/harness-matrix.md) · [WHEN-TO-USE](docs/when-to-use.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
 
-Evidence and method: [subagent routing A/B](docs/evidence/subagent-routing-ab-2026-10-15.md) · [team pilot](docs/pilot.md) · [hook payload probe](docs/probe.md)
+Evidence and method: [subagent routing A/B](docs/evidence/subagent-routing-ab-2026-10-15.md) · [hardening audit](docs/evidence/hardening-audit-2026-10-15.md) · [team pilot](docs/pilot.md) · [hook payload probe](docs/probe.md)
 
 Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit criteria](docs/beta-exit.md) · [remaining tasks](docs/gap-tasks.md)
 
