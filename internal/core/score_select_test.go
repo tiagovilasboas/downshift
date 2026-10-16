@@ -25,6 +25,7 @@ func fakeScores(t *testing.T, scores map[string]float64) {
 type priceResolver struct {
 	price    map[string]float64
 	explicit map[string]bool
+	tier     core.Tier // catalog tier of every id; zero value means mid
 }
 
 func (r priceResolver) ModelFor(h string, t core.Tier) core.Model {
@@ -35,7 +36,11 @@ func (r priceResolver) LookupByID(h, id string) (core.Model, bool) {
 	if !ok {
 		return core.Model{}, false
 	}
-	return core.Model{ID: id, Harness: h, Tier: core.TierMid, InputM: p, OutputM: p, Native: id}, true
+	tier := core.TierMid
+	if r.tier != 0 {
+		tier = r.tier
+	}
+	return core.Model{ID: id, Harness: h, Tier: tier, InputM: p, OutputM: p, Native: id}, true
 }
 func (r priceResolver) SavingsRatio(_, _ core.Model) float64        { return 0 }
 func (r priceResolver) EffortFor(_, _ string, e core.Effort) string { return e.String() }
@@ -287,6 +292,7 @@ func TestScoreLive_KeepsQuotaExplicitOnlyAndHolds(t *testing.T) {
 		res := priceResolver{
 			price:    map[string]float64{"m-10": 1, "m-40": 2, "m-70": 3, "m-90": 4},
 			explicit: map[string]bool{"m-90": true},
+			tier:     core.TierFrontier,
 		}
 		d := liveDecision("codex", core.TierFrontier)
 		d.PlanSession(core.CodexCaps, res, core.KnownSession(scoreIDs), "m-70")

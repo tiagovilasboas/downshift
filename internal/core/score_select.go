@@ -106,8 +106,13 @@ func scoreSelect(d Decision, res Resolver, session SessionList) (string, Model, 
 	}
 	need := lo + (hi-lo)*scoreFraction(d.Tier)
 
+	// A public score never overrides the catalog tier: a cheap small model
+	// with a high score is not a mid-tier model.
 	var passing []Model
 	for _, id := range ids {
+		if m, ok := lookupTier(res, d.Harness, id); ok && m.Tier < d.Tier {
+			continue
+		}
 		if scores[id] >= need-scoreEpsilon && session.quotaAllows(d.Harness, id) {
 			passing = append(passing, modelForSessionID(d.Harness, id, res))
 		}
@@ -175,4 +180,12 @@ func (d *Decision) RecordScoreWould(res Resolver, session SessionList) {
 	if b := modelForSessionID(d.Harness, base, res); price(b) > 0 && price(m) > 0 {
 		d.ScoreWouldCostRatio = price(m) / price(b)
 	}
+}
+
+// lookupTier resolves id in the catalog; ok is false without a resolver.
+func lookupTier(res Resolver, harness, id string) (Model, bool) {
+	if res == nil {
+		return Model{}, false
+	}
+	return res.LookupByID(harness, id)
 }

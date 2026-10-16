@@ -122,7 +122,11 @@ func catalogSessionTarget(d Decision, res Resolver, session SessionList) (string
 	}
 	switch d.Verdict {
 	case VerdictUpshift:
-		return strongestSessionModel(d.Harness, session, res, d.Tier)
+		floor := TierSmall
+		if d.CurrentModel.ID != "" {
+			floor = d.CurrentModel.Tier
+		}
+		return strongestSessionModel(d.Harness, session, res, d.Tier, floor)
 	case VerdictDownshift, VerdictUnknown:
 		return leastSessionModelAtOrAbove(d.Harness, session, res, d.Tier)
 	default:
@@ -235,13 +239,34 @@ func catalogTiers(harness string, ids []string, res Resolver) ([]Tier, bool) {
 	return tiers, true
 }
 
-// TODO(owner): strongestSessionModel still maps tiers to list positions. It
-// was left unchanged on purpose (review 2026-10-13 T2); decide whether upshift
-// should also select by catalog tier.
-func strongestSessionModel(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool, bool) {
+// strongestSessionModel picks the most capable id for an upshift. When every
+// id has a catalog tier, it ranks by tier (highest first, later session
+// position first within a tier) and never returns an id whose tier is below
+// floor, the current model's tier: a session list is not guaranteed to be
+// ordered, and position alone once wrote a small model over a mid one for a
+// COMPLEX task. Otherwise it falls back to the position mapping, as
+// leastSessionModelAtOrAbove does.
+func strongestSessionModel(harness string, session SessionList, res Resolver, minTier, floor Tier) (string, Model, bool, bool) {
 	ids := selectableSessionIDs(harness, session, res, ExplicitUpshiftEnabled())
 	if len(ids) == 0 {
 		return "", Model{}, false, false
+	}
+	if tiers, ok := catalogTiers(harness, ids, res); ok {
+		found := false
+		for tier := TierFrontier; tier >= floor && tier >= TierSmall; tier-- {
+			for i := len(ids) - 1; i >= 0; i-- {
+				if tiers[i] != tier {
+					continue
+				}
+				found = true
+				if session.quotaAllows(harness, ids[i]) {
+					return ids[i], modelForSessionID(harness, ids[i], res), true, false
+				}
+			}
+		}
+		// found: every id at or above the floor was refused by the credit gate.
+		// Otherwise nothing in the list reaches the floor: hold, never go below.
+		return "", Model{}, false, found
 	}
 	start := 0
 	if minTier == TierMid {
