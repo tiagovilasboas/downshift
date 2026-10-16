@@ -13,7 +13,7 @@ import (
 
 // Characterization: Cursor sends no transcript, so the requested model comes
 // only from the payload: tool_input.model, then model_id, then model. The
-// literal "inherit" is passed through unchanged; it is not resolvable here.
+// literal "inherit" means use the parent model, same as an empty tool_input.model.
 func TestRequestedModel_Baseline(t *testing.T) {
 	cases := []struct {
 		name      string
@@ -26,7 +26,7 @@ func TestRequestedModel_Baseline(t *testing.T) {
 		{name: "model_id when tool_input has none", toolInput: `{"task":"t"}`, modelID: "b", model: "c", want: "b"},
 		{name: "payload model last", toolInput: `{"task":"t"}`, model: "c", want: "c"},
 		{name: "empty tool_input model falls through", toolInput: `{"task":"t","model":""}`, modelID: "b", want: "b"},
-		{name: "inherit passes through unresolved", toolInput: `{"task":"t","model":"inherit"}`, modelID: "b", want: "inherit"},
+		{name: "inherit uses parent model_id", toolInput: `{"task":"t","model":"inherit"}`, modelID: "b", want: "b"},
 		{name: "nothing sent", toolInput: `{"task":"t"}`, want: ""},
 	}
 	for _, tc := range cases {
@@ -44,19 +44,26 @@ func TestRequestedModel_Baseline(t *testing.T) {
 	}
 }
 
-// "inherit" is not a catalog id, so Handle routes with no recognised current
-// model. That empty CurrentModel is what makes the runner log unknown.
-func TestHandle_InheritBaselineIsUnrecognised(t *testing.T) {
-	ev := cursor.Event{
+// inherit must resolve like a missing tool_input.model: baseline is model_id.
+func TestHandle_InheritUsesParentModelID(t *testing.T) {
+	ev := withCatalogSession(cursor.Event{
 		ToolName:  "Task",
-		ToolInput: json.RawMessage(`{"task":"rename the userId variable","model":"inherit"}`),
+		ModelID:   catID(core.TierFrontier),
+		ToolInput: json.RawMessage(`{"task":"rename the userId variable to userIdentifier","model":"inherit"}`),
+	})
+	out, _, d := cursor.Handle(ev, cat)
+	wantParent := catID(core.TierFrontier)
+	if d.RequestedID != wantParent {
+		t.Fatalf("Decision.RequestedID = %q, want parent %q", d.RequestedID, wantParent)
 	}
-	_, _, d := cursor.Handle(ev, cat)
-	if d.RequestedID != "inherit" {
-		t.Fatalf("Decision.RequestedID = %q, want inherit", d.RequestedID)
+	if d.CurrentModel.ID != wantParent {
+		t.Fatalf("Decision.CurrentModel.ID = %q, want parent %q", d.CurrentModel.ID, wantParent)
 	}
-	if d.CurrentModel.ID != "" {
-		t.Fatalf("Decision.CurrentModel.ID = %q, want empty (inherit is unresolvable)", d.CurrentModel.ID)
+	if d.Verdict != core.VerdictDownshift || d.Tier != core.TierSmall {
+		t.Fatalf("want small-tier downshift on parent baseline, got verdict=%v tier=%v", d.Verdict, d.Tier)
+	}
+	if m := decodeUpdated(t, out); m == nil {
+		t.Fatal("inherit on parent frontier must still write a small-tier downshift")
 	}
 }
 

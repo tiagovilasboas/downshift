@@ -77,13 +77,22 @@ func TestHookE2E_BaselineUnknownPerHarness(t *testing.T) {
 		wantRaw       string // "" means the field must be absent
 	}{
 		{
-			name: "cursor inherit is unknown with raw kept",
+			name: "cursor inherit without parent model is unknown",
 			run:  runCursor,
 			payload: map[string]any{
 				"hook_event_name": "preToolUse", "tool_name": "Task",
 				"tool_input": map[string]any{"task": "rename the userId variable", "model": "inherit"},
 			},
-			wantRequested: "unknown", wantRaw: "inherit",
+			wantRequested: "unknown",
+		},
+		{
+			name: "cursor inherit uses model_id baseline",
+			run:  runCursor,
+			payload: map[string]any{
+				"hook_event_name": "preToolUse", "tool_name": "Task", "model_id": "claude-opus-5-thinking-high",
+				"tool_input": map[string]any{"task": "rename the userId variable", "model": "inherit"},
+			},
+			wantRequested: "claude-opus-5-thinking-high",
 		},
 		{
 			name:          "antigravity recognised Model",

@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Claude Code: with an empty transcript, the bounded wait for the session model ran twice per hook call (about 850 ms); it now runs once.
 - A downshift held because its baseline was guessed (Claude Code settings, Cursor parent `model_id`) now carries the reason code `HELD_GUESSED_BASELINE` instead of an unexplained `allow`.
 - A prompt that mixes an English trivial verb with a risk written in another language (ES, FR, DE, JA) is no longer downshifted: `Classify` marks prompts with non-Latin script or Spanish/French/German markers unconfident, so the guardrails keep the requested model. Portuguese gains risk terms for access control, vulnerabilities, personal data and prompt injection.
+- Cursor: `tool_input.model` of `inherit` now uses the parent `model_id` as the routing baseline, same as a missing model, so trivial spawns downshift instead of logging an unknown baseline.
 
 ### Changed
 

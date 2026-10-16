@@ -76,7 +76,7 @@ func (ev Event) RequestedReasoningEffort() string {
 func (ev Event) RequestedModel() string {
 	var ti map[string]any
 	if json.Unmarshal(ev.ToolInput, &ti) == nil {
-		if model := hookutil.StringField(ti, "model"); model != "" {
+		if model := hookutil.StringField(ti, "model"); model != "" && model != "inherit" {
 			return model
 		}
 	}
@@ -124,8 +124,8 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// fromParent: the baseline is the parent's model (model_id, model), not
 	// one the call names. Cursor documents inherit as the default, but a
 	// child can also run on Composer or a fast variant.
-	fromParent := currentModel == ""
-	if currentModel == "" {
+	fromParent := currentModel == "" || currentModel == "inherit"
+	if currentModel == "" || currentModel == "inherit" {
 		currentModel = ev.ModelID
 	}
 	if currentModel == "" {
