@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"unicode"
 )
 
 // RiskSignalDef is one deterministic risk matcher. Risk signals do not vote
@@ -49,26 +50,149 @@ var RawRiskSignals = []RiskSignalDef{
 	{"prompt_injection", `\b(ignore|disregard|forget|override)\s+(all\s+|any\s+|the\s+|your\s+)?(previous|prior|above|earlier|system)\s+(instructions?|prompts?|rules?)\b|\bsystem prompt\b|\bthis is (a |an )?(trivial|simple|easy|tiny)\b|\b(route|send|use)\b.{0,20}\b(cheap|cheapest|small|smallest|haiku|mini|nano)\s+(model|tier)\b`},
 }
 
+// riskLiterals is a prefilter, not a second table. For each category it lists
+// lowercase ASCII literals such that every match of that category's regex,
+// run on splitIdentifiers(prompt) and then on foldRiskText, contains at least
+// one of them. A text with none of them cannot match, so the regex is skipped.
+// The lists are supersets of the required words (e.g. "auth" covers "authz"),
+// so a missing entry only costs speed: a category without one always runs its
+// regex. Adding a pattern means adding its required word here too.
+var riskLiterals = map[string][]string{
+	"secret": {"secret", "password", "passphrase", "credential", "api", "private", "signing",
+		"token", "jwt", "oauth", "saml", "sso", "2fa", "mfa", "totp", "senha", "credencia",
+		"segredo", "rotat", "chave"},
+	"authz": {"auth", "permission", "privilege", "admin", "rbac", "acl", "autentica",
+		"autoriza", "access control"},
+	"crypto": {"crypt", "hmac", "tls", "ssl", "certifica", "signature", "signing", "criptograf"},
+	"payment": {"payment", "charg", "refund", "settlement", "payout", "stripe", "pci",
+		"billing", "pagamento", "reembolso", "estorno", "cobr"},
+	"vuln": {"injection", "xss", "csrf", "ssrf", "rce", "sanitiz", "vulnerab", "cve-",
+		"exploit", "security"},
+	"pii": {"pii", "gdpr", "lgpd", "personal data", "ssn", "social security", "credit card"},
+	"destructive": {"-rf", "drop", "trunc", "delet", "force", "push", "reset", "wipe", "purge",
+		"prod", "apag", "exclu"},
+	"concurrency": {"race", "mutex", "deadlock", "atomic", "sync.", "semaphore", "thread",
+		"condi"},
+	"prompt_injection": {"ignore", "disregard", "forget", "override", "system prompt", "this is",
+		"cheap", "small", "haiku", "mini", "nano"},
+}
+
 type riskSignal struct {
 	category string
 	re       *regexp.Regexp
+	literals []string // nil: no prefilter, always run re
 }
 
 var riskSignals = func() []riskSignal {
 	out := make([]riskSignal, 0, len(RawRiskSignals))
 	for _, r := range RawRiskSignals {
-		out = append(out, riskSignal{category: r.Category, re: regexp.MustCompile(`(?i)` + r.Pattern)})
+		out = append(out, riskSignal{
+			category: r.Category,
+			re:       regexp.MustCompile(`(?i)` + r.Pattern),
+			literals: riskLiterals[r.Category],
+		})
 	}
 	return out
 }()
 
-var camelBoundary = regexp.MustCompile(`([a-z0-9])([A-Z])`)
+// mayMatch reports whether folded contains a literal the regex needs. Without
+// the prefilter it reports true, so the regex decides.
+func (s riskSignal) mayMatch(folded string) bool {
+	if s.literals == nil {
+		return true
+	}
+	for _, lit := range s.literals {
+		if strings.Contains(folded, lit) {
+			return true
+		}
+	}
+	return false
+}
+
+// nonASCIIFold maps each non-ASCII rune that (?i) treats as an ASCII letter
+// (U+212A KELVIN SIGN as k, U+017F LONG S as s) to that letter. Computed from
+// unicode.SimpleFold, the same orbit the regexp engine uses for case folding.
+var nonASCIIFold = func() map[rune]byte {
+	out := map[rune]byte{}
+	for c := 'a'; c <= 'z'; c++ {
+		for r := unicode.SimpleFold(c); r != c; r = unicode.SimpleFold(r) {
+			if r >= 0x80 {
+				out[r] = byte(c)
+			}
+		}
+	}
+	return out
+}()
+
+// foldRiskText lowercases ASCII and maps the non-ASCII case-fold partners of
+// ASCII letters onto those letters. It is used only for the literal prefilter.
+// Invalid UTF-8 becomes U+FFFD, which never equals an ASCII literal byte.
+func foldRiskText(text string) string {
+	if !needsFold(text) {
+		return text
+	}
+	var b strings.Builder
+	b.Grow(len(text))
+	for _, r := range text {
+		switch {
+		case r >= 'A' && r <= 'Z':
+			b.WriteByte(byte(r) + ('a' - 'A'))
+		case r < 0x80:
+			b.WriteByte(byte(r))
+		case nonASCIIFold[r] != 0:
+			b.WriteByte(nonASCIIFold[r])
+		default:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+func needsFold(text string) bool {
+	for i := 0; i < len(text); i++ {
+		if c := text[i]; (c >= 'A' && c <= 'Z') || c >= 0x80 {
+			return true
+		}
+	}
+	return false
+}
+
+func isLowerOrDigit(c byte) bool { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') }
+func isUpper(c byte) bool        { return c >= 'A' && c <= 'Z' }
 
 // splitIdentifiers turns code identifiers into words so risk vocabulary is
 // found inside them: creditCardNumber → "credit Card Number", api_key →
-// "api key".
+// "api key". It is the same as replacing each [a-z0-9][A-Z] pair with the pair
+// and a space, then each "_" with a space, but it returns the prompt unchanged
+// (no allocation) when there is nothing to split.
 func splitIdentifiers(prompt string) string {
-	return strings.ReplaceAll(camelBoundary.ReplaceAllString(prompt, "$1 $2"), "_", " ")
+	if !needsSplit(prompt) {
+		return prompt
+	}
+	var b strings.Builder
+	b.Grow(len(prompt) + 16)
+	for i := 0; i < len(prompt); i++ {
+		c := prompt[i]
+		if c == '_' {
+			b.WriteByte(' ')
+			continue
+		}
+		b.WriteByte(c)
+		if i+1 < len(prompt) && isLowerOrDigit(c) && isUpper(prompt[i+1]) {
+			b.WriteByte(' ')
+		}
+	}
+	return b.String()
+}
+
+func needsSplit(prompt string) bool {
+	for i := 0; i < len(prompt); i++ {
+		c := prompt[i]
+		if c == '_' || (i+1 < len(prompt) && isLowerOrDigit(c) && isUpper(prompt[i+1])) {
+			return true
+		}
+	}
+	return false
 }
 
 // RiskCategoryNames returns the set of known risk category names, so a
@@ -110,9 +234,10 @@ func RiskCategories(prompt string) []string {
 
 func scanRiskCategories(prompt string) []string {
 	text := splitIdentifiers(prompt)
+	folded := foldRiskText(text)
 	var cats []string
 	for _, s := range riskSignals {
-		if s.re.MatchString(text) {
+		if s.mayMatch(folded) && s.re.MatchString(text) {
 			cats = append(cats, s.category)
 		}
 	}
