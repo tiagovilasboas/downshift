@@ -300,42 +300,57 @@ func checkScores(rep *doctorReport) {
 }
 
 func checkE5Shadow(rep *doctorReport, env doctorEnv) {
-	if strings.TrimSpace(env.Getenv(e5shadow.EnableEnv)) != "1" {
+	shadow := strings.TrimSpace(env.Getenv(e5shadow.EnableEnv)) == "1"
+	fuse := strings.TrimSpace(env.Getenv(e5shadow.IntegrateEnv)) == "1"
+	if !shadow && !fuse {
 		return
 	}
-	cmd := strings.TrimSpace(env.Getenv(e5shadow.CmdEnv))
+	id := "e5 shadow"
+	switch {
+	case fuse && shadow:
+		id = "e5 encoder"
+	case fuse:
+		id = "e5 fuse"
+	}
+	cmd := e5shadow.EmbedCmdFrom(env.Getenv)
 	proto := strings.TrimSpace(env.Getenv(e5shadow.PrototypesEnv))
 	if cmd == "" {
 		rep.add(doctorCheck{
-			ID:     "e5 shadow",
+			ID:     id,
 			Status: doctorWarn,
-			Detail: "DOWNSHIFT_E5_SHADOW=1 but DOWNSHIFT_E5_SHADOW_CMD is empty (shadow records missing_cmd only)",
-			Fix:    "set DOWNSHIFT_E5_SHADOW_CMD to a local ONNX helper (see tools/e5-shadow/README.md)",
+			Detail: "E5 enabled but embed cmd is empty (fail-open; fuse needs DOWNSHIFT_E5_CMD, shadow needs DOWNSHIFT_E5_SHADOW_CMD)",
+			Fix:    "set DOWNSHIFT_E5_CMD (fuse) and/or DOWNSHIFT_E5_SHADOW_CMD (shadow) to a local ONNX helper",
 		})
 		return
 	}
 	if !e5shadow.CmdTrusted(cmd) {
 		rep.add(doctorCheck{
-			ID:     "e5 shadow",
+			ID:     id,
 			Status: doctorWarn,
-			Detail: "E5 shadow command is not a trusted local helper (absolute binary or python3 + absolute script)",
+			Detail: "E5 command is not a trusted local helper (absolute binary or python3 + absolute script)",
 			Fix:    "use an absolute path to a reviewed embed helper; never curl/wget/sh -c",
 		})
 		return
 	}
 	if proto == "" {
 		rep.add(doctorCheck{
-			ID:     "e5 shadow",
+			ID:     id,
 			Status: doctorWarn,
 			Detail: "DOWNSHIFT_E5_PROTOTYPES is empty",
 			Fix:    "set DOWNSHIFT_E5_PROTOTYPES to a labs-built PrototypeStore JSON under ~/.downshift/",
 		})
 		return
 	}
+	detail := "shadow enabled with local helper and prototypes path configured"
+	if fuse && !shadow {
+		detail = "fuse enabled with local helper and prototypes path configured"
+	} else if fuse && shadow {
+		detail = "fuse+shadow enabled with local helper and prototypes path configured"
+	}
 	rep.add(doctorCheck{
-		ID:     "e5 shadow",
+		ID:     id,
 		Status: doctorOK,
-		Detail: "shadow enabled with local helper and prototypes path configured",
+		Detail: detail,
 	})
 }
 

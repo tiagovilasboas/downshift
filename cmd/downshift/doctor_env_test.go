@@ -56,6 +56,16 @@ func TestCheckE5ShadowWarnsWhenMisconfigured(t *testing.T) {
 	}
 }
 
+func TestCheckE5FuseWarnsWhenMisconfigured(t *testing.T) {
+	rep := &doctorReport{}
+	checkE5Shadow(rep, doctorEnv{Getenv: envOf(map[string]string{
+		e5shadow.IntegrateEnv: "1",
+	})})
+	if len(rep.Checks) != 1 || rep.Checks[0].Status != doctorWarn || rep.Checks[0].ID != "e5 fuse" {
+		t.Fatalf("checks = %+v", rep.Checks)
+	}
+}
+
 func TestAllHarnessCapsCoversEveryAdapter(t *testing.T) {
 	want := map[string]bool{"claude-code": true, "cursor": true, "codex": true, "kirocrew": true, "antigravity": true}
 	for _, c := range core.AllHarnessCaps() {

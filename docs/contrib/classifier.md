@@ -41,8 +41,9 @@ the tier into a model id are in [complexity-weights.md](../reference/complexity-
    Confident Medium/Simple + risk on bounded delegation briefs or narrow high-stakes patterns
    → `RiskAbstain` (confidence cleared, tier unchanged); counts as `deterministicLift` for R7/R9.
 
-**E5 shadow (not production routing):** `DOWNSHIFT_E5_SHADOW=1` records multilingual embedding
-observations on `Route()`; see `internal/semantic/e5shadow` and initiative doc §14.
+**E5 multilingual fuse (opt-in, default off):** `DOWNSHIFT_E5_FUSE=1` applies
+`DOWNSHIFT_E5_CMD` + `DOWNSHIFT_E5_PROTOTYPES` inside `ClassifyWithSemantic`; fail-open.
+It does not reuse `DOWNSHIFT_E5_SHADOW_CMD`. `DOWNSHIFT_E5_SHADOW=1` remains observation-only.
 
 ---
 

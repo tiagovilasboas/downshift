@@ -7,7 +7,8 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/semantic"
 )
 
-// ClassifyWithSemantic runs the regex classifier plus optional MiniLM boost.
+// ClassifyWithSemantic runs the regex classifier plus optional MiniLM boost
+// and, when DOWNSHIFT_E5_FUSE=1, the multilingual E5 fuse.
 func ClassifyWithSemantic(prompt string) Classification {
 	return classifyWithSemantic(prompt, Classify(prompt))
 }
@@ -19,6 +20,13 @@ func classifyWithSemantic(prompt string, base Classification) Classification {
 	if base.NoSignal {
 		return base
 	}
+	if fused, used := applyE5Fuse(prompt, base); used {
+		return fused
+	}
+	return applyMiniLMBoost(prompt, base)
+}
+
+func applyMiniLMBoost(prompt string, base Classification) Classification {
 	label := base.Complexity.String()
 	newLabel, ok := semantic.MaybeAugment(prompt, label, base.Confident)
 	if !ok {

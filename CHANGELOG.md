@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Docs: BDI agentic router diagram (`docs/img/bdi-agentic-*.svg`) and README section map perception → beliefs → desires → deliberation → intentions → action for every harness adapter.
 - Optional `DOWNSHIFT_E5_SHADOW=1` records multilingual E5 ONNX observations on `Route()` without changing tier (Phase D shadow); see `downshift doctor` and initiative doc §14.
+- Optional `DOWNSHIFT_E5_FUSE=1` runs the same encoder inside `ClassifyWithSemantic` (Phase E plumbing, default off, fail-open). It does not reuse `DOWNSHIFT_E5_SHADOW_CMD`; reserved centroids `ABSTAIN`/`FOREIGN` may clear confidence only. Owner enable still waits on labs M3 + legacy gates (initiative §15).
 - Confident upshifts pick the least session model at the needed tier (same target a downshift of that task would use); guessed baselines and `explicit_upshift` still keep the strongest tier.
 - Session lists can carry per-id metadata (tier, supported effort, optional list prices) via `core.ResolveSessionModels`; native or operator order ranks capability but does not invent prices, and a missing rate stays unknown for cost and savings.
 - The risk scan runs each category's regex only when the text holds a literal every match needs. Routing a 1 MiB prompt fell from about 2.9 s to 78 ms in the worst measured case; the categories found are identical (differential test against the previous scan).

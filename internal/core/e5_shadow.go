@@ -8,8 +8,9 @@ import (
 )
 
 // E5Shadow records a parallel multilingual embedding observation. It does not
-// change Tier or Complexity; telemetry only unless a future integration flag
-// promotes the candidate.
+// change Tier or Complexity. Production fuse is applyE5Fuse (DOWNSHIFT_E5_FUSE=1);
+// this path stays telemetry-only. When DOWNSHIFT_E5_CMD equals
+// DOWNSHIFT_E5_SHADOW_CMD, LookupFuse and LookupNearest share one embed.
 type E5Shadow struct {
 	ModelID        string
 	NearestLabel   string

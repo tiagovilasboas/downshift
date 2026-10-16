@@ -124,6 +124,7 @@ type Decision struct {
 	ScoreApplied bool
 	// E5Shadow holds a parallel multilingual embedding observation when
 	// DOWNSHIFT_E5_SHADOW=1. It never changes Tier or Complexity by itself.
+	// Production fuse is a separate flag (DOWNSHIFT_E5_FUSE=1) in ClassifyWithSemantic.
 	E5Shadow E5Shadow
 }
 

@@ -17,6 +17,10 @@ const (
 	LabelSimple  = "SIMPLE"
 	LabelMedium  = "MEDIUM"
 	LabelComplex = "COMPLEX"
+	// LabelAbstain / LabelForeign are reserved E5 centroids: fuse may clear
+	// confidence only. They must not pass through labelRank/AugmentVector.
+	LabelAbstain = "ABSTAIN"
+	LabelForeign = "FOREIGN"
 )
 
 // PrototypeStore holds centroid embeddings per complexity label.

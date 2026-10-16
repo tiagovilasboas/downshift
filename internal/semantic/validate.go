@@ -10,7 +10,7 @@ import (
 
 const (
 	maxPrototypeDim     = 1024
-	maxPrototypeLabels  = 4
+	maxPrototypeLabels  = 6 // four complexity classes plus ABSTAIN/FOREIGN
 	maxPrototypeNameLen = 128
 )
 
@@ -27,7 +27,7 @@ func (p PrototypeStore) Validate() error {
 	}
 	for label, vec := range p.Centroids {
 		switch label {
-		case LabelTrivial, LabelSimple, LabelMedium, LabelComplex:
+		case LabelTrivial, LabelSimple, LabelMedium, LabelComplex, LabelAbstain, LabelForeign:
 		default:
 			return fmt.Errorf("unknown label")
 		}

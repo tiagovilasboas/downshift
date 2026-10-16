@@ -20,6 +20,7 @@ import (
 func TestE5Shadow_EnabledFailOpenDoesNotChangeRoute(t *testing.T) {
 	offlineRouting(t)
 	t.Setenv("DOWNSHIFT_MINILM", "0")
+	t.Setenv(e5shadow.IntegrateEnv, "")
 	prompt := "rename userId to accountId across the repo"
 	t.Setenv(e5shadow.EnableEnv, "")
 	base := core.Route(prompt, "cursor", "gpt-4", cat)
@@ -38,6 +39,7 @@ func TestE5Shadow_EnabledFailOpenDoesNotChangeRoute(t *testing.T) {
 func TestE5Shadow_OnRecordsWithoutChangingRoute(t *testing.T) {
 	offlineRouting(t)
 	t.Setenv("DOWNSHIFT_MINILM", "0")
+	t.Setenv(e5shadow.IntegrateEnv, "")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	restore := hookctx.Set(ctx)
 	t.Cleanup(func() {

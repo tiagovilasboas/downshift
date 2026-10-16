@@ -5,7 +5,7 @@
 harness-downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
-**Status:** Phase A complete; **Phase D (E5 shadow) shipped** on `main` (`831829a`+). Phase E integration remains off.  
+**Status:** Phase A complete; **Phase D (E5 shadow) shipped** on `main` (`831829a`+). **Phase E contract frozen** (this doc §15): opt-in encoder fuse, default off. Implementation not started; no LLM in `Route()`/`Classify()`.  
 **Owner decision:** This initiative supersedes non-essential handoff work (H7, H8, H10, H11) until Phase B baseline is frozen; it does **not** pause guardrail integrity work or H12 release when approved.
 
 ---
@@ -18,7 +18,7 @@ https://github.com/tiagovilasboas/downshift
 | **B — Benchmark** | Versioned eval harness in labs; per-language metrics; equivalence sets | Baseline numbers reproduced on current `main`; train/val/test split documented |
 | **C — Local prototype** | Isolated encoder + offline scorer; p50/p95, RSS, artifact size | Prototype runs without network; fails closed under hook budget in synthetic hook test |
 | **D — Shadow** | Parallel observations only (`routingv2/shadow` pattern); no `Route()` change | Shadow report on M3 + legacy splits; zero production tier writes from candidate |
-| **E — Integration** | Opt-in env flag; fuses with regex + guardrails; kill switch | M3: unsafe confident → 0 without legacy-split regression; owner enables flag |
+| **E — Integration** | Opt-in `DOWNSHIFT_E5_FUSE=1`; language-aware abstention + constrained raise; kill switch | Merge: default off + unit gates. Enable: H14 unsafe confident = 0 (fuse on and off), legacy five splits non-regression vs current `main`, labs mover ≠ MiniLM raise-only. Owner enables flag. |
 
 **Hard rules (AGENTS.md layering):** behaviour in `internal/core` and shared packages; adapters unchanged except exposing facts; no harness-specific branches in `core`; shadow never auto-activates routing; task text not persisted in telemetry.
 
@@ -166,9 +166,13 @@ Evaluation dimensions: equivalence consistency (formal/informal/slang PT/EN), M3
 
 ### Phase E — Integration
 
-- Env: `DOWNSHIFT_SEMANTIC_*` (names TBD); default off.
-- Fuse rules: semantic may **lower confidence** or **abstain** on language mismatch; may **not** sole-source downshift on risk-labelled M3 cases until proven.
-- Rollback: unset env → current behaviour.
+Orchestrator verdict **REVISE** (2026-10-16, força total). Frozen contract: [§15](#15-phase-e-env-contract).
+
+- **Not SHIP** of MiniLM-identical raise-only (`AugmentVector` → `would_label`). That is M4; it cannot add linguistic intelligence.
+- **Not an LLM.** Encoder only: `intfloat/multilingual-e5-small` ONNX INT8.
+- Env: `DOWNSHIFT_E5_FUSE` (exact `1`, default off). Orthogonal to `DOWNSHIFT_E5_SHADOW` and `DOWNSHIFT_MINILM`.
+- Fuse may **abstain / lower confidence** on language mismatch; may **raise** only under MiniLM constraints. Must not lower complexity, create COMPLEX alone, or bypass Check R5–R9.
+- Rollback: unset `DOWNSHIFT_E5_FUSE` → bit-identical `Route()` to current `main`.
 
 ---
 
@@ -213,11 +217,11 @@ Proceed only if Phase B shows representation limit (e.g. e5 fixes equivalence bu
 
 ## 11. Next actions (priority order)
 
-1. **Human adjudication** sample of M3 labels (owner/labs) — blocks interpreting 34% tier accuracy.
-2. **Phase B harness** in `downshift-labs`: e5-small vs MiniLM, same fuse contract, hook-realistic latency.
-3. **Phase D analysis** — aggregate E5 shadow vs production on M3 (no auto-routing).
-4. **Phase C** warm ONNX / `downshift serve` path if p95 still above hook budget.
-5. Resume H12/H7 when owner prioritizes release/evidence over semantic bench.
+1. **Fullstack (authorized):** implement §15 in `internal/core` + `internal/semantic` (not adapters). Flag default off.
+2. **Labs:** ship E5 prototype JSON with reserved `ABSTAIN`/`FOREIGN` centroids (complexity-only store cannot abstain). Warm ONNX p95 under hook budget.
+3. **Human adjudication** sample of M3 labels — still blocks interpreting 34% tier accuracy as encoder failure.
+4. **Phase D analysis** continues (shadow `would_lift` vs production) — does not gate the fuse *plumbing* PR; **does** gate owner `DOWNSHIFT_E5_FUSE=1`.
+5. Resume H12/H7 when owner prioritizes release/evidence over semantic enable.
 
 ---
 
@@ -225,8 +229,8 @@ Proceed only if Phase B shows representation limit (e.g. e5 fixes equivalence bu
 
 | Area | Likely touch |
 |------|----------------|
-| `internal/semantic/` | Encoder backends, ONNX, benchmarks |
-| `internal/core/semantic_fuse.go`, `lang_guard.go` | Fuse and abstention policy |
+| `internal/semantic/` (`e5fuse` + `e5shadow`) | Encoder backends, ONNX, Phase E fuse (new), shadow |
+| `internal/core/semantic_fuse.go` | MiniLM + E5 fuse; `lang_guard.go` stays language-regex |
 | `internal/routingv2/shadow/` | Observations |
 | `docs/reference/complexity-weights.md`, harness-matrix | Behaviour docs |
 | `downshift-labs/eval/multilang/` | Benchmarks, manifests (not embedded prompts in public repo) |
@@ -238,7 +242,7 @@ No adapter routing logic; no catalog changes for semantic work.
 ## 13. Risks still open
 
 - M3 labels may over-state frontier expectation → false “unsafe” counts.
-- Embedding may solve **variant** understanding but not **tier** if fuse stays monotonic raise-only.
+- Embedding may solve **variant** understanding but not **tier** if fuse stays MiniLM raise-only (Phase E forbids shipping that path; abstain is the linguistic lever).
 - Hook budget may require **always-warm** sidecar — operational complexity.
 - Overfitting M3 while breaking legacy splits (forbidden by project rules).
 
@@ -314,4 +318,157 @@ Centroids and ONNX artifacts are built and versioned in **downshift-labs**; do n
 2. **Privacy:** No decision or training JSONL record contains prompt text, full embedding vectors, or helper stderr; only §14.3 fields appear under `e5_shadow`.
 3. **Fail-open:** Every misconfiguration and embed failure yields an `error_code` and leaves production routing identical (automated: `internal/semantic/e5shadow/e5shadow_test.go`).
 4. **Eval report:** Labs (or `downshift-labs`) produces a shadow comparison on **M3** and **legacy five splits**: distribution of `would_lift`, disagreement rate vs production complexity, and p50/p95 `latency_ms` under hook-realistic warm ONNX—without promoting Phase E.
-5. **Promotion gate:** Phase E remains blocked until the owner signs off on item 4 and H14/M3 adjudication plan; no env flag may wire `would_label` into `ClassifyWithSemantic` until then.
+5. **Promotion gate:** Do **not** wire shadow `would_label` / `AugmentVector` into `ClassifyWithSemantic` (that is M4). Phase E plumbing is authorized as a **distinct** fuse (§15). Owner **enable** (`DOWNSHIFT_E5_FUSE=1`) still waits on item 4 plus §15.6 gates.
+
+---
+
+## 15. Phase E env contract (opt-in encoder fuse)
+
+harness-downshift by Tiago de Carvalho Vilas Boas  
+https://github.com/tiagovilasboas/downshift
+
+**Owner decision (frozen 2026-10-16):** Phase E is an **opt-in** fuse of **intfloat/multilingual-e5-small** (ONNX Runtime INT8) into `ClassifyWithSemantic`. It is **not** a chat/completion LLM, **not** a second `Route()`, and **not** MiniLM raise-only. Default **off**. Fail-open. Kill switch = unset.
+
+Orchestrator verdict: **REVISE** (reject SHIP of `would_label`; reject waiting for an LLM ceiling). Fallback if the PR exceeds one increment: **SPLIT** E1 abstain-only then E2 constrained raise, same env flag.
+
+### 15.1 Environment variables
+
+| Variable | Default | When set | Effect |
+|----------|---------|----------|--------|
+| `DOWNSHIFT_E5_FUSE` | off (unset or any value except `1`) | `1` | Run the E5 fuse **after** regex `Classify` + optional MiniLM `MaybeAugment`, **before** graphify / NB / `Check`. Any other spelling (`true`, `yes`, `on`) is **off**. |
+| `DOWNSHIFT_E5_CMD` | empty | Non-empty shell command | **Required** when fuse is on. Same wire as `DOWNSHIFT_E5_SHADOW_CMD` / `DOWNSHIFT_MINILM_EMBED`: task text on **stdin**, one JSON float array on **stdout**. Backend: **intfloat/multilingual-e5-small** ONNX INT8 CPU. Must pass `e5shadow.CmdTrusted`. |
+| `DOWNSHIFT_E5_PROTOTYPES` | empty | Absolute path to a regular file | **Shared with Phase D.** **Required** when fuse is on. JSON `semantic.PrototypeStore`. Max **256 KiB**; symlinks, FIFOs, oversize rejected. Enable-gate centroids **must** include reserved labels `ABSTAIN` and/or `FOREIGN` (complexity-only maps cannot abstain). |
+
+Do **not** introduce `DOWNSHIFT_SEMANTIC_*`. MiniLM already owns that role. Do **not** retune thresholds via env (`MinSimilarity` stays in code).
+
+### 15.2 Orthogonality
+
+| `E5_FUSE` | `E5_SHADOW` | `MINILM` | Behaviour |
+|-----------|-------------|----------|-----------|
+| off | off | on (default) | Current `main` |
+| off | `1` | any | Phase D: observation only; `Route()` identity |
+| `1` | off | on or `0` | Fuse **success** skips MiniLM `MaybeAugment` (one semantic slot). Fuse **fail-open** restores MiniLM+regex (current `main`). |
+| `1` | `1` | any | Fuse applies **and** shadow may record. **At most one embed** per `Route()` (reuse the vector; do not pay 2× 1 s) |
+| off | off | `0` | Regex + guards only (existing tests) |
+
+`DOWNSHIFT_SHADOW_WEIGHTS` and `DOWNSHIFT_SCORE_ROUTING` stay independent. Fuse does not load v2 candidate weights.
+
+MiniLM polarity stays **opt-out** (`0`/`false`/`off`/`no`) and is **unchanged whenever `E5_FUSE` is unset**. E5 fuse polarity is **opt-in exact `1`**, like shadow. When fuse is on and the helper succeeds, **skip** MiniLM hash **and** `DOWNSHIFT_MINILM_EMBED` for that hook (AppSec: two helpers vs 1500 ms lets MiniLM hash-fallback **change** `Route` while E5 eats the budget). Do **not** rewrite the MiniLM env; fail-open must still run MiniLM.
+
+Do **not** silently reuse `DOWNSHIFT_E5_SHADOW_CMD` when `DOWNSHIFT_E5_CMD` is empty (`missing_cmd`, fail-open). Operators who want both copy the same absolute path into both variables.
+
+### 15.3 Fail-open and kill switch
+
+| Condition | `Route()` / classify | Telemetry |
+|-----------|----------------------|-----------|
+| `DOWNSHIFT_E5_FUSE` not exactly `1` | Unchanged vs current `main` | No fuse work; no `e5_fuse` object |
+| Fuse on, `DOWNSHIFT_E5_CMD` empty | Unchanged | `error_code`: `missing_cmd` |
+| Fuse on, cmd not `CmdTrusted` | Unchanged | `error_code`: `untrusted_cmd` |
+| Fuse on, prototypes missing / invalid / too large | Unchanged | `error_code`: `load_prototypes` |
+| Helper missing, slow (>1 s or hook 1500 ms), non-JSON, empty vector | Unchanged | `error_code`: `embed_error` (stderr **not** persisted) |
+| Fuse on, full success | Complexity/confidence only as §15.4 allows | `e5_fuse` populated (prompt-free) |
+
+Unlike MiniLM, E5 fuse **does not** fall back to the hash embedder (spaces must not mix). Hung helper is killed; routing never waits indefinitely.
+
+**Kill switch:** `unset DOWNSHIFT_E5_FUSE` (or any value except `1`) → `Tier`, `Complexity`, `Confident`, `SafeVerdict`, and hook rewrite **identical** to current `main` for the same prompt (`TestE5Fuse_OffMatchesCurrentRoute`).
+
+### 15.4 Fuse policy (what E5 may vs must not)
+
+Insertion point: `classifyWithSemantic` after MiniLM `MaybeAugment`, still inside `classifyTask`, **before** graphify, NB, `compareToCurrentModel`, and **`Check`**. Adapters unchanged.
+
+**MAY**
+
+1. **Abstain / lower confidence** when nearest centroid label is `ABSTAIN` or `FOREIGN` and cosine ≥ `semantic.MinSimilarity` (0.45). Set `Confident=false`. Optionally set `E5Abstain=true` for telemetry. **Do not** change `Complexity`. **Do not** set `UnsupportedLanguage` (that flag stays `lang_guard`). **Do not** set `RiskAbstain` (that flag stays `risk.go`).
+2. **Raise complexity** only if **all** of: not `NoSignal`; regex `Confident==false`; nearest label is TRIVIAL\|SIMPLE\|MEDIUM\|COMPLEX; `labelRank(nearest) > labelRank(base)`; cosine ≥ 0.45; **not** (`nearest==COMPLEX` && `base.Scores[Complex]==0`). After a raise: `Confident=false`, `SemanticLift` if rank increased, then `applyRiskFloor`. Reason code **`E5_BOOST`** (do not reuse `SEMANTIC_BOOST`).
+3. Log abstention as **`E5_ABSTAIN`**.
+
+**MUST NOT**
+
+- Call a chat/completion LLM from `Route()` / `Classify()` / fuse / shadow.
+- Lower `Complexity` or emit a sole-source downshift (risk-labelled M3 stays on regex + R5).
+- Create COMPLEX with no regex Complex score (same MiniLM guard).
+- Boost a `NoSignal` prompt.
+- Set `Confident=true`.
+- Enter `deterministicLift` (`RiskFloor` / `RiskAbstain` / `GraphEscalated` / `NBUpshift` / `PolicyFloor` only). An E5 raise or abstain **must not** exempt R7/R8/R9.
+- Bypass or rewrite `Check` R5–R9 (or R1/R2/R4). Fuse runs **before** Check; guardrails still win.
+- Persist prompt text, stdin, stderr, embedding vectors, or env file paths.
+- Auto-enable (no default-on, no “shadow was healthy so fuse on”).
+- Put policy in adapters or hardcode model IDs in Go (artifact id via prototypes `model` + SHA-256, as Phase D).
+
+### 15.5 Why M4 was null, and what would move M3
+
+Evidence: `downshift-labs/eval/multilang/m4/metrics.json` (tier accuracy **34.1% = 34.1%**, coverage **25.3% = 25.3%**, unsafe confident **10 = 10**); `helper-probe.json` (CmdEmbedder **1103 ms**, `success: false` at 1 s); candidate p95 **2.34 ms** (not neural). Post-H14 on `main`, unsafe confident is **0** via regex/`lang_guard`/`RiskAbstain`, not MiniLM.
+
+Ranked causes:
+
+1. **Raise-only fuse cannot fix the H14 buckets.** Mixed EN+foreign risk and bounded high-stakes briefs needed **abstention**, not a higher class. `AugmentVector` never clears confidence on a language mismatch.
+2. **The encoder likely never fused.** Cold helper missed the 1 s budget; MiniLM **hash-falls-back**. Candidate p95 (~2 ms) is not E5/L12. Identical metrics ⇒ **zero surviving lifts** on 170 rows.
+3. **Complexity-only centroids have no language axis.** `PrototypeStore.Centroids` is `label → vector`. `labelRank` maps unknown labels to SIMPLE (1), so a reserved abstain class must **not** go through `AugmentVector`.
+4. **M3 34.1% is not an encoder score until labels are adjudicated.** Many “misses” are authored `expected_tier` vs EN/PT regex. Abstention will **not** raise tier accuracy (class unchanged). Constrained raise **can** move accuracy only on unconfident rows with regex Complex evidence; it **cannot** invent COMPLEX.
+
+**What would make E5 actually move M3 (linguistic intelligence, not a second classifier):**
+
+| Lever | Moves | Does not move |
+|-------|--------|----------------|
+| Language-aware **abstain** (`FOREIGN`/`ABSTAIN`) | `confident_coverage` down on lang-guard misses; keeps **unsafe confident = 0**; adds intelligence H14 regex cannot see (slang / low-cue foreign) | `tier_accuracy` (class unchanged) |
+| Constrained **raise** (MiniLM rules, E5 space, warm ONNX) | `tier_accuracy` on unconfident multilingual rows where regex under-ranked **and** Complex score already > 0 | H14 mixed/risk buckets; NoSignal; COMPLEX-from-nothing |
+| Copy `would_label` into production | Nothing new (M4) | Anything |
+
+Enable-bar for “better”: labs slice where `lang_guard` did **not** fire, MiniLM raise-only did **not** fire, and E5 **did** abstain (count > 0) **without** increasing unsafe confident. Do not sell 34.1% → N% as the Phase E KPI until adjudication.
+
+### 15.6 Success gates
+
+**Merge (flag default off, CI):**
+
+1. `DOWNSHIFT_E5_FUSE` unset / not `1` → identical `Route()` to `Classify`+MiniLM current behaviour (kill switch).
+2. Fuse on + each fail-open condition in §15.3 → identical `Tier`/`Complexity`/`Confident` to fuse off.
+3. Policy tests: abstain clears confidence and does not change class; raise cannot create COMPLEX when `Scores[Complex]==0`; `NoSignal` untouched; `Check` still holds R5–R9 on fused decisions (`E5Abstain` / `E5_BOOST` ∉ `deterministicLift`).
+4. Shadow orthogonality: `E5_FUSE` unset + `E5_SHADOW=1` still observation-only (existing `e5_shadow_test.go`).
+5. MiniLM orthogonality: `E5_FUSE` unset + `DOWNSHIFT_MINILM=0` unchanged.
+6. H14 acceptance tests pass with fuse **mocked on** (unsafe confident writes still 0).
+7. Privacy: `e5_fuse` fields ⊆ `{model_id, nearest_label, similarity, action (abstain\|raise\|none), latency_ms, error_code}`. No prompt/vector/stderr/env paths.
+8. Default-off path keeps `TestBenchmarkSplitsMatchClsAfterBaseline` green (`cls-after.jsonl`).
+
+**Enable (owner sets `DOWNSHIFT_E5_FUSE=1`, labs report):**
+
+1. **H14:** M3 unsafe confident = **0** with fuse on **and** off (`go run ./tools/multilang --input …/m3-v1.json` plus H14 inventory).
+2. **Legacy five splits** vs **current `main` fuse-off** (not vs pre-H14 M4 JSON): `tasks`, `holdout`, `fresh`, `heldout2`, `blind-vitrine`. BLOCK if any split increases `unsafe_confident` or `unsafe_raw`, or drops `tier_accuracy` (M4 `tasks` 73.5% → 73.0% is the forbidden pattern).
+3. **Kill switch** re-verified on the enable candidate binary.
+4. Warm ONNX p95 embed+classify inside hook budget leave-headroom (Phase C: ≤ **500 ms** of the 1500 ms budget). Cold 6.5 s Python is BLOCK for enable.
+5. Prototypes include `ABSTAIN`/`FOREIGN`; mover slice in §15.5 is non-zero **or** owner explicitly accepts raise-only (not recommended).
+6. Dual `FUSE=1`+`SHADOW=1` does not double-embed or blow the 1500 ms budget.
+
+Any regression in a critical language or risk class **blocks enable**, not necessarily the default-off merge.
+
+### 15.7 Non-goals
+
+- LLM (chat/completion) in `Route()` / `Classify()` / fuse / `Check`.
+- Adapter routing policy or harness branches in `core`.
+- Auto Phase E default-on; shadow health does not promote the flag.
+- Wiring Phase D `would_label` into production.
+- Changing MiniLM default, hash fallback, or `DOWNSHIFT_MINILM` polarity.
+- Catalog ID hardcoding; prompt persistence; Phase F fine-tune.
+- Using E5 to sole-source downshift risk-labelled rows.
+- In-process ONNX Runtime in the hook binary (new native surface). Phase E keeps the **out-of-process** helper, same as Phase D.
+
+### 15.8 Implementation notes (fullstack; not done in this turn)
+
+- New `internal/semantic/e5fuse` (or equivalent) **plus** a few lines in `internal/core/semantic_fuse.go`. Reuse `e5shadow.CmdTrusted` and prototype load rules. **Before the helper can change `Route`:** `CmdTrusted` uses **`Lstat`** (not `Stat` — prototypes already reject symlinks) and rejects glued `-c`/`-e` (today only ` -c ` with spaces is banned). Do not put fuse logic in adapters. Out-of-process helper only.
+- Reserved labels `ABSTAIN`/`FOREIGN` must short-circuit **before** `AugmentVector` / `labelRank` (unknown labels currently rank as SIMPLE).
+- Tests at the shared layer (`classifyWithSemantic` / `Route` / `Check`). Table-driven cases in `semantic_fuse_test.go` (or adjacent `e5_fuse_test.go`).
+- Copyright header on every new `.go` file. No production Go in this orchestrator turn.
+
+### 15.9 Operator example (labs / local only)
+
+```bash
+export DOWNSHIFT_E5_FUSE=1
+export DOWNSHIFT_E5_CMD='/absolute/path/downshift-e5-onnx-int8'
+export DOWNSHIFT_E5_PROTOTYPES='/absolute/path/e5-centroids.json'   # must include ABSTAIN/FOREIGN
+
+# Optional: keep shadow observation without a second embed
+export DOWNSHIFT_E5_SHADOW=1
+export DOWNSHIFT_E5_SHADOW_CMD="$DOWNSHIFT_E5_CMD"
+
+unset DOWNSHIFT_E5_FUSE   # kill switch — current main behaviour
+```
+

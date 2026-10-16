@@ -10,7 +10,8 @@ import (
 )
 
 // CmdTrusted reports whether cmdline looks like a local embed helper (not a
-// network shell one-liner). Used by shadow observation and doctor.
+// network shell one-liner). Used by shadow observation, fuse, and doctor.
+// Symlinks are rejected (Lstat); glued -c/-e flags are rejected.
 func CmdTrusted(cmdline string) bool {
 	parts := strings.Fields(strings.TrimSpace(cmdline))
 	if len(parts) == 0 {
@@ -28,15 +29,28 @@ func CmdTrusted(cmdline string) bool {
 		if _, ok := banned[base]; ok {
 			return false
 		}
+		if isEvalFlag(p) {
+			return false
+		}
 	}
 	exe := parts[0]
 	if filepath.IsAbs(exe) {
-		info, err := os.Stat(exe)
-		return err == nil && info.Mode().IsRegular()
+		return regularFile(exe)
 	}
 	if (exe == "python3" || exe == "python") && len(parts) >= 2 && filepath.IsAbs(parts[1]) {
-		info, err := os.Stat(parts[1])
-		return err == nil && info.Mode().IsRegular()
+		return regularFile(parts[1])
 	}
 	return false
+}
+
+func isEvalFlag(p string) bool {
+	if strings.HasPrefix(p, "--") {
+		return false
+	}
+	return p == "-c" || p == "-e" || strings.HasPrefix(p, "-c") || strings.HasPrefix(p, "-e")
+}
+
+func regularFile(path string) bool {
+	info, err := os.Lstat(path)
+	return err == nil && info.Mode()&os.ModeSymlink == 0 && info.Mode().IsRegular()
 }

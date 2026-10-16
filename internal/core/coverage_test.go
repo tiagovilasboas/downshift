@@ -129,6 +129,13 @@ func TestShouldPreserveExplicitModel_ExplicitOnly(t *testing.T) {
 	}
 }
 
+func TestShouldPreserveExplicitModel_IgnoresSemanticLift(t *testing.T) {
+	d := core.Decision{Harness: "codex", SemanticLift: true, RiskAbstain: true}
+	if !d.ShouldPreserveExplicitModel("gpt-6-astra", covCat) {
+		t.Error("explicit_only must still be preserved after a semantic lift")
+	}
+}
+
 // A Decision with no recommended model must never trigger a rewrite.
 func TestCheckWrites_EmptyModelID(t *testing.T) {
 	d := core.Decision{}

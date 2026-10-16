@@ -90,3 +90,45 @@ func TestDeterministicLift_ExemptsEveryRule(t *testing.T) {
 		}
 	}
 }
+
+// SemanticLift is an embedding opinion, not a deterministic rule. Phase E fuse
+// must keep it out of deterministicLift so R7/R8/R9 still hold unconfident spends.
+func TestDeterministicLift_DoesNotIncludeSemanticLift(t *testing.T) {
+	cases := []struct {
+		verdict core.Verdict
+		tier    core.Tier
+		rule    string
+	}{
+		{core.VerdictUnknown, core.TierFrontier, core.RuleUnconfidentUnknownFrontier},
+		{core.VerdictUpshift, core.TierFrontier, core.RuleUnconfidentUpshift},
+		{core.VerdictUnknown, core.TierMid, core.RuleUnconfidentUnknownMid},
+	}
+	for _, c := range cases {
+		d := core.Decision{
+			Harness:      ccHarness,
+			Verdict:      c.verdict,
+			Tier:         c.tier,
+			SemanticLift: true,
+			Model:        core.Model{ID: catID(ccHarness, c.tier), Tier: c.tier, Harness: ccHarness},
+		}
+		rep := core.Check(d)
+		if !slices.ContainsFunc(rep.Violations, func(v core.Violation) bool { return v.Rule == c.rule }) {
+			t.Errorf("%s: SemanticLift must not exempt %s, got %v", c.verdict, c.rule, rep.Violations)
+		}
+	}
+}
+
+func TestCheck_SemanticLiftDoesNotBypassRiskDowngrade(t *testing.T) {
+	d := core.Decision{
+		Harness:      ccHarness,
+		Verdict:      core.VerdictDownshift,
+		Complexity:   core.Medium,
+		Tier:         core.TierMid,
+		SemanticLift: true,
+		Risk:         []string{"secrets"},
+	}
+	rep := core.Check(d)
+	if !slices.ContainsFunc(rep.Violations, func(v core.Violation) bool { return v.Rule == core.RuleRiskDowngrade }) {
+		t.Fatalf("SemanticLift must not bypass %s, got %v", core.RuleRiskDowngrade, rep.Violations)
+	}
+}
