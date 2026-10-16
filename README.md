@@ -21,7 +21,7 @@ harness-downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovil
 
 Downshift is a hook for your coding harness. When Claude Code starts a subagent, it picks a right-sized model for that task: easy work runs on Haiku, hard work keeps Opus. Your session model never changes. Start with two commands:
 
-- **Cheaper easy subagents.** A trivial rename runs on Haiku 5.5, about 97% cheaper per token than Opus 5.5 at list price. What that is worth depends on how much of your work is easy and delegated: in a controlled test where a parent hands mechanical pieces to subagents, cost fell about 12% overall (a third on pure renames) with the same tasks passing; on natural, longer tasks the classifier is usually unconfident and keeps the model, so the saving is smaller and not yet measured. See [what the evidence shows](#what-the-evidence-shows).
+- **Cheaper easy subagents.** A trivial rename runs on Haiku 4.5 (what Claude Code's native `haiku` alias runs), about 75% cheaper than Opus 5.5 at list price ($1/$5 vs $4/$20 per 1M tokens). What that is worth depends on how much of your work is easy and delegated: in a controlled test where a parent hands mechanical pieces to subagents, cost fell about 12% overall (a third on pure renames) with the same tasks passing; on natural, longer tasks the classifier is usually unconfident and keeps the model, so the saving is smaller and not yet measured. See [what the evidence shows](#what-the-evidence-shows).
 - **Guardrails.** Unsure upshifts are held, risky tasks keep a floor, and anything unknown leaves the spawn unchanged.
 - **Visible.** A statusline, a stderr line per routed subagent, and `downshift session --tree` (or `/downshift`) show what was routed and why.
 
@@ -52,7 +52,7 @@ downshift setup
 
 ### What you will see
 
-- **A stderr line per routed subagent**, for example `downshift: TRIVIAL task → downshift to claude-haiku-5-5`.
+- **A stderr line per routed subagent**, for example `downshift: TRIVIAL task → downshift to claude-haiku-4-5`.
 - **A statusline**, set by `setup` when none exists. It shows Claude's quota windows and, when data exists, the current session's routing summary.
 - **Child endings.** The `PostToolUseFailure` and `SubagentStop` hooks record how each child ended (`completed`, `error`, `interrupted`, ...). `stats` prints them under "How children ended"; error text is never stored.
 - **`downshift try`** (real output, trimmed):

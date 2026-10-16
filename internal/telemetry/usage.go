@@ -40,8 +40,9 @@ import (
 //     parsing or leak prompt content into the event log.
 //
 // CachedTokens is the sum of cache_creation_input_tokens and
-// cache_read_input_tokens: CostUSD bills cached tokens at the input rate,
-// matching the TokenUsage contract in cost.go.
+// cache_read_input_tokens; CacheWriteTokens is the creation part alone, so
+// CostUSD bills writes at the cache-write price and reads at the cache-read
+// price (the TokenUsage contract in cost.go).
 
 // Outcome values written by post-hoc cost linkage (v1: PostToolUse hook).
 // The "baseline" value is reserved for a future symmetric hook that records
@@ -100,9 +101,10 @@ func TokenUsageFromPayload(m map[string]any) TokenUsage {
 	creation := get("cache_creation_input_tokens")
 	read := get("cache_read_input_tokens")
 	return TokenUsage{
-		InputTokens:  get("input_tokens"),
-		OutputTokens: get("output_tokens"),
-		CachedTokens: creation + read,
+		InputTokens:      get("input_tokens"),
+		OutputTokens:     get("output_tokens"),
+		CachedTokens:     creation + read,
+		CacheWriteTokens: creation,
 	}
 }
 

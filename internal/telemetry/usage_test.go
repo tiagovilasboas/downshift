@@ -35,7 +35,7 @@ func TestTokenUsageFromPayload_Defensive(t *testing.T) {
 				"cache_creation_input_tokens": float64(200),
 				"cache_read_input_tokens":     float64(300),
 			}},
-			want: telemetry.TokenUsage{InputTokens: 1000, OutputTokens: 500, CachedTokens: 500},
+			want: telemetry.TokenUsage{InputTokens: 1000, OutputTokens: 500, CachedTokens: 500, CacheWriteTokens: 200},
 		},
 		{
 			name: "flat top-level keys",
@@ -45,7 +45,7 @@ func TestTokenUsageFromPayload_Defensive(t *testing.T) {
 				"cache_creation_input_tokens": float64(10),
 				"cache_read_input_tokens":     float64(20),
 			},
-			want: telemetry.TokenUsage{InputTokens: 100, OutputTokens: 50, CachedTokens: 30},
+			want: telemetry.TokenUsage{InputTokens: 100, OutputTokens: 50, CachedTokens: 30, CacheWriteTokens: 10},
 		},
 		{
 			name: "nested wins over flat",
@@ -308,7 +308,7 @@ func TestHandlePostToolUse_EndToEnd_Linked(t *testing.T) {
 	if u.SessionID != sessionHash || u.FromModel != frontierID || u.ToModel != smallID {
 		t.Errorf("provenance not copied: %+v", u)
 	}
-	wantUsage := telemetry.TokenUsage{InputTokens: 1000, OutputTokens: 500, CachedTokens: 500}
+	wantUsage := telemetry.TokenUsage{InputTokens: 1000, OutputTokens: 500, CachedTokens: 500, CacheWriteTokens: 200}
 	if u.TokenUsageOrZero() != wantUsage {
 		t.Errorf("tokens = %+v, want %+v", u.TokenUsageOrZero(), wantUsage)
 	}

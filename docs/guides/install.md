@@ -56,7 +56,7 @@ downshift try "rename the userId variable" claude-code    # what would be picked
 
 **Step 4 — Confirm it's working.** Open a new Claude Code session and ask it to spawn a subagent for a trivial task. You'll see a line like this in stderr:
 ```
-downshift: TRIVIAL task → downshift to claude-haiku-5-5
+downshift: TRIVIAL task → downshift to claude-haiku-4-5
 ```
 
 That line means the hook fired and rewrote the model before the subagent started.
@@ -426,7 +426,7 @@ in real time. It reads `~/.downshift/events.jsonl` and refreshes every
 │  dsmon  downshift monitor                            │
 │  harness  kirocrew        ◉ live                     │
 │ switches today ────────────────────────────────────  │
-│  04:03  opus   → haiku   trivial  -97%               │
+│  04:03  opus   → haiku   trivial  -75%               │
 │  04:02  haiku  → opus    complex  ↑                  │
 │  04:01  opus   → sonnet  medium   -50%               │
 │ stats ──────────────────────────────────────────────  │

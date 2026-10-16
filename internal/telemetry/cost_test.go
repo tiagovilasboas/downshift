@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -242,5 +243,44 @@ func TestPrintStats_RealCostSection(t *testing.T) {
 	telemetry.PrintStats([]telemetry.Event{makeEvent("cc", "TRIVIAL", "OK", 0)}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf2)
 	if !strings.Contains(buf2.String(), "Real cost: no events with token usage yet (wire the PostToolUse hook to populate them).") {
 		t.Errorf("missing no-real-cost line, got:\n%s", buf2.String())
+	}
+}
+
+// Regression: run b5/mech-rename/claude-routed-force-r1 routed three subagents
+// to the native 'haiku' alias, which Claude Code 2.1.289 ran as
+// claude-haiku-4-5-20251001. The usage record priced it at Haiku 5.5 rates
+// ($0.10/$0.50), 10x too low. Claude Code's own cost for those tokens was
+// $0.21196390 at $1/$5 input/output, $0.10 cache read, $1.25 cache write.
+func TestCostUSD_HaikuFourFiveUsageMatchesClaudeCodeCost(t *testing.T) {
+	c := catalog.Load()
+	m, ok := c.LookupByID("claude-code", "claude-haiku-4-5-20251001")
+	if !ok || m.ID != "claude-haiku-4-5" {
+		t.Fatalf("LookupByID(claude-haiku-4-5-20251001) = %q (ok %v), want claude-haiku-4-5", m.ID, ok)
+	}
+	if m.InputM != 1.00 || m.OutputM != 5.00 || m.CacheReadM != 0.10 || m.CacheWriteM != 1.25 {
+		t.Fatalf("claude-haiku-4-5 prices = %v/%v cache %v/%v, want 1/5 cache 0.10/1.25", m.InputM, m.OutputM, m.CacheReadM, m.CacheWriteM)
+	}
+	payload := map[string]any{"usage": map[string]any{
+		"input_tokens":                218,
+		"output_tokens":               7518,
+		"cache_creation_input_tokens": 78666,
+		"cache_read_input_tokens":     758234,
+	}}
+	usage := telemetry.TokenUsageFromPayload(payload)
+	if usage.CacheWriteTokens != 78666 || usage.CachedTokens != 78666+758234 {
+		t.Fatalf("usage = %+v, want cache write 78666 within cached 836900", usage)
+	}
+	if got, want := telemetry.CostUSD(m, usage), 0.21196390; math.Abs(got-want) > 1e-9 {
+		t.Errorf("CostUSD(claude-haiku-4-5) = %.8f, want %.8f (Claude Code's own cost)", got, want)
+	}
+}
+
+// Cache writes without a catalog write price keep the old billing at the
+// cache-read rate: the split never invents a price.
+func TestCostUSD_CacheWriteWithoutWritePriceUsesReadRate(t *testing.T) {
+	m := core.Model{InputM: 1, OutputM: 5, CacheReadM: 0.1}
+	u := telemetry.TokenUsage{CachedTokens: 1_000_000, CacheWriteTokens: 400_000}
+	if got := telemetry.CostUSD(m, u); math.Abs(got-0.1) > 1e-9 {
+		t.Errorf("CostUSD = %f, want 0.1 (both at the read rate)", got)
 	}
 }

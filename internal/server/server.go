@@ -51,6 +51,8 @@ type rawEvent struct {
 	OutputTokens *int64 `json:"output_tokens,omitempty"`
 	// CachedTokens carries provider-reported cached input tokens (nil when untracked).
 	CachedTokens *int64 `json:"cached_tokens,omitempty"`
+	// CacheWriteTokens is the cache-creation part of CachedTokens (nil when untracked).
+	CacheWriteTokens *int64 `json:"cache_write_tokens,omitempty"`
 	// ActualCostUSD is the real routed cost in USD (nil when untracked).
 	ActualCostUSD *float64 `json:"actual_cost_usd,omitempty"`
 	// BaselineCostUSD is the real baseline cost in USD (nil when untracked).
@@ -362,11 +364,12 @@ func observedChildByHarness(events []rawEvent) map[string]observedChildEntry {
 			continue
 		}
 		byHarness[e.Harness] = append(byHarness[e.Harness], telemetry.Event{
-			Harness:      e.Harness,
-			Outcome:      e.Outcome,
-			InputTokens:  e.InputTokens,
-			OutputTokens: e.OutputTokens,
-			CachedTokens: e.CachedTokens,
+			Harness:          e.Harness,
+			Outcome:          e.Outcome,
+			InputTokens:      e.InputTokens,
+			OutputTokens:     e.OutputTokens,
+			CachedTokens:     e.CachedTokens,
+			CacheWriteTokens: e.CacheWriteTokens,
 		})
 	}
 	out := map[string]observedChildEntry{}

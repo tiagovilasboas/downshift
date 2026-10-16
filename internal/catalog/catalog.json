@@ -6,18 +6,32 @@
   "_doc5": "Anthropic IDs and base input/output prices per 1M tokens: https://docs.anthropic.com/en/docs/about-claude/models/overview and https://docs.anthropic.com/en/docs/about-claude/pricing (accessed 2026-10-08).",
   "_doc8": "Optional cache_read_cost_per_1m / cache_write_cost_per_1m come from the OpenRouter price snapshot dated 2026-10-12 (research/prices/effort-capabilities-2026-10-12.json), written by scripts/sync_catalog_prices.py for entries whose id matches a snapshot model id exactly. Absent means no cache price: cost then bills cached tokens at the input rate, an upper bound. Codex input/output prices were aligned to the same snapshot where the id matches.",
   "_doc7": "Optional 'efforts': allowed effort values for the model, listed ONLY where verified against vendor docs on 2026-10-12. Absent means unknown: no restriction is applied and nothing is assumed.",
-  "_doc6": "Claude Haiku 5.5 is priced by prompt length: $0.10/$0.50 up to 100k prompt tokens, $0.50/$2.50 above. The catalog stores the up-to-100k price (above 100k the gap to the frontier model is ~87%, not ~97%). Older claude-haiku-4-5 ids match through the claude-haiku family; they are not an alias because KiroCrew owns that canonical id.",
+  "_doc6": "Claude Code's native alias 'haiku' resolves to claude-haiku-4-5-20251001 (Claude Code 2.1.289, observed 2026-10-15 in eval run b5/mech-rename/claude-routed-force-r1: stream lines, resolved records and Claude Code's own modelUsage), so the claude-code small entry is claude-haiku-4-5 at $1.00/$5.00, cache $0.10 read / $1.25 write per 1M. claude-haiku-5-5 ($0.10/$0.50 up to 100k prompt tokens, $0.50/$2.50 above; the catalog stores the up-to-100k price, so above 100k the gap to the frontier model is ~87%, not ~97%) is its own claude-code entry with no native name and no family: it is priced only on its exact id and is never the automatic small target. Older claude-haiku-4-5 ids match through the claude-haiku family; they are not an alias of 5-5 because KiroCrew owns that canonical id.",
   "version": "2",
-  "updated": "2026-10-08",
+  "updated": "2026-10-16",
   "entries": [
 
     { "_section": "claude-code — native Anthropic models" },
 
     {
-      "id": "claude-haiku-5-5",
-      "aliases": ["claude-haiku", "claude-haiku-5.5"],
+      "id": "claude-haiku-4-5",
+      "aliases": ["claude-haiku-4-5-20251001", "claude-haiku-4.5", "claude-haiku"],
       "family": "claude-haiku",
       "native_name": "haiku",
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "small",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "5000", "high": "10000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"],
+      "input_cost_per_1m": 1.00,
+      "output_cost_per_1m": 5.00,
+      "cache_read_cost_per_1m": 0.10,
+      "cache_write_cost_per_1m": 1.25
+    },
+    {
+      "id": "claude-haiku-5-5",
+      "aliases": ["claude-haiku-5.5"],
       "provider": "anthropic",
       "harness": "claude-code",
       "tier": "small",

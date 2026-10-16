@@ -49,7 +49,7 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 	}
 
 	type usage struct {
-		in, out, cached int64
+		in, out, cached, cacheWrite int64
 	}
 	byID := map[string]usage{}
 	var order []string
@@ -71,7 +71,7 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 				if _, seen := byID[row.Message.ID]; !seen {
 					order = append(order, row.Message.ID)
 				}
-				byID[row.Message.ID] = usage{u.InputTokens, u.OutputTokens, u.CachedTokens}
+				byID[row.Message.ID] = usage{u.InputTokens, u.OutputTokens, u.CachedTokens, u.CacheWriteTokens}
 				if row.Message.Model != "" {
 					model = row.Message.Model
 				}
@@ -87,6 +87,7 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 		total.InputTokens += u.in
 		total.OutputTokens += u.out
 		total.CachedTokens += u.cached
+		total.CacheWriteTokens += u.cacheWrite
 	}
 	if total == (telemetry.TokenUsage{}) {
 		return subagentUsage{}, false

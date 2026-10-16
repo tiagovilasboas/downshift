@@ -195,7 +195,7 @@ if [ "$session_existed" = 0 ]; then
   if [ "$EXPLICIT_UPSHIFT" = 1 ]; then
     echo "  Edit $SESSION_FILE and keep \"explicit_upshift\": true when you add harness lists."
   else
-    echo "  echo '{ \"claude-code\": [\"claude-haiku-5-5\", \"claude-sonnet-5-5\", \"claude-opus-5-5\"] }' > \"$SESSION_FILE\""
+    echo "  echo '{ \"claude-code\": [\"claude-haiku-4-5\", \"claude-sonnet-5-5\", \"claude-opus-5-5\"] }' > \"$SESSION_FILE\""
   fi
   echo "  Fable is supported. Leave it out unless you want upshift into that expensive frontier model."
   echo "  To opt in, append \"claude-fable-5-1\" as the last id. See docs/reference/session-models.md."

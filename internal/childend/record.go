@@ -308,6 +308,10 @@ func buildUsageEvent(harness string, usage telemetry.TokenUsage, payloadModel, s
 		v := usage.CachedTokens
 		ev.CachedTokens = &v
 	}
+	if usage.CacheWriteTokens > 0 {
+		v := usage.CacheWriteTokens
+		ev.CacheWriteTokens = &v
+	}
 
 	// Price only real spend against a catalog-resolved routed model.
 	routedID := payloadModel

@@ -145,7 +145,7 @@ reserve capacity for the next call or guarantee zero additional charges.
 
 Claude Code shows `systemMessage` text from hooks. Downshift uses it twice:
 
-- when it rewrites a spawn: `downshift: TRIVIAL task → downshift to claude-haiku-5-5 (~98% cheaper)`;
+- when it rewrites a spawn: `downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper than opus)`;
 - when a subagent ends and its tokens are known (SubagentStop, or a PostToolUse
   that reports usage): `↳ downshift: finished on haiku · 14k tokens · $0.01 (opus would be $0.38)`.
   The model is the one the child ran on; the would-be cost is the requested
