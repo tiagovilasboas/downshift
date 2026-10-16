@@ -10,36 +10,30 @@ that touches release tags without the owner's approval.
 State at filing: main has the audit fixes (beta.14 released), the language guard (`48c0dc4`), docs reorganised by audience, and the
 tasks of [2026-10-16-multilang](../2026-10-16-multilang/README.md). Evidence pages: `docs/evidence/hardening-audit-2026-10-15.md`.
 
-## Integration notice for Codex (read first)
+## State at the end of the Claude session (2026-10-16)
 
-Landed on `main` by the Claude session, in order, each CI green:
+Landed on `main`, each checked with the full suite, the five benchmark splits (identical item by item, gates pass) and CI:
 
-- `48c0dc4` language guard (`internal/core/lang_guard.go`) and Portuguese risk terms.
-- `82c2c1b` **Claude Code small tier is `claude-haiku-4-5`** (catalog entry, honest savings text) **and the cache-write split in cost**
-  (`TokenUsage.CacheWriteTokens`, `CostUSD` bills cache writes at `CacheWriteM`). Tests: Haiku 4.5 run priced at $0.21196.
+| Commit | What |
+|---|---|
+| `48c0dc4` | Language guard and Portuguese risk terms (M1 core, M2) |
+| `82c2c1b` | Claude Code small tier is `claude-haiku-4-5`; cache writes priced at the write rate |
+| `def8ac3` | Language guard reads the full prompt; reason code `UNSUPPORTED_LANGUAGE` in events, `stats`, `why` (M1 telemetry) |
+| `3dd246a` | Unknown model prices stay unknown: no free spend, no savings against an unpriced target |
+| H1 commit | Bounded delegation briefs do not default to COMPLEX by length (H1) |
 
-Your uncommitted working tree overlaps these files, so a plain `git pull` is refused:
-`docs/reference/session-models.md`, `internal/catalog/catalog_test.go`, `internal/childend/record.go`, `internal/telemetry/cost.go`,
-`internal/telemetry/usage.go`, `internal/telemetry/usage_test.go`.
+Not on `main`: branch `codex/session-metadata-wip` (pushed). It holds the Codex session-metadata work (see H13). It is not reviewed
+and was not run against current `main`.
 
-How to integrate without losing work: commit your tree on a branch (`git switch -c codex/session-metadata`), then
-`git rebase origin/main` and resolve the six files in favour of main for the Haiku 4.5 catalog entry and the cache-write split;
-re-apply on top only what is yours (the unpriced-model handling in `childend`, `internal/discovery/*`, `internal/core/session_*`,
-the adapters, `tools/multilang`). If you were also fixing the Haiku price, drop that part: it is done and measured (`go test ./...`
-green, all five benchmark splits identical, `eval-outcome` 40 verified).
-
-Not committed by the Claude session because they are yours or depend on your tree: everything under `internal/discovery`,
-`internal/core/session_*`, the adapter edits, `internal/adapters/kirocrew/kirocrew.go` (it needs `core.SessionModel`), the M1
-telemetry (`UNSUPPORTED_LANGUAGE` reason code, full-prompt language check; green and benchmark-identical when tested apart from your
-other edits), the m6 notes, `tools/multilang`. Commit them in small pieces: the M1 telemetry first (it is independent of session
-metadata once `kirocrew.go` is left out).
-
-The task of the user's other session, "keep catalog cache prices when syncing snapshots" (`scripts/sync_catalog_prices.py`), is
-independent of this.
+Labs (private, pushed): M3 labels frozen (`653bfd9`), candidate runners and the M4 evidence (`b640e92`). Result of M4 on the frozen
+M3 set (170 prompts), identical for the current classifier and the multilingual embedding: tier accuracy 0.341, confident coverage
+0.253, unsafe confident recommendations 10, unsafe raw recommendations 74. On the five legacy splits the candidate is equal or
+slightly worse (`tasks` 0.730 against 0.735). Recorded decision: reject. M5 (LLM reference) is blocked: the account had extra usage
+enabled and no request was sent. Human adjudication of the M3 labels is still pending.
 
 | ID | Priority | Task |
 |----|----------|------|
-| H1 | High | Land the bounded-brief classifier change (built and measured, branch `opus` clone) |
+| H1 | Done | Bounded-brief classifier change (landed; keep the note that `blind-vitrine` is not a clean held-out check for it) |
 | H2 | High | Codex session model missing from the catalog: every Codex spawn is held |
 | H3 | Medium | Cursor: explicit `inherit` ignores the parent model that a missing model uses |
 | H4 | Medium | Hook failure events do not record the harness |
@@ -51,6 +45,8 @@ independent of this.
 | H10 | Low | Local clean-up: shadowed binaries, three old log lines with prompt text |
 | H11 | Medium | harness-core leftovers found during the renaming |
 | H12 | High | Release beta.15 (needs the owner's approval) |
+| H13 | High | Review and integrate the session-metadata work in `codex/session-metadata-wip` |
+| H14 | High | Unsafe confident recommendations on the multilingual set: 10 of 170, with or without the embedding |
 
 ## H1: bounded-brief classifier change
 
@@ -151,3 +147,34 @@ The "model by task" rule belongs to the router (Downshift), not to the harness c
 Contents: performance prefilter, single transcript wait, `HELD_GUESSED_BASELINE`, Haiku 4.5 catalog fix and cache-write cost
 split, language guard and its telemetry, H1 if landed. The CHANGELOG already has the entries under Unreleased. Tag and release only
 with the owner's approval.
+
+## H13: session metadata work (branch `codex/session-metadata-wip`)
+
+**What it is.** Native or operator session metadata (identity, tier, supported effort) kept apart from price knowledge: new
+`core.SessionModel`, `session_resolver.go`, `Metadata` and `Unordered` on `SessionList`, discovery ordering, adapter changes
+(Claude Code, Codex, Cursor, Antigravity, KiroCrew), native-selection rules that treat a zero or missing price as unknown, docs
+(`session-discovery.md`, `session-models.md`), `tools/multilang`, the evaluation status and m6 notes. Task text of the intent:
+`docs/internal/tasks/session-metadata-price-safety-2026-10-16.md` (its price part already landed in `3dd246a`).
+
+**Status, checked.** The tree compiles. `internal/core` passed after fixing five test fixtures that set only `OutputM`
+(commit `9b79c2a`; the new rule treats a missing input or output rate as unknown). Not run: the full suite, the five benchmark
+splits and `eval-outcome` on top of current `main`; nothing was reviewed line by line. The branch is based on `fb0a4b4`, so it must
+be rebased onto `main` (the catalog, cost and telemetry files were rewritten on both sides).
+
+**Do.** Rebase, run the full suite and the benchmark comparison, review the adapters one by one, split into small commits
+(core session types, discovery, adapters, docs), and drop `tools/multilang` if it duplicates the labs runners.
+
+**Done when.** Suite green, benchmarks identical item by item, CI green, each adapter's behaviour covered by a test at
+`core.Route` or `runHookAdapter`.
+
+## H14: unsafe confident recommendations on the multilingual set
+
+**Evidence.** On the frozen M3 set the classifier gives 10 unsafe confident recommendations out of 170 and 74 unsafe raw
+recommendations. It is not recorded whether the run included the language guard; check the run manifest against the commit used.
+
+**Do.** List the 10 by category (mixed-language, risk, tier), find which rule made them confident, and fix with the smallest rule
+that does not weaken any floor. Decide the human adjudication of the labels first, because the count depends on them. Do not use
+the five legacy splits to tune.
+
+**Done when.** Zero unsafe confident recommendations on the M3 set without a drop of coverage on the legacy splits, or the cases
+are documented as label disagreements.

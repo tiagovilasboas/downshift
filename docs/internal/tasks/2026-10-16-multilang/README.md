@@ -26,3 +26,17 @@ held-out set from real delegation prompts. M7 after M4/M5 decide the supported s
 
 Rules for every task: no push without approval, header on new Go files, tests first for behaviour changes, no tuning on the
 evaluation splits (`tasks`, `holdout`, `fresh`, `heldout2`, `blind-vitrine`), `go test -p 2 ./...` before done.
+
+## Status (2026-10-16, end of session)
+
+| ID | Status | Evidence |
+|----|--------|----------|
+| M1 | Done | `48c0dc4`, `def8ac3`; telemetry reason code `UNSUPPORTED_LANGUAGE` |
+| M2 | Done | `48c0dc4`; the Portuguese medium verbs remain a separate change |
+| M3 | Done, adjudication pending | labels frozen in labs (`653bfd9`), 170 items |
+| M4 | Rejected | no gain over the current classifier on the frozen set (labs `b640e92`) |
+| M5 | Blocked | no request sent; extra usage was enabled on the account |
+| M6 | Partly done | H1 landed; see the handoff tasks H5 for the remaining briefs |
+| M7 | Partly done | README and `complexity-weights.md` describe the guard; update after H14 |
+
+Open work is mapped in [2026-10-16-handoff](../2026-10-16-handoff/README.md).
