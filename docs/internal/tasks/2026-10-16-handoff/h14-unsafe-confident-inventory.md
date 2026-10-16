@@ -2,8 +2,12 @@
 
 # H14: unsafe confident recommendations (M3 baseline)
 
-Source: `downshift-labs/eval/multilang/baseline.json` on fixture `d4213e51…` (170 rows).  
+Source: `downshift-labs/eval/multilang/m3-v1.json` (170 rows).  
 Definition: `confident == true` and recommended `tier` strictly below label `expected_tier`.
+
+**Status (post `main`, 2026-10-16):** M3 **unsafe confident = 0** after mixed helper guard (`6f11283`), bounded risk brief abstention (`1ca2b2c`), delegation brief scope/verify cues, and parallel high-stakes abstention (`riskHighStakesWorkRE` + `RiskAbstain`).
+
+Historical baseline (pre-H14):
 
 | ID | Lang | Expected | Got | Class | Risk | Notes |
 |----|------|----------|-----|-------|------|-------|

@@ -118,8 +118,8 @@ func docEditOnly(prompt string, wordCount int) bool {
 // project description, "no git commit", "other agents work concurrently") that
 // describe context or constraints, not the task.
 var (
-	briefScopeRE  = regexp.MustCompile(`(?i)\b(read[- ]only|do not (edit|modify|touch)|don't (edit|modify|touch)|edit nothing|edit only|only edit|write only|work only|n[aã]o edite|somente leitura|apenas leitura)\b`)
-	briefVerifyRE = regexp.MustCompile(`(?i)\b(go (test|vet|build)|npm (run )?(test|build|lint)|pnpm (test|build)|yarn test|pytest|cargo (test|build)|vitest|jest|make (test|check))\b`)
+	briefScopeRE = regexp.MustCompile(`(?i)\b(read[- ]only|do not (edit|modify|touch)|don't (edit|modify|touch)|edit nothing|edit only|only edit|write only|work only|n[aã]o edite|somente leitura|apenas leitura|stay within these|do not publish, deploy|modify unrelated subsystems|bounded .{0,40} workstream)\b`)
+	briefVerifyRE = regexp.MustCompile(`(?i)\b(go (test|vet|build)|npm (run )?(test|build|lint)|pnpm (test|build)|yarn test|pytest|cargo (test|build)|vitest|jest|make (test|check)|run the relevant tests)\b`)
 	briefBudgetRE = regexp.MustCompile(`(?i)\b(reply|respond|answer|report|summary|responda)\b[^.\n]{0,40}?(<=|≤|under|at most|no more than|max(imum)?|até)\s*\d+\s*(words|lines|rows|palavras|linhas)|\b(under|<=|≤)\s*\d+\s*(words|palavras)`)
 	// Review and retry wording names the kind of work even inside a brief, so
 	// it is never discounted (see reviewSignals and the retry rows).
@@ -256,7 +256,10 @@ type Classification struct {
 	// RiskFloor is true when a risk signal lifted a Trivial/Simple result to
 	// Medium (see risk.go); Risk lists the matched categories.
 	RiskFloor bool
-	Risk      []string
+	// RiskAbstain is true when a risk rule cleared Confident at Medium/Simple
+	// without changing complexity (H14 delegation / parallel buckets).
+	RiskAbstain bool
+	Risk        []string
 	// NoSignal is true when no content signal fired and Medium is only the
 	// safe default.
 	NoSignal bool

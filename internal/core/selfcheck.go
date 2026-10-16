@@ -161,7 +161,7 @@ func unconfidentUnknownBelowMid(d Decision) bool {
 // escalation, an opted-in NB upshift or an operator tier floor. R7, R8 and R9
 // all exempt such a decision, so the set lives here and only here.
 func deterministicLift(d Decision) bool {
-	return d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied || d.PolicyFloor
+	return d.RiskFloor || d.RiskAbstain || d.GraphEscalated || d.NBUpshift.Applied || d.PolicyFloor
 }
 
 // unconfidentUnknownFrontier reports the R7 condition: no comparable current

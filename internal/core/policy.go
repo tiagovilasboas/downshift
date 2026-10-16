@@ -64,6 +64,8 @@ type Decision struct {
 	// RiskFloor is true when a risk signal (risk.go) lifted the task off the
 	// small tier. Such a task is never downshifted and may be upshifted.
 	RiskFloor bool
+	// RiskAbstain is true when risk rules cleared Confident without a tier lift.
+	RiskAbstain bool
 	// Risk lists the risk categories (risk.go) the prompt touches, whatever
 	// its complexity. Guardrail R5 holds any downshift of such a task.
 	Risk []string
@@ -182,6 +184,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		Confident:           cls.Confident,
 		GraphEscalated:      graphEscalated,
 		RiskFloor:           cls.RiskFloor,
+		RiskAbstain:         cls.RiskAbstain,
 		Risk:                RiskCategories(prompt),
 		NBUpshift:           nbUp,
 		NBDownshift:         nbDown,

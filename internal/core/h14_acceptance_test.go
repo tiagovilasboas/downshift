@@ -71,6 +71,7 @@ func TestH14Acceptance_RouteFinalDecisionInvariant(t *testing.T) {
 	prompts := append(h14MixedRiskPrompts(), h14PureEnglishTrivial()...)
 	prompts = append(prompts,
 		"Implement idempotent payment refunds with audit evidence.",
+		"Revise as permissões de acesso aos dados dos clientes.",
 	)
 	for _, p := range prompts {
 		for _, cur := range finalInvariantCurrents {

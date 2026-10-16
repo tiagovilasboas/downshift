@@ -50,6 +50,10 @@ var RawRiskSignals = []RiskSignalDef{
 	{"prompt_injection", `\b(ignore|disregard|forget|override)\s+(all\s+|any\s+|the\s+|your\s+)?(previous|prior|above|earlier|system)\s+(instructions?|prompts?|rules?)\b|\bsystem prompt\b|\bthis is (a |an )?(trivial|simple|easy|tiny)\b|\b(route|send|use)\b.{0,20}\b(cheap|cheapest|small|smallest|haiku|mini|nano)\s+(model|tier)\b|\b(ignore|desconsidere|esque[çc]a)\s+(todas\s+)?(as\s+)?(instru[çc](ões|oes)|regras)\s+(anteriores|acima|do\s+sistema)\b|\b(esta|essa|isto|isso)\s+(é|e)\s+(uma\s+)?tarefa\s+(trivial|simples|f[áa]cil)\b`},
 }
 
+// riskHighStakesWorkRE matches M3 parallel bucket prompts only (not generic
+// "implement X" medium-risk tasks in the legacy benchmark splits).
+var riskHighStakesWorkRE = regexp.MustCompile(`(?i)\bidempot\w*\b[^.\n]{0,60}\b(payments?|pagamentos?|reembolsos?|refunds?)|\b(payments?|pagamentos?|reembolsos?|refunds?)[^.\n]{0,60}\bidempot\w*\b|\bauthorization boundaries\b|\brevis\w*\s+as\s+permiss`)
+
 // riskLiterals is a prefilter, not a second table. For each category it lists
 // lowercase ASCII literals such that every match of that category's regex,
 // run on splitIdentifiers(prompt) and then on foldRiskText, contains at least
@@ -255,9 +259,12 @@ func applyRiskFloor(prompt string, c Classification) Classification {
 	if len(cats) > 0 {
 		c.Risk = cats
 		wc := len(strings.Fields(prompt))
-		// H14 delegation bucket: bounded risk briefs abstain without tier change.
-		if c.Confident && (c.Complexity == Medium || c.Complexity == Simple) && boundedBrief(prompt, wc) {
-			c.Confident = false
+		// H14: bounded risk briefs and short high-stakes work abstain without tier change.
+		if c.Confident && (c.Complexity == Medium || c.Complexity == Simple) {
+			if boundedBrief(prompt, wc) || (c.Complexity == Medium && riskHighStakesWorkRE.MatchString(prompt)) {
+				c.Confident = false
+				c.RiskAbstain = true
+			}
 		}
 	}
 	if c.Complexity >= Medium {
