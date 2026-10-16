@@ -5,7 +5,8 @@ https://github.com/tiagovilasboas/downshift
 
 Downshift asks each harness which models the current account can use, instead of
 relying only on a compiled-in catalog or a hand-written list. The embedded catalog
-stays as metadata (tier, price, family) that ranks what was found.
+stays as fallback metadata (tier, price, family). Explicit capability descriptors
+from the source take precedence over it and are preserved as `model_metadata`.
 
 ```bash
 downshift models discover              # all harnesses with a source; writes the cache
@@ -80,8 +81,11 @@ that does not establish the missing routing alias/pool mapping.
 
 ## How discovered models are ranked
 
-Capability order comes from the catalog, not from model names: tier first, then
-output price. Within one family only the newest model is kept: the provider's
+Capability order first uses explicit source tiers, then optional catalog metadata.
+Neither picker position nor model names assign a tier. Source descriptors are
+retained for the shared session resolver, including native reasoning efforts.
+When a source has no tier, a catalog match remains necessary to rank that ID.
+Within a catalog family only the newest model is kept: the provider's
 `created_at` when it reports one (Anthropic does), otherwise the numbers inside the
 ids, used only to break a tie inside a family. The report lists three groups:
 
@@ -90,7 +94,9 @@ ids, used only to break a tie inside a family. The report lists three groups:
 - **superseded**: a newer model of the same family exists.
 - **no catalog tier**: reported by the harness, unknown to the catalog (for example a
   new model line, or a version like `gpt-6.1-sol` that the family prefix of
-  `gpt-6-sol` does not cover). Never a routing target until the catalog gives it a tier.
+  `gpt-6-sol` does not cover). Not a discovery routing target until explicit
+  capability evidence or fallback metadata gives it a tier. A declared ordered
+  session list is a separate capability contract and can contain opaque IDs.
 
 ## Not done yet
 
@@ -98,4 +104,7 @@ ids, used only to break a tie inside a family. The report lists three groups:
   catalog-only id can block a spawn on a harness that does not offer it (Kiro does not
   offer Haiku 5.5, for example), so any fallback has to be opt-in per harness.
 - An authenticated Cursor listing validation on this machine, and a supported Antigravity source.
-- Assigning a tier to "no catalog tier" models from the discovery report.
+- Capability evidence for models whose native source exposes only names, UI
+  priority or reasoning efforts. In the local Codex cache on 2026-10-16,
+  `gpt-6.1-sol` is available and declares efforts, but has no capability tier or
+  prices. Discovery retains that evidence without inventing either.

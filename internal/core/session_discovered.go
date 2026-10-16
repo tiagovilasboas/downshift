@@ -47,8 +47,9 @@ func LoadDiscoveredSession(harness string, now time.Time) SessionList {
 	}
 	var f struct {
 		Harnesses map[string]struct {
-			FetchedAt time.Time `json:"fetched_at"`
-			Ordered   []string  `json:"ordered"`
+			FetchedAt time.Time      `json:"fetched_at"`
+			Ordered   []string       `json:"ordered"`
+			Metadata  []SessionModel `json:"model_metadata"`
 		} `json:"harnesses"`
 	}
 	if json.Unmarshal(data, &f) != nil {
@@ -72,5 +73,7 @@ func LoadDiscoveredSession(harness string, now time.Time) SessionList {
 	if age < -5*time.Minute || (ttl > 0 && age > ttl) {
 		return UnknownSession()
 	}
-	return KnownSession(e.Ordered)
+	session := KnownSession(e.Ordered)
+	session.Metadata = e.Metadata
+	return session
 }

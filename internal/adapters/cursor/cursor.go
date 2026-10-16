@@ -37,8 +37,9 @@ type Event struct {
 	// Nil means the payload did not include a list. A non-nil slice is
 	// the session and skips the user file. Cursor's preToolUse payload
 	// does not send either field today.
-	SessionModels   *[]string `json:"session_models,omitempty"`
-	AvailableModels *[]string `json:"available_models,omitempty"`
+	ModelMetadata   []core.SessionModel `json:"model_metadata,omitempty"`
+	SessionModels   *[]string           `json:"session_models,omitempty"`
+	AvailableModels *[]string           `json:"available_models,omitempty"`
 	// IncludedModels and UnavailableModels are optional quota marks.
 	// Absent marks supply no credit evidence. Present marks apply to this call.
 	IncludedModels    *[]string       `json:"included_models,omitempty"`
@@ -136,12 +137,16 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if len(r) > 0 {
 		res = r[0]
 	}
-	decision := core.Route(subPrompt, harnessID, currentModel, res)
-	decision.RequestedID = currentModel
-
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
+	if ev.ModelMetadata != nil {
+		session.Metadata = ev.ModelMetadata
+	}
+	res = core.ResolveSessionModels(harnessID, session, res)
+	decision := core.Route(subPrompt, harnessID, currentModel, res)
+	decision.RequestedID = currentModel
+
 	session = withMuseCatalogInclusion(session, res)
 	plan := decision.PlanSession(core.CursorCaps, res, session, currentModel)
 	if plan.HoldForeign || plan.PreserveExplicit {

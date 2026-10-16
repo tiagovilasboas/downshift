@@ -40,8 +40,9 @@ type Event struct {
 	Model     string          `json:"model"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// Codex PreToolUse does not send this field today.
-	SessionModels   *[]string `json:"session_models,omitempty"`
-	AvailableModels *[]string `json:"available_models,omitempty"`
+	ModelMetadata   []core.SessionModel `json:"model_metadata,omitempty"`
+	SessionModels   *[]string           `json:"session_models,omitempty"`
+	AvailableModels *[]string           `json:"available_models,omitempty"`
 	// IncludedModels and UnavailableModels are optional quota marks.
 	// Absent marks supply no credit evidence. Present marks apply to this call.
 	IncludedModels    *[]string       `json:"included_models,omitempty"`
@@ -149,9 +150,6 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if len(r) > 0 {
 		res = r[0]
 	}
-	decision := core.Route(subPrompt, harnessID, currentModel, res)
-	decision.RequestedID = currentModel
-
 	session := core.ResolveSessionForID(harnessID, ev.SessionID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	usage := ev.UsageQuota
@@ -162,6 +160,13 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		}
 	}
 	session = session.WithUsageQuota(harnessID, usage)
+	if ev.ModelMetadata != nil {
+		session.Metadata = ev.ModelMetadata
+	}
+	res = core.ResolveSessionModels(harnessID, session, res)
+	decision := core.Route(subPrompt, harnessID, currentModel, res)
+	decision.RequestedID = currentModel
+
 	plan := decision.PlanSession(core.CodexCaps, res, session, currentModel)
 	if plan.HoldForeign || plan.PreserveExplicit || (!plan.RewriteModel && !plan.ApplyEffort) {
 		return allow(), "", decision

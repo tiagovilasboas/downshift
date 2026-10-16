@@ -27,8 +27,9 @@ type Event struct {
 	WorkspacePaths []string `json:"workspacePaths,omitempty"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// ResolveSession falls back to the user file when both are nil.
-	SessionModels   *[]string `json:"session_models,omitempty"`
-	AvailableModels *[]string `json:"available_models,omitempty"`
+	ModelMetadata   []core.SessionModel `json:"model_metadata,omitempty"`
+	SessionModels   *[]string           `json:"session_models,omitempty"`
+	AvailableModels *[]string           `json:"available_models,omitempty"`
 	// IncludedModels and UnavailableModels are optional quota marks.
 	// Absent marks supply no credit evidence. Present marks apply to this call.
 	IncludedModels    *[]string       `json:"included_models,omitempty"`
@@ -114,6 +115,10 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
+	if ev.ModelMetadata != nil {
+		session.Metadata = ev.ModelMetadata
+	}
+	res = core.ResolveSessionModels(harnessID, session, res)
 
 	changed := false
 	var lastDecision core.Decision

@@ -53,6 +53,10 @@ func parseCodexCache(data []byte) ([]Model, error) {
 			Slug       string `json:"slug"`
 			Display    string `json:"display_name"`
 			Visibility string `json:"visibility"`
+			Tier       string `json:"tier"`
+			Efforts    []struct {
+				Effort string `json:"effort"`
+			} `json:"supported_reasoning_levels"`
 		} `json:"models"`
 	}
 	if err := json.Unmarshal(data, &f); err != nil {
@@ -63,7 +67,13 @@ func parseCodexCache(data []byte) ([]Model, error) {
 		if m.Slug == "" || m.Visibility != "list" {
 			continue
 		}
-		out = append(out, Model{ID: m.Slug, Display: m.Display})
+		model := Model{ID: m.Slug, Display: m.Display, Tier: m.Tier}
+		for _, level := range m.Efforts {
+			if level.Effort != "" {
+				model.Efforts = append(model.Efforts, level.Effort)
+			}
+		}
+		out = append(out, model)
 	}
 	if len(out) == 0 {
 		return nil, errors.New("codex cache: no listed models")
