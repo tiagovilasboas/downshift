@@ -81,7 +81,7 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   parent's current model: 22 of 24 such spawns in the operator's rollouts
   (2026-10-12; the other mismatches were Downshift's own rewrites). The
   adapter reads the last `turn_context.payload.model` from the tail of
-  `transcript_path`. `gpt-6.1-sol` and `gpt-reserve` are not in the catalog
+  `transcript_path`. `gpt-reserve` is not in the catalog
   yet, so they still log as `unknown` with `requested_model_raw` set.
 - **antigravity current model.** `Subagents[].Model` arrives in the payload
   (2026-10-09 run asked for `pro`) but was never exposed to telemetry; it is
