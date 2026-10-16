@@ -286,3 +286,12 @@ func TestPauseMarker_ExpiryAndFailOpen(t *testing.T) {
 		t.Fatalf("marker dir must be private: %v %v", fi, err)
 	}
 }
+
+func TestSessionTree_UnpricedModelDoesNotShowFreeEstimate(t *testing.T) {
+	input := int64(1000)
+	ev := []Event{td("unknown-price", sessA, 0, "session-model"), {Outcome: OutcomeUsage, Harness: "claude-code", SessionID: sessA, LinkedDecision: "unknown-price", ToModel: "session-model", InputTokens: &input}}
+	out := SessionTree(ev, sessA, TreeOptions{Price: func(string, string) (core.Model, bool) { return core.Model{ID: "session-model"}, true }})
+	if strings.Contains(out, "$") {
+		t.Fatalf("unpriced model shown as priced: %s", out)
+	}
+}

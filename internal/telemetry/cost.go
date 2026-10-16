@@ -22,6 +22,13 @@ type TokenUsage struct {
 	CacheWriteTokens int64
 }
 
+// HasModelPrices reports whether both uncached token rates are known. Zero
+// rates mean missing metadata, never free usage. Cache rates may fall back to
+// the known input rate.
+func HasModelPrices(model core.Model) bool {
+	return model.InputM > 0 && model.OutputM > 0
+}
+
 // CostUSD computes the provider cost for one spawn from catalog list prices
 // (USD per 1M tokens). Cached tokens are billed at the model's cache-read
 // price when the catalog has one. When it has none (CacheReadM == 0) they are
@@ -51,6 +58,9 @@ func CostUSD(model core.Model, usage TokenUsage) float64 {
 // RealSavingsUSD returns baseline minus routed cost for the same usage.
 // Returns 0 when the routed model is not cheaper (upshift / OK).
 func RealSavingsUSD(baseline, routed core.Model, usage TokenUsage) float64 {
+	if !HasModelPrices(baseline) || !HasModelPrices(routed) {
+		return 0
+	}
 	base := CostUSD(baseline, usage)
 	routedCost := CostUSD(routed, usage)
 	if routedCost >= base {

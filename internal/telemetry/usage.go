@@ -159,7 +159,8 @@ const (
 )
 
 // FillRealCost prices the token usage already stored on ev and fills both
-// cost pointers via CostUSD. Usage is read with TokenUsageOrZero, so missing
+// known cost pointers via CostUSD; missing list prices remain absent.
+// Usage is read with TokenUsageOrZero, so missing
 // or negative token fields contribute zero, never garbage.
 //
 // Callers should only invoke this when the spend is real: total tokens > 0
@@ -171,9 +172,13 @@ func FillRealCost(ev *Event, baseline, routed core.Model) {
 		return
 	}
 	usage := ev.TokenUsageOrZero()
-	actual := CostUSD(routed, usage)
-	base := CostUSD(baseline, usage)
-	ev.ActualCostUSD = &actual
-	ev.BaselineCostUSD = &base
-	ev.BaselineSource = BaselineRequested
+	if HasModelPrices(routed) {
+		actual := CostUSD(routed, usage)
+		ev.ActualCostUSD = &actual
+	}
+	if HasModelPrices(baseline) {
+		base := CostUSD(baseline, usage)
+		ev.BaselineCostUSD = &base
+		ev.BaselineSource = BaselineRequested
+	}
 }

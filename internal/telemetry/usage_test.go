@@ -515,3 +515,26 @@ func TestHandlePostToolUse_UnknownRequestedBaselinePreservesObservedSpend(t *tes
 		})
 	}
 }
+
+// Identity from a session is independent from price discovery.
+func TestFillRealCost_UnpricedModelsStayUnknown(t *testing.T) {
+	known := core.Model{InputM: 2, OutputM: 10}
+	for _, missing := range []core.Model{{}, {InputM: 2}, {OutputM: 10}} {
+		for _, actualUnknown := range []bool{false, true} {
+			var ev telemetry.Event
+			input, output := int64(1000), int64(500)
+			ev.InputTokens, ev.OutputTokens = &input, &output
+			baseline, routed := missing, known
+			if actualUnknown {
+				baseline, routed = known, missing
+			}
+			telemetry.FillRealCost(&ev, baseline, routed)
+			if (ev.ActualCostUSD == nil) != actualUnknown || (ev.BaselineCostUSD == nil) == actualUnknown {
+				t.Fatalf("unknown actual=%v: actual=%v baseline=%v", actualUnknown, ev.ActualCostUSD, ev.BaselineCostUSD)
+			}
+			if ev.HasRealCost() || ev.RealSavedUSD() != 0 || telemetry.RealSavingsUSD(baseline, routed, ev.TokenUsageOrZero()) != 0 {
+				t.Fatal("missing prices fabricated savings")
+			}
+		}
+	}
+}

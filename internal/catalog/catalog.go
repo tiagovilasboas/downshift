@@ -431,7 +431,7 @@ func uniqueStrings(a, b string) []string {
 func (c *Catalog) SavingsRatio(from, to core.Model) float64 {
 	fromCost := from.InputM + from.OutputM
 	toCost := to.InputM + to.OutputM
-	if fromCost <= 0 || toCost >= fromCost {
+	if from.InputM <= 0 || from.OutputM <= 0 || to.InputM <= 0 || to.OutputM <= 0 || toCost >= fromCost {
 		return 0
 	}
 	return (fromCost - toCost) / fromCost

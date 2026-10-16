@@ -270,7 +270,7 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 			if id == "" || id == "unknown" {
 				id = d.ToModel
 			}
-			if m, ok := opt.Price(d.Harness, id); ok {
+			if m, ok := opt.Price(d.Harness, id); ok && HasModelPrices(m) {
 				v := CostUSD(m, u.TokenUsageOrZero())
 				row.CostUSD, row.CostKind = &v, "estimate"
 			}

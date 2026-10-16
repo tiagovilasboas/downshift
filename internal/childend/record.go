@@ -334,12 +334,14 @@ func buildUsageEvent(harness string, usage telemetry.TokenUsage, payloadModel, s
 	if usage == (telemetry.TokenUsage{}) {
 		return ev
 	}
-	actual := telemetry.CostUSD(routed, usage)
-	ev.ActualCostUSD = &actual
+	if telemetry.HasModelPrices(routed) {
+		actual := telemetry.CostUSD(routed, usage)
+		ev.ActualCostUSD = &actual
+	}
 	// Observed routed spend does not establish the requested baseline. Keep
 	// it absent unless the linked decision names a catalog-resolved model.
 	if target != nil && target.FromModel != "" && target.FromModel != "unknown" {
-		if baseline, ok := r.LookupByID(harness, target.FromModel); ok {
+		if baseline, ok := r.LookupByID(harness, target.FromModel); ok && telemetry.HasModelPrices(baseline) {
 			base := telemetry.CostUSD(baseline, usage)
 			ev.BaselineCostUSD = &base
 			ev.BaselineSource = telemetry.BaselineRequested

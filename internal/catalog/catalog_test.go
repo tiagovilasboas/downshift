@@ -824,3 +824,16 @@ func TestCatalog_CachePricesOnlyWhereSnapshotHasThem(t *testing.T) {
 		t.Errorf("cursor entry has no snapshot id match; cache read = %v, want 0", cur.CacheReadM)
 	}
 }
+
+func TestSavingsRatio_MissingPricesStayUnknown(t *testing.T) {
+	c := Load()
+	known := core.Model{InputM: 2, OutputM: 10}
+	for _, missing := range []core.Model{{}, {InputM: 2}, {OutputM: 10}} {
+		if got := c.SavingsRatio(known, missing); got != 0 {
+			t.Errorf("unpriced target saved %v, want unknown (0)", got)
+		}
+		if got := c.SavingsRatio(missing, known); got != 0 {
+			t.Errorf("unpriced baseline saved %v, want unknown (0)", got)
+		}
+	}
+}
