@@ -66,18 +66,23 @@ type TreeRow struct {
 
 	mark    string
 	baseUSD float64 // baseline cost, or the cost itself when no baseline is known
+	// inferred: the baseline was guessed from settings, not requested.
+	inferred bool
 }
 
 // SessionTreeView is the structured session view; Render turns it into text.
 type SessionTreeView struct {
-	Session    string    `json:"session"` // first 8 hex of the hashed id
-	Subagents  int       `json:"subagents"`
-	HasCost    bool      `json:"has_cost"`
-	CostUSD    float64   `json:"cost_usd"`
-	WithoutUSD float64   `json:"without_downshift_usd"`
-	DeltaUSD   float64   `json:"delta_usd"` // without minus cost; negative is a loss
-	Paused     bool      `json:"paused"`
-	Rows       []TreeRow `json:"rows"`
+	Session    string  `json:"session"` // first 8 hex of the hashed id
+	Subagents  int     `json:"subagents"`
+	HasCost    bool    `json:"has_cost"`
+	CostUSD    float64 `json:"cost_usd"`
+	WithoutUSD float64 `json:"without_downshift_usd"`
+	DeltaUSD   float64 `json:"delta_usd"` // without minus cost; negative is a loss
+	// InferredBaseline counts priced rows whose baseline was guessed from
+	// settings (BASELINE_FROM_SETTINGS), so the saving is against a guess.
+	InferredBaseline int       `json:"inferred_baseline,omitempty"`
+	Paused           bool      `json:"paused"`
+	Rows             []TreeRow `json:"rows"`
 }
 
 // IsDecisionRow reports whether an event is a routing decision of a subagent:
@@ -210,6 +215,9 @@ func BuildSessionTree(events []Event, sessionHash string, opt TreeOptions) Sessi
 		view.HasCost = true
 		view.CostUSD += *r.CostUSD
 		view.WithoutUSD += r.baseUSD
+		if r.inferred {
+			view.InferredBaseline++
+		}
 	}
 	view.DeltaUSD = view.WithoutUSD - view.CostUSD
 	return view
@@ -225,6 +233,7 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 		f = &childFacts{}
 	}
 	row.Model = rowModel(d, f)
+	refuted := f.resolved != nil && f.resolved.RewriteHonored != nil && !*f.resolved.RewriteHonored
 	switch {
 	case d.Outcome == OutcomeBlocked:
 		row.Status, row.mark = "blocked", markError
@@ -246,7 +255,10 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 		case u.ActualCostUSD != nil:
 			v := *u.ActualCostUSD
 			row.CostUSD, row.CostKind, row.baseUSD = &v, "real", v
-			if u.BaselineCostUSD != nil {
+			row.inferred = u.BaselineSource == BaselineInferred || hasCode(d.ReasonCodes, ReasonBaselineFromSettings)
+			// A refuted rewrite saved nothing: an older record may be priced
+			// on the model the rewrite asked for, so no baseline is credited.
+			if u.BaselineCostUSD != nil && !refuted {
 				row.baseUSD = *u.BaselineCostUSD
 				if over := v - *u.BaselineCostUSD; over > 0.0005 {
 					row.OverUSD = over
@@ -268,9 +280,14 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 }
 
 // rowModel is the model the child ran on: the usage record's, else the
-// resolved record's, else the decision's own final model.
+// resolved record's, else the decision's own final model. A resolved record
+// that refutes the rewrite comes first: it is what the harness ran.
 func rowModel(d Event, f *childFacts) string {
-	for _, ev := range []*Event{f.usage, f.resolved, &d} {
+	order := []*Event{f.usage, f.resolved, &d}
+	if f.resolved != nil && f.resolved.RewriteHonored != nil && !*f.resolved.RewriteHonored {
+		order = []*Event{f.resolved, f.usage, &d}
+	}
+	for _, ev := range order {
 		if ev != nil && ev.ToModel != "" && ev.ToModel != "unknown" {
 			return ShortModel(ev.ToModel)
 		}
@@ -390,6 +407,9 @@ func (v SessionTreeView) Render() string {
 				head = append(head, "over "+formatUSD(-v.DeltaUSD))
 			case v.DeltaUSD > 0.0005:
 				head = append(head, "saved "+formatUSD(v.DeltaUSD))
+			}
+			if v.InferredBaseline > 0 {
+				head = append(head, fmt.Sprintf("%d on an inferred baseline", v.InferredBaseline))
 			}
 		} else {
 			head = append(head, "cost not observed")

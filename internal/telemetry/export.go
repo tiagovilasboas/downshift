@@ -35,6 +35,7 @@ type Summary struct {
 	ActualCostEvents    int                       `json:"actual_cost_events"`
 	ActualCostUSD       float64                   `json:"actual_cost_usd"`
 	RealCostEvents      int                       `json:"real_cost_events"`
+	RealCostInferred    int                       `json:"real_cost_inferred_baseline"`
 	RealSavedUSD        float64                   `json:"real_saved_usd"`
 	RealCostDeltaUSD    float64                   `json:"real_cost_delta_usd,omitempty"`
 	RealOverspendUSD    float64                   `json:"real_overspend_usd,omitempty"`
@@ -108,6 +109,7 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		ActualCostEvents:    stats.ActualCostEvents,
 		ActualCostUSD:       stats.ActualCostUSD,
 		RealCostEvents:      stats.RealCostEvents,
+		RealCostInferred:    stats.RealCostInferred,
 		RealSavedUSD:        stats.RealSavedUSD,
 		RealCostDeltaUSD:    stats.RealCostDeltaUSD,
 		RealOverspendUSD:    stats.RealOverspendUSD,

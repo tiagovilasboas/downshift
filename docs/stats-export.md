@@ -20,6 +20,7 @@ Fields useful for graduation tracking:
 | `actual_cost_events` | Events with observed token usage priced against a known routed model, including unknown-baseline events |
 | `actual_cost_usd` | Sum of observed token costs at catalog list prices (not provider invoices) |
 | `real_cost_events` | Events with both actual and baseline catalog-priced USD |
+| `real_cost_inferred_baseline` | Of those, events whose baseline was guessed from settings (`baseline_source: inferred`), not requested by the harness |
 | `real_saved_usd` | Sum of baseline − actual (catalog pricing), each event clamped at zero, so it never goes negative |
 | `real_cost_delta_usd` | Signed sum of baseline − actual over the same events. Negative means the router cost more than the baseline overall. Omitted when `0` |
 | `real_overspend_usd` | Sum of the negative per-event deltas as a positive number: money spent above baseline. Omitted when `0` |

@@ -757,7 +757,9 @@ func Aggregate(events []Event) Stats {
 				s.UsageLinked++
 				linked[unique] = true
 			}
-			if ev.HasRealCost() {
+			// A refuted rewrite saved nothing; an older record may still be
+			// priced on the model it asked for, so its delta is not credited.
+			if ev.HasRealCost() && !refuted[key] {
 				s.RealCostEvents++
 				s.addRealDelta(ev)
 				if ev.BaselineSource == BaselineInferred || hasReason(decisions[key].ReasonCodes, ReasonBaselineFromSettings) {
@@ -779,8 +781,13 @@ func Aggregate(events []Event) Stats {
 			s.PolicyFloor++
 		}
 		s.ByComplexity[ev.Complexity]++
-		if ev.ToModel != "" && ev.ToModel != "unknown" {
-			s.ModelMix[ShortModel(ev.ToModel)]++
+		isRefuted := refuted[linkKey{ev.Harness, DecisionKey(ev)}]
+		ran := ev.ToModel
+		if isRefuted {
+			ran = ev.FromModel // the harness kept the requested model
+		}
+		if ran != "" && ran != "unknown" {
+			s.ModelMix[ShortModel(ran)]++
 		}
 		if ev.ScoreWould != "" {
 			s.ScoreObserved++
@@ -797,11 +804,11 @@ func Aggregate(events []Event) Stats {
 		}
 		if strings.EqualFold(ev.Tier, core.TierFrontier.String()) {
 			s.FrontierDecisions++
-			if spentOnDoubt(ev) {
+			if spentOnDoubt(ev) && !isRefuted {
 				s.FrontierOnDoubt++
 			}
 		}
-		applied := AppliedRewrite(ev.Outcome, ev.Corrections) && !refuted[linkKey{ev.Harness, DecisionKey(ev)}]
+		applied := AppliedRewrite(ev.Outcome, ev.Corrections) && !isRefuted
 		switch {
 		case ev.Verdict == "DOWNSHIFT" && applied:
 			s.Downshifted++

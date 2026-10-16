@@ -78,3 +78,15 @@ func isShift(ev Event) bool {
 	}
 	return ev.FromModel != ev.ToModel
 }
+
+// RefutedRewrites returns the decisions (harness + "\n" + decision key) that
+// a linked "resolved" record refutes: the harness ran another model.
+func RefutedRewrites(events []Event) map[string]bool {
+	out := map[string]bool{}
+	for _, ev := range events {
+		if ev.Outcome == OutcomeResolved && ev.LinkedDecision != "" && ev.RewriteHonored != nil && !*ev.RewriteHonored {
+			out[ev.Harness+"\n"+ev.LinkedDecision] = true
+		}
+	}
+	return out
+}

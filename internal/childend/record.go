@@ -123,7 +123,13 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 		target = LinkTargetBy(ce.Harness, prior, sessionHash, callHash, ce.Model, now, telemetry.OutcomeUsage)
 	}
 
-	ev := buildUsageEvent(ce.Harness, usage, ce.Model, sessionHash, binaryVersion, target, r, now)
+	// The model the harness reports it resolved is what ran; without a usage
+	// model, pricing on the rewrite target would credit a refuted rewrite.
+	ranOn := ce.Model
+	if ranOn == "" {
+		ranOn = ce.ResolvedModel
+	}
+	ev := buildUsageEvent(ce.Harness, usage, ranOn, sessionHash, binaryVersion, target, r, now)
 	// The same agent id lets a later stop see this child as already priced, so
 	// a foreground child is neither double counted nor announced twice.
 	ev.AgentHash = agentHash
@@ -306,6 +312,12 @@ func buildUsageEvent(harness string, usage telemetry.TokenUsage, payloadModel, s
 	// Price only real spend against a catalog-resolved routed model.
 	routedID := payloadModel
 	if routedID == "" && target != nil {
+		// With no observed model and no known requested model, a control
+		// spawn cannot be priced; pricing the routed one on its rewrite
+		// target would keep it in one report arm only.
+		if target.FromModel == "" || target.FromModel == "unknown" {
+			return ev
+		}
 		routedID = ranModel(*target)
 	}
 	if r == nil || routedID == "" || routedID == "unknown" {

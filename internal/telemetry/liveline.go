@@ -70,12 +70,13 @@ func SessionSummary(events []Event, sessionHash string) SessionRouting {
 		return s
 	}
 	byModel := map[string]int{}
+	refuted := RefutedRewrites(events)
 	for _, ev := range events {
 		if ev.SessionID != sessionHash {
 			continue
 		}
 		if ev.Outcome == OutcomeUsage {
-			if ev.HasRealCost() {
+			if ev.HasRealCost() && !refuted[ev.Harness+"\n"+ev.LinkedDecision] {
 				s.HasCost = true
 				s.DeltaUSD += ev.RealDeltaUSD()
 			}
@@ -85,14 +86,15 @@ func SessionSummary(events []Event, sessionHash string) SessionRouting {
 			continue
 		}
 		s.Spawns++
+		isRefuted := refuted[ev.Harness+"\n"+DecisionKey(ev)]
 		ran := ev.FromModel
-		if AppliedRewrite(ev.Outcome, ev.Corrections) && ev.Outcome == OutcomeRewriteEmitted {
+		if AppliedRewrite(ev.Outcome, ev.Corrections) && ev.Outcome == OutcomeRewriteEmitted && !isRefuted {
 			ran = ev.ToModel
 		}
 		if ran != "" && ran != "unknown" {
 			byModel[ShortModel(ran)]++
 		}
-		if spentOnDoubt(ev) {
+		if spentOnDoubt(ev) && !isRefuted {
 			s.OnDoubt++
 		}
 	}
@@ -173,11 +175,15 @@ func ChildEndLine(ev Event) string {
 			if ev.FromModel != "" && ev.FromModel != "unknown" {
 				want = ShortModel(ev.FromModel)
 			}
+			guess := ""
+			if ev.BaselineSource == BaselineInferred {
+				guess = ", inferred baseline"
+			}
 			switch {
 			case want == "":
-				cost += " (would be " + formatUSD(*ev.BaselineCostUSD) + ")"
+				cost += " (would be " + formatUSD(*ev.BaselineCostUSD) + guess + ")"
 			case want != ran:
-				cost += " (" + want + " would be " + formatUSD(*ev.BaselineCostUSD) + ")"
+				cost += " (" + want + " would be " + formatUSD(*ev.BaselineCostUSD) + guess + ")"
 			}
 		}
 		parts = append(parts, cost)
