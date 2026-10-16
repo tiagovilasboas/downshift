@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hook failure telemetry (`INVALID_EVENT`, `READ_ERROR`, and other fail-open paths) now records the harness id on each error row so `events.jsonl` can be filtered by adapter.
 - Codex: `gpt-6.1-sol` is in the embedded catalog for identity and frontier tier (from `models_cache.json`); list prices stay absent until a vendor snapshot matches exactly, so routing baselines are known while cost telemetry remains unknown for that id.
 - Long delegation briefs that are not bounded (fewer than two scope, test, or reply limits) no longer treat negated or quoted TRIVIAL keywords (`no git commit`, `` `git log` ``, `git branch` labels, rename-in-path segments) as one-step jobs.
+- `hookctx` timing test: a background helper no longer inherits the hook stdout pipe under `go test ./...`, so CI does not hit the 5 s command timeout on loaded runners.
 
 ### Changed
 

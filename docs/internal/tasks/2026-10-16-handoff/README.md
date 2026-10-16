@@ -37,7 +37,7 @@ enabled and no request was sent. Human adjudication of the M3 labels is still pe
 | H2 | Done | Codex `gpt-6.1-sol` in catalog (identity/tier; prices absent until verified) |
 | H3 | Done | Cursor: `inherit` uses parent `model_id` baseline (`3015fc9`) |
 | H4 | Done | Hook failure events record harness (`f8acfbf`) |
-| H5 | In PR | Long unbounded briefs: negated/quoted TRIVIAL keywords no longer vote |
+| H5 | Done | Long unbounded briefs: negated/quoted TRIVIAL keywords no longer vote (`#130`) |
 | H6 | High | Owner decisions with finished diffs: upshift to the needed tier; risky write with unknown baseline |
 | H7 | Medium | Fresh routed-versus-control run after the Haiku fix, and the README evidence screenshots |
 | H8 | Low | Outcome suite re-run on the model that actually runs (Haiku 4.5), 40 tasks, about $5 to $6 |
