@@ -407,12 +407,13 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 
 // Failure records a hook fail-open path without accepting raw input or errors
 // that could contain prompt content.
-func Failure(correlationID, binaryVersion, errorCode string) Event {
+func Failure(correlationID, binaryVersion, harness, errorCode string) Event {
 	return Event{
 		CorrelationID: correlationID,
 		Timestamp:     time.Now().UTC().Format(time.RFC3339Nano),
 		Source:        "hook",
 		Agent:         "subagent",
+		Harness:       harness,
 		PolicyVersion: PolicyVersion,
 		BinaryVersion: binaryVersion,
 		Outcome:       "error",

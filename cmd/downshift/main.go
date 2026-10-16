@@ -177,6 +177,7 @@ func runVersion(w io.Writer) int {
 // Any failure prints the harness-specific fail-open response and exits 0 —
 // the spawn must never be blocked by a router error.
 func runHookAdapter[E any](
+	harness string,
 	in io.Reader,
 	parse func([]byte) (E, error),
 	handle func(E) (any, string, core.Decision),
@@ -189,7 +190,7 @@ func runHookAdapter[E any](
 	correlationID := telemetry.NewCorrelationID()
 	responded := false
 	fail := func(code string) int {
-		telemetry.Record(telemetry.Failure(correlationID, buildVersion, code))
+		telemetry.Record(telemetry.Failure(correlationID, buildVersion, harness, code))
 		if !responded {
 			failOpen()
 			responded = true
@@ -421,7 +422,7 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
 	defer maybeRefreshScores() // same shared trigger as runHookAdapter
 	correlationID := telemetry.NewCorrelationID()
 	fail := func(code string) int {
-		telemetry.Record(telemetry.Failure(correlationID, buildVersion, code))
+		telemetry.Record(telemetry.Failure(correlationID, buildVersion, "kirocrew", code))
 		return 0 // fail-open: never block a spawn on a router error
 	}
 	// A Go panic exits with status 2, which KiroCrew treats as "block".

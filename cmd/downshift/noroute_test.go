@@ -35,6 +35,7 @@ func TestHookNoRoute_AllowsWithoutRewrite(t *testing.T) {
 
 	out := captureStdout(func() {
 		rc := runHookAdapter(
+			"cursor",
 			bytes.NewReader(stdin),
 			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },
@@ -84,6 +85,7 @@ func TestStatsExport_PasteableJSON(t *testing.T) {
 		frontierID + `","tool_input":{"task":"rename the userId variable","model":"` + frontierID + `"}}`)
 	captureStdout(func() {
 		runHookAdapter(
+			"cursor",
 			bytes.NewReader(stdin),
 			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },

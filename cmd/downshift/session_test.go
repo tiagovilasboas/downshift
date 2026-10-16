@@ -32,6 +32,7 @@ func sessionHook(t *testing.T, session, frontier string) string {
 	})
 	return captureStdout(func() {
 		runHookAdapter(
+			"claude-code",
 			bytes.NewReader(pre),
 			func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 			func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },

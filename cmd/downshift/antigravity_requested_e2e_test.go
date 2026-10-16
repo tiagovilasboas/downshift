@@ -35,6 +35,7 @@ func TestHookE2E_AntigravityRequestedModel(t *testing.T) {
 	})
 	captureStdout(func() {
 		runHookAdapter(
+			"antigravity",
 			bytes.NewReader(stdin),
 			func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) },
 			func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, cmdCat) },

@@ -52,6 +52,7 @@ func TestHookE2E_ClaudeCodeRecordsAgentTypeLabel(t *testing.T) {
 		stdin, _ := json.Marshal(map[string]any{"hook_event_name": "PreToolUse", "tool_name": "Agent", "transcript_path": transcript, "tool_input": toolInput})
 		captureStdout(func() {
 			runHookAdapter(
+				"claude-code",
 				bytes.NewReader(stdin),
 				func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 				func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
@@ -83,6 +84,7 @@ func TestHookE2E_CursorEventHasNoAgentType(t *testing.T) {
 	t.Setenv("DOWNSHIFT_CONTROL_SHARE", "0")
 	captureStdout(func() {
 		runHookAdapter(
+			"cursor",
 			strings.NewReader(`{"hook_event_name":"preToolUse","tool_name":"Task","tool_input":{"task":"rename the userId variable to userIdentifier","model":"inherit"}}`),
 			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },

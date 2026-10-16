@@ -21,6 +21,7 @@ func TestRunHookAdapter_EmptyStdinFailsOpen(t *testing.T) {
 	for _, in := range []string{"", "  \n"} {
 		failedOpen := false
 		rc := runHookAdapter(
+			"cursor",
 			strings.NewReader(in),
 			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },

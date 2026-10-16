@@ -107,14 +107,14 @@ func TestHookE2E_MultilangGuardAcrossHarnesses(t *testing.T) {
 func runQAAdapterFixture(raw []byte, harness string) {
 	switch harness {
 	case "claude-code":
-		runHookAdapter(bytes.NewReader(raw), func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) }, func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) }, printAllow)
+		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) }, func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) }, printAllow)
 	case "cursor":
-		runHookAdapter(bytes.NewReader(raw), func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) }, func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) }, printCursorAllow)
+		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) }, func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) }, printCursorAllow)
 	case "codex":
-		runHookAdapter(bytes.NewReader(raw), func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) }, func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) }, printAllow)
+		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) }, func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) }, printAllow)
 	case "kirocrew":
-		runHookAdapter(bytes.NewReader(raw), func(b []byte) (kirocrew.Event, error) { var e kirocrew.Event; return e, json.Unmarshal(b, &e) }, func(e kirocrew.Event) (any, string, core.Decision) { return kirocrew.Handle(e, cmdCat) }, printAllow)
+		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (kirocrew.Event, error) { var e kirocrew.Event; return e, json.Unmarshal(b, &e) }, func(e kirocrew.Event) (any, string, core.Decision) { return kirocrew.Handle(e, cmdCat) }, printAllow)
 	case "antigravity":
-		runHookAdapter(bytes.NewReader(raw), func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) }, func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, cmdCat) }, printAllow)
+		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) }, func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, cmdCat) }, printAllow)
 	}
 }

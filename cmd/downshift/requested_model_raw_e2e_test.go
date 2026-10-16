@@ -56,6 +56,7 @@ func TestHookE2E_RequestedModelRawThroughSharedRunner(t *testing.T) {
 			})
 			captureStdout(func() {
 				runHookAdapter(
+					"cursor",
 					bytes.NewReader(stdin),
 					func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 					func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },

@@ -75,6 +75,7 @@ func TestRunHookAdapter_WarnsOnceWhenSessionUnknown(t *testing.T) {
 	captureStdout(func() {
 		stderr = captureStderr(func() {
 			runHookAdapter(
+				"claude-code",
 				strings.NewReader(stdin),
 				func(b []byte) (claudecode.Event, error) { var e claudecode.Event; return e, json.Unmarshal(b, &e) },
 				func(e claudecode.Event) (any, string, core.Decision) { return claudecode.Handle(e, cmdCat) },
