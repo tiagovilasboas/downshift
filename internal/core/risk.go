@@ -248,18 +248,26 @@ func scanRiskCategories(prompt string) []string {
 
 // applyRiskFloor lifts a Trivial/Simple classification that touches a risk
 // category to Medium (mid tier) and clears Confident, so no adapter acts on
-// a confident downshift for it. Medium and Complex are left unchanged.
+// a confident downshift for it. A confident Medium or Simple label with risk
+// only clears Confident (abstention) and leaves the complexity unchanged.
 func applyRiskFloor(prompt string, c Classification) Classification {
+	cats := RiskCategories(prompt)
+	if len(cats) > 0 {
+		c.Risk = cats
+		wc := len(strings.Fields(prompt))
+		// H14 delegation bucket: bounded risk briefs abstain without tier change.
+		if c.Confident && (c.Complexity == Medium || c.Complexity == Simple) && boundedBrief(prompt, wc) {
+			c.Confident = false
+		}
+	}
 	if c.Complexity >= Medium {
 		return c
 	}
-	cats := RiskCategories(prompt)
 	if len(cats) == 0 {
 		return c
 	}
 	c.Complexity = Medium
 	c.Confident = false
 	c.RiskFloor = true
-	c.Risk = cats
 	return c
 }

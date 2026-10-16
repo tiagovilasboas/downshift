@@ -152,6 +152,32 @@ func TestRiskCategories_Identifiers(t *testing.T) {
 	}
 }
 
+func TestRiskFloor_BoundedRiskBriefAbstainsAtMedium(t *testing.T) {
+	task := "Implement the refund flow for payments processing as described in docs/tasks/refund.md."
+	p := brief(task)
+	if len(core.RiskCategories(p)) == 0 {
+		t.Fatalf("expected risk on bounded brief")
+	}
+	cls := core.Classify(p)
+	if cls.Complexity != core.Medium {
+		t.Fatalf("want MEDIUM, got %s", cls.Complexity)
+	}
+	if cls.Confident {
+		t.Errorf("bounded risk brief must abstain (Confident=false) without changing tier: %+v", cls)
+	}
+}
+
+func TestRiskFloor_ShortMediumRiskStaysConfident(t *testing.T) {
+	p := "add a feature to encrypt exported reports with the tenant key"
+	if len(core.RiskCategories(p)) == 0 {
+		t.Fatal("expected risk categories")
+	}
+	cls := core.Classify(p)
+	if cls.Complexity != core.Medium || !cls.Confident {
+		t.Errorf("short MEDIUM risk prompt keeps classifier confidence; R5 holds downshift: %+v", cls)
+	}
+}
+
 // Trivial/Simple classifications with risk are lifted to Medium without confidence.
 func TestRiskFloor_ClearsConfidentWhenRiskPresent(t *testing.T) {
 	p := "rename the password field to credentialKey"
