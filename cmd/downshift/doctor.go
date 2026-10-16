@@ -19,6 +19,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/semantic/e5shadow"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -162,6 +163,7 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 	checkCatalog(rep, env)
 	checkScores(rep)
 	checkContext(rep, env)
+	checkE5Shadow(rep, env)
 
 	for _, note := range modelOverrideNotes(core.AllHarnessCaps(), env.Getenv) {
 		name := strings.TrimPrefix(note, "model_override_env: ")
@@ -295,6 +297,46 @@ func checkScores(rep *doctorReport) {
 		status, fix = doctorWarn, "downshift models scores --refresh"
 	}
 	rep.add(doctorCheck{ID: "scores cache", Status: status, Detail: line, Fix: fix})
+}
+
+func checkE5Shadow(rep *doctorReport, env doctorEnv) {
+	if strings.TrimSpace(env.Getenv(e5shadow.EnableEnv)) != "1" {
+		return
+	}
+	cmd := strings.TrimSpace(env.Getenv(e5shadow.CmdEnv))
+	proto := strings.TrimSpace(env.Getenv(e5shadow.PrototypesEnv))
+	if cmd == "" {
+		rep.add(doctorCheck{
+			ID:     "e5 shadow",
+			Status: doctorWarn,
+			Detail: "DOWNSHIFT_E5_SHADOW=1 but DOWNSHIFT_E5_SHADOW_CMD is empty (shadow records missing_cmd only)",
+			Fix:    "set DOWNSHIFT_E5_SHADOW_CMD to a local ONNX helper (see tools/e5-shadow/README.md)",
+		})
+		return
+	}
+	if !e5shadow.CmdTrusted(cmd) {
+		rep.add(doctorCheck{
+			ID:     "e5 shadow",
+			Status: doctorWarn,
+			Detail: "E5 shadow command is not a trusted local helper (absolute binary or python3 + absolute script)",
+			Fix:    "use an absolute path to a reviewed embed helper; never curl/wget/sh -c",
+		})
+		return
+	}
+	if proto == "" {
+		rep.add(doctorCheck{
+			ID:     "e5 shadow",
+			Status: doctorWarn,
+			Detail: "DOWNSHIFT_E5_PROTOTYPES is empty",
+			Fix:    "set DOWNSHIFT_E5_PROTOTYPES to a labs-built PrototypeStore JSON under ~/.downshift/",
+		})
+		return
+	}
+	rep.add(doctorCheck{
+		ID:     "e5 shadow",
+		Status: doctorOK,
+		Detail: "shadow enabled with local helper and prototypes path configured",
+	})
 }
 
 func checkContext(rep *doctorReport, env doctorEnv) {

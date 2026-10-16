@@ -292,7 +292,7 @@ Decision events may include a prompt-free object **`e5_shadow`** (see `telemetry
 | `regex_label` | Production complexity string at observation time (after regex, risk, MiniLM fuse, graph, NB—field name is historical) |
 | `regex_confident` | Production `Confident` at observation time |
 | `latency_ms` | Wall time for the shadow path on this hook |
-| `error_code` | `missing_cmd`, `load_prototypes`, or `embed_error` when observation failed |
+| `error_code` | `missing_cmd`, `untrusted_cmd`, `load_prototypes`, `embed_error`, or `observe_panic` when observation failed |
 
 **Never persisted:** raw prompt, stdin/stderr, embedding vectors, file paths from env, or provider errors that might echo task text. No new **`SEMANTIC_BOOST`** or reason-code changes from E5 in Phase D.
 

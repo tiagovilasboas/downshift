@@ -51,22 +51,29 @@ func Enabled() bool {
 
 // Observe runs the E5 shadow path when Enabled(). It never persists prompt text.
 // Returns nil when shadow is disabled.
-func Observe(prompt, regexLabel string, regexConfident bool) *Observation {
+func Observe(prompt, regexLabel string, regexConfident bool) (o *Observation) {
 	if !Enabled() {
 		return nil
 	}
 	start := time.Now()
-	o := &Observation{
+	o = &Observation{
 		RegexLabel:     regexLabel,
 		RegexConfident: regexConfident,
 	}
 	defer func() {
 		o.LatencyMs = float64(time.Since(start).Milliseconds())
+		if recover() != nil && o.ErrorCode == "" {
+			o.ErrorCode = "observe_panic"
+		}
 	}()
 
 	cmd := strings.TrimSpace(os.Getenv(CmdEnv))
 	if cmd == "" {
 		o.ErrorCode = "missing_cmd"
+		return o
+	}
+	if !CmdTrusted(cmd) {
+		o.ErrorCode = "untrusted_cmd"
 		return o
 	}
 	store, modelID, err := loadPrototypes(os.Getenv(PrototypesEnv))
@@ -99,8 +106,8 @@ func loadPrototypes(path string) (semantic.PrototypeStore, string, error) {
 	if path == "" {
 		return semantic.PrototypeStore{}, "", fmt.Errorf("empty prototypes path")
 	}
-	info, err := os.Stat(path)
-	if err != nil || !info.Mode().IsRegular() {
+	info, err := os.Lstat(path)
+	if err != nil || info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
 		return semantic.PrototypeStore{}, "", fmt.Errorf("prototypes must be a regular file")
 	}
 	if info.Size() > maxPrototypeBytes {
@@ -119,8 +126,8 @@ func loadPrototypes(path string) (semantic.PrototypeStore, string, error) {
 	if err := json.Unmarshal(data, &store); err != nil {
 		return semantic.PrototypeStore{}, "", err
 	}
-	if store.Dim == 0 || len(store.Centroids) == 0 {
-		return semantic.PrototypeStore{}, "", fmt.Errorf("invalid prototypes")
+	if err := store.Validate(); err != nil {
+		return semantic.PrototypeStore{}, "", err
 	}
 	digest := sha256.Sum256(data)
 	id := "e5-prototypes-sha256:" + hex.EncodeToString(digest[:])

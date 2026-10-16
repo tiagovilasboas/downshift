@@ -420,15 +420,23 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		}
 	}
 	if e5 := d.E5Shadow; e5.ErrorCode != "" || e5.ModelID != "" {
+		sim := e5.Similarity
+		if math.IsNaN(sim) || math.IsInf(sim, 0) {
+			sim = 0
+		}
+		lat := e5.LatencyMs
+		if math.IsNaN(lat) || math.IsInf(lat, 0) || lat < 0 {
+			lat = 0
+		}
 		ev.E5Shadow = &E5ShadowRecord{
 			ModelID:        e5.ModelID,
 			NearestLabel:   e5.NearestLabel,
-			Similarity:     math.Round(e5.Similarity*1e4) / 1e4,
+			Similarity:     math.Round(sim*1e4) / 1e4,
 			WouldLabel:     e5.WouldLabel,
 			WouldLift:      e5.WouldLift,
 			RegexLabel:     e5.RegexLabel,
 			RegexConfident: e5.RegexConfident,
-			LatencyMs:      e5.LatencyMs,
+			LatencyMs:      lat,
 			ErrorCode:      e5.ErrorCode,
 		}
 	}
