@@ -45,7 +45,7 @@ enabled and no request was sent. Human adjudication of the M3 labels is still pe
 | H10 | Low | Local clean-up: shadowed binaries, three old log lines with prompt text |
 | H11 | Medium | harness-core leftovers found during the renaming |
 | H12 | High | Release beta.15 (needs the owner's approval) |
-| H13 | In PR | Session metadata resolver + adapter wiring (rebased from `codex/session-metadata-wip`) |
+| H13 | Done | Session metadata resolver + adapter wiring (`#133`) |
 | H14 | High | Unsafe confident recommendations on the multilingual set: 10 of 170, with or without the embedding |
 
 ## H1: bounded-brief classifier change
