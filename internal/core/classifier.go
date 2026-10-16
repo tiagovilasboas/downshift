@@ -124,6 +124,9 @@ var (
 	// Review and retry wording names the kind of work even inside a brief, so
 	// it is never discounted (see reviewSignals and the retry rows).
 	briefStrongRE = regexp.MustCompile(`(?i)\b(security\s+(audit|review)|code\s+review|trade-?offs?|design\s+doc|rfc|think\s+through|(auditoria|revis\S{1,3}o)\s+de\s+seguran|previous\s+attempt|tentativa\s+anterior|compilation\s+failed|failed\s+to\s+compile|subagent\s+failed|subagente\s+falhou|tests?\s+failed|testes?\s+falharam|fix\s+(the\s+)?(build|compilation))\b`)
+	// trivialNegationRE matches immediately before a TRIVIAL keyword on long
+	// delegation briefs: "no git commit", "never push", "não rode git pull".
+	trivialNegationRE = regexp.MustCompile(`(?i)\b(do not|don't|never|nor|without|not|no|n[aã]o|nunca|sem|jamais)\b[^.;:\n]{0,30}$`)
 )
 
 const (
@@ -160,6 +163,62 @@ func boundedBrief(prompt string, wordCount int) bool {
 //
 // It never touches the risk floor or the risk categories: a risky brief still
 // cannot be downshifted (selfcheck R5).
+// trivialInCommandQuote reports whether byte offset start lies inside an inline
+// command or path quoted with backticks.
+func trivialInCommandQuote(prompt string, start int) bool {
+	if start <= 0 || start > len(prompt) {
+		return false
+	}
+	return strings.Count(prompt[:start], "`")%2 == 1
+}
+
+// trivialInNegation reports whether a TRIVIAL keyword at start is negated or
+// forbidden in the words immediately before it ("do not format", "no git commit").
+func trivialInNegation(lower string, start int) bool {
+	if start <= 0 {
+		return false
+	}
+	window := lower[max(0, start-45):start]
+	return trivialNegationRE.MatchString(window)
+}
+
+// trivialVotesLongBrief returns the signal weight when at least one match is not
+// a constraint mention (negation or backtick command quote). Multiple matches
+// still add at most one vote, like MatchString.
+func trivialVotesLongBrief(prompt, lower string, s signal) int {
+	locs := s.re.FindAllStringIndex(lower, -1)
+	if len(locs) == 0 {
+		return 0
+	}
+	for _, loc := range locs {
+		if trivialInCommandQuote(prompt, loc[0]) || trivialInNegation(lower, loc[0]) ||
+			trivialGitBranchMention(lower, loc[0]) || trivialRenameInPath(lower, loc[0]) {
+			continue
+		}
+		return s.weight
+	}
+	return 0
+}
+
+// trivialGitBranchMention is a repo label ("git branch `feature/foo`"), not a
+// one-step git command.
+func trivialGitBranchMention(lower string, start int) bool {
+	return strings.HasPrefix(lower[start:], "git branch")
+}
+
+// trivialRenameInPath matches "mech-rename" path segments, not a rename task.
+func trivialRenameInPath(lower string, start int) bool {
+	if start == 0 {
+		return false
+	}
+	switch lower[start-1] {
+	case '-', '/', '.', '_':
+		return true
+	default:
+		return false
+	}
+}
+
 func applyBoundedBrief(prompt, lower string, scores map[Complexity]int, implementSpec bool) {
 	scores[Trivial] = 0
 	rows := 0
@@ -229,7 +288,14 @@ func Classify(prompt string) Classification {
 	lower := strings.ToLower(prompt)
 	scores := map[Complexity]int{Trivial: 0, Simple: 0, Medium: 0, Complex: 0}
 
+	longBrief := wordCount >= minBriefWords
+	isBounded := longBrief && boundedBrief(prompt, wordCount)
+
 	for _, s := range signals {
+		if longBrief && !isBounded && s.class == Trivial {
+			scores[s.class] += trivialVotesLongBrief(prompt, lower, s)
+			continue
+		}
 		if s.re.MatchString(lower) {
 			scores[s.class] += s.weight
 		}
@@ -270,9 +336,9 @@ func Classify(prompt string) Classification {
 	// its keywords as context (applyBoundedBrief). On real subagent briefs the
 	// length nudge alone decided most COMPLEX results. Other long, detailed
 	// prompts still lean toward higher complexity.
-	if contentMatched && boundedBrief(prompt, wordCount) {
+	if contentMatched && isBounded {
 		applyBoundedBrief(prompt, lower, scores, implementSpec)
-	} else if contentMatched && wordCount >= 80 {
+	} else if contentMatched && longBrief {
 		scores[Complex]++
 	}
 

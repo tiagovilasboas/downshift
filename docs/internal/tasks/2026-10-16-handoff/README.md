@@ -37,7 +37,7 @@ enabled and no request was sent. Human adjudication of the M3 labels is still pe
 | H2 | Done | Codex `gpt-6.1-sol` in catalog (identity/tier; prices absent until verified) |
 | H3 | Done | Cursor: `inherit` uses parent `model_id` baseline (`3015fc9`) |
 | H4 | Done | Hook failure events record harness (`f8acfbf`) |
-| H5 | Medium | Six long briefs with fewer than two limits are still confidently TRIVIAL (go to Haiku) |
+| H5 | In PR | Long unbounded briefs: negated/quoted TRIVIAL keywords no longer vote |
 | H6 | High | Owner decisions with finished diffs: upshift to the needed tier; risky write with unknown baseline |
 | H7 | Medium | Fresh routed-versus-control run after the Haiku fix, and the README evidence screenshots |
 | H8 | Low | Outcome suite re-run on the model that actually runs (Haiku 4.5), 40 tasks, about $5 to $6 |
@@ -68,7 +68,7 @@ held-out check for this change: say so in the commit.
 
 **Problem.** The Codex adapter reads the session model correctly (config.toml, `models_cache.json`) but the catalog has no entry
 for it (`gpt-6.1-sol` on the owner's machine), so every Codex spawn has an unknown baseline and is held. Since 2026-10-15, 7 of 8
-Codex decisions were unknown. Test: `TestDefect_CodexSessionModelMissingFromCatalog` in the `opus` clone.
+Codex decisions were unknown. Test: `TestDefect_CodexSessionModelMissingFromCatalog` in `cmd/downshift/harness_defects_test.go`.
 
 **Do.** Add the model to the Codex section with tier and price from a verifiable source (`models_cache.json`, the vendor price
 page), not guessed. If the tier cannot be verified, say so and leave it out.
