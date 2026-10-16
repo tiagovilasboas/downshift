@@ -34,7 +34,7 @@ enabled and no request was sent. Human adjudication of the M3 labels is still pe
 | ID | Priority | Task |
 |----|----------|------|
 | H1 | Done | Bounded-brief classifier change (landed; keep the note that `blind-vitrine` is not a clean held-out check for it) |
-| H2 | High | Codex session model missing from the catalog: every Codex spawn is held |
+| H2 | Done | Codex `gpt-6.1-sol` in catalog (identity/tier; prices absent until verified) |
 | H3 | Done | Cursor: `inherit` uses parent `model_id` baseline (`3015fc9`) |
 | H4 | Done | Hook failure events record harness (`f8acfbf`) |
 | H5 | Medium | Six long briefs with fewer than two limits are still confidently TRIVIAL (go to Haiku) |
