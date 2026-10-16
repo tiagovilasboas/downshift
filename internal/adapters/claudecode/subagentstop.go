@@ -35,6 +35,10 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 	if filepath.Ext(path) != ".jsonl" {
 		return subagentUsage{}, false
 	}
+	// Lstat first: opening a FIFO or device blocks until a writer appears.
+	if fi, err := os.Lstat(path); err != nil || !fi.Mode().IsRegular() {
+		return subagentUsage{}, false
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		return subagentUsage{}, false

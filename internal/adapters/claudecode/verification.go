@@ -30,6 +30,10 @@ var verifyCommand = regexp.MustCompile(`(?:^|[\s;&|(])(?:go\s+(?:test|vet)|pytes
 // reruns the check ends on its final state. Any problem reads as "none": this
 // is a sensor on the hook path and must fail open.
 func readSubagentVerification(path string) string {
+	// Lstat first: opening a FIFO or device blocks until a writer appears.
+	if fi, err := os.Lstat(path); err != nil || !fi.Mode().IsRegular() {
+		return verificationNone
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		return verificationNone
