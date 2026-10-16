@@ -50,8 +50,8 @@ type Decision struct {
 	// Code settings, Cursor parent model_id) instead of reading it from the call.
 	BaselineGuessed bool
 	Verdict         Verdict
-	Savings              float64 // fraction cheaper vs current (0 if not cheaper / unknown)
-	Confident            bool
+	Savings         float64 // fraction cheaper vs current (0 if not cheaper / unknown)
+	Confident       bool
 	// Self-correction outcome, computed by Check inside Route. Verdict
 	// keeps the classified value for diagnostics; SafeVerdict carries the
 	// action adapters may apply. Checked is true for Route decisions and
