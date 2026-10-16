@@ -73,15 +73,24 @@ func TestRunCommand_OutputIsCapped(t *testing.T) {
 // WaitDelay bounds the wait.
 func TestRunCommand_BackgroundChildDoesNotHang(t *testing.T) {
 	needSh(t)
+	// Other packages set hookctx during parallel go test ./...; pin Background
+	// so this test only measures RunCommand behaviour.
+	t.Cleanup(hookctx.Set(context.Background()))
 	script := filepath.Join(t.TempDir(), "helper.sh")
-	if err := os.WriteFile(script, []byte("#!/bin/sh\nsleep 10 &\necho '{}'\n"), 0o700); err != nil {
+	// Redirect the background child's stdout/stderr. If they inherit the hook
+	// pipe, cmd.Run can block until the command timeout (~5s) on a loaded runner
+	// even after the parent shell exits.
+	body := "#!/bin/sh\nsleep 10 >/dev/null 2>&1 &\necho '{}'\n"
+	if err := os.WriteFile(script, []byte(body), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	start := time.Now()
-	hookctx.RunCommand(script, "", 5*time.Second)
+	if _, err := hookctx.RunCommand(script, "", 5*time.Second); err != nil {
+		t.Fatalf("RunCommand: %v", err)
+	}
 	// The helper's own timeout is 5s and its background child sleeps 10s, so a
-	// hang shows as 5s or more. 4s leaves room for a loaded machine.
-	if d := time.Since(start); d > 4*time.Second {
+	// hang shows as 5s or more. 2s leaves headroom on a loaded CI runner.
+	if d := time.Since(start); d > 2*time.Second {
 		t.Fatalf("background child held the helper for %s", d)
 	}
 }
