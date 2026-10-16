@@ -138,6 +138,9 @@ type Classification struct {
 	// SemanticLift is true when the semantic boost raised the complexity above
 	// what the regex rules chose. It makes a non-regex lift visible in telemetry.
 	SemanticLift bool
+	// UnsupportedLanguage is true when the prompt reads as a language the
+	// tables do not cover (lang_guard.go). Confident is then false.
+	UnsupportedLanguage bool
 }
 
 // Classify scores a task prompt against all complexity classes and returns
@@ -225,9 +228,17 @@ func Classify(prompt string) Classification {
 	}
 	confident := topScore > 0 && topScore-second >= 2
 
+	// Outside English and Portuguese a risk word is invisible to risk.go, so
+	// a keyword hit is not enough to act on (see lang_guard.go).
+	foreign := unsupportedLanguage(prompt)
+	if foreign {
+		confident = false
+	}
+
 	return applyRiskFloor(full, Classification{
-		Complexity: top,
-		Scores:     scores,
-		Confident:  confident,
+		Complexity:          top,
+		Scores:              scores,
+		Confident:           confident,
+		UnsupportedLanguage: foreign,
 	})
 }

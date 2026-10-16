@@ -36,18 +36,18 @@ var RawRiskSignals = []RiskSignalDef{
 	// authentication or authorization, so a rename there is not mechanical.
 	// Only as a standalone word: inside a path, file or hyphenated name
 	// (auth.ts, auth/session.ts, auth-7d9f) it is a location, not the subject.
-	{"authz", `(^|[^/.\w-])(auth|authn|authz)([^/.\w-]|$)|\b(permissions?|privileges?|is[ _]?admin|admin (role|rights|access)|rbac|acls?|authori[sz]ation|authenticat\w*|access control)\b|\b(autentica|autoriza)\S*`},
+	{"authz", `(^|[^/.\w-])(auth|authn|authz)([^/.\w-]|$)|\b(permissions?|privileges?|is[ _]?admin|admin (role|rights|access)|rbac|acls?|authori[sz]ation|authenticat\w*|access control)\b|\b(autentica|autoriza)\S*|\bpermiss(ão|ao|ões|oes)|\bprivil\S*gios?\b`},
 	// "signature" alone is not crypto ("function signature", "type signature",
 	// "email signature"); only verification and signed-message contexts are.
 	{"crypto", `\b(crypto\w*|encrypt\w*|decrypt\w*|hmac|tls|ssl|certificates?|(webhook|request|payload|message|digital|cryptographic|jwt|jws|hmac|rsa|ecdsa|ed25519|gpg|pgp) signatures?|signatures? (verification|validation|check|header|secret)s?|(verify|verifies|verifying|validate|validating|check|checking|skip|skipping) (the |a |an |its )?signatures?|signing (secrets?|certificates?))\b|\bcriptograf\S*|\bcertificad\S*\s+(digital|ssl|tls|x\.?509|raiz|autoassinad\S*|https|do servidor|expirad\S*)|\b(verifica\S*|valida\S*|checagem|renova\S*|rota\S*)\s+(d[oa]s?\s+|[oa]s?\s+|de\s+)?certificad\S*|\bcertifica\S*\s+digital`},
 	{"payment", `\b(payments? (processing|logic|flow|handler|service|gateway|capture)|process(ing)? payments?|charg(e|es|ing) (the )?(customer|card|user)s?|double[- ]charg\w*|refunds?|settlements?|payouts?|stripe|pci|billing (logic|flow|cycle|calculation|engine)|pagamentos?|reembolsos?|estornos?)\b|\bcobr(ar|ando|ou|ad[oa]s?|an[çc]as?)\s+(o\s+|a\s+|do\s+|no\s+)?(cart\S*|clientes?)|\bcobr[ae]\s+(o|a|do|no)\s+(cart\S*|clientes?)`},
-	{"vuln", `\b(sql injection|injection|xss|csrf|ssrf|rce|sanitiz\w*|vulnerab\w*|cve-\d+|exploit\w*|security)\b`},
-	{"pii", `\b(pii|gdpr|lgpd|personal data|ssn|social security|credit cards?)\b`},
+	{"vuln", `\b(sql injection|injection|xss|csrf|ssrf|rce|sanitiz\w*|vulnerab\w*|cve-\d+|exploit\w*|security|seguran[çc]a|inje[çc](ão|ao|ões|oes))\b`},
+	{"pii", `\b(pii|gdpr|lgpd|personal data|ssn|social security|credit cards?|dados pessoais)\b|\b(cpf|cnpj)s?\s+d[oa]s?\s+(clientes?|usu\S*rios?|titular\S*|pessoas?|funcion\S*rios?)`},
 	{"destructive", `rm\s+-rf|\bdrop\s+(the\s+)?(\w+\s+)?(table|database|schema|column)s?\b|\btruncate\s+(the\s+)?(\w+\s+)?tables?\b|\bdelete\s+from\s+\w+\s*(;|where\b|$)|\bdelete\s+(all|every)\b|\bforce[- ]push\b|push\s+(-f|--force)\b|reset\s+--hard|\bwipe\b|\bpurge\b|\bprod(uction)? (data|database|db)\b|\b(dados|banco( de dados)?|base( de dados)?) de produ[çc][ãa]o|\b(drop|exclu|apag|delet|trunc)\S*\s+(as?\s+|o\s+)?(tabela|banco de dados|base de dados|schema)s?\b|\b(apag|exclu|delet)\S*\s+(todos\s+)?(os\s+)?dados\b`},
 	// Shared-state changes: a rename that also touches a lock, an atomic or a
 	// race is not mechanical.
 	{"concurrency", `\b(race conditions?|data races?|race detector|(fix|fixes|fixing|fixed|avoid\w*|prevent\w*|introduc\w*|caus\w*)\s+(the\s+|a\s+|this\s+)?races?|mutex(es)?|rwmutex|deadlocks?|atomic\.\w+|atomic (operations?|counters?|ops|loads?|stores?|swaps?|increments?)|atomics|sync\.(once|wait ?group|cond)|semaphores?|thread[- ]safe\w*)\b|\bcondi\S* de corrida`},
-	{"prompt_injection", `\b(ignore|disregard|forget|override)\s+(all\s+|any\s+|the\s+|your\s+)?(previous|prior|above|earlier|system)\s+(instructions?|prompts?|rules?)\b|\bsystem prompt\b|\bthis is (a |an )?(trivial|simple|easy|tiny)\b|\b(route|send|use)\b.{0,20}\b(cheap|cheapest|small|smallest|haiku|mini|nano)\s+(model|tier)\b`},
+	{"prompt_injection", `\b(ignore|disregard|forget|override)\s+(all\s+|any\s+|the\s+|your\s+)?(previous|prior|above|earlier|system)\s+(instructions?|prompts?|rules?)\b|\bsystem prompt\b|\bthis is (a |an )?(trivial|simple|easy|tiny)\b|\b(route|send|use)\b.{0,20}\b(cheap|cheapest|small|smallest|haiku|mini|nano)\s+(model|tier)\b|\b(ignore|desconsidere|esque[çc]a)\s+(todas\s+)?(as\s+)?(instru[çc](ões|oes)|regras)\s+(anteriores|acima|do\s+sistema)\b|\b(esta|essa|isto|isso)\s+(é|e)\s+(uma\s+)?tarefa\s+(trivial|simples|f[áa]cil)\b`},
 }
 
 // riskLiterals is a prefilter, not a second table. For each category it lists
@@ -62,19 +62,20 @@ var riskLiterals = map[string][]string{
 		"token", "jwt", "oauth", "saml", "sso", "2fa", "mfa", "totp", "senha", "credencia",
 		"segredo", "rotat", "chave"},
 	"authz": {"auth", "permission", "privilege", "admin", "rbac", "acl", "autentica",
-		"autoriza", "access control"},
+		"autoriza", "access control", "permiss", "privil"},
 	"crypto": {"crypt", "hmac", "tls", "ssl", "certifica", "signature", "signing", "criptograf"},
 	"payment": {"payment", "charg", "refund", "settlement", "payout", "stripe", "pci",
 		"billing", "pagamento", "reembolso", "estorno", "cobr"},
 	"vuln": {"injection", "xss", "csrf", "ssrf", "rce", "sanitiz", "vulnerab", "cve-",
-		"exploit", "security"},
-	"pii": {"pii", "gdpr", "lgpd", "personal data", "ssn", "social security", "credit card"},
+		"exploit", "security", "seguran", "inje"},
+	"pii": {"pii", "gdpr", "lgpd", "personal data", "ssn", "social security", "credit card",
+		"cpf", "cnpj", "dados pessoais"},
 	"destructive": {"-rf", "drop", "trunc", "delet", "force", "push", "reset", "wipe", "purge",
 		"prod", "apag", "exclu"},
 	"concurrency": {"race", "mutex", "deadlock", "atomic", "sync.", "semaphore", "thread",
 		"condi"},
 	"prompt_injection": {"ignore", "disregard", "forget", "override", "system prompt", "this is",
-		"cheap", "small", "haiku", "mini", "nano"},
+		"cheap", "small", "haiku", "mini", "nano", "desconsidere", "esque", "tarefa"},
 }
 
 type riskSignal struct {
