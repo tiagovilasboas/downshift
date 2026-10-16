@@ -121,6 +121,10 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 
 	currentModel := hookutil.StringField(ti, "model")
+	// fromParent: the baseline is the parent's model (model_id, model), not
+	// one the call names. Cursor documents inherit as the default, but a
+	// child can also run on Composer or a fast variant.
+	fromParent := currentModel == ""
 	if currentModel == "" {
 		currentModel = ev.ModelID
 	}
@@ -160,6 +164,11 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", decision
 	}
 	if !plan.RewriteModel {
+		return allow(), "", decision
+	}
+	// On the parent's model as baseline, only the small tier is surely
+	// cheaper than what the child runs; a mid target could be an upshift.
+	if fromParent && decision.Verdict == core.VerdictDownshift && target.Tier != core.TierSmall {
 		return allow(), "", decision
 	}
 	if !core.CanWriteSessionID(harnessID, target.ID, plan.Session, res) {

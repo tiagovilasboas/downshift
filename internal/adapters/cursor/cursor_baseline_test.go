@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // Characterization: Cursor sends no transcript, so the requested model comes
@@ -56,5 +57,38 @@ func TestHandle_InheritBaselineIsUnrecognised(t *testing.T) {
 	}
 	if d.CurrentModel.ID != "" {
 		t.Fatalf("Decision.CurrentModel.ID = %q, want empty (inherit is unresolvable)", d.CurrentModel.ID)
+	}
+}
+
+// The parent's model_id is a guessed baseline: a mid-tier downshift on it is
+// held, since the child may already run on something cheaper.
+func TestHandle_ParentModelIDHoldsMidTierDownshift(t *testing.T) {
+	ev := withCatalogSession(cursor.Event{
+		ToolName:  "Task",
+		ModelID:   catID(core.TierFrontier),
+		ToolInput: json.RawMessage(`{"task":"implement the CSV export feature"}`),
+	})
+	out, _, d := cursor.Handle(ev, cat)
+	if d.Verdict != core.VerdictDownshift {
+		t.Fatalf("precondition: want a downshift verdict, got %v", d.Verdict)
+	}
+	if m := decodeUpdated(t, out); m != nil {
+		t.Fatalf("mid-tier downshift on the parent's model_id wrote %v", m["model"])
+	}
+}
+
+// A small-tier downshift on the parent's model_id is still written.
+func TestHandle_ParentModelIDStillWritesSmallTier(t *testing.T) {
+	ev := withCatalogSession(cursor.Event{
+		ToolName:  "Task",
+		ModelID:   catID(core.TierFrontier),
+		ToolInput: json.RawMessage(`{"task":"rename the userId variable to userIdentifier"}`),
+	})
+	out, note, d := cursor.Handle(ev, cat)
+	if d.Verdict != core.VerdictDownshift || d.Tier != core.TierSmall {
+		t.Fatalf("precondition: want a small-tier downshift, got verdict=%v tier=%v", d.Verdict, d.Tier)
+	}
+	if m := decodeUpdated(t, out); m == nil {
+		t.Fatalf("small-tier downshift on the parent's model_id must be written (note %q)", note)
 	}
 }

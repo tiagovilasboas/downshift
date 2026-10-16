@@ -62,7 +62,11 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   explicit model is known. `inherit` or no model is not: Cursor sends no
   transcript path (58 of 144 captured Task payloads, 2026-10-09/10), and
   Antigravity's `inherit` has no parent model in the payload either. Neither is
-  an adapter bug; the hook has no source for the session model there.
+  an adapter bug; the hook has no source for the session model there. When a
+  Cursor call has no model but the payload carries the parent's `model_id` (or
+  `model`), that is used as the baseline, and a downshift on it is written only
+  to the small tier: Cursor documents `inherit` as the default, but a child can
+  run on Composer or a fast variant, so a mid target could be an upshift.
 - **Cost linkage.** Every decision records `tool_use_hash`. PostToolUse
   repeats the id, so `resolved`, `child_ended` and, through the agent id,
   `usage` attach to the exact decision even with parallel spawns, including
