@@ -13,3 +13,15 @@ draft: `internal/core/lang_guard.go` (written in the audit, uncommitted when thi
 
 **Done when.** The 16 unsafe prompts are held; English and Portuguese prompts with stray foreign bits (`del`, `λ`, `müllerId`)
 stay confident; all five benchmark splits are identical item by item; reason code in `stats --detail` and `why`.
+
+**Implemented, 2026-10-16.** The guard now propagates `UnsupportedLanguage` through the shared decision into the prompt-free
+`UNSUPPORTED_LANGUAGE` reason code, shown by `stats --detail` and `session --why`. Coverage includes the full prompt beyond
+the 32 KiB scoring cap and the no-signal default. Existing deterministic lifts and the full-input risk floor are unchanged.
+Shared-runner acceptance tests exercise all five adapters; KiroCrew now exposes its requested model to the shared runner so
+an allowed spawn records the known baseline instead of `unknown`.
+
+**Evidence.** `go test ./internal/adapters/kirocrew ./internal/core ./internal/telemetry` passes. The QA acceptance suite covers
+the five adapter paths and privacy assertions. Guia: language coverage and abstention contract (inferencial, behaviour).
+Sensor: shared guard, regression tests and reason-code telemetry (computacional, behaviour / architecture fitness).
+
+Attribution: harness-downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift

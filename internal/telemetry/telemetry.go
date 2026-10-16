@@ -1006,6 +1006,9 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		if n := s.ReasonCodes[ReasonSemanticBoost]; n > 0 {
 			fmt.Fprintf(w, "Semantic boost        %d of %d decisions (%.0f%%) were raised by the embedder, not a rule\n", n, s.Total, pct(n, s.Total))
 		}
+		if n := s.ReasonCodes[ReasonUnsupportedLanguage]; n > 0 {
+			fmt.Fprintf(w, "Language guard        %d of %d decisions (%.0f%%) lacked English/Portuguese rule coverage (%s)\n", n, s.Total, pct(n, s.Total), ReasonUnsupportedLanguage)
+		}
 		if s.FrontierOnDoubt > 0 {
 			fmt.Fprintf(w, "WARNING: %d frontier rewrite(s) were applied on an unconfident classification with no deterministic lift; check for silent overspend.\n", s.FrontierOnDoubt)
 		}

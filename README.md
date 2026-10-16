@@ -135,6 +135,15 @@ Billing and token usage happen at the subagent tier, not the session.
 
 Internals: [docs/design/architecture.md](docs/design/architecture.md). The full runtime routing diagram is [here](docs/brand/downshift-routing-runtime-light.svg) ([dark](docs/brand/downshift-routing-runtime-dark.svg)).
 
+**Languages.** The rules cover English and Portuguese, including Portuguese risk terms.
+When the language guard detects an unsupported language, including mixed-language
+instructions, it drops confidence so uncertain model changes are held. Existing
+deterministic safety floors can still raise an undersized model. With no
+matching signal, routing also abstains. Detection is heuristic; it does not guarantee
+recognition of every foreign-language prompt. Multilingual embeddings and an offline
+LLM reference remain evaluation candidates, with no additional language support enabled.
+See [language coverage and limits](docs/reference/complexity-weights.md#language-coverage).
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/architecture-dark.svg">
   <img src="docs/img/architecture.svg" alt="Architecture: harness adapters call a harness-agnostic core, which uses a model catalog and the session model list to produce a routing decision." width="860">

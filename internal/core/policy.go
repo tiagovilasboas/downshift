@@ -103,6 +103,8 @@ type Decision struct {
 	// SemanticLift is true when the semantic boost, not a regex rule, raised
 	// the complexity. Telemetry records it so non-deterministic lifts stay visible.
 	SemanticLift bool
+	// UnsupportedLanguage records the language guard without persisting text.
+	UnsupportedLanguage bool
 	// ScoreWould is the session model id the public-score capability path
 	// (score_select.go) would pick for this task, or empty when it abstained.
 	// Shadow by default: it changes the routing only when ScoreApplied is set.
@@ -163,22 +165,23 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 	verdict, savings, current := compareToCurrentModel(harness, currentModelID, recommended, res)
 
 	d := Decision{
-		Complexity:     cls.Complexity,
-		Tier:           tier,
-		Effort:         effort,
-		Harness:        harness,
-		Model:          recommended,
-		CurrentModel:   current,
-		Verdict:        verdict,
-		Savings:        savings,
-		Confident:      cls.Confident,
-		GraphEscalated: graphEscalated,
-		RiskFloor:      cls.RiskFloor,
-		Risk:           RiskCategories(prompt),
-		NBUpshift:      nbUp,
-		NBDownshift:    nbDown,
-		NoSignal:       cls.NoSignal,
-		SemanticLift:   cls.SemanticLift,
+		Complexity:          cls.Complexity,
+		Tier:                tier,
+		Effort:              effort,
+		Harness:             harness,
+		Model:               recommended,
+		CurrentModel:        current,
+		Verdict:             verdict,
+		Savings:             savings,
+		Confident:           cls.Confident,
+		GraphEscalated:      graphEscalated,
+		RiskFloor:           cls.RiskFloor,
+		Risk:                RiskCategories(prompt),
+		NBUpshift:           nbUp,
+		NBDownshift:         nbDown,
+		NoSignal:            cls.NoSignal,
+		SemanticLift:        cls.SemanticLift,
+		UnsupportedLanguage: cls.UnsupportedLanguage,
 	}
 	d.Intent = IntentFor(prompt, cls, d, res)
 	// Self-correction validates the decision against the guardrails before

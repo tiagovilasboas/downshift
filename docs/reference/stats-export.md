@@ -91,6 +91,14 @@ observed.
 
 `baseline_source` on cost events is `requested` when the baseline is the model the harness asked for, and `inferred` when it was guessed from the configured model because the harness named none (`BASELINE_FROM_SETTINGS`). Records written before this distinction say `requested` for both; `stats` also checks the linked decision's reason codes. A rewrite that a linked `resolved` record refutes (`rewrite_honored: false`) is counted as not applied: no saving, and never inferred as honored.
 
+`UNSUPPORTED_LANGUAGE` means the language guard detected text outside the English
+and Portuguese rule coverage and withheld confidence. It appears in decision
+`reason_codes`, their aggregate counts and `downshift why`; `stats` also shows the
+language-guard count. It records no detected words, prompt text or language name.
+The code reports a heuristic guard hit, not a complete language census. A
+no-signal abstention can instead carry `NO_SIGNAL` without this code. See
+[language coverage](complexity-weights.md#language-coverage).
+
 `child_ended` events record how a Claude Code Agent/Task child ended. Their `child_status` is one of `completed`, `launched`, `interrupted`, `error`, `stopped` or `unknown`. They are observations, not decisions: they never change `total`, the verdict counts or savings. The error text is never stored. Recording them requires `claude-code-post-tool-use` registered under `PostToolUseFailure` as well as `PostToolUse`; the failure payload was documented but not captured from a real session, so the field names should be checked against one before relying on them.
 
 `cost_sessions`, `cost_subagents`, `max_session_cost_usd` and `max_subagent_cost_usd` summarise observed, catalog-priced cost grouped by the hashed session id and agent id on usage records. Records without an id are in the totals but not in the groups. No individual session id is exported. These are estimates, not invoices.

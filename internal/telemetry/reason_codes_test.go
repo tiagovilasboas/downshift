@@ -4,6 +4,7 @@
 package telemetry_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -56,6 +57,12 @@ func TestReasonCodes_FromRoutedDecisions(t *testing.T) {
 			want:   []string{"CLASSIFIER_UNCONFIDENT", "HELD_UNCONFIDENT_UNKNOWN_MID", "NO_SIGNAL"},
 		},
 		{
+			name:    "unsupported language held",
+			prompt:  "rename el campo que guarda las contraseñas de los usuarios",
+			current: core.TierFrontier, known: true,
+			want: []string{"CLASSIFIER_UNCONFIDENT", "HELD_UNCONFIDENT_DOWNSHIFT", "UNSUPPORTED_LANGUAGE"},
+		},
+		{
 			name:    "plain confident downshift",
 			prompt:  "rename the userId variable to userIdentifier",
 			current: core.TierFrontier, known: true,
@@ -84,6 +91,24 @@ func TestReasonCodes_FromRoutedDecisions(t *testing.T) {
 				t.Error("confidence must stay absent: no calibrated probability exists")
 			}
 		})
+	}
+}
+
+func TestUnsupportedLanguage_VisibleInStatsAndWhy(t *testing.T) {
+	ev := routeTrace(t, "rename el campo que guarda las contraseñas de los usuarios", core.TierFrontier, true)
+	ev.Outcome = telemetry.OutcomeAllow
+	ev.SessionID = "language-session"
+	var stats bytes.Buffer
+	telemetry.PrintStats([]telemetry.Event{ev}, telemetry.StatsOptions{Detail: true}, &stats)
+	if !strings.Contains(stats.String(), "Language guard        1 of 1") || !strings.Contains(stats.String(), telemetry.ReasonUnsupportedLanguage) {
+		t.Fatalf("language reason missing from stats: %s", stats.String())
+	}
+	why := telemetry.Why([]telemetry.Event{ev}, ev.SessionID)
+	if !strings.Contains(why, telemetry.ReasonUnsupportedLanguage) || !strings.Contains(why, "English and Portuguese rule coverage") {
+		t.Fatalf("language reason missing from why: %s", why)
+	}
+	if got := telemetry.Aggregate([]telemetry.Event{ev}).ReasonCodes[telemetry.ReasonUnsupportedLanguage]; got != 1 {
+		t.Fatalf("language count = %d, want 1", got)
 	}
 }
 

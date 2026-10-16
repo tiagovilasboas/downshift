@@ -35,16 +35,43 @@ vulnerability, PII, destructive command, prompt injection, or concurrency) is li
 MEDIUM. MEDIUM and COMPLEX are not lifted further by risk. The risk table is
 `internal/core/risk.go`. It sets a floor. It does not add to the vote.
 
-**Input cap.** The regex table, the risk floor and the structural rules read at
+**Input cap.** The scoring regex table and the structural scoring rules read at
 most the first 32 KB of the prompt (cut on a rune boundary), so cost stays flat
 for the 1 MiB the hook accepts. A signal past byte 32 768 is ignored by design.
-The word-count rules (6 and 80 words, the `add Name(` stub, the doc-edit damper)
+Risk and language checks inspect the full input, so a risky or unsupported-language
+tail cannot bypass them. The word-count rules (6 and 80 words, the `add Name(` stub, the doc-edit damper)
 still count words over the full prompt.
 
 Optional later steps can only raise the class: graph context when the
 classifier is not confident, and the local MiniLM boost. Neither lowers a
 class. The MiniLM boost is ignored for no-signal prompts and cannot create
 COMPLEX without regex evidence. Both can be turned off (`DOWNSHIFT_GRAPHIFY=0`, `DOWNSHIFT_MINILM=0`).
+
+## Language coverage
+
+English and Portuguese are covered by the signal and risk rules. Portuguese risk
+terms include permission, privilege, security, injection and personal-data terms;
+the risk floor is shared by every harness.
+
+The language guard (`internal/core/lang_guard.go`) detects unsupported-language
+indications before a confident routing change can be applied. It looks for distinct
+Spanish, French or German function words, selected foreign Latin letters, or at
+least four non-Latin letters. Mixed-language instructions can trigger the same
+guard even when an English verb matches a cheap-task signal. Detection drops
+confidence without changing the scored class; uncertain changes preserve the
+requested model. Existing deterministic safety floors can still raise an
+undersized model. A prompt with no matching signal also abstains.
+
+This is a conservative heuristic, not a complete language detector. Short foreign
+phrases may escape detection, while identifiers or quoted text may trigger it.
+Scoring inspects a rune-aligned prefix of at most 32 KB; risk and language
+checks inspect the full input. Do not interpret English and Portuguese
+coverage as calibrated accuracy or support for all multilingual prompts.
+
+Multilingual embeddings and a Sonnet reference are offline evaluation candidates.
+They do not extend shipped language coverage or put an LLM in the routing loop.
+Any adoption must satisfy the held-out safety and hook-latency gates in
+[the multilingual tasks](../internal/tasks/2026-10-16-multilang/README.md).
 
 ## Weights
 

@@ -22,6 +22,7 @@ const (
 	ReasonClassifierUnconfident = "CLASSIFIER_UNCONFIDENT"
 	ReasonNoSignal              = "NO_SIGNAL"
 	ReasonSemanticBoost         = "SEMANTIC_BOOST"
+	ReasonUnsupportedLanguage   = "UNSUPPORTED_LANGUAGE"
 	ReasonRiskCategory          = "RISK_CATEGORY"
 	ReasonRiskFloor             = "RISK_FLOOR"
 	ReasonGraphEscalation       = "GRAPH_ESCALATION"
@@ -74,6 +75,9 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.NoSignal {
 		set[ReasonNoSignal] = true
+	}
+	if d.UnsupportedLanguage {
+		set[ReasonUnsupportedLanguage] = true
 	}
 	if d.SemanticLift {
 		set[ReasonSemanticBoost] = true

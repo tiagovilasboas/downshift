@@ -65,6 +65,15 @@ func (ev Event) ProjectDir() string { return ev.Cwd }
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
 func (ev Event) CorrelationIdentifier() string { return ev.CorrelationID }
 
+// RequestedModel exposes the payload baseline to the shared telemetry runner.
+func (ev Event) RequestedModel() string {
+	var ti map[string]any
+	if json.Unmarshal(ev.ToolInput, &ti) != nil {
+		return ""
+	}
+	return hookutil.StringField(ti, "model")
+}
+
 // TaskText returns the subagent task content used for prompt-free feature
 // extraction. Common field names across harnesses: "task", "prompt",
 // "description". The first non-empty value wins.

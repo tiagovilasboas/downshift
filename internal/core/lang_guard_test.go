@@ -4,10 +4,27 @@
 package core_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 )
+
+func TestUnsupportedLanguage_CoversFullPromptAndNoSignal(t *testing.T) {
+	for _, prompt := range []string{
+		"ユーザーのパスワードを保存するモジュール",
+		"rename userId to userIdentifier " + strings.Repeat("x", 33<<10) + " en el módulo que guarda las contraseñas",
+	} {
+		cls := core.Classify(prompt)
+		if cls.Confident || !cls.UnsupportedLanguage {
+			t.Errorf("coverage lost: confident=%v unsupported=%v", cls.Confident, cls.UnsupportedLanguage)
+		}
+		decision := core.Route(prompt, "claude-code", catID("claude-code", core.TierFrontier), cat)
+		if !decision.UnsupportedLanguage || checkWrites(decision) {
+			t.Errorf("language guard not retained by route: flag=%v corrections=%v", decision.UnsupportedLanguage, decision.Corrections)
+		}
+	}
+}
 
 // An English verb or identifier in a prompt written in a language the risk
 // table does not cover must not buy a confident downshift: the risk words

@@ -15,6 +15,7 @@ var reasonWords = map[string]string{
 	ReasonClassifierUnconfident: "the classifier was unsure, so moves that spend or save on doubt were held",
 	ReasonNoSignal:              "nothing in the task pointed up or down, so the default size applied",
 	ReasonSemanticBoost:         "meaning-based matching raised the complexity above the keyword read",
+	ReasonUnsupportedLanguage:   "the language guard found text outside the English and Portuguese rule coverage, so confidence was withheld",
 	ReasonRiskCategory:          "the task touches a risk area (secrets, auth, payments, personal data, destructive ops)",
 	ReasonRiskFloor:             "a risk area set a minimum tier, so the task cannot go below it",
 	ReasonGraphEscalation:       "the dependency graph showed a wide change, which raised the tier",

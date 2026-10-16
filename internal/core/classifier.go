@@ -156,6 +156,9 @@ type Classification struct {
 func Classify(prompt string) Classification {
 	wordCount := len(strings.Fields(prompt)) // full text, before the cap
 	full := prompt
+	// Like the risk floor, language coverage must include text past the scoring
+	// cap. A foreign-language tail may contain risk the rule table cannot read.
+	foreign := unsupportedLanguage(full)
 	prompt = classifyHead(prompt)
 	lower := strings.ToLower(prompt)
 	scores := map[Complexity]int{Trivial: 0, Simple: 0, Medium: 0, Complex: 0}
@@ -202,7 +205,7 @@ func Classify(prompt string) Classification {
 
 	// No content signal at all => safe default (the harness's usual model).
 	if !contentMatched {
-		return Classification{Complexity: Medium, Scores: scores, Confident: false, NoSignal: true}
+		return Classification{Complexity: Medium, Scores: scores, Confident: false, NoSignal: true, UnsupportedLanguage: foreign}
 	}
 
 	// Pick the top score. Iterate high→low so ties favor higher complexity.
@@ -230,7 +233,6 @@ func Classify(prompt string) Classification {
 
 	// Outside English and Portuguese a risk word is invisible to risk.go, so
 	// a keyword hit is not enough to act on (see lang_guard.go).
-	foreign := unsupportedLanguage(prompt)
 	if foreign {
 		confident = false
 	}
