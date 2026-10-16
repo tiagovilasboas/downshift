@@ -28,7 +28,7 @@ https://github.com/tiagovilasboas/downshift
 
 | Area | State |
 |------|--------|
-| Branch | `main` @ `a735062` (H14 + E5 shadow); push CI as usual |
+| Branch | `main` @ `18abffc` (H14 + E5 shadow + BDI docs); CI green |
 | Open PRs | None |
 | Handoff H1–H6, H9, H13, **H14** | Done on `main` |
 | H14 | **M3 unsafe confident = 0** (regex/guard; see [inventory](../2026-10-16-handoff/h14-unsafe-confident-inventory.md)) |
@@ -192,7 +192,7 @@ Evaluation dimensions: equivalence consistency (formal/informal/slang PT/EN), M3
 
 Measure before setting targets:
 
-- Unsafe confident on M3 → **0** ✓ (2026-10-16 on `a735062`; label disagreements may still exist for non-confident rows)
+- Unsafe confident on M3 → **0** ✓ (2026-10-16 on `18abffc`; label disagreements may still exist for non-confident rows)
 - Equivalence consistency ≥ **TBD** % across language variants at same intended tier
 - No increase in unsafe raw on legacy splits
 - p95 hook classify path ≤ **TBD** ms with semantic enabled

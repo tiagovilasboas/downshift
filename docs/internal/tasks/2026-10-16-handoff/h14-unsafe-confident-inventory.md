@@ -5,7 +5,7 @@
 Source: `downshift-labs/eval/multilang/m3-v1.json` (170 rows).  
 Definition: `confident == true` and recommended `tier` strictly below label `expected_tier`.
 
-**Status (post `main`, 2026-10-16):** M3 **unsafe confident = 0** after mixed helper guard (`6f11283`), bounded risk brief abstention (`1ca2b2c`), delegation brief scope/verify cues, and parallel high-stakes abstention (`riskHighStakesWorkRE` + `RiskAbstain`).
+**Status (post `main` @ `18abffc`, 2026-10-16):** M3 **unsafe confident = 0** after mixed helper guard (`6f11283`), bounded risk brief abstention (`1ca2b2c`–`a438604`), `RiskAbstain` + cross-harness acceptance tests, and docs/BDI sync.
 
 Historical baseline (pre-H14):
 

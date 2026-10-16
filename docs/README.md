@@ -58,7 +58,8 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 
 | Doc | Topic |
 |-----|--------|
-| [design/architecture.md](design/architecture.md) | Architecture overview |
+| [design/architecture.md](design/architecture.md) | Architecture overview + BDI agentic diagram |
+| [img/bdi-agentic-light.svg](img/bdi-agentic-light.svg) | BDI loop (beliefs / desires / intentions) — also in [README](../README.md#bdi-agentic-view-beliefs--intentions) |
 | [design/engineering-loop.md](design/engineering-loop.md) | Feedback loop |
 | [design/minilm-semantic.md](design/minilm-semantic.md) | Semantic boost |
 | [internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md](internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md) | Multilingual initiative (Phase D E5 shadow, H14, Phase E gate) |

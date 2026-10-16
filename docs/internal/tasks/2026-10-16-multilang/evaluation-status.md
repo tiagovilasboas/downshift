@@ -8,7 +8,7 @@ M3: authored private corpus frozen before candidate execution in private labs co
 
 M4: reject this candidate for runtime adoption. Cached `paraphrase-multilingual-MiniLM-L12-v2` was evaluated locally on CPU, using independent multilingual development centroids. M3 tier accuracy remains 34.1% and confident coverage remains 25.3% (baseline and candidate at M4 time). Relative to the authored labels, both had **10** confident recommendations below the labelled floor on risky/frontier tasks (classifier recommendations, **not** evidence of executed unsafe rewrites).
 
-**Update (2026-10-16, `main` @ `a735062`):** H14 regex/guard work drives **M3 unsafe confident to 0** without changing Route() semantics for legacy splits (`cls-after` stable locally). M4 conclusion unchanged: no runtime adoption of MiniLM centroids. Human adjudication of M3 labels is still pending for absolute tier accuracy.
+**Update (2026-10-16, `main` @ `18abffc`):** H14 regex/guard work drives **M3 unsafe confident to 0** without changing Route() semantics for legacy splits (`cls-after` stable locally). M4 conclusion unchanged: no runtime adoption of MiniLM centroids. Human adjudication of M3 labels is still pending for absolute tier accuracy.
 
 | Classifier split | Baseline tier accuracy | Candidate tier accuracy | Confident coverage (both) |
 |---|---:|---:|---:|

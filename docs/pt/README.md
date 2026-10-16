@@ -48,6 +48,7 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 |---|---|---|
 | [01 · Entrada do Fluxo](01-entrada.md) | Ciclo de Vida | O que o Downshift intercepta no stdin, limites de payload e o que é ignorado |
 | [02 · Classificador](02-classificador.md) | Decisão | Heurísticas de regex, matriz de sinais ponderados e o limiar de confiança |
+| [Visão BDI agentic (EN)](../README.md#bdi-agentic-view-beliefs--intentions) | Arquitetura | Diagrama completo: percepção → crenças → desejos → deliberação → intenções → ação (todos os harnesses; sem LLM no loop) |
 | [03 · Gestão de Marchas](03-marcha.md) | Política | As faixas de capacidade (Small/Mid/Frontier), regras de downshift e upshift seguro |
 | [04 · Fallbacks e Tolerância](04-fallbacks.md) | Resiliência | O contrato fail-open: como o sistema reage a erros sem quebrar o fluxo do dev |
 | [05 · Catálogo e Sessão](05-catalogo-e-sessao.md) | Permissões | Preço de lista versus modelos realmente autorizados na sessão ativa (`session-models.json`) e, desde `downshift models discover`, os modelos que o próprio harness informa ([session-discovery](../reference/session-discovery.md), em inglês) |

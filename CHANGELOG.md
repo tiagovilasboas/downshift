@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Multilingual eval (M3): **unsafe confident recommendations are 0** on the frozen 170-row set after mixed English-helper language guard, bounded delegation risk abstention, and narrow parallel high-stakes patterns; legacy benchmark `cls-after` splits unchanged locally.
+- Mixed English trivial stubs with foreign risk prose (`rename this helper; …`) set `UnsupportedLanguage` instead of a confident small-tier route.
+- Confident MEDIUM (or SIMPLE) prompts with risk on long agent delegation briefs or M3 parallel payment/permission wording clear confidence via `RiskAbstain` without changing complexity; guardrails treat that as a deterministic lift for R7/R9.
 - Claude Code: the small tier is `claude-haiku-4-5`, the model the native `haiku` alias runs (Claude Code 2.1.289, observed 2026-10-15). It was `claude-haiku-5-5` ($0.10/$0.50), so a downshift was recorded at Haiku 5.5 prices, about 10x too low, and the decision note promised "~95% cheaper". The note now shows the list-price saving: about 50% from Sonnet, 75% from Opus. Haiku 5.5 keeps its own catalog entry on its exact id and is never the native small target. A session file that lists only `claude-haiku-5-5` no longer downshifts to Haiku, because Claude Code cannot address 5.5 by alias; add `claude-haiku-4-5` to the list.
 - Telemetry: cache-creation tokens are priced at the cache-write price when the catalog has one (Haiku 4.5: $1.25 per 1M, not the $0.10 read price). Claude Code's own cost for one observed Haiku 4.5 run is reproduced exactly.
 - Bounded delegation briefs no longer default to COMPLEX by length alone: a prompt of 80+ words with at least two of a scope limit, a test command and a reply budget drops the length point and counts toward MEDIUM; two different COMPLEX keywords still win, and the risk floor is unchanged. On 79 held-out agent-written briefs COMPLEX fell from 25 to 13 and confident MEDIUM rose from 0 to 26; the five benchmark splits are identical item by item.
@@ -27,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Docs: BDI agentic router diagram (`docs/img/bdi-agentic-*.svg`) and README section map perception → beliefs → desires → deliberation → intentions → action for every harness adapter.
+- Optional `DOWNSHIFT_E5_SHADOW=1` records multilingual E5 ONNX observations on `Route()` without changing tier (Phase D shadow); see `downshift doctor` and initiative doc §14.
 - Confident upshifts pick the least session model at the needed tier (same target a downshift of that task would use); guessed baselines and `explicit_upshift` still keep the strongest tier.
 - Session lists can carry per-id metadata (tier, supported effort, optional list prices) via `core.ResolveSessionModels`; native or operator order ranks capability but does not invent prices, and a missing rate stays unknown for cost and savings.
 - The risk scan runs each category's regex only when the text holds a literal every match needs. Routing a 1 MiB prompt fell from about 2.9 s to 78 ms in the worst measured case; the categories found are identical (differential test against the previous scan).

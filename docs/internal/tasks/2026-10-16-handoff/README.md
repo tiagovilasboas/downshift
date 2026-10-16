@@ -46,7 +46,7 @@ enabled and no request was sent. Human adjudication of the M3 labels is still pe
 | H11 | Medium | harness-core leftovers found during the renaming |
 | H12 | High | Release beta.15 (needs the owner's approval) |
 | H13 | Done | Session metadata resolver + adapter wiring (`#133`) |
-| H14 | Done | M3 unsafe confident **0** on `main` (`6f11283`–`a735062`); [inventory](h14-unsafe-confident-inventory.md) |
+| H14 | Done | M3 unsafe confident **0** on `main` (`6f11283`–`18abffc`); [inventory](h14-unsafe-confident-inventory.md) |
 
 ## H1: bounded-brief classifier change
 
@@ -169,7 +169,7 @@ be rebased onto `main` (the catalog, cost and telemetry files were rewritten on 
 
 ## H14: unsafe confident recommendations on the multilingual set
 
-**Status: done** on `main` (`a735062`).
+**Status: done** on `main` (`18abffc`).
 
 **Evidence (before).** M3 baseline: 10 unsafe confident / 170; buckets in [h14-unsafe-confident-inventory.md](h14-unsafe-confident-inventory.md).
 
