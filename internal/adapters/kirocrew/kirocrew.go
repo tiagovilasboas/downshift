@@ -178,10 +178,11 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	decision.Model = plan.Model
 	note := decision.Summary()
 	msg := fmt.Sprintf("downshift: %s\nRespawn this subagent with model=%s (tier %s).",
-		note, plan.Model.ID, decision.Tier)
+		note, plan.Model.ID, plan.Model.Tier)
 	// The context-trim hint only applies when moving DOWN to a small window;
-	// an upshift to a frontier model has room to spare.
-	if decision.Tier == core.TierSmall {
+	// an upshift to a frontier model has room to spare. It follows the target
+	// written, which can sit above the decision's tier (nearest in session).
+	if plan.Model.Tier == core.TierSmall {
 		msg += " For a small tier, also trim context (include_memory/include_lessons/" +
 			"include_project=false) so it fits the model's window."
 	}

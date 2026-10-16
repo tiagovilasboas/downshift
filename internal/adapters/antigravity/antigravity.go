@@ -117,6 +117,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 	changed := false
 	var lastDecision core.Decision
+	lastWritten := false
 
 	for _, raw := range subagentsRaw {
 		subagent, ok := raw.(map[string]any)
@@ -137,6 +138,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		// forbids all fail open (allow, no write).
 		plan := decision.PlanSession(core.AntigravityCaps, res, session, currentModel)
 		lastDecision = decision
+		lastWritten = false
 		if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !session.Contains(plan.Model.ID) {
 			continue
 		}
@@ -158,6 +160,8 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 		subagent["Model"] = plan.WriteName
 		changed = true
+		lastDecision.Model = plan.Model
+		lastWritten = true
 	}
 
 	if !changed {
@@ -169,10 +173,17 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", lastDecision
 	}
 
+	// The note marks the telemetry row as a rewrite, and the row describes the
+	// last child: an earlier child's rewrite must not make a held or unchanged
+	// last child look applied.
+	note := ""
+	if lastWritten {
+		note = "downshift: " + lastDecision.Summary()
+	}
 	return Output{
 		Decision:  "allow",
 		Overwrite: updatedArgs,
-	}, "downshift: " + lastDecision.Summary(), lastDecision
+	}, note, lastDecision
 }
 
 func allow() Output {

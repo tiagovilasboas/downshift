@@ -228,9 +228,9 @@ func effortRank(v string) int {
 // requested one. A confident, unheld decision may set any effort. A decision
 // the guardrails held (its verdict reduced to a safe one) writes no effort:
 // a held change, up or down, leaves the spawn as requested. An unconfident,
-// unheld decision may only raise effort: lowering it would be a downshift on
-// doubt. With no (or an unrecognised) requested effort, it may only write
-// effort alongside a model rewrite.
+// unheld decision writes effort only alongside a model rewrite (a
+// deterministic lift such as the risk floor), and never lowers it: on its
+// own, raising effort would spend more on doubt (docs/session-models.md).
 func effortAllowed(d core.Decision, requested, value string, modelRewritten bool) bool {
 	if d.Confident && len(d.Corrections) == 0 {
 		return true
@@ -238,8 +238,11 @@ func effortAllowed(d core.Decision, requested, value string, modelRewritten bool
 	if d.Checked && d.SafeVerdict != d.Verdict {
 		return false
 	}
+	if !modelRewritten {
+		return false
+	}
 	if effortRank(requested) < 0 {
-		return modelRewritten
+		return true
 	}
 	return effortRank(value) >= effortRank(requested)
 }
