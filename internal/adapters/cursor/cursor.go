@@ -169,6 +169,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// On the parent's model as baseline, only the small tier is surely
 	// cheaper than what the child runs; a mid target could be an upshift.
 	if fromParent && decision.Verdict == core.VerdictDownshift && target.Tier != core.TierSmall {
+		decision.GuessHeld = true
 		return allow(), "", decision
 	}
 	if !core.CanWriteSessionID(harnessID, target.ID, plan.Session, res) {

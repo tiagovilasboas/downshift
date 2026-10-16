@@ -72,6 +72,9 @@ func TestHandle_ParentModelIDHoldsMidTierDownshift(t *testing.T) {
 	if d.Verdict != core.VerdictDownshift {
 		t.Fatalf("precondition: want a downshift verdict, got %v", d.Verdict)
 	}
+	if !d.GuessHeld {
+		t.Errorf("held mid-tier downshift must set GuessHeld for its reason code")
+	}
 	if m := decodeUpdated(t, out); m != nil {
 		t.Fatalf("mid-tier downshift on the parent's model_id wrote %v", m["model"])
 	}

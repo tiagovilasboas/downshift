@@ -312,6 +312,7 @@ var shortCode = map[string]string{
 	ReasonNBUpshiftApplied: "second opinion up",
 	ReasonTierFloor:        "tier floor",
 	ReasonCreditHeld:       "credit held",
+	ReasonGuessHeld:        "guessed baseline",
 	ReasonScoreRouted:      "by score",
 	ReasonPaused:           "paused",
 }

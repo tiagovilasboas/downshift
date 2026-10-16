@@ -22,6 +22,7 @@ var reasonWords = map[string]string{
 	ReasonNBDownshiftApplied:    "the second-opinion model lowered the tier for a trivial task",
 	ReasonTierFloor:             "the project's tier floor raised the tier",
 	ReasonCreditHeld:            "the credit gate refused the rewrite (quota exhausted, stale or unknown)",
+	ReasonGuessHeld:             "the baseline was guessed (settings or the parent model), so only a small-tier downshift is written",
 	ReasonPaused:                "routing was paused for this session: classified and logged, the spawn ran unchanged",
 	ReasonScoreRouted:           "public capability scores picked the model",
 	ReasonBaselineFromSettings:  "the session model was inferred from the configured model (env or settings), not seen in the transcript",

@@ -34,6 +34,9 @@ func TestHandle_SettingsBaselineHoldsMidTierDownshift(t *testing.T) {
 	if !d.BaselineFromSettings || !d.Confident {
 		t.Fatalf("precondition: want confident decision on a settings baseline, got fromSettings=%v confident=%v", d.BaselineFromSettings, d.Confident)
 	}
+	if !d.GuessHeld {
+		t.Errorf("held mid-tier downshift must set GuessHeld for its reason code")
+	}
 	if m := decodeUpdated(t, out); m != nil {
 		t.Fatalf("mid-tier downshift on a guessed baseline, model rewritten to %v (verdict %v, note %q)", m["model"], d.Verdict, note)
 	}

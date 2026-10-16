@@ -226,3 +226,26 @@ func withTranscriptWait(t *testing.T, total, step time.Duration) {
 	transcriptWaitTotal, transcriptWaitStep = total, step
 	t.Cleanup(func() { transcriptWaitTotal, transcriptWaitStep = oldTotal, oldStep })
 }
+
+// One hook call reads the transcript twice; the bounded wait is paid once.
+func TestSessionModelFromTranscript_WaitsOncePerPath(t *testing.T) {
+	withTranscriptWait(t, 200*time.Millisecond, 20*time.Millisecond)
+	path := filepath.Join(t.TempDir(), "s.jsonl")
+	if err := os.WriteFile(path, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now()
+	if got := sessionModelFromTranscript(path); got != "" {
+		t.Fatalf("first read: got %q", got)
+	}
+	if d := time.Since(start); d < 200*time.Millisecond {
+		t.Fatalf("first read must wait the bounded time, took %s", d)
+	}
+	start = time.Now()
+	if got := sessionModelFromTranscript(path); got != "" {
+		t.Fatalf("second read: got %q", got)
+	}
+	if d := time.Since(start); d > 100*time.Millisecond {
+		t.Errorf("second read of the same empty transcript waited again: %s", d)
+	}
+}

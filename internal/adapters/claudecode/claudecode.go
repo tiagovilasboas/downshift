@@ -195,6 +195,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// session can run, so a downshift on a guessed baseline is written only to
 	// it; any other target could be an upshift nobody sees.
 	if fromSettings && decision.Verdict == core.VerdictDownshift && plan.Model.Tier != core.TierSmall {
+		decision.GuessHeld = true
 		return allow(), "", decision
 	}
 	decision.Model = plan.Model

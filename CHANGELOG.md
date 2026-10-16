@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Claude Code: with an empty transcript, the bounded wait for the session model ran twice per hook call (about 850 ms); it now runs once.
+- A downshift held because its baseline was guessed (Claude Code settings, Cursor parent `model_id`) now carries the reason code `HELD_GUESSED_BASELINE` instead of an unexplained `allow`.
+
 ## [0.1.0-beta.14] — 2026-10-15
 
 ### Fixed

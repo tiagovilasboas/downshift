@@ -29,6 +29,9 @@ const (
 	ReasonNBDownshiftApplied    = "NB_DOWNSHIFT_APPLIED"
 	ReasonTierFloor             = "TIER_FLOOR"
 	ReasonCreditHeld            = "CREDIT_HELD"
+	// ReasonGuessHeld marks a downshift held because its baseline was guessed
+	// and the target was not the small tier (Decision.GuessHeld).
+	ReasonGuessHeld = "HELD_GUESSED_BASELINE"
 	// ReasonPaused marks a decision made while the developer had routing paused
 	// for the session (`downshift session --pause`): classified and logged as a
 	// control-group baseline, the spawn left unchanged.
@@ -95,6 +98,9 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.CreditHeld {
 		set[ReasonCreditHeld] = true
+	}
+	if d.GuessHeld {
+		set[ReasonGuessHeld] = true
 	}
 	if d.ScoreApplied {
 		set[ReasonScoreRouted] = true

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
@@ -72,6 +73,14 @@ var (
 	transcriptWaitStep  = 40 * time.Millisecond
 )
 
+// waitedEmpty remembers the last transcript whose bounded wait found no model.
+// One hook call reads the transcript twice (RequestedModel for telemetry and
+// Handle); the second read is still made, but the wait is not paid twice.
+var waitedEmpty struct {
+	sync.Mutex
+	path string
+}
+
 // sessionModelFromTranscript returns the model of the last assistant message in
 // the parent session transcript. Claude Code's PreToolUse payload carries the
 // transcript path but not the session model. Only the model id is kept; the
@@ -90,12 +99,21 @@ func sessionModelFromTranscript(path string) string {
 	if _, err := os.Stat(path); err != nil {
 		return ""
 	}
+	waitedEmpty.Lock()
+	again := waitedEmpty.path == path
+	waitedEmpty.Unlock()
+	if again {
+		return ""
+	}
 	for waited := time.Duration(0); waited < transcriptWaitTotal; waited += transcriptWaitStep {
 		time.Sleep(transcriptWaitStep)
 		if m := hookutil.LastInTranscriptTail(path, assistantModel); m != "" {
 			return m
 		}
 	}
+	waitedEmpty.Lock()
+	waitedEmpty.path = path
+	waitedEmpty.Unlock()
 	return ""
 }
 

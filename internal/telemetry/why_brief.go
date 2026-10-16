@@ -17,6 +17,7 @@ var briefWords = map[string]string{
 	ReasonScoreRouted:          "picked by public capability scores",
 	ReasonBaselineFromSettings: "baseline inferred from the configured model",
 	ReasonCreditHeld:           "credit gate held the rewrite",
+	ReasonGuessHeld:            "guessed baseline held a mid downshift",
 	ReasonPaused:               "routing paused",
 }
 
