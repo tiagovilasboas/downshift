@@ -104,6 +104,12 @@ func AugmentWith(prompt, label string, confident bool, store PrototypeStore, emb
 	return augmentVector(vec, label, confident, store)
 }
 
+// AugmentVector applies monotonic fusion on a precomputed embedding (same rules
+// as AugmentWith, without re-embedding). Used by shadow observers and tools.
+func AugmentVector(vec []float64, label string, confident bool, store PrototypeStore) (string, bool) {
+	return augmentVector(vec, label, confident, store)
+}
+
 func augmentVector(vec []float64, label string, confident bool, store PrototypeStore) (string, bool) {
 	semLabel, sim := store.Nearest(vec)
 	if sim < MinSimilarity {

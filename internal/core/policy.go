@@ -120,6 +120,9 @@ type Decision struct {
 	// ScoreApplied is true when DOWNSHIFT_SCORE_ROUTING=1 and the plan
 	// rewrote the model to ScoreWould.
 	ScoreApplied bool
+	// E5Shadow holds a parallel multilingual embedding observation when
+	// DOWNSHIFT_E5_SHADOW=1. It never changes Tier or Complexity by itself.
+	E5Shadow E5Shadow
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -186,6 +189,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		SemanticLift:        cls.SemanticLift,
 		UnsupportedLanguage: cls.UnsupportedLanguage,
 	}
+	applyE5Shadow(prompt, cls, &d)
 	d.Intent = IntentFor(prompt, cls, d, res)
 	// Self-correction validates the decision against the guardrails before
 	// any adapter acts. The classified verdict is preserved for telemetry;

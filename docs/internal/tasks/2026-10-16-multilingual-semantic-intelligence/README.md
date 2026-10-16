@@ -276,7 +276,7 @@ Implementation surface: `internal/semantic/e5shadow`, wired from `core.Route` vi
 
 Boundaries match other hook helpers: each embed call is capped at **1 s** and the hook’s **1500 ms** global budget (`hookctx`). A hung helper is killed; routing never waits indefinitely. Unlike production MiniLM, the E5 path **does not** fall back to the hash embedder—errors stay in `error_code` only.
 
-**Invariant (Phase D gate):** with shadow enabled vs disabled, `Route()` must produce identical `Tier`, `Complexity`, and `Confident` for the same prompt (`TestRouteE5ShadowDoesNotChangeTier`).
+**Invariant (Phase D gate):** with shadow enabled vs disabled, `Route()` must produce identical `Tier`, `Complexity`, and `Confident` for the same prompt (`TestE5Shadow_OnRecordsWithoutChangingRoute`, `TestE5Shadow_EnabledFailOpenDoesNotChangeRoute`).
 
 ### 14.3 Telemetry (`events.jsonl`)
 

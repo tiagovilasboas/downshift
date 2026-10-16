@@ -140,6 +140,10 @@ type Event struct {
 	// in shadow mode (the default).
 	NBDownshift *NBUpshiftRecord `json:"nb_downshift,omitempty"`
 
+	// E5Shadow is the multilingual E5 shadow observation (opt-in env).
+	// Prompt-free: labels, similarity, and error codes only.
+	E5Shadow *E5ShadowRecord `json:"e5_shadow,omitempty"`
+
 	// RoutingPolicy and ReasonCodes are the prompt-free decision trace:
 	// the deterministic policy version and the sorted codes of the signals
 	// and rules that shaped this decision (see reason_codes.go). Absent on
@@ -174,6 +178,19 @@ type NBUpshiftRecord struct {
 	ToTier   string  `json:"to_tier"`
 	Margin   float64 `json:"margin"`
 	Applied  bool    `json:"applied"`
+}
+
+// E5ShadowRecord is a parallel embedding observation; it never carries prompt text.
+type E5ShadowRecord struct {
+	ModelID        string  `json:"model_id,omitempty"`
+	NearestLabel   string  `json:"nearest_label,omitempty"`
+	Similarity     float64 `json:"similarity,omitempty"`
+	WouldLabel     string  `json:"would_label,omitempty"`
+	WouldLift      bool    `json:"would_lift,omitempty"`
+	RegexLabel     string  `json:"regex_label,omitempty"`
+	RegexConfident bool    `json:"regex_confident,omitempty"`
+	LatencyMs      float64 `json:"latency_ms,omitempty"`
+	ErrorCode      string  `json:"error_code,omitempty"`
 }
 
 // HasRealCost reports whether the event carries real provider costs.
@@ -400,6 +417,19 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 			ToTier:   core.TierSmall.String(),
 			Margin:   math.Round(d.NBDownshift.Margin*1e4) / 1e4,
 			Applied:  d.NBDownshift.Applied,
+		}
+	}
+	if e5 := d.E5Shadow; e5.ErrorCode != "" || e5.ModelID != "" {
+		ev.E5Shadow = &E5ShadowRecord{
+			ModelID:        e5.ModelID,
+			NearestLabel:   e5.NearestLabel,
+			Similarity:     math.Round(e5.Similarity*1e4) / 1e4,
+			WouldLabel:     e5.WouldLabel,
+			WouldLift:      e5.WouldLift,
+			RegexLabel:     e5.RegexLabel,
+			RegexConfident: e5.RegexConfident,
+			LatencyMs:      e5.LatencyMs,
+			ErrorCode:      e5.ErrorCode,
 		}
 	}
 	return ev
