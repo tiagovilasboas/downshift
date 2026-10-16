@@ -47,16 +47,17 @@ const harnessID = "kirocrew"
 type Event struct {
 	HookEventName string `json:"hook_event_name"`
 	// Cwd is the working directory, used to find a project policy file.
-	Cwd               string          `json:"cwd,omitempty"`
-	CorrelationID     string          `json:"correlation_id,omitempty"`
-	ToolName          string          `json:"tool_name"`
-	ToolInput         json.RawMessage `json:"tool_input"`
-	ToolResponse      json.RawMessage `json:"tool_response,omitempty"` // postToolUse only
-	SessionModels     *[]string       `json:"session_models,omitempty"`
-	AvailableModels   *[]string       `json:"available_models,omitempty"`
-	IncludedModels    *[]string       `json:"included_models,omitempty"`
-	UnavailableModels *[]string       `json:"unavailable_models,omitempty"`
-	UsageQuota        *quota.Snapshot `json:"usage_quota,omitempty"`
+	Cwd               string              `json:"cwd,omitempty"`
+	CorrelationID     string              `json:"correlation_id,omitempty"`
+	ToolName          string              `json:"tool_name"`
+	ToolInput         json.RawMessage     `json:"tool_input"`
+	ToolResponse      json.RawMessage     `json:"tool_response,omitempty"` // postToolUse only
+	ModelMetadata     []core.SessionModel `json:"model_metadata,omitempty"`
+	SessionModels     *[]string           `json:"session_models,omitempty"`
+	AvailableModels   *[]string           `json:"available_models,omitempty"`
+	IncludedModels    *[]string           `json:"included_models,omitempty"`
+	UnavailableModels *[]string           `json:"unavailable_models,omitempty"`
+	UsageQuota        *quota.Snapshot     `json:"usage_quota,omitempty"`
 }
 
 // ProjectDir returns the working directory the harness reported, if any.
@@ -133,11 +134,15 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if len(r) > 0 {
 		res = r[0]
 	}
-	decision := core.Route(subPrompt, harnessID, currentModel, res)
-	decision.RequestedID = currentModel
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
+	if ev.ModelMetadata != nil {
+		session.Metadata = ev.ModelMetadata
+	}
+	res = core.ResolveSessionModels(harnessID, session, res)
+	decision := core.Route(subPrompt, harnessID, currentModel, res)
+	decision.RequestedID = currentModel
 	decision.RecordSession(session, currentModel)
 
 	// The user deliberately picked an explicit_only model: never block it or

@@ -22,6 +22,11 @@ import (
 type SessionList struct {
 	IDs   []string
 	Known bool
+	// Metadata is optional native/operator capability evidence for exact IDs.
+	Metadata []SessionModel
+	// Unordered marks a hook availability inventory without a capability order.
+	// Unlike a native quota export, this alone is not quota evidence.
+	Unordered bool
 	// Inferred marks a list derived from the current model's catalog tier
 	// ladder rather than learned from the harness.
 	Inferred bool
@@ -182,9 +187,11 @@ func (s SessionList) WithHookQuota(included, exhausted *[]string) SessionList {
 // A nil slice means that field was absent. A non-nil slice is authoritative,
 // even when empty, and the user file must not be consulted.
 func SessionFromHook(lists ...*[]string) (SessionList, bool) {
-	for _, list := range lists {
+	for index, list := range lists {
 		if list != nil {
-			return KnownSession(*list), true
+			session := KnownSession(*list)
+			session.Unordered = index > 0
+			return session, true
 		}
 	}
 	return SessionList{}, false

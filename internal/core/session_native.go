@@ -117,7 +117,7 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 		}
 		// Exhausting a cheaper pool must not turn a downshift into an upgrade.
 		if d.Verdict == VerdictDownshift && (m.Tier > current.Tier ||
-			(m.Tier == current.Tier && m.OutputM > current.OutputM)) {
+			(m.Tier == current.Tier && (m.InputM <= 0 || m.OutputM <= 0 || current.InputM <= 0 || current.OutputM <= 0 || m.OutputM > current.OutputM))) {
 			continue
 		}
 		if !allowed {
@@ -126,7 +126,7 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 		}
 		m.ID, m.Harness, m.Native = id, d.Harness, ""
 		better := !found || (!upshift && m.Tier < best.Tier) || (upshift && m.Tier > best.Tier)
-		if found && m.Tier == best.Tier && m.OutputM < best.OutputM {
+		if found && m.Tier == best.Tier && m.InputM > 0 && m.OutputM > 0 && best.InputM > 0 && best.OutputM > 0 && m.OutputM < best.OutputM {
 			better = true
 		}
 		if better {

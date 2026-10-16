@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Session lists can carry per-id metadata (tier, supported effort, optional list prices) via `core.ResolveSessionModels`; native or operator order ranks capability but does not invent prices, and a missing rate stays unknown for cost and savings.
 - The risk scan runs each category's regex only when the text holds a literal every match needs. Routing a 1 MiB prompt fell from about 2.9 s to 78 ms in the worst measured case; the categories found are identical (differential test against the previous scan).
 
 ## [0.1.0-beta.14] — 2026-10-15

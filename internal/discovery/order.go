@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // Catalog is what Order needs from the catalog: metadata for an id.
@@ -21,6 +22,7 @@ type Catalog interface {
 
 // Ranked is the routing view of a discovery result.
 type Ranked struct {
+	Metadata []core.SessionModel `json:"model_metadata,omitempty"`
 	// IDs are the usable models, least to most capable, one per family
 	// (the newest). This is the list a hook may write from.
 	IDs []string `json:"ordered"`
@@ -59,7 +61,25 @@ func Order(harness string, models []Model, cat Catalog) Ranked {
 	groups := map[string][]candidate{}
 	var groupOrder []string
 	for _, m := range models {
-		e, ok := cat.EntryFor(harness, m.ID)
+		r.Metadata = append(r.Metadata, core.SessionModel{ID: m.ID, Tier: m.Tier, Efforts: m.Efforts, InputM: m.InputM, OutputM: m.OutputM, Harness: harness})
+		var e catalog.Entry
+		var ok bool
+		if cat != nil {
+			e, ok = cat.EntryFor(harness, m.ID)
+		}
+		nativeTier := strings.ToLower(m.Tier)
+		if _, valid := tierRank[nativeTier]; valid {
+			// A provider descriptor outranks the fallback catalog. Keep native
+			// IDs separate instead of deduplicating them using catalog families.
+			e = catalog.Entry{ID: m.ID, Harness: harness, Tier: nativeTier}
+			if m.OutputM != nil {
+				e.OutputCostM = *m.OutputM
+			}
+			ok = true
+		} else if m.Tier != "" {
+			// Explicit malformed capability evidence cannot silently fall back.
+			ok = false
+		}
 		if !ok {
 			r.Unranked = append(r.Unranked, m.ID)
 			continue
@@ -68,7 +88,7 @@ func Order(harness string, models []Model, cat Catalog) Ranked {
 			r.Unranked = append(r.Unranked, m.ID)
 			continue
 		}
-		if !cat.IsExactID(harness, m.ID) {
+		if m.Tier == "" && cat != nil && !cat.IsExactID(harness, m.ID) {
 			r.FamilyOnly = append(r.FamilyOnly, FamilyMatch{ID: m.ID, CatalogID: e.ID})
 		}
 		key := strings.ToLower(e.Family) + "|" + strings.ToLower(e.Effort)

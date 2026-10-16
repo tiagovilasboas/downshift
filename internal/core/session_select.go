@@ -14,10 +14,13 @@ const inheritID = "inherit"
 // set is not a credit denial. An explicit_only id is writable only when
 // explicit upshift is on.
 func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bool {
+	if rejectedSessionModel(harness, id, res) {
+		return false
+	}
 	if harness == "" || id == "" || id == inheritID || !session.Known || !session.Contains(id) || session.Blocks(id) || !session.quotaAllows(harness, id) {
 		return false
 	}
-	if session.NativeAvailability {
+	if session.NativeAvailability || session.Unordered {
 		if res == nil {
 			return false
 		}
@@ -114,7 +117,7 @@ func selectSessionTarget(d Decision, res Resolver, session SessionList) (string,
 // chose before the capability path existed, and what it still chooses when
 // that path is off or abstains.
 func catalogSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool, bool) {
-	if session.NativeAvailability {
+	if session.NativeAvailability || session.Unordered {
 		return nativeSessionTarget(d, res, session)
 	}
 	if session.Blocks(d.CurrentModel.ID) || session.Blocks(d.RequestedID) {
@@ -163,7 +166,7 @@ func selectableSessionIDs(harness string, session SessionList, res Resolver, all
 	creditClosed := session.CreditsReported && len(session.Included) > 0
 	ids := make([]string, 0, len(session.IDs))
 	for _, id := range session.IDs {
-		if id == "" || id == inheritID || session.Blocks(id) {
+		if id == "" || id == inheritID || session.Blocks(id) || rejectedSessionModel(harness, id, res) {
 			continue
 		}
 		explicit := res != nil && res.IsExplicitOnly(harness, id)
@@ -176,6 +179,13 @@ func selectableSessionIDs(harness string, session SessionList, res Resolver, all
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+func rejectedSessionModel(harness, id string, res Resolver) bool {
+	if checked, ok := res.(interface{ SessionModelRejected(string, string) bool }); ok {
+		return checked.SessionModelRejected(harness, id)
+	}
+	return false
 }
 
 // leastSessionModelAtOrAbove picks the first id, in session order (least to

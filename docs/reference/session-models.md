@@ -6,6 +6,37 @@ Order every list from **least to most capable**. This ordering is the model-agno
 
 If the session list cannot be determined, the hook does not rewrite the model.
 
+## Session metadata before catalog fallback
+
+All five hook adapters resolve the session before classifying its current model.
+Exact `model_metadata` descriptors take precedence over catalog capability and
+effort data. The catalog supplies optional fallback metadata; it cannot add an ID
+to the session. A declared least-to-most-capable `session_models` list can rank
+otherwise unknown IDs. An unordered `available_models` inventory cannot.
+
+For a harness that supplies descriptors, the shared payload extension is:
+
+```json
+{
+  "session_models": ["session-fast", "session-strong"],
+  "model_metadata": [
+    {"id": "session-fast", "tier": "small", "efforts": ["low", "medium"]},
+    {"id": "session-strong", "tier": "frontier", "efforts": ["low", "medium", "high"]}
+  ]
+}
+```
+
+`tier` is `small`, `mid` or `frontier`. Optional `input_per_million` and
+`output_per_million` are independently supplied prices; omitted prices are
+unknown. This extension is accepted by the adapters, not a claim that every
+native harness emits it. Discovery preserves descriptors when its source exposes
+them. Picker order, display names and reasoning-effort counts do not establish
+capability. Missing evidence holds routing instead of assigning a model by name.
+
+Guia: this shared session metadata contract (inferencial, architecture fitness).
+Sensor: shared resolver, all-adapter acceptance tests and unknown-price regression
+checks (computacional, architecture fitness / behaviour).
+
 ## Payload without a model field
 
 Claude Code often spawns a Task without `tool_input.model`; the child then inherits the harness default (usually the parent's model). The router has no current model to compare against (`verdict: UNKNOWN`), so it applies guardrails **R6** (`R6_UNCONFIDENT_UNKNOWN_SMALL`), **R9** (`R9_UNCONFIDENT_UNKNOWN_MID`) and **R7** (`R7_UNCONFIDENT_UNKNOWN_FRONTIER`):

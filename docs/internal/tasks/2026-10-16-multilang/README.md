@@ -36,7 +36,9 @@ evaluation splits (`tasks`, `holdout`, `fresh`, `heldout2`, `blind-vitrine`), `g
 | M3 | Done, adjudication pending | labels frozen in labs (`653bfd9`), 170 items |
 | M4 | Rejected | no gain over the current classifier on the frozen set (labs `b640e92`) |
 | M5 | Blocked | no request sent; extra usage was enabled on the account |
-| M6 | Partly done | H1 landed; see the handoff tasks H5 for the remaining briefs |
+| M6 | Partly done | H1 and H5 landed; see [M6 diagnostic evidence](../m6-delegation-evidence-2026-10-16.md) |
 | M7 | Partly done | README and `complexity-weights.md` describe the guard; update after H14 |
+
+Evaluation details and limitations: [evaluation-status.md](evaluation-status.md). Session-first model resolution (H13) keeps native metadata apart from catalog prices; discovery records availability only when the harness supplies evidence and does not invent capability, pricing or credit.
 
 Open work is mapped in [2026-10-16-handoff](../2026-10-16-handoff/README.md).
