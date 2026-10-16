@@ -36,7 +36,7 @@ enabled and no request was sent. Human adjudication of the M3 labels is still pe
 | H1 | Done | Bounded-brief classifier change (landed; keep the note that `blind-vitrine` is not a clean held-out check for it) |
 | H2 | High | Codex session model missing from the catalog: every Codex spawn is held |
 | H3 | Done | Cursor: `inherit` uses parent `model_id` baseline (`3015fc9`) |
-| H4 | Medium | Hook failure events do not record the harness |
+| H4 | Done | Hook failure events record harness (`f8acfbf`) |
 | H5 | Medium | Six long briefs with fewer than two limits are still confidently TRIVIAL (go to Haiku) |
 | H6 | High | Owner decisions with finished diffs: upshift to the needed tier; risky write with unknown baseline |
 | H7 | Medium | Fresh routed-versus-control run after the Haiku fix, and the README evidence screenshots |
