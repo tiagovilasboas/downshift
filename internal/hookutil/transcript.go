@@ -5,9 +5,12 @@ package hookutil
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // TranscriptTailBytes bounds how much of a session transcript is read.
@@ -51,4 +54,40 @@ func LastInTranscriptTail(path string, pick func(line []byte) string) string {
 		}
 	}
 	return last
+}
+
+// TranscriptModel returns the model id of the last line in the transcript tail
+// whose "type" is lineType, read from <container>.model (Claude Code:
+// assistant/message, Codex: turn_context/payload). An id in angle brackets is
+// a placeholder, not a model (Claude Code writes "<synthetic>" on locally
+// generated messages), and is skipped. Only the id is kept; the line's content
+// is never returned. Any problem returns "" (fail open).
+func TranscriptModel(path, lineType, container string) string {
+	return LastInTranscriptTail(path, modelLinePick(lineType, container))
+}
+
+// modelLinePick builds the pick TranscriptModel scans with. A cheap substring
+// check skips lines that cannot match before any JSON is decoded.
+func modelLinePick(lineType, container string) func(line []byte) string {
+	marker := []byte(`"` + lineType + `"`)
+	return func(line []byte) string {
+		if !bytes.Contains(line, marker) {
+			return ""
+		}
+		var row map[string]json.RawMessage
+		if json.Unmarshal(line, &row) != nil {
+			return ""
+		}
+		var typ string
+		if json.Unmarshal(row["type"], &typ) != nil || typ != lineType {
+			return ""
+		}
+		var inner struct {
+			Model string `json:"model"`
+		}
+		if json.Unmarshal(row[container], &inner) != nil || strings.HasPrefix(inner.Model, "<") {
+			return ""
+		}
+		return inner.Model
+	}
 }

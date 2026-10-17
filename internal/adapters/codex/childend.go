@@ -22,8 +22,9 @@ import (
 // Unverified: no real Codex PostToolUse payload for spawn_agent was captured
 // (docs/reference/harness-matrix.md). The fields are tool_use_id, session_id, model,
 // transcript_path (documented common fields) and tool_response.status/model
-// (assumed names). A spawn_agent call that reports no status is a launch, not
-// an end, and then no usage is read: the transcript at transcript_path belongs
+// (assumed names). A spawn_agent call that reports no status, or one outside
+// the shared vocabulary, is a launch (telemetry.ChildLaunched), not an end:
+// the call returned, and nothing says the child finished. Then no usage is read: the transcript at transcript_path belongs
 // to the parent thread and says nothing about a child that has not finished.
 // Parsing only: records, pricing and the child-end line are the shared
 // recorder's job (internal/childend).
@@ -53,7 +54,7 @@ func ParseChildEnd(raw []byte) (hookport.ChildEnd, bool) {
 		ToolUseID:     p.ToolUseID,
 		SessionID:     p.SessionID,
 		ResolvedModel: hookutil.StringField(resp, "model"),
-		Status:        childStatus(hookutil.StringField(resp, "status")),
+		Status:        telemetry.ChildStatusFromText(hookutil.StringField(resp, "status"), telemetry.ChildLaunched),
 		Source:        hookport.SourcePayload,
 		IsChild:       true,
 	}
@@ -64,21 +65,6 @@ func ParseChildEnd(raw []byte) (hookport.ChildEnd, bool) {
 		}
 	}
 	return ce, true
-}
-
-// childStatus maps the closed set of tool_response statuses to a ChildStatus.
-// Anything else, including no status, is a launch: the call returned, and
-// nothing says the child finished.
-func childStatus(s string) telemetry.ChildStatus {
-	switch strings.ToLower(s) {
-	case "completed", "complete", "succeeded", "success", "done":
-		return telemetry.ChildCompleted
-	case "error", "errored", "failed", "failure":
-		return telemetry.ChildError
-	case "interrupted", "aborted", "cancelled", "canceled":
-		return telemetry.ChildInterrupted
-	}
-	return telemetry.ChildLaunched
 }
 
 // rolloutUsage reads the token counts of the last token_count event in the

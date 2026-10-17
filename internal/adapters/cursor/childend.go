@@ -24,6 +24,8 @@ import (
 // token usage this adapter knows how to read, so a record is linked only when
 // the payload names the spawn tool call, and usage stays unmeasured.
 // Parsing only: records and the child-end line are the shared recorder's job.
+// A stop event that names no known status is a stop with no outcome claim
+// (telemetry.ChildStopped).
 func ParseChildEnd(raw []byte) (hookport.ChildEnd, bool) {
 	var p map[string]any
 	if json.Unmarshal(raw, &p) != nil {
@@ -45,22 +47,8 @@ func ParseChildEnd(raw []byte) (hookport.ChildEnd, bool) {
 		AgentKey:  agent,
 		ToolUseID: call,
 		SessionID: hookutil.StringField(p, "session_id"),
-		Status:    childStatus(hookutil.StringField(p, "status")),
+		Status:    telemetry.ChildStatusFromText(hookutil.StringField(p, "status"), telemetry.ChildStopped),
 		Source:    hookport.SourcePayload,
 		IsChild:   true,
 	}, true
-}
-
-// childStatus maps Cursor's subagent status to a ChildStatus. A stop event
-// that names no known status is a stop with no outcome claim.
-func childStatus(s string) telemetry.ChildStatus {
-	switch strings.ToLower(s) {
-	case "completed", "complete", "success":
-		return telemetry.ChildCompleted
-	case "error", "failed":
-		return telemetry.ChildError
-	case "aborted", "cancelled", "canceled", "interrupted":
-		return telemetry.ChildInterrupted
-	}
-	return telemetry.ChildStopped
 }

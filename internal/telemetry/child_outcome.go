@@ -3,6 +3,8 @@
 
 package telemetry
 
+import "strings"
+
 // OutcomeChildEnded records how a spawned subagent ended. It is an observation
 // about an earlier decision: it never counts as a decision, cost or savings.
 const OutcomeChildEnded = "child_ended"
@@ -42,4 +44,27 @@ func ClassifyChildEnd(event, toolStatus string, isInterrupt bool) ChildStatus {
 		return ChildStopped
 	}
 	return ChildUnknown
+}
+
+// childStatusSynonyms is the vocabulary harnesses use for a child's status in
+// a payload field (Cursor subagentStop.status, Codex tool_response.status).
+// Both payload shapes are unverified, so the table is the union of the names
+// read so far; matching is case-insensitive.
+var childStatusSynonyms = map[string]ChildStatus{
+	"completed": ChildCompleted, "complete": ChildCompleted, "succeeded": ChildCompleted, "success": ChildCompleted, "done": ChildCompleted,
+	"error": ChildError, "errored": ChildError, "failed": ChildError, "failure": ChildError,
+	"interrupted": ChildInterrupted, "aborted": ChildInterrupted, "cancelled": ChildInterrupted, "canceled": ChildInterrupted,
+}
+
+// ChildStatusFromText maps a status string a harness payload reports to a
+// ChildStatus through childStatusSynonyms. A name not in the table, including
+// an empty one, is fallback: what an unqualified event means is a harness fact
+// (a Cursor subagentStop is a stop with no outcome claim, ChildStopped; a
+// Codex spawn_agent call that returned without a status is a launch,
+// ChildLaunched), so the adapter passes it in.
+func ChildStatusFromText(status string, fallback ChildStatus) ChildStatus {
+	if st, ok := childStatusSynonyms[strings.ToLower(status)]; ok {
+		return st
+	}
+	return fallback
 }

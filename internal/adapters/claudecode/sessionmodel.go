@@ -4,8 +4,6 @@
 package claudecode
 
 import (
-	"bytes"
-	"encoding/json"
 	"os"
 	"strings"
 	"sync"
@@ -82,15 +80,17 @@ var waitedEmpty struct {
 }
 
 // sessionModelFromTranscript returns the model of the last assistant message in
-// the parent session transcript. Claude Code's PreToolUse payload carries the
-// transcript path but not the session model. Only the model id is kept; the
-// message content is never stored.
+// the parent session transcript (message.model of the last "assistant" line;
+// locally generated messages carry "<synthetic>" and are skipped by the shared
+// pick). Claude Code's PreToolUse payload carries the transcript path but not
+// the session model. Only the model id is kept; the message content is never
+// stored.
 //
 // When the file exists but holds no assistant model yet, it is read again for a short, bounded time. A missing
 // file is not waited for: a session run without persistence never writes one, and waiting would only delay
 // every spawn.
 func sessionModelFromTranscript(path string) string {
-	if m := hookutil.LastInTranscriptTail(path, assistantModel); m != "" {
+	if m := assistantModel(path); m != "" {
 		return m
 	}
 	if path == "" {
@@ -107,7 +107,7 @@ func sessionModelFromTranscript(path string) string {
 	}
 	for waited := time.Duration(0); waited < transcriptWaitTotal; waited += transcriptWaitStep {
 		time.Sleep(transcriptWaitStep)
-		if m := hookutil.LastInTranscriptTail(path, assistantModel); m != "" {
+		if m := assistantModel(path); m != "" {
 			return m
 		}
 	}
@@ -117,22 +117,10 @@ func sessionModelFromTranscript(path string) string {
 	return ""
 }
 
-// assistantModel reads message.model from an assistant line. Claude Code marks
-// locally generated messages with "<synthetic>"; those are skipped.
-func assistantModel(line []byte) string {
-	if !bytes.Contains(line, []byte(`"assistant"`)) {
-		return ""
-	}
-	var row struct {
-		Type    string `json:"type"`
-		Message struct {
-			Model string `json:"model"`
-		} `json:"message"`
-	}
-	if json.Unmarshal(line, &row) != nil || row.Type != "assistant" || strings.HasPrefix(row.Message.Model, "<") {
-		return ""
-	}
-	return row.Message.Model
+// assistantModel is one read of the transcript tail: message.model of the last
+// assistant line.
+func assistantModel(path string) string {
+	return hookutil.TranscriptModel(path, "assistant", "message")
 }
 
 // envFlagOn reads a boolean environment flag: unset, empty, "0" and "false" are off.
