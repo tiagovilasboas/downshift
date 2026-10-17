@@ -51,14 +51,14 @@ func TestConfig_DefaultsNameTheirSource(t *testing.T) {
 	cleanConfigEnv(t)
 	m := configEntries(t)
 	want := map[string][2]string{
-		"quota_mode":        {"default", cfgDefault},
-		"scores":            {"on", cfgDefault},
-		"score_routing":     {"shadow", cfgDefault},
-		"control_share":     {"0.1", cfgDefault},
-		"quiet":             {"off", cfgDefault},
-		"catalog":           {"embedded", cfgDefault},
-		"semantic_boost":    {"on (hash embedder)", cfgDefault},
-		"infer_session":     {"on", cfgDefault},
+		"quota_mode":     {"default", cfgDefault},
+		"scores":         {"on", cfgDefault},
+		"score_routing":  {"shadow", cfgDefault},
+		"control_share":  {"0.1", cfgDefault},
+		"quiet":          {"off", cfgDefault},
+		"catalog":        {"embedded", cfgDefault},
+		"semantic_boost": {"on (hash embedder)", cfgDefault},
+		"infer_session":  {"on", cfgDefault},
 	}
 	for k, w := range want {
 		if e, ok := m[k]; !ok || e.Value != w[0] || e.Source != w[1] {

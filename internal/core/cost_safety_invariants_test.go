@@ -154,48 +154,48 @@ func TestCostTruthTable(t *testing.T) {
 							name := fmt.Sprintf("%s/conf=%v/%s/rf=%v/nb=%v/pf=%v", v, conf, tier, rf, nb, pf)
 							override := rf || nb || pf
 
-								var gotRules []string
-								for _, x := range rep.Violations {
-									gotRules = append(gotRules, x.Rule)
-								}
-								sort.Strings(gotRules)
-								wantRules := costExpectedRules(d)
-								if strings.Join(gotRules, ",") != strings.Join(wantRules, ",") {
-									t.Errorf("%s: Check rules=%v want %v", name, gotRules, wantRules)
-								}
-								// A clean report keeps the verdict; any violation holds.
-								wantSafe := v
-								if len(wantRules) > 0 {
-									wantSafe = core.VerdictOK
-								}
-								if rep.Safe != wantSafe || rep.Corrected != (len(wantRules) > 0) {
-									t.Errorf("%s: Safe=%s Corrected=%v, want Safe=%s", name, rep.Safe, rep.Corrected, wantSafe)
-								}
+							var gotRules []string
+							for _, x := range rep.Violations {
+								gotRules = append(gotRules, x.Rule)
+							}
+							sort.Strings(gotRules)
+							wantRules := costExpectedRules(d)
+							if strings.Join(gotRules, ",") != strings.Join(wantRules, ",") {
+								t.Errorf("%s: Check rules=%v want %v", name, gotRules, wantRules)
+							}
+							// A clean report keeps the verdict; any violation holds.
+							wantSafe := v
+							if len(wantRules) > 0 {
+								wantSafe = core.VerdictOK
+							}
+							if rep.Safe != wantSafe || rep.Corrected != (len(wantRules) > 0) {
+								t.Errorf("%s: Safe=%s Corrected=%v, want Safe=%s", name, rep.Safe, rep.Corrected, wantSafe)
+							}
 
-								got := checkWrites(d)
-								if want := costExpectedRewrite(v, conf, tier, override, rf); got != want {
-									t.Errorf("%s: Check lets the model be written=%v want %v", name, got, want)
-								}
-								// Core invariant: doubt never spends money upward.
-								if !conf && !override && (v == core.VerdictUpshift ||
-									(v == core.VerdictUnknown && tier == core.TierFrontier)) && got {
-									t.Errorf("%s: unconfident decision without deterministic lift rewrites upward", name)
-								}
-								// R7 fires exactly on unknown + unconfident + frontier + no lift.
-								hasR7 := false
-								for _, r := range gotRules {
-									hasR7 = hasR7 || r == core.RuleUnconfidentUnknownFrontier
-								}
-								wantR7 := v == core.VerdictUnknown && !conf && tier == core.TierFrontier && !override
-								if hasR7 != wantR7 {
-									t.Errorf("%s: R7=%v want %v", name, hasR7, wantR7)
-								}
+							got := checkWrites(d)
+							if want := costExpectedRewrite(v, conf, tier, override, rf); got != want {
+								t.Errorf("%s: Check lets the model be written=%v want %v", name, got, want)
+							}
+							// Core invariant: doubt never spends money upward.
+							if !conf && !override && (v == core.VerdictUpshift ||
+								(v == core.VerdictUnknown && tier == core.TierFrontier)) && got {
+								t.Errorf("%s: unconfident decision without deterministic lift rewrites upward", name)
+							}
+							// R7 fires exactly on unknown + unconfident + frontier + no lift.
+							hasR7 := false
+							for _, r := range gotRules {
+								hasR7 = hasR7 || r == core.RuleUnconfidentUnknownFrontier
+							}
+							wantR7 := v == core.VerdictUnknown && !conf && tier == core.TierFrontier && !override
+							if hasR7 != wantR7 {
+								t.Errorf("%s: R7=%v want %v", name, hasR7, wantR7)
 							}
 						}
 					}
 				}
 			}
 		}
+	}
 	if n != 192 {
 		t.Fatalf("truth table size %d, want 192", n)
 	}
