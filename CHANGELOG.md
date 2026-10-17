@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - KiroCrew: the policy-mode runner now sets the project directory, so `.downshift/policy.json` floors apply there too.
 - `setup`: with the Claude Code plugin enabled, no hooks are written to the settings file (session policy and statusline still are); `doctor` and the install guide describe the one-channel rule. The transcript reader checks the file type before opening it, so a FIFO cannot block a hook.
 
+### Changed
+
+- Positioning: Downshift is presented as an optimizer for the cost and efficiency of agent execution; subagent model routing is the main lever, not the whole product. The README first screen now states the problem, the capabilities with a status word each (implemented, not validated everywhere, shadow), how the pieces connect, and what is proven versus not. New docs: `docs/reference/capability-matrix.md` (audit of every capability against code, tests and dated evidence), `docs/guides/claude-code.md` (opusplan and Downshift, baseline inference, emitted vs honored vs used), `docs/guides/evidence.md` (evidence ladder and metrics table; cost per completed task is the primary metric), `docs/guides/benchmark-protocol.md` (fixed Opus vs native opusplan vs opusplan + Downshift), `docs/design/architecture.md` rewritten around the end-to-end flow and ownership of each step, `skills/README.md` (jobs, measured context cost, delegation overhead). No capability was added by this change; several were described more precisely or more modestly.
+
 ### Added
 
 - Claude Code session policy gains `autoCompactWindow: 400000` next to `opusplan` and plan mode: set by `setup` only when unset, skipped by `--no-session-policy`, shown by `doctor` as `main session`. It moves auto-compact from the model limit to 400k tokens on 1M-context models and is a no-op on 200k ones; the saving is estimated, not measured.

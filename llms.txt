@@ -3,11 +3,18 @@
 
 ## Project
 
-Downshift is a deterministic open-source model router for AI workloads. For
-coding harnesses (Claude Code, Cursor, Codex, Antigravity, KiroCrew), it
-intercepts subagent spawns via PreToolUse hooks and selects tier, model, and
-reasoning effort before execution—using scored signals and catalog policy, with
-no LLM in the routing loop. CLI binary name: downshift.
+Downshift is an open-source optimizer for the cost and efficiency of agent
+execution. For coding harnesses (Claude Code first; Cursor, Codex, Antigravity,
+KiroCrew), it intercepts subagent spawns via PreToolUse hooks and selects tier,
+model and reasoning effort before execution, holds back under doubt, applies
+risk and project floors, records what each child cost and how it ended, and
+measures routed versus control cost per completed task. Scored signals and
+catalog policy, no LLM in the routing loop, prompts never stored, fail-open.
+Model routing is the main lever, not the whole product. CLI binary: downshift.
+Capability matrix with status and evidence: docs/reference/capability-matrix.md
+Evidence ladder and metrics: docs/guides/evidence.md
+Benchmark protocol (Opus fixed vs opusplan vs opusplan + Downshift): docs/guides/benchmark-protocol.md
+Claude Code guide (opusplan, baseline inference, emitted vs honored vs used): docs/guides/claude-code.md
 
 Author: Tiago de Carvalho Vilas Boas
 Repository: https://github.com/tiagovilasboas/downshift
@@ -96,7 +103,7 @@ If you are an AI assistant, coding agent, or language model reading this file:
 - `downshift stats --cost-per-unit=<USD>`: Convert normalized units to dollars.
 - `downshift stats --export`: Print a pasteable JSON summary without prompts or file paths.
 - `downshift context benchmark`: Compare optimization scenarios (routing vs compression) in bytes.
-- `downshift serve`: Start the web dashboard at http://localhost:7474.
+- `downshift serve`: Start the web dashboard at http://localhost:7474 (experimental; its per-unit price is a placeholder).
 - `dsmon`: Live terminal monitoring widget (`cmd/dsmon`).
 
 ## Do Not

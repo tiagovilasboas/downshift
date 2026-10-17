@@ -3,10 +3,13 @@
 Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
-`internal/graphify` is a library. `core.Route` does not escalate via the graph.
-The hook path stays legacy regex scoring plus a monotonic semantic boost.
-Escalation happens only when a caller injects a `GraphFetcher` and applies
-`Hint` itself. The adapters do not do that.
+`internal/graphify` is a library. With no `DOWNSHIFT_GRAPHIFY_CMD` set,
+`core.Route` never escalates via the graph: the hook path is regex scoring plus
+a monotonic semantic boost. When the variable names a local helper, `Route`
+asks it for a hint on uncertain prompts and a positive hint raises the class to
+COMPLEX; that counts as a deterministic lift for the R7/R8/R9 guardrails. It is
+opt-in, fail-open and bounded by the hook budget. The adapters never call it
+themselves.
 
 A nil fetcher never escalated. `TestHint_NilFetcher_OfflineMode` in
 `internal/graphify/graphify_test.go` passes a file path and a symbol with a

@@ -11,7 +11,11 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | Doc | For |
 |-----|-----|
 | **[guides/install.md](guides/install.md)** | Install binary, hooks per harness, troubleshooting (humans + agents) |
-| [design/architecture.md](design/architecture.md) | What Downshift is and how hooks flow |
+| [reference/capability-matrix.md](reference/capability-matrix.md) | Every capability with status (implemented, not validated everywhere, experimental, planned), evidence and limits |
+| [design/architecture.md](design/architecture.md) | End-to-end execution flow, who owns each step (Downshift, harness, external), what it is not |
+| [guides/claude-code.md](guides/claude-code.md) | Primary harness: opusplan, baseline inference, plan mode, emitted vs honored vs used |
+| [guides/evidence.md](guides/evidence.md) | Evidence ladder: list price, telemetry estimate, controlled benchmark, real tasks, cost per completed task |
+| [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Reproducible comparison: fixed Opus vs native opusplan vs opusplan + Downshift |
 | [guides/when-to-use.md](guides/when-to-use.md) | Downshift vs gateways and direct SDK; Claude Code is the primary harness |
 | [guides/config.md](guides/config.md) | State dir, env vars, project tier floor, migration |
 | [reference/beta-exit.md](reference/beta-exit.md) | Beta graduation criteria |
@@ -28,6 +32,10 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [guides/config.md](guides/config.md) | Configuration and local state |
 | [guides/when-to-use.md](guides/when-to-use.md) | When to use Downshift |
 | [guides/companions.md](guides/companions.md) | Companions: Headroom (default, detected and recorded), OmniRoute (optional gateway), patterns Downshift follows but does not bundle |
+| [guides/claude-code.md](guides/claude-code.md) | Claude Code guide: opusplan and Downshift, how the baseline model is found, what is inferred, plugin vs setup |
+| [guides/evidence.md](guides/evidence.md) | What is proven at which level, and the metrics table (available, inferred, estimated, not yet) |
+| [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Protocol for the main comparison and what each run must record |
+| [../skills/README.md](../skills/README.md) | The three skills: jobs, measured context cost, delegation overhead |
 | [guides/daily-truth.md](guides/daily-truth.md) | What Downshift does day to day (routes a subagent, not a session) |
 | [guides/quota.md](guides/quota.md) | Observed usage quota |
 | [guides/session-view.md](guides/session-view.md) | `downshift session`: subagent tree, why, pause |
@@ -48,6 +56,7 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 
 | Doc | Topic |
 |-----|--------|
+| [reference/capability-matrix.md](reference/capability-matrix.md) | Capability matrix with status, evidence, limits (audit date 2026-10-17) |
 | [reference/session-models.md](reference/session-models.md) | Session allowlists and Claude usage hooks |
 | [reference/session-discovery.md](reference/session-discovery.md) | `models discover`: which models each harness offers, and how they are ranked |
 | [reference/complexity-weights.md](reference/complexity-weights.md) | Signal weights, tier map, and per-harness model choice |

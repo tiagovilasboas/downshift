@@ -1,6 +1,6 @@
 # When to use Downshift
 
-Downshift is a **deterministic model router** that runs **locally** and hooks into **coding harnesses** (Claude Code, Cursor, Codex, and others) at subagent spawn time. It is not a replacement for every LLM integration pattern.
+Downshift is an **optimizer for the cost and efficiency of agent execution**, whose main lever today is a **deterministic model router** that runs **locally** and hooks into **coding harnesses** (Claude Code, Cursor, Codex, and others) at subagent spawn time. It is not a replacement for every LLM integration pattern.
 
 Every harness with an adapter gets every feature, computed in shared layers. **Claude Code is the primary harness**: the most complete and the most verified. Start there if you can choose; the [harness matrix](../reference/harness-matrix.md) says what the others honor today.
 

@@ -2,15 +2,17 @@
 
 *Repositório GitHub: [`downshift`](https://github.com/tiagovilasboas/downshift) · CLI `downshift` · licença Apache 2.0.*
 
-O **Downshift** é um roteador determinístico de modelos para fluxos de trabalho com agentes de IA (hooks em harnesses de código; não é gateway HTTP tipo LiteLLM). Quando usar ou não: [WHEN-TO-USE em inglês](../guides/when-to-use.md).
+O **Downshift** é um **otimizador de custo e eficiência de execução para agentes de IA**. Ele se instala nos hooks do seu harness de código e atua onde o custo é decidido: quando o agente principal delega. Por padrão, um subagente herda o modelo mais caro da sessão, então renomear uma variável, rodar um teste ou listar um diretório sai a preço de fronteira, e uma sessão que delega muito multiplica isso.
 
-Quando você dispara um subagente em ferramentas como **Claude Code**, **Cursor**, **Codex**, **Antigravity** ou **KiroCrew**, o comportamento padrão do ambiente é fazer com que o subprocesso herde o modelo mais avançado e caro da sessão ativa (como Claude Opus ou GPT-4o/5). Na prática, gasta-se orçamento de fronteira em tarefas estritamente mecânicas — renomear variáveis, corrigir digitação, listar diretórios ou rodar comandos de terminal.
+O roteamento de modelos é a alavanca principal hoje, não o produto inteiro. Em volta dele: escolha conservadora na dúvida (um palpite nunca gasta dinheiro), guardrails para tarefas de risco e piso de política por projeto, visibilidade de cada decisão, telemetria do que cada filho custou e como terminou, grupo de controle e `downshift report` para medir custo por tarefa concluída, skills de diagnóstico e companions de contexto. Tudo determinístico (nenhum LLM no loop), sem guardar prompt e fail-open. A métrica que importa é **custo por tarefa concluída com qualidade aceitável**; token é proxy. Tabela completa com status e evidência por capacidade: [capability matrix (EN)](../reference/capability-matrix.md).
 
-Com o Downshift, cada subagente é direcionado para a categoria de modelo ideal para a complexidade da demanda **antes da execução começar**. O desenvolvedor continua operando normalmente, sem precisar alternar modelos manualmente na interface.
+Quando você dispara um subagente em ferramentas como **Claude Code**, **Cursor**, **Codex**, **Antigravity** ou **KiroCrew**, cada um é direcionado para a categoria de modelo adequada à complexidade da demanda **antes da execução começar**, e só quando o classificador está confiante e nenhum guardrail segura. O desenvolvedor continua operando normalmente.
 
-Toda funcionalidade é construída nas camadas compartilhadas e calculada para todos os harnesses. **O Claude Code é o harness principal**: é onde o Downshift está mais completo (modelo da sessão inferido, hooks de uso e de fim do filho, comando `/downshift`, statusline) e mais verificado. Os demais rodam o mesmo núcleo; a [matriz de harnesses](../reference/harness-matrix.md) diz o que cada um honra hoje.
+Toda funcionalidade é construída nas camadas compartilhadas e calculada para todos os harnesses. **O Claude Code é o harness principal**: é onde o Downshift está mais completo (modelo da sessão inferido, hooks de uso e de fim do filho, comando `/downshift`, statusline, política de sessão com `opusplan`) e mais verificado. Os demais rodam o mesmo núcleo; a [matriz de harnesses](../reference/harness-matrix.md) diz o que cada um honra hoje, e o [guia do Claude Code (EN)](../guides/claude-code.md) explica a relação com o `opusplan`.
 
-O Downshift não é um chat secundário e não gera código. É um **roteador de infraestrutura**: intercepta o pedido no hook de spawn, classifica a demanda em milissegundos na CPU local, valida se a alteração é segura e, quando aplicável, reescreve o modelo do subagente de forma transparente.
+O Downshift não é um chat secundário, não gera código, não é proxy HTTP e não altera a saída de ferramentas em voo. É uma **camada de otimização de infraestrutura**: intercepta o pedido no hook de spawn, classifica a demanda em milissegundos na CPU local, valida se a mudança é segura e, quando aplicável, reescreve o modelo do subagente de forma transparente.
+
+**O que está provado e o que não está.** Um A/B controlado em 2026-10-15, um operador, Claude Code, mesmas tarefas em braço roteado e braço de controle: em peças mecânicas entregues uma por subagente (o teto) o custo caiu cerca de 12% com os mesmos 12 de 12 aceitos; em tarefas naturais a maioria dos spawns foi segurada e a diferença de custo não é atribuível ao roteamento. A [escada de evidência (EN)](../guides/evidence.md) separa teoria de tabela, estimativa de telemetria, benchmark controlado e resultado em tarefa real; custo por tarefa concluída foi medido uma vez, não ainda em carga natural.
 
 ---
 
@@ -18,10 +20,10 @@ O Downshift não é um chat secundário e não gera código. É um **roteador de
 
 * **Eficiência Real de Tokens:** Tarefas triviais e mecânicas rodam em modelos econômicos (~75% mais baratos que o Opus na tabela de preços dos provedores), reservando os modelos de fronteira para desafios arquiteturais, concorrência e alto risco.
 * **Privacidade Absoluta (Zero-Leakage):** A classificação e o roteamento ocorrem 100% na máquina local. Nenhum texto de prompt, caminho de arquivo ou código sai para serviços externos ou é persistido em arquivos de log.
-* **Velocidade na CPU:** Sem LLM no loop de classificação e sem chamadas de rede adicionais. A inferência híbrida (regex + centróides vetoriais) decide em menos de 2 milissegundos.
+* **Velocidade na CPU:** Sem LLM no loop de classificação e sem chamadas de rede adicionais. A inferência (regex mais um score semântico local por hash de palavras; MiniLM é opcional) decide em menos de 1 ms em prompts curtos e em cerca de 0,2 s num prompt de 1 MiB.
 * **Segurança e Continuidade (Fail-Open):** Na dúvida ou em caso de qualquer falha técnica, o Downshift não interrompe o trabalho: o fluxo segue normalmente com o modelo original da sessão.
 
-> **⚠️ Nota de Transparência:** `rewrite_emitted` na telemetria indica que o Downshift emitiu com sucesso a instrução de troca de modelo. Métricas em dólares reais dependem do reporte de tokens retornado pelo harness no hook posterior (`PostToolUse`). Para detalhes dos critérios de saída do beta, consulte [`docs/reference/beta-exit.md`](../reference/beta-exit.md).
+> **⚠️ Nota de Transparência:** `rewrite_emitted` na telemetria indica que o Downshift emitiu com sucesso a instrução de troca de modelo. Métricas em dólares reais dependem dos tokens do filho, que no Claude Code vêm do transcript lido no `SubagentStop` (o `PostToolUse` traz o modelo resolvido, não tokens) e são precificados pela tabela do catálogo, não pela fatura. Para detalhes dos critérios de saída do beta, consulte [`docs/reference/beta-exit.md`](../reference/beta-exit.md).
 
 ---
 

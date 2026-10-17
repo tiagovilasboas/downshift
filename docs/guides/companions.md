@@ -3,8 +3,11 @@
 Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
-Downshift does one thing: before a subagent spawns, it picks that subagent's
-model and effort. Other token levers live in other tools. This page says which
+Downshift optimizes delegated execution: before a subagent spawns it picks that
+subagent's model and effort, and around that it holds under doubt, applies
+floors, records what each child cost and measures routed against control. The
+levers it does not own, above all compressing what the agent reads, live in
+other tools. This page says which
 ones Downshift knows about, what it does with each (detect, record, document,
 or nothing), and what it will never do on their behalf.
 

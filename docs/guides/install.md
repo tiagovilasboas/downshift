@@ -346,7 +346,7 @@ Register the hook in `~/.gemini/config/hooks.json`:
 }
 ```
 
-When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, inspects the prompt inside `Subagents[0].Prompt`, and dynamically rewrites `Subagents[0].Model` to `flash` or `flash_lite` for mechanical tasks, logging the routing event to `~/.downshift/events.jsonl`.
+When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, inspects the prompt of the last subagent that carries one, and rewrites that subagent's `Model` (`flash_lite` for mechanical tasks, `flash` for the mid tier) through an `overwrite` envelope that is not a documented vendor field, logging the routing event to `~/.downshift/events.jsonl`.
 
 ## KiroCrew (policy mode through the native Kiro CLI hook)
 
@@ -570,7 +570,7 @@ at the harness level, not a bug in Downshift. Evidence matrix: [harness-matrix.m
 |---|---|---|
 | Free | ❌ No real subagents | — |
 | Pro / Max / Teams | ✅ Yes | ✅ Observed 2026-10-06 (API-reported child model) |
-| API (direct) | ✅ Yes | ✅ Yes |
+| API (direct) | ✅ Yes | Expected (same hook path); the 2026-10-06 evidence did not record the plan |
 
 Claude Code free runs in a sandboxed container without network egress — `go install` will fail. The subagent feature itself only exists on paid plans.
 
@@ -582,7 +582,7 @@ Claude Code free runs in a sandboxed container without network egress — `go in
 | Pro (request-based / legacy) | ✅ Yes | ⚠️ `model` field in Task only accepts `"fast"` — override silently dropped |
 | Pro / Ultra (usage-based) | ✅ Yes | ⚠️ Unconfirmed: no child-model proof yet (P1.6 in the matrix) |
 
-Cursor's `preToolUse` hook fires and Downshift runs, but the `model` rewrite is silently discarded on legacy and free plans. [Tracked on Cursor forum](https://forum.cursor.com/t/pretooluse-hook-updated-input-is-silently-ignored-for-the-task-tool/151985). On usage-based Pro/Ultra plans where subagent model selection is expanded, routing works.
+Cursor's `preToolUse` hook fires and Downshift runs, but the `model` rewrite is silently discarded on legacy and free plans. [Tracked on Cursor forum](https://forum.cursor.com/t/pretooluse-hook-updated-input-is-silently-ignored-for-the-task-tool/151985). On usage-based Pro/Ultra plans where subagent model selection is expanded, the rewrite is emitted; whether the child runs on it is unconfirmed (no child-model proof yet, P1.6 in the matrix).
 
 ### Codex
 

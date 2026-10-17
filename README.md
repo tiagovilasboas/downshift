@@ -5,7 +5,7 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift" width="320">
 </picture>
 
-**Cheaper subagents for your coding agent. Doubt never spends money.**
+**An optimizer for the cost and efficiency of agent execution. Right-sized subagents, conservative under doubt, measured.**
 
 Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
 
@@ -15,31 +15,75 @@ Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/d
 [![Release](https://img.shields.io/github/v/release/tiagovilasboas/downshift?include_prereleases&label=release)](https://github.com/tiagovilasboas/downshift/releases)
 [![Status: beta](https://img.shields.io/badge/status-beta-yellow)](#status)
 
-[Install](docs/guides/install.md) · [Docs](docs/README.md) · [Harness support](#harness-support) · [Contributing](#contributing)
+[Install](docs/guides/install.md) · [Docs](docs/README.md) · [Capability matrix](docs/reference/capability-matrix.md) · [Evidence](docs/guides/evidence.md) · [Harness support](#harness-support)
 
 </div>
 
-Downshift is a hook for your coding harness. When Claude Code starts a subagent, it picks a right-sized model for that task: easy work runs on Haiku, hard work keeps Opus. Your session model never changes. Start with two commands:
+## What it is
 
-- **Cheaper easy subagents.** A trivial rename runs on Haiku 4.5 (what Claude Code's native `haiku` alias runs), about 75% cheaper than Opus 5.5 at list price ($1/$5 vs $4/$20 per 1M tokens). What that is worth depends on how much of your work is easy and delegated: in a controlled test where a parent hands mechanical pieces to subagents, cost fell about 12% overall (a third on pure renames) with the same tasks passing; on natural, longer tasks the classifier is usually unconfident and keeps the model, so the saving is smaller and not yet measured. See [what the evidence shows](#what-the-evidence-shows).
-- **Guardrails.** Unsure upshifts are held, risky tasks keep a floor, and anything unknown leaves the spawn unchanged.
-- **Visible.** A statusline, a stderr line per routed subagent, and `downshift session --tree` (or `/downshift`) show what was routed and why.
+Coding agents spend most of their money where you are not looking: when the main agent delegates. A subagent inherits the session's most capable model by default, so a rename, a test run or a file listing is billed at frontier price, and a session that delegates a lot multiplies that. Downshift is a single Go binary that sits in the hooks of your coding harness and optimizes that delegated execution: it picks a right-sized model and effort for each subagent, holds back whenever it is not sure, records what each child cost and how it ended, and gives you the tools to measure whether it paid off. **Claude Code is the primary harness** (most complete, most verified); Cursor, Codex, Antigravity and KiroCrew run the same core with the limits in the [matrix](docs/reference/harness-matrix.md).
+
+Model routing is the main lever today, not the whole product. The metric that matters is **cost per task completed with acceptable quality**; tokens are a proxy. Everything is deterministic (no LLM in the routing loop), prompt-free (task text never leaves memory or reaches a log), and fail-open (any doubt or error leaves the spawn exactly as the harness asked).
+
+## What it does
+
+| Capability | Status | Where to read |
+|---|---|---|
+| **Right-size each subagent.** Classify the task, pick small / mid / frontier and a reasoning effort, rewrite only that subagent's model from the session's own list. | Implemented. Rewrite observed honored on Claude Code (2026-10-06) and Antigravity (2026-10-09); inferred on Codex; unconfirmed on Cursor; KiroCrew blocks and asks for a respawn instead of rewriting. | [How it works](#how-it-works) · [harness matrix](docs/reference/harness-matrix.md) |
+| **Conservative under doubt.** Unconfident upshifts and unconfident frontier picks are held; a guessed baseline downshifts only to the small tier; unsupported languages and risky wording clear confidence. | Implemented, with invariant tests (R1 to R9). | [architecture](docs/design/architecture.md) · [complexity weights](docs/reference/complexity-weights.md) |
+| **Guardrails for risky work.** Secrets, payments, auth, destructive operations keep a floor; a project can require a minimum tier in `.downshift/policy.json`. | Implemented, every harness. | [config](docs/guides/config.md#project-tier-floor-optional) |
+| **See every decision.** A stderr line per routed spawn, a statusline, `downshift session --tree` or `/downshift`, `downshift watch`, `downshift doctor` with a fix per failure. | Implemented. | [session view](docs/guides/session-view.md) |
+| **Know what each child cost and how it ended.** Tokens and catalog-priced cost per subagent, end status (`completed`, `error`, `interrupted`, ...), respawn-after-failure hint. | Implemented on Claude Code (usage from the child transcript). Codex and Cursor end parsers exist but are unverified and carry no usage; Antigravity and KiroCrew record no child end. Estimated from list prices, not an invoice. | [session models](docs/reference/session-models.md#claude-code-real-usage) |
+| **Measure instead of believe.** A built-in control group (about 1 in 10 spawns unrouted), `downshift stats` for estimates, `downshift report` for routed versus control cost per completed task with a confidence interval. | Implemented. The strict definition (a child that ended `completed`, with its rework, 20 tasks per arm) has not unlocked yet; the 2026-10-15 A/B measured cost per run with an acceptance check. | [evidence ladder](docs/guides/evidence.md) · [benchmark protocol](docs/guides/benchmark-protocol.md) |
+| **Find the next saving.** Skills for setup, read-only audit and a fixed-order cost diagnosis (routing, fixed context, tool output, project policy, misroutes). | Implemented as agent guidance; a skill's own description costs context. | [skills](skills/) · [companions](docs/guides/companions.md) |
+| **Context and session policy.** Native observe-only compressor; Headroom detected as companion; `setup` sets `opusplan`, plan mode and `autoCompactWindow` on Claude Code only for keys you have not set. | Implemented, limited: a hook cannot change tool output in flight; session policy is Claude Code only. | [context optimization](docs/design/context-optimization.md) · [Claude Code guide](docs/guides/claude-code.md) |
+| **Learn from outcomes.** Adapt memory, naive-Bayes second opinion, capability scores, multilingual E5. | Shadow or opt-in. They record what they would do and never change a spawn until an owner enables a flag. | [design](docs/design/) |
+
+Status words follow one rule: *Implemented* means code, tests and a dated observation; *not validated everywhere* means the harness or plan has not shown the effect; *Shadow* and *Experimental* never touch a spawn. The full table with evidence per row is the [capability matrix](docs/reference/capability-matrix.md).
+
+## How the pieces connect
+
+```
+main agent delegates ──► hook (PreToolUse) ──► baseline model + session list
+                                                   │
+                                     classify + risk ─► guardrails ─► cheaper model when safe
+                                                   │                   same model under doubt
+                                                   │                   stronger only when policy allows
+                                                   ▼
+                                        subagent runs (harness)
+                                                   │
+                         PostToolUse / SubagentStop ─► usage, end status, control group
+                                                   │
+                            stats · report · session ─► cost per completed task, misroutes
+                                                   │
+                                   benchmarks · feedback ─► tune signals, keep shadow candidates
+```
+
+Who owns each box, and what Downshift deliberately does not do (it is not an HTTP proxy, it does not rewrite tool results, it does not store prompts): [architecture](docs/design/architecture.md).
+
+## What is proven, and what is not
+
+One controlled A/B on 2026-10-15, one operator, Claude Code, same tasks in a routed and a control arm, judged by hidden tests: on mechanical pieces handed one per subagent (the ceiling case) cost fell about 12% with the same 12 of 12 accepted; on natural tasks most spawns were held and the cost difference is not attributable to routing. A trivial downshift from Opus to Haiku is about 75% cheaper on uncached tokens at list price and about 50% on cache reads, which are most of a child's traffic; how much of your work is trivial and delegated decides what that is worth. Details, limits and the defects those runs exposed: [what the evidence shows](#what-the-evidence-shows) and the [evidence ladder](docs/guides/evidence.md), which separates list-price theory, telemetry estimates, controlled benchmarks and real-task results.
+
+## Quickstart
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
-downshift setup
+downshift setup --dry-run   # shows the diff per harness found; writes nothing
+downshift setup             # asks, backs up, wires the hooks
 ```
 
-`setup` prints a diff and asks before it writes. Preview with `downshift setup --dry-run` first, then open a new Claude Code session. On Claude Code you can instead install the plugin, which carries the same hooks, the `/downshift` command, the skills and an example agent (binary still required, use one channel or the other):
+On Claude Code the plugin is the alternative to `setup` (same hooks, the `/downshift` command, the skills and an example agent; the binary is still required; use one channel):
 
 ```text
 /plugin install downshift --marketplace tiagovilasboas/downshift
 ```
- For Claude Code it also sets `"model": "opusplan"` (Opus plans, Sonnet executes), starts sessions in plan mode and sets `autoCompactWindow` to 400000 (earlier compaction on 1M-context models), only for keys you have not set yourself; `downshift setup --no-session-policy` wires the hooks and leaves all three alone.
 
-> **Beta.** Whether a rewrite is applied depends on the harness and plan, not only on Downshift. Read [plan compatibility](docs/guides/install.md#plan-compatibility--read-before-installing) before installing, and see [Harness support](#harness-support) for what has been verified.
+Then open a new session and check it: `downshift doctor` (every failure has a fix), `downshift try "rename the userId variable"` (what would be picked, and why), and after a few spawns `downshift stats --days=1` and `downshift session --tree`. Setup also sets `"model": "opusplan"` (Opus plans, Sonnet executes), plan mode and `autoCompactWindow` on Claude Code, only for keys you have not set yourself; `downshift setup --no-session-policy` wires the hooks and leaves all three alone.
 
-## Quickstart (Claude Code)
+> **Beta.** Whether a rewrite is applied depends on the harness and plan, not only on Downshift. Read [plan compatibility](docs/guides/install.md#plan-compatibility--read-before-installing) before installing, and [Harness support](#harness-support) for what has been verified.
+
+## Quickstart in detail (Claude Code)
 
 1. **Install.** Use the one-liner above (macOS / Linux). `go install` and Windows are in [install.md](docs/guides/install.md).
 2. **Preview, then apply.**
@@ -57,7 +101,7 @@ downshift setup
 
 ### What you will see
 
-- **A stderr line per routed subagent**, for example `downshift: TRIVIAL task → downshift to claude-haiku-4-5`.
+- **A stderr line per routed subagent**, for example `downshift: correlation_id=… TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper)`, followed by `downshift: honor=… quota=… usage=…` once those are observed.
 - **A statusline**, set by `setup` when none exists. It shows Claude's quota windows and, when data exists, the current session's routing summary.
 - **Child endings.** The `PostToolUseFailure` and `SubagentStop` hooks record how each child ended (`completed`, `error`, `interrupted`, ...). `stats` prints them under "How children ended"; error text is never stored.
 - **`downshift try`** (real output, trimmed):
@@ -102,15 +146,9 @@ Prefer to edit `~/.claude/settings.json` yourself? Follow [Manual setup in insta
 
 The session model list is optional on Claude Code: without one, Downshift infers the session from your current model and never upshifts past it. To set the list yourself, see [session-models.md](docs/reference/session-models.md).
 
-## What it is
+## What it is not
 
-Downshift is a single Go binary. Before a subagent spawns, it scores the task text, picks a tier (small / mid / frontier) and a reasoning effort, and rewrites **only that subagent's model** to one from your session's list. The parent session model never changes. The decision is deterministic, makes no network calls and needs no API keys; the only network call is the optional, at-most-daily refresh of public capability scores ([docs/reference/scores.md](docs/reference/scores.md)).
-
-Learned tier memory stays in **shadow**: it is recorded for review and never changes a spawn. Maintainer eval numbers are in [benchmark/report.md](benchmark/report.md); weights are in [docs/reference/complexity-weights.md](docs/reference/complexity-weights.md).
-
-**Example:** Your session runs Claude Sonnet 5.5. You spawn 3 subagents. Downshift may route them to Haiku, Sonnet and Opus based on task complexity. Billing and token usage happen at the subagent tier, not the session.
-
-**What it is not:** an HTTP gateway or proxy (that is LiteLLM's or OmniRoute's job), a context compressor in the request path (Headroom's; Downshift's own compressor observes), a hosted model marketplace (OpenRouter), or an LLM-based classifier (Downshift uses deterministic signals + optional local MiniLM semantic scoring). It only acts on subagent spawns inside harnesses that expose a pre-tool hook. Comparison: [docs/guides/when-to-use.md](docs/guides/when-to-use.md).
+An HTTP gateway or proxy (that is LiteLLM's or OmniRoute's job), a context compressor in the request path (Headroom's; Downshift's own compressor observes), a hosted model marketplace (OpenRouter), or an LLM-based classifier (deterministic signals plus a local semantic score from a word-hash embedder; MiniLM is opt-in). It acts on subagent spawns inside harnesses that expose a pre-tool hook, and the only network call is the optional, at-most-daily refresh of public capability scores ([scores](docs/reference/scores.md)). Learned tier memory stays in shadow. Comparison with gateways and SDKs: [when-to-use](docs/guides/when-to-use.md).
 
 ## How it works
 <picture>
@@ -133,7 +171,7 @@ Billing and token usage happen at the subagent tier, not the session.
 **The routing loop:**
 
 1. **Intercept.** The harness fires a `PreToolUse` hook when a subagent is about to start. Downshift reads the task text in memory only; prompts are never stored.
-2. **Classify.** Deterministic signals (`internal/core`) + optional local MiniLM semantic scoring map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX (English and Portuguese vocabulary). A language guard and risk abstention clear confidence on known multilingual failure modes without an LLM in the loop. The semantic score only raises, needs a regex signal behind it, and cannot create COMPLEX on its own. Weights and the tier map are in [docs/reference/complexity-weights.md](docs/reference/complexity-weights.md).
+2. **Classify.** Deterministic signals (`internal/core`) plus a local semantic score (a word-hash embedder by default; MiniLM only with `DOWNSHIFT_MINILM_EMBED`) map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX (English and Portuguese vocabulary). A language guard and risk abstention clear confidence on known multilingual failure modes without an LLM in the loop. The semantic score only raises, needs a regex signal behind it, and cannot create COMPLEX on its own. Weights and the tier map are in [docs/reference/complexity-weights.md](docs/reference/complexity-weights.md).
 3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/reference/session-models.md)). Doubt never spends money: an unconfident upshift, or an unconfident frontier pick with no known current model, is held. Only deterministic rules (risk floor, risk abstention, graph escalation, a tier floor) may move a task up or hold a rewrite.
 4. **Remember, in shadow.** If `adapt-memory.json` has a reviewed hit or miss for that class and feature, Downshift records the tier it would use. The spawn still uses the classifier tier.
 5. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
@@ -212,7 +250,7 @@ Adapters ship for all of the above; the table reports evidence, not just code. P
 
 ## Context optimization & native compression
 
-Downshift includes a built-in, zero-dependency **Native Context Compressor** (`downshift context compress`) and event-driven **Context Sensor** to govern context token volume without altering critical failure traces.
+Downshift includes a built-in, zero-dependency **Native Context Compressor** (`downshift context compress`) and event-driven **Context Sensor** that observes context volume (byte counts, never a rewrite) without altering critical failure traces.
 
 - **Enable persists a flag, not a prompt rewrite.** `downshift context enable` saves the native provider as active, plus the exit-code contract. Claude Code PostToolUse then records `CompressExit` in observe mode, using the tool's real exit code. The hook cannot replace tool output, so the model still sees the original result. Prompts are not compressed. Safe mode on the CLI still requires `--exit 0`.
 - **Zero external dependencies:** Pure in-process Go engine; zero Python, Rust, Node or LLM runtime requirements.
@@ -269,7 +307,7 @@ Every feature must serve every harness: behaviour in shared layers, adapters onl
 
 ## Status
 
-**Beta (v0.1.0-beta.14).** The adapters ship, but the limiting factor is often harness or plan support rather than the router. As of 2026-10-15 no beta-exit pillar is closed: real spawns are verified on Claude Code (and observed on Antigravity and KiroCrew), there is no external operator yet, usage-linked cost is 5 of 50 records, and the routing-quality benchmark has no new blind set. The first routed-versus-control measurement is in [the evidence](docs/evidence/subagent-routing-ab-2026-10-15.md). Exit criteria are tracked in [docs/reference/beta-exit.md](docs/reference/beta-exit.md).
+**Beta (v0.1.0-beta.14).** The adapters ship, but the limiting factor is often harness or plan support rather than the router. As of 2026-10-15 no beta-exit pillar is closed: real spawns are verified on Claude Code (and observed on Antigravity and KiroCrew), there is no external operator yet, usage-linked cost is 5 records against the 50 the exit criteria ask for (2026-10-09 audit, not re-exported since), and the routing-quality benchmark has no new blind set. The first routed-versus-control measurement is in [the evidence](docs/evidence/subagent-routing-ab-2026-10-15.md). Exit criteria are tracked in [docs/reference/beta-exit.md](docs/reference/beta-exit.md).
 
 ## License
 
