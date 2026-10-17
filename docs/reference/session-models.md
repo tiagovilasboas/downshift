@@ -86,16 +86,19 @@ Native config is not a session allowlist either:
 
 ## Main session policy: plan mode and opusplan (Claude Code)
 
-Downshift routes subagents; the main session is the harness's. For Claude Code, `downshift setup` also sets two keys in `~/.claude/settings.json`, each only when it is not already set:
+Downshift routes subagents; the main session is the harness's. For Claude Code, `downshift setup` also sets three keys in `~/.claude/settings.json`, each only when it is not already set:
 
 | Key | Value | Effect |
 |---|---|---|
 | `model` | `opusplan` | Opus while plan mode is on, Sonnet for execution ([model config](https://code.claude.com/docs/en/model-config)) |
 | `permissions.defaultMode` | `plan` | Every terminal session starts in plan mode: Claude reads and plans, and edits stay blocked until you approve the plan ([permission modes](https://code.claude.com/docs/en/permission-modes)) |
+| `autoCompactWindow` | `400000` | Auto-compact fires at 400k tokens instead of the model limit (about 967k on 1M-context models such as Fable 5.1, Sonnet 5 and later, Haiku 5.5, Opus 4.7 and later). Claude Code caps the value at the model window, so it is a no-op on 200k models. A plain integer: `400k` is read as 400 and clamped to 100k ([model config](https://code.claude.com/docs/en/model-config)) |
 
-Together they make the plan/execute split happen in every session. A value you already set is never replaced; setup prints how to switch, and `downshift doctor` shows both as `main session`. A new `defaultMode` replaces Claude Code's built-in starting mode (auto mode on recent versions), so a session now starts by planning instead of acting. Approving a plan leaves plan mode for the mode you pick in that prompt; `Shift+Tab` or `/plan` plans again.
+Why 400k: a long session on a 1M model otherwise carries up to ~1M input tokens on every turn, and Haiku 5.5 prices prompts above 100k higher. Compacting invalidates the prompt cache and pays one summarization, which at 400k happens rarely. There is no documented recommended threshold; this is a judgment, and the saving is estimated, not measured. Auto-compact itself is on by default in Claude Code; this key only moves the trigger. Per-subagent windows are a separate setting (`autoCompactWindow` in the agent's frontmatter, Claude Code 2.1.296+) and Downshift does not set them.
 
-`downshift setup --no-session-policy` wires the hooks and leaves both keys alone. To undo it later, delete the two keys or run `downshift setup --undo` to restore the last backup. To keep one without the other, set the one you want yourself first: setup keeps it.
+Together the three make the plan/execute split and the earlier compaction happen in every session. A value you already set is never replaced; setup prints how to switch, and `downshift doctor` shows all three as `main session`. A new `defaultMode` replaces Claude Code's built-in starting mode (auto mode on recent versions), so a session now starts by planning instead of acting. Approving a plan leaves plan mode for the mode you pick in that prompt; `Shift+Tab` or `/plan` plans again.
+
+`downshift setup --no-session-policy` wires the hooks and leaves the three keys alone. To undo it later, delete the keys or run `downshift setup --undo` to restore the last backup. To keep one without the other, set the one you want yourself first: setup keeps it.
 
 The two layers fit together. Claude Code resolves an inheriting subagent's model when it starts it, so a subagent spawned during plan mode would run on Opus. The adapter reads the parent model from the last assistant message in the transcript, which is the resolved model (Opus or Sonnet), not the alias, so the baseline stays known and the subagent is right-sized as usual. This follows from the code path; it has not yet been observed in a live plan-mode spawn.
 

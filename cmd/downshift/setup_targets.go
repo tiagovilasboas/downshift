@@ -95,6 +95,17 @@ var setupTargets = []setupTarget{
 				Note: `sessions keep their "permissions.defaultMode"; set it to "plan" in ~/.claude/settings.json ` +
 					"to start every session in plan mode",
 			},
+			// Auto-compact earlier than the model limit. Only models with a 1M
+			// window are affected (Claude Code caps the value at the window, so
+			// 400000 is a no-op on 200k models). A plain integer: "400k" would be
+			// read as 400. Saving is estimated, not measured.
+			{
+				Key:      "autoCompactWindow",
+				Value:    400000,
+				Optional: true,
+				Note: `the session keeps its "autoCompactWindow"; set it to 400000 in ~/.claude/settings.json ` +
+					"to compact context at 400k tokens on 1M-context models",
+			},
 		},
 		Hooks: []setupHook{
 			{Event: "PreToolUse", Matcher: "Agent|Task", Args: "claude-code"},

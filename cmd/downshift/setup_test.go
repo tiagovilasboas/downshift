@@ -381,9 +381,12 @@ func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
 	if m, d := policy(fresh); m != "opusplan" || d != "plan" {
 		t.Errorf("fresh = model %v, defaultMode %v; want opusplan, plan", m, d)
 	}
+	if w := parseDoc(t, fresh.read(".claude/settings.json"))["autoCompactWindow"]; w != float64(400000) {
+		t.Errorf("fresh autoCompactWindow = %v (%T); want the plain integer 400000", w, w)
+	}
 
 	pinned := newSetupEnv(t, ".claude")
-	pinned.write(".claude/settings.json", `{"model":"claude-sonnet-5-5","permissions":{"allow":["Bash(ls:*)"],"defaultMode":"acceptEdits"}}`)
+	pinned.write(".claude/settings.json", `{"model":"claude-sonnet-5-5","autoCompactWindow":250000,"permissions":{"allow":["Bash(ls:*)"],"defaultMode":"acceptEdits"}}`)
 	code, out, _ := pinned.run("claude-code", "--yes")
 	if code != 0 {
 		t.Fatalf("exit %d\n%s", code, out)
@@ -391,15 +394,18 @@ func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
 	if m, d := policy(pinned); m != "claude-sonnet-5-5" || d != "acceptEdits" {
 		t.Errorf("pinned = model %v, defaultMode %v; want both kept", m, d)
 	}
-	if !strings.Contains(out, `"model": "opusplan"`) || !strings.Contains(out, "permissions.defaultMode") {
+	if !strings.Contains(out, `"model": "opusplan"`) || !strings.Contains(out, "permissions.defaultMode") || !strings.Contains(out, "autoCompactWindow") {
 		t.Errorf("no notes for the kept values:\n%s", out)
+	}
+	if w := parseDoc(t, pinned.read(".claude/settings.json"))["autoCompactWindow"]; w != float64(250000) {
+		t.Errorf("pinned autoCompactWindow = %v; want 250000 kept", w)
 	}
 	if perms := parseDoc(t, pinned.read(".claude/settings.json"))["permissions"].(map[string]any); len(perms["allow"].([]any)) != 1 {
 		t.Errorf("existing permissions rules changed: %v", perms)
 	}
 
 	already := newSetupEnv(t, ".claude")
-	already.write(".claude/settings.json", `{"model":"opusplan","permissions":{"defaultMode":"plan"}}`)
+	already.write(".claude/settings.json", `{"model":"opusplan","autoCompactWindow":400000,"permissions":{"defaultMode":"plan"}}`)
 	if _, out, _ := already.run("claude-code", "--yes"); strings.Contains(out, "keeps its pinned") || strings.Contains(out, "keep their") {
 		t.Errorf("note printed although the policy is already set:\n%s", out)
 	}
@@ -421,7 +427,7 @@ func TestSetupSummaryStatesWhatChanges(t *testing.T) {
 	t.Setenv("DOWNSHIFT_CONTROL_SHARE", "")
 	e := newSetupEnv(t, ".claude")
 	_, out, _ := e.run("claude-code", "--yes")
-	for _, want := range []string{"What changes for you", "1 in 10", "downshift report", "plan mode", "opusplan", "--no-session-policy", "downshift setup --undo"} {
+	for _, want := range []string{"What changes for you", "1 in 10", "downshift report", "plan mode", "opusplan", "400k tokens", "--no-session-policy", "downshift setup --undo"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("summary is missing %q:\n%s", want, out)
 		}
@@ -429,7 +435,7 @@ func TestSetupSummaryStatesWhatChanges(t *testing.T) {
 
 	skipped := newSetupEnv(t, ".claude")
 	_, out, _ = skipped.run("claude-code", "--yes", "--no-session-policy")
-	if strings.Contains(out, "plan mode") || strings.Contains(out, "opusplan") {
+	if strings.Contains(out, "plan mode") || strings.Contains(out, "opusplan") || strings.Contains(out, "400k tokens") {
 		t.Errorf("summary claims a session policy that was not written:\n%s", out)
 	}
 	if !strings.Contains(out, "1 in 10") {

@@ -14,13 +14,13 @@ func TestCheckMainPolicy(t *testing.T) {
 		doc  map[string]any
 		want []string // one substring per reported line, in order
 	}{
-		{"both set", map[string]any{"model": "opusplan", "permissions": map[string]any{"defaultMode": "plan"}},
-			[]string{"model opusplan", "permissions.defaultMode plan"}},
-		{"pinned by the user", map[string]any{"model": "claude-sonnet-5-5", "permissions": map[string]any{"defaultMode": "acceptEdits"}},
-			[]string{"claude-sonnet-5-5 (set by you)", "acceptEdits (set by you)"}},
-		{"nothing set", map[string]any{}, []string{"no model set", "no permissions.defaultMode set"}},
+		{"all set", map[string]any{"model": "opusplan", "permissions": map[string]any{"defaultMode": "plan"}, "autoCompactWindow": float64(400000)},
+			[]string{"model opusplan", "permissions.defaultMode plan", "autoCompactWindow 400000"}},
+		{"pinned by the user", map[string]any{"model": "claude-sonnet-5-5", "permissions": map[string]any{"defaultMode": "acceptEdits"}, "autoCompactWindow": float64(250000)},
+			[]string{"claude-sonnet-5-5 (set by you)", "acceptEdits (set by you)", "250000 (set by you)"}},
+		{"nothing set", map[string]any{}, []string{"no model set", "no permissions.defaultMode set", "no autoCompactWindow set"}},
 		{"permissions without a mode", map[string]any{"permissions": map[string]any{"allow": []any{}}},
-			[]string{"no model set", "no permissions.defaultMode set"}},
+			[]string{"no model set", "no permissions.defaultMode set", "no autoCompactWindow set"}},
 	} {
 		var got []string
 		checkMainPolicy(func(id, status, detail, _ string) {

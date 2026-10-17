@@ -88,7 +88,7 @@ Wire every Downshift hook into the harnesses found on this machine.
   --yes                do not ask before writing
   --no-session-policy  wire the hooks only: do not set the Claude Code
                        main-session policy (model opusplan, sessions start in
-                       plan mode)
+                       plan mode, autoCompactWindow 400000)
 
 Claude Code gets the policy by default, only for keys it does not already set.
 `
@@ -216,6 +216,9 @@ func setupSummary(plans []setupPlan) string {
 					policy = append(policy, "sessions start in plan mode: Claude plans and you approve before it edits")
 				}
 			}
+		}
+		if w, _ := doc.get("autoCompactWindow"); fmt.Sprint(w) == "400000" {
+			policy = append(policy, "context auto-compacts at 400k tokens on 1M-context models (no effect on 200k models; saving estimated, not measured)")
 		}
 	}
 	if !wrote {
