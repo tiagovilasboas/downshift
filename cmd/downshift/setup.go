@@ -340,20 +340,24 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 		p.err = fmt.Errorf("not valid JSON, left untouched: %w", err)
 		return p
 	}
+	// With the plugin enabled, the plugin already carries the hooks: writing
+	// them here too would route every spawn twice. Only the session policy
+	// and the statusline (settings, not hooks) are still applied.
+	var pluginNote []string
+	if t.Plugin != "" {
+		var parsed any
+		if json.Unmarshal(raw, &parsed) == nil && pluginEnabled(parsed, t.Plugin) {
+			t.Hooks = nil
+			pluginNote = []string{"plugin " + t.Plugin + " is enabled and carries the hooks, so none were written here " +
+				"(session policy and statusline still apply); `/plugin uninstall " + t.Plugin + "` and rerun setup to use settings hooks instead"}
+		}
+	}
 	notes, err := mergeTarget(doc, t, o.Binary, o.NoSessionPolicy)
 	if err != nil {
 		p.err = err
 		return p
 	}
-	p.notes = append(notes, t.Notes...)
-	if t.Plugin != "" {
-		var parsed any
-		if json.Unmarshal(raw, &parsed) == nil && pluginEnabled(parsed, t.Plugin) {
-			p.notes = append([]string{"plugin " + t.Plugin + " is enabled and already carries these hooks; " +
-				"wiring them here too routes every spawn twice. Prefer one channel: skip this harness, " +
-				"or `/plugin uninstall " + t.Plugin + "` to keep the settings hooks"}, p.notes...)
-		}
-	}
+	p.notes = append(pluginNote, append(notes, t.Notes...)...)
 	out, err := renderJSONDoc(doc)
 	if err != nil {
 		p.err = err

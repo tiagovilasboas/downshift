@@ -59,7 +59,9 @@ downshift try "rename the userId variable" claude-code    # what would be picked
 downshift: TRIVIAL task → downshift to claude-haiku-4-5
 ```
 
-That line means the hook fired and rewrote the model before the subagent started.
+That line means the hook fired and emitted a rewrite before the subagent started.
+Whether the harness applied it is a separate fact; `downshift stats` separates
+`rewrite_emitted` from honored, and the matrix says what is verified per plan.
 
 **Verify the rewrite was honored** (important for beta exit validation):
 - Ask Claude Code: *"spawn a subagent to rename the userId variable in auth.ts"*
@@ -144,7 +146,7 @@ Add the hook to `~/.claude/settings.json`:
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Task",
+        "matcher": "Agent|Task",
         "hooks": [
           { "type": "command", "command": "downshift claude-code" }
         ]
@@ -154,7 +156,10 @@ Add the hook to `~/.claude/settings.json`:
 }
 ```
 
-That's it. Every subagent your session spawns now runs on the right-sized model.
+That is the wiring. From the next session on, every subagent spawn goes through
+the hook; whether the model is rewritten depends on the task (confident, no
+risk) and on the plan ([harness matrix](../reference/harness-matrix.md)). On
+natural work most spawns are held, and that is by design.
 
 ### Plugin install (Claude Code)
 
@@ -179,9 +184,12 @@ the statusline: those are settings, not hooks. Set `"model": "opusplan"` and
 [main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code).
 
 Use one channel. A plugin hook and a settings hook with the same command both
-run, so a session wired through both routes every spawn twice; `downshift
-doctor` warns when it finds both. To switch from `setup` to the plugin, run
-`downshift setup --undo` first.
+run, so a session wired through both routes every spawn twice. `downshift setup`
+skips the hooks when it sees the plugin enabled in `~/.claude/settings.json`
+(it still applies the session policy and statusline), and `downshift doctor`
+warns when it finds both. To switch from `setup` to the plugin, run `downshift
+setup --undo` first. Detection reads the user settings file only; a plugin
+enabled from a project's `.claude/settings.json` is not seen.
 
 ### The /downshift command (Claude Code)
 
@@ -553,7 +561,7 @@ at the harness level, not a bug in Downshift. Evidence matrix: [harness-matrix.m
 | Plan | Subagents exist? | Model routing works? |
 |---|---|---|
 | Free | ❌ No real subagents | — |
-| Pro / Max / Teams | ✅ Yes | ✅ Yes — PreToolUse + updatedInput honored |
+| Pro / Max / Teams | ✅ Yes | ✅ Observed 2026-10-06 (API-reported child model) |
 | API (direct) | ✅ Yes | ✅ Yes |
 
 Claude Code free runs in a sandboxed container without network egress — `go install` will fail. The subagent feature itself only exists on paid plans.
@@ -564,7 +572,7 @@ Claude Code free runs in a sandboxed container without network egress — `go in
 |---|---|---|
 | Free | ✅ Limited | ⚠️ `updated_input.model` silently ignored (known issue) |
 | Pro (request-based / legacy) | ✅ Yes | ⚠️ `model` field in Task only accepts `"fast"` — override silently dropped |
-| Pro / Ultra (usage-based) | ✅ Yes | ✅ Works on plans with expanded subagent model selection |
+| Pro / Ultra (usage-based) | ✅ Yes | ⚠️ Unconfirmed: no child-model proof yet (P1.6 in the matrix) |
 
 Cursor's `preToolUse` hook fires and Downshift runs, but the `model` rewrite is silently discarded on legacy and free plans. [Tracked on Cursor forum](https://forum.cursor.com/t/pretooluse-hook-updated-input-is-silently-ignored-for-the-task-tool/151985). On usage-based Pro/Ultra plans where subagent model selection is expanded, routing works.
 
@@ -572,7 +580,7 @@ Cursor's `preToolUse` hook fires and Downshift runs, but the `model` rewrite is 
 
 | Plan | Subagents exist? | Model routing works? |
 |---|---|---|
-| Any (with `multi_agent_v2` enabled) | ✅ Yes | ✅ Yes — PreToolUse + updatedInput honored |
+| Any (with `multi_agent_v2` enabled) | ✅ Yes | ✅ Inferred 2026-10-02 (next spawn asked for the written model), not observed |
 
 Requires `[features] multi_agent_v2` and `hooks = true` in `config.toml`.
 
@@ -582,8 +590,8 @@ Downshift serves every harness above from the same core, and **Claude Code is th
 
 Downshift is most effective on:
 - **Claude Code Pro / Max / Teams / API** — full model routing via hook
-- **Codex** with multi_agent_v2 enabled — full model + reasoning_effort routing
-- **Cursor Pro/Ultra** on usage-based plans with expanded subagent model selection
+- **Codex** with multi_agent_v2 enabled — model + reasoning_effort emitted; honored is inferred, not observed
+- **Cursor Pro/Ultra** on usage-based plans — emitted; whether it is applied is unconfirmed
 
 On free plans or legacy Cursor pricing, the hook runs but model rewrites may be silently ignored by the harness. The tool fails open — the subagent still spawns, just without the model change.
 
@@ -609,8 +617,9 @@ rewrite has no effect. See [Plan compatibility](#plan-compatibility--read-before
 
 ### No output on stderr — hook is not firing
 
-Check the matcher. Claude Code uses `"Task"` (capital T); `"Agent"` does not
-fire PreToolUse. Confirm with:
+Check the matcher. Claude Code's subagent tool is `Agent` (older builds: `Task`),
+so the matcher must be `"Agent|Task"`, as `setup` and the plugin write it.
+Confirm the binary itself with:
 
 ```bash
 # Should print a JSON allow decision immediately

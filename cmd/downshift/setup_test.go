@@ -576,16 +576,22 @@ func TestPlanTarget_NotesEnabledPlugin(t *testing.T) {
 	if p.err != nil {
 		t.Fatal(p.err)
 	}
-	if len(p.notes) == 0 || !strings.Contains(p.notes[0], "routes every spawn twice") {
+	if len(p.notes) == 0 || !strings.Contains(p.notes[0], "none were written here") {
 		t.Fatalf("notes = %v", p.notes)
+	}
+	if strings.Contains(string(p.after), `"hooks"`) || strings.Contains(string(p.after), "downshift claude-code") {
+		t.Fatalf("hooks must not be written while the plugin is enabled:\n%s", p.after)
 	}
 	if err := os.WriteFile(path, []byte(`{}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	p = planTarget(setupOptions{Home: home, Binary: "/usr/local/bin/downshift"}, target)
 	for _, n := range p.notes {
-		if strings.Contains(n, "routes every spawn twice") {
+		if strings.Contains(n, "none were written here") {
 			t.Fatal("no plugin, no note")
 		}
+	}
+	if !strings.Contains(string(p.after), `"hooks"`) {
+		t.Fatalf("without the plugin the hooks are written:\n%s", p.after)
 	}
 }

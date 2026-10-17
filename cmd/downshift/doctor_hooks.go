@@ -199,7 +199,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 		case len(found) > 0:
 			add("plugin", doctorWarn,
 				fmt.Sprintf("%s is enabled and %d of its hooks are also in %s: every spawn is routed twice", w.Plugin, len(found), file),
-				"downshift setup --undo   # keep the plugin; or /plugin uninstall "+w.Plugin+" to keep the settings hooks")
+				"downshift setup --undo   # keep the plugin; or /plugin uninstall "+w.Plugin+" then downshift setup to keep settings hooks")
 		default:
 			add("plugin", doctorOK, w.Plugin+" enabled; hooks come from the plugin, none needed in "+file, "")
 		}

@@ -190,7 +190,7 @@ if [ "$EXPLICIT_UPSHIFT" = 1 ]; then
   echo "Set explicit_upshift true in $SESSION_FILE"
 fi
 if [ "$session_existed" = 0 ]; then
-  echo "Next: list the models your session can use, or the hook will not rewrite anything:"
+  echo "Optional: list the models your session can use (Claude Code infers them from the current model; Cursor, Codex and others need the list or 'downshift models discover'):"
   echo "  mkdir -p \"$HOME/.downshift\""
   if [ "$EXPLICIT_UPSHIFT" = 1 ]; then
     echo "  Edit $SESSION_FILE and keep \"explicit_upshift\": true when you add harness lists."
