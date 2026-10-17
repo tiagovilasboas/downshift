@@ -140,6 +140,9 @@ func (r *doctorReport) write(w io.Writer, verbose bool) {
 	}
 	if len(r.NotDetected) > 0 {
 		fmt.Fprintf(w, "\nnot detected (no hook file, skipped): %s\n", strings.Join(r.NotDetected, ", "))
+		if !r.anyHarnessChecked() {
+			fmt.Fprintf(w, "next: downshift setup --dry-run%s\n", pluginInstallHint())
+		}
 	}
 	if verbose && len(r.EffortUnknownModels) > 0 {
 		fmt.Fprintf(w, "\nmodels without a verified efforts list:\n")
@@ -155,6 +158,31 @@ func (r *doctorReport) write(w io.Writer, verbose bool) {
 	default:
 		fmt.Fprintf(w, "\nall good\n")
 	}
+}
+
+// anyHarnessChecked reports whether at least one harness had a hook file.
+func (r *doctorReport) anyHarnessChecked() bool {
+	for _, c := range r.Checks {
+		if c.Harness != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// pluginInstallHint names the plugin alternative for every target that
+// declares one (data on setupTargets; doctor names no harness itself).
+func pluginInstallHint() string {
+	var parts []string
+	for _, t := range setupTargets {
+		if t.Plugin != "" {
+			parts = append(parts, fmt.Sprintf("%s: /plugin install %s --marketplace tiagovilasboas/downshift", t.Name, strings.SplitN(t.Plugin, "@", 2)[0]))
+		}
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " (or the plugin, " + strings.Join(parts, "; ") + ")"
 }
 
 func buildDoctorReport(env doctorEnv) *doctorReport {

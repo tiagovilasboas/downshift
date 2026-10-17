@@ -124,9 +124,12 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 	p, ok := reg.Get(cfg.Provider)
 	if ok {
 		installed, ver, path, _ := p.Detect(ctx)
-		if installed {
+		switch {
+		case installed && contextopt.IsCompanion(p):
 			fmt.Fprintf(w, "  Binary: %s (v%s)\n", path, ver)
-		} else {
+		case installed:
+			fmt.Fprintf(w, "  Engine: %s (%s, zero dependencies)\n", path, ver)
+		default:
 			fmt.Fprintln(w, "  ⚠️  Configured provider binary is not found on PATH!")
 		}
 	}

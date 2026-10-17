@@ -727,7 +727,7 @@ func runStats(args []string) int {
 		return 0
 	}
 	if len(events) == 0 {
-		fmt.Fprintln(os.Stderr, "no events recorded yet — run some subagent tasks first.")
+		fmt.Fprintln(os.Stderr, "no events recorded yet: spawn a subagent in a new harness session, or run `downshift doctor` to check the hooks.")
 		return 0
 	}
 	telemetry.PrintStats(events, opts, os.Stdout)

@@ -173,3 +173,22 @@ func TestDoctorPluginWiring(t *testing.T) {
 		}
 	}
 }
+
+// With no harness hook file at all, doctor ends with the next step and names
+// the plugin alternative from the setup-target data.
+func TestDoctorNextStepWhenNothingWired(t *testing.T) {
+	rep := &doctorReport{NotDetected: []string{"a", "b"}}
+	rep.add(doctorCheck{ID: "version", Status: doctorOK, Detail: "x"})
+	var b bytes.Buffer
+	rep.write(&b, false)
+	out := b.String()
+	if !strings.Contains(out, "next: downshift setup --dry-run") || !strings.Contains(out, "/plugin install downshift --marketplace") {
+		t.Fatalf("missing next step:\n%s", out)
+	}
+	rep.add(doctorCheck{ID: "hooks wired", Harness: "a", Status: doctorOK, Detail: "x"})
+	b.Reset()
+	rep.write(&b, false)
+	if strings.Contains(b.String(), "next: downshift setup") {
+		t.Fatal("a checked harness must silence the next step")
+	}
+}
