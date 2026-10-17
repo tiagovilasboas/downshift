@@ -172,10 +172,10 @@ func TestSubagentStop_InlineUsageBeatsTranscript(t *testing.T) {
 	_, small, _, res := stopSetup(t)
 	path := writeTranscript(t, small)
 	raw, _ := json.Marshal(map[string]any{
-		"hook_event_name":        "SubagentStop",
-		"agent_id":               stopAgent,
-		"agent_transcript_path":  path,
-		"model":                  "inline-model",
+		"hook_event_name":       "SubagentStop",
+		"agent_id":              stopAgent,
+		"agent_transcript_path": path,
+		"model":                 "inline-model",
 		"usage": map[string]any{
 			"input_tokens": 7, "output_tokens": 3,
 		},
