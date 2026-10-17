@@ -203,4 +203,8 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	return Output{Block: true, Message: msg}, note, decision
 }
 
+// Denied is the policy-mode wire contract read by the shared hook runner:
+// exit 2 with Message on stderr when blocked, exit 0 otherwise.
+func (o Output) Denied() (bool, string) { return o.Block, o.Message }
+
 func allow() Output { return Output{Block: false} }

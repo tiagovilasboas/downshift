@@ -165,7 +165,7 @@ Three things start a refresh. Each is best effort and never fails the caller:
 - **Doctor.** `downshift doctor` prints a `scores:` line. When the cache is
   missing or stale, it starts a background refresh.
 - **Hooks (daily).** After the response is written, every hook run through the
-  shared runners (`runHookAdapter`, and the KiroCrew runner) calls
+  shared runner (`runHookAdapter`, rewrite and policy mode alike) calls
   `maybeRefreshScores`. It stats `scores.json`. When the file is missing,
   or its modification time is 24 h or older, it creates the lock file
   `scores-refresh.lock` in the state dir and starts a detached

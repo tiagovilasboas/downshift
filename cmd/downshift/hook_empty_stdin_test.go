@@ -25,7 +25,7 @@ func TestRunHookAdapter_EmptyStdinFailsOpen(t *testing.T) {
 			strings.NewReader(in),
 			func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
 			func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, cmdCat) },
-			func() { failedOpen = true },
+			rewriteWire(func() { failedOpen = true }),
 		)
 		if rc != 0 {
 			t.Errorf("input %q: rc = %d, want 0", in, rc)

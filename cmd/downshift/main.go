@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
 	"github.com/tiagovilasboas/downshift/internal/benchmark"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
@@ -171,17 +170,129 @@ func runVersion(w io.Writer) int {
 	return 0
 }
 
+// hookWire is how one harness receives the routed decision: the only
+// per-harness step of the shared runner, chosen by the registry entry in
+// harnesses.go. The runner itself holds no harness branch.
+type hookWire interface {
+	// failOpen writes the "allow unchanged" response. The runner calls it on
+	// every failure, in the control group, when paused and under
+	// DOWNSHIFT_NO_ROUTE, and never more than once per run.
+	failOpen()
+	// emit writes the routed response and returns the hook's exit code. A
+	// non-zero code denies the spawn: every supported harness reads exit 2
+	// as "block".
+	emit(out any, correlationID string) (int, error)
+}
+
+// rewriteWire serves harnesses with an in-place rewrite channel: the adapter
+// output is one JSON line on stdout and the exit code is always 0. The func
+// value prints that harness's fail-open envelope.
+type rewriteWire func()
+
+func (w rewriteWire) failOpen() { w() }
+
+func (w rewriteWire) emit(out any, _ string) (int, error) {
+	encoded, err := json.Marshal(out)
+	if err != nil {
+		return 0, err
+	}
+	fmt.Fprintf(os.Stdout, "%s\n", encoded)
+	return 0, nil
+}
+
+// policyOutput is the adapter output of a policy-mode harness, one whose hook
+// contract is exit-code only (no updated_input): allow unchanged or deny.
+type policyOutput interface {
+	// Denied reports whether the spawn is blocked and, if so, the message
+	// relayed to the agent on stderr.
+	Denied() (blocked bool, message string)
+}
+
+// policyWire serves policy-mode harnesses: exit 0 allows the spawn unchanged
+// with nothing on stdout; exit 2 blocks it and the stderr line is what the
+// harness relays to the LLM. Fail-open is silence, so a router error can
+// never be read as a block.
+type policyWire struct{}
+
+func (policyWire) failOpen() {}
+
+func (policyWire) emit(out any, correlationID string) (int, error) {
+	o, ok := out.(policyOutput)
+	if !ok {
+		return 0, fmt.Errorf("policy wire: %T does not implement Denied", out)
+	}
+	if blocked, message := o.Denied(); blocked {
+		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, message)
+		return 2, nil
+	}
+	return 0, nil
+}
+
+// spawnFate is what the runner did with one spawn. The stderr line and the
+// telemetry outcome both read from it, so they cannot disagree.
+type spawnFate struct {
+	// noRoute means the spawn was allowed unchanged by DOWNSHIFT_NO_ROUTE, a
+	// session pause or the control group.
+	noRoute bool
+	paused  bool
+	control bool
+	// denied means the wire exited non-zero and the harness blocks the spawn.
+	denied bool
+	// note is the adapter's summary, set only when it rewrote or blocked.
+	note string
+}
+
+// stderrLine is the one line that says what happened, or "" when the spawn
+// ran untouched and the adapter had nothing to say.
+func (f spawnFate) stderrLine(correlationID string) string {
+	switch {
+	case f.paused:
+		return fmt.Sprintf("downshift: correlation_id=%s routing paused for this session, spawn unchanged (downshift session --resume)\n", correlationID)
+	case f.control:
+		return fmt.Sprintf("downshift: correlation_id=%s control group, spawn unchanged (DOWNSHIFT_CONTROL_SHARE=0 disables)\n", correlationID)
+	case f.denied:
+		// The wire already relayed the block message on stderr.
+		return ""
+	case f.note != "":
+		return fmt.Sprintf("downshift: correlation_id=%s %s\n", correlationID, f.note)
+	}
+	return ""
+}
+
+// recordOutcome sets the event outcome and reason codes. A FromDecision event
+// starts as a rewrite; only the fates below change that.
+func (f spawnFate) recordOutcome(event *telemetry.Event) {
+	switch {
+	case f.noRoute:
+		event.Outcome = telemetry.OutcomeBaseline
+		if f.paused {
+			event.ReasonCodes = append(event.ReasonCodes, telemetry.ReasonPaused)
+			sort.Strings(event.ReasonCodes)
+		}
+		if f.control {
+			event.ReasonCodes = append(event.ReasonCodes, telemetry.ReasonControl)
+			sort.Strings(event.ReasonCodes)
+		}
+	case f.denied:
+		event.Outcome = telemetry.OutcomeBlocked
+	case f.note == "":
+		// Adapters return a note only when they rewrote or blocked the spawn.
+		event.Outcome = telemetry.OutcomeAllow
+	}
+}
+
 // runHookAdapter is the single hook-runner template shared by all harness
-// adapters. It reads a JSON event from in, calls handle, encodes the result
-// to stdout, and records telemetry for any decision with a non-empty harness.
-// Any failure prints the harness-specific fail-open response and exits 0 —
-// the spawn must never be blocked by a router error.
+// adapters, rewrite and policy mode alike. It reads a JSON event from in,
+// calls handle, hands the result to wire, and records telemetry for any
+// decision with a non-empty harness. Any failure prints the harness-specific
+// fail-open response and exits 0 — the spawn must never be blocked by a
+// router error.
 func runHookAdapter[E any](
 	harness string,
 	in io.Reader,
 	parse func([]byte) (E, error),
 	handle func(E) (any, string, core.Decision),
-	failOpen func(),
+	wire hookWire,
 	taskText ...func(E) string,
 ) (rc int) {
 	// Registered first so it runs last: after the response is written and
@@ -192,12 +303,12 @@ func runHookAdapter[E any](
 	fail := func(code string) int {
 		telemetry.Record(telemetry.Failure(correlationID, buildVersion, harness, code))
 		if !responded {
-			failOpen()
+			wire.failOpen()
 			responded = true
 		}
 		return 0
 	}
-	// A Go panic exits with status 2, which Claude Code and Codex treat as
+	// A Go panic exits with status 2, which every supported harness treats as
 	// "block this tool call". Recover so a router bug can never block a
 	// spawn: answer with the fail-open response (once) and exit 0.
 	defer func() {
@@ -238,10 +349,11 @@ func runHookAdapter[E any](
 	}
 	defer hookctx.SetProjectDir(projectDir)()
 	out, note, decision := handle(ev)
+	fate := spawnFate{note: note}
 	// Control-group mode for before/after comparison: classify as usual
 	// but allow the spawn untouched, recording the decision as a
 	// "baseline" event that stats excludes from routed rates.
-	noRoute := os.Getenv("DOWNSHIFT_NO_ROUTE") == "1"
+	fate.noRoute = os.Getenv("DOWNSHIFT_NO_ROUTE") == "1"
 	// Per-session pause (`downshift session --pause`) routes like the control
 	// group: one stat, fail open, never a block. Harnesses whose payload has no
 	// session id cannot be paused per session.
@@ -249,32 +361,27 @@ func runHookAdapter[E any](
 	if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
 		sessionHash = telemetry.HashSessionID(identified.SessionIdentifier())
 	}
-	paused := !noRoute && telemetry.SessionPaused(sessionHash)
-	noRoute = noRoute || paused
+	fate.paused = !fate.noRoute && telemetry.SessionPaused(sessionHash)
+	fate.noRoute = fate.noRoute || fate.paused
 	// Built-in control group (`downshift report`): a deterministic share of
 	// real spawn decisions, picked by a hash of the routing id, is classified
 	// and logged but never rewritten. Same seam as no-route, same fail-open.
-	control := !noRoute && decision.Harness != "" &&
+	fate.control = !fate.noRoute && decision.Harness != "" &&
 		telemetry.InControlGroup(correlationID, telemetry.ControlShare())
-	noRoute = noRoute || control
-	if noRoute {
-		failOpen()
+	fate.noRoute = fate.noRoute || fate.control
+	if fate.noRoute {
+		wire.failOpen()
 		responded = true
 	} else {
-		encoded, err := json.Marshal(out)
+		code, err := wire.emit(out, correlationID)
 		if err != nil {
 			return fail("OUTPUT_ENCODE_ERROR")
 		}
 		responded = true
-		fmt.Fprintf(os.Stdout, "%s\n", encoded)
+		rc = code
+		fate.denied = code != 0
 	}
-	if paused {
-		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s routing paused for this session, spawn unchanged (downshift session --resume)\n", correlationID)
-	} else if control {
-		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s control group, spawn unchanged (DOWNSHIFT_CONTROL_SHARE=0 disables)\n", correlationID)
-	} else if note != "" {
-		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
-	}
+	fmt.Fprint(os.Stderr, fate.stderrLine(correlationID))
 	warnSessionUnknown(decision)
 	// Record telemetry only when a real routing decision was made.
 	// A zero Decision (Harness == "") means the event was not a subagent spawn.
@@ -283,21 +390,7 @@ func runHookAdapter[E any](
 		// harness's own post-spawn port records them. One line, spawn events only.
 		fmt.Fprintf(os.Stderr, "downshift: honor=unobserved quota=%s usage=unobserved\n", telemetry.ProjectQuota(decision.QuotaStatus, decision.CreditHeld))
 		event := telemetry.FromDecision(decision, correlationID, buildVersion)
-		switch {
-		case noRoute:
-			event.Outcome = telemetry.OutcomeBaseline
-			if paused {
-				event.ReasonCodes = append(event.ReasonCodes, telemetry.ReasonPaused)
-				sort.Strings(event.ReasonCodes)
-			}
-			if control {
-				event.ReasonCodes = append(event.ReasonCodes, telemetry.ReasonControl)
-				sort.Strings(event.ReasonCodes)
-			}
-		case note == "":
-			// Adapters return a note only when they rewrote the spawn.
-			event.Outcome = telemetry.OutcomeAllow
-		}
+		fate.recordOutcome(&event)
 		shadow := decisionintelligence.Evaluate(decisionintelligence.Signals{
 			BaseTier:             decision.Tier,
 			ClassifierConfidence: confidenceValue(decision.Confident),
@@ -349,7 +442,7 @@ func runHookAdapter[E any](
 			}
 		}
 	}
-	return 0
+	return rc
 }
 
 // hookPorts registers honor and usage only when that harness's own hook
@@ -408,100 +501,6 @@ func runHonor(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) 
 func confidenceValue(confident bool) float64 {
 	if confident {
 		return 1
-	}
-	return 0
-}
-
-// runKiroCrewHook is the exit-code runner for KiroCrew. Unlike runHookAdapter,
-// KiroCrew's preToolUse contract has no updated_input channel: the only levers
-// are exit 0 (allow) and exit 2 (block + stderr relayed to the LLM). So this
-// runner never prints a rewrite to stdout — it classifies the spawn and, on a
-// confident tier mismatch, returns exit 2 with an actionable respawn message.
-// Fail-open is absolute: any read/parse error, or an allow decision, exits 0.
-func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
-	defer maybeRefreshScores() // same shared trigger as runHookAdapter
-	correlationID := telemetry.NewCorrelationID()
-	fail := func(code string) int {
-		telemetry.Record(telemetry.Failure(correlationID, buildVersion, "kirocrew", code))
-		return 0 // fail-open: never block a spawn on a router error
-	}
-	// A Go panic exits with status 2, which KiroCrew treats as "block".
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Fprintln(os.Stderr, "downshift: internal error, spawn allowed unchanged")
-			rc = fail("PANIC")
-		}
-	}()
-
-	const maxHookPayloadBytes = 1 << 20
-	data, err := readHookPayload(in, maxHookPayloadBytes+1)
-	if err != nil {
-		if errors.Is(err, errHookReadTimeout) {
-			return fail("INPUT_TIMEOUT")
-		}
-		return fail("READ_ERROR")
-	}
-	if len(data) > maxHookPayloadBytes {
-		return fail("PAYLOAD_TOO_LARGE")
-	}
-
-	var ev kirocrew.Event
-	if err := json.Unmarshal(data, &ev); err != nil {
-		return fail("INVALID_EVENT")
-	}
-	defer withHookDeadline()()
-	correlationID = telemetry.CorrelationIDOrNew(ev.CorrelationIdentifier())
-	// Same project-context seam as runHookAdapter, so the project tier floor
-	// (policyfile) applies to KiroCrew too.
-	projectDir := ev.ProjectDir()
-	if projectDir == "" {
-		projectDir, _ = os.Getwd()
-	}
-	defer hookctx.SetProjectDir(projectDir)()
-
-	out, note, decision := kirocrew.Handle(ev, catalog)
-	warnSessionUnknown(decision)
-	// Built-in control group, same rule as runHookAdapter: never block.
-	control := os.Getenv("DOWNSHIFT_NO_ROUTE") != "1" && decision.Harness != "" &&
-		telemetry.InControlGroup(correlationID, telemetry.ControlShare())
-
-	// Telemetry only when a real routing decision was made (Harness != "").
-	// DOWNSHIFT_NO_ROUTE=1 records a control-group baseline and never blocks.
-	if decision.Harness != "" {
-		event := telemetry.FromDecision(decision, correlationID, buildVersion)
-		// Policy mode never rewrites: a spawn is either blocked (exit 2) or
-		// allowed unchanged (exit 0).
-		switch {
-		case os.Getenv("DOWNSHIFT_NO_ROUTE") == "1":
-			event.Outcome = telemetry.OutcomeBaseline
-		case control:
-			event.Outcome = telemetry.OutcomeBaseline
-			event.ReasonCodes = append(event.ReasonCodes, telemetry.ReasonControl)
-			sort.Strings(event.ReasonCodes)
-		case out.Block:
-			event.Outcome = telemetry.OutcomeBlocked
-		default:
-			event.Outcome = telemetry.OutcomeAllow
-		}
-		if currentID := decision.CurrentModel.ID; currentID != "" {
-			event.FromModel = telemetry.ModelOrUnknown(currentID)
-		} else {
-			event.FromModel = "unknown"
-		}
-		telemetry.MarkUnchanged(&event)
-		telemetry.Record(event)
-		if id, err := training.RecordRoutedDecision(ev.TaskText(), decision); err == nil && id != "" {
-			fmt.Fprintf(os.Stderr, "downshift: feedback id %s (run `downshift feedback %s success|retry|failed` after review)\n", id, id)
-		}
-	}
-
-	if out.Block && os.Getenv("DOWNSHIFT_NO_ROUTE") != "1" && !control {
-		// stderr is what KiroCrew relays to the LLM on exit 2.
-		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, out.Message)
-		return 2
-	}
-	if note != "" {
-		fmt.Fprintf(os.Stderr, "downshift: correlation_id=%s %s\n", correlationID, note)
 	}
 	return 0
 }
@@ -1264,13 +1263,13 @@ func runTrain(args []string) int {
 // Each harness has a different envelope for "allow unchanged". These are the
 // minimal valid JSON outputs that let the tool call proceed unmodified.
 
-func printAllow() {
+var printAllow = rewriteWire(func() {
 	fmt.Println(`{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}`)
-}
+})
 
-func printCursorAllow() {
+var printCursorAllow = rewriteWire(func() {
 	fmt.Println(`{"permission":"allow"}`)
-}
+})
 
 func usage(w io.Writer) {
 	fmt.Fprint(w, `downshift — right-sized models for every subagent task

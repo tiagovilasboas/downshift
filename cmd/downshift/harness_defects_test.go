@@ -32,7 +32,7 @@ func TestDefect_HookFailureRecordsHarness(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
 	var rc int
-	captureStderr(func() { rc = runKiroCrewHook(strings.NewReader(`{not json`), cmdCat) })
+	captureStderr(func() { rc = harnessRegistry["kirocrew"].Hook(strings.NewReader(`{not json`), cmdCat) })
 	if rc != 0 {
 		t.Fatalf("rc=%d, want fail-open 0", rc)
 	}

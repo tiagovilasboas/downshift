@@ -13,7 +13,8 @@ import (
 )
 
 // KiroCrew never rewrites: its events are "blocked" (exit 2) or "allow"
-// (exit 0), never "rewrite_emitted".
+// (exit 0), never "rewrite_emitted". Runs the registered hook, which is the
+// shared runner in policy mode.
 func TestRunKiroCrewHook_RecordsAllowAndBlocked(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	path := filepath.Join(t.TempDir(), "events.jsonl")
@@ -35,7 +36,7 @@ func TestRunKiroCrewHook_RecordsAllowAndBlocked(t *testing.T) {
 	for _, tc := range cases {
 		stdin := `{"tool_name":"spawn_run","tool_input":{"task":"` + tc.task + `","model":"` + frontierID + `"}}`
 		var rc int
-		captureStderr(func() { rc = runKiroCrewHook(strings.NewReader(stdin), cmdCat) })
+		captureStderr(func() { rc = harnessRegistry["kirocrew"].Hook(strings.NewReader(stdin), cmdCat) })
 		if rc != tc.wantRC {
 			t.Fatalf("%q: rc=%d, want %d", tc.task, rc, tc.wantRC)
 		}

@@ -12,9 +12,9 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
-// The KiroCrew runner goes through the same project-context seam as the
-// shared runner: a .downshift/policy.json floor in the payload's cwd keeps a
-// trivial spawn at the frontier tier, so policy mode allows instead of blocks.
+// KiroCrew runs through the shared runner, so it gets its project-context
+// seam: a .downshift/policy.json floor in the payload's cwd keeps a trivial
+// spawn at the frontier tier, so policy mode allows instead of blocks.
 func TestRunKiroCrewHook_ProjectFloorApplies(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("DOWNSHIFT_EVENT_LOG", filepath.Join(t.TempDir(), "events.jsonl"))
@@ -35,11 +35,11 @@ func TestRunKiroCrewHook_ProjectFloorApplies(t *testing.T) {
 		return `{"tool_name":"spawn_run","cwd":"` + cwd + `","tool_input":{"task":"rename the userId variable to userIdentifier","model":"` + frontierID + `"}}`
 	}
 	var rc int
-	captureStderr(func() { rc = runKiroCrewHook(strings.NewReader(payload(project)), cmdCat) })
+	captureStderr(func() { rc = harnessRegistry["kirocrew"].Hook(strings.NewReader(payload(project)), cmdCat) })
 	if rc != 0 {
 		t.Fatalf("with a frontier floor the spawn must be allowed, rc=%d", rc)
 	}
-	captureStderr(func() { rc = runKiroCrewHook(strings.NewReader(payload(t.TempDir())), cmdCat) })
+	captureStderr(func() { rc = harnessRegistry["kirocrew"].Hook(strings.NewReader(payload(t.TempDir())), cmdCat) })
 	if rc != 2 {
 		t.Fatalf("without a floor the trivial spawn is blocked toward a smaller tier, rc=%d", rc)
 	}

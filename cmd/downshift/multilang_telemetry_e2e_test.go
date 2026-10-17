@@ -113,7 +113,7 @@ func runQAAdapterFixture(raw []byte, harness string) {
 	case "codex":
 		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) }, func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) }, printAllow)
 	case "kirocrew":
-		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (kirocrew.Event, error) { var e kirocrew.Event; return e, json.Unmarshal(b, &e) }, func(e kirocrew.Event) (any, string, core.Decision) { return kirocrew.Handle(e, cmdCat) }, printAllow)
+		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (kirocrew.Event, error) { var e kirocrew.Event; return e, json.Unmarshal(b, &e) }, func(e kirocrew.Event) (any, string, core.Decision) { return kirocrew.Handle(e, cmdCat) }, policyWire{})
 	case "antigravity":
 		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) }, func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, cmdCat) }, printAllow)
 	}

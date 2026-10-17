@@ -71,7 +71,7 @@ func TestRunHookAdapter_PanicAfterResponseDoesNotRespondTwice(t *testing.T) {
 	}
 }
 
-// panicResolver makes core.Route panic inside the KiroCrew runner.
+// panicResolver makes core.Route panic inside the shared runner in policy mode.
 type panicResolver struct{ core.Resolver }
 
 func (panicResolver) ModelFor(string, core.Tier) core.Model { panic("resolver boom") }
@@ -81,7 +81,7 @@ func TestRunKiroCrewHook_PanicFailsOpen(t *testing.T) {
 	t.Setenv("DOWNSHIFT_EVENT_LOG", filepath.Join(t.TempDir(), "events.jsonl"))
 	var rc int
 	captureStderr(func() {
-		rc = runKiroCrewHook(strings.NewReader(`{"tool_name":"spawn_run","tool_input":{"task":"rename x","model":"claude-opus-5-5"}}`), panicResolver{cmdCat})
+		rc = harnessRegistry["kirocrew"].Hook(strings.NewReader(`{"tool_name":"spawn_run","tool_input":{"task":"rename x","model":"claude-opus-5-5"}}`), panicResolver{cmdCat})
 	})
 	if rc != 0 {
 		t.Fatalf("rc = %d, want 0 (exit 2 would block the spawn)", rc)

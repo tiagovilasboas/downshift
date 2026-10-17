@@ -23,7 +23,9 @@ import (
 // package and caps var); main.go, portFor and tryHook read from here.
 type harnessEntry struct {
 	// Hook runs the PreToolUse hook for this harness and returns the exit
-	// code. Nil means the harness has no hook subcommand (try-only).
+	// code. Nil means the harness has no hook subcommand (try-only). Every
+	// hook is runHookAdapter with that harness's hookWire: rewriteWire for a
+	// JSON rewrite response, policyWire for an exit-code-only contract.
 	Hook func(in io.Reader, catalog core.Resolver) int
 	// Port is the optional post-spawn observation port (honor / usage).
 	// Zero value means unobserved.
@@ -43,7 +45,7 @@ var harnessRegistry = map[string]harnessEntry{
 				in,
 				func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) },
 				func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, catalog) },
-				func() { fmt.Println(`{"decision":"allow"}`) },
+				rewriteWire(func() { fmt.Println(`{"decision":"allow"}`) }),
 				func(e antigravity.Event) string { return e.TaskText() },
 			)
 		},
@@ -95,8 +97,21 @@ var harnessRegistry = map[string]harnessEntry{
 		Try:  tryCodex,
 		Caps: core.CodexCaps,
 	},
+	// kirocrew has no rewrite channel (exit 0 allows, exit 2 blocks with
+	// stderr relayed to the LLM), so it runs the shared runner in policy mode:
+	// same payload read, panic recovery, control group, pause, telemetry and
+	// project seam; only the wire differs.
 	"kirocrew": {
-		Hook: runKiroCrewHook,
+		Hook: func(in io.Reader, catalog core.Resolver) int {
+			return runHookAdapter(
+				"kirocrew",
+				in,
+				func(b []byte) (kirocrew.Event, error) { var e kirocrew.Event; return e, json.Unmarshal(b, &e) },
+				func(e kirocrew.Event) (any, string, core.Decision) { return kirocrew.Handle(e, catalog) },
+				policyWire{},
+				func(e kirocrew.Event) string { return e.TaskText() },
+			)
+		},
 		Try:  tryKiroCrew,
 		Caps: core.KiroCrewCaps,
 	},
