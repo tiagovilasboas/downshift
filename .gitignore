@@ -39,6 +39,11 @@ __pycache__/
 # Claude Code agent worktrees
 .claude/worktrees/
 
+# Mod type declarations Claude Code generates when the plugin is loaded
+# (claude --plugin-dir .); regenerated, never committed
+.claude-plugin/types/
+.claude/types/
+
 # Built dsmon binary (source in cmd/dsmon)
 /dsmon
 # Built dsmon-hook binary

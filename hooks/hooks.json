@@ -1,4 +1,7 @@
 {
+  "modules": [
+    "./cache-tax/register.ts"
+  ],
   "hooks": {
     "PreToolUse": [
       { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code" } ] }

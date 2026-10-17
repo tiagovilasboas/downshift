@@ -34,7 +34,11 @@ supports; the Downshift side of that table is in
 - It does not bundle third-party skills, rules or agent files in `skills/`.
   Most are single-harness, they add always-loaded context to every session,
   and some carry licences (CC BY) or default telemetry that Downshift does
-  not want to ship under its own name.
+  not want to ship under its own name. One exception, by owner decision
+  2026-10-17: the plugin bundles the [cache-tax mod](../../hooks/cache-tax/README.md)
+  (MIT, vendored and pinned, no always-loaded context, no telemetry, no
+  network call but its own opt-in warming ping). The NOTICE file carries its
+  licence.
 - It does not count a companion's savings as its own. `downshift stats` is
   routing; `headroom savings` is compression. When a companion is recorded,
   `doctor` says so, so a before/after comparison is not attributed to routing

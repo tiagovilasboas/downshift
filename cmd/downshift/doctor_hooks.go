@@ -38,7 +38,9 @@ type doctorWiring struct {
 	Nested bool   // entry shape, see setupTarget.Nested
 	Setup  bool   // `downshift setup <harness>` can write the file
 	Plugin string // plugin id that can carry the same hooks (setupTarget.Plugin)
-	Hooks  []doctorHook
+	// ModConflicts: plugin ids whose mod the Plugin already bundles (setupTarget.ModConflicts).
+	ModConflicts []string
+	Hooks        []doctorHook
 }
 
 // doctorManualWiring covers harnesses whose setupTarget has no File because
@@ -58,7 +60,7 @@ func doctorWiringFor(harness string) (doctorWiring, bool) {
 		if t.Name != harness || t.File == "" {
 			continue
 		}
-		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin}
+		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin, ModConflicts: t.ModConflicts}
 		for i, h := range t.Hooks {
 			w.Hooks = append(w.Hooks, doctorHook{Event: h.Event, Matcher: h.Matcher, Args: h.Args, Required: i == 0})
 		}
@@ -160,6 +162,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 
 	found, missing := matchWiredHooks(cmds, w.Hooks)
 	reportWiring(add, h, w, file, pathBin, viaPlugin, found, missing)
+	reportModConflicts(add, w, raw, viaPlugin)
 	// With the plugin carrying the hooks, found is empty and the hook binary
 	// check has nothing to look at.
 	checkEvidence(add, env, nc, file, found, pathBin, events)
@@ -283,6 +286,24 @@ func checkEvidence(add func(id, status, detail, fix string), env doctorEnv, nc c
 	checkCompletion(add, h, events)
 	if nc.Caps.CanRewriteModel && len(mine) > 0 {
 		checkHonored(add, mine)
+	}
+}
+
+// reportModConflicts warns when a plugin whose mod the Downshift plugin already
+// bundles is enabled next to it: the mod's hooks and commands then run twice.
+// Nothing is reported when the Downshift plugin is off (the bundled mod does
+// not load) or no conflict is enabled.
+func reportModConflicts(add func(id, status, detail, fix string), w doctorWiring, raw any, viaPlugin bool) {
+	if !viaPlugin {
+		return
+	}
+	for _, id := range w.ModConflicts {
+		if !pluginEnabled(raw, id) {
+			continue
+		}
+		add("plugin mod", doctorWarn,
+			fmt.Sprintf("%s is enabled next to %s, which bundles the same mod: its guard and commands run twice", id, w.Plugin),
+			"/plugin uninstall "+id+"   # the Downshift plugin keeps the mod")
 	}
 }
 

@@ -8,6 +8,12 @@ Previous public releases were distributed under the Business Source License 1.1.
 See LICENSE-BSL-1.1-ARCHIVE.md for the archived text. Effective 2026-10-06,
 new distributions use the Apache License, Version 2.0 (see LICENSE).
 
+hooks/cache-tax/ is the Claude Code mod cache-tax by Karan Bansal
+(https://github.com/karanb192/cache-tax, version 2.2.1, commit 06cac47),
+MIT License, Copyright (c) 2026 Karan Bansal, vendored unchanged except for
+the import paths of its test file. The MIT notice is in hooks/cache-tax/LICENSE
+and is retained below.
+
 Portions of internal/adapt/count_predictor.go are adapted from
 litellm/router_strategy/complexity_router/tier_predictor.py in BerriAI/litellm
 (commit 4b8a846), MIT License, Copyright (c) 2023 Berri AI. The MIT notice is

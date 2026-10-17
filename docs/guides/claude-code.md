@@ -151,10 +151,12 @@ twice. `setup` skips the hooks when `enabledPlugins["downshift@downshift"]` is t
 settings file (policy and statusline still apply); `doctor` warns `plugin … every spawn is routed
 twice` when it finds both, and suggests `downshift setup --undo`. Detection reads the user file only.
 
-Mods (plugins with a hooks module that draw UI, Claude Code 2.1.287+) are a third channel Downshift
-does not use: it ships no module and draws no `AbovePrompt` band. For the main session's context
-window above the prompt, the recommended mod is Anthropic's Token Weather, and for a side agent that
-flags what you might have missed, Anthropic's built-in You should know
+Mods (plugins with a hooks module that run inside Claude Code, 2.1.287+) are a third channel. The
+plugin carries one, the vendored [cache-tax](../../hooks/cache-tax/README.md) (MIT, owner decision
+2026-10-17): a priced cold-send guard, `/keepwarm`, and a band above the prompt while a window is
+armed. It holds no routing logic, `setup` cannot write it (a mod is plugin-only), and it is the one
+place a plugin install does more than `setup`. Two more mods are recommended, not bundled: Anthropic's
+built-in You should know and the Token Weather sample
 ([companions](companions.md#claude-code-mods-downshift-recommends)).
 
 ## 8. Agents: pinned model versus inherit, and when not to delegate

@@ -209,6 +209,23 @@ that model at the last refresh; that is not checked here. Live state:
 they are reported uncovered rather than guessed. An uncovered candidate makes the
 capability path abstain for that decision (see [scores.md](scores.md#when-it-abstains)).
 
+## Bundled mod: cache-tax (2026-10-17)
+
+The Claude Code plugin's `hooks/hooks.json` lists one mod module,
+[`hooks/cache-tax/`](../../hooks/cache-tax/README.md) (third-party, MIT,
+vendored and pinned; owner decision 2026-10-17). It is not a routing feature
+and nothing in the shared layers computes it: a mod is code Claude Code runs
+in its own process, so it exists only where mods load.
+
+| harness | bundled mod | why |
+|---|---|---|
+| claude-code | loads with the plugin on 2.1.287+ (CLI, Desktop Code tab, VS Code extension; hooks also run in `claude -p`, nothing is drawn there) | mods are a Claude Code plugin feature; `setup` cannot write one |
+| codex, cursor, kirocrew, antigravity, grok | not available | no mod system; the cold-cache question is the harness's own |
+
+What it does is in its README; the one fact that matters here is that the
+warming ping spends usage and is armed by the user (or for three hours after a
+detected cold write), while the guard itself sends nothing.
+
 ## Revalidation
 
 Every TBD cell must be re-checked per harness release: hook contracts

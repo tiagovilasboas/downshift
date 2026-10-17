@@ -73,7 +73,7 @@ downshift setup --dry-run   # shows the diff per harness found; writes nothing
 downshift setup             # asks, backs up, wires the hooks
 ```
 
-On Claude Code the plugin is the alternative to `setup` (same hooks, the `/downshift` command, the skills and an example agent; the binary is still required; use one channel):
+On Claude Code the plugin is the alternative to `setup` (same hooks, the `/downshift` command, the skills, an example agent and the bundled [cache-tax mod](hooks/cache-tax/README.md), which prices a cold prompt cache before you pay it and keeps it warm on `/keepwarm`; the binary is still required; use one channel):
 
 ```text
 /plugin install downshift --marketplace tiagovilasboas/downshift

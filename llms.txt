@@ -35,6 +35,8 @@ Contributing / architecture for this repo: AGENTS.md and CONTRIBUTING.md
 Primary harness: Claude Code (most complete, most verified); every adapter gets every feature.
 Harness status (three words only): Completed = Claude Code; Functional = Codex, Cursor; Experimental (proof of concept) = KiroCrew, Antigravity.
 Evidence per harness: docs/reference/harness-matrix.md
+The Claude Code plugin bundles one third-party mod, cache-tax (MIT, vendored, priced cold-send
+guard and /keepwarm; the ping spends usage): hooks/cache-tax/README.md
 Companions (Headroom default, detected and recorded, never installed by Downshift;
 OmniRoute optional gateway; recommended Claude Code mods You should know (built in,
 off by default, billed checks) and Token Weather): docs/guides/companions.md

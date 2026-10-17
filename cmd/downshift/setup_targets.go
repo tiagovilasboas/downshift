@@ -66,6 +66,10 @@ type setupTarget struct {
 	// the same hooks from a plugin instead of File. Empty when the harness has
 	// no plugin system. Doctor reads it; setup warns when it is enabled.
 	Plugin string
+	// ModConflicts are plugin ids that carry a mod the Downshift plugin already
+	// bundles (hooks/hooks.json modules). Both enabled means the mod runs
+	// twice; doctor warns. Harness data: only a harness with mods lists any.
+	ModConflicts []string
 }
 
 var setupTargets = []setupTarget{
@@ -118,6 +122,8 @@ var setupTargets = []setupTarget{
 			Args:      "quota claude-statusline",
 			ChainArgs: "quota import --harness claude-code --source claude-statusline",
 		},
+		// The upstream marketplace install of the mod vendored under hooks/cache-tax/.
+		ModConflicts: []string{"cache-tax@claude-code-mods"},
 	},
 	{
 		Name:      "cursor",

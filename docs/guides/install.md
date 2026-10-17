@@ -188,7 +188,14 @@ or in two steps, `/plugin marketplace add tiagovilasboas/downshift` then
 `PostToolUse`, `PostToolUseFailure` and `SubagentStop` from
 [`hooks/hooks.json`](../../hooks/hooks.json) (each entry only calls the binary),
 adds the `downshift-setup`, `downshift-audit` and `cost-reducer` skills, and the
-command below as `/downshift:downshift`. It does not set `opusplan`, plan mode,
+command below as `/downshift:downshift`. On Claude Code 2.1.287 or later it also
+loads the bundled [cache-tax mod](../../hooks/cache-tax/README.md): a cold send
+on a context of 50k tokens or more is dropped once with its estimated rewrite
+price (resend to pay it, `/cache-tax guard warn` to only be told), and
+`/keepwarm 90m` keeps the cache warm through a break with one small model
+request per 50 idle minutes, which costs usage. If you already installed
+`cache-tax@claude-code-mods`, uninstall one copy; `doctor` warns.
+It does not set `opusplan`, plan mode,
 `autoCompactWindow` or the statusline: those are settings, not hooks. Set
 `"model": "opusplan"`, `"permissions": {"defaultMode": "plan"}` and
 `"autoCompactWindow": 400000` in `~/.claude/settings.json` yourself
