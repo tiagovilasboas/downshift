@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Graphify (`internal/graphify`, `DOWNSHIFT_GRAPHIFY_*`), multilingual E5 shadow/fuse (`DOWNSHIFT_E5_*`, `internal/semantic/e5shadow`), and external MiniLM embed commands (`DOWNSHIFT_MINILM_EMBED`, `data/minilm.json`). Semantic boost is the in-process FNV hash embedder only (`DOWNSHIFT_MINILM=0` opts out). `downshift shadow-report` summarises routing v2 candidate observations only.
+
 ### Added
 
 - Claude Code mod path (phase 2a): the adapter reads optional `parent_model` as the baseline for inheriting agent types before the transcript; the shared runner records `entry` (`hook` or `mod`) on every decision; `HarnessCapabilities.HookEntries` lists both paths for Claude Code; `stats` counts by entry and `doctor` warns when one `tool_use_hash` carries two decisions. The opt-in `downshift-router` mod always sends `entry: "mod"`. Design: `docs/design/mod-router.md`.

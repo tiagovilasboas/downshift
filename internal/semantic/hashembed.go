@@ -12,8 +12,7 @@ import (
 const defaultEmbedDim = 384
 
 // HashEmbed produces a deterministic unit vector from prompt text.
-// Used to build shipped prototypes without Python; pair with
-// DOWNSHIFT_MINILM_EMBED=hash for the same algorithm at runtime.
+// Used to build shipped prototypes without Python; runtime uses HashEmbedder.
 func HashEmbed(prompt string, dim int) []float64 {
 	if dim <= 0 {
 		dim = defaultEmbedDim

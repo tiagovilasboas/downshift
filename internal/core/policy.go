@@ -5,8 +5,6 @@ package core
 
 import (
 	"fmt"
-
-	"github.com/tiagovilasboas/downshift/internal/graphify"
 )
 
 // Tier maps a complexity to the minimum capable tier — the gearbox rule:
@@ -69,10 +67,6 @@ type Decision struct {
 	// Shadow holds the observe-only second opinions. None of them changes the
 	// routing unless its own opt-in flag is set.
 	Shadow Shadow
-	// E5Fuse is the trace of the opt-in multilingual fuse that ran inside the
-	// classification (DOWNSHIFT_E5_FUSE=1): what the helper answered and what
-	// the fuse did with it. Zero when the flag is off.
-	E5Fuse E5Fuse
 }
 
 // Baseline is the model currently in effect for the task and the provenance
@@ -120,8 +114,7 @@ type Guards struct {
 	// small tier. Such a task is never downshifted and may be upshifted.
 	RiskFloor bool
 	// RiskAbstain is true when risk rules cleared Confident without a tier lift.
-	RiskAbstain    bool
-	GraphEscalated bool // true when graphify escalated the classification to Complex
+	RiskAbstain bool
 	// PolicyFloor is true when an operator tier floor (internal/policyfile)
 	// raised Tier above what the classifier chose.
 	PolicyFloor bool
@@ -157,10 +150,6 @@ type Shadow struct {
 	// ScoreApplied is true when DOWNSHIFT_SCORE_ROUTING=1 and the plan
 	// rewrote the model to ScoreWould.
 	ScoreApplied bool
-	// E5Shadow holds a parallel multilingual embedding observation when
-	// DOWNSHIFT_E5_SHADOW=1. It never changes Tier or Complexity by itself.
-	// Production fuse is a separate flag (DOWNSHIFT_E5_FUSE=1) in ClassifyWithSemantic.
-	E5Shadow E5Shadow
 }
 
 // Verdict tells the caller what to do about the current model.
@@ -203,7 +192,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		res = r[0]
 	}
 
-	tier, cls, graphEscalated, nbUp, nbDown := classifyTask(prompt)
+	tier, cls, nbUp, nbDown := classifyTask(prompt)
 	effort := EffortFor(tier)
 	recommended := resolveModel(harness, tier, res)
 	verdict, savings, current := compareToCurrentModel(harness, currentModelID, recommended, res)
@@ -224,18 +213,15 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 			CurrentModel: current,
 		},
 		Guards: Guards{
-			GraphEscalated: graphEscalated,
-			RiskFloor:      cls.RiskFloor,
-			RiskAbstain:    cls.RiskAbstain,
-			SemanticLift:   cls.SemanticLift,
+			RiskFloor:    cls.RiskFloor,
+			RiskAbstain:  cls.RiskAbstain,
+			SemanticLift: cls.SemanticLift,
 		},
 		Shadow: Shadow{
 			NBUpshift:   nbUp,
 			NBDownshift: nbDown,
 		},
-		E5Fuse: cls.E5Fuse,
 	}
-	applyE5Shadow(prompt, cls, &d)
 	d.Intent = IntentFor(prompt, cls, d, res)
 	// Self-correction validates the decision against the guardrails before
 	// any adapter acts. The classified verdict is preserved for telemetry;
@@ -282,27 +268,14 @@ func (d *Decision) recheck() {
 	}
 }
 
-// classifyTask classifies the prompt once (regex, semantic boost, risk floor,
-// graphify escalation) and returns the target tier, the final
-// classification and whether graphify escalated it. Route uses this single
-// result for complexity, confidence and intent so they never disagree.
+// classifyTask classifies the prompt once (regex, semantic boost, risk floor)
+// and returns the target tier and the final classification. Route uses this
+// single result for complexity, confidence and intent so they never disagree.
 // The naive-Bayes second opinion runs last, on the final tier.
-func classifyTask(prompt string) (Tier, Classification, bool, NBUpshift, NBDownshift) {
+func classifyTask(prompt string) (Tier, Classification, NBUpshift, NBDownshift) {
 	cls := classifyWithSemantic(prompt, Classify(prompt))
-	escalated := false
 
-	// Graphify escalation: if the text classifier is uncertain but the prompt
-	// mentions critical files/symbols, escalate to Complex for safer handling.
-	// A confident classification is left alone; Complex needs no escalation.
-	if cls.Complexity != Complex && !cls.Confident {
-		hint := graphifyHint(prompt)
-		if hint.ShouldEscalate {
-			cls.Complexity = Complex
-			escalated = true
-		}
-	}
-
-	nbDown := nbTrivialOpinion(prompt, cls, escalated)
+	nbDown := nbTrivialOpinion(prompt, cls)
 	if nbDown.Applied {
 		cls.Complexity = Trivial
 		cls.Confident = false
@@ -312,7 +285,7 @@ func classifyTask(prompt string) (Tier, Classification, bool, NBUpshift, NBDowns
 		cls.Complexity = complexityForTier(nbUp.To)
 		cls.Confident = false
 	}
-	return cls.Complexity.Tier(), cls, escalated, nbUp, nbDown
+	return cls.Complexity.Tier(), cls, nbUp, nbDown
 }
 
 // resolveModel returns the catalog model for the given harness and tier.
@@ -387,9 +360,4 @@ func (d Decision) ShouldPreserveExplicitModel(currentModelID string, r Resolver)
 		return false
 	}
 	return r.IsExplicitOnly(d.Harness, currentModelID)
-}
-
-// graphifyHint uses DOWNSHIFT_GRAPHIFY_CMD when set; otherwise offline (nil fetcher).
-func graphifyHint(prompt string) graphify.EscalationHint {
-	return graphify.Hint(prompt, graphify.DefaultCriteria(), graphify.FetcherFromEnv())
 }

@@ -248,12 +248,10 @@ var corpus = []corpusCase{
 var corpusKnownGaps = []corpusCase{}
 
 // corpusEnv pins the environment so the corpus runs the default production
-// path: hash embedder, no graph lookup, no opt-in naive-Bayes rewrites.
+// path: hash embedder, no opt-in naive-Bayes rewrites.
 func corpusEnv(t *testing.T, minilm string) {
 	t.Helper()
 	t.Setenv("DOWNSHIFT_MINILM", minilm)
-	t.Setenv("DOWNSHIFT_MINILM_EMBED", "")
-	t.Setenv("DOWNSHIFT_GRAPHIFY_CMD", "")
 	t.Setenv(core.NBUpshiftEnv, "")
 	t.Setenv(core.NBDownshiftEnv, "")
 }

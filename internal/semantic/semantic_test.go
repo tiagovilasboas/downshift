@@ -4,14 +4,10 @@
 package semantic_test
 
 import (
-	"context"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
-	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/hookctx"
 	"github.com/tiagovilasboas/downshift/internal/semantic"
 )
 
@@ -20,44 +16,6 @@ func TestMaybeAugment_OptOut(t *testing.T) {
 	out, ok := semantic.MaybeAugment("rename userId", semantic.LabelTrivial, false)
 	if ok || out != semantic.LabelTrivial {
 		t.Fatalf("expected no change when opted out, got %q ok=%v", out, ok)
-	}
-}
-
-func TestEmbedderFromEnv_FallsBackWhenCommandFails(t *testing.T) {
-	t.Setenv("DOWNSHIFT_MINILM_EMBED", "downshift-missing-embed-binary")
-	emb, ok := semantic.EmbedderFromEnv()
-	if !ok {
-		t.Fatal("expected embedder")
-	}
-	vec, err := emb.Embed("rename the variable")
-	if err != nil || len(vec) == 0 {
-		t.Fatalf("fallback hash embed failed: %v len=%d", err, len(vec))
-	}
-}
-
-// When the external embed command fails, the hash fallback vector must be
-// scored against the hash centroids, never the MiniLM ones: results must
-// match DOWNSHIFT_MINILM_EMBED=hash exactly.
-func TestMaybeAugment_FailedEmbedCommandUsesHashCentroids(t *testing.T) {
-	t.Setenv("DOWNSHIFT_MINILM", "1")
-	prompts := []string{
-		"design and implement gRPC service mesh with service discovery",
-		"rename the variable userId to accountId",
-		"refactor the payment module and add integration tests",
-	}
-	for _, cmd := range []string{"downshift-missing-embed-binary", "false"} {
-		for _, prompt := range prompts {
-			for _, label := range []string{semantic.LabelTrivial, semantic.LabelSimple, semantic.LabelMedium} {
-				t.Setenv("DOWNSHIFT_MINILM_EMBED", "hash")
-				wantOut, wantOK := semantic.MaybeAugment(prompt, label, false)
-				t.Setenv("DOWNSHIFT_MINILM_EMBED", cmd)
-				gotOut, gotOK := semantic.MaybeAugment(prompt, label, false)
-				if gotOut != wantOut || gotOK != wantOK {
-					t.Errorf("embed=%q prompt=%q label=%s: got (%s,%v), want hash result (%s,%v)",
-						cmd, prompt, label, gotOut, gotOK, wantOut, wantOK)
-				}
-			}
-		}
 	}
 }
 
@@ -117,7 +75,6 @@ func TestAugmentWith_BelowSimilarityThreshold(t *testing.T) {
 			semantic.LabelComplex: {0, 0, 1},
 		},
 	}
-	// Orthogonal to both centroids → cosine 0, below MinSimilarity.
 	emb := semantic.StaticEmbedder{Vector: []float64{0, 1, 0}}
 
 	out, ok := semantic.AugmentWith("any", semantic.LabelTrivial, false, store, emb)
@@ -128,7 +85,6 @@ func TestAugmentWith_BelowSimilarityThreshold(t *testing.T) {
 
 func TestMaybeAugment_EnabledWithHashOnSeedComplex(t *testing.T) {
 	t.Setenv("DOWNSHIFT_MINILM", "1")
-	t.Setenv("DOWNSHIFT_MINILM_EMBED", "hash")
 
 	prompt := "design and implement gRPC service mesh with service discovery"
 	out, ok := semantic.MaybeAugment(prompt, semantic.LabelMedium, false)
@@ -196,42 +152,10 @@ func TestRefreshHashPrototypesFromBenchmark(t *testing.T) {
 	}
 }
 
-// A hung DOWNSHIFT_MINILM_EMBED helper used to block the hook forever (no
-// timeout). It must now fail within the hook deadline.
-func TestCmdEmbedder_HungCommandBoundedByHookDeadline(t *testing.T) {
-	if _, err := exec.LookPath("sleep"); err != nil {
-		t.Skip("sleep not available")
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
-	defer cancel()
-	defer hookctx.Set(ctx)()
-	start := time.Now()
-	if _, err := (semantic.CmdEmbedder{Cmd: "sleep 10"}).Embed("prompt"); err == nil {
-		t.Fatal("hung embed command must fail")
-	}
-	if d := time.Since(start); d > time.Second {
-		t.Fatalf("embed waited %s past a 300ms deadline", d)
-	}
-}
-
-// MaybeAugmentHash is the fuse-off floor: with no external embed command it
-// must agree with MaybeAugment, and it must honor the MiniLM opt-out.
-func TestMaybeAugmentHash_MatchesMaybeAugmentWithoutCommand(t *testing.T) {
-	t.Setenv("DOWNSHIFT_MINILM", "")
-	t.Setenv("DOWNSHIFT_MINILM_EMBED", "")
-	for _, prompt := range []string{
-		"implement end-to-end encryption for the messaging feature across web and mobile",
-		"rename foo to bar",
-		"fix the typo in the readme",
-	} {
-		wantLabel, wantOK := semantic.MaybeAugment(prompt, "MEDIUM", false)
-		gotLabel, gotOK := semantic.MaybeAugmentHash(prompt, "MEDIUM", false)
-		if wantLabel != gotLabel || wantOK != gotOK {
-			t.Errorf("%q: hash-only (%s,%v) differs from default (%s,%v)", prompt, gotLabel, gotOK, wantLabel, wantOK)
-		}
-	}
+func TestMaybeAugment_OptOutIgnoresBoost(t *testing.T) {
 	t.Setenv("DOWNSHIFT_MINILM", "0")
-	if label, ok := semantic.MaybeAugmentHash("implement end-to-end encryption for the messaging feature across web and mobile", "MEDIUM", false); ok || label != "MEDIUM" {
+	label, ok := semantic.MaybeAugment("implement end-to-end encryption for the messaging feature across web and mobile", "MEDIUM", false)
+	if ok || label != "MEDIUM" {
 		t.Fatalf("opt-out ignored: %s %v", label, ok)
 	}
 }

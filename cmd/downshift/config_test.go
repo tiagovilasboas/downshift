@@ -19,8 +19,7 @@ func cleanConfigEnv(t *testing.T) string {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	for _, k := range []string{paths.EnvStateDir, "DOWNSHIFT_QUOTA_MODE", "DOWNSHIFT_SCORES", "DOWNSHIFT_SCORE_ROUTING",
-		"DOWNSHIFT_CONTROL_SHARE", "DOWNSHIFT_QUIET", "DOWNSHIFT_MINILM", "DOWNSHIFT_MINILM_EMBED", "DOWNSHIFT_INFER_SESSION",
-		"DOWNSHIFT_E5_FUSE", "DOWNSHIFT_E5_SHADOW", "DOWNSHIFT_E5_CMD", "DOWNSHIFT_E5_SHADOW_CMD", "DOWNSHIFT_E5_PROTOTYPES",
+		"DOWNSHIFT_CONTROL_SHARE", "DOWNSHIFT_QUIET", "DOWNSHIFT_MINILM", "DOWNSHIFT_INFER_SESSION",
 		"DOWNSHIFT_SESSION_MODELS", "DOWNSHIFT_DISCOVERED", "DOWNSHIFT_CURSOR_NATIVE_FILE", "DOWNSHIFT_DISCOVERY"} {
 		t.Setenv(k, "")
 	}
@@ -58,10 +57,7 @@ func TestConfig_DefaultsNameTheirSource(t *testing.T) {
 		"control_share":     {"0.1", cfgDefault},
 		"quiet":             {"off", cfgDefault},
 		"catalog":           {"embedded", cfgDefault},
-		"semantic_boost":    {"on", cfgDefault},
-		"semantic_embedder": {"hash", cfgDefault},
-		"e5_fuse":           {"off", cfgDefault},
-		"e5_shadow":         {"off", cfgDefault},
+		"semantic_boost":    {"on (hash embedder)", cfgDefault},
 		"infer_session":     {"on", cfgDefault},
 	}
 	for k, w := range want {

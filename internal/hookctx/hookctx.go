@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package hookctx carries the hook's global deadline to the optional
-// external helper commands (DOWNSHIFT_MINILM_EMBED, DOWNSHIFT_GRAPHIFY_CMD)
+// external helper commands when a feature opts into them
 // that run deep inside core.Route, and runs those commands with bounded
 // time and output. A slow, hung or chatty helper can never stall a spawn:
 // it is killed at the deadline and the caller falls back to regex routing.

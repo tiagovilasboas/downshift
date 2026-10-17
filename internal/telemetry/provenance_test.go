@@ -48,7 +48,6 @@ func TestAggregate_FrontierOnDoubt(t *testing.T) {
 		{"unconfident, no lift", []telemetry.Event{ev("CLASSIFIER_UNCONFIDENT", "SEMANTIC_BOOST")}, 1, 1, true},
 		{"confident regex", []telemetry.Event{ev("CLASSIFIER_CONFIDENT")}, 1, 0, false},
 		{"risk floor lift", []telemetry.Event{ev("CLASSIFIER_UNCONFIDENT", "RISK_FLOOR")}, 1, 0, false},
-		{"graph escalation lift", []telemetry.Event{ev("CLASSIFIER_UNCONFIDENT", "GRAPH_ESCALATION")}, 1, 0, false},
 		{"nb upshift lift", []telemetry.Event{ev("CLASSIFIER_UNCONFIDENT", "NB_UPSHIFT_APPLIED")}, 1, 0, false},
 		{"tier floor lift", []telemetry.Event{ev("CLASSIFIER_UNCONFIDENT", "TIER_FLOOR")}, 1, 0, false},
 		{"mixed", []telemetry.Event{ev("CLASSIFIER_CONFIDENT"), ev("CLASSIFIER_UNCONFIDENT")}, 2, 1, true},

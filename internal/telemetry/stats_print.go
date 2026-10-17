@@ -122,9 +122,6 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		if n := s.ReasonCodes[ReasonSemanticBoost]; n > 0 {
 			fmt.Fprintf(w, "Semantic boost        %d of %d decisions (%.0f%%) were raised by the embedder, not a rule\n", n, s.Total, pct(n, s.Total))
 		}
-		if up, ab := s.ReasonCodes[ReasonE5Boost], s.ReasonCodes[ReasonE5Abstain]; up+ab > 0 {
-			fmt.Fprintf(w, "E5 fuse               raised %d, abstained %d of %d decisions (%s, %s)\n", up, ab, s.Total, ReasonE5Boost, ReasonE5Abstain)
-		}
 		if n := s.ReasonCodes[ReasonUnsupportedLanguage]; n > 0 {
 			fmt.Fprintf(w, "Language guard        %d of %d decisions (%.0f%%) lacked English/Portuguese rule coverage (%s)\n", n, s.Total, pct(n, s.Total), ReasonUnsupportedLanguage)
 		}

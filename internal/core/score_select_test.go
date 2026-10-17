@@ -179,7 +179,6 @@ func TestScoreWould_RiskComplexAndLiftsStayOnTheCatalogPath(t *testing.T) {
 		{"risk category", core.Decision{Complexity: core.Medium, Tier: core.TierMid, Confident: true, Risk: []string{"auth"}}},
 		{"risk floor", core.Decision{Complexity: core.Medium, Tier: core.TierMid, Confident: true, Guards: core.Guards{RiskFloor: true}}},
 		{"operator floor", core.Decision{Complexity: core.Medium, Tier: core.TierMid, Confident: true, Guards: core.Guards{PolicyFloor: true}}},
-		{"graph escalation", core.Decision{Complexity: core.Medium, Tier: core.TierMid, Confident: true, Guards: core.Guards{GraphEscalated: true}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			d := tc.d

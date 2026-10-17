@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 const shadowReportUsage = "usage: downshift shadow-report [--events=<loop-events.jsonl>] [--telemetry=<events.jsonl>] [--text]"
@@ -20,12 +19,10 @@ func runShadowReport(args []string) int {
 	return shadowReport(args, os.Stdout, os.Stderr)
 }
 
-// shadowReport joins the candidate classifier observations (loop events)
-// with the E5 shadow and fuse objects on the telemetry log. Both files are
-// optional; a missing one contributes nothing. Output is JSON unless --text.
+// shadowReport summarises candidate classifier observations (loop events).
+// Output is JSON unless --text.
 func shadowReport(args []string, stdout, stderr io.Writer) int {
 	path := training.DefaultEventsPath()
-	telemetryPath := ""
 	text := false
 	for _, arg := range args {
 		switch {
@@ -33,8 +30,8 @@ func shadowReport(args []string, stdout, stderr io.Writer) int {
 			text = true
 		case strings.HasPrefix(arg, "--events=") && strings.TrimSpace(strings.TrimPrefix(arg, "--events=")) != "":
 			path = strings.TrimPrefix(arg, "--events=")
-		case strings.HasPrefix(arg, "--telemetry=") && strings.TrimSpace(strings.TrimPrefix(arg, "--telemetry=")) != "":
-			telemetryPath = strings.TrimPrefix(arg, "--telemetry=")
+		case strings.HasPrefix(arg, "--telemetry="):
+			// Accepted for backward compatibility; telemetry is no longer merged.
 		default:
 			fmt.Fprintln(stderr, shadowReportUsage)
 			return 2
@@ -45,18 +42,7 @@ func shadowReport(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "error loading shadow events: %v\n", err)
 		return 1
 	}
-	var tel []telemetry.Event
-	if telemetryPath == "" {
-		tel, err = telemetry.ReadEvents()
-	} else {
-		tel, err = telemetry.ReadEventsFrom(telemetryPath)
-	}
-	if err != nil {
-		fmt.Fprintf(stderr, "error loading telemetry events: %v\n", err)
-		return 1
-	}
 	report := training.SummarizeShadow(events)
-	report.E5Shadow, report.E5Fuse = training.SummarizeE5(tel)
 	if text {
 		report.WriteText(stdout)
 		return 0

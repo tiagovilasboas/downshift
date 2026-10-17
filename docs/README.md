@@ -98,15 +98,14 @@ Completed (Claude Code), Functional (Codex, Cursor), Experimental (KiroCrew, Ant
 | [design/architecture.md](design/architecture.md) | Architecture overview, BDI agentic diagram, packaging layers (memory, skills, hooks, agents, plugin) |
 | [img/bdi-agentic-light.svg](img/bdi-agentic-light.svg) | BDI loop (beliefs / desires / intentions) — also in [README](../README.md#bdi-agentic-view-beliefs--intentions) |
 | [design/engineering-loop.md](design/engineering-loop.md) | Feedback loop |
-| [design/minilm-semantic.md](design/minilm-semantic.md) | Semantic boost (word-hash default, MiniLM opt-in) |
+| [design/minilm-semantic.md](design/minilm-semantic.md) | Semantic boost (in-process word-hash embedder) |
 | [design/mod-router.md](design/mod-router.md) | Can Downshift become a Claude Code mod? Design and the opt-in prototype's live runs |
-| [internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md](internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md) | Multilingual initiative (Phase D E5 shadow, H14, Phase E gate) |
+| [internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md](internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md) | Archived multilingual E5 initiative (removed from product) |
 | [design/classifier-shadow.md](design/classifier-shadow.md) | Shadow classifier |
 | [design/context-optimization.md](design/context-optimization.md) | Native Context Compressor & Context Sensor |
 | [design/router-generalization.md](design/router-generalization.md) | Eval methodology and holdout discipline |
 | [design/capability-router-v2.md](design/capability-router-v2.md) | Router v2 (experimental; short) |
 | [design/decision-intelligence.md](design/decision-intelligence.md) | Advisory layer |
-| [design/graphify-integration.md](design/graphify-integration.md) | Graphify as a library, not hook escalation |
 | [design/langgraph-orchestration.md](design/langgraph-orchestration.md) | Optional planner |
 
 ## Contributors

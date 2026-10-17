@@ -14,9 +14,6 @@ import (
 //go:embed data/prototypes.json
 var embeddedPrototypes []byte
 
-//go:embed data/minilm.json
-var embeddedMiniLM []byte
-
 var (
 	loadOnce   sync.Once
 	storeCache PrototypeStore
@@ -41,33 +38,11 @@ func loadStore() (PrototypeStore, bool) {
 // MinSimilarity is the cosine threshold to trust a semantic label.
 const MinSimilarity = 0.45
 
-// MaybeAugment applies a monotonic semantic boost when regex confidence is low.
-// label is TRIVIAL|SIMPLE|MEDIUM|COMPLEX. Returns the new label and whether
-// semantic fired. Never downgrades rank.
+// MaybeAugment applies a monotonic in-process hash semantic boost when regex
+// confidence is low. label is TRIVIAL|SIMPLE|MEDIUM|COMPLEX. Returns the new
+// label and whether semantic fired. Never downgrades rank. Honors
+// DOWNSHIFT_MINILM=0.
 func MaybeAugment(prompt string, label string, confident bool) (string, bool) {
-	if !enabled() {
-		return label, false
-	}
-	emb, ok := EmbedderFromEnv()
-	if !ok {
-		return label, false
-	}
-	vec, neural, err := embedWithSource(emb, prompt)
-	if err != nil {
-		return label, false
-	}
-	store, ok := storeFor(neural)
-	if !ok {
-		return label, false
-	}
-	return augmentVector(vec, label, confident, store)
-}
-
-// MaybeAugmentHash is MaybeAugment restricted to the in-process hash embedder
-// and its centroids. The E5 fuse uses it as the fuse-off floor: it costs no
-// helper process, so it cannot eat the hook budget the way a second external
-// embed command (DOWNSHIFT_MINILM_EMBED) could. Honors DOWNSHIFT_MINILM=0.
-func MaybeAugmentHash(prompt string, label string, confident bool) (string, bool) {
 	if !enabled() {
 		return label, false
 	}
@@ -80,38 +55,6 @@ func MaybeAugmentHash(prompt string, label string, confident bool) (string, bool
 		return label, false
 	}
 	return augmentVector(vec, label, confident, store)
-}
-
-// embedWithSource embeds prompt and reports whether the vector came from the
-// external MiniLM command (true) or the hash embedder (false), including
-// when the command failed and the hash fallback ran.
-func embedWithSource(emb Embedder, prompt string) ([]float64, bool, error) {
-	if f, ok := emb.(fallbackEmbedder); ok {
-		return f.embedSource(prompt)
-	}
-	vec, err := emb.Embed(prompt)
-	return vec, false, err
-}
-
-// storeFor returns the centroids for the space that produced the vector:
-// MiniLM centroids for MiniLM vectors, hash centroids for hash vectors.
-// Embedding spaces are never mixed.
-func storeFor(neural bool) (PrototypeStore, bool) {
-	if neural {
-		return loadMiniLM()
-	}
-	return loadStore()
-}
-
-func loadMiniLM() (PrototypeStore, bool) {
-	var p PrototypeStore
-	if err := json.Unmarshal(embeddedMiniLM, &p); err != nil {
-		return PrototypeStore{}, false
-	}
-	if p.Dim == 0 || len(p.Centroids) == 0 {
-		return PrototypeStore{}, false
-	}
-	return p, true
 }
 
 // AugmentWith runs semantic fusion with explicit store and embedder (for tests and tools).
