@@ -154,7 +154,7 @@
 | W6-4 | Dev.to: artigo problema (subagent cost) — não propaganda | [ ] |
 | W6-5 | HN: Show HN (técnico, link ARCHITECTURE + honest limits) | [ ] |
 | W6-6 | LinkedIn + X (versões rename.md §23) | [ ] |
-| W6-7 | `examples/` mínimo: `hook-input.json` por harness | [x] |
+| W6-7 | `examples/` mínimo: fixtures PreToolUse por harness (`claude-code-pretooluse-*.json`, `cursor-pretooluse-task.json`; root `hook-input.json` removed) | [x] |
 | W6-8 | Publicar imagem `ghcr.io/tiagovilasboas/downshift` + doc (P1 se atrasar) | [ ] |
 
 ---
