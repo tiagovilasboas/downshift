@@ -123,6 +123,66 @@ catalog, or expect `unknown` baselines in `downshift stats`. Not verified on a
 live OmniRoute instance as of 2026-10-17; evidence welcome under
 `docs/evidence/`.
 
+## Token Weather (recommended Claude Code mod)
+
+Claude Code **mods** are plugins with a hooks module (`hooks/hooks.json`
+listing `modules`) that can change what Claude Code does and draw their own
+UI, such as a band above the prompt. They load by default from Claude Code
+2.1.287 and draw on the terminal surface only (not the Desktop app, not
+Cursor or Codex). Anthropic's DevRel team shares three sample mods in
+[claude-code-playground/claude-code/mods](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods),
+Apache 2.0, as-is and unsupported.
+
+[Token Weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather)
+is the one Downshift recommends. One module, about 120 lines, no
+dependencies. After each main-loop turn it calls `$.session.usage()` and
+draws one line above the prompt:
+
+```text
+ ☂  Showers  67% of context  134.4k / 200k   last turns ▁▂█  ▲ +98.3k last turn
+```
+
+A weather word for how full the context window is (☀ Clear under 25%, ☁
+Cloudy, ☂ Showers, ☇ Storm, ↯ Compact soon from 90%), the percentage and
+tokens of the window, a block chart of the last 12 turns and what the last
+turn added. The figures are the ones Claude Code itself reports, so they are
+real, not estimated.
+
+**How the two fit.** Token Weather answers "how full is my main session?"
+above the prompt. Downshift answers "what did my subagents run on, and what
+did that cost?" below it: the statusline `setup` installs shows the quota
+windows and the session's routing summary (`◆ downshift · 6 subagents · 4 on
+haiku · saved $0.31`, an estimate), and `/downshift` or `downshift session`
+prints the tree. Neither reads the other; nothing competes, because Downshift
+draws no `AbovePrompt` band. A second mod that draws that band would compete
+with Token Weather, not with Downshift.
+
+**Install** (Anthropic's instructions; verified on Claude Code 2.1.302,
+`claude plugin validate` passes):
+
+```bash
+git clone https://github.com/anthropics/claude-code-playground.git
+cd claude-code-playground/claude-code/mods
+claude plugin validate ./token-weather     # read hooks/token-weather.mjs first
+claude --plugin-dir ./token-weather        # one session, or:
+claude plugin marketplace add ./
+claude plugin install token-weather@claude-code-playground-mods --scope user
+```
+
+Open a new session; the band appears after the first response. The other two
+sample mods, `blast-radius` (holds a risky shell command and shows what it
+would change, with Proceed and Cancel) and `replay-theater` (steps through
+the last turn's edits), install the same way and are unrelated to routing.
+
+**What Downshift does with it.** Nothing, by the rule above: it does not
+install, detect or configure a mod, and `downshift setup` never touches
+`enabledPlugins`. This section is the whole integration.
+
+**Before you install any mod.** A hooks module runs inside Claude Code with
+Claude Code's access, unsandboxed. Read the module; Token Weather's calls are
+`$.session.usage`, `$.ui.resolve` and `$.ui.invalidate`, which `claude plugin
+validate` lists. Pin the commit you read if you install from a clone.
+
 ## claude-code-setup (pattern, not a dependency)
 
 Anthropic's official

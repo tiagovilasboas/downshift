@@ -151,6 +151,11 @@ twice. `setup` skips the hooks when `enabledPlugins["downshift@downshift"]` is t
 settings file (policy and statusline still apply); `doctor` warns `plugin … every spawn is routed
 twice` when it finds both, and suggests `downshift setup --undo`. Detection reads the user file only.
 
+Mods (plugins with a hooks module that draw UI, Claude Code 2.1.287+) are a third channel Downshift
+does not use: it ships no module and draws no `AbovePrompt` band. For the main session's context
+window above the prompt, the recommended mod is Anthropic's Token Weather
+([companions](companions.md#token-weather-recommended-claude-code-mod)).
+
 ## 8. Agents: pinned model versus inherit, and when not to delegate
 
 Code: `sessionmodel.go` (`inheritsSessionModel`), `agents/mechanical-worker.md`,

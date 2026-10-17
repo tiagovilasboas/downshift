@@ -282,6 +282,7 @@ Routing is one lever; the others live in tools Downshift works next to, never wr
 
 - **Headroom (default companion).** [Headroom](https://github.com/chopratejas/headroom) is a local compression proxy (`headroom wrap claude`, `codex`, Cursor manual). When its binary is on PATH, `downshift context enable` records it and `downshift doctor` shows a `companion` row, so savings are not attributed to routing alone. Downshift never installs, launches or wraps it; `headroom wrap <tool>` is yours to run.
 - **OmniRoute (optional gateway).** Anthropic-family ids behind any `provider/` prefix route normally; other ids stay unknown and the spawn is left unchanged (fail open). Recipe and limits in the guide.
+- **Token Weather (recommended mod, Claude Code terminal).** Anthropic's sample [mod](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) draws the main session's context window above the prompt with real figures; Downshift's statusline shows quota and subagent routing below it. Install commands and the read-before-install note are in the guide. Downshift ships no mod and detects none.
 - **Patterns, not dependencies.** Anthropic's read-only `claude-code-setup` is the contract `downshift setup --dry-run` follows; `task-observer` can collect misroutes for `misroute:` issues. Neither is bundled.
 
 ## Cost and metrics
