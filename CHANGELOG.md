@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `docs/guides/evidence.md` gains two sections: the three saving scenarios (same provider smaller model: measured narrowly on mechanical delegated work; same model lower effort: not measured, emission only; cross-provider: not measured, lookup pinned by tests) with the capability, metric and status for each, and where Downshift adds value beyond native `opusplan` and gateways, each claim tied to a test or evidence file or marked unproven.
 - Harness status in public docs follows three words (owner decision 2026-10-17): Claude Code is **Completed** (rewrite observed honored, usage and child ends recorded, plugin and session policy), Codex and Cursor are **Functional** (rewrite emitted on real spawns and the conformance suite passes; honoring inferred on Codex, unconfirmed on Cursor), KiroCrew and Antigravity are **Experimental** (policy mode or one observed child; proof of concept) and move out of the first screen into an "Experimental harnesses" section of the README and the install guide. Adapters, tests and examples are unchanged: every feature is still computed for every harness.
 
 ### Evaluated

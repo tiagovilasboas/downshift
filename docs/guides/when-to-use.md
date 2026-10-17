@@ -27,6 +27,8 @@ Every harness with an adapter gets every feature, computed in shared layers. **C
 
 Many teams use **LiteLLM, OpenRouter or OmniRoute behind the harness** for provider access, and **Downshift in front of subagent spawns** for tier selection. Those layers solve different problems: gateway = transport and credentials; Downshift = **which model id / effort** this spawn should use. A compression proxy such as Headroom is a third layer that neither of the others replaces. Which companions Downshift detects, and what it will never do for them: [companions.md](companions.md).
 
+What each saving claim must prove (same provider smaller model, same model lower effort, cross-provider) and where Downshift adds value beyond native `opusplan` and gateways, with each claim marked shown or unproven: [evidence.md](evidence.md).
+
 ## Today vs roadmap
 
 - **Today:** PreToolUse hooks, single Go binary, embedded catalog, user override under the [state dir](config.md) (`~/.downshift`, legacy `~/.harness-downshift`).
