@@ -56,6 +56,16 @@ Override paths:
 - `DOWNSHIFT_SCORES=off` — no network for public capability scores: no hook, install or doctor refresh, and the router ignores `scores.json`. Details: [scores.md](../reference/scores.md)
 - `DOWNSHIFT_SCORE_ROUTING=1` — let the public-score pick change the routed model (default: shadow only, recorded in telemetry as `score_would`). Details: [scores.md](../reference/scores.md#capability-selection)
 
+Every variable the routing core reads, with its default, is listed in one place: the doc comment of `internal/core/env.go`. The ones not covered above:
+
+- `DOWNSHIFT_QUOTA_MODE=required` — the quota gate needs fresh evidence and keeps abandoned snapshots holding ([quota.md](quota.md))
+- `DOWNSHIFT_EXPLICIT_UPSHIFT=1` — an upshift may pick `explicit_only` ids ([session-models.md](../reference/session-models.md#explicit_upshift))
+- `DOWNSHIFT_DISCOVERY=off`, `DOWNSHIFT_DISCOVERED=<path>`, `DOWNSHIFT_DISCOVERY_TTL=<duration>` — the discovered-models layer, its cache and its freshness (default 24h) ([session-discovery.md](../reference/session-discovery.md))
+- `DOWNSHIFT_NB_UPSHIFT=1`, `DOWNSHIFT_NB_DOWNSHIFT=1` — apply the naive-Bayes second opinion instead of recording it (default: shadow; R1 still holds an unconfident downshift)
+- `DOWNSHIFT_CURSOR_NATIVE_FILE=<path>` — Cursor's native session export (each harness that has one declares it in `HarnessCapabilities.NativeSessionEnv`)
+
+Outside the core: `DOWNSHIFT_NO_ROUTE=1` (control baseline), `DOWNSHIFT_CONTROL_SHARE` (built-in control group), `DOWNSHIFT_QUIET`, `DOWNSHIFT_MINILM_EMBED`, `DOWNSHIFT_E5_SHADOW` / `DOWNSHIFT_E5_FUSE`, `DOWNSHIFT_GRAPHIFY_CMD`, `DOWNSHIFT_LOG_MAX_MB` / `DOWNSHIFT_LOG_BACKUPS`. `downshift config` prints the effective value and source of most of them; `DOWNSHIFT_EXPLICIT_UPSHIFT`, `DOWNSHIFT_DISCOVERY`, `DOWNSHIFT_DISCOVERY_TTL` and the two `NB_*` switches are not reported there yet.
+
 ## Project tier floor (optional)
 
 A project can require a minimum tier with `.downshift/policy.json` in the project
