@@ -41,6 +41,13 @@ type Event struct {
 	PermissionMode string `json:"permission_mode,omitempty"`
 	// ToolUseID is the harness id of this Task call; PostToolUse repeats it.
 	ToolUseID string `json:"tool_use_id,omitempty"`
+	// ParentModel is the parent's effective model when a caller already knows
+	// it (the Claude Code mod's agent.spawn event). Used as the baseline only
+	// for inheriting agent types, before the transcript tail; never a guess.
+	ParentModel string `json:"parent_model,omitempty"`
+	// Entry names which spawn-time path built this payload ("hook" or "mod").
+	// Empty means the settings/plugin PreToolUse hook; the runner records "hook".
+	Entry string `json:"entry,omitempty"`
 	// Optional allowlist. Nil means the payload did not include one.
 	// Claude Code PreToolUse does not send this field today.
 	ModelMetadata   []core.SessionModel `json:"model_metadata,omitempty"`
@@ -55,6 +62,10 @@ type Event struct {
 
 // ProjectDir returns the working directory the harness reported, if any.
 func (ev Event) ProjectDir() string { return ev.Cwd }
+
+// EntryIdentifier returns the spawn-time entry point named in the payload.
+// Empty means the settings or plugin PreToolUse hook.
+func (ev Event) EntryIdentifier() string { return ev.Entry }
 
 // ToolUseIdentifier returns the harness id of this tool call, if any.
 func (ev Event) ToolUseIdentifier() string { return ev.ToolUseID }
@@ -106,7 +117,9 @@ func (ev Event) currentModel(ti map[string]any) string {
 // whose transcript holds no model: the model the session is configured to use
 // (configuredModel), which needs res to turn an alias into a catalog id. The
 // bool reports that the model came from that fallback, so the decision can say
-// the baseline is inferred. A model in the transcript always wins.
+// the baseline is inferred. Order for an inheriting type with no per-call
+// model: env override, ParentModel (a fact from the mod), transcript, then
+// settings. ParentModel is never inferred.
 func (ev Event) resolveModel(ti map[string]any, res core.Resolver) (string, bool) {
 	if model := hookutil.StringField(ti, "model"); model != "" {
 		return model, false
@@ -120,6 +133,12 @@ func (ev Event) resolveModel(ti map[string]any, res core.Resolver) (string, bool
 	typ := hookutil.StringField(ti, "subagent_type")
 	if m := subagentModelFromEnv(typ); m != "" {
 		return m, false
+	}
+	if ev.ParentModel != "" {
+		if exploreMayLeaveTheMainModel(typ, ev.ParentModel) {
+			return "", false
+		}
+		return ev.ParentModel, false
 	}
 	parent := sessionModelFromTranscript(ev.TranscriptPath)
 	inferred := false

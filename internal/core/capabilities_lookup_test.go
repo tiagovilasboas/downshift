@@ -4,6 +4,7 @@
 package core
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -13,12 +14,27 @@ import (
 func TestCapsForMatchesAllHarnessCaps(t *testing.T) {
 	for _, n := range AllHarnessCaps() {
 		got, ok := CapsFor(n.Harness)
-		if !ok || got != n.Caps {
+		if !ok || !reflect.DeepEqual(got, n.Caps) {
 			t.Fatalf("CapsFor(%q) = %+v, %v", n.Harness, got, ok)
 		}
 	}
 	if _, ok := CapsFor("nope"); ok {
 		t.Fatal("unknown harness found")
+	}
+}
+
+func TestClaudeCodeCapsDeclareBothHookEntries(t *testing.T) {
+	want := []string{"settings-hook", "mod"}
+	if !reflect.DeepEqual(ClaudeCodeCaps.HookEntries, want) {
+		t.Fatalf("HookEntries = %v, want %v", ClaudeCodeCaps.HookEntries, want)
+	}
+	for _, n := range AllHarnessCaps() {
+		if n.Harness == "claude-code" {
+			continue
+		}
+		if len(n.Caps.HookEntries) > 1 {
+			t.Fatalf("%s unexpectedly declares multiple HookEntries: %v", n.Harness, n.Caps.HookEntries)
+		}
 	}
 }
 

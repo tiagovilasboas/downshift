@@ -125,6 +125,11 @@ type Event struct {
 	// decision instead of the latest sibling in the session.
 	ToolUseHash string `json:"tool_use_hash,omitempty"`
 
+	// Entry names which spawn-time path recorded this decision: EntryHook
+	// (settings or plugin PreToolUse) or EntryMod (in-process agent.spawn).
+	// Absent on events written before the field existed.
+	Entry string `json:"entry,omitempty"`
+
 	// RecommendedModel is the classifier's recommendation on events whose
 	// spawn was left unchanged (allow, baseline, blocked). final_model on
 	// those events is the model the child actually runs on.
@@ -630,6 +635,12 @@ type Stats struct {
 
 	// PolicyFloor counts decisions an operator tier floor raised.
 	PolicyFloor int
+	// ByEntry counts decisions by spawn-time entry (hook, mod). Empty on
+	// events written before the field existed are counted under EntryHook.
+	ByEntry map[string]int
+	// DuplicateToolUse counts distinct tool_use_hash values that appear on
+	// more than one decision (both entry points live on the same spawn).
+	DuplicateToolUse int
 	// ScoreObserved counts decisions the capability path produced a pick for;
 	// ScoreDiffers those where the pick is another model than the catalog
 	// path leaves; ScoreRatioN and ScoreRatioSum average the pick's list price

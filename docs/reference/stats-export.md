@@ -31,6 +31,8 @@ Fields useful for graduation tracking:
 | `child_status` | Map of child end status (`completed`, `launched`, `interrupted`, `error`, `stopped`, `unknown`) to count, from `child_ended` events; `{}` when none. Observations only: never part of `total` |
 | `baseline_no_route` | Unrouted events: `DOWNSHIFT_NO_ROUTE`, a session pause, and the built-in control group (`outcome: baseline`; the control group also carries reason code `CONTROL`) |
 | `agent_types` | Decisions per subagent type, `{"Explore": {"decisions": 3, "unknown_baseline": 2}}`, so a gap in the baseline can be pinned on a kind of spawn. Only Claude Code reports a type. Names are limited to the built-in ones (`general-purpose`, `claude`, `Explore`, `Plan`, `statusline-setup`, `claude-code-guide`), plus `unspecified` and `custom`: a custom agent's own name is never stored or exported. Omitted when no event carries a type |
+| `by_entry` | Decisions per spawn-time entry (`hook` for settings/plugin PreToolUse, `mod` for the Claude Code `agent.spawn` path). Empty `entry` on older logs counts as `hook`. Omitted when every count is zero |
+| `duplicate_tool_use` | How many distinct `tool_use_hash` values appear on more than one decision (both entry points routed the same spawn). Zero omitted |
 
 ## Before you paste
 

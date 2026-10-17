@@ -53,6 +53,11 @@ type HarnessCapabilities struct {
 	// UsageSource says where the child's token usage comes from at that event:
 	// UsagePayload, UsageTranscript or UsageNone (also the empty value).
 	UsageSource string
+	// HookEntries lists the known spawn-time entry points that can call the
+	// shared router for this harness (for example "settings-hook" and "mod").
+	// Empty means one unnamed path. When more than one is listed, doctor can
+	// warn if the same tool_use_hash carries decisions from more than one.
+	HookEntries []string
 }
 
 // UsageSource values for HarnessCapabilities.UsageSource.
@@ -67,7 +72,7 @@ const (
 var (
 	// ClaudeCodeCaps — PreToolUse hook honors updatedInput.model, but only
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript}
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}}
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.

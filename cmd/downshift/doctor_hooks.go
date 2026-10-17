@@ -287,6 +287,24 @@ func checkEvidence(add func(id, status, detail, fix string), env doctorEnv, nc c
 	if nc.Caps.CanRewriteModel && len(mine) > 0 {
 		checkHonored(add, mine)
 	}
+	checkDuplicateEntries(add, nc, mine)
+}
+
+// checkDuplicateEntries warns when the same tool_use_hash appears on more than
+// one decision. That shape means two entry points routed one spawn. Only
+// harnesses that declare more than one HookEntries are checked; the fix is
+// harness-free ("disable the second entry").
+func checkDuplicateEntries(add func(id, status, detail, fix string), nc core.NamedCaps, mine []telemetry.Event) {
+	if len(nc.Caps.HookEntries) < 2 {
+		return
+	}
+	n := telemetry.DuplicateToolUseCount(mine)
+	if n == 0 {
+		return
+	}
+	add("entry dual route", doctorWarn,
+		fmt.Sprintf("%d tool_use_hash value(s) have decisions from more than one entry: every spawn is routed twice", n),
+		"disable the second entry (settings/plugin PreToolUse or the mod) so only one path is live")
 }
 
 // reportModConflicts warns when a plugin whose mod the Downshift plugin already

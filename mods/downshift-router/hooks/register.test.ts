@@ -79,6 +79,7 @@ describe('downshift-router: agent.spawn adapter', () => {
     expect(payload.cwd).toBe('/work')
     expect(payload.permission_mode).toBe('default')
     expect(payload.parent_model).toBe('claude-opus-4-1')
+    expect(payload.entry).toBe('mod')
     expect(payload.tool_input).toEqual({ prompt: spawn().prompt, description: 'List files', subagent_type: 'general-purpose', run_in_background: false })
     expect(w.logs.length).toBe(1)
     expect(w.logs[0]).toContain('→ haiku')

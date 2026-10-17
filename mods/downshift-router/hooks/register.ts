@@ -26,11 +26,16 @@ export type HookPayload = {
   permission_mode?: string
   /**
    * The parent's effective model, a fact the settings hook has to recover from
-   * the transcript tail. The binary ignores this field today (phase 2 of
-   * docs/design/mod-router.md reads it under the adapter's inheriting rule), so
-   * the prototype routes exactly as the settings hook does.
+   * the transcript tail. The Claude Code adapter reads it under its inheriting
+   * rule (before the transcript), so a mod spawn gets a known baseline without
+   * waiting on the transcript file.
    */
   parent_model?: string
+  /**
+   * Which spawn-time path built this payload. The shared runner records it on
+   * the decision event so stats and doctor can tell hook and mod apart.
+   */
+  entry?: 'mod'
   tool_input: {
     prompt: string
     description: string
@@ -54,6 +59,7 @@ export function buildPayload(e: AgentSpawnInput, sessionId: string | undefined, 
   if (cwd) payload.cwd = cwd
   if (e.permissionMode) payload.permission_mode = e.permissionMode
   if (e.parentModel) payload.parent_model = e.parentModel
+  payload.entry = 'mod'
   if (e.subagentType) payload.tool_input.subagent_type = e.subagentType
   if (e.model) payload.tool_input.model = e.model
   if (e.name) payload.tool_input.name = e.name

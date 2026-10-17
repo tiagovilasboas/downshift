@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -202,6 +203,25 @@ func TestDoctorPluginModConflict(t *testing.T) {
 		if c.Harness == "claude-code" && c.ID == "plugin" {
 			t.Fatal("a disabled plugin must not add a row")
 		}
+	}
+}
+
+// When the event log shows the same tool_use_hash on two decisions, doctor
+// warns that both entry points routed one spawn. Claude Code declares two
+// HookEntries; harnesses with one are not checked.
+func TestDoctorDuplicateEntry(t *testing.T) {
+	f := newDoctorFixture(t)
+	ts := f.started.Add(-time.Hour).Format(time.RFC3339Nano)
+	writeFile(t, filepath.Join(f.home, ".downshift", "events.jsonl"), strings.Join([]string{
+		fmt.Sprintf(`{"correlation_id":"d1","timestamp":%q,"harness":"claude-code","outcome":"allow","tool_use_hash":"abc","entry":"hook"}`, ts),
+		fmt.Sprintf(`{"correlation_id":"d2","timestamp":%q,"harness":"claude-code","outcome":"allow","tool_use_hash":"abc","entry":"mod"}`, ts),
+	}, "\n")+"\n")
+	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), claudeSettings(f.bin))
+	rep := buildDoctorReport(f.env)
+	c := f.check(t, rep, "claude-code", "entry dual route")
+	wantStatus(t, c, doctorWarn)
+	if !strings.Contains(c.Detail, "routed twice") || !strings.Contains(c.Fix, "second entry") {
+		t.Fatalf("dual entry = %+v", c)
 	}
 }
 

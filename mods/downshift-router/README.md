@@ -69,15 +69,13 @@ resume / workflow pass-through, and the trace file.
 
 ## What is missing compared with the settings hook
 
-- `transcript_path` is not in the event, so the binary cannot read the parent's model from the
-  transcript tail: today a spawn without `tool_input.model` is routed with `requested_model: unknown`
-  and held (`HELD_UNCONFIDENT_UNKNOWN_*`), as observed live. The event does carry `parentModel`; the
-  mod sends it as `parent_model`, and reading it in the adapter under its inheriting-type rule is
-  phase 2 of the design doc. No Go code was changed for this prototype.
+- `transcript_path` is not in the event. The event does carry `parentModel`; the mod sends it as
+  `parent_model`, and the Claude Code adapter reads it under its inheriting-type rule (before the
+  transcript), so a mod spawn gets a known baseline without waiting on disk.
 - `session_models`, `model_metadata` and the quota marks are absent, as they are from Claude Code's
   own PreToolUse payload; the session list is inferred the same way in both paths.
-- Telemetry cannot yet tell the two entry points apart except by a duplicated `tool_use_hash`; an
-  `entry` field is proposed in the design doc.
+- The payload always carries `entry: "mod"` so the decision event, `stats` and `doctor` can tell
+  the two entry points apart; `doctor` warns when one `tool_use_hash` carries two decisions.
 
 ## Limits
 
