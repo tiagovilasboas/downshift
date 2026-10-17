@@ -379,7 +379,7 @@ Every feature must serve every harness: behaviour in shared layers, adapters onl
 
 ## Status
 
-**Beta (v0.1.0-beta.14).** The adapters ship, but the limiting factor is often harness or plan support rather than the router. As of 2026-10-15 no beta-exit pillar is closed: real spawns are verified on Claude Code (and observed on Antigravity and KiroCrew), there is no external operator yet, usage-linked cost is 5 records against the 50 the exit criteria ask for (2026-10-09 audit, not re-exported since), and the routing-quality benchmark has no new blind set. The first routed-versus-control measurement is in [the evidence](docs/evidence/subagent-routing-ab-2026-10-15.md). Exit criteria are tracked in [docs/reference/beta-exit.md](docs/reference/beta-exit.md).
+**Beta (v0.1.0-beta.14).** The adapters ship; leaving beta still depends on harness and plan proof, not only the router. Open items tracked in [docs/reference/beta-exit.md](docs/reference/beta-exit.md): **P1.6** Cursor Pro/Ultra rewrite honor still unconfirmed; **P2.3** no second external operator has shared a week of hook exports; **P3.4** five usage-linked records of the fifty required (2026-10-09 audit, not re-exported since); **P3.7** no filled same-week billing comparison against a provider dashboard; and **P4** still has no new blind classifier set of 200+ tasks never tuned against. Claude Code has an honored rewrite write-up; Antigravity and KiroCrew have limited observed proof. The first routed-versus-control list-price run is [2026-10-15 evidence](docs/evidence/subagent-routing-ab-2026-10-15.md); it is not a billing period and does not close P3.
 
 ## License
 

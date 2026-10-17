@@ -3,6 +3,7 @@
 | Symptom | Likely cause | Check |
 |---|---|---|
 | `events` "not created yet" | Hook never ran or points at a missing binary | `which downshift`; hooks block; restart the harness |
+| `doctor`: `rewrite honored: seen N of M` | Inferred honor (later spawn asked for the written model), not observed child model | `docs/guides/daily-truth.md`; observed honor: `docs/reference/harness-matrix.md` |
 | Hook runs, spawns keep the parent model | Rewrite not honored on this plan, or no session models | `docs/reference/harness-matrix.md`; `session-models.json` |
 | Stats show routing but savings are 0 | Requested model unknown, so the baseline is unrouted | `docs/reference/stats-export.md` |
 | Decisions say downshift, harness used another model | A model setting outranks the hook | Verify on the user's harness version before asserting. `downshift doctor` lists any model-override variable a harness declares (for Claude Code, `CLAUDE_CODE_SUBAGENT_MODEL`, reported by a third-party router); Downshift has not verified that it outranks a hook rewrite. |

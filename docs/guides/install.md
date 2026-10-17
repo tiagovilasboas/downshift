@@ -370,7 +370,7 @@ Register the hook in `~/.gemini/config/hooks.json`:
 }
 ```
 
-When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, inspects the prompt of the last subagent that carries one, and rewrites that subagent's `Model` (`flash_lite` for mechanical tasks, `flash` for the mid tier) through an `overwrite` envelope that is not a documented vendor field, logging the routing event to `~/.downshift/events.jsonl`.
+When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, classifies the **last** entry in `Subagents` that has a non-empty `Prompt` (not necessarily `Subagents[0]`; trailing rows without `Prompt` are skipped), and rewrites **that** subagent's `Model` (`flash_lite` for mechanical tasks, `flash` for the mid tier) through an `overwrite` envelope that is not a documented vendor field, logging the routing event to `~/.downshift/events.jsonl`.
 
 ### KiroCrew (policy mode through the native Kiro CLI hook)
 
@@ -606,9 +606,9 @@ Claude Code free runs in a sandboxed container without network egress — `go in
 |---|---|---|
 | Free | ✅ Limited | ⚠️ `updated_input.model` silently ignored (known issue) |
 | Pro (request-based / legacy) | ✅ Yes | ⚠️ `model` field in Task only accepts `"fast"` — override silently dropped |
-| Pro / Ultra (usage-based) | ✅ Yes | ⚠️ Unconfirmed: no child-model proof yet (P1.6 in the matrix) |
+| Pro / Ultra (usage-based) | ✅ Yes | ⚠️ Rewrite emitted; child model unconfirmed ([P1.6](../reference/harness-matrix.md)) |
 
-Cursor's `preToolUse` hook fires and Downshift runs, but the `model` rewrite is silently discarded on legacy and free plans. [Tracked on Cursor forum](https://forum.cursor.com/t/pretooluse-hook-updated-input-is-silently-ignored-for-the-task-tool/151985). On usage-based Pro/Ultra plans where subagent model selection is expanded, the rewrite is emitted; whether the child runs on it is unconfirmed (no child-model proof yet, P1.6 in the matrix).
+Cursor's `preToolUse` hook fires and Downshift runs, but the `model` rewrite is silently discarded on legacy and free plans. [Tracked on Cursor forum](https://forum.cursor.com/t/pretooluse-hook-updated-input-is-silently-ignored-for-the-task-tool/151985). On usage-based Pro/Ultra plans where subagent model selection is expanded, Downshift emits the rewrite; whether the harness runs the child on that model is unconfirmed (no child-model proof yet — [P1.6](../reference/harness-matrix.md), matrix row *Unconfirmed*).
 
 ### Codex
 
@@ -625,7 +625,7 @@ Downshift serves every harness above from the same core, and **Claude Code is th
 Downshift is most effective on:
 - **Claude Code Pro / Max / Teams / API** — full model routing via hook
 - **Codex** with multi_agent_v2 enabled — model + reasoning_effort emitted; honored is inferred, not observed
-- **Cursor Pro/Ultra** on usage-based plans — emitted; whether it is applied is unconfirmed
+- **Cursor Pro/Ultra** on usage-based plans — rewrite emitted; child model unconfirmed ([P1.6](../reference/harness-matrix.md))
 
 On free plans or legacy Cursor pricing, the hook runs but model rewrites may be silently ignored by the harness. The tool fails open — the subagent still spawns, just without the model change.
 
