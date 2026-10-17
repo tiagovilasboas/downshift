@@ -1,0 +1,14 @@
+{
+  "name": "downshift",
+  "description": "Downshift: deterministic subagent model router. One plugin: hooks, /downshift, and the setup, audit and cost-reducer skills.",
+  "owner": { "name": "Tiago de Carvalho Vilas Boas", "url": "https://github.com/tiagovilasboas" },
+  "plugins": [
+    {
+      "name": "downshift",
+      "source": "./",
+      "description": "Routes each Claude Code subagent to a right-sized model via PreToolUse. Requires the downshift binary (install.sh or Releases).",
+      "category": "productivity",
+      "tags": ["subagents", "cost", "routing"]
+    }
+  ]
+}

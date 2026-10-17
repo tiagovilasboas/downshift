@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code-post-tool-use" } ] }
+    ],
+    "PostToolUseFailure": [
+      { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code-post-tool-use" } ] }
+    ],
+    "SubagentStop": [
+      { "hooks": [ { "type": "command", "command": "downshift claude-code-subagent-stop" } ] }
+    ]
+  }
+}

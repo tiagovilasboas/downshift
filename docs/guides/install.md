@@ -156,17 +156,45 @@ Add the hook to `~/.claude/settings.json`:
 
 That's it. Every subagent your session spawns now runs on the right-sized model.
 
+### Plugin install (Claude Code)
+
+The same four hooks and the `/downshift` command ship as a Claude Code plugin
+whose root is this repository. It needs the `downshift` binary on PATH (step 1
+above) and replaces step 2 for Claude Code only; the other harnesses still use
+`downshift setup`.
+
+```text
+/plugin install downshift --marketplace tiagovilasboas/downshift      # Claude Code 2.1.275+
+```
+
+or in two steps, `/plugin marketplace add tiagovilasboas/downshift` then
+`/plugin install downshift@downshift`. The plugin wires `PreToolUse`,
+`PostToolUse`, `PostToolUseFailure` and `SubagentStop` from
+[`hooks/hooks.json`](../../hooks/hooks.json) (each entry only calls the binary),
+adds the `downshift-setup`, `downshift-audit` and `cost-reducer` skills, and the
+command below as `/downshift:downshift`. It does not set `opusplan`, plan mode or
+the statusline: those are settings, not hooks. Set `"model": "opusplan"` and
+`"permissions": {"defaultMode": "plan"}` in `~/.claude/settings.json` yourself
+(or `/model opusplan` in a session) if you want them; see
+[main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code).
+
+Use one channel. A plugin hook and a settings hook with the same command both
+run, so a session wired through both routes every spawn twice; `downshift
+doctor` warns when it finds both. To switch from `setup` to the plugin, run
+`downshift setup --undo` first.
+
 ### The /downshift command (Claude Code)
 
-Optional. A slash command that shows what Downshift did in the current session
-(a tree of subagents, why the last one ran where it did, pause and resume):
+Optional when installed by hand. A slash command that shows what Downshift did
+in the current session (a tree of subagents, why the last one ran where it did,
+pause and resume):
 
 ```bash
 mkdir -p ~/.claude/commands
-cp .claude/commands/downshift.md ~/.claude/commands/downshift.md   # from this repository
+cp commands/downshift.md ~/.claude/commands/downshift.md   # from this repository
 ```
 
-Inside this repository the project copy already works. Then in Claude Code:
+With the plugin it is already there as `/downshift:downshift`. Then in Claude Code:
 `/downshift`, `/downshift --why`, `/downshift --pause`, `/downshift --resume`.
 The command only runs `downshift session` through the Bash tool, which its
 `allowed-tools` line limits to that command. The same `downshift session` works

@@ -1,0 +1,10 @@
+{
+  "name": "downshift",
+  "displayName": "Downshift",
+  "description": "Right-sized models for every subagent: deterministic PreToolUse routing, session tree (/downshift), setup, audit and cost-reducer skills. Needs the downshift binary on PATH.",
+  "author": { "name": "Tiago de Carvalho Vilas Boas", "url": "https://github.com/tiagovilasboas" },
+  "homepage": "https://github.com/tiagovilasboas/downshift",
+  "repository": "https://github.com/tiagovilasboas/downshift",
+  "license": "Apache-2.0",
+  "keywords": ["subagents", "model-routing", "cost", "tokens", "hooks", "claude-code"]
+}
