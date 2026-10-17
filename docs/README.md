@@ -12,7 +12,7 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 |-----|-----|
 | **[guides/install.md](guides/install.md)** | Install binary, hooks per harness, troubleshooting (humans + agents) |
 | [design/architecture.md](design/architecture.md) | What Downshift is and how hooks flow |
-| [guides/when-to-use.md](guides/when-to-use.md) | Downshift vs gateways and direct SDK |
+| [guides/when-to-use.md](guides/when-to-use.md) | Downshift vs gateways and direct SDK; Claude Code is the primary harness |
 | [guides/config.md](guides/config.md) | State dir, env vars, project tier floor, migration |
 | [reference/beta-exit.md](reference/beta-exit.md) | Beta graduation criteria |
 | [../ROADMAP.md](../ROADMAP.md) | Public roadmap |
@@ -27,6 +27,7 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [guides/install.md](guides/install.md) | Installation and harness setup |
 | [guides/config.md](guides/config.md) | Configuration and local state |
 | [guides/when-to-use.md](guides/when-to-use.md) | When to use Downshift |
+| [guides/companions.md](guides/companions.md) | Companions: Headroom (default, detected and recorded), OmniRoute (optional gateway), patterns Downshift follows but does not bundle |
 | [guides/daily-truth.md](guides/daily-truth.md) | What Downshift does day to day (routes a subagent, not a session) |
 | [guides/quota.md](guides/quota.md) | Observed usage quota |
 | [guides/session-view.md](guides/session-view.md) | `downshift session`: subagent tree, why, pause |

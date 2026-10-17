@@ -8,6 +8,8 @@ Quando você dispara um subagente em ferramentas como **Claude Code**, **Cursor*
 
 Com o Downshift, cada subagente é direcionado para a categoria de modelo ideal para a complexidade da demanda **antes da execução começar**. O desenvolvedor continua operando normalmente, sem precisar alternar modelos manualmente na interface.
 
+Toda funcionalidade é construída nas camadas compartilhadas e calculada para todos os harnesses. **O Claude Code é o harness principal**: é onde o Downshift está mais completo (modelo da sessão inferido, hooks de uso e de fim do filho, comando `/downshift`, statusline) e mais verificado. Os demais rodam o mesmo núcleo; a [matriz de harnesses](../reference/harness-matrix.md) diz o que cada um honra hoje.
+
 O Downshift não é um chat secundário e não gera código. É um **roteador de infraestrutura**: intercepta o pedido no hook de spawn, classifica a demanda em milissegundos na CPU local, valida se a alteração é segura e, quando aplicável, reescreve o modelo do subagente de forma transparente.
 
 ---
@@ -58,6 +60,7 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 | [09 · Decisões Técnicas e Trade-offs](09-decisoes.md) | Engenharia | Racional de arquitetura, compensações técnicas e próximos passos do projeto |
 | [10 · Candidato em shadow](10-candidato-shadow.md) | Avaliação | Observar um candidato softmax sem trocar o roteamento de produção |
 | [11 · Compressor Nativo de Contexto](../design/context-optimization.md) | Otimização | Compressor determinístico em Go e sensor de telemetria passiva |
+| [12 · Companions (EN)](../guides/companions.md) | Ecossistema | Headroom como companion padrão (detectado e registrado, nunca instalado pelo Downshift), OmniRoute como gateway opcional, padrões que o Downshift segue mas não empacota |
 
 ---
 

@@ -160,7 +160,8 @@ cmd/downshift/       — binary entry point, hook runners, try subcommand,
 Context compressor, telemetry and cost commands, and the embedded-vs-user `catalog.json` rules are in
 [docs/contrib/agent-reference.md](docs/contrib/agent-reference.md). Two rules that always apply: telemetry never stores
 prompts, tasks or file paths; and "do not commit catalog.json" means the **user override** under the state dir, never the
-embedded `internal/catalog/catalog.json`.
+embedded `internal/catalog/catalog.json`. Companions (Headroom default, OmniRoute optional) are detected and documented,
+never installed or wrapped by Downshift: [docs/guides/companions.md](docs/guides/companions.md).
 
 ---
 

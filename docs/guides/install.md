@@ -550,6 +550,8 @@ Requires `[features] multi_agent_v2` and `hooks = true` in `config.toml`.
 
 ### Summary
 
+Downshift serves every harness above from the same core, and **Claude Code is the primary harness**: the most complete (inferred session model, usage and child-end hooks, `/downshift`, statusline) and the most verified. Pick it when you can choose.
+
 Downshift is most effective on:
 - **Claude Code Pro / Max / Teams / API** — full model routing via hook
 - **Codex** with multi_agent_v2 enabled — full model + reasoning_effort routing

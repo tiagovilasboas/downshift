@@ -95,3 +95,16 @@ downshift context benchmark
 | **Codex** | Nenhum hook reescreve saída de ferramenta | Não há filtro automático na sessão | Compressão só quando alguém chama o compressor |
 | **Antigravity** | Nenhum hook reescreve saída de ferramenta | Não há filtro direto na sessão | Compressão só quando alguém chama o compressor |
 | **KiroCrew** | Policy mode no spawn | O hook não reescreve a saída da ferramenta | `include_memory=false` no respawn é política de spawn, não compactação de prompt |
+
+---
+
+## 8. Providers e companions
+
+`internal/contextopt` tem dois tipos de provider. O **nativo** roda no processo e é o default (seção 1). Um **companion** (`contextopt.Companion`) é uma ferramenta externa que o usuário instala e executa; o Downshift a detecta, registra que está em uso (`Config.Companion`) e aponta para o comando dela. Nunca instala, lança, faz `wrap` ou configura (a integração RTK fazia `init` em nome do usuário e foi removida no #71).
+
+| Provider | Tipo | Detecção | `enable` persiste | O que muda no hook |
+|---|---|---|---|---|
+| `native` | in-process | sempre presente | `provider=native`, contrato de exit code | PostToolUse grava `CompressExit` em observe |
+| `headroom` | companion | `headroom` no PATH + `--version` | `companion=headroom` | nada; o proxy comprime antes da API, o hook vê a saída original |
+
+`downshift context enable` registra um companion detectado por padrão. `doctor` mostra uma linha `companion` (ok quando registrado e presente; warn com o fix quando detectado e não registrado, ou registrado e ausente). Métricas do companion ficam `unavailable`: o Headroom tem os próprios contadores (`headroom savings`) e o Downshift não os lê. Guia de uso, tabela por harness e o que mais o Downshift conhece: [guides/companions.md](../guides/companions.md).

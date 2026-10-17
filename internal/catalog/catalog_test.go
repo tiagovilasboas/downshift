@@ -838,3 +838,30 @@ func TestSavingsRatio_MissingPricesStayUnknown(t *testing.T) {
 		}
 	}
 }
+
+// --- OmniRoute (local gateway) model ids ---
+//
+// OmniRoute exposes provider-prefixed ids. Anthropic-family ids behind any
+// prefix resolve like OpenRouter ids. Non-Anthropic and combo ids stay
+// unknown: Downshift then has no baseline and leaves the spawn unchanged
+// (fail open). Documented in docs/guides/companions.md.
+
+func TestLookupByID_OmniRoutePrefixedAnthropicID(t *testing.T) {
+	c := Load()
+	m, ok := c.LookupByID("claude-code", "cc/claude-opus-4-8")
+	if !ok {
+		t.Fatal("cc/claude-opus-4-8 should match the claude-opus family after normalisation")
+	}
+	if m.Tier != core.TierFrontier {
+		t.Errorf("tier = %s, want frontier", m.Tier)
+	}
+}
+
+func TestLookupByID_OmniRouteForeignAndComboStayUnknown(t *testing.T) {
+	c := Load()
+	for _, id := range []string{"glm/glm-5.2", "kmc/kimi-k2.6", "claude/combo/custo-otimizado", "claude/glm/glm-5.2"} {
+		if _, ok := c.LookupByID("claude-code", id); ok {
+			t.Errorf("%s must stay unknown so the router fails open", id)
+		}
+	}
+}

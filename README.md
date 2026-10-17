@@ -105,7 +105,7 @@ Learned tier memory stays in **shadow**: it is recorded for review and never cha
 
 **Example:** Your session runs Claude Sonnet 5.5. You spawn 3 subagents. Downshift may route them to Haiku, Sonnet and Opus based on task complexity. Billing and token usage happen at the subagent tier, not the session.
 
-**What it is not:** an HTTP gateway or proxy (that is LiteLLM's job), a hosted model marketplace (OpenRouter), or an LLM-based classifier (Downshift uses deterministic signals + optional local MiniLM semantic scoring). It only acts on subagent spawns inside harnesses that expose a pre-tool hook. Comparison: [docs/guides/when-to-use.md](docs/guides/when-to-use.md).
+**What it is not:** an HTTP gateway or proxy (that is LiteLLM's or OmniRoute's job), a context compressor in the request path (Headroom's; Downshift's own compressor observes), a hosted model marketplace (OpenRouter), or an LLM-based classifier (Downshift uses deterministic signals + optional local MiniLM semantic scoring). It only acts on subagent spawns inside harnesses that expose a pre-tool hook. Comparison: [docs/guides/when-to-use.md](docs/guides/when-to-use.md).
 
 ## How it works
 <picture>
@@ -192,6 +192,8 @@ Measured on 2026-10-15, one operator, Claude Code, same tasks and prompts in a r
 
 ## Harness support
 
+Every feature is built in shared layers and computed for every harness ([layering rule](docs/contrib/layering.md)). **Claude Code is the primary harness**: it is where Downshift is most complete and most verified (rewrite honored with evidence, session model inferred from the current model, usage and child-end hooks, the `/downshift` command, the statusline). The other harnesses run the same core; the table and the [matrix](docs/reference/harness-matrix.md) say what each one can honor today.
+
 | Harness | Subagent tool | Mechanism | Rewrite honored (evidence) |
 |---|---|---|---|
 | **Claude Code** | `Task` / `Agent`, paid plans | `PreToolUse` → `updatedInput.model` | Yes, observed 2026-10-06 ([write-up](docs/evidence/claude-code-rewrite-honored-2026-10-06.md)) |
@@ -225,6 +227,14 @@ Downshift includes a built-in, zero-dependency **Native Context Compressor** (`d
 
 See [the context optimization guide](docs/design/context-optimization.md) for architecture, harness contracts, and failure handling policies.
 
+### Companions
+
+Routing is one lever; the others live in tools Downshift works next to, never wraps. [docs/guides/companions.md](docs/guides/companions.md) covers each one.
+
+- **Headroom (default companion).** [Headroom](https://github.com/chopratejas/headroom) is a local compression proxy (`headroom wrap claude`, `codex`, Cursor manual). When its binary is on PATH, `downshift context enable` records it and `downshift doctor` shows a `companion` row, so savings are not attributed to routing alone. Downshift never installs, launches or wraps it; `headroom wrap <tool>` is yours to run.
+- **OmniRoute (optional gateway).** Anthropic-family ids behind any `provider/` prefix route normally; other ids stay unknown and the spawn is left unchanged (fail open). Recipe and limits in the guide.
+- **Patterns, not dependencies.** Anthropic's read-only `claude-code-setup` is the contract `downshift setup --dry-run` follows; `task-observer` can collect misroutes for `misroute:` issues. Neither is bundled.
+
 ## Cost and metrics
 
 - **Silent overspend alarm.** `downshift stats` prints `Frontier decisions N (rewritten on doubt, no deterministic lift: M)` and a WARNING when M is above zero. The `SEMANTIC_BOOST` reason code and its share show when the local embedder, not a rule, raised a tier. Both are prompt-free.
@@ -238,7 +248,7 @@ See [the context optimization guide](docs/design/context-optimization.md) for ar
 
 ## Documentation
 
-[INSTALL](docs/guides/install.md) · [CONFIG](docs/guides/config.md) · [session models](docs/reference/session-models.md) · [session discovery](docs/reference/session-discovery.md) · [ARCHITECTURE](docs/design/architecture.md) · [complexity weights](docs/reference/complexity-weights.md) · [HARNESS-MATRIX](docs/reference/harness-matrix.md) · [WHEN-TO-USE](docs/guides/when-to-use.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
+[INSTALL](docs/guides/install.md) · [CONFIG](docs/guides/config.md) · [session models](docs/reference/session-models.md) · [session discovery](docs/reference/session-discovery.md) · [ARCHITECTURE](docs/design/architecture.md) · [complexity weights](docs/reference/complexity-weights.md) · [HARNESS-MATRIX](docs/reference/harness-matrix.md) · [WHEN-TO-USE](docs/guides/when-to-use.md) · [companions](docs/guides/companions.md) · [examples](examples/README.md) · [full index](docs/README.md) · [Português](docs/pt/README.md)
 
 Evidence and method: [subagent routing A/B](docs/evidence/subagent-routing-ab-2026-10-15.md) · [hardening audit](docs/evidence/hardening-audit-2026-10-15.md) · [team pilot](docs/guides/pilot.md) · [hook payload probe](docs/guides/probe.md)
 

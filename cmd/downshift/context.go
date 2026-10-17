@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -16,14 +17,31 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/benchmark"
 	"github.com/tiagovilasboas/downshift/internal/compressor"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/headroom"
 	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
 	"github.com/tiagovilasboas/downshift/internal/sensor"
 )
 
+// contextRegistry builds the registry for `downshift context`; tests swap it.
+var contextRegistry = defaultContextRegistry
+
 func defaultContextRegistry() *contextopt.Registry {
 	reg := contextopt.NewRegistry()
 	reg.Register(native.NewProvider(compressor.ModeObserve))
+	reg.Register(headroom.NewProvider())
 	return reg
+}
+
+// companions lists the registered external companions in a stable order.
+func companions(reg *contextopt.Registry) []contextopt.Provider {
+	var out []contextopt.Provider
+	for _, p := range reg.List() {
+		if contextopt.IsCompanion(p) {
+			out = append(out, p)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID() < out[j].ID() })
+	return out
 }
 
 func runContext(args []string, w, errW io.Writer) int {
@@ -32,7 +50,7 @@ func runContext(args []string, w, errW io.Writer) int {
 		return 2
 	}
 
-	reg := defaultContextRegistry()
+	reg := contextRegistry()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -74,8 +92,8 @@ Subcommands:
   status               Show current context optimization status and active provider
   providers            List supported context optimization companion providers
   doctor               Run diagnostics on context optimization providers and harnesses
-  enable [provider]    Enable context optimization provider (default: native)
-  disable              Disable context optimization and revert harness configurations
+  enable [provider]    Enable the native provider (default) or record a companion (headroom)
+  disable [companion]  Disable context optimization, or clear one companion record
   metrics              Show estimated token reduction and command metrics from active provider
   compress [mode]      Compress stdin tool output (mode: observe, safe, off)
   benchmark            Print the scenario matrix and measured compressor bytes`)
@@ -110,6 +128,17 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 			fmt.Fprintf(w, "  Binary: %s (v%s)\n", path, ver)
 		} else {
 			fmt.Fprintln(w, "  ⚠️  Configured provider binary is not found on PATH!")
+		}
+	}
+	for _, c := range companions(reg) {
+		installed, ver, _, _ := c.Detect(ctx)
+		switch {
+		case cfg.Companion == c.ID() && installed:
+			fmt.Fprintf(w, "  Companion: %s (v%s, recorded as active; wrap each harness with its own command)\n", c.ID(), ver)
+		case cfg.Companion == c.ID():
+			fmt.Fprintf(w, "  Companion: %s recorded but not on PATH (`downshift context disable %s` to clear)\n", c.ID(), c.ID())
+		case installed:
+			fmt.Fprintf(w, "  Companion available: %s v%s detected, not recorded (`downshift context enable %s`)\n", c.ID(), ver, c.ID())
 		}
 	}
 	return 0
@@ -186,6 +215,9 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	}
 
 	cwd, _ := os.Getwd()
+	if contextopt.IsCompanion(p) {
+		return enableCompanion(ctx, p, cwd, w, errW)
+	}
 	var configured []string
 	for _, h := range p.SupportedHarnesses() {
 		if h.Supported {
@@ -213,7 +245,41 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	fmt.Fprintln(w, "Exit-code contract: observe_only; nonzero_exit_preserved; hook_cannot_replace_tool_output.")
 	fmt.Fprintln(w, "Claude Code PostToolUse records CompressExit in observe mode when this flag is on, using the tool exit code.")
 	fmt.Fprintln(w, "The hook cannot replace tool output. The model still sees the original result. Prompts are not compressed.")
+	// A detected companion is recorded by default. Recording changes no hook
+	// and runs no third-party command; it only tells doctor and the docs
+	// that savings are not routing alone.
+	for _, c := range companions(reg) {
+		if installed, ver, _, _ := c.Detect(ctx); installed {
+			if err := c.Configure(ctx, cwd, ""); err != nil {
+				fmt.Fprintf(errW, "warning: recording companion %s: %v\n", c.ID(), err)
+				continue
+			}
+			fmt.Fprintf(w, "Companion %s v%s detected and recorded. Wrap each harness yourself:\n", c.ID(), ver)
+			printWrapHints(w, c)
+		}
+	}
 	return 0
+}
+
+// enableCompanion records an external companion next to the in-process
+// provider. Downshift never runs the companion's own setup.
+func enableCompanion(ctx context.Context, p contextopt.Provider, cwd string, w, errW io.Writer) int {
+	if err := p.Configure(ctx, cwd, ""); err != nil {
+		fmt.Fprintf(errW, "error: recording companion %s: %v\n", p.ID(), err)
+		return 1
+	}
+	fmt.Fprintf(w, "Companion %s recorded. The native provider stays active; hooks are unchanged.\n", p.ID())
+	fmt.Fprintln(w, "Downshift does not launch or configure it. Wrap each harness yourself:")
+	printWrapHints(w, p)
+	return 0
+}
+
+func printWrapHints(w io.Writer, p contextopt.Provider) {
+	for _, h := range p.SupportedHarnesses() {
+		if h.Supported {
+			fmt.Fprintf(w, "  %-12s %s\n", h.HarnessID, h.Notes)
+		}
+	}
 }
 
 func runContextDisable(ctx context.Context, reg *contextopt.Registry, args []string, w, errW io.Writer) int {
@@ -222,20 +288,37 @@ func runContextDisable(ctx context.Context, reg *contextopt.Registry, args []str
 		fmt.Fprintf(errW, "error: loading config: %v\n", err)
 		return 1
 	}
-	if !cfg.Enabled {
+	cwd, _ := os.Getwd()
+	if len(args) > 0 {
+		p, ok := reg.Get(args[0])
+		if !ok || !contextopt.IsCompanion(p) {
+			fmt.Fprintf(errW, "error: %q is not a registered companion. Run `downshift context providers`\n", args[0])
+			return 2
+		}
+		if err := p.Disable(ctx, cwd, ""); err != nil {
+			fmt.Fprintf(errW, "error: clearing companion %s: %v\n", p.ID(), err)
+			return 1
+		}
+		fmt.Fprintf(w, "✓ Companion %s cleared. Unwrap your harness with its own command if it is still wrapped.\n", p.ID())
+		return 0
+	}
+	if !cfg.Enabled && cfg.Companion == "" {
 		fmt.Fprintln(w, "Context optimization is already disabled.")
 		return 0
 	}
 
-	cwd, _ := os.Getwd()
 	if p, ok := reg.Get(cfg.Provider); ok {
 		for _, h := range cfg.ActiveHarness {
 			_ = p.Disable(ctx, cwd, h)
 		}
 	}
+	if c, ok := reg.Get(cfg.Companion); ok {
+		_ = c.Disable(ctx, cwd, "")
+	}
 
 	cfg.Enabled = false
 	cfg.Provider = ""
+	cfg.Companion = ""
 	cfg.ActiveHarness = nil
 	if err := contextopt.SaveConfig(cfg); err != nil {
 		fmt.Fprintf(errW, "error: saving config: %v\n", err)

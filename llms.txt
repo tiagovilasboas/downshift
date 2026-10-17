@@ -22,6 +22,9 @@ Assisted setup for AI agents (ask the user before any write outside the repo):
   4. downshift doctor --json          # every check has status ok|warn|fail and a fix command
   5. ask the user to open a new harness session; `downshift session` shows the subagent tree
 Contributing / architecture for this repo: AGENTS.md and CONTRIBUTING.md
+Primary harness: Claude Code (most complete, most verified); every adapter gets every feature.
+Companions (Headroom default, detected and recorded, never installed by Downshift;
+OmniRoute optional gateway): docs/guides/companions.md
 
 ## Licence
 

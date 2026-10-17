@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/headroom"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/semantic/e5shadow"
@@ -29,15 +31,20 @@ type doctorEnv struct {
 	Home       string
 	Executable func() (string, error)
 	LookPath   func(string) (string, error)
-	Now        func() time.Time
-	Getenv     func(string) string
-	Cat        *catalog.Catalog
-	Verbose    bool
+	// Run executes a detected companion binary (version probe). Nil skips the probe.
+	Run     func(ctx context.Context, name string, args ...string) ([]byte, error)
+	Now     func() time.Time
+	Getenv  func(string) string
+	Cat     *catalog.Catalog
+	Verbose bool
 }
 
 func defaultDoctorEnv(cat *catalog.Catalog) doctorEnv {
 	home, _ := os.UserHomeDir()
 	return doctorEnv{Home: home, Executable: os.Executable, LookPath: exec.LookPath,
+		Run: func(ctx context.Context, name string, args ...string) ([]byte, error) {
+			return exec.CommandContext(ctx, name, args...).Output()
+		},
 		Now: time.Now, Getenv: os.Getenv, Cat: cat}
 }
 
@@ -361,6 +368,7 @@ func checkContext(rep *doctorReport, env doctorEnv) {
 	} else {
 		rep.add(doctorCheck{ID: "context optim.", Status: doctorOK, Detail: "disabled (enable with `downshift context enable`)"})
 	}
+	checkCompanion(rep, env, optCfg)
 	if env.Verbose {
 		cmd := env.Getenv("DOWNSHIFT_MINILM_EMBED")
 		if cmd != "" && cmd != "hash" {
@@ -368,6 +376,33 @@ func checkContext(rep *doctorReport, env doctorEnv) {
 		} else {
 			rep.add(doctorCheck{ID: "semantic boost", Status: doctorOK, Detail: "in-process hash embedder (default, zero-dependency)"})
 		}
+	}
+}
+
+// checkCompanion reports the Headroom companion: recorded and present is ok;
+// recorded but missing, or present but not recorded, is a warn with the exact
+// fix. Absent and not recorded prints only in verbose: it is optional.
+func checkCompanion(rep *doctorReport, env doctorEnv, optCfg contextopt.Config) {
+	hp := &headroom.Provider{LookPath: env.LookPath, CommandRunner: env.Run}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	installed, ver, _, err := hp.Detect(ctx)
+	recorded := optCfg.Companion == headroom.ProviderID
+	label := headroom.ProviderID
+	if ver != "" {
+		label += " v" + ver
+	}
+	switch {
+	case err != nil:
+		rep.add(doctorCheck{ID: "companion", Status: doctorWarn, Detail: err.Error(), Fix: "reinstall: " + headroom.InstallHint})
+	case recorded && installed:
+		rep.add(doctorCheck{ID: "companion", Status: doctorOK, Detail: label + " recorded; wrap each harness with `headroom wrap <tool>` (Downshift cannot see whether a session is wrapped)"})
+	case recorded:
+		rep.add(doctorCheck{ID: "companion", Status: doctorWarn, Detail: "headroom recorded but not on PATH", Fix: "downshift context disable headroom"})
+	case installed:
+		rep.add(doctorCheck{ID: "companion", Status: doctorWarn, Detail: label + " detected, not recorded (savings would be attributed to routing alone)", Fix: "downshift context enable headroom"})
+	case env.Verbose:
+		rep.add(doctorCheck{ID: "companion", Status: doctorOK, Detail: "none (optional: Headroom, docs/guides/companions.md)"})
 	}
 }
 

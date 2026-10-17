@@ -30,7 +30,9 @@ wc -c CLAUDE.md AGENTS.md GEMINI.md .claude/rules/* .cursor/rules/* .kiro/steeri
   ~/.claude/CLAUDE.md ~/.codex/AGENTS.md 2>/dev/null | sort -rn
 ```
 
-Add the skill descriptions (the `description:` line of each `SKILL.md`). Estimate tokens as bytes / 4 and say it is an estimate. For each large always-loaded file, ask whether it applies to every project. Content for one domain belongs in a manual or file-matched rule.
+Add the skill descriptions (the `description:` line of each `SKILL.md`). Estimate tokens as bytes / 4 and say it is an estimate. Rules added by portable compression skills (for example `headroom-skill` in `CLAUDE.md` or `AGENTS.md`) count here too.
+
+Companion compressor: if `command -v headroom` finds a binary, report it and whether `downshift context status` records it (`Companion:` line). With a companion active, savings in `downshift stats` are routing only; compression numbers come from the companion's own counters. Details: `docs/guides/companions.md`. For each large always-loaded file, ask whether it applies to every project. Content for one domain belongs in a manual or file-matched rule.
 
 ## 4. Report
 

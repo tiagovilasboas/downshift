@@ -5,6 +5,12 @@
 // context optimization providers (e.g. native, external companions).
 // Downshift remains strictly responsible for model routing and agent orchestration.
 // Optimization providers handle tool-output or context compression.
+//
+// Two kinds of provider exist. The native provider is in-process and is the
+// built-in default. A companion is an external tool the user installs and
+// runs (for example a compression proxy); Downshift detects it, records that
+// it is in use and points to its own commands, but never installs, launches
+// or configures it on the user's behalf.
 package contextopt
 
 import (
@@ -73,8 +79,13 @@ type Metrics struct {
 
 // Config represents the persisted context optimization settings in Downshift.
 type Config struct {
-	Enabled       bool     `json:"enabled"`
-	Provider      string   `json:"provider"` // e.g. "native"
+	Enabled  bool   `json:"enabled"`
+	Provider string `json:"provider"` // e.g. "native"
+	// Companion is the id of an external companion the user enabled next to
+	// the provider (for example "headroom"). It is bookkeeping: the hooks do
+	// not change behaviour, and the native observe record stays on. Empty
+	// means none.
+	Companion     string   `json:"companion,omitempty"`
 	ActiveHarness []string `json:"active_harnesses,omitempty"`
 	Scope         struct {
 		MainAgent     bool `json:"main_agent"`
@@ -96,6 +107,20 @@ type Config struct {
 
 // ExitCodeContractObserve is the rule Configure persists for the native provider.
 const ExitCodeContractObserve = "observe_only;nonzero_exit_preserved;hook_cannot_replace_tool_output"
+
+// Companion marks a provider that runs outside the Downshift process and is
+// enabled next to the in-process provider rather than instead of it.
+// Configure for a companion persists Config.Companion only.
+type Companion interface {
+	Provider
+	IsCompanion() bool
+}
+
+// IsCompanion reports whether p is an external companion.
+func IsCompanion(p Provider) bool {
+	c, ok := p.(Companion)
+	return ok && c.IsCompanion()
+}
 
 // Provider defines the contract that any context optimization companion must implement.
 type Provider interface {

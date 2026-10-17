@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Companions: `internal/contextopt` distinguishes the in-process native provider from external companions (`contextopt.Companion`, `Config.Companion`). Headroom is the default companion: `downshift context enable` records it when the `headroom` binary is on PATH, `context enable headroom` / `context disable headroom` manage the record, `context status` shows it, and `downshift doctor` prints a `companion` row (warn with the exact fix when detected but not recorded, or recorded but missing). Downshift never installs, launches, wraps or configures the companion, and hooks are unchanged; its metrics stay `unavailable`. Guide: `docs/guides/companions.md`.
+- OmniRoute ids: tests pin that an Anthropic-family id behind any `provider/` prefix (`cc/claude-opus-4-8`) resolves, and that non-Anthropic or combo ids (`glm/glm-5.2`, `claude/combo/...`) stay unknown so the spawn is left unchanged.
+- Docs: Claude Code is named the primary harness (most complete, most verified) in the README, `when-to-use.md`, `install.md` and the Portuguese README; every harness with an adapter still gets every feature. `when-to-use.md` gains OmniRoute and Headroom rows; `context-optimization.md` gains a providers-and-companions section.
+
 ### Fixed
 
 - Multilingual eval (M3): **unsafe confident recommendations are 0** on the frozen 170-row set after mixed English-helper language guard, bounded delegation risk abstention, and narrow parallel high-stakes patterns; legacy benchmark `cls-after` splits unchanged locally.
