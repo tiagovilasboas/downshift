@@ -1,0 +1,22 @@
+# Misroute triage
+
+A misroute is a decision the user would not have made: a child that failed because its
+model was too small, or a trivial task that kept the frontier model. Fixing them is how
+the deterministic classifier improves; nothing is learned from raw usage.
+
+## Collect, without the prompt leaving the machine
+
+1. `downshift session --why` (or `/downshift --why`): the tier, the reason codes and the
+   guardrail that held or moved the spawn.
+2. `downshift try "<task>" <harness>`: reproduce the decision from the terminal.
+3. `downshift feedback <id> failed|retry|success`: record the outcome on the decision id
+   that the hook printed. `success` never creates a tier label.
+
+## Report
+
+Open an issue titled `misroute: <short description>` with the redacted prompt, the
+`downshift try` output and the expected class, as in `CONTRIBUTING.md`. Accepted misroutes
+become test cases in `classifier_edge_test.go`.
+
+If the user runs a session-observer skill (for example `task-observer`), its recorded
+corrections are a good source for this list; copy the decision evidence, not the task text.
