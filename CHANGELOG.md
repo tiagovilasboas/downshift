@@ -12,10 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Claude Code mod path (phase 2a): the adapter reads optional `parent_model` as the baseline for inheriting agent types before the transcript; the shared runner records `entry` (`hook` or `mod`) on every decision; `HarnessCapabilities.HookEntries` lists both paths for Claude Code; `stats` counts by entry and `doctor` warns when one `tool_use_hash` carries two decisions. The opt-in `downshift-router` mod always sends `entry: "mod"`. Design: `docs/design/mod-router.md`.
+- Claude Code mod path (phase 2b, partial): `downshift-router` listens for `turn.complete` on subagent loops, accumulates API usage per `agentId`, and when the agent is terminal flushes totals through `downshift end claude-code` with inline `usage` (no child transcript). The Claude Code `ParseChildEnd` / SubagentStop parser prefers inline usage over a transcript path; recorder dedup still prices each agent once. `turn.step` effort steering remains open. Design: `docs/design/mod-router.md`.
 
 ### Experimental
 
-- `mods/downshift-router/`: a standalone, opt-in Claude Code mod (2.1.287+) that routes a subagent's model from the in-process `agent.spawn` event by running `downshift claude-code` over the existing stdin contract and returning `next({ ...e, model })`; off unless `userConfig.enabled` or `DOWNSHIFT_MOD_ROUTER=1`, fails open, never denies, not loaded by the root plugin. Design, the quoted `agent.spawn` fields and two live runs showing that the settings `PreToolUse` hook fires first and that both paths route each spawn when both are installed: `docs/design/mod-router.md`.
+- `mods/downshift-router/`: a standalone, opt-in Claude Code mod (2.1.287+) that routes a subagent's model from the in-process `agent.spawn` event by running `downshift claude-code` over the existing stdin contract and returning `next({ ...e, model })`; off unless `userConfig.enabled` or `DOWNSHIFT_MOD_ROUTER=1`, fails open, never denies, not loaded by the root plugin. Phase 2b also prices finished subagents from `turn.complete` usage via `downshift end claude-code`. Design, the quoted `agent.spawn` fields and two live runs showing that the settings `PreToolUse` hook fires first and that both paths route each spawn when both are installed: `docs/design/mod-router.md`.
 
 ### Security
 

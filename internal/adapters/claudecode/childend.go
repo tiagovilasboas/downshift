@@ -12,9 +12,10 @@ import (
 
 // ParseChildEnd is Claude Code's side of the shared child-end contract. It
 // reads a PostToolUse or PostToolUseFailure payload (a spawn launch or end)
-// or a SubagentStop payload (the end, with the subagent's own transcript).
-// Parsing only: records, pricing and the child-end line are the shared
-// recorder's job (internal/childend).
+// or a SubagentStop payload (the end: inline usage from the mod's
+// turn.complete path, or the subagent's own transcript). Parsing only:
+// records, pricing and the child-end line are the shared recorder's job
+// (internal/childend).
 func ParseChildEnd(raw []byte) (hookport.ChildEnd, bool) {
 	var payload map[string]any
 	if json.Unmarshal(raw, &payload) != nil {

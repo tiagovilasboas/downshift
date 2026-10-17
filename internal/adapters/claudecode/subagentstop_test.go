@@ -130,6 +130,66 @@ func TestSubagentStop_PricesFromTranscriptAndLinksToTheDecision(t *testing.T) {
 	}
 }
 
+// Inline usage (mod turn.complete → end claude-code) prices without a transcript.
+func TestSubagentStop_PricesFromInlineUsage(t *testing.T) {
+	log, small, frontier, res := stopSetup(t)
+	seedLaunch(t, log, small, frontier, res)
+
+	raw, _ := json.Marshal(map[string]any{
+		"hook_event_name": "SubagentStop",
+		"session_id":      "sess-stop",
+		"agent_id":        stopAgent,
+		"model":           small + "-20251001",
+		"usage": map[string]any{
+			"input_tokens":                20,
+			"output_tokens":               240,
+			"cache_creation_input_tokens": 100,
+			"cache_read_input_tokens":     200,
+		},
+	})
+	note := claudecode.HandleSubagentStop(raw, "test", res)
+	if !strings.Contains(note, "linked") {
+		t.Fatalf("note = %q, want a linked decision", note)
+	}
+	got := usageEvents(t)
+	if len(got) != 1 {
+		t.Fatalf("usage events = %d, want 1", len(got))
+	}
+	ev := got[0]
+	if ev.InputTokens == nil || *ev.InputTokens != 20 || ev.OutputTokens == nil || *ev.OutputTokens != 240 {
+		t.Fatalf("tokens in=%v out=%v, want 20/240", ev.InputTokens, ev.OutputTokens)
+	}
+	if ev.CachedTokens == nil || *ev.CachedTokens != 300 {
+		t.Fatalf("cached = %v, want 300", ev.CachedTokens)
+	}
+	if ev.LinkedDecision != "decision-1" {
+		t.Fatalf("link = %q", ev.LinkedDecision)
+	}
+}
+
+// Inline usage wins over a transcript path when both are present.
+func TestSubagentStop_InlineUsageBeatsTranscript(t *testing.T) {
+	_, small, _, res := stopSetup(t)
+	path := writeTranscript(t, small)
+	raw, _ := json.Marshal(map[string]any{
+		"hook_event_name":        "SubagentStop",
+		"agent_id":               stopAgent,
+		"agent_transcript_path":  path,
+		"model":                  "inline-model",
+		"usage": map[string]any{
+			"input_tokens": 7, "output_tokens": 3,
+		},
+	})
+	claudecode.HandleSubagentStop(raw, "test", res)
+	got := usageEvents(t)
+	if len(got) != 1 {
+		t.Fatalf("usage events = %d, want 1", len(got))
+	}
+	if got[0].InputTokens == nil || *got[0].InputTokens != 7 {
+		t.Fatalf("want inline 7 input tokens, got %+v", got[0].InputTokens)
+	}
+}
+
 func TestSubagentStop_IsIdempotent(t *testing.T) {
 	log, small, frontier, res := stopSetup(t)
 	seedLaunch(t, log, small, frontier, res)

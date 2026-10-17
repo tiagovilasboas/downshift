@@ -97,14 +97,40 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 
 // parseSubagentStop turns a SubagentStop payload into a ChildEnd: the agent id
 // (hashed by the recorder) joins the usage to the "resolved" observation made at
-// launch, and through it to the routing decision. The usage and the model come
-// from the subagent's own transcript, because the PostToolUse payload of an
-// async launch carries no tokens. ok is false when the payload has no agent id
-// or a readable .jsonl transcript with usage.
+// launch, and through it to the routing decision.
+//
+// Tokens come from, in order: (1) an inline `usage` object (the mod-router's
+// turn.complete path, which already holds API counts and needs no transcript),
+// or (2) the subagent's .jsonl transcript on disk (the settings SubagentStop
+// path). Source stays SourceTranscript in both cases: a stop only prices usage
+// and does not claim how the child ended. ok is false when there is no agent
+// id or no usable tokens.
 func parseSubagentStop(payload map[string]any) (hookport.ChildEnd, bool) {
 	agent := stringFieldAny(payload, "agent_id", "agentId")
+	if agent == "" {
+		return hookport.ChildEnd{}, false
+	}
+	session := stringFieldAny(payload, "session_id", "sessionId")
+
+	if inline := telemetry.TokenUsageFromPayload(payload); inline != (telemetry.TokenUsage{}) {
+		usage := inline
+		model := stringFieldAny(payload, "model", "model_id")
+		if nested, ok := payload["usage"].(map[string]any); ok && model == "" {
+			model = stringFieldAny(nested, "model")
+		}
+		return hookport.ChildEnd{
+			Harness:   harnessID,
+			AgentKey:  agent,
+			SessionID: session,
+			Model:     model,
+			Usage:     &usage,
+			Source:    hookport.SourceTranscript,
+			IsChild:   true,
+		}, true
+	}
+
 	path := stringFieldAny(payload, "agent_transcript_path")
-	if agent == "" || path == "" || !strings.HasSuffix(path, ".jsonl") {
+	if path == "" || !strings.HasSuffix(path, ".jsonl") {
 		return hookport.ChildEnd{}, false
 	}
 	got, ok := readSubagentUsage(path)
@@ -115,7 +141,7 @@ func parseSubagentStop(payload map[string]any) (hookport.ChildEnd, bool) {
 	return hookport.ChildEnd{
 		Harness:      harnessID,
 		AgentKey:     agent,
-		SessionID:    stringFieldAny(payload, "session_id", "sessionId"),
+		SessionID:    session,
 		Model:        got.Model,
 		Usage:        &usage,
 		Source:       hookport.SourceTranscript,
