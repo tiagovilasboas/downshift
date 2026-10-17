@@ -7,6 +7,8 @@ Canonical guide for humans and coding agents installing Downshift on a user mach
 
 **Related:** [config.md](config.md) · [session-models.md](../reference/session-models.md) · [harness-matrix.md](../reference/harness-matrix.md) · [examples/README.md](../../examples/README.md) · [Portuguese guides](../pt/README.md)
 
+**Harness status:** Claude Code is Completed; Codex and Cursor are Functional; Antigravity and KiroCrew are Experimental (see [Experimental harnesses](#experimental-harnesses)). The sections below follow that order. Definitions and evidence: [harness-matrix.md](../reference/harness-matrix.md#status-per-harness).
+
 ## Health check
 
 After install:
@@ -53,7 +55,7 @@ downshift setup --dry-run   # prints the diff for each harness found; writes not
 downshift setup             # asks first, backs up the files, then merges the hooks
 ```
 
-For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) and `"autoCompactWindow": 400000` (earlier auto-compact on 1M-context models, no effect on 200k ones) for keys you have not set; existing values are kept, and `--no-session-policy` skips all three ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
+For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) and `"autoCompactWindow": 400000` (earlier auto-compact on 1M-context models, no effect on 200k ones) for keys you have not set; existing values are kept, and `--no-session-policy` skips all three ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew (Experimental) needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
 
 **Step 3 — Check the classifier** on your own prompts:
 ```bash
@@ -121,6 +123,8 @@ See [examples/](../../examples/README.md) for sample payloads. `claude-code-pret
 
 ---
 ## Install (Claude Code)
+
+**Status: Completed.** Rewrite observed honored, usage and child end recorded, plugin and session policy ([evidence](../evidence/claude-code-rewrite-honored-2026-10-06.md), [billing audit](../evidence/billing-gap-audit.md)).
 
 Build or install the single binary (no runtime, no dependencies):
 
@@ -218,6 +222,8 @@ in a terminal for any harness. See [session-view.md](session-view.md).
 
 ## Install (Cursor)
 
+**Status: Functional.** The rewrite is emitted on a real spawn; the harness applying it is unconfirmed, and it is discarded on Free and legacy Pro plans ([evidence](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](../evidence/cursor-gap-diagnostic.md)).
+
 Cursor's hook protocol mirrors Claude Code's — same `preToolUse` interception,
 `updated_input` to rewrite the subagent's model. Build the binary, then add the
 hook to `.cursor/hooks.json` (project level) or `~/.cursor/hooks.json` (global):
@@ -236,22 +242,9 @@ hook to `.cursor/hooks.json` (project level) or `~/.cursor/hooks.json` (global):
 The `matcher: "Task"` scopes the hook to subagent spawns only. Cursor watches
 the config and reloads it on save.
 
-## Session allowlist
-
-Downshift writes a model id only when that id is in the current session. The catalog supplies tier, cost, family, and effort for ids that are also in the session. It never adds an id the session does not have. If the session list cannot be determined, the hook leaves the current model unchanged.
-
-Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift validates and hashes that ID before recording it, so local routing decisions can be grouped without persisting the raw session identifier. Record selectable model ids in `~/.downshift/session-models.json` (legacy: `~/.harness-downshift/`). A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. The one exception is Claude Code: with no list from any source it infers the session from the current model (the catalog tier ladder below it, ending at that model), so it can downshift but never upshift past what the session already runs; `DOWNSHIFT_INFER_SESSION=off` disables this. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. Details and evidence: [session-models.md](../reference/session-models.md). [session-models.example.json](../examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
-
-For Cursor quota, the hook can read a complete native export named by
-`DOWNSHIFT_CURSOR_NATIVE_FILE` offline before the canonical quota cache. A
-malformed or stale configured export holds routing. The external experimental
-extension was tested on Cursor 3.24.9 and could not access the built-in-only
-`cursor` API, even with an explicit proposed-API flag; no export was produced.
-Installing that extension does not currently enable collection on that build.
-See [the runtime diagnostic](../evidence/cursor-gap-diagnostic.md). Provider
-membership remains authoritative; do not replace it with a fixed model list.
-
 ## Install (Codex)
+
+**Status: Functional.** The rewrite is emitted on a real spawn; the harness applying it is inferred, not observed ([evidence](../evidence/codex-rewrite-honored-2026-10-02.md)).
 
 Codex spawns subagents through a reserved `spawn_agent` tool under
 `multi_agent_v2`. You can't put a model on the provider-visible call, but a
@@ -329,7 +322,28 @@ allowlist.
 > the reserved fields and fails open, but pin the exact Codex build you deploy
 > and keep an acceptance test on a real spawn.
 
-## Antigravity (Google DeepMind)
+## Session allowlist
+
+Downshift writes a model id only when that id is in the current session. The catalog supplies tier, cost, family, and effort for ids that are also in the session. It never adds an id the session does not have. If the session list cannot be determined, the hook leaves the current model unchanged.
+
+Cursor, Claude Code, and Codex hooks send the active model, not the full picker list. Codex also sends a session ID; Downshift validates and hashes that ID before recording it, so local routing decisions can be grouped without persisting the raw session identifier. Record selectable model ids in `~/.downshift/session-models.json` (legacy: `~/.harness-downshift/`). A top-level harness list is a fallback; an exact `sessions.<harness>.<session_id>` list takes precedence. Lists are operator-curated: Downshift does not query the Codex model picker or infer account entitlement. The one exception is Claude Code: with no list from any source it infers the session from the current model (the catalog tier ladder below it, ending at that model), so it can downshift but never upshift past what the session already runs; `DOWNSHIFT_INFER_SESSION=off` disables this. If a hook payload includes `session_models` or `available_models`, that list is used and the file is skipped. Details and evidence: [session-models.md](../reference/session-models.md). [session-models.example.json](../examples/session-models.example.json) is one Cursor session from 2026-09-27. It is an example, not the default for every user.
+
+For Cursor quota, the hook can read a complete native export named by
+`DOWNSHIFT_CURSOR_NATIVE_FILE` offline before the canonical quota cache. A
+malformed or stale configured export holds routing. The external experimental
+extension was tested on Cursor 3.24.9 and could not access the built-in-only
+`cursor` API, even with an explicit proposed-API flag; no export was produced.
+Installing that extension does not currently enable collection on that build.
+See [the runtime diagnostic](../evidence/cursor-gap-diagnostic.md). Provider
+membership remains authoritative; do not replace it with a fixed model list.
+
+## Experimental harnesses
+
+> **Experimental (proof of concept).** KiroCrew runs in policy mode only (block and retry, no in-place rewrite) and Antigravity's rewrite rides an `overwrite` envelope that is not a documented vendor field; each has one observed child on one build and neither records a child end. Every feature is still computed for them (layering rule, `cmd/downshift/conformance_test.go`), and the adapters, tests and hooks stay in the repository, but treat them as proofs of concept, not as supported installs. Install them only if you accept that.
+
+### Antigravity (Google DeepMind)
+
+**Status: Experimental.** One observed child on desktop 2.21.1 ([evidence](../evidence/antigravity-executor-ack.md)); no child end recorded.
 
 Antigravity executes subagents via `invoke_subagent` and supports arguments modification in its `PreToolUse` hook protocol via `overwrite`.
 
@@ -348,7 +362,9 @@ Register the hook in `~/.gemini/config/hooks.json`:
 
 When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, inspects the prompt of the last subagent that carries one, and rewrites that subagent's `Model` (`flash_lite` for mechanical tasks, `flash` for the mid tier) through an `overwrite` envelope that is not a documented vendor field, logging the routing event to `~/.downshift/events.jsonl`.
 
-## KiroCrew (policy mode through the native Kiro CLI hook)
+### KiroCrew (policy mode through the native Kiro CLI hook)
+
+**Status: Experimental.** Block and retry observed once on Kiro CLI 2.29.0; no in-place rewrite ([evidence](../evidence/kirocrew-native-hook-2026-10-10.md)).
 
 For Kiro CLI 2.29, register Downshift through KiroCrew's persistent
 `agent.kiro_hooks` configuration. KiroCrew generates the agent spec consumed
@@ -370,7 +386,7 @@ those calls are outside routing coverage. Downshift never infers the child
 model from the parent's model or a UI title. The classifier is deterministic;
 the agent must retry a blocked spawn with the recommended model.
 
-### Setup
+#### Setup
 
 > **Important — two hook paths exist.** `~/.kiro/agents/kirocrew.json` is
 > **generated** by KiroCrew and overwritten on every restart; edits there are
@@ -400,7 +416,7 @@ the agent must retry a blocked spawn with the recommended model.
          "preToolUse": [
            {
              "matcher": "*",
-             "command": "/absolute/path/to/harness-downshift/scripts/kirocrew-pre-tool-use.sh"
+             "command": "/absolute/path/to/downshift/scripts/kirocrew-pre-tool-use.sh"
            }
          ]
        }
@@ -434,7 +450,7 @@ after the tool starts, and their exit code does not block that path. A growing
 `run_count` proves invocation only. Do not use that registration as policy
 enforcement or keep an informational duplicate of the native policy hook.
 
-### Acceptance evidence and coverage
+#### Acceptance evidence and coverage
 
 The linked instructions are the **guia inferencial** for the **behaviour**
 eixo. The native pre-tool policy hook is the **sensor computacional** for that

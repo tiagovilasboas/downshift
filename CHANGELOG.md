@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - KiroCrew: the policy-mode runner now sets the project directory, so `.downshift/policy.json` floors apply there too.
 - `setup`: with the Claude Code plugin enabled, no hooks are written to the settings file (session policy and statusline still are); `doctor` and the install guide describe the one-channel rule. The transcript reader checks the file type before opening it, so a FIFO cannot block a hook.
 
+### Changed
+
+- Harness status in public docs follows three words (owner decision 2026-10-17): Claude Code is **Completed** (rewrite observed honored, usage and child ends recorded, plugin and session policy), Codex and Cursor are **Functional** (rewrite emitted on real spawns and the conformance suite passes; honoring inferred on Codex, unconfirmed on Cursor), KiroCrew and Antigravity are **Experimental** (policy mode or one observed child; proof of concept) and move out of the first screen into an "Experimental harnesses" section of the README and the install guide. Adapters, tests and examples are unchanged: every feature is still computed for every harness.
+
 ### Evaluated
 
 - Multilingual E5 (ONNX INT8) as an opt-in routing candidate: baseline of the current classifier measured and reproducible on M3 (170 items: 34.1% tier accuracy, 19.4% confident coverage, 0 unsafe confident, warm p95 3.2 ms) and the five legacy splits (match the previous labs baseline item by item); the E5 weights are unreachable from the evaluation environment, so accuracy and coverage gains stay unproven; an architecture-identical ONNX graph shows a warm INT8 session at 11 to 70 ms p95 but the fresh-process helper at about 1 s p50 cold, so the latency gate reads BLOCK as wired; three plumbing defects recorded (no `E5_BOOST` reason code, fuse-on can end below fuse-off, embed cache keyed on the raw command). Decision: `DOWNSHIFT_E5_FUSE` stays off, E5 stays a shadow candidate; owner runbook `downshift-labs/scripts/e5_eval.sh`. Evidence: `docs/evidence/e5-int8-evaluation-2026-10-17.md`.

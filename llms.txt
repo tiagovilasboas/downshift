@@ -33,6 +33,8 @@ Assisted setup for AI agents (ask the user before any write outside the repo):
   5. ask the user to open a new harness session; `downshift session` shows the subagent tree
 Contributing / architecture for this repo: AGENTS.md and CONTRIBUTING.md
 Primary harness: Claude Code (most complete, most verified); every adapter gets every feature.
+Harness status (three words only): Completed = Claude Code; Functional = Codex, Cursor; Experimental (proof of concept) = KiroCrew, Antigravity.
+Evidence per harness: docs/reference/harness-matrix.md
 Companions (Headroom default, detected and recorded, never installed by Downshift;
 OmniRoute optional gateway): docs/guides/companions.md
 

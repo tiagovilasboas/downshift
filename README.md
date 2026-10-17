@@ -21,7 +21,7 @@ Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/d
 
 ## What it is
 
-Coding agents spend most of their money where you are not looking: when the main agent delegates. A subagent inherits the session's most capable model by default, so a rename, a test run or a file listing is billed at frontier price, and a session that delegates a lot multiplies that. Downshift is a single Go binary that sits in the hooks of your coding harness and optimizes that delegated execution: it picks a right-sized model and effort for each subagent, holds back whenever it is not sure, records what each child cost and how it ended, and gives you the tools to measure whether it paid off. **Claude Code is the primary harness** (most complete, most verified); Cursor, Codex, Antigravity and KiroCrew run the same core with the limits in the [matrix](docs/reference/harness-matrix.md).
+Coding agents spend most of their money where you are not looking: when the main agent delegates. A subagent inherits the session's most capable model by default, so a rename, a test run or a file listing is billed at frontier price, and a session that delegates a lot multiplies that. Downshift is a single Go binary that sits in the hooks of your coding harness and optimizes that delegated execution: it picks a right-sized model and effort for each subagent, holds back whenever it is not sure, records what each child cost and how it ended, and gives you the tools to measure whether it paid off. **Claude Code is the primary harness** (status: Completed; most complete, most verified). Codex and Cursor are Functional; the remaining adapters are Experimental. All of them run the same core, with the limits in the [matrix](docs/reference/harness-matrix.md) and the tiers under [Harness support](#harness-support).
 
 Model routing is the main lever today, not the whole product. The metric that matters is **cost per task completed with acceptable quality**; tokens are a proxy. Everything is deterministic (no LLM in the routing loop), prompt-free (task text never leaves memory or reaches a log), and fail-open (any doubt or error leaves the spawn exactly as the harness asked).
 
@@ -29,7 +29,7 @@ Model routing is the main lever today, not the whole product. The metric that ma
 
 | Capability | Status | Where to read |
 |---|---|---|
-| **Right-size each subagent.** Classify the task, pick small / mid / frontier and a reasoning effort, rewrite only that subagent's model from the session's own list. | Implemented. Rewrite observed honored on Claude Code (2026-10-06) and Antigravity (2026-10-09); inferred on Codex; unconfirmed on Cursor; KiroCrew blocks and asks for a respawn instead of rewriting. | [How it works](#how-it-works) · [harness matrix](docs/reference/harness-matrix.md) |
+| **Right-size each subagent.** Classify the task, pick small / mid / frontier and a reasoning effort, rewrite only that subagent's model from the session's own list. | Implemented. Rewrite observed honored on Claude Code (2026-10-06); inferred on Codex; unconfirmed on Cursor. The two Experimental harnesses are listed under [Harness support](#harness-support). | [How it works](#how-it-works) · [harness matrix](docs/reference/harness-matrix.md) |
 | **Conservative under doubt.** Unconfident upshifts and unconfident frontier picks are held; a guessed baseline downshifts only to the small tier; unsupported languages and risky wording clear confidence. | Implemented, with invariant tests (R1 to R9). | [architecture](docs/design/architecture.md) · [complexity weights](docs/reference/complexity-weights.md) |
 | **Guardrails for risky work.** Secrets, payments, auth, destructive operations keep a floor; a project can require a minimum tier in `.downshift/policy.json`. | Implemented, every harness. | [config](docs/guides/config.md#project-tier-floor-optional) |
 | **See every decision.** A stderr line per routed spawn, a statusline, `downshift session --tree` or `/downshift`, `downshift watch`, `downshift doctor` with a fix per failure. | Implemented. | [session view](docs/guides/session-view.md) |
@@ -235,18 +235,24 @@ Measured on 2026-10-15, one operator, Claude Code, same tasks and prompts in a r
 
 ## Harness support
 
-Every feature is built in shared layers and computed for every harness ([layering rule](docs/contrib/layering.md)). **Claude Code is the primary harness**: it is where Downshift is most complete and most verified (rewrite honored with evidence, session model inferred from the current model, usage and child-end hooks, the `/downshift` command, the statusline). The other harnesses run the same core; the table and the [matrix](docs/reference/harness-matrix.md) say what each one can honor today.
+Every feature is built in shared layers and computed for every harness ([layering rule](docs/contrib/layering.md)); the shared conformance suite (`cmd/downshift/conformance_test.go`) drives the same 8 routing scenarios against every registered hook. What differs is how much has been verified on a real harness, so each harness carries exactly one of three status words:
 
-| Harness | Subagent tool | Mechanism | Rewrite honored (evidence) |
-|---|---|---|---|
-| **Claude Code** | `Task` / `Agent`, paid plans | `PreToolUse` → `updatedInput.model` | Yes, observed 2026-10-06 ([write-up](docs/evidence/claude-code-rewrite-honored-2026-10-06.md)) |
-| **Codex** | `spawn_agent` (`multi_agent_v2`) | `PreToolUse` → model + `reasoning_effort` | Inferred, not observed, 2026-10-02 ([write-up](docs/evidence/codex-rewrite-honored-2026-10-02.md)) |
-| **Cursor** | `Task` | `preToolUse` → `updated_input.model` | Unconfirmed; discarded on Free and legacy Pro plans |
-| **Antigravity** | `invoke_subagent` | `PreToolUse` overwrite | Observed 2026-10-09, desktop 2.21.1: [native child evidence](docs/evidence/antigravity-executor-ack.md); quota mapping still unresolved |
-| **KiroCrew** | `spawn_run` / `spawn_sub_agents` | Native `preToolUse` policy (exit 0/2); no `updated_input` | Block and retry observed 2026-10-10 on Kiro CLI 2.29; not an in-place rewrite ([write-up](docs/evidence/kirocrew-native-hook-2026-10-10.md)) |
-| **Grok CLI** | `spawn_subagent` | Config in `config.toml`, not a hook | No hook rewrite |
+- **Completed.** The rewrite was observed honored on a real child, usage and child end are recorded, and the session policy and plugin ship. Only Claude Code.
+- **Functional.** The hook emits the rewrite on a real spawn and passes the conformance suite, but observation is partial: the harness applying the rewrite is inferred (Codex) or unconfirmed (Cursor), and child usage is not recorded.
+- **Experimental (proof of concept).** Policy mode or a single observed child on one build. Shipped, with install steps in the guide, but not a basis for a production claim.
 
-Adapters ship for all of the above; the table reports evidence, not just code. Plans, caveats and revalidation rules: [harness-matrix.md](docs/reference/harness-matrix.md).
+| Harness | Status | Subagent tool | Mechanism | Rewrite honored (evidence) |
+|---|---|---|---|---|
+| **Claude Code** | Completed | `Task` / `Agent`, paid plans | `PreToolUse` → `updatedInput.model` | Yes, observed 2026-10-06 ([write-up](docs/evidence/claude-code-rewrite-honored-2026-10-06.md)); usage from the child transcript ([billing audit](docs/evidence/billing-gap-audit.md)); one controlled A/B ([2026-10-15](docs/evidence/subagent-routing-ab-2026-10-15.md)) |
+| **Codex** | Functional | `spawn_agent` (`multi_agent_v2`) | `PreToolUse` → model + `reasoning_effort` | Inferred, not observed, 2026-10-02 ([write-up](docs/evidence/codex-rewrite-honored-2026-10-02.md)); install: [Codex](docs/guides/install.md#install-codex) |
+| **Cursor** | Functional | `Task` | `preToolUse` → `updated_input.model` | Unconfirmed; discarded on Free and legacy Pro plans ([write-up](docs/evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](docs/evidence/cursor-gap-diagnostic.md)); install: [Cursor](docs/guides/install.md#install-cursor) |
+| **Grok CLI** | Config only | `spawn_subagent` | Config in `config.toml`, not a hook | No hook rewrite |
+
+Plans, caveats and revalidation rules: [harness-matrix.md](docs/reference/harness-matrix.md).
+
+### Experimental harnesses
+
+**Antigravity** and **KiroCrew** are proofs of concept, not supported at the level of the table above: each has one observed child on one build (Antigravity desktop 2.21.1: [native child evidence](docs/evidence/antigravity-executor-ack.md); Kiro CLI 2.29.0: [native hook evidence](docs/evidence/kirocrew-native-hook-2026-10-10.md), block and retry only, no in-place rewrite) and no recorded child end. The adapters, tests and hooks stay in the repository and compute every feature; setup is in [install.md](docs/guides/install.md#experimental-harnesses) ([Antigravity](docs/guides/install.md#antigravity-google-deepmind), [KiroCrew](docs/guides/install.md#kirocrew-policy-mode-through-the-native-kiro-cli-hook)).
 
 ## Context optimization & native compression
 

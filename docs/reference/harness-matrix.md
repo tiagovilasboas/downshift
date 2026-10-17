@@ -3,6 +3,25 @@
 Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
+## Status per harness
+
+Each harness carries exactly one of three status words (owner decision 2026-10-17); the table below it keeps the per-plan facts.
+
+- **Completed:** rewrite observed honored on a real child, usage and child end recorded, plugin and session policy.
+- **Functional:** the hook emits the rewrite on a real spawn and passes the shared conformance suite; observation is partial (honored is inferred or unconfirmed, no child usage).
+- **Experimental (proof of concept):** policy mode or one observed child on one build; shipped, but no production claim.
+
+`cmd/downshift/conformance_test.go` drives the same 8 routing scenarios against every registered hook, so each harness below, whatever its status, computes every feature (layering rule); the status says how much has been verified on the real harness, not how much code it runs.
+
+| harness | status | why | evidence |
+|---|---|---|---|
+| claude-code | Completed | Rewrite observed honored (2026-10-06, API-reported child model); usage priced from the child transcript at `SubagentStop`; child end recorded; plugin and session policy ship. Failure payload is still GAP-CHILD-FAILURE (see "Child end" below). | [rewrite honored](../evidence/claude-code-rewrite-honored-2026-10-06.md), [billing audit](../evidence/billing-gap-audit.md), [routing A/B](../evidence/subagent-routing-ab-2026-10-15.md) |
+| codex | Functional | Rewrite emitted on a real spawn; honored is inferred from the next spawn, not observed; child end parser unverified, no usage source. | [codex rewrite](../evidence/codex-rewrite-honored-2026-10-02.md) |
+| cursor | Functional | Rewrite emitted on a real spawn; the child executor model is absent from the transcript, so honored is unconfirmed (discarded on Free and legacy Pro); end parser unverified, no usage; native quota collector blocked on Cursor 3.24.9. | [cursor rewrite](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](../evidence/cursor-gap-diagnostic.md) |
+| kirocrew | Experimental | Policy mode: block and retry observed once on Kiro CLI 2.29.0, no in-place rewrite; no child end recorded. | [native hook](../evidence/kirocrew-native-hook-2026-10-10.md) |
+| antigravity | Experimental | One observed child on desktop 2.21.1 (requested `pro`, executed `flash_lite`); the `overwrite` envelope is not a documented vendor field; no child end recorded; quota mapping unresolved. | [executor ack](../evidence/antigravity-executor-ack.md), [runtime source](../evidence/antigravity-runtime-source.md) |
+| grok | Config only | No hook rewrite; reasoning is pinned in `config.toml`. | [install.md](../guides/install.md#grok-cli-config-not-hook) |
+
 "Rewrite honored" means the harness executor applied the hook's model
 rewrite to the child subagent, not just that downshift emitted one.
 `outcome: "rewrite_emitted"` proves emission only (docs/reference/session-models.md:17).

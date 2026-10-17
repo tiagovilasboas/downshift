@@ -6,9 +6,19 @@ O **Downshift** é um **otimizador de custo e eficiência de execução para age
 
 O roteamento de modelos é a alavanca principal hoje, não o produto inteiro. Em volta dele: escolha conservadora na dúvida (um palpite nunca gasta dinheiro), guardrails para tarefas de risco e piso de política por projeto, visibilidade de cada decisão, telemetria do que cada filho custou e como terminou, grupo de controle e `downshift report` para medir custo por tarefa concluída, skills de diagnóstico e companions de contexto. Tudo determinístico (nenhum LLM no loop), sem guardar prompt e fail-open. A métrica que importa é **custo por tarefa concluída com qualidade aceitável**; token é proxy. Tabela completa com status e evidência por capacidade: [capability matrix (EN)](../reference/capability-matrix.md).
 
-Quando você dispara um subagente em ferramentas como **Claude Code**, **Cursor**, **Codex**, **Antigravity** ou **KiroCrew**, cada um é direcionado para a categoria de modelo adequada à complexidade da demanda **antes da execução começar**, e só quando o classificador está confiante e nenhum guardrail segura. O desenvolvedor continua operando normalmente.
+Quando você dispara um subagente em ferramentas como **Claude Code**, **Codex** ou **Cursor** (os harnesses Completed e Functional, abaixo), cada um é direcionado para a categoria de modelo adequada à complexidade da demanda **antes da execução começar**, e só quando o classificador está confiante e nenhum guardrail segura. O desenvolvedor continua operando normalmente.
 
 Toda funcionalidade é construída nas camadas compartilhadas e calculada para todos os harnesses. **O Claude Code é o harness principal**: é onde o Downshift está mais completo (modelo da sessão inferido, hooks de uso e de fim do filho, comando `/downshift`, statusline, política de sessão com `opusplan`) e mais verificado. Os demais rodam o mesmo núcleo; a [matriz de harnesses](../reference/harness-matrix.md) diz o que cada um honra hoje, e o [guia do Claude Code (EN)](../guides/claude-code.md) explica a relação com o `opusplan`.
+
+**Status por harness.** Cada harness tem exatamente uma de três palavras de status, rastreável a um arquivo de evidência ou a um teste (a suíte `cmd/downshift/conformance_test.go` roda os mesmos 8 cenários de roteamento contra todo hook registrado). Detalhes por harness: [matriz de harnesses (EN)](../reference/harness-matrix.md).
+
+| Harness | Status | O que isso significa | Evidência |
+|---|---|---|---|
+| **Claude Code** | Completed | Reescrita observada como honrada em um filho real, uso e fim do filho registrados, plugin e política de sessão | [reescrita honrada](../evidence/claude-code-rewrite-honored-2026-10-06.md) · [auditoria de cobrança](../evidence/billing-gap-audit.md) · [A/B de roteamento](../evidence/subagent-routing-ab-2026-10-15.md) |
+| **Codex** | Functional | O hook emite a reescrita em um spawn real; que o harness a aplicou é inferido, não observado; sem uso do filho | [Codex](../evidence/codex-rewrite-honored-2026-10-02.md) |
+| **Cursor** | Functional | O hook emite a reescrita em um spawn real; que o harness a aplicou não foi confirmado; sem uso do filho | [Cursor](../evidence/cursor-rewrite-honored-2026-10-10.md) · [diagnóstico](../evidence/cursor-gap-diagnostic.md) |
+
+**Experimental (prova de conceito).** Antigravity e KiroCrew têm um filho observado em um build cada (KiroCrew em modo política: bloqueia e pede novo spawn, sem reescrita no lugar) e nenhum fim de filho registrado. Os adapters, testes e hooks continuam no repositório e calculam todas as funcionalidades; a instalação está no [guia de instalação (EN)](../guides/install.md#experimental-harnesses). Evidência: [Antigravity](../evidence/antigravity-executor-ack.md) · [KiroCrew](../evidence/kirocrew-native-hook-2026-10-10.md). O Grok CLI continua apenas por configuração, sem reescrita por hook.
 
 O Downshift não é um chat secundário, não gera código, não é proxy HTTP e não altera a saída de ferramentas em voo. É uma **camada de otimização de infraestrutura**: intercepta o pedido no hook de spawn, classifica a demanda em milissegundos na CPU local, valida se a mudança é segura e, quando aplicável, reescreve o modelo do subagente de forma transparente.
 
@@ -40,7 +50,7 @@ O Downshift não é um chat secundário, não gera código, não é proxy HTTP e
 As faixas de capacidade permanecem equivalentes entre os ambientes suportados:
 * **Codex:** `gpt-6-luna` (Small) · `gpt-5.6-terra` (Mid) · `gpt-6-sol` (Frontier)
 * **Claude Code:** `claude-haiku-4-5` (Small) · `claude-sonnet-5-5` (Mid) · `claude-opus-5-5` (Frontier)
-* **Antigravity:** `flash_lite` (Small) · `flash` (Mid) · `pro` (Frontier)
+* **Antigravity (Experimental):** `flash_lite` (Small) · `flash` (Mid) · `pro` (Frontier)
 
 ---
 
@@ -56,7 +66,7 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 | [03 · Gestão de Marchas](03-marcha.md) | Política | As faixas de capacidade (Small/Mid/Frontier), regras de downshift e upshift seguro |
 | [04 · Fallbacks e Tolerância](04-fallbacks.md) | Resiliência | O contrato fail-open: como o sistema reage a erros sem quebrar o fluxo do dev |
 | [05 · Catálogo e Sessão](05-catalogo-e-sessao.md) | Permissões | Preço de lista versus modelos realmente autorizados na sessão ativa (`session-models.json`) e, desde `downshift models discover`, os modelos que o próprio harness informa ([session-discovery](../reference/session-discovery.md), em inglês) |
-| [06 · Adapters de Harness](06-harnesses.md) | Integração | Especificidades de integração: Claude Code, Codex, Cursor, Antigravity e KiroCrew |
+| [06 · Adapters de Harness](06-harnesses.md) | Integração | Especificidades de integração: Claude Code, Codex e Cursor; Antigravity e KiroCrew (Experimental) |
 | [07 · Camada Semântica MiniLM](07-minilm.md) | Inteligência | Classificação local por centróides vetoriais, boost semântico e privacidade |
 | [08 · Telemetria e Métricas](08-telemetria.md) | Observabilidade | Estrutura do `events.jsonl`, métricas normalizadas e auditoria sem vazamento de prompt |
 | [09 · Decisões Técnicas e Trade-offs](09-decisoes.md) | Engenharia | Racional de arquitetura, compensações técnicas e próximos passos do projeto |

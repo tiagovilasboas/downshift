@@ -2,7 +2,7 @@
 
 Downshift is an **optimizer for the cost and efficiency of agent execution**, whose main lever today is a **deterministic model router** that runs **locally** and hooks into **coding harnesses** (Claude Code, Cursor, Codex, and others) at subagent spawn time. It is not a replacement for every LLM integration pattern.
 
-Every harness with an adapter gets every feature, computed in shared layers. **Claude Code is the primary harness**: the most complete and the most verified. Start there if you can choose; the [harness matrix](../reference/harness-matrix.md) says what the others honor today.
+Every harness with an adapter gets every feature, computed in shared layers. **Claude Code is the primary harness**: the most complete and the most verified. Start there if you can choose; the [harness matrix](../reference/harness-matrix.md) says what the others honor today. Harnesses carry one of three status words: Completed (Claude Code), Functional (Codex, Cursor) or Experimental (KiroCrew, Antigravity; policy mode or proof of concept), defined in the [status table](../reference/harness-matrix.md#status-per-harness).
 
 ## Use Downshift when
 
