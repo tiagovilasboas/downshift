@@ -4,10 +4,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
@@ -130,5 +133,43 @@ func TestDoctorCompanionRow(t *testing.T) {
 	checkCompanion(rep, doctorEnv{LookPath: absent}, cfg)
 	if c := find(rep); c == nil || c.Status != doctorWarn || c.Fix != "downshift context disable headroom" {
 		t.Fatalf("recorded but missing = %+v", c)
+	}
+}
+
+// Plugin wiring is data on the setup target. With the plugin enabled and no
+// settings hooks, "hooks wired" is ok via the plugin; with both, doctor warns
+// that every spawn is routed twice and names the fix.
+func TestDoctorPluginWiring(t *testing.T) {
+	f := newDoctorFixture(t)
+	f.writeEvents(t, filepath.Join(f.home, ".downshift"), time.Hour, true)
+
+	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), `{"enabledPlugins":{"downshift@downshift":true}}`)
+	rep := buildDoctorReport(f.env)
+	if rep.Failed != 0 {
+		var b bytes.Buffer
+		rep.write(&b, false)
+		t.Fatalf("plugin alone must not fail:\n%s", b.String())
+	}
+	wantStatus(t, f.check(t, rep, "claude-code", "hooks wired"), doctorOK)
+	if c := f.check(t, rep, "claude-code", "plugin"); c.Status != doctorOK || !strings.Contains(c.Detail, "downshift@downshift enabled") {
+		t.Fatalf("plugin row = %+v", c)
+	}
+
+	both := strings.TrimSuffix(claudeSettings(f.bin), "}") + `,"enabledPlugins":{"downshift@downshift":true}}`
+	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), both)
+	rep = buildDoctorReport(f.env)
+	c := f.check(t, rep, "claude-code", "plugin")
+	if c.Status != doctorWarn || !strings.Contains(c.Detail, "routed twice") || !strings.Contains(c.Fix, "downshift setup --undo") {
+		t.Fatalf("double wiring = %+v", c)
+	}
+	wantStatus(t, f.check(t, rep, "claude-code", "hooks wired"), doctorOK)
+
+	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), `{"enabledPlugins":{"downshift@downshift":false}}`)
+	rep = buildDoctorReport(f.env)
+	wantStatus(t, f.check(t, rep, "claude-code", "hooks wired"), doctorFail)
+	for _, c := range rep.Checks {
+		if c.Harness == "claude-code" && c.ID == "plugin" {
+			t.Fatal("a disabled plugin must not add a row")
+		}
 	}
 }

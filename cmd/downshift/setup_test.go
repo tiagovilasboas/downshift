@@ -551,3 +551,41 @@ func TestSetupDeclinedPromptWritesNothing(t *testing.T) {
 		t.Error("written without consent")
 	}
 }
+
+// When the plugin already carries the hooks, setup says so before writing.
+func TestPlanTarget_NotesEnabledPlugin(t *testing.T) {
+	home := t.TempDir()
+	var target setupTarget
+	for _, st := range setupTargets {
+		if st.Plugin != "" {
+			target = st
+			break
+		}
+	}
+	if target.Plugin == "" {
+		t.Skip("no target declares a plugin")
+	}
+	path := filepath.Join(home, filepath.FromSlash(target.File))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(`{"enabledPlugins":{"`+target.Plugin+`":true}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	p := planTarget(setupOptions{Home: home, Binary: "/usr/local/bin/downshift"}, target)
+	if p.err != nil {
+		t.Fatal(p.err)
+	}
+	if len(p.notes) == 0 || !strings.Contains(p.notes[0], "routes every spawn twice") {
+		t.Fatalf("notes = %v", p.notes)
+	}
+	if err := os.WriteFile(path, []byte(`{}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	p = planTarget(setupOptions{Home: home, Binary: "/usr/local/bin/downshift"}, target)
+	for _, n := range p.notes {
+		if strings.Contains(n, "routes every spawn twice") {
+			t.Fatal("no plugin, no note")
+		}
+	}
+}

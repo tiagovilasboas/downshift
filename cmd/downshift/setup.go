@@ -5,6 +5,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -345,6 +346,14 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 		return p
 	}
 	p.notes = append(notes, t.Notes...)
+	if t.Plugin != "" {
+		var parsed any
+		if json.Unmarshal(raw, &parsed) == nil && pluginEnabled(parsed, t.Plugin) {
+			p.notes = append([]string{"plugin " + t.Plugin + " is enabled and already carries these hooks; " +
+				"wiring them here too routes every spawn twice. Prefer one channel: skip this harness, " +
+				"or `/plugin uninstall " + t.Plugin + "` to keep the settings hooks"}, p.notes...)
+		}
+	}
 	out, err := renderJSONDoc(doc)
 	if err != nil {
 		p.err = err

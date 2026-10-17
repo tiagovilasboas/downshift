@@ -62,6 +62,10 @@ type setupTarget struct {
 	Notes []string
 	// Manual explains why setup does not write this harness.
 	Manual string
+	// Plugin is the id ("name@marketplace") under which this harness can load
+	// the same hooks from a plugin instead of File. Empty when the harness has
+	// no plugin system. Doctor reads it; setup warns when it is enabled.
+	Plugin string
 }
 
 var setupTargets = []setupTarget{
@@ -71,6 +75,7 @@ var setupTargets = []setupTarget{
 		File:      ".claude/settings.json",
 		HooksPath: []string{"hooks"},
 		Nested:    true,
+		Plugin:    "downshift@downshift",
 		// Main-session policy: start in plan mode, plan on Opus and execute on
 		// Sonnet (opusplan). Downshift routes the subagents underneath; see
 		// docs/reference/session-models.md. Never replaces a value the user already set.

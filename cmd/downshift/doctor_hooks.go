@@ -37,6 +37,7 @@ type doctorWiring struct {
 	File   string // relative to HOME
 	Nested bool   // entry shape, see setupTarget.Nested
 	Setup  bool   // `downshift setup <harness>` can write the file
+	Plugin string // plugin id that can carry the same hooks (setupTarget.Plugin)
 	Hooks  []doctorHook
 }
 
@@ -57,7 +58,7 @@ func doctorWiringFor(harness string) (doctorWiring, bool) {
 		if t.Name != harness || t.File == "" {
 			continue
 		}
-		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true}
+		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin}
 		for i, h := range t.Hooks {
 			w.Hooks = append(w.Hooks, doctorHook{Event: h.Event, Matcher: h.Matcher, Args: h.Args, Required: i == 0})
 		}
@@ -158,6 +159,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	var cmds []foundCommand
 	collectCommands(raw, nil, &cmds)
 	checkMainPolicy(add, h, raw)
+	viaPlugin := w.Plugin != "" && pluginEnabled(raw, w.Plugin)
 
 	// Hooks wired.
 	var found []wiredHook
@@ -189,6 +191,35 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 		status = doctorFail
 	case len(missing) > 0:
 		status = doctorWarn
+	}
+	// The plugin carries the same hooks. With it enabled, nothing in the
+	// settings file is needed; anything found there runs a second time.
+	if viaPlugin {
+		switch {
+		case len(found) > 0:
+			add("plugin", doctorWarn,
+				fmt.Sprintf("%s is enabled and %d of its hooks are also in %s: every spawn is routed twice", w.Plugin, len(found), file),
+				"downshift setup --undo   # keep the plugin; or /plugin uninstall "+w.Plugin+" to keep the settings hooks")
+		default:
+			add("plugin", doctorOK, w.Plugin+" enabled; hooks come from the plugin, none needed in "+file, "")
+		}
+		if len(found) == 0 {
+			add("hooks wired", doctorOK, fmt.Sprintf("%d via plugin %s", len(w.Hooks), w.Plugin), "")
+			checkSessionList(add, env, nc)
+			checkQuotaHold(add, env, h)
+			var mine []telemetry.Event
+			for _, ev := range events {
+				if ev.Harness == h {
+					mine = append(mine, ev)
+				}
+			}
+			checkLastEvent(add, env, h, mine)
+			checkCompletion(add, h, events)
+			if nc.Caps.CanRewriteModel && len(mine) > 0 {
+				checkHonored(add, mine)
+			}
+			return
+		}
 	}
 	var have, fixes []string
 	for _, f := range found {
@@ -242,6 +273,22 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	if nc.Caps.CanRewriteModel && len(mine) > 0 {
 		checkHonored(add, mine)
 	}
+}
+
+// pluginEnabled reads the documented `enabledPlugins` map of a settings file:
+// {"enabledPlugins": {"name@marketplace": true}}. Only this file is read;
+// project-level settings can also enable a plugin and are not checked here.
+func pluginEnabled(raw any, id string) bool {
+	root, ok := raw.(map[string]any)
+	if !ok {
+		return false
+	}
+	m, ok := root["enabledPlugins"].(map[string]any)
+	if !ok {
+		return false
+	}
+	v, ok := m[id].(bool)
+	return ok && v
 }
 
 func checkHookBinary(add func(id, status, detail, fix string), env doctorEnv, file string, found []wiredHook, pathBin string) {
