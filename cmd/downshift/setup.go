@@ -556,6 +556,9 @@ func mergeTarget(doc *jobj, t setupTarget, binary string, skipOptional bool) ([]
 			notes = append(notes, d.Note)
 		}
 	}
+	if len(t.Hooks) == 0 {
+		return mergeStatusLine(doc, t, binary, notes)
+	}
 	holder := doc
 	for _, key := range t.HooksPath {
 		v, ok := holder.get(key)
@@ -591,6 +594,11 @@ func mergeTarget(doc *jobj, t setupTarget, binary string, skipOptional bool) ([]
 		}
 		holder.set(h.Event, list)
 	}
+	return mergeStatusLine(doc, t, binary, notes)
+}
+
+// mergeStatusLine applies the optional statusline default and returns the notes.
+func mergeStatusLine(doc *jobj, t setupTarget, binary string, notes []string) ([]string, error) {
 	if sl := t.StatusLine; sl != nil {
 		note, err := ensureStatusLine(doc, *sl, binary)
 		if err != nil {
