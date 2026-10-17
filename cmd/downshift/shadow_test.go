@@ -122,3 +122,68 @@ func TestShadowReportCLIValidation(t *testing.T) {
 		t.Fatalf("empty report=%s", out)
 	}
 }
+
+// TestShadowReport_E5FromTelemetryLog runs the command over an explicit
+// telemetry log and checks the JSON keys and the --text headings; with no
+// E5 objects the JSON is the same bytes as before the E5 section existed.
+func TestShadowReport_E5FromTelemetryLog(t *testing.T) {
+	dir := t.TempDir()
+	loop := filepath.Join(dir, "loop-events.jsonl") // absent: no candidate observations
+	withE5 := filepath.Join(dir, "events.jsonl")
+	lines := strings.Join([]string{
+		`{"outcome":"allow","harness":"cursor","reason_codes":["RISK_CATEGORY"],"e5_shadow":{"model_id":"e5-prototypes-sha256:abc","nearest_label":"SIMPLE","regex_label":"MEDIUM","latency_ms":12}}`,
+		`{"outcome":"allow","harness":"cursor","e5_shadow":{"model_id":"e5-prototypes-sha256:abc","error_code":"timeout","latency_ms":500}}`,
+		`{"outcome":"allow","harness":"cursor","e5_fuse":{"model_id":"e5-prototypes-sha256:abc","nearest_label":"MEDIUM","action":"none","latency_ms":9}}`,
+	}, "\n") + "\n"
+	if err := os.WriteFile(withE5, []byte(lines), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	without := filepath.Join(dir, "plain.jsonl")
+	if err := os.WriteFile(without, []byte(`{"outcome":"allow","harness":"cursor","complexity":"MEDIUM"}`+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var out, errOut bytes.Buffer
+	if code := shadowReport([]string{"--events=" + loop, "--telemetry=" + withE5}, &out, &errOut); code != 0 {
+		t.Fatalf("exit %d: %s", code, errOut.String())
+	}
+	var got map[string]json.RawMessage
+	if err := json.Unmarshal(out.Bytes(), &got); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out.String())
+	}
+	for _, k := range []string{"e5_shadow", "e5_fuse", "models"} {
+		if _, ok := got[k]; !ok {
+			t.Errorf("missing key %q in %s", k, out.String())
+		}
+	}
+	var shadow struct {
+		Observed            int `json:"observed"`
+		Errors              int `json:"errors"`
+		FalseDowngradeProxy int `json:"false_downgrade_proxy"`
+	}
+	if err := json.Unmarshal(got["e5_shadow"], &shadow); err != nil || shadow.Observed != 2 || shadow.Errors != 1 || shadow.FalseDowngradeProxy != 1 {
+		t.Errorf("e5_shadow = %+v (%v)", shadow, err)
+	}
+
+	out.Reset()
+	if code := shadowReport([]string{"--events=" + loop, "--telemetry=" + withE5, "--text"}, &out, &errOut); code != 0 {
+		t.Fatalf("exit %d: %s", code, errOut.String())
+	}
+	if !strings.Contains(out.String(), "E5 shadow\n") || !strings.Contains(out.String(), "E5 fuse\n") {
+		t.Errorf("--text should print both E5 sections:\n%s", out.String())
+	}
+
+	out.Reset()
+	if code := shadowReport([]string{"--events=" + loop, "--telemetry=" + without}, &out, &errOut); code != 0 {
+		t.Fatalf("exit %d: %s", code, errOut.String())
+	}
+	if want := `{"load_errors":0,"invalid_observations":0,"models":[]}` + "\n"; out.String() != want {
+		t.Errorf("JSON without E5 events must be unchanged:\n got %q\nwant %q", out.String(), want)
+	}
+
+	out.Reset()
+	errOut.Reset()
+	if code := shadowReport([]string{"--bogus"}, &out, &errOut); code != 2 || !strings.Contains(errOut.String(), "--telemetry=") {
+		t.Errorf("unknown flag: code %d, stderr %q", code, errOut.String())
+	}
+}

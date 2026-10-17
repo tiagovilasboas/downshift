@@ -173,6 +173,8 @@ and the five splits through the real binary, and writes
 table filled. `--smoke` was run end to end here (5 m 40 s): the kill switch is
 identical and fuse off reproduces `baseline-2026-10-17.json` exactly.
 
+To read a real shadow log instead of a fixture, run the hooks with `DOWNSHIFT_E5_SHADOW=1` for a while and then `downshift shadow-report --text` (or `--telemetry=<events.jsonl>` for a copied log): the "E5 shadow" section gives the error-code histogram, the would-lift rate by regex label, the abstain share, the false-downgrade proxy on risk decisions and the p50/p95/max latency against the 500 ms gate, all from the prompt-free `e5_shadow` object ([stats-export.md](../reference/stats-export.md)).
+
 ## 6. Sources
 
 - Baseline: `downshift-labs/eval/multilang/results/baseline-2026-10-17.{json,md}`, `scripts/baseline_eval.py`, `scripts/baseline_eval/harness.go`

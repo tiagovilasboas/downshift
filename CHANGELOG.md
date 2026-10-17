@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - KiroCrew: the policy-mode runner now sets the project directory, so `.downshift/policy.json` floors apply there too.
 - `setup`: with the Claude Code plugin enabled, no hooks are written to the settings file (session policy and statusline still are); `doctor` and the install guide describe the one-channel rule. The transcript reader checks the file type before opening it, so a FIFO cannot block a hook.
 
+### Added
+
+- `downshift shadow-report` summarises the multilingual E5 observations from the telemetry log (`events.jsonl`, `--telemetry=` to point elsewhere): observed and scored counts, helper error codes, would-lift rate overall and by regex label, nearest-label distribution, abstain share, a false-downgrade proxy (risk decision, no lift, nearest label below the regex one; a proxy, not a reviewed error), latency p50/p95/max, and the same for the `e5_fuse` trace; `--text` prints the human form, JSON stays the default and is byte-identical when no E5 events exist. This is how E5 is validated in shadow mode on a real log before any enable decision.
+
 ### Changed
 
 - `docs/guides/evidence.md` gains two sections: the three saving scenarios (same provider smaller model: measured narrowly on mechanical delegated work; same model lower effort: not measured, emission only; cross-provider: not measured, lookup pinned by tests) with the capability, metric and status for each, and where Downshift adds value beyond native `opusplan` and gateways, each claim tied to a test or evidence file or marked unproven.

@@ -52,7 +52,7 @@ Maintainer (needs labelled data, which lives in downshift-labs)
   downshift eval-adapt --runs=<dir>  Offline adapt memory efficacy from recorded tier runs (maintainer)
   downshift train <file>         Train capability-router v2 on a labelled dataset
   downshift train --from-events  Train from engineer-reviewed local feedback
-  downshift shadow-report        Compare opt-in candidate observations with explicit reviewed labels (JSON)
+  downshift shadow-report        Candidate observations vs reviewed labels, plus E5 shadow/fuse summary (JSON; --text)
   downshift probe <event>        As a hook: record a payload's field names (never prompts or paths) in probe.jsonl; see docs/guides/probe.md
   downshift models check         Query provider APIs and report new/untiered models
   downshift models pull          Write user catalog.json under the state dir
