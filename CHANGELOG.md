@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Experimental
+
+- `mods/downshift-router/`: a standalone, opt-in Claude Code mod (2.1.287+) that routes a subagent's model from the in-process `agent.spawn` event by running `downshift claude-code` over the existing stdin contract and returning `next({ ...e, model })`; off unless `userConfig.enabled` or `DOWNSHIFT_MOD_ROUTER=1`, fails open, never denies, not loaded by the root plugin. Design, the quoted `agent.spawn` fields and two live runs showing that the settings `PreToolUse` hook fires first and that both paths route each spawn when both are installed: `docs/design/mod-router.md`.
+
 ### Security
 
 - `install.sh` downloads `checksums.txt` from the same release and verifies the archive's sha256 before installing; a mismatch or a missing checksum file is a hard stop, `DOWNSHIFT_SKIP_CHECKSUM=1` opts out loudly. Before, the one-liner installed whatever the download returned.
