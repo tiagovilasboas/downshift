@@ -5,7 +5,7 @@ prompts, splits, and executable outcome tasks live in **downshift-labs**
 (private). Re-run benchmarks there after router changes; update this file when
 you intentionally publish new figures.
 
-**Last updated:** 2026-10-15 (classifier on `main`, outcome runs 2026-10-03; adapt numbers recomputed 2026-10-15).
+**Last updated:** 2026-10-17 (seed row refreshed to the classifier from `236c057` onward, measured at `2c8f3f4`; the earlier 69.0% was the classifier at `be1054ac`, see [baseline-freeze-2026-10-17.md](../docs/evidence/baseline-freeze-2026-10-17.md); outcome runs 2026-10-03; adapt numbers recomputed 2026-10-15).
 
 These figures describe the **maintainer 40-task Go suite** and the **in-tree
 classifier**. They are **not** proof of generalization on unseen traffic and
@@ -15,7 +15,7 @@ classifier**. They are **not** proof of generalization on unseen traffic and
 
 | Dataset | Tasks | Tier accuracy (95% CI) | FRONTIER→MID | FRONTIER→SMALL | SMALL→MID | SMALL→FRONTIER |
 |---|---|---|---|---|---|---|
-| Seed regression net | 200 | 69.0% (62.5–75.5%) | 0.0% (0/50) | 0.0% (0/50) | 49.0% (49/100) | 7.0% (7/100) |
+| Seed regression net | 200 | 73.5% (67.0–79.1%) | 0.0% (0/50) | 0.0% (0/50) | 46.0% (46/100) | 2.0% (2/100) |
 | Burned holdout (regression net only) | 300 | 100.0% (100.0–100.0%) | 0.0% (0/75) | 0.0% (0/75) | 0.0% (0/150) | 0.0% (0/150) |
 
 Eval-only splits beyond the table below (e.g. blind-vitrine) stay in

@@ -96,6 +96,7 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [contrib/prompt-corpus.md](contrib/prompt-corpus.md) | Prompt corpus |
 | [../benchmark/README.md](../benchmark/README.md) | Benchmark splits |
 | [evidence/](evidence/) | Dated runtime evidence (rewrite honored, audits) |
+| [evidence/baseline-freeze-2026-10-17.md](evidence/baseline-freeze-2026-10-17.md) | Baseline freeze manifest: frozen eval sets, sha256, reference numbers the next run must reproduce, how to verify |
 
 ## Brand
 

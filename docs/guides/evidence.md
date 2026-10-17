@@ -62,7 +62,7 @@ repository; the public repo holds aggregates and two sample tasks under `interna
 
 | Benchmark | n | Held constant | Result | Cost measured? |
 |---|--:|---|---|---|
-| Classifier, seed regression net | 200 | prompts, labels, `ClassifyWithSemantic`, no adapt memory | 69.0% tier accuracy (95% CI 62.5–75.5%) in `benchmark/report.md`; 73.5% in the hardening audit on `f9b531e..429bf42`: the two files disagree and neither names the other's commit | No |
+| Classifier, seed regression net | 200 | prompts, labels, `ClassifyWithSemantic`, no adapt memory | 73.5% tier accuracy (95% CI 67.0–79.1%) from `236c057` (2026-10-12) onward, measured again at `2c8f3f4`; the 69.0% that `benchmark/report.md` carried until 2026-10-17 was the classifier at `be1054ac` (2026-10-06), resolved in [baseline-freeze-2026-10-17.md](../evidence/baseline-freeze-2026-10-17.md) | No |
 | Classifier, burned holdout | 300 | same | 100.0%; tuned against, so not generalisation | No |
 | Classifier, eval-only `fresh` / `heldout2` | 100 / 120 | same, split never tuned | 50.0% (40.0–60.0%) / 40.0% (31.7–49.2%) at `5a888e7`; 53.0% / 41.7% at `3067340`. Most misses are abstentions (router keeps the model); confident and wrong: 2 of 37 and 6 of 28 | No |
 | Outcome suite, fixed model per tier | 40 tasks, 1 run per tier | prompt, hidden `check_test.go`, one model per tier, 2026-10-03 | frontier `anthropic/claude-opus-5.5` 40/40; mid `deepseek/deepseek-v4-flash` 31/40 (77.5%); small `qwen/qwen3-coder-30b-a3b-instruct` 27/40 (67.5%). TRIVIAL+SIMPLE: 20/20, 17/20, 16/20 | No: `run.json` holds tier, model, date and pass/fail only (issue #100) |
