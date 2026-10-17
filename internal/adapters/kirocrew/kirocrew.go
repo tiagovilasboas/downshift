@@ -174,9 +174,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// Policy-mode gate: use the same session-only target plan as rewrite
 	// adapters. KiroCrew cannot rewrite in place, but may ask for a respawn
 	// only when the exact target is selectable in this session.
-	plan := decision.PlanForSession(core.KiroCrewCaps, res, session)
-	decision.CreditHeld = plan.CreditHeld
-	decision.RecordScoreWould(res, session)
+	plan := decision.PlanSession(core.KiroCrewCaps, res, session, currentModel)
 	if plan.HoldForeign || plan.PreserveExplicit || plan.Model.ID == "" || plan.Model.ID == currentModel || !session.Contains(plan.Model.ID) {
 		return allow(), "", decision
 	}
