@@ -839,14 +839,14 @@ func TestSavingsRatio_MissingPricesStayUnknown(t *testing.T) {
 	}
 }
 
-// --- OmniRoute (local gateway) model ids ---
+// --- Provider-prefixed model ids from a local gateway ---
 //
-// OmniRoute exposes provider-prefixed ids. Anthropic-family ids behind any
-// prefix resolve like OpenRouter ids. Non-Anthropic and combo ids stay
-// unknown: Downshift then has no baseline and leaves the spawn unchanged
-// (fail open). Documented in docs/guides/companions.md.
+// A self-hosted gateway exposes provider-prefixed ids. Anthropic-family ids
+// behind any prefix resolve by the OpenRouter rule (first provider/ segment
+// stripped). Non-Anthropic and combo ids stay unknown: Downshift then has no
+// baseline and leaves the spawn unchanged (fail open).
 
-func TestLookupByID_OmniRoutePrefixedAnthropicID(t *testing.T) {
+func TestLookupByID_GatewayPrefixedAnthropicID(t *testing.T) {
 	c := Load()
 	m, ok := c.LookupByID("claude-code", "cc/claude-opus-4-8")
 	if !ok {
@@ -857,7 +857,7 @@ func TestLookupByID_OmniRoutePrefixedAnthropicID(t *testing.T) {
 	}
 }
 
-func TestLookupByID_OmniRouteForeignAndComboStayUnknown(t *testing.T) {
+func TestLookupByID_GatewayForeignAndComboStayUnknown(t *testing.T) {
 	c := Load()
 	for _, id := range []string{"glm/glm-5.2", "kmc/kimi-k2.6", "claude/combo/custo-otimizado", "claude/glm/glm-5.2"} {
 		if _, ok := c.LookupByID("claude-code", id); ok {

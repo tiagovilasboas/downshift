@@ -19,8 +19,8 @@ A **companion** (`contextopt.Companion`) is an external tool the user runs next
 to Downshift. Headroom is the default: detected on PATH, recorded by
 `downshift context enable`, reported by `doctor`, never installed, launched or
 wrapped by Downshift. When a companion is recorded, measured savings are not
-routing alone. Guide and the other tools Downshift knows about (OmniRoute,
-claude-code-setup, task-observer): [docs/guides/companions.md](../guides/companions.md).
+routing alone. Guide and the other tools Downshift knows about (claude-code-setup,
+task-observer): [docs/guides/companions.md](../guides/companions.md).
 
 ## Telemetry and cost reporting
 

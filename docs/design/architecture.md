@@ -248,7 +248,7 @@ layers through `downshift setup` and the docs.
 | 5 Plugin | `.claude-plugin/plugin.json`, `marketplace.json` | one install: hooks, command, skills, agent | Claude Code only |
 
 Contributor-only skills (`.claude/skills/downshift-layering`) stay out of the
-plugin. Companions (Headroom, OmniRoute) are detected and documented, never
+plugin. Companions (Headroom) are detected and documented, never
 bundled: [companions.md](../guides/companions.md).
 
 ## Further reading

@@ -2,7 +2,7 @@
 
 *Repositório GitHub: [`downshift`](https://github.com/tiagovilasboas/downshift) · CLI `downshift` · licença Apache 2.0.*
 
-O **Downshift** é um **otimizador de custo e eficiência de execução para agentes de IA**. Ele se instala nos hooks do seu harness de código e atua onde o custo é decidido: quando o agente principal delega. Por padrão, um subagente herda o modelo mais caro da sessão, então renomear uma variável, rodar um teste ou listar um diretório sai a preço de fronteira, e uma sessão que delega muito multiplica isso.
+O **Downshift** é uma **suíte para otimizar o uso de tokens em agentes de código**: roteamento determinístico de subagentes mais os guardrails, pisos, gate de cota, visão de sessão, telemetria, política de contexto, mods e companion em volta dele. Ele se instala nos hooks do seu harness de código e atua onde o custo é decidido: quando o agente principal delega. Por padrão, um subagente herda o modelo mais caro da sessão, então renomear uma variável, rodar um teste ou listar um diretório sai a preço de fronteira, e uma sessão que delega muito multiplica isso.
 
 O roteamento de modelos é a alavanca principal hoje, não o produto inteiro. Em volta dele: escolha conservadora na dúvida (um palpite nunca gasta dinheiro), guardrails para tarefas de risco e piso de política por projeto, visibilidade de cada decisão, telemetria do que cada filho custou e como terminou, grupo de controle e `downshift report` para medir custo por tarefa concluída, skills de diagnóstico e companions de contexto. Tudo determinístico (nenhum LLM no loop), sem guardar prompt e fail-open. A métrica que importa é **custo por tarefa concluída com qualidade aceitável**; token é proxy. Tabela completa com status e evidência por capacidade: [capability matrix (EN)](../reference/capability-matrix.md).
 
@@ -23,6 +23,59 @@ Toda funcionalidade é construída nas camadas compartilhadas e calculada para t
 O Downshift não é um chat secundário, não gera código, não é proxy HTTP e não altera a saída de ferramentas em voo. É uma **camada de otimização de infraestrutura**: intercepta o pedido no hook de spawn, classifica a demanda em milissegundos na CPU local, valida se a mudança é segura e, quando aplicável, reescreve o modelo do subagente de forma transparente.
 
 **O que está provado e o que não está.** Um A/B controlado em 2026-10-15, um operador, Claude Code, mesmas tarefas em braço roteado e braço de controle: em peças mecânicas entregues uma por subagente (o teto) o custo caiu cerca de 12% com os mesmos 12 de 12 aceitos; em tarefas naturais a maioria dos spawns foi segurada e a diferença de custo não é atribuível ao roteamento. A [escada de evidência (EN)](../guides/evidence.md) separa teoria de tabela, estimativa de telemetria, benchmark controlado e resultado em tarefa real; custo por tarefa concluída foi medido uma vez, não ainda em carga natural.
+
+---
+
+## A suíte num relance
+
+Um binário, um diretório de estado, cada peça calculada para todos os harnesses. As palavras de status são as da [capability matrix (EN)](../reference/capability-matrix.md); cada linha de lá aponta o código, o teste ou a evidência datada que a sustenta.
+
+| Peça | Uma frase | Status |
+|---|---|---|
+| **Roteamento determinístico de subagentes** | Um hook `PreToolUse` classifica a tarefa e reescreve só o modelo e o esforço daquele subagente, a partir da lista de modelos da própria sessão. | Implemented; honrado no Claude Code (observado), inferido no Codex, não confirmado no Cursor |
+| **Guardrails: dúvida nunca gasta dinheiro** | R1 a R9 seguram downshifts, upshifts e escolhas de fronteira sem confiança; categorias de risco mantêm um piso; baseline adivinhado só desce ao tier small. | Implemented, testes de invariante (`cost_safety_invariants_test.go`) |
+| **Piso de tier por projeto** | `.downshift/policy.json` exige um tier mínimo por classe ou risco num repositório; só sobe, nunca desce. | Implemented, todos os harnesses |
+| **Gate de cota e crédito** | Uma marca do hook ou um snapshot nativo de uso segura a reescrita para um modelo sem crédito; snapshot velho deixa de segurar após 1 h. | Implemented, not validated everywhere ([quota, EN](../guides/quota.md)) |
+| **Visão de sessão e statusline** | `downshift session --tree`, `/downshift`, `downshift watch`, uma linha de stderr por spawn e uma statusline com as janelas de cota. | Implemented; statusline só no Claude Code ([session view, EN](../guides/session-view.md)) |
+| **Telemetria e relatórios de custo com grupo de controle** | `events.jsonl` sem prompt, tokens e custo por filho a preço de catálogo, cerca de 1 em 10 spawns sem roteamento, `downshift stats` e `downshift report`. | Implemented; uso só no Claude Code; estimativa, não fatura |
+| **Política de contexto** | `setup` define `opusplan`, plan mode e o mod You should know do Claude Code para chaves que você não definiu; o compressor nativo só observa bytes. | Implemented, limitado: política de sessão só no Claude Code ([guia do Claude Code, EN](../guides/claude-code.md)) |
+| **Mods** | cache-tax dentro do plugin; savvy-progress e filetree como plugins irmãos do marketplace; downshift-router como protótipo opt-in. | Shipped, vendorizados e pinados; router Experimental ([mods, EN](../../mods/README.md)) |
+| **Companions** | Headroom (proxy de compressão padrão) é detectado e registrado, nunca instalado nem encapsulado. | Documentado ([companions, EN](../guides/companions.md)) |
+| **Escada de evidência** | Cinco degraus, do preço de tabela ao custo por tarefa concluída, cada número citado do arquivo que o guarda. | Degrau D alcançado uma vez (2026-10-15); degrau E não medido ([evidence, EN](../guides/evidence.md)) |
+
+---
+
+## Os LLMs que ele conhece
+
+Os dados de modelo ficam no [`catalog.json`](../../internal/catalog/catalog.json) embutido (versão 2, atualizado em 2026-10-16; 34 entradas), nunca em código Go; um override do usuário no diretório de estado é mesclado por cima. Por harness: Claude Code com as famílias `claude-haiku` (small), `claude-sonnet` (mid), `claude-opus` e `claude-fable` (frontier) e `grok` via configuração; Cursor com variantes thinking da Anthropic, `gpt-5.6-sol`, `gemini`, `grok`, `glm`, `muse-spark` e os slugs `composer`; Codex com `gpt-6-luna` e `gpt-5.6-luna` (small), `gpt-5.6-terra` (mid), `gpt-6-sol`, `gpt-6.1-sol` e `gpt-5.6-sol` (frontier) e `gpt-6-astra`; Antigravity com os aliases Gemini `flash_lite`, `flash` e `pro`; KiroCrew com as famílias Anthropic.
+
+Regras válidas para todos, fixadas em `internal/catalog/catalog_test.go`:
+
+- **Busca exata, depois alias, depois prefixo de família**: uma versão nova de uma família conhecida resolve para o tier dela.
+- **`routing:"explicit_only"` nunca é escolhido automaticamente.** Hoje são dois: `gpt-6-astra` (Codex) e `claude-fable-5-1-thinking-high` (Cursor). Se o subagente já roda um deles, `Plan()` o preserva em vez de rebaixar.
+- **Prefixos `provider/` são removidos antes da busca**: ids no estilo OpenRouter (`anthropic/claude-opus-5-5`, ou um id de família Anthropic atrás de outro prefixo) resolvem por família; ids que o catálogo não conhece ficam desconhecidos e o spawn segue inalterado.
+- **Inferência de sessão no Claude Code**: sem `session-models.json`, a lista da sessão é inferida do modelo atual como a escada do catálogo abaixo dele, então o roteamento só desce; os outros harnesses precisam de lista no hook, `downshift models discover` ou do arquivo ([session models, EN](../reference/session-models.md)).
+
+## Além do inglês
+
+Três camadas, do padrão ao opt-in ([classificador, EN](../contrib/classifier.md); versão em português: [02 · Classificador](02-classificador.md)):
+
+1. **Classificador determinístico com boost semântico por hash de palavras (padrão).** Sinais regex em inglês e português votam; um score de centróide mais próximo, vindo de um embedder FNV de palavras em processo, pode subir uma classe hesitante, nunca descer, nunca num prompt sem sinal e nunca criar COMPLEX sozinho; a subida é registrada como `SEMANTIC_BOOST`. O guarda de idioma zera a confiança em outros idiomas e em prompts mistos.
+2. **MiniLM (opt-in).** `DOWNSHIFT_MINILM_EMBED` aponta um comando externo de embedding para o mesmo boost; timeout de 1 s, cai de volta no hash.
+3. **Fuse multilíngue E5 (opt-in, desligado por padrão).** `DOWNSHIFT_E5_SHADOW=1` registra o que um helper `intfloat/multilingual-e5-small` faria, sem mudar tier; `downshift shadow-report` resume esses registros do `events.jsonl`. `DOWNSHIFT_E5_FUSE=1` aplica, fail-open, registrado como `E5_BOOST` ou `E5_ABSTAIN`, com o resultado sem fuse mantido como piso.
+
+O que está medido: acurácia de tier, cobertura confiante e latência do classificador atual num conjunto multilíngue de 170 itens e em cinco splits legados (EN 55% de acurácia com 55% de cobertura, PT-BR 55% com 30%, ES/FR/DE/JA e prompts mistos com 0 a 5% de cobertura, todo item confiante correto, p95 quente abaixo de 5 ms). O que não está: qualquer ganho de acurácia ou cobertura do E5, porque os pesos não eram alcançáveis no ambiente de avaliação. Decisão em 2026-10-17: fuse continua desligado, E5 continua candidato em shadow. [Avaliação E5 (EN)](../evidence/e5-int8-evaluation-2026-10-17.md) · [checagens multilíngues no Codex (EN)](../evidence/multilang-codex-2026-10-16.md).
+
+## Mods e companions
+
+Mods são plugins do Claude Code 2.1.287+ com um módulo de hooks, a única exceção à regra de nunca empacotar terceiros (decisão do owner, 2026-10-17): cada um vendorizado byte a byte de um upstream MIT pinado, listado no [NOTICE](../../NOTICE), sem lógica de roteamento, nunca escrito pelo `downshift setup`. Procedimento e testes: [mods/README.md (EN)](../../mods/README.md).
+
+- **cache-tax**, dentro do plugin `downshift` ([hooks/cache-tax/](../../hooks/cache-tax/README.md)): descarta uma vez um envio frio em contexto de 50k+ tokens mostrando o preço estimado da reescrita do cache; `/keepwarm` mantém o cache quente numa pausa (um pedido pequeno a cada 50 minutos ociosos, gasta uso).
+- **savvy-progress** e **filetree**, plugins irmãos do marketplace (`/plugin install savvy-progress@downshift`, `/plugin install filetree@downshift`): barra de progresso com painel `/agents-info`, e um painel de árvore de arquivos do que o Claude lê, escreve e commita. Não cabem dentro do plugin porque um plugin carrega um único módulo de hooks e os três mods ligam em `session.start` sem matcher.
+- **downshift-router** (Experimental, desligado por padrão; [mods/downshift-router/](../../mods/downshift-router/README.md)): roteia a partir do evento `agent.spawn` em processo chamando o mesmo binário `downshift claude-code` pelo mesmo contrato de stdin; fail-open, nunca nega. Não rode junto com o hook de settings: cada spawn é roteado duas vezes (observado em 2026-10-17). Desenho: [mod-router (EN)](../design/mod-router.md).
+- **Recomendados, não empacotados** ([companions, EN](../guides/companions.md#claude-code-mods-downshift-recommends)): You should know (nativo do Claude Code, desligado por padrão; o `setup` liga se você não definiu; cada checagem é um pedido cobrado em segundo plano), Token Weather, Replay Theater e reflect-mod. Companion: Headroom (padrão, proxy de compressão, detectado e registrado). O Downshift não instala, não lança nem encapsula nenhum deles.
+
+**Evidência.** A [escada (EN)](../guides/evidence.md) separa o que é estimado (preço de tabela, telemetria) do que é medido (benchmark controlado, A/B em tarefa real). A comparação de três braços do [protocolo de benchmark (EN)](../guides/benchmark-protocol.md) (Opus fixo, `opusplan` nativo, `opusplan` + Downshift) ainda não tem arquivo de evidência; até ter, "economiza além do `opusplan`" segue não provado.
 
 ---
 
@@ -73,7 +126,7 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 | [10 · Candidato em shadow](10-candidato-shadow.md) | Avaliação | Observar um candidato softmax sem trocar o roteamento de produção |
 | [11 · Compressor Nativo de Contexto](../design/context-optimization.md) | Otimização | Compressor determinístico em Go e sensor de telemetria passiva |
 | [12 · Plugin, skills e agente (EN)](../design/architecture.md#packaging-layers-what-an-agent-harness-loads) | Empacotamento | As cinco camadas que um harness carrega: memória (`AGENTS.md`), skills (`skills/`), hooks (binário; `hooks/hooks.json` no plugin), agente de exemplo (`agents/`) e o plugin do Claude Code (`/plugin install downshift --marketplace tiagovilasboas/downshift`) |
-| [13 · Companions (EN)](../guides/companions.md) | Ecossistema | Headroom como companion padrão (detectado e registrado, nunca instalado pelo Downshift), OmniRoute como gateway opcional, mods do Claude Code recomendados (You should know, Token Weather, Replay Theater, reflect-mod), padrões que o Downshift segue mas não empacota |
+| [13 · Companions (EN)](../guides/companions.md) | Ecossistema | Headroom como companion padrão (detectado e registrado, nunca instalado pelo Downshift), mods do Claude Code recomendados (You should know, Token Weather, Replay Theater, reflect-mod), padrões que o Downshift segue mas não empacota |
 
 ---
 

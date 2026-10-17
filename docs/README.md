@@ -6,6 +6,27 @@ runtime proof) and **internal/** (maintainer planning). Markdown file names
 under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 `SKILL.md`, `AGENTS.md`) keep their exact casing.
 
+## The suite in one table
+
+Downshift is a suite for optimizing token use in coding agents; subagent routing is the main lever, not the whole
+product. Status words below are the [capability matrix](reference/capability-matrix.md)'s; harness words stay
+Completed (Claude Code), Functional (Codex, Cursor), Experimental (KiroCrew, Antigravity).
+
+| Piece | One sentence | Status | Doc |
+|---|---|---|---|
+| Deterministic subagent routing | A `PreToolUse` hook rewrites one subagent's model and effort from the session's list. | Implemented; honored on Claude Code | [design/architecture.md](design/architecture.md) |
+| Guardrails (doubt never spends money) | R1 to R9 hold unconfident moves; risk categories keep a floor. | Implemented | [reference/complexity-weights.md](reference/complexity-weights.md) |
+| Project tier floor | `.downshift/policy.json` raises a minimum tier, never lowers one. | Implemented, every harness | [guides/config.md](guides/config.md#project-tier-floor-optional) |
+| Quota and credit gate | Hook marks or native snapshots hold rewrites to models without credit. | Implemented, not validated everywhere | [guides/quota.md](guides/quota.md) |
+| Session view and statusline | `session --tree`, `/downshift`, `watch`, stderr line, statusline (Claude Code). | Implemented | [guides/session-view.md](guides/session-view.md) |
+| Telemetry and cost reports with a control group | Prompt-free `events.jsonl`, about 1 in 10 spawns unrouted, `stats` and `report`. | Implemented; estimates, not an invoice | [guides/report.md](guides/report.md), [reference/stats-export.md](reference/stats-export.md) |
+| Context policy | `setup` sets `opusplan`, plan mode and You should know for unset keys; compressor observes bytes. | Implemented, limited (Claude Code) | [guides/claude-code.md](guides/claude-code.md), [design/context-optimization.md](design/context-optimization.md) |
+| Models it knows | Embedded catalog, families per harness, `explicit_only`, `provider/` prefix strip, session inference. | Implemented | [reference/session-models.md](reference/session-models.md), [../README.md#the-llms-it-knows](../README.md#the-llms-it-knows) |
+| Languages | EN and PT-BR signals with the word-hash boost; MiniLM and E5 fuse opt-in; E5 shadow with `shadow-report`. | Implemented (EN, PT-BR); E5 gain unproven | [contrib/classifier.md](contrib/classifier.md), [evidence/e5-int8-evaluation-2026-10-17.md](evidence/e5-int8-evaluation-2026-10-17.md) |
+| Mods | cache-tax in the plugin; savvy-progress and filetree as sibling plugins; downshift-router opt-in prototype. | Shipped; router Experimental | [../mods/README.md](../mods/README.md), [design/mod-router.md](design/mod-router.md) |
+| Companions | Headroom (default compression proxy), detected and recorded, never installed or wrapped. | Documented | [guides/companions.md](guides/companions.md) |
+| Evidence ladder | Rungs A to E; rung D reached once (2026-10-15), rung E not measured. | Honest by construction | [guides/evidence.md](guides/evidence.md) |
+
 ## Start here
 
 | Doc | For |
@@ -31,7 +52,7 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [guides/install.md](guides/install.md) | Installation and harness setup |
 | [guides/config.md](guides/config.md) | Configuration and local state |
 | [guides/when-to-use.md](guides/when-to-use.md) | When to use Downshift |
-| [guides/companions.md](guides/companions.md) | Companions: Headroom (default, detected and recorded), OmniRoute (optional gateway), recommended Claude Code mods (You should know, Token Weather, Replay Theater, reflect-mod), patterns Downshift follows but does not bundle |
+| [guides/companions.md](guides/companions.md) | Companions: Headroom (default, detected and recorded), recommended Claude Code mods (You should know, Token Weather, Replay Theater, reflect-mod), patterns Downshift follows but does not bundle |
 | [guides/claude-code.md](guides/claude-code.md) | Claude Code guide: opusplan and Downshift, how the baseline model is found, what is inferred, plugin vs setup |
 | [guides/evidence.md](guides/evidence.md) | What is proven at which level, and the metrics table (available, inferred, estimated, not yet) |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Protocol for the main comparison and what each run must record |
@@ -51,6 +72,8 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [../skills/downshift-audit/SKILL.md](../skills/downshift-audit/SKILL.md) | Read-only agent skill: audit hook wiring, stats and fixed context size |
 | [../skills/cost-reducer/SKILL.md](../skills/cost-reducer/SKILL.md) | Agent skill: cut session tokens in a fixed order (routing, fixed context, tool output, policy, misroutes) |
 | [../.claude-plugin/plugin.json](../.claude-plugin/plugin.json) | Claude Code plugin: `/plugin install downshift --marketplace tiagovilasboas/downshift` |
+| [../mods/README.md](../mods/README.md) | Mods: cache-tax inside the plugin, savvy-progress and filetree as sibling plugins (one install each), re-vendor procedure and tests |
+| [../mods/downshift-router/README.md](../mods/downshift-router/README.md) | Experimental mod (off by default): routing from `agent.spawn` through the same binary |
 
 ## Reference
 
@@ -75,7 +98,8 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [design/architecture.md](design/architecture.md) | Architecture overview, BDI agentic diagram, packaging layers (memory, skills, hooks, agents, plugin) |
 | [img/bdi-agentic-light.svg](img/bdi-agentic-light.svg) | BDI loop (beliefs / desires / intentions) — also in [README](../README.md#bdi-agentic-view-beliefs--intentions) |
 | [design/engineering-loop.md](design/engineering-loop.md) | Feedback loop |
-| [design/minilm-semantic.md](design/minilm-semantic.md) | Semantic boost |
+| [design/minilm-semantic.md](design/minilm-semantic.md) | Semantic boost (word-hash default, MiniLM opt-in) |
+| [design/mod-router.md](design/mod-router.md) | Can Downshift become a Claude Code mod? Design and the opt-in prototype's live runs |
 | [internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md](internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md) | Multilingual initiative (Phase D E5 shadow, H14, Phase E gate) |
 | [design/classifier-shadow.md](design/classifier-shadow.md) | Shadow classifier |
 | [design/context-optimization.md](design/context-optimization.md) | Native Context Compressor & Context Sensor |
@@ -96,6 +120,8 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [contrib/prompt-corpus.md](contrib/prompt-corpus.md) | Prompt corpus |
 | [../benchmark/README.md](../benchmark/README.md) | Benchmark splits |
 | [evidence/](evidence/) | Dated runtime evidence (rewrite honored, audits) |
+| [evidence/e5-int8-evaluation-2026-10-17.md](evidence/e5-int8-evaluation-2026-10-17.md) | Multilingual E5 as a routing candidate: baseline measured, E5 gain unproven, fuse stays off |
+| [evidence/multilang-codex-2026-10-16.md](evidence/multilang-codex-2026-10-16.md) | Multilingual checks through the Codex adapter (wire response and telemetry only) |
 | [evidence/baseline-freeze-2026-10-17.md](evidence/baseline-freeze-2026-10-17.md) | Baseline freeze manifest: frozen eval sets, sha256, reference numbers the next run must reproduce, how to verify |
 
 ## Brand

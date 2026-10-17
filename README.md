@@ -5,7 +5,7 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift" width="320">
 </picture>
 
-**An optimizer for the cost and efficiency of agent execution. Right-sized subagents, conservative under doubt, measured.**
+**A suite for optimizing token use in coding agents: deterministic subagent routing, with the guardrails, floors, quota gate, session view, telemetry, context policy, mods and a companion around it. Conservative under doubt, measured.**
 
 Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
 
@@ -25,6 +25,23 @@ Coding agents spend most of their money where you are not looking: when the main
 
 Model routing is the main lever today, not the whole product. The metric that matters is **cost per task completed with acceptable quality**; tokens are a proxy. Everything is deterministic (no LLM in the routing loop), prompt-free (task text never leaves memory or reaches a log), and fail-open (any doubt or error leaves the spawn exactly as the harness asked).
 
+## The suite at a glance
+
+One binary, one state directory, every piece computed for every harness. Status words are the ones the [capability matrix](docs/reference/capability-matrix.md) uses; each row there names the code, test or dated evidence behind it.
+
+| Piece | One sentence | Status |
+|---|---|---|
+| **Deterministic subagent routing** | A `PreToolUse` hook classifies the task and rewrites only that subagent's model and effort from the session's own list. | Implemented; honored on Claude Code (observed), inferred on Codex, unconfirmed on Cursor |
+| **Guardrails: doubt never spends money** | R1 to R9 hold unconfident downshifts, unconfident upshifts and unconfident frontier picks; risk categories keep a floor; a guessed baseline reaches only the small tier. | Implemented, invariant tests (`cost_safety_invariants_test.go`) |
+| **Project tier floor** | `.downshift/policy.json` raises a minimum tier by class or risk for a repository; it never lowers one. | Implemented, every harness |
+| **Quota and credit gate** | A hook mark or native usage snapshot holds a rewrite to a model you have no credit for; stale snapshots stop holding after 1 h. | Implemented, not validated everywhere ([quota](docs/guides/quota.md)) |
+| **Session view and statusline** | `downshift session --tree`, `/downshift`, `downshift watch`, a stderr line per spawn and a statusline with quota windows. | Implemented; statusline Claude Code only ([session view](docs/guides/session-view.md)) |
+| **Telemetry and cost reports with a control group** | Prompt-free `events.jsonl`, tokens and catalog-priced cost per child, about 1 in 10 spawns left unrouted, `downshift stats` and `downshift report`. | Implemented; usage on Claude Code only; estimates, not an invoice |
+| **Context policy** | `setup` sets `opusplan`, plan mode and Claude Code's You should know mod for keys you have not set; the native compressor observes bytes. | Implemented, limited: Claude Code session policy only ([Claude Code guide](docs/guides/claude-code.md)) |
+| **Mods** | cache-tax bundled in the plugin; savvy-progress and filetree as sibling plugins of the marketplace; downshift-router as an opt-in prototype. | Shipped, vendored and pinned; router Experimental ([mods](mods/README.md)) |
+| **Companions** | Headroom (default compression proxy) is detected and recorded, never installed or wrapped. | Documented ([companions](docs/guides/companions.md)) |
+| **Evidence ladder** | Five rungs from list price to cost per completed task, each figure quoted from the file that holds it. | Rung D reached once (2026-10-15); rung E not measured ([evidence](docs/guides/evidence.md)) |
+
 ## What it does
 
 | Capability | Status | Where to read |
@@ -38,6 +55,9 @@ Model routing is the main lever today, not the whole product. The metric that ma
 | **Find the next saving.** Skills for setup, read-only audit and a fixed-order cost diagnosis (routing, fixed context, tool output, project policy, misroutes). | Implemented as agent guidance; a skill's own description costs context. | [skills](skills/) · [companions](docs/guides/companions.md) |
 | **Context and session policy.** Native observe-only compressor; Headroom detected as companion; `setup` sets `opusplan`, plan mode and Claude Code's You should know mod on Claude Code only for keys you have not set. | Implemented, limited: a hook cannot change tool output in flight; session policy is Claude Code only. | [context optimization](docs/design/context-optimization.md) · [Claude Code guide](docs/guides/claude-code.md) |
 | **Learn from outcomes.** Adapt memory, naive-Bayes second opinion, capability scores, multilingual E5. | Shadow or opt-in. They record what they would do and never change a spawn until an owner enables a flag. | [design](docs/design/) |
+| **Know the models.** An embedded catalog of 34 entries across the Anthropic, OpenAI, Gemini, Grok and Cursor-native families, with tiers, list prices, aliases and family prefixes; `explicit_only` models are never picked automatically; OpenRouter-style `provider/` prefixes are stripped before lookup. | Implemented (`catalog_test.go`). | [The LLMs it knows](#the-llms-it-knows) · [session models](docs/reference/session-models.md) |
+| **Read more than English.** Regex signals in English and Portuguese plus a word-hash semantic boost by default; a language guard clears confidence elsewhere; MiniLM and the multilingual E5 fuse are opt-in, E5 in shadow with `downshift shadow-report`. | Implemented for EN and PT-BR; other languages abstain by design; E5 gain unproven. | [Languages](#languages) · [classifier](docs/contrib/classifier.md) |
+| **Mods and companions.** Three vendored Claude Code mods, one experimental router mod, four recommended mods, one companion. | Shipped (mods); documented (companions). | [Mods](#mods) · [companions](docs/guides/companions.md) |
 
 Status words follow one rule: *Implemented* means code, tests and a dated observation; *not validated everywhere* means the harness or plan has not shown the effect; *Shadow* and *Experimental* never touch a spawn. The full table with evidence per row is the [capability matrix](docs/reference/capability-matrix.md).
 
@@ -148,7 +168,7 @@ The session model list is optional on Claude Code: without one, Downshift infers
 
 ## What it is not
 
-An HTTP gateway or proxy (that is LiteLLM's or OmniRoute's job), a context compressor in the request path (Headroom's; Downshift's own compressor observes), a hosted model marketplace (OpenRouter), or an LLM-based classifier (deterministic signals plus a local semantic score from a word-hash embedder; MiniLM is opt-in). It acts on subagent spawns inside harnesses that expose a pre-tool hook, and the only network call is the optional, at-most-daily refresh of public capability scores ([scores](docs/reference/scores.md)). Learned tier memory stays in shadow. Comparison with gateways and SDKs: [when-to-use](docs/guides/when-to-use.md).
+An HTTP gateway or proxy (that is LiteLLM's job), a context compressor in the request path (Headroom's; Downshift's own compressor observes), a hosted model marketplace (OpenRouter), or an LLM-based classifier (deterministic signals plus a local semantic score from a word-hash embedder; MiniLM is opt-in). It acts on subagent spawns inside harnesses that expose a pre-tool hook, and the only network call is the optional, at-most-daily refresh of public capability scores ([scores](docs/reference/scores.md)). Learned tier memory stays in shadow. Comparison with gateways and SDKs: [when-to-use](docs/guides/when-to-use.md).
 
 ## How it works
 <picture>
@@ -199,17 +219,62 @@ Shadow observers (E5 multilingual embed, adapt memory, routing v2) update **cand
   <img src="docs/img/bdi-agentic-light.svg" alt="BDI agentic diagram: perception through adapters, beliefs in core, desires as tier and safety goals, deterministic deliberation, guardrail-checked intentions, harness action, and telemetry feedback. Parent LLM sits outside the loop." width="920">
 </picture>
 
-**Languages.** The rules cover English and Portuguese, including Portuguese risk terms.
+### Languages
+
+The rules cover English and Portuguese, including Portuguese risk terms.
 When the language guard detects an unsupported language, including mixed-language
 instructions, it drops confidence so uncertain model changes are held. Existing
 deterministic safety floors can still raise an undersized model. With no
 matching signal, routing also abstains. Detection is heuristic; it does not guarantee
-recognition of every foreign-language prompt. Optional **E5 multilingual shadow** (`DOWNSHIFT_E5_SHADOW=1`) records embedding observations only; it does not change tier. An offline LLM reference remains an evaluation candidate. See [language coverage and limits](docs/reference/complexity-weights.md#language-coverage).
+recognition of every foreign-language prompt. See [language coverage and limits](docs/reference/complexity-weights.md#language-coverage).
+
+Three layers, from default to opt-in ([classifier reference](docs/contrib/classifier.md)):
+
+1. **Deterministic classifier with the word-hash semantic boost (default).** Weighted regex signals vote; a nearest-centroid score from an in-process FNV word-hash embedder may raise a hesitant class, never lower it, never on a no-signal prompt and never to COMPLEX alone. A lift is logged as `SEMANTIC_BOOST`.
+2. **MiniLM (opt-in).** `DOWNSHIFT_MINILM_EMBED` names an external embedding command for the same boost; 1 s timeout, falls back to the hash embedder.
+3. **Multilingual E5 fuse (opt-in, default off).** `DOWNSHIFT_E5_SHADOW=1` records what an `intfloat/multilingual-e5-small` helper would do, without changing a tier; `downshift shadow-report` summarises those records from `events.jsonl` (would-lift rate, nearest labels, abstain share, latency percentiles, a false-downgrade proxy). `DOWNSHIFT_E5_FUSE=1` applies it, fail-open, logged as `E5_BOOST` or `E5_ABSTAIN`, with the fuse-off result kept as a floor.
+
+What is measured: the current classifier's tier accuracy, confident coverage and warm latency on a 170-item multilingual set and five legacy splits (EN 55% accuracy at 55% coverage, PT-BR 55% at 30%, ES/FR/DE/JA and mixed prompts at 0 to 5% coverage, every confident item correct, warm p95 under 5 ms). What is not: any accuracy or coverage gain from E5, because its weights were unreachable from the evaluation environment, and a live Codex child's model (the Codex check proves the wire response only). Decision on 2026-10-17: the fuse stays off, E5 stays a shadow candidate. [E5 evaluation](docs/evidence/e5-int8-evaluation-2026-10-17.md) · [Codex multilingual checks](docs/evidence/multilang-codex-2026-10-16.md).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/architecture-dark.svg">
   <img src="docs/img/architecture.svg" alt="Architecture: harness adapters call a harness-agnostic core, which uses a model catalog and the session model list to produce a routing decision." width="860">
 </picture>
+
+## The LLMs it knows
+
+Model data lives in the embedded [`catalog.json`](internal/catalog/catalog.json) (version 2, updated 2026-10-16; 34 entries), never in Go source. A user override under the [state dir](docs/guides/config.md) merges on top. Per harness the catalog carries:
+
+| Harness | Families in the catalog |
+|---|---|
+| Claude Code | `claude-haiku` (small), `claude-sonnet` (mid), `claude-opus` and `claude-fable` (frontier); xAI `grok` (frontier, custom model config) |
+| Cursor | Anthropic thinking variants (`claude-4.5-haiku`, `claude-4.5-sonnet`, `claude-opus`, `claude-fable`), `gpt-5.6-sol`, `gemini`, `grok`, `glm`, `muse-spark`, Cursor's own `composer` slugs |
+| Codex | `gpt-6-luna` and `gpt-5.6-luna` (small), `gpt-5.6-terra` (mid), `gpt-6-sol`, `gpt-6.1-sol`, `gpt-5.6-sol` (frontier), `gpt-6-astra` (explicit only) |
+| Antigravity | Gemini aliases `flash_lite` (small), `flash` (mid), `pro` (frontier) |
+| KiroCrew | the Anthropic `claude-haiku` / `claude-sonnet` / `claude-opus` families |
+
+Rules that hold for all of them, pinned by `internal/catalog/catalog_test.go`:
+
+- **Lookup is exact, then alias, then family prefix.** A newer version of a known family (say a `claude-opus` id the catalog has never seen) still resolves to its tier.
+- **`routing:"explicit_only"` is never chosen automatically.** Two entries carry it today, `gpt-6-astra` (Codex) and `claude-fable-5-1-thinking-high` (Cursor). If the current subagent already runs one, `Plan()` preserves it instead of downshifting. `claude-fable-5-1` on Claude Code is opt-in by listing, not `explicit_only`; the install example omits it on purpose.
+- **`provider/` prefixes are stripped before lookup.** OpenRouter-style ids (`anthropic/claude-opus-5-5`, or an Anthropic-family id behind any other prefix) resolve by family; an id the catalog does not know stays unknown and the spawn is left unchanged.
+- **Session inference on Claude Code.** Without a `session-models.json`, the session list is inferred from the current model as the catalog ladder below it, so routing only ever moves down from what you are running; `DOWNSHIFT_INFER_SESSION=off` disables it. Other harnesses need a hook-supplied list, `downshift models discover` or the file ([session models](docs/reference/session-models.md)).
+- **Prices are a dated list-price snapshot** with cache rates where the snapshot had them; `downshift models check` and `models pull` compare and refresh.
+
+## Mods
+
+Mods are Claude Code 2.1.287+ plugins with a hooks module. They are the one exception to the never-bundle rule (owner decision 2026-10-17): each is vendored byte for byte from a pinned MIT upstream, listed in [NOTICE](NOTICE), holds no routing logic and is never written by `downshift setup`. Procedure and tests: [mods/README.md](mods/README.md).
+
+| Mod | Where | What it does | Install |
+|---|---|---|---|
+| **cache-tax** | inside the `downshift` plugin ([hooks/cache-tax/](hooks/cache-tax/README.md)) | drops one cold send on a 50k+ context with its estimated rewrite price; `/keepwarm` keeps the cache warm through a break (one small model request per 50 idle minutes, it spends usage); `/cache-tax` prints the card | comes with `/plugin install downshift --marketplace tiagovilasboas/downshift` |
+| **savvy-progress** | sibling plugin ([mods/savvy-progress/](mods/savvy-progress/README.md)) | progress bar above the prompt and an `/agents-info` panel of subagents | `/plugin install savvy-progress@downshift` |
+| **filetree** | sibling plugin ([mods/filetree/](mods/filetree/README.md)) | a file tree pane showing what Claude reads, writes and commits | `/plugin install filetree@downshift` |
+| **downshift-router** (Experimental, off by default) | [mods/downshift-router/](mods/downshift-router/README.md) | routes from the in-process `agent.spawn` event by running the same `downshift claude-code` binary over the same stdin contract; fails open, never denies; a prototype for [can Downshift become a mod?](docs/design/mod-router.md). Do not run it next to the settings hook: each spawn is routed twice (observed 2026-10-17) | `userConfig.enabled` or `DOWNSHIFT_MOD_ROUTER=1` after installing it |
+
+Why savvy-progress and filetree are not inside the plugin: a plugin loads one hooks module, and all three mods hook `session.start` without a matcher, so each needs its own plugin.
+
+**Recommended, not bundled** ([companions guide](docs/guides/companions.md#claude-code-mods-downshift-recommends)): **You should know** (built into Claude Code, off by default; `setup` turns it on unless you set it, each check is a billed background request), **Token Weather** (Anthropic sample: the main session's context window above the prompt, next to Downshift's statusline below it), **Replay Theater** (Anthropic sample: step through the last turn's edits, no model call) and **reflect-mod** (claude-reflect, MIT: corrections become `CLAUDE.md` rules after one small Haiku check). The companion **Headroom** (default, compression proxy, detected and recorded) is in the same guide; Downshift installs, launches or wraps none of them.
 
 ## Project tier floor (optional)
 
@@ -232,6 +297,7 @@ Measured on 2026-10-15, one operator, Claude Code, same tasks and prompts in a r
 - **Supported:** Downshift routes, and where it rewrites down the task still passes; it saves up to about 12% on mechanical delegated work (list price, three runs per cell).
 - **Not supported:** a saving figure for general use. The 64% of subagents that kept their model in the ceiling case were left alone for lack of classifier confidence, and the estimate in `downshift stats` (list price per decision) is not a measurement.
 - **Not measured:** quality beyond the checks, other harnesses, more than one operator. The team protocol in [docs/guides/pilot.md](docs/guides/pilot.md) is how to add data; `downshift report` compares routed and control from your own usage.
+- **Not yet reported:** the three-arm comparison of [benchmark-protocol.md](docs/guides/benchmark-protocol.md) (fixed Opus, native `opusplan`, `opusplan` + Downshift). No `docs/evidence/benchmark-opusplan-*.md` exists; until one does, "saves beyond `opusplan`" stays unproven in the [evidence ladder](docs/guides/evidence.md#where-downshift-adds-value-beyond-native-opusplan-and-gateways).
 
 ## Harness support
 
@@ -281,7 +347,6 @@ See [the context optimization guide](docs/design/context-optimization.md) for ar
 Routing is one lever; the others live in tools Downshift works next to, never wraps. [docs/guides/companions.md](docs/guides/companions.md) covers each one.
 
 - **Headroom (default companion).** [Headroom](https://github.com/chopratejas/headroom) is a local compression proxy (`headroom wrap claude`, `codex`, Cursor manual). When its binary is on PATH, `downshift context enable` records it and `downshift doctor` shows a `companion` row, so savings are not attributed to routing alone. Downshift never installs, launches or wraps it; `headroom wrap <tool>` is yours to run.
-- **OmniRoute (optional gateway).** Anthropic-family ids behind any `provider/` prefix route normally; other ids stay unknown and the spawn is left unchanged (fail open). Recipe and limits in the guide.
 - **Claude Code mods Downshift recommends.** **You should know** (`/plugin enable cc-plugin-you-should-know@builtin`, built in and off by default: a tool-less side agent notes one thing you might have missed above the prompt; each check is a billed request, so the guide says when it pays), **Token Weather** (Anthropic sample [mod](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather) drawing the main session's context window above the prompt with real figures, while Downshift's statusline shows quota and subagent routing below it), **Replay Theater** (Anthropic sample: step through the last turn's edits one diff at a time, no model call) and **reflect-mod** ([claude-reflect](https://github.com/BayramAnnakov/claude-reflect), MIT: turns your corrections into `CLAUDE.md` rules after one small Haiku check per short prompt). Install steps and the read-before-install note are in the guide.
 - **Patterns, not dependencies.** Anthropic's read-only `claude-code-setup` is the contract `downshift setup --dry-run` follows; `task-observer` can collect misroutes for `misroute:` issues. Neither is bundled.
 

@@ -100,37 +100,6 @@ every session, the cost the [audit skill](../../skills/downshift-audit/SKILL.md)
 measures. Prefer the binary; if you use the skill, keep it in one project and
 measure.
 
-## OmniRoute (optional gateway)
-
-[OmniRoute](https://github.com/diegosouzapw/OmniRoute), MIT, is a self-hosted
-OpenAI-compatible gateway: one local endpoint, many providers, quota-aware
-fallback, its own compression. It is complementary, as
-[when-to-use.md](when-to-use.md) already says of LiteLLM and OpenRouter:
-the gateway chooses transport, credentials and provider; Downshift chooses
-the subagent's model id and effort at spawn time.
-
-**What works.** OmniRoute exposes provider-prefixed ids. Downshift strips the
-first `provider/` segment (the OpenRouter rule) and resolves the rest by exact
-id, alias or family, so an Anthropic-family id behind any prefix routes
-normally: `cc/claude-opus-4-8` resolves to the frontier tier.
-
-**What does not, by design.** A non-Anthropic or combo id (`glm/glm-5.2`,
-`kmc/kimi-k2.6`, `claude/combo/custo-otimizado`) is not in the catalog.
-Downshift then has no baseline tier, holds the spawn and leaves the model
-unchanged. That is the fail-open rule, not a bug: doubt never spends money.
-Both behaviours are pinned by `TestLookupByID_OmniRoute*` in
-`internal/catalog/catalog_test.go`.
-
-**Recipe (Claude Code, from OmniRoute's own guide).** Point Claude Code at the
-gateway root with `ANTHROPIC_BASE_URL` (no `/v1`) and `ANTHROPIC_AUTH_TOKEN`,
-restart the session, install the Downshift hooks as usual. The session model
-Claude Code reports is whatever OmniRoute's `/model` picker or
-`ANTHROPIC_MODEL` names; if that is not an Anthropic-family id, add a
-[`session-models.json`](../reference/session-models.md) whose ids are in the
-catalog, or expect `unknown` baselines in `downshift stats`. Not verified on a
-live OmniRoute instance as of 2026-10-17; evidence welcome under
-`docs/evidence/`.
-
 ## Claude Code mods Downshift recommends
 
 Claude Code **mods** (released 2026-10-01 with Claude Code 2.1.287) are
