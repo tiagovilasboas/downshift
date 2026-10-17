@@ -1,0 +1,157 @@
+<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+
+# Evidence ladder: what each saving figure means
+
+Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+
+Five kinds of "saving" appear around this project, and they are not the same number. This page separates them, quotes
+each figure from the file that holds it (checked against the current file on 2026-10-17), and says which rung the
+project stands on today. Rule of reading: a figure on a lower rung never stands in for a higher one.
+
+| Rung | What it is | Status today |
+|---|---|---|
+| A | Theoretical saving from catalog list prices | Arithmetic, always available |
+| B | Saving estimated by telemetry (normalised units, catalog-priced tokens) | Available on Claude Code; an estimate per decision |
+| C | Saving measured in controlled benchmarks | Partial: quality measured, cost not |
+| D | Saving demonstrated on real tasks, routed versus control | One measurement, one operator, 2026-10-15 |
+| E | Cost per task completed with acceptable quality | Defined and computed by `report`; no window has unlocked it yet |
+
+## A. Theoretical saving (list prices)
+
+Source: `internal/catalog/catalog.json` (`version` 2, `updated` 2026-10-16), USD per 1M tokens.
+
+| Model | Input | Output | Cache read | Cache write |
+|---|--:|--:|--:|--:|
+| `claude-haiku-4-5` (small, the native `haiku` alias) | 1.00 | 5.00 | 0.10 | 1.25 |
+| `claude-sonnet-5-5` (mid) | 2.00 | 10.00 | 0.10 | 2.50 |
+| `claude-opus-5-5` (frontier) | 4.00 | 20.00 | 0.20 | 5.00 |
+
+A Haiku child costs 75% less than Opus and 50% less than Sonnet on uncached input and output tokens. On cache reads the
+gap to Opus is 50% and the gap to Sonnet is zero. A subagent's traffic is mostly cached context (the one transcript
+checked in [beta-exit.md](../reference/beta-exit.md#pillar-3--billing-beforeafter-real-dollars) had 18 input, 311
+output and 82,900 cache tokens), so "75%" is the ceiling of one token class, not the saving on a child. Rung A also
+assumes the same tokens on both models and a task that passes on the cheaper one; both assumptions are what rungs C
+to E test.
+
+## B. Saving estimated by telemetry
+
+Source: `internal/telemetry/telemetry.go` (`Aggregate`), `export.go`, [stats-export.md](../reference/stats-export.md).
+
+- **Normalised units** (`norm_baseline`, `norm_routed`): every decision is 1.0 baseline unit; an applied downshift is
+  charged `1 - estimated_savings` (a list-price ratio), an applied upshift `upshift_cost_ratio`, everything else 1.0.
+  No tokens are involved. `--cost-per-unit` turns units into dollars by multiplication, nothing more.
+- **Catalog-priced tokens** (`actual_cost_usd`, `real_saved_usd`, `real_cost_delta_usd`, `real_overspend_usd`): the
+  child's recorded tokens priced at the executed model and again at the requested model. The baseline is the same
+  token count on another model, a counterfactual, not a second run. `real_saved_usd` clamps each event at zero;
+  read it with `real_overspend_usd`. Tokens come from the child transcript on `SubagentStop` (Claude Code only).
+- **Provenance.** [billing-gap-audit.md](../evidence/billing-gap-audit.md) (2026-10-09, 7 days): `total` 186,
+  `usage_records` 15, `usage_linked` 5, `actual_cost_usd` 15.432977, `real_saved_usd` 0.424866,
+  `baseline_no_route` 0; native tokens and model matched the record on 5 of 5 linked children. That is provenance
+  for the token counts, not for a bill. P3.4 needs 50 linked records and stands at 5 in that audit.
+- **Known biases.** `baseline_source: inferred` (Claude Code settings guess) is counted apart; a refuted rewrite saves
+  nothing; an unknown requested model gives zero saving by construction; a decision with no usage record gives units
+  only. The headline percentage this produces (19.3% in one operator's log, per
+  [subagent-routing-ab-2026-10-15.md](../evidence/subagent-routing-ab-2026-10-15.md)) is an estimate per decision at
+  list price, not a measurement.
+
+## C. Saving measured in controlled benchmarks
+
+Sources: [benchmark/report.md](../../benchmark/report.md) (last updated 2026-10-15),
+[hardening-audit-2026-10-15.md](../evidence/hardening-audit-2026-10-15.md). Datasets live in the private downshift-labs
+repository; the public repo holds aggregates and two sample tasks under `internal/outcome/testdata/`.
+
+| Benchmark | n | Held constant | Result | Cost measured? |
+|---|--:|---|---|---|
+| Classifier, seed regression net | 200 | prompts, labels, `ClassifyWithSemantic`, no adapt memory | 69.0% tier accuracy (95% CI 62.5–75.5%) in `benchmark/report.md`; 73.5% in the hardening audit on `f9b531e..429bf42`: the two files disagree and neither names the other's commit | No |
+| Classifier, burned holdout | 300 | same | 100.0%; tuned against, so not generalisation | No |
+| Classifier, eval-only `fresh` / `heldout2` | 100 / 120 | same, split never tuned | 50.0% (40.0–60.0%) / 40.0% (31.7–49.2%) at `5a888e7`; 53.0% / 41.7% at `3067340`. Most misses are abstentions (router keeps the model); confident and wrong: 2 of 37 and 6 of 28 | No |
+| Outcome suite, fixed model per tier | 40 tasks, 1 run per tier | prompt, hidden `check_test.go`, one model per tier, 2026-10-03 | frontier `anthropic/claude-opus-5.5` 40/40; mid `deepseek/deepseek-v4-flash` 31/40 (77.5%); small `qwen/qwen3-coder-30b-a3b-instruct` 27/40 (67.5%). TRIVIAL+SIMPLE: 20/20, 17/20, 16/20 | No: `run.json` holds tier, model, date and pass/fail only (issue #100) |
+| Classifier routing on that suite | 40 | recomputed 2026-10-15 | 6 small, 22 mid, 12 frontier; 37/40 pass at the picked tier | No |
+| Adapt memory, offline | 40 | same runs | per-task upper bound 40/40; shared shape memory 37/40 (0.0pp vs classifier) | No |
+| Held-out suite (GAP-SUITE) | 6 tasks, 1 smoke run | Go tasks outside the development suite | small 2/6, mid 4/6, frontier 6/6, USD 0.14 total ([gap-tasks.md](../internal/gap-tasks.md)) | Total only, not per task |
+
+Two notes. The small-versus-frontier gap on TRIVIAL+SIMPLE labels is −20.0 points on fixed-model runs, with
+overlapping intervals; the suite's own rule is to revisit the downshift below −5. And `downshift eval-adapt` prints a
+"cost per completed task" per policy, but it is a model: reference tokens per attempt (`--ref-in`, `--ref-out`), tier
+prices you pass, escalation one tier up on failure, an optional `--fail-penalty`. It uses no observed tokens.
+
+## D. Saving demonstrated on real tasks
+
+Source: [subagent-routing-ab-2026-10-15.md](../evidence/subagent-routing-ab-2026-10-15.md). One operator, Claude
+Code on `sonnet-5-5`, same prompts in both arms, control = same hooks with `DOWNSHIFT_NO_ROUTE=1`, acceptance = exit
+code of hidden tests, cost = Claude Code's own `total_cost_usd` (list price), runs shuffled, usage-limit refusals
+excluded, comparison restricted to runs with at least 3 spawns.
+
+| Batch | Tasks | n per arm | Accepted routed / control | Avg cost routed / control | Downshifts applied |
+|---|---|--:|---|---|--:|
+| b2 | 4 real fixes, delegation optional | 8 | 7/8 / 7/8 | $0.65 / $0.77 | 0 (1 upshift to Opus) |
+| b5 | 4 mechanical tasks, one subagent per piece | 12 | 12/12 / 12/12 | $0.59 / $0.67 (−12%) | 19 of 56 (34%) |
+| b6 | 4 real fixes, at least 3 subagents | 12 | 8/12 / 9/12 | $0.75 / $0.92 | 3 of 34 (9%) |
+
+Per task in b5: `mech-rename` $0.49 / $0.74 (−33%, all five subagents downshifted in all three runs), `mech-constant`
+$0.66 / $0.77, `mech-doc-comments` $0.59 / $0.65 (interval includes zero), `mech-test-mirror` $0.62 / $0.52 (noise:
+nothing downshifted in 2 of 3 runs). Output tokens in b5: 39.8k on Haiku against 117.5k all on Sonnet. In b2 the
+routed arm used about half the turns (13.9 against 30.6) with no downshift applied, so that gap is agent variation.
+Codex without Downshift, 8 runs: 8/8 accepted, about $0.21 per run. Median wall time 141 s; mean not reported.
+
+What D supports: a saving of about 12% on mechanical delegated work, a third on pure renames, with 12/12 accepted
+in both arms. What it does not: any figure for natural use (b2 and b6 gaps are not attributable to routing),
+intervals (three runs per cell), quality beyond structural checks, other harnesses, more than one operator.
+
+## E. Cost per task completed with acceptable quality
+
+**Not measured today.** The definition exists and the command computes it, but no window has met its threshold.
+
+`downshift report` (`cmd/downshift/report.go`, `internal/telemetry/report.go`, `tasks.go`) defines a completed task as a
+child that ended `completed` and has a priced usage record; cost per completed task is that child's cost plus every
+failed attempt it redid (a respawn in the same session within 10 minutes of an `error` or `interrupted` end); rework
+rate is reworked spawns over spawns with an observed end; savings are control minus routed per completed task, with a
+95% percentile bootstrap (2,000 resamples, fixed seed 20261013). It needs 20 completed, priced tasks per group
+(`MinReportTasks`); at the default `DOWNSHIFT_CONTROL_SHARE=0.10` that is roughly 200 completed tasks.
+
+What is missing to produce it: enough completed tasks in one log (the [pilot](pilot.md) at share 0.5); a captured
+`PostToolUseFailure` payload, without which rework undercounts (GAP-CHILD-FAILURE); and a quality judgment, because
+"acceptable quality" is not in the log: `completed` means the child returned, not that its work was right.
+`downshift feedback <id> failed|retry` is the manual backstop. The 2026-10-15 A/B measured cost per run with an
+acceptance check, which is close to E for those tasks but is not the `report` definition and had no rework term.
+
+## Metrics table
+
+Status: **available** (recorded and printed), **inferred** (derived from indirect evidence), **estimated** (a price
+model applied to something recorded), **not available** today. Claude Code unless stated; other harnesses record
+decisions but not usage or ends ([harness-matrix.md](../reference/harness-matrix.md#child-end-n5-2026-10-13)).
+
+| Metric | Status | Where |
+|---|---|---|
+| **Total cost per task completed with acceptable quality** (primary) | not available | `downshift report` computes cost per completed task once 20 priced completions per group exist; quality is manual |
+| Cost per run (parent session) | not available from Downshift | hooks see subagents only; the A/B used Claude Code's `total_cost_usd` by hand |
+| Cost per subagent | estimated | `downshift session --tree`, `stats --detail` (`cost_subagents`, `max_subagent_cost_usd`); catalog price × transcript tokens |
+| Input / output / cache tokens per child | available | usage event fields `input_tokens`, `output_tokens`, `cached_tokens`, `cache_write_tokens`; `observed_child_tokens` in `stats --export` |
+| Latency, total and per step | not available | no duration field on decision, usage or end events (`latency_ms` exists only on the E5 shadow record); the A/B timed runs externally |
+| Completion rate | available | `child_status` counts in `stats` ("How children ended") and `--export`; `report` `ended` / `completed_tasks` |
+| Failure rate | available, undercounted | `child_status` `error` / `interrupted`; `PostToolUseFailure` payload never captured (GAP-CHILD-FAILURE) |
+| Retries | inferred | "Respawned after a failure" in `stats`, `↻` in the session tree (10-minute rule, a hint); explicit via `downshift feedback <id> retry` |
+| Result quality | not available | hidden tests in the A/B only; `feedback <id> success|failed` is manual |
+| Coordination and delegation cost | not available | parent turns and tokens are outside the hook; GAP-COORDINATION open |
+| Fixed-context cost | available per child, estimated in dollars | `cached_tokens` / `cache_write_tokens` priced at cache rates; parent context not seen; `context metrics` token fields unavailable |
+| Abstention rate | available | reason codes `NO_SIGNAL`, `CLASSIFIER_UNCONFIDENT` in `stats --export` `reason_codes`; `downshift benchmark` prints abstentions per split |
+| Routing decisions and guardrails fired | available | `verdict`, `corrections`, `HELD_*` codes; `stats` "Guardrails held"; `session --why`; `stats --by-harness` |
+| Requested versus executed model | available / inferred | `requested_model` and `final_model` on the decision; `resolved` record with `rewrite_honored` when the harness reports the child's model; otherwise `rewrite_honored_inferred` from a later spawn |
+| Baseline comparison | available (control) / estimated (counterfactual) | `report` routed versus `CONTROL` spawns; `stats` same-token counterfactual, marked `baseline_source: inferred` when guessed |
+
+## Why catalog prices are not the invoice
+
+Catalog prices are public list prices from a dated snapshot. An invoice differs by plan (Pro, Max and Team have no
+per-token line at all), negotiated or batch discounts, cache pricing the catalog may lack (then cached tokens are
+billed at the input rate, an upper bound), provider-side retries and the parent session's own tokens, which no hook
+sees. The only invoice-grade comparison is the [billing comparison template](billing-comparison-template.md), still
+unfilled; see [pilot.md](pilot.md) for the protocol that feeds it.
+
+## Why fewer tokens can cost more
+
+A cheaper child that fails is paid for and then paid for again on the retry, usually on a larger model, plus the
+parent's turns to notice and re-delegate. The outcome suite shows the risk size: the small tier passes 27 of 40 tasks
+where the frontier passes 40. That is why the primary metric is per completed task including rework, why `report` adds
+redone attempts to the completing child, and why an unconfident router that keeps the requested model (most spawns in
+b2 and b6) is the intended behaviour rather than a missed saving. A token count or a per-decision percentage says what
+a spawn cost, not what the task cost.
