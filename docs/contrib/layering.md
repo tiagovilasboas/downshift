@@ -17,10 +17,23 @@ Dependencies point inward: adapters may import core and shared services; core
 never imports `catalog`, `telemetry`, `adapt`, `policyfile` or an adapter
 (checked with `go list -deps ./internal/core`). Optional layers plug into core
 through a hook variable (`core.MemoryAdjustHook`, `core.TierFloorHook`)
-registered in their `init`. Known debt (2026-10-17): core still imports `quota`
-(session gates) and `hookctx` directly, and reads a dozen `DOWNSHIFT_*`
-variables with `os.Getenv`; the target is the same hook-variable pattern, with
-configuration read once at the edge by the runner.
+registered in their `init`. Debt status (2026-10-17):
+
+- Configuration read once at the edge: done. `core.Config` (`internal/core/env.go`)
+  types every `DOWNSHIFT_*` variable core reads; `runHookAdapter` calls
+  `core.SetConfig(core.ConfigFromEnv(os.Getenv))` once per invocation and
+  restores it on return, and offline commands and tests read the live
+  environment through the same accessors (test:
+  `TestHookRunnerReadsConfigOnce`).
+- `hookctx`: core no longer imports it directly; it reaches core only through
+  the helper packages (`semantic`, `graphify`) that run bounded commands.
+- `quota`: still open. `core.SessionList.Usage` is a `*quota.Snapshot`,
+  `WithUsageQuota` takes one and `QuotaStatus` returns a `quota.Status`;
+  all five adapters construct and pass those types and read the field. A
+  hook variable would cover `quota.Load`/`LoadNative`/`ParseNative`, but
+  removing the import needs the snapshot type to move into core (an alias in
+  core reintroduces the import), which changes the public types adapters and
+  tests use. Left for a change that may move those types.
 
 ## Before you write code
 

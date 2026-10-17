@@ -25,6 +25,11 @@ import (
 var hookReadTimeout = 2 * time.Second
 var errHookReadTimeout = errors.New("hook input timeout")
 
+// hookGetenv is where the shared runner reads the DOWNSHIFT_* configuration
+// that core routes by. It is read once per invocation (core.ConfigFromEnv)
+// and pinned for the whole hook; tests swap it for a map.
+var hookGetenv = os.Getenv
+
 // hookWire is how one harness receives the routed decision: the only
 // per-harness step of the shared runner, chosen by the registry entry in
 // harnesses.go. The runner itself holds no harness branch.
@@ -172,6 +177,10 @@ func runHookAdapter[E any](
 			rc = fail("PANIC")
 		}
 	}()
+	// Configuration is read once, here, at the edge: core and every shared
+	// layer below it see one snapshot for the whole invocation, restored on
+	// return like the hook deadline and the project context.
+	defer core.SetConfig(core.ConfigFromEnv(hookGetenv))()
 	// Harness hook payloads contain task text. Bound the read so a malformed or
 	// hostile stdin cannot make the persistent harness process exhaust memory.
 	const maxHookPayloadBytes = 1 << 20

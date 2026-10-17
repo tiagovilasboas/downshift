@@ -3,14 +3,21 @@
 
 package core
 
-import "os"
+import (
+	"os"
+	"sync"
+	"time"
+)
 
 // Environment variables read by internal/core.
 //
-// Every read goes through lookupEnv, the single seam of this package. Tests
-// swap it for a map; the target (docs/contrib/layering.md) is configuration
-// read once at the edge by the hook runner. This file is the one place to
-// check `downshift config` and docs/guides/config.md against.
+// Configuration is read once at the edge: the hook runner calls
+// SetConfig(ConfigFromEnv(os.Getenv)) at the start of every invocation and
+// every accessor below reads that snapshot. Outside a hook (offline commands,
+// tests) no config is set and the accessors read the live environment
+// through lookupEnv, so their values equal ConfigFromEnv(os.Getenv) at any
+// moment. This file is the one place to check `downshift config` and
+// docs/guides/config.md against.
 //
 //	Variable                    Default      Effect
 //	DOWNSHIFT_SESSION_MODELS    unset        Path of the operator session
@@ -83,17 +90,146 @@ const (
 	ScoreRoutingEnv = "DOWNSHIFT_SCORE_ROUTING"
 )
 
+// Config is every setting core reads from the environment, typed. The zero
+// value is "nothing set". Build one with ConfigFromEnv; install it with
+// SetConfig.
+type Config struct {
+	// SessionModelsPath is DOWNSHIFT_SESSION_MODELS; "" means the default path.
+	SessionModelsPath string
+	// QuotaRequired is DOWNSHIFT_QUOTA_MODE == "required".
+	QuotaRequired bool
+	// ExplicitUpshift is DOWNSHIFT_EXPLICIT_UPSHIFT == "1".
+	ExplicitUpshift bool
+	// InferSessionOff is DOWNSHIFT_INFER_SESSION == "off".
+	InferSessionOff bool
+	// DiscoveryOff is DOWNSHIFT_DISCOVERY == "off".
+	DiscoveryOff bool
+	// DiscoveredPath is DOWNSHIFT_DISCOVERED; "" means the state dir.
+	DiscoveredPath string
+	// DiscoveryTTL is DOWNSHIFT_DISCOVERY_TTL parsed as a Go duration, or
+	// defaultDiscoveryTTL when unset; 0 keeps a cache entry forever.
+	DiscoveryTTL time.Duration
+	// DiscoveryTTLInvalid is set when DOWNSHIFT_DISCOVERY_TTL is present but
+	// not a non-negative Go duration. A discovered entry is then an unknown
+	// session (same behaviour as before the value was typed).
+	DiscoveryTTLInvalid bool
+	// NBUpshift is DOWNSHIFT_NB_UPSHIFT == "1".
+	NBUpshift bool
+	// NBDownshift is DOWNSHIFT_NB_DOWNSHIFT == "1".
+	NBDownshift bool
+	// ScoreRouting is DOWNSHIFT_SCORE_ROUTING == "1".
+	ScoreRouting bool
+	// NativeSessionPaths holds the value of every HarnessCapabilities.
+	// NativeSessionEnv variable, keyed by variable name. The names come from
+	// the capability table, never from a branch.
+	NativeSessionPaths map[string]string
+}
+
+// ConfigFromEnv reads every variable above through getenv, once. Matching is
+// exact and case-sensitive: only the documented literal values switch a flag.
+func ConfigFromEnv(getenv func(string) string) Config {
+	c := Config{
+		SessionModelsPath: getenv(EnvSessionModels),
+		QuotaRequired:     getenv(EnvQuotaMode) == "required",
+		ExplicitUpshift:   getenv(EnvExplicitUpshift) == "1",
+		InferSessionOff:   getenv(EnvInferSession) == "off",
+		DiscoveryOff:      getenv(EnvDiscovery) == "off",
+		DiscoveredPath:    getenv(EnvDiscovered),
+		DiscoveryTTL:      defaultDiscoveryTTL,
+		NBUpshift:         getenv(NBUpshiftEnv) == "1",
+		NBDownshift:       getenv(NBDownshiftEnv) == "1",
+		ScoreRouting:      getenv(ScoreRoutingEnv) == "1",
+	}
+	if v := getenv(EnvDiscoveryTTL); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil || d < 0 {
+			c.DiscoveryTTLInvalid = true
+		} else {
+			c.DiscoveryTTL = d
+		}
+	}
+	for _, n := range AllHarnessCaps() {
+		name := n.Caps.NativeSessionEnv
+		if name == "" {
+			continue
+		}
+		if c.NativeSessionPaths == nil {
+			c.NativeSessionPaths = map[string]string{}
+		}
+		c.NativeSessionPaths[name] = getenv(name)
+	}
+	return c
+}
+
+var (
+	configMu sync.RWMutex
+	// activeConfig is the snapshot every accessor reads. nil means no config
+	// was set: the accessors read the live environment through lookupEnv.
+	activeConfig *Config
+)
+
+// SetConfig installs c as the configuration every accessor reads and returns
+// a function that restores the previous state. The hook runner calls it once
+// per invocation; tests call it to pin a configuration without touching the
+// process environment.
+func SetConfig(c Config) (restore func()) {
+	configMu.Lock()
+	prev := activeConfig
+	activeConfig = &c
+	configMu.Unlock()
+	return func() {
+		configMu.Lock()
+		activeConfig = prev
+		configMu.Unlock()
+	}
+}
+
+// config returns the active snapshot, or a fresh read of the live
+// environment when none is set.
+func config() Config {
+	configMu.RLock()
+	c := activeConfig
+	configMu.RUnlock()
+	if c != nil {
+		return *c
+	}
+	return ConfigFromEnv(lookupEnv)
+}
+
 // lookupEnv is the only reader of the process environment in this package.
+// It is consulted only when no Config is set.
 var lookupEnv = os.Getenv
 
-func sessionModelsEnv() string                { return lookupEnv(EnvSessionModels) }
-func quotaModeRequired() bool                 { return lookupEnv(EnvQuotaMode) == "required" }
-func explicitUpshiftEnv() bool                { return lookupEnv(EnvExplicitUpshift) == "1" }
-func inferSessionOff() bool                   { return lookupEnv(EnvInferSession) == "off" }
-func discoveryOff() bool                      { return lookupEnv(EnvDiscovery) == "off" }
-func discoveredEnv() string                   { return lookupEnv(EnvDiscovered) }
-func discoveryTTLEnv() string                 { return lookupEnv(EnvDiscoveryTTL) }
-func nbUpshiftEnv() bool                      { return lookupEnv(NBUpshiftEnv) == "1" }
-func nbDownshiftEnv() bool                    { return lookupEnv(NBDownshiftEnv) == "1" }
-func scoreRoutingEnv() bool                   { return lookupEnv(ScoreRoutingEnv) == "1" }
-func nativeSessionPathEnv(name string) string { return lookupEnv(name) }
+func sessionModelsEnv() string { return config().SessionModelsPath }
+func quotaModeRequired() bool  { return config().QuotaRequired }
+func explicitUpshiftEnv() bool { return config().ExplicitUpshift }
+func inferSessionOff() bool    { return config().InferSessionOff }
+func discoveryOff() bool       { return config().DiscoveryOff }
+func discoveredEnv() string    { return config().DiscoveredPath }
+func nbUpshiftEnv() bool       { return config().NBUpshift }
+func nbDownshiftEnv() bool     { return config().NBDownshift }
+func scoreRoutingEnv() bool    { return config().ScoreRouting }
+
+// nativeSessionPathEnv returns the path held by the named native-export
+// variable. A pinned Config carries every name the capability table declares;
+// without one the live environment is read, so a harness declared outside
+// AllHarnessCaps (tests) still works.
+func nativeSessionPathEnv(name string) string {
+	if name == "" {
+		return ""
+	}
+	configMu.RLock()
+	c := activeConfig
+	configMu.RUnlock()
+	if c != nil {
+		return c.NativeSessionPaths[name]
+	}
+	return lookupEnv(name)
+}
+
+// discoveryTTL returns the discovery cache TTL and whether the configured
+// value was invalid (an unknown session, see LoadDiscoveredSession).
+func discoveryTTL() (ttl time.Duration, invalid bool) {
+	c := config()
+	return c.DiscoveryTTL, c.DiscoveryTTLInvalid
+}

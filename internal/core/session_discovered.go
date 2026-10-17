@@ -50,13 +50,9 @@ func LoadDiscoveredSession(harness string, now time.Time) SessionList {
 	if !ok || len(e.Ordered) == 0 {
 		return UnknownSession()
 	}
-	ttl := defaultDiscoveryTTL
-	if v := discoveryTTLEnv(); v != "" {
-		d, err := time.ParseDuration(v)
-		if err != nil || d < 0 {
-			return UnknownSession()
-		}
-		ttl = d
+	ttl, invalid := discoveryTTL()
+	if invalid {
+		return UnknownSession()
 	}
 	// An entry dated in the future (clock skew or a tampered file) would never
 	// age out, so anything beyond a small skew allowance is treated as expired.
