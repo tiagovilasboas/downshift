@@ -118,6 +118,25 @@ documented in README and `docs/design/minilm-semantic.md`.
 
 ---
 
+## Packaging layers (what an agent harness loads)
+
+Besides the Go layers above, the repository is laid out as the five things a
+coding harness can load. Each is a thin surface over the same binary; none holds
+policy. The plugin is Claude Code only; every other harness reaches the same
+layers through `downshift setup` and the docs.
+
+| Layer | Path | Holds | Harness-neutral? |
+|---|---|---|---|
+| 1 Memory | `AGENTS.md` (`CLAUDE.md` points to it) | always-loaded rules, at most 200 lines | yes |
+| 2 Skills | `skills/downshift-setup`, `skills/downshift-audit`, `skills/cost-reducer` | procedures with judgment; detail in `references/` on demand | yes (SKILL.md format) |
+| 3 Hooks | the `downshift <harness>` subcommands; `hooks/hooks.json` is the plugin form | routing, telemetry, guardrails (shared Go) | yes; `hooks.json` is Claude Code packaging |
+| 4 Agents | `agents/mechanical-worker.md` | one example with no pinned model ([subagents.md](../guides/subagents.md)) | Claude Code format; the rule applies everywhere |
+| 5 Plugin | `.claude-plugin/plugin.json`, `marketplace.json` | one install: hooks, command, skills, agent | Claude Code only |
+
+Contributor-only skills (`.claude/skills/downshift-layering`) stay out of the
+plugin. Companions (Headroom, OmniRoute) are detected and documented, never
+bundled: [companions.md](../guides/companions.md).
+
 ## Further reading
 
 | Doc | Audience |

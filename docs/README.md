@@ -38,7 +38,11 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [guides/billing-comparison-template.md](guides/billing-comparison-template.md) | Compare provider billing with `downshift stats --export` |
 | [pt/README.md](pt/README.md) | Documentação em português |
 | [../examples/README.md](../examples/README.md) | Sample hook JSON payloads |
+| [guides/subagents.md](guides/subagents.md) | When a subagent is routable: omit `model`; the example agent in `agents/` |
+| [../skills/downshift-setup/SKILL.md](../skills/downshift-setup/SKILL.md) | Agent skill: install or repair hooks on any harness, dry-run first |
 | [../skills/downshift-audit/SKILL.md](../skills/downshift-audit/SKILL.md) | Read-only agent skill: audit hook wiring, stats and fixed context size |
+| [../skills/cost-reducer/SKILL.md](../skills/cost-reducer/SKILL.md) | Agent skill: cut session tokens in a fixed order (routing, fixed context, tool output, policy, misroutes) |
+| [../.claude-plugin/plugin.json](../.claude-plugin/plugin.json) | Claude Code plugin: `/plugin install downshift --marketplace tiagovilasboas/downshift` |
 
 ## Reference
 
@@ -59,7 +63,7 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 
 | Doc | Topic |
 |-----|--------|
-| [design/architecture.md](design/architecture.md) | Architecture overview + BDI agentic diagram |
+| [design/architecture.md](design/architecture.md) | Architecture overview, BDI agentic diagram, packaging layers (memory, skills, hooks, agents, plugin) |
 | [img/bdi-agentic-light.svg](img/bdi-agentic-light.svg) | BDI loop (beliefs / desires / intentions) — also in [README](../README.md#bdi-agentic-view-beliefs--intentions) |
 | [design/engineering-loop.md](design/engineering-loop.md) | Feedback loop |
 | [design/minilm-semantic.md](design/minilm-semantic.md) | Semantic boost |

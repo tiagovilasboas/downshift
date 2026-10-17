@@ -14,6 +14,9 @@ Repository: https://github.com/tiagovilasboas/downshift
 Language: Go 1.27, single binary, zero runtime dependencies.
 
 Install and harness setup (canonical for agents): docs/guides/install.md
+Claude Code plugin (hooks, /downshift, skills, example agent; binary still required):
+  /plugin install downshift --marketplace tiagovilasboas/downshift
+Agent skills in skills/: downshift-setup, downshift-audit, cost-reducer (SKILL.md, any harness)
 
 Assisted setup for AI agents (ask the user before any write outside the repo):
   1. curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh

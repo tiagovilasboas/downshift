@@ -19,6 +19,12 @@ rewrite to the child subagent, not just that downshift emitted one.
 | antigravity | desktop 2.21.1, `invoke_subagent` | Yes, observed 2026-10-09 | One exact child: original `pro`, executed `flash_lite`, native executor/generation model `gemini-3.5-flash-lite`. [Evidence and QA](../evidence/antigravity-executor-ack.md). Manual read-only, build-specific sensor; quota/picker/alias mapping remains unresolved. |
 | grok | any (single model grok-4.6) | No hook rewrite: config only | PreToolUse is allow/deny; pin `reasoning_effort` in config.toml (README.md:520-531) |
 
+Packaging note: the plugin (`.claude-plugin/`, `hooks/hooks.json`, `agents/`)
+loads only on Claude Code. Every other harness gets the same hooks through
+`downshift setup` or the manual sections of
+[install.md](../guides/install.md); the skills under `skills/` are plain
+SKILL.md files any harness can read.
+
 "Inferred" means a later spawn in the same session asked for the model the
 hook had written (`rewrite_honored_inferred` in `stats --export`). It is
 correlation, not a read of the child's actual model. Only applied rewrites

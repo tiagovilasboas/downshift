@@ -30,7 +30,12 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/insta
 downshift setup
 ```
 
-`setup` prints a diff and asks before it writes. Preview with `downshift setup --dry-run` first, then open a new Claude Code session. For Claude Code it also sets `"model": "opusplan"` (Opus plans, Sonnet executes) and starts sessions in plan mode, only for keys you have not set yourself; `downshift setup --no-session-policy` wires the hooks and leaves both alone.
+`setup` prints a diff and asks before it writes. Preview with `downshift setup --dry-run` first, then open a new Claude Code session. On Claude Code you can instead install the plugin, which carries the same hooks, the `/downshift` command, the skills and an example agent (binary still required, use one channel or the other):
+
+```text
+/plugin install downshift --marketplace tiagovilasboas/downshift
+```
+ For Claude Code it also sets `"model": "opusplan"` (Opus plans, Sonnet executes) and starts sessions in plan mode, only for keys you have not set yourself; `downshift setup --no-session-policy` wires the hooks and leaves both alone.
 
 > **Beta.** Whether a rewrite is applied depends on the harness and plan, not only on Downshift. Read [plan compatibility](docs/guides/install.md#plan-compatibility--read-before-installing) before installing, and see [Harness support](#harness-support) for what has been verified.
 
@@ -42,7 +47,7 @@ downshift setup
    downshift setup --dry-run   # prints the settings diff; writes nothing
    downshift setup             # asks, backs up your settings, then wires the hooks
    ```
-   `setup` merges the hooks into `~/.claude/settings.json` using this binary's absolute path, keeps your other keys, and is idempotent. `downshift setup --undo` restores the latest backup. It also finds Cursor, Codex and Antigravity if they are installed.
+   `setup` merges the hooks into `~/.claude/settings.json` using this binary's absolute path, keeps your other keys, and is idempotent. `downshift setup --undo` restores the latest backup. It also finds Cursor, Codex and Antigravity if they are installed. Plugin users skip this step ([plugin install](docs/guides/install.md#plugin-install-claude-code)); `doctor` warns if both channels are wired.
 3. **Open a new session.** Subagents it spawns now go through the hook.
 4. **Check it.**
    ```bash
@@ -260,7 +265,7 @@ Project: [ROADMAP](ROADMAP.md) · [GOVERNANCE](GOVERNANCE.md) · [beta exit crit
 
 The most valuable contribution is a **misrouted prompt**: open an issue with the `downshift try` output and the tier you expected. Evidence that a rewrite was (or was not) honored on your harness and plan is just as welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Every feature must serve every harness: behaviour in shared layers, adapters only parse and emit. Read [docs/contrib/layering.md](docs/contrib/layering.md) before changing code.
+Every feature must serve every harness: behaviour in shared layers, adapters only parse and emit. Read [docs/contrib/layering.md](docs/contrib/layering.md) before changing code. How the repository is packaged for an agent harness (memory, skills, hooks, agents, plugin) is in [architecture.md](docs/design/architecture.md#packaging-layers-what-an-agent-harness-loads).
 
 ## Status
 
