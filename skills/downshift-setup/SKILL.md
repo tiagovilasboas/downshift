@@ -45,4 +45,4 @@ after the install works: it is for the first day, not for every session.
 Do not invent hook paths, matchers or catalog entries; everything above is in
 `docs/guides/install.md` and `examples/`.
 
-harness-downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift

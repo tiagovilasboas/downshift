@@ -1,6 +1,6 @@
 # Companions: tools that work next to Downshift
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Downshift does one thing: before a subagent spawns, it picks that subagent's

@@ -11,4 +11,4 @@ Use one channel, plugin or `setup`, not both: Claude Code runs a plugin hook
 and a settings hook separately, so wiring both routes every spawn twice.
 `downshift doctor` warns when it finds both.
 
-harness-downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift

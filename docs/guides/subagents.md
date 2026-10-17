@@ -26,4 +26,4 @@ brief routes small; a vague or risky one keeps the session model. `downshift try
 Other harnesses have no agent files in this format; the same rule applies to
 whatever field pins a child's model there ([harness matrix](../reference/harness-matrix.md)).
 
-harness-downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift

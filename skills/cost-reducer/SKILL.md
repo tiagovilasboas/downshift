@@ -46,4 +46,4 @@ Table: lever | evidence (command and the line you read) | change proposed | expe
 user applies one, re-run step 1 next week; `downshift report` compares routed and control from
 their own usage.
 
-harness-downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
