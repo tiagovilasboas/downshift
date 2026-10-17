@@ -2,9 +2,11 @@
 
 Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-**Decision: do not enable `DOWNSHIFT_E5_FUSE`. Keep E5 as an optional shadow
-candidate.** No gain is proven and one enable gate reads BLOCK for the helper as
-wired today. The three plumbing defects found during the evaluation (§3) are
+**Superseded 2026-10-17:** E5 shadow, E5 fuse, and the external MiniLM command
+were removed from the product. This note is historical. The decision below
+was "do not enable"; removal followed.
+
+**Decision (historical): do not enable `DOWNSHIFT_E5_FUSE`.** No gain was proven. The three plumbing defects found during the evaluation (§3) are
 fixed; they no longer stand between a measured gain and an enable decision. The baseline is measured and reproducible; the E5 side could not be
 measured here because the model weights are unreachable from this environment,
 and the full run is scripted for a machine that can reach them.

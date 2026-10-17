@@ -6,6 +6,14 @@ are the most valuable.
 
 Repository: https://github.com/tiagovilasboas/downshift
 
+## First hour (no API spend)
+
+1. `go test ./...` from a clone. That is the free regression suite.
+2. `go run ./cmd/downshift try "rename the variable userId" claude-code` and read the tier. `try` does not call a model.
+3. If a prompt looks wrong, open `misroute:` as below. Do not tune against private eval splits.
+
+Launch honesty, harness scope, and open beta blockers: [docs/guides/public-beta.md](docs/guides/public-beta.md).
+
 ## The most useful contribution: a misrouted prompt
 
 Downshift classifies a task's complexity with deterministic rules.

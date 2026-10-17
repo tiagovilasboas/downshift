@@ -31,22 +31,15 @@ the tier into a model id are in [complexity-weights.md](../reference/complexity-
    under-route on a tie).
 3. **Confidence margin** — a win needs at least **2 points** over the runner-up, or
    the classifier is treated as low-confidence (conservative routing).
-4. **Graphify (optional)** — `DOWNSHIFT_GRAPHIFY_CMD` can supply a graph label on stdin;
-   failures/timeouts do not escalate complexity. `DOWNSHIFT_GRAPHIFY=0` disables.
-5. **Semantic boost (MiniLM)** — `internal/semantic`: centroid distance can **raise**
-   complexity when regex is hesitant; it **never lowers** a class. It is ignored for no-signal prompts and cannot create COMPLEX without regex evidence. A lift is recorded as `SEMANTIC_BOOST`. `DOWNSHIFT_MINILM=0` disables.
+4. **Semantic boost (in-process hash)** — `internal/semantic`: nearest centroid can **raise**
+   complexity when regex is hesitant; it **never lowers** a class. It is ignored for no-signal prompts and cannot create COMPLEX without regex evidence. A lift is recorded as `SEMANTIC_BOOST`. `DOWNSHIFT_MINILM=0` disables. Graphify and external MiniLM commands were removed on 2026-10-17.
 6. **Language guard** — `lang_guard.go`: unsupported or mixed-helper-brief foreign cues set
    `UnsupportedLanguage` and clear confidence (M3 mixed bucket).
 7. **Risk floor and abstention** — `risk.go`: Trivial/Simple + risk → Medium with `RiskFloor`.
    Confident Medium/Simple + risk on bounded delegation briefs or narrow high-stakes patterns
    → `RiskAbstain` (confidence cleared, tier unchanged); counts as `deterministicLift` for R7/R9.
 
-**E5 multilingual fuse (opt-in, default off):** `DOWNSHIFT_E5_FUSE=1` applies
-`DOWNSHIFT_E5_CMD` + `DOWNSHIFT_E5_PROTOTYPES` inside `ClassifyWithSemantic`; fail-open.
-It does not reuse `DOWNSHIFT_E5_SHADOW_CMD`. `DOWNSHIFT_E5_SHADOW=1` remains observation-only.
-A lift by the fuse is logged as `E5_BOOST`, a reserved-centroid abstention as `E5_ABSTAIN`, and the
-event carries a prompt-free `e5_fuse` object. The fuse-off hash boost stays a floor under the fused
-class (`fuseFloor`), so turning the fuse on never ends a prompt below where fuse-off would leave it.
+Multilingual E5 (shadow and fuse) was removed on 2026-10-17. Logs written before that date may still contain `E5_BOOST`, `E5_ABSTAIN`, or `e5_fuse`; new decisions do not.
 
 ---
 

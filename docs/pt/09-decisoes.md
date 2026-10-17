@@ -13,12 +13,12 @@ O design do Downshift é pautado pelo equilíbrio deliberado entre requisitos de
 | **Desempate prioriza capacidade superior** | Segurança contra subdimensionamento: tarefas no limiar nunca caem em modelos fracos demais. | Um empate duvidoso pode manter um custo ligeiramente mais alto. |
 | **Tarefas `SIMPLE` no tier Small** | Economia máxima: ajustes pontuais e componentes isolados rodam no modelo econômico (Haiku/Luna). | Um ajuste `SIMPLE` incomumente complexo pode exigir que o modelo gaste mais turnos. |
 | **Exigência de margem de confiança** | Evita oscilações de roteamento em tarefas ambíguas ou vagas. | Uma tarefa `MEDIUM` sem sinais fortes permanece no modelo atual (mesmo em `UPSHIFT`). |
-| **Camada Semântica MiniLM local** | No holdout queimado (`benchmark/minilm-holdout.json`) a linha neural faz 96,3% de acurácia de tier e 0% de `FRONTIER → MID`, sem custo de rede. Não supera a rede de regex nesse arquivo. | Treino e sincronização de centróides requerem curadoria contínua de datasets. |
+| **Boost semântico por hash** | Em processo, sem rede e sem subprocesso. Só sobe classe hesitante. | Não é um modelo de linguagem; vocabulário fora de EN/PT continua no regex e no guarda de idioma. |
 | **Sem chamadas a serviços remotos (Jev/APIs)** | Zero latência de rede, custo marginal zero na classificação e privacidade absoluta. | Não se utiliza modelos de raciocínio de ponta apenas para triagem. |
 | **Separação entre Catálogo e Permissões** | Impossibilita erros onde o subagente falharia por tentar usar um modelo não contratado pela conta. | Exige manutenção do arquivo de permissões da sessão (`session-models.json`). |
 | **Distinção entre Emissão e Aplicação** | Transparência nos relatórios: a telemetria não assume falsamente que o cliente acatou a instrução. | A confirmação final de uso depende do ecossistema do harness. |
 | **Honor inferido na mesma sessão** | Codex já conta o follow-up sem reescrever o log. | Claude sem `session_id` não entra nessa conta. |
-| **Graphify via comando** | Dá para ligar um grafo depois, fail-open. | Não é socket MCP nativo. |
+| **Graphify** | Removido em 2026-10-17. | Fora do produto. |
 | **Zero-Leakage no log de eventos** | Logs seguros para compartilhamento público e relatórios de auditoria. | Não é possível recuperar o texto original do prompt a partir dos arquivos de telemetria. |
 | **Candidato softmax só em shadow** | Dá para comparar um candidato com rótulos revisados antes de qualquer promoção. | `DOWNSHIFT_SHADOW_WEIGHTS` não altera o hook. Sucesso sem `--required-tier` não vira treino. Ver [10 · Candidato em shadow](10-candidato-shadow.md). |
 

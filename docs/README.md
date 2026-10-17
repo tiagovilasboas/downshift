@@ -22,7 +22,7 @@ Completed (Claude Code), Functional (Codex, Cursor), Experimental (KiroCrew, Ant
 | Telemetry and cost reports with a control group | Prompt-free `events.jsonl`, about 1 in 10 spawns unrouted, `stats` and `report`. | Implemented; estimates, not an invoice | [guides/report.md](guides/report.md), [reference/stats-export.md](reference/stats-export.md) |
 | Context policy | `setup` sets `opusplan`, plan mode and You should know for unset keys; compressor observes bytes. | Implemented, limited (Claude Code) | [guides/claude-code.md](guides/claude-code.md), [design/context-optimization.md](design/context-optimization.md) |
 | Models it knows | Embedded catalog, families per harness, `explicit_only`, `provider/` prefix strip, session inference. | Implemented | [reference/session-models.md](reference/session-models.md), [../README.md#the-llms-it-knows](../README.md#the-llms-it-knows) |
-| Languages | EN and PT-BR signals with the word-hash boost; MiniLM and E5 fuse opt-in; E5 shadow with `shadow-report`. | Implemented (EN, PT-BR); E5 gain unproven | [contrib/classifier.md](contrib/classifier.md), [evidence/e5-int8-evaluation-2026-10-17.md](evidence/e5-int8-evaluation-2026-10-17.md) |
+| Languages | EN and PT-BR signals plus an in-process word-hash boost. | Implemented (EN, PT-BR) | [contrib/classifier.md](contrib/classifier.md) |
 | Mods | cache-tax in the plugin; savvy-progress and filetree as sibling plugins; downshift-router opt-in prototype. | Shipped; router Experimental | [../mods/README.md](../mods/README.md), [design/mod-router.md](design/mod-router.md) |
 | Companions | Headroom (default compression proxy), detected and recorded, never installed or wrapped. | Documented | [guides/companions.md](guides/companions.md) |
 | Evidence ladder | Rungs A to E; rung D reached once (2026-10-15), rung E not measured. | Honest by construction | [guides/evidence.md](guides/evidence.md) |
@@ -32,6 +32,7 @@ Completed (Claude Code), Functional (Codex, Cursor), Experimental (KiroCrew, Ant
 | Doc | For |
 |-----|-----|
 | **[guides/install.md](guides/install.md)** | Install binary, hooks per harness, troubleshooting (humans + agents) |
+| **[guides/public-beta.md](guides/public-beta.md)** | Public beta: what is proven, blockers, first contribution, roadmap |
 | [reference/capability-matrix.md](reference/capability-matrix.md) | Every capability with status (implemented, not validated everywhere, experimental, planned), evidence and limits |
 | [design/architecture.md](design/architecture.md) | End-to-end execution flow, who owns each step (Downshift, harness, external), what it is not |
 | [guides/claude-code.md](guides/claude-code.md) | Primary harness: opusplan, baseline inference, plan mode, emitted vs honored vs used |

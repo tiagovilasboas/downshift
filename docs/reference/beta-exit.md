@@ -83,7 +83,7 @@ Historical P3.4 finding (2026-10-06; superseded counts and current provenance in
 |----|------|-------|------|
 | P4.1 | Seed dataset health checks (`DatasetHealth`, no duplicates) | eng | [x] |
 | P4.2 | Expand curated set **30 → 108** tasks | eng | [x] |
-| P4.3 | `internal/graphify` library. A nil fetcher never escalates. `core.Route` does not escalate via the graph. | eng | [x] |
+| P4.3 | Graphify library | eng | [x] removed from the product 2026-10-17 |
 | P4.4 | Grow to **200** tasks (real prompts, rubric in `benchmark/README.md`) | curation | [x] |
 | P4.5 | 500-task seed+holdout net existed (200+300); datasets moved to **downshift-labs** since v0.1.0-beta.7; public [benchmark/report.md](../../benchmark/report.md). | curation | [x] |
 | P4.6 | `downshift benchmark --report` + `--gate` exist and can pass on the in-tree files. They gate the burned net, not unseen traffic. | eng | [x] |

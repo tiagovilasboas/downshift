@@ -23,13 +23,13 @@ A tabela de pesos, os pontos extras e a escolha do modelo em cada harness estão
 
 ## Detalhes de Engenharia
 
-Pontuação por regex, margem de confiança, Graphify opcional, boost MiniLM e fluxo de contribuição (`misroute:`) estão documentados em inglês para mantenedores:
+Pontuação por regex, margem de confiança, boost por hash em processo e fluxo de contribuição (`misroute:`) estão documentados em inglês para mantenedores:
 
 **[contrib/classifier.md](../contrib/classifier.md)**
 
 O candidato estatístico da v2 **não** substitui este caminho nos hooks. Ele só observa com `DOWNSHIFT_SHADOW_WEIGHTS`; relatório: `downshift shadow-report`. Ver [10 · Candidato em shadow](10-candidato-shadow.md).
 
-**Multilíngue e risco (2026-10-16):** o guard de idioma (`lang_guard.go`) e o piso de risco (`risk.go`) podem **abster** (`Confident=false`, `RiskAbstain`) em briefs de delegação ou padrões de alto risco do conjunto M3, sem baixar o tier. Embeddings E5 multilíngues ficam só em **shadow** (`DOWNSHIFT_E5_SHADOW=1`); não alteram o tier no hook. Detalhes em [complexity-weights.md](../reference/complexity-weights.md#language-coverage) e [architecture.md](../design/architecture.md).
+**Multilíngue e risco:** o guard de idioma (`lang_guard.go`) e o piso de risco (`risk.go`) podem **abster** (`Confident=false`, `RiskAbstain`) em briefs de delegação ou padrões de alto risco, sem baixar o tier. A cobertura de regras é inglês e português. E5 e Graphify não fazem parte do binário. Detalhes em [complexity-weights.md](../reference/complexity-weights.md#language-coverage).
 
 ---
 

@@ -44,8 +44,8 @@ external tool. Dotted boxes are opt-in or shadow and never change the route.
    the current model (Claude Code only) · quota marks from the hook, quota.json,
    native exports (never fetched during a hook)
              ▼
- classify + risk [D]  Classify (signals) → semantic boost → risk floor /
-   abstain → graphify escalation → NB second opinion ┆ E5 shadow (observe) ┆
+ classify + risk [D]  Classify (signals) → hash semantic boost → risk floor /
+   abstain → NB second opinion (shadow unless opted in) ┆ adapt / score (shadow) ┆
              ▼
  Route + Check [D]  tier → effort → catalog model → verdict vs current →
    R1 R2 R4 R5 R6 R7 R8 R9 (any hit ⇒ OK, keep current) → project floor
@@ -108,14 +108,13 @@ BDI agentic loop (beliefs / desires / intentions on the hook path):
    hook payload, the `quota.json` cache or an opt-in native export file; a hook
    never calls a provider.
 4. **Classification and risk** `[D]`. `classifyTask` (`internal/core/policy.go`)
-   runs the signal scorer, the monotonic semantic boost, the risk floor and
-   risk abstention (`risk.go`), graphify escalation of unconfident tasks, and
-   the naive-Bayes second opinion. The E5 shadow records an observation only.
+   runs the signal scorer, the monotonic hash semantic boost, the risk floor and
+   risk abstention (`risk.go`), and the naive-Bayes second opinion.
 5. **Route, guardrails, floor** `[D]`. `Route` resolves tier, effort and the
    catalog model, compares with the current model, then `Check`
    (`selfcheck.go`) applies R1, R2, R4, R5, R6, R7, R8, R9 (R3 retired): any
    violation turns the safe verdict into OK, which keeps the current model.
-   Only a deterministic lift (risk, graph, opted-in NB upshift, operator floor)
+   Only a deterministic lift (risk, opted-in NB upshift, operator floor)
    may move up. The project floor (`internal/policyfile`, `TierFloorHook`) runs
    after `Check` and re-checks. Adapt memory records a would-be tier and does
    not change it; the capability score path runs only with
@@ -169,7 +168,6 @@ BDI agentic loop (beliefs / desires / intentions on the hook path):
 
 | Path | Status | Switch |
 |---|---|---|
-| E5 shadow / fuse | observation on `Route()`; never changes tier | `DOWNSHIFT_E5_SHADOW`, `DOWNSHIFT_E5_FUSE` |
 | adapt memory (`internal/adapt`) | records a would-be tier; a present file does not change `Tier` | file under the state dir |
 | capability score routing | live only when enabled, behind the safe-verdict gate | `DOWNSHIFT_SCORE_ROUTING=1` |
 | NB upshift | opinion always logged; applied only when enabled | `DOWNSHIFT_NB_UPSHIFT=1` |
@@ -207,7 +205,7 @@ BDI agentic loop (beliefs / desires / intentions on the hook path):
 | `internal/hookport`, `internal/childend` | Honor, usage and child-end contract; one shared recorder for every harness |
 | `internal/telemetry` | Append-only local JSONL; prompt-free events; stats, report, control group, session tree |
 | `internal/contextopt`, `internal/compressor`, `internal/sensor` | Context optimization registry, native compressor (observe/safe), tool-output sensor |
-| `internal/semantic`, `internal/nbtier`, `internal/graphify` | Semantic boost, naive-Bayes opinion, critical-symbol escalation |
+| `internal/semantic`, `internal/nbtier` | In-process hash semantic boost and naive-Bayes opinion |
 | `internal/routingv2/*`, `internal/decisionintelligence`, `internal/outcome`, `internal/benchmark` | Shadow classifiers and training, advisory recommendation, outcome evals, classifier KPIs |
 | `internal/server` | Local dashboard over the event log (`serve`, `dsmon-server`) |
 | `cmd/downshift` | CLI, `harnessRegistry`, `runHookAdapter`, `runEnd`, setup, doctor |
