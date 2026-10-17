@@ -15,6 +15,8 @@ import {
   agentIsTerminal,
   buildPayload,
   buildStopPayload,
+  effortForTurnStep,
+  effortFromHookOutput,
   isRoutable,
   modelFromHookOutput,
 } from './register'
@@ -39,6 +41,12 @@ const rewrite = (model: string) => JSON.stringify({
   hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', updatedInput: { prompt: 'x', description: 'y', model } },
 })
 const allowUnchanged = JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow' } })
+const hookEffortOnly = (effort: string) => JSON.stringify({
+  hookSpecificOutput: {
+    hookEventName: 'PreToolUse', permissionDecision: 'allow',
+    updatedInput: { prompt: 'x', description: 'y', reasoning_effort: effort },
+  },
+})
 
 // The world beneath the mod: the environment, the session, a scripted binary
 // and the engine's own answer to agent.spawn, which records the model it got.
@@ -174,6 +182,44 @@ describe('downshift-router: agent.spawn adapter', () => {
   })
 })
 
+describe('downshift-router: turn.step effort', () => {
+  test('disabled: turn.step passes through without effort', async ($, on) => {
+    const stepped: Array<{ effort?: unknown }> = []
+    world(on, { stdout: hookEffortOnly('low') })
+    on('turn.step', async function* ($, e, next) {
+      stepped.push({ effort: e.effort })
+      yield* next(e)
+    })
+    await $.agent.spawn(spawn())
+    await ($.turn.step as (e: unknown) => AsyncIterable<unknown>)({ turnId: 't1', index: 0, messageCount: 1, agentId: 'A1' })
+    expect(stepped[0]?.effort).toBe(undefined)
+  })
+
+  test('enabled: applies stored effort on subagent turn.step', { options: { enabled: true } }, async ($, on) => {
+    const stepped: Array<{ effort?: unknown }> = []
+    world(on, { stdout: hookEffortOnly('medium') })
+    on('turn.step', async function* ($, e, next) {
+      stepped.push({ effort: e.effort })
+      yield* next(e)
+    })
+    await $.agent.spawn(spawn())
+    await ($.turn.step as (e: unknown) => AsyncIterable<unknown>)({ turnId: 't1', index: 0, messageCount: 1, agentId: 'A1' })
+    expect(stepped[0]?.effort).toBe('medium')
+  })
+
+  test('main-loop turn.step (no agentId) is unchanged', { options: { enabled: true } }, async ($, on) => {
+    const stepped: Array<{ effort?: unknown }> = []
+    world(on, { stdout: hookEffortOnly('low') })
+    on('turn.step', async function* ($, e, next) {
+      stepped.push({ effort: e.effort })
+      yield* next(e)
+    })
+    await $.agent.spawn(spawn())
+    await ($.turn.step as (e: unknown) => AsyncIterable<unknown>)({ turnId: 't1', index: 0, messageCount: 1 })
+    expect(stepped[0]?.effort).toBe(undefined)
+  })
+})
+
 describe('downshift-router: turn.complete usage', () => {
   const turnUsage = {
     input_tokens: 10,
@@ -258,6 +304,16 @@ describe('downshift-router: pure helpers', () => {
     expect(modelFromHookOutput('')).toBe(null)
     expect(modelFromHookOutput('[]')).toBe(null)
     expect(modelFromHookOutput(JSON.stringify({ hookSpecificOutput: { updatedInput: { model: 7 } } }))).toBe(null)
+  })
+
+  test('effortFromHookOutput and effortForTurnStep', async () => {
+    expect(effortFromHookOutput(hookEffortOnly('low'))).toBe('low')
+    expect(effortFromHookOutput(rewrite('haiku'))).toBe(null)
+    expect(effortFromHookOutput(JSON.stringify({
+      hookSpecificOutput: { updatedInput: { effort: 5000 } },
+    }))).toBe('5000')
+    expect(effortForTurnStep('high')).toBe('high')
+    expect(effortForTurnStep('5000')).toBe(5000)
   })
 
   test('isRoutable', async () => {

@@ -38,7 +38,10 @@ On every `turn.complete` for a subagent loop (`e.agentId` set) the mod, when ena
 4. Dedup in the recorder still prices each agent once, so overlapping settings + mod paths do not
    double-bill.
 
-`turn.step` effort steering is not wired yet.
+On every `turn.step` for a subagent loop (`e.agentId` set), when enabled, the mod returns
+`next({ ...e, effort })` when the spawn-time `downshift claude-code` decision carried
+`reasoning_effort` in `updatedInput` (the settings hook ignores that field). Effort is stored
+per `agentId` from the spawn result and cleared when usage is flushed at loop end.
 
 All routing and pricing logic stays in the Go core; this module is an adapter in the sense of
 [docs/contrib/layering.md](../../docs/contrib/layering.md): parse the event, call the shared binary,
@@ -77,7 +80,7 @@ claude plugin test mods/downshift-router       # mock-engine tests; the binary i
 The tests cover: disabled (binary never runs), enabled by option and by env, a rewrite applied, binary
 error, non-zero exit, non-JSON output, allow without `updatedInput`, same model written back, fork /
 resume / workflow pass-through, the trace file, and `turn.complete` usage flush (accumulate, wait for
-terminal status, `end claude-code` payload).
+terminal status, `end claude-code` payload), and `turn.step` effort from the spawn decision).
 
 ## What is missing compared with the settings hook
 

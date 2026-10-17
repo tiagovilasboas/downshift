@@ -11,7 +11,8 @@
 // Phase 2b also listens for `turn.complete` on subagent loops: when the agent
 // has finished, accumulated API usage is handed to `downshift end claude-code`
 // (same ChildEnd recorder as SubagentStop) so pricing no longer needs the
-// child transcript. `turn.step` effort steering is still open.
+// child transcript. `turn.step` applies `reasoning_effort` from the spawn
+// decision (the settings hook drops it from updatedInput).
 //
 // Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
@@ -21,6 +22,7 @@ import type {
   PluginOptions,
   Register,
   TurnCompleteInput,
+  TurnStepInput,
   TurnUsage,
 } from 'claude-code'
 
@@ -146,8 +148,7 @@ export function accumulateUsage(prev: AccUsage | undefined, usage: TurnUsage, se
   return next
 }
 
-/** Reads `hookSpecificOutput.updatedInput.model` from the hook's stdout; null when absent or not JSON. */
-export function modelFromHookOutput(stdout: string): string | null {
+function updatedInputFromHookOutput(stdout: string): Record<string, unknown> | null {
   let out: unknown
   try {
     out = JSON.parse(stdout)
@@ -159,8 +160,32 @@ export function modelFromHookOutput(stdout: string): string | null {
   if (!hso || typeof hso !== 'object') return null
   const updated = (hso as { updatedInput?: unknown }).updatedInput
   if (!updated || typeof updated !== 'object') return null
-  const model = (updated as { model?: unknown }).model
+  return updated as Record<string, unknown>
+}
+
+/** Reads `hookSpecificOutput.updatedInput.model` from the hook's stdout; null when absent or not JSON. */
+export function modelFromHookOutput(stdout: string): string | null {
+  const updated = updatedInputFromHookOutput(stdout)
+  if (!updated) return null
+  const model = updated.model
   return typeof model === 'string' && model !== '' ? model : null
+}
+
+/** Reads policy effort from updatedInput (`reasoning_effort` or `effort`). */
+export function effortFromHookOutput(stdout: string): string | null {
+  const updated = updatedInputFromHookOutput(stdout)
+  if (!updated) return null
+  const effort = updated.reasoning_effort ?? updated.effort
+  if (typeof effort === 'string' && effort !== '') return effort
+  if (typeof effort === 'number' && Number.isFinite(effort)) return String(effort)
+  return null
+}
+
+/** Maps a stored effort string to the turn.step `effort` field. */
+export function effortForTurnStep(stored: string): string | number {
+  const n = Number(stored)
+  if (stored !== '' && Number.isFinite(n) && String(n) === stored.trim()) return n
+  return stored
 }
 
 /** Spawns the event cannot or should not route: a fork inherits and ignores `model`; a resume only accepts a refusal; a workflow agent's prompt may be a placeholder. */
@@ -225,6 +250,8 @@ export const register: Register = (on, options) => {
   const binary = typeof options.binary === 'string' && options.binary !== '' ? options.binary : 'downshift'
   /** Per-agent token totals across turn.complete events until the loop ends. */
   const usageByAgent = new Map<string, AccUsage>()
+  /** Effort from the spawn-time decision, keyed by subagent agentId. */
+  const effortByAgent = new Map<string, string>()
 
   on('agent.spawn', async ($, e, next) => {
     if (!(await isEnabled($, options))) return next(e)
@@ -237,14 +264,18 @@ export const register: Register = (on, options) => {
     const startedAt = Date.now()
 
     let model: string | null = null
+    let effort: string | null = null
+    let stdout = ''
     let note = ''
     try {
       const run = await $.process.run([binary, 'claude-code'], { stdin: JSON.stringify(payload), timeoutMs: RUN_TIMEOUT_MS })
+      stdout = run.stdout
       if (run.exitCode !== 0) {
         note = `exit ${run.exitCode}`
       } else {
-        model = modelFromHookOutput(run.stdout)
-        if (model === null) note = 'no model in hook output'
+        model = modelFromHookOutput(stdout)
+        effort = effortFromHookOutput(stdout)
+        if (model === null && effort === null) note = 'no model in hook output'
       }
       const stderrLine = run.stderr.split('\n').find(l => l.includes('correlation_id=')) ?? ''
       if (stderrLine) note = note ? `${note}; ${stderrLine.trim()}` : stderrLine.trim()
@@ -256,16 +287,32 @@ export const register: Register = (on, options) => {
     const changed = model !== null && model !== requested
     const trace = {
       event: 'agent.spawn', tool_use_id: e.tool_use_id, subagent_type: e.subagentType, requested_model: requested || null,
-      parent_model: e.parentModel, written_model: changed ? model : null, elapsed_ms: elapsedMs, note,
+      parent_model: e.parentModel, written_model: changed ? model : null, written_effort: effort, elapsed_ms: elapsedMs, note,
     }
     await appendTrace($, trace)
 
+    const spawnResult = await next(changed ? { ...e, model: model as string } : e)
+    if (effort && spawnResult.agentId) effortByAgent.set(spawnResult.agentId, effort)
+
     if (!changed) {
-      if (note && model === null) $.ui.log(`${LOG_PREFIX}: spawn ${e.tool_use_id} left unchanged (${note})`, { to: 'debug' })
-      return next(e)
+      if (note && model === null && !effort) $.ui.log(`${LOG_PREFIX}: spawn ${e.tool_use_id} left unchanged (${note})`, { to: 'debug' })
+      return spawnResult
     }
     $.ui.log(`${LOG_PREFIX}: ${e.subagentType || 'agent'} ${requested || e.parentModel} → ${model} (${elapsedMs} ms)`)
-    return next({ ...e, model: model as string })
+    return spawnResult
+  })
+
+  on('turn.step', async function* ($, e: TurnStepInput, next) {
+    if (!(await isEnabled($, options))) {
+      yield* next(e)
+      return
+    }
+    const stored = e.agentId ? effortByAgent.get(e.agentId) : undefined
+    if (stored) {
+      yield* next({ ...e, effort: effortForTurnStep(stored) })
+      return
+    }
+    yield* next(e)
   })
 
   on('turn.complete', async ($, e: TurnCompleteInput, next) => {
@@ -300,6 +347,7 @@ export const register: Register = (on, options) => {
     }
     acc.flushed = true
     usageByAgent.set(e.agentId, acc)
+    effortByAgent.delete(e.agentId)
     await appendTrace($, {
       event: 'turn.complete', agent_id: e.agentId, model: acc.model || null,
       input_tokens: acc.input_tokens, output_tokens: acc.output_tokens, note,
