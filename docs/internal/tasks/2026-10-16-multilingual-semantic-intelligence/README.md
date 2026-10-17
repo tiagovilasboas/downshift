@@ -162,7 +162,7 @@ Evaluation dimensions: equivalence consistency (formal/informal/slang PT/EN), M3
 
 - [x] **Encoder:** `intfloat/multilingual-e5-small` via **ONNX Runtime INT8** (`internal/semantic/e5shadow`); observation only on `main`.
 - Env contract: [§14 Phase D env contract](#14-phase-d-env-contract) (`DOWNSHIFT_E5_SHADOW*`). **No** `Route()` tier change; telemetry field `e5_shadow`.
-- [ ] Compare `would_label` / `would_lift` vs production tier on M3 + legacy splits (`downshift-labs` + `events.jsonl` aggregates) — ongoing analysis, not a routing gate.
+- [ ] Compare `would_label` / `would_lift` vs production tier on M3 + legacy splits (`downshift-labs` + `events.jsonl` aggregates) — ongoing analysis, not a routing gate. **2026-10-17:** baseline measured and reproducible (`labs/eval/multilang/results/baseline-2026-10-17`); E5 vectors not obtainable from the evaluation environment; latency gate reads BLOCK for a fresh-process helper; three plumbing defects found. Evidence and decision: [docs/evidence/e5-int8-evaluation-2026-10-17.md](../../../evidence/e5-int8-evaluation-2026-10-17.md). Owner runbook: `labs/scripts/e5_eval.sh`.
 
 ### Phase E — Integration
 
