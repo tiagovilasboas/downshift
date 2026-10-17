@@ -20,8 +20,7 @@ On every `agent.spawn` (a subagent or teammate about to start, its model not yet
 2. Builds the PreToolUse-shaped payload the `downshift claude-code` hook already reads on stdin, from
    the fields the event really carries: `prompt`, `description`, `subagentType`, `model` (as the call
    gave it), `name`, `background`, `cwd`, `tool_use_id`, `permissionMode`, plus `session_id` and the
-   session `cwd` from `$.session`. The parent's effective model travels as `parent_model`, a field the
-   binary does not read yet (see "What is missing").
+   session `cwd` from `$.session`. The parent's effective model travels as `parent_model`.
 3. Runs `downshift claude-code` through `$.process.run` with the JSON on stdin (8 s cap; the binary
    answers in about 30 ms), parses `hookSpecificOutput.updatedInput.model`, and returns
    `next({ ...e, model })` when it differs from the requested one.
@@ -29,7 +28,22 @@ On every `agent.spawn` (a subagent or teammate about to start, its model not yet
    written. One dim `$.ui.log` line names the reason (to the debug log when nothing changed, to the
    transcript when a model was written). It never returns `{ deny }`.
 
-All routing logic stays in the Go core; this module is an adapter in the sense of
+On every `turn.complete` for a subagent loop (`e.agentId` set) the mod, when enabled:
+
+1. Adds `e.usage` into a per-agent total (multi-turn subagents sum every turn).
+2. When `$.agent.list()` shows that agent `completed` / `failed` / `killed` (or gone), runs
+   `downshift end claude-code` with a SubagentStop-shaped payload that carries the totals inline, so
+   the shared ChildEnd recorder prices the child without reading a transcript.
+3. If `$.agent.list()` is unavailable, leaves pricing to the settings `SubagentStop` hook (fail open).
+4. Dedup in the recorder still prices each agent once, so overlapping settings + mod paths do not
+   double-bill.
+
+On every `turn.step` for a subagent loop (`e.agentId` set), when enabled, the mod returns
+`next({ ...e, effort })` when the spawn-time `downshift claude-code` decision carried
+`reasoning_effort` in `updatedInput` (the settings hook ignores that field). Effort is stored
+per `agentId` from the spawn result and cleared when usage is flushed at loop end.
+
+All routing and pricing logic stays in the Go core; this module is an adapter in the sense of
 [docs/contrib/layering.md](../../docs/contrib/layering.md): parse the event, call the shared binary,
 apply the wire result.
 
@@ -60,12 +74,13 @@ DOWNSHIFT_MOD_ROUTER=1 claude --plugin-dir ./mods/downshift-router
 
 ```bash
 claude plugin validate mods/downshift-router   # manifest, hooks, calls and env names the module makes
-claude plugin test mods/downshift-router       # 14 tests against the mock engine; the binary is stubbed
+claude plugin test mods/downshift-router       # mock-engine tests; the binary is stubbed
 ```
 
 The tests cover: disabled (binary never runs), enabled by option and by env, a rewrite applied, binary
 error, non-zero exit, non-JSON output, allow without `updatedInput`, same model written back, fork /
-resume / workflow pass-through, and the trace file.
+resume / workflow pass-through, the trace file, and `turn.complete` usage flush (accumulate, wait for
+terminal status, `end claude-code` payload), and `turn.step` effort from the spawn decision).
 
 ## What is missing compared with the settings hook
 

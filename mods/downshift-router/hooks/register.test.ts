@@ -10,7 +10,16 @@
 import { describe, expect, test } from 'claude-code/testing'
 import type { AgentSpawnInput, On, ProcessRunInit } from 'claude-code'
 
-import { buildPayload, isRoutable, modelFromHookOutput } from './register'
+import {
+  accumulateUsage,
+  agentIsTerminal,
+  buildPayload,
+  buildStopPayload,
+  effortForTurnStep,
+  effortFromHookOutput,
+  isRoutable,
+  modelFromHookOutput,
+} from './register'
 
 const spawn = (over: Partial<AgentSpawnInput> = {}): AgentSpawnInput => ({
   tool_use_id: 'toolu_01',
@@ -32,6 +41,12 @@ const rewrite = (model: string) => JSON.stringify({
   hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow', updatedInput: { prompt: 'x', description: 'y', model } },
 })
 const allowUnchanged = JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'allow' } })
+const hookEffortOnly = (effort: string) => JSON.stringify({
+  hookSpecificOutput: {
+    hookEventName: 'PreToolUse', permissionDecision: 'allow',
+    updatedInput: { prompt: 'x', description: 'y', reasoning_effort: effort },
+  },
+})
 
 // The world beneath the mod: the environment, the session, a scripted binary
 // and the engine's own answer to agent.spawn, which records the model it got.
@@ -167,11 +182,118 @@ describe('downshift-router: agent.spawn adapter', () => {
   })
 })
 
+describe('downshift-router: turn.step effort', () => {
+  test('disabled: turn.step passes through without effort', async ($, on) => {
+    const stepped: Array<{ effort?: unknown }> = []
+    world(on, { stdout: hookEffortOnly('low') })
+    on('turn.step', async function* ($, e, next) {
+      stepped.push({ effort: e.effort })
+      yield* next(e)
+    })
+    await $.agent.spawn(spawn())
+    await ($.turn.step as (e: unknown) => AsyncIterable<unknown>)({ turnId: 't1', index: 0, messageCount: 1, agentId: 'A1' })
+    expect(stepped[0]?.effort).toBe(undefined)
+  })
+
+  test('enabled: applies stored effort on subagent turn.step', { options: { enabled: true } }, async ($, on) => {
+    const stepped: Array<{ effort?: unknown }> = []
+    world(on, { stdout: hookEffortOnly('medium') })
+    on('turn.step', async function* ($, e, next) {
+      stepped.push({ effort: e.effort })
+      yield* next(e)
+    })
+    await $.agent.spawn(spawn())
+    await ($.turn.step as (e: unknown) => AsyncIterable<unknown>)({ turnId: 't1', index: 0, messageCount: 1, agentId: 'A1' })
+    expect(stepped[0]?.effort).toBe('medium')
+  })
+
+  test('main-loop turn.step (no agentId) is unchanged', { options: { enabled: true } }, async ($, on) => {
+    const stepped: Array<{ effort?: unknown }> = []
+    world(on, { stdout: hookEffortOnly('low') })
+    on('turn.step', async function* ($, e, next) {
+      stepped.push({ effort: e.effort })
+      yield* next(e)
+    })
+    await $.agent.spawn(spawn())
+    await ($.turn.step as (e: unknown) => AsyncIterable<unknown>)({ turnId: 't1', index: 0, messageCount: 1 })
+    expect(stepped[0]?.effort).toBe(undefined)
+  })
+})
+
+describe('downshift-router: turn.complete usage', () => {
+  const turnUsage = {
+    input_tokens: 10,
+    output_tokens: 20,
+    cache_read_input_tokens: 1,
+    cache_creation_input_tokens: 2,
+    model: 'claude-haiku-4-5-20251001',
+  }
+
+  test('disabled: turn.complete never runs the binary', async ($, on) => {
+    const w = world(on, { stdout: '' })
+    on('agent.list', () => ({ value: [{ id: 'A1', status: 'completed' }] }))
+    on('turn.complete', () => ({ text: '' }) as never)
+    await ($.turn.complete as (e: unknown) => Promise<unknown>)({
+      agentId: 'A1', reason: 'answer', answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', usage: turnUsage,
+    })
+    expect(w.runs.length).toBe(0)
+  })
+
+  test('enabled: flushes accumulated usage via end claude-code when the agent is done', { options: { enabled: true } }, async ($, on) => {
+    const w = world(on, { stdout: '', stderr: 'downshift: usage recorded\n' })
+    on('agent.list', () => ({ value: [{ id: 'A1', status: 'completed' }] }))
+    on('turn.complete', () => ({ text: '' }) as never)
+    await ($.turn.complete as (e: unknown) => Promise<unknown>)({
+      agentId: 'A1', reason: 'answer', answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', usage: turnUsage,
+    })
+    expect(w.runs.length).toBe(1)
+    expect(w.runs[0]?.argv).toEqual(['downshift', 'end', 'claude-code'])
+    const payload = JSON.parse(w.runs[0]?.init?.stdin ?? '{}')
+    expect(payload.hook_event_name).toBe('SubagentStop')
+    expect(payload.agent_id).toBe('A1')
+    expect(payload.entry).toBe('mod')
+    expect(payload.session_id).toBe('S1')
+    expect(payload.model).toBe('claude-haiku-4-5-20251001')
+    expect(payload.usage).toEqual({
+      input_tokens: 10, output_tokens: 20, cache_read_input_tokens: 1, cache_creation_input_tokens: 2,
+    })
+  })
+
+  test('enabled: accumulates across turns and waits until the agent is terminal', { options: { enabled: true } }, async ($, on) => {
+    const w = world(on, { stdout: '' })
+    let status = 'running'
+    on('agent.list', () => ({ value: [{ id: 'A1', status }] }))
+    on('turn.complete', () => ({ text: '' }) as never)
+    const fire = async (over: Partial<typeof turnUsage> = {}) =>
+      ($.turn.complete as (e: unknown) => Promise<unknown>)({
+        agentId: 'A1', reason: 'answer', answer: 'ok', durationMs: 1, isAborted: false, turnId: 't',
+        usage: { ...turnUsage, ...over },
+      })
+    await fire()
+    expect(w.runs.length).toBe(0)
+    status = 'completed'
+    await fire({ input_tokens: 5, output_tokens: 7 })
+    expect(w.runs.length).toBe(1)
+    const payload = JSON.parse(w.runs[0]?.init?.stdin ?? '{}')
+    expect(payload.usage.input_tokens).toBe(15)
+    expect(payload.usage.output_tokens).toBe(27)
+  })
+
+  test('main-loop turn.complete (no agentId) is ignored', { options: { enabled: true } }, async ($, on) => {
+    const w = world(on, { stdout: '' })
+    on('turn.complete', () => ({ text: '' }) as never)
+    await ($.turn.complete as (e: unknown) => Promise<unknown>)({
+      reason: 'answer', answer: 'ok', durationMs: 1, isAborted: false, turnId: 't1', usage: turnUsage,
+    })
+    expect(w.runs.length).toBe(0)
+  })
+})
+
 describe('downshift-router: pure helpers', () => {
   test('buildPayload keeps only what the event carries', async () => {
     const p = buildPayload(spawn({ subagentType: '', permissionMode: undefined }), undefined, undefined)
     expect(p).toEqual({
-      hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_use_id: 'toolu_01', parent_model: 'claude-opus-4-1',
+      hook_event_name: 'PreToolUse', tool_name: 'Agent', tool_use_id: 'toolu_01', parent_model: 'claude-opus-4-1', entry: 'mod',
       tool_input: { prompt: spawn().prompt, description: 'List files', run_in_background: false },
     })
   })
@@ -184,10 +306,39 @@ describe('downshift-router: pure helpers', () => {
     expect(modelFromHookOutput(JSON.stringify({ hookSpecificOutput: { updatedInput: { model: 7 } } }))).toBe(null)
   })
 
+  test('effortFromHookOutput and effortForTurnStep', async () => {
+    expect(effortFromHookOutput(hookEffortOnly('low'))).toBe('low')
+    expect(effortFromHookOutput(rewrite('haiku'))).toBe(null)
+    expect(effortFromHookOutput(JSON.stringify({
+      hookSpecificOutput: { updatedInput: { effort: 5000 } },
+    }))).toBe('5000')
+    expect(effortForTurnStep('high')).toBe('high')
+    expect(effortForTurnStep('5000')).toBe(5000)
+  })
+
   test('isRoutable', async () => {
     expect(isRoutable(spawn())).toBe(true)
     expect(isRoutable(spawn({ fork: true }))).toBe(false)
     expect(isRoutable(spawn({ resume: { agentId: 'A0' } }))).toBe(false)
     expect(isRoutable(spawn({ workflow: { runId: 'wf', agentIndex: 1 } }))).toBe(false)
+  })
+
+  test('accumulateUsage and buildStopPayload', async () => {
+    const u1 = { input_tokens: 1, output_tokens: 2, cache_read_input_tokens: 3, cache_creation_input_tokens: 4, model: 'm1' }
+    const a1 = accumulateUsage(undefined, u1, 'S')
+    const a2 = accumulateUsage(a1, { ...u1, input_tokens: 9, model: 'm2' }, undefined)
+    expect(a2.input_tokens).toBe(10)
+    expect(a2.model).toBe('m2')
+    expect(buildStopPayload('A9', a2)).toEqual({
+      hook_event_name: 'SubagentStop', agent_id: 'A9', session_id: 'S', model: 'm2', entry: 'mod',
+      usage: { input_tokens: 10, output_tokens: 4, cache_read_input_tokens: 6, cache_creation_input_tokens: 8 },
+    })
+  })
+
+  test('agentIsTerminal', async ($, on) => {
+    on('agent.list', () => ({ value: [{ id: 'A1', status: 'running' }, { id: 'A2', status: 'completed' }] }))
+    expect(await agentIsTerminal($, 'A1')).toBe(false)
+    expect(await agentIsTerminal($, 'A2')).toBe(true)
+    expect(await agentIsTerminal($, 'gone')).toBe(true)
   })
 })

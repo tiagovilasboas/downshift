@@ -212,23 +212,58 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	decision.Baseline.Guessed = fromSettings
 
 	plan := decision.PlanSession(core.ClaudeCodeCaps, res, session, currentModel)
-	if plan.HoldForeign || plan.PreserveExplicit || !plan.RewriteModel || !core.CanWriteSessionID(harnessID, plan.Model.ID, plan.Session, res) {
-		return allow(), "", decision
-	}
-	// A baseline read from settings is a guess: the session may run another
-	// model (--model, /model). Only the small tier is cheaper than anything the
-	// session can run, so a downshift on a guessed baseline is written only to
-	// it; any other target could be an upshift nobody sees.
-	if fromSettings && decision.Verdict == core.VerdictDownshift && plan.Model.Tier != core.TierSmall {
-		decision.Baseline.GuessHeld = true
-		return allow(), "", decision
-	}
-	decision.Model = plan.Model
+	modEntry := ev.Entry == "mod"
+	holdOrPreserve := plan.HoldForeign || plan.PreserveExplicit
+	canRewrite := plan.RewriteModel && !holdOrPreserve && core.CanWriteSessionID(harnessID, plan.Model.ID, plan.Session, res)
 
-	// plan.WriteName is the catalog's native name: Claude Code validates
-	// "model" against family names, and the core plan already declined to
-	// rewrite when the entry has none.
-	ti["model"] = plan.WriteName
+	if holdOrPreserve || (!canRewrite && !modEntry) {
+		return allow(), "", decision
+	}
+
+	modelRewritten := false
+	if canRewrite {
+		// A baseline read from settings is a guess: the session may run another
+		// model (--model, /model). Only the small tier is cheaper than anything the
+		// session can run, so a downshift on a guessed baseline is written only to
+		// it; any other target could be an upshift nobody sees.
+		if fromSettings && decision.Verdict == core.VerdictDownshift && plan.Model.Tier != core.TierSmall {
+			decision.Baseline.GuessHeld = true
+			if !modEntry {
+				return allow(), "", decision
+			}
+		} else {
+			decision.Model = plan.Model
+			ti["model"] = plan.WriteName
+			modelRewritten = true
+		}
+	}
+
+	applyEffort := false
+	if modEntry && res != nil {
+		targetID := decision.Baseline.CurrentModel.ID
+		if modelRewritten {
+			targetID = plan.Model.ID
+		} else if targetID == "" {
+			targetID = currentModel
+		}
+		effort, effortOK, effortChanged := core.ConstrainEffort(res, harnessID, targetID, decision.Effort)
+		if effortChanged {
+			decision.Corrections = append(decision.Corrections, core.RuleEffortUnsupported)
+		}
+		effortValue := effort.String()
+		requestedEffort := hookutil.StringField(ti, "reasoning_effort")
+		applyEffort = effortOK && hookutil.EffortAllowed(decision, requestedEffort, effortValue, modelRewritten) && effortValue != requestedEffort
+		if applyEffort {
+			// The settings hook path ignores updatedInput.reasoning_effort; the mod
+			// reads it for turn.step. Use the policy vocabulary turn.step accepts.
+			ti["reasoning_effort"] = effortValue
+		}
+	}
+
+	if !modelRewritten && !applyEffort {
+		return allow(), "", decision
+	}
+
 	updated, err := json.Marshal(ti)
 	if err != nil {
 		return allow(), "", decision
@@ -241,10 +276,14 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 			UpdatedInput:       updated,
 		},
 	}
-	if !telemetry.Quiet() {
-		out.SystemMessage = "downshift: " + decision.Summary()
+	note := ""
+	if modelRewritten {
+		note = decision.Summary()
 	}
-	return out, decision.Summary(), decision
+	if !telemetry.Quiet() && note != "" {
+		out.SystemMessage = "downshift: " + note
+	}
+	return out, note, decision
 }
 
 func allow() Output {

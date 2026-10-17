@@ -180,7 +180,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		effortValue = res.EffortFor(harnessID, plan.Model.ID, effort)
 	}
 	requestedEffort := hookutil.StringField(ti, "reasoning_effort")
-	applyEffort := plan.ApplyEffort && effortOK && effortAllowed(decision, requestedEffort, effortValue, plan.RewriteModel)
+	applyEffort := plan.ApplyEffort && effortOK && hookutil.EffortAllowed(decision, requestedEffort, effortValue, plan.RewriteModel)
 	if plan.ApplyEffort && effortChanged {
 		decision.Corrections = append(decision.Corrections, core.RuleEffortUnsupported)
 	}
@@ -216,40 +216,6 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		},
 	}
 	return out, note, decision
-}
-
-// effortRank orders the cross-harness effort vocabulary. Unknown values
-// rank -1.
-func effortRank(v string) int {
-	for i, e := range []string{"none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"} {
-		if v == e {
-			return i
-		}
-	}
-	return -1
-}
-
-// effortAllowed reports whether the hook may write effort value over the
-// requested one. A confident, unheld decision may set any effort. A decision
-// the guardrails held (its verdict reduced to a safe one) writes no effort:
-// a held change, up or down, leaves the spawn as requested. An unconfident,
-// unheld decision writes effort only alongside a model rewrite (a
-// deterministic lift such as the risk floor), and never lowers it: on its
-// own, raising effort would spend more on doubt (docs/reference/session-models.md).
-func effortAllowed(d core.Decision, requested, value string, modelRewritten bool) bool {
-	if d.Confident && len(d.Corrections) == 0 {
-		return true
-	}
-	if d.Checked && d.SafeVerdict != d.Verdict {
-		return false
-	}
-	if !modelRewritten {
-		return false
-	}
-	if effortRank(requested) < 0 {
-		return true
-	}
-	return effortRank(value) >= effortRank(requested)
 }
 
 func effortOrInherit(v string) string {

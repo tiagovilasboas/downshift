@@ -185,12 +185,15 @@ next({ ...e, model })   or   next(e)            [fail open; never deny]
    runner records `entry` (`hook` or `mod`) on every decision; `HarnessCapabilities.HookEntries`
    lists both paths for Claude Code; `stats` counts by entry and `doctor` warns when one
    `tool_use_hash` carries two decisions. The mod always sends `entry: "mod"`.
-3. **Phase 2b (open).** A `turn.complete` hook in the mod that records `e.agentId`, `e.usage` and
-   the model that counted through `downshift end claude-code` (the same shared recorder
-   `SubagentStop` feeds), so usage no longer needs the child transcript; a `turn.step` hook that
-   sets `effort` from the decision, giving Claude Code the effort channel the harness matrix lists
-   as dropped. Observe `PostToolUse` `resolvedModel` for mod-written models (the honored count the
-   hook path already reports).
+3. **Phase 2b (done, this change).** A `turn.complete` hook in the mod accumulates `e.usage`
+   per `e.agentId` and, once `$.agent.list()` shows the loop finished, records the totals through
+   `downshift end claude-code` with inline usage (same ChildEnd recorder `SubagentStop` feeds; the
+   Claude Code adapter prefers inline `usage` over a transcript path). Dedup still prices each
+   agent once, so a live settings `SubagentStop` and the mod do not double-bill. A `turn.step`
+   hook stores `reasoning_effort` from the mod spawn's binary stdout (the adapter emits it in
+   `updatedInput` only when `entry` is `mod`) and returns `next({ ...e, effort })` per subagent
+   request. Still open: live `PostToolUse` `resolvedModel` evidence for mod-written models (the
+   honored count the hook path already reports).
 4. **Phase 3.** Once honored is observed for mod writes at the same bar as the hook path (P3.4,
    fifty linked records), make the mod the Claude Code route for 2.1.287+: the root plugin's
    `hooks.json` keeps `PostToolUse`, `PostToolUseFailure`, `SubagentStop` and drops `PreToolUse`
@@ -206,8 +209,8 @@ session. The gain is concrete and specific to Claude Code: the parent's model an
 type arrive as facts instead of transcript reads and guesses, effort becomes settable, and usage per
 agent arrives as an event. The cost is a second packaging to test on every release of an early-access
 surface. Phase 1 shipped off by default; phase 2a (`entry` + `parent_model`) is on `main` so the two
-paths are comparable in `stats` and `doctor`; do phase 2b (`turn.complete` / `turn.step`) next;
-decide phase 3 on honored evidence, not on the prototype alone.
+paths are comparable in `stats` and `doctor`; phase 2b (`turn.complete` usage + `turn.step`
+effort) is in; decide phase 3 on honored evidence, not on the prototype alone.
 
 ## Appendix: evidence
 
