@@ -47,7 +47,7 @@ func TestAggregateCountsUnknownBaselineByAgentType(t *testing.T) {
 		decision("Explore", "unknown"),
 		decision("Explore", "claude-sonnet-5-5"),
 		decision("custom", "unknown"),
-		decision("", "unknown"), // an event from before the field existed: not counted per type
+		decision("", "unknown"),                                                         // an event from before the field existed: not counted per type
 		{Harness: "claude-code", Outcome: telemetry.OutcomeUsage, AgentType: "Explore"}, // usage records are not decisions
 	})
 	explore := s.ByAgentType["Explore"]
