@@ -28,7 +28,7 @@ else
         ;;
     esac
     case "$f" in
-      *.go | go.mod | go.sum | benchmark/* | scripts/* | .github/workflows/* | catalog.sample.json | install.sh | README.md)
+      *.go | go.mod | go.sum | benchmark/* | scripts/* | .github/workflows/* | catalog.sample.json | install.sh | README.md | hooks/* | .claude-plugin/* | commands/* | agents/* | skills/*)
         go=1
         ;;
     esac

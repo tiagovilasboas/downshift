@@ -5,6 +5,7 @@ package native
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/compressor"
@@ -91,11 +92,12 @@ func (p *Provider) Detect(ctx context.Context) (bool, string, string, error) {
 	return true, "built-in", "in-process", nil
 }
 
+// Validate probes the in-process engine once: an all-ok go test line must be
+// recognised, or the compressor table is broken.
 func (p *Provider) Validate(ctx context.Context) error {
-	// Verify deterministic engine with simple probe
 	res := compressor.Compress([]byte("ok  test.pkg  0.1s\n"), compressor.ModeObserve)
-	if res.Reason == "" {
-		return nil
+	if res.Format == "" {
+		return errors.New("native compressor did not recognise a go test line")
 	}
 	return nil
 }

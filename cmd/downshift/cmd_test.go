@@ -383,7 +383,7 @@ func TestRunHookAdapter_Codex_Downshift(t *testing.T) {
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-			printCodexAllow,
+			printAllow,
 		)
 	})
 	if !strings.Contains(out, `"permissionDecision":"allow"`) {
@@ -414,7 +414,7 @@ func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-			printCodexAllow,
+			printAllow,
 			func(e codex.Event) string { return e.TaskText() },
 		)
 	})
@@ -470,7 +470,7 @@ func TestHookTelemetryEndToEnd(t *testing.T) {
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-			printCodexAllow,
+			printAllow,
 		); rc != 0 {
 			t.Fatalf("hook rc = %d", rc)
 		}
@@ -515,7 +515,7 @@ func TestHookTelemetryDoesNotBackfillRequestedModel(t *testing.T) {
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-			printCodexAllow,
+			printAllow,
 		)
 	})
 	events, err := telemetry.ReadEventsFrom(path)
@@ -655,7 +655,7 @@ func TestEngineeringLoopEndToEnd(t *testing.T) {
 			bytes.NewReader(event),
 			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-			printCodexAllow,
+			printAllow,
 			func(e codex.Event) string { return e.TaskText() },
 		); rc != 0 {
 			t.Fatalf("hook rc = %d", rc)

@@ -159,9 +159,9 @@ func (v Verdict) String() string {
 // Route is the main entry point: given a task prompt, a harness, the current
 // model id (may be empty), and an optional Resolver, produce a routing Decision.
 //
-// When r is nil, Route falls back to the in-package Catalog for backward
-// compatibility. Once all callers pass a real Resolver (Wave 4.4), the Catalog
-// var will be removed from core.
+// Without a Resolver the decision carries tiers but no model ids: resolveModel
+// returns a zero Model and the verdict stays Unknown, so the caller fails open.
+// Hooks always pass the catalog; offline commands may not.
 func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 	var res Resolver
 	if len(r) > 0 && r[0] != nil {
@@ -272,7 +272,7 @@ func classifyTask(prompt string) (Tier, Classification, bool, NBUpshift, NBDowns
 }
 
 // resolveModel returns the catalog model for the given harness and tier.
-// Uses the Resolver when provided; panics if nil (callers must inject one).
+// With a nil Resolver it returns a zero Model that only carries the tier.
 func resolveModel(harness string, tier Tier, r Resolver) Model {
 	if r != nil {
 		return r.ModelFor(harness, tier)

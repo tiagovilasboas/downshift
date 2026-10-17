@@ -26,11 +26,16 @@ import (
 const (
 	scoreCacheFile  = "scores.json"
 	scoreLockFile   = "scores-refresh.lock"
+	scoreFailedFile = "scores-refresh.failed"
 	scoreMaxAge     = 24 * time.Hour
 	scoreLockStale  = 10 * time.Minute
-	scoreEnvSwitch  = "DOWNSHIFT_SCORES"
-	scoreStatusOff  = "off"
-	scoreStatusNone = "missing"
+	// scoreFailBackoff is how long hooks stop retrying after a refresh that
+	// reached no source (offline, firewalled). Without it every hook after
+	// the lock went stale spawned another network process.
+	scoreFailBackoff = 6 * time.Hour
+	scoreEnvSwitch   = "DOWNSHIFT_SCORES"
+	scoreStatusOff   = "off"
+	scoreStatusNone  = "missing"
 )
 
 // scoreRefreshSpawn starts the detached refresh. A variable so tests inject a
@@ -71,12 +76,42 @@ func maybeRefreshScores() (started bool) {
 	if age, ok := scoreCacheAge(); ok && age < scoreMaxAge {
 		return false
 	}
+	if age, ok := scoreFailedAge(); ok && age < scoreFailBackoff {
+		return false
+	}
 	if !acquireScoreLock() {
 		return false
 	}
 	// A spawn error keeps the lock: the next attempt waits for the stale
 	// timeout instead of retrying on every hook.
 	return scoreRefreshSpawn() == nil
+}
+
+// scoreFailedAge is the age of the last failed-refresh stamp, if any.
+func scoreFailedAge() (time.Duration, bool) {
+	p, err := paths.Join(scoreFailedFile)
+	if err != nil {
+		return 0, false
+	}
+	fi, err := os.Stat(p)
+	if err != nil {
+		return 0, false
+	}
+	return scoreRefreshNow().Sub(fi.ModTime()), true
+}
+
+// markScoreRefreshFailed writes the stamp that holds hooks back; clear
+// removes it after a refresh that succeeded.
+func markScoreRefreshFailed(failed bool) {
+	p, err := paths.Join(scoreFailedFile)
+	if err != nil {
+		return
+	}
+	if !failed {
+		_ = os.Remove(p)
+		return
+	}
+	_ = os.WriteFile(p, []byte(scoreRefreshNow().UTC().Format(time.RFC3339)+"\n"), 0o600)
 }
 
 // acquireScoreLock creates the lock file exclusively. A lock older than

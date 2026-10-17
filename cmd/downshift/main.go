@@ -1272,10 +1272,6 @@ func printCursorAllow() {
 	fmt.Println(`{"permission":"allow"}`)
 }
 
-func printCodexAllow() {
-	fmt.Println(`{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}`)
-}
-
 func usage(w io.Writer) {
 	fmt.Fprint(w, `downshift — right-sized models for every subagent task
 

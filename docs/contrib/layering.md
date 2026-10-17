@@ -14,8 +14,13 @@ adapter, hook, command or policy.
 | Adapters | `internal/adapters/<harness>` | Parse the payload, declare capabilities, emit the wire response |
 
 Dependencies point inward: adapters may import core and shared services; core
-imports none of them. Optional layers plug into core through a hook variable
-(`core.MemoryAdjustHook`, `core.TierFloorHook`) registered in their `init`.
+never imports `catalog`, `telemetry`, `adapt`, `policyfile` or an adapter
+(checked with `go list -deps ./internal/core`). Optional layers plug into core
+through a hook variable (`core.MemoryAdjustHook`, `core.TierFloorHook`)
+registered in their `init`. Known debt (2026-10-17): core still imports `quota`
+(session gates) and `hookctx` directly, and reads a dozen `DOWNSHIFT_*`
+variables with `os.Getenv`; the target is the same hook-variable pattern, with
+configuration read once at the edge by the runner.
 
 ## Before you write code
 

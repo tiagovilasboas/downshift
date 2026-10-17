@@ -87,7 +87,7 @@ var harnessRegistry = map[string]harnessEntry{
 				in,
 				func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 				func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, catalog) },
-				printCodexAllow,
+				printAllow,
 				func(e codex.Event) string { return e.TaskText() },
 			)
 		},

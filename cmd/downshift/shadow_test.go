@@ -36,7 +36,7 @@ func TestShadowHookReviewReportEndToEnd(t *testing.T) {
 			if rc := runHookAdapter("codex", bytes.NewReader(payload),
 				func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
 				func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-				printCodexAllow, func(e codex.Event) string { return e.TaskText() }); rc != 0 {
+				printAllow, func(e codex.Event) string { return e.TaskText() }); rc != 0 {
 				t.Fatalf("hook rc=%d", rc)
 			}
 		})

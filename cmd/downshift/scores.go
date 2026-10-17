@@ -83,8 +83,10 @@ func runModelsScores(args []string, stdout, stderr io.Writer) int {
 				}
 			}
 			fmt.Fprintf(stderr, "scores: refresh failed: %v\n", err)
+			markScoreRefreshFailed(true)
 			return 1
 		}
+		markScoreRefreshFailed(false)
 		if !*quiet && !*asJSON {
 			for _, r := range rep.Results {
 				fmt.Fprintf(stdout, "  %-14s rows %-3d %s\n", r.Name, r.Rows, r.Status)
