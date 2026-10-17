@@ -133,7 +133,7 @@ var setupTargets = []setupTarget{
 			ChainArgs: "quota import --harness claude-code --source claude-statusline",
 		},
 		// The upstream marketplace install of the mod vendored under hooks/cache-tax/.
-		ModConflicts: []string{"cache-tax@claude-code-mods", "savvy-progress@claude-kit", "filetree@claude-code-filetree", "filetree@filetree"}, // upstream ids of the three mods under hooks/; filetree@filetree is its pre-rename id
+		ModConflicts: []string{"cache-tax@claude-code-mods"},
 	},
 	{
 		Name:      "cursor",
