@@ -160,8 +160,14 @@ func unconfidentUnknownBelowMid(d Decision) bool {
 // doubtful read, put the decision at its tier: the risk floor, a graphify
 // escalation, an opted-in NB upshift or an operator tier floor. R7, R8 and R9
 // all exempt such a decision, so the set lives here and only here.
+//
+// A risk abstention clears confidence without moving the tier, so it counts
+// only while the tier is still the regex read. Once the semantic boost has
+// lifted the tier (SemanticLift), that tier is a guess and the abstention
+// must not launder it past R7, R8 or R9.
 func deterministicLift(d Decision) bool {
-	return d.RiskFloor || d.RiskAbstain || d.GraphEscalated || d.NBUpshift.Applied || d.PolicyFloor
+	riskAbstain := d.RiskAbstain && !d.SemanticLift
+	return d.RiskFloor || riskAbstain || d.GraphEscalated || d.NBUpshift.Applied || d.PolicyFloor
 }
 
 // unconfidentUnknownFrontier reports the R7 condition: no comparable current

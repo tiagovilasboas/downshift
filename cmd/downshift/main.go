@@ -451,6 +451,13 @@ func runKiroCrewHook(in io.Reader, catalog core.Resolver) (rc int) {
 	}
 	defer withHookDeadline()()
 	correlationID = telemetry.CorrelationIDOrNew(ev.CorrelationIdentifier())
+	// Same project-context seam as runHookAdapter, so the project tier floor
+	// (policyfile) applies to KiroCrew too.
+	projectDir := ev.ProjectDir()
+	if projectDir == "" {
+		projectDir, _ = os.Getwd()
+	}
+	defer hookctx.SetProjectDir(projectDir)()
 
 	out, note, decision := kirocrew.Handle(ev, catalog)
 	warnSessionUnknown(decision)
