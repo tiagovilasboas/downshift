@@ -123,6 +123,7 @@ Completed (Claude Code), Functional (Codex, Cursor), Experimental (KiroCrew, Ant
 | [evidence/e5-int8-evaluation-2026-10-17.md](evidence/e5-int8-evaluation-2026-10-17.md) | Multilingual E5 as a routing candidate: baseline measured, E5 gain unproven, fuse stays off |
 | [evidence/multilang-codex-2026-10-16.md](evidence/multilang-codex-2026-10-16.md) | Multilingual checks through the Codex adapter (wire response and telemetry only) |
 | [evidence/baseline-freeze-2026-10-17.md](evidence/baseline-freeze-2026-10-17.md) | Baseline freeze manifest: frozen eval sets, sha256, reference numbers the next run must reproduce, how to verify |
+| [evidence/plugin-mods-smoke-2026-10-17.md](evidence/plugin-mods-smoke-2026-10-17.md) | Plugin and mods under headless Claude Code 2.1.302: load, routing decisions, double routing with the router mod (n=1 per round) |
 
 ## Brand
 
