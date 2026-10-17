@@ -19,6 +19,13 @@ So, for agents you write yourself:
 | Downshift to pick the tier per task | omit `model` (or `model: inherit`) |
 | One fixed model, always | `model: <alias or id>`; routing leaves it alone |
 
+**Delegation has a cost of its own.** A spawn pays for the child's context, the
+brief, the return and the parent's coordination; Downshift records that cost
+per child on Claude Code (`downshift stats`, `downshift session --tree`) but
+does not decide whether to delegate. A one-line edit is usually cheaper in the
+main agent even on a frontier model. The example agent shows what a routable
+delegation looks like, not that every trivial task should become one.
+
 The classifier reads the Task prompt, not the agent file. A bounded, mechanical
 brief routes small; a vague or risky one keeps the session model. `downshift try
 "<the brief>"` shows the decision before any spawn.
