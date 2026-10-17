@@ -5,6 +5,8 @@
 Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
+**Historical archive.** This document is a historical archive. `DOWNSHIFT_E5_*`, `DOWNSHIFT_MINILM_EMBED`, `DOWNSHIFT_GRAPHIFY_CMD`, and Graphify are not in the binary as of 2026-10-17. Do not implement this spec.
+
 **Superseded 2026-10-17:** E5 and the external MiniLM command were removed. This file is an archive. Do not reimplement it from this contract.
 
 **Status (historical):** Phase A complete; Phase D (E5 shadow) had shipped; Phase E stayed default off.  
