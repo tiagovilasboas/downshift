@@ -11,16 +11,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
-const (
-	// EnvDiscovery set to "off" disables the discovered-models layer.
-	EnvDiscovery = "DOWNSHIFT_DISCOVERY"
-	// EnvDiscoveryTTL is a Go duration; "0" keeps a cache entry forever.
-	EnvDiscoveryTTL = "DOWNSHIFT_DISCOVERY_TTL"
-	// EnvDiscovered overrides the cache path.
-	EnvDiscovered = "DOWNSHIFT_DISCOVERED"
-
-	defaultDiscoveryTTL = 24 * time.Hour
-)
+const defaultDiscoveryTTL = 24 * time.Hour
 
 // LoadDiscoveredSession reads the models `downshift models discover` found for
 // harness. It only reads a local file: no network, no process, so it is safe
@@ -30,10 +21,10 @@ const (
 // The ids are already ranked least to most capable by the discovery step, one
 // per family; this layer does not rank or look at the catalog.
 func LoadDiscoveredSession(harness string, now time.Time) SessionList {
-	if harness == "" || os.Getenv(EnvDiscovery) == "off" {
+	if harness == "" || discoveryOff() {
 		return UnknownSession()
 	}
-	path := os.Getenv(EnvDiscovered)
+	path := discoveredEnv()
 	if path == "" {
 		p, err := paths.Join("discovered.json")
 		if err != nil {
@@ -60,7 +51,7 @@ func LoadDiscoveredSession(harness string, now time.Time) SessionList {
 		return UnknownSession()
 	}
 	ttl := defaultDiscoveryTTL
-	if v := os.Getenv(EnvDiscoveryTTL); v != "" {
+	if v := discoveryTTLEnv(); v != "" {
 		d, err := time.ParseDuration(v)
 		if err != nil || d < 0 {
 			return UnknownSession()

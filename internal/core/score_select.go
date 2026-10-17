@@ -3,8 +3,6 @@
 
 package core
 
-import "os"
-
 // Capability selection: choose the session model by the capability the task
 // needs, measured with public scores, instead of by the catalog tier of the
 // session ids. It is harness-agnostic: it reads only the session list, the
@@ -20,11 +18,8 @@ import "os"
 // TierFloorHook. The hook must be offline and fast: it runs inside the hook.
 var ScoreHook func(harness, id string) (score float64, ok bool)
 
-// ScoreRoutingEnv makes the capability pick live. Default off (shadow only).
-const ScoreRoutingEnv = "DOWNSHIFT_SCORE_ROUTING"
-
 // ScoreRoutingEnabled reports whether the capability pick may change the model.
-func ScoreRoutingEnabled() bool { return os.Getenv(ScoreRoutingEnv) == "1" }
+func ScoreRoutingEnabled() bool { return scoreRoutingEnv() }
 
 // The capability a task needs, as a fraction of the span between the weakest
 // and the strongest selectable model of the session itself:

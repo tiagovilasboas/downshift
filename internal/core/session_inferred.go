@@ -3,11 +3,6 @@
 
 package core
 
-import "os"
-
-// EnvInferSession set to "off" disables the inferred session layer.
-const EnvInferSession = "DOWNSHIFT_INFER_SESSION"
-
 // InferSessionFromCurrent builds the last-resort session list for a harness
 // whose real list could not be learned (no hook list, native export,
 // discovery cache or operator file). The current model is proof of access, and
@@ -19,7 +14,7 @@ const EnvInferSession = "DOWNSHIFT_INFER_SESSION"
 // An unknown or empty current model, or a disabled layer, is an unknown
 // session, which never rewrites.
 func InferSessionFromCurrent(harness, currentID string, res Resolver) SessionList {
-	if harness == "" || currentID == "" || res == nil || os.Getenv(EnvInferSession) == "off" {
+	if harness == "" || currentID == "" || res == nil || inferSessionOff() {
 		return UnknownSession()
 	}
 	cur, ok := res.LookupByID(harness, currentID)

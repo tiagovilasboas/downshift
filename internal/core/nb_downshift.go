@@ -4,15 +4,8 @@
 package core
 
 import (
-	"os"
-
 	"github.com/tiagovilasboas/downshift/internal/nbtier"
 )
-
-// NBDownshiftEnv turns the naive-Bayes TRIVIAL downshift on. Default OFF:
-// the opinion is still computed and recorded (shadow mode) but routing is
-// unchanged.
-const NBDownshiftEnv = "DOWNSHIFT_NB_DOWNSHIFT"
 
 // NBDownshift is the TRIVIAL downshift opinion for prompts where no
 // classifier keyword fired. Would is true only when the classifier fell back
@@ -28,7 +21,7 @@ type NBDownshift struct {
 }
 
 // NBDownshiftEnabled reports whether DOWNSHIFT_NB_DOWNSHIFT=1.
-func NBDownshiftEnabled() bool { return os.Getenv(NBDownshiftEnv) == "1" }
+func NBDownshiftEnabled() bool { return nbDownshiftEnv() }
 
 func nbTrivialOpinion(prompt string, cls Classification, graphEscalated bool) NBDownshift {
 	if !cls.NoSignal || cls.Complexity != Medium || graphEscalated || cls.RiskFloor {

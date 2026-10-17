@@ -4,14 +4,8 @@
 package core
 
 import (
-	"os"
-
 	"github.com/tiagovilasboas/downshift/internal/nbtier"
 )
-
-// NBUpshiftEnv turns the naive-Bayes upshift on. Default OFF: the opinion is
-// still computed and recorded (shadow mode) but the routing tier is unchanged.
-const NBUpshiftEnv = "DOWNSHIFT_NB_UPSHIFT"
 
 // NBUpshift is the upshift-only second opinion from internal/nbtier.
 // Would is true when NB rates the task a higher tier than the classifier
@@ -26,7 +20,7 @@ type NBUpshift struct {
 }
 
 // NBUpshiftEnabled reports whether DOWNSHIFT_NB_UPSHIFT=1.
-func NBUpshiftEnabled() bool { return os.Getenv(NBUpshiftEnv) == "1" }
+func NBUpshiftEnabled() bool { return nbUpshiftEnv() }
 
 func nbSecondOpinion(prompt string, tier Tier) NBUpshift {
 	s := nbtier.Suggest(prompt, int(tier))

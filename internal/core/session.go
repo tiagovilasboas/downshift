@@ -56,7 +56,7 @@ type SessionList struct {
 // Missing evidence in legacy mode retains routing without claiming credit.
 func (s SessionList) WithUsageQuota(harness string, supplied *quota.Snapshot) SessionList {
 	s.QuotaTime = time.Now()
-	s.QuotaRequired = os.Getenv("DOWNSHIFT_QUOTA_MODE") == "required"
+	s.QuotaRequired = quotaModeRequired()
 	if supplied != nil {
 		s.Usage, s.QuotaRequired = supplied, true
 		return s
@@ -98,7 +98,7 @@ func StaleQuotaHold(harness string, now time.Time) (expiredFor time.Duration, he
 	if !present || s == nil || s.Validate() != nil || now.Before(s.ExpiresAt) {
 		return 0, false
 	}
-	if os.Getenv("DOWNSHIFT_QUOTA_MODE") != "required" && s.Abandoned(now) {
+	if !quotaModeRequired() && s.Abandoned(now) {
 		return 0, false
 	}
 	return now.Sub(s.ExpiresAt), true
@@ -217,7 +217,7 @@ func LoadUserSession(harness string) SessionList {
 // LoadUserSessionForID prefers an allowlist scoped to the exact harness
 // session, then falls back to the harness-wide allowlist for compatibility.
 func LoadUserSessionForID(harness, sessionID string) SessionList {
-	path := os.Getenv("DOWNSHIFT_SESSION_MODELS")
+	path := sessionModelsEnv()
 	if path == "" {
 		path = DefaultSessionModelsPath()
 	}
@@ -328,14 +328,14 @@ func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) Sess
 // "explicit_upshift": true in session-models.json turns it on. Either source
 // is enough. The flag does not replace a current explicit_only model.
 func ExplicitUpshiftEnabled() bool {
-	if os.Getenv("DOWNSHIFT_EXPLICIT_UPSHIFT") == "1" {
+	if explicitUpshiftEnv() {
 		return true
 	}
 	return explicitUpshiftFromFile()
 }
 
 func explicitUpshiftFromFile() bool {
-	path := os.Getenv("DOWNSHIFT_SESSION_MODELS")
+	path := sessionModelsEnv()
 	if path == "" {
 		path = DefaultSessionModelsPath()
 	}

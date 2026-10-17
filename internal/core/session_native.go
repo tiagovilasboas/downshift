@@ -29,7 +29,7 @@ func loadNativeSession(caps HarnessCapabilities, now time.Time) (SessionList, bo
 	if caps.NativeSessionEnv == "" {
 		return SessionList{}, false
 	}
-	path := os.Getenv(caps.NativeSessionEnv)
+	path := nativeSessionPathEnv(caps.NativeSessionEnv)
 	if path == "" {
 		return SessionList{}, false
 	}
