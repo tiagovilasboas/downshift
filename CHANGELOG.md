@@ -51,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- One hook runner for every harness: `runHookAdapter` takes a wire strategy (rewrite: JSON response, exit 0; policy: deny message on stderr, exit 2). The hand-copied KiroCrew runner is gone, so KiroCrew gets the project floor, session pause (once its payload carries a session id) and the same telemetry path as the other harnesses.
+- Shared-layer conformance suite (`cmd/downshift/conformance_test.go`): eight routing scenarios driven through the runner for every registered harness, with payload builders and response decoders as data. The per-adapter copies of those tests (556 lines) are removed; adapter packages keep only wire-specific tests.
+- Adapters share one child-status mapper (`telemetry.ChildStatusFromText`, synonym table plus per-harness fallback) and one transcript model reader (`hookutil.TranscriptModel`); Cursor now also maps `succeeded`/`done` and `errored`/`failure`.
+- CI: the cross-platform build matrix runs on every Go change, and plugin files trigger the Go job; a parity test keeps `hooks/hooks.json` equal to the setup target.
+- Scores refresh backs off for six hours after a refresh that reached no source.
 - Docs: BDI agentic router diagram (`docs/img/bdi-agentic-*.svg`) and README section map perception → beliefs → desires → deliberation → intentions → action for every harness adapter.
 - Optional `DOWNSHIFT_E5_SHADOW=1` records multilingual E5 ONNX observations on `Route()` without changing tier (Phase D shadow); see `downshift doctor` and initiative doc §14.
 - Optional `DOWNSHIFT_E5_FUSE=1` runs the same encoder inside `ClassifyWithSemantic` (Phase E plumbing, default off, fail-open). It does not reuse `DOWNSHIFT_E5_SHADOW_CMD`; reserved centroids `ABSTAIN`/`FOREIGN` may clear confidence only. Owner enable still waits on labs M3 + legacy gates (initiative §15).
