@@ -145,8 +145,8 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	res = core.ResolveSessionModels(harnessID, session, res)
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
-	decision.RequestedID = currentModel
-	decision.BaselineGuessed = fromParent
+	decision.Baseline.RequestedID = currentModel
+	decision.Baseline.Guessed = fromParent
 
 	session = withMuseCatalogInclusion(session, res)
 	plan := decision.PlanSession(core.CursorCaps, res, session, currentModel)
@@ -155,18 +155,18 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	if hold, creditHeld, exhausted := cursorMuseSparkHold(decision, plan, session, res); hold {
 		// Absent marks are not credit. Exhausted and unavailable are.
-		decision.CreditHeld = creditHeld
+		decision.Session.CreditHeld = creditHeld
 		if exhausted {
-			decision.QuotaStatus = string(quota.Exhausted)
-		} else if decision.QuotaStatus == string(quota.Available) {
-			decision.QuotaStatus = string(quota.Unknown)
+			decision.Session.QuotaStatus = string(quota.Exhausted)
+		} else if decision.Session.QuotaStatus == string(quota.Available) {
+			decision.Session.QuotaStatus = string(quota.Unknown)
 		}
 		return allow(), "", decision
 	}
 
 	target := plan.Model
 	note := decision.Summary()
-	if target.ID == "" || target.ID == decision.CurrentModel.ID {
+	if target.ID == "" || target.ID == decision.Baseline.CurrentModel.ID {
 		return allow(), "", decision
 	}
 	if !plan.RewriteModel {
@@ -175,7 +175,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// On the parent's model as baseline, only the small tier is surely
 	// cheaper than what the child runs; a mid target could be an upshift.
 	if fromParent && decision.Verdict == core.VerdictDownshift && target.Tier != core.TierSmall {
-		decision.GuessHeld = true
+		decision.Baseline.GuessHeld = true
 		return allow(), "", decision
 	}
 	if !core.CanWriteSessionID(harnessID, target.ID, plan.Session, res) {

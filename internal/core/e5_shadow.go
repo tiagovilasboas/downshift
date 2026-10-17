@@ -31,7 +31,7 @@ func applyE5Shadow(prompt string, cls Classification, d *Decision) {
 	if obs == nil {
 		return
 	}
-	d.E5Shadow = E5Shadow{
+	d.Shadow.E5Shadow = E5Shadow{
 		ModelID:        obs.ModelID,
 		NearestLabel:   obs.NearestLabel,
 		Similarity:     obs.Similarity,

@@ -22,13 +22,13 @@ func TestSessionFirstAcceptance_NewOrderedModelsAcrossHarnesses(t *testing.T) {
 		t.Run(h.Harness, func(t *testing.T) {
 			session := core.KnownSession([]string{"qa-new-small", "qa-new-mid", "qa-new-frontier"})
 			d := core.RouteForSession("rename the userId variable to userIdentifier", h.Harness, "qa-new-frontier", cat, session)
-			if d.CurrentModel.ID != "qa-new-frontier" || d.CurrentModel.Tier != core.TierFrontier {
-				t.Errorf("session baseline not resolved: %+v", d.CurrentModel)
+			if d.Baseline.CurrentModel.ID != "qa-new-frontier" || d.Baseline.CurrentModel.Tier != core.TierFrontier {
+				t.Errorf("session baseline not resolved: %+v", d.Baseline.CurrentModel)
 			}
 			if d.Tier != core.TierSmall || d.Model.ID != "qa-new-small" {
 				t.Errorf("session route not selected: %+v", d)
 			}
-			if d.CurrentModel.InputM != 0 || d.CurrentModel.OutputM != 0 || d.Model.InputM != 0 || d.Model.OutputM != 0 || d.Savings != 0 {
+			if d.Baseline.CurrentModel.InputM != 0 || d.Baseline.CurrentModel.OutputM != 0 || d.Model.InputM != 0 || d.Model.OutputM != 0 || d.Savings != 0 {
 				t.Errorf("unknown session prices invented: %+v", d)
 			}
 			foreign := core.RouteForSession("rename el campo que contiene las contraseñas de clientes", h.Harness, "qa-new-frontier", cat, session)

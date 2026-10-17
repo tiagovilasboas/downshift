@@ -79,37 +79,37 @@ func ReasonCodes(d core.Decision) []string {
 	if d.UnsupportedLanguage {
 		set[ReasonUnsupportedLanguage] = true
 	}
-	if d.SemanticLift {
+	if d.Guards.SemanticLift {
 		set[ReasonSemanticBoost] = true
 	}
 	if len(d.Risk) > 0 {
 		set[ReasonRiskCategory] = true
 	}
-	if d.RiskFloor {
+	if d.Guards.RiskFloor {
 		set[ReasonRiskFloor] = true
 	}
-	if d.GraphEscalated {
+	if d.Guards.GraphEscalated {
 		set[ReasonGraphEscalation] = true
 	}
-	if d.NBUpshift.Applied {
+	if d.Shadow.NBUpshift.Applied {
 		set[ReasonNBUpshiftApplied] = true
 	}
-	if d.NBDownshift.Applied {
+	if d.Shadow.NBDownshift.Applied {
 		set[ReasonNBDownshiftApplied] = true
 	}
-	if d.PolicyFloor {
+	if d.Guards.PolicyFloor {
 		set[ReasonTierFloor] = true
 	}
-	if d.CreditHeld {
+	if d.Session.CreditHeld {
 		set[ReasonCreditHeld] = true
 	}
-	if d.GuessHeld {
+	if d.Baseline.GuessHeld {
 		set[ReasonGuessHeld] = true
 	}
-	if d.ScoreApplied {
+	if d.Shadow.ScoreApplied {
 		set[ReasonScoreRouted] = true
 	}
-	if d.BaselineFromSettings {
+	if d.Baseline.FromSettings {
 		set[ReasonBaselineFromSettings] = true
 	}
 	for _, rule := range d.Corrections {

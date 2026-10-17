@@ -130,7 +130,7 @@ func TestShouldPreserveExplicitModel_ExplicitOnly(t *testing.T) {
 }
 
 func TestShouldPreserveExplicitModel_IgnoresSemanticLift(t *testing.T) {
-	d := core.Decision{Harness: "codex", SemanticLift: true, RiskAbstain: true}
+	d := core.Decision{Harness: "codex", Guards: core.Guards{SemanticLift: true, RiskAbstain: true}}
 	if !d.ShouldPreserveExplicitModel("gpt-6-astra", covCat) {
 		t.Error("explicit_only must still be preserved after a semantic lift")
 	}

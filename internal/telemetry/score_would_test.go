@@ -15,8 +15,15 @@ import (
 func scoreDecision() core.Decision {
 	return core.Decision{
 		Harness: "codex", Complexity: core.Medium, Tier: core.TierMid, Confident: true,
-		Verdict: core.VerdictOK, Model: core.Model{ID: "m-70"}, CurrentModel: core.Model{ID: "m-70"},
-		ScoreWould: "m-40", ScoreDiffers: true, ScoreWouldCostRatio: 0.123456,
+		Verdict: core.VerdictOK, Model: core.Model{ID: "m-70"},
+		Baseline: core.Baseline{
+			CurrentModel: core.Model{ID: "m-70"},
+		},
+		Shadow: core.Shadow{
+			ScoreWould:          "m-40",
+			ScoreDiffers:        true,
+			ScoreWouldCostRatio: 0.123456,
+		},
 	}
 }
 
@@ -38,7 +45,7 @@ func TestFromDecision_RecordsScoreWouldPromptFree(t *testing.T) {
 		}
 	}
 	d := scoreDecision()
-	d.ScoreWould, d.ScoreDiffers, d.ScoreWouldCostRatio = "", false, 0
+	d.Shadow.ScoreWould, d.Shadow.ScoreDiffers, d.Shadow.ScoreWouldCostRatio = "", false, 0
 	raw, _ = json.Marshal(FromDecision(d, "abcdef0123456789", "test"))
 	if strings.Contains(string(raw), "score") {
 		t.Fatalf("event without a pick carries score keys: %s", raw)
@@ -47,7 +54,7 @@ func TestFromDecision_RecordsScoreWouldPromptFree(t *testing.T) {
 
 func TestFromDecision_UntrustedScoreIDIsBounded(t *testing.T) {
 	d := scoreDecision()
-	d.ScoreWould = "has spaces and prompt text"
+	d.Shadow.ScoreWould = "has spaces and prompt text"
 	if got := FromDecision(d, "abcdef0123456789", "test").ScoreWould; got != "unknown" {
 		t.Fatalf("score_would = %q, want unknown", got)
 	}
@@ -55,7 +62,7 @@ func TestFromDecision_UntrustedScoreIDIsBounded(t *testing.T) {
 
 func TestReasonCodes_ScoreRoutedOnlyWhenApplied(t *testing.T) {
 	d := scoreDecision()
-	d.ScoreApplied = true
+	d.Shadow.ScoreApplied = true
 	found := false
 	for _, c := range ReasonCodes(d) {
 		found = found || c == ReasonScoreRouted

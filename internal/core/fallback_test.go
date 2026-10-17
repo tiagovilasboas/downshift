@@ -51,12 +51,14 @@ func TestPlanForSession_OnlySessionIDs(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.harness, func(t *testing.T) {
 			d := core.Decision{
-				Harness:      tc.harness,
-				Verdict:      core.VerdictDownshift,
-				Confident:    true,
-				Tier:         core.TierSmall,
-				Model:        core.Model{ID: tc.catalogSmall, Tier: core.TierSmall, Harness: tc.harness},
-				CurrentModel: core.Model{ID: tc.frontier, Tier: core.TierFrontier, Harness: tc.harness},
+				Harness:   tc.harness,
+				Verdict:   core.VerdictDownshift,
+				Confident: true,
+				Tier:      core.TierSmall,
+				Model:     core.Model{ID: tc.catalogSmall, Tier: core.TierSmall, Harness: tc.harness},
+				Baseline: core.Baseline{
+					CurrentModel: core.Model{ID: tc.frontier, Tier: core.TierFrontier, Harness: tc.harness},
+				},
 			}
 			plan := d.PlanForSession(tc.caps, cat, core.KnownSession(tc.session))
 			if !plan.RewriteModel {
@@ -82,12 +84,14 @@ func TestPlanForSession_MissingSessionDoesNotRewrite(t *testing.T) {
 	for _, harness := range []string{"cursor", "claude-code"} {
 		t.Run(harness, func(t *testing.T) {
 			d := core.Decision{
-				Harness:      harness,
-				Verdict:      core.VerdictDownshift,
-				Confident:    true,
-				Tier:         core.TierSmall,
-				Model:        cat.ModelFor(harness, core.TierSmall),
-				CurrentModel: cat.ModelFor(harness, core.TierFrontier),
+				Harness:   harness,
+				Verdict:   core.VerdictDownshift,
+				Confident: true,
+				Tier:      core.TierSmall,
+				Model:     cat.ModelFor(harness, core.TierSmall),
+				Baseline: core.Baseline{
+					CurrentModel: cat.ModelFor(harness, core.TierFrontier),
+				},
 			}
 			plan := d.Plan(core.CursorCaps, cat)
 			if plan.RewriteModel {
@@ -100,12 +104,14 @@ func TestPlanForSession_MissingSessionDoesNotRewrite(t *testing.T) {
 func TestPlan_ExplicitOnlySkipsSessionRouting(t *testing.T) {
 	session := core.KnownSession([]string{"gpt-5.6-luna", "gpt-6-astra"})
 	d := core.Decision{
-		Harness:      "codex",
-		Verdict:      core.VerdictDownshift,
-		Confident:    true,
-		Tier:         core.TierSmall,
-		Model:        core.Model{ID: "gpt-5.6-luna", Tier: core.TierSmall, Harness: "codex"},
-		CurrentModel: core.Model{ID: "gpt-6-astra", Tier: core.TierFrontier, Harness: "codex"},
+		Harness:   "codex",
+		Verdict:   core.VerdictDownshift,
+		Confident: true,
+		Tier:      core.TierSmall,
+		Model:     core.Model{ID: "gpt-5.6-luna", Tier: core.TierSmall, Harness: "codex"},
+		Baseline: core.Baseline{
+			CurrentModel: core.Model{ID: "gpt-6-astra", Tier: core.TierFrontier, Harness: "codex"},
+		},
 	}
 	plan := d.PlanForSession(core.CodexCaps, cat, session)
 	if !plan.PreserveExplicit {

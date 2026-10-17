@@ -13,9 +13,14 @@ import (
 
 // A shadow NB upshift is recorded on the event without changing its tier.
 func TestFromDecision_RecordsNBShadowUpshift(t *testing.T) {
-	d := core.Decision{Tier: core.TierMid, NBUpshift: core.NBUpshift{
-		Would: true, From: core.TierMid, To: core.TierFrontier, Margin: 0.123456,
-	}}
+	d := core.Decision{
+		Tier: core.TierMid,
+		Shadow: core.Shadow{
+			NBUpshift: core.NBUpshift{
+				Would: true, From: core.TierMid, To: core.TierFrontier, Margin: 0.123456,
+			},
+		},
+	}
 	ev := FromDecision(d, "0123456789abcdef", "test")
 	if ev.Tier != "mid" || ev.NBUpshift == nil {
 		t.Fatalf("event tier=%s nb=%+v", ev.Tier, ev.NBUpshift)
@@ -37,7 +42,7 @@ func TestFromDecision_OmitsNBWhenNoUpshift(t *testing.T) {
 
 // A shadow NB TRIVIAL downshift is recorded as mid -> small, not applied.
 func TestFromDecision_RecordsNBShadowDownshift(t *testing.T) {
-	d := core.Decision{Tier: core.TierMid, NBDownshift: core.NBDownshift{Would: true, Margin: 0.31234}}
+	d := core.Decision{Tier: core.TierMid, Shadow: core.Shadow{NBDownshift: core.NBDownshift{Would: true, Margin: 0.31234}}}
 	ev := FromDecision(d, "0123456789abcdef", "test")
 	want := NBUpshiftRecord{FromTier: "mid", ToTier: "small", Margin: 0.3123, Applied: false}
 	if ev.Tier != "mid" || ev.NBDownshift == nil || *ev.NBDownshift != want {

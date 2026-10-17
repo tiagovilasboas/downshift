@@ -252,7 +252,7 @@ func runHookAdapter[E any](
 	if decision.Harness != "" {
 		// Spawn-time surface. Honor and usage stay unobserved until that
 		// harness's own post-spawn port records them. One line, spawn events only.
-		fmt.Fprintf(os.Stderr, "downshift: honor=unobserved quota=%s usage=unobserved\n", telemetry.ProjectQuota(decision.QuotaStatus, decision.CreditHeld))
+		fmt.Fprintf(os.Stderr, "downshift: honor=unobserved quota=%s usage=unobserved\n", telemetry.ProjectQuota(decision.Session.QuotaStatus, decision.Session.CreditHeld))
 		event := telemetry.FromDecision(decision, correlationID, buildVersion)
 		fate.recordOutcome(&event)
 		shadow := decisionintelligence.Evaluate(decisionintelligence.Signals{
@@ -273,15 +273,15 @@ func runHookAdapter[E any](
 		event.FromModel = "unknown"
 		if requested, ok := any(ev).(interface{ RequestedModel() string }); ok {
 			candidate := requested.RequestedModel()
-			if decision.BaselineFromSettings {
+			if decision.Baseline.FromSettings {
 				// Inferred from settings: the adapter resolved it with the catalog.
-				candidate = decision.RequestedID
+				candidate = decision.Baseline.RequestedID
 			}
 			if candidate != "" {
 				// Route only populates CurrentModel when its resolver recognized
 				// the original candidate. That makes this a catalog allowlist
 				// check without coupling the shared hook runner to a catalog type.
-				if decision.CurrentModel.ID != "" {
+				if decision.Baseline.CurrentModel.ID != "" {
 					event.FromModel = telemetry.ModelOrUnknown(candidate)
 				} else {
 					event.RequestedModelRaw = telemetry.RawModelOrInvalid(candidate)
@@ -372,7 +372,7 @@ func withHookDeadline() func() {
 // could not resolve a session allowlist: without it the hook never rewrites,
 // which otherwise looks like a silent no-op install.
 func warnSessionUnknown(d core.Decision) {
-	if d.Harness == "" || !d.SessionUnknown {
+	if d.Harness == "" || !d.Session.Unknown {
 		return
 	}
 	fmt.Fprintf(os.Stderr, "downshift: no session allowlist for %s, so no model is rewritten. "+

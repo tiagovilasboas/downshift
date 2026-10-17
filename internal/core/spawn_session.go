@@ -10,10 +10,10 @@ import "github.com/tiagovilasboas/downshift/internal/quota"
 // uses, and the evidence source. Every adapter did this by hand; it lives here
 // so the five harnesses cannot drift apart.
 func (d *Decision) RecordSession(session SessionList, currentModelID string) {
-	d.SessionUnknown = !session.Known
-	d.QuotaStatus = string(session.QuotaStatus(d.Harness, currentModelID))
+	d.Session.Unknown = !session.Known
+	d.Session.QuotaStatus = string(session.QuotaStatus(d.Harness, currentModelID))
 	if session.Usage != nil {
-		d.QuotaSource = quota.SourceName(session.Usage.Source)
+		d.Session.QuotaSource = quota.SourceName(session.Usage.Source)
 	}
 }
 
@@ -28,11 +28,11 @@ func (d *Decision) PlanSession(caps HarnessCapabilities, res Resolver, session S
 	d.RecordSession(session, currentModelID)
 	plan := d.PlanForSession(caps, res, session)
 	plan.Session = session
-	d.CreditHeld = plan.CreditHeld
+	d.Session.CreditHeld = plan.CreditHeld
 	if plan.RewriteModel {
-		d.QuotaStatus = string(session.QuotaStatus(d.Harness, plan.Model.ID))
+		d.Session.QuotaStatus = string(session.QuotaStatus(d.Harness, plan.Model.ID))
 	}
 	d.RecordScoreWould(res, plan.Session)
-	d.ScoreApplied = ScoreRoutingEnabled() && plan.RewriteModel && d.ScoreWould != "" && plan.Model.ID == d.ScoreWould
+	d.Shadow.ScoreApplied = ScoreRoutingEnabled() && plan.RewriteModel && d.Shadow.ScoreWould != "" && plan.Model.ID == d.Shadow.ScoreWould
 	return plan
 }

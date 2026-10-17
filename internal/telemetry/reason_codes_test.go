@@ -130,9 +130,17 @@ func TestReasonCodes_EveryRuleHasACode(t *testing.T) {
 		t.Errorf("unknown rule must still leave a hold code, got %v", codes)
 	}
 	lifts := telemetry.ReasonCodes(core.Decision{
-		GraphEscalated: true, PolicyFloor: true, CreditHeld: true,
-		NBUpshift:   core.NBUpshift{Would: true, Applied: true},
-		NBDownshift: core.NBDownshift{Would: true, Applied: false},
+		Session: core.Session{
+			CreditHeld: true,
+		},
+		Guards: core.Guards{
+			GraphEscalated: true,
+			PolicyFloor:    true,
+		},
+		Shadow: core.Shadow{
+			NBUpshift:   core.NBUpshift{Would: true, Applied: true},
+			NBDownshift: core.NBDownshift{Would: true, Applied: false},
+		},
 	})
 	want := []string{"CLASSIFIER_UNCONFIDENT", "CREDIT_HELD", "GRAPH_ESCALATION", "NB_UPSHIFT_APPLIED", "TIER_FLOOR"}
 	if !reflect.DeepEqual(lifts, want) {

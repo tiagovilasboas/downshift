@@ -39,7 +39,7 @@ func planFor(t *testing.T, caps core.HarnessCapabilities, res core.Resolver) cor
 	small := cat.ModelFor("claude-code", core.TierSmall).ID
 	frontier := cat.ModelFor("claude-code", core.TierFrontier).ID
 	d := core.Route("rename the userId variable", "claude-code", frontier, res)
-	d.RequestedID = frontier
+	d.Baseline.RequestedID = frontier
 	session := core.KnownSession([]string{small, frontier})
 	return d.PlanForSession(caps, res, session)
 }

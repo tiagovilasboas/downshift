@@ -125,9 +125,9 @@ func scoreSelect(d Decision, res Resolver, session SessionList) (string, Model, 
 	}
 	// An unconfident decision never goes above the model already running.
 	if !d.Confident {
-		cur := d.RequestedID
+		cur := d.Baseline.RequestedID
 		if cur == "" {
-			cur = d.CurrentModel.ID
+			cur = d.Baseline.CurrentModel.ID
 		}
 		if cs, ok := ScoreHook(d.Harness, cur); ok && scores[best.ID] > cs {
 			return "", Model{}, false
@@ -156,24 +156,24 @@ func allPriced(ms []Model) bool {
 // the figures mean the same in shadow and in live mode. PlanSession calls it;
 // adapters that call PlanForSession directly call it after planning.
 func (d *Decision) RecordScoreWould(res Resolver, session SessionList) {
-	d.ScoreWould, d.ScoreDiffers, d.ScoreWouldCostRatio = "", false, 0
+	d.Shadow.ScoreWould, d.Shadow.ScoreDiffers, d.Shadow.ScoreWouldCostRatio = "", false, 0
 	id, m, ok := scoreSelect(*d, res, session)
 	if !ok {
 		return
 	}
-	d.ScoreWould = id
-	base := d.CurrentModel.ID
+	d.Shadow.ScoreWould = id
+	base := d.Baseline.CurrentModel.ID
 	if !(d.Checked && d.SafeVerdict == VerdictOK) {
 		if cid, _, cok, _ := catalogSessionTarget(*d, res, session); cok && cid != "" && session.Contains(cid) {
 			base = cid
 		}
 	}
-	d.ScoreDiffers = id != base
+	d.Shadow.ScoreDiffers = id != base
 	if base == "" {
 		return
 	}
 	if b := modelForSessionID(d.Harness, base, res); price(b) > 0 && price(m) > 0 {
-		d.ScoreWouldCostRatio = price(m) / price(b)
+		d.Shadow.ScoreWouldCostRatio = price(m) / price(b)
 	}
 }
 

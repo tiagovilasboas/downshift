@@ -67,7 +67,7 @@ func TestPromptReport(t *testing.T) {
 				ID: c.ID, File: filepath.Base(f), Prompt: c.Prompt, DevDifficulty: c.DevDifficulty,
 				Complexity: d.Complexity.String(), Tier: d.Tier.String(), Effort: d.Effort.String(),
 				Confident: d.Confident, Written: checkWrites(d), HeldBy: d.Corrections,
-				RiskFloor: d.RiskFloor, GraphEsc: d.GraphEscalated, Chars: len(c.Prompt),
+				RiskFloor: d.Guards.RiskFloor, GraphEsc: d.Guards.GraphEscalated, Chars: len(c.Prompt),
 				NoSignal: cls.NoSignal, Scores: scoreMap(cls.Scores),
 			})
 		}

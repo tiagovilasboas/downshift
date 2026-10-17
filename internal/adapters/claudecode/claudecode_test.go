@@ -383,12 +383,12 @@ func TestHandle_PolicyFloorFailsOpen(t *testing.T) {
 		writePolicy(t, dir, body)
 		out, _, d := claudecode.Handle(floorEvent(t, dir), cat)
 		m := decodeUpdated(t, out)
-		if m == nil || m["model"] != nativeOf(core.TierSmall) || d.PolicyFloor {
-			t.Errorf("%s: bad policy must route as if absent, got %v floor %v", name, m, d.PolicyFloor)
+		if m == nil || m["model"] != nativeOf(core.TierSmall) || d.Guards.PolicyFloor {
+			t.Errorf("%s: bad policy must route as if absent, got %v floor %v", name, m, d.Guards.PolicyFloor)
 		}
 	}
 	out, _, d := claudecode.Handle(floorEvent(t, t.TempDir()), cat)
-	if m := decodeUpdated(t, out); m == nil || m["model"] != nativeOf(core.TierSmall) || d.PolicyFloor {
+	if m := decodeUpdated(t, out); m == nil || m["model"] != nativeOf(core.TierSmall) || d.Guards.PolicyFloor {
 		t.Errorf("no policy: expected small, got %v", m)
 	}
 }
@@ -408,7 +408,7 @@ func TestHandle_MissingSessionInfersFromCurrentModel(t *testing.T) {
 	if note == "" || out.HookSpecificOutput == nil || out.HookSpecificOutput.UpdatedInput == nil {
 		t.Fatalf("inferred session should downshift, note=%q", note)
 	}
-	if d.SessionUnknown {
+	if d.Session.Unknown {
 		t.Fatal("decision must record the inferred session as known")
 	}
 }

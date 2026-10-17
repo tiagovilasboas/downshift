@@ -66,7 +66,7 @@ func TestRiskFloor_BlocksDownshiftAllowsUpshift(t *testing.T) {
 	small := escalCat.ModelFor("claude-code", core.TierSmall).ID
 
 	down := core.Route(p, "claude-code", frontier, escalCat)
-	if !down.RiskFloor {
+	if !down.Guards.RiskFloor {
 		t.Fatalf("expected RiskFloor, got %+v", down)
 	}
 	if checkWrites(down) {

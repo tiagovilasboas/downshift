@@ -30,7 +30,7 @@ func TestUpshift_WritesLeastModelAtNeededTier(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			d := core.Route(tc.prompt, "claude-code", tc.current, cat)
-			d.RequestedID = tc.current
+			d.Baseline.RequestedID = tc.current
 			if !d.Confident {
 				t.Fatalf("precondition: want a confident decision, got %+v", d)
 			}
@@ -46,8 +46,10 @@ func TestUpshift_NeededTierMissingOrExhausted(t *testing.T) {
 	upshiftTestEnv(t)
 	d := core.Decision{
 		Harness: "claude-code", Verdict: core.VerdictUpshift, Confident: true, Tier: core.TierMid,
-		CurrentModel: core.Model{ID: "claude-haiku-4-5", Harness: "claude-code", Tier: core.TierSmall},
-		RequestedID:  "claude-haiku-4-5",
+		Baseline: core.Baseline{
+			CurrentModel: core.Model{ID: "claude-haiku-4-5", Harness: "claude-code", Tier: core.TierSmall},
+			RequestedID:  "claude-haiku-4-5",
+		},
 	}
 	noMid := core.KnownSession([]string{"claude-haiku-4-5", "claude-opus-5-5"})
 	if plan := d.PlanForSession(core.ClaudeCodeCaps, cat, noMid); !plan.RewriteModel || plan.Model.ID != "claude-opus-5-5" {
@@ -65,11 +67,11 @@ func TestUpshift_GuessedBaselineOrExplicitKeepsStrongest(t *testing.T) {
 	sess := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
 	route := func() core.Decision {
 		d := core.Route("implement the feature to export sales as CSV", "claude-code", "claude-haiku-4-5", cat)
-		d.RequestedID = "claude-haiku-4-5"
+		d.Baseline.RequestedID = "claude-haiku-4-5"
 		return d
 	}
 	d := route()
-	d.BaselineGuessed = true
+	d.Baseline.Guessed = true
 	if plan := d.PlanForSession(core.ClaudeCodeCaps, cat, sess); !plan.RewriteModel || plan.Model.ID != "claude-opus-5-5" {
 		t.Fatalf("guessed baseline: plan %+v, want opus", plan)
 	}

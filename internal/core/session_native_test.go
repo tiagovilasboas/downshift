@@ -156,20 +156,20 @@ func TestNativeSelectionUsesRealTierAndQuotaNotProviderOrder(t *testing.T) {
 	t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", writeNativeFixture(t, p))
 	s, _ = LoadNativeSession("cursor", now)
 	d.Tier, d.Verdict = TierMid, VerdictDownshift
-	d.CurrentModel = r.models["strong"]
+	d.Baseline.CurrentModel = r.models["strong"]
 	if plan := d.PlanForSession(CursorCaps, r, s); !plan.RewriteModel || plan.Model.ID != "middle" {
 		t.Fatalf("mid floor used provider position rather than metadata: %+v", plan)
 	}
 	// The current model may be absent from the native candidate set, but its
 	// metadata still bounds a downshift after cheaper pools are exhausted.
-	d.CurrentModel = r.models["middle"]
+	d.Baseline.CurrentModel = r.models["middle"]
 	d.Tier = TierSmall
 	s.IDs = []string{"strong"}
 	if plan := d.PlanForSession(CursorCaps, r, s); plan.RewriteModel {
 		t.Fatalf("quota converted downshift into upgrade: %+v", plan)
 	}
 	s.IDs = []string{"strong", "unknown", "cheap", "middle"}
-	d.CurrentModel = r.models["cheap"]
+	d.Baseline.CurrentModel = r.models["cheap"]
 	d.Tier = TierMid
 	d.Verdict = VerdictUpshift
 	if plan := d.PlanForSession(CursorCaps, r, s); !plan.RewriteModel || plan.Model.ID != "middle" {

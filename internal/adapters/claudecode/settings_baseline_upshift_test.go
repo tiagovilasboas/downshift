@@ -32,7 +32,7 @@ func TestHandle_SettingsBaselineUpshiftKeepsStrongest(t *testing.T) {
 		ToolInput:      json.RawMessage(`{"subagent_type":"general-purpose","prompt":"implement the feature to export sales as CSV"}`),
 	}
 	out, _, d := claudecode.Handle(ev, cat)
-	if !d.BaselineFromSettings || !d.BaselineGuessed || d.Verdict != core.VerdictUpshift {
+	if !d.Baseline.FromSettings || !d.Baseline.Guessed || d.Verdict != core.VerdictUpshift {
 		t.Fatalf("precondition: want an upshift on a settings baseline, got %+v", d)
 	}
 	if m := decodeUpdated(t, out); m == nil || m["model"] != "opus" {
@@ -41,7 +41,7 @@ func TestHandle_SettingsBaselineUpshiftKeepsStrongest(t *testing.T) {
 
 	ev.Model = "claude-haiku-4-5"
 	out, _, d = claudecode.Handle(ev, cat)
-	if d.BaselineGuessed {
+	if d.Baseline.Guessed {
 		t.Fatalf("precondition: payload model is not a guess")
 	}
 	if m := decodeUpdated(t, out); m == nil || m["model"] != "sonnet" {

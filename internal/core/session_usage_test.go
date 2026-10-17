@@ -191,7 +191,7 @@ func TestNativeDownshiftDoesNotBecomeCapabilityOrPriceUpshift(t *testing.T) {
 				},
 			})
 			session.NativeAvailability = true
-			decision := Decision{Harness: "cursor", Tier: TierSmall, Verdict: VerdictDownshift, CurrentModel: current, RequestedID: current.ID}
+			decision := Decision{Harness: "cursor", Tier: TierSmall, Verdict: VerdictDownshift, Baseline: Baseline{CurrentModel: current, RequestedID: current.ID}}
 			plan := decision.PlanForSession(CursorCaps, resolver, session)
 			if plan.RewriteModel != tc.wantWrite {
 				t.Fatalf("downshift plan=%+v, want rewrite=%v", plan, tc.wantWrite)
@@ -226,7 +226,7 @@ func TestNativeUpshiftExplicitFlagKeepsOrdinaryFundedFallback(t *testing.T) {
 				Windows: []quota.Window{{ID: "shared", Scope: "harness", UsedPercent: quotaNumber(20), ResetsAt: now.Add(time.Hour)}},
 			})
 			session.NativeAvailability = true
-			decision := Decision{Harness: "cursor", Tier: TierMid, Verdict: VerdictUpshift, CurrentModel: cheap, RequestedID: cheap.ID}
+			decision := Decision{Harness: "cursor", Tier: TierMid, Verdict: VerdictUpshift, Baseline: Baseline{CurrentModel: cheap, RequestedID: cheap.ID}}
 			plan := decision.PlanForSession(CursorCaps, resolver, session)
 			if !plan.RewriteModel || plan.Model.ID != tc.want {
 				t.Fatalf("explicit flag=%q plan=%+v, want funded rewrite to %s", tc.flag, plan, tc.want)
@@ -244,11 +244,13 @@ func TestStoredClaudeStatuslineSnapshotHoldsClaudeRewrite(t *testing.T) {
 	strong := Model{ID: "claude-opus-5-5", Native: "opus", Harness: "claude-code", Tier: TierFrontier}
 	resolver := nativeResolver{models: map[string]Model{cheap.ID: cheap, strong.ID: strong}}
 	decision := Decision{
-		Harness:      "claude-code",
-		Tier:         TierSmall,
-		Verdict:      VerdictDownshift,
-		CurrentModel: strong,
-		RequestedID:  strong.ID,
+		Harness: "claude-code",
+		Tier:    TierSmall,
+		Verdict: VerdictDownshift,
+		Baseline: Baseline{
+			CurrentModel: strong,
+			RequestedID:  strong.ID,
+		},
 	}
 	now := time.Now().UTC().Add(-time.Second)
 	reset := now.Add(time.Hour).Unix()

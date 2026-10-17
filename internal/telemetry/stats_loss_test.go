@@ -66,15 +66,15 @@ func TestAggregate_UsageRecordLossCounts(t *testing.T) {
 func TestFromDecision_UpshiftCostRatio(t *testing.T) {
 	mid := core.Model{ID: "m-mid", InputM: 3, OutputM: 15}
 	top := core.Model{ID: "m-top", InputM: 5, OutputM: 25}
-	ev := telemetry.FromDecision(core.Decision{Verdict: core.VerdictUpshift, CurrentModel: mid, Model: top}, telemetry.NewCorrelationID(), "t")
+	ev := telemetry.FromDecision(core.Decision{Verdict: core.VerdictUpshift, Model: top, Baseline: core.Baseline{CurrentModel: mid}}, telemetry.NewCorrelationID(), "t")
 	if math.Abs(ev.UpshiftCostRatio-30.0/18.0) > 1e-9 {
 		t.Errorf("UpshiftCostRatio = %f, want %f", ev.UpshiftCostRatio, 30.0/18.0)
 	}
-	unknown := telemetry.FromDecision(core.Decision{Verdict: core.VerdictUpshift, CurrentModel: core.Model{ID: "x"}, Model: top}, telemetry.NewCorrelationID(), "t")
+	unknown := telemetry.FromDecision(core.Decision{Verdict: core.VerdictUpshift, Model: top, Baseline: core.Baseline{CurrentModel: core.Model{ID: "x"}}}, telemetry.NewCorrelationID(), "t")
 	if unknown.UpshiftCostRatio != 0 {
 		t.Errorf("unknown requested price must leave the ratio absent, got %f", unknown.UpshiftCostRatio)
 	}
-	down := telemetry.FromDecision(core.Decision{Verdict: core.VerdictDownshift, CurrentModel: top, Model: mid}, telemetry.NewCorrelationID(), "t")
+	down := telemetry.FromDecision(core.Decision{Verdict: core.VerdictDownshift, Model: mid, Baseline: core.Baseline{CurrentModel: top}}, telemetry.NewCorrelationID(), "t")
 	if down.UpshiftCostRatio != 0 {
 		t.Errorf("downshift must not carry an upshift ratio, got %f", down.UpshiftCostRatio)
 	}

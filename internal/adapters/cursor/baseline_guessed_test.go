@@ -18,11 +18,11 @@ func TestHandle_ParentModelIDIsGuessedBaseline(t *testing.T) {
 	session := []string{"composer-2.5-fast", cur, "composer-2.5"}
 	ev := cursor.Event{ToolName: "Task", SessionModels: &session, ModelID: cur,
 		ToolInput: json.RawMessage(`{"task": "implement the feature to export sales as CSV"}`)}
-	if _, _, d := cursor.Handle(ev, cat); !d.BaselineGuessed {
+	if _, _, d := cursor.Handle(ev, cat); !d.Baseline.Guessed {
 		t.Fatalf("parent model_id baseline must be marked guessed: %+v", d)
 	}
 	ev.ToolInput = json.RawMessage(`{"task": "implement the feature to export sales as CSV", "model": "` + cur + `"}`)
-	if _, _, d := cursor.Handle(ev, cat); d.BaselineGuessed {
+	if _, _, d := cursor.Handle(ev, cat); d.Baseline.Guessed {
 		t.Fatalf("a model named by the call is not a guess: %+v", d)
 	}
 }

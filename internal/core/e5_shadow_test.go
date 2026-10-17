@@ -31,8 +31,8 @@ func TestE5Shadow_EnabledFailOpenDoesNotChangeRoute(t *testing.T) {
 	if base.Tier != on.Tier || base.Complexity != on.Complexity || base.Confident != on.Confident {
 		t.Fatalf("E5 shadow changed routing: base=%+v on=%+v", base, on)
 	}
-	if on.E5Shadow.ErrorCode != "missing_cmd" {
-		t.Fatalf("expected missing_cmd shadow error, got %+v", on.E5Shadow)
+	if on.Shadow.E5Shadow.ErrorCode != "missing_cmd" {
+		t.Fatalf("expected missing_cmd shadow error, got %+v", on.Shadow.E5Shadow)
 	}
 }
 
@@ -75,7 +75,7 @@ func TestE5Shadow_OnRecordsWithoutChangingRoute(t *testing.T) {
 	if off.Tier != on.Tier || off.Complexity != on.Complexity {
 		t.Fatalf("E5 shadow changed tier/complexity: off=%+v on=%+v", off, on)
 	}
-	if on.E5Shadow.ModelID == "" || on.E5Shadow.ErrorCode != "" {
-		t.Fatalf("expected successful shadow record, got %+v", on.E5Shadow)
+	if on.Shadow.E5Shadow.ModelID == "" || on.Shadow.E5Shadow.ErrorCode != "" {
+		t.Fatalf("expected successful shadow record, got %+v", on.Shadow.E5Shadow)
 	}
 }

@@ -29,13 +29,15 @@ func TestHarnessOwnsID_RejectsOtherHarnessSlug(t *testing.T) {
 func TestPlanForSession_ForeignIDDoesNotRewrite(t *testing.T) {
 	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
 	d := core.Decision{
-		Harness:      "claude-code",
-		RequestedID:  "composer-2.5",
-		Verdict:      core.VerdictDownshift,
-		Confident:    true,
-		Tier:         core.TierSmall,
-		Model:        core.Model{ID: "claude-haiku-4-5", Tier: core.TierSmall, Harness: "claude-code"},
-		CurrentModel: core.Model{ID: "", Harness: "claude-code"},
+		Harness:   "claude-code",
+		Verdict:   core.VerdictDownshift,
+		Confident: true,
+		Tier:      core.TierSmall,
+		Model:     core.Model{ID: "claude-haiku-4-5", Tier: core.TierSmall, Harness: "claude-code"},
+		Baseline: core.Baseline{
+			RequestedID:  "composer-2.5",
+			CurrentModel: core.Model{ID: "", Harness: "claude-code"},
+		},
 	}
 	plan := d.PlanForSession(core.ClaudeCodeCaps, cat, session)
 	if !plan.HoldForeign || plan.RewriteModel {
@@ -55,15 +57,17 @@ func TestPlanForSession_PrefersIncludedAndSkipsExhausted(t *testing.T) {
 	session.Exhausted = []string{"claude-4.5-haiku-thinking"}
 	d := core.Decision{
 		Harness:     "cursor",
-		RequestedID: "claude-opus-5-thinking-high",
 		Verdict:     core.VerdictDownshift,
 		Confident:   true,
 		Checked:     true,
 		SafeVerdict: core.VerdictDownshift,
 		Tier:        core.TierSmall,
 		Model:       core.Model{ID: "claude-4.5-haiku-thinking", Tier: core.TierSmall, Harness: "cursor"},
-		CurrentModel: core.Model{
-			ID: "claude-opus-5-thinking-high", Tier: core.TierFrontier, Harness: "cursor",
+		Baseline: core.Baseline{
+			RequestedID: "claude-opus-5-thinking-high",
+			CurrentModel: core.Model{
+				ID: "claude-opus-5-thinking-high", Tier: core.TierFrontier, Harness: "cursor",
+			},
 		},
 	}
 	plan := d.PlanForSession(core.CursorCaps, cat, session)
@@ -83,13 +87,15 @@ func TestPlanForSession_CreditsStayInsideThatHarness(t *testing.T) {
 	cursor.CreditsReported = true
 	cursor.Included = []string{"composer-2.5", "grok-4.7-xhigh"}
 	up := core.Decision{
-		Harness:      "cursor",
-		RequestedID:  "composer-2.5-fast",
-		Verdict:      core.VerdictUpshift,
-		Confident:    true,
-		Tier:         core.TierFrontier,
-		Model:        core.Model{ID: "grok-4.7-xhigh", Harness: "cursor"},
-		CurrentModel: core.Model{ID: "composer-2.5-fast", Harness: "cursor"},
+		Harness:   "cursor",
+		Verdict:   core.VerdictUpshift,
+		Confident: true,
+		Tier:      core.TierFrontier,
+		Model:     core.Model{ID: "grok-4.7-xhigh", Harness: "cursor"},
+		Baseline: core.Baseline{
+			RequestedID:  "composer-2.5-fast",
+			CurrentModel: core.Model{ID: "composer-2.5-fast", Harness: "cursor"},
+		},
 	}
 	plan := up.PlanForSession(core.CursorCaps, cat, cursor)
 	if plan.Model.ID != "grok-4.7-xhigh" {
@@ -100,13 +106,15 @@ func TestPlanForSession_CreditsStayInsideThatHarness(t *testing.T) {
 	codex.CreditsReported = true
 	codex.Included = []string{"gpt-6-luna"}
 	codexUp := core.Decision{
-		Harness:      "codex",
-		RequestedID:  "gpt-6-luna",
-		Verdict:      core.VerdictUpshift,
-		Confident:    true,
-		Tier:         core.TierFrontier,
-		Model:        core.Model{ID: "gpt-6-luna", Harness: "codex"},
-		CurrentModel: core.Model{ID: "gpt-6-sol", Harness: "codex"},
+		Harness:   "codex",
+		Verdict:   core.VerdictUpshift,
+		Confident: true,
+		Tier:      core.TierFrontier,
+		Model:     core.Model{ID: "gpt-6-luna", Harness: "codex"},
+		Baseline: core.Baseline{
+			RequestedID:  "gpt-6-luna",
+			CurrentModel: core.Model{ID: "gpt-6-sol", Harness: "codex"},
+		},
 	}
 	codexPlan := codexUp.PlanForSession(core.CodexCaps, cat, codex)
 	if codexPlan.Model.ID != "gpt-6-luna" {
@@ -406,12 +414,14 @@ func TestExplicitUpshift_DownshiftAndCurrentModelStayPut(t *testing.T) {
 	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "1")
 	session := core.KnownSession([]string{"composer-2.5", "claude-opus-5-thinking-high", "claude-fable-5-1-thinking-high"})
 	down := core.Decision{
-		Harness:      "cursor",
-		RequestedID:  "claude-opus-5-thinking-high",
-		Verdict:      core.VerdictDownshift,
-		Confident:    true,
-		Tier:         core.TierFrontier,
-		CurrentModel: core.Model{ID: "claude-opus-5-thinking-high", Harness: "cursor"},
+		Harness:   "cursor",
+		Verdict:   core.VerdictDownshift,
+		Confident: true,
+		Tier:      core.TierFrontier,
+		Baseline: core.Baseline{
+			RequestedID:  "claude-opus-5-thinking-high",
+			CurrentModel: core.Model{ID: "claude-opus-5-thinking-high", Harness: "cursor"},
+		},
 	}
 	plan := down.PlanForSession(core.CursorCaps, cat, session)
 	if plan.Model.ID == "claude-fable-5-1-thinking-high" || plan.RewriteModel {
@@ -419,13 +429,15 @@ func TestExplicitUpshift_DownshiftAndCurrentModelStayPut(t *testing.T) {
 	}
 
 	held := core.Decision{
-		Harness:      "codex",
-		RequestedID:  "gpt-6-astra",
-		Verdict:      core.VerdictDownshift,
-		Confident:    true,
-		Tier:         core.TierSmall,
-		Model:        core.Model{ID: "gpt-5.6-luna", Harness: "codex"},
-		CurrentModel: core.Model{ID: "gpt-6-astra", Harness: "codex"},
+		Harness:   "codex",
+		Verdict:   core.VerdictDownshift,
+		Confident: true,
+		Tier:      core.TierSmall,
+		Model:     core.Model{ID: "gpt-5.6-luna", Harness: "codex"},
+		Baseline: core.Baseline{
+			RequestedID:  "gpt-6-astra",
+			CurrentModel: core.Model{ID: "gpt-6-astra", Harness: "codex"},
+		},
 	}
 	heldPlan := held.PlanForSession(core.CodexCaps, cat, core.KnownSession([]string{"gpt-5.6-luna", "gpt-6-astra"}))
 	if !heldPlan.PreserveExplicit || heldPlan.RewriteModel {
@@ -470,13 +482,15 @@ func TestClaudeCodeFableIsSelectableWithoutExplicitUpshift(t *testing.T) {
 
 func upshiftPlan(harness, current string, caps core.HarnessCapabilities, session core.SessionList) core.RewritePlan {
 	d := core.Decision{
-		Harness:      harness,
-		RequestedID:  current,
-		Verdict:      core.VerdictUpshift,
-		Confident:    true,
-		Tier:         core.TierFrontier,
-		Model:        core.Model{ID: current, Harness: harness},
-		CurrentModel: core.Model{ID: current, Harness: harness},
+		Harness:   harness,
+		Verdict:   core.VerdictUpshift,
+		Confident: true,
+		Tier:      core.TierFrontier,
+		Model:     core.Model{ID: current, Harness: harness},
+		Baseline: core.Baseline{
+			RequestedID:  current,
+			CurrentModel: core.Model{ID: current, Harness: harness},
+		},
 	}
 	return d.PlanForSession(caps, cat, session)
 }

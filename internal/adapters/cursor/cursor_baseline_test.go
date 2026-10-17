@@ -53,11 +53,11 @@ func TestHandle_InheritUsesParentModelID(t *testing.T) {
 	})
 	out, _, d := cursor.Handle(ev, cat)
 	wantParent := catID(core.TierFrontier)
-	if d.RequestedID != wantParent {
-		t.Fatalf("Decision.RequestedID = %q, want parent %q", d.RequestedID, wantParent)
+	if d.Baseline.RequestedID != wantParent {
+		t.Fatalf("Decision.RequestedID = %q, want parent %q", d.Baseline.RequestedID, wantParent)
 	}
-	if d.CurrentModel.ID != wantParent {
-		t.Fatalf("Decision.CurrentModel.ID = %q, want parent %q", d.CurrentModel.ID, wantParent)
+	if d.Baseline.CurrentModel.ID != wantParent {
+		t.Fatalf("Decision.CurrentModel.ID = %q, want parent %q", d.Baseline.CurrentModel.ID, wantParent)
 	}
 	if d.Verdict != core.VerdictDownshift || d.Tier != core.TierSmall {
 		t.Fatalf("want small-tier downshift on parent baseline, got verdict=%v tier=%v", d.Verdict, d.Tier)
@@ -79,7 +79,7 @@ func TestHandle_ParentModelIDHoldsMidTierDownshift(t *testing.T) {
 	if d.Verdict != core.VerdictDownshift {
 		t.Fatalf("precondition: want a downshift verdict, got %v", d.Verdict)
 	}
-	if !d.GuessHeld {
+	if !d.Baseline.GuessHeld {
 		t.Errorf("held mid-tier downshift must set GuessHeld for its reason code")
 	}
 	if m := decodeUpdated(t, out); m != nil {

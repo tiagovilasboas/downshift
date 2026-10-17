@@ -16,21 +16,23 @@ func TestFromDecision_RecordsE5Shadow(t *testing.T) {
 	d := core.Decision{
 		Harness: "cursor",
 		Tier:    core.TierSmall,
-		E5Shadow: core.E5Shadow{
-			ModelID:      "e5-prototypes-sha256:abc",
-			NearestLabel: "COMPLEX",
-			Similarity:   0.81234,
-			WouldLabel:   "COMPLEX",
-			WouldLift:    true,
-			RegexLabel:   "TRIVIAL",
-			LatencyMs:    12,
+		Shadow: core.Shadow{
+			E5Shadow: core.E5Shadow{
+				ModelID:      "e5-prototypes-sha256:abc",
+				NearestLabel: "COMPLEX",
+				Similarity:   0.81234,
+				WouldLabel:   "COMPLEX",
+				WouldLift:    true,
+				RegexLabel:   "TRIVIAL",
+				LatencyMs:    12,
+			},
 		},
 	}
 	ev := telemetry.FromDecision(d, "0123456789abcdef", "test")
 	if ev.E5Shadow == nil {
 		t.Fatal("expected e5_shadow record")
 	}
-	if ev.E5Shadow.ModelID != d.E5Shadow.ModelID || !ev.E5Shadow.WouldLift {
+	if ev.E5Shadow.ModelID != d.Shadow.E5Shadow.ModelID || !ev.E5Shadow.WouldLift {
 		t.Fatalf("record = %+v", ev.E5Shadow)
 	}
 	raw, _ := json.Marshal(ev)
@@ -55,11 +57,13 @@ func TestFromDecision_E5ShadowAllowlistedKeysAndClosedError(t *testing.T) {
 	d := core.Decision{
 		Harness: "cursor",
 		Tier:    core.TierSmall,
-		E5Shadow: core.E5Shadow{
-			ModelID:      "e5-prototypes-sha256:deadbeef",
-			NearestLabel: "MEDIUM",
-			ErrorCode:    "embed_error",
-			LatencyMs:    1000,
+		Shadow: core.Shadow{
+			E5Shadow: core.E5Shadow{
+				ModelID:      "e5-prototypes-sha256:deadbeef",
+				NearestLabel: "MEDIUM",
+				ErrorCode:    "embed_error",
+				LatencyMs:    1000,
+			},
 		},
 	}
 	ev := telemetry.FromDecision(d, "0123456789abcdef", "test")

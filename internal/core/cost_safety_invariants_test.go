@@ -39,7 +39,7 @@ func costTierComplexity(t core.Tier) core.Complexity {
 // rule comments in selfcheck.go (Risk and NBDownshift are left empty, and the
 // model always belongs to the decision's harness, so R4 never fires here).
 func costExpectedRules(d core.Decision) []string {
-	override := d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied || d.PolicyFloor
+	override := d.Guards.RiskFloor || d.Guards.GraphEscalated || d.Shadow.NBUpshift.Applied || d.Guards.PolicyFloor
 	var rules []string
 	if d.Verdict == core.VerdictDownshift && !d.Confident {
 		rules = append(rules, core.RuleUnconfidentDowngrade) // R1
@@ -47,7 +47,7 @@ func costExpectedRules(d core.Decision) []string {
 	if d.Verdict == core.VerdictDownshift && d.Complexity == core.Complex {
 		rules = append(rules, core.RuleComplexDowngrade) // R2
 	}
-	if d.Verdict == core.VerdictDownshift && d.RiskFloor {
+	if d.Verdict == core.VerdictDownshift && d.Guards.RiskFloor {
 		rules = append(rules, core.RuleRiskDowngrade) // R5
 	}
 	if d.Verdict == core.VerdictUnknown && !d.Confident && d.Tier == core.TierSmall {
@@ -135,16 +135,20 @@ func TestCostTruthTable(t *testing.T) {
 							for _, pf := range bools {
 								n++
 								d := core.Decision{
-									Complexity:     costTierComplexity(tier),
-									Tier:           tier,
-									Harness:        ccHarness,
-									Model:          core.Model{ID: catID(ccHarness, tier), Tier: tier, Harness: ccHarness},
-									Verdict:        v,
-									Confident:      conf,
-									RiskFloor:      rf,
-									GraphEscalated: ge,
-									NBUpshift:      core.NBUpshift{Applied: nb},
-									PolicyFloor:    pf,
+									Complexity: costTierComplexity(tier),
+									Tier:       tier,
+									Harness:    ccHarness,
+									Model:      core.Model{ID: catID(ccHarness, tier), Tier: tier, Harness: ccHarness},
+									Verdict:    v,
+									Confident:  conf,
+									Guards: core.Guards{
+										RiskFloor:      rf,
+										GraphEscalated: ge,
+										PolicyFloor:    pf,
+									},
+									Shadow: core.Shadow{
+										NBUpshift: core.NBUpshift{Applied: nb},
+									},
 								}
 								rep := core.Check(d)
 								d.SafeVerdict = rep.Safe
@@ -293,11 +297,11 @@ type costCase struct {
 func (c costCase) String() string {
 	return fmt.Sprintf("prompt=%q current=%q session=%s verdict=%s safe=%s tier=%s conf=%v rf=%v ge=%v nb=%v -> rewrite=%v target=%q",
 		c.prompt, c.current, c.sessionKind, c.d.Verdict, c.d.SafeVerdict, c.d.Tier, c.d.Confident,
-		c.d.RiskFloor, c.d.GraphEscalated, c.d.NBUpshift.Applied, c.plan.RewriteModel, c.plan.Model.ID)
+		c.d.Guards.RiskFloor, c.d.Guards.GraphEscalated, c.d.Shadow.NBUpshift.Applied, c.plan.RewriteModel, c.plan.Model.ID)
 }
 
 func costDeterministicLift(d core.Decision) bool {
-	return d.RiskFloor || d.GraphEscalated || d.NBUpshift.Applied || d.PolicyFloor
+	return d.Guards.RiskFloor || d.Guards.GraphEscalated || d.Shadow.NBUpshift.Applied || d.Guards.PolicyFloor
 }
 
 func costTierOf(t *testing.T, harness, id string) (core.Model, bool) {
@@ -451,7 +455,7 @@ func TestCostNoInferenceNeverRewrites(t *testing.T) {
 				n++
 				d := core.Route(p, h.name, cur, cat)
 				plan := d.PlanSession(h.caps, cat, core.UnknownSession(), cur)
-				if plan.RewriteModel || plan.Session.Known || !d.SessionUnknown {
+				if plan.RewriteModel || plan.Session.Known || !d.Session.Unknown {
 					t.Errorf("(e) %s prompt=%q current=%q rewrote on unknown session: %+v", h.name, p, cur, plan)
 				}
 			}

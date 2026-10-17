@@ -11,13 +11,15 @@ import (
 
 func TestCheck_CleanDecision(t *testing.T) {
 	d := core.Decision{
-		Complexity:   core.Simple,
-		Tier:         core.TierMid,
-		Verdict:      core.VerdictDownshift,
-		Confident:    true,
-		Harness:      "claude-code",
-		Model:        core.Model{ID: "m", Harness: "claude-code"},
-		CurrentModel: core.Model{ID: "f", Harness: "claude-code"},
+		Complexity: core.Simple,
+		Tier:       core.TierMid,
+		Verdict:    core.VerdictDownshift,
+		Confident:  true,
+		Harness:    "claude-code",
+		Model:      core.Model{ID: "m", Harness: "claude-code"},
+		Baseline: core.Baseline{
+			CurrentModel: core.Model{ID: "f", Harness: "claude-code"},
+		},
 	}
 	r := core.Check(d)
 	if r.Corrected {
@@ -33,13 +35,15 @@ func TestCheck_CleanDecision(t *testing.T) {
 
 func TestCheck_Rules(t *testing.T) {
 	base := core.Decision{
-		Complexity:   core.Simple,
-		Tier:         core.TierMid,
-		Verdict:      core.VerdictDownshift,
-		Confident:    true,
-		Harness:      "claude-code",
-		Model:        core.Model{ID: "m", Harness: "claude-code"},
-		CurrentModel: core.Model{ID: "f", Harness: "claude-code"},
+		Complexity: core.Simple,
+		Tier:       core.TierMid,
+		Verdict:    core.VerdictDownshift,
+		Confident:  true,
+		Harness:    "claude-code",
+		Model:      core.Model{ID: "m", Harness: "claude-code"},
+		Baseline: core.Baseline{
+			CurrentModel: core.Model{ID: "f", Harness: "claude-code"},
+		},
 	}
 	cases := []struct {
 		name     string

@@ -88,8 +88,8 @@ func isReviewTask(prompt string, cls Classification) bool {
 //  4. Normal     — everything else (Simple, Medium, Complex construction).
 func IntentFor(prompt string, cls Classification, d Decision, r Resolver) EscalationIntent {
 	// 1. Explicit preservation beats everything.
-	if r != nil && d.CurrentModel.ID != "" {
-		if r.IsExplicitOnly(d.Harness, d.CurrentModel.ID) {
+	if r != nil && d.Baseline.CurrentModel.ID != "" {
+		if r.IsExplicitOnly(d.Harness, d.Baseline.CurrentModel.ID) {
 			return PreservedIntent
 		}
 	}

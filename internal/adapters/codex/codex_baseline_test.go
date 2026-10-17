@@ -82,10 +82,10 @@ func TestHandle_BaselineMatchesRequestedModel(t *testing.T) {
 		ToolInput:      json.RawMessage(`{"message":"rename the userId variable"}`),
 	}
 	_, _, d := codex.Handle(ev, cat)
-	if d.RequestedID != "gpt-6-luna" {
-		t.Fatalf("Decision.RequestedID = %q, want gpt-6-luna", d.RequestedID)
+	if d.Baseline.RequestedID != "gpt-6-luna" {
+		t.Fatalf("Decision.RequestedID = %q, want gpt-6-luna", d.Baseline.RequestedID)
 	}
-	if d.CurrentModel.ID != "gpt-6-luna" {
-		t.Fatalf("Decision.CurrentModel.ID = %q, want gpt-6-luna (catalog-recognised)", d.CurrentModel.ID)
+	if d.Baseline.CurrentModel.ID != "gpt-6-luna" {
+		t.Fatalf("Decision.CurrentModel.ID = %q, want gpt-6-luna (catalog-recognised)", d.Baseline.CurrentModel.ID)
 	}
 }

@@ -14,8 +14,8 @@ import (
 func TestRoute_RiskCategoryHoldsMediumDownshift(t *testing.T) {
 	prompt := "add a feature to encrypt exported reports with the tenant key"
 	d := core.Route(prompt, "claude-code", catID("claude-code", core.TierFrontier), cat)
-	if d.Verdict != core.VerdictDownshift || d.RiskFloor {
-		t.Fatalf("precondition: want a classified downshift without risk floor, got verdict=%v floor=%v", d.Verdict, d.RiskFloor)
+	if d.Verdict != core.VerdictDownshift || d.Guards.RiskFloor {
+		t.Fatalf("precondition: want a classified downshift without risk floor, got verdict=%v floor=%v", d.Verdict, d.Guards.RiskFloor)
 	}
 	if checkWrites(d) {
 		t.Fatal("risk-category downshift must be held")

@@ -142,7 +142,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	res = core.ResolveSessionModels(harnessID, session, res)
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
-	decision.RequestedID = currentModel
+	decision.Baseline.RequestedID = currentModel
 	decision.RecordSession(session, currentModel)
 
 	// The user deliberately picked an explicit_only model: never block it or

@@ -33,7 +33,7 @@ func TestRiskSafety_SignalPastClassifyCapKeepsTaskOffSmall(t *testing.T) {
 		plan := d.PlanSession(core.ClaudeCodeCaps, cat, session, "")
 		if plan.RewriteModel && plan.Model.ID == small {
 			t.Errorf("%s: wrote small model %s (tier=%v risk=%v floor=%v verdict=%v safe=%v)",
-				name, plan.Model.ID, d.Tier, d.Risk, d.RiskFloor, d.Verdict, d.SafeVerdict)
+				name, plan.Model.ID, d.Tier, d.Risk, d.Guards.RiskFloor, d.Verdict, d.SafeVerdict)
 		}
 	}
 }
@@ -87,7 +87,7 @@ func TestRiskSafety_MixedLongPromptInsideCapHeld(t *testing.T) {
 	pad := strings.Repeat("lorem ipsum dolor sit amet ", 200)
 	p := "rename the variable foo to bar. " + pad + " also rotate the database credentials. " + pad
 	d := core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
-	if appliedSmallDownshift(d) || !d.RiskFloor {
-		t.Errorf("mixed prompt: floor=%v risk=%v writes=%v", d.RiskFloor, d.Risk, checkWrites(d))
+	if appliedSmallDownshift(d) || !d.Guards.RiskFloor {
+		t.Errorf("mixed prompt: floor=%v risk=%v writes=%v", d.Guards.RiskFloor, d.Risk, checkWrites(d))
 	}
 }

@@ -40,7 +40,7 @@ func TestInferSessionFromCurrent_UnknownStaysUnknown(t *testing.T) {
 func TestPlanSession_InfersWhenSessionUnknown(t *testing.T) {
 	d := core.Route("rename the userId variable", "claude-code", "claude-opus-5-5", cat)
 	plan := d.PlanSession(core.ClaudeCodeCaps, cat, core.UnknownSession(), "claude-opus-5-5")
-	if d.SessionUnknown {
+	if d.Session.Unknown {
 		t.Fatalf("decision must record the inferred session as known")
 	}
 	if !plan.RewriteModel || plan.Model.ID == "claude-opus-5-5" {
@@ -57,7 +57,7 @@ func TestPlanSession_InfersWhenSessionUnknown(t *testing.T) {
 func TestPlanSession_NoCurrentModelStillHolds(t *testing.T) {
 	d := core.Route("rename the userId variable", "claude-code", "", cat)
 	plan := d.PlanSession(core.ClaudeCodeCaps, cat, core.UnknownSession(), "")
-	if plan.RewriteModel || !d.SessionUnknown {
+	if plan.RewriteModel || !d.Session.Unknown {
 		t.Fatalf("no current model must not rewrite: %+v", plan)
 	}
 }
@@ -67,7 +67,7 @@ func TestPlanSession_NoCurrentModelStillHolds(t *testing.T) {
 func TestPlanSession_InferenceIsACapability(t *testing.T) {
 	d := core.Route("rename the userId variable", "cursor", "claude-4.5-opus-high-thinking", cat)
 	plan := d.PlanSession(core.CursorCaps, cat, core.UnknownSession(), "claude-4.5-opus-high-thinking")
-	if plan.RewriteModel || !d.SessionUnknown {
+	if plan.RewriteModel || !d.Session.Unknown {
 		t.Fatalf("a harness without InferSession must not infer: %+v", plan)
 	}
 }

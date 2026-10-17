@@ -31,56 +31,73 @@ func (c Complexity) Tier() Tier {
 // needs, what model to use on the given harness, and how it compares to the
 // model the harness would have used by default.
 type Decision struct {
-	Complexity   Complexity
-	Tier         Tier
-	Effort       Effort           // recommended reasoning intensity for this tier
-	Intent       EscalationIntent // named task intent (Trivial/Normal/Review/Preserved)
-	Harness      string
-	Model        Model // the model we recommend for this task
-	CurrentModel Model // the model currently in effect (may be zero if unknown)
-	// RequestedID is the model string from the hook payload, before catalog
-	// normalisation. Adapters set it so a foreign harness id is not rewritten.
-	RequestedID string
-	// BaselineFromSettings is true when the baseline (CurrentModel) was not seen
-	// in the payload or transcript but inferred from the session's configured
-	// model. A `--model` flag or a mid-session /model is invisible to the hook,
-	// so such a baseline can be wrong.
-	BaselineFromSettings bool
-	// BaselineGuessed is true when the adapter inferred the baseline (Claude
-	// Code settings, Cursor parent model_id) instead of reading it from the call.
-	BaselineGuessed bool
-	Verdict         Verdict
-	Savings         float64 // fraction cheaper vs current (0 if not cheaper / unknown)
-	Confident       bool
+	Complexity Complexity
+	Tier       Tier
+	Effort     Effort           // recommended reasoning intensity for this tier
+	Intent     EscalationIntent // named task intent (Trivial/Normal/Review/Preserved)
+	Harness    string
+	Model      Model // the model we recommend for this task
+	Verdict    Verdict
+	Savings    float64 // fraction cheaper vs current (0 if not cheaper / unknown)
+	Confident  bool
 	// Self-correction outcome, computed by Check inside Route. Verdict
 	// keeps the classified value for diagnostics; SafeVerdict carries the
 	// action adapters may apply. Checked is true for Route decisions and
 	// false for hand-built ones; selectSessionTarget only honours a
 	// SafeVerdict of OK when Checked is true.
-	SafeVerdict    Verdict
-	Corrections    []string // guardrail rule IDs that held this decision, empty when clean
-	Checked        bool
-	GraphEscalated bool // true when graphify escalated the classification to Complex
-	// RiskFloor is true when a risk signal (risk.go) lifted the task off the
-	// small tier. Such a task is never downshifted and may be upshifted.
-	RiskFloor bool
-	// RiskAbstain is true when risk rules cleared Confident without a tier lift.
-	RiskAbstain bool
+	SafeVerdict Verdict
+	Corrections []string // guardrail rule IDs that held this decision, empty when clean
+	Checked     bool
 	// Risk lists the risk categories (risk.go) the prompt touches, whatever
 	// its complexity. Guardrail R5 holds any downshift of such a task.
 	Risk []string
-	// NBUpshift records the naive-Bayes upshift-only second opinion. It is
-	// always computed (shadow mode); it changes the tier only when
-	// DOWNSHIFT_NB_UPSHIFT=1, and then only upward.
-	NBUpshift NBUpshift
-	// NBDownshift records the naive-Bayes TRIVIAL downshift opinion for
-	// no-signal prompts. Always computed (shadow mode); it lowers the tier
-	// only when DOWNSHIFT_NB_DOWNSHIFT=1.
-	NBDownshift NBDownshift
-	// SessionUnknown is set by adapters when no session allowlist could be
+	// NoSignal is true when the classifier matched no content signal and the
+	// complexity is only the safe Medium default (Classification.NoSignal).
+	NoSignal bool
+	// UnsupportedLanguage records the language guard without persisting text.
+	UnsupportedLanguage bool
+
+	// Baseline describes the model the harness would have used by default and
+	// how reliably it was observed.
+	Baseline Baseline
+	// Session carries the session-scope facts adapters resolve for the write:
+	// whether the allowlist is known and the provider budget evidence.
+	Session Session
+	// Guards records the deterministic interventions that moved the tier or
+	// cleared confidence after classification.
+	Guards Guards
+	// Shadow holds the observe-only second opinions. None of them changes the
+	// routing unless its own opt-in flag is set.
+	Shadow Shadow
+}
+
+// Baseline is the model currently in effect for the task and the provenance
+// of that observation.
+type Baseline struct {
+	CurrentModel Model // the model currently in effect (may be zero if unknown)
+	// RequestedID is the model string from the hook payload, before catalog
+	// normalisation. Adapters set it so a foreign harness id is not rewritten.
+	RequestedID string
+	// FromSettings is true when the baseline (CurrentModel) was not seen
+	// in the payload or transcript but inferred from the session's configured
+	// model. A `--model` flag or a mid-session /model is invisible to the hook,
+	// so such a baseline can be wrong.
+	FromSettings bool
+	// Guessed is true when the adapter inferred the baseline (Claude
+	// Code settings, Cursor parent model_id) instead of reading it from the call.
+	Guessed bool
+	// GuessHeld is true when an adapter held a downshift because its baseline
+	// was guessed (Claude Code settings, Cursor parent model_id) and the target
+	// was not the small tier, which is the only one surely cheaper.
+	GuessHeld bool
+}
+
+// Session is the session-scope evidence behind the write decision.
+type Session struct {
+	// Unknown is set by adapters when no session allowlist could be
 	// resolved (no hook list, no session-models.json entry). The hook then
 	// never rewrites; runners use it to warn the operator once per call.
-	SessionUnknown bool
+	Unknown bool
 	// QuotaStatus is provider budget evidence for the proposed/retained model.
 	// unknown is explicit, including legacy routing without a quota source.
 	QuotaStatus string
@@ -90,26 +107,40 @@ type Decision struct {
 	// on their own; this flag covers unknown when a present source or
 	// required mode refused the write.
 	CreditHeld bool
-	// GuessHeld is true when an adapter held a downshift because its baseline
-	// was guessed (Claude Code settings, Cursor parent model_id) and the target
-	// was not the small tier, which is the only one surely cheaper.
-	GuessHeld bool
+}
+
+// Guards records which deterministic rule moved the decision after the
+// classifier scored the task.
+type Guards struct {
+	// RiskFloor is true when a risk signal (risk.go) lifted the task off the
+	// small tier. Such a task is never downshifted and may be upshifted.
+	RiskFloor bool
+	// RiskAbstain is true when risk rules cleared Confident without a tier lift.
+	RiskAbstain    bool
+	GraphEscalated bool // true when graphify escalated the classification to Complex
+	// PolicyFloor is true when an operator tier floor (internal/policyfile)
+	// raised Tier above what the classifier chose.
+	PolicyFloor bool
+	// SemanticLift is true when the semantic boost, not a regex rule, raised
+	// the complexity. Telemetry records it so non-deterministic lifts stay visible.
+	SemanticLift bool
+}
+
+// Shadow collects the observe-only opinions computed beside the routing.
+type Shadow struct {
+	// NBUpshift records the naive-Bayes upshift-only second opinion. It is
+	// always computed (shadow mode); it changes the tier only when
+	// DOWNSHIFT_NB_UPSHIFT=1, and then only upward.
+	NBUpshift NBUpshift
+	// NBDownshift records the naive-Bayes TRIVIAL downshift opinion for
+	// no-signal prompts. Always computed (shadow mode); it lowers the tier
+	// only when DOWNSHIFT_NB_DOWNSHIFT=1.
+	NBDownshift NBDownshift
 	// AdaptWould is the tier local memory would select. It is shadow-only:
 	// Route does not copy it into Tier until an independent eval promotes it.
 	// AdaptWouldSet is false when memory is absent or agrees with Tier.
 	AdaptWould    Tier
 	AdaptWouldSet bool
-	// PolicyFloor is true when an operator tier floor (internal/policyfile)
-	// raised Tier above what the classifier chose.
-	PolicyFloor bool
-	// NoSignal is true when the classifier matched no content signal and the
-	// complexity is only the safe Medium default (Classification.NoSignal).
-	NoSignal bool
-	// SemanticLift is true when the semantic boost, not a regex rule, raised
-	// the complexity. Telemetry records it so non-deterministic lifts stay visible.
-	SemanticLift bool
-	// UnsupportedLanguage records the language guard without persisting text.
-	UnsupportedLanguage bool
 	// ScoreWould is the session model id the public-score capability path
 	// (score_select.go) would pick for this task, or empty when it abstained.
 	// Shadow by default: it changes the routing only when ScoreApplied is set.
@@ -179,19 +210,25 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 		Effort:              effort,
 		Harness:             harness,
 		Model:               recommended,
-		CurrentModel:        current,
 		Verdict:             verdict,
 		Savings:             savings,
 		Confident:           cls.Confident,
-		GraphEscalated:      graphEscalated,
-		RiskFloor:           cls.RiskFloor,
-		RiskAbstain:         cls.RiskAbstain,
 		Risk:                RiskCategories(prompt),
-		NBUpshift:           nbUp,
-		NBDownshift:         nbDown,
 		NoSignal:            cls.NoSignal,
-		SemanticLift:        cls.SemanticLift,
 		UnsupportedLanguage: cls.UnsupportedLanguage,
+		Baseline: Baseline{
+			CurrentModel: current,
+		},
+		Guards: Guards{
+			GraphEscalated: graphEscalated,
+			RiskFloor:      cls.RiskFloor,
+			RiskAbstain:    cls.RiskAbstain,
+			SemanticLift:   cls.SemanticLift,
+		},
+		Shadow: Shadow{
+			NBUpshift:   nbUp,
+			NBDownshift: nbDown,
+		},
 	}
 	applyE5Shadow(prompt, cls, &d)
 	d.Intent = IntentFor(prompt, cls, d, res)
@@ -218,11 +255,11 @@ func (d *Decision) RaiseTier(t Tier, currentModelID string, r Resolver) bool {
 	d.Tier = t
 	d.Effort = EffortFor(t)
 	d.Model = resolveModel(d.Harness, t, r)
-	d.Verdict, d.Savings, d.CurrentModel = compareToCurrentModel(d.Harness, currentModelID, d.Model, r)
-	d.PolicyFloor = true
+	d.Verdict, d.Savings, d.Baseline.CurrentModel = compareToCurrentModel(d.Harness, currentModelID, d.Model, r)
+	d.Guards.PolicyFloor = true
 	// A raised tier means any applied naive-Bayes downshift did not take effect.
 	// Keep the opinion (Would) for telemetry, but do not claim it was applied.
-	d.NBDownshift.Applied = false
+	d.Shadow.NBDownshift.Applied = false
 	d.Corrections = nil
 	d.recheck()
 	return true

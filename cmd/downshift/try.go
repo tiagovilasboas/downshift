@@ -72,8 +72,8 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 	fmt.Fprintf(w, "Intent:     %s\n", d.Intent)
 	fmt.Fprintf(w, "Needs tier: %s\n", d.Tier)
 	fmt.Fprintf(w, "Recommend:  %s\n", d.Model.ID)
-	if d.CurrentModel.ID != "" {
-		fmt.Fprintf(w, "Current:    %s\n", d.CurrentModel.ID)
+	if d.Baseline.CurrentModel.ID != "" {
+		fmt.Fprintf(w, "Current:    %s\n", d.Baseline.CurrentModel.ID)
 	}
 	fmt.Fprintf(w, "Verdict:    %s\n", d.Verdict)
 	fmt.Fprintf(w, "Confident:  %t\n", d.Confident)
@@ -87,7 +87,7 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 		fmt.Fprintf(w, "Hook:       block (exit 2) → respawn with %s\n", res.written)
 	case res.written != "":
 		fmt.Fprintf(w, "Rewrite:    yes → %s\n", res.written)
-	case d.SessionUnknown:
+	case d.Session.Unknown:
 		fmt.Fprintf(w, "Rewrite:    no: session unknown. Add \"%s\": [<model ids>] to %s (see docs/reference/session-models.md)\n",
 			harness, sessionModelsPathForDisplay())
 	case d.Intent == core.PreservedIntent:
@@ -107,11 +107,11 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 // the current model or that it stays.
 func tryHeadline(d core.Decision) string {
 	rec := telemetry.ShortModel(d.Model.ID)
-	cur := telemetry.ShortModel(d.CurrentModel.ID)
-	if d.CurrentModel.ID == "" {
+	cur := telemetry.ShortModel(d.Baseline.CurrentModel.ID)
+	if d.Baseline.CurrentModel.ID == "" {
 		return fmt.Sprintf("→ %s: %s", d.Tier, rec)
 	}
-	if d.Model.ID == d.CurrentModel.ID || d.Verdict == core.VerdictOK {
+	if d.Model.ID == d.Baseline.CurrentModel.ID || d.Verdict == core.VerdictOK {
 		return fmt.Sprintf("→ %s: stays on %s", d.Tier, cur)
 	}
 	switch d.Verdict {
@@ -137,11 +137,11 @@ func tryNotApplied(res tryResult, known bool, d core.Decision, harness string) s
 		return ""
 	}
 	switch {
-	case d.SessionUnknown:
+	case d.Session.Unknown:
 		return fmt.Sprintf("not rewritten: session models unknown for %s (see docs/reference/session-models.md)", harness)
 	case d.Intent == core.PreservedIntent:
 		return "not rewritten: the current model is explicit_only"
-	case d.CreditHeld:
+	case d.Session.CreditHeld:
 		return "not rewritten: the credit gate refused it (quota exhausted, stale or unknown)"
 	case len(d.Corrections) > 0:
 		return "not rewritten: held by a guardrail"

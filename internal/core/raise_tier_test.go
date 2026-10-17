@@ -13,7 +13,7 @@ func TestRaiseTierOnlyRaises(t *testing.T) {
 	if !d.RaiseTier(TierFrontier, "", nil) {
 		t.Fatal("expected a change")
 	}
-	if d.Tier != TierFrontier || d.Effort != EffortFor(TierFrontier) || !d.PolicyFloor {
+	if d.Tier != TierFrontier || d.Effort != EffortFor(TierFrontier) || !d.Guards.PolicyFloor {
 		t.Fatalf("decision not lifted: %+v", d)
 	}
 	if d.Model.Tier != TierFrontier {
@@ -36,24 +36,26 @@ func TestRaiseTierLeavesHigherTierAlone(t *testing.T) {
 	if d.RaiseTier(TierSmall, "", nil) {
 		t.Fatal("a lower floor must be a no-op")
 	}
-	if d.Tier != before.Tier || d.PolicyFloor {
+	if d.Tier != before.Tier || d.Guards.PolicyFloor {
 		t.Fatal("no-op must not touch the decision")
 	}
 }
 
 func TestRaiseTierClearsAppliedNBDownshift(t *testing.T) {
 	d := Decision{
-		Harness:     "claude-code",
-		Tier:        TierSmall,
-		NBDownshift: NBDownshift{Would: true, Applied: true, Margin: 1},
+		Harness: "claude-code",
+		Tier:    TierSmall,
+		Shadow: Shadow{
+			NBDownshift: NBDownshift{Would: true, Applied: true, Margin: 1},
+		},
 	}
 	if !d.RaiseTier(TierMid, "", nil) {
 		t.Fatal("expected a change")
 	}
-	if d.NBDownshift.Applied {
+	if d.Shadow.NBDownshift.Applied {
 		t.Fatal("a raised tier must not report the NB downshift as applied")
 	}
-	if !d.NBDownshift.Would {
+	if !d.Shadow.NBDownshift.Would {
 		t.Fatal("the opinion itself must stay recorded")
 	}
 }

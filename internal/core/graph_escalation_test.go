@@ -37,9 +37,9 @@ func TestRoute_GraphEscalationUpshiftsUnconfidentPrompt(t *testing.T) {
 	stubGraphify(t)
 	prompt := "make internal/text/strings.go nicer"
 	d := core.Route(prompt, "claude-code", "claude-haiku-4-5", cat)
-	if !d.GraphEscalated || d.Confident || d.Verdict != core.VerdictUpshift {
+	if !d.Guards.GraphEscalated || d.Confident || d.Verdict != core.VerdictUpshift {
 		t.Fatalf("precondition: escalated=%v confident=%v verdict=%s complexity=%s",
-			d.GraphEscalated, d.Confident, d.Verdict, d.Complexity)
+			d.Guards.GraphEscalated, d.Confident, d.Verdict, d.Complexity)
 	}
 	if !checkWrites(d) {
 		t.Fatalf("graph-escalated upshift was not rewritten (tier %s, corrections %v)",
@@ -51,8 +51,8 @@ func TestRoute_GraphEscalationUpshiftsUnconfidentPrompt(t *testing.T) {
 func TestRoute_UnconfidentPromptWithoutGraphStaysPut(t *testing.T) {
 	t.Setenv("DOWNSHIFT_GRAPHIFY_CMD", "")
 	d := core.Route("make internal/text/strings.go nicer", "claude-code", "claude-haiku-4-5", cat)
-	if d.GraphEscalated || d.Confident {
-		t.Fatalf("precondition: escalated=%v confident=%v", d.GraphEscalated, d.Confident)
+	if d.Guards.GraphEscalated || d.Confident {
+		t.Fatalf("precondition: escalated=%v confident=%v", d.Guards.GraphEscalated, d.Confident)
 	}
 	if d.Verdict == core.VerdictUpshift && checkWrites(d) {
 		t.Fatalf("unconfident prompt without graph signal was upshifted to %s", d.Tier)
@@ -68,7 +68,7 @@ func TestRoute_GraphDoesNotEscalateConfidentClassification(t *testing.T) {
 		t.Fatalf("precondition: want a confident non-complex classification, got %+v", c)
 	}
 	d := core.Route(prompt, "claude-code", "claude-haiku-4-5", cat)
-	if d.GraphEscalated || d.Complexity == core.Complex {
-		t.Fatalf("confident classification escalated: escalated=%v complexity=%s", d.GraphEscalated, d.Complexity)
+	if d.Guards.GraphEscalated || d.Complexity == core.Complex {
+		t.Fatalf("confident classification escalated: escalated=%v complexity=%s", d.Guards.GraphEscalated, d.Complexity)
 	}
 }

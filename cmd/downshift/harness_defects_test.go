@@ -18,9 +18,9 @@ import (
 // no entry, so every Codex spawn logged requested_model "unknown" and was held.
 func TestDefect_CodexSessionModelMissingFromCatalog(t *testing.T) {
 	d := core.Route("implement the CSV export feature", "codex", "gpt-6.1-sol", cmdCat)
-	if d.CurrentModel.ID == "" || d.Verdict == core.VerdictUnknown {
+	if d.Baseline.CurrentModel.ID == "" || d.Verdict == core.VerdictUnknown {
 		t.Fatalf("gpt-6.1-sol is not a known codex model: verdict=%v current=%q corrections=%v",
-			d.Verdict, d.CurrentModel.ID, d.Corrections)
+			d.Verdict, d.Baseline.CurrentModel.ID, d.Corrections)
 	}
 }
 

@@ -277,8 +277,8 @@ func TestE5Fuse_SharesEmbedWithShadow(t *testing.T) {
 		},
 	}))
 	d := core.Route(prompt, "cursor", "gpt-4", cat)
-	if d.E5Shadow.ErrorCode != "" {
-		t.Fatalf("shadow error: %+v", d.E5Shadow)
+	if d.Shadow.E5Shadow.ErrorCode != "" {
+		t.Fatalf("shadow error: %+v", d.Shadow.E5Shadow)
 	}
 	data, err := os.ReadFile(countPath)
 	if err != nil {

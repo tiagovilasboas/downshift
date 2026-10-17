@@ -165,7 +165,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 	res = core.ResolveSessionModels(harnessID, session, res)
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
-	decision.RequestedID = currentModel
+	decision.Baseline.RequestedID = currentModel
 
 	plan := decision.PlanSession(core.CodexCaps, res, session, currentModel)
 	if plan.HoldForeign || plan.PreserveExplicit || (!plan.RewriteModel && !plan.ApplyEffort) {
@@ -196,9 +196,9 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	} else {
 		// Effort-only change: the model stays as requested, and the event
 		// must record the model the child actually runs on.
-		decision.Model = decision.CurrentModel
+		decision.Model = decision.Baseline.CurrentModel
 		note = fmt.Sprintf("%s task → keep %s, reasoning effort %s → %s",
-			decision.Complexity, decision.CurrentModel.ID, effortOrInherit(requestedEffort), effortValue)
+			decision.Complexity, decision.Baseline.CurrentModel.ID, effortOrInherit(requestedEffort), effortValue)
 	}
 	if applyEffort {
 		ti["reasoning_effort"] = effortValue

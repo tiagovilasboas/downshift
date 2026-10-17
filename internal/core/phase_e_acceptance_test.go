@@ -42,10 +42,10 @@ func phaseEDecisionSnap(d core.Decision) phaseESnap {
 		Complexity:          d.Complexity,
 		Tier:                d.Tier,
 		Confident:           d.Confident,
-		SemanticLift:        d.SemanticLift,
+		SemanticLift:        d.Guards.SemanticLift,
 		UnsupportedLanguage: d.UnsupportedLanguage,
-		RiskFloor:           d.RiskFloor,
-		RiskAbstain:         d.RiskAbstain,
+		RiskFloor:           d.Guards.RiskFloor,
+		RiskAbstain:         d.Guards.RiskAbstain,
 		NoSignal:            d.NoSignal,
 		Verdict:             d.Verdict,
 		SafeVerdict:         d.SafeVerdict,
@@ -107,8 +107,8 @@ func TestPhaseE_DefaultOffMatchesCurrentRouteAndClassify(t *testing.T) {
 			got.RiskFloor != want.RiskFloor || got.RiskAbstain != want.RiskAbstain || got.NoSignal != want.NoSignal {
 			t.Errorf("case %d: Route != Classify with Phase E/MiniLM off: route=%+v cls=%+v", i, got, want)
 		}
-		if baseRoute.E5Shadow != (core.E5Shadow{}) {
-			t.Errorf("case %d: default-off Route recorded E5 shadow: %+v", i, baseRoute.E5Shadow)
+		if baseRoute.Shadow.E5Shadow != (core.E5Shadow{}) {
+			t.Errorf("case %d: default-off Route recorded E5 shadow: %+v", i, baseRoute.Shadow.E5Shadow)
 		}
 	}
 }
@@ -207,7 +207,7 @@ func TestPhaseE_FailOpenBadCmdDoesNotChangeTier(t *testing.T) {
 			t.Setenv(e5shadow.PrototypesEnv, tc.proto)
 			got := core.Route(prompt, "claude-code", frontier, cat)
 			if phaseEDecisionSnap(got) != phaseEDecisionSnap(base) {
-				t.Fatalf("fail-open changed routing: base=%+v got=%+v shadow=%+v", base, got, got.E5Shadow)
+				t.Fatalf("fail-open changed routing: base=%+v got=%+v shadow=%+v", base, got, got.Shadow.E5Shadow)
 			}
 			if got.Tier != base.Tier || got.Complexity != base.Complexity || got.Confident != base.Confident {
 				t.Fatalf("fail-open changed tier/complexity/confidence: base=%+v got=%+v", base, got)
@@ -260,10 +260,10 @@ func TestPhaseE_SuccessfulE5ObservationDoesNotChangeRouteWhileFlagDefaultOff(t *
 	if phaseEDecisionSnap(off) != phaseEDecisionSnap(on) {
 		t.Fatalf("E5 observation changed Route while Phase E is off: off=%+v on=%+v", off, on)
 	}
-	if on.E5Shadow.ErrorCode != "" || on.E5Shadow.NearestLabel == "" {
-		t.Fatalf("expected a successful shadow record, got %+v", on.E5Shadow)
+	if on.Shadow.E5Shadow.ErrorCode != "" || on.Shadow.E5Shadow.NearestLabel == "" {
+		t.Fatalf("expected a successful shadow record, got %+v", on.Shadow.E5Shadow)
 	}
-	if !on.E5Shadow.WouldLift {
-		t.Fatalf("precondition: synthetic COMPLEX vector should would_lift, got %+v", on.E5Shadow)
+	if !on.Shadow.E5Shadow.WouldLift {
+		t.Fatalf("precondition: synthetic COMPLEX vector should would_lift, got %+v", on.Shadow.E5Shadow)
 	}
 }

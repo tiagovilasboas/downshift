@@ -106,7 +106,7 @@ quote does not vote). Judge on the held-out set. Reject if any benchmark split c
 1. **Upshift to the needed tier** (`~/.downshift-eval/design`, uncommitted). Today a confident MEDIUM task starts on Haiku and is
    upshifted to Opus, but the same task starting on Opus is downshifted to Sonnet. The diff picks the lowest tier at or above both
    the needed tier and the current tier, keeps the strongest on a guessed baseline or with `explicit_upshift`, and adds
-   `Decision.BaselineGuessed`. Roadmap P2.3 calls it an owner decision: ask before landing.
+   `Decision.Baseline.Guessed`. Roadmap P2.3 calls it an owner decision: ask before landing.
 2. **Risky write with unknown baseline.** Guardrail R5 only fires on a DOWNSHIFT verdict, so with no baseline a risky task can be
    written to mid even if the child would inherit frontier. Suggested fix: hold a risky write below frontier when the baseline is
    unknown. It reverses `TestDecisionRewritePolicy` and `t1-deterministic-lift.md`; ask first.

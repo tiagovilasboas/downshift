@@ -65,16 +65,16 @@ func TestNBUpshift_OffKeepsRoutingAndRecordsShadow(t *testing.T) {
 		if d.Tier.String() != g.Prod {
 			t.Errorf("flag off changed routing: tier %s, main %s for %q", d.Tier, g.Prod, g.Prompt)
 		}
-		if d.NBUpshift.Applied {
+		if d.Shadow.NBUpshift.Applied {
 			t.Errorf("flag off applied an upshift for %q", g.Prompt)
 		}
-		if want := g.Final != g.Prod; d.NBUpshift.Would != want {
-			t.Errorf("shadow would=%v, want %v for %q", d.NBUpshift.Would, want, g.Prompt)
+		if want := g.Final != g.Prod; d.Shadow.NBUpshift.Would != want {
+			t.Errorf("shadow would=%v, want %v for %q", d.Shadow.NBUpshift.Would, want, g.Prompt)
 		}
-		if d.NBUpshift.Would {
+		if d.Shadow.NBUpshift.Would {
 			shadow++
-			if d.NBUpshift.From.String() != g.Prod || d.NBUpshift.To.String() != g.Final || d.NBUpshift.Margin < 0.10 {
-				t.Errorf("shadow record %+v for %q", d.NBUpshift, g.Prompt)
+			if d.Shadow.NBUpshift.From.String() != g.Prod || d.Shadow.NBUpshift.To.String() != g.Final || d.Shadow.NBUpshift.Margin < 0.10 {
+				t.Errorf("shadow record %+v for %q", d.Shadow.NBUpshift, g.Prompt)
 			}
 		}
 	}
@@ -101,7 +101,7 @@ func TestNBUpshift_OnAppliesUpshiftOnly(t *testing.T) {
 		if g.Gold == "COMPLEX" && d.Tier == core.TierSmall {
 			t.Errorf("FRONTIER->SMALL for %q", g.Prompt)
 		}
-		if d.NBUpshift.Applied {
+		if d.Shadow.NBUpshift.Applied {
 			applied++
 			if d.Verdict == core.VerdictUpshift && !checkWrites(d) {
 				t.Errorf("applied NB upshift was not rewritten for %q", g.Prompt)

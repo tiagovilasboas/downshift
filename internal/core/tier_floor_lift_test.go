@@ -36,8 +36,8 @@ func TestTierFloor_UnconfidentPromptStillRewrites(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			d := core.Route("help", ccHarness, tc.current, cat)
-			if d.Confident || !d.PolicyFloor || d.Tier != core.TierFrontier {
-				t.Fatalf("precondition: confident=%v floor=%v tier=%v", d.Confident, d.PolicyFloor, d.Tier)
+			if d.Confident || !d.Guards.PolicyFloor || d.Tier != core.TierFrontier {
+				t.Fatalf("precondition: confident=%v floor=%v tier=%v", d.Confident, d.Guards.PolicyFloor, d.Tier)
 			}
 			for _, r := range []string{core.RuleUnconfidentUnknownFrontier, core.RuleUnconfidentUpshift, core.RuleUnconfidentUnknownMid} {
 				if slices.Contains(d.Corrections, r) {
@@ -59,10 +59,10 @@ func TestTierFloor_UnconfidentPromptStillRewrites(t *testing.T) {
 // lift an unconfident decision out of all three rules.
 func TestDeterministicLift_ExemptsEveryRule(t *testing.T) {
 	lifts := map[string]func(*core.Decision){
-		"risk":  func(d *core.Decision) { d.RiskFloor = true },
-		"graph": func(d *core.Decision) { d.GraphEscalated = true },
-		"nb":    func(d *core.Decision) { d.NBUpshift.Applied = true },
-		"floor": func(d *core.Decision) { d.PolicyFloor = true },
+		"risk":  func(d *core.Decision) { d.Guards.RiskFloor = true },
+		"graph": func(d *core.Decision) { d.Guards.GraphEscalated = true },
+		"nb":    func(d *core.Decision) { d.Shadow.NBUpshift.Applied = true },
+		"floor": func(d *core.Decision) { d.Guards.PolicyFloor = true },
 	}
 	cases := []struct {
 		verdict core.Verdict
@@ -105,11 +105,13 @@ func TestDeterministicLift_DoesNotIncludeSemanticLift(t *testing.T) {
 	}
 	for _, c := range cases {
 		d := core.Decision{
-			Harness:      ccHarness,
-			Verdict:      c.verdict,
-			Tier:         c.tier,
-			SemanticLift: true,
-			Model:        core.Model{ID: catID(ccHarness, c.tier), Tier: c.tier, Harness: ccHarness},
+			Harness: ccHarness,
+			Verdict: c.verdict,
+			Tier:    c.tier,
+			Model:   core.Model{ID: catID(ccHarness, c.tier), Tier: c.tier, Harness: ccHarness},
+			Guards: core.Guards{
+				SemanticLift: true,
+			},
 		}
 		rep := core.Check(d)
 		if !slices.ContainsFunc(rep.Violations, func(v core.Violation) bool { return v.Rule == c.rule }) {
@@ -120,12 +122,14 @@ func TestDeterministicLift_DoesNotIncludeSemanticLift(t *testing.T) {
 
 func TestCheck_SemanticLiftDoesNotBypassRiskDowngrade(t *testing.T) {
 	d := core.Decision{
-		Harness:      ccHarness,
-		Verdict:      core.VerdictDownshift,
-		Complexity:   core.Medium,
-		Tier:         core.TierMid,
-		SemanticLift: true,
-		Risk:         []string{"secrets"},
+		Harness:    ccHarness,
+		Verdict:    core.VerdictDownshift,
+		Complexity: core.Medium,
+		Tier:       core.TierMid,
+		Risk:       []string{"secrets"},
+		Guards: core.Guards{
+			SemanticLift: true,
+		},
 	}
 	rep := core.Check(d)
 	if !slices.ContainsFunc(rep.Violations, func(v core.Violation) bool { return v.Rule == core.RuleRiskDowngrade }) {

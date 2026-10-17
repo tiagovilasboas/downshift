@@ -80,16 +80,16 @@ func loadNativeSession(caps HarnessCapabilities, now time.Time) (SessionList, bo
 // Unknown metadata cannot become a routing target. Equal-tier price ties retain
 // the provider's order without treating that order as a quality signal.
 func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool, bool) {
-	if res == nil || (d.Verdict == VerdictOK && !session.Blocks(d.CurrentModel.ID) && !session.Blocks(d.RequestedID)) {
+	if res == nil || (d.Verdict == VerdictOK && !session.Blocks(d.Baseline.CurrentModel.ID) && !session.Blocks(d.Baseline.RequestedID)) {
 		return "", Model{}, false, false
 	}
 	upshift := d.Verdict == VerdictUpshift
-	strongest := upshift && (d.BaselineGuessed || ExplicitUpshiftEnabled())
+	strongest := upshift && (d.Baseline.Guessed || ExplicitUpshiftEnabled())
 	var current Model
 	if d.Verdict == VerdictDownshift {
-		currentID := d.RequestedID
+		currentID := d.Baseline.RequestedID
 		if currentID == "" {
-			currentID = d.CurrentModel.ID
+			currentID = d.Baseline.CurrentModel.ID
 		}
 		var known bool
 		current, known = res.LookupByID(d.Harness, currentID)

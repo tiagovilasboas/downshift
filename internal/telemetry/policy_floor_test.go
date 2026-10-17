@@ -18,7 +18,7 @@ func TestFromDecisionRecordsPolicyFloor(t *testing.T) {
 	if ev := telemetry.FromDecision(core.Decision{Harness: "cursor"}, "id", "v"); ev.PolicyFloor {
 		t.Fatal("no floor must not be recorded")
 	}
-	ev := telemetry.FromDecision(core.Decision{Harness: "cursor", PolicyFloor: true}, "id", "v")
+	ev := telemetry.FromDecision(core.Decision{Harness: "cursor", Guards: core.Guards{PolicyFloor: true}}, "id", "v")
 	if !ev.PolicyFloor {
 		t.Fatal("floor must be recorded")
 	}

@@ -367,7 +367,7 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		Agent:            "subagent",
 		Harness:          d.Harness,
 		Complexity:       d.Complexity.String(),
-		FromModel:        ModelOrUnknown(d.CurrentModel.ID),
+		FromModel:        ModelOrUnknown(d.Baseline.CurrentModel.ID),
 		ToModel:          ModelOrUnknown(d.Model.ID),
 		RequestedEffort:  "unknown",
 		FinalEffort:      EffortOrUnknown(d.Effort.String()),
@@ -377,24 +377,24 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		BinaryVersion:    binaryVersion,
 		Outcome:          OutcomeRewriteEmitted,
 		EstimatedSavings: d.Savings,
-		QuotaStatus:      d.QuotaStatus,
-		QuotaSource:      d.QuotaSource,
-		CreditHeld:       d.CreditHeld,
-		PolicyFloor:      d.PolicyFloor,
+		QuotaStatus:      d.Session.QuotaStatus,
+		QuotaSource:      d.Session.QuotaSource,
+		CreditHeld:       d.Session.CreditHeld,
+		PolicyFloor:      d.Guards.PolicyFloor,
 		RoutingPolicy:    RoutingPolicy,
 		ReasonCodes:      ReasonCodes(d),
 	}
 	if d.Verdict == core.VerdictUpshift {
-		from := d.CurrentModel.InputM + d.CurrentModel.OutputM
+		from := d.Baseline.CurrentModel.InputM + d.Baseline.CurrentModel.OutputM
 		to := d.Model.InputM + d.Model.OutputM
 		if from > 0 && to > from {
 			ev.UpshiftCostRatio = to / from
 		}
 	}
-	if d.ScoreWould != "" {
-		ev.ScoreWould = ModelOrUnknown(d.ScoreWould)
-		ev.ScoreDiffers = d.ScoreDiffers
-		if r := d.ScoreWouldCostRatio; r > 0 && !math.IsInf(r, 0) && !math.IsNaN(r) {
+	if d.Shadow.ScoreWould != "" {
+		ev.ScoreWould = ModelOrUnknown(d.Shadow.ScoreWould)
+		ev.ScoreDiffers = d.Shadow.ScoreDiffers
+		if r := d.Shadow.ScoreWouldCostRatio; r > 0 && !math.IsInf(r, 0) && !math.IsNaN(r) {
 			ev.ScoreWouldCostRatio = math.Round(r*1e4) / 1e4
 		}
 	}
@@ -402,24 +402,24 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		ev.SafeVerdict = d.SafeVerdict.String()
 		ev.Corrections = d.Corrections
 	}
-	if d.NBUpshift.Would {
+	if d.Shadow.NBUpshift.Would {
 		ev.NBUpshift = &NBUpshiftRecord{
-			FromTier: d.NBUpshift.From.String(),
-			ToTier:   d.NBUpshift.To.String(),
-			Margin:   math.Round(d.NBUpshift.Margin*1e4) / 1e4,
-			Applied:  d.NBUpshift.Applied,
+			FromTier: d.Shadow.NBUpshift.From.String(),
+			ToTier:   d.Shadow.NBUpshift.To.String(),
+			Margin:   math.Round(d.Shadow.NBUpshift.Margin*1e4) / 1e4,
+			Applied:  d.Shadow.NBUpshift.Applied,
 		}
 	}
-	if d.NBDownshift.Would {
+	if d.Shadow.NBDownshift.Would {
 		// The opinion only exists for the Medium default, so it is mid -> small.
 		ev.NBDownshift = &NBUpshiftRecord{
 			FromTier: core.TierMid.String(),
 			ToTier:   core.TierSmall.String(),
-			Margin:   math.Round(d.NBDownshift.Margin*1e4) / 1e4,
-			Applied:  d.NBDownshift.Applied,
+			Margin:   math.Round(d.Shadow.NBDownshift.Margin*1e4) / 1e4,
+			Applied:  d.Shadow.NBDownshift.Applied,
 		}
 	}
-	if e5 := d.E5Shadow; e5.ErrorCode != "" || e5.ModelID != "" {
+	if e5 := d.Shadow.E5Shadow; e5.ErrorCode != "" || e5.ModelID != "" {
 		sim := e5.Similarity
 		if math.IsNaN(sim) || math.IsInf(sim, 0) {
 			sim = 0

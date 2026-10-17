@@ -63,25 +63,25 @@ func HarnessOwnsID(harness, id string, session SessionList, res Resolver) bool {
 // least-to-most capable; native lists instead require resolver tier metadata.
 // An unknown session leaves the current model in place.
 func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session SessionList) RewritePlan {
-	currentID := d.CurrentModel.ID
-	requested := d.RequestedID
+	currentID := d.Baseline.CurrentModel.ID
+	requested := d.Baseline.RequestedID
 	if requested == "" {
 		requested = currentID
 	}
 	if requested != "" && !HarnessOwnsID(d.Harness, requested, session, res) {
-		return RewritePlan{Model: d.CurrentModel, HoldForeign: true}
+		return RewritePlan{Model: d.Baseline.CurrentModel, HoldForeign: true}
 	}
 	if res != nil && d.ShouldPreserveExplicitModel(currentID, res) {
 		return RewritePlan{Model: d.Model, PreserveExplicit: true}
 	}
 	if !session.Known {
-		return RewritePlan{Model: d.CurrentModel}
+		return RewritePlan{Model: d.Baseline.CurrentModel}
 	}
 
 	id, model, ok, creditHeld := selectSessionTarget(d, res, session)
 	if !ok || id == "" || !session.Contains(id) || id == currentID {
 		apply := c.CanApplyEffort && currentID != "" && session.Contains(currentID) && d.Model.ID != "" && session.quotaAllows(d.Harness, currentID)
-		return RewritePlan{Model: d.CurrentModel, ApplyEffort: apply, CreditHeld: creditHeld}
+		return RewritePlan{Model: d.Baseline.CurrentModel, ApplyEffort: apply, CreditHeld: creditHeld}
 	}
 	model.ID = id
 	if model.Harness == "" {
@@ -120,16 +120,16 @@ func catalogSessionTarget(d Decision, res Resolver, session SessionList) (string
 	if session.NativeAvailability || session.Unordered {
 		return nativeSessionTarget(d, res, session)
 	}
-	if session.Blocks(d.CurrentModel.ID) || session.Blocks(d.RequestedID) {
+	if session.Blocks(d.Baseline.CurrentModel.ID) || session.Blocks(d.Baseline.RequestedID) {
 		return leastSessionModelAtOrAbove(d.Harness, session, res, d.Tier)
 	}
 	switch d.Verdict {
 	case VerdictUpshift:
 		floor := TierSmall
-		if d.CurrentModel.ID != "" {
-			floor = d.CurrentModel.Tier
+		if d.Baseline.CurrentModel.ID != "" {
+			floor = d.Baseline.CurrentModel.Tier
 		}
-		if d.BaselineGuessed || ExplicitUpshiftEnabled() {
+		if d.Baseline.Guessed || ExplicitUpshiftEnabled() {
 			return strongestSessionModel(d.Harness, session, res, d.Tier, floor)
 		}
 		return upshiftSessionModel(d.Harness, session, res, d.Tier, floor)

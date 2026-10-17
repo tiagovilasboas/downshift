@@ -90,7 +90,7 @@ func Check(d Decision) Report {
 	// known (VerdictUnknown): the NB margin is not a confident classification,
 	// so its own gate never skips this rule.
 	if !d.Confident && (d.Verdict == VerdictDownshift ||
-		(d.NBDownshift.Applied && d.Verdict == VerdictUnknown)) {
+		(d.Shadow.NBDownshift.Applied && d.Verdict == VerdictUnknown)) {
 		violations = append(violations, Violation{
 			Rule:   RuleUnconfidentDowngrade,
 			Detail: "downshift verdict without confident classification",
@@ -105,13 +105,13 @@ func Check(d Decision) Report {
 	// R5 covers every downshift of a task that touches a risk category, not
 	// only tasks the risk floor lifted off the small tier: a confident MEDIUM
 	// crypto or auth task must not move from frontier to mid either.
-	if d.Verdict == VerdictDownshift && (d.RiskFloor || len(d.Risk) > 0) {
+	if d.Verdict == VerdictDownshift && (d.Guards.RiskFloor || len(d.Risk) > 0) {
 		violations = append(violations, Violation{
 			Rule:   RuleRiskDowngrade,
 			Detail: "task touches a risk category and must not move to a cheaper tier",
 		})
 	}
-	if unconfidentUnknownBelowMid(d) && !d.NBDownshift.Applied {
+	if unconfidentUnknownBelowMid(d) && !d.Shadow.NBDownshift.Applied {
 		// An applied NB downshift is already held by R1 above.
 		violations = append(violations, Violation{
 			Rule:   RuleUnconfidentUnknownSmall,
@@ -166,8 +166,8 @@ func unconfidentUnknownBelowMid(d Decision) bool {
 // lifted the tier (SemanticLift), that tier is a guess and the abstention
 // must not launder it past R7, R8 or R9.
 func deterministicLift(d Decision) bool {
-	riskAbstain := d.RiskAbstain && !d.SemanticLift
-	return d.RiskFloor || riskAbstain || d.GraphEscalated || d.NBUpshift.Applied || d.PolicyFloor
+	riskAbstain := d.Guards.RiskAbstain && !d.Guards.SemanticLift
+	return d.Guards.RiskFloor || riskAbstain || d.Guards.GraphEscalated || d.Shadow.NBUpshift.Applied || d.Guards.PolicyFloor
 }
 
 // unconfidentUnknownFrontier reports the R7 condition: no comparable current

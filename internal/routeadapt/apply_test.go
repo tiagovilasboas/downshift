@@ -33,7 +33,7 @@ func TestApply_ShadowDoesNotChangeTier(t *testing.T) {
 	if d.Tier != base {
 		t.Fatalf("routed tier = %s, classifier = %s; shadow must not apply", d.Tier, base)
 	}
-	if !d.AdaptWouldSet || d.AdaptWould != core.TierSmall {
-		t.Fatalf("shadow = set:%v tier:%s, want small", d.AdaptWouldSet, d.AdaptWould)
+	if !d.Shadow.AdaptWouldSet || d.Shadow.AdaptWould != core.TierSmall {
+		t.Fatalf("shadow = set:%v tier:%s, want small", d.Shadow.AdaptWouldSet, d.Shadow.AdaptWould)
 	}
 }

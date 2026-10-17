@@ -44,7 +44,7 @@ func TestScoreTier_ScoreRoutingNeverBelowDecisionTier(t *testing.T) {
 	session := core.KnownSession([]string{"s-lo", "s-hi", "m-1", "f-1"})
 
 	d := core.Route("implement the CSV export feature", "claude-code", "f-1", res)
-	d.RequestedID = "f-1"
+	d.Baseline.RequestedID = "f-1"
 	t.Logf("route: complexity=%s tier=%s confident=%v verdict=%s safe=%s risk=%v corrections=%v",
 		d.Complexity, d.Tier, d.Confident, d.Verdict, d.SafeVerdict, d.Risk, d.Corrections)
 	if d.Tier != core.TierMid || d.SafeVerdict != core.VerdictDownshift {
@@ -54,6 +54,6 @@ func TestScoreTier_ScoreRoutingNeverBelowDecisionTier(t *testing.T) {
 	m, _ := res.LookupByID("claude-code", plan.Model.ID)
 	if plan.RewriteModel && m.Tier < d.Tier {
 		t.Fatalf("score routing wrote %q (catalog tier %s) for a %s-tier decision; ScoreApplied=%v",
-			plan.Model.ID, m.Tier, d.Tier, d.ScoreApplied)
+			plan.Model.ID, m.Tier, d.Tier, d.Shadow.ScoreApplied)
 	}
 }

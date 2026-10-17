@@ -22,7 +22,7 @@ func TestHandleQuotaGovernsRewriteAndPreservesSiblings(t *testing.T) {
 	ev := withCatalogSession(codex.Event{Model: catID(core.TierFrontier), ToolInput: json.RawMessage(`{"message":"rename the userId variable to userIdentifier","task_name":"worker_agent_rename","fork_turns":"none","custom":{"keep":true}}`), UsageQuota: &s})
 	out, _, d := codex.Handle(ev, cat)
 	m := decodeUpdated(t, out)
-	if m == nil || m["model"] != catID(core.TierSmall) || m["custom"] == nil || m["fork_turns"] != "none" || d.QuotaStatus != "available" {
+	if m == nil || m["model"] != catID(core.TierSmall) || m["custom"] == nil || m["fork_turns"] != "none" || d.Session.QuotaStatus != "available" {
 		t.Fatalf("funded rewrite lost siblings %+v %+v", m, d)
 	}
 	for _, tc := range []struct {
@@ -44,7 +44,7 @@ func TestHandleQuotaGovernsRewriteAndPreservesSiblings(t *testing.T) {
 	ev.UsageQuota = nil
 	ev.TranscriptPath = filepath.Join(t.TempDir(), "missing.jsonl")
 	out, _, d = codex.Handle(ev, cat)
-	if decodeUpdated(t, out) != nil || d.QuotaStatus != "unknown" {
+	if decodeUpdated(t, out) != nil || d.Session.QuotaStatus != "unknown" {
 		t.Fatal("missing explicit transcript reopened legacy quota")
 	}
 }

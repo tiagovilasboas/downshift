@@ -48,16 +48,16 @@ func TestNBDownshift_OffKeepsRoutingAndRecordsShadow(t *testing.T) {
 		if d.Tier.String() != g.Prod {
 			t.Errorf("flag off changed routing: tier %s, main %s for %q", d.Tier, g.Prod, g.Prompt)
 		}
-		if d.NBDownshift.Applied {
+		if d.Shadow.NBDownshift.Applied {
 			t.Errorf("flag off applied a downshift for %q", g.Prompt)
 		}
-		if d.NBDownshift.Would != would[i] {
-			t.Errorf("shadow would=%v, want %v for %q", d.NBDownshift.Would, would[i], g.Prompt)
+		if d.Shadow.NBDownshift.Would != would[i] {
+			t.Errorf("shadow would=%v, want %v for %q", d.Shadow.NBDownshift.Would, would[i], g.Prompt)
 		}
-		if d.NBDownshift.Would {
+		if d.Shadow.NBDownshift.Would {
 			shadow++
-			if d.Tier != core.TierMid || d.RiskFloor || d.NBDownshift.Margin < 0.2 {
-				t.Errorf("shadow opinion outside its gate: tier=%s riskFloor=%v %+v for %q", d.Tier, d.RiskFloor, d.NBDownshift, g.Prompt)
+			if d.Tier != core.TierMid || d.Guards.RiskFloor || d.Shadow.NBDownshift.Margin < 0.2 {
+				t.Errorf("shadow opinion outside its gate: tier=%s riskFloor=%v %+v for %q", d.Tier, d.Guards.RiskFloor, d.Shadow.NBDownshift, g.Prompt)
 			}
 		}
 	}
@@ -87,10 +87,10 @@ func TestNBDownshift_OnAppliesTrivialOnly(t *testing.T) {
 		if g.Gold == "COMPLEX" && d.Tier == core.TierSmall {
 			t.Errorf("FRONTIER->SMALL for %q", g.Prompt)
 		}
-		if d.NBDownshift.Applied {
+		if d.Shadow.NBDownshift.Applied {
 			applied++
-			if d.RiskFloor || d.Complexity != core.Trivial {
-				t.Errorf("applied downshift: riskFloor=%v complexity=%s for %q", d.RiskFloor, d.Complexity, g.Prompt)
+			if d.Guards.RiskFloor || d.Complexity != core.Trivial {
+				t.Errorf("applied downshift: riskFloor=%v complexity=%s for %q", d.Guards.RiskFloor, d.Complexity, g.Prompt)
 			}
 			if checkWrites(d) || d.SafeVerdict != core.VerdictOK || !slices.Contains(d.Corrections, core.RuleUnconfidentDowngrade) {
 				t.Errorf("R1 did not hold the NB downshift: safe=%s corrections=%v for %q", d.SafeVerdict, d.Corrections, g.Prompt)
@@ -120,7 +120,7 @@ func TestNBDownshift_R1HoldsWithFlagOn(t *testing.T) {
 	}
 	for _, current := range []string{"claude-opus-5-5", ""} {
 		d := core.Route(prompt, "claude-code", current, cat)
-		if !d.NBDownshift.Applied {
+		if !d.Shadow.NBDownshift.Applied {
 			t.Fatalf("precondition: NB downshift not applied for %q", prompt)
 		}
 		if d.SafeVerdict != core.VerdictOK || !slices.Contains(d.Corrections, core.RuleUnconfidentDowngrade) {

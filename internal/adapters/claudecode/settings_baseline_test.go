@@ -31,10 +31,10 @@ func TestHandle_SettingsBaselineHoldsMidTierDownshift(t *testing.T) {
 		ToolInput:      json.RawMessage(`{"subagent_type":"general-purpose","prompt":"implement the feature to export sales as CSV"}`),
 	}
 	out, note, d := claudecode.Handle(ev, cat)
-	if !d.BaselineFromSettings || !d.Confident {
-		t.Fatalf("precondition: want confident decision on a settings baseline, got fromSettings=%v confident=%v", d.BaselineFromSettings, d.Confident)
+	if !d.Baseline.FromSettings || !d.Confident {
+		t.Fatalf("precondition: want confident decision on a settings baseline, got fromSettings=%v confident=%v", d.Baseline.FromSettings, d.Confident)
 	}
-	if !d.GuessHeld {
+	if !d.Baseline.GuessHeld {
 		t.Errorf("held mid-tier downshift must set GuessHeld for its reason code")
 	}
 	if m := decodeUpdated(t, out); m != nil {
@@ -57,8 +57,8 @@ func TestHandle_SettingsBaselineStillWritesSmallTier(t *testing.T) {
 		ToolInput:      json.RawMessage(`{"subagent_type":"general-purpose","prompt":"rename the userId variable to userIdentifier"}`),
 	}
 	out, note, d := claudecode.Handle(ev, cat)
-	if !d.BaselineFromSettings || d.Verdict != core.VerdictDownshift || d.Tier != core.TierSmall {
-		t.Fatalf("precondition: want a small-tier downshift on a settings baseline, got fromSettings=%v verdict=%v tier=%v", d.BaselineFromSettings, d.Verdict, d.Tier)
+	if !d.Baseline.FromSettings || d.Verdict != core.VerdictDownshift || d.Tier != core.TierSmall {
+		t.Fatalf("precondition: want a small-tier downshift on a settings baseline, got fromSettings=%v verdict=%v tier=%v", d.Baseline.FromSettings, d.Verdict, d.Tier)
 	}
 	if m := decodeUpdated(t, out); m == nil {
 		t.Fatalf("small-tier downshift on a settings baseline must still be written (note %q)", note)

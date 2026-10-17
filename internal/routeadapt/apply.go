@@ -30,6 +30,6 @@ func Apply(prompt string, d *core.Decision, res core.Resolver) {
 	if core.Tier(newTier) == d.Tier {
 		return
 	}
-	d.AdaptWould = core.Tier(newTier)
-	d.AdaptWouldSet = true
+	d.Shadow.AdaptWould = core.Tier(newTier)
+	d.Shadow.AdaptWouldSet = true
 }

@@ -23,13 +23,15 @@ func TestPlanForSession_UnknownIDsAreSelectedFromSessionOrder(t *testing.T) {
 		t.Run(tc.harness, func(t *testing.T) {
 			ids := []string{"session-low-x91", "session-mid-q27", "session-high-k44"}
 			d := core.Decision{
-				Harness:      tc.harness,
-				RequestedID:  ids[2],
-				Verdict:      core.VerdictDownshift,
-				Confident:    true,
-				Tier:         core.TierSmall,
-				Model:        core.Model{ID: "recommendation-not-in-session", Harness: tc.harness},
-				CurrentModel: core.Model{ID: ids[2], Harness: tc.harness},
+				Harness:   tc.harness,
+				Verdict:   core.VerdictDownshift,
+				Confident: true,
+				Tier:      core.TierSmall,
+				Model:     core.Model{ID: "recommendation-not-in-session", Harness: tc.harness},
+				Baseline: core.Baseline{
+					RequestedID:  ids[2],
+					CurrentModel: core.Model{ID: ids[2], Harness: tc.harness},
+				},
 			}
 			plan := d.PlanForSession(tc.caps, nil, core.KnownSession(ids))
 			if plan.Model.ID != ids[0] {
@@ -45,13 +47,15 @@ func TestPlanForSession_UnknownIDsAreSelectedFromSessionOrder(t *testing.T) {
 func TestPlanForSession_MidTierUsesSessionMidpointWithoutCatalog(t *testing.T) {
 	ids := []string{"opaque-a", "opaque-b", "opaque-c", "opaque-d", "opaque-e"}
 	d := core.Decision{
-		Harness:      "claude-code",
-		RequestedID:  ids[len(ids)-1],
-		Verdict:      core.VerdictDownshift,
-		Confident:    true,
-		Tier:         core.TierMid,
-		Model:        core.Model{ID: "unlisted", Harness: "claude-code"},
-		CurrentModel: core.Model{ID: ids[len(ids)-1], Harness: "claude-code"},
+		Harness:   "claude-code",
+		Verdict:   core.VerdictDownshift,
+		Confident: true,
+		Tier:      core.TierMid,
+		Model:     core.Model{ID: "unlisted", Harness: "claude-code"},
+		Baseline: core.Baseline{
+			RequestedID:  ids[len(ids)-1],
+			CurrentModel: core.Model{ID: ids[len(ids)-1], Harness: "claude-code"},
+		},
 	}
 	plan := d.PlanForSession(core.ClaudeCodeCaps, nil, core.KnownSession(ids))
 	if plan.Model.ID != ids[2] {

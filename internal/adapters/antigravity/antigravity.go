@@ -137,7 +137,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 
 		currentModel := hookutil.StringField(subagent, "Model")
 		decision := core.Route(prompt, harnessID, currentModel, res)
-		decision.RequestedID = currentModel
+		decision.Baseline.RequestedID = currentModel
 		// Gate the rewrite on the session plan: unknown session, empty
 		// target, explicit-only current model, or a rewrite the plan
 		// forbids all fail open (allow, no write).

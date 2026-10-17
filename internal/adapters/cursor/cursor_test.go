@@ -260,7 +260,7 @@ func TestHandle_CursorUpshiftDoesNotEmitRejectedMuseSpark(t *testing.T) {
 				if decision.Model.ID != muse.ID {
 					t.Fatalf("decision model = %q, want catalog id %q", decision.Model.ID, muse.ID)
 				}
-				if decision.CreditHeld {
+				if decision.Session.CreditHeld {
 					t.Fatal("available pool must not set CreditHeld")
 				}
 				return
@@ -268,11 +268,11 @@ func TestHandle_CursorUpshiftDoesNotEmitRejectedMuseSpark(t *testing.T) {
 			if out.UpdatedInput != nil || note != "" {
 				t.Fatalf("spawn rewritten, note=%q updated=%s", note, out.UpdatedInput)
 			}
-			if decision.CreditHeld != tc.wantHeld {
-				t.Fatalf("CreditHeld = %v, want %v", decision.CreditHeld, tc.wantHeld)
+			if decision.Session.CreditHeld != tc.wantHeld {
+				t.Fatalf("CreditHeld = %v, want %v", decision.Session.CreditHeld, tc.wantHeld)
 			}
-			if tc.wantUnknown && (decision.QuotaStatus != string(quota.Unknown) || decision.CreditHeld) {
-				t.Fatalf("unobserved pool status=%q creditHeld=%v, want unknown and not held", decision.QuotaStatus, decision.CreditHeld)
+			if tc.wantUnknown && (decision.Session.QuotaStatus != string(quota.Unknown) || decision.Session.CreditHeld) {
+				t.Fatalf("unobserved pool status=%q creditHeld=%v, want unknown and not held", decision.Session.QuotaStatus, decision.Session.CreditHeld)
 			}
 		})
 	}

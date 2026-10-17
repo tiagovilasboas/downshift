@@ -13,11 +13,11 @@ import (
 )
 
 func TestReasonCodes_SemanticBoostIsRecorded(t *testing.T) {
-	d := core.Decision{Harness: "claude-code", Tier: core.TierMid, SemanticLift: true}
+	d := core.Decision{Harness: "claude-code", Tier: core.TierMid, Guards: core.Guards{SemanticLift: true}}
 	if !hasCode(telemetry.ReasonCodes(d), telemetry.ReasonSemanticBoost) {
 		t.Fatalf("a semantic lift must leave SEMANTIC_BOOST in the trace: %v", telemetry.ReasonCodes(d))
 	}
-	d.SemanticLift = false
+	d.Guards.SemanticLift = false
 	if hasCode(telemetry.ReasonCodes(d), telemetry.ReasonSemanticBoost) {
 		t.Fatal("no lift must not record SEMANTIC_BOOST")
 	}

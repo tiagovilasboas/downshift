@@ -43,8 +43,8 @@ model the child would otherwise run on, in Claude Code's own order:
    (`CLAUDE_CONFIG_DIR` honoured); first file that sets it wins. `opusplan` resolves to Opus when
    `permission_mode` is `plan`, Sonnet otherwise; `sonnet`/`opus`/`haiku`/`fable` map to the
    catalog's model of that family (`familyAliases`); a full id the catalog knows passes through;
-   `default` or anything unrecognised is unknown. A hit here sets `Decision.BaselineFromSettings`
-   and `BaselineGuessed`, logged as reason code `BASELINE_FROM_SETTINGS`.
+   `default` or anything unrecognised is unknown. A hit here sets `Decision.Baseline.FromSettings`
+   and `Decision.Baseline.Guessed`, logged as reason code `BASELINE_FROM_SETTINGS`.
 6. `Explore` under a Fable main model is forced unknown (`exploreMayLeaveTheMainModel`): Claude Code
    may run Explore on Opus there (subscription, Console, gateway) or keep the main model (Bedrock
    and similar), and a hook cannot tell which.
@@ -56,7 +56,7 @@ model without a `session-models.json` list. `DOWNSHIFT_INFER_SESSION=off` disabl
 
 ## 3. When the baseline is unknown or guessed
 
-Code: `internal/core/selfcheck.go` (R6/R7/R9), `claudecode.go` (`GuessHeld`),
+Code: `internal/core/selfcheck.go` (R6/R7/R9), `claudecode.go` (`Decision.Baseline.GuessHeld`),
 `internal/telemetry/reason_codes.go`.
 
 - **Unknown** (`verdict: UNKNOWN`, `requested_model: unknown`): the session list cannot be inferred,
@@ -66,9 +66,9 @@ Code: `internal/core/selfcheck.go` (R6/R7/R9), `claudecode.go` (`GuessHeld`),
   `Explore` and `Plan` had no inferred baseline, so every such spawn was held this way.
 - **Guessed** (`BASELINE_FROM_SETTINGS`): the session may really be on another model (`--model`,
   `/model`). A downshift is written only when the target is the **small** tier, the one cheaper than
-  anything the session can run. A downshift to mid is held with `Decision.GuessHeld`, reason code
+  anything the session can run. A downshift to mid is held with `Decision.Baseline.GuessHeld`, reason code
   `HELD_GUESSED_BASELINE`. An upshift on a guessed baseline keeps the strongest eligible tier
-  (`core/session_select.go`, `BaselineGuessed`).
+  (`core/session_select.go`, `Decision.Baseline.Guessed`).
 - `Explore` under Fable stays unknown even with a settings hit (point 6 above).
 
 The cost record follows the same honesty: a `usage` row whose decision was `BASELINE_FROM_SETTINGS` is

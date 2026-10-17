@@ -26,7 +26,7 @@ Rules:
 - **Fallback** — external embed failure returns to hash.
 - **Monotonic** — semantic never downgrades; only raises when regex is unconfident.
 - **Needs regex evidence** — a prompt with no regex signal (`NoSignal`) is never lifted, and the boost can never produce COMPLEX on its own: Complex needs a regex signal, the risk floor or graph escalation. The hash centroids are nearly parallel, so its nearest class on a weak-signal prompt is close to noise.
-- **Visible** — a lift sets `Decision.SemanticLift` and the reason code `SEMANTIC_BOOST`; `downshift stats` shows its share.
+- **Visible** — a lift sets `Decision.Guards.SemanticLift` and the reason code `SEMANTIC_BOOST`; `downshift stats` shows its share.
 - **No prompts in telemetry** — unchanged privacy contract.
 
 ## Maintainer training (private)
