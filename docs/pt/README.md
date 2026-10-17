@@ -58,13 +58,12 @@ Regras válidas para todos, fixadas em `internal/catalog/catalog_test.go`:
 
 ## Além do inglês
 
-Três camadas, do padrão ao opt-in ([classificador, EN](../contrib/classifier.md); versão em português: [02 · Classificador](02-classificador.md)):
+Duas camadas ([classificador, EN](../contrib/classifier.md); versão em português: [02 · Classificador](02-classificador.md)):
 
-1. **Classificador determinístico com boost semântico por hash de palavras (padrão).** Sinais regex em inglês e português votam; um score de centróide mais próximo, vindo de um embedder FNV de palavras em processo, pode subir uma classe hesitante, nunca descer, nunca num prompt sem sinal e nunca criar COMPLEX sozinho; a subida é registrada como `SEMANTIC_BOOST`. O guarda de idioma zera a confiança em outros idiomas e em prompts mistos.
-2. **MiniLM (opt-in).** `DOWNSHIFT_MINILM_EMBED` aponta um comando externo de embedding para o mesmo boost; timeout de 1 s, cai de volta no hash.
-3. **Fuse multilíngue E5 (opt-in, desligado por padrão).** `DOWNSHIFT_E5_SHADOW=1` registra o que um helper `intfloat/multilingual-e5-small` faria, sem mudar tier; `downshift shadow-report` resume esses registros do `events.jsonl`. `DOWNSHIFT_E5_FUSE=1` aplica, fail-open, registrado como `E5_BOOST` ou `E5_ABSTAIN`, com o resultado sem fuse mantido como piso.
+1. **Classificador determinístico (sempre).** Sinais regex em inglês e português votam; o guarda de idioma zera a confiança fora dessa cobertura.
+2. **Boost semântico por hash de palavras (padrão, em processo).** Um embedder FNV compara o prompt a centróides embutidos e pode subir uma classe hesitante; nunca desce, nunca num prompt sem sinal e nunca cria COMPLEX sozinho. `DOWNSHIFT_MINILM=0` desliga. A subida é `SEMANTIC_BOOST`.
 
-O que está medido: acurácia de tier, cobertura confiante e latência do classificador atual num conjunto multilíngue de 170 itens e em cinco splits legados (EN 55% de acurácia com 55% de cobertura, PT-BR 55% com 30%, ES/FR/DE/JA e prompts mistos com 0 a 5% de cobertura, todo item confiante correto, p95 quente abaixo de 5 ms). O que não está: qualquer ganho de acurácia ou cobertura do E5, porque os pesos não eram alcançáveis no ambiente de avaliação. Decisão em 2026-10-17: fuse continua desligado, E5 continua candidato em shadow. [Avaliação E5 (EN)](../evidence/e5-int8-evaluation-2026-10-17.md) · [checagens multilíngues no Codex (EN)](../evidence/multilang-codex-2026-10-16.md).
+MiniLM por comando externo, E5 multilíngue e Graphify saíram do produto em 2026-10-17. Logs antigos podem ainda mostrar esses códigos.
 
 ## Mods e companions
 

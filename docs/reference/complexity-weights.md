@@ -44,10 +44,9 @@ Risk and language checks inspect the full input, so a risky or unsupported-langu
 tail cannot bypass them. The word-count rules (6 and 80 words, the `add Name(` stub, the doc-edit damper)
 still count words over the full prompt.
 
-Optional later steps can only raise the class: graph context when the
-classifier is not confident, and the local MiniLM boost. Neither lowers a
-class. The MiniLM boost is ignored for no-signal prompts and cannot create
-COMPLEX without regex evidence. Both can be turned off (`DOWNSHIFT_GRAPHIFY=0`, `DOWNSHIFT_MINILM=0`).
+An optional later step can only raise the class: the in-process word-hash
+semantic boost. It never lowers a class, is ignored for no-signal prompts, and
+cannot create COMPLEX without regex evidence. Turn it off with `DOWNSHIFT_MINILM=0`.
 
 ## Language coverage
 
@@ -79,10 +78,9 @@ Scoring inspects a rune-aligned prefix of at most 32 KB; risk and language
 checks inspect the full input. Do not interpret English and Portuguese
 coverage as calibrated accuracy or support for all multilingual prompts.
 
-Multilingual **E5 shadow** (`DOWNSHIFT_E5_SHADOW=1`, `internal/semantic/e5shadow`) records
-observations only; it does not change tier. MiniLM fuse and a Sonnet reference remain offline
-evaluation candidates. They do not extend shipped language coverage or put an LLM in the routing loop.
-Initiative contract: [multilingual semantic intelligence](../internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md).
+English and Portuguese coverage is the shipped language contract. Multilingual E5
+and external MiniLM were removed on 2026-10-17; they do not extend coverage.
+The archived initiative note is [multilingual semantic intelligence](../internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md).
 
 ## Weights
 

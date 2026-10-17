@@ -26,7 +26,7 @@ registered in their `init`. Debt status (2026-10-17):
   environment through the same accessors (test:
   `TestHookRunnerReadsConfigOnce`).
 - `hookctx`: core no longer imports it directly; it reaches core only through
-  the helper packages (`semantic`, `graphify`) that run bounded commands.
+  helper packages that stay in-process (`semantic` hash embedder).
 - `quota`: still open. `core.SessionList.Usage` is a `*quota.Snapshot`,
   `WithUsageQuota` takes one and `QuotaStatus` returns a `quota.Status`;
   all five adapters construct and pass those types and read the field. A

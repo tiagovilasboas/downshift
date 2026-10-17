@@ -5,7 +5,9 @@
 Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
-**Status:** Phase A complete; **Phase D (E5 shadow) shipped** on `main` (`831829a`+). **Phase E contract frozen** (this doc §15): opt-in encoder fuse, default off. Implementation not started; no LLM in `Route()`/`Classify()`.  
+**Superseded 2026-10-17:** E5 and the external MiniLM command were removed. This file is an archive. Do not reimplement it from this contract.
+
+**Status (historical):** Phase A complete; Phase D (E5 shadow) had shipped; Phase E stayed default off.  
 **Owner decision:** This initiative supersedes non-essential handoff work (H7, H8, H10, H11) until Phase B baseline is frozen; it does **not** pause guardrail integrity work or H12 release when approved.
 
 ---
