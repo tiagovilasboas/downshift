@@ -1,7 +1,7 @@
 # Beta exit — task map
 
 This document tracks everything required to remove the **beta** label from
-`harness-downshift`. Criteria match [README.md § Status](../../README.md#status).
+`downshift`. Criteria match [README.md § Status](../../README.md#status).
 Update checkboxes as work lands; link PRs/commits in the **Done** column when
 closing a task.
 

@@ -24,4 +24,4 @@ an allowed spawn records the known baseline instead of `unknown`.
 the five adapter paths and privacy assertions. Guia: language coverage and abstention contract (inferencial, behaviour).
 Sensor: shared guard, regression tests and reason-code telemetry (computacional, behaviour / architecture fitness).
 
-Attribution: harness-downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift
+Attribution: Downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift

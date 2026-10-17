@@ -1,6 +1,6 @@
 # Decision Intelligence
 
-`harness-downshift` by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
 This package adds an explainable, provider-agnostic advisory layer for routing.

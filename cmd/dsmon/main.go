@@ -3,7 +3,7 @@
 
 // dsmon — downshift monitor
 // Floating terminal widget. Lives in cmd/dsmon/ as a standalone command
-// inside harness-downshift — reads events.jsonl, renders live in the terminal.
+// inside Downshift — reads events.jsonl, renders live in the terminal.
 //
 // Build:   go build -o dsmon ./cmd/dsmon
 // Run:     ./dsmon

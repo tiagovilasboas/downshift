@@ -1,6 +1,6 @@
 # Session discovery
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Downshift asks each harness which models the current account can use, instead of

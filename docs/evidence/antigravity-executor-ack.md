@@ -1,6 +1,6 @@
 # Antigravity applied rewrite — native child evidence
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Verified on 2026-10-09 with the installed Antigravity **2.21.1** desktop app.

@@ -1,6 +1,6 @@
 # Downshift
 
-*Repositório GitHub: [`harness-downshift`](https://github.com/tiagovilasboas/downshift) · CLI `downshift` · licença Apache 2.0.*
+*Repositório GitHub: [`downshift`](https://github.com/tiagovilasboas/downshift) · CLI `downshift` · licença Apache 2.0.*
 
 O **Downshift** é um roteador determinístico de modelos para fluxos de trabalho com agentes de IA (hooks em harnesses de código; não é gateway HTTP tipo LiteLLM). Quando usar ou não: [WHEN-TO-USE em inglês](../guides/when-to-use.md).
 

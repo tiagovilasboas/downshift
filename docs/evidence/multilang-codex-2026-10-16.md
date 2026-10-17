@@ -2,7 +2,7 @@
 
 # Multilingual routing checks from Codex, 2026-10-16
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 ## Scope

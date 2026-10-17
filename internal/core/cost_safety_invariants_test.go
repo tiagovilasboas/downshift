@@ -9,7 +9,7 @@ package core_test
 // may. These tests pin that principle over hand-built decisions (truth table)
 // and over Route + PlanSession on a varied prompt corpus (property sweep).
 //
-// harness-downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago de Carvalho Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 
 import (

@@ -2,7 +2,7 @@
 
 # Product roadmap: from router to cost control plane
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Owner-facing plan. Status as of 2026-10-13. The public summary stays in

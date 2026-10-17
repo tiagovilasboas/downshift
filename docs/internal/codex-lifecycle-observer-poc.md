@@ -1,6 +1,6 @@
 # Codex lifecycle observer POC (DS-04)
 
-harness-downshift by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
 This is a local, disabled-by-default POC at

@@ -2,7 +2,7 @@
 
 O hook de produção continua em `core.Route`. O classificador softmax da v2 não escolhe o modelo do subagente.
 
-`harness-downshift` by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 ## O que muda no dia a dia

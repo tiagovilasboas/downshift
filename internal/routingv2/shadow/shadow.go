@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package shadow compares candidate classifiers without changing production.
-// Part of harness-downshift by Tiago de Carvalho Vilas Boas.
+// Part of Downshift by Tiago de Carvalho Vilas Boas.
 // https://github.com/tiagovilasboas/downshift
 package shadow
 

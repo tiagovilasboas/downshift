@@ -1,6 +1,6 @@
 # Graphify integration: library, not hook escalation
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 `internal/graphify` is a library. `core.Route` does not escalate via the graph.

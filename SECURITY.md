@@ -21,7 +21,7 @@ This project runs as a PreToolUse hook inside AI coding agents (Claude Code, Cur
 
 ## Scope
 
-Security vulnerabilities in `harness-downshift` include:
+Security vulnerabilities in `downshift` include:
 
 - **Privilege escalation** — routing logic that bypasses or circumvents hook execution controls.
 - **Model & token injection** — unauthorized mutation of `updated_input.model` or `reasoning_effort` fields.
@@ -68,7 +68,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow.
 
 ## Dependencies
 
-`harness-downshift` has **zero external Go dependencies**. The binary is statically linked and safe to download and run offline.
+`downshift` has **zero external Go dependencies**. The binary is statically linked and safe to download and run offline.
 
 ```bash
 # View dependency graph

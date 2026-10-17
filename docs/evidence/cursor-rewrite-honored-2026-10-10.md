@@ -1,6 +1,6 @@
 # Cursor rewrite honor — 2026-10-10
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 One spawn on this machine, Cursor **3.24.9** build

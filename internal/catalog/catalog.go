@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-// Package catalog owns all model-ID data for harness-downshift.
+// Package catalog owns all model-ID data for Downshift.
 //
 // core never imports catalog. The dependency runs one way:
 //
@@ -110,7 +110,7 @@ func Load() *Catalog {
 func load(warning io.Writer) *Catalog {
 	base, err := decode(embeddedJSON)
 	if err != nil {
-		panic("harness-downshift: embedded catalog.json is invalid: " + err.Error())
+		panic("downshift: embedded catalog.json is invalid: " + err.Error())
 	}
 
 	// A user catalog is an override, not a replacement: preserve all embedded

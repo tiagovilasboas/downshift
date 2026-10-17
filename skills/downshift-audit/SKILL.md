@@ -40,4 +40,4 @@ Table: finding | evidence (command and the line you read) | suggested fix | conf
 
 Symptom-to-cause hints: [references/interpretation.md](references/interpretation.md).
 
-harness-downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift

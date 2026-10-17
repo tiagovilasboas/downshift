@@ -1,6 +1,6 @@
 # Harness x plan x rewrite-honored matrix
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 "Rewrite honored" means the harness executor applied the hook's model

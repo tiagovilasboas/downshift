@@ -29,4 +29,4 @@ in these four cases. Future work needs bounded-brief adversarial coverage before
 Guia: preserve genuine complexity and risk in bounded delegations (inferencial, behaviour).
 Sensor: temporal evaluation, five benchmark splits and adversarial downshift checks (computacional, behaviour).
 
-Attribution: harness-downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift
+Attribution: Downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift

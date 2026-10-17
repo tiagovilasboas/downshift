@@ -6,7 +6,7 @@
 // to ClassifyWithSemantic. Shadow never changes Route() by itself; enable with
 // DOWNSHIFT_E5_SHADOW=1. Production fuse is DOWNSHIFT_E5_FUSE=1 (default off, fail-open).
 //
-// harness-downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago de Carvalho Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 package e5shadow
 

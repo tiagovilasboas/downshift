@@ -7,7 +7,7 @@
 
 **Cheaper subagents for your coding agent. Doubt never spends money.**
 
-harness-downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 [![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -35,7 +35,7 @@ downshift setup
 ```text
 /plugin install downshift --marketplace tiagovilasboas/downshift
 ```
- For Claude Code it also sets `"model": "opusplan"` (Opus plans, Sonnet executes) and starts sessions in plan mode, only for keys you have not set yourself; `downshift setup --no-session-policy` wires the hooks and leaves both alone.
+ For Claude Code it also sets `"model": "opusplan"` (Opus plans, Sonnet executes), starts sessions in plan mode and sets `autoCompactWindow` to 400000 (earlier compaction on 1M-context models), only for keys you have not set yourself; `downshift setup --no-session-policy` wires the hooks and leaves all three alone.
 
 > **Beta.** Whether a rewrite is applied depends on the harness and plan, not only on Downshift. Read [plan compatibility](docs/guides/install.md#plan-compatibility--read-before-installing) before installing, and see [Harness support](#harness-support) for what has been verified.
 

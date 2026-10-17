@@ -2,7 +2,7 @@
 
 # Public capability scores
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Downshift keeps a local cache of public capability scores for the session

@@ -1,6 +1,6 @@
 # Billing linkage audit — 2026-10-09
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 ## Scope and limits

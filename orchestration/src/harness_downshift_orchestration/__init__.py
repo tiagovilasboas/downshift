@@ -1,4 +1,4 @@
-"""Local, opt-in LangGraph planning for harness-downshift."""
+"""Local, opt-in LangGraph planning for Downshift."""
 
 from .graph import SCHEMA_VERSION, build_graph, plan
 

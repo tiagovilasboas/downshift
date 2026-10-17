@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-// Package core is the harness-agnostic brain of harness-downshift.
+// Package core is the harness-agnostic brain of Downshift.
 // It classifies a task by complexity and maps it to the cheapest model tier
 // that can handle it. Adapters translate this decision into each harness's
 // own mechanism (Claude Code hook, Cursor frontmatter, etc).

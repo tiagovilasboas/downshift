@@ -1,6 +1,6 @@
 # Runtime and evidence task queue
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Execution snapshot: **2026-10-09** (open items from the 2026-10-11 review are listed at the end). These are the remaining tasks from the runtime

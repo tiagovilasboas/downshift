@@ -3,7 +3,7 @@
 
 package semantic_test
 
-// harness-downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago de Carvalho Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 
 import (

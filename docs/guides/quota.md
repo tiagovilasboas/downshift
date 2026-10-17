@@ -1,6 +1,6 @@
 # Observed usage quota
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Discovery answers which models a harness offers. Quota answers whether a fresh

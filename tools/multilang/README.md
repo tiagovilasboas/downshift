@@ -1,6 +1,6 @@
 # Private multilingual evaluation runner
 
-harness-downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift
+Downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift
 
 This offline development command measures a private, prelabelled fixture. It neither installs a model nor modifies runtime routing. Keep prompts, vectors, prototype training data, native-session metadata and detailed results in the private labs repository.
 

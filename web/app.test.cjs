@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
-// harness-downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago de Carvalho Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 
 const assert = require('node:assert/strict');

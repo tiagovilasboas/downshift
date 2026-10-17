@@ -11,7 +11,7 @@ labels: adapter
 
 ## Does it have subagents?
 
-<!-- harness-downshift controls the subagent's model at spawn time.
+<!-- Downshift controls the subagent's model at spawn time.
      If the harness is single-threaded (no subagents), it's out of scope. -->
 
 - [ ] Yes — it spawns subagents

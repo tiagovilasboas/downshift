@@ -3,7 +3,7 @@
 
 package core_test
 
-// harness-downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago de Carvalho Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 
 // Canonical M3 / H14 evaluation prompts (downshift-labs multilang m3-v1).

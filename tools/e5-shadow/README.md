@@ -1,6 +1,6 @@
 # E5 shadow embed helper
 
-harness-downshift by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
 Shadow-only path: set `DOWNSHIFT_E5_SHADOW=1` and point `DOWNSHIFT_E5_SHADOW_CMD` at a local embed helper. Production `ClassifyWithSemantic` / MiniLM is unchanged.

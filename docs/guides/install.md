@@ -1,6 +1,6 @@
 # Installation and harness setup
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Canonical guide for humans and coding agents installing Downshift on a user machine.
@@ -53,7 +53,7 @@ downshift setup --dry-run   # prints the diff for each harness found; writes not
 downshift setup             # asks first, backs up the files, then merges the hooks
 ```
 
-For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution) and `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) for keys you have not set; existing values are kept, and `--no-session-policy` skips both ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
+For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) and `"autoCompactWindow": 400000` (earlier auto-compact on 1M-context models, no effect on 200k ones) for keys you have not set; existing values are kept, and `--no-session-policy` skips all three ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
 
 **Step 3 — Check the classifier** on your own prompts:
 ```bash
@@ -184,9 +184,10 @@ or in two steps, `/plugin marketplace add tiagovilasboas/downshift` then
 `PostToolUse`, `PostToolUseFailure` and `SubagentStop` from
 [`hooks/hooks.json`](../../hooks/hooks.json) (each entry only calls the binary),
 adds the `downshift-setup`, `downshift-audit` and `cost-reducer` skills, and the
-command below as `/downshift:downshift`. It does not set `opusplan`, plan mode or
-the statusline: those are settings, not hooks. Set `"model": "opusplan"` and
-`"permissions": {"defaultMode": "plan"}` in `~/.claude/settings.json` yourself
+command below as `/downshift:downshift`. It does not set `opusplan`, plan mode,
+`autoCompactWindow` or the statusline: those are settings, not hooks. Set
+`"model": "opusplan"`, `"permissions": {"defaultMode": "plan"}` and
+`"autoCompactWindow": 400000` in `~/.claude/settings.json` yourself
 (or `/model opusplan` in a session) if you want them; see
 [main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code).
 

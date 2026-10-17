@@ -1,6 +1,6 @@
 # Close-out recheck — 2026-10-09
 
-harness-downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Afternoon recheck after `739ecec`. This records what was observed and what that

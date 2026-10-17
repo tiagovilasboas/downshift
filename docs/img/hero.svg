@@ -13,7 +13,7 @@
   <!-- ── LEFT PANEL ── -->
 
   <!-- Project name -->
-  <text x="52" y="88" fill="#e6edf3" font-size="40" font-weight="700" letter-spacing="-1">harness-downshift</text>
+  <text x="52" y="88" fill="#e6edf3" font-size="40" font-weight="700" letter-spacing="-1">Downshift</text>
 
   <!-- Tagline line 1 -->
   <text x="52" y="128" fill="#8b949e" font-size="18">Right-sized models for every subagent task.</text>

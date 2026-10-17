@@ -231,5 +231,5 @@ Não bloqueia launch; ordem sugerida:
 
 ---
 
-harness-downshift by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift

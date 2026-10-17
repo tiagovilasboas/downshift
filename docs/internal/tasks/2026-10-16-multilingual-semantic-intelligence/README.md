@@ -2,7 +2,7 @@
 
 # Multilingual semantic intelligence — diagnosis and execution contract
 
-harness-downshift by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
 **Status:** Phase A complete; **Phase D (E5 shadow) shipped** on `main` (`831829a`+). **Phase E contract frozen** (this doc §15): opt-in encoder fuse, default off. Implementation not started; no LLM in `Route()`/`Classify()`.  
@@ -250,7 +250,7 @@ No adapter routing logic; no catalog changes for semantic work.
 
 ## 14. Phase D env contract
 
-harness-downshift by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
 **Owner decision (frozen for Phase D):** observe **multilingual E5-small** embeddings through an **ONNX Runtime INT8** helper. Shadow is **opt-in** and **fail-open**. Production **`Route()`**, **`Classify()`**, **`ClassifyWithSemantic()`**, hook rewrites, and **`DOWNSHIFT_MINILM`** behaviour stay unchanged until Phase E.
@@ -324,7 +324,7 @@ Centroids and ONNX artifacts are built and versioned in **downshift-labs**; do n
 
 ## 15. Phase E env contract (opt-in encoder fuse)
 
-harness-downshift by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago de Carvalho Vilas Boas  
 https://github.com/tiagovilasboas/downshift
 
 **Owner decision (frozen 2026-10-16):** Phase E is an **opt-in** fuse of **intfloat/multilingual-e5-small** (ONNX Runtime INT8) into `ClassifyWithSemantic`. It is **not** a chat/completion LLM, **not** a second `Route()`, and **not** MiniLM raise-only. Default **off**. Fail-open. Kill switch = unset.
