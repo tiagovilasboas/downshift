@@ -23,6 +23,11 @@ func LastInTranscriptTail(path string, pick func(line []byte) string) string {
 	if path == "" || filepath.Ext(path) != ".jsonl" {
 		return ""
 	}
+	// Lstat before Open: opening a FIFO or device would block the hook until
+	// the harness timeout. A symlink is not followed either.
+	if fi, err := os.Lstat(path); err != nil || !fi.Mode().IsRegular() {
+		return ""
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		return ""

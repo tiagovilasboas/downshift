@@ -50,7 +50,9 @@ func NewProvider() *Provider {
 	return &Provider{
 		LookPath: exec.LookPath,
 		CommandRunner: func(ctx context.Context, name string, args ...string) ([]byte, error) {
-			return exec.CommandContext(ctx, name, args...).Output()
+			cmd := exec.CommandContext(ctx, name, args...)
+			cmd.WaitDelay = time.Second // a child that keeps stdout open cannot outlive the probe
+			return cmd.Output()
 		},
 	}
 }

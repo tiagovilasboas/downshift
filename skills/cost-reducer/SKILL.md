@@ -1,6 +1,6 @@
 ---
 name: cost-reducer
-description: Cut the tokens a coding-agent session spends, in a fixed order, with evidence first. Use when the user says they spend too much, hit usage limits, or ask how to save tokens or cost with Downshift. Diagnoses routing, fixed context, tool output and project policy; writes nothing without a yes.
+description: Reduce what a session spends with Downshift installed, in a fixed order with evidence first. Use only when the user names Downshift, or asks to cut subagent cost or tokens in a project where `downshift doctor` runs. Not for general billing questions. Diagnoses routing, fixed context, tool output and project policy; writes nothing without a yes.
 ---
 
 # Cost reducer

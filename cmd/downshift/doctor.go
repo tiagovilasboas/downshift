@@ -43,7 +43,9 @@ func defaultDoctorEnv(cat *catalog.Catalog) doctorEnv {
 	home, _ := os.UserHomeDir()
 	return doctorEnv{Home: home, Executable: os.Executable, LookPath: exec.LookPath,
 		Run: func(ctx context.Context, name string, args ...string) ([]byte, error) {
-			return exec.CommandContext(ctx, name, args...).Output()
+			cmd := exec.CommandContext(ctx, name, args...)
+			cmd.WaitDelay = time.Second
+			return cmd.Output()
 		},
 		Now: time.Now, Getenv: os.Getenv, Cat: cat}
 }

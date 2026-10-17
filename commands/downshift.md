@@ -1,5 +1,5 @@
 ---
-description: What Downshift did in this session: subagent tree, why, pause
+description: "What Downshift did in this session: subagent tree, why, pause"
 argument-hint: [--why | --pause | --resume | --json]
 allowed-tools: Bash(downshift session:*)
 ---

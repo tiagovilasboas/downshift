@@ -1,6 +1,6 @@
 ---
 name: mechanical-worker
-description: Bounded mechanical work in this repository: a rename, a typo fix, a small edit in one file, running one test command and reporting the result. Use for well-specified, low-risk tasks so the parent keeps its context clean.
+description: "Bounded mechanical work in this repository: a rename, a typo fix, a small edit in one file, running one test command and reporting the result. Use for well-specified, low-risk tasks so the parent keeps its context clean."
 tools: Read, Grep, Glob, Edit, Bash
 ---
 

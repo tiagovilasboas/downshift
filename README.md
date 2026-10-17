@@ -269,7 +269,7 @@ Every feature must serve every harness: behaviour in shared layers, adapters onl
 
 ## Status
 
-**Beta (v0.1.0-beta.13).** The adapters ship, but the limiting factor is often harness or plan support rather than the router. As of 2026-10-15 no beta-exit pillar is closed: real spawns are verified on Claude Code (and observed on Antigravity and KiroCrew), there is no external operator yet, usage-linked cost is 5 of 50 records, and the routing-quality benchmark has no new blind set. The first routed-versus-control measurement is in [the evidence](docs/evidence/subagent-routing-ab-2026-10-15.md). Exit criteria are tracked in [docs/reference/beta-exit.md](docs/reference/beta-exit.md).
+**Beta (v0.1.0-beta.14).** The adapters ship, but the limiting factor is often harness or plan support rather than the router. As of 2026-10-15 no beta-exit pillar is closed: real spawns are verified on Claude Code (and observed on Antigravity and KiroCrew), there is no external operator yet, usage-linked cost is 5 of 50 records, and the routing-quality benchmark has no new blind set. The first routed-versus-control measurement is in [the evidence](docs/evidence/subagent-routing-ab-2026-10-15.md). Exit criteria are tracked in [docs/reference/beta-exit.md](docs/reference/beta-exit.md).
 
 ## License
 

@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -65,7 +66,9 @@ func DefaultConfig() Config {
 	var cfg Config
 	cfg.Enabled = true
 	cfg.Provider = "native"
-	cfg.ActiveHarness = []string{"claude-code", "cursor", "codex", "antigravity", "kirocrew"}
+	for _, nc := range core.AllHarnessCaps() {
+		cfg.ActiveHarness = append(cfg.ActiveHarness, nc.Harness)
+	}
 	cfg.Scope.MainAgent = true
 	cfg.Scope.SpawnedAgents = true
 	cfg.Safety.PreserveOriginalOutput = true

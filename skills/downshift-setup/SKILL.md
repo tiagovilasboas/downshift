@@ -6,8 +6,9 @@ description: Install or repair Downshift hooks on the user's machine for any har
 # Downshift setup
 
 Assisted, never silent. Every write outside the repository is shown as a diff and
-waits for the user's yes. Never read or print task prompts. Delete this skill
-after the install works: it is for the first day, not for every session.
+waits for the user's yes. Never read or print task prompts. This skill is for the
+first day: once `downshift doctor` is clean, ignore it (a hand-copied install can
+delete it; the plugin copy stays and costs one description line).
 
 ## 1. Binary
 
@@ -15,8 +16,9 @@ after the install works: it is for the first day, not for every session.
    (macOS / Linux) or the Releases page or `go install`; see `docs/guides/install.md`.
 2. Claude Code only: the plugin (`/plugin marketplace add tiagovilasboas/downshift`, then
    `/plugin install downshift@downshift`) wires the same hooks and the `/downshift` command
-   without touching `~/.claude/settings.json`. Use one path, plugin or `setup`, not both;
-   `downshift doctor` warns when both are wired.
+   without touching `~/.claude/settings.json`; its command is `/downshift:downshift`. Use one
+   path, plugin or `setup`, not both: `setup` skips the hooks when it sees the plugin enabled,
+   and `downshift doctor` warns when both are wired.
 
 ## 2. Hooks
 
