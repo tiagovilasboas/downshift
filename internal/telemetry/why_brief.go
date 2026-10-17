@@ -10,9 +10,6 @@ import "strings"
 var briefWords = map[string]string{
 	ReasonNoSignal:             "no clear signal",
 	ReasonSemanticBoost:        "raised by meaning-based matching",
-	ReasonE5Boost:              "raised by the multilingual encoder",
-	ReasonE5Abstain:            "multilingual encoder withheld confidence",
-	ReasonGraphEscalation:      "wide change in the dependency graph",
 	ReasonNBUpshiftApplied:     "raised by the second-opinion model",
 	ReasonNBDownshiftApplied:   "lowered by the second-opinion model",
 	ReasonTierFloor:            "project tier floor",

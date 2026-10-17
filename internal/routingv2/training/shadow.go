@@ -17,15 +17,9 @@ type ShadowReport struct {
 	LoadErrors int                `json:"load_errors"`
 	Invalid    int                `json:"invalid_observations"`
 	Models     []ShadowModelStats `json:"models"`
-	// E5Shadow and E5Fuse summarise the multilingual E5 objects on the
-	// telemetry log (SummarizeE5). Nil, and absent from the JSON, when no
-	// event carries them, so a report over a log without E5 is unchanged.
-	E5Shadow *E5ShadowSummary `json:"e5_shadow,omitempty"`
-	E5Fuse   *E5FuseSummary   `json:"e5_fuse,omitempty"`
 }
 
-// WriteText renders the report for a human: the candidate classifier
-// section, then "E5 shadow" and "E5 fuse" only when that summary exists.
+// WriteText renders the report for a human.
 func (r ShadowReport) WriteText(w io.Writer) {
 	fmt.Fprintf(w, "Candidate classifier\n")
 	fmt.Fprintf(w, "  load errors         %8d  invalid observations %d\n", r.LoadErrors, r.Invalid)
@@ -40,14 +34,6 @@ func (r ShadowReport) WriteText(w io.Writer) {
 			m.ReviewedOutcomes, m.ProductionFailures, m.Labeled, m.ProductionCorrect, m.RawCorrect, m.PolicyCorrect)
 		fmt.Fprintf(w, "    under tier: production %d  raw %d  policy %d  frontier labels %d  frontier->small: raw %d  policy %d\n",
 			m.ProductionUnderTier, m.RawUnderTier, m.PolicyUnderTier, m.FrontierLabels, m.RawFrontierToSmall, m.PolicyFrontierToSmall)
-	}
-	if r.E5Shadow != nil {
-		fmt.Fprintf(w, "\n")
-		r.E5Shadow.writeText(w)
-	}
-	if r.E5Fuse != nil {
-		fmt.Fprintf(w, "\n")
-		r.E5Fuse.writeText(w)
 	}
 }
 

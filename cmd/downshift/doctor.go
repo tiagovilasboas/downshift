@@ -20,7 +20,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/semantic/e5shadow"
+	"github.com/tiagovilasboas/downshift/internal/semantic"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -196,8 +196,6 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 	checkCatalog(rep, env)
 	checkScores(rep)
 	checkContext(rep, env)
-	checkE5Shadow(rep, env)
-
 	for _, note := range modelOverrideNotes(core.AllHarnessCaps(), env.Getenv) {
 		name := strings.TrimPrefix(note, "model_override_env: ")
 		if i := strings.Index(name, "="); i > 0 {
@@ -332,61 +330,6 @@ func checkScores(rep *doctorReport) {
 	rep.add(doctorCheck{ID: "scores cache", Status: status, Detail: line, Fix: fix})
 }
 
-func checkE5Shadow(rep *doctorReport, env doctorEnv) {
-	shadow := strings.TrimSpace(env.Getenv(e5shadow.EnableEnv)) == "1"
-	fuse := strings.TrimSpace(env.Getenv(e5shadow.IntegrateEnv)) == "1"
-	if !shadow && !fuse {
-		return
-	}
-	id := "e5 shadow"
-	switch {
-	case fuse && shadow:
-		id = "e5 encoder"
-	case fuse:
-		id = "e5 fuse"
-	}
-	cmd := e5shadow.EmbedCmdFrom(env.Getenv)
-	proto := strings.TrimSpace(env.Getenv(e5shadow.PrototypesEnv))
-	if cmd == "" {
-		rep.add(doctorCheck{
-			ID:     id,
-			Status: doctorWarn,
-			Detail: "E5 enabled but embed cmd is empty (fail-open; fuse needs DOWNSHIFT_E5_CMD, shadow needs DOWNSHIFT_E5_SHADOW_CMD)",
-			Fix:    "set DOWNSHIFT_E5_CMD (fuse) and/or DOWNSHIFT_E5_SHADOW_CMD (shadow) to a local ONNX helper",
-		})
-		return
-	}
-	if !e5shadow.CmdTrusted(cmd) {
-		rep.add(doctorCheck{
-			ID:     id,
-			Status: doctorWarn,
-			Detail: "E5 command is not a trusted local helper (absolute binary or python3 + absolute script)",
-			Fix:    "use an absolute path to a reviewed embed helper; never curl/wget/sh -c",
-		})
-		return
-	}
-	if proto == "" {
-		rep.add(doctorCheck{
-			ID:     id,
-			Status: doctorWarn,
-			Detail: "DOWNSHIFT_E5_PROTOTYPES is empty",
-			Fix:    "set DOWNSHIFT_E5_PROTOTYPES to a labs-built PrototypeStore JSON under ~/.downshift/",
-		})
-		return
-	}
-	detail := "shadow enabled with local helper and prototypes path configured"
-	if fuse && !shadow {
-		detail = "fuse enabled with local helper and prototypes path configured"
-	} else if fuse && shadow {
-		detail = "fuse+shadow enabled with local helper and prototypes path configured"
-	}
-	rep.add(doctorCheck{
-		ID:     id,
-		Status: doctorOK,
-		Detail: detail,
-	})
-}
-
 func checkContext(rep *doctorReport, env doctorEnv) {
 	optCfg, _ := contextopt.LoadConfig()
 	if optCfg.Enabled {
@@ -396,11 +339,10 @@ func checkContext(rep *doctorReport, env doctorEnv) {
 	}
 	checkCompanion(rep, env, optCfg)
 	if env.Verbose {
-		cmd := env.Getenv("DOWNSHIFT_MINILM_EMBED")
-		if cmd != "" && cmd != "hash" {
-			rep.add(doctorCheck{ID: "semantic boost", Status: doctorOK, Detail: "external command configured (" + cmd + ", hash fallback on failure)"})
+		if semantic.Enabled() {
+			rep.add(doctorCheck{ID: "semantic boost", Status: doctorOK, Detail: "in-process hash embedder (DOWNSHIFT_MINILM not off)"})
 		} else {
-			rep.add(doctorCheck{ID: "semantic boost", Status: doctorOK, Detail: "in-process hash embedder (default, zero-dependency)"})
+			rep.add(doctorCheck{ID: "semantic boost", Status: doctorOK, Detail: "disabled (DOWNSHIFT_MINILM=0)"})
 		}
 	}
 }

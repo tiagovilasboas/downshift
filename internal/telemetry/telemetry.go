@@ -441,37 +441,6 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 			Applied:  d.Shadow.NBDownshift.Applied,
 		}
 	}
-	if e5 := d.Shadow.E5Shadow; e5.ErrorCode != "" || e5.ModelID != "" {
-		sim := e5.Similarity
-		if math.IsNaN(sim) || math.IsInf(sim, 0) {
-			sim = 0
-		}
-		lat := e5.LatencyMs
-		if math.IsNaN(lat) || math.IsInf(lat, 0) || lat < 0 {
-			lat = 0
-		}
-		ev.E5Shadow = &E5ShadowRecord{
-			ModelID:        e5.ModelID,
-			NearestLabel:   e5.NearestLabel,
-			Similarity:     math.Round(sim*1e4) / 1e4,
-			WouldLabel:     e5.WouldLabel,
-			WouldLift:      e5.WouldLift,
-			RegexLabel:     e5.RegexLabel,
-			RegexConfident: e5.RegexConfident,
-			LatencyMs:      lat,
-			ErrorCode:      e5.ErrorCode,
-		}
-	}
-	if f := d.E5Fuse; f.Enabled {
-		ev.E5Fuse = &E5FuseRecord{
-			ModelID:      f.ModelID,
-			NearestLabel: f.NearestLabel,
-			Similarity:   finiteRounded(f.Similarity),
-			Action:       f.Action,
-			LatencyMs:    finiteNonNegative(f.LatencyMs),
-			ErrorCode:    f.ErrorCode,
-		}
-	}
 	return ev
 }
 
@@ -848,7 +817,7 @@ func frontierOnDoubt(codes []string) bool {
 		switch c {
 		case ReasonClassifierUnconfident:
 			unconfident = true
-		case ReasonRiskFloor, ReasonGraphEscalation, ReasonNBUpshiftApplied, ReasonTierFloor:
+		case ReasonRiskFloor, ReasonNBUpshiftApplied, ReasonTierFloor:
 			return false
 		}
 	}

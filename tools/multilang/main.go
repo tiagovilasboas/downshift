@@ -72,8 +72,8 @@ func run() error {
 	}
 	if *helperProbe != "" {
 		start := time.Now()
-		v, probeErr := (semantic.CmdEmbedder{Cmd: *helperProbe}).Embed(fixture.Items[0].Prompt)
-		return json.NewEncoder(os.Stdout).Encode(map[string]any{"milliseconds": float64(time.Since(start).Nanoseconds()) / 1e6, "success": probeErr == nil, "dimensions": len(v), "measurement": "existing CmdEmbedder one-second timeout; no fallback vector counted as candidate success"})
+		v, probeErr := semantic.HashEmbedder{}.Embed(fixture.Items[0].Prompt)
+		return json.NewEncoder(os.Stdout).Encode(map[string]any{"milliseconds": float64(time.Since(start).Nanoseconds()) / 1e6, "success": probeErr == nil, "dimensions": len(v), "measurement": "hash embedder in-process probe (helperProbe flag kept for CLI compat)"})
 	}
 	var vecs map[string][]float64
 	var store semantic.PrototypeStore

@@ -7,7 +7,7 @@
 // is low (Jev/Laya-style decision layer beside generation).
 //
 // On by default. Opt out with DOWNSHIFT_MINILM=0.
-// The local hash embedder always runs. DOWNSHIFT_MINILM_EMBED may point at
+// The in-process hash embedder always runs when enabled.
 // tools/minilm/embed_stdin.py; if that command fails, hash is the fallback.
 package semantic
 

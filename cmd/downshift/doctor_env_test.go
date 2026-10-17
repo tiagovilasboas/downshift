@@ -13,7 +13,6 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/semantic/e5shadow"
 )
 
 func envOf(m map[string]string) func(string) string {
@@ -48,26 +47,6 @@ func TestModelOverrideNotesAreDrivenByCapabilities(t *testing.T) {
 	got := modelOverrideNotes(caps, envOf(map[string]string{"FUTURE_MODEL": "m1"}))
 	if len(got) != 1 || !strings.Contains(got[0], "future-harness") {
 		t.Fatalf("notes = %v", got)
-	}
-}
-
-func TestCheckE5ShadowWarnsWhenMisconfigured(t *testing.T) {
-	rep := &doctorReport{}
-	checkE5Shadow(rep, doctorEnv{Getenv: envOf(map[string]string{
-		e5shadow.EnableEnv: "1",
-	})})
-	if len(rep.Checks) != 1 || rep.Checks[0].Status != doctorWarn {
-		t.Fatalf("checks = %+v", rep.Checks)
-	}
-}
-
-func TestCheckE5FuseWarnsWhenMisconfigured(t *testing.T) {
-	rep := &doctorReport{}
-	checkE5Shadow(rep, doctorEnv{Getenv: envOf(map[string]string{
-		e5shadow.IntegrateEnv: "1",
-	})})
-	if len(rep.Checks) != 1 || rep.Checks[0].Status != doctorWarn || rep.Checks[0].ID != "e5 fuse" {
-		t.Fatalf("checks = %+v", rep.Checks)
 	}
 }
 

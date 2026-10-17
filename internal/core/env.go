@@ -61,8 +61,7 @@ import (
 //	                                         Name comes from the capability
 //	                                         table, never a branch.
 //
-// Only the variables above are read here. DOWNSHIFT_E5_FUSE, DOWNSHIFT_E5_CMD
-// and the like are mentioned in e5_*.go comments but not read by core.
+// Only the variables above are read here.
 const (
 	// EnvSessionModels is the operator session allowlist path.
 	EnvSessionModels = "DOWNSHIFT_SESSION_MODELS"

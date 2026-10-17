@@ -88,15 +88,15 @@ Historical P3.4 finding (2026-10-06; superseded counts and current provenance in
 | P4.5 | 500-task seed+holdout net existed (200+300); datasets moved to **downshift-labs** since v0.1.0-beta.7; public [benchmark/report.md](../../benchmark/report.md). | curation | [x] |
 | P4.6 | `downshift benchmark --report` + `--gate` exist and can pass on the in-tree files. They gate the burned net, not unseen traffic. | eng | [x] |
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
-| P4.8 | Graphify **MCP fetcher** for KiroCrew (optional; measure FRONTIER→MID delta) | eng | [ ] deferred 2026-10-09, not done. `DOWNSHIFT_GRAPHIFY_CMD` command fetcher stays fail-open; native MCP socket still optional. Out of the quota close-out. |
-| P4.9 | **MiniLM semantic boost on by default** (local hash; external embed falls back to hash; `DOWNSHIFT_MINILM=0` opts out — `docs/design/minilm-semantic.md`) | eng | [x] |
+| P4.8 | ~~Graphify MCP fetcher~~ | eng | [x] removed 2026-10-17 (out of product scope) |
+| P4.9 | **Hash semantic boost on by default** (`DOWNSHIFT_MINILM=0` opts out — `docs/design/minilm-semantic.md`) | eng | [x] |
 | P4.10 | Retrain prototypes with `sentence-transformers` + measure tier accuracy delta on holdout (`benchmark/minilm-holdout.json`) | eng | [x] |
 
 **Exit (not met on this dataset):** P4.5 regression files live in private **downshift-labs** (`ci-eval` gates). The public repo ships [benchmark/report.md](../../benchmark/report.md) only. Historical note (2026-10-04, `eb116ed`): holdout was a burned regression net (template stems, post-holdout signal tuning to 100% tier accuracy), not proof of generalization. Do not remove the beta label on that dataset alone.
 
 **P4 status (2026-10-15):** open. The beta.14 hardening audit leaves every split's classifier output unchanged (before and after); the abstention split is reported separately, see [evidence/hardening-audit-2026-10-15.md](../evidence/hardening-audit-2026-10-15.md). The seed and the shared-memory floor are recomputed at 37/40 (the floor moved from 38/40 on purpose when the semantic boost stopped lifting prompts with no regex signal). Two eval-only splits are published as aggregates in [benchmark/report.md](../../benchmark/report.md) (`fresh` 50.0%, `heldout2` 40.0%, classifier commit `5a888e7`, 2026-10-10). Still missing: a new blind set of 200 or more tasks that is never tuned against.
 
-P4.3's checked box is the library, not graph-aware routing on the hook. `TestHint_NilFetcher_OfflineMode` shows a nil fetcher never escalates. See [graphify-integration.md](../design/graphify-integration.md).
+P4.3 Graphify was removed from the product on 2026-10-17 to keep the hook lean (regex + hash semantic boost only).
 
 ---
 

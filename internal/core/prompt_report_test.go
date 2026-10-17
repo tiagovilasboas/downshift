@@ -38,7 +38,6 @@ func TestPromptReport(t *testing.T) {
 		Written       bool           `json:"written_when_model_unknown"`
 		HeldBy        []string       `json:"held_by,omitempty"`
 		RiskFloor     bool           `json:"risk_floor,omitempty"`
-		GraphEsc      bool           `json:"graph_escalated,omitempty"`
 		NoSignal      bool           `json:"no_signal"`
 		Scores        map[string]int `json:"scores"`
 		Chars         int            `json:"prompt_chars"`
@@ -67,7 +66,7 @@ func TestPromptReport(t *testing.T) {
 				ID: c.ID, File: filepath.Base(f), Prompt: c.Prompt, DevDifficulty: c.DevDifficulty,
 				Complexity: d.Complexity.String(), Tier: d.Tier.String(), Effort: d.Effort.String(),
 				Confident: d.Confident, Written: checkWrites(d), HeldBy: d.Corrections,
-				RiskFloor: d.Guards.RiskFloor, GraphEsc: d.Guards.GraphEscalated, Chars: len(c.Prompt),
+				RiskFloor: d.Guards.RiskFloor, Chars: len(c.Prompt),
 				NoSignal: cls.NoSignal, Scores: scoreMap(cls.Scores),
 			})
 		}

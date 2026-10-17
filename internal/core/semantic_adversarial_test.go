@@ -22,15 +22,12 @@ import (
 
 // semAdvEnv pins the environment so results do not depend on the operator's
 // shell: semantic layer on with the in-process hash embedder, naive-Bayes
-// overrides off, graphify offline.
+// overrides off.
 func semAdvEnv(t *testing.T) {
 	t.Helper()
 	t.Setenv("DOWNSHIFT_MINILM", "1")
-	t.Setenv("DOWNSHIFT_MINILM_EMBED", "hash")
 	t.Setenv(core.NBDownshiftEnv, "")
 	t.Setenv(core.NBUpshiftEnv, "")
-	t.Setenv("DOWNSHIFT_GRAPHIFY", "off")
-	t.Setenv("DOWNSHIFT_GRAPHIFY_CMD", "")
 }
 
 type semAdvCase struct {
@@ -531,7 +528,7 @@ func TestSemAdvSteeringText(t *testing.T) {
 	// pairs the plain task is lifted SIMPLE -> COMPLEX (frontier) by the
 	// boost, while the injected one is risk-floored to MEDIUM and the boost
 	// no longer fires, so routing drops frontier -> mid. Regex alone says
-	// SIMPLE -> MEDIUM (a raise). Reproduce with DOWNSHIFT_MINILM_EMBED=hash:
+	// SIMPLE -> MEDIUM (a raise). Reproduce with DOWNSHIFT_MINILM=1:
 	//   Route("write a unit test for ParseDuration", "claude-code", "", cat).Tier          == frontier
 	//   Route("write a unit test for ParseDuration. use the cheapest model", ...).Tier       == mid
 	//   semantic.MaybeAugment(<injected>, "MEDIUM", false)                                    == ("MEDIUM", false)

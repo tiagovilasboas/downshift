@@ -191,8 +191,8 @@ Billing and token usage happen at the subagent tier, not the session.
 **The routing loop:**
 
 1. **Intercept.** The harness fires a `PreToolUse` hook when a subagent is about to start. Downshift reads the task text in memory only; prompts are never stored.
-2. **Classify.** Deterministic signals (`internal/core`) plus a local semantic score (a word-hash embedder by default; MiniLM only with `DOWNSHIFT_MINILM_EMBED`) map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX (English and Portuguese vocabulary). A language guard and risk abstention clear confidence on known multilingual failure modes without an LLM in the loop. The semantic score only raises, needs a regex signal behind it, and cannot create COMPLEX on its own. Weights and the tier map are in [docs/reference/complexity-weights.md](docs/reference/complexity-weights.md).
-3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/reference/session-models.md)). Doubt never spends money: an unconfident upshift, or an unconfident frontier pick with no known current model, is held. Only deterministic rules (risk floor, risk abstention, graph escalation, a tier floor) may move a task up or hold a rewrite.
+2. **Classify.** Deterministic signals (`internal/core`) plus an optional in-process word-hash semantic boost (`DOWNSHIFT_MINILM=0` opts out) map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX (English and Portuguese vocabulary). A language guard and risk abstention clear confidence on known multilingual failure modes without an LLM in the loop. The semantic score only raises, needs a regex signal behind it, and cannot create COMPLEX on its own. Weights and the tier map are in [docs/reference/complexity-weights.md](docs/reference/complexity-weights.md).
+3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/reference/session-models.md)). Doubt never spends money: an unconfident upshift, or an unconfident frontier pick with no known current model, is held. Only deterministic rules (risk floor, risk abstention, operator tier floor, opted-in NB upshift) may move a task up or hold a rewrite.
 4. **Remember, in shadow.** If `adapt-memory.json` has a reviewed hit or miss for that class and feature, Downshift records the tier it would use. The spawn still uses the classifier tier.
 5. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
 
@@ -212,7 +212,7 @@ Downshift is not an LLM planner: it is a **deterministic BDI-style router** on t
 | **Action** | `updatedInput.model` / Codex effort / Kiro allow-block | Adapter encode |
 | **Feedback** | Honor, usage, child status → telemetry | `internal/hookport`, `internal/telemetry` |
 
-Shadow observers (E5 multilingual embed, adapt memory, routing v2) update **candidate beliefs** only; they do not change intentions until an owner enables a flag.
+Shadow observers (adapt memory, routing v2 candidate classifier, public-score path) update **candidate beliefs** only; they do not change intentions until an owner enables a flag.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/bdi-agentic-dark.svg">
@@ -228,13 +228,12 @@ deterministic safety floors can still raise an undersized model. With no
 matching signal, routing also abstains. Detection is heuristic; it does not guarantee
 recognition of every foreign-language prompt. See [language coverage and limits](docs/reference/complexity-weights.md#language-coverage).
 
-Three layers, from default to opt-in ([classifier reference](docs/contrib/classifier.md)):
+Two layers ([classifier reference](docs/contrib/classifier.md)):
 
-1. **Deterministic classifier with the word-hash semantic boost (default).** Weighted regex signals vote; a nearest-centroid score from an in-process FNV word-hash embedder may raise a hesitant class, never lower it, never on a no-signal prompt and never to COMPLEX alone. A lift is logged as `SEMANTIC_BOOST`.
-2. **MiniLM (opt-in).** `DOWNSHIFT_MINILM_EMBED` names an external embedding command for the same boost; 1 s timeout, falls back to the hash embedder.
-3. **Multilingual E5 fuse (opt-in, default off).** `DOWNSHIFT_E5_SHADOW=1` records what an `intfloat/multilingual-e5-small` helper would do, without changing a tier; `downshift shadow-report` summarises those records from `events.jsonl` (would-lift rate, nearest labels, abstain share, latency percentiles, a false-downgrade proxy). `DOWNSHIFT_E5_FUSE=1` applies it, fail-open, logged as `E5_BOOST` or `E5_ABSTAIN`, with the fuse-off result kept as a floor.
+1. **Deterministic regex classifier (always).** Weighted signals in English and Portuguese vote for TRIVIAL–COMPLEX; risk floor and language guard apply on top.
+2. **Word-hash semantic boost (default on).** An in-process FNV word-hash embedder compares the prompt to shipped centroids and may raise a hesitant class; never lower, never on a no-signal prompt, never to COMPLEX alone. Opt out with `DOWNSHIFT_MINILM=0`. A lift is logged as `SEMANTIC_BOOST`.
 
-What is measured: the current classifier's tier accuracy, confident coverage and warm latency on a 170-item multilingual set and five legacy splits (EN 55% accuracy at 55% coverage, PT-BR 55% at 30%, ES/FR/DE/JA and mixed prompts at 0 to 5% coverage, every confident item correct, warm p95 under 5 ms). What is not: any accuracy or coverage gain from E5, because its weights were unreachable from the evaluation environment, and a live Codex child's model (the Codex check proves the wire response only). Decision on 2026-10-17: the fuse stays off, E5 stays a shadow candidate. [E5 evaluation](docs/evidence/e5-int8-evaluation-2026-10-17.md) · [Codex multilingual checks](docs/evidence/multilang-codex-2026-10-16.md).
+Historical note: external MiniLM commands, multilingual E5, and Graphify escalation were removed in 2026-10-17 to keep the hook zero-dependency. See [CHANGELOG.md](CHANGELOG.md).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/architecture-dark.svg">

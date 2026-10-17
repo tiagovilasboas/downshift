@@ -18,7 +18,6 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/scoreindex"
 	"github.com/tiagovilasboas/downshift/internal/semantic"
-	"github.com/tiagovilasboas/downshift/internal/semantic/e5shadow"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -178,24 +177,9 @@ func buildConfigReport(getenv func(string) string, now time.Time, cat *catalog.C
 
 	// Semantic boost.
 	if semantic.Enabled() {
-		add(configEntry{Key: "semantic_boost", Value: "on", Source: cfgDefault, Env: "DOWNSHIFT_MINILM"})
+		add(configEntry{Key: "semantic_boost", Value: "on (hash embedder)", Source: cfgDefault, Env: "DOWNSHIFT_MINILM"})
 	} else {
 		add(configEntry{Key: "semantic_boost", Value: "off", Source: cfgEnv, Env: "DOWNSHIFT_MINILM"})
-	}
-	if v, ok := envVal(getenv, "DOWNSHIFT_MINILM_EMBED"); ok && v != "hash" {
-		add(configEntry{Key: "semantic_embedder", Value: "command (falls back to hash)", Source: cfgEnv, Env: "DOWNSHIFT_MINILM_EMBED"})
-	} else {
-		add(configEntry{Key: "semantic_embedder", Value: "hash", Source: cfgDefault, Env: "DOWNSHIFT_MINILM_EMBED"})
-	}
-	if strings.TrimSpace(getenv(e5shadow.IntegrateEnv)) == "1" {
-		add(configEntry{Key: "e5_fuse", Value: "on", Source: cfgEnv, Env: e5shadow.IntegrateEnv, Note: "multilingual encoder in ClassifyWithSemantic; fail-open"})
-	} else {
-		add(configEntry{Key: "e5_fuse", Value: "off", Source: cfgDefault, Env: e5shadow.IntegrateEnv})
-	}
-	if strings.TrimSpace(getenv(e5shadow.EnableEnv)) == "1" {
-		add(configEntry{Key: "e5_shadow", Value: "on", Source: cfgEnv, Env: e5shadow.EnableEnv, Note: "observation only"})
-	} else {
-		add(configEntry{Key: "e5_shadow", Value: "off", Source: cfgDefault, Env: e5shadow.EnableEnv})
 	}
 
 	// Inferred session.

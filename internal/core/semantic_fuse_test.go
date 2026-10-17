@@ -21,7 +21,6 @@ func TestClassifyWithSemantic_DisabledMatchesClassify(t *testing.T) {
 
 func TestClassifyWithSemantic_EnabledCanRaise(t *testing.T) {
 	t.Setenv("DOWNSHIFT_MINILM", "1")
-	t.Setenv("DOWNSHIFT_MINILM_EMBED", "hash")
 
 	prompt := "implement streaming pipeline for processing 1M events/sec"
 	base := core.Classify(prompt)

@@ -1,39 +1,43 @@
-# MiniLM semantic boost (P4.9)
+# Semantic boost — in-process word hash
 
-Local embedding layer beside the regex classifier — on by default, no LLM.
-Same role as a small decision model (Jev/Laya): finite labels only.
+Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-## Paths (public OSS)
+The optional semantic layer raises complexity when regex confidence is low. It
+runs **inside the Go binary**: no Python, no ONNX, no subprocess on the hook path.
 
-| Path | Role |
-|------|------|
-| `internal/semantic/` | Prototypes, hash/MiniLM embedder, `MaybeAugment` |
-| `internal/semantic/data/prototypes.json` | Embedded hash centroids (shipped in binary) |
-| `internal/core/semantic_fuse.go` | Wires boost into `Route` / `ClassifyWithSemantic` |
+## Algorithm
 
-## Default runtime
+1. Tokenise the prompt (lowercase words).
+2. For each word, update a 384-dimensional vector using **FNV-1a 64-bit** (see
+   `internal/semantic/hashembed.go`).
+3. L2-normalise the vector.
+4. Nearest centroid in `internal/semantic/data/prototypes.json` (cosine similarity).
+5. If similarity ≥ `MinSimilarity` (0.45), the semantic label ranks above the regex
+   label, and the regex result was not confident, raise the label (monotonic).
+6. Never downgrade; never lift a **no-signal** Medium default; never create
+   **COMPLEX** unless regex already scored Complex.
 
-Semantic boost is **on**. The shipped **hash** embedder runs in-process (no Python, no network).
+## Operator knob
 
 ```bash
-export DOWNSHIFT_MINILM=0          # disable boost
-export DOWNSHIFT_MINILM_EMBED="…"  # optional external embed command; hash fallback on failure
+# Default: boost on
+export DOWNSHIFT_MINILM=0   # opt out entirely
 ```
 
-Rules:
+`downshift config` shows `semantic_boost` as `on (hash embedder)` when enabled.
 
-- **Local first** — hash prototypes are embedded in the binary.
-- **Fallback** — external embed failure returns to hash.
-- **Monotonic** — semantic never downgrades; only raises when regex is unconfident.
-- **Needs regex evidence** — a prompt with no regex signal (`NoSignal`) is never lifted, and the boost can never produce COMPLEX on its own: Complex needs a regex signal, the risk floor or graph escalation. The hash centroids are nearly parallel, so its nearest class on a weak-signal prompt is close to noise.
-- **Visible** — a lift sets `Decision.Guards.SemanticLift` and the reason code `SEMANTIC_BOOST`; `downshift stats` shows its share.
-- **No prompts in telemetry** — unchanged privacy contract.
+## Telemetry
 
-## Maintainer training (private)
+A lift clears classifier confidence and adds reason code `SEMANTIC_BOOST`.
 
-Refreshing hash prototypes, training neural centroids, and holdout eval scripts
-live in **downshift-labs** (`tools/minilm/`). Published neural vs hash numbers:
-[benchmark/report.md](../../benchmark/report.md).
+## Retraining centroids
 
-Do not commit maintainer benchmark JSON to this repo; see
-[benchmark/eval-private.md](../../benchmark/eval-private.md).
+Maintainers can rebuild hash prototypes from labelled fixtures (see
+`semantic.RefreshHashPrototypesFromBenchmark` and `benchmark/README.md`). That
+does not change runtime behaviour until `prototypes.json` is updated in the repo.
+
+## Removed (2026-10-17)
+
+External MiniLM embed commands (`DOWNSHIFT_MINILM_EMBED`), multilingual E5
+shadow/fuse, and Graphify escalation were removed to keep Downshift focused on
+deterministic token optimisation for spawned subagents.

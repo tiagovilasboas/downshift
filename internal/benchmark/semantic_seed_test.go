@@ -20,7 +20,6 @@ func TestSeedDataset_MiniLM_ImprovesTierOrSafety(t *testing.T) {
 	regexOnly := benchmark.RunWithClassifier(tasks, core.Classify, io.Discard)
 
 	t.Setenv("DOWNSHIFT_MINILM", "1")
-	t.Setenv("DOWNSHIFT_MINILM_EMBED", "hash")
 	withMiniLM := benchmark.Run(tasks, io.Discard)
 
 	regexTier := benchmark.TierAccuracy(regexOnly)

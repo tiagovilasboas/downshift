@@ -134,15 +134,15 @@ func TestReasonCodes_EveryRuleHasACode(t *testing.T) {
 			CreditHeld: true,
 		},
 		Guards: core.Guards{
-			GraphEscalated: true,
-			PolicyFloor:    true,
+			RiskFloor:   true,
+			PolicyFloor: true,
 		},
 		Shadow: core.Shadow{
 			NBUpshift:   core.NBUpshift{Would: true, Applied: true},
 			NBDownshift: core.NBDownshift{Would: true, Applied: false},
 		},
 	})
-	want := []string{"CLASSIFIER_UNCONFIDENT", "CREDIT_HELD", "GRAPH_ESCALATION", "NB_UPSHIFT_APPLIED", "TIER_FLOOR"}
+	want := []string{"CLASSIFIER_UNCONFIDENT", "CREDIT_HELD", "NB_UPSHIFT_APPLIED", "RISK_FLOOR", "TIER_FLOOR"}
 	if !reflect.DeepEqual(lifts, want) {
 		t.Errorf("lift codes = %v, want %v (a shadow-only NB opinion is not a reason)", lifts, want)
 	}

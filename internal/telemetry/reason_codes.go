@@ -22,12 +22,9 @@ const (
 	ReasonClassifierUnconfident = "CLASSIFIER_UNCONFIDENT"
 	ReasonNoSignal              = "NO_SIGNAL"
 	ReasonSemanticBoost         = "SEMANTIC_BOOST"
-	ReasonE5Boost               = "E5_BOOST"
-	ReasonE5Abstain             = "E5_ABSTAIN"
 	ReasonUnsupportedLanguage   = "UNSUPPORTED_LANGUAGE"
 	ReasonRiskCategory          = "RISK_CATEGORY"
 	ReasonRiskFloor             = "RISK_FLOOR"
-	ReasonGraphEscalation       = "GRAPH_ESCALATION"
 	ReasonNBUpshiftApplied      = "NB_UPSHIFT_APPLIED"
 	ReasonNBDownshiftApplied    = "NB_DOWNSHIFT_APPLIED"
 	ReasonTierFloor             = "TIER_FLOOR"
@@ -81,16 +78,7 @@ func ReasonCodes(d core.Decision) []string {
 	if d.UnsupportedLanguage {
 		set[ReasonUnsupportedLanguage] = true
 	}
-	// A lift by the E5 fuse is E5_BOOST, never SEMANTIC_BOOST, so the two
-	// embedders stay countable apart (the fuse-off floor hands a lift back to
-	// the hash boost by resetting the fuse action, see core.fuseFloor).
-	switch d.E5Fuse.Action {
-	case core.E5ActionRaise:
-		set[ReasonE5Boost] = true
-	case core.E5ActionAbstain:
-		set[ReasonE5Abstain] = true
-	}
-	if d.Guards.SemanticLift && d.E5Fuse.Action != core.E5ActionRaise {
+	if d.Guards.SemanticLift {
 		set[ReasonSemanticBoost] = true
 	}
 	if len(d.Risk) > 0 {
@@ -98,9 +86,6 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.Guards.RiskFloor {
 		set[ReasonRiskFloor] = true
-	}
-	if d.Guards.GraphEscalated {
-		set[ReasonGraphEscalation] = true
 	}
 	if d.Shadow.NBUpshift.Applied {
 		set[ReasonNBUpshiftApplied] = true
