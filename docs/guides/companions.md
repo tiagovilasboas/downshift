@@ -3,13 +3,23 @@
 Downshift by Tiago de Carvalho Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
-Downshift optimizes delegated execution: before a subagent spawns it picks that
-subagent's model and effort, and around that it holds under doubt, applies
-floors, records what each child cost and measures routed against control. The
-levers it does not own, above all compressing what the agent reads, live in
-other tools. This page says which
-ones Downshift knows about, what it does with each (detect, record, document,
-or nothing), and what it will never do on their behalf.
+Downshift is a **suite for optimizing token use in coding agents**. Model
+routing is the **main lever today, not the whole product**: a deterministic
+local hook classifies each subagent spawn and rewrites that child's model and
+effort from the session list. Around the router sit guardrails (doubt never
+spends money), a project tier floor, a quota and credit gate, session view
+and statusline, telemetry and cost reports with a control group, context
+policy from `setup`, vendored mods and documented companions; one sentence
+and a status word for each is in the
+[README](../../README.md#the-suite-at-a-glance) and the
+[docs index](../README.md#the-suite-in-one-table).
+
+This page covers **companions**: separate tools whose levers Downshift does
+not own, above all compressing what the agent reads in the request path.
+Downshift may detect and record them, documents how they fit next to routing,
+and never installs, wraps, unwraps or counts their savings as routing savings.
+The sections below name each tool Downshift knows about and what it will never
+do on its behalf.
 
 **Default and optional.** Headroom is the default companion: when its binary
 is on PATH, `downshift context enable` records it and `downshift doctor`

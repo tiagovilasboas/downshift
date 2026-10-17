@@ -54,19 +54,19 @@ For a Task call without `model` on an inheriting agent type (no `subagent_type`,
 
 ## What the hook actually sends
 
-Checked against the adapter structs and local telemetry on 2026-09-27. No secrets below.
+Checked against the adapter structs and local telemetry on 2026-10-17. No secrets below. Optional extension fields (`session_models`, `available_models`, `model_metadata`, `included_models`, `unavailable_models`, `usage_quota`) are decoded when present on any harness; none of the native PreToolUse payloads send a full picker list today.
 
-| Harness | Stdin fields the adapter decodes | Allowlist on the payload? |
+| Harness | Stdin fields the adapter decodes (PreToolUse) | Allowlist on the payload? |
 |---|---|---|
-| Cursor | `hook_event_name`, `tool_name`, `tool_input`, `model`, `model_id` | No. Current model only. |
-| Claude Code | `hook_event_name`, `tool_name`, `tool_input`, `model`, `prompt` | No. Current model only. |
-| Codex | `hook_event_name`, `session_id`, `tool_name`, `tool_input`, `model` | No. Current model and session id only. |
+| Cursor | `hook_event_name`, `tool_name`, `tool_input`, `model`, `model_id`, optional `cwd`, `workspace_roots`, `tool_use_id`, `correlation_id` | No. Current model only unless extension fields are sent. |
+| Claude Code | `hook_event_name`, `tool_name`, `tool_input`, `model`, `prompt`, optional `session_id`, `cwd`, `transcript_path`, `permission_mode`, `tool_use_id`, `correlation_id`, `parent_model`, `entry` | No. Current model only unless extension fields are sent. |
+| Codex | `hook_event_name`, `session_id`, `tool_name`, `tool_input`, `model`, optional `cwd`, `transcript_path`, `tool_use_id`, `correlation_id` | No. Current model and session id only unless extension fields are sent. |
 
-`~/.downshift/events.jsonl` (legacy `~/.harness-downshift/`) stores routing outcomes: `complexity`, `estimated_savings`, `requested_model`, `final_model`, `harness`, optional hashed `session_id`, `timestamp`, `verdict`, and `outcome`, plus optional real-cost fields `input_tokens`, `output_tokens`, `cached_tokens`, `actual_cost_usd` and `baseline_cost_usd` (absent until a PostToolUse hook supplies provider usage; see `internal/telemetry/cost.go`). A raw Codex session ID is validated and hashed before it can be recorded. `requested_model` is `unknown` unless the original hook value is catalog-allowlisted; it is never filled with a policy recommendation. `outcome: "rewrite_emitted"` proves only that Downshift emitted a compatible rewrite, not that a child executor honored it. On Claude Code the PostToolUse hook also appends an `outcome: "resolved"` record that links to the decision (`linked_decision`) and carries the model the harness reports it chose for the child (`tool_response.resolvedModel`), with `rewrite_honored` true or false when the catalog can compare it to the written model. `downshift stats` counts a matching record as honored; a mismatch stays visible in the log.
+`~/.downshift/events.jsonl` (legacy `~/.harness-downshift/`) stores routing outcomes: `complexity`, `estimated_savings`, `requested_model`, `final_model`, `harness`, optional hashed `session_id`, `timestamp`, `verdict`, and `outcome`, plus optional real-cost fields `input_tokens`, `output_tokens`, `cached_tokens`, `actual_cost_usd` and `baseline_cost_usd` (absent until a harness reports usage — on Claude Code that is **SubagentStop** pricing the child transcript, not PostToolUse on an async Agent launch, which carries no tokens; see [beta-exit.md](beta-exit.md) P3 note and [Claude Code real usage](#claude-code-real-usage); `internal/telemetry/cost.go`). A raw Codex session ID is validated and hashed before it can be recorded. `requested_model` is `unknown` unless the original hook value is catalog-allowlisted; it is never filled with a policy recommendation. `outcome: "rewrite_emitted"` proves only that Downshift emitted a compatible rewrite, not that a child executor honored it. On Claude Code the PostToolUse hook also appends an `outcome: "resolved"` record that links to the decision (`linked_decision`) and carries the model the harness reports it chose for the child at launch (`tool_response.resolvedModel`), with `rewrite_honored` true or false when the catalog can compare it to the written model — still not token usage. `downshift stats` counts a matching record as honored; a mismatch stays visible in the log.
 
 ## Claude Code real usage
 
-The PostToolUse payload of an async subagent is launch metadata with no tokens. Real usage is read when the subagent stops, from its own transcript (`agent_transcript_path`), by a second hook next to the PreToolUse one:
+The PostToolUse payload of an async `Agent`/`Task` subagent is **launch** metadata only (`isAsync`, `resolvedModel`, …) with **no token usage** — the same fact recorded under P3 in [beta-exit.md](beta-exit.md). Real usage is read when the subagent stops, from its own transcript (`agent_transcript_path`), by a separate hook next to the PreToolUse one:
 
 ```json
 "SubagentStop": [
@@ -82,7 +82,7 @@ Native config is not a session allowlist either:
 - Codex `config.toml` holds the active model and feature flags, not the session's selectable set.
 - Cursor's model picker is UI state. This repo does not call a Cursor API to read it.
 
-- Antigravity uses the `Subagents` array in `invoke_subagent` calls, where subagent models (`flash_lite`, `flash`, `pro`, `inherit`) are mapped directly according to routing decisions.
+- Antigravity uses the `Subagents` array in `invoke_subagent` calls; routing inspects the last entry with a `Prompt` and rewrites that child's model (`flash_lite`, `flash`, `pro`, `inherit`).
 
 ## Main session policy: plan mode and opusplan (Claude Code)
 
@@ -180,12 +180,13 @@ reserve capacity for the next call or guarantee zero additional charges.
 Claude Code shows `systemMessage` text from hooks. Downshift uses it twice:
 
 - when it rewrites a spawn: `downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper than opus)`;
-- when a subagent ends and its tokens are known (SubagentStop, or a PostToolUse
-  that reports usage): `↳ downshift: finished on haiku · 14k tokens · $0.01 (opus would be $0.38)`.
+- when a subagent ends and its tokens are known (**SubagentStop** on Claude Code,
+  after the child transcript is complete; not PostToolUse on an async launch,
+  which has no tokens yet): `↳ downshift: finished on haiku · 14k tokens · $0.01 (opus would be $0.38)`.
   The model is the one the child ran on; the would-be cost is the requested
   model's price for the same tokens, and appears only when that model is known
-  and differs. Missing parts are left out, never guessed. An async launch has no
-  tokens yet, so it prints nothing.
+  and differs. Missing parts are left out, never guessed. PostToolUse at launch
+  records `resolvedModel` but prints no finish line until SubagentStop supplies usage.
 
 `DOWNSHIFT_QUIET=1` silences both lines. Routing, telemetry and the stderr notes
 are unchanged. The line never blocks, never changes the subagent result, and a
