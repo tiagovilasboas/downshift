@@ -333,8 +333,12 @@ func Classify(prompt string) Classification {
 	}
 
 	// Structural nudge: very short imperative prompts lean trivial — but only
-	// to reinforce an existing trivial signal, never to create one.
-	if contentMatched && wordCount > 0 && wordCount <= 6 {
+	// to reinforce an existing trivial signal, never to create one. The point
+	// is withheld when Complex is already at least as strong, so a six-word
+	// Portuguese twin cannot turn a Complex tie into Trivial. Withholding it
+	// whenever Trivial is not strictly ahead would also drop the point that
+	// keeps a short unsignalled helper unconfident (R6).
+	if contentMatched && wordCount > 0 && wordCount <= 6 && (scores[Complex] == 0 || scores[Trivial] > scores[Complex]) {
 		scores[Trivial]++
 	}
 	// A bounded delegation brief is long because it lists files, limits and
