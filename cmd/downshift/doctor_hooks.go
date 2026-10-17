@@ -140,6 +140,8 @@ func hookSnippet(w doctorWiring, h doctorHook, command string) string {
 	return fmt.Sprintf(`{"command":%q}`, command)
 }
 
+// checkHarness is the orchestrator: read the hook file, report how the hooks
+// are wired, then the evidence that they run.
 func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorWiring, pathBin string, events []telemetry.Event) {
 	h := nc.Harness
 	file := filepath.Join(env.Home, w.File)
@@ -147,13 +149,8 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 		rep.add(doctorCheck{ID: id, Harness: h, Status: status, Detail: detail, Fix: fix})
 	}
 
-	var raw any
-	data, err := os.ReadFile(file)
-	if err == nil {
-		err = json.Unmarshal(data, &raw)
-	}
-	if err != nil {
-		add("hooks wired", doctorFail, fmt.Sprintf("cannot read %s: %v", file, err), "python3 -m json.tool "+file)
+	raw, ok := readHookFile(add, file)
+	if !ok {
 		return
 	}
 	var cmds []foundCommand
@@ -161,10 +158,31 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	checkMainPolicy(add, h, raw)
 	viaPlugin := w.Plugin != "" && pluginEnabled(raw, w.Plugin)
 
-	// Hooks wired.
-	var found []wiredHook
-	var missing []doctorHook
-	for _, spec := range w.Hooks {
+	found, missing := matchWiredHooks(cmds, w.Hooks)
+	reportWiring(add, h, w, file, pathBin, viaPlugin, found, missing)
+	// With the plugin carrying the hooks, found is empty and the hook binary
+	// check has nothing to look at.
+	checkEvidence(add, env, nc, file, found, pathBin, events)
+}
+
+// readHookFile reads and parses the harness hook file. On failure it adds the
+// "hooks wired" failure row and reports ok=false.
+func readHookFile(add func(id, status, detail, fix string), file string) (raw any, ok bool) {
+	data, err := os.ReadFile(file)
+	if err == nil {
+		err = json.Unmarshal(data, &raw)
+	}
+	if err != nil {
+		add("hooks wired", doctorFail, fmt.Sprintf("cannot read %s: %v", file, err), "python3 -m json.tool "+file)
+		return nil, false
+	}
+	return raw, true
+}
+
+// matchWiredHooks pairs each expected hook with the first command under its
+// event that runs it. Specs with no match are returned as missing.
+func matchWiredHooks(cmds []foundCommand, specs []doctorHook) (found []wiredHook, missing []doctorHook) {
+	for _, spec := range specs {
 		hit := false
 		for _, c := range cmds {
 			if !underEvent(c.Path, spec.Event) {
@@ -180,18 +198,12 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 			missing = append(missing, spec)
 		}
 	}
-	status, requiredMissing := doctorOK, false
-	for _, m := range missing {
-		if m.Required {
-			requiredMissing = true
-		}
-	}
-	switch {
-	case requiredMissing:
-		status = doctorFail
-	case len(missing) > 0:
-		status = doctorWarn
-	}
+	return found, missing
+}
+
+// reportWiring adds the plugin rows (when the plugin is enabled) and the
+// "hooks wired" row, with its fix lines.
+func reportWiring(add func(id, status, detail, fix string), h string, w doctorWiring, file, pathBin string, viaPlugin bool, found []wiredHook, missing []doctorHook) {
 	// The plugin carries the same hooks. With it enabled, nothing in the
 	// settings file is needed; anything found there runs a second time.
 	if viaPlugin {
@@ -205,21 +217,20 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 		}
 		if len(found) == 0 {
 			add("hooks wired", doctorOK, fmt.Sprintf("%d via plugin %s", len(w.Hooks), w.Plugin), "")
-			checkSessionList(add, env, nc)
-			checkQuotaHold(add, env, h)
-			var mine []telemetry.Event
-			for _, ev := range events {
-				if ev.Harness == h {
-					mine = append(mine, ev)
-				}
-			}
-			checkLastEvent(add, env, h, mine)
-			checkCompletion(add, h, events)
-			if nc.Caps.CanRewriteModel && len(mine) > 0 {
-				checkHonored(add, mine)
-			}
 			return
 		}
+	}
+	status, requiredMissing := doctorOK, false
+	for _, m := range missing {
+		if m.Required {
+			requiredMissing = true
+		}
+	}
+	switch {
+	case requiredMissing:
+		status = doctorFail
+	case len(missing) > 0:
+		status = doctorWarn
 	}
 	var have, fixes []string
 	for _, f := range found {
@@ -251,17 +262,17 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 		fixes = []string{"downshift setup " + h}
 	}
 	add("hooks wired", status, detail, strings.Join(fixes, "\n"))
+}
 
-	// Hook binary equals the binary on PATH.
+// checkEvidence runs the checks that show the wired hooks work: the hook
+// binary, the session list, a held quota snapshot, and the last event,
+// completion and honored rewrites from the shared event log.
+func checkEvidence(add func(id, status, detail, fix string), env doctorEnv, nc core.NamedCaps, file string, found []wiredHook, pathBin string, events []telemetry.Event) {
+	h := nc.Harness
 	checkHookBinary(add, env, file, found, pathBin)
-
-	// Session list.
 	checkSessionList(add, env, nc)
-
-	// Quota snapshot that expired but still holds rewrites.
 	checkQuotaHold(add, env, h)
 
-	// Last hook event and rewrite honored, from the shared event log.
 	var mine []telemetry.Event
 	for _, ev := range events {
 		if ev.Harness == h {
