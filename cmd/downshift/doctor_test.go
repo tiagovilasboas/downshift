@@ -41,15 +41,10 @@ func newDoctorFixture(t *testing.T) *doctorFixture {
 	f.env = doctorEnv{
 		Home:       home,
 		Executable: func() (string, error) { return bin, nil },
-		LookPath: func(name string) (string, error) {
-			if name == "headroom" { // optional companion: absent unless a test says otherwise
-				return "", os.ErrNotExist
-			}
-			return bin, nil
-		},
-		Now:    func() time.Time { return f.started },
-		Getenv: func(string) string { return "" },
-		Cat:    cmdCat,
+		LookPath:   func(string) (string, error) { return bin, nil },
+		Now:        func() time.Time { return f.started },
+		Getenv:     func(string) string { return "" },
+		Cat:        cmdCat,
 	}
 	return f
 }

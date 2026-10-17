@@ -198,12 +198,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 	// Self-correction validates the decision against the guardrails before
 	// any adapter acts. The classified verdict is preserved for telemetry;
 	// the safe action is exposed separately.
-	report := Check(d)
-	d.SafeVerdict = report.Safe
-	d.Checked = true
-	for _, v := range report.Violations {
-		d.Corrections = append(d.Corrections, v.Rule)
-	}
+	d.recheck()
 	// The operator floor runs before adapt memory so the shadow comparison
 	// sees the final tier.
 	applyTierFloor(&d, currentModelID, res)
@@ -229,13 +224,20 @@ func (d *Decision) RaiseTier(t Tier, currentModelID string, r Resolver) bool {
 	// Keep the opinion (Would) for telemetry, but do not claim it was applied.
 	d.NBDownshift.Applied = false
 	d.Corrections = nil
+	d.recheck()
+	return true
+}
+
+// recheck runs the guardrails on the decision as it stands and records the
+// safe verdict and the rules that corrected it. Route calls it once; any
+// later step that moves the tier (the operator floor) calls it again.
+func (d *Decision) recheck() {
 	report := Check(*d)
 	d.SafeVerdict = report.Safe
 	d.Checked = true
 	for _, v := range report.Violations {
 		d.Corrections = append(d.Corrections, v.Rule)
 	}
-	return true
 }
 
 // classifyTask classifies the prompt once (regex, semantic boost, risk floor,

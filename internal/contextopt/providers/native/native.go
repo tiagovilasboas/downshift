@@ -44,12 +44,7 @@ func (p *Provider) Capabilities() []contextopt.Capability {
 }
 
 func (p *Provider) HasCapability(cap contextopt.Capability) bool {
-	for _, c := range p.Capabilities() {
-		if c == cap {
-			return true
-		}
-	}
-	return false
+	return contextopt.HasCapability(p, cap)
 }
 
 func (p *Provider) SupportedHarnesses() []contextopt.HarnessSupport {

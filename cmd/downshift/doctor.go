@@ -18,7 +18,6 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
-	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/headroom"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/semantic/e5shadow"
@@ -31,23 +30,20 @@ type doctorEnv struct {
 	Home       string
 	Executable func() (string, error)
 	LookPath   func(string) (string, error)
-	// Run executes a detected companion binary (version probe). Nil skips the probe.
-	Run     func(ctx context.Context, name string, args ...string) ([]byte, error)
-	Now     func() time.Time
-	Getenv  func(string) string
-	Cat     *catalog.Catalog
-	Verbose bool
+	// Companions lists the external companions to probe (the registry's by
+	// default); tests inject fakes. Nil skips the companion row.
+	Companions func() []contextopt.Provider
+	Now        func() time.Time
+	Getenv     func(string) string
+	Cat        *catalog.Catalog
+	Verbose    bool
 }
 
 func defaultDoctorEnv(cat *catalog.Catalog) doctorEnv {
 	home, _ := os.UserHomeDir()
 	return doctorEnv{Home: home, Executable: os.Executable, LookPath: exec.LookPath,
-		Run: func(ctx context.Context, name string, args ...string) ([]byte, error) {
-			cmd := exec.CommandContext(ctx, name, args...)
-			cmd.WaitDelay = time.Second
-			return cmd.Output()
-		},
-		Now: time.Now, Getenv: os.Getenv, Cat: cat}
+		Companions: func() []contextopt.Provider { return companions(contextRegistry()) },
+		Now:        time.Now, Getenv: os.Getenv, Cat: cat}
 }
 
 // runDoctor is `downshift doctor`: a checklist, one line per check, with the
@@ -409,30 +405,36 @@ func checkContext(rep *doctorReport, env doctorEnv) {
 	}
 }
 
-// checkCompanion reports the Headroom companion: recorded and present is ok;
-// recorded but missing, or present but not recorded, is a warn with the exact
-// fix. Absent and not recorded prints only in verbose: it is optional.
+// checkCompanion reports every registered companion: recorded and present is
+// ok; recorded but missing, or present but not recorded, is a warn with the
+// exact fix. Absent and not recorded prints only in verbose: it is optional.
+// The providers come from env.Companions, so doctor names none of them.
 func checkCompanion(rep *doctorReport, env doctorEnv, optCfg contextopt.Config) {
-	hp := &headroom.Provider{LookPath: env.LookPath, CommandRunner: env.Run}
+	if env.Companions == nil {
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
-	installed, ver, _, err := hp.Detect(ctx)
-	recorded := optCfg.Companion == headroom.ProviderID
-	label := headroom.ProviderID
-	if ver != "" {
-		label += " v" + ver
-	}
-	switch {
-	case err != nil:
-		rep.add(doctorCheck{ID: "companion", Status: doctorWarn, Detail: err.Error(), Fix: "reinstall: " + headroom.InstallHint})
-	case recorded && installed:
-		rep.add(doctorCheck{ID: "companion", Status: doctorOK, Detail: label + " recorded; wrap each harness with `headroom wrap <tool>` (Downshift cannot see whether a session is wrapped)"})
-	case recorded:
-		rep.add(doctorCheck{ID: "companion", Status: doctorWarn, Detail: "headroom recorded but not on PATH", Fix: "downshift context disable headroom"})
-	case installed:
-		rep.add(doctorCheck{ID: "companion", Status: doctorWarn, Detail: label + " detected, not recorded (savings would be attributed to routing alone)", Fix: "downshift context enable headroom"})
-	case env.Verbose:
-		rep.add(doctorCheck{ID: "companion", Status: doctorOK, Detail: "none (optional: Headroom, docs/guides/companions.md)"})
+	for _, c := range env.Companions() {
+		id := c.ID()
+		installed, ver, _, err := c.Detect(ctx)
+		recorded := optCfg.Companion == id
+		label := id
+		if ver != "" {
+			label += " v" + ver
+		}
+		switch {
+		case err != nil:
+			rep.add(doctorCheck{ID: "companion", Status: doctorWarn, Detail: err.Error(), Fix: "run `" + id + " --version` by hand, then `downshift context doctor`"})
+		case recorded && installed:
+			rep.add(doctorCheck{ID: "companion", Status: doctorOK, Detail: label + " recorded; wrap each harness with its own command (Downshift cannot see whether a session is wrapped)"})
+		case recorded:
+			rep.add(doctorCheck{ID: "companion", Status: doctorWarn, Detail: id + " recorded but not on PATH", Fix: "downshift context disable " + id})
+		case installed:
+			rep.add(doctorCheck{ID: "companion", Status: doctorWarn, Detail: label + " detected, not recorded (savings would be attributed to routing alone)", Fix: "downshift context enable " + id})
+		case env.Verbose:
+			rep.add(doctorCheck{ID: "companion", Status: doctorOK, Detail: "none (optional: " + id + ", docs/guides/companions.md)"})
+		}
 	}
 }
 

@@ -5,8 +5,6 @@ package main
 
 import (
 	"bytes"
-	"context"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -82,9 +80,10 @@ func TestAllHarnessCapsCoversEveryAdapter(t *testing.T) {
 	}
 }
 
-// The companion row: absent and not recorded is silent (verbose prints ok);
-// detected but not recorded warns with the enable command; recorded but
-// missing warns with the disable command; both present is ok.
+// The companion row comes from env.Companions: absent and not recorded is
+// silent (verbose prints ok); detected but not recorded warns with the enable
+// command; recorded but missing warns with the disable command; both present
+// is ok. Doctor names no provider itself.
 func TestDoctorCompanionRow(t *testing.T) {
 	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
 	find := func(rep *doctorReport) *doctorCheck {
@@ -95,28 +94,23 @@ func TestDoctorCompanionRow(t *testing.T) {
 		}
 		return nil
 	}
-	present := func(name string) (string, error) {
-		if name == "headroom" {
-			return "/opt/bin/headroom", nil
-		}
-		return "", os.ErrNotExist
+	with := func(installed bool) func() []contextopt.Provider {
+		return func() []contextopt.Provider { return []contextopt.Provider{fakeHeadroom(installed)} }
 	}
-	absent := func(string) (string, error) { return "", os.ErrNotExist }
-	ver := func(context.Context, string, ...string) ([]byte, error) { return []byte("headroom 2.0.0"), nil }
 
 	rep := &doctorReport{}
-	checkCompanion(rep, doctorEnv{LookPath: absent}, contextopt.DefaultConfig())
+	checkCompanion(rep, doctorEnv{Companions: with(false)}, contextopt.DefaultConfig())
 	if find(rep) != nil {
 		t.Fatal("absent and not recorded must be silent")
 	}
 	rep = &doctorReport{}
-	checkCompanion(rep, doctorEnv{LookPath: absent, Verbose: true}, contextopt.DefaultConfig())
+	checkCompanion(rep, doctorEnv{Companions: with(false), Verbose: true}, contextopt.DefaultConfig())
 	if c := find(rep); c == nil || c.Status != doctorOK {
 		t.Fatalf("verbose absent = %+v", c)
 	}
 
 	rep = &doctorReport{}
-	checkCompanion(rep, doctorEnv{LookPath: present, Run: ver}, contextopt.DefaultConfig())
+	checkCompanion(rep, doctorEnv{Companions: with(true)}, contextopt.DefaultConfig())
 	if c := find(rep); c == nil || c.Status != doctorWarn || c.Fix != "downshift context enable headroom" || !strings.Contains(c.Detail, "v2.0.0") {
 		t.Fatalf("detected not recorded = %+v", c)
 	}
@@ -124,15 +118,21 @@ func TestDoctorCompanionRow(t *testing.T) {
 	cfg := contextopt.DefaultConfig()
 	cfg.Companion = "headroom"
 	rep = &doctorReport{}
-	checkCompanion(rep, doctorEnv{LookPath: present, Run: ver}, cfg)
-	if c := find(rep); c == nil || c.Status != doctorOK || !strings.Contains(c.Detail, "headroom wrap") {
+	checkCompanion(rep, doctorEnv{Companions: with(true)}, cfg)
+	if c := find(rep); c == nil || c.Status != doctorOK || !strings.Contains(c.Detail, "recorded") {
 		t.Fatalf("recorded and present = %+v", c)
 	}
 
 	rep = &doctorReport{}
-	checkCompanion(rep, doctorEnv{LookPath: absent}, cfg)
+	checkCompanion(rep, doctorEnv{Companions: with(false)}, cfg)
 	if c := find(rep); c == nil || c.Status != doctorWarn || c.Fix != "downshift context disable headroom" {
 		t.Fatalf("recorded but missing = %+v", c)
+	}
+
+	rep = &doctorReport{}
+	checkCompanion(rep, doctorEnv{}, cfg)
+	if find(rep) != nil {
+		t.Fatal("nil Companions skips the row")
 	}
 }
 

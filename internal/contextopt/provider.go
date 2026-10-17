@@ -116,6 +116,17 @@ type Companion interface {
 	IsCompanion() bool
 }
 
+// HasCapability reports whether p lists cap. Providers delegate their method
+// to it so the lookup lives once.
+func HasCapability(p Provider, cap Capability) bool {
+	for _, c := range p.Capabilities() {
+		if c == cap {
+			return true
+		}
+	}
+	return false
+}
+
 // IsCompanion reports whether p is an external companion.
 func IsCompanion(p Provider) bool {
 	c, ok := p.(Companion)
