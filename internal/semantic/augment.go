@@ -63,6 +63,25 @@ func MaybeAugment(prompt string, label string, confident bool) (string, bool) {
 	return augmentVector(vec, label, confident, store)
 }
 
+// MaybeAugmentHash is MaybeAugment restricted to the in-process hash embedder
+// and its centroids. The E5 fuse uses it as the fuse-off floor: it costs no
+// helper process, so it cannot eat the hook budget the way a second external
+// embed command (DOWNSHIFT_MINILM_EMBED) could. Honors DOWNSHIFT_MINILM=0.
+func MaybeAugmentHash(prompt string, label string, confident bool) (string, bool) {
+	if !enabled() {
+		return label, false
+	}
+	vec, err := HashEmbedder{}.Embed(prompt)
+	if err != nil {
+		return label, false
+	}
+	store, ok := loadStore()
+	if !ok {
+		return label, false
+	}
+	return augmentVector(vec, label, confident, store)
+}
+
 // embedWithSource embeds prompt and reports whether the vector came from the
 // external MiniLM command (true) or the hash embedder (false), including
 // when the command failed and the hash fallback ran.

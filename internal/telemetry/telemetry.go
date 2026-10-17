@@ -144,6 +144,11 @@ type Event struct {
 	// Prompt-free: labels, similarity, and error codes only.
 	E5Shadow *E5ShadowRecord `json:"e5_shadow,omitempty"`
 
+	// E5Fuse is the opt-in multilingual fuse trace (DOWNSHIFT_E5_FUSE=1):
+	// what the helper answered and the action taken. Prompt-free; absent
+	// when the flag is off.
+	E5Fuse *E5FuseRecord `json:"e5_fuse,omitempty"`
+
 	// RoutingPolicy and ReasonCodes are the prompt-free decision trace:
 	// the deterministic policy version and the sorted codes of the signals
 	// and rules that shaped this decision (see reason_codes.go). Absent on
@@ -191,6 +196,18 @@ type E5ShadowRecord struct {
 	RegexConfident bool    `json:"regex_confident,omitempty"`
 	LatencyMs      float64 `json:"latency_ms,omitempty"`
 	ErrorCode      string  `json:"error_code,omitempty"`
+}
+
+// E5FuseRecord is the production fuse trace. Its fields are the closed set
+// {model_id, nearest_label, similarity, action, latency_ms, error_code}; no
+// prompt, vector, stderr or env path is ever added.
+type E5FuseRecord struct {
+	ModelID      string  `json:"model_id,omitempty"`
+	NearestLabel string  `json:"nearest_label,omitempty"`
+	Similarity   float64 `json:"similarity,omitempty"`
+	Action       string  `json:"action,omitempty"`
+	LatencyMs    float64 `json:"latency_ms,omitempty"`
+	ErrorCode    string  `json:"error_code,omitempty"`
 }
 
 // HasRealCost reports whether the event carries real provider costs.
@@ -440,7 +457,33 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 			ErrorCode:      e5.ErrorCode,
 		}
 	}
+	if f := d.E5Fuse; f.Enabled {
+		ev.E5Fuse = &E5FuseRecord{
+			ModelID:      f.ModelID,
+			NearestLabel: f.NearestLabel,
+			Similarity:   finiteRounded(f.Similarity),
+			Action:       f.Action,
+			LatencyMs:    finiteNonNegative(f.LatencyMs),
+			ErrorCode:    f.ErrorCode,
+		}
+	}
 	return ev
+}
+
+// finiteRounded is v rounded to four decimals, or 0 when v is NaN or infinite.
+func finiteRounded(v float64) float64 {
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return 0
+	}
+	return math.Round(v*1e4) / 1e4
+}
+
+// finiteNonNegative is v, or 0 when v is NaN, infinite or negative.
+func finiteNonNegative(v float64) float64 {
+	if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 {
+		return 0
+	}
+	return v
 }
 
 // Failure records a hook fail-open path without accepting raw input or errors

@@ -269,6 +269,9 @@ type Classification struct {
 	// UnsupportedLanguage is true when the prompt reads as a language the
 	// tables do not cover (lang_guard.go). Confident is then false.
 	UnsupportedLanguage bool
+	// E5Fuse is the prompt-free trace of the opt-in multilingual fuse
+	// (e5_fuse.go). Zero when DOWNSHIFT_E5_FUSE is off.
+	E5Fuse E5Fuse
 }
 
 // Classify scores a task prompt against all complexity classes and returns

@@ -69,6 +69,10 @@ type Decision struct {
 	// Shadow holds the observe-only second opinions. None of them changes the
 	// routing unless its own opt-in flag is set.
 	Shadow Shadow
+	// E5Fuse is the trace of the opt-in multilingual fuse that ran inside the
+	// classification (DOWNSHIFT_E5_FUSE=1): what the helper answered and what
+	// the fuse did with it. Zero when the flag is off.
+	E5Fuse E5Fuse
 }
 
 // Baseline is the model currently in effect for the task and the provenance
@@ -229,6 +233,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 			NBUpshift:   nbUp,
 			NBDownshift: nbDown,
 		},
+		E5Fuse: cls.E5Fuse,
 	}
 	applyE5Shadow(prompt, cls, &d)
 	d.Intent = IntentFor(prompt, cls, d, res)

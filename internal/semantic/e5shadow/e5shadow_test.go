@@ -299,3 +299,39 @@ func TestObserve_HungHelperFailOpen(t *testing.T) {
 		t.Fatalf("timeout must not lift: %+v", obs)
 	}
 }
+
+// DOWNSHIFT_E5_CMD and DOWNSHIFT_E5_SHADOW_CMD that differ only by spacing
+// run the same helper, so they must share one embed (enable gate 6).
+func TestLookupNearest_CacheFoldsCommandWhitespace(t *testing.T) {
+	dir := t.TempDir()
+	protoPath := filepath.Join(dir, "prototypes.json")
+	store := semantic.PrototypeStore{
+		Dim: 2,
+		Centroids: map[string][]float64{
+			semantic.LabelTrivial: {1, 0},
+			semantic.LabelSimple:  {0, 1},
+		},
+	}
+	data, err := json.Marshal(store)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(protoPath, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(e5shadow.CmdEnv, "  /bin/echo   [0,1] ")
+	t.Setenv(e5shadow.CmdEnvAlias, "/bin/echo [0,1]")
+	t.Setenv(e5shadow.PrototypesEnv, protoPath)
+	prompt := "fold-me"
+	a := e5shadow.LookupFuse(prompt)
+	b := e5shadow.LookupNearest(prompt)
+	if a == nil || b == nil || a.ErrorCode != "" || b.ErrorCode != "" {
+		t.Fatalf("lookups failed: a=%+v b=%+v", a, b)
+	}
+	if a != b {
+		t.Fatal("commands that differ only by whitespace must reuse one Lookup")
+	}
+	if got := e5shadow.NormalizeCmd("  /bin/echo   [0,1] "); got != "/bin/echo [0,1]" {
+		t.Fatalf("NormalizeCmd = %q", got)
+	}
+}

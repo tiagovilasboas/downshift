@@ -44,6 +44,9 @@ the tier into a model id are in [complexity-weights.md](../reference/complexity-
 **E5 multilingual fuse (opt-in, default off):** `DOWNSHIFT_E5_FUSE=1` applies
 `DOWNSHIFT_E5_CMD` + `DOWNSHIFT_E5_PROTOTYPES` inside `ClassifyWithSemantic`; fail-open.
 It does not reuse `DOWNSHIFT_E5_SHADOW_CMD`. `DOWNSHIFT_E5_SHADOW=1` remains observation-only.
+A lift by the fuse is logged as `E5_BOOST`, a reserved-centroid abstention as `E5_ABSTAIN`, and the
+event carries a prompt-free `e5_fuse` object. The fuse-off hash boost stays a floor under the fused
+class (`fuseFloor`), so turning the fuse on never ends a prompt below where fuse-off would leave it.
 
 ---
 

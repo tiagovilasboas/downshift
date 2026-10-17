@@ -213,3 +213,25 @@ func TestCmdEmbedder_HungCommandBoundedByHookDeadline(t *testing.T) {
 		t.Fatalf("embed waited %s past a 300ms deadline", d)
 	}
 }
+
+// MaybeAugmentHash is the fuse-off floor: with no external embed command it
+// must agree with MaybeAugment, and it must honor the MiniLM opt-out.
+func TestMaybeAugmentHash_MatchesMaybeAugmentWithoutCommand(t *testing.T) {
+	t.Setenv("DOWNSHIFT_MINILM", "")
+	t.Setenv("DOWNSHIFT_MINILM_EMBED", "")
+	for _, prompt := range []string{
+		"implement end-to-end encryption for the messaging feature across web and mobile",
+		"rename foo to bar",
+		"fix the typo in the readme",
+	} {
+		wantLabel, wantOK := semantic.MaybeAugment(prompt, "MEDIUM", false)
+		gotLabel, gotOK := semantic.MaybeAugmentHash(prompt, "MEDIUM", false)
+		if wantLabel != gotLabel || wantOK != gotOK {
+			t.Errorf("%q: hash-only (%s,%v) differs from default (%s,%v)", prompt, gotLabel, gotOK, wantLabel, wantOK)
+		}
+	}
+	t.Setenv("DOWNSHIFT_MINILM", "0")
+	if label, ok := semantic.MaybeAugmentHash("implement end-to-end encryption for the messaging feature across web and mobile", "MEDIUM", false); ok || label != "MEDIUM" {
+		t.Fatalf("opt-out ignored: %s %v", label, ok)
+	}
+}

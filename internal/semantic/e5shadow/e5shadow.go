@@ -119,8 +119,18 @@ type lookupCache struct {
 // The prompt is held only as a cache key in this process; it is never persisted.
 var lastLookup lookupCache
 
+// cacheKey folds the command's whitespace so DOWNSHIFT_E5_CMD and
+// DOWNSHIFT_E5_SHADOW_CMD that differ only by spacing share one embed. The
+// helper is executed from the folded form too (CmdEmbedder splits on fields),
+// so the two commands really are the same process.
 func cacheKey(prompt, cmd, proto string) string {
-	return cmd + "\x00" + proto + "\x00" + prompt
+	return NormalizeCmd(cmd) + "\x00" + proto + "\x00" + prompt
+}
+
+// NormalizeCmd is the command line with runs of whitespace folded to one
+// space and the ends trimmed. It is the identity the embed cache compares.
+func NormalizeCmd(cmd string) string {
+	return strings.Join(strings.Fields(cmd), " ")
 }
 
 // LookupNearest embeds using the shadow command (DOWNSHIFT_E5_SHADOW_CMD).

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- E5 fuse (opt-in, default off): a lift by the multilingual fuse is logged as `E5_BOOST` and an abstention as `E5_ABSTAIN`, never as `SEMANTIC_BOOST`, and each decision carries a prompt-free `e5_fuse` object (`model_id`, `nearest_label`, `similarity`, `action`, `latency_ms`, `error_code`); the fuse-off hash boost is kept as a floor under the fused class, so enabling the fuse can no longer end a prompt one class below fuse-off; the embed cache folds command whitespace, so `DOWNSHIFT_E5_CMD` and `DOWNSHIFT_E5_SHADOW_CMD` that differ by spacing embed once. Flag off stays byte-identical.
 - Self-check: a risk abstention no longer exempts a decision whose tier was lifted afterwards by the semantic boost, so an abstained MEDIUM lifted to frontier with no current model is held by R7 (R9 for mid) instead of written.
 - KiroCrew: the policy-mode runner now sets the project directory, so `.downshift/policy.json` floors apply there too.
 - `setup`: with the Claude Code plugin enabled, no hooks are written to the settings file (session policy and statusline still are); `doctor` and the install guide describe the one-channel rule. The transcript reader checks the file type before opening it, so a FIFO cannot block a hook.

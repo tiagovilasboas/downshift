@@ -3,9 +3,9 @@
 Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 **Decision: do not enable `DOWNSHIFT_E5_FUSE`. Keep E5 as an optional shadow
-candidate.** No gain is proven, one enable gate reads BLOCK for the helper as
-wired today, and three plumbing defects would let a fused route end below the
-unfused one. The baseline is measured and reproducible; the E5 side could not be
+candidate.** No gain is proven and one enable gate reads BLOCK for the helper as
+wired today. The three plumbing defects found during the evaluation (§3) are
+fixed; they no longer stand between a measured gain and an enable decision. The baseline is measured and reproducible; the E5 side could not be
 measured here because the model weights are unreachable from this environment,
 and the full run is scripted for a machine that can reach them.
 
@@ -98,32 +98,45 @@ byte-identical command embeds once. No prompt text in any event.
 | Gate | Status | Why |
 |---|---|---|
 | 1. M3 unsafe confident = 0 with fuse on and off | **Not evaluable here** (off: 0, measured) | Needs real E5 vectors |
-| 2. Five legacy splits: no rise in unsafe, no drop in tier accuracy vs fuse off | **Not evaluable here**; one structural risk found (§3.2) | Needs real vectors; the plumbing can already produce the forbidden pattern |
+| 2. Five legacy splits: no rise in unsafe, no drop in tier accuracy vs fuse off | **Not evaluable here**; the structural risk found (§3.2) is fixed | Needs real vectors; the fuse-off floor now makes a drop below fuse-off impossible by construction |
 | 3. Kill switch identical to `main` | **Pass** | Measured on 17 + 10 cases |
 | 4. Warm ONNX p95 embed + classify ≤ 500 ms; cold Python is BLOCK | **BLOCK as wired** | A warm session is 11 to 70 ms p95, inside the gate, but the hook spawns a fresh process per call and that cold path is ~1.0 s p50 / 1.5 s p95 before tokenizer and `transformers` load, so under the 1 s per-call timeout most hooks fail open (the M4 result repeating) |
 | 5. Prototypes include `ABSTAIN` / `FOREIGN`; mover slice non-zero | **Not evaluable here** | `development.json` has only the four complexity labels; the reserved centroids need real vectors |
-| 6. `FUSE=1` + `SHADOW=1` single embed, inside budget | **Pass only with byte-identical commands** (§3.3) | Commands differing by one space embed twice and the hook hits the 1531 ms ceiling |
+| 6. `FUSE=1` + `SHADOW=1` single embed, inside budget | **Pass** after the §3.3 fix (measured with byte-identical commands; whitespace variants now share the key) | Before the fix, commands differing by one space embed twice and the hook hit the 1531 ms ceiling |
 
 Merge gates (default off, CI) are green on `main`: the kill switch test, the
 fail-open tests, the H14 acceptance with the fuse mocked on, and the default-off
 benchmark parity test all pass in the current suite.
 
-## 3. Plumbing findings (fix before any enable candidate)
+## 3. Plumbing findings (fixed the same day, after the measurements)
+
+All three are fixed on `main` after this document's measurements, with tests
+at the shared layer (`internal/core/e5_fuse_floor_test.go`,
+`e5shadow_test.go`, `semantic_test.go`). The measurements above were taken
+before the fixes and are left as recorded.
 
 1. **No `e5_fuse` telemetry object and no `E5_BOOST` reason code.** A raise by
    the fuse is logged as `SEMANTIC_BOOST`, so E5 lifts and abstentions cannot be
    counted from `events.jsonl`, which §15.6 gate 7 and the Phase D analysis both
-   assume. `internal/core/e5_fuse.go`, `internal/telemetry`.
+   assume. `internal/core/e5_fuse.go`, `internal/telemetry`. **Fixed:** the
+   fuse writes `E5_BOOST` / `E5_ABSTAIN` (never `SEMANTIC_BOOST` for its own
+   lift) and a prompt-free `e5_fuse` object limited to `model_id`,
+   `nearest_label`, `similarity`, `action`, `latency_ms`, `error_code`.
 2. **Fuse on can end below fuse off.** When the helper succeeds, the MiniLM /
    hash `MaybeAugment` slot is skipped ("one semantic slot"), so a prompt the hash
    boost would have lifted can lose that lift. In the smoke run with random
    vectors through the real Go path, `tasks-0046` went COMPLEX (fuse off) to
    MEDIUM (fuse on): `tasks` 73.5% to 73.0%, unsafe raw 0 to 1, exactly the
    pattern §15.6 gate 2 forbids. The enable candidate must keep the fuse-off
-   class as a floor. `internal/core/semantic_fuse.go`, `e5_fuse.go`.
+   class as a floor. `internal/core/semantic_fuse.go`, `e5_fuse.go`. **Fixed:**
+   `fuseFloor` runs the in-process hash boost (no second helper process) and
+   keeps its class when it is higher; such a lift is credited to the hash boost
+   (`SEMANTIC_BOOST`), not to E5.
 3. **The embed cache key is the raw command string.** "At most one embed" for
    `FUSE` plus `SHADOW` holds only for byte-identical `DOWNSHIFT_E5_CMD` and
-   `DOWNSHIFT_E5_SHADOW_CMD`. Normalise or document.
+   `DOWNSHIFT_E5_SHADOW_CMD`. Normalise or document. **Fixed:** the cache key
+   folds whitespace (`NormalizeCmd`), which is the same split the helper is
+   executed with.
 
 ## 4. What this means for the candidate
 
@@ -140,8 +153,8 @@ benchmark parity test all pass in the current suite.
   the current `CmdEmbedder` would mostly fail open and occasionally spend the
   whole budget. A warm sidecar or an in-process engine is a §15.7 non-goal today
   and is the real prerequisite.
-- **Safety: the plumbing needs the floor in §3.2** before real vectors are even
-  worth measuring for gate 2.
+- **Safety: the floor in §3.2 is in place**, so real vectors can be measured for
+  gate 2 without the plumbing itself producing the forbidden pattern.
 
 ## 5. How to finish the measurement
 

@@ -20,15 +20,24 @@ func classifyWithSemantic(prompt string, base Classification) Classification {
 	if base.NoSignal {
 		return base
 	}
-	if fused, used := applyE5Fuse(prompt, base); used {
-		return fused
+	fused, used := applyE5Fuse(prompt, base)
+	if used {
+		return fuseFloor(prompt, base, fused)
 	}
-	return applyMiniLMBoost(prompt, base)
+	// Fail-open keeps the fuse trace (error code) on the MiniLM result.
+	out := applyBoost(prompt, base, semantic.MaybeAugment)
+	out.E5Fuse = fused.E5Fuse
+	return out
 }
 
-func applyMiniLMBoost(prompt string, base Classification) Classification {
+// augmentFunc is the nearest-centroid step: (prompt, label, confident) to
+// (new label, fired). semantic.MaybeAugment uses the configured embedder,
+// semantic.MaybeAugmentHash only the in-process hash one.
+type augmentFunc func(prompt, label string, confident bool) (string, bool)
+
+func applyBoost(prompt string, base Classification, augment augmentFunc) Classification {
 	label := base.Complexity.String()
-	newLabel, ok := semantic.MaybeAugment(prompt, label, base.Confident)
+	newLabel, ok := augment(prompt, label, base.Confident)
 	if !ok {
 		return base
 	}

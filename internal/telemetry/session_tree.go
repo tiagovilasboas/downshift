@@ -307,6 +307,8 @@ func hasCode(codes []string, code string) bool {
 // shortCode is the few-word form of a reason code for the tree's last column.
 var shortCode = map[string]string{
 	ReasonSemanticBoost:    "boosted",
+	ReasonE5Boost:          "e5 boosted",
+	ReasonE5Abstain:        "e5 abstained",
 	ReasonRiskFloor:        "risk floor",
 	ReasonGraphEscalation:  "wide change",
 	ReasonNBUpshiftApplied: "second opinion up",
