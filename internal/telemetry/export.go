@@ -33,10 +33,10 @@ type Summary struct {
 	NotApplied          int                       `json:"not_applied"`
 	PolicyFloor         int                       `json:"policy_floor"`
 	ActualCostEvents    int                       `json:"actual_cost_events"`
-	ActualCostUSD       float64                   `json:"actual_cost_usd"`
+	ActualCostUSD       *float64                  `json:"actual_cost_usd,omitempty"`
 	RealCostEvents      int                       `json:"real_cost_events"`
 	RealCostInferred    int                       `json:"real_cost_inferred_baseline"`
-	RealSavedUSD        float64                   `json:"real_saved_usd"`
+	RealSavedUSD        *float64                  `json:"real_saved_usd,omitempty"`
 	RealCostDeltaUSD    float64                   `json:"real_cost_delta_usd,omitempty"`
 	RealOverspendUSD    float64                   `json:"real_overspend_usd,omitempty"`
 	UsageRecords        int                       `json:"usage_records"`
@@ -52,8 +52,8 @@ type Summary struct {
 	ObservedChildUsage  int                       `json:"observed_child_usage"`
 	CostSessions        int                       `json:"cost_sessions"`
 	CostSubagents       int                       `json:"cost_subagents"`
-	MaxSessionCostUSD   float64                   `json:"max_session_cost_usd"`
-	MaxSubagentCostUSD  float64                   `json:"max_subagent_cost_usd"`
+	MaxSessionCostUSD   *float64                  `json:"max_session_cost_usd,omitempty"`
+	MaxSubagentCostUSD  *float64                  `json:"max_subagent_cost_usd,omitempty"`
 	ChildStatus         map[string]int            `json:"child_status"`
 	ReasonCodes         map[string]int            `json:"reason_codes,omitempty"`
 	AgentTypes          map[string]AgentTypeCount `json:"agent_types,omitempty"`
@@ -109,10 +109,10 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		NotApplied:          stats.NotApplied,
 		PolicyFloor:         stats.PolicyFloor,
 		ActualCostEvents:    stats.ActualCostEvents,
-		ActualCostUSD:       stats.ActualCostUSD,
+		ActualCostUSD:       exportMeasuredUSD(stats.ActualCostEvents, stats.ActualCostUSD),
 		RealCostEvents:      stats.RealCostEvents,
 		RealCostInferred:    stats.RealCostInferred,
-		RealSavedUSD:        stats.RealSavedUSD,
+		RealSavedUSD:        exportMeasuredUSD(stats.RealCostEvents, stats.RealSavedUSD),
 		RealCostDeltaUSD:    stats.RealCostDeltaUSD,
 		RealOverspendUSD:    stats.RealOverspendUSD,
 		UsageRecords:        stats.UsageRecords,
@@ -128,8 +128,8 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		ObservedChildUsage:  stats.ObservedChildUsage,
 		CostSessions:        nSessions,
 		CostSubagents:       nSubagents,
-		MaxSessionCostUSD:   maxSession,
-		MaxSubagentCostUSD:  maxSubagent,
+		MaxSessionCostUSD:   exportMeasuredUSD(nSessions, maxSession),
+		MaxSubagentCostUSD:  exportMeasuredUSD(nSubagents, maxSubagent),
 		ChildStatus:         childStatus,
 		ReasonCodes:         stats.ReasonCodes,
 		AgentTypes:          nonEmptyAgentTypes(stats.ByAgentType),
@@ -137,6 +137,16 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		DuplicateToolUse:    stats.DuplicateToolUse,
 		Note:                note,
 	}
+}
+
+// exportMeasuredUSD is nil when no event contributed to the aggregate, so JSON
+// omits the field instead of writing a literal zero for an unmeasured cost.
+func exportMeasuredUSD(events int, usd float64) *float64 {
+	if events <= 0 {
+		return nil
+	}
+	v := usd
+	return &v
 }
 
 // nonEmptyCounts copies a count map, dropping zero values so omitempty stays

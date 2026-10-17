@@ -138,7 +138,11 @@ func TestHonesty_ExportOmitsInferredBaselineCount(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Fatalf("export has real_saved_usd=%.2f with no inferred-baseline field: %s", sum.RealSavedUSD, raw)
+		saved := 0.0
+		if sum.RealSavedUSD != nil {
+			saved = *sum.RealSavedUSD
+		}
+		t.Fatalf("export has real_saved_usd=%.2f with no inferred-baseline field: %s", saved, raw)
 	}
 }
 

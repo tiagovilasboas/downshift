@@ -24,6 +24,13 @@ func exportFloat64Ptr(value float64) *float64 {
 	return &value
 }
 
+func exportUSDPtr(v *float64) float64 {
+	if v == nil {
+		return 0
+	}
+	return *v
+}
+
 // exportEvent builds a minimal Event with an explicit timestamp.
 func exportEvent(stamp time.Time, complexity string, verdict string, savings float64) telemetry.Event {
 	return telemetry.Event{
@@ -76,8 +83,8 @@ func TestExportSummary_CountsRatesAndCosts(t *testing.T) {
 	if got.RealCostEvents != 1 {
 		t.Errorf("RealCostEvents = %d, want 1", got.RealCostEvents)
 	}
-	if math.Abs(got.RealSavedUSD-0.08) > 1e-9 {
-		t.Errorf("RealSavedUSD = %f, want 0.08", got.RealSavedUSD)
+	if math.Abs(exportUSDPtr(got.RealSavedUSD)-0.08) > 1e-9 {
+		t.Errorf("RealSavedUSD = %f, want 0.08", exportUSDPtr(got.RealSavedUSD))
 	}
 	if math.Abs(got.NormBaseline-4.0) > 1e-9 {
 		t.Errorf("NormBaseline = %f, want 4.0", got.NormBaseline)
@@ -130,8 +137,8 @@ func TestExportSummary_EmptyInputZeros(t *testing.T) {
 	if got.Total != 0 || got.Downshifted != 0 || got.Upshifted != 0 || got.OK != 0 || got.Unknown != 0 {
 		t.Errorf("counts not zero: %+v", got)
 	}
-	if got.DownshiftRate != 0 || got.RealSavedUSD != 0 || got.NormBaseline != 0 || got.NormRouted != 0 {
-		t.Errorf("rates/costs not zero: %+v", got)
+	if got.DownshiftRate != 0 || got.RealSavedUSD != nil || got.ActualCostUSD != nil || got.NormBaseline != 0 || got.NormRouted != 0 {
+		t.Errorf("rates/costs wrong for empty input: %+v", got)
 	}
 	if got.ByComplexity == nil || len(got.ByComplexity) != 0 {
 		t.Errorf("ByComplexity should be empty non-nil map, got %v", got.ByComplexity)
@@ -187,5 +194,80 @@ func TestExportJSON_RoundTrip(t *testing.T) {
 	}
 	if math.Abs(back.DownshiftRate-summary.DownshiftRate) > 1e-9 {
 		t.Errorf("DownshiftRate round-trip = %f, want %f", back.DownshiftRate, summary.DownshiftRate)
+	}
+}
+
+func TestExportJSON_OmitsUnmeasuredCostUSD(t *testing.T) {
+	tests := []struct {
+		name        string
+		events      []telemetry.Event
+		wantAbsent  []string
+		wantPresent map[string]float64
+	}{
+		{
+			name:       "no events",
+			events:     nil,
+			wantAbsent: []string{"actual_cost_usd", "real_saved_usd", "max_session_cost_usd", "max_subagent_cost_usd"},
+		},
+		{
+			name: "routing only",
+			events: []telemetry.Event{
+				exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT", 0.8),
+			},
+			wantAbsent: []string{"actual_cost_usd", "real_saved_usd", "max_session_cost_usd", "max_subagent_cost_usd"},
+		},
+		{
+			name: "observed spend without baseline comparison",
+			events: func() []telemetry.Event {
+				u := exportEvent(exportNow, "TRIVIAL", "UNKNOWN", 0)
+				u.Outcome = telemetry.OutcomeUsage
+				u.ActualCostUSD = exportFloat64Ptr(0.25)
+				u.InputTokens = exportInt64Ptr(1000)
+				return []telemetry.Event{u}
+			}(),
+			wantAbsent:  []string{"real_saved_usd", "max_session_cost_usd", "max_subagent_cost_usd"},
+			wantPresent: map[string]float64{"actual_cost_usd": 0.25},
+		},
+		{
+			name: "measured zero savings still present",
+			events: func() []telemetry.Event {
+				ev := exportEvent(exportNow, "COMPLEX", "UPSHIFT", 0)
+				ev.ActualCostUSD = exportFloat64Ptr(6.0)
+				ev.BaselineCostUSD = exportFloat64Ptr(2.0)
+				return []telemetry.Event{ev}
+			}(),
+			wantPresent: map[string]float64{"real_saved_usd": 0},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			raw, err := telemetry.ExportJSON(telemetry.ExportSummary(tt.events, 30, exportNow))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var m map[string]json.RawMessage
+			if err := json.Unmarshal([]byte(raw), &m); err != nil {
+				t.Fatal(err)
+			}
+			for _, key := range tt.wantAbsent {
+				if _, ok := m[key]; ok {
+					t.Errorf("key %q must be absent, got %s", key, raw)
+				}
+			}
+			for key, want := range tt.wantPresent {
+				rawVal, ok := m[key]
+				if !ok {
+					t.Fatalf("key %q missing from export:\n%s", key, raw)
+				}
+				var got float64
+				if err := json.Unmarshal(rawVal, &got); err != nil {
+					t.Fatal(err)
+				}
+				if math.Abs(got-want) > 1e-9 {
+					t.Errorf("%s = %f, want %f", key, got, want)
+				}
+			}
+		})
 	}
 }
