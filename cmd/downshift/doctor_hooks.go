@@ -486,7 +486,7 @@ func checkHonored(add func(id, status, detail, fix string), mine []telemetry.Eve
 }
 
 // checkMainPolicy reports the main-session policy setup writes for a harness
-// (setupDefault entries with a Note: for Claude Code the model, permissions.defaultMode and autoCompactWindow defaults).
+// (setupDefault entries with a Note: for Claude Code the model, permissions.defaultMode and You should know defaults).
 // A pinned model is a valid choice, so it is reported, not warned about.
 func checkMainPolicy(add func(id, status, detail, fix string), harness string, raw any) {
 	doc, _ := raw.(map[string]any)
@@ -507,7 +507,12 @@ func checkMainPolicy(add func(id, status, detail, fix string), harness string, r
 			if d.Parent != "" {
 				label = d.Parent + "." + d.Key
 			}
+			if d.Label != "" {
+				label = d.Label
+			}
 			switch {
+			case ok && fmt.Sprint(v) == fmt.Sprint(d.Value) && d.Info != "":
+				add("main session", doctorOK, label+" "+d.Info, "")
 			case ok && fmt.Sprint(v) == fmt.Sprint(d.Value):
 				add("main session", doctorOK, fmt.Sprintf("%s %v", label, d.Value), "")
 			case ok:

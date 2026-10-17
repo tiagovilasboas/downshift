@@ -158,7 +158,7 @@ BDI agentic loop (beliefs / desires / intentions on the hook path):
 
 | Concern | What Downshift does | Owner | Where |
 |---|---|---|---|
-| Harness session policy | `setup` offers `model: opusplan`, `permissions.defaultMode: plan`, `autoCompactWindow: 400000` for Claude Code, each written only when the key is unset; `--no-session-policy` skips it. The main agent's model is otherwise untouched. | D writes once, H enforces | `cmd/downshift/setup_targets.go` |
+| Harness session policy | `setup` offers `model: opusplan`, `permissions.defaultMode: plan`, `enabledPlugins["cc-plugin-you-should-know@builtin"]: true` for Claude Code, each written only when the key is unset; `--no-session-policy` skips it. The main agent's model is otherwise untouched. | D writes once, H enforces | `cmd/downshift/setup_targets.go` |
 | Subagent routing | The flow above: one decision per spawn, rewrite or allow, fail open. | D decides, H applies | `internal/core`, adapters, `runHookAdapter` |
 | Context optimization | Native provider is **observe-only**: PostToolUse records tool output bytes and the reduction `safe` mode would reach; the hook never replaces the tool result the model sees. `downshift context compress` compacts piped output in `safe` mode as an explicit CLI step. Headroom is a companion: detected on PATH, recorded with `context enable headroom`, never installed, launched or wrapped. | D observes; X compresses | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` |
 | Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `serve`, `probe` (maintainer). | D | `internal/telemetry`, `internal/childend`, `internal/server` |

@@ -24,8 +24,9 @@ delete it; the plugin copy stays and costs one description line).
 
 1. `downshift setup --dry-run`: one diff per harness found. Show it. Explain the Claude Code
    extras it adds only for keys the user has not set: `"model": "opusplan"` (Opus plans,
-   Sonnet executes), sessions starting in plan mode, a statusline. `--no-session-policy`
-   skips the first two.
+   Sonnet executes), sessions starting in plan mode, Claude Code's built-in You should know mod
+   (each check is a billed background request: say so), a statusline. `--no-session-policy`
+   skips the first three.
 2. Only after a clear yes: `downshift setup --yes`. Backups are kept; `downshift setup --undo`
    restores the latest.
 3. KiroCrew needs its wrapper script and is only reported by `setup`; follow the KiroCrew

@@ -136,16 +136,18 @@ keeps a backup, and prints a diff (`--dry-run` first):
   `downshift claude-code-post-tool-use`), `PostToolUseFailure` (same runner), `SubagentStop`
   (`downshift claude-code-subagent-stop`).
 - Main-session policy, each key **only when unset**: `model: "opusplan"`,
-  `permissions.defaultMode: "plan"`, `autoCompactWindow: 400000` (a plain integer; no-op on 200k
-  models; saving estimated, not measured). `--no-session-policy` skips these three. An existing
-  value is reported by `doctor` as `main session: … (set by you)` with the note on how to switch.
+  `permissions.defaultMode: "plan"`, and `enabledPlugins["cc-plugin-you-should-know@builtin"]: true`
+  (Claude Code's built-in You should know mod; each check is a billed background request to the
+  session's model). `--no-session-policy` skips these three. An existing value, `false` included, is
+  reported by `doctor` as `main session: … (set by you)` with the note on how to switch.
+  `autoCompactWindow` is not written by setup; set it yourself if you want it.
 - `statusLine`: set only when none exists; someone else's is left alone with a note on chaining
   (`quota import --harness claude-code --source claude-statusline`).
 - `--undo` restores the latest backup of each hook file (a marker removes a file setup created).
 
 The plugin (`/plugin install downshift@downshift`, Claude Code 2.1.275+) carries the **same four
 hooks** from `hooks/hooks.json`, the `/downshift:downshift` command and the skills. It writes **no
-settings**: no `opusplan`, no plan mode, no `autoCompactWindow`, no statusline. Use one channel: a
+settings**: no `opusplan`, no plan mode, no You should know, no statusline. Use one channel: a
 plugin hook and a settings hook with the same command both run, so every spawn would be routed
 twice. `setup` skips the hooks when `enabledPlugins["downshift@downshift"]` is true in the user
 settings file (policy and statusline still apply); `doctor` warns `plugin … every spawn is routed

@@ -39,7 +39,8 @@ The Claude Code plugin bundles one third-party mod, cache-tax (MIT, vendored, pr
 guard and /keepwarm; the ping spends usage): hooks/cache-tax/README.md
 Companions (Headroom default, detected and recorded, never installed by Downshift;
 OmniRoute optional gateway; recommended Claude Code mods You should know (built in,
-off by default, billed checks) and Token Weather): docs/guides/companions.md
+off by default, billed checks), Token Weather, Replay Theater and reflect-mod):
+docs/guides/companions.md
 
 ## Licence
 

@@ -14,13 +14,13 @@ func TestCheckMainPolicy(t *testing.T) {
 		doc  map[string]any
 		want []string // one substring per reported line, in order
 	}{
-		{"all set", map[string]any{"model": "opusplan", "permissions": map[string]any{"defaultMode": "plan"}, "autoCompactWindow": float64(400000)},
-			[]string{"model opusplan", "permissions.defaultMode plan", "autoCompactWindow 400000"}},
-		{"pinned by the user", map[string]any{"model": "claude-sonnet-5-5", "permissions": map[string]any{"defaultMode": "acceptEdits"}, "autoCompactWindow": float64(250000)},
-			[]string{"claude-sonnet-5-5 (set by you)", "acceptEdits (set by you)", "250000 (set by you)"}},
-		{"nothing set", map[string]any{}, []string{"no model set", "no permissions.defaultMode set", "no autoCompactWindow set"}},
+		{"all set", map[string]any{"model": "opusplan", "permissions": map[string]any{"defaultMode": "plan"}, "enabledPlugins": map[string]any{"cc-plugin-you-should-know@builtin": true}},
+			[]string{"model opusplan", "permissions.defaultMode plan", "you-should-know on (built-in Claude Code mod; each check is a billed request; /plugin disable cc-plugin-you-should-know@builtin to turn off)"}},
+		{"pinned by the user", map[string]any{"model": "claude-sonnet-5-5", "permissions": map[string]any{"defaultMode": "acceptEdits"}, "enabledPlugins": map[string]any{"downshift@downshift": true, "cc-plugin-you-should-know@builtin": false}},
+			[]string{"claude-sonnet-5-5 (set by you)", "acceptEdits (set by you)", "you-should-know false (set by you)"}},
+		{"nothing set", map[string]any{}, []string{"no model set", "no permissions.defaultMode set", "no you-should-know set"}},
 		{"permissions without a mode", map[string]any{"permissions": map[string]any{"allow": []any{}}},
-			[]string{"no model set", "no permissions.defaultMode set", "no autoCompactWindow set"}},
+			[]string{"no model set", "no permissions.defaultMode set", "no you-should-know set"}},
 	} {
 		var got []string
 		checkMainPolicy(func(id, status, detail, _ string) {

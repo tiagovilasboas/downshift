@@ -136,7 +136,10 @@ add a `/command`, and draw a band above the prompt or a pane. Hooks run
 wherever the plugin loads, including `claude -p`; drawing works in the
 terminal, the Desktop app's Code tab and the VS Code extension, not in
 Cursor or Codex. Reference: [Mods overview](https://code.claude.com/docs/en/plugins/mods/overview).
-Two are recommended here, both from Anthropic.
+Four are recommended here: two from Anthropic (You should know, Token
+Weather), one Anthropic sample that reviews edits (Replay Theater) and one
+third-party learning aid (reflect-mod). Three more ship inside the Downshift
+plugin itself (see the exception above).
 
 ### You should know (built into Claude Code, off by default)
 
@@ -175,7 +178,7 @@ every check. That counts against the 5-hour and 7-day windows the Downshift
 statusline shows. Downshift's own rule, doubt never spends money, is about
 routing; this mod is a quality aid you pay for, so turn it on for long
 tasks where a missed trade-off costs more than the checks, and off for
-mechanical runs. Downshift neither enables nor detects it. Recent notes and
+mechanical runs. `downshift setup` enables it unless you set the key yourself, `downshift doctor` reports it, and the plugin alone does not. Recent notes and
 topics marked as known live in a file under `~/.claude/plugins/store/`
 whose name starts with `cc-plugin-you-should-know`; Claude Code deletes it
 after `cleanupPeriodDays` unused.
@@ -234,6 +237,50 @@ install, detect or configure a mod, and `downshift setup` never touches
 Claude Code's access, unsandboxed. Read the module; Token Weather's calls are
 `$.session.usage`, `$.ui.resolve` and `$.ui.invalidate`, which `claude plugin
 validate` lists. Pin the commit you read if you install from a clone.
+
+### Replay Theater (sample mod, review the last turn's edits)
+
+[Replay Theater](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/replay-theater),
+the third Anthropic sample, records each Edit, Write and MultiEdit call
+during a turn (file, text before and after) without blocking or changing
+it. When the turn ends a hint appears above the prompt
+(`▶ Replay: 5 edits (press r)  [ Replay ]`); `/replay` or the button opens
+a pane that steps through the edits one diff at a time, with Prev, Next and
+Close. It calls no model and sends nothing. Downshift recommends it because
+its own `downshift session --tree` says which model did the work, and this
+shows what the work was; the two together answer "was the cheaper model
+good enough?" in a minute. Same clone and install as Token Weather, plugin
+name `replay-theater`.
+
+### reflect-mod (claude-reflect, third-party, spends a small model call)
+
+[claude-reflect](https://github.com/BayramAnnakov/claude-reflect) (MIT) is
+a self-learning aid: it captures the corrections you make to Claude and
+turns them into rules in `CLAUDE.md`. It comes in two forms, and its author
+says to install only one, because with both every correction is captured
+twice. The mod form, `reflect-mod` (Claude Code 2.1.286+), checks each
+short prompt you send (500 characters or less, not `ok`, `continue` or a
+slash command) with one small model call, Haiku by default, and shows the
+rules it finds in a band above the prompt; nothing is written until you
+press Save, which adds a bullet inside a marked section of
+`~/.claude/CLAUDE.md` or `./CLAUDE.md`. `/reflect-queue` lists what it
+found, `/reflect-pause` turns it off, `remember: <rule>` saves a rule
+without the model check.
+
+```bash
+claude plugin marketplace add bayramannakov/claude-reflect
+claude plugin install reflect-mod@claude-reflect-marketplace
+```
+
+**Why Downshift recommends it, and the cost.** Every rule it saves is
+always-loaded context in later sessions, the cost the
+[audit skill](../../skills/downshift-audit/SKILL.md) measures, so keep the
+section short and prune it. Each check is a Haiku-sized request on your
+own account; it is small, but it is usage, and on a subscription it counts
+in the windows the statusline shows. The Python plugin form (`/reflect`,
+reviewed in batch, also syncs `AGENTS.md`, works for Codex and Cursor) spends
+nothing until you run it. Downshift neither installs nor detects either
+form.
 
 ## claude-code-setup (pattern, not a dependency)
 

@@ -55,7 +55,7 @@ downshift setup --dry-run   # prints the diff for each harness found; writes not
 downshift setup             # asks first, backs up the files, then merges the hooks
 ```
 
-For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) and `"autoCompactWindow": 400000` (earlier auto-compact on 1M-context models, no effect on 200k ones) for keys you have not set; existing values are kept, and `--no-session-policy` skips all three ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew (Experimental) needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
+For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) and `"enabledPlugins": {"cc-plugin-you-should-know@builtin": true}` (Claude Code's built-in You should know mod; each check is a billed background request to the session's model, `/plugin disable cc-plugin-you-should-know@builtin` turns it off) for keys you have not set; existing values are kept, and `--no-session-policy` skips all three ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew (Experimental) needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
 
 **Step 3 — Check the classifier** on your own prompts:
 ```bash
@@ -195,11 +195,11 @@ price (resend to pay it, `/cache-tax guard warn` to only be told), and
 `/keepwarm 90m` keeps the cache warm through a break with one small model
 request per 50 idle minutes, which costs usage. If you already installed
 `cache-tax@claude-code-mods`, uninstall one copy; `doctor` warns.
-It does not set `opusplan`, plan mode,
-`autoCompactWindow` or the statusline: those are settings, not hooks. Set
-`"model": "opusplan"`, `"permissions": {"defaultMode": "plan"}` and
-`"autoCompactWindow": 400000` in `~/.claude/settings.json` yourself
-(or `/model opusplan` in a session) if you want them; see
+It does not set `opusplan`, plan mode, the statusline or
+the You should know mod: those are settings, not hooks, and `downshift setup` writes them. Set
+`"model": "opusplan"` and `"permissions": {"defaultMode": "plan"}` in `~/.claude/settings.json` yourself
+(or `/model opusplan` in a session), and `/plugin enable cc-plugin-you-should-know@builtin` for You should know
+(a billed request per check), if you want them without `setup`; see
 [main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code).
 
 Use one channel. A plugin hook and a settings hook with the same command both

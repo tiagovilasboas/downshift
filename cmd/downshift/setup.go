@@ -27,7 +27,7 @@ type setupOptions struct {
 	Undo   bool
 	Yes    bool
 	// NoSessionPolicy skips the optional main-session policy (model opusplan and
-	// plan as the starting mode); hooks are wired as usual.
+	// plan as the starting mode, You should know); hooks are wired as usual.
 	NoSessionPolicy bool
 	Home            string
 	Binary          string
@@ -83,7 +83,7 @@ Wire every Downshift hook into the harnesses found on this machine.
   --yes                do not ask before writing
   --no-session-policy  wire the hooks only: do not set the Claude Code
                        main-session policy (model opusplan, sessions start in
-                       plan mode, autoCompactWindow 400000)
+                       plan mode, You should know on)
 
 Claude Code gets the policy by default, only for keys it does not already set.
 `
@@ -197,8 +197,12 @@ func setupSummary(plans []setupPlan) string {
 				}
 			}
 		}
-		if w, _ := doc.get("autoCompactWindow"); fmt.Sprint(w) == "400000" {
-			policy = append(policy, "context auto-compacts at 400k tokens on 1M-context models (no effect on 200k models; saving estimated, not measured)")
+		if ep, ok := doc.get("enabledPlugins"); ok {
+			if po, isObj := asObj(ep); isObj {
+				if on, _ := po.get("cc-plugin-you-should-know@builtin"); on == true {
+					policy = append(policy, "You should know is on: each check is a billed background request to the session's model (/plugin disable cc-plugin-you-should-know@builtin to turn off)")
+				}
+			}
 		}
 	}
 	if !wrote {

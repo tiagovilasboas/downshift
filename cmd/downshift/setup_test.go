@@ -381,12 +381,12 @@ func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
 	if m, d := policy(fresh); m != "opusplan" || d != "plan" {
 		t.Errorf("fresh = model %v, defaultMode %v; want opusplan, plan", m, d)
 	}
-	if w := parseDoc(t, fresh.read(".claude/settings.json"))["autoCompactWindow"]; w != float64(400000) {
-		t.Errorf("fresh autoCompactWindow = %v (%T); want the plain integer 400000", w, w)
+	if _, ok := parseDoc(t, fresh.read(".claude/settings.json"))["autoCompactWindow"]; ok {
+		t.Error("setup wrote autoCompactWindow; the owner keeps it outside setup")
 	}
 
 	pinned := newSetupEnv(t, ".claude")
-	pinned.write(".claude/settings.json", `{"model":"claude-sonnet-5-5","autoCompactWindow":250000,"permissions":{"allow":["Bash(ls:*)"],"defaultMode":"acceptEdits"}}`)
+	pinned.write(".claude/settings.json", `{"model":"claude-sonnet-5-5","autoCompactWindow":250000,"enabledPlugins":{"cc-plugin-you-should-know@builtin":false},"permissions":{"allow":["Bash(ls:*)"],"defaultMode":"acceptEdits"}}`)
 	code, out, _ := pinned.run("claude-code", "--yes")
 	if code != 0 {
 		t.Fatalf("exit %d\n%s", code, out)
@@ -394,18 +394,18 @@ func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
 	if m, d := policy(pinned); m != "claude-sonnet-5-5" || d != "acceptEdits" {
 		t.Errorf("pinned = model %v, defaultMode %v; want both kept", m, d)
 	}
-	if !strings.Contains(out, `"model": "opusplan"`) || !strings.Contains(out, "permissions.defaultMode") || !strings.Contains(out, "autoCompactWindow") {
+	if !strings.Contains(out, `"model": "opusplan"`) || !strings.Contains(out, "permissions.defaultMode") || !strings.Contains(out, "cc-plugin-you-should-know@builtin") {
 		t.Errorf("no notes for the kept values:\n%s", out)
 	}
 	if w := parseDoc(t, pinned.read(".claude/settings.json"))["autoCompactWindow"]; w != float64(250000) {
-		t.Errorf("pinned autoCompactWindow = %v; want 250000 kept", w)
+		t.Errorf("pinned autoCompactWindow = %v; want 250000 kept (setup never touches it)", w)
 	}
 	if perms := parseDoc(t, pinned.read(".claude/settings.json"))["permissions"].(map[string]any); len(perms["allow"].([]any)) != 1 {
 		t.Errorf("existing permissions rules changed: %v", perms)
 	}
 
 	already := newSetupEnv(t, ".claude")
-	already.write(".claude/settings.json", `{"model":"opusplan","autoCompactWindow":400000,"permissions":{"defaultMode":"plan"}}`)
+	already.write(".claude/settings.json", `{"model":"opusplan","enabledPlugins":{"cc-plugin-you-should-know@builtin":true},"permissions":{"defaultMode":"plan"}}`)
 	if _, out, _ := already.run("claude-code", "--yes"); strings.Contains(out, "keeps its pinned") || strings.Contains(out, "keep their") {
 		t.Errorf("note printed although the policy is already set:\n%s", out)
 	}
@@ -427,7 +427,7 @@ func TestSetupSummaryStatesWhatChanges(t *testing.T) {
 	t.Setenv("DOWNSHIFT_CONTROL_SHARE", "")
 	e := newSetupEnv(t, ".claude")
 	_, out, _ := e.run("claude-code", "--yes")
-	for _, want := range []string{"What changes for you", "1 in 10", "downshift report", "plan mode", "opusplan", "400k tokens", "--no-session-policy", "downshift setup --undo"} {
+	for _, want := range []string{"What changes for you", "1 in 10", "downshift report", "plan mode", "opusplan", "You should know is on", "billed", "--no-session-policy", "downshift setup --undo"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("summary is missing %q:\n%s", want, out)
 		}
@@ -435,7 +435,7 @@ func TestSetupSummaryStatesWhatChanges(t *testing.T) {
 
 	skipped := newSetupEnv(t, ".claude")
 	_, out, _ = skipped.run("claude-code", "--yes", "--no-session-policy")
-	if strings.Contains(out, "plan mode") || strings.Contains(out, "opusplan") || strings.Contains(out, "400k tokens") {
+	if strings.Contains(out, "plan mode") || strings.Contains(out, "opusplan") || strings.Contains(out, "You should know") {
 		t.Errorf("summary claims a session policy that was not written:\n%s", out)
 	}
 	if !strings.Contains(out, "1 in 10") {
@@ -599,5 +599,86 @@ func TestPlanTarget_NotesEnabledPlugin(t *testing.T) {
 	}
 	if !strings.Contains(string(p.after), `"hooks"`) {
 		t.Fatalf("without the plugin the hooks are written:\n%s", p.after)
+	}
+}
+
+const youShouldKnowKey = "cc-plugin-you-should-know@builtin"
+
+func enabledPlugin(t *testing.T, e *setupEnv) (any, bool) {
+	t.Helper()
+	ep, _ := parseDoc(t, e.read(".claude/settings.json"))["enabledPlugins"].(map[string]any)
+	v, ok := ep[youShouldKnowKey]
+	return v, ok
+}
+
+// "You should know" is a sub-key of the enabledPlugins map, which the user
+// usually already fills: only the sub-key decides, never the map.
+func TestSetupYouShouldKnowDefault(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		settings  string // empty: no settings file
+		args      []string
+		want      any // value of the sub-key afterwards
+		present   bool
+		wantNote  bool
+		keepOther bool // downshift@downshift must survive
+	}{
+		{"map absent: created", `{"hooks":{}}`, nil, true, true, false, false},
+		{"no file: created", "", nil, true, true, false, false},
+		{"key absent beside other plugins", `{"enabledPlugins":{"downshift@downshift":true}}`, nil, true, true, false, true},
+		{"already true: untouched", `{"enabledPlugins":{"` + youShouldKnowKey + `":true,"downshift@downshift":true}}`, nil, true, true, false, true},
+		{"false set by you: untouched and reported", `{"enabledPlugins":{"` + youShouldKnowKey + `":false,"downshift@downshift":true}}`, nil, false, true, true, true},
+		{"--no-session-policy: skipped", `{"enabledPlugins":{"downshift@downshift":true}}`, []string{"--no-session-policy"}, nil, false, false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			e := newSetupEnv(t, ".claude")
+			if tc.settings != "" {
+				e.write(".claude/settings.json", tc.settings)
+			}
+			if code, out, errOut := e.run(append([]string{"claude-code", "--yes"}, tc.args...)...); code != 0 {
+				t.Fatalf("exit %d\n%s%s", code, out, errOut)
+			} else if got := strings.Contains(out, "is not true in enabledPlugins"); got != tc.wantNote {
+				t.Errorf("note printed = %v, want %v\n%s", got, tc.wantNote, out)
+			}
+			v, ok := enabledPlugin(t, e)
+			if ok != tc.present || (ok && v != tc.want) {
+				t.Errorf("enabledPlugins[%s] = %v, present %v; want %v, present %v", youShouldKnowKey, v, ok, tc.want, tc.present)
+			}
+			if tc.keepOther {
+				ep := parseDoc(t, e.read(".claude/settings.json"))["enabledPlugins"].(map[string]any)
+				if ep["downshift@downshift"] != true {
+					t.Errorf("existing plugin entry lost: %v", ep)
+				}
+			}
+		})
+	}
+}
+
+// Dry run shows the sub-key in the diff and writes nothing; undo restores the
+// backup taken before setup added it.
+func TestSetupYouShouldKnowDryRunAndUndo(t *testing.T) {
+	original := `{"enabledPlugins":{"downshift@downshift":true},"hooks":{}}`
+	e := newSetupEnv(t, ".claude")
+	e.write(".claude/settings.json", original)
+
+	code, out, _ := e.run("claude-code", "--dry-run")
+	if code != 0 || !strings.Contains(out, youShouldKnowKey) || !strings.Contains(out, "Dry run") {
+		t.Fatalf("dry run exit %d, diff must show the key:\n%s", code, out)
+	}
+	if e.read(".claude/settings.json") != original {
+		t.Fatal("dry run wrote the file")
+	}
+
+	if code, out, _ := e.run("claude-code", "--yes"); code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	if v, ok := enabledPlugin(t, e); !ok || v != true {
+		t.Fatalf("not written: %v %v", v, ok)
+	}
+	if code, out, _ := e.run("--undo", "--yes"); code != 0 {
+		t.Fatalf("undo exit %d\n%s", code, out)
+	}
+	if e.read(".claude/settings.json") != original {
+		t.Errorf("undo did not restore the original:\n%s", e.read(".claude/settings.json"))
 	}
 }

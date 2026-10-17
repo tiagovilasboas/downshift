@@ -32,13 +32,18 @@ type setupStatusLine struct {
 // when set, names the top-level object that holds Key. An existing value is
 // never replaced; Note, when set, is printed if that value differs from Value.
 // Optional defaults are the main-session policy and are skipped by
-// --no-session-policy.
+// --no-session-policy. Parent may name a map the user already fills (such as
+// enabledPlugins): only Key is checked, never the map. Label and Info are for
+// reports (doctor, the setup summary): Label replaces the key path, Info
+// describes the value when it is the one setup writes.
 type setupDefault struct {
 	Parent   string
 	Key      string
 	Value    any
 	Note     string
 	Optional bool
+	Label    string
+	Info     string
 }
 
 type setupTarget struct {
@@ -99,16 +104,21 @@ var setupTargets = []setupTarget{
 				Note: `sessions keep their "permissions.defaultMode"; set it to "plan" in ~/.claude/settings.json ` +
 					"to start every session in plan mode",
 			},
-			// Auto-compact earlier than the model limit. Only models with a 1M
-			// window are affected (Claude Code caps the value at the window, so
-			// 400000 is a no-op on 200k models). A plain integer: "400k" would be
-			// read as 400. Saving is estimated, not measured.
+			// Claude Code's built-in "You should know" mod (off by default). The key is
+			// a sub-key of the enabledPlugins map, which the user usually already has
+			// (the Downshift plugin itself), so "only when unset" applies to the
+			// sub-key. Each check is a billed background request to the session's
+			// model: Info says so wherever the default is reported.
 			{
-				Key:      "autoCompactWindow",
-				Value:    400000,
+				Parent:   "enabledPlugins",
+				Key:      "cc-plugin-you-should-know@builtin",
+				Value:    true,
 				Optional: true,
-				Note: `the session keeps its "autoCompactWindow"; set it to 400000 in ~/.claude/settings.json ` +
-					"to compact context at 400k tokens on 1M-context models",
+				Label:    "you-should-know",
+				Info: "on (built-in Claude Code mod; each check is a billed request; " +
+					"/plugin disable cc-plugin-you-should-know@builtin to turn off)",
+				Note: `"cc-plugin-you-should-know@builtin" is not true in enabledPlugins; set it to true in ~/.claude/settings.json ` +
+					"(or run /plugin enable cc-plugin-you-should-know@builtin) to turn on You should know; each check is a billed request",
 			},
 		},
 		Hooks: []setupHook{
@@ -123,7 +133,7 @@ var setupTargets = []setupTarget{
 			ChainArgs: "quota import --harness claude-code --source claude-statusline",
 		},
 		// The upstream marketplace install of the mod vendored under hooks/cache-tax/.
-		ModConflicts: []string{"cache-tax@claude-code-mods"},
+		ModConflicts: []string{"cache-tax@claude-code-mods", "savvy-progress@claude-kit", "filetree@claude-code-filetree", "filetree@filetree"}, // upstream ids of the three mods under hooks/; filetree@filetree is its pre-rename id
 	},
 	{
 		Name:      "cursor",
