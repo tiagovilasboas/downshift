@@ -9,6 +9,18 @@
       "description": "Routes each Claude Code subagent to a right-sized model via PreToolUse. Requires the downshift binary (install.sh or Releases).",
       "category": "productivity",
       "tags": ["subagents", "cost", "routing"]
+    },
+    {
+      "name": "savvy-progress",
+      "source": "./mods/savvy-progress",
+      "description": "Mod: progress bar above the prompt and a live /agents-info panel of subagents (vendored, MIT).",
+      "category": "productivity"
+    },
+    {
+      "name": "filetree",
+      "source": "./mods/filetree",
+      "description": "Mod: IDE-style file tree pane highlighting what Claude reads, writes and commits (vendored, MIT).",
+      "category": "productivity"
     }
   ]
 }

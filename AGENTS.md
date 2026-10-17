@@ -154,7 +154,7 @@ cmd/downshift/       — binary entry point, hook runners, try subcommand,
 - Task text stays in memory for feature extraction and is never persisted. Feedback and training are
   harness-agnostic; only explicit reviewed `required_tier` labels enter supervised training.
 - The install example omits `claude-fable-5-1` on purpose (upshift writes the last listed id); do not add it.
-- `hooks/cache-tax/` is a vendored third-party mod (MIT, pinned in NOTICE): re-vendor per its README, never edit in place; it holds no routing logic.
+- `hooks/cache-tax/`, `mods/savvy-progress/` and `mods/filetree/` are vendored third-party mods (MIT, pinned in NOTICE): re-vendor per their READMEs, never edit in place; they hold no routing logic.
 
 ### Reference (read on demand)
 

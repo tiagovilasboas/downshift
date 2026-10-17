@@ -195,6 +195,9 @@ price (resend to pay it, `/cache-tax guard warn` to only be told), and
 `/keepwarm 90m` keeps the cache warm through a break with one small model
 request per 50 idle minutes, which costs usage. If you already installed
 `cache-tax@claude-code-mods`, uninstall one copy; `doctor` warns.
+The marketplace also offers savvy-progress and filetree, one install each
+(`/plugin install savvy-progress@downshift`, `/plugin install filetree@downshift`;
+see [mods/README.md](../../mods/README.md)).
 It does not set `opusplan`, plan mode, the statusline or
 the You should know mod: those are settings, not hooks, and `downshift setup` writes them. Set
 `"model": "opusplan"` and `"permissions": {"defaultMode": "plan"}` in `~/.claude/settings.json` yourself

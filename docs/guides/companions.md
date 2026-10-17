@@ -38,7 +38,11 @@ supports; the Downshift side of that table is in
   2026-10-17: the plugin bundles the [cache-tax mod](../../hooks/cache-tax/README.md)
   (MIT, vendored and pinned, no always-loaded context, no telemetry, no
   network call but its own opt-in warming ping). The NOTICE file carries its
-  licence.
+  licence. Mods are the exception category to the never-bundle rule (owner decision
+  2026-10-17): cache-tax inside the plugin, [savvy-progress](../../mods/savvy-progress/README.md)
+  and [filetree](../../mods/filetree/README.md) as sibling plugins of the marketplace
+  (`savvy-progress@downshift`, `filetree@downshift`), each vendored and pinned with its
+  licence in NOTICE.
 - It does not count a companion's savings as its own. `downshift stats` is
   routing; `headroom savings` is compression. When a companion is recorded,
   `doctor` says so, so a before/after comparison is not attributed to routing
