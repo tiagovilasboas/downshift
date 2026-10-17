@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Companions guide: Anthropic's Token Weather sample mod (Claude Code 2.1.287+, terminal only) is the recommended way to see the main session's context window above the prompt; the section says how it complements Downshift's statusline, the install commands (validated on 2.1.302) and why to read a hooks module before installing. Downshift ships no mod and detects none.
+- Companions guide: two Claude Code mods recommended, both Anthropic's. You should know (`cc-plugin-you-should-know@builtin`, built in, off by default) shows one thing you might have missed above the prompt; the section states its cost (a billed background request per check) and when it pays. Token Weather (sample mod, Claude Code 2.1.287+) draws the main session's context window above the prompt; the section says how it complements Downshift's statusline, the install commands (validated on 2.1.302) and why to read a hooks module before installing. Downshift enables and detects neither.
 - `downshift shadow-report` summarises the multilingual E5 observations from the telemetry log (`events.jsonl`, `--telemetry=` to point elsewhere): observed and scored counts, helper error codes, would-lift rate overall and by regex label, nearest-label distribution, abstain share, a false-downgrade proxy (risk decision, no lift, nearest label below the regex one; a proxy, not a reviewed error), latency p50/p95/max, and the same for the `e5_fuse` trace; `--text` prints the human form, JSON stays the default and is byte-identical when no E5 events exist. This is how E5 is validated in shadow mode on a real log before any enable decision.
 
 ### Changed

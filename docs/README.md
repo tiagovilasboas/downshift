@@ -31,7 +31,7 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 | [guides/install.md](guides/install.md) | Installation and harness setup |
 | [guides/config.md](guides/config.md) | Configuration and local state |
 | [guides/when-to-use.md](guides/when-to-use.md) | When to use Downshift |
-| [guides/companions.md](guides/companions.md) | Companions: Headroom (default, detected and recorded), OmniRoute (optional gateway), Token Weather (recommended Claude Code mod), patterns Downshift follows but does not bundle |
+| [guides/companions.md](guides/companions.md) | Companions: Headroom (default, detected and recorded), OmniRoute (optional gateway), recommended Claude Code mods (You should know, Token Weather), patterns Downshift follows but does not bundle |
 | [guides/claude-code.md](guides/claude-code.md) | Claude Code guide: opusplan and Downshift, how the baseline model is found, what is inferred, plugin vs setup |
 | [guides/evidence.md](guides/evidence.md) | What is proven at which level, and the metrics table (available, inferred, estimated, not yet) |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Protocol for the main comparison and what each run must record |

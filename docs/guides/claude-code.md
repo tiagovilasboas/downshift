@@ -153,8 +153,9 @@ twice` when it finds both, and suggests `downshift setup --undo`. Detection read
 
 Mods (plugins with a hooks module that draw UI, Claude Code 2.1.287+) are a third channel Downshift
 does not use: it ships no module and draws no `AbovePrompt` band. For the main session's context
-window above the prompt, the recommended mod is Anthropic's Token Weather
-([companions](companions.md#token-weather-recommended-claude-code-mod)).
+window above the prompt, the recommended mod is Anthropic's Token Weather, and for a side agent that
+flags what you might have missed, Anthropic's built-in You should know
+([companions](companions.md#claude-code-mods-downshift-recommends)).
 
 ## 8. Agents: pinned model versus inherit, and when not to delegate
 

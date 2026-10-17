@@ -36,8 +36,8 @@ Primary harness: Claude Code (most complete, most verified); every adapter gets 
 Harness status (three words only): Completed = Claude Code; Functional = Codex, Cursor; Experimental (proof of concept) = KiroCrew, Antigravity.
 Evidence per harness: docs/reference/harness-matrix.md
 Companions (Headroom default, detected and recorded, never installed by Downshift;
-OmniRoute optional gateway; Token Weather recommended Claude Code mod, terminal only,
-never bundled): docs/guides/companions.md
+OmniRoute optional gateway; recommended Claude Code mods You should know (built in,
+off by default, billed checks) and Token Weather): docs/guides/companions.md
 
 ## Licence
 

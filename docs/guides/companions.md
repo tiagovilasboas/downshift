@@ -123,16 +123,64 @@ catalog, or expect `unknown` baselines in `downshift stats`. Not verified on a
 live OmniRoute instance as of 2026-10-17; evidence welcome under
 `docs/evidence/`.
 
-## Token Weather (recommended Claude Code mod)
+## Claude Code mods Downshift recommends
 
-Claude Code **mods** are plugins with a hooks module (`hooks/hooks.json`
-listing `modules`) that can change what Claude Code does and draw their own
-UI, such as a band above the prompt. They load by default from Claude Code
-2.1.287 and draw on the terminal surface only (not the Desktop app, not
-Cursor or Codex). Anthropic's DevRel team shares three sample mods in
+Claude Code **mods** (released 2026-10-01 with Claude Code 2.1.287) are
+plugins with a hooks module (`hooks/hooks.json` listing `modules`) whose
+functions run inside Claude Code: they can guard a tool call or a prompt,
+add a `/command`, and draw a band above the prompt or a pane. Hooks run
+wherever the plugin loads, including `claude -p`; drawing works in the
+terminal, the Desktop app's Code tab and the VS Code extension, not in
+Cursor or Codex. Reference: [Mods overview](https://code.claude.com/docs/en/plugins/mods/overview).
+Two are recommended here, both from Anthropic.
+
+### You should know (built into Claude Code, off by default)
+
+`cc-plugin-you-should-know@builtin` is Anthropic's own mod, shipped inside
+Claude Code and off until you turn it on. While Claude works through a long
+task, a side agent rereads the conversation from time to time and, when it
+finds one thing you might have missed (a trade-off Claude chose without
+saying so, a result that may be off), shows a short note above the prompt:
+
+```text
+✦ Heads up · There was a change to how folder sharing starts in June, which may have bumped usage metrics artificially.
+  1: Learn more   2: Knew this already   0: Dismiss
+```
+
+The side agent is a separate request to the session's model with no tools:
+it cannot read files, run commands or change what Claude does, and the main
+agent never sees a note unless you send it with "Chat in main session".
+
+Turn it on at the Claude Code prompt, then open a new session:
+
+```text
+/plugin enable cc-plugin-you-should-know@builtin
+```
+
+`/plugin disable cc-plugin-you-should-know@builtin` turns it off. If the
+enable command answers that the plugin is not installed, your session does
+not list it: it needs a direct connection with a claude.ai account or a
+Console key (not an LLM gateway or an `apiKeyHelper`) and the feature flags
+a session with `DISABLE_TELEMETRY` does not fetch.
+
+**It spends usage, and Downshift says so.** Each check is a background
+request to the session's model: the conversation is read from the prompt
+cache on the same terms as Claude's next request, and the mod's own
+instructions (several thousand tokens) plus the reply are billed in full,
+every check. That counts against the 5-hour and 7-day windows the Downshift
+statusline shows. Downshift's own rule, doubt never spends money, is about
+routing; this mod is a quality aid you pay for, so turn it on for long
+tasks where a missed trade-off costs more than the checks, and off for
+mechanical runs. Downshift neither enables nor detects it. Recent notes and
+topics marked as known live in a file under `~/.claude/plugins/store/`
+whose name starts with `cc-plugin-you-should-know`; Claude Code deletes it
+after `cleanupPeriodDays` unused.
+
+### Token Weather (sample mod, install from the playground)
+
+Anthropic's DevRel team shares three sample mods in
 [claude-code-playground/claude-code/mods](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods),
 Apache 2.0, as-is and unsupported.
-
 [Token Weather](https://github.com/anthropics/claude-code-playground/tree/main/claude-code/mods/token-weather)
 is the one Downshift recommends. One module, about 120 lines, no
 dependencies. After each main-loop turn it calls `$.session.usage()` and
