@@ -38,6 +38,13 @@ received a live usage observation.
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 ```
 
+The installer downloads the release archive and `checksums.txt` from the same
+GitHub release and verifies the sha256 before anything is installed; a mismatch
+or a missing checksum file stops it. `DOWNSHIFT_SKIP_CHECKSUM=1` installs
+unverified and says so. Releases are also on the
+[Releases page](https://github.com/tiagovilasboas/downshift/releases) with the
+same `checksums.txt`.
+
 `install.sh` still treats a non-flag argument as the release version. `--explicit-upshift` may come before or after that version. It writes `"explicit_upshift": true` into `session-models.json` without dropping harness lists that are already there. The same switch at runtime is `DOWNSHIFT_EXPLICIT_UPSHIFT=1`. Default is off. See [session-models.md](../reference/session-models.md#explicit_upshift).
 
 **Step 2 — Preview, then wire the hooks:**

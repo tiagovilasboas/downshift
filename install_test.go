@@ -6,6 +6,8 @@ package installer_test
 import (
 	"archive/tar"
 	"compress/gzip"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -46,6 +48,14 @@ case "$url" in
     printf '<feed>\n  <link rel="alternate" href="%s"/>\n' "$base"
     printf '  <entry>\n    <link rel="alternate" type="text/html" href="%s/tag/%s"/>\n  </entry>\n' "$base" "$FAKE_LIST"
     printf '  <entry>\n    <link rel="alternate" type="text/html" href="%s/tag/v0.0.1-alpha.1"/>\n  </entry>\n</feed>\n' "$base" ;;
+  */releases/download/*/checksums.txt)
+    [ "$FAKE_NO_CHECKSUMS" = 1 ] && exit 22
+    ver="${url#*/releases/download/}"; ver="${ver%%/*}"; ver="${ver#v}"
+    sha="$FAKE_SHA"; [ -n "$FAKE_BAD_SHA" ] && sha="$FAKE_BAD_SHA"
+    : > "$out"
+    for os in linux darwin; do for arch in amd64 arm64; do
+      printf '%s  downshift_%s_%s_%s.tar.gz\n' "$sha" "$ver" "$os" "$arch" >> "$out"
+    done; done ;;
   */releases/download/*)
     cp "$FAKE_TARBALL" "$out" ;;
   *) exit 22 ;;
@@ -113,6 +123,7 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 		"FAKE_LATEST=" + latest,
 		"FAKE_LIST=" + list,
 		"FAKE_TARBALL=" + tarball,
+		"FAKE_SHA=" + sha256Of(t, tarball),
 		"FAKE_LOG=" + logFile,
 	}
 	cmd.Env = append(cmd.Env, keptEnv...)
@@ -229,8 +240,14 @@ func TestInstallResolvesLatestWithoutGitHubAPI(t *testing.T) {
 func TestInstallExplicitVersionSkipsLookup(t *testing.T) {
 	r := runInstall(t, "", "", "v0.1.0-beta.1")
 	assertInstalled(t, r)
-	if len(r.urls) != 1 {
-		t.Errorf("explicit version should only download, got curl calls: %v", r.urls)
+	// Explicit version: no lookup, only the archive and its checksums.txt.
+	if len(r.urls) != 2 {
+		t.Errorf("explicit version should only download the archive and checksums, got curl calls: %v", r.urls)
+	}
+	for _, u := range r.urls {
+		if strings.Contains(u, "/releases/latest") || strings.Contains(u, "releases.atom") {
+			t.Errorf("explicit version must not look up releases: %v", r.urls)
+		}
 	}
 	if u := downloadURL(t, r); !strings.Contains(u, "/releases/download/v0.1.0-beta.1/downshift_0.1.0-beta.1_") {
 		t.Errorf("download URL = %s, want the v0.1.0-beta.1 archive", u)
@@ -312,5 +329,54 @@ func TestInstallExplainsSessionAllowlist(t *testing.T) {
 	assertInstalled(t, r)
 	if !strings.Contains(r.output, "session-models.json") {
 		t.Fatalf("installer must explain session-models.json, output:\n%s", r.output)
+	}
+}
+
+func sha256Of(t *testing.T, path string) string {
+	t.Helper()
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])
+}
+
+// The installer downloads checksums.txt and verifies the archive before it
+// installs anything. A wrong digest or a missing checksums file is a hard
+// stop unless the user opts out.
+func TestInstallVerifiesChecksum(t *testing.T) {
+	r := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, r)
+	found := false
+	for _, u := range r.urls {
+		if strings.HasSuffix(u, "/releases/download/v1.0.0/checksums.txt") {
+			found = true
+		}
+	}
+	if !found || !strings.Contains(r.output, "Checksum verified") {
+		t.Fatalf("checksums.txt not fetched or not verified; urls=%v\noutput:\n%s", r.urls, r.output)
+	}
+}
+
+func TestInstallRejectsBadChecksum(t *testing.T) {
+	r := runInstallEnv(t, "v1.0.0", "", []string{"FAKE_BAD_SHA=" + strings.Repeat("0", 64)})
+	if r.code != 1 || !strings.Contains(r.output, "checksum mismatch") {
+		t.Fatalf("exit %d, want 1 with a mismatch message\noutput:\n%s", r.code, r.output)
+	}
+	if _, err := os.Stat(filepath.Join(r.binDir, "downshift")); err == nil {
+		t.Fatal("binary must not be installed on a checksum mismatch")
+	}
+}
+
+func TestInstallMissingChecksumsNeedsOptOut(t *testing.T) {
+	r := runInstallEnv(t, "v1.0.0", "", []string{"FAKE_NO_CHECKSUMS=1"})
+	if r.code != 1 || !strings.Contains(r.output, "DOWNSHIFT_SKIP_CHECKSUM=1") {
+		t.Fatalf("exit %d, want 1 naming the opt-out\noutput:\n%s", r.code, r.output)
+	}
+	r = runInstallEnv(t, "v1.0.0", "", []string{"FAKE_NO_CHECKSUMS=1", "DOWNSHIFT_SKIP_CHECKSUM=1"})
+	assertInstalled(t, r)
+	if !strings.Contains(r.output, "checksum verification skipped") {
+		t.Fatalf("opt-out must be loud\noutput:\n%s", r.output)
 	}
 }

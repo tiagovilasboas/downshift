@@ -134,6 +134,38 @@ trap 'rm -rf "$TMP"' EXIT
 echo "Downloading downshift ${VERSION} (${OS}/${ARCH})..."
 curl -fsSL "$URL" -o "$TMP/$ARCHIVE"
 
+# ── Verify checksum ───────────────────────────────────────────────────────────
+# goreleaser publishes checksums.txt (sha256) next to every archive. A hook
+# binary runs on every spawn, so an unverified download is not installed
+# unless the user says so with DOWNSHIFT_SKIP_CHECKSUM=1.
+CHECKSUMS_URL="https://github.com/${REPO}/releases/download/${VERSION}/checksums.txt"
+if [ "${DOWNSHIFT_SKIP_CHECKSUM:-0}" = 1 ]; then
+  echo "warning: checksum verification skipped (DOWNSHIFT_SKIP_CHECKSUM=1)" >&2
+else
+  if ! curl -fsSL "$CHECKSUMS_URL" -o "$TMP/checksums.txt"; then
+    echo "error: could not download checksums.txt for ${VERSION}; set DOWNSHIFT_SKIP_CHECKSUM=1 to install unverified" >&2
+    exit 1
+  fi
+  expected=$(grep " ${ARCHIVE}\$" "$TMP/checksums.txt" | awk '{print $1}' | head -n 1)
+  if [ -z "$expected" ]; then
+    echo "error: ${ARCHIVE} is not listed in checksums.txt" >&2
+    exit 1
+  fi
+  if command -v sha256sum >/dev/null 2>&1; then
+    actual=$(sha256sum "$TMP/$ARCHIVE" | awk '{print $1}')
+  elif command -v shasum >/dev/null 2>&1; then
+    actual=$(shasum -a 256 "$TMP/$ARCHIVE" | awk '{print $1}')
+  else
+    echo "error: neither sha256sum nor shasum is available; set DOWNSHIFT_SKIP_CHECKSUM=1 to install unverified" >&2
+    exit 1
+  fi
+  if [ "$actual" != "$expected" ]; then
+    echo "error: checksum mismatch for ${ARCHIVE} (expected ${expected}, got ${actual}); not installed" >&2
+    exit 1
+  fi
+  echo "Checksum verified (sha256)."
+fi
+
 echo "Extracting..."
 tar -xzf "$TMP/$ARCHIVE" -C "$TMP"
 

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- `install.sh` downloads `checksums.txt` from the same release and verifies the archive's sha256 before installing; a mismatch or a missing checksum file is a hard stop, `DOWNSHIFT_SKIP_CHECKSUM=1` opts out loudly. Before, the one-liner installed whatever the download returned.
+
+### Fixed
+
+- Self-check: a risk abstention no longer exempts a decision whose tier was lifted afterwards by the semantic boost, so an abstained MEDIUM lifted to frontier with no current model is held by R7 (R9 for mid) instead of written.
+- KiroCrew: the policy-mode runner now sets the project directory, so `.downshift/policy.json` floors apply there too.
+- `setup`: with the Claude Code plugin enabled, no hooks are written to the settings file (session policy and statusline still are); `doctor` and the install guide describe the one-channel rule. The transcript reader checks the file type before opening it, so a FIFO cannot block a hook.
+
 ### Added
 
 - Claude Code plugin at the repository root: `.claude-plugin/plugin.json` and `marketplace.json`, `hooks/hooks.json` with the same four hooks `setup` writes (each only calls the binary), the `/downshift` command under `commands/`, the skills under `skills/` and one example agent. Install with `/plugin install downshift --marketplace tiagovilasboas/downshift`; the binary is still required. Claude Code only; `setup` stays the path for every other harness.
