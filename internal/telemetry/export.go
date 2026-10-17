@@ -57,6 +57,8 @@ type Summary struct {
 	ChildStatus         map[string]int            `json:"child_status"`
 	ReasonCodes         map[string]int            `json:"reason_codes,omitempty"`
 	AgentTypes          map[string]AgentTypeCount `json:"agent_types,omitempty"`
+	ByEntry             map[string]int            `json:"by_entry,omitempty"`
+	DuplicateToolUse    int                       `json:"duplicate_tool_use,omitempty"`
 	Note                string                    `json:"note"`
 }
 
@@ -131,8 +133,28 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		ChildStatus:         childStatus,
 		ReasonCodes:         stats.ReasonCodes,
 		AgentTypes:          nonEmptyAgentTypes(stats.ByAgentType),
+		ByEntry:             nonEmptyCounts(stats.ByEntry),
+		DuplicateToolUse:    stats.DuplicateToolUse,
 		Note:                note,
 	}
+}
+
+// nonEmptyCounts copies a count map, dropping zero values so omitempty stays
+// honest on the export.
+func nonEmptyCounts(in map[string]int) map[string]int {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]int, len(in))
+	for k, v := range in {
+		if v > 0 {
+			out[k] = v
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 // ExportJSON renders summary as stable indented JSON that contributors can

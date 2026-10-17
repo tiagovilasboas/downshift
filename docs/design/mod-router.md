@@ -147,11 +147,12 @@ next({ ...e, model })   or   next(e)            [fail open; never deny]
   second entry point to keep in step. The payload is `hook_event_name: "PreToolUse"`,
   `tool_name: "Agent"`, `tool_use_id`, `session_id`, `cwd`, `permission_mode`, `tool_input {prompt,
   description, subagent_type, model?, name?, run_in_background, cwd?}`, plus `parent_model`.
-- **Shared core untouched** in phase 1. Two small, harness-free additions are proposed for phase 2,
-  both in the layers the rule names, not in the mod:
+- **Shared core untouched** in phase 1. Phase 2a lands two small, harness-free additions in the
+  layers the rule names, not in the mod:
   1. `parent_model` (optional payload field, Claude Code adapter): used as the baseline **only**
      under the adapter's existing inheriting-type rule, before the transcript tail. Same rule, one
-     more source, no new policy. The `Baseline.FromSettings` guess path becomes rarer.
+     more source, no new policy. The `Baseline.FromSettings` guess path becomes rarer when the mod
+     is the live path.
   2. `entry` on the telemetry event (`hook` by default, `mod` when the payload says so through an
      optional `EntryIdentifier()` method read by `runHookAdapter`, like `ProjectDir()`), and
      `HarnessCapabilities.HookEntries` as data (`["settings-hook", "mod"]` for Claude Code) so
@@ -176,16 +177,21 @@ next({ ...e, model })   or   next(e)            [fail open; never deny]
 
 ## 7. Migration path
 
-1. **Phase 1 (this change).** Opt-in prototype under `mods/downshift-router/`, its own manifest, not
+1. **Phase 1 (done, 2026-10-17).** Opt-in prototype under `mods/downshift-router/`, its own manifest, not
    loaded by the root plugin. `claude plugin validate` and `claude plugin test` pass; two live
    headless runs show the ordering and the double-routing shape. No Go change.
-2. **Phase 2.** `parent_model` and `entry` as in section 5; a `turn.complete` hook in the mod that
-   records `e.agentId`, `e.usage` and the model that counted through `downshift end claude-code`
-   (the same shared recorder `SubagentStop` feeds), so usage no longer needs the child transcript;
-   a `turn.step` hook that sets `effort` from the decision, giving Claude Code the effort channel the
-   harness matrix lists as dropped. Observe `PostToolUse` `resolvedModel` for mod-written models (the
-   honored count the hook path already reports).
-3. **Phase 3.** Once honored is observed for mod writes at the same bar as the hook path (P3.4,
+2. **Phase 2a (done, this change).** `parent_model` and `entry` as in section 5: the Claude Code
+   adapter reads `parent_model` under its inheriting-type rule (before the transcript); the shared
+   runner records `entry` (`hook` or `mod`) on every decision; `HarnessCapabilities.HookEntries`
+   lists both paths for Claude Code; `stats` counts by entry and `doctor` warns when one
+   `tool_use_hash` carries two decisions. The mod always sends `entry: "mod"`.
+3. **Phase 2b (open).** A `turn.complete` hook in the mod that records `e.agentId`, `e.usage` and
+   the model that counted through `downshift end claude-code` (the same shared recorder
+   `SubagentStop` feeds), so usage no longer needs the child transcript; a `turn.step` hook that
+   sets `effort` from the decision, giving Claude Code the effort channel the harness matrix lists
+   as dropped. Observe `PostToolUse` `resolvedModel` for mod-written models (the honored count the
+   hook path already reports).
+4. **Phase 3.** Once honored is observed for mod writes at the same bar as the hook path (P3.4,
    fifty linked records), make the mod the Claude Code route for 2.1.287+: the root plugin's
    `hooks.json` keeps `PostToolUse`, `PostToolUseFailure`, `SubagentStop` and drops `PreToolUse`
    when the mod is enabled; `setup` keeps writing settings hooks for older Claude Code and for every
@@ -199,8 +205,9 @@ of parse, run, apply around the shared binary), and the two entry points are nev
 session. The gain is concrete and specific to Claude Code: the parent's model and the resolved agent
 type arrive as facts instead of transcript reads and guesses, effort becomes settable, and usage per
 agent arrives as an event. The cost is a second packaging to test on every release of an early-access
-surface. Ship phase 1 off by default now; do phase 2 only after the `entry` field exists so the two
-paths can be compared in `stats`; decide phase 3 on honored evidence, not on this prototype.
+surface. Phase 1 shipped off by default; phase 2a (`entry` + `parent_model`) is on `main` so the two
+paths are comparable in `stats` and `doctor`; do phase 2b (`turn.complete` / `turn.step`) next;
+decide phase 3 on honored evidence, not on the prototype alone.
 
 ## Appendix: evidence
 

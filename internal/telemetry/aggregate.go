@@ -32,6 +32,7 @@ func Aggregate(events []Event) Stats {
 		a.countDecision(ev)
 	}
 	a.tallyLogWide(events)
+	a.s.DuplicateToolUse = DuplicateToolUseCount(events)
 	return a.s
 }
 
@@ -56,6 +57,7 @@ func newAggregator() *aggregator {
 	return &aggregator{
 		s: Stats{
 			ByComplexity:   make(map[string]int),
+			ByEntry:        make(map[string]int),
 			ChildStatus:    make(map[ChildStatus]int),
 			CostBySession:  make(map[string]CostGroup),
 			CostBySubagent: make(map[string]CostGroup),
@@ -154,6 +156,7 @@ func (a *aggregator) addRealCost(ev Event, baselineFromSettings bool) {
 func (a *aggregator) countDecision(ev Event) {
 	a.s.Total++
 	a.countAgentType(ev)
+	a.s.ByEntry[NormalizeEntry(ev.Entry)]++
 	if ev.PolicyFloor {
 		a.s.PolicyFloor++
 	}
