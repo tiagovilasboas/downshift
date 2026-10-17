@@ -8,9 +8,12 @@ on:
   pull_request:
     branches: [main]
 
+# Pull requests cancel their superseded runs. Pushes to main do not: with
+# cancellation, a docs-only push right after a code push cancelled the code
+# run and then skipped the Go job itself, leaving main unverified.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
