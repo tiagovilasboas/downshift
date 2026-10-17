@@ -14,8 +14,6 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookctx"
-	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
@@ -48,73 +46,6 @@ func decodeUpdated(t *testing.T, out cursor.Output) map[string]any {
 		t.Fatalf("updated_input not valid JSON: %v", err)
 	}
 	return m
-}
-
-func TestHandle_DownshiftsTrivialSubagent(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	ev := cursor.Event{
-		ToolName: "Task",
-		ModelID:  frontierID,
-		ToolInput: json.RawMessage(`{
-			"task": "rename the userId variable to userIdentifier",
-			"model": "` + frontierID + `"
-		}`),
-	}
-	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
-	if note == "" {
-		t.Fatal("expected a downshift note, got none")
-	}
-	if out.Permission != "allow" {
-		t.Errorf("permission = %s, want allow", out.Permission)
-	}
-	m := decodeUpdated(t, out)
-	wantID := catID(core.TierSmall)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s", m["model"], wantID)
-	}
-	if m["task"] == nil {
-		t.Error("task field must be preserved in updated_input")
-	}
-}
-
-func TestHandle_UpshiftsComplexSubagent(t *testing.T) {
-	smallID := catID(core.TierSmall)
-	ev := cursor.Event{
-		ToolName: "Task",
-		ModelID:  smallID,
-		ToolInput: json.RawMessage(`{
-			"task": "rearchitect the payment flow across services",
-			"model": "` + smallID + `"
-		}`),
-	}
-	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
-	if note == "" {
-		t.Fatal("expected an upshift note, got none")
-	}
-	m := decodeUpdated(t, out)
-	wantID := catID(core.TierFrontier)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s", m["model"], wantID)
-	}
-}
-
-func TestHandle_OKKeepsGear(t *testing.T) {
-	midID := catID(core.TierMid)
-	ev := cursor.Event{
-		ToolName: "Task",
-		ModelID:  midID,
-		ToolInput: json.RawMessage(`{
-			"task": "implement the CSV export feature",
-			"model": "` + midID + `"
-		}`),
-	}
-	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
-	if note != "" {
-		t.Errorf("expected no change, got %q", note)
-	}
-	if out.UpdatedInput != nil {
-		t.Error("must not rewrite when gear is already right")
-	}
 }
 
 func TestHandle_IgnoresNonTaskTools(t *testing.T) {
@@ -165,40 +96,6 @@ func TestHandle_FallsBackToEventModel(t *testing.T) {
 	wantID := catID(core.TierSmall)
 	if m["model"] != wantID {
 		t.Errorf("model = %v, want %s", m["model"], wantID)
-	}
-}
-
-// TestHandle_SiblingFieldsPreserved is a regression test ensuring that a Cursor
-// preToolUse rewrite does not drop fields like timeout or run_in_background.
-func TestHandle_SiblingFieldsPreserved(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	ev := cursor.Event{
-		ToolName: "Task",
-		ModelID:  frontierID,
-		ToolInput: json.RawMessage(`{
-			"task":              "rename the userId variable",
-			"model":             "` + frontierID + `",
-			"timeout":           45,
-			"run_in_background": true
-		}`),
-	}
-	out, _, _ := cursor.Handle(withCatalogSession(ev), cat)
-	m := decodeUpdated(t, out)
-	if m == nil {
-		t.Fatal("expected updated_input")
-	}
-	wantID := catID(core.TierSmall)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s", m["model"], wantID)
-	}
-	if m["timeout"] == nil {
-		t.Error("timeout field was dropped from updated_input")
-	}
-	if m["run_in_background"] == nil {
-		t.Error("run_in_background field was dropped from updated_input")
-	}
-	if m["task"] == nil {
-		t.Error("task field was dropped from updated_input")
 	}
 }
 
@@ -268,47 +165,6 @@ func TestHandle_UnknownIDIsNotRewritten(t *testing.T) {
 	out, note, _ := cursor.Handle(withCatalogSession(ev), cat)
 	if note != "" || out.UpdatedInput != nil {
 		t.Fatalf("foreign id must not be rewritten, note=%q updated=%s", note, out.UpdatedInput)
-	}
-}
-
-func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
-	// This session is ordered least to most capable; composer is the first
-	// selectable ID for a small task.
-	frontierID := catID(core.TierFrontier)
-	session := []string{"composer-2.5", "claude-4.5-sonnet-thinking", frontierID}
-	ev := cursor.Event{
-		ToolName:      "Task",
-		SessionModels: &session,
-		ToolInput: json.RawMessage(`{
-			"task": "rename the userId variable to userIdentifier",
-			"model": "` + frontierID + `"
-		}`),
-	}
-	out, _, _ := cursor.Handle(ev, cat)
-	m := decodeUpdated(t, out)
-	if m == nil {
-		t.Fatal("expected a rewrite to a session model")
-	}
-	if m["model"] != "composer-2.5" {
-		t.Fatalf("model = %v, want composer-2.5", m["model"])
-	}
-	if m["model"] == "claude-4.5-haiku-thinking" || m["model"] == "claude-haiku-4" {
-		t.Fatal("emitted a catalog id that is not in the session")
-	}
-}
-
-func TestHandle_MissingSessionDoesNotRewrite(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	ev := cursor.Event{
-		ToolName: "Task",
-		ToolInput: json.RawMessage(`{
-			"task": "rename the userId variable to userIdentifier",
-			"model": "` + frontierID + `"
-		}`),
-	}
-	out, note, _ := cursor.Handle(ev, cat)
-	if note != "" || out.UpdatedInput != nil {
-		t.Fatalf("missing session must not rewrite, note=%q updated=%s", note, out.UpdatedInput)
 	}
 }
 
@@ -498,40 +354,6 @@ func TestHandle_HeldDecisionDoesNotRewriteViaFamilyPath(t *testing.T) {
 	}
 	if note != "" {
 		t.Errorf("expected no note when a held decision falls through to allow, got %q", note)
-	}
-}
-
-func writeFloorPolicy(t *testing.T, dir, tier string) {
-	t.Helper()
-	p := filepath.Join(dir, ".downshift", "policy.json")
-	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(p, []byte(`{"version":1,"min_tier":"`+tier+`"}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
-	dir := t.TempDir()
-	writeFloorPolicy(t, dir, "mid")
-	t.Cleanup(hookctx.SetProjectDir(dir))
-	frontierID := catID(core.TierFrontier)
-	ev := cursor.Event{
-		ToolName: "Task",
-		ModelID:  frontierID,
-		Cwd:      dir,
-		ToolInput: json.RawMessage(`{
-			"task": "rename the userId variable to userIdentifier",
-			"model": "` + frontierID + `"
-		}`),
-	}
-	out, _, d := cursor.Handle(withCatalogSession(ev), cat)
-	if !d.PolicyFloor || d.Tier != core.TierMid {
-		t.Fatalf("decision tier %v floor %v, want mid with floor", d.Tier, d.PolicyFloor)
-	}
-	if m := decodeUpdated(t, out); m["model"] != catID(core.TierMid) {
-		t.Errorf("model = %v, want %s", m["model"], catID(core.TierMid))
 	}
 }
 

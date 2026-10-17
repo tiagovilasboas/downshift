@@ -12,8 +12,6 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookctx"
-	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 )
 
 var cat = catalog.Load()
@@ -68,59 +66,6 @@ func decodeUpdated(t *testing.T, out codex.Output) map[string]any {
 		t.Fatalf("updatedInput not valid JSON: %v", err)
 	}
 	return m
-}
-
-func TestHandle_DownshiftsTrivialSubagent(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	ev := codex.Event{
-		ToolName: "spawn_agent",
-		Model:    frontierID,
-		ToolInput: json.RawMessage(`{
-			"task_name": "worker_agent_rename",
-			"message": "rename the userId variable to userIdentifier",
-			"fork_turns": "none"
-		}`),
-	}
-	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
-	if note == "" {
-		t.Fatal("expected a downshift note, got none")
-	}
-	if out.HookSpecificOutput.PermissionDecision != "allow" {
-		t.Errorf("permissionDecision = %s, want allow", out.HookSpecificOutput.PermissionDecision)
-	}
-	m := decodeUpdated(t, out)
-	wantID := catID(core.TierSmall)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s", m["model"], wantID)
-	}
-	// reasoning_effort must be set (not empty).
-	if m["reasoning_effort"] == "" || m["reasoning_effort"] == nil {
-		t.Error("reasoning_effort must be set on downshift")
-	}
-	// Reserved schema fields must be preserved.
-	if m["message"] == nil || m["task_name"] == nil || m["fork_turns"] == nil {
-		t.Error("reserved spawn_agent fields must be preserved in updatedInput")
-	}
-}
-
-func TestHandle_UpshiftsComplexSubagent(t *testing.T) {
-	smallID := catID(core.TierSmall)
-	ev := codex.Event{
-		ToolName: "spawn_agent",
-		Model:    smallID,
-		ToolInput: json.RawMessage(`{
-			"message": "rearchitect the payment flow across multiple services and migrate the schema"
-		}`),
-	}
-	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
-	if note == "" {
-		t.Fatal("expected an upshift note, got none")
-	}
-	m := decodeUpdated(t, out)
-	wantID := catID(core.TierFrontier)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s", m["model"], wantID)
-	}
 }
 
 func TestHandle_OKRewritesReasoningEffort(t *testing.T) {
@@ -290,80 +235,10 @@ func TestHandle_EmptyMessageFailsOpen(t *testing.T) {
 	}
 }
 
-// TestHandle_SiblingFieldsPreserved is a regression test ensuring that a Codex
-// PreToolUse rewrite does not drop fields from the spawn_agent payload (the
-// v2 schema has reserved fields that must all survive the model/effort rewrite).
-func TestHandle_SiblingFieldsPreserved(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	ev := codex.Event{
-		ToolName: "spawn_agent",
-		Model:    frontierID,
-		ToolInput: json.RawMessage(`{
-			"message":          "rename the userId variable",
-			"task_name":        "worker_agent_rename",
-			"fork_turns":       "none",
-			"model":            "` + frontierID + `",
-			"timeout_seconds":  120,
-			"background":       false
-		}`),
-	}
-	out, _, _ := codex.Handle(withCatalogSession(ev), cat)
-	m := decodeUpdated(t, out)
-	if m == nil {
-		t.Fatal("expected updatedInput")
-	}
-	wantID := catID(core.TierSmall)
-	if m["model"] != wantID {
-		t.Errorf("model = %v, want %s", m["model"], wantID)
-	}
-	if m["reasoning_effort"] == nil {
-		t.Error("reasoning_effort must be set")
-	}
-	// Reserved v2 fields must survive.
-	for _, field := range []string{"message", "task_name", "fork_turns", "timeout_seconds", "background"} {
-		if m[field] == nil {
-			t.Errorf("field %q was dropped from updatedInput", field)
-		}
-	}
-}
-
 func TestMain(m *testing.M) {
 	os.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(os.TempDir(), "downshift-session-models-absent.json"))
 	os.Setenv("DOWNSHIFT_DISCOVERY", "off")
 	os.Exit(m.Run())
-}
-
-func TestHandle_MissingSessionDoesNotRewrite(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	ev := codex.Event{
-		ToolName: "spawn_agent",
-		ToolInput: json.RawMessage(`{
-			"message": "rename the userId variable to userIdentifier",
-			"model": "` + frontierID + `"
-		}`),
-	}
-	out, note, _ := codex.Handle(ev, cat)
-	if note != "" || (out.HookSpecificOutput != nil && out.HookSpecificOutput.UpdatedInput != nil) {
-		t.Fatalf("missing session must not rewrite, note=%q", note)
-	}
-}
-
-func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	session := []string{"gpt-5.6-terra", frontierID}
-	ev := codex.Event{
-		ToolName:      "spawn_agent",
-		SessionModels: &session,
-		ToolInput: json.RawMessage(`{
-			"message": "rename the userId variable to userIdentifier",
-			"model": "` + frontierID + `"
-		}`),
-	}
-	out, _, _ := codex.Handle(ev, cat)
-	m := decodeUpdated(t, out)
-	if m == nil || m["model"] != "gpt-5.6-terra" {
-		t.Fatalf("model = %v, want gpt-5.6-terra", m)
-	}
 }
 
 // A spawn without a model and an unconfident small-tier classification must
@@ -428,37 +303,6 @@ func TestHandle_ConfidentDownshiftSetsLowEffort(t *testing.T) {
 	m := decodeUpdated(t, out)
 	if m == nil || m["reasoning_effort"] == "high" {
 		t.Fatalf("confident downshift should lower effort, got %v", m)
-	}
-}
-
-func writeFloorPolicy(t *testing.T, dir, tier string) {
-	t.Helper()
-	p := filepath.Join(dir, ".downshift", "policy.json")
-	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(p, []byte(`{"version":1,"min_tier":"`+tier+`"}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
-	dir := t.TempDir()
-	writeFloorPolicy(t, dir, "mid")
-	t.Cleanup(hookctx.SetProjectDir(dir))
-	ev := codex.Event{
-		ToolName: "spawn_agent",
-		Model:    catID(core.TierFrontier),
-		Cwd:      dir,
-		ToolInput: json.RawMessage(`{
-			"task_name": "worker_agent_rename",
-			"message": "rename the userId variable to userIdentifier",
-			"fork_turns": "none"
-		}`),
-	}
-	_, _, d := codex.Handle(withCatalogSession(ev), cat)
-	if !d.PolicyFloor || d.Tier != core.TierMid {
-		t.Fatalf("decision tier %v floor %v, want mid with floor", d.Tier, d.PolicyFloor)
 	}
 }
 

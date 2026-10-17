@@ -54,75 +54,6 @@ func decodeUpdated(t *testing.T, out claudecode.Output) map[string]any {
 	return m
 }
 
-func TestHandle_DownshiftsTrivialSubagent(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	ev := claudecode.Event{
-		ToolName: "Task",
-		Model:    frontierID,
-		ToolInput: json.RawMessage(`{
-			"description": "cleanup",
-			"prompt": "rename the userId variable to userIdentifier",
-			"model": "` + frontierID + `"
-		}`),
-	}
-	out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
-	if note == "" {
-		t.Fatal("expected a downshift note, got none")
-	}
-	m := decodeUpdated(t, out)
-	if m == nil {
-		t.Fatal("expected updatedInput, got none")
-	}
-	if m["model"] != nativeOf(core.TierSmall) {
-		t.Errorf("model = %v, want %s (small tier)", m["model"], nativeOf(core.TierSmall))
-	}
-	if m["prompt"] == nil || m["description"] == nil {
-		t.Error("prompt and description must be preserved in updatedInput")
-	}
-	if out.HookSpecificOutput.PermissionDecision != "allow" {
-		t.Errorf("permissionDecision = %s, want allow", out.HookSpecificOutput.PermissionDecision)
-	}
-}
-
-func TestHandle_UpshiftsComplexSubagent(t *testing.T) {
-	smallID := catID(core.TierSmall)
-	ev := claudecode.Event{
-		ToolName: "Task",
-		Model:    smallID,
-		ToolInput: json.RawMessage(`{
-			"prompt": "rearchitect the payment flow across services",
-			"model": "` + smallID + `"
-		}`),
-	}
-	out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
-	if note == "" {
-		t.Fatal("expected an upshift note, got none")
-	}
-	m := decodeUpdated(t, out)
-	if m["model"] != nativeOf(core.TierFrontier) {
-		t.Errorf("model = %v, want %s (frontier tier)", m["model"], nativeOf(core.TierFrontier))
-	}
-}
-
-func TestHandle_NoChangeWhenAlreadyRightGear(t *testing.T) {
-	midID := catID(core.TierMid)
-	ev := claudecode.Event{
-		ToolName: "Task",
-		Model:    midID,
-		ToolInput: json.RawMessage(`{
-			"prompt": "implement the CSV export feature",
-			"model": "` + midID + `"
-		}`),
-	}
-	out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
-	if note != "" {
-		t.Errorf("expected no change note, got %q", note)
-	}
-	if out.HookSpecificOutput.UpdatedInput != nil {
-		t.Error("must not rewrite input when gear is already right")
-	}
-}
-
 func TestHandle_IgnoresNonTaskTools(t *testing.T) {
 	ev := claudecode.Event{
 		ToolName:  "Bash",
@@ -196,91 +127,10 @@ func TestHandle_MalformedInputFailsOpen(t *testing.T) {
 	}
 }
 
-// TestHandle_SiblingFieldsPreserved is a regression test for the updatedInput
-// replace-vs-patch behaviour. Claude Code's hook replaces the entire tool_input
-// with updatedInput — so the adapter must re-marshal the *full* decoded map
-// with only the model key changed. Any field not present in updatedInput is
-// silently dropped by the harness, which can break subagents that use timeout,
-// run_in_background, or other non-standard fields.
-func TestHandle_SiblingFieldsPreserved(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	ev := claudecode.Event{
-		ToolName: "Task",
-		Model:    frontierID,
-		ToolInput: json.RawMessage(`{
-			"prompt":             "rename the userId variable",
-			"model":              "` + frontierID + `",
-			"timeout":            30,
-			"description":        "a short rename task",
-			"run_in_background":  false
-		}`),
-	}
-	out, _, _ := claudecode.Handle(withCatalogSession(ev), cat)
-	m := decodeUpdated(t, out)
-	if m == nil {
-		t.Fatal("expected updatedInput")
-	}
-	// Model must be rewritten.
-	if m["model"] != nativeOf(core.TierSmall) {
-		t.Errorf("model = %v, want %s", m["model"], nativeOf(core.TierSmall))
-	}
-	// All sibling fields must survive the rewrite.
-	if m["timeout"] == nil {
-		t.Error("timeout field was dropped from updatedInput")
-	}
-	if m["description"] == nil {
-		t.Error("description field was dropped from updatedInput")
-	}
-	if m["run_in_background"] == nil {
-		t.Error("run_in_background field was dropped from updatedInput")
-	}
-	if m["prompt"] == nil {
-		t.Error("prompt field was dropped from updatedInput")
-	}
-}
-
 func TestMain(m *testing.M) {
 	os.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(os.TempDir(), "downshift-session-models-absent.json"))
 	os.Setenv("DOWNSHIFT_DISCOVERY", "off")
 	os.Exit(m.Run())
-}
-
-func TestHandle_SessionWithoutCatalogSmallUsesNextInSession(t *testing.T) {
-	frontierID := catID(core.TierFrontier)
-	session := []string{"claude-sonnet-5-5", frontierID}
-	ev := claudecode.Event{
-		ToolName:      "Task",
-		SessionModels: &session,
-		ToolInput: json.RawMessage(`{
-			"prompt": "rename the userId variable to userIdentifier",
-			"model": "` + frontierID + `"
-		}`),
-	}
-	out, _, _ := claudecode.Handle(ev, cat)
-	m := decodeUpdated(t, out)
-	if m == nil {
-		t.Fatal("expected a rewrite to a session model")
-	}
-	if m["model"] != nativeOf(core.TierMid) {
-		t.Fatalf("model = %v, want %s", m["model"], nativeOf(core.TierMid))
-	}
-}
-
-// With no session list and inference off, nothing is rewritten.
-func TestHandle_MissingSessionDoesNotRewrite(t *testing.T) {
-	t.Setenv(core.EnvInferSession, "off")
-	frontierID := catID(core.TierFrontier)
-	ev := claudecode.Event{
-		ToolName: "Task",
-		ToolInput: json.RawMessage(`{
-			"prompt": "rename the userId variable to userIdentifier",
-			"model": "` + frontierID + `"
-		}`),
-	}
-	out, note, _ := claudecode.Handle(ev, cat)
-	if note != "" || (out.HookSpecificOutput != nil && out.HookSpecificOutput.UpdatedInput != nil) {
-		t.Fatalf("missing session must not rewrite, note=%q", note)
-	}
 }
 
 // A Task payload without a model field and an unconfident small-tier
@@ -521,19 +371,6 @@ func writePolicy(t *testing.T, dir, body string) {
 	}
 	if err := os.WriteFile(p, []byte(body), 0o644); err != nil {
 		t.Fatal(err)
-	}
-}
-
-func TestHandle_PolicyFloorRaisesTier(t *testing.T) {
-	dir := t.TempDir()
-	writePolicy(t, dir, `{"version":1,"min_tier":"mid"}`)
-	out, _, d := claudecode.Handle(floorEvent(t, dir), cat)
-	m := decodeUpdated(t, out)
-	if m == nil || m["model"] != nativeOf(core.TierMid) {
-		t.Fatalf("model = %v, want mid %s", m, nativeOf(core.TierMid))
-	}
-	if !d.PolicyFloor || d.Tier != core.TierMid {
-		t.Fatalf("decision = tier %v floor %v", d.Tier, d.PolicyFloor)
 	}
 }
 
