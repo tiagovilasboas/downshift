@@ -146,7 +146,10 @@ var RawSignals = []SignalDef{
 	{`\bdelete\s+(the\s+)?file\b`, 3, Trivial},
 	{`\bbump\s+.{0,15}version\b`, 3, Trivial},
 	{`\bremove\s+(unused|dead)\b`, 2, Trivial},
-	{`\blist(?:ar|e)?\b.{0,40}\barquivos?\b`, 3, Trivial},
+	// Infinitive only: leading "liste os arquivos" is already scored by the
+	// anchored list/show row above (weight 2). Matching "liste" here too doubled
+	// PT trivial weight and let list+review prompts outvote code review.
+	{`\blistar\b.{0,40}\barquivos?\b`, 3, Trivial},
 
 	// ── TRIVIAL / SIMPLE — mechanical edits and commands, EN + PT-BR ─────
 	// Mined from the development half of the 1000-prompt exploration set
@@ -178,7 +181,7 @@ var RawSignals = []SignalDef{
 	{`\b(corrij\w*|corrigir|conserte|consertar)\s+(o\s+|um\s+|os\s+)?(typos?|erros?\s+de\s+digita)`, 3, Trivial},
 	{`\badicion\w*\s+(um\s+|uma\s+)?coment`, 3, Trivial},
 	{`\b(mova|mover|apague|apagar|exclua|excluir|delete)\s+(o\s+)?arquivo`, 3, Trivial},
-	{`\b(remova|remover|apague)\s+(o\s+|os\s+)?(\w+\s+)?(n.o\s+usad|mort)`, 2, Trivial},
+	{`\b(remova|remover|apague)\s+(o\s+|os\s+)?(?:c[oó]digo\s+morto|(?:\w+\s+)?(?:n[aã]o\s+usad\w*|morto))`, 2, Trivial},
 	{`\badicion\w*\s+([\w-]+\s+){0,3}?(campo|par.metro|flag|propriedade|coluna|atributo|argumento|m.todo|fun..o)s?\b`, 2, Simple},
 	{`\b(corrij\w*|corrigir|conserte|consertar)\s+(o\s+|um\s+)?bug\b`, 2, Simple},
 	{`\b(escreva|escrever|crie)\s+(um|uma)\s+(\w+\s+)?(fun..o|teste\b|helper)`, 2, Simple},

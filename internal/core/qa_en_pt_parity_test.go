@@ -82,12 +82,7 @@ var enPtParityCases = []enPtPair{
 	{name: "show logs", en: "show the logs in the directory", pt: "mostre os arquivos de log do diretório tmp"},
 	{name: "move file", en: "move the file utils.go to the helpers folder", pt: "mova o arquivo utils.go para a pasta helpers"},
 	{name: "delete file", en: "delete the file temp.txt", pt: "apague o arquivo temp.txt"},
-	{
-		// signals.go: `\b(remova|remover|apague)\s+(o\s+|os\s+)?(\w+\s+)?(n.o\s+usad|mort)`
-		// `\w` is ASCII-only, so `código` is not consumed and `mort` never lines up.
-		name: "remove dead code", en: "remove dead code from the date module", pt: "remova o código morto do módulo de datas",
-		missingPT: `\b(remova|remover|apague)\s+(o\s+|os\s+)?(\w+\s+)?(n.o\s+usad|mort) does not match "código morto" (\w is ASCII-only)`,
-	},
+	{name: "remove dead code", en: "remove dead code from the date module", pt: "remova o código morto do módulo de datas"},
 	{name: "indent block", en: "indent the configuration block", pt: "indente o bloco de configuração"},
 	{name: "run tests", en: "run the tests and show the result", pt: "rode os testes e mostre o resultado"},
 	{name: "add field", en: "add a name field to the Usuario struct", pt: "adicione um campo nome na struct Usuario"},
@@ -117,10 +112,9 @@ var enPtParityCases = []enPtPair{
 		missingPT: `\bre-?write\b has no reescrev/reescreva stem`,
 	},
 	{
-		name:      "code review",
-		en:        "list the Go files and do a code review without changing anything",
-		pt:        "liste os arquivos Go e faça uma revisão de código sem mudar nada",
-		missingPT: `\bcode\s+review\b; PT revisão only hits medium \brevis(?:ar|e|ão|oes|ões)\b`,
+		name: "code review",
+		en:   "list the Go files and do a code review without changing anything",
+		pt:   "liste os arquivos Go e faça uma revisão de código sem mudar nada",
 	},
 	{
 		name:      "design doc",
