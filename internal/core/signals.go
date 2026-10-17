@@ -28,38 +28,41 @@ var RawSignals = []SignalDef{
 	// One pattern per stem: "re-architect" used to match both an architect and
 	// a re-architect row and score twice for a single mention.
 	{`\b(re-?)?architect\w*\b`, 3, Complex},
-	{`\bre-?write\b`, 2, Complex},
+	{`\bre-?(?:write|escrev\w*)\b`, 2, Complex},
 	{`\bre-?design\b`, 3, Complex},
 	{`\bsecurity\s+(audit|review)\b`, 3, Complex},
-	{`\bcode\s+review\b`, 3, Complex},
-	{`\bcross-system\b`, 3, Complex},
+	{`\b(?:code\s+review|review\s+de\s+c[oó]digo|revis\S{0,3}o\s+de\s+c[oó]digo)\b`, 3, Complex},
+	{`\b(?:cross-system|cross-?sistemas?|inter-?sistemas|entre\s+(?:os\s+|as\s+)?sistemas)\b`, 3, Complex},
 	// One row for "distributed": a second row for "distributed lock",
 	// "distributed cache" and similar phrases scored one mention twice. The
-	// bare word still covers those phrases.
-	{`\bdistributed\b`, 2, Complex},
+	// bare word still covers those phrases. The PT adjective shares this row
+	// ("cache distribuído"). "distribuir" stays out: handing files out is not
+	// a distributed design. "sistema distribuído" also hits the weight-3
+	// phrase below.
+	{`\b(?:distributed|distribu[ií]d[oa]s?|distribui[cç][aã]o)\b`, 2, Complex},
 	{`\b(etcd|raft|consensus protocol)\b`, 3, Complex},
 	{`\brace\s+condition\b`, 3, Complex},
-	{`\bdeadlock\b`, 3, Complex},
-	{`\bmulti-(system|service|region|tenant)\b`, 3, Complex},
+	{`\b(?:deadlock|impasse|bloqueio\s+m[uú]tuo)\b`, 3, Complex},
+	{`\bmulti-(?:system|service|region|tenant|sistemas?|servi[cç]os?|regi(?:[aã]o|[oõ]es)|inquilinos?|locat[aá]rios?)\b`, 3, Complex},
 	{`\bentire\s+(codebase|system|platform)\b`, 3, Complex},
-	{`\btrade-?offs?\b`, 2, Complex},
-	{`\bdesign\s+doc\b`, 3, Complex},
+	{`\b(?:trade-?offs?|compensa[cç][oõ]es)\b`, 2, Complex},
+	{`\b(?:design\s+doc|doc(?:umento)?\s+de\s+design)\b`, 3, Complex},
 	{`\brfc\b`, 3, Complex},
-	{`\bthink\s+through\b`, 2, Complex},
-	{`\b(service mesh|event sourcing|cqrs|chaos engineering|end-to-end encryption|data lineage|cross-cluster|memory leak|cascading failure|streaming pipeline|model serving|key management)\b`, 3, Complex},
+	{`\b(?:think\s+through|pens(?:e|ar)\s+a\s+fundo)\b`, 2, Complex},
+	{`\b(service mesh|event sourcing|cqrs|chaos engineering|end-to-end encryption|data lineage|cross-cluster|memory leak|cascading failure|streaming pipeline|model serving|key management|malha de servi[cç]os|engenharia do caos|linhagem de dados|entre clusters|vazamento de mem[oó]ria|falha em cascata|pipeline de streaming|serving de modelos)\b`, 3, Complex},
 	// Distributed-data vocabulary: partitioning, agreement and copying state
 	// across nodes, and concurrent multi-user editing.
 	// "replication" only: "replicate the bug" is a reproduction, not a design.
 	// "sharding" only: "shard the test suite across runners" is CI config.
-	{`\b(sharding|consensus|replication|real[- ]?time collaborat\w*|operational transform\w*)\b`, 3, Complex},
+	{`\b(sharding|consensus|replication|consenso|replica[cç][aã]o|real[- ]?time collaborat\w*|colabora[cç][aã]o em tempo real|operational transform\w*)\b`, 3, Complex},
 	// Designing or building a whole system rather than a part of one: the verb
 	// takes a system-sized noun as its object ("design a real-time collaborative
 	// editing system", "design and build a reconciliation engine", "build a
 	// collaboration platform"). Up to three modifiers, no punctuation. "build"
 	// alone is narrower: building a system, strategy or algorithm is often a
 	// routine feature. One row, so "design and build an engine" scores once.
-	{`\b((design|architect)\s+(and\s+(build|implement)\s+)?(an?\s+|the\s+)?([\w-]+\s+){0,3}?(system|engine|platform|protocol|strategy|algorithm)|build\s+(an?\s+|the\s+)?([\w-]+\s+){0,3}?(engine|platform))s?\b`, 2, Complex},
-	{`\bwhy\s+.{0,40}(fail|crash|hang|break|regress)\w*`, 2, Complex},
+	{`\b((?:design|architect|projetar|projete|projeta|projetem|desenhar|desenhe|desenha|desenhem)\s+(?:and\s+(?:build|implement)\s+|e\s+(?:construir|construa|implementar|implemente)\s+)?(?:an?\s+|the\s+|um\s+|uma\s+|o\s+|os\s+|as\s+)?(?:[\w-]+\s+){0,3}?(?:system|engine|platform|protocol|strategy|algorithm|sistema|motor|plataforma|protocolo|estrat[eé]gia|algoritmo)|(?:build|construir|construam|construa)\s+(?:an?\s+|the\s+|um\s+|uma\s+|o\s+|a\s+)?(?:[\w-]+\s+){0,3}?(?:engine|platform|motor|plataforma))s?\b`, 2, Complex},
+	{`\b(?:why|porque|por\s+qu[eê])\s+.{0,40}(?:(?:fail|crash|hang|break|regress|falh|quebr)\w*|trav(?:a(?:r|ndo|ou|mento)?|ou)|caiu|caindo)\b`, 2, Complex},
 	// Portuguese mirror of the COMPLEX vocabulary above. Without it, hard PT-BR
 	// work stays on mid. Go's \b and \w are ASCII-only, so stems stop before
 	// the first accented letter and carry no trailing \b.
@@ -73,12 +76,14 @@ var RawSignals = []SignalDef{
 	{`\bsistemas?\s+distribu`, 3, Complex},
 	{`\b(toda|todo)\s+(a\s+|o\s+)?(base\s+de\s+c\S+digo|sistema|plataforma)\b`, 3, Complex},
 	// Algorithmic / interpreter specs (general CS vocabulary, not eval prompts).
-	{`\b(recursive-descent|longest common subsequence|operator precedence|postfix operators?)\b`, 3, Complex},
+	{`\b(recursive-descent|descida recursiva|longest common subsequence|subsequ[eê]ncia comum mais longa|operator precedence|preced[eê]ncia de operadores|postfix operators?|operadores postfixos)\b`, 3, Complex},
 	{`\bbacktracking\b`, 3, Complex},
 	{`\bcron\b`, 3, Complex},
-	{`\b(directed )?graph\b`, 2, Complex},
-	{`\bbinary heap\b`, 2, Complex},
-	{`\b(concurrent(?:ly)?|goroutines?)\b`, 2, Complex},
+	// "grafo" is not preceded by \b: in "parágrafo" the accent is a non-word
+	// byte, so \b would see a boundary and score the suffix "grafo".
+	{`\b(?:directed |dirigido )?graph\b|(?:^|\s)(?:grafos?|grafo dirigido)\b`, 2, Complex},
+	{`\b(binary heap|heap bin[aá]rio)\b`, 2, Complex},
+	{`\b(concurrent(?:ly)?|goroutines?|concorrentes?|concorrentemente)\b`, 2, Complex},
 	{`\bfn\s+func\s*\(`, 3, Complex},
 	{`\[[0-9]+\]\[[0-9]+\]`, 2, Complex},
 	// Reviewed retry wording. These patterns are already part of the shipped
@@ -90,19 +95,19 @@ var RawSignals = []SignalDef{
 
 	// ── MEDIUM — features across files, refactors with context ───────────
 
-	{`\brefactor\w*\b`, 2, Medium},
-	{`\bimplement\b`, 2, Medium},
-	{`\bintegrat\w*\b`, 2, Medium},
-	{`\bfeature\b`, 2, Medium},
+	{`\b(?:refactor|refator)\w*\b`, 2, Medium},
+	{`\b(?:implement|implementar|implemente|implementa|implementam|implementou|implementem)\b`, 2, Medium},
+	{`\b(?:integrat\w*|integrar|integre|integra|integram|integrou|integraram)\b`, 2, Medium},
+	{`\b(?:feature|funcionalidades?)\b`, 2, Medium},
 	{`\bendpoint\b`, 1, Medium},
 	{`\bmodule\b`, 1, Medium},
-	{`\bacross\s+\w+\s+files\b`, 2, Medium},
-	{`\bdebug\b`, 2, Medium},
+	{`\b(?:across\s+\w+\s+files|(?:em|entre)\s+\w+\s+arquivos)\b`, 2, Medium},
+	{`\b(?:debug|debugar|debugue|depurar|depure|depura|depuram|depurou)\b`, 2, Medium},
 	{`\brevis(?:ar|e|ão|oes|ões)\b`, 2, Medium},
 	// Changing a live schema without downtime takes multi-step planning
 	// (backfill, concurrent index builds, lock timeouts) even when the edit
 	// itself is "add a column".
-	{`\b(zero[\s-]downtime|no[\s-]downtime|without\s+(any\s+)?downtime|without\s+(locking|blocking)\s+(writes|reads|the\s+table)|online\s+schema\s+change)\b`, 3, Medium},
+	{`\b(?:zero[\s-]downtime|no[\s-]downtime|without\s+(?:any\s+)?downtime|without\s+(?:locking|blocking)\s+(?:writes|reads|the\s+table)|online\s+schema\s+change|altera[cç][aã]o\s+de\s+schema\s+online|mudan[cç]a\s+de\s+schema\s+online|sem\s+(?:bloquear|travar)\s+(?:as\s+|os\s+)?(?:escritas|leituras|a\s+tabela))\b`, 3, Medium},
 
 	// ── SIMPLE — one isolated change ─────────────────────────────────────
 
@@ -116,9 +121,13 @@ var RawSignals = []SignalDef{
 	// what X does"). Inside a long analysis ("... and explain the fix in terms
 	// of happens-before") it is not evidence of a simple task.
 	{`^\W*((can|could)\s+you\s+|please\s+)?explain\b`, 2, Simple},
-	{`\bwhat\s+(is|does|are)\b`, 1, Simple},
-	{`\bsingle\s+(file|function)\b`, 2, Simple},
-	{`\b(rotating cube|three\.js scene|hello world|landing page|one file|one function|one component)\b`, 3, Simple},
+	// "qual é" ends on a non-ASCII letter, so a trailing \b (ASCII-only) would
+	// miss it. The other alternatives still require a word boundary.
+	{`\b(?:what\s+(?:is|does|are)|quais\s+s[aã]o|o\s+que\s+.{0,30}?\bfaz(?:em)?)\b|\bqual\s+[eé](?:\W|$)`, 1, Simple},
+	// "única" starts on a non-ASCII letter, so \b (ASCII-only) does not fire
+	// before it. The prefix is start-of-text or a non-word byte instead.
+	{`\b(?:single\s+(?:file|function)|arquivo\s+[uú]nico|fun..o\s+[uú]nica)\b|(?:^|\W)[uú]nic[oa]\s+(?:arquivo|fun..o)\b`, 2, Simple},
+	{`\b(?:rotating cube|cubo girando|three\.js scene|hello world|ol[aá] mundo|landing page|p[aá]gina de destino|one file|one function|one component)\b`, 3, Simple},
 
 	// ── TRIVIAL — mechanical ──────────────────────────────────────────────
 
@@ -129,10 +138,10 @@ var RawSignals = []SignalDef{
 	{`\blint\b`, 2, Trivial},
 	{`\bprettier\b`, 3, Trivial},
 	{`\beslint\b`, 3, Trivial},
-	{`\bgit\s+(commit|push|pull|status|add|stash|log|diff|checkout|branch)\b`, 3, Trivial},
+	{`\b(?:git\s+(?:commit|push|pull|status|add|stash|log|diff|checkout|branch)|fa[cç]a\s+o\s+(?:commit|push|pull)|fazer\s+o\s+(?:commit|push|pull))\b`, 3, Trivial},
 	{`\bfix\s+(a\s+)?typo\b`, 3, Trivial},
 	{`\badd\s+(a\s+)?comment\b`, 3, Trivial},
-	{`\bboilerplate\b`, 2, Trivial},
+	{`\b(?:boilerplate|c[oó]digo\s+repetitivo)\b`, 2, Trivial},
 	{`\bmove\s+(the\s+)?file\b`, 3, Trivial},
 	{`\bdelete\s+(the\s+)?file\b`, 3, Trivial},
 	{`\bbump\s+.{0,15}version\b`, 3, Trivial},
@@ -173,6 +182,6 @@ var RawSignals = []SignalDef{
 	{`\badicion\w*\s+([\w-]+\s+){0,3}?(campo|par.metro|flag|propriedade|coluna|atributo|argumento|m.todo|fun..o)s?\b`, 2, Simple},
 	{`\b(corrij\w*|corrigir|conserte|consertar)\s+(o\s+|um\s+)?bug\b`, 2, Simple},
 	{`\b(escreva|escrever|crie)\s+(um|uma)\s+(\w+\s+)?(fun..o|teste\b|helper)`, 2, Simple},
-	{`\b(atualiz\w*|altere|ajuste)\s+(a\s+|o\s+)?(descri|texto|mensagem|r.tulo)`, 2, Simple},
+	{`\b(atualiz\w*|altere|ajuste|update)\s+(a\s+|o\s+|the\s+)?(descri|texto|mensagem|r.tulo)`, 2, Simple},
 	{`\bresumo\s+(curto|breve)`, 2, Simple},
 }
