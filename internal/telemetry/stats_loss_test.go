@@ -117,14 +117,16 @@ func TestExportSummary_LossFieldsRoundTrip(t *testing.T) {
 	if err := json.Unmarshal([]byte(raw), &back); err != nil {
 		t.Fatal(err)
 	}
-	if back.RealCostDeltaUSD != -4 || back.RealOverspendUSD != 4 || back.RealSavedUSD != 0 {
-		t.Errorf("round trip delta=%f overspend=%f saved=%f", back.RealCostDeltaUSD, back.RealOverspendUSD, back.RealSavedUSD)
+	if back.RealCostDeltaUSD != -4 || back.RealOverspendUSD != 4 || back.RealSavedUSD == nil || *back.RealSavedUSD != 0 {
+		t.Errorf("round trip delta=%f overspend=%f saved=%v", back.RealCostDeltaUSD, back.RealOverspendUSD, back.RealSavedUSD)
 	}
 
 	// Additive: a clean window omits both keys, and older JSON still parses.
 	clean, _ := telemetry.ExportJSON(telemetry.ExportSummary(nil, 30, exportNow))
-	if strings.Contains(clean, "real_cost_delta_usd") || strings.Contains(clean, "real_overspend_usd") {
-		t.Errorf("zero loss fields must be omitted:\n%s", clean)
+	for _, key := range []string{"real_cost_delta_usd", "real_overspend_usd", "real_saved_usd", "actual_cost_usd"} {
+		if strings.Contains(clean, key) {
+			t.Errorf("unmeasured export must omit %q:\n%s", key, clean)
+		}
 	}
 	var old telemetry.Summary
 	if err := json.Unmarshal([]byte(`{"total":1,"real_saved_usd":0.5}`), &old); err != nil || old.RealCostDeltaUSD != 0 {

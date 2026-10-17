@@ -59,7 +59,8 @@ func TestCostGroupsPrintedOnlyWithAttributableUsage(t *testing.T) {
 
 func TestExportCarriesCostGroupAggregatesOnly(t *testing.T) {
 	exp := telemetry.ExportSummary([]telemetry.Event{usageEv("s1", "a1", 0.4), usageEv("s2", "a2", 0.1)}, 0, time.Now())
-	if exp.CostSessions != 2 || exp.CostSubagents != 2 || exp.MaxSessionCostUSD < 0.399 || exp.MaxSubagentCostUSD < 0.399 {
+	if exp.CostSessions != 2 || exp.CostSubagents != 2 || exp.MaxSessionCostUSD == nil || exp.MaxSubagentCostUSD == nil ||
+		*exp.MaxSessionCostUSD < 0.399 || *exp.MaxSubagentCostUSD < 0.399 {
 		t.Fatalf("export = %+v", exp)
 	}
 }

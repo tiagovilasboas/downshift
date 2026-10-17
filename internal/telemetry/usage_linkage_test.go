@@ -102,7 +102,7 @@ func TestExportSummary_ObservedCostSurvivesUnknownBaseline(t *testing.T) {
 	usage.ActualCostUSD = exportFloat64Ptr(0.25)
 	usage.InputTokens = exportInt64Ptr(1000)
 	got := telemetry.ExportSummary([]telemetry.Event{usage}, 1, exportNow)
-	if got.ActualCostEvents != 1 || got.ActualCostUSD != 0.25 || got.RealCostEvents != 0 || got.RealSavedUSD != 0 {
+	if got.ActualCostEvents != 1 || got.ActualCostUSD == nil || math.Abs(*got.ActualCostUSD-0.25) > 1e-9 || got.RealCostEvents != 0 || got.RealSavedUSD != nil {
 		t.Fatalf("unknown baseline must preserve observed spend without manufacturing comparison: %+v", got)
 	}
 }
