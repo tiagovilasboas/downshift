@@ -78,9 +78,9 @@ Whether the harness applied it is a separate fact; `downshift stats` separates
 - Confirm it started on haiku, not the session's default frontier model
 - This proves the hook's rewrite was not just emitted—it was **actually applied** by the harness
 
-**Step 5 — See what happened.** `downshift stats --days=1` shows decisions and estimated savings; `downshift session --tree` shows this session's subagents as a tree. The optional `/downshift` slash command is set up in [The /downshift command](#the-downshift-command-claude-code).
+**Step 5 — See what happened.** `downshift stats --days=1` shows decisions and estimated savings; `downshift session --tree` shows this session's subagents as a tree. In Claude Code, the plugin exposes `/downshift:status`; the optional manual alias `/downshift` is in [The /downshift command](#the-downshift-command-claude-code).
 
-**Step 6 — (Optional) Watch it live.** `downshift watch` redraws the current session's subagent tree (model, end status, cost, why) every second, for every harness; `downshift session --tree` prints it once, and `/downshift` shows it inside Claude Code. The older floating widget is still available: [dsmon — live monitor widget](#dsmon--live-monitor-widget).
+**Step 6 — (Optional) Watch it live.** `downshift watch` redraws the current session's subagent tree (model, end status, cost, why) every second, for every harness; `downshift session --tree` prints it once, and `/downshift:status` or `/downshift` shows it inside Claude Code. The older floating widget is still available: [dsmon — live monitor widget](#dsmon--live-monitor-widget).
 
 ### Manual setup (Claude Code)
 
@@ -174,7 +174,7 @@ natural work most spawns are held, and that is by design.
 
 ### Plugin install (Claude Code)
 
-The same four hooks and the `/downshift` command ship as a Claude Code plugin
+The same four hooks and the `/downshift:status` command ship as a Claude Code plugin
 whose root is this repository. It needs the `downshift` binary on PATH (step 1
 above) and replaces step 2 for Claude Code only; the other harnesses still use
 `downshift setup`.
@@ -621,7 +621,7 @@ Requires `[features] multi_agent_v2` and `hooks = true` in `config.toml`.
 
 ### Summary
 
-Downshift serves every harness above from the same core, and **Claude Code is the primary harness**: the most complete (inferred session model, usage and child-end hooks, `/downshift`, statusline) and the most verified. Pick it when you can choose.
+Downshift serves every harness above from the same core, and **Claude Code is the primary harness**: the most complete (inferred session model, usage and child-end hooks, `/downshift:status`, statusline) and the most verified. Pick it when you can choose.
 
 Downshift is most effective on:
 - **Claude Code Pro / Max / Teams / API** — full model routing via hook

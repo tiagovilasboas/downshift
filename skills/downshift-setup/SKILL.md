@@ -15,8 +15,8 @@ delete it; the plugin copy stays and costs one description line).
 1. `downshift version`. If missing: `curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh`
    (macOS / Linux) or the Releases page or `go install`; see `docs/guides/install.md`.
 2. Claude Code only: the plugin (`/plugin marketplace add tiagovilasboas/downshift`, then
-   `/plugin install downshift@downshift`) wires the same hooks and the `/downshift` command
-   without touching `~/.claude/settings.json`; its command is `/downshift:status`. Use one
+   `/plugin install downshift@downshift`) wires the same hooks and the `/downshift:status`
+   slash command without touching `~/.claude/settings.json`. Use one
    path, plugin or `setup`, not both: `setup` skips the hooks when it sees the plugin enabled,
    and `downshift doctor` warns when both are wired.
 
@@ -42,7 +42,8 @@ delete it; the plugin copy stays and costs one description line).
 3. Plan limits decide whether a rewrite is honored, not Downshift
    (`docs/reference/harness-matrix.md`). Say so when the plan is Free or legacy Cursor Pro.
 4. Ask the user to open a **new** harness session, spawn a trivial subagent, and check
-   `downshift session` or `/downshift`. The stderr line `downshift: TRIVIAL task → downshift to …`
+   `downshift session`, or in Claude Code `/downshift:status` (plugin) or `/downshift` (manual alias).
+   The stderr line `downshift: TRIVIAL task → downshift to …`
    proves the hook fired; the matrix says whether it was applied.
 
 Do not invent hook paths, matchers or catalog entries; everything above is in
