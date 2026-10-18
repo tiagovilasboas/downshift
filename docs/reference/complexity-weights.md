@@ -4,7 +4,7 @@ How Downshift scores a task and turns that score into a model. The weights
 are harness-agnostic. The harness only chooses which model id represents the
 tier, and whether the rewrite is applied.
 
-Source of truth: `internal/core/signals.go`, `internal/core/classifier.go`,
+Source of truth: `internal/classify/signals.go`, `internal/classify/classifier.go`,
 `internal/core/policy.go`, `internal/core/risk.go`, `internal/core/models.go`.
 Session lists: [session-models.md](session-models.md). What each harness does
 with the rewrite: [harness-matrix.md](harness-matrix.md).

@@ -1,6 +1,6 @@
 # Router generalization (public summary)
 
-Downshift ships a deterministic classifier (`internal/core/signals.go`).
+Downshift ships a deterministic classifier (`internal/classify/signals.go`).
 Maintainer regression nets live in **downshift-labs**; the public repo publishes
 only [benchmark/report.md](../../benchmark/report.md).
 
