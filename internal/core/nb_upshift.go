@@ -3,10 +3,6 @@
 
 package core
 
-import (
-	"github.com/tiagovilasboas/downshift/internal/nbtier"
-)
-
 // NBUpshift is the upshift-only second opinion from internal/nbtier.
 // Would is true when NB rates the task a higher tier than the classifier
 // with a margin of at least nbtier.Margin; Applied is true only when the
@@ -19,15 +15,23 @@ type NBUpshift struct {
 	Margin  float64
 }
 
+// NBSuggestHook is that opinion: upshift, destination tier, and margin.
+// internal/nbopinion registers it in init. A nil hook is no opinion.
+var NBSuggestHook func(prompt string, prodTier int) (upshift bool, to int, margin float64)
+
 // NBUpshiftEnabled reports whether DOWNSHIFT_NB_UPSHIFT=1.
 func NBUpshiftEnabled() bool { return nbUpshiftEnv() }
 
 func nbSecondOpinion(prompt string, tier Tier) NBUpshift {
-	s := nbtier.Suggest(prompt, int(tier))
-	out := NBUpshift{From: tier, To: tier, Margin: s.Margin}
-	if s.Upshift && Tier(s.To) > tier {
+	out := NBUpshift{From: tier, To: tier}
+	if NBSuggestHook == nil {
+		return out
+	}
+	upshift, to, margin := NBSuggestHook(prompt, int(tier))
+	out.Margin = margin
+	if upshift && Tier(to) > tier {
 		out.Would = true
-		out.To = Tier(s.To)
+		out.To = Tier(to)
 		out.Applied = NBUpshiftEnabled()
 	}
 	return out
