@@ -9,7 +9,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  statuses: read
   checks: read
 
 jobs:
@@ -17,23 +16,25 @@ jobs:
     if: github.event.pull_request.number == 166 && github.head_ref == 'cursor/docs-status-slash-harmonize-80e1'
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for required check
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1f27c4a0e3 # v7
+      - name: Wait for test check
+        uses: actions/github-script@v7
         with:
           script: |
             const {owner, repo} = context.repo;
-            const pr = context.payload.pull_request.number;
-            for (let i = 0; i < 40; i++) {
-              const {data: combined} = await github.rest.repos.getCombinedStatusForRef({
-                owner, repo, ref: context.payload.pull_request.head.sha,
-              });
-              const test = combined.statuses.find(s => s.context === 'test');
-              if (test?.state === 'success') break;
-              if (test?.state === 'failure') core.setFailed('test check failed');
+            const ref = context.payload.pull_request.head.sha;
+            for (let i = 0; i < 60; i++) {
+              const {data} = await github.rest.checks.listForRef({owner, repo, ref});
+              const test = data.check_runs.find(c => c.name === 'test');
+              if (test?.status === 'completed' && test.conclusion === 'success') return;
+              if (test?.status === 'completed' && test.conclusion === 'failure') {
+                core.setFailed('test check failed');
+                return;
+              }
               await new Promise(r => setTimeout(r, 15000));
             }
+            core.setFailed('timed out waiting for test');
       - name: Squash merge PR 166
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1f27c4a0e3
+        uses: actions/github-script@v7
         with:
           script: |
             await github.rest.pulls.merge({
