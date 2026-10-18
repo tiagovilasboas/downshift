@@ -42,6 +42,9 @@ uses required reviews (including CODEOWNERS), CI status checks, conversation
 resolution, admin enforcement, and a repository ruleset that blocks force-push
 and branch deletion.
 
+Solo maintainer: you cannot approve your own PRs; see
+[docs/contrib/solo-maintainer-merge.md](docs/contrib/solo-maintainer-merge.md).
+
 ## Commercial use
 
 See [COMMERCIAL.md](COMMERCIAL.md).
