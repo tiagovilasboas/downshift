@@ -273,7 +273,7 @@ func (d *Decision) recheck() {
 // single result for complexity, confidence and intent so they never disagree.
 // The naive-Bayes second opinion runs last, on the final tier.
 func classifyTask(prompt string) (Tier, Classification, NBUpshift, NBDownshift) {
-	cls := classifyWithSemantic(prompt, Classify(prompt))
+	cls := ClassifyWithSemantic(prompt)
 
 	nbDown := nbTrivialOpinion(prompt, cls)
 	if nbDown.Applied {
