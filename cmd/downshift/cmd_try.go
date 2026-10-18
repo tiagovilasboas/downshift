@@ -46,7 +46,7 @@ func runTry(resolver core.Resolver, args []string) int {
 	// instead of a model ID, and point at the config-based mechanism.
 	if harnessRegistry[harness].Caps.SingleModelReasoning {
 		cls := core.Classify(prompt)
-		tier := cls.Complexity.Tier()
+		tier := core.TierOf(cls.Complexity)
 		effort := core.EffortFor(tier)
 		fmt.Printf("Task:       %s\n", prompt)
 		fmt.Printf("Complexity: %s\n", cls.Complexity)

@@ -25,7 +25,7 @@ func TestApply_ShadowDoesNotChangeTier(t *testing.T) {
 	if err := adapt.Save(filepath.Join(dir, "adapt-memory.json"), mem); err != nil {
 		t.Fatal(err)
 	}
-	base := core.ClassifyWithSemantic(prompt).Complexity.Tier()
+	base := core.TierOf(core.ClassifyWithSemantic(prompt).Complexity)
 	if base == core.TierSmall {
 		t.Fatalf("prompt classified small, cannot show a held downshift")
 	}

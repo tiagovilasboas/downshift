@@ -23,7 +23,7 @@ const (
 type Dataset struct{ Path, Name string }
 
 // Route maps a prompt to the tier the production classifier picks.
-func Route(prompt string) core.Tier { return core.ClassifyWithSemantic(prompt).Complexity.Tier() }
+func Route(prompt string) core.Tier { return core.TierOf(core.ClassifyWithSemantic(prompt).Complexity) }
 
 // Report renders the generated README block: classifier benchmark numbers for
 // each dataset and outcome-eval pass rates from recorded runs. It never makes

@@ -1,7 +1,9 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package core
+// Package classify scores a task prompt into a complexity class.
+// It does not choose a model tier. Route policy in internal/core does that.
+package classify
 
 import (
 	"regexp"
@@ -383,7 +385,7 @@ func Classify(prompt string) Classification {
 		confident = false
 	}
 
-	return applyRiskFloor(full, Classification{
+	return ApplyRiskFloor(full, Classification{
 		Complexity:          top,
 		Scores:              scores,
 		Confident:           confident,

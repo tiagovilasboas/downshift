@@ -237,7 +237,8 @@ tests, a security review or a production signal.
 
 | Package | Responsibility |
 |---------|----------------|
-| `internal/core` | Classifier, risk, policy, escalation, self-check, session guards, `HarnessCapabilities` — **no** catalog, telemetry, adapt, policyfile or adapter imports |
+| `internal/classify` | Regex classifier, signal table, language guard, risk floor. No tier, no harness, no catalog |
+| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session, escalation, self-check, `HarnessCapabilities`. Imports `classify`. Does **not** import catalog, telemetry, adapt, policyfile or an adapter |
 | `internal/catalog` | Embedded `catalog.json`, user override, `Resolver` |
 | `internal/adapters/*` | Harness-specific I/O only; call `core.Route` / `PlanSession` |
 | `internal/policyfile`, `internal/adapt`, `internal/routeadapt` | Project tier floor (`TierFloorHook`) and shadow tier memory (`MemoryAdjustHook`), plugged into core at `init` |

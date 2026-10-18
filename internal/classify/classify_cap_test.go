@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package core
+package classify
 
 import (
 	"strings"
@@ -52,6 +52,13 @@ func TestClassifyWordCountUsesFullText(t *testing.T) {
 	if long.Scores[Complex] != short.Scores[Complex]+1 {
 		t.Errorf("long prompt COMPLEX score %d, short %d; want +1 from the word-count rule",
 			long.Scores[Complex], short.Scores[Complex])
+	}
+}
+
+func skipUnderRace(t *testing.T) {
+	t.Helper()
+	if raceEnabled {
+		t.Skip("latency bounds do not apply under -race")
 	}
 }
 

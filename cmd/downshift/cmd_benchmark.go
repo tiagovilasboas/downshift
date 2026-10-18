@@ -198,7 +198,7 @@ func runBenchmarkCompare(path, candidateWeights string) int {
 		default:
 			legacyActual[i] = core.TierMid
 		}
-		legacyPredicted[i] = r.Predicted.Tier()
+		legacyPredicted[i] = core.TierOf(r.Predicted)
 	}
 	legacyMetrics := training.Compute(legacyActual, legacyPredicted)
 

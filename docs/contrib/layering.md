@@ -8,14 +8,15 @@ adapter, hook, command or policy.
 
 | Layer | Where | Holds |
 |---|---|---|
-| Policy | `internal/core` | Classification, `Route`, tiers, risk, self-check, `HarnessCapabilities` |
+| Classification | `internal/classify` | Regex class, signals, language guard, risk floor. No tier and no harness |
+| Policy | `internal/core` | `Route`, `TierOf`, guardrails, session, self-check, `HarnessCapabilities`. Calls `classify` |
 | Shared services | `internal/policyfile`, `adapt`, `quota`, `telemetry`, `catalog`, `hookctx` | Optional behaviour plugged into core, state, I/O |
 | Hook runner | `cmd/downshift` `runHookAdapter` | Reads the payload once, sets shared context, records telemetry, fails open |
 | Adapters | `internal/adapters/<harness>` | Parse the payload, declare capabilities, emit the wire response |
 
 Dependencies point inward: adapters may import core and shared services; core
-never imports `catalog`, `telemetry`, `adapt`, `policyfile` or an adapter
-(checked with `go list -deps ./internal/core`). Optional layers plug into core
+imports `classify` and never imports `catalog`, `telemetry`, `adapt`,
+`policyfile` or an adapter (checked with `go list -deps ./internal/core`). Optional layers plug into core
 through a hook variable (`core.MemoryAdjustHook`, `core.TierFloorHook`)
 registered in their `init`. Debt status (2026-10-17):
 
@@ -27,6 +28,7 @@ registered in their `init`. Debt status (2026-10-17):
   `TestHookRunnerReadsConfigOnce`).
 - `hookctx`: core no longer imports it directly; it reaches core only through
   helper packages that stay in-process (`semantic` hash embedder).
+- Classification vs route policy: done. `internal/classify` scores the prompt. `core.TierOf` and `Route` stay in policy. Later phases, not this cut: move the quota snapshot type out of the `core` import, then session selection.
 - `quota`: still open. `core.SessionList.Usage` is a `*quota.Snapshot`,
   `WithUsageQuota` takes one and `QuotaStatus` returns a `quota.Status`;
   all five adapters construct and pass those types and read the field. A

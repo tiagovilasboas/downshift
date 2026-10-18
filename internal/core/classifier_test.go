@@ -83,8 +83,8 @@ func TestComplexityTier(t *testing.T) {
 		{Complex, TierFrontier},
 	}
 	for _, tt := range tests {
-		if got := tt.c.Tier(); got != tt.tier {
-			t.Errorf("%s.Tier() = %s, want %s", tt.c, got, tt.tier)
+		if got := TierOf(tt.c); got != tt.tier {
+			t.Errorf("TierOf(%s) = %s, want %s", tt.c, got, tt.tier)
 		}
 	}
 }

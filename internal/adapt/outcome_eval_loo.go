@@ -116,7 +116,7 @@ func EvalSharedShapeMemoryLOO(tasks []outcome.Task, runs []outcome.Run) (Outcome
 	var rep OutcomeEvalReport
 	for i, s := range shapes {
 		mem := looMemory(shapes, i)
-		baseline := core.ClassifyWithSemantic(prompts[s.id]).Complexity.Tier()
+		baseline := core.TierOf(core.ClassifyWithSemantic(prompts[s.id]).Complexity)
 		adjusted := AdjustTier(Tier(baseline), s.key, &mem)
 		bPass, okB := passAt(baseline, s.id, by)
 		aPass, okA := passAt(core.Tier(adjusted), s.id, by)
@@ -170,7 +170,7 @@ func EvalCost(tasks []outcome.Task, runs []outcome.Run, cm CostModel) ([]CostRow
 		rows[i].Name = n
 	}
 	for i, s := range shapes {
-		baseline := Tier(core.ClassifyWithSemantic(prompts[s.id]).Complexity.Tier())
+		baseline := Tier(core.TierOf(core.ClassifyWithSemantic(prompts[s.id]).Complexity))
 		loo := looMemory(shapes, i)
 		starts := []Tier{
 			baseline,

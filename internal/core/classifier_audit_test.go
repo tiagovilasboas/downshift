@@ -136,7 +136,7 @@ func TestRiskFloor_AuthAndPortuguese(t *testing.T) {
 		{"rename the credenciais struct to creds", "secret"},
 	} {
 		cls := core.Classify(c.prompt)
-		if !cls.RiskFloor || cls.Confident || cls.Complexity.Tier() == core.TierSmall {
+		if !cls.RiskFloor || cls.Confident || core.TierOf(cls.Complexity) == core.TierSmall {
 			t.Errorf("%q: complexity=%s confident=%v riskFloor=%v, want risk-floored mid", c.prompt, cls.Complexity, cls.Confident, cls.RiskFloor)
 		}
 		if cats := core.RiskCategories(c.prompt); !slices.Contains(cats, c.cat) {

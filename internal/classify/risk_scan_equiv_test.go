@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package core
+package classify
 
 import (
 	"go/ast"
@@ -344,20 +344,6 @@ func benchInput(filler string, size int) string {
 	}
 	return b.String()[:size]
 }
-
-func benchRoute(b *testing.B, prompt string) {
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		riskMemo.ok = false
-		_ = Route(prompt, "claude-code", "")
-	}
-}
-
-func BenchmarkRouteAdversarial1M(b *testing.B) { benchRoute(b, benchAdversarial) }
-func BenchmarkRouteBenign1M(b *testing.B)      { benchRoute(b, benchBenign) }
-func BenchmarkRouteWorst1M(b *testing.B)       { benchRoute(b, benchWorst) }
-func BenchmarkRouteNoMatch1M(b *testing.B)     { benchRoute(b, benchNoMatch) }
-func BenchmarkRouteShort(b *testing.B)         { benchRoute(b, benchShort) }
 
 func BenchmarkRiskScanAdversarial1M(b *testing.B) { benchScan(b, benchAdversarial, scanRiskCategories) }
 func BenchmarkRiskScanBenign1M(b *testing.B)      { benchScan(b, benchBenign, scanRiskCategories) }

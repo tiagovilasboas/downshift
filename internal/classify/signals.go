@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package core
+package classify
 
 // SignalDef is one uncompiled classifier signal: a regex pattern, a weight,
 // and the complexity class it votes for. Keeping the table here — separate

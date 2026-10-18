@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package core
+package classify
 
 import (
 	"regexp"
@@ -267,11 +267,11 @@ func applyRiskAbstention(prompt string, c Classification) Classification {
 	return c
 }
 
-// applyRiskFloor lifts a Trivial/Simple classification that touches a risk
+// ApplyRiskFloor lifts a Trivial/Simple classification that touches a risk
 // category to Medium (mid tier) and clears Confident, so no adapter acts on
 // a confident downshift for it. applyRiskAbstention handles confident Medium/Simple
 // with risk where the tier should stay unchanged.
-func applyRiskFloor(prompt string, c Classification) Classification {
+func ApplyRiskFloor(prompt string, c Classification) Classification {
 	cats := RiskCategories(prompt)
 	if len(cats) > 0 {
 		c.Risk = cats

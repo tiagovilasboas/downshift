@@ -7,10 +7,10 @@ import (
 	"fmt"
 )
 
-// Tier maps a complexity to the minimum capable tier — the gearbox rule:
-// which gear does this stretch of road need? Lives here because it is routing
-// policy, not classification knowledge.
-func (c Complexity) Tier() Tier {
+// TierOf maps a complexity to the minimum capable tier — the gearbox rule:
+// which gear does this stretch of road need? It lives in the route policy,
+// not in the classifier.
+func TierOf(c Complexity) Tier {
 	switch c {
 	case Trivial:
 		return TierSmall // flat straight: high gear, cheap
@@ -280,12 +280,12 @@ func classifyTask(prompt string) (Tier, Classification, NBUpshift, NBDownshift) 
 		cls.Complexity = Trivial
 		cls.Confident = false
 	}
-	nbUp := nbSecondOpinion(prompt, cls.Complexity.Tier())
+	nbUp := nbSecondOpinion(prompt, TierOf(cls.Complexity))
 	if nbUp.Applied {
 		cls.Complexity = complexityForTier(nbUp.To)
 		cls.Confident = false
 	}
-	return cls.Complexity.Tier(), cls, nbUp, nbDown
+	return TierOf(cls.Complexity), cls, nbUp, nbDown
 }
 
 // resolveModel returns the catalog model for the given harness and tier.

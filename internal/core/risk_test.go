@@ -45,7 +45,7 @@ var riskPrompts = []string{
 func TestRiskSignals_NeverSmallTier(t *testing.T) {
 	for _, p := range riskPrompts {
 		cls := core.ClassifyWithSemantic(p)
-		if cls.Complexity.Tier() == core.TierSmall {
+		if core.TierOf(cls.Complexity) == core.TierSmall {
 			t.Errorf("%q routed to small tier (%s)", p, cls.Complexity)
 		}
 		if cls.Complexity < core.Medium && len(core.RiskCategories(p)) == 0 {

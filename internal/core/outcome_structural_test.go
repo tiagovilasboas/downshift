@@ -89,8 +89,8 @@ func TestClassify_OutcomeStructuralRegression(t *testing.T) {
 			if got.Complexity != tt.want {
 				t.Fatalf("complexity = %s, want %s (scores=%v nosig=%v)", got.Complexity, tt.want, got.Scores, got.NoSignal)
 			}
-			if got.Complexity.Tier() != tt.tier {
-				t.Fatalf("tier = %s, want %s", got.Complexity.Tier(), tt.tier)
+			if TierOf(got.Complexity) != tt.tier {
+				t.Fatalf("tier = %s, want %s", TierOf(got.Complexity), tt.tier)
 			}
 		})
 	}

@@ -199,7 +199,7 @@ func RunWithClassifier(tasks []Task, classify func(string) core.Classification, 
 		cls := classify(t.Prompt)
 		correct := cls.Complexity == expected
 		if isTierLabel(t.Label) {
-			correct = cls.Complexity.Tier() == expected.Tier()
+			correct = core.TierOf(cls.Complexity) == core.TierOf(expected)
 		}
 		results = append(results, Result{
 			Task:      t,
@@ -262,7 +262,7 @@ func TierAccuracy(results []Result) float64 {
 		if !ok {
 			continue
 		}
-		if expected.Tier() == r.Predicted.Tier() {
+		if core.TierOf(expected) == core.TierOf(r.Predicted) {
 			correct++
 		}
 	}
@@ -275,11 +275,11 @@ func TierAccuracy(results []Result) float64 {
 func UnsafeDowngradeRates(results []Result) (toMID, toSMALL float64, cntMID, cntSMALL, total int) {
 	for _, r := range results {
 		expected, ok := complexityFromString(r.Task.Label)
-		if !ok || expected.Tier() != core.TierFrontier {
+		if !ok || core.TierOf(expected) != core.TierFrontier {
 			continue
 		}
 		total++
-		switch r.Predicted.Tier() {
+		switch core.TierOf(r.Predicted) {
 		case core.TierMid:
 			cntMID++
 		case core.TierSmall:
@@ -300,11 +300,11 @@ func UnsafeDowngradeRates(results []Result) (toMID, toSMALL float64, cntMID, cnt
 func WastefulOverRoutingRates(results []Result) (toMID, toFrontier float64, cntMID, cntFrontier, total int) {
 	for _, r := range results {
 		expected, ok := complexityFromString(r.Task.Label)
-		if !ok || expected.Tier() != core.TierSmall {
+		if !ok || core.TierOf(expected) != core.TierSmall {
 			continue
 		}
 		total++
-		switch r.Predicted.Tier() {
+		switch core.TierOf(r.Predicted) {
 		case core.TierMid:
 			cntMID++
 		case core.TierFrontier:
@@ -359,7 +359,7 @@ func AbstentionSplit(results []Result) Split {
 	var s Split
 	for _, r := range results {
 		expected, _ := complexityFromString(r.Task.Label)
-		hit := r.Predicted.Tier() == expected.Tier()
+		hit := core.TierOf(r.Predicted) == core.TierOf(expected)
 		switch {
 		case r.Confident && hit:
 			s.ConfidentHit++
@@ -427,7 +427,7 @@ func Print(results []Result, m Matrix, w io.Writer) {
 	hasMisrouted := false
 	for _, r := range results {
 		expected, ok := complexityFromString(r.Task.Label)
-		if ok && expected.Tier() == core.TierFrontier && r.Predicted.Tier() != core.TierFrontier {
+		if ok && core.TierOf(expected) == core.TierFrontier && core.TierOf(r.Predicted) != core.TierFrontier {
 			hasMisrouted = true
 			break
 		}
@@ -436,7 +436,7 @@ func Print(results []Result, m Matrix, w io.Writer) {
 		fmt.Fprintf(w, "Unsafe downgrade detail (FRONTIER → cheaper tier)\n")
 		for _, r := range results {
 			expected, ok := complexityFromString(r.Task.Label)
-			if !ok || expected.Tier() != core.TierFrontier || r.Predicted.Tier() == core.TierFrontier {
+			if !ok || core.TierOf(expected) != core.TierFrontier || core.TierOf(r.Predicted) == core.TierFrontier {
 				continue
 			}
 			fmt.Fprintf(w, "  COMPLEX → %-7s  %q\n",
@@ -501,7 +501,7 @@ func BootstrapConfidenceInterval(results []Result, resamples int) ConfidenceInte
 			idx := lcgNext()
 			r := results[idx]
 			expected, ok := complexityFromString(r.Task.Label)
-			if ok && expected.Tier() == r.Predicted.Tier() {
+			if ok && core.TierOf(expected) == core.TierOf(r.Predicted) {
 				correct++
 			}
 		}

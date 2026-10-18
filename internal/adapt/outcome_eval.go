@@ -50,7 +50,7 @@ func EvalContrafactualPerTask(tasks []outcome.Task, runs []outcome.Run) (Outcome
 			continue
 		}
 		mem := memoryFromTaskOutcomes(t.ID, t.Prompt, byTier)
-		baseline := core.ClassifyWithSemantic(t.Prompt).Complexity.Tier()
+		baseline := core.TierOf(core.ClassifyWithSemantic(t.Prompt).Complexity)
 		adjusted := Tier(baseline)
 		if mem != nil {
 			adjusted = AdjustTier(Tier(baseline), key, mem)
@@ -102,7 +102,7 @@ func EvalSharedShapeMemory(tasks []outcome.Task, runs []outcome.Run) (OutcomeEva
 		if key == "" {
 			continue
 		}
-		baseline := core.ClassifyWithSemantic(t.Prompt).Complexity.Tier()
+		baseline := core.TierOf(core.ClassifyWithSemantic(t.Prompt).Complexity)
 		adjusted := AdjustTier(Tier(baseline), key, &global)
 		bPass, okB := passAt(baseline, t.ID, byTier)
 		aPass, okA := passAt(core.Tier(adjusted), t.ID, byTier)

@@ -25,10 +25,10 @@ func TestClassifyWithSemantic_EnabledCanRaise(t *testing.T) {
 	prompt := "implement streaming pipeline for processing 1M events/sec"
 	base := core.Classify(prompt)
 	sem := core.ClassifyWithSemantic(prompt)
-	if sem.Complexity.Tier() < base.Complexity.Tier() {
+	if core.TierOf(sem.Complexity) < core.TierOf(base.Complexity) {
 		t.Fatalf("semantic must not downgrade tier: base=%v sem=%v", base.Complexity, sem.Complexity)
 	}
-	if sem.Complexity.Tier() > base.Complexity.Tier() {
+	if core.TierOf(sem.Complexity) > core.TierOf(base.Complexity) {
 		t.Logf("semantic raised tier: %v -> %v", base.Complexity, sem.Complexity)
 	}
 }

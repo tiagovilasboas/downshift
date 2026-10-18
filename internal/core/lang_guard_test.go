@@ -158,7 +158,7 @@ func TestPartialForeignLanguage_MixedHelperBrief(t *testing.T) {
 	if !cls.UnsupportedLanguage || cls.Confident {
 		t.Errorf("Classify: unsupported=%v confident=%v, want language guard hold", cls.UnsupportedLanguage, cls.Confident)
 	}
-	if cls.Complexity.Tier() == core.TierSmall && checkWrites(core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)) {
+	if core.TierOf(cls.Complexity) == core.TierSmall && checkWrites(core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)) {
 		t.Errorf("confident small downshift on mixed risk brief")
 	}
 }
