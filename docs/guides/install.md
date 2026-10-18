@@ -188,7 +188,7 @@ or in two steps, `/plugin marketplace add tiagovilasboas/downshift` then
 `PostToolUse`, `PostToolUseFailure` and `SubagentStop` from
 [`hooks/hooks.json`](../../hooks/hooks.json) (each entry only calls the binary),
 adds the `downshift-setup`, `downshift-audit` and `cost-reducer` skills, and the
-command below as `/downshift:downshift`. On Claude Code 2.1.287 or later it also
+command below as `/downshift:status`. On Claude Code 2.1.287 or later it also
 loads the bundled [cache-tax mod](../../hooks/cache-tax/README.md): a cold send
 on a context of 50k tokens or more is dropped once with its estimated rewrite
 price (resend to pay it, `/cache-tax guard warn` to only be told), and
@@ -221,11 +221,12 @@ pause and resume):
 
 ```bash
 mkdir -p ~/.claude/commands
-cp commands/downshift.md ~/.claude/commands/downshift.md   # from this repository
+cp commands/status.md ~/.claude/commands/downshift.md   # from this repository
 ```
 
-With the plugin it is already there as `/downshift:downshift`. Then in Claude Code:
-`/downshift`, `/downshift --why`, `/downshift --pause`, `/downshift --resume`.
+With the plugin it is already there as `/downshift:status`. Then in Claude Code:
+`/downshift:status`, `/downshift:status --why`, `/downshift:status --pause`, `/downshift:status --resume`.
+The optional manual copy above retains `/downshift` as a local alias.
 The command only runs `downshift session` through the Bash tool, which its
 `allowed-tools` line limits to that command. The same `downshift session` works
 in a terminal for any harness. See [session-view.md](session-view.md).

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Claude Code plugin session command renamed to `/downshift:status` (`commands/status.md`). Update the plugin and start a new session to load the new name. The optional manual `/downshift` alias remains available by copying the same command file.
+
 ### Removed
 
 - Graphify (`internal/graphify`, `DOWNSHIFT_GRAPHIFY_*`), multilingual E5 shadow/fuse (`DOWNSHIFT_E5_*`, `internal/semantic/e5shadow`), and external MiniLM embed commands (`DOWNSHIFT_MINILM_EMBED`, `data/minilm.json`). Semantic boost is the in-process FNV hash embedder only (`DOWNSHIFT_MINILM=0` opts out). `downshift shadow-report` summarises routing v2 candidate observations only.

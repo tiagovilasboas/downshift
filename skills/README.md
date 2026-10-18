@@ -21,7 +21,7 @@ tokenizer):
 | `downshift-audit/SKILL.md` | ~70 tokens | ~890 tokens |
 | `downshift-setup/SKILL.md` | ~66 tokens | ~730 tokens |
 | `agents/mechanical-worker.md` | ~55 tokens | ~270 tokens |
-| `commands/downshift.md` | ~16 tokens | ~90 tokens |
+| `commands/status.md` | ~16 tokens | ~90 tokens |
 
 About 290 tokens per session for the whole set when installed through the
 plugin. A skill does not save anything by recommending savings; it pays off

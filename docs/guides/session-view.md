@@ -3,7 +3,7 @@
 # Session view: `downshift session`
 
 What Downshift did in one session, readable at a glance. Works for every
-harness; Claude Code also gets the `/downshift` command (see
+harness; Claude Code also gets `/downshift:status` through the plugin, or `/downshift` with the optional manual command alias (see
 [install.md](install.md#the-downshift-command-claude-code)).
 
 ```

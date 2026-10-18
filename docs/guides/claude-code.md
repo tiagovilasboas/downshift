@@ -146,7 +146,7 @@ keeps a backup, and prints a diff (`--dry-run` first):
 - `--undo` restores the latest backup of each hook file (a marker removes a file setup created).
 
 The plugin (`/plugin install downshift@downshift`, Claude Code 2.1.275+) carries the **same four
-hooks** from `hooks/hooks.json`, the `/downshift:downshift` command and the skills. It writes **no
+hooks** from `hooks/hooks.json`, the `/downshift:status` command and the skills. It writes **no
 settings**: no `opusplan`, no plan mode, no You should know, no statusline. Use one channel: a
 plugin hook and a settings hook with the same command both run, so every spawn would be routed
 twice. `setup` skips the hooks when `enabledPlugins["downshift@downshift"]` is true in the user
