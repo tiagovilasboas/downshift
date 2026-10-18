@@ -1,5 +1,5 @@
 ---
-description: "What Downshift did in this session: subagent tree, why, pause"
+description: "Session status: subagent tree, routing reasons, pause and resume"
 argument-hint: [--why | --pause | --resume | --json]
 allowed-tools: Bash(downshift session:*)
 ---

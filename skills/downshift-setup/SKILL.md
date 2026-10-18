@@ -16,7 +16,7 @@ delete it; the plugin copy stays and costs one description line).
    (macOS / Linux) or the Releases page or `go install`; see `docs/guides/install.md`.
 2. Claude Code only: the plugin (`/plugin marketplace add tiagovilasboas/downshift`, then
    `/plugin install downshift@downshift`) wires the same hooks and the `/downshift` command
-   without touching `~/.claude/settings.json`; its command is `/downshift:downshift`. Use one
+   without touching `~/.claude/settings.json`; its command is `/downshift:status`. Use one
    path, plugin or `setup`, not both: `setup` skips the hooks when it sees the plugin enabled,
    and `downshift doctor` warns when both are wired.
 
