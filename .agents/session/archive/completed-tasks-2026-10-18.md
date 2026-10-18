@@ -1,0 +1,110 @@
+
+### 📦 Tarefas Compactadas em 2026-10-18 18:04:57 (42 itens)
+- [x] Task 1: Domain Types, Configuration & Deterministic Tokenizer
+  - [x] 1.1 Define types (`types.go`): symbols, documents, index structures, query candidate, pack, config.
+  - [x] 1.2 Implement deterministic tokenizer (`tokenize.go`): camelCase, snake_case, PascalCase, acronyms, path splitting, punctuation.
+  - [x] 1.3 Unit tests for tokenizer (`tokenize_test.go`) covering HTTPServer, userID, processPIXPayment, getUserById, payment_service.
+  - [x] 1.4 Commit and push Task 1.
+- [x] Task 2: Code Discovery with Boundary & Security Protections
+  - [x] 2.1 Implement `discover.go`: git ls-files (-z) invocation with context timeout.
+  - [x] 2.2 Exclusions: node_modules, vendor, .git, dist, build, coverage, binaries, .env, secrets.
+  - [x] 2.3 Hard limits: 2000 files, 512 KiB/file, 16 MiB/run. No symlink traversal, path traversal prevention.
+  - [x] 2.4 Unit tests for discovery (`discover_test.go`).
+  - [x] 2.5 Commit and push Task 2.
+- [x] Task 3: Go AST Symbol Extraction & Fallback Parser
+  - [x] 3.1 Implement `parse.go`: `go/parser`, `go/ast`, `go/token` extracting functions, methods, structs, interfaces, types with line ranges.
+  - [x] 3.2 Implement fallback lexical scanner for non-Go files (TypeScript, JavaScript, PHP, Python).
+  - [x] 3.3 Unit tests for parsing (`parse_test.go`).
+  - [x] 3.4 Commit and push Task 3.
+- [x] Task 4: Incremental Inverted Index & Metadata Cache
+  - [x] 4.1 Implement `index.go`: Inverted index term -> postings, document metadata, SHA-256 change detection.
+  - [x] 4.2 Implement `cache.go`: Atomic persistence of metadata only (no code/prompts), file permissions 0600/0700.
+  - [x] 4.3 Incremental update flow (reindex modified, purge removed).
+  - [x] 4.4 Unit tests for indexing and incremental updates (`index_test.go`, `cache_test.go`).
+  - [x] 4.5 Commit and push Task 4.
+- [x] Task 5: BM25 Scoring & Deterministic Ranking
+  - [x] 5.1 Implement `rank.go` / `search.go`: BM25 (k1=1.2, b=0.75, IDF, TF, DL, avgdl).
+  - [x] 5.2 Field weights (symbol: 5, filename: 3, content: 1) and exact match boosts.
+  - [x] 5.3 Deterministic tie-breaking (Score DESC, RelativePath ASC, StartLine ASC).
+  - [x] 5.4 Top-K selection (up to 3 files, 8 symbols, 4 snippets).
+  - [x] 5.5 Unit tests for BM25 and ranking (`search_test.go`, `rank_test.go`).
+  - [x] 5.6 Commit and push Task 5.
+- [x] Task 6: Relevance Filtering & Abstention
+  - [x] 6.1 Implement abstention logic in `service.go` or `search.go` (greetings, short chatter, insufficient lexical evidence).
+  - [x] 6.2 Criteria: explicit symbol/path match OR >=2 distinct domain terms with verified index postings.
+  - [x] 6.3 Unit tests for abstention scenarios (`abstain_test.go`).
+  - [x] 6.4 Commit and push Task 6.
+- [x] Task 7: Structural Context Packager
+  - [x] 7.1 Implement `pack.go`: Structural sketch + extractive selection.
+  - [x] 7.2 Strict budget: max 3500 bytes UTF-8 (valid rune boundary, no corruption).
+  - [x] 7.3 Security markers: prompt-injection disclaimer, grouping by file, contiguous literal snippets without omitting conditions.
+  - [x] 7.4 Unit tests for packing (`pack_test.go`) covering byte limits, formatting, UTF-8 safety.
+  - [x] 7.5 Commit and push Task 7.
+- [x] Task 8: DCI High-Level Service & Orchestration
+  - [x] 8.1 Implement `service.go`: Orchestrates discover -> parse -> index -> search -> abstain -> pack with deadlines and fail-open.
+
+### 📦 Tarefas Compactadas em 2026-10-18 18:13:58 (64 itens)
+- [x] Task 1: Domain Types, Configuration & Deterministic Tokenizer
+  - [x] 1.1 Define types (`types.go`): symbols, documents, index structures, query candidate, pack, config.
+  - [x] 1.2 Implement deterministic tokenizer (`tokenize.go`): camelCase, snake_case, PascalCase, acronyms, path splitting, punctuation.
+  - [x] 1.3 Unit tests for tokenizer (`tokenize_test.go`) covering HTTPServer, userID, processPIXPayment, getUserById, payment_service.
+  - [x] 1.4 Commit and push Task 1.
+- [x] Task 2: Code Discovery with Boundary & Security Protections
+  - [x] 2.1 Implement `discover.go`: git ls-files (-z) invocation with context timeout and WalkDir fallback.
+  - [x] 2.2 Exclusions: node_modules, vendor, .git, dist, build, coverage, binaries, .env, secrets.
+  - [x] 2.3 Hard limits: 2000 files, 512 KiB/file, 16 MiB/run. No symlink traversal, path traversal prevention.
+  - [x] 2.4 Unit tests for discovery (`discover_test.go`).
+  - [x] 2.5 Commit and push Task 2.
+- [x] Task 3: Go AST Symbol Extraction & Fallback Parser
+  - [x] 3.1 Implement `parse.go`: `go/parser`, `go/ast`, `go/token` extracting functions, methods, structs, interfaces, types with line ranges.
+  - [x] 3.2 Implement fallback lexical scanner for non-Go files (TypeScript, JavaScript, PHP, Python).
+  - [x] 3.3 Unit tests for parsing (`parse_test.go`).
+  - [x] 3.4 Commit and push Task 3.
+- [x] Task 4: Incremental Inverted Index & Metadata Cache
+  - [x] 4.1 Implement `index.go`: Inverted index term -> postings, document metadata, SHA-256 change detection.
+  - [x] 4.2 Implement `cache.go`: Atomic persistence of metadata only (no code/prompts), file permissions 0600/0700.
+  - [x] 4.3 Incremental update flow (reindex modified, purge removed).
+  - [x] 4.4 Unit tests for indexing and incremental updates (`index_test.go`, `cache_test.go`).
+  - [x] 4.5 Commit and push Task 4.
+- [x] Task 5: BM25 Scoring & Deterministic Ranking
+  - [x] 5.1 Implement `rank.go` / `search.go`: BM25 (k1=1.2, b=0.75, IDF, TF, DL, avgdl).
+  - [x] 5.2 Field weights (symbol: 5, filename: 3, content: 1) and exact match boosts.
+  - [x] 5.3 Deterministic tie-breaking (Score DESC, RelativePath ASC, StartLine ASC).
+  - [x] 5.4 Top-K selection (up to 3 files, 8 symbols, 4 snippets).
+  - [x] 5.5 Unit tests for BM25 and ranking (`search_test.go`, `rank_test.go`).
+  - [x] 5.6 Commit and push Task 5.
+- [x] Task 6: Relevance Filtering & Abstention
+  - [x] 6.1 Implement abstention logic in `abstain.go` (greetings, short chatter, insufficient lexical evidence).
+  - [x] 6.2 Criteria: explicit symbol/path match OR >=2 distinct domain terms with verified index postings.
+  - [x] 6.3 Unit tests for abstention scenarios (`abstain_test.go`).
+  - [x] 6.4 Commit and push Task 6.
+- [x] Task 7: Structural Context Packager
+  - [x] 7.1 Implement `pack.go`: Structural sketch + extractive selection.
+  - [x] 7.2 Strict budget: max 3500 bytes UTF-8 (valid rune boundary, no corruption).
+  - [x] 7.3 Security markers: prompt-injection disclaimer, grouping by file, contiguous literal snippets without omitting conditions.
+  - [x] 7.4 Unit tests for packing (`pack_test.go`) covering byte limits, formatting, UTF-8 safety.
+  - [x] 7.5 Commit and push Task 7.
+- [x] Task 8: DCI High-Level Service & Orchestration
+  - [x] 8.1 Implement `service.go`: Orchestrates discover -> parse -> index -> search -> abstain -> pack with deadlines and fail-open.
+  - [x] 8.2 Telemetry recording (observed durations, file counts, byte sizes; no prompts or code stored).
+  - [x] 8.3 Unit and integration tests for service (`service_test.go`).
+  - [x] 8.4 Commit and push Task 8.
+- [x] Task 9: CLI Commands & Configuration Management
+  - [x] 9.1 Implement `cmd/downshift/dci.go`: `status`, `enable`, `disable`, `doctor`, `inspect`, `benchmark`.
+  - [x] 9.2 Configuration storage in `.downshift/dci.json` (modes: off, observe, active).
+  - [x] 9.3 CLI tests (`cmd/downshift/dci_test.go`).
+  - [x] 9.4 Commit and push Task 9.
+- [x] Task 10: Claude Code UserPromptSubmit Hook
+  - [x] 10.1 Implement `cmd/downshift/dci_hook.go`: stdin JSON parsing (`UserPromptSubmit`), execution of DCI service within deadline.
+  - [x] 10.2 JSON output emission (`hookSpecificOutput.additionalContext`).
+  - [x] 10.3 Fail-open error handling (exit 0 on timeout, error, or abstention).
+  - [x] 10.4 Unit tests for hook (`dci_hook_test.go`).
+  - [x] 10.5 Commit and push Task 10.
+- [x] Task 11: Setup & Plugin Integration
+  - [x] 11.1 Update `cmd/downshift/setup_targets.go` to register `UserPromptSubmit` hook for claude-code (`downshift dci hook claude-code`).
+  - [x] 11.2 Update `hooks/hooks.json` to include `UserPromptSubmit`.
+  - [x] 11.3 Ensure idempotency and conflict prevention with existing hooks (`TestPluginHooksMatchSetupTarget`).
+  - [x] 11.4 Integration tests for setup merge (`setup_test.go`).
+  - [x] 11.5 Commit and push Task 11.
+- [x] Task 12: Benchmark, Security Review, Documentation & Validation
+  - [x] 12.1 Implement repeatable benchmark runner in `dci benchmark` with labeled fixtures.
