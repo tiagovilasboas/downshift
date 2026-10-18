@@ -315,4 +315,3 @@ function processRefund($chargeId) {
 		t.Errorf("processRefund = %v, want KindFunction", phpSyms["processRefund"])
 	}
 }
-

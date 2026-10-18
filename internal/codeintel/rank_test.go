@@ -187,4 +187,3 @@ func TestBM25DeterminismAndRepeatability(t *testing.T) {
 		}
 	}
 }
-

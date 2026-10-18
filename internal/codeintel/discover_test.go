@@ -168,4 +168,3 @@ func TestDiscoverFiles_Boundaries(t *testing.T) {
 		t.Error("expected error with cancelled context")
 	}
 }
-

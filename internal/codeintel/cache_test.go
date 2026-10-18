@@ -133,4 +133,3 @@ func TestCacheCorruptionRecovery(t *testing.T) {
 		t.Error("expected error saving nil index")
 	}
 }
-
