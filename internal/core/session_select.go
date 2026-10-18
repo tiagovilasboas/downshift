@@ -17,7 +17,7 @@ func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bo
 	if rejectedSessionModel(harness, id, res) {
 		return false
 	}
-	if harness == "" || id == "" || id == inheritID || !session.Known || !session.Contains(id) || session.Blocks(id) || !session.quotaAllows(harness, id) {
+	if harness == "" || id == "" || id == inheritID || !session.Known || !session.Contains(id) || session.Blocks(id) || !session.QuotaAllows(harness, id) {
 		return false
 	}
 	if session.NativeAvailability || session.Unordered {
@@ -80,7 +80,7 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 
 	id, model, ok, creditHeld := selectSessionTarget(d, res, session)
 	if !ok || id == "" || !session.Contains(id) || id == currentID {
-		apply := c.CanApplyEffort && currentID != "" && session.Contains(currentID) && d.Model.ID != "" && session.quotaAllows(d.Harness, currentID)
+		apply := c.CanApplyEffort && currentID != "" && session.Contains(currentID) && d.Model.ID != "" && session.QuotaAllows(d.Harness, currentID)
 		return RewritePlan{Model: d.Baseline.CurrentModel, ApplyEffort: apply, CreditHeld: creditHeld}
 	}
 	model.ID = id
@@ -211,7 +211,7 @@ func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolve
 				continue
 			}
 			found = true
-			if session.quotaAllows(harness, id) {
+			if session.QuotaAllows(harness, id) {
 				return id, modelForSessionID(harness, id, res), true, false
 			}
 		}
@@ -227,7 +227,7 @@ func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolve
 		start = len(ids) - 1
 	}
 	for _, id := range ids[start:] {
-		if session.quotaAllows(harness, id) {
+		if session.QuotaAllows(harness, id) {
 			return id, modelForSessionID(harness, id, res), true, false
 		}
 	}
@@ -262,7 +262,7 @@ func upshiftSessionModel(harness string, session SessionList, res Resolver, minT
 		need := max(minTier, floor)
 		for tier := need; tier <= TierFrontier; tier++ {
 			for i := len(ids) - 1; i >= 0; i-- {
-				if tiers[i] == tier && session.quotaAllows(harness, ids[i]) {
+				if tiers[i] == tier && session.QuotaAllows(harness, ids[i]) {
 					return ids[i], modelForSessionID(harness, ids[i], res), true, false
 				}
 			}
@@ -291,7 +291,7 @@ func strongestSessionModel(harness string, session SessionList, res Resolver, mi
 					continue
 				}
 				found = true
-				if session.quotaAllows(harness, ids[i]) {
+				if session.QuotaAllows(harness, ids[i]) {
 					return ids[i], modelForSessionID(harness, ids[i], res), true, false
 				}
 			}
@@ -308,7 +308,7 @@ func strongestSessionModel(harness string, session SessionList, res Resolver, mi
 	}
 	for i := len(ids) - 1; i >= start; i-- {
 		id := ids[i]
-		if session.quotaAllows(harness, id) {
+		if session.QuotaAllows(harness, id) {
 			return id, modelForSessionID(harness, id, res), true, false
 		}
 	}

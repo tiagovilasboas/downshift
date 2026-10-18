@@ -7,6 +7,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/session"
 )
 
 // Environment variables read by internal/core.
@@ -64,19 +66,19 @@ import (
 // Only the variables above are read here.
 const (
 	// EnvSessionModels is the operator session allowlist path.
-	EnvSessionModels = "DOWNSHIFT_SESSION_MODELS"
+	EnvSessionModels = session.EnvSessionModels
 	// EnvQuotaMode set to "required" makes quota evidence mandatory.
-	EnvQuotaMode = "DOWNSHIFT_QUOTA_MODE"
+	EnvQuotaMode = session.EnvQuotaMode
 	// EnvExplicitUpshift set to "1" lets upshift pick explicit_only ids.
-	EnvExplicitUpshift = "DOWNSHIFT_EXPLICIT_UPSHIFT"
+	EnvExplicitUpshift = session.EnvExplicitUpshift
 	// EnvInferSession set to "off" disables the inferred session layer.
 	EnvInferSession = "DOWNSHIFT_INFER_SESSION"
 	// EnvDiscovery set to "off" disables the discovered-models layer.
-	EnvDiscovery = "DOWNSHIFT_DISCOVERY"
+	EnvDiscovery = session.EnvDiscovery
 	// EnvDiscoveryTTL is a Go duration; "0" keeps a cache entry forever.
-	EnvDiscoveryTTL = "DOWNSHIFT_DISCOVERY_TTL"
+	EnvDiscoveryTTL = session.EnvDiscoveryTTL
 	// EnvDiscovered overrides the cache path.
-	EnvDiscovered = "DOWNSHIFT_DISCOVERED"
+	EnvDiscovered = session.EnvDiscovered
 	// NBUpshiftEnv turns the naive-Bayes upshift on. Default OFF: the opinion
 	// is still computed and recorded (shadow mode) but the routing tier is
 	// unchanged.
@@ -88,6 +90,10 @@ const (
 	// ScoreRoutingEnv makes the capability pick live. Default off (shadow only).
 	ScoreRoutingEnv = "DOWNSHIFT_SCORE_ROUTING"
 )
+
+// defaultDiscoveryTTL is the discovery cache TTL when DOWNSHIFT_DISCOVERY_TTL
+// is unset. The loader that honors it lives in internal/session.
+const defaultDiscoveryTTL = session.DefaultDiscoveryTTL
 
 // Config is every setting core reads from the environment, typed. The zero
 // value is "nothing set". Build one with ConfigFromEnv; install it with
@@ -106,7 +112,7 @@ type Config struct {
 	// DiscoveredPath is DOWNSHIFT_DISCOVERED; "" means the state dir.
 	DiscoveredPath string
 	// DiscoveryTTL is DOWNSHIFT_DISCOVERY_TTL parsed as a Go duration, or
-	// defaultDiscoveryTTL when unset; 0 keeps a cache entry forever.
+	// session.DefaultDiscoveryTTL when unset; 0 keeps a cache entry forever.
 	DiscoveryTTL time.Duration
 	// DiscoveryTTLInvalid is set when DOWNSHIFT_DISCOVERY_TTL is present but
 	// not a non-negative Go duration. A discovered entry is then an unknown
@@ -127,25 +133,19 @@ type Config struct {
 // ConfigFromEnv reads every variable above through getenv, once. Matching is
 // exact and case-sensitive: only the documented literal values switch a flag.
 func ConfigFromEnv(getenv func(string) string) Config {
+	sc := session.ConfigFromEnv(getenv)
 	c := Config{
-		SessionModelsPath: getenv(EnvSessionModels),
-		QuotaRequired:     getenv(EnvQuotaMode) == "required",
-		ExplicitUpshift:   getenv(EnvExplicitUpshift) == "1",
-		InferSessionOff:   getenv(EnvInferSession) == "off",
-		DiscoveryOff:      getenv(EnvDiscovery) == "off",
-		DiscoveredPath:    getenv(EnvDiscovered),
-		DiscoveryTTL:      defaultDiscoveryTTL,
-		NBUpshift:         getenv(NBUpshiftEnv) == "1",
-		NBDownshift:       getenv(NBDownshiftEnv) == "1",
-		ScoreRouting:      getenv(ScoreRoutingEnv) == "1",
-	}
-	if v := getenv(EnvDiscoveryTTL); v != "" {
-		d, err := time.ParseDuration(v)
-		if err != nil || d < 0 {
-			c.DiscoveryTTLInvalid = true
-		} else {
-			c.DiscoveryTTL = d
-		}
+		SessionModelsPath:   sc.SessionModelsPath,
+		QuotaRequired:       sc.QuotaRequired,
+		ExplicitUpshift:     sc.ExplicitUpshift,
+		InferSessionOff:     getenv(EnvInferSession) == "off",
+		DiscoveryOff:        sc.DiscoveryOff,
+		DiscoveredPath:      sc.DiscoveredPath,
+		DiscoveryTTL:        sc.DiscoveryTTL,
+		DiscoveryTTLInvalid: sc.DiscoveryTTLInvalid,
+		NBUpshift:           getenv(NBUpshiftEnv) == "1",
+		NBDownshift:         getenv(NBDownshiftEnv) == "1",
+		ScoreRouting:        getenv(ScoreRoutingEnv) == "1",
 	}
 	for _, n := range AllHarnessCaps() {
 		name := n.Caps.NativeSessionEnv
@@ -176,7 +176,17 @@ func SetConfig(c Config) (restore func()) {
 	prev := activeConfig
 	activeConfig = &c
 	configMu.Unlock()
+	restoreSession := session.SetConfig(session.Config{
+		SessionModelsPath:   c.SessionModelsPath,
+		QuotaRequired:       c.QuotaRequired,
+		ExplicitUpshift:     c.ExplicitUpshift,
+		DiscoveryOff:        c.DiscoveryOff,
+		DiscoveredPath:      c.DiscoveredPath,
+		DiscoveryTTL:        c.DiscoveryTTL,
+		DiscoveryTTLInvalid: c.DiscoveryTTLInvalid,
+	})
 	return func() {
+		restoreSession()
 		configMu.Lock()
 		activeConfig = prev
 		configMu.Unlock()

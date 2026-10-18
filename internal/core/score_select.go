@@ -108,7 +108,7 @@ func scoreSelect(d Decision, res Resolver, session SessionList) (string, Model, 
 		if m, ok := lookupTier(res, d.Harness, id); ok && m.Tier < d.Tier {
 			continue
 		}
-		if scores[id] >= need-scoreEpsilon && session.quotaAllows(d.Harness, id) {
+		if scores[id] >= need-scoreEpsilon && session.QuotaAllows(d.Harness, id) {
 			passing = append(passing, modelForSessionID(d.Harness, id, res))
 		}
 	}

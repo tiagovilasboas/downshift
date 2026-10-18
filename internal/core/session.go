@@ -4,358 +4,96 @@
 package core
 
 import (
-	"encoding/json"
-	"os"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/quotamodel"
+	"github.com/tiagovilasboas/downshift/internal/session"
 )
 
-// SessionList is the only set of model ids a hook may write.
-// The catalog describes tier, cost, family, and effort for ids that are
-// also in this list. It must not introduce an id the session does not have.
-//
-// Known is false when the list could not be determined (hook payload had
-// no allowlist and the user file is missing or has no key for the harness).
-// Callers must not rewrite the model in that case.
-type SessionList struct {
-	IDs   []string
-	Known bool
-	// Metadata is optional native/operator capability evidence for exact IDs.
-	Metadata []SessionModel
-	// Unordered marks a hook availability inventory without a capability order.
-	// Unlike a native quota export, this alone is not quota evidence.
-	Unordered bool
-	// Inferred marks a list derived from the current model's catalog tier
-	// ladder rather than learned from the harness.
-	Inferred bool
-	// NativeAvailability contains provider IDs without an operator capability
-	// order. These candidates require resolver metadata before selection.
-	NativeAvailability bool
-	// Included ids have a stable token budget in this call. Empty means neither
-	// the hook nor this harness's quota object reported one. Allowlist
-	// membership is not a credit source.
-	Included []string
-	// Exhausted ids are in the session but must not be selected. The user
-	// has no remaining token budget for them. A hook unavailable_models list
-	// or this harness's quota.exhausted list sets this.
-	Exhausted []string
-	// CreditsReported is true when the hook sent included_models or
-	// unavailable_models, or when this harness's quota object supplied
-	// included and/or exhausted. The allowlist is not a credit report.
-	CreditsReported bool
-	// Usage evidence is separate from operator allowlists and hook marks.
-	Usage         *quotamodel.Snapshot
-	QuotaRequired bool
-	QuotaTime     time.Time
-}
+// SessionList is the allowlist a hook may write. The loader lives in
+// internal/session; this alias keeps existing call sites compiling.
+type SessionList = session.SessionList
 
-// WithUsageQuota attaches current provider evidence. A supplied snapshot,
-// cached snapshot (even malformed), or required mode closes the quota gate.
-// Missing evidence in legacy mode retains routing without claiming credit.
-func (s SessionList) WithUsageQuota(harness string, supplied *quotamodel.Snapshot) SessionList {
-	s.QuotaTime = time.Now()
-	s.QuotaRequired = quotaModeRequired()
-	if supplied != nil {
-		s.Usage, s.QuotaRequired = supplied, true
-		return s
-	}
-	// Native availability and quota were read from the same bounded export.
-	// Preserve that observation rather than reopening a file that may rotate.
-	if s.NativeAvailability {
-		s.QuotaRequired = true
-		return s
-	}
-	var present bool
-	s.Usage, present = loadUsage(harness)
-	// A snapshot that expired more than quotamodel.StaleGrace ago is treated as
-	// absent, like a user without quota. Required mode keeps holding.
-	if present && s.Usage != nil && !s.QuotaRequired && s.Usage.Abandoned(s.QuotaTime) {
-		s.Usage, present = nil, false
-	}
-	s.QuotaRequired = s.QuotaRequired || present
-	return s
-}
+// SessionModel is exact-id capability evidence carried on a SessionList.
+type SessionModel = session.SessionModel
 
-// loadUsage reads the provider evidence for a harness. An explicitly configured
-// native export is fresher than the canonical cache. Invalid native input
-// remains present and therefore closes the gate instead of falling back to a
-// stale cache.
-func loadUsage(harness string) (*quotamodel.Snapshot, bool) {
-	if LoadNativeQuotaHook != nil {
-		if s, present := LoadNativeQuotaHook(harness); present {
-			return s, true
+func init() {
+	// The session package must not import core. Wire the env seam and the
+	// quota hooks so loaders see the same snapshot and the same evidence
+	// quota registers on this package.
+	session.SetLookup(func(key string) string { return lookupEnv(key) })
+	session.LoadQuotaHook = func(harness string) (*quotamodel.Snapshot, bool) {
+		if LoadQuotaHook == nil {
+			return nil, false
 		}
+		return LoadQuotaHook(harness)
 	}
-	if LoadQuotaHook == nil {
-		return nil, false
-	}
-	return LoadQuotaHook(harness)
-}
-
-// StaleQuotaHold reports whether a loaded snapshot for harness has expired but
-// still holds model rewrites, and for how long it has been expired. It follows
-// the same rule as WithUsageQuota, so doctor and the statusline never disagree
-// with the gate. Malformed evidence is not "stale" and reports false.
-func StaleQuotaHold(harness string, now time.Time) (expiredFor time.Duration, held bool) {
-	s, present := loadUsage(harness)
-	if !present || s == nil || s.Validate() != nil || now.Before(s.ExpiresAt) {
-		return 0, false
-	}
-	if !quotaModeRequired() && s.Abandoned(now) {
-		return 0, false
-	}
-	return now.Sub(s.ExpiresAt), true
-}
-
-// QuotaStatus reports token budget. A usage snapshot stays authoritative:
-// file or hook marks must not turn it into a false Available. When Usage
-// is nil, Included is available, Exhausted is exhausted, and every other
-// id is unknown. Allowlist membership is not a balance claim.
-func (s SessionList) QuotaStatus(harness, id string) quotamodel.Status {
-	if s.Usage == nil {
-		if s.IsIncluded(id) {
-			return quotamodel.Available
+	session.LoadNativeQuotaHook = func(harness string) (*quotamodel.Snapshot, bool) {
+		if LoadNativeQuotaHook == nil {
+			return nil, false
 		}
-		if s.Blocks(id) {
-			return quotamodel.Exhausted
-		}
-		return quotamodel.Unknown
+		return LoadNativeQuotaHook(harness)
 	}
-	now := s.QuotaTime
-	if now.IsZero() {
-		now = time.Now()
-	}
-	return s.Usage.Evaluate(harness, id, now)
+	session.LoadNativeSessionHook = LoadNativeSession
 }
-
-func (s SessionList) quotaAllows(harness, id string) bool {
-	return !s.QuotaRequired || s.QuotaStatus(harness, id) == quotamodel.Available
-}
-
-// UnknownSession is the fail-open list: no rewrite.
-func UnknownSession() SessionList { return SessionList{} }
 
 // KnownSession marks ids as the session allowlist, including a known-empty list.
-func KnownSession(ids []string) SessionList {
-	cp := append([]string(nil), ids...)
-	return SessionList{IDs: cp, Known: true}
-}
+func KnownSession(ids []string) SessionList { return session.KnownSession(ids) }
 
-// Contains reports whether id is an exact member of a known session list.
-func (s SessionList) Contains(id string) bool {
-	return s.has(s.IDs, id)
-}
+// UnknownSession is the fail-open list: no rewrite.
+func UnknownSession() SessionList { return session.UnknownSession() }
 
-// IsIncluded reports an operator mark: this id still has token budget.
-func (s SessionList) IsIncluded(id string) bool {
-	return s.has(s.Included, id)
-}
-
-// Blocks reports an operator mark: this id has no remaining token budget.
-func (s SessionList) Blocks(id string) bool {
-	return s.has(s.Exhausted, id)
-}
-
-func (s SessionList) has(ids []string, id string) bool {
-	if !s.Known || id == "" {
-		return false
-	}
-	for _, candidate := range ids {
-		if candidate == id {
-			return true
-		}
-	}
-	return false
-}
-
-// WithHookQuota replaces included and exhausted lists when the hook sent them.
-// An absent slice supplies no mark; a present slice is authoritative and
-// replaces any mark loaded from quota.<harness>. The allowlist is not
-// credit evidence.
-func (s SessionList) WithHookQuota(included, exhausted *[]string) SessionList {
-	if !s.Known || (included == nil && exhausted == nil) {
-		return s
-	}
-	s.CreditsReported = true
-	if included != nil {
-		s.Included = append([]string(nil), (*included)...)
-	}
-	if exhausted != nil {
-		s.Exhausted = append([]string(nil), (*exhausted)...)
-	}
-	return s
+// StaleQuotaHold reports whether a loaded snapshot for harness has expired but
+// still holds model rewrites, and for how long it has been expired.
+func StaleQuotaHold(harness string, now time.Time) (time.Duration, bool) {
+	return session.StaleQuotaHold(harness, now)
 }
 
 // SessionFromHook returns the first non-nil allowlist from the hook payload.
-// A nil slice means that field was absent. A non-nil slice is authoritative,
-// even when empty, and the user file must not be consulted.
 func SessionFromHook(lists ...*[]string) (SessionList, bool) {
-	for index, list := range lists {
-		if list != nil {
-			session := KnownSession(*list)
-			session.Unordered = index > 0
-			return session, true
-		}
-	}
-	return SessionList{}, false
+	return session.SessionFromHook(lists...)
 }
 
 // DefaultSessionModelsPath is under the Downshift state dir (see internal/paths).
-// The file is operator config. The binary does not embed a default allowlist.
-func DefaultSessionModelsPath() string {
-	p, err := paths.SessionModelsPath()
-	if err != nil {
-		return ""
-	}
-	return p
-}
+func DefaultSessionModelsPath() string { return session.DefaultSessionModelsPath() }
 
 // LoadUserSession reads the harness key from the user file.
-// DOWNSHIFT_SESSION_MODELS overrides the path (tests and operators).
-// A missing file, invalid JSON, or a missing harness key is an unknown session.
-func LoadUserSession(harness string) SessionList {
-	return LoadUserSessionForID(harness, "")
-}
+func LoadUserSession(harness string) SessionList { return session.LoadUserSession(harness) }
 
-// LoadUserSessionForID prefers an allowlist scoped to the exact harness
-// session, then falls back to the harness-wide allowlist for compatibility.
+// LoadUserSessionForID prefers an allowlist scoped to the exact harness session.
 func LoadUserSessionForID(harness, sessionID string) SessionList {
-	path := sessionModelsEnv()
-	if path == "" {
-		path = DefaultSessionModelsPath()
-	}
-	return LoadSessionFileForID(harness, sessionID, path)
+	return session.LoadUserSessionForID(harness, sessionID)
 }
 
 // LoadSessionFile reads one harness allowlist from path.
 func LoadSessionFile(harness, path string) SessionList {
-	return LoadSessionFileForID(harness, "", path)
+	return session.LoadSessionFile(harness, path)
 }
 
 // LoadSessionFileForID checks sessions.<harness>.<session-id> first, then
 // the legacy top-level <harness> list.
 func LoadSessionFileForID(harness, sessionID, path string) SessionList {
-	if harness == "" || path == "" {
-		return UnknownSession()
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return UnknownSession()
-	}
-	var raw map[string]json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
-		return UnknownSession()
-	}
-	if sessionID != "" {
-		var byHarness map[string]map[string][]string
-		if sessions, ok := raw["sessions"]; ok && json.Unmarshal(sessions, &byHarness) == nil {
-			if ids, ok := byHarness[harness][sessionID]; ok && ids != nil {
-				return applyFileQuota(KnownSession(ids), raw, harness)
-			}
-		}
-	}
-	msg, ok := raw[harness]
-	if !ok {
-		return UnknownSession()
-	}
-	var ids []string
-	if err := json.Unmarshal(msg, &ids); err != nil {
-		return UnknownSession()
-	}
-	return applyFileQuota(KnownSession(ids), raw, harness)
-}
-
-// harnessQuotaMarks is quota.<harness> inside session-models.json.
-// A missing slice is not a mark. The harness allowlist is a different key.
-type harnessQuotaMarks struct {
-	Included  *[]string `json:"included"`
-	Exhausted *[]string `json:"exhausted"`
-}
-
-// applyFileQuota copies quota.<harness> onto session from the document
-// already unmarshaled by LoadSessionFileForID. Another harness's marks
-// stay on that harness. An absent quota key leaves the allowlist as a
-// known session with no invented credits.
-func applyFileQuota(session SessionList, raw map[string]json.RawMessage, harness string) SessionList {
-	msg, ok := raw["quota"]
-	if !ok || !session.Known || harness == "" {
-		return session
-	}
-	var byHarness map[string]json.RawMessage
-	if json.Unmarshal(msg, &byHarness) != nil {
-		return session
-	}
-	entry, ok := byHarness[harness]
-	if !ok {
-		return session
-	}
-	var marks harnessQuotaMarks
-	if json.Unmarshal(entry, &marks) != nil || (marks.Included == nil && marks.Exhausted == nil) {
-		return session
-	}
-	if marks.Included != nil {
-		session.Included = append([]string(nil), (*marks.Included)...)
-	}
-	if marks.Exhausted != nil {
-		session.Exhausted = append([]string(nil), (*marks.Exhausted)...)
-	}
-	session.CreditsReported = true
-	return session
+	return session.LoadSessionFileForID(harness, sessionID, path)
 }
 
 // ResolveSession prefers a hook allowlist. When the payload has none, it
 // reads the user file. Every harness uses this order.
 func ResolveSession(harness string, hookLists ...*[]string) SessionList {
-	return ResolveSessionForID(harness, "", hookLists...)
+	return session.ResolveSession(harness, hookLists...)
 }
 
 // ResolveSessionForID prefers the hook payload, a configured native export,
 // models recovered by `downshift models discover`, then the operator file.
-// The allowlist is not a credit report and does not outrank a recovered
-// session. quota.<harness> on that file is credit evidence for that harness.
 func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) SessionList {
-	if session, ok := SessionFromHook(hookLists...); ok {
-		return session
-	}
-	if session, present := LoadNativeSession(harness, time.Now()); present {
-		return session
-	}
-	if session := LoadDiscoveredSession(harness, time.Now()); session.Known {
-		return session
-	}
-	return LoadUserSessionForID(harness, sessionID)
+	return session.ResolveSessionForID(harness, sessionID, hookLists...)
 }
 
 // ExplicitUpshiftEnabled reports whether upshift may select catalog
-// explicit_only ids. The default is off. DOWNSHIFT_EXPLICIT_UPSHIFT=1 or
-// "explicit_upshift": true in session-models.json turns it on. Either source
-// is enough. The flag does not replace a current explicit_only model.
-func ExplicitUpshiftEnabled() bool {
-	if explicitUpshiftEnv() {
-		return true
-	}
-	return explicitUpshiftFromFile()
-}
+// explicit_only ids. The default is off.
+func ExplicitUpshiftEnabled() bool { return session.ExplicitUpshiftEnabled() }
 
-func explicitUpshiftFromFile() bool {
-	path := sessionModelsEnv()
-	if path == "" {
-		path = DefaultSessionModelsPath()
-	}
-	if path == "" {
-		return false
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return false
-	}
-	var raw struct {
-		ExplicitUpshift bool `json:"explicit_upshift"`
-	}
-	if json.Unmarshal(data, &raw) != nil {
-		return false
-	}
-	return raw.ExplicitUpshift
+// LoadDiscoveredSession reads the models `downshift models discover` found for
+// harness. An absent, invalid, empty or expired entry is an unknown session.
+func LoadDiscoveredSession(harness string, now time.Time) SessionList {
+	return session.LoadDiscoveredSession(harness, now)
 }

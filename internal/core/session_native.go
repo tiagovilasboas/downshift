@@ -104,7 +104,7 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 	for _, id := range session.IDs {
 		// A closed gate is not a write. Opening it only answers whether this
 		// id would have been the target, so a metadata miss is not a credit hold.
-		allowed := session.quotaAllows(d.Harness, id)
+		allowed := session.QuotaAllows(d.Harness, id)
 		check := session
 		if !allowed {
 			check.QuotaRequired = false
