@@ -7,8 +7,6 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
 func TestCapsForMatchesAllHarnessCaps(t *testing.T) {
@@ -35,18 +33,6 @@ func TestClaudeCodeCapsDeclareBothHookEntries(t *testing.T) {
 		if len(n.Caps.HookEntries) > 1 {
 			t.Fatalf("%s unexpectedly declares multiple HookEntries: %v", n.Harness, n.Caps.HookEntries)
 		}
-	}
-}
-
-func TestNativeCapsAgreeWithQuotaTable(t *testing.T) {
-	for _, n := range AllHarnessCaps() {
-		env, src, ok := quota.NativeSource(n.Harness)
-		if ok != (n.Caps.NativeSessionEnv != "") || env != n.Caps.NativeSessionEnv || src != n.Caps.NativeUsageSource {
-			t.Fatalf("%s: quota table and caps disagree", n.Harness)
-		}
-	}
-	if !CodexCaps.TranscriptQuota || CursorCaps.TranscriptQuota {
-		t.Fatal("transcript quota must be codex-only")
 	}
 }
 

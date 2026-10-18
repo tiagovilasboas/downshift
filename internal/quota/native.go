@@ -199,9 +199,8 @@ func hasObservedAt(data []byte) bool {
 }
 
 // nativeSources maps a harness to its native export env var and parser source.
-// The facts are owned by core.HarnessCapabilities; core registers them at init
-// (quota cannot import core, because core imports quota), so there is no second
-// copy of them here.
+// The facts are owned by core.HarnessCapabilities. quota's init publishes them
+// through core.RegisterNativeQuotaHook, so there is no second copy here.
 var (
 	nativeMu      sync.RWMutex
 	nativeSources = map[string]struct{ env, source string }{}
