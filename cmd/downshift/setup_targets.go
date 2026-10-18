@@ -126,6 +126,7 @@ var setupTargets = []setupTarget{
 			{Event: "PostToolUse", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
 			{Event: "PostToolUseFailure", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
 			{Event: "SubagentStop", Args: "claude-code-subagent-stop"},
+			{Event: "UserPromptSubmit", Args: "dci hook claude-code"},
 		},
 		StatusLine: &setupStatusLine{
 			Key:       "statusLine",

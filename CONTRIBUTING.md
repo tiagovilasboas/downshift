@@ -158,9 +158,9 @@ Author: Tiago Vilas Boas <2006720+tiagovilasboas@users.noreply.github.com>
 
 ❌ **Not allowed:**
 ```
-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
-Co-Authored-By: Cursor <cursoragent@cursor.com>
-Author: Claude <noreply@anthropic.com>
+Co-Authored-By: AI Agent <agent@example.com>
+Co-Authored-By: Another AI <bot@example.com>
+Author: AI Model <model@example.com>
 ```
 
 Before committing, check your message for an agent `Co-Authored-By` line, and make

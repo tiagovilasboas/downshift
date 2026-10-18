@@ -120,6 +120,8 @@ func main() {
 		os.Exit(runFeedback(args[1:]))
 	case "context":
 		os.Exit(runContext(args[1:], os.Stdout, os.Stderr))
+	case "dci":
+		os.Exit(runDCI(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "setup":
 		os.Exit(runSetup(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "doctor":

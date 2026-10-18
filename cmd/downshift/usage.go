@@ -68,6 +68,12 @@ Experimental (kept, not part of the routing pitch; may change or move)
   downshift context metrics      Show token reduction metrics from active provider
   downshift context compress     Compress tool output from stdin (observe/safe)
   downshift context benchmark    Compare 4 optimization scenarios (routing vs compression)
+  downshift dci status           Show DCI status, mode, and index statistics
+  downshift dci enable [act|obs] Enable DCI code intelligence (active: inject; observe: telemetry)
+  downshift dci disable          Disable DCI (mode off)
+  downshift dci doctor           Diagnose DCI health, file limits, permissions, and budgets
+  downshift dci inspect <prompt> Simulate retrieval and context generation for a query
+  downshift dci benchmark        Run automated latency, relevance, and budget benchmarks
   go build -o dsmon ./cmd/dsmon  Live terminal widget (separate binary; downshift watch is the supported live view)
   ./cmd/dsmon/launch.sh          Open dsmon in a floating terminal window
 
