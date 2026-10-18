@@ -517,6 +517,24 @@
       "provider": "opencode",
       "harness": "opencode",
       "tier": "frontier"
+    },
+    {
+      "id": "beam-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "small"
+    },
+    {
+      "id": "longcat-2.5-preview-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "mid"
+    },
+    {
+      "id": "nemotron-3-ultra-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "frontier"
     }
   ]
 }

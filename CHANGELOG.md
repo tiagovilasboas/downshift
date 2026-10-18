@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `mods/downshift-router/`: a standalone, opt-in Claude Code mod (2.1.287+) that routes a subagent's model from the in-process `agent.spawn` event by running `downshift claude-code` over the existing stdin contract and returning `next({ ...e, model })`; off unless `userConfig.enabled` or `DOWNSHIFT_MOD_ROUTER=1`, fails open, never denies, not loaded by the root plugin. Phase 2b also prices finished subagents from `turn.complete` usage via `downshift end claude-code`. Design, the quoted `agent.spawn` fields and two live runs showing that the settings `PreToolUse` hook fires first and that both paths route each spawn when both are installed: `docs/design/mod-router.md`.
 
+- OpenCode project-scoped plugin (F2): `mods/downshift-opencode/` forwards `subagent_spawn_intent` to `downshift opencode`, applies route via `ctx.session.switchModel`, and sends observations (switch_attempt/model_selected/child_context/child_done) to `downshift honor opencode` + `downshift end opencode`. Marker-gated (`.dsspike-switch-enabled`), fail-open, v2-only, project-scoped. E2E: H1-H5 (intent→route→switch ok→context→flush) + negative (gated) + C1-C3 (bin_missing/checksum_mismatch/parse_error) verified; usage seam NOT PROVEN. Install: copy dir + `config.json` 0600 to `.opencode/plugins/downshift-opencode/`. [WIP branch feat/opencode-plugin]
+- Catalog: added opencode models `beam-free` (small), `longcat-2.5-preview-free` (mid), `nemotron-3-ultra-free` (frontier) to the embedded catalog (internal/catalog/catalog.json).
+
 ### Security
 
 - `install.sh` downloads `checksums.txt` from the same release and verifies the archive's sha256 before installing; a mismatch or a missing checksum file is a hard stop, `DOWNSHIFT_SKIP_CHECKSUM=1` opts out loudly. Before, the one-liner installed whatever the download returned.
