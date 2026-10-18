@@ -238,9 +238,10 @@ tests, a security review or a production signal.
 | Package | Responsibility |
 |---------|----------------|
 | `internal/classify` | Regex classifier, signal table, language guard, risk floor. No tier, no harness, no catalog |
-| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify` and `quotamodel`. Does **not** import catalog, telemetry, adapt, policyfile, `quota` or an adapter. Next cut, not landed: `SessionList` and the loaders that do not need `Decision` or `Resolver` (file, hook marks, discovered file, quota snapshot attachment) move to `internal/session`; `core` may import `session`, and `session` must not import `core` |
+| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify`, `quotamodel` and `session`. Does **not** import catalog, telemetry, adapt, policyfile, `quota` or an adapter. Session list loaders are landed in `internal/session`. Next cut, not landed in this docs commit: semantic boost policy (`semantic_fuse.go`, `ClassifyWithSemantic`, raise-only, no-signal skip) moves to `internal/fuse`; `core` keeps a thin `ClassifyWithSemantic` wrapper. NB upshift/downshift (`nb_upshift.go`, `nb_downshift.go`) and score selection (`score_select.go`) stay here |
 | `internal/quotamodel` | Pure quota evidence types: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O. Landed: `core` imports this package; file reads and native parsing enter through hooks registered by `quota`, the same pattern as `MemoryAdjustHook` |
-| `internal/session` (next cut, not landed) | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Must not import `core` |
+| `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed (`5f94e07`): `core` imports this package; this package must not import `core`. `PlanForSession`, `RouteForSession`, `InferSessionFromCurrent` and `CanWriteSessionID` stay in `core` |
+| `internal/fuse` (next cut, not landed) | Semantic boost policy from `semantic_fuse.go`: `ClassifyWithSemantic`, raise-only, no-signal skip. May import `classify` and `semantic`. Must not import `core`. `core` keeps a thin `ClassifyWithSemantic` wrapper. Not landed in this docs commit. NB upshift/downshift and score selection stay in `core`; those three do not share one package |
 | `internal/catalog` | Embedded `catalog.json`, user override, `Resolver` |
 | `internal/adapters/*` | Harness-specific I/O only; call `core.Route` / `PlanSession` |
 | `internal/policyfile`, `internal/adapt`, `internal/routeadapt` | Project tier floor (`TierFloorHook`) and shadow tier memory (`MemoryAdjustHook`), plugged into core at `init` |
@@ -248,7 +249,7 @@ tests, a security review or a production signal.
 | `internal/hookport`, `internal/childend` | Honor, usage and child-end contract; one shared recorder for every harness |
 | `internal/telemetry` | Append-only local JSONL; prompt-free events; stats, report, control group, session tree |
 | `internal/contextopt`, `internal/compressor`, `internal/sensor` | Context optimization registry, native compressor (observe/safe), tool-output sensor |
-| `internal/semantic`, `internal/nbtier` | In-process hash semantic boost and naive-Bayes opinion |
+| `internal/semantic`, `internal/nbtier` | In-process hash embedder (`semantic`) and naive-Bayes opinion (`nbtier`). The raise-only boost policy still lives in `core` until the `internal/fuse` cut |
 | `internal/routingv2/*`, `internal/decisionintelligence`, `internal/outcome`, `internal/benchmark` | Shadow classifiers and training, advisory recommendation, outcome evals, classifier KPIs |
 | `internal/server` | Local dashboard over the event log (`serve`, `dsmon-server`) |
 | `cmd/downshift` | CLI, `harnessRegistry`, `runHookAdapter`, `runEnd`, setup, doctor |
