@@ -12,11 +12,12 @@ import (
 
 // Service coordinates code discovery, indexing, ranking, abstention, and context packaging.
 type Service struct {
-	repoRoot  string
-	config    Config
-	cachePath string
-	index     *InvertedIndex
-	mu        sync.RWMutex
+	repoRoot    string
+	config      Config
+	cachePath   string
+	index       *InvertedIndex
+	lastChecked time.Time
+	mu          sync.RWMutex
 }
 
 // NewService creates a new DCI service instance for the given repository root and configuration.
@@ -48,6 +49,11 @@ func (s *Service) EnsureIndex(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	// If index is already loaded in memory and checked within the last 5 seconds, reuse it
+	if s.index != nil && !s.lastChecked.IsZero() && time.Since(s.lastChecked) < 5*time.Second {
+		return nil
+	}
+
 	// 1. Try loading cached index if not already in memory
 	if s.index == nil {
 		cached, err := LoadCache(s.cachePath)
@@ -71,6 +77,7 @@ func (s *Service) EnsureIndex(ctx context.Context) error {
 
 	// 4. Persist cache atomically (fail-open: ignore cache save errors)
 	_ = SaveCache(s.cachePath, s.index)
+	s.lastChecked = time.Now()
 
 	return nil
 }
