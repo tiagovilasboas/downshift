@@ -9,21 +9,24 @@ adapter, hook, command or policy.
 | Layer | Where | Holds |
 |---|---|---|
 | Classification | `internal/classify` | Regex class, signals, language guard, risk floor. No tier and no harness |
-| Policy | `internal/core` | `Route`, `TierOf`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), self-check, `HarnessCapabilities`. Calls `classify`. Imports `quotamodel` |
+| Policy | `internal/core` | `Route`, `TierOf`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), self-check, `HarnessCapabilities`. Calls `classify`. Imports `quotamodel` and `session` |
 | Quota types | `internal/quotamodel` | Pure evidence: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O |
-| Session list (next cut, not landed) | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Must not import `core` |
+| Session list | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed: `core` imports `session`; `session` must not import `core` |
+| Semantic boost policy (next cut, not landed) | `internal/fuse` | Raise-only `ClassifyWithSemantic` from `semantic_fuse.go`, including the no-signal skip. May import `classify` and `semantic`. Must not import `core`. `core` keeps a thin wrapper. Not landed in this docs commit |
 | Shared services | `internal/policyfile`, `adapt`, `quota`, `telemetry`, `catalog`, `hookctx` | Optional behaviour plugged into core, state, I/O |
 | Hook runner | `cmd/downshift` `runHookAdapter` | Reads the payload once, sets shared context, records telemetry, fails open |
 | Adapters | `internal/adapters/<harness>` | Parse the payload, declare capabilities, emit the wire response |
 
 Dependencies point inward: adapters may import core and shared services; core
-imports `classify` and `quotamodel` and never imports `catalog`, `telemetry`,
-`adapt`, `policyfile`, `quota` or an adapter (checked with
-`go list -deps ./internal/core`). The next cut, not landed, moves the session
-list to `internal/session`. `core` may import `session`; `session` must not
-import `core`. Optional layers plug into core through a hook variable
-(`core.MemoryAdjustHook`, `core.TierFloorHook`) registered in their `init`.
-Debt status (2026-10-18):
+imports `classify`, `quotamodel` and `session`, and never imports `catalog`,
+`telemetry`, `adapt`, `policyfile`, `quota` or an adapter (checked with
+`go list -deps ./internal/core`). `session` must not import `core`.
+`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent` and
+`CanWriteSessionID` stay in `core`. The next cut, not landed in this docs
+commit, moves the semantic boost policy to `internal/fuse`. `fuse` may import
+`classify` and `semantic` and must not import `core`. Optional layers plug
+into core through a hook variable (`core.MemoryAdjustHook`,
+`core.TierFloorHook`) registered in their `init`. Debt status (2026-10-18):
 
 - Configuration read once at the edge: done. `core.Config` (`internal/core/env.go`)
   types every `DOWNSHIFT_*` variable core reads; `runHookAdapter` calls
@@ -44,14 +47,23 @@ Debt status (2026-10-18):
   `quota.Snapshot`. File reads and native parsing enter through hooks
   registered by `quota` (`LoadQuotaHook`, `LoadNativeQuotaHook`,
   `ParseNativeQuotaHook`), the same pattern as `MemoryAdjustHook`.
-- Session list: the next cut, not landed. `SessionList` and the loaders that
-  do not need `Decision` or `Resolver` still live in `internal/core`: the
-  operator file, hook marks, the discovered file, and quota snapshot
-  attachment. A new package `internal/session` will own them.
-  `PlanForSession`, `RouteForSession`, `InferSessionFromCurrent` and
-  `CanWriteSessionID` stay in `internal/core` because they need `Decision`,
-  `Tier`, `Model` and `Resolver`. `core` may import `session`. `session` must
-  not import `core`.
+- Session list: done (`5f94e07`, PR 152). `internal/session` owns `SessionList`
+  and the loaders that do not need `Decision` or `Resolver`: the operator
+  file, hook marks, the discovered file, and quota snapshot attachment.
+  `go list -deps ./internal/core` includes `session`. `go list -deps
+  ./internal/session` does not include `core`. `PlanForSession`,
+  `RouteForSession`, `InferSessionFromCurrent` and `CanWriteSessionID` stay
+  in `internal/core` because they need `Decision`, `Tier`, `Model` and
+  `Resolver`.
+- Semantic boost policy: the next cut, not landed in this docs commit.
+  `semantic_fuse.go` (`ClassifyWithSemantic`, raise-only, no-signal skip)
+  still lives in `internal/core`, which imports `semantic`. A new package
+  `internal/fuse` will own that policy. `fuse` may import `classify` and
+  `semantic`. It must not import `core`. `core` keeps a thin
+  `ClassifyWithSemantic` wrapper. Naive-Bayes upshift and downshift
+  (`nb_upshift.go`, `nb_downshift.go`) and score selection (`score_select.go`)
+  stay in `core`. The semantic boost policy, the NB upshift/downshift
+  opinions, and score selection do not share one package.
 
 ## Before you write code
 
