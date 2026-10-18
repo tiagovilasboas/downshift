@@ -1,7 +1,7 @@
-// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package core
+package session
 
 import (
 	"encoding/json"
@@ -10,8 +10,6 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
-
-const defaultDiscoveryTTL = 24 * time.Hour
 
 // LoadDiscoveredSession reads the models `downshift models discover` found for
 // harness. It only reads a local file: no network, no process, so it is safe
@@ -60,7 +58,7 @@ func LoadDiscoveredSession(harness string, now time.Time) SessionList {
 	if age < -5*time.Minute || (ttl > 0 && age > ttl) {
 		return UnknownSession()
 	}
-	session := KnownSession(e.Ordered)
-	session.Metadata = e.Metadata
-	return session
+	list := KnownSession(e.Ordered)
+	list.Metadata = e.Metadata
+	return list
 }

@@ -8,17 +8,6 @@ import (
 	"regexp"
 )
 
-// SessionModel describes one exact selectable ID. Absent tier and prices mean
-// unknown; omission must never imply small capability or free inference.
-type SessionModel struct {
-	ID      string   `json:"id"`
-	Tier    string   `json:"tier,omitempty"`
-	Efforts []string `json:"efforts,omitempty"`
-	InputM  *float64 `json:"input_per_million,omitempty"`
-	OutputM *float64 `json:"output_per_million,omitempty"`
-	Harness string   `json:"harness,omitempty"`
-}
-
 type sessionResolver struct {
 	harness  string
 	session  SessionList

@@ -221,7 +221,7 @@ func TestHandle_CursorUpshiftDoesNotEmitRejectedMuseSpark(t *testing.T) {
 				t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "no-quota.json"))
 			} else {
 				// A missing native export is treated as present and would close
-				// quotaAllows. Clear it so only this call's marks are evidence.
+				// QuotaAllows. Clear it so only this call's marks are evidence.
 				t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", "")
 				t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "no-quota.json"))
 			}
