@@ -95,12 +95,31 @@ func DiscoverFiles(ctx context.Context, repoRoot string, cfg Config) ([]Discover
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("git ls-files failed: %w (stderr: %s)", err, stderr.String())
+	var rawEntries [][]byte
+	if err := cmd.Run(); err == nil {
+		rawEntries = bytes.Split(stdout.Bytes(), []byte{0})
+	} else {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		// Fallback for non-git directories (e.g. temporary test directories)
+		_ = filepath.WalkDir(absRoot, func(p string, d os.DirEntry, err error) error {
+			if err != nil {
+				return nil
+			}
+			if d.IsDir() {
+				name := d.Name()
+				if name == ".git" || (strings.HasPrefix(name, ".") && name != ".") {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if rel, err := filepath.Rel(absRoot, p); err == nil {
+				rawEntries = append(rawEntries, []byte(rel))
+			}
+			return nil
+		})
 	}
-
-	// Output is null-delimited
-	rawEntries := bytes.Split(stdout.Bytes(), []byte{0})
 
 	maxFiles := cfg.MaxFiles
 	if maxFiles <= 0 {
