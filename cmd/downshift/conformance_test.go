@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 
@@ -50,7 +51,15 @@ type hookResult struct {
 type conformanceDriver struct {
 	build  func(spawnSpec) []byte
 	decode func(t *testing.T, rc int, stdout, stderr, requested string) hookResult
+	// chdir means the payload carries no working directory, so the runner
+	// reads the process cwd (the project seam) instead; the suite chdirs to
+	// the scenario's cwd before running the hook.
+	chdir bool
 }
+
+// conformanceChildHex is the synthetic spawn correlation for the opencode
+// driver: lowercase hex, within the wire's 16..64 character contract.
+const conformanceChildHex = "a1b2c3d4e5f60718293a4b5c6d7e8f90"
 
 // conformanceDrivers maps a registry id to its payload builder and response
 // decoder. Every registry entry with a Hook must have one; the suite fails
@@ -154,6 +163,43 @@ var conformanceDrivers = map[string]conformanceDriver{
 			return res
 		},
 	},
+	"opencode": {
+		build: func(s spawnSpec) []byte {
+			return mustJSON(map[string]any{
+				"v":           1,
+				"kind":        "route",
+				"harness":     map[string]any{"id": "opencode", "version": "2.0.32"},
+				"event":       "subagent_spawn_intent",
+				"correlation": map[string]any{"child": conformanceChildHex, "parent": "f0e1d2c3b4a5968778695a4b3c2d1e0f"},
+				"agent":       "general",
+				"model":       map[string]any{"providerID": "opencode", "id": s.model, "variant": "default"},
+				"taskText":    s.task,
+				"tsUtc":       "2026-10-18T12:00:00Z",
+			})
+		},
+		// The route answer names the model the plugin should spawn on; it
+		// never echoes the spawn input, so fields stay nil. Action "route"
+		// is the only change signal on this wire.
+		decode: func(t *testing.T, rc int, stdout, _, requested string) hookResult {
+			t.Helper()
+			var out struct {
+				V      int    `json:"v"`
+				Action string `json:"action"`
+				Model  *struct {
+					ProviderID string `json:"providerID"`
+					ID         string `json:"id"`
+				} `json:"model"`
+			}
+			decodeHookStdout(t, stdout, &out)
+			res := hookResult{rc: rc}
+			if out.Action == "route" && out.Model != nil && out.Model.ID != "" {
+				res.changed = out.Model.ID != requested
+				res.model = out.Model.ID
+			}
+			return res
+		},
+		chdir: true,
+	},
 }
 
 func mustJSON(v any) []byte {
@@ -226,6 +272,9 @@ func (h conformanceHarness) run(t *testing.T, s spawnSpec) hookResult {
 	if s.cwd == "" {
 		s.cwd = t.TempDir()
 	}
+	if h.driver.chdir {
+		t.Chdir(s.cwd)
+	}
 	hook := harnessRegistry[h.id].Hook
 	var rc int
 	var stderr string
@@ -247,8 +296,11 @@ func (h conformanceHarness) session(t *testing.T, models ...core.Model) {
 
 // alternateSmall returns a second automatic small-tier catalog model of this
 // harness, distinct from the default, that the harness can write. Zero when
-// the catalog has none.
+// the catalog has none. Candidates are walked sorted by id: the catalog slice
+// is shared in-process and another command may have reordered it, so the
+// scenario's alternate must not depend on slice order.
 func (h conformanceHarness) alternateSmall() core.Model {
+	var candidates []core.Model
 	for _, e := range cmdCat.Entries() {
 		if e.Harness != h.id || e.Tier != core.TierSmall.String() || e.ID == h.small.ID || e.Routing == "explicit_only" {
 			continue
@@ -257,10 +309,14 @@ func (h conformanceHarness) alternateSmall() core.Model {
 			continue
 		}
 		if m, ok := cmdCat.LookupByID(h.id, e.ID); ok && m.ID == e.ID {
-			return m
+			candidates = append(candidates, m)
 		}
 	}
-	return core.Model{}
+	sort.Slice(candidates, func(i, j int) bool { return candidates[i].ID < candidates[j].ID })
+	if len(candidates) == 0 {
+		return core.Model{}
+	}
+	return candidates[0]
 }
 
 // lastEvent returns the newest telemetry event the hook recorded.
@@ -301,12 +357,12 @@ var conformanceScenarios = []conformanceScenario{
 			if !res.changed || res.model != h.small.WriteName() {
 				t.Fatalf("got changed=%v model=%q rc=%d, want %q", res.changed, res.model, res.rc, h.small.WriteName())
 			}
-			if h.caps.CanRewriteModel {
+			if h.caps.CanRewriteModel && h.caps.RewritePreservesInput {
 				if res.rc != 0 || res.fields == nil {
 					t.Fatalf("a rewriting harness must allow (rc 0) with a rewritten input, got rc=%d fields=%v", res.rc, res.fields)
 				}
 			} else if res.fields != nil {
-				t.Fatalf("a harness without a rewrite channel must not emit a rewritten input, got %v", res.fields)
+				t.Fatalf("a harness that does not echo the spawn's tool input must not emit a rewritten input, got %v", res.fields)
 			}
 			if h.caps.CanApplyEffort {
 				if effort, _ := res.fields["reasoning_effort"].(string); effort == "" {
@@ -352,6 +408,9 @@ var conformanceScenarios = []conformanceScenario{
 		skip: func(caps core.HarnessCapabilities) string {
 			if !caps.CanRewriteModel {
 				return "harness has no rewrite channel (CanRewriteModel=false)"
+			}
+			if !caps.RewritePreservesInput {
+				return "harness wire does not echo the spawn's tool input"
 			}
 			return ""
 		},

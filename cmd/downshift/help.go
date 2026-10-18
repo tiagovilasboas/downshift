@@ -40,7 +40,7 @@ Fix things
   downshift feedback list          Routing ids waiting for your review
 
 Hooks (your harness calls these, you do not)
-  downshift claude-code | cursor | codex | antigravity | kirocrew
+  downshift claude-code | cursor | codex | antigravity | kirocrew | opencode
 
 More
   downshift help --all             Every command: watch, models, quota, context, benchmark and the rest

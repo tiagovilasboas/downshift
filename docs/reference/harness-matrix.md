@@ -20,6 +20,7 @@ Each harness carries exactly one of three status words (owner decision 2026-10-1
 | cursor | Functional | Rewrite emitted on a real spawn; the child executor model is absent from the transcript, so honored is unconfirmed (discarded on Free and legacy Pro); end parser unverified, no usage; native quota collector blocked on Cursor 3.24.9. | [cursor rewrite](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](../evidence/cursor-gap-diagnostic.md) |
 | kirocrew | Experimental | Policy mode: block and retry observed once on Kiro CLI 2.29.0, no in-place rewrite; no child end recorded. | [native hook](../evidence/kirocrew-native-hook-2026-10-10.md) |
 | antigravity | Experimental | One observed child on desktop 2.21.1 (requested `pro`, executed `flash_lite`); the `overwrite` envelope is not a documented vendor field; no child end recorded; quota mapping unresolved. | [executor ack](../evidence/antigravity-executor-ack.md), [runtime source](../evidence/antigravity-runtime-source.md) |
+| opencode | Experimental | Downshift-side adapter only: no live spawn observed yet (the forwarding plugin is phase 2); route answers, fail-open paths and observation parsing are covered by adapter tests and the shared conformance suite. No child end recorded yet; usage seam not proven. | [adapter tests](../../internal/adapters/opencode/), [conformance](../../cmd/downshift/conformance_test.go) |
 | grok | Config only | No hook rewrite; reasoning is pinned in `config.toml`. | [install.md](../guides/install.md#grok-cli-config-not-hook) |
 
 "Rewrite honored" means the harness executor applied the hook's model
@@ -36,6 +37,7 @@ rewrite to the child subagent, not just that downshift emitted one.
 | codex | multi_agent_v2 + hooks on | Yes, inferred (2026-10-02) | Inferred, not observed: same-session follow-up: spawn requested `gpt-5.6-terra` after hook emitted Terra (`docs/evidence/codex-rewrite-honored-2026-10-02.md`). Payload >1MB still fail-open. Schema still evolving upstream. |
 | kirocrew | Kiro CLI 2.29 native spec hook; MCP `spawn_run` with explicit `task` + `model` | Policy/block + retry observed 2026-10-10; no in-place rewrite | Persistent `agent.kiro_hooks.preToolUse` + executable wrapper; no `updated_input` channel. Native `use_subagent` without child model is outside coverage. `hooks.json` tool-call hooks are informational and do not enforce blocks. [Native evidence](../evidence/kirocrew-native-hook-2026-10-10.md); [setup and limits](../guides/install.md#kirocrew-policy-mode-through-the-native-kiro-cli-hook). |
 | antigravity | desktop 2.21.1, `invoke_subagent` | Yes, observed 2026-10-09 | One exact child: original `pro`, executed `flash_lite`, native executor/generation model `gemini-3.5-flash-lite`. [Evidence and QA](../evidence/antigravity-executor-ack.md). Manual read-only, build-specific sensor; quota/picker/alias mapping remains unresolved. |
+| opencode | zen models (no published list price) | Not observed yet | Adapter and conformance only (the forwarding plugin is phase 2). The route answer carries the target model; the observation side reports a resolved model only from an arrival-ordered switch chain (`switch_attempt` ok, then `model_selected`, then the first `child_context`) compared against the decision target. Usage seam not proven: no cost recorded. |
 | grok | any (single model grok-4.6) | No hook rewrite: config only | PreToolUse is allow/deny; pin `reasoning_effort` in config.toml (README.md:520-531) |
 
 Packaging note: the plugin (`.claude-plugin/`, `hooks/hooks.json`, `agents/`)
@@ -164,6 +166,7 @@ not an end). Claude Code keeps `claude-code-post-tool-use` and
 | cursor | `subagentStop` | none (no usage field is read) | **unverified: needs a real payload.** Linked only when the payload names the spawn tool call (`tool_use_id` / `tool_call_id`); Cursor sends no session id, so otherwise nothing is recorded. No model is read. |
 | antigravity | none | none | no documented subagent-end payload (PostToolUse exists; its result fields are not documented). Nothing recorded. |
 | kirocrew | none | none | PostToolUse `tool_response` not confirmed (see `evidence/vendor-hook-docs-2026-10-11.md`). Nothing recorded. |
+| opencode | `child_done` (observation envelope the plugin forwards) | none (`UsageSource: none`): the `child_done` parser reads status and inline usage counts, but nothing is priced. | **unverified: needs a live run.** The envelope shape comes from the phase-0 probes, not from a captured plugin forward. The honor reader reports a resolved model only from the arrival-ordered switch chain; a batch without it records nothing. |
 
 Where `ChildEndEvent` is empty, `downshift end <harness>` exits 0, records nothing
 and says so on stderr.
@@ -173,7 +176,7 @@ and says so on stderr.
 `HarnessCapabilities.CanShowChildLine` says whether the hook protocol can show
 one line when a subagent ends. Claude Code: true (`systemMessage` on
 PostToolUse and SubagentStop), pending a live check. cursor, codex, antigravity,
-kirocrew: false; the line is still computed by `telemetry.ChildEndLine` (by the
+kirocrew, opencode: false; the line is still computed by `telemetry.ChildEndLine` (by the
 shared recorder, for every harness) and no adapter prints it. `DOWNSHIFT_QUIET=1` turns it off. See
 [session-models.md](session-models.md#what-downshift-shows-while-it-works).
 

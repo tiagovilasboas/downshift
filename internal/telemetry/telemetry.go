@@ -347,7 +347,18 @@ const (
 	// spawn and asked the agent to respawn on another model. Nothing was
 	// rewritten.
 	OutcomeBlocked = "blocked"
+	// OutcomeFailOpen marks a hook that could not answer (malformed input,
+	// internal error, oversized payload): the spawn was allowed unchanged and
+	// the hook's own fail-open response was emitted. It records no decision.
+	OutcomeFailOpen = "fail_open"
 )
+
+// IsFailureOutcome reports whether an outcome is a hook failure rather than a
+// routing decision: an error record or a fail-open answer. Failure records
+// count in no routed/decision aggregate, exactly like errors.
+func IsFailureOutcome(outcome string) bool {
+	return outcome == "error" || outcome == OutcomeFailOpen
+}
 
 // AppliedRewrite reports whether a decision event changed the spawn: the
 // hook emitted a rewrite and no guardrail held the decision. Allow events,
@@ -473,6 +484,25 @@ func Failure(correlationID, binaryVersion, harness, errorCode string) Event {
 		BinaryVersion: binaryVersion,
 		Outcome:       "error",
 		ErrorCode:     errorCode,
+	}
+}
+
+// FailOpen records one harness answer that could not route a spawn: the hook
+// emitted its fail-open response and the child ran unchanged. outcome is
+// "fail_open" (never "error") so fail-open rates stay countable apart from
+// hard failures; cause is a short code such as the wire's "INVALID_REQUEST",
+// never raw input.
+func FailOpen(correlationID, binaryVersion, harness, cause string) Event {
+	return Event{
+		CorrelationID: correlationID,
+		Timestamp:     time.Now().UTC().Format(time.RFC3339Nano),
+		Source:        "hook",
+		Agent:         "subagent",
+		Harness:       harness,
+		PolicyVersion: PolicyVersion,
+		BinaryVersion: binaryVersion,
+		Outcome:       OutcomeFailOpen,
+		ErrorCode:     cause,
 	}
 }
 
@@ -772,7 +802,7 @@ const respawnWindow = 10 * time.Minute
 func tallySpawnSurface(events []Event, s *Stats) {
 	honor, usage := ObservedLinks(events)
 	for _, ev := range events {
-		if ev.Harness == "" || IsCostOnlyOutcome(ev.Outcome) || ev.Outcome == "error" {
+		if ev.Harness == "" || IsCostOnlyOutcome(ev.Outcome) || IsFailureOutcome(ev.Outcome) {
 			continue
 		}
 		surface := SurfaceFor(ev, honor[SurfaceKey(ev)], usage[SurfaceKey(ev)])

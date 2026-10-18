@@ -207,8 +207,8 @@ func LinkTargetBy(harness string, prior []telemetry.Event, sessionHash, callHash
 	var bestTime time.Time
 	for i := range prior {
 		ev := &prior[i]
-		if telemetry.IsCostOnlyOutcome(ev.Outcome) || ev.Outcome == "error" {
-			continue // cost records and fail-open errors are not decisions
+		if telemetry.IsCostOnlyOutcome(ev.Outcome) || telemetry.IsFailureOutcome(ev.Outcome) {
+			continue // cost records and fail-open/error lines are not decisions
 		}
 		if ev.HasRealCost() || priced[decisionKey(*ev)] {
 			continue // already priced — one decision prices once

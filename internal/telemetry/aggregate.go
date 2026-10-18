@@ -75,7 +75,7 @@ func newAggregator() *aggregator {
 // counting.
 func (a *aggregator) indexDecisions(events []Event) {
 	for _, ev := range events {
-		if !IsCostOnlyOutcome(ev.Outcome) && ev.Outcome != "error" {
+		if !IsCostOnlyOutcome(ev.Outcome) && !IsFailureOutcome(ev.Outcome) {
 			a.decisions[linkKey{ev.Harness, DecisionKey(ev)}] = ev
 		}
 		if ev.Outcome == OutcomeResolved && ev.LinkedDecision != "" && ev.RewriteHonored != nil && !*ev.RewriteHonored {

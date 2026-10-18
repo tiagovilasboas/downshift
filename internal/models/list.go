@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -17,7 +18,9 @@ import (
 // Shows harness, tier, model ID, cost per 1M tokens, effort scale, and
 // which source is active (embedded or user override).
 func List(cat CatalogReader, w io.Writer) {
-	entries := cat.Entries()
+	// Sort a copy: the reader may hand us a live catalog shared with other
+	// readers in the same process, and List must not reorder it under them.
+	entries := append([]catalog.Entry(nil), cat.Entries()...)
 	if len(entries) == 0 {
 		fmt.Fprintln(w, "catalog is empty")
 		return
