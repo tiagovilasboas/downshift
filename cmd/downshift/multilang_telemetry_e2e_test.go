@@ -21,6 +21,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
+	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -50,6 +51,19 @@ func TestHookE2E_MultilangGuardAcrossHarnesses(t *testing.T) {
 					payload["hook_event_name"] = "preToolUse"
 				case "antigravity":
 					payload = map[string]any{"toolCall": map[string]any{"name": "invoke_subagent", "args": map[string]any{"Subagents": []any{map[string]any{"Prompt": prompt, "Model": ids[2]}}}}}
+				case "opencode":
+					// The route wire carries no session list; the allowlist
+					// comes from the operator file (set above).
+					payload = map[string]any{
+						"v":           1,
+						"kind":        "route",
+						"harness":     map[string]any{"id": "opencode"},
+						"event":       "subagent_spawn_intent",
+						"correlation": map[string]any{"child": "aa11bb22cc33dd44ee55ff6600778899"},
+						"agent":       "general",
+						"model":       map[string]any{"providerID": "opencode", "id": ids[2]},
+						"taskText":    prompt,
+					}
 				}
 				raw, err := json.Marshal(payload)
 				if err != nil {
@@ -116,5 +130,7 @@ func runQAAdapterFixture(raw []byte, harness string) {
 		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (kirocrew.Event, error) { var e kirocrew.Event; return e, json.Unmarshal(b, &e) }, func(e kirocrew.Event) (any, string, core.Decision) { return kirocrew.Handle(e, cmdCat) }, policyWire{})
 	case "antigravity":
 		runHookAdapter(harness, bytes.NewReader(raw), func(b []byte) (antigravity.Event, error) { var e antigravity.Event; return e, json.Unmarshal(b, &e) }, func(e antigravity.Event) (any, string, core.Decision) { return antigravity.Handle(e, cmdCat) }, printAllow)
+	case "opencode":
+		runHookAdapter(harness, bytes.NewReader(raw), opencode.ParseRequest, func(e opencode.Request) (any, string, core.Decision) { return opencode.Handle(e, cmdCat) }, openCodeWire{})
 	}
 }

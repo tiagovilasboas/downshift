@@ -178,4 +178,16 @@ var setupTargets = []setupTarget{
 			"scripts/kirocrew-pre-tool-use.sh registered in ~/.kiro/crew/config.json (agent.kiro_hooks.preToolUse). " +
 			"See docs/guides/install.md, section KiroCrew.",
 	},
+	{
+		Name:      "opencode",
+		ConfigDir: ".config/opencode",
+		Manual: "opencode is wired by its own plugin (phase 2), which forwards subagent_spawn_intent to " +
+			"`downshift opencode` and the child_done observation to `downshift end opencode`; there is no hook file " +
+			"to write yet.",
+		Hooks: []setupHook{
+			// The observation envelope the plugin forwards when a child ends
+			// (F1 parses the child_done JSON envelope; see internal/adapters/opencode).
+			{Event: "child_done", Args: "end opencode"},
+		},
+	},
 }

@@ -10,6 +10,11 @@ package core
 type HarnessCapabilities struct {
 	CanRewriteModel bool // hook output can replace the subagent model ID
 	CanApplyEffort  bool // hook output can set reasoning effort level
+	// RewritePreservesInput means the rewrite channel echoes the spawn's own
+	// input back (updatedInput-style), so every sibling field survives the
+	// rewrite. False where the hook answers with a route decision the harness
+	// applies itself, without echoing the spawn input.
+	RewritePreservesInput bool
 	// StrictModelName means the harness validates the model field against its
 	// own names (e.g. family aliases) and rejects any other string, blocking
 	// the spawn. A target with no native_name in the catalog is then not
@@ -70,17 +75,17 @@ const (
 var (
 	// ClaudeCodeCaps — PreToolUse hook honors updatedInput.model, but only
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}}
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}}
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.
-	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, NativeSessionEnv: "DOWNSHIFT_CURSOR_NATIVE_FILE", NativeUsageSource: "cursor-usage", ChildEndEvent: "subagentStop", UsageSource: UsageNone}
+	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, NativeSessionEnv: "DOWNSHIFT_CURSOR_NATIVE_FILE", NativeUsageSource: "cursor-usage", ChildEndEvent: "subagentStop", UsageSource: UsageNone}
 
 	// CodexCaps — PreToolUse hook accepts updatedInput.model + reasoning_effort.
 	// Child usage stays UsageNone until a real payload proves transcript_path is
 	// the child's rollout and not the parent's (2026-10-13); the end status is
 	// still recorded.
-	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true, TranscriptQuota: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone}
+	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true, RewritePreservesInput: true, TranscriptQuota: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone}
 
 	// KiroCrewCaps — KiroCrew's preToolUse hook is policy-only: its contract is
 	// exit 0 (allow) / exit 2 (block + stderr to the LLM), with NO updated_input
@@ -93,7 +98,18 @@ var (
 	// flash, pro), not catalog ids, so the adapter maps the routed tier to
 	// the alias and writes it only when the session plan allows a rewrite.
 	// Effort is not supported: there is no reasoning-effort field.
-	AntigravityCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false}
+	AntigravityCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true}
+
+	// OpenCodeCaps — the OpenCode plugin forwards subagent_spawn_intent to
+	// `downshift opencode` and applies a {action:"route", model:{providerID,
+	// id}} answer to the child before the spawn; CanRewriteModel is true
+	// because the wire carries the target model rather than editing the spawn
+	// input, so RewritePreservesInput is false. Effort has no wire field
+	// (CanApplyEffort false). UsageSource stays UsageNone: no token seam is
+	// proven yet (the bus fallback is NOT PROVEN — see
+	// internal/adapters/opencode). ChildEndEvent is the child_done
+	// observation envelope the end hook parses.
+	OpenCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, ChildEndEvent: "child_done", UsageSource: UsageNone}
 
 	// GrokCaps — one model with configurable reasoning in config.toml; there
 	// is no hook, so it is deliberately not in AllHarnessCaps (doctor output
@@ -110,6 +126,7 @@ func AllHarnessCaps() []NamedCaps {
 		{"codex", CodexCaps},
 		{"kirocrew", KiroCrewCaps},
 		{"antigravity", AntigravityCaps},
+		{"opencode", OpenCodeCaps},
 	}
 }
 

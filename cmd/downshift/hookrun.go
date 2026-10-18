@@ -13,6 +13,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/decisionintelligence"
 	"github.com/tiagovilasboas/downshift/internal/hookctx"
@@ -34,22 +35,27 @@ var hookGetenv = os.Getenv
 // per-harness step of the shared runner, chosen by the registry entry in
 // harnesses.go. The runner itself holds no harness branch.
 type hookWire interface {
-	// failOpen writes the "allow unchanged" response. The runner calls it on
-	// every failure, in the control group, when paused and under
-	// DOWNSHIFT_NO_ROUTE, and never more than once per run.
-	failOpen()
+	// failOpen writes the "allow unchanged" response. cause is the failure
+	// code on runner errors (recorded by wires that log fail-open) or
+	// wireFailOpenNoRoute in the control group, when paused and under
+	// DOWNSHIFT_NO_ROUTE. Never called more than once per run.
+	failOpen(cause, correlationID string)
 	// emit writes the routed response and returns the hook's exit code. A
 	// non-zero code denies the spawn: every supported harness reads exit 2
 	// as "block".
 	emit(out any, correlationID string) (int, error)
 }
 
+// wireFailOpenNoRoute is the failOpen cause for "no route was attempted"
+// (control group, per-session pause, DOWNSHIFT_NO_ROUTE): not a failure.
+const wireFailOpenNoRoute = "no_route"
+
 // rewriteWire serves harnesses with an in-place rewrite channel: the adapter
 // output is one JSON line on stdout and the exit code is always 0. The func
 // value prints that harness's fail-open envelope.
 type rewriteWire func()
 
-func (w rewriteWire) failOpen() { w() }
+func (w rewriteWire) failOpen(_, _ string) { w() }
 
 func (w rewriteWire) emit(out any, _ string) (int, error) {
 	encoded, err := json.Marshal(out)
@@ -74,7 +80,7 @@ type policyOutput interface {
 // never be read as a block.
 type policyWire struct{}
 
-func (policyWire) failOpen() {}
+func (policyWire) failOpen(_, _ string) {}
 
 func (policyWire) emit(out any, correlationID string) (int, error) {
 	o, ok := out.(policyOutput)
@@ -163,7 +169,7 @@ func runHookAdapter[E any](
 	fail := func(code string) int {
 		telemetry.Record(telemetry.Failure(correlationID, buildVersion, harness, code))
 		if !responded {
-			wire.failOpen()
+			wire.failOpen(code, correlationID)
 			responded = true
 		}
 		return 0
@@ -234,7 +240,7 @@ func runHookAdapter[E any](
 		telemetry.InControlGroup(correlationID, telemetry.ControlShare())
 	fate.noRoute = fate.noRoute || fate.control
 	if fate.noRoute {
-		wire.failOpen()
+		wire.failOpen(wireFailOpenNoRoute, correlationID)
 		responded = true
 	} else {
 		code, err := wire.emit(out, correlationID)
@@ -421,6 +427,40 @@ var printAllow = rewriteWire(func() {
 var printCursorAllow = rewriteWire(func() {
 	fmt.Println(`{"permission":"allow"}`)
 })
+
+// openCodeWire serves the OpenCode route contract: one JSON object on stdout
+// and the exit code always 0. Unlike the rewrite wires, fail-open is a valid
+// allow answer the plugin caches: under no-route it answers reasonCode
+// "no_route" (the decision was recorded as a baseline), and on any internal
+// error it answers reasonCode "fail_open" and records the fail-open outcome
+// so the rate is visible in stats. The adapter's own invalid-request answer
+// ("fail_open" from Handle) is recorded here too, once.
+type openCodeWire struct{}
+
+func (openCodeWire) failOpen(cause, correlationID string) {
+	if cause == wireFailOpenNoRoute {
+		fmt.Printf("{\"v\":1,\"action\":\"allow\",\"reasonCode\":%q,\"ttlMs\":15000}\n", wireFailOpenNoRoute)
+		return
+	}
+	telemetry.Record(telemetry.FailOpen(correlationID, buildVersion, "opencode", cause))
+	fmt.Printf("{\"v\":1,\"action\":\"allow\",\"reasonCode\":%q}\n", opencode.ReasonFailOpen)
+}
+
+func (openCodeWire) emit(out any, correlationID string) (int, error) {
+	resp, ok := out.(opencode.Response)
+	if !ok {
+		return 0, fmt.Errorf("opencode wire: %T is not a route response", out)
+	}
+	if resp.ReasonCode == opencode.ReasonFailOpen {
+		telemetry.Record(telemetry.FailOpen(correlationID, buildVersion, "opencode", "INVALID_REQUEST"))
+	}
+	encoded, err := json.Marshal(resp)
+	if err != nil {
+		return 0, err
+	}
+	fmt.Fprintf(os.Stdout, "%s\n", encoded)
+	return 0, nil
+}
 
 // runUsage is the post-spawn usage runner. The child already finished, so it
 // never blocks: a read error, an oversized payload, or a panic exits 0 with

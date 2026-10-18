@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/models"
 )
 
@@ -62,6 +63,31 @@ func TestList_EmptyCatalog(t *testing.T) {
 		t.Error("List() must produce output for non-empty catalog")
 	}
 }
+
+// TestList_DoesNotReorderTheCallersCatalog pins the hermetic contract: a
+// reader that shares its catalog with other readers in the same process (the
+// conformance suite is one) must not observe a reordering after List.
+func TestList_DoesNotReorderTheCallersCatalog(t *testing.T) {
+	reader := &fixedReader{entries: []catalog.Entry{
+		{Harness: "zeta", Tier: "small", ID: "z-small", InputCostM: 1, OutputCostM: 2},
+		{Harness: "alpha", Tier: "frontier", ID: "a-frontier", InputCostM: 3, OutputCostM: 6},
+		{Harness: "alpha", Tier: "small", ID: "a-small", InputCostM: 1, OutputCostM: 1},
+	}}
+	before := append([]catalog.Entry(nil), reader.entries...)
+	models.List(reader, &bytes.Buffer{})
+	for i := range before {
+		if reader.entries[i].ID != before[i].ID {
+			t.Fatalf("List reordered the caller's catalog: position %d = %q, want %q", i, reader.entries[i].ID, before[i].ID)
+		}
+	}
+}
+
+// fixedReader serves a fixed entry slice, shared like a live catalog.
+type fixedReader struct{ entries []catalog.Entry }
+
+func (r *fixedReader) Entries() []catalog.Entry { return r.entries }
+
+func (r *fixedReader) LookupByID(_, _ string) (core.Model, bool) { return core.Model{}, false }
 
 // --- Check (unit-level, no real HTTP) ---
 

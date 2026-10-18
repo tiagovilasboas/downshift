@@ -38,6 +38,20 @@ func TestHookE2E_SessionFirstNewIDsAcrossHarnesses(t *testing.T) {
 					payload["hook_event_name"] = "preToolUse"
 				case "antigravity":
 					payload = map[string]any{"session_models": ids, "toolCall": map[string]any{"name": "invoke_subagent", "args": map[string]any{"Subagents": []any{map[string]any{"Prompt": prompt, "Model": current}}}}}
+				case "opencode":
+					// The route wire carries no session list: the allowlist
+					// comes from the operator file instead of the payload.
+					setSessionAllowlist(t, h.Harness, ids)
+					payload = map[string]any{
+						"v":           1,
+						"kind":        "route",
+						"harness":     map[string]any{"id": "opencode"},
+						"event":       "subagent_spawn_intent",
+						"correlation": map[string]any{"child": "00112233445566778899aabbccddeeff"},
+						"agent":       "general",
+						"model":       map[string]any{"providerID": "opencode", "id": current},
+						"taskText":    prompt,
+					}
 				}
 				raw, err := json.Marshal(payload)
 				if err != nil {

@@ -82,7 +82,7 @@ func SessionSummary(events []Event, sessionHash string) SessionRouting {
 			}
 			continue
 		}
-		if IsCostOnlyOutcome(ev.Outcome) || ev.Outcome == "error" {
+		if IsCostOnlyOutcome(ev.Outcome) || IsFailureOutcome(ev.Outcome) {
 			continue
 		}
 		s.Spawns++

@@ -41,6 +41,7 @@ Plumbing (your harness or statusline calls these, you do not)
   downshift codex                Run as a Codex PreToolUse hook (reads stdin)
   downshift antigravity          Run as an Antigravity PreToolUse hook
   downshift kirocrew             Run as a KiroCrew preToolUse hook (policy mode: exit 0/2)
+  downshift opencode             Run as the OpenCode subagent_spawn_intent route hook (wire v1)
   downshift quota import         Import native subscription quota JSON from stdin
   downshift quota collect        Collect quota from an explicit local Codex transcript
   downshift quota claude-statusline   Opt-in Claude statusLine quota bridge

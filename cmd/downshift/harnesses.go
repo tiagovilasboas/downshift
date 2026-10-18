@@ -14,6 +14,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
+	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 )
@@ -118,6 +119,27 @@ var harnessRegistry = map[string]harnessEntry{
 	// grok has no hook: a single model with configurable reasoning, so try
 	// reports an effort instead of a model (SingleModelReasoning).
 	"grok": {Caps: core.GrokCaps},
+
+	// opencode's plugin (phase 2) forwards subagent_spawn_intent to the hook
+	// and applies the route answer itself; the hook reads the v1 wire, drops
+	// unknown fields and answers one allow-listed JSON object. Its taskText is
+	// the classification input: it stays in memory and only derived features
+	// reach the feedback store (see training.RecordRoutedDecision).
+	"opencode": {
+		Hook: func(in io.Reader, catalog core.Resolver) int {
+			return runHookAdapter(
+				"opencode",
+				in,
+				opencode.ParseRequest,
+				func(e opencode.Request) (any, string, core.Decision) { return opencode.Handle(e, catalog) },
+				openCodeWire{},
+				func(e opencode.Request) string { return e.TaskText },
+			)
+		},
+		Port: portPtr(opencode.Port()),
+		Try:  tryOpenCode,
+		Caps: core.OpenCodeCaps,
+	},
 }
 
 func portPtr(p hookport.Port) *hookport.Port { return &p }
@@ -213,6 +235,28 @@ func tryAntigravity(prompt, current string, catalog core.Resolver) tryResult {
 				r.written = w
 			}
 		}
+	}
+	return r
+}
+
+// tryOpenCode runs the v1 route path on a synthetic request. The correlation
+// id is a fixed all-zero hex: it matches the wire contract, so the try path
+// exercises the same validation, routing and answer a real spawn would get.
+func tryOpenCode(prompt, current string, catalog core.Resolver) tryResult {
+	req := opencode.Request{
+		V:           1,
+		Kind:        "route",
+		Harness:     opencode.RequestHarness{ID: "opencode"},
+		Event:       "subagent_spawn_intent",
+		Correlation: opencode.RequestRelation{Child: "00000000000000000000000000000000"},
+		Agent:       "try",
+		Model:       opencode.RequestModel{ProviderID: "opencode", ID: current},
+		TaskText:    prompt,
+	}
+	resp, _, d := opencode.Handle(req, catalog)
+	r := tryResult{decision: d}
+	if resp.Action == "route" && resp.Model != nil && resp.Model.ID != current {
+		r.written = resp.Model.ID
 	}
 	return r
 }

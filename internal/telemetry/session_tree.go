@@ -86,14 +86,14 @@ type SessionTreeView struct {
 }
 
 // IsDecisionRow reports whether an event is a routing decision of a subagent:
-// not a usage, resolved, child-ended or error record. A control-group
+// not a usage, resolved, child-ended or failure record. A control-group
 // (baseline) decision is one: it is a spawn, only left unchanged.
 func IsDecisionRow(ev Event) bool {
 	if ev.Harness == "" {
 		return false
 	}
 	switch ev.Outcome {
-	case OutcomeUsage, OutcomeResolved, OutcomeChildEnded, "error":
+	case OutcomeUsage, OutcomeResolved, OutcomeChildEnded, "error", OutcomeFailOpen:
 		return false
 	}
 	return true

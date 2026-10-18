@@ -490,6 +490,33 @@
       "output_cost_per_1m": 20.00,
       "cache_read_cost_per_1m": 0.20,
       "cache_write_cost_per_1m": 5.00
+    },
+
+    { "_section": "opencode — zen model IDs (no published list price: zero cost fields mean not in the catalog, never a real $0)" },
+
+    {
+      "id": "deepseek-v4.1-flash-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "small"
+    },
+    {
+      "id": "mimo-v2.6-flash-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "small"
+    },
+    {
+      "id": "glm-5.3-flash-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "mid"
+    },
+    {
+      "id": "big-pickle",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "frontier"
     }
   ]
 }
