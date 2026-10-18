@@ -26,7 +26,10 @@ current maintainer and copyright holder (see [LICENSE](LICENSE)).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-By contributing, you agree to the copyright assignment in `LICENSE` Section 8.
+By contributing, you grant the licence in [LICENSE](LICENSE) Section 5 (Contribution
+License). You keep your copyright; the project receives a perpetual, worldwide,
+non-exclusive licence to use your contribution under Apache 2.0, as stated in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 There is no elected steering committee yet. As adoption grows, governance may
 move to a lightweight maintainer team documented here.
@@ -34,6 +37,10 @@ move to a lightweight maintainer team documented here.
 ## Security
 
 See [SECURITY.md](SECURITY.md). Do not report vulnerabilities in public issues.
+Private reporting is enabled on GitHub (Security → Advisories). The `main` branch
+uses required reviews (including CODEOWNERS), CI status checks, conversation
+resolution, admin enforcement, and a repository ruleset that blocks force-push
+and branch deletion.
 
 ## Commercial use
 

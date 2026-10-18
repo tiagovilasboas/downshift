@@ -12,12 +12,12 @@ This project runs as a PreToolUse hook inside AI coding agents (Claude Code, Cur
 
 1. Prefer **[GitHub Private Vulnerability Reporting](https://github.com/tiagovilasboas/downshift/security/advisories/new)** (Security → Advisories → Report a vulnerability).
 2. Alternatively, contact the maintainer via the channels listed on [github.com/tiagovilasboas](https://github.com/tiagovilasboas) with subject **Downshift security**.
-2. Include:
+3. Include:
    - A clear description of the vulnerability.
    - Steps to reproduce (if applicable).
    - Potential impact.
    - Suggested fix (if you have one).
-3. Allow **7 days** for an initial response, and **30 days** for a fix and release.
+4. Allow **7 days** for an initial response, and **30 days** for a fix and release.
 
 ## Scope
 
