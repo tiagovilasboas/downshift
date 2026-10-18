@@ -1,6 +1,6 @@
 # Semantic boost — in-process word hash
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 The optional semantic layer raises complexity when regex confidence is low. It
 runs **inside the Go binary**: no Python, no ONNX, no subprocess on the hook path.

@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # T1: one `deterministicLift` helper; tier floor not held; drop dead gate
 

@@ -1,6 +1,6 @@
 # Claude Code: how Downshift routes subagents here
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Claude Code is the primary harness: the only one with an inferred session list, a usage hook, a
 child-end line and `/downshift`. This page says what the adapter can and cannot know, with the code
@@ -209,4 +209,4 @@ you spawn; write the brief as the bounded task, not the whole context.
 - **Hook payload fields** can change per Claude Code release; re-verify `transcript_path`,
   `permission_mode` and `tool_response.resolvedModel` when a release moves them.
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift

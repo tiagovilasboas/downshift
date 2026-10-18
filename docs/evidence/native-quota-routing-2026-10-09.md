@@ -1,6 +1,6 @@
 # Native quota routing evidence — 2026-10-09
 
-Downshift by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago Vilas Boas\
 https://github.com/tiagovilasboas/downshift
 
 ## Codex: live observation and local adapter replay

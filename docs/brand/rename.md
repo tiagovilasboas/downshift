@@ -6,7 +6,7 @@
 > **CLI:** `downshift`  
 > **Legacy module:** `github.com/tiagovilasboas/harness-downshift` (last tag before rename).
 
-Downshift by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago Vilas Boas\
 https://github.com/tiagovilasboas/downshift
 
 ---

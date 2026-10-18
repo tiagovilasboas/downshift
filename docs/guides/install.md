@@ -1,6 +1,6 @@
 # Installation and harness setup
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Canonical guide for humans and coding agents installing Downshift on a user machine.

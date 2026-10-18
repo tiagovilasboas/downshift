@@ -3,7 +3,7 @@
 Downshift is **Apache License 2.0**. You may use, modify, and ship it in
 commercial products without a separate licence from the maintainer.
 
-Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+Copyright (c) 2026 Tiago Vilas Boas.
 
 ## How the project can sustain itself
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Command multilang measures authored private fixtures without retaining prompts
-// in the report. Downshift by Tiago de Carvalho Vilas Boas
+// in the report. Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 package main
 

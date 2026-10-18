@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # UX review 2026-10-13: make Downshift easy to start and its value obvious
 

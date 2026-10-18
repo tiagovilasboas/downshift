@@ -1,6 +1,6 @@
 # KiroCrew subagent routing
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 When delegation is warranted, use the `kirocrew-core` MCP tool `spawn_run`

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+# Copyright (c) 2026 Tiago Vilas Boas.
 # SPDX-License-Identifier: Apache-2.0
 """Package the opt-in Cursor bridge locally, without registry dependencies."""
 

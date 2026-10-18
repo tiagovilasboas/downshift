@@ -1,8 +1,8 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # Multilingual evaluation decision, 2026-10-16
 
-Downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas — https://github.com/tiagovilasboas/downshift
 
 M3: authored private corpus frozen before candidate execution in private labs commits `653bfd9` and `c94bcad` (final fixture). It contains 120 aligned EN/PT-BR/ES/FR/DE/JA prompts, 30 mixed-language prompts and 20 synthetic agent delegations. Labels are AI authored, with human adjudication pending. Existing five splits were neither modified nor used for training. The labels, prompts, vectors and detailed reports remain private.
 

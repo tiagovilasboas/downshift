@@ -23,4 +23,4 @@ Two more vendored mods, [`savvy-progress`](../mods/savvy-progress/README.md) and
 marketplace under [`mods/`](../mods/README.md), one install each, because a plugin
 loads a single hooks module. Neither is part of the `downshift` plugin.
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift

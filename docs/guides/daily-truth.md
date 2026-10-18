@@ -1,6 +1,6 @@
 # Daily truth
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Downshift routes a subagent. It does not orchestrate a session. The daily

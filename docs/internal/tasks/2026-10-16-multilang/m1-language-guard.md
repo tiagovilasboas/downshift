@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # M1: language guard
 
@@ -24,4 +24,4 @@ an allowed spawn records the known baseline instead of `unknown`.
 the five adapter paths and privacy assertions. Guia: language coverage and abstention contract (inferencial, behaviour).
 Sensor: shared guard, regression tests and reason-code telemetry (computacional, behaviour / architecture fitness).
 
-Attribution: Downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift
+Attribution: Downshift by Tiago Vilas Boas — https://github.com/tiagovilasboas/downshift

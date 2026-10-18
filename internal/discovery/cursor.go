@@ -16,7 +16,7 @@ import (
 
 // CursorCLI uses Cursor's read-only `models` command. It relies on the CLI's
 // existing authentication and never reads credentials or starts a login.
-// Downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 type CursorCLI struct{ Bin string }
 

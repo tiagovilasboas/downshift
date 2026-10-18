@@ -1,6 +1,6 @@
 # Cursor runtime gap diagnostic — 2026-10-09
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Initial observations at approximately **2026-10-09 14:37 UTC** against repository commit

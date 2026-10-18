@@ -4,9 +4,9 @@ Business Source License 1.1
 
 Parameters
 
-  Licensor:             Tiago de Carvalho Vilas Boas
+  Licensor:             Tiago Vilas Boas
   Licensed Work:        harness-downshift
-                        Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+                        Copyright (c) 2026 Tiago Vilas Boas.
                         All rights reserved.
   Additional Use Grant: You may use the Licensed Work for any purpose that
                         does not involve Commercial Use (as defined below),
@@ -190,7 +190,7 @@ Additional Use Grant.
 7.  Intellectual Property
 
     All copyright, trade secret, and other intellectual property rights in
-    the Licensed Work are owned exclusively by Tiago de Carvalho Vilas Boas.
+    the Licensed Work are owned exclusively by Tiago Vilas Boas.
     Publication of source code does not constitute a dedication to the public
     domain or a waiver of any right. The Author reserves the right to pursue
     copyright infringement claims independently of any contractual claim
@@ -199,7 +199,7 @@ Additional Use Grant.
 8.  Contributor Assignment
 
     By submitting a contribution to the official repository, the contributor
-    irrevocably assigns to Tiago de Carvalho Vilas Boas all copyright in
+    irrevocably assigns to Tiago Vilas Boas all copyright in
     that contribution and grants the Licensor the right to use, modify, and
     relicence it under any terms, including proprietary terms. The Licensor
     will credit significant contributors in project documentation.
@@ -213,4 +213,4 @@ Additional Use Grant.
 -------------------------------------------------------------------------------
 
 For commercial licensing enquiries contact:
-  Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas
+  Tiago Vilas Boas — https://github.com/tiagovilasboas

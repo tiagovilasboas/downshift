@@ -1,8 +1,8 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # Product roadmap: from router to cost control plane
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Owner-facing plan. Status as of 2026-10-13. The public summary stays in

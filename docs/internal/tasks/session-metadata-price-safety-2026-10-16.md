@@ -1,6 +1,6 @@
 # Session metadata and unknown price safety — 2026-10-16
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 A native session can prove a model's identity, tier and supported effort without

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+# Copyright (c) 2026 Tiago Vilas Boas.
 # SPDX-License-Identifier: Apache-2.0
 """Fixture-only tests for the manual Antigravity evidence sensor.
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 """
 
@@ -76,7 +76,7 @@ class EvidenceSensorTests(unittest.TestCase):
 
     def test_valid_chain_has_executor_and_generation_proof_without_private_content(self):
         report = SENSOR.collect(self.parent, self.child, 8)
-        self.assertEqual(report["project"], "Downshift by Tiago de Carvalho Vilas Boas")
+        self.assertEqual(report["project"], "Downshift by Tiago Vilas Boas")
         self.assertEqual(report["repository"], "https://github.com/tiagovilasboas/downshift")
         self.assertEqual(report["requested_alias"], "pro")
         self.assertEqual(report["applied_alias"], "flash_lite")

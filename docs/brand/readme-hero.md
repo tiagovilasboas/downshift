@@ -93,7 +93,7 @@ downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper than opu
 
 **Integrations** (docs): Coding harnesses · Catalog & session models · Shadow classifier · Outcome benchmarks
 
-*Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift*
+*Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift*
 ```
 
 ---

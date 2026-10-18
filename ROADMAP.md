@@ -6,7 +6,7 @@ Public direction for the open-source project. Timelines are indicative.
 **Product roadmap (owner, milestones and tasks):** [docs/product/roadmap.md](docs/product/roadmap.md)  
 **Maintainer execution:** [docs/internal/launch-waves.md](docs/internal/launch-waves.md) (see [publishing boundaries](docs/reference/publishing-boundaries.md)).
 
-Downshift by Tiago de Carvalho Vilas Boas  
+Downshift by Tiago Vilas Boas\
 https://github.com/tiagovilasboas/downshift
 
 ---
@@ -20,6 +20,12 @@ in the routing loop.
 Today the primary integration is **coding harness hooks** (Claude Code, Cursor,
 Codex, and others). The core is intentionally **gateway-shaped** for a future
 HTTP proxy, but that is not the current shipping surface.
+
+**Integration priorities (owner direction, 2026-10-18): Claude Code, Cursor and
+OpenCode.** Claude Code has the strongest native evidence today. Cursor still
+needs paid-plan rewrite proof. The OpenCode Go adapter and wire tests exist;
+the native plugin/installer integration is still in development. These are
+product priorities, not a claim of equal release readiness across the three.
 
 ---
 

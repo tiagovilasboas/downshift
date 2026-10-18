@@ -48,4 +48,4 @@ delete it; the plugin copy stays and costs one description line).
 Do not invent hook paths, matchers or catalog entries; everything above is in
 `docs/guides/install.md` and `examples/`.
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift

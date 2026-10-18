@@ -1,6 +1,6 @@
 # KiroCrew native policy hook — 2026-10-10
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Observed locally with Kiro CLI **2.29.0**, the installed KiroCrew macOS app,

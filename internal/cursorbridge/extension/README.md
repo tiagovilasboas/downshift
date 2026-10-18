@@ -1,6 +1,6 @@
 # Downshift Cursor Quota Bridge (experimental)
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 This experimental extension attempts to export current quota and available model

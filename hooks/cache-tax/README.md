@@ -1,6 +1,6 @@
 # cache-tax (bundled mod)
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 This directory is a vendored copy of **cache-tax**, a Claude Code mod by
 Karan Bansal, MIT License ([LICENSE](LICENSE)). Owner decision 2026-10-17:

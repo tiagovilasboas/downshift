@@ -1,6 +1,6 @@
 # Hash embedder audit — 2026-10-17
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Read-only inventory of the in-process word-hash embedder at `2b0cfcd`.

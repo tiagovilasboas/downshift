@@ -1,8 +1,8 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # Baseline freeze manifest (2026-10-17)
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 What this page answers: which evaluation sets are frozen, by which hash and commit, and which numbers the next run must
 reproduce before it may report a delta. It is the readable form of `eval/FREEZE.json` in the private downshift-labs

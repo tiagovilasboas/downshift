@@ -5,7 +5,7 @@
 // (Epoch AI ECI, Artificial Analysis via OpenRouter) for the session models of
 // every harness, and registers core.ScoreHook to read it offline.
 //
-// Downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 package scoreindex
 

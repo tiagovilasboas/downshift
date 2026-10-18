@@ -11,7 +11,7 @@ package core_test
 //
 // Assertions are on Decision.Tier only, never on model ids.
 //
-// Downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 
 import (

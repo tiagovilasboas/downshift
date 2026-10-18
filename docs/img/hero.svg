@@ -74,7 +74,7 @@
 
   <!-- GitHub URL -->
   <text x="52" y="580" fill="#58a6ff" font-size="13">github.com/tiagovilasboas/downshift</text>
-  <text x="52" y="600" fill="#30363d" font-size="11">© 2026 Tiago de Carvalho Vilas Boas · Apache-2.0</text>
+  <text x="52" y="600" fill="#30363d" font-size="11">© 2026 Tiago Vilas Boas · Apache-2.0</text>
 
   <!-- ── DIVIDER ── -->
   <line x1="596" y1="40" x2="596" y2="590" stroke="#21262d" stroke-width="1"/>

@@ -1,6 +1,6 @@
-// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
-// Downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 
 const assert = require('node:assert/strict');

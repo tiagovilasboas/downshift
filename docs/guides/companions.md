@@ -1,6 +1,6 @@
 # Companions: tools that work next to Downshift
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 Downshift is a **suite for optimizing token use in coding agents**. Model

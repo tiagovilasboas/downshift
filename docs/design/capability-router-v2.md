@@ -1,6 +1,6 @@
 # Capability Router v2 (experimental)
 
-> Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+> Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 **Production hooks use v1:** `internal/core` regex scoring (+ optional semantic boost) →
 `core.Route()` → catalog policy. **v2 is not on the hot path.**

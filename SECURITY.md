@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # Security Policy
 
@@ -87,4 +87,4 @@ Security patches are released for supported versions under the same licence term
 ---
 
 **Last updated:** 2026-10-06  
-**Maintainer:** Tiago de Carvalho Vilas Boas
+**Maintainer:** Tiago Vilas Boas

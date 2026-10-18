@@ -1,6 +1,6 @@
 # Multilingual E5 (ONNX INT8) as a routing candidate: evaluation, 2026-10-17
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 **Superseded 2026-10-17:** E5 shadow, E5 fuse, and the external MiniLM command
 were removed from the product. This note is historical. The decision below

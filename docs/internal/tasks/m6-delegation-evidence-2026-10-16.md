@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # M6 delegation evaluation — rejected candidate
 
@@ -34,4 +34,4 @@ Guia: task constraints do not cancel hard-work signals (inferencial, behaviour).
 Sensor: adversarial classifier and safe-verdict comparison alongside temporal and benchmark checks (computacional,
 behaviour). This closes the evaluation decision, while a safe reduction in Opus usage remains future work.
 
-Attribution: Downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift
+Attribution: Downshift by Tiago Vilas Boas — https://github.com/tiagovilasboas/downshift

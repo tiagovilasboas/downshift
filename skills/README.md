@@ -38,4 +38,4 @@ parent's coordination, and a one-line change is usually cheaper done by the
 main agent. Delegate when the work is self-contained and its output is short;
 then let the router pick the tier. See [docs/guides/subagents.md](../docs/guides/subagents.md).
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+# Copyright (c) 2026 Tiago Vilas Boas.
 # SPDX-License-Identifier: Apache-2.0
 """Manual, read-only evidence sensor for Antigravity 2.21.1 local SQLite.
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 This private storage schema is build-specific. It is never used by routing or
@@ -140,7 +140,7 @@ def collect(parent, child, step_index):
         raise ValueError("inconsistent models or no applied rewrite")
     return {
         "schema_version": 1,
-        "project": "Downshift by Tiago de Carvalho Vilas Boas",
+        "project": "Downshift by Tiago Vilas Boas",
         "repository": "https://github.com/tiagovilasboas/downshift",
         "observed_at": datetime.now(timezone.utc).isoformat(),
         "source": "manual_antigravity_sqlite",

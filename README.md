@@ -78,6 +78,11 @@ One controlled A/B on 2026-10-15, one operator, Claude Code, same tasks in a rou
 
 ## Quickstart
 
+The integration priorities are **Claude Code, Cursor and OpenCode**. Claude
+Code is the most validated integration today; Cursor still needs paid-plan
+rewrite proof. OpenCode has a Go adapter and wire tests in the repository,
+while its native plugin/installer integration remains in development.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 downshift setup --dry-run   # shows the diff per harness found; writes nothing

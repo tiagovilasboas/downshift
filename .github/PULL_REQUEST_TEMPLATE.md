@@ -29,7 +29,7 @@
 ## Checklist
 
 - [ ] Code follows the style of the project
-- [ ] New files include copyright header (`// Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0`)
+- [ ] New files include copyright header (`// Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0`)
 - [ ] Documentation updated if needed
 - [ ] No hardcoded model IDs (use `catalog.json` instead)
 - [ ] Commit message is clear and in English

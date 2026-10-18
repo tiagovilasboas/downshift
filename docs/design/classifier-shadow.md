@@ -1,6 +1,6 @@
 # Candidate classifier shadow (public summary)
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Production hooks use **`core.Route`** (deterministic classifier). Shadow mode is
 **opt-in observation only**: it records a local candidate’s tier beside the

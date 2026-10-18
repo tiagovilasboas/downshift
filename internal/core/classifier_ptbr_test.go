@@ -7,7 +7,7 @@ package core_test
 // leave the medium default, hard ones must still reach frontier, and risk
 // prompts must keep their floor.
 //
-// Downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 
 import (

@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # Changelog
 
@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Attribution reads "Downshift by Tiago de Carvalho Vilas Boas" across the repository; the legacy state directory `~/.harness-downshift`, hash salts and schema ids are unchanged for compatibility.
+- Attribution reads "Downshift by Tiago Vilas Boas" across the repository; the legacy state directory `~/.harness-downshift`, hash salts and schema ids are unchanged for compatibility.
 - Claude Code plugin at the repository root: `.claude-plugin/plugin.json` and `marketplace.json`, `hooks/hooks.json` with the same four hooks `setup` writes (each only calls the binary), the `/downshift` command under `commands/`, the skills under `skills/` and one example agent. Install with `/plugin install downshift --marketplace tiagovilasboas/downshift`; the binary is still required. Claude Code only; `setup` stays the path for every other harness.
 - `doctor` and `setup` know the plugin (`Plugin` on the setup target): hooks count as wired via the plugin, both channels at once warn that every spawn is routed twice, and `setup` prints the note before writing.
 - Skills `downshift-setup` (install or repair hooks on any harness, dry-run first, remove after install) and `cost-reducer` (fixed diagnosis order, then one lever at a time from `references/`: context diet, compress output, project tier floor, misroute triage), next to `downshift-audit`.

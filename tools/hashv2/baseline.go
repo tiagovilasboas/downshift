@@ -8,7 +8,7 @@
 // file. The printed accuracy is not a production-quality number and is not a
 // holdout result.
 //
-// Downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 package main
 

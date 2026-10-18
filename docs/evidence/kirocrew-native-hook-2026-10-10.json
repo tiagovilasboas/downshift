@@ -18,7 +18,7 @@
   "child_ack_source": "native subagent state.json resolved_model from provider.served_model",
   "in_place_rewrite": false,
   "billing_savings_verified": false,
-  "attribution": "Downshift by Tiago de Carvalho Vilas Boas",
+  "attribution": "Downshift by Tiago Vilas Boas",
   "repository": "https://github.com/tiagovilasboas/downshift",
   "child_result_complete": true,
   "binary_sha256": "00f166669e9a903c2402fedd50f741c124cf8093445d4a86a700e4c5ab43cdd4",

@@ -1,8 +1,8 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # Capability matrix
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Audit date: 2026-10-17. Source of truth for writers: every row below was read from code, tests or a dated evidence
 file in this repository, not from existing marketing text. When a public doc says more than a row supports, the doc

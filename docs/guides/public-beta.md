@@ -1,6 +1,6 @@
 # Public beta — honesty, blockers, and how to help
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 The **beta** label stays until [beta-exit.md](../reference/beta-exit.md) is signed.
 This page is what an external developer can verify locally, and what still needs

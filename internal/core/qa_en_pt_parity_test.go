@@ -8,7 +8,7 @@ package core_test
 // Pairs are taken from classifier_test.go, classifier_edge_test.go,
 // classifier_ptbr_test.go and the EN/PT rows in signals.go / risk.go.
 //
-// Downshift by Tiago de Carvalho Vilas Boas
+// Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
 
 import (

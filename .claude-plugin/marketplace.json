@@ -1,7 +1,7 @@
 {
   "name": "downshift",
   "description": "Downshift: deterministic subagent model router. One plugin: hooks, /downshift, and the setup, audit and cost-reducer skills.",
-  "owner": { "name": "Tiago de Carvalho Vilas Boas", "url": "https://github.com/tiagovilasboas" },
+  "owner": { "name": "Tiago Vilas Boas", "url": "https://github.com/tiagovilasboas" },
   "plugins": [
     {
       "name": "downshift",

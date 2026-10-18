@@ -2,7 +2,7 @@
 
 ## Maintainer
 
-**Tiago de Carvalho Vilas Boas** ([tiagovilasboas](https://github.com/tiagovilasboas)) is the
+**Tiago Vilas Boas** ([tiagovilasboas](https://github.com/tiagovilasboas)) is the
 current maintainer and copyright holder (see [LICENSE](LICENSE)).
 
 ## Decision making

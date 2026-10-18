@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package quota supplies offline budget evidence for harness-downshift by
-// Tiago de Carvalho Vilas Boas, https://github.com/tiagovilasboas/downshift.
+// Tiago Vilas Boas, https://github.com/tiagovilasboas/downshift.
 package quota
 
 import (

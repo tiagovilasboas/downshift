@@ -1,6 +1,6 @@
 # Harness x plan x rewrite-honored matrix
 
-Downshift by Tiago de Carvalho Vilas Boas
+Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 ## Status per harness

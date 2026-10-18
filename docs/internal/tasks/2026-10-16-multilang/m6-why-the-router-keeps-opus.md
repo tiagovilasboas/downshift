@@ -1,4 +1,4 @@
-<!-- Copyright (c) 2026 Tiago de Carvalho Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
 # M6: why the router keeps Opus
 
@@ -29,4 +29,4 @@ in these four cases. Future work needs bounded-brief adversarial coverage before
 Guia: preserve genuine complexity and risk in bounded delegations (inferencial, behaviour).
 Sensor: temporal evaluation, five benchmark splits and adversarial downshift checks (computacional, behaviour).
 
-Attribution: Downshift by Tiago de Carvalho Vilas Boas — https://github.com/tiagovilasboas/downshift
+Attribution: Downshift by Tiago Vilas Boas — https://github.com/tiagovilasboas/downshift
