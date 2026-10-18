@@ -9,31 +9,36 @@ adapter, hook, command or policy.
 | Layer | Where | Holds |
 |---|---|---|
 | Classification | `internal/classify` | Regex class, signals, language guard, risk floor. No tier and no harness |
-| Policy | `internal/core` | `Route`, `TierOf`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), self-check, `HarnessCapabilities`. Calls `classify`. Imports `quotamodel` and `session` |
+| Policy | `internal/core` | `Route`, `TierOf`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), self-check, `HarnessCapabilities`. Calls `classify`. Imports `fuse`, `quotamodel` and `session`. Score selection stays here: `ScoreHook` is the port, and `core` does not import `scoreindex` |
 | Quota types | `internal/quotamodel` | Pure evidence: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O |
 | Session list | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed: `core` imports `session`; `session` must not import `core` |
-| Semantic boost policy (next cut, not landed) | `internal/fuse` | Raise-only `ClassifyWithSemantic` from `semantic_fuse.go`, including the no-signal skip. May import `classify` and `semantic`. Must not import `core`. `core` keeps a thin wrapper. Not landed in this docs commit |
+| Semantic boost policy | `internal/fuse` | Landed. Raise-only boost, including the no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper |
+| NB opinion hooks (next cut, not landed) | `internal/nbopinion` | Hook funcs that call `nbtier.Suggest` and `nbtier.Trivial`. May import `core` and `nbtier`. `core` must not import `nbopinion` or `nbtier`. The NB upshift/downshift opinion stays a core type on `Decision`. `cmd` blank-imports `nbopinion` so `init` runs. Not landed in this docs commit |
 | Shared services | `internal/policyfile`, `adapt`, `quota`, `telemetry`, `catalog`, `hookctx` | Optional behaviour plugged into core, state, I/O |
 | Hook runner | `cmd/downshift` `runHookAdapter` | Reads the payload once, sets shared context, records telemetry, fails open |
 | Adapters | `internal/adapters/<harness>` | Parse the payload, declare capabilities, emit the wire response |
 
 Dependencies point inward: adapters may import core and shared services; core
-imports `classify`, `quotamodel` and `session`, and never imports `catalog`,
-`telemetry`, `adapt`, `policyfile`, `quota` or an adapter (checked with
-`go list -deps ./internal/core`). `session` must not import `core`.
-`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent` and
-`CanWriteSessionID` stay in `core`. The next cut, not landed in this docs
-commit, moves the semantic boost policy to `internal/fuse`. `fuse` may import
-`classify` and `semantic` and must not import `core`. Optional layers plug
-into core through a hook variable (`core.MemoryAdjustHook`,
-`core.TierFloorHook`) registered in their `init`. Debt status (2026-10-18):
+imports `classify`, `fuse`, `quotamodel` and `session`, and never imports
+`catalog`, `telemetry`, `adapt`, `policyfile`, `quota`, `scoreindex` or an
+adapter (checked with `go list -deps ./internal/core`). `session` must not
+import `core`. `fuse` imports `classify` and `semantic` and does not import
+`core`. `PlanForSession`, `RouteForSession`, `InferSessionFromCurrent` and
+`CanWriteSessionID` stay in `core`. Score selection stays in `core` on
+purpose: `ScoreHook` is already the port, and `core` does not import
+`scoreindex`. Do not propose a package that merges score selection with the
+naive-Bayes opinion. The next cut, not landed in this docs commit, stops
+`core` importing `internal/nbtier`. Optional layers plug into core through a
+hook variable (`core.MemoryAdjustHook`, `core.TierFloorHook`) registered in
+their `init`. Debt status (2026-10-18):
 
 - Configuration read once at the edge: done. `core.Config` (`internal/core/env.go`)
   types every `DOWNSHIFT_*` variable core reads; `runHookAdapter` calls
   `core.SetConfig(core.ConfigFromEnv(os.Getenv))` once per invocation and
   restores it on return, and offline commands and tests read the live
   environment through the same accessors (test:
-  `TestHookRunnerReadsConfigOnce`).
+  `TestHookRunnerReadsConfigOnce`). Env stays this typed snapshot set at the
+  edge (`SetConfig`). Do not move `env.go` in the NB opinion cut.
 - `hookctx`: core no longer imports it directly; it reaches core only through
   helper packages that stay in-process (`semantic` hash embedder).
 - Classification vs route policy: done. `internal/classify` scores the prompt. `core.TierOf` and `Route` stay in policy. Session routing stays in policy with them.
@@ -55,15 +60,23 @@ into core through a hook variable (`core.MemoryAdjustHook`,
   `RouteForSession`, `InferSessionFromCurrent` and `CanWriteSessionID` stay
   in `internal/core` because they need `Decision`, `Tier`, `Model` and
   `Resolver`.
-- Semantic boost policy: the next cut, not landed in this docs commit.
-  `semantic_fuse.go` (`ClassifyWithSemantic`, raise-only, no-signal skip)
-  still lives in `internal/core`, which imports `semantic`. A new package
-  `internal/fuse` will own that policy. `fuse` may import `classify` and
-  `semantic`. It must not import `core`. `core` keeps a thin
-  `ClassifyWithSemantic` wrapper. Naive-Bayes upshift and downshift
-  (`nb_upshift.go`, `nb_downshift.go`) and score selection (`score_select.go`)
-  stay in `core`. The semantic boost policy, the NB upshift/downshift
-  opinions, and score selection do not share one package.
+- Semantic boost policy: done (`110ef31`, PR 154). `internal/fuse` owns the
+  raise-only boost, including the no-signal skip. It imports `classify` and
+  `semantic`. `go list -deps ./internal/fuse` does not include `core`.
+  `core` keeps `ClassifyWithSemantic` as a wrapper.
+- Score selection stays in `core` (`score_select.go`) on purpose. `ScoreHook`
+  is already the port. `go list -deps ./internal/core` does not include
+  `scoreindex`. Do not propose a package that merges score selection with
+  the naive-Bayes opinion.
+- Naive-Bayes opinion hooks: the next cut, not landed in this docs commit.
+  `core` still imports `internal/nbtier` (`nbtier.Suggest` from the upshift
+  path, `nbtier.Trivial` from the downshift path) and must stop. The NB
+  upshift/downshift opinion stays a core type on `Decision`. Those calls
+  move to hook funcs registered by a new package `internal/nbopinion`. That
+  package may import `core` and `nbtier`. `core` must not import `nbopinion`
+  or `nbtier`. `cmd` blank-imports `nbopinion` so `init` runs. Env stays a
+  typed snapshot set at the edge (`SetConfig`). Do not move `env.go` in
+  this cut.
 
 ## Before you write code
 
