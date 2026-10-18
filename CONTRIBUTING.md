@@ -153,7 +153,7 @@ contributors; automated attribution belongs in CI logs and PR descriptions.
 ```
 Co-Authored-By: Alice Engineer <alice@company.com>
 Co-Authored-By: Bob Developer <bob@company.com>
-Author: Tiago Vilas Boas <12345678+tiagovilasboas@users.noreply.github.com>
+Author: Tiago Vilas Boas <2006720+tiagovilasboas@users.noreply.github.com>
 ```
 
 ❌ **Not allowed:**
