@@ -5,10 +5,11 @@ https://github.com/tiagovilasboas/downshift
 
 ## Status per harness
 
-Each harness carries exactly one of three status words (owner decision 2026-10-17); the table below it keeps the per-plan facts.
+Each harness carries exactly one of four status words (owner decision 2026-10-17; Beta added 2026-10-18); the table below it keeps the per-plan facts.
 
 - **Completed:** rewrite observed honored on a real child, usage and child end recorded, plugin and session policy.
 - **Functional:** the hook emits the rewrite on a real spawn and passes the shared conformance suite; observation is partial (honored is inferred or unconfirmed, no child usage).
+- **Beta:** first-class integration under active development — adapter, route wire and shared conformance in the repository and green; the harness-side plugin and the first live observation are still ahead, so no live spawn is observed yet and there is no production claim (owner decision 2026-10-18).
 - **Experimental (proof of concept):** policy mode or one observed child on one build; shipped, but no production claim.
 
 `cmd/downshift/conformance_test.go` drives the same 8 routing scenarios against every registered hook, so each harness below, whatever its status, computes every feature (layering rule); the status says how much has been verified on the real harness, not how much code it runs.
@@ -20,7 +21,7 @@ Each harness carries exactly one of three status words (owner decision 2026-10-1
 | cursor | Functional | Rewrite emitted on a real spawn; the child executor model is absent from the transcript, so honored is unconfirmed (discarded on Free and legacy Pro); end parser unverified, no usage; native quota collector blocked on Cursor 3.24.9. | [cursor rewrite](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](../evidence/cursor-gap-diagnostic.md) |
 | kirocrew | Experimental | Policy mode: block and retry observed once on Kiro CLI 2.29.0, no in-place rewrite; no child end recorded. | [native hook](../evidence/kirocrew-native-hook-2026-10-10.md) |
 | antigravity | Experimental | One observed child on desktop 2.21.1 (requested `pro`, executed `flash_lite`); the `overwrite` envelope is not a documented vendor field; no child end recorded; quota mapping unresolved. | [executor ack](../evidence/antigravity-executor-ack.md), [runtime source](../evidence/antigravity-runtime-source.md) |
-| opencode | Experimental | Downshift-side adapter only: no live spawn observed yet (the forwarding plugin is phase 2); route answers, fail-open paths and observation parsing are covered by adapter tests and the shared conformance suite. No child end recorded yet; usage seam not proven. | [adapter tests](../../internal/adapters/opencode/), [conformance](../../cmd/downshift/conformance_test.go) |
+| opencode | Beta | First-class integration under active development (owner decision 2026-10-18): adapter, route wire v1 and shared conformance in the repository; the forwarding plugin is in development and no live spawn is observed yet. Route answers, fail-open paths and observation parsing are covered by adapter tests and the shared conformance suite. No child end recorded yet; usage seam not proven. | [adapter tests](../../internal/adapters/opencode/), [conformance](../../cmd/downshift/conformance_test.go) |
 | grok | Config only | No hook rewrite; reasoning is pinned in `config.toml`. | [install.md](../guides/install.md#grok-cli-config-not-hook) |
 
 "Rewrite honored" means the harness executor applied the hook's model

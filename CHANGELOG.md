@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Claude Code mod path (phase 2a): the adapter reads optional `parent_model` as the baseline for inheriting agent types before the transcript; the shared runner records `entry` (`hook` or `mod`) on every decision; `HarnessCapabilities.HookEntries` lists both paths for Claude Code; `stats` counts by entry and `doctor` warns when one `tool_use_hash` carries two decisions. The opt-in `downshift-router` mod always sends `entry: "mod"`. Design: `docs/design/mod-router.md`.
 - Claude Code mod path (phase 2b): `downshift-router` listens for `turn.complete` on subagent loops, accumulates API usage per `agentId`, and when the agent is terminal flushes totals through `downshift end claude-code` with inline `usage` (no child transcript). The Claude Code `ParseChildEnd` / SubagentStop parser prefers inline usage over a transcript path; recorder dedup still prices each agent once. On `turn.step`, the mod applies `effort` from the spawn decision: the Claude Code adapter includes `reasoning_effort` in `updatedInput` only when `entry` is `mod` (settings `CanApplyEffort` unchanged). Design: `docs/design/mod-router.md`.
+- Harness status vocabulary: added **Beta** as a fourth word (owner decision 2026-10-18) and marked the OpenCode integration Beta (adapter and route wire v1 in #162; its plugin wiring is still in development).
 
 ### Experimental
 

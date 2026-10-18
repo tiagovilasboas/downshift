@@ -21,7 +21,7 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 ## What it is
 
-Coding agents spend most of their money where you are not looking: when the main agent delegates. A subagent inherits the session's most capable model by default, so a rename, a test run or a file listing is billed at frontier price, and a session that delegates a lot multiplies that. Downshift is a single Go binary that sits in the hooks of your coding harness and optimizes that delegated execution: it picks a right-sized model and effort for each subagent, holds back whenever it is not sure, records what each child cost and how it ended, and gives you the tools to measure whether it paid off. **Claude Code is the primary harness** (status: Completed; most complete, most verified). Codex and Cursor are Functional; the remaining adapters are Experimental. All of them run the same core, with the limits in the [matrix](docs/reference/harness-matrix.md) and the tiers under [Harness support](#harness-support).
+Coding agents spend most of their money where you are not looking: when the main agent delegates. A subagent inherits the session's most capable model by default, so a rename, a test run or a file listing is billed at frontier price, and a session that delegates a lot multiplies that. Downshift is a single Go binary that sits in the hooks of your coding harness and optimizes that delegated execution: it picks a right-sized model and effort for each subagent, holds back whenever it is not sure, records what each child cost and how it ended, and gives you the tools to measure whether it paid off. **Claude Code is the primary harness** (status: Completed; most complete, most verified). Codex and Cursor are Functional; OpenCode is Beta (adapter and route wire in the repository, plugin wiring in development); Antigravity and KiroCrew are Experimental. All of them run the same core, with the limits in the [matrix](docs/reference/harness-matrix.md) and the tiers under [Harness support](#harness-support).
 
 Model routing is the main lever today, not the whole product. The metric that matters is **cost per task completed with acceptable quality**; tokens are a proxy. Everything is deterministic (no LLM in the routing loop), prompt-free (task text never leaves memory or reaches a log), and fail-open (any doubt or error leaves the spawn exactly as the harness asked).
 
@@ -318,10 +318,11 @@ Measured on 2026-10-15, one operator, Claude Code, same tasks and prompts in a r
 
 ## Harness support
 
-Every feature is built in shared layers and computed for every harness ([layering rule](docs/contrib/layering.md)); the shared conformance suite (`cmd/downshift/conformance_test.go`) drives the same 8 routing scenarios against every registered hook. What differs is how much has been verified on a real harness, so each harness carries exactly one of three status words:
+Every feature is built in shared layers and computed for every harness ([layering rule](docs/contrib/layering.md)); the shared conformance suite (`cmd/downshift/conformance_test.go`) drives the same 8 routing scenarios against every registered hook. What differs is how much has been verified on a real harness, so each harness carries exactly one of four status words:
 
 - **Completed.** The rewrite was observed honored on a real child, usage and child end are recorded, and the session policy and plugin ship. Only Claude Code.
 - **Functional.** The hook emits the rewrite on a real spawn and passes the conformance suite, but observation is partial: the harness applying the rewrite is inferred (Codex) or unconfirmed (Cursor), and child usage is not recorded.
+- **Beta.** First-class integration under active development: the adapter, route wire and shared conformance suite are in this repository and green, while the harness-side plugin and the first live observation are still ahead. Not a production claim. OpenCode.
 - **Experimental (proof of concept).** Policy mode or a single observed child on one build. Shipped, with install steps in the guide, but not a basis for a production claim.
 
 | Harness | Status | Subagent tool | Mechanism | Rewrite honored (evidence) |
@@ -329,6 +330,7 @@ Every feature is built in shared layers and computed for every harness ([layerin
 | **Claude Code** | Completed | `Task` / `Agent`, paid plans | `PreToolUse` → `updatedInput.model` | Yes, observed 2026-10-06 ([write-up](docs/evidence/claude-code-rewrite-honored-2026-10-06.md)); usage from the child transcript ([billing audit](docs/evidence/billing-gap-audit.md)); one controlled A/B ([2026-10-15](docs/evidence/subagent-routing-ab-2026-10-15.md)) |
 | **Codex** | Functional | `spawn_agent` (`multi_agent_v2`) | `PreToolUse` → model + `reasoning_effort` | Inferred, not observed, 2026-10-02 ([write-up](docs/evidence/codex-rewrite-honored-2026-10-02.md)); install: [Codex](docs/guides/install.md#install-codex) |
 | **Cursor** | Functional | `Task` | `preToolUse` → `updated_input.model` | Unconfirmed; discarded on Free and legacy Pro plans ([write-up](docs/evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](docs/evidence/cursor-gap-diagnostic.md)); install: [Cursor](docs/guides/install.md#install-cursor) |
+| **OpenCode** | Beta | `subagent` | plugin → `subagent_spawn_intent` → `downshift opencode` | [Not observed yet](docs/reference/harness-matrix.md#status-per-harness) |
 | **Grok CLI** | Config only | `spawn_subagent` | Config in `config.toml`, not a hook | No hook rewrite |
 
 Plans, caveats and revalidation rules: [harness-matrix.md](docs/reference/harness-matrix.md).

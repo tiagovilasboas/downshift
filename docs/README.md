@@ -10,7 +10,7 @@ under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 
 Downshift is a suite for optimizing token use in coding agents; subagent routing is the main lever, not the whole
 product. Status words below are the [capability matrix](reference/capability-matrix.md)'s; harness words stay
-Completed (Claude Code), Functional (Codex, Cursor), Experimental (KiroCrew, Antigravity).
+Completed (Claude Code), Functional (Codex, Cursor), Beta (OpenCode), Experimental (KiroCrew, Antigravity).
 
 | Piece | One sentence | Status | Doc |
 |---|---|---|---|

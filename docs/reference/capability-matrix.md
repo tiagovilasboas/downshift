@@ -13,7 +13,7 @@ harness. *Implemented, not validated everywhere* means the code is shared but th
 harnesses or plans only. *Experimental* means shipped behind a flag or a maintainer command, with no production
 claim. *Planned* means documented intent with no code path. *Not supported* means the harness or design cannot do it.
 
-Harness status words (Completed, Functional, Experimental) are a different scale and are defined in [harness-matrix.md](harness-matrix.md#status-per-harness); they appear only in section 4.
+Harness status words (Completed, Functional, Beta, Experimental) are a different scale and are defined in [harness-matrix.md](harness-matrix.md#status-per-harness); they appear only in section 4.
 
 Shorthand: `core` is `internal/core`, `cmd` is `cmd/downshift`, "matrix" is `docs/reference/harness-matrix.md`,
 "A/B" is `docs/evidence/subagent-routing-ab-2026-10-15.md`, "audit" is `docs/evidence/hardening-audit-2026-10-15.md`.
@@ -57,7 +57,7 @@ Shorthand: `core` is `internal/core`, `cmd` is `cmd/downshift`, "matrix" is `doc
 
 ## 4. Harness integration
 
-Harness status words (Completed, Functional, Experimental) are a separate scale from the capability statuses above: they say how much has been verified on each real harness, per [harness-matrix.md](harness-matrix.md#status-per-harness). `TestHarnessConformance` runs the same eight scenarios against every registered hook, whatever the harness status. The "Experimental" harness word means a proof of concept and does not change any capability row.
+Harness status words (Completed, Functional, Beta, Experimental) are a separate scale from the capability statuses above: they say how much has been verified on each real harness, per [harness-matrix.md](harness-matrix.md#status-per-harness). `TestHarnessConformance` runs the same eight scenarios against every registered hook, whatever the harness status. The "Experimental" harness word means a proof of concept and does not change any capability row.
 
 | Harness | What is emitted | What is honored (evidence, date) | Child end and usage | Limits | Docs |
 |---|---|---|---|---|---|

@@ -7,7 +7,7 @@ Canonical guide for humans and coding agents installing Downshift on a user mach
 
 **Related:** [config.md](config.md) · [session-models.md](../reference/session-models.md) · [harness-matrix.md](../reference/harness-matrix.md) · [examples/README.md](../../examples/README.md) · [Portuguese guides](../pt/README.md)
 
-**Harness status:** Claude Code is Completed; Codex and Cursor are Functional; Antigravity and KiroCrew are Experimental (see [Experimental harnesses](#experimental-harnesses)). The sections below follow that order. Definitions and evidence: [harness-matrix.md](../reference/harness-matrix.md#status-per-harness).
+**Harness status:** Claude Code is Completed; Codex and Cursor are Functional; Antigravity and KiroCrew are Experimental (see [Experimental harnesses](#experimental-harnesses)); OpenCode is Beta (adapter and route wire in this repository, plugin wiring in development). The sections below follow that order. Definitions and evidence: [harness-matrix.md](../reference/harness-matrix.md#status-per-harness).
 
 ## Health check
 
