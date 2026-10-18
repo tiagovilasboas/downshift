@@ -50,3 +50,7 @@ __pycache__/
 /dsmon-hook
 # Built dsmon-server binary
 /dsmon-server
+
+# Downshift Code Intelligence runtime state and cache
+.downshift/
+
