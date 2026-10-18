@@ -86,6 +86,14 @@ func runStats(args []string) int {
 		fmt.Fprintln(os.Stderr, "no events recorded yet: spawn a subagent in a new harness session, or run `downshift doctor` to check the hooks.")
 		return 0
 	}
+	if opts.ShowDCI {
+		if dciSummary.TotalPrompts == 0 {
+			fmt.Fprintln(os.Stderr, "no DCI prompt events recorded in this window.")
+			return 0
+		}
+		codeintel.PrintDCIStats(os.Stdout, dciSummary)
+		return 0
+	}
 	if len(events) > 0 {
 		telemetry.PrintStats(events, opts, os.Stdout)
 	}
