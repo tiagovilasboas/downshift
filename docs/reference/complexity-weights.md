@@ -5,7 +5,7 @@ are harness-agnostic. The harness only chooses which model id represents the
 tier, and whether the rewrite is applied.
 
 Source of truth: `internal/classify/signals.go`, `internal/classify/classifier.go`,
-`internal/core/policy.go`, `internal/core/risk.go`, `internal/core/models.go`.
+`internal/core/policy.go`, `internal/classify/risk.go`, `internal/core/models.go`.
 Session lists: [session-models.md](session-models.md). What each harness does
 with the rewrite: [harness-matrix.md](harness-matrix.md).
 
@@ -35,7 +35,7 @@ Extra points, applied after the regex table:
 A TRIVIAL or SIMPLE task that touches risk (secret, auth, crypto, payment,
 vulnerability, PII, destructive command, prompt injection, or concurrency) is lifted to
 MEDIUM. MEDIUM and COMPLEX are not lifted further by risk. The risk table is
-`internal/core/risk.go`. It sets a floor. It does not add to the vote.
+`internal/classify/risk.go`. It sets a floor. It does not add to the vote.
 
 **Input cap.** The scoring regex table and the structural scoring rules read at
 most the first 32 KB of the prompt (cut on a rune boundary), so cost stays flat
