@@ -3,7 +3,7 @@
 
 package core
 
-import "github.com/tiagovilasboas/downshift/internal/quota"
+import "github.com/tiagovilasboas/downshift/internal/quotamodel"
 
 // RecordSession stamps the session and quota evidence on the decision: whether
 // the session list is known, the quota status of the model the spawn currently
@@ -13,7 +13,7 @@ func (d *Decision) RecordSession(session SessionList, currentModelID string) {
 	d.Session.Unknown = !session.Known
 	d.Session.QuotaStatus = string(session.QuotaStatus(d.Harness, currentModelID))
 	if session.Usage != nil {
-		d.Session.QuotaSource = quota.SourceName(session.Usage.Source)
+		d.Session.QuotaSource = quotamodel.SourceName(session.Usage.Source)
 	}
 }
 

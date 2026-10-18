@@ -4,13 +4,37 @@
 package core
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift/internal/quotamodel"
 )
+
+// writeQuotaCache writes one harness snapshot in the canonical cache shape
+// that Load reads. Package core tests cannot import quota (quota imports core).
+func writeQuotaCache(t *testing.T, path string, s quotamodel.Snapshot) {
+	t.Helper()
+	if err := s.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	doc := struct {
+		Version   int                            `json:"version"`
+		Harnesses map[string]quotamodel.Snapshot `json:"harnesses"`
+	}{Version: 1, Harnesses: map[string]quotamodel.Snapshot{s.Harness: s}}
+	b, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, append(b, '\n'), 0600); err != nil {
+		t.Fatal(err)
+	}
+}
 
 // storeExpiredSnapshot writes a valid cache snapshot that expired expiredAgo
 // ago, with a harness window that was not yet reset.
@@ -20,12 +44,10 @@ func storeExpiredSnapshot(t *testing.T, harness string, expiredAgo time.Duration
 	t.Setenv("DOWNSHIFT_QUOTA_FILE", path)
 	expires := time.Now().Add(-expiredAgo)
 	used := 10.0
-	s := quota.Snapshot{Version: 1, Harness: harness, Source: "operator-normalized",
+	s := quotamodel.Snapshot{Version: 1, Harness: harness, Source: "operator-normalized",
 		ObservedAt: expires.Add(-time.Minute), ExpiresAt: expires,
-		Windows: []quota.Window{{ID: "w", Scope: "harness", UsedPercent: &used, ResetsAt: time.Now().Add(24 * time.Hour)}}}
-	if err := quota.Store(path, s); err != nil {
-		t.Fatal(err)
-	}
+		Windows: []quotamodel.Window{{ID: "w", Scope: "harness", UsedPercent: &used, ResetsAt: time.Now().Add(24 * time.Hour)}}}
+	writeQuotaCache(t, path, s)
 }
 
 // A snapshot that expired less than an hour ago still holds the rewrite; past
@@ -34,7 +56,7 @@ func TestStaleQuotaHoldsForAnHourThenBecomesUnknown(t *testing.T) {
 	t.Setenv("DOWNSHIFT_QUOTA_MODE", "")
 	storeExpiredSnapshot(t, "claude-code", 59*time.Minute)
 	s := KnownSession([]string{"candidate"}).WithUsageQuota("claude-code", nil)
-	if s.QuotaStatus("claude-code", "candidate") != quota.Stale || CanWriteSessionID("claude-code", "candidate", s, nil) {
+	if s.QuotaStatus("claude-code", "candidate") != quotamodel.Stale || CanWriteSessionID("claude-code", "candidate", s, nil) {
 		t.Fatalf("snapshot expired 59m ago must hold: status=%s", s.QuotaStatus("claude-code", "candidate"))
 	}
 	if _, held := StaleQuotaHold("claude-code", time.Now()); !held {
@@ -43,7 +65,7 @@ func TestStaleQuotaHoldsForAnHourThenBecomesUnknown(t *testing.T) {
 
 	storeExpiredSnapshot(t, "claude-code", 61*time.Minute)
 	s = KnownSession([]string{"candidate"}).WithUsageQuota("claude-code", nil)
-	if s.Usage != nil || s.QuotaRequired || s.QuotaStatus("claude-code", "candidate") != quota.Unknown {
+	if s.Usage != nil || s.QuotaRequired || s.QuotaStatus("claude-code", "candidate") != quotamodel.Unknown {
 		t.Fatalf("snapshot expired 61m ago must be absent: usage=%v required=%v", s.Usage, s.QuotaRequired)
 	}
 	if !CanWriteSessionID("claude-code", "candidate", s, nil) {
@@ -58,7 +80,7 @@ func TestStaleQuotaRequiredModeKeepsHolding(t *testing.T) {
 	t.Setenv("DOWNSHIFT_QUOTA_MODE", "required")
 	storeExpiredSnapshot(t, "claude-code", 3*time.Hour)
 	s := KnownSession([]string{"candidate"}).WithUsageQuota("claude-code", nil)
-	if s.QuotaStatus("claude-code", "candidate") != quota.Stale || CanWriteSessionID("claude-code", "candidate", s, nil) {
+	if s.QuotaStatus("claude-code", "candidate") != quotamodel.Stale || CanWriteSessionID("claude-code", "candidate", s, nil) {
 		t.Fatal("required mode must keep holding on an old snapshot")
 	}
 	if age, held := StaleQuotaHold("claude-code", time.Now()); !held || age < 3*time.Hour {

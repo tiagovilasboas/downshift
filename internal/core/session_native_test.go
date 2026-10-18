@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift/internal/quotamodel"
 )
 
 func nativeFixture(now time.Time) map[string]any {
@@ -61,7 +61,7 @@ func TestNativeAvailabilityPrecedenceAndSharedObservation(t *testing.T) {
 		t.Fatal(err)
 	}
 	s = s.WithUsageQuota("cursor", nil)
-	if s.QuotaStatus("cursor", "cheap") != quota.Available || !s.Usage.ObservedAt.Equal(observed) {
+	if s.QuotaStatus("cursor", "cheap") != quotamodel.Available || !s.Usage.ObservedAt.Equal(observed) {
 		t.Fatal("availability and quota were not the same observation")
 	}
 	if fallback := ResolveSession("cursor"); fallback.Known {

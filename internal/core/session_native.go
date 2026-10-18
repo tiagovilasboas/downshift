@@ -9,8 +9,6 @@ import (
 	"os"
 	"regexp"
 	"time"
-
-	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
 const nativeSessionTTL = 5 * time.Minute
@@ -65,7 +63,10 @@ func loadNativeSession(caps HarnessCapabilities, now time.Time) (SessionList, bo
 		}
 		seen[id] = true
 	}
-	usage, err := quota.ParseNative(caps.NativeUsageSource, data, now, nativeSessionTTL)
+	if ParseNativeQuotaHook == nil {
+		return hold, true
+	}
+	usage, err := ParseNativeQuotaHook(caps.NativeUsageSource, data, now, nativeSessionTTL)
 	if err != nil {
 		return hold, true
 	}

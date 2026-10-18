@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift/internal/quotamodel"
 )
 
 // SessionList is the only set of model ids a hook may write.
@@ -46,7 +46,7 @@ type SessionList struct {
 	// included and/or exhausted. The allowlist is not a credit report.
 	CreditsReported bool
 	// Usage evidence is separate from operator allowlists and hook marks.
-	Usage         *quota.Snapshot
+	Usage         *quotamodel.Snapshot
 	QuotaRequired bool
 	QuotaTime     time.Time
 }
@@ -54,7 +54,7 @@ type SessionList struct {
 // WithUsageQuota attaches current provider evidence. A supplied snapshot,
 // cached snapshot (even malformed), or required mode closes the quota gate.
 // Missing evidence in legacy mode retains routing without claiming credit.
-func (s SessionList) WithUsageQuota(harness string, supplied *quota.Snapshot) SessionList {
+func (s SessionList) WithUsageQuota(harness string, supplied *quotamodel.Snapshot) SessionList {
 	s.QuotaTime = time.Now()
 	s.QuotaRequired = quotaModeRequired()
 	if supplied != nil {
@@ -69,7 +69,7 @@ func (s SessionList) WithUsageQuota(harness string, supplied *quota.Snapshot) Se
 	}
 	var present bool
 	s.Usage, present = loadUsage(harness)
-	// A snapshot that expired more than quota.StaleGrace ago is treated as
+	// A snapshot that expired more than quotamodel.StaleGrace ago is treated as
 	// absent, like a user without quota. Required mode keeps holding.
 	if present && s.Usage != nil && !s.QuotaRequired && s.Usage.Abandoned(s.QuotaTime) {
 		s.Usage, present = nil, false
@@ -82,11 +82,16 @@ func (s SessionList) WithUsageQuota(harness string, supplied *quota.Snapshot) Se
 // native export is fresher than the canonical cache. Invalid native input
 // remains present and therefore closes the gate instead of falling back to a
 // stale cache.
-func loadUsage(harness string) (*quota.Snapshot, bool) {
-	if s, present := quota.LoadNative(harness); present {
-		return s, true
+func loadUsage(harness string) (*quotamodel.Snapshot, bool) {
+	if LoadNativeQuotaHook != nil {
+		if s, present := LoadNativeQuotaHook(harness); present {
+			return s, true
+		}
 	}
-	return quota.Load(harness)
+	if LoadQuotaHook == nil {
+		return nil, false
+	}
+	return LoadQuotaHook(harness)
 }
 
 // StaleQuotaHold reports whether a loaded snapshot for harness has expired but
@@ -108,15 +113,15 @@ func StaleQuotaHold(harness string, now time.Time) (expiredFor time.Duration, he
 // file or hook marks must not turn it into a false Available. When Usage
 // is nil, Included is available, Exhausted is exhausted, and every other
 // id is unknown. Allowlist membership is not a balance claim.
-func (s SessionList) QuotaStatus(harness, id string) quota.Status {
+func (s SessionList) QuotaStatus(harness, id string) quotamodel.Status {
 	if s.Usage == nil {
 		if s.IsIncluded(id) {
-			return quota.Available
+			return quotamodel.Available
 		}
 		if s.Blocks(id) {
-			return quota.Exhausted
+			return quotamodel.Exhausted
 		}
-		return quota.Unknown
+		return quotamodel.Unknown
 	}
 	now := s.QuotaTime
 	if now.IsZero() {
@@ -126,7 +131,7 @@ func (s SessionList) QuotaStatus(harness, id string) quota.Status {
 }
 
 func (s SessionList) quotaAllows(harness, id string) bool {
-	return !s.QuotaRequired || s.QuotaStatus(harness, id) == quota.Available
+	return !s.QuotaRequired || s.QuotaStatus(harness, id) == quotamodel.Available
 }
 
 // UnknownSession is the fail-open list: no rewrite.
