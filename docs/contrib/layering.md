@@ -10,15 +10,17 @@ adapter, hook, command or policy.
 |---|---|---|
 | Classification | `internal/classify` | Regex class, signals, language guard, risk floor. No tier and no harness |
 | Policy | `internal/core` | `Route`, `TierOf`, guardrails, session, self-check, `HarnessCapabilities`. Calls `classify` |
+| Quota types (next cut, not landed) | `internal/quotamodel` | Pure evidence: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O |
 | Shared services | `internal/policyfile`, `adapt`, `quota`, `telemetry`, `catalog`, `hookctx` | Optional behaviour plugged into core, state, I/O |
 | Hook runner | `cmd/downshift` `runHookAdapter` | Reads the payload once, sets shared context, records telemetry, fails open |
 | Adapters | `internal/adapters/<harness>` | Parse the payload, declare capabilities, emit the wire response |
 
 Dependencies point inward: adapters may import core and shared services; core
 imports `classify` and never imports `catalog`, `telemetry`, `adapt`,
-`policyfile` or an adapter (checked with `go list -deps ./internal/core`). Optional layers plug into core
-through a hook variable (`core.MemoryAdjustHook`, `core.TierFloorHook`)
-registered in their `init`. Debt status (2026-10-17):
+`policyfile` or an adapter (checked with `go list -deps ./internal/core`). The next
+cut, not landed, also removes the `internal/quota` import from `core`. Optional
+layers plug into core through a hook variable (`core.MemoryAdjustHook`,
+`core.TierFloorHook`) registered in their `init`. Debt status (2026-10-17):
 
 - Configuration read once at the edge: done. `core.Config` (`internal/core/env.go`)
   types every `DOWNSHIFT_*` variable core reads; `runHookAdapter` calls
@@ -28,14 +30,17 @@ registered in their `init`. Debt status (2026-10-17):
   `TestHookRunnerReadsConfigOnce`).
 - `hookctx`: core no longer imports it directly; it reaches core only through
   helper packages that stay in-process (`semantic` hash embedder).
-- Classification vs route policy: done. `internal/classify` scores the prompt. `core.TierOf` and `Route` stay in policy. Later phases, not this cut: move the quota snapshot type out of the `core` import, then session selection.
-- `quota`: still open. `core.SessionList.Usage` is a `*quota.Snapshot`,
-  `WithUsageQuota` takes one and `QuotaStatus` returns a `quota.Status`;
-  all five adapters construct and pass those types and read the field. A
-  hook variable would cover `quota.Load`/`LoadNative`/`ParseNative`, but
-  removing the import needs the snapshot type to move into core (an alias in
-  core reintroduces the import), which changes the public types adapters and
-  tests use. Left for a change that may move those types.
+- Classification vs route policy: done. `internal/classify` scores the prompt. `core.TierOf` and `Route` stay in policy. Session selection stays a later phase.
+- Quota evidence types: the next cut, not landed. `core` still imports
+  `internal/quota` because `SessionList.Usage` is a `*quota.Snapshot`.
+  A new package `internal/quotamodel` holds the pure quota evidence types
+  (`Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`,
+  `SourceName`) and does no file I/O. `internal/quota` keeps `Load`,
+  `Store`, `ParseNative` and native registration. It may alias those types
+  so adapters can keep saying `quota.Snapshot`. `internal/core` must stop
+  importing `internal/quota` and take the snapshot type from
+  `internal/quotamodel`. File reads and native parsing enter through a hook
+  registered by `quota`, the same pattern as `MemoryAdjustHook`.
 
 ## Before you write code
 
