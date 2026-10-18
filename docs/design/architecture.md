@@ -238,12 +238,13 @@ tests, a security review or a production signal.
 | Package | Responsibility |
 |---------|----------------|
 | `internal/classify` | Regex classifier, signal table, language guard, risk floor. No tier, no harness, no catalog |
-| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session, escalation, self-check, `HarnessCapabilities`. Imports `classify`. Does **not** import catalog, telemetry, adapt, policyfile or an adapter. Next cut, not landed: also stop importing `internal/quota` and take the snapshot type from `internal/quotamodel`; file reads and native parsing enter through a hook registered by `quota`, the same pattern as `MemoryAdjustHook` |
-| `internal/quotamodel` (next cut, not landed) | Pure quota evidence types: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O |
+| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify` and `quotamodel`. Does **not** import catalog, telemetry, adapt, policyfile, `quota` or an adapter. Next cut, not landed: `SessionList` and the loaders that do not need `Decision` or `Resolver` (file, hook marks, discovered file, quota snapshot attachment) move to `internal/session`; `core` may import `session`, and `session` must not import `core` |
+| `internal/quotamodel` | Pure quota evidence types: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O. Landed: `core` imports this package; file reads and native parsing enter through hooks registered by `quota`, the same pattern as `MemoryAdjustHook` |
+| `internal/session` (next cut, not landed) | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Must not import `core` |
 | `internal/catalog` | Embedded `catalog.json`, user override, `Resolver` |
 | `internal/adapters/*` | Harness-specific I/O only; call `core.Route` / `PlanSession` |
 | `internal/policyfile`, `internal/adapt`, `internal/routeadapt` | Project tier floor (`TierFloorHook`) and shadow tier memory (`MemoryAdjustHook`), plugged into core at `init` |
-| `internal/quota`, `internal/hookctx`, `internal/hookutil` | Offline budget evidence; per-hook deadline and project dir; shared field helpers. Next cut, not landed: `quota` keeps `Load`, `Store`, `ParseNative` and native registration, and may alias the `quotamodel` types so adapters can keep saying `quota.Snapshot` |
+| `internal/quota`, `internal/hookctx`, `internal/hookutil` | Offline budget evidence; per-hook deadline and project dir; shared field helpers. `quota` keeps `Load`, `Store`, `ParseNative` and native registration, and aliases the `quotamodel` types so adapters can keep saying `quota.Snapshot` |
 | `internal/hookport`, `internal/childend` | Honor, usage and child-end contract; one shared recorder for every harness |
 | `internal/telemetry` | Append-only local JSONL; prompt-free events; stats, report, control group, session tree |
 | `internal/contextopt`, `internal/compressor`, `internal/sensor` | Context optimization registry, native compressor (observe/safe), tool-output sensor |
