@@ -37,6 +37,7 @@ Fields useful for graduation tracking:
 | `agent_types` | Decisions per subagent type, `{"Explore": {"decisions": 3, "unknown_baseline": 2}}`, so a gap in the baseline can be pinned on a kind of spawn. Only Claude Code reports a type. Names are limited to the built-in ones (`general-purpose`, `claude`, `Explore`, `Plan`, `statusline-setup`, `claude-code-guide`), plus `unspecified` and `custom`: a custom agent's own name is never stored or exported. Omitted when no event carries a type |
 | `by_entry` | Decisions per spawn-time entry (`hook` for settings/plugin PreToolUse, `mod` for the Claude Code `agent.spawn` path). Empty `entry` on older logs counts as `hook`. Omitted when every count is zero |
 | `duplicate_tool_use` | How many distinct `tool_use_hash` values appear on more than one decision (both entry points routed the same spawn). Zero omitted |
+| `dci` | Object containing Downshift Code Intelligence telemetry: `prompts_evaluated`, `injections_applied`, `injection_rate`, `injection_pct`, `abstentions` (and breakdown: `conversational_greeting`, `chatter`, `no_candidates`, `insufficient_evidence`), `context_bytes_emitted`, `avg_bytes_per_injection`, `latency_ms_p50`, and `latency_ms_p95`. Strictly observed empirical measurements; zero synthetic token counts, zero fictitious dollar estimates. Omitted when no DCI events exist in the window |
 
 ## Before you paste
 

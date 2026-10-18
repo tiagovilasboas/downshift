@@ -185,7 +185,7 @@ above) and replaces step 2 for Claude Code only; the other harnesses still use
 
 or in two steps, `/plugin marketplace add tiagovilasboas/downshift` then
 `/plugin install downshift@downshift`. The plugin wires `PreToolUse`,
-`PostToolUse`, `PostToolUseFailure` and `SubagentStop` from
+`PostToolUse`, `PostToolUseFailure`, `SubagentStop`, and `UserPromptSubmit` (for Downshift Code Intelligence) from
 [`hooks/hooks.json`](../../hooks/hooks.json) (each entry only calls the binary),
 adds the `downshift-setup`, `downshift-audit` and `cost-reducer` skills, and the
 command below as `/downshift:status`. On Claude Code 2.1.287 or later it also
@@ -230,6 +230,26 @@ The optional manual copy above retains `/downshift` as a local alias.
 The command only runs `downshift session` through the Bash tool, which its
 `allowed-tools` line limits to that command. The same `downshift session` works
 in a terminal for any harness. See [session-view.md](session-view.md).
+
+### Downshift Code Intelligence (DCI)
+
+Downshift includes an optional code intelligence engine that discovers repository code, extracts Go AST and lexical symbols, scores relevance via BM25, and injects compact structural context (<=3,500 bytes UTF-8) via `UserPromptSubmit` in Claude Code.
+
+By default, DCI is `off`. To enable it in a repository:
+
+```bash
+downshift dci enable active   # Inject context into Claude Code prompts
+downshift dci enable observe  # Observe and record telemetry without injecting
+downshift dci status          # Show active mode and cache statistics
+downshift dci doctor          # Check permissions, discovery, and latencies
+downshift dci benchmark       # Run local performance and relevance benchmarks
+```
+
+To view DCI telemetry and metrics:
+```bash
+downshift stats --dci         # Display DCI-specific prompts, injections, and latencies
+```
+See [code-intelligence.md](../design/code-intelligence.md) for full architectural details.
 
 ## Install (Cursor)
 
