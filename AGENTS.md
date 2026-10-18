@@ -107,16 +107,47 @@ By contributing, you license your contribution under Apache 2.0. See
 ## Architecture — understand before changing
 
 ```
+internal/classify/
+  classifier.go      — regex task text → Complexity (scored signals, deterministic). No tier
+  signals.go         — RawSignals table (exported, tunable without touching the scorer)
+  lang_guard.go      — language guard
+  risk.go            — risk floor
+
+internal/fuse/
+  fuse.go            — semantic boost policy (raise-only, including the no-signal skip).
+                       Imports classify and semantic. Does not import core.
+                       core keeps ClassifyWithSemantic as a wrapper
+
+internal/session/    — SessionList and the loaders (file, hook marks, discovered
+                       file, quota snapshot). Does not import core.
+                       PlanForSession, RouteForSession, InferSessionFromCurrent
+                       and CanWriteSessionID stay in core
+
+internal/quotamodel/ — pure quota types (Status, Window, Snapshot, Validate,
+                       Evaluate, Abandoned, SourceName). No file I/O
+internal/quota/      — file I/O; aliases the quotamodel types. Registers
+                       LoadQuotaHook, LoadNativeQuotaHook, ParseNativeQuotaHook
+                       and RegisterNativeQuotaHook. Core production sources do not import quota
+
+internal/nbopinion/  — landed (4d3e857, PR 156). init registers hooks that call
+                       nbtier.Suggest and nbtier.Trivial. May import core and
+                       nbtier. core production sources must not import nbopinion
+                       or nbtier. cmd blank-imports this package. NBUpshift and
+                       NBDownshift stay on Decision in core
+
 internal/core/
-  classifier.go      — task text → Complexity (scored signals, deterministic)
-  signals.go         — RawSignals table (exported, tunable without touching scorer)
+  classify_facade.go — Classify re-export; ClassifyWithSemantic wraps fuse
   escalation.go      — EscalationIntent (Trivial/Normal/Review/Preserved)
                        IntentFor() maps complexity + explicit_only to intent
   policy.go          — Tier, Effort, Verdict, Decision, Route()
                        ShouldPreserveExplicitModel
+                       NBUpshift / NBDownshift on Decision
   capabilities.go    — HarnessCapabilities per harness; RewritePlan; Plan()
   resolver.go        — Resolver interface (ModelFor, LookupByID, EffortFor,
                        SavingsRatio, IsExplicitOnly)
+  score_select.go    — score selection via ScoreHook. Stays in core on purpose;
+                       do not merge it with the naive-Bayes opinion
+  quota_hooks.go     — LoadQuotaHook and the native quota hooks quota registers
 
 internal/catalog/
   catalog.go         — Catalog struct, Load(), Resolver implementation
@@ -138,12 +169,14 @@ internal/routingv2/shadow/   — opt-in candidate observation; never changes Rou
 internal/routingv2/training/ — prompt-free route outcomes, shadow-report, offline training
 
 cmd/downshift/       — binary entry point, hook runners, try subcommand,
-                       models list/check/pull dispatch
+                       models list/check/pull dispatch; blank-imports nbopinion
 ```
 
 **Key invariants:**
-- `core` never imports `catalog` or any adapter.
-- Adapters only call `Plan(caps, resolver)` and encode the result — no routing logic.
+- Core production sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, or any adapter, because a core test file may import `nbtier` and that file is not in the binary.
+- Adapters do not choose the tier; they call `core.Route`, then apply the plan core returns.
+- The semantic boost and the naive-Bayes opinion stay in-process and do not exec.
+- `session` does not import `core`. `fuse` imports `classify` and `semantic` and does not import `core`. Score selection stays in `core` through `ScoreHook`; do not merge it with the naive-Bayes opinion.
 - Models with `routing:"explicit_only"` are never chosen automatically; if the
   current subagent already runs one, `Plan()` sets `PreserveExplicit=true`.
 - `updatedInput` preserves all sibling fields — only `model` and

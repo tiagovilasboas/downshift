@@ -13,24 +13,26 @@ adapter, hook, command or policy.
 | Quota types | `internal/quotamodel` | Pure evidence: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O |
 | Session list | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed: `core` imports `session`; `session` must not import `core` |
 | Semantic boost policy | `internal/fuse` | Landed. Raise-only boost, including the no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper |
-| NB opinion hooks (next cut, not landed) | `internal/nbopinion` | Hook funcs that call `nbtier.Suggest` and `nbtier.Trivial`. May import `core` and `nbtier`. `core` must not import `nbopinion` or `nbtier`. The NB upshift/downshift opinion stays a core type on `Decision`. `cmd` blank-imports `nbopinion` so `init` runs. Not landed in this docs commit |
+| NB opinion hooks | `internal/nbopinion` | Landed (`4d3e857`, PR 156). Hook funcs that call `nbtier.Suggest` and `nbtier.Trivial`. May import `core` and `nbtier`. Core production sources do not import `nbopinion` or `nbtier` (a core test file may import `nbtier`; that file is not in the binary). `NBUpshift` and `NBDownshift` stay on `Decision` in `core`. `cmd` blank-imports `nbopinion` so `init` runs. The opinion stays in-process and does not exec |
 | Shared services | `internal/policyfile`, `adapt`, `quota`, `telemetry`, `catalog`, `hookctx` | Optional behaviour plugged into core, state, I/O |
 | Hook runner | `cmd/downshift` `runHookAdapter` | Reads the payload once, sets shared context, records telemetry, fails open |
 | Adapters | `internal/adapters/<harness>` | Parse the payload, declare capabilities, emit the wire response |
 
 Dependencies point inward: adapters may import core and shared services; core
-imports `classify`, `fuse`, `quotamodel` and `session`, and never imports
-`catalog`, `telemetry`, `adapt`, `policyfile`, `quota`, `scoreindex` or an
-adapter (checked with `go list -deps ./internal/core`). `session` must not
-import `core`. `fuse` imports `classify` and `semantic` and does not import
-`core`. `PlanForSession`, `RouteForSession`, `InferSessionFromCurrent` and
-`CanWriteSessionID` stay in `core`. Score selection stays in `core` on
-purpose: `ScoreHook` is already the port, and `core` does not import
-`scoreindex`. Do not propose a package that merges score selection with the
-naive-Bayes opinion. The next cut, not landed in this docs commit, stops
-`core` importing `internal/nbtier`. Optional layers plug into core through a
-hook variable (`core.MemoryAdjustHook`, `core.TierFloorHook`) registered in
-their `init`. Debt status (2026-10-18):
+imports `classify`, `fuse`, `quotamodel` and `session`. Core production
+sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`,
+`adapt`, `policyfile`, `scoreindex` or an adapter (checked with `go list
+-deps ./internal/core`). A core test file may import `nbtier`; that file is
+not in the binary. `session` must not import `core`. `fuse` imports
+`classify` and `semantic` and does not import `core`. `PlanForSession`,
+`RouteForSession`, `InferSessionFromCurrent` and `CanWriteSessionID` stay in
+`core`. Score selection stays in `core` on purpose: `ScoreHook` is already
+the port, and `core` does not import `scoreindex`. Do not propose a package
+that merges score selection with the naive-Bayes opinion. The naive-Bayes
+hooks are landed (`4d3e857`, PR 156): `internal/nbopinion` calls
+`nbtier.Suggest` and `nbtier.Trivial`, in-process, with no exec. Optional
+layers plug into core through a hook variable (`core.MemoryAdjustHook`,
+`core.TierFloorHook`) registered in their `init`. Debt status (2026-10-18):
 
 - Configuration read once at the edge: done. `core.Config` (`internal/core/env.go`)
   types every `DOWNSHIFT_*` variable core reads; `runHookAdapter` calls
@@ -38,7 +40,7 @@ their `init`. Debt status (2026-10-18):
   restores it on return, and offline commands and tests read the live
   environment through the same accessors (test:
   `TestHookRunnerReadsConfigOnce`). Env stays this typed snapshot set at the
-  edge (`SetConfig`). Do not move `env.go` in the NB opinion cut.
+  edge (`SetConfig`). The landed NB cut left `env.go` there.
 - `hookctx`: core no longer imports it directly; it reaches core only through
   helper packages that stay in-process (`semantic` hash embedder).
 - Classification vs route policy: done. `internal/classify` scores the prompt. `core.TierOf` and `Route` stay in policy. Session routing stays in policy with them.
@@ -68,15 +70,14 @@ their `init`. Debt status (2026-10-18):
   is already the port. `go list -deps ./internal/core` does not include
   `scoreindex`. Do not propose a package that merges score selection with
   the naive-Bayes opinion.
-- Naive-Bayes opinion hooks: the next cut, not landed in this docs commit.
-  `core` still imports `internal/nbtier` (`nbtier.Suggest` from the upshift
-  path, `nbtier.Trivial` from the downshift path) and must stop. The NB
-  upshift/downshift opinion stays a core type on `Decision`. Those calls
-  move to hook funcs registered by a new package `internal/nbopinion`. That
-  package may import `core` and `nbtier`. `core` must not import `nbopinion`
-  or `nbtier`. `cmd` blank-imports `nbopinion` so `init` runs. Env stays a
-  typed snapshot set at the edge (`SetConfig`). Do not move `env.go` in
-  this cut.
+- Naive-Bayes opinion hooks: done (`4d3e857`, PR 156). `internal/nbopinion`
+  registers hook funcs that call `nbtier.Suggest` and `nbtier.Trivial`. It
+  may import `core` and `nbtier`. `go list -deps ./internal/core` does not
+  include `nbopinion` or `nbtier`. A core test file may import `nbtier`;
+  that file is not in the binary. `NBUpshift` and `NBDownshift` stay on
+  `Decision` in `core`. `cmd` blank-imports `nbopinion` so `init` runs. The
+  opinion stays in-process and does not exec. Env stays a typed snapshot
+  set at the edge (`SetConfig`).
 
 ## Before you write code
 
