@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
 // Package scoreindex keeps a local cache of public capability scores

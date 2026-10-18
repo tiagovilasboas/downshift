@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Tiago de Carvalho Vilas Boas.
+// Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
 // Package outcome is the outcome eval: coding tasks with an executable check,
