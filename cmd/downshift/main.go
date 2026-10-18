@@ -22,6 +22,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
+	_ "github.com/tiagovilasboas/downshift/internal/nbopinion"
 	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 	_ "github.com/tiagovilasboas/downshift/internal/quota"
 	_ "github.com/tiagovilasboas/downshift/internal/routeadapt"
