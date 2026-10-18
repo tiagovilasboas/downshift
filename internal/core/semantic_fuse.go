@@ -3,66 +3,8 @@
 
 package core
 
-import (
-	"github.com/tiagovilasboas/downshift/internal/semantic"
-)
+import "github.com/tiagovilasboas/downshift/internal/fuse"
 
 // ClassifyWithSemantic runs the regex classifier plus the optional in-process
-// hash semantic boost (DOWNSHIFT_MINILM).
-func ClassifyWithSemantic(prompt string) Classification {
-	return classifyWithSemantic(prompt, Classify(prompt))
-}
-
-func classifyWithSemantic(prompt string, base Classification) Classification {
-	// The boost only raises. A prompt with no regex content signal is Medium by
-	// default, not by evidence, so a nearest-centroid match on noise (a stray
-	// word such as "hook") must not lift it to Complex and spend frontier money.
-	if base.NoSignal {
-		return base
-	}
-	return applyBoost(prompt, base, semantic.MaybeAugment)
-}
-
-// augmentFunc is the nearest-centroid step: (prompt, label, confident) to
-// (new label, fired).
-type augmentFunc func(prompt, label string, confident bool) (string, bool)
-
-func applyBoost(prompt string, base Classification, augment augmentFunc) Classification {
-	label := base.Complexity.String()
-	newLabel, ok := augment(prompt, label, base.Confident)
-	if !ok {
-		return base
-	}
-	c, ok := complexityFromLabel(newLabel)
-	if !ok {
-		return base
-	}
-	// Frontier is the expensive, invisible error: the hash embedder's centroids
-	// are nearly parallel, so its nearest class on a weak-signal prompt is close
-	// to noise. The boost may lift toward Medium, but Complex needs evidence
-	// from the regex rules (the risk floor adds its own lift).
-	if c == Complex && base.Scores[Complex] == 0 {
-		return base
-	}
-	out := base
-	out.Complexity = c
-	out.Confident = false
-	out.SemanticLift = c > base.Complexity
-	// The semantic boost is monotonic and only raises complexity; the risk floor still holds.
-	return applyRiskFloor(prompt, out)
-}
-
-func complexityFromLabel(label string) (Complexity, bool) {
-	switch label {
-	case "TRIVIAL":
-		return Trivial, true
-	case "SIMPLE":
-		return Simple, true
-	case "MEDIUM":
-		return Medium, true
-	case "COMPLEX":
-		return Complex, true
-	default:
-		return Medium, false
-	}
-}
+// hash semantic boost (DOWNSHIFT_MINILM). The boost policy lives in internal/fuse.
+func ClassifyWithSemantic(prompt string) Classification { return fuse.Apply(prompt) }

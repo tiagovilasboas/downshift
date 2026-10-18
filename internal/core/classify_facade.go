@@ -21,7 +21,7 @@ const (
 )
 
 // Classify scores a prompt with the regex classifier. The semantic boost
-// stays in this package (ClassifyWithSemantic).
+// policy lives in internal/fuse; ClassifyWithSemantic is the wrapper.
 func Classify(prompt string) Classification { return classify.Classify(prompt) }
 
 // RiskCategories and RiskCategoryNames are the classifier's risk table,
