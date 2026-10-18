@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/codeintel"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -32,6 +33,8 @@ func runStats(args []string) int {
 			byHarness = true
 		case arg == "--detail":
 			opts.Detail = true
+		case arg == "--dci":
+			opts.ShowDCI = true
 		case strings.HasPrefix(arg, "--days=") && len(arg) > len("--days="):
 			n, err := strconv.ParseFloat(strings.TrimPrefix(arg, "--days="), 64)
 			if err != nil || n < 0 {
@@ -61,8 +64,17 @@ func runStats(args []string) int {
 		telemetry.PrintCuration(os.Stdout, telemetry.BuildCuration(telemetry.FilterByDays(events, opts.Days)))
 		return 0
 	}
+
+	dciEvents, _ := codeintel.ReadTelemetryEvents()
+	dciFiltered := codeintel.FilterTelemetryByDays(dciEvents, opts.Days)
+	dciSummary := codeintel.AggregateTelemetry(dciFiltered)
+
 	if export {
-		out, err := telemetry.ExportJSON(telemetry.ExportSummary(events, opts.Days, time.Now().UTC()))
+		sum := telemetry.ExportSummary(events, opts.Days, time.Now().UTC())
+		if dciSummary.TotalPrompts > 0 {
+			sum.DCISummary = &dciSummary
+		}
+		out, err := telemetry.ExportJSON(sum)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error exporting summary: %v\n", err)
 			return 1
@@ -70,10 +82,18 @@ func runStats(args []string) int {
 		fmt.Println(out)
 		return 0
 	}
-	if len(events) == 0 {
+	if len(events) == 0 && dciSummary.TotalPrompts == 0 {
 		fmt.Fprintln(os.Stderr, "no events recorded yet: spawn a subagent in a new harness session, or run `downshift doctor` to check the hooks.")
 		return 0
 	}
-	telemetry.PrintStats(events, opts, os.Stdout)
+	if len(events) > 0 {
+		telemetry.PrintStats(events, opts, os.Stdout)
+	}
+	if dciSummary.TotalPrompts > 0 {
+		if len(events) > 0 {
+			fmt.Println()
+		}
+		codeintel.PrintDCIStats(os.Stdout, dciSummary)
+	}
 	return 0
 }

@@ -55,13 +55,14 @@ const (
 	OutcomeUsage    = "usage"
 	OutcomeBaseline = "baseline"
 	OutcomeResolved = "resolved"
+	OutcomeDCI      = "dci"
 )
 
 // IsCostOnlyOutcome reports whether an outcome value marks a post-hoc cost
-// record rather than a routing decision. Cost records must never inflate
-// decision counts in Aggregate.
+// or observation record rather than a routing decision. Cost and observation
+// records must never inflate decision counts in Aggregate.
 func IsCostOnlyOutcome(outcome string) bool {
-	return outcome == OutcomeUsage || outcome == OutcomeBaseline || outcome == OutcomeResolved || outcome == OutcomeChildEnded
+	return outcome == OutcomeUsage || outcome == OutcomeBaseline || outcome == OutcomeResolved || outcome == OutcomeChildEnded || outcome == OutcomeDCI
 }
 
 // DecisionKey identifies a decision event for post-hoc linkage: its
