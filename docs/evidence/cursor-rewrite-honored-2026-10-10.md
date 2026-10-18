@@ -4,8 +4,8 @@ Downshift by Tiago Vilas Boas
 https://github.com/tiagovilasboas/downshift
 
 One spawn on this machine, Cursor **3.24.9** build
-`cd6d2a1f2e56e9841f0ed9c7c24542087b4e69b0`. The hook binary was
-`/Users/tiago.boas/.local/bin/downshift` at `v0.1.0-beta.7-69-g379d413`.
+`cd6d2a1f2e56e9841f0ed9c7c24542087b4e69b0`. The hook binary was `downshift`
+on `PATH` (`$HOME/.local/bin/downshift`) at `v0.1.0-beta.7-69-g379d413`.
 No prompts, transcript paths, account identifiers, or quota payloads are
 stored here.
 

@@ -59,9 +59,10 @@ change this repository), read **[docs/guides/install.md](docs/guides/install.md)
 
 ### Shared RAG memory
 
-The private Logseq vault at `/Users/tiago.boas/Logseq/knowledge-hub` is durable shared
-context for Codex, Cursor, Kiro, and Claude Code. Its contract is
-`pages/meta/harness-memory.md`.
+Maintainers may use a **private** Logseq vault (not in this repository) as durable
+shared context across harnesses. Its contract is `pages/meta/harness-memory.md`
+in that vault. Do not publish vault paths, employer KB dumps, or secrets in this
+repo; see [publishing-boundaries.md](docs/reference/publishing-boundaries.md).
 
 - Start memory or domain questions from the relevant scope hub.
 - Verify live facts in their product system; the vault is durable context, not
