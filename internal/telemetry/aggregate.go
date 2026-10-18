@@ -4,6 +4,7 @@
 package telemetry
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
@@ -25,6 +26,10 @@ func Aggregate(events []Event) Stats {
 		if ev.Outcome == OutcomeResolved {
 			continue // an observation about an earlier decision, not a cost or a decision
 		}
+		if ev.Outcome == OutcomeDCI || ev.DCI != nil {
+			a.countDCI(ev)
+			continue
+		}
 		if IsCostOnlyOutcome(ev.Outcome) {
 			a.countCostOnly(ev)
 			continue
@@ -32,6 +37,7 @@ func Aggregate(events []Event) Stats {
 		a.countDecision(ev)
 	}
 	a.tallyLogWide(events)
+	a.finalizeDCI()
 	a.s.DuplicateToolUse = DuplicateToolUseCount(events)
 	return a.s
 }
@@ -50,7 +56,8 @@ type aggregator struct {
 	// not run: they are not applied and save nothing.
 	refuted map[linkKey]bool
 	// linked marks usage records already matched to a decision.
-	linked map[linkKey]bool
+	linked       map[linkKey]bool
+	dciLatencies []float64
 }
 
 func newAggregator() *aggregator {
@@ -64,6 +71,10 @@ func newAggregator() *aggregator {
 			ReasonCodes:    make(map[string]int),
 			ModelMix:       make(map[string]int),
 			ByAgentType:    make(map[string]AgentTypeCount),
+			DCI: DCIStats{
+				AbstentionsByReason: make(map[string]int),
+				ErrorsByCode:        make(map[string]int),
+			},
 		},
 		decisions: make(map[linkKey]Event),
 		refuted:   make(map[linkKey]bool),
@@ -269,4 +280,46 @@ func (a *aggregator) tallyLogWide(events []Event) {
 	tallySpawnSurface(events, &a.s)
 	a.s.ObservedChildTokens, a.s.ObservedChildUsage = ObservedChildTokens(events)
 	a.s.RespawnAfterFailure = len(RespawnAfterFailure(events, respawnWindow))
+}
+
+// countDCI accumulates observed Code Intelligence metrics from an OutcomeDCI event.
+func (a *aggregator) countDCI(ev Event) {
+	if ev.DCI == nil {
+		return
+	}
+	d := ev.DCI
+	a.s.DCI.PromptsEvaluated++
+	if d.InjectionApplied {
+		a.s.DCI.InjectionsApplied++
+		a.s.DCI.ContextBytesEmitted += int64(d.OutputBytes)
+	} else if d.AbstentionReason != "" {
+		a.s.DCI.AbstentionsByReason[d.AbstentionReason]++
+	}
+	if d.ErrorCode != "" {
+		a.s.DCI.Errors++
+		a.s.DCI.ErrorsByCode[d.ErrorCode]++
+	}
+	if d.TotalDurationMs >= 0 {
+		a.dciLatencies = append(a.dciLatencies, float64(d.TotalDurationMs))
+	}
+}
+
+// finalizeDCI computes summary averages and p50/p95 latencies for DCI.
+func (a *aggregator) finalizeDCI() {
+	if a.s.DCI.InjectionsApplied > 0 {
+		a.s.DCI.AvgContextBytes = float64(a.s.DCI.ContextBytesEmitted) / float64(a.s.DCI.InjectionsApplied)
+	}
+	if len(a.dciLatencies) > 0 {
+		sort.Float64s(a.dciLatencies)
+		p50Idx := int(float64(len(a.dciLatencies)) * 0.50)
+		if p50Idx >= len(a.dciLatencies) {
+			p50Idx = len(a.dciLatencies) - 1
+		}
+		p95Idx := int(float64(len(a.dciLatencies)) * 0.95)
+		if p95Idx >= len(a.dciLatencies) {
+			p95Idx = len(a.dciLatencies) - 1
+		}
+		a.s.DCI.LatencyP50Ms = a.dciLatencies[p50Idx]
+		a.s.DCI.LatencyP95Ms = a.dciLatencies[p95Idx]
+	}
 }

@@ -83,6 +83,7 @@ func runDCIHook(harness string, r io.Reader, w io.Writer, stderr io.Writer) int 
 
 	service := codeintel.NewService(repoRoot, cfg)
 	pack, telemetry := service.ProcessPrompt(ctx, prompt)
+	_ = codeintel.RecordTelemetry(telemetry)
 
 	if pack == nil || pack.OutputBytes == 0 || !telemetry.InjectionApplied {
 		return 0 // Abstained, observe mode, or empty context: exit 0

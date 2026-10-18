@@ -6,6 +6,7 @@ package telemetry
 import (
 	"fmt"
 	"io"
+	"sort"
 )
 
 // StatsOptions controls PrintStats output.
@@ -15,6 +16,8 @@ type StatsOptions struct {
 	// Detail adds the full report (normalised units, honor, quota, usage, child
 	// status, per-session cost, complexity breakdown) after the 3-line headline.
 	Detail bool
+	// ShowDCI displays the Code Intelligence (DCI) metrics section.
+	ShowDCI bool
 }
 
 // PrintStats writes a human-readable stats summary to w.
@@ -30,8 +33,12 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 
 	printHeadline(w, s, opts.Days)
 	fmt.Fprintf(w, "Estimated at list price, not an invoice. Measured against a control group: downshift report\n")
-	if !opts.Detail {
+	if !opts.Detail && !opts.ShowDCI {
 		fmt.Fprintf(w, "\nFull report: downshift stats --detail\n")
+		return
+	}
+	if opts.ShowDCI && !opts.Detail {
+		printDCISection(w, s.DCI)
 		return
 	}
 	fmt.Fprintf(w, "\n%s\n", label)
@@ -129,7 +136,51 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 			fmt.Fprintf(w, "WARNING: %d frontier rewrite(s) were applied on an unconfident classification with no deterministic lift; check for silent overspend.\n", s.FrontierOnDoubt)
 		}
 	}
+	if s.DCI.PromptsEvaluated > 0 || opts.ShowDCI {
+		printDCISection(w, s.DCI)
+	}
 	fmt.Fprintf(w, "─────────────────────────────────────\n")
+}
+
+// printDCISection writes the Code Intelligence (DCI) telemetry section.
+// In accordance with Downshift's epistemic invariants, all metrics are strictly
+// observed; no synthetic token counts or fictitious dollar savings are computed.
+func printDCISection(w io.Writer, dci DCIStats) {
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "Code Intelligence (DCI)\n")
+	if dci.PromptsEvaluated == 0 {
+		fmt.Fprintf(w, "  No DCI prompt evaluations recorded in this window.\n")
+		return
+	}
+	injPct := pct(dci.InjectionsApplied, dci.PromptsEvaluated)
+	abstained := dci.PromptsEvaluated - dci.InjectionsApplied
+	absPct := pct(abstained, dci.PromptsEvaluated)
+
+	fmt.Fprintf(w, "  Prompts evaluated     %8d\n", dci.PromptsEvaluated)
+	fmt.Fprintf(w, "  Injections applied    %8d  %5.1f%%  (context injected into harness)\n", dci.InjectionsApplied, injPct)
+	fmt.Fprintf(w, "  Abstentions           %8d  %5.1f%%  (conversational / low relevance)\n", abstained, absPct)
+	if len(dci.AbstentionsByReason) > 0 {
+		keys := make([]string, 0, len(dci.AbstentionsByReason))
+		for k := range dci.AbstentionsByReason {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, r := range keys {
+			fmt.Fprintf(w, "    %-18s  %6d\n", r, dci.AbstentionsByReason[r])
+		}
+	}
+	fmt.Fprintf(w, "  Context emitted       %8d bytes", dci.ContextBytesEmitted)
+	if dci.InjectionsApplied > 0 {
+		fmt.Fprintf(w, "  (avg %.0f bytes/injection)", dci.AvgContextBytes)
+	}
+	fmt.Fprintf(w, "\n")
+	fmt.Fprintf(w, "  Observed latency      p50 %.1fms   p95 %.1fms\n", dci.LatencyP50Ms, dci.LatencyP95Ms)
+	if dci.Errors > 0 {
+		fmt.Fprintf(w, "  Errors (fail-open)    %8d\n", dci.Errors)
+		for code, count := range dci.ErrorsByCode {
+			fmt.Fprintf(w, "    error:%-12s  %6d\n", code, count)
+		}
+	}
 }
 
 // printScoreLine reports the public-score capability path. It prints nothing

@@ -93,7 +93,7 @@ func IsDecisionRow(ev Event) bool {
 		return false
 	}
 	switch ev.Outcome {
-	case OutcomeUsage, OutcomeResolved, OutcomeChildEnded, "error", OutcomeFailOpen:
+	case OutcomeUsage, OutcomeResolved, OutcomeChildEnded, "error", OutcomeFailOpen, OutcomeDCI:
 		return false
 	}
 	return true

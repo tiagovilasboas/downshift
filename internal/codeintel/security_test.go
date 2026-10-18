@@ -5,7 +5,9 @@ package codeintel
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -500,5 +502,195 @@ func TestZeroPersistenceGuarantee(t *testing.T) {
 	}
 	if err := VerifyTelemetryPrivacy(leakyTelemetry); !errors.Is(err, ErrPersistenceViolation) {
 		t.Errorf("Expected ErrPersistenceViolation for telemetry containing secret, got: %v", err)
+	}
+}
+
+func TestDCIEventsPrivacyInvariants(t *testing.T) {
+	tempDir := t.TempDir()
+	eventsPath := filepath.Join(tempDir, "sub", "dci-events.jsonl")
+
+	// 1. Verify strict 0600 file permissions and 0700 dir permissions
+	cleanEv := Telemetry{
+		IndexedFiles:        50,
+		CandidateCount:      5,
+		SelectedFiles:       2,
+		SelectedSymbols:     4,
+		InputBytes:          120,
+		OutputBytes:         850,
+		IndexDurationMs:     12,
+		RetrievalDurationMs: 4,
+		PackDurationMs:      1,
+		TotalDurationMs:     17,
+		InjectionApplied:    true,
+		Timestamp:           time.Now().UTC(),
+	}
+
+	if err := RecordTelemetryTo(eventsPath, cleanEv); err != nil {
+		t.Fatalf("RecordTelemetryTo failed: %v", err)
+	}
+
+	// Verify parent directory permission is 0700 (no group or other access)
+	dirInfo, err := os.Stat(filepath.Dir(eventsPath))
+	if err != nil {
+		t.Fatalf("Stat dir failed: %v", err)
+	}
+	if dirInfo.Mode().Perm()&0077 != 0 {
+		t.Errorf("Dir has group/other permissions: %04o (want 0700)", dirInfo.Mode().Perm())
+	}
+
+	// Verify file permission is strictly 0600 (rw-------)
+	fileInfo, err := os.Stat(eventsPath)
+	if err != nil {
+		t.Fatalf("Stat file failed: %v", err)
+	}
+	if fileInfo.Mode().Perm()&0077 != 0 {
+		t.Errorf("File has group/other permissions: %04o (want 0600)", fileInfo.Mode().Perm())
+	}
+	if fileInfo.Mode().Perm() != 0600 {
+		t.Errorf("File mode = %04o, want 0600", fileInfo.Mode().Perm())
+	}
+	if err := ValidatePermissions(eventsPath); err != nil {
+		t.Errorf("ValidatePermissions failed on 0600 file: %v", err)
+	}
+
+	// Verify existing file with 0666 is tightened to 0600 by RecordTelemetryTo
+	looseFile := filepath.Join(tempDir, "loose-events.jsonl")
+	if err := os.WriteFile(looseFile, []byte(""), 0666); err != nil {
+		t.Fatalf("WriteFile loose failed: %v", err)
+	}
+	_ = os.Chmod(looseFile, 0666) // override umask
+	if err := RecordTelemetryTo(looseFile, cleanEv); err != nil {
+		t.Fatalf("RecordTelemetryTo loose failed: %v", err)
+	}
+	looseInfo, err := os.Stat(looseFile)
+	if err != nil {
+		t.Fatalf("Stat loose file failed: %v", err)
+	}
+	if looseInfo.Mode().Perm()&0077 != 0 {
+		t.Errorf("RecordTelemetryTo did not tighten loose permissions: %04o", looseInfo.Mode().Perm())
+	}
+
+	// 2. Verify that NO user prompts, task text, source code snippets, or conversational text are persisted
+	data, err := os.ReadFile(eventsPath)
+	if err != nil {
+		t.Fatalf("ReadFile failed: %v", err)
+	}
+
+	var rawMap map[string]any
+	if err := json.Unmarshal(data, &rawMap); err != nil {
+		t.Fatalf("Unmarshal failed: %v", err)
+	}
+
+	forbiddenKeys := []string{"prompt", "task", "content", "snippet", "snippets", "raw_code", "source_code", "query", "conversational_text", "formatted_text", "code"}
+	for _, k := range forbiddenKeys {
+		if _, exists := rawMap[k]; exists {
+			t.Errorf("Forbidden key %q found in dci-events.jsonl record!", k)
+		}
+	}
+
+	// Verify VerifyDCIEventsLogFile succeeds on clean log
+	if err := VerifyDCIEventsLogFile(eventsPath); err != nil {
+		t.Errorf("VerifyDCIEventsLogFile rejected clean log: %v", err)
+	}
+
+	// 3. Verify injection of forbidden keys causes VerifyDCIEventsLogFile to fail
+	for _, badKey := range []string{"prompt", "task", "source_code", "snippet", "conversational_text"} {
+		badFile := filepath.Join(tempDir, "bad-"+badKey+".jsonl")
+		badJSON := fmt.Sprintf(`{"indexed_files":10,"%s":"user secret data"}`, badKey)
+		if err := os.WriteFile(badFile, []byte(badJSON), 0600); err != nil {
+			t.Fatalf("WriteFile bad failed: %v", err)
+		}
+		if err := VerifyDCIEventsLogFile(badFile); !errors.Is(err, ErrPersistenceViolation) {
+			t.Errorf("VerifyDCIEventsLogFile did not reject forbidden key %q (got %v)", badKey, err)
+		}
+	}
+
+	// 4. Verify path traversal and null-byte defenses
+	nullPath := filepath.Join(tempDir, "sub\x00escape.jsonl")
+	if err := RecordTelemetryTo(nullPath, cleanEv); err == nil {
+		t.Error("RecordTelemetryTo should fail on null byte in path")
+	}
+	if err := VerifyDCIEventsLogFile(nullPath); !errors.Is(err, ErrNullByteInPath) {
+		t.Errorf("VerifyDCIEventsLogFile should return ErrNullByteInPath for null byte, got: %v", err)
+	}
+
+	// 5. Verify error codes and abstention reasons do not leak sensitive repository paths or credentials
+	pathLeakTelemetry := []struct {
+		name string
+		ev   Telemetry
+	}{
+		{
+			name: "abstention_reason leaks /Users/ path",
+			ev: Telemetry{
+				AbstentionReason: "/Users/tiago.boas/workspace/secret.go: not found",
+			},
+		},
+		{
+			name: "abstention_reason leaks /home/ path",
+			ev: Telemetry{
+				AbstentionReason: "/home/runner/work/repo/internal/secret.pem",
+			},
+		},
+		{
+			name: "abstention_reason leaks traversal ../",
+			ev: Telemetry{
+				AbstentionReason: "../outside/config.json",
+			},
+		},
+		{
+			name: "error_code leaks /etc/ path",
+			ev: Telemetry{
+				ErrorCode: "/etc/passwd: access denied",
+			},
+		},
+		{
+			name: "error_code leaks AWS key",
+			ev: Telemetry{
+				ErrorCode: "auth_failed_AKIAIOSFODNN7EXAMPLE",
+			},
+		},
+		{
+			name: "error_code leaks GitHub token",
+			ev: Telemetry{
+				ErrorCode: "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+			},
+		},
+		{
+			name: "abstention_reason leaks OpenAI key",
+			ev: Telemetry{
+				AbstentionReason: "sk-proj-1234567890123456789012345678901234567890",
+			},
+		},
+	}
+
+	for _, tc := range pathLeakTelemetry {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := VerifyTelemetryPrivacy(tc.ev); !errors.Is(err, ErrPersistenceViolation) {
+				t.Errorf("Expected ErrPersistenceViolation for %s, got: %v", tc.name, err)
+			}
+			// Verify RecordTelemetryTo also rejects it
+			testFile := filepath.Join(tempDir, "leak-test.jsonl")
+			if err := RecordTelemetryTo(testFile, tc.ev); err == nil {
+				t.Errorf("RecordTelemetryTo should refuse to write telemetry with sensitive leak: %s", tc.name)
+			}
+		})
+	}
+
+	// 6. Verify clean standard telemetry passes all checks
+	standardTelemetry := []Telemetry{
+		{AbstentionReason: "conversational_greeting", Timestamp: time.Now().UTC()},
+		{AbstentionReason: "chatter", Timestamp: time.Now().UTC()},
+		{AbstentionReason: "empty_prompt", Timestamp: time.Now().UTC()},
+		{AbstentionReason: "no_candidates", Timestamp: time.Now().UTC()},
+		{AbstentionReason: "insufficient_evidence", Timestamp: time.Now().UTC()},
+		{ErrorCode: "context_cancelled", Timestamp: time.Now().UTC()},
+		{ErrorCode: "index_error", Timestamp: time.Now().UTC()},
+		{ErrorCode: "timeout", Timestamp: time.Now().UTC()},
+	}
+
+	for _, st := range standardTelemetry {
+		if err := VerifyTelemetryPrivacy(st); err != nil {
+			t.Errorf("Standard telemetry rejected: %v (reason=%q, error=%q)", err, st.AbstentionReason, st.ErrorCode)
+		}
 	}
 }

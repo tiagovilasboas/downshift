@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/codeintel"
 )
 
 // baseNote is the fixed honesty disclaimer attached to every export.
@@ -59,6 +61,7 @@ type Summary struct {
 	AgentTypes          map[string]AgentTypeCount `json:"agent_types,omitempty"`
 	ByEntry             map[string]int            `json:"by_entry,omitempty"`
 	DuplicateToolUse    int                       `json:"duplicate_tool_use,omitempty"`
+	DCISummary          *codeintel.DCISummary     `json:"dci,omitempty"`
 	Note                string                    `json:"note"`
 }
 
@@ -135,7 +138,30 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		AgentTypes:          nonEmptyAgentTypes(stats.ByAgentType),
 		ByEntry:             nonEmptyCounts(stats.ByEntry),
 		DuplicateToolUse:    stats.DuplicateToolUse,
+		DCISummary:          exportDCISummary(stats.DCI),
 		Note:                note,
+	}
+}
+
+func exportDCISummary(dci DCIStats) *codeintel.DCISummary {
+	if dci.PromptsEvaluated <= 0 {
+		return nil
+	}
+	rate := 0.0
+	if dci.PromptsEvaluated > 0 {
+		rate = float64(dci.InjectionsApplied) / float64(dci.PromptsEvaluated)
+	}
+	return &codeintel.DCISummary{
+		TotalPrompts:         dci.PromptsEvaluated,
+		InjectionsApplied:    dci.InjectionsApplied,
+		InjectionRate:        rate,
+		InjectionPct:         rate * 100.0,
+		Abstentions:          dci.PromptsEvaluated - dci.InjectionsApplied,
+		AbstentionsByReason:  nonEmptyCounts(dci.AbstentionsByReason),
+		TotalContextBytes:    dci.ContextBytesEmitted,
+		AvgBytesPerInjection: dci.AvgContextBytes,
+		LatencyP50Ms:         dci.LatencyP50Ms,
+		LatencyP95Ms:         dci.LatencyP95Ms,
 	}
 }
 

@@ -80,6 +80,9 @@ func SessionModelsPath() (string, error) {
 // LoopEventsPath is loop-events.jsonl for routing v2 training events.
 func LoopEventsPath() (string, error) { return Join("loop-events.jsonl") }
 
+// DCIEventsPath is dci-events.jsonl for code intelligence telemetry.
+func DCIEventsPath() (string, error) { return Join("dci-events.jsonl") }
+
 // WeightsPath is weights.json for classifier overrides.
 func WeightsPath() (string, error) { return Join("weights.json") }
 

@@ -175,9 +175,30 @@ type Event struct {
 	// price over that model's (input plus output per 1M); absent when unknown.
 	ScoreDiffers        bool    `json:"score_differs,omitempty"`
 	ScoreWouldCostRatio float64 `json:"score_would_cost_ratio,omitempty"`
+	// Optional Code Intelligence (DCI) record. Set on OutcomeDCI events.
+	DCI *DCIRecord `json:"dci,omitempty"`
+
 	// Confidence is reserved and never set: the router has no calibrated
 	// probability, so the key stays absent rather than carry a made-up number.
 	Confidence *float64 `json:"confidence,omitempty"`
+}
+
+// DCIRecord captures prompt-time code intelligence evaluation metrics.
+// Prompt text, raw source code, and snippets are strictly excluded.
+type DCIRecord struct {
+	IndexedFiles        int    `json:"indexed_files,omitempty"`
+	CandidateCount      int    `json:"candidate_count,omitempty"`
+	SelectedFiles       int    `json:"selected_files,omitempty"`
+	SelectedSymbols     int    `json:"selected_symbols,omitempty"`
+	InputBytes          int    `json:"input_bytes,omitempty"`
+	OutputBytes         int    `json:"output_bytes,omitempty"`
+	IndexDurationMs     int64  `json:"index_duration_ms,omitempty"`
+	RetrievalDurationMs int64  `json:"retrieval_duration_ms,omitempty"`
+	PackDurationMs      int64  `json:"pack_duration_ms,omitempty"`
+	TotalDurationMs     int64  `json:"total_duration_ms,omitempty"`
+	InjectionApplied    bool   `json:"injection_applied"`
+	AbstentionReason    string `json:"abstention_reason,omitempty"`
+	ErrorCode           string `json:"error_code,omitempty"`
 }
 
 // NBUpshiftRecord is a tier change a naive-Bayes opinion would make (or made,
@@ -706,6 +727,24 @@ type Stats struct {
 	// such usage events contributed. Zero usage means unobserved, not measured zero.
 	ObservedChildTokens int64
 	ObservedChildUsage  int
+
+	// DCI holds aggregated Code Intelligence telemetry for the time window.
+	DCI DCIStats
+}
+
+// DCIStats contains aggregated telemetry for Downshift Code Intelligence (DCI).
+// In accordance with Downshift's epistemic invariants, all metrics are strictly
+// observed; no synthetic token counts or fictitious dollar savings are computed.
+type DCIStats struct {
+	PromptsEvaluated    int            `json:"prompts_evaluated"`
+	InjectionsApplied   int            `json:"injections_applied"`
+	AbstentionsByReason map[string]int `json:"abstentions_by_reason,omitempty"`
+	ContextBytesEmitted int64          `json:"context_bytes_emitted"`
+	AvgContextBytes     float64        `json:"avg_context_bytes,omitempty"`
+	LatencyP50Ms        float64        `json:"latency_p50_ms,omitempty"`
+	LatencyP95Ms        float64        `json:"latency_p95_ms,omitempty"`
+	Errors              int            `json:"errors,omitempty"`
+	ErrorsByCode        map[string]int `json:"errors_by_code,omitempty"`
 }
 
 // addRealDelta folds one real-cost event into the clamped and signed totals.
