@@ -132,7 +132,7 @@ var (
 	reOpenSSHPriv   = regexp.MustCompile(`(?m)-----BEGIN OPENSSH PRIVATE KEY-----`)
 	rePGPPrivKey    = regexp.MustCompile(`(?m)-----BEGIN PGP PRIVATE KEY BLOCK-----`)
 	rePEMPrivateKey = regexp.MustCompile(`(?m)-----BEGIN (?:[A-Z0-9 ]+ )?PRIVATE KEY-----`)
-	reAWSAccessKey  = regexp.MustCompile(`\bAKIA[0-9A-Z]{16}\b`)
+	reAWSAccessKey  = regexp.MustCompile(`(?:\b|_)AKIA[0-9A-Z]{16}(?:\b|_)`)
 	reAWSSecretKey  = regexp.MustCompile(`(?i)\baws_secret_access_key\s*[:=]\s*['"]?[A-Za-z0-9/+=]{40}['"]?`)
 	reGitHubToken   = regexp.MustCompile(`\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36,}\b|\bgithub_pat_[A-Za-z0-9_]{22,}\b`)
 	reSlackToken    = regexp.MustCompile(`\bxox[baprs]-[0-9a-zA-Z-]{10,}\b`)
@@ -518,16 +518,19 @@ func FormatUntrustedContext(content string) string {
 	return sb.String()
 }
 
-// Forbidden metadata keys that must NEVER be persisted in index cache files.
+// Forbidden metadata keys that must NEVER be persisted in index cache files or telemetry logs.
 var forbiddenPersistenceKeys = map[string]bool{
-	"content":        true,
-	"prompt":         true,
-	"query":          true,
-	"raw_code":       true,
-	"snippet":        true,
-	"snippets":       true,
-	"formatted_text": true,
-	"source_code":    true,
+	"content":             true,
+	"prompt":              true,
+	"query":               true,
+	"raw_code":            true,
+	"snippet":             true,
+	"snippets":            true,
+	"formatted_text":      true,
+	"source_code":         true,
+	"task":                true,
+	"code":                true,
+	"conversational_text": true,
 }
 
 // VerifyZeroPersistence inspects serialized cache JSON and asserts that no raw code,
@@ -547,7 +550,7 @@ func checkZeroPersistenceRecursive(node any) error {
 		for k, child := range v {
 			lowerKey := strings.ToLower(k)
 			if forbiddenPersistenceKeys[lowerKey] {
-				return fmt.Errorf("%w: forbidden key %q found in persisted cache", ErrPersistenceViolation, k)
+				return fmt.Errorf("%w: forbidden key %q found in persisted record", ErrPersistenceViolation, k)
 			}
 			if err := checkZeroPersistenceRecursive(child); err != nil {
 				return err
@@ -563,17 +566,86 @@ func checkZeroPersistenceRecursive(node any) error {
 	return nil
 }
 
-// VerifyTelemetryPrivacy validates that a Telemetry record does not leak prompts or secrets.
+// ContainsSensitivePath returns true if text contains an absolute filesystem path,
+// parent directory traversal, or sensitive system locations.
+func ContainsSensitivePath(text string) bool {
+	if text == "" {
+		return false
+	}
+	lower := strings.ToLower(text)
+	if strings.Contains(lower, "/users/") || strings.Contains(lower, "\\users\\") ||
+		strings.Contains(lower, "/home/") || strings.Contains(lower, "\\home\\") ||
+		strings.Contains(lower, "/root/") || strings.Contains(lower, "/etc/") ||
+		strings.Contains(lower, "/var/") || strings.Contains(lower, "/private/") ||
+		strings.Contains(lower, "../") || strings.Contains(lower, "..\\") {
+		return true
+	}
+	if strings.HasPrefix(text, "/") || (len(text) >= 3 && text[1] == ':' && (text[2] == '/' || text[2] == '\\')) {
+		return true
+	}
+	return false
+}
+
+// VerifyTelemetryPrivacy validates that a Telemetry record does not leak prompts, secrets, or sensitive system paths.
 func VerifyTelemetryPrivacy(t Telemetry) error {
 	if t.AbstentionReason != "" {
 		if hasSecret, kind := ContainsSecretContent(t.AbstentionReason); hasSecret {
 			return fmt.Errorf("%w: telemetry abstention_reason contains %s", ErrPersistenceViolation, kind)
+		}
+		if ContainsSensitivePath(t.AbstentionReason) {
+			return fmt.Errorf("%w: telemetry abstention_reason leaks local filesystem path: %s", ErrPersistenceViolation, t.AbstentionReason)
 		}
 	}
 	if t.ErrorCode != "" {
 		if hasSecret, kind := ContainsSecretContent(t.ErrorCode); hasSecret {
 			return fmt.Errorf("%w: telemetry error_code contains %s", ErrPersistenceViolation, kind)
 		}
+		if ContainsSensitivePath(t.ErrorCode) {
+			return fmt.Errorf("%w: telemetry error_code leaks local filesystem path: %s", ErrPersistenceViolation, t.ErrorCode)
+		}
 	}
+	return nil
+}
+
+// VerifyDCIEventsLogFile validates that an existing dci-events.jsonl file on disk
+// adheres strictly to permissions (0600) and contains zero leaked user prompts, code snippets,
+// or secrets in any of its JSON lines.
+func VerifyDCIEventsLogFile(eventsPath string) error {
+	if strings.ContainsRune(eventsPath, 0) {
+		return ErrNullByteInPath
+	}
+	if err := ValidatePermissions(eventsPath); err != nil {
+		return err
+	}
+
+	data, err := os.ReadFile(eventsPath)
+	if err != nil {
+		return err
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+
+		var rawMap map[string]any
+		if err := json.Unmarshal([]byte(trimmed), &rawMap); err != nil {
+			return fmt.Errorf("line %d: invalid JSON: %w", i+1, err)
+		}
+		if err := checkZeroPersistenceRecursive(rawMap); err != nil {
+			return fmt.Errorf("line %d: %w", i+1, err)
+		}
+
+		var ev Telemetry
+		if err := json.Unmarshal([]byte(trimmed), &ev); err != nil {
+			return fmt.Errorf("line %d: failed to unmarshal telemetry: %w", i+1, err)
+		}
+		if err := VerifyTelemetryPrivacy(ev); err != nil {
+			return fmt.Errorf("line %d: %w", i+1, err)
+		}
+	}
+
 	return nil
 }
