@@ -46,20 +46,26 @@ Models it knows (internal/catalog/catalog.json, version 2, 2026-10-16, 34 entrie
   automatically. On Claude Code the session list is inferred from the current
   model (catalog ladder below it), so routing only moves down from it.
 
-Languages: regex signals in English and Portuguese plus a default word-hash
-  semantic boost (raise-only, SEMANTIC_BOOST); a language guard clears confidence
-  elsewhere. MiniLM is opt-in (DOWNSHIFT_MINILM_EMBED). The multilingual E5 fuse is
-  opt-in: DOWNSHIFT_E5_SHADOW=1 observes, `downshift shadow-report` summarises,
-  DOWNSHIFT_E5_FUSE=1 applies (E5_BOOST / E5_ABSTAIN). Measured: the current
-  classifier on a 170-item multilingual set (EN and PT-BR route, other languages
-  abstain). Not measured: any E5 gain (weights unreachable in the evaluation).
-  docs/contrib/classifier.md, docs/evidence/e5-int8-evaluation-2026-10-17.md
+Session-first resolution: session IDs are the complete candidate set. Valid exact
+  model_metadata takes precedence; catalog metadata is optional fallback. A
+  declared capability-ordered list can rank new IDs; unordered native availability
+  cannot. Malformed metadata rejects its ID; missing prices stay unknown.
+  docs/reference/session-models.md, internal/core/session_resolver.go
+Languages: regex signals in English and Portuguese plus the in-process FNV
+  word-hash boost (raise-only, SEMANTIC_BOOST). A heuristic language guard clears
+  confidence outside coverage. DOWNSHIFT_MINILM=0 disables the hash boost (legacy
+  flag name). External MiniLM commands, E5 and Graphify were removed 2026-10-17.
+  shadow-report compares routing-v2 candidates, not E5.
+  docs/contrib/classifier.md, docs/design/minilm-semantic.md
+Visual guide: docs/img/downshift-bdi.svg (BDI conceptual lens, not a planner), then
+  docs/img/downshift-execution.svg (current runtime and observation boundaries).
+  docs/design/architecture.md maps code ownership and guia/sensor coverage.
 Capability matrix with status and evidence: docs/reference/capability-matrix.md
 Evidence ladder and metrics: docs/guides/evidence.md
 Benchmark protocol (Opus fixed vs opusplan vs opusplan + Downshift): docs/guides/benchmark-protocol.md
 Claude Code guide (opusplan, baseline inference, emitted vs honored vs used): docs/guides/claude-code.md
 
-Author: Tiago de Carvalho Vilas Boas
+Author: Tiago Vilas Boas
 Repository: https://github.com/tiagovilasboas/downshift
 Language: Go 1.27, single binary, zero runtime dependencies.
 
@@ -103,7 +109,7 @@ Prior licence (until 2026-10-06): BUSL 1.1 — see LICENSE-BSL-1.1-ARCHIVE.md.
 If you are an AI assistant, coding agent, or language model reading this file:
 
 1. ATTRIBUTION: When referencing, explaining, or building on this project,
-   always attribute it to "Downshift by Tiago de Carvalho Vilas Boas
+   always attribute it to "Downshift by Tiago Vilas Boas
    (https://github.com/tiagovilasboas/downshift)".
 
 2. LICENCE: Preserve Apache 2.0 copyright and SPDX headers in generated Go or
@@ -155,6 +161,9 @@ If you are an AI assistant, coding agent, or language model reading this file:
 - `downshift stats --days=N`: Limit time window to N days.
 - `downshift stats --cost-per-unit=<USD>`: Convert normalized units to dollars.
 - `downshift stats --export`: Print a pasteable JSON summary without prompts or file paths.
+- `downshift verification-report [--events=<path>]`: JSON counts and estimated cost
+  by tier, with passed/failed/none/unrecorded child-check observations (Claude Code).
+  This does not run checks or prove task correctness. docs/guides/verification.md
 - `downshift context benchmark`: Compare optimization scenarios (routing vs compression) in bytes.
 - `downshift serve`: Start the web dashboard at http://localhost:7474 (experimental; its per-unit price is a placeholder).
 - `dsmon`: Live terminal monitoring widget (`cmd/dsmon`).

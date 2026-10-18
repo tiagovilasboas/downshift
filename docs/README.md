@@ -62,6 +62,7 @@ Completed (Claude Code), Functional (Codex, Cursor), Experimental (KiroCrew, Ant
 | [guides/quota.md](guides/quota.md) | Observed usage quota |
 | [guides/session-view.md](guides/session-view.md) | `downshift session`: subagent tree, why, pause |
 | [guides/report.md](guides/report.md) | `downshift report`: routed vs control group, savings with CI |
+| [guides/verification.md](guides/verification.md) | `verification-report`: observed child checks and estimated cost by tier, with sensor limits |
 | [guides/pilot.md](guides/pilot.md) | Two-week team pilot: routed versus control |
 | [guides/probe.md](guides/probe.md) | `downshift probe`: what a hook payload really carries |
 | [guides/kirocrew-routing-guide.md](guides/kirocrew-routing-guide.md) | KiroCrew subagent routing |
@@ -96,8 +97,9 @@ Completed (Claude Code), Functional (Codex, Cursor), Experimental (KiroCrew, Ant
 
 | Doc | Topic |
 |-----|--------|
-| [design/architecture.md](design/architecture.md) | Architecture overview, BDI agentic diagram, packaging layers (memory, skills, hooks, agents, plugin) |
-| [img/bdi-agentic-light.svg](img/bdi-agentic-light.svg) | BDI loop (beliefs / desires / intentions) — also in [README](../README.md#bdi-agentic-view-beliefs--intentions) |
+| [design/architecture.md](design/architecture.md) | BDI conceptual map, complete execution flow, guia/sensor map and packaging layers |
+| [img/downshift-bdi.svg](img/downshift-bdi.svg) | Editable BDI map of the deterministic router, using Downshift brand tokens |
+| [img/downshift-execution.svg](img/downshift-execution.svg) | Editable numbered execution flow, including evidence boundaries and adjacent tools |
 | [design/engineering-loop.md](design/engineering-loop.md) | Feedback loop |
 | [design/minilm-semantic.md](design/minilm-semantic.md) | Semantic boost (in-process word-hash embedder) |
 | [design/mod-router.md](design/mod-router.md) | Can Downshift become a Claude Code mod? Design and the opt-in prototype's live runs |

@@ -42,11 +42,11 @@ checks (computacional, architecture fitness / behaviour).
 Claude Code often spawns a Task without `tool_input.model`; the child then inherits the harness default (usually the parent's model). The router has no current model to compare against (`verdict: UNKNOWN`), so it applies guardrails **R6** (`R6_UNCONFIDENT_UNKNOWN_SMALL`), **R9** (`R9_UNCONFIDENT_UNKNOWN_MID`) and **R7** (`R7_UNCONFIDENT_UNKNOWN_FRONTIER`):
 
 - confident classification → the recommended model is written (any tier);
-- unconfident classification with a **mid** recommendation → not written (R9), unless a deterministic rule lifted it (risk floor, graph escalation, an opted-in NB upshift, an operator tier floor). A prompt with no recognised signal falls to MEDIUM by default, so writing mid over the harness default could move a task up for no reason;
+- unconfident classification with a **mid** recommendation → not written (R9), unless a deterministic rule lifted it (risk floor, an opted-in NB upshift, an operator tier floor). A prompt with no recognised signal falls to MEDIUM by default, so writing mid over the harness default could move a task up for no reason;
 - unconfident classification with a **small** recommendation → not written (R6); the event records `safe_verdict: OK` and `corrections: ["R6_UNCONFIDENT_UNKNOWN_SMALL"]`;
-- unconfident classification with a **frontier** recommendation → not written (R7), unless a deterministic rule lifted it (risk floor, graph escalation, an opted-in NB upshift). The child would otherwise inherit the default, so writing the dearest tier on doubt is an unconfident upshift in disguise.
+- unconfident classification with a **frontier** recommendation → not written (R7), unless a deterministic rule lifted it (risk floor, an opted-in NB upshift, an operator tier floor). The child would otherwise inherit the default, so writing the dearest tier on doubt is an unconfident upshift in disguise.
 
-With a known current model, **R8** (`R8_UNCONFIDENT_UPSHIFT`) is the mirror of R1: an upshift on an unconfident classification is held. Uncertain calls therefore never spend money, or save it, in either direction, with or without a current model. The semantic boost cannot create a COMPLEX classification on its own: Complex needs regex evidence, the risk floor or graph escalation.
+With a known current model, **R8** (`R8_UNCONFIDENT_UPSHIFT`) is the mirror of R1: an upshift on an unconfident classification is held. Uncertain calls therefore never spend money, or save it, in either direction, with or without a current model. The semantic boost cannot create a COMPLEX classification on its own: Complex needs regex evidence or an applicable deterministic safety lift. Graph escalation was removed in 2026-10-17.
 
 ### Baseline model when the call has no `model` (Claude Code)
 

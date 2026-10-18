@@ -1,5 +1,7 @@
 # Downshift
 
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+
 *Repositório GitHub: [`downshift`](https://github.com/tiagovilasboas/downshift) · CLI `downshift` · licença Apache 2.0.*
 
 O **Downshift** é uma **suíte para otimizar o uso de tokens em agentes de código**: roteamento determinístico de subagentes mais os guardrails, pisos, gate de cota, visão de sessão, telemetria, política de contexto, mods e companion em volta dele. Ele se instala nos hooks do seu harness de código e atua onde o custo é decidido: quando o agente principal delega. Por padrão, um subagente herda o modelo mais caro da sessão, então renomear uma variável, rodar um teste ou listar um diretório sai a preço de fronteira, e uma sessão que delega muito multiplica isso.
@@ -53,8 +55,39 @@ Regras válidas para todos, fixadas em `internal/catalog/catalog_test.go`:
 
 - **Busca exata, depois alias, depois prefixo de família**: uma versão nova de uma família conhecida resolve para o tier dela.
 - **`routing:"explicit_only"` nunca é escolhido automaticamente.** Hoje são dois: `gpt-6-astra` (Codex) e `claude-fable-5-1-thinking-high` (Cursor). Se o subagente já roda um deles, `Plan()` o preserva em vez de rebaixar.
-- **Prefixos `provider/` são removidos antes da busca**: ids no estilo OpenRouter (`anthropic/claude-opus-5-5`, ou um id de família Anthropic atrás de outro prefixo) resolvem por família; ids que o catálogo não conhece ficam desconhecidos e o spawn segue inalterado.
+- **Prefixos `provider/` são removidos na busca do catálogo**: IDs no estilo OpenRouter podem resolver por família. Um ID ausente do catálogo ainda pode rotear com metadados válidos da sessão ou ordem declarada de capacidade; sem essa evidência, o spawn é mantido. Um prefixo de família não fornece o preço de uma geração nova.
 - **Inferência de sessão no Claude Code**: sem `session-models.json`, a lista da sessão é inferida do modelo atual como a escada do catálogo abaixo dele, então o roteamento só desce; os outros harnesses precisam de lista no hook, `downshift models discover` ou do arquivo ([session models, EN](../reference/session-models.md)).
+
+## Da decisão à execução
+
+O BDI é uma lente conceitual: **crenças** são os fatos disponíveis sobre tarefa e
+sessão; **desejos** são os objetivos fixos de capacidade e segurança;
+**intenções** são os planos de roteamento que passaram pelas verificações.
+O Downshift decide com regras locais. O harness executa o subagente.
+
+![Visão BDI do Downshift: fatos da tarefa e da sessão, objetivos fixos e plano verificado; observações alimentam revisão offline.](../img/downshift-bdi.png)
+
+O fluxo completo separa a decisão, a aplicação pelo harness e a observação do
+resultado. Os números indicam a sequência; as caixas inferiores mostram recursos
+que ficam ao lado do roteamento.
+
+![Fluxo completo em nove etapas: delegação, fatos da sessão, classificação, guardrails, plano, execução pelo harness, observações, relatórios e revisão offline.](../img/downshift-execution.png)
+
+**A sessão vem antes do catálogo.** Ela define todos os candidatos; metadados
+exatos válidos têm precedência. O catálogo fornece informações de fallback.
+Uma lista declarada em ordem de capacidade pode classificar IDs novos; a ordem
+de uma lista nativa de disponibilidade não prova capacidade. Metadados inválidos
+rejeitam aquele ID, e preço ausente continua desconhecido.
+[Contrato de sessão (EN)](../reference/session-models.md).
+
+**Verificação observada:** `downshift verification-report` agrupa o último teste,
+lint ou type-check reconhecido no transcript do filho e seu custo estimado por
+tier. Hoje esse sensor é do Claude Code. `passed` não prova que a tarefa está
+correta; `none` pode significar comando não reconhecido ou transcript indisponível;
+`unrecorded` indica ausência do campo. [Guia e limites (EN)](../guides/verification.md).
+
+Código, responsáveis por cada etapa e mapa de guia/sensor:
+[arquitetura (EN)](../design/architecture.md#guide-and-sensor-map).
 
 ## Além do inglês
 
@@ -81,8 +114,8 @@ Mods são plugins do Claude Code 2.1.287+ com um módulo de hooks, a única exce
 ## O Que Você Ganha
 
 * **Eficiência Real de Tokens:** Tarefas triviais e mecânicas rodam em modelos econômicos (~75% mais baratos que o Opus na tabela de preços dos provedores), reservando os modelos de fronteira para desafios arquiteturais, concorrência e alto risco.
-* **Privacidade Absoluta (Zero-Leakage):** A classificação e o roteamento ocorrem 100% na máquina local. Nenhum texto de prompt, caminho de arquivo ou código sai para serviços externos ou é persistido em arquivos de log.
-* **Velocidade na CPU:** Sem LLM no loop de classificação e sem chamadas de rede adicionais. A inferência (regex mais um score semântico local por hash de palavras; MiniLM é opcional) decide em menos de 1 ms em prompts curtos e em cerca de 0,2 s num prompt de 1 MiB.
+* **Classificação local e telemetria sem prompts:** O roteamento processa a tarefa em memória; o log registra metadados, sem o texto da tarefa ou caminhos. O harness continua responsável pelo envio do trabalho ao provedor escolhido.
+* **Sem LLM no roteamento:** Regex e boost FNV por palavras rodam dentro do binário, sem chamada de rede no caminho do hook. O tempo depende do tamanho do payload; medições e limites estão na [auditoria (EN)](../evidence/hardening-audit-2026-10-15.md).
 * **Segurança e Continuidade (Fail-Open):** Na dúvida ou em caso de qualquer falha técnica, o Downshift não interrompe o trabalho: o fluxo segue normalmente com o modelo original da sessão.
 
 > **⚠️ Nota de Transparência:** `rewrite_emitted` na telemetria indica que o Downshift emitiu com sucesso a instrução de troca de modelo. Métricas em dólares reais dependem dos tokens do filho, que no Claude Code vêm do transcript lido no `SubagentStop` (o `PostToolUse` traz o modelo resolvido, não tokens) e são precificados pela tabela do catálogo, não pela fatura. Para detalhes dos critérios de saída do beta, consulte [`docs/reference/beta-exit.md`](../reference/beta-exit.md).
@@ -114,12 +147,12 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 |---|---|---|
 | [01 · Entrada do Fluxo](01-entrada.md) | Ciclo de Vida | O que o Downshift intercepta no stdin, limites de payload e o que é ignorado |
 | [02 · Classificador](02-classificador.md) | Decisão | Heurísticas de regex, matriz de sinais ponderados e o limiar de confiança |
-| [Visão BDI agentic (EN)](../README.md#bdi-agentic-view-beliefs--intentions) | Arquitetura | Diagrama completo: percepção → crenças → desejos → deliberação → intenções → ação (todos os harnesses; sem LLM no loop) |
+| [Visão BDI e fluxo completo (EN)](../../README.md#bdi-agentic-view-beliefs--intentions) | Arquitetura | Primeiro a lente conceitual, depois o caminho executado e os limites de observação |
 | [03 · Gestão de Marchas](03-marcha.md) | Política | As faixas de capacidade (Small/Mid/Frontier), regras de downshift e upshift seguro |
 | [04 · Fallbacks e Tolerância](04-fallbacks.md) | Resiliência | O contrato fail-open: como o sistema reage a erros sem quebrar o fluxo do dev |
 | [05 · Catálogo e Sessão](05-catalogo-e-sessao.md) | Permissões | Preço de lista versus modelos realmente autorizados na sessão ativa (`session-models.json`) e, desde `downshift models discover`, os modelos que o próprio harness informa ([session-discovery](../reference/session-discovery.md), em inglês) |
 | [06 · Adapters de Harness](06-harnesses.md) | Integração | Especificidades de integração: Claude Code, Codex e Cursor; Antigravity e KiroCrew (Experimental) |
-| [07 · Camada Semântica MiniLM](07-minilm.md) | Inteligência | Classificação local por centróides vetoriais, boost semântico e privacidade |
+| [07 · Boost semântico por hash](07-minilm.md) | Classificação | FNV em processo, centróides, condições de subida e privacidade; o nome do arquivo é histórico |
 | [08 · Telemetria e Métricas](08-telemetria.md) | Observabilidade | Estrutura do `events.jsonl`, métricas normalizadas e auditoria sem vazamento de prompt |
 | [09 · Decisões Técnicas e Trade-offs](09-decisoes.md) | Engenharia | Racional de arquitetura, compensações técnicas e próximos passos do projeto |
 | [10 · Candidato em shadow](10-candidato-shadow.md) | Avaliação | Observar um candidato softmax sem trocar o roteamento de produção |
@@ -143,7 +176,10 @@ downshift stats --days=7
 # Resumo em JSON higienizado para auditorias (sem texto de prompt nem caminhos)
 downshift stats --export
 
-# Iniciar dashboard web local
+# Verificações observadas e custo estimado por tier (Claude Code)
+downshift verification-report
+
+# Dashboard web experimental; preço por unidade é placeholder
 downshift serve
 ```
 

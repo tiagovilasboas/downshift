@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="910" viewBox="0 0 1600 910" role="img" aria-labelledby="title desc">
+<title id="title">Downshift through a BDI lens</title><desc id="desc">Session facts and fixed safety goals feed a checked routing intention. The adapter emits a response; the harness executes. Available observations are recorded for offline review, not automatic learning.</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0D1117"/><stop offset="1" stop-color="#0D1117"/></linearGradient><pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" fill="none" stroke="#9CA3AF" stroke-opacity=".06"/></pattern><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#22C55E"/></marker><marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#22C55E"/></marker></defs>
+<rect width="1600" height="910" rx="28" fill="url(#bg)"/><rect width="1600" height="910" rx="28" fill="url(#grid)"/>
+<g transform="translate(65 34) scale(.22)"><path d="M28 22 H104 L168 86 V140 L137 171 V98 L94 55 H28 Z" fill="#F9FAFB"/><path d="M28 80 H81 L120 119 V164 L94 190 V130 L74 110 H28 Z" fill="#F9FAFB"/><path d="M28 138 H65 L103 176 L78 201 L55 178 H28 Z" fill="#22C55E"/></g><g font-family="Inter,ui-sans-serif,system-ui,Arial,sans-serif"><text x="130" y="78" font-size="36" font-weight="700" fill="#F9FAFB">Downshift through a BDI lens</text><text x="65" y="122" font-size="23" fill="#9CA3AF">A conceptual map of deterministic routing. No LLM deliberates inside the router.</text>
+<rect x="65" y="180" width="420" height="180" rx="20" fill="#161B22" stroke="#22C55E" stroke-width="2.5"/><text x="275" y="223" text-anchor="middle" font-size="27" font-weight="700" fill="#22C55E">Beliefs: available facts</text>
+<text x="275" y="262" text-anchor="middle" font-size="22" fill="#F9FAFB">Task signals, confidence and risk</text>
+<text x="275" y="293" text-anchor="middle" font-size="22" fill="#F9FAFB">Session IDs, tiers, effort and quota</text>
+<text x="275" y="324" text-anchor="middle" font-size="22" fill="#F9FAFB">Catalog fallback when needed</text>
+<rect x="65" y="430" width="420" height="180" rx="20" fill="#161B22" stroke="#22C55E" stroke-width="2.5"/><text x="275" y="473" text-anchor="middle" font-size="27" font-weight="700" fill="#22C55E">Desires: fixed goals</text>
+<text x="275" y="512" text-anchor="middle" font-size="22" fill="#F9FAFB">Choose sufficient capability</text>
+<text x="275" y="543" text-anchor="middle" font-size="22" fill="#F9FAFB">Hold uncertain model changes</text>
+<text x="275" y="574" text-anchor="middle" font-size="22" fill="#F9FAFB">Respect risk and project floors</text>
+<rect x="680" y="300" width="365" height="205" rx="20" fill="#161B22" stroke="#22C55E" stroke-width="2.5"/><text x="862" y="343" text-anchor="middle" font-size="27" font-weight="700" fill="#22C55E">Intentions: checked plan</text>
+<text x="862" y="382" text-anchor="middle" font-size="22" fill="#F9FAFB">Classify → Route → Check</text>
+<text x="862" y="413" text-anchor="middle" font-size="22" fill="#F9FAFB">Restrict to eligible session IDs</text>
+<text x="862" y="444" text-anchor="middle" font-size="22" fill="#F9FAFB">Rewrite or preserve the spawn</text>
+<rect x="1220" y="300" width="315" height="205" rx="20" fill="#161B22" stroke="#22C55E" stroke-width="2.5"/><text x="1377" y="343" text-anchor="middle" font-size="27" font-weight="700" fill="#22C55E">Action: hook response</text>
+<text x="1377" y="382" text-anchor="middle" font-size="22" fill="#F9FAFB">Emit model / effort</text>
+<text x="1377" y="413" text-anchor="middle" font-size="22" fill="#F9FAFB">or allow unchanged</text>
+<text x="1377" y="444" text-anchor="middle" font-size="22" fill="#F9FAFB">Harness owns execution</text>
+<path d="M485 270 H580 V360 H672" fill="none" stroke="#22C55E" stroke-width="4" stroke-linejoin="round" marker-end="url(#a)"/>
+<path d="M485 520 H580 V440 H672" fill="none" stroke="#22C55E" stroke-width="4" stroke-linejoin="round" marker-end="url(#a)"/>
+<path d="M1045 400 H1212" fill="none" stroke="#22C55E" stroke-width="4" stroke-linejoin="round" marker-end="url(#a)"/>
+<text x="1132" y="372" text-anchor="middle" font-size="21" fill="#9CA3AF">emit</text>
+<rect x="680" y="650" width="855" height="150" rx="20" fill="#161B22" stroke="#22C55E" stroke-width="2.5"/><text x="1107" y="693" text-anchor="middle" font-size="27" font-weight="700" fill="#22C55E">Observation → offline review</text>
+<text x="1107" y="732" text-anchor="middle" font-size="22" fill="#F9FAFB">Honor, child status, usage and verification where available</text>
+<text x="1107" y="763" text-anchor="middle" font-size="22" fill="#F9FAFB">Human-reviewed feedback and opt-in candidates; no automatic retraining</text>
+<path d="M1377 505 V642" fill="none" stroke="#22C55E" stroke-width="4" stroke-linejoin="round" marker-end="url(#g)"/>
+<text x="800" y="855" text-anchor="middle" font-size="21" fill="#9CA3AF">Solid arrows show execution. Observation does not automatically change policy.</text>
+<text x="800" y="880" text-anchor="middle" font-size="21" fill="#9CA3AF">Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift</text>
+</g></svg>

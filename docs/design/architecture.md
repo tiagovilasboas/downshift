@@ -3,7 +3,7 @@
 High-level view for adopters and contributors. Implementation details live in
 code and [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 ---
 
@@ -47,7 +47,7 @@ external tool. Dotted boxes are opt-in or shadow and never change the route.
  classify + risk [D]  Classify (signals) → hash semantic boost → risk floor /
    abstain → NB second opinion (shadow unless opted in) ┆ adapt / score (shadow) ┆
              ▼
- Route + Check [D]  tier → effort → catalog model → verdict vs current →
+ Route + Check [D]  tier → effort → session-resolved model → verdict vs current →
    R1 R2 R4 R5 R6 R7 R8 R9 (any hit ⇒ OK, keep current) → project floor
    (.downshift/policy.json, re-checked) ┆ adapt memory, score path (shadow/opt-in) ┆
              ▼
@@ -79,11 +79,24 @@ external tool. Dotted boxes are opt-in or shadow and never change the route.
    shadow-report · classifier tests
 ```
 
-![Architecture](../img/architecture.svg)
+### Read the decision, then the execution
 
-BDI agentic loop (beliefs / desires / intentions on the hook path):
+BDI is a conceptual lens: task and session facts are **beliefs**, fixed safety
+and capability goals are **desires**, and a checked routing plan is an
+**intention**. Downshift implements deterministic routing, not a BDI framework
+or an LLM planner. Available observations support offline review rather than
+automatic policy updates.
 
-![BDI agentic router](../img/bdi-agentic-light.svg)
+![BDI lens: available task and session facts and fixed safety goals feed a checked plan; the harness executes and observations support offline review.](../img/downshift-bdi.png)
+
+The complete flow keeps the same ownership boundary: Downshift recommends;
+the harness executes; sensors record only the evidence they receive.
+
+![Complete execution flow: delegation, session-first resolution, classification, guarded decision, session plan, harness execution, observation, reports and offline review.](../img/downshift-execution.png)
+
+Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
+[execution SVG](../img/downshift-execution.svg). Their colors follow the
+[brand tokens](../brand/downshift-brand-tokens.json).
 
 ### Step by step, with what the code does
 
@@ -106,12 +119,18 @@ BDI agentic loop (beliefs / desires / intentions on the hook path):
    from hook lists, `session-models.json`, discovery, or (Claude Code only)
    inference from the current model, never above it. Quota marks come from the
    hook payload, the `quota.json` cache or an opt-in native export file; a hook
-   never calls a provider.
+   never calls a provider. Every adapter calls `ResolveSessionModels` before
+   classification: exact session metadata takes precedence, and the catalog
+   supplies optional fallback metadata. The session is the complete candidate
+   set. Declared capability order can rank new IDs; an unordered native inventory
+   cannot. Malformed metadata rejects its ID instead of reopening catalog or
+   positional fallback. Missing prices remain unknown, including family matches
+   to a different generation. See [session models](../reference/session-models.md).
 4. **Classification and risk** `[D]`. `classifyTask` (`internal/core/policy.go`)
    runs the signal scorer, the monotonic hash semantic boost, the risk floor and
    risk abstention (`risk.go`), and the naive-Bayes second opinion.
 5. **Route, guardrails, floor** `[D]`. `Route` resolves tier, effort and the
-   catalog model, compares with the current model, then `Check`
+   session-resolved model, compares with the current model, then `Check`
    (`selfcheck.go`) applies R1, R2, R4, R5, R6, R7, R8, R9 (R3 retired): any
    violation turns the safe verdict into OK, which keeps the current model.
    Only a deterministic lift (risk, opted-in NB upshift, operator floor)
@@ -128,22 +147,26 @@ BDI agentic loop (beliefs / desires / intentions on the hook path):
    `updatedInput` with only `model` and `reasoning_effort` changed; kirocrew
    has no rewrite channel and gets a block-with-reason instead.
 7. **Subagent execution** `[H]`. The harness decides whether the rewrite takes
-   effect. Honored on Claude Code, Antigravity and (inferred) Codex; dropped on
-   Cursor Free and legacy Pro; config-only on Grok. Downshift does not run the
+   effect. Observed on Claude Code; inferred on Codex; unconfirmed on Cursor
+   (dropped on Free and legacy Pro). Antigravity has limited experimental proof
+   on one build; KiroCrew uses policy and retry. Grok is config-only. Downshift does not run the
    child, cannot see its context, and never edits what it returns.
 8. **Child end and usage** `[D]` from `[H]` payloads. PostToolUse on Claude Code
    is the launch of an async child: it carries `resolvedModel` (honored or
    refuted) and no tokens. SubagentStop supplies the child transcript, from
    which the shared recorder (`internal/childend`) prices tokens with catalog
    list prices. A nil port stays unobserved; absence is never inferred.
-   Latency is not measured per step: the only `latency_ms` in the log is the
-   E5 shadow's own.
+   Per-step routing latency is not a supported telemetry measurement. Claude
+   Code also records the last recognized check command's result as
+   `verification: passed|failed|none`; this is a transcript sensor, not proof
+   that the implementation is correct. [Verification guide](../guides/verification.md).
 9. **Telemetry and read-outs** `[D]`. `events.jsonl` holds routing metadata
    only (no prompts, tasks or paths). `stats` estimates at list price;
    `report` compares routed spawns with the control group, counting "completed"
    only for harnesses that declare an end event and have end records;
-   `session`, `watch` and `serve` read the same log. `serve` is a local HTTP
-   dashboard, not a proxy.
+   `verification-report` groups observed checks and estimated cost by tier;
+   `session` and `watch` read the same log. `serve` is an experimental local HTTP
+   dashboard with a placeholder per-unit price, not a proxy or billing evidence.
 10. **Benchmarks and tuning** `[D]`, offline. `benchmark` scores the classifier
     on labelled fixtures (tier accuracy, unsafe downgrade, over-routing);
     `eval-outcome` runs the outcome suite (minimal fixtures in OSS, full suite
@@ -152,6 +175,23 @@ BDI agentic loop (beliefs / desires / intentions on the hook path):
     compares candidate classifiers that never touched a route.
 
 ---
+
+## Guide and sensor map
+
+This is the outer harness around a coding agent (model + vendor harness + user
+harness). Each concern has a guide before execution and a sensor after it;
+sensor coverage depends on the harness, not just on emitted JSON.
+
+| Concern / axis | Guia (feedforward) | Sensor (feedback) | Coverage |
+|---|---|---|---|
+| Routing safety / behaviour | Session metadata and project policy contract (inferencial); shared guards and tier floors (computacional) | Resolver, guardrail and all-adapter conformance tests (computacional) | Shared core; a passing test does not prove native rewrite honor |
+| Cross-harness architecture / architecture fitness | Adapters parse/emit; policy stays in shared code (inferencial, `AGENTS.md`) | Conformance tests and code review against that boundary (computacional + inferencial) | Repository / PR / CI |
+| Cost and outcome / behaviour | Control-group and evidence protocol (inferencial) | Honor, child-end and usage records; `report` and `verification-report` (computacional) | Claude Code has the most complete records; absent evidence stays unknown |
+| Privacy and upkeep / maintainability | Prompt-free telemetry and bounded hook I/O contracts (inferencial) | Existing privacy, payload and documentation checks (computacional) | Repository checks; metadata rather than raw task text is persisted |
+
+Human review decides whether offline findings justify a policy change. The
+verification sensor observes a check result; it does not replace acceptance
+tests, a security review or a production signal.
 
 ## Boundaries
 

@@ -7,7 +7,7 @@
 
 **A suite for optimizing token use in coding agents: deterministic subagent routing, with the guardrails, floors, quota gate, session view, telemetry, context policy, mods and a companion around it. Conservative under doubt, measured.**
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 [![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
@@ -51,33 +51,24 @@ One binary, one state directory, every piece computed for every harness. Status 
 | **Guardrails for risky work.** Secrets, payments, auth, destructive operations keep a floor; a project can require a minimum tier in `.downshift/policy.json`. | Implemented, every harness. | [config](docs/guides/config.md#project-tier-floor-optional) |
 | **See every decision.** A stderr line per routed spawn, a statusline, `downshift session --tree` or `/downshift`, `downshift watch`, `downshift doctor` with a fix per failure. | Implemented. | [session view](docs/guides/session-view.md) |
 | **Know what each child cost and how it ended.** Tokens and catalog-priced cost per subagent, end status (`completed`, `error`, `interrupted`, ...), respawn-after-failure hint. | Implemented on Claude Code (usage from the child transcript). Codex and Cursor end parsers exist but are unverified and carry no usage; Antigravity and KiroCrew record no child end. Estimated from list prices, not an invoice. | [session models](docs/reference/session-models.md#claude-code-real-usage) |
+| **See whether the child checked its work.** `verification-report` groups cost and the last recognized test/lint/type-check result by tier. | Implemented on Claude Code. `passed`, `failed`, `none` and `unrecorded` are sensor observations, not task acceptance. | [verification evidence](docs/guides/verification.md) |
 | **Measure instead of believe.** A built-in control group (about 1 in 10 spawns unrouted), `downshift stats` for estimates, `downshift report` for routed versus control cost per completed task with a confidence interval. | Implemented. The strict definition (a child that ended `completed`, with its rework, 20 tasks per arm) has not unlocked yet; the 2026-10-15 A/B measured cost per run with an acceptance check. | [evidence ladder](docs/guides/evidence.md) · [benchmark protocol](docs/guides/benchmark-protocol.md) |
 | **Find the next saving.** Skills for setup, read-only audit and a fixed-order cost diagnosis (routing, fixed context, tool output, project policy, misroutes). | Implemented as agent guidance; a skill's own description costs context. | [skills](skills/) · [companions](docs/guides/companions.md) |
 | **Context and session policy.** Native observe-only compressor; Headroom detected as companion; `setup` sets `opusplan`, plan mode and Claude Code's You should know mod on Claude Code only for keys you have not set. | Implemented, limited: a hook cannot change tool output in flight; session policy is Claude Code only. | [context optimization](docs/design/context-optimization.md) · [Claude Code guide](docs/guides/claude-code.md) |
-| **Learn from outcomes.** Adapt memory, naive-Bayes second opinion, capability scores, multilingual E5. | Shadow or opt-in. They record what they would do and never change a spawn until an owner enables a flag. | [design](docs/design/) |
+| **Review outcomes before changing routing.** Adapt memory, naive-Bayes second opinions, capability scores and candidate classifiers. | Shadow or opt-in. Observations do not automatically retrain the router or enable a candidate. | [design](docs/design/) |
 | **Know the models.** An embedded catalog of 34 entries across the Anthropic, OpenAI, Gemini, Grok and Cursor-native families, with tiers, list prices, aliases and family prefixes; `explicit_only` models are never picked automatically; OpenRouter-style `provider/` prefixes are stripped before lookup. | Implemented (`catalog_test.go`). | [The LLMs it knows](#the-llms-it-knows) · [session models](docs/reference/session-models.md) |
-| **Read more than English.** Regex signals in English and Portuguese plus a word-hash semantic boost by default; a language guard clears confidence elsewhere; MiniLM and the multilingual E5 fuse are opt-in, E5 in shadow with `downshift shadow-report`. | Implemented for EN and PT-BR; other languages abstain by design; E5 gain unproven. | [Languages](#languages) · [classifier](docs/contrib/classifier.md) |
+| **Read English and Portuguese.** Weighted regex signals plus an in-process FNV word-hash boost; a language guard clears confidence outside coverage. | Implemented for EN and PT-BR; language detection is heuristic. External MiniLM, E5 and Graphify were removed. | [Languages](#languages) · [classifier](docs/contrib/classifier.md) |
 | **Mods and companions.** Three vendored Claude Code mods, one experimental router mod, four recommended mods, one companion. | Shipped (mods); documented (companions). | [Mods](#mods) · [companions](docs/guides/companions.md) |
 
 Status words follow one rule: *Implemented* means code, tests and a dated observation; *not validated everywhere* means the harness or plan has not shown the effect; *Shadow* and *Experimental* never touch a spawn. The full table with evidence per row is the [capability matrix](docs/reference/capability-matrix.md).
 
 ## How the pieces connect
 
-```
-main agent delegates ──► hook (PreToolUse) ──► baseline model + session list
-                                                   │
-                                     classify + risk ─► guardrails ─► cheaper model when safe
-                                                   │                   same model under doubt
-                                                   │                   stronger only when policy allows
-                                                   ▼
-                                        subagent runs (harness)
-                                                   │
-                         PostToolUse / SubagentStop ─► usage, end status, control group
-                                                   │
-                            stats · report · session ─► cost per completed task, misroutes
-                                                   │
-                                   benchmarks · feedback ─► tune signals, keep shadow candidates
-```
+The main agent delegates; Downshift recommends a checked model and effort; the
+harness executes. Available observations feed local reports and offline review.
+Start with the [BDI conceptual view](#bdi-agentic-view-beliefs--intentions), then
+follow the [complete execution diagram](#complete-execution-flow). Both distinguish
+the router's decision from what the harness actually applies.
 
 Who owns each box, and what Downshift deliberately does not do (it is not an HTTP proxy, it does not rewrite tool results, it does not store prompts): [architecture](docs/design/architecture.md).
 
@@ -168,7 +159,7 @@ The session model list is optional on Claude Code: without one, Downshift infers
 
 ## What it is not
 
-An HTTP gateway or proxy (that is LiteLLM's job), a context compressor in the request path (Headroom's; Downshift's own compressor observes), a hosted model marketplace (OpenRouter), or an LLM-based classifier (deterministic signals plus a local semantic score from a word-hash embedder; MiniLM is opt-in). It acts on subagent spawns inside harnesses that expose a pre-tool hook, and the only network call is the optional, at-most-daily refresh of public capability scores ([scores](docs/reference/scores.md)). Learned tier memory stays in shadow. Comparison with gateways and SDKs: [when-to-use](docs/guides/when-to-use.md).
+An HTTP gateway or proxy (that is LiteLLM's job), a context compressor in the request path (Headroom's; Downshift's own compressor observes), a hosted model marketplace (OpenRouter), or an LLM-based classifier (deterministic signals plus a local semantic score from a word-hash embedder). It acts on subagent spawns inside harnesses that expose a pre-tool hook, and the only network call is the optional, at-most-daily refresh of public capability scores ([scores](docs/reference/scores.md)). Learned tier memory stays in shadow. Comparison with gateways and SDKs: [when-to-use](docs/guides/when-to-use.md).
 
 ## How it works
 <picture>
@@ -192,32 +183,48 @@ Billing and token usage happen at the subagent tier, not the session.
 
 1. **Intercept.** The harness fires a `PreToolUse` hook when a subagent is about to start. Downshift reads the task text in memory only; prompts are never stored.
 2. **Classify.** Deterministic signals (`internal/core`) plus an optional in-process word-hash semantic boost (`DOWNSHIFT_MINILM=0` opts out) map the task to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX (English and Portuguese vocabulary). A language guard and risk abstention clear confidence on known multilingual failure modes without an LLM in the loop. The semantic score only raises, needs a regex signal behind it, and cannot create COMPLEX on its own. Weights and the tier map are in [docs/reference/complexity-weights.md](docs/reference/complexity-weights.md).
-3. **Choose.** Policy picks small, mid, or frontier. The target must come from the session's model list, ordered least to most capable ([session-models.md](docs/reference/session-models.md)). Doubt never spends money: an unconfident upshift, or an unconfident frontier pick with no known current model, is held. Only deterministic rules (risk floor, risk abstention, operator tier floor, opted-in NB upshift) may move a task up or hold a rewrite.
+3. **Choose.** Policy picks small, mid, or frontier. All adapters resolve session metadata before classification: the session supplies all candidates, exact metadata wins, and the catalog is optional fallback. A declared capability-ordered list can rank new IDs; an unordered availability list cannot ([session-models.md](docs/reference/session-models.md)). Doubt never spends money: an unconfident upshift, or an unconfident frontier pick with no known current model, is held. Only deterministic rules (risk floor, risk abstention, operator tier floor, opted-in NB upshift) may move a task up or hold a rewrite.
 4. **Remember, in shadow.** If `adapt-memory.json` has a reviewed hit or miss for that class and feature, Downshift records the tier it would use. The spawn still uses the classifier tier.
 5. **Rewrite or stay out.** Downshift returns the new model in `updatedInput`. If anything is unknown or fails, it does nothing and the spawn runs unchanged (fail-open).
 
-Internals: [docs/design/architecture.md](docs/design/architecture.md). The full runtime routing diagram is [here](docs/brand/downshift-routing-runtime-light.svg) ([dark](docs/brand/downshift-routing-runtime-dark.svg)).
+Internals and code ownership: [docs/design/architecture.md](docs/design/architecture.md).
 
 ### BDI agentic view (beliefs → intentions)
 
-Downshift is not an LLM planner: it is a **deterministic BDI-style router** on the subagent hook. Each spawn is one cycle—perceive the payload, update beliefs, pursue fixed desires, commit an intention only if guardrails pass, act on the wire, then learn from honor/usage without storing task text.
+**BDI is a conceptual lens for reading this deterministic router**, not a separate
+agent framework or an LLM planner. Beliefs are the available task and session
+facts; desires are fixed capability and safety goals; intentions are checked
+routing plans. The adapter emits the plan, and the harness owns execution.
+Observations are recorded for offline review; they do not automatically retrain
+the classifier or change the next spawn.
+
+![Downshift BDI view: task and session facts plus fixed safety goals feed a checked routing plan; the harness executes, and available observations support offline review.](docs/img/downshift-bdi.png)
 
 | BDI | Downshift | Packages / artifacts |
 |-----|-----------|----------------------|
 | **Perception** | Adapter reads PreToolUse JSON (task, model, session facts) | `internal/adapters/*`, `runHookAdapter` |
-| **Beliefs** | Complexity, confidence, risk, language guard, catalog tier, session allowlist, quota | `internal/core`, `internal/catalog`, `session-models.json` |
-| **Desires** | Match tier to task; save cost; never confident upshift on doubt; never unsafe downshift on risk | `EscalationIntent`, R5–R9 in `selfcheck.go` |
+| **Beliefs** | Complexity, confidence, risk, language guard, exact session metadata, optional catalog fallback, quota | `internal/core/session_resolver.go`, `internal/catalog`, `session-models.json` |
+| **Desires** | Match capability to task; hold uncertain changes; respect risk and project floors | `EscalationIntent`, `selfcheck.go` |
 | **Deliberation** | `Route` + `Check` (no LLM, no network on hot path) | `internal/core/policy.go` |
 | **Intention** | `Decision` + `SafeVerdict` + `PlanForSession` → `RewritePlan` | `Decision`, `RewritePlan` |
 | **Action** | `updatedInput.model` / Codex effort / Kiro allow-block | Adapter encode |
 | **Feedback** | Honor, usage, child status → telemetry | `internal/hookport`, `internal/telemetry` |
 
-Shadow observers (adapt memory, routing v2 candidate classifier, public-score path) update **candidate beliefs** only; they do not change intentions until an owner enables a flag.
+Adapt memory and candidate classifiers observe by default. Score routing and NB
+changes require explicit opt-in flags and stay behind the routing guards.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/img/bdi-agentic-dark.svg">
-  <img src="docs/img/bdi-agentic-light.svg" alt="BDI agentic diagram: perception through adapters, beliefs in core, desires as tier and safety goals, deterministic deliberation, guardrail-checked intentions, harness action, and telemetry feedback. Parent LLM sits outside the loop." width="920">
-</picture>
+### Complete execution flow
+
+![Nine numbered stages: delegation, local session facts, classification, guardrails, session plan and response, harness execution, observations, reports and offline review. Context tools, Claude Code extras and Headroom sit beside the routing path.](docs/img/downshift-execution.png)
+
+**Read the evidence in three steps:** emitted is a hook response; honored is a
+harness observation; usage and verification require their own records. Claude
+Code has the most complete evidence. Codex and Cursor carry no child usage today;
+Antigravity and KiroCrew remain experimental. See the [harness matrix](docs/reference/harness-matrix.md).
+
+Editable sources: [BDI SVG](docs/img/downshift-bdi.svg) ·
+[execution SVG](docs/img/downshift-execution.svg). Code ownership and the
+guide/sensor map: [architecture](docs/design/architecture.md#guide-and-sensor-map).
 
 ### Languages
 
@@ -242,6 +249,12 @@ Historical note: external MiniLM commands, multilingual E5, and Graphify escalat
 
 ## The LLMs it knows
 
+**Session first, catalog second.** The current session defines the complete
+candidate set. Valid exact metadata can describe a model absent from the
+embedded catalog. Invalid descriptors reject that ID, and missing prices remain
+unknown. The catalog helps supply capability, alias and price metadata; it never
+adds a model to the session. See [the session contract](docs/reference/session-models.md#session-metadata-before-catalog-fallback).
+
 Model data lives in the embedded [`catalog.json`](internal/catalog/catalog.json) (version 2, updated 2026-10-16; 34 entries), never in Go source. A user override under the [state dir](docs/guides/config.md) merges on top. Per harness the catalog carries:
 
 | Harness | Families in the catalog |
@@ -256,7 +269,7 @@ Rules that hold for all of them, pinned by `internal/catalog/catalog_test.go`:
 
 - **Lookup is exact, then alias, then family prefix.** A newer version of a known family (say a `claude-opus` id the catalog has never seen) still resolves to its tier.
 - **`routing:"explicit_only"` is never chosen automatically.** Two entries carry it today, `gpt-6-astra` (Codex) and `claude-fable-5-1-thinking-high` (Cursor). If the current subagent already runs one, `Plan()` preserves it instead of downshifting. `claude-fable-5-1` on Claude Code is opt-in by listing, not `explicit_only`; the install example omits it on purpose.
-- **`provider/` prefixes are stripped before lookup.** OpenRouter-style ids (`anthropic/claude-opus-5-5`, or an Anthropic-family id behind any other prefix) resolve by family; an id the catalog does not know stays unknown and the spawn is left unchanged.
+- **`provider/` prefixes are stripped for catalog lookup.** OpenRouter-style IDs can resolve by family. IDs absent from the catalog can still route when the session supplies valid capability metadata or a declared capability order. Without that evidence, the spawn is held. Family fallback never invents the new generation's price.
 - **Session inference on Claude Code.** Without a `session-models.json`, the session list is inferred from the current model as the catalog ladder below it, so routing only ever moves down from what you are running; `DOWNSHIFT_INFER_SESSION=off` disables it. Other harnesses need a hook-supplied list, `downshift models discover` or the file ([session models](docs/reference/session-models.md)).
 - **Prices are a dated list-price snapshot** with cache rates where the snapshot had them; `downshift models check` and `models pull` compare and refresh.
 
@@ -384,6 +397,6 @@ Every feature must serve every harness: behaviour in shared layers, adapters onl
 
 Apache License 2.0. See [LICENSE](LICENSE), [NOTICE](NOTICE) and [docs/reference/relicense.md](docs/reference/relicense.md).
 
-Downshift by Tiago de Carvalho Vilas Boas · https://github.com/tiagovilasboas/downshift
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Conceptual backbone: [Harness engineering (Fowler)](https://martinfowler.com/articles/harness-engineering.html).
