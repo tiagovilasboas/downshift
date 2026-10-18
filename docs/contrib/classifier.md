@@ -24,18 +24,18 @@ toward **no rewrite** when confidence is low).
 The full weight table, the structural bonuses, and how each harness turns
 the tier into a model id are in [complexity-weights.md](../reference/complexity-weights.md).
 
-## Scoring (`internal/core/signals.go` + `classifier.go`)
+## Scoring (`internal/classify/signals.go` + `internal/classify/classifier.go`)
 
 1. **Weighted regex vote** — each pattern adds to a complexity bucket; highest sum wins.
 2. **Tie-break** — adjacent ties resolve toward the **higher** capability tier (never
    under-route on a tie).
 3. **Confidence margin** — a win needs at least **2 points** over the runner-up, or
    the classifier is treated as low-confidence (conservative routing).
-4. **Semantic boost (in-process hash)** — `internal/semantic`: nearest centroid can **raise**
+4. **Semantic boost (in-process hash)** — policy in `internal/fuse` (the embedder is `internal/semantic`; `core.ClassifyWithSemantic` is a wrapper): nearest centroid can **raise**
    complexity when regex is hesitant; it **never lowers** a class. It is ignored for no-signal prompts and cannot create COMPLEX without regex evidence. A lift is recorded as `SEMANTIC_BOOST`. `DOWNSHIFT_MINILM=0` disables. Graphify and external MiniLM commands were removed on 2026-10-17.
-6. **Language guard** — `lang_guard.go`: unsupported or mixed-helper-brief foreign cues set
+6. **Language guard** — `internal/classify/lang_guard.go`: unsupported or mixed-helper-brief foreign cues set
    `UnsupportedLanguage` and clear confidence (M3 mixed bucket).
-7. **Risk floor and abstention** — `risk.go`: Trivial/Simple + risk → Medium with `RiskFloor`.
+7. **Risk floor and abstention** — `internal/classify/risk.go`: Trivial/Simple + risk → Medium with `RiskFloor`.
    Confident Medium/Simple + risk on bounded delegation briefs or narrow high-stakes patterns
    → `RiskAbstain` (confidence cleared, tier unchanged); counts as `deterministicLift` for R7/R9.
 
@@ -48,7 +48,7 @@ Multilingual E5 (shadow and fuse) was removed on 2026-10-17. Logs written before
 1. Reproduce with `downshift try "<prompt>" [harness]`.
 2. Open a `misroute:` issue (see [CONTRIBUTING.md](../../CONTRIBUTING.md)).
 3. Add a case to `internal/core/classifier_edge_test.go` (or related edge tests).
-4. Adjust `RawSignals` in `signals.go`; never tune against maintainer eval-only splits (downshift-labs).
+4. Adjust `RawSignals` in `internal/classify/signals.go`; never tune against maintainer eval-only splits (downshift-labs).
 
 ---
 
@@ -64,6 +64,6 @@ It does **not** change hook JSON. Labels for supervised training require explici
 
 | Asset | Role |
 |-------|------|
-| `classifier_edge_test.go` | Regression from misroute reports |
+| `internal/core/classifier_edge_test.go` | Regression from misroute reports |
 | `benchmark/seed.json` | Train/tune signals (not in same PR as signal edits + fresh) |
 | Eval-only splits (labs) | Never use to edit signals in the same change set |
