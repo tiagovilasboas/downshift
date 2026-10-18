@@ -319,3 +319,45 @@ func TestDCIStats_DaysFilter(t *testing.T) {
 		t.Errorf("TotalContextBytes with --days=7 = %d, want 500", exportSummary.DCISummary.TotalContextBytes)
 	}
 }
+
+func TestDCIStats_DCIFlag(t *testing.T) {
+	tempDir := t.TempDir()
+	dciLog := filepath.Join(tempDir, "dci-events.jsonl")
+	routeLog := filepath.Join(tempDir, "events.jsonl")
+
+	t.Setenv("DOWNSHIFT_DCI_EVENT_LOG", dciLog)
+	t.Setenv("DOWNSHIFT_EVENT_LOG", routeLog)
+
+	// When both route and DCI events exist, --dci flag prints only DCI section
+	subagentEv := telemetry.Event{
+		SessionID: "sess-test-9999",
+		Timestamp: time.Now().UTC().Format(time.RFC3339Nano),
+		Outcome:   "rewrite_emitted",
+		Tier:      "standard",
+		ToModel:   "claude-haiku",
+		FromModel: "claude-opus",
+		Harness:   "claude-code",
+	}
+	_ = telemetry.AppendTo(routeLog, subagentEv)
+
+	dciEv := codeintel.Telemetry{
+		TotalDurationMs:  15,
+		InjectionApplied: true,
+		OutputBytes:      900,
+		Timestamp:        time.Now().UTC(),
+	}
+	_ = codeintel.RecordTelemetryTo(dciLog, dciEv)
+
+	out := captureStdout(func() {
+		if rc := runStats([]string{"--dci"}); rc != 0 {
+			t.Errorf("runStats --dci rc = %d, want 0", rc)
+		}
+	})
+
+	if !strings.Contains(out, "Downshift Code Intelligence (DCI)") {
+		t.Errorf("expected DCI output, got: %s", out)
+	}
+	if strings.Contains(out, "Subagent decisions") || strings.Contains(out, "Estimated at list price") {
+		t.Errorf("--dci should focus on DCI stats, got: %s", out)
+	}
+}

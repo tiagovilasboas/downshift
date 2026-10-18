@@ -50,11 +50,11 @@ type linkKey struct {
 // aggregator accumulates Stats over one Aggregate call. Each method is one
 // concern of the single pass.
 type aggregator struct {
-	s            Stats
-	decisions    map[linkKey]Event
+	s         Stats
+	decisions map[linkKey]Event
 	// refuted holds rewrites a linked "resolved" record says the harness did
 	// not run: they are not applied and save nothing.
-	refuted      map[linkKey]bool
+	refuted map[linkKey]bool
 	// linked marks usage records already matched to a decision.
 	linked       map[linkKey]bool
 	dciLatencies []float64
