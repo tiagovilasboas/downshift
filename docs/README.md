@@ -124,6 +124,7 @@ Completed (Claude Code), Functional (Codex, Cursor), Experimental (KiroCrew, Ant
 | [evidence/multilang-codex-2026-10-16.md](evidence/multilang-codex-2026-10-16.md) | Multilingual checks through the Codex adapter (wire response and telemetry only) |
 | [evidence/baseline-freeze-2026-10-17.md](evidence/baseline-freeze-2026-10-17.md) | Baseline freeze manifest: frozen eval sets, sha256, reference numbers the next run must reproduce, how to verify |
 | [evidence/plugin-mods-smoke-2026-10-17.md](evidence/plugin-mods-smoke-2026-10-17.md) | Plugin and mods under headless Claude Code 2.1.302: load, routing decisions, double routing with the router mod (n=1 per round) |
+| [evidence/hash-v2-audit-2026-10-17.md](evidence/hash-v2-audit-2026-10-17.md) | Hash embedder inventory at `2b0cfcd`: unigram FNV vector, fixed 0.45 raise-only gate; not Weinberger hashing, n-grams, a top-2 margin, or calibrated selective classification |
 
 ## Brand
 
