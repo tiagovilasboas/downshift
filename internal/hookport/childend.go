@@ -49,6 +49,11 @@ type ChildEnd struct {
 	Status telemetry.ChildStatus
 	// Usage is nil when no token count was found.
 	Usage *TokenUsage
+	// Cumulative is true when Usage is the child's running total read from its
+	// whole transcript. A child can stop, be sent another message and stop
+	// again, so a later stop of an agent already priced records only the growth
+	// since the last record. False for counts that cover one turn or call.
+	Cumulative bool
 	// Source is SourcePayload or SourceTranscript.
 	Source string
 	// IsChild is true when the event is a subagent spawn or stop, false when

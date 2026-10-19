@@ -125,7 +125,7 @@ func TestResolveModel_Fallback(t *testing.T) {
 		{"Explore under a Fable setting stays unknown", "fable", map[string]any{"subagent_type": "Explore"}, Event{TranscriptPath: empty}, "", false},
 		{"Plan under a Fable setting inherits", "fable", map[string]any{"subagent_type": "Plan"}, Event{TranscriptPath: empty}, fableID, true},
 		{"custom type has no fallback", "sonnet", map[string]any{"subagent_type": "my-reviewer"}, Event{TranscriptPath: empty}, "", false},
-		{"built-in with its own model has no fallback", "sonnet", map[string]any{"subagent_type": "claude-code-guide"}, Event{TranscriptPath: empty}, "", false},
+		{"built-in with its own model keeps it, not the setting", "sonnet", map[string]any{"subagent_type": "claude-code-guide"}, Event{TranscriptPath: empty}, familyID(t, "haiku"), false},
 		{"explicit Task model wins", "sonnet", map[string]any{"model": "haiku"}, Event{TranscriptPath: empty}, "haiku", false},
 		{"payload model wins", "sonnet", map[string]any{}, Event{Model: "m-payload", TranscriptPath: empty}, "m-payload", false},
 		{"unusable setting stays unknown", "default", map[string]any{}, Event{TranscriptPath: empty}, "", false},
