@@ -374,4 +374,3 @@ func TestDCIImpact(t *testing.T) {
 		t.Errorf("runDCI(impact) with no target want code 2, got %d", code)
 	}
 }
-

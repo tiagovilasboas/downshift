@@ -1309,4 +1309,3 @@ func TestSecurity_CircularCallGraphsAndPathologicalMultiLangLimits(t *testing.T)
 		t.Errorf("docRS.Symbols[0].Calls len = %d, expected exactly 16 capped from 200 calls", len(docRS.Symbols[0].Calls))
 	}
 }
-

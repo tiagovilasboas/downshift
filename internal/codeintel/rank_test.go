@@ -720,4 +720,3 @@ func TestPackContext_BudgetAdherenceWithImpactRadius(t *testing.T) {
 		})
 	}
 }
-

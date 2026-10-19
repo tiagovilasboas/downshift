@@ -53,12 +53,12 @@ var (
 	reCSMethod    = regexp.MustCompile(`^(?:(?:public|protected|private|internal|static|virtual|override|abstract|async|sealed|partial)\s+)+(?:[A-Za-z0-9_<>\[\],\s\?]+)\s+([A-Za-z0-9_]+)\s*(?:<[^>]*>)?\s*\(`)
 
 	// Import extraction regexes
-	reTSJSImport     = regexp.MustCompile(`(?:import\s+(?:(?:[A-Za-z0-9_{}\s*,*]+)\s+from\s+)?["']([^"']+)["']|require\s*\(\s*["']([^"']+)["']\s*\))`)
-	rePythonImport   = regexp.MustCompile(`^\s*(?:from\s+([A-Za-z0-9_.]+)\s+import|import\s+([A-Za-z0-9_.,\s]+))`)
-	reRustUse        = regexp.MustCompile(`^\s*(?:pub\s+)?use\s+([A-Za-z0-9_:{}*,\s]+);`)
-	rePHPUse         = regexp.MustCompile(`^\s*use\s+([A-Za-z0-9_\\]+)(?:\s+as\s+[A-Za-z0-9_]+)?;`)
-	reJavaImport     = regexp.MustCompile(`^\s*import\s+(?:static\s+)?([A-Za-z0-9_.*]+);`)
-	reCSUsing        = regexp.MustCompile(`^\s*using\s+(?:static\s+)?(?:[A-Za-z0-9_]+\s*=\s*)?([A-Za-z0-9_.]+);`)
+	reTSJSImport   = regexp.MustCompile(`(?:import\s+(?:(?:[A-Za-z0-9_{}\s*,*]+)\s+from\s+)?["']([^"']+)["']|require\s*\(\s*["']([^"']+)["']\s*\))`)
+	rePythonImport = regexp.MustCompile(`^\s*(?:from\s+([A-Za-z0-9_.]+)\s+import|import\s+([A-Za-z0-9_.,\s]+))`)
+	reRustUse      = regexp.MustCompile(`^\s*(?:pub\s+)?use\s+([A-Za-z0-9_:{}*,\s]+);`)
+	rePHPUse       = regexp.MustCompile(`^\s*use\s+([A-Za-z0-9_\\]+)(?:\s+as\s+[A-Za-z0-9_]+)?;`)
+	reJavaImport   = regexp.MustCompile(`^\s*import\s+(?:static\s+)?([A-Za-z0-9_.*]+);`)
+	reCSUsing      = regexp.MustCompile(`^\s*using\s+(?:static\s+)?(?:[A-Za-z0-9_]+\s*=\s*)?([A-Za-z0-9_.]+);`)
 
 	// Lightweight call regex
 	reCallIdentifier = regexp.MustCompile(`\b([A-Za-z_][A-Za-z0-9_]*)\s*\(`)
