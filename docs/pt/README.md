@@ -42,7 +42,7 @@ Um binário, um diretório de estado, cada peça calculada para todos os harness
 | **Visão de sessão e statusline** | `downshift session --tree`, `/downshift`, `downshift watch`, uma linha de stderr por spawn e uma statusline com as janelas de cota. | Implemented; statusline só no Claude Code ([session view, EN](../guides/session-view.md)) |
 | **Telemetria e relatórios de custo com grupo de controle** | `events.jsonl` sem prompt, tokens e custo por filho a preço de catálogo, cerca de 1 em 10 spawns sem roteamento, `downshift stats` e `downshift report`. | Implemented; uso só no Claude Code; estimativa, não fatura |
 | **Política de contexto** | `setup` define `opusplan`, plan mode e o mod You should know do Claude Code para chaves que você não definiu; o compressor nativo só observa bytes. | Implemented, limitado: política de sessão só no Claude Code ([guia do Claude Code, EN](../guides/claude-code.md)) |
-| **Code Intelligence (DCI)** | Descoberta Git, extração Go AST de símbolos, índice invertido, ranking BM25, abstenção e injeção de contexto estrutural de até 3.500 bytes com zero persistência de prompts via `UserPromptSubmit`. | Implemented (MVP v0.1); telemetria em `downshift stats --dci` |
+| **Code Intelligence (DCI)** | Descoberta Git, extração Go AST e multi-linguagem (TS/JS, Python, Rust, PHP, Java, C#), grafo de chamadas saintes e índice reverso (*Blast Radius*), ranking BM25 Production-First, abstenção e injeção de contexto estrutural de até 3.500 bytes (configurável 512..16384 via `--budget`) com zero persistência de prompts via `UserPromptSubmit`. Subcomando `downshift dci impact`. | Implemented (v0.4); telemetria em `downshift stats --dci` |
 | **Mods** | cache-tax dentro do plugin; savvy-progress e filetree como plugins irmãos do marketplace; downshift-router como protótipo opt-in. | Shipped, vendorizados e pinados; router Experimental ([mods, EN](../../mods/README.md)) |
 | **Companions** | Headroom (proxy de compressão padrão) é detectado e registrado, nunca instalado nem encapsulado. | Documentado ([companions, EN](../guides/companions.md)) |
 | **Escada de evidência** | Cinco degraus, do preço de tabela ao custo por tarefa concluída, cada número citado do arquivo que o guarda. | Degrau D alcançado uma vez (2026-10-15); degrau E não medido ([evidence, EN](../guides/evidence.md)) |
@@ -159,8 +159,9 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 | [09 · Decisões Técnicas e Trade-offs](09-decisoes.md) | Engenharia | Racional de arquitetura, compensações técnicas e próximos passos do projeto |
 | [10 · Candidato em shadow](10-candidato-shadow.md) | Avaliação | Observar um candidato softmax sem trocar o roteamento de produção |
 | [11 · Compressor Nativo de Contexto](../design/context-optimization.md) | Otimização | Compressor determinístico em Go e sensor de telemetria passiva |
-| [12 · Plugin, skills e agente (EN)](../design/architecture.md#packaging-layers-what-an-agent-harness-loads) | Empacotamento | As cinco camadas que um harness carrega: memória (`AGENTS.md`), skills (`skills/`), hooks (binário; `hooks/hooks.json` no plugin), agente de exemplo (`agents/`) e o plugin do Claude Code (`/plugin install downshift --marketplace tiagovilasboas/downshift`) |
-| [13 · Companions (EN)](../guides/companions.md) | Ecossistema | Headroom como companion padrão (detectado e registrado, nunca instalado pelo Downshift), mods do Claude Code recomendados (You should know, Token Weather, Replay Theater, reflect-mod), padrões que o Downshift segue mas não empacota |
+| [12 · Code Intelligence DCI (EN)](../design/code-intelligence.md) | Otimização | Índice invertido, call-graph multi-linguagem, blast radius e injeção estrutural |
+| [13 · Plugin, skills e agente (EN)](../design/architecture.md#packaging-layers-what-an-agent-harness-loads) | Empacotamento | As cinco camadas que um harness carrega: memória (`AGENTS.md`), skills (`skills/`), hooks (binário; `hooks/hooks.json` no plugin), agente de exemplo (`agents/`) e o plugin do Claude Code (`/plugin install downshift --marketplace tiagovilasboas/downshift`) |
+| [14 · Companions (EN)](../guides/companions.md) | Ecossistema | Headroom como companion padrão (detectado e registrado, nunca instalado pelo Downshift), mods do Claude Code recomendados (You should know, Token Weather, Replay Theater, reflect-mod), padrões que o Downshift segue mas não empacota |
 
 ---
 
@@ -172,11 +173,25 @@ Para auditar o histórico de rotas, ver a estimativa de custos e acompanhar as m
 # Relatório consolidado dos últimos 30 dias
 downshift stats
 
+# Métricas detalhadas do Downshift Code Intelligence (DCI)
+downshift stats --dci
+
 # Filtrar janela temporal (ex: 7 dias)
 downshift stats --days=7
 
 # Resumo em JSON higienizado para auditorias (sem texto de prompt nem caminhos)
 downshift stats --export
+
+# Inspecionar impacto e blast radius de uma função ou arquivo
+downshift dci impact Tokenize
+downshift dci impact --json internal/codeintel/parse.go
+
+# Simular injeção de contexto estrutural para um prompt
+downshift dci inspect --json "Qual função processa pagamentos PIX?"
+
+# Diagnóstico de saúde e benchmark local do DCI
+downshift dci doctor
+downshift dci benchmark
 
 # Verificações observadas e custo estimado por tier (Claude Code)
 downshift verification-report
