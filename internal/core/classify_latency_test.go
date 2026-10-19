@@ -22,8 +22,11 @@ func TestClassifyLatencyLargePrompts(t *testing.T) {
 		bytes int
 		limit time.Duration
 	}{
-		{"1KB", 1 << 10, 200 * time.Millisecond},
-		{"100KB", 100 << 10, 1 * time.Second},
+		// 1KB and 100KB limits are 5x the laptop figures: 100KB measured 1.66 s
+		// under load against a 1 s bound. Regressions of interest are orders of
+		// magnitude, so the bound still fails on backtracking.
+		{"1KB", 1 << 10, 1 * time.Second},
+		{"100KB", 100 << 10, 5 * time.Second},
 		// 10 s: the shared CI runner is about 3x slower than a laptop (5.0-5.2 s
 		// measured for this size against 1.7 s locally), so 5 s sat on the edge.
 		// Backtracking would be orders of magnitude over this.
