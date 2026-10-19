@@ -73,12 +73,28 @@ Delegating work to subagents is where a model choice can be made per task. Downs
 └───────────────────────────────┘                   └───────────────────────────────┘
 ```
 
-Downshift is built on four pillars:
+Downshift is four capabilities behind one `setup`, running as native Go hooks inside your harness:
 
-1. **Deterministic Subagent Routing**: Intercepts delegation hooks (`PreToolUse` / `agent.spawn`) and matches task complexity (TRIVIAL to COMPLEX) to the right tier of your session's own model list. Syntactic heuristics plus an in-process FNV word-hash boost that can only raise a tier, never lower it. Conservative under doubt: unconfident upshifts and unconfident frontier picks are held, and risk floors protect auth, payment, and secret operations. Doubt leaves the spawn unchanged.
-2. **Code Intelligence (DCI, opt-in)**: Pure-Go symbol extraction (Go AST; TypeScript/JavaScript, Python, Rust, PHP, Java, C# by pattern), a reverse call graph for blast radius (`downshift dci impact`) and field-weighted BM25 that packs a compact sketch of the relevant code into the prompt under a strict byte cap. Off by default; `downshift dci enable` turns it on. Measured so far: latency and bytes, not answer quality or token savings.
-3. **Cache and Context Governance**: The bundled `cache-tax` mod prices a cold prompt cache before you pay for it and keeps it warm on request; the mod lets orchestration messages (`task-notification`, peer, coordinator, scheduled trigger) through untouched; the native compressor squelches only unambiguous clean output (`go test`, `git status`).
-4. **Zero-touch Setup and Visibility**: `downshift setup` wires every harness it finds, discovers models from the session instead of fixed lists, and on Claude Code installs the visual mods. `dsmon` and `downshift stats` show what was routed; savings are estimates at list price, labelled as such, and a built-in control group measures the real effect.
+### 1. Deterministic model routing (zero LLM)
+- No model call to choose a model: no extra tokens and no extra seconds in the spawn path.
+- Strict heuristics plus an in-process FNV word-hash boost that can only raise a tier. The decision is local, in milliseconds.
+- **Doubt never spends money.** When the classifier is not confident, the spawn keeps the model it asked for. Mechanical, repetitive work (renames, test runs, listings) is downshifted on the spot, and risk floors protect auth, payment, and secrets.
+
+### 2. Cache hygiene and orchestration awareness (`cache-tax`)
+- Prices a cold prompt cache before you pay for it: a cold send on a 50k+ context is held with its estimated rewrite price, and `/keepwarm` keeps the cache alive through a break.
+- Tells your own prompts apart from internal traffic (task notifications, peers, coordinators, scheduled triggers), so it never gets in the way of parallel subagent flows.
+- Claude Code 2.1.287+ only, installed by `setup` through the plugin.
+
+### 3. Code intelligence (DCI, opt-in)
+- Indexes the repository in-process: Go AST, plus TypeScript/JavaScript, Python, Rust, PHP, Java, and C# by pattern.
+- Reverse call graph: who calls whom, before the model edits anything (`downshift dci impact`).
+- Packs only the affected symbols with BM25 under a strict byte cap, so the model gets the relevant slice instead of the whole tree. Measured so far: latency and bytes, not answer quality. Off by default; `downshift dci enable` turns it on.
+
+### 4. Output compaction (native `contextopt`, in the spirit of RTK and Headroom)
+- Recognises noisy terminal output (clean `go test` runs, `git status`, repeated log lines) and compacts only what is unambiguously clean. Errors, stack traces, diffs, grep matches, and non-zero exits stay verbatim.
+- **Honest scope:** a Claude Code hook cannot rewrite tool output in flight, so there the native provider measures bytes and saves no tokens. Real in-flight compression on Claude Code needs a proxy such as [Headroom](https://github.com/chopratejas/headroom); Downshift detects and records it but never starts it. The compactor itself is available as a stream (`downshift context compress --exit 0`).
+
+**Practical result.** One install instead of a separate router, a separate cache watcher, and a separate code indexer: `downshift setup` wires the hooks and, on Claude Code, the plugin, the mods, and your discovered models. It is a single Go binary with no daemon. What is proven so far is narrow: up to about 12% list-price saving on mechanical delegated work in a controlled trial, and nothing attributable on natural use; the other capabilities carry their own evidence status in the [capability matrix](docs/reference/capability-matrix.md).
 
 ---
 
