@@ -5,15 +5,15 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift" width="320">
 </picture>
 
-**Deterministic model router and code-intelligence layer for coding agents: right-sizes subagent models, packs only the relevant code context, and flags wasted prompt cache. Fail-open hooks for Claude Code, Cursor, Codex, and OpenCode. No LLM in the loop.**
+**Right model for every subagent. No LLM in the loop.**
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+A local hook scores each delegated task and picks the model and effort. Unsure? The spawn keeps the model it asked for.
 
-[![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Go 1.27](https://img.shields.io/badge/go-1.27-00ADD8.svg)](https://go.dev)
-[![Release](https://img.shields.io/github/v/release/tiagovilasboas/downshift?include_prereleases&label=release)](https://github.com/tiagovilasboas/downshift/releases)
-[![Status: beta](https://img.shields.io/badge/status-beta-yellow)](#status)
+[![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg?color=22C55E)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-868A90.svg?labelColor=0A0A0A)](LICENSE)
+[![Go 1.27](https://img.shields.io/badge/go-1.27-868A90.svg?labelColor=0A0A0A)](https://go.dev)
+[![Release](https://img.shields.io/github/v/release/tiagovilasboas/downshift?include_prereleases&label=release&labelColor=0A0A0A&color=868A90)](https://github.com/tiagovilasboas/downshift/releases)
+[![Status: beta](https://img.shields.io/badge/status-beta-868A90?labelColor=0A0A0A)](#status)
 
 [Quickstart](#quickstart) · [How it works](#how-it-works) · [Domains](#specialized-domains) · [Commands](#commands) · [Harness support](#harness-support) · [Docs](docs/README.md)
 

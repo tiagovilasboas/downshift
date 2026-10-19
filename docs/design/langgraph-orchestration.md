@@ -3,7 +3,7 @@
 Downshift by Tiago Vilas Boas\
 https://github.com/tiagovilasboas/downshift
 
-![Orchestration planner — adjacent, not involved in model routing](../brand/downshift-orchestration-planner.png)
+The planner is adjacent to routing and is not involved in model choice.
 
 ## Execution path: Go (`internal/orchestration/`)
 
