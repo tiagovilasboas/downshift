@@ -295,3 +295,45 @@ func TestDCIInspect_JSONFlag(t *testing.T) {
 		t.Fatalf("failed to unmarshal JSON output when --json is at the end: %v", err)
 	}
 }
+
+func TestDCIImpact(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	// Test human-readable impact command
+	code := runDCI([]string{"impact", "Tokenize"}, nil, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("runDCI(impact Tokenize) = %d, want 0. stderr: %s", code, stderr.String())
+	}
+	out := stdout.String()
+	if !strings.Contains(out, "=== DCI Impact Blast Radius ===") {
+		t.Errorf("expected header in impact output: %s", out)
+	}
+	if !strings.Contains(out, "Target:        Tokenize") {
+		t.Errorf("expected target Tokenize in impact output: %s", out)
+	}
+
+	// Test JSON output
+	stdout.Reset()
+	stderr.Reset()
+	code = runDCI([]string{"impact", "--json", "Tokenize"}, nil, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("runDCI(impact --json Tokenize) = %d, want 0. stderr: %s", code, stderr.String())
+	}
+	var impactJSON map[string]interface{}
+	if err := json.Unmarshal(stdout.Bytes(), &impactJSON); err != nil {
+		t.Fatalf("failed to unmarshal JSON impact output: %v\nOutput: %s", err, stdout.String())
+	}
+	if impactJSON["target"] != "Tokenize" {
+		t.Errorf("expected target 'Tokenize', got %v", impactJSON["target"])
+	}
+	if _, ok := impactJSON["impact_radius"].([]interface{}); !ok {
+		t.Errorf("expected impact_radius array in JSON: %v", impactJSON)
+	}
+
+	// Test missing target returns error code 2
+	stdout.Reset()
+	stderr.Reset()
+	code = runDCI([]string{"impact"}, nil, &stdout, &stderr)
+	if code != 2 {
+		t.Errorf("runDCI(impact) with no target want code 2, got %d", code)
+	}
+}

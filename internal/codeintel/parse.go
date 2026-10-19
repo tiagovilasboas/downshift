@@ -90,11 +90,11 @@ func ParseFile(repoRoot, relPath string) (*Document, error) {
 	case ".go":
 		symbols, imports = parseGoAST(relPath, contentBytes)
 	case ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs":
-		symbols = parseTSJSSymbols(relPath, contentStr)
+		symbols, imports = parseTSJSSymbols(relPath, contentStr)
 	case ".py":
-		symbols = parsePythonSymbols(relPath, contentStr)
+		symbols, imports = parsePythonSymbols(relPath, contentStr)
 	case ".rs", ".php", ".java", ".cs":
-		symbols = parseCStyleSymbols(relPath, contentStr, ext)
+		symbols, imports = parseCStyleSymbols(relPath, contentStr, ext)
 	default:
 		symbols = parseFallbackSymbols(relPath, contentStr)
 	}

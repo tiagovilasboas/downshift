@@ -57,6 +57,7 @@ type Document struct {
 type InvertedIndex struct {
 	Documents   map[string]*Document `json:"documents"`
 	Postings    map[string][]Posting `json:"postings"`
+	Callers     map[string][]string  `json:"callers,omitempty"`
 	TotalTokens int64                `json:"total_tokens"`
 	AvgDocLen   float64              `json:"avg_doc_len"`
 	LastUpdated time.Time            `json:"last_updated"`
@@ -112,6 +113,7 @@ type Candidate struct {
 	MatchedTerms   []string  `json:"matched_terms"`
 	MatchedSymbols []Symbol  `json:"matched_symbols"`
 	Snippets       []Snippet `json:"snippets"`
+	ImpactRadius   []string  `json:"impact_radius,omitempty"`
 }
 
 // ContextPack represents the compact structural context produced for prompt injection.
@@ -122,6 +124,7 @@ type ContextPack struct {
 	SymbolsCount  int      `json:"symbols_count"`
 	SnippetsCount int      `json:"snippets_count"`
 	RelevantTerms []string `json:"relevant_terms"`
+	ImpactRadius  []string `json:"impact_radius,omitempty"`
 }
 
 // Telemetry captures privacy-safe execution metrics for DCI operations.

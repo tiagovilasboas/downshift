@@ -58,14 +58,19 @@ Downshift Code Intelligence (DCI) is a zero-runtime, deterministic, privacy-firs
                      [Multi-Harness Hook Response / Exit 0]
 ```
 
-### 2.2 Multi-Language Structural Symbol & Call-Graph Extraction (DCI v0.2 / v0.3)
+### 2.2 Multi-Language Structural Symbol & Call-Graph Extraction (DCI v0.2 – v0.4)
 
-DCI extracts structural declarations with start/end line spans across primary languages without external runtimes or CGo dependencies:
-- **Go (`.go`)**: Full `go/ast` parsing for functions, methods, structs, interfaces, types, constants, and variables. In addition:
+DCI extracts structural declarations, outgoing calls, and imports across primary languages without external runtimes or CGo dependencies:
+- **Go (`.go`)**: Full `go/ast` parsing for functions, methods, structs, interfaces, types, constants, and variables.
   - **Function Call-Graph (`Symbol.Calls`)**: Traverses `*ast.CallExpr` within function declarations (`*ast.FuncDecl`), discarding standard Go built-in calls (`append`, `cap`, `close`, `complex`, `copy`, `delete`, `imag`, `len`, `make`, `new`, `panic`, `print`, `println`, `real`, `recover`), and capping extracted unique calls at 16 calls per symbol to bound index size.
   - **Package Imports (`Document.Imports`)**: Extracts import path specifications from `*ast.File.Imports`, capped at 32 imports per document.
-- **TypeScript / JavaScript (`.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`)**: Structural extraction of functions, classes, interfaces, type aliases, enums, exported const/arrow functions, and class methods with brace-balanced span tracking.
+- **TypeScript / JavaScript (`.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`)**: Structural extraction of functions, classes, interfaces, type aliases, enums, exported const/arrow functions, and class methods.
+  - **Calls & Imports**: Extracts outgoing function and method invocations (`Symbol.Calls`, capped at 16, filtering JS/TS keywords and globals like `console`, `require`, `Promise`, `Object`), and `import ... from '...'` declarations (`Document.Imports`, capped at 32).
 - **Python (`.py`)**: Structural extraction of `def` / `async def` functions, methods, and `class` declarations with indentation-based block span tracking.
+  - **Calls & Imports**: Extracts function and method invocations (`Symbol.Calls`, capped at 16, filtering Python builtins like `print`, `len`, `range`, `str`, `int`), and `import ...` / `from ... import ...` statements (`Document.Imports`, capped at 32).
+- **Rust (`.rs`)**: Structural extraction of `fn`, `struct`, `enum`, `trait`, and `impl` blocks.
+  - **Calls & Imports**: Extracts outgoing call expressions (`Symbol.Calls`, capped at 16) and `use ...;` import paths (`Document.Imports`, capped at 32).
+- **PHP, Java, and C# (`.php`, `.java`, `.cs`)**: Structural function/method/class extraction with balanced brace scanning, outgoing calls (`Symbol.Calls`, capped at 16), and import/namespace declarations (`Document.Imports`, capped at 32).
 - **Other text files**: Lexical camelCase / snake_case tokenization for full-text BM25 indexing.
 
 ### 2.3 Production-First Ranking & Call-Graph Co-Reference Boosting (DCI v0.3)
@@ -81,7 +86,23 @@ In real-world engineering workflows, developer prompts are typically targeted at
    - If a candidate file defines a symbol that is called by any matched symbol in the top-ranked candidate (`Symbol.Calls`), or if the candidate calls a symbol defined in the top-ranked candidate, the candidate receives a `+2.0` co-reference boost.
    - This surfaces tightly coupled dependencies (such as service caller -> handler, or handler -> dispatcher) within the Top-K candidates without exceeding context token budgets.
 
-### 2.4 Security & Prompt Injection Mitigation
+### 2.4 Reverse Call-Graph & Blast Radius Analysis (DCI v0.4)
+
+When developers or coding agents modify, refactor, or delete a function or type, knowing what other components call or depend on that symbol is critical to prevent breaking changes. DCI v0.4 adds an inverted call-graph index and blast radius analysis:
+
+1. **Inverted Call Index (`InvertedIndex.Callers`)**:
+   - During `RebuildPostings`, DCI inverts all extracted `Symbol.Calls` into a reverse index mapping each called symbol/function name to its unique callers (formatted as `path:symbol` or `path`).
+   - Hardened against index blowup and circular recursion: callers per symbol are capped at 32 entries and sorted deterministically. Circular call patterns (e.g., recursive routines or mutual cycles `A -> B -> A`) are handled cleanly without infinite loops or stack overflow.
+
+2. **Downstream Blast Radius in Context Packs**:
+   - When packaging prompt context in `PackContext`, if a top candidate's matched symbols are called elsewhere in the codebase, DCI injects a compact downstream impact annotation (e.g. `(Impact Radius: called by pkg/auth.go, pkg/router.go)`).
+   - This explicitly alerts coding agents to downstream callers before modifying declarations, reducing regression risks during code generation.
+   - The injection strictly adheres to the configured UTF-8 byte budget (`maxBytes`), truncating or omitting impact notes if context limits are reached.
+
+3. **CLI Impact Inspection (`downshift dci impact`)**:
+   - Developers and agent scripts can query the downstream blast radius directly via `downshift dci impact [--json] <target>` (accepting a symbol name or file path) to inspect callers across the entire repository.
+
+### 2.5 Security & Prompt Injection Mitigation
 
 Context injected into LLMs from untrusted repositories presents an attack surface (e.g. malicious instruction injections inside comments or files). DCI defends against this through:
 1. **Unambiguous Demarcation**:
@@ -116,6 +137,7 @@ DCI provides three operational modes configured in `.downshift/dci.json`:
 - `downshift dci disable`: Sets mode to `off`.
 - `downshift dci doctor`: Runs health checks on directory permissions, discovery limits, symlink safety, and latency budgets.
 - `downshift dci inspect [--json] <prompt>`: Simulates the DCI pipeline for a test prompt, displaying query tokens, candidate rankings, abstention decisions, and formatted output. When `--json` is supplied, outputs a clean, machine-readable JSON object with `prompt_tokens`, `abstained`, `abstention_reason`, `candidates_count`, `selected_files`, `symbols_count`, `snippets_count`, `output_bytes`, `formatted_text`, and `latency_ms`.
+- `downshift dci impact [--json] <symbol_or_file>`: Queries the reverse call-graph index to compute downstream blast radius (which files or functions call the target symbol, or files that call symbols defined in the target file). Outputs human-readable caller hierarchy or structured JSON for agent verification.
 - `downshift dci benchmark`: Executes repeatable automated performance, relevance, and latency benchmarks against the current repository.
 - `downshift dci hook <harness>`: Executes the stdin hook handler for `claude-code`, `cursor`, `opencode`, `codex`, or `generic`.
 

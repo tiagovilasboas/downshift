@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -19,6 +20,7 @@ func NewInvertedIndex() *InvertedIndex {
 	return &InvertedIndex{
 		Documents:   make(map[string]*Document),
 		Postings:    make(map[string][]Posting),
+		Callers:     make(map[string][]string),
 		TotalTokens: 0,
 		AvgDocLen:   0,
 		LastUpdated: time.Now().UTC(),
@@ -138,6 +140,41 @@ func (idx *InvertedIndex) RebuildPostings() {
 		})
 	}
 
+	// Rebuild reverse caller index
+	newCallers := make(map[string][]string)
+	seenCallerMap := make(map[string]map[string]bool)
+
+	for _, p := range docPaths {
+		doc := idx.Documents[p]
+		for _, sym := range doc.Symbols {
+			callerRep := p
+			if sym.Name != "" {
+				callerRep = p + ":" + sym.Name
+			}
+			for _, call := range sym.Calls {
+				if call == "" {
+					continue
+				}
+				if seenCallerMap[call] == nil {
+					seenCallerMap[call] = make(map[string]bool)
+				}
+				if !seenCallerMap[call][callerRep] {
+					seenCallerMap[call][callerRep] = true
+					newCallers[call] = append(newCallers[call], callerRep)
+				}
+			}
+		}
+	}
+
+	// Deterministically sort and cap at 32 callers per symbol
+	for symName := range newCallers {
+		sort.Strings(newCallers[symName])
+		if len(newCallers[symName]) > 32 {
+			newCallers[symName] = newCallers[symName][:32]
+		}
+	}
+
+	idx.Callers = newCallers
 	idx.Postings = newPostings
 	idx.TotalTokens = totalTokens
 
@@ -147,6 +184,28 @@ func (idx *InvertedIndex) RebuildPostings() {
 	} else {
 		idx.AvgDocLen = 0
 	}
+}
+
+// GetCallers returns deterministic, unique callers for a symbol or method name.
+// It checks exact name match, and if not found, method suffix match (e.g. "Bar" for "Foo.Bar").
+func (idx *InvertedIndex) GetCallers(symbolName string) []string {
+	if idx == nil || idx.Callers == nil || symbolName == "" {
+		return nil
+	}
+
+	if callers, ok := idx.Callers[symbolName]; ok && len(callers) > 0 {
+		return callers
+	}
+
+	// If symbol has receiver/namespace prefix (e.g. "Receiver.Method"), check method suffix
+	if dotIdx := strings.LastIndex(symbolName, "."); dotIdx != -1 && dotIdx < len(symbolName)-1 {
+		shortName := symbolName[dotIdx+1:]
+		if callers, ok := idx.Callers[shortName]; ok && len(callers) > 0 {
+			return callers
+		}
+	}
+
+	return nil
 }
 
 // computeFileSHA256 streams file content to compute SHA-256 without loading entire file into memory.

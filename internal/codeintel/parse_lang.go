@@ -52,6 +52,17 @@ var (
 	reCSEnum      = regexp.MustCompile(`^(?:(?:public|protected|private|internal)\s+)*enum\s+([A-Za-z0-9_]+)`)
 	reCSMethod    = regexp.MustCompile(`^(?:(?:public|protected|private|internal|static|virtual|override|abstract|async|sealed|partial)\s+)+(?:[A-Za-z0-9_<>\[\],\s\?]+)\s+([A-Za-z0-9_]+)\s*(?:<[^>]*>)?\s*\(`)
 
+	// Import extraction regexes
+	reTSJSImport     = regexp.MustCompile(`(?:import\s+(?:(?:[A-Za-z0-9_{}\s*,*]+)\s+from\s+)?["']([^"']+)["']|require\s*\(\s*["']([^"']+)["']\s*\))`)
+	rePythonImport   = regexp.MustCompile(`^\s*(?:from\s+([A-Za-z0-9_.]+)\s+import|import\s+([A-Za-z0-9_.,\s]+))`)
+	reRustUse        = regexp.MustCompile(`^\s*(?:pub\s+)?use\s+([A-Za-z0-9_:{}*,\s]+);`)
+	rePHPUse         = regexp.MustCompile(`^\s*use\s+([A-Za-z0-9_\\]+)(?:\s+as\s+[A-Za-z0-9_]+)?;`)
+	reJavaImport     = regexp.MustCompile(`^\s*import\s+(?:static\s+)?([A-Za-z0-9_.*]+);`)
+	reCSUsing        = regexp.MustCompile(`^\s*using\s+(?:static\s+)?(?:[A-Za-z0-9_]+\s*=\s*)?([A-Za-z0-9_.]+);`)
+
+	// Lightweight call regex
+	reCallIdentifier = regexp.MustCompile(`\b([A-Za-z_][A-Za-z0-9_]*)\s*\(`)
+
 	tsExcludedMethodNames = map[string]bool{
 		"if": true, "for": true, "while": true, "switch": true, "catch": true,
 		"function": true, "return": true, "throw": true, "new": true,
@@ -63,6 +74,33 @@ var (
 		"if": true, "for": true, "while": true, "switch": true, "catch": true,
 		"return": true, "throw": true, "new": true, "class": true,
 		"interface": true, "struct": true, "enum": true,
+	}
+
+	langCallExclusions = map[string]bool{
+		// Common keywords & control flow
+		"if": true, "for": true, "while": true, "switch": true, "catch": true,
+		"return": true, "throw": true, "new": true, "sizeof": true, "typeof": true,
+		"instanceof": true, "function": true, "def": true, "fn": true, "class": true,
+		"import": true, "export": true, "require": true, "from": true, "as": true,
+		"yield": true, "await": true, "async": true, "try": true, "finally": true,
+		"else": true, "elif": true, "case": true, "default": true, "break": true,
+		"continue": true, "with": true, "assert": true, "lambda": true, "print": true,
+		// Builtins across JS/TS/Py/Rust/PHP/Java/C#
+		"console": true, "log": true, "warn": true, "error": true, "info": true,
+		"len": true, "range": true, "str": true, "int": true, "float": true,
+		"bool": true, "list": true, "dict": true, "set": true, "tuple": true,
+		"type": true, "super": true, "isinstance": true, "issubclass": true,
+		"open": true, "sum": true, "min": true, "max": true, "map": true,
+		"filter": true, "zip": true, "enumerate": true, "any": true, "all": true,
+		"abs": true, "round": true, "pow": true, "repr": true, "iter": true,
+		"next": true, "input": true, "format": true, "id": true, "hash": true,
+		"println": true, "panic": true, "unwrap": true, "expect": true, "clone": true,
+		"echo": true, "isset": true, "empty": true, "array": true, "var_dump": true,
+		"die": true, "exit": true, "count": true, "in_array": true, "explode": true,
+		"implode": true, "strlen": true, "substr": true, "trim": true,
+		"System": true, "out": true, "Console": true, "WriteLine": true,
+		"Write": true, "ReadLine": true, "ToString": true, "Equals": true,
+		"GetHashCode": true, "GetType": true, "main": true,
 	}
 )
 
@@ -436,14 +474,91 @@ func findBodyEndLine(masked string, lineOffsets []int, startLine int, declOffset
 	return totalLines
 }
 
-// parseTSJSSymbols extracts structural symbols from TypeScript and JavaScript files.
-func parseTSJSSymbols(relPath, content string) []Symbol {
+// extractCallsFromSpan extracts up to 16 outgoing calls within a 1-indexed line span [startLine, endLine].
+// Calls matching langCallExclusions or keywords are omitted.
+func extractCallsFromSpan(masked string, lineOffsets []int, startLine, endLine int) []string {
+	if startLine < 1 || endLine < startLine || len(lineOffsets) == 0 {
+		return nil
+	}
+
+	startOffset := 0
+	if startLine-1 < len(lineOffsets) {
+		startOffset = lineOffsets[startLine-1]
+	}
+
+	endOffset := len(masked)
+	if endLine < len(lineOffsets) {
+		endOffset = lineOffsets[endLine]
+	}
+	if endOffset > len(masked) {
+		endOffset = len(masked)
+	}
+	if startOffset >= endOffset {
+		return nil
+	}
+
+	span := masked[startOffset:endOffset]
+	matches := reCallIdentifier.FindAllStringSubmatch(span, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+
+	var calls []string
+	seen := make(map[string]bool)
+
+	for _, m := range matches {
+		if len(m) < 2 {
+			continue
+		}
+		name := m[1]
+		if name == "" || langCallExclusions[name] {
+			continue
+		}
+		if !seen[name] {
+			seen[name] = true
+			calls = append(calls, name)
+			if len(calls) >= 16 {
+				break
+			}
+		}
+	}
+
+	return calls
+}
+
+// parseTSJSSymbols extracts structural symbols, calls, and imports from TypeScript and JavaScript files.
+func parseTSJSSymbols(relPath, content string) ([]Symbol, []string) {
 	masked := maskStringsAndComments(content, "ts")
 	lineOffsets := computeLineOffsets(content)
 	lines := strings.Split(content, "\n")
 	maskedLines := strings.Split(masked, "\n")
 
 	var symbols []Symbol
+	var imports []string
+	seenImports := make(map[string]bool)
+
+	// Extract TS/JS imports
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "//") {
+			continue
+		}
+		if m := reTSJSImport.FindStringSubmatch(trimmed); len(m) > 1 {
+			target := m[1]
+			if target == "" && len(m) > 2 {
+				target = m[2]
+			}
+			target = strings.TrimSpace(target)
+			if target != "" && !seenImports[target] {
+				seenImports[target] = true
+				imports = append(imports, target)
+				if len(imports) >= 32 {
+					break
+				}
+			}
+		}
+	}
+
 	var classStack []classScope
 
 	for i := 0; i < len(lines); i++ {
@@ -523,12 +638,14 @@ func parseTSJSSymbols(relPath, content string) []Symbol {
 		if m := reTSJSFunc.FindStringSubmatch(trimmed); len(m) > 1 {
 			name := m[1]
 			endLine := findBodyEndLine(masked, lineOffsets, lineNum, declOffset, true, false)
+			calls := extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
 			symbols = append(symbols, Symbol{
 				Name:         name,
 				Kind:         KindFunction,
 				RelativePath: relPath,
 				StartLine:    lineNum,
 				EndLine:      endLine,
+				Calls:        calls,
 			})
 			continue
 		}
@@ -565,12 +682,17 @@ func parseTSJSSymbols(relPath, content string) []Symbol {
 			}
 
 			endLine := findBodyEndLine(masked, lineOffsets, lineNum, declOffset, isFunc, isArrow)
+			var calls []string
+			if isFunc {
+				calls = extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
+			}
 			symbols = append(symbols, Symbol{
 				Name:         name,
 				Kind:         kind,
 				RelativePath: relPath,
 				StartLine:    lineNum,
 				EndLine:      endLine,
+				Calls:        calls,
 			})
 			continue
 		}
@@ -584,12 +706,14 @@ func parseTSJSSymbols(relPath, content string) []Symbol {
 				methodName := m[1]
 				if !tsExcludedMethodNames[methodName] {
 					endLine := findBodyEndLine(masked, lineOffsets, lineNum, declOffset, true, true)
+					calls := extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
 					symbols = append(symbols, Symbol{
 						Name:         curClass + "." + methodName,
 						Kind:         KindMethod,
 						RelativePath: relPath,
 						StartLine:    lineNum,
 						EndLine:      endLine,
+						Calls:        calls,
 					})
 					continue
 				}
@@ -600,12 +724,14 @@ func parseTSJSSymbols(relPath, content string) []Symbol {
 				methodName := m[1]
 				if !tsExcludedMethodNames[methodName] {
 					endLine := findBodyEndLine(masked, lineOffsets, lineNum, declOffset, true, false)
+					calls := extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
 					symbols = append(symbols, Symbol{
 						Name:         curClass + "." + methodName,
 						Kind:         KindMethod,
 						RelativePath: relPath,
 						StartLine:    lineNum,
 						EndLine:      endLine,
+						Calls:        calls,
 					})
 					continue
 				}
@@ -613,7 +739,7 @@ func parseTSJSSymbols(relPath, content string) []Symbol {
 		}
 	}
 
-	return symbols
+	return symbols, imports
 }
 
 // computePythonEndLine tracks Python block indentation: a block ends at the last non-empty,
@@ -648,10 +774,38 @@ func computePythonEndLine(lines []string, startIdx int, declIndent int) int {
 	return lastNonEmpty
 }
 
-// parsePythonSymbols extracts structural symbols from Python source files.
-func parsePythonSymbols(relPath, content string) []Symbol {
+// parsePythonSymbols extracts structural symbols, calls, and imports from Python source files.
+func parsePythonSymbols(relPath, content string) ([]Symbol, []string) {
+	masked := maskStringsAndComments(content, "py")
+	lineOffsets := computeLineOffsets(content)
 	lines := strings.Split(content, "\n")
 	var symbols []Symbol
+	var imports []string
+	seenImports := make(map[string]bool)
+
+	// Extract Python imports
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		if m := rePythonImport.FindStringSubmatch(trimmed); len(m) > 1 {
+			target := m[1]
+			if target == "" && len(m) > 2 {
+				target = m[2]
+			}
+			for _, part := range strings.Split(target, ",") {
+				imp := strings.TrimSpace(part)
+				if imp != "" && !seenImports[imp] {
+					seenImports[imp] = true
+					imports = append(imports, imp)
+					if len(imports) >= 32 {
+						break
+					}
+				}
+			}
+		}
+	}
 
 	type pyClassScope struct {
 		name   string
@@ -702,6 +856,7 @@ func parsePythonSymbols(relPath, content string) []Symbol {
 		if m := rePythonDef.FindStringSubmatch(trimmed); len(m) > 1 {
 			name := m[1]
 			endLine := computePythonEndLine(lines, i, lineIndent)
+			calls := extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
 
 			if len(classStack) > 0 {
 				fullName := classStack[len(classStack)-1].name + "." + name
@@ -711,6 +866,7 @@ func parsePythonSymbols(relPath, content string) []Symbol {
 					RelativePath: relPath,
 					StartLine:    lineNum,
 					EndLine:      endLine,
+					Calls:        calls,
 				})
 			} else if lineIndent == 0 {
 				symbols = append(symbols, Symbol{
@@ -719,17 +875,18 @@ func parsePythonSymbols(relPath, content string) []Symbol {
 					RelativePath: relPath,
 					StartLine:    lineNum,
 					EndLine:      endLine,
+					Calls:        calls,
 				})
 			}
 			continue
 		}
 	}
 
-	return symbols
+	return symbols, imports
 }
 
-// parseCStyleSymbols extracts structural symbols from Rust, PHP, Java, and C# source files.
-func parseCStyleSymbols(relPath, content, ext string) []Symbol {
+// parseCStyleSymbols extracts structural symbols, calls, and imports from Rust, PHP, Java, and C# source files.
+func parseCStyleSymbols(relPath, content, ext string) ([]Symbol, []string) {
 	lang := "c"
 	switch ext {
 	case ".rs":
@@ -744,6 +901,40 @@ func parseCStyleSymbols(relPath, content, ext string) []Symbol {
 	maskedLines := strings.Split(masked, "\n")
 
 	var symbols []Symbol
+	var imports []string
+	seenImports := make(map[string]bool)
+
+	// Extract language-specific imports
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "/*") {
+			continue
+		}
+
+		var match []string
+		switch ext {
+		case ".rs":
+			match = reRustUse.FindStringSubmatch(trimmed)
+		case ".php":
+			match = rePHPUse.FindStringSubmatch(trimmed)
+		case ".java":
+			match = reJavaImport.FindStringSubmatch(trimmed)
+		case ".cs":
+			match = reCSUsing.FindStringSubmatch(trimmed)
+		}
+
+		if len(match) > 1 {
+			target := strings.TrimSpace(match[1])
+			if target != "" && !seenImports[target] {
+				seenImports[target] = true
+				imports = append(imports, target)
+				if len(imports) >= 32 {
+					break
+				}
+			}
+		}
+	}
+
 	var classStack []classScope
 
 	for i := 0; i < len(lines); i++ {
@@ -808,6 +999,7 @@ func parseCStyleSymbols(relPath, content, ext string) []Symbol {
 			if m := reRustFn.FindStringSubmatch(trimmed); len(m) > 1 {
 				name := m[1]
 				endLine := findBodyEndLine(masked, lineOffsets, lineNum, declOffset, true, false)
+				calls := extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
 				if len(classStack) > 0 {
 					symbols = append(symbols, Symbol{
 						Name:         classStack[len(classStack)-1].name + "." + name,
@@ -815,6 +1007,7 @@ func parseCStyleSymbols(relPath, content, ext string) []Symbol {
 						RelativePath: relPath,
 						StartLine:    lineNum,
 						EndLine:      endLine,
+						Calls:        calls,
 					})
 				} else {
 					symbols = append(symbols, Symbol{
@@ -823,6 +1016,7 @@ func parseCStyleSymbols(relPath, content, ext string) []Symbol {
 						RelativePath: relPath,
 						StartLine:    lineNum,
 						EndLine:      endLine,
+						Calls:        calls,
 					})
 				}
 				continue
@@ -870,12 +1064,14 @@ func parseCStyleSymbols(relPath, content, ext string) []Symbol {
 				if m := rePHPMethod.FindStringSubmatch(trimmed); len(m) > 1 {
 					name := m[1]
 					endLine := findBodyEndLine(masked, lineOffsets, lineNum, declOffset, true, false)
+					calls := extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
 					symbols = append(symbols, Symbol{
 						Name:         classStack[len(classStack)-1].name + "." + name,
 						Kind:         KindMethod,
 						RelativePath: relPath,
 						StartLine:    lineNum,
 						EndLine:      endLine,
+						Calls:        calls,
 					})
 					continue
 				}
@@ -883,12 +1079,14 @@ func parseCStyleSymbols(relPath, content, ext string) []Symbol {
 			if m := rePHPFunc.FindStringSubmatch(trimmed); len(m) > 1 {
 				name := m[1]
 				endLine := findBodyEndLine(masked, lineOffsets, lineNum, declOffset, true, false)
+				calls := extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
 				symbols = append(symbols, Symbol{
 					Name:         name,
 					Kind:         KindFunction,
 					RelativePath: relPath,
 					StartLine:    lineNum,
 					EndLine:      endLine,
+					Calls:        calls,
 				})
 				continue
 			}
@@ -948,12 +1146,14 @@ func parseCStyleSymbols(relPath, content, ext string) []Symbol {
 					name := m[1]
 					if !cstyleExcludedMethodNames[name] {
 						endLine := findBodyEndLine(masked, lineOffsets, lineNum, declOffset, true, false)
+						calls := extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
 						symbols = append(symbols, Symbol{
 							Name:         classStack[len(classStack)-1].name + "." + name,
 							Kind:         KindMethod,
 							RelativePath: relPath,
 							StartLine:    lineNum,
 							EndLine:      endLine,
+							Calls:        calls,
 						})
 						continue
 					}
@@ -1015,12 +1215,14 @@ func parseCStyleSymbols(relPath, content, ext string) []Symbol {
 					name := m[1]
 					if !cstyleExcludedMethodNames[name] {
 						endLine := findBodyEndLine(masked, lineOffsets, lineNum, declOffset, true, false)
+						calls := extractCallsFromSpan(masked, lineOffsets, lineNum, endLine)
 						symbols = append(symbols, Symbol{
 							Name:         classStack[len(classStack)-1].name + "." + name,
 							Kind:         KindMethod,
 							RelativePath: relPath,
 							StartLine:    lineNum,
 							EndLine:      endLine,
+							Calls:        calls,
 						})
 						continue
 					}
@@ -1029,5 +1231,5 @@ func parseCStyleSymbols(relPath, content, ext string) []Symbol {
 		}
 	}
 
-	return symbols
+	return symbols, imports
 }
