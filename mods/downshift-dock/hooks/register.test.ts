@@ -11,7 +11,7 @@
 import { describe, expect, mock, test } from 'claude-code/testing'
 import type { CommandInfo, RenderPropsOf, SessionStartInput } from 'claude-code'
 
-import { detect, visibleTargets } from './register'
+import { ACCENT, IDLE, detect, dotColor, visibleTargets } from './register'
 
 const plug = (name: string): CommandInfo => ({ name, description: name, source: 'plugin', plugin: name })
 const builtin = (name: string): CommandInfo => ({ name, description: name, source: 'builtin' })
@@ -40,6 +40,16 @@ describe('detection', () => {
     expect(visibleTargets(null).map(t => t.key)).toEqual(['files', 'agents'])
     expect(visibleTargets({ files: true, agents: false }).map(t => t.key)).toEqual(['files'])
     expect(visibleTargets({ files: false, agents: false })).toEqual([])
+  })
+})
+
+describe('dot', () => {
+  test('green only while a dock panel is open, grey otherwise', () => {
+    expect(dotColor([])).toBe(IDLE)
+    expect(dotColor(['other'])).toBe(IDLE)
+    expect(dotColor(['filetree'])).toBe(ACCENT)
+    expect(dotColor(['savvy-agents', 'x'])).toBe(ACCENT)
+    expect(IDLE).toBe('#5C6168')
   })
 })
 

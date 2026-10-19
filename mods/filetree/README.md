@@ -14,9 +14,28 @@ cannot be folded into the `downshift` plugin unchanged.
 | Upstream | https://github.com/data-goblin/claude-code-filetree |
 | Version | 0.2.26 |
 | Commit | `1b3e72ce1bd265b0a9aeedb993bdf848139e29cc` (2026-10-16) |
-| Files | `.claude-plugin/plugin.json`, `hooks/` (`hooks.json`, `register.tsx`, `button.tsx`, `git.ts`, `icons.ts`, `open.ts`, `rows.tsx`, `tree.ts`), `tests/` and `types/index.d.ts` byte-identical to upstream; upstream's `scripts/check-open.ts` (a Node dev script), `media/`, `.githooks/` and CI are not vendored |
+| Files | `.claude-plugin/plugin.json`, `hooks/` (`hooks.json`, `register.tsx`, `button.tsx`, `git.ts`, `icons.ts`, `open.ts`, `rows.tsx`, `tree.ts`), `tests/` and `types/index.d.ts` byte-identical to upstream except the Downshift local patch below; upstream's `scripts/check-open.ts` (a Node dev script), `media/`, `.githooks/` and CI are not vendored |
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `filetree`, source `./mods/filetree` |
 | Needs | Claude Code 2.1.287 or later; in the terminal the fullscreen layout (`/tui fullscreen`) and at least 110 columns; the desktop app docks the pane itself |
+
+## Downshift local patch
+
+Owner decision 2026-10-19: colours follow the Downshift site (black first,
+white and grey, green only as an accent). Colours only, no behaviour. Reapply
+with `git apply mods/filetree/downshift-local.patch` after a re-vendor.
+
+| File | Change |
+|---|---|
+| `hooks/tree.ts` | `DEFAULT_THEME` (dark) `accent` `#5b9bd5` to `#f5f7fa`, `muted` `#808a96` to `#868a90` |
+| `hooks/git.ts` | `TONES` (dark shimmer) `orange` (writes) to white ramp, `purple` (reads) and `teal`/`blue`/`cyan` to grey ramps; `green` (commits) and `red` kept |
+| `hooks/icons.ts` | git status colours match the `downshift-theme` mod: added and untracked `#22c55e`, modified `#d6dae2`, renamed and copied `#868a90` (light: `#15803d`, `#374151`, `#4b5563`) |
+| `hooks/register.tsx` | `ADD_COLOR` `#98c379` to `#22c55e`, `DEL_COLOR` `#e06c75` to `#f87171` (light: `#15803d`, `#b91c1c`); the modified-count fallback `#e5c07b` to `#d6dae2` |
+| `tests/surfaces.test.tsx` | expected colours follow the values above |
+
+The patch was regenerated 2026-10-19 against the pinned upstream commit. The
+light theme's tree colours and the diff colours otherwise are untouched; the
+light add colour `#15803d` is 5.0:1 on white (AA), not the AAA the upstream
+light palette targeted.
 
 ## What it does
 

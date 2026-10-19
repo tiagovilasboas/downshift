@@ -1,0 +1,32 @@
+{
+  "name": "Downshift Light",
+  "base": "light",
+  "overrides": {
+    "text": "#1F2328",
+    "inverseText": "#FFFFFF",
+    "inactive": "#6B7078",
+    "subtle": "#5B6068",
+    "suggestion": "#3F444B",
+    "remember": "#5B6068",
+    "success": "#15803D",
+    "error": "#B91C1C",
+    "warning": "#92400E",
+    "merged": "#3F444B",
+    "claude": "#0A0A0A",
+    "permission": "#0A0A0A",
+    "planMode": "#1F2328",
+    "autoAccept": "#3F444B",
+    "promptBorder": "#D0D3D8",
+    "bashBorder": "#15803D",
+    "ide": "#5B6068",
+    "userMessageBackground": "#F3F4F6",
+    "composerSidebarBackground": "#FFFFFF",
+    "selectionBg": "#E5E7EB",
+    "diffAdded": "#DCFCE7",
+    "diffRemoved": "#FEE2E2",
+    "diffAddedDimmed": "#F0FDF4",
+    "diffRemovedDimmed": "#FEF2F2",
+    "diffAddedWord": "#86EFAC",
+    "diffRemovedWord": "#FCA5A5"
+  }
+}
