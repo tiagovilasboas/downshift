@@ -35,7 +35,7 @@ func TestRunHookAdapter_PanicFailsOpen(t *testing.T) {
 	if rc != 0 {
 		t.Fatalf("rc = %d, want 0", rc)
 	}
-	if n := strings.Count(out, `"permissionDecision":"allow"`); n != 1 {
+	if n := strings.Count(out, `{}`); n != 1 || strings.Contains(out, "permissionDecision") {
 		t.Fatalf("want exactly one fail-open response, got %d:\n%s", n, out)
 	}
 	events, _ := telemetry.ReadEventsFrom(path)

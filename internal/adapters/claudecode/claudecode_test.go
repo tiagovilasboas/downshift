@@ -64,9 +64,7 @@ func TestHandle_IgnoresNonTaskTools(t *testing.T) {
 	if note != "" {
 		t.Errorf("expected no note for non-Task tool, got %q", note)
 	}
-	if out.HookSpecificOutput.UpdatedInput != nil {
-		t.Error("must not rewrite input for non-Task tools")
-	}
+	assertNoDecision(t, out)
 }
 
 func TestHandle_FallsBackToSessionModel(t *testing.T) {
@@ -94,8 +92,8 @@ func TestHandle_CursorSlugIsNotRewritten(t *testing.T) {
 		ToolInput:     json.RawMessage(`{"prompt":"rename the userId variable","model":"composer-2.5"}`),
 	}
 	out, note, _ := claudecode.Handle(ev, cat)
-	if note != "" || len(out.HookSpecificOutput.UpdatedInput) > 0 {
-		t.Fatalf("claude-code must not write its catalog id over a cursor slug, note=%q input=%s", note, out.HookSpecificOutput.UpdatedInput)
+	if note != "" || out.HookSpecificOutput != nil {
+		t.Fatalf("claude-code must not write its catalog id over a cursor slug, note=%q out=%+v", note, out.HookSpecificOutput)
 	}
 }
 
@@ -112,6 +110,19 @@ func TestHandle_AgentToolAlias(t *testing.T) {
 	}
 }
 
+// assertNoDecision pins the ask-rule invariant: an unchanged call must not
+// carry permissionDecision, or it would override the user's ask rules.
+func assertNoDecision(t *testing.T, out claudecode.Output) {
+	t.Helper()
+	if out.HookSpecificOutput != nil {
+		t.Errorf("unchanged call must emit no permissionDecision, got %+v", out.HookSpecificOutput)
+	}
+	b, _ := json.Marshal(out)
+	if string(b) != "{}" {
+		t.Errorf("unchanged call must serialise to {}, got %s", b)
+	}
+}
+
 func TestHandle_MalformedInputFailsOpen(t *testing.T) {
 	ev := claudecode.Event{
 		ToolName:  "Task",
@@ -122,9 +133,7 @@ func TestHandle_MalformedInputFailsOpen(t *testing.T) {
 	if note != "" {
 		t.Errorf("malformed input must fail-open, got note %q", note)
 	}
-	if out.HookSpecificOutput.PermissionDecision != "allow" {
-		t.Error("malformed input must return allow")
-	}
+	assertNoDecision(t, out)
 }
 
 func TestMain(m *testing.M) {
@@ -233,9 +242,7 @@ func TestHandle_EmptyPromptFailsOpen(t *testing.T) {
 	if note != "" {
 		t.Errorf("empty prompt must fail open, got note %q", note)
 	}
-	if out.HookSpecificOutput.PermissionDecision != "allow" {
-		t.Error("empty prompt must return allow")
-	}
+	assertNoDecision(t, out)
 }
 
 func TestHandle_SessionQuotaRespected(t *testing.T) {
@@ -257,9 +264,9 @@ func TestHandle_SessionQuotaRespected(t *testing.T) {
 	// decision will reflect the constraints.
 	_ = note
 	_ = d
-	// Minimal check: it should still return allow (fail-safe)
-	if out.HookSpecificOutput.PermissionDecision != "allow" {
-		t.Error("must always return allow permission")
+	// Either no decision (unchanged) or an allow carrying updatedInput.
+	if out.HookSpecificOutput != nil && out.HookSpecificOutput.UpdatedInput == nil {
+		t.Error("an explicit allow must carry updatedInput")
 	}
 }
 

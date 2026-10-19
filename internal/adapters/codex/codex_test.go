@@ -195,8 +195,8 @@ func TestHandle_MalformedInputFailsOpen(t *testing.T) {
 	if note != "" {
 		t.Errorf("expected fail-open (no note), got %q", note)
 	}
-	if out.HookSpecificOutput.PermissionDecision != "allow" {
-		t.Error("malformed input must fail open with permissionDecision: allow")
+	if out.HookSpecificOutput != nil {
+		t.Error("malformed input must fail open without a permissionDecision")
 	}
 }
 
@@ -230,8 +230,8 @@ func TestHandle_EmptyMessageFailsOpen(t *testing.T) {
 	if note != "" {
 		t.Errorf("expected no decision for empty message, got %q", note)
 	}
-	if out.HookSpecificOutput.UpdatedInput != nil {
-		t.Error("must not rewrite when there is no task text")
+	if raw, _ := json.Marshal(out); string(raw) != "{}" {
+		t.Errorf("no task text must emit a neutral {}, got %s", raw)
 	}
 }
 

@@ -45,7 +45,7 @@ func DefaultDCIEventsPath() string {
 		return p
 	}
 	repoPath := filepath.Join(".downshift", "dci-events.jsonl")
-	if info, err := os.Stat(repoPath); err == nil && !info.IsDir() {
+	if info, err := os.Lstat(repoPath); err == nil && info.Mode().IsRegular() {
 		return repoPath
 	}
 	p, err := paths.DCIEventsPath()
@@ -82,12 +82,31 @@ func RecordTelemetryTo(path string, t Telemetry) error {
 		return err
 	}
 
+	// The log may sit at a repo-relative path an untrusted repository controls.
+	// Refuse a symlink or any non-regular file, so a link can never redirect
+	// the append or the permission tightening to a file elsewhere.
+	var before os.FileInfo
+	if info, err := os.Lstat(path); err == nil {
+		if !info.Mode().IsRegular() {
+			return fmt.Errorf("telemetry log %s is not a regular file", path)
+		}
+		before = info
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
+	// Tighten only the file that was inspected: if the path was swapped for a
+	// link between the check and the open, the open file is not the one we
+	// saw, so leave its mode alone and refuse to write.
+	if after, err := f.Stat(); err != nil || (before != nil && !os.SameFile(before, after)) {
+		return fmt.Errorf("telemetry log %s changed while opening", path)
+	}
 	_ = f.Chmod(0o600)
 
 	line, err := json.Marshal(t)
