@@ -81,7 +81,8 @@ Downshift is four capabilities behind one `setup`, running as native Go hooks in
 
 ### 4. Output compaction (native `contextopt`, in the spirit of RTK and Headroom)
 - Recognises noisy terminal output (clean `go test` runs, `git status`, repeated log lines) and compacts only what is unambiguously clean. Errors, stack traces, diffs, grep matches, and non-zero exits stay verbatim.
-- **Honest scope:** a Claude Code hook cannot rewrite tool output in flight, so there the native provider measures bytes and saves no tokens. Real in-flight compression on Claude Code needs a proxy such as [Headroom](https://github.com/chopratejas/headroom); Downshift detects and records it but never starts it. The compactor itself is available as a stream (`downshift context compress --exit 0`).
+- **Honest scope:** a Claude Code hook cannot rewrite tool output in flight, so by default the native provider measures bytes and saves no tokens. Real in-flight compression of every tool result needs a proxy such as [Headroom](https://github.com/chopratejas/headroom); Downshift detects and records it but never starts it. The compactor itself is available as a stream (`downshift context compress --exit 0`).
+- **Opt-in command wrapper (off by default):** `downshift context enable native --exec` lets the PreToolUse hook rewrite a short allowlist of shell commands (`go test`, `git status`, with no pipe, list, redirection, quote, glob or expansion) to `downshift exec -- <command>`. That runs the program with no shell, keeps its exit code, and compacts stdout only when the exit code is 0, stderr is empty and the compressor recognises that command's own format; anything else prints byte-identical. It saves tokens only on those clean runs (for example a `go test` where every package line is `ok`). Wired on Claude Code only, through a Bash matcher you add yourself; not yet observed on a live session. `DOWNSHIFT_EXEC=0` turns it off. `downshift context metrics` shows the bytes saved, with tokens estimated as bytes / 4. Details: [harness matrix](docs/reference/harness-matrix.md#shell-command-rewrite-downshift-exec-opt-in-2026-10-19).
 
 The flow, end to end:
 
@@ -162,6 +163,7 @@ Internal hooks, benchmark harnesses, and catalog tools (*invoked by harness hook
 | `downshift dci hook <harness>` | Automated prompt context injection hook runner (1 MiB stdin cap) |
 | `downshift dci benchmark` | Measures local Git discovery, AST parsing, and BM25 retrieval latency |
 | `downshift context compress [--exit 0]` | Low-level safe stdin compaction stream utility |
+| `downshift exec -- <program> [args...]` | Runs a program with no shell, keeps its exit code, compacts only clean output (target of the opt-in `--exec` rewrite) |
 | `downshift context benchmark` | Compaction benchmark measuring raw byte reduction on checked-in fixtures |
 | `downshift models <discover\|check\|pull>` | Harness model discovery, catalog pricing audit, and remote score refresh |
 

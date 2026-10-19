@@ -213,6 +213,20 @@ func runHookAdapter[E any](
 		return fail("INVALID_EVENT")
 	}
 	defer withHookDeadline()()
+	// A shell-tool call is not a spawn: the opt-in exec wrapper may rewrite
+	// its command (shellrewrite.go), and it is never routed or denied.
+	if out, isShell := shellRewrite(harness, ev); isShell {
+		if out == nil {
+			wire.failOpen(wireFailOpenNoRoute, correlationID)
+			responded = true
+			return 0
+		}
+		if _, err := wire.emit(out, correlationID); err != nil {
+			return fail("OUTPUT_ENCODE_ERROR")
+		}
+		responded = true
+		return 0
+	}
 	sentCorrelation := false
 	if identified, ok := any(ev).(interface{ CorrelationIdentifier() string }); ok {
 		sent := identified.CorrelationIdentifier()

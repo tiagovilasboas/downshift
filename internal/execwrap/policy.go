@@ -1,0 +1,144 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+// Package execwrap is the opt-in shell-command wrapper: a harness-free rewrite
+// policy (Decide) that turns an allowlisted shell command into
+// `downshift exec -- <argv>`, and the runner (Run) that executes it, keeps the
+// exit code and compacts only unambiguously clean output with the internal
+// compressor. Nothing here knows a harness; adapters only expose the command
+// and emit the rewritten input.
+package execwrap
+
+import "strings"
+
+// Family names an allowlisted command family. It is the only command fact
+// that reaches telemetry: never the command text, arguments or paths.
+type Family string
+
+const (
+	FamilyNone      Family = ""
+	FamilyGoTest    Family = "go-test"
+	FamilyGitStatus Family = "git-status"
+)
+
+// execTail follows the quoted binary path in a wrapped command.
+const execTail = " exec -- "
+
+// QuoteExecutable single-quotes an absolute binary path for the shell. It
+// reports false for a path that is not absolute or holds a quote or a control
+// character, which the rewrite never emits.
+func QuoteExecutable(exe string) (string, bool) {
+	if exe == "" || exe[0] != '/' {
+		return "", false
+	}
+	for i := 0; i < len(exe); i++ {
+		if exe[i] == '\'' || exe[i] < 0x20 || exe[i] == 0x7f {
+			return "", false
+		}
+	}
+	return "'" + exe + "'", true
+}
+
+// maxCommandBytes bounds the command the policy considers. Longer commands
+// are left alone.
+const maxCommandBytes = 512
+
+// Decision is the policy answer for one shell command.
+type Decision struct {
+	// Rewrite is true only when Command should replace the original.
+	Rewrite bool
+	// Command is the wrapped command; empty when Rewrite is false.
+	Command string
+	Family  Family
+	// Argv is the command with whitespace normalised: the text a permission
+	// rule of the original command is matched against.
+	Argv string
+	// Reason is a fixed code, safe to log.
+	Reason string
+}
+
+// Reason codes.
+const (
+	ReasonAllowlisted    = "allowlisted"
+	ReasonEmpty          = "empty"
+	ReasonTooLong        = "too_long"
+	ReasonUnsafeChar     = "unsafe_character"
+	ReasonAlreadyWrapped = "already_wrapped"
+	ReasonNotAllowlisted = "not_allowlisted"
+	ReasonBadExecutable  = "bad_executable"
+)
+
+// Decide applies the rewrite policy to a shell command string. It does not
+// know whether the feature is enabled; the caller checks that first.
+//
+// A command is wrapped only when every byte is in a small safe set (ASCII
+// letters, digits, space and - _ . / : = , + @ %), so no pipe, list,
+// redirection, expansion, substitution, quote, glob, escape, comment, tilde
+// or newline can appear, and its first two words name an allowlisted family.
+// Env assignments and sudo fail the family check because the first word must
+// be exactly "go" or "git". The shell still parses the wrapped command, so the
+// words after the prefix expand exactly as they would have.
+//
+// exe is the absolute path of the running downshift binary; the wrapped
+// command invokes exactly that file, single-quoted, never a name looked up on
+// the Bash tool's PATH.
+func Decide(command, exe string) Decision {
+	trimmed := strings.Trim(command, " ")
+	switch {
+	case trimmed == "":
+		return Decision{Reason: ReasonEmpty}
+	case len(trimmed) > maxCommandBytes:
+		return Decision{Reason: ReasonTooLong}
+	}
+	for i := 0; i < len(trimmed); i++ {
+		if !safeByte(trimmed[i]) {
+			return Decision{Reason: ReasonUnsafeChar}
+		}
+	}
+	argv := strings.Fields(trimmed)
+	if argv[0] == "downshift" {
+		return Decision{Reason: ReasonAlreadyWrapped}
+	}
+	family := FamilyOf(argv)
+	if family == FamilyNone {
+		return Decision{Reason: ReasonNotAllowlisted}
+	}
+	quoted, ok := QuoteExecutable(exe)
+	if !ok {
+		return Decision{Family: family, Reason: ReasonBadExecutable}
+	}
+	return Decision{
+		Rewrite: true,
+		Command: quoted + execTail + strings.Join(argv, " "),
+		Argv:    strings.Join(argv, " "),
+		Family:  family,
+		Reason:  ReasonAllowlisted,
+	}
+}
+
+// FamilyOf names the allowlisted family of an argv, or FamilyNone. The
+// program must be the bare name ("go", "git"), not a path.
+func FamilyOf(argv []string) Family {
+	if len(argv) < 2 {
+		return FamilyNone
+	}
+	switch {
+	case argv[0] == "go" && argv[1] == "test":
+		return FamilyGoTest
+	case argv[0] == "git" && argv[1] == "status":
+		return FamilyGitStatus
+	}
+	return FamilyNone
+}
+
+func safeByte(c byte) bool {
+	switch {
+	case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9':
+		return true
+	}
+	switch c {
+	case ' ', '-', '_', '.', '/', ':', '=', ',', '+', '@', '%':
+		return true
+	}
+	return false
+}

@@ -53,6 +53,17 @@ supports; the Downshift side of that table is in
   and [filetree](../../mods/filetree/README.md) as sibling plugins of the marketplace
   (`savvy-progress@downshift`, `filetree@downshift`), each vendored and pinned with its
   licence in NOTICE.
+- Its own opt-in `downshift exec` wrapper (owner decision 2026-10-19, off
+  by default) is not a companion integration. With
+  `downshift context enable native --exec` the hook may rewrite an
+  allowlisted shell command (`go test`, `git status`, no shell
+  metacharacters) to `downshift exec -- <command>`. That runs the program
+  itself and compacts only clean output with the in-process compressor. It
+  never wraps, launches or rewrites a companion's command, and its saving
+  is reported separately (`exec_metrics` in `downshift context metrics`,
+  bytes measured, tokens estimated). When Headroom also runs, it sees the
+  already compacted output. See the
+  [harness matrix](../reference/harness-matrix.md#shell-command-rewrite-downshift-exec-opt-in-2026-10-19).
 - It does not count a companion's savings as its own. `downshift stats` is
   routing; `headroom savings` is compression. When a companion is recorded,
   `doctor` says so, so a before/after comparison is not attributed to routing

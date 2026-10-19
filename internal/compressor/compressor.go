@@ -73,6 +73,18 @@ func CompressExit(input []byte, mode Mode, exitCode int) Result {
 		return res
 	}
 
+	// Output that does not end in a newline may have been cut off mid-line,
+	// and CRLF output would be rewritten with stray carriage returns. In both
+	// cases the raw bytes are the only faithful answer.
+	if input[len(input)-1] != '\n' {
+		res.Reason = "no_final_newline_preserved"
+		return res
+	}
+	if bytes.IndexByte(input, '\r') != -1 {
+		res.Reason = "carriage_return_preserved"
+		return res
+	}
+
 	// Detect format
 	format, isError := detectFormat(input)
 	res.Format = format
@@ -106,11 +118,6 @@ func CompressExit(input []byte, mode Mode, exitCode int) Result {
 }
 
 func detectFormat(input []byte) (Format, bool) {
-	// Repetitive logs
-	if isRepetitiveLog(input) {
-		return FormatLogs, false
-	}
-
 	// 1. Go test
 	if reGoTestFail.Match(input) {
 		return FormatGoTest, true // Error detected! Preserve raw!
@@ -129,12 +136,19 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatGitLog, false
 	}
 
-	// 4. Search results (rg / grep)
+	// 4. Repetitive logs, only after go test, git status and git log had their
+	// say: a failing test run or a git log with repeated lines must stay raw.
+	// Timestamps can look like search hits, so this precedes the search check.
+	if isRepetitiveLog(input) {
+		return FormatLogs, false
+	}
+
+	// 5. Search results (rg / grep)
 	if reRipgrepMatch.Match(input) {
 		return FormatSearch, false
 	}
 
-	// 5. File listings / tree
+	// 6. File listings / tree
 	if bytes.Contains(input, []byte("total ")) && bytes.Contains(input, []byte("drwx")) {
 		return FormatFileList, false
 	}
@@ -161,40 +175,95 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 	}
 }
 
-// compressGoTest summarizes a suite only when every non-empty line is an
+// compressGoTest summarises a suite only when every non-empty line is an
 // "ok" package line. Any other line (warning, skip, fail text the detector
-// missed) keeps the original output.
+// missed) keeps the original output. The summary keeps the pass count, every
+// package name (the module prefix shared by all of them is stated once) and
+// the coverage figure when present; it drops only timings and "(cached)".
+// If that is not strictly shorter than the input, the input is returned.
 func compressGoTest(input []byte) ([]byte, bool, string) {
-	passes := 0
+	type pkg struct{ name, cover string }
+	var pkgs []pkg
 	for _, line := range strings.Split(string(input), "\n") {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
-		if reGoTestPass.MatchString(line) {
-			passes++
-			continue
+		m := reGoTestPass.FindStringSubmatch(line)
+		if m == nil {
+			return input, false, "go_test_preserved_non_pass_lines"
 		}
-		return input, false, "go_test_preserved_non_pass_lines"
+		pkgs = append(pkgs, pkg{name: m[1], cover: strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(m[3]), "of statements"))})
 	}
-	if passes < 2 {
+	if len(pkgs) < 2 {
 		return input, false, "go_test_too_few_packages_to_compress"
 	}
-	summary := fmt.Sprintf("Go test: PASS (%d packages ok)\n", passes)
-	return []byte(summary), true, fmt.Sprintf("compressed %d passing packages into summary", passes)
+	names := make([]string, len(pkgs))
+	for i, p := range pkgs {
+		names[i] = p.name
+	}
+	prefix := commonPathPrefix(names)
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "Go test: PASS (%d packages ok)", len(pkgs))
+	if prefix != "" {
+		fmt.Fprintf(&b, " under %s", prefix)
+	}
+	b.WriteString("\n")
+	for _, p := range pkgs {
+		b.WriteString("ok " + strings.TrimPrefix(p.name, prefix))
+		if p.cover != "" {
+			b.WriteString(" " + p.cover)
+		}
+		b.WriteString("\n")
+	}
+	out := b.String()
+	if len(out) >= len(input) {
+		return input, false, "no_compression_gain"
+	}
+	return []byte(out), true, fmt.Sprintf("compressed %d passing packages into summary", len(pkgs))
 }
 
-// compressGitStatus squelches "nothing to commit" or long untracked blocks.
+// commonPathPrefix returns the longest prefix shared by all names that ends
+// at a '/' boundary (including the slash), or "" when there is none.
+func commonPathPrefix(names []string) string {
+	prefix := names[0]
+	for _, n := range names[1:] {
+		for !strings.HasPrefix(n, prefix) {
+			prefix = prefix[:len(prefix)-1]
+		}
+	}
+	i := strings.LastIndexByte(prefix, '/')
+	if i < 0 {
+		return ""
+	}
+	return prefix[:i+1]
+}
+
+// compressGitStatus squelches a clean working tree, and only when every
+// non-empty line is the branch line, an "up to date" tracking line or the
+// clean marker. Ahead, behind, diverged, detached or any other line keeps the
+// original output: an agent deciding whether to push needs that line.
 func compressGitStatus(input []byte) ([]byte, bool, string) {
 	s := string(input)
-	if strings.Contains(s, "nothing to commit, working tree clean") {
-		branch := "branch"
-		lines := strings.Split(s, "\n")
-		if len(lines) > 0 && strings.HasPrefix(lines[0], "On branch ") {
-			branch = lines[0]
-		}
-		return []byte(fmt.Sprintf("%s (working tree clean)\n", branch)), true, "squelched clean working tree"
+	if !strings.Contains(s, "nothing to commit, working tree clean") {
+		return input, false, "git_status_has_changes_preserved"
 	}
-	return input, false, "git_status_has_changes_preserved"
+	branch := ""
+	for _, line := range strings.Split(s, "\n") {
+		switch {
+		case strings.TrimSpace(line) == "":
+		case strings.HasPrefix(line, "On branch ") && branch == "":
+			branch = line
+		case strings.HasPrefix(line, "Your branch is up to date"):
+		case line == "nothing to commit, working tree clean":
+		default:
+			return input, false, "git_status_extra_lines_preserved"
+		}
+	}
+	if branch == "" {
+		return input, false, "git_status_no_branch_preserved"
+	}
+	return []byte(fmt.Sprintf("%s (working tree clean)\n", branch)), true, "squelched clean working tree"
 }
 
 // compressGitLog keeps the raw log. An oneline summary drops bodies.
