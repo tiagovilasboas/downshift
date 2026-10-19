@@ -5,7 +5,9 @@ package telemetry
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -169,7 +171,8 @@ func LivePath() string {
 }
 
 // WriteLive folds rec into live.json. Counts reset when the session changes.
-// It is best effort: the caller ignores the error, a spawn never waits on it.
+// It is best effort: the caller ignores the error. A busy lock can cost the
+// spawn up to lockTimeout (500 ms), after which the record is skipped.
 func WriteLive(rec SpawnRecord) error {
 	path := LivePath()
 	lock, err := LockFile(path, lockTimeout)
@@ -195,12 +198,23 @@ func WriteLive(rec SpawnRecord) error {
 	return os.Rename(tmp, path)
 }
 
-// ReadLive reads live.json; a missing or unreadable file is the zero value.
+// maxLiveBytes caps what ReadLive accepts; a real record is under 1 KB.
+const maxLiveBytes = 64 << 10
+
+// ReadLive reads live.json; a missing, oversized or unreadable file is the zero value.
 func ReadLive() (LiveState, error) {
 	var l LiveState
-	data, err := os.ReadFile(LivePath())
+	f, err := os.Open(LivePath())
 	if err != nil {
 		return l, err
+	}
+	defer f.Close()
+	data, err := io.ReadAll(io.LimitReader(f, maxLiveBytes+1))
+	if err != nil {
+		return l, err
+	}
+	if len(data) > maxLiveBytes {
+		return l, errors.New("live.json too large")
 	}
 	err = json.Unmarshal(data, &l)
 	return l, err

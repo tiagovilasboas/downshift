@@ -145,3 +145,13 @@ func TestPanelLabelsAndKey(t *testing.T) {
 		t.Fatalf("ToolUseKey must equal HashSessionID: %s vs %s", got, HashSessionID("toolu_1"))
 	}
 }
+
+func TestReadLiveRefusesOversizedFile(t *testing.T) {
+	t.Setenv("DOWNSHIFT_EVENT_LOG", t.TempDir()+"/events.jsonl")
+	if err := os.WriteFile(LivePath(), []byte(`{"session":"`+strings.Repeat("a", maxLiveBytes)+`"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if l, err := ReadLive(); err == nil || l.Session != "" {
+		t.Fatalf("oversized live.json must be refused: %+v %v", l, err)
+	}
+}
