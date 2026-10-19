@@ -25,7 +25,7 @@ Security vulnerabilities in `downshift` include:
 
 - **Privilege escalation** — routing logic that bypasses or circumvents hook execution controls.
 - **Model & token injection** — unauthorized mutation of `updated_input.model` or `reasoning_effort` fields.
-- **Event log leakage** — paths, prompts, or API keys exposed in `~/.harness-downshift/events.jsonl`.
+- **Event log leakage** — paths, prompts, or API keys exposed in `~/.downshift/events.jsonl`.
 - **Catalog injection** — malformed or untrusted catalog entries that cause denial of service or bypass safety guards.
 - **Hook runtime isolation** — failure to run isolated from the parent harness process, or unexpected process access.
 
@@ -33,7 +33,7 @@ Security vulnerabilities in `downshift` include:
 
 - Vulnerabilities in upstream harnesses (Claude Code, Cursor, Codex, etc.) that ignore the hook's rewrite.
 - Vulnerabilities in LLM providers' APIs (Anthropic, OpenRouter, etc.).
-- Configuration mistakes (e.g., insecure file permissions on `~/.harness-downshift/`).
+- Configuration mistakes (e.g., insecure file permissions on `~/.downshift/`).
 - Dependency vulnerabilities in `go` stdlib or the build toolchain (report to Go team).
 
 ## Fixed and disclosed vulnerabilities

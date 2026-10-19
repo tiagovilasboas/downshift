@@ -213,8 +213,10 @@ would change, with Proceed and Cancel) and `replay-theater` (steps through
 the last turn's edits), install the same way and are unrelated to routing.
 
 **What Downshift does with it.** Nothing, by the rule above: it does not
-install, detect or configure a mod, and `downshift setup` never touches
-`enabledPlugins`. This section is the whole integration.
+install, detect or configure these recommended mods. (`downshift setup` does
+install its own plugin and the sibling mods savvy-progress and filetree, and
+turns on You should know unless you set it; see [mods/README.md](../../mods/README.md).)
+This section is the whole integration.
 
 **Before you install any mod.** A hooks module runs inside Claude Code with
 Claude Code's access, unsandboxed. Read the module; Token Weather's calls are

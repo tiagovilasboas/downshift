@@ -1,6 +1,6 @@
 # Domain: Code Intelligence (DCI)
 
-Zero-latency, privacy-first deterministic structural code intelligence and prompt context injection.
+Low-latency, privacy-first deterministic structural code intelligence and prompt context injection. Off by default (`downshift dci enable` turns it on); the measured evidence is latency and context bytes, not answer quality.
 
 Downshift Code Intelligence (DCI) is a high-speed, zero-runtime subsystem that parses repository structure, builds incremental in-memory AST and symbol indexes, computes downstream blast radiuses, and injects compact, relevant code sketches directly into user prompts across coding harnesses (`claude-code`, `cursor`, `opencode`, `codex`, and `generic`).
 

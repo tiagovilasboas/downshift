@@ -12,7 +12,7 @@ services and products **around** the code, not from restricting the source:
 
 | Model | Examples |
 |-------|----------|
-| **Hosted** | Downshift Cloud — managed routing, dashboards, org policies |
+| **Hosted** | A possible managed offering (dashboards, org policies). Not built, not announced |
 | **Support** | Paid integration help for enterprises |
 | **Enterprise** | SSO, audit retention, SLA, private benchmarks |
 | **Trademark** | "Downshift" as a brand for official binaries and cloud |
