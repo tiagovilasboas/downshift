@@ -1,0 +1,13 @@
+{
+  "name": "downshift-dock",
+  "version": "0.1.0",
+  "description": "A one-line band above the prompt with buttons that bring back the Files (filetree) and Agents (savvy-progress) panels.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Tiago Vilas Boas",
+    "url": "https://github.com/tiagovilasboas"
+  },
+  "homepage": "https://github.com/tiagovilasboas/downshift/tree/main/mods/downshift-dock",
+  "repository": "https://github.com/tiagovilasboas/downshift",
+  "license": "Apache-2.0"
+}
