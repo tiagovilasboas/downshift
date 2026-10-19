@@ -17,7 +17,8 @@ and is retained below.
 mods/savvy-progress/ is the Claude Code mod savvy-progress by johnnyvizz
 (https://github.com/JohnnyVizz/claude-kit, path plugins/savvy-progress,
 version 1.2.1, commit c871c15), MIT License, Copyright (c) 2026 johnnyvizz,
-vendored unchanged. The MIT notice is in mods/savvy-progress/LICENSE; its text
+vendored with one local patch (three colour values, documented in
+mods/savvy-progress/README.md). The MIT notice is in mods/savvy-progress/LICENSE; its text
 is the MIT text retained below, under the copyright line above.
 
 mods/filetree/ is the Claude Code mod filetree by Kurt Buhler

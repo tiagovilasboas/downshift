@@ -15,9 +15,26 @@ folded into the `downshift` plugin unchanged.
 | Upstream | https://github.com/JohnnyVizz/claude-kit, path `plugins/savvy-progress` |
 | Version | 1.2.1 |
 | Commit | `c871c153ead54ad9547cc717d0f3e5a676c73986` (2026-10-13) |
-| Files | `.claude-plugin/plugin.json`, `hooks/hooks.json`, `hooks/register.tsx`, `types/index.d.ts` byte-identical to upstream; the four `hooks/*.test.ts(x)` files byte-identical (they import nothing by relative path) |
+| Files | `.claude-plugin/plugin.json`, `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `hooks/register.tsx` byte-identical except the Downshift colour patch below; the four `hooks/*.test.ts(x)` files byte-identical (they import nothing by relative path) |
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `savvy-progress`, source `./mods/savvy-progress` |
 | Needs | Claude Code 2.1.287 or later (mods on by default); a pane for `/agents-info` (desktop docks it; the terminal needs the fullscreen layout) |
+
+## Downshift colour patch
+
+The only local change to upstream: the bar uses the Downshift brand green
+(`docs/brand/downshift-brand-tokens.json`, accent `#22C55E`) instead of the
+upstream violet, and the percentage pill uses the brand ink `#0D1117` instead
+of white, because white on green has poor contrast.
+
+| Constant in `hooks/register.tsx` | Upstream | Downshift |
+|---|---|---|
+| `ACCENT` (running) | `#8f8cf4` | `#22c55e` |
+| `DONE` (finished) | `#5fbf8f` | `#16a34a` |
+| `PILL_INK` (pill text; was a literal `#ffffff`) | `#ffffff` | `#0d1117` |
+
+Tier colours in the agents panel are untouched: they tell tiers apart. When
+re-vendoring a newer upstream, reapply these three lines and rerun
+`claude plugin test mods/savvy-progress`.
 
 ## What it does
 
