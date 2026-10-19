@@ -316,7 +316,7 @@ describe('guard', () => {
     await $.turn.complete(turn())
     await clock.advance(3 * HOUR)
     const first = await $.prompt.submit(prompt('hi'))
-    expect(first.drop).toMatch(/cache-tax: the prompt cache went cold 2h00m ago\. Sending this re-writes up to 200,502 tokens at \$20\/MTok = \$4\.01/)
+    expect(first.drop).toMatch(/\[downshift:cache-tax\] the prompt cache went cold 2h00m ago\. Sending this re-writes up to 200,502 tokens at \$20\/MTok = \$4\.01/)
     expect(w.entered).toEqual([])
     const second = await $.prompt.submit(prompt('hi'))
     expect(second.drop).toBe(undefined)

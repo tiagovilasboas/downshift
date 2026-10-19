@@ -21,9 +21,10 @@ prompt-cache guard and `/keepwarm` without a second marketplace.
 - **Cold-send guard (on by default).** When the session's context is at
   least 50,000 tokens and the last request is more than an hour old, an
   ordinary message is dropped once with its estimated rewrite price
-  (`cache-tax: the prompt cache went cold 2h00m ago. Sending this re-writes
+  (`[downshift:cache-tax] the prompt cache went cold 2h00m ago. Sending this re-writes
   up to 200,502 tokens at $20/MTok = $4.01 ...`). Sending it again goes
-  through. `/cache-tax guard warn` shows the price and sends.
+  through. Automated subagent and background task deliveries bypass the drop
+  automatically to prevent stalling orchestration workflows. `/cache-tax guard warn` shows the price and sends.
 - **Keep-warm (you arm it).** `/keepwarm` (6 h), `/keepwarm 90m`,
   `/keepwarm always`, `/keepwarm off`. Inside the window, after 50 idle
   minutes one tool-less fork with a fixed one-line prompt reads the cache so

@@ -451,8 +451,13 @@ export const register: Register = on => {
     if (typeof e.text !== 'string' || e.text.trimStart().startsWith('/')) return next(e)
     const now = await $.clock.now()
     if (!isCold(s, now) || s.ctx < BIG_TOKENS) return next(e)
+    // Automated background sessions / subagent tasks should not be blocked by the prompt drop
+    const originKind = (e.origin as { kind?: string })?.kind
+    if (originKind === 'task-notification' || originKind === 'peer' || originKind === 'peer-send-message' || originKind === 'coordinator' || originKind === 'scheduled-trigger') {
+      return next(e)
+    }
     if (s.guard === 'warn') {
-      $.ui.log(`${guardText(s, now)} Sending anyway; keepwarm will hold the cache for ${fmtDuration(AUTO_WARM_MS)} once it lands.`)
+      $.ui.log(`[downshift:cache-tax] ${guardText(s, now)} Sending anyway; keepwarm will hold the cache for ${fmtDuration(AUTO_WARM_MS)} once it lands.`)
       s.coldWritePending = true
       return next(e)
     }
@@ -462,7 +467,7 @@ export const register: Register = on => {
       return next(e)
     }
     s.ackedAt = s.lastRequestAt
-    return { drop: `cache-tax: ${guardText(s, now)} Send it again to pay it, and keepwarm will then hold the cache for ${fmtDuration(AUTO_WARM_MS)}. Or /clear and start from a note.` }
+    return { drop: `[downshift:cache-tax] ${guardText(s, now)} Send it again to pay it, and keepwarm will then hold the cache for ${fmtDuration(AUTO_WARM_MS)}. Or /clear and start from a note.` }
   })
 
   on('turn.step', async function* ($, e, next) {

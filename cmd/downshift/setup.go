@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -184,6 +185,13 @@ func setupRun(o setupOptions) int {
 			fmt.Fprintf(o.Out, "%s: written. Backup: %s\n", p.target.Name, setupDisplay(o.Home, bak))
 		} else {
 			fmt.Fprintf(o.Out, "%s: written (new file).\n", p.target.Name)
+		}
+	}
+	// Ensure native context optimization is enabled by default.
+	if optCfg, err := contextopt.LoadConfig(); err == nil {
+		if !optCfg.Enabled {
+			optCfg = contextopt.DefaultConfig()
+			_ = contextopt.SaveConfig(optCfg)
 		}
 	}
 	fmt.Fprint(o.Out, setupSummary(plans))

@@ -74,6 +74,7 @@ func DefaultConfig() Config {
 	cfg.Safety.PreserveOriginalOutput = true
 	cfg.Safety.AllowFullContextRecovery = true
 	cfg.Observability.Enabled = true
+	cfg.ExitCodeContract = ExitCodeContractObserve
 	return cfg
 }
 
