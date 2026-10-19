@@ -1,10 +1,22 @@
 # Documentation index
 
-Docs are grouped by audience: **guides/** (how-tos), **reference/** (specs and
+Docs are grouped by audience: **domains/** (core architecture and domain specifications), **guides/** (how-tos), **reference/** (specs and
 contracts), **design/** (architecture and design notes), **evidence/** (dated
 runtime proof) and **internal/** (maintainer planning). Markdown file names
 under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`,
 `SKILL.md`, `AGENTS.md`) keep their exact casing.
+
+## Specialized Domains
+
+Detailed architectural boundaries and specifications per functional domain:
+
+| Domain | Scope & Focus | Specification |
+|---|---|---|
+| **Subagent Routing** | Deterministic PreToolUse delegation routing, BDI deliberation, invariant guardrails (R1-R9), session catalog resolution | [domains/subagent-routing.md](domains/subagent-routing.md) |
+| **Code Intelligence (DCI)** | Zero-runtime AST symbol extraction, reverse call-graphs (blast radius), BM25 ranking, prompt context packaging | [domains/code-intelligence.md](domains/code-intelligence.md) |
+| **Context Optimization** | Native context compressor, context sensor, Claude Code session policies (`opusplan`), companion integration | [domains/context-optimization.md](domains/context-optimization.md) |
+| **Observability & Telemetry** | Local prompt-free telemetry (`events.jsonl`), automated empirical control groups, child outcome tracking, cost reports | [domains/observability-telemetry.md](domains/observability-telemetry.md) |
+
 
 ## The suite in one table
 
