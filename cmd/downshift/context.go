@@ -118,6 +118,10 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 	if len(cfg.ActiveHarness) > 0 {
 		fmt.Fprintf(w, "  Active Harnesses: %s\n", strings.Join(cfg.ActiveHarness, ", "))
 	}
+	if cfg.Provider == "native" {
+		fmt.Fprintln(w, "  Claude Code: measures only. A Claude Code hook cannot rewrite tool output, so the native provider saves no tokens there;")
+		fmt.Fprintln(w, "    real compression needs the Headroom proxy (`headroom wrap claude`), which Downshift does not start.")
+	}
 	fmt.Fprintf(w, "  Main Agent: %v, Subagents: %v\n", cfg.Scope.MainAgent, cfg.Scope.SpawnedAgents)
 	fmt.Fprintf(w, "  Preserve Original Output: %v\n", cfg.Safety.PreserveOriginalOutput)
 

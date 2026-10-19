@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `downshift context status` and `doctor` now say that on Claude Code the native context provider only measures bytes: a Claude Code hook cannot rewrite tool output, so real compression there needs the Headroom proxy, which Downshift does not start.
 - Claude Code plugin session command renamed to `/downshift:status` (`commands/status.md`). Update the plugin and start a new session to load the new name. The optional manual `/downshift` alias remains available by copying the same command file.
 
 ### Removed
