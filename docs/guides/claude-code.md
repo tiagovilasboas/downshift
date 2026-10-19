@@ -136,9 +136,10 @@ keeps a backup, and prints a diff (`--dry-run` first):
   `downshift claude-code-post-tool-use`), `PostToolUseFailure` (same runner), `SubagentStop`
   (`downshift claude-code-subagent-stop`).
 - Main-session policy, each key **only when unset**: `model: "opusplan"`,
-  `permissions.defaultMode: "plan"`, and `enabledPlugins["cc-plugin-you-should-know@builtin"]: true`
-  (Claude Code's built-in You should know mod; each check is a billed background request to the
-  session's model). `--no-session-policy` skips these three. An existing value, `false` included, is
+  and `permissions.defaultMode: "plan"`. `--no-session-policy` skips these two. Claude Code's built-in
+  You should know mod (`enabledPlugins["cc-plugin-you-should-know@builtin"]: true`) is **opt-in**:
+  each check is a billed background request to the session's model, so `setup` only prints the
+  suggestion and writes it with `downshift setup --you-should-know`. An existing value, `false` included, is
   reported by `doctor` as `main session: … (set by you)` with the note on how to switch.
   `autoCompactWindow` is not written by setup; set it yourself if you want it.
 - `statusLine`: set only when none exists; someone else's is left alone with a note on chaining

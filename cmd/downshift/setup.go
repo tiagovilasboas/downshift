@@ -33,8 +33,11 @@ type setupOptions struct {
 	// SkipDiscovery disables automatic model discovery during setup (useful in tests).
 	SkipDiscovery bool
 	// NoSessionPolicy skips the optional main-session policy (model opusplan and
-	// plan as the starting mode, You should know); hooks are wired as usual.
+	// plan as the starting mode); hooks are wired as usual.
 	NoSessionPolicy bool
+	// YouShouldKnow turns on Claude Code's built-in You should know mod. It is
+	// opt-in because each check is a billed background request.
+	YouShouldKnow bool
 	// NoPlugin keeps the Claude Code hooks in settings.json instead of
 	// installing the Downshift plugin (which carries the hooks and the
 	// cache-tax mod).
@@ -66,6 +69,8 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 			opts.Yes = true
 		case a == "--no-session-policy":
 			opts.NoSessionPolicy = true
+		case a == "--you-should-know":
+			opts.YouShouldKnow = true
 		case a == "--no-plugin":
 			opts.NoPlugin = true
 		case a == "-h" || a == "--help":
@@ -93,7 +98,7 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	return setupRun(opts)
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy] [--no-plugin]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy] [--you-should-know] [--no-plugin]
 
 Wire every Downshift hook into the harnesses found on this machine.
   --dry-run            show the diff, write nothing
@@ -101,7 +106,9 @@ Wire every Downshift hook into the harnesses found on this machine.
   --yes                do not ask before writing
   --no-session-policy  wire the hooks only: do not set the Claude Code
                        main-session policy (model opusplan, sessions start in
-                       plan mode, You should know on)
+                       plan mode)
+  --you-should-know    also turn on Claude Code's built-in You should know mod
+                       (opt-in: each check is a billed background request)
   --no-plugin          Claude Code: keep the hooks in settings.json instead of
                        installing the Downshift plugin (the plugin carries the
                        same hooks plus the cache-tax mod) and skip the sibling

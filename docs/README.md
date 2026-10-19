@@ -97,7 +97,7 @@ Downshift Code Intelligence (DCI) is a zero-runtime, deterministic, privacy-firs
 
 ## Domain 3: Output Compaction & Context Optimization
 
-The context optimization domain manages context window consumption without intercepting or altering model generation in flight. The native compressor provides AST, JSON, text, and test output compaction in `safe` mode as an explicit CLI step (`downshift context compress`). The PostToolUse hook sensor is strictly observe-only: it records tool output bytes and potential token reductions without rewriting tool outputs seen by the model. Companion tools like Headroom (a compression proxy) are detected on PATH and recorded via `downshift context enable headroom`, but never installed, launched, or wrapped. Context policy also configures initial session posture (`opusplan`, plan mode, You should know).
+The context optimization domain manages context window consumption without intercepting or altering model generation in flight. The native compressor provides AST, JSON, text, and test output compaction in `safe` mode as an explicit CLI step (`downshift context compress`). The PostToolUse hook sensor is strictly observe-only: it records tool output bytes and potential token reductions without rewriting tool outputs seen by the model. Companion tools like Headroom (a compression proxy) are detected on PATH and recorded via `downshift context enable headroom`, but never installed, launched, or wrapped. Context policy also configures initial session posture (`opusplan`, plan mode; You should know is opt-in).
 
 | Doc | Type | Topic |
 |-----|------|-------|
