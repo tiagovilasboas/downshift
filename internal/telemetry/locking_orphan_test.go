@@ -5,6 +5,7 @@ package telemetry
 
 import (
 	"bytes"
+	"github.com/tiagovilasboas/downshift/internal/testrace"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,7 +32,7 @@ func TestLockFile_LeftoverLockFileDoesNotBlock(t *testing.T) {
 		t.Fatalf("leftover lock file blocked the writer: %v", err)
 	}
 	lock.Close()
-	if d := time.Since(start); d > 300*time.Millisecond {
+	if d := time.Since(start); d > testrace.Budget(300*time.Millisecond) {
 		t.Fatalf("acquiring past a leftover lock took %s", d)
 	}
 }

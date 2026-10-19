@@ -105,6 +105,24 @@ jobs:
         if: needs.changes.outputs.docs_only != '1'
         run: node --test web/app.test.cjs internal/cursorbridge/extension/decoder.test.cjs
 
+  # Race detector on every package except internal/core, whose -race run takes
+  # 4-5 minutes (the scheduled ci-full covers it). Not the required `test` check.
+  race:
+    needs: changes
+    if: needs.changes.outputs.go == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.27"
+          cache: true
+
+      - name: Test with the race detector (all but internal/core)
+        run: go test -race -timeout 15m $(go list ./... | grep -v '/internal/core$')
+
   python:
     needs: changes
     if: needs.changes.outputs.python == '1' || needs.changes.outputs.go == '1'

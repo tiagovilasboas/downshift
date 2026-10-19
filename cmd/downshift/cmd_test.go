@@ -691,3 +691,20 @@ func TestEngineeringLoopEndToEnd(t *testing.T) {
 		t.Fatalf("candidate was not evaluated: %s", output)
 	}
 }
+
+// A saving is only quoted when the hook would apply the move. With an
+// allowlist that lists nothing cheaper, try says "not applied" and quotes no
+// percentage.
+func TestRunTry_NoSavingClaimedWhenTheMoveIsNotApplied(t *testing.T) {
+	setSessionAllowlist(t, "cursor", []string{cmdCat.ModelFor("cursor", core.TierFrontier).ID})
+	out := captureStdout(func() {
+		runTry(cmdCat, []string{"rename the userId variable", "cursor", cmdCat.ModelFor("cursor", core.TierFrontier).ID})
+	})
+	lines := strings.Split(out, "\n")
+	if strings.Contains(lines[0], "cheaper") || strings.Contains(lines[0], "%") || !strings.Contains(lines[0], "not applied") {
+		t.Errorf("headline must not quote a saving the hook will not make; got:\n%s", out)
+	}
+	if !strings.Contains(out, "note: not rewritten") {
+		t.Errorf("the note explaining why is missing; got:\n%s", out)
+	}
+}
