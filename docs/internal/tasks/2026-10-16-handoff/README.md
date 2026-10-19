@@ -265,7 +265,8 @@ wrap as the opt-in step.
 
 ## I8: Headroom on Claude Code (opt-in)
 
-Scope: Claude Code only, the one harness that must work end to end.
+Scope: Claude Code only, the one harness that must work end to end. `setup --headroom` applies to the `claude-code` target alone;
+for any other harness it is ignored with a note, and it never runs when `setup` is called for other harnesses only.
 
 **What is known.** `headroom wrap claude` launches Claude Code through a local proxy by setting `ANTHROPIC_BASE_URL`; it registers a
 code-memory MCP server (Serena) by default. `headroom init claude` ("install Claude Code durable hooks and provider routing") and
