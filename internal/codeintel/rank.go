@@ -24,6 +24,9 @@ const (
 	ExactSymbolMatchBonus   = 5.0
 	ExactFilenameMatchBonus = 3.0
 
+	// Call-Graph Boost
+	CallGraphBoost = 2.0
+
 	// Top-K Selection Limits
 	MaxTopFiles    = 3
 	MaxTopSymbols  = 8
@@ -103,6 +106,15 @@ func RankCandidates(idx *InvertedIndex, queryTokens []string, rawPrompt string) 
 		// Apply exact match bonuses
 		score += computeExactMatchBonus(doc, matchedSymbols, uniqueTerms, rawPrompt)
 
+		// Production-First vs Test Ranking
+		if isTestFile(doc.RelativePath) {
+			if !isTestQuery(uniqueTerms) {
+				score *= 0.65
+			} else {
+				score += 2.0
+			}
+		}
+
 		candidates = append(candidates, &Candidate{
 			Document:       doc,
 			Score:          score,
@@ -113,6 +125,73 @@ func RankCandidates(idx *InvertedIndex, queryTokens []string, rawPrompt string) 
 
 	// Deterministic sorting: Score DESC, RelativePath ASC
 	SortCandidates(candidates)
+
+	// Call-Graph Co-Reference Boost (CallGraphBoost = 2.0)
+	if len(candidates) > 1 && candidates[0] != nil {
+		top := candidates[0]
+		topTargetSymbols := top.MatchedSymbols
+		if len(topTargetSymbols) == 0 && top.Document != nil {
+			topTargetSymbols = top.Document.Symbols
+		}
+
+		topCalled := make(map[string]bool)
+		for _, sym := range topTargetSymbols {
+			for _, call := range sym.Calls {
+				topCalled[call] = true
+			}
+		}
+
+		topMatchedNames := make(map[string]bool)
+		for _, sym := range topTargetSymbols {
+			topMatchedNames[sym.Name] = true
+			if dotIdx := strings.LastIndex(sym.Name, "."); dotIdx != -1 {
+				topMatchedNames[sym.Name[dotIdx+1:]] = true
+			}
+		}
+
+		for _, c := range candidates[1:] {
+			if c == nil || c.Document == nil {
+				continue
+			}
+			boosted := false
+			for _, sym := range c.Document.Symbols {
+				symName := sym.Name
+				methodPart := symName
+				if dotIdx := strings.LastIndex(symName, "."); dotIdx != -1 {
+					methodPart = symName[dotIdx+1:]
+				}
+
+				calledByTop := topCalled[symName] || topCalled[methodPart]
+				callsTop := false
+				for _, call := range sym.Calls {
+					if topMatchedNames[call] {
+						callsTop = true
+						break
+					}
+				}
+
+				if calledByTop || callsTop {
+					if !boosted {
+						c.Score += CallGraphBoost
+						boosted = true
+					}
+					alreadyPresent := false
+					for _, existing := range c.MatchedSymbols {
+						if existing.Name == sym.Name && existing.StartLine == sym.StartLine {
+							alreadyPresent = true
+							break
+						}
+					}
+					if !alreadyPresent {
+						c.MatchedSymbols = append(c.MatchedSymbols, sym)
+					}
+				}
+			}
+		}
+
+		// Re-run SortCandidates after applying call-graph boosts
+		SortCandidates(candidates)
+	}
 
 	return candidates
 }
@@ -182,6 +261,32 @@ func computeExactMatchBonus(doc *Document, symbols []Symbol, queryTerms []string
 	}
 
 	return bonus
+}
+
+// isTestFile returns true if relPath corresponds to a test or spec file.
+func isTestFile(relPath string) bool {
+	p := strings.ToLower(filepath.ToSlash(relPath))
+	base := filepath.Base(p)
+	if strings.HasSuffix(p, "_test.go") ||
+		strings.HasSuffix(p, ".test.ts") ||
+		strings.HasSuffix(p, ".spec.ts") ||
+		strings.HasSuffix(p, ".test.js") ||
+		strings.HasSuffix(p, ".spec.js") ||
+		strings.HasPrefix(base, "test_") {
+		return true
+	}
+	return false
+}
+
+// isTestQuery returns true if any query term indicates test or benchmark intent.
+func isTestQuery(queryTerms []string) bool {
+	for _, term := range queryTerms {
+		switch strings.ToLower(term) {
+		case "test", "tests", "testing", "benchmark", "benchmarks", "bench":
+			return true
+		}
+	}
+	return false
 }
 
 // findDocMatchedSymbols extracts symbols matching query terms and sorts them deterministically (StartLine ASC, Name ASC).

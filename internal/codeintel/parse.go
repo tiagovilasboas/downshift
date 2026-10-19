@@ -27,6 +27,34 @@ var (
 	reType    = regexp.MustCompile(`^\s*(?:export\s+)?(?:type|interface)\s+([A-Za-z0-9_]+)`)
 )
 
+var goBuiltins = map[string]bool{
+	"len":     true,
+	"cap":     true,
+	"append":  true,
+	"make":    true,
+	"new":     true,
+	"copy":    true,
+	"delete":  true,
+	"close":   true,
+	"panic":   true,
+	"recover": true,
+	"complex": true,
+	"real":    true,
+	"imag":    true,
+	"clear":   true,
+	"min":     true,
+	"max":     true,
+	"string":  true,
+	"int":     true,
+	"int64":   true,
+	"uint64":  true,
+	"float64": true,
+	"byte":    true,
+	"rune":    true,
+	"bool":    true,
+	"error":   true,
+}
+
 // ParseFile parses a source file from disk into an indexed Document.
 // Raw file contents are used for term frequency and symbol extraction, but never stored.
 func ParseFile(repoRoot, relPath string) (*Document, error) {
@@ -56,10 +84,11 @@ func ParseFile(repoRoot, relPath string) (*Document, error) {
 	}
 
 	var symbols []Symbol
+	var imports []string
 	ext := strings.ToLower(filepath.Ext(relPath))
 	switch ext {
 	case ".go":
-		symbols = parseGoAST(relPath, contentBytes)
+		symbols, imports = parseGoAST(relPath, contentBytes)
 	case ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs":
 		symbols = parseTSJSSymbols(relPath, contentStr)
 	case ".py":
@@ -86,18 +115,32 @@ func ParseFile(repoRoot, relPath string) (*Document, error) {
 		ModTime:      info.ModTime().UTC().Truncate(time.Second),
 		TermFreqs:    termFreqs,
 		Symbols:      symbols,
+		Imports:      imports,
 		TotalTerms:   totalTerms,
 	}
 
 	return doc, nil
 }
 
-func parseGoAST(relPath string, src []byte) []Symbol {
+func parseGoAST(relPath string, src []byte) ([]Symbol, []string) {
 	fset := token.NewFileSet()
 	node, err := parser.ParseFile(fset, "", src, parser.ParseComments)
 	if err != nil {
 		// If AST parse fails (syntax error), fallback to lexical scan
-		return parseFallbackSymbols(relPath, string(src))
+		return parseFallbackSymbols(relPath, string(src)), nil
+	}
+
+	var imports []string
+	for _, imp := range node.Imports {
+		if imp != nil && imp.Path != nil {
+			val := strings.Trim(imp.Path.Value, "\"`")
+			if val != "" {
+				imports = append(imports, val)
+				if len(imports) >= 32 {
+					break
+				}
+			}
+		}
 	}
 
 	var symbols []Symbol
@@ -114,6 +157,36 @@ func parseGoAST(relPath string, src []byte) []Symbol {
 					name = recvType + "." + name
 				}
 			}
+
+			var calls []string
+			if d.Body != nil {
+				seenCalls := make(map[string]bool)
+				ast.Inspect(d.Body, func(n ast.Node) bool {
+					if len(calls) >= 16 {
+						return false
+					}
+					call, ok := n.(*ast.CallExpr)
+					if !ok {
+						return true
+					}
+					var callName string
+					switch fn := call.Fun.(type) {
+					case *ast.Ident:
+						callName = fn.Name
+					case *ast.SelectorExpr:
+						callName = fn.Sel.Name
+					}
+					if callName == "" || goBuiltins[callName] {
+						return true
+					}
+					if !seenCalls[callName] {
+						seenCalls[callName] = true
+						calls = append(calls, callName)
+					}
+					return true
+				})
+			}
+
 			startLine := fset.Position(d.Pos()).Line
 			endLine := fset.Position(d.End()).Line
 			symbols = append(symbols, Symbol{
@@ -122,6 +195,7 @@ func parseGoAST(relPath string, src []byte) []Symbol {
 				RelativePath: relPath,
 				StartLine:    startLine,
 				EndLine:      endLine,
+				Calls:        calls,
 			})
 
 		case *ast.GenDecl:
@@ -165,7 +239,7 @@ func parseGoAST(relPath string, src []byte) []Symbol {
 		}
 	}
 
-	return symbols
+	return symbols, imports
 }
 
 func parseFallbackSymbols(relPath, content string) []Symbol {

@@ -37,6 +37,7 @@ type Symbol struct {
 	RelativePath string     `json:"path"`
 	StartLine    int        `json:"start_line"`
 	EndLine      int        `json:"end_line"`
+	Calls        []string   `json:"calls,omitempty"`
 }
 
 // Document holds the indexed representation of a source file.
@@ -48,6 +49,7 @@ type Document struct {
 	ModTime      time.Time      `json:"mod_time"`
 	TermFreqs    map[string]int `json:"term_freqs"`
 	Symbols      []Symbol       `json:"symbols"`
+	Imports      []string       `json:"imports,omitempty"`
 	TotalTerms   int            `json:"total_terms"`
 }
 

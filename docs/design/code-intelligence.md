@@ -34,37 +34,54 @@ Downshift Code Intelligence (DCI) is a zero-runtime, deterministic, privacy-firs
    - Permissions: 0600 (file), 0700 (directory)                    │
       │                                                            │
       ▼                                                            │
-[BM25 Ranking & Tie-Breaking]                                      │
-   - k1=1.2, b=0.75                                                │
-   - Field weights: symbol=5, filename=3, content=1                │
-   - Tie-breaking: Score DESC, Path ASC, Line ASC                  │
-      │                                                            │
-      ▼                                                            │
-[Relevance Filter & Abstention Engine]                             │
-   - Greetings, thanks, conversational chatter                     │
-   - Requires explicit symbol/path OR >=2 terms                    │
-      │                                                            │
-   ┌──┴─────────────────────────┐                                  │
-   │ (Abstain)                  │ (Pass)                           │
-   ▼                            ▼                                  │
-[Exit 0 / Empty]       [Structural Packager]                       │
-                         - Default 3500 bytes UTF-8 (512..16384)   │
-                         - Security markers                        │
-                         - Literal code snippets                   │
-                                │                                  │
-                                ▼                                  ▼
+[BM25 Ranking, Production-First Weighting & Call-Graph Boost]
+   - k1=1.2, b=0.75
+   - Field weights: symbol=5, filename=3, content=1
+   - Production-First: 0.65x on _test.go for non-test queries; +2.0 boost on test queries
+   - Call-Graph Boost: +2.0 co-reference boost for caller/callee file pairs
+   - Tie-breaking: Score DESC, Path ASC, Line ASC
+      │
+      ▼
+[Relevance Filter & Abstention Engine]
+   - Greetings, thanks, conversational chatter
+   - Requires explicit symbol/path OR >=2 terms
+      │
+   ┌──┴─────────────────────────┐
+   │ (Abstain)                  │ (Pass)
+   ▼                            ▼
+[Exit 0 / Empty]       [Structural Packager]
+                         - Default 3500 bytes UTF-8 (512..16384)
+                         - Security markers
+                         - Literal code snippets
+                                │
+                                ▼
                      [Multi-Harness Hook Response / Exit 0]
 ```
 
-### 2.2 Multi-Language Structural Symbol Extraction (DCI v0.2)
+### 2.2 Multi-Language Structural Symbol & Call-Graph Extraction (DCI v0.2 / v0.3)
 
 DCI extracts structural declarations with start/end line spans across primary languages without external runtimes or CGo dependencies:
-- **Go (`.go`)**: Full `go/ast` parsing for functions, methods, structs, interfaces, types, constants, and variables.
+- **Go (`.go`)**: Full `go/ast` parsing for functions, methods, structs, interfaces, types, constants, and variables. In addition:
+  - **Function Call-Graph (`Symbol.Calls`)**: Traverses `*ast.CallExpr` within function declarations (`*ast.FuncDecl`), discarding standard Go built-in calls (`append`, `cap`, `close`, `complex`, `copy`, `delete`, `imag`, `len`, `make`, `new`, `panic`, `print`, `println`, `real`, `recover`), and capping extracted unique calls at 16 calls per symbol to bound index size.
+  - **Package Imports (`Document.Imports`)**: Extracts import path specifications from `*ast.File.Imports`, capped at 32 imports per document.
 - **TypeScript / JavaScript (`.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`)**: Structural extraction of functions, classes, interfaces, type aliases, enums, exported const/arrow functions, and class methods with brace-balanced span tracking.
 - **Python (`.py`)**: Structural extraction of `def` / `async def` functions, methods, and `class` declarations with indentation-based block span tracking.
 - **Other text files**: Lexical camelCase / snake_case tokenization for full-text BM25 indexing.
 
-### 2.3 Security & Prompt Injection Mitigation
+### 2.3 Production-First Ranking & Call-Graph Co-Reference Boosting (DCI v0.3)
+
+In real-world engineering workflows, developer prompts are typically targeted at understanding or modifying production logic, yet test files (`*_test.go`, test suites) often contain identical symbol names, mocks, and high term frequencies that crowd out implementation files in pure BM25 ranking. DCI v0.3 introduces two ranking enhancements:
+
+1. **Production-First Ranking Weighting**:
+   - When a prompt does **not** contain explicit testing tokens (such as `test`, `tests`, `testing`, `bench`, `benchmark`), candidate test files (files ending in `_test.go` or residing in test directories) are penalized by a multiplier of `0.65x`.
+   - When a prompt **explicitly mentions** test or benchmark tokens, candidate test files receive a `+2.0` score boost, ensuring test suites are immediately surfaced when developers ask about testing.
+
+2. **Call-Graph Co-Reference Boosting (`+2.0`)**:
+   - For multi-file architectural understanding, callers and callees must be packaged together. After initial BM25 scoring and ranking, DCI evaluates cross-file symbol call relationships against the top candidate.
+   - If a candidate file defines a symbol that is called by any matched symbol in the top-ranked candidate (`Symbol.Calls`), or if the candidate calls a symbol defined in the top-ranked candidate, the candidate receives a `+2.0` co-reference boost.
+   - This surfaces tightly coupled dependencies (such as service caller -> handler, or handler -> dispatcher) within the Top-K candidates without exceeding context token budgets.
+
+### 2.4 Security & Prompt Injection Mitigation
 
 Context injected into LLMs from untrusted repositories presents an attack surface (e.g. malicious instruction injections inside comments or files). DCI defends against this through:
 1. **Unambiguous Demarcation**:
@@ -98,7 +115,7 @@ DCI provides three operational modes configured in `.downshift/dci.json`:
 - `downshift dci enable [active|observe] [--budget=N]`: Configures operational mode and optional UTF-8 byte budget (clamped between `512` and `16384` bytes; default `3500`) in `.downshift/dci.json`.
 - `downshift dci disable`: Sets mode to `off`.
 - `downshift dci doctor`: Runs health checks on directory permissions, discovery limits, symlink safety, and latency budgets.
-- `downshift dci inspect <prompt>`: Simulates the DCI pipeline for a test prompt, displaying query tokens, candidate rankings, abstention decisions, and formatted output.
+- `downshift dci inspect [--json] <prompt>`: Simulates the DCI pipeline for a test prompt, displaying query tokens, candidate rankings, abstention decisions, and formatted output. When `--json` is supplied, outputs a clean, machine-readable JSON object with `prompt_tokens`, `abstained`, `abstention_reason`, `candidates_count`, `selected_files`, `symbols_count`, `snippets_count`, `output_bytes`, `formatted_text`, and `latency_ms`.
 - `downshift dci benchmark`: Executes repeatable automated performance, relevance, and latency benchmarks against the current repository.
 - `downshift dci hook <harness>`: Executes the stdin hook handler for `claude-code`, `cursor`, `opencode`, `codex`, or `generic`.
 
