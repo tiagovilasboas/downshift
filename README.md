@@ -182,6 +182,18 @@ Downshift follows a strict 5-rung [Evidence Ladder](docs/guides/evidence.md) (fr
 
 ---
 
+## System design
+
+Architecture diagrams drawn from the code (package imports checked on 2026-10-19). Open them in [Excalidraw](https://excalidraw.com) to zoom, move and edit:
+
+- [Context](https://excalidraw.com/#json=bGMJ1juCVo9QGDlzeXGau,6p-T7EcaZgYTa87OYyKT6w): Downshift, the harnesses, the plugin and the local state.
+- [Containers](https://excalidraw.com/#json=zQUCXrdLJ6pZsprneMJdq,o4JxDvNXeW7rw4JB2ABRtQ): the `internal/` packages by domain and what imports what.
+- [Routing flow](https://excalidraw.com/#json=z6kSqPw2z-jm2qHKMK_QD,O9gh95mVIWhtPBMWZRNdjA): one subagent spawn, from the hook to a rewrite or a pass-through.
+- [Cache guard](https://excalidraw.com/#json=zaPr8E8rZ_JfZslFJwK7j,fPSsmd85ZxROvOzhTPbyeA): the `cache-tax` cold-cache guard and keep-warm.
+- [Packaging](https://excalidraw.com/#json=f3DwaDFGmbtxz3nQnn21v,QetwA0ZRQgeeibEC57LEMQ): how `setup` installs hooks, the plugin and the mods.
+
+---
+
 ## Documentation
 
 - **Core Documentation**: [Guides Index](docs/README.md) · [Install Guide](docs/guides/install.md) · [Configuration](docs/guides/config.md) · [Architecture](docs/design/architecture.md)
