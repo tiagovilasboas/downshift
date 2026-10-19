@@ -720,8 +720,9 @@ type Stats struct {
 
 	// RewriteShifted counts rewrite_emitted events that asked for a different model.
 	// RewriteHonored is the inferred count from CountInferredHonored. The
-	// report does not print it as honor. HonorObserved counts decisions with
-	// a linked resolved record whose rewrite_honored is true.
+	// report does not print it as honor. HonorObserved counts applied rewrites with
+	// a linked resolved record whose rewrite_honored is true; HonorUnobserved the
+	// applied rewrites with none. Spawns left unchanged are in neither.
 	RewriteShifted  int
 	RewriteHonored  int
 	HonorObserved   int
@@ -856,11 +857,16 @@ func tallySpawnSurface(events []Event, s *Stats) {
 			continue
 		}
 		surface := SurfaceFor(ev, honor[SurfaceKey(ev)], usage[SurfaceKey(ev)])
-		switch surface.Honor {
-		case HonorObserved:
-			s.HonorObserved++
-		default:
-			s.HonorUnobserved++
+		// Honor is asked of a rewrite only: a spawn the hook left alone has no
+		// written model to confirm, so counting it "unobserved" buried the few
+		// real rewrites under every unchanged spawn.
+		if isShift(ev) {
+			switch surface.Honor {
+			case HonorObserved:
+				s.HonorObserved++
+			default:
+				s.HonorUnobserved++
+			}
 		}
 		switch surface.Usage {
 		case UsageObserved:

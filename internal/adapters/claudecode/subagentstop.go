@@ -144,6 +144,7 @@ func parseSubagentStop(payload map[string]any) (hookport.ChildEnd, bool) {
 		SessionID:    session,
 		Model:        got.Model,
 		Usage:        &usage,
+		Cumulative:   true,
 		Source:       hookport.SourceTranscript,
 		IsChild:      true,
 		Verification: readSubagentVerification(path),

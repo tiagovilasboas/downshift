@@ -88,6 +88,10 @@ type Baseline struct {
 	// was guessed (Claude Code settings, Cursor parent model_id) and the target
 	// was not the small tier, which is the only one surely cheaper.
 	GuessHeld bool
+	// Pinned is true when the harness's agent definition fixes the child's model
+	// (an agent file or a built-in type that names one). The model is then the
+	// owner's explicit choice: the baseline is known, and routing never rewrites it.
+	Pinned bool
 }
 
 // Session is the session-scope evidence behind the write decision.

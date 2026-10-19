@@ -71,3 +71,20 @@ func TestPlanSession_InferenceIsACapability(t *testing.T) {
 		t.Fatalf("a harness without InferSession must not infer: %+v", plan)
 	}
 }
+
+// A baseline pinned by the harness's agent definition is the owner's explicit
+// choice: whatever the verdict and whether or not the session list is known,
+// the plan keeps it (no model and no effort rewrite), like an explicit_only model.
+func TestPlanSession_PinnedBaselineIsNeverRewritten(t *testing.T) {
+	for _, session := range []core.SessionList{
+		core.UnknownSession(),
+		core.KnownSession([]string{"claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"}),
+	} {
+		d := core.Route("rename the userId variable to userIdentifier", "claude-code", "claude-opus-5-5", cat)
+		d.Baseline.Pinned = true
+		plan := d.PlanSession(core.ClaudeCodeCaps, cat, session, "claude-opus-5-5")
+		if !plan.PreserveExplicit || plan.RewriteModel || plan.ApplyEffort {
+			t.Errorf("known=%v: a pinned baseline must be preserved, got %+v", session.Known, plan)
+		}
+	}
+}

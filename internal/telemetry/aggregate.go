@@ -134,7 +134,8 @@ func (a *aggregator) countCostOnly(ev Event) {
 	// A refuted rewrite saved nothing; an older record may still be priced on
 	// the model it asked for, so its delta is not credited.
 	if ev.HasRealCost() && !a.refuted[key] {
-		a.addRealCost(ev, hasReason(a.decisions[key].ReasonCodes, ReasonBaselineFromSettings))
+		decision, found := a.decisions[key]
+		a.addRealCost(RoutedCost(ev, decision, found), hasReason(decision.ReasonCodes, ReasonBaselineFromSettings))
 	}
 }
 
