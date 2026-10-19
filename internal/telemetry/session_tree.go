@@ -60,9 +60,13 @@ type TreeRow struct {
 	CostKind string   `json:"cost_kind"` // real|estimate|none
 	OverUSD  float64  `json:"over_usd,omitempty"`
 	Reason   string   `json:"reason"`
-	RedoOf   int      `json:"redo_of,omitempty"` // index of the child this one redid
-	Paused   bool     `json:"paused,omitempty"`
-	Time     string   `json:"time,omitempty"`
+	// State is what Downshift did: switched|held|observed|paused|control|blocked.
+	State       string   `json:"state"`
+	FromModel   string   `json:"from_model,omitempty"`
+	ReasonCodes []string `json:"reason_codes,omitempty"`
+	RedoOf      int      `json:"redo_of,omitempty"` // index of the child this one redid
+	Paused      bool     `json:"paused,omitempty"`
+	Time        string   `json:"time,omitempty"`
 
 	mark    string
 	baseUSD float64 // baseline cost, or the cost itself when no baseline is known
@@ -80,9 +84,13 @@ type SessionTreeView struct {
 	DeltaUSD   float64 `json:"delta_usd"` // without minus cost; negative is a loss
 	// InferredBaseline counts priced rows whose baseline was guessed from
 	// settings (BASELINE_FROM_SETTINGS), so the saving is against a guess.
-	InferredBaseline int       `json:"inferred_baseline,omitempty"`
-	Paused           bool      `json:"paused"`
-	Rows             []TreeRow `json:"rows"`
+	InferredBaseline int  `json:"inferred_baseline,omitempty"`
+	Paused           bool `json:"paused"`
+	// Switched and Held count the rows Downshift changed and the rows it
+	// considered and kept.
+	Switched int       `json:"switched"`
+	Held     int       `json:"held"`
+	Rows     []TreeRow `json:"rows"`
 }
 
 // IsDecisionRow reports whether an event is a routing decision of a subagent:
@@ -209,6 +217,14 @@ func BuildSessionTree(events []Event, sessionHash string, opt TreeOptions) Sessi
 	view.Rows = orderRows(rows, parent)
 	view.Subagents = len(rows)
 	for _, r := range view.Rows {
+		switch r.State {
+		case StateSwitched:
+			view.Switched++
+		case StateHeld:
+			view.Held++
+		}
+	}
+	for _, r := range view.Rows {
 		if r.CostKind != "real" || r.CostUSD == nil {
 			continue // an estimate or an unpriced child never enters the totals
 		}
@@ -233,6 +249,10 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 		f = &childFacts{}
 	}
 	row.Model = rowModel(d, f)
+	row.State, row.FromModel, row.ReasonCodes = SpawnStateOf(d), shortOrQ(d.FromModel), d.ReasonCodes
+	if row.State == StateSwitched && d.FromModel != d.ToModel {
+		row.Reason = "switched from " + row.FromModel + ", " + row.Reason
+	}
 	refuted := f.resolved != nil && f.resolved.RewriteHonored != nil && !*f.resolved.RewriteHonored
 	switch {
 	case d.Outcome == OutcomeBlocked:
@@ -400,6 +420,7 @@ func (v SessionTreeView) Render() string {
 		head = append(head, "no subagents yet")
 	} else {
 		head = append(head, fmt.Sprintf("%d %s", v.Subagents, noun))
+		head = append(head, fmt.Sprintf("%d switched, %d held", v.Switched, v.Held))
 		if v.HasCost {
 			head = append(head, fmt.Sprintf("%s (without downshift: %s)", formatUSD(v.CostUSD), formatUSD(v.WithoutUSD)))
 			switch {
