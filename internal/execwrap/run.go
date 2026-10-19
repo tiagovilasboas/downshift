@@ -79,6 +79,8 @@ var expectedFormat = map[Family]compressor.Format{
 	FamilyTSC:        compressor.FormatTSC,
 	FamilyJest:       compressor.FormatJest,
 	FamilyCypress:    compressor.FormatCypress,
+	FamilyNextBuild:  compressor.FormatNextBuild,
+	FamilyPHPUnit:    compressor.FormatPHPUnit,
 }
 
 // Run executes argv directly (no shell) with the caller's stdin, and exits
@@ -98,7 +100,7 @@ func Run(argv []string, o Options) (res Result) {
 	if res.Family == FamilyNone {
 		// exec is not a generic runner: only the allowlisted families run, so
 		// a wrapped command can never be anything the hook would not wrap.
-		fmt.Fprintln(o.Stderr, "downshift exec: refused: only `go test`, `git status`, `pytest`, `vitest`, `jest`, `playwright`, `cypress run`, `cargo test` and `tsc` may run through exec")
+		fmt.Fprintln(o.Stderr, "downshift exec: refused: only allowlisted test, build, and status commands may run through exec")
 		return Result{ExitCode: ExitCannotExecute, ExitClass: ExitClassRefused}
 	}
 	path, err := exec.LookPath(argv[0])

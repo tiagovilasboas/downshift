@@ -12,7 +12,7 @@ import (
 
 var (
 	reCypressStat  = regexp.MustCompile(`^\s*(Tests|Passing|Failing|Pending|Skipped):\s+(\d+)\s*$`)
-	reCypressError = regexp.MustCompile(`(?i)(?:AssertionError|Error:|uncaught (?:exception|error)|failed|timed out)`)
+	reCypressError = regexp.MustCompile(`(?i)(?:AssertionError|Error:|uncaught (?:exception|error)|failed|timed out|warning)`)
 )
 
 type cypressSummary struct {

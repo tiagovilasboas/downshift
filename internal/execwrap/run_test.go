@@ -610,3 +610,26 @@ func TestRun_CypressPassingRunCompacts(t *testing.T) {
 		t.Fatalf("unexpected Cypress output: %q", stdout)
 	}
 }
+
+func TestRun_NextBuildAndPHPUnitCompact(t *testing.T) {
+	for _, tc := range []struct {
+		name, bin, command, fixture, want string
+		family                            Family
+	}{
+		{"Next.js build", "next", "next build", "next_build_pass.txt", "Next.js Build: SUCCESS (5 routes: 3 app, 2 pages; shared First Load JS 96.7 kB in 8.2s)", FamilyNextBuild},
+		{"PHPUnit", "phpunit", "phpunit", "phpunit_pass_default.txt", "PHPUnit: PASS (58 tests, 143 assertions", FamilyPHPUnit},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := os.ReadFile(filepath.Join("..", "compressor", "testdata", "corpus", tc.fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+			fakeBin(t, tc.bin, "cat <<'EOF'\n"+string(data)+"EOF\n")
+			argv := strings.Fields(tc.command)
+			r, stdout, stderr := run(t, argv, true)
+			if r.ExitCode != 0 || !r.Compacted || r.Family != tc.family || stderr != "" || !strings.Contains(stdout, tc.want) {
+				t.Fatalf("result=%+v stdout=%q stderr=%q", r, stdout, stderr)
+			}
+		})
+	}
+}

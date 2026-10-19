@@ -32,6 +32,10 @@ func TestDecide(t *testing.T) {
 		{"npx jest", "npx jest", true, FamilyJest, "'/opt/ds/downshift' exec -- npx jest", ReasonAllowlisted},
 		{"cypress run", "cypress run", true, FamilyCypress, "'/opt/ds/downshift' exec -- cypress run", ReasonAllowlisted},
 		{"npx cypress run", "npx cypress run", true, FamilyCypress, "'/opt/ds/downshift' exec -- npx cypress run", ReasonAllowlisted},
+		{"next build", "next build", true, FamilyNextBuild, "'/opt/ds/downshift' exec -- next build", ReasonAllowlisted},
+		{"npx next build", "npx next build", true, FamilyNextBuild, "'/opt/ds/downshift' exec -- npx next build", ReasonAllowlisted},
+		{"phpunit", "phpunit", true, FamilyPHPUnit, "'/opt/ds/downshift' exec -- phpunit", ReasonAllowlisted},
+		{"vendor phpunit", "./vendor/bin/phpunit", true, FamilyPHPUnit, "'/opt/ds/downshift' exec -- ./vendor/bin/phpunit", ReasonAllowlisted},
 
 		{"git log not allowlisted", "git log", false, "", "", ReasonNotAllowlisted},
 		{"git diff", "git diff", false, "", "", ReasonNotAllowlisted},

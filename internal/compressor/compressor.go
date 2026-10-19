@@ -142,6 +142,13 @@ func CompressExit(input []byte, mode Mode, exitCode int) Result {
 }
 
 func detectFormat(input []byte) (Format, bool) {
+	if isNextBuild(input) {
+		return FormatNextBuild, reNextBuildError.Match(input)
+	}
+	if isPHPUnit(input) {
+		return FormatPHPUnit, rePHPUnitFailure.Match(input)
+	}
+
 	// Verbose Go output ends with PASS, which otherwise matches Jest's generic
 	// PASS header. Identify a Go test transcript before the broader Jest check.
 	if reGoVerboseRun.Match(input) {
@@ -278,6 +285,10 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressJest(input)
 	case FormatCypress:
 		return compressCypress(input)
+	case FormatNextBuild:
+		return compressNextBuild(input)
+	case FormatPHPUnit:
+		return compressPHPUnit(input)
 	case FormatGitStatus:
 		return compressGitStatus(input)
 	case FormatGitLog:

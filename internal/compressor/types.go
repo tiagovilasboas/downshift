@@ -34,6 +34,8 @@ const (
 	FormatTSC        Format = "tsc"
 	FormatJest       Format = "jest"
 	FormatCypress    Format = "cypress"
+	FormatNextBuild  Format = "next_build"
+	FormatPHPUnit    Format = "phpunit"
 	FormatSearch     Format = "search"       // rg, grep
 	FormatFileList   Format = "file_listing" // ls -R, tree, find
 	FormatLogs       Format = "logs"         // repetitive log lines

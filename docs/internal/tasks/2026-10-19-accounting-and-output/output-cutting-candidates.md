@@ -36,7 +36,8 @@ Every candidate must satisfy the following four core principles:
 | **`mvn test`** | 3,000 – 8,000 tokens (`[INFO]` downloads, plugin resolutions, build logs) | `Maven: PASS (N tests run, 0 failures in Xs)` | **~98%** | `BUILD FAILURE`, `FAILURE!`, exceptions, exit != 0 | **Phase 3** |
 | **`gradle test`** | 2,500 – 6,000 tokens (task execution tree, daemon banners) | `Gradle: PASS (N tests passed in Xs)` | **~97%** | `BUILD FAILED`, task failure, exit != 0 | **Phase 3** |
 | **`flutter test`** | 1,000 – 3,500 tokens (engine init, simulator status, test lines) | `Flutter: PASS (N tests passed in Xs)` | **~92%** | `Some tests failed`, exceptions, exit != 0 | **Phase 4** |
-| **`phpunit` / `pest`** | 500 – 3,000 tokens (per-test progress, suite summaries) | `PHP tests: PASS (N tests, 0 failures)` | **~90%** | Failure/error details, exceptions, exit != 0 | **Phase 3** |
+| **`phpunit`** | 1,000 – 4,000 tokens (dot progress, runtime details, test/assertion totals) | `PHPUnit: PASS (N tests, M assertions in Xs)` | **~93%** | Failures, warnings, test output, alternate printer, inconsistent totals, exit != 0 | **Landed** |
+| **`pest`** | 500 – 3,000 tokens (per-test progress, suite summaries) | `Pest: PASS (N tests, 0 failures)` | **~90%** | Failure/error details, exceptions, exit != 0 | **Phase 3** |
 
 ---
 
@@ -64,7 +65,7 @@ Every candidate must satisfy the following four core principles:
 ### Category D: Build Bundlers & ORM ASCII Art
 | Tool / Command | Typical Raw Output | Compacted Target | Token Reduction | Fail-Open Trigger | Phase |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`next build`** | 2,000 – 4,500 tokens (massive ASCII route tables, chunk sizes, symbols) | `Next.js Build: SUCCESS (N routes compiled in Xs)` | **~96%** | `Failed to compile`, build errors, exit != 0 | **Phase 2** |
+| **`next build`** | 2,000 – 4,500 tokens (massive ASCII route tables, chunk sizes, symbols) | `Next.js Build: SUCCESS (N routes: A app, P pages; shared First Load JS SIZE in Xs)` | **~96%** | Warnings, errors, incomplete route/chunk tables, unfamiliar output, exit != 0 | **Landed** |
 | **`prisma generate` / `migrate`** | 800 – 2,000 tokens (ASCII pyramid banner, telemetry notes) | `Prisma: SUCCESS (Client generated for schema)` | **~95%** | `Error: P...`, migration failed, exit != 0 | **Phase 3** |
 | **`alembic upgrade`** | 400 – 1,200 tokens (revision migration logs) | `Alembic: SUCCESS (Upgraded to revision REV)` | **~85%** | Migration errors, exit != 0 | **Phase 4** |
 
@@ -112,7 +113,7 @@ The following tools are explicitly excluded from `downshift exec` wrapping to pr
 ## 4. Execution Roadmap Summary
 
 - **Phase 1 (Landed):** `playwright` (E2E), `cargo test` (Rust), `tsc` (TypeScript typecheck), and verbose `go test`.
-- **Phase 2 (In Progress):** `jest` and `cypress` landed; remaining candidates are `next build`, `prettier --check`, `black/ruff format --check`, and `mypy`.
-- **Phase 3 (Enterprise & Linters):** `mvn test`, `gradle test`, `prisma generate/migrate`, `eslint`, `ruff check`, `golangci-lint`, PHP test/type/format tools, `go generate`, and `sqlc`.
+- **Phase 2 (In Progress):** `jest`, `cypress`, and `next build` landed; remaining candidates are `prettier --check`, `black/ruff format --check`, and `mypy`.
+- **Phase 3 (Enterprise & Linters):** `phpunit` landed; remaining candidates are `mvn test`, `gradle test`, `prisma generate/migrate`, `eslint`, `ruff check`, `golangci-lint`, Pest/PHP type/format tools, `go generate`, and `sqlc`.
 - **Phase 4 (Deps & Audits):** `pnpm install`, `npm install`, `pip/uv`, `npm/cargo/pip audit`, `alembic`, `flutter test`.
 - **Phase 5 (Noise & Search Bounds):** `git diff` lockfile squelcher, `ripgrep` (`rg`) hierarchical match bounds.

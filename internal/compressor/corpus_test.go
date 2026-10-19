@@ -93,6 +93,10 @@ var rawFixtures = []string{
 	"cargo_fail.txt",
 	"tsc_fail.txt",
 	"jest_fail.txt",
+	"next_build_warning.txt",
+	"next_build_truncated.txt",
+	"next_build_unknown_output.txt",
+	"phpunit_fail_actionable.txt",
 }
 
 // cleanFixture is output that may be compacted on exit 0. facts are substrings
@@ -116,6 +120,8 @@ var cleanFixtures = []cleanFixture{
 	{"cargo_pass_clean.txt", []string{"25 passed"}},
 	{"tsc_pass_clean.txt", []string{"0 errors"}},
 	{"jest_pass_clean.txt", []string{"25 passed", "3 suites", "1 suite skipped", "1 todo"}},
+	{"next_build_pass.txt", []string{"5 routes", "8.2s"}},
+	{"phpunit_pass_default.txt", []string{"58 tests", "143 assertions", "00:00.019", "12.00 MB"}},
 }
 
 func readFixture(t *testing.T, name string) []byte {

@@ -50,6 +50,14 @@ func TestCompressCypressPreservesErrorOutputWithPassingSummary(t *testing.T) {
 	}
 }
 
+func TestCompressCypressPreservesWarningsWithPassingSummary(t *testing.T) {
+	in := []byte("(Run Starting)\nBrowser: Electron\nWarning: browser emitted a deprecation warning\n(Run Finished)\n│ Tests: 1\n│ Passing: 1\n│ Failing: 0\n│ Pending: 0\n│ Skipped: 0\n│ Duration: 1 second\n")
+	res := CompressExit(in, ModeSafe, 0)
+	if res.Applied || res.Format != FormatCypress || !bytes.Equal(res.Output, in) {
+		t.Fatalf("warning output must be preserved: applied=%v format=%q reason=%q output=%q", res.Applied, res.Format, res.Reason, res.Output)
+	}
+}
+
 func TestCompressCypress_FailurePreservesActionableOutput(t *testing.T) {
 	in, err := os.ReadFile(filepath.Join("testdata", "corpus", "cypress_fail_actionable.txt"))
 	if err != nil {
