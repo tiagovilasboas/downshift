@@ -11,8 +11,6 @@ import (
 	"testing"
 	"time"
 	"unicode/utf8"
-
-	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 var sessA = strings.Repeat("a", 64)
@@ -30,6 +28,7 @@ func tuse(link, sess string, d time.Duration, model string, cost, base float64) 
 	return Event{
 		CorrelationID: "u-" + link, Timestamp: at(d), SessionID: sess, Harness: "claude-code", Outcome: OutcomeUsage,
 		LinkedDecision: link, ToModel: model, ActualCostUSD: f64(cost), BaselineCostUSD: f64(base),
+		InputTokens: i64(600), OutputTokens: i64(400), CachedTokens: i64(9000),
 	}
 }
 
@@ -60,29 +59,26 @@ func TestSessionTree_OneSubagentWithRealCost(t *testing.T) {
 		tuse("d1", sessA, time.Minute, "claude-sonnet-5-5", 0.22, 0.60),
 	}
 	got := lines(SessionTree(ev, sessA, TreeOptions{}))
-	if got[0] != "session · 1 subagent · 1 switched, 0 held · $0.22 (without downshift: $0.60) · saved $0.38" {
+	if got[0] != "session · 1 subagent · 1 switched, 0 held · tokens saved: work 100% · cache 100% (10k of 10k)" {
 		t.Fatalf("header: %q", got[0])
 	}
-	if got[1] != "└─ subagent 1  sonnet  ✓  $0.22  switched from opus, MEDIUM, confident" {
+	if got[1] != "└─ subagent 1  sonnet  ✓  10k tokens · saved from opus  switched from opus, MEDIUM, confident" {
 		t.Fatalf("row: %q", got[1])
 	}
 }
 
-func TestSessionTree_LossIsShownAsOver(t *testing.T) {
+func TestSessionTree_PricierIsNeverSaved(t *testing.T) {
 	ev := []Event{
 		td("d1", sessA, 0, "claude-opus-5-5"),
 		tuse("d1", sessA, time.Minute, "claude-opus-5-5", 1.30, 0.50),
 	}
 	out := SessionTree(ev, sessA, TreeOptions{})
-	if !strings.Contains(out, "over $0.80") {
-		t.Fatalf("loss not shown as over:\n%s", out)
-	}
 	hdr := lines(out)[0]
-	if !strings.HasSuffix(hdr, "· over $0.80") || strings.Contains(hdr, "saved") {
+	if !strings.Contains(hdr, "work 0% · cache 0%") || !strings.Contains(hdr, "10k on a pricier model") {
 		t.Fatalf("header: %q", hdr)
 	}
-	if strings.Contains(out, "-$") || strings.Contains(out, "saved -") {
-		t.Fatalf("a negative amount leaked:\n%s", out)
+	if !strings.Contains(out, "pricier than opus") || strings.Contains(out, "saved from") || strings.Contains(out, "$") {
+		t.Fatalf("a pricier child must read pricier, never saved, and carry no dollar:\n%s", out)
 	}
 }
 
@@ -181,41 +177,43 @@ func TestSessionTree_ColumnsAreAligned(t *testing.T) {
 			t.Fatalf("status column moves: %v", marks)
 		}
 	}
-	// The cost column is right-aligned: its last digit sits at one column.
-	var ends []int
+	// The tokens column is left-aligned: it starts at one column on every row.
+	var starts []int
 	for _, l := range lines(SessionTree(ev, sessA, TreeOptions{}))[1:] {
+		if strings.HasPrefix(l, "by agent type") {
+			continue
+		}
 		r := []rune(l)
-		i := marks[0] + 3
+		i := marks[0] + 1
 		for i < len(r) && r[i] == ' ' {
 			i++
 		}
-		for i < len(r) && r[i] != ' ' {
-			i++
-		}
-		ends = append(ends, i)
+		starts = append(starts, i)
 	}
-	for _, e := range ends {
-		if e != ends[0] {
-			t.Fatalf("cost column not right-aligned: %v", ends)
+	for _, e := range starts {
+		if e != starts[0] {
+			t.Fatalf("tokens column not aligned: %v", starts)
 		}
 	}
 	_ = costEnds
 }
 
-func TestSessionTree_EstimateIsMarkedAndNeverSummed(t *testing.T) {
+// The live tree shows tokens, never dollars: an unpriced child shows its
+// tokens without a price, and no row or header carries a "$".
+func TestSessionTree_TokensNotDollars(t *testing.T) {
 	use := Event{
 		CorrelationID: "u1", Timestamp: at(time.Minute), SessionID: sessA, Harness: "claude-code",
 		Outcome: OutcomeUsage, LinkedDecision: "d1", ToModel: "claude-sonnet-5-5",
 		InputTokens: i64(1_000_000), OutputTokens: i64(0),
 	}
 	ev := []Event{td("d1", sessA, 0, "claude-sonnet-5-5"), use}
-	price := func(string, string) (core.Model, bool) { return core.Model{InputM: 3, OutputM: 15}, true }
-	out := SessionTree(ev, sessA, TreeOptions{Price: price})
-	if !strings.Contains(out, "~$3.00") || !strings.Contains(out, "cost not observed") {
-		t.Fatalf("estimate must be marked ~ and kept out of the header total:\n%s", out)
+	out := SessionTree(ev, sessA, TreeOptions{})
+	if strings.Contains(out, "$") || !strings.Contains(out, "tokens not observed") {
+		t.Fatalf("an unpriced child is not a priced token observation, and no dollar is shown:\n%s", out)
 	}
-	if out = SessionTree(ev, sessA, TreeOptions{}); strings.Contains(out, "~") {
-		t.Fatalf("no price, no estimate:\n%s", out)
+	priced := append(ev, tuse("d1", sessA, 2*time.Minute, "claude-sonnet-5-5", 0.5, 0.5))
+	if out = SessionTree(priced, sessA, TreeOptions{}); strings.Contains(out, "$") || !strings.Contains(out, "tokens saved: work") {
+		t.Fatalf("priced child shows tokens, no dollars:\n%s", out)
 	}
 }
 
@@ -284,14 +282,5 @@ func TestPauseMarker_ExpiryAndFailOpen(t *testing.T) {
 	}
 	if fi, err := os.Stat(filepath.Dir(p)); err != nil || fi.Mode().Perm()&0o077 != 0 {
 		t.Fatalf("marker dir must be private: %v %v", fi, err)
-	}
-}
-
-func TestSessionTree_UnpricedModelDoesNotShowFreeEstimate(t *testing.T) {
-	input := int64(1000)
-	ev := []Event{td("unknown-price", sessA, 0, "session-model"), {Outcome: OutcomeUsage, Harness: "claude-code", SessionID: sessA, LinkedDecision: "unknown-price", ToModel: "session-model", InputTokens: &input}}
-	out := SessionTree(ev, sessA, TreeOptions{Price: func(string, string) (core.Model, bool) { return core.Model{ID: "session-model"}, true }})
-	if strings.Contains(out, "$") {
-		t.Fatalf("unpriced model shown as priced: %s", out)
 	}
 }

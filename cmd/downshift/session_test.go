@@ -136,9 +136,10 @@ func seedTreeLog(t *testing.T) (log, sessA, sessB string) {
 	now := time.Now().UTC()
 	ts := func(d time.Duration) string { return now.Add(d).Format(time.RFC3339Nano) }
 	cost, base := 0.22, 0.60
+	in, out, cached := int64(600), int64(400), int64(9000)
 	for _, ev := range []telemetry.Event{
 		{CorrelationID: "a1", Timestamp: ts(-3 * time.Minute), Harness: "claude-code", SessionID: ha, Outcome: telemetry.OutcomeRewriteEmitted, Complexity: "MEDIUM", FromModel: "claude-opus-5-5", ToModel: "claude-sonnet-5-5", Tier: "mid", Verdict: "DOWNSHIFT", ReasonCodes: []string{telemetry.ReasonClassifierConfident}},
-		{CorrelationID: "au", Timestamp: ts(-2 * time.Minute), Harness: "claude-code", SessionID: ha, Outcome: telemetry.OutcomeUsage, LinkedDecision: "a1", ToModel: "claude-sonnet-5-5", ActualCostUSD: &cost, BaselineCostUSD: &base},
+		{CorrelationID: "au", Timestamp: ts(-2 * time.Minute), Harness: "claude-code", SessionID: ha, Outcome: telemetry.OutcomeUsage, LinkedDecision: "a1", ToModel: "claude-sonnet-5-5", ActualCostUSD: &cost, BaselineCostUSD: &base, InputTokens: &in, OutputTokens: &out, CachedTokens: &cached},
 		{CorrelationID: "b1", Timestamp: ts(-time.Minute), Harness: "claude-code", SessionID: hb, Outcome: telemetry.OutcomeAllow, Complexity: "COMPLEX", FromModel: "claude-opus-5-5", ToModel: "claude-opus-5-5", Tier: "frontier", Verdict: "UPSHIFT"},
 	} {
 		if err := telemetry.AppendTo(log, ev); err != nil {
@@ -156,7 +157,7 @@ func TestSession_SelectionExplicitThenEnvThenLatest(t *testing.T) {
 
 	// Latest decision in the log is session b: one subagent, unpriced.
 	out, _, rc := sessionCmd(t)
-	if rc != 0 || !strings.HasPrefix(out, header+"1 subagent · 0 switched, 0 held · cost not observed") || !strings.Contains(out, "opus") {
+	if rc != 0 || !strings.HasPrefix(out, header+"1 subagent · 0 switched, 0 held · tokens not observed") || !strings.Contains(out, "opus") {
 		t.Fatalf("latest session: rc=%d\n%s", rc, out)
 	}
 	// The harness's declared env var beats "latest" (read from capabilities, no name in code).
@@ -170,12 +171,12 @@ func TestSession_SelectionExplicitThenEnvThenLatest(t *testing.T) {
 		t.Fatal("no harness declares SessionEnv")
 	}
 	t.Setenv(envName, a)
-	if out, _, _ := sessionCmd(t); !strings.Contains(out, "$0.22 (without downshift: $0.60) · saved $0.38") {
+	if out, _, _ := sessionCmd(t); !strings.Contains(out, "tokens saved: work 100% · cache 100% (10k of 10k)") {
 		t.Fatalf("env session:\n%s", out)
 	}
 	// --session beats the env, and accepts a hash prefix as printed in --json.
 	prefix := telemetry.HashSessionID("sess-b")[:8]
-	if out, _, _ := sessionCmd(t, "--session="+prefix); !strings.Contains(out, "cost not observed") {
+	if out, _, _ := sessionCmd(t, "--session="+prefix); !strings.Contains(out, "tokens not observed") {
 		t.Fatalf("prefix session:\n%s", out)
 	}
 	if _, _, rc := sessionCmd(t, "--session=bad id with spaces"); rc != 2 {
@@ -191,7 +192,7 @@ func TestSession_TreeWhyAndJSONWriteNothing(t *testing.T) {
 	state := t.TempDir()
 	t.Setenv("DOWNSHIFT_STATE_DIR", state)
 	tree, _, _ := sessionCmd(t, "--session="+a)
-	if !strings.Contains(tree, "└─ subagent 1  sonnet  ✓  $0.22  switched from opus, MEDIUM, confident") {
+	if !strings.Contains(tree, "└─ subagent 1  sonnet  ✓  10k tokens · saved from opus  switched from opus, MEDIUM, confident") {
 		t.Fatalf("tree:\n%s", tree)
 	}
 	why, _, _ := sessionCmd(t, "--why", "--session="+a)
@@ -202,12 +203,13 @@ func TestSession_TreeWhyAndJSONWriteNothing(t *testing.T) {
 	var view struct {
 		Subagents int `json:"subagents"`
 		Rows      []struct {
-			Label    string `json:"label"`
-			Status   string `json:"status"`
-			CostKind string `json:"cost_kind"`
+			Label       string `json:"label"`
+			Status      string `json:"status"`
+			TokensLabel string `json:"tokens_label"`
 		} `json:"rows"`
 	}
-	if err := json.Unmarshal([]byte(js), &view); err != nil || view.Subagents != 1 || view.Rows[0].Label != "subagent 1" || view.Rows[0].CostKind != "real" {
+	if err := json.Unmarshal([]byte(js), &view); err != nil || view.Subagents != 1 || view.Rows[0].Label != "subagent 1" ||
+		view.Rows[0].TokensLabel != "10k tokens · saved from opus" || strings.Contains(js, "usd") {
 		t.Fatalf("json: %v\n%s", err, js)
 	}
 	if entries, _ := os.ReadDir(state); len(entries) != 0 {
@@ -276,11 +278,15 @@ func TestSession_PanelIsPromptFreeStateAndSavings(t *testing.T) {
 	if err := json.Unmarshal([]byte(out), &v); err != nil {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
-	if v.Switched != 1 || v.Held != 0 || !v.HasSaved || !v.Estimated || v.SavedUSD < 0.379 || v.SavedUSD > 0.381 {
+	if v.Switched != 1 || v.Held != 0 || v.Tokens.WorkSaved != 1000 || v.Tokens.CacheSaved != 9000 ||
+		v.TokensLine != "tokens saved: work 100% · cache 100% (10k of 10k)" {
 		t.Fatalf("panel: %+v", v)
 	}
-	if len(v.Spawns) != 1 || v.Spawns[0].Label != "opus → sonnet (mid)" {
+	if len(v.Spawns) != 1 || v.Spawns[0].Label != "opus → sonnet (mid)" || v.Spawns[0].TokensLabel != "10k tokens · saved from opus" {
 		t.Fatalf("spawns: %+v", v.Spawns)
+	}
+	if strings.Contains(out, "usd") || strings.Contains(out, "$") {
+		t.Fatalf("the live panel carries money: %s", out)
 	}
 	if strings.Contains(out, a) || strings.Contains(out, "sess-a") {
 		t.Fatalf("raw session id leaked: %s", out)

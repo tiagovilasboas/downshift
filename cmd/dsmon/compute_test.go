@@ -31,9 +31,6 @@ func TestCompute_CountsOnlyAppliedRewrites(t *testing.T) {
 	if st.total != 3 || st.down != 1 || st.held != 2 {
 		t.Fatalf("total=%d down=%d held=%d, want 3/1/2", st.total, st.down, st.held)
 	}
-	if st.totalSavingsUnits < 0.79 || st.totalSavingsUnits > 0.81 {
-		t.Fatalf("savings units=%.2f, want 0.8", st.totalSavingsUnits)
-	}
 	if len(recent) != 3 || recent[1].Verdict != "HELD" {
 		t.Fatalf("held decision must render as HELD, got %+v", recent)
 	}
@@ -51,18 +48,21 @@ func usageLine(t *testing.T, ts string, baseline, actual float64) string {
 	return string(b) + "\n"
 }
 
-// A rewrite that cost more must lower the widget's number: it shows the net
-// value `downshift stats` prints, not the positive-only sum.
-func TestCompute_SavingsAreNet(t *testing.T) {
+// The widget shows tokens saved, from the shared definition: a child that ran
+// on a cheaper model counts, a pricier one never does.
+func TestCompute_TokensSaved(t *testing.T) {
 	ts := time.Now().UTC().Format(time.RFC3339Nano)
 	base1, act1, base2, act2 := 1.0, 0.2, 0.1, 0.4
+	in1, in2 := int64(800), int64(200)
 	all := []event{
-		ev(telemetry.Event{Timestamp: ts, Harness: "h", Outcome: "usage", BaselineCostUSD: &base1, ActualCostUSD: &act1}),
-		ev(telemetry.Event{Timestamp: ts, Harness: "h", Outcome: "usage", BaselineCostUSD: &base2, ActualCostUSD: &act2}),
+		ev(telemetry.Event{CorrelationID: "a", Timestamp: ts, Harness: "h", Outcome: "rewrite_emitted", Verdict: "DOWNSHIFT", FromModel: "big", ToModel: "small"}),
+		ev(telemetry.Event{Timestamp: ts, Harness: "h", Outcome: "usage", LinkedDecision: "a", InputTokens: &in1, BaselineCostUSD: &base1, ActualCostUSD: &act1}),
+		ev(telemetry.Event{CorrelationID: "b", Timestamp: ts, Harness: "h", Outcome: "rewrite_emitted", Verdict: "UPSHIFT", FromModel: "small", ToModel: "big"}),
+		ev(telemetry.Event{Timestamp: ts, Harness: "h", Outcome: "usage", LinkedDecision: "b", InputTokens: &in2, BaselineCostUSD: &base2, ActualCostUSD: &act2}),
 	}
 	st, _ := compute(all)
-	if st.savings.CostEvents != 2 || diff(st.savings.NetSavedUSD, 0.5) || diff(st.savings.GrossSavedUSD, 0.8) {
-		t.Fatalf("savings = %+v, want net 0.5 (gross 0.8, overspend 0.3)", st.savings)
+	if st.tokens.WorkTokens != 1000 || st.tokens.WorkSaved != 800 || st.tokens.WorkPricier != 200 {
+		t.Fatalf("tokens = %+v, want 800 of 1000 saved and 200 pricier", st.tokens)
 	}
 }
 

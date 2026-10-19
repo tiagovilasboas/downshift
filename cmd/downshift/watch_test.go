@@ -112,7 +112,7 @@ func TestWatch_RealLogOnceFrame(t *testing.T) {
 		ev, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
 		return ev
 	})
-	if rc != 0 || !strings.Contains(o.String(), "saved $0.38") {
+	if rc != 0 || !strings.Contains(o.String(), "tokens saved: work 100%") {
 		t.Fatalf("rc=%d\n%s", rc, o.String())
 	}
 }
