@@ -91,7 +91,7 @@ downshift setup --dry-run   # shows the diff per harness found; writes nothing
 downshift setup             # asks, backs up, wires the hooks
 ```
 
-On Claude Code the plugin is the alternative to `setup` (same hooks, the `/downshift:status` command, the skills, an example agent and the bundled [cache-tax mod](hooks/cache-tax/README.md), which prices a cold prompt cache before you pay it and keeps it warm on `/keepwarm`; the binary is still required; use one channel; the marketplace also offers savvy-progress and filetree, one install each, see [mods/](mods/README.md)):
+On Claude Code `downshift setup` installs the plugin for you when it can (it runs `claude plugin install`, then removes any Downshift hooks from `settings.json` so spawns are not routed twice; it falls back to settings hooks, and says why, when `claude` is missing or a login shell resolves `downshift` to another build; `--no-plugin` opts out). The plugin carries the same hooks as `setup` (the `/downshift:status` command, the `/downshift:status` command, the skills, an example agent and the bundled [cache-tax mod](hooks/cache-tax/README.md), which prices a cold prompt cache before you pay it and keeps it warm on `/keepwarm`; the binary is still required; use one channel; the marketplace also offers savvy-progress and filetree, one install each, see [mods/](mods/README.md)):
 
 ```text
 /plugin install downshift --marketplace tiagovilasboas/downshift
@@ -285,7 +285,7 @@ Rules that hold for all of them, pinned by `internal/catalog/catalog_test.go`:
 
 ## Mods
 
-Mods are Claude Code 2.1.287+ plugins with a hooks module. They are the one exception to the never-bundle rule (owner decision 2026-10-17): each is vendored byte for byte from a pinned MIT upstream, listed in [NOTICE](NOTICE), holds no routing logic and is never written by `downshift setup`. Procedure and tests: [mods/README.md](mods/README.md).
+Mods are Claude Code 2.1.287+ plugins with a hooks module. They are the one exception to the never-bundle rule (owner decision 2026-10-17): each is vendored byte for byte from a pinned MIT upstream, listed in [NOTICE](NOTICE), holds no routing logic and is never written into a settings file by `downshift setup`; on Claude Code `setup` enables the plugin that bundles cache-tax through Claude Code's own `claude plugin install` (owner decision 2026-10-19: the token-saving mods ship with the install). Procedure and tests: [mods/README.md](mods/README.md).
 
 | Mod | Where | What it does | Install |
 |---|---|---|---|

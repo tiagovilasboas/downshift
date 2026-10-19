@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `downshift setup` on Claude Code installs the Downshift plugin through `claude plugin marketplace add` and `claude plugin install`, so the hooks and the bundled cache-tax mod arrive with one command. It removes the Downshift hooks it had written into `settings.json` (the plugin carries them; keeping both would route every spawn twice) and falls back to the settings hooks, naming the reason, when `claude` is not on PATH, when a login shell does not resolve `downshift` to the binary running `setup`, or when the install fails. `--no-plugin` keeps the settings hooks.
+
 ### Changed
 
 - Claude Code plugin session command renamed to `/downshift:status` (`commands/status.md`). Update the plugin and start a new session to load the new name. The optional manual `/downshift` alias remains available by copying the same command file.
