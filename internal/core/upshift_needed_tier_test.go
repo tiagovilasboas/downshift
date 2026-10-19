@@ -62,7 +62,7 @@ func TestUpshift_NeededTierMissingOrExhausted(t *testing.T) {
 	}
 }
 
-func TestUpshift_GuessedBaselineOrExplicitKeepsStrongest(t *testing.T) {
+func TestUpshift_GuessedBaselineKeepsNeededTierAndExplicitKeepsStrongest(t *testing.T) {
 	upshiftTestEnv(t)
 	sess := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
 	route := func() core.Decision {
@@ -72,8 +72,9 @@ func TestUpshift_GuessedBaselineOrExplicitKeepsStrongest(t *testing.T) {
 	}
 	d := route()
 	d.Baseline.Guessed = true
-	if plan := d.PlanForSession(core.ClaudeCodeCaps, cat, sess); !plan.RewriteModel || plan.Model.ID != "claude-opus-5-5" {
-		t.Fatalf("guessed baseline: plan %+v, want opus", plan)
+	// Guessed baseline must not jump blindly to Frontier (Opus); it lifts only to the needed tier (Sonnet).
+	if plan := d.PlanForSession(core.ClaudeCodeCaps, cat, sess); !plan.RewriteModel || plan.Model.ID != "claude-sonnet-5-5" {
+		t.Fatalf("guessed baseline: plan %+v, want sonnet", plan)
 	}
 	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "1")
 	if plan := route().PlanForSession(core.ClaudeCodeCaps, cat, sess); !plan.RewriteModel || plan.Model.ID != "claude-opus-5-5" {

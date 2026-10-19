@@ -13,7 +13,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
-func TestHandle_SettingsBaselineUpshiftKeepsStrongest(t *testing.T) {
+func TestHandle_SettingsBaselineUpshiftLiftsToNeededTier(t *testing.T) {
 	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "absent.json"))
 	t.Setenv("HOME", t.TempDir())
@@ -35,9 +35,18 @@ func TestHandle_SettingsBaselineUpshiftKeepsStrongest(t *testing.T) {
 	if !d.Baseline.FromSettings || !d.Baseline.Guessed || d.Verdict != core.VerdictUpshift {
 		t.Fatalf("precondition: want an upshift on a settings baseline, got %+v", d)
 	}
-	if m := decodeUpdated(t, out); m == nil || m["model"] != "opus" {
-		t.Fatalf("settings-baseline upshift wrote %v, want opus", m)
+	// Settings baseline must not jump blindly to Frontier (opus); it lifts only to the needed tier (sonnet).
+	if m := decodeUpdated(t, out); m == nil || m["model"] != "sonnet" {
+		t.Fatalf("settings-baseline upshift wrote %v, want sonnet", m)
 	}
+
+	// Explicit upshift flag allows jumping to strongest.
+	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "1")
+	out, _, d = claudecode.Handle(ev, cat)
+	if m := decodeUpdated(t, out); m == nil || m["model"] != "opus" {
+		t.Fatalf("explicit upshift wrote %v, want opus", m)
+	}
+	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 
 	ev.Model = "claude-haiku-4-5"
 	out, _, d = claudecode.Handle(ev, cat)

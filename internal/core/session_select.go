@@ -129,7 +129,7 @@ func catalogSessionTarget(d Decision, res Resolver, session SessionList) (string
 		if d.Baseline.CurrentModel.ID != "" {
 			floor = d.Baseline.CurrentModel.Tier
 		}
-		if d.Baseline.Guessed || ExplicitUpshiftEnabled() {
+		if ExplicitUpshiftEnabled() {
 			return strongestSessionModel(d.Harness, session, res, d.Tier, floor)
 		}
 		return upshiftSessionModel(d.Harness, session, res, d.Tier, floor)
