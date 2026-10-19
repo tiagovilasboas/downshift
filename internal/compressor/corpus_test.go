@@ -85,6 +85,9 @@ var rawFixtures = []string{
 	// encodings.
 	"non_utf8.bin",
 	"binary_nul.bin",
+	// pytest and vitest: failures and tracebacks stay raw.
+	"pytest_fail.txt",
+	"vitest_fail.txt",
 }
 
 // cleanFixture is output that may be compacted on exit 0. facts are substrings
@@ -102,6 +105,8 @@ var cleanFixtures = []cleanFixture{
 	{"gotest_pass_mixed_no_test_files.txt", []string{"PASS", "6 packages ok", "3 without tests", "cmd/dsmon-server", "internal/adapt", "80.5%", "internal/session", "internal/testrace"}},
 	{"gitstatus_clean_uptodate.txt", []string{"On branch main", "working tree clean"}},
 	{"gitstatus_clean_no_upstream.txt", []string{"On branch feature/rate-limit", "working tree clean"}},
+	{"pytest_pass_clean.txt", []string{"25 passed"}},
+	{"vitest_pass_clean.txt", []string{"25 passed"}},
 }
 
 func readFixture(t *testing.T, name string) []byte {
@@ -278,6 +283,94 @@ func TestCorpus_AdversarialGoTestFailOpenWithNoTestFiles(t *testing.T) {
 			}
 			if code <= 0 && res.Reason != "error_detected_fail_open_raw_preserved" {
 				t.Fatalf("exit=%d: reason=%q, want error_detected_fail_open_raw_preserved", code, res.Reason)
+			}
+		})
+	}
+}
+
+// TestCorpus_Pytest verifies the pytest contract:
+// - clean output with exit 0 is compacted and preserves core facts (25 passed).
+// - clean output with exit != 0 passes through raw byte-a-byte.
+// - failure output stays 100% byte-identical (raw) on exit 0, exit -1, or exit != 0.
+func TestCorpus_Pytest(t *testing.T) {
+	cleanIn := readFixture(t, "pytest_pass_clean.txt")
+	failIn := readFixture(t, "pytest_fail.txt")
+	codes := append([]int{-1, 0}, nonZeroExits...)
+
+	// Clean exit 0 must compact
+	t.Run("clean/exit=0", func(t *testing.T) {
+		res := compressor.CompressExit(cleanIn, compressor.ModeSafe, 0)
+		if !res.Applied {
+			t.Fatalf("clean pytest not compacted: reason=%q", res.Reason)
+		}
+		if len(res.Output) >= len(cleanIn) {
+			t.Fatalf("clean pytest did not shrink: %d -> %d", len(cleanIn), len(res.Output))
+		}
+		if !bytes.Contains(res.Output, []byte("25 passed")) {
+			t.Fatalf("clean pytest lost '25 passed': %q", res.Output)
+		}
+	})
+
+	// Clean exit != 0 must pass through raw
+	for _, code := range nonZeroExits {
+		t.Run(fmt.Sprintf("clean/exit=%d", code), func(t *testing.T) {
+			res := compressor.CompressExit(cleanIn, compressor.ModeSafe, code)
+			if res.Applied || !bytes.Equal(res.Output, cleanIn) || res.Reason != "nonzero_exit_preserved" {
+				t.Fatalf("clean pytest exit=%d not raw: applied=%v reason=%q", code, res.Applied, res.Reason)
+			}
+		})
+	}
+
+	// Fail cases must stay byte-identical raw across all exit codes (-1, 0, nonZeroExits)
+	for _, code := range codes {
+		t.Run(fmt.Sprintf("fail/exit=%d", code), func(t *testing.T) {
+			res := compressor.CompressExit(failIn, compressor.ModeSafe, code)
+			if res.Applied || !bytes.Equal(res.Output, failIn) {
+				t.Fatalf("failing pytest modified: applied=%v reason=%q", res.Applied, res.Reason)
+			}
+		})
+	}
+}
+
+// TestCorpus_Vitest verifies the vitest contract:
+// - clean output with exit 0 is compacted and preserves core facts (25 passed).
+// - clean output with exit != 0 passes through raw byte-a-byte.
+// - failure output stays 100% byte-identical (raw) on exit 0, exit -1, or exit != 0.
+func TestCorpus_Vitest(t *testing.T) {
+	cleanIn := readFixture(t, "vitest_pass_clean.txt")
+	failIn := readFixture(t, "vitest_fail.txt")
+	codes := append([]int{-1, 0}, nonZeroExits...)
+
+	// Clean exit 0 must compact
+	t.Run("clean/exit=0", func(t *testing.T) {
+		res := compressor.CompressExit(cleanIn, compressor.ModeSafe, 0)
+		if !res.Applied {
+			t.Fatalf("clean vitest not compacted: reason=%q", res.Reason)
+		}
+		if len(res.Output) >= len(cleanIn) {
+			t.Fatalf("clean vitest did not shrink: %d -> %d", len(cleanIn), len(res.Output))
+		}
+		if !bytes.Contains(res.Output, []byte("25 passed")) {
+			t.Fatalf("clean vitest lost '25 passed': %q", res.Output)
+		}
+	})
+
+	// Clean exit != 0 must pass through raw
+	for _, code := range nonZeroExits {
+		t.Run(fmt.Sprintf("clean/exit=%d", code), func(t *testing.T) {
+			res := compressor.CompressExit(cleanIn, compressor.ModeSafe, code)
+			if res.Applied || !bytes.Equal(res.Output, cleanIn) || res.Reason != "nonzero_exit_preserved" {
+				t.Fatalf("clean vitest exit=%d not raw: applied=%v reason=%q", code, res.Applied, res.Reason)
+			}
+		})
+	}
+
+	// Fail cases must stay byte-identical raw across all exit codes (-1, 0, nonZeroExits)
+	for _, code := range codes {
+		t.Run(fmt.Sprintf("fail/exit=%d", code), func(t *testing.T) {
+			res := compressor.CompressExit(failIn, compressor.ModeSafe, code)
+			if res.Applied || !bytes.Equal(res.Output, failIn) {
+				t.Fatalf("failing vitest modified: applied=%v reason=%q", res.Applied, res.Reason)
 			}
 		})
 	}

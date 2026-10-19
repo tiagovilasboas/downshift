@@ -21,6 +21,13 @@ func TestDecide(t *testing.T) {
 		{"git status", "git status", true, FamilyGitStatus, "'/opt/ds/downshift' exec -- git status", ReasonAllowlisted},
 		{"surrounding space", "  git status  ", true, FamilyGitStatus, "'/opt/ds/downshift' exec -- git status", ReasonAllowlisted},
 		{"collapsed spaces", "go  test   ./...", true, FamilyGoTest, "'/opt/ds/downshift' exec -- go test ./...", ReasonAllowlisted},
+		{"pytest bare", "pytest", true, FamilyPytest, "'/opt/ds/downshift' exec -- pytest", ReasonAllowlisted},
+		{"pytest with args", "pytest -v tests/test_app.py", true, FamilyPytest, "'/opt/ds/downshift' exec -- pytest -v tests/test_app.py", ReasonAllowlisted},
+		{"vitest bare", "vitest", true, FamilyVitest, "'/opt/ds/downshift' exec -- vitest", ReasonAllowlisted},
+		{"vitest run", "vitest run", true, FamilyVitest, "'/opt/ds/downshift' exec -- vitest run", ReasonAllowlisted},
+		{"npx vitest", "npx vitest", true, FamilyVitest, "'/opt/ds/downshift' exec -- npx vitest", ReasonAllowlisted},
+		{"npx vitest run", "npx vitest run --reporter=verbose", true, FamilyVitest, "'/opt/ds/downshift' exec -- npx vitest run --reporter=verbose", ReasonAllowlisted},
+		{"npx jest not allowlisted", "npx jest", false, "", "", ReasonNotAllowlisted},
 
 		{"git log not allowlisted", "git log", false, "", "", ReasonNotAllowlisted},
 		{"git diff", "git diff", false, "", "", ReasonNotAllowlisted},

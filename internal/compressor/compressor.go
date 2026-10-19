@@ -17,12 +17,22 @@ const (
 )
 
 var (
-	reGoTestPass    = regexp.MustCompile(`(?m)^ok\s+([^\s]+)\s+([^\s]+)(?:\s+coverage:\s+(.+))?$`)
-	reGoTestNoTest  = regexp.MustCompile(`(?m)^\?\s+([^\s]+)\s+\[no test files\]\s*$`)
-	reGoTestFail    = regexp.MustCompile(`(?m)^(?:--- FAIL:|FAIL|\s*panic:)`)
-	reGitLogCommit  = regexp.MustCompile(`(?m)^commit\s+[0-9a-f]{40}`)
-	reGitStatusHead = regexp.MustCompile(`(?m)^(?:On branch |HEAD detached at )`)
-	reRipgrepMatch  = regexp.MustCompile(`(?m)^(?:\d+:)?[^:\n]+:\d+:`)
+	reGoTestPass        = regexp.MustCompile(`(?m)^ok\s+([^\s]+)\s+([^\s]+)(?:\s+coverage:\s+(.+))?$`)
+	reGoTestNoTest      = regexp.MustCompile(`(?m)^\?\s+([^\s]+)\s+\[no test files\]\s*$`)
+	reGoTestFail        = regexp.MustCompile(`(?m)^(?:--- FAIL:|FAIL|\s*panic:)`)
+	reGitLogCommit      = regexp.MustCompile(`(?m)^commit\s+[0-9a-f]{40}`)
+	reGitStatusHead     = regexp.MustCompile(`(?m)^(?:On branch |HEAD detached at )`)
+	reRipgrepMatch      = regexp.MustCompile(`(?m)^(?:\d+:)?[^:\n]+:\d+:`)
+	rePytestSummary     = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+([^\n=]+?)\s*=+\s*$`)
+	rePytestHeader      = regexp.MustCompile(`(?m)^=+\s*test session starts\s*=+`)
+	rePytestFailSummary = regexp.MustCompile(`(?m)^=+\s*.*?(?:failed|error).*?\s+in\s+`)
+	rePytestError       = regexp.MustCompile(`(?:FAILED|ERROR|Traceback|AssertionError)`)
+	reVitestTests       = regexp.MustCompile(`(?m)^\s*Tests\s+(\d+)\s+passed`)
+	reVitestFiles       = regexp.MustCompile(`(?m)^\s*Test Files\s+(\d+)\s+passed`)
+	reVitestHeader      = regexp.MustCompile(`(?m)^\s*RUN\s+v\d+\.\d+`)
+	reVitestFail        = regexp.MustCompile(`(?m)^\s*(?:Test Files|Tests)\s+.*failed`)
+	reVitestDuration    = regexp.MustCompile(`(?m)^\s*Duration\s+([^\s\n()]+)`)
+	reVitestError       = regexp.MustCompile(`(?:FAIL|Error:|AssertionError)`)
 )
 
 // Compress evaluates the input according to the policy and selected mode.
@@ -127,29 +137,51 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatGoTest, false
 	}
 
-	// 2. Git status
+	// 2. Pytest
+	if isPytest(input) {
+		if rePytestError.Match(input) {
+			return FormatPytest, true // Error detected! Fail open!
+		}
+		if rePytestSummary.Match(input) {
+			return FormatPytest, false
+		}
+		return FormatPytest, true
+	}
+
+	// 3. Vitest
+	if isVitest(input) {
+		if reVitestError.Match(input) {
+			return FormatVitest, true // Error detected! Fail open!
+		}
+		if reVitestTests.Match(input) {
+			return FormatVitest, false
+		}
+		return FormatVitest, true
+	}
+
+	// 4. Git status
 	if reGitStatusHead.Match(input) {
 		return FormatGitStatus, false
 	}
 
-	// 3. Git log
+	// 5. Git log
 	if reGitLogCommit.Match(input) {
 		return FormatGitLog, false
 	}
 
-	// 4. Repetitive logs, only after go test, git status and git log had their
+	// 6. Repetitive logs, only after test suites, git status and git log had their
 	// say: a failing test run or a git log with repeated lines must stay raw.
 	// Timestamps can look like search hits, so this precedes the search check.
 	if isRepetitiveLog(input) {
 		return FormatLogs, false
 	}
 
-	// 5. Search results (rg / grep)
+	// 7. Search results (rg / grep)
 	if reRipgrepMatch.Match(input) {
 		return FormatSearch, false
 	}
 
-	// 6. File listings / tree
+	// 8. File listings / tree
 	if bytes.Contains(input, []byte("total ")) && bytes.Contains(input, []byte("drwx")) {
 		return FormatFileList, false
 	}
@@ -161,6 +193,10 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 	switch f {
 	case FormatGoTest:
 		return compressGoTest(input)
+	case FormatPytest:
+		return compressPytest(input)
+	case FormatVitest:
+		return compressVitest(input)
 	case FormatGitStatus:
 		return compressGitStatus(input)
 	case FormatGitLog:
@@ -362,4 +398,84 @@ func deduplicateLogs(input []byte) ([]byte, bool, string) {
 		return input, false, "no_compression_gain"
 	}
 	return []byte(res), true, "deduplicated consecutive log lines"
+}
+
+func isPytest(input []byte) bool {
+	return rePytestSummary.Match(input) ||
+		rePytestHeader.Match(input) ||
+		rePytestFailSummary.Match(input)
+}
+
+func isVitest(input []byte) bool {
+	return reVitestTests.Match(input) ||
+		reVitestFiles.Match(input) ||
+		reVitestHeader.Match(input) ||
+		reVitestFail.Match(input)
+}
+
+// compressPytest compacts clean pytest output to a one-line summary:
+// Pytest: PASS (N passed[ , M skipped] in <time>)
+// If not strictly shorter than raw input, the input is returned.
+func compressPytest(input []byte) ([]byte, bool, string) {
+	m := rePytestSummary.FindSubmatch(input)
+	if m == nil {
+		return input, false, "pytest_missing_summary"
+	}
+	skippedCount := string(m[1])
+	if skippedCount == "" {
+		skippedCount = string(m[3])
+	}
+	passedCount := string(m[2])
+	timeStr := strings.TrimSpace(string(m[4]))
+
+	var out string
+	if skippedCount != "" {
+		out = fmt.Sprintf("Pytest: PASS (%s passed, %s skipped in %s)\n", passedCount, skippedCount, timeStr)
+	} else {
+		out = fmt.Sprintf("Pytest: PASS (%s passed in %s)\n", passedCount, timeStr)
+	}
+
+	if len(out) >= len(input) {
+		return input, false, "no_compression_gain"
+	}
+	var reason string
+	if skippedCount != "" {
+		reason = fmt.Sprintf("compressed pytest summary (%s passed, %s skipped)", passedCount, skippedCount)
+	} else {
+		reason = fmt.Sprintf("compressed pytest summary (%s passed)", passedCount)
+	}
+	return []byte(out), true, reason
+}
+
+// compressVitest compacts clean vitest output to a one-line summary:
+// Vitest: PASS (N passed across M files[ in <time>])
+// If not strictly shorter than raw input, the input is returned.
+func compressVitest(input []byte) ([]byte, bool, string) {
+	mt := reVitestTests.FindSubmatch(input)
+	if mt == nil {
+		return input, false, "vitest_missing_tests_summary"
+	}
+	nPassed := string(mt[1])
+
+	mFiles := "1"
+	if mf := reVitestFiles.FindSubmatch(input); mf != nil {
+		mFiles = string(mf[1])
+	}
+
+	var timeStr string
+	if md := reVitestDuration.FindSubmatch(input); md != nil {
+		timeStr = strings.TrimSpace(string(md[1]))
+	}
+
+	var out string
+	if timeStr != "" {
+		out = fmt.Sprintf("Vitest: PASS (%s passed across %s files in %s)\n", nPassed, mFiles, timeStr)
+	} else {
+		out = fmt.Sprintf("Vitest: PASS (%s passed across %s files)\n", nPassed, mFiles)
+	}
+
+	if len(out) >= len(input) {
+		return input, false, "no_compression_gain"
+	}
+	return []byte(out), true, fmt.Sprintf("compressed vitest summary (%s passed across %s files)", nPassed, mFiles)
 }
