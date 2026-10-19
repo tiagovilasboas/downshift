@@ -16,6 +16,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -58,29 +59,10 @@ const (
 
 // ── event ─────────────────────────────────────────────────────────────────────
 
+// event is one event-log line. It reuses the telemetry schema instead of
+// keeping a private copy of it.
 type event struct {
-	Timestamp   string  `json:"timestamp"`
-	Harness     string  `json:"harness"`
-	Complexity  string  `json:"complexity"`
-	From        string  `json:"requested_model"`
-	To          string  `json:"final_model"`
-	Verdict     string  `json:"verdict"`
-	Savings     float64 `json:"estimated_savings"`
-	QuotaStatus string  `json:"quota_status,omitempty"`
-	CreditHeld  bool    `json:"credit_held,omitempty"`
-	// Outcome and Corrections decide whether the decision changed the spawn.
-	Outcome     string   `json:"outcome,omitempty"`
-	Corrections []string `json:"corrections,omitempty"`
-	// InputTokens carries provider-reported input tokens (nil when untracked).
-	InputTokens *int64 `json:"input_tokens,omitempty"`
-	// OutputTokens carries provider-reported output tokens (nil when untracked).
-	OutputTokens *int64 `json:"output_tokens,omitempty"`
-	// CachedTokens carries provider-reported cached input tokens (nil when untracked).
-	CachedTokens *int64 `json:"cached_tokens,omitempty"`
-	// ActualCostUSD is the real routed cost in USD (nil when untracked).
-	ActualCostUSD *float64 `json:"actual_cost_usd,omitempty"`
-	// BaselineCostUSD is the real baseline cost in USD (nil when untracked).
-	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"`
+	telemetry.Event
 }
 
 func (e event) localTime() string {
@@ -143,6 +125,13 @@ func (a agentEvent) age() string {
 
 // ── state (polling tail) ──────────────────────────────────────────────────────
 
+const (
+	// maxKeptEvents and maxKeptAgents bound memory: the widget only shows the
+	// last 24 hours and a handful of rows, so older lines are dropped.
+	maxKeptEvents = 5000
+	maxKeptAgents = 500
+)
+
 type state struct {
 	all       []event
 	agents    []agentEvent
@@ -153,25 +142,78 @@ type state struct {
 	tick      int
 }
 
+// readNewLines reads complete lines from f starting at offset up to EOF and
+// returns the offset after the last complete line it consumed. A trailing
+// line without a newline is left for the next poll (the writer may be
+// mid-append), and a line over telemetry.MaxLineBytes is skipped.
+func readNewLines(f *os.File, offset int64, handle func(line []byte)) (int64, error) {
+	if _, err := f.Seek(offset, io.SeekStart); err != nil {
+		return offset, err
+	}
+	r := bufio.NewReaderSize(f, 64*1024)
+	for {
+		line, err := r.ReadBytes('\n')
+		if err != nil {
+			// io.EOF: line (if any) is an unterminated partial; do not consume it.
+			if err == io.EOF {
+				return offset, nil
+			}
+			return offset, err
+		}
+		offset += int64(len(line))
+		if len(line) > telemetry.MaxLineBytes {
+			continue
+		}
+		handle(line)
+	}
+}
+
+func (s *state) addEvent(line []byte) bool {
+	var e event
+	if json.Unmarshal(line, &e) != nil || e.Harness == "" {
+		return false
+	}
+	s.all = append(s.all, e)
+	return true
+}
+
+// prune keeps only the recent window and at most maxKeptEvents events.
+func (s *state) prune() {
+	kept := s.all[:0]
+	for _, e := range s.all {
+		if e.isRecent() {
+			kept = append(kept, e)
+		}
+	}
+	if len(kept) > maxKeptEvents {
+		kept = append([]event(nil), kept[len(kept)-maxKeptEvents:]...)
+	}
+	s.all = kept
+}
+
 func (s *state) reload(path string) {
 	f, err := os.Open(path)
 	if err != nil {
 		return
 	}
 	defer f.Close()
-	if fi, err := f.Stat(); err == nil {
-		s.size, s.modTime = fi.Size(), fi.ModTime()
+	fi, err := f.Stat()
+	if err != nil {
+		return
 	}
-	s.all = nil
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
-		var e event
-		if json.Unmarshal(sc.Bytes(), &e) == nil && e.Harness != "" {
-			s.all = append(s.all, e)
-		}
-	}
+	s.all, s.size, s.modTime = nil, 0, fi.ModTime()
+	n, _ := readNewLines(f, 0, func(l []byte) { s.addEvent(l); s.prune1() })
+	s.size = n
 	if len(s.all) > 0 {
 		s.lastEvent = time.Now()
+	}
+}
+
+// prune1 bounds growth while a large file is read: it only trims when the
+// slice has doubled past the cap, so the cost stays amortised.
+func (s *state) prune1() {
+	if len(s.all) > 2*maxKeptEvents {
+		s.prune()
 	}
 }
 
@@ -190,17 +232,18 @@ func (s *state) pollAgents(path string) {
 		return
 	}
 	defer f.Close()
-	f.Seek(s.agentSize, 0) //nolint:errcheck
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
+	n, _ := readNewLines(f, s.agentSize, func(l []byte) {
 		var ae agentEvent
 		// Keep privacy-safe lines: new hook events have an empty task but
 		// always carry a tool name. Skip only lines with neither.
-		if json.Unmarshal(sc.Bytes(), &ae) == nil && (ae.Task != "" || ae.Tool != "") {
+		if json.Unmarshal(l, &ae) == nil && (ae.Task != "" || ae.Tool != "") {
 			s.agents = append(s.agents, ae)
 		}
+	})
+	s.agentSize = n
+	if len(s.agents) > maxKeptAgents {
+		s.agents = append([]agentEvent(nil), s.agents[len(s.agents)-maxKeptAgents:]...)
 	}
-	s.agentSize = fi.Size()
 }
 
 func (s *state) recentAgents() []agentEvent {
@@ -232,20 +275,20 @@ func (s *state) poll(path string) {
 		return
 	}
 	defer f.Close()
-	f.Seek(s.size, 0) //nolint:errcheck
 	added := 0
-	sc := bufio.NewScanner(f)
-	for sc.Scan() {
-		var e event
-		if json.Unmarshal(sc.Bytes(), &e) == nil && e.Harness != "" {
-			s.all = append(s.all, e)
+	n, _ := readNewLines(f, s.size, func(l []byte) {
+		if s.addEvent(l) {
 			added++
 		}
-	}
+	})
 	if added > 0 {
 		s.lastEvent = time.Now()
+		s.prune()
 	}
-	s.size, s.modTime = fi.Size(), fi.ModTime()
+	// Advance by the bytes actually consumed, not the size seen by Stat:
+	// lines appended between Stat and read are picked up next poll, never
+	// read twice or skipped.
+	s.size, s.modTime = n, fi.ModTime()
 	s.tick++
 }
 
@@ -258,30 +301,25 @@ type stats struct {
 	totalSavings float64
 	// totalSavingsUnits accumulates the normalised savings fraction per DOWNSHIFT event.
 	totalSavingsUnits float64
-	// realSavedUSD accumulates baseline minus actual cost for events with real costs.
-	realSavedUSD float64
-	// realCostEvents counts events that carried both real cost fields.
-	realCostEvents int
-	harnesses      []string // all distinct harnesses active today, most-recent first
+	// savings is the shared net, list-price savings definition.
+	savings   telemetry.SavingsSummary
+	harnesses []string // all distinct harnesses active today, most-recent first
 }
 
 func compute(all []event) (stats, []event) {
 	var st stats
 	var recent []event
+	var window []telemetry.Event
 	seen := map[string]bool{}
 	for _, e := range all {
 		if !e.isRecent() {
 			continue
 		}
+		window = append(window, e.Event)
 		if telemetry.IsCostOnlyOutcome(e.Outcome) {
-			// Usage records carry real cost; baseline records are the
-			// no-route control group. Neither is a routing decision.
-			if e.Outcome == telemetry.OutcomeUsage && e.ActualCostUSD != nil && e.BaselineCostUSD != nil {
-				if saved := *e.BaselineCostUSD - *e.ActualCostUSD; saved > 0 {
-					st.realSavedUSD += saved
-				}
-				st.realCostEvents++
-			}
+			// Usage records carry real cost (summed by Summarize below);
+			// baseline records are the no-route control group. Neither is
+			// a routing decision.
 			continue
 		}
 		st.total++
@@ -291,8 +329,8 @@ func compute(all []event) (stats, []event) {
 			st.down++
 			// unknown and held are not credited routes and do not add savings.
 			if telemetry.ProjectQuota(e.QuotaStatus, e.CreditHeld) == telemetry.QuotaAvailable {
-				st.totalSavings += e.Savings
-				st.totalSavingsUnits += e.Savings
+				st.totalSavings += e.EstimatedSavings
+				st.totalSavingsUnits += e.EstimatedSavings
 			}
 		case e.Verdict == "UPSHIFT" && applied:
 			st.up++
@@ -308,6 +346,7 @@ func compute(all []event) (stats, []event) {
 		}
 		recent = append(recent, e)
 	}
+	st.savings = telemetry.Summarize(window)
 	if len(recent) > maxRecent {
 		recent = recent[len(recent)-maxRecent:]
 	}
@@ -366,8 +405,8 @@ func shortModel(m string) string {
 }
 
 func switchLine(e event) string {
-	from := shortModel(e.From)
-	to := shortModel(e.To)
+	from := shortModel(e.FromModel)
+	to := shortModel(e.ToModel)
 	comp := strings.ToLower(e.Complexity)
 	if len(comp) > 7 {
 		comp = comp[:7]
@@ -377,7 +416,7 @@ func switchLine(e event) string {
 	case "DOWNSHIFT":
 		return fmt.Sprintf("  %s  %s%s%s→%s%s%s  %s%s%s  %s-%d%%%s",
 			e.localTime(), dim, from, rst, grn, to, rst,
-			dim, comp, rst, grn, int(e.Savings*100), rst)
+			dim, comp, rst, grn, int(e.EstimatedSavings*100), rst)
 	case "UPSHIFT":
 		return fmt.Sprintf("  %s  %s%s%s→%s%s%s  %s%s%s  %s↑%s",
 			e.localTime(), dim, from, rst, ylw, to, rst,
@@ -508,10 +547,10 @@ func render(s *state) {
 		b.WriteString(row(fmt.Sprintf(
 			"  %s¹ estimate · provider tokens not yet tracked%s", dim, rst,
 		)) + "\n")
-		if st.realCostEvents > 0 {
+		if st.savings.CostEvents > 0 {
 			b.WriteString(row(fmt.Sprintf(
-				"  real saved  %s$%.2f%s  (%d events with usage)",
-				grn, st.realSavedUSD, rst, st.realCostEvents,
+				"  net saved   %s$%.2f%s  (%d events, %s)",
+				grn, st.savings.NetSavedUSD, rst, st.savings.CostEvents, st.savings.Basis,
 			)) + "\n")
 		}
 	}
