@@ -595,3 +595,18 @@ func TestRun_PlaywrightCargoTscExecution(t *testing.T) {
 		})
 	}
 }
+
+func TestRun_CypressPassingRunCompacts(t *testing.T) {
+	const output = "  (Run Starting)\n  (Run Finished)\n  │ Tests: 2\n  │ Passing: 2\n  │ Failing: 0\n  │ Pending: 0\n  │ Skipped: 0\n  │ Duration: 1 second\n  │ Spec Ran: cypress/e2e/accounting.cy.ts\n"
+	fakeBin(t, "cypress", "cat <<'EOF'\n"+output+"EOF")
+	r, stdout, stderr := run(t, []string{"cypress", "run"}, true)
+	if r.ExitCode != 0 || r.ExitClass != ExitClassZero {
+		t.Fatalf("exit = %d/%s, want 0/zero; stderr=%q", r.ExitCode, r.ExitClass, stderr)
+	}
+	if !r.Compacted || r.Family != FamilyCypress {
+		t.Fatalf("compacted=%v family=%q, want true cypress", r.Compacted, r.Family)
+	}
+	if !strings.Contains(stdout, "Cypress: PASS (2 tests") || strings.Contains(stdout, "Run Starting") {
+		t.Fatalf("unexpected Cypress output: %q", stdout)
+	}
+}

@@ -30,6 +30,8 @@ func TestDecide(t *testing.T) {
 		{"jest bare", "jest", true, FamilyJest, "'/opt/ds/downshift' exec -- jest", ReasonAllowlisted},
 		{"jest run", "jest --runInBand", true, FamilyJest, "'/opt/ds/downshift' exec -- jest --runInBand", ReasonAllowlisted},
 		{"npx jest", "npx jest", true, FamilyJest, "'/opt/ds/downshift' exec -- npx jest", ReasonAllowlisted},
+		{"cypress run", "cypress run", true, FamilyCypress, "'/opt/ds/downshift' exec -- cypress run", ReasonAllowlisted},
+		{"npx cypress run", "npx cypress run", true, FamilyCypress, "'/opt/ds/downshift' exec -- npx cypress run", ReasonAllowlisted},
 
 		{"git log not allowlisted", "git log", false, "", "", ReasonNotAllowlisted},
 		{"git diff", "git diff", false, "", "", ReasonNotAllowlisted},

@@ -25,14 +25,14 @@ Every candidate must satisfy the following four core principles:
 | Tool / Command | Typical Raw Output | Compacted Target | Token Reduction | Fail-Open Trigger | Phase |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`go test`** | 300 – 2,500 tokens (package list, durations, cached tags) | `Go test: PASS (N packages ok)` | **~85%** | `FAIL`, `--- FAIL`, `panic:`, exit != 0 | **Landed (v0.1)** |
-| **`go test -v`** | 1,000 – 5,000 tokens (one line per test, package summaries) | `Go test: PASS (N tests across M packages)` | **~90%** | `FAIL`, `--- FAIL`, `panic:`, unrecognized output, exit != 0 | **Phase 1 (In Progress)** |
+| **`go test -v`** | 1,000 – 5,000 tokens (one line per test, package summary) | `Go test -v: PASS (N passed, 0 failed, S skipped) in Xs` | **~90%** | Any failure, test log output, incomplete or unrecognized output, exit != 0 | **Landed** |
 | **`git status`** | 100 – 400 tokens (boilerplate branch info) | `On branch X (working tree clean)` | **~65%** | Modified files, untracked, exit != 0 | **Landed (v0.1)** |
 | **`pytest`** | 500 – 3,000 tokens (rootdir, session starts, dots, duration) | `Pytest: PASS (N passed in Xs)` | **~95%** | `FAILED`, `ERROR`, `Traceback`, exit != 0 | **Landed (PR #267)** |
 | **`vitest`** | 500 – 2,500 tokens (test files, runner headers, transform times) | `Vitest: PASS (N passed across M files in Xs)` | **~86%** | `FAIL`, `Error:`, `AssertionError`, exit != 0 | **Landed (PR #267)** |
-| **`playwright test`** | 2,000 – 6,000 tokens (workers, browser matrix, step timings, HTML links) | `Playwright: PASS (N passed across B browsers in Xs)` | **~97%** | `failed`, `flaky`, timeout, retry, trace, `Error:`, exit != 0 | **Phase 1 (In Progress)** |
-| **`cargo test`** | 1,000 – 3,000 tokens (compilation banners, individual `test ... ok`) | `Cargo test: PASS (N passed in Xs)` | **~92%** | `FAILED`, `error[E...]`, warning, panic, exit != 0 | **Phase 1 (In Progress)** |
+| **`playwright test`** | 2,000 – 6,000 tokens (workers, browser matrix, step timings, HTML links) | `Playwright: PASS (N passed across B browsers in Xs)` | **~97%** | `failed`, `flaky`, timeout, retry, trace, `Error:`, exit != 0 | **Landed** |
+| **`cargo test`** | 1,000 – 3,000 tokens (compilation banners, individual `test ... ok`) | `Cargo test: PASS (N passed in Xs)` | **~92%** | `FAILED`, `error[E...]`, warning, panic, exit != 0 | **Landed** |
 | **`jest`** | 1,000 – 3,500 tokens (spec trees, test suites summary) | `Jest: PASS (N passed across M suites)` | **~90%** | `FAIL`, `Error:`, incomplete summary, exit != 0 | **Landed (Jest support)** |
-| **`cypress run`** | 2,500 – 6,500 tokens (spec tables, video links, browser launch) | `Cypress: PASS (N passed across M specs in Xs)` | **~96%** | `failed`, `AssertionError`, exit != 0 | **Phase 2** |
+| **`cypress run`** | 2,500 – 6,500 tokens (spec tables, video links, browser launch) | `Cypress: PASS (N tests: P passing, Q pending, R skipped; spec S; Xs)` | **~96%** | `failed`, `AssertionError`, error output, incomplete/inconsistent summary, exit != 0 | **Landed** |
 | **`mvn test`** | 3,000 – 8,000 tokens (`[INFO]` downloads, plugin resolutions, build logs) | `Maven: PASS (N tests run, 0 failures in Xs)` | **~98%** | `BUILD FAILURE`, `FAILURE!`, exceptions, exit != 0 | **Phase 3** |
 | **`gradle test`** | 2,500 – 6,000 tokens (task execution tree, daemon banners) | `Gradle: PASS (N tests passed in Xs)` | **~97%** | `BUILD FAILED`, task failure, exit != 0 | **Phase 3** |
 | **`flutter test`** | 1,000 – 3,500 tokens (engine init, simulator status, test lines) | `Flutter: PASS (N tests passed in Xs)` | **~92%** | `Some tests failed`, exceptions, exit != 0 | **Phase 4** |
@@ -43,7 +43,7 @@ Every candidate must satisfy the following four core principles:
 ### Category B: Typecheckers, Compilers & Linters
 | Tool / Command | Typical Raw Output | Compacted Target | Token Reduction | Fail-Open Trigger | Phase |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`tsc --noEmit`** | 500 – 2,000 tokens (or clean 0 bytes / header noise) | `TSC: PASS (0 errors)` | **~95%** | `error TS...`, `Found N errors`, exit != 0 | **Phase 1 (In Progress)** |
+| **`tsc --noEmit`** | 500 – 2,000 tokens (or clean 0 bytes / header noise) | `TSC: PASS (0 errors)` | **~95%** | `error TS...`, `Found N errors`, exit != 0 | **Landed** |
 | **`mypy` / `pyright`** | 600 – 2,500 tokens (file-by-file checks, environment warnings) | `Mypy: PASS (no issues found in N source files)` | **~90%** | `Found N errors`, type mismatch, exit != 0 | **Phase 2** |
 | **`eslint` / `biome`** | 800 – 3,000 tokens (dozens of non-blocking style/import warnings) | `ESLint: PASS (0 errors, W warnings)` | **~85%** | `X errors`, exit != 0 | **Phase 3** |
 | **`ruff check`** | 500 – 2,000 tokens (rule descriptions, code fix snippets) | `Ruff: PASS (All checks passed)` | **~90%** | Syntax/rule errors, exit != 0 | **Phase 3** |
@@ -111,8 +111,8 @@ The following tools are explicitly excluded from `downshift exec` wrapping to pr
 
 ## 4. Execution Roadmap Summary
 
-- **Phase 1 (In Progress):** `playwright` (E2E), `cargo test` (Rust), `tsc` (TypeScript typecheck), and verbose `go test`.
-- **Phase 2 (Web & Unit):** `cypress`, `next build`, `prettier --check`, `black/ruff format --check`, `mypy`.
+- **Phase 1 (Landed):** `playwright` (E2E), `cargo test` (Rust), `tsc` (TypeScript typecheck), and verbose `go test`.
+- **Phase 2 (In Progress):** `jest` and `cypress` landed; remaining candidates are `next build`, `prettier --check`, `black/ruff format --check`, and `mypy`.
 - **Phase 3 (Enterprise & Linters):** `mvn test`, `gradle test`, `prisma generate/migrate`, `eslint`, `ruff check`, `golangci-lint`, PHP test/type/format tools, `go generate`, and `sqlc`.
 - **Phase 4 (Deps & Audits):** `pnpm install`, `npm install`, `pip/uv`, `npm/cargo/pip audit`, `alembic`, `flutter test`.
 - **Phase 5 (Noise & Search Bounds):** `git diff` lockfile squelcher, `ripgrep` (`rg`) hierarchical match bounds.

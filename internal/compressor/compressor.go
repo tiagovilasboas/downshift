@@ -142,6 +142,15 @@ func CompressExit(input []byte, mode Mode, exitCode int) Result {
 }
 
 func detectFormat(input []byte) (Format, bool) {
+	// Verbose Go output ends with PASS, which otherwise matches Jest's generic
+	// PASS header. Identify a Go test transcript before the broader Jest check.
+	if reGoVerboseRun.Match(input) {
+		if reGoTestFail.Match(input) {
+			return FormatGoTest, true
+		}
+		return FormatGoTest, false
+	}
+
 	// 1. Jest must precede go test because both use a leading FAIL marker.
 	if isJest(input) {
 		if reJestFail.Match(input) || reJestError.Match(input) {
@@ -194,7 +203,12 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatPlaywright, true
 	}
 
-	// 6. Cargo test
+	// 6. Cypress
+	if isCypress(input) {
+		return FormatCypress, false
+	}
+
+	// 7. Cargo test
 	if isCargoTest(input) {
 		if reCargoTestError.Match(input) {
 			return FormatCargoTest, true // Error detected! Fail open!
@@ -205,7 +219,7 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatCargoTest, true
 	}
 
-	// 7. TSC
+	// 8. TSC
 	if isTSC(input) {
 		if reTSCError.Match(input) {
 			return FormatTSC, true // Error detected! Fail open!
@@ -216,29 +230,29 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatTSC, true
 	}
 
-	// 8. Git status
+	// 9. Git status
 	if reGitStatusHead.Match(input) {
 		return FormatGitStatus, false
 	}
 
-	// 9. Git log
+	// 10. Git log
 	if reGitLogCommit.Match(input) {
 		return FormatGitLog, false
 	}
 
-	// 10. Repetitive logs, only after test suites, git status and git log had their
+	// 11. Repetitive logs, only after test suites, git status and git log had their
 	// say: a failing test run or a git log with repeated lines must stay raw.
 	// Timestamps can look like search hits, so this precedes the search check.
 	if isRepetitiveLog(input) {
 		return FormatLogs, false
 	}
 
-	// 11. Search results (rg / grep)
+	// 12. Search results (rg / grep)
 	if reRipgrepMatch.Match(input) {
 		return FormatSearch, false
 	}
 
-	// 12. File listings / tree
+	// 13. File listings / tree
 	if bytes.Contains(input, []byte("total ")) && bytes.Contains(input, []byte("drwx")) {
 		return FormatFileList, false
 	}
@@ -262,6 +276,8 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressTSC(input)
 	case FormatJest:
 		return compressJest(input)
+	case FormatCypress:
+		return compressCypress(input)
 	case FormatGitStatus:
 		return compressGitStatus(input)
 	case FormatGitLog:
@@ -285,6 +301,10 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 // figure when present; it drops only timings and "(cached)".
 // If that is not strictly shorter than the input, the input is returned.
 func compressGoTest(input []byte) ([]byte, bool, string) {
+	if reGoVerboseRun.Match(input) {
+		return parseGoVerbose(input)
+	}
+
 	type pkg struct {
 		name    string
 		cover   string

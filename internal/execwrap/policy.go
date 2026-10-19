@@ -25,6 +25,7 @@ const (
 	FamilyCargoTest  Family = "cargo-test"
 	FamilyTSC        Family = "tsc"
 	FamilyJest       Family = "jest"
+	FamilyCypress    Family = "cypress"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -139,6 +140,9 @@ func FamilyOf(argv []string) Family {
 	}
 	if argv[0] == "tsc" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "tsc") {
 		return FamilyTSC
+	}
+	if (argv[0] == "cypress" && len(argv) >= 2 && argv[1] == "run") || (len(argv) >= 3 && argv[0] == "npx" && argv[1] == "cypress" && argv[2] == "run") {
+		return FamilyCypress
 	}
 	if len(argv) >= 3 && argv[0] == "npx" && argv[1] == "playwright" && argv[2] == "test" {
 		return FamilyPlaywright
