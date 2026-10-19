@@ -33,9 +33,9 @@ Extra points, applied after the regex table:
 | Bounded brief: at least 80 words and two of three limits (scope limit such as `read-only` or `edit only`, a test command such as `go test`, a reply budget such as `reply <= 150 words`) | TRIVIAL votes dropped; a single COMPLEX row (other than review or retry wording) dropped; +2 MEDIUM |
 | Long brief (80+ words) that is not bounded | A TRIVIAL keyword does not vote when it sits inside a backtick command quote, is negated (`do not git commit`, `never push`), is a `git branch` label, or is a path segment such as `mech-rename` |
 | Any prompt: a negated scope word | A COMPLEX match on architecture, re-architect, redesign, rewrite, migrate or entire codebase/system does not vote when its own clause negates it: `do not touch the architecture`, `don't redesign`, `without migrating`, `não mexa na arquitetura`, `sem migrar`. The negation may be followed only by a change verb (touch, change, modify, edit, alter, mexer, mudar, alterar, tocar) and at most three filler words. A phenomenon (race condition, deadlock, leak) is never negated: `make sure it does not deadlock` still asks for hard work |
-| Long brief (80+ words) that is not bounded and states its task | Task focus, below |
+| Long brief (80+ words) that is not bounded and states its task, or a shorter brief with an explicit `Task:` marker | Task focus, below |
 
-### Task focus (long briefs)
+### Task focus (briefs with a stated task)
 
 A long parent brief wraps a short task in context: what the project is, what
 was tried, what must not change. Context words such as `architecture` or
@@ -47,13 +47,18 @@ brief weighed as context (`internal/classify/brief_task.go`).
 The task is:
 
 1. the section after an explicit `Task:` / `Your task:` / `Tarefa:` marker (a
-   heading or bold form works too). It runs to the end of the brief or to the
-   next context section (`Background:`, `Context:`, `Notes:`, `History:`,
-   `Reply:` and Portuguese forms). Requirements, constraints and "done means"
-   sections stay in the task, because they shape the work.
-2. otherwise, every sentence that opens with a work verb (rename, fix, add,
-   migrate, implement, review, … and Portuguese imperatives). Reading, running
-   checks, replying and negated sentences (`Do not …`) are not the task.
+   heading or bold form works too) at the start of a line or of a sentence
+   (`… none of that is in scope here. Task: rename …`). It runs to the end of
+   the brief or to the next context section (`Background:`, `Context:`,
+   `Notes:`, `History:`, `Reply:` and Portuguese forms). Requirements,
+   constraints and "done means" sections stay in the task, because they shape
+   the work. The marker is the author saying the rest is context, so it counts
+   on a brief of any length.
+2. otherwise, on a long brief (80+ words) only, every sentence that opens with
+   a work verb (rename, fix, add, migrate, implement, review, … and Portuguese
+   imperatives). Reading, running checks, replying and negated sentences
+   (`Do not …`) are not the task. A shorter prompt's other sentences may be
+   the work, so it gets no imperative extraction.
 3. otherwise, nothing: the brief is scored as before.
 
 The focused tally, used only when the task itself matched a signal:
@@ -75,7 +80,7 @@ floor still reads the whole brief, context included. A rename under a
 briefs keep their own rule above. A decision shaped by the focus carries the
 reason code `TASK_FOCUS`.
 
-Examples (80+ word briefs):
+Examples (80+ word briefs unless the word count says otherwise):
 
 | Brief | Before | After |
 |---|---|---|
@@ -84,11 +89,17 @@ Examples (80+ word briefs):
 | Background names JWTs and refresh tokens; `Task: rename fmtTok to formatToken` | COMPLEX, unconfident | MEDIUM, unconfident (risk floor; no write below the requested model) |
 | `Task: rewrite the replication layer and migrate the slots` | COMPLEX, confident | unchanged |
 | No marker; one sentence names the architecture, then `Rename the field amount to amountCents …` | COMPLEX, unconfident | unchanged (imperative extraction keeps the nudge: 3 against 2) |
+| 65 words on one line: background names the architecture, a redesign, the migration plan and concurrency; `… in scope here. Task: rename the variable totalAmt to totalAmount …` | COMPLEX, confident | TRIVIAL, confident (downshift applied) |
+| 40 words: context names a distributed design and a rewrite; `Task: fix the typo 'occured' to 'occurred' in docs/ingest.md` | COMPLEX, confident | TRIVIAL, confident (downshift applied) |
 
 Measured on 2026-10-19 against every labelled set in the maintainers' eval
 repository (the five frozen benchmark splits, M3 multilingual and two
 development sets, 1074 items): no item changed class or confidence. None of
-them is a long brief with a stated task. The gain is pinned by the
+them is a long brief with a stated task. Re-measured on 2026-10-19 after the
+marker started counting on short briefs and at a sentence start, together with
+the widened typo row (`fix the typo`, `fix typos`): the only item that changed
+is `fix the typo in the README`, labelled TRIVIAL, which moved from MEDIUM
+unconfident to TRIVIAL confident. The gain is pinned by the
 table-driven tests in `internal/classify/classifier_edge_test.go` and
 `internal/core/task_focus_test.go`.
 
@@ -175,7 +186,7 @@ expressions, case-insensitive. Several matches in the same class add up.
 
 | Weight | Matches |
 |---|---|
-| 3 | rename, renomear, format, indent, prettier, eslint, git commit/push/pull/status/add/stash/log/diff/checkout/branch, fix a typo, add a comment, move the file, delete the file, bump the version, listar arquivos |
+| 3 | rename, renomear, format, indent, prettier, eslint, git commit/push/pull/status/add/stash/log/diff/checkout/branch, fix a/the/some typo(s), add a comment, move the file, delete the file, bump the version, listar arquivos |
 | 2 | lint, boilerplate, remove unused/dead |
 
 ## From class to tier

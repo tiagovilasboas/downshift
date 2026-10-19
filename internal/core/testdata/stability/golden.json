@@ -105,9 +105,9 @@
   "tier": "small"
  },
  "ambiguous.json/AMB-22": {
-  "complexity": "MEDIUM",
-  "confident": false,
-  "tier": "mid"
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
  },
  "ambiguous.json/AMB-23": {
   "complexity": "MEDIUM",
@@ -645,9 +645,9 @@
   "tier": "small"
  },
  "standard.json/STD-10": {
-  "complexity": "MEDIUM",
-  "confident": false,
-  "tier": "mid"
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
  },
  "standard.json/STD-11": {
   "complexity": "MEDIUM",
@@ -800,9 +800,9 @@
   "tier": "mid"
  },
  "trivial.json/trivial-01": {
-  "complexity": "MEDIUM",
-  "confident": false,
-  "tier": "mid"
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
  },
  "trivial.json/trivial-02": {
   "complexity": "TRIVIAL",

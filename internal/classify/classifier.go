@@ -297,12 +297,20 @@ func Classify(prompt string) Classification {
 	longBrief := wordCount >= minBriefWords
 	isBounded := longBrief && boundedBrief(prompt, wordCount)
 
-	// A long brief that states its task gets a second, task-focused tally
-	// (focus); focusOnTask decides below which one stands.
+	// A brief that states its task gets a second, task-focused tally (focus);
+	// focusOnTask decides below which one stands. Below minBriefWords only an
+	// explicit "Task:" marker counts: a short prompt's other sentences may
+	// still be the work.
 	var task []span
 	explicitTask := false
-	if longBrief && !isBounded {
+	switch {
+	case isBounded:
+		// A bounded brief has its own context rule (applyBoundedBrief).
+	case longBrief:
 		task, explicitTask = taskSpans(lower)
+	default:
+		task = explicitTaskSpan(lower)
+		explicitTask = task != nil
 	}
 	focus := map[Complexity]int{Trivial: 0, Simple: 0, Medium: 0, Complex: 0}
 	taskSignal := false

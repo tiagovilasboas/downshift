@@ -18,8 +18,10 @@ import (
 
 var (
 	// taskMarkerRE opens an explicit task section: "Task:", "## Your task:",
-	// "**Tarefa:**". The section runs to the next label line or heading.
-	taskMarkerRE = regexp.MustCompile(`(?m)^[ \t>*#-]*(?:\*\*)?(?:your\s+|the\s+|sua\s+|a\s+)?(?:task|tarefa)(?:\*\*)?[ \t]*:(?:\*\*)?`)
+	// "**Tarefa:**", at the start of a line or of a sentence ("... in scope
+	// here. Task: rename ..."). The section runs to the next label line or
+	// heading.
+	taskMarkerRE = regexp.MustCompile(`(?m)(?:^|[.!?][ \t]+)[ \t>*#-]*(?:\*\*)?(?:your\s+|the\s+|sua\s+|a\s+)?(?:task|tarefa)(?:\*\*)?[ \t]*:(?:\*\*)?`)
 	// contextLabelRE opens a section that is context, not work: background,
 	// notes, history, or how to reply. Requirements, constraints and "done
 	// means" sections shape the work and stay in the task.
@@ -44,17 +46,8 @@ type span struct{ start, end int }
 // otherwise every sentence that opens with a work verb. It returns nil when it
 // finds neither, and Classify then scores the brief as before.
 func taskSpans(lower string) (spans []span, explicit bool) {
-	if loc := taskMarkerRE.FindStringIndex(lower); loc != nil {
-		start, end := loc[1], len(lower)
-		if nl := strings.IndexByte(lower[start:], '\n'); nl >= 0 {
-			rest := start + nl + 1
-			if next := contextLabelRE.FindStringIndex(lower[rest:]); next != nil {
-				end = rest + next[0]
-			}
-		}
-		if strings.TrimSpace(lower[start:end]) != "" {
-			return []span{{start, end}}, true
-		}
+	if spans := explicitTaskSpan(lower); spans != nil {
+		return spans, true
 	}
 	for _, s := range sentences(lower) {
 		text := lower[s.start:s.end]
@@ -64,6 +57,28 @@ func taskSpans(lower string) (spans []span, explicit bool) {
 		}
 	}
 	return spans, false
+}
+
+// explicitTaskSpan returns the section after an explicit "Task:" marker, or
+// nil when the brief has none. Unlike imperative sentences, the marker is the
+// author saying the rest is context, so Classify trusts it on a brief of any
+// length.
+func explicitTaskSpan(lower string) []span {
+	loc := taskMarkerRE.FindStringIndex(lower)
+	if loc == nil {
+		return nil
+	}
+	start, end := loc[1], len(lower)
+	if nl := strings.IndexByte(lower[start:], '\n'); nl >= 0 {
+		rest := start + nl + 1
+		if next := contextLabelRE.FindStringIndex(lower[rest:]); next != nil {
+			end = rest + next[0]
+		}
+	}
+	if strings.TrimSpace(lower[start:end]) == "" {
+		return nil
+	}
+	return []span{{start, end}}
 }
 
 // sentences splits lower on line breaks and on ". ", "! ", "? ". A dot inside

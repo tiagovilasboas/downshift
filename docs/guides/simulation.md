@@ -133,7 +133,4 @@ Add a JSON file to `internal/simbench/testdata/sim` (unknown fields are rejected
 
 ## Known gaps the scenarios show today (2026-10-19)
 
-- **Long briefs.** A long brief with a stated mechanical `Task:` is classified COMPLEX and kept on
-  the frontier model on every harness (Codex's rewrite only sets the frontier reasoning effort).
-  That scenario has no rewrite expectation until the classifier handles it.
 - **Explore.** Explore tasks ("find where …") are held as unconfident under an Opus-tier parent.
