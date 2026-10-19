@@ -78,9 +78,13 @@ expect "claude-code inferred session" "$cc_inf" '"updatedInput":{'
 expect "claude-code inferred session" "$cc_inf" '"model":"haiku"'
 echo "OK: claude-code without allowlist infers the session from the current model"
 
-# Without a current model there is nothing to infer from: allow, no rewrite.
+# Without a current model there is nothing to infer from: no rewrite and no
+# permission decision, so the user's own ask rules for Agent/Task still apply.
 cc_none=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
-expect "claude-code no model" "$cc_none" '"permissionDecision":"allow"'
+if printf '%s' "$cc_none" | grep -qF permissionDecision; then
+  echo "FAIL: claude-code answered a permission decision for an unchanged spawn: $cc_none" >&2
+  exit 1
+fi
 if printf '%s' "$cc_none" | grep -qF updatedInput; then
   echo "FAIL: claude-code rewrote with no session and no current model: $cc_none" >&2
   exit 1
