@@ -40,14 +40,17 @@ delegation-heavy, and one added here, **output-heavy** (a bounded fix whose loop
 Complex and security-sensitive tasks stay in the set as safety checks (acceptance only), not as a saving claim. Each
 task keeps its hidden acceptance check, validated on base and fix.
 
-### Ecosystem Coverage: Python (pytest) and TypeScript (vitest)
+### Ecosystem Coverage: Python (pytest), TypeScript/Node (vitest, Playwright, tsc), and Rust (cargo test)
 
 The output-heavy category explicitly evaluates suites across the primary agent engineering ecosystems:
 - **Go (`go test`)**: Multi-package unit and integration suites with `-v` or package summaries.
 - **Python (`pytest`)**: Suites running 50+ tests (e.g. FastAPI/Flask services, data pipelines). Clean runs output dozens of lines of test identifiers, progress percentages, and session summaries, inflating tool output by 1,500–3,500 tokens.
-- **TypeScript / JavaScript (`vitest`)**: Fullstack suites running 50+ tests across multiple test files. Clean runs render module trees, execution durations, and checkmark tables, injecting 2,000–4,000 tokens per execution.
+- **TypeScript / JavaScript Unit (`vitest`)**: Fullstack suites running 50+ tests across multiple test files. Clean runs render module trees, execution durations, and checkmark tables, injecting 2,000–4,000 tokens per execution.
+- **End-to-End Browser Testing (`playwright`)**: Suites running 10–30 E2E tests across Chromium, Firefox, and WebKit. Clean runs emit hundreds of worker step notifications, browser launch events, test titles, and timing breakdowns, generating **3,000 to 5,000 tokens** per run. Squelching clean runs to `playwright: PASS (N passed across M workers in X.XXs)` (~25 tokens) delivers a ~99% token reduction. Fail-open guarantee: any `failed`, `timed out`, `Error:`, assertion diff, trace attachment, or non-zero exit is preserved 100% verbatim.
+- **Systems Engineering (`cargo test`)**: Rust crate builds and test runners. Clean runs output compilation steps, test suite discovery, and lines for dozens of unit/integration tests (`test foo ... ok`), generating **1,000 to 2,500 tokens**. Squelching clean runs to `cargo test: PASS (N passed; 0 failed in X.XXs)` (~20 tokens) achieves 98%+ reduction. Fail-open guarantee: any `FAILED`, compiler warning (`warning:`), compiler error (`error[E...]`), `panicked at`, or non-zero exit is preserved verbatim.
+- **Static Typechecking (`tsc --noEmit`)**: Canonical TypeScript typecheck loops in agentic refactorings. When clean, `tsc` exits with code 0 and either an empty string or `Found 0 errors.`. Squelching to `tsc: PASS (0 errors)` (< 5 tokens) provides clear, unambiguous confirmation while preventing tool output ambiguity. Fail-open guarantee: any `error TS\d+:`, diagnostic chain, syntax/semantic error, or non-zero exit is preserved verbatim.
 
-Tasks in this category simulate realistic agent iterative workflows (e.g., TDD loops, localized bug fixing) where tests are executed 2 to 5 times across a multi-turn conversation.
+Tasks in this category simulate realistic agent iterative workflows (e.g., TDD loops, localized bug fixing) where tests and typechecks are executed 2 to 5 times across a multi-turn conversation.
 
 ## Metrics
 
@@ -64,8 +67,9 @@ Tasks in this category simulate realistic agent iterative workflows (e.g., TDD l
 Work and cache are reported apart because cache reads carry the smallest price gap between models and are most of a
 session's tokens; one token total would credit routing with a saving it cannot make on that class. Output cutting
 shows in fresh-input tokens and, crucially, in **dampening cumulative cache growth across turns**: in a 15-turn session,
-squelching a 2,500-token `pytest` or `vitest` pass on turn 3 avoids over 30,000 downstream cache read tokens. Report both
-single-turn reduction and cumulative session cache savings.
+squelching a 4,000-token `playwright` pass on turn 2 avoids over 50,000 downstream cache read tokens; squelching a
+2,000-token `cargo test` or `pytest` pass on turn 3 avoids over 24,000 cache read tokens; and deterministic `tsc` typechecks
+prevent iterative context clutter. Report both single-turn reduction and cumulative session cache savings.
 
 Quota windows are measured in blocks: run one arm's block back to back, read the windows before and after, let the
 window reset or use a second identical account, and alternate block order across repeats. The harness rounds window

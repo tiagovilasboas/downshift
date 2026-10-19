@@ -1,0 +1,15 @@
+src/components/Button.tsx:12:7 - error TS2322: Type 'string' is not assignable to type 'number'.
+
+12 const width: number = "100px";
+         ~~~~~
+
+src/utils/format.ts:45:10 - error TS2304: Cannot find name 'unknownVar'.
+
+45   return unknownVar;
+            ~~~~~~~~~~
+
+Found 2 errors in 2 files.
+
+Errors  Files
+     1  src/components/Button.tsx:12
+     1  src/utils/format.ts:45

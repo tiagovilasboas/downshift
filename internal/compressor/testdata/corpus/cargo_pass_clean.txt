@@ -1,0 +1,17 @@
+   Compiling downshift-core v0.1.0 (/Users/tiago.boas/rust/downshift)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.85s
+     Running unittests src/lib.rs (target/debug/deps/downshift_core-a1b2c3d4)
+
+running 25 tests
+test auth::tests::test_token_validation ... ok
+test auth::tests::test_session_expiry ... ok
+test billing::tests::test_invoice_calc ... ok
+test billing::tests::test_tax_rate ... ok
+test config::tests::test_load_defaults ... ok
+test store::tests::test_cache_hit ... ok
+test store::tests::test_cache_miss ... ok
+test utils::tests::test_sanitize ... ok
+test utils::tests::test_slugify ... ok
+test engine::tests::test_parse_input ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
