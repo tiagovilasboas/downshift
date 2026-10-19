@@ -12,6 +12,12 @@ judged on.
   router. `TestPromptCorpusFiles` fails on a **wrong write** (the model would be
   rewritten to a tier other than the label); a held spawn only loses a saving and is
   reported as a metric. Remove `known_gap` when a gap is fixed.
+- `internal/core/testdata/stability/golden.json` — what the router decides (complexity,
+  confidence, tier) for each of those 200 prompts. `TestClassifierStability` fails on any
+  drift, including drift inside the label. An intended classifier change regenerates it with
+  `go test ./internal/core -run TestClassifierStability -update-stability`; review the diff
+  next to the before/after evidence. It replaces the old check that read a private
+  directory outside the repository.
 - `downshift-labs/research/prompts-1000/` — 1000 synthetic developer prompts with the
   generator's own `dev_difficulty`. That label is a guess, not ground truth; the set
   is for finding error families, not for measuring accuracy.
