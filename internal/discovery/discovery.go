@@ -17,6 +17,7 @@ package discovery
 import (
 	"context"
 	"errors"
+	"regexp"
 	"time"
 )
 
@@ -59,10 +60,26 @@ func Run(ctx context.Context, sources []Source, perSource time.Duration) []Outco
 		cctx, cancel := context.WithTimeout(ctx, perSource)
 		models, err := s.Discover(cctx)
 		cancel()
+		models = validModels(models)
 		if err == nil && len(models) == 0 {
 			err = errors.New("source returned no models")
 		}
 		out = append(out, Outcome{Source: s, Models: models, Err: err})
+	}
+	return out
+}
+
+// modelIDPattern is the shape every discovered id must have, whatever the
+// source: no spaces, control or escape characters, bounded length. Ids that do
+// not match are dropped before they reach the cache or the terminal.
+var modelIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/+\[\],=-]{0,127}$`)
+
+func validModels(models []Model) []Model {
+	out := models[:0:0]
+	for _, m := range models {
+		if modelIDPattern.MatchString(m.ID) {
+			out = append(out, m)
+		}
 	}
 	return out
 }

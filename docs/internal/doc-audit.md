@@ -112,7 +112,6 @@ Stubs: `backlog.md`, `next-steps.md` (root + internal) — no moat leak.
 |-------|------|------|
 | `docs/img/architecture.svg` | USE | No |
 | `docs/brand/downshift-routing-*.svg` | USE | No |
-| `docs/brand/downshift-capability-router-v2.png` | INSIDE | Mild — v2 marketing |
 
 ---
 

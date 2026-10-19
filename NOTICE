@@ -11,19 +11,21 @@ new distributions use the Apache License, Version 2.0 (see LICENSE).
 hooks/cache-tax/ is the Claude Code mod cache-tax by Karan Bansal
 (https://github.com/karanb192/cache-tax, version 2.2.1, commit 06cac47),
 MIT License, Copyright (c) 2026 Karan Bansal, vendored unchanged except for
-the import paths of its test file. The MIT notice is in hooks/cache-tax/LICENSE
+the import paths of its test file and a local colour patch (documented in
+hooks/cache-tax/README.md and hooks/cache-tax/downshift-local.patch). The MIT notice is in hooks/cache-tax/LICENSE
 and is retained below.
 
 mods/savvy-progress/ is the Claude Code mod savvy-progress by johnnyvizz
 (https://github.com/JohnnyVizz/claude-kit, path plugins/savvy-progress,
 version 1.2.1, commit c871c15), MIT License, Copyright (c) 2026 johnnyvizz,
-vendored with one local patch (three colour values, documented in
-mods/savvy-progress/README.md). The MIT notice is in mods/savvy-progress/LICENSE; its text
+vendored with one local patch (colours, shown tier words and a single crab sprite, documented in
+mods/savvy-progress/README.md and mods/savvy-progress/downshift-local.patch). The MIT notice is in mods/savvy-progress/LICENSE; its text
 is the MIT text retained below, under the copyright line above.
 
 mods/filetree/ is the Claude Code mod filetree by Kurt Buhler
 (https://github.com/data-goblin/claude-code-filetree, version 0.2.26, commit
-1b3e72c), MIT License, Copyright (c) 2026 Kurt Buhler, vendored unchanged.
+1b3e72c), MIT License, Copyright (c) 2026 Kurt Buhler, vendored with a local colour patch
+(documented in mods/filetree/README.md and mods/filetree/downshift-local.patch).
 The MIT notice is in mods/filetree/LICENSE; its text is the MIT text retained
 below, under the copyright line above.
 

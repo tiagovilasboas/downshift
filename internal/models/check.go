@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -82,6 +83,16 @@ func CheckWithProviders(cat CatalogReader, providers []ProviderConfig, client *h
 	return 0
 }
 
+// maxModelListBytes caps the provider response read into memory.
+const maxModelListBytes = 4 << 20
+
+// modelIDPattern is what a model id may look like. Anything else (escape
+// sequences, spaces, control characters) is dropped, so a hostile answer can
+// neither reach the terminal nor the user catalog.
+var modelIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:/+-]{0,127}$`)
+
+func validModelID(id string) bool { return modelIDPattern.MatchString(id) }
+
 // fetchModelIDs calls a provider's /v1/models endpoint and returns model IDs.
 // Handles both OpenAI {"data":[{"id":"..."}]} and Anthropic {"models":[{"id":"..."}]}.
 func fetchModelIDs(client *http.Client, p ProviderConfig, apiKey string) ([]string, error) {
@@ -94,7 +105,11 @@ func fetchModelIDs(client *http.Client, p ProviderConfig, apiKey string) ([]stri
 	}
 	setAuth(req, p, apiKey)
 
-	resp, err := client.Do(req)
+	// Never follow a redirect: Go forwards custom headers such as Anthropic's
+	// x-api-key to the new host. The caller's client is copied, not changed.
+	noRedirect := *client
+	noRedirect.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	resp, err := noRedirect.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -112,20 +127,20 @@ func fetchModelIDs(client *http.Client, p ProviderConfig, apiKey string) ([]stri
 			ID string `json:"id"`
 		} `json:"models"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxModelListBytes)).Decode(&envelope); err != nil {
 		return nil, fmt.Errorf("parse response: %w", err)
 	}
 
 	seen := make(map[string]bool)
 	var ids []string
 	for _, m := range envelope.Data {
-		if m.ID != "" && !seen[m.ID] {
+		if validModelID(m.ID) && !seen[m.ID] {
 			ids = append(ids, m.ID)
 			seen[m.ID] = true
 		}
 	}
 	for _, m := range envelope.Models {
-		if m.ID != "" && !seen[m.ID] {
+		if validModelID(m.ID) && !seen[m.ID] {
 			ids = append(ids, m.ID)
 			seen[m.ID] = true
 		}

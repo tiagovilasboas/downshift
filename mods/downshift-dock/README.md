@@ -22,8 +22,9 @@ command to exist.
   turn. Until a listing answers, both show. With neither installed the band is not drawn.
 - The command is queued until the session is idle. A press during a streaming turn runs when the
   turn ends. If the run is rejected, a toast names the plugin to enable.
-- Button colours follow the terminal theme (`variant="primary"`); the label and the "downshift"
-  text use the brand green `#22C55E` and muted `#9CA3AF`. No background is set.
+- Black-first look: button labels follow the terminal theme (`variant="primary"`); the "downshift"
+  text is muted grey `#868A90`; the small status dot is brand green `#22C55E` only while at least one
+  of the two panels is open and grey `#5C6168` otherwise. No background is set.
 
 ## Install and test
 

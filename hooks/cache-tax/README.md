@@ -12,9 +12,21 @@ prompt-cache guard and `/keepwarm` without a second marketplace.
 | Upstream | https://github.com/karanb192/cache-tax |
 | Version | 2.2.1 |
 | Commit | `06cac47ec125a41a4aeeb78a6b006bec8cc6d6ed` (2026-10-04) |
-| Files | `register.ts`, `status-icons.ts` byte-identical to upstream `hooks/`; `register.test.ts` is upstream `tests/register.test.ts` with its two imports pointed at this directory |
+| Files | `register.ts`, `status-icons.ts` byte-identical to upstream `hooks/` except the Downshift local patch below; `register.test.ts` is upstream `tests/register.test.ts` with its two imports pointed at this directory |
 | Loaded by | [`../hooks.json`](../hooks.json), `"modules": ["./cache-tax/register.ts"]` |
 | Needs | Claude Code 2.1.287 or later (mods on by default); a one-hour prompt cache for the keep-warm timer |
+
+## Downshift local patch
+
+Owner decision 2026-10-19: colours follow the Downshift site (black first,
+white and grey, green only for a warm cache). Colours only, no behaviour.
+Reapply with `git apply hooks/cache-tax/downshift-local.patch` after a re-vendor.
+
+| File | Change |
+|---|---|
+| `register.ts` | cold band colour `#d97757`/`#c15f3c` (dark/light) to `#d6dae2`/`#2b2f36` |
+| `status-icons.ts` | SVG fills and strokes remapped (warm `#22c55e` dark, `#16a34a` light; cold light-grey; neutral `#868a90`; stroke `#f5f7fa` dark, `#0a0a0a` light); the six base64 PNGs re-rendered from them with `rsvg-convert` at 96x64 (the generator script is not vendored) |
+| `register.test.ts` | cold-colour expectations follow `register.ts` |
 
 ## What it does
 
