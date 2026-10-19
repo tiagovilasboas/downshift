@@ -109,3 +109,37 @@ func cursorSpawn(t *testing.T, usage *quota.Snapshot) (string, []telemetry.Event
 	}
 	return stderr, events
 }
+
+// TestSpawnStateIsVisible pins the shared contract: every spawn prints one
+// "spawn <state>" line and updates live.json, whatever the harness. Cursor is
+// only the fixture; the code under test is runHookAdapter.
+func TestSpawnStateIsVisible(t *testing.T) {
+	used := 20.0
+	exhausted := 100.0
+	now := time.Now().UTC()
+	cases := []struct {
+		name  string
+		quota *quota.Snapshot
+		want  string
+	}{
+		{"switched", cursorQuota(now, &used), "downshift: spawn switched "},
+		{"held by the credit gate", cursorQuota(now, &exhausted), "downshift: spawn held on "},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			stderr, events := cursorSpawn(t, tc.quota)
+			if !strings.Contains(stderr, tc.want) {
+				t.Fatalf("stderr missing %q:\n%s", tc.want, stderr)
+			}
+			state := strings.TrimSuffix(strings.TrimPrefix(tc.want, "downshift: spawn "), " ")
+			state = strings.Fields(state)[0]
+			if got := telemetry.SpawnStateOf(events[0]); got != state {
+				t.Fatalf("event state = %q, want %q", got, state)
+			}
+			live, err := telemetry.ReadLive()
+			if err != nil || live.Last.State != state || live.Counts[state] != 1 || live.Last.Harness != "cursor" {
+				t.Fatalf("live.json = %+v, err %v", live, err)
+			}
+		})
+	}
+}

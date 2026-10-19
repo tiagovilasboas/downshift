@@ -51,6 +51,8 @@ type SessionRouting struct {
 	TopModelN int     // how many children ran on TopModel
 	HasCost   bool    // at least one child was priced against its baseline
 	DeltaUSD  float64 // signed real delta: baseline minus actual, summed
+	Switched  int     // spawns whose model or effort Downshift changed
+	Held      int     // spawns Downshift considered and left unchanged
 	OnDoubt   int     // frontier decisions resting on an unconfident classification
 	// QuotaStale marks that an expired quota snapshot is still holding model
 	// rewrites (core.StaleQuotaHold). The caller sets it; the event log has no
@@ -93,6 +95,12 @@ func SessionSummary(events []Event, sessionHash string) SessionRouting {
 			continue
 		}
 		s.Spawns++
+		switch SpawnStateOf(ev) {
+		case StateSwitched:
+			s.Switched++
+		case StateHeld:
+			s.Held++
+		}
 		isRefuted := refuted[ev.Harness+"\n"+DecisionKey(ev)]
 		ran := ev.FromModel
 		if AppliedRewrite(ev.Outcome, ev.Corrections) && ev.Outcome == OutcomeRewriteEmitted && !isRefuted {
@@ -133,6 +141,7 @@ func (s SessionRouting) Line() string {
 		noun = "subagent"
 	}
 	parts := []string{"◆ downshift", fmt.Sprintf("%d %s", s.Spawns, noun)}
+	parts = append(parts, fmt.Sprintf("%d switched · %d held", s.Switched, s.Held))
 	if s.TopModel != "" {
 		parts = append(parts, fmt.Sprintf("%d on %s", s.TopModelN, s.TopModel))
 	}

@@ -60,10 +60,10 @@ func TestSessionTree_OneSubagentWithRealCost(t *testing.T) {
 		tuse("d1", sessA, time.Minute, "claude-sonnet-5-5", 0.22, 0.60),
 	}
 	got := lines(SessionTree(ev, sessA, TreeOptions{}))
-	if got[0] != "session · 1 subagent · $0.22 (without downshift: $0.60) · saved $0.38" {
+	if got[0] != "session · 1 subagent · 1 switched, 0 held · $0.22 (without downshift: $0.60) · saved $0.38" {
 		t.Fatalf("header: %q", got[0])
 	}
-	if got[1] != "└─ subagent 1  sonnet  ✓  $0.22  MEDIUM, confident" {
+	if got[1] != "└─ subagent 1  sonnet  ✓  $0.22  switched from opus, MEDIUM, confident" {
 		t.Fatalf("row: %q", got[1])
 	}
 }

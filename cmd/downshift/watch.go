@@ -100,6 +100,7 @@ func watchFrame(events []telemetry.Event, sessionFlag string, catalog core.Resol
 	}
 	var b strings.Builder
 	fmt.Fprintf(&b, "downshift watch · %s · every %s · Ctrl-C to quit\n", now.Format("15:04:05"), interval)
+	b.WriteString(telemetry.ActivityLine(events, hash, now) + "\n")
 	b.WriteString(telemetry.SessionTree(events, hash, opt))
 	if hash == "" {
 		b.WriteString("waiting for a session: no subagent has been logged yet\n")

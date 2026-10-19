@@ -45,26 +45,26 @@ func TestSessionSummaryLine(t *testing.T) {
 		{"empty log", nil, ""},
 		{"only another session", []Event{liveDecision("sess-b", OutcomeRewriteEmitted, opus, haiku, "small")}, ""},
 		{"only quota-like noise", []Event{{Outcome: "error", SessionID: s}, {Outcome: OutcomeResolved, SessionID: s}}, ""},
-		{"one spawn, no cost", []Event{rewrite()}, "◆ downshift · 1 subagent · 1 on haiku · 0 on doubt"},
+		{"one spawn, no cost", []Event{rewrite()}, "◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · 0 on doubt"},
 		{"saved", []Event{rewrite(), rewrite(), liveUsage(s, 0.10, 0.50), liveUsage(s, 0.02, 0.04)},
-			"◆ downshift · 2 subagents · 2 on haiku · saved $0.42 · 0 on doubt"},
+			"◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved $0.42 · 0 on doubt"},
 		{"loss shows as over", []Event{rewrite(), liveUsage(s, 0.50, 0.10)},
-			"◆ downshift · 1 subagent · 1 on haiku · over $0.40 · 0 on doubt"},
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · over $0.40 · 0 on doubt"},
 		{"loss and gain net out signed", []Event{rewrite(), liveUsage(s, 0.50, 0.10), liveUsage(s, 0.10, 0.90)},
-			"◆ downshift · 1 subagent · 1 on haiku · saved $0.40 · 0 on doubt"},
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · saved $0.40 · 0 on doubt"},
 		{"allow counts the requested model", []Event{liveDecision(s, OutcomeAllow, opus, opus, "frontier"), rewrite(), rewrite()},
-			"◆ downshift · 3 subagents · 2 on haiku · 0 on doubt"},
+			"◆ downshift · 3 subagents · 2 switched · 0 held · 2 on haiku · 0 on doubt"},
 		{"doubt", []Event{
 			liveDecision(s, OutcomeRewriteEmitted, "claude-sonnet-5-5", opus, "frontier", ReasonClassifierUnconfident), // written on doubt
 			liveDecision(s, OutcomeAllow, opus, opus, "frontier", ReasonClassifierUnconfident, ReasonRiskFloor),        // lifted: not doubt
-		}, "◆ downshift · 2 subagents · 2 on opus · 1 on doubt"},
+		}, "◆ downshift · 2 subagents · 1 switched · 0 held · 2 on opus · 1 on doubt"},
 		{"doubt that was not written is not counted", []Event{
 			liveDecision(s, OutcomeAllow, opus, opus, "frontier", ReasonClassifierUnconfident),
-		}, "◆ downshift · 1 subagent · 1 on opus · 0 on doubt"},
+		}, "◆ downshift · 1 subagent · 0 switched · 0 held · 1 on opus · 0 on doubt"},
 		{"unknown models are not a top model", []Event{liveDecision(s, OutcomeAllow, "unknown", "unknown", "mid")},
-			"◆ downshift · 1 subagent · 0 on doubt"},
+			"◆ downshift · 1 subagent · 0 switched · 0 held · 0 on doubt"},
 		{"unpriced usage adds no cost segment", []Event{rewrite(), {Outcome: OutcomeUsage, SessionID: s, InputTokens: i64(5)}},
-			"◆ downshift · 1 subagent · 1 on haiku · 0 on doubt"},
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · 0 on doubt"},
 	}
 	for _, c := range cases {
 		if got := SessionSummary(c.events, s).Line(); got != c.want {

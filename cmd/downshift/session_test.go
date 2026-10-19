@@ -156,7 +156,7 @@ func TestSession_SelectionExplicitThenEnvThenLatest(t *testing.T) {
 
 	// Latest decision in the log is session b: one subagent, unpriced.
 	out, _, rc := sessionCmd(t)
-	if rc != 0 || !strings.HasPrefix(out, header+"1 subagent · cost not observed") || !strings.Contains(out, "opus") {
+	if rc != 0 || !strings.HasPrefix(out, header+"1 subagent · 0 switched, 0 held · cost not observed") || !strings.Contains(out, "opus") {
 		t.Fatalf("latest session: rc=%d\n%s", rc, out)
 	}
 	// The harness's declared env var beats "latest" (read from capabilities, no name in code).
@@ -191,7 +191,7 @@ func TestSession_TreeWhyAndJSONWriteNothing(t *testing.T) {
 	state := t.TempDir()
 	t.Setenv("DOWNSHIFT_STATE_DIR", state)
 	tree, _, _ := sessionCmd(t, "--session="+a)
-	if !strings.Contains(tree, "└─ subagent 1  sonnet  ✓  $0.22  MEDIUM, confident") {
+	if !strings.Contains(tree, "└─ subagent 1  sonnet  ✓  $0.22  switched from opus, MEDIUM, confident") {
 		t.Fatalf("tree:\n%s", tree)
 	}
 	why, _, _ := sessionCmd(t, "--why", "--session="+a)
@@ -262,5 +262,30 @@ func TestSession_FastOnALargeLog(t *testing.T) {
 	// leaves shared-runner headroom and still catches a full read.
 	if best > 200*time.Millisecond {
 		t.Fatalf("session tree took %v on a 50 MB log, want < 200ms (it must read only the tail)", best)
+	}
+}
+
+func TestSession_PanelIsPromptFreeStateAndSavings(t *testing.T) {
+	_, a, _ := seedTreeLog(t)
+	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
+	out, _, rc := sessionCmd(t, "--panel", "--session="+a)
+	if rc != 0 {
+		t.Fatalf("rc=%d", rc)
+	}
+	var v telemetry.PanelView
+	if err := json.Unmarshal([]byte(out), &v); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out)
+	}
+	if v.Switched != 1 || v.Held != 0 || !v.HasSaved || !v.Estimated || v.SavedUSD < 0.379 || v.SavedUSD > 0.381 {
+		t.Fatalf("panel: %+v", v)
+	}
+	if len(v.Spawns) != 1 || v.Spawns[0].Label != "opus → sonnet (mid)" {
+		t.Fatalf("spawns: %+v", v.Spawns)
+	}
+	if strings.Contains(out, a) || strings.Contains(out, "sess-a") {
+		t.Fatalf("raw session id leaked: %s", out)
+	}
+	if _, _, rc := sessionCmd(t, "--panel", "--why"); rc != 2 {
+		t.Fatalf("two modes is a usage error, rc=%d", rc)
 	}
 }

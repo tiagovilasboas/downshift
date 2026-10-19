@@ -205,7 +205,7 @@ Downshift follows a strict 5-rung [Evidence Ladder](docs/guides/evidence.md) (fr
 ## Documentation
 
 - **Core Documentation**: [Guides Index](docs/README.md) · [Install Guide](docs/guides/install.md) · [Configuration](docs/guides/config.md) · [Architecture](docs/design/architecture.md)
-- **Reference & Matrix**: [Capability Matrix](docs/reference/capability-matrix.md) · [Harness Matrix](docs/reference/harness-matrix.md) · [Session Models](docs/reference/session-models.md) · [Complexity Weights](docs/reference/complexity-weights.md)
+- **Reference & Matrix**: [Capability Matrix](docs/reference/capability-matrix.md) · [Harness Matrix](docs/reference/harness-matrix.md) · [Session Models](docs/reference/session-models.md) · [Spawn State](docs/reference/spawn-state.md) · [Complexity Weights](docs/reference/complexity-weights.md)
 - **Evidence & Audits**: [Evidence Ladder](docs/guides/evidence.md) · [Subagent A/B (2026-10-15)](docs/evidence/subagent-routing-ab-2026-10-15.md) · [DCI Benchmarks](docs/evidence/dci-mvp-v01.md)
 - **For AI Agents**: [AGENTS.md](AGENTS.md) · [llms.txt](llms.txt) · [docs/guides/install.md](docs/guides/install.md)
 

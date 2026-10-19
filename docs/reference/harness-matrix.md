@@ -212,6 +212,15 @@ kirocrew, opencode: false; the line is still computed by `telemetry.ChildEndLine
 shared recorder, for every harness) and no adapter prints it. `DOWNSHIFT_QUIET=1` turns it off. See
 [session-models.md](session-models.md#what-downshift-shows-while-it-works).
 
+## Spawn state (2026-10-19)
+
+`switched` / `held` / `observed` is computed in `telemetry.SpawnStateOf` and
+shown by the shared runner for every harness: one stderr line per spawn, plus
+`live.json` for panels. No harness-specific code. Limits: the stderr line only
+helps where the harness surfaces hook stderr (unverified per harness), and the
+statusline segment needs a statusline bridge (Claude Code today). Details:
+[spawn-state.md](spawn-state.md).
+
 ## Session view (U3, 2026-10-13)
 
 `downshift session` (tree, `--why`, `--pause`) is shared code; what differs is
