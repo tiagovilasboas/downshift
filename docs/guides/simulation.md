@@ -28,7 +28,9 @@ harness it lists (Claude Code, Cursor, Codex, OpenCode):
    rollout file, OpenCode child_done. OpenCode's switch chain also goes through `runHonor`.
 3. **Usage.** Each child draws input, output, cache-read and cache-write tokens from the scenario's
    profile with a fixed seed. Ids come from the same seed, so the production control-group draw
-   (`telemetry.InControlGroup`, about 1 in 10) lands on the same spawns every run.
+   (`telemetry.InControlGroup`, about 1 in 10) lands on the same spawns every run. Like the real
+   payloads, Claude Code, Cursor and Codex send no `correlation_id`, so the draw is keyed on the
+   tool-use id (`controlKey` in the runner); OpenCode's key is its `correlation.child`.
 4. **Aggregation.** It reads the sandbox log with `telemetry.ReadEventsFrom` and runs `Summarize`,
    `Aggregate` and `BuildReport` on it. The test also runs `downshift report --json` and
    `downshift stats --export` and requires that they print the same numbers.

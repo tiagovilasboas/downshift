@@ -105,7 +105,7 @@ func summarize(sc Scenario, traces []Trace, events []telemetry.Event, cat core.R
 				continue
 			}
 			r.Routed++
-			dec := v.decisions[t.Correlation]
+			dec := v.decisions[t.Key()]
 			key := telemetry.DecisionKey(dec)
 			for _, c := range dec.ReasonCodes {
 				r.ReasonCodes[c]++

@@ -16,11 +16,14 @@ import (
 // Spawn is one synthetic child as the simulator plans it. Raw ids carry
 // distinctive prefixes so the prompt-free check can prove none reached disk.
 type Spawn struct {
-	Harness     string
-	Session     string
-	ToolUse     string
-	Agent       string
-	Correlation string // lowercase hex, the routing id the runner keeps
+	Harness string
+	Session string
+	ToolUse string
+	Agent   string
+	// Correlation is the harness's own spawn id (OpenCode's correlation.child,
+	// lowercase hex). Harnesses that send none leave it empty, like the real
+	// payloads: the runner then keys the control group on the tool-use id.
+	Correlation string
 	Task        string
 	AgentType   string
 	// Requested is the model the child runs on without a rewrite, the truth the
@@ -61,6 +64,9 @@ type wire struct {
 	// reportsRan: a post-spawn payload names the model the child ran on, so a
 	// rewrite gets an honored or refuted verdict.
 	reportsRan bool
+	// sendsCorrelation: the spawn payload carries the harness's own spawn id,
+	// which is then also its tool-use id (OpenCode's correlation.child).
+	sendsCorrelation bool
 	// readsAgentDefinitions: the harness resolves a custom agent type's model
 	// from its definition file (pinned types run on their own model).
 	readsAgentDefinitions bool
@@ -83,7 +89,7 @@ var wires = map[string]wire{
 			}
 			return mustJSON(map[string]any{
 				"hook_event_name": "PreToolUse", "tool_name": "Agent", "session_id": s.Session,
-				"tool_use_id": s.ToolUse, "correlation_id": s.Correlation, "cwd": s.ProjectDir,
+				"tool_use_id": s.ToolUse, "cwd": s.ProjectDir,
 				"transcript_path": transcriptPath(s), "tool_input": in,
 			})
 		},
@@ -125,7 +131,7 @@ var wires = map[string]wire{
 			// input may repeat it.
 			return mustJSON(map[string]any{
 				"hook_event_name": "preToolUse", "tool_name": "Task", "model_id": s.Requested,
-				"tool_use_id": s.ToolUse, "correlation_id": s.Correlation, "cwd": s.ProjectDir,
+				"tool_use_id": s.ToolUse, "cwd": s.ProjectDir,
 				"tool_input": map[string]any{"task": s.Task, "model": s.Requested},
 			})
 		},
@@ -152,7 +158,7 @@ var wires = map[string]wire{
 		spawn: func(s Spawn) []byte {
 			return mustJSON(map[string]any{
 				"hook_event_name": "PreToolUse", "session_id": s.Session, "tool_use_id": s.ToolUse,
-				"correlation_id": s.Correlation, "tool_name": "spawn_agent", "cwd": s.ProjectDir,
+				"tool_name": "spawn_agent", "cwd": s.ProjectDir,
 				"tool_input": map[string]any{"message": s.Task, "model": s.Requested},
 			})
 		},
@@ -230,8 +236,9 @@ var wires = map[string]wire{
 				}},
 			})}, nil
 		},
-		reported:   identity,
-		reportsRan: true,
+		reported:         identity,
+		reportsRan:       true,
+		sendsCorrelation: true,
 	},
 }
 

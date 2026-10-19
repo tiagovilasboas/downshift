@@ -53,7 +53,7 @@ const eps = 1e-9
 // harnessView is the event log of one harness, indexed for the checks.
 type harnessView struct {
 	events    []telemetry.Event
-	decisions map[string]telemetry.Event // by correlation id
+	decisions map[string]telemetry.Event // by hashed tool-use id
 	usage     map[string][]telemetry.Event
 	resolved  map[string][]telemetry.Event
 	ended     map[string][]telemetry.Event
@@ -86,11 +86,11 @@ func viewOf(harness string, events []telemetry.Event) harnessView {
 		case telemetry.IsObservationOutcome(ev.Outcome) || telemetry.IsFailureOutcome(ev.Outcome):
 			v.strays = append(v.strays, ev)
 		default:
-			if _, dup := v.decisions[ev.CorrelationID]; dup {
+			if _, dup := v.decisions[ev.ToolUseHash]; dup || ev.ToolUseHash == "" {
 				v.strays = append(v.strays, ev)
 				continue
 			}
-			v.decisions[ev.CorrelationID] = ev
+			v.decisions[ev.ToolUseHash] = ev
 		}
 	}
 	return v
@@ -159,11 +159,11 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 	var wantDownshifted, wantHonored int
 	for _, t := range traces {
 		if t.RC != 0 {
-			bad(RuleExitZero, "spawn %s: hook exit %d", short(t.Correlation), t.RC)
+			bad(RuleExitZero, "spawn %s: hook exit %d", short(t.Key()), t.RC)
 		}
-		dec, ok := v.decisions[t.Correlation]
+		dec, ok := v.decisions[t.Key()]
 		if !ok {
-			bad(RuleOneDecision, "spawn %s: no decision recorded", short(t.Correlation))
+			bad(RuleOneDecision, "spawn %s: no decision recorded", short(t.Key()))
 			continue
 		}
 		key := telemetry.DecisionKey(dec)
@@ -172,9 +172,9 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 		// Control group: the production draw, never rewritten, a baseline event.
 		switch {
 		case t.Control && (!isControl || dec.Outcome != telemetry.OutcomeBaseline || t.Written != ""):
-			bad(RuleControl, "spawn %s: drawn for control but outcome %s, CONTROL %v, written %q", short(t.Correlation), dec.Outcome, isControl, t.Written)
+			bad(RuleControl, "spawn %s: drawn for control but outcome %s, CONTROL %v, written %q", short(t.Key()), dec.Outcome, isControl, t.Written)
 		case !t.Control && (isControl || dec.Outcome == telemetry.OutcomeBaseline):
-			bad(RuleControl, "spawn %s: routed spawn recorded as control (outcome %s)", short(t.Correlation), dec.Outcome)
+			bad(RuleControl, "spawn %s: routed spawn recorded as control (outcome %s)", short(t.Key()), dec.Outcome)
 		}
 		if t.Control {
 			control++
@@ -187,13 +187,13 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 			// A harness with strict model names gets an alias on the wire
 			// (Claude Code: "haiku"); the log keeps the catalog id.
 			if dec.Outcome != telemetry.OutcomeRewriteEmitted || !sameModel(cat, h, dec.ToModel, t.Written) {
-				bad(RuleWireLog, "spawn %s: wire wrote %q, log has outcome %s final %q", short(t.Correlation), t.Written, dec.Outcome, dec.ToModel)
+				bad(RuleWireLog, "spawn %s: wire wrote %q, log has outcome %s final %q", short(t.Key()), t.Written, dec.Outcome, dec.ToModel)
 			}
 		} else if dec.Outcome == telemetry.OutcomeRewriteEmitted || dec.ToModel != dec.FromModel {
-			bad(RuleWireLog, "spawn %s: wire left it unchanged, log has outcome %s %s -> %s", short(t.Correlation), dec.Outcome, dec.FromModel, dec.ToModel)
+			bad(RuleWireLog, "spawn %s: wire left it unchanged, log has outcome %s %s -> %s", short(t.Key()), dec.Outcome, dec.FromModel, dec.ToModel)
 		}
 		if dec.EstimatedSavings < 0 || dec.EstimatedSavings >= 1 {
-			bad(RulePercent, "spawn %s: estimated_savings %v outside [0,1)", short(t.Correlation), dec.EstimatedSavings)
+			bad(RulePercent, "spawn %s: estimated_savings %v outside [0,1)", short(t.Key()), dec.EstimatedSavings)
 		}
 
 		// Every child end links to its decision, control spawns included.
@@ -202,18 +202,18 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 			if t.Control {
 				rule = RuleControlLinked
 			}
-			bad(rule, "spawn %s: %d child_ended records linked, want 1", short(t.Correlation), n)
+			bad(rule, "spawn %s: %d child_ended records linked, want 1", short(t.Key()), n)
 		}
 
 		// The baseline the log prices is the model the child would have run on.
 		if dec.FromModel != "unknown" {
 			if got, ok1 := cat.LookupByID(h, dec.FromModel); ok1 {
 				if want, ok2 := cat.LookupByID(h, t.Requested); !ok2 || want.ID != got.ID {
-					bad(RuleBaselineTruth, "spawn %s: log baseline %s, child would run %s", short(t.Correlation), dec.FromModel, t.Requested)
+					bad(RuleBaselineTruth, "spawn %s: log baseline %s, child would run %s", short(t.Key()), dec.FromModel, t.Requested)
 				}
 			}
 		} else if !sc.ExpectFor(h).UnknownBaseline && sc.AgentType != AgentUndefined {
-			bad(RuleBaselineTruth, "spawn %s: baseline unknown for a type whose model is known", short(t.Correlation))
+			bad(RuleBaselineTruth, "spawn %s: baseline unknown for a type whose model is known", short(t.Key()))
 		}
 
 		isApplied := applied(dec)
@@ -223,16 +223,16 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 			if r.RewriteHonored != nil {
 				honoredRecords++
 				if !telemetry.IsAppliedShift(dec) {
-					bad(RuleHonorOnce, "spawn %s: honor verdict on a decision that changed nothing", short(t.Correlation))
+					bad(RuleHonorOnce, "spawn %s: honor verdict on a decision that changed nothing", short(t.Key()))
 				}
 			}
 		}
 		if telemetry.IsAppliedShift(dec) && w.reportsRan {
 			if honoredRecords != 1 {
-				bad(RuleHonorOnce, "spawn %s: %d honor verdicts, want 1", short(t.Correlation), honoredRecords)
+				bad(RuleHonorOnce, "spawn %s: %d honor verdicts, want 1", short(t.Key()), honoredRecords)
 			}
 			if isRefuted != sc.Refuse {
-				bad(RuleHonorOnce, "spawn %s: refuted %v, harness refused %v", short(t.Correlation), isRefuted, sc.Refuse)
+				bad(RuleHonorOnce, "spawn %s: refuted %v, harness refused %v", short(t.Key()), isRefuted, sc.Refuse)
 			}
 			if !isRefuted {
 				wantHonored++
@@ -248,13 +248,13 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 		if !usageSeam {
 			for _, u := range usage {
 				if u.ActualCostUSD != nil || u.BaselineCostUSD != nil {
-					bad(RuleOneUsage, "spawn %s: priced usage on a harness with no proven usage source", short(t.Correlation))
+					bad(RuleOneUsage, "spawn %s: priced usage on a harness with no proven usage source", short(t.Key()))
 				}
 			}
 			continue
 		}
 		if len(usage) != 1 {
-			bad(RuleOneUsage, "spawn %s: %d usage records linked, want 1", short(t.Correlation), len(usage))
+			bad(RuleOneUsage, "spawn %s: %d usage records linked, want 1", short(t.Key()), len(usage))
 			continue
 		}
 		u := usage[0]
@@ -267,12 +267,12 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 				pricedRouted++
 			}
 			if u.ActualCostUSD == nil || math.Abs(*u.ActualCostUSD-telemetry.CostUSD(ranM, t.Usage)) > eps {
-				bad(RuleSavedArithmetic, "spawn %s: actual cost %v, want %v", short(t.Correlation), ptr(u.ActualCostUSD), telemetry.CostUSD(ranM, t.Usage))
+				bad(RuleSavedArithmetic, "spawn %s: actual cost %v, want %v", short(t.Key()), ptr(u.ActualCostUSD), telemetry.CostUSD(ranM, t.Usage))
 			}
 		}
 		if dec.FromModel == "unknown" {
 			if u.BaselineCostUSD != nil {
-				bad(RuleUnknownBaseline, "spawn %s: baseline cost %v on an unknown requested model", short(t.Correlation), *u.BaselineCostUSD)
+				bad(RuleUnknownBaseline, "spawn %s: baseline cost %v on an unknown requested model", short(t.Key()), *u.BaselineCostUSD)
 			}
 			continue
 		}
@@ -280,7 +280,7 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 			continue
 		}
 		if u.BaselineCostUSD == nil || math.Abs(*u.BaselineCostUSD-telemetry.CostUSD(reqM, t.Usage)) > eps {
-			bad(RuleSavedArithmetic, "spawn %s: baseline cost %v, want %v", short(t.Correlation), ptr(u.BaselineCostUSD), telemetry.CostUSD(reqM, t.Usage))
+			bad(RuleSavedArithmetic, "spawn %s: baseline cost %v, want %v", short(t.Key()), ptr(u.BaselineCostUSD), telemetry.CostUSD(reqM, t.Usage))
 		}
 		credited := 0.0
 		if !isRefuted {
@@ -291,14 +291,14 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 			want = telemetry.CostUSD(reqM, t.Usage) - telemetry.CostUSD(ranM, t.Usage)
 		}
 		if math.Abs(credited-want) > eps {
-			bad(RuleSavedArithmetic, "spawn %s: credited saving %v, want %v (applied %v, control %v)", short(t.Correlation), credited, want, isApplied, t.Control)
+			bad(RuleSavedArithmetic, "spawn %s: credited saving %v, want %v (applied %v, control %v)", short(t.Key()), credited, want, isApplied, t.Control)
 		}
 		if t.Control && credited != 0 {
-			bad(RuleRates, "spawn %s: control spawn credited %v", short(t.Correlation), credited)
+			bad(RuleRates, "spawn %s: control spawn credited %v", short(t.Key()), credited)
 		}
 		if base := telemetry.CostUSD(reqM, t.Usage); credited > 0 && base > 0 {
 			if frac, bound := credited/base, maxSavingFraction(reqM, ranM, t.Usage); frac > bound+eps || frac > 1 {
-				bad(RulePercent, "spawn %s: saving %.1f%% above the list-price gap %.1f%%", short(t.Correlation), 100*frac, 100*bound)
+				bad(RulePercent, "spawn %s: saving %.1f%% above the list-price gap %.1f%%", short(t.Key()), 100*frac, 100*bound)
 			}
 		}
 		wantGross += max(want, 0)
@@ -385,10 +385,10 @@ func checkExpect(sc Scenario, h string, traces []Trace, v harnessView, cat core.
 			written++
 		}
 		if e.NoDownshift && t.Written != "" && price(cat, h, t.Ran) < price(cat, h, t.Requested) {
-			bad("spawn %s moved to a cheaper model (%s -> %s) on a task that must not downshift", short(t.Correlation), t.Requested, t.Ran)
+			bad("spawn %s moved to a cheaper model (%s -> %s) on a task that must not downshift", short(t.Key()), t.Requested, t.Ran)
 		}
-		if dec, ok := v.decisions[t.Correlation]; ok && e.UnknownBaseline && dec.FromModel != "unknown" {
-			bad("spawn %s recorded baseline %s, want unknown", short(t.Correlation), dec.FromModel)
+		if dec, ok := v.decisions[t.Key()]; ok && e.UnknownBaseline && dec.FromModel != "unknown" {
+			bad("spawn %s recorded baseline %s, want unknown", short(t.Key()), dec.FromModel)
 		}
 	}
 	if routed == 0 {

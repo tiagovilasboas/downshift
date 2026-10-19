@@ -64,17 +64,20 @@ func Run(sc Scenario, d Driver, env Env, cat core.Resolver) (Result, error) {
 		}
 		for i := range sc.Spawns {
 			s := Spawn{
-				Harness:     h,
-				Session:     fmt.Sprintf("%s-%s-%d", sessionPrefix, h, i/5),
-				ToolUse:     toolPrefix + hexID(rng, 1),
-				Agent:       agentPrefix + hexID(rng, 1),
-				Correlation: hexID(rng, 2),
-				Task:        strings.ReplaceAll(sc.Tasks[i%len(sc.Tasks)], "{canary}", Canary+hexID(rng, 1)[:8]),
-				AgentType:   agentType,
-				Requested:   parent,
-				Explicit:    sc.ExplicitModel,
-				Dir:         dir,
-				ProjectDir:  env.Project,
+				Harness:    h,
+				Session:    fmt.Sprintf("%s-%s-%d", sessionPrefix, h, i/5),
+				ToolUse:    toolPrefix + hexID(rng, 1),
+				Agent:      agentPrefix + hexID(rng, 1),
+				Task:       strings.ReplaceAll(sc.Tasks[i%len(sc.Tasks)], "{canary}", Canary+hexID(rng, 1)[:8]),
+				AgentType:  agentType,
+				Requested:  parent,
+				Explicit:   sc.ExplicitModel,
+				Dir:        dir,
+				ProjectDir: env.Project,
+			}
+			if w.sendsCorrelation {
+				s.Correlation = hexID(rng, 2)
+				s.ToolUse = s.Correlation
 			}
 			if w.readsAgentDefinitions && agentType == AgentPinned && !s.Explicit {
 				s.Requested = env.PinnedModel
@@ -87,7 +90,7 @@ func Run(sc Scenario, d Driver, env Env, cat core.Resolver) (Result, error) {
 				Spawn:   s,
 				Written: w.written(stdout),
 				RC:      rc,
-				Control: telemetry.InControlGroup(s.Correlation, env.ControlShare),
+				Control: telemetry.InControlGroup(controlKey(s), env.ControlShare),
 				Usage:   w.reported(sc.Usage.draw(rng)),
 			}
 			t.Ran = s.Requested
@@ -121,6 +124,19 @@ func Run(sc Scenario, d Driver, env Env, cat core.Resolver) (Result, error) {
 	res.Violations = append(res.Violations, leaks...)
 	return res, nil
 }
+
+// controlKey is the documented routing id of the control group
+// (docs/guides/report.md): the harness's own correlation id when it sends one,
+// else its tool-use id, so every copy of one spawn lands on the same side.
+func controlKey(s Spawn) string {
+	if s.Correlation != "" {
+		return s.Correlation
+	}
+	return "tool-use:" + telemetry.HashSessionID(s.ToolUse)
+}
+
+// Key is the hashed tool-use id the event log joins this spawn by.
+func (s Spawn) Key() string { return telemetry.HashSessionID(s.ToolUse) }
 
 // draw picks one child's tokens. CachedTokens is read plus write, like the
 // harness totals; CacheWriteTokens is the write part.
