@@ -138,6 +138,9 @@ var setupTargets = []setupTarget{
 		Hooks: []setupHook{
 			{Event: "PreToolUse", Matcher: "Agent|Task", Args: "claude-code"},
 			{Event: "PostToolUse", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
+			// Bash output reaches the context sensor (observe only: bytes and
+			// the compressor's potential, never the text).
+			{Event: "PostToolUse", Matcher: "Bash", Args: "claude-code-post-tool-use"},
 			{Event: "PostToolUseFailure", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
 			{Event: "SubagentStop", Args: "claude-code-subagent-stop"},
 			{Event: "UserPromptSubmit", Args: "dci hook claude-code"},

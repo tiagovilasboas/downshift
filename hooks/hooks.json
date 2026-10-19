@@ -7,7 +7,8 @@
       { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code" } ] }
     ],
     "PostToolUse": [
-      { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code-post-tool-use" } ] }
+      { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code-post-tool-use" } ] },
+      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "downshift claude-code-post-tool-use" } ] }
     ],
     "PostToolUseFailure": [
       { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code-post-tool-use" } ] }
