@@ -432,7 +432,7 @@ Downshift's codebase and documentation are structured strictly according to Clea
 **Invariants:** adapters embed no routing rules; adding a harness is one
 `harnessRegistry` entry plus its adapter package, with a port entry only when
 that harness's own hook sends honor or usage fields; a nil port is unobserved,
-never inferred. Dependency check: `go list -deps ./internal/core` (manual; no test enforces the graph, see Known gaps).
+never inferred. Dependency check: `internal/archtest` (`TestImportGraph`, run by `go test ./...` in the `test` job) fails when the production closure of `core` reaches quota, nbtier, nbopinion, catalog, telemetry, adapt, policyfile, scoreindex or an adapter, when `session` or `fuse` reach `core`, or when `codeintel` reaches `core` or `classify`; a negative test proves the matcher detects a violation. Rules not listed there (for example adapters importing policy) are still manual: `go list -deps ./internal/<pkg>`.
 
 ---
 
