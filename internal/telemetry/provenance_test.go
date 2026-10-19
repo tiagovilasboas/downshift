@@ -23,6 +23,17 @@ func TestReasonCodes_SemanticBoostIsRecorded(t *testing.T) {
 	}
 }
 
+func TestReasonCodes_TaskFocusIsRecorded(t *testing.T) {
+	d := core.Decision{Harness: "claude-code", Tier: core.TierSmall, Guards: core.Guards{TaskFocus: true}}
+	if !hasCode(telemetry.ReasonCodes(d), telemetry.ReasonTaskFocus) {
+		t.Fatalf("a task-focused read must leave TASK_FOCUS in the trace: %v", telemetry.ReasonCodes(d))
+	}
+	d.Guards.TaskFocus = false
+	if hasCode(telemetry.ReasonCodes(d), telemetry.ReasonTaskFocus) {
+		t.Fatal("no focus must not record TASK_FOCUS")
+	}
+}
+
 func hasCode(codes []string, want string) bool {
 	for _, c := range codes {
 		if c == want {

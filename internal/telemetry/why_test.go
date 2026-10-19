@@ -11,7 +11,7 @@ import (
 
 func TestReasonWords_EveryCodeHasWords(t *testing.T) {
 	codes := []string{
-		ReasonClassifierConfident, ReasonClassifierUnconfident, ReasonNoSignal, ReasonSemanticBoost, ReasonUnsupportedLanguage,
+		ReasonClassifierConfident, ReasonClassifierUnconfident, ReasonNoSignal, ReasonSemanticBoost, ReasonTaskFocus, ReasonUnsupportedLanguage,
 		ReasonRiskCategory, ReasonRiskFloor, ReasonNBUpshiftApplied,
 		ReasonNBDownshiftApplied, ReasonTierFloor, ReasonCreditHeld, ReasonGuessHeld, ReasonPaused, ReasonScoreRouted, ReasonBaselineFromSettings, ReasonHeldUnmapped,
 	}

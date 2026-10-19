@@ -5,6 +5,7 @@ are harness-agnostic. The harness only chooses which model id represents the
 tier, and whether the rewrite is applied.
 
 Source of truth: `internal/classify/signals.go`, `internal/classify/classifier.go`,
+`internal/classify/brief_task.go`,
 `internal/core/policy.go`, `internal/classify/risk.go`, `internal/core/models.go`.
 Session lists: [session-models.md](session-models.md). What each harness does
 with the rewrite: [harness-matrix.md](harness-matrix.md).
@@ -31,6 +32,65 @@ Extra points, applied after the regex table:
 | Some signal already matched, the prompt has at least 80 words and is not a bounded brief | +1 COMPLEX |
 | Bounded brief: at least 80 words and two of three limits (scope limit such as `read-only` or `edit only`, a test command such as `go test`, a reply budget such as `reply <= 150 words`) | TRIVIAL votes dropped; a single COMPLEX row (other than review or retry wording) dropped; +2 MEDIUM |
 | Long brief (80+ words) that is not bounded | A TRIVIAL keyword does not vote when it sits inside a backtick command quote, is negated (`do not git commit`, `never push`), is a `git branch` label, or is a path segment such as `mech-rename` |
+| Any prompt: a negated scope word | A COMPLEX match on architecture, re-architect, redesign, rewrite, migrate or entire codebase/system does not vote when its own clause negates it: `do not touch the architecture`, `don't redesign`, `without migrating`, `não mexa na arquitetura`, `sem migrar`. The negation may be followed only by a change verb (touch, change, modify, edit, alter, mexer, mudar, alterar, tocar) and at most three filler words. A phenomenon (race condition, deadlock, leak) is never negated: `make sure it does not deadlock` still asks for hard work |
+| Long brief (80+ words) that is not bounded and states its task | Task focus, below |
+
+### Task focus (long briefs)
+
+A long parent brief wraps a short task in context: what the project is, what
+was tried, what must not change. Context words such as `architecture` or
+`consensus` describe the project, not the work, yet each scores COMPLEX 3. On
+real use (2026-10-19) this kept mechanical subagent work unconfident, so it
+stayed on the expensive model. Task focus scores the task with the rest of the
+brief weighed as context (`internal/classify/brief_task.go`).
+
+The task is:
+
+1. the section after an explicit `Task:` / `Your task:` / `Tarefa:` marker (a
+   heading or bold form works too). It runs to the end of the brief or to the
+   next context section (`Background:`, `Context:`, `Notes:`, `History:`,
+   `Reply:` and Portuguese forms). Requirements, constraints and "done means"
+   sections stay in the task, because they shape the work.
+2. otherwise, every sentence that opens with a work verb (rename, fix, add,
+   migrate, implement, review, … and Portuguese imperatives). Reading, running
+   checks, replying and negated sentences (`Do not …`) are not the task.
+3. otherwise, nothing: the brief is scored as before.
+
+The focused tally, used only when the task itself matched a signal:
+
+| Signal | Inside the task | Outside the task |
+|---|---|---|
+| TRIVIAL, SIMPLE | full weight | does not vote (side steps and constraints) |
+| MEDIUM | full weight | full weight |
+| COMPLEX, review or retry wording | full weight | full weight |
+| COMPLEX, any other row | full weight | 1 per row; under an explicit `Task:` section all of them together count 1 |
+| Length nudge (+1 COMPLEX) | applies when the task itself has 80+ words, or when the task was found by imperative sentences (the other sentences may describe the work) | |
+
+The focused result replaces the whole-brief result only in the safe
+direction. It never raises the class, and never makes a COMPLEX result
+confident. An unconfident lower class does not lower anything: it only clears
+confidence on the whole-brief class, so the spawn keeps its model. The risk
+floor still reads the whole brief, context included. A rename under a
+`Context:` that mentions JWTs or refunds stays MEDIUM and unconfident. Bounded
+briefs keep their own rule above. A decision shaped by the focus carries the
+reason code `TASK_FOCUS`.
+
+Examples (80+ word briefs):
+
+| Brief | Before | After |
+|---|---|---|
+| Background names the architecture and a consensus protocol; `Task: rename cnt to count in summary.go` | COMPLEX, confident | TRIVIAL, confident (downshift applied) |
+| Same background; `Task: add a verbose flag to the stats command` | COMPLEX, confident | COMPLEX, unconfident (held) |
+| Background names JWTs and refresh tokens; `Task: rename fmtTok to formatToken` | COMPLEX, unconfident | MEDIUM, unconfident (risk floor; no write below the requested model) |
+| `Task: rewrite the replication layer and migrate the slots` | COMPLEX, confident | unchanged |
+| No marker; one sentence names the architecture, then `Rename the field amount to amountCents …` | COMPLEX, unconfident | unchanged (imperative extraction keeps the nudge: 3 against 2) |
+
+Measured on 2026-10-19 against every labelled set in the maintainers' eval
+repository (the five frozen benchmark splits, M3 multilingual and two
+development sets, 1074 items): no item changed class or confidence. None of
+them is a long brief with a stated task. The gain is pinned by the
+table-driven tests in `internal/classify/classifier_edge_test.go` and
+`internal/core/task_focus_test.go`.
 
 A TRIVIAL or SIMPLE task that touches risk (secret, auth, crypto, payment,
 vulnerability, PII, destructive command, prompt injection, or concurrency) is lifted to
@@ -44,8 +104,9 @@ Risk and language checks inspect the full input, so a risky or unsupported-langu
 tail cannot bypass them. The word-count rules (6 and 80 words, the `add Name(` stub, the doc-edit damper)
 still count words over the full prompt.
 
-An optional later step can only raise the class: the in-process word-hash
-semantic boost. It never lowers a class, is ignored for no-signal prompts, and
+Task focus and negated scope words only remove votes; they are part of the
+regex scoring, not a later step. An optional later step can only raise the
+class: the in-process word-hash semantic boost. It never lowers a class, is ignored for no-signal prompts, and
 cannot create COMPLEX without regex evidence. Turn it off with `DOWNSHIFT_MINILM=0`.
 
 ## Language coverage

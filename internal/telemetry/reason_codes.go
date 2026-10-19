@@ -22,13 +22,16 @@ const (
 	ReasonClassifierUnconfident = "CLASSIFIER_UNCONFIDENT"
 	ReasonNoSignal              = "NO_SIGNAL"
 	ReasonSemanticBoost         = "SEMANTIC_BOOST"
-	ReasonUnsupportedLanguage   = "UNSUPPORTED_LANGUAGE"
-	ReasonRiskCategory          = "RISK_CATEGORY"
-	ReasonRiskFloor             = "RISK_FLOOR"
-	ReasonNBUpshiftApplied      = "NB_UPSHIFT_APPLIED"
-	ReasonNBDownshiftApplied    = "NB_DOWNSHIFT_APPLIED"
-	ReasonTierFloor             = "TIER_FLOOR"
-	ReasonCreditHeld            = "CREDIT_HELD"
+	// ReasonTaskFocus marks a long brief whose actionable task, with the rest
+	// of the brief weighed as context, lowered the class or its confidence.
+	ReasonTaskFocus           = "TASK_FOCUS"
+	ReasonUnsupportedLanguage = "UNSUPPORTED_LANGUAGE"
+	ReasonRiskCategory        = "RISK_CATEGORY"
+	ReasonRiskFloor           = "RISK_FLOOR"
+	ReasonNBUpshiftApplied    = "NB_UPSHIFT_APPLIED"
+	ReasonNBDownshiftApplied  = "NB_DOWNSHIFT_APPLIED"
+	ReasonTierFloor           = "TIER_FLOOR"
+	ReasonCreditHeld          = "CREDIT_HELD"
 	// ReasonGuessHeld marks a downshift held because its baseline was guessed
 	// and the target was not the small tier (Decision.GuessHeld).
 	ReasonGuessHeld = "HELD_GUESSED_BASELINE"
@@ -80,6 +83,9 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.Guards.SemanticLift {
 		set[ReasonSemanticBoost] = true
+	}
+	if d.Guards.TaskFocus {
+		set[ReasonTaskFocus] = true
 	}
 	if len(d.Risk) > 0 {
 		set[ReasonRiskCategory] = true
