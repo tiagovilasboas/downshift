@@ -826,6 +826,27 @@ func TestCatalog_CachePricesOnlyWhereSnapshotHasThem(t *testing.T) {
 	}
 }
 
+// Claude Opus 5.5 and Claude Sonnet 5.5 bill cache hits at 0.05x the base input
+// price (https://platform.claude.com/docs/en/about-claude/pricing, table
+// footnote 2, read 2026-10-19): Sonnet 5.5 is $0.10 per million on $2 input, Opus
+// 5.5 is $0.20 on $4. A report that Sonnet 5.5 reads at about $0.20 mixed up the two
+// rows. Change these numbers only with a newer vendor source, and cite it.
+func TestCatalog_Sonnet55AndOpus55CacheReadsFollowTheVendorTable(t *testing.T) {
+	c := Load()
+	for _, tc := range []struct {
+		id          string
+		input, read float64
+	}{
+		{"claude-sonnet-5-5", 2, 0.10},
+		{"claude-opus-5-5", 4, 0.20},
+	} {
+		m, ok := c.LookupByID("claude-code", tc.id)
+		if !ok || m.InputM != tc.input || m.CacheReadM != tc.read || m.CacheReadM != 0.05*m.InputM {
+			t.Errorf("%s: input %v cache read %v (ok=%v), want %v and %v (0.05x input)", tc.id, m.InputM, m.CacheReadM, ok, tc.input, tc.read)
+		}
+	}
+}
+
 func TestSavingsRatio_MissingPricesStayUnknown(t *testing.T) {
 	c := Load()
 	known := core.Model{InputM: 2, OutputM: 10}

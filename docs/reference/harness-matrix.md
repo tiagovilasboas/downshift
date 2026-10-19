@@ -61,9 +61,14 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
 - **Current model.** A Task call without `model` (agent type empty,
   `general-purpose`, `claude`, and the built-in `Explore` and `Plan`) runs on
   the session model. The adapter reads it from the last assistant message in
-  the tail of `transcript_path` (1 MiB, model id only). Other agent types may
-  pin their own model (`statusline-setup` runs on Sonnet, `claude-code-guide`
-  on Haiku, a custom type on its frontmatter) and stay `unknown`. `Explore`
+  the tail of `transcript_path` (1 MiB, model id only). Any other type is decided
+  by its definition (2026-10-19): a built-in that runs on its own model
+  (`statusline-setup` on Sonnet, `claude-code-guide` on Haiku) and an agent
+  file whose `model:` names one are a known baseline that routing leaves
+  alone (`AGENT_PINS_MODEL`); an agent file with no `model:` or `inherit` (project
+  `.claude/agents`, user `agents`, or an installed plugin's `agents`, found through
+  `installed_plugins.json` for a `plugin:agent` type) inherits like
+  `general-purpose`. A type with no definition found stays `unknown`. `Explore`
   also stays `unknown` when the session model is Fable: Claude Code may run it
   on Opus (subscription, Console, gateway) or keep it on the main model (cloud
   providers), and a hook cannot tell which. Until 2026-10-15 `Explore` and

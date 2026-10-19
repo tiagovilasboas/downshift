@@ -39,7 +39,7 @@ tab:
 
 | Claim | Values | Observed only when |
 |---|---|---|
-| Honor | `observed` \| `unobserved` | That harness's Honor func recorded the child model for this decision |
+| Honor | `observed` \| `unobserved` | That harness's Honor func recorded the child model for this decision. Asked of an applied rewrite only: a spawn the hook left unchanged is in neither count |
 | Quota | `available` \| `held` \| `unknown` | Credit for this spawn was `available` |
 | Usage | `observed` \| `unobserved` | That harness's Usage func recorded this child's tokens |
 

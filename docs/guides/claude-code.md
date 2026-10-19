@@ -31,12 +31,17 @@ model the child would otherwise run on, in Claude Code's own order:
 
 1. `tool_input.model`, then the payload `model`: a requested model, not a guess.
 2. Only for an **inheriting agent type** (`inheritingAgentTypes`: no `subagent_type`,
-   `general-purpose`, `claude`, `Explore`, `Plan`); any other type may pin a model in its
-   frontmatter, so its baseline stays unknown.
+   `general-purpose`, `claude`, `Explore`, `Plan`) or an agent whose definition inherits
+   (`agentdef.go`: `<cwd>/.claude/agents` and its parents, the user `agents` directory, or an
+   installed plugin's `agents` for a `plugin:agent` type; no `model:` or `model: inherit`). An agent
+   that names a model, and the built-ins `claude-code-guide` (Haiku) and `statusline-setup`
+   (Sonnet), have that model as a known baseline and are left alone (`AGENT_PINS_MODEL`). A type
+   with no definition found keeps an unknown baseline.
 3. `CLAUDE_CODE_SUBAGENT_MODEL` (`core.ClaudeCodeCaps.ModelOverrideEnv`) when set and not `inherit`;
    `Explore` and `Plan` take it only under `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`.
-4. The transcript tail (1 MiB, `TranscriptTailBytes`): `message.model` of the last `assistant` line,
-   skipping `<synthetic>`. Only the id is read; content is never stored. If the file exists but has
+4. The transcript tail (1 MiB, `TranscriptTailBytes`): `message.model` of the assistant line that
+   carries this call's `tool_use_id` (the parent's model at spawn time; waited for up to 400 ms when
+   it is not on disk yet), else of the last `assistant` line, skipping `<synthetic>`. Only the id is read; content is never stored. If the file exists but has
    no assistant model yet, the read is retried for up to 400 ms (`transcriptWaitTotal`), once per path.
 5. Settings fallback (`configuredModel`), needs the catalog: `ANTHROPIC_MODEL`, then `model` in
    `<cwd>/.claude/settings.local.json`, `<cwd>/.claude/settings.json`, then the user `settings.json`
