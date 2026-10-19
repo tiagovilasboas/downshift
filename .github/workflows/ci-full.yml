@@ -2,8 +2,8 @@ name: ci-full
 
 on:
   schedule:
-    # Weekdays 09:00 UTC — race, govulncheck (benchmark gates run in downshift-labs).
-    - cron: "0 9 * * 1-5"
+    # Weekdays 09:23 UTC (not on the hour: GitHub delays or drops scheduled runs queued at :00, seen 4-5 h late here) — race, govulncheck (benchmark gates run in downshift-labs).
+    - cron: "23 9 * * 1-5"
   workflow_dispatch:
 
 concurrency:
