@@ -40,12 +40,18 @@ Fields useful for graduation tracking:
 | `dci` | Object containing Downshift Code Intelligence telemetry: `prompts_evaluated`, `injections_applied`, `injection_rate`, `injection_pct`, `abstentions` (and breakdown: `conversational_greeting`, `chatter`, `no_candidates`, `insufficient_evidence`), `context_bytes_emitted`, `avg_bytes_per_injection`, `latency_ms_p50`, and `latency_ms_p95`. Strictly observed empirical measurements; zero synthetic token counts, zero fictitious dollar estimates. Omitted when no DCI events exist in the window |
 | `tokens_rerouted` | The token facts behind the savings, per harness and per model pair. Always present. Object `{basis, by_harness, totals}`; see [Tokens rerouted](#tokens-rerouted) |
 
+`downshift stats` text (short and `--detail`) prints no dollar figure since 2026-10-19: its headline is tokens
+saved from the requested model, and dollars are `downshift report`'s, priced at report time. The export below keeps
+its dollar fields unchanged for machine readers and the evidence files.
+
 ## Tokens rerouted
 
 Downshift does not reduce tokens. A routed child runs about the same tokens on another model;
 the dollar figures (`real_saved_usd` and friends) are those tokens priced on the model the
 harness asked for, a counterfactual. `tokens_rerouted` shows the tokens themselves, so the
-dollars can be read against them. It never says "tokens saved". Counts only: no prompt, task,
+dollars can be read against them. The live views' "tokens saved" share (saved from the requested
+model, work and cache apart) is the `cheaper` bucket over all priced children; see
+[evidence.md](../guides/evidence.md). Counts only: no prompt, task,
 path, session or agent id. Model ids are the bounded ids already in the log (`unknown` when the
 catalog did not recognise one).
 

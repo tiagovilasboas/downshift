@@ -55,9 +55,18 @@ Source: `internal/telemetry/telemetry.go` (`Aggregate`), `export.go`, [stats-exp
   moved to a pricier one. It is rung B evidence: the counts are observed (Claude Code only today, because it is the only
   harness that records child tokens), the dollars are estimated at list price, and the baseline stays a counterfactual.
   It carries the same biases as the dollar figures below: a refuted rewrite, an unknown requested model or a decision
-  with no usage record contributes nothing. Downshift cannot claim "tokens saved": no run without routing exists to
+  with no usage record contributes nothing. Downshift does not claim fewer tokens: no run without routing exists to
   subtract from, a cheaper model can need more tokens or a retry, and on a plan with no per-token bill (Claude Code Pro,
   Max, Team; Cursor plans) what was saved is not tokens or dollars but headroom against a quota, which no hook sees.
+- **"Tokens saved" in the live views means saved from the requested model** (owner decision 2026-10-19). The session
+  tree, `session --panel` (savvy-progress), the statusline, `watch`, `dsmon`, the child-end line and the `stats`
+  headline show the share of child tokens that ran on a cheaper model than the one the harness asked for: the
+  "cheaper" bucket above over every priced child (control, held, kept and refuted children count in the total, never
+  as saved), per agent, per agent type and per session (`telemetry.TokenSavings`). Work tokens (input+output) and cache
+  tokens (read+write) are counted apart, because cache reads are most of a child's tokens and carry the smallest price
+  gap: Sonnet to Haiku saves nothing on them, so one share would overstate the value. These views carry no dollar;
+  `downshift report` prices the tokens at report time (API lens) and states the share again in tokens (plan lens). The
+  share is a count of where tokens ran, not a reduction in tokens and not a dollar saving.
   Per harness, what is observed and what blocks the rest: [value-per-harness.md](../reference/value-per-harness.md).
 - **Known biases.** `baseline_source: inferred` (Claude Code settings guess) is counted apart; a refuted rewrite saves
   nothing; an unknown requested model gives zero saving by construction; a decision with no usage record gives units

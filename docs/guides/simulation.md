@@ -56,6 +56,7 @@ no adapter (enforced by `internal/archtest`), and the binary does not import sim
 | `no-saving-on-unknown-baseline` | No baseline cost when the requested model is unknown |
 | `no-impossible-percentage` | `estimated_savings` stays in [0, 1); no event saves more than the largest per-token-class list-price gap between the two models (the "~98% cheaper" class) |
 | `no-saving-without-rewrite` | A log holding only untouched or refuted spawns shows zero saving, zero overspend and no shift |
+| `tokens-match-children` (saved) | The live "tokens saved" figures (`telemetry.TokenSavings`, used by the session tree, panel, statusline and `stats` headline) equal the children's tokens: work and cache saved are the cheaper bucket, totals are every priced child, the scenario's one agent type carries the same numbers, and no share exceeds 100% |
 | `tokens-match-children` | `stats` `tokens_rerouted` puts every priced child's tokens in exactly one bucket (cheaper, pricier, unchanged, unattributed) per the definition in [stats-export.md](../reference/stats-export.md); a harness without a usage source reads `unobserved`; `report` tokens per completed task equal the children's tokens over completed tasks |
 | `prompt-free` | No file the hook path wrote (state dir, event log, `live.json`, feedback store, project dir) holds task text, a planted canary, a path from a task or a raw harness id |
 | `scenario-expectation` | The scenario's own bounds: rewrite share, no downshift on risk tasks, unknown baseline |
@@ -78,9 +79,11 @@ baselines, and three money and token columns:
   (today Cursor, Codex, OpenCode). Those never record a cost, by design.
 - **rung A (what-if)**: the same synthetic tokens priced on the requested and the ran model, for
   every routed spawn the catalog prices. OpenCode's free models are `unpriced`.
-- **tokens moved cheaper / pricier**: routed tokens that ran on a cheaper or pricier model than
-  requested. Routing moves tokens to another model. It does not remove them, so this is never
-  "tokens saved".
+- **tokens saved work / cache (routed)**: the share of routed tokens that ran on a cheaper model
+  than requested, work (input+output) and cache (read+write) apart, and the tokens on a pricier
+  model. Routing moves tokens to another model; it does not remove them. The dollar columns carry
+  no percentage. Compare the two: under a Sonnet parent most cache tokens move to Haiku, yet the
+  dollar gap is small, because Sonnet and Haiku cost the same on cache reads.
 
 On Claude Code, rung A and rung B must agree. A gap there is an accounting regression.
 
