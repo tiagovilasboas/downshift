@@ -4,6 +4,7 @@
 package claudecode
 
 import (
+	"github.com/tiagovilasboas/downshift/internal/testrace"
 	"os"
 	"path/filepath"
 	"strings"
@@ -176,7 +177,7 @@ func TestSessionModelFromTranscript_WaitsForTheAssistantMessageToLand(t *testing
 	if got := sessionModelFromTranscript(path); got != "m-late" {
 		t.Fatalf("got %q, want the model written 120 ms after the hook started", got)
 	}
-	if d := time.Since(start); d > 500*time.Millisecond {
+	if d := time.Since(start); d > testrace.Budget(500*time.Millisecond) {
 		t.Errorf("waited %s, it should return as soon as the model appears", d)
 	}
 }
@@ -188,7 +189,7 @@ func TestSessionModelFromTranscript_NoWaitWhenTheModelIsAlreadyThere(t *testing.
 	if got := sessionModelFromTranscript(path); got != "m-now" {
 		t.Fatalf("got %q", got)
 	}
-	if d := time.Since(start); d > 100*time.Millisecond {
+	if d := time.Since(start); d > testrace.Budget(100*time.Millisecond) {
 		t.Errorf("a model already on disk must not be waited for: %s", d)
 	}
 }
@@ -201,7 +202,7 @@ func TestSessionModelFromTranscript_GivesUpAfterTheBoundedWait(t *testing.T) {
 	if got := sessionModelFromTranscript(path); got != "" {
 		t.Fatalf("got %q, want unknown", got)
 	}
-	if d := time.Since(start); d < 120*time.Millisecond || d > 600*time.Millisecond {
+	if d := time.Since(start); d < 120*time.Millisecond || d > testrace.Budget(600*time.Millisecond) {
 		t.Errorf("waited %s, want about the bound (150 ms)", d)
 	}
 }
@@ -215,7 +216,7 @@ func TestSessionModelFromTranscript_NoWaitWithoutAFile(t *testing.T) {
 			t.Fatalf("%q: got %q", path, got)
 		}
 	}
-	if d := time.Since(start); d > 100*time.Millisecond {
+	if d := time.Since(start); d > testrace.Budget(100*time.Millisecond) {
 		t.Errorf("no transcript file means no wait: %s", d)
 	}
 }
@@ -245,7 +246,7 @@ func TestSessionModelFromTranscript_WaitsOncePerPath(t *testing.T) {
 	if got := sessionModelFromTranscript(path); got != "" {
 		t.Fatalf("second read: got %q", got)
 	}
-	if d := time.Since(start); d > 100*time.Millisecond {
+	if d := time.Since(start); d > testrace.Budget(100*time.Millisecond) {
 		t.Errorf("second read of the same empty transcript waited again: %s", d)
 	}
 }

@@ -6,9 +6,9 @@ O subsistema de telemetria do Downshift foi projetado para registrar o **comport
 
 ## Perspectiva de Produto
 
-* **Armazenamento Seguro:** Todos os eventos são gravados exclusivamente no diretório local do usuário em `~/.harness-downshift/events.jsonl` com permissões restritas (`0700`).
+* **Armazenamento Seguro:** Todos os eventos são gravados exclusivamente no diretório local do usuário em `~/.downshift/events.jsonl` (herdado de `~/.harness-downshift/` se existir), com arquivo `0600` e diretório `0700`. Os appends não fazem fsync: uma queda de energia pode perder os últimos eventos, uma queda do processo não.
 * **Compartilhamento Seguro de Métricas:** O comando `downshift stats --export` gera um resumo consolidado das métricas de economia e distribuição de tiers sem expor nenhum caminho de arquivo, nome de projeto ou texto de prompt.
-* **Métricas em Dólares Reais:** Cálculos baseados em dólares reais (`Real provider cost`) são calculados quando o harness fornece o consumo real de tokens no pós-execução (`PostToolUse`). Na ausência desses dados, o sistema apresenta a economia normalizada em unidades adimensionais baseadas nos preços de tabela dos modelos.
+* **Métricas em Dólares Reais:** Cálculos baseados em dólares reais (`Real provider cost`) são calculados quando o harness fornece o consumo real de tokens no pós-execução (`PostToolUse`). Na ausência desses dados, o sistema apresenta a economia normalizada em unidades adimensionais baseadas nos preços de tabela dos modelos. Há uma só definição de economia (`telemetry.Summarize`: bruta, gasto a mais e líquida), usada por `stats`, dashboard e `dsmon`, sempre rotulada como estimativa a preço de lista; os preços do catálogo carregam a data `prices_as_of`.
 * **Honor inferido:** `rewrite_honored_inferred` no export conta quando o spawn seguinte da mesma sessão chega no modelo que o hook tinha pedido (ou quando `rewrite_honored` veio preenchido). O JSONL original não é alterado.
 
 ---
@@ -39,7 +39,7 @@ Cada entrada registrada no arquivo `events.jsonl` obedece a um esquema estrito:
 * **Vantagem:** O arquivo de telemetria pode ser compartilhado em relatórios de auditoria, issues do GitHub ou pull requests sem qualquer risco de vazamento de propriedade intelectual ou credenciais.
 * **Custo:** Como o texto do prompt não é persistido, não é possível reclassificar retroativamente uma tarefa do passado a partir do arquivo de log; a depuração precisa ser realizada inspecionando diretamente as sessões dos harnesses ou usando o comando `downshift try`.
 
-O arquivo `~/.harness-downshift/events.jsonl` é a telemetria de custo e de rota. O loop de revisão fica em `~/.harness-downshift/loop-events.jsonl`. Com shadow ligado, esse segundo arquivo ganha `classifier_shadow` (números e hash do artefato, sem texto da tarefa). `downshift feedback <id> success` não cria rótulo de tier mínimo. O guia está em [10 · Candidato em shadow](10-candidato-shadow.md).
+O arquivo `~/.downshift/events.jsonl` é a telemetria de custo e de rota; os backups rotacionados (100 MB por padrão) não entram nos totais do `stats`, que avisa disso. O loop de revisão fica em `~/.downshift/loop-events.jsonl`. Com shadow ligado, esse segundo arquivo ganha `classifier_shadow` (números e hash do artefato, sem texto da tarefa). `downshift feedback <id> success` não cria rótulo de tier mínimo. O guia está em [10 · Candidato em shadow](10-candidato-shadow.md).
 
 `policy_floor` conta as decisões em que um piso de tier definido pelo operador (`.downshift/policy.json`, veja [config.md](../guides/config.md)) elevou o tier. É registrado pelo executor compartilhado para todos os harnesses.
 

@@ -120,24 +120,41 @@ func load(warning io.Writer) *Catalog {
 		panic("downshift: embedded catalog.json is invalid: " + err.Error())
 	}
 
-	// A user catalog is an override, not a replacement: preserve all embedded
-	// entries that it does not name and replace only matching harness/model IDs.
-	if path, ok := userCatalogPath(); ok {
-		data, err := readUserCatalog(path)
-		if err != nil {
-			fmt.Fprintf(warning, "downshift: warning: could not read %s (%v); using embedded catalog\n", path, err)
-		} else if override, err := decode(data); err == nil {
-			merged := mergeEntries(base.Entries, override.Entries)
-			if err := validateEntries(merged); err != nil {
-				fmt.Fprintf(warning, "downshift: warning: could not merge %s (%v); using embedded catalog\n", path, err)
-			} else {
-				base.Entries = merged
-			}
-		} else {
-			fmt.Fprintf(warning, "downshift: warning: could not parse %s (%v); using embedded catalog\n", path, err)
-		}
-	}
+	applyUserOverride(&base, warning)
 	return build(base)
+}
+
+// applyUserOverride merges the user catalog into base. A user catalog is an
+// override, not a replacement: it preserves all embedded entries it does not
+// name and replaces only matching harness/model IDs. The file is untrusted
+// input read on every hook, so any failure, even a panic in the merge, leaves
+// base untouched (embedded catalog) and only warns.
+func applyUserOverride(base *catalogFile, warning io.Writer) {
+	path, ok := userCatalogPath()
+	if !ok {
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(warning, "downshift: warning: could not apply %s (%v); using embedded catalog\n", path, r)
+		}
+	}()
+	data, err := readUserCatalog(path)
+	if err != nil {
+		fmt.Fprintf(warning, "downshift: warning: could not read %s (%v); using embedded catalog\n", path, err)
+		return
+	}
+	override, err := decode(data)
+	if err != nil {
+		fmt.Fprintf(warning, "downshift: warning: could not parse %s (%v); using embedded catalog\n", path, err)
+		return
+	}
+	merged := mergeEntries(base.Entries, override.Entries)
+	if err := validateEntries(merged); err != nil {
+		fmt.Fprintf(warning, "downshift: warning: could not merge %s (%v); using embedded catalog\n", path, err)
+		return
+	}
+	base.Entries = merged
 }
 
 // maxUserCatalogBytes caps the user override read: the file is untrusted

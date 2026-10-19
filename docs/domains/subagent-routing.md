@@ -77,6 +77,7 @@ BDI serves as an architectural lens for reasoning about Downshift's deterministi
 
 Model definitions reside in embedded metadata (`internal/catalog/catalog.json`) covering Anthropic, OpenAI, Gemini, Grok, and Cursor families.
 
+- **Prices and Freshness**: The catalog carries `prices_as_of`; the weekly `sync-prices` workflow opens a PR when a list price changes, and `downshift doctor` warns after 30 days. The hook never fetches a price ([policy](../reference/prices.md)).
 - **Exact Match → Alias → Family Prefix**: Resolves known models, aliases, and new point releases in the same family.
 - **Explicit Only**: Specialized high-cost or niche models (e.g., `gpt-6-astra`, `claude-fable-5-1-thinking-high`) are flagged `explicit_only` and are never auto-selected by Downshift.
 - **Session Model Inference**: When the harness does not provide an explicit candidate list, Downshift infers the candidate ladder below the currently active model (ensuring it never upshifts above the session's chosen model).

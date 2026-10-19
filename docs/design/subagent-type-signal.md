@@ -1,0 +1,82 @@
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+
+# Design note: `subagent_type` is not a routing signal (FinOps P1-5)
+
+Downshift by Tiago Vilas Boas
+https://github.com/tiagovilasboas/downshift
+
+Status: investigation, 2026-10-19. No routing behaviour changed by this note.
+
+## Question
+
+`agents/mechanical-worker.md` declares no `model:`. Does the hook treat the
+Task call's `subagent_type` (for example `mechanical-worker`) as information?
+
+## What the code does today
+
+- The tier comes from the task text only (`TaskText`: `prompt`, `description`).
+  `subagent_type` is never read by the classifier or by `core.Route`.
+- The adapter reads it for two things: the baseline model
+  (`inheritsSessionModel`, `internal/adapters/claudecode/sessionmodel.go`) and a
+  storable telemetry label (`telemetry.AgentTypeLabel`; custom names collapse to
+  `custom`).
+- Only `""`, `general-purpose`, `claude`, `Explore` and `Plan` inherit the parent
+  session model. Every other type, including a custom one with no `model:`
+  line, gets an unknown baseline: the parent model "would be a guess" because a
+  type may pin its own model in its definition.
+
+## Observed (isolated HOME, Opus parent in the transcript, same trivial rename prompt)
+
+| `subagent_type` | Rewrite | Baseline | Message |
+|---|---|---|---|
+| `general-purpose` | `model: haiku` | parent (Opus) | "downshift to claude-haiku-4-5 (~75% cheaper)" |
+| `mechanical-worker` | `model: haiku` | unknown | "use claude-haiku-4-5 (small tier)", no saving claim |
+
+So routing works for the custom type, because the text is classified. What is
+lost is the baseline: the spawn is not counted as a measurable saving, and
+`stats` reports an unknown-baseline rate for it (`stats --detail`, "Baseline by
+agent type"). That is conservative and correct today, not a bug.
+
+## The real risk is the other direction
+
+A per-call `model` wins over the agent definition in Claude Code. If a custom
+type pins `model: opus` (or `haiku`) in its frontmatter, the hook, which cannot
+see the definition, rewrites over that pin: a confident downshift removes a
+deliberate quality choice, and a confident upshift spends money the author did
+not ask for. The guard that exists is `explicit_only` models and the held
+unconfident upshift; neither knows about frontmatter.
+
+## Options
+
+1. **Use the type name as a signal.** Rejected. Names are free text chosen by
+   the user, not a stable vocabulary; `mechanical-worker` says nothing the task
+   text does not, and a name such as `reviewer` would wrongly pull work up or
+   down. It would add a hidden, hard-to-test input to a deterministic router.
+2. **Read the agent definition's `model:` (smallest safe change).** For a type
+   name matching `^[A-Za-z0-9._-]{1,64}$` (no separators, no plugin `name:agent`
+   scope), read `<cwd>/.claude/agents/<type>.md` and `~/.claude/agents/<type>.md`
+   with a size cap, parse only the frontmatter `model:` line, and:
+   - no `model:` or `inherit` -> treat like an inheriting type (baseline = parent
+     model, savings measurable);
+   - a pinned model -> baseline = that model, and treat it as an explicit choice
+     (`ShouldPreserveExplicitModel` path: never upshift, downshift only if the
+     owner opts in);
+   - file missing or unreadable -> today's behaviour (unknown baseline).
+   Cost: up to two small reads per spawn (about 20-50 µs on warm cache, not
+   measured). Plugin agents (`downshift:mechanical-worker`) live under the
+   plugin cache path and need the plugin manifest to resolve; out of scope for
+   a first step.
+3. **Do nothing.** Acceptable for savings accuracy; leaves the override-a-pin
+   risk, which needs data to size.
+
+## Recommendation
+
+Do not change routing yet. Ship option 2 as **observation only** first: record
+a prompt-free field on the event (`agent_def_model`: `none|inherit|pinned`) so
+`stats --detail` can say how many custom-type spawns carry a pin. Only that
+measurement can justify changing behaviour, and the fine-tuning rule requires a
+measured before/after. There is no checked-in dataset with agent definitions, so
+none of the above has a measured effect size yet.
+
+Not measured: how often real users' custom agents pin a model; the file-read
+cost; Claude Code versions where frontmatter `model:` precedence differs.

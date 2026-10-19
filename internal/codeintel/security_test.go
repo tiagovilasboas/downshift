@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/tiagovilasboas/downshift/internal/testrace"
 	"os"
 	"path/filepath"
 	"strings"
@@ -806,7 +807,7 @@ func TestSecurity_ParseFile_UnbalancedBracesAndIndentation(t *testing.T) {
 			if doc == nil {
 				t.Fatalf("ParseFile(%s) returned nil doc", tc.name)
 			}
-			if elapsed >= 100*time.Millisecond {
+			if elapsed >= testrace.Budget(100*time.Millisecond) {
 				t.Errorf("ParseFile(%s) took %v, must complete in <100ms", tc.name, elapsed)
 			}
 		})
@@ -867,7 +868,7 @@ func TestSecurity_ParseFile_UnclosedLiteralsAndComments(t *testing.T) {
 			if doc == nil {
 				t.Fatalf("ParseFile(%s) returned nil doc", tc.name)
 			}
-			if elapsed >= 100*time.Millisecond {
+			if elapsed >= testrace.Budget(100*time.Millisecond) {
 				t.Errorf("ParseFile(%s) took %v, must complete in <100ms", tc.name, elapsed)
 			}
 		})
@@ -1084,7 +1085,7 @@ func TestSecurity_GoAST_CallGraphAndImportsCap(t *testing.T) {
 		t.Fatalf("ParseFile returned nil doc")
 	}
 
-	if elapsed >= 50*time.Millisecond {
+	if elapsed >= testrace.Budget(50*time.Millisecond) {
 		t.Errorf("ParseFile took %v, must complete in <50ms without ReDoS or stack explosion", elapsed)
 	}
 
@@ -1180,7 +1181,7 @@ func TestSecurity_CircularCallGraphsAndPathologicalMultiLangLimits(t *testing.T)
 	idx.RebuildPostings()
 	rebuildDuration := time.Since(start)
 
-	if rebuildDuration > 250*time.Millisecond {
+	if rebuildDuration > testrace.Budget(250*time.Millisecond) {
 		t.Errorf("RebuildPostings on 1000 circular documents took %v, want <= 250ms", rebuildDuration)
 	}
 

@@ -13,8 +13,8 @@ adapter, hook, command or policy.
 | Quota types | `internal/quotamodel` | Pure evidence: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O |
 | Session list | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed: `core` imports `session`; `session` must not import `core` |
 | Semantic boost policy | `internal/fuse` | Landed. Raise-only boost, including the no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper |
-| NB opinion hooks | `internal/nbopinion` | Landed (`4d3e857`, PR 156). Hook funcs that call `nbtier.Suggest` and `nbtier.Trivial`. May import `core` and `nbtier`. Core production sources do not import `nbopinion` or `nbtier` (a core test file may import `nbtier`; that file is not in the binary). `NBUpshift` and `NBDownshift` stay on `Decision` in `core`. `cmd` blank-imports `nbopinion` so `init` runs. The opinion stays in-process and does not exec |
-| Shared services | `internal/policyfile`, `adapt`, `quota`, `telemetry`, `catalog`, `hookctx` | Optional behaviour plugged into core, state, I/O |
+| NB opinion hooks | `internal/nbopinion` | Landed (`4d3e857`, PR 156). Hook funcs that call `nbtier.Suggest` and `nbtier.Trivial`. May import `core` and `nbtier`. Core production sources do not import `nbopinion` or `nbtier` (core test files import `catalog`, `nbopinion`, `nbtier` and `quota`; they are not in the binary). `NBUpshift` and `NBDownshift` stay on `Decision` in `core`. `cmd` blank-imports `nbopinion` so `init` runs. The opinion stays in-process and does not exec |
+| Shared services | `internal/policyfile`, `adapt`, `routeadapt`, `scoreindex`, `quota`, `telemetry`, `catalog`, `discovery`, `models`, `hookctx` | Optional behaviour plugged into core, state, I/O. All import `core`; `core` imports none of them |
 | Hook runner | `cmd/downshift` `runHookAdapter` | Reads the payload once, sets shared context, records telemetry, fails open |
 | Adapters | `internal/adapters/<harness>` | Parse the payload, declare capabilities, emit the wire response |
 
@@ -22,8 +22,8 @@ Dependencies point inward: adapters may import core and shared services; core
 imports `classify`, `fuse`, `quotamodel` and `session`. Core production
 sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`,
 `adapt`, `policyfile`, `scoreindex` or an adapter (checked with `go list
--deps ./internal/core`). A core test file may import `nbtier`; that file is
-not in the binary. `session` must not import `core`. `fuse` imports
+-deps ./internal/core`; re-verified 2026-10-19). Core test files import `catalog`,
+`nbopinion`, `nbtier` and `quota`; they are not in the binary. `session` must not import `core`. `fuse` imports
 `classify` and `semantic` and does not import `core`. `PlanForSession`,
 `RouteForSession`, `InferSessionFromCurrent` and `CanWriteSessionID` stay in
 `core`. Score selection stays in `core` on purpose: `ScoreHook` is already
@@ -32,7 +32,7 @@ that merges score selection with the naive-Bayes opinion. The naive-Bayes
 hooks are landed (`4d3e857`, PR 156): `internal/nbopinion` calls
 `nbtier.Suggest` and `nbtier.Trivial`, in-process, with no exec. Optional
 layers plug into core through a hook variable (`core.MemoryAdjustHook`,
-`core.TierFloorHook`) registered in their `init`. Debt status (2026-10-18):
+`core.TierFloorHook`) registered in their `init`. Debt status (2026-10-19):
 
 - Configuration read once at the edge: done. `core.Config` (`internal/core/env.go`)
   types every `DOWNSHIFT_*` variable core reads; `runHookAdapter` calls
@@ -73,11 +73,18 @@ layers plug into core through a hook variable (`core.MemoryAdjustHook`,
 - Naive-Bayes opinion hooks: done (`4d3e857`, PR 156). `internal/nbopinion`
   registers hook funcs that call `nbtier.Suggest` and `nbtier.Trivial`. It
   may import `core` and `nbtier`. `go list -deps ./internal/core` does not
-  include `nbopinion` or `nbtier`. A core test file may import `nbtier`;
-  that file is not in the binary. `NBUpshift` and `NBDownshift` stay on
+  include `nbopinion` or `nbtier`. Core test files import `catalog`, `nbopinion`,
+  `nbtier` and `quota`; they are not in the binary. `NBUpshift` and `NBDownshift` stay on
   `Decision` in `core`. `cmd` blank-imports `nbopinion` so `init` runs. The
   opinion stays in-process and does not exec. Env stays a typed snapshot
   set at the edge (`SetConfig`).
+
+- Not enforced by a test (open gap): the import rules above are checked by hand
+  with `go list -deps`. Registration by `init` also means `core.Route` depends
+  on blank imports in `cmd/downshift` (`nbopinion`, `policyfile`, `quota`,
+  `routeadapt`); adapter tests do not load `policyfile`, `nbopinion` or
+  `routeadapt`. See "Known gaps and limits" in
+  [architecture.md](../design/architecture.md).
 
 ## Before you write code
 

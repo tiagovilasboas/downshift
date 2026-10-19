@@ -25,14 +25,24 @@ today's UTC date, which is the freshness signal `downshift doctor` reads.
 
 Usage:
   python3 scripts/sync_catalog_prices.py [--snapshot FILE] [--harnesses a,b]
-                                         [--today YYYY-MM-DD] [--dry-run]
+                                         [--today YYYY-MM-DD] [--allow-large-change]
+                                         [--dry-run]
 
-Prints every change; exit 0 on success (changed or not), 1 on a fetch or parse
-failure (the catalog is not touched). Stdlib only, no prompts, no secrets.
+Every price taken from the source is validated before anything is written: it
+must be a finite number greater than zero and at most MAX_PER_M USD per 1M
+tokens, and it may not move more than MAX_CHANGE_FACTOR times up or down from
+the value already in the catalog unless --allow-large-change is given. Any
+violation prints one clear line per price and exits 1 without touching the
+catalog.
+
+Prints every change; exit 0 on success (changed or not), 1 on a fetch, parse or
+validation failure (the catalog is not touched). Stdlib only, no prompts, no
+secrets.
 """
 import argparse
 import datetime
 import json
+import math
 import re
 import sys
 import urllib.request
@@ -46,6 +56,16 @@ KEYS = [
     ("cache_read_cost_per_1m", "input_cache_read"),
     ("cache_write_cost_per_1m", "input_cache_write"),
 ]
+
+
+# A list price per 1M tokens above this is a unit mistake, not a price.
+MAX_PER_M = 1000.0
+# Largest accepted move against the catalog's current value, per run.
+MAX_CHANGE_FACTOR = 5.0
+
+
+class PriceError(ValueError):
+    """A source price that must not reach the catalog."""
 
 
 def norm(name):
@@ -100,8 +120,35 @@ def split_entries(lines):
     return spans
 
 
-def sync(lines, prices, harnesses):
+def checked_per_m(raw, label, key):
+    """Convert a source USD-per-token price to USD per 1M, rejecting nonsense."""
+    try:
+        value = per_m(raw)
+    except (TypeError, ValueError, OverflowError):
+        raise PriceError(f"{label} {key}: not a number ({raw!r})") from None
+    if not math.isfinite(value):
+        raise PriceError(f"{label} {key}: not finite ({raw!r})")
+    if value <= 0:
+        raise PriceError(f"{label} {key}: must be greater than zero ({raw!r})")
+    if value > MAX_PER_M:
+        raise PriceError(f"{label} {key}: {value} USD per 1M exceeds the {MAX_PER_M:g} limit ({raw!r})")
+    return value
+
+
+def check_move(label, key, old, new, allow_large):
+    if allow_large or old <= 0:
+        return
+    factor = new / old
+    if factor > MAX_CHANGE_FACTOR or factor < 1 / MAX_CHANGE_FACTOR:
+        raise PriceError(
+            f"{label} {key}: {old} -> {new} is a {factor:.3g}x move (limit {MAX_CHANGE_FACTOR:g}x); "
+            "rerun with --allow-large-change after checking the source"
+        )
+
+
+def sync(lines, prices, harnesses, allow_large=False):
     changes = []
+    errors = []
     spans = split_entries(lines)
     # Edit back to front so earlier spans keep their indexes.
     for start, end in reversed(spans):
@@ -118,11 +165,21 @@ def sync(lines, prices, harnesses):
         for key, field in KEYS:
             if p.get(field) in (None, "", "0"):
                 continue
-            new = fmt(per_m(p[field]))
+            try:
+                value = checked_per_m(p[field], label, key)
+            except PriceError as exc:
+                errors.append(str(exc))
+                continue
+            new = fmt(value)
             idx = next((j for j, b in enumerate(block) if re.match(rf'\s*"{key}":', b)), None)
             if idx is not None:
                 old = re.search(r":\s*([\d.]+)", block[idx]).group(1)
                 if float(old) == float(new):
+                    continue
+                try:
+                    check_move(label, key, float(old), float(new), allow_large)
+                except PriceError as exc:
+                    errors.append(str(exc))
                     continue
                 comma = "," if block[idx].rstrip().endswith(",") else ""
                 block[idx] = re.sub(r":\s*[\d.]+,?\s*$", f": {new}{comma}", block[idx])
@@ -134,6 +191,8 @@ def sync(lines, prices, harnesses):
                 block.insert(last + 1, f'      "{key}": {new}')
                 changes.append(f"price  {label} {key}: (none) -> {new}")
         lines[start + 1 : end] = block
+    if errors:
+        raise PriceError("\n".join(reversed(errors)))
     return changes
 
 
@@ -160,6 +219,8 @@ def main():
                     help="comma list of harnesses whose prices follow the source")
     ap.add_argument("--today", default=datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"),
                     help="date written to prices_as_of (default: today, UTC)")
+    ap.add_argument("--allow-large-change", action="store_true",
+                    help=f"accept a price that moves more than {MAX_CHANGE_FACTOR:g}x against the catalog")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     datetime.date.fromisoformat(a.today)
@@ -171,7 +232,11 @@ def main():
         return 1
 
     lines = CATALOG.read_text().splitlines()
-    changes = sync(lines, prices, set(filter(None, a.harnesses.split(","))))
+    try:
+        changes = sync(lines, prices, set(filter(None, a.harnesses.split(","))), a.allow_large_change)
+    except PriceError as exc:
+        print(f"sync_catalog_prices: refusing to update, catalog untouched:\n{exc}", file=sys.stderr)
+        return 1
     for c in changes:
         print(c)
     for key in ("updated", "prices_as_of"):
