@@ -106,8 +106,12 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    `spawn_run`; `cmd/downshift/setup_targets.go`).
 2. **Hook runner and adapter** `[D]`. `runHookAdapter` (`cmd/downshift/main.go`)
    is shared by every harness through `harnessRegistry` (`harnesses.go`). It
-   bounds stdin, parses the payload, sets the hook deadline and `ProjectDir`,
-   recovers a panic into an allow, and only then calls the adapter's `Handle`.
+   bounds stdin (1 MiB, 2 s read timeout), parses the payload, sets the 1.5 s
+   hook deadline and `ProjectDir`, recovers a panic into an allow, and only then
+   calls the adapter's `Handle`. The catalog loads through
+   `loadCatalogFailOpen` (`catalogload.go`): a panic in the embedded data or a
+   hostile user override leaves the spawn unchanged instead of exiting 2, which
+   a harness reads as a deny.
    Adapters (`internal/adapters/<harness>`) parse fields, declare
    `HarnessCapabilities`, call core and encode the wire response. No policy.
 3. **Reference model and session** `[D]`. The Claude Code adapter resolves the
@@ -128,7 +132,9 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    to a different generation. See [session models](../reference/session-models.md).
 4. **Classification and risk** `[D]`. `classifyTask` (`internal/core/policy.go`)
    runs the signal scorer, the monotonic hash semantic boost, the risk floor and
-   risk abstention (`risk.go`), and the naive-Bayes second opinion.
+   risk abstention (`internal/classify/risk.go`; from 64 KiB the candidate risk
+   categories are scanned concurrently, same results and order), and the
+   naive-Bayes second opinion.
 5. **Route, guardrails, floor** `[D]`. `Route` resolves tier, effort and the
    session-resolved model, compares with the current model, then `Check`
    (`selfcheck.go`) applies R1, R2, R4, R5, R6, R7, R8, R9 (R3 retired): any
@@ -161,7 +167,11 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    `verification: passed|failed|none`; this is a transcript sensor, not proof
    that the implementation is correct. [Verification guide](../guides/verification.md).
 9. **Telemetry and read-outs** `[D]`. `events.jsonl` holds routing metadata
-   only (no prompts, tasks or paths). `stats` estimates at list price;
+   only (no prompts, tasks or paths). Appends do not fsync (a power loss can
+   drop the last events; a process crash cannot). `telemetry.Summarize` is the
+   single savings definition (gross saved, overspend, net) shared by `stats`,
+   the dashboard `/api/status` and `dsmon`. `stats` estimates at list price,
+   labelled `estimated, list price`, from the catalog's `prices_as_of`;
    `report` compares routed spawns with the control group, counting "completed"
    only for harnesses that declare an end event and have end records;
    `verification-report` groups observed checks and estimated cost by tier;
@@ -173,6 +183,154 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
     in downshift-labs); `feedback` attaches success/retry/failed to a routing
     id, and only reviewed `required_tier` labels enter `train`; `shadow-report`
     compares candidate classifiers that never touched a route.
+
+---
+
+## Layered view and import graph
+
+Checked against `go list` on 2026-10-19. An arrow means "imports"; every arrow
+points down or sideways to an inner package, and `core` never points back out.
+
+```text
+ harness hook (stdin JSON in, stdout JSON or exit code out)
+        │
+ ┌──────▼───────────────────────────────────────────────────────────────┐
+ │ cmd/downshift   harnessRegistry · runHookAdapter · setup · doctor    │
+ │   blank-imports: nbopinion policyfile quota routeadapt (init → hooks)│
+ └──────┬───────────────────────────────────────────────────────────────┘
+        ▼
+ ┌─────────────────────────────────────────────────────────────────────┐
+ │ internal/adapters/{claudecode cursor codex opencode kirocrew         │
+ │   antigravity}: parse, HarnessCapabilities, wire response. No policy │
+ │   imports: core hookutil quota · hookport childend telemetry         │
+ │   (claudecode also contextopt sensor lifecycleobserver)              │
+ └──────┬───────────────────────────────────────────────────────────────┘
+        ▼
+ ┌─────────────────────────────────────────────────────────────────────┐
+ │ internal/core  Route · Check R1-R9 · PlanSession · Resolver · Caps   │
+ │   imports only: classify fuse quotamodel session                     │
+ │   hook vars (ports): MemoryAdjustHook TierFloorHook ScoreHook        │
+ │   NBSuggestHook NBTrivialHook LoadQuotaHook LoadNativeQuotaHook      │
+ │   ParseNativeQuotaHook RegisterNativeQuotaHook                       │
+ └──▲───────────────────────────────▲──────────────────────────────────┘
+    │ implement / register at init  │ import core (depend inward)
+ ┌──┴────────────────────────┐   ┌──┴────────────────────────────────────┐
+ │ hook providers            │   │ services over core                    │
+ │ quota → LoadQuota*        │   │ catalog (Resolver) · discovery · models│
+ │ policyfile → TierFloor    │   │ telemetry · hookport · childend       │
+ │ adapt/routeadapt → Memory │   │ contextopt · sensor · server          │
+ │ scoreindex → ScoreHook    │   │ benchmark · outcome · routingv2/*     │
+ │ nbopinion (+nbtier) → NB  │   │ decisionintelligence                  │
+ └───────────────────────────┘   └───────────────────────────────────────┘
+ leaf packages used by the layers above: classify semantic quotamodel paths
+   fuse (classify, semantic) · session (paths, quotamodel) · hookctx · codeintel (paths)
+```
+
+Edges worth knowing, all read from the code:
+
+- `core` → `classify`, `fuse`, `quotamodel`, `session` (and `semantic`, `paths`
+  below them). Nothing else.
+- `session`, `fuse` and `codeintel` do not import `core`; `codeintel` imports
+  only `paths`.
+- `telemetry` → `core`, `codeintel`, `paths`. `hookport` → `core`, `telemetry`.
+  `childend` → `core`, `hookport`, `telemetry`.
+- `catalog` → `core`, `paths`. `discovery` → `catalog`, `core`, `paths`.
+  `models` → `catalog`, `core`, `paths`.
+- `policyfile` → `core`, `hookctx`. `quota` → `core`, `paths`, `quotamodel`.
+  `nbopinion` → `core`, `nbtier`. `routeadapt` → `adapt`, `core`.
+- `hookutil` → `core` (shared payload helpers; it is not a leaf).
+- Not wired into any production package today: `internal/routecache` and
+  `internal/routingv2/router` (tests only).
+
+Invariant checks run for this refresh (all from the repository root):
+
+| Invariant | Command | Result |
+|---|---|---|
+| Core production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter | `go list -deps ./internal/core \| grep -E 'internal/(quota\|nbtier\|nbopinion\|catalog\|telemetry\|adapt\|policyfile\|scoreindex\|adapters)(/\|$)'` | holds (no match) |
+| `session` does not import `core` | `go list -deps ./internal/session \| grep 'internal/core$'` | holds |
+| `fuse` does not import `core` | `go list -deps ./internal/fuse \| grep 'internal/core$'` | holds |
+| `codeintel` does not import `core` or `classify` | `go list -deps ./internal/codeintel \| grep -E 'internal/(core\|classify)$'` | holds |
+| `core` test files import `catalog`, `nbopinion`, `nbtier`, `quota` | `go list -f '{{join .TestImports "\n"}}' ./internal/core` | true; not in the binary, but those tests run with the registered hooks |
+
+No test or CI step enforces these checks; they are manual (see Known gaps).
+
+## Data flows
+
+**Spawn routing (hook path).** harness `PreToolUse` → `runHookAdapter`
+(1 MiB, 2 s read, 1.5 s deadline, panic → allow) → adapter parses →
+`ResolveSessionModels` → `core.Route` (classify, fuse, risk, `Check`, tier floor)
+→ `PlanSession` → control group, pause and `DOWNSHIFT_NO_ROUTE` → wire
+`updatedInput` (or block-with-reason for kirocrew) → two prompt-free appends
+(`events.jsonl`, `loop-events.jsonl`).
+
+**Prompt and DCI (opt-in).** `UserPromptSubmit` → `dci_hook.go` (1 MiB cap) →
+`codeintel` (cache, BM25, abstain, pack within the byte budget) → stdout adds
+a `<downshift-code-context>` block, or nothing. Imports no routing package.
+Measured only for latency and bytes (`dci-events.jsonl`); no benefit to answer
+quality or cost is claimed.
+
+**Output compaction (observe only).** `PostToolUse` → `sensor` records tool
+output bytes and the reduction `safe` mode would reach → `{}` (plus an optional
+status line). The model never sees a shorter result. Compaction only happens
+when the user pipes output through `downshift context compress`. Claude Code
+hooks cannot rewrite tool output, so measure-only is a platform limit, not a
+choice.
+
+**Telemetry and stats.** appenders (`telemetry`, `childend`, `hookport`) write
+JSONL; `stats`, `report`, `session`, `watch`, `serve` and `dsmon` read it.
+`telemetry.Summarize` produces the one savings figure (gross, overspend, net);
+`prices_as_of` dates the list prices behind it.
+
+## Where state lives
+
+All under `~/.downshift/` (override `DOWNSHIFT_STATE_DIR`; legacy
+`~/.harness-downshift/`). Directories are created `0700`.
+
+| File | Written by | Mode |
+|---|---|---|
+| `events.jsonl` (+ rotated backups) | hook, `end`, `feedback` | `0600`, no fsync |
+| `loop-events.jsonl`, `dci-events.jsonl`, `probe.jsonl` | hook, DCI hook, `probe` | `0600` |
+| `quota.json` | `quota` (temp file, atomic rename; lock dir) | `0600` temp file |
+| `session-models.json` (operator), `discovered.json` (24 h TTL cache) | operator; `setup` and `models discover` | operator-owned; temp file `0600` |
+| `catalog.json` (user override), `weights.json`, `adapt-memory.json` | operator, offline tools | operator-owned; `adapt-memory.json` `0600` |
+| `paused/<session hash>` | `downshift session --pause` | `0600` |
+| score cache and refresh stamp | `scoreindex`, `scorerefresh` | `0600` |
+| `context-optimization.json` | `context enable` | `0644` (no secret inside) |
+| DCI index cache | `codeintel` | dir `0700`, file `0600` |
+
+Per project: `.downshift/policy.json` (read only). No file holds prompts, task
+text or file paths. The harness's own settings are edited only by `setup`, with a
+backup, and only for keys that are unset.
+
+## Trust boundaries
+
+| Boundary | Control |
+|---|---|
+| Harness → hook stdin | Untrusted JSON. 1 MiB cap (`+1` byte detects overflow), 2 s read timeout (`hookReadTimeout`), strict parse; any failure is a logged fail-open allow |
+| Hook runtime | 1.5 s `HookBudget` for helper commands, panic recovery, catalog loaded under `recover`; a failure never exits 2 (deny) and an unchanged Claude Code or Codex spawn answers `{}`, not an explicit `allow`, so the user's ask rules still apply (Cursor's wire requires `{"permission":"allow"}`) |
+| Hook → network | None. No provider call, no LLM, no price fetch. Quota and prices come from files |
+| State directory | Single-user local files; `0700` dirs, `0600` logs; the DCI telemetry log refuses symlinks and non-regular files |
+| Local dashboard (`serve`, `dsmon-server`) | Binds `127.0.0.1` only; rejects a non-loopback `Host` (DNS rebinding) and a foreign `Origin`; no CORS headers; `web/index.html` sets a CSP (`default-src 'self'`, `connect-src 'self'`, `object-src 'none'`, `form-action 'none'`); values rendered as text |
+| Vendored mods | Third-party code pinned in NOTICE, read-only, no routing logic; `setup` installs them through `claude plugin install` |
+| Release | goreleaser pinned to an exact version; build provenance attested for every archive (`gh attestation verify`) |
+
+## CI and release guards
+
+- `scripts/ci-classify-changes.sh` decides whether Go tests run. It is an
+  allowlist: only existing images under `docs/` are provably inert, so every
+  other path, including Markdown (read by `internal/docscheck`), embedded JSON
+  and `.goreleaser.yml`, runs Go. An empty diff, or a tag, also runs Go. The
+  classifier has its own test (`scripts/test-ci-classify-changes.sh`).
+- Pushes to `main` are never cancelled by a newer run; only superseded pull
+  request runs are. A cancelled code run followed by a skipped docs run once
+  left `main` unverified.
+- `ci-full` (weekdays) runs `go test -race -cover ./...` and `govulncheck`;
+  the per-PR job does not run the race detector.
+- `sync-prices` (Mondays, `workflow_dispatch`) refreshes the embedded list
+  prices and `prices_as_of`, runs the catalog tests and opens a PR; a person
+  merges it. It dispatches `ci` on its branch because a PR opened with
+  `GITHUB_TOKEN` cannot trigger `pull_request` runs.
+- Release: `goreleaser` at an exact version, then `attest-build-provenance`.
 
 ---
 
@@ -197,11 +355,11 @@ tests, a security review or a production signal.
 
 | Concern | What Downshift does | Owner | Where |
 |---|---|---|---|
-| Harness session policy | `setup` offers `model: opusplan`, `permissions.defaultMode: plan`, for Claude Code, each written only when the key is unset (`--no-session-policy` skips them); `enabledPlugins["cc-plugin-you-should-know@builtin"]: true` is opt-in (`--you-should-know`) because it is billed. The main agent's model is otherwise untouched. | D writes once, H enforces | `cmd/downshift/setup_targets.go` |
+| Harness session policy | `setup` offers `model: opusplan`, `permissions.defaultMode: plan`, for Claude Code, each written only when the key is unset (`--no-session-policy` skips them); `enabledPlugins["cc-plugin-you-should-know@builtin"]: true` is opt-in (`--you-should-know`) because it is billed. On Claude Code `setup` also runs `claude plugin install` for the sibling mods `savvy-progress`, `filetree` and `downshift-dock` (`--no-plugin` skips them; never by editing settings), and, outside `--dry-run`/`--undo`, runs model discovery (`discovery.Run`, 5 s) so session lists do not stay on handwritten values. The main agent's model is otherwise untouched. | D writes once, H enforces | `cmd/downshift/setup*.go`, `internal/discovery` |
 | Subagent routing | The flow above: one decision per spawn, rewrite or allow, fail open. | D decides, H applies | `internal/core`, adapters, `runHookAdapter` |
 | Context optimization | Native provider is **observe-only**: PostToolUse records tool output bytes and the reduction `safe` mode would reach; the hook never replaces the tool result the model sees. `downshift context compress` compacts piped output in `safe` mode as an explicit CLI step. Headroom is a companion: detected on PATH, recorded with `context enable headroom`, never installed, launched or wrapped. | D observes; X compresses | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` |
 | Code Intelligence (DCI) | Independent subsystem: discovers repository code via Git (`discover.go`), extracts Go AST and multi-language structural symbols & calls (`parse.go`, `parse_lang.go`), builds incremental inverted index with reverse call graph (`index.go`), scores via BM25 with Production-First weighting & Call-Graph Co-Reference boost (`rank.go`), abstains on conversational chatter (`abstain.go`), packages structural sketches with downstream blast radius and prompt-injection defense within configurable budget (`pack.go`), and auto-injects via multi-harness hooks (`UserPromptSubmit`). CLI queries via `downshift dci impact` and `inspect`. Strictly decoupled from model routing. | D | `internal/codeintel/` |
-| Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `serve`, `probe` (maintainer). | D | `internal/telemetry`, `internal/childend`, `internal/server` |
+| Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `serve`, `probe` (maintainer). Prices come from the embedded catalog (`prices_as_of`, refreshed by the weekly `sync-prices` PR, [prices.md](../reference/prices.md)). | D | `internal/telemetry`, `internal/childend`, `internal/server`, `.github/workflows/sync-prices.yml` |
 | Diagnosis and recommendations | `doctor` (binary, state dir, catalog, hooks per harness, model override, quota, policy, context optimization, companion, semantic boost) with a `fix` per failed check; skills `downshift-setup`, `downshift-audit`, `cost-reducer` write nothing without a yes. | D | `cmd/downshift/doctor*.go`, `skills/` |
 | Benchmark and economic evaluation | Classifier KPIs, outcome evals, control-group report with bootstrap CI, feedback and offline training. Public `benchmark/` holds the published report; datasets stay in downshift-labs. | D | `internal/benchmark`, `internal/outcome`, `internal/routingv2/training` |
 
@@ -241,8 +399,8 @@ Downshift's codebase and documentation are structured strictly according to Clea
 | **Domain 1: Subagent Model Routing & Guardrails** | Core Domain / Business Logic | Deterministic subagent routing, regex signal scoring, monotonic hash semantic boost, R1-R9 guardrails (holding unconfident moves under doubt), project tier floor (`.downshift/policy.json`), session candidate allowlists, and quota gating. Invariants: bounded reads (1 MiB), fail-open on timeout or error, zero network/LLM on hot path, zero prompt storage. | `internal/core`, `internal/classify`, `internal/fuse`, `internal/session`, `internal/quotamodel`, `internal/catalog`, `internal/semantic`, `internal/nbopinion`, `internal/policyfile` | [../domains/subagent-routing.md](../domains/subagent-routing.md), [architecture.md](architecture.md), [router-generalization.md](router-generalization.md), [../reference/complexity-weights.md](../reference/complexity-weights.md), [../reference/session-models.md](../reference/session-models.md) |
 | **Domain 2: Code Intelligence & Context Layer (DCI)** | Autonomous Domain Subsystem | Zero-runtime AST structural symbol and call extraction (Go, TS/JS, Python, Rust, PHP, Java, C#), incremental inverted index, reverse call-graph blast radius analysis (`InvertedIndex.Callers`), BM25 ranking with Production-First weighting & call-graph co-reference boosting, conversational abstention, and structural context packaging with prompt-injection delimiters (`<downshift-code-context>`). Invariants: strict domain isolation (zero imports between `internal/codeintel` and `core`/`classify`), strict latency budgets (cold <= 2500ms, warm p95 <= 300ms), fail-open (timeouts/errors exit 0), epistemic honesty (records only observed counts and byte sizes, never synthetic dollar savings). | `internal/codeintel` | [../domains/code-intelligence.md](../domains/code-intelligence.md), [code-intelligence.md](code-intelligence.md), [../evidence/dci-v04-blast-radius.md](../evidence/dci-v04-blast-radius.md), [../evidence/dci-mvp-v01.md](../evidence/dci-mvp-v01.md) |
 | **Domain 3: Output Compaction & Context Optimization** | Supporting Domain / Optimization | Native AST/JSON context compressor (`safe` mode CLI compaction), observe-only tool output sensor (PostToolUse byte measurement and hypothetical token reduction), Headroom companion detection & telemetry (`context enable headroom`), and initial session context policy (`opusplan`, plan mode). Invariants: PostToolUse hook never alters live output seen by the model (observe-only); companion tools are detected and recorded, never installed, wrapped, or launched. | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` | [../domains/context-optimization.md](../domains/context-optimization.md), [context-optimization.md](context-optimization.md), [../guides/companions.md](../guides/companions.md), [../../skills/cost-reducer/SKILL.md](../../skills/cost-reducer/SKILL.md) |
-| **Domain 4: Observability, Evidence & Verification** | Telemetry, Auditing & Evaluation | Prompt-free event logging (`events.jsonl`), 10% unrouted control group A/B baseline, catalog-priced cost & savings reports (`stats`, `report`), verification reports (`verification: passed|failed|none`), capability matrix, and evidence ladder (rungs A-E). Invariants: telemetry persists metadata only; child-end tokens are priced with catalog list prices; unobserved ports remain absent, never inferred. | `internal/telemetry`, `internal/childend`, `internal/hookport`, `internal/server`, `internal/benchmark`, `internal/outcome` | [../domains/observability-telemetry.md](../domains/observability-telemetry.md), [engineering-loop.md](engineering-loop.md), [../reference/capability-matrix.md](../reference/capability-matrix.md), [../guides/report.md](../guides/report.md), [../guides/verification.md](../guides/verification.md), [../guides/evidence.md](../guides/evidence.md) |
-| **Domain 5: Harness Adapters & Packaging** | Interface Adapters & Delivery | Harness-specific edge I/O (Claude Code, Cursor, Codex, OpenCode, KiroCrew, Antigravity), fail-open hook runner (`runHookAdapter`), 5 packaging layers (Memory, Skills, Hooks, Agents, Plugin), Claude Code plugin, and mods (`cache-tax`, `downshift-router`). Invariants: adapters embed no routing policy; adapters only parse wire format and emit core decisions; panic recovery ensures fail-open allow. | `internal/adapters/*`, `cmd/downshift`, `plugins`, `mods` | [../domains/harness-adapters-packaging.md](../domains/harness-adapters-packaging.md), [../reference/harness-matrix.md](../reference/harness-matrix.md), [../contrib/layering.md](../contrib/layering.md), [mod-router.md](mod-router.md), [../guides/claude-code.md](../guides/claude-code.md) |
+| **Domain 4: Observability, Evidence & Verification** | Telemetry, Auditing & Evaluation | Prompt-free event logging (`events.jsonl`), 10% unrouted control group A/B baseline, catalog-priced cost & savings reports (`stats`, `report`; one definition in `telemetry.Summarize`), verification reports (`verification: passed|failed|none`), capability matrix, and evidence ladder (rungs A-E). Invariants: telemetry persists metadata only; child-end tokens are priced with catalog list prices; unobserved ports remain absent, never inferred. | `internal/telemetry`, `internal/childend`, `internal/hookport`, `internal/server`, `internal/benchmark`, `internal/outcome` | [../domains/observability-telemetry.md](../domains/observability-telemetry.md), [engineering-loop.md](engineering-loop.md), [../reference/capability-matrix.md](../reference/capability-matrix.md), [../guides/report.md](../guides/report.md), [../guides/verification.md](../guides/verification.md), [../guides/evidence.md](../guides/evidence.md) |
+| **Domain 5: Harness Adapters & Packaging** | Interface Adapters & Delivery | Harness-specific edge I/O (Claude Code, Cursor, Codex, OpenCode, KiroCrew, Antigravity), fail-open hook runner (`runHookAdapter`), 5 packaging layers (Memory, Skills, Hooks, Agents, Plugin), Claude Code plugin, and mods (`cache-tax` inside the plugin; `savvy-progress`, `filetree`, `downshift-dock` as sibling plugins that `setup` installs; `downshift-router` experimental). Invariants: adapters embed no routing policy; adapters only parse wire format and emit core decisions; panic recovery ensures fail-open allow. | `internal/adapters/*`, `cmd/downshift`, `mods`, `hooks` | [../domains/harness-adapters-packaging.md](../domains/harness-adapters-packaging.md), [../reference/harness-matrix.md](../reference/harness-matrix.md), [../contrib/layering.md](../contrib/layering.md), [mod-router.md](mod-router.md), [../guides/claude-code.md](../guides/claude-code.md) |
 
 ---
 
@@ -251,41 +409,41 @@ Downshift's codebase and documentation are structured strictly according to Clea
 | Package | Responsibility |
 |---------|----------------|
 | `internal/classify` | Regex classifier, `signals.go`, language guard, risk floor. No tier, no harness, no catalog |
-| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify`, `fuse`, `quotamodel` and `session`. Production sources do not import `quota`, `nbtier`, `nbopinion`, catalog, telemetry, adapt, policyfile, `scoreindex` or an adapter (a core test file may import `nbtier`; that file is not in the binary). Session list loaders are landed in `internal/session`. Semantic boost policy is landed in `internal/fuse`; `core` keeps `ClassifyWithSemantic` as a wrapper. Score selection stays here on purpose: `ScoreHook` is already the port, and `core` does not import `scoreindex`. Do not propose a package that merges score selection with the naive-Bayes opinion. Naive-Bayes hooks are landed (`4d3e857`, PR 156): `NBUpshift` and `NBDownshift` stay on `Decision`; `nbtier.Suggest` and `nbtier.Trivial` run through hooks registered by `internal/nbopinion`. That package may import `core` and `nbtier`. `cmd` blank-imports `nbopinion` so `init` runs. Env stays a typed snapshot set at the edge (`SetConfig`) |
+| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify`, `fuse`, `quotamodel` and `session` (checked 2026-10-19: `go list -deps ./internal/core` lists only those plus `semantic` and `paths`). Production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter. Core test files do import `catalog`, `nbopinion`, `nbtier` and `quota`; they are not in the binary. Optional layers plug in through hook variables set in their `init` (see Known gaps). Score selection stays here on purpose (`ScoreHook`); do not merge it with the naive-Bayes opinion. `NBUpshift` and `NBDownshift` stay on `Decision`. Env stays a typed snapshot set at the edge (`SetConfig`) |
 | `internal/quotamodel` | Pure quota evidence types: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O. Landed: `core` imports this package; file reads and native parsing enter through `LoadQuotaHook`, `LoadNativeQuotaHook`, `ParseNativeQuotaHook` and `RegisterNativeQuotaHook`, registered by `quota`, the same pattern as `MemoryAdjustHook` |
 | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed (`5f94e07`): `core` imports this package; this package must not import `core`. `PlanForSession`, `RouteForSession`, `InferSessionFromCurrent` and `CanWriteSessionID` stay in `core` |
 | `internal/fuse` | Landed (`110ef31`). Semantic boost policy: raise-only, no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper. Stays in-process and does not exec |
 | `internal/nbopinion` | Landed (`4d3e857`, PR 156). Hook funcs that call `nbtier.Suggest` and `nbtier.Trivial`, registered in `init`. May import `core` and `nbtier`. Core production sources do not import this package or `nbtier`. `NBUpshift` and `NBDownshift` stay on `Decision` in `core`. `cmd` blank-imports this package so `init` runs. Stays in-process and does not exec. Env stays a typed snapshot set at the edge (`SetConfig`) |
-| `internal/catalog` | Embedded `catalog.json`, user override, `Resolver` |
+| `internal/classify` | Regex classifier, `signals.go`, language guard, risk floor (concurrent category scan from 64 KiB). No tier, no harness, no catalog |
+| `internal/catalog` | Embedded `catalog.json` (with `prices_as_of`), user override merge (recovers into the embedded data on a panic), `Resolver` |
+| `internal/discovery`, `internal/models` | Session model discovery (sources, order, `discovered.json` cache; run by `setup` and `models discover`) and `models list/check/pull`. Both import `catalog` and `core` |
 | `internal/adapters/*` | Harness-specific I/O only. Adapters do not choose the tier; they call `core.Route`, then apply the plan core returns |
-| `internal/policyfile`, `internal/adapt`, `internal/routeadapt` | Project tier floor (`TierFloorHook`) and shadow tier memory (`MemoryAdjustHook`), plugged into core at `init` |
+| `internal/policyfile`, `internal/adapt`, `internal/routeadapt`, `internal/scoreindex` | Project tier floor (`TierFloorHook`), shadow tier memory (`MemoryAdjustHook`) and the score cache (`ScoreHook`), plugged into core at `init`. `cmd` blank-imports the first three kinds and imports `scoreindex` directly |
 | `internal/quota`, `internal/hookctx`, `internal/hookutil` | Offline budget evidence (file I/O); per-hook deadline and project dir; shared field helpers. `quota` keeps `Load`, `Store`, `ParseNative` and native registration, aliases the `quotamodel` types so adapters can keep saying `quota.Snapshot`, and registers `LoadQuotaHook` and the native quota hooks. Core production sources do not import `quota` |
 | `internal/hookport`, `internal/childend` | Honor, usage and child-end contract; one shared recorder for every harness |
-| `internal/telemetry` | Append-only local JSONL; prompt-free events; stats, report, control group, session tree |
+| `internal/telemetry` | Append-only local JSONL (no per-spawn fsync); prompt-free events; `Summarize` (single savings definition), stats, report, control group, session tree. Imports `core` (tiers, prices) and `codeintel` (DCI summary type in the export) |
 | `internal/contextopt`, `internal/compressor`, `internal/sensor` | Context optimization registry, native compressor (observe/safe), tool-output sensor |
-| `internal/codeintel` | Downshift Code Intelligence (DCI): pure Go symbol extraction, incremental inverted index, BM25 ranking, abstention, and structural context packager. Strictly isolated: does not import core or classify. |
+| `internal/codeintel` | Downshift Code Intelligence (DCI): pure Go symbol extraction, incremental inverted index, BM25 ranking, abstention, and structural context packager. Isolated from routing: imports only `paths`; `core` and `classify` do not import it (`telemetry` imports it for the stats export type). |
 | `internal/semantic`, `internal/nbtier` | In-process hash embedder (`semantic`) and naive-Bayes opinion (`nbtier`). The raise-only boost policy lives in `internal/fuse`. `nbopinion` calls `nbtier.Suggest` and `nbtier.Trivial`. Core production sources do not import `nbtier`. The semantic boost and the naive-Bayes opinion stay in-process and do not exec |
-| `internal/routingv2/*`, `internal/decisionintelligence`, `internal/outcome`, `internal/benchmark` | Shadow classifiers and training, advisory recommendation, outcome evals, classifier KPIs |
+| `internal/routingv2/*`, `internal/decisionintelligence`, `internal/outcome`, `internal/benchmark` | Shadow classifiers and training, advisory recommendation, outcome evals, classifier KPIs. `routingv2/router` and `internal/routecache` are not imported by any production package today (tests only) |
 | `internal/server` | Local dashboard over the event log (`serve`, `dsmon-server`) |
-| `cmd/downshift` | CLI, `harnessRegistry`, `runHookAdapter`, `runEnd`, setup, doctor |
+| `cmd/downshift` | CLI, `harnessRegistry`, `runHookAdapter`, `runEnd`, setup, doctor. Blank-imports `nbopinion`, `policyfile`, `quota`, `routeadapt` |
 
 **Invariants:** adapters embed no routing rules; adding a harness is one
 `harnessRegistry` entry plus its adapter package, with a port entry only when
 that harness's own hook sends honor or usage fields; a nil port is unobserved,
-never inferred. Dependency check: `go list -deps ./internal/core`.
+never inferred. Dependency check: `go list -deps ./internal/core` (manual; no test enforces the graph, see Known gaps).
 
 ---
 
 ## Configuration on disk
 
 State directory `~/.downshift/` (legacy `~/.harness-downshift/`, see
-[rename.md](../brand/rename.md); override with `DOWNSHIFT_STATE_DIR`):
-`catalog.json` (user override), `events.jsonl`, `loop-events.jsonl`,
-`session-models.json`, `quota.json`, `context-optimization.json`,
-`probe.jsonl`, optional weights and scores cache. Per project:
-`.downshift/policy.json` (tier floor). Overrides: `DOWNSHIFT_EVENT_LOG`,
-`DOWNSHIFT_SESSION_MODELS`, `DOWNSHIFT_QUIET`, flags in README and
-[minilm-semantic.md](minilm-semantic.md).
+[rename.md](../brand/rename.md); override with `DOWNSHIFT_STATE_DIR`). See
+"Where state lives" below for what each file is and its permissions.
+Per project: `.downshift/policy.json` (tier floor). Overrides:
+`DOWNSHIFT_EVENT_LOG`, `DOWNSHIFT_SESSION_MODELS`, `DOWNSHIFT_QUIET`, flags in
+README and [minilm-semantic.md](minilm-semantic.md).
 
 ---
 
@@ -302,11 +460,58 @@ layers through `downshift setup` and the docs.
 | 2 Skills | `skills/downshift-setup`, `skills/downshift-audit`, `skills/cost-reducer` | procedures with judgment; detail in `references/` on demand | yes (SKILL.md format) |
 | 3 Hooks | the `downshift <harness>` subcommands; `hooks/hooks.json` is the plugin form | routing, telemetry, guardrails (shared Go) | yes; `hooks.json` is Claude Code packaging |
 | 4 Agents | `agents/mechanical-worker.md` | one example with no pinned model ([subagents.md](../guides/subagents.md)) | Claude Code format; the rule applies everywhere |
-| 5 Plugin | `.claude-plugin/plugin.json`, `marketplace.json` | one install: hooks, command, skills, agent | Claude Code only |
+| 5 Plugin and mods | `.claude-plugin/plugin.json`, `marketplace.json`, `mods/` | one install: hooks, command, skills, agent; sibling mods (`savvy-progress`, `filetree`, `downshift-dock`) that `setup` installs | Claude Code only |
 
 Contributor-only skills (`.claude/skills/downshift-layering`) stay out of the
 plugin. Companions (Headroom) are detected and documented, never
 bundled: [companions.md](../guides/companions.md).
+
+## Known gaps and limits
+
+These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
+
+1. **`telemetry` is large.** 31 non-test files (events, cost, stats, report,
+   control group, rotation, pause, session tree, completion) behind one
+   package, imported by adapters, `childend`, `hookport` and `server`. A split
+   (event log and appenders vs read-outs) is proposed, not done.
+2. **`init`-registered hooks in `core` (Fullstack P1-1).** The result of
+   `core.Route` depends on which packages were blank-imported: the tier floor
+   (`policyfile`), shadow memory (`routeadapt`), naive-Bayes (`nbopinion`) and
+   the quota loaders (`quota`) exist only if `cmd/downshift` imported them.
+   Adapter tests link `quota` (adapters import it) but not `policyfile`,
+   `nbopinion` or `routeadapt`, so they run without the tier floor and the
+   opinion. Behaviour is covered at `runHookAdapter` and `core.Route` tests, but
+   an adapter test alone does not prove production routing.
+3. **No import-graph sensor.** The invariants above are checked by hand with
+   `go list`. There is no test or CI step that fails when core gains a
+   forbidden import.
+4. **Rotated log backups are not read.** `stats` prints a note and counts only
+   the live `events.jsonl`; totals drop after a rotation (100 MB by default).
+5. **DCI is opt-in** and measured only for latency and injected bytes. No
+   evidence yet that it improves answers or lowers cost.
+6. **Savings are list-price estimates.** They use the embedded catalog at
+   `prices_as_of` (weekly PR), not provider invoices. Real-cost figures exist
+   only where the harness reports tokens (Claude Code most completely). The
+   one tracked field trial is -12% on mechanical pieces, not a general rate.
+7. **Compaction is measure-only on Claude Code.** Hooks cannot rewrite tool
+   output, so the sensor reports a hypothetical reduction.
+8. **Hook latency** after removing the per-spawn fsync: p50 8.5 ms, p95 9.7 ms
+   for a Claude Code Task payload (n = 200, Apple M3 Pro, macOS 26.6, Go
+   1.27.1; `downshift version` p50 7.7 ms; process floor 2.2 ms). Not measured on
+   Linux or Windows, on a populated state directory, or under parallel
+   spawning. Trade-off: a power loss can drop the last events.
+   [Evidence](../evidence/perf-2026-10-19.md).
+9. **OpenCode packaging is unverified.** The adapter and conformance tests
+   exist; the forwarding plugin (`mods/downshift-opencode`) has no live spawn
+   observed. Cursor, Codex and Antigravity rewrite honor is also bounded as in
+   the [harness matrix](../reference/harness-matrix.md).
+10. **Stale diagram source.** `docs/img/architecture.svg` (and `-dark`) is
+    hand-drawn, not generated, and predates `classify`, `fuse`, `session`,
+    `opencode` and the hook ports; it still names e5 and graphify helpers.
+    Nothing links to it. The ASCII diagram above is the maintained one.
+    `downshift-bdi` and `downshift-execution` are current.
+11. **Dead-end packages.** `internal/routecache` and `internal/routingv2/router`
+    have no production importer.
 
 ## Further reading
 

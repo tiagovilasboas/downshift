@@ -23,7 +23,7 @@ Downshift is designed to serve every agent harness through thin, decoupled edge 
        │
        ▼ (stdin JSON payload, 1 MiB bounded read)
 [runHookAdapter Runner]
-       ├── Sets hook deadline (default 2500ms) & discovers ProjectDir
+       ├── Sets hook deadline (2 s stdin read, 1.5 s budget) & discovers ProjectDir
        ├── Recovers from panics ──► Fail-open allow
        │
        ▼
@@ -63,9 +63,9 @@ For Claude Code operators, Downshift packages hooks, skills, commands, and optio
   ```bash
   /plugin install downshift --marketplace tiagovilasboas/downshift
   ```
-- **Cache-Tax Mod (`mods/cache-tax`)**: Bundled inside the plugin. Monitors cold cache read fees on idle sessions and offers `/keepwarm` to maintain prompt cache warmth.
+- **Cache-Tax Mod (`hooks/cache-tax`)**: Bundled inside the plugin. Monitors cold cache read fees on idle sessions and offers `/keepwarm` to maintain prompt cache warmth.
 - **Downshift Router Mod (`mods/downshift-router`)**: An experimental in-process routing prototype that intercepts `agent.spawn` inside the node runtime, eliminating CLI process invocation overhead.
-- **Sibling Mods**: Works seamlessly alongside recommended companion mods such as `savvy-progress` and `filetree`.
+- **Sibling Mods (`mods/`)**: `savvy-progress` (progress bar, `/agents-info`), `filetree` (file tree pane) and `downshift-dock` (original Downshift code: a band that reopens both panels). On Claude Code, `downshift setup` installs them with `claude plugin install` (`--no-plugin` skips); setup also runs model discovery so session lists do not stay on handwritten values, and `You should know` stays opt-in (`--you-should-know`). The vendored mods are pinned in NOTICE and never edited in place, except documented local patches.
 
 ---
 

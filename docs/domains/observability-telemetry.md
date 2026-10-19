@@ -12,7 +12,9 @@ You cannot manage what you cannot measure. Downshift incorporates an end-to-end 
 2. **Empirical Control Group**: Approximately 1 in 10 spawns (`DOWNSHIFT_CONTROL_SHARE=0.10`) is left unrouted as an automated control group, enabling scientific, statistically valid comparisons between routed and unrouted workloads.
 3. **Epistemic Honesty**: Downshift clearly distinguishes **catalog-priced estimates** from **provider invoices**. Savings figures represent counterfactual catalog benchmarks unless corroborated by native provider billing.
 4. **Child Outcome Observability**: Telemetry observes not only what model was picked, but also whether the child subagent completed, errored, or required rework.
-5. **Zero External Telemetry Sinks**: Events remain strictly on your local machine under `.downshift/events.jsonl`. No telemetry is transmitted to remote analytics servers.
+5. **One Savings Definition**: `telemetry.Summarize` yields gross saved, overspend and net saved for `stats`, the dashboard and `dsmon`, labelled `estimated, list price`. Prices come from the embedded catalog; its `prices_as_of` date is refreshed by the weekly `sync-prices` workflow ([prices policy](../reference/prices.md)).
+6. **No Per-Spawn fsync**: Event appends are plain `write(2)` calls. A process crash loses nothing; a power loss can drop the last events. The logs are statistics ([measurement](../evidence/perf-2026-10-19.md)).
+7. **Zero External Telemetry Sinks**: Events remain strictly on your local machine under `~/.downshift/events.jsonl` (files `0600`, directory `0700`). Rotated backups (100 MB default) are not read by `stats`, which prints a note. No telemetry is transmitted to remote analytics servers.
 
 ---
 
