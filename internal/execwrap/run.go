@@ -77,10 +77,10 @@ var expectedFormat = map[Family]compressor.Format{
 // Run executes argv directly (no shell) with the caller's stdin, and exits
 // with the program's own status. Only the allowlisted families run (anything
 // else is refused with 126). Output keeps the order the program wrote it in.
-// With compaction on, stdout is held briefly (see gate) and compacted only
+// With compaction on, stdout is held (see gate) and compacted only
 // when the program exited 0, wrote nothing on stderr, stayed under
-// compressor.MaxProcessableBytes and HoldBound, and the compressor recognised
-// the family's own format. Otherwise it is byte-identical.
+// compressor.MaxProcessableBytes and HoldBound (when configured), and the
+// compressor recognised the family's own format. Otherwise it is byte-identical.
 // Any internal error prints the raw output: output is never lost.
 func Run(argv []string, o Options) (res Result) {
 	if len(argv) == 0 {
@@ -166,17 +166,17 @@ func exitStatus(err error) (int, string) {
 	return code, ExitClassNonZero
 }
 
-// HoldBound is the longest stdout of an allowlisted family is held while it
-// could still be compacted. Past it the held bytes are flushed and the rest
-// streams, so a slow run is not silent and a killed wrapper has shown what the
-// program wrote up to that point.
-var HoldBound = 2 * time.Second
+// HoldBound, when positive, bounds how long stdout of an allowlisted family
+// is held while it could still be compacted. Past it the held bytes are flushed
+// and the rest streams. By default it is 0 (disabled), so batch commands like
+// `go test` hold the buffer until process completion without arbitrary timeouts.
+var HoldBound time.Duration
 
 // gate serialises the program's two output streams into the caller's two
 // writers so their relative order is preserved. Stdout is held back only
 // while compaction is still possible: the first stderr byte, the size limit
-// or HoldBound releases the held bytes first, in write order, and from then
-// on both streams pass straight through and nothing is compacted.
+// or HoldBound (when positive) releases the held bytes first, in write order,
+// and from then on both streams pass straight through and nothing is compacted.
 type gate struct {
 	mu        sync.Mutex
 	out, err  io.Writer
@@ -218,7 +218,7 @@ func (w stdoutWriter) Write(p []byte) (int, error) {
 		_, _ = g.out.Write(p)
 		return len(p), nil
 	}
-	if g.buf.Len() == 0 {
+	if g.buf.Len() == 0 && HoldBound > 0 {
 		g.timer = time.AfterFunc(HoldBound, func() {
 			g.mu.Lock()
 			defer g.mu.Unlock()

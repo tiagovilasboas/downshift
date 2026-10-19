@@ -34,14 +34,15 @@ var nonZeroExits = []int{1, 2, 124, 130, 137, 255}
 var rawFixtures = []string{
 	// go test: failures, panics, races, build and vet errors.
 	"gotest_fail_mixed_ok.txt",
+	"gotest_fail_mixed_no_test_files.txt",
 	"gotest_fail_summary_only.txt",
 	"gotest_panic.txt",
+	"gotest_panic_mixed_no_test_files.txt",
 	"gotest_race.txt",
 	"gotest_race_no_fail_line.txt",
 	"gotest_build_failed.txt",
 	"gotest_vet_error.txt",
 	// go test: not all-ok lines, so not clearly clean.
-	"gotest_no_test_files.txt",
 	"gotest_no_tests_to_run.txt",
 	"gotest_verbose.txt",
 	"gotest_pass_with_log_line.txt",
@@ -97,6 +98,8 @@ var cleanFixtures = []cleanFixture{
 	{"gotest_pass_coverage.txt", []string{"PASS", "12 packages", "internal/billing", "65.9%", "cmd/widget", "100.0%"}},
 	{"gotest_pass_cached.txt", []string{"PASS", "6 packages", "internal/config"}},
 	{"gotest_pass_plain.txt", []string{"PASS", "12 packages", "internal/store"}},
+	{"gotest_no_test_files.txt", []string{"PASS", "2 packages ok", "1 without tests", "cmd/widget", "internal/api", "internal/auth"}},
+	{"gotest_pass_mixed_no_test_files.txt", []string{"PASS", "6 packages ok", "3 without tests", "cmd/dsmon-server", "internal/adapt", "80.5%", "internal/session", "internal/testrace"}},
 	{"gitstatus_clean_uptodate.txt", []string{"On branch main", "working tree clean"}},
 	{"gitstatus_clean_no_upstream.txt", []string{"On branch feature/rate-limit", "working tree clean"}},
 }
@@ -247,4 +250,35 @@ func TestCorpusCleanReduction(t *testing.T) {
 		t.Fatalf("no reduction on clean corpus: %d -> %d", before, after)
 	}
 	t.Logf("%-34s %5d -> %4d bytes (%.1f%%)", "TOTAL", before, after, float64(before-after)/float64(before)*100)
+}
+
+// TestCorpus_AdversarialGoTestFailOpenWithNoTestFiles verifies that suites mixing
+// failures (--- FAIL: or panic:) with [no test files] packages stay 100% raw (fail-open),
+// even if exit code is 0, -1, or non-zero.
+func TestCorpus_AdversarialGoTestFailOpenWithNoTestFiles(t *testing.T) {
+	failIn := readFixture(t, "gotest_fail_mixed_no_test_files.txt")
+	panicIn := readFixture(t, "gotest_panic_mixed_no_test_files.txt")
+	codes := append([]int{-1, 0}, nonZeroExits...)
+
+	for _, code := range codes {
+		t.Run(fmt.Sprintf("fail/exit=%d", code), func(t *testing.T) {
+			res := compressor.CompressExit(failIn, compressor.ModeSafe, code)
+			if res.Applied || !bytes.Equal(res.Output, failIn) {
+				t.Fatalf("failing test with no test files modified: applied=%v reason=%q", res.Applied, res.Reason)
+			}
+			if code <= 0 && res.Reason != "error_detected_fail_open_raw_preserved" {
+				t.Fatalf("exit=%d: reason=%q, want error_detected_fail_open_raw_preserved", code, res.Reason)
+			}
+		})
+
+		t.Run(fmt.Sprintf("panic/exit=%d", code), func(t *testing.T) {
+			res := compressor.CompressExit(panicIn, compressor.ModeSafe, code)
+			if res.Applied || !bytes.Equal(res.Output, panicIn) {
+				t.Fatalf("panic test with no test files modified: applied=%v reason=%q", res.Applied, res.Reason)
+			}
+			if code <= 0 && res.Reason != "error_detected_fail_open_raw_preserved" {
+				t.Fatalf("exit=%d: reason=%q, want error_detected_fail_open_raw_preserved", code, res.Reason)
+			}
+		})
+	}
 }
