@@ -19,6 +19,8 @@ const (
 	FamilyNone      Family = ""
 	FamilyGoTest    Family = "go-test"
 	FamilyGitStatus Family = "git-status"
+	FamilyPytest    Family = "pytest"
+	FamilyVitest    Family = "vitest"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -117,8 +119,17 @@ func Decide(command, exe string) Decision {
 }
 
 // FamilyOf names the allowlisted family of an argv, or FamilyNone. The
-// program must be the bare name ("go", "git"), not a path.
+// program must be the bare name ("go", "git", "pytest", "vitest", "npx"), not a path.
 func FamilyOf(argv []string) Family {
+	if len(argv) == 0 {
+		return FamilyNone
+	}
+	if argv[0] == "pytest" {
+		return FamilyPytest
+	}
+	if argv[0] == "vitest" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "vitest") {
+		return FamilyVitest
+	}
 	if len(argv) < 2 {
 		return FamilyNone
 	}

@@ -1,0 +1,13 @@
+
+ RUN  v1.6.0 /Users/tiago.boas/web
+
+ ✓ test/auth.test.ts (5)
+ ✓ test/billing.test.ts (5)
+ ✓ test/config.test.ts (5)
+ ✓ test/db.test.ts (5)
+ ✓ test/store.test.ts (5)
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  19:20:00
+   Duration  412ms (transform 45ms, setup 0ms, collect 32ms, tests 210ms, environment 0ms, prepare 72ms)

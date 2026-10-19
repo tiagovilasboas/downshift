@@ -231,3 +231,104 @@ func TestCompress_GitStatus_KeepsTrackingAndDetached(t *testing.T) {
 		})
 	}
 }
+
+func TestCompress_Pytest_PassCompaction(t *testing.T) {
+	in := []byte("============================= test session starts ==============================\nrootdir: /tmp\ncollected 10 items\n\ntest_a.py ..........\n\n============================== 10 passed in 0.42s ==============================\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for passing pytest: %s", res.Reason)
+	}
+	want := "Pytest: PASS (10 passed in 0.42s)\n"
+	if string(res.Output) != want {
+		t.Errorf("got %q, want %q", string(res.Output), want)
+	}
+	if res.Format != compressor.FormatPytest {
+		t.Errorf("expected format pytest, got %v", res.Format)
+	}
+}
+
+func TestCompress_Pytest_PassWithSkipped(t *testing.T) {
+	in := []byte("============================= test session starts ==============================\ncollected 12 items\n\ntest_a.py ..........ss\n\n======================== 10 passed, 2 skipped in 1.15s =========================\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for pytest with skipped: %s", res.Reason)
+	}
+	want := "Pytest: PASS (10 passed, 2 skipped in 1.15s)\n"
+	if string(res.Output) != want {
+		t.Errorf("got %q, want %q", string(res.Output), want)
+	}
+}
+
+func TestCompress_Pytest_ErrorsPreserveRaw(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"FAILED line", "=== 5 passed in 0.1s ===\nFAILED test_x.py::test_1\n"},
+		{"ERROR line", "=== 5 passed in 0.1s ===\nERROR: fixture error\n"},
+		{"Traceback line", "=== 5 passed in 0.1s ===\nTraceback (most recent call last):\n"},
+		{"AssertionError line", "=== 5 passed in 0.1s ===\nAssertionError: assert 1 == 2\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("must not compress pytest with error: %s", tc.name)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("must preserve raw output byte-identical")
+			}
+		})
+	}
+}
+
+func TestCompress_Vitest_PassCompaction(t *testing.T) {
+	in := []byte("\n RUN  v1.6.0 /web\n\n ✓ a.test.ts (2)\n ✓ b.test.ts (3)\n\n Test Files  2 passed (2)\n      Tests  5 passed (5)\n   Start at  12:00:00\n   Duration  350ms (transform 50ms, tests 35ms)\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for passing vitest: %s", res.Reason)
+	}
+	want := "Vitest: PASS (5 passed across 2 files in 350ms)\n"
+	if string(res.Output) != want {
+		t.Errorf("got %q, want %q", string(res.Output), want)
+	}
+	if res.Format != compressor.FormatVitest {
+		t.Errorf("expected format vitest, got %v", res.Format)
+	}
+}
+
+func TestCompress_Vitest_NoDuration(t *testing.T) {
+	in := []byte("\n RUN  v1.6.0 /web\n\n ✓ a.test.ts (5)\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for vitest without duration: %s", res.Reason)
+	}
+	want := "Vitest: PASS (5 passed across 1 files)\n"
+	if string(res.Output) != want {
+		t.Errorf("got %q, want %q", string(res.Output), want)
+	}
+}
+
+func TestCompress_Vitest_ErrorsPreserveRaw(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"FAIL indicator", " RUN  v1.0.0\n FAIL  a.test.ts\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n"},
+		{"Error indicator", " RUN  v1.0.0\n Error: connection reset\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n"},
+		{"AssertionError indicator", " RUN  v1.0.0\n AssertionError: expected true\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("must not compress vitest with error: %s", tc.name)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("must preserve raw output byte-identical")
+			}
+		})
+	}
+}

@@ -27,6 +27,8 @@ const (
 	FormatGitStatus Format = "git_status"
 	FormatGitLog    Format = "git_log"
 	FormatGoTest    Format = "go_test"
+	FormatPytest    Format = "pytest"
+	FormatVitest    Format = "vitest"
 	FormatSearch    Format = "search"       // rg, grep
 	FormatFileList  Format = "file_listing" // ls -R, tree, find
 	FormatLogs      Format = "logs"         // repetitive log lines

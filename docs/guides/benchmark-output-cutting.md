@@ -40,12 +40,22 @@ delegation-heavy, and one added here, **output-heavy** (a bounded fix whose loop
 Complex and security-sensitive tasks stay in the set as safety checks (acceptance only), not as a saving claim. Each
 task keeps its hidden acceptance check, validated on base and fix.
 
+### Ecosystem Coverage: Python (pytest) and TypeScript (vitest)
+
+The output-heavy category explicitly evaluates suites across the primary agent engineering ecosystems:
+- **Go (`go test`)**: Multi-package unit and integration suites with `-v` or package summaries.
+- **Python (`pytest`)**: Suites running 50+ tests (e.g. FastAPI/Flask services, data pipelines). Clean runs output dozens of lines of test identifiers, progress percentages, and session summaries, inflating tool output by 1,500–3,500 tokens.
+- **TypeScript / JavaScript (`vitest`)**: Fullstack suites running 50+ tests across multiple test files. Clean runs render module trees, execution durations, and checkmark tables, injecting 2,000–4,000 tokens per execution.
+
+Tasks in this category simulate realistic agent iterative workflows (e.g., TDD loops, localized bug fixing) where tests are executed 2 to 5 times across a multi-turn conversation.
+
 ## Metrics
 
 | Metric | Source | Status |
 |---|---|---|
 | **Cost per accepted task** (primary): cost of every run of the task divided by accepted runs, so a failed run is charged to the task | Claude Code `total_cost_usd` per run (list price) | measured per run by the harness; dollars are list price, not an invoice |
 | **Tokens per accepted task, split work and cache**: input+output apart from cache read+write | whole-session usage from the harness; child tokens from usage events | child tokens observed by Downshift; whole-session tokens are harness output, read by hand |
+| **Multi-turn Cache Debt**: cumulative cache read tokens incurred across downstream turns ($T_1 \dots T_k$) attributable to tool output from turn $T_0$ | whole-session token progression per turn from harness logs | measured by comparing token delta per turn across arms; isolates output bloat from prompt growth |
 | **Quota-window consumption on a subscription plan**: share of the 5-hour and 7-day windows used by the arm's runs | the harness's own usage display before and after a block of runs, same account, no other use | manual and coarse; the only metric that speaks for plans with no per-token bill |
 | **Acceptance** | exit code of the hidden check, then the repository suite | manual |
 | Retries, failures, rework | as in the protocol it extends | inferred plus manual |
@@ -53,7 +63,9 @@ task keeps its hidden acceptance check, validated on base and fix.
 
 Work and cache are reported apart because cache reads carry the smallest price gap between models and are most of a
 session's tokens; one token total would credit routing with a saving it cannot make on that class. Output cutting
-should show mostly in work and fresh-input tokens and in how cache grows over the session; report both.
+shows in fresh-input tokens and, crucially, in **dampening cumulative cache growth across turns**: in a 15-turn session,
+squelching a 2,500-token `pytest` or `vitest` pass on turn 3 avoids over 30,000 downstream cache read tokens. Report both
+single-turn reduction and cumulative session cache savings.
 
 Quota windows are measured in blocks: run one arm's block back to back, read the windows before and after, let the
 window reset or use a second identical account, and alternate block order across repeats. The harness rounds window

@@ -332,3 +332,101 @@ func TestRun_GoTestOverTwoSecondsFailStaysRaw(t *testing.T) {
 		t.Fatalf("raw %d != emitted %d", r.RawBytes, r.EmittedBytes)
 	}
 }
+
+// TestRun_PytestVitestExecution validates the execwrap execution, compaction on clean exit 0,
+// and byte-for-byte raw preservation on exit != 0 or errors for pytest and vitest.
+func TestRun_PytestVitestExecution(t *testing.T) {
+	pytestClean := "============================= test session starts ==============================\nrootdir: /tmp\ncollected 25 items\n\ntest_a.py .....\ntest_b.py .....\ntest_c.py .....\ntest_d.py .....\ntest_e.py .....\n\n============================== 25 passed in 0.42s ==============================\n"
+	pytestFail := "============================= test session starts ==============================\nrootdir: /tmp\ncollected 25 items\n\ntest_a.py ..F..\n\n=================================== FAILURES ===================================\n_________________________________ test_charge __________________________________\nAssertionError\n========================= 1 failed, 24 passed in 0.48s =========================\n"
+
+	vitestClean := "\n RUN  v1.6.0 /Users/tiago.boas/web\n\n ✓ test/a.test.ts (5)\n ✓ test/b.test.ts (5)\n ✓ test/c.test.ts (5)\n ✓ test/d.test.ts (5)\n ✓ test/e.test.ts (5)\n\n Test Files  5 passed (5)\n      Tests  25 passed (25)\n   Start at  19:20:00\n   Duration  412ms\n"
+	vitestFail := "\n RUN  v1.6.0 /Users/tiago.boas/web\n\n ❯ test/b.test.ts (5)\n   × test_charge\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  test/b.test.ts > test_charge\nAssertionError: expected 100 to be 110\n\n Test Files  1 failed | 4 passed (5)\n      Tests  1 failed | 24 passed (25)\n"
+
+	cases := []struct {
+		name       string
+		bin        string
+		script     string
+		argv       []string
+		compact    bool
+		wantCode   int
+		wantClass  string
+		wantOut    string
+		wantErr    string
+		compacted  bool
+		wantFamily Family
+	}{
+		{
+			name: "passing pytest compacts", bin: "pytest",
+			script: "printf '" + strings.ReplaceAll(pytestClean, "\n", "\\n") + "'",
+			argv:   []string{"pytest"}, compact: true,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: compactedWant(pytestClean), compacted: true, wantFamily: Family("pytest"),
+		},
+		{
+			name: "pytest kill switch keeps raw", bin: "pytest",
+			script: "printf '" + strings.ReplaceAll(pytestClean, "\n", "\\n") + "'",
+			argv:   []string{"pytest"}, compact: false,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: pytestClean, wantFamily: Family("pytest"),
+		},
+		{
+			name: "failing pytest stays raw", bin: "pytest",
+			script: "printf '" + strings.ReplaceAll(pytestFail, "\n", "\\n") + "'; exit 1",
+			argv:   []string{"pytest"}, compact: true,
+			wantCode: 1, wantClass: ExitClassNonZero, wantOut: pytestFail, wantFamily: Family("pytest"),
+		},
+		{
+			name: "clean pytest with stderr stays raw", bin: "pytest",
+			script: "printf '" + strings.ReplaceAll(pytestClean, "\n", "\\n") + "'; echo 'pytest warning' >&2",
+			argv:   []string{"pytest"}, compact: true,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: pytestClean, wantErr: "pytest warning\n", wantFamily: Family("pytest"),
+		},
+		{
+			name: "passing vitest compacts", bin: "vitest",
+			script: "printf '" + strings.ReplaceAll(vitestClean, "\n", "\\n") + "'",
+			argv:   []string{"vitest", "run"}, compact: true,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: compactedWant(vitestClean), compacted: true, wantFamily: Family("vitest"),
+		},
+		{
+			name: "vitest kill switch keeps raw", bin: "vitest",
+			script: "printf '" + strings.ReplaceAll(vitestClean, "\n", "\\n") + "'",
+			argv:   []string{"vitest", "run"}, compact: false,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: vitestClean, wantFamily: Family("vitest"),
+		},
+		{
+			name: "failing vitest stays raw", bin: "vitest",
+			script: "printf '" + strings.ReplaceAll(vitestFail, "\n", "\\n") + "'; exit 1",
+			argv:   []string{"vitest", "run"}, compact: true,
+			wantCode: 1, wantClass: ExitClassNonZero, wantOut: vitestFail, wantFamily: Family("vitest"),
+		},
+		{
+			name: "clean vitest with stderr stays raw", bin: "vitest",
+			script: "printf '" + strings.ReplaceAll(vitestClean, "\n", "\\n") + "'; echo 'vitest warning' >&2",
+			argv:   []string{"vitest", "run"}, compact: true,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: vitestClean, wantErr: "vitest warning\n", wantFamily: Family("vitest"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeBin(t, tc.bin, tc.script)
+			r, out, errOut := run(t, tc.argv, tc.compact)
+			if r.ExitCode != tc.wantCode || r.ExitClass != tc.wantClass {
+				t.Fatalf("exit = %d/%s, want %d/%s (stderr %q)", r.ExitCode, r.ExitClass, tc.wantCode, tc.wantClass, errOut)
+			}
+			if out != tc.wantOut {
+				t.Fatalf("stdout = %q, want %q", out, tc.wantOut)
+			}
+			if errOut != tc.wantErr {
+				t.Fatalf("stderr = %q, want %q", errOut, tc.wantErr)
+			}
+			if r.Compacted != tc.compacted || r.Family != tc.wantFamily {
+				t.Fatalf("compacted=%v family=%q, want %v %q", r.Compacted, r.Family, tc.compacted, tc.wantFamily)
+			}
+			if r.EmittedBytes != int64(len(out)+len(errOut)) {
+				t.Fatalf("EmittedBytes = %d, want %d", r.EmittedBytes, len(out)+len(errOut))
+			}
+			if !r.Compacted && r.RawBytes != r.EmittedBytes {
+				t.Fatalf("raw %d != emitted %d without compaction", r.RawBytes, r.EmittedBytes)
+			}
+		})
+	}
+}
