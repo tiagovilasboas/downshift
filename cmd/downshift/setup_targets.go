@@ -151,8 +151,8 @@ var setupTargets = []setupTarget{
 		ModConflicts: []string{"cache-tax@claude-code-mods"},
 		// Sibling mods of the Downshift marketplace (mods/, listed in
 		// .claude-plugin/marketplace.json): progress bar and /agents-info panel,
-		// file tree pane. mods/downshift-router stays out: it would route twice.
-		Mods: []string{"savvy-progress@downshift", "filetree@downshift"},
+		// file tree pane, downshift-dock band that reopens both. mods/downshift-router stays out: it would route twice.
+		Mods: []string{"savvy-progress@downshift", "filetree@downshift", "downshift-dock@downshift"},
 	},
 	{
 		Name:      "cursor",

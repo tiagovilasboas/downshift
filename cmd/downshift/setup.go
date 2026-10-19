@@ -112,7 +112,7 @@ Wire every Downshift hook into the harnesses found on this machine.
   --no-plugin          Claude Code: keep the hooks in settings.json instead of
                        installing the Downshift plugin (the plugin carries the
                        same hooks plus the cache-tax mod) and skip the sibling
-                       mods (savvy-progress, filetree)
+                       mods (savvy-progress, filetree, downshift-dock)
 
 Claude Code gets the policy by default, only for keys it does not already set.
 `

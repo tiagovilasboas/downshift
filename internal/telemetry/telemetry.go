@@ -612,7 +612,11 @@ func AppendTo(path string, ev Event) error {
 	if _, err := fmt.Fprintf(f, "%s\n", line); err != nil {
 		return err
 	}
-	return f.Sync() // flush to OS before releasing lock
+	// No fsync: the write(2) is in the OS buffer cache and survives a process
+	// crash. On macOS Go's File.Sync is F_FULLFSYNC (~2.5 ms measured), paid on
+	// every hook spawn for an advisory log. A power loss can drop the last
+	// event; the log is statistics, not a ledger.
+	return nil
 }
 
 // Stats is the aggregated view of all recorded events.
