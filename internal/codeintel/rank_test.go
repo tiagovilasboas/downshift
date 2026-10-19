@@ -4,10 +4,13 @@
 package codeintel
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 )
 
 func TestRankCandidatesFieldWeightsAndBonuses(t *testing.T) {

@@ -539,6 +539,9 @@ func parseTSJSSymbols(relPath, content string) ([]Symbol, []string) {
 
 	// Extract TS/JS imports
 	for _, line := range lines {
+		if len(imports) >= 32 {
+			break
+		}
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "//") {
 			continue
@@ -785,6 +788,9 @@ func parsePythonSymbols(relPath, content string) ([]Symbol, []string) {
 
 	// Extract Python imports
 	for _, line := range lines {
+		if len(imports) >= 32 {
+			break
+		}
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
 			continue
@@ -906,6 +912,9 @@ func parseCStyleSymbols(relPath, content, ext string) ([]Symbol, []string) {
 
 	// Extract language-specific imports
 	for _, line := range lines {
+		if len(imports) >= 32 {
+			break
+		}
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "/*") {
 			continue
