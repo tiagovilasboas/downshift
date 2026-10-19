@@ -63,16 +63,16 @@ func TestStatusline_RoutingSummaryForTheCurrentSession(t *testing.T) {
 
 	got := renderStatusline(t, statusInput("sess-ui", true))
 	t.Logf("statusline: %s", strings.TrimSpace(got))
-	want := "5h 25% · 7d 40% │ ◆ downshift · 2 subagents · 2 on haiku · saved $0.42 · 0 on doubt\n"
+	want := "5h 25% · 7d 40% │ ◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved $0.42 · 0 on doubt\n"
 	if got != want {
 		t.Errorf("got %q\nwant %q", got, want)
 	}
 	// Without a quota block only the routing summary prints.
-	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 on haiku · saved $0.42 · 0 on doubt\n" {
+	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved $0.42 · 0 on doubt\n" {
 		t.Errorf("routing only: %q", got)
 	}
 	// Another session sees only its own spawns.
-	if got := renderStatusline(t, statusInput("another", false)); got != "◆ downshift · 1 subagent · 1 on opus · 0 on doubt\n" {
+	if got := renderStatusline(t, statusInput("another", false)); got != "◆ downshift · 1 subagent · 0 switched · 0 held · 1 on opus · 0 on doubt\n" {
 		t.Errorf("session filter: %q", got)
 	}
 }
@@ -117,7 +117,7 @@ func TestStatusline_FastOnALargeLogAndReadsOnlyTheTail(t *testing.T) {
 	got := renderStatusline(t, statusInput("sess-ui", false))
 	took := time.Since(start)
 	t.Logf("50 MB log rendered in %v", took)
-	if !strings.Contains(got, "2 subagents · 2 on haiku") {
+	if !strings.Contains(got, "2 subagents · 2 switched · 0 held · 2 on haiku") {
 		t.Errorf("tail lost the current session: %q", got)
 	}
 	if raceEnabled {
@@ -146,7 +146,7 @@ func TestStatusline_QuotaStaleMarkerWhileSnapshotHolds(t *testing.T) {
 		}
 	}
 	storeAged(10 * time.Minute)
-	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 on haiku · saved $0.42 · 0 on doubt · quota stale\n" {
+	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved $0.42 · 0 on doubt · quota stale\n" {
 		t.Errorf("holding snapshot: %q", got)
 	}
 	// No spawns and an unusable session still flag the hold.

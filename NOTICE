@@ -18,7 +18,7 @@ and is retained below.
 mods/savvy-progress/ is the Claude Code mod savvy-progress by johnnyvizz
 (https://github.com/JohnnyVizz/claude-kit, path plugins/savvy-progress,
 version 1.2.1, commit c871c15), MIT License, Copyright (c) 2026 johnnyvizz,
-vendored with one local patch (colours, shown tier words and a single crab sprite, documented in
+vendored with one local patch (colours, shown tier words, a single crab sprite and a read-only draw of Downshift's per-spawn state and savings, documented in
 mods/savvy-progress/README.md and mods/savvy-progress/downshift-local.patch). The MIT notice is in mods/savvy-progress/LICENSE; its text
 is the MIT text retained below, under the copyright line above.
 

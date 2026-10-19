@@ -37,7 +37,7 @@ func TestWatchFrame_FakeClockAndTimeoutToUnknown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(out, "downshift watch · 10:50:00 · every 1s · Ctrl-C to quit\nsession · 2 subagents") {
+	if !strings.HasPrefix(out, "downshift watch · 10:50:00 · every 1s · Ctrl-C to quit\n○ downshift idle") {
 		t.Fatalf("frame header:\n%s", out)
 	}
 	if strings.Count(out, "  …  ") != 2 || strings.Contains(out, "  ?  ") {
@@ -47,7 +47,7 @@ func TestWatchFrame_FakeClockAndTimeoutToUnknown(t *testing.T) {
 	// 2h05 after d1: the first runs out to ?, the second is still running.
 	out, _ = watchFrame(events, "", cmdCat, watchT0.Add(125*time.Minute), time.Second)
 	rows := strings.Split(strings.TrimRight(out, "\n"), "\n")
-	if len(rows) != 4 || !strings.Contains(rows[2], "  ?  ") || !strings.Contains(rows[3], "  …  ") {
+	if len(rows) != 5 || !strings.Contains(rows[3], "  ?  ") || !strings.Contains(rows[4], "  …  ") {
 		t.Fatalf("d1 must be ?, d2 running:\n%s", out)
 	}
 }
