@@ -139,7 +139,7 @@ var RawSignals = []SignalDef{
 	{`\bprettier\b`, 3, Trivial},
 	{`\beslint\b`, 3, Trivial},
 	{`\b(?:git\s+(?:commit|push|pull|status|add|stash|log|diff|checkout|branch)|fa[cç]a\s+o\s+(?:commit|push|pull)|fazer\s+o\s+(?:commit|push|pull))\b`, 3, Trivial},
-	{`\bfix\s+(a\s+)?typo\b`, 3, Trivial},
+	{`\bfix\s+(?:a\s+|the\s+|some\s+)?typos?\b`, 3, Trivial},
 	{`\badd\s+(a\s+)?comment\b`, 3, Trivial},
 	{`\b(?:boilerplate|c[oó]digo\s+repetitivo)\b`, 2, Trivial},
 	{`\bmove\s+(the\s+)?file\b`, 3, Trivial},

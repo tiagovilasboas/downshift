@@ -1,0 +1,40 @@
+{
+  "name": "agent-custom-undefined",
+  "description": "Custom agent type with no definition: unknown baseline, so no saving may be claimed.",
+  "parent_tier": "frontier",
+  "spawns": 20,
+  "tasks": [
+    "rename the variable userId to userIdentifier in internal/store/user.go ({canary})",
+    "rename the function parseCfg to parseConfig everywhere it is called ({canary})",
+    "fix the typo 'recieve' to 'receive' in the README ({canary})",
+    "rename the constant MaxRetry to MaxRetries in pkg/retry/retry.go ({canary})",
+    "rename the test helper mkTmp to makeTempDir in the test files ({canary})"
+  ],
+  "usage": {
+    "input": [
+      200,
+      1500
+    ],
+    "output": [
+      300,
+      2500
+    ],
+    "cache_read": [
+      15000,
+      90000
+    ],
+    "cache_write": [
+      0,
+      8000
+    ]
+  },
+  "harnesses": [
+    "claude-code"
+  ],
+  "agent_type": "sim-undefined",
+  "expect": {
+    "*": {
+      "unknown_baseline": true
+    }
+  }
+}
