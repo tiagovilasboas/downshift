@@ -79,6 +79,7 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 	}
 
 	var usage telemetry.TokenUsage
+	priced := false // a later stop of an agent already priced (Cumulative)
 	// A harness whose usage source is not proven (UsageNone or empty) records
 	// the end and the status but never a cost: unverified tokens could belong
 	// to the parent thread and would corrupt cost per completed task.
@@ -96,18 +97,36 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 		if agentHash == "" {
 			return res
 		}
-		var resolved *telemetry.Event
+		var resolved, firstUsage *telemetry.Event
+		var recorded telemetry.TokenUsage
 		for i := range prior {
 			ev := &prior[i]
 			if ev.AgentHash != agentHash {
 				continue
 			}
 			if ev.Outcome == telemetry.OutcomeUsage {
-				return res // this agent is already priced
+				if !ce.Cumulative {
+					return res // this agent is already priced
+				}
+				if firstUsage == nil {
+					firstUsage = ev
+				}
+				recorded = addUsage(recorded, ev.TokenUsageOrZero())
+				continue
 			}
 			if ev.Outcome == telemetry.OutcomeResolved {
 				resolved = ev
 			}
+		}
+		if firstUsage != nil {
+			// The agent stopped before and was priced then. Its transcript is
+			// cumulative, so only the growth is new; an unchanged transcript (a
+			// repeated stop) records nothing.
+			usage = usageGrowth(usage, recorded)
+			if usage == (telemetry.TokenUsage{}) {
+				return res
+			}
+			priced = true
 		}
 		if resolved != nil {
 			for i := range prior {
@@ -136,7 +155,7 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 	ev.Verification = ce.Verification
 	telemetry.Record(ev)
 	res.Usage = &ev
-	if ce.IsChild {
+	if ce.IsChild && !priced {
 		res.Line = telemetry.ChildEndLine(ev)
 	}
 	if target != nil {
@@ -439,4 +458,26 @@ func recordChildEnd(ce hookport.ChildEnd, sessionHash, callHash, agentHash, bina
 		AgentHash:      agentHash,
 		ChildStatus:    ce.Status,
 	})
+}
+
+// addUsage sums two token counts field by field.
+func addUsage(a, b telemetry.TokenUsage) telemetry.TokenUsage {
+	return telemetry.TokenUsage{
+		InputTokens:      a.InputTokens + b.InputTokens,
+		OutputTokens:     a.OutputTokens + b.OutputTokens,
+		CachedTokens:     a.CachedTokens + b.CachedTokens,
+		CacheWriteTokens: a.CacheWriteTokens + b.CacheWriteTokens,
+	}
+}
+
+// usageGrowth is total minus recorded, field by field, never below zero: what a
+// cumulative transcript gained since the last record.
+func usageGrowth(total, recorded telemetry.TokenUsage) telemetry.TokenUsage {
+	grow := func(t, r int64) int64 { return max(0, t-r) }
+	return telemetry.TokenUsage{
+		InputTokens:      grow(total.InputTokens, recorded.InputTokens),
+		OutputTokens:     grow(total.OutputTokens, recorded.OutputTokens),
+		CachedTokens:     grow(total.CachedTokens, recorded.CachedTokens),
+		CacheWriteTokens: grow(total.CacheWriteTokens, recorded.CacheWriteTokens),
+	}
 }

@@ -91,3 +91,23 @@ func modelLinePick(lineType, container string) func(line []byte) string {
 		return inner.Model
 	}
 }
+
+// TranscriptModelOfCall returns the model of the last line of type lineType whose
+// text carries id (a tool-call id), read from <container>.model. For Claude
+// Code it is the model of the assistant message that issued that tool call, the
+// parent's exact model at spawn time, where TranscriptModel would return the
+// last model written, which is stale when the session switched models between
+// turns. Only the id is kept. Any problem, or no such line yet, returns "".
+func TranscriptModelOfCall(path, lineType, container, id string) string {
+	if id == "" {
+		return ""
+	}
+	pick := modelLinePick(lineType, container)
+	needle := []byte(id)
+	return LastInTranscriptTail(path, func(line []byte) string {
+		if !bytes.Contains(line, needle) {
+			return ""
+		}
+		return pick(line)
+	})
+}

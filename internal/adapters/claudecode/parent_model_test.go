@@ -62,8 +62,8 @@ func TestHandle_ExplicitModelBeatsParentModel(t *testing.T) {
 	}
 }
 
-// Non-inheriting agent types keep an unknown baseline even when parent_model
-// is set: the parent would be a guess for a pinned custom agent.
+// A built-in type that runs on its own model never takes parent_model: its
+// baseline is the model it runs on, it is pinned, and it is not rewritten.
 func TestHandle_ParentModelIgnoredForPinnedAgentType(t *testing.T) {
 	frontier := catID(core.TierFrontier)
 	ev := withCatalogSession(claudecode.Event{
@@ -71,9 +71,12 @@ func TestHandle_ParentModelIgnoredForPinnedAgentType(t *testing.T) {
 		ParentModel: frontier,
 		ToolInput:   json.RawMessage(`{"subagent_type":"statusline-setup","prompt":"rename the userId variable to userIdentifier"}`),
 	})
-	_, _, d := claudecode.Handle(ev, cat)
-	if d.Baseline.RequestedID != "" {
-		t.Fatalf("pinned agent type must keep unknown baseline, got %q", d.Baseline.RequestedID)
+	out, _, d := claudecode.Handle(ev, cat)
+	if d.Baseline.RequestedID == frontier || d.Baseline.RequestedID == "" || !d.Baseline.Pinned {
+		t.Fatalf("want the built-in's own model as a pinned baseline, got %q pinned=%v", d.Baseline.RequestedID, d.Baseline.Pinned)
+	}
+	if m := decodeUpdated(t, out); m != nil {
+		t.Fatalf("a pinned built-in must not be rewritten, got %v", m)
 	}
 }
 

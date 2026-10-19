@@ -15,10 +15,11 @@ import (
 
 // inheritingAgentTypes run on the parent session's model when the Task call
 // sets no model: the general-purpose and catch-all types, and the built-in
-// Explore and Plan (sub-agents docs, "Built-in subagents"). Other types may pin
-// their own model in their definition (statusline-setup runs on Sonnet,
-// claude-code-guide on Haiku, a custom type on whatever its frontmatter says),
-// so the parent model would be a guess for them and the baseline stays unknown.
+// Explore and Plan (sub-agents docs, "Built-in subagents"). Any other type is
+// defined by a file, or is a built-in that runs on its own model
+// (builtinPinnedAgentTypes), so the parent model would be a guess for it: its
+// definition decides (agentdef.go), and a type whose definition is not found
+// keeps an unknown baseline.
 var inheritingAgentTypes = map[string]bool{"": true, "general-purpose": true, "claude": true, "Explore": true, "Plan": true}
 
 // envDefaultOnlyAgentTypes use CLAUDE_CODE_SUBAGENT_MODEL only when it is forced
@@ -29,11 +30,6 @@ var envDefaultOnlyAgentTypes = map[string]bool{"Explore": true, "Plan": true}
 // subagentModelForceEnv is the variable that makes subagentModelFromEnv win over
 // every definition and per-call choice (Claude Code v2.1.257 and later).
 const subagentModelForceEnv = "CLAUDE_CODE_SUBAGENT_MODEL_FORCE"
-
-// inheritsSessionModel reports whether this Task call runs on the session model.
-func inheritsSessionModel(ti map[string]any) bool {
-	return hookutil.StringField(ti, "model") == "" && inheritingAgentTypes[hookutil.StringField(ti, "subagent_type")]
-}
 
 // subagentModelFromEnv returns the model the harness override variable pins for
 // subagents (name declared in core.ClaudeCodeCaps.ModelOverrideEnv). Claude
@@ -115,6 +111,49 @@ func sessionModelFromTranscript(path string) string {
 	waitedEmpty.path = path
 	waitedEmpty.Unlock()
 	return ""
+}
+
+// callWaited remembers the last (transcript, call) whose bounded wait found no
+// line for the call, so the second read of one hook call does not wait again.
+var callWaited struct {
+	sync.Mutex
+	path, call string
+}
+
+// parentModelAtSpawn is the model of the parent at the moment it spawned: the
+// model of the assistant message that issued this very tool call. The last
+// assistant model in the transcript (sessionModelFromTranscript) is the model of
+// the previous turn when the session switched models in between (/model,
+// opusplan entering plan mode), and a baseline from it priced a spawn on the
+// wrong model: one spawn recorded a $2.38 overspend that was never the router's.
+// The line for the call may not be on disk yet (the transcript is written
+// asynchronously), so it is waited for, bounded as the first-spawn wait is, and
+// then the last assistant model stands in. Without a call id, only that stand-in.
+func parentModelAtSpawn(path, toolUseID string) string {
+	if toolUseID == "" || path == "" {
+		return sessionModelFromTranscript(path)
+	}
+	if m := hookutil.TranscriptModelOfCall(path, "assistant", "message", toolUseID); m != "" {
+		return m
+	}
+	if _, err := os.Stat(path); err != nil {
+		return sessionModelFromTranscript(path)
+	}
+	callWaited.Lock()
+	again := callWaited.path == path && callWaited.call == toolUseID
+	callWaited.Unlock()
+	if !again {
+		for waited := time.Duration(0); waited < transcriptWaitTotal; waited += transcriptWaitStep {
+			time.Sleep(transcriptWaitStep)
+			if m := hookutil.TranscriptModelOfCall(path, "assistant", "message", toolUseID); m != "" {
+				return m
+			}
+		}
+		callWaited.Lock()
+		callWaited.path, callWaited.call = path, toolUseID
+		callWaited.Unlock()
+	}
+	return assistantModel(path) // the wait above already covered a transcript with no model yet
 }
 
 // assistantModel is one read of the transcript tail: message.model of the last
