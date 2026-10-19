@@ -12,7 +12,9 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/compressor"
 )
@@ -73,12 +75,12 @@ var expectedFormat = map[Family]compressor.Format{
 }
 
 // Run executes argv directly (no shell) with the caller's stdin, and exits
-// with the program's own status. Stderr always streams through unchanged.
-// Stdout streams through unchanged too unless argv is an allowlisted family
-// and compaction is on; then it is held in memory up to
-// compressor.MaxProcessableBytes and compacted only when the program exited 0,
-// wrote nothing on stderr, and the compressor recognised the family's own
-// format. Past the bound, the held bytes are flushed and the rest streams.
+// with the program's own status. Only the allowlisted families run (anything
+// else is refused with 126). Output keeps the order the program wrote it in.
+// With compaction on, stdout is held briefly (see gate) and compacted only
+// when the program exited 0, wrote nothing on stderr, stayed under
+// compressor.MaxProcessableBytes and HoldBound, and the compressor recognised
+// the family's own format. Otherwise it is byte-identical.
 // Any internal error prints the raw output: output is never lost.
 func Run(argv []string, o Options) (res Result) {
 	if len(argv) == 0 {
@@ -97,20 +99,14 @@ func Run(argv []string, o Options) (res Result) {
 		return startFailure(argv[0], err, o.Stderr, res.Family)
 	}
 
-	stderr := &countingWriter{w: o.Stderr}
-	var held *heldWriter
+	g := newGate(o.Stdout, o.Stderr, o.Compact)
 	cmd := exec.Command(path, argv[1:]...)
 	cmd.Args[0] = argv[0]
 	cmd.Env = append(os.Environ(), DepthEnv+"=1")
 	ownProcessGroup(cmd)
 	cmd.Stdin = o.Stdin
-	cmd.Stderr = stderr
-	if o.Compact && res.Family != FamilyNone {
-		held = &heldWriter{out: o.Stdout, limit: compressor.MaxProcessableBytes}
-		cmd.Stdout = held
-	} else {
-		cmd.Stdout = &countingWriter{w: o.Stdout}
-	}
+	cmd.Stdout = stdoutWriter{g}
+	cmd.Stderr = stderrWriter{g}
 
 	signals := o.Signals
 	if signals == nil {
@@ -136,18 +132,7 @@ func Run(argv []string, o Options) (res Result) {
 	}()
 
 	res.ExitCode, res.ExitClass = exitStatus(cmd.Wait())
-	res.RawBytes = stderr.n
-	res.EmittedBytes = stderr.n
-	switch w := cmd.Stdout.(type) {
-	case *countingWriter:
-		res.RawBytes += w.n
-		res.EmittedBytes += w.n
-	case *heldWriter:
-		raw, emitted, compacted := w.finish(res.ExitCode == 0 && stderr.n == 0, expectedFormat[res.Family])
-		res.RawBytes += raw
-		res.EmittedBytes += emitted
-		res.Compacted = compacted
-	}
+	res.RawBytes, res.EmittedBytes, res.Compacted = g.finish(res.ExitCode == 0, expectedFormat[res.Family])
 	return res
 }
 
@@ -181,59 +166,105 @@ func exitStatus(err error) (int, string) {
 	return code, ExitClassNonZero
 }
 
-// countingWriter passes bytes through and counts them.
-type countingWriter struct {
-	w io.Writer
-	n int64
-}
+// HoldBound is the longest stdout of an allowlisted family is held while it
+// could still be compacted. Past it the held bytes are flushed and the rest
+// streams, so a slow run is not silent and a killed wrapper has shown what the
+// program wrote up to that point.
+var HoldBound = 2 * time.Second
 
-func (c *countingWriter) Write(p []byte) (int, error) {
-	c.n += int64(len(p))
-	_, _ = c.w.Write(p) // a closed reader must not kill the program
-	return len(p), nil
-}
-
-// heldWriter holds stdout up to limit bytes. Past the limit it flushes what it
-// held and streams the rest, so memory stays bounded and nothing is lost.
-type heldWriter struct {
-	out       io.Writer
-	limit     int
+// gate serialises the program's two output streams into the caller's two
+// writers so their relative order is preserved. Stdout is held back only
+// while compaction is still possible: the first stderr byte, the size limit
+// or HoldBound releases the held bytes first, in write order, and from then
+// on both streams pass straight through and nothing is compacted.
+type gate struct {
+	mu        sync.Mutex
+	out, err  io.Writer
 	buf       bytes.Buffer
 	streaming bool
-	n         int64
+	timer     *time.Timer
+	nOut      int64
+	nErr      int64
 }
 
-func (h *heldWriter) Write(p []byte) (int, error) {
-	h.n += int64(len(p))
-	if !h.streaming && h.buf.Len()+len(p) > h.limit {
-		h.streaming = true
-		_, _ = h.out.Write(h.buf.Bytes())
-		h.buf = bytes.Buffer{}
+func newGate(out, err io.Writer, hold bool) *gate {
+	return &gate{out: out, err: err, streaming: !hold}
+}
+
+// release flushes held stdout and switches to streaming. Callers hold g.mu.
+func (g *gate) release() {
+	if g.streaming {
+		return
 	}
-	if h.streaming {
-		_, _ = h.out.Write(p)
+	g.streaming = true
+	if g.timer != nil {
+		g.timer.Stop()
+	}
+	_, _ = g.out.Write(g.buf.Bytes()) // a closed reader must not kill the program
+	g.buf = bytes.Buffer{}
+}
+
+type stdoutWriter struct{ g *gate }
+
+func (w stdoutWriter) Write(p []byte) (int, error) {
+	g := w.g
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.nOut += int64(len(p))
+	if !g.streaming && g.buf.Len()+len(p) > compressor.MaxProcessableBytes {
+		g.release()
+	}
+	if g.streaming {
+		_, _ = g.out.Write(p)
 		return len(p), nil
 	}
-	h.buf.Write(p)
+	if g.buf.Len() == 0 {
+		g.timer = time.AfterFunc(HoldBound, func() {
+			g.mu.Lock()
+			defer g.mu.Unlock()
+			g.release()
+		})
+	}
+	g.buf.Write(p)
 	return len(p), nil
 }
 
-// finish writes the held stdout, compacted when clean is true and the
-// compressor applied the expected format, raw otherwise. It returns raw and
-// emitted byte counts.
-func (h *heldWriter) finish(clean bool, want compressor.Format) (raw, emitted int64, compacted bool) {
-	if h.streaming {
-		return h.n, h.n, false
+type stderrWriter struct{ g *gate }
+
+func (w stderrWriter) Write(p []byte) (int, error) {
+	g := w.g
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.nErr += int64(len(p))
+	g.release()
+	_, _ = g.err.Write(p)
+	return len(p), nil
+}
+
+// finish writes any still-held stdout, compacted when the exit code was 0,
+// nothing was released early and the compressor applied the expected format,
+// raw otherwise. It returns the raw and emitted byte counts.
+func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64, compacted bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	raw = g.nOut + g.nErr
+	if g.streaming {
+		return raw, raw, false
 	}
-	data := h.buf.Bytes()
+	if g.timer != nil {
+		g.timer.Stop()
+	}
+	data := g.buf.Bytes()
+	g.streaming = true // a timer that fires after finish finds nothing to flush
+	g.buf = bytes.Buffer{}
 	out := data
-	if clean && want != "" {
+	if exitZero && want != "" {
 		if c, ok := compactSafely(data, want); ok {
 			out, compacted = c, true
 		}
 	}
-	_, _ = h.out.Write(out)
-	return h.n, int64(len(out)), compacted
+	_, _ = g.out.Write(out)
+	return raw, int64(len(out)), compacted
 }
 
 // compactSafely runs the compressor under recover: a compressor bug prints
