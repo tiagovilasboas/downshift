@@ -21,6 +21,10 @@ type shellEvent interface {
 	// ShellRewrite returns the wire output that replaces the command,
 	// preserving every other input field.
 	ShellRewrite(command string) (any, error)
+	// ShellAllowed reports whether the harness's own permission rules would
+	// run the original command without asking: an allow rule matches and no
+	// deny or ask rule does. Any rule-reading error is false.
+	ShellAllowed(command string) bool
 }
 
 // execEnvKillSwitch turns the exec wrapper off everywhere when set to "0".
@@ -39,9 +43,9 @@ var execLookPath = exec.LookPath
 
 // shellWrapDecision is the shared, harness-free decision for one shell
 // command: kill switch, config, policy, the harness's declared capability,
-// and a downshift binary on PATH for the shell to find. Anything short of all
-// of them leaves the command unchanged.
-func shellWrapDecision(harness, command string) execwrap.Decision {
+// the user's own permission rules, and a downshift binary on PATH for the
+// shell to find. Anything short of all of them leaves the command unchanged.
+func shellWrapDecision(harness, command string, allowed func(string) bool) execwrap.Decision {
 	if hookGetenv(execEnvKillSwitch) == "0" || !execConfigEnabled() {
 		return execwrap.Decision{Reason: "disabled"}
 	}
@@ -51,6 +55,12 @@ func shellWrapDecision(harness, command string) execwrap.Decision {
 	}
 	if caps, ok := core.CapsFor(harness); !ok || !caps.CanRewriteShellCommand {
 		return execwrap.Decision{Family: d.Family, Reason: "harness_cannot_rewrite"}
+	}
+	// The user's own rules decide: the original command must be allowed and
+	// not denied or asked, as written and as normalised. The rewritten text
+	// would match none of those rules.
+	if allowed == nil || !allowed(command) || !allowed(d.Argv) {
+		return execwrap.Decision{Family: d.Family, Reason: "not_allowed_by_user_rules"}
 	}
 	if _, err := execLookPath("downshift"); err != nil {
 		return execwrap.Decision{Family: d.Family, Reason: "downshift_not_on_path"}
@@ -71,7 +81,7 @@ func shellRewrite[E any](harness string, ev E) (out any, isShell bool) {
 	if !isShell {
 		return nil, false
 	}
-	d := shellWrapDecision(harness, command)
+	d := shellWrapDecision(harness, command, s.ShellAllowed)
 	if !d.Rewrite {
 		return nil, true
 	}

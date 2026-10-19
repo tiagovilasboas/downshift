@@ -36,6 +36,9 @@ type Decision struct {
 	// Command is the wrapped command; empty when Rewrite is false.
 	Command string
 	Family  Family
+	// Argv is the command with whitespace normalised: the text a permission
+	// rule of the original command is matched against.
+	Argv string
 	// Reason is a fixed code, safe to log.
 	Reason string
 }
@@ -84,6 +87,7 @@ func Decide(command string) Decision {
 	return Decision{
 		Rewrite: true,
 		Command: WrapPrefix + strings.Join(argv, " "),
+		Argv:    strings.Join(argv, " "),
 		Family:  family,
 		Reason:  ReasonAllowlisted,
 	}

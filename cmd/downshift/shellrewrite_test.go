@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
@@ -33,13 +34,36 @@ func withExec(t *testing.T, enabled bool, env map[string]string, onPath bool) {
 	t.Cleanup(func() { execConfigEnabled, execLookPath, hookGetenv = oldEnabled, oldLook, oldEnv })
 }
 
-func bashPayload(t *testing.T, command string) string {
+// userSettings points CLAUDE_CONFIG_DIR at a temp dir whose settings.json
+// carries the given permission rules, and hides the machine's managed policy.
+// It returns a cwd with no settings of its own.
+func userSettings(t *testing.T, allow, deny, ask []string) string {
+	t.Helper()
+	dir := t.TempDir()
+	body, err := json.Marshal(map[string]any{"permissions": map[string]any{"allow": allow, "deny": deny, "ask": ask}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "settings.json"), body, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("CLAUDE_CONFIG_DIR", dir)
+	t.Cleanup(claudecode.WithManagedSettings(nil))
+	cwd := t.TempDir()
+	if err := os.Mkdir(filepath.Join(cwd, ".git"), 0o700); err != nil { // stop the settings walk here
+		t.Fatal(err)
+	}
+	return cwd
+}
+
+func bashPayload(t *testing.T, command, cwd string) string {
 	t.Helper()
 	b, err := json.Marshal(map[string]any{
 		"hook_event_name": "PreToolUse",
 		"tool_name":       "Bash",
 		"session_id":      "s1",
 		"tool_use_id":     "toolu_1",
+		"cwd":             cwd,
 		"tool_input": map[string]any{
 			"command":           command,
 			"description":       "Run the unit tests for the whole module",
@@ -55,6 +79,8 @@ func bashPayload(t *testing.T, command string) string {
 
 // TestShellRewrite_ThroughSharedRunner drives the real Claude Code hook entry
 // (runHookAdapter with the claude-code adapter and wire).
+var okRules = []string{"Bash(go test:*)", "Bash(git status)"}
+
 func TestShellRewrite_ThroughSharedRunner(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -62,19 +88,27 @@ func TestShellRewrite_ThroughSharedRunner(t *testing.T) {
 		env     map[string]string
 		onPath  bool
 		command string
+		allow   []string
+		deny    []string
+		ask     []string
 		want    string // rewritten command; "" means unchanged ({})
 	}{
-		{"enabled go test", true, nil, true, "go test ./...", "downshift exec -- go test ./..."},
-		{"enabled git status", true, nil, true, "git status", "downshift exec -- git status"},
-		{"disabled by default", false, nil, true, "go test ./...", ""},
-		{"kill switch", true, map[string]string{"DOWNSHIFT_EXEC": "0"}, true, "go test ./...", ""},
-		{"kill switch other value keeps it on", true, map[string]string{"DOWNSHIFT_EXEC": "1"}, true, "git status", "downshift exec -- git status"},
-		{"metacharacter", true, nil, true, "go test ./... | tail -5", ""},
-		{"list", true, nil, true, "git status && rm -rf x", ""},
-		{"not allowlisted", true, nil, true, "git log", ""},
-		{"already wrapped", true, nil, true, "downshift exec -- go test ./...", ""},
-		{"downshift not on PATH", true, nil, false, "go test ./...", ""},
-		{"empty command", true, nil, true, "", ""},
+		{"enabled go test", true, nil, true, "go test ./...", okRules, nil, nil, "downshift exec -- go test ./..."},
+		{"enabled git status", true, nil, true, "git status", okRules, nil, nil, "downshift exec -- git status"},
+		{"no allow rule", true, nil, true, "go test ./...", nil, nil, nil, ""},
+		{"allow rule for another command", true, nil, true, "go test ./...", []string{"Bash(git status)"}, nil, nil, ""},
+		{"deny rule wins", true, nil, true, "go test ./...", okRules, []string{"Bash(go test:*)"}, nil, ""},
+		{"ask rule wins", true, nil, true, "go test ./...", okRules, nil, []string{"Bash(go test ./...)"}, ""},
+		{"bare Bash deny", true, nil, true, "git status", okRules, []string{"Bash"}, nil, ""},
+		{"disabled by default", false, nil, true, "go test ./...", okRules, nil, nil, ""},
+		{"kill switch", true, map[string]string{"DOWNSHIFT_EXEC": "0"}, true, "go test ./...", okRules, nil, nil, ""},
+		{"kill switch other value keeps it on", true, map[string]string{"DOWNSHIFT_EXEC": "1"}, true, "git status", okRules, nil, nil, "downshift exec -- git status"},
+		{"metacharacter", true, nil, true, "go test ./... | tail -5", okRules, nil, nil, ""},
+		{"list", true, nil, true, "git status && rm -rf x", okRules, nil, nil, ""},
+		{"not allowlisted", true, nil, true, "git log", okRules, nil, nil, ""},
+		{"already wrapped", true, nil, true, "downshift exec -- go test ./...", okRules, nil, nil, ""},
+		{"downshift not on PATH", true, nil, false, "go test ./...", okRules, nil, nil, ""},
+		{"empty command", true, nil, true, "", okRules, nil, nil, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -82,10 +116,11 @@ func TestShellRewrite_ThroughSharedRunner(t *testing.T) {
 			eventLog := filepath.Join(t.TempDir(), "events.jsonl")
 			t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)
 			withExec(t, tc.enabled, tc.env, tc.onPath)
+			cwd := userSettings(t, tc.allow, tc.deny, tc.ask)
 
 			var rc int
 			out := captureStdout(func() {
-				rc = harnessRegistry["claude-code"].Hook(strings.NewReader(bashPayload(t, tc.command)), cmdCat)
+				rc = harnessRegistry["claude-code"].Hook(strings.NewReader(bashPayload(t, tc.command, cwd)), cmdCat)
 			})
 			if rc != 0 {
 				t.Fatalf("rc = %d, a shell call must never be denied", rc)
@@ -142,6 +177,7 @@ func assertShellRewrite(t *testing.T, out, want string) {
 type fakeShellEvent struct{ Command string }
 
 func (e fakeShellEvent) ShellCommand() (string, bool) { return e.Command, true }
+func (fakeShellEvent) ShellAllowed(string) bool       { return true }
 func (e fakeShellEvent) ShellRewrite(c string) (any, error) {
 	return map[string]string{"command": c}, nil
 }
@@ -149,7 +185,7 @@ func (e fakeShellEvent) ShellRewrite(c string) (any, error) {
 func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 	withExec(t, true, nil, true)
 	for _, n := range []string{"cursor", "codex", "kirocrew", "antigravity", "opencode", "unknown"} {
-		d := shellWrapDecision(n, "go test ./...")
+		d := shellWrapDecision(n, "go test ./...", func(string) bool { return true })
 		if d.Rewrite || d.Reason != "harness_cannot_rewrite" || d.Family != execwrap.FamilyGoTest {
 			t.Fatalf("%s: decision = %+v", n, d)
 		}
@@ -175,7 +211,7 @@ func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 // fact is data, read through AllHarnessCaps.
 func TestShellRewrite_CapabilityDeclaredOnlyForClaudeCode(t *testing.T) {
 	withExec(t, true, nil, true)
-	if d := shellWrapDecision("claude-code", "go test ./..."); !d.Rewrite {
+	if d := shellWrapDecision("claude-code", "go test ./...", func(string) bool { return true }); !d.Rewrite {
 		t.Fatalf("claude-code decision = %+v", d)
 	}
 }
@@ -228,5 +264,55 @@ func TestContextEnableExecFlag(t *testing.T) {
 	}
 	if rc := runContext([]string{"enable", "headroom", "--exec"}, &out, &errb); rc != 2 {
 		t.Fatalf("--exec on a companion: rc=%d, want 2", rc)
+	}
+}
+
+// Any settings read or parse error means no rewrite, in any scope.
+func TestShellRewrite_UnreadableSettingsMeanNoRewrite(t *testing.T) {
+	withExec(t, true, nil, true)
+	cwd := userSettings(t, okRules, nil, nil)
+	if err := os.MkdirAll(filepath.Join(cwd, ".claude"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(cwd, ".claude", "settings.local.json"), []byte("{not json"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	out := captureStdout(func() {
+		harnessRegistry["claude-code"].Hook(strings.NewReader(bashPayload(t, "go test ./...", cwd)), cmdCat)
+	})
+	if strings.TrimSpace(out) != "{}" {
+		t.Fatalf("stdout = %q, want {}", out)
+	}
+}
+
+// A deny rule in the project or local scope, or a managed deny, blocks the
+// rewrite even when the user scope allows the command.
+func TestShellRewrite_DenyInAnyScope(t *testing.T) {
+	withExec(t, true, nil, true)
+	scopes := map[string]func(t *testing.T, cwd string) string{
+		"project": func(t *testing.T, cwd string) string { return filepath.Join(cwd, ".claude", "settings.json") },
+		"local":   func(t *testing.T, cwd string) string { return filepath.Join(cwd, ".claude", "settings.local.json") },
+		"managed": func(t *testing.T, cwd string) string { return filepath.Join(t.TempDir(), "managed-settings.json") },
+	}
+	for name, path := range scopes {
+		t.Run(name, func(t *testing.T) {
+			cwd := userSettings(t, okRules, nil, nil)
+			file := path(t, cwd)
+			if err := os.MkdirAll(filepath.Dir(file), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(file, []byte(`{"permissions":{"deny":["Bash(go test:*)"]}}`), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if name == "managed" {
+				t.Cleanup(claudecode.WithManagedSettings([]string{file}))
+			}
+			out := captureStdout(func() {
+				harnessRegistry["claude-code"].Hook(strings.NewReader(bashPayload(t, "go test ./...", cwd)), cmdCat)
+			})
+			if strings.TrimSpace(out) != "{}" {
+				t.Fatalf("stdout = %q, want {}", out)
+			}
+		})
 	}
 }
