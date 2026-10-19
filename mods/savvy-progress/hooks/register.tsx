@@ -635,6 +635,8 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
   const ctx = ctxOf(a)
   const textW = W - 42 - 22
   const meta = [runModel(a)]
+  const dsText = dsLabel(a)
+  if (dsText) meta.push(dsText)
   if (a.round > 1) meta.push(`${s.round} ${a.round}`)
   if (a.status === 'failed') meta.push(s.failed)
   const barW = textW
@@ -723,6 +725,74 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
   if (p.autoOpenedFor === key) return
   await update($, panel, prev => ({ ...prev, autoOpenedFor: key }))
   void $.ui.open({ id: PANE, title: tr().pane })
+}
+
+// ---------------------------------------------------------------------------
+// Downshift local patch (2026-10-19): what Downshift did per spawn and this session.
+// Reads `downshift session --panel` (prompt-free JSON, computed by Downshift; this
+// mod only draws it). Fail-open: no binary, bad output or no match means nothing extra
+// is drawn. Data contract: docs/reference/spawn-state.md in the Downshift repo.
+
+type DsSpawn = { tool_use?: string; label: string }
+type DsView = { switched: number; held: number; saved_usd: number; has_saved: boolean; spawns: DsSpawn[] }
+
+let ds: DsView | null = null
+let dsAt = -Infinity
+const dsKeys = new Map<string, string>() // panel row id -> Downshift's hashed tool call id
+const DS_TTL_MS = 3000
+
+const dsParse = (raw: unknown): DsView | null => {
+  const v = raw as Partial<DsView> | null
+  if (!v || typeof v !== 'object' || !Array.isArray(v.spawns)) return null
+  const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : 0)
+  return {
+    switched: num(v.switched),
+    held: num(v.held),
+    saved_usd: num(v.saved_usd),
+    has_saved: v.has_saved === true,
+    spawns: v.spawns
+      .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
+      .map(x => ({ tool_use: typeof x.tool_use === 'string' ? x.tool_use : undefined, label: x.label.slice(0, 60) })),
+  }
+}
+
+// Same recipe as Downshift's ToolUseKey: sha256 of a fixed prefix and the tool call id.
+async function dsKeyOf(toolUseId: string): Promise<string | undefined> {
+  try {
+    const bytes = new TextEncoder().encode('harness-downshift-session-v1:' + toolUseId)
+    const sum = await globalThis.crypto.subtle.digest('SHA-256', bytes)
+    return [...new Uint8Array(sum)].map(b => b.toString(16).padStart(2, '0')).join('')
+  } catch {
+    return undefined
+  }
+}
+
+async function dsRefresh($: EngineInterface, force = false): Promise<void> {
+  try {
+    const at = await $.clock.now()
+    if (!force && at - dsAt < DS_TTL_MS) return
+    dsAt = at
+    const run = await $.process.run(['downshift', 'session', '--panel'], { timeoutMs: 2_000 })
+    ds = run.exitCode === 0 ? dsParse(JSON.parse(run.stdout)) : null
+  } catch {
+    ds = null
+  }
+}
+
+const dsLabel = (a: AgentRun): string | undefined => {
+  const key = dsKeys.get(a.id)
+  return key && ds ? ds.spawns.find(x => x.tool_use === key)?.label : undefined
+}
+
+/** One line for the band and the panel header; '' when there is nothing true to say. */
+const dsSummary = (): string => {
+  if (!ds || ds.switched + ds.held === 0 && !ds.has_saved) return ''
+  const parts: string[] = []
+  if (ds.has_saved && ds.saved_usd > 0.005) parts.push(`Downshift saved ≈${fmtCost(ds.saved_usd)} (est., list price)`)
+  else if (ds.has_saved && ds.saved_usd < -0.005) parts.push(`Downshift over ≈${fmtCost(-ds.saved_usd)} (est., list price)`)
+  else parts.push('Downshift on')
+  parts.push(`${ds.switched} switched · ${ds.held} held`)
+  return parts.join(' · ')
 }
 
 export const register: Register = (on, options) => {
@@ -883,6 +953,12 @@ export const register: Register = (on, options) => {
       return [...list.filter(a => a.id !== run.id), run].slice(-200)
     })
     await update($, now, () => at)
+    const key = await dsKeyOf(e.tool_use_id)
+    if (key) {
+      dsKeys.set(started.agentId ?? e.tool_use_id, key)
+      if (dsKeys.size > 200) dsKeys.delete(dsKeys.keys().next().value as string)
+    }
+    await dsRefresh($, true)
     if (e.subagentType.startsWith('savvy-')) {
       const f = await read($, flow)
       await autoOpen($, f && !f.isFinished ? f.title : 'savvy-flow')
@@ -933,6 +1009,7 @@ export const register: Register = (on, options) => {
   on('turn.complete', async ($, e, next) => {
     const agentId = e.agentId
     if (agentId) {
+      await dsRefresh($, true)
       const at = await $.clock.now()
       await update($, agents, list =>
         list.map((a): AgentRun => {
@@ -966,6 +1043,7 @@ export const register: Register = (on, options) => {
     const s = tr()
     const ui = $.ui.resolve(e)
     const { Box, Text, Button } = ui
+    await dsRefresh($)
     const list = await read($, agents)
     const f = await read($, flow)
     const p: Panel = await read($, panel)
@@ -1028,6 +1106,7 @@ export const register: Register = (on, options) => {
           ))}
           <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
             <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
+            {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
             {toggleCompact}
             {isEmpty && <Text dimColor>{s.empty}</Text>}
             {running.length > 0 && section('h-run', `${s.running} · ${running.length}`)}
@@ -1070,6 +1149,7 @@ export const register: Register = (on, options) => {
           <Text dimColor wrap="truncate-end">
             {'  '}
             {tier === 'other' ? a.type : tierWord(tier)} · {model}
+            {dsLabel(a) ? ` · ${dsLabel(a)}` : ''}
             {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
           </Text>
           <Text wrap="truncate-end">
@@ -1095,6 +1175,7 @@ export const register: Register = (on, options) => {
         <Text dimColor>
           ≈{fmtCost(t.cost)} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
         </Text>
+        {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
         {p.isCompact ? (
           <Text wrap="truncate-end">
             {[...running, ...finished].map(a => (
@@ -1140,6 +1221,7 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const f = await read($, flow)
     if (f === null || e.props.hasSurvey) return next(e)
+    await dsRefresh($)
     // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
     // never nested: the desktop drops a band that nests it.
     const drawn = await Promise.resolve(next(e)).catch(() => null)
@@ -1177,6 +1259,7 @@ export const register: Register = (on, options) => {
             {crewButton}
             {dismiss}
           </Box>
+          {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
           {below}
         </Box>
       )
@@ -1199,6 +1282,7 @@ export const register: Register = (on, options) => {
           {crewButton}
           {dismiss}
         </Box>
+        {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
         {below}
       </Box>
     )

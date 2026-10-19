@@ -15,7 +15,7 @@ folded into the `downshift` plugin unchanged.
 | Upstream | https://github.com/JohnnyVizz/claude-kit, path `plugins/savvy-progress` |
 | Version | 1.2.1 |
 | Commit | `c871c153ead54ad9547cc717d0f3e5a676c73986` (2026-10-13) |
-| Files | `.claude-plugin/plugin.json`, `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `hooks/register.tsx` byte-identical except the Downshift colour patch below; the four `hooks/*.test.ts(x)` files byte-identical (they import nothing by relative path) |
+| Files | `.claude-plugin/plugin.json`, `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; the four `hooks/*.test.ts(x)` files byte-identical (they import nothing by relative path) |
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `savvy-progress`, source `./mods/savvy-progress` |
 | Needs | Claude Code 2.1.287 or later (mods on by default); a pane for `/agents-info` (desktop docks it; the terminal needs the fullscreen layout) |
 
@@ -37,7 +37,28 @@ regenerated 2026-10-19 against the pinned upstream commit.
 | Pixel crab | one costume per role (hard hat, star, palette, flag, ...) | one monochrome crab in greys (`CLAY` `#868A90`, claws `#D6DAE2`); one `#22c55e` pixel once the agent is done | no per-role costumes |
 | Tier words shown (`tier` strings, all three languages) | `light`, `medium`, `careful`, `heavy`, `fable` | `small`, `medium`, `frontier`, `frontier`, `frontier` | same words as the site and `downshift try`; the internal tier keys and the tool schema are unchanged |
 
-Re-vendor, then `git apply mods/savvy-progress/downshift-local.patch`.
+### Second part: what Downshift did (2026-10-19)
+
+Owner decision: the panel and the band show what Downshift did. The mod only
+draws; every number and label is computed by Downshift
+(`downshift session --panel`, see
+[docs/reference/spawn-state.md](../../docs/reference/spawn-state.md)).
+
+| In `hooks/register.tsx` | What it does |
+|---|---|
+| `dsRefresh` | runs `downshift session --panel` (`$.process.run`, 2 s timeout, at most every 3 s on render; forced at spawn and at turn end). Any failure leaves the panel exactly as upstream draws it |
+| `dsKeyOf` | sha256 of `harness-downshift-session-v1:` + the spawn's `tool_use_id` (Web Crypto), so a panel row finds Downshift's record for that spawn |
+| row | the model line gains the label: `opus → sonnet (mid)`, `held: original model kept`, `kept`, `control (unrouted)` |
+| header and band | one line: `Downshift saved ≈$X (est., list price) · N switched · M held` (`over` when negative; `Downshift on` before anything is priced) |
+
+Nothing here touches routing and it spends nothing. The savings figure is an
+estimate: list prices of the priced children against their baseline. The new
+test file `hooks/downshift.test.ts` is Downshift's own (not upstream). The
+spawn and the Downshift hook must see the same `tool_use_id`; if they do not
+(unverified live), rows show no label and the summary still draws.
+
+Re-vendor, then `git apply mods/savvy-progress/downshift-local.patch` (one patch
+for both parts; it applies to the pinned upstream commit).
 
 ## What it does
 

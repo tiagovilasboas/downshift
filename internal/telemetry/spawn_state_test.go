@@ -113,3 +113,35 @@ func TestActivityLine(t *testing.T) {
 		}
 	}
 }
+
+func TestPanelLabelsAndKey(t *testing.T) {
+	s := strings.Repeat("a", 64)
+	ev := func(o string, mod func(*Event)) Event {
+		e := Event{Harness: "claude-code", SessionID: s, Outcome: o, Tier: "MID", FromModel: "claude-opus-5-5", ToModel: "claude-sonnet-5-5",
+			Timestamp: time.Now().UTC().Format(time.RFC3339Nano), ToolUseHash: ToolUseKey("toolu_1")}
+		if mod != nil {
+			mod(&e)
+		}
+		return e
+	}
+	events := []Event{
+		ev(OutcomeRewriteEmitted, nil),
+		ev(OutcomeAllow, func(e *Event) { e.Corrections = []string{"R3"}; e.ToModel = e.FromModel }),
+		ev(OutcomeAllow, func(e *Event) { e.ToModel = e.FromModel }),
+		ev(OutcomeBaseline, func(e *Event) { e.ToModel = e.FromModel }),
+	}
+	v := BuildPanel(events, s)
+	want := []string{"opus → sonnet (mid)", "held: original model kept", "kept", "control (unrouted)"}
+	for i, w := range want {
+		if v.Spawns[i].Label != w {
+			t.Errorf("spawn %d label %q want %q", i, v.Spawns[i].Label, w)
+		}
+	}
+	if v.Switched != 1 || v.Held != 1 || v.Observed != 1 || v.HasSaved || v.Spawns[0].ToolUse != ToolUseKey("toolu_1") {
+		t.Fatalf("%+v", v)
+	}
+	// Pinned so the mod's own hash (same recipe) can be checked against it.
+	if got := ToolUseKey("toolu_1"); got != HashSessionID("toolu_1") {
+		t.Fatalf("ToolUseKey must equal HashSessionID: %s vs %s", got, HashSessionID("toolu_1"))
+	}
+}

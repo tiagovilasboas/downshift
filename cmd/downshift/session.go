@@ -34,17 +34,18 @@ func runSession(args []string, stdout, stderr io.Writer, catalog core.Resolver) 
 	resume := fs.Bool("resume", false, "undo --pause")
 	session := fs.String("session", "", "session id (default: the harness's own, else the most recent in the log)")
 	asJSON := fs.Bool("json", false, "tree as JSON")
+	panel := fs.Bool("panel", false, "prompt-free per-spawn state and session savings as JSON, for a panel mod")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
 	modes := 0
-	for _, on := range []bool{*tree, *why, *pause, *resume} {
+	for _, on := range []bool{*tree, *why, *pause, *resume, *panel} {
 		if on {
 			modes++
 		}
 	}
-	if modes > 1 || (*asJSON && (*why || *pause || *resume)) || fs.NArg() > 0 {
-		fmt.Fprintln(stderr, "usage: downshift session [--tree|--why|--pause|--resume] [--session=<id>] [--json]  (--json applies to --tree)")
+	if modes > 1 || (*asJSON && (*why || *pause || *resume || *panel)) || fs.NArg() > 0 {
+		fmt.Fprintln(stderr, "usage: downshift session [--tree|--why|--pause|--resume|--panel] [--session=<id>] [--json]  (--json applies to --tree)")
 		return 2
 	}
 
@@ -60,6 +61,13 @@ func runSession(args []string, stdout, stderr io.Writer, catalog core.Resolver) 
 		return sessionPauseResume(hash, *pause, stdout, stderr)
 	case *why:
 		fmt.Fprint(stdout, telemetry.Why(events, hash))
+		return 0
+	case *panel:
+		out, err := json.Marshal(telemetry.BuildPanel(events, hash))
+		if err != nil {
+			return 1
+		}
+		fmt.Fprintln(stdout, string(out))
 		return 0
 	}
 

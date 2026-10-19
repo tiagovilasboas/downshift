@@ -63,13 +63,33 @@ session or agent id is stored; `session` is the first 8 hex of the hashed id.
 5 minutes as idle. For `held`, `to_model` is what the child runs on and
 `recommended_model` is what Downshift would have chosen.
 
-### Re-vendoring `mods/savvy-progress` (and any panel)
+## `downshift session --panel` (what the agents panel reads)
 
-The mods under `mods/` are vendored: never edit them in place. A panel that
-wants the indicator reads `live.json`, or runs
-`downshift watch --once` / `downshift session --json`, and renders the fields
-above. Nothing in the mod is patched for this; if a future re-vendor adds a
-data hook, point it at `live.json`. No routing logic moves into the mod.
+Prompt-free JSON for the selected session (latest, or `--session`), built in
+`telemetry.BuildPanel`. Ready-made labels, so a panel only draws:
+
+```json
+{"session":"a1b2c3d4","switched":2,"held":1,"observed":4,
+ "saved_usd":1.23,"has_saved":true,"estimated":true,
+ "spawns":[{"tool_use":"<sha256 hex>","state":"switched",
+            "from_model":"claude-opus-5-5","to_model":"claude-sonnet-5-5",
+            "label":"opus → sonnet (mid)"}]}
+```
+
+Labels: `opus → sonnet (mid)`, `held: original model kept`, `kept`,
+`control (unrouted)`, `paused (unrouted)`, `blocked: respawn on another model`.
+`tool_use` is `telemetry.ToolUseKey(tool_use_id)`: sha256 of
+`harness-downshift-session-v1:` + the harness tool call id. `saved_usd` is an
+estimate (list prices, real usage of priced children); `has_saved` is false
+until a child is priced, and a reader then says nothing about money.
+
+### `mods/savvy-progress`
+
+Vendored, so it is patched only through its documented local patch
+(`mods/savvy-progress/downshift-local.patch`, README section "Downshift local
+patch"). The patch runs `downshift session --panel` and draws the row label and
+the summary line in the panel and the band; with no binary or bad output it
+draws what upstream draws. No routing logic lives in the mod.
 
 ## What a harness cannot honor
 

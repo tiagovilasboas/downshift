@@ -264,3 +264,28 @@ func TestSession_FastOnALargeLog(t *testing.T) {
 		t.Fatalf("session tree took %v on a 50 MB log, want < 200ms (it must read only the tail)", best)
 	}
 }
+
+func TestSession_PanelIsPromptFreeStateAndSavings(t *testing.T) {
+	_, a, _ := seedTreeLog(t)
+	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
+	out, _, rc := sessionCmd(t, "--panel", "--session="+a)
+	if rc != 0 {
+		t.Fatalf("rc=%d", rc)
+	}
+	var v telemetry.PanelView
+	if err := json.Unmarshal([]byte(out), &v); err != nil {
+		t.Fatalf("not JSON: %v\n%s", err, out)
+	}
+	if v.Switched != 1 || v.Held != 0 || !v.HasSaved || !v.Estimated || v.SavedUSD < 0.379 || v.SavedUSD > 0.381 {
+		t.Fatalf("panel: %+v", v)
+	}
+	if len(v.Spawns) != 1 || v.Spawns[0].Label != "opus → sonnet (mid)" {
+		t.Fatalf("spawns: %+v", v.Spawns)
+	}
+	if strings.Contains(out, a) || strings.Contains(out, "sess-a") {
+		t.Fatalf("raw session id leaked: %s", out)
+	}
+	if _, _, rc := sessionCmd(t, "--panel", "--why"); rc != 2 {
+		t.Fatalf("two modes is a usage error, rc=%d", rc)
+	}
+}
