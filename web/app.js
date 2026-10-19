@@ -33,7 +33,7 @@ function observedChildLine(data, harness) {
   if (harness) {
     const row = map[harness];
     if (!row || !row.usage) return 'child tokens unobserved';
-    return `child tokens ${row.tokens} (${row.usage} usage)`;
+    return `child tokens ${escapeHtml(row.tokens)} (${escapeHtml(row.usage)} usage)`;
   }
   let tokens = 0;
   let usage = 0;
@@ -43,7 +43,7 @@ function observedChildLine(data, harness) {
     usage += row.usage;
   }
   if (usage === 0) return 'child tokens unobserved';
-  return `child tokens ${tokens} (${usage} usage)`;
+  return `child tokens ${escapeHtml(tokens)} (${escapeHtml(usage)} usage)`;
 }
 
 function spawnSurfaceLine(events) {
@@ -62,9 +62,9 @@ function spawnSurfaceLine(events) {
 }
 
 function modelVersion(e) {
-  const id = (e && (e.final_model || e.requested_model || e.model)) || 'unknown';
+  const id = escapeHtml((e && (e.final_model || e.requested_model || e.model)) || 'unknown');
   const effort = e && (e.final_reasoning_effort || e.requested_reasoning_effort);
-  if (effort && effort !== 'unknown') return `${id} · ${effort}`;
+  if (effort && effort !== 'unknown') return `${id} · ${escapeHtml(effort)}`;
   return id;
 }
 
@@ -115,9 +115,9 @@ function renderMonitor(data) {
   for (const h of harnesses) {
     if (h && !chipNames.includes(h)) chipNames.push(h);
   }
-  const allChip = `<span class="chip${activeHarness===null?' hi':''}" onclick="setActiveHarness(null)">all</span>`;
+  const allChip = `<span class="chip${activeHarness===null?' hi':''}">all</span>`;
   const hchips = chipNames.map(h =>
-    `<span class="chip${h===activeHarness?' hi':''}" data-harness="${h}" onclick="setActiveHarness('${h}')">${h}</span>`
+    `<span class="chip${h===activeHarness?' hi':''}" data-harness="${escapeHtml(h)}">${escapeHtml(h)}</span>`
   ).join('');
   set('monitor-status', allChip + hchips);
 
@@ -154,18 +154,18 @@ function renderMonitor(data) {
     set('monitor-active-agents', dim('none in the last 5 min'));
   } else {
     const fromSwitches = activeSwitches.slice().reverse().map(e => {
-      const complexity = (e.complexity || 'unknown').toLowerCase();
+      const complexity = escapeHtml((e.complexity || 'unknown').toLowerCase());
       const verdict = e.verdict === 'DOWNSHIFT' ? `↓ ${complexity}`
         : e.verdict === 'UPSHIFT' ? `↑ ${complexity}`
         : e.verdict === 'UNKNOWN' ? `? ${complexity}`
         : `✓ ${complexity}`;
       const effort = e.final_reasoning_effort && e.final_reasoning_effort !== 'unknown'
-        ? ` · ${e.final_reasoning_effort}` : '';
+        ? ` · ${escapeHtml(e.final_reasoning_effort)}` : '';
       return `<div class="row">
         <span class="t">${ageStr(e.timestamp)}</span>
         <span class="m"><span class="active-dot">●</span>${modelVersion(e)}</span>
         <span class="tag-spawned">spawned</span>
-        <span class="desc">${e.harness || ''} · ${verdict}${effort}</span>
+        <span class="desc">${escapeHtml(e.harness || '')} · ${verdict}${effort}</span>
       </div>`;
     });
     set('monitor-active-agents', fromSwitches.join(''));
@@ -173,18 +173,18 @@ function renderMonitor(data) {
 
   // ── switches (last 6, newest first with flash) ──
   const swRows = filteredSwitches.slice(-6).reverse().map((e, i) => {
-    const complexity = (e.complexity || 'unknown').toLowerCase();
+    const complexity = escapeHtml((e.complexity || 'unknown').toLowerCase());
     const v = e.verdict === 'DOWNSHIFT' ? ok(`↓ ${complexity}`)
             : e.verdict === 'UPSHIFT'   ? warn(`↑ ${complexity}`)
             : e.verdict === 'UNKNOWN'   ? dim(`? ${complexity}`)
             : dim(`✓ ${complexity}`);
     const isNew = i === 0 && _justUpdated;
     return `<div class="row${isNew?' new':''}"><span class="t">${ageStr(e.timestamp)}</span><span class="m">${modelVersion(e)}</span><span class="tag-spawned">spawned</span>${v}</div>`;
-  }).join('') || dim(activeHarness ? `no ${activeHarness} events in the last 24h` : 'no active agent spawned');
+  }).join('') || dim(activeHarness ? `no ${escapeHtml(activeHarness)} events in the last 24h` : 'no active agent spawned');
   set('monitor-switches', swRows);
 
   const agRows = filteredAgents.slice(-4).map(a =>
-    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${a.model || 'unknown'}</span><span class="tag-spawned">spawned</span><span class="desc">${(a.task || '').slice(0,44)}</span></div>`
+    `<div class="row"><span class="t">${ageStr(a.timestamp)}</span><span class="m">${escapeHtml(a.model || 'unknown')}</span><span class="tag-spawned">spawned</span><span class="desc">${escapeHtml(String(a.task || '').slice(0,44))}</span></div>`
   ).join('') || dim('no spawned agents in the agent log');
   set('monitor-agents', agRows);
 
@@ -200,8 +200,8 @@ function renderMonitor(data) {
   const estUSD = credited.reduce((s, e) => s + (e.estimated_savings || 0) * 0.01, 0);
   const economyN = credited.length;
   set('monitor-stats',
-    `${info(totalN)} events &nbsp; ${ok(`${downN}↓`)} &nbsp; ${warn(`${upN}↑`)}` +
-    (activeHarness ? ` &nbsp; ${dim(`· ${activeHarness} only`)}` : '') +
+    `${info(escapeHtml(totalN))} events &nbsp; ${ok(`${escapeHtml(downN)}↓`)} &nbsp; ${warn(`${escapeHtml(upN)}↑`)}` +
+    (activeHarness ? ` &nbsp; ${dim(`· ${escapeHtml(activeHarness)} only`)}` : '') +
     `<div class="dim">${spawnSurfaceLine(src)}</div>` +
     `<div class="dim">${observedChildLine(data, activeHarness)}</div>`
   );
@@ -251,8 +251,8 @@ function renderCompaction(c) {
     }).join('');
   }
   set('compaction-report',
-    `<div class="stats-line">${before} bytes in · ${after} bytes after · ${ok(reduced + ' bytes reduced')} · savings_pct ${pct.toFixed(1)}</div>` +
-    `<div class="dim">token_state ${tokenState}</div>` +
+    `<div class="stats-line">${escapeHtml(before)} bytes in · ${escapeHtml(after)} bytes after · ${ok(escapeHtml(reduced) + ' bytes reduced')} · savings_pct ${pct.toFixed(1)}</div>` +
+    `<div class="dim">token_state ${escapeHtml(tokenState)}</div>` +
     harnessRows +
     `<div>Bytes medidos na saída da ferramenta. Tokens indisponíveis. Não soma na economia estimada do roteamento.</div>`
   );
@@ -302,6 +302,15 @@ function updateTimestamps() {
 
 // Do not register a service worker. A previous one cached a broken app.js
 // and a stale /api/status. sw.js now only unregisters that worker.
+
+// Chips are delegated: no inline handlers, so a CSP can forbid them.
+const chipBar = $('monitor-status');
+if (chipBar && chipBar.addEventListener) {
+  chipBar.addEventListener('click', ev => {
+    const chip = ev.target && ev.target.closest ? ev.target.closest('.chip') : null;
+    if (chip) setActiveHarness(chip.dataset.harness || null);
+  });
+}
 
 // First paint
 fetchStatus().then(data => { latestData = data; renderMonitor(data); });
