@@ -31,7 +31,7 @@ Every candidate must satisfy the following four core principles:
 | **`vitest`** | 500 – 2,500 tokens (test files, runner headers, transform times) | `Vitest: PASS (N passed across M files in Xs)` | **~86%** | `FAIL`, `Error:`, `AssertionError`, exit != 0 | **Landed (PR #267)** |
 | **`playwright test`** | 2,000 – 6,000 tokens (workers, browser matrix, step timings, HTML links) | `Playwright: PASS (N passed across B browsers in Xs)` | **~97%** | `failed`, `flaky`, timeout, retry, trace, `Error:`, exit != 0 | **Phase 1 (In Progress)** |
 | **`cargo test`** | 1,000 – 3,000 tokens (compilation banners, individual `test ... ok`) | `Cargo test: PASS (N passed in Xs)` | **~92%** | `FAILED`, `error[E...]`, warning, panic, exit != 0 | **Phase 1 (In Progress)** |
-| **`jest`** | 1,000 – 3,500 tokens (spec trees, test suites summary) | `Jest: PASS (N passed across M suites in Xs)` | **~90%** | `FAIL`, `Error:`, exit != 0 | **Phase 2** |
+| **`jest`** | 1,000 – 3,500 tokens (spec trees, test suites summary) | `Jest: PASS (N passed across M suites)` | **~90%** | `FAIL`, `Error:`, incomplete summary, exit != 0 | **Landed (Jest support)** |
 | **`cypress run`** | 2,500 – 6,500 tokens (spec tables, video links, browser launch) | `Cypress: PASS (N passed across M specs in Xs)` | **~96%** | `failed`, `AssertionError`, exit != 0 | **Phase 2** |
 | **`mvn test`** | 3,000 – 8,000 tokens (`[INFO]` downloads, plugin resolutions, build logs) | `Maven: PASS (N tests run, 0 failures in Xs)` | **~98%** | `BUILD FAILURE`, `FAILURE!`, exceptions, exit != 0 | **Phase 3** |
 | **`gradle test`** | 2,500 – 6,000 tokens (task execution tree, daemon banners) | `Gradle: PASS (N tests passed in Xs)` | **~97%** | `BUILD FAILED`, task failure, exit != 0 | **Phase 3** |
@@ -112,7 +112,7 @@ The following tools are explicitly excluded from `downshift exec` wrapping to pr
 ## 4. Execution Roadmap Summary
 
 - **Phase 1 (In Progress):** `playwright` (E2E), `cargo test` (Rust), `tsc` (TypeScript typecheck), and verbose `go test`.
-- **Phase 2 (Web & Unit):** `jest`, `cypress`, `next build`, `prettier --check`, `black/ruff format --check`, `mypy`.
+- **Phase 2 (Web & Unit):** `cypress`, `next build`, `prettier --check`, `black/ruff format --check`, `mypy`.
 - **Phase 3 (Enterprise & Linters):** `mvn test`, `gradle test`, `prisma generate/migrate`, `eslint`, `ruff check`, `golangci-lint`, PHP test/type/format tools, `go generate`, and `sqlc`.
 - **Phase 4 (Deps & Audits):** `pnpm install`, `npm install`, `pip/uv`, `npm/cargo/pip audit`, `alembic`, `flutter test`.
 - **Phase 5 (Noise & Search Bounds):** `git diff` lockfile squelcher, `ripgrep` (`rg`) hierarchical match bounds.

@@ -27,7 +27,9 @@ func TestDecide(t *testing.T) {
 		{"vitest run", "vitest run", true, FamilyVitest, "'/opt/ds/downshift' exec -- vitest run", ReasonAllowlisted},
 		{"npx vitest", "npx vitest", true, FamilyVitest, "'/opt/ds/downshift' exec -- npx vitest", ReasonAllowlisted},
 		{"npx vitest run", "npx vitest run --reporter=verbose", true, FamilyVitest, "'/opt/ds/downshift' exec -- npx vitest run --reporter=verbose", ReasonAllowlisted},
-		{"npx jest not allowlisted", "npx jest", false, "", "", ReasonNotAllowlisted},
+		{"jest bare", "jest", true, FamilyJest, "'/opt/ds/downshift' exec -- jest", ReasonAllowlisted},
+		{"jest run", "jest --runInBand", true, FamilyJest, "'/opt/ds/downshift' exec -- jest --runInBand", ReasonAllowlisted},
+		{"npx jest", "npx jest", true, FamilyJest, "'/opt/ds/downshift' exec -- npx jest", ReasonAllowlisted},
 
 		{"git log not allowlisted", "git log", false, "", "", ReasonNotAllowlisted},
 		{"git diff", "git diff", false, "", "", ReasonNotAllowlisted},

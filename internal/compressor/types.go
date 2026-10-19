@@ -32,6 +32,7 @@ const (
 	FormatPlaywright Format = "playwright"
 	FormatCargoTest  Format = "cargo_test"
 	FormatTSC        Format = "tsc"
+	FormatJest       Format = "jest"
 	FormatSearch     Format = "search"       // rg, grep
 	FormatFileList   Format = "file_listing" // ls -R, tree, find
 	FormatLogs       Format = "logs"         // repetitive log lines

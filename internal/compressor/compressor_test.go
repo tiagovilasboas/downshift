@@ -460,6 +460,48 @@ func TestCompress_TSC_ErrorsPreserveRaw(t *testing.T) {
 	}
 }
 
+func TestCompress_Jest_PassCompaction(t *testing.T) {
+	in := []byte("PASS src/auth.test.ts\nPASS src/billing.test.ts\n\nTest Suites: 1 skipped, 2 passed, 3 total\nTests:       1 skipped, 1 todo, 25 passed, 27 total\nSnapshots:   0 total\nTime:        1.234 s\nRan all test suites.\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for passing Jest: %s", res.Reason)
+	}
+	want := "Jest: PASS (1 skipped, 1 todo, 25 passed across 3 suites, 1 suite skipped)\n"
+	if string(res.Output) != want {
+		t.Errorf("got %q, want %q", string(res.Output), want)
+	}
+	if res.Format != compressor.FormatJest {
+		t.Errorf("expected format jest, got %v", res.Format)
+	}
+}
+
+func TestCompress_Jest_ErrorsPreserveRaw(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"failing suite", "FAIL src/auth.test.ts\n\nTest Suites: 1 failed, 1 passed, 2 total\nTests: 1 failed, 25 passed, 26 total\n"},
+		{"failing summary", "Test Suites: 1 passed, 1 total\nTests: 1 failed, 24 passed, 25 total\n"},
+		{"error output", "PASS src/auth.test.ts\nError: worker crashed\nTest Suites: 1 passed, 1 total\nTests: 25 passed, 25 total\n"},
+		{"incomplete summary", "PASS src/auth.test.ts\nTest Suites: 1 passed, 1 total\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("must not compress unsafe Jest output: %s", tc.name)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatal("must preserve raw output byte-identical")
+			}
+			if res.Format != compressor.FormatJest {
+				t.Errorf("expected format jest, got %v", res.Format)
+			}
+		})
+	}
+}
+
 func TestCompress_PrecedenceOverSearch(t *testing.T) {
 	// e2e/auth.spec.ts:10:5 › login flow looks like rg match (file:line:col:)
 	playwrightIn := []byte("Running 5 tests using 2 workers\n  ✓ 1 e2e/auth.spec.ts:10:5 › login flow (1.0s)\n  5 passed (2.0s)\n")

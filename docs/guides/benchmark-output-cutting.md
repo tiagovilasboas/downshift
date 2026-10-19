@@ -40,12 +40,13 @@ delegation-heavy, and one added here, **output-heavy** (a bounded fix whose loop
 Complex and security-sensitive tasks stay in the set as safety checks (acceptance only), not as a saving claim. Each
 task keeps its hidden acceptance check, validated on base and fix.
 
-### Ecosystem Coverage: Python (pytest), TypeScript/Node (vitest, Playwright, tsc), and Rust (cargo test)
+### Ecosystem Coverage: Go, Python, TypeScript/Node (vitest, Jest, Playwright, tsc), and Rust (cargo test)
 
 The output-heavy category explicitly evaluates suites across the primary agent engineering ecosystems:
 - **Go (`go test`)**: Multi-package unit and integration suites with `-v` or package summaries.
 - **Python (`pytest`)**: Suites running 50+ tests (e.g. FastAPI/Flask services, data pipelines). Clean runs output dozens of lines of test identifiers, progress percentages, and session summaries, inflating tool output by 1,500–3,500 tokens.
 - **TypeScript / JavaScript Unit (`vitest`)**: Fullstack suites running 50+ tests across multiple test files. Clean runs render module trees, execution durations, and checkmark tables, injecting 2,000–4,000 tokens per execution.
+- **JavaScript / TypeScript Unit (`jest`)**: Jest prints per-suite results and test summaries. Downshift compacts only when both suite and test summaries show a complete passing run; skipped and todo counts remain visible. Failing or incomplete output stays raw.
 - **End-to-End Browser Testing (`playwright`)**: Suites running 10–30 E2E tests across Chromium, Firefox, and WebKit. Clean runs emit hundreds of worker step notifications, browser launch events, test titles, and timing breakdowns, generating **3,000 to 5,000 tokens** per run. Squelching clean runs to `playwright: PASS (N passed across M workers in X.XXs)` (~25 tokens) delivers a ~99% token reduction. Fail-open guarantee: any `failed`, `timed out`, `Error:`, assertion diff, trace attachment, or non-zero exit is preserved 100% verbatim.
 - **Systems Engineering (`cargo test`)**: Rust crate builds and test runners. Clean runs output compilation steps, test suite discovery, and lines for dozens of unit/integration tests (`test foo ... ok`), generating **1,000 to 2,500 tokens**. Squelching clean runs to `cargo test: PASS (N passed; 0 failed in X.XXs)` (~20 tokens) achieves 98%+ reduction. Fail-open guarantee: any `FAILED`, compiler warning (`warning:`), compiler error (`error[E...]`), `panicked at`, or non-zero exit is preserved verbatim.
 - **Static Typechecking (`tsc --noEmit`)**: Canonical TypeScript typecheck loops in agentic refactorings. When clean, `tsc` exits with code 0 and either an empty string or `Found 0 errors.`. Squelching to `tsc: PASS (0 errors)` (< 5 tokens) provides clear, unambiguous confirmation while preventing tool output ambiguity. Fail-open guarantee: any `error TS\d+:`, diagnostic chain, syntax/semantic error, or non-zero exit is preserved verbatim.

@@ -143,6 +143,34 @@ func TestRun_ExitCodesAndCompaction(t *testing.T) {
 	}
 }
 
+func TestRun_JestCompactionAndFailOpen(t *testing.T) {
+	clean := "PASS src/a.test.ts\nPASS src/b.test.ts\n\nTest Suites: 2 passed, 2 total\nTests:       25 passed, 25 total\nSnapshots:   0 total\nTime:        1.234 s\n"
+	fail := "FAIL src/a.test.ts\n\nTest Suites: 1 failed, 1 total\nTests:       1 failed, 24 passed, 25 total\n"
+	cases := []struct {
+		name, raw, want string
+		code            int
+	}{
+		{"passing Jest compacts", clean, compactedWant(clean), 0},
+		{"failing Jest stays raw", fail, fail, 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			script := "cat <<'EOF'\n" + tc.raw + "EOF\n"
+			if tc.code != 0 {
+				script += "exit 1\n"
+			}
+			fakeBin(t, "jest", script)
+			r, out, errOut := run(t, []string{"jest"}, true)
+			if r.ExitCode != tc.code || out != tc.want || errOut != "" {
+				t.Fatalf("result=%+v stdout=%q stderr=%q, want code=%d stdout=%q", r, out, errOut, tc.code, tc.want)
+			}
+			if tc.code == 0 && (!r.Compacted || r.Family != FamilyJest) {
+				t.Fatalf("passing Jest should compact under its family: %+v", r)
+			}
+		})
+	}
+}
+
 func TestRun_NotFound127(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	r, out, errOut := run(t, []string{"go", "test"}, true)

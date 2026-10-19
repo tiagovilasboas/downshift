@@ -92,6 +92,7 @@ var rawFixtures = []string{
 	"playwright_fail.txt",
 	"cargo_fail.txt",
 	"tsc_fail.txt",
+	"jest_fail.txt",
 }
 
 // cleanFixture is output that may be compacted on exit 0. facts are substrings
@@ -114,6 +115,7 @@ var cleanFixtures = []cleanFixture{
 	{"playwright_pass_clean.txt", []string{"25 passed"}},
 	{"cargo_pass_clean.txt", []string{"25 passed"}},
 	{"tsc_pass_clean.txt", []string{"0 errors"}},
+	{"jest_pass_clean.txt", []string{"25 passed", "3 suites", "1 suite skipped", "1 todo"}},
 }
 
 func readFixture(t *testing.T, name string) []byte {
