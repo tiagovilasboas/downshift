@@ -1,12 +1,11 @@
-# Operational State — DCI v0.4: Reverse Call-Graph (Blast Radius) & Multi-Language Calls
+# Operational State — Downshift Zero-Touch & Elegance
 
-- **Current Objective**: Implement, test, document, and integrate DCI v0.4 (`feat/dci-v04-blast-radius-multilang-calls`):
-  1. **Cross-Language Calls & Imports**: Extract lightweight outgoing function/method calls and imports in `internal/codeintel/parse_lang.go` and `internal/codeintel/parse.go` for TS/JS, Python, Rust, PHP, Java, and C#.
-  2. **Reverse Call-Graph & Blast Radius Index**: Compute global reverse call mappings (`InvertedIndex.Callers: map[string][]string`) and `CalculateBlastRadius(symbol/file)` in `internal/codeintel/index.go` and `internal/codeintel/rank.go`.
-  3. **Context Packaging & CLI**: Surface reverse call dependencies (Blast Radius / Impact) in `PackContext` (showing callers when modifying code) and `downshift dci inspect` / `downshift dci impact <target>`.
-  4. **Security & QA Verification**: Verify nested call chains, circular dependencies, budget safety, and 100% test pass.
-- **Current Status**: Task V04.2 completed (QA & AppSec test suites, hardening & documentation).
-- **Branch**: `feat/dci-v04-blast-radius-multilang-calls`
-- **Agents Assigned**: Senior Staff QA & AppSec finished; Senior Staff Fullstack integrating V04.1.
+- **Current Objective**: Consolidate, polish, and merge all high-value mods and zero-touch setup capabilities for Downshift.
+- **Current Status**: All tasks completed, tested, CI verified green, and merged into `main`.
+- **Merged PRs**:
+  - PR #182: `cache-tax` branding, multi-agent auto-bypass, native context compressor enabled by default in setup.
+  - PR #183: Purged all MiniLM references in favor of in-process FNV word-hash semantic boost (`DOWNSHIFT_SEMANTIC_BOOST`).
+  - PR #184: Auto-discovery of models during setup and removed experimental harnesses (Kiro/KiroCrew) from default sources.
+  - PR #185: Elegant installation of sibling UX mods (`savvy-progress`, `filetree`) during `downshift setup` for Claude Code.
+- **Active Branch**: `main` (clean, fully synced with `origin/main`).
 - **Blockers**: None.
-- **QA & AppSec Verdict**: PASS (100% green under `go test -v -race ./internal/codeintel/... ./cmd/downshift/...`).
