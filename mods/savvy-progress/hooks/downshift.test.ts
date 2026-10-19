@@ -55,10 +55,12 @@ for (const [name, answer] of [
 }
 
 // With no flow registered the band follows the live subagents; a registered flow keeps upstream drawing.
-const spawnTwo = async ($: Engine, on: On) => {
+const spawnTwo = async ($: Engine, on: On, active = true) => {
   mock.clock(on)
+  if (!active) on('ui.render', () => ({ type: 'engine' }) as never)
+  on('session.id', () => ({ value: 'S-1' }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
-  on('process.run', () => ({ value: { exitCode: 1, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('process.run', () => ({ value: { exitCode: active ? 0 : 1, stdout: active ? JSON.stringify(PANEL) : '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
   let n = 0
   on('agent.spawn', () => ({ model: 'claude-sonnet-5-5', agentId: `a${++n}` }))
   for (const id of ['t1', 't2']) {
@@ -99,4 +101,10 @@ test('session: with no session id the figure is not drawn (it could be another s
   expect(argvs.at(-1)).toEqual(['downshift', 'session', '--panel'])
   // The row label is keyed by the spawn's own tool call, so it is still exact.
   expect(await shows($, 'Pane', /opus → sonnet \(mid\)/)).toBe(true)
+})
+
+test('band fallback: Downshift inactive or its data missing, the mod draws as upstream (no derived band)', async ($, on) => {
+  await spawnTwo($, on, false)
+  // Upstream draws nothing here: the engine's own placeholder is all that is left, which the test engine refuses.
+  await expect(shows($, 'AbovePrompt', /Subagents|running · /)).rejects.toThrow(/engine drew its own/)
 })

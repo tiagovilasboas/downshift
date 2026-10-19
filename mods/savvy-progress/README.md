@@ -51,11 +51,11 @@ draws; every number and label is computed by Downshift
 | row | the model line gains the label: `opus → sonnet (mid)`, `held: original model kept`, `kept`, `control (unrouted)` |
 | header and band | one line: `Downshift saved ≈$X (est., list price) · N switched · M held` (`over` when negative; `Downshift on` before anything is priced) |
 
-| band fallback (`derivedFlow`) | when no flow is registered, or its total is 0, the band is drawn from the subagents the mod already tracks: title `Subagents`, `N running · M done`, bar `M/(N+M)` over the current batch (spawns since the oldest running one; a finished batch lingers 30 s). A registered flow with a total keeps upstream drawing |
+| band fallback (`derivedFlow`) | when no flow is registered, or its total is 0, **and Downshift is working in this session** (`downshift session --panel` for the session names at least one decided spawn), the band is drawn from the subagents the mod already tracks: title `Subagents`, `N running · M done`, bar `M/(N+M)` over the current batch (spawns since the oldest running one; a finished batch lingers 30 s). A registered flow with a total keeps upstream drawing |
 
 | session | `dsRefresh` passes `--session=<id>` (`$.session.id()`, else `CLAUDE_CODE_SESSION_ID`). With no id the summary line is not drawn at all, so another session's figure can never appear; row labels stay (keyed by the spawn's own tool call) |
 
-**Behaviour change, owner-requested:** the band above the prompt now appears whenever subagents run, even with no registered flow (see the band fallback row above). Upstream drew nothing in that case.
+**Behaviour change, owner-requested:** while Downshift is working in the session, the band above the prompt also appears when subagents run with no registered flow (see the band fallback row above). When Downshift is not active, or its data is missing or the session unknown, the mod draws exactly what upstream draws.
 
 Nothing here touches routing and it spends nothing. The savings figure is an
 estimate: list prices of the priced children against their baseline. The new

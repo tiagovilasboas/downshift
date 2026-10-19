@@ -1248,11 +1248,19 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    // Downshift local patch: with no registered flow (or total 0) the band follows the live subagents.
-    const registered = await read($, flow)
-    const f = registered !== null && registered.total > 0 ? registered : derivedFlow(await read($, agents), await read($, now))
-    if (f === null || e.props.hasSurvey) return next(e)
+    // Downshift local patch: with no registered flow (or total 0) the band follows the live subagents,
+    // but only while Downshift is working in this session (it has decided at least one spawn of it).
+    // Otherwise the mod draws exactly what upstream draws.
     await dsRefresh($)
+    const registered = await read($, flow)
+    const dsActive = ds !== null && dsSessionKnown && ds.spawns.length > 0
+    const f =
+      registered !== null && registered.total > 0
+        ? registered
+        : dsActive
+          ? derivedFlow(await read($, agents), await read($, now))
+          : registered
+    if (f === null || e.props.hasSurvey) return next(e)
     // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
     // never nested: the desktop drops a band that nests it.
     const drawn = await Promise.resolve(next(e)).catch(() => null)

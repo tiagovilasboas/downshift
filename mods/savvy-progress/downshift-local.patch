@@ -306,12 +306,10 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      .join('')
    const x = shown.length * 36 + (more ? 4 : 0)
    return svg(
-@@ -788,8 +729,101 @@
-   if (p.autoOpenedFor === key) return
-   await update($, panel, prev => ({ ...prev, autoOpenedFor: key }))
+@@ -790,6 +731,99 @@
    void $.ui.open({ id: PANE, title: tr().pane })
-+}
-+
+ }
+ 
 +// ---------------------------------------------------------------------------
 +// Downshift local patch (2026-10-19): what Downshift did per spawn and this session.
 +// Reads `downshift session --panel` (prompt-free JSON, computed by Downshift; this
@@ -391,8 +389,8 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +const dsLabel = (a: AgentRun): string | undefined => {
 +  const key = dsKeys.get(a.id)
 +  return key && ds ? ds.spawns.find(x => x.tool_use === key)?.label : undefined
- }
- 
++}
++
 +/** One line for the band and the panel header; '' when there is nothing true to say. */
 +const dsSummary = (): string => {
 +  // Without a session id the log's latest session could be another one: draw no figure.
@@ -461,20 +459,27 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
          {p.isCompact ? (
            <Text wrap="truncate-end">
              {[...running, ...finished].map(a => (
-@@ -1203,8 +1248,11 @@
+@@ -1203,7 +1248,18 @@
    })
  
    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
 -    const f = await read($, flow)
-+    // Downshift local patch: with no registered flow (or total 0) the band follows the live subagents.
-+    const registered = await read($, flow)
-+    const f = registered !== null && registered.total > 0 ? registered : derivedFlow(await read($, agents), await read($, now))
-     if (f === null || e.props.hasSurvey) return next(e)
++    // Downshift local patch: with no registered flow (or total 0) the band follows the live subagents,
++    // but only while Downshift is working in this session (it has decided at least one spawn of it).
++    // Otherwise the mod draws exactly what upstream draws.
 +    await dsRefresh($)
++    const registered = await read($, flow)
++    const dsActive = ds !== null && dsSessionKnown && ds.spawns.length > 0
++    const f =
++      registered !== null && registered.total > 0
++        ? registered
++        : dsActive
++          ? derivedFlow(await read($, agents), await read($, now))
++          : registered
+     if (f === null || e.props.hasSurvey) return next(e)
      // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
      // never nested: the desktop drops a band that nests it.
-     const drawn = await Promise.resolve(next(e)).catch(() => null)
-@@ -1242,6 +1290,7 @@
+@@ -1242,6 +1298,7 @@
              {crewButton}
              {dismiss}
            </Box>
@@ -482,7 +487,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
            {below}
          </Box>
        )
-@@ -1264,6 +1313,7 @@
+@@ -1264,6 +1321,7 @@
            {crewButton}
            {dismiss}
          </Box>
