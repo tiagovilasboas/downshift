@@ -34,6 +34,7 @@ const (
 	RulePercent         = "no-impossible-percentage"
 	RuleUnapplied       = "no-saving-without-rewrite"
 	RulePromptFree      = "prompt-free"
+	RuleTokens          = "tokens-match-children"
 	RuleExpect          = "scenario-expectation"
 )
 
@@ -157,6 +158,16 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 	var routed, control, pricedRouted, pricedControl int
 	var wantGross, wantOver float64
 	var wantDownshifted, wantHonored int
+	// Token oracle: each priced child's tokens, in the bucket the definition
+	// in telemetry/tokens_rerouted.go puts them, and per report arm.
+	wantTokens := map[string]*Tokens{}
+	var wantRoutedTokens, wantControlTokens Tokens
+	addTokens := func(dir string, u telemetry.TokenUsage) {
+		if wantTokens[dir] == nil {
+			wantTokens[dir] = &Tokens{}
+		}
+		wantTokens[dir].add(u)
+	}
 	for _, t := range traces {
 		if t.RC != 0 {
 			bad(RuleExitZero, "spawn %s: hook exit %d", short(t.Key()), t.RC)
@@ -263,8 +274,25 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 		if okRan {
 			if t.Control {
 				pricedControl++
+				wantControlTokens.add(t.Usage)
 			} else {
 				pricedRouted++
+				wantRoutedTokens.add(t.Usage)
+			}
+			switch {
+			case t.Control || !isApplied || isRefuted:
+				addTokens(telemetry.TokenUnchanged, t.Usage)
+			case dec.FromModel == "unknown" || !okReq:
+				addTokens(telemetry.TokenUnattributed, t.Usage)
+			default:
+				switch d := telemetry.CostUSD(reqM, t.Usage) - telemetry.CostUSD(ranM, t.Usage); {
+				case sc.Refuse || d == 0:
+					addTokens(telemetry.TokenUnchanged, t.Usage)
+				case d > 0:
+					addTokens(telemetry.TokenCheaper, t.Usage)
+				default:
+					addTokens(telemetry.TokenPricier, t.Usage)
+				}
 			}
 			if u.ActualCostUSD == nil || math.Abs(*u.ActualCostUSD-telemetry.CostUSD(ranM, t.Usage)) > eps {
 				bad(RuleSavedArithmetic, "spawn %s: actual cost %v, want %v", short(t.Key()), ptr(u.ActualCostUSD), telemetry.CostUSD(ranM, t.Usage))
@@ -327,6 +355,7 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 	if w.reportsRan && st.HonorObserved != wantHonored {
 		bad(RuleHonorOnce, "stats honor observed %d, want %d", st.HonorObserved, wantHonored)
 	}
+	out = append(out, checkTokens(h, usageSeam, st, wantTokens)...)
 	rep := telemetry.BuildReport(v.events, 0)
 	if rep.Routed.Spawns != routed || rep.Control.Spawns != control || rep.Excluded != 0 {
 		bad(RuleRates, "report routed %d control %d excluded %d, want %d / %d / 0", rep.Routed.Spawns, rep.Control.Spawns, rep.Excluded, routed, control)
@@ -336,6 +365,12 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 	}
 	if usageSeam && (rep.Routed.Completed != pricedRouted || rep.Control.Completed != pricedControl) {
 		bad(RuleRates, "report completed routed %d control %d, want %d / %d", rep.Routed.Completed, rep.Control.Completed, pricedRouted, pricedControl)
+	}
+	if usageSeam && (!sameTokens(rep.Routed.Tokens, wantRoutedTokens) || !sameTokens(rep.Control.Tokens, wantControlTokens)) {
+		bad(RuleTokens, "report tokens routed %+v control %+v, want %+v / %+v", rep.Routed.Tokens, rep.Control.Tokens, wantRoutedTokens, wantControlTokens)
+	}
+	if rep.Routed.Completed > 0 && math.Abs(rep.Routed.TokensPerTask-float64(rep.Routed.Tokens.Total)/float64(rep.Routed.Completed)) > eps {
+		bad(RuleTokens, "routed tokens per task %v is not tokens over completed tasks", rep.Routed.TokensPerTask)
 	}
 	if !usageSeam && (rep.Routed.Completed != 0 || rep.Control.Completed != 0) {
 		bad(RuleRates, "report priced tasks on a harness with no usage source")
@@ -366,6 +401,52 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 
 	out = append(out, checkExpect(sc, h, traces, v, cat)...)
 	return out
+}
+
+// checkTokens holds the production token buckets to the children's tokens:
+// routing moves tokens between models, so every priced child's tokens appear
+// in exactly one bucket, and a harness with no usage source says unobserved.
+func checkTokens(h string, usageSeam bool, st telemetry.Stats, want map[string]*Tokens) []Violation {
+	var out []Violation
+	bad := func(format string, args ...any) {
+		out = append(out, Violation{Rule: RuleTokens, Harness: h, Detail: fmt.Sprintf(format, args...)})
+	}
+	got, ok := st.TokensRerouted.ByHarness[h]
+	if !ok {
+		bad("no token entry for the harness")
+		return out
+	}
+	if !usageSeam {
+		if got.Status != telemetry.TokenStatusUnobserved || got.Cheaper != nil || got.Pricier != nil {
+			bad("status %q on a harness with no usage source, want %q and no buckets", got.Status, telemetry.TokenStatusUnobserved)
+		}
+		return out
+	}
+	for _, b := range []struct {
+		dir string
+		got *telemetry.TokenClasses
+	}{
+		{telemetry.TokenCheaper, got.Cheaper}, {telemetry.TokenPricier, got.Pricier},
+		{telemetry.TokenUnchanged, got.Unchanged}, {telemetry.TokenUnattributed, got.Unattributed},
+	} {
+		w := Tokens{}
+		if want[b.dir] != nil {
+			w = *want[b.dir]
+		}
+		g := telemetry.TokenClasses{}
+		if b.got != nil {
+			g = *b.got
+		}
+		if !sameTokens(g, w) {
+			bad("%s tokens %+v, want %+v", b.dir, g, w)
+		}
+	}
+	return out
+}
+
+func sameTokens(g telemetry.TokenClasses, w Tokens) bool {
+	return g.Input == w.Input && g.Output == w.Output && g.CacheRead == w.CacheRead &&
+		g.CacheWrite == w.CacheWrite && g.Total == w.Total()
 }
 
 // checkExpect holds the scenario's own expectations for one harness.

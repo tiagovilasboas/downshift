@@ -285,6 +285,12 @@ func TestSimulation_InvariantsCatchPlantedDefects(t *testing.T) {
 			evs[i].ActualCostUSD = scale(evs[i].BaselineCostUSD, 0.4)
 			return evs
 		}},
+		{"child tokens miscounted", simbench.RuleTokens, func(evs []telemetry.Event) []telemetry.Event {
+			i := usageOf(evs, applied)
+			n := *evs[i].InputTokens * 3
+			evs[i].InputTokens = &n
+			return evs
+		}},
 		{"one spawn logged twice", simbench.RuleOneDecision, func(evs []telemetry.Event) []telemetry.Event {
 			for _, ev := range evs {
 				if isDecision(ev) {
