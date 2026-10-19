@@ -240,12 +240,40 @@ func RiskCategories(prompt string) []string {
 	return cats
 }
 
+// parallelScanMin is the text size from which the candidate regexes run
+// concurrently. Go's regexp is an NFA at a few MB/s per pattern, so a 1 MiB
+// prompt whose literals defeat the prefilter spends ~200 ms per category;
+// below this size the goroutine overhead outweighs the gain.
+const parallelScanMin = 64 << 10
+
 func scanRiskCategories(prompt string) []string {
 	text := splitIdentifiers(prompt)
 	folded := foldRiskText(text)
-	var cats []string
+	var cand []riskSignal
 	for _, s := range riskSignals {
-		if s.mayMatch(folded) && s.re.MatchString(text) {
+		if s.mayMatch(folded) {
+			cand = append(cand, s)
+		}
+	}
+	hit := make([]bool, len(cand))
+	if len(text) >= parallelScanMin && len(cand) > 1 {
+		var wg sync.WaitGroup
+		for i := range cand {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				hit[i] = cand[i].re.MatchString(text)
+			}()
+		}
+		wg.Wait()
+	} else {
+		for i := range cand {
+			hit[i] = cand[i].re.MatchString(text)
+		}
+	}
+	var cats []string
+	for i, s := range cand {
+		if hit[i] {
 			cats = append(cats, s.category)
 		}
 	}
