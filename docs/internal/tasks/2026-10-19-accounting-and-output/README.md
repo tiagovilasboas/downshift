@@ -35,27 +35,36 @@ headers, shared layers only (no feature for one harness, [layering.md](../../../
 
 ## Open pull requests, in merge order
 
-| PR | Base | State | Blocks |
+| PR | Base | State |
+|---|---|---|
+| #260 | main | Sensor measures Bash output bytes and registers PostToolUse for Bash. Existing installs need `downshift setup` or a plugin update |
+| #262 | main | savvy-progress shipped as 1.2.2 so a cached 1.2.1 with upstream's purple is replaced |
+| #259 | main | `downshift exec`, default off. Head `754db877`: the AppSec and QA lists below are implemented and `go test ./...` is green, **but nobody has re-reviewed that head**. #261 (compressor defects) and #263 (QA tests) are already inside this branch |
+| #264 | main | This handoff and the roadmap rows |
+
+### What the exec branch now does (all of it landed in the branch, not yet reviewed)
+
+The AppSec must-fix list and the QA defects, closed by the Fullstack agent:
+
+1. Rewrite only when the user's own Bash allow rule matches the original command and no deny or ask rule does, across managed, user (`CLAUDE_CONFIG_DIR`), project and local settings; any read or parse error means no rewrite; no `permissionDecision` is ever emitted.
+2. `downshift exec` refuses anything outside `go test` and `git status` (exit 126, nothing spawned).
+3. No advice to allow `downshift exec` in the docs.
+4. The rewrite uses the single-quoted, symlink-resolved absolute path of the binary, skipped when not executable.
+5. The child runs in its own process group and signals go to the group (a SIGKILL of the wrapper itself still cannot be forwarded).
+6. Compacted output ends with `[downshift exec: compacted N to M bytes]`.
+7. `DOWNSHIFT_EXEC_DEPTH` guard, the shell branch under the hook deadline, a telemetry canary test and `FuzzDecide`.
+8. QA D-A: stdout and stderr keep the program's order; stdout is held at most 2 seconds, and the first stderr byte, 2 MiB or the bound flushes it raw. D-B and D-C close with the compressor fixes of #261.
+
+### Tasks still open on `downshift exec`
+
+| # | Task | Owner | Done when |
 |---|---|---|---|
-| #260 | main | Sensor measures Bash output bytes and registers PostToolUse for Bash. Needs `downshift setup` or a plugin update on existing installs | none |
-| #262 | main | savvy-progress shipped as 1.2.2 so a cached 1.2.1 with upstream's purple is replaced | none |
-| #261 | #259 | Compressor corpus defects D1, D2, D5, D6, D7, D8 fixed (D3, D4 come with #259). Clean-fixture reduction falls from 91% to 58%: the 91% came from dropping package names and coverage | three exec tests need realistic fixtures |
-| #263 | #259 | QA adversarial tests for exec, strict-gated | D-A, D-B, D-C |
-| #259 | main | `downshift exec`: **do not merge** until the list below is closed | AppSec and QA |
-
-### Must-fix before #259 can merge
-
-From the AppSec review (threat model and checklist in the maintainer notes) and the QA verdict:
-
-1. Rewrite only when the original argv matches a Bash allow rule and no deny or ask rule in any scope; any settings read error means no rewrite; never a `permissionDecision`.
-2. `downshift exec` refuses (exit 126, nothing spawned) any argv outside the allowlist.
-3. Stop advising an allow rule for `downshift exec -- go test`.
-4. Rewritten command uses the single-quoted absolute path of the binary.
-5. Child in its own process group; kill the group on stop.
-6. Marker line when output is compacted.
-7. `DOWNSHIFT_EXEC_DEPTH` guard, shell branch inside the hook deadline, a telemetry canary test, `FuzzDecide`.
-8. QA D-A: stdout held until exit flips stdout/stderr order and shows nothing if the wrapper is killed. D-B and D-C are the compressor's D7 and D8 (#261).
-9. **Unverified:** whether Claude Code applies `updatedInput` when the hook returns no permission decision. Check once in a live session; if it does not, the only safe decision is `ask`.
+| E1 | AppSec re-review at head `754db877` against the 14-item checklist | AppSec | every item PASS; the maintainer notes carry the verdict |
+| E2 | QA re-run with the real binary (exit codes, ordering, large output, fail-open, prompt-free, strict corpus) | QA | PASS, or defects with failing tests |
+| E3 | **Live check C14**: does Claude Code apply `updatedInput` when the hook returns no permission decision? Steps are in [harness-matrix.md](../../../reference/harness-matrix.md). If it does not, the only safe decision is `ask` | owner | recorded in the matrix with the Claude Code version |
+| E4 | Keep a SIGKILLed wrapper from leaving its child running (a group kill needs a supervisor) | fullstack | a test, or the limit stays documented |
+| E5 | Decide whether `git log` joins the allowlist (the compressor keeps it verbatim, so wrapping saves nothing) | owner | decision recorded |
+| E6 | After E1 to E3: merge #259 | owner | CI green, branch up to date |
 
 ## Open findings (not fixed)
 
@@ -71,14 +80,14 @@ From the AppSec review (threat model and checklist in the maintainer notes) and 
 
 ## Next steps, in order
 
-1. Fullstack closes the #259 list; merge #261 into its branch; AppSec and QA re-review the new head; then merge #259.
-2. Merge #260 and #262 (independent). Owner runs `claude plugin marketplace update downshift` and `claude plugin update savvy-progress@downshift`, reinstalls the binary from main and runs `downshift setup`.
-3. After a few days of normal use: `downshift report`, `downshift context metrics` (the sensor now has bytes), and the reason-code mix of `stats --export`. This is the first real number after the fixes of the day.
-4. Owner decides the Codex tiers (finding 1).
+1. E1 and E2 in parallel on head `754db877`, then E3 (owner), then merge #259 (E6).
+2. Merge #260 and #262 (independent of the above). Owner runs `claude plugin marketplace update downshift` and `claude plugin update savvy-progress@downshift`, reinstalls the binary from main and runs `downshift setup`.
+3. After a few days of normal use: `downshift report`, `downshift context metrics` (the sensor now has bytes) and the reason-code mix of `stats --export`. This is the first real number after the day's fixes.
+4. Owner decides the Codex tiers (finding 1 above).
 5. Run the pilot of [benchmark-output-cutting.md](../../../guides/benchmark-output-cutting.md) (routing alone, + Headroom, + `downshift exec`, RTK alone), then apply its pre-registered cut criterion.
 6. Capture child-token payloads for Cursor, Codex and OpenCode so the tokens-first views cover them.
 
 ## Measured so far (do not quote beyond this)
 
 - Routing: about 12% on mechanical delegated work (2026-10-15 A/B, rung D, one operator); about 3% estimated in natural use before the fixes of the day ([real-usage-2026-10-19.md](../../../evidence/real-usage-2026-10-19.md), rung B). The figure after the fixes is unmeasured.
-- Output cutting: no real-world number yet; 58% on the clean fixtures of the compressor corpus is a lab figure.
+- Output cutting: no real-world number yet. 58% on the clean fixtures of the compressor corpus is a lab figure, and `exec` rewrites only `go test` and `git status`, so on a repository whose `go test ./...` prints `[no test files]` lines (the compressor leaves those raw) the real cut will be smaller.
