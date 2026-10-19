@@ -36,6 +36,23 @@ for keeping them honest.
    the tier and prices in that file before relying on them. The override does
    not change `prices_as_of`, which describes the embedded snapshot.
 
+## What the sync refuses
+
+The sync validates every price it would write, before writing anything:
+
+- it must be a finite number greater than zero (negative, `NaN`, `inf` and
+  non-numeric values are rejected);
+- at most 1000 USD per 1M tokens (a unit mistake such as 1000x is rejected);
+- it may not move more than 5x up or down against the value already in the
+  catalog in one run, unless `--allow-large-change` is passed after checking
+  the source by hand.
+
+Any violation prints one line per price and the script exits 1 with the catalog
+untouched, so the weekly workflow fails visibly instead of opening a PR with a
+wrong number. The checks are covered by `scripts/test_sync_catalog_prices.py`,
+which the `python` job of `ci` runs. They do not prove a price is right (the
+source can be wrong inside the limits); a person still reviews the PR.
+
 ## What the sync touches
 
 Only entries of the `claude-code`, `codex` and `kirocrew` harnesses whose id
