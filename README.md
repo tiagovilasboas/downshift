@@ -371,8 +371,9 @@ See [the context optimization guide](docs/design/context-optimization.md) for ar
 
 Downshift Code Intelligence (DCI) is a zero-runtime, deterministic, privacy-first subsystem that injects high-signal structural context directly into user prompts across supported harnesses (`claude-code`, `cursor`, `opencode`, `codex`, and `generic`).
 
-- **Deterministic Pipeline:** Discovers files via Git (`discover.go`), extracts structural symbols across Go AST (including function call-graph `Symbol.Calls` and package `Document.Imports`), TypeScript/JavaScript, and Python plus lexical tokens (`parse.go`), builds an incremental inverted index with SHA-256 change detection (`index.go`), scores candidates via field-weighted BM25 (`rank.go`), and packages compact context sketches (`pack.go`).
+- **Deterministic Pipeline:** Discovers files via Git (`discover.go`), extracts structural symbols across Go AST (including function call-graph `Symbol.Calls` and package `Document.Imports`), TypeScript/JavaScript, Python, Rust, PHP, Java, and C# (`parse.go`, `parse_lang.go`), builds an incremental inverted index with SHA-256 change detection (`index.go`), scores candidates via field-weighted BM25 (`rank.go`), and packages compact context sketches (`pack.go`).
 - **Production-First Ranking & Call-Graph Boosting:** Demotes `_test.go` files by `0.65x` for non-test queries while boosting them by `+2.0` for test-specific prompts; applies a `+2.0` co-reference boost to files containing caller or callee symbol definitions matching the top candidate.
+- **Reverse Call-Graph & Downstream Blast Radius:** Inverts the call graph into a reverse index (`InvertedIndex.Callers`), identifying callers across the repository (capped at 32 callers per symbol, resistant to cyclic recursion). Prompt context injection attaches compact Impact Radius notes so coding agents know downstream callers before refactoring or breaking definitions.
 - **Conversational Abstention:** Greetings ("hi", "bom dia"), gratitude ("thanks"), and general chatter abstain immediately without injecting context, saving token headroom.
 - **Budget & Boundary Defense:** Configurable UTF-8 byte ceiling via `--budget` (default **3,500 bytes**, clamped between **512** and **16,384 bytes**) per injection; all context is wrapped in defensive boundary markers (`=== DCI UNTRUSTED REPOSITORY CONTEXT ===`) to prevent prompt injection.
 - **Multi-Harness Hook Support:** `downshift dci hook <claude-code|cursor|opencode|codex|generic>` accepts prompts from `"prompt"`, `"task"`, or `"user_message"` (with a 1 MiB stdin cap) and emits `hookSpecificOutput` (plus top-level `additionalContext` on non-Claude harnesses).
@@ -385,6 +386,7 @@ Downshift Code Intelligence (DCI) is a zero-runtime, deterministic, privacy-firs
   downshift dci disable                       # Deactivate DCI (reverts to off)
   downshift dci doctor                        # Check directory permissions, discovery, and latencies
   downshift dci inspect [--json] "<msg>"      # Dry-run pipeline for a prompt (tokens, ranks, packed sketch; text or JSON)
+  downshift dci impact [--json] <target>      # Query downstream blast radius and caller dependencies
   downshift dci benchmark                     # Run local indexing, sync, and retrieval latency benchmarks
   downshift dci hook <harness>                # Run stdin hook for claude-code, cursor, opencode, codex, or generic
   downshift stats --dci                       # View empirical prompts, injection rates, and observed latencies

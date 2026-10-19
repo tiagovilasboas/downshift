@@ -223,6 +223,9 @@ func TestDCIInspect(t *testing.T) {
 }
 
 func TestDCIBenchmark(t *testing.T) {
+	if raceEnabled {
+		t.Skip("latency benchmarks do not apply under -race")
+	}
 	var stdout, stderr bytes.Buffer
 	code := runDCI([]string{"benchmark"}, nil, &stdout, &stderr)
 	if code != 0 {
@@ -293,5 +296,81 @@ func TestDCIInspect_JSONFlag(t *testing.T) {
 	}
 	if err := json.Unmarshal(stdout.Bytes(), &parsed); err != nil {
 		t.Fatalf("failed to unmarshal JSON output when --json is at the end: %v", err)
+	}
+}
+
+func TestDCIImpact(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+
+	// 1. Test human-readable impact command on symbol target
+	code := runDCI([]string{"impact", "Tokenize"}, nil, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("runDCI(impact Tokenize) = %d, want 0. stderr: %s", code, stderr.String())
+	}
+	out := stdout.String()
+	if !strings.Contains(out, "=== DCI Impact Blast Radius ===") {
+		t.Errorf("expected header in impact output: %s", out)
+	}
+	if !strings.Contains(out, "Target:        Tokenize") {
+		t.Errorf("expected target Tokenize in impact output: %s", out)
+	}
+	if !strings.Contains(out, "Target Type:   Symbol") {
+		t.Errorf("expected Target Type: Symbol, got: %s", out)
+	}
+
+	// 2. Test JSON output for symbol target
+	stdout.Reset()
+	stderr.Reset()
+	code = runDCI([]string{"impact", "--json", "Tokenize"}, nil, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("runDCI(impact --json Tokenize) = %d, want 0. stderr: %s", code, stderr.String())
+	}
+	var impactJSON map[string]interface{}
+	if err := json.Unmarshal(stdout.Bytes(), &impactJSON); err != nil {
+		t.Fatalf("failed to unmarshal JSON impact output: %v\nOutput: %s", err, stdout.String())
+	}
+	if impactJSON["target"] != "Tokenize" {
+		t.Errorf("expected target 'Tokenize', got %v", impactJSON["target"])
+	}
+	if impactJSON["is_file"] != false {
+		t.Errorf("expected is_file: false for symbol, got %v", impactJSON["is_file"])
+	}
+	if _, ok := impactJSON["impact_radius"].([]interface{}); !ok {
+		t.Errorf("expected impact_radius array in JSON: %v", impactJSON)
+	}
+
+	// 3. Test impact command on file target (human readable)
+	stdout.Reset()
+	stderr.Reset()
+	code = runDCI([]string{"impact", "internal/codeintel/tokenize.go"}, nil, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("runDCI(impact file) = %d, want 0. stderr: %s", code, stderr.String())
+	}
+	out = stdout.String()
+	if !strings.Contains(out, "Target Type:   File") {
+		t.Errorf("expected Target Type: File for internal/codeintel/tokenize.go, got: %s", out)
+	}
+
+	// 4. Test impact command on file target (--json at end)
+	stdout.Reset()
+	stderr.Reset()
+	code = runDCI([]string{"impact", "internal/codeintel/tokenize.go", "--json"}, nil, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("runDCI(impact file --json) = %d, want 0. stderr: %s", code, stderr.String())
+	}
+	var fileJSON map[string]interface{}
+	if err := json.Unmarshal(stdout.Bytes(), &fileJSON); err != nil {
+		t.Fatalf("failed to unmarshal JSON file impact: %v\nOutput: %s", err, stdout.String())
+	}
+	if fileJSON["is_file"] != true {
+		t.Errorf("expected is_file: true for internal/codeintel/tokenize.go, got %v", fileJSON["is_file"])
+	}
+
+	// 5. Test missing target returns error code 2
+	stdout.Reset()
+	stderr.Reset()
+	code = runDCI([]string{"impact"}, nil, &stdout, &stderr)
+	if code != 2 {
+		t.Errorf("runDCI(impact) with no target want code 2, got %d", code)
 	}
 }

@@ -1,12 +1,12 @@
-# Operational State — DCI v0.3: Go AST Call-Graph & Production-First Ranking
+# Operational State — DCI v0.4: Reverse Call-Graph (Blast Radius) & Multi-Language Calls
 
-- **Current Objective**: Implement, test, secure, and document DCI v0.3 (`feat/dci-v03-go-callgraph-ranking`):
-  1. Go AST Call-Graph (`Symbol.Calls`) and Package Import (`Document.Imports`) extraction in `internal/codeintel/types.go` & `parse.go`.
-  2. Call-Graph Co-Reference Boost (`+2.0`) and Production-vs-Test Ranking (`0.65x` on test files for non-test queries, `+2.0` boost on test queries) in `internal/codeintel/rank.go`.
-  3. `downshift dci inspect --json` and call-graph visualization in `cmd/downshift/dci.go` + documentation updates.
-  4. Security & QA verification.
-- **Current Status**: Complete. 100% green tests in `internal/codeintel/...` and `cmd/downshift/...`.
-- **Branch**: `feat/dci-v03-go-callgraph-ranking`
+- **Current Objective**: Implement, test, document, and integrate DCI v0.4 (`feat/dci-v04-blast-radius-multilang-calls`):
+  1. **Cross-Language Calls & Imports**: Extract lightweight outgoing function/method calls and imports in `internal/codeintel/parse_lang.go` and `internal/codeintel/parse.go` for TS/JS, Python, Rust, PHP, Java, and C#.
+  2. **Reverse Call-Graph & Blast Radius Index**: Compute global reverse call mappings (`InvertedIndex.Callers: map[string][]string`) and `CalculateBlastRadius(symbol/file)` in `internal/codeintel/index.go` and `internal/codeintel/rank.go`.
+  3. **Context Packaging & CLI**: Surface reverse call dependencies (Blast Radius / Impact) in `PackContext` (showing callers when modifying code) and `downshift dci inspect` / `downshift dci impact <target>`.
+  4. **Security & QA Verification**: Verify nested call chains, circular dependencies, budget safety, and 100% test pass.
+- **Current Status**: Task V04.2 completed (QA & AppSec test suites, hardening & documentation).
+- **Branch**: `feat/dci-v04-blast-radius-multilang-calls`
+- **Agents Assigned**: Senior Staff QA & AppSec finished; Senior Staff Fullstack integrating V04.1.
 - **Blockers**: None.
-- **QA Verdict**: PASS.
-
+- **QA & AppSec Verdict**: PASS (100% green under `go test -v -race ./internal/codeintel/... ./cmd/downshift/...`).

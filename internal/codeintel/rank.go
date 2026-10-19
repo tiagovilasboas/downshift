@@ -364,6 +364,7 @@ func PruneTopK(candidates []*Candidate, maxFiles, maxSymbols int) []*Candidate {
 			Score:        c.Score,
 			MatchedTerms: c.MatchedTerms,
 			Snippets:     c.Snippets,
+			ImpactRadius: c.ImpactRadius,
 		}
 
 		for _, sym := range c.MatchedSymbols {

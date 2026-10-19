@@ -749,8 +749,12 @@ func TestSecurity_ParseFile_PathologicalLongLines(t *testing.T) {
 			if doc == nil {
 				t.Fatalf("ParseFile(%s) returned nil doc", tc.name)
 			}
-			if elapsed >= 100*time.Millisecond {
-				t.Errorf("ParseFile(%s) took %v, must complete in <100ms", tc.name, elapsed)
+			threshold := 100 * time.Millisecond
+			if raceEnabled {
+				threshold = 500 * time.Millisecond
+			}
+			if elapsed >= threshold {
+				t.Errorf("ParseFile(%s) took %v, must complete in <%v", tc.name, elapsed, threshold)
 			}
 		})
 	}
@@ -1132,5 +1136,176 @@ func TestSecurity_GoAST_CallGraphAndImportsCap(t *testing.T) {
 	// Total serialized doc size should be reasonable (< 4KB) despite 100 imports and 200 calls in source
 	if len(marshaled) > 4096 {
 		t.Errorf("Marshaled document size = %d bytes, exceeds 4096 bytes (risk of .downshift/dci_index.json bloat)", len(marshaled))
+	}
+}
+
+func TestSecurity_CircularCallGraphsAndPathologicalMultiLangLimits(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// 1. Pathological Circular Call Graph: 1000 cyclic calls (cycle_0 -> cycle_1 -> ... -> cycle_999 -> cycle_0)
+	// plus 50 distinct caller files calling TargetHotspot to test Callers cap (<= 32)
+	idx := NewInvertedIndex()
+
+	for i := 0; i < 1000; i++ {
+		nextI := (i + 1) % 1000
+		relPath := fmt.Sprintf("pkg/cyclic/file_%04d.go", i)
+		symName := fmt.Sprintf("CycleFunc_%04d", i)
+		calledName := fmt.Sprintf("CycleFunc_%04d", nextI)
+
+		var calls []string
+		calls = append(calls, calledName)
+		if i < 50 {
+			calls = append(calls, "TargetHotspot")
+		}
+
+		doc := &Document{
+			RelativePath: relPath,
+			TotalTerms:   20,
+			TermFreqs:    map[string]int{"cyclic": 1},
+			Symbols: []Symbol{
+				{
+					Name:         symName,
+					Kind:         KindFunction,
+					RelativePath: relPath,
+					StartLine:    1,
+					EndLine:      10,
+					Calls:        calls,
+				},
+			},
+		}
+		idx.AddDocument(doc)
+	}
+
+	start := time.Now()
+	idx.RebuildPostings()
+	rebuildDuration := time.Since(start)
+
+	if rebuildDuration > 250*time.Millisecond {
+		t.Errorf("RebuildPostings on 1000 circular documents took %v, want <= 250ms", rebuildDuration)
+	}
+
+	// Verify TargetHotspot callers hard cap (<= 32, exactly 32 when 50 callers exist)
+	hotspotCallers := idx.GetCallers("TargetHotspot")
+	if len(hotspotCallers) > 32 {
+		t.Errorf("len(hotspotCallers) = %d, strictly exceeds hard cap of 32 callers", len(hotspotCallers))
+	}
+	if len(hotspotCallers) != 32 {
+		t.Errorf("len(hotspotCallers) = %d, expected exactly 32 capped from 50 callers", len(hotspotCallers))
+	}
+
+	// Verify deterministic caller sorting
+	for i := 1; i < len(hotspotCallers); i++ {
+		if hotspotCallers[i-1] >= hotspotCallers[i] {
+			t.Errorf("hotspotCallers not strictly sorted: %s >= %s", hotspotCallers[i-1], hotspotCallers[i])
+		}
+	}
+
+	// Verify cyclical traversal does not deadlock or crash
+	for i := 0; i < 100; i++ {
+		sym := fmt.Sprintf("CycleFunc_%04d", i)
+		callers := idx.GetCallers(sym)
+		if len(callers) != 1 {
+			t.Errorf("Expected 1 caller for %s, got %d: %v", sym, len(callers), callers)
+		}
+	}
+
+	// 2. Pathological Multi-Language Files: 100 imports and 200 calls per language
+
+	// 2a. TypeScript Pathological
+	var tsSB strings.Builder
+	for i := 0; i < 100; i++ {
+		fmt.Fprintf(&tsSB, "import { Mod%03d } from \"pkg/module_%03d\";\n", i, i)
+	}
+	tsSB.WriteString("export function pathologicalTS() {\n")
+	for i := 0; i < 200; i++ {
+		fmt.Fprintf(&tsSB, "\tcallTSFunc_%03d();\n", i)
+	}
+	tsSB.WriteString("}\n")
+
+	tsPath := filepath.Join(tempDir, "pathological.ts")
+	if err := os.WriteFile(tsPath, []byte(tsSB.String()), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	docTS, err := ParseFile(tempDir, "pathological.ts")
+	if err != nil {
+		t.Fatalf("ParseFile(pathological.ts) failed: %v", err)
+	}
+	if len(docTS.Imports) > 32 {
+		t.Errorf("docTS.Imports len = %d, exceeds cap of 32", len(docTS.Imports))
+	}
+	if len(docTS.Symbols) == 0 {
+		t.Fatalf("No symbols extracted from pathological.ts")
+	}
+	if len(docTS.Symbols[0].Calls) > 16 {
+		t.Errorf("docTS.Symbols[0].Calls len = %d, exceeds cap of 16", len(docTS.Symbols[0].Calls))
+	}
+	if len(docTS.Symbols[0].Calls) != 16 {
+		t.Errorf("docTS.Symbols[0].Calls len = %d, expected exactly 16 capped from 200 calls", len(docTS.Symbols[0].Calls))
+	}
+
+	// 2b. Python Pathological
+	var pySB strings.Builder
+	for i := 0; i < 100; i++ {
+		fmt.Fprintf(&pySB, "import lib_%03d\n", i)
+	}
+	pySB.WriteString("def pathological_py():\n")
+	for i := 0; i < 200; i++ {
+		fmt.Fprintf(&pySB, "    call_py_func_%03d()\n", i)
+	}
+
+	pyPath := filepath.Join(tempDir, "pathological.py")
+	if err := os.WriteFile(pyPath, []byte(pySB.String()), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	docPy, err := ParseFile(tempDir, "pathological.py")
+	if err != nil {
+		t.Fatalf("ParseFile(pathological.py) failed: %v", err)
+	}
+	if len(docPy.Imports) > 32 {
+		t.Errorf("docPy.Imports len = %d, exceeds cap of 32", len(docPy.Imports))
+	}
+	if len(docPy.Symbols) == 0 {
+		t.Fatalf("No symbols extracted from pathological.py")
+	}
+	if len(docPy.Symbols[0].Calls) > 16 {
+		t.Errorf("docPy.Symbols[0].Calls len = %d, exceeds cap of 16", len(docPy.Symbols[0].Calls))
+	}
+	if len(docPy.Symbols[0].Calls) != 16 {
+		t.Errorf("docPy.Symbols[0].Calls len = %d, expected exactly 16 capped from 200 calls", len(docPy.Symbols[0].Calls))
+	}
+
+	// 2c. Rust Pathological
+	var rsSB strings.Builder
+	for i := 0; i < 100; i++ {
+		fmt.Fprintf(&rsSB, "use crate::module_%03d::Item;\n", i)
+	}
+	rsSB.WriteString("pub fn pathological_rs() {\n")
+	for i := 0; i < 200; i++ {
+		fmt.Fprintf(&rsSB, "    call_rs_func_%03d();\n", i)
+	}
+	rsSB.WriteString("}\n")
+
+	rsPath := filepath.Join(tempDir, "pathological.rs")
+	if err := os.WriteFile(rsPath, []byte(rsSB.String()), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	docRS, err := ParseFile(tempDir, "pathological.rs")
+	if err != nil {
+		t.Fatalf("ParseFile(pathological.rs) failed: %v", err)
+	}
+	if len(docRS.Imports) > 32 {
+		t.Errorf("docRS.Imports len = %d, exceeds cap of 32", len(docRS.Imports))
+	}
+	if len(docRS.Symbols) == 0 {
+		t.Fatalf("No symbols extracted from pathological.rs")
+	}
+	if len(docRS.Symbols[0].Calls) > 16 {
+		t.Errorf("docRS.Symbols[0].Calls len = %d, exceeds cap of 16", len(docRS.Symbols[0].Calls))
+	}
+	if len(docRS.Symbols[0].Calls) != 16 {
+		t.Errorf("docRS.Symbols[0].Calls len = %d, expected exactly 16 capped from 200 calls", len(docRS.Symbols[0].Calls))
 	}
 }

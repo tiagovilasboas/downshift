@@ -35,6 +35,8 @@ func runDCI(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) 
 		return runDCIDoctor(stdout, stderr)
 	case "inspect":
 		return runDCIInspect(args[1:], stdout, stderr)
+	case "impact":
+		return runDCIImpact(args[1:], stdout, stderr)
 	case "benchmark":
 		return runDCIBenchmark(args[1:], stdout, stderr)
 	case "hook":
@@ -62,6 +64,7 @@ Commands:
   disable                             Disable DCI (mode off)
   doctor                              Diagnose DCI health, file limits, permissions, and budgets
   inspect [--json] <prompt>           Simulate retrieval and context generation for a query
+  impact [--json] <symbol_or_file>    Inspect impact blast radius (callers and file dependencies)
   benchmark                           Run automated latency, relevance, and budget benchmarks
   hook <harness>                      Run hook handler on stdin for harness (claude-code, cursor, opencode, codex, generic)`)
 }
@@ -295,6 +298,7 @@ type dciInspectJSONOutput struct {
 	SnippetsCount    int      `json:"snippets_count"`
 	OutputBytes      int      `json:"output_bytes"`
 	FormattedText    string   `json:"formatted_text"`
+	ImpactRadius     []string `json:"impact_radius,omitempty"`
 	LatencyMs        int64    `json:"latency_ms"`
 }
 
@@ -358,6 +362,11 @@ func runDCIInspect(args []string, w io.Writer, stderr io.Writer) int {
 		abstentionReason = telemetry.ErrorCode
 	}
 
+	var impactRadius []string
+	if pack != nil && pack.ImpactRadius != nil {
+		impactRadius = pack.ImpactRadius
+	}
+
 	if jsonOutput {
 		out := dciInspectJSONOutput{
 			PromptTokens:     queryTokens,
@@ -369,6 +378,7 @@ func runDCIInspect(args []string, w io.Writer, stderr io.Writer) int {
 			SnippetsCount:    snippetsCount,
 			OutputBytes:      outputBytes,
 			FormattedText:    formattedText,
+			ImpactRadius:     impactRadius,
 			LatencyMs:        telemetry.TotalDurationMs,
 		}
 		enc := json.NewEncoder(w)
@@ -397,6 +407,10 @@ func runDCIInspect(args []string, w io.Writer, stderr io.Writer) int {
 	fmt.Fprintf(w, "Total Duration:        %d ms\n", telemetry.TotalDurationMs)
 	fmt.Fprintf(w, "Injection Applied:     %v\n", telemetry.InjectionApplied)
 
+	if len(impactRadius) > 0 {
+		fmt.Fprintf(w, "Impact Radius:         %s\n", strings.Join(impactRadius, ", "))
+	}
+
 	if telemetry.AbstentionReason != "" {
 		fmt.Fprintf(w, "Abstention Reason:     %s\n", telemetry.AbstentionReason)
 	}
@@ -409,6 +423,142 @@ func runDCIInspect(args []string, w io.Writer, stderr io.Writer) int {
 		fmt.Fprintln(w, pack.FormattedText)
 	} else {
 		fmt.Fprintln(w, "\n(No context injected — prompt abstained or no relevance)")
+	}
+
+	return 0
+}
+
+type dciImpactJSONOutput struct {
+	Target       string   `json:"target"`
+	IsFile       bool     `json:"is_file"`
+	ImpactRadius []string `json:"impact_radius"`
+	CallersCount int      `json:"callers_count"`
+}
+
+func runDCIImpact(args []string, w io.Writer, stderr io.Writer) int {
+	jsonOutput := false
+	var targetParts []string
+	for _, arg := range args {
+		if arg == "--json" {
+			jsonOutput = true
+		} else {
+			targetParts = append(targetParts, arg)
+		}
+	}
+
+	if len(targetParts) == 0 {
+		fmt.Fprintln(stderr, "usage: downshift dci impact [--json] <symbol_or_file>")
+		return 2
+	}
+
+	target := strings.Join(targetParts, " ")
+	repoRoot := findRepoRoot()
+	cfg, err := codeintel.LoadConfig(repoRoot)
+	if err != nil {
+		cfg = codeintel.DefaultConfig()
+	}
+	cfg.Mode = codeintel.ModeActive
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5000*time.Millisecond)
+	defer cancel()
+
+	service := codeintel.NewService(repoRoot, cfg)
+	if err := service.EnsureIndex(ctx); err != nil {
+		fmt.Fprintf(stderr, "failed to index repository: %v\n", err)
+		return 1
+	}
+
+	idx := service.GetIndex()
+	if idx == nil {
+		fmt.Fprintln(stderr, "index not available")
+		return 1
+	}
+
+	normTarget := filepath.ToSlash(target)
+	isFile := false
+	var callers []string
+	seen := make(map[string]bool)
+
+	// Check if target is a file in the index
+	var targetDoc *codeintel.Document
+	for path, doc := range idx.Documents {
+		if path == normTarget || strings.HasSuffix(path, "/"+normTarget) || strings.EqualFold(path, normTarget) {
+			isFile = true
+			targetDoc = doc
+			break
+		}
+	}
+
+	if isFile && targetDoc != nil {
+		// Target is a file: find callers of all symbols defined in this file, plus files importing it
+		for _, sym := range targetDoc.Symbols {
+			for _, clr := range idx.GetCallers(sym.Name) {
+				if !seen[clr] {
+					seen[clr] = true
+					callers = append(callers, clr)
+				}
+			}
+		}
+
+		// Also check documents that import this file's path or package name
+		baseWithoutExt := strings.TrimSuffix(filepath.Base(targetDoc.RelativePath), filepath.Ext(targetDoc.RelativePath))
+		for path, doc := range idx.Documents {
+			if path == targetDoc.RelativePath {
+				continue
+			}
+			for _, imp := range doc.Imports {
+				if imp == targetDoc.RelativePath || strings.HasSuffix(imp, "/"+baseWithoutExt) || imp == baseWithoutExt {
+					rep := path
+					if !seen[rep] {
+						seen[rep] = true
+						callers = append(callers, rep)
+					}
+				}
+			}
+		}
+	} else {
+		// Target is a symbol name
+		for _, clr := range idx.GetCallers(target) {
+			if !seen[clr] {
+				seen[clr] = true
+				callers = append(callers, clr)
+			}
+		}
+	}
+
+	sort.Strings(callers)
+	if callers == nil {
+		callers = []string{}
+	}
+
+	if jsonOutput {
+		out := dciImpactJSONOutput{
+			Target:       target,
+			IsFile:       isFile,
+			ImpactRadius: callers,
+			CallersCount: len(callers),
+		}
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(out); err != nil {
+			fmt.Fprintf(stderr, "failed to encode json: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+
+	fmt.Fprintln(w, "=== DCI Impact Blast Radius ===")
+	fmt.Fprintf(w, "Target:        %s\n", target)
+	fmt.Fprintf(w, "Target Type:   %s\n", map[bool]string{true: "File", false: "Symbol"}[isFile])
+	fmt.Fprintf(w, "Callers/Deps:  %d\n\n", len(callers))
+
+	if len(callers) == 0 {
+		fmt.Fprintln(w, "No callers or dependent files found in index.")
+		return 0
+	}
+
+	for _, c := range callers {
+		fmt.Fprintf(w, "  - %s\n", c)
 	}
 
 	return 0

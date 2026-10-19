@@ -138,6 +138,51 @@ func (s *Service) ProcessPrompt(ctx context.Context, prompt string) (*ContextPac
 	// 4. Prune Top-K (up to 3 files, 8 symbols)
 	topCandidates := PruneTopK(candidates, MaxTopFiles, MaxTopSymbols)
 
+	// Populate ImpactRadius for top candidates (up to 4 callers per candidate)
+	for _, cand := range topCandidates {
+		if cand == nil {
+			continue
+		}
+		var callers []string
+		seenCaller := make(map[string]bool)
+
+		// First check matched symbols
+		for _, sym := range cand.MatchedSymbols {
+			for _, clr := range idx.GetCallers(sym.Name) {
+				if !seenCaller[clr] {
+					seenCaller[clr] = true
+					callers = append(callers, clr)
+					if len(callers) >= 4 {
+						break
+					}
+				}
+			}
+			if len(callers) >= 4 {
+				break
+			}
+		}
+
+		// Also check relative path or all document symbols if callers < 4
+		if len(callers) < 4 && cand.Document != nil {
+			for _, sym := range cand.Document.Symbols {
+				for _, clr := range idx.GetCallers(sym.Name) {
+					if !seenCaller[clr] {
+						seenCaller[clr] = true
+						callers = append(callers, clr)
+						if len(callers) >= 4 {
+							break
+						}
+					}
+				}
+				if len(callers) >= 4 {
+					break
+				}
+			}
+		}
+
+		cand.ImpactRadius = callers
+	}
+
 	// 5. Extract Snippets (up to 4 snippets)
 	ExtractSnippets(s.repoRoot, topCandidates, MaxTopSnippets)
 

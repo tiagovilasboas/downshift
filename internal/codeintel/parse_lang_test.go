@@ -374,3 +374,173 @@ func TestEndToEndRetrieval_MultiLineSnippets(t *testing.T) {
 		t.Errorf("Expected final Python return line in snippet, got:\n%s", packPy.FormattedText)
 	}
 }
+
+func TestMultiLanguageOutgoingCallsAndImports(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// 1. TS file
+	tsContent := `import { AuthService } from "./auth";
+import axios from "axios";
+
+export function handleLogin(user: string): boolean {
+	const token = generateToken(user);
+	logEvent(token);
+	return verifyToken(token);
+}
+`
+	if err := os.WriteFile(filepath.Join(tempDir, "login.ts"), []byte(tsContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// 2. Python file
+	pyContent := `from services.auth import verify_token
+import os, sys
+
+def authenticate_request(req):
+    token = extract_token(req)
+    validate_header(token)
+    return verify_token(token)
+`
+	if err := os.WriteFile(filepath.Join(tempDir, "auth.py"), []byte(pyContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// 3. Rust file
+	rsContent := `use std::collections::HashMap;
+use crate::crypto::sign;
+
+pub fn process_order(id: u64) -> bool {
+    check_inventory(id);
+    sign_receipt(id);
+    true
+}
+`
+	if err := os.WriteFile(filepath.Join(tempDir, "order.rs"), []byte(rsContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Test TS parse
+	docTS, err := ParseFile(tempDir, "login.ts")
+	if err != nil {
+		t.Fatalf("ParseFile login.ts failed: %v", err)
+	}
+	if len(docTS.Imports) == 0 {
+		t.Errorf("Expected imports in login.ts, got %v", docTS.Imports)
+	}
+	if len(docTS.Symbols) == 0 {
+		t.Fatalf("Expected symbols in login.ts")
+	}
+	symTS := docTS.Symbols[0]
+	if symTS.Name != "handleLogin" {
+		t.Errorf("Expected symbol handleLogin, got %s", symTS.Name)
+	}
+	hasGenToken := false
+	for _, c := range symTS.Calls {
+		if c == "generateToken" {
+			hasGenToken = true
+			break
+		}
+	}
+	if !hasGenToken {
+		t.Errorf("Expected generateToken in calls, got %v", symTS.Calls)
+	}
+
+	// Test Py parse
+	docPy, err := ParseFile(tempDir, "auth.py")
+	if err != nil {
+		t.Fatalf("ParseFile auth.py failed: %v", err)
+	}
+	if len(docPy.Imports) == 0 {
+		t.Errorf("Expected imports in auth.py, got %v", docPy.Imports)
+	}
+	symPy := docPy.Symbols[0]
+	hasExtract := false
+	for _, c := range symPy.Calls {
+		if c == "extract_token" {
+			hasExtract = true
+			break
+		}
+	}
+	if !hasExtract {
+		t.Errorf("Expected extract_token in calls, got %v", symPy.Calls)
+	}
+
+	// Test Rust parse
+	docRs, err := ParseFile(tempDir, "order.rs")
+	if err != nil {
+		t.Fatalf("ParseFile order.rs failed: %v", err)
+	}
+	if len(docRs.Imports) == 0 {
+		t.Errorf("Expected imports in order.rs, got %v", docRs.Imports)
+	}
+	symRs := docRs.Symbols[0]
+	hasCheckInv := false
+	for _, c := range symRs.Calls {
+		if c == "check_inventory" {
+			hasCheckInv = true
+			break
+		}
+	}
+	if !hasCheckInv {
+		t.Errorf("Expected check_inventory in calls, got %v", symRs.Calls)
+	}
+}
+
+func TestInvertedIndex_CallersAndImpactRadius(t *testing.T) {
+	idx := NewInvertedIndex()
+	docA := &Document{
+		RelativePath: "pkg/auth/token.go",
+		Symbols: []Symbol{
+			{
+				Name:  "VerifyToken",
+				Kind:  KindFunction,
+				Calls: []string{"ValidateSignature"},
+			},
+		},
+		TermFreqs:  map[string]int{"verifytoken": 1, "token": 1},
+		TotalTerms: 2,
+	}
+	docB := &Document{
+		RelativePath: "pkg/api/handler.go",
+		Symbols: []Symbol{
+			{
+				Name:  "LoginHandler",
+				Kind:  KindFunction,
+				Calls: []string{"VerifyToken"},
+			},
+		},
+		TermFreqs:  map[string]int{"loginhandler": 1, "login": 1},
+		TotalTerms: 2,
+	}
+
+	idx.AddDocument(docA)
+	idx.AddDocument(docB)
+	idx.RebuildPostings()
+
+	callers := idx.GetCallers("VerifyToken")
+	if len(callers) == 0 {
+		t.Fatalf("Expected callers for VerifyToken, got none")
+	}
+	if callers[0] != "pkg/api/handler.go:LoginHandler" {
+		t.Errorf("Expected caller 'pkg/api/handler.go:LoginHandler', got %q", callers[0])
+	}
+
+	// Verify ContextPack includes Impact Radius note
+	cand := &Candidate{
+		Document: docA,
+		MatchedSymbols: []Symbol{
+			{Name: "VerifyToken", Kind: KindFunction, StartLine: 1, EndLine: 10},
+		},
+		ImpactRadius: callers,
+	}
+	pack := PackContext([]*Candidate{cand}, 3, 3500)
+	if pack == nil {
+		t.Fatalf("PackContext returned nil")
+	}
+	if !strings.Contains(pack.FormattedText, "Impact Radius: called by pkg/api/handler.go:LoginHandler") {
+		t.Errorf("Expected Impact Radius in formatted pack, got:\n%s", pack.FormattedText)
+	}
+	if len(pack.ImpactRadius) == 0 {
+		t.Errorf("Expected pack.ImpactRadius to be populated, got empty")
+	}
+}

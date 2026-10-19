@@ -4,10 +4,13 @@
 package codeintel
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 )
 
 func TestRankCandidatesFieldWeightsAndBonuses(t *testing.T) {
@@ -417,5 +420,303 @@ func TestRankCandidates_CallGraphCoReferenceBoost(t *testing.T) {
 	}
 	if !hasValidateCart {
 		t.Errorf("cart.go MatchedSymbols does not contain ValidateCart: %v", cartCandidate.MatchedSymbols)
+	}
+}
+
+func TestMultiLanguageCallAndImportExtraction(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// 1. TypeScript snippet with imports and calls
+	tsCode := `import { AuthClient } from "./client";
+import axios from "axios";
+
+export class TokenManager {
+	async refreshToken(token: string): Promise<boolean> {
+		const valid = validateToken(token);
+		if (!valid) {
+			notifyExpiry(token);
+			return false;
+		}
+		emitTelemetry("refreshed");
+		return true;
+	}
+}
+`
+	if err := os.WriteFile(filepath.Join(tempDir, "token_manager.ts"), []byte(tsCode), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	docTS, err := ParseFile(tempDir, "token_manager.ts")
+	if err != nil {
+		t.Fatalf("ParseFile(token_manager.ts) failed: %v", err)
+	}
+
+	// Verify TS imports
+	if len(docTS.Imports) == 0 {
+		t.Errorf("Expected docTS.Imports to be non-empty, got 0")
+	}
+	hasClientImport := false
+	for _, imp := range docTS.Imports {
+		if strings.Contains(imp, "./client") || imp == "axios" {
+			hasClientImport = true
+			break
+		}
+	}
+	if !hasClientImport {
+		t.Errorf("Expected './client' or 'axios' in docTS.Imports, got: %v", docTS.Imports)
+	}
+
+	// Verify TS calls
+	var tsMethod *Symbol
+	for _, s := range docTS.Symbols {
+		if s.Name == "TokenManager.refreshToken" {
+			tsMethod = &s
+			break
+		}
+	}
+	if tsMethod == nil {
+		t.Fatalf("Symbol TokenManager.refreshToken not found in %v", docTS.Symbols)
+	}
+	hasValidateToken := false
+	for _, c := range tsMethod.Calls {
+		if c == "validateToken" {
+			hasValidateToken = true
+			break
+		}
+	}
+	if !hasValidateToken {
+		t.Errorf("Expected validateToken in tsMethod.Calls, got: %v", tsMethod.Calls)
+	}
+
+	// 2. Python snippet with imports and calls
+	pyCode := `from payment.gateway import charge_card
+import logging
+
+def process_checkout(order_id: str, amount: int):
+    charge_card(amount)
+    send_receipt(order_id)
+`
+	if err := os.WriteFile(filepath.Join(tempDir, "checkout.py"), []byte(pyCode), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	docPy, err := ParseFile(tempDir, "checkout.py")
+	if err != nil {
+		t.Fatalf("ParseFile(checkout.py) failed: %v", err)
+	}
+
+	// Verify Python imports
+	if len(docPy.Imports) == 0 {
+		t.Errorf("Expected docPy.Imports to be non-empty, got 0")
+	}
+	hasPyImport := false
+	for _, imp := range docPy.Imports {
+		if strings.Contains(imp, "payment.gateway") || strings.Contains(imp, "logging") {
+			hasPyImport = true
+			break
+		}
+	}
+	if !hasPyImport {
+		t.Errorf("Expected payment.gateway or logging in docPy.Imports, got: %v", docPy.Imports)
+	}
+
+	// Verify Python calls
+	var pyFunc *Symbol
+	for _, s := range docPy.Symbols {
+		if s.Name == "process_checkout" {
+			pyFunc = &s
+			break
+		}
+	}
+	if pyFunc == nil {
+		t.Fatalf("Symbol process_checkout not found in %v", docPy.Symbols)
+	}
+	hasChargeCard := false
+	for _, c := range pyFunc.Calls {
+		if c == "charge_card" {
+			hasChargeCard = true
+			break
+		}
+	}
+	if !hasChargeCard {
+		t.Errorf("Expected charge_card in pyFunc.Calls, got: %v", pyFunc.Calls)
+	}
+
+	// 3. Rust snippet with imports and calls
+	rsCode := `use std::sync::Arc;
+use crate::database::Pool;
+
+pub fn execute_transaction(pool: &Pool) -> bool {
+    begin_tx(pool);
+    commit_tx();
+    true
+}
+`
+	if err := os.WriteFile(filepath.Join(tempDir, "tx.rs"), []byte(rsCode), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	docRS, err := ParseFile(tempDir, "tx.rs")
+	if err != nil {
+		t.Fatalf("ParseFile(tx.rs) failed: %v", err)
+	}
+
+	// Verify Rust imports
+	if len(docRS.Imports) == 0 {
+		t.Errorf("Expected docRS.Imports to be non-empty, got 0")
+	}
+	hasRSImport := false
+	for _, imp := range docRS.Imports {
+		if strings.Contains(imp, "std::sync::Arc") || strings.Contains(imp, "crate::database::Pool") {
+			hasRSImport = true
+			break
+		}
+	}
+	if !hasRSImport {
+		t.Errorf("Expected std::sync::Arc in docRS.Imports, got: %v", docRS.Imports)
+	}
+
+	// Verify Rust calls
+	var rsFunc *Symbol
+	for _, s := range docRS.Symbols {
+		if s.Name == "execute_transaction" {
+			rsFunc = &s
+			break
+		}
+	}
+	if rsFunc == nil {
+		t.Fatalf("Symbol execute_transaction not found in %v", docRS.Symbols)
+	}
+	hasBeginTx := false
+	for _, c := range rsFunc.Calls {
+		if c == "begin_tx" {
+			hasBeginTx = true
+			break
+		}
+	}
+	if !hasBeginTx {
+		t.Errorf("Expected begin_tx in rsFunc.Calls, got: %v", rsFunc.Calls)
+	}
+}
+
+func TestReverseCallGraph_ComputationAndCircularDependencyResistance(t *testing.T) {
+	idx := NewInvertedIndex()
+
+	// Circular call graph:
+	// File A: defines FuncA, calls FuncB
+	docA := &Document{
+		RelativePath: "pkg/cycle/service_a.go",
+		TotalTerms:   50,
+		TermFreqs:    map[string]int{"cycle": 2},
+		Symbols: []Symbol{
+			{Name: "FuncA", Kind: KindFunction, RelativePath: "pkg/cycle/service_a.go", StartLine: 1, EndLine: 10, Calls: []string{"FuncB"}},
+		},
+	}
+
+	// File B: defines FuncB, calls FuncA (circular with A)
+	docB := &Document{
+		RelativePath: "pkg/cycle/service_b.go",
+		TotalTerms:   50,
+		TermFreqs:    map[string]int{"cycle": 2},
+		Symbols: []Symbol{
+			{Name: "FuncB", Kind: KindFunction, RelativePath: "pkg/cycle/service_b.go", StartLine: 1, EndLine: 10, Calls: []string{"FuncA"}},
+		},
+	}
+
+	// File C: defines FuncC, calls both FuncA and FuncB
+	docC := &Document{
+		RelativePath: "pkg/cycle/service_c.go",
+		TotalTerms:   50,
+		TermFreqs:    map[string]int{"cycle": 2},
+		Symbols: []Symbol{
+			{Name: "FuncC", Kind: KindFunction, RelativePath: "pkg/cycle/service_c.go", StartLine: 1, EndLine: 10, Calls: []string{"FuncA", "FuncB"}},
+		},
+	}
+
+	idx.AddDocument(docA)
+	idx.AddDocument(docB)
+	idx.AddDocument(docC)
+	idx.RebuildPostings()
+
+	// Check reverse callers for FuncA
+	callersA := idx.GetCallers("FuncA")
+	if len(callersA) != 2 {
+		t.Fatalf("Expected 2 callers for FuncA, got %d: %v", len(callersA), callersA)
+	}
+	// Callers must be deterministically sorted
+	if callersA[0] != "pkg/cycle/service_b.go:FuncB" || callersA[1] != "pkg/cycle/service_c.go:FuncC" {
+		t.Errorf("Unexpected callers for FuncA: %v", callersA)
+	}
+
+	// Check reverse callers for FuncB
+	callersB := idx.GetCallers("FuncB")
+	if len(callersB) != 2 {
+		t.Fatalf("Expected 2 callers for FuncB, got %d: %v", len(callersB), callersB)
+	}
+	if callersB[0] != "pkg/cycle/service_a.go:FuncA" || callersB[1] != "pkg/cycle/service_c.go:FuncC" {
+		t.Errorf("Unexpected callers for FuncB: %v", callersB)
+	}
+
+	// Check unknown symbol returns nil
+	callersUnknown := idx.GetCallers("NonExistentFunc")
+	if callersUnknown != nil {
+		t.Errorf("Expected nil for NonExistentFunc, got: %v", callersUnknown)
+	}
+}
+
+func TestPackContext_BudgetAdherenceWithImpactRadius(t *testing.T) {
+	cands := []*Candidate{
+		{
+			Document: &Document{
+				RelativePath: "pkg/auth/login.go",
+				Symbols: []Symbol{
+					{Name: "HandleLogin", Kind: KindFunction, RelativePath: "pkg/auth/login.go", StartLine: 10, EndLine: 50},
+				},
+			},
+			Score:        20.0,
+			MatchedTerms: []string{"auth", "login"},
+			MatchedSymbols: []Symbol{
+				{Name: "HandleLogin", Kind: KindFunction, RelativePath: "pkg/auth/login.go", StartLine: 10, EndLine: 50},
+			},
+			ImpactRadius: []string{
+				"pkg/api/router.go:RegisterAuth",
+				"pkg/gateway/proxy.go:ProxyAuth",
+				"pkg/worker/audit.go:RecordLogin",
+			},
+			Snippets: []Snippet{
+				{
+					RelativePath: "pkg/auth/login.go",
+					StartLine:    10,
+					EndLine:      20,
+					Content:      "func HandleLogin(w http.ResponseWriter, r *http.Request) {\n\t// Authenticate\n}\n",
+				},
+			},
+		},
+	}
+
+	budgets := []int{100, 250, 400, 600, 1000, 3500}
+	for _, maxBytes := range budgets {
+		t.Run(fmt.Sprintf("Budget_%d", maxBytes), func(t *testing.T) {
+			pack := PackContext(cands, 3, maxBytes)
+			if pack == nil {
+				t.Fatalf("PackContext returned nil for budget %d", maxBytes)
+			}
+			raw := []byte(pack.FormattedText)
+			if len(raw) > maxBytes {
+				t.Errorf("Output bytes %d strictly exceeds maxBytes %d", len(raw), maxBytes)
+			}
+			if !utf8.Valid(raw) {
+				t.Errorf("Output is not valid UTF-8 for budget %d", maxBytes)
+			}
+			// When budget is comfortably large (>= 600), verify Impact Radius appears
+			if maxBytes >= 600 {
+				if !strings.Contains(pack.FormattedText, "Impact Radius:") {
+					t.Errorf("Expected 'Impact Radius:' in pack text for budget %d, got:\n%s", maxBytes, pack.FormattedText)
+				}
+				if len(pack.ImpactRadius) == 0 {
+					t.Errorf("Expected non-empty pack.ImpactRadius for budget %d", maxBytes)
+				}
+			}
+		})
 	}
 }

@@ -43,6 +43,9 @@ func PackContext(candidates []*Candidate, maxFiles, maxBytes int) *ContextPack {
 
 	// 2. Build Structural Sketch
 	var structSketch strings.Builder
+	var allImpactRadius []string
+	seenImpactGlobal := make(map[string]bool)
+
 	for _, cand := range topCands {
 		selectedFiles = append(selectedFiles, cand.Document.RelativePath)
 		for _, t := range cand.MatchedTerms {
@@ -62,6 +65,21 @@ func PackContext(candidates []*Candidate, maxFiles, maxBytes int) *ContextPack {
 			}
 			structSketch.WriteString(strings.Join(symStrs, ", "))
 			structSketch.WriteString(")")
+		}
+
+		// Impact Radius: callers of matched symbols or document
+		if len(cand.ImpactRadius) > 0 {
+			callersToShow := cand.ImpactRadius
+			if len(callersToShow) > 4 {
+				callersToShow = callersToShow[:4]
+			}
+			structSketch.WriteString(fmt.Sprintf(" (Impact Radius: called by %s)", strings.Join(callersToShow, ", ")))
+			for _, c := range callersToShow {
+				if !seenImpactGlobal[c] {
+					seenImpactGlobal[c] = true
+					allImpactRadius = append(allImpactRadius, c)
+				}
+			}
 		}
 	}
 	structSketch.WriteString("\n")
@@ -93,6 +111,7 @@ func PackContext(candidates []*Candidate, maxFiles, maxBytes int) *ContextPack {
 			SymbolsCount:  symbolsCount,
 			SnippetsCount: snippetsCount,
 			RelevantTerms: relevantTerms,
+			ImpactRadius:  allImpactRadius,
 		}
 	}
 
@@ -106,6 +125,7 @@ func PackContext(candidates []*Candidate, maxFiles, maxBytes int) *ContextPack {
 			SymbolsCount:  symbolsCount,
 			SnippetsCount: 0, // snippets dropped due to budget
 			RelevantTerms: relevantTerms,
+			ImpactRadius:  allImpactRadius,
 		}
 	}
 
@@ -118,6 +138,7 @@ func PackContext(candidates []*Candidate, maxFiles, maxBytes int) *ContextPack {
 		SymbolsCount:  symbolsCount,
 		SnippetsCount: 0,
 		RelevantTerms: relevantTerms,
+		ImpactRadius:  allImpactRadius,
 	}
 }
 
