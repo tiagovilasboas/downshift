@@ -108,7 +108,7 @@ The same command also prints a routing summary for the current session, after
 the quota windows:
 
 ```text
-5h 25% · 7d 40% │ ◆ downshift · 6 subagents · 4 on haiku · saved $0.42 · 0 on doubt
+5h 25% · 7d 40% │ ◆ downshift · 6 subagents · 4 on haiku · tokens saved work 62% · cache 58% · 0 on doubt
 ```
 
 - The statusline input carries `session_id`. It is hashed with the same function
@@ -118,8 +118,10 @@ the quota windows:
   rendering does not grow with the log: about 7 ms on a 50 MB log. Spawns older
   than that window are not counted.
 - `N subagents`: routing decisions. `N on haiku`: the model most children ran on.
-  `saved $x` / `over $x`: the signed real delta (baseline minus actual) over
-  priced children; a net loss shows as `over`. `N on doubt`: frontier decisions
+  `tokens saved work N% · cache M%`: the share of the session's child tokens
+  that ran on a cheaper model than requested, work (input+output) and cache
+  apart; a child on a pricier model is never counted as saved. No dollars here:
+  `downshift report` prices tokens. `N on doubt`: frontier decisions
   that rest on an unconfident classification with no deterministic lift.
   Segments with no data are left out; a session with no spawns prints no summary.
 - Each part fails on its own. With no event log the quota windows print alone;

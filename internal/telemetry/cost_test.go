@@ -225,24 +225,18 @@ func TestMarshal_OmitsAbsentRealCostFields(t *testing.T) {
 	}
 }
 
-func TestPrintStats_RealCostSection(t *testing.T) {
+// The real-cost block moved to `downshift report` (priced at report time):
+// stats --detail points there and prints no dollar, with or without usage.
+func TestPrintStats_RealCostSectionMovedToReport(t *testing.T) {
 	withCost := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.5)
 	withCost.ActualCostUSD = float64Ptr(1.0)
 	withCost.BaselineCostUSD = float64Ptr(4.0)
-
-	var buf strings.Builder
-	telemetry.PrintStats([]telemetry.Event{withCost}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
-	if !strings.Contains(buf.String(), "Real provider cost (1 events with token usage)") {
-		t.Errorf("missing real-cost section, got:\n%s", buf.String())
-	}
-	if !strings.Contains(buf.String(), "$") {
-		t.Error("real-cost section should show saved USD")
-	}
-
-	var buf2 strings.Builder
-	telemetry.PrintStats([]telemetry.Event{makeEvent("cc", "TRIVIAL", "OK", 0)}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf2)
-	if !strings.Contains(buf2.String(), "Real cost: no events with token usage yet (wire the PostToolUse hook to populate them).") {
-		t.Errorf("missing no-real-cost line, got:\n%s", buf2.String())
+	for _, ev := range []telemetry.Event{withCost, makeEvent("cc", "TRIVIAL", "OK", 0)} {
+		var buf strings.Builder
+		telemetry.PrintStats([]telemetry.Event{ev}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
+		if strings.Contains(buf.String(), "Real provider cost") || strings.Contains(buf.String(), "$") || !strings.Contains(buf.String(), "downshift report") {
+			t.Errorf("stats --detail must point at report and print no dollars:\n%s", buf.String())
+		}
 	}
 }
 

@@ -95,9 +95,6 @@ func watchFrame(events []telemetry.Event, sessionFlag string, catalog core.Resol
 		return "", err
 	}
 	opt := telemetry.TreeOptions{Paused: telemetry.SessionPaused(hash), Now: now}
-	if catalog != nil {
-		opt.Price = func(harness, id string) (core.Model, bool) { return catalog.LookupByID(harness, id) }
-	}
 	var b strings.Builder
 	fmt.Fprintf(&b, "downshift watch · %s · every %s · Ctrl-C to quit\n", now.Format("15:04:05"), interval)
 	b.WriteString(telemetry.ActivityLine(events, hash, now) + "\n")

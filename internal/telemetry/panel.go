@@ -6,6 +6,8 @@ package telemetry
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -18,13 +20,22 @@ type PanelView struct {
 	Switched int    `json:"switched"`
 	Held     int    `json:"held"`
 	Observed int    `json:"observed"`
-	// SavedUSD is the signed real delta of priced children (baseline minus
-	// actual, list prices): an estimate. HasSaved is false until a child is
-	// priced; a reader then draws nothing about money.
-	SavedUSD  float64      `json:"saved_usd"`
-	HasSaved  bool         `json:"has_saved"`
-	Estimated bool         `json:"estimated"` // always true: list-price estimate
-	Spawns    []PanelSpawn `json:"spawns"`
+	// Tokens is the session's tokens saved from the requested model, work
+	// (input+output) and cache counted apart; TokensLine is its final text, ""
+	// until a child's tokens are known. No dollars: those are `downshift
+	// report`'s, priced at report time.
+	Tokens     TokenSaving `json:"tokens"`
+	TokensLine string      `json:"tokens_line"`
+	// ByAgentType is the same per agent type, with its final text.
+	ByAgentType []PanelAgentType `json:"by_agent_type"`
+	Spawns      []PanelSpawn     `json:"spawns"`
+}
+
+// PanelAgentType is one agent type's tokens saved in the session.
+type PanelAgentType struct {
+	AgentType string      `json:"agent_type"`
+	Tokens    TokenSaving `json:"tokens"`
+	Line      string      `json:"line"` // e.g. "general-purpose: work 70% · cache 64% (3 of 4 agents)"
 }
 
 // PanelSpawn is one subagent decision of the session.
@@ -34,6 +45,10 @@ type PanelSpawn struct {
 	FromModel string `json:"from_model"`
 	ToModel   string `json:"to_model"`
 	Label     string `json:"label"` // e.g. "opus → sonnet (mid)", "held: original model kept"
+	// Tokens is this agent's tokens once it ended; TokensLabel its text, e.g.
+	// "48k tokens · saved from opus" ("" while it runs).
+	Tokens      TokenSaving `json:"tokens"`
+	TokensLabel string      `json:"tokens_label"`
 }
 
 // ToolUseKey is the hash a decision event stores for a harness tool call id
@@ -66,11 +81,15 @@ func PanelLabel(r SpawnRecord, ev Event) string {
 
 // BuildPanel folds one session's events into the panel record.
 func BuildPanel(events []Event, sessionHash string) PanelView {
-	v := PanelView{Estimated: true, Spawns: []PanelSpawn{}}
+	v := PanelView{Spawns: []PanelSpawn{}, ByAgentType: []PanelAgentType{}}
 	if len(sessionHash) >= 8 {
 		v.Session = sessionHash[:8]
 	}
-	for _, ev := range sessionEvents(events, sessionHash) {
+	mine := sessionEvents(events, sessionHash)
+	saved := TokenSavings(mine)
+	v.Tokens, v.TokensLine = saved.Total, saved.Total.Line()
+	v.ByAgentType = agentTypeLines(saved)
+	for _, ev := range mine {
 		if !IsDecisionRow(ev) {
 			continue
 		}
@@ -83,11 +102,53 @@ func BuildPanel(events []Event, sessionHash string) PanelView {
 		case StateObserved:
 			v.Observed++
 		}
+		child := saved.Child(ev)
 		v.Spawns = append(v.Spawns, PanelSpawn{
 			ToolUse: ev.ToolUseHash, State: r.State, FromModel: r.FromModel, ToModel: r.ToModel, Label: PanelLabel(r, ev),
+			Tokens: child, TokensLabel: ChildTokensLabel(child, ev),
 		})
 	}
-	s := SessionSummary(events, sessionHash)
-	v.HasSaved, v.SavedUSD = s.HasCost, s.DeltaUSD
 	return v
+}
+
+// ChildTokensLabel is one agent's token text: "48k tokens · saved from opus",
+// "48k tokens · pricier than opus", "48k tokens" when it ran as requested, or
+// "" before its tokens are known.
+func ChildTokensLabel(c TokenSaving, d Event) string {
+	if !c.Observed() {
+		return ""
+	}
+	out := formatTokens(c.WorkTokens+c.CacheTokens) + " tokens"
+	switch c.Direction() {
+	case TokenCheaper:
+		out += " · saved from " + shortOrQ(d.FromModel)
+	case TokenPricier:
+		out += " · pricier than " + shortOrQ(d.FromModel)
+	}
+	return out
+}
+
+// agentTypeLines orders the agent types by tokens, most first.
+func agentTypeLines(v TokenSavingView) []PanelAgentType {
+	out := make([]PanelAgentType, 0, len(v.ByAgentType))
+	for typ, s := range v.ByAgentType {
+		out = append(out, PanelAgentType{AgentType: typ, Tokens: s, Line: AgentTypeLine(typ, s)})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		a, b := out[i].Tokens, out[j].Tokens
+		if ta, tb := a.WorkTokens+a.CacheTokens, b.WorkTokens+b.CacheTokens; ta != tb {
+			return ta > tb
+		}
+		return out[i].AgentType < out[j].AgentType
+	})
+	return out
+}
+
+// AgentTypeLine is "general-purpose: work 70% · cache 64% (3 of 4 agents)".
+func AgentTypeLine(typ string, s TokenSaving) string {
+	noun := "agents"
+	if s.Children == 1 {
+		noun = "agent"
+	}
+	return fmt.Sprintf("%s: work %s · cache %s (%d of %d %s)", typ, percentText(s.WorkPercent()), percentText(s.CachePercent()), s.SavedChildren, s.Children, noun)
 }

@@ -9,12 +9,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // runReport compares routed spawns with the built-in control group: cost per
-// completed task, rework rate and savings with a bootstrap interval. It only
-// reads the event log.
+// completed task (API lens, priced now), tokens saved (plan lens), rework rate
+// and savings with a bootstrap interval. It only reads the event log.
 func runReport(args []string, stdout, stderr io.Writer) int {
 	days := 30
 	asJSON := false
@@ -39,7 +40,12 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "error reading event log: %v\n", err)
 		return 1
 	}
+	// Dollars are a valuation of the measured tokens, done now with the
+	// current catalog, so a price correction reaches the whole history.
+	cat := catalog.Load()
+	events = telemetry.RepriceUsage(events, cat.LookupByID)
 	rep := telemetry.BuildReport(events, days)
+	rep.PricesAsOf = cat.PricesAsOf()
 	if asJSON {
 		out, err := telemetry.ReportJSON(rep)
 		if err != nil {

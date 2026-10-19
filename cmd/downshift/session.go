@@ -72,9 +72,6 @@ func runSession(args []string, stdout, stderr io.Writer, catalog core.Resolver) 
 	}
 
 	opt := telemetry.TreeOptions{Paused: telemetry.SessionPaused(hash)}
-	if catalog != nil {
-		opt.Price = func(harness, id string) (core.Model, bool) { return catalog.LookupByID(harness, id) }
-	}
 	if *asJSON {
 		out, err := json.MarshalIndent(telemetry.BuildSessionTree(events, hash, opt), "", "  ")
 		if err != nil {

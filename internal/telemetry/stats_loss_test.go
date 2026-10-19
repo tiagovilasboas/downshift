@@ -134,13 +134,15 @@ func TestExportSummary_LossFieldsRoundTrip(t *testing.T) {
 	}
 }
 
-func TestPrintStats_ShowsLoss(t *testing.T) {
+// A loss stays visible where dollars are: the aggregate and the export (above).
+// `stats` prints none.
+func TestPrintStats_ShowsNoDollarLoss(t *testing.T) {
 	var sb strings.Builder
 	telemetry.PrintStats([]telemetry.Event{costEvent(6.0, 2.0)}, telemetry.StatsOptions{Detail: true}, &sb)
-	out := sb.String()
-	for _, want := range []string{"Real saved", "Real cost delta", "-4.00", "Real overspend"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("stats output missing %q:\n%s", want, out)
-		}
+	if strings.Contains(sb.String(), "$") || strings.Contains(sb.String(), "-4.00") {
+		t.Errorf("stats prints a dollar loss; it belongs to downshift report:\n%s", sb.String())
+	}
+	if s := telemetry.Summarize([]telemetry.Event{costEvent(6.0, 2.0)}); s.OverspendUSD != 4 || s.NetSavedUSD != -4 {
+		t.Errorf("the loss must stay in Summarize: %+v", s)
 	}
 }

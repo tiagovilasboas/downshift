@@ -84,14 +84,15 @@ func TestBuildReport_SavingsAndDeterministicCI(t *testing.T) {
 		t.Fatalf("expected savings: %+v", rep)
 	}
 	s := rep.Savings
-	if s.Percent < 0.45 || s.Percent > 0.55 {
-		t.Errorf("savings = %.3f, want about 0.5", s.Percent)
+	// control averages $0.14 a task, routed $0.07: about $0.07 saved per task.
+	if s.PerTaskUSD < 0.065 || s.PerTaskUSD > 0.075 {
+		t.Errorf("savings per task = %.4f, want about 0.07", s.PerTaskUSD)
 	}
 	if !(s.PerTaskLowUSD <= s.PerTaskUSD && s.PerTaskUSD <= s.PerTaskHighUSD) || s.PerTaskLowUSD <= 0 {
 		t.Errorf("CI must bracket a positive estimate: %+v", s)
 	}
-	if !(s.PercentLow <= s.Percent && s.Percent <= s.PercentHigh) {
-		t.Errorf("percent CI must bracket the estimate: %+v", s)
+	if raw, _ := ReportJSON(rep); strings.Contains(raw, "percent") {
+		t.Errorf("the report states no dollar percentage: %s", raw)
 	}
 	again := BuildReport(f.events, 30)
 	a, _ := ReportJSON(rep)

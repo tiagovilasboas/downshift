@@ -112,10 +112,13 @@ func TestChildLine_SubagentStopFullData(t *testing.T) {
 	}
 	msg := systemMessage(t, stdout)
 	t.Logf("child-end line: %s", msg)
-	for _, want := range []string{"↳ downshift: finished on haiku", "320k tokens", "$", "would be $"} {
+	for _, want := range []string{"↳ downshift: finished on haiku", "320k tokens", "saved from opus"} {
 		if !strings.Contains(msg, want) {
 			t.Errorf("line %q lacks %q", msg, want)
 		}
+	}
+	if strings.Contains(msg, "$") {
+		t.Errorf("the live child-end line carries a dollar figure: %q", msg)
 	}
 	if strings.Contains(msg, "\n") {
 		t.Errorf("line must be one line: %q", msg)
@@ -128,11 +131,11 @@ func TestChildLine_SubagentStopFullData(t *testing.T) {
 
 func TestChildLine_PartialDataOmitsWhatIsUnknown(t *testing.T) {
 	_, small, _ := childLineEnv(t)
-	// No decision was recorded: no requested model, so no would-be cost.
+	// No decision was recorded: no requested model, so no saving is claimed.
 	stdout, _ := runStop(stopRaw(childTranscript(t, small, 12000, 2000)))
 	msg := systemMessage(t, stdout)
 	t.Logf("partial line: %s", msg)
-	if !strings.HasPrefix(msg, "↳ downshift: finished on haiku · 14k tokens · ") || strings.Contains(msg, "would be") {
+	if msg != "↳ downshift: finished on haiku · 14k tokens (work 14k, cache 0)" {
 		t.Errorf("partial line = %q", msg)
 	}
 }
@@ -196,7 +199,7 @@ func TestChildLine_PostToolUseForegroundChild(t *testing.T) {
 	}
 	msg := systemMessage(t, post("Agent"))
 	t.Logf("post-tool-use line: %s", msg)
-	if !strings.HasPrefix(msg, "↳ downshift: finished on haiku · 3.5k tokens · ") {
+	if !strings.HasPrefix(msg, "↳ downshift: finished on haiku · 3.5k tokens (work 3.5k, cache 0)") {
 		t.Errorf("line = %q", msg)
 	}
 	// SubagentStop for the same child must not announce or price it again.

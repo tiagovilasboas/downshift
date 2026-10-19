@@ -37,11 +37,6 @@ const (
 	window24h = 24 * time.Hour
 )
 
-// estimatedCostPerUnitUSD is a placeholder conversion rate from normalised
-// savings units to dollars. It is NOT billing; it matches the
-// --cost-per-unit default semantics. Real billing needs provider token counts.
-const estimatedCostPerUnitUSD = 0.01
-
 // ── ANSI ──────────────────────────────────────────────────────────────────────
 
 const (
@@ -297,12 +292,10 @@ func (s *state) poll(path string) {
 type stats struct {
 	total, down, up, ok int
 	// held counts classified shifts the hook left unchanged.
-	held         int
-	totalSavings float64
-	// totalSavingsUnits accumulates the normalised savings fraction per DOWNSHIFT event.
-	totalSavingsUnits float64
-	// savings is the shared net, list-price savings definition.
-	savings   telemetry.SavingsSummary
+	held int
+	// tokens is the shared tokens-saved view (telemetry.TokenSavings): a live
+	// widget shows tokens, never dollars (`downshift report` prices them).
+	tokens    telemetry.TokenSaving
 	harnesses []string // all distinct harnesses active today, most-recent first
 }
 
@@ -327,11 +320,6 @@ func compute(all []event) (stats, []event) {
 		switch {
 		case e.Verdict == "DOWNSHIFT" && applied:
 			st.down++
-			// unknown and held are not credited routes and do not add savings.
-			if telemetry.ProjectQuota(e.QuotaStatus, e.CreditHeld) == telemetry.QuotaAvailable {
-				st.totalSavings += e.EstimatedSavings
-				st.totalSavingsUnits += e.EstimatedSavings
-			}
 		case e.Verdict == "UPSHIFT" && applied:
 			st.up++
 		case e.Verdict == "DOWNSHIFT" || e.Verdict == "UPSHIFT":
@@ -346,7 +334,7 @@ func compute(all []event) (stats, []event) {
 		}
 		recent = append(recent, e)
 	}
-	st.savings = telemetry.Summarize(window)
+	st.tokens = telemetry.TokenSavings(window).Total
 	if len(recent) > maxRecent {
 		recent = recent[len(recent)-maxRecent:]
 	}
@@ -471,10 +459,6 @@ func render(s *state) {
 		}
 	}
 
-	// Estimated savings
-	estUSD := st.totalSavingsUnits * estimatedCostPerUnitUSD
-	estTokensK := int(estUSD / 0.000025)
-
 	hr := strings.Repeat("─", boxWidth-2)
 	top := bold + cyn + "╭" + hr + "╮" + rst
 	bot := bold + cyn + "╰" + hr + "╯" + rst
@@ -539,20 +523,10 @@ func render(s *state) {
 		"  %d events   %s%d↓%s  %s%d↑%s  %s%d✓%s",
 		st.total, grn, st.down, rst, ylw, st.up, rst, dim, st.ok, rst,
 	)) + "\n")
-	if st.down > 0 {
-		b.WriteString(row(fmt.Sprintf(
-			"  est. saved  %s~$%.2f est.%s  ~%dK units %s¹%s",
-			grn, estUSD, rst, estTokensK, dim, rst,
-		)) + "\n")
-		b.WriteString(row(fmt.Sprintf(
-			"  %s¹ estimate · provider tokens not yet tracked%s", dim, rst,
-		)) + "\n")
-		if st.savings.CostEvents > 0 {
-			b.WriteString(row(fmt.Sprintf(
-				"  net saved   %s$%.2f%s  (%d events, %s)",
-				grn, st.savings.NetSavedUSD, rst, st.savings.CostEvents, st.savings.Basis,
-			)) + "\n")
-		}
+	if line := st.tokens.Line(); line != "" {
+		b.WriteString(row(fmt.Sprintf("  %s%s%s", grn, line, rst)) + "\n")
+	} else if st.down > 0 {
+		b.WriteString(row(fmt.Sprintf("  %stokens not observed yet%s", dim, rst)) + "\n")
 	}
 	b.WriteString(row("") + "\n")
 	b.WriteString(bot + "\n")

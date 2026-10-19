@@ -187,10 +187,10 @@ turn added. The figures are the ones Claude Code itself reports, so they are
 real, not estimated.
 
 **How the two fit.** Token Weather answers "how full is my main session?"
-above the prompt. Downshift answers "what did my subagents run on, and what
-did that cost?" below it: the statusline `setup` installs shows the quota
-windows and the session's routing summary (`◆ downshift · 6 subagents · 4 on
-haiku · saved $0.31`, an estimate), and `/downshift` or `downshift session`
+above the prompt. Downshift answers "what did my subagents run on?" below it:
+the statusline `setup` installs shows the quota windows and the session's
+routing summary (`◆ downshift · 6 subagents · 4 on haiku · tokens saved work
+62% · cache 58%`), and `/downshift` or `downshift session`
 prints the tree. Neither reads the other; nothing competes, because Downshift
 draws no `AbovePrompt` band. A second mod that draws that band would compete
 with Token Weather, not with Downshift.

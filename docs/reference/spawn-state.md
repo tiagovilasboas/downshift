@@ -70,26 +70,47 @@ Prompt-free JSON for the selected session (latest, or `--session`), built in
 
 ```json
 {"session":"a1b2c3d4","switched":2,"held":1,"observed":4,
- "saved_usd":1.23,"has_saved":true,"estimated":true,
+ "tokens":{"children":4,"saved_children":2,"work_tokens":5200,"work_saved":3200,
+           "cache_tokens":180000,"cache_saved":104000},
+ "tokens_line":"tokens saved: work 62% · cache 58% (107k of 185k)",
+ "by_agent_type":[{"agent_type":"general-purpose","tokens":{...},
+                   "line":"general-purpose: work 70% · cache 64% (2 of 3 agents)"}],
  "spawns":[{"tool_use":"<sha256 hex>","state":"switched",
             "from_model":"claude-opus-5-5","to_model":"claude-sonnet-5-5",
-            "label":"opus → sonnet (mid)"}]}
+            "label":"opus → sonnet (mid)",
+            "tokens":{...},"tokens_label":"48k tokens · saved from opus"}]}
 ```
 
 Labels: `opus → sonnet (mid)`, `held: original model kept`, `kept`,
 `control (unrouted)`, `paused (unrouted)`, `blocked: respawn on another model`.
 `tool_use` is `telemetry.ToolUseKey(tool_use_id)`: sha256 of
-`harness-downshift-session-v1:` + the harness tool call id. `saved_usd` is an
-estimate (list prices, real usage of priced children); `has_saved` is false
-until a child is priced, and a reader then says nothing about money.
+`harness-downshift-session-v1:` + the harness tool call id.
+
+Tokens, never dollars (owner decision 2026-10-19). "Saved" means a child's
+tokens ran on a cheaper model than the one requested (`telemetry.TokenSavings`,
+the same buckets as `stats --export` `tokens_rerouted`); work (input+output)
+and cache (read+write) are counted apart. `tokens_line` and `tokens_label` are
+`""` until a child's tokens are known; a reader then draws no figure. A child on
+a pricier model reads `pricier than <model>` and adds to `work_pricier` /
+`cache_pricier`, never to the saved share. Control, held, kept and refuted
+children count in the totals. Harnesses with no proven token source (Cursor,
+Codex, OpenCode today) have no token figures, never zeros. Dollars:
+`downshift report`, priced at report time.
+
+The same figures appear in `downshift session` (header, a tokens column per row,
+a `by agent type` line), the statusline (`tokens saved work N% · cache M%`),
+`downshift watch`, `dsmon` and the child-end line (`48k tokens (work 2.1k,
+cache 46k) · saved from opus`).
 
 ### `mods/savvy-progress`
 
 Vendored, so it is patched only through its documented local patch
 (`mods/savvy-progress/downshift-local.patch`, README section "Downshift local
-patch"). The patch runs `downshift session --panel` and draws the row label and
-the summary line in the panel and the band; with no binary or bad output it
-draws what upstream draws. No routing logic lives in the mod.
+patch"). The patch runs `downshift session --panel` and draws the row label
+(with the agent's `tokens_label`), the summary line (`Downshift tokens saved: …`)
+in the panel and the band, and the `by agent type` line in the panel header;
+with no binary or bad output it draws what upstream draws. No routing logic lives
+in the mod.
 
 ## What a harness cannot honor
 

@@ -18,8 +18,10 @@ func liveDecision(sess, outcome, from, to, tier string, codes ...string) Event {
 	}
 }
 
-func liveUsage(sess string, actual, baseline float64) Event {
-	return Event{Outcome: OutcomeUsage, Harness: "claude-code", SessionID: sess, ActualCostUSD: f64(actual), BaselineCostUSD: f64(baseline)}
+func liveUsage(sess, linked string, actual, baseline float64) Event {
+	return Event{Outcome: OutcomeUsage, Harness: "claude-code", SessionID: sess, LinkedDecision: linked,
+		InputTokens: i64(600), OutputTokens: i64(400), CachedTokens: i64(9000),
+		ActualCostUSD: f64(actual), BaselineCostUSD: f64(baseline)}
 }
 
 func TestShortModel(t *testing.T) {
@@ -46,12 +48,15 @@ func TestSessionSummaryLine(t *testing.T) {
 		{"only another session", []Event{liveDecision("sess-b", OutcomeRewriteEmitted, opus, haiku, "small")}, ""},
 		{"only quota-like noise", []Event{{Outcome: "error", SessionID: s}, {Outcome: OutcomeResolved, SessionID: s}}, ""},
 		{"one spawn, no cost", []Event{rewrite()}, "◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · 0 on doubt"},
-		{"saved", []Event{rewrite(), rewrite(), liveUsage(s, 0.10, 0.50), liveUsage(s, 0.02, 0.04)},
-			"◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved $0.42 · 0 on doubt"},
-		{"loss shows as over", []Event{rewrite(), liveUsage(s, 0.50, 0.10)},
-			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · over $0.40 · 0 on doubt"},
-		{"loss and gain net out signed", []Event{rewrite(), liveUsage(s, 0.50, 0.10), liveUsage(s, 0.10, 0.90)},
-			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · saved $0.40 · 0 on doubt"},
+		{"saved", []Event{rewrite(), liveUsage(s, rewrite().CorrelationID, 0.10, 0.50)},
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · tokens saved work 100% · cache 100% · 0 on doubt"},
+		{"pricier is no saving", []Event{rewrite(), liveUsage(s, rewrite().CorrelationID, 0.50, 0.10)},
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · tokens saved work 0% · cache 0% · 0 on doubt"},
+		{"control child counts in the total", []Event{rewrite(), liveUsage(s, rewrite().CorrelationID, 0.10, 0.50),
+			liveDecision(s, OutcomeBaseline, opus, opus, "frontier", ReasonControl), liveUsage(s, opus+opus+OutcomeBaseline+ReasonControl, 0.50, 0.50)},
+			// The statusline counts routed spawns; the control child's tokens
+			// still enter the token total, so the share is not inflated.
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · tokens saved work 50% · cache 50% · 0 on doubt"},
 		{"allow counts the requested model", []Event{liveDecision(s, OutcomeAllow, opus, opus, "frontier"), rewrite(), rewrite()},
 			"◆ downshift · 3 subagents · 2 switched · 0 held · 2 on haiku · 0 on doubt"},
 		{"doubt", []Event{
@@ -63,7 +68,7 @@ func TestSessionSummaryLine(t *testing.T) {
 		}, "◆ downshift · 1 subagent · 0 switched · 0 held · 1 on opus · 0 on doubt"},
 		{"unknown models are not a top model", []Event{liveDecision(s, OutcomeAllow, "unknown", "unknown", "mid")},
 			"◆ downshift · 1 subagent · 0 switched · 0 held · 0 on doubt"},
-		{"unpriced usage adds no cost segment", []Event{rewrite(), {Outcome: OutcomeUsage, SessionID: s, InputTokens: i64(5)}},
+		{"unpriced usage adds no token segment", []Event{rewrite(), {Outcome: OutcomeUsage, SessionID: s, InputTokens: i64(5)}},
 			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · 0 on doubt"},
 	}
 	for _, c := range cases {
@@ -113,20 +118,25 @@ func TestChildEndLine(t *testing.T) {
 		want string
 	}{
 		{"full", Event{FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5-20251001", InputTokens: i64(12000), OutputTokens: i64(2000),
-			ActualCostUSD: f64(0.014), BaselineCostUSD: f64(0.38)}, "↳ downshift: finished on haiku · 14k tokens · $0.01 (opus would be $0.38)"},
-		{"same model has no would-be", Event{FromModel: "claude-haiku-4-5", ToModel: "claude-haiku-4-5", InputTokens: i64(900),
-			ActualCostUSD: f64(0.02), BaselineCostUSD: f64(0.02)}, "↳ downshift: finished on haiku · 900 tokens · $0.02"},
+			ActualCostUSD: f64(0.014), BaselineCostUSD: f64(0.38)}, "↳ downshift: finished on haiku · 14k tokens (work 14k, cache 0) · saved from opus"},
+		{"same model says nothing about saving", Event{FromModel: "claude-haiku-4-5", ToModel: "claude-haiku-4-5", InputTokens: i64(900),
+			ActualCostUSD: f64(0.02), BaselineCostUSD: f64(0.02)}, "↳ downshift: finished on haiku · 900 tokens (work 900, cache 0)"},
+		{"pricier", Event{FromModel: "claude-sonnet-5-5", ToModel: "claude-opus-5-5", InputTokens: i64(100), CachedTokens: i64(5000),
+			ActualCostUSD: f64(0.2), BaselineCostUSD: f64(0.1)}, "↳ downshift: finished on opus · 5.1k tokens (work 100, cache 5.0k) · pricier than sonnet"},
 		{"unknown requested model", Event{FromModel: "unknown", ToModel: "claude-haiku-4-5", ActualCostUSD: f64(0.5), BaselineCostUSD: f64(1)},
-			"↳ downshift: finished on haiku · $0.50 (would be $1.00)"},
+			"↳ downshift: finished on haiku"},
 		{"no baseline", Event{FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5", InputTokens: i64(1500), ActualCostUSD: f64(0.004)},
-			"↳ downshift: finished on haiku · 1.5k tokens · <$0.01"},
+			"↳ downshift: finished on haiku · 1.5k tokens (work 1.5k, cache 0)"},
 		{"model only", Event{ToModel: "claude-sonnet-4-5"}, "↳ downshift: finished on sonnet"},
-		{"tokens only", Event{ToModel: "unknown", OutputTokens: i64(2500000)}, "↳ downshift: 2.5M tokens"},
+		{"tokens only", Event{ToModel: "unknown", OutputTokens: i64(2500000)}, "↳ downshift: 2.5M tokens (work 2.5M, cache 0)"},
 		{"nothing known", Event{ToModel: "unknown"}, ""},
 	}
 	for _, c := range cases {
 		if got := ChildEndLine(c.ev); got != c.want {
 			t.Errorf("%s:\n got %q\nwant %q", c.name, got, c.want)
+		}
+		if strings.Contains(ChildEndLine(c.ev), "$") {
+			t.Errorf("%s: the live child-end line carries a dollar figure", c.name)
 		}
 	}
 }
