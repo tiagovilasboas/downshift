@@ -146,10 +146,9 @@ func (s *EventStore) Record(e Event) error {
 		return err
 	}
 
+	// No fsync: this runs on every spawn and a macOS F_FULLFSYNC costs
+	// milliseconds. The event survives a process crash in the OS cache.
 	if _, err = f.Write(append(data, '\n')); err != nil {
-		return err
-	}
-	if err := f.Sync(); err != nil {
 		return err
 	}
 	s.events = append(s.events, e)
