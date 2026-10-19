@@ -1,0 +1,15 @@
+==================
+WARNING: DATA RACE
+Write at 0x00c0000b4010 by goroutine 8:
+  example.com/acme/widget/internal/cache.(*LRU).Put()
+      /src/widget/internal/cache/lru.go:51 +0x84
+
+Previous read at 0x00c0000b4010 by goroutine 7:
+  example.com/acme/widget/internal/cache.(*LRU).Get()
+      /src/widget/internal/cache/lru.go:33 +0x5c
+==================
+--- FAIL: TestLRUConcurrent (0.00s)
+    testing.go:1398: race detected during execution of test
+FAIL
+FAIL	example.com/acme/widget/internal/cache	0.044s
+FAIL

@@ -34,7 +34,7 @@ func TestCompress_ModeOff(t *testing.T) {
 }
 
 func TestCompress_ModeObserve(t *testing.T) {
-	in := []byte("ok  pkg1 0.1s\nok  pkg2 0.2s\nok  pkg3 0.3s\n")
+	in := []byte("ok  github.com/foo/bar/pkg1  0.1s\nok  github.com/foo/bar/pkg2  0.2s\nok  github.com/foo/bar/pkg3  0.3s\n")
 	res := compressor.Compress(in, compressor.ModeObserve)
 	if !res.Applied {
 		t.Fatalf("expected applied=true (detected gain) in ModeObserve")
@@ -133,7 +133,7 @@ func TestCompress_SearchResults_Preserved(t *testing.T) {
 }
 
 func TestCompressExit_NonZeroPreservesPassingText(t *testing.T) {
-	in := []byte("ok  github.com/foo/bar  0.1s\nok  github.com/foo/baz  0.2s\n")
+	in := []byte("ok  github.com/foo/bar  0.1s  coverage: 80.0% of statements\nok  github.com/foo/baz  0.2s  coverage: 90.0% of statements\n")
 	res := compressor.CompressExit(in, compressor.ModeSafe, 1)
 	if res.Applied || !bytes.Equal(res.Output, in) {
 		t.Fatalf("nonzero exit was compacted: %+v", res)
