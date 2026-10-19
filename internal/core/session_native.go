@@ -85,7 +85,7 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 		return "", Model{}, false, false
 	}
 	upshift := d.Verdict == VerdictUpshift
-	strongest := upshift && (d.Baseline.Guessed || ExplicitUpshiftEnabled())
+	strongest := upshift && ExplicitUpshiftEnabled()
 	var current Model
 	if d.Verdict == VerdictDownshift {
 		currentID := d.Baseline.RequestedID
