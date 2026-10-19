@@ -196,7 +196,8 @@ and it falls back to settings hooks, naming the reason, when `claude` is missing
 | I3 | Medium | `cmd/dsmon/dsmon-launchd-setup.sh` still writes `~/.harness-downshift/...` and flags (`--events`, `--agents`, `--web`) that `serve` ignores |
 | I4 | Medium | `doctor` does not check the hook binary of KiroCrew nor the LaunchAgent target: a hook pointing to a deleted path passed as "wired" for 8 days |
 | I5 | Medium | `internal/benchmark/cls_stability_test.go` reads a scratch baseline outside the repo and is skipped by CI |
-| I6 | Medium | Be honest about compression on Claude Code: the native provider only observes bytes there |
+| I6 | Done | `context status` and `doctor` say the native provider only measures on Claude Code |
+| I8 | High | Headroom on Claude Code as an opt-in `setup --headroom`, after a measured benefit and an isolated trial |
 | I7 | Low | Owner clean-up: the stale Homebrew build, the Cursor login, the Antigravity model source |
 
 ## I1: live verification of the plugin install
@@ -261,3 +262,27 @@ wrap as the opt-in step.
   keeps the settings hooks. Remove it (`brew uninstall`/delete) or fix the PATH order, then rerun `downshift setup`.
 - Cursor: `cursor-agent models` fails on authentication; log in so the list is recovered instead of read from a 2026-10-04 file.
 - Antigravity has no discovery source: its four models come from a handwritten file.
+
+## I8: Headroom on Claude Code (opt-in)
+
+Scope: Claude Code only, the one harness that must work end to end. `setup --headroom` applies to the `claude-code` target alone;
+for any other harness it is ignored with a note, and it never runs when `setup` is called for other harnesses only.
+
+**What is known.** `headroom wrap claude` launches Claude Code through a local proxy by setting `ANTHROPIC_BASE_URL`; it registers a
+code-memory MCP server (Serena) by default. `headroom init claude` ("install Claude Code durable hooks and provider routing") and
+`headroom install apply` (persistent service, undone by `headroom install remove`) are the durable path. Their help text does not
+say which files they write, and the commands may register a system service, so they were not run on the maintainer's machine.
+
+**Risks to design around.** (1) Fail closed: with the base URL pointing at a local proxy, a stopped proxy breaks every Claude Code
+request, unlike every Downshift hook, which fails open. (2) Prompts, code and tool output pass through a third-party Python process
+that has memory, capture and learn modes. (3) Not verified: whether a subscription login works through a custom base URL.
+(4) No measured benefit yet.
+
+**Do.** (a) Run `headroom init claude` and `headroom install apply` once in an isolated environment (a throwaway user or a
+container) and record every file and service they touch. (b) Measure on real work for a few days with `headroom agent-savings`
+and write the figure down. (c) Only then add `downshift setup --headroom`: never the default; it runs `headroom doctor` first and
+writes nothing unless the proxy answers; `downshift doctor` fails loudly when `ANTHROPIC_BASE_URL` points to a local port without a
+healthy proxy; `setup --undo` calls `headroom install remove`.
+
+**Done when.** One evidence page with the isolated trial, the measured saving and the subscription-login result, and the opt-in
+flag behind tests with a fake `headroom`.

@@ -333,7 +333,11 @@ func checkScores(rep *doctorReport) {
 func checkContext(rep *doctorReport, env doctorEnv) {
 	optCfg, _ := contextopt.LoadConfig()
 	if optCfg.Enabled {
-		rep.add(doctorCheck{ID: "context optim.", Status: doctorOK, Detail: "enabled (provider: " + optCfg.Provider + ")"})
+		detail := "enabled (provider: " + optCfg.Provider + ")"
+		if optCfg.Provider == "native" {
+			detail += "; on Claude Code it only measures bytes, a hook cannot rewrite tool output"
+		}
+		rep.add(doctorCheck{ID: "context optim.", Status: doctorOK, Detail: detail})
 	} else {
 		rep.add(doctorCheck{ID: "context optim.", Status: doctorOK, Detail: "disabled (enable with `downshift context enable`)"})
 	}
