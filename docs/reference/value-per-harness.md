@@ -131,4 +131,4 @@ The inversions above appear only through non-default session models (1 to 3) or 
 Tokens rerouted, the metric that counts the tokens of usage records linked to applied, non-refuted rewrites by harness
 and requested-to-ran model pair, is defined in
 [evidence.md](../guides/evidence.md#b-saving-estimated-by-telemetry) as rung B evidence. Its
-fields and command output are documented in [stats-export.md](stats-export.md) when the implementation lands.
+fields and command output are documented in [stats-export.md](stats-export.md#tokens-rerouted).
