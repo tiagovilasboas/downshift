@@ -53,6 +53,10 @@ draws; every number and label is computed by Downshift
 
 | band fallback (`derivedFlow`) | when no flow is registered, or its total is 0, the band is drawn from the subagents the mod already tracks: title `Subagents`, `N running · M done`, bar `M/(N+M)` over the current batch (spawns since the oldest running one; a finished batch lingers 30 s). A registered flow with a total keeps upstream drawing |
 
+| session | `dsRefresh` passes `--session=<id>` (`$.session.id()`, else `CLAUDE_CODE_SESSION_ID`). With no id the summary line is not drawn at all, so another session's figure can never appear; row labels stay (keyed by the spawn's own tool call) |
+
+**Behaviour change, owner-requested:** the band above the prompt now appears whenever subagents run, even with no registered flow (see the band fallback row above). Upstream drew nothing in that case.
+
 Nothing here touches routing and it spends nothing. The savings figure is an
 estimate: list prices of the priced children against their baseline. The new
 test file `hooks/downshift.test.ts` is Downshift's own (not upstream). The

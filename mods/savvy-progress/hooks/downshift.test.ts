@@ -15,10 +15,11 @@ const PANEL = {
   spawns: [{ tool_use: T1, state: 'switched', from_model: 'claude-opus-5-5', to_model: 'claude-sonnet-5-5', label: 'opus → sonnet (mid)' }],
 }
 
-const world = async ($: Engine, on: On, answer: { stdout?: string; exitCode?: number }) => {
+const world = async ($: Engine, on: On, answer: { stdout?: string; exitCode?: number }, sessionId?: string, argvs: string[][] = []) => {
   mock.clock(on)
+  if (sessionId !== undefined) on('session.id', () => ({ value: sessionId }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
-  on('process.run', () => ({ value: { exitCode: answer.exitCode ?? 0, stdout: answer.stdout ?? '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('process.run', (_$, e) => { argvs.push([...e.argv]); return { value: { exitCode: answer.exitCode ?? 0, stdout: answer.stdout ?? '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } } })
   on('agent.spawn', () => ({ model: 'claude-sonnet-5-5', agentId: 'a1' }))
   await $.tool.call({ tool: 'mcp__savvy-progress__progress', title: 'Ship it', total: 1, phase: 'delegate' } as never)
   await $.agent.spawn({ tool_use_id: 't1', prompt: 'p', description: 'Work', subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
@@ -35,7 +36,7 @@ const shows = async ($: Engine, component: 'Pane' | 'AbovePrompt', text: RegExp)
 }
 
 test('downshift: the row says what happened to this spawn, the header and band say what it saved', async ($, on) => {
-  await world($, on, { stdout: JSON.stringify(PANEL) })
+  await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
   expect(await shows($, 'Pane', /opus → sonnet \(mid\)/)).toBe(true)
   expect(await shows($, 'Pane', /Downshift saved ≈\$1\.23 \(est\., list price\) · 2 switched · 1 held/)).toBe(true)
   expect(await shows($, 'AbovePrompt', /Downshift saved ≈\$1\.23 \(est\., list price\)/)).toBe(true)
@@ -82,4 +83,20 @@ test('band fallback: a registered flow with a total keeps upstream drawing', asy
   await $.tool.call({ tool: 'mcp__savvy-progress__progress', title: 'Ship it', total: 4, done: 1, phase: 'delegate' } as never)
   expect(await shows($, 'AbovePrompt', /^Tasks 1\/4$/)).toBe(true)
   expect(await shows($, 'AbovePrompt', /running · /)).toBe(false)
+})
+
+test('session: the mod asks Downshift for its own session and draws the figure', async ($, on) => {
+  const argvs: string[][] = []
+  await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-123', argvs)
+  expect(await shows($, 'AbovePrompt', /Downshift saved/)).toBe(true)
+  expect(argvs.at(-1)).toEqual(['downshift', 'session', '--panel', '--session=S-123'])
+})
+
+test('session: with no session id the figure is not drawn (it could be another session\'s)', async ($, on) => {
+  const argvs: string[][] = []
+  await world($, on, { stdout: JSON.stringify(PANEL) }, '', argvs)
+  expect(await shows($, 'AbovePrompt', /Downshift saved/)).toBe(false)
+  expect(argvs.at(-1)).toEqual(['downshift', 'session', '--panel'])
+  // The row label is keyed by the spawn's own tool call, so it is still exact.
+  expect(await shows($, 'Pane', /opus → sonnet \(mid\)/)).toBe(true)
 })

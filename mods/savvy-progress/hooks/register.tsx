@@ -741,6 +741,7 @@ type DsSpawn = { tool_use?: string; label: string }
 type DsView = { switched: number; held: number; saved_usd: number; has_saved: boolean; spawns: DsSpawn[] }
 
 let ds: DsView | null = null
+let dsSessionKnown = false // the figures are only drawn for a session we could name
 let dsAt = -Infinity
 const dsKeys = new Map<string, string>() // panel row id -> Downshift's hashed tool call id
 const DS_TTL_MS = 3000
@@ -776,7 +777,14 @@ async function dsRefresh($: EngineInterface, force = false): Promise<void> {
     const at = await $.clock.now()
     if (!force && at - dsAt < DS_TTL_MS) return
     dsAt = at
-    const run = await $.process.run(['downshift', 'session', '--panel'], { timeoutMs: 2_000 })
+    let id = ''
+    try {
+      id = String((await $.session.id()) ?? '') || String((await $.env.get('CLAUDE_CODE_SESSION_ID')) ?? '')
+    } catch {
+      id = ''
+    }
+    dsSessionKnown = id !== ''
+    const run = await $.process.run(['downshift', 'session', '--panel', ...(id ? [`--session=${id}`] : [])], { timeoutMs: 2_000 })
     ds = run.exitCode === 0 ? dsParse(JSON.parse(run.stdout)) : null
   } catch {
     ds = null
@@ -806,7 +814,8 @@ const dsLabel = (a: AgentRun): string | undefined => {
 
 /** One line for the band and the panel header; '' when there is nothing true to say. */
 const dsSummary = (): string => {
-  if (!ds || ds.switched + ds.held === 0 && !ds.has_saved) return ''
+  // Without a session id the log's latest session could be another one: draw no figure.
+  if (!ds || !dsSessionKnown || ds.switched + ds.held === 0 && !ds.has_saved) return ''
   const parts: string[] = []
   if (ds.has_saved && ds.saved_usd > 0.005) parts.push(`Downshift saved ≈${fmtCost(ds.saved_usd)} (est., list price)`)
   else if (ds.has_saved && ds.saved_usd < -0.005) parts.push(`Downshift over ≈${fmtCost(-ds.saved_usd)} (est., list price)`)

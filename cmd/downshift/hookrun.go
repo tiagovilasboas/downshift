@@ -322,7 +322,9 @@ func runHookAdapter[E any](
 		// One visible line and one live record per spawn, for every harness:
 		// what Downshift did (switched, held, observed). Fail-open, best effort.
 		spawn := telemetry.NewSpawnRecord(event)
-		fmt.Fprintf(os.Stderr, "downshift: spawn %s\n", spawn.Line())
+		if !telemetry.Quiet() {
+			fmt.Fprintf(os.Stderr, "downshift: spawn %s\n", spawn.Line())
+		}
 		_ = telemetry.WriteLive(spawn)
 		if len(taskText) > 0 {
 			if id, err := training.RecordRoutedDecision(taskText[0](ev), decision); err == nil && id != "" {

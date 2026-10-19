@@ -143,3 +143,15 @@ func TestSpawnStateIsVisible(t *testing.T) {
 		})
 	}
 }
+
+func TestSpawnStateLineRespectsQuiet(t *testing.T) {
+	used := 20.0
+	t.Setenv("DOWNSHIFT_QUIET", "1")
+	stderr, _ := cursorSpawn(t, cursorQuota(time.Now().UTC(), &used))
+	if strings.Contains(stderr, "downshift: spawn ") {
+		t.Fatalf("DOWNSHIFT_QUIET=1 must silence the spawn line:\n%s", stderr)
+	}
+	if live, err := telemetry.ReadLive(); err != nil || live.Last.State != telemetry.StateSwitched {
+		t.Fatalf("quiet only hides text; live.json is still written: %+v %v", live, err)
+	}
+}

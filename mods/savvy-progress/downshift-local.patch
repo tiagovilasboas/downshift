@@ -306,7 +306,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      .join('')
    const x = shown.length * 36 + (more ? 4 : 0)
    return svg(
-@@ -788,8 +729,92 @@
+@@ -788,8 +729,101 @@
    if (p.autoOpenedFor === key) return
    await update($, panel, prev => ({ ...prev, autoOpenedFor: key }))
    void $.ui.open({ id: PANE, title: tr().pane })
@@ -322,6 +322,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +type DsView = { switched: number; held: number; saved_usd: number; has_saved: boolean; spawns: DsSpawn[] }
 +
 +let ds: DsView | null = null
++let dsSessionKnown = false // the figures are only drawn for a session we could name
 +let dsAt = -Infinity
 +const dsKeys = new Map<string, string>() // panel row id -> Downshift's hashed tool call id
 +const DS_TTL_MS = 3000
@@ -350,14 +351,21 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +  } catch {
 +    return undefined
 +  }
- }
- 
++}
++
 +async function dsRefresh($: EngineInterface, force = false): Promise<void> {
 +  try {
 +    const at = await $.clock.now()
 +    if (!force && at - dsAt < DS_TTL_MS) return
 +    dsAt = at
-+    const run = await $.process.run(['downshift', 'session', '--panel'], { timeoutMs: 2_000 })
++    let id = ''
++    try {
++      id = String((await $.session.id()) ?? '') || String((await $.env.get('CLAUDE_CODE_SESSION_ID')) ?? '')
++    } catch {
++      id = ''
++    }
++    dsSessionKnown = id !== ''
++    const run = await $.process.run(['downshift', 'session', '--panel', ...(id ? [`--session=${id}`] : [])], { timeoutMs: 2_000 })
 +    ds = run.exitCode === 0 ? dsParse(JSON.parse(run.stdout)) : null
 +  } catch {
 +    ds = null
@@ -383,11 +391,12 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +const dsLabel = (a: AgentRun): string | undefined => {
 +  const key = dsKeys.get(a.id)
 +  return key && ds ? ds.spawns.find(x => x.tool_use === key)?.label : undefined
-+}
-+
+ }
+ 
 +/** One line for the band and the panel header; '' when there is nothing true to say. */
 +const dsSummary = (): string => {
-+  if (!ds || ds.switched + ds.held === 0 && !ds.has_saved) return ''
++  // Without a session id the log's latest session could be another one: draw no figure.
++  if (!ds || !dsSessionKnown || ds.switched + ds.held === 0 && !ds.has_saved) return ''
 +  const parts: string[] = []
 +  if (ds.has_saved && ds.saved_usd > 0.005) parts.push(`Downshift saved ≈${fmtCost(ds.saved_usd)} (est., list price)`)
 +  else if (ds.has_saved && ds.saved_usd < -0.005) parts.push(`Downshift over ≈${fmtCost(-ds.saved_usd)} (est., list price)`)
@@ -399,7 +408,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  export const register: Register = (on, options) => {
    on('session.start', async ($, e, next) => {
      const started = await next(e)
-@@ -948,6 +973,12 @@
+@@ -948,6 +982,12 @@
        return [...list.filter(a => a.id !== run.id), run].slice(-200)
      })
      await update($, now, () => at)
@@ -412,7 +421,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (e.subagentType.startsWith('savvy-')) {
        const f = await read($, flow)
        await autoOpen($, f && !f.isFinished ? f.title : 'savvy-flow')
-@@ -998,6 +1029,7 @@
+@@ -998,6 +1038,7 @@
    on('turn.complete', async ($, e, next) => {
      const agentId = e.agentId
      if (agentId) {
@@ -420,7 +429,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
        const at = await $.clock.now()
        await update($, agents, list =>
          list.map((a): AgentRun => {
-@@ -1031,6 +1063,7 @@
+@@ -1031,6 +1072,7 @@
      const s = tr()
      const ui = $.ui.resolve(e)
      const { Box, Text, Button } = ui
@@ -428,7 +437,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      const list = await read($, agents)
      const f = await read($, flow)
      const p: Panel = await read($, panel)
-@@ -1093,6 +1126,7 @@
+@@ -1093,6 +1135,7 @@
            ))}
            <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
              <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
@@ -436,7 +445,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {toggleCompact}
              {isEmpty && <Text dimColor>{s.empty}</Text>}
              {running.length > 0 && section('h-run', `${s.running} · ${running.length}`)}
-@@ -1135,6 +1169,7 @@
+@@ -1135,6 +1178,7 @@
            <Text dimColor wrap="truncate-end">
              {'  '}
              {tier === 'other' ? a.type : tierWord(tier)} · {model}
@@ -444,7 +453,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
            </Text>
            <Text wrap="truncate-end">
-@@ -1160,6 +1195,7 @@
+@@ -1160,6 +1204,7 @@
          <Text dimColor>
            ≈{fmtCost(t.cost)} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
          </Text>
@@ -452,7 +461,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
          {p.isCompact ? (
            <Text wrap="truncate-end">
              {[...running, ...finished].map(a => (
-@@ -1203,8 +1239,11 @@
+@@ -1203,8 +1248,11 @@
    })
  
    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -465,7 +474,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
      // never nested: the desktop drops a band that nests it.
      const drawn = await Promise.resolve(next(e)).catch(() => null)
-@@ -1242,6 +1281,7 @@
+@@ -1242,6 +1290,7 @@
              {crewButton}
              {dismiss}
            </Box>
@@ -473,7 +482,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
            {below}
          </Box>
        )
-@@ -1264,6 +1304,7 @@
+@@ -1264,6 +1313,7 @@
            {crewButton}
            {dismiss}
          </Box>
