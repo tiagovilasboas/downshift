@@ -39,6 +39,10 @@ func runEnd(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) {
 	if err != nil || len(data) > maxHookPayloadBytes {
 		return 0
 	}
+	if owner := foreignPayloadOwner(port.ID, data); owner != "" {
+		fmt.Fprint(os.Stderr, foreignPayloadNote(port.ID, owner))
+		return 0
+	}
 	ce, ok := port.ParseChildEnd(data)
 	if !ok {
 		return 0

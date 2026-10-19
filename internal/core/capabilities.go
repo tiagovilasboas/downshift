@@ -61,6 +61,12 @@ type HarnessCapabilities struct {
 	// Empty means one unnamed path. When more than one is listed, doctor can
 	// warn if the same tool_use_hash carries decisions from more than one.
 	HookEntries []string
+	// PayloadMarkers are top-level payload keys only this harness sends. A
+	// harness that also runs another harness's hooks (Cursor runs the Claude
+	// Code hooks in ~/.claude/settings.json when third-party configs are on)
+	// delivers the same spawn twice; the copy carrying a foreign marker is left
+	// to its own harness's hook (see ForeignPayloadOwner). Empty means none known.
+	PayloadMarkers []string
 }
 
 // UsageSource values for HarnessCapabilities.UsageSource.
@@ -79,7 +85,11 @@ var (
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.
-	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, NativeSessionEnv: "DOWNSHIFT_CURSOR_NATIVE_FILE", NativeUsageSource: "cursor-usage", ChildEndEvent: "subagentStop", UsageSource: UsageNone}
+	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, NativeSessionEnv: "DOWNSHIFT_CURSOR_NATIVE_FILE", NativeUsageSource: "cursor-usage", ChildEndEvent: "subagentStop", UsageSource: UsageNone,
+		// Cursor's common hook input; Claude Code sends none of these. A live
+		// preToolUse on 3.13 carried conversation_id, generation_id and
+		// workspace_roots (docs/evidence/vendor-hook-docs-2026-10-11.md).
+		PayloadMarkers: []string{"cursor_version", "conversation_id", "generation_id", "workspace_roots"}}
 
 	// CodexCaps — PreToolUse hook accepts updatedInput.model + reasoning_effort.
 	// Child usage stays UsageNone until a real payload proves transcript_path is
@@ -128,6 +138,25 @@ func AllHarnessCaps() []NamedCaps {
 		{"antigravity", AntigravityCaps},
 		{"opencode", OpenCodeCaps},
 	}
+}
+
+// ForeignPayloadOwner returns the harness whose PayloadMarkers appear in a
+// payload delivered to the hook of harness, or "" when the payload is that
+// harness's own (or carries no marker). has reports whether a top-level key is
+// present. The owner's own hook routes and records that spawn; the copy is a
+// duplicate delivery and must not be routed or counted a second time.
+func ForeignPayloadOwner(harness string, has func(key string) bool) string {
+	for _, n := range AllHarnessCaps() {
+		if n.Harness == harness {
+			continue
+		}
+		for _, key := range n.Caps.PayloadMarkers {
+			if has(key) {
+				return n.Harness
+			}
+		}
+	}
+	return ""
 }
 
 // CapsFor returns the declared capabilities of a harness by id.
