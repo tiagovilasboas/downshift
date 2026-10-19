@@ -40,14 +40,39 @@ func isDownshiftCommand(command, args string) bool {
 	return base == "downshift" && strings.Join(strings.Fields(rest), " ") == strings.Join(strings.Fields(args), " ")
 }
 
+// defaultKeySet reports whether the document already holds d's key.
+func defaultKeySet(doc *jobj, d setupDefault) bool {
+	holder := doc
+	if d.Parent != "" {
+		pv, ok := doc.get(d.Parent)
+		if !ok {
+			return false
+		}
+		holder, ok = asObj(pv)
+		if !ok {
+			return false
+		}
+	}
+	_, ok := holder.get(d.Key)
+	return ok
+}
+
 func asObj(v any) (*jobj, bool) { o, ok := v.(*jobj); return o, ok }
 
 // mergeTarget applies every hook (and the status line) of t to doc in place.
 // skipOptional leaves out the optional defaults (the main-session policy).
-func mergeTarget(doc *jobj, t setupTarget, binary string, skipOptional bool) ([]string, error) {
+// optIn turns on the defaults that cost money; without it they are only
+// suggested, and only when their key is unset.
+func mergeTarget(doc *jobj, t setupTarget, binary string, skipOptional, optIn bool) ([]string, error) {
 	var notes []string
 	for _, d := range t.Defaults {
 		if skipOptional && d.Optional {
+			continue
+		}
+		if d.OptIn && !optIn {
+			if d.Suggest != "" && !defaultKeySet(doc, d) {
+				notes = append(notes, d.Suggest)
+			}
 			continue
 		}
 		parent := doc

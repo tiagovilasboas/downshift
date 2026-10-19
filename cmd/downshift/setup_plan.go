@@ -114,7 +114,7 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 			}
 		}
 	}
-	notes, err := mergeTarget(doc, t, o.Binary, o.NoSessionPolicy)
+	notes, err := mergeTarget(doc, t, o.Binary, o.NoSessionPolicy, o.YouShouldKnow)
 	if err != nil {
 		p.err = err
 		return p

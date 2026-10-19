@@ -70,6 +70,8 @@ func (e *setupEnv) run(args ...string) (code int, out, errOut string) {
 			opts.Undo = true
 		case "--yes":
 			opts.Yes = true
+		case "--you-should-know":
+			opts.YouShouldKnow = true
 		case "--no-session-policy":
 			opts.NoSessionPolicy = true
 		default:
@@ -387,7 +389,7 @@ func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
 
 	pinned := newSetupEnv(t, ".claude")
 	pinned.write(".claude/settings.json", `{"model":"claude-sonnet-5-5","autoCompactWindow":250000,"enabledPlugins":{"cc-plugin-you-should-know@builtin":false},"permissions":{"allow":["Bash(ls:*)"],"defaultMode":"acceptEdits"}}`)
-	code, out, _ := pinned.run("claude-code", "--yes")
+	code, out, _ := pinned.run("claude-code", "--yes", "--you-should-know")
 	if code != 0 {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
@@ -426,11 +428,17 @@ func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
 func TestSetupSummaryStatesWhatChanges(t *testing.T) {
 	t.Setenv("DOWNSHIFT_CONTROL_SHARE", "")
 	e := newSetupEnv(t, ".claude")
-	_, out, _ := e.run("claude-code", "--yes")
+	_, out, _ := e.run("claude-code", "--yes", "--you-should-know")
 	for _, want := range []string{"What changes for you", "1 in 10", "downshift report", "plan mode", "opusplan", "You should know is on", "billed", "--no-session-policy", "downshift setup --undo"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("summary is missing %q:\n%s", want, out)
 		}
+	}
+
+	// Without the flag the summary must not claim the mod is on.
+	_, out, _ = newSetupEnv(t, ".claude").run("claude-code", "--yes")
+	if strings.Contains(out, "You should know is on") {
+		t.Errorf("summary claims You should know is on without --you-should-know:\n%s", out)
 	}
 
 	skipped := newSetupEnv(t, ".claude")
@@ -614,21 +622,27 @@ func enabledPlugin(t *testing.T, e *setupEnv) (any, bool) {
 // "You should know" is a sub-key of the enabledPlugins map, which the user
 // usually already fills: only the sub-key decides, never the map.
 func TestSetupYouShouldKnowDefault(t *testing.T) {
+	on := []string{"--you-should-know"}
 	for _, tc := range []struct {
-		name      string
-		settings  string // empty: no settings file
-		args      []string
-		want      any // value of the sub-key afterwards
-		present   bool
-		wantNote  bool
-		keepOther bool // downshift@downshift must survive
+		name        string
+		settings    string // empty: no settings file
+		args        []string
+		want        any // value of the sub-key afterwards
+		present     bool
+		wantNote    bool // "is not true in enabledPlugins"
+		wantSuggest bool // the opt-in suggestion line
+		keepOther   bool // downshift@downshift must survive
 	}{
-		{"map absent: created", `{"hooks":{}}`, nil, true, true, false, false},
-		{"no file: created", "", nil, true, true, false, false},
-		{"key absent beside other plugins", `{"enabledPlugins":{"downshift@downshift":true}}`, nil, true, true, false, true},
-		{"already true: untouched", `{"enabledPlugins":{"` + youShouldKnowKey + `":true,"downshift@downshift":true}}`, nil, true, true, false, true},
-		{"false set by you: untouched and reported", `{"enabledPlugins":{"` + youShouldKnowKey + `":false,"downshift@downshift":true}}`, nil, false, true, true, true},
-		{"--no-session-policy: skipped", `{"enabledPlugins":{"downshift@downshift":true}}`, []string{"--no-session-policy"}, nil, false, false, true},
+		{"default: not written, suggested", `{"hooks":{}}`, nil, nil, false, false, true, false},
+		{"default, no file: not written, suggested", "", nil, nil, false, false, true, false},
+		{"default beside other plugins: not written", `{"enabledPlugins":{"downshift@downshift":true}}`, nil, nil, false, false, true, true},
+		{"default, already true: untouched, no suggestion", `{"enabledPlugins":{"` + youShouldKnowKey + `":true,"downshift@downshift":true}}`, nil, true, true, false, false, true},
+		{"default, false set by you: untouched, no suggestion", `{"enabledPlugins":{"` + youShouldKnowKey + `":false,"downshift@downshift":true}}`, nil, false, true, false, false, true},
+		{"flag, map absent: created", `{"hooks":{}}`, on, true, true, false, false, false},
+		{"flag, no file: created", "", on, true, true, false, false, false},
+		{"flag beside other plugins: created", `{"enabledPlugins":{"downshift@downshift":true}}`, on, true, true, false, false, true},
+		{"flag, false set by you: untouched and reported", `{"enabledPlugins":{"` + youShouldKnowKey + `":false,"downshift@downshift":true}}`, on, false, true, true, false, true},
+		{"flag with --no-session-policy: skipped", `{"enabledPlugins":{"downshift@downshift":true}}`, []string{"--you-should-know", "--no-session-policy"}, nil, false, false, false, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			e := newSetupEnv(t, ".claude")
@@ -637,8 +651,13 @@ func TestSetupYouShouldKnowDefault(t *testing.T) {
 			}
 			if code, out, errOut := e.run(append([]string{"claude-code", "--yes"}, tc.args...)...); code != 0 {
 				t.Fatalf("exit %d\n%s%s", code, out, errOut)
-			} else if got := strings.Contains(out, "is not true in enabledPlugins"); got != tc.wantNote {
-				t.Errorf("note printed = %v, want %v\n%s", got, tc.wantNote, out)
+			} else {
+				if got := strings.Contains(out, "is not true in enabledPlugins"); got != tc.wantNote {
+					t.Errorf("note printed = %v, want %v\n%s", got, tc.wantNote, out)
+				}
+				if got := strings.Contains(out, "downshift setup --you-should-know"); got != tc.wantSuggest {
+					t.Errorf("suggestion printed = %v, want %v\n%s", got, tc.wantSuggest, out)
+				}
 			}
 			v, ok := enabledPlugin(t, e)
 			if ok != tc.present || (ok && v != tc.want) {
@@ -661,7 +680,7 @@ func TestSetupYouShouldKnowDryRunAndUndo(t *testing.T) {
 	e := newSetupEnv(t, ".claude")
 	e.write(".claude/settings.json", original)
 
-	code, out, _ := e.run("claude-code", "--dry-run")
+	code, out, _ := e.run("claude-code", "--dry-run", "--you-should-know")
 	if code != 0 || !strings.Contains(out, youShouldKnowKey) || !strings.Contains(out, "Dry run") {
 		t.Fatalf("dry run exit %d, diff must show the key:\n%s", code, out)
 	}
@@ -669,7 +688,7 @@ func TestSetupYouShouldKnowDryRunAndUndo(t *testing.T) {
 		t.Fatal("dry run wrote the file")
 	}
 
-	if code, out, _ := e.run("claude-code", "--yes"); code != 0 {
+	if code, out, _ := e.run("claude-code", "--yes", "--you-should-know"); code != 0 {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
 	if v, ok := enabledPlugin(t, e); !ok || v != true {

@@ -55,7 +55,7 @@ downshift setup --dry-run   # prints the diff for each harness found; writes not
 downshift setup             # asks first, backs up the files, then merges the hooks
 ```
 
-For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) and `"enabledPlugins": {"cc-plugin-you-should-know@builtin": true}` (Claude Code's built-in You should know mod; each check is a billed background request to the session's model, `/plugin disable cc-plugin-you-should-know@builtin` turns it off) for keys you have not set; existing values are kept, and `--no-session-policy` skips all three ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew (Experimental) needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
+For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) for keys you have not set; existing values are kept, and `--no-session-policy` skips both. Claude Code's built-in You should know mod (`"enabledPlugins": {"cc-plugin-you-should-know@builtin": true}`) is opt-in because each check is a billed background request to the session's model: `setup` prints a suggestion, and `downshift setup --you-should-know` writes it (`/plugin disable cc-plugin-you-should-know@builtin` turns it off) ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew (Experimental) needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
 
 **Step 3 — Check the classifier** on your own prompts:
 ```bash
@@ -199,7 +199,7 @@ The marketplace also offers savvy-progress and filetree, one install each
 (`downshift setup` installs both on Claude Code; by hand: `/plugin install savvy-progress@downshift`, `/plugin install filetree@downshift`;
 see [mods/README.md](../../mods/README.md)).
 It does not set `opusplan`, plan mode, the statusline or
-the You should know mod: those are settings, not hooks, and `downshift setup` writes them. Set
+the You should know mod: those are settings, not hooks, and `downshift setup` writes them (You should know only with `--you-should-know`). Set
 `"model": "opusplan"` and `"permissions": {"defaultMode": "plan"}` in `~/.claude/settings.json` yourself
 (or `/model opusplan` in a session), and `/plugin enable cc-plugin-you-should-know@builtin` for You should know
 (a billed request per check), if you want them without `setup`; see

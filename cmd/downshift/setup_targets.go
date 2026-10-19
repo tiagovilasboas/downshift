@@ -35,7 +35,9 @@ type setupStatusLine struct {
 // --no-session-policy. Parent may name a map the user already fills (such as
 // enabledPlugins): only Key is checked, never the map. Label and Info are for
 // reports (doctor, the setup summary): Label replaces the key path, Info
-// describes the value when it is the one setup writes.
+// describes the value when it is the one setup writes. An OptIn default costs
+// money to run, so setup never writes it unprompted: it prints Suggest when the
+// key is unset and writes the value only when the user passes OptInFlag.
 type setupDefault struct {
 	Parent   string
 	Key      string
@@ -44,6 +46,11 @@ type setupDefault struct {
 	Optional bool
 	Label    string
 	Info     string
+	OptIn    bool
+	// OptInFlag is the setup flag that turns an OptIn default on.
+	OptInFlag string
+	// Suggest is the line printed when an OptIn default is left off.
+	Suggest string
 }
 
 type setupTarget struct {
@@ -111,13 +118,17 @@ var setupTargets = []setupTarget{
 			// a sub-key of the enabledPlugins map, which the user usually already has
 			// (the Downshift plugin itself), so "only when unset" applies to the
 			// sub-key. Each check is a billed background request to the session's
-			// model: Info says so wherever the default is reported.
+			// model, so it is opt-in (--you-should-know): setup only suggests it.
 			{
-				Parent:   "enabledPlugins",
-				Key:      "cc-plugin-you-should-know@builtin",
-				Value:    true,
-				Optional: true,
-				Label:    "you-should-know",
+				Parent:    "enabledPlugins",
+				Key:       "cc-plugin-you-should-know@builtin",
+				Value:     true,
+				Optional:  true,
+				OptIn:     true,
+				OptInFlag: "--you-should-know",
+				Suggest: "You should know is off: each check is a billed background request to the session's model. " +
+					"Run `downshift setup --you-should-know` to turn it on",
+				Label: "you-should-know",
 				Info: "on (built-in Claude Code mod; each check is a billed request; " +
 					"/plugin disable cc-plugin-you-should-know@builtin to turn off)",
 				Note: `"cc-plugin-you-should-know@builtin" is not true in enabledPlugins; set it to true in ~/.claude/settings.json ` +
