@@ -49,15 +49,15 @@ func runTryReport(resolver core.Resolver, harness, prompt, current string, detai
 	if !known {
 		d = core.Route(prompt, harness, current, resolver)
 	}
-	printTry(os.Stdout, res, known, d, prompt, harness, current, assumed, detail)
+	printTry(os.Stdout, res, known, d, prompt, harness, current, assumed, detail, pricesAsOf(resolver))
 	return 0
 }
 
-func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, harness, current string, assumed, detail bool) {
+func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, harness, current string, assumed, detail bool, asOf string) {
 	if assumed {
 		fmt.Fprintf(w, "assumed current: %s (harness default)\n", current)
 	}
-	fmt.Fprintf(w, "%s\n", tryHeadline(d))
+	fmt.Fprintf(w, "%s\n", tryHeadline(d, asOf))
 	fmt.Fprintf(w, "why: %s task, %s\n", strings.ToLower(d.Complexity.String()), telemetry.ReasonBrief(telemetry.ReasonCodes(d)))
 	if note := tryNotApplied(res, known, d, harness); note != "" {
 		fmt.Fprintf(w, "note: %s\n", note)
@@ -105,7 +105,7 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 
 // tryHeadline is the first answer line: the tier, then either the move from
 // the current model or that it stays.
-func tryHeadline(d core.Decision) string {
+func tryHeadline(d core.Decision, asOf string) string {
 	rec := telemetry.ShortModel(d.Model.ID)
 	cur := telemetry.ShortModel(d.Baseline.CurrentModel.ID)
 	if d.Baseline.CurrentModel.ID == "" {
@@ -120,11 +120,29 @@ func tryHeadline(d core.Decision) string {
 			// No catalog price for one side (e.g. tier aliases): do not claim 0%.
 			return fmt.Sprintf("→ %s: %s → %s (cheaper tier)", d.Tier, cur, rec)
 		}
-		return fmt.Sprintf("→ %s: %s → %s (~%.0f%% cheaper)", d.Tier, cur, rec, d.Savings*100)
+		return fmt.Sprintf("→ %s: %s → %s (~%.0f%% cheaper)%s", d.Tier, cur, rec, d.Savings*100, estimateSuffix(asOf))
 	case core.VerdictUpshift:
 		return fmt.Sprintf("→ %s: %s → %s (needs more torque)", d.Tier, cur, rec)
 	}
 	return fmt.Sprintf("→ %s: stays on %s", d.Tier, cur)
+}
+
+// pricesAsOf is the date of the resolver's embedded list prices, or "" when
+// the resolver does not carry one.
+func pricesAsOf(resolver core.Resolver) string {
+	if p, ok := resolver.(interface{ PricesAsOf() string }); ok {
+		return p.PricesAsOf()
+	}
+	return ""
+}
+
+// estimateSuffix labels a saving as an estimate at list prices and names
+// their date. Empty when there is no date.
+func estimateSuffix(asOf string) string {
+	if asOf == "" {
+		return ""
+	}
+	return " (est., list prices as of " + asOf + ")"
 }
 
 // tryNotApplied says why the hook would leave the spawn alone although the

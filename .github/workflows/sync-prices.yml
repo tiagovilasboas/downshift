@@ -1,0 +1,94 @@
+name: sync-prices
+
+# Keeps the embedded list prices (internal/catalog/catalog.json) from going
+# stale. The hook never fetches prices at run time (it must work offline and
+# fast), so this job refreshes the snapshot weekly and opens a PR when a price
+# or the prices_as_of date changes. See docs/reference/prices.md.
+
+on:
+  schedule:
+    # Mondays 06:17 UTC.
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: sync-prices
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # Least privilege, for this job only: push chore/sync-prices, open or update
+    # the PR, and dispatch ci on the branch (see the last step).
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BRANCH: chore/sync-prices
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.27"
+          cache: true
+
+      - name: Fetch current list prices
+        run: python3 -I scripts/sync_catalog_prices.py | tee "$RUNNER_TEMP/changes.txt"
+
+      - name: Catalog tests
+        run: go test ./internal/catalog/... -count=1
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- internal/catalog/catalog.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push branch and open or update the PR
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add internal/catalog/catalog.json
+          git commit -m "chore(catalog): sync list prices"
+          git push --force origin "$BRANCH"
+
+          {
+            echo "Weekly list-price sync (scripts/sync_catalog_prices.py, OpenRouter public model list)."
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/changes.txt"
+            echo '```'
+            echo
+            echo "Only exact id matches for the claude-code, codex and kirocrew harnesses are touched, and prices_as_of is bumped. A date-only diff means prices were re-verified and unchanged. Review the numbers against the vendor pricing pages before merging."
+          } > "$RUNNER_TEMP/body.md"
+
+          if gh pr view "$BRANCH" --json state --jq '.state' 2>/dev/null | grep -qx OPEN; then
+            gh pr edit "$BRANCH" --body-file "$RUNNER_TEMP/body.md"
+          elif ! gh pr create --base main --head "$BRANCH" \
+            --title "chore(catalog): sync list prices" --body-file "$RUNNER_TEMP/body.md"; then
+            {
+              echo "### Could not open the PR"
+              echo "Branch \`$BRANCH\` was pushed. Open the PR from https://github.com/${GITHUB_REPOSITORY}/compare/main...${BRANCH}"
+              echo "Enable Settings > Actions > General > 'Allow GitHub Actions to create and approve pull requests' so this job can do it."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      # A PR opened with GITHUB_TOKEN does not trigger pull_request workflows,
+      # so the required check `test` would never report. A workflow_dispatch
+      # run is exempt from that rule and attaches its checks to the branch head
+      # commit, which is the PR head.
+      - name: Run ci on the sync branch
+        if: steps.diff.outputs.changed == 'true'
+        run: gh workflow run ci.yml --ref "$BRANCH"
