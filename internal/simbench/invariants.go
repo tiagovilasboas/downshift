@@ -356,6 +356,7 @@ func checkHarness(sc Scenario, h string, traces []Trace, v harnessView, cat core
 		bad(RuleHonorOnce, "stats honor observed %d, want %d", st.HonorObserved, wantHonored)
 	}
 	out = append(out, checkTokens(h, usageSeam, st, wantTokens)...)
+	out = append(out, checkTokensSaved(h, sc, v.events, wantTokens)...)
 	rep := telemetry.BuildReport(v.events, 0)
 	if rep.Routed.Spawns != routed || rep.Control.Spawns != control || rep.Excluded != 0 {
 		bad(RuleRates, "report routed %d control %d excluded %d, want %d / %d / 0", rep.Routed.Spawns, rep.Control.Spawns, rep.Excluded, routed, control)
@@ -439,6 +440,47 @@ func checkTokens(h string, usageSeam bool, st telemetry.Stats, want map[string]*
 		}
 		if !sameTokens(g, w) {
 			bad("%s tokens %+v, want %+v", b.dir, g, w)
+		}
+	}
+	return out
+}
+
+// checkTokensSaved holds the live tokens-saved figures (session tree, panel,
+// statusline, stats headline) to the children's tokens: work and cache saved
+// are exactly the cheaper bucket, the totals are every priced child, and the
+// one agent type of the scenario carries the same numbers.
+func checkTokensSaved(h string, sc Scenario, events []telemetry.Event, want map[string]*Tokens) []Violation {
+	var out []Violation
+	bad := func(format string, args ...any) {
+		out = append(out, Violation{Rule: RuleTokens, Harness: h, Detail: fmt.Sprintf(format, args...)})
+	}
+	var all, saved, pricier Tokens
+	for dir, t := range want {
+		all.Input, all.Output, all.CacheRead, all.CacheWrite = all.Input+t.Input, all.Output+t.Output, all.CacheRead+t.CacheRead, all.CacheWrite+t.CacheWrite
+		switch dir {
+		case telemetry.TokenCheaper:
+			saved = *t
+		case telemetry.TokenPricier:
+			pricier = *t
+		}
+	}
+	view := telemetry.TokenSavings(events)
+	got := view.Total
+	if got.WorkTokens != all.Input+all.Output || got.CacheTokens != all.CacheRead+all.CacheWrite ||
+		got.WorkSaved != saved.Input+saved.Output || got.CacheSaved != saved.CacheRead+saved.CacheWrite ||
+		got.WorkPricier != pricier.Input+pricier.Output || got.CachePricier != pricier.CacheRead+pricier.CacheWrite {
+		bad("tokens saved %+v, want work %d of %d, cache %d of %d, pricier %d", got,
+			saved.Input+saved.Output, all.Input+all.Output, saved.CacheRead+saved.CacheWrite, all.CacheRead+all.CacheWrite, pricier.Total())
+	}
+	if got.WorkPercent() > 100 || got.CachePercent() > 100 || got.WorkPercent() < 0 {
+		bad("impossible tokens-saved share: work %.1f%% cache %.1f%%", got.WorkPercent(), got.CachePercent())
+	}
+	if len(view.ByAgentType) > 1 {
+		bad("%d agent types in a one-type scenario", len(view.ByAgentType))
+	}
+	for typ, t := range view.ByAgentType {
+		if t != got {
+			bad("agent type %s %+v differs from the total %+v", typ, t, got)
 		}
 	}
 	return out

@@ -15,7 +15,8 @@ func decisionRow(id, outcome, verdict, from, to string) telemetry.Event {
 }
 
 func usageRow(link, ran string, actual, baseline float64) telemetry.Event {
-	return telemetry.Event{
+	in := int64(100)
+	return telemetry.Event{InputTokens: &in,
 		CorrelationID: "u-" + link, Harness: "claude-code", SessionID: "s1", Outcome: telemetry.OutcomeUsage,
 		LinkedDecision: link, FromModel: "x", ToModel: ran, ActualCostUSD: &actual, BaselineCostUSD: &baseline,
 		BaselineSource: telemetry.BaselineRequested,
@@ -53,9 +54,17 @@ func TestRealCostIsCreditedOnlyToAppliedRewrites(t *testing.T) {
 			if stats.RealCostEvents != 1 {
 				t.Errorf("the child still counts as a priced event: got %d", stats.RealCostEvents)
 			}
-			sum := telemetry.SessionSummary(events, "s1")
-			if math.Abs(sum.DeltaUSD-tc.wantDelta) > 1e-9 {
-				t.Errorf("SessionSummary delta = %v, want %v", sum.DeltaUSD, tc.wantDelta)
+			// The live session view says the same in tokens: saved only
+			// for an applied cheaper rewrite, pricier only for an applied
+			// dearer one.
+			sum := telemetry.SessionSummary(events, "s1").Tokens
+			// A record with no known decision is unattributed: neither.
+			wantSaved, wantPricier := tc.wantDelta > 0, tc.wantDelta < 0
+			if tc.decision.CorrelationID != tc.usage.LinkedDecision {
+				wantSaved, wantPricier = false, false
+			}
+			if saved, pricier := sum.WorkSaved > 0, sum.WorkPricier > 0; saved != wantSaved || pricier != wantPricier {
+				t.Errorf("SessionSummary tokens %+v, want saved %v pricier %v", sum, wantSaved, wantPricier)
 			}
 		})
 	}

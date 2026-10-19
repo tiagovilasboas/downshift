@@ -78,10 +78,23 @@ ended (the same events `stats` reads).
 `--json` carries `tokens` (by class: `input`, `output`, `cache_read`, `cache_write`, `total`,
 `records`) and `tokens_per_completed_task` in each group.
 
-Savings are `control cost per completed task - routed cost per completed task`, also shown as a
-percentage of the control cost. The interval is a 95% percentile bootstrap (2,000 resamples of
-each group, independent, fixed seed), so the same log always prints the same numbers. When the
-interval includes zero the report says the window does not show a saving.
+The report reads the same numbers through two lenses (owner decision 2026-10-19):
+
+- **API lens**, for whoever pays per token. Dollars are the recorded tokens priced at the
+  catalog's current list prices when the report runs (`telemetry.RepriceUsage`; the header names
+  `prices_as_of`), so a catalog correction reaches the whole history. Which records are priced
+  stays what the recorder decided; only the numbers change. Savings are `control cost per
+  completed task - routed cost per completed task`, in dollars only: no percentage, which would
+  hide the price table it rests on. The interval is a 95% percentile bootstrap (2,000 resamples of
+  each group, independent, fixed seed), so the same log always prints the same numbers. When the
+  interval includes zero the report says the window does not show a saving.
+- **Plan lens**, for plans with no per-token bill (Claude Code Pro, Max, Team; Cursor plans):
+  tokens only. Tokens saved from the requested model in the window, work (input+output) and cache
+  (read+write) apart (`tokens_saved` in `--json`), and tokens per completed task, routed against
+  control.
+
+`downshift stats` and every live view (session tree, panel, statusline, watch) show tokens only;
+dollars appear here.
 
 With fewer than 20 completed, priced tasks in either group the report prints
 `not enough data` and no savings figure. At a 10% control share that means roughly 200 completed

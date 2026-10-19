@@ -89,12 +89,12 @@ func TestHonesty_SessionTreeRowModelPrefersRefutedUsageModel(t *testing.T) {
 		ActualCostUSD: hvUSD(0.01), BaselineCostUSD: hvUSD(0.05), BaselineSource: BaselineRequested})
 	v := BuildSessionTree(evs, hvSess, TreeOptions{})
 	if v.Rows[0].Model != "opus" {
-		t.Fatalf("tree row model = %q, saved delta $%.2f; resolved record says opus ran", v.Rows[0].Model, v.DeltaUSD)
+		t.Fatalf("tree row model = %q, saved %d work tokens; resolved record says opus ran", v.Rows[0].Model, v.Tokens.WorkSaved)
 	}
 }
 
-// Session tree header "(without downshift: $X) · saved $Y" rests entirely on
-// an inferred baseline and says nothing about it.
+// Session tree header "tokens saved: …" rests entirely on an inferred baseline
+// and must say so.
 func TestHonesty_SessionTreeHidesInferredBaseline(t *testing.T) {
 	evs := []Event{
 		{CorrelationID: "d3", Timestamp: "2026-10-15T10:00:00Z", Harness: "claude-code", SessionID: hvSess,

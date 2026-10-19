@@ -361,31 +361,28 @@ func TestPrintStats_TokensLine(t *testing.T) {
 		events []telemetry.Event
 		want   string
 	}{
-		{"cheaper tokens with a breakdown", []telemetry.Event{
+		{"cheaper tokens", []telemetry.Event{
 			tokDecision("d", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", modelBig, modelSmall),
 			tokUsage("d", "claude-code", modelBig, modelSmall, tokUse{in: 40_000, out: 90_000, cached: 1_100_000, write: 100_000}, 1, 4)},
-			"Tokens moved to a cheaper model: 1.2M (in 40k / out 90k / cache 1.1M) · to a pricier model: 0"},
+			"tokens saved: work 100% · cache 100% (1.2M of 1.2M)"},
 		{"pricier tokens", []telemetry.Event{
 			tokDecision("d", telemetry.OutcomeRewriteEmitted, "UPSHIFT", modelSmall, modelBig),
 			tokUsage("d", "claude-code", modelSmall, modelBig, tokUse{in: 10, out: 20}, 4, 1)},
-			"Tokens moved to a cheaper model: 0 · to a pricier model: 30 (in 10 / out 20 / cache 0)"},
-		{"no priced usage reads unobserved, not zero", []telemetry.Event{
+			"tokens saved: work 0% · cache 0% (0 of 30) · 30 on a pricier model"},
+		{"no priced usage reads not observed, not zero", []telemetry.Event{
 			tokDecision("d", telemetry.OutcomeAllow, "OK", modelBig, modelBig)},
-			"Tokens moved to a cheaper model: unobserved (no priced child usage in this window)"},
+			"tokens not observed yet: wire SubagentStop with downshift setup"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			var b bytes.Buffer
 			telemetry.PrintStats(tc.events, telemetry.StatsOptions{}, &b)
-			lines := strings.Split(b.String(), "\n")
-			if lines[3] != tc.want {
-				t.Errorf("line 4 = %q, want %q\n%s", lines[3], tc.want, b.String())
+			first := strings.SplitN(b.String(), "\n", 2)[0]
+			if !strings.HasSuffix(first, tc.want) {
+				t.Errorf("line 1 = %q, want it to end with %q\n%s", first, tc.want, b.String())
 			}
-			if !strings.Contains(b.String(), "Estimated at list price, not an invoice") {
-				t.Errorf("the dollar basis label must stay:\n%s", b.String())
-			}
-			if strings.Contains(b.String(), "tokens saved") {
-				t.Errorf("Downshift does not save tokens:\n%s", b.String())
+			if strings.Contains(b.String(), "$") {
+				t.Errorf("stats prints no dollars:\n%s", b.String())
 			}
 		})
 	}
@@ -406,7 +403,7 @@ func TestPrintStats_TokensDetail(t *testing.T) {
 		"token mix by model: model-small 130",
 		"cursor       unobserved (usage source: none)",
 		"codex        unobserved",
-		"Estimated at list price, not an invoice",
+		"Dollars, priced now, and the control group: downshift report",
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("--detail is missing %q:\n%s", want, text)

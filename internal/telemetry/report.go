@@ -44,16 +44,15 @@ type GroupSummary struct {
 	costs []float64
 }
 
-// Savings compares control with routed cost per completed task. Positive means
-// routing was cheaper. The interval is a 95% percentile bootstrap with a fixed
-// seed, so the same log always prints the same numbers.
+// Savings compares control with routed cost per completed task, in dollars
+// (the API lens). Positive means routing was cheaper. The interval is a 95%
+// percentile bootstrap with a fixed seed, so the same log always prints the
+// same numbers. There is no percentage: a dollar share would hide the price
+// table it rests on; the plan lens states the share in tokens.
 type Savings struct {
 	PerTaskUSD     float64 `json:"per_task_usd"`
 	PerTaskLowUSD  float64 `json:"per_task_low_usd"`
 	PerTaskHighUSD float64 `json:"per_task_high_usd"`
-	Percent        float64 `json:"percent"`
-	PercentLow     float64 `json:"percent_low"`
-	PercentHigh    float64 `json:"percent_high"`
 	Resamples      int     `json:"resamples"`
 }
 
@@ -71,6 +70,12 @@ type Report struct {
 	Savings         *Savings     `json:"savings,omitempty"`
 	// Completion says, per harness, whether the end of a child is measurable.
 	Completion []HarnessCompletion `json:"completion"`
+	// PricesAsOf is the catalog date the dollars were priced at (API lens);
+	// the caller sets it after RepriceUsage. Empty means as recorded.
+	PricesAsOf string `json:"prices_as_of,omitempty"`
+	// TokensSaved is the plan lens: tokens saved from the requested model in
+	// the window, work and cache apart, with no price at all.
+	TokensSaved TokenSaving `json:"tokens_saved"`
 }
 
 // BuildReport filters events to the last days (<= 0 means all time) and
@@ -79,6 +84,7 @@ func BuildReport(events []Event, days int) Report {
 	rep := Report{Days: days, MinTasks: MinReportTasks}
 	windowed := FilterByDays(events, days)
 	rep.Completion = CompletionByHarness(windowed)
+	rep.TokensSaved = TokenSavings(windowed).Total
 	tasks := BuildTasks(windowed)
 	for _, t := range tasks {
 		var g *GroupSummary
@@ -157,23 +163,15 @@ func percentile(sorted []float64, p float64) float64 {
 // bootstrapSavings resamples both groups independently with a fixed seed.
 func bootstrapSavings(control, routed []float64) *Savings {
 	mc, mr := mean(control), mean(routed)
-	s := &Savings{PerTaskUSD: mc - mr, Percent: (mc - mr) / mc, Resamples: bootstrapResamples}
+	s := &Savings{PerTaskUSD: mc - mr, Resamples: bootstrapResamples}
 	rng := rand.New(rand.NewSource(bootstrapSeed))
 	deltas := make([]float64, 0, bootstrapResamples)
-	pcts := make([]float64, 0, bootstrapResamples)
 	for i := 0; i < bootstrapResamples; i++ {
 		c, r := resampleMean(rng, control), resampleMean(rng, routed)
 		deltas = append(deltas, c-r)
-		if c > 0 {
-			pcts = append(pcts, (c-r)/c)
-		}
 	}
 	sort.Float64s(deltas)
 	s.PerTaskLowUSD, s.PerTaskHighUSD = percentile(deltas, 0.025), percentile(deltas, 0.975)
-	if len(pcts) > 0 {
-		sort.Float64s(pcts)
-		s.PercentLow, s.PercentHigh = percentile(pcts, 0.025), percentile(pcts, 0.975)
-	}
 	return s
 }
 
@@ -213,17 +211,35 @@ func PrintReport(w io.Writer, r Report) {
 		fmt.Fprintf(w, "%-9s %7d %7d %10d %14s %17s %9s\n", row.name, row.g.Spawns, row.g.Ended, row.g.Completed, cost, tokens, rework)
 	}
 	fmt.Fprintln(w)
+
+	// API lens: tokens priced at list prices, for whoever pays per token.
+	basis := "list prices as recorded"
+	if r.PricesAsOf != "" {
+		basis = "list prices as of " + r.PricesAsOf
+	}
+	fmt.Fprintf(w, "API lens (tokens x %s; not an invoice)\n", basis)
 	if r.Savings != nil {
 		s := r.Savings
-		fmt.Fprintf(w, "Savings per completed task  $%.4f  (95%% CI $%.4f to $%.4f)\n", s.PerTaskUSD, s.PerTaskLowUSD, s.PerTaskHighUSD)
-		fmt.Fprintf(w, "Savings vs control          %.1f%%  (95%% CI %.1f%% to %.1f%%)\n", s.Percent*100, s.PercentLow*100, s.PercentHigh*100)
+		fmt.Fprintf(w, "  Savings per completed task  $%.4f  (95%% CI $%.4f to $%.4f)\n", s.PerTaskUSD, s.PerTaskLowUSD, s.PerTaskHighUSD)
 		if s.PerTaskLowUSD <= 0 && s.PerTaskHighUSD >= 0 {
-			fmt.Fprintln(w, "The interval includes zero: this window does not show a saving.")
+			fmt.Fprintln(w, "  The interval includes zero: this window does not show a saving.")
 		}
-		printTokenCheck(w, r)
 	} else {
-		fmt.Fprintf(w, "%s.\n", r.Message)
+		fmt.Fprintf(w, "  %s.\n", r.Message)
 	}
+
+	// Plan lens: no per-token bill (Pro, Max, Team, Cursor plans), so tokens
+	// by where they ran, never dollars.
+	fmt.Fprintln(w, "\nPlan lens (no per-token bill: tokens only)")
+	if line := r.TokensSaved.Line(); line != "" {
+		fmt.Fprintf(w, "  %s\n", line)
+	} else {
+		fmt.Fprintln(w, "  tokens not observed in this window")
+	}
+	if r.Savings != nil {
+		printTokenCheck(w, r)
+	}
+
 	if len(r.Completion) > 0 {
 		fmt.Fprintln(w, "\nCompletion measurable, by harness")
 		for _, c := range r.Completion {
@@ -235,8 +251,9 @@ func PrintReport(w io.Writer, r Report) {
 		fmt.Fprintf(w, "%d spawn(s) left unrouted by DOWNSHIFT_NO_ROUTE or a session pause are not part of the comparison.\n", r.Excluded)
 	}
 	fmt.Fprintln(w, "Tokens per completed task = input, output and cache tokens of the same tasks; a cheaper model should not need more of them.")
+	fmt.Fprintln(w, "Tokens saved = tokens that ran on a cheaper model than requested; work (input+output) and cache are counted apart.")
 	fmt.Fprintln(w, "Cost per completed task = completed children plus the failed attempts they redid (respawn in the same session within 10 minutes).")
-	fmt.Fprintln(w, "Dollars are catalog-priced from recorded usage, not provider invoices. Prompt-free.")
+	fmt.Fprintln(w, "Dollars are the recorded tokens priced at catalog list prices when the report runs, not provider invoices. Prompt-free.")
 }
 
 // printTokenCheck compares tokens per completed task between the groups, once

@@ -44,7 +44,7 @@ func seedSession(t *testing.T, log, session string) {
 	for i, ev := range []telemetry.Event{
 		{CorrelationID: "d1", Harness: "claude-code", SessionID: h, Outcome: telemetry.OutcomeRewriteEmitted, Verdict: "DOWNSHIFT", FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5", Tier: "small"},
 		{CorrelationID: "d2", Harness: "claude-code", SessionID: h, Outcome: telemetry.OutcomeRewriteEmitted, Verdict: "DOWNSHIFT", FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5", Tier: "small"},
-		{Harness: "claude-code", SessionID: h, Outcome: telemetry.OutcomeUsage, LinkedDecision: "d1", ActualCostUSD: ptr(0.10), BaselineCostUSD: ptr(0.52)},
+		{Harness: "claude-code", SessionID: h, Outcome: telemetry.OutcomeUsage, LinkedDecision: "d1", ActualCostUSD: ptr(0.10), BaselineCostUSD: ptr(0.52), InputTokens: iptr(600), OutputTokens: iptr(400), CachedTokens: iptr(9000)},
 		{CorrelationID: "other", Harness: "claude-code", SessionID: telemetry.HashSessionID("another"), Outcome: telemetry.OutcomeAllow, FromModel: "claude-opus-4-7", ToModel: "claude-opus-4-7", Tier: "frontier"},
 	} {
 		if err := telemetry.AppendTo(log, ev); err != nil {
@@ -54,6 +54,7 @@ func seedSession(t *testing.T, log, session string) {
 }
 
 func ptr(v float64) *float64 { return &v }
+func iptr(v int64) *int64    { return &v }
 
 func TestStatusline_RoutingSummaryForTheCurrentSession(t *testing.T) {
 	t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "quota.json"))
@@ -63,12 +64,12 @@ func TestStatusline_RoutingSummaryForTheCurrentSession(t *testing.T) {
 
 	got := renderStatusline(t, statusInput("sess-ui", true))
 	t.Logf("statusline: %s", strings.TrimSpace(got))
-	want := "5h 25% · 7d 40% │ ◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved $0.42 · 0 on doubt\n"
+	want := "5h 25% · 7d 40% │ ◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · tokens saved work 100% · cache 100% · 0 on doubt\n"
 	if got != want {
 		t.Errorf("got %q\nwant %q", got, want)
 	}
 	// Without a quota block only the routing summary prints.
-	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved $0.42 · 0 on doubt\n" {
+	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · tokens saved work 100% · cache 100% · 0 on doubt\n" {
 		t.Errorf("routing only: %q", got)
 	}
 	// Another session sees only its own spawns.
@@ -146,7 +147,7 @@ func TestStatusline_QuotaStaleMarkerWhileSnapshotHolds(t *testing.T) {
 		}
 	}
 	storeAged(10 * time.Minute)
-	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved $0.42 · 0 on doubt · quota stale\n" {
+	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · tokens saved work 100% · cache 100% · 0 on doubt · quota stale\n" {
 		t.Errorf("holding snapshot: %q", got)
 	}
 	// No spawns and an unusable session still flag the hold.

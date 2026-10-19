@@ -17,19 +17,6 @@ func tokenBreakdown(c TokenClasses) string {
 	return fmt.Sprintf("%s (in %s / out %s / cache %s)", formatTokens(c.Total), formatTokens(c.Input), formatTokens(c.Output), formatTokens(c.Cache()))
 }
 
-// printTokensLine writes the one line next to the headline: the tokens that ran
-// on a cheaper model, and on a pricier one. These are tokens that moved, not
-// tokens saved: the dollar line above prices the same tokens on the requested
-// model. With no observed harness it says so instead of printing zeros.
-func printTokensLine(w io.Writer, t TokensRerouted) {
-	if t.Totals == nil {
-		fmt.Fprintf(w, "Tokens moved to a cheaper model: unobserved (no priced child usage in this window)\n")
-		return
-	}
-	fmt.Fprintf(w, "Tokens moved to a cheaper model: %s · to a pricier model: %s\n",
-		tokenBreakdown(t.Totals.Cheaper), tokenBreakdown(t.Totals.Pricier))
-}
-
 // printTokensDetail writes the per-harness and per-pair tables of --detail.
 func printTokensDetail(w io.Writer, t TokensRerouted) {
 	fmt.Fprintf(w, "\nTokens rerouted, by harness (%s)\n", t.Basis)

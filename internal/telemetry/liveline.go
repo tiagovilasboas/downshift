@@ -46,14 +46,15 @@ func ShortModel(id string) string {
 
 // SessionRouting is the routing picture of one session, from the event log.
 type SessionRouting struct {
-	Spawns    int     // routing decisions made for the session
-	TopModel  string  // short name of the model most children ran on
-	TopModelN int     // how many children ran on TopModel
-	HasCost   bool    // at least one child was priced against its baseline
-	DeltaUSD  float64 // signed real delta: baseline minus actual, summed
-	Switched  int     // spawns whose model or effort Downshift changed
-	Held      int     // spawns Downshift considered and left unchanged
-	OnDoubt   int     // frontier decisions resting on an unconfident classification
+	Spawns    int    // routing decisions made for the session
+	TopModel  string // short name of the model most children ran on
+	TopModelN int    // how many children ran on TopModel
+	// Tokens is the session's tokens saved from the requested model (work and
+	// cache apart). Live views show tokens only; dollars are `downshift report`'s.
+	Tokens   TokenSaving
+	Switched int // spawns whose model or effort Downshift changed
+	Held     int // spawns Downshift considered and left unchanged
+	OnDoubt  int // frontier decisions resting on an unconfident classification
 	// QuotaStale marks that an expired quota snapshot is still holding model
 	// rewrites (core.StaleQuotaHold). The caller sets it; the event log has no
 	// say in it.
@@ -73,24 +74,15 @@ func SessionSummary(events []Event, sessionHash string) SessionRouting {
 	}
 	byModel := map[string]int{}
 	refuted := RefutedRewrites(events)
-	decisions := map[string]Event{}
-	for _, ev := range events {
-		if IsDecisionRow(ev) {
-			decisions[ev.Harness+"\n"+DecisionKey(ev)] = ev
-		}
-	}
+	var mine []Event
 	for _, ev := range events {
 		if ev.SessionID != sessionHash {
 			continue
 		}
-		if ev.Outcome == OutcomeUsage {
-			if ev.HasRealCost() && !refuted[ev.Harness+"\n"+ev.LinkedDecision] {
-				decision, found := decisions[ev.Harness+"\n"+ev.LinkedDecision]
-				s.HasCost = true
-				s.DeltaUSD += RoutedCost(ev, decision, found).RealDeltaUSD()
-			}
-			continue
-		}
+		mine = append(mine, ev)
+	}
+	s.Tokens = TokenSavings(mine).Total
+	for _, ev := range mine {
 		if IsCostOnlyOutcome(ev.Outcome) || IsFailureOutcome(ev.Outcome) {
 			continue
 		}
@@ -145,12 +137,8 @@ func (s SessionRouting) Line() string {
 	if s.TopModel != "" {
 		parts = append(parts, fmt.Sprintf("%d on %s", s.TopModelN, s.TopModel))
 	}
-	if s.HasCost {
-		if s.DeltaUSD < 0 {
-			parts = append(parts, "over "+formatUSD(-s.DeltaUSD))
-		} else {
-			parts = append(parts, "saved "+formatUSD(s.DeltaUSD))
-		}
+	if s.Tokens.Observed() {
+		parts = append(parts, fmt.Sprintf("tokens saved work %s · cache %s", percentText(s.Tokens.WorkPercent()), percentText(s.Tokens.CachePercent())))
 	}
 	parts = append(parts, fmt.Sprintf("%d on doubt", s.OnDoubt))
 	if s.QuotaStale {
@@ -160,10 +148,11 @@ func (s SessionRouting) Line() string {
 }
 
 // ChildEndLine renders the one-line message shown when a child ends, from the
-// usage record built for it: the model it ran on (final_model), its tokens, its
-// real cost and, when a different requested model is known and priced, what
-// that model would have cost. Missing parts are omitted, never guessed. It
-// returns "" when nothing is known.
+// usage record built for it: the model it ran on (final_model), its work and
+// cache tokens and, when a different requested model is known, whether those
+// tokens were saved from it (ran on a cheaper model) or ran on a pricier one.
+// No dollars: the live line shows tokens only. Missing parts are omitted,
+// never guessed. It returns "" when nothing is known.
 func ChildEndLine(ev Event) string {
 	var parts []string
 	ran := ""
@@ -172,37 +161,20 @@ func ChildEndLine(ev Event) string {
 		parts = append(parts, "finished on "+ran)
 	}
 	if hasChildTokens(ev) {
-		var n int64
-		if ev.InputTokens != nil {
-			n += *ev.InputTokens
-		}
-		if ev.OutputTokens != nil {
-			n += *ev.OutputTokens
-		}
-		if ev.CachedTokens != nil {
-			n += *ev.CachedTokens
-		}
-		parts = append(parts, formatTokens(n)+" tokens")
+		c := classesOf(ev.TokenUsageOrZero())
+		parts = append(parts, fmt.Sprintf("%s tokens (work %s, cache %s)", formatTokens(c.Total), formatTokens(c.Input+c.Output), formatTokens(c.Cache())))
 	}
-	if ev.ActualCostUSD != nil {
-		cost := formatUSD(*ev.ActualCostUSD)
-		if ev.BaselineCostUSD != nil {
-			want := ""
-			if ev.FromModel != "" && ev.FromModel != "unknown" {
-				want = ShortModel(ev.FromModel)
-			}
-			guess := ""
-			if ev.BaselineSource == BaselineInferred {
-				guess = ", inferred baseline"
-			}
-			switch {
-			case want == "":
-				cost += " (would be " + formatUSD(*ev.BaselineCostUSD) + guess + ")"
-			case want != ran:
-				cost += " (" + want + " would be " + formatUSD(*ev.BaselineCostUSD) + guess + ")"
-			}
+	if want := ev.FromModel; want != "" && want != "unknown" && ShortModel(want) != ran && ev.HasRealCost() {
+		guess := ""
+		if ev.BaselineSource == BaselineInferred {
+			guess = " (inferred baseline)"
 		}
-		parts = append(parts, cost)
+		switch d := ev.RealDeltaUSD(); {
+		case d > 0:
+			parts = append(parts, "saved from "+ShortModel(want)+guess)
+		case d < 0:
+			parts = append(parts, "pricier than "+ShortModel(want)+guess)
+		}
 	}
 	if len(parts) == 0 {
 		return ""

@@ -38,22 +38,13 @@ func TestAggregateGroupsCostBySessionAndSubagent(t *testing.T) {
 	}
 }
 
-func TestCostGroupsPrintedOnlyWithAttributableUsage(t *testing.T) {
-	var none bytes.Buffer
-	telemetry.PrintStats([]telemetry.Event{usageEv("", "", 0.2)}, telemetry.StatsOptions{Detail: true}, &none)
-	if strings.Contains(none.String(), "Sessions with cost") {
-		t.Fatalf("no attributable usage must print no group section:\n%s", none.String())
-	}
+// Cost groups stay in the aggregate and the export; `stats` itself prints no
+// dollar figure, so --detail shows none of them.
+func TestCostGroupsAreNotPrintedByStats(t *testing.T) {
 	var out bytes.Buffer
 	telemetry.PrintStats([]telemetry.Event{usageEv("sessAAAA1", "agent1", 0.4), usageEv("sessBBBB2", "agent2", 0.1)}, telemetry.StatsOptions{Detail: true}, &out)
-	got := out.String()
-	for _, want := range []string{"Sessions with cost", "Subagents with cost", "session sessAAAA", "catalog-priced"} {
-		if !strings.Contains(got, want) {
-			t.Errorf("missing %q in:\n%s", want, got)
-		}
-	}
-	if strings.Index(got, "sessAAAA") > strings.Index(got, "sessBBBB") {
-		t.Error("sessions must be ordered by cost, highest first")
+	if got := out.String(); strings.Contains(got, "Sessions with cost") || strings.Contains(got, "$") {
+		t.Errorf("stats --detail prints dollars:\n%s", got)
 	}
 }
 

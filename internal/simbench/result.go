@@ -15,7 +15,7 @@ import (
 
 // EstimateLabel heads every simulation output. Simulated dollars are list
 // prices applied to synthetic tokens: rungs A and B of docs/guides/evidence.md.
-const EstimateLabel = "ESTIMATE (evidence rungs A/B): catalog list prices on synthetic tokens, no model call. " +
+const EstimateLabel = "ESTIMATE (evidence rungs A/B): catalog list prices on synthetic tokens, no model call; no dollar percentage. " +
 	"Not a measurement: quality and real token counts need real runs or `downshift report`."
 
 // Money is one dollar comparison over routed (non-control) spawns.
@@ -29,14 +29,6 @@ type Money struct {
 
 // NetUSD is gross saving minus overspend; negative means routing cost more.
 func (m Money) NetUSD() float64 { return m.GrossUSD - m.OverspendUSD }
-
-// Percent is net saving over the baseline, 0 with no priced baseline.
-func (m Money) Percent() float64 {
-	if m.BaselineUSD <= 0 {
-		return 0
-	}
-	return 100 * m.NetUSD() / m.BaselineUSD
-}
 
 // Tokens is a token count by class. Routing moves tokens to another model; it
 // does not remove them.
@@ -188,15 +180,15 @@ func (r Result) Format(w io.Writer) {
 	fmt.Fprintf(w, "scenario %s (seed %d, parent tier %s, agent %s)\n", r.Scenario.Name, r.Scenario.Seed, r.Scenario.ParentTier, orDefault(r.Scenario.AgentType))
 	fmt.Fprintf(w, "%-12s %6s %4s %6s %5s %4s %3s %5s %4s %5s %5s  %-24s %-24s %s\n",
 		"harness", "spawns", "ctl", "routed", "rewr", "down", "up", "holds", "kept", "honor", "unkBL",
-		"rung B (pipeline)", "rung A (what-if)", "tokens moved cheaper / pricier")
+		"rung B (pipeline)", "rung A (what-if)", "tokens saved work / cache (routed)")
 	for _, h := range r.Harnesses {
 		pipeline := "unobserved (no usage source)"
 		if h.UsageSeam {
 			pipeline = money(h.Pipeline)
 		}
-		fmt.Fprintf(w, "%-12s %6d %4d %6d %5d %4d %3d %5d %4d %5d %5d  %-24s %-24s %s / %s\n",
+		fmt.Fprintf(w, "%-12s %6d %4d %6d %5d %4d %3d %5d %4d %5d %5d  %-24s %-24s %s\n",
 			h.Harness, h.Spawns, h.Control, h.Routed, h.Rewrites, h.Downshifts, h.Upshifts, h.Holds, h.Kept,
-			h.Honored, h.UnknownBaseline, pipeline, money(h.WhatIf), human(h.MovedCheaper.Total()), human(h.MovedPricier.Total()))
+			h.Honored, h.UnknownBaseline, pipeline, money(h.WhatIf), h.savedShare())
 	}
 	if len(r.Violations) == 0 {
 		fmt.Fprintln(w, "invariants: all held")
@@ -206,6 +198,30 @@ func (r Result) Format(w io.Writer) {
 	for _, v := range r.Violations {
 		fmt.Fprintf(w, "  %s\n", v)
 	}
+}
+
+// savedShare is the routed tokens that ran on a cheaper model than requested,
+// work (input+output) and cache apart, from the synthetic tokens.
+func (h HarnessResult) savedShare() string {
+	all := Tokens{}
+	for _, t := range []Tokens{h.MovedCheaper, h.MovedPricier, h.Unchanged} {
+		all.Input, all.Output, all.CacheRead, all.CacheWrite = all.Input+t.Input, all.Output+t.Output, all.CacheRead+t.CacheRead, all.CacheWrite+t.CacheWrite
+	}
+	c := h.MovedCheaper
+	work := shareOf(c.Input+c.Output, all.Input+all.Output)
+	cache := shareOf(c.CacheRead+c.CacheWrite, all.CacheRead+all.CacheWrite)
+	out := fmt.Sprintf("%.0f%% / %.0f%% of %s", work, cache, human(all.Total()))
+	if p := h.MovedPricier.Total(); p > 0 {
+		out += " · " + human(p) + " pricier"
+	}
+	return out
+}
+
+func shareOf(part, whole int64) float64 {
+	if whole <= 0 {
+		return 0
+	}
+	return 100 * float64(part) / float64(whole)
 }
 
 // TopReasons lists a harness's most frequent reason codes, for a test log.
@@ -238,7 +254,7 @@ func money(m Money) string {
 	if m.Events == 0 {
 		return "unpriced"
 	}
-	return fmt.Sprintf("$%.4f net (%+.1f%%)", m.NetUSD(), m.Percent())
+	return fmt.Sprintf("$%.4f net", m.NetUSD())
 }
 
 func human(n int64) string {

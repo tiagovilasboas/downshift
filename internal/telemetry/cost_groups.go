@@ -4,8 +4,6 @@
 package telemetry
 
 import (
-	"fmt"
-	"io"
 	"sort"
 )
 
@@ -60,23 +58,4 @@ func topGroups(m map[string]CostGroup, limit int) []string {
 		keys = keys[:limit]
 	}
 	return keys
-}
-
-// printCostGroups writes observed cost per session and per subagent. It prints
-// nothing when no priced usage could be attributed, so output without usage is
-// unchanged. Ids are the hashed ids already stored; only a short prefix is shown.
-func printCostGroups(w io.Writer, sessions, subagents map[string]CostGroup) {
-	if len(sessions) == 0 && len(subagents) == 0 {
-		return
-	}
-	if n, mean, max := groupStats(sessions); n > 0 {
-		fmt.Fprintf(w, "  Sessions with cost   %6d  (mean $%.4f, max $%.4f)\n", n, mean, max)
-		for _, k := range topGroups(sessions, 3) {
-			fmt.Fprintf(w, "    session %-8.8s $%.4f  (%d usage records)\n", k, sessions[k].USD, sessions[k].Events)
-		}
-	}
-	if n, mean, max := groupStats(subagents); n > 0 {
-		fmt.Fprintf(w, "  Subagents with cost  %6d  (mean $%.4f, max $%.4f)\n", n, mean, max)
-	}
-	fmt.Fprintf(w, "  Cost per session and subagent is catalog-priced from recorded usage; subagents counted only when the record carries an agent id.\n")
 }

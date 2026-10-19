@@ -137,7 +137,7 @@ func TestPanelLabelsAndKey(t *testing.T) {
 			t.Errorf("spawn %d label %q want %q", i, v.Spawns[i].Label, w)
 		}
 	}
-	if v.Switched != 1 || v.Held != 1 || v.Observed != 1 || v.HasSaved || v.Spawns[0].ToolUse != ToolUseKey("toolu_1") {
+	if v.Switched != 1 || v.Held != 1 || v.Observed != 1 || v.Tokens.Observed() || v.Spawns[0].ToolUse != ToolUseKey("toolu_1") {
 		t.Fatalf("%+v", v)
 	}
 	// Pinned so the mod's own hash (same recipe) can be checked against it.

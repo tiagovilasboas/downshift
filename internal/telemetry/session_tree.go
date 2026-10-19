@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 	"unicode/utf8"
-
-	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // RedoWindow is how soon after a failed child a new spawn in the same session
@@ -39,9 +37,6 @@ const RunningTimeout = 2 * time.Hour
 
 // TreeOptions tunes SessionTree. The zero value is valid.
 type TreeOptions struct {
-	// Price resolves a catalog model so a child with observed tokens but no
-	// recorded cost can show an estimate (marked ~). Nil means no estimates.
-	Price func(harness, modelID string) (core.Model, bool)
 	// Paused adds the pause flag to the header: routing is paused for the
 	// session (see SessionPaused).
 	Paused bool
@@ -51,15 +46,17 @@ type TreeOptions struct {
 
 // TreeRow is one subagent of the session.
 type TreeRow struct {
-	Index    int      `json:"index"`
-	Depth    int      `json:"depth"` // 0 for a first attempt, +1 for each redo level
-	Label    string   `json:"label"`
-	Model    string   `json:"model"`
-	Status   string   `json:"status"` // done|redone|error|blocked|running|unknown
-	CostUSD  *float64 `json:"cost_usd,omitempty"`
-	CostKind string   `json:"cost_kind"` // real|estimate|none
-	OverUSD  float64  `json:"over_usd,omitempty"`
-	Reason   string   `json:"reason"`
+	Index  int    `json:"index"`
+	Depth  int    `json:"depth"` // 0 for a first attempt, +1 for each redo level
+	Label  string `json:"label"`
+	Model  string `json:"model"`
+	Status string `json:"status"` // done|redone|error|blocked|running|unknown
+	// Tokens is this child's tokens saved from the requested model (work and
+	// cache apart), known once it ended; TokensLabel its text. No dollars in
+	// the live view: `downshift report` prices tokens.
+	Tokens      TokenSaving `json:"tokens"`
+	TokensLabel string      `json:"tokens_label"`
+	Reason      string      `json:"reason"`
 	// State is what Downshift did: switched|held|observed|paused|control|blocked.
 	State       string   `json:"state"`
 	FromModel   string   `json:"from_model,omitempty"`
@@ -68,24 +65,18 @@ type TreeRow struct {
 	Paused      bool     `json:"paused,omitempty"`
 	Time        string   `json:"time,omitempty"`
 
-	mark    string
-	baseUSD float64 // baseline cost, or the cost itself when no baseline is known
-	// inferred: the baseline was guessed from settings, not requested.
-	inferred bool
+	mark string
 }
 
 // SessionTreeView is the structured session view; Render turns it into text.
 type SessionTreeView struct {
-	Session    string  `json:"session"` // first 8 hex of the hashed id
-	Subagents  int     `json:"subagents"`
-	HasCost    bool    `json:"has_cost"`
-	CostUSD    float64 `json:"cost_usd"`
-	WithoutUSD float64 `json:"without_downshift_usd"`
-	DeltaUSD   float64 `json:"delta_usd"` // without minus cost; negative is a loss
-	// InferredBaseline counts priced rows whose baseline was guessed from
-	// settings (BASELINE_FROM_SETTINGS), so the saving is against a guess.
-	InferredBaseline int  `json:"inferred_baseline,omitempty"`
-	Paused           bool `json:"paused"`
+	Session   string `json:"session"` // first 8 hex of the hashed id
+	Subagents int    `json:"subagents"`
+	// Tokens is the session's tokens saved from the requested model, and
+	// ByAgentType the same per agent type (TokenSavings).
+	Tokens      TokenSaving      `json:"tokens"`
+	ByAgentType []PanelAgentType `json:"by_agent_type"`
+	Paused      bool             `json:"paused"`
 	// Switched and Held count the rows Downshift changed and the rows it
 	// considered and kept.
 	Switched int       `json:"switched"`
@@ -189,12 +180,16 @@ func BuildSessionTree(events []Event, sessionHash string, opt TreeOptions) Sessi
 		}
 	}
 
+	saved := TokenSavings(evs)
+	view.Tokens, view.ByAgentType = saved.Total, agentTypeLines(saved)
 	rows := make([]TreeRow, len(decisions))
 	index := map[string]int{}
 	for i, d := range decisions {
 		key := DecisionKey(d)
 		index[key] = i
 		rows[i] = buildRow(i+1, d, facts[key], opt)
+		rows[i].Tokens = saved.Child(d)
+		rows[i].TokensLabel = ChildTokensLabel(rows[i].Tokens, d)
 	}
 
 	// A redo nests under the child it redid; the child it redid is marked ↻.
@@ -225,25 +220,13 @@ func BuildSessionTree(events []Event, sessionHash string, opt TreeOptions) Sessi
 			view.Held++
 		}
 	}
-	for _, r := range view.Rows {
-		if r.CostKind != "real" || r.CostUSD == nil {
-			continue // an estimate or an unpriced child never enters the totals
-		}
-		view.HasCost = true
-		view.CostUSD += *r.CostUSD
-		view.WithoutUSD += r.baseUSD
-		if r.inferred {
-			view.InferredBaseline++
-		}
-	}
-	view.DeltaUSD = view.WithoutUSD - view.CostUSD
 	return view
 }
 
 func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 	row := TreeRow{
 		Index: n, Label: fmt.Sprintf("subagent %d", n), Status: "running", mark: markRunning,
-		CostKind: "none", Reason: ShortReason(d), Time: d.Timestamp,
+		Reason: ShortReason(d), Time: d.Timestamp,
 		Paused: hasCode(d.ReasonCodes, ReasonPaused),
 	}
 	if f == nil {
@@ -254,7 +237,6 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 	if row.State == StateSwitched && d.FromModel != d.ToModel {
 		row.Reason = "switched from " + row.FromModel + ", " + row.Reason
 	}
-	refuted := f.resolved != nil && f.resolved.RewriteHonored != nil && !*f.resolved.RewriteHonored
 	switch {
 	case d.Outcome == OutcomeBlocked:
 		row.Status, row.mark = "blocked", markError
@@ -269,32 +251,6 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 		}
 		if t := evTime(d); !t.IsZero() && now.Sub(t) > RunningTimeout {
 			row.Status, row.mark = "unknown", markUnknown
-		}
-	}
-	if u := f.usage; u != nil {
-		switch {
-		case u.ActualCostUSD != nil:
-			v := *u.ActualCostUSD
-			row.CostUSD, row.CostKind, row.baseUSD = &v, "real", v
-			row.inferred = u.BaselineSource == BaselineInferred || hasCode(d.ReasonCodes, ReasonBaselineFromSettings)
-			// A refuted rewrite saved nothing: an older record may be priced
-			// on the model the rewrite asked for, so no baseline is credited.
-			if routed := RoutedCost(*u, d, true); routed.BaselineCostUSD != nil && !refuted {
-				row.baseUSD = *routed.BaselineCostUSD
-				if over := v - *routed.BaselineCostUSD; over > 0.0005 {
-					row.OverUSD = over
-					row.Reason += " · over " + formatUSD(over)
-				}
-			}
-		case hasChildTokens(*u) && opt.Price != nil:
-			id := u.ToModel
-			if id == "" || id == "unknown" {
-				id = d.ToModel
-			}
-			if m, ok := opt.Price(d.Harness, id); ok && HasModelPrices(m) {
-				v := CostUSD(m, u.TokenUsageOrZero())
-				row.CostUSD, row.CostKind = &v, "estimate"
-			}
 		}
 	}
 	return row
@@ -411,7 +367,7 @@ func orderRows(rows []TreeRow, parent []int) []TreeRow {
 }
 
 // Render lays the view out as text. Columns are aligned: tree and label, model,
-// status, cost (right-aligned), reason.
+// status, tokens, reason; a last line gives tokens saved per agent type.
 func (v SessionTreeView) Render() string {
 	noun := "subagents"
 	if v.Subagents == 1 {
@@ -423,19 +379,10 @@ func (v SessionTreeView) Render() string {
 	} else {
 		head = append(head, fmt.Sprintf("%d %s", v.Subagents, noun))
 		head = append(head, fmt.Sprintf("%d switched, %d held", v.Switched, v.Held))
-		if v.HasCost {
-			head = append(head, fmt.Sprintf("%s (without downshift: %s)", formatUSD(v.CostUSD), formatUSD(v.WithoutUSD)))
-			switch {
-			case v.DeltaUSD < -0.0005:
-				head = append(head, "over "+formatUSD(-v.DeltaUSD))
-			case v.DeltaUSD > 0.0005:
-				head = append(head, "saved "+formatUSD(v.DeltaUSD))
-			}
-			if v.InferredBaseline > 0 {
-				head = append(head, fmt.Sprintf("%d on an inferred baseline", v.InferredBaseline))
-			}
+		if line := v.Tokens.Line(); line != "" {
+			head = append(head, line)
 		} else {
-			head = append(head, "cost not observed")
+			head = append(head, "tokens not observed")
 		}
 	}
 	if v.Paused {
@@ -477,22 +424,25 @@ func (v SessionTreeView) Render() string {
 		names[i] = p.String() + r.Label
 		nameW = max(nameW, utf8.RuneCountInString(names[i]))
 		modelW = max(modelW, utf8.RuneCountInString(r.Model))
-		switch r.CostKind {
-		case "real":
-			costs[i] = formatUSD(*r.CostUSD)
-		case "estimate":
-			costs[i] = "~" + formatUSD(*r.CostUSD)
-		default:
-			costs[i] = "-"
+		costs[i] = "-"
+		if r.TokensLabel != "" {
+			costs[i] = r.TokensLabel
 		}
 		costW = max(costW, utf8.RuneCountInString(costs[i]))
 	}
 	for i, r := range v.Rows {
 		line := fmt.Sprintf("%s  %s  %s  %s  %s",
 			padRight(names[i], nameW), padRight(r.Model, modelW), r.mark,
-			padLeft(costs[i], costW), r.Reason)
+			padRight(costs[i], costW), r.Reason)
 		b.WriteString(strings.TrimRight(line, " "))
 		b.WriteByte('\n')
+	}
+	if len(v.ByAgentType) > 1 || len(v.ByAgentType) == 1 && v.ByAgentType[0].AgentType != UntypedAgent {
+		lines := make([]string, len(v.ByAgentType))
+		for i, t := range v.ByAgentType {
+			lines[i] = t.Line
+		}
+		b.WriteString("by agent type: " + strings.Join(lines, " · ") + "\n")
 	}
 	return b.String()
 }

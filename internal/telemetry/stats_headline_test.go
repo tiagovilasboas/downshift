@@ -22,54 +22,68 @@ func headlineEvent(from, to, tier string, actual, baseline *float64) telemetry.E
 
 func f(v float64) *float64 { return &v }
 
-func TestPrintStats_HeadlineWithRealCost(t *testing.T) {
-	evs := []telemetry.Event{
-		headlineEvent("claude-opus-5-5", "claude-haiku-5-5", "SMALL", f(1), f(5)),    // saved 4
-		headlineEvent("claude-haiku-5-5", "claude-opus-5-5", "FRONTIER", f(6), f(2)), // cost 4 more
-		headlineEvent("claude-opus-5-5", "claude-haiku-5-5", "SMALL", f(1), f(2)),    // saved 1
-	}
+// usageFor is the priced usage record of a headline decision, with tokens.
+func usageFor(d telemetry.Event, in, out, cached int64, actual, baseline float64) telemetry.Event {
+	return telemetry.Event{Timestamp: d.Timestamp, Harness: "claude-code", Outcome: telemetry.OutcomeUsage, LinkedDecision: d.CorrelationID,
+		FromModel: d.FromModel, ToModel: d.ToModel, InputTokens: &in, OutputTokens: &out, CachedTokens: &cached,
+		ActualCostUSD: f(actual), BaselineCostUSD: f(baseline)}
+}
+
+func TestPrintStats_HeadlineIsTokensSaved(t *testing.T) {
+	down := headlineEvent("claude-opus-5-5", "claude-haiku-5-5", "SMALL", nil, nil)
+	up := headlineEvent("claude-haiku-5-5", "claude-opus-5-5", "FRONTIER", nil, nil)
+	evs := []telemetry.Event{down, usageFor(down, 600, 400, 9000, 1, 5), up, usageFor(up, 100, 100, 0, 6, 2)}
 	var b bytes.Buffer
 	telemetry.PrintStats(evs, telemetry.StatsOptions{Days: 7}, &b)
 	lines := strings.Split(b.String(), "\n")
-	if want := "Last 7 days · 3 subagents · net saved $1.00 (saved $5.00, cost more $4.00)"; lines[0] != want {
+	if want := "Last 7 days · 2 subagents · tokens saved: work 83% · cache 100% (10k of 10k) · 200 on a pricier model"; lines[0] != want {
 		t.Errorf("line 1 = %q, want %q", lines[0], want)
 	}
 	if !strings.HasPrefix(lines[1], "Guardrails held 0 risky moves · frontier rewrites on doubt: ") {
 		t.Errorf("line 2 = %q", lines[1])
 	}
-	if want := "Models: haiku-5-5 2 · opus-5-5 1"; !strings.Contains(lines[2], "haiku") || !strings.Contains(lines[2], "opus") {
-		t.Errorf("line 3 = %q, want something like %q", lines[2], want)
+	if !strings.Contains(lines[2], "haiku") || !strings.Contains(lines[2], "opus") {
+		t.Errorf("line 3 = %q, want the model mix", lines[2])
 	}
-	for _, hidden := range []string{"Normalised", "Honor", "Quota", "By complexity", "Real saved"} {
+	for _, hidden := range []string{"Normalised", "Honor", "Quota", "By complexity", "$"} {
 		if strings.Contains(b.String(), hidden) {
-			t.Errorf("%q belongs under --detail:\n%s", hidden, b.String())
+			t.Errorf("%q does not belong in the short stats view:\n%s", hidden, b.String())
 		}
 	}
 }
 
-func TestPrintStats_HeadlineWithoutRealCost(t *testing.T) {
+func TestPrintStats_HeadlineWithoutTokens(t *testing.T) {
 	var b bytes.Buffer
 	telemetry.PrintStats([]telemetry.Event{headlineEvent("claude-opus-5-5", "claude-haiku-5-5", "SMALL", nil, nil)}, telemetry.StatsOptions{Days: 1}, &b)
 	first := strings.SplitN(b.String(), "\n", 2)[0]
-	if want := "Last 1 day · 1 subagents · no real cost yet: wire SubagentStop with downshift setup"; first != want {
+	if want := "Last 1 day · 1 subagents · tokens not observed yet: wire SubagentStop with downshift setup"; first != want {
 		t.Errorf("line 1 = %q, want %q", first, want)
 	}
 }
 
-func TestPrintStats_HeadlineNetLoss(t *testing.T) {
+func TestPrintStats_HeadlineByAgentType(t *testing.T) {
+	gp := headlineEvent("claude-opus-5-5", "claude-haiku-5-5", "SMALL", nil, nil)
+	gp.AgentType = "general-purpose"
+	ex := headlineEvent("claude-opus-5-5", "claude-opus-5-5", "FRONTIER", nil, nil)
+	ex.CorrelationID, ex.AgentType, ex.Outcome = "h-explore", "Explore", telemetry.OutcomeAllow
+	evs := []telemetry.Event{gp, usageFor(gp, 600, 400, 9000, 1, 5), ex, usageFor(ex, 500, 500, 0, 2, 2)}
 	var b bytes.Buffer
-	telemetry.PrintStats([]telemetry.Event{headlineEvent("claude-haiku-5-5", "claude-opus-5-5", "FRONTIER", f(6), f(2))}, telemetry.StatsOptions{Days: 7}, &b)
-	if !strings.Contains(b.String(), "net cost $4.00 more (saved $0.00, cost more $4.00)") {
-		t.Errorf("net loss must read as a cost:\n%s", b.String())
+	telemetry.PrintStats(evs, telemetry.StatsOptions{Days: 7}, &b)
+	if !strings.Contains(b.String(), "By agent type: general-purpose: work 100% · cache 100% (1 of 1 agent) · Explore: work 0% · cache 0% (0 of 1 agent)") {
+		t.Errorf("missing the per agent type line:\n%s", b.String())
 	}
 }
 
 func TestPrintStats_DetailKeepsEverythingAfterHeadline(t *testing.T) {
+	d := headlineEvent("claude-opus-5-5", "claude-haiku-5-5", "SMALL", nil, nil)
 	var b bytes.Buffer
-	telemetry.PrintStats([]telemetry.Event{headlineEvent("claude-opus-5-5", "claude-haiku-5-5", "SMALL", f(1), f(5))}, telemetry.StatsOptions{Days: 7, Detail: true}, &b)
-	for _, want := range []string{"Last 7 days · 1 subagents", "Subagent decisions", "By complexity", "Normalised baseline", "Honor", "Quota", "Real saved"} {
+	telemetry.PrintStats([]telemetry.Event{d, usageFor(d, 600, 400, 9000, 1, 5)}, telemetry.StatsOptions{Days: 7, Detail: true}, &b)
+	for _, want := range []string{"Last 7 days · 1 subagents", "Subagent decisions", "By complexity", "Normalised baseline", "Honor", "Quota", "Tokens rerouted, by harness"} {
 		if !strings.Contains(b.String(), want) {
 			t.Errorf("--detail must keep %q:\n%s", want, b.String())
 		}
+	}
+	if strings.Contains(b.String(), "$") {
+		t.Errorf("--detail prints no dollars (downshift report does):\n%s", b.String())
 	}
 }
