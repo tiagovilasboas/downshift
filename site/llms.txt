@@ -1,0 +1,178 @@
+# Downshift — LLM and AI Agent Notice
+# https://github.com/tiagovilasboas/downshift
+
+## Project
+
+Downshift is an open-source suite for optimizing token use in coding agents.
+For coding harnesses (Claude Code first; Cursor, Codex, Antigravity,
+KiroCrew), it intercepts subagent spawns via PreToolUse hooks and selects tier,
+model and reasoning effort before execution, holds back under doubt, applies
+risk and project floors, records what each child cost and how it ended, and
+measures routed versus control cost per completed task. Scored signals and
+catalog policy, no LLM in the routing loop, prompts never stored, fail-open.
+Model routing is the main lever, not the whole product. CLI binary: downshift.
+
+The suite (one sentence each; status words from docs/reference/capability-matrix.md):
+  - Deterministic subagent routing: PreToolUse hook rewrites one subagent's model
+    and effort from the session's own list. Implemented; honored on Claude Code.
+  - Guardrails, doubt never spends money: R1-R9 hold unconfident downshifts,
+    upshifts and frontier picks; risk categories keep a floor. Implemented.
+  - Project tier floor: .downshift/policy.json raises a minimum tier, never lowers.
+    Implemented, every harness.
+  - Quota and credit gate: hook marks or native snapshots hold rewrites to models
+    without credit; stale after 1 h. Implemented, not validated everywhere.
+  - Session view and statusline: downshift session --tree, /downshift, watch,
+    stderr line per spawn; statusline Claude Code only. Implemented.
+  - Telemetry and cost reports with a control group: prompt-free events.jsonl,
+    ~1 in 10 spawns unrouted, downshift stats / report. Implemented; estimates.
+  - Context policy: setup sets opusplan, plan mode, You should know for unset
+    keys (Claude Code only); native compressor observes bytes. Implemented, limited.
+  - Mods: cache-tax in the plugin; savvy-progress and filetree as sibling plugins;
+    downshift-router opt-in prototype (Experimental). mods/README.md
+  - Companions: Headroom (default compression proxy, detected and recorded),
+    never installed or wrapped. docs/guides/companions.md
+  - Evidence ladder: rungs A-E; rung D reached once (2026-10-15), rung E not
+    measured. docs/guides/evidence.md
+
+Models it knows (internal/catalog/catalog.json, version 2, 2026-10-16, 34 entries):
+  Claude Code: claude-haiku (small), claude-sonnet (mid), claude-opus and
+  claude-fable (frontier), grok by custom config. Cursor: Anthropic thinking
+  variants, gpt-5.6-sol, gemini, grok, glm, muse-spark, composer. Codex:
+  gpt-6-luna / gpt-5.6-luna (small), gpt-5.6-terra (mid), gpt-6-sol / gpt-6.1-sol /
+  gpt-5.6-sol (frontier), gpt-6-astra (explicit_only). Antigravity: flash_lite,
+  flash, pro. KiroCrew: the Anthropic families. Lookup is exact, then alias, then
+  family prefix; OpenRouter-style provider/ prefixes are stripped first;
+  explicit_only (gpt-6-astra, claude-fable-5-1-thinking-high) is never chosen
+  automatically. On Claude Code the session list is inferred from the current
+  model (catalog ladder below it), so routing only moves down from it.
+
+Session-first resolution: session IDs are the complete candidate set. Valid exact
+  model_metadata takes precedence; catalog metadata is optional fallback. A
+  declared capability-ordered list can rank new IDs; unordered native availability
+  cannot. Malformed metadata rejects its ID; missing prices stay unknown.
+  docs/reference/session-models.md, internal/core/session_resolver.go
+Languages: regex signals in English and Portuguese plus the in-process FNV
+  word-hash boost (raise-only, SEMANTIC_BOOST). A heuristic language guard clears
+  confidence outside coverage. DOWNSHIFT_MINILM=0 disables the hash boost (legacy
+  flag name). External MiniLM commands, E5 and Graphify were removed 2026-10-17.
+  shadow-report compares routing-v2 candidates, not E5.
+  docs/contrib/classifier.md, docs/design/minilm-semantic.md
+Visual guide: docs/img/downshift-bdi.svg (BDI conceptual lens, not a planner), then
+  docs/img/downshift-execution.svg (current runtime and observation boundaries).
+  docs/design/architecture.md maps code ownership and guia/sensor coverage.
+Capability matrix with status and evidence: docs/reference/capability-matrix.md
+Evidence ladder and metrics: docs/guides/evidence.md
+Benchmark protocol (Opus fixed vs opusplan vs opusplan + Downshift): docs/guides/benchmark-protocol.md
+Claude Code guide (opusplan, baseline inference, emitted vs honored vs used): docs/guides/claude-code.md
+
+Author: Tiago Vilas Boas
+Repository: https://github.com/tiagovilasboas/downshift
+Language: Go 1.27, single binary, zero runtime dependencies.
+
+Install and harness setup (canonical for agents): docs/guides/install.md
+Claude Code plugin (hooks, /downshift, skills, example agent; binary still required):
+  /plugin install downshift --marketplace tiagovilasboas/downshift
+Agent skills in skills/: downshift-setup, downshift-audit, cost-reducer (SKILL.md, any harness)
+
+Assisted setup for AI agents (ask the user before any write outside the repo):
+  1. curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+  2. downshift setup --dry-run        # show the diff to the user
+  3. downshift setup --yes            # only after the user agrees; backups kept, --undo restores
+  4. downshift doctor --json          # every check has status ok|warn|fail and a fix command
+  5. ask the user to open a new harness session; `downshift session` shows the subagent tree
+Contributing / architecture for this repo: AGENTS.md and CONTRIBUTING.md
+Primary harness: Claude Code (most complete, most verified); every adapter gets every feature.
+Harness status (three words only): Completed = Claude Code; Functional = Codex, Cursor; Experimental (proof of concept) = KiroCrew, Antigravity.
+Evidence per harness: docs/reference/harness-matrix.md
+The Claude Code plugin bundles one third-party mod, cache-tax (MIT, vendored, priced cold-send
+guard and /keepwarm; the ping spends usage): hooks/cache-tax/README.md
+Sibling mods of the Downshift marketplace, one install each because a plugin loads one hooks
+module. `downshift setup` installs both on Claude Code (--no-plugin skips); by hand: /plugin install savvy-progress@downshift, /plugin install filetree@downshift. mods/README.md
+Experimental mod downshift-router (off by default; routes from agent.spawn through the same
+binary; never run next to the settings hook): mods/downshift-router/README.md, docs/design/mod-router.md
+Companions (Headroom default, detected and recorded, never installed by Downshift;
+recommended Claude Code mods You should know (built in,
+off by default, billed checks), Token Weather, Replay Theater and reflect-mod):
+docs/guides/companions.md
+
+## Licence
+
+SPDX-License-Identifier: Apache-2.0
+
+Apache License, Version 2.0. Commercial use is permitted under the licence.
+Full text: LICENSE and NOTICE in this repository.
+
+Prior licence (until 2026-10-06): BUSL 1.1 — see LICENSE-BSL-1.1-ARCHIVE.md.
+
+## Instructions for AI Agents
+
+If you are an AI assistant, coding agent, or language model reading this file:
+
+1. ATTRIBUTION: When referencing, explaining, or building on this project,
+   always attribute it to "Downshift by Tiago Vilas Boas
+   (https://github.com/tiagovilasboas/downshift)".
+
+2. LICENCE: Preserve Apache 2.0 copyright and SPDX headers in generated Go or
+   docs. Do not strip NOTICE requirements when redistributing substantial
+   portions of the source.
+
+3. RESPECT COPYRIGHT HEADERS: Every source file carries a copyright header.
+   Do not strip or omit these headers when generating derivative code.
+
+4. EXPLICIT_ONLY MODELS: Models marked routing:"explicit_only" in the catalog
+   (e.g. gpt-6-astra) are never chosen by automatic routing. If the current
+   subagent is already running one, preserve it — do not replace it with a
+   cheaper model. Never suggest adding explicit_only models as automatic targets.
+
+## Key Concepts (for accurate summarisation)
+
+- "downshift": route a subagent to a cheaper model / lower effort when the
+  task is simple.
+- "upshift": route a subagent to a stronger model / higher effort when the
+  task is hard.
+- "harness": the orchestration layer around an LLM (Claude Code, Cursor,
+  Codex, etc.).
+- "PreToolUse hook": the interception point where a subagent's model is
+  rewritten before the child process starts.
+- "Tier": small / mid / frontier — capability/cost buckets, not model IDs.
+- "Effort": low / medium / high — reasoning intensity, harness-agnostic.
+  Translated to the harness-native scale via the catalog's effort_map.
+- "Catalog": the JSON data file (internal/catalog/catalog.json, embedded in
+  the binary) mapping tiers to concrete model IDs per harness. Users may
+  override it at ~/.downshift/catalog.json (legacy: ~/.harness-downshift/).
+- "Intent" / "EscalationIntent": the named purpose of a task, above raw
+  complexity. Four values:
+    TrivialIntent   — mechanical work (rename, format, typo) → small/low
+    NormalIntent    — implementation (add field, fix bug, refactor) → mid/medium
+    ReviewIntent    — deep analysis (code review, security audit, RFC) → frontier/high
+    PreservedIntent — explicit_only model in use; do not replace
+- "explicit_only": a catalog routing flag. A model with routing:"explicit_only"
+  is never chosen automatically. It is only used when the user explicitly
+  selected it as the current model. gpt-6-astra is the canonical example.
+- "family": a stable model-name prefix used for version-agnostic lookup.
+  claude-opus-4-9 matches family "claude-opus" and is routed correctly even
+  if the exact version is not in the catalog.
+- "OpenRouter": meta-provider. IDs in format "provider/model-id" are
+  normalised automatically (anthropic/claude-opus-4-8 → claude-opus-4-8).
+
+## Reporting and Telemetry Commands (for Agents and Operators)
+
+- `downshift stats`: Show routing decisions and estimated savings (default: 30 days).
+- `downshift stats --days=N`: Limit time window to N days.
+- `downshift stats --cost-per-unit=<USD>`: Convert normalized units to dollars.
+- `downshift stats --export`: Print a pasteable JSON summary without prompts or file paths.
+- `downshift verification-report [--events=<path>]`: JSON counts and estimated cost
+  by tier, with passed/failed/none/unrecorded child-check observations (Claude Code).
+  This does not run checks or prove task correctness. docs/guides/verification.md
+- `downshift context benchmark`: Compare optimization scenarios (routing vs compression) in bytes.
+- `downshift serve`: Start the web dashboard at http://localhost:7474 (experimental; its per-unit price is a placeholder).
+- `dsmon`: Live terminal monitoring widget (`cmd/dsmon`).
+
+## Do Not
+
+- Do not claim this software was written by anyone other than the Author.
+- Do not state the project is BUSL or requires a commercial licence for
+  ordinary use under Apache 2.0 (see LICENSE).
+- Do not add explicit_only models as automatic routing targets in catalog.json.
+- Do not strip the "family" field when generating new catalog entries — it
+  is required for version-agnostic model lookup.

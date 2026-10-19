@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Downshift: deterministic model router for Claude Code, Cursor and Codex</title>
+<meta name="description" content="Open-source Go hooks that right-size subagent models and reasoning effort, flag wasted prompt cache and pack relevant code context. No LLM in the loop, fail-open. Apache-2.0.">
+<link rel="canonical" href="https://downshift-eta.vercel.app/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0D1117">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Downshift: stop paying frontier prices for mechanical subagent work">
+<meta property="og:description" content="Deterministic subagent model router for Claude Code, Cursor, Codex and OpenCode. Zero LLM in the routing loop.">
+<meta property="og:url" content="https://downshift-eta.vercel.app/">
+<meta property="og:image" content="https://downshift-eta.vercel.app/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"SoftwareApplication","name":"Downshift","applicationCategory":"DeveloperApplication","operatingSystem":"macOS, Linux","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://downshift-eta.vercel.app/","codeRepository":"https://github.com/tiagovilasboas/downshift","author":{"@type":"Person","name":"Tiago Vilas Boas"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Deterministic subagent model router and code-intelligence layer for coding agents."},{"@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Does Downshift call an LLM to pick a model?","acceptedAnswer":{"@type":"Answer","text":"No. Routing uses scored signals and a model catalog, locally, in milliseconds. No extra tokens and no extra latency in the spawn path."}},{"@type":"Question","name":"What happens when Downshift is unsure?","acceptedAnswer":{"@type":"Answer","text":"Doubt never spends money: the spawn keeps the model it asked for. Downshift is fail-open, so errors or missing capabilities leave the spawn untouched."}},{"@type":"Question","name":"Which coding agents does it support?","acceptedAnswer":{"@type":"Answer","text":"Claude Code (completed), Codex and Cursor (functional), OpenCode (beta), Antigravity and KiroCrew (experimental)."}},{"@type":"Question","name":"How much does it save?","acceptedAnswer":{"@type":"Answer","text":"In a controlled Claude Code trial, mechanical delegated tasks saved about 12% in list-price token cost with 12 of 12 hidden test suites passing. Natural use shows nothing attributable yet. Estimates are not invoices."}},{"@type":"Question","name":"Is it free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Apache-2.0, single Go binary, no daemon."}}]}]}</script>
+<style>
+:root{--bg:#0D1117;--surface:#161B22;--line:#262d38;--text:#F9FAFB;--muted:#9CA3AF;--accent:#22C55E;--accent-ink:#04210f}
+@media(prefers-color-scheme:light){:root{--bg:#fff;--surface:#f4f6f8;--line:#dfe3e8;--text:#0D1117;--muted:#4b5563;--accent:#15803d;--accent-ink:#fff}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.w{max-width:1040px;margin:0 auto;padding:0 16px}
+header{border-bottom:1px solid var(--line)}
+nav{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;flex-wrap:wrap}
+nav img{height:30px;display:block}
+nav ul{display:flex;gap:18px;list-style:none;margin:0;padding:0;flex-wrap:wrap;font-size:15px}
+nav a{color:var(--muted);text-decoration:none}nav a:hover{color:var(--text)}
+.hero{padding:72px 0 48px;text-align:center}
+h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.1;margin:0 0 16px;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--accent)}
+.lead{max-width:680px;margin:0 auto 28px;color:var(--muted);font-size:1.15rem}
+.cmd{display:flex;gap:8px;max-width:760px;margin:0 auto 20px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 10px 10px 16px;align-items:center;text-align:left}
+.cmd code{flex:1;overflow-x:auto;white-space:nowrap;font:14px ui-monospace,Menlo,monospace}
+button,.btn{cursor:pointer;font:inherit;font-weight:600;border-radius:8px;padding:9px 16px;border:1px solid var(--line);background:var(--bg);color:var(--text);text-decoration:none;display:inline-block}
+.btn.p{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:40px 0}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.stat b{display:block;font-size:1.8rem;color:var(--accent)}.stat span{color:var(--muted);font-size:.92rem}
+section{padding:48px 0;border-top:1px solid var(--line)}
+h2{font-size:1.8rem;margin:0 0 8px;letter-spacing:-.01em}.sub{color:var(--muted);margin:0 0 28px;max-width:700px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.card h3{margin:0 0 6px;font-size:1.05rem}.card p{margin:0;color:var(--muted);font-size:.95rem}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600}
+.tag{font-size:.8rem;border:1px solid var(--accent);color:var(--accent);border-radius:99px;padding:2px 10px;white-space:nowrap}
+ol.steps{padding-left:20px;color:var(--muted)}ol.steps strong{color:var(--text)}
+.sponsor{text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:36px 20px}
+details{border-bottom:1px solid var(--line);padding:14px 0}summary{cursor:pointer;font-weight:600}details p{color:var(--muted);margin:8px 0 0}
+footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<header><div class="w"><nav aria-label="Main">
+<a href="/" aria-label="Downshift home"><picture><source srcset="/downshift-logo-dark.svg" media="(prefers-color-scheme:dark)"><img src="/downshift-logo-light.svg" alt="Downshift" width="130" height="30"></picture></a>
+<ul><li><a href="#how">How it works</a></li><li><a href="#harnesses">Harnesses</a></li><li><a href="#evidence">Evidence</a></li><li><a href="#contribute">Contribute</a></li><li><a href="https://github.com/tiagovilasboas/downshift/blob/main/docs/README.md">Docs</a></li><li><a href="https://github.com/tiagovilasboas/downshift">GitHub</a></li></ul>
+</nav></div></header>
+<main>
+<div class="w">
+<div class="hero">
+<h1>Stop paying frontier prices for <em>mechanical</em> subagent work</h1>
+<p class="lead">Downshift is a deterministic model router for coding agents. It right-sizes each subagent's model and reasoning effort through native hooks. No LLM in the loop, fail-open, one Go binary.</p>
+<div class="cmd"><code id="c">curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh &amp;&amp; downshift setup</code><button type="button" id="b" aria-label="Copy install command">Copy</button></div>
+<div class="cta"><a class="btn p" href="https://github.com/tiagovilasboas/downshift">Star on GitHub</a><a class="btn" href="https://github.com/sponsors/tiagovilasboas">Sponsor</a><a class="btn" href="https://github.com/tiagovilasboas/downshift/blob/main/docs/guides/install.md">Install guide</a></div>
+<div class="stats">
+<div class="stat"><b>0 LLM calls</b><span>Routing is scored signals plus a catalog. Milliseconds, local.</span></div>
+<div class="stat"><b>~12%</b><span>List-price saving on mechanical tasks in a controlled trial, 12/12 test suites passing.</span></div>
+<div class="stat"><b>6 harnesses</b><span>Claude Code, Codex, Cursor, OpenCode, Antigravity, KiroCrew.</span></div>
+<div class="stat"><b>Apache-2.0</b><span>Free, single binary, no daemon.</span></div>
+</div>
+</div>
+
+<section id="how"><h2>How it works</h2><p class="sub">Four capabilities behind one <code>downshift setup</code>, running as native hooks inside your harness.</p>
+<div class="grid">
+<div class="card"><h3>Deterministic routing</h3><p>Renames, test runs and listings get a cheaper tier on the spot. Risk floors protect auth, payments and secrets.</p></div>
+<div class="card"><h3>Doubt never spends money</h3><p>When the classifier is unsure, the spawn keeps the model it asked for. Upshifts need confidence.</p></div>
+<div class="card"><h3>Cache hygiene</h3><p>Prices a cold prompt cache before you pay for it and offers <code>/keepwarm</code> across a break.</p></div>
+<div class="card"><h3>Code intelligence</h3><p>Opt-in AST and call-graph index that packs only the affected symbols under a byte cap.</p></div>
+</div></section>
+
+<section id="harnesses"><h2>One router, every harness</h2><p class="sub">Behaviour lives in shared layers; adapters only parse and emit. Status is stated as verified, not hoped.</p>
+<div class="tw"><table><thead><tr><th>Harness</th><th>Status</th><th>Hook</th></tr></thead><tbody>
+<tr><td>Claude Code</td><td><span class="tag">Completed</span></td><td>PreToolUse, updatedInput.model</td></tr>
+<tr><td>Codex</td><td><span class="tag">Functional</span></td><td>PreToolUse, model and reasoning effort</td></tr>
+<tr><td>Cursor</td><td><span class="tag">Functional</span></td><td>preToolUse, updated_input.model</td></tr>
+<tr><td>OpenCode</td><td><span class="tag">Beta</span></td><td>Plugin, subagent spawn intent</td></tr>
+<tr><td>Antigravity, KiroCrew</td><td><span class="tag">Experimental</span></td><td>Policy mode, native CLI hook</td></tr>
+</tbody></table></div></section>
+
+<section id="evidence"><h2>Honest numbers</h2><p class="sub">Estimates are not invoices. Downshift leaves about 1 in 10 spawns unrouted as a control group, so <code>downshift report</code> can compare routed against control. Prompts are evaluated in memory and never stored. On natural, complex use, nothing is attributable yet, and the docs say so.</p>
+<a class="btn" href="https://github.com/tiagovilasboas/downshift/blob/main/docs/evidence/subagent-routing-ab-2026-10-15.md">Read the A/B report</a></section>
+
+<section id="contribute"><h2>Contribute in five minutes</h2><p class="sub">The most valuable contribution is a misrouted prompt.</p>
+<ol class="steps"><li><strong>Run</strong> <code>downshift try "your prompt"</code></li><li><strong>Compare</strong> the chosen tier with what you expected</li><li><strong>Open an issue</strong> with both, or send a table-driven test</li></ol>
+<div class="cta" style="justify-content:flex-start"><a class="btn p" href="https://github.com/tiagovilasboas/downshift/issues/new/choose">Report a misroute</a><a class="btn" href="https://github.com/tiagovilasboas/downshift/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a><a class="btn" href="https://github.com/tiagovilasboas/downshift/blob/main/docs/contrib/layering.md">Layering rules</a></div></section>
+
+<section id="sponsor"><div class="sponsor"><h2>Keep Downshift independent</h2><p class="sub" style="margin:0 auto 20px">Downshift is built in the open by Tiago Vilas Boas. Sponsorship pays for benchmark runs and keeps the catalog fresh.</p><a class="btn p" href="https://github.com/sponsors/tiagovilasboas">Sponsor on GitHub</a></div></section>
+
+<section id="faq"><h2>FAQ</h2>
+<details><summary>Does Downshift call an LLM to pick a model?</summary><p>No. Scored signals and a catalog, locally, in milliseconds. No extra tokens in the spawn path.</p></details>
+<details><summary>What happens when it is unsure?</summary><p>The spawn keeps the model it asked for. Downshift is fail-open: errors or missing capabilities leave everything untouched.</p></details>
+<details><summary>How much does it save?</summary><p>About 12% list-price on mechanical delegated work in one controlled Claude Code trial. Treat it as an estimate.</p></details>
+<details><summary>Is it free?</summary><p>Yes. Apache-2.0, single Go binary.</p></details>
+</section>
+</div>
+</main>
+<footer><div class="w">Downshift by Tiago Vilas Boas · <a href="https://github.com/tiagovilasboas/downshift">github.com/tiagovilasboas/downshift</a> · Apache-2.0 · <a href="/llms.txt">llms.txt</a></div></footer>
+<script>document.getElementById("b").onclick=function(){var b=this;navigator.clipboard.writeText(document.getElementById("c").textContent).then(function(){b.textContent="Copied";setTimeout(function(){b.textContent="Copy"},1500)}).catch(function(){})}</script>
+</body></html>
