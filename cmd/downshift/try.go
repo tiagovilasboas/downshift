@@ -57,9 +57,15 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 	if assumed {
 		fmt.Fprintf(w, "assumed current: %s (harness default)\n", current)
 	}
-	fmt.Fprintf(w, "%s\n", tryHeadline(d, asOf))
+	note := tryNotApplied(res, known, d, harness)
+	if note != "" {
+		// The hook would leave the spawn alone: do not quote a saving it will not make.
+		fmt.Fprintf(w, "%s\n", tryHeadlineNotApplied(d))
+	} else {
+		fmt.Fprintf(w, "%s\n", tryHeadline(d, asOf))
+	}
 	fmt.Fprintf(w, "why: %s task, %s\n", strings.ToLower(d.Complexity.String()), telemetry.ReasonBrief(telemetry.ReasonCodes(d)))
-	if note := tryNotApplied(res, known, d, harness); note != "" {
+	if note != "" {
 		fmt.Fprintf(w, "note: %s\n", note)
 	}
 	if !detail {
@@ -125,6 +131,17 @@ func tryHeadline(d core.Decision, asOf string) string {
 		return fmt.Sprintf("→ %s: %s → %s (needs more torque)", d.Tier, cur, rec)
 	}
 	return fmt.Sprintf("→ %s: stays on %s", d.Tier, cur)
+}
+
+// tryHeadlineNotApplied is the headline for a move the hook would not apply:
+// the tier and the model the decision points at, with no saving claimed.
+func tryHeadlineNotApplied(d core.Decision) string {
+	rec := telemetry.ShortModel(d.Model.ID)
+	cur := telemetry.ShortModel(d.Baseline.CurrentModel.ID)
+	if d.Baseline.CurrentModel.ID == "" {
+		return fmt.Sprintf("→ %s: %s (not applied)", d.Tier, rec)
+	}
+	return fmt.Sprintf("→ %s: %s → %s (not applied, no saving)", d.Tier, cur, rec)
 }
 
 // pricesAsOf is the date of the resolver's embedded list prices, or "" when
