@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The vendored `savvy-progress` mod draws its bar in the Downshift brand green (`#22C55E`) with brand ink on the percentage pill, instead of upstream's violet. It is the only local patch to the vendored file and is documented in `mods/savvy-progress/README.md`; `downshift setup` installs the mod, so the colours arrive with it.
 - `downshift setup` on Claude Code installs the Downshift plugin through `claude plugin marketplace add` and `claude plugin install`, so the hooks and the bundled cache-tax mod arrive with one command. It removes the Downshift hooks it had written into `settings.json` (the plugin carries them; keeping both would route every spawn twice) and falls back to the settings hooks, naming the reason, when `claude` is not on PATH, when a login shell does not resolve `downshift` to the binary running `setup`, or when the install fails. `--no-plugin` keeps the settings hooks.
 - `downshift setup` on Claude Code also installs the sibling mods `savvy-progress@downshift` (progress bar above the prompt, `/agents-info` panel of subagents) and `filetree@downshift` with `claude plugin install`, skipping any already enabled. They carry no routing, so they install even when routing falls back to the settings hooks, and a failed install is only a note. `--no-plugin` skips them; `downshift-router` stays opt-in (it would route twice).
 

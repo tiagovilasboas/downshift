@@ -28,8 +28,11 @@ const TIERS: readonly string[] = ['fable', 'heavy', 'careful', 'medium', 'light'
 const MAX_TASKS = 200
 const MAX_AFTER = 20
 const MAX_TITLE = 120
-const ACCENT = '#8f8cf4'
-const DONE = '#5fbf8f'
+// Downshift local patch (see ../README.md): brand green instead of upstream's
+// '#8f8cf4' / '#5fbf8f', and brand ink on the pill instead of white.
+const ACCENT = '#22c55e'
+const DONE = '#16a34a'
+const PILL_INK = '#0d1117'
 
 type ProgressInput = {
   title?: string
@@ -340,7 +343,7 @@ const rowSvg = (f: Flow, W: number, isWorking: boolean): string => {
 <g class="tk">${ticks.join('')}</g>
 </g>
 <rect x="${pillX}" width="${pillW}" height="${BAR_H}" rx="${BAR_H / 2}" fill="${color}"/>
-<text x="${pillX + pillW / 2}" y="${BAR_H / 2 + 4}" text-anchor="middle"${rtl ? ' direction="rtl"' : ''} font-family="${FONT}" font-size="11" font-weight="600" fill="#ffffff">${xml(text)}</text>
+<text x="${pillX + pillW / 2}" y="${BAR_H / 2 + 4}" text-anchor="middle"${rtl ? ' direction="rtl"' : ''} font-family="${FONT}" font-size="11" font-weight="600" fill="${PILL_INK}">${xml(text)}</text>
 </g>
 <text class="m" ${percentAt} font-family="${FONT}" font-size="12.5" font-variant-numeric="tabular-nums">${percent}</text>
 ${CRAB_CSS}${crab(rx(W - CRAB_W + 1, crabW), 0, 'other', false, isWorking, 0.8, rtl)}
