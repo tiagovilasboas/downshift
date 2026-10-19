@@ -103,9 +103,7 @@ func recordSensorToolObservation(payload map[string]any, sessionHash string) {
 	isError := false
 	exitCode := -1
 	if resp, ok := payload["tool_response"].(map[string]any); ok {
-		if content, ok := resp["content"].(string); ok {
-			outputBytes = []byte(content)
-		}
+		outputBytes = toolOutputBytes(resp)
 		if status, ok := resp["status"].(string); ok && (status == "error" || status == "failed") {
 			isError = true
 		}
@@ -114,6 +112,44 @@ func recordSensorToolObservation(payload map[string]any, sessionHash string) {
 		}
 	}
 	_ = st.RecordToolResult(sessionHash, harnessID, toolName, outputBytes, exitCode, isError)
+}
+
+// toolOutputBytes is the text the model reads from one tool result, in the
+// shapes Claude Code sends: Bash {stdout, stderr}, a plain content string, an
+// array of content blocks ({type:"text", text}), or a generic output string.
+// Only the length and the observe-mode compressor ever see it; nothing here is
+// stored. Unknown shapes give nil, which records zero bytes as before.
+func toolOutputBytes(resp map[string]any) []byte {
+	var b []byte
+	if out, ok := resp["stdout"].(string); ok {
+		b = append(b, out...)
+	}
+	if errOut, ok := resp["stderr"].(string); ok && errOut != "" {
+		if len(b) > 0 && b[len(b)-1] != '\n' {
+			b = append(b, '\n')
+		}
+		b = append(b, errOut...)
+	}
+	if b != nil {
+		return b
+	}
+	switch c := resp["content"].(type) {
+	case string:
+		return []byte(c)
+	case []any:
+		for _, block := range c {
+			if m, ok := block.(map[string]any); ok {
+				if text, ok := m["text"].(string); ok {
+					b = append(b, text...)
+				}
+			}
+		}
+		return b
+	}
+	if out, ok := resp["output"].(string); ok {
+		return []byte(out)
+	}
+	return nil
 }
 
 // nativeContextObserveOn is the persisted native-provider flag. Missing

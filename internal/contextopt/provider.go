@@ -103,6 +103,11 @@ type Config struct {
 	// It cannot replace the tool result the model sees, and it does not
 	// compress prompts.
 	ExitCodeContract string `json:"exit_code_contract,omitempty"`
+	// Exec turns on the opt-in shell wrapper: the PreToolUse hook rewrites an
+	// allowlisted shell command to `downshift exec -- <argv>` (see
+	// internal/execwrap). Off by default and when absent; it applies only
+	// while Enabled is true, and DOWNSHIFT_EXEC=0 overrides it.
+	Exec bool `json:"exec,omitempty"`
 }
 
 // ExitCodeContractObserve is the rule Configure persists for the native provider.

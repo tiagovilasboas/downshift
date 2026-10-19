@@ -34,7 +34,7 @@ func TestCompress_ModeOff(t *testing.T) {
 }
 
 func TestCompress_ModeObserve(t *testing.T) {
-	in := []byte("ok  pkg1 0.1s\nok  pkg2 0.2s\nok  pkg3 0.3s\n")
+	in := []byte("ok  github.com/foo/bar/pkg1  0.1s\nok  github.com/foo/bar/pkg2  0.2s\nok  github.com/foo/bar/pkg3  0.3s\n")
 	res := compressor.Compress(in, compressor.ModeObserve)
 	if !res.Applied {
 		t.Fatalf("expected applied=true (detected gain) in ModeObserve")
@@ -133,7 +133,7 @@ func TestCompress_SearchResults_Preserved(t *testing.T) {
 }
 
 func TestCompressExit_NonZeroPreservesPassingText(t *testing.T) {
-	in := []byte("ok  github.com/foo/bar  0.1s\nok  github.com/foo/baz  0.2s\n")
+	in := []byte("ok  github.com/foo/bar  0.1s  coverage: 80.0% of statements\nok  github.com/foo/baz  0.2s  coverage: 90.0% of statements\n")
 	res := compressor.CompressExit(in, compressor.ModeSafe, 1)
 	if res.Applied || !bytes.Equal(res.Output, in) {
 		t.Fatalf("nonzero exit was compacted: %+v", res)
@@ -159,5 +159,31 @@ func TestCompress_RepetitiveLogs(t *testing.T) {
 	}
 	if !strings.Contains(string(res.Output), "[repeated") {
 		t.Errorf("expected repeated indicator in output: %s", string(res.Output))
+	}
+}
+
+func TestCompress_GitStatus_KeepsTrackingAndDetached(t *testing.T) {
+	cases := []struct {
+		name    string
+		in      string
+		applied bool
+	}{
+		{"up to date", "On branch main\nYour branch is up to date with 'origin/main'.\n\nnothing to commit, working tree clean\n", true},
+		{"no upstream", "On branch main\nnothing to commit, working tree clean\n", true},
+		{"ahead", "On branch main\nYour branch is ahead of 'origin/main' by 3 commits.\n  (use \"git push\" to publish your local commits)\n\nnothing to commit, working tree clean\n", false},
+		{"behind", "On branch main\nYour branch is behind 'origin/main' by 1 commit, and can be fast-forwarded.\n\nnothing to commit, working tree clean\n", false},
+		{"detached", "HEAD detached at abc1234\nnothing to commit, working tree clean\n", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.CompressExit(in, compressor.ModeSafe, 0)
+			if res.Applied != tc.applied {
+				t.Fatalf("applied = %v, want %v (%s)", res.Applied, tc.applied, res.Reason)
+			}
+			if !tc.applied && !bytes.Equal(res.Output, in) {
+				t.Fatal("output must be byte-identical when not applied")
+			}
+		})
 	}
 }

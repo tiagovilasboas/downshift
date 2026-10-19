@@ -12,10 +12,7 @@ package compressor_test
 //   (c) compaction is idempotent and never grows the output;
 //   (d) a non-zero exit code always passes the output through raw.
 //
-// Known defects are listed in corpusDefects. They are skipped by default so CI
-// stays green, and fail when DOWNSHIFT_CORPUS_STRICT=1:
-//
-//	DOWNSHIFT_CORPUS_STRICT=1 go test ./internal/compressor -run TestCorpusKnownDefects -v
+//   (e) every defect QA found in the first corpus (D1-D8) stays fixed.
 
 import (
 	"bytes"
@@ -60,7 +57,25 @@ var rawFixtures = []string{
 	"gitstatus_ansi.txt",
 	"gitstatus_porcelain_v2.txt",
 	"gitstatus_short.txt",
-	// git log is never summarised.
+	// D1: repeated lines must not trigger log dedup on a failing run.
+	"gotest_fail_repeated_log.txt",
+	// D8: no final newline means possibly truncated.
+	"gotest_pass_no_trailing_newline.txt",
+	// D6: a summary may never be longer than the input.
+	"gotest_two_short_pkgs.txt",
+	// D3/D4: a clean tree still carries facts the summary would drop.
+	"gitstatus_clean_ahead.txt",
+	"gitstatus_clean_behind.txt",
+	"gitstatus_clean_diverged.txt",
+	"gitstatus_clean_upstream_gone.txt",
+	"gitstatus_clean_bisecting.txt",
+	"gitstatus_merge_concluding.txt",
+	"gitstatus_clean_stash.txt",
+	"gitstatus_clean_detached.txt",
+	// D5: CRLF would be rewritten with a stray carriage return.
+	"gitstatus_clean_crlf.txt",
+	// git log is never summarised (D2: repeated body lines included).
+	"gitlog_squash_repeated_body.txt",
 	"gitlog_plain.txt",
 	"gitlog_merge.txt",
 	"gitlog_signed.txt",
@@ -79,9 +94,9 @@ type cleanFixture struct {
 }
 
 var cleanFixtures = []cleanFixture{
-	{"gotest_pass_coverage.txt", []string{"PASS", "12 packages"}},
-	{"gotest_pass_cached.txt", []string{"PASS", "6 packages"}},
-	{"gotest_pass_plain.txt", []string{"PASS", "12 packages"}},
+	{"gotest_pass_coverage.txt", []string{"PASS", "12 packages", "internal/billing", "65.9%", "cmd/widget", "100.0%"}},
+	{"gotest_pass_cached.txt", []string{"PASS", "6 packages", "internal/config"}},
+	{"gotest_pass_plain.txt", []string{"PASS", "12 packages", "internal/store"}},
 	{"gitstatus_clean_uptodate.txt", []string{"On branch main", "working tree clean"}},
 	{"gitstatus_clean_no_upstream.txt", []string{"On branch feature/rate-limit", "working tree clean"}},
 }
@@ -170,9 +185,6 @@ func allFixtures(t *testing.T) []string {
 
 func TestCorpusIdempotentAndNeverGrows(t *testing.T) {
 	for _, name := range allFixtures(t) {
-		if knownGrowth[name] {
-			continue // tracked in corpusDefects
-		}
 		in := readFixture(t, name)
 		for _, code := range []int{-1, 0} {
 			t.Run(fmt.Sprintf("%s/exit=%d", name, code), func(t *testing.T) {
@@ -235,89 +247,4 @@ func TestCorpusCleanReduction(t *testing.T) {
 		t.Fatalf("no reduction on clean corpus: %d -> %d", before, after)
 	}
 	t.Logf("%-34s %5d -> %4d bytes (%.1f%%)", "TOTAL", before, after, float64(before-after)/float64(before)*100)
-}
-
-// knownGrowth lists fixtures excluded from the never-grows invariant because a
-// defect below already covers them.
-var knownGrowth = map[string]bool{"gotest_two_short_pkgs.txt": true}
-
-type corpusDefect struct {
-	id, summary, file string
-	exit              int
-	check             func(in []byte, res compressor.Result) error
-}
-
-func mustBeRaw(in []byte, res compressor.Result) error {
-	if res.Applied || !bytes.Equal(res.Output, in) {
-		return fmt.Errorf("changed (reason=%q):\n got: %q", res.Reason, res.Output)
-	}
-	return nil
-}
-
-func mustKeep(facts ...string) func([]byte, compressor.Result) error {
-	return func(_ []byte, res compressor.Result) error {
-		var lost []string
-		for _, f := range facts {
-			if !bytes.Contains(res.Output, []byte(f)) {
-				lost = append(lost, f)
-			}
-		}
-		if len(lost) > 0 {
-			return fmt.Errorf("facts lost %q; output %q", lost, res.Output)
-		}
-		return nil
-	}
-}
-
-var corpusDefects = []corpusDefect{
-	{"D1", "log dedup runs before error detection: failing go test with repeated lines is rewritten",
-		"gotest_fail_repeated_log.txt", -1, mustBeRaw},
-	{"D2", "git log with repeated body lines is deduplicated (git log must stay raw)",
-		"gitlog_squash_repeated_body.txt", 0, mustBeRaw},
-	{"D3", "clean git status drops ahead count", "gitstatus_clean_ahead.txt", 0,
-		mustKeep("main", "ahead", "3 commits")},
-	{"D3", "clean git status drops behind count", "gitstatus_clean_behind.txt", 0,
-		mustKeep("main", "behind", "2 commits")},
-	{"D3", "clean git status drops divergence", "gitstatus_clean_diverged.txt", 0,
-		mustKeep("release/1.4", "diverged", "1 and 4")},
-	{"D3", "clean git status drops 'upstream is gone'", "gitstatus_clean_upstream_gone.txt", 0,
-		mustKeep("feature/old", "upstream is gone")},
-	{"D3", "clean git status drops bisect in progress", "gitstatus_clean_bisecting.txt", 0,
-		mustKeep("bisecting")},
-	{"D3", "clean git status drops merge still in progress", "gitstatus_merge_concluding.txt", 0,
-		mustKeep("still merging")},
-	{"D3", "clean git status drops stash count", "gitstatus_clean_stash.txt", 0,
-		mustKeep("stash", "2 entries")},
-	{"D4", "clean detached HEAD becomes 'branch (working tree clean)'", "gitstatus_clean_detached.txt", 0,
-		mustKeep("HEAD detached at 4f2a9c1")},
-	{"D5", "CRLF clean git status is rewritten with a stray \\r", "gitstatus_clean_crlf.txt", 0, mustBeRaw},
-	{"D6", "go test summary can grow the output", "gotest_two_short_pkgs.txt", 0,
-		func(in []byte, res compressor.Result) error {
-			if len(res.Output) > len(in) {
-				return fmt.Errorf("grew %d -> %d: %q", len(in), len(res.Output), res.Output)
-			}
-			return nil
-		}},
-	{"D7", "go test summary drops package names and coverage", "gotest_pass_coverage.txt", 0,
-		mustKeep("internal/billing", "65.9%")},
-	{"D8", "output without a final newline (possibly truncated) is still summarised",
-		"gotest_pass_no_trailing_newline.txt", 0, mustBeRaw},
-}
-
-func TestCorpusKnownDefects(t *testing.T) {
-	strict := os.Getenv("DOWNSHIFT_CORPUS_STRICT") == "1"
-	for _, d := range corpusDefects {
-		t.Run(d.id+"/"+strings.TrimSuffix(d.file, filepath.Ext(d.file)), func(t *testing.T) {
-			in := readFixture(t, d.file)
-			err := d.check(in, compressor.CompressExit(in, compressor.ModeSafe, d.exit))
-			switch {
-			case err == nil:
-				t.Fatalf("%s looks fixed (%s): move %s into rawFixtures/cleanFixtures and drop this entry", d.id, d.summary, d.file)
-			case strict:
-				t.Fatalf("%s: %s: %v", d.id, d.summary, err)
-			default:
-				t.Skipf("known defect %s: %s (DOWNSHIFT_CORPUS_STRICT=1 to fail)", d.id, d.summary)
-			}
-		})
-	}
 }

@@ -67,6 +67,11 @@ type HarnessCapabilities struct {
 	// delivers the same spawn twice; the copy carrying a foreign marker is left
 	// to its own harness's hook (see ForeignPayloadOwner). Empty means none known.
 	PayloadMarkers []string
+	// CanRewriteShellCommand means the hook can replace the command of the
+	// harness's shell tool in place (the opt-in `downshift exec` wrapper).
+	// False means the wrap decision is still computed by the shared runner
+	// when the adapter exposes the command, but never written.
+	CanRewriteShellCommand bool
 }
 
 // UsageSource values for HarnessCapabilities.UsageSource.
@@ -81,7 +86,9 @@ const (
 var (
 	// ClaudeCodeCaps — PreToolUse hook honors updatedInput.model, but only
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}}
+	// The same hook can return updatedInput.command for the Bash tool
+	// (CanRewriteShellCommand, opt-in exec wrapper).
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true}
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.

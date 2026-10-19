@@ -7,7 +7,7 @@ a vendored third-party Claude Code mod (MIT, pinned in [NOTICE](../NOTICE)), exc
 
 | Plugin | Directory | Upstream |
 |---|---|---|
-| `savvy-progress@downshift` | [`savvy-progress/`](savvy-progress/README.md) | johnnyvizz, v1.2.1 |
+| `savvy-progress@downshift` | [`savvy-progress/`](savvy-progress/README.md) | johnnyvizz, v1.2.1 upstream, shipped as 1.2.2 |
 | `filetree@downshift` | [`filetree/`](filetree/README.md) | Kurt Buhler, v0.2.26 |
 | `downshift-dock@downshift` | [`downshift-dock/`](downshift-dock/README.md) | Downshift (original, Apache-2.0, not vendored) |
 | `downshift-theme@downshift` | [`downshift-theme/`](downshift-theme/README.md) | Downshift (original, Apache-2.0, optional, not installed by `setup`) |

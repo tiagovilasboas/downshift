@@ -64,7 +64,7 @@ Experimental (kept, not part of the routing pitch; may change or move)
   downshift context status       Show context optimization status and active provider
   downshift context providers    List supported context optimization companion providers
   downshift context doctor       Run diagnostics on context optimization providers
-  downshift context enable [p]   Enable context optimization provider (default: native)
+  downshift context enable [p]   Enable context optimization provider (default: native; --exec adds the shell wrapper)
   downshift context disable      Disable context optimization and revert configs
   downshift context metrics      Show token reduction metrics from active provider
   downshift context compress     Compress tool output from stdin (observe/safe)
