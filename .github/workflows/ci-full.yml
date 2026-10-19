@@ -16,6 +16,7 @@ permissions:
 jobs:
   full:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,7 +64,9 @@ jobs:
           govulncheck ./...
 
       - name: Test (race + cover)
-        run: go test -race -cover ./...
+        # internal/core alone takes 215-290 s under -race; the default 10 min package
+        # timeout was hit once on a slow runner (2026-10-16), hence 30m.
+        run: go test -race -cover -timeout 30m ./...
 
       - name: Build downshift CLI
         run: go build -ldflags "-s -w" -o downshift ./cmd/downshift

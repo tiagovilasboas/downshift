@@ -495,7 +495,24 @@ func newHandler(webDir string) http.Handler {
 	if webDir != "" {
 		mux.Handle("/", http.FileServer(http.Dir(webDir)))
 	}
-	return localOnly(mux)
+	return localOnly(securityHeaders(mux))
+}
+
+// dashboardCSP is the policy of web/index.html's meta tag plus frame-ancestors,
+// which browsers ignore in a meta tag. Sent as a header so the dashboard cannot
+// be framed by another page.
+const dashboardCSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+	"img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; " +
+	"form-action 'none'; frame-ancestors 'none'"
+
+// securityHeaders adds the CSP and nosniff headers to every response.
+func securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("Content-Security-Policy", dashboardCSP)
+		h.Set("X-Content-Type-Options", "nosniff")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func errString(err error) string {

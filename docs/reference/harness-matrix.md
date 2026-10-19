@@ -235,6 +235,26 @@ What each does is in its README; the one fact that matters here is that the
 cache-tax warming ping spends usage and is armed by the user (or for three hours
 after a detected cold write), while the guard itself sends nothing.
 
+## Answer when nothing is rewritten (2026-10-19)
+
+An allow on an unchanged spawn can override the user's own ask rules, so the shared
+runner answers neutrally where the host permits it (PR #192) and with the host's
+required decision where it does not.
+
+| Harness | Unchanged spawn | Why |
+|---|---|---|
+| claude-code, codex | neutral `{}` | `permissionDecision` is optional; `updatedInput` is only accepted together with `allow`, so `allow` is emitted only with a rewrite. Pinned by `TestHarnessConformance` ("unchanged spawn must emit no permissionDecision"). |
+| antigravity | `{"decision":"allow"}` | The vendor summary lists `decision` as **required** output (allow, deny, ask, force_ask, deny_unless_prior_grant) ([vendor-hook-docs](../evidence/vendor-hook-docs-2026-10-11.md)). A neutral object would be a missing required field. Not changed. |
+| cursor | `{"permission":"allow"}` | The vendor summary documents `permission` allow/deny and says an invalid response blocks the action; it does not say the field is optional, and no capture of a neutral `{}` exists. Not changed. |
+| opencode | `{"v":1,"action":"allow",...}` | The envelope's `action` is required by the plugin wire contract. |
+| kirocrew | empty stdout, exit 0 | exit-code contract. |
+
+Whether cursor or antigravity treat an explicit allow as overriding a user prompt
+rule has **not** been verified on a live build (no Cursor or Antigravity session was
+driven). To change either, first capture how the host treats `{}` for a spawn it has
+a rule for, then add the harness to the neutral set and extend the conformance
+decoders. Until then the safe answer is the documented one.
+
 ## Revalidation
 
 Every TBD cell must be re-checked per harness release: hook contracts
