@@ -38,6 +38,74 @@ Fields useful for graduation tracking:
 | `by_entry` | Decisions per spawn-time entry (`hook` for settings/plugin PreToolUse, `mod` for the Claude Code `agent.spawn` path). Empty `entry` on older logs counts as `hook`. Omitted when every count is zero |
 | `duplicate_tool_use` | How many distinct `tool_use_hash` values appear on more than one decision (both entry points routed the same spawn). Zero omitted |
 | `dci` | Object containing Downshift Code Intelligence telemetry: `prompts_evaluated`, `injections_applied`, `injection_rate`, `injection_pct`, `abstentions` (and breakdown: `conversational_greeting`, `chatter`, `no_candidates`, `insufficient_evidence`), `context_bytes_emitted`, `avg_bytes_per_injection`, `latency_ms_p50`, and `latency_ms_p95`. Strictly observed empirical measurements; zero synthetic token counts, zero fictitious dollar estimates. Omitted when no DCI events exist in the window |
+| `tokens_rerouted` | The token facts behind the savings, per harness and per model pair. Always present. Object `{basis, by_harness, totals}`; see [Tokens rerouted](#tokens-rerouted) |
+
+## Tokens rerouted
+
+Downshift does not reduce tokens. A routed child runs about the same tokens on another model;
+the dollar figures (`real_saved_usd` and friends) are those tokens priced on the model the
+harness asked for, a counterfactual. `tokens_rerouted` shows the tokens themselves, so the
+dollars can be read against them. It never says "tokens saved". Counts only: no prompt, task,
+path, session or agent id. Model ids are the bounded ids already in the log (`unknown` when the
+catalog did not recognise one).
+
+```json
+"tokens_rerouted": {
+  "basis": "tokens as reported by the harness; dollars elsewhere are ...",
+  "by_harness": {
+    "claude-code": {
+      "usage_source": "transcript",
+      "status": "observed",
+      "cheaper":      {"records": 12, "input": 40000, "output": 90000, "cache_read": 1000000, "cache_write": 100000, "total": 1230000},
+      "pricier":      {"records": 0, "input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "total": 0},
+      "unchanged":    {"records": 30, "...": 0},
+      "unattributed": {"records": 1, "...": 0},
+      "by_pair": [{"requested_model": "<id>", "ran_model": "<id>", "direction": "cheaper", "records": 12, "input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "total": 0}],
+      "by_model": [{"model": "<id>", "records": 12, "input": 0, "output": 0, "cache_read": 0, "cache_write": 0, "total": 0}]
+    },
+    "cursor": {"usage_source": "none", "status": "unobserved"}
+  },
+  "totals": {"cheaper": {}, "pricier": {}, "unchanged": {}, "unattributed": {}}
+}
+```
+
+Population: every **priced** usage record with tokens (`outcome: usage`, `actual_cost_usd` set,
+at least one token). Each lands in exactly one bucket, so the four buckets of a harness add up to
+its token mix:
+
+| Bucket | What lands there |
+|--------|------------------|
+| `cheaper` | The linked decision is an **applied** rewrite (rewrite emitted, no guardrail correction), the harness did not refute it, and the record's baseline cost (the same tokens on the requested model) is above its actual cost. |
+| `pricier` | Same, but baseline cost is below actual cost: an applied upshift. |
+| `unchanged` | The child ran on the requested model, or at its price: an allow, a held or blocked decision, the control group (`CONTROL`), `DOWNSHIFT_NO_ROUTE` or a pause, a rewrite a linked `resolved` record refutes, or an applied rewrite whose two costs are equal. |
+| `unattributed` | No linked decision in the window, or an applied rewrite whose requested model has no price (no `baseline_cost_usd`). Never counted as rerouted. |
+
+Link and refutation rules are the ones `real_saved_usd` uses (`AppliedRewrite`, the refuted
+index, `RoutedCost`), so a record that counts as a saving is the one that counts as `cheaper`.
+
+Token classes, per bucket: `input`, `output`, `cache_read` (cached minus cache write), `cache_write`
+(cache creation, clamped to the cached total), `total` (their sum) and `records` (usage records).
+`cache_read` equals the whole cached count when the write split is unknown, the same rule
+`CostUSD` prices by.
+
+- `by_pair`: `cheaper`, `pricier` and `unchanged` tokens per `requested_model` to `ran_model`
+  pair and `direction`, largest first. Unattributed records have no pair. A refuted rewrite ran
+  on the requested model, so its pair is requested to requested.
+- `by_model`: the **token mix**, every priced usage record of the harness by the model that ran,
+  largest first.
+- `usage_source` is `core.HarnessCapabilities.UsageSource` (`payload`, `transcript`, `none`), read
+  from the capability table, not from a harness name. `status` is `observed` (priced records in
+  the window), `none_in_window` (the harness has a token seam but no record in this window) or
+  `unobserved` (no token seam, no record). Only an `observed` harness carries the bucket objects,
+  `by_pair` and `by_model`; an `unobserved` one has none, so it never reads as a measured zero.
+  Every harness in `core.AllHarnessCaps()` is listed; one whose declared source is `none` or empty
+  (today Cursor, Codex, OpenCode, KiroCrew and Antigravity) is `unobserved`. A harness outside the table with records appears with `usage_source: unknown`.
+- `totals`: the four buckets summed over the observed harnesses; absent when none is observed.
+
+`downshift stats` prints the headline-adjacent line `Tokens moved to a cheaper model: 1.2M (in
+40k / out 90k / cache 1.1M) · to a pricier model: 0` (cache is read plus write), or `unobserved`
+when no priced usage exists; `--detail` adds the per-harness and per-pair table. Records without
+a price are not in these figures; `observed_child_tokens` still counts them.
 
 ## Before you paste
 
