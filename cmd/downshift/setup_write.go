@@ -18,10 +18,10 @@ const setupBackupInfix = ".downshift-bak-"
 // atomically. It returns the backup path ("" for a new file; a marker file
 // records that the file did not exist so --undo can remove it).
 func setupWrite(p setupPlan, stamp string) (string, error) {
-	if err := os.MkdirAll(filepath.Dir(p.path), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(p.path), 0o700); err != nil {
 		return "", err
 	}
-	mode := os.FileMode(0o644)
+	mode := os.FileMode(0o600)
 	bak := p.path + setupBackupInfix + stamp
 	if p.existed {
 		if st, err := os.Stat(p.path); err == nil {
@@ -31,17 +31,12 @@ func setupWrite(p setupPlan, stamp string) (string, error) {
 			return "", fmt.Errorf("backup: %w", err)
 		}
 	} else {
-		if err := os.WriteFile(bak+".new", nil, 0o644); err != nil {
+		if err := os.WriteFile(bak+".new", nil, 0o600); err != nil {
 			return "", fmt.Errorf("backup marker: %w", err)
 		}
 		bak = ""
 	}
-	tmp := p.path + ".downshift-tmp"
-	if err := os.WriteFile(tmp, p.after, mode); err != nil {
-		return "", err
-	}
-	if err := os.Rename(tmp, p.path); err != nil {
-		os.Remove(tmp)
+	if err := atomicWriteFile(p.path, p.after, mode); err != nil {
 		return "", err
 	}
 	return bak, nil
@@ -125,10 +120,11 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 				err = nil
 			}
 		} else {
-			err = os.WriteFile(r.path, r.want, 0o644)
-			if st, serr := os.Stat(r.backup); serr == nil && err == nil {
-				err = os.Chmod(r.path, st.Mode().Perm())
+			mode := os.FileMode(0o600) // never wider than the backup; no 0644 window
+			if st, serr := os.Stat(r.backup); serr == nil {
+				mode = st.Mode().Perm()
 			}
+			err = atomicWriteFile(r.path, r.want, mode)
 		}
 		if err != nil {
 			fmt.Fprintf(o.Err, "%s: restore failed: %v\n", r.t.Name, err)
@@ -138,4 +134,51 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 		fmt.Fprintf(o.Out, "%s: restored %s\n", r.t.Name, setupDisplay(o.Home, r.path))
 	}
 	return code
+}
+
+// atomicWriteFile replaces path with data without ever exposing a partial or
+// wider-than-mode file. A symlinked path is resolved first, so the link stays
+// a link and the real file (often in a dotfiles repository) is the one
+// replaced. The temporary file is unique, lives next to the target (same
+// filesystem for the rename), is synced before the rename, and the directory
+// is synced after it so a crash leaves the old or the new content, never an
+// empty file.
+func atomicWriteFile(path string, data []byte, mode os.FileMode) error {
+	target := path
+	if resolved, err := filepath.EvalSymlinks(path); err == nil {
+		target = resolved
+	}
+	dir := filepath.Dir(target)
+	tmp, err := os.CreateTemp(dir, filepath.Base(target)+".downshift-tmp-*")
+	if err != nil {
+		return err
+	}
+	name := tmp.Name()
+	fail := func(err error) error {
+		tmp.Close()
+		os.Remove(name)
+		return err
+	}
+	if err := tmp.Chmod(mode); err != nil {
+		return fail(err)
+	}
+	if _, err := tmp.Write(data); err != nil {
+		return fail(err)
+	}
+	if err := tmp.Sync(); err != nil {
+		return fail(err)
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(name)
+		return err
+	}
+	if err := os.Rename(name, target); err != nil {
+		os.Remove(name)
+		return err
+	}
+	if d, err := os.Open(dir); err == nil {
+		_ = d.Sync()
+		d.Close()
+	}
+	return nil
 }
