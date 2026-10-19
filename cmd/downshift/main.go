@@ -45,14 +45,21 @@ func main() {
 		os.Exit(2)
 	}
 
+	// A hook must never block a spawn (a Go panic exits 2, which every harness
+	// reads as "deny"), so its catalog load runs under a recover and a failure
+	// allows the spawn unchanged.
+	if h, ok := harnessRegistry[args[0]]; ok && h.Hook != nil {
+		cat, loaded := loadCatalogFailOpen(os.Stderr)
+		if !loaded {
+			os.Exit(0)
+		}
+		os.Exit(h.Hook(os.Stdin, cat))
+	}
+
 	// Load the effective catalog once at startup — embedded JSON with optional
 	// user override at ~/.harness-downshift/catalog.json. Fail-open: if the
 	// user file is invalid, the embedded catalog is used automatically.
 	catalog := catalog.Load()
-
-	if h, ok := harnessRegistry[args[0]]; ok && h.Hook != nil {
-		os.Exit(h.Hook(os.Stdin, catalog))
-	}
 
 	switch args[0] {
 	case "honor":
