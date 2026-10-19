@@ -150,8 +150,11 @@ Then open a new session and check it: `downshift doctor` (every failure has a fi
 | `downshift setup [--dry-run] [--undo]` | wire, preview or undo the hooks |
 | `downshift doctor [--verbose] [--json]` | check binary, hooks, state and scores |
 | `downshift try "<task>"` | see what would be picked, before any spawn |
-| `downshift stats [--days=N]` | decisions and estimated savings |
+| `downshift stats [--days=N] [--dci]` | decisions, estimated savings, and DCI telemetry |
 | `downshift session --tree` | this session's subagents as a tree |
+| `downshift dci status` | code intelligence mode, cache stats, and health |
+| `downshift dci enable [active\|observe]` | enable automatic context injection |
+| `downshift dci benchmark` | local indexing and retrieval latency benchmarks |
 
 More: `downshift help --all` lists every command by group. `downshift watch` is the live tree and `downshift config` shows every effective setting and where it came from.
 
@@ -362,6 +365,28 @@ Downshift includes a built-in, zero-dependency **Native Context Compressor** (`d
   ```
 
 See [the context optimization guide](docs/design/context-optimization.md) for architecture, harness contracts, and failure handling policies.
+
+### Code Intelligence (DCI)
+
+Downshift Code Intelligence (DCI) is a zero-runtime, deterministic, privacy-first subsystem that injects high-signal structural context directly into user prompts (starting with Claude Code's `UserPromptSubmit` hook).
+
+- **Deterministic Pipeline:** Discovers files via Git (`discover.go`), parses Go AST and lexical symbols (`parse.go`), builds an incremental inverted index with SHA-256 change detection (`index.go`), scores candidates via field-weighted BM25 (`rank.go`), and packages compact context sketches (`pack.go`).
+- **Conversational Abstention:** Greetings ("hi", "bom dia"), gratitude ("thanks"), and general chatter abstain immediately without injecting context, saving token headroom.
+- **Budget & Boundary Defense:** Hard ceiling of **3,500 bytes UTF-8** per injection; all context is wrapped in defensive boundary markers (`=== DCI UNTRUSTED REPOSITORY CONTEXT ===`) to prevent prompt injection.
+- **Zero Ingestion of Secrets:** Files matching `.env*`, `*.key`, `*.pem`, `id_rsa`, and token patterns (AWS, GitHub, Stripe, Slack) are automatically excluded.
+- **Zero User Data Persistence:** User prompts, raw code snippets, and conversational content are **never saved to disk or logs**. Only file metadata (relative paths, hashes, term counts, line numbers) is cached.
+- **Management CLI:**
+  ```bash
+  downshift dci status          # Show active mode, file count, and cache stats
+  downshift dci enable active   # Enable live context injection (or 'observe' for telemetry only)
+  downshift dci disable         # Deactivate DCI (reverts to off)
+  downshift dci doctor          # Check directory permissions, discovery, and latencies
+  downshift dci inspect "<msg>" # Dry-run pipeline for a prompt (tokens, ranks, packed sketch)
+  downshift dci benchmark       # Run local indexing, sync, and retrieval latency benchmarks
+  downshift stats --dci         # View empirical prompts, injection rates, and observed latencies
+  ```
+
+See [docs/design/code-intelligence.md](docs/design/code-intelligence.md) for architecture and [docs/evidence/dci-mvp-v01.md](docs/evidence/dci-mvp-v01.md) for measured benchmarks.
 
 ### Companions
 
