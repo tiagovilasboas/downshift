@@ -102,10 +102,16 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 	var pluginNote []string
 	if t.Plugin != "" {
 		var parsed any
-		if json.Unmarshal(raw, &parsed) == nil && pluginEnabled(parsed, t.Plugin) {
+		enabled := json.Unmarshal(raw, &parsed) == nil && pluginEnabled(parsed, t.Plugin)
+		if enabled || o.PluginActive[t.Name] {
+			if removed := removeOwnHooks(doc, t); removed > 0 {
+				pluginNote = append(pluginNote, pluginNotesRemoved(removed))
+			}
 			t.Hooks = nil
-			pluginNote = []string{"plugin " + t.Plugin + " is enabled and carries the hooks, so none were written here " +
-				"(session policy and statusline still apply); `/plugin uninstall " + t.Plugin + "` and rerun setup to use settings hooks instead"}
+			if enabled {
+				pluginNote = append(pluginNote, "plugin "+t.Plugin+" is enabled and carries the hooks, so none were written here "+
+					"(session policy and statusline still apply); `/plugin uninstall "+t.Plugin+"` and rerun setup with --no-plugin to use settings hooks instead")
+			}
 		}
 	}
 	notes, err := mergeTarget(doc, t, o.Binary, o.NoSessionPolicy)

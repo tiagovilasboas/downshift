@@ -29,17 +29,27 @@ type setupOptions struct {
 	// NoSessionPolicy skips the optional main-session policy (model opusplan and
 	// plan as the starting mode, You should know); hooks are wired as usual.
 	NoSessionPolicy bool
-	Home            string
-	Binary          string
-	Now             func() time.Time
-	In              io.Reader
-	Out             io.Writer
-	Err             io.Writer
+	// NoPlugin keeps the Claude Code hooks in settings.json instead of
+	// installing the Downshift plugin (which carries the hooks and the
+	// cache-tax mod).
+	NoPlugin bool
+	// Exec is the process boundary used to install the plugin. Its zero value
+	// runs nothing.
+	Exec setupExec
+	// PluginActive records, per target name, that the plugin carries the hooks
+	// (installed now, or assumed in a dry run).
+	PluginActive map[string]bool
+	Home         string
+	Binary       string
+	Now          func() time.Time
+	In           io.Reader
+	Out          io.Writer
+	Err          io.Writer
 }
 
 // runSetup is the CLI entry: it resolves HOME and the running binary.
 func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
-	opts := setupOptions{In: in, Out: out, Err: errw, Now: time.Now}
+	opts := setupOptions{In: in, Out: out, Err: errw, Now: time.Now, Exec: realSetupExec()}
 	for _, a := range args {
 		switch {
 		case a == "--dry-run":
@@ -50,6 +60,8 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 			opts.Yes = true
 		case a == "--no-session-policy":
 			opts.NoSessionPolicy = true
+		case a == "--no-plugin":
+			opts.NoPlugin = true
 		case a == "-h" || a == "--help":
 			fmt.Fprint(out, setupUsage)
 			return 0
@@ -75,7 +87,7 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	return setupRun(opts)
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy] [--no-plugin]
 
 Wire every Downshift hook into the harnesses found on this machine.
   --dry-run            show the diff, write nothing
@@ -84,6 +96,9 @@ Wire every Downshift hook into the harnesses found on this machine.
   --no-session-policy  wire the hooks only: do not set the Claude Code
                        main-session policy (model opusplan, sessions start in
                        plan mode, You should know on)
+  --no-plugin          Claude Code: keep the hooks in settings.json instead of
+                       installing the Downshift plugin (the plugin carries the
+                       same hooks plus the cache-tax mod)
 
 Claude Code gets the policy by default, only for keys it does not already set.
 `
@@ -98,12 +113,22 @@ func setupRun(o setupOptions) int {
 	}
 
 	var plans []setupPlan
+	extra := map[string][]string{}
 	for _, t := range targets {
 		if t.File == "" {
 			fmt.Fprintf(o.Out, "%s: detected, not wired by setup\n  %s\n\n", t.Name, t.Manual)
 			continue
 		}
-		plans = append(plans, planTarget(o, t))
+		if active, notes := ensurePlugin(o, t); active || len(notes) > 0 {
+			if o.PluginActive == nil {
+				o.PluginActive = map[string]bool{}
+			}
+			o.PluginActive[t.Name] = active
+			extra[t.Name] = notes
+		}
+		p := planTarget(o, t)
+		p.notes = append(extra[t.Name], p.notes...)
+		plans = append(plans, p)
 	}
 
 	failed := false

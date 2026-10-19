@@ -31,6 +31,19 @@ func (o *jobj) set(k string, v any) {
 	o.vals[k] = v
 }
 
+func (o *jobj) del(k string) {
+	if _, ok := o.vals[k]; !ok {
+		return
+	}
+	delete(o.vals, k)
+	for i, key := range o.keys {
+		if key == k {
+			o.keys = append(o.keys[:i], o.keys[i+1:]...)
+			break
+		}
+	}
+}
+
 func encodeNoEscape(v any) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
