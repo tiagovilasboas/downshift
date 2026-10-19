@@ -21,6 +21,12 @@
       "source": "./mods/filetree",
       "description": "Mod: IDE-style file tree pane highlighting what Claude reads, writes and commits (vendored, MIT).",
       "category": "productivity"
+    },
+    {
+      "name": "downshift-dock",
+      "source": "./mods/downshift-dock",
+      "description": "Mod: one-line band above the prompt with Files and Agents buttons that bring back the filetree pane and the /agents-info panel (Downshift-owned, Apache-2.0).",
+      "category": "productivity"
     }
   ]
 }

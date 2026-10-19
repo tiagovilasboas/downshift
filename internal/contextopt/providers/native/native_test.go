@@ -10,9 +10,12 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/compressor"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
+	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 func TestNativeProvider_Basics(t *testing.T) {
+	// Configure and Disable persist the context config in the state dir.
+	t.Setenv(paths.EnvStateDir, t.TempDir())
 	p := native.NewProvider(compressor.ModeSafe)
 
 	if p.ID() != "native" {
