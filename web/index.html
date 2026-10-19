@@ -197,8 +197,8 @@ main {
 /* ── stats inline ── */
 .stats-line { color: var(--text); font-size: 12px; }
 
-/* ── economy bar ── */
-.economy-bar {
+/* ── tokens saved bar ── */
+.tokens-bar {
   border-radius: 6px;
   background: linear-gradient(135deg, rgba(63,185,80,.08) 0%, rgba(63,185,80,.04) 100%);
   border: 1px solid rgba(63,185,80,.2);
@@ -207,9 +207,8 @@ main {
   gap: 16px;
   align-items: center;
 }
-.economy-bar .big  { font-size: 20px; font-weight: 700; color: var(--ok); line-height: 1; }
-.economy-bar .sub  { font-size: 9px; color: var(--muted); margin-top: 2px; }
-.economy-divider { width: 1px; background: rgba(63,185,80,.2); align-self: stretch; }
+.tokens-bar .big  { font-size: 13px; font-weight: 700; color: var(--ok); line-height: 1.3; }
+.tokens-bar .sub  { font-size: 9px; color: var(--muted); margin: 2px 0 4px; }
 
 /* ── notice footer ── */
 .notice {
@@ -334,9 +333,9 @@ main {
         <div class="stats-line" id="monitor-stats"><span class="dim">—</span></div>
       </div>
 
-      <div class="section" id="economy-section" style="display:none">
-        <div class="section-label">estimated savings</div>
-        <div id="economy-bar"></div>
+      <div class="section" id="tokens-section" style="display:none">
+        <div class="section-label">tokens saved from the requested model</div>
+        <div id="tokens-saved"></div>
       </div>
 
       <div class="section" id="compaction-section">
@@ -350,14 +349,16 @@ main {
         session. Each line is a subagent the hook saw on Claude Code, Cursor,
         Codex, Antigravity, or KiroCrew.
         <br>
-        Dollar figures are estimates, not a provider invoice. A downshift that
-        the hook held (guardrail) stays in the log and does not add savings.
+        Tokens saved means a child's tokens ran on a cheaper model than the one
+        requested, not fewer tokens; work and cache are counted apart. A held,
+        control or refuted child counts in the total, never as saved. Dollars,
+        priced at report time: <code>downshift report</code>.
       </div>
     </div>
   </main>
 </div>
 
 <script src="boot.js"></script>
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>

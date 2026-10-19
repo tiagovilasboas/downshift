@@ -168,15 +168,16 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    that the implementation is correct. [Verification guide](../guides/verification.md).
 9. **Telemetry and read-outs** `[D]`. `events.jsonl` holds routing metadata
    only (no prompts, tasks or paths). Appends do not fsync (a power loss can
-   drop the last events; a process crash cannot). `telemetry.Summarize` is the
-   single savings definition (gross saved, overspend, net) shared by `stats`,
-   the dashboard `/api/status` and `dsmon`. `stats` estimates at list price,
-   labelled `estimated, list price`, from the catalog's `prices_as_of`;
+   drop the last events; a process crash cannot). `telemetry.TokenSavings` is the
+   single tokens-saved definition (work and cache apart, per agent type) shared
+   by `stats`, the session views, `dsmon` and the dashboard `/api/status`; none of
+   them shows a dollar. `report` prices tokens at report time, from the catalog's
+   `prices_as_of`;
    `report` compares routed spawns with the control group, counting "completed"
    only for harnesses that declare an end event and have end records;
    `verification-report` groups observed checks and estimated cost by tier;
    `session` and `watch` read the same log. `serve` is an experimental local HTTP
-   dashboard with a placeholder per-unit price, not a proxy or billing evidence.
+   dashboard that shows tokens saved, not a proxy or billing evidence.
 10. **Benchmarks and tuning** `[D]`, offline. `benchmark` scores the classifier
     on labelled fixtures (tier accuracy, unsafe downgrade, over-routing);
     `eval-outcome` runs the outcome suite (minimal fixtures in OSS, full suite

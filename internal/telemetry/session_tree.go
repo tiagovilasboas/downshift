@@ -181,7 +181,7 @@ func BuildSessionTree(events []Event, sessionHash string, opt TreeOptions) Sessi
 	}
 
 	saved := TokenSavings(evs)
-	view.Tokens, view.ByAgentType = saved.Total, agentTypeLines(saved)
+	view.Tokens, view.ByAgentType = saved.Total, AgentTypeLines(saved)
 	rows := make([]TreeRow, len(decisions))
 	index := map[string]int{}
 	for i, d := range decisions {

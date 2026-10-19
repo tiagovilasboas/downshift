@@ -205,7 +205,7 @@ downshift dci benchmark
 # Verificações observadas e custo estimado por tier (Claude Code)
 downshift verification-report
 
-# Dashboard web experimental; preço por unidade é placeholder
+# Dashboard web experimental; tokens economizados, sem dólares (dólares: downshift report)
 downshift serve
 ```
 
@@ -223,4 +223,4 @@ downshift try "renomeie a variável userId em auth.go" codex gpt-6-sol
 downshift try "rearchitect auth module to support multi-tenant" claude-code claude-haiku-4-5
 ```
 
-A saída exibe a complexidade detectada, o tier recomendado, a variação de custo estimada e a confirmação se o modelo seria reescrito pelo hook. Para o guia completo de instalação e configuração nos clientes, consulte o [README principal da raiz](../../README.md).
+A saída exibe a complexidade detectada, o tier recomendado, se os tokens da tarefa rodariam num modelo mais barato ou mais caro que o pedido (sem preço nem porcentagem) e a confirmação se o modelo seria reescrito pelo hook. Para o guia completo de instalação e configuração nos clientes, consulte o [README principal da raiz](../../README.md).

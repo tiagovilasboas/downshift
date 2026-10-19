@@ -134,8 +134,13 @@ func TestRunTry_TrivialTask(t *testing.T) {
 	if !strings.HasPrefix(lines[0], "assumed current: "+claudeCodeFrontierID()+" (harness default)") {
 		t.Errorf("first line must name the assumed harness default; got:\n%s", out)
 	}
-	if !strings.Contains(lines[1], "→ small:") || !strings.Contains(lines[1], "cheaper") {
-		t.Errorf("second line must be the tier and move; got:\n%s", out)
+	if !strings.Contains(lines[1], "→ small:") || !strings.Contains(lines[1], "its tokens would run on a cheaper model than requested") {
+		t.Errorf("second line must be the tier, the move and where its tokens run; got:\n%s", out)
+	}
+	// Tokens, never dollars, for one decision (owner decision 2026-10-19):
+	// no list-price ratio and no price.
+	if strings.Contains(out, "%") || strings.Contains(out, "$") || strings.Contains(out, "list prices") {
+		t.Errorf("try must not quote a price or a percentage; got:\n%s", out)
 	}
 	if !strings.HasPrefix(lines[2], "why: trivial task") {
 		t.Errorf("third line must be the why line; got:\n%s", out)
@@ -151,10 +156,14 @@ func TestRunTry_TrivialTask_Detail(t *testing.T) {
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rename the userId variable", "claude-code", "--detail"})
 	})
-	for _, want := range []string{"→ small:", "Complexity: TRIVIAL", "Intent:     trivial", "Needs tier: small", "Verdict:    DOWNSHIFT", "Confident:  true", "Rewrite:"} {
+	for _, want := range []string{"→ small:", "Complexity: TRIVIAL", "Intent:     trivial", "Needs tier: small", "Verdict:    DOWNSHIFT", "Confident:  true", "Rewrite:",
+		"downshift to " + cmdCat.ModelFor("claude-code", core.TierSmall).ID + " (its tokens would run on a cheaper model than requested)"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("expected %q with --detail; got:\n%s", want, out)
 		}
+	}
+	if strings.Contains(out, "%") || strings.Contains(out, "$") {
+		t.Errorf("--detail must not quote a price or a percentage; got:\n%s", out)
 	}
 }
 
@@ -692,17 +701,17 @@ func TestEngineeringLoopEndToEnd(t *testing.T) {
 	}
 }
 
-// A saving is only quoted when the hook would apply the move. With an
-// allowlist that lists nothing cheaper, try says "not applied" and quotes no
-// percentage.
+// A move is only claimed when the hook would apply it. With an allowlist that
+// lists nothing cheaper, try says "not applied", that the tokens stay on the
+// current model, and claims no cheaper model.
 func TestRunTry_NoSavingClaimedWhenTheMoveIsNotApplied(t *testing.T) {
 	setSessionAllowlist(t, "cursor", []string{cmdCat.ModelFor("cursor", core.TierFrontier).ID})
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rename the userId variable", "cursor", cmdCat.ModelFor("cursor", core.TierFrontier).ID})
 	})
 	lines := strings.Split(out, "\n")
-	if strings.Contains(lines[0], "cheaper") || strings.Contains(lines[0], "%") || !strings.Contains(lines[0], "not applied") {
-		t.Errorf("headline must not quote a saving the hook will not make; got:\n%s", out)
+	if strings.Contains(lines[0], "cheaper") || strings.Contains(lines[0], "%") || !strings.Contains(lines[0], "not applied, tokens stay on") {
+		t.Errorf("headline must not claim a move the hook will not make; got:\n%s", out)
 	}
 	if !strings.Contains(out, "note: not rewritten") {
 		t.Errorf("the note explaining why is missing; got:\n%s", out)

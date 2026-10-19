@@ -27,8 +27,11 @@ for keeping them honest.
    than 30 days old. Prices only age between releases, so the fix is to upgrade
    to the latest release.
 5. **Estimates are labelled.** A saving computed from these prices is an
-   estimate at list prices, not an invoice. `downshift try` appends
-   `(est., list prices as of <date>)` to the percentage it shows.
+   estimate at list prices, not an invoice, and only `downshift report` shows
+   one, with the `prices_as_of` date it priced at. `downshift try` and the live
+   views quote no price and no percentage: `try` says whether one decision's
+   tokens would run on a cheaper or a pricier model than requested (owner
+   decision 2026-10-19).
 6. **You can override.** A user file at `~/.harness-downshift/catalog.json`
    is merged over the embedded catalog by harness and model id, so a negotiated
    or newer price can be set there. `downshift models pull` adds models that a

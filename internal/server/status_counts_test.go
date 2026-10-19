@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// Only an applied downshift counts as a switch with savings. Allow and held
+// Only an applied downshift counts as a switch. Allow and held
 // decisions are reported as not applied; usage records are not decisions.
 func TestStatus_CountsOnlyAppliedRewrites(t *testing.T) {
 	home := t.TempDir()
@@ -44,9 +44,6 @@ func TestStatus_CountsOnlyAppliedRewrites(t *testing.T) {
 	st := got.Stats
 	if st.Total != 3 || st.Down != 1 || st.NotApplied != 2 {
 		t.Fatalf("total=%d down=%d not_applied=%d, want 3/1/2", st.Total, st.Down, st.NotApplied)
-	}
-	if st.EstUnits < 0.79 || st.EstUnits > 0.81 {
-		t.Fatalf("est_units=%.2f, want 0.8 (applied downshift only)", st.EstUnits)
 	}
 	// Per-harness chips consume switches, while All consumes stats. The
 	// API's computed flag must produce the same count in both views.
