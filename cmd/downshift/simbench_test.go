@@ -175,6 +175,9 @@ func TestSimulation_InvariantsCatchPlantedDefects(t *testing.T) {
 		t.Fatal("scenario mechanical-renames-opus-parent missing")
 	}
 	sc.Harnesses = []string{"claude-code"}
+	// A no-signal task is held, so the wire-log case has a decision with
+	// corrections to plant on.
+	sc.Tasks = append(slices.Clone(sc.Tasks), "tidy the error messages in internal/invoice so they start with a lowercase letter ({canary})")
 	env := sandbox(t)
 	res, err := simbench.Run(sc, hookDriver{t}, env, cmdCat)
 	if err != nil {
