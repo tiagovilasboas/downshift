@@ -32,6 +32,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	}
 
 	printHeadline(w, s, opts.Days)
+	printTokensLine(w, s.TokensRerouted)
 	fmt.Fprintf(w, "Estimated at list price, not an invoice. Measured against a control group: downshift report\n")
 	if !opts.Detail && !opts.ShowDCI {
 		fmt.Fprintf(w, "\nFull report: downshift stats --detail\n")
@@ -113,8 +114,9 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	} else {
 		fmt.Fprintf(w, "Real cost: no events with token usage yet (wire the PostToolUse hook to populate them).\n")
 	}
+	printTokensDetail(w, s.TokensRerouted)
 	if s.UsageRecords > 0 {
-		fmt.Fprintf(w, "Usage records         %8d  (all post-hoc usage records)\n", s.UsageRecords)
+		fmt.Fprintf(w, "Usage records        %8d  (all post-hoc usage records)\n", s.UsageRecords)
 		fmt.Fprintf(w, "Usage linked          %8d  (distinct usage matched to decisions in this window)\n", s.UsageLinked)
 	}
 	if s.Baseline > 0 {

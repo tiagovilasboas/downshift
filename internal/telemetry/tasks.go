@@ -33,6 +33,8 @@ type TaskRecord struct {
 	// when no usage record carried a cost.
 	CostUSD float64
 	Priced  bool
+	// Tokens is the token count of the priced usage records of this spawn alone.
+	Tokens TokenClasses
 	// Redo lists the failed spawns this one redid (a respawn in the same
 	// session within the respawn window after an error or interrupt).
 	Redo []string
@@ -41,6 +43,9 @@ type TaskRecord struct {
 	// TotalUSD is CostUSD plus the cost of every failed attempt it redid,
 	// transitively. For a completed task this is its cost including rework.
 	TotalUSD float64
+	// TotalTokens is Tokens plus the tokens of every failed attempt it redid,
+	// transitively: the same scope as TotalUSD.
+	TotalTokens TokenClasses
 }
 
 // Failed reports an error or interrupt end.
@@ -132,6 +137,7 @@ func BuildTasks(events []Event) []TaskRecord {
 			if ev.ActualCostUSD != nil {
 				tasks[i].CostUSD += *ev.ActualCostUSD
 				tasks[i].Priced = true
+				tasks[i].Tokens.add(classesOf(ev.TokenUsageOrZero()))
 			}
 			// Background children report only "launched" at spawn time; the
 			// usage record written when the child stops is the proof that it ran
@@ -154,23 +160,30 @@ func BuildTasks(events []Event) []TaskRecord {
 		tasks[f].Reworked = true
 		tasks[n].Redo = append(tasks[n].Redo, tasks[f].Key)
 	}
-	memo := map[int]float64{}
-	var total func(i int) float64
-	total = func(i int) float64 {
+	type taskTotal struct {
+		usd    float64
+		tokens TokenClasses
+	}
+	memo := map[int]taskTotal{}
+	var total func(i int) taskTotal
+	total = func(i int) taskTotal {
 		if v, ok := memo[i]; ok {
 			return v
 		}
-		sum := tasks[i].CostUSD
+		sum := taskTotal{usd: tasks[i].CostUSD, tokens: tasks[i].Tokens}
 		for _, k := range tasks[i].Redo {
 			// A redo is always later than the attempt it redid, so this
 			// recursion strictly moves back in time and cannot cycle.
-			sum += total(index[k])
+			r := total(index[k])
+			sum.usd += r.usd
+			sum.tokens.add(r.tokens)
 		}
 		memo[i] = sum
 		return sum
 	}
 	for i := range tasks {
-		tasks[i].TotalUSD = total(i)
+		t := total(i)
+		tasks[i].TotalUSD, tasks[i].TotalTokens = t.usd, t.tokens
 	}
 	sort.SliceStable(tasks, func(i, j int) bool { return tasks[i].Time.Before(tasks[j].Time) })
 	return tasks

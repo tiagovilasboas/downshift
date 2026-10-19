@@ -30,6 +30,12 @@ type GroupSummary struct {
 	// CostUSD is the cost of those tasks plus the failed attempts they redid.
 	CostUSD        float64 `json:"cost_usd"`
 	CostPerTaskUSD float64 `json:"cost_per_completed_task_usd"`
+	// Tokens is the token count of the same tasks (priced usage records, the
+	// failed attempts they redid included), by billing class; Tokens.Records is
+	// the number of usage records. TokensPerTask is Tokens.Total over Completed.
+	// It is the check that a cheaper model did not need more tokens.
+	Tokens        TokenClasses `json:"tokens"`
+	TokensPerTask float64      `json:"tokens_per_completed_task"`
 	// Reworked counts failed spawns that were redone; ReworkRate is Reworked
 	// over Ended.
 	Reworked   int     `json:"reworked"`
@@ -95,12 +101,14 @@ func BuildReport(events []Event, days int) Report {
 		if t.Completed() && t.Priced {
 			g.Completed++
 			g.CostUSD += t.TotalUSD
+			g.Tokens.add(t.TotalTokens)
 			g.costs = append(g.costs, t.TotalUSD)
 		}
 	}
 	for _, g := range []*GroupSummary{&rep.Routed, &rep.Control} {
 		if g.Completed > 0 {
 			g.CostPerTaskUSD = g.CostUSD / float64(g.Completed)
+			g.TokensPerTask = float64(g.Tokens.Total) / float64(g.Completed)
 		}
 		if g.Ended > 0 {
 			g.ReworkRate = float64(g.Reworked) / float64(g.Ended)
@@ -185,7 +193,7 @@ func PrintReport(w io.Writer, r Report) {
 		window = "all time"
 	}
 	fmt.Fprintf(w, "Routed vs control, %s\n\n", window)
-	fmt.Fprintf(w, "%-9s %7s %7s %10s %14s %9s\n", "group", "spawns", "ended", "completed", "$/completed", "rework")
+	fmt.Fprintf(w, "%-9s %7s %7s %10s %14s %17s %9s\n", "group", "spawns", "ended", "completed", "$/completed", "tokens/completed", "rework")
 	for _, row := range []struct {
 		name string
 		g    GroupSummary
@@ -194,11 +202,15 @@ func PrintReport(w io.Writer, r Report) {
 		if row.g.Completed > 0 {
 			cost = fmt.Sprintf("$%.4f", row.g.CostPerTaskUSD)
 		}
+		tokens := "-"
+		if row.g.Completed > 0 {
+			tokens = formatTokens(int64(row.g.TokensPerTask + 0.5))
+		}
 		rework := "-"
 		if row.g.Ended > 0 {
 			rework = fmt.Sprintf("%.1f%%", row.g.ReworkRate*100)
 		}
-		fmt.Fprintf(w, "%-9s %7d %7d %10d %14s %9s\n", row.name, row.g.Spawns, row.g.Ended, row.g.Completed, cost, rework)
+		fmt.Fprintf(w, "%-9s %7d %7d %10d %14s %17s %9s\n", row.name, row.g.Spawns, row.g.Ended, row.g.Completed, cost, tokens, rework)
 	}
 	fmt.Fprintln(w)
 	if r.Savings != nil {
@@ -208,6 +220,7 @@ func PrintReport(w io.Writer, r Report) {
 		if s.PerTaskLowUSD <= 0 && s.PerTaskHighUSD >= 0 {
 			fmt.Fprintln(w, "The interval includes zero: this window does not show a saving.")
 		}
+		printTokenCheck(w, r)
 	} else {
 		fmt.Fprintf(w, "%s.\n", r.Message)
 	}
@@ -221,6 +234,20 @@ func PrintReport(w io.Writer, r Report) {
 	if r.Excluded > 0 {
 		fmt.Fprintf(w, "%d spawn(s) left unrouted by DOWNSHIFT_NO_ROUTE or a session pause are not part of the comparison.\n", r.Excluded)
 	}
+	fmt.Fprintln(w, "Tokens per completed task = input, output and cache tokens of the same tasks; a cheaper model should not need more of them.")
 	fmt.Fprintln(w, "Cost per completed task = completed children plus the failed attempts they redid (respawn in the same session within 10 minutes).")
 	fmt.Fprintln(w, "Dollars are catalog-priced from recorded usage, not provider invoices. Prompt-free.")
+}
+
+// printTokenCheck compares tokens per completed task between the groups, once
+// the report has enough data to state a saving. Tokens are counts, not a
+// price: routed using more tokens than control is the signal to read.
+func printTokenCheck(w io.Writer, r Report) {
+	c, d := r.Control.TokensPerTask, r.Routed.TokensPerTask
+	if c <= 0 || r.Routed.Completed == 0 {
+		return
+	}
+	change := (d - c) / c * 100
+	fmt.Fprintf(w, "Tokens per completed task   routed %s vs control %s  (%+.1f%%; not an interval)\n",
+		formatTokens(int64(d+0.5)), formatTokens(int64(c+0.5)), change)
 }

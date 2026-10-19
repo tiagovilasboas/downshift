@@ -62,6 +62,7 @@ type Summary struct {
 	ByEntry             map[string]int            `json:"by_entry,omitempty"`
 	DuplicateToolUse    int                       `json:"duplicate_tool_use,omitempty"`
 	DCISummary          *codeintel.DCISummary     `json:"dci,omitempty"`
+	TokensRerouted      TokensRerouted            `json:"tokens_rerouted"`
 	Note                string                    `json:"note"`
 }
 
@@ -139,6 +140,7 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		ByEntry:             nonEmptyCounts(stats.ByEntry),
 		DuplicateToolUse:    stats.DuplicateToolUse,
 		DCISummary:          exportDCISummary(stats.DCI),
+		TokensRerouted:      stats.TokensRerouted,
 		Note:                note,
 	}
 }

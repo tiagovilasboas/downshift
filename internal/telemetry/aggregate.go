@@ -38,6 +38,7 @@ func Aggregate(events []Event) Stats {
 	}
 	a.tallyLogWide(events)
 	a.finalizeDCI()
+	a.s.TokensRerouted = a.finalizeTokens()
 	a.s.DuplicateToolUse = DuplicateToolUseCount(events)
 	return a.s
 }
@@ -55,9 +56,14 @@ type aggregator struct {
 	// refuted holds rewrites a linked "resolved" record says the harness did
 	// not run: they are not applied and save nothing.
 	refuted map[linkKey]bool
+	// unrouted holds control-group and no-route decisions (outcome baseline):
+	// spawns the router left alone on purpose. They are not in decisions.
+	unrouted map[linkKey]bool
 	// linked marks usage records already matched to a decision.
 	linked       map[linkKey]bool
 	dciLatencies []float64
+	// tokens accumulates priced usage tokens per harness (tokens_rerouted.go).
+	tokens map[string]*harnessTokenAcc
 }
 
 func newAggregator() *aggregator {
@@ -78,7 +84,9 @@ func newAggregator() *aggregator {
 		},
 		decisions: make(map[linkKey]Event),
 		refuted:   make(map[linkKey]bool),
+		unrouted:  make(map[linkKey]bool),
 		linked:    make(map[linkKey]bool),
+		tokens:    make(map[string]*harnessTokenAcc),
 	}
 }
 
@@ -88,6 +96,9 @@ func (a *aggregator) indexDecisions(events []Event) {
 	for _, ev := range events {
 		if !IsCostOnlyOutcome(ev.Outcome) && !IsFailureOutcome(ev.Outcome) {
 			a.decisions[linkKey{ev.Harness, DecisionKey(ev)}] = ev
+		}
+		if ev.Outcome == OutcomeBaseline {
+			a.unrouted[linkKey{ev.Harness, DecisionKey(ev)}] = true
 		}
 		if ev.Outcome == OutcomeResolved && ev.LinkedDecision != "" && ev.RewriteHonored != nil && !*ev.RewriteHonored {
 			a.refuted[linkKey{ev.Harness, ev.LinkedDecision}] = true
@@ -131,6 +142,10 @@ func (a *aggregator) countCostOnly(ev Event) {
 	a.s.UsageRecords++
 	key := linkKey{ev.Harness, ev.LinkedDecision}
 	a.linkUsage(ev, key)
+	if ev.Outcome == OutcomeUsage {
+		decision, found := a.decisions[key]
+		a.countTokens(ev, decision, found, a.unrouted[key], a.refuted[key])
+	}
 	// A refuted rewrite saved nothing; an older record may still be priced on
 	// the model it asked for, so its delta is not credited.
 	if ev.HasRealCost() && !a.refuted[key] {
