@@ -180,7 +180,9 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
 10. **Benchmarks and tuning** `[D]`, offline. `benchmark` scores the classifier
     on labelled fixtures (tier accuracy, unsafe downgrade, over-routing);
     `eval-outcome` runs the outcome suite (minimal fixtures in OSS, full suite
-    in downshift-labs); `feedback` attaches success/retry/failed to a routing
+    in downshift-labs; it compiles and runs task and model-written Go code and
+    runs the `--solver` string through `sh -c`, with no sandbox, so it is for
+    maintainers on task sets they trust); `feedback` attaches success/retry/failed to a routing
     id, and only reviewed `required_tier` labels enter `train`; `shadow-report`
     compares candidate classifiers that never touched a route.
 
