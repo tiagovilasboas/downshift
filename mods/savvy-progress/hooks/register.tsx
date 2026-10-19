@@ -734,11 +734,13 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 // ---------------------------------------------------------------------------
 // Downshift local patch (2026-10-19): what Downshift did per spawn and this session.
 // Reads `downshift session --panel` (prompt-free JSON, computed by Downshift; this
-// mod only draws it). Fail-open: no binary, bad output or no match means nothing extra
-// is drawn. Data contract: docs/reference/spawn-state.md in the Downshift repo.
+// mod only draws it). Tokens only: the tokens each agent and the session saved from
+// the requested model, work and cache apart; no dollars (`downshift report` prices
+// them). Fail-open: no binary, bad output or no match means nothing extra is drawn.
+// Data contract: docs/reference/spawn-state.md in the Downshift repo.
 
-type DsSpawn = { tool_use?: string; label: string }
-type DsView = { switched: number; held: number; saved_usd: number; has_saved: boolean; spawns: DsSpawn[] }
+type DsSpawn = { tool_use?: string; label: string; tokens_label: string }
+type DsView = { switched: number; held: number; tokens_line: string; types: string[]; spawns: DsSpawn[] }
 
 let ds: DsView | null = null
 let dsSessionKnown = false // the figures are only drawn for a session we could name
@@ -750,14 +752,21 @@ const dsParse = (raw: unknown): DsView | null => {
   const v = raw as Partial<DsView> | null
   if (!v || typeof v !== 'object' || !Array.isArray(v.spawns)) return null
   const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : 0)
+  const str = (x: unknown, max: number) => (typeof x === 'string' ? x.slice(0, max) : '')
+  const raw2 = raw as { tokens_line?: unknown; by_agent_type?: unknown }
+  const types = Array.isArray(raw2.by_agent_type) ? raw2.by_agent_type : []
   return {
     switched: num(v.switched),
     held: num(v.held),
-    saved_usd: num(v.saved_usd),
-    has_saved: v.has_saved === true,
+    tokens_line: str(raw2.tokens_line, 120),
+    types: types.map(t => str((t as { line?: unknown } | null)?.line, 80)).filter(l => l !== '').slice(0, 6),
     spawns: v.spawns
       .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
-      .map(x => ({ tool_use: typeof x.tool_use === 'string' ? x.tool_use : undefined, label: x.label.slice(0, 60) })),
+      .map(x => ({
+        tool_use: typeof x.tool_use === 'string' ? x.tool_use : undefined,
+        label: x.label.slice(0, 60),
+        tokens_label: str((x as { tokens_label?: unknown }).tokens_label, 60),
+      })),
   }
 }
 
@@ -809,20 +818,22 @@ const derivedFlow = (list: AgentRun[], at: number): Flow | null => {
 
 const dsLabel = (a: AgentRun): string | undefined => {
   const key = dsKeys.get(a.id)
-  return key && ds ? ds.spawns.find(x => x.tool_use === key)?.label : undefined
+  const sp = key && ds ? ds.spawns.find(x => x.tool_use === key) : undefined
+  if (!sp) return undefined
+  return sp.tokens_label ? `${sp.label} · ${sp.tokens_label}` : sp.label
 }
 
 /** One line for the band and the panel header; '' when there is nothing true to say. */
 const dsSummary = (): string => {
   // Without a session id the log's latest session could be another one: draw no figure.
-  if (!ds || !dsSessionKnown || ds.switched + ds.held === 0 && !ds.has_saved) return ''
-  const parts: string[] = []
-  if (ds.has_saved && ds.saved_usd > 0.005) parts.push(`Downshift saved ≈${fmtCost(ds.saved_usd)} (est., list price)`)
-  else if (ds.has_saved && ds.saved_usd < -0.005) parts.push(`Downshift over ≈${fmtCost(-ds.saved_usd)} (est., list price)`)
-  else parts.push('Downshift on')
+  if (!ds || !dsSessionKnown || ds.switched + ds.held === 0 && ds.tokens_line === '') return ''
+  const parts: string[] = [ds.tokens_line ? `Downshift ${ds.tokens_line}` : 'Downshift on']
   parts.push(`${ds.switched} switched · ${ds.held} held`)
   return parts.join(' · ')
 }
+
+/** Tokens saved per agent type, for the panel header; '' when spawns name no type. */
+const dsTypes = (): string => (ds && dsSessionKnown && ds.types.length > 0 ? `by agent type: ${ds.types.join(' · ')}` : '')
 
 export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
@@ -1136,6 +1147,7 @@ export const register: Register = (on, options) => {
           <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
             <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
             {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
+            {dsTypes() !== '' && <Text dimColor wrap="truncate-end">{dsTypes()}</Text>}
             {toggleCompact}
             {isEmpty && <Text dimColor>{s.empty}</Text>}
             {running.length > 0 && section('h-run', `${s.running} · ${running.length}`)}
@@ -1205,6 +1217,7 @@ export const register: Register = (on, options) => {
           ≈{fmtCost(t.cost)} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
         </Text>
         {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
+        {dsTypes() !== '' && <Text dimColor wrap="truncate-end">{dsTypes()}</Text>}
         {p.isCompact ? (
           <Text wrap="truncate-end">
             {[...running, ...finished].map(a => (

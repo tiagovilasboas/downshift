@@ -1,7 +1,7 @@
 diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/register.tsx
 --- a/mods/savvy-progress/hooks/register.tsx
 +++ b/mods/savvy-progress/hooks/register.tsx
-@@ -28,8 +28,12 @@
+@@ -28,8 +28,12 @@ const TIERS: readonly string[] = ['fable', 'heavy', 'careful', 'medium', 'light'
  const MAX_TASKS = 200
  const MAX_AFTER = 20
  const MAX_TITLE = 120
@@ -16,7 +16,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
  type ProgressInput = {
    title?: string
-@@ -75,7 +79,7 @@
+@@ -75,7 +79,7 @@ const STRINGS = {
      review: 'Review',
      busy: 'running',
      ctx: 'ctx',
@@ -25,7 +25,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      effort: { low: 'low', medium: 'medium', high: 'high', xhigh: 'xhigh', max: 'max' },
    },
    ru: {
-@@ -106,7 +110,7 @@
+@@ -106,7 +110,7 @@ const STRINGS = {
      review: 'Ревью',
      busy: 'в работе',
      ctx: 'ctx',
@@ -34,7 +34,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      effort: { low: 'low', medium: 'medium', high: 'high', xhigh: 'xhigh', max: 'max' },
    },
    he: {
-@@ -137,7 +141,7 @@
+@@ -137,7 +141,7 @@ const STRINGS = {
      review: 'בדיקה',
      busy: 'בעבודה',
      ctx: 'הקשר',
@@ -43,7 +43,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      effort: { low: 'נמוך', medium: 'בינוני', high: 'גבוה', xhigh: 'גבוה מאוד', max: 'מקסימלי' },
    },
  } as const
-@@ -216,9 +220,13 @@
+@@ -216,9 +220,13 @@ const merge = (prev: Flow | null, input: ProgressInput): Flow => {
    }
  }
  
@@ -57,7 +57,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    if (f.phase === 'plan') return s.plan
    if (f.phase === 'design') return s.design
    const count = f.total ? `${f.done}/${f.total}` : `${f.running} ${s.busy}`
-@@ -340,10 +348,10 @@
+@@ -340,10 +348,10 @@ const rowSvg = (f: Flow, W: number, isWorking: boolean): string => {
  <g class="tk">${ticks.join('')}</g>
  </g>
  <rect x="${pillX}" width="${pillW}" height="${BAR_H}" rx="${BAR_H / 2}" fill="${color}"/>
@@ -70,7 +70,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  </svg>`
  }
  
-@@ -355,17 +363,19 @@
+@@ -355,17 +363,19 @@ const barText = (f: Flow, width: number): string => {
  // ---------------------------------------------------------------------------
  // Agents panel: every subagent of the session, plus the tasks the flow planned.
  
@@ -97,7 +97,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
  const TIER_MODEL: Record<string, [model: string, effort: string]> = {
    fable: ['Fable', 'high'],
-@@ -509,25 +519,24 @@
+@@ -509,25 +519,24 @@ const PANE_CSS = `<style>
  @media (prefers-reduced-motion: reduce){.live{animation:none}}
  </style>`
  
@@ -135,7 +135,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    f(7, 22, 2, 4, CLAY, 'la')
    f(17, 22, 2, 4, CLAY, 'la')
    f(11, 22, 2, 4, CLAY, 'lb')
-@@ -535,106 +544,36 @@
+@@ -535,106 +544,36 @@ const crabBody = (f: Fill, armFront = 0, armCls?: string): void => {
  }
  
  // Pure CSS, run by the compositor: no redraws. Periods divide one second, so the
@@ -248,7 +248,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    if (status === 'failed') return `<path d="M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8" stroke="#D0453F" stroke-width="1.8" stroke-linecap="round"/>`
    return `<circle cx="${x}" cy="${y}" r="5" fill="none" stroke="#9a9a96" stroke-width="1.4"/><path d="M${x} ${y - 2.5}v2.8l1.8 1.2" fill="none" stroke="#9a9a96" stroke-width="1.4" stroke-linecap="round"/>`
  }
-@@ -658,8 +597,8 @@
+@@ -658,8 +597,8 @@ const endText = (W: number, x: number, y: number, words = false): string =>
  const crabWidth = (scale: number): number => Math.round(CRAB_BOX * scale * 100) / 100
  
  // A panel crab at x in a row of width W: on the mirrored side and facing left in Hebrew.
@@ -259,7 +259,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
  const svg = (W: number, H: number, body: string): string =>
    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${PANE_CSS}${CRAB_CSS}${body}</svg>`
-@@ -700,6 +639,8 @@
+@@ -700,6 +639,8 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
    const ctx = ctxOf(a)
    const textW = W - 42 - 22
    const meta = [runModel(a)]
@@ -268,7 +268,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    if (a.round > 1) meta.push(`${s.round} ${a.round}`)
    if (a.status === 'failed') meta.push(s.failed)
    const barW = textW
-@@ -712,7 +653,7 @@
+@@ -712,7 +653,7 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
    return svg(
      W,
      66,
@@ -277,7 +277,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  <text class="t" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(a.description || a.type, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tier === 'other' ? a.type : tierWord(tier))}</tspan><tspan class="s">  ${xml(meta.join('  ·  '))}</tspan></text>
  ${steps && stepsW > 30 ? `<text class="t" ${startText(W, 42, 49)} font-family="${FONT}" font-size="11" font-variant-numeric="tabular-nums">${xml(fitText(steps, 11, stepsW))}</text>` : ''}
-@@ -732,7 +673,7 @@
+@@ -732,7 +673,7 @@ const plannedSvg = (W: number, p: Planned): string => {
    return svg(
      W,
      46,
@@ -286,7 +286,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  <text class="s" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(`${p.n}. ${p.title}`, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tierWord(tier))}</tspan><tspan class="m">  ${xml(meta.filter(Boolean).join('  ·  '))}</tspan></text>
  ${statusMark(mx(W, W - 8), 16, 'planned', color)}
-@@ -742,15 +683,15 @@
+@@ -742,15 +683,15 @@ ${statusMark(mx(W, W - 8), 16, 'planned', color)}
  
  const compactSvg = (W: number, list: AgentRun[], planned: Planned[], t: ReturnType<typeof totals>): string => {
    const icons = [
@@ -306,18 +306,20 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      .join('')
    const x = shown.length * 36 + (more ? 4 : 0)
    return svg(
-@@ -790,6 +731,99 @@
+@@ -790,6 +731,110 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
    void $.ui.open({ id: PANE, title: tr().pane })
  }
  
 +// ---------------------------------------------------------------------------
 +// Downshift local patch (2026-10-19): what Downshift did per spawn and this session.
 +// Reads `downshift session --panel` (prompt-free JSON, computed by Downshift; this
-+// mod only draws it). Fail-open: no binary, bad output or no match means nothing extra
-+// is drawn. Data contract: docs/reference/spawn-state.md in the Downshift repo.
++// mod only draws it). Tokens only: the tokens each agent and the session saved from
++// the requested model, work and cache apart; no dollars (`downshift report` prices
++// them). Fail-open: no binary, bad output or no match means nothing extra is drawn.
++// Data contract: docs/reference/spawn-state.md in the Downshift repo.
 +
-+type DsSpawn = { tool_use?: string; label: string }
-+type DsView = { switched: number; held: number; saved_usd: number; has_saved: boolean; spawns: DsSpawn[] }
++type DsSpawn = { tool_use?: string; label: string; tokens_label: string }
++type DsView = { switched: number; held: number; tokens_line: string; types: string[]; spawns: DsSpawn[] }
 +
 +let ds: DsView | null = null
 +let dsSessionKnown = false // the figures are only drawn for a session we could name
@@ -329,14 +331,21 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +  const v = raw as Partial<DsView> | null
 +  if (!v || typeof v !== 'object' || !Array.isArray(v.spawns)) return null
 +  const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : 0)
++  const str = (x: unknown, max: number) => (typeof x === 'string' ? x.slice(0, max) : '')
++  const raw2 = raw as { tokens_line?: unknown; by_agent_type?: unknown }
++  const types = Array.isArray(raw2.by_agent_type) ? raw2.by_agent_type : []
 +  return {
 +    switched: num(v.switched),
 +    held: num(v.held),
-+    saved_usd: num(v.saved_usd),
-+    has_saved: v.has_saved === true,
++    tokens_line: str(raw2.tokens_line, 120),
++    types: types.map(t => str((t as { line?: unknown } | null)?.line, 80)).filter(l => l !== '').slice(0, 6),
 +    spawns: v.spawns
 +      .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
-+      .map(x => ({ tool_use: typeof x.tool_use === 'string' ? x.tool_use : undefined, label: x.label.slice(0, 60) })),
++      .map(x => ({
++        tool_use: typeof x.tool_use === 'string' ? x.tool_use : undefined,
++        label: x.label.slice(0, 60),
++        tokens_label: str((x as { tokens_label?: unknown }).tokens_label, 60),
++      })),
 +  }
 +}
 +
@@ -388,25 +397,27 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +
 +const dsLabel = (a: AgentRun): string | undefined => {
 +  const key = dsKeys.get(a.id)
-+  return key && ds ? ds.spawns.find(x => x.tool_use === key)?.label : undefined
++  const sp = key && ds ? ds.spawns.find(x => x.tool_use === key) : undefined
++  if (!sp) return undefined
++  return sp.tokens_label ? `${sp.label} · ${sp.tokens_label}` : sp.label
 +}
 +
 +/** One line for the band and the panel header; '' when there is nothing true to say. */
 +const dsSummary = (): string => {
 +  // Without a session id the log's latest session could be another one: draw no figure.
-+  if (!ds || !dsSessionKnown || ds.switched + ds.held === 0 && !ds.has_saved) return ''
-+  const parts: string[] = []
-+  if (ds.has_saved && ds.saved_usd > 0.005) parts.push(`Downshift saved ≈${fmtCost(ds.saved_usd)} (est., list price)`)
-+  else if (ds.has_saved && ds.saved_usd < -0.005) parts.push(`Downshift over ≈${fmtCost(-ds.saved_usd)} (est., list price)`)
-+  else parts.push('Downshift on')
++  if (!ds || !dsSessionKnown || ds.switched + ds.held === 0 && ds.tokens_line === '') return ''
++  const parts: string[] = [ds.tokens_line ? `Downshift ${ds.tokens_line}` : 'Downshift on']
 +  parts.push(`${ds.switched} switched · ${ds.held} held`)
 +  return parts.join(' · ')
 +}
 +
++/** Tokens saved per agent type, for the panel header; '' when spawns name no type. */
++const dsTypes = (): string => (ds && dsSessionKnown && ds.types.length > 0 ? `by agent type: ${ds.types.join(' · ')}` : '')
++
  export const register: Register = (on, options) => {
    on('session.start', async ($, e, next) => {
      const started = await next(e)
-@@ -948,6 +982,12 @@
+@@ -948,6 +993,12 @@ export const register: Register = (on, options) => {
        return [...list.filter(a => a.id !== run.id), run].slice(-200)
      })
      await update($, now, () => at)
@@ -419,7 +430,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (e.subagentType.startsWith('savvy-')) {
        const f = await read($, flow)
        await autoOpen($, f && !f.isFinished ? f.title : 'savvy-flow')
-@@ -998,6 +1038,7 @@
+@@ -998,6 +1049,7 @@ export const register: Register = (on, options) => {
    on('turn.complete', async ($, e, next) => {
      const agentId = e.agentId
      if (agentId) {
@@ -427,7 +438,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
        const at = await $.clock.now()
        await update($, agents, list =>
          list.map((a): AgentRun => {
-@@ -1031,6 +1072,7 @@
+@@ -1031,6 +1083,7 @@ export const register: Register = (on, options) => {
      const s = tr()
      const ui = $.ui.resolve(e)
      const { Box, Text, Button } = ui
@@ -435,15 +446,16 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      const list = await read($, agents)
      const f = await read($, flow)
      const p: Panel = await read($, panel)
-@@ -1093,6 +1135,7 @@
+@@ -1093,6 +1146,8 @@ export const register: Register = (on, options) => {
            ))}
            <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
              <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
 +            {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
++            {dsTypes() !== '' && <Text dimColor wrap="truncate-end">{dsTypes()}</Text>}
              {toggleCompact}
              {isEmpty && <Text dimColor>{s.empty}</Text>}
              {running.length > 0 && section('h-run', `${s.running} · ${running.length}`)}
-@@ -1135,6 +1178,7 @@
+@@ -1135,6 +1190,7 @@ export const register: Register = (on, options) => {
            <Text dimColor wrap="truncate-end">
              {'  '}
              {tier === 'other' ? a.type : tierWord(tier)} · {model}
@@ -451,15 +463,16 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
            </Text>
            <Text wrap="truncate-end">
-@@ -1160,6 +1204,7 @@
+@@ -1160,6 +1216,8 @@ export const register: Register = (on, options) => {
          <Text dimColor>
            ≈{fmtCost(t.cost)} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
          </Text>
 +        {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
++        {dsTypes() !== '' && <Text dimColor wrap="truncate-end">{dsTypes()}</Text>}
          {p.isCompact ? (
            <Text wrap="truncate-end">
              {[...running, ...finished].map(a => (
-@@ -1203,7 +1248,18 @@
+@@ -1203,7 +1261,18 @@ export const register: Register = (on, options) => {
    })
  
    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -479,7 +492,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (f === null || e.props.hasSurvey) return next(e)
      // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
      // never nested: the desktop drops a band that nests it.
-@@ -1242,6 +1298,7 @@
+@@ -1242,6 +1311,7 @@ export const register: Register = (on, options) => {
              {crewButton}
              {dismiss}
            </Box>
@@ -487,7 +500,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
            {below}
          </Box>
        )
-@@ -1264,6 +1321,7 @@
+@@ -1264,6 +1334,7 @@ export const register: Register = (on, options) => {
            {crewButton}
            {dismiss}
          </Box>

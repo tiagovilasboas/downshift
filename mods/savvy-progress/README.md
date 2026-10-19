@@ -48,8 +48,9 @@ draws; every number and label is computed by Downshift
 |---|---|
 | `dsRefresh` | runs `downshift session --panel` (`$.process.run`, 2 s timeout, at most every 3 s on render; forced at spawn and at turn end). Any failure leaves the panel exactly as upstream draws it |
 | `dsKeyOf` | sha256 of `harness-downshift-session-v1:` + the spawn's `tool_use_id` (Web Crypto), so a panel row finds Downshift's record for that spawn |
-| row | the model line gains the label: `opus → sonnet (mid)`, `held: original model kept`, `kept`, `control (unrouted)` |
-| header and band | one line: `Downshift saved ≈$X (est., list price) · N switched · M held` (`over` when negative; `Downshift on` before anything is priced) |
+| row | the model line gains the label, then the agent's tokens once it ended: `opus → sonnet (mid) · 48k tokens · saved from opus` (`pricier than …` when it ran on a dearer model); `held: original model kept`, `kept`, `control (unrouted)` |
+| header and band | one line: `Downshift tokens saved: work 62% · cache 58% (1.2M of 1.9M) · N switched · M held` (`Downshift on` before any agent's tokens are known). Work is input+output, cache is cache read+write, counted apart |
+| panel header | a second line, tokens saved per agent type: `by agent type: general-purpose: work 70% · cache 64% (3 of 4 agents) · …` (only when spawns name a type) |
 
 | band fallback (`derivedFlow`) | when no flow is registered, or its total is 0, **and Downshift is working in this session** (`downshift session --panel` for the session names at least one decided spawn), the band is drawn from the subagents the mod already tracks: title `Subagents`, `N running · M done`, bar `M/(N+M)` over the current batch (spawns since the oldest running one; a finished batch lingers 30 s). A registered flow with a total keeps upstream drawing |
 
@@ -57,8 +58,11 @@ draws; every number and label is computed by Downshift
 
 **Behaviour change, owner-requested:** while Downshift is working in the session, the band above the prompt also appears when subagents run with no registered flow (see the band fallback row above). When Downshift is not active, or its data is missing or the session unknown, the mod draws exactly what upstream draws.
 
-Nothing here touches routing and it spends nothing. The savings figure is an
-estimate: list prices of the priced children against their baseline. The new
+Nothing here touches routing and it spends nothing. Downshift's lines carry
+tokens only, never dollars (owner decision 2026-10-19): "saved" means the
+agent's tokens ran on a cheaper model than the one requested, not that fewer
+tokens were used. `downshift report` prices tokens at report time. The
+agents panel's own per-agent cost estimate is upstream's and is unchanged. The new
 test file `hooks/downshift.test.ts` is Downshift's own (not upstream). The
 spawn and the Downshift hook must see the same `tool_use_id`; if they do not
 (unverified live), rows show no label and the summary still draws.
@@ -139,5 +143,5 @@ Then restore this README, update the version and commit here and in
 
 ```bash
 claude plugin validate mods/savvy-progress   # hooks: ... calls: ... env reads: LANG, LC_ALL, LC_MESSAGES
-claude plugin test mods/savvy-progress       # 24 tests across 4 files
+claude plugin test mods/savvy-progress       # 36 tests across 5 files
 ```
