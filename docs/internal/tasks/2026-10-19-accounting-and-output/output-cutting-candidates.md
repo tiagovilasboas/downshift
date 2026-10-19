@@ -33,11 +33,11 @@ Every candidate must satisfy the following four core principles:
 | **`cargo test`** | 1,000 – 3,000 tokens (compilation banners, individual `test ... ok`) | `Cargo test: PASS (N passed in Xs)` | **~92%** | `FAILED`, `error[E...]`, warning, panic, exit != 0 | **Landed** |
 | **`jest`** | 1,000 – 3,500 tokens (spec trees, test suites summary) | `Jest: PASS (N passed across M suites)` | **~90%** | `FAIL`, `Error:`, incomplete summary, exit != 0 | **Landed (Jest support)** |
 | **`cypress run`** | 2,500 – 6,500 tokens (spec tables, video links, browser launch) | `Cypress: PASS (N tests: P passing, Q pending, R skipped; spec S; Xs)` | **~96%** | `failed`, `AssertionError`, error output, incomplete/inconsistent summary, exit != 0 | **Landed** |
-| **`mvn test`** | 3,000 – 8,000 tokens (`[INFO]` downloads, plugin resolutions, build logs) | `Maven: PASS (N tests run, 0 failures in Xs)` | **~98%** | `BUILD FAILURE`, `FAILURE!`, exceptions, exit != 0 | **Phase 3** |
-| **`gradle test`** | 2,500 – 6,000 tokens (task execution tree, daemon banners) | `Gradle: PASS (N tests passed in Xs)` | **~97%** | `BUILD FAILED`, task failure, exit != 0 | **Phase 3** |
+| **`mvn test`** | No local Maven project or Surefire transcript to establish the default output | Unmeasured | Unmeasured | Build/test failures and plugin diagnostics stay raw | **Deferred (no local baseline)** |
+| **`gradle test`** | No local Gradle project or transcript; CLI unavailable in this environment | Unmeasured | Unmeasured | Build/test failures and task diagnostics stay raw | **Deferred (no local baseline)** |
 | **`flutter test`** | 1,000 – 3,500 tokens (engine init, simulator status, test lines) | `Flutter: PASS (N tests passed in Xs)` | **~92%** | `Some tests failed`, exceptions, exit != 0 | **Phase 4** |
 | **`phpunit`** | 1,000 – 4,000 tokens (dot progress, runtime details, test/assertion totals) | `PHPUnit: PASS (N tests, M assertions in Xs)` | **~93%** | Failures, warnings, test output, alternate printer, inconsistent totals, exit != 0 | **Landed** |
-| **`pest`** | 500 – 3,000 tokens (per-test progress, suite summaries) | `Pest: PASS (N tests, 0 failures)` | **~90%** | Failure/error details, exceptions, exit != 0 | **Phase 3** |
+| **`pest`** | Official two-test sample is 186 bytes; larger local suite transcript unavailable | Pest has a native `--compact` mode | Unmeasured | Failures, warnings, test output and diagnostics stay raw | **Deferred (needs real suite measurement)** |
 
 ---
 
@@ -49,7 +49,7 @@ Every candidate must satisfy the following four core principles:
 | **`eslint` / `biome`** | 800 – 3,000 tokens (dozens of non-blocking style/import warnings) | `ESLint: PASS (0 errors, W warnings)` | **~85%** | `X errors`, exit != 0 | **Phase 3** |
 | **`ruff check`** | 500 – 2,000 tokens (rule descriptions, code fix snippets) | `Ruff: PASS (All checks passed)` | **~90%** | Syntax/rule errors, exit != 0 | **Phase 3** |
 | **`golangci-lint run`** | 1,000 – 4,000 tokens (multi-linter diagnostic trees) | `golangci-lint: PASS (no issues)` | **~92%** | Linter violations, exit != 0 | **Phase 3** |
-| **`phpstan analyse`** | 500 – 3,000 tokens (file progress, memory/time footer) | `PHPStan: PASS (N files, 0 errors)` | **~90%** | Any diagnostic, baseline error, internal error, exit != 0 | **Phase 3** |
+| **`phpstan analyse`** | Default is a progress bar plus a short result; per-file output requires `--debug` | No change to clean default output | **~0% in default mode** | Type diagnostics and debug output stay raw | **Deferred (no default-mode ROI)** |
 
 ---
 
@@ -114,8 +114,9 @@ The following tools are explicitly excluded from `downshift exec` wrapping to pr
 
 - **Phase 1 (Landed):** `playwright` (E2E), `cargo test` (Rust), `tsc` (TypeScript typecheck), and verbose `go test`.
 - **Phase 2 (In Progress):** `jest`, `cypress`, and `next build` landed; `mypy` / `pyright` still needs measurement. Prettier and Black/Ruff formatting are deferred because clean output is already short.
-- **Phase 3 (Enterprise & Linters):** `phpunit` landed; remaining candidates are `mvn test`, `gradle test`, `prisma generate/migrate`, `eslint`, `ruff check`, `golangci-lint`, Pest/PHP type/format tools, `go generate`, and `sqlc`.
+- **Phase 3 (Enterprise & Linters):** `phpunit` landed; candidates still under evaluation are `prisma generate/migrate`, `eslint`, `ruff check`, `golangci-lint`, PHP format/type tools, `go generate`, and `sqlc`. Maven, Gradle, Pest, and PHPStan are deferred pending a representative local transcript or evidence of meaningful savings.
 - **Phase 4 (Deps & Audits):** `pnpm install`, `npm install`, `pip/uv`, `npm/cargo/pip audit`, `alembic`, `flutter test`.
 - **Phase 5 (Noise & Search Bounds):** `git diff` lockfile squelcher, `ripgrep` (`rg`) hierarchical match bounds.
 
 Deferred evidence: a local Prettier 3.6.2 `--check package.json` pass emitted 66 bytes in two lines. The [Prettier CLI docs](https://prettier.io/docs/cli) show that same two-line success output and list files only when formatting differs. The [Black `--check` docs](https://black.readthedocs.io/en/latest/usage_and_configuration/the_basics.html) show a two-line success result; [Ruff formatter docs](https://docs.astral.sh/ruff/formatter/) define `--check` as a status check. Black and Ruff are not configured in this repository, so no local output baseline exists. These candidates remain deferred unless a real workload shows material savings.
+Pest’s [official installation docs](https://pestphp.com/docs/installation) show per-test output, but the available sample covers only two tests; the [CLI reference](https://pestphp.com/docs/cli-api-reference) already offers `--compact`. PHPStan’s [CLI docs](https://phpstan.org/user-guide/command-line-usage) say default mode uses a progress bar, while `--debug` prints every file and disables result caching and parallelism. The local environment has no Composer/Pest/PHPStan setup, and the installed PHP is below Pest’s current minimum. Maven and Gradle also have no local project/transcript; Gradle is unavailable. Do not implement these parsers until representative output demonstrates worthwhile savings.
