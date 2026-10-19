@@ -17,6 +17,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/discovery"
+	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -95,6 +96,11 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 		return 1
 	}
 	opts.Binary = exe
+	if !opts.DryRun && !opts.Undo {
+		// Older releases created the state directory and its files with the
+		// default umask; tighten what the product owns. Best effort.
+		_ = paths.Harden()
+	}
 	return setupRun(opts)
 }
 

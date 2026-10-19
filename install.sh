@@ -24,6 +24,9 @@ set -e
 REPO="tiagovilasboas/downshift"
 BINARY="downshift"
 
+# Every download is https-only (also after a redirect) and at least TLS 1.2.
+fetch() { curl --proto '=https' --tlsv1.2 "$@"; }
+
 # ── Resolve version ───────────────────────────────────────────────────────────
 # No GitHub API: anonymous api.github.com calls are rate-limited (60/h per IP),
 # which broke the one-liner on shared networks and CI. Instead:
@@ -36,14 +39,14 @@ BINARY="downshift"
 # An explicit version argument skips both lookups.
 GH="https://github.com/${REPO}"
 latest_tag() {
-  final_url=$(curl -fsSLI -o /dev/null -w '%{url_effective}' "${GH}/releases/latest" 2>/dev/null || true)
+  final_url=$(fetch -fsSLI -o /dev/null -w '%{url_effective}' "${GH}/releases/latest" 2>/dev/null || true)
   case "$final_url" in
     */releases/tag/?*)
       echo "${final_url##*/releases/tag/}"
       return 0
       ;;
   esac
-  curl -fsSL "${GH}/releases.atom" 2>/dev/null \
+  fetch -fsSL "${GH}/releases.atom" 2>/dev/null \
     | grep -o '/releases/tag/[^"<]*' \
     | head -n 1 \
     | sed 's#.*/releases/tag/##' || true
@@ -79,6 +82,19 @@ if [ -z "$VERSION" ]; then
   echo "error: could not determine latest version (no release found, or github.com unreachable)." >&2
   echo "Pass a version explicitly:" >&2
   echo "  sh install.sh v0.1.0-beta.1" >&2
+  exit 1
+fi
+
+# The version goes into URLs and a grep pattern: accept nothing but a strict
+# vMAJOR.MINOR.PATCH[-prerelease] tag.
+# The character test comes first: grep matches line by line, so a value with an
+# embedded newline could otherwise pass on its first line.
+case "$VERSION" in
+  *[!0-9A-Za-z.-]*) VERSION_OK=0 ;;
+  *) VERSION_OK=1 ;;
+esac
+if [ "$VERSION_OK" = 0 ] || ! printf '%s\n' "$VERSION" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+  echo "error: invalid version '$VERSION' (expected something like v1.2.3 or v1.2.3-beta.1)" >&2
   exit 1
 fi
 
@@ -132,7 +148,7 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 echo "Downloading downshift ${VERSION} (${OS}/${ARCH})..."
-curl -fsSL "$URL" -o "$TMP/$ARCHIVE"
+fetch -fsSL "$URL" -o "$TMP/$ARCHIVE"
 
 # ── Verify checksum ───────────────────────────────────────────────────────────
 # goreleaser publishes checksums.txt (sha256) next to every archive. A hook
@@ -142,11 +158,11 @@ CHECKSUMS_URL="https://github.com/${REPO}/releases/download/${VERSION}/checksums
 if [ "${DOWNSHIFT_SKIP_CHECKSUM:-0}" = 1 ]; then
   echo "warning: checksum verification skipped (DOWNSHIFT_SKIP_CHECKSUM=1)" >&2
 else
-  if ! curl -fsSL "$CHECKSUMS_URL" -o "$TMP/checksums.txt"; then
+  if ! fetch -fsSL "$CHECKSUMS_URL" -o "$TMP/checksums.txt"; then
     echo "error: could not download checksums.txt for ${VERSION}; set DOWNSHIFT_SKIP_CHECKSUM=1 to install unverified" >&2
     exit 1
   fi
-  expected=$(grep " ${ARCHIVE}\$" "$TMP/checksums.txt" | awk '{print $1}' | head -n 1)
+  expected=$(awk -v a="$ARCHIVE" '$2 == a {print $1; exit}' "$TMP/checksums.txt")
   if [ -z "$expected" ]; then
     echo "error: ${ARCHIVE} is not listed in checksums.txt" >&2
     exit 1
@@ -166,15 +182,54 @@ else
   echo "Checksum verified (sha256)."
 fi
 
+PROVENANCE=0
+# ── Verify build provenance (optional) ────────────────────────────────────────
+# Releases carry a GitHub build-provenance attestation. When the gh CLI is
+# installed, check it; when gh is missing, not signed in, or the release
+# predates attestations, say so and carry on: the sha256 above has already
+# passed. DOWNSHIFT_REQUIRE_ATTESTATION=1 turns every non-verified outcome into
+# an error; DOWNSHIFT_SKIP_ATTESTATION=1 skips the check.
+attestation_failed() {
+  if [ "${DOWNSHIFT_REQUIRE_ATTESTATION:-0}" = 1 ]; then
+    echo "error: $1; not installed (DOWNSHIFT_REQUIRE_ATTESTATION=1)" >&2
+    exit 1
+  fi
+  echo "warning: $1; continuing with the sha256 check only" >&2
+}
+if [ "${DOWNSHIFT_SKIP_ATTESTATION:-0}" = 1 ]; then
+  echo "warning: attestation check skipped (DOWNSHIFT_SKIP_ATTESTATION=1)" >&2
+elif command -v gh >/dev/null 2>&1; then
+  if gh attestation verify "$TMP/$ARCHIVE" --repo "$REPO" >/dev/null 2>&1; then
+    echo "Build provenance verified (GitHub attestation)."
+    PROVENANCE=1
+  else
+    attestation_failed "build provenance for ${ARCHIVE} could not be verified (no attestation for this release, gh not signed in, or a mismatch: run 'gh attestation verify <file> --repo ${REPO}' to see which)"
+  fi
+else
+  attestation_failed "build provenance not checked (the gh CLI is not installed; see docs/guides/install.md)"
+fi
+
 echo "Extracting..."
 tar -xzf "$TMP/$ARCHIVE" -C "$TMP"
 
 echo "Installing to ${INSTALL_DIR}/downshift ..."
-mv "$TMP/$BINARY" "${INSTALL_DIR}/${BINARY}"
-chmod +x "${INSTALL_DIR}/${BINARY}"
+# Copy next to the destination under a temporary name, then rename: a partial
+# copy is never the file a hook would execute.
+STAGED="${INSTALL_DIR}/.${BINARY}.new.$$"
+cp "$TMP/$BINARY" "$STAGED"
+chmod +x "$STAGED"
+mv -f "$STAGED" "${INSTALL_DIR}/${BINARY}"
 
 echo ""
 echo "✓ downshift ${VERSION} installed to ${INSTALL_DIR}/downshift"
+if [ "$PROVENANCE" = 1 ]; then
+  echo "  Verified: sha256 and GitHub build provenance (who built it)."
+elif [ "${DOWNSHIFT_SKIP_CHECKSUM:-0}" = 1 ]; then
+  echo "  Verified: nothing (checksum skipped)."
+else
+  echo "  Verified: sha256 only. That proves the download is intact, not who published it:"
+  echo "  gh attestation verify <archive> --repo ${REPO}"
+fi
 echo ""
 
 # set_explicit_upshift writes the operator flag. A missing file is created.
@@ -182,7 +237,7 @@ echo ""
 set_explicit_upshift() {
   file=$1
   dir=$(dirname "$file")
-  mkdir -p "$dir"
+  (umask 077 && mkdir -p "$dir")
   if [ ! -f "$file" ]; then
     printf '%s\n' '{' '  "explicit_upshift": true' '}' > "$file"
     return 0
@@ -223,7 +278,7 @@ if [ "$EXPLICIT_UPSHIFT" = 1 ]; then
 fi
 if [ "$session_existed" = 0 ]; then
   echo "Optional: list the models your session can use (Claude Code infers them from the current model; Cursor, Codex and others need the list or 'downshift models discover'):"
-  echo "  mkdir -p \"$HOME/.downshift\""
+  echo "  mkdir -m 700 -p \"$HOME/.downshift\""
   if [ "$EXPLICIT_UPSHIFT" = 1 ]; then
     echo "  Edit $SESSION_FILE and keep \"explicit_upshift\": true when you add harness lists."
   else

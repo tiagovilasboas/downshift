@@ -707,4 +707,15 @@ func TestRunTry_NoSavingClaimedWhenTheMoveIsNotApplied(t *testing.T) {
 	if !strings.Contains(out, "note: not rewritten") {
 		t.Errorf("the note explaining why is missing; got:\n%s", out)
 	}
+
+	// --detail repeated the claim in its last line.
+	detail := captureStdout(func() {
+		runTry(cmdCat, []string{"rename the userId variable", "cursor", cmdCat.ModelFor("cursor", core.TierFrontier).ID, "--detail"})
+	})
+	if strings.Contains(detail, "cheaper") || strings.Contains(detail, "~") && strings.Contains(detail, "%") {
+		t.Errorf("--detail quotes a saving next to a move that is not applied:\n%s", detail)
+	}
+	if !strings.Contains(detail, "Rewrite:") || !strings.Contains(detail, "not applied") {
+		t.Errorf("--detail lost its rewrite line or the not-applied summary:\n%s", detail)
+	}
 }

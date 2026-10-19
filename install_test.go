@@ -25,6 +25,7 @@ import (
 // Downloads copy FAKE_TARBALL to the -o path. Every URL is appended to FAKE_LOG.
 const fakeCurl = `#!/bin/sh
 url=""; out=""; write=""
+echo "$*" >> "$FAKE_LOG.args"
 while [ $# -gt 0 ]; do
   case "$1" in
     -o) out="$2"; shift ;;
@@ -62,12 +63,22 @@ case "$url" in
 esac
 `
 
+// fakeGH stands in for the gh CLI: FAKE_GH=ok verifies, anything else fails.
+// Every call is appended to FAKE_GH_LOG.
+const fakeGH = `#!/bin/sh
+echo "$*" >> "$FAKE_GH_LOG"
+[ "$FAKE_GH" = ok ] && exit 0
+echo "no attestation found" >&2
+exit 1
+`
+
 type installResult struct {
 	code   int
 	output string
 	urls   []string
 	binDir string
 	home   string
+	ghLog  string
 }
 
 func runInstall(t *testing.T, latest, list string, args ...string) installResult {
@@ -91,6 +102,21 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 	if err := os.WriteFile(filepath.Join(fakeBin, "curl"), []byte(fakeCurl), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	// A fake gh always shadows a real one, so no test reaches the network.
+	// NO_GH=1 builds a PATH that has the tools install.sh needs and no gh.
+	noGH := false
+	for _, env := range extraEnv {
+		if env == "NO_GH=1" {
+			noGH = true
+		}
+	}
+	path := fakeBin + string(os.PathListSeparator) + os.Getenv("PATH")
+	if noGH {
+		path = toolOnlyPath(t, fakeBin)
+	} else if err := os.WriteFile(filepath.Join(fakeBin, "gh"), []byte(fakeGH), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	ghLog := filepath.Join(tmp, "gh.log")
 	tarball := filepath.Join(tmp, "release.tar.gz")
 	writeTarball(t, tarball)
 	logFile := filepath.Join(tmp, "curl.log")
@@ -99,6 +125,9 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 	var seed string
 	keptEnv := make([]string, 0, len(extraEnv))
 	for _, env := range extraEnv {
+		if env == "NO_GH=1" {
+			continue
+		}
 		if strings.HasPrefix(env, "SEED_SESSION=") {
 			seed = strings.TrimPrefix(env, "SEED_SESSION=")
 			continue
@@ -117,7 +146,8 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 
 	cmd := exec.Command("sh", append([]string{"install.sh"}, args...)...)
 	cmd.Env = []string{
-		"PATH=" + fakeBin + string(os.PathListSeparator) + os.Getenv("PATH"),
+		"PATH=" + path,
+		"FAKE_GH_LOG=" + ghLog,
 		"HOME=" + tmp,
 		"DOWNSHIFT_INSTALL_DIR=" + binDir,
 		"FAKE_LATEST=" + latest,
@@ -143,7 +173,27 @@ func runInstallEnv(t *testing.T, latest, list string, extraEnv []string, args ..
 		urls:   strings.Fields(string(logged)),
 		binDir: binDir,
 		home:   tmp,
+		ghLog:  ghLog,
 	}
+}
+
+// toolOnlyPath returns a PATH holding fakeBin plus symlinks to the external
+// tools install.sh uses, and no gh.
+func toolOnlyPath(t *testing.T, fakeBin string) string {
+	t.Helper()
+	dir := filepath.Join(filepath.Dir(fakeBin), "tools")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, tool := range []string{"sh", "uname", "tr", "mktemp", "rm", "grep", "awk", "head", "sed", "tar", "mv", "chmod",
+		"mkdir", "dirname", "cat", "sha256sum", "shasum", "python3", "cp", "date", "gzip", "gunzip", "env"} {
+		if p, err := exec.LookPath(tool); err == nil {
+			if err := os.Symlink(p, filepath.Join(dir, tool)); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	return fakeBin + string(os.PathListSeparator) + dir
 }
 
 func writeTarball(t *testing.T, path string) {
@@ -378,5 +428,127 @@ func TestInstallMissingChecksumsNeedsOptOut(t *testing.T) {
 	assertInstalled(t, r)
 	if !strings.Contains(r.output, "checksum verification skipped") {
 		t.Fatalf("opt-out must be loud\noutput:\n%s", r.output)
+	}
+}
+
+// Build provenance is checked when gh exists and never blocks the install
+// unless the operator asks for it.
+func TestInstallVerifiesAttestationWithGH(t *testing.T) {
+	r := runInstallEnv(t, "v1.0.0", "", []string{"FAKE_GH=ok"})
+	assertInstalled(t, r)
+	if !strings.Contains(r.output, "Build provenance verified") {
+		t.Fatalf("attestation not reported\noutput:\n%s", r.output)
+	}
+	log, _ := os.ReadFile(r.ghLog)
+	if !strings.Contains(string(log), "attestation verify") || !strings.Contains(string(log), "--repo tiagovilasboas/downshift") {
+		t.Fatalf("gh called as %q", log)
+	}
+}
+
+func TestInstallWarnsButInstallsWhenAttestationFails(t *testing.T) {
+	r := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, r)
+	if !strings.Contains(r.output, "could not be verified") || !strings.Contains(r.output, "sha256 check only") {
+		t.Fatalf("expected a warning\noutput:\n%s", r.output)
+	}
+}
+
+func TestInstallWarnsButInstallsWithoutGH(t *testing.T) {
+	r := runInstallEnv(t, "v1.0.0", "", []string{"NO_GH=1"})
+	assertInstalled(t, r)
+	if !strings.Contains(r.output, "gh CLI is not installed") || !strings.Contains(r.output, "Checksum verified") {
+		t.Fatalf("expected a warning and the sha256 pass\noutput:\n%s", r.output)
+	}
+}
+
+func TestInstallRequireAttestationBlocks(t *testing.T) {
+	for name, env := range map[string][]string{
+		"gh fails":   {"DOWNSHIFT_REQUIRE_ATTESTATION=1"},
+		"gh missing": {"DOWNSHIFT_REQUIRE_ATTESTATION=1", "NO_GH=1"},
+	} {
+		r := runInstallEnv(t, "v1.0.0", "", env)
+		if r.code != 1 || !strings.Contains(r.output, "DOWNSHIFT_REQUIRE_ATTESTATION=1") {
+			t.Errorf("%s: exit %d, want 1\noutput:\n%s", name, r.code, r.output)
+		}
+		if _, err := os.Stat(filepath.Join(r.binDir, "downshift")); err == nil {
+			t.Errorf("%s: binary installed despite the requirement", name)
+		}
+	}
+	ok := runInstallEnv(t, "v1.0.0", "", []string{"DOWNSHIFT_REQUIRE_ATTESTATION=1", "FAKE_GH=ok"})
+	assertInstalled(t, ok)
+}
+
+func TestInstallSkipAttestationDoesNotCallGH(t *testing.T) {
+	r := runInstallEnv(t, "v1.0.0", "", []string{"DOWNSHIFT_SKIP_ATTESTATION=1"})
+	assertInstalled(t, r)
+	if _, err := os.Stat(r.ghLog); err == nil {
+		t.Fatal("gh was called although the check was skipped")
+	}
+}
+
+// The version is spliced into URLs: anything but a strict tag is refused
+// before the first network call.
+func TestInstallRejectsMalformedVersions(t *testing.T) {
+	for _, v := range []string{"latest", "1.0.0", "v1.0", "v1.0.0/../x", "v1.0.0;id", "v1.0.0 ", "v1.0.0-", "v1.*", "../v1.0.0", "v1.0.0\n"} {
+		r := runInstall(t, "v1.0.0", "", v)
+		if r.code == 0 || !strings.Contains(r.output, "invalid version") {
+			t.Errorf("version %q: exit %d, want a refusal\n%s", v, r.code, r.output)
+		}
+		if len(r.urls) != 0 {
+			t.Errorf("version %q reached the network: %v", v, r.urls)
+		}
+	}
+	for _, v := range []string{"v1.2.3", "v0.1.0-beta.1", "v10.20.30-rc.2"} {
+		if r := runInstall(t, "", "", v); r.code != 0 {
+			t.Errorf("valid version %q refused: %s", v, r.output)
+		}
+	}
+}
+
+// A latest tag read from GitHub is held to the same rule.
+func TestInstallRejectsAMalformedLatestTag(t *testing.T) {
+	r := runInstall(t, "v1.0.0;id", "")
+	if r.code == 0 || !strings.Contains(r.output, "invalid version") {
+		t.Fatalf("exit %d\n%s", r.code, r.output)
+	}
+}
+
+func TestInstallUsesHTTPSOnlyForEveryDownload(t *testing.T) {
+	r := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, r)
+	args, _ := os.ReadFile(filepath.Join(filepath.Dir(r.ghLog), "curl.log.args"))
+	lines := strings.Split(strings.TrimSpace(string(args)), "\n")
+	if len(lines) < 3 {
+		t.Fatalf("expected the lookup, archive and checksum calls, got %q", lines)
+	}
+	for _, l := range lines {
+		if !strings.Contains(l, "--proto =https") || !strings.Contains(l, "--tlsv1.2") {
+			t.Errorf("curl call without https-only/TLS 1.2: %q", l)
+		}
+	}
+}
+
+// The closing line says what was actually proven.
+func TestInstallSaysWhatWasVerified(t *testing.T) {
+	only := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, only)
+	if !strings.Contains(only.output, "Verified: sha256 only") || !strings.Contains(only.output, "not who published it") {
+		t.Errorf("sha-only install must say so:\n%s", only.output)
+	}
+	full := runInstallEnv(t, "v1.0.0", "", []string{"FAKE_GH=ok"})
+	assertInstalled(t, full)
+	if !strings.Contains(full.output, "Verified: sha256 and GitHub build provenance") {
+		t.Errorf("provenance install must say so:\n%s", full.output)
+	}
+}
+
+// The binary lands through a temporary name and a rename; no staging file is
+// left in the install directory, and a failed copy leaves the old binary.
+func TestInstallLeavesNoStagingFileAndKeepsTheOldBinaryOnFailure(t *testing.T) {
+	r := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, r)
+	entries, _ := os.ReadDir(r.binDir)
+	if len(entries) != 1 || entries[0].Name() != "downshift" {
+		t.Errorf("install dir = %v, want only downshift", entries)
 	}
 }
