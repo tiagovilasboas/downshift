@@ -57,9 +57,16 @@ func ParseFile(repoRoot, relPath string) (*Document, error) {
 
 	var symbols []Symbol
 	ext := strings.ToLower(filepath.Ext(relPath))
-	if ext == ".go" {
+	switch ext {
+	case ".go":
 		symbols = parseGoAST(relPath, contentBytes)
-	} else {
+	case ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs":
+		symbols = parseTSJSSymbols(relPath, contentStr)
+	case ".py":
+		symbols = parsePythonSymbols(relPath, contentStr)
+	case ".rs", ".php", ".java", ".cs":
+		symbols = parseCStyleSymbols(relPath, contentStr, ext)
+	default:
 		symbols = parseFallbackSymbols(relPath, contentStr)
 	}
 
