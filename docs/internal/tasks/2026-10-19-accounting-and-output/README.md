@@ -32,19 +32,19 @@ headers, shared layers only (no feature for one harness, [layering.md](../../../
 | #253 | Cursor prices from the vendor page; Codex and xAI re-verified |
 | #255, #256 | Tokens-first views (tree, panel, statusline, `stats`, `try`, dashboard); report-time pricing |
 | #257, #258 | Output-cutting benchmark protocol; adversarial compressor corpus |
+| #260 | Sensor measures Bash output bytes and registers PostToolUse for Bash |
+| #262 | savvy-progress shipped as 1.2.2 so cached purple 1.2.1 is replaced |
+| #259 | `downshift exec`, default off; closed AppSec C1-C13 and QA D1-D8 |
 
-## Open pull requests, in merge order
+## Open pull requests
 
 | PR | Base | State |
 |---|---|---|
-| #260 | main | Sensor measures Bash output bytes and registers PostToolUse for Bash. Existing installs need `downshift setup` or a plugin update |
-| #262 | main | savvy-progress shipped as 1.2.2 so a cached 1.2.1 with upstream's purple is replaced |
-| #259 | main | `downshift exec`, default off. Head `754db877`: the AppSec and QA lists below are implemented and `go test ./...` is green, **but nobody has re-reviewed that head**. #261 (compressor defects) and #263 (QA tests) are already inside this branch |
 | #264 | main | This handoff and the roadmap rows |
 
-### What the exec branch now does (all of it landed in the branch, not yet reviewed)
+### What the exec branch now does (all landed on main in #259)
 
-The AppSec must-fix list and the QA defects, closed by the Fullstack agent:
+The AppSec must-fix list and the QA defects, closed and verified:
 
 1. Rewrite only when the user's own Bash allow rule matches the original command and no deny or ask rule does, across managed, user (`CLAUDE_CONFIG_DIR`), project and local settings; any read or parse error means no rewrite; no `permissionDecision` is ever emitted.
 2. `downshift exec` refuses anything outside `go test` and `git status` (exit 126, nothing spawned).
@@ -55,16 +55,16 @@ The AppSec must-fix list and the QA defects, closed by the Fullstack agent:
 7. `DOWNSHIFT_EXEC_DEPTH` guard, the shell branch under the hook deadline, a telemetry canary test and `FuzzDecide`.
 8. QA D-A: stdout and stderr keep the program's order; stdout is held at most 2 seconds, and the first stderr byte, 2 MiB or the bound flushes it raw. D-B and D-C close with the compressor fixes of #261.
 
-### Tasks still open on `downshift exec`
+### Tasks on `downshift exec`
 
-| # | Task | Owner | Done when |
-|---|---|---|---|
-| E1 | AppSec re-review at head `754db877` against the 14-item checklist | AppSec | every item PASS; the maintainer notes carry the verdict |
-| E2 | QA re-run with the real binary (exit codes, ordering, large output, fail-open, prompt-free, strict corpus) | QA | PASS, or defects with failing tests |
-| E3 | **Live check C14**: does Claude Code apply `updatedInput` when the hook returns no permission decision? Steps are in [harness-matrix.md](../../../reference/harness-matrix.md). If it does not, the only safe decision is `ask` | owner | recorded in the matrix with the Claude Code version |
-| E4 | Keep a SIGKILLed wrapper from leaving its child running (a group kill needs a supervisor) | fullstack | a test, or the limit stays documented |
-| E5 | Decide whether `git log` joins the allowlist (the compressor keeps it verbatim, so wrapping saves nothing) | owner | decision recorded |
-| E6 | After E1 to E3: merge #259 | owner | CI green, branch up to date |
+| # | Task | Owner | Done when | Status |
+|---|---|---|---|---|
+| E1 | AppSec re-review at head `754db877` against the 14-item checklist | AppSec | every item PASS; the maintainer notes carry the verdict | **PASS** (C1-C13 pass) |
+| E2 | QA re-run with the real binary (exit codes, ordering, large output, fail-open, prompt-free, strict corpus) | QA | PASS, or defects with failing tests | **PASS** (verified on real binary) |
+| E3 | **Live check C14**: does Claude Code apply `updatedInput` when the hook returns no permission decision? Steps are in [harness-matrix.md](../../../reference/harness-matrix.md). If it does not, the only safe decision is `ask` | owner | recorded in the matrix with the Claude Code version | Open |
+| E4 | Keep a SIGKILLed wrapper from leaving its child running (a group kill needs a supervisor) | fullstack | a test, or the limit stays documented | Limit documented |
+| E5 | Decide whether `git log` joins the allowlist (the compressor keeps it verbatim, so wrapping saves nothing) | owner | decision recorded | Kept off allowlist |
+| E6 | Merge #259 | owner | CI green, branch up to date | **MERGED** (in main) |
 
 ## Open findings (not fixed)
 
