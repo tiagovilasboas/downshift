@@ -45,7 +45,7 @@ Every candidate must satisfy the following four core principles:
 | Tool / Command | Typical Raw Output | Compacted Target | Token Reduction | Fail-Open Trigger | Phase |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`tsc --noEmit`** | 500 – 2,000 tokens (or clean 0 bytes / header noise) | `TSC: PASS (0 errors)` | **~95%** | `error TS...`, `Found N errors`, exit != 0 | **Landed** |
-| **`mypy` / `pyright`** | 600 – 2,500 tokens (file-by-file checks, environment warnings) | `Mypy: PASS (no issues found in N source files)` | **~90%** | `Found N errors`, type mismatch, exit != 0 | **Phase 2** |
+| **`mypy` / `pyright`** | Usually a short clean summary; failures carry file-level diagnostics | No change to clean summary | **Deferred** | Type errors and file-level diagnostics remain raw | **Phase 2 (needs measurement)** |
 | **`eslint` / `biome`** | 800 – 3,000 tokens (dozens of non-blocking style/import warnings) | `ESLint: PASS (0 errors, W warnings)` | **~85%** | `X errors`, exit != 0 | **Phase 3** |
 | **`ruff check`** | 500 – 2,000 tokens (rule descriptions, code fix snippets) | `Ruff: PASS (All checks passed)` | **~90%** | Syntax/rule errors, exit != 0 | **Phase 3** |
 | **`golangci-lint run`** | 1,000 – 4,000 tokens (multi-linter diagnostic trees) | `golangci-lint: PASS (no issues)` | **~92%** | Linter violations, exit != 0 | **Phase 3** |
@@ -56,8 +56,8 @@ Every candidate must satisfy the following four core principles:
 ### Category C: Formatters & Pretty-Printers
 | Tool / Command | Typical Raw Output | Compacted Target | Token Reduction | Fail-Open Trigger | Phase |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`prettier --check`** | 1,500 – 4,000 tokens (lists every unchanged file checked) | `Prettier: PASS (N files checked, clean)` | **~99%** | `Code style issues found`, exit != 0 | **Phase 2** |
-| **`black --check`** / **`ruff format --check`** | 400 – 1,500 tokens (lists all checked Python files) | `Format: PASS (N files left unchanged)` | **~95%** | `would be reformatted`, exit != 0 | **Phase 2** |
+| **`prettier --check`** | Two-line success summary; failure lists only unformatted files | Existing success message (no useful reduction) | **~0%** | Unformatted file paths and diagnostics remain raw | **Deferred (no demonstrated ROI)** |
+| **`black --check` / `ruff format --check`** | One- or two-line success summary; failures identify files | Existing success message (no useful reduction) | **~0%** | File paths, formatting differences, warnings, or errors remain raw | **Deferred (no demonstrated ROI)** |
 | **`pint --test`** | 300 – 1,500 tokens (file-by-file style results) | `Pint: PASS (N files clean)` | **~90%** | Any file needing a fix, formatter error, exit != 0 | **Phase 3** |
 
 ---
@@ -113,7 +113,9 @@ The following tools are explicitly excluded from `downshift exec` wrapping to pr
 ## 4. Execution Roadmap Summary
 
 - **Phase 1 (Landed):** `playwright` (E2E), `cargo test` (Rust), `tsc` (TypeScript typecheck), and verbose `go test`.
-- **Phase 2 (In Progress):** `jest`, `cypress`, and `next build` landed; remaining candidates are `prettier --check`, `black/ruff format --check`, and `mypy`.
+- **Phase 2 (In Progress):** `jest`, `cypress`, and `next build` landed; `mypy` / `pyright` still needs measurement. Prettier and Black/Ruff formatting are deferred because clean output is already short.
 - **Phase 3 (Enterprise & Linters):** `phpunit` landed; remaining candidates are `mvn test`, `gradle test`, `prisma generate/migrate`, `eslint`, `ruff check`, `golangci-lint`, Pest/PHP type/format tools, `go generate`, and `sqlc`.
 - **Phase 4 (Deps & Audits):** `pnpm install`, `npm install`, `pip/uv`, `npm/cargo/pip audit`, `alembic`, `flutter test`.
 - **Phase 5 (Noise & Search Bounds):** `git diff` lockfile squelcher, `ripgrep` (`rg`) hierarchical match bounds.
+
+Deferred evidence: a local Prettier 3.6.2 `--check package.json` pass emitted 66 bytes in two lines. The [Prettier CLI docs](https://prettier.io/docs/cli) show that same two-line success output and list files only when formatting differs. The [Black `--check` docs](https://black.readthedocs.io/en/latest/usage_and_configuration/the_basics.html) show a two-line success result; [Ruff formatter docs](https://docs.astral.sh/ruff/formatter/) define `--check` as a status check. Black and Ruff are not configured in this repository, so no local output baseline exists. These candidates remain deferred unless a real workload shows material savings.

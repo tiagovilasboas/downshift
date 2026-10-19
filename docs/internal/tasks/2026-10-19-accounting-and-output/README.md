@@ -86,7 +86,7 @@ The AppSec must-fix list and the QA defects, closed and verified:
 4. Owner decides the Codex tiers (finding 1 above).
 5. Run the pilot of [benchmark-output-cutting.md](../../../guides/benchmark-output-cutting.md) (routing alone, + Headroom, + `downshift exec`, RTK alone), then apply its pre-registered cut criterion.
 6. Capture child-token payloads for Cursor, Codex and OpenCode so the tokens-first views cover them.
-7. Continue the native output cutting candidate roadmap in [output-cutting-candidates.md](output-cutting-candidates.md): Phase 1 is landed (Playwright, Cargo, TSC, verbose Go tests); Jest, Cypress, Next.js build, and PHPUnit are landed; remaining Phase 2 candidates are Prettier, Python formatting, and Mypy.
+7. Continue the native output cutting candidate roadmap in [output-cutting-candidates.md](output-cutting-candidates.md): Phase 1 is landed (Playwright, Cargo, TSC, verbose Go tests); Jest, Cypress, Next.js build, and PHPUnit are landed. Prettier and Black/Ruff formatting are deferred for lack of demonstrated savings; Mypy/Pyright still needs measurement.
 
 ## Measured so far (do not quote beyond this)
 
