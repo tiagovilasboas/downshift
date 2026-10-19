@@ -57,7 +57,7 @@ func (e *setupEnv) read(rel string) string {
 func (e *setupEnv) run(args ...string) (code int, out, errOut string) {
 	e.t.Helper()
 	var o, er bytes.Buffer
-	opts := setupOptions{Home: e.home, Binary: testBin, In: strings.NewReader(""), Out: &o, Err: &er}
+	opts := setupOptions{Home: e.home, Binary: testBin, SkipDiscovery: true, In: strings.NewReader(""), Out: &o, Err: &er}
 	opts.Now = func() time.Time {
 		e.tick++
 		return time.Date(2026, 10, 13, 12, 0, 0, e.tick*1000, time.UTC)
@@ -680,5 +680,37 @@ func TestSetupYouShouldKnowDryRunAndUndo(t *testing.T) {
 	}
 	if e.read(".claude/settings.json") != original {
 		t.Errorf("undo did not restore the original:\n%s", e.read(".claude/settings.json"))
+	}
+}
+
+func TestSetupDiscoverModelsGuards(t *testing.T) {
+	cacheFile := filepath.Join(t.TempDir(), "discovered.json")
+	t.Setenv("DOWNSHIFT_DISCOVERED", cacheFile)
+
+	// Guard 1: SkipDiscovery
+	setupDiscoverModels(setupOptions{
+		SkipDiscovery: true,
+		Now:           time.Now,
+	})
+	if _, err := os.Stat(cacheFile); !os.IsNotExist(err) {
+		t.Fatalf("expected cache file not created when SkipDiscovery is true")
+	}
+
+	// Guard 2: DryRun
+	setupDiscoverModels(setupOptions{
+		DryRun: true,
+		Now:    time.Now,
+	})
+	if _, err := os.Stat(cacheFile); !os.IsNotExist(err) {
+		t.Fatalf("expected cache file not created when DryRun is true")
+	}
+
+	// Guard 3: Undo
+	setupDiscoverModels(setupOptions{
+		Undo: true,
+		Now:  time.Now,
+	})
+	if _, err := os.Stat(cacheFile); !os.IsNotExist(err) {
+		t.Fatalf("expected cache file not created when Undo is true")
 	}
 }

@@ -240,10 +240,11 @@ func (a AnthropicAPI) Discover(ctx context.Context) ([]Model, error) {
 }
 
 // Defaults is the source set `models discover` uses when none is named.
+// Experimental harnesses (Kiro, KiroCrew) are not run by default.
 // Antigravity has no verified listing mechanism and is absent. Failed sources
 // preserve their cache; discovery does not imply included credit.
 func Defaults() []Source {
-	return []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, KiroCLI{}, GrokCLI{}}
+	return []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, GrokCLI{}}
 }
 
 func readBounded(path string) ([]byte, error) {

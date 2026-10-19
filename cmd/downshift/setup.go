@@ -5,6 +5,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"math"
@@ -13,7 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
+	"github.com/tiagovilasboas/downshift/internal/discovery"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -27,6 +30,8 @@ type setupOptions struct {
 	DryRun bool
 	Undo   bool
 	Yes    bool
+	// SkipDiscovery disables automatic model discovery during setup (useful in tests).
+	SkipDiscovery bool
 	// NoSessionPolicy skips the optional main-session policy (model opusplan and
 	// plan as the starting mode, You should know); hooks are wired as usual.
 	NoSessionPolicy bool
@@ -194,6 +199,9 @@ func setupRun(o setupOptions) int {
 			_ = contextopt.SaveConfig(optCfg)
 		}
 	}
+	// Run discovery for harnesses with a source so sessions don't stay on handwritten lists.
+	setupDiscoverModels(o)
+
 	fmt.Fprint(o.Out, setupSummary(plans))
 	fmt.Fprintln(o.Out, "Undo with: downshift setup --undo")
 	if failed {
@@ -289,4 +297,37 @@ func setupConfirm(o setupOptions, prompt string) bool {
 		return true
 	}
 	return false
+}
+
+// setupDiscoverModels runs models discovery for harnesses with a source
+// so fresh installs don't stay on handwritten or outdated lists.
+func setupDiscoverModels(o setupOptions) {
+	if o.SkipDiscovery || o.DryRun || o.Undo {
+		return
+	}
+	cachePath, err := discovery.Path()
+	if err != nil {
+		return
+	}
+	cat := catalog.Load()
+	sources := discovery.Defaults()
+	now := o.Now().UTC()
+	outcomes := discovery.Run(context.Background(), sources, 5*time.Second)
+	updates := map[string]discovery.Entry{}
+	for _, res := range outcomes {
+		if res.Err != nil || len(res.Models) == 0 {
+			continue
+		}
+		h := res.Source.Harness()
+		ranked := discovery.Order(h, res.Models, cat)
+		updates[h] = discovery.Entry{
+			Source:    res.Source.Name(),
+			FetchedAt: now,
+			Models:    res.Models,
+			Ranked:    ranked,
+		}
+	}
+	if len(updates) > 0 {
+		_ = discovery.Merge(cachePath, updates)
+	}
 }
