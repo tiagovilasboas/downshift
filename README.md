@@ -29,7 +29,7 @@ Install the single binary and configure transparent, zero-config hooks across yo
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh && downshift setup
 ```
 
-`downshift setup` asks, backs up your existing configuration, and merges transparent pre-tool hooks into Claude Code (`~/.claude/settings.json`), Cursor, Codex, and OpenCode. On Claude Code it also installs the Downshift plugin (hooks plus the `cache-tax` mod) and the sibling mods `savvy-progress` (progress bar, `/agents-info` panel of subagents) and `filetree`, and discovers the models of your session. `downshift setup --dry-run` previews changes; `--undo` restores backups; `--no-plugin` keeps the hooks in `settings.json` and skips the mods.
+`downshift setup` asks, backs up your existing configuration, and merges transparent pre-tool hooks into Claude Code (`~/.claude/settings.json`), Cursor, Codex, and OpenCode. On Claude Code it also installs the Downshift plugin (hooks plus the `cache-tax` mod) and the sibling mods `savvy-progress` (progress bar, `/agents-info` panel of subagents) `filetree` and `downshift-dock` (a band above the prompt whose Files and Agents buttons bring those two panels back), and discovers the models of your session. `downshift setup --dry-run` previews changes; `--undo` restores backups; `--no-plugin` keeps the hooks in `settings.json` and skips the mods.
 
 Verify your environment immediately:
 
@@ -177,7 +177,7 @@ Downshift follows a strict 5-rung [Evidence Ladder](docs/guides/evidence.md) (fr
 
 ## Mods & Companions
 
-- **Vendored Mods**: Claude Code 2.1.287+ plugins with zero routing logic: bundled `cache-tax` (monitors cold prompt cache prices and offers `/keepwarm`), plus sibling plugins `savvy-progress` (progress bar, `/agents-info` panel) and `filetree`; on Claude Code `downshift setup` installs all three with `claude plugin install` (`--no-plugin` skips them) ([mods guide](mods/README.md)).
+- **Vendored Mods**: Claude Code 2.1.287+ plugins with zero routing logic: bundled `cache-tax` (monitors cold prompt cache prices and offers `/keepwarm`), plus sibling plugins `savvy-progress` (progress bar, `/agents-info` panel), `filetree` and the Downshift-owned `downshift-dock` (buttons that reopen those panels); on Claude Code `downshift setup` installs them with `claude plugin install` (`--no-plugin` skips them) ([mods guide](mods/README.md)).
 - **Companions**: Integrates cleanly beside external proxies like [Headroom](https://github.com/chopratejas/headroom). Downshift records companion presence so savings are never attributed to routing alone ([companions guide](docs/guides/companions.md)).
 
 ---
