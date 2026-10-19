@@ -734,12 +734,16 @@ func TestValidate_RejectsOverlapWhenOneEntryUntagged(t *testing.T) {
 
 func TestLookupByID_ReturnsFamily(t *testing.T) {
 	c := Load()
-	m, ok := c.LookupByID("cursor", "grok-4.7-high-fast")
+	m, ok := c.LookupByID("cursor", "grok-4.7-high")
 	if !ok {
-		t.Fatal("grok-4.7-high-fast should be found")
+		t.Fatal("grok-4.7-high should be found")
 	}
 	if m.Family != "grok" {
 		t.Errorf("Family = %q, want grok", m.Family)
+	}
+	// The Fast slug is its own exact-id row (twice the rate), with no family.
+	if fast, ok := c.LookupByID("cursor", "grok-4.7-high-fast"); !ok || fast.Family != "" || fast.ID != "grok-4.7-high-fast" {
+		t.Errorf("grok-4.7-high-fast = %q family %q (ok=%v), want its own row without a family", fast.ID, fast.Family, ok)
 	}
 }
 
@@ -821,8 +825,47 @@ func TestCatalog_CachePricesOnlyWhereSnapshotHasThem(t *testing.T) {
 	if !ok || opus.CacheReadM != 0.2 {
 		t.Fatalf("claude-opus-5-5 cache read = %v (ok=%v), want 0.2", opus.CacheReadM, ok)
 	}
-	if cur, ok := c.LookupByID("cursor", "claude-opus-5-5-medium"); ok && cur.CacheReadM != 0 {
-		t.Errorf("cursor entry has no snapshot id match; cache read = %v, want 0", cur.CacheReadM)
+	// Cursor rows carry the cache prices of https://cursor.com/docs/models
+	// (read 2026-10-19), not the OpenRouter snapshot; a row whose vendor lists
+	// no cache-write price keeps none.
+	if cur, ok := c.LookupByID("cursor", "claude-opus-5-5-medium"); !ok || cur.CacheReadM != 0.2 || cur.CacheWriteM != 5 {
+		t.Errorf("cursor claude-opus-5-5-medium cache = %v/%v (ok=%v), want 0.2/5", cur.CacheReadM, cur.CacheWriteM, ok)
+	}
+	if comp, ok := c.LookupByID("cursor", "composer-2.5"); !ok || comp.CacheWriteM != 0 {
+		t.Errorf("composer-2.5 cache write = %v (ok=%v), want none", comp.CacheWriteM, ok)
+	}
+}
+
+// Cursor's list rates (https://cursor.com/docs/models, read 2026-10-19, the
+// per-1M rates beyond the included pool). Change them only with a newer read
+// of that page, and cite it. A Fast variant costs twice the standard Grok rate
+// and must never resolve to the standard row.
+func TestCatalog_CursorRatesFollowTheVendorPage(t *testing.T) {
+	c := Load()
+	for _, tc := range []struct {
+		id                 string
+		in, out, read, wrt float64
+	}{
+		{"claude-4.5-haiku-thinking", 1, 5, 0.1, 1.25},
+		{"claude-4.5-sonnet-thinking", 3, 15, 0.3, 3.75},
+		{"claude-sonnet-5-5-high", 2, 10, 0.1, 2.5},
+		{"claude-opus-5-thinking-high", 5, 25, 0.5, 6.25},
+		{"composer-2.5", 0.5, 2.5, 0.2, 0},
+		{"composer-2.5-fast", 3, 15, 0.5, 0},
+		{"grok-4.7-xhigh", 2, 6, 0.5, 0},
+		{"grok-4.7-high-fast", 4, 12, 1, 0},
+		{"glm-5.2-high", 1.4, 4.4, 0.26, 0},
+		{"gemini-3.8-flash-high", 0.75, 3.75, 0.075, 0},
+		{"gpt-5.6-sol-high", 4, 20, 0.4, 5},
+	} {
+		m, ok := c.LookupByID("cursor", tc.id)
+		if !ok || m.ID != tc.id {
+			t.Errorf("%s: resolved to %q (ok=%v), want its own row", tc.id, m.ID, ok)
+			continue
+		}
+		if m.InputM != tc.in || m.OutputM != tc.out || m.CacheReadM != tc.read || m.CacheWriteM != tc.wrt {
+			t.Errorf("%s = %v/%v cache %v/%v, want %v/%v cache %v/%v", tc.id, m.InputM, m.OutputM, m.CacheReadM, m.CacheWriteM, tc.in, tc.out, tc.read, tc.wrt)
+		}
 	}
 }
 

@@ -87,4 +87,6 @@ rule); its checks attach to the branch head commit, which is the PR head.
 |---|---|
 | Anthropic | https://platform.claude.com/docs/en/about-claude/pricing and the models overview, 2026-10-19 |
 | OpenAI (codex) | https://developers.openai.com/api/docs/pricing, 2026-10-19 (OpenAI lists no cache-write price; a codex cache write figure comes from OpenRouter) |
-| Others (xAI, Google, Cursor, GLM) | Entered by hand; not verified by the sync unless the id matches the source |
+| Cursor | https://cursor.com/docs/models, 2026-10-19 (the per-1M rates beyond the included pool; no cache-write price for Cursor, xAI, Gemini, GLM and Muse rows). Entered by hand: the weekly sync does not cover Cursor |
+| xAI (Claude Code `grok-4.6`) | https://docs.x.ai/docs/models, 2026-10-19 (under-200k-token rate; xAI doubles every rate at 200k and above) |
+| Others (Google, GLM outside Cursor) | Entered by hand; not verified by the sync unless the id matches the source |
