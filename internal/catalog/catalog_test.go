@@ -31,7 +31,7 @@ func TestCodexGPT6ModelsAreRoutable(t *testing.T) {
 	}{
 		{id: "gpt-6-luna", wantTier: core.TierSmall, wantInput: 0.1, wantOutput: 0.5},
 		{id: "gpt-6-sol", wantTier: core.TierFrontier, wantInput: 2, wantOutput: 10},
-		{id: "gpt-6.1-sol", wantTier: core.TierFrontier, wantInput: 0, wantOutput: 0},
+		{id: "gpt-6.1-sol", wantTier: core.TierFrontier, wantInput: 2, wantOutput: 10},
 	} {
 		m, ok := c.LookupByID("codex", tc.id)
 		if !ok {

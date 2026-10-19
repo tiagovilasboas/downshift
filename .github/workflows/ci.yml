@@ -7,6 +7,9 @@ on:
       - "v*"
   pull_request:
     branches: [main]
+  # Also started by sync-prices on chore/sync-prices, whose PR (opened with
+  # GITHUB_TOKEN) cannot trigger pull_request runs.
+  workflow_dispatch:
 
 # Pull requests cancel their superseded runs. Pushes to main do not: with
 # cancellation, a docs-only push right after a code push cancelled the code

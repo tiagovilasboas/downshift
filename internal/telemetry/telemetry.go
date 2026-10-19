@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -585,7 +586,12 @@ func AppendTo(path string, ev Event) error {
 	defer lock.Close()
 
 	if _, err := RotationPolicyFromEnv().MaybeRotate(path); err != nil {
-		return fmt.Errorf("log rotation failed for %s: %w", path, err)
+		var cleanup *BackupCleanupError
+		if !errors.As(err, &cleanup) {
+			return fmt.Errorf("log rotation failed for %s: %w", path, err)
+		}
+		// Rotation worked; stale backups remain. Say so, keep recording.
+		fmt.Fprintf(os.Stderr, "downshift: %v\n", err)
 	}
 
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
@@ -788,6 +794,7 @@ func ReadEventsFrom(path string) ([]Event, error) {
 func parseEvents(r io.Reader) ([]Event, error) {
 	var events []Event
 	sc := bufio.NewScanner(r)
+	sc.Buffer(make([]byte, 0, 64*1024), MaxLineBytes)
 	for sc.Scan() {
 		line := sc.Bytes()
 		if len(line) == 0 {

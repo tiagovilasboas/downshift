@@ -21,6 +21,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	_ "embed"
 
@@ -56,9 +57,13 @@ type Entry struct {
 
 // catalogFile is the structure of the JSON file on disk.
 type catalogFile struct {
-	Version string  `json:"version"`
-	Updated string  `json:"updated"`
-	Entries []Entry `json:"entries"`
+	Version string `json:"version"`
+	Updated string `json:"updated"`
+	// PricesAsOf (YYYY-MM-DD) is when the list prices were last verified
+	// against a public source. Only the embedded catalog's value is trusted:
+	// a user override merges entries, not freshness.
+	PricesAsOf string  `json:"prices_as_of"`
+	Entries    []Entry `json:"entries"`
 }
 
 // Catalog is the resolved in-memory model store, implementing core.Resolver.
@@ -79,6 +84,8 @@ type Catalog struct {
 	byFamEff map[string]map[string]map[string]core.Model
 	// entries: all raw entries (for list/check/pull commands)
 	entries []Entry
+	// pricesAsOf: catalogFile.PricesAsOf, empty when absent.
+	pricesAsOf string
 }
 
 // familyEntry pairs a stable family prefix with the model it maps to.
@@ -204,6 +211,8 @@ func build(f catalogFile) *Catalog {
 		byFamily:  make(map[string][]familyEntry),
 		byFamEff:  make(map[string]map[string]map[string]core.Model),
 		entries:   f.Entries,
+
+		pricesAsOf: f.PricesAsOf,
 	}
 
 	for _, e := range f.Entries {
@@ -468,6 +477,25 @@ func (c *Catalog) SavingsRatio(from, to core.Model) float64 {
 }
 
 // --- Accessors for commands (models list / check / pull) ---
+
+// PricesAsOf returns the date (YYYY-MM-DD) the list prices were last verified,
+// or "" when the catalog carries none.
+func (c *Catalog) PricesAsOf() string {
+	if c == nil {
+		return ""
+	}
+	return c.pricesAsOf
+}
+
+// PricesAge returns how many whole days old the list prices are at now. ok is
+// false when prices_as_of is missing or not a YYYY-MM-DD date.
+func (c *Catalog) PricesAge(now time.Time) (days int, ok bool) {
+	d, err := time.Parse("2006-01-02", c.PricesAsOf())
+	if err != nil {
+		return 0, false
+	}
+	return int(now.UTC().Sub(d).Hours() / 24), true
+}
 
 // Entries returns all raw catalog entries (including unknown-tier ones).
 func (c *Catalog) Entries() []Entry {

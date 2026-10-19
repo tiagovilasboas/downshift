@@ -39,6 +39,7 @@ Markdown file names under `docs/` are lowercase kebab-case; only names a tool re
 | [guides/when-to-use.md](guides/when-to-use.md) | Downshift vs gateways and direct SDK; Claude Code is the primary harness |
 | [guides/config.md](guides/config.md) | State dir, env vars, project tier floor, migration |
 | [reference/beta-exit.md](reference/beta-exit.md) | Beta graduation criteria |
+| [reference/prices.md](reference/prices.md) | Where list prices come from, the weekly sync PR, staleness warning, user override |
 | [../ROADMAP.md](../ROADMAP.md) | Public roadmap |
 | [../LICENSE](../LICENSE) | Apache 2.0 |
 | [../MONETIZATION.md](../MONETIZATION.md) | Optional hosted/support |
