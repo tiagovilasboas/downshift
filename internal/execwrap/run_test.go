@@ -36,7 +36,22 @@ func run(t *testing.T, argv []string, compact bool) (Result, string, string) {
 	return r, out.String(), errb.String()
 }
 
-const passingSuite = "ok  \tgithub.com/x/a\t0.1s\nok  \tgithub.com/x/b\t(cached)\nok  \tgithub.com/x/c\t0.2s\n"
+// passingSuite is a realistic all-ok run: enough packages that the compressor
+// summary is strictly shorter than the input.
+var passingSuite = func() string {
+	var b strings.Builder
+	for _, p := range []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"} {
+		b.WriteString("ok  \tgithub.com/x/internal/" + p + "\t0.1s\n")
+	}
+	return b.String()
+}()
+
+// compactedWant is what a compacted run prints: the compressor's own summary
+// plus the marker line.
+func compactedWant(raw string) string {
+	out := compressor.CompressExit([]byte(raw), compressor.ModeSafe, 0).Output
+	return string(out) + Marker(len(raw), len(out))
+}
 
 func TestRun_ExitCodesAndCompaction(t *testing.T) {
 	cases := []struct {
@@ -56,7 +71,7 @@ func TestRun_ExitCodesAndCompaction(t *testing.T) {
 			name: "passing go test compacts", bin: "go",
 			script: "printf '" + strings.ReplaceAll(passingSuite, "\t", "\\t") + "'",
 			argv:   []string{"go", "test", "./..."}, compact: true,
-			wantCode: 0, wantClass: ExitClassZero, wantOut: "Go test: PASS (3 packages ok)\n" + Marker(len(passingSuite), len("Go test: PASS (3 packages ok)\n")), compacted: true, wantFamily: FamilyGoTest,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: compactedWant(passingSuite), compacted: true, wantFamily: FamilyGoTest,
 		},
 		{
 			name: "kill switch keeps raw", bin: "go",

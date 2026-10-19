@@ -98,7 +98,11 @@ func writeContextConfig(t *testing.T, dir string, enabled bool) {
 }
 
 func allOKToolOutput() string {
-	return "ok  github.com/acme/a  0.1s\nok  github.com/acme/b  0.2s\n"
+	var b strings.Builder
+	for _, p := range []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"} {
+		b.WriteString("ok  github.com/acme/" + p + "  0.2s\n")
+	}
+	return b.String()
 }
 
 func postTool(t *testing.T, content string, exitCode int) claudecode.Output {

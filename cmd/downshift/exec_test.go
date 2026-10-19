@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/compressor"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
@@ -35,13 +36,13 @@ func TestRunExec_ExitCodeAndPromptFreeLog(t *testing.T) {
 	}
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 
-	summary := "Go test: PASS (8 packages ok)\n"
+	compacted := compressor.CompressExit([]byte(rawSuite), compressor.ModeSafe, 0).Output
 	cases := []struct {
 		name, exit, killSwitch string
 		wantRC                 int
 		wantOut                string
 	}{
-		{"clean run compacts", "0", "", 0, summary + execwrap.Marker(len(rawSuite), len(summary))},
+		{"clean run compacts", "0", "", 0, string(compacted) + execwrap.Marker(len(rawSuite), len(compacted))},
 		{"non-zero exit stays raw and keeps the code", "1", "", 1, rawSuite},
 		{"kill switch keeps raw", "0", "0", 0, rawSuite},
 	}

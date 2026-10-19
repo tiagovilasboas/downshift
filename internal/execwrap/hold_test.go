@@ -23,14 +23,20 @@ func TestRun_HoldIsBounded(t *testing.T) {
 	for i := 0; i < 8; i++ {
 		suite.WriteString("ok  \\tgithub.com/x/p\\t0.1s\\n")
 	}
-	fakeBin(t, "go", "printf '"+suite.String()+"'; sleep 1; printf 'ok  \\tgithub.com/x/q\\t0.1s\\n'")
+	fakeBin(t, "go", "printf '"+suite.String()+"'; sleep 4; printf 'ok  \\tgithub.com/x/q\\t0.1s\\n'")
 	var merged lockedBuf
 	seen := make(chan string, 1)
 	go func() {
-		time.Sleep(600 * time.Millisecond)
-		merged.mu.Lock()
-		seen <- merged.b.String()
-		merged.mu.Unlock()
+		var early string
+		for end := time.Now().Add(3 * time.Second); time.Now().Before(end); time.Sleep(25 * time.Millisecond) {
+			merged.mu.Lock()
+			early = merged.b.String()
+			merged.mu.Unlock()
+			if strings.Contains(early, "github.com/x/p") {
+				break
+			}
+		}
+		seen <- early
 	}()
 	r := Run([]string{"go", "test"}, Options{Stdin: strings.NewReader(""), Stdout: &merged, Stderr: &merged, Compact: true})
 	if early := <-seen; !strings.Contains(early, "github.com/x/p") {
