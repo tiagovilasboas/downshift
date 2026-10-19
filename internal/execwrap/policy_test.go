@@ -5,6 +5,8 @@ package execwrap
 
 import "testing"
 
+const exe = "/opt/ds/downshift"
+
 func TestDecide(t *testing.T) {
 	cases := []struct {
 		name    string
@@ -14,11 +16,11 @@ func TestDecide(t *testing.T) {
 		want    string // wrapped command when rewrite
 		reason  string
 	}{
-		{"go test", "go test ./...", true, FamilyGoTest, "downshift exec -- go test ./...", ReasonAllowlisted},
-		{"go test flags", "go test -count=1 -run TestX ./internal/core", true, FamilyGoTest, "downshift exec -- go test -count=1 -run TestX ./internal/core", ReasonAllowlisted},
-		{"git status", "git status", true, FamilyGitStatus, "downshift exec -- git status", ReasonAllowlisted},
-		{"surrounding space", "  git status  ", true, FamilyGitStatus, "downshift exec -- git status", ReasonAllowlisted},
-		{"collapsed spaces", "go  test   ./...", true, FamilyGoTest, "downshift exec -- go test ./...", ReasonAllowlisted},
+		{"go test", "go test ./...", true, FamilyGoTest, "'/opt/ds/downshift' exec -- go test ./...", ReasonAllowlisted},
+		{"go test flags", "go test -count=1 -run TestX ./internal/core", true, FamilyGoTest, "'/opt/ds/downshift' exec -- go test -count=1 -run TestX ./internal/core", ReasonAllowlisted},
+		{"git status", "git status", true, FamilyGitStatus, "'/opt/ds/downshift' exec -- git status", ReasonAllowlisted},
+		{"surrounding space", "  git status  ", true, FamilyGitStatus, "'/opt/ds/downshift' exec -- git status", ReasonAllowlisted},
+		{"collapsed spaces", "go  test   ./...", true, FamilyGoTest, "'/opt/ds/downshift' exec -- go test ./...", ReasonAllowlisted},
 
 		{"git log not allowlisted", "git log", false, "", "", ReasonNotAllowlisted},
 		{"git diff", "git diff", false, "", "", ReasonNotAllowlisted},
@@ -63,7 +65,7 @@ func TestDecide(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			d := Decide(tc.command)
+			d := Decide(tc.command, exe)
 			if d.Rewrite != tc.rewrite || d.Family != tc.family || d.Reason != tc.reason {
 				t.Fatalf("Decide(%q) = %+v, want rewrite=%v family=%q reason=%q", tc.command, d, tc.rewrite, tc.family, tc.reason)
 			}
@@ -79,8 +81,8 @@ func TestDecide_TooLong(t *testing.T) {
 	for len(long) <= maxCommandBytes {
 		long += " ./x"
 	}
-	if d := Decide(long); d.Rewrite || d.Reason != ReasonTooLong {
-		t.Fatalf("Decide(long) = %+v, want too_long", d)
+	if d := Decide(long, exe); d.Rewrite || d.Reason != ReasonTooLong {
+		t.Fatalf("Decide(long, exe) = %+v, want too_long", d)
 	}
 }
 
@@ -88,12 +90,23 @@ func TestDecide_TooLong(t *testing.T) {
 // always refuses.
 func TestDecide_Idempotent(t *testing.T) {
 	for _, c := range []string{"go test ./...", "git status"} {
-		first := Decide(c)
+		first := Decide(c, exe)
 		if !first.Rewrite {
 			t.Fatalf("Decide(%q) did not rewrite", c)
 		}
-		if second := Decide(first.Command); second.Rewrite {
+		if second := Decide(first.Command, exe); second.Rewrite {
 			t.Fatalf("Decide(%q) rewrote an already wrapped command: %+v", first.Command, second)
 		}
+	}
+}
+
+func TestDecide_BadExecutable(t *testing.T) {
+	for _, bad := range []string{"", "downshift", "./downshift", "/opt/it's/downshift", "/opt/a\nb/downshift"} {
+		if d := Decide("go test ./...", bad); d.Rewrite || d.Reason != ReasonBadExecutable {
+			t.Fatalf("exe %q: %+v", bad, d)
+		}
+	}
+	if q, ok := QuoteExecutable("/opt/my dir/$x/downshift"); !ok || q != "'/opt/my dir/$x/downshift'" {
+		t.Fatalf("quote = %q %v", q, ok)
 	}
 }

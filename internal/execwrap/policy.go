@@ -21,9 +21,23 @@ const (
 	FamilyGitStatus Family = "git-status"
 )
 
-// WrapPrefix is what an allowlisted command is prefixed with. The command
-// after it is the original, token for token.
-const WrapPrefix = "downshift exec -- "
+// execTail follows the quoted binary path in a wrapped command.
+const execTail = " exec -- "
+
+// QuoteExecutable single-quotes an absolute binary path for the shell. It
+// reports false for a path that is not absolute or holds a quote or a control
+// character, which the rewrite never emits.
+func QuoteExecutable(exe string) (string, bool) {
+	if exe == "" || exe[0] != '/' {
+		return "", false
+	}
+	for i := 0; i < len(exe); i++ {
+		if exe[i] == '\'' || exe[i] < 0x20 || exe[i] == 0x7f {
+			return "", false
+		}
+	}
+	return "'" + exe + "'", true
+}
 
 // maxCommandBytes bounds the command the policy considers. Longer commands
 // are left alone.
@@ -51,6 +65,7 @@ const (
 	ReasonUnsafeChar     = "unsafe_character"
 	ReasonAlreadyWrapped = "already_wrapped"
 	ReasonNotAllowlisted = "not_allowlisted"
+	ReasonBadExecutable  = "bad_executable"
 )
 
 // Decide applies the rewrite policy to a shell command string. It does not
@@ -63,7 +78,11 @@ const (
 // Env assignments and sudo fail the family check because the first word must
 // be exactly "go" or "git". The shell still parses the wrapped command, so the
 // words after the prefix expand exactly as they would have.
-func Decide(command string) Decision {
+//
+// exe is the absolute path of the running downshift binary; the wrapped
+// command invokes exactly that file, single-quoted, never a name looked up on
+// the Bash tool's PATH.
+func Decide(command, exe string) Decision {
 	trimmed := strings.Trim(command, " ")
 	switch {
 	case trimmed == "":
@@ -84,9 +103,13 @@ func Decide(command string) Decision {
 	if family == FamilyNone {
 		return Decision{Reason: ReasonNotAllowlisted}
 	}
+	quoted, ok := QuoteExecutable(exe)
+	if !ok {
+		return Decision{Family: family, Reason: ReasonBadExecutable}
+	}
 	return Decision{
 		Rewrite: true,
-		Command: WrapPrefix + strings.Join(argv, " "),
+		Command: quoted + execTail + strings.Join(argv, " "),
 		Argv:    strings.Join(argv, " "),
 		Family:  family,
 		Reason:  ReasonAllowlisted,

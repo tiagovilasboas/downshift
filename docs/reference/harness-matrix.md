@@ -304,7 +304,7 @@ Off by default. `downshift context enable native --exec` turns it on;
 `DOWNSHIFT_EXEC=0` turns it off without a config change. The decision is
 shared (`internal/execwrap.Decide` plus `shellWrapDecision` in the hook
 runner): allowlist `go test` and `git status`, no shell metacharacter, never
-twice, and a `downshift` binary on PATH. The harness fact is
+twice, and the running binary's absolute path (single-quoted in the command, no PATH lookup). The harness fact is
 `HarnessCapabilities.CanRewriteShellCommand`. An adapter takes part by
 exposing `ShellCommand()` and `ShellRewrite()`.
 

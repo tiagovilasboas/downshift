@@ -4,7 +4,9 @@
 package main
 
 import (
-	"os/exec"
+	"errors"
+	"os"
+	"path/filepath"
 
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
@@ -37,19 +39,40 @@ var execConfigEnabled = func() bool {
 	return err == nil && cfg.Enabled && cfg.Exec
 }
 
-// execLookPath finds the downshift binary the rewritten command will run.
+// execExecutable is the absolute, symlink-resolved path of the running
+// downshift binary, or an error when it is not an executable regular file.
 // Tests swap it.
-var execLookPath = exec.LookPath
+var execExecutable = func() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	if exe, err = filepath.EvalSymlinks(exe); err != nil {
+		return "", err
+	}
+	info, err := os.Stat(exe)
+	if err != nil {
+		return "", err
+	}
+	if !info.Mode().IsRegular() || info.Mode().Perm()&0o111 == 0 {
+		return "", errors.New("not an executable file")
+	}
+	return exe, nil
+}
 
 // shellWrapDecision is the shared, harness-free decision for one shell
 // command: kill switch, config, policy, the harness's declared capability,
-// the user's own permission rules, and a downshift binary on PATH for the
-// shell to find. Anything short of all of them leaves the command unchanged.
+// the user's own permission rules, and the running binary's absolute path.
+// Anything short of all of them leaves the command unchanged.
 func shellWrapDecision(harness, command string, allowed func(string) bool) execwrap.Decision {
 	if hookGetenv(execEnvKillSwitch) == "0" || !execConfigEnabled() {
 		return execwrap.Decision{Reason: "disabled"}
 	}
-	d := execwrap.Decide(command)
+	exe, err := execExecutable()
+	if err != nil {
+		return execwrap.Decision{Reason: "executable_unavailable"}
+	}
+	d := execwrap.Decide(command, exe)
 	if !d.Rewrite {
 		return d
 	}
@@ -61,9 +84,6 @@ func shellWrapDecision(harness, command string, allowed func(string) bool) execw
 	// would match none of those rules.
 	if allowed == nil || !allowed(command) || !allowed(d.Argv) {
 		return execwrap.Decision{Family: d.Family, Reason: "not_allowed_by_user_rules"}
-	}
-	if _, err := execLookPath("downshift"); err != nil {
-		return execwrap.Decision{Family: d.Family, Reason: "downshift_not_on_path"}
 	}
 	return d
 }

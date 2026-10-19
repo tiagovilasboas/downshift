@@ -22,16 +22,16 @@ import (
 // config flag, the kill-switch env and whether downshift is on PATH.
 func withExec(t *testing.T, enabled bool, env map[string]string, onPath bool) {
 	t.Helper()
-	oldEnabled, oldLook, oldEnv := execConfigEnabled, execLookPath, hookGetenv
+	oldEnabled, oldExe, oldEnv := execConfigEnabled, execExecutable, hookGetenv
 	execConfigEnabled = func() bool { return enabled }
-	execLookPath = func(string) (string, error) {
+	execExecutable = func() (string, error) {
 		if onPath {
-			return "/usr/local/bin/downshift", nil
+			return testExe, nil
 		}
-		return "", errors.New("not found")
+		return "", errors.New("not executable")
 	}
 	hookGetenv = func(k string) string { return env[k] }
-	t.Cleanup(func() { execConfigEnabled, execLookPath, hookGetenv = oldEnabled, oldLook, oldEnv })
+	t.Cleanup(func() { execConfigEnabled, execExecutable, hookGetenv = oldEnabled, oldExe, oldEnv })
 }
 
 // userSettings points CLAUDE_CONFIG_DIR at a temp dir whose settings.json
@@ -55,6 +55,8 @@ func userSettings(t *testing.T, allow, deny, ask []string) string {
 	}
 	return cwd
 }
+
+const testExe = "/opt/down shift/bin/downshift"
 
 func bashPayload(t *testing.T, command, cwd string) string {
 	t.Helper()
@@ -93,8 +95,8 @@ func TestShellRewrite_ThroughSharedRunner(t *testing.T) {
 		ask     []string
 		want    string // rewritten command; "" means unchanged ({})
 	}{
-		{"enabled go test", true, nil, true, "go test ./...", okRules, nil, nil, "downshift exec -- go test ./..."},
-		{"enabled git status", true, nil, true, "git status", okRules, nil, nil, "downshift exec -- git status"},
+		{"enabled go test", true, nil, true, "go test ./...", okRules, nil, nil, "'" + testExe + "' exec -- go test ./..."},
+		{"enabled git status", true, nil, true, "git status", okRules, nil, nil, "'" + testExe + "' exec -- git status"},
 		{"no allow rule", true, nil, true, "go test ./...", nil, nil, nil, ""},
 		{"allow rule for another command", true, nil, true, "go test ./...", []string{"Bash(git status)"}, nil, nil, ""},
 		{"deny rule wins", true, nil, true, "go test ./...", okRules, []string{"Bash(go test:*)"}, nil, ""},
@@ -102,12 +104,12 @@ func TestShellRewrite_ThroughSharedRunner(t *testing.T) {
 		{"bare Bash deny", true, nil, true, "git status", okRules, []string{"Bash"}, nil, ""},
 		{"disabled by default", false, nil, true, "go test ./...", okRules, nil, nil, ""},
 		{"kill switch", true, map[string]string{"DOWNSHIFT_EXEC": "0"}, true, "go test ./...", okRules, nil, nil, ""},
-		{"kill switch other value keeps it on", true, map[string]string{"DOWNSHIFT_EXEC": "1"}, true, "git status", okRules, nil, nil, "downshift exec -- git status"},
+		{"kill switch other value keeps it on", true, map[string]string{"DOWNSHIFT_EXEC": "1"}, true, "git status", okRules, nil, nil, "'" + testExe + "' exec -- git status"},
 		{"metacharacter", true, nil, true, "go test ./... | tail -5", okRules, nil, nil, ""},
 		{"list", true, nil, true, "git status && rm -rf x", okRules, nil, nil, ""},
 		{"not allowlisted", true, nil, true, "git log", okRules, nil, nil, ""},
 		{"already wrapped", true, nil, true, "downshift exec -- go test ./...", okRules, nil, nil, ""},
-		{"downshift not on PATH", true, nil, false, "go test ./...", okRules, nil, nil, ""},
+		{"binary not executable", true, nil, false, "go test ./...", okRules, nil, nil, ""},
 		{"empty command", true, nil, true, "", okRules, nil, nil, ""},
 	}
 	for _, tc := range cases {
