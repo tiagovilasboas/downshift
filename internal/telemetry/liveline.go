@@ -73,14 +73,21 @@ func SessionSummary(events []Event, sessionHash string) SessionRouting {
 	}
 	byModel := map[string]int{}
 	refuted := RefutedRewrites(events)
+	decisions := map[string]Event{}
+	for _, ev := range events {
+		if IsDecisionRow(ev) {
+			decisions[ev.Harness+"\n"+DecisionKey(ev)] = ev
+		}
+	}
 	for _, ev := range events {
 		if ev.SessionID != sessionHash {
 			continue
 		}
 		if ev.Outcome == OutcomeUsage {
 			if ev.HasRealCost() && !refuted[ev.Harness+"\n"+ev.LinkedDecision] {
+				decision, found := decisions[ev.Harness+"\n"+ev.LinkedDecision]
 				s.HasCost = true
-				s.DeltaUSD += ev.RealDeltaUSD()
+				s.DeltaUSD += RoutedCost(ev, decision, found).RealDeltaUSD()
 			}
 			continue
 		}

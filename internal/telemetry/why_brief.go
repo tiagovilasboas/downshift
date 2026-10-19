@@ -18,6 +18,7 @@ var briefWords = map[string]string{
 	ReasonCreditHeld:           "credit gate held the rewrite",
 	ReasonGuessHeld:            "guessed baseline held a mid downshift",
 	ReasonPaused:               "routing paused",
+	ReasonAgentPinsModel:       "agent pins its model",
 }
 
 // ReasonBrief renders reason codes as one short phrase such as

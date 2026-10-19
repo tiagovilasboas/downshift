@@ -81,6 +81,21 @@ none of the above has a measured effect size yet.
 Not measured: how often real users' custom agents pin a model; the file-read
 cost; Claude Code versions where frontmatter `model:` precedence differs.
 
+## Addendum 2, 2026-10-19: option 2 shipped, and it routes
+
+The owner reported implausibly low savings on a day with 61 subagent decisions. Option 2 was
+built as a routing change, not observation only, because the cost of waiting was measured:
+`claude-code-guide` (runs on Haiku by its definition) and custom or plugin agents were held or
+left without a baseline, so their spawns could not count as a saving. `lookupAgentDefinition`
+(`internal/adapters/claudecode/agentdef.go`) reads only the frontmatter `model:` and `name:`
+lines, with a 64 KiB cap and a type-name pattern that cannot leave an agents directory, and
+resolves plugin agents through `installed_plugins.json`, which the first step left out of scope.
+The pin is a core fact (`Baseline.Pinned`, reason `AGENT_PINS_MODEL`) and `PlanForSession`
+holds it like an `explicit_only` model, so no adapter owns that policy. The type name is still
+not a routing signal (option 1 stays rejected): `downshift:mechanical-worker` routes small
+because its brief classifies small, with the risk floors intact. Still not measured: how often
+real custom agents pin a model, and the file-read cost.
+
 ## Addendum, 2026-10-19: the measured "custom" share was not custom agents
 
 `stats --detail` on the operator's log showed 72 of 72 `custom` decisions with
