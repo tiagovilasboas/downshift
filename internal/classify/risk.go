@@ -31,7 +31,7 @@ type RiskSignalDef struct {
 var RawRiskSignals = []RiskSignalDef{
 	// PT-BR terms follow the English ones. Go's \b is ASCII-only, so stems that
 	// continue into an accented letter use \S* and carry no trailing \b.
-	{"secret", `\b(secrets?|passwords?|passphrases?|credentials?|api[ _-]?keys?|private[ _-]?keys?|signing[ _-]?keys?|(access|refresh|bearer|session|auth) tokens?|tokens? validation|jwts?|oauth\w*|saml|sso|2fa|mfa|totp|senhas?|credencia(l|is)|segredos?)\b|\btokens? de (acesso|refresh|bearer|sess\S*|autentica\S*|atualiza\S*|renova\S*)|\brotat\w*\s+(the\s+|all\s+)?(\w+\s+)?keys\b|\bchaves?\s+(d[ae]s?\s+apis?\b|api|privad\S*|secret\S*|de\s+assinatura|de\s+criptografia)|\brotacion\S*\s+(as\s+|a\s+)?chaves?|\bfrases?\s+secretas?\b|\btokens?\s+bearer\b|\bvalida\S{1,24}\s+d[eoa]s?\s+tokens?\b`},
+	{"secret", `\b(secrets?|passwords?|passphrases?|credentials?|api[ _-]?keys?|private[ _-]?keys?|signing[ _-]?keys?|(access|refresh|bearer|session|auth|api|personal access) tokens?|ssh[ _-]?keys?|authorized[ _]keys|tokens? validation|jwts?|oauth\w*|saml|sso|2fa|mfa|totp|senhas?|credencia(l|is)|segredos?)\b|\btokens? de (acesso|refresh|bearer|sess\S*|autentica\S*|atualiza\S*|renova\S*)|\brotat\w*\s+(the\s+|all\s+)?(\w+\s+)?keys\b|\bchaves?\s+(d[ae]s?\s+apis?\b|api|privad\S*|secret\S*|de\s+assinatura|de\s+criptografia)|\brotacion\S*\s+(as\s+|a\s+)?chaves?|\bfrases?\s+secretas?\b|\btokens?\s+bearer\b|\bvalida\S{1,24}\s+d[eoa]s?\s+tokens?\b`},
 	// Bare "auth" (the auth middleware, authMiddleware) is the same surface as
 	// authentication or authorization, so a rename there is not mechanical.
 	// Only as a standalone word: inside a path, file or hyphenated name
@@ -41,9 +41,9 @@ var RawRiskSignals = []RiskSignalDef{
 	// "email signature"); only verification and signed-message contexts are.
 	{"crypto", `\b(crypto\w*|encrypt\w*|decrypt\w*|hmac|tls|ssl|certificates?|(webhook|request|payload|message|digital|cryptographic|jwt|jws|hmac|rsa|ecdsa|ed25519|gpg|pgp) signatures?|signatures? (verification|validation|check|header|secret)s?|(verify|verifies|verifying|validate|validating|check|checking|skip|skipping) (the |a |an |its )?signatures?|signing (secrets?|certificates?))\b|\b((des|de|en)?criptograf|(en|de)cript)\S*|\bcertificad\S*\s+(digital|ssl|tls|x\.?509|raiz|autoassinad\S*|https|do servidor|expirad\S*)|\b(verifica\S*|valida\S*|checagem|renova\S*|rota\S*)\s+(d[oa]s?\s+|[oa]s?\s+|de\s+)?certificad\S*|\bcertifica\S*\s+digital|\bassinaturas?\s+(digitais|digital|criptogr\S*|hmac|jwt|jws|rsa|ecdsa|ed25519|gpg|pgp)\b|\bassinaturas?\s+d[eoa]s?\s+(webhooks?|payloads?|mensagens?|requisi\S*|jwts?|hmacs?)\b|\b(verifica\S*|valida\S*|checagem)\s+(de\s+|d[ao]s?\s+)assinaturas?\b|\b(pul\S*|desativ\S*|desabilit\S*)\s+(a\s+|as\s+)?verifica\S*\s+(de\s+|d[ao]s?\s+)assinaturas?\b|\bcabe[çc]alho\s+de\s+assinaturas?\b`},
 	{"payment", `\b(payments? (processing|logic|flow|handler|service|gateway|capture|function|endpoint)|process(ing)? payments?|charg(e|es|ing) (the )?(customer|card|user)s?|double[- ]charg\w*|refunds?|settlements?|payouts?|stripe|pci|billing (logic|flow|cycle|calculation|engine)|pagamentos?|reembols\S*|estorn\S*)\b|\bcobr(ar|ando|ou|ad[oa]s?|an[çc]as?)\s+(o\s+|a\s+|do\s+|no\s+)?(cart\S*|clientes?)|\bcobr[ae]\s+(o|a|do|no)\s+(cart\S*|clientes?)|\b(l[óo]gica|fluxo|ciclo|c[áa]lculo|motor)\s+de\s+faturamento\b|\bcobr(?:ar|ando|ou|ad[oa]s?|an[çc]as?)\s+(duplicad\S*|em\s+dobro|duas\s+vezes)\b|\bdupla\s+cobran[çc]as?\b`},
-	{"vuln", `\b(sql injection|injection|xss|csrf|ssrf|rce|sanitiz\w*|vulnerab\w*|cve-\d+|exploit\w*|security|seguran[çc]a|inje[çc](ão|ao|ões|oes))\b`},
+	{"vuln", `\b(sql injection|injection|xss|csrf|ssrf|rce|sanitiz\w*|vulnerab\w*|cve-\d+|exploit\w*|security|seguran[çc]a|inje[çc](ão|ao|ões|oes)|cors|same[ _-]?site|(path|directory) traversal|zip slip|open redirects?|clickjacking|content[- ]security[- ]policy|(session|auth|authentication) cookies?|(run|runs|running|ran) as root|(public|publicly|world)[- ](readable |accessible |writable )?(s3 )?buckets?)\b|\btravessia\s+de\s+(diret\S*|caminho)|\bcookies?\s+de\s+(sess[ãa]o|autentica\S*)`},
 	{"pii", `\b(pii|gdpr|lgpd|personal data|ssn|social security|credit cards?|dados pessoais)\b|\b(cpf|cnpj)s?\s+d[oa]s?\s+(clientes?|usu\S*rios?|titular\S*|pessoas?|funcion\S*rios?)|\bcart(ões|oes|ão|ao)\s+de\s+cr[ée]dito\b`},
-	{"destructive", `rm\s+-rf|\bdrop\s+(the\s+)?(\w+\s+)?(table|database|schema|column)s?\b|\btruncate\s+(the\s+)?(\w+\s+)?tables?\b|\bdelete\s+from\s+\w+\s*(;|where\b|$)|\bdelete\s+(all|every)\b|\bforce[- ]push\b|push\s+(-f|--force)\b|reset\s+--hard|\bwipe\b|\bpurge\b|\bprod(uction)? (data|database|db)\b|\b(dados|banco( de dados)?|base( de dados)?) de produ[çc][ãa]o|\b(drop|exclu|apag|delet|trunc)\S*\s+(as?\s+|o\s+)?(tabela|coluna|banco de dados|base de dados|schema)s?\b|\b(apag|exclu|delet)\S*\s+(todos\s+)?(os\s+)?dados\b|\bpurga(r|ndo|do|da|dos|das)?\b|\bpurgue\b|\bpush\s+for[çc]ado\b|\b(apag|exclu|delet)\S*\s+tudo\b`},
+	{"destructive", `rm\s+-rf|\bchmod\s+(-r\s+)?(0?777|a\+rwx)\b|\bworld[- ]writable\b|\bdrop\s+(the\s+)?(\w+\s+)?(table|database|schema|column)s?\b|\btruncate\s+(the\s+)?(\w+\s+)?tables?\b|\bdelete\s+from\s+\w+\s*(;|where\b|$)|\bdelete\s+(all|every)\b|\bforce[- ]push\b|push\s+(-f|--force)\b|reset\s+--hard|\bwipe\b|\bpurge\b|\bprod(uction)? (data|database|db)\b|\b(dados|banco( de dados)?|base( de dados)?) de produ[çc][ãa]o|\b(drop|exclu|apag|delet|trunc)\S*\s+(as?\s+|o\s+)?(tabela|coluna|banco de dados|base de dados|schema)s?\b|\b(apag|exclu|delet)\S*\s+(todos\s+)?(os\s+)?dados\b|\bpurga(r|ndo|do|da|dos|das)?\b|\bpurgue\b|\bpush\s+for[çc]ado\b|\b(apag|exclu|delet)\S*\s+tudo\b`},
 	// Shared-state changes: a rename that also touches a lock, an atomic or a
 	// race is not mechanical.
 	{"concurrency", `\b(race conditions?|data races?|race detector|(fix|fixes|fixing|fixed|avoid\w*|prevent\w*|introduc\w*|caus\w*)\s+(the\s+|a\s+|this\s+)?races?|mutex(es)?|rwmutex|deadlocks?|atomic\.\w+|atomic (operations?|counters?|ops|loads?|stores?|swaps?|increments?)|atomics|sync\.(once|wait ?group|cond)|semaphores?|thread[- ]safe\w*)\b|\bcondi\S* de corrida|\b(opera\S*|contador(?:es)?|incrementos?|cargas?|trocas?|armazenamentos?)\s+at[ôo]mic[oa]s?\b|\bcorridas?\s+de\s+dados\b|\bdetector\s+de\s+(corridas?|races?)\b|\bsegur[oa]s?\s+para\s+threads?\b|\bexclus[ãa]o\s+m[úu]tua\b`},
@@ -64,7 +64,7 @@ var riskHighStakesWorkRE = regexp.MustCompile(`(?i)\bidempot\w*\b[^.\n]{0,60}\b(
 var riskLiterals = map[string][]string{
 	"secret": {"secret", "password", "passphrase", "credential", "api", "private", "signing",
 		"token", "jwt", "oauth", "saml", "sso", "2fa", "mfa", "totp", "senha", "credencia",
-		"segredo", "rotat", "chave"},
+		"segredo", "rotat", "chave", "ssh", "authorized"},
 	"authz": {"auth", "permission", "privilege", "permisos", "admin", "rbac", "acl", "autentica",
 		"autoriza", "access control", "permiss", "privil", "acceso a los datos", "acesso"},
 	"crypto": {"crypt", "hmac", "tls", "ssl", "certifica", "signature", "signing", "criptograf",
@@ -72,11 +72,12 @@ var riskLiterals = map[string][]string{
 	"payment": {"payment", "charg", "refund", "settlement", "payout", "stripe", "pci",
 		"billing", "pagamento", "reembols", "estorn", "cobr", "fatur"},
 	"vuln": {"injection", "xss", "csrf", "ssrf", "rce", "sanitiz", "vulnerab", "cve-",
-		"exploit", "security", "seguran", "inje"},
+		"exploit", "security", "seguran", "inje", "cors", "samesite", "same site", "traversal", "zip slip", "redirect",
+		"clickjack", "content security", "content-security", "cookie", "as root", "bucket", "travessia"},
 	"pii": {"pii", "gdpr", "lgpd", "personal data", "ssn", "social security", "credit card",
 		"cpf", "cnpj", "dados pessoais", "cart"},
 	"destructive": {"-rf", "drop", "trunc", "delet", "force", "push", "reset", "wipe", "purge",
-		"prod", "apag", "exclu", "purg"},
+		"prod", "apag", "exclu", "purg", "chmod", "writable"},
 	"concurrency": {"race", "mutex", "deadlock", "atomic", "sync.", "semaphore", "thread",
 		"condi", "atôm", "corrida", "exclus"},
 	"prompt_injection": {"ignore", "disregard", "forget", "override", "system prompt", "this is",
