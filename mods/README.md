@@ -10,6 +10,7 @@ a vendored third-party Claude Code mod (MIT, pinned in [NOTICE](../NOTICE)), exc
 | `savvy-progress@downshift` | [`savvy-progress/`](savvy-progress/README.md) | johnnyvizz, v1.2.1 |
 | `filetree@downshift` | [`filetree/`](filetree/README.md) | Kurt Buhler, v0.2.26 |
 | `downshift-dock@downshift` | [`downshift-dock/`](downshift-dock/README.md) | Downshift (original, Apache-2.0, not vendored) |
+| `downshift-theme@downshift` | [`downshift-theme/`](downshift-theme/README.md) | Downshift (original, Apache-2.0, optional, not installed by `setup`) |
 
 The third mod, cache-tax, lives inside the plugin at
 [`hooks/cache-tax/`](../hooks/cache-tax/README.md). None of them holds routing
@@ -37,11 +38,13 @@ Hence one plugin per mod, listed in
 
 ## Update procedure
 
-Re-vendor from the pinned upstream commit, never edit in place: clone upstream,
+Re-vendor from the pinned upstream commit; edit a vendored mod only through its
+documented local patch (owner decision 2026-10-19): clone upstream,
 check out the new tag, copy `.claude-plugin/plugin.json`, `hooks/`, `types/`,
 tests and `LICENSE` byte for byte (filetree: drop its own `marketplace.json`),
 compare with `sha256sum`, run the tests below, then update the version and
-commit in the mod's README, in NOTICE and in CHANGELOG. Do not run anything
+commit in the mod's README, in NOTICE and in CHANGELOG, then reapply the
+mod's `downshift-local.patch` (`git apply`), re-run its tests and refresh the patch. Do not run anything
 from the clone.
 
 ## Tests

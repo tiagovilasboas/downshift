@@ -1,0 +1,32 @@
+{
+  "name": "Downshift",
+  "base": "dark",
+  "overrides": {
+    "text": "#D6DAE2",
+    "inverseText": "#0A0A0A",
+    "inactive": "#5C6168",
+    "subtle": "#868A90",
+    "suggestion": "#A8ADB4",
+    "remember": "#868A90",
+    "success": "#22C55E",
+    "error": "#F87171",
+    "warning": "#E0B34A",
+    "merged": "#A8ADB4",
+    "claude": "#FFFFFF",
+    "permission": "#D6DAE2",
+    "planMode": "#D6DAE2",
+    "autoAccept": "#A8ADB4",
+    "promptBorder": "#2A2D31",
+    "bashBorder": "#22C55E",
+    "ide": "#868A90",
+    "userMessageBackground": "#141414",
+    "composerSidebarBackground": "#0A0A0A",
+    "selectionBg": "#2A2D31",
+    "diffAdded": "#0F3D22",
+    "diffRemoved": "#4A1518",
+    "diffAddedDimmed": "#0B2415",
+    "diffRemovedDimmed": "#2A0F11",
+    "diffAddedWord": "#166534",
+    "diffRemovedWord": "#7F1D1D"
+  }
+}

@@ -13,16 +13,18 @@ import type { CommandInfo, EngineInterface, Register } from 'claude-code'
 
 import type { Available } from '../types'
 
-// Downshift brand tokens (docs/brand/downshift-brand-tokens.json). Only the two
-// that read on a dark and a light terminal; the band sets no background.
+// Downshift brand tokens (docs/brand/downshift-brand-tokens.json). Black first:
+// text follows the terminal theme, grey carries the chrome, green is a small
+// status dot that shows only while a panel is open. The band sets no background.
 export const ACCENT = '#22C55E'
-export const MUTED = '#9CA3AF'
+export const MUTED = '#868A90'
+export const IDLE = '#5C6168'
 
-export type Target = { key: 'files' | 'agents'; label: string; command: string; args: string; plugin: string }
+export type Target = { key: 'files' | 'agents'; label: string; command: string; args: string; plugin: string; pane: string }
 
 export const TARGETS: readonly Target[] = [
-  { key: 'files', label: 'Files', command: 'filetree', args: '', plugin: 'filetree' },
-  { key: 'agents', label: 'Agents', command: 'agents-info', args: 'open', plugin: 'savvy-progress' },
+  { key: 'files', label: 'Files', command: 'filetree', args: '', plugin: 'filetree', pane: 'filetree' },
+  { key: 'agents', label: 'Agents', command: 'agents-info', args: 'open', plugin: 'savvy-progress', pane: 'savvy-agents' },
 ]
 
 const available = atom({ plugin: 'downshift-dock', key: 'available' } as const, null)
@@ -37,6 +39,19 @@ export function detect(list: readonly CommandInfo[]): Available {
 /** The buttons to draw: both while detection has not answered, else the installed ones. */
 export function visibleTargets(a: Available | null): Target[] {
   return TARGETS.filter(t => a === null || a[t.key])
+}
+
+/** Green means live: the dot is green while at least one of the dock's panels is open, else grey. */
+export function dotColor(paneIds: readonly string[]): string {
+  return TARGETS.some(t => paneIds.includes(t.pane)) ? ACCENT : IDLE
+}
+
+async function openPaneIds($: EngineInterface): Promise<string[]> {
+  try {
+    return (await $.ui.panes()).map(p => p.id)
+  } catch {
+    return []
+  }
 }
 
 async function refresh($: EngineInterface): Promise<void> {
@@ -76,16 +91,17 @@ export const register: Register = on => {
     const targets = visibleTargets(await read($, available))
     if (targets.length === 0) return rest
 
+    const dot = dotColor(await openPaneIds($))
     const { Box, Text, Button } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
         {rest}
         <Box flexDirection="row" columnGap={1}>
-          <Text bold color={ACCENT}>downshift</Text>
+          <Text color={dot}>●</Text>
+          <Text color={MUTED}>downshift</Text>
           {targets.map(t => (
             <Button key={t.key} label={t.label} variant="primary" onPress={() => void press($, t)} />
           ))}
-          <Text color={MUTED}>panels</Text>
         </Box>
       </Box>
     )
