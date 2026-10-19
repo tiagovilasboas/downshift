@@ -106,6 +106,11 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 	if res.effort != "" {
 		fmt.Fprintf(w, "Effort:     → %s\n", res.effort)
 	}
+	if note != "" {
+		// Summary quotes the saving of the decision; the hook would not apply it.
+		fmt.Fprintf(w, "→ %s task → %s (not applied, no saving)\n", d.Complexity, d.Model.ID)
+		return
+	}
 	fmt.Fprintf(w, "→ %s\n", d.Summary())
 }
 
