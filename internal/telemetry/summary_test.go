@@ -54,17 +54,6 @@ func TestSummarize(t *testing.T) {
 	}
 }
 
-// `stats` prints Aggregate(...).Summary(); this pins that the headline and
-// Summarize agree on the same events.
-func TestSummarize_MatchesStatsHeadline(t *testing.T) {
-	events := []telemetry.Event{usage("a", 1.0, 0.2), usage("b", 0.1, 0.4)}
-	var sb strings.Builder
-	telemetry.PrintStats(events, telemetry.StatsOptions{Days: 0}, &sb)
-	if !strings.Contains(sb.String(), "net saved $0.50 (saved $0.80, cost more $0.30") {
-		t.Fatalf("headline does not carry the Summarize numbers:\n%s", sb.String())
-	}
-}
-
 func TestParseEvents_OversizedLineSurfacesError(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.jsonl")
 	good := `{"harness":"h","outcome":"allow"}` + "\n"

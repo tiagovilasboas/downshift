@@ -114,7 +114,8 @@ func TestPrintStats_UnknownBaselineDoesNotClaimUsageMissing(t *testing.T) {
 	usage.InputTokens = exportInt64Ptr(1000)
 	var out strings.Builder
 	telemetry.PrintStats([]telemetry.Event{usage}, telemetry.StatsOptions{Detail: true}, &out)
-	if !strings.Contains(out.String(), "Observed token cost") || !strings.Contains(out.String(), "known requested baseline") || strings.Contains(out.String(), "no events with token usage") {
-		t.Fatalf("unknown baseline display hides observed spend: %s", out.String())
+	// The tokens stay visible; the spend itself is report's (priced now).
+	if !strings.Contains(out.String(), "Observed child tokens") || strings.Contains(out.String(), "unobserved\n") || strings.Contains(out.String(), "$") {
+		t.Fatalf("unknown baseline display hides observed tokens or prints dollars: %s", out.String())
 	}
 }

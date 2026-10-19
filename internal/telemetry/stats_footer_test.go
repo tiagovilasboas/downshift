@@ -10,14 +10,15 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
-// stats estimates at list price; report measures with a control group. The
-// headline says so and points at report, in the short and the detailed view.
+// stats shows tokens; report prices them and compares with a control group.
+// The headline points at report once, in the short and the detailed view, and
+// stats prints no dollar figure.
 func TestPrintStats_PointsAtReportForTheMeasuredNumber(t *testing.T) {
 	for _, detail := range []bool{false, true} {
 		var b strings.Builder
 		telemetry.PrintStats(nil, telemetry.StatsOptions{Days: 30, Detail: detail}, &b)
 		out := b.String()
-		if !strings.Contains(out, "not an invoice") || !strings.Contains(out, "downshift report") {
+		if !strings.Contains(out, "Dollars, priced now") || !strings.Contains(out, "downshift report") || strings.Contains(out, "$") {
 			t.Errorf("detail=%v: no pointer to report in:\n%s", detail, out)
 		}
 		if strings.Count(out, "downshift report") != 1 {

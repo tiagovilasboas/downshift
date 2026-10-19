@@ -24,16 +24,15 @@ type StatsOptions struct {
 func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	filtered := FilterByDays(events, opts.Days)
 	s := Aggregate(filtered)
-	normSaved, normFrac := s.NormSaved()
+	normSaved, _ := s.NormSaved()
 
 	label := fmt.Sprintf("Last %d days", opts.Days)
 	if opts.Days <= 0 {
 		label = "All time"
 	}
 
-	printHeadline(w, s, opts.Days)
-	printTokensLine(w, s.TokensRerouted)
-	fmt.Fprintf(w, "Estimated at list price, not an invoice. Measured against a control group: downshift report\n")
+	printHeadline(w, s, TokenSavings(filtered), opts.Days)
+	fmt.Fprintf(w, "Tokens saved = ran on a cheaper model than requested. Dollars, priced now, and the control group: downshift report\n")
 	if !opts.Detail && !opts.ShowDCI {
 		fmt.Fprintf(w, "\nFull report: downshift stats --detail\n")
 		return
@@ -75,14 +74,14 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 			saved := normSaved * opts.CostPerUnit
 			fmt.Fprintf(w, "Estimated baseline    $%10.2f\n", baseline)
 			fmt.Fprintf(w, "Estimated routed      $%10.2f\n", routed)
-			fmt.Fprintf(w, "Estimated savings     $%10.2f  (%4.1f%%)\n", saved, normFrac*100)
+			fmt.Fprintf(w, "Estimated savings     $%10.2f\n", saved)
 			fmt.Fprintf(w, "\n")
 			fmt.Fprintf(w, "Rate: $%.4f / unit  (--cost-per-unit=%.4f)\n", opts.CostPerUnit, opts.CostPerUnit)
 		} else {
 			// Unit mode: dimensionless proxy, no dollar claim.
 			fmt.Fprintf(w, "Normalised baseline   %8.1f units\n", s.NormBaseline)
 			fmt.Fprintf(w, "Normalised routed     %8.1f units\n", s.NormRouted)
-			fmt.Fprintf(w, "Normalised savings    %8.1f units  (%4.1f%%)\n", normSaved, normFrac*100)
+			fmt.Fprintf(w, "Normalised savings    %8.1f units\n", normSaved)
 			fmt.Fprintf(w, "\n")
 			fmt.Fprintf(w, "Note: 1 unit = cost of one unrouted event. Not real dollars.\n")
 			fmt.Fprintf(w, "For dollar figures: downshift stats --cost-per-unit=<USD-per-unit>\n")
@@ -91,28 +90,13 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	if s.Corrected > 0 {
 		fmt.Fprintf(w, "Safety-held           %8d  (guardrail applied, see corrections)\n", s.Corrected)
 	}
-	if s.ActualCostEvents > 0 {
-		fmt.Fprintf(w, "Observed token cost   $%10.2f  (%d events, catalog pricing)\n", s.ActualCostUSD, s.ActualCostEvents)
-		printCostGroups(w, s.CostBySession, s.CostBySubagent)
-	}
 	if s.ObservedChildUsage == 0 {
 		fmt.Fprintf(w, "Observed child tokens unobserved\n")
 	} else {
 		fmt.Fprintf(w, "Observed child tokens %12d  (%d usage records)\n", s.ObservedChildTokens, s.ObservedChildUsage)
 	}
-	if s.RealCostEvents > 0 {
-		fmt.Fprintf(w, "\n")
-		fmt.Fprintf(w, "Real provider cost (%d events with token usage)\n", s.RealCostEvents)
-		fmt.Fprintf(w, "Real saved            $%10.2f  (catalog list-price counterfactual)\n", s.RealSavedUSD)
-		fmt.Fprintf(w, "Real cost delta       $%10.2f  (baseline minus actual; negative means the router cost more)\n", s.RealCostDeltaUSD)
-		fmt.Fprintf(w, "Real overspend        $%10.2f  (events that cost more than their baseline)\n", s.RealOverspendUSD)
-		if s.RealCostInferred > 0 {
-			fmt.Fprintf(w, "Inferred baseline     %8d  of %d events: baseline guessed from settings (BASELINE_FROM_SETTINGS), not requested\n", s.RealCostInferred, s.RealCostEvents)
-		}
-	} else if s.ActualCostEvents > 0 {
-		fmt.Fprintf(w, "Savings comparison: no events with a known requested baseline yet.\n")
-	} else {
-		fmt.Fprintf(w, "Real cost: no events with token usage yet (wire the PostToolUse hook to populate them).\n")
+	if s.RealCostInferred > 0 {
+		fmt.Fprintf(w, "Inferred baseline     %8d  of %d priced records: requested model guessed from settings (BASELINE_FROM_SETTINGS)\n", s.RealCostInferred, s.RealCostEvents)
 	}
 	printTokensDetail(w, s.TokensRerouted)
 	if s.UsageRecords > 0 {

@@ -13,14 +13,21 @@ import (
 // maxMixModels bounds the model-mix line; the rest folds into "other".
 const maxMixModels = 5
 
-// printHeadline writes the three lines every `downshift stats` starts with:
-// the money, the guardrails, and the model mix. The money comes only from
-// events with real provider cost; with none, it says how to get some instead
-// of showing a normalised proxy as if it were dollars.
-func printHeadline(w io.Writer, s Stats, days int) {
-	fmt.Fprintf(w, "%s · %d subagents · %s\n", headlineWindow(days), s.Total, headlineMoney(s))
+// printHeadline writes the lines every `downshift stats` starts with: the
+// tokens saved from the requested model (work and cache apart), the
+// guardrails, the model mix and, when spawns name one, tokens saved per agent
+// type. No dollars: `downshift report` prices tokens at report time.
+func printHeadline(w io.Writer, s Stats, saved TokenSavingView, days int) {
+	fmt.Fprintf(w, "%s · %d subagents · %s\n", headlineWindow(days), s.Total, headlineTokens(saved.Total))
 	fmt.Fprintf(w, "Guardrails held %d risky moves · frontier rewrites on doubt: %d\n", s.Corrected, s.FrontierOnDoubt)
 	fmt.Fprintf(w, "%s\n", headlineMix(s))
+	if types := agentTypeLines(saved); len(types) > 1 || len(types) == 1 && types[0].AgentType != UntypedAgent {
+		lines := make([]string, len(types))
+		for i, t := range types {
+			lines[i] = t.Line
+		}
+		fmt.Fprintf(w, "By agent type: %s\n", strings.Join(lines, " · "))
+	}
 }
 
 func headlineWindow(days int) string {
@@ -34,20 +41,11 @@ func headlineWindow(days int) string {
 	}
 }
 
-func headlineMoney(s Stats) string {
-	sum := s.Summary()
-	if sum.CostEvents == 0 {
-		return "no real cost yet: wire SubagentStop with downshift setup"
+func headlineTokens(t TokenSaving) string {
+	if line := t.Line(); line != "" {
+		return line
 	}
-	net := sum.NetSavedUSD
-	inferred := ""
-	if sum.InferredBaselineEvents > 0 {
-		inferred = fmt.Sprintf("; %d of %d events on an inferred baseline", sum.InferredBaselineEvents, sum.CostEvents)
-	}
-	if net < 0 {
-		return fmt.Sprintf("net cost $%.2f more (saved $%.2f, cost more $%.2f%s)", -net, sum.GrossSavedUSD, sum.OverspendUSD, inferred)
-	}
-	return fmt.Sprintf("net saved $%.2f (saved $%.2f, cost more $%.2f%s)", net, sum.GrossSavedUSD, sum.OverspendUSD, inferred)
+	return "tokens not observed yet: wire SubagentStop with downshift setup"
 }
 
 // headlineMix renders the models children ended up on, most used first.
