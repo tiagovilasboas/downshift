@@ -96,6 +96,7 @@ func Run(argv []string, o Options) (res Result) {
 	var held *heldWriter
 	cmd := exec.Command(path, argv[1:]...)
 	cmd.Args[0] = argv[0]
+	ownProcessGroup(cmd)
 	cmd.Stdin = o.Stdin
 	cmd.Stderr = stderr
 	if o.Compact && res.Family != FamilyNone {
@@ -121,7 +122,7 @@ func Run(argv []string, o Options) (res Result) {
 		for {
 			select {
 			case s := <-signals:
-				_ = cmd.Process.Signal(s)
+				signalChild(cmd, s)
 			case <-done:
 				return
 			}
