@@ -114,8 +114,8 @@ func TestHandleStatus_OK(t *testing.T) {
 	if resp.Stats.Down != 1 {
 		t.Errorf("Down count = %d, want 1", resp.Stats.Down)
 	}
-	if !resp.Stats.IsEstimate {
-		t.Error("IsEstimate must be true")
+	if resp.Stats.Dollars != "downshift report" {
+		t.Errorf("Dollars = %q, want the report command", resp.Stats.Dollars)
 	}
 }
 

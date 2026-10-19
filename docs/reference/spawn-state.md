@@ -99,8 +99,14 @@ Codex, OpenCode today) have no token figures, never zeros. Dollars:
 
 The same figures appear in `downshift session` (header, a tokens column per row,
 a `by agent type` line), the statusline (`tokens saved work N% · cache M%`),
-`downshift watch`, `dsmon` and the child-end line (`48k tokens (work 2.1k,
-cache 46k) · saved from opus`).
+`downshift watch`, `dsmon`, the child-end line (`48k tokens (work 2.1k,
+cache 46k) · saved from opus`) and the dashboard (`downshift serve`:
+`stats.tokens_saved` and `stats.tokens_saved_by_harness` in `/api/status`, each
+`{tokens, line, by_agent_type}`; a harness with no priced child has no entry).
+`downshift try` has no tokens for one decision and says only where they would
+run: `→ small: opus → haiku · its tokens would run on a cheaper model than
+requested`, or `(not applied, tokens stay on opus)` when the hook would leave
+the spawn alone.
 
 ### `mods/savvy-progress`
 

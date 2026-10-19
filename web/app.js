@@ -192,13 +192,9 @@ function renderMonitor(data) {
   const src = activeHarness ? switches.filter(e => e.harness === activeHarness) : switches;
   const down = src.filter(e => e.verdict === 'DOWNSHIFT' && e.applied === true);
   const up   = src.filter(e => e.verdict === 'UPSHIFT' && e.applied === true);
-  // Savings count only an applied downshift whose quota surface is available.
-  const credited = down.filter(e => e.quota === 'available');
   const totalN = activeHarness ? src.length : (stats.total ?? src.length);
   const downN = activeHarness ? down.length : (stats.down ?? down.length);
   const upN = activeHarness ? up.length : (stats.up ?? up.length);
-  const estUSD = credited.reduce((s, e) => s + (e.estimated_savings || 0) * 0.01, 0);
-  const economyN = credited.length;
   set('monitor-stats',
     `${info(escapeHtml(totalN))} events &nbsp; ${ok(`${escapeHtml(downN)}↓`)} &nbsp; ${warn(`${escapeHtml(upN)}↑`)}` +
     (activeHarness ? ` &nbsp; ${dim(`· ${escapeHtml(activeHarness)} only`)}` : '') +
@@ -206,23 +202,43 @@ function renderMonitor(data) {
     `<div class="dim">${observedChildLine(data, activeHarness)}</div>`
   );
 
-  // ── economy bar ──
-  if (economyN > 0) {
-    const sec = document.getElementById('economy-section');
-    if (sec) sec.style.display = '';
-    set('economy-bar', `
-<div class="economy-bar">
+  // ── tokens saved: the server's TokenSavings, never dollars ──
+  renderTokensSaved(stats, activeHarness);
+  renderCompaction(data.compaction);
+}
+
+// tokensBlockFor is the server's tokens saved block for all harnesses or one
+// chip. A harness with no priced child token record has no block.
+function tokensBlockFor(stats, harness) {
+  if (!harness) return stats.tokens_saved;
+  const map = stats.tokens_saved_by_harness;
+  return map && typeof map === 'object' ? map[harness] : undefined;
+}
+
+// renderTokensSaved draws the share of child tokens that ran on a cheaper
+// model than requested, work and cache apart, with one line per agent type.
+// No figure until a child's tokens are known; dollars live in the report.
+function renderTokensSaved(stats, harness) {
+  const block = tokensBlockFor(stats, harness);
+  const sec = document.getElementById('tokens-section');
+  if (!block || !block.line) {
+    if (sec) sec.style.display = 'none';
+    set('tokens-saved', '');
+    return;
+  }
+  if (sec) sec.style.display = '';
+  const types = Array.isArray(block.by_agent_type) ? block.by_agent_type : [];
+  const typeRows = types.length > 1 || (types.length === 1 && types[0].agent_type !== 'untyped')
+    ? types.map(t => `<div class="dim">${escapeHtml(t.line || '')}</div>`).join('') : '';
+  const dollars = escapeHtml(stats.dollars || 'downshift report');
+  set('tokens-saved', `
+<div class="tokens-bar">
   <div>
-    <div class="big">$${estUSD.toFixed(2)}</div>
-    <div class="sub">catalog list-price counterfactual · last 24h · ${economyN} downshift${economyN!==1?'s':''}</div>
+    <div class="big">${escapeHtml(block.line)}</div>
+    <div class="sub">ran on a cheaper model than requested · last 24h · dollars: ${dollars}</div>
+    ${typeRows}
   </div>
 </div>`);
-  } else {
-    const sec = document.getElementById('economy-section');
-    if (sec) sec.style.display = 'none';
-    set('economy-bar', '');
-  }
-  renderCompaction(data.compaction);
 }
 
 function escapeHtml(value) {

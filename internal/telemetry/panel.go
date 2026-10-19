@@ -88,7 +88,7 @@ func BuildPanel(events []Event, sessionHash string) PanelView {
 	mine := sessionEvents(events, sessionHash)
 	saved := TokenSavings(mine)
 	v.Tokens, v.TokensLine = saved.Total, saved.Total.Line()
-	v.ByAgentType = agentTypeLines(saved)
+	v.ByAgentType = AgentTypeLines(saved)
 	for _, ev := range mine {
 		if !IsDecisionRow(ev) {
 			continue
@@ -128,8 +128,9 @@ func ChildTokensLabel(c TokenSaving, d Event) string {
 	return out
 }
 
-// agentTypeLines orders the agent types by tokens, most first.
-func agentTypeLines(v TokenSavingView) []PanelAgentType {
+// AgentTypeLines is one row per agent type with its AgentTypeLine, ordered by
+// tokens, most first.
+func AgentTypeLines(v TokenSavingView) []PanelAgentType {
 	out := make([]PanelAgentType, 0, len(v.ByAgentType))
 	for typ, s := range v.ByAgentType {
 		out = append(out, PanelAgentType{AgentType: typ, Tokens: s, Line: AgentTypeLine(typ, s)})

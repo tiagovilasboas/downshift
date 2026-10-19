@@ -5,7 +5,6 @@ package server
 
 import (
 	"encoding/json"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -101,11 +100,10 @@ func TestStatus_UnobservedDoesNotInflateSavingsOrHonor(t *testing.T) {
 	if cx.Quota != "held" || cx.Honor != "unobserved" {
 		t.Fatalf("held surface = honor %s quota %s, want unobserved/held", cx.Honor, cx.Quota)
 	}
-	if got.Stats.EstUnits < 0.39 || got.Stats.EstUnits > 0.41 {
-		t.Fatalf("est_units = %v, want 0.4 (available claude downshift only)", got.Stats.EstUnits)
-	}
-	if math.Abs(got.Stats.EstUSD-0.004) > 1e-9 {
-		t.Fatalf("est_usd = %v, want 0.004", got.Stats.EstUSD)
+	// Usage with tokens but no price, or with no tokens, is not a priced
+	// child: no tokens saved figure, for any harness, never a zero.
+	if got.Stats.TokensSaved.Line != "" || got.Stats.TokensSavedByHarness != nil {
+		t.Fatalf("tokens saved = %+v by harness %+v, want none", got.Stats.TokensSaved, got.Stats.TokensSavedByHarness)
 	}
 }
 

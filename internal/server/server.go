@@ -25,21 +25,15 @@ import (
 
 const DefaultPort = "7474"
 
-// estimatedCostPerUnitUSD is a placeholder conversion rate from normalised
-// savings units to dollars. It is NOT billing; it matches the
-// --cost-per-unit default semantics. Real billing needs provider token counts.
-const estimatedCostPerUnitUSD = 0.01
-
 type rawEvent struct {
-	Timestamp       string  `json:"timestamp"`
-	Harness         string  `json:"harness"`
-	From            string  `json:"requested_model"`
-	To              string  `json:"final_model"`
-	RequestedEffort string  `json:"requested_reasoning_effort,omitempty"`
-	FinalEffort     string  `json:"final_reasoning_effort,omitempty"`
-	Verdict         string  `json:"verdict"`
-	Complexity      string  `json:"complexity"`
-	Savings         float64 `json:"estimated_savings"`
+	Timestamp       string `json:"timestamp"`
+	Harness         string `json:"harness"`
+	From            string `json:"requested_model"`
+	To              string `json:"final_model"`
+	RequestedEffort string `json:"requested_reasoning_effort,omitempty"`
+	FinalEffort     string `json:"final_reasoning_effort,omitempty"`
+	Verdict         string `json:"verdict"`
+	Complexity      string `json:"complexity"`
 	// Outcome and Corrections decide whether the decision changed the spawn
 	// (telemetry.AppliedRewrite); only applied downshifts count as savings.
 	Outcome     string   `json:"outcome,omitempty"`
@@ -55,23 +49,20 @@ type rawEvent struct {
 	CachedTokens *int64 `json:"cached_tokens,omitempty"`
 	// CacheWriteTokens is the cache-creation part of CachedTokens (nil when untracked).
 	CacheWriteTokens *int64 `json:"cache_write_tokens,omitempty"`
-	// ActualCostUSD is the real routed cost in USD (nil when untracked).
-	ActualCostUSD *float64 `json:"actual_cost_usd,omitempty"`
-	// BaselineCostUSD is the real baseline cost in USD (nil when untracked).
-	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"`
-	CorrelationID   string   `json:"correlation_id,omitempty"`
-	SessionID       string   `json:"session_id,omitempty"`
-	QuotaStatus     string   `json:"quota_status,omitempty"`
-	CreditHeld      bool     `json:"credit_held,omitempty"`
-	RewriteHonored  *bool    `json:"rewrite_honored,omitempty"`
-	LinkedDecision  string   `json:"linked_decision,omitempty"`
+	CorrelationID    string `json:"correlation_id,omitempty"`
+	SessionID        string `json:"session_id,omitempty"`
+	QuotaStatus      string `json:"quota_status,omitempty"`
+	CreditHeld       bool   `json:"credit_held,omitempty"`
+	RewriteHonored   *bool  `json:"rewrite_honored,omitempty"`
+	LinkedDecision   string `json:"linked_decision,omitempty"`
 	// Honor, Quota, and Usage are the spawn surface for this decision.
 	Honor string `json:"honor"`
 	Quota string `json:"quota"`
 	Usage string `json:"usage"`
 
 	// src is the event as the telemetry package parsed it; the dashboard
-	// money comes from telemetry.Summarize(src), the same code `stats` runs.
+	// tokens saved come from telemetry.TokenSavings(src), the code every live
+	// view and `stats` run. Dollars are not sent: `downshift report`.
 	src telemetry.Event
 }
 
@@ -116,20 +107,47 @@ type statsBlock struct {
 	OK    int `json:"ok"`
 	// NotApplied counts classified shifts the hook left unchanged
 	// (allow, held by a guardrail, or blocked).
-	NotApplied int     `json:"not_applied"`
-	EstUSD     float64 `json:"est_usd"`
-	// EstUnits accumulates the normalised savings fraction per DOWNSHIFT event.
-	EstUnits float64 `json:"est_units"`
-	// RealSavedUSD is the NET real saving (telemetry.SavingsSummary.NetSavedUSD):
-	// rewrites that cost more are subtracted, exactly as in `downshift stats`.
-	// The key is kept for older clients; Savings has the labelled breakdown.
-	RealSavedUSD float64 `json:"real_saved_usd"`
-	// RealCostEvents counts events that carried both real cost fields.
-	RealCostEvents int `json:"real_cost_events"`
-	// Savings is the shared savings definition, estimated at list price.
-	Savings telemetry.SavingsSummary `json:"savings"`
-	// IsEstimate is always true: dollar figures are estimates, not billing.
-	IsEstimate bool `json:"is_estimate"`
+	NotApplied int `json:"not_applied"`
+	// TokensSaved is the share of child tokens that ran on a cheaper model
+	// than requested, work and cache apart (telemetry.TokenSavings), over
+	// every harness; TokensSavedByHarness is the same per harness chip.
+	// Tokens, never dollars (owner decision 2026-10-19).
+	TokensSaved          tokensBlock            `json:"tokens_saved"`
+	TokensSavedByHarness map[string]tokensBlock `json:"tokens_saved_by_harness,omitempty"`
+	// Dollars names the command that prices the tokens: the dashboard has none.
+	Dollars string `json:"dollars"`
+}
+
+// tokensBlock is one population's tokens saved with the shared labels, so the
+// page only draws. Line is "" when no child's tokens are known: the page then
+// shows no figure, never a zero.
+type tokensBlock struct {
+	Tokens      telemetry.TokenSaving      `json:"tokens"`
+	Line        string                     `json:"line"`
+	ByAgentType []telemetry.PanelAgentType `json:"by_agent_type"`
+}
+
+func newTokensBlock(v telemetry.TokenSavingView) tokensBlock {
+	return tokensBlock{Tokens: v.Total, Line: v.Total.Line(), ByAgentType: telemetry.AgentTypeLines(v)}
+}
+
+// tokensSaved folds the windowed events once for all harnesses and once per
+// harness. A harness with no priced child token record has no entry.
+func tokensSaved(srcs []telemetry.Event) (tokensBlock, map[string]tokensBlock) {
+	byHarness := map[string][]telemetry.Event{}
+	for _, ev := range srcs {
+		byHarness[ev.Harness] = append(byHarness[ev.Harness], ev)
+	}
+	out := map[string]tokensBlock{}
+	for h, evs := range byHarness {
+		if v := telemetry.TokenSavings(evs); v.Total.Observed() {
+			out[h] = newTokensBlock(v)
+		}
+	}
+	if len(out) == 0 {
+		out = nil
+	}
+	return newTokensBlock(telemetry.TokenSavings(srcs)), out
 }
 
 var window = 24 * time.Hour
@@ -324,15 +342,12 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	for i := range events {
 		srcs[i] = events[i].src
 	}
-	st.Savings = telemetry.Summarize(srcs)
-	st.RealSavedUSD = st.Savings.NetSavedUSD
-	st.RealCostEvents = st.Savings.CostEvents
-	// IsEstimate is always true: dollar figures are estimates, not provider billing.
-	st.IsEstimate = true
+	st.TokensSaved, st.TokensSavedByHarness = tokensSaved(srcs)
+	st.Dollars = "downshift report"
 	var decisions []rawEvent
 	for _, e := range events {
 		if telemetry.IsCostOnlyOutcome(e.Outcome) {
-			// Usage records carry real cost (summed by Summarize above);
+			// Usage records carry child tokens (folded by TokenSavings above);
 			// baseline (no-route) records are control-group events.
 			// Neither is a routing decision.
 			continue
@@ -343,11 +358,6 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 		switch {
 		case e.Verdict == "DOWNSHIFT" && applied:
 			st.Down++
-			// unknown and held are not credited routes and do not add savings.
-			if e.Quota == telemetry.QuotaAvailable {
-				st.EstUnits += e.Savings
-				st.EstUSD = st.EstUnits * estimatedCostPerUnitUSD
-			}
 		case e.Verdict == "UPSHIFT" && applied:
 			st.Up++
 		case e.Verdict == "DOWNSHIFT" || e.Verdict == "UPSHIFT":

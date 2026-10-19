@@ -21,7 +21,7 @@ func printHeadline(w io.Writer, s Stats, saved TokenSavingView, days int) {
 	fmt.Fprintf(w, "%s · %d subagents · %s\n", headlineWindow(days), s.Total, headlineTokens(saved.Total))
 	fmt.Fprintf(w, "Guardrails held %d risky moves · frontier rewrites on doubt: %d\n", s.Corrected, s.FrontierOnDoubt)
 	fmt.Fprintf(w, "%s\n", headlineMix(s))
-	if types := agentTypeLines(saved); len(types) > 1 || len(types) == 1 && types[0].AgentType != UntypedAgent {
+	if types := AgentTypeLines(saved); len(types) > 1 || len(types) == 1 && types[0].AgentType != UntypedAgent {
 		lines := make([]string, len(types))
 		for i, t := range types {
 			lines[i] = t.Line
