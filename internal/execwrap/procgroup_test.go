@@ -23,7 +23,12 @@ func TestRun_SignalReachesGrandchildren(t *testing.T) {
 	fakeBin(t, "go", "sleep 30 & echo $! > "+pidFile+"; wait")
 	sig := make(chan os.Signal, 1)
 	go func() {
-		time.Sleep(500 * time.Millisecond)
+		for end := time.Now().Add(5 * time.Second); time.Now().Before(end); time.Sleep(20 * time.Millisecond) {
+			if _, err := os.Stat(pidFile); err == nil {
+				time.Sleep(100 * time.Millisecond) // let the pid be written
+				break
+			}
+		}
 		sig <- syscall.SIGTERM
 	}()
 	var out, errb bytes.Buffer

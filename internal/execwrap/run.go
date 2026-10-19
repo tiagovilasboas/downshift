@@ -239,8 +239,18 @@ func compactSafely(data []byte, want compressor.Format) (out []byte, ok bool) {
 		}
 	}()
 	r := compressor.CompressExit(data, compressor.ModeSafe, 0)
-	if !r.Applied || r.Format != want || len(r.Output) >= len(data) {
+	if !r.Applied || r.Format != want {
 		return nil, false
 	}
-	return r.Output, true
+	out = append(append([]byte{}, r.Output...), Marker(len(data), len(r.Output))...)
+	if len(out) >= len(data) {
+		return nil, false
+	}
+	return out, true
+}
+
+// Marker is the last line of compacted output. It tells the reader that the
+// text above is a summary, not what the program printed.
+func Marker(rawBytes, summaryBytes int) string {
+	return fmt.Sprintf("[downshift exec: compacted %d to %d bytes]\n", rawBytes, summaryBytes)
 }

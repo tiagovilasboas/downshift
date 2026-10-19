@@ -56,7 +56,7 @@ func TestRun_ExitCodesAndCompaction(t *testing.T) {
 			name: "passing go test compacts", bin: "go",
 			script: "printf '" + strings.ReplaceAll(passingSuite, "\t", "\\t") + "'",
 			argv:   []string{"go", "test", "./..."}, compact: true,
-			wantCode: 0, wantClass: ExitClassZero, wantOut: "Go test: PASS (3 packages ok)\n", compacted: true, wantFamily: FamilyGoTest,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: "Go test: PASS (3 packages ok)\n" + Marker(len(passingSuite), len("Go test: PASS (3 packages ok)\n")), compacted: true, wantFamily: FamilyGoTest,
 		},
 		{
 			name: "kill switch keeps raw", bin: "go",
@@ -80,7 +80,7 @@ func TestRun_ExitCodesAndCompaction(t *testing.T) {
 			name: "clean git status compacts", bin: "git",
 			script: "printf 'On branch main\\nYour branch is up to date with origin/main.\\n\\nnothing to commit, working tree clean\\n'",
 			argv:   []string{"git", "status"}, compact: true,
-			wantCode: 0, wantClass: ExitClassZero, wantOut: "On branch main (working tree clean)\n", compacted: true, wantFamily: FamilyGitStatus,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: "On branch main (working tree clean)\n" + Marker(len("On branch main\nYour branch is up to date with origin/main.\n\nnothing to commit, working tree clean\n"), len("On branch main (working tree clean)\n")), compacted: true, wantFamily: FamilyGitStatus,
 		},
 		{
 			name: "dirty git status stays raw", bin: "git",

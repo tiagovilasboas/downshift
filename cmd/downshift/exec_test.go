@@ -7,6 +7,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,20 +21,29 @@ func TestRunExec_ExitCodeAndPromptFreeLog(t *testing.T) {
 	state := t.TempDir()
 	t.Setenv(paths.EnvStateDir, state)
 	bin := t.TempDir()
-	script := "#!/bin/sh\nprintf 'ok  \\tsecret/pkg/a\\t0.1s\\nok  \\tsecret/pkg/b\\t0.1s\\n'\nexit \"${FAKE_EXIT:-0}\"\n"
+	var suite strings.Builder
+	for i := 0; i < 8; i++ {
+		fmt.Fprintf(&suite, "ok  \tsecret/pkg/p%d\t0.1s\n", i)
+	}
+	rawSuite := suite.String()
+	if err := os.WriteFile(filepath.Join(bin, "suite.txt"), []byte(rawSuite), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	script := "#!/bin/sh\ncat \"$(dirname \"$0\")/suite.txt\"\nexit \"${FAKE_EXIT:-0}\"\n"
 	if err := os.WriteFile(filepath.Join(bin, "go"), []byte(script), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 
+	summary := "Go test: PASS (8 packages ok)\n"
 	cases := []struct {
 		name, exit, killSwitch string
 		wantRC                 int
 		wantOut                string
 	}{
-		{"clean run compacts", "0", "", 0, "Go test: PASS (2 packages ok)\n"},
-		{"non-zero exit stays raw and keeps the code", "1", "", 1, "ok  \tsecret/pkg/a\t0.1s\nok  \tsecret/pkg/b\t0.1s\n"},
-		{"kill switch keeps raw", "0", "0", 0, "ok  \tsecret/pkg/a\t0.1s\nok  \tsecret/pkg/b\t0.1s\n"},
+		{"clean run compacts", "0", "", 0, summary + execwrap.Marker(len(rawSuite), len(summary))},
+		{"non-zero exit stays raw and keeps the code", "1", "", 1, rawSuite},
+		{"kill switch keeps raw", "0", "0", 0, rawSuite},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
