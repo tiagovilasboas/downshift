@@ -210,6 +210,36 @@ writes one field in its own file; the earlier RTK `init` call was removed in #71
 optional, at-most-daily refresh of public capability scores, off with `DOWNSHIFT_SCORES=off`. A companion's saving is
 never counted as routing: `doctor` reports the companion so a before/after is not attributed to Downshift alone.
 
+## Where the saving can come from
+
+Nothing in this section is measured. It is the arithmetic of the ceiling, to read before comparing any percentage
+above with another tool's.
+
+**Routing has a structural ceiling.** It acts only on subagent spawns, only on the share of those a guardrail lets
+through, and only by the price gap between two models. The saving on total spend is at most:
+
+    subagent share of spend  x  price gap  x  routable share
+
+Worked example, **hypothetical, not an observation**: if subagents are 30% of a session's spend, the price gap on the
+tokens that move is 50% (Sonnet to Haiku on uncached work tokens; zero on cache reads), and 35% of spawns are routable
+(b5 applied 19 of 56, b6 3 of 34), the ceiling is 0.30 x 0.50 x 0.35, about 5%. With a routable share of 10%, as in
+b6, it falls under 2%. This is why b5 shows 12% on a task set built from delegation while natural use is estimated
+near 3%: the first inflates the subagent share and the routable share, the second does not. The three factors are the
+quantities worth logging, not their product.
+
+**Output cutting acts elsewhere and multiplies.** A tool that shrinks command and tool output (a compression proxy
+such as Headroom, an output wrapper such as `downshift exec`, or RTK) reduces the tokens the main session reads and
+then re-reads from cache on every later turn: the part of spend routing cannot touch. The two levers act on different
+tokens, so their savings compose roughly as (1 - r)(1 - o), not as a sum. Hypothetical: a 5% routing saving on top of
+a 20% output saving takes spend to 0.95 x 0.80, a 24% total saving. The composition breaks if cutting changes
+behaviour (more retries, more turns), which is part of what the arms of
+[benchmark-output-cutting.md](benchmark-output-cutting.md) test.
+
+**Status.** None of this is measured. No run has combined routing with output cutting; the 12% (rung D) and 3%
+(rung B estimate) are the only routing figures; no output-cutting figure from Downshift or its companions has been
+reproduced here. The protocol and its pre-registered cut criterion are in
+[benchmark-output-cutting.md](benchmark-output-cutting.md).
+
 ## Why catalog prices are not the invoice
 
 Catalog prices are public list prices from a dated snapshot. An invoice differs by plan (Pro, Max and Team have no

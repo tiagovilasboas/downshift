@@ -1,0 +1,14 @@
+On branch feature/rate-limit
+Your branch is ahead of 'origin/feature/rate-limit' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	modified:   internal/httpx/limit.go
+	new file:   internal/httpx/limit_test.go
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	deleted:    internal/httpx/old.go
+

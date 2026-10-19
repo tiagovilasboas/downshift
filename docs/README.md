@@ -36,6 +36,7 @@ Markdown file names under `docs/` are lowercase kebab-case; only names a tool re
 | [guides/claude-code.md](guides/claude-code.md) | Primary harness: opusplan, baseline inference, plan mode, emitted vs honored vs used |
 | [guides/evidence.md](guides/evidence.md) | Evidence ladder: list price, telemetry estimate, controlled benchmark, real tasks, cost per completed task |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Reproducible comparison: fixed Opus vs native opusplan vs opusplan + Downshift |
+| [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Protocol: routing vs output cutting (Headroom, `downshift exec`) vs RTK, with a pre-registered cut criterion |
 | [guides/when-to-use.md](guides/when-to-use.md) | Downshift vs gateways and direct SDK; Claude Code is the primary harness |
 | [guides/config.md](guides/config.md) | State dir, env vars, project tier floor, migration |
 | [reference/beta-exit.md](reference/beta-exit.md) | Beta graduation criteria |
@@ -125,6 +126,7 @@ The observability and verification domain delivers empirical proof of routing be
 | [guides/verification.md](guides/verification.md) | Guide | `verification-report`: observed child checks and estimated cost by tier, sensor limits |
 | [guides/evidence.md](guides/evidence.md) | Guide | Evidence ladder: list price, telemetry estimate, controlled benchmark, real tasks, cost per task |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Guide | Protocol for reproducible three-arm comparison (Opus vs opusplan vs opusplan+Downshift) |
+| [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Guide | Protocol, not yet run: routing, output cutting and RTK arms, cut criterion |
 | [guides/pilot.md](guides/pilot.md) | Guide | Two-week team pilot methodology: routed vs control |
 | [guides/billing-comparison-template.md](guides/billing-comparison-template.md) | Guide | Template to compare provider billing with `downshift stats --export` |
 | [design/engineering-loop.md](design/engineering-loop.md) | Design | Feedback loop: telemetry, outcome evals, reviewed feedback, and offline tuning |
