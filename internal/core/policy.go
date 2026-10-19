@@ -125,6 +125,9 @@ type Guards struct {
 	// SemanticLift is true when the semantic boost, not a regex rule, raised
 	// the complexity. Telemetry records it so non-deterministic lifts stay visible.
 	SemanticLift bool
+	// TaskFocus is true when the actionable task of a long brief, with the
+	// rest scored as context, lowered the class or changed its confidence.
+	TaskFocus bool
 }
 
 // Shadow collects the observe-only opinions computed beside the routing.
@@ -220,6 +223,7 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 			RiskFloor:    cls.RiskFloor,
 			RiskAbstain:  cls.RiskAbstain,
 			SemanticLift: cls.SemanticLift,
+			TaskFocus:    cls.TaskFocus,
 		},
 		Shadow: Shadow{
 			NBUpshift:   nbUp,

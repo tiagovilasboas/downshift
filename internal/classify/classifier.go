@@ -184,22 +184,19 @@ func trivialInNegation(lower string, start int) bool {
 	return trivialNegationRE.MatchString(window)
 }
 
-// trivialVotesLongBrief returns the signal weight when at least one match is not
-// a constraint mention (negation or backtick command quote). Multiple matches
-// still add at most one vote, like MatchString.
-func trivialVotesLongBrief(prompt, lower string, s signal) int {
-	locs := s.re.FindAllStringIndex(lower, -1)
-	if len(locs) == 0 {
-		return 0
-	}
+// trivialJobLocs keeps the TRIVIAL matches that are not a constraint mention
+// (negation, backtick command quote, git branch label, path segment). A long
+// brief's Trivial row votes, once, only when one of them is left.
+func trivialJobLocs(prompt, lower string, locs [][]int) [][]int {
+	var out [][]int
 	for _, loc := range locs {
 		if trivialInCommandQuote(prompt, loc[0]) || trivialInNegation(lower, loc[0]) ||
 			trivialGitBranchMention(lower, loc[0]) || trivialRenameInPath(lower, loc[0]) {
 			continue
 		}
-		return s.weight
+		out = append(out, loc)
 	}
-	return 0
+	return out
 }
 
 // trivialGitBranchMention is a repo label ("git branch `feature/foo`"), not a
@@ -271,6 +268,10 @@ type Classification struct {
 	// UnsupportedLanguage is true when the prompt reads as a language the
 	// tables do not cover (lang_guard.go). Confident is then false.
 	UnsupportedLanguage bool
+	// TaskFocus is true when the actionable task of a long brief, scored with
+	// the rest of the brief as context (focusOnTask), lowered the class or
+	// changed its confidence.
+	TaskFocus bool
 }
 
 // Classify scores a task prompt against all complexity classes and returns
@@ -296,15 +297,54 @@ func Classify(prompt string) Classification {
 	longBrief := wordCount >= minBriefWords
 	isBounded := longBrief && boundedBrief(prompt, wordCount)
 
+	// A long brief that states its task gets a second, task-focused tally
+	// (focus); focusOnTask decides below which one stands.
+	var task []span
+	explicitTask := false
+	if longBrief && !isBounded {
+		task, explicitTask = taskSpans(lower)
+	}
+	focus := map[Complexity]int{Trivial: 0, Simple: 0, Medium: 0, Complex: 0}
+	taskSignal := false
+	mentions := 0 // Complex rows that matched only outside the task
+
 	for _, s := range signals {
-		if longBrief && !isBounded && s.class == Trivial {
-			scores[s.class] += trivialVotesLongBrief(prompt, lower, s)
+		if !s.re.MatchString(lower) {
 			continue
 		}
-		if s.re.MatchString(lower) {
-			scores[s.class] += s.weight
+		locs := s.re.FindAllStringIndex(lower, -1)
+		if s.class == Complex {
+			// "do not touch the architecture" takes the architecture out of the work.
+			locs = dropNegatedScope(lower, locs)
 		}
+		if longBrief && !isBounded && s.class == Trivial {
+			locs = trivialJobLocs(prompt, lower, locs)
+		}
+		if len(locs) == 0 {
+			continue
+		}
+		scores[s.class] += s.weight
+		if task == nil {
+			continue
+		}
+		inTask := anyInSpans(task, locs)
+		taskSignal = taskSignal || inTask
+		switch {
+		case s.class == Medium || inTask || (s.class == Complex && strongMention(lower, locs)):
+			focus[s.class] += s.weight
+		case s.class == Complex:
+			mentions++
+		}
+		// Trivial and Simple words outside the task are side steps and
+		// constraints ("commit in English", "add a comment if needed").
 	}
+	// Outside the task a Complex word describes the project, not the work.
+	// Each such row counts 1. Under an explicit "Task:" section the author has
+	// said the rest is context, so all of them together count 1.
+	if explicitTask {
+		mentions = min(mentions, 1)
+	}
+	focus[Complex] += mentions
 
 	// Architectural vocabulary inside a prose-only edit is the topic of the
 	// text, not the size of the work (see docEditOnly).
@@ -328,6 +368,7 @@ func Classify(prompt string) Classification {
 	implementSpec := strings.Contains(lower, "implement") && len(exportedCallRE.FindAllString(prompt, -1)) >= 3
 	if implementSpec {
 		scores[Complex] += 2
+		focus[Complex] += 2
 		contentMatched = true
 	}
 
@@ -356,7 +397,35 @@ func Classify(prompt string) Classification {
 		return Classification{Complexity: Medium, Scores: scores, Confident: false, NoSignal: true, UnsupportedLanguage: foreign}
 	}
 
-	// Pick the top score. Iterate high→low so ties favor higher complexity.
+	top, confident := pickClass(scores)
+	// Outside English and Portuguese a risk word is invisible to risk.go, so
+	// a keyword hit is not enough to act on (see lang_guard.go).
+	if foreign {
+		confident = false
+	}
+	cls := Classification{
+		Complexity:          top,
+		Scores:              scores,
+		Confident:           confident,
+		UnsupportedLanguage: foreign,
+	}
+	// Only an explicit "Task:" section says the rest of the brief is context,
+	// so only then does the focused tally drop the length nudge (unless the
+	// task itself is long). Sentences around imperative ones may describe
+	// the work itself.
+	if taskSignal {
+		if !explicitTask || spanWords(lower, task) >= minBriefWords {
+			focus[Complex]++
+		}
+		cls = focusOnTask(cls, focus)
+	}
+	// The risk floor reads the whole brief, context included.
+	return ApplyRiskFloor(full, cls)
+}
+
+// pickClass returns the top-scoring class and whether it beat the runner-up
+// by a clear margin. Ties favour the higher complexity.
+func pickClass(scores map[Complexity]int) (Complexity, bool) {
 	order := []Complexity{Complex, Medium, Simple, Trivial}
 	top := Medium // safe default when nothing matches
 	topScore := 0
@@ -366,8 +435,6 @@ func Classify(prompt string) Classification {
 			top = c
 		}
 	}
-
-	// Confidence: the top class beat the runner-up by a clear margin.
 	second := 0
 	for _, c := range order {
 		if c == top {
@@ -377,18 +444,35 @@ func Classify(prompt string) Classification {
 			second = scores[c]
 		}
 	}
-	confident := topScore > 0 && topScore-second >= 2
+	return top, topScore > 0 && topScore-second >= 2
+}
 
-	// Outside English and Portuguese a risk word is invisible to risk.go, so
-	// a keyword hit is not enough to act on (see lang_guard.go).
-	if foreign {
+// focusOnTask chooses between the whole-brief result and the task-focused
+// tally of a long brief. The focus may lower the class or its confidence; it
+// never spends money on doubt:
+//   - it never raises the class, and never makes a Complex result confident;
+//   - an unconfident lower class only clears confidence on the whole-brief
+//     class, so the router keeps the requested model.
+func focusOnTask(base Classification, focus map[Complexity]int) Classification {
+	top, confident := pickClass(focus)
+	if base.UnsupportedLanguage {
 		confident = false
 	}
-
-	return ApplyRiskFloor(full, Classification{
+	switch {
+	case top > base.Complexity,
+		top == Complex && confident && !base.Confident,
+		top == base.Complexity && confident == base.Confident:
+		return base
+	case top < base.Complexity && !confident:
+		base.Confident = false
+		base.TaskFocus = true
+		return base
+	}
+	return Classification{
 		Complexity:          top,
-		Scores:              scores,
+		Scores:              focus,
 		Confident:           confident,
-		UnsupportedLanguage: foreign,
-	})
+		UnsupportedLanguage: base.UnsupportedLanguage,
+		TaskFocus:           true,
+	}
 }
