@@ -220,9 +220,13 @@ const merge = (prev: Flow | null, input: ProgressInput): Flow => {
   }
 }
 
+const DERIVED_TITLE = 'Subagents'
+const DERIVED_LINGER_MS = 30_000
+
 const label = (f: Flow): string => {
   const s = tr()
   if (f.isFinished) return s.done
+  if (f.title === DERIVED_TITLE && f.tasks.length === 0 && f.total > 0) return `${f.running} running · ${f.done} done`
   if (f.phase === 'plan') return s.plan
   if (f.phase === 'design') return s.design
   const count = f.total ? `${f.done}/${f.total}` : `${f.running} ${s.busy}`
@@ -779,6 +783,22 @@ async function dsRefresh($: EngineInterface, force = false): Promise<void> {
   }
 }
 
+
+/** Band state from the live subagents when no flow with a total is registered; null when nothing is live. */
+const derivedFlow = (list: AgentRun[], at: number): Flow | null => {
+  const live = list.filter(a => a.status === 'running')
+  let batch: AgentRun[]
+  if (live.length) {
+    const since = Math.min(...live.map(a => a.startedAt))
+    batch = list.filter(a => a.startedAt >= since)
+  } else {
+    batch = list.filter(a => a.endedAt !== undefined && at - a.endedAt <= DERIVED_LINGER_MS)
+  }
+  if (!batch.length) return null
+  const running = batch.filter(a => a.status === 'running').length
+  return { title: DERIVED_TITLE, total: batch.length, done: batch.length - running, running, phase: 'delegate', isFinished: running === 0, tasks: [] }
+}
+
 const dsLabel = (a: AgentRun): string | undefined => {
   const key = dsKeys.get(a.id)
   return key && ds ? ds.spawns.find(x => x.tool_use === key)?.label : undefined
@@ -1219,7 +1239,9 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    const f = await read($, flow)
+    // Downshift local patch: with no registered flow (or total 0) the band follows the live subagents.
+    const registered = await read($, flow)
+    const f = registered !== null && registered.total > 0 ? registered : derivedFlow(await read($, agents), await read($, now))
     if (f === null || e.props.hasSurvey) return next(e)
     await dsRefresh($)
     // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is

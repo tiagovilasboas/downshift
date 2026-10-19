@@ -52,3 +52,34 @@ for (const [name, answer] of [
     expect(await shows($, 'AbovePrompt', /Downshift/)).toBe(false)
   })
 }
+
+// With no flow registered the band follows the live subagents; a registered flow keeps upstream drawing.
+const spawnTwo = async ($: Engine, on: On) => {
+  mock.clock(on)
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('process.run', () => ({ value: { exitCode: 1, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  let n = 0
+  on('agent.spawn', () => ({ model: 'claude-sonnet-5-5', agentId: `a${++n}` }))
+  for (const id of ['t1', 't2']) {
+    await $.agent.spawn({ tool_use_id: id, prompt: 'p', description: `Work ${id}`, subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
+  }
+}
+
+test('band fallback: no registered flow, the band shows the running subagents', async ($, on) => {
+  await spawnTwo($, on)
+  expect(await shows($, 'AbovePrompt', /^Subagents$/)).toBe(true)
+  expect(await shows($, 'AbovePrompt', /^2 running · 0 done$/)).toBe(true)
+})
+
+test('band fallback: a flow with total 0 is replaced the same way', async ($, on) => {
+  await spawnTwo($, on)
+  await $.tool.call({ tool: 'mcp__savvy-progress__progress', title: 'Empty plan', phase: 'delegate' } as never)
+  expect(await shows($, 'AbovePrompt', /^2 running · 0 done$/)).toBe(true)
+})
+
+test('band fallback: a registered flow with a total keeps upstream drawing', async ($, on) => {
+  await spawnTwo($, on)
+  await $.tool.call({ tool: 'mcp__savvy-progress__progress', title: 'Ship it', total: 4, done: 1, phase: 'delegate' } as never)
+  expect(await shows($, 'AbovePrompt', /^Tasks 1\/4$/)).toBe(true)
+  expect(await shows($, 'AbovePrompt', /running · /)).toBe(false)
+})

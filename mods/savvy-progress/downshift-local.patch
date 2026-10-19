@@ -43,7 +43,21 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      effort: { low: 'נמוך', medium: 'בינוני', high: 'גבוה', xhigh: 'גבוה מאוד', max: 'מקסימלי' },
    },
  } as const
-@@ -340,10 +344,10 @@
+@@ -216,9 +220,13 @@
+   }
+ }
+ 
++const DERIVED_TITLE = 'Subagents'
++const DERIVED_LINGER_MS = 30_000
++
+ const label = (f: Flow): string => {
+   const s = tr()
+   if (f.isFinished) return s.done
++  if (f.title === DERIVED_TITLE && f.tasks.length === 0 && f.total > 0) return `${f.running} running · ${f.done} done`
+   if (f.phase === 'plan') return s.plan
+   if (f.phase === 'design') return s.design
+   const count = f.total ? `${f.done}/${f.total}` : `${f.running} ${s.busy}`
+@@ -340,10 +348,10 @@
  <g class="tk">${ticks.join('')}</g>
  </g>
  <rect x="${pillX}" width="${pillW}" height="${BAR_H}" rx="${BAR_H / 2}" fill="${color}"/>
@@ -56,7 +70,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  </svg>`
  }
  
-@@ -355,17 +359,19 @@
+@@ -355,17 +363,19 @@
  // ---------------------------------------------------------------------------
  // Agents panel: every subagent of the session, plus the tasks the flow planned.
  
@@ -83,7 +97,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
  const TIER_MODEL: Record<string, [model: string, effort: string]> = {
    fable: ['Fable', 'high'],
-@@ -509,25 +515,24 @@
+@@ -509,25 +519,24 @@
  @media (prefers-reduced-motion: reduce){.live{animation:none}}
  </style>`
  
@@ -121,7 +135,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    f(7, 22, 2, 4, CLAY, 'la')
    f(17, 22, 2, 4, CLAY, 'la')
    f(11, 22, 2, 4, CLAY, 'lb')
-@@ -535,106 +540,36 @@
+@@ -535,106 +544,36 @@
  }
  
  // Pure CSS, run by the compositor: no redraws. Periods divide one second, so the
@@ -234,7 +248,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    if (status === 'failed') return `<path d="M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8" stroke="#D0453F" stroke-width="1.8" stroke-linecap="round"/>`
    return `<circle cx="${x}" cy="${y}" r="5" fill="none" stroke="#9a9a96" stroke-width="1.4"/><path d="M${x} ${y - 2.5}v2.8l1.8 1.2" fill="none" stroke="#9a9a96" stroke-width="1.4" stroke-linecap="round"/>`
  }
-@@ -658,8 +593,8 @@
+@@ -658,8 +597,8 @@
  const crabWidth = (scale: number): number => Math.round(CRAB_BOX * scale * 100) / 100
  
  // A panel crab at x in a row of width W: on the mirrored side and facing left in Hebrew.
@@ -245,7 +259,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
  const svg = (W: number, H: number, body: string): string =>
    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${PANE_CSS}${CRAB_CSS}${body}</svg>`
-@@ -700,6 +635,8 @@
+@@ -700,6 +639,8 @@
    const ctx = ctxOf(a)
    const textW = W - 42 - 22
    const meta = [runModel(a)]
@@ -254,7 +268,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    if (a.round > 1) meta.push(`${s.round} ${a.round}`)
    if (a.status === 'failed') meta.push(s.failed)
    const barW = textW
-@@ -712,7 +649,7 @@
+@@ -712,7 +653,7 @@
    return svg(
      W,
      66,
@@ -263,7 +277,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  <text class="t" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(a.description || a.type, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tier === 'other' ? a.type : tierWord(tier))}</tspan><tspan class="s">  ${xml(meta.join('  ·  '))}</tspan></text>
  ${steps && stepsW > 30 ? `<text class="t" ${startText(W, 42, 49)} font-family="${FONT}" font-size="11" font-variant-numeric="tabular-nums">${xml(fitText(steps, 11, stepsW))}</text>` : ''}
-@@ -732,7 +669,7 @@
+@@ -732,7 +673,7 @@
    return svg(
      W,
      46,
@@ -272,7 +286,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  <text class="s" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(`${p.n}. ${p.title}`, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tierWord(tier))}</tspan><tspan class="m">  ${xml(meta.filter(Boolean).join('  ·  '))}</tspan></text>
  ${statusMark(mx(W, W - 8), 16, 'planned', color)}
-@@ -742,15 +679,15 @@
+@@ -742,15 +683,15 @@
  
  const compactSvg = (W: number, list: AgentRun[], planned: Planned[], t: ReturnType<typeof totals>): string => {
    const icons = [
@@ -292,10 +306,12 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      .join('')
    const x = shown.length * 36 + (more ? 4 : 0)
    return svg(
-@@ -790,6 +727,74 @@
+@@ -788,8 +729,92 @@
+   if (p.autoOpenedFor === key) return
+   await update($, panel, prev => ({ ...prev, autoOpenedFor: key }))
    void $.ui.open({ id: PANE, title: tr().pane })
- }
- 
++}
++
 +// ---------------------------------------------------------------------------
 +// Downshift local patch (2026-10-19): what Downshift did per spawn and this session.
 +// Reads `downshift session --panel` (prompt-free JSON, computed by Downshift; this
@@ -334,8 +350,8 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +  } catch {
 +    return undefined
 +  }
-+}
-+
+ }
+ 
 +async function dsRefresh($: EngineInterface, force = false): Promise<void> {
 +  try {
 +    const at = await $.clock.now()
@@ -346,6 +362,22 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +  } catch {
 +    ds = null
 +  }
++}
++
++
++/** Band state from the live subagents when no flow with a total is registered; null when nothing is live. */
++const derivedFlow = (list: AgentRun[], at: number): Flow | null => {
++  const live = list.filter(a => a.status === 'running')
++  let batch: AgentRun[]
++  if (live.length) {
++    const since = Math.min(...live.map(a => a.startedAt))
++    batch = list.filter(a => a.startedAt >= since)
++  } else {
++    batch = list.filter(a => a.endedAt !== undefined && at - a.endedAt <= DERIVED_LINGER_MS)
++  }
++  if (!batch.length) return null
++  const running = batch.filter(a => a.status === 'running').length
++  return { title: DERIVED_TITLE, total: batch.length, done: batch.length - running, running, phase: 'delegate', isFinished: running === 0, tasks: [] }
 +}
 +
 +const dsLabel = (a: AgentRun): string | undefined => {
@@ -367,7 +399,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  export const register: Register = (on, options) => {
    on('session.start', async ($, e, next) => {
      const started = await next(e)
-@@ -948,6 +953,12 @@
+@@ -948,6 +973,12 @@
        return [...list.filter(a => a.id !== run.id), run].slice(-200)
      })
      await update($, now, () => at)
@@ -380,7 +412,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (e.subagentType.startsWith('savvy-')) {
        const f = await read($, flow)
        await autoOpen($, f && !f.isFinished ? f.title : 'savvy-flow')
-@@ -998,6 +1009,7 @@
+@@ -998,6 +1029,7 @@
    on('turn.complete', async ($, e, next) => {
      const agentId = e.agentId
      if (agentId) {
@@ -388,7 +420,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
        const at = await $.clock.now()
        await update($, agents, list =>
          list.map((a): AgentRun => {
-@@ -1031,6 +1043,7 @@
+@@ -1031,6 +1063,7 @@
      const s = tr()
      const ui = $.ui.resolve(e)
      const { Box, Text, Button } = ui
@@ -396,7 +428,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      const list = await read($, agents)
      const f = await read($, flow)
      const p: Panel = await read($, panel)
-@@ -1093,6 +1106,7 @@
+@@ -1093,6 +1126,7 @@
            ))}
            <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
              <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
@@ -404,7 +436,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {toggleCompact}
              {isEmpty && <Text dimColor>{s.empty}</Text>}
              {running.length > 0 && section('h-run', `${s.running} · ${running.length}`)}
-@@ -1135,6 +1149,7 @@
+@@ -1135,6 +1169,7 @@
            <Text dimColor wrap="truncate-end">
              {'  '}
              {tier === 'other' ? a.type : tierWord(tier)} · {model}
@@ -412,7 +444,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
            </Text>
            <Text wrap="truncate-end">
-@@ -1160,6 +1175,7 @@
+@@ -1160,6 +1195,7 @@
          <Text dimColor>
            ≈{fmtCost(t.cost)} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
          </Text>
@@ -420,15 +452,20 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
          {p.isCompact ? (
            <Text wrap="truncate-end">
              {[...running, ...finished].map(a => (
-@@ -1205,6 +1221,7 @@
+@@ -1203,8 +1239,11 @@
+   })
+ 
    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-     const f = await read($, flow)
+-    const f = await read($, flow)
++    // Downshift local patch: with no registered flow (or total 0) the band follows the live subagents.
++    const registered = await read($, flow)
++    const f = registered !== null && registered.total > 0 ? registered : derivedFlow(await read($, agents), await read($, now))
      if (f === null || e.props.hasSurvey) return next(e)
 +    await dsRefresh($)
      // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
      // never nested: the desktop drops a band that nests it.
      const drawn = await Promise.resolve(next(e)).catch(() => null)
-@@ -1242,6 +1259,7 @@
+@@ -1242,6 +1281,7 @@
              {crewButton}
              {dismiss}
            </Box>
@@ -436,7 +473,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
            {below}
          </Box>
        )
-@@ -1264,6 +1282,7 @@
+@@ -1264,6 +1304,7 @@
            {crewButton}
            {dismiss}
          </Box>

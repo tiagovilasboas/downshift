@@ -51,6 +51,8 @@ draws; every number and label is computed by Downshift
 | row | the model line gains the label: `opus → sonnet (mid)`, `held: original model kept`, `kept`, `control (unrouted)` |
 | header and band | one line: `Downshift saved ≈$X (est., list price) · N switched · M held` (`over` when negative; `Downshift on` before anything is priced) |
 
+| band fallback (`derivedFlow`) | when no flow is registered, or its total is 0, the band is drawn from the subagents the mod already tracks: title `Subagents`, `N running · M done`, bar `M/(N+M)` over the current batch (spawns since the oldest running one; a finished batch lingers 30 s). A registered flow with a total keeps upstream drawing |
+
 Nothing here touches routing and it spends nothing. The savings figure is an
 estimate: list prices of the priced children against their baseline. The new
 test file `hooks/downshift.test.ts` is Downshift's own (not upstream). The
