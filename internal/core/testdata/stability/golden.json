@@ -1,0 +1,1002 @@
+{
+ "ambiguous.json/AMB-01": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-02": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-03": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-04": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-05": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-06": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-07": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-08": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-09": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-10": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-11": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-12": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-13": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-14": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-15": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-16": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-17": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-18": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-19": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-20": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-21": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "ambiguous.json/AMB-22": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-23": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-24": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-25": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-26": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "ambiguous.json/AMB-27": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-28": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-29": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-30": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-31": {
+  "complexity": "SIMPLE",
+  "confident": false,
+  "tier": "small"
+ },
+ "ambiguous.json/AMB-32": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-33": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-34": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "ambiguous.json/AMB-35": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "ambiguous.json/AMB-36": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "ambiguous.json/AMB-37": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "ambiguous.json/AMB-38": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "ambiguous.json/AMB-39": {
+  "complexity": "COMPLEX",
+  "confident": false,
+  "tier": "frontier"
+ },
+ "ambiguous.json/AMB-40": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-01": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-02": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-03": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-04": {
+  "complexity": "COMPLEX",
+  "confident": false,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-05": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-06": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-07": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "hard.json/HARD-08": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-09": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-10": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-11": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-12": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-13": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-14": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "hard.json/HARD-15": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-16": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-17": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-18": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-19": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-20": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-21": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-22": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "hard.json/HARD-23": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "hard.json/HARD-24": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-25": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-26": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-27": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-28": {
+  "complexity": "COMPLEX",
+  "confident": false,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-29": {
+  "complexity": "COMPLEX",
+  "confident": false,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-30": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-31": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-32": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-33": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-34": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-35": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-36": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-37": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "hard.json/HARD-38": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-39": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "hard.json/HARD-40": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "risk.json/risk-01": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-02": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-03": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-04": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-05": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-06": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-07": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-08": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "risk.json/risk-09": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "risk.json/risk-10": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-11": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "risk.json/risk-12": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-13": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "risk.json/risk-14": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "risk.json/risk-15": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-16": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-17": {
+  "complexity": "SIMPLE",
+  "confident": true,
+  "tier": "small"
+ },
+ "risk.json/risk-18": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-19": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-20": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-21": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "risk.json/risk-22": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-23": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-24": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-25": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-26": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-27": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-28": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-29": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "risk.json/risk-30": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "risk.json/risk-31": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-32": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "risk.json/risk-33": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "risk.json/risk-34": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-35": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-36": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-37": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "risk.json/risk-38": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-39": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "risk.json/risk-40": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "standard.json/STD-01": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-02": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-03": {
+  "complexity": "SIMPLE",
+  "confident": true,
+  "tier": "small"
+ },
+ "standard.json/STD-04": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-05": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "standard.json/STD-06": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-07": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-08": {
+  "complexity": "SIMPLE",
+  "confident": true,
+  "tier": "small"
+ },
+ "standard.json/STD-09": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "standard.json/STD-10": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-11": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-12": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-13": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "standard.json/STD-14": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "standard.json/STD-15": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "standard.json/STD-16": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-17": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "standard.json/STD-18": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-19": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-20": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-21": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "standard.json/STD-22": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-23": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-24": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-25": {
+  "complexity": "MEDIUM",
+  "confident": true,
+  "tier": "mid"
+ },
+ "standard.json/STD-26": {
+  "complexity": "SIMPLE",
+  "confident": false,
+  "tier": "small"
+ },
+ "standard.json/STD-27": {
+  "complexity": "COMPLEX",
+  "confident": false,
+  "tier": "frontier"
+ },
+ "standard.json/STD-28": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-29": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-30": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-31": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-32": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "standard.json/STD-33": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-34": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-35": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-36": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-37": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "standard.json/STD-38": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-39": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "standard.json/STD-40": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-01": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-02": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-03": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-04": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-05": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-06": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-07": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-08": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-09": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-10": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-11": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-12": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-13": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-14": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-15": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-16": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-17": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-18": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-19": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-20": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-21": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-22": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-23": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-24": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-25": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-26": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-27": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-28": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-29": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-30": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-31": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-32": {
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
+ },
+ "trivial.json/trivial-33": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-34": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-35": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-36": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-37": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ },
+ "trivial.json/trivial-38": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-39": {
+  "complexity": "MEDIUM",
+  "confident": false,
+  "tier": "mid"
+ },
+ "trivial.json/trivial-40": {
+  "complexity": "TRIVIAL",
+  "confident": true,
+  "tier": "small"
+ }
+}
