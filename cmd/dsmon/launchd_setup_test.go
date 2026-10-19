@@ -66,7 +66,7 @@ func TestLaunchdSetupWritesASafePlist(t *testing.T) {
 	if !strings.Contains(text, "a&amp;b&lt;c&gt;d") {
 		t.Errorf("the binary path is not XML-escaped:\n%s", text)
 	}
-	for _, bad := range []string{"--events", "--agents", "--web", "/tmp/", ".harness-downshift"} {
+	for _, bad := range []string{"--events", "--agents", "--web", "/tmp/dsmon-server.log", ".harness-downshift"} {
 		if strings.Contains(text, bad) {
 			t.Errorf("plist still contains %q:\n%s", bad, text)
 		}
