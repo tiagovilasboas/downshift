@@ -51,10 +51,10 @@ const ROWS_BUDGET = 80_000
 const READ_REVEAL_LIMIT = 12
 const SEARCH_REVEAL_LIMIT = 60
 const ACTIVITY_TTL_MS = 45_000
-const ADD_COLOR = '#98c379'
-const DEL_COLOR = '#e06c75'
-const LIGHT_ADD_COLOR = '#14532d'
-const LIGHT_DEL_COLOR = '#7f1d1d'
+const ADD_COLOR = '#22c55e'
+const DEL_COLOR = '#f87171'
+const LIGHT_ADD_COLOR = '#15803d'
+const LIGHT_DEL_COLOR = '#b91c1c'
 const LIGHT_HOVER = '#f0f2f5'
 const THEME_FILE = '.local/state/omarchy/current/theme/colors.toml'
 const THEME_POLL_MS = 2000
@@ -1463,7 +1463,7 @@ export const register: Register = (on, options) => {
       if (!c) return []
       const out: Seg[] = []
       if (c[0] > 0) out.push({ t: ` ?:${c[0]}`, c: gitColors['?'] ?? addColor })
-      if (c[1] > 0) out.push({ t: ` M:${c[1]}`, c: gitColors.M ?? '#e5c07b' })
+      if (c[1] > 0) out.push({ t: ` M:${c[1]}`, c: gitColors.M ?? '#d6dae2' })
       if (c[2] > 0) out.push({ t: ` D:${c[2]}`, c: theme.urgent })
       return out
     }

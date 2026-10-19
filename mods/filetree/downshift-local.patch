@@ -1,0 +1,126 @@
+diff --git a/mods/filetree/hooks/git.ts b/mods/filetree/hooks/git.ts
+--- a/mods/filetree/hooks/git.ts
++++ b/mods/filetree/hooks/git.ts
+@@ -25,12 +25,12 @@ const ICON = {
+ }
+ 
+ export const TONES: Record<string, { bright: string[]; dim: string[]; solid: string }> = {
+-  orange: { bright: ['#f97316', '#fb923c', '#fdba74', '#ffedd5'], dim: ['#8a4316', '#a3562a', '#bd7444', '#d29267'], solid: '#f97316' },
++  orange: { bright: ['#ffffff', '#f5f7fa', '#d6dae2', '#aab0b8'], dim: ['#4a4e55', '#5c6068', '#70757d', '#868a90'], solid: '#f5f7fa' },
+   green: { bright: ['#22c55e', '#4ade80', '#86efac', '#dcfce7'], dim: ['#14532d', '#166534', '#2f7a47', '#4f9a66'], solid: '#4ade80' },
+-  teal: { bright: ['#14b8a6', '#2dd4bf', '#5eead4', '#ccfbf1'], dim: ['#0f5e57', '#16786f', '#2a9488', '#4fb3a8'], solid: '#2dd4bf' },
+-  blue: { bright: ['#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'], dim: ['#1e3a8a', '#1d4ed8', '#3b6fd1', '#6b93dc'], solid: '#60a5fa' },
+-  purple: { bright: ['#a855f7', '#c084fc', '#d8b4fe', '#f3e8ff'], dim: ['#581c87', '#6b21a8', '#8b47c4', '#a874d6'], solid: '#c084fc' },
+-  cyan: { bright: ['#06b6d4', '#22d3ee', '#67e8f9', '#cffafe'], dim: ['#155e75', '#0e7490', '#2b8ea3', '#5aa9b8'], solid: '#22d3ee' },
++  teal: { bright: ['#d6dae2', '#aab0b8', '#868a90', '#6b7076'], dim: ['#33363b', '#3f4348', '#4d5157', '#5c6068'], solid: '#aab0b8' },
++  blue: { bright: ['#d6dae2', '#aab0b8', '#868a90', '#6b7076'], dim: ['#33363b', '#3f4348', '#4d5157', '#5c6068'], solid: '#aab0b8' },
++  purple: { bright: ['#d6dae2', '#aab0b8', '#868a90', '#6b7076'], dim: ['#33363b', '#3f4348', '#4d5157', '#5c6068'], solid: '#aab0b8' },
++  cyan: { bright: ['#d6dae2', '#aab0b8', '#868a90', '#6b7076'], dim: ['#33363b', '#3f4348', '#4d5157', '#5c6068'], solid: '#aab0b8' },
+   red: { bright: ['#ef4444', '#f87171', '#fca5a5', '#fee2e2'], dim: ['#7f1d1d', '#991b1b', '#b54040', '#c96a6a'], solid: '#f87171' },
+ }
+ 
+diff --git a/mods/filetree/hooks/icons.ts b/mods/filetree/hooks/icons.ts
+--- a/mods/filetree/hooks/icons.ts
++++ b/mods/filetree/hooks/icons.ts
+@@ -114,22 +114,24 @@ export function fileIcon(n: FileNode, open: boolean, isRepo: boolean): string {
+   return cp(EXTS[ext] ?? 0xf0214)
+ }
+ 
++// Downshift local patch: same tokens as the downshift-theme mod. Added is the
++// brand green, deleted a soft red, modified light grey, renamed/copied mid grey.
+ export const GIT_COLOR: Record<string, string> = {
+-  A: '#98c379',
+-  '?': '#98c379',
+-  R: '#61afef',
+-  C: '#61afef',
+-  M: '#e5c07b',
+-  T: '#e5c07b',
++  A: '#22c55e',
++  '?': '#22c55e',
++  R: '#868a90',
++  C: '#868a90',
++  M: '#d6dae2',
++  T: '#d6dae2',
+ }
+ 
+ export const LIGHT_GIT_COLOR: Record<string, string> = {
+-  A: '#14532d',
+-  '?': '#14532d',
+-  R: '#1e3a8a',
+-  C: '#1e3a8a',
+-  M: '#78350f',
+-  T: '#78350f',
++  A: '#15803d',
++  '?': '#15803d',
++  R: '#4b5563',
++  C: '#4b5563',
++  M: '#374151',
++  T: '#374151',
+ }
+ 
+ const PRIORITY = ['U', 'D', 'M', 'T', 'R', 'C', 'A', '?']
+diff --git a/mods/filetree/hooks/register.tsx b/mods/filetree/hooks/register.tsx
+--- a/mods/filetree/hooks/register.tsx
++++ b/mods/filetree/hooks/register.tsx
+@@ -51,10 +51,10 @@ const ROWS_BUDGET = 80_000
+ const READ_REVEAL_LIMIT = 12
+ const SEARCH_REVEAL_LIMIT = 60
+ const ACTIVITY_TTL_MS = 45_000
+-const ADD_COLOR = '#98c379'
+-const DEL_COLOR = '#e06c75'
+-const LIGHT_ADD_COLOR = '#14532d'
+-const LIGHT_DEL_COLOR = '#7f1d1d'
++const ADD_COLOR = '#22c55e'
++const DEL_COLOR = '#f87171'
++const LIGHT_ADD_COLOR = '#15803d'
++const LIGHT_DEL_COLOR = '#b91c1c'
+ const LIGHT_HOVER = '#f0f2f5'
+ const THEME_FILE = '.local/state/omarchy/current/theme/colors.toml'
+ const THEME_POLL_MS = 2000
+@@ -1463,7 +1463,7 @@ export const register: Register = (on, options) => {
+       if (!c) return []
+       const out: Seg[] = []
+       if (c[0] > 0) out.push({ t: ` ?:${c[0]}`, c: gitColors['?'] ?? addColor })
+-      if (c[1] > 0) out.push({ t: ` M:${c[1]}`, c: gitColors.M ?? '#e5c07b' })
++      if (c[1] > 0) out.push({ t: ` M:${c[1]}`, c: gitColors.M ?? '#d6dae2' })
+       if (c[2] > 0) out.push({ t: ` D:${c[2]}`, c: theme.urgent })
+       return out
+     }
+diff --git a/mods/filetree/hooks/tree.ts b/mods/filetree/hooks/tree.ts
+--- a/mods/filetree/hooks/tree.ts
++++ b/mods/filetree/hooks/tree.ts
+@@ -8,8 +8,8 @@ const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'bas
+ 
+ export const DEFAULT_THEME: Theme = {
+   fg: '',
+-  accent: '#5b9bd5',
+-  muted: '#808a96',
++  accent: '#f5f7fa',
++  muted: '#868a90',
+   urgent: '#d0605e',
+   selection: '#6b7280',
+   bg: '',
+diff --git a/mods/filetree/tests/surfaces.test.tsx b/mods/filetree/tests/surfaces.test.tsx
+--- a/mods/filetree/tests/surfaces.test.tsx
++++ b/mods/filetree/tests/surfaces.test.tsx
+@@ -1182,9 +1182,9 @@ test('a light theme setting draws every color at AAA contrast in the terminal, a
+   await clock.settle()
+   const light = await texts(ui)
+   expect(light).toContain('"activeBg":"#e2e6ec","hoverBg":"#f0f2f5"')
+-  for (const c of ['#1e3a8a', '#78350f', '#14532d', '#374151']) expect(light).toContain(`"color":"${c}"`)
++  for (const c of ['#1e3a8a', '#374151', '#15803d', '#b91c1c']) expect(light).toContain(`"color":"${c}"`)
+   expect(light).toContain('#431407')
+-  expect(light).not.toContain('"color":"#5b9bd5"')
++  expect(light).not.toContain('"color":"#f5f7fa"')
+   await ui.unmount()
+   const desktop = await $.ui.mount({ plugin: 'filetree', surface: 'desktop', component: 'Pane', requestId: 'filetree', props: paneProps(60) })
+   await clock.settle()
+@@ -1199,7 +1199,7 @@ test('a light theme setting draws every color at AAA contrast in the terminal, a
+   await clock.settle()
+   const dark = await texts(ui)
+   expect(dark).toContain('"activeBg":"#6b7280","hoverBg":"#3b3d41"')
+-  for (const c of ['#5b9bd5', '#e5c07b', '#98c379', '#808a96']) expect(dark).toContain(`"color":"${c}"`)
++  for (const c of ['#f5f7fa', '#d6dae2', '#22c55e', '#868a90']) expect(dark).toContain(`"color":"${c}"`)
+   expect(dark).not.toContain('"color":"#1e3a8a"')
+   await ui.unmount()
+ })

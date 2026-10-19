@@ -200,6 +200,14 @@ func runHookAdapter[E any](
 	if len(data) > maxHookPayloadBytes {
 		return fail("PAYLOAD_TOO_LARGE")
 	}
+	// Another harness's copy of a spawn its own hook already handles: allow it
+	// unchanged and record nothing, so one spawn is one decision.
+	if owner := foreignPayloadOwner(harness, data); owner != "" {
+		wire.failOpen(wireFailOpenNoRoute, correlationID)
+		responded = true
+		fmt.Fprint(os.Stderr, foreignPayloadNote(harness, owner))
+		return 0
+	}
 	ev, err := parse(data)
 	if err != nil {
 		return fail("INVALID_EVENT")
@@ -343,6 +351,10 @@ func runHonor(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) 
 	if err != nil || len(data) > maxHookPayloadBytes {
 		return neutral()
 	}
+	if owner := foreignPayloadOwner(port.ID, data); owner != "" {
+		fmt.Fprint(os.Stderr, foreignPayloadNote(port.ID, owner))
+		return neutral()
+	}
 	obs := hookport.ObserveHonor(port, data, buildVersion, catalog)
 	if !obs.Observed {
 		fmt.Fprintf(os.Stderr, "downshift: honor unobserved for %s\n", port.ID)
@@ -358,6 +370,25 @@ func runHonor(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) 
 		fmt.Fprintf(os.Stderr, "downshift: %s\n", obs.Note)
 	}
 	return 0
+}
+
+// foreignPayloadOwner names the harness that sent a payload to the hook of
+// harness when it is not that harness's own (core.ForeignPayloadOwner on the
+// declared PayloadMarkers), or "". Only top-level keys are read; a payload that
+// is not a JSON object is left to the normal parse path.
+func foreignPayloadOwner(harness string, data []byte) string {
+	var top map[string]json.RawMessage
+	if json.Unmarshal(data, &top) != nil {
+		return ""
+	}
+	return core.ForeignPayloadOwner(harness, func(key string) bool {
+		_, ok := top[key]
+		return ok
+	})
+}
+
+func foreignPayloadNote(harness, owner string) string {
+	return fmt.Sprintf("downshift: %s payload reached the %s hook; left to the %s hook, nothing recorded\n", owner, harness, owner)
 }
 
 func confidenceValue(confident bool) float64 {
@@ -478,6 +509,10 @@ func runUsage(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) 
 	const maxHookPayloadBytes = 1 << 20
 	data, err := readHookPayload(in, maxHookPayloadBytes+1)
 	if err != nil || len(data) > maxHookPayloadBytes {
+		return 0
+	}
+	if owner := foreignPayloadOwner(port.ID, data); owner != "" {
+		fmt.Fprint(os.Stderr, foreignPayloadNote(port.ID, owner))
 		return 0
 	}
 	obs := hookport.ObserveUsage(port, data, buildVersion, catalog)

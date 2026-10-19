@@ -12,7 +12,7 @@
 | Model choice | Tier → cheapest in session allowlist | Matcher + profiles (design; not wired to hooks) |
 | Training labels | `misroute:` issues → `signals.go` | Reviewed `--required-tier` only |
 
-![Capability Router v2 — offline pipeline, not the production hook path](../brand/downshift-capability-router-v2.png)
+Offline pipeline (not the production hook path): features → tier probabilities → safety floor → profile match.
 
 ---
 

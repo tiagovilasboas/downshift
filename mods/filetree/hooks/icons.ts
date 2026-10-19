@@ -114,22 +114,24 @@ export function fileIcon(n: FileNode, open: boolean, isRepo: boolean): string {
   return cp(EXTS[ext] ?? 0xf0214)
 }
 
+// Downshift local patch: same tokens as the downshift-theme mod. Added is the
+// brand green, deleted a soft red, modified light grey, renamed/copied mid grey.
 export const GIT_COLOR: Record<string, string> = {
-  A: '#98c379',
-  '?': '#98c379',
-  R: '#61afef',
-  C: '#61afef',
-  M: '#e5c07b',
-  T: '#e5c07b',
+  A: '#22c55e',
+  '?': '#22c55e',
+  R: '#868a90',
+  C: '#868a90',
+  M: '#d6dae2',
+  T: '#d6dae2',
 }
 
 export const LIGHT_GIT_COLOR: Record<string, string> = {
-  A: '#14532d',
-  '?': '#14532d',
-  R: '#1e3a8a',
-  C: '#1e3a8a',
-  M: '#78350f',
-  T: '#78350f',
+  A: '#15803d',
+  '?': '#15803d',
+  R: '#4b5563',
+  C: '#4b5563',
+  M: '#374151',
+  T: '#374151',
 }
 
 const PRIORITY = ['U', 'D', 'M', 'T', 'R', 'C', 'A', '?']

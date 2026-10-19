@@ -1,13 +1,30 @@
 {
   "name": "Downshift",
-  "tagline": "One harness. Any model.",
+  "tagline": "Right model for every subagent.",
   "colors": {
-    "background": "#0D1117",
-    "surface": "#161B22",
-    "text": "#F9FAFB",
-    "muted": "#9CA3AF",
+    "background": "#0A0A0A",
+    "surface": "#1A1A1A",
+    "line": "#1F2329",
+    "text": "#FFFFFF",
+    "body": "#D6DAE2",
+    "muted": "#868A90",
     "accent": "#22C55E",
-    "black": "#0D1117",
-    "white": "#F9FAFB"
+    "accentDeep": "#16A34A",
+    "black": "#0A0A0A",
+    "white": "#FFFFFF"
+  },
+  "usage": "Black first. White and grey carry the interface. Green is a small accent: a status dot, an ok line, a chip, a focus ring.",
+  "terminal": {
+    "text": "#D6DAE2",
+    "inverseText": "#0A0A0A",
+    "subtle": "#868A90",
+    "inactive": "#5C6168",
+    "success": "#22C55E",
+    "error": "#F87171",
+    "warning": "#E0B34A",
+    "claude": "#FFFFFF",
+    "permission": "#FFFFFF",
+    "promptBorder": "#2A2D31",
+    "bashBorder": "#22C55E"
   }
 }

@@ -111,7 +111,7 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 		}
 		if resolved != nil {
 			for i := range prior {
-				if !telemetry.IsCostOnlyOutcome(prior[i].Outcome) && decisionKey(prior[i]) == resolved.LinkedDecision {
+				if !telemetry.IsObservationOutcome(prior[i].Outcome) && decisionKey(prior[i]) == resolved.LinkedDecision {
 					target = &prior[i]
 				}
 			}
@@ -152,7 +152,7 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 func pricedCall(prior []telemetry.Event, callHash string) bool {
 	keys := map[string]bool{}
 	for _, ev := range prior {
-		if ev.ToolUseHash == callHash && !telemetry.IsCostOnlyOutcome(ev.Outcome) {
+		if ev.ToolUseHash == callHash && !telemetry.IsObservationOutcome(ev.Outcome) {
 			keys[decisionKey(ev)] = true
 		}
 	}
@@ -197,7 +197,7 @@ func LinkTargetBy(harness string, prior []telemetry.Event, sessionHash, callHash
 	callSeen := false
 	if callHash != "" {
 		for _, ev := range prior {
-			if ev.ToolUseHash == callHash && !telemetry.IsCostOnlyOutcome(ev.Outcome) {
+			if ev.ToolUseHash == callHash && !telemetry.IsObservationOutcome(ev.Outcome) {
 				callSeen = true
 				break
 			}
@@ -207,7 +207,7 @@ func LinkTargetBy(harness string, prior []telemetry.Event, sessionHash, callHash
 	var bestTime time.Time
 	for i := range prior {
 		ev := &prior[i]
-		if telemetry.IsCostOnlyOutcome(ev.Outcome) || telemetry.IsFailureOutcome(ev.Outcome) {
+		if telemetry.IsObservationOutcome(ev.Outcome) || telemetry.IsFailureOutcome(ev.Outcome) {
 			continue // cost records and fail-open/error lines are not decisions
 		}
 		if ev.HasRealCost() || priced[decisionKey(*ev)] {

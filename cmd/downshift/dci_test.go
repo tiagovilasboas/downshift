@@ -303,6 +303,9 @@ func TestDCIInspect_JSONFlag(t *testing.T) {
 }
 
 func TestDCIImpact(t *testing.T) {
+	if raceEnabled {
+		t.Skip("impact indexes the repository inside the fixed 2.5 s hook budget; that budget does not hold under -race")
+	}
 	var stdout, stderr bytes.Buffer
 
 	// 1. Test human-readable impact command on symbol target
