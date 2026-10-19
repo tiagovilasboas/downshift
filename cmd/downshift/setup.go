@@ -104,7 +104,8 @@ Wire every Downshift hook into the harnesses found on this machine.
                        plan mode, You should know on)
   --no-plugin          Claude Code: keep the hooks in settings.json instead of
                        installing the Downshift plugin (the plugin carries the
-                       same hooks plus the cache-tax mod)
+                       same hooks plus the cache-tax mod) and skip the sibling
+                       mods (savvy-progress, filetree)
 
 Claude Code gets the policy by default, only for keys it does not already set.
 `
@@ -132,6 +133,7 @@ func setupRun(o setupOptions) int {
 			o.PluginActive[t.Name] = active
 			extra[t.Name] = notes
 		}
+		extra[t.Name] = append(extra[t.Name], ensureMods(o, t)...)
 		p := planTarget(o, t)
 		p.notes = append(extra[t.Name], p.notes...)
 		plans = append(plans, p)

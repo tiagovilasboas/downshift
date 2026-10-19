@@ -12,7 +12,9 @@ a vendored third-party Claude Code mod (MIT, pinned in [NOTICE](../NOTICE)):
 
 The third mod, cache-tax, lives inside the plugin at
 [`hooks/cache-tax/`](../hooks/cache-tax/README.md). None of them holds routing
-logic; they need Claude Code 2.1.287 or later, and `downshift setup` never writes them.
+logic; they need Claude Code 2.1.287 or later. On Claude Code `downshift setup` installs
+savvy-progress and filetree with `claude plugin install` (never by editing a settings
+file); `--no-plugin` skips them.
 
 ## Install
 
