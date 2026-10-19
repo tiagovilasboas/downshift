@@ -241,8 +241,9 @@ Edges worth knowing, all read from the code:
 - `policyfile` → `core`, `hookctx`. `quota` → `core`, `paths`, `quotamodel`.
   `nbopinion` → `core`, `nbtier`. `routeadapt` → `adapt`, `core`.
 - `hookutil` → `core` (shared payload helpers; it is not a leaf).
-- Not wired into any production package today: `internal/routecache` and
-  `internal/routingv2/router` (tests only).
+- Removed on 2026-10-19 because no production package imported them:
+  `internal/routecache`, `internal/orchestration`, `internal/routingv2/router`
+  and `internal/routingv2/matcher`.
 
 Invariant checks run for this refresh (all from the repository root):
 
@@ -427,7 +428,7 @@ Downshift's codebase and documentation are structured strictly according to Clea
 | `internal/contextopt`, `internal/compressor`, `internal/sensor` | Context optimization registry, native compressor (observe/safe), tool-output sensor |
 | `internal/codeintel` | Downshift Code Intelligence (DCI): pure Go symbol extraction, incremental inverted index, BM25 ranking, abstention, and structural context packager. Isolated from routing: imports only `paths`; `core` and `classify` do not import it (`telemetry` imports it for the stats export type). |
 | `internal/semantic`, `internal/nbtier` | In-process hash embedder (`semantic`) and naive-Bayes opinion (`nbtier`). The raise-only boost policy lives in `internal/fuse`. `nbopinion` calls `nbtier.Suggest` and `nbtier.Trivial`. Core production sources do not import `nbtier`. The semantic boost and the naive-Bayes opinion stay in-process and do not exec |
-| `internal/routingv2/*`, `internal/decisionintelligence`, `internal/outcome`, `internal/benchmark` | Shadow classifiers and training, advisory recommendation, outcome evals, classifier KPIs. `routingv2/router` and `internal/routecache` are not imported by any production package today (tests only) |
+| `internal/routingv2/*`, `internal/decisionintelligence`, `internal/outcome`, `internal/benchmark` | Shadow classifiers and training, advisory recommendation, outcome evals, classifier KPIs. the `routingv2/router` and `matcher` packages and `internal/routecache` were removed on 2026-10-19 (no production importer) |
 | `internal/server` | Local dashboard over the event log (`serve`, `dsmon-server`) |
 | `cmd/downshift` | CLI, `harnessRegistry`, `runHookAdapter`, `runEnd`, setup, doctor. Blank-imports `nbopinion`, `policyfile`, `quota`, `routeadapt` |
 
@@ -512,8 +513,8 @@ These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
     `opencode` and the hook ports; it still names e5 and graphify helpers.
     Nothing links to it. The ASCII diagram above is the maintained one.
     `downshift-bdi` and `downshift-execution` are current.
-11. **Dead-end packages.** `internal/routecache` and `internal/routingv2/router`
-    have no production importer.
+11. **Dead-end packages.** Removed on 2026-10-19: `internal/routecache`,
+    `internal/orchestration`, `internal/routingv2/router` and `matcher`.
 
 ## Further reading
 

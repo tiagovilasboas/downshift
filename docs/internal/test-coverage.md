@@ -11,7 +11,6 @@ Run with: `go test ./... -cover`
 | Package | Lines | Notes |
 |---------|-------|-------|
 | `internal/hookutil` | 31 | Utilities for JSON field extraction |
-| `internal/routecache` | ~50 | Route decision caching |
 | `internal/routingv2/safety` | ~100 | Safety guards for escalation |
 | `internal/routingv2/policy` | ~100 | Tier & rewrite policies |
 
@@ -20,12 +19,9 @@ Run with: `go test ./... -cover`
 | Package | Coverage | Lines | Notes |
 |---------|----------|-------|-------|
 | `internal/routingv2/domain` | 96.3% | ~200 | Decision & route types |
-| `internal/routingv2/router` | 95.5% | ~150 | Main routing pipeline |
 | `internal/nbtier` | 95.9% | ~100 | Naive Bayes tier classifier |
 | `internal/hookctx` | 96.8% | ~150 | Hook execution context |
-| `internal/orchestration` | 94.1% | ~100 | Agent orchestration |
 | `internal/routingv2/extractor` | 91.9% | ~150 | Signal extraction |
-| `internal/routingv2/matcher` | 91.4% | ~150 | Pattern matching for signals |
 | `internal/benchmark` | 89.4% | ~400 | Benchmark runner & gates |
 | `internal/catalog` | 89.5% | ~400 | Model catalog |
 | `internal/models` | 89.6% | ~200 | Model list/check/pull CLI |
