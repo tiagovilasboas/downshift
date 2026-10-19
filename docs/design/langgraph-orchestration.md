@@ -5,21 +5,10 @@ https://github.com/tiagovilasboas/downshift
 
 The planner is adjacent to routing and is not involved in model choice.
 
-## Execution path: Go (`internal/orchestration/`)
+## Execution path: Go (removed)
 
-Fan-out delegation planning lives natively in Go, in `internal/orchestration/planner.go`.
-Zero Python, zero runtime overhead (~0ms). Same contract as the reference design below.
+The Go fan-out planner (`internal/orchestration/`) had no production importer and was removed on 2026-10-19. The Python reference under `orchestration/` is the only planner.
 
-```go
-plan := orchestration.Orchestrate(orchestration.Request{
-    Source:        "hook",
-    Task:          "review a small change",
-    DelegateTasks: []string{"inspect code", "run tests"},
-    MaxDelegates:  2,
-})
-// plan.Status == "planned"
-// plan.Delegations == [{1, "inspect code"}, {2, "run tests"}]
-```
 
 ## Reference design: Python / LangGraph (`orchestration/`)
 
