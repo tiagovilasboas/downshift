@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
@@ -85,13 +84,7 @@ func main() {
 	case "claude-code-subagent-stop":
 		os.Exit(runUsage(os.Stdin, portFor("claude-code"), catalog))
 	case "serve":
-		// Find web/ next to the binary, then fall back to CWD/web
-		exe, _ := os.Executable()
-		webDir := filepath.Join(filepath.Dir(exe), "web")
-		if _, err := os.Stat(webDir); err != nil {
-			webDir = "web"
-		}
-		if err := dsserver.Run(dsserver.DefaultPort, webDir); err != nil {
+		if err := dsserver.Run(dsserver.DefaultPort, dsserver.WebRoot()); err != nil {
 			fmt.Fprintf(os.Stderr, "serve: %v\n", err)
 			os.Exit(1)
 		}

@@ -9,6 +9,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,6 +20,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/sensor"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/web"
 )
 
 const DefaultPort = "7474"
@@ -234,6 +236,8 @@ func localOnly(next http.Handler) http.Handler {
 // handleEvents streams Server-Sent Events whenever the data files change.
 // Each update event tells the client to re-fetch /api/status.
 func handleEvents(w http.ResponseWriter, r *http.Request) {
+	// A long-lived stream: lift the server's write deadline for this response.
+	_ = http.NewResponseController(w).SetWriteDeadline(time.Time{})
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
@@ -477,23 +481,83 @@ func compactionSummary() statusCompaction {
 	return out
 }
 
+// WebDirEnv names an explicit directory to serve instead of the embedded
+// dashboard (development). Nothing else is searched: not the binary's
+// directory and not the working directory.
+const WebDirEnv = "DOWNSHIFT_WEB_DIR"
+
+// WebRoot is the dashboard file tree: the explicit directory when WebDirEnv is
+// set, the embedded copy otherwise.
+func WebRoot() fs.FS {
+	if dir := os.Getenv(WebDirEnv); dir != "" {
+		return os.DirFS(dir)
+	}
+	return web.FS
+}
+
 // Run starts the dashboard server on the given port.
-// webDir is the path to the static web/ directory; pass "" to skip file serving.
-func Run(port, webDir string) error {
+// root is the static file tree; pass nil to skip file serving.
+func Run(port string, root fs.FS) error {
 	addr := "127.0.0.1:" + port
 	fmt.Printf("downshift serve · http://%s\n", addr)
-	return http.ListenAndServe(addr, newHandler(webDir))
+	return newServer(addr, newHandlerFS(root)).ListenAndServe()
+}
+
+// newServer bounds how long a client may hold a connection. WriteTimeout would
+// cut the /events stream, which clears its own write deadline.
+func newServer(addr string, h http.Handler) *http.Server {
+	return &http.Server{
+		Addr:              addr,
+		Handler:           h,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 16,
+	}
 }
 
 func newHandler(webDir string) http.Handler {
+	if webDir == "" {
+		return newHandlerFS(nil)
+	}
+	return newHandlerFS(os.DirFS(webDir))
+}
+
+// noListingFS refuses directories: a request for /brand/ is a 404, not an
+// index of the files under it. A directory with an index.html still serves it.
+type noListingFS struct{ fs http.FileSystem }
+
+func (n noListingFS) Open(name string) (http.File, error) {
+	f, err := n.fs.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	info, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	if info.IsDir() {
+		idx, err := n.fs.Open(strings.TrimSuffix(name, "/") + "/index.html")
+		if err != nil {
+			f.Close()
+			return nil, os.ErrNotExist
+		}
+		idx.Close()
+	}
+	return f, nil
+}
+
+func newHandlerFS(root fs.FS) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/status", handleStatus)
 	mux.HandleFunc("/events", handleEvents)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		fmt.Fprintf(w, `{"ok":true,"ts":"%s"}`, time.Now().UTC().Format(time.RFC3339))
 	})
-	if webDir != "" {
-		mux.Handle("/", http.FileServer(http.Dir(webDir)))
+	if root != nil {
+		mux.Handle("/", http.FileServer(noListingFS{http.FS(root)}))
 	}
 	return localOnly(securityHeaders(mux))
 }

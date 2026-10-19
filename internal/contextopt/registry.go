@@ -104,7 +104,7 @@ func SaveConfig(cfg Config) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+	if _, err := paths.EnsureStateDir(); err != nil {
 		return err
 	}
 	data, err := json.MarshalIndent(cfg, "", "  ")
@@ -113,9 +113,23 @@ func SaveConfig(cfg Config) error {
 	}
 	data = append(data, '\n')
 
-	tmp := p + ".tmp"
-	if err := os.WriteFile(tmp, data, 0644); err != nil {
+	tmp, err := os.CreateTemp(filepath.Dir(p), filepath.Base(p)+".tmp-*") // unique, 0600
+	if err != nil {
 		return err
 	}
-	return os.Rename(tmp, p)
+	name := tmp.Name()
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		os.Remove(name)
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		os.Remove(name)
+		return err
+	}
+	if err := os.Rename(name, p); err != nil {
+		os.Remove(name)
+		return err
+	}
+	return nil
 }
