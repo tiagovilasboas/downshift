@@ -9,7 +9,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -31,6 +33,11 @@ func (c CursorCLI) Discover(ctx context.Context) ([]Model, error) {
 		} else {
 			// `agent` is also used by unrelated products. Confirm the command's
 			// identity through help before invoking a listing on that executable.
+			// The probe executes the program, so only a binary from a fixed
+			// location (not the working directory, not a temp directory) may be run.
+			if p, err := exec.LookPath("agent"); err != nil || !trustedBinaryFn(p) {
+				return nil, errors.New("Cursor CLI not installed (cursor-agent or verified agent models)")
+			}
 			help, err := runCLI(ctx, "agent", "models", "--help")
 			if err != nil || !strings.Contains(string(help), "Usage: agent models") ||
 				!strings.Contains(string(help), "List available models for this account") {
@@ -92,4 +99,33 @@ func parseCursorList(data []byte) ([]Model, error) {
 		return nil, errors.New("cursor list: empty or incomplete model listing")
 	}
 	return out, nil
+}
+
+// trustedBinaryFn is replaced by tests that must run a fake CLI from a temp dir.
+var trustedBinaryFn = trustedBinary
+
+// trustedBinary accepts an absolute path that is neither under the working
+// directory nor under a temp directory, where a hostile repository or a
+// download could plant a program named like a CLI.
+func trustedBinary(path string) bool {
+	if !filepath.IsAbs(path) {
+		return false
+	}
+	real, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return false
+	}
+	banned := []string{os.TempDir(), "/tmp", "/var/tmp", "/private/tmp"}
+	if wd, err := os.Getwd(); err == nil {
+		banned = append(banned, wd)
+	}
+	for _, b := range banned {
+		if rb, err := filepath.EvalSymlinks(b); err == nil {
+			b = rb
+		}
+		if rel, err := filepath.Rel(b, real); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return false
+		}
+	}
+	return true
 }

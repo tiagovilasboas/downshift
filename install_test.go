@@ -25,6 +25,7 @@ import (
 // Downloads copy FAKE_TARBALL to the -o path. Every URL is appended to FAKE_LOG.
 const fakeCurl = `#!/bin/sh
 url=""; out=""; write=""
+echo "$*" >> "$FAKE_LOG.args"
 while [ $# -gt 0 ]; do
   case "$1" in
     -o) out="$2"; shift ;;
@@ -482,5 +483,72 @@ func TestInstallSkipAttestationDoesNotCallGH(t *testing.T) {
 	assertInstalled(t, r)
 	if _, err := os.Stat(r.ghLog); err == nil {
 		t.Fatal("gh was called although the check was skipped")
+	}
+}
+
+// The version is spliced into URLs: anything but a strict tag is refused
+// before the first network call.
+func TestInstallRejectsMalformedVersions(t *testing.T) {
+	for _, v := range []string{"latest", "1.0.0", "v1.0", "v1.0.0/../x", "v1.0.0;id", "v1.0.0 ", "v1.0.0-", "v1.*", "../v1.0.0", "v1.0.0\n"} {
+		r := runInstall(t, "v1.0.0", "", v)
+		if r.code == 0 || !strings.Contains(r.output, "invalid version") {
+			t.Errorf("version %q: exit %d, want a refusal\n%s", v, r.code, r.output)
+		}
+		if len(r.urls) != 0 {
+			t.Errorf("version %q reached the network: %v", v, r.urls)
+		}
+	}
+	for _, v := range []string{"v1.2.3", "v0.1.0-beta.1", "v10.20.30-rc.2"} {
+		if r := runInstall(t, "", "", v); r.code != 0 {
+			t.Errorf("valid version %q refused: %s", v, r.output)
+		}
+	}
+}
+
+// A latest tag read from GitHub is held to the same rule.
+func TestInstallRejectsAMalformedLatestTag(t *testing.T) {
+	r := runInstall(t, "v1.0.0;id", "")
+	if r.code == 0 || !strings.Contains(r.output, "invalid version") {
+		t.Fatalf("exit %d\n%s", r.code, r.output)
+	}
+}
+
+func TestInstallUsesHTTPSOnlyForEveryDownload(t *testing.T) {
+	r := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, r)
+	args, _ := os.ReadFile(filepath.Join(filepath.Dir(r.ghLog), "curl.log.args"))
+	lines := strings.Split(strings.TrimSpace(string(args)), "\n")
+	if len(lines) < 3 {
+		t.Fatalf("expected the lookup, archive and checksum calls, got %q", lines)
+	}
+	for _, l := range lines {
+		if !strings.Contains(l, "--proto =https") || !strings.Contains(l, "--tlsv1.2") {
+			t.Errorf("curl call without https-only/TLS 1.2: %q", l)
+		}
+	}
+}
+
+// The closing line says what was actually proven.
+func TestInstallSaysWhatWasVerified(t *testing.T) {
+	only := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, only)
+	if !strings.Contains(only.output, "Verified: sha256 only") || !strings.Contains(only.output, "not who published it") {
+		t.Errorf("sha-only install must say so:\n%s", only.output)
+	}
+	full := runInstallEnv(t, "v1.0.0", "", []string{"FAKE_GH=ok"})
+	assertInstalled(t, full)
+	if !strings.Contains(full.output, "Verified: sha256 and GitHub build provenance") {
+		t.Errorf("provenance install must say so:\n%s", full.output)
+	}
+}
+
+// The binary lands through a temporary name and a rename; no staging file is
+// left in the install directory, and a failed copy leaves the old binary.
+func TestInstallLeavesNoStagingFileAndKeepsTheOldBinaryOnFailure(t *testing.T) {
+	r := runInstall(t, "v1.0.0", "")
+	assertInstalled(t, r)
+	entries, _ := os.ReadDir(r.binDir)
+	if len(entries) != 1 || entries[0].Name() != "downshift" {
+		t.Errorf("install dir = %v, want only downshift", entries)
 	}
 }

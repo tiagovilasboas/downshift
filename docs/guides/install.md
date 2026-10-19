@@ -54,7 +54,7 @@ and prints `Build provenance verified`. It never blocks on this by default: with
 `gh`, no `gh auth login`, or a release older than the attestations, it prints a
 warning and continues on the sha256 alone. `DOWNSHIFT_REQUIRE_ATTESTATION=1` makes
 any outcome other than "verified" an error that installs nothing;
-`DOWNSHIFT_SKIP_ATTESTATION=1` skips the check. By hand:
+`DOWNSHIFT_SKIP_ATTESTATION=1` skips the check. The installer ends by saying what was proven: "sha256 and GitHub build provenance" or "sha256 only" (an intact download, not proof of who published it). It accepts only a strict `vMAJOR.MINOR.PATCH[-prerelease]` version, downloads with `curl --proto '=https' --tlsv1.2`, and installs through a temporary name plus a rename. By hand:
 `gh attestation verify downshift_<ver>_<os>_<arch>.tar.gz --repo tiagovilasboas/downshift`.
 
 `install.sh` still treats a non-flag argument as the release version. `--explicit-upshift` may come before or after that version. It writes `"explicit_upshift": true` into `session-models.json` without dropping harness lists that are already there. The same switch at runtime is `DOWNSHIFT_EXPLICIT_UPSHIFT=1`. Default is off. See [session-models.md](../reference/session-models.md#explicit_upshift).
