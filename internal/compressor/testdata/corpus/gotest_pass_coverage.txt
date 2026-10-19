@@ -1,0 +1,12 @@
+ok  	example.com/acme/widget/cmd/widget	(cached)	coverage: 71.4% of statements
+ok  	example.com/acme/widget/internal/api	0.137s	coverage: 88.0% of statements
+ok  	example.com/acme/widget/internal/auth	0.174s	coverage: 92.3% of statements
+ok  	example.com/acme/widget/internal/billing	(cached)	coverage: 65.9% of statements
+ok  	example.com/acme/widget/internal/cache	0.248s	coverage: 100.0% of statements
+ok  	example.com/acme/widget/internal/config	0.285s	coverage: 80.1% of statements
+ok  	example.com/acme/widget/internal/db	(cached)	coverage: 77.7% of statements
+ok  	example.com/acme/widget/internal/events	0.359s	coverage: 59.2% of statements
+ok  	example.com/acme/widget/internal/httpx	0.396s	coverage: 84.6% of statements
+ok  	example.com/acme/widget/internal/metrics	(cached)	coverage: 90.0% of statements
+ok  	example.com/acme/widget/internal/queue	0.470s	coverage: 73.3% of statements
+ok  	example.com/acme/widget/internal/store	0.507s	coverage: 86.5% of statements

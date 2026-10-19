@@ -1,0 +1,5 @@
+ok  	example.com/acme/widget/cmd/widget	0.100s
+ok  	example.com/acme/widget/internal/api	0.101s
+ok  	example.com/acme/widget/internal/auth	0.102s
+ok  	example.com/acme/widget/internal/billing	0.103s
+ok  	example.com/acme/widget/internal/cache	0.104s
