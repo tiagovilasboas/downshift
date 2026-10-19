@@ -11,8 +11,8 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/semantic"
 )
 
-// Apply runs the regex classifier plus the optional in-process hash semantic
-// boost (DOWNSHIFT_MINILM).
+// Apply runs the regex classifier plus the in-process FNV hash semantic
+// boost (DOWNSHIFT_SEMANTIC_BOOST).
 func Apply(prompt string) classify.Classification {
 	return apply(prompt, classify.Classify(prompt))
 }

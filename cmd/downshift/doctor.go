@@ -344,9 +344,9 @@ func checkContext(rep *doctorReport, env doctorEnv) {
 	checkCompanion(rep, env, optCfg)
 	if env.Verbose {
 		if semantic.Enabled() {
-			rep.add(doctorCheck{ID: "semantic boost", Status: doctorOK, Detail: "in-process hash embedder (DOWNSHIFT_MINILM not off)"})
+			rep.add(doctorCheck{ID: "semantic boost", Status: doctorOK, Detail: "in-process FNV hash embedder (on by default)"})
 		} else {
-			rep.add(doctorCheck{ID: "semantic boost", Status: doctorOK, Detail: "disabled (DOWNSHIFT_MINILM=0)"})
+			rep.add(doctorCheck{ID: "semantic boost", Status: doctorOK, Detail: "disabled (DOWNSHIFT_SEMANTIC_BOOST=0)"})
 		}
 	}
 }

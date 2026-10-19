@@ -1,14 +1,13 @@
 // Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-// Package semantic provides an optional local MiniLM embedding boost for the
+// Package semantic provides an in-process FNV word-hash embedding boost for the
 // regex classifier. It never calls an LLM and never downgrades complexity:
 // semantic signal may only preserve or raise the class when regex confidence
 // is low (Jev/Laya-style decision layer beside generation).
 //
-// On by default. Opt out with DOWNSHIFT_MINILM=0.
-// The in-process hash embedder always runs when enabled.
-// tools/minilm/embed_stdin.py; if that command fails, hash is the fallback.
+// On by default. Opt out with DOWNSHIFT_SEMANTIC_BOOST=0 (or DOWNSHIFT_MINILM=0).
+// The in-process deterministic hash embedder runs with zero external runtime dependencies.
 package semantic
 
 // Label names match benchmark complexity labels.

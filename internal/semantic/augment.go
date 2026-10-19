@@ -41,7 +41,7 @@ const MinSimilarity = 0.45
 // MaybeAugment applies a monotonic in-process hash semantic boost when regex
 // confidence is low. label is TRIVIAL|SIMPLE|MEDIUM|COMPLEX. Returns the new
 // label and whether semantic fired. Never downgrades rank. Honors
-// DOWNSHIFT_MINILM=0.
+// DOWNSHIFT_SEMANTIC_BOOST=0 (or DOWNSHIFT_MINILM=0).
 func MaybeAugment(prompt string, label string, confident bool) (string, bool) {
 	if !enabled() {
 		return label, false
