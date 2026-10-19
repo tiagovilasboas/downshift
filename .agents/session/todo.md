@@ -1,19 +1,19 @@
-# Task List — Downshift Code Intelligence (DCI) v0.2
+# Task List — Downshift Code Intelligence (DCI) v0.3
 
-> 📦 *Histórico compactado: tarefas do MVP v0.1 e Frente 1 arquivadas em `archive/`*
+> 📦 *Histórico compactado: tarefas do MVP v0.1, Frente 1 e v0.2 arquivadas em `archive/`*
 
-## DCI v0.2: Multi-Language Symbols & Multi-Harness Hooks
-- [x] **V02.1 (Fullstack - Multi-Lang Parser):** Implement `internal/codeintel/parse_lang.go` and wire in `parse.go`:
-  - TypeScript/JavaScript (`.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`): functions, arrow functions, classes, class methods (`ClassName.method`), interfaces, types, enums with brace-depth `StartLine`..`EndLine` tracking.
-  - Python (`.py`): module functions, classes, class methods (`ClassName.method`) with indentation-based `StartLine`..`EndLine` tracking.
-  - C-style fallback (`.rs`, `.php`, `.java`, `.cs`) with brace-depth span estimation.
-- [x] **V02.2 (AI / FinOps - Multi-Harness Hook & Budget):** Update `cmd/downshift/dci_hook.go` and `cmd/downshift/dci.go`:
-  - Support `claude-code`, `cursor`, `opencode`, `codex`, and `generic` in `downshift dci hook <harness>`.
-  - Support `--budget <bytes>` flag on `downshift dci enable [active|observe] [--budget=3500]` (clamped to safe bounds 512..16384 bytes).
-  - Update `docs/design/code-intelligence.md`, `README.md`, and `docs/reference/capability-matrix.md`.
-- [x] **V02.3 (AppSec - Parser & Hook Security):** Audit and add tests in `internal/codeintel/security_test.go`:
-  - Test deeply nested braces, unclosed strings/braces, pathological lines (ReDoS resistance / linear-time scanning), and oversized/malformed hook payloads across all harnesses.
-- [x] **V02.4 (QA - End-to-End Test Suite):** Add comprehensive tests in `internal/codeintel/parse_lang_test.go` and `cmd/downshift/dci_test.go`:
-  - Verify multi-line `StartLine`..`EndLine` extraction for TS, JS, Python, Rust, PHP.
-  - Verify `downshift dci hook` for `cursor`, `opencode`, `codex`, `claude-code`, and `--budget` flag.
-  - Run full test suite, `go vet`, `gofmt`, push, open PR, and verify green CI.
+## DCI v0.3: Go AST Call-Graph & Production-First Ranking
+- [x] **V03.1 (Fullstack - Go AST Call-Graph & Ranking):** Edit `internal/codeintel/types.go`, `internal/codeintel/parse.go`, and `internal/codeintel/rank.go`:
+  - Add `Calls []string` to `Symbol` and `Imports []string` to `Document` in `types.go`.
+  - In `parseGoAST` (`parse.go`), extract unique outgoing function/method calls (`*ast.CallExpr`) per `*ast.FuncDecl` (skipping Go built-ins, capped at 16 calls per symbol) and package imports (`node.Imports`, capped at 32).
+  - In `RankCandidates` (`rank.go`), apply Production-vs-Test file weighting (`0.65x` on `_test.go` when query has no test/bench terms; `+2.0` boost when query asks for test/bench) and Call-Graph Co-Reference Boost (`+2.0` when a candidate defines a symbol called by top-1 candidate or calls a matched symbol of top-1 candidate).
+- [x] **V03.2 (AI / FinOps - `dci inspect --json` & Docs):** Edit `cmd/downshift/dci.go`, `docs/design/code-intelligence.md`, and `README.md`:
+  - Support `downshift dci inspect [--json] <prompt>` emitting structured JSON for automation/inspection and showing symbol `Calls` in text output.
+  - Document Go AST Call-Graph Co-Reference Boosting, Production-First Ranking, and `dci inspect --json`.
+- [x] **V03.3 (AppSec - Call-Graph & AST Security):** Edit `internal/codeintel/security_test.go`:
+  - Verify deeply nested `*ast.CallExpr` chains (e.g. 500 chained calls `a().b().c()...`) and large import blocks do not cause stack overflow or blow up index cache size (verify `Calls` cap <= 16 and `Imports` cap <= 32).
+- [x] **V03.4 (QA - Call-Graph & Ranking Test Suite):** Edit `internal/codeintel/rank_test.go` and `cmd/downshift/dci_test.go`:
+  - Test Go AST `Symbol.Calls` and `Document.Imports` extraction.
+  - Test Production-First Ranking (verify `service.go` ranks above `service_test.go` for non-test queries, and `service_test.go` ranks higher when query includes `"test"`).
+  - Test Call-Graph Co-Reference Boost between caller and callee files.
+  - Test `downshift dci inspect --json <prompt>`.
