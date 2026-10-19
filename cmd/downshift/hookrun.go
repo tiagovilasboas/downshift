@@ -213,8 +213,15 @@ func runHookAdapter[E any](
 		return fail("INVALID_EVENT")
 	}
 	defer withHookDeadline()()
+	sentCorrelation := false
 	if identified, ok := any(ev).(interface{ CorrelationIdentifier() string }); ok {
-		correlationID = telemetry.CorrelationIDOrNew(identified.CorrelationIdentifier())
+		sent := identified.CorrelationIdentifier()
+		correlationID = telemetry.CorrelationIDOrNew(sent)
+		sentCorrelation = correlationID == sent
+	}
+	toolUseID := ""
+	if call, ok := any(ev).(interface{ ToolUseIdentifier() string }); ok {
+		toolUseID = call.ToolUseIdentifier()
 	}
 	// One shared seam for project context: adapters only say where their
 	// payload keeps the working directory (optional ProjectDir method).
@@ -242,10 +249,10 @@ func runHookAdapter[E any](
 	fate.paused = !fate.noRoute && telemetry.SessionPaused(sessionHash)
 	fate.noRoute = fate.noRoute || fate.paused
 	// Built-in control group (`downshift report`): a deterministic share of
-	// real spawn decisions, picked by a hash of the routing id, is classified
-	// and logged but never rewritten. Same seam as no-route, same fail-open.
+	// real spawn decisions, picked by a hash of the spawn's control key, is
+	// classified and logged but never rewritten. Same seam as no-route, same fail-open.
 	fate.control = !fate.noRoute && decision.Harness != "" &&
-		telemetry.InControlGroup(correlationID, telemetry.ControlShare())
+		telemetry.InControlGroup(controlKey(correlationID, sentCorrelation, toolUseID), telemetry.ControlShare())
 	fate.noRoute = fate.noRoute || fate.control
 	if fate.noRoute {
 		wire.failOpen(wireFailOpenNoRoute, correlationID)
@@ -304,9 +311,7 @@ func runHookAdapter[E any](
 			}
 		}
 		event.SessionID = sessionHash
-		if call, ok := any(ev).(interface{ ToolUseIdentifier() string }); ok {
-			event.ToolUseHash = telemetry.HashSessionID(call.ToolUseIdentifier())
-		}
+		event.ToolUseHash = telemetry.HashSessionID(toolUseID)
 		event.Entry = telemetry.EntryHook
 		if identified, ok := any(ev).(interface{ EntryIdentifier() string }); ok {
 			event.Entry = telemetry.NormalizeEntry(identified.EntryIdentifier())
@@ -537,4 +542,20 @@ func runUsage(in io.Reader, port hookport.Port, catalog core.Resolver) (rc int) 
 		fmt.Fprintf(os.Stderr, "downshift: %s\n", obs.Note)
 	}
 	return 0
+}
+
+// controlKey is the id the control group hashes for one spawn: the harness's
+// own correlation id when it sent a valid one, else its tool-use id, else the
+// per-call correlation id. Claude Code, Cursor and Codex send only a tool-use
+// id, and the settings hook and the mod entry see the same one, so both copies
+// of a spawn and any retry land on the same side. The key is only hashed in
+// memory; the tool-use id goes through the validated session hash first.
+func controlKey(correlationID string, sentByHarness bool, toolUseID string) string {
+	if sentByHarness {
+		return correlationID
+	}
+	if hash := telemetry.HashSessionID(toolUseID); hash != "" {
+		return "tool-use:" + hash
+	}
+	return correlationID
 }
