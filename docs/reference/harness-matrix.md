@@ -53,6 +53,9 @@ correlation, not a read of the child's actual model. Only applied rewrites
 (outcome `rewrite_emitted`, no guardrail correction) count; allow, blocked
 and held events never do.
 
+Per-harness measurement (what is observed, what blocks per-token figures, which catalog prices apply, and catalog anomalies):
+[value-per-harness.md](value-per-harness.md).
+
 ## Decision linkage (current model and post-spawn cost)
 
 Observed on claude-code 2026-10-12: the PreToolUse payload carries
@@ -141,9 +144,9 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   parent's current model: 22 of 24 such spawns in the operator's rollouts
   (2026-10-12; the other mismatches were Downshift's own rewrites). The
   adapter reads the last `turn_context.payload.model` from the tail of
-  `transcript_path`. `gpt-6.1-sol` is registered for identity and tier; list
-  prices are absent until a vendor snapshot matches exactly, so cost telemetry
-  stays unknown for that id. `gpt-reserve` is not in the catalog yet, so they
+  `transcript_path`. `gpt-6.1-sol` is registered for identity and tier and has
+  list prices since #190 (2026-10-19), so cost telemetry can price it once a
+  token source exists (Codex has none today). `gpt-reserve` is not in the catalog yet, so they
   still log as `unknown` with `requested_model_raw` set.
 - **antigravity current model.** `Subagents[].Model` arrives in the payload
   (2026-10-09 run asked for `pro`) but was never exposed to telemetry; it is
