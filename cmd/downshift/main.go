@@ -54,6 +54,10 @@ func main() {
 		}
 		os.Exit(h.Hook(os.Stdin, cat))
 	}
+	// exec wraps a shell command; it needs no catalog, so it skips the load.
+	if args[0] == "exec" {
+		os.Exit(runExec(args[1:], os.Stdin, os.Stdout, os.Stderr))
+	}
 
 	// Load the effective catalog once at startup — embedded JSON with optional
 	// user override at ~/.harness-downshift/catalog.json. Fail-open: if the

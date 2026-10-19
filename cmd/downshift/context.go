@@ -19,6 +19,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/headroom"
 	"github.com/tiagovilasboas/downshift/internal/contextopt/providers/native"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/sensor"
 )
 
@@ -93,8 +94,9 @@ Subcommands:
   providers            List supported context optimization companion providers
   doctor               Run diagnostics on context optimization providers and harnesses
   enable [provider]    Enable the native provider (default) or record a companion (headroom)
+                       --exec: also turn on the opt-in shell wrapper (downshift exec); --no-exec: turn it off
   disable [companion]  Disable context optimization, or clear one companion record
-  metrics              Show estimated token reduction and command metrics from active provider
+  metrics              Show command metrics, and bytes saved by downshift exec (tokens estimated)
   compress [mode]      Compress stdin tool output (mode: observe, safe, off)
   benchmark            Print the scenario matrix and measured compressor bytes`)
 }
@@ -121,6 +123,11 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 	if cfg.Provider == "native" {
 		fmt.Fprintln(w, "  Claude Code: measures only. A Claude Code hook cannot rewrite tool output, so the native provider saves no tokens there;")
 		fmt.Fprintln(w, "    real compression needs the Headroom proxy (`headroom wrap claude`), which Downshift does not start.")
+	}
+	if cfg.Exec {
+		fmt.Fprintln(w, "  Exec wrapper: on (allowlisted shell commands run through `downshift exec`; DOWNSHIFT_EXEC=0 disables)")
+	} else {
+		fmt.Fprintln(w, "  Exec wrapper: off (`downshift context enable native --exec` turns it on)")
 	}
 	fmt.Fprintf(w, "  Main Agent: %v, Subagents: %v\n", cfg.Scope.MainAgent, cfg.Scope.SpawnedAgents)
 	fmt.Fprintf(w, "  Preserve Original Output: %v\n", cfg.Safety.PreserveOriginalOutput)
@@ -207,8 +214,22 @@ func runContextDoctor(ctx context.Context, reg *contextopt.Registry, w, errW io.
 
 func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []string, w, errW io.Writer) int {
 	providerID := "native"
-	if len(args) > 0 {
-		providerID = args[0]
+	execFlag := ""
+	var positional []string
+	for _, a := range args {
+		switch a {
+		case "--exec", "--no-exec":
+			execFlag = a
+		default:
+			positional = append(positional, a)
+		}
+	}
+	if len(positional) > 0 {
+		providerID = positional[0]
+	}
+	if execFlag != "" && providerID != "native" {
+		fmt.Fprintf(errW, "error: %s applies to the native provider only\n", execFlag)
+		return 2
 	}
 	p, ok := reg.Get(providerID)
 	if !ok {
@@ -243,6 +264,12 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	if providerID == "native" {
 		cfg.ExitCodeContract = contextopt.ExitCodeContractObserve
 	}
+	switch execFlag {
+	case "--exec":
+		cfg.Exec = true
+	case "--no-exec":
+		cfg.Exec = false
+	}
 	if err := contextopt.SaveConfig(cfg); err != nil {
 		fmt.Fprintf(errW, "error: failed to save config: %v\n", err)
 		return 1
@@ -252,6 +279,9 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	fmt.Fprintln(w, "Exit-code contract: observe_only; nonzero_exit_preserved; hook_cannot_replace_tool_output.")
 	fmt.Fprintln(w, "Claude Code PostToolUse records CompressExit in observe mode when this flag is on, using the tool exit code.")
 	fmt.Fprintln(w, "The hook cannot replace tool output. The model still sees the original result. Prompts are not compressed.")
+	if cfg.Exec {
+		printExecEnabled(w)
+	}
 	// A detected companion is recorded by default. Recording changes no hook
 	// and runs no third-party command; it only tells doctor and the docs
 	// that savings are not routing alone.
@@ -324,6 +354,7 @@ func runContextDisable(ctx context.Context, reg *contextopt.Registry, args []str
 	}
 
 	cfg.Enabled = false
+	cfg.Exec = false
 	cfg.Provider = ""
 	cfg.Companion = ""
 	cfg.ActiveHarness = nil
@@ -360,12 +391,21 @@ func runContextMetrics(ctx context.Context, reg *contextopt.Registry, w, errW io
 		sensorObservations, _ = st.GetSummary()
 	}
 
+	var execMetrics *execwrap.Summary
+	if path, err := execwrap.EventsPath(); err == nil {
+		if s, err := execwrap.Summarize(path); err == nil && s.Commands > 0 {
+			execMetrics = &s
+		}
+	}
+
 	output := struct {
 		ProviderMetrics    *contextopt.Metrics                  `json:"provider_metrics,omitempty"`
 		SensorObservations map[string]sensor.SessionObservation `json:"context_sensor_observations,omitempty"`
+		ExecMetrics        *execwrap.Summary                    `json:"exec_metrics,omitempty"`
 	}{
 		ProviderMetrics:    metrics,
 		SensorObservations: sensorObservations,
+		ExecMetrics:        execMetrics,
 	}
 
 	enc := json.NewEncoder(w)
@@ -437,4 +477,15 @@ func runContextCompress(args []string, w, errW io.Writer) int {
 	}
 	_, _ = w.Write(res.Output)
 	return 0
+}
+
+// printExecEnabled says what --exec turned on and the one hook entry it needs.
+// It writes no harness settings: the user adds the entry.
+func printExecEnabled(w io.Writer) {
+	fmt.Fprintln(w, "Exec wrapper: on. Allowlisted shell commands (go test, git status) with no shell metacharacters")
+	fmt.Fprintln(w, "are rewritten to `downshift exec -- <command>`, which keeps the exit code and compacts only clean output.")
+	fmt.Fprintln(w, "Claude Code: add a PreToolUse entry for the Bash tool (setup does not write it):")
+	fmt.Fprintln(w, `  {"matcher": "Bash", "hooks": [{"type": "command", "command": "downshift claude-code"}]}`)
+	fmt.Fprintln(w, "Permission rules match the rewritten text: allow `Bash(downshift exec -- go test:*)` if you allow `Bash(go test:*)`.")
+	fmt.Fprintln(w, "Other harnesses: not wired. DOWNSHIFT_EXEC=0 turns it off without a config change.")
 }
