@@ -196,6 +196,9 @@ func DispatchOrderEvent(orderID string) error {
 }
 
 func TestDCIDoctor(t *testing.T) {
+	if raceEnabled {
+		t.Skip("doctor indexes the repository inside a fixed 2.5 s context; that budget does not hold under -race")
+	}
 	var stdout, stderr bytes.Buffer
 	code := runDCI([]string{"doctor"}, nil, &stdout, &stderr)
 	if code != 0 {
