@@ -320,6 +320,15 @@ exposing `ShellCommand()` and `ShellRewrite()`.
 
 `downshift exec -- <argv>` works the same from any shell, harness or not.
 
+**Unverified on a live session (C14).** A unit test cannot show that Claude Code applies `updatedInput.command` when the hook returns no `permissionDecision`. To check it:
+
+1. `downshift context enable native --exec`, add the printed `Bash` PreToolUse entry, and make sure `Bash(go test:*)` is in your allow rules.
+2. Start a new Claude Code session in a Go repository and ask it to run `go test ./...` (a repository with a dozen or more packages, all passing).
+3. Look at the tool call Claude Code shows. The command must read `'<path>/downshift' exec -- go test ./...`, and a passing result must end with a `[downshift exec: compacted N to M bytes]` line.
+4. Run `downshift context metrics`: `exec_metrics.commands` must have grown. With `DOWNSHIFT_EXEC=0` in the environment the command must run as typed.
+
+If the command runs as typed with the hook on, Claude Code ignores the rewrite without a decision: nothing breaks and nothing is saved, and this feature should stay documented as not working there.
+
 ## Revalidation
 
 Every TBD cell must be re-checked per harness release: hook contracts
