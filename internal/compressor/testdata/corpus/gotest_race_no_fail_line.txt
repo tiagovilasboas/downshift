@@ -1,0 +1,7 @@
+==================
+WARNING: DATA RACE
+Write at 0x00c0000b4010 by goroutine 8:
+  example.com/acme/widget/internal/cache.(*LRU).Put()
+==================
+ok  	example.com/acme/widget/internal/api	0.212s
+ok  	example.com/acme/widget/internal/cache	0.044s

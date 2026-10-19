@@ -1,0 +1,10 @@
+commit 4f2a9c1e0b7d6a5c4b3a2918f7e6d5c4b3a29184
+Author: Dev Example <dev@example.com>
+Date:   Mon Oct 19 10:00:00 2026 +0000
+
+    fix: flaky test
+
+    The old run printed:
+    FAIL
+    panic: boom
+
