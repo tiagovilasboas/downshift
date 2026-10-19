@@ -739,6 +739,11 @@ type Stats struct {
 	ObservedChildTokens int64
 	ObservedChildUsage  int
 
+	// TokensRerouted is the token view of routing, per harness: the tokens that
+	// ran on a cheaper or a pricier model than the one requested (see
+	// tokens_rerouted.go). Counts only; not tokens saved.
+	TokensRerouted TokensRerouted
+
 	// DCI holds aggregated Code Intelligence telemetry for the time window.
 	DCI DCIStats
 }

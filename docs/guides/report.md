@@ -65,10 +65,18 @@ ended (the same events `stats` reads).
   in its own group.
 - **Cost per completed task** = the completed child's cost plus the cost of every failed
   attempt it redid. Failed work that never got a successful redo is not added to anyone.
+- **Tokens per completed task** = the input, output and cache tokens of the same tasks
+  (priced usage records, failed attempts they redid included) over the number of completed
+  tasks. It is the A/B check that a cheaper model did not need more tokens: the report prints
+  routed against control once the savings figure is stated. It is a plain ratio, with no
+  interval of its own.
 - **Rework rate** = reworked spawns divided by spawns with an observed end (completed, error or
   interrupted).
 
 ## Savings and the interval
+
+`--json` carries `tokens` (by class: `input`, `output`, `cache_read`, `cache_write`, `total`,
+`records`) and `tokens_per_completed_task` in each group.
 
 Savings are `control cost per completed task - routed cost per completed task`, also shown as a
 percentage of the control cost. The interval is a 95% percentile bootstrap (2,000 resamples of
