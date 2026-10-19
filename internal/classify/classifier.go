@@ -409,10 +409,12 @@ func Classify(prompt string) Classification {
 		Confident:           confident,
 		UnsupportedLanguage: foreign,
 	}
-	// The focused tally gets the length nudge only when the task itself is
-	// long; otherwise the brief is long because of its context.
+	// Only an explicit "Task:" section says the rest of the brief is context,
+	// so only then does the focused tally drop the length nudge (unless the
+	// task itself is long). Sentences around imperative ones may describe
+	// the work itself.
 	if taskSignal {
-		if spanWords(lower, task) >= minBriefWords {
+		if !explicitTask || spanWords(lower, task) >= minBriefWords {
 			focus[Complex]++
 		}
 		cls = focusOnTask(cls, focus)
