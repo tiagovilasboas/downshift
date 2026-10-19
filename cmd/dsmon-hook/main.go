@@ -9,9 +9,9 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,23 +51,47 @@ func main() {
 	run()
 }
 
-func run() {
+const (
+	maxPayloadBytes = 1 << 20
+	readTimeout     = 2 * time.Second
+)
 
+// readPayload reads at most maxPayloadBytes from in and gives up after
+// readTimeout, so a stalled or oversized stdin can never hang a spawn.
+func readPayload(in io.Reader, timeout time.Duration) ([]byte, bool) {
+	type result struct {
+		data []byte
+		err  error
+	}
+	done := make(chan result, 1)
+	go func() {
+		data, err := io.ReadAll(io.LimitReader(in, maxPayloadBytes+1))
+		done <- result{data, err}
+	}()
+	select {
+	case r := <-done:
+		if r.err != nil || len(r.data) > maxPayloadBytes {
+			return nil, false
+		}
+		return r.data, true
+	case <-time.After(timeout):
+		return nil, false
+	}
+}
+
+// buildEvent maps a hook payload to the agents.jsonl record. Untrusted
+// fields (model, harness) are bounded before they reach durable storage;
+// the dashboard renders this file.
+func buildEvent(raw []byte) (agentEvent, bool) {
 	var ev hookEvent
-	sc := bufio.NewScanner(os.Stdin)
-	var lines []string
-	for sc.Scan() {
-		lines = append(lines, sc.Text())
+	if len(strings.TrimSpace(string(raw))) == 0 {
+		return agentEvent{}, false
 	}
-	raw := strings.Join(lines, "")
-	if raw == "" {
-		return
-	}
-	if err := json.Unmarshal([]byte(raw), &ev); err != nil {
-		return
+	if err := json.Unmarshal(raw, &ev); err != nil {
+		return agentEvent{}, false
 	}
 	if !spawnTools[ev.ToolName] {
-		return // not a spawn — exit 0 silently
+		return agentEvent{}, false // not a spawn
 	}
 
 	var ti map[string]any
@@ -77,14 +101,17 @@ func run() {
 	// schema (empty) so old readers keep parsing new lines.
 	model := ""
 	if v, ok := ti["model"].(string); ok {
-		model = v
+		model = telemetry.ModelOrUnknown(v)
 	}
 	harness := ""
 	if v, ok := ti["harness"].(string); ok {
-		harness = v
+		harness = telemetry.ModelOrUnknown(v)
+		if harness == "unknown" {
+			harness = ""
+		}
 	}
 
-	ae := agentEvent{
+	return agentEvent{
 		Timestamp: time.Now().UTC().Format(time.RFC3339Nano),
 		Event:     "spawn",
 		Tool:      ev.ToolName,
@@ -92,6 +119,17 @@ func run() {
 		Session:   telemetry.HashSessionID(os.Getenv("KIRO_SESSION_ID")),
 		Task:      "",
 		Model:     model,
+	}, true
+}
+
+func run() {
+	raw, ok := readPayload(os.Stdin, readTimeout)
+	if !ok {
+		return
+	}
+	ae, ok := buildEvent(raw)
+	if !ok {
+		return
 	}
 
 	path, err := paths.AgentsPath()

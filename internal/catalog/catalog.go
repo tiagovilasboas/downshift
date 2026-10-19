@@ -116,7 +116,7 @@ func load(warning io.Writer) *Catalog {
 	// A user catalog is an override, not a replacement: preserve all embedded
 	// entries that it does not name and replace only matching harness/model IDs.
 	if path, ok := userCatalogPath(); ok {
-		data, err := os.ReadFile(path)
+		data, err := readUserCatalog(path)
 		if err != nil {
 			fmt.Fprintf(warning, "downshift: warning: could not read %s (%v); using embedded catalog\n", path, err)
 		} else if override, err := decode(data); err == nil {
@@ -131,6 +131,36 @@ func load(warning io.Writer) *Catalog {
 		}
 	}
 	return build(base)
+}
+
+// maxUserCatalogBytes caps the user override read: the file is untrusted
+// input on every hook invocation.
+const maxUserCatalogBytes = 4 << 20
+
+// readUserCatalog reads the override only if it is a regular file, and never
+// more than maxUserCatalogBytes. A FIFO, device or huge file is an error (the
+// caller falls back to the embedded catalog) instead of a hang or an OOM.
+func readUserCatalog(path string) ([]byte, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("not a regular file")
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	data, err := io.ReadAll(io.LimitReader(f, maxUserCatalogBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxUserCatalogBytes {
+		return nil, fmt.Errorf("larger than %d bytes", maxUserCatalogBytes)
+	}
+	return data, nil
 }
 
 // userCatalogPath returns the path to the user override file and whether it
