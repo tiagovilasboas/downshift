@@ -1,0 +1,6 @@
+ok  	example.com/acme/widget/cmd/widget	(cached)
+ok  	example.com/acme/widget/internal/api	(cached)
+ok  	example.com/acme/widget/internal/auth	(cached)
+ok  	example.com/acme/widget/internal/billing	(cached)
+ok  	example.com/acme/widget/internal/cache	(cached)
+ok  	example.com/acme/widget/internal/config	(cached)

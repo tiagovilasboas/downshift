@@ -1,0 +1,12 @@
+=== RUN   TestRetry
+    retry_test.go:20: dial tcp 127.0.0.1:9: connection refused
+    retry_test.go:20: dial tcp 127.0.0.1:9: connection refused
+    retry_test.go:20: dial tcp 127.0.0.1:9: connection refused
+    retry_test.go:20: dial tcp 127.0.0.1:9: connection refused
+    retry_test.go:20: dial tcp 127.0.0.1:9: connection refused
+    retry_test.go:20: dial tcp 127.0.0.1:9: connection refused
+--- FAIL: TestRetry (0.30s)
+    retry_test.go:31: gave up after 6 attempts
+FAIL
+FAIL	example.com/acme/widget/internal/queue	0.311s
+FAIL

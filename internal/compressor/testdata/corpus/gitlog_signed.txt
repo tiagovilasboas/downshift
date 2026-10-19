@@ -1,0 +1,9 @@
+commit 4f2a9c1e0b7d6a5c4b3a2918f7e6d5c4b3a29183
+gpg: Signature made Mon Oct 19 10:00:00 2026 UTC
+gpg:                using EDDSA key 0000000000000000000000000000000000000000
+gpg: BAD signature from "Dev Example <dev@example.com>" [unknown]
+Author: Dev Example <dev@example.com>
+Date:   Mon Oct 19 10:00:00 2026 +0000
+
+    chore: release
+

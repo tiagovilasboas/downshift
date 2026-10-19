@@ -1,0 +1,5 @@
+On branch feature/old
+Your branch is based on 'origin/feature/old', but the upstream is gone.
+  (use "git branch --unset-upstream" to fixup)
+
+nothing to commit, working tree clean
