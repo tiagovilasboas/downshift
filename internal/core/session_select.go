@@ -71,7 +71,7 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 	if requested != "" && !HarnessOwnsID(d.Harness, requested, session, res) {
 		return RewritePlan{Model: d.Baseline.CurrentModel, HoldForeign: true}
 	}
-	if res != nil && d.ShouldPreserveExplicitModel(currentID, res) {
+	if (res != nil && d.ShouldPreserveExplicitModel(currentID, res)) || d.Baseline.Pinned {
 		return RewritePlan{Model: d.Model, PreserveExplicit: true}
 	}
 	if !session.Known {

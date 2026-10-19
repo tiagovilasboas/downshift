@@ -168,7 +168,8 @@ func BuildSessionTree(events []Event, sessionHash string, opt TreeOptions) Sessi
 		case ev.Outcome == OutcomeResolved && ev.LinkedDecision != "":
 			get(ev.LinkedDecision).resolved = &evs[i]
 		case ev.Outcome == OutcomeUsage && ev.LinkedDecision != "":
-			get(ev.LinkedDecision).usage = &evs[i]
+			f := get(ev.LinkedDecision)
+			f.usage = foldUsage(f.usage, &evs[i])
 		case ev.Outcome == OutcomeChildEnded && ev.LinkedDecision != "":
 			f := get(ev.LinkedDecision)
 			switch {
@@ -258,9 +259,9 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 			row.inferred = u.BaselineSource == BaselineInferred || hasCode(d.ReasonCodes, ReasonBaselineFromSettings)
 			// A refuted rewrite saved nothing: an older record may be priced
 			// on the model the rewrite asked for, so no baseline is credited.
-			if u.BaselineCostUSD != nil && !refuted {
-				row.baseUSD = *u.BaselineCostUSD
-				if over := v - *u.BaselineCostUSD; over > 0.0005 {
+			if routed := RoutedCost(*u, d, true); routed.BaselineCostUSD != nil && !refuted {
+				row.baseUSD = *routed.BaselineCostUSD
+				if over := v - *routed.BaselineCostUSD; over > 0.0005 {
 					row.OverUSD = over
 					row.Reason += " · over " + formatUSD(over)
 				}
@@ -486,4 +487,42 @@ func padLeft(s string, w int) string {
 		return strings.Repeat(" ", w-n) + s
 	}
 	return s
+}
+
+// foldUsage merges a child's usage records into one view. A child that stopped,
+// was sent another message and stopped again has one record per stop, each
+// holding that stretch's tokens and cost, so the child's cost is their sum. The
+// later record's model wins, as the one the child ended on.
+func foldUsage(prev, next *Event) *Event {
+	if prev == nil {
+		return next
+	}
+	sumI := func(a, b *int64) *int64 {
+		if a == nil && b == nil {
+			return nil
+		}
+		var n int64
+		if a != nil {
+			n += *a
+		}
+		if b != nil {
+			n += *b
+		}
+		return &n
+	}
+	sumF := func(a, b *float64) *float64 {
+		if a == nil || b == nil {
+			return nil // a stretch with no price makes the total unpriced
+		}
+		v := *a + *b
+		return &v
+	}
+	merged := *next
+	merged.InputTokens = sumI(prev.InputTokens, next.InputTokens)
+	merged.OutputTokens = sumI(prev.OutputTokens, next.OutputTokens)
+	merged.CachedTokens = sumI(prev.CachedTokens, next.CachedTokens)
+	merged.CacheWriteTokens = sumI(prev.CacheWriteTokens, next.CacheWriteTokens)
+	merged.ActualCostUSD = sumF(prev.ActualCostUSD, next.ActualCostUSD)
+	merged.BaselineCostUSD = sumF(prev.BaselineCostUSD, next.BaselineCostUSD)
+	return &merged
 }

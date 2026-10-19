@@ -83,6 +83,23 @@ func DecisionKey(ev Event) string {
 	return ev.Timestamp + "|" + ev.SessionID
 }
 
+// RoutedCost returns usage ev as the router may be credited for it. A usage
+// record is priced against the model its decision asked for, but only an
+// applied rewrite makes that a counterfactual: when the hook left the spawn
+// alone (outcome allow, baseline or blocked, or a guardrail correction) the model that ran is the harness's own choice (a /model switch after
+// the transcript was read, opusplan, a definition), and any gap to the model the
+// decision recorded is not the router's saving or overspend. Such a record gets
+// the cost it actually had as its baseline, so it moves no delta; records whose
+// decision is unknown are unchanged. The log itself is not rewritten.
+func RoutedCost(ev Event, decision Event, found bool) Event {
+	if !found || AppliedRewrite(decision.Outcome, decision.Corrections) || !ev.HasRealCost() {
+		return ev
+	}
+	same := *ev.ActualCostUSD
+	ev.BaselineCostUSD = &same
+	return ev
+}
+
 // IsAppliedShift reports a decision event whose rewrite was written and
 // changed the model. These are the only decisions a harness can honor or not.
 func IsAppliedShift(ev Event) bool { return isShift(ev) }

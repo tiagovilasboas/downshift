@@ -287,8 +287,9 @@ func runHookAdapter[E any](
 		event.FromModel = "unknown"
 		if requested, ok := any(ev).(interface{ RequestedModel() string }); ok {
 			candidate := requested.RequestedModel()
-			if decision.Baseline.FromSettings {
-				// Inferred from settings: the adapter resolved it with the catalog.
+			if decision.Baseline.FromSettings || decision.Baseline.Pinned {
+				// Inferred from settings, or fixed by an agent definition: the
+				// adapter resolved it with the catalog.
 				candidate = decision.Baseline.RequestedID
 			}
 			if candidate != "" {
