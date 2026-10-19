@@ -57,7 +57,9 @@ func TestSpawnRecordLine(t *testing.T) {
 
 func TestWriteLiveCountsAndResetsPerSession(t *testing.T) {
 	t.Setenv("DOWNSHIFT_EVENT_LOG", t.TempDir()+"/events.jsonl")
-	rec := func(sess, state string) SpawnRecord { return SpawnRecord{State: state, Harness: "claude-code", Session: sess} }
+	rec := func(sess, state string) SpawnRecord {
+		return SpawnRecord{State: state, Harness: "claude-code", Session: sess}
+	}
 	for _, r := range []SpawnRecord{rec("aaaaaaaa", StateSwitched), rec("aaaaaaaa", StateHeld), rec("aaaaaaaa", StateSwitched)} {
 		if err := WriteLive(r); err != nil {
 			t.Fatal(err)
