@@ -5,7 +5,7 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift" width="320">
 </picture>
 
-**Right-size subagent models and inject zero-latency code intelligence automatically across Claude Code, Cursor, Codex, and OpenCode.**
+**Deterministic model router and code-intelligence layer for coding agents: right-sizes subagent models, packs only the relevant code context, and flags wasted prompt cache. Fail-open hooks for Claude Code, Cursor, Codex, and OpenCode. No LLM in the loop.**
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
@@ -29,7 +29,7 @@ Install the single binary and configure transparent, zero-config hooks across yo
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh && downshift setup
 ```
 
-`downshift setup` asks, backs up your existing configuration, and merges transparent pre-tool hooks into Claude Code (`~/.claude/settings.json`), Cursor, Codex, and OpenCode. `downshift setup --dry-run` previews changes; `--undo` restores backups.
+`downshift setup` asks, backs up your existing configuration, and merges transparent pre-tool hooks into Claude Code (`~/.claude/settings.json`), Cursor, Codex, and OpenCode. On Claude Code it also installs the Downshift plugin (hooks plus the `cache-tax` mod) and the sibling mods `savvy-progress` (progress bar, `/agents-info` panel of subagents) and `filetree`, and discovers the models of your session. `downshift setup --dry-run` previews changes; `--undo` restores backups; `--no-plugin` keeps the hooks in `settings.json` and skips the mods.
 
 Verify your environment immediately:
 
@@ -44,7 +44,7 @@ downshift try "rename the userId variable"    # Preview routing decision and rat
 
 ## How it works
 
-Coding agents spend most of their budget when delegating tasks to subagents. Downshift runs entirely in the background via native harness hooks with zero manual intervention:
+Delegating work to subagents is where a model choice can be made per task. Downshift runs in the background through native harness hooks, decides locally and deterministically (no model call), and leaves the spawn untouched when it is unsure:
 
 ```
                   ┌────────────────────────────────────────┐
@@ -73,11 +73,28 @@ Coding agents spend most of their budget when delegating tasks to subagents. Dow
 └───────────────────────────────┘                   └───────────────────────────────┘
 ```
 
-Downshift is built on three core pillars:
+Downshift is four capabilities behind one `setup`, running as native Go hooks inside your harness:
 
-1. **Deterministic Subagent Routing**: Intercepts delegation hooks (`PreToolUse` / `agent.spawn`) and matches task complexity (TRIVIAL to COMPLEX) to the optimal model tier from your session's own model list. Conservative under doubt: unconfident upshifts and unconfident frontier picks are held, while risk floors protect auth, payment, and secret operations.
-2. **Zero-Latency Code Intelligence (DCI)**: Zero-runtime AST symbol extraction (Go, TS/JS, Python), reverse call-graph (downstream blast radius), and field-weighted BM25 search inject compact repository sketches directly into prompt submissions (<10ms warm p95).
-3. **Context Optimization & Compaction**: In-process observe-mode context sensing, safe squelch compaction for verbose clean successes (`go test`, `git status`), session policy governance (`opusplan`), and companion integration (Headroom proxy).
+### 1. Deterministic model routing (zero LLM)
+- No model call to choose a model: no extra tokens and no extra seconds in the spawn path.
+- Strict heuristics plus an in-process FNV word-hash boost that can only raise a tier. The decision is local, in milliseconds.
+- **Doubt never spends money.** When the classifier is not confident, the spawn keeps the model it asked for. Mechanical, repetitive work (renames, test runs, listings) is downshifted on the spot, and risk floors protect auth, payment, and secrets.
+
+### 2. Cache hygiene and orchestration awareness (`cache-tax`)
+- Prices a cold prompt cache before you pay for it: a cold send on a 50k+ context is held with its estimated rewrite price, and `/keepwarm` keeps the cache alive through a break.
+- Tells your own prompts apart from internal traffic (task notifications, peers, coordinators, scheduled triggers), so it never gets in the way of parallel subagent flows.
+- Claude Code 2.1.287+ only, installed by `setup` through the plugin.
+
+### 3. Code intelligence (DCI, opt-in)
+- Indexes the repository in-process: Go AST, plus TypeScript/JavaScript, Python, Rust, PHP, Java, and C# by pattern.
+- Reverse call graph: who calls whom, before the model edits anything (`downshift dci impact`).
+- Packs only the affected symbols with BM25 under a strict byte cap, so the model gets the relevant slice instead of the whole tree. Measured so far: latency and bytes, not answer quality. Off by default; `downshift dci enable` turns it on.
+
+### 4. Output compaction (native `contextopt`, in the spirit of RTK and Headroom)
+- Recognises noisy terminal output (clean `go test` runs, `git status`, repeated log lines) and compacts only what is unambiguously clean. Errors, stack traces, diffs, grep matches, and non-zero exits stay verbatim.
+- **Honest scope:** a Claude Code hook cannot rewrite tool output in flight, so there the native provider measures bytes and saves no tokens. Real in-flight compression on Claude Code needs a proxy such as [Headroom](https://github.com/chopratejas/headroom); Downshift detects and records it but never starts it. The compactor itself is available as a stream (`downshift context compress --exit 0`).
+
+**Practical result.** One install instead of a separate router, a separate cache watcher, and a separate code indexer: `downshift setup` wires the hooks and, on Claude Code, the plugin, the mods, and your discovered models. It is a single Go binary with no daemon. What is proven so far is narrow: up to about 12% list-price saving on mechanical delegated work in a controlled trial, and nothing attributable on natural use; the other capabilities carry their own evidence status in the [capability matrix](docs/reference/capability-matrix.md).
 
 ---
 
@@ -151,6 +168,7 @@ Every feature is implemented in harness-agnostic shared layers and validated via
 
 Downshift follows a strict 5-rung [Evidence Ladder](docs/guides/evidence.md) (from catalog list prices to multi-week invoice verification):
 
+- **Estimates are not invoices**: `stats` and `dsmon` price routing at the catalog's dated list-price snapshot (`downshift models check` compares it with the providers). Treat them as estimates until `downshift report` or your invoice confirms them.
 - **Measured in A/B Trials**: In a controlled trial on Claude Code (2026-10-15), mechanical delegated tasks saved ~12% in list-price token costs with 12/12 hidden test suites passing. On complex, natural tasks, guardrails held most spawns at baseline ([full report](docs/evidence/subagent-routing-ab-2026-10-15.md)).
 - **Built-in Control Group**: Downshift leaves ~1 in 10 spawns unrouted (`DOWNSHIFT_CONTROL_SHARE=0.10`). `downshift report` statistically contrasts routed vs control arms to measure real cost per completed task and rework rates ([report guide](docs/guides/report.md)).
 - **Prompt Privacy**: Task instructions, user messages, and file contents are evaluated in-memory only and never logged to disk or sent across the network. Local telemetry (`.downshift/events.jsonl`) contains counts, hashes, and timings only ([stats export](docs/reference/stats-export.md)).

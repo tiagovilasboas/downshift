@@ -16,7 +16,7 @@ a vendored third-party module (MIT) that guards a cold prompt cache with its
 price and keeps the cache warm on request (`/keepwarm`). It is the one
 third-party component Downshift bundles (owner decision 2026-10-17), Claude
 Code only because only Claude Code loads mods, and it holds no routing logic.
-`setup` never writes it: a mod is plugin-only.
+`setup` never writes the mod into a settings file: it arrives with the plugin that `setup` installs through `claude plugin install` (`--no-plugin` skips it).
 
 Two more vendored mods, [`savvy-progress`](../mods/savvy-progress/README.md) and
 [`filetree`](../mods/filetree/README.md), ship as sibling plugins of the Downshift

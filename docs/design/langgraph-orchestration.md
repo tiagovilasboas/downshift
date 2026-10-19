@@ -59,7 +59,7 @@ Request:
 
 Response fields include the stable `schema_version`, `status`, `delegations`, an auditable node `trace`, and `routing_boundary` to prevent a consumer from mistaking planning for tier/model routing.
 
-The CLI fails closed after two seconds waiting for stdin and emits `INPUT_TIMEOUT`. It appends only timestamp, status, error code, and delegation count to `~/.harness-downshift/orchestration-events.jsonl` with owner-only permissions; task text and prompt content are never logged. Set `DOWNSHIFT_ORCHESTRATION_TELEMETRY_PATH` only for controlled test environments.
+The CLI fails closed after two seconds waiting for stdin and emits `INPUT_TIMEOUT`. It appends only timestamp, status, error code, and delegation count to `~/.downshift/orchestration-events.jsonl` with owner-only permissions; task text and prompt content are never logged. Set `DOWNSHIFT_ORCHESTRATION_TELEMETRY_PATH` only for controlled test environments.
 
 ## Fowler loop
 
