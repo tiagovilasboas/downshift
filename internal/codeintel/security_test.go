@@ -984,12 +984,12 @@ func TestSecurity_MultiHarnessDCIEventsPrivacy(t *testing.T) {
 			Timestamp:        time.Now().UTC(),
 		},
 		{
-			IndexedFiles:     150,
-			CandidateCount:   0,
-			SelectedFiles:    0,
-			SelectedSymbols:  0,
-			ErrorCode:        "timeout",
-			Timestamp:        time.Now().UTC(),
+			IndexedFiles:    150,
+			CandidateCount:  0,
+			SelectedFiles:   0,
+			SelectedSymbols: 0,
+			ErrorCode:       "timeout",
+			Timestamp:       time.Now().UTC(),
 		},
 	}
 
@@ -1036,4 +1036,3 @@ func TestSecurity_MultiHarnessDCIEventsPrivacy(t *testing.T) {
 		}
 	}
 }
-

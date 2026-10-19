@@ -11,14 +11,14 @@ import (
 
 var (
 	// TypeScript / JavaScript regexes
-	reTSJSFunc       = regexp.MustCompile(`^(?:export\s+(?:default\s+)?)?(?:async\s+)?function(?:\s*\*|\s+)\s*([A-Za-z0-9_$]+)`)
-	reTSJSClass      = regexp.MustCompile(`^(?:export\s+(?:default\s+)?)?(?:abstract\s+)?class\s+([A-Za-z0-9_$]+)`)
-	reTSJSInterface  = regexp.MustCompile(`^(?:export\s+(?:default\s+)?)?interface\s+([A-Za-z0-9_$]+)`)
-	reTSJSType       = regexp.MustCompile(`^(?:export\s+)?type\s+([A-Za-z0-9_$]+)(?:<[^>]*>)?\s*=`)
-	reTSJSEnum       = regexp.MustCompile(`^(?:export\s+)?(?:const\s+)?enum\s+([A-Za-z0-9_$]+)`)
-	reTSJSConst      = regexp.MustCompile(`^(?:export\s+)?(const|let|var)\s+([A-Za-z0-9_$]+)\s*(?::\s*[^=]+)?\s*=\s*(.*)`)
-	reTSJSMethod     = regexp.MustCompile(`^(?:(?:public|private|protected|static|readonly|override|abstract|async)\s+)*(?:(?:get|set)\s+)?([A-Za-z0-9_$]+)\s*(?:<[^>]*>)?\s*\(`)
-	reTSJSPropArrow  = regexp.MustCompile(`^(?:(?:public|private|protected|static|readonly)\s+)*([A-Za-z0-9_$]+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z0-9_$]+)?\s*=>`)
+	reTSJSFunc      = regexp.MustCompile(`^(?:export\s+(?:default\s+)?)?(?:async\s+)?function(?:\s*\*|\s+)\s*([A-Za-z0-9_$]+)`)
+	reTSJSClass     = regexp.MustCompile(`^(?:export\s+(?:default\s+)?)?(?:abstract\s+)?class\s+([A-Za-z0-9_$]+)`)
+	reTSJSInterface = regexp.MustCompile(`^(?:export\s+(?:default\s+)?)?interface\s+([A-Za-z0-9_$]+)`)
+	reTSJSType      = regexp.MustCompile(`^(?:export\s+)?type\s+([A-Za-z0-9_$]+)(?:<[^>]*>)?\s*=`)
+	reTSJSEnum      = regexp.MustCompile(`^(?:export\s+)?(?:const\s+)?enum\s+([A-Za-z0-9_$]+)`)
+	reTSJSConst     = regexp.MustCompile(`^(?:export\s+)?(const|let|var)\s+([A-Za-z0-9_$]+)\s*(?::\s*[^=]+)?\s*=\s*(.*)`)
+	reTSJSMethod    = regexp.MustCompile(`^(?:(?:public|private|protected|static|readonly|override|abstract|async)\s+)*(?:(?:get|set)\s+)?([A-Za-z0-9_$]+)\s*(?:<[^>]*>)?\s*\(`)
+	reTSJSPropArrow = regexp.MustCompile(`^(?:(?:public|private|protected|static|readonly)\s+)*([A-Za-z0-9_$]+)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z0-9_$]+)?\s*=>`)
 
 	// Python regexes
 	rePythonClass = regexp.MustCompile(`^class\s+([A-Za-z0-9_]+)`)
