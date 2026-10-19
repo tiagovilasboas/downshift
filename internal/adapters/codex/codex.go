@@ -225,11 +225,8 @@ func effortOrInherit(v string) string {
 	return v
 }
 
-func allow() Output {
-	return Output{
-		HookSpecificOutput: &HookSpecificOutput{
-			HookEventName:      "PreToolUse",
-			PermissionDecision: "allow",
-		},
-	}
-}
+// allow answers "no opinion": an empty object, no permissionDecision. An
+// explicit "allow" would override the user's own ask/deny permission rules for
+// the spawning tool, and Codex rejects a bare allow without updatedInput. The
+// harness then applies its normal permission flow to the unchanged call.
+func allow() Output { return Output{} }

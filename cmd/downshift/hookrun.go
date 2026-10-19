@@ -421,7 +421,9 @@ func readHookPayload(in io.Reader, limit int64) ([]byte, error) {
 // minimal valid JSON outputs that let the tool call proceed unmodified.
 
 var printAllow = rewriteWire(func() {
-	fmt.Println(`{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}`)
+	// No permissionDecision: an explicit allow would override the user's ask
+	// rules. An empty object leaves the harness's own permission flow intact.
+	fmt.Println(`{}`)
 })
 
 var printCursorAllow = rewriteWire(func() {

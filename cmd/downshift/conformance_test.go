@@ -245,12 +245,17 @@ func decodeHookSpecificOutput(t *testing.T, rc int, stdout, _, requested string)
 	t.Helper()
 	var out struct {
 		HookSpecificOutput *struct {
-			UpdatedInput map[string]any `json:"updatedInput"`
+			PermissionDecision string         `json:"permissionDecision"`
+			UpdatedInput       map[string]any `json:"updatedInput"`
 		} `json:"hookSpecificOutput"`
 	}
 	decodeHookStdout(t, stdout, &out)
 	if out.HookSpecificOutput == nil {
 		return hookResult{rc: rc}
+	}
+	// A decision without a rewrite would override the user's ask rules.
+	if out.HookSpecificOutput.PermissionDecision != "" && out.HookSpecificOutput.UpdatedInput == nil {
+		t.Errorf("unchanged spawn must emit no permissionDecision: %s", stdout)
 	}
 	return resultFromFields(rc, out.HookSpecificOutput.UpdatedInput, "model", requested)
 }

@@ -551,8 +551,8 @@ func TestRunHookAdapter_InputDeadlineFailsOpenAndRecordsNoPayload(t *testing.T) 
 		}
 	})
 	close(release)
-	if !strings.Contains(out, `"permissionDecision":"allow"`) {
-		t.Fatalf("timeout must fail open: %s", out)
+	if strings.TrimSpace(out) != `{}` {
+		t.Fatalf("timeout must fail open with a neutral {}: %s", out)
 	}
 	events, err := telemetry.ReadEventsFrom(path)
 	if err != nil || len(events) != 1 {
@@ -576,8 +576,8 @@ func TestRunHookAdapter_MalformedJSON_FailOpen(t *testing.T) {
 			t.Errorf("malformed JSON must fail-open (rc=0), got %d", rc)
 		}
 	})
-	if !strings.Contains(out, `"permissionDecision":"allow"`) {
-		t.Errorf("fail-open must print allow; got:\n%s", out)
+	if strings.TrimSpace(out) != `{}` {
+		t.Errorf("fail-open must print a neutral {}; got:\n%s", out)
 	}
 }
 
@@ -595,8 +595,8 @@ func TestRunHookAdapter_OversizedPayload_FailOpen(t *testing.T) {
 			t.Errorf("oversized payload must fail-open (rc=0), got %d", rc)
 		}
 	})
-	if !strings.Contains(out, `"permissionDecision":"allow"`) {
-		t.Errorf("oversized payload must print allow; got:\n%s", out)
+	if strings.TrimSpace(out) != `{}` {
+		t.Errorf("oversized payload must print a neutral {}; got:\n%s", out)
 	}
 }
 
