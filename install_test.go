@@ -185,7 +185,7 @@ func toolOnlyPath(t *testing.T, fakeBin string) string {
 		t.Fatal(err)
 	}
 	for _, tool := range []string{"sh", "uname", "tr", "mktemp", "rm", "grep", "awk", "head", "sed", "tar", "mv", "chmod",
-		"mkdir", "dirname", "cat", "sha256sum", "shasum", "python3", "cp", "date"} {
+		"mkdir", "dirname", "cat", "sha256sum", "shasum", "python3", "cp", "date", "gzip", "gunzip", "env"} {
 		if p, err := exec.LookPath(tool); err == nil {
 			if err := os.Symlink(p, filepath.Join(dir, tool)); err != nil {
 				t.Fatal(err)
