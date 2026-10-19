@@ -19,22 +19,25 @@ folded into the `downshift` plugin unchanged.
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `savvy-progress`, source `./mods/savvy-progress` |
 | Needs | Claude Code 2.1.287 or later (mods on by default); a pane for `/agents-info` (desktop docks it; the terminal needs the fullscreen layout) |
 
-## Downshift colour patch
+## Downshift local patch
 
-The only local change to upstream: the bar uses the Downshift brand green
-(`docs/brand/downshift-brand-tokens.json`, accent `#22C55E`) instead of the
-upstream violet, and the percentage pill uses the brand ink `#0D1117` instead
-of white, because white on green has poor contrast.
+Owner decision 2026-10-19: the look follows the Downshift site (black first,
+white and grey carry the interface, green only as a small accent;
+`docs/brand/downshift-brand-tokens.json`). The only local change to upstream is
+in `hooks/register.tsx`: colours, the shown tier words and one simpler sprite, no
+behaviour. The reapplyable diff is [`downshift-local.patch`](downshift-local.patch),
+regenerated 2026-10-19 against the pinned upstream commit.
 
-| Constant in `hooks/register.tsx` | Upstream | Downshift |
-|---|---|---|
-| `ACCENT` (running) | `#8f8cf4` | `#22c55e` |
-| `DONE` (finished) | `#5fbf8f` | `#16a34a` |
-| `PILL_INK` (pill text; was a literal `#ffffff`) | `#ffffff` | `#0d1117` |
+| In `hooks/register.tsx` | Upstream | Downshift | Why |
+|---|---|---|---|
+| `ACCENT` (running bar, dot) | `#8f8cf4` | `#f5f7fa` | white while running |
+| `DONE` (finished bar, dot, check) | `#5fbf8f` | `#22c55e` | green means done |
+| `PILL_INK` (pill text; was a literal `#ffffff`) | `#ffffff` | `#0a0a0a` | brand black on a white or green pill |
+| `TIER_COLOR` | violet, orange, amber, blue, teal | grey ramp by lightness: `fable` `#FFFFFF`, `heavy` `#D6DAE2`, `careful` `#AAB0B8`, `medium` `#868A90`, `light` and `other` `#5C6168` | tier by lightness; green only for done, red for failed |
+| Pixel crab | one costume per role (hard hat, star, palette, flag, ...) | one monochrome crab in greys (`CLAY` `#868A90`, claws `#D6DAE2`); one `#22c55e` pixel once the agent is done | no per-role costumes |
+| Tier words shown (`tier` strings, all three languages) | `light`, `medium`, `careful`, `heavy`, `fable` | `small`, `medium`, `frontier`, `frontier`, `frontier` | same words as the site and `downshift try`; the internal tier keys and the tool schema are unchanged |
 
-Tier colours in the agents panel are untouched: they tell tiers apart. When
-re-vendoring a newer upstream, reapply these three lines and rerun
-`claude plugin test mods/savvy-progress`.
+Re-vendor, then `git apply mods/savvy-progress/downshift-local.patch`.
 
 ## What it does
 
