@@ -97,6 +97,9 @@ func TestCursorCLIVerifiesGenericAgent(t *testing.T) {
 			}
 			cursorScript(t, dir, "agent", body)
 			t.Setenv("PATH", dir)
+			old := trustedBinaryFn
+			trustedBinaryFn = func(string) bool { return true } // the fake lives in a temp dir
+			defer func() { trustedBinaryFn = old }()
 			got, err := (CursorCLI{}).Discover(context.Background())
 			if cursor && (err != nil || len(got) != 1) {
 				t.Fatalf("got %+v, %v", got, err)
@@ -105,5 +108,26 @@ func TestCursorCLIVerifiesGenericAgent(t *testing.T) {
 				t.Fatalf("unrelated agent accepted: %+v", got)
 			}
 		})
+	}
+}
+
+// The identity probe executes the program, so an `agent` that sits in a temp
+// directory or the working directory is never run.
+func TestCursorCLIDoesNotRunAnUntrustedAgent(t *testing.T) {
+	dir := t.TempDir()
+	marker := filepath.Join(dir, "ran")
+	cursorScript(t, dir, "agent", "touch "+marker+"\necho 'Usage: agent models'\n")
+	t.Setenv("PATH", dir)
+	if _, err := (CursorCLI{}).Discover(context.Background()); err == nil {
+		t.Fatal("an agent in a temp directory was accepted")
+	}
+	if _, err := os.Stat(marker); err == nil {
+		t.Fatal("the untrusted agent was executed")
+	}
+	if trustedBinary("relative/agent") {
+		t.Error("a relative path must not be trusted")
+	}
+	if trustedBinary(filepath.Join(dir, "agent")) {
+		t.Error("a temp-directory binary must not be trusted")
 	}
 }
