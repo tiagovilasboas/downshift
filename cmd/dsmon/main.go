@@ -383,7 +383,7 @@ func row(content string) string {
 }
 
 func divider(label string) string {
-	bar := strings.Repeat("─", boxWidth-4-len(label)-1)
+	bar := strings.Repeat("─", boxWidth-4-len(label))
 	return fmt.Sprintf("│ %s%s%s %s│", dim, label, rst, bar)
 }
 
