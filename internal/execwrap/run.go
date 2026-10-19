@@ -30,6 +30,7 @@ const (
 	ExitClassSignal     = "signal"
 	ExitClassNotFound   = "not_found"
 	ExitClassStartError = "start_error"
+	ExitClassRefused    = "refused"
 )
 
 // forwardedSignals are relayed to the child so an interrupt or termination of
@@ -80,6 +81,12 @@ func Run(argv []string, o Options) (res Result) {
 		return Result{ExitCode: 2, ExitClass: ExitClassStartError}
 	}
 	res.Family = FamilyOf(argv)
+	if res.Family == FamilyNone {
+		// exec is not a generic runner: only the allowlisted families run, so
+		// a wrapped command can never be anything the hook would not wrap.
+		fmt.Fprintln(o.Stderr, "downshift exec: refused: only `go test` and `git status` may run through exec")
+		return Result{ExitCode: ExitCannotExecute, ExitClass: ExitClassRefused}
+	}
 	path, err := exec.LookPath(argv[0])
 	if err != nil {
 		return startFailure(argv[0], err, o.Stderr, res.Family)

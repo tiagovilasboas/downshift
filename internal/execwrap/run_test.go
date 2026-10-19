@@ -95,16 +95,10 @@ func TestRun_ExitCodesAndCompaction(t *testing.T) {
 			wantCode: 0, wantClass: ExitClassZero, wantOut: "On branch main\nnothing to commit, working tree clean\n", wantFamily: FamilyGoTest,
 		},
 		{
-			name: "non allowlisted program is passthrough", bin: "tool",
-			script: "printf '" + strings.ReplaceAll(passingSuite, "\t", "\\t") + "'; exit 3",
-			argv:   []string{"tool"}, compact: true,
-			wantCode: 3, wantClass: ExitClassNonZero, wantOut: passingSuite,
-		},
-		{
-			name: "stdout and stderr stay separate", bin: "tool",
+			name: "stdout and stderr stay separate", bin: "go",
 			script: "echo out; echo err >&2",
-			argv:   []string{"tool"}, compact: true,
-			wantCode: 0, wantClass: ExitClassZero, wantOut: "out\n", wantErr: "err\n",
+			argv:   []string{"go", "test"}, compact: true,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: "out\n", wantErr: "err\n", wantFamily: FamilyGoTest,
 		},
 	}
 	for _, tc := range cases {
@@ -144,14 +138,32 @@ func TestRun_NotFound127(t *testing.T) {
 	}
 }
 
-func TestRun_NotExecutable126(t *testing.T) {
+// exec is not a generic runner: anything outside the allowlist is refused
+// with 126 and nothing is spawned (the marker file would exist otherwise).
+func TestRun_RefusesNonAllowlisted(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "x"), []byte("data"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	r, _, _ := run(t, []string{filepath.Join(dir, "x")}, true)
-	if r.ExitCode != ExitCannotExecute {
-		t.Fatalf("exit = %d, want 126", r.ExitCode)
+	marker := filepath.Join(dir, "ran")
+	fakeBin(t, "tool", "touch "+marker)
+	fakeBin(t, "downshift", "touch "+marker)
+	for _, argv := range [][]string{
+		{"tool"},
+		{"rm", "-rf", marker},
+		{"downshift", "exec", "--", "go", "test"}, // recursion
+		{"/usr/bin/git", "status"},
+		{"git", "log"},
+		{"go", "build"},
+		{"go"},
+	} {
+		r, out, errOut := run(t, argv, true)
+		if r.ExitCode != ExitCannotExecute || r.ExitClass != ExitClassRefused || r.Family != FamilyNone {
+			t.Fatalf("%v: result = %+v", argv, r)
+		}
+		if out != "" || !strings.Contains(errOut, "refused") {
+			t.Fatalf("%v: stdout=%q stderr=%q", argv, out, errOut)
+		}
+		if _, err := os.Stat(marker); err == nil {
+			t.Fatalf("%v: a program was spawned", argv)
+		}
 	}
 }
 
@@ -163,9 +175,9 @@ func TestRun_NoArgv(t *testing.T) {
 }
 
 func TestRun_StdinInherited(t *testing.T) {
-	fakeBin(t, "tool", "cat")
+	fakeBin(t, "go", "cat")
 	var out bytes.Buffer
-	r := Run([]string{"tool"}, Options{Stdin: strings.NewReader("hello\n"), Stdout: &out, Stderr: &bytes.Buffer{}, Compact: true})
+	r := Run([]string{"go", "test"}, Options{Stdin: strings.NewReader("hello\n"), Stdout: &out, Stderr: &bytes.Buffer{}, Compact: true})
 	if r.ExitCode != 0 || out.String() != "hello\n" {
 		t.Fatalf("exit=%d out=%q", r.ExitCode, out.String())
 	}
@@ -197,7 +209,7 @@ func TestRun_LargeOutputStreamsRaw(t *testing.T) {
 }
 
 func TestRun_SignalForwarded(t *testing.T) {
-	fakeBin(t, "tool", "exec sleep 10")
+	fakeBin(t, "go", "exec sleep 10")
 	sig := make(chan os.Signal, 1)
 	var out, errb bytes.Buffer
 	go func() {
@@ -205,7 +217,7 @@ func TestRun_SignalForwarded(t *testing.T) {
 		sig <- syscall.SIGTERM
 	}()
 	start := time.Now()
-	r := Run([]string{"tool"}, Options{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb, Compact: true, Signals: sig})
+	r := Run([]string{"go", "test"}, Options{Stdin: strings.NewReader(""), Stdout: &out, Stderr: &errb, Compact: true, Signals: sig})
 	if r.ExitCode != 128+int(syscall.SIGTERM) || r.ExitClass != ExitClassSignal {
 		t.Fatalf("exit = %d/%s, want %d/signal", r.ExitCode, r.ExitClass, 128+int(syscall.SIGTERM))
 	}
