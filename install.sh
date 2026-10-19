@@ -166,6 +166,31 @@ else
   echo "Checksum verified (sha256)."
 fi
 
+# ── Verify build provenance (optional) ────────────────────────────────────────
+# Releases carry a GitHub build-provenance attestation. When the gh CLI is
+# installed, check it; when gh is missing, not signed in, or the release
+# predates attestations, say so and carry on: the sha256 above has already
+# passed. DOWNSHIFT_REQUIRE_ATTESTATION=1 turns every non-verified outcome into
+# an error; DOWNSHIFT_SKIP_ATTESTATION=1 skips the check.
+attestation_failed() {
+  if [ "${DOWNSHIFT_REQUIRE_ATTESTATION:-0}" = 1 ]; then
+    echo "error: $1; not installed (DOWNSHIFT_REQUIRE_ATTESTATION=1)" >&2
+    exit 1
+  fi
+  echo "warning: $1; continuing with the sha256 check only" >&2
+}
+if [ "${DOWNSHIFT_SKIP_ATTESTATION:-0}" = 1 ]; then
+  echo "warning: attestation check skipped (DOWNSHIFT_SKIP_ATTESTATION=1)" >&2
+elif command -v gh >/dev/null 2>&1; then
+  if gh attestation verify "$TMP/$ARCHIVE" --repo "$REPO" >/dev/null 2>&1; then
+    echo "Build provenance verified (GitHub attestation)."
+  else
+    attestation_failed "build provenance for ${ARCHIVE} could not be verified (no attestation for this release, gh not signed in, or a mismatch: run 'gh attestation verify <file> --repo ${REPO}' to see which)"
+  fi
+else
+  attestation_failed "build provenance not checked (the gh CLI is not installed; see docs/guides/install.md)"
+fi
+
 echo "Extracting..."
 tar -xzf "$TMP/$ARCHIVE" -C "$TMP"
 
