@@ -67,6 +67,10 @@ type rawEvent struct {
 	Honor string `json:"honor"`
 	Quota string `json:"quota"`
 	Usage string `json:"usage"`
+
+	// src is the event as the telemetry package parsed it; the dashboard
+	// money comes from telemetry.Summarize(src), the same code `stats` runs.
+	src telemetry.Event
 }
 
 type agentEntry struct {
@@ -89,6 +93,9 @@ type statusResponse struct {
 	Stats                  statsBlock                    `json:"stats"`
 	ObservedChildByHarness map[string]observedChildEntry `json:"observed_child_by_harness,omitempty"`
 	Compaction             statusCompaction              `json:"compaction"`
+	// LogError is set when the event log could not be read completely, for
+	// example a line above telemetry.MaxLineBytes. Absent when the read was clean.
+	LogError string `json:"log_error,omitempty"`
 }
 
 // statusCompaction is the dashboard compaction block. ByHarness comes from
@@ -111,10 +118,14 @@ type statsBlock struct {
 	EstUSD     float64 `json:"est_usd"`
 	// EstUnits accumulates the normalised savings fraction per DOWNSHIFT event.
 	EstUnits float64 `json:"est_units"`
-	// RealSavedUSD accumulates baseline minus actual cost for events with real costs.
+	// RealSavedUSD is the NET real saving (telemetry.SavingsSummary.NetSavedUSD):
+	// rewrites that cost more are subtracted, exactly as in `downshift stats`.
+	// The key is kept for older clients; Savings has the labelled breakdown.
 	RealSavedUSD float64 `json:"real_saved_usd"`
 	// RealCostEvents counts events that carried both real cost fields.
 	RealCostEvents int `json:"real_cost_events"`
+	// Savings is the shared savings definition, estimated at list price.
+	Savings telemetry.SavingsSummary `json:"savings"`
 	// IsEstimate is always true: dollar figures are estimates, not billing.
 	IsEstimate bool `json:"is_estimate"`
 }
@@ -122,21 +133,32 @@ type statsBlock struct {
 var window = 24 * time.Hour
 
 func readEvents() []rawEvent {
+	out, _ := readEventsErr()
+	return out
+}
+
+// readEventsErr returns the windowed events and the scanner error, if any.
+// Events read before the error are still returned.
+func readEventsErr() ([]rawEvent, error) {
 	evPath, err := paths.EventsPath()
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	f, err := os.Open(evPath)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	defer f.Close()
 	cutoff := time.Now().UTC().Add(-window)
 	var out []rawEvent
 	sc := bufio.NewScanner(f)
+	sc.Buffer(make([]byte, 0, 64*1024), telemetry.MaxLineBytes)
 	for sc.Scan() {
 		var e rawEvent
 		if json.Unmarshal(sc.Bytes(), &e) != nil || e.Harness == "" {
+			continue
+		}
+		if json.Unmarshal(sc.Bytes(), &e.src) != nil {
 			continue
 		}
 		t, err := time.Parse(time.RFC3339Nano, e.Timestamp)
@@ -145,7 +167,7 @@ func readEvents() []rawEvent {
 		}
 		out = append(out, e)
 	}
-	return out
+	return out, sc.Err()
 }
 
 func readAgents() []agentEntry {
@@ -161,6 +183,7 @@ func readAgents() []agentEntry {
 	cutoff := time.Now().UTC().Add(-window)
 	var out []agentEntry
 	sc := bufio.NewScanner(f)
+	sc.Buffer(make([]byte, 0, 64*1024), telemetry.MaxLineBytes)
 	for sc.Scan() {
 		var a agentEntry
 		// Privacy-compatible filter: new hook events carry an empty task
@@ -271,7 +294,7 @@ func fileSize(path string) int64 {
 }
 
 func handleStatus(w http.ResponseWriter, _ *http.Request) {
-	events := readEvents()
+	events, logErr := readEventsErr()
 	agents := readAgents()
 
 	// Chips are the product harnesses, not "whoever wrote in the last 24h".
@@ -293,19 +316,21 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 	applySpawnSurfaces(events)
 	observedChild := observedChildByHarness(events)
 	var st statsBlock
+	srcs := make([]telemetry.Event, len(events))
+	for i := range events {
+		srcs[i] = events[i].src
+	}
+	st.Savings = telemetry.Summarize(srcs)
+	st.RealSavedUSD = st.Savings.NetSavedUSD
+	st.RealCostEvents = st.Savings.CostEvents
 	// IsEstimate is always true: dollar figures are estimates, not provider billing.
 	st.IsEstimate = true
 	var decisions []rawEvent
 	for _, e := range events {
 		if telemetry.IsCostOnlyOutcome(e.Outcome) {
-			// Usage records carry real cost; baseline (no-route) records
-			// are control-group events. Neither is a routing decision.
-			if e.Outcome == telemetry.OutcomeUsage && e.ActualCostUSD != nil && e.BaselineCostUSD != nil {
-				if saved := *e.BaselineCostUSD - *e.ActualCostUSD; saved > 0 {
-					st.RealSavedUSD += saved
-				}
-				st.RealCostEvents++
-			}
+			// Usage records carry real cost (summed by Summarize above);
+			// baseline (no-route) records are control-group events.
+			// Neither is a routing decision.
 			continue
 		}
 		applied := telemetry.AppliedRewrite(e.Outcome, e.Corrections)
@@ -352,6 +377,7 @@ func handleStatus(w http.ResponseWriter, _ *http.Request) {
 		Harnesses: harnesses, Switches: sw, Agents: ag, Stats: st,
 		ObservedChildByHarness: observedChild,
 		Compaction:             compactionSummary(),
+		LogError:               errString(logErr),
 	})
 }
 
@@ -470,4 +496,11 @@ func newHandler(webDir string) http.Handler {
 		mux.Handle("/", http.FileServer(http.Dir(webDir)))
 	}
 	return localOnly(mux)
+}
+
+func errString(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
 }

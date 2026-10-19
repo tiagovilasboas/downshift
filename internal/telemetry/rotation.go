@@ -4,6 +4,7 @@
 package telemetry
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -96,13 +97,20 @@ func (p RotationPolicy) MaybeRotate(path string) (string, error) {
 	// Clean up old backups.
 	if p.MaxBackups > 0 {
 		if err := cleanupOldBackups(path, p.MaxBackups); err != nil {
-			// Log cleanup errors but don't fail the rotation.
-			// (in production, might log this with the observability system)
+			// The rotation itself succeeded; callers decide how to surface it.
+			return path, &BackupCleanupError{Err: err}
 		}
 	}
 
 	return path, nil
 }
+
+// BackupCleanupError reports that old backups could not be pruned after a
+// successful rotation. The log is already safe to append to.
+type BackupCleanupError struct{ Err error }
+
+func (e *BackupCleanupError) Error() string { return "pruning old log backups: " + e.Err.Error() }
+func (e *BackupCleanupError) Unwrap() error { return e.Err }
 
 // rotateFile returns a rotated filename with a timestamp suffix.
 // Example: events.jsonl → events.jsonl.2026-10-01T09-44-00
@@ -115,13 +123,34 @@ func rotateFile(path string) string {
 // Matching files are named path + "." + ISO8601-like timestamp.
 func cleanupOldBackups(logPath string, maxBackups int) error {
 	dir := filepath.Dir(logPath)
-	base := filepath.Base(logPath)
-
-	entries, err := os.ReadDir(dir)
+	backups, err := listBackups(logPath)
 	if err != nil {
 		return err
 	}
 
+	if len(backups) <= maxBackups {
+		return nil // Nothing to clean up.
+	}
+
+	toDelete := len(backups) - maxBackups
+	var errs []error
+	for i := 0; i < toDelete; i++ {
+		// Keep going after a failure so one stuck file does not block the rest.
+		if err := os.Remove(filepath.Join(dir, backups[i].Name())); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// listBackups returns the rotated backups of logPath, oldest first.
+func listBackups(logPath string) ([]os.DirEntry, error) {
+	dir := filepath.Dir(logPath)
+	base := filepath.Base(logPath)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
 	var backups []os.DirEntry
 	for _, e := range entries {
 		// The lock file shares the prefix but is not a backup.
@@ -129,23 +158,16 @@ func cleanupOldBackups(logPath string, maxBackups int) error {
 			backups = append(backups, e)
 		}
 	}
+	sort.Slice(backups, func(i, j int) bool { return backups[i].Name() < backups[j].Name() })
+	return backups, nil
+}
 
-	if len(backups) <= maxBackups {
-		return nil // Nothing to clean up.
+// RotatedBackupCount returns how many rotated backups sit beside the default
+// event log. ReadEvents does not read them, so stats uses this to say so.
+func RotatedBackupCount() int {
+	backups, err := listBackups(defaultEventPath())
+	if err != nil {
+		return 0
 	}
-
-	// Sort by name (timestamp order); delete oldest ones.
-	sort.Slice(backups, func(i, j int) bool {
-		return backups[i].Name() < backups[j].Name()
-	})
-
-	toDelete := len(backups) - maxBackups
-	for i := 0; i < toDelete; i++ {
-		oldPath := filepath.Join(dir, backups[i].Name())
-		if err := os.Remove(oldPath); err != nil {
-			// Best-effort cleanup; don't fail if one deletion fails.
-		}
-	}
-
-	return nil
+	return len(backups)
 }

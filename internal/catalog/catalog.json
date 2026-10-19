@@ -3,12 +3,14 @@
   "_doc2": "Override at ~/.harness-downshift/catalog.json. Run 'downshift models pull' to refresh.",
   "_doc3": "'family' is the stable prefix for version-agnostic matching. A model whose ID starts with the family string matches this entry's tier even if the exact version is unknown.",
   "_doc4": "OpenRouter model IDs arrive as 'provider/model-id' (e.g. 'anthropic/claude-opus-5-5'). The router normalises these before lookup, so family matching works transparently.",
-  "_doc5": "Anthropic IDs and base input/output prices per 1M tokens: https://docs.anthropic.com/en/docs/about-claude/models/overview and https://docs.anthropic.com/en/docs/about-claude/pricing (accessed 2026-10-08).",
-  "_doc8": "Optional cache_read_cost_per_1m / cache_write_cost_per_1m come from the OpenRouter price snapshot dated 2026-10-12 (research/prices/effort-capabilities-2026-10-12.json), written by scripts/sync_catalog_prices.py for entries whose id matches a snapshot model id exactly. Absent means no cache price: cost then bills cached tokens at the input rate, an upper bound. Codex input/output prices were aligned to the same snapshot where the id matches.",
+  "_doc5": "Anthropic IDs and base input/output prices per 1M tokens, verified 2026-10-19 against https://platform.claude.com/docs/en/about-claude/pricing (formerly docs.anthropic.com/en/docs/about-claude/pricing) and https://docs.anthropic.com/en/docs/about-claude/models/overview. Cache write (5m) is 1.25x input for every Anthropic model. Cache read is 0.1x input, except Claude Opus 5.5 and Claude Sonnet 5.5 (0.05x, so Sonnet 5.5 reads at $0.10 on $2.00 input) and Claude Fable 5.1 (0.025x). An exact-id row exists for each older model that a 5.x row used to alias (claude-sonnet-4-6, claude-opus-4-8, claude-fable-5): they have different list prices and must not share a row.",
+  "_doc9": "prices_as_of is the date the list prices were last verified against a public source. The weekly workflow .github/workflows/sync-prices.yml runs scripts/sync_catalog_prices.py (OpenRouter public model list, no key) and opens a PR when a price or the date changes. downshift doctor warns when prices_as_of is more than 30 days old. Savings figures are estimates at these list prices. See docs/reference/prices.md.",
+  "_doc8": "Optional cache_read_cost_per_1m / cache_write_cost_per_1m come from the OpenRouter price snapshot dated 2026-10-12 (research/prices/effort-capabilities-2026-10-12.json), written by scripts/sync_catalog_prices.py for entries whose id matches a snapshot model id exactly. Absent means no cache price: cost then bills cached tokens at the input rate, an upper bound. Since 2026-10-19 the weekly sync-prices workflow re-runs the script against the live OpenRouter list (see _doc9), for the claude-code, codex and kirocrew harnesses. Codex input and cached-input prices were checked against https://developers.openai.com/api/docs/pricing on 2026-10-19; OpenAI lists no cache-write price, so a codex cache_write figure is OpenRouter's.",
   "_doc7": "Optional 'efforts': allowed effort values for the model, listed ONLY where verified against vendor docs on 2026-10-12. Absent means unknown: no restriction is applied and nothing is assumed.",
   "_doc6": "Claude Code's native alias 'haiku' resolves to claude-haiku-4-5-20251001 (Claude Code 2.1.289, observed 2026-10-15 in eval run b5/mech-rename/claude-routed-force-r1: stream lines, resolved records and Claude Code's own modelUsage), so the claude-code small entry is claude-haiku-4-5 at $1.00/$5.00, cache $0.10 read / $1.25 write per 1M. claude-haiku-5-5 ($0.10/$0.50 up to 100k prompt tokens, $0.50/$2.50 above; the catalog stores the up-to-100k price, so above 100k the gap to the frontier model is ~87%, not ~97%) is its own claude-code entry with no native name and no family: it is priced only on its exact id and is never the automatic small target. Older claude-haiku-4-5 ids match through the claude-haiku family; they are not an alias of 5-5 because KiroCrew owns that canonical id.",
   "version": "2",
-  "updated": "2026-10-16",
+  "updated": "2026-10-19",
+  "prices_as_of": "2026-10-19",
   "entries": [
 
     { "_section": "claude-code — native Anthropic models" },
@@ -45,7 +47,7 @@
     },
     {
       "id": "claude-sonnet-5-5",
-      "aliases": ["claude-sonnet", "claude-sonnet-5.5", "claude-sonnet-4-6"],
+      "aliases": ["claude-sonnet", "claude-sonnet-5.5"],
       "family": "claude-sonnet",
       "native_name": "sonnet",
       "provider": "anthropic",
@@ -61,7 +63,7 @@
     },
     {
       "id": "claude-opus-5-5",
-      "aliases": ["claude-opus", "claude-opus-5.5", "claude-opus-4-8"],
+      "aliases": ["claude-opus", "claude-opus-5.5"],
       "family": "claude-opus",
       "native_name": "opus",
       "provider": "anthropic",
@@ -77,7 +79,7 @@
     },
     {
       "id": "claude-fable-5-1",
-      "aliases": ["claude-fable", "claude-fable-5", "claude-fable-5.1"],
+      "aliases": ["claude-fable", "claude-fable-5.1"],
       "family": "claude-fable",
       "native_name": "fable",
       "provider": "anthropic",
@@ -92,6 +94,45 @@
       "cache_write_cost_per_1m": 12.50
     },
 
+    {
+      "id": "claude-sonnet-4-6",
+      "aliases": ["claude-sonnet-4.6"],
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
+      "input_cost_per_1m": 3.00,
+      "output_cost_per_1m": 15.00,
+      "cache_read_cost_per_1m": 0.30,
+      "cache_write_cost_per_1m": 3.75
+    },
+    {
+      "id": "claude-opus-4-8",
+      "aliases": ["claude-opus-4.8"],
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 5.00,
+      "output_cost_per_1m": 25.00,
+      "cache_read_cost_per_1m": 0.50,
+      "cache_write_cost_per_1m": 6.25
+    },
+    {
+      "id": "claude-fable-5",
+      "aliases": [],
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 10.00,
+      "output_cost_per_1m": 50.00,
+      "cache_read_cost_per_1m": 1.00,
+      "cache_write_cost_per_1m": 12.50
+    },
     { "_section": "claude-code — xAI Grok (installed via custom model config)" },
 
     {
@@ -212,8 +253,8 @@
       "tier": "mid",
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
-      "input_cost_per_1m": 3.00,
-      "output_cost_per_1m": 15.00
+      "input_cost_per_1m": 2.00,
+      "output_cost_per_1m": 10.00
     },
     {
       "id": "cursor-grok-4.6-medium",
@@ -350,7 +391,11 @@
       "harness": "codex",
       "tier": "frontier",
       "effort_scale": "reasoning_effort",
-      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "input_cost_per_1m": 2.00,
+      "output_cost_per_1m": 10.00,
+      "cache_read_cost_per_1m": 0.10,
+      "cache_write_cost_per_1m": 2.50
     },
     {
       "id": "gpt-5.6-luna",
@@ -389,10 +434,10 @@
       "tier": "frontier",
       "effort_scale": "reasoning_effort",
       "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 2.00,
-      "output_cost_per_1m": 10.00,
-      "cache_read_cost_per_1m": 0.20,
-      "cache_write_cost_per_1m": 2.50
+      "input_cost_per_1m": 4.00,
+      "output_cost_per_1m": 20.00,
+      "cache_read_cost_per_1m": 0.40,
+      "cache_write_cost_per_1m": 5.00
     },
     {
       "id": "gpt-6-astra",
@@ -461,11 +506,13 @@
       "effort_scale": "thinking_budget",
       "effort_map": { "low": "0", "medium": "5000", "high": "10000" },
       "input_cost_per_1m": 1.00,
-      "output_cost_per_1m": 5.00
+      "output_cost_per_1m": 5.00,
+      "cache_read_cost_per_1m": 0.10,
+      "cache_write_cost_per_1m": 1.25
     },
     {
       "id": "claude-sonnet-5-5",
-      "aliases": ["sonnet", "claude-sonnet-5.5", "claude-sonnet-4-6", "claude-sonnet-4.6", "claude-sonnet"],
+      "aliases": ["sonnet", "claude-sonnet-5.5", "claude-sonnet"],
       "family": "claude-sonnet",
       "provider": "anthropic",
       "harness": "kirocrew",
@@ -479,7 +526,7 @@
     },
     {
       "id": "claude-opus-5-5",
-      "aliases": ["opus", "claude-opus-5.5", "claude-opus-4-8", "claude-opus-4.8", "claude-opus"],
+      "aliases": ["opus", "claude-opus-5.5", "claude-opus"],
       "family": "claude-opus",
       "provider": "anthropic",
       "harness": "kirocrew",
@@ -490,6 +537,32 @@
       "output_cost_per_1m": 20.00,
       "cache_read_cost_per_1m": 0.20,
       "cache_write_cost_per_1m": 5.00
+    },
+    {
+      "id": "claude-sonnet-4-6",
+      "aliases": ["claude-sonnet-4.6"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
+      "input_cost_per_1m": 3.00,
+      "output_cost_per_1m": 15.00,
+      "cache_read_cost_per_1m": 0.30,
+      "cache_write_cost_per_1m": 3.75
+    },
+    {
+      "id": "claude-opus-4-8",
+      "aliases": ["claude-opus-4.8"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 5.00,
+      "output_cost_per_1m": 25.00,
+      "cache_read_cost_per_1m": 0.50,
+      "cache_write_cost_per_1m": 6.25
     },
 
     { "_section": "opencode — zen model IDs (no published list price: zero cost fields mean not in the catalog, never a real $0)" },

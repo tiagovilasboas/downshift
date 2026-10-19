@@ -194,6 +194,7 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 	pathBin := checkBinary(rep, env)
 	events := checkState(rep, env)
 	checkCatalog(rep, env)
+	checkPrices(rep, env)
 	checkScores(rep)
 	checkContext(rep, env)
 	for _, note := range modelOverrideNotes(core.AllHarnessCaps(), env.Getenv) {
@@ -314,6 +315,34 @@ func checkCatalog(rep *doctorReport, env doctorEnv) {
 		return
 	}
 	rep.add(doctorCheck{ID: "catalog", Status: doctorOK, Detail: "embedded default (override path " + catalogPath + ")"})
+}
+
+// pricesMaxAgeDays is how old the embedded list prices may get before doctor
+// warns that savings estimates may be off.
+const pricesMaxAgeDays = 30
+
+// checkPrices warns when the embedded list prices were verified long ago (or
+// carry no date). Prices only age between downshift releases; the weekly
+// sync-prices workflow keeps the newest release current.
+func checkPrices(rep *doctorReport, env doctorEnv) {
+	now := time.Now
+	if env.Now != nil {
+		now = env.Now
+	}
+	days, ok := env.Cat.PricesAge(now())
+	asOf := env.Cat.PricesAsOf()
+	switch {
+	case !ok:
+		rep.add(doctorCheck{ID: "prices", Status: doctorWarn,
+			Detail: "catalog has no valid prices_as_of date; savings estimates may use outdated list prices",
+			Fix:    "upgrade downshift to the latest release (docs/reference/prices.md)"})
+	case days > pricesMaxAgeDays:
+		rep.add(doctorCheck{ID: "prices", Status: doctorWarn,
+			Detail: fmt.Sprintf("list prices are from %s (%d days old, limit %d); savings estimates may be off", asOf, days, pricesMaxAgeDays),
+			Fix:    "upgrade downshift to the latest release, or set prices with 'downshift models pull' (docs/reference/prices.md)"})
+	default:
+		rep.add(doctorCheck{ID: "prices", Status: doctorOK, Detail: "list prices as of " + asOf})
+	}
 }
 
 // checkScores reuses writeScoreStatus, so the refresh trigger and wording stay
