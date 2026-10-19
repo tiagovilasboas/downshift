@@ -4,7 +4,8 @@ Public direction for the open-source project. Timelines are indicative.
 
 **Status:** beta — exit criteria in [docs/reference/beta-exit.md](docs/reference/beta-exit.md).  
 **Product roadmap (owner, milestones and tasks):** [docs/product/roadmap.md](docs/product/roadmap.md)  
-**Maintainer execution:** [docs/internal/launch-waves.md](docs/internal/launch-waves.md) (see [publishing boundaries](docs/reference/publishing-boundaries.md)).
+**Maintainer execution:** [docs/internal/launch-waves.md](docs/internal/launch-waves.md) (see [publishing boundaries](docs/reference/publishing-boundaries.md)).  
+**Latest handoff (open PRs, findings, next steps):** [2026-10-19](docs/internal/tasks/2026-10-19-accounting-and-output/README.md).
 
 Downshift by Tiago Vilas Boas\
 https://github.com/tiagovilasboas/downshift
@@ -39,6 +40,8 @@ product priorities, not a claim of equal release readiness across the three.
 | Session discovery | `downshift models discover` per harness ([session-discovery.md](docs/reference/session-discovery.md)); Cursor and Antigravity sources, catalog as an opt-in fallback |
 | Safe by default | Doubt never spends money (R7, R8, semantic boost capped); inferred session on Claude Code; `SEMANTIC_BOOST` provenance and a frontier-on-doubt alarm in `stats` |
 | Real cost | SubagentStop usage linkage (Claude Code); expand as harnesses expose usage |
+| Tokens first | Live views show tokens saved from the requested model (work and cache apart), per agent, agent type and session; dollars only in `downshift report`, priced at report time (API and plan lenses) |
+| Offline simulation | `internal/simbench`: synthetic spawns through the real hook path with accounting invariants in `go test` ([simulation.md](docs/guides/simulation.md)) |
 | Evaluation | Public [benchmark/report.md](benchmark/report.md); full regression in maintainer downshift-labs; shadow observation |
 | Docs | User docs (install, session models), [classifier contrib](docs/contrib/classifier.md), misroute workflow |
 | Eval rigor | [router-generalization](docs/design/router-generalization.md) summary; detailed study in labs |
@@ -56,6 +59,8 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 | P0 | ~~Rename to **Downshift**~~ — done ([rename.md](docs/brand/rename.md)) |
 | P0 | ~~State directory `~/.downshift`~~ — done ([config.md](docs/guides/config.md)) |
 | P1 | ~~Condensed docs~~ — [WHEN-TO-USE](docs/guides/when-to-use.md), trimmed [CAPABILITY-ROUTER-V2](docs/design/capability-router-v2.md) |
+| P0 | Opt-in `downshift exec` (tool-output cutting for `go test` and `git status`, default off) after AppSec and QA review; decide with the output-cutting benchmark whether routing stays a headline ([protocol](docs/guides/benchmark-output-cutting.md)) |
+| P1 | Child-token payloads for Cursor, Codex and OpenCode so tokens-first views cover them; Codex tier order decision |
 | P1 | More harness matrix rows (Cursor paid plans, etc.) |
 | P1 | Optional: container image on GHCR |
 | P1 | Independent outcome suite and cost per completed task before any tier-memory promotion ([gap-tasks](docs/internal/gap-tasks.md): GAP-SUITE, GAP-MEMORY-COUNTS) |
