@@ -24,9 +24,12 @@ event is unverified or unknown say so instead of printing zeros. See
 ## The control group
 
 The shared hook runner decides per spawn, for every harness (Claude Code, Cursor, Codex,
-Antigravity and KiroCrew), by hashing the routing id (the correlation id, which is the harness
-tool-use id when it sends one). The same id always lands on the same side, no state is kept, and
-the share is accurate to within 1 percentage point.
+Antigravity and KiroCrew), by hashing one key per spawn: the correlation id when the harness sends
+one, else the harness tool-use id, else a fresh id for that call. Claude Code, Cursor and Codex send
+only a tool-use id, so the settings hook and the mod entry for one spawn, and any retry, land on the
+same side. The same key always lands on the same side, no state is kept, and the share is accurate
+to within 1 percentage point. Before 2026-10-19 those three harnesses drew a fresh id per hook call,
+so the two copies of a spawn routed by both entries could be split between the groups.
 
 | Variable | Meaning |
 |----------|---------|
