@@ -16,11 +16,14 @@ import "strings"
 type Family string
 
 const (
-	FamilyNone      Family = ""
-	FamilyGoTest    Family = "go-test"
-	FamilyGitStatus Family = "git-status"
-	FamilyPytest    Family = "pytest"
-	FamilyVitest    Family = "vitest"
+	FamilyNone       Family = ""
+	FamilyGoTest     Family = "go-test"
+	FamilyGitStatus  Family = "git-status"
+	FamilyPytest     Family = "pytest"
+	FamilyVitest     Family = "vitest"
+	FamilyPlaywright Family = "playwright"
+	FamilyCargoTest  Family = "cargo-test"
+	FamilyTSC        Family = "tsc"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -119,7 +122,7 @@ func Decide(command, exe string) Decision {
 }
 
 // FamilyOf names the allowlisted family of an argv, or FamilyNone. The
-// program must be the bare name ("go", "git", "pytest", "vitest", "npx"), not a path.
+// program must be the bare name ("go", "git", "pytest", "vitest", "playwright", "cargo", "tsc", "npx"), not a path.
 func FamilyOf(argv []string) Family {
 	if len(argv) == 0 {
 		return FamilyNone
@@ -130,6 +133,12 @@ func FamilyOf(argv []string) Family {
 	if argv[0] == "vitest" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "vitest") {
 		return FamilyVitest
 	}
+	if argv[0] == "tsc" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "tsc") {
+		return FamilyTSC
+	}
+	if len(argv) >= 3 && argv[0] == "npx" && argv[1] == "playwright" && argv[2] == "test" {
+		return FamilyPlaywright
+	}
 	if len(argv) < 2 {
 		return FamilyNone
 	}
@@ -138,6 +147,10 @@ func FamilyOf(argv []string) Family {
 		return FamilyGoTest
 	case argv[0] == "git" && argv[1] == "status":
 		return FamilyGitStatus
+	case argv[0] == "cargo" && argv[1] == "test":
+		return FamilyCargoTest
+	case argv[0] == "playwright" && argv[1] == "test":
+		return FamilyPlaywright
 	}
 	return FamilyNone
 }

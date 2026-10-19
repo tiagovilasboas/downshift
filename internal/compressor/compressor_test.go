@@ -332,3 +332,146 @@ func TestCompress_Vitest_ErrorsPreserveRaw(t *testing.T) {
 		})
 	}
 }
+
+func TestCompress_Playwright_PassCompaction(t *testing.T) {
+	in := []byte("Running 10 tests using 4 workers\n\n  ✓  1 e2e/a.spec.ts (1.0s)\n  ✓  2 e2e/b.spec.ts (1.2s)\n\n  10 passed (2.2s)\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for passing playwright: %s", res.Reason)
+	}
+	want := "Playwright: PASS (10 passed in 2.2s)\n"
+	if string(res.Output) != want {
+		t.Errorf("got %q, want %q", string(res.Output), want)
+	}
+	if res.Format != compressor.FormatPlaywright {
+		t.Errorf("expected format playwright, got %v", res.Format)
+	}
+}
+
+func TestCompress_Playwright_ErrorsPreserveRaw(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"failed indicator", "Running 10 tests using 4 workers\n  1 failed\n  9 passed (2.5s)\n"},
+		{"timeout indicator", "Running 10 tests using 4 workers\n  Error: test timed out\n  10 passed (2.5s)\n"},
+		{"retry indicator", "Running 10 tests using 4 workers\n  Retrying test (retry #1)\n  10 passed (2.5s)\n"},
+		{"trace attachment", "Running 10 tests using 4 workers\n  trace: test-results/trace.zip\n  10 passed (2.5s)\n"},
+		{"flaky indicator", "Running 10 tests using 4 workers\n  1 flaky\n  9 passed (2.5s)\n"},
+		{"Error indicator", "Running 10 tests using 4 workers\n  Error: target closed\n  10 passed (2.5s)\n"},
+		{"AssertionError indicator", "Running 10 tests using 4 workers\n  AssertionError: expected true\n  10 passed (2.5s)\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("must not compress playwright with error: %s", tc.name)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("must preserve raw output byte-identical")
+			}
+			if res.Format != compressor.FormatPlaywright {
+				t.Errorf("expected format playwright, got %v", res.Format)
+			}
+		})
+	}
+}
+
+func TestCompress_CargoTest_PassCompaction(t *testing.T) {
+	in := []byte("   Compiling my_crate v0.1.0\n    Finished test target(s) in 0.5s\n     Running unittests\n\nrunning 5 tests\ntest tests::test_1 ... ok\n\ntest result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for passing cargo test: %s", res.Reason)
+	}
+	want := "Cargo test: PASS (5 passed in 0.15s)\n"
+	if string(res.Output) != want {
+		t.Errorf("got %q, want %q", string(res.Output), want)
+	}
+	if res.Format != compressor.FormatCargoTest {
+		t.Errorf("expected format cargo_test, got %v", res.Format)
+	}
+}
+
+func TestCompress_CargoTest_ErrorsPreserveRaw(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"FAILED summary", "running 2 tests\ntest t1 ... ok\ntest t2 ... FAILED\n\ntest result: FAILED. 1 passed; 1 failed; finished in 0.05s\n"},
+		{"compiler error E", "error[E0425]: cannot find value `foo` in this scope\n --> src/lib.rs:10:5\n"},
+		{"compiler warning", "running 2 tests\ntest t1 ... ok\ntest t2 ... ok\nwarning: unused variable: `x`\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s\n"},
+		{"panicked at", "thread 'test_panics' panicked at src/lib.rs:20:5:\nassertion failed\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("must not compress cargo test with error: %s", tc.name)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("must preserve raw output byte-identical")
+			}
+			if res.Format != compressor.FormatCargoTest {
+				t.Errorf("expected format cargo_test, got %v", res.Format)
+			}
+		})
+	}
+}
+
+func TestCompress_TSC_PassCompaction(t *testing.T) {
+	in := []byte("[19:20:00] Projects in this build:\n    * tsconfig.json\n[19:20:01] Building project...\n[19:20:02] Found 0 errors. Watching for file changes.\n")
+	res := compressor.Compress(in, compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("expected applied=true for passing tsc: %s", res.Reason)
+	}
+	want := "TSC: PASS (0 errors)\n"
+	if string(res.Output) != want {
+		t.Errorf("got %q, want %q", string(res.Output), want)
+	}
+	if res.Format != compressor.FormatTSC {
+		t.Errorf("expected format tsc, got %v", res.Format)
+	}
+}
+
+func TestCompress_TSC_ErrorsPreserveRaw(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"error TS code", "src/index.ts:1:1 - error TS2322: Type 'string' is not assignable to type 'number'.\nFound 1 error in src/index.ts:1\n"},
+		{"Found N errors", "src/utils.ts:5:5 - error TS2304: Cannot find name 'x'.\nFound 2 errors in 1 file.\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("must not compress tsc with error: %s", tc.name)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("must preserve raw output byte-identical")
+			}
+			if res.Format != compressor.FormatTSC {
+				t.Errorf("expected format tsc, got %v", res.Format)
+			}
+		})
+	}
+}
+
+func TestCompress_PrecedenceOverSearch(t *testing.T) {
+	// e2e/auth.spec.ts:10:5 › login flow looks like rg match (file:line:col:)
+	playwrightIn := []byte("Running 5 tests using 2 workers\n  ✓ 1 e2e/auth.spec.ts:10:5 › login flow (1.0s)\n  5 passed (2.0s)\n")
+	resP := compressor.Compress(playwrightIn, compressor.ModeSafe)
+	if resP.Format != compressor.FormatPlaywright {
+		t.Fatalf("playwright output with file:line:col must have precedence over search, got %v", resP.Format)
+	}
+
+	// [19:20:00] timestamp looks like prefix match
+	tscIn := []byte("[19:20:00] Projects in this build:\n    * tsconfig.json\n[19:20:02] Found 0 errors. Watching for file changes.\n")
+	resT := compressor.Compress(tscIn, compressor.ModeSafe)
+	if resT.Format != compressor.FormatTSC {
+		t.Fatalf("tsc output must have precedence over search, got %v", resT.Format)
+	}
+}

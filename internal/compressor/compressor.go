@@ -33,6 +33,14 @@ var (
 	reVitestFail        = regexp.MustCompile(`(?m)^\s*(?:Test Files|Tests)\s+.*failed`)
 	reVitestDuration    = regexp.MustCompile(`(?m)^\s*Duration\s+([^\s\n()]+)`)
 	reVitestError       = regexp.MustCompile(`(?:FAIL|Error:|AssertionError)`)
+	rePlaywrightHeader  = regexp.MustCompile(`(?m)^\s*Running\s+(\d+)\s+tests\s+using\s+(\d+)\s+workers?`)
+	rePlaywrightSummary = regexp.MustCompile(`(?m)^\s*(\d+)\s+passed\s+\(([^)]+)\)`)
+	rePlaywrightError   = regexp.MustCompile(`(?i)(?:failed|flaky|timed out|Error:|AssertionError|trace(?: file| attached)?|retry(?:ing| #))`)
+	reCargoTestSummary  = regexp.MustCompile(`(?m)^\s*test result: ok\.\s+(\d+)\s+passed;\s+0\s+failed;.*?finished in\s+([^\n\r]+?)\s*$`)
+	reCargoTestHeader   = regexp.MustCompile(`(?m)^running\s+\d+\s+tests`)
+	reCargoTestError    = regexp.MustCompile(`(?m)(?:FAILED|error\[E[^\]]*\]:|warning:|panicked at)`)
+	reTSCPass           = regexp.MustCompile(`(?m)Found 0 errors`)
+	reTSCError          = regexp.MustCompile(`(?m)(?:error\s+TS\d+:|Found\s+[1-9]\d*\s+errors?)`)
 )
 
 // Compress evaluates the input according to the policy and selected mode.
@@ -159,29 +167,62 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatVitest, true
 	}
 
-	// 4. Git status
+	// 4. Playwright
+	if isPlaywright(input) {
+		if rePlaywrightError.Match(input) {
+			return FormatPlaywright, true // Error detected! Fail open!
+		}
+		if rePlaywrightSummary.Match(input) {
+			return FormatPlaywright, false
+		}
+		return FormatPlaywright, true
+	}
+
+	// 5. Cargo test
+	if isCargoTest(input) {
+		if reCargoTestError.Match(input) {
+			return FormatCargoTest, true // Error detected! Fail open!
+		}
+		if reCargoTestSummary.Match(input) {
+			return FormatCargoTest, false
+		}
+		return FormatCargoTest, true
+	}
+
+	// 6. TSC
+	if isTSC(input) {
+		if reTSCError.Match(input) {
+			return FormatTSC, true // Error detected! Fail open!
+		}
+		if reTSCPass.Match(input) {
+			return FormatTSC, false
+		}
+		return FormatTSC, true
+	}
+
+	// 7. Git status
 	if reGitStatusHead.Match(input) {
 		return FormatGitStatus, false
 	}
 
-	// 5. Git log
+	// 8. Git log
 	if reGitLogCommit.Match(input) {
 		return FormatGitLog, false
 	}
 
-	// 6. Repetitive logs, only after test suites, git status and git log had their
+	// 9. Repetitive logs, only after test suites, git status and git log had their
 	// say: a failing test run or a git log with repeated lines must stay raw.
 	// Timestamps can look like search hits, so this precedes the search check.
 	if isRepetitiveLog(input) {
 		return FormatLogs, false
 	}
 
-	// 7. Search results (rg / grep)
+	// 10. Search results (rg / grep)
 	if reRipgrepMatch.Match(input) {
 		return FormatSearch, false
 	}
 
-	// 8. File listings / tree
+	// 11. File listings / tree
 	if bytes.Contains(input, []byte("total ")) && bytes.Contains(input, []byte("drwx")) {
 		return FormatFileList, false
 	}
@@ -197,6 +238,12 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressPytest(input)
 	case FormatVitest:
 		return compressVitest(input)
+	case FormatPlaywright:
+		return compressPlaywright(input)
+	case FormatCargoTest:
+		return compressCargoTest(input)
+	case FormatTSC:
+		return compressTSC(input)
 	case FormatGitStatus:
 		return compressGitStatus(input)
 	case FormatGitLog:
@@ -478,4 +525,75 @@ func compressVitest(input []byte) ([]byte, bool, string) {
 		return input, false, "no_compression_gain"
 	}
 	return []byte(out), true, fmt.Sprintf("compressed vitest summary (%s passed across %s files)", nPassed, mFiles)
+}
+
+func isPlaywright(input []byte) bool {
+	return rePlaywrightHeader.Match(input) ||
+		(rePlaywrightSummary.Match(input) && (bytes.Contains(input, []byte("worker")) || bytes.Contains(input, []byte("Running"))))
+}
+
+// compressPlaywright compacts clean playwright output to a one-line summary:
+// Playwright: PASS (N passed in <time>)
+// If not strictly shorter than raw input, the input is returned.
+func compressPlaywright(input []byte) ([]byte, bool, string) {
+	m := rePlaywrightSummary.FindSubmatch(input)
+	if m == nil {
+		return input, false, "playwright_missing_summary"
+	}
+	passedCount := string(m[1])
+	timeStr := strings.TrimSpace(string(m[2]))
+
+	out := fmt.Sprintf("Playwright: PASS (%s passed in %s)\n", passedCount, timeStr)
+	if len(out) >= len(input) {
+		return input, false, "no_compression_gain"
+	}
+	return []byte(out), true, fmt.Sprintf("compressed playwright summary (%s passed in %s)", passedCount, timeStr)
+}
+
+func isCargoTest(input []byte) bool {
+	return reCargoTestSummary.Match(input) ||
+		reCargoTestHeader.Match(input) ||
+		bytes.Contains(input, []byte("test result:")) ||
+		reCargoTestError.Match(input)
+}
+
+// compressCargoTest compacts clean cargo test output to a one-line summary:
+// Cargo test: PASS (N passed in <time>)
+// If not strictly shorter than raw input, the input is returned.
+func compressCargoTest(input []byte) ([]byte, bool, string) {
+	matches := reCargoTestSummary.FindAllSubmatch(input, -1)
+	if len(matches) == 0 {
+		return input, false, "cargo_test_missing_summary"
+	}
+	var totalPassed int
+	var timeStr string
+	for _, m := range matches {
+		var p int
+		fmt.Sscanf(string(m[1]), "%d", &p)
+		totalPassed += p
+		if timeStr == "" || p > 0 {
+			timeStr = strings.TrimSpace(string(m[2]))
+		}
+	}
+
+	out := fmt.Sprintf("Cargo test: PASS (%d passed in %s)\n", totalPassed, timeStr)
+	if len(out) >= len(input) {
+		return input, false, "no_compression_gain"
+	}
+	return []byte(out), true, fmt.Sprintf("compressed cargo test summary (%d passed in %s)", totalPassed, timeStr)
+}
+
+func isTSC(input []byte) bool {
+	return reTSCPass.Match(input) || reTSCError.Match(input) || bytes.Contains(input, []byte("error TS"))
+}
+
+// compressTSC compacts clean tsc output to a one-line summary:
+// TSC: PASS (0 errors)
+// If not strictly shorter than raw input, the input is returned.
+func compressTSC(input []byte) ([]byte, bool, string) {
+	out := "TSC: PASS (0 errors)\n"
+	if len(out) >= len(input) {
+		return input, false, "no_compression_gain"
+	}
+	return []byte(out), true, "compressed tsc summary (0 errors)"
 }

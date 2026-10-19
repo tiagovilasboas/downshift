@@ -23,15 +23,18 @@ const (
 type Format string
 
 const (
-	FormatUnknown   Format = "unknown"
-	FormatGitStatus Format = "git_status"
-	FormatGitLog    Format = "git_log"
-	FormatGoTest    Format = "go_test"
-	FormatPytest    Format = "pytest"
-	FormatVitest    Format = "vitest"
-	FormatSearch    Format = "search"       // rg, grep
-	FormatFileList  Format = "file_listing" // ls -R, tree, find
-	FormatLogs      Format = "logs"         // repetitive log lines
+	FormatUnknown    Format = "unknown"
+	FormatGitStatus  Format = "git_status"
+	FormatGitLog     Format = "git_log"
+	FormatGoTest     Format = "go_test"
+	FormatPytest     Format = "pytest"
+	FormatVitest     Format = "vitest"
+	FormatPlaywright Format = "playwright"
+	FormatCargoTest  Format = "cargo_test"
+	FormatTSC        Format = "tsc"
+	FormatSearch     Format = "search"       // rg, grep
+	FormatFileList   Format = "file_listing" // ls -R, tree, find
+	FormatLogs       Format = "logs"         // repetitive log lines
 )
 
 // Result is the deterministic outcome of a compression attempt.

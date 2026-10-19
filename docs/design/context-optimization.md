@@ -8,7 +8,7 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 
 1. **Zero External Runtime**: Written purely in Go, with zero Python, Rust, Node, network or LLM dependencies. `context enable` persiste o provider nativo e o contrato de exit code. O PostToolUse do Claude Code grava `CompressExit` em modo observe, com o exit code real, só quando essa flag está ligada. O hook não substitui a saída da ferramenta e não comprime prompt.
 2. **Fowler Harness Taxonomy (Guia vs. Sensor)**:
-   - **Guia (Execution / Transformation)**: Canal ativo de reescrita e execução opt-in (`downshift exec`, `internal/execwrap`). Intervém apenas em comandos estritamente allowlistados (`go test`, `pytest`, `vitest`, `git status`) quando habilitado pelo usuário.
+   - **Guia (Execution / Transformation)**: Canal ativo de reescrita e execução opt-in (`downshift exec`, `internal/execwrap`). Intervém apenas em comandos estritamente allowlistados (`go test`, `pytest`, `vitest`, `playwright`, `cargo test`, `tsc`, `git status`) quando habilitado pelo usuário.
    - **Sensor (Observability)**: Canal puramente passivo (`internal/sensor`, `PostToolUse`). Registra apenas agregados de bytes, classificações de formato e contadores de execução. Nunca altera a saída e nunca persiste comandos.
 3. **Clean Code, SRP & Dependency Rule**: O `internal/compressor` é uma biblioteca pura (leaf package) sem dependências externas ou conhecimento de harnesses. O `sensor` observa métricas sem executar comandos; o `execwrap` orquestra subprocessos e gates de buffer sem alterar regras de negócio de harnesses.
 4. **Deterministic & Fail-Open**: Compacta sucesso repetido só com exit code 0. **Preserva erro, stack trace, exit diferente de zero, linha que não seja `ok`/`passed`, busca, lista de arquivos e `git log`.**
@@ -25,6 +25,9 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 | `go test` | `ok` package lines | Summarizes a suite only when every non-empty line is `ok` | Any other line, `FAIL`, or non-zero exit is preserved verbatim |
 | `pytest` | `=== N passed in X.XXs ===`, test progress dots/names | Summarizes clean suite to `pytest: PASS (N passed in X.XXs)` with package/module overview | Any `FAILED`, `ERROR`, `AssertionError`, traceback, warning flag, stderr output, or non-zero exit is preserved verbatim |
 | `vitest` | `Test Files N passed`, `Tests N passed`, `✓` checks | Summarizes clean suite to `vitest: PASS (N test files, M passed in X.XXs)` | Any `FAIL`, `Error:`, unhandled rejection, assertion diff, stderr output, or non-zero exit is preserved verbatim |
+| `playwright` | `Running N tests using M workers`, `N passed (X.XXs)`, browser run lines (`[chromium]`, `[firefox]`, `[webkit]`) | Summarizes clean suite to `playwright: PASS (N passed across M workers in X.XXs)` | Any `failed`, `timed out`, `Error:`, assertion diff, trace attachment, retry warning, stderr output, or non-zero exit is preserved verbatim |
+| `cargo test` | `running N tests`, `test result: ok. N passed; 0 failed`, `finished in X.XXs` | Summarizes clean suite to `cargo test: PASS (N passed; 0 failed in X.XXs)` | Any `FAILED`, `error[E...]`, `warning:`, `panicked at`, doc-test failure, stderr output, or non-zero exit is preserved verbatim |
+| `tsc` | Clean exit with zero errors (empty output or `Found 0 errors.`) with exit code 0 | Summarizes clean typecheck to `tsc: PASS (0 errors)` | Any `error TS\d+:`, diagnostic message, syntax error, semantic error, stderr output, or non-zero exit is preserved verbatim |
 | `git status` | `On branch`, `nothing to commit` | Compacts a clean status | Preserves branch, conflicts and uncommitted changes |
 | `git log` | `commit [0-9a-f]{40}` | Preserved verbatim | A summary would drop commit bodies |
 | `search` (grep/rg) | `path:line: content` | Preserved verbatim | A prefix would hide matches |
@@ -37,14 +40,37 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 
 Não há medição reproduzível de economia de tokens neste repositório. `downshift context benchmark` mede bytes em fixtures versionadas (original bytes, reduced bytes, byte savings). A unidade é bytes. Custo de roteamento e acurácia saem como `not measured`. Isso não é token e não é dólar. `downshift context metrics` pode contar comandos no log de compactação; os campos de token ficam `unavailable` e não são uma economia medida.
 
+### Os Campeões de Queima de Tokens de Output
+
+Três formatos destacam-se como fontes críticas de queima descontrolada de tokens e inflação de contexto em sessões de agentes autônomos:
+
+1. **Playwright (Testes E2E Multi-Browser)**:
+   - Suítes de 10 a 30 testes ponta a ponta executadas em múltiplos browsers (Chromium, Firefox, WebKit) disparam workers concorrentes.
+   - Cada teste gera logs de inicialização de instâncias de browser, context switching, relatórios de passos (`[chromium] › auth.spec.ts:12:3 › login success`), tempos por worker e tabelas de resumo.
+   - Uma execução limpa gera rotineiramente **3.000 a 5.000 tokens** de puro overhead de logs de aprovação.
+   - A compactação para `playwright: PASS (24 passed across 3 workers in 12.4s)` corta **~99% dos bytes**, convertendo 4.000+ tokens em apenas ~25 tokens.
+
+2. **Cargo Test (Ecossistema Rust)**:
+   - Em projetos Rust, `cargo test` aciona a compilação incremental de crates de teste (`Compiling ...`, `Finished test ...`), descoberta de testes, listas de testes unitários (`test module::test_name ... ok`), testes de integração e doc-tests (`Doc-tests ...`).
+   - Uma suíte média gera **1.000 a 2.500 tokens** em saídas que apenas confirmam que dezenas de asserções passaram sem pânico.
+   - A compactação para `cargo test: PASS (42 passed; 0 failed in 2.15s)` reduz a carga para ~20 tokens (**98%+ de economia de bytes**).
+
+3. **TSC / TypeScript Typecheck (`tsc --noEmit`)**:
+   - Em loops de refatoração dirigidos por agentes (TDD / lint-and-fix), o agente invoca repetidamente `tsc --noEmit` para verificar a integridade dos tipos.
+   - Em caso de sucesso limpo, a ferramenta emite saída vazia ou `Found 0 errors.`. No entanto, em monorepos ou projetos com referências cruzadas (`--build`), comandos semânticos podem emitir diagnósticos informativos e listagens de projeto.
+   - A sintetização determinística em `tsc: PASS (0 errors)` padroniza o feedback para menos de 5 tokens, eliminando ambiguidades e evitando alucinações causadas por saídas vazias ou parciais.
+
 ### O Mecanismo de Multi-Turn Cache Debt
 
-Em agentes autônomos de engenharia (Claude Code, Cursor, Codex), o impacto de saídas de teste verbosas (como suítes de 50+ testes em `pytest` ou `vitest` despejando centenas de linhas e 2.000 a 4.000 tokens) é multiplicativo:
-1. **Turno de Execução ($T_0$)**: A saída do teste é gravada como saída de ferramenta e entra no contexto.
-2. **Turnos Subsequentes ($T_1 \dots T_k$)**: O histórico do diálogo é re-lido em cada turno subsequente da sessão. Um dump de teste de 2.500 tokens lido por mais 15 turnos gera **$15 \times 2.500 = 37.500$ tokens de Cache Read**.
-3. **Cache Write Invalidation**: Qualquer invalidação de cache (mudança de arquivo, prompt de usuário ou expiração de TTL de 5 minutos) força a regravação desses milhares de tokens como **Cache Write**, inflando o custo em até $3.75 por MTok no Sonnet 3.5.
+Em agentes autônomos de engenharia (Claude Code, Cursor, Codex), o impacto dessas saídas de teste verbosas é multiplicativo:
+1. **Turno de Execução ($T_0$)**: A saída do teste é gravada como saída de ferramenta e entra no contexto imediato como tokens de Fresh Input.
+2. **Turnos Subsequentes ($T_1 \dots T_k$)**: O histórico do diálogo é re-lido em cada turno subsequente da sessão.
+   - Uma execução de **Playwright** de 4.000 tokens no turno $T_2$ em uma sessão de 15 turnos gera $13 \times 4.000 = \mathbf{52.000}$ **tokens de Cache Read** acumulados.
+   - Uma execução de **Cargo Test** de 2.000 tokens no turno $T_3$ gera $12 \times 2.000 = \mathbf{24.000}$ **tokens de Cache Read** acumulados.
+   - Múltiplas validações de **TSC** ao longo da sessão evitam poluição residual de contexto turno a turno.
+3. **Cache Write Invalidation**: Qualquer invalidação de cache (edição de arquivo de código, prompt do usuário ou expiração do TTL de 5 minutos do provedor LLM) força a regravação integral desses milhares de tokens como **Cache Write**, cobrado a até $3.75 por MTok no Sonnet 3.5.
 
-Ao compactar uma suíte de 50+ testes aprovados para um resumo de ~20 tokens (`pytest: PASS (52 passed in 1.4s)`), o corte de 95%+ em bytes evita a dívida de cache cumulativa em toda a vida útil da sessão. A estimativa nos comandos de CLI é sempre reportada como heurística (`saved_bytes / 4`), nunca como contagem exata faturada.
+Ao compactar essas suítes para resumos de ~20–25 tokens, a economia imediata de 95% a 99% em bytes corta na raiz a dívida de cache cumulativa, economizando de 50.000 a 100.000 tokens de cache por sessão complexa. A estimativa nos comandos de CLI é sempre reportada como heurística (`saved_bytes / 4`), nunca como contagem exata faturada.
 
 ---
 
@@ -126,22 +152,28 @@ downshift context benchmark
 
 ## 9. Requisitos de Telemetria sem Vazamento (Fullstack, AppSec, QA)
 
-Para suportar suítes modernas como `pytest` e `vitest` sem comprometer a segurança operacional, os requisitos de telemetria seguem governança rígida entre disciplinas:
+Para suportar suítes modernas como `pytest`, `vitest`, `playwright`, `cargo test` e `tsc` sem comprometer a segurança operacional, os requisitos de telemetria seguem governança rígida entre disciplinas:
 
 ### AppSec (Privacidade e Segurança)
 - **Zero Prompt & Code Leakage**: O compressor e os hooks nunca capturam, armazenam ou transmitem prompts, código-fonte ou corpos de saída.
-- **Zero Path Leakage na Telemetria**: `exec-events.jsonl` e `context-sensor.json` gravam estritamente metadados categorizados (`family`: `pytest` | `vitest` | `go-test` | `git-status`, `exit_class`, contagens brutas de `raw_bytes` e `emitted_bytes`, flag booleana `compacted`). **Caminhos de arquivos (`/Users/.../test_auth.py`), flags CLI, variáveis de ambiente ou argumentos de testes jamais chegam ao disco de telemetria.**
-- **Superfície Restrita de Reescrita**: O `execwrap.Decide` só considera comandos sob 512 bytes compostos exclusivamente por caracteres seguros (alfanuméricos, espaços e `- _ . / : = , + @ %`). Proíbe pipes, redirecionamentos, crases, aspas e substituição de comandos.
+- **Zero Path Leakage na Telemetria**: `exec-events.jsonl` e `context-sensor.json` gravam estritamente metadados categorizados (`family`: `pytest` | `vitest` | `playwright` | `cargo-test` | `tsc` | `go-test` | `git-status`, `exit_class`, contagens brutas de `raw_bytes` e `emitted_bytes`, flag booleana `compacted`). **Caminhos de arquivos (`/Users/.../test_auth.py`, `tests/e2e/login.spec.ts`, `src/lib.rs`), flags CLI, variáveis de ambiente ou argumentos de testes jamais chegam ao disco de telemetria.**
+- **Superfície Restrita de Reescrita**: O `execwrap.Decide` só considera comandos sob 512 bytes compostos exclusivamente por caracteres seguros (alfanuméricos, espaços e `- _ . / : = , + @ %`). Proíbe pipes, redirecionamentos, crases, aspas e substituição de comandos. Comandos suportados incluem chamadas canônicas como `playwright test`, `npx playwright test`, `cargo test`, `tsc` e `npx tsc`.
+- **Limites de Buffering e DoS Protection**: Limite rígido de buffer em memória (`2 MiB`) para proteção contra streams torrenciais gerados por suítes E2E de Playwright ou compilações extensas do compilador Rust (`rustc`).
 - **Recursion Guard**: Injeção da variável `DOWNSHIFT_EXEC_DEPTH=1` em processos-filhos para impedir aninhamento acidental ou loops de reescrita.
-- **Isolamento de Processos**: Processos filhos rodam em seu próprio process group com encaminhamento transparente de sinais (`SIGTERM`, `SIGINT`, `SIGHUP`, `SIGQUIT`).
+- **Isolamento de Processos**: Processos filhos rodam em seu próprio process group com encaminhamento transparente de sinais (`SIGTERM`, `SIGINT`, `SIGHUP`, `SIGQUIT`), assegurando encerramento limpo de processos pesados (como instâncias de browsers headless e processos de compilação) ao cancelar um turno.
 
 ### QA (Engenharia de Testes e Confiabilidade)
-- **Corpus Adversarial e Fuzzing**: Conjunto abrangente de fixtures cobrindo variações comuns de `pytest` (ex: `pytest-xdist`, flags `-v`, `-s`, warnings deprecados, doctests) e `vitest` (ex: ANSI colors, barras de progresso, multi-threads, testes assíncronos rejeitados).
-- **Garantia Inviolável de Fail-Open**: Qualquer suite contendo `FAILED`, `ERROR`, `AssertionError`, `UnhandledPromiseRejection`, traceback ou código de saída diferente de zero é emitida 100% bruta (verbatim). Testes de regressão garantem que um teste quebrado nunca seja omitido ou sintetizado incorretamente.
+- **Corpus Adversarial e Fuzzing**: Conjunto abrangente de fixtures cobrindo:
+  - `pytest`: variações `pytest-xdist`, flags `-v`, `-s`, warnings deprecados, doctests.
+  - `vitest`: ANSI colors, barras de progresso, multi-threads, testes assíncronos rejeitados.
+  - `playwright`: suítes com retries ativados, timeouts de locator, falhas em múltiplos browsers simultâneos, crashes de browser worker, e links para visualizadores de trace/HTML report.
+  - `cargo test`: testes unitários misturados com doc-tests, warnings de compilação do rustc (`warning:`), erros de borrow-checker (`error[E...]`), panics com stack traces (`panicked at ...`).
+  - `tsc`: erros encadeados de inferência de tipos (`error TS2322`), erros de sintaxe JSX/TSX, e projetos com referências compostas (`--build`).
+- **Garantia Inviolável de Fail-Open**: Qualquer suite contendo marcadores de falha (`FAILED`, `ERROR`, `AssertionError`, `failed`, `timed out`, `error[E`, `error TS`, `panicked at`, `UnhandledPromiseRejection`), traceback, ou código de saída diferente de zero é emitida 100% bruta (verbatim). Testes de regressão garantem que qualquer diagnóstico quebrado nunca seja omitido ou sintetizado incorretamente.
 - **Contrato de Saída Idêntica sob Erro**: Se o compressor estourar limite de memória (`2 MiB`), encontrar caracteres de controle inválidos ou receber bytes no stderr antes do término, o gate imediatamente desiste e faz streaming raw byte a byte.
 
 ### Fullstack (Experiência do Desenvolvedor e Integração)
-- **Zero-Dependency Runtime**: Executado inteiramente no binário compilado em Go, sem exigir bibliotecas Python (`pytest-json-report`) ou pacotes npm (`vitest-custom-reporter`).
+- **Zero-Dependency Runtime**: Executado inteiramente no binário compilado em Go, sem exigir bibliotecas Python (`pytest-json-report`), pacotes npm (`vitest-custom-reporter`, reporters customizados do Playwright) ou crates adicionais do Rust.
 - **Transparência de Compactação**: Adição padronizada do marcador `[downshift exec: compacted N to M bytes]` ao final da saída, permitindo ao desenvolvedor e ao LLM saberem exatamente que a visualização foi resumida de forma segura.
 - **Kill-Switch Imediato**: Suporte a desligamento sem reinicialização de daemon via flag `--no-compact` ou variável de ambiente `DOWNSHIFT_EXEC=0`.
 

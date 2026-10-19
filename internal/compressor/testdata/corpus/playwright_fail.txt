@@ -1,0 +1,23 @@
+Running 25 tests using 4 workers
+
+  ✓  1 [chromium] › e2e/auth.spec.ts:10:5 › login flow (1.2s)
+  ✘  2 [chromium] › e2e/billing.spec.ts:30:5 › stripe checkout (2.1s)
+
+  1) [chromium] › e2e/billing.spec.ts:30:5 › stripe checkout ───────────────────────────────────────────
+
+    Error: Timed out 5000ms waiting for expect(locator).toBeVisible()
+
+    Locator: getByText('Payment Successful')
+    Expected: visible
+    Received: <element(s) not found>
+
+      32 |     await page.getByRole('button', { name: 'Pay' }).click();
+    > 33 |     await expect(page.getByText('Payment Successful')).toBeVisible();
+         |                                                        ^
+      34 |   });
+
+        at /Users/tiago.boas/web/e2e/billing.spec.ts:33:56
+
+  1 failed
+    [chromium] › e2e/billing.spec.ts:30:5 › stripe checkout ────────────────────────────────────────────
+  24 passed (6.5s)

@@ -86,6 +86,7 @@ The AppSec must-fix list and the QA defects, closed and verified:
 4. Owner decides the Codex tiers (finding 1 above).
 5. Run the pilot of [benchmark-output-cutting.md](../../../guides/benchmark-output-cutting.md) (routing alone, + Headroom, + `downshift exec`, RTK alone), then apply its pre-registered cut criterion.
 6. Capture child-token payloads for Cursor, Codex and OpenCode so the tokens-first views cover them.
+7. Execute the native output cutting candidate roadmap in [output-cutting-candidates.md](output-cutting-candidates.md) (Phase 1: Playwright, Cargo, TSC; Phase 2: Jest, Next.js build, Prettier; Phase 3: Maven, Gradle, Prisma, Mypy; Phase 4: Ripgrep search caps).
 
 ## Measured so far (do not quote beyond this)
 
