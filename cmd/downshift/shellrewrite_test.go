@@ -248,7 +248,7 @@ func TestContextEnableExecFlag(t *testing.T) {
 	if !cfg.Exec || !cfg.Enabled {
 		t.Fatalf("cfg = %+v", cfg)
 	}
-	if !strings.Contains(out.String(), `"matcher": "Bash"`) || !strings.Contains(out.String(), "Permission rules match the rewritten text") {
+	if !strings.Contains(out.String(), `"matcher": "Bash"`) || !strings.Contains(out.String(), "Add no rule for `downshift exec`") {
 		t.Fatalf("enable --exec must print the hook entry and the permission note:\n%s", out.String())
 	}
 	if rc := runContext([]string{"enable", "--no-exec"}, &out, &errb); rc != 0 {

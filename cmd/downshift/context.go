@@ -486,6 +486,7 @@ func printExecEnabled(w io.Writer) {
 	fmt.Fprintln(w, "are rewritten to `downshift exec -- <command>`, which keeps the exit code and compacts only clean output.")
 	fmt.Fprintln(w, "Claude Code: add a PreToolUse entry for the Bash tool (setup does not write it):")
 	fmt.Fprintln(w, `  {"matcher": "Bash", "hooks": [{"type": "command", "command": "downshift claude-code"}]}`)
-	fmt.Fprintln(w, "Permission rules match the rewritten text: allow `Bash(downshift exec -- go test:*)` if you allow `Bash(go test:*)`.")
+	fmt.Fprintln(w, "Your own rules gate it: a command is rewritten only when a Bash allow rule (for example `Bash(go test:*)`)")
+	fmt.Fprintln(w, "matches it and no deny or ask rule in any settings scope does. Add no rule for `downshift exec`.")
 	fmt.Fprintln(w, "Other harnesses: not wired. DOWNSHIFT_EXEC=0 turns it off without a config change.")
 }
