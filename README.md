@@ -11,7 +11,7 @@ A local hook scores each delegated task and picks the model and effort. Unsure? 
 
 ```text
 $ downshift try "rename the userId variable"
-→ small: opus → haiku (~75% cheaper) (est., list prices as of 2026-10-19)
+→ small: opus → haiku · its tokens would run on a cheaper model than requested
 why: trivial task, no risk, confident
 ```
 

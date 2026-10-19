@@ -45,12 +45,3 @@ func TestDoctorPricesBoundaryIs30DaysInclusive(t *testing.T) {
 		t.Errorf("30 days old must still be ok: %+v", c)
 	}
 }
-
-func TestTryHeadlineLabelsSavingAsEstimate(t *testing.T) {
-	if got := estimateSuffix("2026-10-19"); got != " (est., list prices as of 2026-10-19)" {
-		t.Errorf("suffix = %q", got)
-	}
-	if got := estimateSuffix(""); got != "" {
-		t.Errorf("no date must add nothing, got %q", got)
-	}
-}

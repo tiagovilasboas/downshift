@@ -49,20 +49,20 @@ func runTryReport(resolver core.Resolver, harness, prompt, current string, detai
 	if !known {
 		d = core.Route(prompt, harness, current, resolver)
 	}
-	printTry(os.Stdout, res, known, d, prompt, harness, current, assumed, detail, pricesAsOf(resolver))
+	printTry(os.Stdout, res, known, d, prompt, harness, current, assumed, detail)
 	return 0
 }
 
-func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, harness, current string, assumed, detail bool, asOf string) {
+func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, harness, current string, assumed, detail bool) {
 	if assumed {
 		fmt.Fprintf(w, "assumed current: %s (harness default)\n", current)
 	}
 	note := tryNotApplied(res, known, d, harness)
 	if note != "" {
-		// The hook would leave the spawn alone: do not quote a saving it will not make.
+		// The hook would leave the spawn alone: do not claim a move it will not make.
 		fmt.Fprintf(w, "%s\n", tryHeadlineNotApplied(d))
 	} else {
-		fmt.Fprintf(w, "%s\n", tryHeadline(d, asOf))
+		fmt.Fprintf(w, "%s\n", tryHeadline(d))
 	}
 	fmt.Fprintf(w, "why: %s task, %s\n", strings.ToLower(d.Complexity.String()), telemetry.ReasonBrief(telemetry.ReasonCodes(d)))
 	if note != "" {
@@ -107,16 +107,43 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 		fmt.Fprintf(w, "Effort:     → %s\n", res.effort)
 	}
 	if note != "" {
-		// Summary quotes the saving of the decision; the hook would not apply it.
-		fmt.Fprintf(w, "→ %s task → %s (not applied, no saving)\n", d.Complexity, d.Model.ID)
+		// The hook would not apply the move: the tokens stay where they were asked.
+		fmt.Fprintf(w, "→ %s task → %s (not applied, tokens stay on %s)\n", d.Complexity, d.Model.ID, d.Baseline.CurrentModel.ID)
 		return
 	}
-	fmt.Fprintf(w, "→ %s\n", d.Summary())
+	fmt.Fprintf(w, "→ %s\n", trySummary(d))
+}
+
+// trySummary is the last --detail line. A downshift names where its tokens
+// would run instead of the list-price ratio Decision.Summary quotes: one
+// decision has no tokens yet, and dollars are priced only by downshift report.
+func trySummary(d core.Decision) string {
+	if d.Verdict == core.VerdictDownshift {
+		return fmt.Sprintf("%s task → downshift to %s (%s)", d.Complexity, d.Model.ID, tokensMove(d))
+	}
+	return d.Summary()
+}
+
+// tokensMove says where the child's tokens would run against the model the
+// harness asked for, with no price and no percentage (owner decision
+// 2026-10-19: per-decision views show tokens, not dollars). "Cheaper model"
+// needs a catalog price on both sides; without one only the tier is known.
+func tokensMove(d core.Decision) string {
+	switch d.Verdict {
+	case core.VerdictDownshift:
+		if d.Savings > 0 {
+			return "its tokens would run on a cheaper model than requested"
+		}
+		return "its tokens would run on a lower tier than requested"
+	case core.VerdictUpshift:
+		return "its tokens would run on a pricier tier than requested"
+	}
+	return ""
 }
 
 // tryHeadline is the first answer line: the tier, then either the move from
-// the current model or that it stays.
-func tryHeadline(d core.Decision, asOf string) string {
+// the current model and where its tokens would run, or that it stays.
+func tryHeadline(d core.Decision) string {
 	rec := telemetry.ShortModel(d.Model.ID)
 	cur := telemetry.ShortModel(d.Baseline.CurrentModel.ID)
 	if d.Baseline.CurrentModel.ID == "" {
@@ -127,44 +154,23 @@ func tryHeadline(d core.Decision, asOf string) string {
 	}
 	switch d.Verdict {
 	case core.VerdictDownshift:
-		if d.Savings <= 0 {
-			// No catalog price for one side (e.g. tier aliases): do not claim 0%.
-			return fmt.Sprintf("→ %s: %s → %s (cheaper tier)", d.Tier, cur, rec)
-		}
-		return fmt.Sprintf("→ %s: %s → %s (~%.0f%% cheaper)%s", d.Tier, cur, rec, d.Savings*100, estimateSuffix(asOf))
+		return fmt.Sprintf("→ %s: %s → %s · %s", d.Tier, cur, rec, tokensMove(d))
 	case core.VerdictUpshift:
-		return fmt.Sprintf("→ %s: %s → %s (needs more torque)", d.Tier, cur, rec)
+		return fmt.Sprintf("→ %s: %s → %s · %s (needs more torque)", d.Tier, cur, rec, tokensMove(d))
 	}
 	return fmt.Sprintf("→ %s: stays on %s", d.Tier, cur)
 }
 
 // tryHeadlineNotApplied is the headline for a move the hook would not apply:
-// the tier and the model the decision points at, with no saving claimed.
+// the tier and the model the decision points at, and that the tokens stay on
+// the current model.
 func tryHeadlineNotApplied(d core.Decision) string {
 	rec := telemetry.ShortModel(d.Model.ID)
 	cur := telemetry.ShortModel(d.Baseline.CurrentModel.ID)
 	if d.Baseline.CurrentModel.ID == "" {
 		return fmt.Sprintf("→ %s: %s (not applied)", d.Tier, rec)
 	}
-	return fmt.Sprintf("→ %s: %s → %s (not applied, no saving)", d.Tier, cur, rec)
-}
-
-// pricesAsOf is the date of the resolver's embedded list prices, or "" when
-// the resolver does not carry one.
-func pricesAsOf(resolver core.Resolver) string {
-	if p, ok := resolver.(interface{ PricesAsOf() string }); ok {
-		return p.PricesAsOf()
-	}
-	return ""
-}
-
-// estimateSuffix labels a saving as an estimate at list prices and names
-// their date. Empty when there is no date.
-func estimateSuffix(asOf string) string {
-	if asOf == "" {
-		return ""
-	}
-	return " (est., list prices as of " + asOf + ")"
+	return fmt.Sprintf("→ %s: %s → %s (not applied, tokens stay on %s)", d.Tier, cur, rec, cur)
 }
 
 // tryNotApplied says why the hook would leave the spawn alone although the
