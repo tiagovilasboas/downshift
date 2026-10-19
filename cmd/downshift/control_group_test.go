@@ -131,3 +131,62 @@ func TestRunReport_JSONAndFlags(t *testing.T) {
 		t.Errorf("bad days rc = %d, want 2", rc)
 	}
 }
+
+// A control spawn must end up in `downshift report` like a routed one: the
+// PreToolUse decision through the shared runner, then the PostToolUse launch
+// and the SubagentStop usage through the shared end runner, joined by the
+// tool-call id and the agent id. Before the fix every control spawn stayed
+// without an end record, so the control arm never had a completed task.
+func TestControlGroup_EndRecordLinksThroughSharedRunners(t *testing.T) {
+	for _, tc := range []struct {
+		share string
+		group string
+	}{{"1", telemetry.GroupControl}, {"0", telemetry.GroupRouted}} {
+		t.Run(tc.group, func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			t.Setenv("DOWNSHIFT_QUIET", "1")
+			eventLog := filepath.Join(t.TempDir(), "events.jsonl")
+			t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)
+			t.Setenv("DOWNSHIFT_CONTROL_SHARE", tc.share)
+			midID := cmdCat.ModelFor("claude-code", core.TierMid).ID
+			smallID := cmdCat.ModelFor("claude-code", core.TierSmall).ID
+			setSessionAllowlist(t, "claude-code", []string{smallID, midID})
+
+			pre := `{"hook_event_name":"PreToolUse","tool_name":"Agent","session_id":"s-ctl","tool_use_id":"toolu_ctl",` +
+				`"tool_input":{"prompt":"rename the userId variable to userIdentifier","subagent_type":"general-purpose","model":"` + midID + `"}}`
+			captureStdout(func() {
+				captureStderr(func() {
+					if rc := harnessRegistry["claude-code"].Hook(strings.NewReader(pre), cmdCat); rc != 0 {
+						t.Errorf("hook rc = %d", rc)
+					}
+				})
+			})
+			post := `{"hook_event_name":"PostToolUse","tool_name":"Agent","session_id":"s-ctl","tool_use_id":"toolu_ctl",` +
+				`"tool_response":{"agentId":"ag-ctl","status":"completed","resolvedModel":"` + midID + `"}}`
+			stop := `{"hook_event_name":"SubagentStop","session_id":"s-ctl","agent_id":"ag-ctl","model":"` + midID + `",` +
+				`"usage":{"input_tokens":1200,"output_tokens":300}}`
+			for _, payload := range []string{post, stop} {
+				if rc, _, _ := runEndFor("claude-code", []byte(payload)); rc != 0 {
+					t.Fatalf("end rc = %d", rc)
+				}
+			}
+
+			events, err := telemetry.ReadEventsFrom(eventLog)
+			if err != nil {
+				t.Fatal(err)
+			}
+			tasks := telemetry.BuildTasks(events)
+			if len(tasks) != 1 || tasks[0].Group != tc.group || !tasks[0].Completed() || !tasks[0].Priced {
+				t.Fatalf("tasks = %+v, want one completed, priced %s task", tasks, tc.group)
+			}
+			rep := telemetry.BuildReport(events, 1)
+			arm := rep.Routed
+			if tc.group == telemetry.GroupControl {
+				arm = rep.Control
+			}
+			if arm.Spawns != 1 || arm.Completed != 1 {
+				t.Fatalf("report %s arm = %+v, want 1 spawn and 1 completed task", tc.group, arm)
+			}
+		})
+	}
+}

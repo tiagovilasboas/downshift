@@ -37,6 +37,12 @@ fail-open response: the spawn runs on the model the harness asked for. The event
 with `outcome: baseline` and the reason code `CONTROL`. KiroCrew's policy mode never blocks a
 control spawn.
 
+A control spawn's launch, end and usage link to its decision exactly like a routed spawn's: by
+the tool-call id, then the agent id (see "Cost linkage" in
+[harness-matrix.md](../reference/harness-matrix.md)). Logs written before 2026-10-19 have no end
+record for any control spawn: the linker skipped `baseline` decisions, so a window that reaches
+back before that date undercounts the control arm.
+
 `DOWNSHIFT_NO_ROUTE=1` and a session pause (`downshift session --pause`) still win and are
 unchanged. Their baseline events carry no `CONTROL` code, so the report counts them as
 excluded rather than as a control sample: they are not random.
@@ -77,6 +83,11 @@ tasks before the first estimate.
   still be skewed: read the interval, not only the point estimate.
 - A harness that does not report usage or child ends contributes spawns but no completed tasks.
 - Rework needs a session id; spawns without one are never linked.
+- An end without a tool-call id links by session only to an applied rewrite, in both groups, so
+  a control or unchanged routed spawn on such a harness has no end.
+- Before 2026-10-19 a Cursor spawn could also be logged as a claude-code decision (Cursor runs
+  the Claude Code hooks); those copies never end, so they inflate the routed spawn count of
+  older windows. Current versions leave the copy to the cursor hook and record nothing.
 - The control group costs money by design: about `DOWNSHIFT_CONTROL_SHARE` of the saving. Lower
   it once the interval is tight, or set it to `0`.
 

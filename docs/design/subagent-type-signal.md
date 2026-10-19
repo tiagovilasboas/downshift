@@ -80,3 +80,17 @@ none of the above has a measured effect size yet.
 
 Not measured: how often real users' custom agents pin a model; the file-read
 cost; Claude Code versions where frontmatter `model:` precedence differs.
+
+## Addendum, 2026-10-19: the measured "custom" share was not custom agents
+
+`stats --detail` on the operator's log showed 72 of 72 `custom` decisions with
+an unknown baseline. None of them was a Claude Code custom agent: each sat
+within 3 s of a cursor decision, and every one with a tool-call id shared it
+with that decision. Cursor runs the Claude Code hooks when its third-party
+configs are on, and its Task input (`model: "inherit"`, lowercase types such as
+`explore`) was logged a second time under claude-code. The shared runners now
+leave such a copy to the cursor hook (`PayloadMarkers`, see
+[harness-matrix.md](../reference/harness-matrix.md)). The same log's Claude
+Code transcripts named only `general-purpose`, `Explore` and
+`claude-code-guide`, so there is still no measurement of real custom types, and
+the recommendation above stands.

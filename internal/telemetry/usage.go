@@ -62,7 +62,16 @@ const (
 // or observation record rather than a routing decision. Cost and observation
 // records must never inflate decision counts in Aggregate.
 func IsCostOnlyOutcome(outcome string) bool {
-	return outcome == OutcomeUsage || outcome == OutcomeBaseline || outcome == OutcomeResolved || outcome == OutcomeChildEnded || outcome == OutcomeDCI
+	return outcome == OutcomeBaseline || IsObservationOutcome(outcome)
+}
+
+// IsObservationOutcome reports a record written after a spawn about an earlier
+// decision (usage, resolved, child_ended) or a DCI line: never a decision a
+// post-spawn record may link to. Unlike IsCostOnlyOutcome it leaves out
+// baseline: a control-group or no-route spawn is a decision that ran unchanged,
+// and its end must link to it like any routed spawn's.
+func IsObservationOutcome(outcome string) bool {
+	return outcome == OutcomeUsage || outcome == OutcomeResolved || outcome == OutcomeChildEnded || outcome == OutcomeDCI
 }
 
 // DecisionKey identifies a decision event for post-hoc linkage: its

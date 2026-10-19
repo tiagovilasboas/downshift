@@ -101,8 +101,34 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
 - **Cost linkage.** Every decision records `tool_use_hash`. PostToolUse
   repeats the id, so `resolved`, `child_ended` and, through the agent id,
   `usage` attach to the exact decision even with parallel spawns, including
-  held and allow decisions (no `rewrite_honored` claim for those). Lines
-  written before this field fall back to the session heuristic.
+  held and allow decisions (no `rewrite_honored` claim for those), and
+  control-group and no-route decisions (`outcome: baseline`): before
+  2026-10-19 the linker treated `baseline` as a cost record and skipped it, so
+  no control spawn ever had an end record. Lines written before this field
+  fall back to the session heuristic.
+- **One spawn, two harnesses (all harnesses).** Cursor runs the Claude Code
+  hooks in `~/.claude/settings.json` when its third-party configs are on
+  ([Cursor docs](https://cursor.com/docs/reference/third-party-hooks)), so one
+  Cursor spawn reaches both the cursor hook and the claude-code hook. Each
+  harness declares `PayloadMarkers` (top-level keys only it sends; Cursor:
+  `cursor_version`, `conversation_id`, `generation_id`, `workspace_roots`), and
+  the shared hook, honor, usage and end runners leave a payload carrying
+  another harness's marker to that harness's own hook: allowed unchanged,
+  nothing recorded, one stderr line. Before 2026-10-19 the copy was routed and
+  logged as a claude-code decision with Cursor's `inherit` and lowercase agent
+  types: all 79 claude-code decisions labelled `agent_type: custom` in the
+  operator's 30-day log were such copies (each within 3 s of a cursor decision;
+  all 33 with a tool-call id shared it). Not verified on a live Cursor build:
+  that the copy carries at least one marker. It is the native Cursor input, and
+  the logged copies match it.
+- **Custom agent types on Claude Code.** A real custom type (project or user
+  `.claude/agents/<name>.md`, or a plugin agent `plugin:name`) still logs an
+  unknown baseline unless the call names a model: the payload carries only the
+  type name, and the model its definition pins (or `inherit`) is in a file the
+  hook does not read. Reading it is option 2 of
+  [subagent-type-signal.md](../design/subagent-type-signal.md), held back
+  until it is measured. Built-in pinned types (`claude-code-guide`,
+  `statusline-setup`) ship no definition on disk, so they stay `unknown` too.
 - **Other harnesses.** cursor and codex expose `tool_use_id` on decisions
   (documented in their hook payloads). Their end hooks (see "Child end" below)
   join on it when the end payload repeats the id.
