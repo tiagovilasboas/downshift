@@ -87,7 +87,7 @@ Evidence per harness: docs/reference/harness-matrix.md
 The Claude Code plugin bundles one third-party mod, cache-tax (MIT, vendored, priced cold-send
 guard and /keepwarm; the ping spends usage): hooks/cache-tax/README.md
 Sibling mods of the Downshift marketplace, one install each because a plugin loads one hooks
-module: /plugin install savvy-progress@downshift, /plugin install filetree@downshift. mods/README.md
+module. `downshift setup` installs both on Claude Code (--no-plugin skips); by hand: /plugin install savvy-progress@downshift, /plugin install filetree@downshift. mods/README.md
 Experimental mod downshift-router (off by default; routes from agent.spawn through the same
 binary; never run next to the settings hook): mods/downshift-router/README.md, docs/design/mod-router.md
 Companions (Headroom default, detected and recorded, never installed by Downshift;
