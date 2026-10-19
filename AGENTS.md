@@ -107,92 +107,48 @@ By contributing, you license your contribution under Apache 2.0. See
 
 ## Architecture — understand before changing
 
+Imports point inward. Checked with `go list` on 2026-10-19; the graph, flows and
+known gaps are in [docs/design/architecture.md](docs/design/architecture.md).
+
 ```
-internal/classify/
-  classifier.go      — regex task text → Complexity (scored signals, deterministic). No tier
-  signals.go         — RawSignals table (exported, tunable without touching the scorer)
-  lang_guard.go      — language guard
-  risk.go            — risk floor
-
-internal/fuse/
-  fuse.go            — semantic boost policy (raise-only, including the no-signal skip).
-                       Imports classify and semantic. Does not import core.
-                       core keeps ClassifyWithSemantic as a wrapper
-
-internal/session/    — SessionList and the loaders (file, hook marks, discovered
-                       file, quota snapshot). Does not import core.
-                       PlanForSession, RouteForSession, InferSessionFromCurrent
-                       and CanWriteSessionID stay in core
-
-internal/quotamodel/ — pure quota types (Status, Window, Snapshot, Validate,
-                       Evaluate, Abandoned, SourceName). No file I/O
-internal/quota/      — file I/O; aliases the quotamodel types. Registers
-                       LoadQuotaHook, LoadNativeQuotaHook, ParseNativeQuotaHook
-                       and RegisterNativeQuotaHook. Core production sources do not import quota
-
-internal/nbopinion/  — landed (4d3e857, PR 156). init registers hooks that call
-                       nbtier.Suggest and nbtier.Trivial. May import core and
-                       nbtier. core production sources must not import nbopinion
-                       or nbtier. cmd blank-imports this package. NBUpshift and
-                       NBDownshift stay on Decision in core
-
-internal/core/
-  classify_facade.go — Classify re-export; ClassifyWithSemantic wraps fuse
-  escalation.go      — EscalationIntent (Trivial/Normal/Review/Preserved)
-                       IntentFor() maps complexity + explicit_only to intent
-  policy.go          — Tier, Effort, Verdict, Decision, Route()
-                       ShouldPreserveExplicitModel
-                       NBUpshift / NBDownshift on Decision
-  capabilities.go    — HarnessCapabilities per harness; RewritePlan; Plan()
-  resolver.go        — Resolver interface (ModelFor, LookupByID, EffortFor,
-                       SavingsRatio, IsExplicitOnly)
-  score_select.go    — score selection via ScoreHook. Stays in core on purpose;
-                       do not merge it with the naive-Bayes opinion
-  quota_hooks.go     — LoadQuotaHook and the native quota hooks quota registers
-
-internal/catalog/
-  catalog.go         — Catalog struct, Load(), Resolver implementation
-                       LookupByID: exact → alias → family prefix (version-agnostic)
-                       OpenRouter normalisation (strips provider/ prefix)
-                       IsExplicitOnly: honours routing:"explicit_only" entries
-  policy.go          — mergeEntries + validateEntries (catalog merge rules)
-  catalog.json       — embedded model data (committed, go:embed'd into binary)
-
-internal/models/     — `models list/check/pull/discover` (CatalogReader interface)
-
-internal/adapters/   — one package per harness: parse payload, declare caps, emit wire response
-  claudecode/ cursor/ codex/ antigravity/ kirocrew/
-
-internal/policyfile/ — optional project tier floor, plugged into core via TierFloorHook
-internal/hookctx/    — per-invocation context (hook deadline, ProjectDir) set by the shared runner
-internal/hookutil/   — shared utilities (StringField)
-internal/routingv2/shadow/   — opt-in candidate observation; never changes Route()
-internal/routingv2/training/ — prompt-free route outcomes, shadow-report, offline training
-
-cmd/downshift/       — binary entry point, hook runners, try subcommand,
-                       models list/check/pull dispatch; blank-imports nbopinion
+cmd/downshift/       — CLI, harnessRegistry, runHookAdapter, setup, doctor. Blank-imports
+                       nbopinion, policyfile, quota, routeadapt (their init registers core hooks)
+internal/adapters/   — claudecode cursor codex antigravity kirocrew opencode: parse the payload,
+                       declare HarnessCapabilities, emit the wire response. No policy
+internal/core/       — Route, Check (R1-R9), PlanSession, HarnessCapabilities, Resolver, EscalationIntent.
+                       Imports only classify, fuse, quotamodel, session (and paths, semantic below them).
+                       Optional layers plug in through hook vars: MemoryAdjustHook, TierFloorHook,
+                       ScoreHook, NBSuggestHook/NBTrivialHook, quota hooks. ClassifyWithSemantic wraps fuse
+internal/classify/   — regex signals, language guard, risk floor (large prompts scan categories concurrently). No tier
+internal/fuse/       — raise-only semantic boost (imports classify, semantic; not core)
+internal/session/    — SessionList and loaders (not core). PlanForSession, RouteForSession,
+                       InferSessionFromCurrent and CanWriteSessionID stay in core
+internal/quotamodel/ — pure quota types, no I/O. internal/quota/ does the file I/O and registers the hooks
+internal/nbtier/ nbopinion/ — naive-Bayes opinion; nbopinion registers the hooks, may import core
+internal/catalog/    — embedded catalog.json (prices_as_of, synced weekly), user override, Resolver;
+                       Load runs under recover in the hooks (loadCatalogFailOpen)
+internal/discovery/ models/ — `models discover/list/check/pull`; setup runs discovery
+internal/policyfile/ adapt/ routeadapt/ scoreindex/ — project tier floor, shadow memory, score cache (via hooks)
+internal/hookctx/ hookutil/ hookport/ childend/ — hook deadline, field helpers, honor/usage ports, child-end recorder
+internal/telemetry/  — prompt-free JSONL (no per-spawn fsync), Summarize (the one savings definition)
+internal/server/ sensor/ contextopt/ compressor/ codeintel/ — dashboard, tool-output sensor, compaction, DCI
+internal/routingv2/shadow/ training/ — opt-in candidate observation; never changes Route()
 ```
 
-**Key invariants:**
-- Core production sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, or any adapter, because a core test file may import `nbtier` and that file is not in the binary.
+**Key invariants** (each checked on 2026-10-19; recheck with `go list -deps ./internal/core`):
+- Core production sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter. Core test files do import `catalog`, `nbopinion`, `nbtier` and `quota`; they are not in the binary. No test enforces this graph yet: it is a manual check.
 - Adapters do not choose the tier; they call `core.Route`, then apply the plan core returns.
-- The semantic boost and the naive-Bayes opinion stay in-process and do not exec.
-- `session` does not import `core`. `fuse` imports `classify` and `semantic` and does not import `core`. Score selection stays in `core` through `ScoreHook`; do not merge it with the naive-Bayes opinion.
-- Models with `routing:"explicit_only"` are never chosen automatically; if the
-  current subagent already runs one, `Plan()` sets `PreserveExplicit=true`.
-- `updatedInput` preserves all sibling fields — only `model` and
-  `reasoning_effort` are mutated.
-- Doubt never spends money: an unconfident UPSHIFT (R8) and an unconfident frontier pick with no
-  current model (R7) are held in `Check`; only `deterministicLift` (selfcheck.go) may move up.
-- The semantic boost ignores no-signal prompts, never creates COMPLEX alone, and is logged as `SEMANTIC_BOOST`.
-- `InferSession` (Claude Code only) infers an unknown session from the current model; adapters pass
-  `plan.Session` to the write guard.
-- Shadow only, never auto-activated: `DOWNSHIFT_SHADOW_WEIGHTS`, candidate weights, adapt memory, and score
-  selection unless `DOWNSHIFT_SCORE_ROUTING=1`. `success` feedback never creates a `required_tier` label.
-- Task text stays in memory for feature extraction and is never persisted. Feedback and training are
-  harness-agnostic; only explicit reviewed `required_tier` labels enter supervised training.
+- `session` does not import `core`. `fuse` does not import `core`. `codeintel` imports only `paths`. Score selection stays in `core` through `ScoreHook`; do not merge it with the naive-Bayes opinion.
+- The semantic boost and the naive-Bayes opinion stay in-process and do not exec. The boost ignores no-signal prompts, never creates COMPLEX alone, and is logged as `SEMANTIC_BOOST`.
+- Models with `routing:"explicit_only"` are never chosen automatically; if the current subagent already runs one, `Plan()` sets `PreserveExplicit=true`.
+- `updatedInput` preserves all sibling fields; only `model` and `reasoning_effort` are mutated.
+- Doubt never spends money: an unconfident UPSHIFT (R8) and an unconfident frontier pick with no current model (R7) are held in `Check`; only `deterministicLift` (selfcheck.go) may move up.
+- `InferSession` (Claude Code only) infers an unknown session from the current model; adapters pass `plan.Session` to the write guard.
+- Shadow only, never auto-activated: `DOWNSHIFT_SHADOW_WEIGHTS`, candidate weights, adapt memory, and score selection unless `DOWNSHIFT_SCORE_ROUTING=1`. `success` feedback never creates a `required_tier` label.
+- Task text stays in memory for feature extraction and is never persisted. Only explicit reviewed `required_tier` labels enter supervised training.
+- Hooks fail open: 1 MiB stdin cap, 2 s read timeout, 1.5 s deadline, panic and catalog-load panic become an unchanged spawn.
 - The install example omits `claude-fable-5-1` on purpose (upshift writes the last listed id); do not add it.
-- `hooks/cache-tax/`, `mods/savvy-progress/` and `mods/filetree/` are vendored third-party mods (MIT, pinned in NOTICE): re-vendor per their READMEs, never edit in place; they hold no routing logic. One owner exception (2026-10-19): a small local patch is allowed when it is documented in the mod's README and NOTICE so a re-vendor can reapply it (today only the savvy-progress brand colours).
+- `hooks/cache-tax/`, `mods/savvy-progress/` and `mods/filetree/` are vendored third-party mods (MIT, pinned in NOTICE): re-vendor per their READMEs, never edit in place; they hold no routing logic. One owner exception (2026-10-19): a small local patch is allowed when documented in the mod's README and NOTICE so a re-vendor can reapply it (today only the savvy-progress brand colours). `mods/downshift-dock/` is original Downshift code.
 
 ### Reference (read on demand)
 

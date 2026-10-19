@@ -16,12 +16,12 @@ O Downshift opera com uma distinção estrita entre duas fontes de informação:
 
 1. **Catálogo Embarcado e Sobrescrita:**
    * O catálogo canônico fica embutido no binário (`internal/catalog/catalog.json`).
-   * Operadores podem estender ou substituir dados colocando um arquivo em `~/.harness-downshift/catalog.json`.
+   * Operadores podem estender ou substituir dados colocando um arquivo em `~/.downshift/catalog.json`.
 2. **Resolução da Lista de Sessão:**
    A descoberta dos modelos autorizados segue uma ordem estrita de precedência:
    1. Campos `session_models` ou `available_models` fornecidos diretamente no payload do hook pelo harness (se presente, essa lista é soberana).
-   2. Configuração local por ID de sessão em `~/.harness-downshift/session-models.json` (`sessions.<harness>.<session_id>`).
-   3. Configuração geral por harness em `~/.harness-downshift/session-models.json` (ex: chaves `"claude-code"`, `"cursor"`, `"codex"`, `"antigravity"`).
+   2. Configuração local por ID de sessão em `~/.downshift/session-models.json` (`sessions.<harness>.<session_id>`).
+   3. Configuração geral por harness em `~/.downshift/session-models.json` (ex: chaves `"claude-code"`, `"cursor"`, `"codex"`, `"antigravity"`).
    4. Se nenhuma lista for localizada, a sessão é declarada como desconhecida (`Known = false`) e o Downshift falha aberto sem realizar reescritas.
 3. **Seleção agnóstica de alvos:**
    * Cada lista deve estar ordenada por capacidade crescente (menos potente → mais potente).

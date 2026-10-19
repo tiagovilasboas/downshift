@@ -20,6 +20,8 @@ O ecossistema trata cenários de borda sem recorrer a chamadas externas a LLMs:
 | **JSON malformado no stdin** | Registra erro `INVALID_EVENT` na telemetria | O hook libera o spawn sem alterações (`allow`) |
 | **Payload acima de 1 MB** | Emite `PAYLOAD_TOO_LARGE` | O processo não tenta desserializar o buffer |
 | **Timeout de leitura no stdin** | Emite `INPUT_TIMEOUT` | Libera a execução imediatamente |
+| **Pânico ao carregar o catálogo (dado embutido ou override hostil)** | Carrega sob `recover` (`loadCatalogFailOpen`) e avisa no stderr | Libera o spawn sem alterações; sem isso o Go sairia com código 2, que o harness lê como negação |
+| **Prazo do hook** | Leitura do stdin até 2 s; orçamento de 1,5 s para comandos auxiliares | Estourou: libera sem alterações |
 | **Sessão sem lista de modelos** | Sessão tratada como desconhecida (`unknown`) | Não reescreve o modelo |
 | **Modelo recomendado fora da sessão** | Modelo não consta no allowlist ativo | Preserva o modelo original da sessão |
 | **Transição com baixa confiança** | Margem de pontuação menor que 2 | Mantém o modelo da sessão inalterado |
