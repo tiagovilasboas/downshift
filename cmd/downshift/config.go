@@ -177,9 +177,9 @@ func buildConfigReport(getenv func(string) string, now time.Time, cat *catalog.C
 
 	// Semantic boost.
 	if semantic.Enabled() {
-		add(configEntry{Key: "semantic_boost", Value: "on (hash embedder)", Source: cfgDefault, Env: "DOWNSHIFT_MINILM"})
+		add(configEntry{Key: "semantic_boost", Value: "on (hash embedder)", Source: cfgDefault, Env: "DOWNSHIFT_SEMANTIC_BOOST"})
 	} else {
-		add(configEntry{Key: "semantic_boost", Value: "off", Source: cfgEnv, Env: "DOWNSHIFT_MINILM"})
+		add(configEntry{Key: "semantic_boost", Value: "off", Source: cfgEnv, Env: "DOWNSHIFT_SEMANTIC_BOOST"})
 	}
 
 	// Inferred session.

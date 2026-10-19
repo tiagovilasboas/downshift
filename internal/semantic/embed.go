@@ -13,9 +13,12 @@ type Embedder interface {
 	Embed(prompt string) ([]float64, error)
 }
 
-// enabled is on unless DOWNSHIFT_MINILM is 0, false, or off.
+// enabled is on unless DOWNSHIFT_SEMANTIC_BOOST or legacy DOWNSHIFT_MINILM is 0, false, or off.
 func enabled() bool {
-	v := strings.ToLower(strings.TrimSpace(os.Getenv("DOWNSHIFT_MINILM")))
+	v := strings.ToLower(strings.TrimSpace(os.Getenv("DOWNSHIFT_SEMANTIC_BOOST")))
+	if v == "" {
+		v = strings.ToLower(strings.TrimSpace(os.Getenv("DOWNSHIFT_MINILM")))
+	}
 	switch v {
 	case "0", "false", "off", "no":
 		return false
