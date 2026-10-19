@@ -26,7 +26,7 @@ func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		Stdin:   stdin,
 		Stdout:  stdout,
 		Stderr:  stderr,
-		Compact: os.Getenv(execEnvKillSwitch) != "0",
+		Compact: os.Getenv(execEnvKillSwitch) != "0" && os.Getenv(execwrap.DepthEnv) == "",
 	})
 	if len(args) > 1 {
 		if path, err := execwrap.EventsPath(); err == nil {

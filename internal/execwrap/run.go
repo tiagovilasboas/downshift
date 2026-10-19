@@ -37,6 +37,11 @@ const (
 // the wrapper reaches the program it runs.
 var forwardedSignals = []os.Signal{os.Interrupt, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT}
 
+// DepthEnv is set to "1" in the child's environment. A wrapper that finds it
+// set runs as a plain passthrough and the hook does not wrap again, so a
+// program that itself runs commands never nests compaction.
+const DepthEnv = "DOWNSHIFT_EXEC_DEPTH"
+
 // Options configures one Run.
 type Options struct {
 	Stdin          io.Reader
@@ -96,6 +101,7 @@ func Run(argv []string, o Options) (res Result) {
 	var held *heldWriter
 	cmd := exec.Command(path, argv[1:]...)
 	cmd.Args[0] = argv[0]
+	cmd.Env = append(os.Environ(), DepthEnv+"=1")
 	ownProcessGroup(cmd)
 	cmd.Stdin = o.Stdin
 	cmd.Stderr = stderr

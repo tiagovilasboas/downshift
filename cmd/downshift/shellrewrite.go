@@ -65,7 +65,7 @@ var execExecutable = func() (string, error) {
 // the user's own permission rules, and the running binary's absolute path.
 // Anything short of all of them leaves the command unchanged.
 func shellWrapDecision(harness, command string, allowed func(string) bool) execwrap.Decision {
-	if hookGetenv(execEnvKillSwitch) == "0" || !execConfigEnabled() {
+	if hookGetenv(execEnvKillSwitch) == "0" || hookGetenv(execwrap.DepthEnv) != "" || !execConfigEnabled() {
 		return execwrap.Decision{Reason: "disabled"}
 	}
 	exe, err := execExecutable()
