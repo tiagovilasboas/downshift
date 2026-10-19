@@ -47,6 +47,16 @@ unverified and says so. Releases are also on the
 [Releases page](https://github.com/tiagovilasboas/downshift/releases) with the
 same `checksums.txt`.
 
+**Build provenance (optional).** Releases built by the `release` job carry a GitHub
+build-provenance attestation. After the sha256 check, if the `gh` CLI is installed,
+`install.sh` runs `gh attestation verify <archive> --repo tiagovilasboas/downshift`
+and prints `Build provenance verified`. It never blocks on this by default: with no
+`gh`, no `gh auth login`, or a release older than the attestations, it prints a
+warning and continues on the sha256 alone. `DOWNSHIFT_REQUIRE_ATTESTATION=1` makes
+any outcome other than "verified" an error that installs nothing;
+`DOWNSHIFT_SKIP_ATTESTATION=1` skips the check. By hand:
+`gh attestation verify downshift_<ver>_<os>_<arch>.tar.gz --repo tiagovilasboas/downshift`.
+
 `install.sh` still treats a non-flag argument as the release version. `--explicit-upshift` may come before or after that version. It writes `"explicit_upshift": true` into `session-models.json` without dropping harness lists that are already there. The same switch at runtime is `DOWNSHIFT_EXPLICIT_UPSHIFT=1`. Default is off. See [session-models.md](../reference/session-models.md#explicit_upshift).
 
 **Step 2 — Preview, then wire the hooks:**
