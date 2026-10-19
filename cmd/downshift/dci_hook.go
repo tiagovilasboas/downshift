@@ -13,7 +13,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/codeintel"
 )
 
-// userPromptSubmitInput matches the Claude Code UserPromptSubmit hook schema.
+// userPromptSubmitInput matches the UserPromptSubmit hook schema across supported harnesses.
 type userPromptSubmitInput struct {
 	HookEventName      string `json:"hook_event_name"`
 	HookEventNameCamel string `json:"hookEventName"`
@@ -21,6 +21,8 @@ type userPromptSubmitInput struct {
 	SessionID          string `json:"session_id"`
 	SessionIDCamel     string `json:"sessionId"`
 	Prompt             string `json:"prompt"`
+	Task               string `json:"task"`
+	UserMessage        string `json:"user_message"`
 }
 
 func (u *userPromptSubmitInput) EventName() string {
@@ -30,9 +32,21 @@ func (u *userPromptSubmitInput) EventName() string {
 	return u.HookEventNameCamel
 }
 
-// userPromptSubmitOutput matches the Claude Code UserPromptSubmit response schema.
+func (u *userPromptSubmitInput) PromptText() string {
+	if u.Prompt != "" {
+		return u.Prompt
+	}
+	if u.Task != "" {
+		return u.Task
+	}
+	return u.UserMessage
+}
+
+// userPromptSubmitOutput matches the Claude Code UserPromptSubmit response schema
+// and optionally includes top-level additionalContext for multi-harness compatibility.
 type userPromptSubmitOutput struct {
 	HookSpecificOutput hookSpecificOutput `json:"hookSpecificOutput"`
+	AdditionalContext  string             `json:"additionalContext,omitempty"`
 }
 
 type hookSpecificOutput struct {
@@ -48,11 +62,17 @@ func runDCIHook(harness string, r io.Reader, w io.Writer, stderr io.Writer) int 
 		_ = recover()
 	}()
 
-	if harness != "claude-code" {
-		return 0 // Only claude-code currently supported, fail-open
+	switch harness {
+	case "claude-code", "cursor", "opencode", "codex", "generic":
+	default:
+		return 0 // Unknown harness: fail-open
 	}
 
-	data, err := io.ReadAll(r)
+	if r == nil {
+		return 0
+	}
+
+	data, err := io.ReadAll(io.LimitReader(r, 1<<20))
 	if err != nil || len(data) == 0 {
 		return 0 // Empty or unreadable stdin: fail-open
 	}
@@ -62,7 +82,7 @@ func runDCIHook(harness string, r io.Reader, w io.Writer, stderr io.Writer) int 
 		return 0 // Invalid JSON: fail-open
 	}
 
-	prompt := input.Prompt
+	prompt := input.PromptText()
 	if prompt == "" {
 		return 0
 	}
@@ -94,6 +114,9 @@ func runDCIHook(harness string, r io.Reader, w io.Writer, stderr io.Writer) int 
 			HookEventName:     "UserPromptSubmit",
 			AdditionalContext: pack.FormattedText,
 		},
+	}
+	if harness != "claude-code" {
+		out.AdditionalContext = pack.FormattedText
 	}
 
 	enc := json.NewEncoder(w)

@@ -1,25 +1,19 @@
-# Task List — Downshift Code Intelligence (DCI) MVP v0.1
+# Task List — Downshift Code Intelligence (DCI) v0.2
 
-> 📦 *Histórico compactado: 42 tarefas concluídas arquivadas em [completed-tasks-2026-10-18.md](archive/completed-tasks-2026-10-18.md)*
+> 📦 *Histórico compactado: tarefas do MVP v0.1 e Frente 1 arquivadas em `archive/`*
 
-> 📦 *Histórico compactado: 64 tarefas concluídas arquivadas em [completed-tasks-2026-10-18.md](archive/completed-tasks-2026-10-18.md)*
-
-
-
-
-
-
-
-
-
-
-
-  - [x] 12.2 Create `docs/design/code-intelligence.md` detailing architecture, epistemology, limits, and security.
-  - [x] 12.3 Run full test suite (`go test ./internal/codeintel/...`, `go test ./cmd/downshift/...`, `gofmt`).
-  - [x] 12.4 Commit, push, and summarize delivery.
-
-## Frente 1: DCI Telemetry & Stats Integration
-  - [x] F1.1 Oversee epistemic contract for DCI telemetry (prompts evaluated, injections applied, abstentions by reason, context bytes emitted, latencies p50/p95; zero synthetic tokens/dollars).
-  - [x] F1.2 Coordinate CLI formatting in `cmd/downshift/cmd_stats.go` and `codeintel.PrintDCIStats` with `--dci`, `--detail`, and default views.
-  - [x] F1.3 Ensure `--export` outputs clean JSON for DCI metrics under `dci` key in `telemetry.Summary`.
-  - [x] F1.4 Verify all tests pass with `go test ./cmd/downshift/...`, `go test ./internal/telemetry/...`, and `go test ./internal/codeintel/...`.
+## DCI v0.2: Multi-Language Symbols & Multi-Harness Hooks
+- [x] **V02.1 (Fullstack - Multi-Lang Parser):** Implement `internal/codeintel/parse_lang.go` and wire in `parse.go`:
+  - TypeScript/JavaScript (`.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`): functions, arrow functions, classes, class methods (`ClassName.method`), interfaces, types, enums with brace-depth `StartLine`..`EndLine` tracking.
+  - Python (`.py`): module functions, classes, class methods (`ClassName.method`) with indentation-based `StartLine`..`EndLine` tracking.
+  - C-style fallback (`.rs`, `.php`, `.java`, `.cs`) with brace-depth span estimation.
+- [x] **V02.2 (AI / FinOps - Multi-Harness Hook & Budget):** Update `cmd/downshift/dci_hook.go` and `cmd/downshift/dci.go`:
+  - Support `claude-code`, `cursor`, `opencode`, `codex`, and `generic` in `downshift dci hook <harness>`.
+  - Support `--budget <bytes>` flag on `downshift dci enable [active|observe] [--budget=3500]` (clamped to safe bounds 512..16384 bytes).
+  - Update `docs/design/code-intelligence.md`, `README.md`, and `docs/reference/capability-matrix.md`.
+- [x] **V02.3 (AppSec - Parser & Hook Security):** Audit and add tests in `internal/codeintel/security_test.go`:
+  - Test deeply nested braces, unclosed strings/braces, pathological lines (ReDoS resistance / linear-time scanning), and oversized/malformed hook payloads across all harnesses.
+- [x] **V02.4 (QA - End-to-End Test Suite):** Add comprehensive tests in `internal/codeintel/parse_lang_test.go` and `cmd/downshift/dci_test.go`:
+  - Verify multi-line `StartLine`..`EndLine` extraction for TS, JS, Python, Rust, PHP.
+  - Verify `downshift dci hook` for `cursor`, `opencode`, `codex`, `claude-code`, and `--budget` flag.
+  - Run full test suite, `go vet`, `gofmt`, push, open PR, and verify green CI.
