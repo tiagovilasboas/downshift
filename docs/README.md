@@ -121,6 +121,7 @@ The observability and verification domain delivers empirical proof of routing be
 | [reference/stats-export.md](reference/stats-export.md) | Reference | Sanitized telemetry export format for safe sharing |
 | [reference/beta-exit.md](reference/beta-exit.md) | Reference | Beta graduation criteria and open blockers |
 | [guides/report.md](guides/report.md) | Guide | `downshift report`: routed vs control group, savings with bootstrap CI, cost per task |
+| [guides/simulation.md](guides/simulation.md) | Guide | Offline simulation gate: synthetic spawns through the real hook path, accounting invariants, ESTIMATE tables (no model call) |
 | [guides/verification.md](guides/verification.md) | Guide | `verification-report`: observed child checks and estimated cost by tier, sensor limits |
 | [guides/evidence.md](guides/evidence.md) | Guide | Evidence ladder: list price, telemetry estimate, controlled benchmark, real tasks, cost per task |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Guide | Protocol for reproducible three-arm comparison (Opus vs opusplan vs opusplan+Downshift) |
