@@ -157,6 +157,10 @@ Context compressor, telemetry and cost commands, and the embedded-vs-user `catal
 prompts, tasks or file paths; and "do not commit catalog.json" means the **user override** under the state dir, never the
 embedded `internal/catalog/catalog.json`. Companions (Headroom default) are detected and documented,
 never installed or wrapped by Downshift: [docs/guides/companions.md](docs/guides/companions.md).
+One exception to "Downshift does not wrap commands" (owner decision 2026-10-19): the opt-in, default-off
+`downshift exec` wrapper (`downshift context enable native --exec`; `DOWNSHIFT_EXEC=0` kills it) may rewrite an
+allowlisted shell command with no shell metacharacters to `downshift exec -- <argv>`, which keeps the exit code
+and compacts only clean output. Its policy lives in `internal/execwrap`, never in an adapter; it never wraps a companion.
 
 ---
 

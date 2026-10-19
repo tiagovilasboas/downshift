@@ -298,6 +298,28 @@ driven). To change either, first capture how the host treats `{}` for a spawn it
 a rule for, then add the harness to the neutral set and extend the conformance
 decoders. Until then the safe answer is the documented one.
 
+## Shell command rewrite: `downshift exec` (opt-in, 2026-10-19)
+
+Off by default. `downshift context enable native --exec` turns it on;
+`DOWNSHIFT_EXEC=0` turns it off without a config change. The decision is
+shared (`internal/execwrap.Decide` plus `shellWrapDecision` in the hook
+runner): allowlist `go test` and `git status`, no shell metacharacter, never
+twice, and a `downshift` binary on PATH. The harness fact is
+`HarnessCapabilities.CanRewriteShellCommand`. An adapter takes part by
+exposing `ShellCommand()` and `ShellRewrite()`.
+
+| harness | shell rewrite | status | limit |
+|---|---|---|---|
+| claude-code | `PreToolUse` on `Bash` → `updatedInput.command`, every sibling field kept, no `permissionDecision` | Wired, not observed live | Needs a manual `{"matcher": "Bash", ...}` PreToolUse entry running `downshift claude-code`; `setup` does not write it. Not verified on a live session that Claude Code applies `updatedInput` without a `permissionDecision`. If it does not, the command runs unchanged: nothing breaks, nothing is saved. Permission allow rules match the **rewritten** text (`downshift exec -- go test ...`): allow `Bash(downshift exec -- go test:*)` next to `Bash(go test:*)`, and never a broad `Bash(downshift exec:*)`, which would allow any program. |
+| codex | not wired | Unverified | The adapter exposes no shell command. The decision would be computed if it did. |
+| cursor | not wired | Unverified | Same. |
+| opencode | not wired | Unverified | Same. |
+| antigravity | not wired | Unverified | Same. |
+| kirocrew | not wired | No rewrite channel | Policy-mode only (allow or block), so it can never rewrite a command. |
+| grok | none | No hook | Config only. |
+
+`downshift exec -- <argv>` works the same from any shell, harness or not.
+
 ## Revalidation
 
 Every TBD cell must be re-checked per harness release: hook contracts
