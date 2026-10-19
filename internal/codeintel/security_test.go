@@ -1036,3 +1036,101 @@ func TestSecurity_MultiHarnessDCIEventsPrivacy(t *testing.T) {
 		}
 	}
 }
+
+func TestSecurity_GoAST_CallGraphAndImportsCap(t *testing.T) {
+	tempDir := t.TempDir()
+
+	var sb strings.Builder
+	sb.WriteString("package main\n\nimport (\n")
+	// 100 imports
+	for i := 0; i < 100; i++ {
+		fmt.Fprintf(&sb, "\t\"pkg_%03d\"\n", i)
+	}
+	sb.WriteString(")\n\nfunc PathologicalCallGraph() {\n")
+
+	// Builtin calls that must be filtered out
+	sb.WriteString("\tlen(data)\n")
+	sb.WriteString("\tpanic(\"halt\")\n")
+
+	// 200 distinct function calls
+	for i := 0; i < 200; i++ {
+		fmt.Fprintf(&sb, "\tcallFunc_%03d()\n", i)
+	}
+
+	// Deeply nested chained call expression (100 levels deep: root().chain001().chain002()...chain100())
+	sb.WriteString("\troot()")
+	for i := 1; i <= 100; i++ {
+		fmt.Fprintf(&sb, ".chain_%03d()", i)
+	}
+	sb.WriteString("\n}\n")
+
+	filePath := filepath.Join(tempDir, "pathological_calls.go")
+	if err := os.WriteFile(filePath, []byte(sb.String()), 0600); err != nil {
+		t.Fatalf("Failed writing pathological Go file: %v", err)
+	}
+
+	start := time.Now()
+	doc, err := ParseFile(tempDir, "pathological_calls.go")
+	elapsed := time.Since(start)
+
+	if err != nil {
+		t.Fatalf("ParseFile failed on pathological Go AST file: %v", err)
+	}
+	if doc == nil {
+		t.Fatalf("ParseFile returned nil doc")
+	}
+
+	if elapsed >= 50*time.Millisecond {
+		t.Errorf("ParseFile took %v, must complete in <50ms without ReDoS or stack explosion", elapsed)
+	}
+
+	// 1. Verify Imports hard cap (<= 32, exactly 32 when 100 provided)
+	if len(doc.Imports) > 32 {
+		t.Errorf("len(doc.Imports) = %d, strictly exceeds cap of 32", len(doc.Imports))
+	}
+	if len(doc.Imports) != 32 {
+		t.Errorf("len(doc.Imports) = %d, expected exactly 32 capped from 100", len(doc.Imports))
+	}
+	// Verify imports are clean paths without quotes
+	for _, imp := range doc.Imports {
+		if strings.ContainsAny(imp, "\"`") {
+			t.Errorf("Import path contains quote characters: %q", imp)
+		}
+	}
+
+	// 2. Verify Symbol.Calls hard cap (<= 16, exactly 16 when 200+ distinct calls made)
+	var foundSymbol *Symbol
+	for _, s := range doc.Symbols {
+		if s.Name == "PathologicalCallGraph" {
+			foundSymbol = &s
+			break
+		}
+	}
+	if foundSymbol == nil {
+		t.Fatalf("Symbol PathologicalCallGraph not found in parsed symbols")
+	}
+
+	if len(foundSymbol.Calls) > 16 {
+		t.Errorf("len(foundSymbol.Calls) = %d, strictly exceeds cap of 16", len(foundSymbol.Calls))
+	}
+	if len(foundSymbol.Calls) != 16 {
+		t.Errorf("len(foundSymbol.Calls) = %d, expected exactly 16 capped from 200+ distinct calls", len(foundSymbol.Calls))
+	}
+
+	// Verify builtins are never in calls
+	for _, callName := range foundSymbol.Calls {
+		if callName == "len" || callName == "panic" {
+			t.Errorf("Builtin %q leaked into Symbol.Calls", callName)
+		}
+	}
+
+	// 3. Verify zero index bloat on serialization
+	marshaled, err := json.Marshal(doc)
+	if err != nil {
+		t.Fatalf("Failed marshaling document: %v", err)
+	}
+	// Total serialized doc size should be reasonable (< 4KB) despite 100 imports and 200 calls in source
+	if len(marshaled) > 4096 {
+		t.Errorf("Marshaled document size = %d bytes, exceeds 4096 bytes (risk of .downshift/dci_index.json bloat)", len(marshaled))
+	}
+}

@@ -182,3 +182,107 @@ be rebased onto `main` (the catalog, cost and telemetry files were rewritten on 
 | Parallel high-stakes (PT/EN) | `a438604` | `riskHighStakesWorkRE` + `RiskAbstain`; `deterministicLift` in `selfcheck` |
 
 **Done when (met).** `go run ./tools/multilang --input …/m3-v1.json` → **0** unsafe confident; `go test ./...` green; `TestBenchmarkSplitsMatchClsAfterBaseline` unchanged vs local `cls-after.jsonl`.
+
+## Install review, 2026-10-19 (tasks I1 to I7)
+
+Found while reinstalling Downshift on the maintainer's machine after the audit. `downshift setup` now installs the Claude Code
+plugin (`#174`, merged): the hooks and the bundled cache-tax mod arrive with one command, the settings copy of the hooks is removed,
+and it falls back to settings hooks, naming the reason, when `claude` is missing or a login shell resolves `downshift` to another build.
+
+| ID | Priority | Task |
+|----|----------|------|
+| I1 | High | Verify the plugin install in a live Claude Code session: hooks fire once per spawn, cache-tax loads, `doctor` reports the plugin path |
+| I2 | High | `downshift setup` should run `models discover` (with `--dry-run` showing the result): only the maintainer's manual run recovered the Codex and KiroCrew lists |
+| I3 | Medium | `cmd/dsmon/dsmon-launchd-setup.sh` still writes `~/.harness-downshift/...` and flags (`--events`, `--agents`, `--web`) that `serve` ignores |
+| I4 | Medium | `doctor` does not check the hook binary of KiroCrew nor the LaunchAgent target: a hook pointing to a deleted path passed as "wired" for 8 days |
+| I5 | Medium | `internal/benchmark/cls_stability_test.go` reads a scratch baseline outside the repo and is skipped by CI |
+| I6 | Done | `context status` and `doctor` say the native provider only measures on Claude Code |
+| I8 | High | Headroom on Claude Code as an opt-in `setup --headroom`, after a measured benefit and an isolated trial |
+| I7 | Low | Owner clean-up: the stale Homebrew build, the Cursor login, the Antigravity model source |
+
+## I1: live verification of the plugin install
+
+**Problem.** `claude plugin marketplace add` and `claude plugin install` were run non-interactively in an isolated
+`CLAUDE_CONFIG_DIR` and wrote `extraKnownMarketplaces` and `enabledPlugins`, and the unit tests cover every branch of `setup` with a
+fake executor. No real session has loaded the plugin's hooks and the cache-tax module after a `setup` run.
+
+**Do.** On a machine whose login shell resolves `downshift` to the current build, run `downshift setup claude-code`, start Claude
+Code, spawn three subagents and check `downshift stats` (one decision per spawn, not two), `downshift doctor` (plugin path, hook
+rows) and `/cache-tax`. Record the result in `docs/evidence/`.
+
+**Done when.** One evidence page states the Claude Code version, the observed hooks and what was not observed.
+
+## I2: setup recovers the session lists
+
+**Problem.** `models discover` is documented as the preferred source of the session list ("a recovered list beats a handwritten
+allowlist"), but nothing runs it at install time. After `setup`, Codex and KiroCrew stay on file or inferred lists until someone
+runs it by hand.
+
+**Do.** After the hooks are wired, run the discovery for the harnesses that have a source, show the result in the same
+dry-run/diff style, write `discovered.json`, and say plainly which harnesses have no source (Claude Code on a subscription lists
+nothing and infers from the session; Cursor needs a working `cursor-agent`).
+
+**Done when.** A fresh `setup` leaves `doctor` reporting `discovered` for every harness that offers a source.
+
+## I3: LaunchAgent script
+
+**Do.** Make `dsmon-launchd-setup.sh` use the `downshift` found on PATH, the default state directory and a `WorkingDirectory` that
+holds `web/` (`serve` looks next to the binary, then in the working directory), and drop the flags `serve` ignores.
+
+**Done when.** Running the script on a clean machine leaves a service answering on `127.0.0.1:7474` from the intended binary.
+
+## I4: doctor checks hook targets
+
+**Do.** Check that the binary of every KiroCrew hook file exists and is executable, and that the LaunchAgent (when present) points
+to an existing file; report both with a fix line.
+
+**Done when.** A hook file pointing to a deleted path produces a failed row instead of "wired".
+
+## I5: non-hermetic stability test
+
+**Problem.** `TestBenchmarkSplitsMatchClsAfterBaseline` reads `~/.downshift-eval/opus-data/bench/cls-after.jsonl` and `all.jsonl`
+(a scratch directory, not in the repository). CI skips it; locally it fails on `tasks-88` (confident COMPLEX now, unconfident in the
+baseline). Only 1 of 780 rows changed, in the safe direction.
+
+**Do.** Make the test self-contained, or delete it. Do not commit evaluation prompts: derive the baseline from the public seed
+file only, or compare hashes of the decisions.
+
+## I6: honest compression messages
+
+**Problem.** `downshift context metrics` shows 520 observed commands and 0 saved tokens on Claude Code, because a Claude Code hook
+cannot rewrite tool output; `context status` still lists "Enabled" as if it saved tokens. Real compression there comes only from
+the Headroom proxy (`headroom wrap claude`), which Downshift does not start.
+
+**Do.** Have `doctor` and `context status` say that on Claude Code the native provider measures only, and point to the Headroom
+wrap as the opt-in step.
+
+## I7: owner clean-up
+
+- `/opt/homebrew/bin/downshift` (2026-10-06, no `context` command) wins over `~/go/bin` in a login shell, so `setup` correctly
+  keeps the settings hooks. Remove it (`brew uninstall`/delete) or fix the PATH order, then rerun `downshift setup`.
+- Cursor: `cursor-agent models` fails on authentication; log in so the list is recovered instead of read from a 2026-10-04 file.
+- Antigravity has no discovery source: its four models come from a handwritten file.
+
+## I8: Headroom on Claude Code (opt-in)
+
+Scope: Claude Code only, the one harness that must work end to end. `setup --headroom` applies to the `claude-code` target alone;
+for any other harness it is ignored with a note, and it never runs when `setup` is called for other harnesses only.
+
+**What is known.** `headroom wrap claude` launches Claude Code through a local proxy by setting `ANTHROPIC_BASE_URL`; it registers a
+code-memory MCP server (Serena) by default. `headroom init claude` ("install Claude Code durable hooks and provider routing") and
+`headroom install apply` (persistent service, undone by `headroom install remove`) are the durable path. Their help text does not
+say which files they write, and the commands may register a system service, so they were not run on the maintainer's machine.
+
+**Risks to design around.** (1) Fail closed: with the base URL pointing at a local proxy, a stopped proxy breaks every Claude Code
+request, unlike every Downshift hook, which fails open. (2) Prompts, code and tool output pass through a third-party Python process
+that has memory, capture and learn modes. (3) Not verified: whether a subscription login works through a custom base URL.
+(4) No measured benefit yet.
+
+**Do.** (a) Run `headroom init claude` and `headroom install apply` once in an isolated environment (a throwaway user or a
+container) and record every file and service they touch. (b) Measure on real work for a few days with `headroom agent-savings`
+and write the figure down. (c) Only then add `downshift setup --headroom`: never the default; it runs `headroom doctor` first and
+writes nothing unless the proxy answers; `downshift doctor` fails loudly when `ANTHROPIC_BASE_URL` points to a local port without a
+healthy proxy; `setup --undo` calls `headroom install remove`.
+
+**Done when.** One evidence page with the isolated trial, the measured saving and the subscription-login result, and the opt-in
+flag behind tests with a fake `headroom`.

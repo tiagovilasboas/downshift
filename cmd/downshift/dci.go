@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -60,7 +61,7 @@ Commands:
   enable [active|obs] [--budget=N]    Enable DCI (active: injects context; observe: telemetry only; budget: 512..16384 bytes, default 3500)
   disable                             Disable DCI (mode off)
   doctor                              Diagnose DCI health, file limits, permissions, and budgets
-  inspect <prompt>                    Simulate retrieval and context generation for a query
+  inspect [--json] <prompt>           Simulate retrieval and context generation for a query
   benchmark                           Run automated latency, relevance, and budget benchmarks
   hook <harness>                      Run hook handler on stdin for harness (claude-code, cursor, opencode, codex, generic)`)
 }
@@ -284,13 +285,36 @@ func runDCIDoctor(w io.Writer, stderr io.Writer) int {
 	return 1
 }
 
+type dciInspectJSONOutput struct {
+	PromptTokens     []string `json:"prompt_tokens"`
+	Abstained        bool     `json:"abstained"`
+	AbstentionReason string   `json:"abstention_reason"`
+	CandidatesCount  int      `json:"candidates_count"`
+	SelectedFiles    []string `json:"selected_files"`
+	SymbolsCount     int      `json:"symbols_count"`
+	SnippetsCount    int      `json:"snippets_count"`
+	OutputBytes      int      `json:"output_bytes"`
+	FormattedText    string   `json:"formatted_text"`
+	LatencyMs        int64    `json:"latency_ms"`
+}
+
 func runDCIInspect(args []string, w io.Writer, stderr io.Writer) int {
-	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: downshift dci inspect <prompt>")
+	jsonOutput := false
+	var promptParts []string
+	for _, arg := range args {
+		if arg == "--json" {
+			jsonOutput = true
+		} else {
+			promptParts = append(promptParts, arg)
+		}
+	}
+
+	if len(promptParts) == 0 {
+		fmt.Fprintln(stderr, "usage: downshift dci inspect [--json] <prompt>")
 		return 2
 	}
 
-	prompt := strings.Join(args, " ")
+	prompt := strings.Join(promptParts, " ")
 	repoRoot := findRepoRoot()
 	cfg, err := codeintel.LoadConfig(repoRoot)
 	if err != nil {
@@ -304,13 +328,61 @@ func runDCIInspect(args []string, w io.Writer, stderr io.Writer) int {
 
 	service := codeintel.NewService(repoRoot, cfg)
 
-	fmt.Fprintln(w, "=== DCI Query Inspection ===")
-	fmt.Fprintf(w, "Prompt: %q\n", prompt)
-
 	queryTokens := codeintel.Tokenize(prompt)
-	fmt.Fprintf(w, "Query Tokens: %v\n\n", queryTokens)
+	if queryTokens == nil {
+		queryTokens = []string{}
+	}
 
 	pack, telemetry := service.ProcessPrompt(ctx, prompt)
+
+	selectedFiles := []string{}
+	symbolsCount := 0
+	snippetsCount := 0
+	outputBytes := 0
+	formattedText := ""
+
+	if pack != nil {
+		if pack.SelectedFiles != nil {
+			selectedFiles = pack.SelectedFiles
+		}
+		symbolsCount = pack.SymbolsCount
+		snippetsCount = pack.SnippetsCount
+		outputBytes = pack.OutputBytes
+		formattedText = pack.FormattedText
+	}
+
+	abstained := telemetry.AbstentionReason != ""
+	abstentionReason := telemetry.AbstentionReason
+	if !abstained && telemetry.ErrorCode != "" {
+		abstained = true
+		abstentionReason = telemetry.ErrorCode
+	}
+
+	if jsonOutput {
+		out := dciInspectJSONOutput{
+			PromptTokens:     queryTokens,
+			Abstained:        abstained,
+			AbstentionReason: abstentionReason,
+			CandidatesCount:  telemetry.CandidateCount,
+			SelectedFiles:    selectedFiles,
+			SymbolsCount:     symbolsCount,
+			SnippetsCount:    snippetsCount,
+			OutputBytes:      outputBytes,
+			FormattedText:    formattedText,
+			LatencyMs:        telemetry.TotalDurationMs,
+		}
+		enc := json.NewEncoder(w)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(out); err != nil {
+			fmt.Fprintf(stderr, "failed to encode json: %v\n", err)
+			return 1
+		}
+		return 0
+	}
+
+	fmt.Fprintln(w, "=== DCI Query Inspection ===")
+	fmt.Fprintf(w, "Prompt: %q\n", prompt)
+	fmt.Fprintf(w, "Query Tokens: %v\n\n", queryTokens)
 
 	fmt.Fprintln(w, "--- Observed Telemetry ---")
 	fmt.Fprintf(w, "Indexed Files:         %d\n", telemetry.IndexedFiles)

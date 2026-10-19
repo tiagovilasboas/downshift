@@ -236,3 +236,62 @@ func TestDCIBenchmark(t *testing.T) {
 		t.Errorf("missing warm path p95 latency in benchmark output: %s", out)
 	}
 }
+
+func TestDCIInspect_JSONFlag(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	// 1. Verify inspect with --json flag preceding prompt
+	code := runDCI([]string{"inspect", "--json", "tokenization", "identifiers"}, nil, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("runDCI(inspect --json) = %d, want 0. stderr: %s", code, stderr.String())
+	}
+
+	var parsed map[string]interface{}
+	if err := json.Unmarshal(stdout.Bytes(), &parsed); err != nil {
+		t.Fatalf("failed to unmarshal JSON output: %v\nOutput: %s", err, stdout.String())
+	}
+
+	// Verify required keys: prompt_tokens, abstained, selected_files, output_bytes, formatted_text
+	requiredKeys := []string{"prompt_tokens", "abstained", "selected_files", "output_bytes", "formatted_text"}
+	for _, key := range requiredKeys {
+		if _, ok := parsed[key]; !ok {
+			t.Errorf("missing key %q in JSON output: %s", key, stdout.String())
+		}
+	}
+
+	// Verify prompt_tokens
+	tokens, ok := parsed["prompt_tokens"].([]interface{})
+	if !ok || len(tokens) == 0 {
+		t.Errorf("prompt_tokens is not a non-empty array: %v", parsed["prompt_tokens"])
+	}
+
+	// Verify abstained is boolean
+	if _, ok := parsed["abstained"].(bool); !ok {
+		t.Errorf("abstained is not a boolean: %v", parsed["abstained"])
+	}
+
+	// Verify selected_files is array
+	if _, ok := parsed["selected_files"].([]interface{}); !ok {
+		t.Errorf("selected_files is not an array: %v", parsed["selected_files"])
+	}
+
+	// Verify output_bytes is number
+	if _, ok := parsed["output_bytes"].(float64); !ok {
+		t.Errorf("output_bytes is not a number: %v", parsed["output_bytes"])
+	}
+
+	// Verify formatted_text is string
+	if _, ok := parsed["formatted_text"].(string); !ok {
+		t.Errorf("formatted_text is not a string: %v", parsed["formatted_text"])
+	}
+
+	// 2. Also verify --json flag after prompt args
+	stdout.Reset()
+	stderr.Reset()
+	code = runDCI([]string{"inspect", "tokenization", "identifiers", "--json"}, nil, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("runDCI(inspect prompt --json) = %d, want 0. stderr: %s", code, stderr.String())
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &parsed); err != nil {
+		t.Fatalf("failed to unmarshal JSON output when --json is at the end: %v", err)
+	}
+}

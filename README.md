@@ -56,7 +56,7 @@ One binary, one state directory, every piece computed for every harness. Status 
 | **Measure instead of believe.** A built-in control group (about 1 in 10 spawns unrouted), `downshift stats` for estimates, `downshift report` for routed versus control cost per completed task with a confidence interval. | Implemented. The strict definition (a child that ended `completed`, with its rework, 20 tasks per arm) has not unlocked yet; the 2026-10-15 A/B measured cost per run with an acceptance check. | [evidence ladder](docs/guides/evidence.md) · [benchmark protocol](docs/guides/benchmark-protocol.md) |
 | **Find the next saving.** Skills for setup, read-only audit and a fixed-order cost diagnosis (routing, fixed context, tool output, project policy, misroutes). | Implemented as agent guidance; a skill's own description costs context. | [skills](skills/) · [companions](docs/guides/companions.md) |
 | **Context and session policy.** Native observe-only compressor; Headroom detected as companion; `setup` sets `opusplan`, plan mode and Claude Code's You should know mod on Claude Code only for keys you have not set. | Implemented, limited: a hook cannot change tool output in flight; session policy is Claude Code only. | [context optimization](docs/design/context-optimization.md) · [Claude Code guide](docs/guides/claude-code.md) |
-| **Code intelligence & context optimization (DCI).** Auto-inject structural context (files, Go/TS/JS/Python symbols, line ranges, literal snippets) on prompt submit across harnesses; abstain on conversational greetings. | Implemented (v0.2, pure Go, zero LLM, <10ms warm p95). | [code intelligence](docs/design/code-intelligence.md) · [evidence](docs/evidence/dci-mvp-v01.md) |
+| **Code intelligence & context optimization (DCI).** Auto-inject structural context (files, Go AST call-graphs, Go/TS/JS/Python symbols, line ranges, literal snippets) on prompt submit across harnesses; production-first ranking (`0.65x` test penalty for code queries; `+2.0` test boost for test queries) and call-graph co-reference boosting (`+2.0`); abstain on conversational greetings. | Implemented (v0.3, pure Go, zero LLM, <10ms warm p95). | [code intelligence](docs/design/code-intelligence.md) · [evidence](docs/evidence/dci-mvp-v01.md) |
 | **Review outcomes before changing routing.** Adapt memory, naive-Bayes second opinions, capability scores and candidate classifiers. | Shadow or opt-in. Observations do not automatically retrain the router or enable a candidate. | [design](docs/design/) |
 | **Know the models.** An embedded catalog of 34 entries across the Anthropic, OpenAI, Gemini, Grok and Cursor-native families, with tiers, list prices, aliases and family prefixes; `explicit_only` models are never picked automatically; OpenRouter-style `provider/` prefixes are stripped before lookup. | Implemented (`catalog_test.go`). | [The LLMs it knows](#the-llms-it-knows) · [session models](docs/reference/session-models.md) |
 | **Read English and Portuguese.** Weighted regex signals plus an in-process FNV word-hash boost; a language guard clears confidence outside coverage. | Implemented for EN and PT-BR; language detection is heuristic. External MiniLM, E5 and Graphify were removed. | [Languages](#languages) · [classifier](docs/contrib/classifier.md) |
@@ -91,7 +91,7 @@ downshift setup --dry-run   # shows the diff per harness found; writes nothing
 downshift setup             # asks, backs up, wires the hooks
 ```
 
-On Claude Code the plugin is the alternative to `setup` (same hooks, the `/downshift:status` command, the skills, an example agent and the bundled [cache-tax mod](hooks/cache-tax/README.md), which prices a cold prompt cache before you pay it and keeps it warm on `/keepwarm`; the binary is still required; use one channel; the marketplace also offers savvy-progress and filetree, one install each, see [mods/](mods/README.md)):
+On Claude Code `downshift setup` installs the plugin for you when it can (it runs `claude plugin install`, then removes any Downshift hooks from `settings.json` so spawns are not routed twice; it falls back to settings hooks, and says why, when `claude` is missing or a login shell resolves `downshift` to another build; `--no-plugin` opts out). The plugin carries the same hooks as `setup` (the `/downshift:status` command, the `/downshift:status` command, the skills, an example agent and the bundled [cache-tax mod](hooks/cache-tax/README.md), which prices a cold prompt cache before you pay it and keeps it warm on `/keepwarm`; the binary is still required; use one channel; the marketplace also offers savvy-progress and filetree, one install each, see [mods/](mods/README.md)):
 
 ```text
 /plugin install downshift --marketplace tiagovilasboas/downshift
@@ -154,6 +154,7 @@ Then open a new session and check it: `downshift doctor` (every failure has a fi
 | `downshift session --tree` | this session's subagents as a tree |
 | `downshift dci status` | code intelligence mode, cache stats, and health |
 | `downshift dci enable [active\|observe] [--budget=N]` | enable automatic context injection and optional byte budget |
+| `downshift dci inspect [--json] "<prompt>"` | simulate retrieval, ranking, and context pack generation |
 | `downshift dci benchmark` | local indexing and retrieval latency benchmarks |
 
 More: `downshift help --all` lists every command by group. `downshift watch` is the live tree and `downshift config` shows every effective setting and where it came from.
@@ -285,7 +286,7 @@ Rules that hold for all of them, pinned by `internal/catalog/catalog_test.go`:
 
 ## Mods
 
-Mods are Claude Code 2.1.287+ plugins with a hooks module. They are the one exception to the never-bundle rule (owner decision 2026-10-17): each is vendored byte for byte from a pinned MIT upstream, listed in [NOTICE](NOTICE), holds no routing logic and is never written by `downshift setup`. Procedure and tests: [mods/README.md](mods/README.md).
+Mods are Claude Code 2.1.287+ plugins with a hooks module. They are the one exception to the never-bundle rule (owner decision 2026-10-17): each is vendored byte for byte from a pinned MIT upstream, listed in [NOTICE](NOTICE), holds no routing logic and is never written into a settings file by `downshift setup`; on Claude Code `setup` enables the plugin that bundles cache-tax through Claude Code's own `claude plugin install` (owner decision 2026-10-19: the token-saving mods ship with the install). Procedure and tests: [mods/README.md](mods/README.md).
 
 | Mod | Where | What it does | Install |
 |---|---|---|---|
@@ -370,7 +371,8 @@ See [the context optimization guide](docs/design/context-optimization.md) for ar
 
 Downshift Code Intelligence (DCI) is a zero-runtime, deterministic, privacy-first subsystem that injects high-signal structural context directly into user prompts across supported harnesses (`claude-code`, `cursor`, `opencode`, `codex`, and `generic`).
 
-- **Deterministic Pipeline:** Discovers files via Git (`discover.go`), extracts structural symbols across Go AST, TypeScript/JavaScript, and Python plus lexical tokens (`parse.go`), builds an incremental inverted index with SHA-256 change detection (`index.go`), scores candidates via field-weighted BM25 (`rank.go`), and packages compact context sketches (`pack.go`).
+- **Deterministic Pipeline:** Discovers files via Git (`discover.go`), extracts structural symbols across Go AST (including function call-graph `Symbol.Calls` and package `Document.Imports`), TypeScript/JavaScript, and Python plus lexical tokens (`parse.go`), builds an incremental inverted index with SHA-256 change detection (`index.go`), scores candidates via field-weighted BM25 (`rank.go`), and packages compact context sketches (`pack.go`).
+- **Production-First Ranking & Call-Graph Boosting:** Demotes `_test.go` files by `0.65x` for non-test queries while boosting them by `+2.0` for test-specific prompts; applies a `+2.0` co-reference boost to files containing caller or callee symbol definitions matching the top candidate.
 - **Conversational Abstention:** Greetings ("hi", "bom dia"), gratitude ("thanks"), and general chatter abstain immediately without injecting context, saving token headroom.
 - **Budget & Boundary Defense:** Configurable UTF-8 byte ceiling via `--budget` (default **3,500 bytes**, clamped between **512** and **16,384 bytes**) per injection; all context is wrapped in defensive boundary markers (`=== DCI UNTRUSTED REPOSITORY CONTEXT ===`) to prevent prompt injection.
 - **Multi-Harness Hook Support:** `downshift dci hook <claude-code|cursor|opencode|codex|generic>` accepts prompts from `"prompt"`, `"task"`, or `"user_message"` (with a 1 MiB stdin cap) and emits `hookSpecificOutput` (plus top-level `additionalContext` on non-Claude harnesses).
@@ -382,7 +384,7 @@ Downshift Code Intelligence (DCI) is a zero-runtime, deterministic, privacy-firs
   downshift dci enable active [--budget=3500] # Enable live context injection (or 'observe' for telemetry only)
   downshift dci disable                       # Deactivate DCI (reverts to off)
   downshift dci doctor                        # Check directory permissions, discovery, and latencies
-  downshift dci inspect "<msg>"               # Dry-run pipeline for a prompt (tokens, ranks, packed sketch)
+  downshift dci inspect [--json] "<msg>"      # Dry-run pipeline for a prompt (tokens, ranks, packed sketch; text or JSON)
   downshift dci benchmark                     # Run local indexing, sync, and retrieval latency benchmarks
   downshift dci hook <harness>                # Run stdin hook for claude-code, cursor, opencode, codex, or generic
   downshift stats --dci                       # View empirical prompts, injection rates, and observed latencies
