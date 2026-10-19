@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="theme-color" content="#161b22">
 <meta name="description" content="downshift · AI subagent model router — live dashboard">
 <title>downshift</title>
@@ -356,29 +357,7 @@ main {
   </main>
 </div>
 
-<script>
-// PWA install prompt
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  document.getElementById('install-banner').classList.add('show');
-});
-document.getElementById('install-btn')?.addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  const {outcome} = await deferredPrompt.userChoice;
-  if (outcome === 'accepted') document.getElementById('install-banner').classList.remove('show');
-  deferredPrompt = null;
-});
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations()
-    .then((regs) => Promise.all(regs.map((reg) => reg.unregister())))
-    .catch(() => {});
-}
-</script>
+<script src="boot.js"></script>
 <script src="app.js?v=13"></script>
 </body>
 </html>

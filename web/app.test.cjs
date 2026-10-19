@@ -157,3 +157,41 @@ test('observed child tokens show sum or unobserved per tab', () => {
   vm.runInContext("setActiveHarness('claude-code')", context);
   assert.match(text('monitor-stats'), /child tokens 150 \(1 usage\)/);
 });
+
+test('hostile event and agent fields render inert and chips use no inline handlers', () => {
+  const elements = new Map();
+  const document = {
+    getElementById(id) {
+      if (!elements.has(id)) elements.set(id, { innerHTML: '', style: {} });
+      return elements.get(id);
+    },
+  };
+  const context = vm.createContext({
+    document,
+    fetch: () => new Promise(() => {}),
+    AbortSignal,
+    EventSource: class { addEventListener() {} },
+    setInterval() {},
+    setTimeout() {},
+  });
+  vm.runInContext(readFileSync(join(__dirname, 'app.js'), 'utf8'), context);
+  const timestamp = new Date().toISOString();
+  const payload = '<img src=x onerror=alert(1)>';
+  context.fixture = {
+    harnesses: [payload], agents: [{ timestamp, model: payload, task: payload }],
+    switches: [{
+      timestamp, harness: payload, verdict: 'OK', complexity: payload,
+      final_model: payload, final_reasoning_effort: payload,
+    }],
+    stats: { total: 1, down: 0, up: 0 },
+    compaction: { token_state: payload },
+  };
+  vm.runInContext('renderMonitor(fixture)', context);
+  for (const id of ['monitor-status', 'monitor-switches', 'monitor-agents',
+    'monitor-active-agents', 'compaction-report']) {
+    const html = document.getElementById(id).innerHTML;
+    assert.doesNotMatch(html, /<img/i, id);
+    assert.doesNotMatch(html, /onclick/i, id);
+  }
+  assert.match(document.getElementById('monitor-agents').innerHTML, /&lt;img/);
+});

@@ -5,9 +5,11 @@ package main
 
 import (
 	"encoding/json"
+	"io"
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
@@ -33,6 +35,43 @@ func feedStdin(t *testing.T, payload string) {
 		os.Stdin = old
 		r.Close()
 	})
+}
+
+func TestBuildEventNeutralisesUntrustedModelAndHarness(t *testing.T) {
+	payload := `{"tool_name":"spawn_run","tool_input":{"model":"<img src=x onerror=alert(1)>","harness":"<script>x</script>","task":"<b>t</b>"}}`
+	ae, ok := buildEvent([]byte(payload))
+	if !ok {
+		t.Fatal("spawn payload must produce an event")
+	}
+	if ae.Model != "unknown" {
+		t.Fatalf("model = %q, want unknown", ae.Model)
+	}
+	if ae.Harness != "" || ae.Task != "" {
+		t.Fatalf("harness=%q task=%q, want both empty", ae.Harness, ae.Task)
+	}
+}
+
+type blockedReader struct{ release chan struct{} }
+
+func (b blockedReader) Read([]byte) (int, error) { <-b.release; return 0, io.EOF }
+
+func TestReadPayloadTimesOutOnStalledStdin(t *testing.T) {
+	r := blockedReader{release: make(chan struct{})}
+	defer close(r.release)
+	start := time.Now()
+	if _, ok := readPayload(r, 50*time.Millisecond); ok {
+		t.Fatal("stalled stdin must not yield a payload")
+	}
+	if time.Since(start) > 2*time.Second {
+		t.Fatal("readPayload did not honour its deadline")
+	}
+}
+
+func TestReadPayloadRejectsOversizedInput(t *testing.T) {
+	big := strings.NewReader(strings.Repeat("a", maxPayloadBytes+10))
+	if _, ok := readPayload(big, time.Second); ok {
+		t.Fatal("oversized payload must be rejected")
+	}
 }
 
 func TestRunWritesPrivacySafeLine(t *testing.T) {
