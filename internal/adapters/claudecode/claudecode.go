@@ -10,6 +10,7 @@ package claudecode
 
 import (
 	"encoding/json"
+	"os"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
@@ -113,43 +114,87 @@ func (ev Event) currentModel(ti map[string]any) string {
 	return m
 }
 
-// resolveModel is currentModel plus a last resort for an inheriting agent type
-// whose transcript holds no model: the model the session is configured to use
-// (configuredModel), which needs res to turn an alias into a catalog id. The
-// bool reports that the model came from that fallback, so the decision can say
-// the baseline is inferred. Order for an inheriting type with no per-call
-// model: env override, ParentModel (a fact from the mod), transcript, then
-// settings. ParentModel is never inferred.
+// resolveModel is resolveBaseline without the pin flag.
 func (ev Event) resolveModel(ti map[string]any, res core.Resolver) (string, bool) {
+	b := ev.resolveBaseline(ti, res)
+	return b.Model, b.FromSettings
+}
+
+// baseline is the model a spawn would run on without a rewrite, and how it was
+// learned.
+type baseline struct {
+	Model string
+	// FromSettings: inferred from the configured model, not seen in the
+	// transcript (see configuredModel); the decision says its baseline is a guess.
+	FromSettings bool
+	// Pinned: the agent definition names the model. It is the author's explicit
+	// choice, so the baseline is a fact and routing must leave the spawn alone.
+	Pinned bool
+}
+
+// resolveBaseline is currentModel plus two things that need more than the
+// payload. An agent type that is not a built-in inheriting one is looked up in
+// its definition (lookupAgentDefinition): no `model:` or `inherit` inherits like
+// general-purpose, a named model is pinned, and a type with no definition found
+// keeps an unknown baseline. For an inheriting spawn whose transcript holds no
+// model, the last resort is the model the session is configured to use
+// (configuredModel), which needs res to turn an alias into a catalog id. Order
+// for an inheriting spawn with no per-call model: env override, ParentModel (a
+// fact from the mod), transcript, then settings. ParentModel is never inferred.
+func (ev Event) resolveBaseline(ti map[string]any, res core.Resolver) baseline {
 	if model := hookutil.StringField(ti, "model"); model != "" {
-		return model, false
+		return baseline{Model: model}
 	}
 	if ev.Model != "" {
-		return ev.Model, false
-	}
-	if !inheritsSessionModel(ti) {
-		return "", false
+		return baseline{Model: ev.Model}
 	}
 	typ := hookutil.StringField(ti, "subagent_type")
+	if !inheritingAgentTypes[typ] {
+		def := lookupAgentDefinition(ev.Cwd, typ)
+		switch {
+		case def.Pins():
+			return ev.pinnedBaseline(typ, def.Model, res)
+		case !def.Inherits():
+			return baseline{}
+		}
+	}
 	if m := subagentModelFromEnv(typ); m != "" {
-		return m, false
+		return baseline{Model: m}
 	}
 	if ev.ParentModel != "" {
 		if exploreMayLeaveTheMainModel(typ, ev.ParentModel) {
-			return "", false
+			return baseline{}
 		}
-		return ev.ParentModel, false
+		return baseline{Model: ev.ParentModel}
 	}
-	parent := sessionModelFromTranscript(ev.TranscriptPath)
+	parent := parentModelAtSpawn(ev.TranscriptPath, ev.ToolUseID)
 	inferred := false
 	if parent == "" && res != nil {
 		parent = configuredModel(ev.Cwd, ev.PermissionMode, res)
 		inferred = parent != ""
 	}
 	if exploreMayLeaveTheMainModel(typ, parent) {
-		return "", false
+		return baseline{}
 	}
-	return parent, inferred
+	return baseline{Model: parent, FromSettings: inferred}
+}
+
+// pinnedBaseline is the baseline of a definition that names its model. Claude
+// Code's force flag (CLAUDE_CODE_SUBAGENT_MODEL_FORCE) lets the override
+// variable win over a definition; otherwise the definition wins. Without a
+// catalog the raw value stands; with one an alias becomes a catalog id, and a
+// model the catalog does not know leaves the baseline empty but still pinned,
+// so it is never rewritten.
+func (ev Event) pinnedBaseline(typ, raw string, res core.Resolver) baseline {
+	if envFlagOn(os.Getenv(subagentModelForceEnv)) {
+		if m := subagentModelFromEnv(typ); m != "" {
+			return baseline{Model: m}
+		}
+	}
+	if res == nil {
+		return baseline{Model: raw, Pinned: true}
+	}
+	return baseline{Model: resolveConfiguredModel(raw, ev.PermissionMode, res), Pinned: true}
 }
 
 // TaskText returns the task content used for local, prompt-free feature
@@ -197,7 +242,8 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if len(r) > 0 {
 		res = r[0]
 	}
-	currentModel, fromSettings := ev.resolveModel(ti, res)
+	base := ev.resolveBaseline(ti, res)
+	currentModel, fromSettings := base.Model, base.FromSettings
 
 	session := core.ResolveSessionForID(harnessID, ev.SessionID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
@@ -210,6 +256,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	decision.Baseline.RequestedID = currentModel
 	decision.Baseline.FromSettings = fromSettings
 	decision.Baseline.Guessed = fromSettings
+	decision.Baseline.Pinned = base.Pinned
 
 	plan := decision.PlanSession(core.ClaudeCodeCaps, res, session, currentModel)
 	modEntry := ev.Entry == "mod"

@@ -57,24 +57,25 @@ func TestSessionModelFromTranscript_ReadsTailOfLargeFile(t *testing.T) {
 	}
 }
 
-func TestInheritsSessionModel(t *testing.T) {
+// Only these types inherit without a definition lookup; every other type is
+// decided by its definition (agentdef_test.go).
+func TestInheritingAgentTypes(t *testing.T) {
 	cases := []struct {
-		ti   map[string]any
+		typ  string
 		want bool
 	}{
-		{map[string]any{}, true},
-		{map[string]any{"subagent_type": "general-purpose"}, true},
-		{map[string]any{"subagent_type": "Explore"}, true},
-		{map[string]any{"subagent_type": "Plan"}, true},
-		{map[string]any{"subagent_type": "claude"}, true},
-		{map[string]any{"subagent_type": "my-custom-reviewer"}, false},
-		{map[string]any{"subagent_type": "statusline-setup"}, false},
-		{map[string]any{"subagent_type": "claude-code-guide"}, false},
-		{map[string]any{"model": "haiku"}, false},
+		{"", true},
+		{"general-purpose", true},
+		{"Explore", true},
+		{"Plan", true},
+		{"claude", true},
+		{"my-custom-reviewer", false},
+		{"statusline-setup", false},
+		{"claude-code-guide", false},
 	}
 	for _, c := range cases {
-		if got := inheritsSessionModel(c.ti); got != c.want {
-			t.Errorf("inheritsSessionModel(%v) = %v, want %v", c.ti, got, c.want)
+		if got := inheritingAgentTypes[c.typ]; got != c.want {
+			t.Errorf("inheritingAgentTypes[%q] = %v, want %v", c.typ, got, c.want)
 		}
 	}
 }
@@ -96,7 +97,7 @@ func TestCurrentModel_SubagentModelEnv(t *testing.T) {
 		{"env unset falls to transcript", "", false, map[string]any{}, "m-parent"},
 		{"explicit model wins", "m-env", true, map[string]any{"model": "haiku"}, "haiku"},
 		{"custom type untouched", "m-env", true, map[string]any{"subagent_type": "my-custom-reviewer"}, ""},
-		{"built-in with its own model untouched", "m-env", true, map[string]any{"subagent_type": "claude-code-guide"}, ""},
+		{"built-in with its own model keeps it", "m-env", true, map[string]any{"subagent_type": "claude-code-guide"}, "haiku"},
 		// Explore and Plan run on the main model; the variable is only a default
 		// for general-purpose, and reaches them only when forced onto every subagent.
 		{"Explore runs on the main model", "", false, map[string]any{"subagent_type": "Explore"}, "m-parent"},
