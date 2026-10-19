@@ -134,6 +134,100 @@ func TestClassify_LongBriefEdgeCases(t *testing.T) {
 	}
 }
 
+// TestClassify_ShortBriefExplicitTask covers briefs under minBriefWords. Only
+// an explicit "Task:" marker, at a line or sentence start, makes the rest
+// context; the guards of the long-brief focus hold unchanged.
+func TestClassify_ShortBriefExplicitTask(t *testing.T) {
+	tests := []struct {
+		name      string
+		prompt    string
+		want      Complexity
+		confident bool
+		focus     bool
+		riskFloor bool
+		note      string
+	}{
+		{
+			name: "inline task rename after a background on one line",
+			prompt: "Background: this service is a large monolith with a billing summary, a legacy architecture we will redesign " +
+				"next quarter, and many open questions about the migration plan. The team discussed concurrency, caching and the " +
+				"overall design at length; none of that is in scope here. Task: rename the variable totalAmt to totalAmount in " +
+				"internal/report/summary.go and update its two call sites. Do not change anything else.",
+			want: Trivial, confident: true, focus: true,
+			note: "architecture, redesign, migration, concurrency and design are context; together they count 1",
+		},
+		{
+			name: "inline task typo after a context sentence",
+			prompt: "Context: we are reviewing the whole ingestion pipeline and its distributed design, and a later change will " +
+				"rewrite the scheduler. Keep that context in mind but do not act on it. Task: fix the typo 'occured' to " +
+				"'occurred' in docs/ingest.md.",
+			want: Trivial, confident: true, focus: true,
+			note: "distributed and rewrite describe the project; the typo fix is the work",
+		},
+		{
+			name:   "short brief, auth context keeps the risk floor",
+			prompt: "Context: the auth service issues JWTs and stores refresh tokens in a legacy architecture. Task: rename fmtTok to formatToken in tokens.go.",
+			want:   Medium, confident: false, focus: true, riskFloor: true,
+			note: "the task reads Trivial, but auth and secrets in the context floor it to Medium",
+		},
+		{
+			name:   "short brief, the task is the hard work",
+			prompt: "Context: the docs are up to date. Task: rewrite the replication layer and migrate the existing slots.",
+			want:   Complex, confident: true, focus: false,
+			note: "Complex words inside the task keep full weight",
+		},
+		{
+			name:   "short brief, focus never makes Complex confident",
+			prompt: "Context: earlier we had to rename half the packages by hand. Task: re-architect the scheduler around a work queue.",
+			want:   Complex, confident: false, focus: false,
+			note: "without the focus the rename in the context keeps the Complex task unconfident; the focus may not clear that doubt",
+		},
+		{
+			name:   "short prompt without a marker is scored as before",
+			prompt: "The architecture is a set of Go services behind a gateway. Rename the field amount to amountCents in invoice.go.",
+			want:   Complex, confident: false, focus: false,
+			note: "imperative extraction stays a long-brief rule: a short prompt's other sentences may be the work",
+		},
+		{
+			name:   "task word mid-sentence is not a marker",
+			prompt: "The architecture is a set of Go services and the task: rename the field amount to amountCents in invoice.go.",
+			want:   Complex, confident: false, focus: false,
+			note: "only a line or sentence start opens a task section",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if n := len(strings.Fields(tt.prompt)); n >= minBriefWords {
+				t.Fatalf("precondition: %d words, want < %d", n, minBriefWords)
+			}
+			got := Classify(tt.prompt)
+			if got.Complexity != tt.want || got.Confident != tt.confident || got.TaskFocus != tt.focus || got.RiskFloor != tt.riskFloor {
+				t.Errorf("got %v confident=%v focus=%v floor=%v scores=%v; want %v confident=%v focus=%v floor=%v (%s)",
+					got.Complexity, got.Confident, got.TaskFocus, got.RiskFloor, got.Scores,
+					tt.want, tt.confident, tt.focus, tt.riskFloor, tt.note)
+			}
+		})
+	}
+}
+
+// TestClassify_FixTypoRow: the Trivial typo row takes an article and the
+// plural, like the doc-edit verb ("fix the typo", "fix typos").
+func TestClassify_FixTypoRow(t *testing.T) {
+	for _, p := range []string{
+		"fix a typo in the README",
+		"fix the typo in the README",
+		"Fix the typo 'recieve' in README.md.",
+		"fix some typos in docs/setup.md",
+		"fix typos in the changelog",
+	} {
+		t.Run(p, func(t *testing.T) {
+			if got := Classify(p); got.Complexity != Trivial || !got.Confident {
+				t.Errorf("got %v confident=%v scores=%v; want confident TRIVIAL", got.Complexity, got.Confident, got.Scores)
+			}
+		})
+	}
+}
+
 // TestClassify_TaskFocusNeverSpendsOnDoubt checks the guard in focusOnTask: the
 // focused tally drops Trivial context votes, which could make a hard task's
 // Complex score look confident. It must not.
@@ -213,6 +307,8 @@ func TestTaskSpans(t *testing.T) {
 		{"pt-br marker", "contexto aqui.\n\n**Tarefa:** renomeie x para y.", true, []string{"renomeie x para y."}},
 		{"imperative sentences", "Repo /tmp/x (Go). Read AGENTS.md first. Rename a to b in api.md. Do not commit. Then update the docs.",
 			false, []string{"rename a to b in api.md.", "then update the docs."}},
+		{"inline marker after a sentence", "background only. task: rename a to b. do not change anything else.",
+			true, []string{"rename a to b. do not change anything else."}},
 		{"no task found", "This is background only. It has no work verbs.", false, nil},
 	}
 	for _, tt := range tests {
