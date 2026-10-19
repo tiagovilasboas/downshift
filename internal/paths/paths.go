@@ -7,6 +7,7 @@ package paths
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -105,7 +106,7 @@ func DisplayStateDir() string {
 	}
 	home, err := os.UserHomeDir()
 	if err == nil {
-		if rel, err := filepath.Rel(home, dir); err == nil && rel != ".." && !filepath.IsAbs(rel) {
+		if rel, err := filepath.Rel(home, dir); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel) {
 			return "~/" + rel
 		}
 	}
