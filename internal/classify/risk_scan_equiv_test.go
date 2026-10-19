@@ -201,6 +201,9 @@ var longFillers = []string{
 }
 
 func TestRiskScanEquivalence_CorpusAndFuzz(t *testing.T) {
+	if raceEnabled {
+		t.Skip("single-threaded equivalence sweep, too slow under -race; covered by the non-race run")
+	}
 	seen := map[string]bool{}
 	var corpus []string
 	add := func(s string) {
@@ -287,6 +290,9 @@ func TestRiskLiteralsCoverEveryCategory(t *testing.T) {
 }
 
 func TestRiskScanEquivalence_LongPrompts(t *testing.T) {
+	if raceEnabled {
+		t.Skip("single-threaded equivalence sweep, too slow under -race; covered by the non-race run")
+	}
 	// The signal sits at the start, just before the 32 KB classify cap, just
 	// after it, and deeper in the prompt.
 	offsets := []int{0, 1<<15 - 5, 1<<15 + 3, 40 << 10}
