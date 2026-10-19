@@ -75,6 +75,9 @@ type setupTarget struct {
 	// bundles (hooks/hooks.json modules). Both enabled means the mod runs
 	// twice; doctor warns. Harness data: only a harness with mods lists any.
 	ModConflicts []string
+	// Mods are sibling plugin ids ("name@marketplace") setup installs next to
+	// Plugin. They carry no routing, so a failed install is only a note.
+	Mods []string
 }
 
 var setupTargets = []setupTarget{
@@ -135,6 +138,10 @@ var setupTargets = []setupTarget{
 		},
 		// The upstream marketplace install of the mod vendored under hooks/cache-tax/.
 		ModConflicts: []string{"cache-tax@claude-code-mods"},
+		// Sibling mods of the Downshift marketplace (mods/, listed in
+		// .claude-plugin/marketplace.json): progress bar and /agents-info panel,
+		// file tree pane. mods/downshift-router stays out: it would route twice.
+		Mods: []string{"savvy-progress@downshift", "filetree@downshift"},
 	},
 	{
 		Name:      "cursor",

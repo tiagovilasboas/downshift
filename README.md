@@ -159,7 +159,7 @@ Downshift follows a strict 5-rung [Evidence Ladder](docs/guides/evidence.md) (fr
 
 ## Mods & Companions
 
-- **Vendored Mods**: Claude Code 2.1.287+ plugins with zero routing logic: bundled `cache-tax` (monitors cold prompt cache prices and offers `/keepwarm`), plus sibling plugins `savvy-progress` and `filetree` ([mods guide](mods/README.md)).
+- **Vendored Mods**: Claude Code 2.1.287+ plugins with zero routing logic: bundled `cache-tax` (monitors cold prompt cache prices and offers `/keepwarm`), plus sibling plugins `savvy-progress` (progress bar, `/agents-info` panel) and `filetree`; on Claude Code `downshift setup` installs all three with `claude plugin install` (`--no-plugin` skips them) ([mods guide](mods/README.md)).
 - **Companions**: Integrates cleanly beside external proxies like [Headroom](https://github.com/chopratejas/headroom). Downshift records companion presence so savings are never attributed to routing alone ([companions guide](docs/guides/companions.md)).
 
 ---
