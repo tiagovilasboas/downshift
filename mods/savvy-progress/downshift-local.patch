@@ -1,3 +1,14 @@
+diff --git a/mods/savvy-progress/.claude-plugin/plugin.json b/mods/savvy-progress/.claude-plugin/plugin.json
+--- a/mods/savvy-progress/.claude-plugin/plugin.json
++++ b/mods/savvy-progress/.claude-plugin/plugin.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "savvy-progress",
+-  "version": "1.2.1",
++  "version": "1.2.2",
+   "description": "Progress bar above the prompt for /savvy-flow, plus an agents panel (/agents-info): running, finished and planned subagents with model, task progress, context, cost and time.",
+   "author": {
+     "name": "johnnyvizz",
 diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/register.tsx
 --- a/mods/savvy-progress/hooks/register.tsx
 +++ b/mods/savvy-progress/hooks/register.tsx
