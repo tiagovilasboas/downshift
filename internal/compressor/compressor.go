@@ -647,7 +647,9 @@ func cargoTestLinesRecognised(input []byte) bool {
 		if len(line) == 0 {
 			continue
 		}
-		if !matchesAnyCargoTestLine(line) {
+		// Free text carrying an error word is never a plain success line, even
+		// when its shape fits a pattern (e.g. "Running unittests x (error: boom)").
+		if bytes.Contains(bytes.ToLower(line), []byte("error")) || !matchesAnyCargoTestLine(line) {
 			return false
 		}
 	}

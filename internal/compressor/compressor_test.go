@@ -433,6 +433,42 @@ func TestCompress_CargoTest_UnrecognisedLinePreservesRaw(t *testing.T) {
 	}
 }
 
+// TestCompress_CargoTest_ErrorTextInCargoShapedLinePreservesRaw covers lines
+// whose shape fits a cargo success pattern but whose free text carries an error
+// word. Each must keep the transcript byte-identical.
+func TestCompress_CargoTest_ErrorTextInCargoShapedLinePreservesRaw(t *testing.T) {
+	clean := []string{
+		"   Compiling my_crate v0.1.0 (/home/dev/my_crate)",
+		"    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.5s",
+		"     Running unittests src/lib.rs (target/debug/deps/my_crate-1a2b3c)",
+		"",
+		"running 2 tests",
+		"test a::t1 ... ok",
+		"test a::t2 ... ok",
+		"",
+		"test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s",
+		"",
+	}
+	injected := []string{
+		"   Compiling x v1 (error: x)",
+		"     Running unittests x (error: boom)",
+		"test x ... ok ... error: y ... ok",
+	}
+	for _, line := range injected {
+		for pos := 0; pos <= len(clean); pos++ {
+			lines := append(append(append([]string{}, clean[:pos]...), line), clean[pos:]...)
+			in := []byte(strings.Join(lines, "\n"))
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("line %q at %d must not compact: reason=%q", line, pos, res.Reason)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("line %q at %d must come back byte-identical", line, pos)
+			}
+		}
+	}
+}
+
 func TestCompress_CargoTest_ErrorsPreserveRaw(t *testing.T) {
 	cases := []struct {
 		name string
