@@ -13,9 +13,9 @@ folded into the `downshift` plugin unchanged.
 | | |
 |---|---|
 | Upstream | https://github.com/JohnnyVizz/claude-kit, path `plugins/savvy-progress` |
-| Version | 1.2.1 upstream; shipped here as **1.2.2** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
+| Version | 1.2.1 upstream; shipped here as **1.2.3** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
 | Commit | `c871c153ead54ad9547cc717d0f3e5a676c73986` (2026-10-13) |
-| Files | `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `.claude-plugin/plugin.json` byte-identical except `version` (1.2.2, see below); `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; three of the four `hooks/*.test.ts(x)` files byte-identical (`hooks/cost.test.ts` is gated by `SHOWN_DOLLARS`, see the local patch) (they import nothing by relative path) |
+| Files | `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `.claude-plugin/plugin.json` byte-identical except `version` (1.2.3, see below); `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; three of the four `hooks/*.test.ts(x)` files byte-identical (`hooks/cost.test.ts` is gated by `SHOWN_DOLLARS`, see the local patch) (they import nothing by relative path) |
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `savvy-progress`, source `./mods/savvy-progress` |
 | Needs | Claude Code 2.1.287 or later (mods on by default); a pane for `/agents-info` (desktop docks it; the terminal needs the fullscreen layout) |
 
@@ -26,7 +26,7 @@ white and grey carry the interface, green only as a small accent;
 `docs/brand/downshift-brand-tokens.json`). The only local change to upstream is
 in `hooks/register.tsx`: colours, the shown tier words and one simpler sprite, no
 behaviour; plus the `version` line of `.claude-plugin/plugin.json` (1.2.1 to
-1.2.2, 2026-10-19). Claude Code keys its plugin cache by that version, so a
+1.2.3, 2026-10-20; 1.2.2 on 2026-10-19 was superseded before the agents panel changes reached the cache). Claude Code keys its plugin cache by that version, so a
 machine that installed 1.2.1 before the colour patch keeps upstream's purple
 `#8f8cf4` until the version changes. The panel's header tile, summary lines and per-agent rows show the tokens Downshift saved in the session (`downshift session --panel`, `work_saved` + `cache_saved`) instead of the estimated dollar cost; the dollar estimate is no longer drawn. The reapplyable diff is [`downshift-local.patch`](downshift-local.patch),
 regenerated 2026-10-19 against the pinned upstream commit.
