@@ -43,9 +43,8 @@ saved from the requested model. `downshift report` compares routed and control g
 ## Tokens rerouted
 
 Downshift does not reduce tokens. A routed child runs about the same tokens on another model;
-the dollar figures (`real_saved_usd` and friends) are those tokens priced on the model the
-harness asked for, a counterfactual. `tokens_rerouted` shows the tokens themselves, so the
-dollars can be read against them. The live views' "tokens saved" share (saved from the requested
+`tokens_rerouted` counts those tokens by the tier they ran on against the tier requested, a
+counterfactual. Since part 4e the export carries no dollar figures. The live views' "tokens saved" share (saved from the requested
 model, work and cache apart) is the `cheaper` bucket over all priced children; see
 [evidence.md](../guides/evidence.md). Counts only: no prompt, task,
 path, session or agent id. Model ids are the bounded ids already in the log (`unknown` when the
@@ -71,8 +70,7 @@ catalog did not recognise one).
 }
 ```
 
-Population: every **priced** usage record with tokens (`outcome: usage`, `actual_cost_usd` set,
-at least one token). Each lands in exactly one bucket, so the four buckets of a harness add up to
+Population: every usage record with tokens (`outcome: usage`, at least one token). Each lands in exactly one bucket, so the four buckets of a harness add up to
 its token mix:
 
 | Bucket | What lands there |
@@ -80,10 +78,10 @@ its token mix:
 | `cheaper` | The linked decision is an **applied** rewrite (rewrite emitted, no guardrail correction), the harness did not refute it, and the record's baseline cost (the same tokens on the requested model) is above its actual cost. |
 | `pricier` | Same, but baseline cost is below actual cost: an applied upshift. |
 | `unchanged` | The child ran on the requested model, or at its price: an allow, a held or blocked decision, the control group (`CONTROL`), `DOWNSHIFT_NO_ROUTE` or a pause, a rewrite a linked `resolved` record refutes, or an applied rewrite whose two costs are equal. |
-| `unattributed` | No linked decision in the window, or an applied rewrite whose requested model has no price (no `baseline_cost_usd`). Never counted as rerouted. |
+| `unattributed` | No linked decision in the window, or an applied rewrite whose requested or ran model is not in the catalog. Never counted as rerouted. |
 
-Link and refutation rules are the ones `real_saved_usd` uses (`AppliedRewrite`, the refuted
-index, `RoutedCost`), so a record that counts as a saving is the one that counts as `cheaper`.
+Link and refutation rules are the ones the tier comparison uses (`AppliedRewrite`, the refuted
+index), so a record that counts as a saving is the one that counts as `cheaper`.
 
 Token classes, per bucket: `input`, `output`, `cache_read` (cached minus cache write), `cache_write`
 (cache creation, clamped to the cached total), `total` (their sum) and `records` (usage records).
@@ -145,17 +143,12 @@ linked-decision gate. A decision outside the selected window contributes no
 link in that window. Cost totals still include priced usage without a link;
 linkage alone does not prove the requested baseline is known or a bill changed.
 
-Unknown requested models leave `baseline_cost_usd` absent on new usage events.
-Their observed spend remains in `actual_cost_usd`/`actual_cost_events`, but they
-contribute neither a comparison to `real_cost_events` nor savings to
-`real_saved_usd`. Existing historical cost values are preserved.
+Unknown requested models get no tier comparison: their tokens are `unattributed`. New usage events write no dollar
+figure at all. Older lines keep the `actual_cost_usd` and `baseline_cost_usd` they were written with; they are read but
+no longer exported.
 
-`CostUSD` prices cached input at the model's cache-read price when the catalog
-has one (`cache_read_cost_per_1m`, taken from a dated price snapshot). When the
-catalog has no cache price for a model, cached tokens fall back to the full
-input rate, which is an upper bound. These amounts are catalog-list-price
-estimates from observed token counts, not provider invoices. Baseline and routed estimates use the same observed tokens;
-the baseline is a counterfactual, not a second measured execution.
+Tokens are the harness-reported counts. The tier comparison is a counterfactual, not a second measured execution, and
+nothing in the export is a provider invoice.
 
 `observed_child_tokens` and `observed_child_usage` are the end-of-day child
 token sum and how many usage records contributed. They are not billing; pair

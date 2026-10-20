@@ -115,7 +115,7 @@ Code: `claudecode.go` (`Handle`), `posttooluse.go`, `subagentstop.go`, `internal
 |---|---|---|
 | Downshift wrote a model | PreToolUse response, `hookSpecificOutput.updatedInput.model` | event `outcome: "rewrite_emitted"` |
 | Claude Code chose that model for the child | PostToolUse `tool_response.resolvedModel` (async launch payload, no tokens) | `outcome: "resolved"`, `linked_decision`, `rewrite_honored` true/false |
-| The API served it and what it cost | SubagentStop, child transcript at `agent_transcript_path` (last line per message id, `message.model`) | `outcome: "usage"`, `agent_hash`, `actual_cost_usd` |
+| The API served it and what it consumed | SubagentStop, child transcript at `agent_transcript_path` (last line per message id, `message.model`) | `outcome: "usage"`, `agent_hash`, `input_tokens`, `output_tokens` |
 
 `rewrite_emitted` proves emission only. Claude Code validates `updatedInput.model` against family
 names (`StrictModelName: true`), so the adapter writes the catalog `native_name` (`plan.WriteName`,
