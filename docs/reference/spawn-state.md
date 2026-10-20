@@ -108,6 +108,17 @@ run: `→ small: opus → haiku · its tokens would run on a cheaper model than
 requested`, or `(not applied, tokens stay on opus)` when the hook would leave
 the spawn alone.
 
+### Compactor in the panel JSON
+
+`session --panel` adds an optional `compactor` block for the session:
+`{commands, compacted, raw_bytes, saved_bytes, estimated_tokens_saved, token_estimate}`.
+Bytes are measured; `estimated_tokens_saved` is `saved_bytes / 4` and is never
+added to the routing `tokens` (different units, different certainty). The hook puts
+the hashed session on the wrapped command (`downshift compact --session=<hash> -- …`,
+`telemetry.HashSessionID`, never the raw id) and the runner logs it in
+`exec-events.jsonl`. No wrapped command in the session, or records written before
+this field existed, means no block, never zeros.
+
 ### `mods/savvy-progress`
 
 Vendored, so it is patched only through its documented local patch
