@@ -5,6 +5,10 @@ package classify
 
 import "os"
 
+func osDomainDedupEnabled() bool {
+	return os.Getenv("DOWNSHIFT_DOMAIN_DEDUP") != "0"
+}
+
 // domainEvidenceKey groups overlapping signals from one specialty and class.
 // General signals and risk floors are deliberately not aggregated.
 type domainEvidenceKey struct {
@@ -42,7 +46,7 @@ func (d *domainEvidence) add(domain string, class Complexity, weight int) {
 func (d *domainEvidence) apply(scores map[Complexity]int) {
 	// Explicit opt-out lets benchmark comparisons isolate this mathematical
 	// change without disabling the bilingual dictionary or risk policies.
-	raw := os.Getenv("DOWNSHIFT_DOMAIN_DEDUP") == "0"
+	raw := !osDomainDedupEnabled()
 	for key, vote := range d.groups {
 		value := vote.total
 		if !raw {
