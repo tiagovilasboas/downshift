@@ -10,13 +10,13 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 Each item is a small, separately merged change. Items marked **decision** need
 the owner before code.
 
-## 1. Tokens only (in progress)
+## 1. Tokens only (done)
 
 Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 
-- [x] Part 3: `stats --export` drops `*_usd`. **Decision:** operator contract (issue #104). Bump the export version, update `docs/reference/stats-export.md`, adjust `simbench` invariants. (Done: schema v2, `*_usd` omitted, simbench invariants updated).
+- [x] Part 3: `stats --export` drops `*_usd`. **Decision:** operator contract (issue #104). Bump the export version, update `docs/reference/stats-export.md`, adjust `simbench` invariants. (Done: schema v2 with `*_usd` omitted, now schema 3 after part 4e; `simbench` was removed in 3c3f75fc.)
 - [x] Part 4: event log stops writing `actual_cost_usd` / `baseline_cost_usd`; summaries move to tokens. Keeps reading old lines. **Decision:** changes accounting history.
-- [ ] Part 5: remove catalog-price valuation (`RepriceUsage`) from report and stats. Routing keeps the catalog.
+- [x] Part 5: remove catalog-price valuation (`RepriceUsage`) from report and stats. Routing keeps the catalog. (Done: #290; the report prints tokens only. Parts 4a to 4e merged as #287 to #294.)
 - [x] Open question from the JSON change: the price date no longer appears in the report. Decided (2026-10-20): the report is tokens only; the catalog date stays in `downshift doctor` ("prices as of"), not in report output.
 
 ## 2. Use it on this machine
@@ -25,7 +25,7 @@ Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 - [x] Reinstall the binary from `main`. The installed one reports `downshift dev`. Follow `docs/guides/install.md`. (Done: binary built with ldflags commit/date stamp).
 - [x] Run `downshift setup --dry-run`, show the diff, and wait for a yes before `--yes` (AGENTS.md rule). (Done: all configs verified in parity, 0 diff).
 - [x] Confirm live that Claude Code applies the compact rewrite (`updatedInput`). Not observed yet in a real session. (Done: verified hook rewrite and live compaction 259 -> 118 bytes).
-- [x] Watch for a permission prompt on rewritten commands. AppSec flagged it as low: the rewritten `compact --` line may not match the user's `Bash(go test:*)` allow rule. If it prompts, add a fix or document the rule. (Done: `shellWrapDecision` requires command in user's allow rules; `Bash(downshift compact:*)` or prompt acceptance handles prefix change).
+- [x] Watch for a permission prompt on rewritten commands. AppSec flagged it as low: the rewritten `compact --` line may not match the user's `Bash(go test:*)` allow rule. If it prompts, add a fix or document the rule. (Partly done: `shellWrapDecision` requires the original command to match the user's allow rules, and the hook approves nothing. The rewritten command starts with the quoted binary path, so a `Bash(downshift compact:*)` rule does not match it. Still open: confirm in the UI whether the prompt shows the rewritten command.)
 
 ## 3. Agents panel and dock (merged, to verify live)
 
@@ -65,6 +65,17 @@ Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 - [ ] No open PRs. Footer CNPJ at 11px merged (#7).
 - [ ] Owner decisions: custom domain (the site is on `*.vercel.app`), and Search Console submission (a user action).
 - [ ] `/pt-br/guias/` is thin (232 words). Grow it or leave it.
+
+## 10. Tokens saved read zero (2026-10-20, fixed)
+
+- [x] Claude Code stops the child before the Agent tool returns, so the usage record was logged before the `resolved` record that links the agent to its decision. Unlinked usage never counts as saved. Fixed by joining on the agent hash when the log is read (#297); a zero now reads `already on the cheapest model` or `nothing saved yet`. Short text in the dock and panel: #298.
+- [x] Dollar residue in the stats help and the live line (#299). Compact status follows the config switches, and settings reads are capped (#300).
+- [ ] **Decision:** `adapt_eval` still prints USD and takes prices by flag. Keep it as an operator tool or retire it.
+- [ ] DCI hook runs outside `runHookAdapter` and branches on the harness name (`cmd/downshift/dci_hook.go`). Move it behind the shared runner and `HarnessCapabilities` before any DCI measurement work.
+- [ ] Dock "N running" count has no test beyond a mock; the mod has no CI job. Extract a pure `countRunning` and test it.
+- [ ] `scripts/test-ci-classify-changes.sh` has no `python=` case; add `orchestration/` and `scripts/sync_catalog_prices.py`.
+- [ ] `TestRunCommand_BackgroundChildDoesNotHang` is flaky under load: its bound is relative to a baseline.
+- [ ] `cheap_models/README.md` (outside this repository) tells the reader to `export OPENROUTER_API_KEY`; the review loop above says the key is passed per command.
 
 ## Rule for every PR
 
