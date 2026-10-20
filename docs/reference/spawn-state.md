@@ -94,8 +94,8 @@ and cache (read+write) are counted apart. `tokens_line` and `tokens_label` are
 a pricier model reads `pricier than <model>` and adds to `work_pricier` /
 `cache_pricier`, never to the saved share. Control, held, kept and refuted
 children count in the totals. Harnesses with no proven token source (Cursor,
-Codex, OpenCode today) have no token figures, never zeros. Dollars:
-`downshift report`, priced at report time.
+Codex, OpenCode today) have no token figures, never zeros. No dollars:
+`downshift report` is tokens only.
 
 The same figures appear in `downshift session` (header, a tokens column per row,
 a `by agent type` line), the statusline (`tokens saved work N% · cache M%`),

@@ -66,7 +66,7 @@ Source: `internal/telemetry/telemetry.go` (`Aggregate`), `export.go`, [stats-exp
   as saved), per agent, per agent type and per session (`telemetry.TokenSavings`). Work tokens (input+output) and cache
   tokens (read+write) are counted apart, because cache reads are most of a child's tokens and carry the smallest price
   gap: Sonnet to Haiku saves nothing on them, so one share would overstate the value. These views carry no dollar;
-  `downshift report` prices the tokens at report time (API lens) and states the share again in tokens (plan lens). The
+  `downshift report` prints no dollar either: it shows tokens per completed task for routed and control, and states the share again in tokens (plan lens). The
   share is a count of where tokens ran, not a reduction in tokens and not a dollar saving. `downshift try` quotes no
   price or percentage for one decision: it says whether its tokens would run on a cheaper or a pricier model than
   requested, and only when the hook would make that rewrite.
