@@ -71,8 +71,8 @@ external tool. Dotted boxes are opt-in or shadow and never change the route.
    (features + tier, for feedback) · sensor: tool output bytes (observe only)
              ▼
  read-outs [D]  stats (tokens saved) · report (routed vs control, tokens per
-   completed task, rework, token check) · session / watch / serve (local
-   dashboard over the log) · doctor and skills (diagnosis)
+   completed task, rework, token check) · session / watch (live views over
+   the log) · doctor and skills (diagnosis)
              ▼
  tuning [D, offline]  benchmark (classifier KPIs on labelled fixtures) ·
    eval-outcome · feedback → reviewed required_tier labels → train ·
@@ -170,13 +170,12 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    only (no prompts, tasks or paths). Appends do not fsync (a power loss can
    drop the last events; a process crash cannot). `telemetry.TokenSavings` is the
    single tokens-saved definition (work and cache apart, per agent type) shared
-   by `stats`, the session views, `dsmon` and the dashboard `/api/status`; none of
+   by `stats`, the session views and `dsmon`; none of
    them shows a dollar, and neither does `report`.
    `report` compares routed spawns with the control group, counting "completed"
    only for harnesses that declare an end event and have end records;
    `verification-report` groups observed checks and estimated cost by tier;
-   `session` and `watch` read the same log. `serve` is an experimental local HTTP
-   dashboard that shows tokens saved, not a proxy or billing evidence.
+   `session` and `watch` read the same log.
 10. **Benchmarks and tuning** `[D]`, offline. `benchmark` scores the classifier
     on labelled fixtures (tier accuracy, unsafe downgrade, over-routing);
     `eval-outcome` runs the outcome suite (minimal fixtures in OSS, full suite
@@ -280,7 +279,7 @@ hooks cannot rewrite tool output, so measure-only is a platform limit, not a
 choice.
 
 **Telemetry and stats.** appenders (`telemetry`, `childend`, `hookport`) write
-JSONL; `stats`, `report`, `session`, `watch`, `serve` and `dsmon` read it.
+JSONL; `stats`, `report`, `session`, `watch` and `dsmon` read it.
 `telemetry.Summarize` produces the one savings figure (gross, overspend, net);
 `prices_as_of` dates the list prices behind it.
 
@@ -313,7 +312,6 @@ backup, and only for keys that are unset.
 | Hook runtime | 1.5 s `HookBudget` for helper commands, panic recovery, catalog loaded under `recover`; a failure never exits 2 (deny) and an unchanged Claude Code or Codex spawn answers `{}`, not an explicit `allow`, so the user's ask rules still apply (Cursor's wire requires `{"permission":"allow"}`) |
 | Hook → network | None. No provider call, no LLM, no price fetch. Quota and prices come from files |
 | State directory | Single-user local files; `0700` dirs, `0600` logs; the DCI telemetry log refuses symlinks and non-regular files |
-| Local dashboard (`serve`, `dsmon-server`) | Binds `127.0.0.1` only; rejects a non-loopback `Host` (DNS rebinding) and a foreign `Origin`; no CORS headers; `web/index.html` sets a CSP (`default-src 'self'`, `connect-src 'self'`, `object-src 'none'`, `form-action 'none'`); values rendered as text |
 | Vendored mods | Third-party code pinned in NOTICE, read-only, no routing logic; `setup` installs them through `claude plugin install` |
 | Release | goreleaser pinned to an exact version; build provenance attested for every archive (`gh attestation verify`) |
 
@@ -362,7 +360,7 @@ tests, a security review or a production signal.
 | Subagent routing | The flow above: one decision per spawn, rewrite or allow, fail open. | D decides, H applies | `internal/core`, adapters, `runHookAdapter` |
 | Context optimization | Native provider is **observe-only**: PostToolUse records tool output bytes and the reduction `safe` mode would reach; the hook never replaces the tool result the model sees. `downshift context compress` compacts piped output in `safe` mode as an explicit CLI step. Headroom is a companion: detected on PATH, recorded with `context enable headroom`, never installed, launched or wrapped. | D observes; X compresses | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` |
 | Code Intelligence (DCI) | Independent subsystem: discovers repository code via Git (`discover.go`), extracts Go AST and multi-language structural symbols & calls (`parse.go`, `parse_lang.go`), builds incremental inverted index with reverse call graph (`index.go`), scores via BM25 with Production-First weighting & Call-Graph Co-Reference boost (`rank.go`), abstains on conversational chatter (`abstain.go`), packages structural sketches with downstream blast radius and prompt-injection defense within configurable budget (`pack.go`), and auto-injects via multi-harness hooks (`UserPromptSubmit`). CLI queries via `downshift dci impact` and `inspect`. Strictly decoupled from model routing. | D | `internal/codeintel/` |
-| Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `serve`, `probe` (maintainer). Prices come from the embedded catalog (`prices_as_of`, refreshed by the weekly `sync-prices` PR, [prices.md](../reference/prices.md)). | D | `internal/telemetry`, `internal/childend`, `internal/server`, `.github/workflows/sync-prices.yml` |
+| Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `probe` (maintainer). Prices come from the embedded catalog (`prices_as_of`, refreshed by the weekly `sync-prices` PR, [prices.md](../reference/prices.md)). | D | `internal/telemetry`, `internal/childend`, `.github/workflows/sync-prices.yml` |
 | Diagnosis and recommendations | `doctor` (binary, state dir, catalog, hooks per harness, model override, quota, policy, context optimization, companion, semantic boost) with a `fix` per failed check; skills `downshift-setup`, `downshift-audit`, `cost-reducer` write nothing without a yes. | D | `cmd/downshift/doctor*.go`, `skills/` |
 | Benchmark and economic evaluation | Classifier KPIs, outcome evals, control-group report with its token check, feedback and offline training. Public `benchmark/` holds the published report; datasets stay in downshift-labs. | D | `internal/benchmark`, `internal/outcome`, `internal/routingv2/training` |
 
@@ -382,7 +380,6 @@ tests, a security review or a production signal.
 ## What Downshift is not
 
 - **Not an HTTP proxy.** Nothing sits between the harness and the model API.
-  `downshift serve` is a local dashboard that reads the event log.
 - **Not an LLM-in-the-loop router.** Classification is a scored signal table,
   a hash embedder and a naive-Bayes opinion, all local and deterministic.
 - **Does not edit tool results in flight.** The PostToolUse hook returns `{}`
@@ -429,7 +426,6 @@ Downshift's codebase and documentation are structured strictly according to Clea
 | `internal/codeintel` | Downshift Code Intelligence (DCI): pure Go symbol extraction, incremental inverted index, BM25 ranking, abstention, and structural context packager. Isolated from routing: imports only `paths`; `core` and `classify` do not import it (`telemetry` imports it for the stats export type). |
 | `internal/semantic`, `internal/nbtier` | In-process hash embedder (`semantic`) and naive-Bayes opinion (`nbtier`). The raise-only boost policy lives in `internal/fuse`. `nbopinion` calls `nbtier.Suggest` and `nbtier.Trivial`. Core production sources do not import `nbtier`. The semantic boost and the naive-Bayes opinion stay in-process and do not exec |
 | `internal/routingv2/*`, `internal/decisionintelligence`, `internal/outcome`, `internal/benchmark` | Shadow classifiers and training, advisory recommendation, outcome evals, classifier KPIs. the `routingv2/router` and `matcher` packages and `internal/routecache` were removed on 2026-10-19 (no production importer) |
-| `internal/server` | Local dashboard over the event log (`serve`, `dsmon-server`) |
 | `cmd/downshift` | CLI, `harnessRegistry`, `runHookAdapter`, `runEnd`, setup, doctor. Blank-imports `nbopinion`, `policyfile`, `quota`, `routeadapt` |
 
 **Invariants:** adapters embed no routing rules; adding a harness is one

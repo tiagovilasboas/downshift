@@ -60,8 +60,9 @@ change this repository), read **[docs/guides/install.md](docs/guides/install.md)
 ### Native compact works in ANY harness (supported or not)
 
 `downshift compact -- <command>` cuts the output of an allowlisted test/build/
-status command (go test, pytest, vitest, jest, tsc, cargo test, playwright,
-phpunit, next build, git status/log) to its PASS/FAIL summary and keeps the real
+status command (go test, git status, pytest, vitest, jest, tsc, cypress run,
+playwright test, next build, phpunit, cargo test, flutter test, dart test,
+gradle, maven; the exact forms are in docs/reference/harness-matrix.md) to its PASS/FAIL summary and keeps the real
 exit code. It is a plain shell command, so it needs NO hook and NO adapter: it
 runs the same on every OS and in every harness, including one Downshift has no
 integration for. When a harness lacks a model-routing hook (KiroCrew has only a
@@ -174,7 +175,7 @@ embedded `internal/catalog/catalog.json`. Companions (Headroom default) are dete
 never installed or wrapped by Downshift: [docs/guides/companions.md](docs/guides/companions.md).
 One exception to "Downshift does not wrap commands" (owner decision 2026-10-19): the default-on
 `downshift compact` wrapper, product name Compactor (`downshift compactor` is an alias; the plugin registers its Bash hook; `"exec": false` in the config or `DOWNSHIFT_EXEC=0` turns it off) may rewrite an
-allowlisted shell command with no shell metacharacters to `downshift compact -- <argv>`, which keeps the exit code
+allowlisted shell command with no shell metacharacters to `downshift compact -- <argv>` (no Bash allow rule is needed; a deny or ask rule that matches the command stops the rewrite), which keeps the exit code
 and compacts only clean output. Its policy lives in `internal/execwrap`, never in an adapter; it never wraps a companion.
 
 ---
