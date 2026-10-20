@@ -5,7 +5,7 @@ diff --git a/mods/savvy-progress/.claude-plugin/plugin.json b/mods/savvy-progres
  {
    "name": "savvy-progress",
 -  "version": "1.2.1",
-+  "version": "1.2.4",
++  "version": "1.2.5",
    "description": "Progress bar above the prompt for /savvy-flow, plus an agents panel (/agents-info): running, finished and planned subagents with model, task progress, context, cost and time.",
    "author": {
      "name": "johnnyvizz",
@@ -69,7 +69,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    en: {
      pane: 'Agents',
 -    cost: 'Cost',
-+    saved: 'On smaller model',
++    saved: 'Downshifted',
      tokens: 'Tokens',
      time: 'Time',
      collapse: 'Collapse',
@@ -166,17 +166,27 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
  const TIER_MODEL: Record<string, [model: string, effort: string]> = {
    fable: ['Fable', 'high'],
-@@ -459,6 +470,9 @@ const fmtTokens = (n: number): string =>
+@@ -459,6 +470,19 @@ const fmtTokens = (n: number): string =>
  
  const fmtCost = (usd: number): string => `$${usd < 10 ? usd.toFixed(2) : usd.toFixed(1)}`
  
 +/** Tokens Downshift saved in this session, from the session panel; 0 until it answers. */
 +const savedOf = (): number => (ds && dsSessionKnown ? ds.saved : 0)
 +
++const fmtBytes = (n: number): string =>
++  n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${Math.round(n)} B`
++
++/** Bytes the Compactor cut in this session (measured); null when it did not run or the session is unknown. Never added to the tokens above. */
++const compactorOf = (): number | null => (ds && dsSessionKnown && ds.compactor ? ds.compactor.savedBytes : null)
++const compactorSuffix = (): string => {
++  const b = compactorOf()
++  return b === null ? '' : ` · ${fmtBytes(b)} compactor`
++}
++
  const fmtTime = (ms: number): string => {
    const s = Math.max(0, Math.round(ms / 1000))
    const h = Math.floor(s / 3600)
-@@ -509,25 +523,24 @@ const PANE_CSS = `<style>
+@@ -509,25 +533,24 @@ const PANE_CSS = `<style>
  @media (prefers-reduced-motion: reduce){.live{animation:none}}
  </style>`
  
@@ -214,7 +224,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    f(7, 22, 2, 4, CLAY, 'la')
    f(17, 22, 2, 4, CLAY, 'la')
    f(11, 22, 2, 4, CLAY, 'lb')
-@@ -535,106 +548,36 @@ const crabBody = (f: Fill, armFront = 0, armCls?: string): void => {
+@@ -535,106 +558,36 @@ const crabBody = (f: Fill, armFront = 0, armCls?: string): void => {
  }
  
  // Pure CSS, run by the compositor: no redraws. Periods divide one second, so the
@@ -327,7 +337,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    if (status === 'failed') return `<path d="M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8" stroke="#D0453F" stroke-width="1.8" stroke-linecap="round"/>`
    return `<circle cx="${x}" cy="${y}" r="5" fill="none" stroke="#9a9a96" stroke-width="1.4"/><path d="M${x} ${y - 2.5}v2.8l1.8 1.2" fill="none" stroke="#9a9a96" stroke-width="1.4" stroke-linecap="round"/>`
  }
-@@ -658,8 +601,8 @@ const endText = (W: number, x: number, y: number, words = false): string =>
+@@ -658,8 +611,8 @@ const endText = (W: number, x: number, y: number, words = false): string =>
  const crabWidth = (scale: number): number => Math.round(CRAB_BOX * scale * 100) / 100
  
  // A panel crab at x in a row of width W: on the mirrored side and facing left in Hebrew.
@@ -338,16 +348,27 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
  const svg = (W: number, H: number, body: string): string =>
    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${PANE_CSS}${CRAB_CSS}${body}</svg>`
-@@ -678,7 +621,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
+@@ -668,7 +621,9 @@ const svg = (W: number, H: number, body: string): string =>
+ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): string => {
+   const s = tr()
+   const gap = 6
+-  const tw = (W - gap * 2) / 3
++  const cb = compactorOf()
++  const n = cb === null ? 3 : 4
++  const tw = (W - gap * (n - 1)) / n
+   const top = title ? 28 : 0
+   const tile = (i: number, k: string, v: string) =>
+     `<rect class="tile" x="${mx(W, i * (tw + gap), tw)}" y="${top}" width="${tw}" height="40" rx="8"/>
+@@ -678,7 +633,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
      W,
      headerHeight(title),
      `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
 -${tile(0, s.cost, '≈' + fmtCost(t.cost))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
-+${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
++${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, 'Compactor', fmtBytes(cb))}`,
    )
  }
  
-@@ -700,11 +643,13 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
+@@ -700,11 +655,13 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
    const ctx = ctxOf(a)
    const textW = W - 42 - 22
    const meta = [runModel(a)]
@@ -362,7 +383,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    const steps = a.stepTotal ? `${a.stepDone ?? 0}/${a.stepTotal}${a.stepNote ? ' · ' + a.stepNote : ''}` : ''
    const stepsW = Math.max(0, barW - textWidth(stats, 11) - 12)
    // Without reported steps the bar falls back to the context, drawn grey.
-@@ -712,7 +657,7 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
+@@ -712,7 +669,7 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
    return svg(
      W,
      66,
@@ -371,7 +392,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  <text class="t" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(a.description || a.type, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tier === 'other' ? a.type : tierWord(tier))}</tspan><tspan class="s">  ${xml(meta.join('  ·  '))}</tspan></text>
  ${steps && stepsW > 30 ? `<text class="t" ${startText(W, 42, 49)} font-family="${FONT}" font-size="11" font-variant-numeric="tabular-nums">${xml(fitText(steps, 11, stepsW))}</text>` : ''}
-@@ -732,7 +677,7 @@ const plannedSvg = (W: number, p: Planned): string => {
+@@ -732,7 +689,7 @@ const plannedSvg = (W: number, p: Planned): string => {
    return svg(
      W,
      46,
@@ -380,7 +401,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  <text class="s" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(`${p.n}. ${p.title}`, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tierWord(tier))}</tspan><tspan class="m">  ${xml(meta.filter(Boolean).join('  ·  '))}</tspan></text>
  ${statusMark(mx(W, W - 8), 16, 'planned', color)}
-@@ -742,22 +687,22 @@ ${statusMark(mx(W, W - 8), 16, 'planned', color)}
+@@ -742,22 +699,22 @@ ${statusMark(mx(W, W - 8), 16, 'planned', color)}
  
  const compactSvg = (W: number, list: AgentRun[], planned: Planned[], t: ReturnType<typeof totals>): string => {
    const icons = [
@@ -404,11 +425,11 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      32,
      `${body}${more ? `<text class="s" ${startText(W, x, 21, false)} font-family="${FONT}" font-size="12">+${more}</text>` : ''}
 -<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">≈${fmtCost(t.cost)} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
-+<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtTokens(savedOf())} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
++<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtTokens(savedOf())} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}${xml(compactorSuffix())}</text>`,
    )
  }
  
-@@ -790,6 +735,123 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
+@@ -790,6 +747,125 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
    void $.ui.open({ id: PANE, title: tr().pane })
  }
  
@@ -421,7 +442,8 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +// Data contract: docs/reference/spawn-state.md in the Downshift repo.
 +
 +type DsSpawn = { tool_use?: string; label: string; saved: number }
-+type DsView = { switched: number; held: number; saved: number; spawns: DsSpawn[] }
++type DsCompactor = { savedBytes: number; commands: number }
++type DsView = { switched: number; held: number; saved: number; compactor: DsCompactor | null; spawns: DsSpawn[] }
 +
 +let ds: DsView | null = null
 +let dsSessionKnown = false // the figures are only drawn for a session we could name
@@ -434,11 +456,12 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +  if (!v || typeof v !== 'object' || !Array.isArray(v.spawns)) return null
 +  const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : 0)
 +  const str = (x: unknown, max: number) => (typeof x === 'string' ? x.slice(0, max) : '')
-+  const raw2 = raw as { tokens?: { work_saved?: unknown; cache_saved?: unknown } }
++  const raw2 = raw as { tokens?: { work_saved?: unknown; cache_saved?: unknown }; compactor?: { saved_bytes?: unknown; commands?: unknown } }
 +  return {
 +    switched: num(v.switched),
 +    held: num(v.held),
 +    saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
++    compactor: raw2.compactor && typeof raw2.compactor === 'object' ? { savedBytes: num(raw2.compactor.saved_bytes), commands: num(raw2.compactor.commands) } : null,
 +    spawns: v.spawns
 +      .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
 +      .map(x => ({
@@ -532,7 +555,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  export const register: Register = (on, options) => {
    on('session.start', async ($, e, next) => {
      const started = await next(e)
-@@ -948,6 +1010,12 @@ export const register: Register = (on, options) => {
+@@ -948,6 +1024,12 @@ export const register: Register = (on, options) => {
        return [...list.filter(a => a.id !== run.id), run].slice(-200)
      })
      await update($, now, () => at)
@@ -545,7 +568,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (e.subagentType.startsWith('savvy-')) {
        const f = await read($, flow)
        await autoOpen($, f && !f.isFinished ? f.title : 'savvy-flow')
-@@ -998,6 +1066,7 @@ export const register: Register = (on, options) => {
+@@ -998,6 +1080,7 @@ export const register: Register = (on, options) => {
    on('turn.complete', async ($, e, next) => {
      const agentId = e.agentId
      if (agentId) {
@@ -553,7 +576,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
        const at = await $.clock.now()
        await update($, agents, list =>
          list.map((a): AgentRun => {
-@@ -1031,6 +1100,7 @@ export const register: Register = (on, options) => {
+@@ -1031,6 +1114,7 @@ export const register: Register = (on, options) => {
      const s = tr()
      const ui = $.ui.resolve(e)
      const { Box, Text, Button } = ui
@@ -561,16 +584,16 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      const list = await read($, agents)
      const f = await read($, flow)
      const p: Panel = await read($, panel)
-@@ -1060,7 +1130,7 @@ export const register: Register = (on, options) => {
+@@ -1060,7 +1144,7 @@ export const register: Register = (on, options) => {
        />
      )
      const isEmpty = list.length === 0 && planned.length === 0
 -    const summary = `≈${fmtCost(t.cost)}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
-+    const summary = `${fmtTokens(savedOf())} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
++    const summary = `${fmtTokens(savedOf())} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}${compactorSuffix().replace(' · ', ', ')}`
  
      if (e.surface === 'desktop' && 'Svg' in ui) {
        const { Svg } = ui
-@@ -1093,6 +1163,7 @@ export const register: Register = (on, options) => {
+@@ -1093,6 +1177,7 @@ export const register: Register = (on, options) => {
            ))}
            <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
              <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
@@ -578,7 +601,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {toggleCompact}
              {isEmpty && <Text dimColor>{s.empty}</Text>}
              {running.length > 0 && section('h-run', `${s.running} · ${running.length}`)}
-@@ -1135,6 +1206,7 @@ export const register: Register = (on, options) => {
+@@ -1135,6 +1220,7 @@ export const register: Register = (on, options) => {
            <Text dimColor wrap="truncate-end">
              {'  '}
              {tier === 'other' ? a.type : tierWord(tier)} · {model}
@@ -586,7 +609,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
            </Text>
            <Text wrap="truncate-end">
-@@ -1142,7 +1214,7 @@ export const register: Register = (on, options) => {
+@@ -1142,7 +1228,7 @@ export const register: Register = (on, options) => {
              {progress === null ? <Text dimColor>{ctxBar(ctx, barW)}</Text> : <Text color={color}>{ctxBar(progress * 100, barW)}</Text>}
              <Text dimColor>
                {' '}
@@ -595,18 +618,18 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              </Text>
            </Text>
          </Box>
-@@ -1158,8 +1230,9 @@ export const register: Register = (on, options) => {
+@@ -1158,8 +1244,9 @@ export const register: Register = (on, options) => {
            {toggleCompact}
          </Box>
          <Text dimColor>
 -          ≈{fmtCost(t.cost)} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
-+          {fmtTokens(savedOf())} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
++          {fmtTokens(savedOf())} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}{compactorSuffix()}
          </Text>
 +        {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
          {p.isCompact ? (
            <Text wrap="truncate-end">
              {[...running, ...finished].map(a => (
-@@ -1203,7 +1276,18 @@ export const register: Register = (on, options) => {
+@@ -1203,7 +1290,18 @@ export const register: Register = (on, options) => {
    })
  
    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -626,7 +649,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (f === null || e.props.hasSurvey) return next(e)
      // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
      // never nested: the desktop drops a band that nests it.
-@@ -1242,6 +1326,7 @@ export const register: Register = (on, options) => {
+@@ -1242,6 +1340,7 @@ export const register: Register = (on, options) => {
              {crewButton}
              {dismiss}
            </Box>
@@ -634,7 +657,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
            {below}
          </Box>
        )
-@@ -1264,6 +1349,7 @@ export const register: Register = (on, options) => {
+@@ -1264,6 +1363,7 @@ export const register: Register = (on, options) => {
            {crewButton}
            {dismiss}
          </Box>

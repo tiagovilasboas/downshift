@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `savvy-progress` 1.2.5: the first panel tile reads `Downshifted` and a `Compactor` tile shows the bytes the Compactor cut in the session, from the new `compactor` block of `downshift session --panel`. Not summed with the downshifted tokens: different units and certainty. No `compactor` block, no tile.
+
 - `savvy-progress` panel and band say less (owner request 2026-10-20; mod 1.2.4, patch regenerated against the pinned upstream commit): the band and the panel header show one short line (`Downshift · 2 switched · 1 held`) instead of the long tokens sentence, the per-type line and the work/cache percentages are not drawn, each row shows a one-word status and `↓` plus the tokens that agent moved to a smaller model, and the tile reads `On smaller model` in English. The CLI output, `tokens_line` and the JSON contract are unchanged.
 
 - `downshift report` text output shows tokens only. The dollar column, the API lens block and the dollar footer are gone; the table shows tokens per completed task, and the plan lens is labelled tokens only. The JSON report and `downshift stats --export` are unchanged and keep their dollar fields.
