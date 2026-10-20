@@ -74,6 +74,10 @@ type setupTarget struct {
 	Notes []string
 	// Manual explains why setup does not write this harness.
 	Manual string
+	// Steering is an optional whole-file steering asset setup installs for this
+	// harness (KiroCrew), independent of hook wiring. A Manual target may still
+	// carry one.
+	Steering *setupSteering
 	// Plugin is the id ("name@marketplace") under which this harness can load
 	// the same hooks from a plugin instead of File. Empty when the harness has
 	// no plugin system. Doctor reads it; setup warns when it is enabled.
@@ -201,6 +205,10 @@ var setupTargets = []setupTarget{
 		Manual: "KiroCrew accepts only an absolute executable path with no arguments, so it needs the wrapper script " +
 			"scripts/kirocrew-pre-tool-use.sh registered in ~/.kiro/crew/config.json (agent.kiro_hooks.preToolUse). " +
 			"See docs/guides/install.md, section KiroCrew.",
+		Steering: &setupSteering{
+			Path:    ".kiro/crew/workspace/.kiro/steering/downshift-compact.md",
+			Content: kirocrewCompactSteering,
+		},
 	},
 	{
 		Name:      "opencode",
