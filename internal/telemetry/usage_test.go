@@ -261,8 +261,6 @@ func TestHandlePostToolUse_EndToEnd_Linked(t *testing.T) {
 	if smallID == "" || frontierID == "" {
 		t.Fatal("catalog missing claude-code tier models")
 	}
-	small, _ := cat.LookupByID("claude-code", smallID)
-	frontier, _ := cat.LookupByID("claude-code", frontierID)
 
 	eventLog := filepath.Join(t.TempDir(), "events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)
@@ -312,19 +310,16 @@ func TestHandlePostToolUse_EndToEnd_Linked(t *testing.T) {
 	if u.TokenUsageOrZero() != wantUsage {
 		t.Errorf("tokens = %+v, want %+v", u.TokenUsageOrZero(), wantUsage)
 	}
-	if u.ActualCostUSD == nil || math.Abs(*u.ActualCostUSD-telemetry.CostUSD(small, wantUsage)) > 1e-9 {
-		t.Errorf("ActualCostUSD = %v, want CostUSD(routed)", u.ActualCostUSD)
-	}
-	if u.BaselineCostUSD == nil || math.Abs(*u.BaselineCostUSD-telemetry.CostUSD(frontier, wantUsage)) > 1e-9 {
-		t.Errorf("BaselineCostUSD = %v, want CostUSD(baseline)", u.BaselineCostUSD)
+	if u.ActualCostUSD != nil || u.BaselineCostUSD != nil {
+		t.Errorf("usage record writes no dollar figure: actual %v baseline %v", u.ActualCostUSD, u.BaselineCostUSD)
 	}
 
 	s := telemetry.Aggregate(events)
 	if s.Total != 1 || s.Downshifted != 1 {
 		t.Errorf("Total/Downshifted = %d/%d, want 1/1", s.Total, s.Downshifted)
 	}
-	if s.RealCostEvents != 1 || s.UsageLinked != 1 {
-		t.Errorf("RealCostEvents/UsageLinked = %d/%d, want 1/1", s.RealCostEvents, s.UsageLinked)
+	if s.UsageLinked != 1 || s.TokensRerouted.Totals == nil || s.TokensRerouted.Totals.Cheaper.Records != 1 {
+		t.Errorf("UsageLinked %d, tokens rerouted %+v: want the usage linked and one cheaper record", s.UsageLinked, s.TokensRerouted.Totals)
 	}
 	if math.Abs(s.NormBaseline-1.0) > 1e-9 {
 		t.Errorf("NormBaseline = %f, want 1.0 (usage adds none)", s.NormBaseline)
@@ -354,8 +349,8 @@ func TestHandlePostToolUse_EndToEnd_Unmatched(t *testing.T) {
 	if events[0].Verdict != "UNKNOWN" {
 		t.Errorf("Verdict = %q, want UNKNOWN", events[0].Verdict)
 	}
-	if events[0].ActualCostUSD == nil || *events[0].ActualCostUSD <= 0 {
-		t.Error("unmatched record should still price the routed spend")
+	if !events[0].HasTokenUsage() {
+		t.Error("unmatched record should still carry the routed tokens")
 	}
 	if events[0].BaselineCostUSD != nil || events[0].HasRealCost() {
 		t.Error("unmatched record must not invent a requested baseline")
@@ -468,7 +463,7 @@ func TestHandlePostToolUse_DecisionPricedOnce(t *testing.T) {
 	events, _ := telemetry.ReadEventsFrom(eventLog)
 	priced := 0
 	for _, ev := range events {
-		if ev.Outcome == telemetry.OutcomeUsage && ev.RealSavedUSD() > 0 {
+		if ev.Outcome == telemetry.OutcomeUsage && ev.LinkedDecision != "" && ev.HasTokenUsage() {
 			priced++
 		}
 	}
@@ -482,7 +477,6 @@ func TestHandlePostToolUse_UnknownRequestedBaselinePreservesObservedSpend(t *tes
 		t.Run(requested, func(t *testing.T) {
 			cat := usageTestCatalog(t)
 			smallID := cat.ModelFor("claude-code", core.TierSmall).ID
-			small, _ := cat.LookupByID("claude-code", smallID)
 			eventLog := filepath.Join(t.TempDir(), "events.jsonl")
 			t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)
 			sessionHash := telemetry.HashSessionID("unknown-requested-session")
@@ -501,16 +495,15 @@ func TestHandlePostToolUse_UnknownRequestedBaselinePreservesObservedSpend(t *tes
 				t.Fatalf("want decision + usage, got %d err=%v", len(events), err)
 			}
 			usage := events[1]
-			wantCost := telemetry.CostUSD(small, telemetry.TokenUsage{InputTokens: 1000, OutputTokens: 500})
-			if usage.ActualCostUSD == nil || math.Abs(*usage.ActualCostUSD-wantCost) > 1e-9 || wantCost <= 0 {
-				t.Fatalf("observed spend lost: actual=%v, want %f", usage.ActualCostUSD, wantCost)
+			if !usage.HasTokenUsage() {
+				t.Fatalf("observed tokens lost: %+v", usage)
 			}
-			if usage.BaselineCostUSD != nil || usage.HasRealCost() || usage.RealSavedUSD() != 0 {
+			if usage.BaselineCostUSD != nil || usage.HasRealCost() {
 				t.Fatalf("unknown requested baseline was manufactured: %+v", usage)
 			}
 			stats := telemetry.Aggregate(events)
-			if stats.UsageLinked != 1 || stats.ActualCostEvents != 1 || stats.RealCostEvents != 0 || stats.RealSavedUSD != 0 {
-				t.Fatalf("link/spend/comparison counts must remain distinct: %+v", stats)
+			if stats.UsageLinked != 1 || stats.TokensRerouted.Totals == nil || stats.TokensRerouted.Totals.Unattributed.Records != 1 {
+				t.Fatalf("link and tokens must stay distinct from a comparison: %+v", stats.TokensRerouted.Totals)
 			}
 		})
 	}

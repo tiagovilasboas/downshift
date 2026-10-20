@@ -20,11 +20,7 @@ func TestBuildUsageEvent_InferredBaselineSource(t *testing.T) {
 		ReasonCodes: []string{telemetry.ReasonBaselineFromSettings}}
 	ev := buildUsageEvent("claude-code", telemetry.TokenUsage{InputTokens: 1000, OutputTokens: 500},
 		"claude-haiku-5-5", "s1", "test", target, catalog.Load(), time.Now())
-	if ev.BaselineCostUSD == nil {
-		t.Fatal("no baseline priced")
-	}
 	if ev.BaselineSource == telemetry.BaselineRequested {
-		t.Fatalf("inferred baseline recorded as baseline_source=%q (baseline $%.6f, actual $%.6f)",
-			ev.BaselineSource, *ev.BaselineCostUSD, *ev.ActualCostUSD)
+		t.Fatalf("inferred baseline recorded as baseline_source=%q", ev.BaselineSource)
 	}
 }

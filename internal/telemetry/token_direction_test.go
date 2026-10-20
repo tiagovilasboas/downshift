@@ -67,12 +67,11 @@ func TestTokenDirection_Gates(t *testing.T) {
 	}
 }
 
-// TestTokenDirection_NoRealCost: a record without priced costs is not
-// placed, as in the dollar method, so old lines keep their bucket.
-func TestTokenDirection_NoRealCost(t *testing.T) {
+// TestTokenDirection_NoTokens: a record without token counts is not placed.
+func TestTokenDirection_NoTokens(t *testing.T) {
 	cat := catalog.Load()
 	usage, decision := rankEvents(t, cat, "claude-opus-4-8", "claude-haiku-4-5", OutcomeRewriteEmitted)
-	usage.ActualCostUSD = nil
+	usage.InputTokens, usage.OutputTokens, usage.CachedTokens = nil, nil, nil
 	if got := tokenDirection(usage, decision, true, false, false); got != TokenUnattributed {
 		t.Fatalf("got %q, want %q", got, TokenUnattributed)
 	}

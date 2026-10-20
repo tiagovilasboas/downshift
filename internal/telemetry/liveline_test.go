@@ -69,7 +69,7 @@ func TestSessionSummaryLine(t *testing.T) {
 		}, "◆ downshift · 1 subagent · 0 switched · 0 held · 1 on opus · 0 on doubt"},
 		{"unknown models are not a top model", []Event{liveDecision(s, OutcomeAllow, "unknown", "unknown", "mid")},
 			"◆ downshift · 1 subagent · 0 switched · 0 held · 0 on doubt"},
-		{"unpriced usage adds no token segment", []Event{rewrite(), {Outcome: OutcomeUsage, SessionID: s, InputTokens: i64(5)}},
+		{"usage without tokens adds no token segment", []Event{rewrite(), {Outcome: OutcomeUsage, SessionID: s}},
 			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · 0 on doubt"},
 	}
 	for _, c := range cases {
@@ -126,8 +126,8 @@ func TestChildEndLine(t *testing.T) {
 			ActualCostUSD: f64(0.2), BaselineCostUSD: f64(0.1)}, "↳ downshift: finished on opus · 5.1k tokens (work 100, cache 5.0k) · pricier than sonnet"},
 		{"unknown requested model", Event{FromModel: "unknown", ToModel: "claude-haiku-4-5", ActualCostUSD: f64(0.5), BaselineCostUSD: f64(1)},
 			"↳ downshift: finished on haiku"},
-		{"no baseline", Event{FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5", InputTokens: i64(1500), ActualCostUSD: f64(0.004)},
-			"↳ downshift: finished on haiku · 1.5k tokens (work 1.5k, cache 0)"},
+		{"no baseline: the tier comparison needs no dollar", Event{FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5", InputTokens: i64(1500), ActualCostUSD: f64(0.004)},
+			"↳ downshift: finished on haiku · 1.5k tokens (work 1.5k, cache 0) · saved from opus"},
 		{"model only", Event{ToModel: "claude-sonnet-4-5"}, "↳ downshift: finished on sonnet"},
 		{"tokens only", Event{ToModel: "unknown", OutputTokens: i64(2500000)}, "↳ downshift: 2.5M tokens (work 2.5M, cache 0)"},
 		{"nothing known", Event{ToModel: "unknown"}, ""},

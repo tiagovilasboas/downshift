@@ -28,7 +28,7 @@ headers, shared layers only (no feature for one harness, [layering.md](../../../
 | #249 | Per-harness value matrix and catalog price audit |
 | #250 | Control group keyed on the tool-use id (the copies of one spawn were split across arms) |
 | #251 | `tokens_rerouted` and tokens per completed task |
-| #252 | Offline simulation gate ([simulation.md](../../../guides/simulation.md)): 10 scenarios, 17 invariants, no model call |
+| #252 | Offline simulation gate (removed 2026-10-20): 10 scenarios, 17 invariants, no model call |
 | #253 | Cursor prices from the vendor page; Codex and xAI re-verified |
 | #255, #256 | Tokens-first views (tree, panel, statusline, `stats`, `try`, dashboard); report-time pricing |
 | #257, #258 | Output-cutting benchmark protocol; adversarial compressor corpus |

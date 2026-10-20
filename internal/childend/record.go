@@ -229,7 +229,7 @@ func LinkTargetBy(harness string, prior []telemetry.Event, sessionHash, callHash
 		if telemetry.IsObservationOutcome(ev.Outcome) || telemetry.IsFailureOutcome(ev.Outcome) {
 			continue // cost records and fail-open/error lines are not decisions
 		}
-		if ev.HasRealCost() || priced[decisionKey(*ev)] {
+		if ev.HasTokenUsage() || priced[decisionKey(*ev)] {
 			continue // already priced — one decision prices once
 		}
 		if ev.Harness != harness {
@@ -346,23 +346,18 @@ func buildUsageEvent(harness string, usage telemetry.TokenUsage, payloadModel, s
 	if r == nil || routedID == "" || routedID == "unknown" {
 		return ev // tokens without prices: counted as neither real nor fake
 	}
-	routed, ok := r.LookupByID(harness, routedID)
-	if !ok {
+	if _, ok := r.LookupByID(harness, routedID); !ok {
 		return ev
 	}
 	if usage == (telemetry.TokenUsage{}) {
 		return ev
 	}
-	if telemetry.HasModelPrices(routed) {
-		actual := telemetry.CostUSD(routed, usage)
-		ev.ActualCostUSD = &actual
-	}
+	// Tokens only: the record carries the token counts and the model ids; the
+	// tier comparison reads those. No dollar figure is written.
 	// Observed routed spend does not establish the requested baseline. Keep
-	// it absent unless the linked decision names a catalog-resolved model.
+	// the source absent unless the linked decision names a catalog-resolved model.
 	if target != nil && target.FromModel != "" && target.FromModel != "unknown" {
-		if baseline, ok := r.LookupByID(harness, target.FromModel); ok && telemetry.HasModelPrices(baseline) {
-			base := telemetry.CostUSD(baseline, usage)
-			ev.BaselineCostUSD = &base
+		if _, ok := r.LookupByID(harness, target.FromModel); ok {
 			ev.BaselineSource = telemetry.BaselineRequested
 			if slices.Contains(target.ReasonCodes, telemetry.ReasonBaselineFromSettings) {
 				ev.BaselineSource = telemetry.BaselineInferred

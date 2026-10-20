@@ -193,7 +193,8 @@ func TestBuildTasks_UsageMarksBackgroundChildCompleted(t *testing.T) {
 	key := DecisionKey(dec)
 	cost := 0.02
 	launched := Event{Timestamp: "2026-10-13T10:00:01Z", Harness: "claude-code", SessionID: "s", Outcome: OutcomeChildEnded, ChildStatus: ChildLaunched, LinkedDecision: key}
-	usage := Event{Timestamp: "2026-10-13T10:01:00Z", Harness: "claude-code", SessionID: "s", Outcome: OutcomeUsage, ActualCostUSD: &cost, LinkedDecision: key}
+	in := int64(1000)
+	usage := Event{Timestamp: "2026-10-13T10:01:00Z", Harness: "claude-code", SessionID: "s", Outcome: OutcomeUsage, ActualCostUSD: &cost, LinkedDecision: key, InputTokens: &in}
 	for _, order := range [][]Event{{dec, launched, usage}, {dec, usage, launched}} {
 		tasks := BuildTasks(order)
 		if len(tasks) != 1 || !tasks[0].Completed() || !tasks[0].Priced {

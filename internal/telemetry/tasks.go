@@ -134,8 +134,10 @@ func BuildTasks(events []Event) []TaskRecord {
 		}
 		switch ev.Outcome {
 		case OutcomeUsage:
-			if ev.ActualCostUSD != nil {
-				tasks[i].CostUSD += *ev.ActualCostUSD
+			if ev.HasTokenUsage() {
+				if ev.ActualCostUSD != nil { // lines written before tokens only
+					tasks[i].CostUSD += *ev.ActualCostUSD
+				}
 				tasks[i].Priced = true
 				tasks[i].Tokens.add(classesOf(ev.TokenUsageOrZero()))
 			}

@@ -1,4 +1,4 @@
-.PHONY: build test lint vet install build-all clean report sim
+.PHONY: build test lint vet install build-all clean report
 
 BINARY=downshift
 LDFLAGS=-ldflags "-s -w"
@@ -10,10 +10,6 @@ build:
 ## test: run tests with race detector and coverage
 test:
 	go test -race -cover ./...
-
-## sim: offline accounting simulation with per-scenario ESTIMATE tables (no model call)
-sim:
-	go test ./cmd/downshift -run TestSimulation -count=1 -v
 
 ## vet: run go vet
 vet:
