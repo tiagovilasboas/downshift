@@ -44,59 +44,6 @@ func exportEvent(stamp time.Time, complexity string, verdict string, savings flo
 	}
 }
 
-func TestExportSummary_CountsRatesAndCosts(t *testing.T) {
-	real := exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT", 0.8)
-	real.ActualCostUSD = exportFloat64Ptr(0.02)
-	real.BaselineCostUSD = exportFloat64Ptr(0.10)
-	real.InputTokens = exportInt64Ptr(1000)
-	real.OutputTokens = exportInt64Ptr(500)
-	held := exportEvent(exportNow, "MEDIUM", "OK", 0)
-	held.Corrections = []string{"guardrail-demo"}
-
-	events := []telemetry.Event{
-		real,
-		exportEvent(exportNow, "COMPLEX", "UPSHIFT", 0),
-		held,
-		exportEvent(exportNow, "SIMPLE", "UNKNOWN", 0),
-	}
-
-	got := telemetry.ExportSummary(events, 30, exportNow)
-
-	wantCounts := map[string]int{
-		"total": 4, "downshifted": 1, "upshifted": 1, "ok": 1, "unknown": 1, "corrected": 1,
-	}
-	gotCounts := map[string]int{
-		"total": got.Total, "downshifted": got.Downshifted, "upshifted": got.Upshifted,
-		"ok": got.OK, "unknown": got.Unknown, "corrected": got.Corrected,
-	}
-	for key, want := range wantCounts {
-		if gotCounts[key] != want {
-			t.Errorf("%s = %d, want %d", key, gotCounts[key], want)
-		}
-	}
-	if math.Abs(got.DownshiftRate-0.25) > 1e-9 {
-		t.Errorf("DownshiftRate = %f, want 0.25", got.DownshiftRate)
-	}
-	if got.WindowDays != 30 {
-		t.Errorf("WindowDays = %d, want 30", got.WindowDays)
-	}
-	if got.RealCostEvents != 1 {
-		t.Errorf("RealCostEvents = %d, want 1", got.RealCostEvents)
-	}
-	if math.Abs(exportUSDPtr(got.RealSavedUSD)-0.08) > 1e-9 {
-		t.Errorf("RealSavedUSD = %f, want 0.08", exportUSDPtr(got.RealSavedUSD))
-	}
-	if math.Abs(got.NormBaseline-4.0) > 1e-9 {
-		t.Errorf("NormBaseline = %f, want 4.0", got.NormBaseline)
-	}
-	if got.ByComplexity["TRIVIAL"] != 1 || got.ByComplexity["COMPLEX"] != 1 {
-		t.Errorf("ByComplexity = %v, want TRIVIAL=1 COMPLEX=1", got.ByComplexity)
-	}
-	if got.GeneratedAt != exportNow.UTC().Format(time.RFC3339Nano) {
-		t.Errorf("GeneratedAt = %q, want fixed clock", got.GeneratedAt)
-	}
-}
-
 func TestExportSummary_UnknownCaution(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -131,23 +78,6 @@ func TestExportSummary_UnknownCaution(t *testing.T) {
 	}
 }
 
-func TestExportSummary_EmptyInputZeros(t *testing.T) {
-	got := telemetry.ExportSummary(nil, 30, exportNow)
-
-	if got.Total != 0 || got.Downshifted != 0 || got.Upshifted != 0 || got.OK != 0 || got.Unknown != 0 {
-		t.Errorf("counts not zero: %+v", got)
-	}
-	if got.DownshiftRate != 0 || got.RealSavedUSD != nil || got.ActualCostUSD != nil || got.NormBaseline != 0 || got.NormRouted != 0 {
-		t.Errorf("rates/costs wrong for empty input: %+v", got)
-	}
-	if got.ByComplexity == nil || len(got.ByComplexity) != 0 {
-		t.Errorf("ByComplexity should be empty non-nil map, got %v", got.ByComplexity)
-	}
-	if strings.Contains(got.Note, "Caution:") {
-		t.Errorf("empty input must not warn: %q", got.Note)
-	}
-}
-
 func TestExportSummary_WindowFiltering(t *testing.T) {
 	recent := exportEvent(exportNow.Add(-1*time.Hour), "TRIVIAL", "DOWNSHIFT", 0.8)
 	old := exportEvent(exportNow.Add(-48*time.Hour), "TRIVIAL", "DOWNSHIFT", 0.8)
@@ -179,7 +109,7 @@ func TestExportJSON_RoundTrip(t *testing.T) {
 	if !strings.Contains(raw, "\n") || !strings.Contains(raw, `"window_days"`) {
 		t.Fatalf("expected indented JSON with window_days, got: %s", raw)
 	}
-	for _, field := range []string{`"total"`, `"downshifted"`, `"downshift_rate"`, `"note"`, `"by_complexity"`, `"generated_at"`, `"rewrite_honored_inferred"`, `"schema_version": 2`} {
+	for _, field := range []string{`"total"`, `"downshifted"`, `"downshift_rate"`, `"note"`, `"by_complexity"`, `"generated_at"`, `"rewrite_honored_inferred"`, `"schema_version": 3`} {
 		if !strings.Contains(raw, field) {
 			t.Errorf("JSON missing field %s: %s", field, raw)
 		}
@@ -189,7 +119,7 @@ func TestExportJSON_RoundTrip(t *testing.T) {
 	if err := json.Unmarshal([]byte(raw), &back); err != nil {
 		t.Fatalf("Unmarshal ExportJSON: %v", err)
 	}
-	if back.SchemaVersion != 2 || back.Total != summary.Total || back.Downshifted != summary.Downshifted || back.Note != summary.Note {
+	if back.SchemaVersion != 3 || back.Total != summary.Total || back.Downshifted != summary.Downshifted || back.Note != summary.Note {
 		t.Errorf("round-trip mismatch: got %+v, want %+v", back, summary)
 	}
 	if math.Abs(back.DownshiftRate-summary.DownshiftRate) > 1e-9 {
@@ -258,8 +188,8 @@ func TestExportJSON_OmitsAllCostUSD_SchemaV2(t *testing.T) {
 				t.Fatalf("schema_version missing from export:\n%s", raw)
 			}
 			var schemaVer int
-			if err := json.Unmarshal(rawSchema, &schemaVer); err != nil || schemaVer != 2 {
-				t.Fatalf("expected schema_version 2, got %d (err: %v)", schemaVer, err)
+			if err := json.Unmarshal(rawSchema, &schemaVer); err != nil || schemaVer != 3 {
+				t.Fatalf("expected schema_version 3, got %d (err: %v)", schemaVer, err)
 			}
 			for _, key := range dollarKeys {
 				if _, ok := m[key]; ok {

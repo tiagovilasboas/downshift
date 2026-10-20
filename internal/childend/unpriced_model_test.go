@@ -37,7 +37,7 @@ func TestBuildUsageEvent_TokensOnlyNoDollars(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			target := &telemetry.Event{Harness: "claude-code", FromModel: tc.from, ToModel: tc.to}
 			ev := buildUsageEvent("claude-code", telemetry.TokenUsage{InputTokens: 1000, OutputTokens: 500}, tc.to, "s", "test", target, r, time.Now())
-			if ev.ActualCostUSD != nil || ev.BaselineCostUSD != nil || ev.HasRealCost() {
+			if ev.ActualCostUSD != nil || ev.BaselineCostUSD != nil {
 				t.Fatalf("a dollar figure was written: %#v", ev)
 			}
 			if !ev.HasTokenUsage() {

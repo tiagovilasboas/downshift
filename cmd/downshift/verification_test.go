@@ -24,17 +24,17 @@ func writeVerificationEvents(t *testing.T, events ...telemetry.Event) string {
 	return path
 }
 
-func usageEvent(tier, verification string, cost float64) telemetry.Event {
-	c := cost
-	return telemetry.Event{Outcome: telemetry.OutcomeUsage, Tier: tier, Verification: verification, ActualCostUSD: &c}
+func usageEvent(tier, verification string, tokens int64) telemetry.Event {
+	in := tokens
+	return telemetry.Event{Outcome: telemetry.OutcomeUsage, Tier: tier, Verification: verification, InputTokens: &in}
 }
 
 func TestVerificationReport_GroupsByTierAndCountsVerdicts(t *testing.T) {
 	path := writeVerificationEvents(t,
-		usageEvent("small", "passed", 0.01),
-		usageEvent("small", "failed", 0.02),
-		usageEvent("small", "none", 0.03),
-		usageEvent("frontier", "passed", 0.5),
+		usageEvent("small", "passed", 100),
+		usageEvent("small", "failed", 200),
+		usageEvent("small", "none", 300),
+		usageEvent("frontier", "passed", 5000),
 		telemetry.Event{Outcome: telemetry.OutcomeRewriteEmitted, Tier: "small"},
 	)
 	rep, err := buildVerificationReport(path)
@@ -51,13 +51,13 @@ func TestVerificationReport_GroupsByTierAndCountsVerdicts(t *testing.T) {
 	if small.Passed != 1 || small.Failed != 1 || small.None != 1 || small.Unrecorded != 0 {
 		t.Fatalf("small verdicts wrong: %+v", small)
 	}
-	if small.PricedCalls != 3 || small.CostUSD < 0.0599 || small.CostUSD > 0.0601 {
-		t.Fatalf("small cost wrong: %+v", small)
+	if small.TokenCalls != 3 {
+		t.Fatalf("small token calls wrong: %+v", small)
 	}
 }
 
 func TestVerificationReport_MissingFieldIsUnrecordedNotNone(t *testing.T) {
-	path := writeVerificationEvents(t, usageEvent("small", "", 0.01))
+	path := writeVerificationEvents(t, usageEvent("small", "", 100))
 	rep, err := buildVerificationReport(path)
 	if err != nil {
 		t.Fatal(err)
@@ -86,7 +86,7 @@ func TestVerificationReport_CLIRejectsBadFlagAndEmitsJSON(t *testing.T) {
 		t.Fatalf("missing usage message: %q", errOut.String())
 	}
 
-	path := writeVerificationEvents(t, usageEvent("small", "passed", 0.01))
+	path := writeVerificationEvents(t, usageEvent("small", "passed", 100))
 	out.Reset()
 	errOut.Reset()
 	if code := runVerificationReport([]string{"--events=" + path}, &out, &errOut); code != 0 {

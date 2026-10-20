@@ -326,24 +326,8 @@ func TestPrintStats_UnitMode_NoUSDClaim(t *testing.T) {
 	if !strings.Contains(out, "Normalised") {
 		t.Error("unit mode should label savings as 'Normalised'")
 	}
-	if !strings.Contains(out, "Not real dollars") {
-		t.Error("unit mode should disclaim real-dollar interpretation")
-	}
-}
-
-func TestPrintStats_DollarMode_ShowsUSD(t *testing.T) {
-	events := []telemetry.Event{
-		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.5),
-	}
-	var buf strings.Builder
-	telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true, Days: 30, CostPerUnit: 0.10}, &buf)
-	out := buf.String()
-
-	if !strings.Contains(out, "$") {
-		t.Error("dollar mode should show dollar signs")
-	}
-	if !strings.Contains(out, "--cost-per-unit=") {
-		t.Error("dollar mode should echo the rate used")
+	if !strings.Contains(out, "A count, not money") {
+		t.Error("unit mode should say the units are a count, not money")
 	}
 }
 

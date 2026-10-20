@@ -5,8 +5,6 @@ package telemetry
 
 import (
 	"encoding/json"
-
-	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // Real-cost usage extraction and pricing for PostToolUse hook payloads.
@@ -81,23 +79,6 @@ func DecisionKey(ev Event) string {
 		return ev.CorrelationID
 	}
 	return ev.Timestamp + "|" + ev.SessionID
-}
-
-// RoutedCost returns usage ev as the router may be credited for it. A usage
-// record is priced against the model its decision asked for, but only an
-// applied rewrite makes that a counterfactual: when the hook left the spawn
-// alone (outcome allow, baseline or blocked, or a guardrail correction) the model that ran is the harness's own choice (a /model switch after
-// the transcript was read, opusplan, a definition), and any gap to the model the
-// decision recorded is not the router's saving or overspend. Such a record gets
-// the cost it actually had as its baseline, so it moves no delta; records whose
-// decision is unknown are unchanged. The log itself is not rewritten.
-func RoutedCost(ev Event, decision Event, found bool) Event {
-	if !found || AppliedRewrite(decision.Outcome, decision.Corrections) || !ev.HasRealCost() {
-		return ev
-	}
-	same := *ev.ActualCostUSD
-	ev.BaselineCostUSD = &same
-	return ev
 }
 
 // IsAppliedShift reports a decision event whose rewrite was written and
@@ -184,28 +165,3 @@ const (
 	BaselineRequested = "requested"
 	BaselineInferred  = "inferred"
 )
-
-// FillRealCost prices the token usage already stored on ev and fills both
-// known cost pointers via CostUSD; missing list prices remain absent.
-// Usage is read with TokenUsageOrZero, so missing
-// or negative token fields contribute zero, never garbage.
-//
-// Callers should only invoke this when the spend is real: total tokens > 0
-// and the routed model resolved against the catalog. A zero-usage event
-// would otherwise register as a $0 "real cost" and inflate RealCostEvents
-// with a meaningless record.
-func FillRealCost(ev *Event, baseline, routed core.Model) {
-	if ev == nil {
-		return
-	}
-	usage := ev.TokenUsageOrZero()
-	if HasModelPrices(routed) {
-		actual := CostUSD(routed, usage)
-		ev.ActualCostUSD = &actual
-	}
-	if HasModelPrices(baseline) {
-		base := CostUSD(baseline, usage)
-		ev.BaselineCostUSD = &base
-		ev.BaselineSource = BaselineRequested
-	}
-}

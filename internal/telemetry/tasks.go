@@ -29,10 +29,8 @@ type TaskRecord struct {
 	Time    time.Time
 	// Status is how the child ended, or "" when no end was observed.
 	Status ChildStatus
-	// CostUSD is the catalog-priced cost of this spawn alone; Priced is false
-	// when no usage record carried a cost.
-	CostUSD float64
-	Priced  bool
+	// Priced is true when a usage record carried token counts for this spawn.
+	Priced bool
 	// Tokens is the token count of the priced usage records of this spawn alone.
 	Tokens TokenClasses
 	// Redo lists the failed spawns this one redid (a respawn in the same
@@ -40,9 +38,6 @@ type TaskRecord struct {
 	Redo []string
 	// Reworked is set on a failed spawn that a later spawn redid.
 	Reworked bool
-	// TotalUSD is CostUSD plus the cost of every failed attempt it redid,
-	// transitively. For a completed task this is its cost including rework.
-	TotalUSD float64
 	// TotalTokens is Tokens plus the tokens of every failed attempt it redid,
 	// transitively: the same scope as TotalUSD.
 	TotalTokens TokenClasses
@@ -135,9 +130,6 @@ func BuildTasks(events []Event) []TaskRecord {
 		switch ev.Outcome {
 		case OutcomeUsage:
 			if ev.HasTokenUsage() {
-				if ev.ActualCostUSD != nil { // lines written before tokens only
-					tasks[i].CostUSD += *ev.ActualCostUSD
-				}
 				tasks[i].Priced = true
 				tasks[i].Tokens.add(classesOf(ev.TokenUsageOrZero()))
 			}
@@ -163,7 +155,6 @@ func BuildTasks(events []Event) []TaskRecord {
 		tasks[n].Redo = append(tasks[n].Redo, tasks[f].Key)
 	}
 	type taskTotal struct {
-		usd    float64
 		tokens TokenClasses
 	}
 	memo := map[int]taskTotal{}
@@ -172,12 +163,11 @@ func BuildTasks(events []Event) []TaskRecord {
 		if v, ok := memo[i]; ok {
 			return v
 		}
-		sum := taskTotal{usd: tasks[i].CostUSD, tokens: tasks[i].Tokens}
+		sum := taskTotal{tokens: tasks[i].Tokens}
 		for _, k := range tasks[i].Redo {
 			// A redo is always later than the attempt it redid, so this
 			// recursion strictly moves back in time and cannot cycle.
 			r := total(index[k])
-			sum.usd += r.usd
 			sum.tokens.add(r.tokens)
 		}
 		memo[i] = sum
@@ -185,7 +175,7 @@ func BuildTasks(events []Event) []TaskRecord {
 	}
 	for i := range tasks {
 		t := total(i)
-		tasks[i].TotalUSD, tasks[i].TotalTokens = t.usd, t.tokens
+		tasks[i].TotalTokens = t.tokens
 	}
 	sort.SliceStable(tasks, func(i, j int) bool { return tasks[i].Time.Before(tasks[j].Time) })
 	return tasks

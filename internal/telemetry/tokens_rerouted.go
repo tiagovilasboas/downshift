@@ -18,7 +18,7 @@ import (
 // saved". Counts only: no prompt, task, path, session or agent id.
 
 // TokensBasis labels every figure of TokensRerouted.
-const TokensBasis = "tokens as reported by the harness; dollars elsewhere are the same tokens priced on the requested model, an estimate"
+const TokensBasis = "tokens as reported by the harness, placed by the catalog tier of the model that ran against the one requested"
 
 // Where a priced usage record's tokens land.
 const (
