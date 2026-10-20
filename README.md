@@ -43,7 +43,7 @@ Install the single binary and configure transparent, zero-config hooks across yo
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh && downshift setup
 ```
 
-`downshift setup` asks, backs up your existing configuration, and merges transparent pre-tool hooks into Claude Code (`~/.claude/settings.json`), Cursor, Codex, and OpenCode. On Claude Code it also installs the Downshift plugin (hooks plus the `cache-tax` mod) and the sibling mods `savvy-progress` (progress bar, `/agents-info` panel of subagents) `filetree` and `downshift-dock` (a band above the prompt whose Files and Agents buttons bring those two panels back), and discovers the models of your session. `downshift setup --dry-run` previews changes; `--undo` restores backups; `--no-plugin` keeps the hooks in `settings.json` and skips the mods.
+`downshift setup` asks, backs up your existing configuration, and merges transparent pre-tool hooks into Claude Code (`~/.claude/settings.json`), Cursor, Codex, and OpenCode. On Claude Code it also installs the Downshift plugin (hooks) and the sibling mods `savvy-progress` (progress bar, `/agents-info` panel of subagents) `filetree` and `downshift-dock` (a band above the prompt whose Files and Agents buttons bring those two panels back), and discovers the models of your session. `downshift setup --dry-run` previews changes; `--undo` restores backups; `--no-plugin` keeps the hooks in `settings.json` and skips the mods.
 
 Prefer not to pipe to a shell? Download a build from [Releases](https://github.com/tiagovilasboas/downshift/releases) and check its sha256 in `checksums.txt`. Releases from the next tag on also carry a build-provenance attestation (`gh attestation verify <file> --repo tiagovilasboas/downshift`).
 
@@ -62,27 +62,22 @@ downshift try "rename the userId variable"    # Preview routing decision and rat
 
 Delegating work to subagents is where a model choice can be made per task. Downshift runs in the background through native harness hooks, decides locally and deterministically (no model call), and leaves the spawn untouched when it is unsure:
 
-Downshift is four capabilities behind one `setup`, running as native Go hooks inside your harness:
+Downshift is three capabilities behind one `setup`, running as native Go hooks inside your harness:
 
 ### 1. Deterministic model routing (zero LLM)
 - No model call to choose a model: no extra tokens and no extra seconds in the spawn path.
 - Strict heuristics plus an in-process FNV word-hash boost that can only raise a tier. The decision is local, in milliseconds.
 - **Doubt never spends money.** When the classifier is not confident, the spawn keeps the model it asked for. Mechanical, repetitive work (renames, test runs, listings) is downshifted on the spot, and risk floors protect auth, payment, and secrets.
 
-### 2. Cache hygiene and orchestration awareness (`cache-tax`)
-- Prices a cold prompt cache before you pay for it: a cold send on a 50k+ context is held with its estimated rewrite price, and `/keepwarm` keeps the cache alive through a break.
-- Tells your own prompts apart from internal traffic (task notifications, peers, coordinators, scheduled triggers), so it never gets in the way of parallel subagent flows.
-- Claude Code 2.1.287+ only, installed by `setup` through the plugin.
+### 2. Output compaction (`downshift compact`, on by default)
+- On Claude Code, the plugin registers a Bash hook that rewrites a short allowlist of shell commands (`go test`, `git status`, with no pipe, list, redirection, quote, glob or expansion) to `downshift compact -- <command>`. That runs the program with no shell, keeps its exit code, and compacts stdout only when the exit code is 0, stderr is empty and the compressor recognises that command's own format. Errors, stack traces, diffs, grep matches and non-zero exits stay byte for byte the same.
+- **Honest scope:** it saves tokens only on clean runs of those commands (for example a `go test` where every package line is `ok`); a hook cannot rewrite the output of any other tool in flight, which needs a proxy such as [Headroom](https://github.com/chopratejas/headroom) (Downshift detects and records it, never starts it). Wired on Claude Code only.
+- Turn it off with `"exec": false` in the Downshift config or `DOWNSHIFT_EXEC=0`. `downshift context metrics` shows the bytes saved, with tokens estimated as bytes / 4. Details: [harness matrix](docs/reference/harness-matrix.md#shell-command-rewrite-downshift-compact-on-by-default-2026-10-19).
 
 ### 3. Code intelligence (DCI, opt-in)
 - Indexes the repository in-process: Go AST, plus TypeScript/JavaScript, Python, Rust, PHP, Java, and C# by pattern.
 - Reverse call graph: who calls whom, before the model edits anything (`downshift dci impact`).
 - Packs only the affected symbols with BM25 under a strict byte cap, so the model gets the relevant slice instead of the whole tree. Measured so far: latency and bytes, not answer quality. Off by default; `downshift dci enable` turns it on.
-
-### 4. Output compaction (native `contextopt`, in the spirit of RTK and Headroom)
-- Recognises noisy terminal output (clean `go test` runs, `git status`, repeated log lines) and compacts only what is unambiguously clean. Errors, stack traces, diffs, grep matches, and non-zero exits stay verbatim.
-- **Honest scope:** a Claude Code hook cannot rewrite tool output in flight, so by default the native provider measures bytes and saves no tokens. Real in-flight compression of every tool result needs a proxy such as [Headroom](https://github.com/chopratejas/headroom); Downshift detects and records it but never starts it. The compactor itself is available as a stream (`downshift context compress --exit 0`).
-- **Opt-in command wrapper (off by default):** `downshift context enable native` lets the PreToolUse hook rewrite a short allowlist of shell commands (`go test`, `git status`, with no pipe, list, redirection, quote, glob or expansion) to `downshift compact -- <command>`. That runs the program with no shell, keeps its exit code, and compacts stdout only when the exit code is 0, stderr is empty and the compressor recognises that command's own format; anything else prints byte-identical. It saves tokens only on those clean runs (for example a `go test` where every package line is `ok`). Wired on Claude Code only, through a Bash matcher you add yourself; not yet observed on a live session. `DOWNSHIFT_EXEC=0` turns it off. `downshift context metrics` shows the bytes saved, with tokens estimated as bytes / 4. Details: [harness matrix](docs/reference/harness-matrix.md#shell-command-rewrite-downshift-exec-opt-in-2026-10-19).
 
 The flow, end to end:
 
@@ -113,7 +108,7 @@ The flow, end to end:
 └───────────────────────────────┘                   └───────────────────────────────┘
 ```
 
-**Practical result.** One install instead of a separate router, a separate cache watcher, and a separate code indexer: `downshift setup` wires the hooks and, on Claude Code, the plugin, the mods, and your discovered models. It is a single Go binary with no daemon. What is proven so far is narrow: up to about 12% list-price saving on mechanical delegated work in a controlled trial, and nothing attributable on natural use; the other capabilities carry their own evidence status in the [capability matrix](docs/reference/capability-matrix.md).
+**Practical result.** One install instead of a separate router, a separate output compactor, and a separate code indexer: `downshift setup` wires the hooks and, on Claude Code, the plugin, the mods, and your discovered models. It is a single Go binary with no daemon. What is proven so far is narrow: up to about 12% list-price saving on mechanical delegated work in a controlled trial, and nothing attributable on natural use; the other capabilities carry their own evidence status in the [capability matrix](docs/reference/capability-matrix.md).
 
 ---
 
@@ -163,7 +158,7 @@ Internal hooks, benchmark harnesses, and catalog tools (*invoked by harness hook
 | `downshift dci hook <harness>` | Automated prompt context injection hook runner (1 MiB stdin cap) |
 | `downshift dci benchmark` | Measures local Git discovery, AST parsing, and BM25 retrieval latency |
 | `downshift context compress [--exit 0]` | Low-level safe stdin compaction stream utility |
-| `downshift compact -- <program> [args...]` | Runs a program with no shell, keeps its exit code, compacts only clean output (target of the shell rewrite; the plugin turns it on by default) |
+| `downshift compact -- <program> [args...]` | Runs a program with no shell, keeps its exit code, compacts only clean output (target of the shell rewrite; on by default through the plugin) |
 | `downshift context benchmark` | Compaction benchmark measuring raw byte reduction on checked-in fixtures |
 | `downshift models <discover\|check\|pull>` | Harness model discovery, catalog pricing audit, and remote score refresh |
 
@@ -197,9 +192,10 @@ Downshift follows a strict 5-rung [Evidence Ladder](docs/guides/evidence.md) (fr
 
 ## Mods & Companions
 
-- **Vendored Mods**: Claude Code 2.1.287+ plugins with zero routing logic: bundled `cache-tax` (monitors cold prompt cache prices and offers `/keepwarm`), plus sibling plugins `savvy-progress` (progress bar, `/agents-info` panel), `filetree` and the Downshift-owned `downshift-dock` (buttons that reopen those panels); on Claude Code `downshift setup` installs them with `claude plugin install` (`--no-plugin` skips them) ([mods guide](mods/README.md)).
+- **Vendored Mods**: Claude Code 2.1.287+ plugins with zero routing logic: sibling plugins `savvy-progress` (progress bar, `/agents-info` panel), `filetree` and the Downshift-owned `downshift-dock` (buttons that reopen those panels); on Claude Code `downshift setup` installs them with `claude plugin install` (`--no-plugin` skips them) ([mods guide](mods/README.md)).
 - **Optional theme**: `downshift-theme` is an original Claude Code theme mod; `setup` does not install it ([mods guide](mods/README.md)).
 - **Skills and commands**: the plugin ships `downshift-setup`, `downshift-audit` and `cost-reducer` as `/downshift:<name>`, plus `/downshift:status` ([skills guide](skills/README.md)).
+- **cache-tax** (optional, separate): the vendored cache-price mod in `hooks/cache-tax/` no longer loads from the plugin; install it on its own if you want it ([mods guide](mods/README.md)).
 - **Companions**: Integrates cleanly beside external proxies like [Headroom](https://github.com/chopratejas/headroom). Downshift records companion presence so savings are never attributed to routing alone ([companions guide](docs/guides/companions.md)).
 
 ---

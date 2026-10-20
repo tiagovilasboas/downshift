@@ -107,7 +107,9 @@ func CompressExit(input []byte, mode Mode, exitCode int) Result {
 		res.Reason = "no_final_newline_preserved"
 		return res
 	}
-	if bytes.IndexByte(input, '\r') != -1 {
+	// The Flutter and Dart reporters rewrite one status line with carriage
+	// returns even without a TTY; compressFlutterTest validates them exactly.
+	if bytes.IndexByte(input, '\r') != -1 && !isFlutterTest(input) {
 		res.Reason = "carriage_return_preserved"
 		return res
 	}
@@ -150,6 +152,15 @@ func detectFormat(input []byte) (Format, bool) {
 	}
 	if isPHPUnit(input) {
 		return FormatPHPUnit, rePHPUnitFailure.Match(input)
+	}
+	if isFlutterTest(input) {
+		return FormatFlutterTest, reFlutterTestFailure.Match(input)
+	}
+	if isMaven(input) {
+		return FormatMaven, reMavenFailure.Match(input)
+	}
+	if isGradle(input) {
+		return FormatGradle, reGradleFailure.Match(input)
 	}
 
 	// Verbose Go output ends with PASS, which otherwise matches Jest's generic
@@ -292,6 +303,12 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressNextBuild(input)
 	case FormatPHPUnit:
 		return compressPHPUnit(input)
+	case FormatFlutterTest:
+		return compressFlutterTest(input)
+	case FormatMaven:
+		return compressMaven(input)
+	case FormatGradle:
+		return compressGradle(input)
 	case FormatGitStatus:
 		return compressGitStatus(input)
 	case FormatGitLog:

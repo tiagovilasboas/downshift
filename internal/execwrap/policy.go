@@ -9,25 +9,32 @@
 // and emit the rewritten input.
 package execwrap
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // Family names an allowlisted command family. It is the only command fact
 // that reaches telemetry: never the command text, arguments or paths.
 type Family string
 
 const (
-	FamilyNone       Family = ""
-	FamilyGoTest     Family = "go-test"
-	FamilyGitStatus  Family = "git-status"
-	FamilyPytest     Family = "pytest"
-	FamilyVitest     Family = "vitest"
-	FamilyPlaywright Family = "playwright"
-	FamilyCargoTest  Family = "cargo-test"
-	FamilyTSC        Family = "tsc"
-	FamilyJest       Family = "jest"
-	FamilyCypress    Family = "cypress"
-	FamilyNextBuild  Family = "next-build"
-	FamilyPHPUnit    Family = "phpunit"
+	FamilyNone        Family = ""
+	FamilyGoTest      Family = "go-test"
+	FamilyGitStatus   Family = "git-status"
+	FamilyPytest      Family = "pytest"
+	FamilyVitest      Family = "vitest"
+	FamilyPlaywright  Family = "playwright"
+	FamilyCargoTest   Family = "cargo-test"
+	FamilyTSC         Family = "tsc"
+	FamilyJest        Family = "jest"
+	FamilyCypress     Family = "cypress"
+	FamilyNextBuild   Family = "next-build"
+	FamilyPHPUnit     Family = "phpunit"
+	FamilyFlutterTest Family = "flutter-test"
+	FamilyDartTest    Family = "dart-test"
+	FamilyGradle      Family = "gradle"
+	FamilyMaven       Family = "maven"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -153,6 +160,12 @@ func FamilyOf(argv []string) Family {
 	if argv[0] == "phpunit" || argv[0] == "vendor/bin/phpunit" || argv[0] == "./vendor/bin/phpunit" {
 		return FamilyPHPUnit
 	}
+	if isMavenCommand(argv) {
+		return FamilyMaven
+	}
+	if len(argv) >= 2 && isGradleProgram(argv[0]) && gradleTask(argv[1:]) {
+		return FamilyGradle
+	}
 	if len(argv) >= 3 && argv[0] == "npx" && argv[1] == "playwright" && argv[2] == "test" {
 		return FamilyPlaywright
 	}
@@ -164,12 +177,85 @@ func FamilyOf(argv []string) Family {
 		return FamilyGoTest
 	case argv[0] == "git" && argv[1] == "status":
 		return FamilyGitStatus
+	case argv[0] == "flutter" && argv[1] == "test":
+		return FamilyFlutterTest
+	case argv[0] == "dart" && argv[1] == "test":
+		return FamilyDartTest
 	case argv[0] == "cargo" && argv[1] == "test":
 		return FamilyCargoTest
 	case argv[0] == "playwright" && argv[1] == "test":
 		return FamilyPlaywright
 	}
 	return FamilyNone
+}
+
+// mavenGoals are the lifecycle phases the maven family wraps. A phase must be
+// the first argument and every other positional must be one too, so option-first forms ("mvn -q test") and plugin goals
+// ("mvn spring-boot:run") are never wrapped.
+var mavenGoals = map[string]bool{
+	"test": true, "verify": true, "package": true, "install": true, "clean": true,
+}
+
+// mavenFlags are the only options a wrapped Maven command may carry. Each takes
+// no value, so no file, settings or profile path can ride along.
+var mavenFlags = map[string]bool{
+	"-o": true, "-q": true, "-B": true, "-DskipTests": true, "-DskipITs": true,
+}
+
+func isMavenCommand(argv []string) bool {
+	switch argv[0] {
+	case "mvn", "mvnw", "./mvnw":
+		if len(argv) < 2 || !mavenGoals[argv[1]] {
+			return false
+		}
+		for _, a := range argv[2:] {
+			if strings.HasPrefix(a, "-") {
+				if !mavenFlags[a] {
+					return false
+				}
+			} else if !mavenGoals[a] {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func isGradleProgram(p string) bool {
+	return p == "gradle" || p == "gradlew" || p == "./gradlew"
+}
+
+// gradleTaskName is the exact allowlist of task names: the plain tasks, and
+// the unit-test, assemble and lint tasks of the Debug and Release build types.
+// Nothing else is allowlisted; there is no open suffix, so names such as
+// testDebugPublish or lintDebugUpload are not wrapped.
+var gradleTaskName = regexp.MustCompile(`^(?:build|check|clean|test|assemble|lint|connectedAndroidTest|testDebugUnitTest|testReleaseUnitTest|assembleDebug|assembleRelease|lintDebug|lintRelease)$`)
+
+// gradleTask reports whether there is at least one positional task and every
+// positional task is allowlisted (build, check, clean, test*, assemble*,
+// lint*), optionally qualified by a project path such as :app:assembleDebug.
+// The value of -x / --exclude-task is skipped; any other option that takes a
+// separate value leaves that value as a positional word, which fails the
+// check and keeps the command unwrapped.
+func gradleTask(args []string) bool {
+	found := false
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if a == "-x" || a == "--exclude-task" {
+			i++
+			continue
+		}
+		if strings.HasPrefix(a, "-") {
+			continue
+		}
+		name := a[strings.LastIndexByte(a, ':')+1:]
+		if !gradleTaskName.MatchString(name) {
+			return false
+		}
+		found = true
+	}
+	return found
 }
 
 func safeByte(c byte) bool {
