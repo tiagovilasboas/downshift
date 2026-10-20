@@ -74,7 +74,7 @@ for (const [name, answer] of [
 
 // With no flow registered the band follows the live subagents; a registered flow keeps upstream drawing.
 const spawnTwo = async ($: Engine, on: On, active = true) => {
-  mock.clock(on)
+  const clock = mock.clock(on)
   if (!active) on('ui.render', () => ({ type: 'engine' }) as never)
   on('session.id', () => ({ value: 'S-1' }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
@@ -84,6 +84,7 @@ const spawnTwo = async ($: Engine, on: On, active = true) => {
   for (const id of ['t1', 't2']) {
     await $.agent.spawn({ tool_use_id: id, prompt: 'p', description: `Work ${id}`, subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
   }
+  return clock
 }
 
 test('band fallback: no registered flow, the band shows the running subagents', async ($, on) => {
@@ -184,4 +185,29 @@ test('downshift: without a compactor block the header says nothing about it', as
   const { compactor: _c, ...noCompactor } = PANEL
   await world($, on, { stdout: JSON.stringify(noCompactor) }, 'S-1')
   expect(await shows($, 'Pane', /compactor/)).toBe(false)
+})
+
+// Whether the band draws at all: when it draws nothing it hands over to the engine, which the test engine reports as an error, not a failure here.
+const bandDrawn = async ($: Engine, text: RegExp): Promise<boolean> => {
+  try {
+    const ui = await $.ui.mount({ plugin: PLUGIN, surface: 'terminal', component: 'AbovePrompt', props: band as never })
+    const found = (await ui.find({ type: 'Text', text })) !== undefined
+    await ui.unmount()
+    return found
+  } catch (err) {
+    if (/drew nothing|no implementation for ui\.render/.test(String(err))) return false
+    throw err
+  }
+}
+
+test('dismiss: the band that follows the live subagents stays away after the dismiss, until a new agent starts', async ($, on) => {
+  const clock = await spawnTwo($, on)
+  expect(await bandDrawn($, /^2 running · 0 done$/)).toBe(true)
+  const ui = await $.ui.mount({ plugin: PLUGIN, surface: 'terminal', component: 'AbovePrompt', props: band as never })
+  await ui.press({ key: 'savvy-dismiss' } as never)
+  await ui.unmount()
+  expect(await bandDrawn($, /running/)).toBe(false)
+  await clock.advance(1000)
+  await $.agent.spawn({ tool_use_id: 't3', prompt: 'p', description: 'Work t3', subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
+  expect(await bandDrawn($, /running/)).toBe(true)
 })

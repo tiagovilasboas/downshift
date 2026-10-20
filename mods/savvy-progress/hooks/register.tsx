@@ -11,6 +11,10 @@ const panel = atom({ plugin: 'savvy-progress', key: 'panel' } as const, {
   autoOpenedFor: '',
 })
 const now = atom({ plugin: 'savvy-progress', key: 'now' } as const, 0)
+// Downshift local patch: when the band was dismissed (ms). The band that follows the live subagents
+// draws only agents started after it, so the dismiss button keeps the band away until a new agent starts.
+// Module state, like `ds` below: nothing needs it after a restart.
+let dismissedAt = -Infinity
 
 const TOOL = 'mcp__savvy-progress__progress'
 const STEP_TOOL = 'mcp__savvy-progress__step'
@@ -880,6 +884,11 @@ const dsSummary = (): string => {
   return parts.join(' · ')
 }
 
+/** Agents drawn by the band that follows the live subagents: only those started after the last dismiss. */
+const derivedAgents = async ($: EngineInterface): Promise<AgentRun[]> => {
+  return (await read($, agents)).filter(a => a.startedAt > dismissedAt)
+}
+
 export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
     const started = await next(e)
@@ -1133,7 +1142,7 @@ export const register: Register = (on, options) => {
     const f = await read($, flow)
     const p: Panel = await read($, panel)
     // The live clock: the stored `now` only ticks while an agent runs, so it would freeze after the last finish.
-    const at = Math.max(await $.clock.now(), ...list.map(a => a.startedAt), 0)
+    const at = Math.max(await Promise.resolve($.clock.now()).catch(() => 0), ...list.map(a => a.startedAt), 0)
 
     const running = list.filter(a => a.status === 'running').reverse()
     const finished = list.filter(a => a.status !== 'running').reverse()
@@ -1316,7 +1325,7 @@ export const register: Register = (on, options) => {
       registered !== null && registered.total > 0
         ? registered
         : dsActive
-          ? derivedFlow(await read($, agents))
+          ? derivedFlow(await derivedAgents($))
           : registered
     if (f === null || e.props.hasSurvey) return next(e)
     // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
@@ -1339,7 +1348,12 @@ export const register: Register = (on, options) => {
         label="✕"
         plain
         role="dismiss"
-        onPress={() => update($, flow, () => null)}
+        onPress={() =>
+          void (async () => {
+            dismissedAt = await read($, now)
+            await update($, flow, () => null)
+          })()
+        }
       />
     )
 
@@ -1351,9 +1365,11 @@ export const register: Register = (on, options) => {
       const width = Math.max(180, Math.min(1600, (e.props.bodyColumns || 100) * 8 - 96))
       return (
         <Box flexDirection="column">
-          <Box flexDirection={isRtl() ? 'row-reverse' : 'row'} alignItems="center" gap={1}>
-            <Svg source={rowSvg(f, width, isWorking)} alt={`${f.title}: ${label(f)}, ${percent}`} width={width} height={H} />
-            {crewButton}
+          <Box flexDirection={isRtl() ? 'row-reverse' : 'row'} alignItems="center" justifyContent="space-between" gap={1}>
+            <Box flexDirection={isRtl() ? 'row-reverse' : 'row'} alignItems="center" gap={1}>
+              <Svg source={rowSvg(f, width, isWorking)} alt={`${f.title}: ${label(f)}, ${percent}`} width={width} height={H} />
+              {crewButton}
+            </Box>
             {dismiss}
           </Box>
           {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
@@ -1367,16 +1383,18 @@ export const register: Register = (on, options) => {
     const width = Math.max(6, Math.min(40, cols - titleW - 32))
     return (
       <Box flexDirection="column">
-        <Box flexDirection="row" gap={2}>
-          <Box width={titleW} flexShrink={0}>
-            <Text color={f.isFinished ? DONE : ACCENT}>● </Text>
-            <Text wrap="truncate-end">{f.title}</Text>
+        <Box flexDirection="row" justifyContent="space-between">
+          <Box flexDirection="row" gap={2}>
+            <Box width={titleW} flexShrink={0}>
+              <Text color={f.isFinished ? DONE : ACCENT}>● </Text>
+              <Text wrap="truncate-end">{f.title}</Text>
+            </Box>
+            <Text color={f.isFinished ? DONE : ACCENT}>{barText(f, width)}</Text>
+            <Text bold>{label(f)}</Text>
+            <Text dimColor>{percent}</Text>
+            <Text color={CLAY}>▣</Text>
+            {crewButton}
           </Box>
-          <Text color={f.isFinished ? DONE : ACCENT}>{barText(f, width)}</Text>
-          <Text bold>{label(f)}</Text>
-          <Text dimColor>{percent}</Text>
-          <Text color={CLAY}>▣</Text>
-          {crewButton}
           {dismiss}
         </Box>
         {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
