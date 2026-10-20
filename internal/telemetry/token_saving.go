@@ -129,7 +129,7 @@ func TokenSavings(events []Event) TokenSavingView {
 	}
 	children := map[string]*child{}
 	for _, ev := range events {
-		if ev.Outcome != OutcomeUsage || ev.ActualCostUSD == nil {
+		if ev.Outcome != OutcomeUsage || !ev.HasTokenUsage() {
 			continue
 		}
 		c := classesOf(ev.TokenUsageOrZero())

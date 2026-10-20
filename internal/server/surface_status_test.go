@@ -100,10 +100,9 @@ func TestStatus_UnobservedDoesNotInflateSavingsOrHonor(t *testing.T) {
 	if cx.Quota != "held" || cx.Honor != "unobserved" {
 		t.Fatalf("held surface = honor %s quota %s, want unobserved/held", cx.Honor, cx.Quota)
 	}
-	// Usage with tokens but no price, or with no tokens, is not a priced
-	// child: no tokens saved figure, for any harness, never a zero.
-	if got.Stats.TokensSaved.Line != "" || got.Stats.TokensSavedByHarness != nil {
-		t.Fatalf("tokens saved = %+v by harness %+v, want none", got.Stats.TokensSaved, got.Stats.TokensSavedByHarness)
+	// Usage whose decision was never applied saves nothing, whatever it cost.
+	if ts := got.Stats.TokensSaved.Tokens; ts.WorkSaved != 0 || ts.CacheSaved != 0 {
+		t.Fatalf("tokens saved = %+v, want none", got.Stats.TokensSaved)
 	}
 }
 

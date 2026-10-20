@@ -208,7 +208,7 @@ func tokenModels(usage, decision Event, found, refuted bool) (requested, ran str
 // countTokens folds one priced usage record into its harness. A record with no
 // price or no tokens is not a priced token observation and adds nothing.
 func (a *aggregator) countTokens(ev Event, decision Event, found, unrouted, refuted bool) {
-	if ev.ActualCostUSD == nil {
+	if !ev.HasTokenUsage() {
 		return
 	}
 	c := classesOf(ev.TokenUsageOrZero())

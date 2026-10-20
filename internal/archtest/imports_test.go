@@ -32,7 +32,6 @@ var rules = []rule{
 	{"session", []string{"core"}, "session is a leaf loader; PlanForSession and friends stay in core"},
 	{"fuse", []string{"core"}, "fuse imports classify and semantic, never core (core wraps fuse)"},
 	{"codeintel", []string{"core", "classify"}, "code intelligence is independent of routing"},
-	{"simbench", []string{"adapters"}, "the simulation drives adapters only through the Driver port the binary implements"},
 	{"replay", []string{"core", "catalog", "telemetry", "adapters", "session", "classify", "hookport"}, "the replay domain reaches the router, the catalog and the transcripts only through its ports (Source, Router, Comparer)"},
 }
 
@@ -72,18 +71,6 @@ func TestImportGraph(t *testing.T) {
 				t.Errorf("internal/%s must not depend on %v (%s)", r.pkg, v, r.why)
 			}
 		})
-	}
-}
-
-// The offline simulation is a test-time layer: the shipped binary never
-// carries it.
-func TestBinaryDoesNotImportSimbench(t *testing.T) {
-	out, err := exec.Command("go", "list", "-deps", "github.com/tiagovilasboas/downshift/cmd/downshift").Output()
-	if err != nil {
-		t.Fatalf("go list -deps cmd/downshift: %v", err)
-	}
-	if v := violations(strings.Fields(string(out)), []string{"simbench"}); len(v) > 0 {
-		t.Errorf("cmd/downshift production imports %v", v)
 	}
 }
 

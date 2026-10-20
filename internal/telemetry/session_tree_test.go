@@ -211,7 +211,6 @@ func TestSessionTree_TokensNotDollars(t *testing.T) {
 	use := Event{
 		CorrelationID: "u1", Timestamp: at(time.Minute), SessionID: sessA, Harness: "claude-code",
 		Outcome: OutcomeUsage, LinkedDecision: "d1", ToModel: "claude-sonnet-5-5",
-		InputTokens: i64(1_000_000), OutputTokens: i64(0),
 	}
 	ev := []Event{td("d1", sessA, 0, "claude-sonnet-5-5"), use}
 	out := SessionTree(ev, sessA, TreeOptions{})

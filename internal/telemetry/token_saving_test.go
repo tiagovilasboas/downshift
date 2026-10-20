@@ -45,8 +45,8 @@ func TestTokenSavings_PerChildTypeAndSession(t *testing.T) {
 		usageEv("r1", 5, 5, 0, 0, 0.01, 0.04),
 		// unlinked usage, no decision in the window
 		usageEv("", 1, 1, 0, 0, 0.001, 0.001),
-		// tokens with no price are not a priced observation
-		{Harness: "claude-code", Outcome: OutcomeUsage, LinkedDecision: "a1", InputTokens: i64(999)},
+		// a usage record with no token counts is not a token observation
+		{Harness: "claude-code", Outcome: OutcomeUsage, LinkedDecision: "a1"},
 	}
 	v := TokenSavings(events)
 

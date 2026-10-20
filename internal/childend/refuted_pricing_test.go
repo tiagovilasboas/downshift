@@ -34,7 +34,7 @@ func TestHonesty_RefutedRewritePricedOnRewriteTarget(t *testing.T) {
 	res := childend.Record(hookport.ChildEnd{Harness: "claude-code", SessionID: "sess-1", ToolUseID: "call-1",
 		ResolvedModel: "claude-opus-5-5", Status: telemetry.ChildCompleted, Usage: &usage,
 		Source: hookport.SourcePayload, IsChild: true}, "test", r)
-	if res.Usage == nil || res.Usage.ActualCostUSD == nil {
+	if res.Usage == nil || !res.Usage.HasTokenUsage() {
 		t.Fatalf("precondition: no priced usage written: %+v", res)
 	}
 	evs, _ := telemetry.ReadEventsFrom(path)
@@ -47,10 +47,8 @@ func TestHonesty_RefutedRewritePricedOnRewriteTarget(t *testing.T) {
 	if !refuted {
 		t.Fatal("precondition: no refuting resolved record written")
 	}
-	opus, _ := r.LookupByID("claude-code", "claude-opus-5-5")
-	want := telemetry.CostUSD(opus, usage)
-	if got := *res.Usage.ActualCostUSD; got != want {
-		t.Fatalf("usage priced on %s at $%.4f (baseline $%.4f, real saved $%.4f); harness resolved opus, want actual $%.4f",
-			res.Usage.ToModel, got, *res.Usage.BaselineCostUSD, res.Usage.RealSavedUSD(), want)
+	// The harness ran the requested model, so the usage records that model.
+	if res.Usage.ToModel != "claude-opus-5-5" {
+		t.Fatalf("usage records model %q, want the model that ran (claude-opus-5-5)", res.Usage.ToModel)
 	}
 }

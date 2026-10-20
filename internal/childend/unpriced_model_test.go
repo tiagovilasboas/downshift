@@ -21,26 +21,30 @@ func (r unpricedResolver) LookupByID(harness, id string) (core.Model, bool) {
 	return r.Catalog.LookupByID(harness, id)
 }
 
-// Session discovery can establish identity and tier without establishing list
-// prices. Known identity must not fabricate free spend or a free baseline.
-func TestBuildUsageEvent_UnpricedModelKeepsCostsUnknown(t *testing.T) {
+// A usage record carries tokens and model ids only: no dollar figure is
+// written, and a model the catalog cannot resolve gets no baseline source, so
+// no tier comparison is claimed for it.
+func TestBuildUsageEvent_TokensOnlyNoDollars(t *testing.T) {
 	r := unpricedResolver{catalog.Load()}
 	for _, tc := range []struct {
-		name, from, to   string
-		actual, baseline bool
+		name, from, to string
+		baselineSource bool
 	}{
-		{"unknown actual", "claude-opus-5-5", "session-model", false, true},
-		{"unknown baseline", "session-model", "claude-haiku-5-5", true, false},
-		{"both unknown", "session-model", "session-model", false, false},
+		{"known models", "claude-opus-5-5", "claude-haiku-5-5", true},
+		{"session model (tier only)", "claude-opus-5-5", "session-model", true},
+		{"unknown requested", "unknown", "claude-haiku-5-5", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			target := &telemetry.Event{Harness: "claude-code", FromModel: tc.from, ToModel: tc.to}
 			ev := buildUsageEvent("claude-code", telemetry.TokenUsage{InputTokens: 1000, OutputTokens: 500}, tc.to, "s", "test", target, r, time.Now())
-			if (ev.ActualCostUSD != nil) != tc.actual || (ev.BaselineCostUSD != nil) != tc.baseline {
-				t.Fatalf("actual=%v baseline=%v; want priced %v/%v", ev.ActualCostUSD, ev.BaselineCostUSD, tc.actual, tc.baseline)
+			if ev.ActualCostUSD != nil || ev.BaselineCostUSD != nil || ev.HasRealCost() {
+				t.Fatalf("a dollar figure was written: %#v", ev)
 			}
-			if ev.HasRealCost() || ev.RealSavedUSD() != 0 {
-				t.Fatalf("missing price fabricated comparative cost: %#v", ev)
+			if !ev.HasTokenUsage() {
+				t.Fatalf("tokens not recorded: %#v", ev)
+			}
+			if got := ev.BaselineSource != ""; got != tc.baselineSource {
+				t.Fatalf("baseline source %q, want set=%v", ev.BaselineSource, tc.baselineSource)
 			}
 		})
 	}

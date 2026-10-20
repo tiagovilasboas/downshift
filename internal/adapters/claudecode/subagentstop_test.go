@@ -125,8 +125,8 @@ func TestSubagentStop_PricesFromTranscriptAndLinksToTheDecision(t *testing.T) {
 	if ev.LinkedDecision != "decision-1" || ev.AgentHash != telemetry.HashSessionID(stopAgent) {
 		t.Fatalf("link = %q agent=%q", ev.LinkedDecision, ev.AgentHash)
 	}
-	if !ev.HasRealCost() || ev.RealSavedUSD() <= 0 {
-		t.Fatalf("want real cost with savings against the requested frontier model, got %+v", ev)
+	if !ev.HasTokenUsage() || ev.ActualCostUSD != nil || ev.BaselineCostUSD != nil {
+		t.Fatalf("want tokens on the linked usage record and no dollar figure, got %+v", ev)
 	}
 }
 

@@ -164,7 +164,7 @@ func ChildEndLine(ev Event) string {
 		c := classesOf(ev.TokenUsageOrZero())
 		parts = append(parts, fmt.Sprintf("%s tokens (work %s, cache %s)", formatTokens(c.Total), formatTokens(c.Input+c.Output), formatTokens(c.Cache())))
 	}
-	if want := ev.FromModel; want != "" && want != "unknown" && ShortModel(want) != ran && ev.HasRealCost() {
+	if want := ev.FromModel; want != "" && want != "unknown" && ShortModel(want) != ran && ev.HasTokenUsage() {
 		guess := ""
 		if ev.BaselineSource == BaselineInferred {
 			guess = " (inferred baseline)"

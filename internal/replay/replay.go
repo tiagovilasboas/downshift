@@ -8,9 +8,7 @@
 // cheaper or a pricier model. It makes no model call and no network
 // connection, and it never persists a prompt.
 //
-// It is independent of simbench: simbench drives synthetic spawns through the
-// hook path to prove the accounting; replay re-decides real spawns to measure a
-// policy. Neither imports the other.
+// It re-decides real spawns to measure a policy, through its own ports.
 //
 // The domain imports nothing from the router, the catalog, telemetry or any
 // harness. Everything outside it comes through three ports: Source (where the

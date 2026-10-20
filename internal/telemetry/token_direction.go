@@ -21,7 +21,7 @@ func tokenDirection(usage, decision Event, found, unrouted, refuted bool) string
 		return TokenUnattributed
 	case !AppliedRewrite(decision.Outcome, decision.Corrections), refuted:
 		return TokenUnchanged
-	case !usage.HasRealCost():
+	case !usage.HasTokenUsage():
 		return TokenUnattributed
 	}
 	requested, ran := tokenModels(usage, decision, found, refuted)

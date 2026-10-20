@@ -41,7 +41,6 @@ product priorities, not a claim of equal release readiness across the three.
 | Safe by default | Doubt never spends money (R7, R8, semantic boost capped); inferred session on Claude Code; `SEMANTIC_BOOST` provenance and a frontier-on-doubt alarm in `stats` |
 | Real cost | SubagentStop usage linkage (Claude Code); expand as harnesses expose usage |
 | Tokens first | Live views show tokens saved from the requested model (work and cache apart), per agent, agent type and session; dollars only in `downshift report`, priced at report time (API and plan lenses) |
-| Offline simulation | `internal/simbench`: synthetic spawns through the real hook path with accounting invariants in `go test` ([simulation.md](docs/guides/simulation.md)) |
 | Evaluation | Public [benchmark/report.md](benchmark/report.md); full regression in maintainer downshift-labs; shadow observation |
 | Docs | User docs (install, session models), [classifier contrib](docs/contrib/classifier.md), misroute workflow |
 | Eval rigor | [router-generalization](docs/design/router-generalization.md) summary; detailed study in labs |

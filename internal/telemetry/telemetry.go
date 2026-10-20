@@ -237,6 +237,9 @@ type E5FuseRecord struct {
 	ErrorCode    string  `json:"error_code,omitempty"`
 }
 
+// HasTokenUsage reports whether the event carries any provider token count.
+func (e Event) HasTokenUsage() bool { return classesOf(e.TokenUsageOrZero()).Total > 0 }
+
 // HasRealCost reports whether the event carries real provider costs.
 // Both cost pointers must be non-nil; token counts alone are not enough.
 func (e Event) HasRealCost() bool {

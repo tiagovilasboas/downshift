@@ -197,8 +197,7 @@ func TestTokensRerouted_CacheSplit(t *testing.T) {
 
 // A record with no price or no tokens is not a priced token observation.
 func TestTokensRerouted_SkipsUnpricedAndEmpty(t *testing.T) {
-	unpriced := tokUsage("d", "claude-code", modelBig, modelSmall, tokUse{in: 5}, 1, 4)
-	unpriced.ActualCostUSD = nil
+	unpriced := tokUsage("d", "claude-code", modelBig, modelSmall, tokUse{}, 1, 4)
 	empty := tokUsage("d", "claude-code", modelBig, modelSmall, tokUse{}, 1, 4)
 	ev := []telemetry.Event{
 		tokDecision("d", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", modelBig, modelSmall), unpriced, empty,
