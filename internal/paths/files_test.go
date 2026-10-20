@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -64,9 +65,7 @@ func TestSessionModelsPathEnvOverrideWinsOverTheStateDir(t *testing.T) {
 
 func TestDisplayStateDirUsesTildeUnderHome(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
-	// Windows resolves the home directory from USERPROFILE, not HOME.
-	t.Setenv("USERPROFILE", home)
+	testenv.SetHome(t, home)
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", "")
 
 	t.Setenv(paths.EnvStateDir, "")
