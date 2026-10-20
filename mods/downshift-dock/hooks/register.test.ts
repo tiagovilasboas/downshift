@@ -146,3 +146,20 @@ describe('mode', () => {
     expect(modeLabel('performance')).toContain('performance')
   })
 })
+
+describe('mode', () => {
+  test('a valid mode file is read; a missing, invalid or unknown one is performance', () => {
+    expect(parseMode('{"mode":"economy"}')).toBe('economy')
+    expect(parseMode('{"mode":"performance"}')).toBe('performance')
+    expect(parseMode(null)).toBe('performance')
+    expect(parseMode('not json')).toBe('performance')
+    expect(parseMode('{"mode":"turbo"}')).toBe('performance')
+  })
+
+  test('a press switches between the two modes and the label names the current one', () => {
+    expect(nextMode('performance')).toBe('economy')
+    expect(nextMode('economy')).toBe('performance')
+    expect(modeLabel('economy')).toContain('economy')
+    expect(modeLabel('performance')).toContain('performance')
+  })
+})

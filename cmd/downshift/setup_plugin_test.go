@@ -159,8 +159,9 @@ func TestSetupPluginFallsBackToSettingsHooks(t *testing.T) {
 				t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
 			}
 			doc := parseDoc(t, e.read(".claude/settings.json"))
-			if cmds := hookCommands(t, doc, "PreToolUse"); len(cmds) != 1 || !strings.HasSuffix(cmds[0], "downshift claude-code") {
-				t.Fatalf("fallback must write the settings hook, got %v", cmds)
+			// Agent|Task and Bash share the handler: two groups, one command each.
+			if cmds := hookCommands(t, doc, "PreToolUse"); len(cmds) != 2 || !strings.HasSuffix(cmds[0], "downshift claude-code") || !strings.HasSuffix(cmds[1], "downshift claude-code") {
+				t.Fatalf("fallback must write the settings hooks, got %v", cmds)
 			}
 			if !strings.Contains(out, tc.note) || !strings.Contains(out, "wiring the hooks in settings.json instead") {
 				t.Fatalf("the fallback reason must be shown (%q):\n%s", tc.note, out)
@@ -199,7 +200,7 @@ func TestSetupNoPluginKeepsSettingsHooks(t *testing.T) {
 		t.Fatalf("--no-plugin must not run claude: %v", f.calls)
 	}
 	doc := parseDoc(t, e.read(".claude/settings.json"))
-	if cmds := hookCommands(t, doc, "PreToolUse"); len(cmds) != 1 {
+	if cmds := hookCommands(t, doc, "PreToolUse"); len(cmds) != 2 {
 		t.Fatalf("hooks expected in settings: %v", cmds)
 	}
 }

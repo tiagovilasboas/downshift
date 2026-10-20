@@ -36,7 +36,7 @@ const execEnvKillSwitch = "DOWNSHIFT_EXEC"
 // config. Tests swap it.
 var execConfigEnabled = func() bool {
 	cfg, err := contextopt.LoadConfig()
-	return err == nil && cfg.Enabled && cfg.Exec
+	return err == nil && cfg.Enabled && cfg.ExecOn()
 }
 
 // execExecutable is the absolute, symlink-resolved path of the running
