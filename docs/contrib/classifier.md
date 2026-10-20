@@ -43,15 +43,17 @@ Multilingual E5 (shadow and fuse) was removed on 2026-10-17. Logs written before
 
 ---
 
-## Go-native domain enrichment (candidate, opt-in)
+## Go-native bilingual domain enrichment (enabled by default)
 
-The production scorer remains unchanged by default. Additional engineering
-vocabulary lives in **`internal/classify/domain_signals.go`**, separate from the
-general table in `signals.go`. Activate the candidate vocabulary locally:
+Additional engineering vocabulary is enabled by default and lives in
+**`internal/classify/domain_signals.go`**, separate from the original
+baseline rules in `signals.go`. To restore baseline routing, set
+`DOWNSHIFT_DOMAIN_SIGNALS=0`.
 
 ```sh
-DOWNSHIFT_DOMAIN_SIGNALS=1 downshift try "Investigue o hydration mismatch no React"
-DOWNSHIFT_DOMAIN_SIGNALS=1 go test ./internal/classify ./internal/core
+downshift try "Investigue o hydration mismatch no React"
+go test ./internal/classify ./internal/core
+DOWNSHIFT_DOMAIN_SIGNALS=0 downshift try "Investigue o hydration mismatch no React"
 ```
 
 The table currently contains **32 rules across eight domains**: frontend,
@@ -65,7 +67,7 @@ rule must have an **English, Brazilian Portuguese and mixed-language** example
 in `domain_signals_test.go`. The current test set has 96 positive examples,
 checks the same regex for all three variants, and verifies the integrated
 scorer does not send those scoped examples below medium. This does **not**
-prove global equal routing outcomes for arbitrary EN/PT prompts: promotion
+prove global equal routing outcomes for arbitrary EN/PT prompts: continued calibration
 requires reviewed holdout corpus evaluation, including over-routing, risk
 false negatives, confidence, and latency.
 
