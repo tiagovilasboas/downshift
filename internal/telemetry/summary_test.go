@@ -98,3 +98,18 @@ func TestRotatedBackupCount(t *testing.T) {
 		t.Fatalf("backups = %d, want 2 (lock and live log excluded)", n)
 	}
 }
+
+// The summary carries the same savings in tokens: the cheaper tier's tokens
+// are the gross, the pricier tier's tokens the overspend.
+func TestSummarize_TokensByTier(t *testing.T) {
+	events := []telemetry.Event{
+		tokDecision("d", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", "claude-opus-4-7", "claude-haiku-4-5"),
+		tokUsage("d", "claude-code", "claude-opus-4-7", "claude-haiku-4-5", tokUse{in: 10, out: 20, cached: 100, write: 40}, 1, 4),
+		tokDecision("e", telemetry.OutcomeRewriteEmitted, "UPSHIFT", "claude-haiku-4-5", "claude-opus-4-7"),
+		tokUsage("e", "claude-code", "claude-haiku-4-5", "claude-opus-4-7", tokUse{in: 5, out: 5}, 4, 1),
+	}
+	got := telemetry.Summarize(events)
+	if got.GrossSavedTokens != 130 || got.OverspendTokens != 10 || got.NetSavedTokens != 120 {
+		t.Fatalf("tokens gross %d overspend %d net %d, want 130/10/120", got.GrossSavedTokens, got.OverspendTokens, got.NetSavedTokens)
+	}
+}
