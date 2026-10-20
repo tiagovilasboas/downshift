@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Prints shell-assignable flags: docs_only, go, python (0 or 1). Go is the default; see needs_go.
+# Prints shell-assignable flags: docs_only, go, python, os_sensitive (0 or 1).
+# Go is the default; see needs_go. os_sensitive gates the cross-OS test job.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -25,8 +26,20 @@ needs_go() {
   return 0
 }
 
+# Paths whose behaviour differs by OS (paths, HOME, setup writer, exec wrapper,
+# hooks wiring) or whose change must be proven on Windows and macOS.
+needs_os() {
+  case "$1" in
+    internal/paths/* | internal/execwrap/* | internal/contextopt/* | internal/hookctx/* | internal/adapters/* | cmd/downshift/* | scripts/kirocrew-* | hooks/hooks.json | mods/*/hooks/hooks.json | .github/workflows/*)
+      return 0
+      ;;
+  esac
+  return 1
+}
+
 go=0
 python=0
+os_sensitive=0
 seen=0
 
 while IFS= read -r f; do
@@ -34,6 +47,9 @@ while IFS= read -r f; do
   seen=1
   if needs_go "$f"; then
     go=1
+  fi
+  if needs_os "$f"; then
+    os_sensitive=1
   fi
   case "$f" in
     orchestration/* | tests/ds04_observer_contract/* | scripts/sync_catalog_prices.py | scripts/test_sync_catalog_prices.py)
@@ -46,11 +62,17 @@ done <<<"$changed"
 if [ "$seen" -eq 0 ]; then
   go=1
   python=1
+  os_sensitive=1
 fi
 
 # Tags always run Go smoke path.
 if [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
   go=1
+fi
+
+# main is always checked in full on every OS, whatever the diff touched.
+if [[ "${GITHUB_REF:-}" == refs/heads/main ]] || [[ "${GITHUB_REF:-}" == refs/tags/* ]]; then
+  os_sensitive=1
 fi
 
 # docs_only means "nothing needing Go or Node tests changed".
@@ -59,3 +81,4 @@ if [ "$go" -eq 1 ]; then docs_only=0; else docs_only=1; fi
 echo "docs_only=$docs_only"
 echo "go=$go"
 echo "python=$python"
+echo "os_sensitive=$os_sensitive"
