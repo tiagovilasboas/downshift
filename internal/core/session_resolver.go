@@ -234,6 +234,14 @@ func (r *sessionResolver) IsExplicitOnly(harness, id string) bool {
 	return r.fallback != nil && r.fallback.IsExplicitOnly(harness, id)
 }
 
+// IsShadow forwards the allowlist shadow check; the catalog owns the rows.
+func (r *sessionResolver) IsShadow(harness, id string) bool {
+	if s, ok := r.fallback.(interface{ IsShadow(string, string) bool }); ok {
+		return s.IsShadow(harness, id)
+	}
+	return false
+}
+
 // ShadowGateways forwards the optional allowlist extension. The allowlist is
 // a user fact, not a session fact, so it comes from the fallback unchanged.
 func (r *sessionResolver) ShadowGateways() []Model {

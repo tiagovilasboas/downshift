@@ -1,0 +1,10 @@
+```python
+def csv_row(fields):
+    rows = []
+    for field in fields:
+        value = "" if field is None else str(field)
+        if any(char in value for char in ',"\r\n'):
+            value = '"' + value.replace('"', '""') + '"'
+        rows.append(value)
+    return ','.join(rows)
+```

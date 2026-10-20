@@ -1,0 +1,14 @@
+```python
+def csv_row(fields):
+    def encode(value):
+        if value is None:
+            value = ""
+        else:
+            value = str(value)
+
+        if any(char in value for char in ',"\r\n'):
+            return '"' + value.replace('"', '""') + '"'
+        return value
+
+    return ",".join(encode(field) for field in fields)
+```

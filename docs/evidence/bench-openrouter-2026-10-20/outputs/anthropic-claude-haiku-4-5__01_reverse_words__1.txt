@@ -1,0 +1,44 @@
+
+```python
+def reverse_words(s: str) -> str:
+    # Extract all words (maximal runs of letters or digits)
+    words = []
+    current_word = ""
+    
+    for char in s:
+        if char.isalnum():
+            current_word += char
+        else:
+            if current_word:
+                words.append(current_word)
+                current_word = ""
+    
+    if current_word:
+        words.append(current_word)
+    
+    # Reverse the words list
+    words.reverse()
+    
+    # Reconstruct the string with words reversed but non-word characters in original positions
+    result = []
+    word_index = 0
+    current_word_pos = 0
+    
+    for char in s:
+        if char.isalnum():
+            if current_word_pos == 0:
+                # Starting a new word position, get the next reversed word
+                if word_index < len(words):
+                    current_word = words[word_index]
+                    word_index += 1
+            
+            if current_word_pos < len(current_word):
+                result.append(current_word[current_word_pos])
+                current_word_pos += 1
+        else:
+            # Non-word character, keep it in place
+            result.append(char)
+            current_word_pos = 0
+    
+    return "".join(result)
+```

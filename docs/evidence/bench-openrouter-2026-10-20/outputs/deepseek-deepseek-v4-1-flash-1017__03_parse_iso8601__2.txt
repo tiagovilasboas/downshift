@@ -1,0 +1,11 @@
+```python
+import datetime
+
+def parse_iso8601(s: str) -> datetime.datetime:
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    dt = datetime.datetime.fromisoformat(s)
+    if dt.tzinfo is None or dt.utcoffset() is None:
+        raise ValueError("ISO 8601 string must include a timezone offset")
+    return dt
+```

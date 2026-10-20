@@ -1,0 +1,30 @@
+```python
+def reverse_words(s: str) -> str:
+    words = []
+    current = []
+
+    for char in s:
+        if char.isalnum():
+            current.append(char)
+        elif current:
+            words.append("".join(current))
+            current = []
+
+    if current:
+        words.append("".join(current))
+
+    reversed_words = iter(reversed(words))
+    result = []
+    in_word = False
+
+    for char in s:
+        if char.isalnum():
+            if not in_word:
+                result.append(next(reversed_words))
+                in_word = True
+        else:
+            result.append(char)
+            in_word = False
+
+    return "".join(result)
+```

@@ -1,0 +1,8 @@
+```python
+def reverse_words(s: str) -> str:
+    import re
+
+    pattern = r"[^\W_]+"
+    words = re.findall(pattern, s)
+    return re.sub(pattern, lambda _: words.pop(), s)
+```

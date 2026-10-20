@@ -1,0 +1,35 @@
+
+```python
+def call_with_retry(fn, max_attempts, base_delay, sleep):
+    """
+    Call fn() with retry logic using exponential backoff.
+    
+    Args:
+        fn: Function to call with no arguments
+        max_attempts: Maximum number of attempts
+        base_delay: Initial delay in seconds
+        sleep: Function to call for sleeping (e.g., time.sleep)
+    
+    Returns:
+        Result of fn() on first success
+    
+    Raises:
+        Last exception if all attempts fail
+    """
+    last_exception = None
+    
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return fn()
+        except Exception as e:
+            last_exception = e
+            
+            # If this wasn't the last attempt, sleep before retrying
+            if attempt < max_attempts:
+                # Calculate delay: base_delay * 2^(attempt - 1)
+                delay = base_delay * (2 ** (attempt - 1))
+                sleep(delay)
+    
+    # All attempts failed, re-raise the last exception
+    raise last_exception
+```

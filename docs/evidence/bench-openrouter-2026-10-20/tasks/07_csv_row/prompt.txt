@@ -1,0 +1,7 @@
+Write a Python function `csv_row(fields)` that takes an iterable of values and returns one RFC 4180 CSV line without a trailing newline.
+- Convert None to an empty field; convert every other value with str().
+- Wrap a field in double quotes only if it contains a comma, a double quote, CR or LF.
+- Inside quoted fields, double every double quote.
+- Fields are joined with commas.
+Examples: csv_row(['a', 'b']) == 'a,b'; csv_row(['say "hi"']) == '"say ""hi"""'.
+Return only one Python code block containing the function. No explanation.

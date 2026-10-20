@@ -1,0 +1,38 @@
+```python
+class TokenBucket:
+    def __init__(
+        self, capacity: float, refill_per_second: float, clock
+    ) -> None:
+        capacity = float(capacity)
+        refill_per_second = float(refill_per_second)
+
+        if capacity < 0:
+            raise ValueError("capacity must be non-negative")
+        if refill_per_second < 0:
+            raise ValueError("refill_per_second must be non-negative")
+
+        self.capacity = capacity
+        self.refill_per_second = refill_per_second
+        self.clock = clock
+        self._tokens = capacity
+        self._last_refill = float(clock())
+
+    def allow(self, cost: float = 1.0) -> bool:
+        cost = float(cost)
+        if cost < 0:
+            raise ValueError("cost must be non-negative")
+
+        now = float(self.clock())
+        elapsed = now - self._last_refill
+        if elapsed > 0:
+            self._tokens = min(
+                self.capacity,
+                self._tokens + elapsed * self.refill_per_second,
+            )
+            self._last_refill = now
+
+        if self._tokens >= cost:
+            self._tokens -= cost
+            return True
+        return False
+```

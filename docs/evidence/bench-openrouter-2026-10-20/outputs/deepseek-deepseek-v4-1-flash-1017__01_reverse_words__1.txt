@@ -1,0 +1,17 @@
+```python
+def reverse_words(s: str) -> str:
+    words = []
+    i = 0
+    n = len(s)
+
+    while i < n:
+        if s[i].isalnum():
+            j = i
+            while j < n and s[j].isalnum():
+                j += 1
+            words.append(s[i:j])
+            i = j
+        else:
+            i += 1
+
+    words.reverse

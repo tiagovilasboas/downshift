@@ -1,0 +1,7 @@
+Write a Python function `json_get(data, path, default=None)`.
+- `path` is a string of dot-separated keys. A segment may end with one or more bracketed non-negative integer indexes, e.g. 'user.items[0].name' or 'matrix[1][2]'.
+- Return the value at the path.
+- If any step is missing (absent key, index out of range, or the current value is not a dict or list for that step), return `default`.
+- An empty path returns data itself.
+- Do not mutate data.
+Return only one Python code block containing the function. No explanation.
