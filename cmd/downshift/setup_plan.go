@@ -136,23 +136,12 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 			}
 		}
 	}
-	// A wrapper hook already registered from another directory (the repository
-	// checkout the install guide points at) is the user's: leave it, and write
-	// no wrapper for it. Anything else gets the generated wrapper, written
+	// A hook that names a Wrapper is carried by a generated script, written
 	// before the config that points at it.
-	var wrapperNotes []string
-	var kept []setupHook
 	for _, h := range t.Hooks {
 		if h.Wrapper == "" {
-			kept = append(kept, h)
 			continue
 		}
-		want := wrapperPath(o.stateDir(), h)
-		if cur := existingWrapperCommand(doc, t, h); cur != "" && cur != want {
-			wrapperNotes = append(wrapperNotes, fmt.Sprintf("%s is already wired through %s: left untouched", h.Event, cur))
-			continue
-		}
-		kept = append(kept, h)
 		w := planWrapper(o, h)
 		w.target = t
 		if w.err != nil {
@@ -161,13 +150,12 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 		}
 		p.companions = append(p.companions, w)
 	}
-	t.Hooks = kept
 	notes, err := mergeTarget(doc, t, o.Binary, o.stateDir(), o.NoSessionPolicy, o.YouShouldKnow)
 	if err != nil {
 		p.err = err
 		return p
 	}
-	p.notes = append(pluginNote, append(append(wrapperNotes, notes...), t.Notes...)...)
+	p.notes = append(pluginNote, append(notes, t.Notes...)...)
 	out, err := renderJSONDoc(doc)
 	if err != nil {
 		p.err = err

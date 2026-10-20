@@ -50,14 +50,15 @@ type setupOptions struct {
 	// (installed now, or assumed in a dry run).
 	PluginActive map[string]bool
 	Home         string
-	// StateDir is where setup keeps what it generates (wrapper scripts). Empty
-	// means <Home>/.downshift.
+	Binary       string
+	Now          func() time.Time
+	In           io.Reader
+	Out          io.Writer
+	Err          io.Writer
+
+	// StateDir is where setup keeps what it generates (wrapper scripts).
+	// Empty means <Home>/.downshift.
 	StateDir string
-	Binary   string
-	Now      func() time.Time
-	In       io.Reader
-	Out      io.Writer
-	Err      io.Writer
 }
 
 // runSetup is the CLI entry: it resolves HOME and the running binary.
@@ -143,34 +144,28 @@ func setupRun(o setupOptions) int {
 	for _, t := range targets {
 		if t.File == "" {
 			fmt.Fprintf(o.Out, "%s: detected, not wired by setup\n  %s\n\n", t.Name, osWrapperHint(t.Manual))
-		} else {
-			if active, notes := ensurePlugin(o, t); active || len(notes) > 0 {
-				if o.PluginActive == nil {
-					o.PluginActive = map[string]bool{}
-				}
-				o.PluginActive[t.Name] = active
-				extra[t.Name] = notes
+			if p, ok := planSteering(o, t); ok {
+				plans = append(plans, p)
 			}
-			extra[t.Name] = append(extra[t.Name], ensureMods(o, t)...)
-			p := planTarget(o, t)
-			p.notes = append(extra[t.Name], p.notes...)
-			// A file the config points at is written before the config.
-			plans = append(plans, p.companions...)
-			plans = append(plans, p)
+			continue
 		}
-		if p, ok := planSteering(o, t); ok {
-			plans = append(plans, p)
+		if active, notes := ensurePlugin(o, t); active || len(notes) > 0 {
+			if o.PluginActive == nil {
+				o.PluginActive = map[string]bool{}
+			}
+			o.PluginActive[t.Name] = active
+			extra[t.Name] = notes
 		}
+		extra[t.Name] = append(extra[t.Name], ensureMods(o, t)...)
+		p := planTarget(o, t)
+		p.notes = append(extra[t.Name], p.notes...)
+		plans = append(plans, p.companions...)
+		plans = append(plans, p)
 	}
 
 	failed := false
 	pending := 0
-	unwritable := map[string]bool{} // paths whose plan failed, here or while writing
-	for _, p := range plans {
-		if p.err != nil {
-			unwritable[p.path] = true
-		}
-	}
+	unwritable := map[string]bool{} // files that failed to write
 	for _, p := range plans {
 		shown := setupDisplay(o.Home, p.path)
 		switch {

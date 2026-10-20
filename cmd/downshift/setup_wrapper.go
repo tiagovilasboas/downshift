@@ -131,31 +131,6 @@ func planWrapper(o setupOptions, h setupHook) setupPlan {
 	return p
 }
 
-// existingWrapperCommand returns the command of a hook h that is already in
-// doc, or "". It reads the same place mergeTarget writes: HooksPath, then the
-// list under h.Event.
-func existingWrapperCommand(doc *jobj, t setupTarget, h setupHook) string {
-	holder := doc
-	for _, key := range t.HooksPath {
-		v, ok := holder.get(key)
-		if !ok {
-			return ""
-		}
-		next, isObj := asObj(v)
-		if !isObj {
-			return ""
-		}
-		holder = next
-	}
-	list, _ := holder.vals[h.Event].([]any)
-	for _, item := range list {
-		if e, ok := asObj(item); ok && ownsCommand(hookCommand(e), h) {
-			return hookCommand(e)
-		}
-	}
-	return ""
-}
-
 // failedCompanion returns the path of a companion of p that could not be
 // written, or "" when p can be written.
 func failedCompanion(p setupPlan, unwritable map[string]bool) string {
