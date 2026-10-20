@@ -158,7 +158,7 @@ downshift context benchmark
 
 ## 8. Providers e companions
 
-`internal/contextopt` tem dois tipos de provider. O **nativo** roda no processo e é o default (seção 1). Um **companion** (`contextopt.Companion`) é uma ferramenta externa que o usuário instala e executa; o Downshift a detecta, registra que está em uso (`Config.Companion`) e aponta para o comando dela. Nunca instala, lança, faz `wrap` ou configura (a integração RTK fazia `init` em nome do usuário e foi removida no #71).
+`internal/contextopt` tem dois tipos de provider. O **nativo** roda no processo e é o default (seção 1). Um **companion** (`contextopt.Companion`) é uma ferramenta externa que o usuário instala e executa; o Downshift a detecta, registra que está em uso (`Config.Companion`) e aponta para o comando dela. Nunca instala, lança, faz `wrap` ou configura (uma integração anterior fazia `init` em nome do usuário e foi removida no #71).
 
 | Provider | Tipo | Detecção | `enable` persiste | O que muda no hook |
 |---|---|---|---|---|
