@@ -617,7 +617,11 @@ func TestRun_NextBuildAndPHPUnitCompact(t *testing.T) {
 		family                            Family
 	}{
 		{"Next.js build", "next", "next build", "next_build_pass.txt", "Next.js Build: SUCCESS (5 routes: 3 app, 2 pages; shared First Load JS 96.7 kB in 8.2s)", FamilyNextBuild},
+		{"Gradle", "gradle", "gradle build", "gradle_pass_build.txt", "gradle: 14 tasks", FamilyGradle},
 		{"PHPUnit", "phpunit", "phpunit", "phpunit_pass_default.txt", "PHPUnit: PASS (58 tests, 143 assertions", FamilyPHPUnit},
+		{"Flutter test", "flutter", "flutter test", "flutter_pass_compact.txt", "dart/flutter test: PASS (3 passed, 1 skipped", FamilyFlutterTest},
+		{"Dart test", "dart", "dart test --no-color", "dart_pass_compact.txt", "dart/flutter test: PASS (3 passed, 1 skipped", FamilyDartTest},
+		{"Maven", "mvn", "mvn test", "maven_pass_test.txt", "[INFO] BUILD SUCCESS", FamilyMaven},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			data, err := os.ReadFile(filepath.Join("..", "compressor", "testdata", "corpus", tc.fixture))
