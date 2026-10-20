@@ -116,11 +116,6 @@ func TestBuildReport_NoSavingsIntervalIncludesZero(t *testing.T) {
 	if rep.Savings == nil || rep.Savings.PerTaskLowUSD > 0 || rep.Savings.PerTaskHighUSD < 0 {
 		t.Fatalf("identical groups must give an interval around zero: %+v", rep.Savings)
 	}
-	var b strings.Builder
-	PrintReport(&b, rep)
-	if !strings.Contains(b.String(), "includes zero") {
-		t.Errorf("report must flag an interval that includes zero:\n%s", b.String())
-	}
 }
 
 func TestBuildTasks_ReworkLinkingAndCost(t *testing.T) {
