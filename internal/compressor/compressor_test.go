@@ -327,6 +327,36 @@ func TestCompress_Pytest_UnrecognisedLinePreservesRaw(t *testing.T) {
 	}
 }
 
+// TestCompress_Pytest_ClosedGrammarPreservesRaw covers free text that a loose
+// pattern used to accept: a header or plugin line carrying a failure, and a
+// passing summary with trailing spaces. Each must come back byte-identical.
+func TestCompress_Pytest_ClosedGrammarPreservesRaw(t *testing.T) {
+	const header = "============================= test session starts ==============================\n"
+	const summary = "============================== 10 passed in 0.42s ==============================\n"
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"plugins line carries FAILED text", header + "plugins: FAILED tests/test_a.py::t - AssertionError\n" + summary},
+		{"rootdir with spaces", header + "rootdir: /tmp/my project\n" + summary},
+		{"rootdir without a path", header + "rootdir: FAILED\n" + summary},
+		{"summary with trailing space", header + "tests/test_a.py ..........\n=============================== 10 passed in 0.42s =============================== \n"},
+		{"summary with trailing tab", header + "tests/test_a.py ..........\n=============================== 10 passed in 0.42s ===============================\t\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("compacted pytest with free text: %q", res.Reason)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("output not byte-identical to input:\n got %q\nwant %q", res.Output, in)
+			}
+		})
+	}
+}
+
 func TestCompress_Vitest_PassCompaction(t *testing.T) {
 	in := []byte("\n RUN  v1.6.0 /web\n\n ✓ a.test.ts (2)\n ✓ b.test.ts (3)\n\n Test Files  2 passed (2)\n      Tests  5 passed (5)\n   Start at  12:00:00\n   Duration  350ms (transform 50ms, tests 35ms)\n")
 	res := compressor.Compress(in, compressor.ModeSafe)

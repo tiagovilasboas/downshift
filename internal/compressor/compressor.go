@@ -23,7 +23,7 @@ var (
 	reGitLogCommit      = regexp.MustCompile(`(?m)^commit\s+[0-9a-f]{40}`)
 	reGitStatusHead     = regexp.MustCompile(`(?m)^(?:On branch |HEAD detached at )`)
 	reRipgrepMatch      = regexp.MustCompile(`(?m)^(?:\d+:)?[^:\n]+:\d+:`)
-	rePytestSummary     = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d[^\n=]*?)\s*=+\s*$`)
+	rePytestSummary     = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d[^\n=]*?)\s*=+$`)
 	rePytestHeader      = regexp.MustCompile(`(?m)^=+\s*test session starts\s*=+`)
 	rePytestFailSummary = regexp.MustCompile(`(?m)^=+\s*.*?(?:failed|error).*?\s+in\s+`)
 	// rePytestPlainLine lists every line shape a clean pytest run emits. A
@@ -31,9 +31,11 @@ var (
 	// (or is the single passing summary); any other line keeps the output raw.
 	rePytestPlainLine = regexp.MustCompile(`^(?:` +
 		`|=+ test session starts =+` +
-		`|platform [A-Za-z0-9_.-]+ -- Python [0-9][^\s,]*(?:, (?:pytest|pluggy)-[0-9][^\s,]*)*(?: -- \S.*)?` +
-		`|(?:rootdir|configfile|cachedir): \S.*` +
-		`|plugins: .+` +
+		`|platform [A-Za-z0-9_.-]+ -- Python [0-9][^\s,]*(?:, (?:pytest|pluggy)-[0-9][^\s,]*)*(?: -- /\S+)?` +
+		`|rootdir: /\S+` +
+		`|configfile: \S+` +
+		`|cachedir: \S+` +
+		`|plugins: [A-Za-z0-9_.-]+-[0-9][A-Za-z0-9_.+-]*(?:, [A-Za-z0-9_.-]+-[0-9][A-Za-z0-9_.+-]*)*` +
 		`|collected \d+ items?(?: / \d+ deselected)?` +
 		`|\S+\.py [.s]+(?: +\[ *\d+%\])?` +
 		`)$`)
