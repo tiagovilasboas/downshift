@@ -48,7 +48,7 @@ LLM to decide (ROADMAP non-goals, `docs/guides/when-to-use.md`).
 | 1 | Resolver keeps the full slug for OpenRouter entries; collision tests | none without OpenRouter rows |
 | 2 | Catalog schema `provider: "openrouter"`, `explicit_only` default, allowlist loader and `docs/guides/config.md` | none until a row is allowlisted |
 | 3 | Discovery source `openrouter`, recorded fixture tests, shown by `models discover` and `models list` | none on the hot path |
-| 4 | Shadow routing for OpenRouter targets, reported next to `models scores` | records only |
+| 4 | Shadow routing for OpenRouter targets (implemented, shadow only): `gateway_would` on the decision event, `stats --detail` line | records only |
 | 5 | Harness wiring facts: OpenCode, Claude Code through the OpenRouter endpoint, Codex custom provider, in `docs/reference/harness-matrix.md` | docs, after live checks |
 | 6 | Optional: live rewrite for same-vendor OpenRouter ids behind a flag | visible to users, last |
 
