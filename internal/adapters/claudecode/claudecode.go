@@ -68,6 +68,10 @@ func (ev Event) ProjectDir() string { return ev.Cwd }
 // Empty means the settings or plugin PreToolUse hook.
 func (ev Event) EntryIdentifier() string { return ev.Entry }
 
+// PermissionModeIdentifier returns the session's permission mode name as sent.
+// The runner keeps only a known label (telemetry.PermissionModeLabel).
+func (ev Event) PermissionModeIdentifier() string { return ev.PermissionMode }
+
 // ToolUseIdentifier returns the harness id of this tool call, if any.
 func (ev Event) ToolUseIdentifier() string { return ev.ToolUseID }
 

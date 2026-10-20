@@ -123,6 +123,13 @@ type Event struct {
 	// the field and on harnesses that do not report a type.
 	AgentType string `json:"agent_type,omitempty"`
 
+	// PermissionMode is the session's permission mode name on decision records
+	// (see PermissionModeLabel): "plan", "auto", "default" and so on, never a
+	// prompt or a path. It lets the report count decisions per mode, such as
+	// plan mode, where opusplan's model choice is not otherwise visible. Empty
+	// on events that predate the field and on harnesses that do not report it.
+	PermissionMode string `json:"permission_mode,omitempty"`
+
 	// ToolUseHash is the hashed harness tool-call id on decision records. The
 	// post-spawn observations carry the same id, so they join the exact
 	// decision instead of the latest sibling in the session.

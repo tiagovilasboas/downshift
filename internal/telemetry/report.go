@@ -70,6 +70,9 @@ type Report struct {
 	// TokensSaved is the plan lens: tokens saved from the requested model in
 	// the window, work and cache apart, with no price at all.
 	TokensSaved TokenSaving `json:"tokens_saved"`
+	// DecisionsByPermissionMode counts decisions per permission mode name in
+	// the window (see PermissionModeLabel). Display only: no comparison uses it.
+	DecisionsByPermissionMode map[string]int `json:"decisions_by_permission_mode,omitempty"`
 }
 
 // BuildReport filters events to the last days (<= 0 means all time) and
@@ -79,6 +82,7 @@ func BuildReport(events []Event, days int) Report {
 	windowed := FilterByDays(events, days)
 	rep.Completion = CompletionByHarness(windowed)
 	rep.TokensSaved = TokenSavings(windowed).Total
+	rep.DecisionsByPermissionMode = CountPermissionModes(windowed)
 	tasks := BuildTasks(windowed)
 	for _, t := range tasks {
 		var g *GroupSummary
@@ -217,6 +221,7 @@ func PrintReport(w io.Writer, r Report) {
 		printTokenCheck(w, r)
 	}
 
+	printPermissionModes(w, r.DecisionsByPermissionMode)
 	if len(r.Completion) > 0 {
 		fmt.Fprintln(w, "\nCompletion measurable, by harness")
 		for _, c := range r.Completion {
