@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -297,14 +298,15 @@ func TestSetupGeneratedWrapperDoesNotWriteTheConfigWhenTheWrapperWriteFails(t *t
 	}
 	e := newSetupEnv(t, fakeDir)
 	e.write(fakeConfig, fakeExisting)
-	bin := e.path(filepath.Join(".downshift", "bin"))
-	if err := os.MkdirAll(bin, 0o700); err != nil {
+	// The state directory exists but cannot take a new bin/ inside it.
+	state := e.path(".downshift")
+	if err := os.MkdirAll(state, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chmod(bin, 0o500); err != nil {
+	if err := os.Chmod(state, 0o500); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(bin, 0o700) })
+	t.Cleanup(func() { _ = os.Chmod(state, 0o700) })
 
 	code, out, errOut := e.run(fakeName, "--yes")
 	if code == 0 {
@@ -315,6 +317,81 @@ func TestSetupGeneratedWrapperDoesNotWriteTheConfigWhenTheWrapperWriteFails(t *t
 	}
 	if !strings.Contains(errOut, "not written") || !strings.Contains(errOut, "the config would point at it") {
 		t.Errorf("no explanation for the skipped config:\n%s", errOut)
+	}
+}
+
+// The wrapper runs on every tool call, so nobody else may be able to swap it:
+// bin/ is 0700 even when an earlier release, or the user, left it wider.
+func TestSetupGeneratedWrapperClosesAWideBinDirectory(t *testing.T) {
+	withFakeHarness(t)
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX permission bits")
+	}
+	e := newSetupEnv(t, fakeDir)
+	e.write(fakeConfig, fakeExisting)
+	bin := e.path(filepath.Join(".downshift", "bin"))
+	if err := os.MkdirAll(bin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(bin, 0o755); err != nil { // MkdirAll honours the umask
+		t.Fatal(err)
+	}
+	if code, out, errOut := e.run(fakeName, "--yes"); code != 0 {
+		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
+	}
+	st, err := os.Stat(bin)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Mode().Perm() != 0o700 {
+		t.Errorf("bin/ mode = %v, want 0700", st.Mode().Perm())
+	}
+	// The config's own directory is not ours to restrict.
+	if st, err := os.Stat(e.path(fakeDir)); err != nil || st.Mode().Perm() != 0o755 {
+		t.Errorf("the harness config directory was changed: %v %v", st.Mode().Perm(), err)
+	}
+}
+
+// --undo puts back a wrapper that was there before setup, instead of deleting it.
+func TestSetupGeneratedWrapperUndoRestoresAWrapperThatWasThereBefore(t *testing.T) {
+	withFakeHarness(t)
+	e := newSetupEnv(t, fakeDir)
+	e.write(fakeConfig, fakeExisting)
+	const previous = "#!/bin/sh\n# an older wrapper\nexit 0\n"
+	rel := filepath.Join(".downshift", "bin", wrapperFile(fakeStem, runtime.GOOS))
+	e.write(rel, previous)
+
+	if code, out, _ := e.run(fakeName, "--yes"); code != 0 {
+		t.Fatalf("setup exit %d\n%s", code, out)
+	}
+	if e.read(rel) == previous {
+		t.Fatal("setup did not replace the old wrapper; the test proves nothing")
+	}
+	if code, out, _ := e.run(fakeName, "--undo", "--yes"); code != 0 {
+		t.Fatalf("undo exit %d\n%s", code, out)
+	}
+	if got := e.read(rel); got != previous {
+		t.Errorf("undo did not restore the earlier wrapper:\n%s", got)
+	}
+}
+
+// With a plugin carrying the hooks, setup writes none, so it writes no wrapper
+// either: nothing would point at it.
+func TestSetupGeneratedWrapperIsNotWrittenWhenAPluginCarriesTheHook(t *testing.T) {
+	saved := setupTargets
+	setupTargets = append(append([]setupTarget{}, saved...), setupTarget{
+		Name: fakeName, ConfigDir: fakeDir, File: fakeConfig, HooksPath: []string{"hooks"}, RequireFile: true,
+		Plugin: "fake@market",
+		Hooks:  []setupHook{{Event: "preToolUse", Matcher: "*", Args: fakeArgs, Wrapper: fakeStem}},
+	})
+	t.Cleanup(func() { setupTargets = saved })
+	e := newSetupEnv(t, fakeDir)
+	e.write(fakeConfig, `{"enabledPlugins":{"fake@market":true}}`)
+	if code, out, errOut := e.run(fakeName, "--yes"); code != 0 {
+		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
+	}
+	if _, err := os.Stat(e.wrapperFor()); !os.IsNotExist(err) {
+		t.Errorf("a wrapper was written although the plugin carries the hook (stat err = %v)", err)
 	}
 }
 
@@ -377,8 +454,8 @@ func TestWrapperScriptPOSIX(t *testing.T) {
 	if !strings.Contains(s, `bin='/opt/my tools/it'\''s/downshift'`) {
 		t.Errorf("path is not shell-quoted:\n%s", s)
 	}
-	if !strings.Contains(s, `[ -x "$bin" ] || exit 0`) {
-		t.Errorf("a missing binary must let the call through:\n%s", s)
+	if !strings.Contains(s, `[ -x "$bin" ] || { echo "downshift: $bin not found, hook skipped" >&2; exit 0; }`) {
+		t.Errorf("a missing binary must let the call through and say so on stderr:\n%s", s)
 	}
 	if !strings.HasSuffix(s, `exec "$bin" fakecrew-hook`+"\n") {
 		t.Errorf("exec must be last so stdin and the exit code pass through:\n%s", s)
@@ -397,7 +474,8 @@ func TestWrapperScriptWindows(t *testing.T) {
 		t.Errorf("a .cmd needs CRLF line endings throughout:\n%q", s)
 	}
 	for _, want := range []string{
-		`if not exist "C:\Program Files\ds\downshift.exe" exit /b 0`,
+		`if not exist "C:\Program Files\ds\downshift.exe" (`,
+		"  echo downshift: binary not found, hook skipped 1>&2\r\n  exit /b 0\r\n)",
 		`"C:\Program Files\ds\downshift.exe" fakecrew-hook`,
 		"exit /b %ERRORLEVEL%",
 	} {
@@ -440,6 +518,7 @@ func TestIsWrapperCommand(t *testing.T) {
 		"/home/me/.downshift/bin/fakecrew-pre-tool-use.sh",
 		`C:\ds\bin\fakecrew-pre-tool-use.cmd`,
 		"  /a/fakecrew-pre-tool-use.sh  ",
+		`C:\Program Files\Downshift\bin\fakecrew-pre-tool-use.cmd`,
 	} {
 		if !isWrapperCommand(c, fakeStem) {
 			t.Errorf("%q not recognised", c)
@@ -505,7 +584,12 @@ func TestGeneratedWrapperPassesStdinAndExitCodeThrough(t *testing.T) {
 	}
 	cmd := exec.Command(wrapper)
 	cmd.Stdin = strings.NewReader("{}")
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		t.Errorf("a missing binary must exit 0, got %v", err)
+	}
+	if !strings.Contains(stderr.String(), "not found, hook skipped") {
+		t.Errorf("a vanished binary must not fail silently, stderr = %q", stderr.String())
 	}
 }

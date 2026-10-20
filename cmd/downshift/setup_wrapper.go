@@ -63,7 +63,13 @@ func wrapperPath(stateDir string, h setupHook) string {
 
 // wrapperScript renders the wrapper that runs `<binary> <args>` and passes the
 // hook payload (stdin) and the exit code through. A missing binary lets the
-// call through (exit 0): the router never blocks on its own doubt.
+// call through (exit 0) and says so on stderr: the router never blocks on its
+// own doubt, but it must not fail silently. Because the hook chain also runs the
+// operator's own guards, that is a deliberate trade: a vanished router cannot
+// stop their guards from running, only stop being a router.
+//
+// binary is quoted for the target shell; args is written as is, so it must be a
+// constant subcommand from the setup table (setupHook.Args), never data.
 func wrapperScript(goos, binary, args string) (string, error) {
 	if strings.ContainsAny(binary, "\r\n\x00") {
 		return "", errors.New("the binary path contains a control character")
@@ -81,7 +87,10 @@ func wrapperScript(goos, binary, args string) (string, error) {
 			"rem https://github.com/tiagovilasboas/downshift",
 			"rem Written by `downshift setup`, which rewrites it. Edit nothing here.",
 			"rem The harness takes one executable and no arguments, so this carries the subcommand.",
-			"if not exist " + q + " exit /b 0",
+			"if not exist " + q + " (",
+			"  echo downshift: binary not found, hook skipped 1>&2",
+			"  exit /b 0",
+			")",
 			q + " " + args,
 			"exit /b %ERRORLEVEL%",
 		}
@@ -97,7 +106,7 @@ func wrapperScript(goos, binary, args string) (string, error) {
 		"# Written by `downshift setup`, which rewrites it. Edit nothing here.",
 		"# The harness takes one executable and no arguments, so this carries the subcommand.",
 		"bin=" + q,
-		`[ -x "$bin" ] || exit 0`,
+		`[ -x "$bin" ] || { echo "downshift: $bin not found, hook skipped" >&2; exit 0; }`,
 		`exec "$bin" ` + args,
 	}
 	return strings.Join(lines, "\n") + "\n", nil
