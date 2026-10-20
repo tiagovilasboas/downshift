@@ -28,8 +28,9 @@ type GroupSummary struct {
 	// CostUSD and CostPerTaskUSD.
 	Completed int `json:"completed_tasks"`
 	// CostUSD is the cost of those tasks plus the failed attempts they redid.
-	CostUSD        float64 `json:"cost_usd"`
-	CostPerTaskUSD float64 `json:"cost_per_completed_task_usd"`
+	// Not in the JSON report: dollars are not an output (tokens only).
+	CostUSD        float64 `json:"-"`
+	CostPerTaskUSD float64 `json:"-"`
 	// Tokens is the token count of the same tasks (priced usage records, the
 	// failed attempts they redid included), by billing class; Tokens.Records is
 	// the number of usage records. TokensPerTask is Tokens.Total over Completed.
@@ -50,9 +51,9 @@ type GroupSummary struct {
 // same numbers. There is no percentage: a dollar share would hide the price
 // table it rests on; the plan lens states the share in tokens.
 type Savings struct {
-	PerTaskUSD     float64 `json:"per_task_usd"`
-	PerTaskLowUSD  float64 `json:"per_task_low_usd"`
-	PerTaskHighUSD float64 `json:"per_task_high_usd"`
+	PerTaskUSD     float64 `json:"-"`
+	PerTaskLowUSD  float64 `json:"-"`
+	PerTaskHighUSD float64 `json:"-"`
 	Resamples      int     `json:"resamples"`
 }
 
@@ -67,12 +68,12 @@ type Report struct {
 	MinTasks        int          `json:"min_tasks_per_group"`
 	Enough          bool         `json:"enough_data"`
 	Message         string       `json:"message,omitempty"`
-	Savings         *Savings     `json:"savings,omitempty"`
+	Savings         *Savings     `json:"-"`
 	// Completion says, per harness, whether the end of a child is measurable.
 	Completion []HarnessCompletion `json:"completion"`
 	// PricesAsOf is the catalog date the dollars were priced at (API lens);
 	// the caller sets it after RepriceUsage. Empty means as recorded.
-	PricesAsOf string `json:"prices_as_of,omitempty"`
+	PricesAsOf string `json:"-"`
 	// TokensSaved is the plan lens: tokens saved from the requested model in
 	// the window, work and cache apart, with no price at all.
 	TokensSaved TokenSaving `json:"tokens_saved"`

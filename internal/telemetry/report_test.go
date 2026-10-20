@@ -4,6 +4,7 @@
 package telemetry
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -206,5 +207,26 @@ func TestPrintReport_NoTokensSavedSaysSo(t *testing.T) {
 	PrintReport(&b, rep)
 	if !strings.Contains(b.String(), "no tokens ran on a cheaper model in this window") {
 		t.Errorf("a window with observed tokens and none saved must say so:\n%s", b.String())
+	}
+}
+
+// The JSON report is tokens only: no dollar key at the top level, and the saved
+// quantity is there.
+func TestReportJSON_TokensOnly(t *testing.T) {
+	out, err := ReportJSON(BuildReport(nil, 30))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var top map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(out), &top); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"savings", "prices_as_of"} {
+		if _, ok := top[key]; ok {
+			t.Errorf("report JSON must not carry top-level %q", key)
+		}
+	}
+	if _, ok := top["tokens_saved"]; !ok {
+		t.Errorf("report JSON must carry tokens_saved")
 	}
 }
