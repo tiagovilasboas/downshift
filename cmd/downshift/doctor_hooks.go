@@ -18,16 +18,15 @@ import (
 )
 
 // Per-harness hook checks for `doctor`. Harness facts are data: the expected
-// hooks come from setupTargets (the table `setup` writes from), plus
-// doctorManualWiring for a harness setup cannot write. Nothing here names a
-// harness.
+// hooks come from setupTargets, the table `setup` writes from. Nothing here
+// names a harness.
 
 // doctorHook is one expected hook.
 type doctorHook struct {
 	Event   string
 	Matcher string
 	Args    string // subcommand and arguments after the binary
-	Wrapper string // basename of a script that carries the subcommand
+	Wrapper string // stem of a script that carries the subcommand (setupHook.Wrapper)
 	// Required: routing does not work without it. The first hook of a harness
 	// is the routing hook; the rest only observe (honor, usage).
 	Required bool
@@ -43,18 +42,6 @@ type doctorWiring struct {
 	Hooks        []doctorHook
 }
 
-// doctorManualWiring covers harnesses whose setupTarget has no File because
-// setup does not write it. KiroCrew takes only an absolute executable path, so
-// its hook is a wrapper script.
-var doctorManualWiring = map[string]doctorWiring{
-	"kirocrew": {
-		File: ".kiro/crew/config.json",
-		Hooks: []doctorHook{
-			{Event: "preToolUse", Matcher: "*", Args: "kirocrew", Wrapper: "kirocrew-pre-tool-use.sh", Required: true},
-		},
-	},
-}
-
 func doctorWiringFor(harness string) (doctorWiring, bool) {
 	for _, t := range setupTargets {
 		if t.Name != harness || t.File == "" {
@@ -62,12 +49,11 @@ func doctorWiringFor(harness string) (doctorWiring, bool) {
 		}
 		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin, ModConflicts: t.ModConflicts}
 		for i, h := range t.Hooks {
-			w.Hooks = append(w.Hooks, doctorHook{Event: h.Event, Matcher: h.Matcher, Args: h.Args, Required: i == 0})
+			w.Hooks = append(w.Hooks, doctorHook{Event: h.Event, Matcher: h.Matcher, Args: h.Args, Wrapper: h.Wrapper, Required: i == 0})
 		}
 		return w, true
 	}
-	w, ok := doctorManualWiring[harness]
-	return w, ok
+	return doctorWiring{}, false
 }
 
 // foundCommand is a "command" string in a hook file and the keys above it.
@@ -110,7 +96,7 @@ func matchHook(command string, h doctorHook) (bin string, ok bool) {
 		return "", false
 	}
 	base := filepath.Base(tok[0])
-	if h.Wrapper != "" && base == h.Wrapper {
+	if h.Wrapper != "" && isWrapperCommand(command, h.Wrapper) {
 		return "", true
 	}
 	if base != "downshift" && base != "downshift.exe" {
@@ -245,9 +231,6 @@ func reportWiring(add func(id, status, detail, fix string), h string, w doctorWi
 	}
 	for _, m := range missing {
 		command := binForFix + " " + m.Args
-		if m.Wrapper != "" {
-			command = "/absolute/path/to/scripts/" + m.Wrapper
-		}
 		fixes = append(fixes, fmt.Sprintf("add to %s under %q: %s", file, m.Event, hookSnippet(w, m, command)))
 	}
 	detail := fmt.Sprintf("%d of %d expected (%s)", len(found), len(w.Hooks), strings.Join(have, ", "))
