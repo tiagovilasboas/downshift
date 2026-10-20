@@ -480,7 +480,7 @@ const fmtBytes = (n: number): string =>
 const compactorOf = (): number | null => (ds && dsSessionKnown && ds.compactor ? ds.compactor.savedBytes : null)
 const compactorSuffix = (): string => {
   const b = compactorOf()
-  return b === null ? '' : ` · ${fmtBytes(b)} compactor`
+  return b === null ? '' : ` · ↓ ${fmtBytes(b)} compactor`
 }
 
 const fmtTime = (ms: number): string => {
@@ -633,7 +633,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
     W,
     headerHeight(title),
     `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
-${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, 'Compactor', fmtBytes(cb))}`,
+${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, 'Compactor', `↓ ${fmtBytes(cb)}`)}`,
   )
 }
 
