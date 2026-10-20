@@ -6,6 +6,7 @@ A Claude Code mod (2.1.287+) that draws one line above the prompt, right aligned
 and two icon buttons:
 
 - **DCI** chip: green when `<workspace>/.downshift/dci.json` has mode `active`, grey for `observe` or `off`.
+- **Running** count: `N running` while subagents are in progress (from the engine's agent list). Hidden when none run.
 - **Compact** chip: green when `~/.downshift/context-optimization.json` enables the native provider.
   In Claude Code the native compactor measures only (a hook cannot rewrite tool output).
 - **Mode** button: shows `◇ performance` or `◆ economy` and switches between them. Economy lowers
