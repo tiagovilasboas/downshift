@@ -10,7 +10,7 @@ a real operator. It is not a release announcement.
 
 | Surface | Claim that matches the code |
 |---------|-----------------------------|
-| Claude Code | Primary path. PreToolUse can rewrite a subagent model. Honor evidence exists for one paid session (2026-10-06) via the child transcript model, not an invoice. Usage can be priced from a SubagentStop transcript (`internal/adapters/claudecode/subagentstop_test.go`). |
+| Claude Code | Primary path. PreToolUse can rewrite a subagent model. Honor evidence exists for one paid session (2026-10-06) via the child transcript model, not an invoice. `SubagentStop` records transcript token counts and model; current Downshift reports show no dollar amount (`internal/adapters/claudecode/subagentstop_test.go`). |
 | Codex | Functional wire path. Honor write-up is inferred (2026-10-02), not a billing receipt. |
 | Cursor | Functional wire path. **Rewrite honored is not closed** (beta-exit P1.6). Do not treat a hook JSON rewrite as proof the child ran that model. |
 | KiroCrew, Antigravity | Experimental. Matrix rows stay honest when a plan drops the rewrite. |

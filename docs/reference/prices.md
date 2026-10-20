@@ -1,8 +1,9 @@
 # Model prices
 
-Downshift prices its savings estimates with list prices (USD per 1M tokens)
-stored in the catalog, `internal/catalog/catalog.json`. This page is the policy
-for keeping them honest.
+The catalog stores dated provider list prices (USD per 1M tokens) in
+`internal/catalog/catalog.json`. They guide model routing and price analysis;
+current Downshift reports expose token counts and no dollar amounts. This page
+sets the policy for keeping catalog prices accurate.
 
 ## Policy
 
