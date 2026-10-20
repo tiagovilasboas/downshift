@@ -35,13 +35,6 @@ type Summary struct {
 	Corrected           int                       `json:"corrected"`
 	NotApplied          int                       `json:"not_applied"`
 	PolicyFloor         int                       `json:"policy_floor"`
-	ActualCostEvents    int                       `json:"actual_cost_events"`
-	ActualCostUSD       *float64                  `json:"-"`
-	RealCostEvents      int                       `json:"real_cost_events"`
-	RealCostInferred    int                       `json:"real_cost_inferred_baseline"`
-	RealSavedUSD        *float64                  `json:"-"`
-	RealCostDeltaUSD    float64                   `json:"-"`
-	RealOverspendUSD    float64                   `json:"-"`
 	UsageRecords        int                       `json:"usage_records"`
 	UsageLinked         int                       `json:"usage_linked"`
 	Baseline            int                       `json:"baseline_no_route"`
@@ -53,10 +46,6 @@ type Summary struct {
 	DownshiftRate       float64                   `json:"downshift_rate"`
 	ObservedChildTokens int64                     `json:"observed_child_tokens"`
 	ObservedChildUsage  int                       `json:"observed_child_usage"`
-	CostSessions        int                       `json:"cost_sessions"`
-	CostSubagents       int                       `json:"cost_subagents"`
-	MaxSessionCostUSD   *float64                  `json:"-"`
-	MaxSubagentCostUSD  *float64                  `json:"-"`
 	ChildStatus         map[string]int            `json:"child_status"`
 	ReasonCodes         map[string]int            `json:"reason_codes,omitempty"`
 	AgentTypes          map[string]AgentTypeCount `json:"agent_types,omitempty"`
@@ -93,8 +82,6 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		byComplexity[key] = count
 	}
 
-	nSessions, _, maxSession := groupStats(stats.CostBySession)
-	nSubagents, _, maxSubagent := groupStats(stats.CostBySubagent)
 	childStatus := make(map[string]int, len(stats.ChildStatus))
 	for st, count := range stats.ChildStatus {
 		if count > 0 {
@@ -103,7 +90,7 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 	}
 
 	return Summary{
-		SchemaVersion:       2,
+		SchemaVersion:       3,
 		WindowDays:          days,
 		GeneratedAt:         now.UTC().Format(time.RFC3339Nano),
 		Total:               stats.Total,
@@ -114,13 +101,6 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		Corrected:           stats.Corrected,
 		NotApplied:          stats.NotApplied,
 		PolicyFloor:         stats.PolicyFloor,
-		ActualCostEvents:    stats.ActualCostEvents,
-		ActualCostUSD:       exportMeasuredUSD(stats.ActualCostEvents, stats.ActualCostUSD),
-		RealCostEvents:      stats.RealCostEvents,
-		RealCostInferred:    stats.RealCostInferred,
-		RealSavedUSD:        exportMeasuredUSD(stats.RealCostEvents, stats.RealSavedUSD),
-		RealCostDeltaUSD:    stats.RealCostDeltaUSD,
-		RealOverspendUSD:    stats.RealOverspendUSD,
 		UsageRecords:        stats.UsageRecords,
 		UsageLinked:         stats.UsageLinked,
 		Baseline:            stats.Baseline,
@@ -132,10 +112,6 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		DownshiftRate:       downshiftRate,
 		ObservedChildTokens: stats.ObservedChildTokens,
 		ObservedChildUsage:  stats.ObservedChildUsage,
-		CostSessions:        nSessions,
-		CostSubagents:       nSubagents,
-		MaxSessionCostUSD:   exportMeasuredUSD(nSessions, maxSession),
-		MaxSubagentCostUSD:  exportMeasuredUSD(nSubagents, maxSubagent),
 		ChildStatus:         childStatus,
 		ReasonCodes:         stats.ReasonCodes,
 		AgentTypes:          nonEmptyAgentTypes(stats.ByAgentType),
@@ -167,16 +143,6 @@ func exportDCISummary(dci DCIStats) *codeintel.DCISummary {
 		LatencyP50Ms:         dci.LatencyP50Ms,
 		LatencyP95Ms:         dci.LatencyP95Ms,
 	}
-}
-
-// exportMeasuredUSD is nil when no event contributed to the aggregate, so JSON
-// omits the field instead of writing a literal zero for an unmeasured cost.
-func exportMeasuredUSD(events int, usd float64) *float64 {
-	if events <= 0 {
-		return nil
-	}
-	v := usd
-	return &v
 }
 
 // nonEmptyCounts copies a count map, dropping zero values so omitempty stays

@@ -15,7 +15,7 @@ import (
 )
 
 // runStats reads the local event log and prints a savings summary.
-// Usage: downshift stats [--days=N] [--cost-per-unit=USD] [--export]
+// Usage: downshift stats [--days=N] [--export]
 //
 // --days=N           time window in days (default 30; 0 = all time)
 // --cost-per-unit=X  convert normalised units to dollars at rate X per unit
@@ -42,13 +42,6 @@ func runStats(args []string) int {
 				return 2
 			}
 			opts.Days = int(n)
-		case strings.HasPrefix(arg, "--cost-per-unit=") && len(arg) > len("--cost-per-unit="):
-			v, err := strconv.ParseFloat(strings.TrimPrefix(arg, "--cost-per-unit="), 64)
-			if err != nil || v < 0 {
-				fmt.Fprintf(os.Stderr, "invalid --cost-per-unit value: %s\n", strings.TrimPrefix(arg, "--cost-per-unit="))
-				return 2
-			}
-			opts.CostPerUnit = v
 		default:
 			fmt.Fprintf(os.Stderr, "unknown flag: %s\n", arg)
 			return 2

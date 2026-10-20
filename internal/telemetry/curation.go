@@ -31,7 +31,6 @@ type CurationRow struct {
 	InputTok  int64
 	OutputTok int64
 	CachedTok int64
-	CostUSD   float64 // catalog-priced estimate from usage, not a bill
 }
 
 func isDecision(ev Event) bool {
@@ -113,9 +112,6 @@ func BuildCuration(events []Event) []CurationRow {
 		if ev.CachedTokens != nil {
 			r.CachedTok += *ev.CachedTokens
 		}
-		if ev.ActualCostUSD != nil {
-			r.CostUSD += *ev.ActualCostUSD
-		}
 	}
 	out := make([]CurationRow, 0, len(rows))
 	for _, r := range rows {
@@ -143,13 +139,13 @@ func PrintCuration(w io.Writer, rows []CurationRow) {
 		fmt.Fprintln(w, "No decisions recorded yet.")
 		return
 	}
-	fmt.Fprintln(w, "| Harness | Tier | Effort | Spawns | Applied | Held | Up | Down | Usage | In tok | Out tok | Cached tok | Est. USD |")
+	fmt.Fprintln(w, "| Harness | Tier | Effort | Spawns | Applied | Held | Up | Down | Usage | In tok | Out tok | Cached tok |")
 	fmt.Fprintln(w, "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
 	held := map[string]map[string]int{}
 	for _, r := range rows {
-		fmt.Fprintf(w, "| %s | %s | %s | %d | %d | %d | %d | %d | %d | %d | %d | %d | %.4f |\n",
+		fmt.Fprintf(w, "| %s | %s | %s | %d | %d | %d | %d | %d | %d | %d | %d | %d |\n",
 			r.Harness, r.Tier, r.Effort, r.Spawns, r.Applied, r.Held, r.Upshift, r.Downshift,
-			r.Usage, r.InputTok, r.OutputTok, r.CachedTok, r.CostUSD)
+			r.Usage, r.InputTok, r.OutputTok, r.CachedTok)
 		for rule, n := range r.HeldBy {
 			if held[r.Harness] == nil {
 				held[r.Harness] = map[string]int{}
@@ -179,5 +175,5 @@ func PrintCuration(w io.Writer, rows []CurationRow) {
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Held = the spawn ran unchanged (allow, blocked or a guardrail). Tier is the recommendation;")
 	fmt.Fprintln(w, "effort is applied only where the harness can (Codex today). Usage rows with tier (unlinked)")
-	fmt.Fprintln(w, "could not be tied to a decision. Cost is a catalog-priced estimate, not a bill.")
+	fmt.Fprintln(w, "could not be tied to a decision. Figures are the tokens the harness reported, not a bill.")
 }

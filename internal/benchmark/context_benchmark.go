@@ -32,7 +32,6 @@ type ContextBenchmarkRecord struct {
 	Scenario        ContextScenario `json:"scenario"`
 	InputTokens     int64           `json:"input_tokens"`
 	OutputTokens    int64           `json:"output_tokens"`
-	TotalCostUSD    float64         `json:"total_cost_usd"`
 	Latency         time.Duration   `json:"latency"`
 	SuccessRate     float64         `json:"success_rate"` // 0.0 - 1.0
 	Retries         int             `json:"retries"`

@@ -25,8 +25,7 @@ func rankEvents(t *testing.T, cat core.Resolver, requested, ran, outcome string)
 	if !ok {
 		t.Fatalf("ran %s not in catalog", ran)
 	}
-	u := TokenUsage{InputTokens: 1000, OutputTokens: 500}
-	base, actual := CostUSD(req, u), CostUSD(got, u)
+	_, _ = req, got // the tier comparison reads the catalog, not a price
 	in, out := int64(1000), int64(500)
 	decision = Event{
 		CorrelationID: "d", Harness: rankHarness, SessionID: "s", Outcome: outcome,
@@ -35,8 +34,8 @@ func rankEvents(t *testing.T, cat core.Resolver, requested, ran, outcome string)
 	usage = Event{
 		CorrelationID: "u", Harness: rankHarness, SessionID: "s", Outcome: OutcomeUsage,
 		LinkedDecision: "d", FromModel: requested, ToModel: ran,
-		ActualCostUSD: &actual, BaselineCostUSD: &base, BaselineSource: BaselineRequested,
-		InputTokens: &in, OutputTokens: &out,
+		BaselineSource: BaselineRequested,
+		InputTokens:    &in, OutputTokens: &out,
 	}
 	return usage, decision
 }

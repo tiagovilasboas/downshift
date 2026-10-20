@@ -74,12 +74,14 @@ type Event struct {
 
 	// Optional real-cost fields (nil = provider usage not tracked for this event).
 	// When absent, fall back to the normalised estimate above; never fake dollars.
-	InputTokens      *int64   `json:"input_tokens,omitempty"`       // provider-reported input tokens
-	OutputTokens     *int64   `json:"output_tokens,omitempty"`      // provider-reported output tokens
-	CachedTokens     *int64   `json:"cached_tokens,omitempty"`      // provider-reported cached input tokens
-	CacheWriteTokens *int64   `json:"cache_write_tokens,omitempty"` // cache-creation part of cached_tokens, billed at the cache-write price
-	ActualCostUSD    *float64 `json:"actual_cost_usd,omitempty"`    // real routed cost in USD
-	BaselineCostUSD  *float64 `json:"baseline_cost_usd,omitempty"`  // real baseline cost in USD
+	InputTokens      *int64 `json:"input_tokens,omitempty"`       // provider-reported input tokens
+	OutputTokens     *int64 `json:"output_tokens,omitempty"`      // provider-reported output tokens
+	CachedTokens     *int64 `json:"cached_tokens,omitempty"`      // provider-reported cached input tokens
+	CacheWriteTokens *int64 `json:"cache_write_tokens,omitempty"` // cache-creation part of cached_tokens, billed at the cache-write price
+	// ActualCostUSD and BaselineCostUSD are read from lines written before the
+	// tokens-only change; nothing writes them now.
+	ActualCostUSD   *float64 `json:"actual_cost_usd,omitempty"`
+	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"`
 	// BaselineSource says where the baseline model came from: "requested" (the
 	// model the harness asked for) or "inferred" (the configured model, used
 	// when the harness named none). Absent when no baseline was computed.
@@ -239,32 +241,6 @@ type E5FuseRecord struct {
 
 // HasTokenUsage reports whether the event carries any provider token count.
 func (e Event) HasTokenUsage() bool { return classesOf(e.TokenUsageOrZero()).Total > 0 }
-
-// HasRealCost reports whether the event carries real provider costs.
-// Both cost pointers must be non-nil; token counts alone are not enough.
-func (e Event) HasRealCost() bool {
-	return e.ActualCostUSD != nil && e.BaselineCostUSD != nil
-}
-
-// RealDeltaUSD returns baseline minus actual cost, signed: negative when the
-// routed model cost more than the baseline (an overspend). Returns 0 when real
-// costs are missing.
-func (e Event) RealDeltaUSD() float64 {
-	if !e.HasRealCost() {
-		return 0
-	}
-	return *e.BaselineCostUSD - *e.ActualCostUSD
-}
-
-// RealSavedUSD returns baseline minus actual cost clamped at zero.
-// Returns 0 when real costs are missing or when the routed model cost more.
-// Use RealDeltaUSD when an overspend must stay visible.
-func (e Event) RealSavedUSD() float64 {
-	if delta := e.RealDeltaUSD(); delta > 0 {
-		return delta
-	}
-	return 0
-}
 
 // TokenUsageOrZero returns the event token usage, nil-safe.
 // Missing pointers and negative values are clamped to 0.
@@ -635,25 +611,6 @@ type Stats struct {
 	NormBaseline float64
 	NormRouted   float64
 
-	// RealSavedUSD is the sum of Event.RealSavedUSD over events with real cost.
-	// RealCostEvents counts events where HasRealCost is true.
-	RealSavedUSD   float64
-	RealCostEvents int
-	// RealCostInferred counts the RealCostEvents whose baseline was inferred
-	// from settings, not requested by the harness.
-	RealCostInferred int
-	// RealCostDeltaUSD is the signed sum of Event.RealDeltaUSD (baseline minus
-	// actual): negative when the router cost more than the baseline overall.
-	// RealOverspendUSD is the sum of the negative deltas as a positive number,
-	// the money spent above baseline on individual events.
-	RealCostDeltaUSD float64
-	RealOverspendUSD float64
-
-	// ActualCost fields include catalog-priced observed spend even when the
-	// requested baseline is unknown and no savings comparison can be made.
-	ActualCostUSD    float64
-	ActualCostEvents int
-
 	// UsageRecords counts all post-hoc usage records, including unmatched ones.
 	// UsageLinked counts distinct usage records whose references resolve to
 	// decisions in the same harness and compatible session. Records are deduped
@@ -687,10 +644,6 @@ type Stats struct {
 	// RespawnAfterFailure counts failed children followed by another spawn in
 	// the same session within respawnWindow. A hint, not a verdict.
 	RespawnAfterFailure int
-	// CostBySession and CostBySubagent group observed catalog-priced cost by the
-	// hashed session id and agent id carried on usage records.
-	CostBySession  map[string]CostGroup
-	CostBySubagent map[string]CostGroup
 
 	// ReasonCodes counts decisions per reason code. Events written before
 	// the decision trace carry no codes and add nothing here.
@@ -764,16 +717,6 @@ type DCIStats struct {
 	LatencyP95Ms        float64        `json:"latency_p95_ms,omitempty"`
 	Errors              int            `json:"errors,omitempty"`
 	ErrorsByCode        map[string]int `json:"errors_by_code,omitempty"`
-}
-
-// addRealDelta folds one real-cost event into the clamped and signed totals.
-func (s *Stats) addRealDelta(ev Event) {
-	s.RealSavedUSD += ev.RealSavedUSD()
-	delta := ev.RealDeltaUSD()
-	s.RealCostDeltaUSD += delta
-	if delta < 0 {
-		s.RealOverspendUSD -= delta
-	}
 }
 
 // NormSaved returns normalised savings: absolute units saved and fraction.

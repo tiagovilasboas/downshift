@@ -214,7 +214,7 @@ func TestSubagentStop_UnlinkedSpawnRecordsSpendWithoutSavings(t *testing.T) {
 		t.Fatalf("note = %q", note)
 	}
 	got := usageEvents(t)
-	if len(got) != 1 || got[0].LinkedDecision != "" || got[0].RealSavedUSD() != 0 {
+	if len(got) != 1 || got[0].LinkedDecision != "" || got[0].ActualCostUSD != nil {
 		t.Fatalf("want one unlinked event with zero savings, got %+v", got)
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
-	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -67,13 +66,5 @@ func TestChildEnd_IgnoresNonAgentToolsAndDoesNotCountAsDecision(t *testing.T) {
 	}
 	if stats.ChildStatus[telemetry.ChildError] != 1 {
 		t.Fatalf("child status not aggregated: %+v", stats.ChildStatus)
-	}
-}
-
-func TestBaselineSourceRequestedOnPricedUsage(t *testing.T) {
-	ev := telemetry.Event{}
-	telemetry.FillRealCost(&ev, core.Model{ID: "b", InputM: 1, OutputM: 1}, core.Model{ID: "r", InputM: 1, OutputM: 1})
-	if ev.BaselineSource != telemetry.BaselineRequested {
-		t.Fatalf("baseline source = %q", ev.BaselineSource)
 	}
 }

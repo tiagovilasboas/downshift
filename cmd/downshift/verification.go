@@ -17,14 +17,13 @@ import (
 
 // verificationTierReport is one tier's share of usage events.
 type verificationTierReport struct {
-	Tier        string  `json:"tier"`
-	Usage       int     `json:"usage_events"`
-	Passed      int     `json:"passed"`
-	Failed      int     `json:"failed"`
-	None        int     `json:"none"`
-	Unrecorded  int     `json:"unrecorded"`
-	CostUSD     float64 `json:"cost_usd"`
-	PricedCalls int     `json:"priced_calls"`
+	Tier       string `json:"tier"`
+	Usage      int    `json:"usage_events"`
+	Passed     int    `json:"passed"`
+	Failed     int    `json:"failed"`
+	None       int    `json:"none"`
+	Unrecorded int    `json:"unrecorded"`
+	TokenCalls int    `json:"token_calls"`
 }
 
 // verificationReport answers whether subagents verified their own work, per
@@ -111,9 +110,8 @@ func buildVerificationReport(path string) (verificationReport, error) {
 		default:
 			t.Unrecorded++
 		}
-		if ev.ActualCostUSD != nil {
-			t.CostUSD += *ev.ActualCostUSD
-			t.PricedCalls++
+		if ev.HasTokenUsage() {
+			t.TokenCalls++
 		}
 	}
 	if rep.Usage > 0 {

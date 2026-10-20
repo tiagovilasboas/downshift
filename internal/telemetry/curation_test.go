@@ -37,7 +37,7 @@ func TestBuildCuration_GroupsAndLinksUsage(t *testing.T) {
 	if s.Spawns != 2 || s.Applied != 2 || s.Held != 0 || s.Downshift != 1 {
 		t.Errorf("small row: %+v", s)
 	}
-	if s.Usage != 1 || s.InputTok != 100 || s.OutputTok != 40 || s.CachedTok != 10 || s.CostUSD != 0.5 {
+	if s.Usage != 1 || s.InputTok != 100 || s.OutputTok != 40 || s.CachedTok != 10 {
 		t.Errorf("usage linked to d1 must count once: %+v", s)
 	}
 	m := get("claude-code", "mid")

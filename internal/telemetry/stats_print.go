@@ -11,8 +11,7 @@ import (
 
 // StatsOptions controls PrintStats output.
 type StatsOptions struct {
-	Days        int     // time window; <= 0 means all time
-	CostPerUnit float64 // USD per normalised unit; 0 means show units only
+	Days int // time window; <= 0 means all time
 	// Detail adds the full report (normalised units, honor, quota, usage, child
 	// status, per-session cost, complexity breakdown) after the 3-line headline.
 	Detail bool
@@ -67,25 +66,12 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	fmt.Fprintf(w, "\n")
 
 	if s.Total > 0 {
-		if opts.CostPerUnit > 0 {
-			// Dollar mode: multiply normalised units by the user-supplied rate.
-			baseline := s.NormBaseline * opts.CostPerUnit
-			routed := s.NormRouted * opts.CostPerUnit
-			saved := normSaved * opts.CostPerUnit
-			fmt.Fprintf(w, "Estimated baseline    $%10.2f\n", baseline)
-			fmt.Fprintf(w, "Estimated routed      $%10.2f\n", routed)
-			fmt.Fprintf(w, "Estimated savings     $%10.2f\n", saved)
-			fmt.Fprintf(w, "\n")
-			fmt.Fprintf(w, "Rate: $%.4f / unit  (--cost-per-unit=%.4f)\n", opts.CostPerUnit, opts.CostPerUnit)
-		} else {
-			// Unit mode: dimensionless proxy, no dollar claim.
-			fmt.Fprintf(w, "Normalised baseline   %8.1f units\n", s.NormBaseline)
-			fmt.Fprintf(w, "Normalised routed     %8.1f units\n", s.NormRouted)
-			fmt.Fprintf(w, "Normalised savings    %8.1f units\n", normSaved)
-			fmt.Fprintf(w, "\n")
-			fmt.Fprintf(w, "Note: 1 unit = cost of one unrouted event. Not real dollars.\n")
-			fmt.Fprintf(w, "For dollar figures: downshift stats --cost-per-unit=<USD-per-unit>\n")
-		}
+		// Normalised units: a dimensionless proxy of routed against unrouted events.
+		fmt.Fprintf(w, "Normalised baseline   %8.1f units\n", s.NormBaseline)
+		fmt.Fprintf(w, "Normalised routed     %8.1f units\n", s.NormRouted)
+		fmt.Fprintf(w, "Normalised savings    %8.1f units\n", normSaved)
+		fmt.Fprintf(w, "\n")
+		fmt.Fprintf(w, "Note: 1 unit = cost of one unrouted event. A count, not money.\n")
 	}
 	if s.Corrected > 0 {
 		fmt.Fprintf(w, "Safety-held           %8d  (guardrail applied, see corrections)\n", s.Corrected)
@@ -94,9 +80,6 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Observed child tokens unobserved\n")
 	} else {
 		fmt.Fprintf(w, "Observed child tokens %12d  (%d usage records)\n", s.ObservedChildTokens, s.ObservedChildUsage)
-	}
-	if s.RealCostInferred > 0 {
-		fmt.Fprintf(w, "Inferred baseline     %8d  of %d priced records: requested model guessed from settings (BASELINE_FROM_SETTINGS)\n", s.RealCostInferred, s.RealCostEvents)
 	}
 	printTokensDetail(w, s.TokensRerouted)
 	if s.UsageRecords > 0 {

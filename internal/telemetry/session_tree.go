@@ -482,19 +482,10 @@ func foldUsage(prev, next *Event) *Event {
 		}
 		return &n
 	}
-	sumF := func(a, b *float64) *float64 {
-		if a == nil || b == nil {
-			return nil // a stretch with no price makes the total unpriced
-		}
-		v := *a + *b
-		return &v
-	}
 	merged := *next
 	merged.InputTokens = sumI(prev.InputTokens, next.InputTokens)
 	merged.OutputTokens = sumI(prev.OutputTokens, next.OutputTokens)
 	merged.CachedTokens = sumI(prev.CachedTokens, next.CachedTokens)
 	merged.CacheWriteTokens = sumI(prev.CacheWriteTokens, next.CacheWriteTokens)
-	merged.ActualCostUSD = sumF(prev.ActualCostUSD, next.ActualCostUSD)
-	merged.BaselineCostUSD = sumF(prev.BaselineCostUSD, next.BaselineCostUSD)
 	return &merged
 }

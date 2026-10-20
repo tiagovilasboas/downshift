@@ -4,8 +4,6 @@
 package telemetry
 
 import (
-	"bytes"
-	"strings"
 	"testing"
 )
 
@@ -49,16 +47,3 @@ func TestCountInferredHonored_RefutedBeatsLaterSpawn(t *testing.T) {
 }
 
 // real saving whose baseline was inferred from settings must not be presented as measured.
-func TestPrintStats_MarksInferredBaseline(t *testing.T) {
-	d := refShift("d1", "s1")
-	d.ReasonCodes = []string{ReasonBaselineFromSettings, ReasonClassifierConfident}
-	u := Event{Outcome: OutcomeUsage, Harness: "claude-code", SessionID: "s1", LinkedDecision: "d1",
-		Timestamp: "2026-10-15T10:10:00Z", FromModel: d.FromModel, ToModel: d.ToModel,
-		ActualCostUSD: refF(0.10), BaselineCostUSD: refF(0.50), BaselineSource: BaselineRequested}
-	var buf bytes.Buffer
-	PrintStats([]Event{d, u}, StatsOptions{Detail: true}, &buf)
-	out := buf.String()
-	if !strings.Contains(strings.ToLower(out), "inferred") {
-		t.Fatalf("saving from an inferred baseline printed without any inferred marker:\n%s", out)
-	}
-}

@@ -19,7 +19,6 @@ func Aggregate(events []Event) Stats {
 	a := newAggregator()
 	a.indexDecisions(events)
 	for _, ev := range events {
-		a.sumActualCost(ev)
 		if a.countChildEnd(ev) {
 			continue // how a child ended: an observation, not a decision or cost
 		}
@@ -69,14 +68,12 @@ type aggregator struct {
 func newAggregator() *aggregator {
 	return &aggregator{
 		s: Stats{
-			ByComplexity:   make(map[string]int),
-			ByEntry:        make(map[string]int),
-			ChildStatus:    make(map[ChildStatus]int),
-			CostBySession:  make(map[string]CostGroup),
-			CostBySubagent: make(map[string]CostGroup),
-			ReasonCodes:    make(map[string]int),
-			ModelMix:       make(map[string]int),
-			ByAgentType:    make(map[string]AgentTypeCount),
+			ByComplexity: make(map[string]int),
+			ByEntry:      make(map[string]int),
+			ChildStatus:  make(map[ChildStatus]int),
+			ReasonCodes:  make(map[string]int),
+			ModelMix:     make(map[string]int),
+			ByAgentType:  make(map[string]AgentTypeCount),
 			DCI: DCIStats{
 				AbstentionsByReason: make(map[string]int),
 				ErrorsByCode:        make(map[string]int),
@@ -106,20 +103,6 @@ func (a *aggregator) indexDecisions(events []Event) {
 	}
 }
 
-// sumActualCost adds provider-reported actual cost, and groups it by session
-// and subagent for usage records.
-func (a *aggregator) sumActualCost(ev Event) {
-	if ev.Outcome == OutcomeResolved || ev.Outcome == OutcomeBaseline || ev.ActualCostUSD == nil {
-		return
-	}
-	a.s.ActualCostEvents++
-	a.s.ActualCostUSD += *ev.ActualCostUSD
-	if ev.Outcome == OutcomeUsage {
-		addGroupCost(a.s.CostBySession, ev.SessionID, *ev.ActualCostUSD)
-		addGroupCost(a.s.CostBySubagent, ev.AgentHash, *ev.ActualCostUSD)
-	}
-}
-
 // countChildEnd tallies how a child ended and reports whether ev was such a
 // record.
 func (a *aggregator) countChildEnd(ev Event) bool {
@@ -146,12 +129,6 @@ func (a *aggregator) countCostOnly(ev Event) {
 		decision, found := a.decisions[key]
 		a.countTokens(ev, decision, found, a.unrouted[key], a.refuted[key])
 	}
-	// A refuted rewrite saved nothing; an older record may still be priced on
-	// the model it asked for, so its delta is not credited.
-	if ev.HasRealCost() && !a.refuted[key] {
-		decision, found := a.decisions[key]
-		a.addRealCost(RoutedCost(ev, decision, found), hasReason(decision.ReasonCodes, ReasonBaselineFromSettings))
-	}
 }
 
 // linkUsage counts a usage record once per distinct subagent (or event) when
@@ -166,16 +143,6 @@ func (a *aggregator) linkUsage(ev Event, key linkKey) {
 		(ev.SessionID == "" || decision.SessionID == "" || ev.SessionID == decision.SessionID) {
 		a.s.UsageLinked++
 		a.linked[unique] = true
-	}
-}
-
-// addRealCost credits the real-dollar delta of an event with token usage and
-// notes when its baseline was inferred.
-func (a *aggregator) addRealCost(ev Event, baselineFromSettings bool) {
-	a.s.RealCostEvents++
-	a.s.addRealDelta(ev)
-	if ev.BaselineSource == BaselineInferred || baselineFromSettings {
-		a.s.RealCostInferred++
 	}
 }
 
@@ -198,10 +165,6 @@ func (a *aggregator) countDecision(ev Event) {
 	applied := AppliedRewrite(ev.Outcome, ev.Corrections) && !isRefuted
 	a.countVerdict(ev, applied)
 	a.sumNormalisedCost(ev, applied)
-	// Real provider cost: only events with token usage contribute.
-	if ev.HasRealCost() {
-		a.addRealCost(ev, hasReason(ev.ReasonCodes, ReasonBaselineFromSettings))
-	}
 	// Self-correction: the verdict stands, the safe action applied.
 	if len(ev.Corrections) > 0 {
 		a.s.Corrected++

@@ -141,8 +141,8 @@ func TestBuildTasks_ReworkLinkingAndCost(t *testing.T) {
 	if !byKey[failed].Reworked || !byKey[failed].Failed() {
 		t.Errorf("failed spawn must be marked reworked: %+v", byKey[failed])
 	}
-	if got := byKey[redo].TotalUSD; got < 0.4999 || got > 0.5001 {
-		t.Errorf("completed redo total = %.4f, want 0.50 (0.20 + 0.30 rework)", got)
+	if got := byKey[redo].TotalTokens.Total; got != 5000 {
+		t.Errorf("completed redo total = %d tokens, want 5000 (0.20 + 0.30 rework at 10,000 tokens a dollar)", got)
 	}
 	if len(byKey[redo].Redo) != 1 || byKey[redo].Redo[0] != failed {
 		t.Errorf("redo links = %v, want [%s]", byKey[redo].Redo, failed)
@@ -151,8 +151,8 @@ func TestBuildTasks_ReworkLinkingAndCost(t *testing.T) {
 		// s2 failure is followed within 10 min by `after`, so it is reworked.
 		t.Error("s2 failure followed by a respawn inside the window must be reworked")
 	}
-	if got := byKey[after].TotalUSD; got < 0.1599 || got > 0.1601 {
-		t.Errorf("after total = %.4f, want 0.16", got)
+	if got := byKey[after].TotalTokens.Total; got != 1600 {
+		t.Errorf("after total = %d tokens, want 1600", got)
 	}
 
 	rep := BuildReport(f.events, 30)
