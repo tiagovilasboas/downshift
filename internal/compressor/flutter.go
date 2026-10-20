@@ -71,6 +71,7 @@ func compressFlutterTest(input []byte) ([]byte, bool, string) {
 	var (
 		passed, skipped, count int
 		clock, last            string
+		texts                  strings.Builder // all progress texts, joined without separator
 	)
 	for _, line := range lines {
 		if line == "" {
@@ -84,9 +85,7 @@ func compressFlutterTest(input []byte) ([]byte, bool, string) {
 			if m == nil || strings.Contains(seg, "  ") || strings.ContainsRune(seg, '\t') {
 				return input, false, "flutter_test_unrecognized_output_preserved"
 			}
-			if reFlutterDanger.MatchString(m[5]) {
-				return input, false, "flutter_test_danger_word_preserved"
-			}
+			texts.WriteString(m[5])
 			if m[3] != "" && m[3] != "0" {
 				return input, false, "flutter_test_failure_counter_preserved"
 			}
@@ -104,6 +103,11 @@ func compressFlutterTest(input []byte) ([]byte, bool, string) {
 			passed, skipped, clock, last = p, s, m[1], m[5]
 			count++
 		}
+	}
+	// Checked on the concatenation, so a word split across segments
+	// (`Err` + `or`, `sec` + `ret`) is caught as well.
+	if reFlutterDanger.MatchString(texts.String()) {
+		return input, false, "flutter_test_danger_word_preserved"
 	}
 	if last != flutterAllPassed || passed == 0 || count < 2 {
 		return input, false, "flutter_test_incomplete_or_inconsistent_success_preserved"

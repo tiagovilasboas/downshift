@@ -84,6 +84,16 @@ func TestCompressFlutterTestDangerWordsArePreserved(t *testing.T) {
 			t.Errorf("%q: applied=%v reason=%q", w, applied, reason)
 		}
 	}
+	for _, s := range []string{
+		"00:00 +0: loading t.dart\n00:01 +1: a\r00:02 +2: Err\r00:02 +2: or\r00:02 +2: All tests passed!\n",
+		"00:00 +0: loading t.dart\n00:01 +1: a\r00:02 +2: sec\r00:02 +2: ret\r00:02 +2: All tests passed!\n",
+	} {
+		in := []byte(s)
+		out, applied, reason := compressFlutterTest(in)
+		if applied || !bytes.Equal(out, in) || reason != "flutter_test_danger_word_preserved" {
+			t.Errorf("split danger word must be preserved: applied=%v reason=%q out=%q", applied, reason, out)
+		}
+	}
 	in := []byte("00:00 +0: loading t.dart\n00:01 +1: group parses input\n00:01 +2: group renders widget\n00:01 +2: All tests passed!\n")
 	if _, applied, reason := compressFlutterTest(in); !applied {
 		t.Errorf("ordinary names must compact: %q", reason)
