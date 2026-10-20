@@ -23,7 +23,7 @@ This page sequences the surface. It does not close or replace
   export, then discovery, then the operator allowlist. The operator file
   `quota` member is ignored. `unknown`, `stale`, and `exhausted` are not
   `available`.
-- The report and the dashboard already exclude a held rewrite from applied
+- The report and `stats` already exclude a held rewrite from applied
   savings. A catalog counterfactual is not a child's token count. Context
   compression records observe-mode bytes and does not replace tool output the
   model already saw.
