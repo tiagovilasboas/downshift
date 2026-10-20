@@ -65,7 +65,7 @@ downshift setup --dry-run   # prints the diff for each harness found; writes not
 downshift setup             # asks first, backs up the files, then merges the hooks
 ```
 
-For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) for keys you have not set; existing values are kept, and `--no-session-policy` skips both. Claude Code's built-in You should know mod (`"enabledPlugins": {"cc-plugin-you-should-know@builtin": true}`) is opt-in because each check is a billed background request to the session's model: `setup` prints a suggestion, and `downshift setup --you-should-know` writes it (`/plugin disable cc-plugin-you-should-know@builtin` turns it off) ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex and Antigravity, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew (Experimental) needs its wrapper script and is only reported; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
+For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) for keys you have not set; existing values are kept, and `--no-session-policy` skips both. Claude Code's built-in You should know mod (`"enabledPlugins": {"cc-plugin-you-should-know@builtin": true}`) is opt-in because each check is a billed background request to the session's model: `setup` prints a suggestion, and `downshift setup --you-should-know` writes it (`/plugin disable cc-plugin-you-should-know@builtin` turns it off) ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex, Antigravity and KiroCrew, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew (Experimental) gets a generated wrapper and a `preToolUse` entry in its existing `config.json`; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
 
 **Step 3 — Check the classifier** on your own prompts:
 ```bash
@@ -158,7 +158,7 @@ go install github.com/tiagovilasboas/downshift/cmd/downshift@latest
 Pre-built binaries for macOS (arm64/amd64), Linux (arm64/amd64), and Windows (amd64)
 are available on the [Releases](https://github.com/tiagovilasboas/downshift/releases) page.
 
-**Fastest path:** `downshift setup` finds Claude Code, Cursor, Codex and Antigravity on this machine and merges every hook (plus the Claude Code statusline when none is set) into their hook files, using this binary's absolute path. It keeps unrelated keys and existing hooks, is idempotent, prints a diff, and saves a timestamped backup. `--dry-run` writes nothing, `--yes` skips the question, `--undo` restores the latest backup. KiroCrew needs its wrapper script and is only reported. The manual JSON follows.
+**Fastest path:** `downshift setup` finds Claude Code, Cursor, Codex, Antigravity and KiroCrew on this machine and merges every hook (plus the Claude Code statusline when none is set) into their hook files, using this binary's absolute path. It keeps unrelated keys and existing hooks, is idempotent, prints a diff, and saves a timestamped backup. `--dry-run` writes nothing, `--yes` skips the question, `--undo` restores the latest backup. For KiroCrew it also writes a wrapper script (see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook)). The manual JSON follows.
 
 Add the hook to `~/.claude/settings.json`:
 
@@ -428,6 +428,18 @@ model from the parent's model or a UI title. The classifier is deterministic;
 the agent must retry a blocked spawn with the recommended model.
 
 #### Setup
+
+**Automatic.** Run `downshift setup kirocrew --dry-run`, read the diff, then `downshift setup kirocrew`. Setup:
+
+* writes a wrapper to `~/.downshift/bin/kirocrew-pre-tool-use.sh` (`.cmd` on Windows) that runs the binary doing the setup, passes the payload on stdin and the exit code through, and exits 0 with a line on stderr when the binary is gone, so a removed install never breaks KiroCrew;
+* adds that wrapper to `agent.kiro_hooks.preToolUse` in `~/.kiro/crew/config.json`, next to the hooks already there. A `kirocrew-pre-tool-use` wrapper you registered by hand, from any directory, is pointed at the generated one instead of being added twice;
+* installs the compact steering.
+
+It edits `config.json` only if the file exists (KiroCrew creates it; a missing file means KiroCrew is not set up, and setup says so). It writes the wrapper before the config and skips the config if the wrapper fails. `downshift setup --undo` restores both. Then restart KiroCrew so it regenerates its agent spec, and run `downshift doctor`.
+
+Run it from your own terminal. If KiroCrew's policy blocks an agent session from writing its own `config.json`, setup exits 1 with `write failed … operation not permitted`, leaves the wrapper in `~/.downshift/bin/` and the config untouched, and keeps the backup it took first (`config.json.downshift-bak-…`, which you can delete); run it again yourself.
+
+**Manual.** The same result by hand, from a checkout of this repository:
 
 > **Important — two hook paths exist.** `~/.kiro/agents/kirocrew.json` is
 > **generated** by KiroCrew and overwritten on every restart; edits there are
