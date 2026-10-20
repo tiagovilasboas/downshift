@@ -39,9 +39,10 @@ type TokenSaving struct {
 	// AtFloor counts unchanged children whose requested model already sat on
 	// the lowest catalog tier: no cheaper model existed, so a zero is not a miss.
 	AtFloor int `json:"at_floor,omitempty"`
-	// GatewayUnpriced counts children that ran on an OpenRouter model with no
-	// snapshot price: never saved, never guessed from a tier.
-	GatewayUnpriced int `json:"gateway_unpriced,omitempty"`
+	// GatewayUnattributed counts children that ran on an OpenRouter id no
+	// allowlisted row names: never saved, never guessed from a tier.
+	// The JSON key is kept: it is a published field and only its wording changed.
+	GatewayUnattributed int `json:"gateway_unpriced,omitempty"`
 }
 
 // Observed reports whether any child's tokens are known.
@@ -88,18 +89,18 @@ func (s TokenSaving) Line() string {
 	if s.SavedInferred > 0 {
 		out += " · baseline inferred"
 	}
-	if s.GatewayUnpriced > 0 {
-		out += " · " + gatewayUnpricedText(s.GatewayUnpriced)
+	if s.GatewayUnattributed > 0 {
+		out += " · " + gatewayUnattributedText(s.GatewayUnattributed)
 	}
 	return out
 }
 
-// gatewayUnpricedText counts gateway runs that no saving was credited for.
-func gatewayUnpricedText(n int) string {
+// gatewayUnattributedText counts gateway runs whose id no allowlisted row names.
+func gatewayUnattributedText(n int) string {
 	if n == 1 {
-		return "1 gateway run without a snapshot price (not counted as saved)"
+		return "1 gateway run unattributed: no tier for this gateway id"
 	}
-	return fmt.Sprintf("%d gateway runs without a snapshot price (not counted as saved)", n)
+	return fmt.Sprintf("%d gateway runs unattributed: no tier for this gateway id", n)
 }
 
 func (s *TokenSaving) add(o TokenSaving) {
@@ -113,7 +114,7 @@ func (s *TokenSaving) add(o TokenSaving) {
 	s.CachePricier += o.CachePricier
 	s.SavedInferred += o.SavedInferred
 	s.AtFloor += o.AtFloor
-	s.GatewayUnpriced += o.GatewayUnpriced
+	s.GatewayUnattributed += o.GatewayUnattributed
 }
 
 // TokenSavingView is TokenSavings folded three ways.
@@ -194,13 +195,13 @@ func TokenSavings(events []Event) TokenSavingView {
 		ch.s.add(s)
 		ch.inferred = ch.inferred || ev.BaselineSource == BaselineInferred || hasReason(decision.ReasonCodes, ReasonBaselineFromSettings)
 		ch.floor = ch.floor || dir == TokenUnchanged && atTierFloor(ev.Harness, requested)
-		ch.gateway = ch.gateway || isUnpricedGateway(dir, ran, found)
+		ch.gateway = ch.gateway || isUnattributedGateway(dir, ran, found)
 	}
 	v := TokenSavingView{ByAgentType: map[string]TokenSaving{}, byChild: map[string]TokenSaving{}}
 	for id, ch := range children {
 		ch.s.Children = 1
 		if ch.gateway {
-			ch.s.GatewayUnpriced = 1
+			ch.s.GatewayUnattributed = 1
 		}
 		if ch.s.Direction() == TokenCheaper {
 			ch.s.SavedChildren = 1

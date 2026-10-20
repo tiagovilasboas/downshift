@@ -90,6 +90,12 @@ func gatewayTier(ran string) (core.Tier, bool) {
 	return 0, false
 }
 
+// gatewayRowKnown reports whether an allowlisted gateway row names ran.
+func gatewayRowKnown(ran string) bool {
+	_, ok := gatewayTier(ran)
+	return ok
+}
+
 // rankTiers is the one ranking rule for native and gateway runs: a ran tier
 // below the requested one is saved, above it pricier, equal is unchanged.
 func rankTiers(requested, ran core.Tier) string {

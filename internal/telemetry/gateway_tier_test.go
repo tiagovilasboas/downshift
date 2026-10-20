@@ -93,7 +93,7 @@ func TestGatewayRun_SmallRowSavedInTotals(t *testing.T) {
 	mid := catalog.Load().ModelFor(rankHarness, core.TierMid).ID
 	usage, decision := gatewayEvents(mid, allowlistSmallID)
 	s := TokenSavings([]Event{decision, usage}).Total
-	if s.SavedChildren != 1 || s.GatewayUnpriced != 0 {
-		t.Fatalf("saved %d, unpriced %d; want 1 and 0", s.SavedChildren, s.GatewayUnpriced)
+	if s.SavedChildren != 1 || s.GatewayUnattributed != 0 {
+		t.Fatalf("saved %d, unattributed %d; want 1 and 0", s.SavedChildren, s.GatewayUnattributed)
 	}
 }
