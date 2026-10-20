@@ -159,10 +159,15 @@ async function refreshStatus($: EngineInterface): Promise<void> {
   }
 }
 
+/** How many subagents are running in an agent list. */
+export function countRunning(agents: readonly { status: string }[]): number {
+  return agents.filter(a => a.status === 'running').length
+}
+
 /** Subagents whose loop is running now, from the engine's agent list; 0 when it cannot answer. */
 async function runningAgents($: EngineInterface): Promise<number> {
   try {
-    return (await $.agent.list()).filter(a => a.status === 'running').length
+    return countRunning(await $.agent.list())
   } catch {
     return 0
   }

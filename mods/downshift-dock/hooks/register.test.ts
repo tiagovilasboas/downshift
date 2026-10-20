@@ -11,7 +11,7 @@
 import { describe, expect, mock, test } from 'claude-code/testing'
 import type { CommandInfo, RenderPropsOf, SessionStartInput } from 'claude-code'
 
-import { ACCENT, IDLE, chips, compactorOn, dciMode, detect, dotColor, modeLabel, nextMode, parseMode, visibleTargets } from './register'
+import { ACCENT, IDLE, chips, compactorOn, countRunning, dciMode, detect, dotColor, modeLabel, nextMode, parseMode, visibleTargets } from './register'
 
 const plug = (name: string): CommandInfo => ({ name, description: name, source: 'plugin', plugin: name })
 const builtin = (name: string): CommandInfo => ({ name, description: name, source: 'builtin' })
@@ -145,6 +145,20 @@ describe('mode', () => {
     expect(modeLabel('economy')).toContain('economy')
     expect(modeLabel('performance')).toContain('performance')
   })
+})
+
+describe('running count', () => {
+  const agent = (status: string) => ({ status })
+  const table: [string, { status: string }[], number][] = [
+    ['only running agents count', [agent('running'), agent('done'), agent('failed'), agent('running')], 2],
+    ['an empty list counts zero', [], 0],
+    ['no running agent counts zero', [agent('done'), agent('failed')], 0],
+  ]
+  for (const [name, agents, want] of table) {
+    test(name, () => {
+      expect(countRunning(agents)).toBe(want)
+    })
+  }
 })
 
 describe('mode', () => {
