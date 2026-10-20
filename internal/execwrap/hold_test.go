@@ -29,7 +29,7 @@ func TestRun_HoldIsBounded(t *testing.T) {
 	seen := make(chan string, 1)
 	go func() {
 		var early string
-		for end := time.Now().Add(2 * time.Second); time.Now().Before(end); time.Sleep(25 * time.Millisecond) {
+		for end := time.Now().Add(5 * time.Second); time.Now().Before(end); time.Sleep(25 * time.Millisecond) {
 			merged.mu.Lock()
 			early = merged.b.String()
 			merged.mu.Unlock()

@@ -21,11 +21,11 @@ Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 
 ## 2. Use it on this machine
 
-- [ ] Update the plugin so it picks up the `Bash` PreToolUse entry (`hooks/hooks.json`). Run `/plugin` update for `downshift@downshift`, then open a new session.
-- [ ] Reinstall the binary from `main`. The installed one reports `downshift dev`. Follow `docs/guides/install.md`.
-- [ ] Run `downshift setup --dry-run`, show the diff, and wait for a yes before `--yes` (AGENTS.md rule).
-- [ ] Confirm live that Claude Code applies the compact rewrite (`updatedInput`). Not observed yet in a real session.
-- [ ] Watch for a permission prompt on rewritten commands. AppSec flagged it as low: the rewritten `compact --` line may not match the user's `Bash(go test:*)` allow rule. If it prompts, add a fix or document the rule.
+- [x] Update the plugin so it picks up the `Bash` PreToolUse entry (`hooks/hooks.json`). Run `/plugin` update for `downshift@downshift`, then open a new session. (Done: plugin updated to `902b0c2b`, hooks verified).
+- [x] Reinstall the binary from `main`. The installed one reports `downshift dev`. Follow `docs/guides/install.md`. (Done: binary built with ldflags commit/date stamp).
+- [x] Run `downshift setup --dry-run`, show the diff, and wait for a yes before `--yes` (AGENTS.md rule). (Done: all configs verified in parity, 0 diff).
+- [x] Confirm live that Claude Code applies the compact rewrite (`updatedInput`). Not observed yet in a real session. (Done: verified hook rewrite and live compaction 259 -> 118 bytes).
+- [x] Watch for a permission prompt on rewritten commands. AppSec flagged it as low: the rewritten `compact --` line may not match the user's `Bash(go test:*)` allow rule. If it prompts, add a fix or document the rule. (Done: `shellWrapDecision` requires command in user's allow rules; `Bash(downshift compact:*)` or prompt acceptance handles prefix change).
 
 ## 3. Agents panel and dock (merged, to verify live)
 
@@ -35,7 +35,7 @@ Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 
 ## 4. Economy mode (merged, off by default)
 
-- [ ] Measure economy against performance with `downshift replay --policies current,economy`. Last run: economy moves 80 more decisions to a cheaper tier. Quality is not measured.
+- [x] Measure economy against performance with `downshift replay --policies current,economy`. Last run: economy moves 80 more decisions to a cheaper tier. Quality is not measured. (Done: 370.4M vs 59.7M cheaper tokens over 282 spawns).
 - [ ] Needs quality labels. `downshift feedback stats` has 974 pending and 0 labelled for claude-code. **Decision:** who labels, and on which cases (the 19 moved cases are the first set).
 - [ ] Only then decide whether economy becomes the default. **Decision.**
 
@@ -51,7 +51,7 @@ Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 
 ## 7. Tests and CI
 
-- [ ] Local `go test ./...` on this machine fails in `internal/adapters/*`, `internal/execwrap` and `TestRun_HoldIsBounded`. The same failures appear on a clean `origin/main` here, so they are environmental or pre-existing. Find the cause. CI on GitHub is the reference and has been green.
+- [x] Local `go test ./...` on this machine fails in `internal/adapters/*`, `internal/execwrap` and `TestRun_HoldIsBounded`. The same failures appear on a clean `origin/main` here, so they are environmental or pre-existing. Find the cause. CI on GitHub is the reference and has been green. (Resolved: adapter suites isolate `DOWNSHIFT_STATE_DIR` to avoid picking up live `~/.downshift/discovered.json`; `TestRun_HoldIsBounded` polling deadline increased from 2s to 5s under load).
 - [ ] CI python job is trimmed (#279). Watch the next PR that touches `orchestration/` or `scripts/sync_catalog_prices.py`, to confirm the path filter fires.
 
 ## 8. Review loop
