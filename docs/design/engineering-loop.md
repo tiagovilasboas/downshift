@@ -31,7 +31,7 @@ An expired or missing observation cannot establish remaining credit. Keep
 |---|---|---|---|
 | Discovery | Documented CLI/cache contracts and precedence | Bounded parsers, source failures, discovery cache expiry tests | Guia inferencial; sensor computacional; architecture fitness and behaviour |
 | Quota | Source, scope, freshness and shared-window contract | Quota gate plus malformed, stale, exhausted and cross-harness tests | Guia inferencial; sensor computacional; behaviour |
-| Dashboard counts | Count emitted rewrites consistently in every tab | Server computes `applied`; API regression compares per-harness totals | Guia inferencial; sensor computacional; behaviour |
+| Read-out counts | Count emitted rewrites consistently in every read-out (`stats`, `report`) | Shared telemetry summary computes `applied` | Guia inferencial; sensor computacional; behaviour |
 
 The hooks provide the local runtime sensor. The Go tests run in repository CI;
 they establish implementation behaviour against fixtures. A live observation

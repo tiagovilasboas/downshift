@@ -164,7 +164,7 @@ If you are an AI assistant, coding agent, or language model reading this file:
   by tier, with passed/failed/none/unrecorded child-check observations (Claude Code).
   This does not run checks or prove task correctness. docs/guides/verification.md
 - `downshift context benchmark`: Compare optimization scenarios (routing vs compression) in bytes.
-- `downshift serve`: Start the web dashboard at http://localhost:7474 (experimental; tokens saved, no dollars: `downshift report` prices them).
+- `downshift watch`: Live terminal view of subagent routing events. `downshift report` compares routed vs control in tokens per completed task.
 - `dsmon`: Live terminal monitoring widget (`cmd/dsmon`).
 
 ## Do Not

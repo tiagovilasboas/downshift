@@ -60,8 +60,8 @@ Source: `internal/telemetry/telemetry.go` (`Aggregate`), `export.go`, [stats-exp
   subtract from, a cheaper model can need more tokens or a retry, and on a plan with no per-token bill (Claude Code Pro,
   Max, Team; Cursor plans) what was saved is not tokens or dollars but headroom against a quota, which no hook sees.
 - **"Tokens saved" in the live views means saved from the requested model** (owner decision 2026-10-19). The session
-  tree, `session --panel` (savvy-progress), the statusline, `watch`, `dsmon`, the child-end line, the dashboard
-  (`downshift serve`) and the `stats` headline show the share of child tokens that ran on a cheaper model than the one the harness asked for: the
+  tree, `session --panel` (savvy-progress), the statusline, `watch`, `dsmon`, the child-end line and the `stats`
+  headline show the share of child tokens that ran on a cheaper model than the one the harness asked for: the
   "cheaper" bucket above over every priced child (control, held, kept and refuted children count in the total, never
   as saved), per agent, per agent type and per session (`telemetry.TokenSavings`). Work tokens (input+output) and cache
   tokens (read+write) are counted apart, because cache reads are most of a child's tokens and carry the smallest price
