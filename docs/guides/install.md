@@ -523,6 +523,11 @@ does not install one. Native block, retry and served-model acknowledgement were
 observed on 2026-10-10 with Kiro CLI 2.29.0; see
 [the build-specific evidence](../evidence/kirocrew-native-hook-2026-10-10.md).
 
+KiroCrew's Agent Dashboard app shows the run history and health of your agents.
+It reads the agent run records of the ecosystem it is pointed at (`runs.db`),
+not Downshift's state directory, so it does not show routing decisions or
+savings. Use `downshift stats` for those.
+
 ## dsmon — live monitor widget
 
 > **Prefer `downshift watch`.** The live session tree is built into the `downshift`
