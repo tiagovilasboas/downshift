@@ -10,8 +10,9 @@ import (
 	"strings"
 )
 
-// mavenPath is a single path token: no spaces or shell/URL punctuation.
-const mavenPath = `[A-Za-z0-9_.\-/+@:~]+`
+// mavenPath is one path token: it must start with "/", "./" or a drive letter,
+// and holds no spaces or other characters. Anything else is not a path.
+const mavenPath = `(?:/|\./|[A-Za-z]:[\\/])[A-Za-z0-9_.\-/+@:~\\]*`
 
 // mavenJavacOptions is the closed set of bracketed javac options Maven prints,
 // for example "[debug release 17]" or "[debug target 17 -parameters]".
@@ -36,7 +37,7 @@ var (
 		`|Copying \d+ resources?(?: from ` + mavenPath + ` to ` + mavenPath + `)?` +
 		`|Using '[A-Za-z0-9\-]+' encoding to copy filtered resources\.` +
 		`|skip non existing resourceDirectory ` + mavenPath +
-		`|Using auto detected provider ` + mavenPath + `)$`)
+		`|Using auto detected provider org\.apache\.maven\.surefire\.[A-Za-z0-9.]+)$`)
 	// reMavenPostTests lists the only chatter allowed between the Surefire
 	// totals and BUILD SUCCESS: a packaged jar or an install step.
 	reMavenPostTests = regexp.MustCompile(`^\[INFO\] (?:Building jar: ` + mavenPath +

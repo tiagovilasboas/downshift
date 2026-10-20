@@ -6,7 +6,7 @@
 [[1;34mINFO[m] --------------------------------[ jar ]---------------------------------
 [[1;34mINFO[m] 
 [[1;34mINFO[m] --- resources:3.3.1:resources (default-resources) @ inventory ---
-[[1;34mINFO[m] Copying 2 resources from src/main/resources to target/classes
+[[1;34mINFO[m] Copying 2 resources from /work/inventory/src/main/resources to /work/inventory/target/classes
 [[1;34mINFO[m] 
 [[1;34mINFO[m] --- compiler:3.13.0:compile (default-compile) @ inventory ---
 [[1;34mINFO[m] Nothing to compile - all classes are up to date.
@@ -16,7 +16,7 @@
 [[1;34mINFO[m] 
 [[1;34mINFO[m] --- compiler:3.13.0:testCompile (default-testCompile) @ inventory ---
 [[1;34mINFO[m] Changes detected - recompiling the module! :source
-[[1;34mINFO[m] Compiling 3 source files with javac [debug release 17] to target/test-classes
+[[1;34mINFO[m] Compiling 3 source files with javac [debug release 17] to /work/inventory/target/test-classes
 [[1;34mINFO[m] 
 [[1;34mINFO[m] --- surefire:3.2.5:test (default-test) @ inventory ---
 [[1;34mINFO[m] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
