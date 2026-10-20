@@ -103,6 +103,12 @@ var rawFixtures = []string{
 	"flutter_print_output.txt",
 	"flutter_pub_get_noise.txt",
 	"dart_pass_ansi.txt",
+	"maven_fail_test.txt",
+	"maven_warning.txt",
+	"maven_downloads.txt",
+	"maven_ansi.txt",
+	"maven_skipped.txt",
+	"maven_multimodule.txt",
 	"gradle_fail.txt",
 	"gradle_kotlin_warning.txt",
 	"gradle_deprecation.txt",
@@ -140,6 +146,8 @@ var cleanFixtures = []cleanFixture{
 	{"flutter_pass_expanded.txt", []string{"PASS", "3 passed", "1 skipped"}},
 	{"dart_pass_compact.txt", []string{"PASS", "3 passed", "1 skipped"}},
 	{"dart_pass_expanded.txt", []string{"PASS", "3 passed", "1 skipped"}},
+	{"maven_pass_test.txt", []string{"inventory 1.4.0", "surefire:test", "Tests run: 13, Failures: 0, Errors: 0, Skipped: 0", "BUILD SUCCESS", "Total time:  2.915 s"}},
+	{"maven_pass_package.txt", []string{"jar:jar", "Tests run: 13, Failures: 0, Errors: 0, Skipped: 0", "BUILD SUCCESS", "Total time:  4.302 s"}},
 }
 
 func readFixture(t *testing.T, name string) []byte {

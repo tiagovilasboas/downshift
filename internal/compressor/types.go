@@ -41,6 +41,7 @@ const (
 	FormatFileList    Format = "file_listing" // ls -R, tree, find
 	FormatLogs        Format = "logs"         // repetitive log lines
 	FormatGradle      Format = "gradle"
+	FormatMaven       Format = "maven"
 )
 
 // Result is the deterministic outcome of a compression attempt.

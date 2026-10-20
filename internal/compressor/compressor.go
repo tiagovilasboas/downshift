@@ -156,6 +156,9 @@ func detectFormat(input []byte) (Format, bool) {
 	if isFlutterTest(input) {
 		return FormatFlutterTest, reFlutterTestFailure.Match(input)
 	}
+	if isMaven(input) {
+		return FormatMaven, reMavenFailure.Match(input)
+	}
 	if isGradle(input) {
 		return FormatGradle, reGradleFailure.Match(input)
 	}
@@ -302,6 +305,8 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressPHPUnit(input)
 	case FormatFlutterTest:
 		return compressFlutterTest(input)
+	case FormatMaven:
+		return compressMaven(input)
 	case FormatGradle:
 		return compressGradle(input)
 	case FormatGitStatus:

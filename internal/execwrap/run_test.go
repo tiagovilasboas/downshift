@@ -621,6 +621,7 @@ func TestRun_NextBuildAndPHPUnitCompact(t *testing.T) {
 		{"PHPUnit", "phpunit", "phpunit", "phpunit_pass_default.txt", "PHPUnit: PASS (58 tests, 143 assertions", FamilyPHPUnit},
 		{"Flutter test", "flutter", "flutter test", "flutter_pass_compact.txt", "dart/flutter test: PASS (3 passed, 1 skipped", FamilyFlutterTest},
 		{"Dart test", "dart", "dart test --no-color", "dart_pass_compact.txt", "dart/flutter test: PASS (3 passed, 1 skipped", FamilyDartTest},
+		{"Maven", "mvn", "mvn test", "maven_pass_test.txt", "[INFO] BUILD SUCCESS", FamilyMaven},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			data, err := os.ReadFile(filepath.Join("..", "compressor", "testdata", "corpus", tc.fixture))
