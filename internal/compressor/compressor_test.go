@@ -310,6 +310,32 @@ func TestCompress_Vitest_NoDuration(t *testing.T) {
 	}
 }
 
+// TestCompress_Vitest_UnrecognisedLinePreservesRaw injects lines into an
+// otherwise clean vitest transcript. Any unrecognised line must keep the whole
+// transcript byte-identical, so a hidden failure or warning cannot be compacted.
+func TestCompress_Vitest_UnrecognisedLinePreservesRaw(t *testing.T) {
+	clean := "\n RUN  v1.6.0 /web\n\n ✓ a.test.ts (5)\n\n Test Files  1 passed (1)\n      Tests  5 passed (5)\n   Start at  12:00:00\n   Duration  350ms (transform 50ms, tests 35ms)\n"
+	injected := map[string]string{
+		"error":   "stderr | error: connection reset\n",
+		"warning": "Warning: deprecated option used\n",
+		"panic":   "panic: runtime boom\n",
+		"FAIL":    " FAIL  a.test.ts > case\n",
+		"failed":  " 1 failed\n",
+	}
+	for name, line := range injected {
+		t.Run(name, func(t *testing.T) {
+			in := []byte(strings.Replace(clean, "\n Test Files", "\n"+line+"\n Test Files", 1))
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("vitest with injected %s line must not be compacted: reason=%q", name, res.Reason)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("vitest with injected %s line must come back byte-identical", name)
+			}
+		})
+	}
+}
+
 func TestCompress_Vitest_ErrorsPreserveRaw(t *testing.T) {
 	cases := []struct {
 		name string
