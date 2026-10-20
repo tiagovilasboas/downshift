@@ -2,10 +2,10 @@
 
 # Team pilot: routed versus control
 
-A two-week protocol for a team that wants to know whether Downshift saves money on its own
+A two-week protocol for a team that wants to know whether Downshift lowers the tokens each completed task needs on its own
 work. It uses the built-in control group and [`downshift report`](report.md), so nothing new has
 to be built. The result is one evidence page that answers a single question: does routing lower
-the cost per completed task without raising rework?
+the tokens per completed task without raising rework?
 
 What a pilot closes in [beta-exit.md](../reference/beta-exit.md): P2.3 (non-maintainer exports), P3.4 (linked
 usage events) and P3.7 (period comparison), if the numbers are there.
@@ -17,11 +17,11 @@ usage events) and P3.7 (period comparison), if the numbers are there.
 | Unit | One subagent spawn | The hook assigns each spawn to routed or control by hashing its routing id. No calendar split, so a heavy week does not skew one side |
 | Control share | `DOWNSHIFT_CONTROL_SHARE=0.5` during the pilot | At the default 0.10 the first estimate needs about 200 completed tasks. At 0.5 it needs about 40. Reset to 0.10 or 0 afterwards |
 | Harness | Claude Code only | It is the only harness where completion and cost are measurable today (SubagentStop reads the child transcript). See [harness-matrix.md](../reference/harness-matrix.md#child-end-n5-2026-10-13) |
-| Primary metric | Cost per completed task, routed versus control, with the 95% interval | What `downshift report` prints |
+| Primary metric | Tokens per completed task, routed versus control, with the token check | What `downshift report` prints |
 | Quality guardrail | Rework rate per group, plus misroutes flagged with `downshift feedback` | Downshifting has a measured quality cost on executable tasks; the pilot has to show whether it turns into rework |
 | Secondary | `usage_linked`, honored rewrites (`resolved`) | Linkage and provenance |
 | Duration | 2 weeks, 3 or more people | One machine is not a pilot |
-| Stop rule | At least 20 completed, priced tasks per group (the report unlocks); aim for 50+ per group | Below that the interval usually includes zero and the pilot shows nothing either way |
+| Stop rule | At least 20 completed tasks per group (the report unlocks); aim for 50+ per group | Below that the report prints `not enough data` and the pilot shows nothing either way |
 
 ## Before day 1 (every participant)
 
@@ -58,9 +58,9 @@ usage events) and P3.7 (period comparison), if the numbers are there.
 | Report says | Conclusion |
 |---|---|
 | `not enough data` | Keep running, or raise the share. Do not quote a number |
-| Interval includes zero | No saving shown in this window. That is a valid result; publish it |
-| Interval above zero, rework not higher in the routed group | Saving shown for this team and workload |
-| Interval above zero, rework higher in the routed group | Cheaper per completed task, but at a quality cost. Report both numbers |
+| Token check shows routed at or above control | No saving shown in this window. That is a valid result; publish it |
+| Routed below control, rework not higher in the routed group | Fewer tokens per completed task for this team and workload |
+| Routed below control, rework higher in the routed group | Fewer tokens per completed task, but at a quality cost. Report both numbers |
 
 ## Lessons from the first routed-versus-control runs
 

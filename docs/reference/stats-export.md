@@ -117,8 +117,8 @@ a price are not in these figures; `observed_child_tokens` still counts them.
 
 Since the control group is on by default, a share of spawns (`DOWNSHIFT_CONTROL_SHARE`, default
 `0.10`, `0` disables) is classified and logged but never rewritten, with reason code `CONTROL`.
-`downshift report` compares those spawns with the routed ones: cost per completed task, rework
-rate and savings with a 95% bootstrap interval. Reason code `CONTROL` is documented in
+`downshift report` compares those spawns with the routed ones: tokens per completed task, rework
+rate and the token check (a point percentage, no interval). Reason code `CONTROL` is documented in
 [report.md](../guides/report.md); it is not counted under `reason_codes`, because baseline events are
 excluded from decision counts.
 
@@ -140,7 +140,7 @@ otherwise by the usage event correlation ID (legacy fallback: timestamp and
 session). Two distinct agents can contribute two linked records. Only the
 corrected `usage_linked` is suitable for the P3.4
 linked-decision gate. A decision outside the selected window contributes no
-link in that window. Cost totals still include priced usage without a link;
+link in that window. Token totals still include usage without a link;
 linkage alone does not prove the requested baseline is known or a bill changed.
 
 Unknown requested models get no tier comparison: their tokens are `unattributed`. New usage events write no dollar

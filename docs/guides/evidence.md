@@ -11,10 +11,10 @@ project stands on today. Rule of reading: a figure on a lower rung never stands 
 | Rung | What it is | Status today |
 |---|---|---|
 | A | Theoretical saving from catalog list prices | Arithmetic, always available |
-| B | Saving estimated by telemetry (normalised units, catalog-priced tokens) | Available on Claude Code; an estimate per decision |
+| B | Saving estimated by telemetry (normalised units, tokens by tier) | Available on Claude Code; an estimate per decision |
 | C | Saving measured in controlled benchmarks | Partial: quality measured, cost not |
 | D | Saving demonstrated on real tasks, routed versus control | One measurement, one operator, 2026-10-15 |
-| E | Cost per task completed with acceptable quality | Defined and computed by `report`; no window has unlocked it yet |
+| E | Cost per task completed with acceptable quality | Defined; `report` computes tokens per completed task; no window has unlocked it yet |
 
 ## A. Theoretical saving (list prices)
 
@@ -50,12 +50,12 @@ Source: `internal/telemetry/telemetry.go` (`Aggregate`), `export.go`, [stats-exp
   `baseline_no_route` 0; native tokens and model matched the record on 5 of 5 linked children. That is provenance
   for the token counts, not for a bill. P3.4 needs 50 linked records and stands at 5 in that audit.
 - **Tokens rerouted, and why "tokens saved" is not a claim.** Routing does not reduce tokens: the child reads and
-  writes about the same tokens on another model, so the dollar saving is those tokens priced on the requested model
-  minus the same tokens priced on the model that ran. "Tokens rerouted" counts the tokens of usage records linked to an
+  writes about the same tokens on another model, so a saving at list price would be those tokens priced on the requested model
+  minus the same tokens priced on the model that ran (no dollar is printed). "Tokens rerouted" counts the tokens of usage records linked to an
   applied, non-refuted rewrite, by harness and requested-to-ran model pair, split into moved to a cheaper model and
   moved to a pricier one. It is rung B evidence: the counts are observed (Claude Code only today, because it is the only
-  harness that records child tokens), the dollars are estimated at list price, and the baseline stays a counterfactual.
-  It carries the same biases as the dollar figures below: a refuted rewrite, an unknown requested model or a decision
+  harness that records child tokens), any dollar reading is a list-price estimate, and the baseline stays a counterfactual.
+  It carries the same biases as the cheaper-model share below: a refuted rewrite, an unknown requested model or a decision
   with no usage record contributes nothing. Downshift does not claim fewer tokens: no run without routing exists to
   subtract from, a cheaper model can need more tokens or a retry, and on a plan with no per-token bill (Claude Code Pro,
   Max, Team; Cursor plans) what was saved is not tokens or dollars but headroom against a quota, which no hook sees.
@@ -126,10 +126,9 @@ intervals (three runs per cell), quality beyond structural checks, other harness
 **Not measured today.** The definition exists and the command computes it, but no window has met its threshold.
 
 `downshift report` (`cmd/downshift/report.go`, `internal/telemetry/report.go`, `tasks.go`) defines a completed task as a
-child that ended `completed` and has a priced usage record; cost per completed task is that child's cost plus every
+child that ended `completed` and has a usage record with tokens; tokens per completed task are that child's tokens plus every
 failed attempt it redid (a respawn in the same session within 10 minutes of an `error` or `interrupted` end); rework
-rate is reworked spawns over spawns with an observed end; savings are control minus routed per completed task, with a
-95% percentile bootstrap (2,000 resamples, fixed seed 20261013). It needs 20 completed, priced tasks per group
+rate is reworked spawns over spawns with an observed end; the token check gives routed against control per completed task as a point percentage, with no interval printed. It needs 20 completed tasks per group
 (`MinReportTasks`); at the default `DOWNSHIFT_CONTROL_SHARE=0.10` that is roughly 200 completed tasks.
 
 What is missing to produce it: enough completed tasks in one log (the [pilot](pilot.md) at share 0.5); a captured
@@ -146,7 +145,7 @@ decisions but not usage or ends ([harness-matrix.md](../reference/harness-matrix
 
 | Metric | Status | Where |
 |---|---|---|
-| **Total cost per task completed with acceptable quality** (primary) | not available | `downshift report` computes cost per completed task once 20 priced completions per group exist; quality is manual |
+| **Total cost per task completed with acceptable quality** (primary) | not available | `downshift report` computes tokens per completed task once 20 completions per group exist; quality is manual |
 | Cost per run (parent session) | not available from Downshift | hooks see subagents only; the A/B used Claude Code's `total_cost_usd` by hand |
 | Tokens per subagent | observed | `downshift session --tree`, `stats --detail`; transcript tokens, placed by tier |
 | Input / output / cache tokens per child | available | usage event fields `input_tokens`, `output_tokens`, `cached_tokens`, `cache_write_tokens`; `observed_child_tokens` in `stats --export` |
@@ -156,7 +155,7 @@ decisions but not usage or ends ([harness-matrix.md](../reference/harness-matrix
 | Retries | inferred | "Respawned after a failure" in `stats`, `↻` in the session tree (10-minute rule, a hint); explicit via `downshift feedback <id> retry` |
 | Result quality | not available | hidden tests in the A/B only; `feedback <id> success|failed` is manual |
 | Coordination and delegation cost | not available | parent turns and tokens are outside the hook; GAP-COORDINATION open |
-| Fixed-context cost | available per child, estimated in dollars | `cached_tokens` / `cache_write_tokens` priced at cache rates; parent context not seen; `context metrics` token fields unavailable |
+| Fixed-context cost | available per child, as tokens | `cached_tokens` / `cache_write_tokens` counted apart by class; parent context not seen; `context metrics` token fields unavailable |
 | Abstention rate | available | reason codes `NO_SIGNAL`, `CLASSIFIER_UNCONFIDENT` in `stats --export` `reason_codes`; `downshift benchmark` prints abstentions per split |
 | Routing decisions and guardrails fired | available | `verdict`, `corrections`, `HELD_*` codes; `stats` "Guardrails held"; `session --why`; `stats --by-harness` |
 | Requested versus executed model | available / inferred | `requested_model` and `final_model` on the decision; `resolved` record with `rewrite_honored` when the harness reports the child's model; otherwise `rewrite_honored_inferred` from a later spawn |
@@ -199,7 +198,7 @@ has named a model. "Shown by" names a test or an evidence file; a claim with nei
 | Harness-honest observation: emitted, honored and used are three records (`rewrite_emitted`; `resolved` with `rewrite_honored`; `usage`), and a refuted rewrite saves nothing | A gateway sees the model named in each request, not which spawn it belongs to or whether the harness applied a rewrite | [claude-code-rewrite-honored-2026-10-06.md](../evidence/claude-code-rewrite-honored-2026-10-06.md) (two spawns); [billing-gap-audit.md](../evidence/billing-gap-audit.md) (5 of 5 linked records matched); `TestAggregate_RefutedRewriteSavesNothing`, `TestCountInferredHonored_RefutedBeatsLaterSpawn` in `internal/telemetry/refuted_inferred_test.go` | Shown on Claude Code. Codex honored is inferred (2026-10-02), Cursor unconfirmed (2026-10-10); other harnesses record decisions only ([harness-matrix.md](../reference/harness-matrix.md)) |
 | Per-spawn guardrails: R1–R9, risk floor, `explicit_only`, quota gate; a held decision changes nothing | `opusplan` has none; gateway fallbacks fire on errors and quotas, not on task risk or classifier confidence | `internal/core/selfcheck_test.go`, `cost_safety_invariants_test.go`, `risk_downshift_test.go`; [hardening-audit-2026-10-15.md](../evidence/hardening-audit-2026-10-15.md) (23 regression tests fail on the base commit); A/B b6: 2 upshift and 1 downshift verdicts held | Shown |
 | Project tier floors: `.downshift/policy.json` by class and by risk, raise-only, applied by the shared runner for every harness | Neither `opusplan` nor a gateway reads a per-project floor from the repository | `internal/policyfile/policyfile_test.go`, `TestHookE2E_ProjectFloorThroughSharedRunner` (`cmd/downshift/policy_floor_e2e_test.go`), `TestRunKiroCrewHook_ProjectFloorApplies`; counted as `policy_floor` in `stats --export` | Shown by tests; no dated evidence file records a floor firing on a real project |
-| Control group and report: about 1 in 10 spawns left unrouted by hashing the routing id, `downshift report` compares cost per completed task with a bootstrap interval | A session policy has no control arm; whether a given gateway offers a per-task routed-versus-control comparison is outside this repository's evidence | `cmd/downshift/control_group_test.go`, `TestInControlGroup_ShareAccuracy`, `internal/telemetry/report_test.go`; [report.md](report.md) | Mechanism shown; a saving from it unproven: no window has reached 20 priced completions per group (rung E) |
+| Control group and report: about 1 in 10 spawns left unrouted by hashing the routing id, `downshift report` compares tokens per completed task | A session policy has no control arm; whether a given gateway offers a per-task routed-versus-control comparison is outside this repository's evidence | `cmd/downshift/control_group_test.go`, `TestInControlGroup_ShareAccuracy`, `internal/telemetry/report_test.go`; [report.md](report.md) | Mechanism shown; a saving from it unproven: no window has reached 20 completions per group (rung E) |
 | Composes with `opusplan`: a spawn in plan mode inherits Opus and is routed as usual | Replaces nothing in the main session | Code path only: `configuredModel` resolves `opusplan` by `permission_mode` ([claude-code.md](claude-code.md), section 2) | Unproven: a live plan-mode spawn has not been observed |
 | Saves beyond what `opusplan` alone saves | The B−C comparison | Protocol only: [benchmark-protocol.md](benchmark-protocol.md); no `docs/evidence/benchmark-opusplan-*.md` exists | Unproven: the A/B compared routed and control under a Sonnet session, not `opusplan` arms |
 

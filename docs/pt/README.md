@@ -6,7 +6,7 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 O **Downshift** é uma **suíte para otimizar o uso de tokens em agentes de código**: roteamento determinístico de subagentes mais os guardrails, pisos, gate de cota, visão de sessão, telemetria, política de contexto, mods e companion em volta dele. Ele se instala nos hooks do seu harness de código e atua onde o custo é decidido: quando o agente principal delega. Por padrão, um subagente herda o modelo mais caro da sessão, então renomear uma variável, rodar um teste ou listar um diretório sai a preço de fronteira, e uma sessão que delega muito multiplica isso.
 
-O roteamento de modelos é a alavanca principal hoje, não o produto inteiro. Em volta dele: escolha conservadora na dúvida (um palpite nunca gasta dinheiro), guardrails para tarefas de risco e piso de política por projeto, visibilidade de cada decisão, telemetria do que cada filho custou e como terminou, grupo de controle e `downshift report` para medir custo por tarefa concluída, skills de diagnóstico e companions de contexto. Tudo determinístico (nenhum LLM no loop), sem guardar prompt e fail-open. A métrica que importa é **custo por tarefa concluída com qualidade aceitável**; token é proxy. Tabela completa com status e evidência por capacidade: [capability matrix (EN)](../reference/capability-matrix.md).
+O roteamento de modelos é a alavanca principal hoje, não o produto inteiro. Em volta dele: escolha conservadora na dúvida (um palpite nunca gasta dinheiro), guardrails para tarefas de risco e piso de política por projeto, visibilidade de cada decisão, telemetria do que cada filho custou e como terminou, grupo de controle e `downshift report` para comparar tokens por tarefa concluída, skills de diagnóstico e companions de contexto. Tudo determinístico (nenhum LLM no loop), sem guardar prompt e fail-open. A métrica que importa é **custo por tarefa concluída com qualidade aceitável**; token é proxy. Tabela completa com status e evidência por capacidade: [capability matrix (EN)](../reference/capability-matrix.md).
 
 **O Downshift são quatro capacidades atrás de um único `setup`, rodando como hooks nativos em Go dentro do seu harness:**
 
@@ -49,7 +49,7 @@ Um binário, um diretório de estado, cada peça calculada para todos os harness
 | **Piso de tier por projeto** | `.downshift/policy.json` exige um tier mínimo por classe ou risco num repositório; só sobe, nunca desce. | Implemented, todos os harnesses |
 | **Gate de cota e crédito** | Uma marca do hook ou um snapshot nativo de uso segura a reescrita para um modelo sem crédito; snapshot velho deixa de segurar após 1 h. | Implemented, not validated everywhere ([quota, EN](../guides/quota.md)) |
 | **Visão de sessão e statusline** | `downshift session --tree`, `/downshift`, `downshift watch`, uma linha de stderr por spawn e uma statusline com as janelas de cota. | Implemented; statusline só no Claude Code ([session view, EN](../guides/session-view.md)) |
-| **Telemetria e relatórios de custo com grupo de controle** | `events.jsonl` sem prompt, tokens e custo por filho a preço de catálogo, cerca de 1 em 10 spawns sem roteamento, `downshift stats` e `downshift report`. | Implemented; uso só no Claude Code; estimativa, não fatura |
+| **Telemetria e relatórios de custo com grupo de controle** | `events.jsonl` sem prompt, tokens por filho, cerca de 1 em 10 spawns sem roteamento, `downshift stats` e `downshift report` (só tokens). | Implemented; uso só no Claude Code; tokens observados, não fatura |
 | **Política de contexto** | `setup` define `opusplan` e plan mode do Claude Code para chaves que você não definiu (o mod You should know é opt-in: `setup --you-should-know`); o compressor nativo só observa bytes. | Implemented, limitado: política de sessão só no Claude Code ([guia do Claude Code, EN](../guides/claude-code.md)) |
 | **Code Intelligence (DCI)** | Descoberta Git, extração Go AST e multi-linguagem (TS/JS, Python, Rust, PHP, Java, C#), grafo de chamadas saintes e índice reverso (*Blast Radius*), ranking BM25 Production-First, abstenção e injeção de contexto estrutural de até 3.500 bytes (configurável 512..16384 via `--budget`) com zero persistência de prompts via `UserPromptSubmit`. Subcomando `downshift dci impact`. | Implemented (v0.4); telemetria em `downshift stats --dci` |
 | **Mods** | cache-tax dentro do plugin; savvy-progress, filetree e downshift-dock como plugins irmãos do marketplace (o `setup` instala os três no Claude Code); downshift-router como protótipo opt-in. | Shipped, vendorizados e pinados; router Experimental ([mods, EN](../../mods/README.md)) |
@@ -129,7 +129,7 @@ Mods são plugins do Claude Code 2.1.287+ com um módulo de hooks, a única exce
 * **Sem LLM no roteamento:** Regex e boost FNV por palavras rodam dentro do binário, sem chamada de rede no caminho do hook. O tempo depende do tamanho do payload; medições e limites estão na [auditoria (EN)](../evidence/hardening-audit-2026-10-15.md).
 * **Segurança e Continuidade (Fail-Open):** Na dúvida ou em caso de qualquer falha técnica, o Downshift não interrompe o trabalho: o fluxo segue normalmente com o modelo original da sessão.
 
-> **⚠️ Nota de Transparência:** `rewrite_emitted` na telemetria indica que o Downshift emitiu com sucesso a instrução de troca de modelo. Métricas em dólares reais dependem dos tokens do filho, que no Claude Code vêm do transcript lido no `SubagentStop` (o `PostToolUse` traz o modelo resolvido, não tokens) e são precificados pela tabela do catálogo, não pela fatura. Para detalhes dos critérios de saída do beta, consulte [`docs/reference/beta-exit.md`](../reference/beta-exit.md).
+> **⚠️ Nota de Transparência:** `rewrite_emitted` na telemetria indica que o Downshift emitiu com sucesso a instrução de troca de modelo. Os tokens do filho, que no Claude Code vêm do transcript lido no `SubagentStop` (o `PostToolUse` traz o modelo resolvido, não tokens), são contagens observadas: o Downshift não mostra dólar, e nenhuma contagem é a fatura. Para detalhes dos critérios de saída do beta, consulte [`docs/reference/beta-exit.md`](../reference/beta-exit.md).
 
 ---
 
@@ -176,7 +176,7 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 
 ## Relatórios e Auditoria de Economia
 
-Para auditar o histórico de rotas, ver a estimativa de custos e acompanhar as métricas locais de tokens:
+Para auditar o histórico de rotas, ver a economia estimada em tokens e acompanhar as métricas locais:
 
 ```bash
 # Relatório consolidado dos últimos 30 dias
@@ -205,7 +205,7 @@ downshift dci benchmark
 # Verificações observadas e custo estimado por tier (Claude Code)
 downshift verification-report
 
-# Dashboard web experimental; tokens economizados, sem dólares (dólares: downshift report)
+# Dashboard web experimental; tokens economizados, sem dólares (`downshift report` mostra tokens por tarefa concluída)
 downshift serve
 ```
 

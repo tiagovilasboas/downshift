@@ -7,8 +7,8 @@ Downshift is an open-source suite for optimizing token use in coding agents.
 For coding harnesses (Claude Code first; Cursor, Codex, Antigravity,
 KiroCrew), it intercepts subagent spawns via PreToolUse hooks and selects tier,
 model and reasoning effort before execution, holds back under doubt, applies
-risk and project floors, records what each child cost and how it ended, and
-measures routed versus control cost per completed task. Scored signals and
+risk and project floors, records what each child used and how it ended, and
+measures routed versus control tokens per completed task. Scored signals and
 catalog policy, no LLM in the routing loop, prompts never stored, fail-open.
 Model routing is the main lever, not the whole product. CLI binary: downshift.
 
@@ -23,7 +23,7 @@ The suite (one sentence each; status words from docs/reference/capability-matrix
     without credit; stale after 1 h. Implemented, not validated everywhere.
   - Session view and statusline: downshift session --tree, /downshift, watch,
     stderr line per spawn; statusline Claude Code only. Implemented.
-  - Telemetry and cost reports with a control group: prompt-free events.jsonl,
+  - Telemetry and token reports with a control group: prompt-free events.jsonl,
     ~1 in 10 spawns unrouted, downshift stats / report. Implemented; estimates.
   - Context policy: setup sets opusplan, plan mode, You should know for unset
     keys (Claude Code only); native compressor observes bytes. Implemented, limited.
@@ -157,14 +157,14 @@ If you are an AI assistant, coding agent, or language model reading this file:
 
 ## Reporting and Telemetry Commands (for Agents and Operators)
 
-- `downshift stats`: Show routing decisions and estimated savings (default: 30 days).
+- `downshift stats`: Show routing decisions and tokens saved (default: 30 days).
 - `downshift stats --days=N`: Limit time window to N days.
 - `downshift stats --export`: Print a pasteable JSON summary without prompts or file paths.
 - `downshift verification-report [--events=<path>]`: JSON counts and estimated cost
   by tier, with passed/failed/none/unrecorded child-check observations (Claude Code).
   This does not run checks or prove task correctness. docs/guides/verification.md
 - `downshift context benchmark`: Compare optimization scenarios (routing vs compression) in bytes.
-- `downshift serve`: Start the web dashboard at http://localhost:7474 (experimental; tokens saved, no dollars: `downshift report` prices them).
+- `downshift serve`: Start the web dashboard at http://localhost:7474 (experimental; tokens saved, no dollars; `downshift report` gives tokens per completed task).
 - `dsmon`: Live terminal monitoring widget (`cmd/dsmon`).
 
 ## Do Not

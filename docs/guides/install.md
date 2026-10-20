@@ -88,9 +88,9 @@ Whether the harness applied it is a separate fact; `downshift stats` separates
 - Confirm it started on haiku, not the session's default frontier model
 - This proves the hook's rewrite was not just emitted—it was **actually applied** by the harness
 
-**Step 5 — See what happened.** `downshift stats --days=1` shows decisions and estimated savings; `downshift session --tree` shows this session's subagents as a tree. In Claude Code, the plugin exposes `/downshift:status`; the optional manual alias `/downshift` is in [The /downshift command](#the-downshift-command-claude-code).
+**Step 5 — See what happened.** `downshift stats --days=1` shows decisions and tokens saved; `downshift session --tree` shows this session's subagents as a tree. In Claude Code, the plugin exposes `/downshift:status`; the optional manual alias `/downshift` is in [The /downshift command](#the-downshift-command-claude-code).
 
-**Step 6 — (Optional) Watch it live.** `downshift watch` redraws the current session's subagent tree (model, end status, cost, why) every second, for every harness; `downshift session --tree` prints it once, and `/downshift:status` or `/downshift` shows it inside Claude Code. The older floating widget is still available: [dsmon — live monitor widget](#dsmon--live-monitor-widget).
+**Step 6 — (Optional) Watch it live.** `downshift watch` redraws the current session's subagent tree (model, end status, tokens, why) every second, for every harness; `downshift session --tree` prints it once, and `/downshift:status` or `/downshift` shows it inside Claude Code. The older floating widget is still available: [dsmon — live monitor widget](#dsmon--live-monitor-widget).
 
 ### Manual setup (Claude Code)
 
@@ -518,7 +518,7 @@ observed on 2026-10-10 with Kiro CLI 2.29.0; see
 > `dsmon` stays buildable and is documented below.
 
 `cmd/dsmon` is a separate command inside this repo — a floating terminal widget
-that shows model switches, harness, tier distribution and estimated cost savings
+that shows model switches, harness, tier distribution and estimated tokens saved
 in real time. It reads `~/.downshift/events.jsonl` and refreshes every
 800 ms. Zero external dependencies; pure stdlib Go.
 
@@ -532,7 +532,7 @@ in real time. It reads `~/.downshift/events.jsonl` and refreshes every
 │  04:01  opus   → sonnet  medium   -50%               │
 │ stats ──────────────────────────────────────────────  │
 │  35 events   22↓  2↑  8✓                             │
-│  est. saved  $0.18  ~7K tokens ¹                     │
+│  est. saved  ~7K tokens ¹                            │
 │  ¹ estimated · actual tokens not yet tracked         │
 ╰──────────────────────────────────────────────────────╯
   04:03:51 · ctrl+c to quit
@@ -558,8 +558,8 @@ go build -o dsmon ./cmd/dsmon
 | Harness | `events.jsonl` → `harness` field | Last harness seen today |
 | Switches | `events.jsonl` → `verdict` + model fields | Last 7 routing decisions |
 | Events / ↓ ↑ ✓ | `events.jsonl` | Today's counts by verdict |
-| Est. saved ($) | `estimated_savings` × $0.01 avg spawn cost | Rough estimate, not actual billing |
-| Est. tokens | Derived from $ saved ÷ frontier output cost | Estimated, not from provider |
+| Est. saved (tokens) | Tokens that ran on a cheaper model than requested, the shared `telemetry.TokenSavings` view | Observed where the harness reports tokens; not a bill |
+| Tokens | Observed child tokens, when the harness reports them | Not from a provider invoice |
 
 **Token consumption note.** The router has no access to provider-reported token
 counts — it only sees what the harness passes to the preToolUse hook, which

@@ -13,15 +13,23 @@ downshift session [--tree|--why|--pause|--resume] [--session=<id>] [--json]
 ## Tree (default)
 
 ```
-session · 5 subagents · $1.43 (without downshift: $1.31) · over $0.12
-├─ subagent 1  sonnet  ✓  $0.22  MEDIUM, confident
-├─ subagent 2  haiku   ↻  $0.03  SIMPLE, unsure, held
-│  └─ subagent 3  sonnet  ✓  $0.09  MEDIUM, confident
-├─ subagent 4  opus    ✓  $1.04  COMPLEX, unsure, risk floor · over $0.52
-└─ subagent 5  sonnet  …       -  MEDIUM, confident
+session · N subagents · N switched, N held · saved N% of work · N% of cache
+├─ subagent 1  haiku   ✓  N tokens  MEDIUM, confident
+├─ subagent 2  haiku   ↻  N tokens  SIMPLE, unsure, held
+│  └─ subagent 3  sonnet  ✓  N tokens  MEDIUM, confident
+├─ subagent 4  opus    ✓  N tokens  COMPLEX, unsure, risk floor
+└─ subagent 5  sonnet  …  -  MEDIUM, confident
+by type: general-purpose: N% work · N% cache
 ```
 
-Columns: subagent, the model it ran on, status, cost, and a short reason.
+Columns: subagent, the model it ran on, status, tokens, and a short reason. The header counts the subagents and the
+switched and held decisions, then the session's tokens saved from the requested model. It reads one of
+`saved N% of work · N% of cache`, `already on the cheapest model`, `nothing saved yet`, or `tokens not observed` when
+no child reported tokens. The `by type:` line gives the same share per agent type. A session paused with `--pause`
+says so in the header.
+
+Tokens are the child's input, output and cache tokens as the harness reported them. `-` means no usage record yet.
+The view prints no dollar figure: `downshift report` compares tokens per completed task.
 
 | Mark | Meaning |
 |------|---------|
@@ -31,15 +39,11 @@ Columns: subagent, the model it ran on, status, cost, and a short reason.
 | `…` | running: spawned less than 2 hours ago, no end or usage record yet |
 | `?` | unknown end: still no end, usage or error record 2 hours after the spawn (the harness never said it finished) |
 
-Cost is real when the harness reported usage (`$0.22`), an estimate when only
-tokens were seen and the catalog has a price (`~$0.22`), and `-` otherwise.
-Estimates never enter the header. A loss is shown as `over $x`, never as a
-negative number. The header's "without downshift" is the sum of the baselines
-(the model each spawn asked for); a child with no baseline counts at its own
-cost. A redo is a hint only: the next spawn may be unrelated work.
+A redo is a hint only: the next spawn may be unrelated work.
 
-`--json` prints the same rows as JSON (`session`, `subagents`, `cost_usd`,
-`without_downshift_usd`, `delta_usd`, `rows[]`).
+`--json` prints the same rows as JSON: `session`, `subagents`, `tokens` (with `by_agent_type`), `paused`,
+`switched`, `held` and `rows[]`. Each row carries `index`, `depth`, `label`, `model`, `status`, `tokens`,
+`tokens_label`, `state`, `reason`, `reason_codes`, `from_model` and `time`.
 
 ## `--why`
 
