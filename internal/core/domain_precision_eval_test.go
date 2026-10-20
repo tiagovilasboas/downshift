@@ -179,6 +179,7 @@ func TestDomainPrecisionComparison(t *testing.T) {
 	comparePrecisionPredictions(t, cases, out["baseline_without_domains"].pred, out["96_domains_without_pairs"].pred, "domains vs baseline")
 	comparePrecisionPredictions(t, cases, out["96_domains_without_pairs"].pred, out["96_domains_with_pairs"].pred, "pairwise interactions vs domains")
 	comparePrecisionPredictions(t, cases, out["baseline_without_domains"].pred, out["96_domains_with_pairs"].pred, "full candidate vs baseline")
+	t.Error("TEMPORARY EVALUATION REPORT: review metrics, then restore passing assertions")
 }
 
 // Each changed prediction is reported, including regressions. Pairwise
@@ -237,6 +238,7 @@ func TestDomainPrecisionLegacyCorpus(t *testing.T) {
 		}
 		t.Logf("%s on original corpus: %s", config.name, stats.summary())
 	}
+	t.Error("TEMPORARY LEGACY REPORT: review metrics, then restore passing assertions")
 }
 
 func BenchmarkDomainPrecisionRoute(b *testing.B) {
