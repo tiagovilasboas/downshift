@@ -493,6 +493,15 @@ const fmtTime = (ms: number): string => {
 
 const elapsed = (a: AgentRun, at: number): number => (a.endedAt ?? Math.max(at, a.startedAt)) - a.startedAt
 
+// The finished rows the panel still lists: each shows for FINISHED_SHOW_MS after it was first seen finished.
+// Forgets agents that are no longer finished, so the map does not grow.
+const shownFinished = (finished: AgentRun[], at: number): AgentRun[] => {
+  const ids = new Set(finished.map(a => a.id))
+  for (const id of finishedSeenAt.keys()) if (!ids.has(id)) finishedSeenAt.delete(id)
+  for (const a of finished) if (!finishedSeenAt.has(a.id)) finishedSeenAt.set(a.id, at)
+  return finished.filter(a => at - (finishedSeenAt.get(a.id) ?? at) < FINISHED_SHOW_MS)
+}
+
 type Planned = PlannedTask & { n: number }
 
 const plannedOf = (f: Flow | null, list: AgentRun[]): Planned[] => {
@@ -764,6 +773,11 @@ let dsSessionKnown = false // the figures are only drawn for a session we could 
 let dsAt = -Infinity
 const dsKeys = new Map<string, string>() // panel row id -> Downshift's hashed tool call id
 const DS_TTL_MS = 3000
+
+// A finished row leaves the panel this long after the render that first saw it finished (no timer:
+// the panel gets the current time on each render). Running rows are never hidden.
+const FINISHED_SHOW_MS = 10_000
+const finishedSeenAt = new Map<string, number>() // finished agent id -> render time it was first seen finished
 
 const dsParse = (raw: unknown): DsView | null => {
   const v = raw as Partial<DsView> | null
@@ -1118,12 +1132,14 @@ export const register: Register = (on, options) => {
     const list = await read($, agents)
     const f = await read($, flow)
     const p: Panel = await read($, panel)
-    const at = Math.max(await read($, now), ...list.map(a => a.startedAt), 0)
+    // The live clock: the stored `now` only ticks while an agent runs, so it would freeze after the last finish.
+    const at = Math.max(await $.clock.now(), ...list.map(a => a.startedAt), 0)
 
     const running = list.filter(a => a.status === 'running').reverse()
     const finished = list.filter(a => a.status !== 'running').reverse()
     const planned = plannedOf(f, list)
     const t = totals(list, at)
+    const shown = shownFinished(finished, at)
     // The pane's title says "Agents"; inside, only the flow's own name.
     const title = f && !f.isFinished ? f.title : ''
 
@@ -1165,7 +1181,7 @@ export const register: Register = (on, options) => {
           </Box>
         )
       }
-      const shownDone = p.isDoneCollapsed ? 0 : finished.length
+      const shownDone = p.isDoneCollapsed ? 0 : shown.length
       const lines = 1 + (isEmpty ? 1 : 0) + (running.length > 0 ? 1 : 0) + (finished.length > 0 ? 1 : 0) + (planned.length > 0 ? 1 : 0)
       const gridH = headerHeight(title) + lines * LINE_H + (running.length + shownDone) * 66 + planned.length * 46
       return (
@@ -1186,7 +1202,7 @@ export const register: Register = (on, options) => {
             ))}
             {finished.length > 0 && toggleDone}
             {!p.isDoneCollapsed &&
-              finished.map(a => (
+              shown.map(a => (
                 <Svg key={a.id} source={agentSvg(W, a, at)} alt={`${a.description}: ${modelName(a.model)}, ${s.isFinished}`} width={W} height={66} />
               ))}
             {planned.length > 0 && section('h-plan', `${s.planned} · ${planned.length}`)}
@@ -1249,7 +1265,7 @@ export const register: Register = (on, options) => {
         {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
         {p.isCompact ? (
           <Text wrap="truncate-end">
-            {[...running, ...finished].map(a => (
+            {[...running, ...shown].map(a => (
               <Text key={a.id} color={colorOf(tierOf(a.type))}>
                 {STATUS_GLYPH[a.status]}{' '}
               </Text>
@@ -1266,7 +1282,7 @@ export const register: Register = (on, options) => {
             {running.length > 0 && <Text dimColor>{s.running} · {running.length}</Text>}
             {running.map(row)}
             {finished.length > 0 && toggleDone}
-            {!p.isDoneCollapsed && finished.map(row)}
+            {!p.isDoneCollapsed && shown.map(row)}
             {planned.length > 0 && <Text dimColor>{s.planned} · {planned.length}</Text>}
             {planned.map(pl => {
               const tier = pl.tier in TIER_COLOR ? pl.tier : 'other'
