@@ -6,6 +6,7 @@ package classify
 import "testing"
 
 func TestDomainEvidenceSaturation(t *testing.T) {
+	t.Setenv("DOWNSHIFT_DOMAIN_INTERACTIONS", "0")
 	t.Setenv("DOWNSHIFT_DOMAIN_DEDUP", "1")
 	var e domainEvidence
 	e.add("backend", Medium, 2)
@@ -22,6 +23,7 @@ func TestDomainEvidenceSaturation(t *testing.T) {
 }
 
 func TestDomainEvidenceWithoutDuplicates(t *testing.T) {
+	t.Setenv("DOWNSHIFT_DOMAIN_INTERACTIONS", "0")
 	t.Setenv("DOWNSHIFT_DOMAIN_DEDUP", "1")
 	var e domainEvidence
 	e.add("mobile", Complex, 3)
@@ -33,6 +35,7 @@ func TestDomainEvidenceWithoutDuplicates(t *testing.T) {
 }
 
 func TestDomainEvidenceOptOutRestoresRawWeights(t *testing.T) {
+	t.Setenv("DOWNSHIFT_DOMAIN_INTERACTIONS", "0")
 	t.Setenv("DOWNSHIFT_DOMAIN_DEDUP", "0")
 	var e domainEvidence
 	e.add("backend", Medium, 2)
