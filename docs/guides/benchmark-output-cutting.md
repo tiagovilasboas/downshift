@@ -1,13 +1,13 @@
 <!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
-# Benchmark protocol: routing, output cutting and RTK
+# Benchmark protocol: routing, output cutting and a third-party tool
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Routing alone saved about 12% on mechanical delegated work and an estimated 3% in natural use
 ([evidence.md](evidence.md), rungs D and B). Output cutting, which shrinks tool output before it reaches the model,
 acts on the main session as well. This protocol answers one question before more is built: **does routing still earn
-its place once output cutting is in the stack, and how does the stack compare with RTK alone?** It extends
+its place once output cutting is in the stack, and how does the stack compare with a third-party output-cutting tool alone?** It extends
 [benchmark-protocol.md](benchmark-protocol.md) (tasks, per-run record, privacy, limits) and does not repeat it.
 
 Status: **protocol only. Nothing here has been run.** Every number below is a design parameter or a pre-registered
@@ -24,10 +24,10 @@ All arms: same harness version, same plan, same repository state, same prompts, 
 | a | Downshift routing only | none | `DOWNSHIFT_CONTROL_SHARE=0` |
 | b | routing | Headroom companion in the request path | arm a plus `headroom wrap` for the harness (Headroom's own command, see [companions.md](companions.md)) |
 | c | routing | `downshift compact` wrapper (on by default) | arm a plus the wrapper as documented once released |
-| d | off | RTK alone, if installed | RTK's own hook setup; `DOWNSHIFT_NO_ROUTE=1` |
+| d | off | a third-party output-cutting tool alone, if installed | that tool's own hook setup; `DOWNSHIFT_NO_ROUTE=1` |
 | e (optional, isolates routing) | off | `downshift compact` | arm c with `DOWNSHIFT_NO_ROUTE=1` |
 
-Arm d is dropped, and the result says so, if RTK is not available. Arm e is what separates the marginal value of
+Arm d is dropped, and the result says so, if that tool is not available. Arm e is what separates the marginal value of
 routing on top of exec (c against e); without it, c against d is the only stack comparison. Confirm each arm's
 configuration from the log (`requested_model`, companion record from `downshift doctor`), not from settings files. A
 companion's saving is never credited to routing.
@@ -99,7 +99,7 @@ Fixed before any run, on the saving-claim tasks only, primary metric cost per ac
 1. **Acceptance gate.** An arm whose acceptance is more than 5 points below arm 0 or below arm d is disqualified from
    any saving claim.
 2. **Routing becomes an optional feature, and stops being the headline,** if both hold:
-   - arm c lowers cost per accepted task by less than 10% relative to arm d (RTK alone), judged on the point estimate;
+   - arm c lowers cost per accepted task by less than 10% relative to arm d (that tool alone), judged on the point estimate;
    - the quota-window readings show no gain for c over d (difference within one display step on both the 5-hour and
      7-day windows).
 3. If arm d was not run, the same test is applied to arm c against arm e (exec alone): routing adding less than 10% on
@@ -125,7 +125,7 @@ E by itself: `downshift report` defines E on its own rule and needs 20 priced co
 | Whole-session tokens and parent coordination | measured by the harness, read by hand; the hook does not see the parent |
 | Quota-window consumption | measured, coarse, manual |
 | Any ceiling or composition figure in [evidence.md](evidence.md#where-the-saving-can-come-from) | hypothetical until this runs |
-| RTK and Headroom figures from their own pages | their claims, not ours; here they are only arms to be measured |
+| Third-party tool and Headroom figures from their own pages | their claims, not ours; here they are only arms to be measured |
 
 ## Limits
 

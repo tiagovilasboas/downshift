@@ -39,7 +39,7 @@ supports; the Downshift side of that table is in
 - It does not install, launch, wrap, unwrap or configure a third-party tool.
   `downshift context enable headroom` writes one field in Downshift's own
   `context-optimization.json`; it runs no `headroom` command and touches no
-  harness settings. (An earlier RTK integration ran the companion's own
+  harness settings. (An earlier integration ran the companion's own
   `init`; it was removed in #71 and this rule comes from that.)
 - It does not bundle third-party skills, rules or agent files in `skills/`.
   Most are single-harness, they add always-loaded context to every session,
