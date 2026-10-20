@@ -49,6 +49,7 @@ func TestCompactRename_AlreadyWrappedForBothNames(t *testing.T) {
 	}{
 		{"compact", "downshift compact -- go test ./..."},
 		{"exec alias", "downshift exec -- go test ./..."},
+		{"compactor alias", "downshift compactor -- go test ./..."},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

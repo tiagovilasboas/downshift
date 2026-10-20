@@ -33,6 +33,10 @@ var (
 	reVitestFail        = regexp.MustCompile(`(?m)^\s*(?:Test Files|Tests)\s+.*failed`)
 	reVitestDuration    = regexp.MustCompile(`(?m)^\s*Duration\s+([^\s\n()]+)`)
 	reVitestError       = regexp.MustCompile(`(?:FAIL|Error:|AssertionError)`)
+	// reVitestPlainLine matches the only lines a clean vitest run prints.
+	// Any other line, including an unexpected error, warning or FAIL, makes
+	// the whole transcript raw. Recognition is the rule, not a danger list.
+	reVitestPlainLine   = regexp.MustCompile(`^(?:\s*|\s*RUN\s+v\d+\.\d+\.\d+(?:\s+\S+)?|\s*✓\s+\S+\s+\(\d+\)|\s*Test Files\s+\d+\s+passed\s+\(\d+\)|\s*Tests\s+\d+\s+passed\s+\(\d+\)|\s*Start at\s+\d{2}:\d{2}:\d{2}|\s*Duration\s+\d+(?:\.\d+)?(?:ms|s)(?:\s+\((?:\w+ \d+ms)(?:, \w+ \d+ms)*\))?)$`)
 	rePlaywrightHeader  = regexp.MustCompile(`(?m)^\s*Running\s+(\d+)\s+tests\s+using\s+(\d+)\s+workers?`)
 	rePlaywrightSummary = regexp.MustCompile(`(?m)^\s*(\d+)\s+passed\s+\(([^)]+)\)`)
 	rePlaywrightError   = regexp.MustCompile(`(?i)(?:failed|flaky|timed out|Error:|AssertionError|trace(?: file| attached)?|retry(?:ing| #))`)
@@ -231,8 +235,8 @@ func detectFormat(input []byte) (Format, bool) {
 
 	// 7. Cargo test
 	if isCargoTest(input) {
-		if reCargoTestError.Match(input) {
-			return FormatCargoTest, true // Error detected! Fail open!
+		if reCargoTestError.Match(input) || !cargoTestLinesRecognised(input) {
+			return FormatCargoTest, true // Error or unrecognised line! Fail open!
 		}
 		if reCargoTestSummary.Match(input) {
 			return FormatCargoTest, false
@@ -567,6 +571,9 @@ func compressPytest(input []byte) ([]byte, bool, string) {
 // Vitest: PASS (N passed across M files[ in <time>])
 // If not strictly shorter than raw input, the input is returned.
 func compressVitest(input []byte) ([]byte, bool, string) {
+	if !vitestLinesRecognized(input) {
+		return input, false, "vitest_unrecognized_line_preserved"
+	}
 	mt := reVitestTests.FindSubmatch(input)
 	if mt == nil {
 		return input, false, "vitest_missing_tests_summary"
@@ -594,6 +601,17 @@ func compressVitest(input []byte) ([]byte, bool, string) {
 		return input, false, "no_compression_gain"
 	}
 	return []byte(out), true, fmt.Sprintf("compressed vitest summary (%s passed across %s files)", nPassed, mFiles)
+}
+
+// vitestLinesRecognized reports whether every line of input is a plain vitest
+// success line. A single unrecognised line makes the transcript unsafe to compact.
+func vitestLinesRecognized(input []byte) bool {
+	for _, line := range bytes.Split(input, []byte("\n")) {
+		if !reVitestPlainLine.Match(line) {
+			return false
+		}
+	}
+	return true
 }
 
 func isPlaywright(input []byte) bool {
@@ -626,10 +644,52 @@ func isCargoTest(input []byte) bool {
 		reCargoTestError.Match(input)
 }
 
+// cargoTestLinePatterns are the only line shapes a clean cargo test run emits.
+// Recognition is the rule: a line that matches none of them (a compiler
+// diagnostic, a panic, a failure marker, an injected warning) keeps the whole
+// transcript raw, whatever its words are.
+var cargoTestLinePatterns = []*regexp.Regexp{
+	regexp.MustCompile(`^\s*Compiling \S+ v\S+ \(.*\)$`),
+	regexp.MustCompile(`^\s*Finished .+ profile \[[^\]]+\] target\(s\) in \S+$`),
+	regexp.MustCompile(`^\s*Running (?:unittests )?\S+ \(.*\)$`),
+	regexp.MustCompile(`^\s*Doc-tests \S+$`),
+	regexp.MustCompile(`^running \d+ tests?$`),
+	regexp.MustCompile(`^test \S.* \.\.\. ok$`),
+	regexp.MustCompile(`^test result: ok\. \d+ passed; 0 failed; \d+ ignored; \d+ measured; \d+ filtered out; finished in \S+$`),
+}
+
+// cargoTestLinesRecognised reports whether every non-empty line of input is a
+// plain cargo test success line. Empty lines are structural and always allowed.
+func cargoTestLinesRecognised(input []byte) bool {
+	for _, line := range bytes.Split(input, []byte("\n")) {
+		if len(line) == 0 {
+			continue
+		}
+		// Free text carrying an error word is never a plain success line, even
+		// when its shape fits a pattern (e.g. "Running unittests x (error: boom)").
+		if bytes.Contains(bytes.ToLower(line), []byte("error")) || !matchesAnyCargoTestLine(line) {
+			return false
+		}
+	}
+	return true
+}
+
+func matchesAnyCargoTestLine(line []byte) bool {
+	for _, re := range cargoTestLinePatterns {
+		if re.Match(line) {
+			return true
+		}
+	}
+	return false
+}
+
 // compressCargoTest compacts clean cargo test output to a one-line summary:
 // Cargo test: PASS (N passed in <time>)
 // If not strictly shorter than raw input, the input is returned.
 func compressCargoTest(input []byte) ([]byte, bool, string) {
+	if !cargoTestLinesRecognised(input) {
+		return input, false, "cargo_test_unrecognised_line_preserved"
+	}
 	matches := reCargoTestSummary.FindAllSubmatch(input, -1)
 	if len(matches) == 0 {
 		return input, false, "cargo_test_missing_summary"
