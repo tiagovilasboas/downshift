@@ -220,16 +220,25 @@ func TestShellRewrite_CapabilityDeclaredOnlyForClaudeCode(t *testing.T) {
 
 func TestShellRewrite_ConfigFlag(t *testing.T) {
 	t.Setenv(paths.EnvStateDir, t.TempDir())
-	if execConfigEnabled() {
-		t.Fatal("exec must be off with no config file")
+	// No file: the default config is enabled and its exec key is absent, so the
+	// wrapper is on for a fresh install and for an upgrade with no key.
+	if !execConfigEnabled() {
+		t.Fatal("exec must be on with no config file (absent key means on)")
 	}
 	cfg := contextopt.DefaultConfig()
-	cfg.Exec = true
+	cfg.SetExec(false)
+	if err := contextopt.SaveConfig(cfg); err != nil {
+		t.Fatal(err)
+	}
+	if execConfigEnabled() {
+		t.Fatal("an explicit exec:false must turn the wrapper off")
+	}
+	cfg.SetExec(true)
 	if err := contextopt.SaveConfig(cfg); err != nil {
 		t.Fatal(err)
 	}
 	if !execConfigEnabled() {
-		t.Fatal("exec should be on after cfg.Exec = true")
+		t.Fatal("exec should be on after SetExec(true)")
 	}
 	cfg.Enabled = false
 	if err := contextopt.SaveConfig(cfg); err != nil {
@@ -247,7 +256,7 @@ func TestContextEnableExecFlag(t *testing.T) {
 		t.Fatalf("rc=%d stderr=%s", rc, errb.String())
 	}
 	cfg, _ := contextopt.LoadConfig()
-	if !cfg.Exec || !cfg.Enabled {
+	if !cfg.ExecOn() || !cfg.Enabled {
 		t.Fatalf("cfg = %+v", cfg)
 	}
 	if !strings.Contains(out.String(), `"matcher": "Bash"`) || !strings.Contains(out.String(), "Add no rule for `downshift exec`") {
@@ -256,12 +265,12 @@ func TestContextEnableExecFlag(t *testing.T) {
 	if rc := runContext([]string{"enable", "--no-exec"}, &out, &errb); rc != 0 {
 		t.Fatalf("rc=%d stderr=%s", rc, errb.String())
 	}
-	if cfg, _ := contextopt.LoadConfig(); cfg.Exec {
+	if cfg, _ := contextopt.LoadConfig(); cfg.ExecOn() {
 		t.Fatal("--no-exec must turn it off")
 	}
 	runContext([]string{"enable", "--exec"}, &out, &errb)
 	runContext([]string{"disable"}, &out, &errb)
-	if cfg, _ := contextopt.LoadConfig(); cfg.Exec {
+	if cfg, _ := contextopt.LoadConfig(); cfg.ExecOn() {
 		t.Fatal("disable must turn exec off")
 	}
 	if rc := runContext([]string{"enable", "headroom", "--exec"}, &out, &errb); rc != 2 {
