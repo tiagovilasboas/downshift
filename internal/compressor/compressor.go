@@ -47,12 +47,12 @@ var (
 		`|collected \d+ items?(?: / \d+ deselected)?` +
 		`|` + pytestPathChars + `\.py [.s]+(?: +\[ *\d+%\])?` +
 		`)$`)
-	reVitestTests       = regexp.MustCompile(`(?m)^\s*Tests\s+(\d+)\s+passed`)
-	reVitestFiles       = regexp.MustCompile(`(?m)^\s*Test Files\s+(\d+)\s+passed`)
-	reVitestHeader      = regexp.MustCompile(`(?m)^\s*RUN\s+v\d+\.\d+`)
-	reVitestFail        = regexp.MustCompile(`(?m)^\s*(?:Test Files|Tests)\s+.*failed`)
-	reVitestDuration    = regexp.MustCompile(`(?m)^\s*Duration\s+([^\s\n()]+)`)
-	reVitestError       = regexp.MustCompile(`(?:FAIL|Error:|AssertionError)`)
+	reVitestTests    = regexp.MustCompile(`(?m)^\s*Tests\s+(\d+)\s+passed`)
+	reVitestFiles    = regexp.MustCompile(`(?m)^\s*Test Files\s+(\d+)\s+passed`)
+	reVitestHeader   = regexp.MustCompile(`(?m)^\s*RUN\s+v\d+\.\d+`)
+	reVitestFail     = regexp.MustCompile(`(?m)^\s*(?:Test Files|Tests)\s+.*failed`)
+	reVitestDuration = regexp.MustCompile(`(?m)^\s*Duration\s+([^\s\n()]+)`)
+	reVitestError    = regexp.MustCompile(`(?:FAIL|Error:|AssertionError)`)
 	// reVitestPlainLine matches the only lines a clean vitest run prints.
 	// Any other line, including an unexpected error, warning or FAIL, makes
 	// the whole transcript raw. Recognition is the rule, not a danger list.
