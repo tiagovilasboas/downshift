@@ -9,12 +9,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 	"os"
 
 	"github.com/tiagovilasboas/downshift/internal/server"
 )
 
 func main() {
+	telemetry.DirectionCatalog = catalog.Load()
 	if err := server.Run(server.DefaultPort, server.WebRoot()); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
