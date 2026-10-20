@@ -1,7 +1,7 @@
 {
   "name": "downshift-dock",
-  "version": "0.1.0",
-  "description": "A one-line band above the prompt with buttons that bring back the Files (filetree) and Agents (savvy-progress) panels.",
+  "version": "0.2.0",
+  "description": "A right-aligned band above the prompt: DCI and native compactor status chips, plus icon buttons for the Files (filetree) and Agents (savvy-progress) panels.",
   "types": "./types/index.d.ts",
   "author": {
     "name": "Tiago Vilas Boas",

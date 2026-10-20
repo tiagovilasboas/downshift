@@ -2,11 +2,18 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-A Claude Code mod (2.1.287+) that draws one line above the prompt with buttons that bring
-back panels that went away:
+A Claude Code mod (2.1.287+) that draws one line above the prompt, right aligned. Two status chips
+and two icon buttons:
 
-- **Files** runs `/filetree`, which opens the filetree mod's pane.
-- **Agents** runs `/agents-info open`, which opens the savvy-progress agents panel.
+- **DCI** chip: green when `<workspace>/.downshift/dci.json` has mode `active`, grey for `observe` or `off`.
+- **Compact** chip: green when `~/.downshift/context-optimization.json` enables the native provider.
+  In Claude Code the native compactor measures only (a hook cannot rewrite tool output).
+- Pressing a chip shows a toast with what it means and the command that changes it. The mod API has no
+  tooltip, so the toast is the detail.
+- **▤ Files** runs `/filetree`, which opens the filetree mod's pane.
+- **◈ Agents** runs `/agents-info open`, which opens the savvy-progress agents panel.
+
+The dock only reads those two config files; it never writes them.
 
 Original Downshift code (Apache-2.0), not vendored. No routing logic.
 
@@ -22,9 +29,9 @@ command to exist.
   turn. Until a listing answers, both show. With neither installed the band is not drawn.
 - The command is queued until the session is idle. A press during a streaming turn runs when the
   turn ends. If the run is rejected, a toast names the plugin to enable.
-- Black-first look: button labels follow the terminal theme (`variant="primary"`); the "downshift"
-  text is muted grey `#868A90`; the small status dot is brand green `#22C55E` only while at least one
-  of the two panels is open and grey `#5C6168` otherwise. No background is set.
+- Black-first look: icons and labels follow the terminal theme (`plain` buttons, dim at rest, inverted
+  under the pointer); the separator is brand green `#22C55E` only while at least one of the two panels
+  is open and grey `#5C6168` otherwise. No background is set.
 
 ## Install and test
 

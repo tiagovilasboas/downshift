@@ -11,7 +11,7 @@
 import { describe, expect, mock, test } from 'claude-code/testing'
 import type { CommandInfo, RenderPropsOf, SessionStartInput } from 'claude-code'
 
-import { ACCENT, IDLE, detect, dotColor, visibleTargets } from './register'
+import { ACCENT, IDLE, chips, compactorOn, dciMode, detect, dotColor, visibleTargets } from './register'
 
 const plug = (name: string): CommandInfo => ({ name, description: name, source: 'plugin', plugin: name })
 const builtin = (name: string): CommandInfo => ({ name, description: name, source: 'builtin' })
@@ -82,6 +82,16 @@ describe('band', () => {
     expect(await ui.find({ type: 'Button', key: 'agents' })).toBeUndefined()
   })
 
+  test('the status chips show even when no panel mod is installed', async ($, on) => {
+    base(on)
+    on('command.list', () => ({ value: [] }))
+    await $.session.start({ ...session, surface: 'terminal', isInteractive: true })
+    const ui = await $.ui.mount({ plugin: 'downshift-dock', surface: 'terminal', component: 'AbovePrompt', props: bandProps })
+    expect(await ui.find({ type: 'Button', key: 'dci' })).toBeDefined()
+    expect(await ui.find({ type: 'Button', key: 'compactor' })).toBeDefined()
+    expect(await ui.find({ type: 'Button', key: 'files' })).toBeUndefined()
+  })
+
   test('a survey on screen hides the band', async ($, on) => {
     base(on)
     on('command.list', () => ({ value: [plug('filetree'), plug('agents-info')] }))
@@ -90,5 +100,32 @@ describe('band', () => {
       plugin: 'downshift-dock', surface: 'terminal', component: 'AbovePrompt', props: { ...bandProps, hasSurvey: true },
     })
     expect(await ui.find({ type: 'Button', key: 'files' })).toBeUndefined()
+  })
+})
+
+describe('status', () => {
+  test('DCI mode comes from the workspace config, off when unreadable', () => {
+    expect(dciMode({ mode: 'active' })).toBe('active')
+    expect(dciMode({ mode: 'observe' })).toBe('observe')
+    expect(dciMode({ mode: 'off' })).toBe('off')
+    expect(dciMode({ mode: 'bogus' })).toBe('off')
+    expect(dciMode(null)).toBe('off')
+  })
+
+  test('the compactor is on only for the enabled native provider', () => {
+    expect(compactorOn({ enabled: true, provider: 'native' })).toBe(true)
+    expect(compactorOn({ enabled: false, provider: 'native' })).toBe(false)
+    expect(compactorOn({ enabled: true, provider: 'headroom' })).toBe(false)
+    expect(compactorOn(null)).toBe(false)
+  })
+
+  test('a chip is lit only when its feature does work, and the detail says what to run', () => {
+    const [dci, compact] = chips({ dci: 'active', compactor: true })
+    expect([dci!.on, compact!.on]).toEqual([true, true])
+    const [obs] = chips({ dci: 'observe', compactor: false })
+    expect(obs!.on).toBe(false)
+    expect(obs!.detail).toContain('downshift dci enable active')
+    expect(chips(null).map(c => c.on)).toEqual([false, false])
+    expect(chips({ dci: 'off', compactor: false })[1]!.detail).toContain('downshift context enable native')
   })
 })
