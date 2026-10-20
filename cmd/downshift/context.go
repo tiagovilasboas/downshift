@@ -124,7 +124,7 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 		fmt.Fprintln(w, "  Claude Code: measures only. A Claude Code hook cannot rewrite tool output, so the native provider saves no tokens there;")
 		fmt.Fprintln(w, "    real compression needs the Headroom proxy (`headroom wrap claude`), which Downshift does not start.")
 	}
-	if cfg.Exec {
+	if cfg.ExecOn() {
 		fmt.Fprintln(w, "  Exec wrapper: on (allowlisted shell commands run through `downshift exec`; DOWNSHIFT_EXEC=0 disables)")
 	} else {
 		fmt.Fprintln(w, "  Exec wrapper: off (`downshift context enable native --exec` turns it on)")
@@ -266,9 +266,9 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	}
 	switch execFlag {
 	case "--exec":
-		cfg.Exec = true
+		cfg.SetExec(true)
 	case "--no-exec":
-		cfg.Exec = false
+		cfg.SetExec(false)
 	}
 	if err := contextopt.SaveConfig(cfg); err != nil {
 		fmt.Fprintf(errW, "error: failed to save config: %v\n", err)
@@ -279,7 +279,7 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	fmt.Fprintln(w, "Exit-code contract: observe_only; nonzero_exit_preserved; hook_cannot_replace_tool_output.")
 	fmt.Fprintln(w, "Claude Code PostToolUse records CompressExit in observe mode when this flag is on, using the tool exit code.")
 	fmt.Fprintln(w, "The hook cannot replace tool output. The model still sees the original result. Prompts are not compressed.")
-	if cfg.Exec {
+	if cfg.ExecOn() {
 		printExecEnabled(w)
 	}
 	// A detected companion is recorded by default. Recording changes no hook
@@ -354,7 +354,7 @@ func runContextDisable(ctx context.Context, reg *contextopt.Registry, args []str
 	}
 
 	cfg.Enabled = false
-	cfg.Exec = false
+	cfg.SetExec(false)
 	cfg.Provider = ""
 	cfg.Companion = ""
 	cfg.ActiveHarness = nil
