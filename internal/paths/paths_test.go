@@ -9,11 +9,12 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 func TestResolveEnvWins(t *testing.T) {
 	t.Setenv(paths.EnvStateDir, "/tmp/downshift-test-state")
-	t.Setenv("HOME", t.TempDir())
+	testenv.SetHome(t, t.TempDir())
 	dir, src, err := paths.Resolve()
 	if err != nil {
 		t.Fatal(err)
@@ -25,7 +26,7 @@ func TestResolveEnvWins(t *testing.T) {
 
 func TestResolveLegacyWhenOnlyLegacyExists(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	testenv.SetHome(t, home)
 	t.Setenv(paths.EnvStateDir, "")
 	legacy := filepath.Join(home, paths.LegacyName)
 	if err := os.MkdirAll(legacy, 0o755); err != nil {
@@ -42,7 +43,7 @@ func TestResolveLegacyWhenOnlyLegacyExists(t *testing.T) {
 
 func TestResolveDefaultWhenNeitherExists(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	testenv.SetHome(t, home)
 	t.Setenv(paths.EnvStateDir, "")
 	want := filepath.Join(home, paths.DirName)
 	dir, src, err := paths.Resolve()
@@ -56,7 +57,7 @@ func TestResolveDefaultWhenNeitherExists(t *testing.T) {
 
 func TestResolvePrefersNewDirWhenBothExist(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	testenv.SetHome(t, home)
 	t.Setenv(paths.EnvStateDir, "")
 	newDir := filepath.Join(home, paths.DirName)
 	legacy := filepath.Join(home, paths.LegacyName)

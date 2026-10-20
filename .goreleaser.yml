@@ -46,6 +46,8 @@ archives:
       - LICENSE
       - NOTICE
       - catalog.sample.json
+      - scripts/kirocrew-pre-tool-use.sh
+      - scripts/kirocrew-pre-tool-use.cmd
 
 checksum:
   name_template: "checksums.txt"

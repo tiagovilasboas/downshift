@@ -97,7 +97,7 @@ func TestUsageAllIsGroupedAndComplete(t *testing.T) {
 		"Everyday":     {"downshift setup", "downshift doctor", "downshift try", "downshift stats ", "downshift report", "downshift session", "downshift config", "downshift feedback list"},
 		"Plumbing":     {"downshift claude-code", "downshift cursor", "downshift codex", "downshift antigravity", "downshift kirocrew", "downshift quota import", "downshift quota collect", "downshift quota claude-statusline"},
 		"Maintainer":   {"downshift benchmark", "downshift eval-outcome", "downshift eval-adapt", "downshift train", "downshift shadow-report", "downshift models check", "downshift models pull"},
-		"Experimental": {"downshift serve", "downshift context status", "downshift context compress", "dsmon"},
+		"Experimental": {"downshift context status", "downshift context compress", "dsmon"},
 	} {
 		sec := section(name)
 		for _, c := range cmds {

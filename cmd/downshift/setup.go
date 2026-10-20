@@ -136,7 +136,10 @@ func setupRun(o setupOptions) int {
 	extra := map[string][]string{}
 	for _, t := range targets {
 		if t.File == "" {
-			fmt.Fprintf(o.Out, "%s: detected, not wired by setup\n  %s\n\n", t.Name, t.Manual)
+			fmt.Fprintf(o.Out, "%s: detected, not wired by setup\n  %s\n\n", t.Name, osWrapperHint(t.Manual))
+			if p, ok := planSteering(o, t); ok {
+				plans = append(plans, p)
+			}
 			continue
 		}
 		if active, notes := ensurePlugin(o, t); active || len(notes) > 0 {

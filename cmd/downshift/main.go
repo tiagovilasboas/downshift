@@ -25,7 +25,6 @@ import (
 	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 	_ "github.com/tiagovilasboas/downshift/internal/quota"
 	_ "github.com/tiagovilasboas/downshift/internal/routeadapt"
-	dsserver "github.com/tiagovilasboas/downshift/internal/server"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -91,11 +90,6 @@ func main() {
 		os.Exit(runHonor(os.Stdin, portFor("claude-code"), catalog))
 	case "claude-code-subagent-stop":
 		os.Exit(runUsage(os.Stdin, portFor("claude-code"), catalog))
-	case "serve":
-		if err := dsserver.Run(dsserver.DefaultPort, dsserver.WebRoot()); err != nil {
-			fmt.Fprintf(os.Stderr, "serve: %v\n", err)
-			os.Exit(1)
-		}
 	case "try":
 		os.Exit(runTry(catalog, args[1:]))
 	case "models":

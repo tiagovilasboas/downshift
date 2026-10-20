@@ -113,9 +113,46 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Test report counters and Cursor quota decoder
+      - name: Test Cursor quota decoder
         if: needs.changes.outputs.docs_only != '1'
-        run: node --test web/app.test.cjs internal/cursorbridge/extension/decoder.test.cjs
+        run: node --test internal/cursorbridge/extension/decoder.test.cjs
+
+  # Cross-OS behavior check (GAP-OS-1). CI already cross-COMPILES for windows
+  # and darwin; this job also RUNS the OS-sensitive packages on those runners so
+  # path joining, HOME resolution, the setup writer and the exec wrapper are
+  # verified, not just compiled. Scoped to the packages whose behavior differs
+  # by OS to keep the matrix cheap; it uses `go test` directly (no bash CI
+  # scripts, which are POSIX-only).
+  test-os:
+    needs: changes
+    if: needs.changes.outputs.go == '1'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.27"
+          cache: true
+      - name: Build downshift CLI
+        run: go build -o downshift ./cmd/downshift
+      - name: Test OS-sensitive packages (all)
+        # These internal packages are OS-portable and run in full on every OS.
+        run: go test -timeout 15m ./internal/paths/ ./internal/execwrap/ ./internal/contextopt/ ./internal/hookctx/
+      - name: Test cmd/downshift (macOS only)
+        # The cmd/downshift suite still carries Unix assumptions on Windows
+        # (HOME-only env, PATH binary lookup, symlink settings, POSIX perms);
+        # porting it is tracked separately. On Windows the portable core above
+        # is the coverage; macOS runs the scoped setup/path tests too, and the
+        # full suite runs on Linux in `test`.
+        if: matrix.os == 'macos-latest'
+        run: go test -timeout 15m -run 'Setup|Steering|Wrapper|Config|Session|Display|Path|Project' ./cmd/downshift/
 
   # Race detector on every package except internal/core, whose -race run takes
   # 4-5 minutes (the scheduled ci-full covers it). Not the required `test` check.
