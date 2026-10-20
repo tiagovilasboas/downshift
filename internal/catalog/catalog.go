@@ -33,6 +33,10 @@ import (
 var embeddedJSON []byte
 
 // Entry is one row in the catalog JSON.
+// ProviderOpenRouter marks a gateway row: a model reached through OpenRouter,
+// known only by its full "vendor/model" slug.
+const ProviderOpenRouter = "openrouter"
+
 type Entry struct {
 	ID          string            `json:"id"`
 	Aliases     []string          `json:"aliases"`
@@ -454,15 +458,25 @@ func (c *Catalog) LookupByID(harness, modelID string) (core.Model, bool) {
 		}
 	}
 
-	// 3: family prefix — version-agnostic fallback.
-	lower := strings.ToLower(normalised)
-	for _, fe := range c.byFamily[harness] {
-		if strings.HasPrefix(lower, fe.prefix) {
-			return fe.model, true
+	// 3: family prefix — version-agnostic fallback. The full slug is tried
+	// before the stripped form, so a gateway row whose family carries its own
+	// "vendor/" prefix wins over a native family that only matches the tail.
+	for _, lower := range familyCandidates(modelID) {
+		for _, fe := range c.byFamily[harness] {
+			if strings.HasPrefix(lower, fe.prefix) {
+				return fe.model, true
+			}
 		}
 	}
 
 	return core.Model{}, false
+}
+
+// familyCandidates lists the lower-case forms of an id to try against family
+// prefixes: the full id first, then the form with its first "provider/"
+// segment stripped. An id with no slash has one candidate.
+func familyCandidates(modelID string) []string {
+	return uniqueStrings(strings.ToLower(modelID), strings.ToLower(normaliseModelID(modelID)))
 }
 
 // normaliseModelID strips the "provider/" prefix from OpenRouter-style model
@@ -559,12 +573,13 @@ func (c *Catalog) EntryFor(harness, modelID string) (Entry, bool) {
 		}
 	}
 
-	// Family prefix fallback.
-	lower := strings.ToLower(normalised)
-	for _, e := range c.entries {
-		if e.Harness == harness && e.Family != "" {
-			if strings.HasPrefix(lower, strings.ToLower(e.Family)) {
-				return e, true
+	// Family prefix fallback, full slug first (see LookupByID).
+	for _, lower := range familyCandidates(modelID) {
+		for _, e := range c.entries {
+			if e.Harness == harness && e.Family != "" {
+				if strings.HasPrefix(lower, strings.ToLower(e.Family)) {
+					return e, true
+				}
 			}
 		}
 	}
