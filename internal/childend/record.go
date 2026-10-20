@@ -34,6 +34,7 @@ package childend
 
 import (
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
@@ -405,11 +406,56 @@ func recordResolved(ce hookport.ChildEnd, sessionHash, callHash, agentHash, bina
 		got, okGot := r.LookupByID(ce.Harness, ce.ResolvedModel)
 		want, okWant := r.LookupByID(ce.Harness, target.ToModel)
 		if okGot && okWant {
-			honored := got.ID == want.ID
+			honored := rewriteHonored(got, want)
 			ev.RewriteHonored = &honored
 		}
 	}
 	telemetry.Record(ev)
+}
+
+// rewriteHonored reports whether the model the harness ran satisfies the model
+// the hook wrote. An exact id match always does. Otherwise the observed model
+// counts when it is a different version of the same family in the same catalog
+// tier, for example a harness alias that resolves to a newer release than the
+// catalog id the hook wrote. A different family or tier never does.
+func rewriteHonored(got, want core.Model) bool {
+	if got.ID == want.ID {
+		return true
+	}
+	if got.Tier != want.Tier {
+		return false
+	}
+	gf, wf := familyOf(got), familyOf(want)
+	return gf != "" && gf == wf
+}
+
+// familyOf is the catalog family, or the id without its trailing version
+// segments (claude-haiku-5-5 -> claude-haiku) for an entry that declares none.
+func familyOf(m core.Model) string {
+	if m.Family != "" {
+		return m.Family
+	}
+	parts := strings.Split(m.ID, "-")
+	n := len(parts)
+	for n > 1 && isVersionPart(parts[n-1]) {
+		n--
+	}
+	if n == len(parts) {
+		return "" // no version suffix: nothing to compare across versions
+	}
+	return strings.Join(parts[:n], "-")
+}
+
+func isVersionPart(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // linkable reports whether a post-spawn observation may attach to target: an
