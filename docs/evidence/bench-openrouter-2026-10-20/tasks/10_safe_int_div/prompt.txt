@@ -1,0 +1,5 @@
+Write a Python function `safe_int_div(a, b)` that returns the integer quotient of a divided by b, truncated toward zero (so safe_int_div(-7, 2) == -3 and safe_int_div(7, -2) == -3).
+- Raise ZeroDivisionError if b == 0.
+- Raise TypeError if either argument is not an int (bool is not accepted).
+- Do not use float arithmetic.
+Return only one Python code block containing the function. No explanation.

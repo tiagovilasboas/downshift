@@ -1,0 +1,15 @@
+The following Python function is supposed to return the index of `target` in the sorted list `xs`, or -1 if it is absent. It has a bug (it can return wrong results or loop forever):
+
+def binary_search(xs, target):
+    lo, hi = 0, len(xs)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if xs[mid] == target:
+            return mid
+        elif xs[mid] < target:
+            lo = mid
+        else:
+            hi = mid
+    return -1
+
+Fix the off-by-one bug. Keep the same signature and the half-open interval [lo, hi). Return only one Python code block containing the corrected function. No explanation.

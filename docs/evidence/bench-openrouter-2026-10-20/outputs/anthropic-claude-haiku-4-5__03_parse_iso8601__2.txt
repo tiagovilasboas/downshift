@@ -1,0 +1,99 @@
+
+```python
+import re
+from datetime import datetime, timezone, timedelta
+
+def parse_iso8601(s: str) -> datetime:
+    """
+    Parse ISO 8601 datetime strings with timezone information.
+    
+    Accepts formats like:
+    - '2026-10-20T14:30:00Z'
+    - '2026-10-20T14:30:00+02:00'
+    - '2026-10-20T14:30:00.250-03:00'
+    
+    Returns a timezone-aware datetime object.
+    Raises ValueError if the string has no timezone offset or is malformed.
+    """
+    # Pattern to match ISO 8601 datetime with timezone
+    # Format: YYYY-MM-DDTHH:MM:SS[.fff][Z|±HH:MM]
+    pattern = r'^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?([Z+-].*)$'
+    
+    match = re.match(pattern, s)
+    if not match:
+        raise ValueError(f"Invalid ISO 8601 datetime format: {s}")
+    
+    year, month, day, hour, minute, second, microseconds_str, tz_str = match.groups()
+    
+    # Parse date and time components
+    year = int(year)
+    month = int(month)
+    day = int(day)
+    hour = int(hour)
+    minute = int(minute)
+    second = int(second)
+    
+    # Parse microseconds if present
+    microseconds = 0
+    if microseconds_str:
+        # Pad or truncate to 6 digits
+        microseconds_str = microseconds_str.ljust(6, '0')[:6]
+        microseconds = int(microseconds_str)
+    
+    # Parse timezone
+    if not tz_str:
+        raise ValueError("Timezone offset is required")
+    
+    if tz_str == 'Z':
+        tz = timezone.utc
+    else:
+        # Parse offset like +02:00 or -03:00
+        tz_pattern = r'^([+-])(\d{2}):(\d{2})$'
+        tz_match = re.match(tz_pattern, tz_str)
+        if not tz_match:
+            raise ValueError(f"Invalid timezone offset: {tz_str}")
+        
+        sign, tz_hours, tz_minutes = tz_match.groups()
+        tz_hours = int(tz_hours)
+        tz_minutes = int(tz_minutes)
+        
+        # Create timezone with offset
+        offset_minutes = tz_hours * 60 + tz_minutes
+        if sign == '-':
+            offset_minutes = -offset_minutes
+        
+        tz = timezone(timedelta(minutes=offset_minutes))
+    
+    # Create and return datetime object
+    return datetime(year, month, day, hour, minute, second, microseconds, tzinfo=tz)
+
+
+# Test the function
+if __name__ == "__main__":
+    # Test cases
+    test_cases = [
+        '2026-10-20T14:30:00Z',
+        '2026-10-20T14:30:00+02:00',
+        '2026-10-20T14:30:00.250-03:00',
+        '2024-01-15T10:30:45.123456+05:30',
+        '2024-12-31T23:59:59-08:00',
+    ]
+    
+    for test in test_cases:
+        result = parse_iso8601(test)
+        print(f"{test} -> {result}")
+    
+    # Test error cases
+    error_cases = [
+        '2026-10-20T14:30:00',  # No timezone
+        '2026-10-20 14:30:00Z',  # Wrong separator
+        'invalid',  # Completely invalid
+    ]
+    
+    for test in error_cases:
+        try:
+            parse_iso8601(test)
+            print(f"ERROR: {test} should have raised ValueError")
+        except ValueError as e:
+            print(f"{test} -> ValueError: {e}")
+```

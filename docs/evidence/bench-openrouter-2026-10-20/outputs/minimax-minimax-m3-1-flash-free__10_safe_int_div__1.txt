@@ -1,0 +1,14 @@
+```python
+def safe_int_div(a, b):
+    if not isinstance(a, int) or isinstance(a, bool):
+        raise TypeError("a must be an int")
+    if not isinstance(b, int) or isinstance(b, bool):
+        raise TypeError("b must be an int")
+    if b == 0:
+        raise ZeroDivisionError("division by zero")
+
+    quotient = abs(a) // abs(b)
+    if (a < 0) != (b < 0):
+        return -quotient
+    return quotient
+```

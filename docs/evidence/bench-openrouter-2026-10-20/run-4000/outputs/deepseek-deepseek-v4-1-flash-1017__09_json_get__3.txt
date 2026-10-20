@@ -1,0 +1,50 @@
+```python
+def json_get(data, path, default=None):
+    if not isinstance(path, str):
+        return default
+    if path == "":
+        return data
+
+    cur = data
+    for segment in path.split('.'):
+        key = segment
+        indexes = []
+
+        if '[' in segment:
+            key, rest = segment.split('[', 1)
+            if rest == "":
+                return default
+
+            pos = 0
+            while pos < len(rest):
+                close = rest.find(']', pos)
+                if close == -1:
+                    return default
+
+                num = rest[pos:close]
+                if not num.isdigit():
+                    return default
+
+                indexes.append(int(num))
+                pos = close + 1
+
+                if pos < len(rest):
+                    if rest[pos] != '[':
+                        return default
+                    pos += 1
+
+        if not isinstance(cur, dict):
+            return default
+        if key not in cur:
+            return default
+        cur = cur[key]
+
+        for idx in indexes:
+            if not isinstance(cur, list):
+                return default
+            if idx < 0 or idx >= len(cur):
+                return default
+            cur = cur[idx]
+
+    return cur
+```

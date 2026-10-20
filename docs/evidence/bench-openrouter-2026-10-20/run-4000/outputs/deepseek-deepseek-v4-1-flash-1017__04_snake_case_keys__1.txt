@@ -1,0 +1,17 @@
+```python
+def to_snake_case_keys(obj):
+    import re
+
+    def convert_key(key):
+        if not isinstance(key, str):
+            return key
+        key = re.sub(r'(?<=[a-z0-9])([A-Z])', r'_\1', key)
+        key = key.replace('-', '_')
+        return key.lower()
+
+    if isinstance(obj, dict):
+        return {convert_key(k): to_snake_case_keys(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [to_snake_case_keys(v) for v in obj]
+    return obj
+```

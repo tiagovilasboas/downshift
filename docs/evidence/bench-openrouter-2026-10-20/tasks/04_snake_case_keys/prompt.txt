@@ -1,0 +1,5 @@
+Write a Python function `to_snake_case_keys(obj)` that returns a new structure in which every dict key is converted to snake_case, recursively through dicts and lists.
+Rules for each key: insert '_' before an uppercase letter that follows a lowercase letter or digit; replace '-' with '_'; lowercase everything.
+Examples: 'userName' -> 'user_name'; 'HelloWorld2Go' -> 'hello_world2_go'; 'Nested-Key' -> 'nested_key'.
+Values that are not dicts or lists are returned unchanged. Do not mutate the input.
+Return only one Python code block containing the function. No explanation.

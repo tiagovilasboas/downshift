@@ -1,0 +1,26 @@
+
+```python
+def safe_int_div(a, b):
+    # Check for bool type (bool is a subclass of int, so we need to check explicitly)
+    if isinstance(a, bool) or isinstance(b, bool):
+        raise TypeError("Arguments must be int, not bool")
+    
+    # Check if arguments are integers
+    if not isinstance(a, int) or not isinstance(b, int):
+        raise TypeError("Arguments must be int")
+    
+    # Check for division by zero
+    if b == 0:
+        raise ZeroDivisionError("division by zero")
+    
+    # Perform integer division truncated toward zero
+    # Python's // operator floors toward negative infinity, so we need to adjust
+    # for negative results to truncate toward zero instead
+    quotient = a // b
+    
+    # If the signs are different and there's a remainder, we need to adjust
+    if (a < 0) != (b < 0) and a % b != 0:
+        quotient += 1
+    
+    return quotient
+```

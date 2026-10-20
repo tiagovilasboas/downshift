@@ -1,0 +1,19 @@
+```python
+import datetime
+
+
+def parse_iso8601(s: str) -> datetime.datetime:
+    if not isinstance(s, str):
+        raise ValueError("Expected an ISO 8601 string")
+
+    try:
+        normalized = s[:-1] + "+00:00" if s.endswith("Z") else s
+        result = datetime.datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise ValueError(f"Malformed ISO 8601 datetime: {s!r}") from exc
+
+    if result.tzinfo is None or result.utcoffset() is None:
+        raise ValueError("ISO 8601 datetime must include a timezone offset")
+
+    return result
+```

@@ -1,0 +1,11 @@
+```python
+def safe_int_div(a, b):
+    if type(a) is not int or type(b) is not int:
+        raise TypeError("arguments must be int")
+    if b == 0:
+        raise ZeroDivisionError("division by zero")
+    q = abs(a) // abs(b)
+    if (a < 0) ^ (b < 0):
+        q = -q
+    return q
+```

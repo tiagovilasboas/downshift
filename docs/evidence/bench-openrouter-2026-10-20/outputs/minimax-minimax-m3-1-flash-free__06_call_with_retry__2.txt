@@ -1,0 +1,10 @@
+```python
+def call_with_retry(fn, max_attempts, base_delay, sleep):
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return fn()
+        except Exception:
+            if attempt == max_attempts:
+                raise
+            sleep(base_delay * 2 ** (attempt - 1))
+```

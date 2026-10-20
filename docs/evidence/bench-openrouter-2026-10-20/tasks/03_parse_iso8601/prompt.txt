@@ -1,0 +1,5 @@
+Write a Python function `parse_iso8601(s: str) -> datetime.datetime` using only the standard library.
+Accept strings such as '2026-10-20T14:30:00Z', '2026-10-20T14:30:00+02:00' and '2026-10-20T14:30:00.250-03:00'.
+Return a timezone-aware datetime; 'Z' means UTC.
+Raise ValueError if the string has no timezone offset or is malformed.
+Return only one Python code block containing the function. No explanation.

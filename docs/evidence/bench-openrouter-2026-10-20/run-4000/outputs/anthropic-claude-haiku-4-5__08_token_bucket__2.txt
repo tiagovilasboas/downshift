@@ -1,0 +1,26 @@
+
+```python
+class TokenBucket:
+    def __init__(self, capacity: float, refill_per_second: float, clock):
+        self.capacity = capacity
+        self.refill_per_second = refill_per_second
+        self.clock = clock
+        self.tokens = capacity
+        self.last_refill_time = clock()
+    
+    def allow(self, cost: float = 1.0) -> bool:
+        current_time = self.clock()
+        elapsed_time = current_time - self.last_refill_time
+        
+        # Refill tokens based on elapsed time
+        tokens_to_add = elapsed_time * self.refill_per_second
+        self.tokens = min(self.capacity, self.tokens + tokens_to_add)
+        self.last_refill_time = current_time
+        
+        # Check if we have enough tokens
+        if self.tokens >= cost:
+            self.tokens -= cost
+            return True
+        else:
+            return False
+```
