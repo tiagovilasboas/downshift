@@ -34,5 +34,5 @@ go list -f '{{.ImportPath}} {{join .Deps " "}} {{join .TestImports " "}} {{join 
 		for dep in $pkg $rest; do
 			case " $changed " in *" $dep "*) hit=1; break ;; esac
 		done
-		[[ -n "$hit" ]] && echo "$pkg"
+		if [[ -n "$hit" ]]; then echo "$pkg"; fi
 	done | sort -u
