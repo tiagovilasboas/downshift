@@ -76,6 +76,22 @@ func TestCompressFlutterTestPreservesAnythingAmbiguous(t *testing.T) {
 	}
 }
 
+func TestCompressFlutterTestNonASCIIIsPreservedByteIdentically(t *testing.T) {
+	for name, text := range map[string]string{
+		"zero-width space":  "Err​or",
+		"soft hyphen":       "sec­ret",
+		"NUL byte":          "Err\x00or",
+		"cyrillic e":        "еrror",
+		"fullwidth letters": "ＥＲＲＯＲ",
+	} {
+		in := []byte("00:00 +0: loading t.dart\n00:01 +1: " + text + "\n00:01 +2: All tests passed!\n")
+		out, applied, reason := compressFlutterTest(in)
+		if applied || !bytes.Equal(out, in) || reason != "flutter_test_non_ascii_text_preserved" {
+			t.Errorf("%s: applied=%v reason=%q", name, applied, reason)
+		}
+	}
+}
+
 func TestCompressFlutterTestDangerWordsArePreserved(t *testing.T) {
 	for _, w := range []string{"Error: boom", "an Exception", "FAILED to connect", "WARNING secret=x", "panic now", "Fatal", "secret", "api token", "Password"} {
 		in := []byte("00:00 +0: loading t.dart\n00:01 +1: " + w + "\n00:01 +2: All tests passed!\n")

@@ -60,6 +60,16 @@ func isFlutterTest(input []byte) bool {
 // counters never go backwards, and the last segment is the all-passed line.
 // Test print output, warnings, tool chatter, ANSI, CRLF and anything else is
 // returned unchanged.
+// isPrintableASCII reports whether every byte is 0x20-0x7e.
+func isPrintableASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < 0x20 || s[i] > 0x7e {
+			return false
+		}
+	}
+	return true
+}
+
 func compressFlutterTest(input []byte) ([]byte, bool, string) {
 	if len(input) == 0 || input[len(input)-1] != '\n' {
 		return input, false, "flutter_test_incomplete_bytes_preserved"
@@ -84,6 +94,11 @@ func compressFlutterTest(input []byte) ([]byte, bool, string) {
 			// glued to the status line (test print output).
 			if m == nil || strings.Contains(seg, "  ") || strings.ContainsRune(seg, '\t') {
 				return input, false, "flutter_test_unrecognized_output_preserved"
+			}
+			// Only printable ASCII is trusted: zero-width, control, NUL and
+			// look-alike letters could hide a danger word from the match.
+			if !isPrintableASCII(seg) {
+				return input, false, "flutter_test_non_ascii_text_preserved"
 			}
 			texts.WriteString(m[5])
 			if m[3] != "" && m[3] != "0" {
