@@ -29,6 +29,13 @@ type SavingsSummary struct {
 	// NetSavedUSD is GrossSavedUSD minus OverspendUSD. Negative means the
 	// router cost more than the baseline overall. This is the headline.
 	NetSavedUSD float64 `json:"net_saved_usd"`
+	// GrossSavedTokens counts the tokens that ran on a cheaper tier than the
+	// one requested (TokensRerouted, cheaper bucket). Tokens only: no price.
+	GrossSavedTokens int64 `json:"gross_saved_tokens"`
+	// OverspendTokens counts the tokens that ran on a pricier tier.
+	OverspendTokens int64 `json:"overspend_tokens"`
+	// NetSavedTokens is GrossSavedTokens minus OverspendTokens.
+	NetSavedTokens int64 `json:"net_saved_tokens"`
 }
 
 // Summarize aggregates events into the single savings definition.
@@ -38,7 +45,14 @@ func Summarize(events []Event) SavingsSummary {
 
 // Summary projects the money fields of Stats into the shared definition.
 func (s Stats) Summary() SavingsSummary {
+	var saved, over int64
+	if t := s.TokensRerouted.Totals; t != nil {
+		saved, over = t.Cheaper.Total, t.Pricier.Total
+	}
 	return SavingsSummary{
+		GrossSavedTokens:       saved,
+		OverspendTokens:        over,
+		NetSavedTokens:         saved - over,
 		Basis:                  SummaryBasis,
 		CostEvents:             s.RealCostEvents,
 		InferredBaselineEvents: s.RealCostInferred,
