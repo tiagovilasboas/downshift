@@ -614,6 +614,8 @@ func TestCompress_TSC_UnrecognisedLinePreservesRaw(t *testing.T) {
 		{"project line with spaces", "[19:20:00] Projects in this build:\n    * unexpected error in output\n" + tail},
 		{"ANSI-wrapped summary", head + "[19:20:02] \x1b[32mFound 0 errors. Watching for file changes.\x1b[0m\n"},
 		{"no summary line", head},
+		{"project named error.json", "[19:20:00] Projects in this build:\n    * error.json\n" + tail},
+		{"building panic project", "[19:20:00] Projects in this build:\n    * tsconfig.json\n[19:20:01] Building project 'panic'...\n" + tail},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

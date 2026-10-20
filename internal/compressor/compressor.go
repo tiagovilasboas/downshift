@@ -57,9 +57,10 @@ var (
 
 var (
 	// reTSCPlainLine matches the only lines a clean tsc watch-mode run prints.
-	// Any other line, including an injected error, warning, FAIL or ANSI-wrapped
-	// text, makes the whole transcript raw. Recognition is the rule, not a danger list.
-	reTSCPlainLine = regexp.MustCompile(`^(?:|\[\d{2}:\d{2}:\d{2}\] (?:Projects in this build: ?|Building project(?: '[\w./@-]+')?\.\.\.|Found 0 errors\. Watching for file changes\.)|    \* [\w./@-]+\.json)$`)
+	// A project path must end in tsconfig*.json, so no free-text word (error,
+	// panic, FAIL) can ride along in a path. Any other line, including an
+	// injected danger word or an ANSI-wrapped line, makes the transcript raw.
+	reTSCPlainLine = regexp.MustCompile(`^(?:|\[\d{2}:\d{2}:\d{2}\] (?:Projects in this build: ?|Building project(?: '/?(?:[\w@.-]+/)*tsconfig(?:\.[\w-]+)?\.json')?\.\.\.|Found 0 errors\. Watching for file changes\.)|    \* (?:[\w@.-]+/)*tsconfig(?:\.[\w-]+)?\.json)$`)
 	// reTSCSuccessLine is the 0-errors summary a clean run must end with.
 	reTSCSuccessLine = regexp.MustCompile(`^\[\d{2}:\d{2}:\d{2}\] Found 0 errors\. Watching for file changes\.$`)
 )
