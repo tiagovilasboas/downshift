@@ -56,17 +56,22 @@ go test ./internal/classify ./internal/core
 DOWNSHIFT_DOMAIN_SIGNALS=0 downshift try "Investigue o hydration mismatch no React"
 ```
 
-The table currently contains **32 rules across eight domains**: frontend,
-backend, fullstack, devops, finops, devsecops, mobile, and CI/CD. Each
-rule requires an **action plus bounded technical context**. A framework
+The Go-native vocabulary now contains **96 rules across 12 domains**:
+frontend, backend, fullstack, devops, finops, devsecops, mobile, CI/CD,
+testing/QA, data engineering, AI/agents, and observability. The original
+32-rule table remains in `domain_signals.go`; the 64 incremental rules
+live in `domain_signals_extended.go`. Each rule requires **an action
+plus bounded technical context**. A framework
 name (React, Kubernetes, SwiftUI, etc.) alone never raises the tier.
 The table does not hardcode model IDs or change risk-floor policy.
 
 **Bilingual parity is a contribution requirement**: each added or modified
 rule must have an **English, Brazilian Portuguese and mixed-language** example
-in `domain_signals_test.go`. The current test set has 96 positive examples,
-checks the same regex for all three variants, and verifies the integrated
-scorer does not send those scoped examples below medium. This does **not**
+in `domain_signals_test.go` or `domain_signals_extended_test.go`.
+The combined test set has **288 lexical examples** (96 from the original
+32 rules, plus 192 from the 64 new rules), checks each rule against
+English/PT-BR/mixed prompts, and checks that these scoped examples are
+not classified below medium. This does **not**
 prove global equal routing outcomes for arbitrary EN/PT prompts: continued calibration
 requires reviewed holdout corpus evaluation, including over-routing, risk
 false negatives, confidence, and latency.
@@ -85,7 +90,11 @@ Reference vocabularies used for manual curation (do not bulk-copy rules):
 Calibration is **reviewed evaluation**, not LLM fine-tuning: propose candidate
 regex/weights from labeled misroutes, test against EN/PT/mixed positives and
 negative controls, then promote only after independent holdout evidence.
-Avoid changing multiple unrelated weights in one PR. Neither externally
+Prefer a small number of reviewed domain changes per iteration, measure
+classifier latency and over-routing in the corpus, and avoid adding
+generic framework-name-only or documentation-keyword signals. The current
+96-rule expansion is a deliberate coverage checkpoint, **not a target to
+maximize regex count**. Avoid changing multiple unrelated weights in one PR. Neither externally
 sourced text nor model output becomes a rule automatically.
 
 ---
