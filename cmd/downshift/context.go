@@ -120,10 +120,14 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 		fmt.Fprintf(w, "  Active Harnesses: %s\n", strings.Join(cfg.ActiveHarness, ", "))
 	}
 	if cfg.Provider == "native" {
-		fmt.Fprintln(w, "  Claude Code: measures only. A Claude Code hook cannot rewrite tool output, so the native provider saves no tokens there;")
-		fmt.Fprintln(w, "    real compression needs the Headroom proxy (`headroom wrap claude`), which Downshift does not start.")
+		fmt.Fprintln(w, "  Claude Code: measures only. A Claude Code hook cannot rewrite tool output already produced, so the PostToolUse path saves no tokens;")
+		fmt.Fprintln(w, "    Compact (below) shortens output by rewriting the command before it runs. Other compression needs the Headroom proxy (`headroom wrap claude`), which Downshift does not start.")
 	}
-	fmt.Fprintln(w, "  Compact: on (allowlisted shell commands run through `downshift compact`)")
+	if compactOn(cfg) {
+		fmt.Fprintln(w, "  Compact: on (allowlisted shell commands run through `downshift compact`)")
+	} else {
+		fmt.Fprintln(w, "  Compact: off (\"exec\": false in the config, or DOWNSHIFT_EXEC=0)")
+	}
 	fmt.Fprintf(w, "  Main Agent: %v, Subagents: %v\n", cfg.Scope.MainAgent, cfg.Scope.SpawnedAgents)
 	fmt.Fprintf(w, "  Preserve Original Output: %v\n", cfg.Safety.PreserveOriginalOutput)
 
@@ -268,7 +272,7 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	fmt.Fprintln(w, "Exit-code contract: observe_only; nonzero_exit_preserved; hook_cannot_replace_tool_output.")
 	fmt.Fprintln(w, "Claude Code PostToolUse records CompressExit in observe mode when this flag is on, using the tool exit code.")
 	fmt.Fprintln(w, "The hook cannot replace tool output. The model still sees the original result. Prompts are not compressed.")
-	printExecEnabled(w)
+	printExecEnabled(w, compactOn(cfg))
 	// A detected companion is recorded by default. Recording changes no hook
 	// and runs no third-party command; it only tells doctor and the docs
 	// that savings are not routing alone.
@@ -441,10 +445,20 @@ func runContextCompress(args []string, w, errW io.Writer) int {
 
 // printExecEnabled says what compact does and the one hook entry it needs.
 // It writes no harness settings: the plugin and setup carry the Bash hook.
-func printExecEnabled(w io.Writer) {
+func printExecEnabled(w io.Writer, on bool) {
+	if !on {
+		fmt.Fprintln(w, "Compact: off (\"exec\": false in the config, or DOWNSHIFT_EXEC=0). Remove the key and unset the variable to turn it on.")
+		return
+	}
 	fmt.Fprintln(w, "Compact: on. Allowlisted shell commands (go test, git status) with no shell metacharacters")
 	fmt.Fprintln(w, "are rewritten to `downshift compact -- <command>`, which keeps the exit code and compacts only clean output.")
 	fmt.Fprintln(w, "Your own rules gate it: a command is rewritten only when a Bash allow rule (for example `Bash(go test:*)`)")
 	fmt.Fprintln(w, "matches it and no deny or ask rule in any settings scope does. Add no rule for `downshift compact`.")
 	fmt.Fprintln(w, "Other harnesses: not wired.")
+}
+
+// compactOn reports whether the compact wrapper is on: the environment kill
+// switch and the config key both have to allow it.
+func compactOn(cfg contextopt.Config) bool {
+	return os.Getenv(execEnvKillSwitch) != "0" && cfg.ExecOn()
 }
