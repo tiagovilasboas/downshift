@@ -1,8 +1,9 @@
 # Model prices
 
-Downshift prices its savings estimates with list prices (USD per 1M tokens)
-stored in the catalog, `internal/catalog/catalog.json`. This page is the policy
-for keeping them honest.
+The catalog stores dated provider list prices (USD per 1M tokens) in
+`internal/catalog/catalog.json`. They guide model routing and price analysis;
+current Downshift reports expose token counts and no dollar amounts. This page
+sets the policy for keeping catalog prices accurate.
 
 ## Policy
 
@@ -26,12 +27,12 @@ for keeping them honest.
 4. **Staleness is visible.** `downshift doctor` warns when `prices_as_of` is more
    than 30 days old. Prices only age between releases, so the fix is to upgrade
    to the latest release.
-5. **Estimates are labelled.** A saving computed from these prices is an
-   estimate at list prices, not an invoice, and only `downshift report` shows
-   one, with the `prices_as_of` date it priced at. `downshift try` and the live
-   views quote no price and no percentage: `try` says whether one decision's
-   tokens would run on a cheaper or a pricier model than requested (owner
-   decision 2026-10-19).
+5. **List prices are routing inputs, not report output.** The catalog's dated
+   prices can guide a model choice, but current `stats`, `report` and usage
+   exports show token counts and no dollar estimates. A list-price calculation
+   is not an invoice. `downshift try` and the live views quote no price and no
+   percentage: `try` says whether one decision's tokens would run on a cheaper
+   or a pricier model than requested (owner decision 2026-10-19).
 6. **You can override.** A user file at `~/.harness-downshift/catalog.json`
    is merged over the embedded catalog by harness and model id, so a negotiated
    or newer price can be set there. `downshift models pull` adds models that a

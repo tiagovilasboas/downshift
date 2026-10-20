@@ -33,19 +33,18 @@ On every `turn.complete` for a subagent loop (`e.agentId` set) the mod, when ena
 1. Adds `e.usage` into a per-agent total (multi-turn subagents sum every turn).
 2. When `$.agent.list()` shows that agent `completed` / `failed` / `killed` (or gone), runs
    `downshift end claude-code` with a SubagentStop-shaped payload that carries the totals inline, so
-   the shared ChildEnd recorder prices the child without reading a transcript.
-3. If `$.agent.list()` is unavailable, leaves pricing to the settings `SubagentStop` hook (fail open).
-4. Dedup in the recorder still prices each agent once, so overlapping settings + mod paths do not
-   double-bill.
+   the shared ChildEnd recorder records the child's token counts and model without reading a transcript.
+3. If `$.agent.list()` is unavailable, leaves usage recording to the settings `SubagentStop` hook (fail open).
+4. Dedup in the recorder ensures each agent's usage is recorded once, even when settings and mod paths overlap.
 
 On every `turn.step` for a subagent loop (`e.agentId` set), when enabled, the mod returns
 `next({ ...e, effort })` when the spawn-time `downshift claude-code` decision carried
 `reasoning_effort` in `updatedInput` (the settings hook ignores that field). Effort is stored
 per `agentId` from the spawn result and cleared when usage is flushed at loop end.
 
-All routing and pricing logic stays in the Go core; this module is an adapter in the sense of
-[docs/contrib/layering.md](../../docs/contrib/layering.md): parse the event, call the shared binary,
-apply the wire result.
+Routing and telemetry interpretation stay in the Go core. This module is an adapter in the sense
+of [docs/contrib/layering.md](../../docs/contrib/layering.md): it accumulates the harness usage
+fields, calls the shared binary, and applies the wire result.
 
 ## Enable it
 
