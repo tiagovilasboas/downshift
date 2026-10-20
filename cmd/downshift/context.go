@@ -450,7 +450,7 @@ func printExecEnabled(w io.Writer, on bool) {
 		fmt.Fprintln(w, "Compact: off (\"exec\": false in the config, or DOWNSHIFT_EXEC=0). Remove the key and unset the variable to turn it on.")
 		return
 	}
-	fmt.Fprintln(w, "Compact: on. Allowlisted shell commands (go test, git status) with no shell metacharacters")
+	fmt.Fprintln(w, "Compact: on. Allowlisted shell commands (go test, any git command) with no shell metacharacters")
 	fmt.Fprintln(w, "are rewritten to `downshift compact -- <command>`, which keeps the exit code and compacts only clean output.")
 	fmt.Fprintln(w, "Your own rules still gate it: a command is not rewritten when a deny or ask rule in any settings scope")
 	fmt.Fprintln(w, "matches it. No allow rule is installed or required; your permission mode decides any approval prompt.")
