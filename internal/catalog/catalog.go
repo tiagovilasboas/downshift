@@ -32,11 +32,12 @@ import (
 //go:embed catalog.json
 var embeddedJSON []byte
 
-// Entry is one row in the catalog JSON.
 // ProviderOpenRouter marks a gateway row: a model reached through OpenRouter,
-// known only by its full "vendor/model" slug.
+// known only by its full "vendor/model" slug. Gateway rows default to
+// routing "explicit_only" unless the row says otherwise.
 const ProviderOpenRouter = "openrouter"
 
+// Entry is one row in the catalog JSON.
 type Entry struct {
 	ID          string            `json:"id"`
 	Aliases     []string          `json:"aliases"`
@@ -57,6 +58,9 @@ type Entry struct {
 	// real free price. Filled by scripts/sync_catalog_prices.py from a snapshot.
 	CacheReadCostM  float64 `json:"cache_read_cost_per_1m"`
 	CacheWriteCostM float64 `json:"cache_write_cost_per_1m"`
+	// ZDR marks a gateway row whose user allowlist says the provider keeps no
+	// data. Carried only; refusing a non-ZDR row for a risky task is not done yet.
+	ZDR bool `json:"zdr"`
 }
 
 // catalogFile is the structure of the JSON file on disk.
@@ -125,6 +129,7 @@ func load(warning io.Writer) *Catalog {
 	}
 
 	applyUserOverride(&base, warning)
+	applyOpenRouterAllowlist(&base, warning)
 	return build(base)
 }
 
@@ -161,6 +166,45 @@ func applyUserOverride(base *catalogFile, warning io.Writer) {
 	base.Entries = merged
 }
 
+// maxOpenRouterAllowlistBytes caps the OpenRouter allowlist read.
+const maxOpenRouterAllowlistBytes = 256 << 10
+
+// applyOpenRouterAllowlist adds the rows the user listed in openrouter.json.
+// A missing file means no allowlist and is silent. Any other failure leaves
+// base untouched and only warns, so a bad file never blocks a spawn. The
+// listed rows go ahead of the catalog rows so an explicit user choice wins
+// the tier.
+func applyOpenRouterAllowlist(base *catalogFile, warning io.Writer) {
+	path, err := paths.OpenRouterAllowlistPath()
+	if err != nil {
+		return
+	}
+	if _, err := os.Stat(path); err != nil {
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(warning, "downshift: warning: could not apply %s (%v); ignoring it\n", path, r)
+		}
+	}()
+	data, err := readCapped(path, maxOpenRouterAllowlistBytes)
+	if err != nil {
+		fmt.Fprintf(warning, "downshift: warning: could not read %s (%v); ignoring it\n", path, err)
+		return
+	}
+	rows, err := parseOpenRouterAllowlist(data)
+	if err != nil {
+		fmt.Fprintf(warning, "downshift: warning: could not parse %s (%v); ignoring it\n", path, err)
+		return
+	}
+	merged := append(rows, base.Entries...)
+	if err := validateEntries(merged); err != nil {
+		fmt.Fprintf(warning, "downshift: warning: could not merge %s (%v); ignoring it\n", path, err)
+		return
+	}
+	base.Entries = merged
+}
+
 // maxUserCatalogBytes caps the user override read: the file is untrusted
 // input on every hook invocation.
 const maxUserCatalogBytes = 4 << 20
@@ -169,6 +213,12 @@ const maxUserCatalogBytes = 4 << 20
 // more than maxUserCatalogBytes. A FIFO, device or huge file is an error (the
 // caller falls back to the embedded catalog) instead of a hang or an OOM.
 func readUserCatalog(path string) ([]byte, error) {
+	return readCapped(path, maxUserCatalogBytes)
+}
+
+// readCapped reads a regular file of at most limit bytes. Used for every
+// user-owned JSON file the hooks read.
+func readCapped(path string, limit int64) ([]byte, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return nil, err
@@ -181,12 +231,12 @@ func readUserCatalog(path string) ([]byte, error) {
 		return nil, err
 	}
 	defer f.Close()
-	data, err := io.ReadAll(io.LimitReader(f, maxUserCatalogBytes+1))
+	data, err := io.ReadAll(io.LimitReader(f, limit+1))
 	if err != nil {
 		return nil, err
 	}
-	if len(data) > maxUserCatalogBytes {
-		return nil, fmt.Errorf("larger than %d bytes", maxUserCatalogBytes)
+	if int64(len(data)) > limit {
+		return nil, fmt.Errorf("larger than %d bytes", limit)
 	}
 	return data, nil
 }
@@ -220,6 +270,11 @@ func decode(data []byte) (catalogFile, error) {
 	}
 	if err := validateEntries(f.Entries); err != nil {
 		return catalogFile{}, err
+	}
+	for i := range f.Entries {
+		if f.Entries[i].Provider == ProviderOpenRouter && f.Entries[i].Routing == "" {
+			f.Entries[i].Routing = "explicit_only"
+		}
 	}
 	return f, nil
 }

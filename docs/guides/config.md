@@ -43,6 +43,7 @@ hook payload overrides them at spawn time.
 | `events.jsonl` | Routing telemetry (no prompt text) |
 | `agents.jsonl` | Optional spawn log (dsmon-hook) |
 | `catalog.json` | User catalog override (`downshift models pull`) |
+| `openrouter.json` | Optional OpenRouter allowlist: the only way an OpenRouter model becomes a routing target (below) |
 | `session-models.json` | Per-harness session allowlists |
 | `loop-events.jsonl` | Routing v2 training events |
 | `weights.json` | Classifier weight override |
@@ -65,6 +66,38 @@ Every variable the routing core reads, with its default, is listed in one place:
 - `DOWNSHIFT_CURSOR_NATIVE_FILE=<path>` — Cursor's native session export (each harness that has one declares it in `HarnessCapabilities.NativeSessionEnv`)
 
 Outside the core: `DOWNSHIFT_EXEC=0` (kill switch for the `downshift compact` shell wrapper, on by default: the hook leaves commands unchanged and `downshift compact` stops compacting; the file switch is `"exec": false` in the context config, with no CLI off switch), `DOWNSHIFT_NO_ROUTE=1` (control baseline), `DOWNSHIFT_CONTROL_SHARE` (built-in control group), `DOWNSHIFT_QUIET`, `DOWNSHIFT_MINILM` (hash semantic boost; `0` opts out), `DOWNSHIFT_LOG_MAX_MB` / `DOWNSHIFT_LOG_BACKUPS`. `downshift config` prints the effective value and source of most of them. Graphify, `DOWNSHIFT_MINILM_EMBED`, and `DOWNSHIFT_E5_*` were removed on 2026-10-17 and are ignored. `DOWNSHIFT_EXPLICIT_UPSHIFT`, `DOWNSHIFT_DISCOVERY`, `DOWNSHIFT_DISCOVERY_TTL` and the two `NB_*` switches are not reported by `config` yet.
+
+## OpenRouter allowlist (optional)
+
+OpenRouter models are gateway rows (`provider: "openrouter"`, full `vendor/model` id).
+They are never chosen automatically unless you list them in `openrouter.json` under the
+state dir. Nothing is listed by default, so the file is off until you create it.
+
+```json
+{
+  "version": 1,
+  "harness": "opencode",
+  "models": [
+    {"id": "deepseek/deepseek-v4.1-flash", "tier": "mid", "max_effort": "medium", "zdr": true},
+    {"id": "x-ai/grok-x", "tier": "frontier", "max_effort": "high", "zdr": false}
+  ]
+}
+```
+
+- `id`: the full `vendor/model` slug. An id without a slash is rejected.
+- `tier`: `small`, `mid` or `frontier`.
+- `max_effort`: the highest effort the model may get: `low`, `medium` or `high`.
+  Lower levels are allowed too.
+- `zdr`: recorded on the row only. It does not block any request yet.
+- No price is stored: the row has no cost, so savings are not computed for it.
+
+The file is all or nothing. An invalid JSON, an unknown tier or effort, an id without a
+slash, a duplicate id, a file over 256 KiB, or an id that clashes with another row makes
+Downshift ignore the whole file and print one warning to stderr. The embedded catalog
+stays in force, and a bad file never blocks a spawn.
+
+Listed rows go ahead of the catalog rows for their tier, so a listed model is picked
+before a catalog model of the same tier. Remove the row to go back to the catalog choice.
 
 ## Project tier floor (optional)
 
