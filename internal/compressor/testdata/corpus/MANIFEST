@@ -1,0 +1,80 @@
+# Corpus manifest: how each fixture is classified for the family conformance suite
+# (conformance_test.go). One line per file: <kind> <format> <file>.
+#   clean     compacts on exit 0 as <format>; the output must be strictly shorter.
+#   preserve  must come back byte-identical (failures, warnings, truncation,
+#             CRLF, ANSI, binary, or any shape a summary would drop facts from).
+# <format> is the compressor.Format the fixture belongs to ("unknown" when no
+# family owns it). A new family adds its fixtures here; the test needs no edit.
+# Every file in this directory must be listed, and every line must name a file.
+preserve  unknown     binary_nul.bin
+preserve  cargo_test  cargo_fail.txt
+clean     cargo_test  cargo_pass_clean.txt
+preserve  cypress     cypress_fail_actionable.txt
+clean     cypress     cypress_pass_clean.txt
+preserve  git_log     gitlog_body_mentions_fail.txt
+preserve  git_log     gitlog_merge.txt
+preserve  git_log     gitlog_oneline.txt
+preserve  git_log     gitlog_plain.txt
+preserve  git_log     gitlog_signed.txt
+preserve  git_log     gitlog_squash_repeated_body.txt
+preserve  git_status  gitstatus_ansi.txt
+preserve  git_status  gitstatus_clean_ahead.txt
+preserve  git_status  gitstatus_clean_behind.txt
+preserve  git_status  gitstatus_clean_bisecting.txt
+preserve  git_status  gitstatus_clean_crlf.txt
+preserve  git_status  gitstatus_clean_detached.txt
+preserve  git_status  gitstatus_clean_diverged.txt
+clean     git_status  gitstatus_clean_no_upstream.txt
+preserve  git_status  gitstatus_clean_stash.txt
+preserve  git_status  gitstatus_clean_upstream_gone.txt
+clean     git_status  gitstatus_clean_uptodate.txt
+preserve  git_status  gitstatus_conflict.txt
+preserve  git_status  gitstatus_detached_dirty.txt
+preserve  git_status  gitstatus_merge_concluding.txt
+preserve  git_status  gitstatus_modified_staged.txt
+preserve  git_status  gitstatus_porcelain_v2.txt
+preserve  git_status  gitstatus_rebase_in_progress.txt
+preserve  git_status  gitstatus_short.txt
+preserve  git_status  gitstatus_untracked.txt
+preserve  go_test     go_verbose_fail.txt
+clean     go_test     go_verbose_pass.txt
+preserve  go_test     gotest_ansi.txt
+preserve  go_test     gotest_build_failed.txt
+preserve  go_test     gotest_crlf.txt
+preserve  go_test     gotest_fail_mixed_no_test_files.txt
+preserve  go_test     gotest_fail_mixed_ok.txt
+preserve  go_test     gotest_fail_repeated_log.txt
+preserve  go_test     gotest_fail_summary_only.txt
+clean     go_test     gotest_no_test_files.txt
+preserve  go_test     gotest_no_tests_to_run.txt
+preserve  go_test     gotest_panic.txt
+preserve  go_test     gotest_panic_mixed_no_test_files.txt
+clean     go_test     gotest_pass_cached.txt
+clean     go_test     gotest_pass_coverage.txt
+clean     go_test     gotest_pass_mixed_no_test_files.txt
+preserve  go_test     gotest_pass_no_trailing_newline.txt
+clean     go_test     gotest_pass_plain.txt
+preserve  go_test     gotest_pass_with_log_line.txt
+preserve  go_test     gotest_race.txt
+preserve  go_test     gotest_race_no_fail_line.txt
+preserve  go_test     gotest_truncated_last_line.txt
+preserve  go_test     gotest_two_short_pkgs.txt
+preserve  go_test     gotest_verbose.txt
+preserve  go_test     gotest_vet_error.txt
+preserve  jest        jest_fail.txt
+clean     jest        jest_pass_clean.txt
+clean     next_build  next_build_pass.txt
+preserve  next_build  next_build_truncated.txt
+preserve  next_build  next_build_unknown_output.txt
+preserve  next_build  next_build_warning.txt
+preserve  unknown     non_utf8.bin
+preserve  phpunit     phpunit_fail_actionable.txt
+clean     phpunit     phpunit_pass_default.txt
+preserve  playwright  playwright_fail.txt
+clean     playwright  playwright_pass_clean.txt
+preserve  pytest      pytest_fail.txt
+clean     pytest      pytest_pass_clean.txt
+preserve  tsc         tsc_fail.txt
+clean     tsc         tsc_pass_clean.txt
+preserve  vitest      vitest_fail.txt
+clean     vitest      vitest_pass_clean.txt
