@@ -39,13 +39,14 @@ Source: `internal/telemetry/telemetry.go` (`Aggregate`), `export.go`, [stats-exp
 
 - **Normalised units** (`norm_baseline`, `norm_routed`): every decision is 1.0 baseline unit; an applied downshift is
   charged `1 - estimated_savings` (a list-price ratio), an applied upshift `upshift_cost_ratio`, everything else 1.0.
-  No tokens are involved. `--cost-per-unit` turns units into dollars by multiplication, nothing more.
-- **Catalog-priced tokens** (`actual_cost_usd`, `real_saved_usd`, `real_cost_delta_usd`, `real_overspend_usd`): the
-  child's recorded tokens priced at the executed model and again at the requested model. The baseline is the same
-  token count on another model, a counterfactual, not a second run. `real_saved_usd` clamps each event at zero;
-  read it with `real_overspend_usd`. Tokens come from the child transcript on `SubagentStop` (Claude Code only).
+  A count, not money: no tokens are involved and no price is applied.
+- **Tokens by tier** (`tokens_rerouted`, `tokens_saved`): the child's recorded tokens, placed by the catalog tier of the
+  model that ran against the one requested (cheaper, pricier, unchanged). The counterfactual is the same token count on
+  the requested model, not a second run. Tokens come from the child transcript on `SubagentStop` (Claude Code only).
+  Until 2026-10-20 these lines also carried dollar figures (`actual_cost_usd`, `real_saved_usd`); the dollar fields are
+  gone from the export (schema 3) and from `stats`, and the provenance below keeps the figures it was measured with.
 - **Provenance.** [billing-gap-audit.md](../evidence/billing-gap-audit.md) (2026-10-09, 7 days): `total` 186,
-  `usage_records` 15, `usage_linked` 5, `actual_cost_usd` 15.432977, `real_saved_usd` 0.424866,
+  `usage_records` 15, `usage_linked` 5, then-measured `actual_cost_usd` 15.432977 and `real_saved_usd` 0.424866 (schema 2),
   `baseline_no_route` 0; native tokens and model matched the record on 5 of 5 linked children. That is provenance
   for the token counts, not for a bill. P3.4 needs 50 linked records and stands at 5 in that audit.
 - **Tokens rerouted, and why "tokens saved" is not a claim.** Routing does not reduce tokens: the child reads and
@@ -147,7 +148,7 @@ decisions but not usage or ends ([harness-matrix.md](../reference/harness-matrix
 |---|---|---|
 | **Total cost per task completed with acceptable quality** (primary) | not available | `downshift report` computes cost per completed task once 20 priced completions per group exist; quality is manual |
 | Cost per run (parent session) | not available from Downshift | hooks see subagents only; the A/B used Claude Code's `total_cost_usd` by hand |
-| Cost per subagent | estimated | `downshift session --tree`, `stats --detail` (`cost_subagents`, `max_subagent_cost_usd`); catalog price × transcript tokens |
+| Tokens per subagent | observed | `downshift session --tree`, `stats --detail`; transcript tokens, placed by tier |
 | Input / output / cache tokens per child | available | usage event fields `input_tokens`, `output_tokens`, `cached_tokens`, `cache_write_tokens`; `observed_child_tokens` in `stats --export` |
 | Latency, total and per step | not available | no duration field on decision, usage or end events (`latency_ms` exists only on the E5 shadow record); the A/B timed runs externally |
 | Completion rate | available | `child_status` counts in `stats` ("How children ended") and `--export`; `report` `ended` / `completed_tasks` |

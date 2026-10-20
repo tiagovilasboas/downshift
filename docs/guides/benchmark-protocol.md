@@ -63,7 +63,7 @@ Store one row per run, aggregates only, no prompt or task text (the telemetry po
 | Functional result | exit code of the hidden check applied after the run | manual |
 | Test result | the repository's own suite after the run (`go test ./...` or equivalent) | manual |
 | Cost per run | Claude Code's own `total_cost_usd` for the run (list price, as in the A/B) | manual, harness output |
-| Cost per subagent, tokens | usage events via `SubagentStop`: `actual_cost_usd`, `input_tokens`, `output_tokens`, `cached_tokens`, `cache_write_tokens` | available on Claude Code |
+| Tokens per subagent | usage events via `SubagentStop`: `input_tokens`, `output_tokens`, `cached_tokens`, `cache_write_tokens` | available on Claude Code |
 | Latency | wall clock around the run, and per spawn from decision and usage timestamps | manual; no duration field in telemetry |
 | Retries | "Respawned after a failure" in `downshift stats`, `↻` rows in the tree; plus a manual count of re-delegations seen in the run | inferred + manual |
 | Failures | `child_status` `error` / `interrupted`; `PostToolUseFailure` payload is uncaptured, so also count by hand | available, undercounted |

@@ -36,6 +36,9 @@ type TokenSaving struct {
 	// SavedInferred counts saved children whose requested model was inferred
 	// from settings, not sent by the harness: the saving rests on a guess.
 	SavedInferred int `json:"saved_inferred,omitempty"`
+	// AtFloor counts unchanged children whose requested model already sat on
+	// the lowest catalog tier: no cheaper model existed, so a zero is not a miss.
+	AtFloor int `json:"at_floor,omitempty"`
 }
 
 // Observed reports whether any child's tokens are known.
@@ -60,18 +63,27 @@ func (s TokenSaving) Direction() string {
 }
 
 // Line is the short text every live view uses, or "" when nothing is observed:
-// "tokens saved: work 62% · cache 58% (1.2M of 1.9M)".
+// "saved 62% of work · 58% of cache". A zero says why when it can: every child
+// already ran on the cheapest model, so there was nothing to save. The token
+// counts stay in the JSON fields.
 func (s TokenSaving) Line() string {
 	if !s.Observed() {
 		return ""
 	}
-	out := fmt.Sprintf("tokens saved: work %s · cache %s (%s of %s)",
-		percentText(s.WorkPercent()), percentText(s.CachePercent()), formatTokens(s.WorkSaved+s.CacheSaved), formatTokens(s.WorkTokens+s.CacheTokens))
+	var out string
+	switch {
+	case s.WorkSaved+s.CacheSaved > 0:
+		out = fmt.Sprintf("saved %s of work · %s of cache", percentText(s.WorkPercent()), percentText(s.CachePercent()))
+	case s.AtFloor == s.Children:
+		out = "already on the cheapest model"
+	default:
+		out = "nothing saved yet"
+	}
 	if p := s.WorkPricier + s.CachePricier; p > 0 {
 		out += " · " + formatTokens(p) + " on a pricier model"
 	}
 	if s.SavedInferred > 0 {
-		out += fmt.Sprintf(" · %d on an inferred baseline", s.SavedInferred)
+		out += " · baseline inferred"
 	}
 	return out
 }
@@ -86,6 +98,7 @@ func (s *TokenSaving) add(o TokenSaving) {
 	s.WorkPricier += o.WorkPricier
 	s.CachePricier += o.CachePricier
 	s.SavedInferred += o.SavedInferred
+	s.AtFloor += o.AtFloor
 }
 
 // TokenSavingView is TokenSavings folded three ways.
@@ -126,6 +139,7 @@ func TokenSavings(events []Event) TokenSavingView {
 		s        TokenSaving
 		typ      string
 		inferred bool
+		floor    bool
 	}
 	children := map[string]*child{}
 	for _, ev := range events {
@@ -140,7 +154,9 @@ func TokenSavings(events []Event) TokenSavingView {
 		decision, found := decisions[key]
 		work, cache := c.Input+c.Output, c.Cache()
 		s := TokenSaving{WorkTokens: work, CacheTokens: cache}
-		switch tokenDirection(ev, decision, found, a.unrouted[key], a.refuted[key]) {
+		dir := tokenDirection(ev, decision, found, a.unrouted[key], a.refuted[key])
+		requested, _ := tokenModels(ev, decision, found, a.refuted[key])
+		switch dir {
 		case TokenCheaper:
 			s.WorkSaved, s.CacheSaved = work, cache
 		case TokenPricier:
@@ -161,6 +177,7 @@ func TokenSavings(events []Event) TokenSavingView {
 		}
 		ch.s.add(s)
 		ch.inferred = ch.inferred || ev.BaselineSource == BaselineInferred || hasReason(decision.ReasonCodes, ReasonBaselineFromSettings)
+		ch.floor = ch.floor || dir == TokenUnchanged && atTierFloor(ev.Harness, requested)
 	}
 	v := TokenSavingView{ByAgentType: map[string]TokenSaving{}, byChild: map[string]TokenSaving{}}
 	for id, ch := range children {
@@ -170,6 +187,8 @@ func TokenSavings(events []Event) TokenSavingView {
 			if ch.inferred {
 				ch.s.SavedInferred = 1
 			}
+		} else if ch.floor && ch.s.Direction() == TokenUnchanged {
+			ch.s.AtFloor = 1
 		}
 		v.byChild[id] = ch.s
 		v.Total.add(ch.s)

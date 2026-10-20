@@ -28,7 +28,7 @@ Cada entrada registrada no arquivo `events.jsonl` obedece a um esquema estrito:
 | `tier` | Tier selecionado (`small`, `mid`, `frontier`) |
 | `outcome` | Estado do ciclo: `rewrite_emitted`, `baseline`, `usage` ou `error` |
 | `session_id` | Hash criptográfico anônimo da sessão (o ID bruto nunca é persistido) |
-| `input_tokens` / `actual_cost_usd` | Métricas reais de consumo populadas caso o `PostToolUse` seja capturado |
+| `input_tokens` / `output_tokens` | Métricas reais de consumo populadas caso o `PostToolUse` seja capturado |
 
 > **Garantia de Privacidade:** Os campos `prompt`, `task`, nomes de repositórios e parâmetros de ferramentas são explicitamente omitidos do struct de serialização do evento.
 

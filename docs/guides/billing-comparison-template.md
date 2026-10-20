@@ -37,8 +37,8 @@ Paste the sanitized JSON export below:
 {
   "total": 0,
   "downshift_rate": 0.0,
-  "real_cost_events": 0,
-  "real_saved_usd": 0.0,
+  "observed_child_usage": 0,
+  "tokens_rerouted": {},
   "usage_linked": 0,
   "baseline_no_route": 0
 }

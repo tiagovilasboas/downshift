@@ -437,12 +437,8 @@ func (v SessionTreeView) Render() string {
 		b.WriteString(strings.TrimRight(line, " "))
 		b.WriteByte('\n')
 	}
-	if len(v.ByAgentType) > 1 || len(v.ByAgentType) == 1 && v.ByAgentType[0].AgentType != UntypedAgent {
-		lines := make([]string, len(v.ByAgentType))
-		for i, t := range v.ByAgentType {
-			lines[i] = t.Line
-		}
-		b.WriteString("by agent type: " + strings.Join(lines, " · ") + "\n")
+	if lines := SavedTypeLines(v.ByAgentType); len(lines) > 0 {
+		b.WriteString("by type: " + strings.Join(lines, " · ") + "\n")
 	}
 	return b.String()
 }

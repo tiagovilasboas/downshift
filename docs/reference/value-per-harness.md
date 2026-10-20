@@ -41,7 +41,7 @@ read). Status words are those of [harness-matrix.md](harness-matrix.md#status-pe
 | KiroCrew | Experimental | yes, policy mode | no in-place rewrite; block and retry observed once 2026-10-10 | not applicable | none declared | none | none per spawn |
 
 **Only Claude Code records child tokens today.** Every dollar figure that `downshift stats` or `downshift report`
-prints per spawn (`actual_cost_usd`, `real_saved_usd`, `real_overspend_usd`) comes from Claude Code transcripts. For the
+prints per spawn (`input_tokens`, `output_tokens`, `cached_tokens`, and the tier direction they place) comes from Claude Code transcripts. For the
 other five harnesses Downshift records the decision, and for some a rewrite or an end status, never the tokens that ran.
 Any "tokens rerouted" figure below is a Claude Code figure until a second harness gets a proven token source.
 
@@ -80,8 +80,9 @@ Method: read every priced entry of `internal/catalog/catalog.json`, order the ti
 informational (`SavingsRatio` returns 0 when the target is not cheaper, `internal/catalog/catalog.go:487-494`). No
 path in `internal/core` gates a cross-tier downshift on price before an adapter writes the rewrite (price
 comparisons exist only to order equal-tier native candidates, `internal/core/session_native.go:122-131`), so a tier
-inversion in the data is an inversion in the money. `RealSavingsUSD` clamps each event at zero
-(`internal/telemetry/cost.go:58-70`), so the overspend would show only in `real_overspend_usd`, not in `real_saved_usd`.
+inversion in the data is an inversion in the money. The old dollar comparison clamped each event at zero, which hid
+overspend; part 4e removed it, and the tier comparison in `internal/telemetry/token_direction.go` now counts every
+pricier token as overspend.
 
 | # | Anomaly | Where | Can a routed downshift overspend? |
 |---|---|---|---|
