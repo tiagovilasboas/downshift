@@ -44,7 +44,11 @@ type PanelSpawn struct {
 	State     string `json:"state"`
 	FromModel string `json:"from_model"`
 	ToModel   string `json:"to_model"`
-	Label     string `json:"label"` // e.g. "opus → sonnet (mid)", "held: original model kept"
+	// ObservedModel is the model the child was observed to run on (its
+	// resolved or usage record), set only when it is known and differs from
+	// ToModel. Empty means "as decided" or "not observed".
+	ObservedModel string `json:"observed_model,omitempty"`
+	Label         string `json:"label"` // e.g. "opus → sonnet (mid)", "held: original model kept"
 	// Tokens is this agent's tokens once it ended; TokensLabel its text, e.g.
 	// "48k tokens · saved from opus" ("" while it runs).
 	Tokens      TokenSaving `json:"tokens"`
@@ -89,6 +93,7 @@ func BuildPanel(events []Event, sessionHash string) PanelView {
 	saved := TokenSavings(mine)
 	v.Tokens, v.TokensLine = saved.Total, saved.Total.Line()
 	v.ByAgentType = AgentTypeLines(saved)
+	observed := observedModels(mine)
 	for _, ev := range mine {
 		if !IsDecisionRow(ev) {
 			continue
@@ -104,11 +109,67 @@ func BuildPanel(events []Event, sessionHash string) PanelView {
 		}
 		child := saved.Child(ev)
 		v.Spawns = append(v.Spawns, PanelSpawn{
-			ToolUse: ev.ToolUseHash, State: r.State, FromModel: r.FromModel, ToModel: r.ToModel, Label: PanelLabel(r, ev),
-			Tokens: child, TokensLabel: ChildTokensLabel(child, ev),
+			ToolUse: ev.ToolUseHash, State: r.State, FromModel: r.FromModel, ToModel: r.ToModel,
+			ObservedModel: differentModel(observed[ev.Harness+"\n"+DecisionKey(ev)], r.ToModel),
+			Label:         PanelLabel(r, ev),
+			Tokens:        child, TokensLabel: ChildTokensLabel(child, ev),
 		})
 	}
 	return v
+}
+
+// observedModels maps each decision (harness and DecisionKey) to the model its
+// child was observed to run on. The resolved record (what the harness chose at
+// launch) wins over a usage record (what the transcript reported). Only known
+// ids are kept.
+func observedModels(events []Event) map[string]string {
+	out := map[string]string{}
+	for _, ev := range events {
+		if ev.LinkedDecision == "" || !knownModel(ev.ToModel) {
+			continue
+		}
+		key := ev.Harness + "\n" + ev.LinkedDecision
+		switch ev.Outcome {
+		case OutcomeResolved:
+			out[key] = ev.ToModel
+		case OutcomeUsage:
+			if _, seen := out[key]; !seen {
+				out[key] = ev.ToModel
+			}
+		}
+	}
+	return out
+}
+
+// differentModel returns observed when it is known and is not the decided
+// model, "" otherwise. A dated id (claude-haiku-4-5-20251001) is the same
+// model as its undated form (claude-haiku-4-5).
+func differentModel(observed, decided string) string {
+	if !knownModel(observed) || sameModel(observed, decided) {
+		return ""
+	}
+	return observed
+}
+
+// sameModel compares two model ids, ignoring a trailing 8-digit date stamp.
+func sameModel(a, b string) bool {
+	return undatedModel(a) == undatedModel(b)
+}
+
+func undatedModel(id string) string {
+	if i := strings.LastIndexByte(id, '-'); i >= 0 && len(id)-i-1 == 8 && isDigits(id[i+1:]) {
+		return id[:i]
+	}
+	return id
+}
+
+func isDigits(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return s != ""
 }
 
 // ChildTokensLabel is one agent's token text: "48k tokens · saved from opus",
