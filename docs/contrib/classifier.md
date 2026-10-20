@@ -43,6 +43,51 @@ Multilingual E5 (shadow and fuse) was removed on 2026-10-17. Logs written before
 
 ---
 
+## Go-native domain enrichment (candidate, opt-in)
+
+The production scorer remains unchanged by default. Additional engineering
+vocabulary lives in **`internal/classify/domain_signals.go`**, separate from the
+general table in `signals.go`. Activate the candidate vocabulary locally:
+
+```sh
+DOWNSHIFT_DOMAIN_SIGNALS=1 downshift try "Investigue o hydration mismatch no React"
+DOWNSHIFT_DOMAIN_SIGNALS=1 go test ./internal/classify ./internal/core
+```
+
+The table currently contains **32 rules across eight domains**: frontend,
+backend, fullstack, devops, finops, devsecops, mobile, and CI/CD. Each
+rule requires an **action plus bounded technical context**. A framework
+name (React, Kubernetes, SwiftUI, etc.) alone never raises the tier.
+The table does not hardcode model IDs or change risk-floor policy.
+
+**Bilingual parity is a contribution requirement**: each added or modified
+rule must have an **English, Brazilian Portuguese and mixed-language** example
+in `domain_signals_test.go`. The current test set has 96 positive examples,
+checks the same regex for all three variants, and verifies the integrated
+scorer does not send those scoped examples below medium. This does **not**
+prove global equal routing outcomes for arbitrary EN/PT prompts: promotion
+requires reviewed holdout corpus evaluation, including over-routing, risk
+false negatives, confidence, and latency.
+
+Reference vocabularies used for manual curation (do not bulk-copy rules):
+
+- [GitHub Linguist](https://github.com/github-linguist/linguist):
+  language names and aliases (e.g. TypeScript / TSX, SwiftUI)
+- [OWASP ASVS](https://github.com/OWASP/ASVS):
+  authorization, access-control and software security terminology
+- [FinOps FOCUS glossary](https://focus.finops.org/docs/specification/v1-2/glossary/):
+  amortized cost, effective cost, chargeback and allocation terms
+- [Stack Exchange tag synonyms](https://api.stackexchange.com/docs/synonyms-by-tags):
+  terminology discovery; verify context and PT-BR translations independently
+
+Calibration is **reviewed evaluation**, not LLM fine-tuning: propose candidate
+regex/weights from labeled misroutes, test against EN/PT/mixed positives and
+negative controls, then promote only after independent holdout evidence.
+Avoid changing multiple unrelated weights in one PR. Neither externally
+sourced text nor model output becomes a rule automatically.
+
+---
+
 ## Tuning workflow
 
 1. Reproduce with `downshift try "<prompt>" [harness]`.
