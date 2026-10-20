@@ -55,6 +55,15 @@ var (
 	reJestTime          = regexp.MustCompile(`^Time:\s+\d+(?:\.\d+)? s(?:, estimated \d+(?:\.\d+)? s)?$`)
 )
 
+var (
+	// reTSCPlainLine matches the only lines a clean tsc watch-mode run prints.
+	// Any other line, including an injected error, warning, FAIL or ANSI-wrapped
+	// text, makes the whole transcript raw. Recognition is the rule, not a danger list.
+	reTSCPlainLine = regexp.MustCompile(`^(?:|\[\d{2}:\d{2}:\d{2}\] (?:Projects in this build: ?|Building project(?: '[\w./@-]+')?\.\.\.|Found 0 errors\. Watching for file changes\.)|    \* [\w./@-]+\.json)$`)
+	// reTSCSuccessLine is the 0-errors summary a clean run must end with.
+	reTSCSuccessLine = regexp.MustCompile(`^\[\d{2}:\d{2}:\d{2}\] Found 0 errors\. Watching for file changes\.$`)
+)
+
 // Compress evaluates the input according to the policy and selected mode.
 // If mode is ModeOff or ModeObserve, the returned Result.Output is byte-identical
 // to input. In ModeSafe, recognized safe formats are compacted.
@@ -774,9 +783,28 @@ func isKnownJestTranscript(input []byte) bool {
 // TSC: PASS (0 errors)
 // If not strictly shorter than raw input, the input is returned.
 func compressTSC(input []byte) ([]byte, bool, string) {
+	if !tscLinesRecognized(input) {
+		return input, false, "tsc_unrecognized_line_preserved"
+	}
 	out := "TSC: PASS (0 errors)\n"
 	if len(out) >= len(input) {
 		return input, false, "no_compression_gain"
 	}
 	return []byte(out), true, "compressed tsc summary (0 errors)"
+}
+
+// tscLinesRecognized reports whether every line of input is part of the plain
+// tsc success grammar and the run ends with its 0-errors summary line. A single
+// unrecognised line makes the transcript unsafe to compact.
+func tscLinesRecognized(input []byte) bool {
+	summary := false
+	for _, line := range bytes.Split(input, []byte("\n")) {
+		if !reTSCPlainLine.Match(line) {
+			return false
+		}
+		if reTSCSuccessLine.Match(line) {
+			summary = true
+		}
+	}
+	return summary
 }

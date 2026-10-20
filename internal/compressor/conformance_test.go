@@ -229,13 +229,11 @@ func buildKnownViolations() map[string]string {
 	for _, f := range []struct{ fixture, family string }{
 		{"playwright_pass_clean.txt", "playwright"},
 		{"pytest_pass_clean.txt", "pytest"},
-		{"tsc_pass_clean.txt", "tsc"},
 	} {
 		for _, w := range []string{"error", "FAIL", "warning", "panic"} {
 			m[f.fixture+"|danger-"+w] = fmt.Sprintf(summaryOnly, f.family)
 		}
 	}
-	m["tsc_pass_clean.txt|ansi"] = "TODO(tsc): an ANSI-wrapped 'Found 0 errors' line is compacted without keeping the coloured original"
 	return m
 }
 

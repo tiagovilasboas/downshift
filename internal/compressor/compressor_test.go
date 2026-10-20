@@ -565,6 +565,39 @@ func TestCompress_TSC_ErrorsPreserveRaw(t *testing.T) {
 	}
 }
 
+// TestCompress_TSC_UnrecognisedLinePreservesRaw covers injected lines that the
+// plain tsc success grammar does not recognise: each must return the input
+// byte-identical, even when the run otherwise ends with the 0-errors summary.
+func TestCompress_TSC_UnrecognisedLinePreservesRaw(t *testing.T) {
+	const head = "[19:20:00] Projects in this build:\n    * tsconfig.json\n"
+	const tail = "[19:20:02] Found 0 errors. Watching for file changes.\n"
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"injected error word", head + "unexpected error in output\n" + tail},
+		{"injected warning word", head + "unexpected warning in output\n" + tail},
+		{"injected FAIL word", head + "unexpected FAIL in output\n" + tail},
+		{"injected panic word", head + "unexpected panic in output\n" + tail},
+		{"injected unknown line", head + "zz-unrecognised-line 42\n" + tail},
+		{"project line with spaces", "[19:20:00] Projects in this build:\n    * unexpected error in output\n" + tail},
+		{"ANSI-wrapped summary", head + "[19:20:02] \x1b[32mFound 0 errors. Watching for file changes.\x1b[0m\n"},
+		{"no summary line", head},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("must not compact tsc with unrecognised line: %s", res.Reason)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("must preserve raw output byte-identical, got %q", res.Output)
+			}
+		})
+	}
+}
+
 func TestCompress_Jest_PassCompaction(t *testing.T) {
 	in := []byte("PASS src/auth.test.ts\nPASS src/billing.test.ts\n\nTest Suites: 1 skipped, 2 passed, 3 total\nTests:       1 skipped, 1 todo, 25 passed, 27 total\nSnapshots:   0 total\nTime:        1.234 s\nRan all test suites.\n")
 	res := compressor.Compress(in, compressor.ModeSafe)
