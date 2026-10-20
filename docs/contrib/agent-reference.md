@@ -29,7 +29,6 @@ Downshift records local routing decisions to `events.jsonl` in the state directo
 Commands for agents and operators to audit savings, costs, and optimization:
 - `downshift stats`: display decision counts and estimated token savings (default: 30 days).
 - `downshift stats --days=N`: filter metrics window to the last N days.
-- `downshift stats --cost-per-unit=<USD>`: convert normalised unit savings to estimated USD using list prices.
 - `downshift stats --export`: generate sanitized, prompt-free JSON summary for audits and issues. See [docs/reference/stats-export.md](../reference/stats-export.md).
 - `downshift serve`: start local web dashboard at `http://localhost:7474` (serves `web/`).
 - `dsmon`: standalone terminal dashboard widget (`cmd/dsmon/launch.sh`).
@@ -95,4 +94,3 @@ in `docs/reference/beta-exit.md` (P1, P3), so keep the seam.
 
 ## Cost per session and subagent
 
-`internal/telemetry/cost_groups.go`: `Aggregate` groups priced `usage` events by hashed `SessionID` and `AgentHash` into `Stats.CostBySession` / `CostBySubagent`. Events without an id are skipped from the groups, not from the totals. `stats` prints the groups only when attributable usage exists; the export carries counts and maxima, never ids. This is reporting: a hook cannot enforce budgets or concurrency.
