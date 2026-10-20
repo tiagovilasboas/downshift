@@ -112,10 +112,11 @@ the spawn alone.
 
 Vendored, so it is patched only through its documented local patch
 (`mods/savvy-progress/downshift-local.patch`, README section "Downshift local
-patch"). The patch runs `downshift session --panel` and draws the row label
-(with the agent's `tokens_label`), the summary line (`Downshift tokens saved: …`)
-in the panel and the band, and the `by agent type` line in the panel header;
-with no binary or bad output it draws what upstream draws. No routing logic lives
+patch"). The patch runs `downshift session --panel` and draws a short row
+status plus the tokens that agent moved to a smaller model (`↓58k`, from the
+spawn's `tokens.work_saved` + `cache_saved`) and one line, `Downshift · N switched · M held`,
+in the panel and the band; `tokens_line`, `tokens_label` and `by_agent_type` stay in the
+contract for the CLI but the mod no longer draws them; with no binary or bad output it draws what upstream draws. No routing logic lives
 in the mod.
 
 ## What a harness cannot honor
