@@ -16,7 +16,9 @@ import (
 // cmp treats "opus" and its full id as one model, and "haiku" as cheaper.
 type cmp struct{}
 
-func (cmp) Known(m string) bool { return m == "opus" || m == "claude-opus-5-5" || m == "claude-haiku-5-5" }
+func (cmp) Known(m string) bool {
+	return m == "opus" || m == "claude-opus-5-5" || m == "claude-haiku-5-5"
+}
 func (cmp) Compare(from, to string) replay.Direction {
 	rank := func(m string) int {
 		if m == "claude-haiku-5-5" {
