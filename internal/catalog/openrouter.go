@@ -7,7 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"unicode"
 )
+
+// AllowlistProvider is the gateway the user allowlist file belongs to. Its rows
+// carry this provider, so the registry must hold a gateway of this name.
+const AllowlistProvider = "openrouter"
 
 // openRouterAllowlistHarness is the only harness the allowlist may target.
 const openRouterAllowlistHarness = "opencode"
@@ -67,7 +72,7 @@ func parseOpenRouterAllowlist(data []byte) ([]Entry, error) {
 
 		rows = append(rows, Entry{
 			ID:       m.ID,
-			Provider: ProviderOpenRouter,
+			Provider: AllowlistProvider,
 			Harness:  openRouterAllowlistHarness,
 			Tier:     strings.ToLower(m.Tier),
 			Routing:  RoutingShadow,
@@ -78,10 +83,22 @@ func parseOpenRouterAllowlist(data []byte) ([]Entry, error) {
 	return rows, nil
 }
 
-// isFullSlug reports a "vendor/model" id with both parts non-empty.
+// isFullSlug reports a "vendor/model" id with both parts non-empty and no
+// control character or whitespace anywhere in it.
 func isFullSlug(id string) bool {
 	vendor, model, ok := strings.Cut(id, "/")
-	return ok && vendor != "" && model != "" && !strings.Contains(model, "/")
+	return ok && vendor != "" && model != "" && !strings.Contains(model, "/") && !hasControlOrSpace(id)
+}
+
+// hasControlOrSpace reports whether s holds a control character or whitespace,
+// such as a newline, which must never reach a model id.
+func hasControlOrSpace(s string) bool {
+	for _, r := range s {
+		if unicode.IsControl(r) || unicode.IsSpace(r) {
+			return true
+		}
+	}
+	return false
 }
 
 // effortsUpTo turns a max_effort cap into the list of effort levels the model

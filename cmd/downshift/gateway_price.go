@@ -7,13 +7,21 @@ import (
 	"sync"
 
 	"github.com/tiagovilasboas/downshift/internal/discovery"
+	"github.com/tiagovilasboas/downshift/internal/gateway"
+	"github.com/tiagovilasboas/downshift/internal/gateway/openrouter"
 )
 
-// gatewaySnapshotPrice reads OpenRouter list prices from the discovery cache,
+// registerGateways is the composition root for gateway adapters. Each adapter
+// is registered here and nowhere else; shared layers see only the port.
+func registerGateways() {
+	gateway.Register(openrouter.New(gatewaySnapshotPrice()))
+}
+
+// gatewaySnapshotPrice reads gateway list prices from the discovery cache,
 // once per process. It only reads: the snapshot is written by
 // `downshift models discover` when the operator opted in. A missing or invalid
 // cache prices nothing.
-func gatewaySnapshotPrice() func(model string) (float64, float64, bool) {
+func gatewaySnapshotPrice() openrouter.Snapshot {
 	var once sync.Once
 	var cache discovery.File
 	return func(model string) (float64, float64, bool) {

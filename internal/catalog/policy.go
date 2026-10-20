@@ -101,7 +101,7 @@ func validateEntries(entries []Entry) error {
 		// A gateway row is reachable only by its full "vendor/model" slug. An
 		// id or family without a slash would also match the stripped tail of a
 		// native id, which is the collision this rule exists to prevent.
-		if e.Provider == ProviderOpenRouter {
+		if isGatewayProvider(e.Provider) {
 			if !strings.Contains(e.ID, "/") {
 				return fmt.Errorf("catalog: openrouter model %q for harness %q must use its full %q slug", e.ID, e.Harness, "vendor/model")
 			}

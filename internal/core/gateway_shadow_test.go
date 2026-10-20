@@ -53,7 +53,7 @@ func TestGatewayShadow_AllowlistNeverChangesRoute(t *testing.T) {
 	useEmptyHome(t)
 	bare := catalog.Load()
 
-	writeStateFileAt(t, paths.OpenRouterAllowlistPath, gatewayAllowlist)
+	writeStateFileAt(t, paths.GatewayAllowlistPath, gatewayAllowlist)
 	withList := catalog.Load()
 
 	prompts := []string{
@@ -139,7 +139,7 @@ func TestGatewayShadow_NoAllowlistRecordsNothing(t *testing.T) {
 func TestGatewayShadow_ExplicitOnlyRowIsNeverRecorded(t *testing.T) {
 	useEmptyHome(t)
 	writeStateFileAt(t, paths.CatalogPath, `{"entries":[
-		{"id":"z-ai/glm","harness":"opencode","provider":"openrouter","tier":"small"}]}`)
+		{"id":"z-ai/glm","harness":"opencode","provider":"`+catalog.AllowlistProvider+`","tier":"small"}]}`)
 	res := catalog.Load()
 	d := core.Decision{Tier: core.TierSmall, Harness: "opencode"}
 	d.RecordGatewayWould(res)
@@ -160,7 +160,7 @@ func TestGatewayShadow_BadAllowlistIsIgnored(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			useEmptyHome(t)
 			bare := catalog.Load()
-			writeStateFileAt(t, paths.OpenRouterAllowlistPath, body)
+			writeStateFileAt(t, paths.GatewayAllowlistPath, body)
 			res := catalog.Load()
 
 			d := core.Decision{Tier: core.TierSmall, Harness: "opencode"}
@@ -184,7 +184,7 @@ func TestGatewayShadow_BadAllowlistIsIgnored(t *testing.T) {
 func TestGatewayShadow_RecordsThroughKnownSessionResolver(t *testing.T) {
 	useEmptyHome(t)
 	bare := catalog.Load()
-	writeStateFileAt(t, paths.OpenRouterAllowlistPath, gatewayAllowlist)
+	writeStateFileAt(t, paths.GatewayAllowlistPath, gatewayAllowlist)
 	withList := catalog.Load()
 
 	session := core.KnownSession([]string{"claude-sonnet-5"})

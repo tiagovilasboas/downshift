@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/gateway"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	_ "github.com/tiagovilasboas/downshift/internal/nbopinion"
 	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
@@ -45,7 +46,8 @@ func main() {
 	}
 	// Set before the hooks: a usage record written by a hook prices its gateway
 	// run from the same snapshot the reports read.
-	telemetry.GatewayPriceLookup = gatewaySnapshotPrice()
+	registerGateways()
+	telemetry.GatewayPriceLookup = gateway.PriceOf
 
 	// A hook must never block a spawn (a Go panic exits 2, which every harness
 	// reads as "deny"), so its catalog load runs under a recover and a failure

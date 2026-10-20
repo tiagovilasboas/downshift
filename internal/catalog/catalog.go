@@ -27,20 +27,35 @@ import (
 	_ "embed"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/gateway"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 //go:embed catalog.json
 var embeddedJSON []byte
 
-// ProviderOpenRouter marks a gateway row: a model reached through OpenRouter,
-// known only by its full "vendor/model" slug. Gateway rows default to
-// routing "explicit_only" unless the row says otherwise.
-const ProviderOpenRouter = "openrouter"
+// isGatewayProvider reports whether a catalog row's provider names a registered
+// gateway. A gateway row is reachable only by its full "vendor/model" slug and
+// defaults to routing "explicit_only" unless the row says otherwise. The
+// registry, not this package, decides which names are gateways.
+func isGatewayProvider(provider string) bool {
+	if provider == "" {
+		return false
+	}
+	_, ok := gateway.Lookup(provider)
+	return ok
+}
 
-// gatewayPrefix is the OpenCode form of a gateway model:
-// "openrouter/<vendor>/<model>". Such an id resolves only to OpenRouter rows.
-const gatewayPrefix = ProviderOpenRouter + "/"
+// gatewaySlug splits the OpenCode form of a gateway model,
+// "<gateway>/<vendor>/<model>", when the first segment names a registered
+// gateway. Such an id resolves only to gateway rows.
+func gatewaySlug(id string) (string, bool) {
+	name, slug, ok := strings.Cut(id, "/")
+	if !ok || !isGatewayProvider(name) {
+		return "", false
+	}
+	return slug, true
+}
 
 // RoutingShadow marks an allowlisted gateway row. It is never an automatic
 // routing target and never a current-model write target; it is only a
@@ -191,7 +206,7 @@ const maxOpenRouterAllowlistBytes = 256 << 10
 // listed rows go ahead of the catalog rows so an explicit user choice wins
 // the tier.
 func applyOpenRouterAllowlist(base *catalogFile, warning io.Writer) {
-	path, err := paths.OpenRouterAllowlistPath()
+	path, err := paths.GatewayAllowlistPath()
 	if err != nil {
 		return
 	}
@@ -288,7 +303,7 @@ func decode(data []byte) (catalogFile, error) {
 		return catalogFile{}, err
 	}
 	for i := range f.Entries {
-		if f.Entries[i].Provider == ProviderOpenRouter && f.Entries[i].Routing == "" {
+		if isGatewayProvider(f.Entries[i].Provider) && f.Entries[i].Routing == "" {
 			f.Entries[i].Routing = "explicit_only"
 		}
 	}
@@ -377,7 +392,7 @@ func build(f catalogFile) *Catalog {
 			c.byFamily[e.Harness] = append(c.byFamily[e.Harness], fe)
 		}
 
-		if e.Provider == ProviderOpenRouter {
+		if isGatewayProvider(e.Provider) {
 			indexGateway(c, e, m)
 		}
 	}
@@ -504,7 +519,7 @@ func (c *Catalog) IsExactID(harness, id string) bool {
 	if c == nil || harness == "" || id == "" {
 		return false
 	}
-	if slug, ok := strings.CutPrefix(id, gatewayPrefix); ok {
+	if slug, ok := gatewaySlug(id); ok {
 		_, exact := c.gateway[harness][slug]
 		return exact && slug != ""
 	}
@@ -539,7 +554,7 @@ func (c *Catalog) LookupByID(harness, modelID string) (core.Model, bool) {
 	if modelID == "" {
 		return core.Model{}, false
 	}
-	if slug, ok := strings.CutPrefix(modelID, gatewayPrefix); ok {
+	if slug, ok := gatewaySlug(modelID); ok {
 		return c.lookupGateway(harness, slug)
 	}
 
@@ -668,7 +683,7 @@ func (c *Catalog) EntryFor(harness, modelID string) (Entry, bool) {
 	if modelID == "" {
 		return Entry{}, false
 	}
-	if slug, ok := strings.CutPrefix(modelID, gatewayPrefix); ok {
+	if slug, ok := gatewaySlug(modelID); ok {
 		return c.gatewayEntryFor(harness, slug)
 	}
 	normalised := normaliseModelID(modelID)
@@ -713,13 +728,13 @@ func (c *Catalog) gatewayEntryFor(harness, slug string) (Entry, bool) {
 		return Entry{}, false
 	}
 	for _, e := range c.entries {
-		if e.Provider == ProviderOpenRouter && e.Harness == harness && isGatewayName(e, slug) {
+		if isGatewayProvider(e.Provider) && e.Harness == harness && isGatewayName(e, slug) {
 			return e, true
 		}
 	}
 	lower := strings.ToLower(slug)
 	for _, e := range c.entries {
-		if e.Provider == ProviderOpenRouter && e.Harness == harness && e.Family != "" &&
+		if isGatewayProvider(e.Provider) && e.Harness == harness && e.Family != "" &&
 			strings.HasPrefix(lower, strings.ToLower(e.Family)) {
 			return e, true
 		}
@@ -752,13 +767,20 @@ func automaticRoutable(e Entry) bool {
 	return e.Routing != "explicit_only" && e.Routing != RoutingShadow
 }
 
+// IsShadow reports whether modelID resolves to an allowlist shadow row. Core
+// uses it to keep shadow rows out of every session selection path.
+func (c *Catalog) IsShadow(harness, modelID string) bool {
+	entry, ok := c.EntryFor(harness, modelID)
+	return ok && entry.Routing == RoutingShadow
+}
+
 // ShadowGateways lists the allowlisted gateway rows (Routing "shadow") as
 // models. Harness-agnostic: the allowlist is a user fact, not a harness fact.
 // Rows carry only the tier and id; no price is invented for them.
 func (c *Catalog) ShadowGateways() []core.Model {
 	var out []core.Model
 	for _, e := range c.entries {
-		if e.Provider != ProviderOpenRouter || e.Routing != RoutingShadow || e.ID == "" {
+		if !isGatewayProvider(e.Provider) || e.Routing != RoutingShadow || e.ID == "" {
 			continue
 		}
 		tier, ok := parseTier(e.Tier)
@@ -789,12 +811,12 @@ func (c *Catalog) AllowedEfforts(harness, modelID string) []string {
 	if c == nil || modelID == "" {
 		return nil
 	}
-	if slug, ok := strings.CutPrefix(modelID, gatewayPrefix); ok {
+	if slug, ok := gatewaySlug(modelID); ok {
 		if slug == "" {
 			return nil
 		}
 		for _, e := range c.entries {
-			if e.Provider == ProviderOpenRouter && e.Harness == harness && isGatewayName(e, slug) {
+			if isGatewayProvider(e.Provider) && e.Harness == harness && isGatewayName(e, slug) {
 				return e.Efforts
 			}
 		}
