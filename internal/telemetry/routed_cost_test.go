@@ -18,7 +18,7 @@ func usageRow(link, ran string, actual, baseline float64) telemetry.Event {
 	in := int64(100)
 	return telemetry.Event{InputTokens: &in,
 		CorrelationID: "u-" + link, Harness: "claude-code", SessionID: "s1", Outcome: telemetry.OutcomeUsage,
-		LinkedDecision: link, FromModel: "x", ToModel: ran, ActualCostUSD: &actual, BaselineCostUSD: &baseline,
+		LinkedDecision: link, ToModel: ran, ActualCostUSD: &actual, BaselineCostUSD: &baseline,
 		BaselineSource: telemetry.BaselineRequested,
 	}
 }
@@ -34,15 +34,16 @@ func TestRealCostIsCreditedOnlyToAppliedRewrites(t *testing.T) {
 		usage     telemetry.Event
 		wantDelta float64
 	}{
-		{"applied downshift keeps its saving", decisionRow("d", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", "opus", "sonnet"), usageRow("d", "sonnet", 0.5, 1.0), 0.5},
-		{"applied upshift keeps its overspend", decisionRow("d", telemetry.OutcomeRewriteEmitted, "UPSHIFT", "sonnet", "opus"), usageRow("d", "opus", 2.0, 1.0), -1.0},
-		{"unchanged spawn that ran dearer is not an overspend", decisionRow("d", telemetry.OutcomeAllow, "OK", "sonnet", "sonnet"), usageRow("d", "opus", 4.76, 2.38), 0},
-		{"unchanged spawn that ran cheaper is not a saving", decisionRow("d", telemetry.OutcomeAllow, "DOWNSHIFT", "opus", "opus"), usageRow("d", "sonnet", 0.41, 0.82), 0},
-		{"held downshift is not a saving", decisionRow("d", telemetry.OutcomeAllow, "DOWNSHIFT", "opus", "opus"), usageRow("d", "sonnet", 1, 2), 0},
-		{"usage with no known decision is left as recorded", decisionRow("other", telemetry.OutcomeAllow, "OK", "sonnet", "sonnet"), usageRow("d", "opus", 2, 1), -1},
+		{"applied downshift keeps its saving", decisionRow("d", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", "claude-opus-4-7", "claude-sonnet-4-6"), usageRow("d", "claude-sonnet-4-6", 0.5, 1.0), 0.5},
+		{"applied upshift keeps its overspend", decisionRow("d", telemetry.OutcomeRewriteEmitted, "UPSHIFT", "claude-sonnet-4-6", "claude-opus-4-7"), usageRow("d", "claude-opus-4-7", 2.0, 1.0), -1.0},
+		{"unchanged spawn that ran dearer is not an overspend", decisionRow("d", telemetry.OutcomeAllow, "OK", "claude-sonnet-4-6", "claude-sonnet-4-6"), usageRow("d", "claude-opus-4-7", 4.76, 2.38), 0},
+		{"unchanged spawn that ran cheaper is not a saving", decisionRow("d", telemetry.OutcomeAllow, "DOWNSHIFT", "claude-opus-4-7", "claude-opus-4-7"), usageRow("d", "claude-sonnet-4-6", 0.41, 0.82), 0},
+		{"held downshift is not a saving", decisionRow("d", telemetry.OutcomeAllow, "DOWNSHIFT", "claude-opus-4-7", "claude-opus-4-7"), usageRow("d", "claude-sonnet-4-6", 1, 2), 0},
+		{"usage with no known decision is left as recorded", decisionRow("other", telemetry.OutcomeAllow, "OK", "claude-sonnet-4-6", "claude-sonnet-4-6"), usageRow("d", "claude-opus-4-7", 2, 1), -1},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			tc.usage.FromModel = tc.decision.FromModel // the child was requested as its decision says
 			events := []telemetry.Event{tc.decision, tc.usage}
 			stats := telemetry.Aggregate(events)
 			if math.Abs(stats.RealCostDeltaUSD-tc.wantDelta) > 1e-9 {
@@ -75,10 +76,10 @@ func TestRealCostIsCreditedOnlyToAppliedRewrites(t *testing.T) {
 // rewrites that existed were all confirmed.
 func TestHonorCountsAppliedRewritesOnly(t *testing.T) {
 	events := []telemetry.Event{
-		decisionRow("keep-1", telemetry.OutcomeAllow, "OK", "sonnet", "sonnet"),
-		decisionRow("keep-2", telemetry.OutcomeAllow, "DOWNSHIFT", "opus", "opus"),
-		decisionRow("seen", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", "opus", "sonnet"),
-		decisionRow("blind", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", "opus", "sonnet"),
+		decisionRow("keep-1", telemetry.OutcomeAllow, "OK", "claude-sonnet-4-6", "claude-sonnet-4-6"),
+		decisionRow("keep-2", telemetry.OutcomeAllow, "DOWNSHIFT", "claude-opus-4-7", "claude-opus-4-7"),
+		decisionRow("seen", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", "claude-opus-4-7", "claude-sonnet-4-6"),
+		decisionRow("blind", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", "claude-opus-4-7", "claude-sonnet-4-6"),
 		{CorrelationID: "r", Harness: "claude-code", SessionID: "s1", Outcome: telemetry.OutcomeResolved, LinkedDecision: "seen", RewriteHonored: boolPtr(true)},
 	}
 	stats := telemetry.Aggregate(events)

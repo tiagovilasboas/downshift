@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // TestMain isolates HOME before any test runs. Several tests drive the real
@@ -15,6 +18,7 @@ import (
 // developer's own events.jsonl and skew `downshift stats`. Only HOME is set so
 // tests that choose their own HOME or DOWNSHIFT_* variables keep working.
 func TestMain(m *testing.M) {
+	telemetry.DirectionCatalog = catalog.Load()
 	root, err := os.MkdirTemp("", "downshift-cmd-test-")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "TestMain: temp dir:", err)

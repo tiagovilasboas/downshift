@@ -169,10 +169,10 @@ func ChildEndLine(ev Event) string {
 		if ev.BaselineSource == BaselineInferred {
 			guess = " (inferred baseline)"
 		}
-		switch d := ev.RealDeltaUSD(); {
-		case d > 0:
+		switch tierDirection(ev.Harness, want, ev.ToModel) {
+		case TokenCheaper:
 			parts = append(parts, "saved from "+ShortModel(want)+guess)
-		case d < 0:
+		case TokenPricier:
 			parts = append(parts, "pricier than "+ShortModel(want)+guess)
 		}
 	}

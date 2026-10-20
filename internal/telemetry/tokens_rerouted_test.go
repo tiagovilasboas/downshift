@@ -17,8 +17,8 @@ import (
 // Placeholder model ids: the token view never prices anything itself, it reads
 // the costs the usage record already carries.
 const (
-	modelBig   = "model-big"
-	modelSmall = "model-small"
+	modelBig   = "claude-opus-4-7"
+	modelSmall = "claude-haiku-4-5"
 )
 
 type tokUse struct {
@@ -105,8 +105,8 @@ func TestTokensRerouted_Placement(t *testing.T) {
 			tokUsage("nope", "claude-code", modelBig, modelSmall, use, 1, 4)}, telemetry.TokenUnattributed, ""},
 		{"applied rewrite with unknown baseline is unattributed", []telemetry.Event{applied("DOWNSHIFT", "unknown", modelSmall),
 			tokUsage("d", "claude-code", "unknown", modelSmall, use, 1, -1)}, telemetry.TokenUnattributed, ""},
-		{"applied rewrite priced the same is unchanged", []telemetry.Event{applied("DOWNSHIFT", modelBig, modelSmall),
-			tokUsage("d", "claude-code", modelBig, modelSmall, use, 2, 2)}, telemetry.TokenUnchanged, modelBig + ">" + modelSmall},
+		{"applied rewrite within one tier is unchanged", []telemetry.Event{applied("DOWNSHIFT", "claude-sonnet-4-6", "claude-sonnet-5-5"),
+			tokUsage("d", "claude-code", "claude-sonnet-4-6", "claude-sonnet-5-5", use, 2, 2)}, telemetry.TokenUnchanged, "claude-sonnet-4-6>claude-sonnet-5-5"},
 		{"usage with no decision order still links (usage first)", []telemetry.Event{
 			tokUsage("d", "claude-code", modelBig, modelSmall, use, 1, 4), applied("DOWNSHIFT", modelBig, modelSmall)},
 			telemetry.TokenCheaper, modelBig + ">" + modelSmall},
@@ -265,12 +265,14 @@ func TestTokensRerouted_PerHarness(t *testing.T) {
 	if got := bucketOf(t, tr.ByHarness["claude-code"], telemetry.TokenCheaper).Total; got != 20 {
 		t.Errorf("claude-code cheaper = %d, want 20", got)
 	}
+	// The catalog has no entry for a custom harness, so its record cannot be
+	// placed by tier: it is unattributed, and it still shows under its harness.
 	custom := tr.ByHarness["custom-harness"]
-	if custom.Status != telemetry.TokenStatusObserved || custom.UsageSource != "unknown" || bucketOf(t, custom, telemetry.TokenCheaper).Total != 5 {
+	if custom.Status != telemetry.TokenStatusObserved || custom.UsageSource != "unknown" || bucketOf(t, custom, telemetry.TokenUnattributed).Total != 5 {
 		t.Errorf("custom-harness = %+v", custom)
 	}
-	if tr.Totals.Cheaper.Total != 25 || tr.Totals.Cheaper.Records != 2 {
-		t.Errorf("totals cheaper = %+v, want 25 tokens in 2 records", tr.Totals.Cheaper)
+	if tr.Totals.Cheaper.Total != 20 || tr.Totals.Cheaper.Records != 1 {
+		t.Errorf("totals cheaper = %+v, want 20 tokens in 1 record", tr.Totals.Cheaper)
 	}
 	order := tr.HarnessOrder()
 	if order[0] != "claude-code" || order[len(order)-1] != "custom-harness" {
@@ -398,9 +400,9 @@ func TestPrintStats_TokensDetail(t *testing.T) {
 	text := b.String()
 	for _, want := range []string{
 		"Tokens rerouted, by harness",
-		"cheaper", "model-big -> model-small",
+		"cheaper", "opus -> haiku",
 		"cache read 60, write 40",
-		"token mix by model: model-small 130",
+		"token mix by model: haiku 130",
 		"cursor       unobserved (usage source: none)",
 		"codex        unobserved",
 		"Dollars, priced now, and the control group: downshift report",

@@ -41,9 +41,8 @@ func rankEvents(t *testing.T, cat core.Resolver, requested, ran, outcome string)
 	return usage, decision
 }
 
-// TestTokenDirectionByRank_Gates: the gates that do not depend on a model pair
-// place a record exactly as the dollar method does.
-func TestTokenDirectionByRank_Gates(t *testing.T) {
+// TestTokenDirection_Gates: the gates that do not depend on a model pair.
+func TestTokenDirection_Gates(t *testing.T) {
 	cat := catalog.Load()
 	usage, decision := rankEvents(t, cat, "claude-opus-4-8", "claude-haiku-4-5", OutcomeRewriteEmitted)
 	cases := []struct {
@@ -60,22 +59,21 @@ func TestTokenDirectionByRank_Gates(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := tokenDirectionByRank(usage, tc.decision, tc.found, tc.unrouted, tc.refuted, cat)
-			want := tokenDirection(usage, tc.decision, tc.found, tc.unrouted, tc.refuted)
-			if got != tc.want || want != tc.want {
-				t.Fatalf("rank %q, dollars %q, want %q", got, want, tc.want)
+			got := tokenDirection(usage, tc.decision, tc.found, tc.unrouted, tc.refuted)
+			if got != tc.want {
+				t.Fatalf("got %q, want %q", got, tc.want)
 			}
 		})
 	}
 }
 
-// TestTokenDirectionByRank_NoRealCost: a record without priced costs is not
+// TestTokenDirection_NoRealCost: a record without priced costs is not
 // placed, as in the dollar method, so old lines keep their bucket.
-func TestTokenDirectionByRank_NoRealCost(t *testing.T) {
+func TestTokenDirection_NoRealCost(t *testing.T) {
 	cat := catalog.Load()
 	usage, decision := rankEvents(t, cat, "claude-opus-4-8", "claude-haiku-4-5", OutcomeRewriteEmitted)
 	usage.ActualCostUSD = nil
-	if got := tokenDirectionByRank(usage, decision, true, false, false, cat); got != TokenUnattributed {
+	if got := tokenDirection(usage, decision, true, false, false); got != TokenUnattributed {
 		t.Fatalf("got %q, want %q", got, TokenUnattributed)
 	}
 }
@@ -90,9 +88,9 @@ func withOutcome(e Event, outcome string) Event {
 	return e
 }
 
-// TestTokenDirectionByRank_Placement: an applied rewrite moves tokens to the
+// TestTokenDirection_Placement: an applied rewrite moves tokens to the
 // cheaper or pricier tier, and a same-tier rewrite stays unchanged.
-func TestTokenDirectionByRank_Placement(t *testing.T) {
+func TestTokenDirection_Placement(t *testing.T) {
 	cat := catalog.Load()
 	cases := []struct {
 		name, requested, ran, want string
@@ -104,40 +102,10 @@ func TestTokenDirectionByRank_Placement(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			usage, decision := rankEvents(t, cat, tc.requested, tc.ran, OutcomeRewriteEmitted)
-			got := tokenDirectionByRank(usage, decision, true, false, false, cat)
+			got := tokenDirection(usage, decision, true, false, false)
 			if got != tc.want {
 				t.Fatalf("got %q, want %q", got, tc.want)
 			}
 		})
 	}
-}
-
-// TestTokenDirectionByRank_DivergenceFromDollars lists every claude-code pair
-// where the rank direction and the dollar direction differ. Those are the
-// cases part 4a has to show: same-tier price gaps and price inversions across
-// tiers. The list is logged, not asserted, so the catalog can move.
-func TestTokenDirectionByRank_DivergenceFromDollars(t *testing.T) {
-	cat := catalog.Load()
-	var ids []string
-	for _, e := range cat.Entries() {
-		if e.Harness == rankHarness {
-			ids = append(ids, e.ID)
-		}
-	}
-	var diverged []string
-	for _, requested := range ids {
-		for _, ran := range ids {
-			if requested == ran {
-				continue
-			}
-			usage, decision := rankEvents(t, cat, requested, ran, OutcomeRewriteEmitted)
-			rank := tokenDirectionByRank(usage, decision, true, false, false, cat)
-			dollars := tokenDirection(usage, decision, true, false, false)
-			if rank == dollars {
-				continue
-			}
-			diverged = append(diverged, requested+" -> "+ran+": rank "+rank+", dollars "+dollars)
-		}
-	}
-	t.Logf("%d same-tier or price-inverted pairs differ from the dollar method:\n%v", len(diverged), diverged)
 }

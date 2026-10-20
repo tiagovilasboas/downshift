@@ -148,7 +148,7 @@ func TestHonesty_ExportOmitsInferredBaselineCount(t *testing.T) {
 
 // Child-end line "(opus would be $X)" on an inferred baseline, unmarked.
 func TestHonesty_ChildEndLineHidesInferredBaseline(t *testing.T) {
-	line := ChildEndLine(Event{Outcome: OutcomeUsage, FromModel: "claude-opus-5-5", ToModel: "claude-haiku-5-5",
+	line := ChildEndLine(Event{Outcome: OutcomeUsage, Harness: "claude-code", FromModel: "claude-opus-5-5", ToModel: "claude-haiku-5-5",
 		InputTokens: hvTok(1000), ActualCostUSD: hvUSD(0.01), BaselineCostUSD: hvUSD(0.05), BaselineSource: BaselineInferred})
 	if !strings.Contains(strings.ToLower(line), "inferred") && !strings.Contains(line, "~") {
 		t.Fatalf("child-end line states a counterfactual on an inferred baseline as fact: %q", line)

@@ -24,6 +24,13 @@ func td(id, sess string, d time.Duration, model string, codes ...string) Event {
 	}
 }
 
+// upshift is a decision that moved a haiku request up to opus.
+func upshift(id, sess string, d time.Duration) Event {
+	e := td(id, sess, d, "claude-opus-5-5")
+	e.FromModel = "claude-haiku-5-5"
+	return e
+}
+
 func tuse(link, sess string, d time.Duration, model string, cost, base float64) Event {
 	return Event{
 		CorrelationID: "u-" + link, Timestamp: at(d), SessionID: sess, Harness: "claude-code", Outcome: OutcomeUsage,
@@ -69,7 +76,7 @@ func TestSessionTree_OneSubagentWithRealCost(t *testing.T) {
 
 func TestSessionTree_PricierIsNeverSaved(t *testing.T) {
 	ev := []Event{
-		td("d1", sessA, 0, "claude-opus-5-5"),
+		upshift("d1", sessA, 0),
 		tuse("d1", sessA, time.Minute, "claude-opus-5-5", 1.30, 0.50),
 	}
 	out := SessionTree(ev, sessA, TreeOptions{})
@@ -77,7 +84,7 @@ func TestSessionTree_PricierIsNeverSaved(t *testing.T) {
 	if !strings.Contains(hdr, "work 0% · cache 0%") || !strings.Contains(hdr, "10k on a pricier model") {
 		t.Fatalf("header: %q", hdr)
 	}
-	if !strings.Contains(out, "pricier than opus") || strings.Contains(out, "saved from") || strings.Contains(out, "$") {
+	if !strings.Contains(out, "pricier than haiku") || strings.Contains(out, "saved from") || strings.Contains(out, "$") {
 		t.Fatalf("a pricier child must read pricier, never saved, and carry no dollar:\n%s", out)
 	}
 }
