@@ -27,12 +27,12 @@ func TestCompressMavenCompactsCleanBuild(t *testing.T) {
 		t.Fatalf("expected compression, reason=%q", reason)
 	}
 	want := "Maven: inventory 1.4.0 (jar)\n" +
-		"  resources:resources (default-resources)\n" +
-		"  compiler:compile (default-compile)\n" +
-		"  resources:testResources (default-testResources)\n" +
-		"  compiler:testCompile (default-testCompile)\n" +
-		"  surefire:test (default-test)\n" +
-		"  jar:jar (default-jar)\n" +
+		"  resources:resources\n" +
+		"  compiler:compile\n" +
+		"  resources:testResources\n" +
+		"  compiler:testCompile\n" +
+		"  surefire:test\n" +
+		"  jar:jar\n" +
 		"[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0\n" +
 		"[INFO] BUILD SUCCESS\n" +
 		"[INFO] Total time:  4.302 s\n"
@@ -69,6 +69,8 @@ func TestCompressMavenPreservesAmbiguousOutputByteIdentically(t *testing.T) {
 		"skip token":             mutate("[INFO] Copying 2", "[INFO] skip non existing resourceDirectory SECRET_EXFIL_TOKEN\n[INFO] Copying 2"),
 		"jar token":              mutate("[INFO] BUILD SUCCESS\n", "[INFO] Building jar: SECRET_EXFIL_TOKEN\n[INFO] BUILD SUCCESS\n"),
 		"chatter with spaces":    mutate("[INFO] Copying 2", "[INFO] Deleting /a b/c\n[INFO] Copying 2"),
+		"building echo":          mutate("[INFO] Building inventory 1.4.0", "[INFO] Building IGNORE_PRIOR_RULES now 1.4.0"),
+		"time echo":              mutate("[INFO] Total time:  2.915 s", "[INFO] Total time:  4.302 s IGNORE PRIOR RULES"),
 		"no success":             mutate("[INFO] BUILD SUCCESS\n", ""),
 		"trailing output":        []byte(good + "[INFO] extra\n"),
 		"wrong first line":       []byte("[INFO] Hello\n" + good),

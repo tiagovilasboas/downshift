@@ -24,10 +24,10 @@ var (
 	reMavenBlank     = regexp.MustCompile(`^\[INFO\] ?$`)
 	reMavenRule      = regexp.MustCompile(`^\[INFO\] -{20,}$`)
 	reMavenProject   = regexp.MustCompile(`^\[INFO\] -+< [A-Za-z0-9_.\-]+:[A-Za-z0-9_.\-]+ >-+$`)
-	reMavenBuilding  = regexp.MustCompile(`^\[INFO\] Building (\S.*) (\S+)$`)
+	reMavenBuilding  = regexp.MustCompile(`^\[INFO\] Building ([a-z][a-z0-9.\-]*) (\d+(?:\.[0-9A-Za-z]+)+(?:-[0-9A-Za-z.]+)?)$`)
 	reMavenFrom      = regexp.MustCompile(`^\[INFO\]   from [A-Za-z0-9_.\-/]+$`)
-	reMavenPackaging = regexp.MustCompile(`^\[INFO\] -+\[ [a-z0-9\-]+ \]-+$`)
-	reMavenGoal      = regexp.MustCompile(`^\[INFO\] --- ([A-Za-z0-9_.\-]+):([A-Za-z0-9_.\-]+):([A-Za-z0-9_.\-]+) \(([A-Za-z0-9_.\-]+)\) @ ([A-Za-z0-9_.\-]+) ---$`)
+	reMavenPackaging = regexp.MustCompile(`^\[INFO\] -+\[ (jar|pom|war|ear|maven-plugin|bundle) \]-+$`)
+	reMavenGoal      = regexp.MustCompile(`^\[INFO\] --- ([a-z][a-z0-9.\-]*):(\d+(?:\.[0-9A-Za-z]+)*(?:-[0-9A-Za-z.]+)?):([a-z][A-Za-z0-9]*) \([a-z][A-Za-z0-9\-]*\) @ [A-Za-z0-9_.\-]+ ---$`)
 	// reMavenChatter lists the goal chatter that may precede the Surefire
 	// header. Only the javac option tokens of a real compile line are accepted,
 	// and every path or copy target is one path token.
@@ -48,7 +48,7 @@ var (
 	reMavenResults     = regexp.MustCompile(`^\[INFO\] Results:$`)
 	reMavenTotalTests  = regexp.MustCompile(`^\[INFO\] Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+)$`)
 	reMavenSuccess     = regexp.MustCompile(`^\[INFO\] BUILD SUCCESS$`)
-	reMavenTotalTime   = regexp.MustCompile(`^\[INFO\] Total time: +\S.*$`)
+	reMavenTotalTime   = regexp.MustCompile(`^\[INFO\] Total time: +(?:\d+(?:\.\d+)? s|\d+:\d\d min)$`)
 	reMavenFinished    = regexp.MustCompile(`^\[INFO\] Finished at: \d{4}-\d\d-\d\dT[0-9:.]+(?:Z|[+-]\d\d:\d\d)$`)
 	reMavenReactor     = regexp.MustCompile(`Reactor (?:Build Order|Summary)`)
 
@@ -130,13 +130,13 @@ func compressMaven(input []byte) ([]byte, bool, string) {
 			if !seenBuilding || packaging != "" {
 				return input, false, "maven_unrecognized_output_preserved"
 			}
-			packaging = strings.Trim(strings.TrimPrefix(line, "[INFO] "), "-[] ")
+			packaging = reMavenPackaging.FindStringSubmatch(line)[1]
 		case reMavenGoal.MatchString(line):
 			if !seenBuilding || packaging == "" {
 				return input, false, "maven_unrecognized_output_preserved"
 			}
 			m := reMavenGoal.FindStringSubmatch(line)
-			goals = append(goals, m[1]+":"+m[3]+" ("+m[4]+")")
+			goals = append(goals, m[1]+":"+m[3])
 		case len(goals) > 0 && !seenHeader && reMavenChatter.MatchString(line):
 		case len(goals) > 0 && totalRun >= 0 && reMavenPostTests.MatchString(line):
 		case len(goals) > 0 && reMavenTestsHeader.MatchString(line):
