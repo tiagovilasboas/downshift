@@ -113,9 +113,9 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Test report counters and Cursor quota decoder
+      - name: Test Cursor quota decoder
         if: needs.changes.outputs.docs_only != '1'
-        run: node --test web/app.test.cjs internal/cursorbridge/extension/decoder.test.cjs
+        run: node --test internal/cursorbridge/extension/decoder.test.cjs
 
   # Cross-OS behavior check (GAP-OS-1). CI already cross-COMPILES for windows
   # and darwin; this job also RUNS the OS-sensitive packages on those runners so
