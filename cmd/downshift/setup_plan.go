@@ -10,6 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 // setupPlan is the outcome of planning one target.
@@ -21,10 +23,26 @@ type setupPlan struct {
 	after   []byte
 	notes   []string
 	err     error
+	// mode is the permission of a file setup creates or rewrites; 0 keeps the
+	// default (the existing file's mode, or 0600 for a new one).
+	mode os.FileMode
+	// skip is why nothing is planned for this target (not an error).
+	skip string
+	// companions are files the config points at (a generated wrapper). They are
+	// written first, and the config is not written if one of them fails.
+	companions []setupPlan
 }
 
 func (p setupPlan) changed() bool {
-	return p.err == nil && (!p.existed || string(p.before) != string(p.after))
+	return p.err == nil && p.skip == "" && (!p.existed || string(p.before) != string(p.after))
+}
+
+// stateDir is where setup keeps the files it generates (the wrappers).
+func (o setupOptions) stateDir() string {
+	if o.StateDir != "" {
+		return o.StateDir
+	}
+	return filepath.Join(o.Home, paths.DirName)
 }
 
 // setupSelect resolves which targets to act on: the named ones, or every
@@ -87,6 +105,10 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 		p.existed = true
 		p.before = raw
 	case errors.Is(err, os.ErrNotExist):
+		if t.RequireFile {
+			p.skip = fmt.Sprintf("%s does not exist, so %s is not set up yet; nothing was written", setupDisplay(o.Home, p.path), t.Name)
+			return p
+		}
 	default:
 		p.err = err
 		return p
@@ -114,7 +136,21 @@ func planTarget(o setupOptions, t setupTarget) setupPlan {
 			}
 		}
 	}
-	notes, err := mergeTarget(doc, t, o.Binary, o.NoSessionPolicy, o.YouShouldKnow)
+	// A hook that names a Wrapper is carried by a generated script, written
+	// before the config that points at it.
+	for _, h := range t.Hooks {
+		if h.Wrapper == "" {
+			continue
+		}
+		w := planWrapper(o, h)
+		w.target = t
+		if w.err != nil {
+			p.err = w.err
+			return p
+		}
+		p.companions = append(p.companions, w)
+	}
+	notes, err := mergeTarget(doc, t, o.Binary, o.stateDir(), o.NoSessionPolicy, o.YouShouldKnow)
 	if err != nil {
 		p.err = err
 		return p

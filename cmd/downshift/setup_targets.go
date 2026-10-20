@@ -17,6 +17,11 @@ type setupHook struct {
 	Event   string // event key in the harness file
 	Matcher string // tool matcher; empty means any (and an existing matcher is kept)
 	Args    string // subcommand and arguments after the binary
+	// Wrapper, when set, is the stem of a script setup generates (setup_wrapper.go)
+	// and registers instead of `<binary> <Args>`. For a harness that accepts one
+	// executable path and no arguments. A hook already registered under that
+	// stem from another directory is left alone.
+	Wrapper string
 }
 
 // setupStatusLine is the optional status line command (Claude Code).
@@ -72,6 +77,10 @@ type setupTarget struct {
 	StatusLine *setupStatusLine
 	// Notes are printed after the harness is wired (things setup cannot do).
 	Notes []string
+	// RequireFile makes setup edit File only when it already exists. For a
+	// config the harness itself creates and owns: a missing file means the
+	// harness is not set up, and creating it here would be a guess.
+	RequireFile bool
 	// Manual explains why setup does not write this harness.
 	Manual string
 	// Steering is an optional whole-file steering asset setup installs for this

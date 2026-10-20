@@ -21,6 +21,14 @@ func setupWrite(p setupPlan, stamp string) (string, error) {
 	if err := os.MkdirAll(filepath.Dir(p.path), 0o700); err != nil {
 		return "", err
 	}
+	if p.mode != 0 {
+		// A generated script runs on every tool call. MkdirAll leaves a directory
+		// that already exists as it was, so close it to everyone else here; if we
+		// cannot (not ours), fail rather than put a script where others can swap it.
+		if err := os.Chmod(filepath.Dir(p.path), 0o700); err != nil {
+			return "", fmt.Errorf("cannot restrict %s to its owner: %w", filepath.Dir(p.path), err)
+		}
+	}
 	mode := os.FileMode(0o600)
 	bak := p.path + setupBackupInfix + stamp
 	if p.existed {
@@ -35,6 +43,9 @@ func setupWrite(p setupPlan, stamp string) (string, error) {
 			return "", fmt.Errorf("backup marker: %w", err)
 		}
 		bak = ""
+	}
+	if p.mode != 0 {
+		mode = p.mode // a generated script must stay executable
 	}
 	if err := atomicWriteFile(p.path, p.after, mode); err != nil {
 		return "", err
@@ -90,6 +101,9 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 		}
 		if t.Steering != nil {
 			addRestore(t, filepath.Join(o.Home, filepath.FromSlash(t.Steering.Path)))
+		}
+		for _, w := range wrapperPathsFor(o, t) {
+			addRestore(t, w)
 		}
 	}
 	if readErr {
