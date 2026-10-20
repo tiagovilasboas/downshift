@@ -162,6 +162,18 @@ test('band fallback: the finished batch is replaced when a new agent starts', as
   expect(await shows($, 'AbovePrompt', /^1 running · 0 done$/)).toBe(true)
 })
 
+test('band fallback: a finished row leaves the panel 10 seconds after the panel first saw it finished', async ($, on) => {
+  const clock = await runAgents($, on, ['t1', 't2'])
+  // First rendered at the finish time: still listed nine seconds later, gone after ten.
+  expect(await shows($, 'Pane', /Work t1/)).toBe(true)
+  await clock.set(Date.parse('2026-10-19T10:00:09Z'))
+  expect(await shows($, 'Pane', /Work t1/)).toBe(true)
+  await clock.set(Date.parse('2026-10-19T10:00:11Z'))
+  expect(await shows($, 'Pane', /Work t1/)).toBe(false)
+  // The band still counts the batch.
+  expect(await shows($, 'AbovePrompt', /^2 done$/)).toBe(true)
+})
+
 test('downshift: the Compactor shows in its own unit and is never added to the tokens moved', async ($, on) => {
   await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
   expect(await shows($, 'Pane', /59k downshifted · .* · ↓ 60 KB compactor/)).toBe(true)
