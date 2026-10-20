@@ -53,131 +53,131 @@ func domainPattern(action, target string) string {
 var RawDomainSignals = []DomainSignalDef{
 	{Domain: "frontend", ID: "fe-hydration-debug", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `hydration mismatch|hidrata[cç][aã]o|lcp|cls|inp|web vitals`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "frontend", ID: "fe-component-integration", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActIntegrate, `(?:react|vue|angular|front[ -]?end|ui|component\w*|componentes?|interface|tela).{0,70}(?:api|state|estado|back[ -]?end|servidor)`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "frontend", ID: "fe-design-system-migration", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActPlan, `design system|sistema de design|micro[ -]?frontends?|server components?|componentes? de servidor|rendering architecture|arquitetura de renderiza[cç][aã]o`),
-		Weight: 3, Class: Complex,
+		Weight:  3, Class: Complex,
 	}},
 	{Domain: "frontend", ID: "fe-typescript-typecheck", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActFix, `typescript type errors?|typecheck|tsx|erros? de tipagem|falhas? de tipagem|checagem de tipos`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "backend", ID: "be-pagination-endpoint", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActBuild, `cursor pagination|pagina[cç][aã]o por cursor|pagina[cç][aã]o|rate limit(?:ing)?|limite de requisi[cç][oõ]es`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "backend", ID: "be-query-profiling", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `n\+1|slow quer\w*|consulta lenta|consultas? lentas|query plan|execution plan|plano de execu[cç][aã]o`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "backend", ID: "be-consistency-design", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActPlan, `transactional outbox|outbox transacional|saga pattern|padr[aã]o saga|exactly[ -]?once|eventual consistency|consist[eê]ncia eventual|distributed transactions?|transa[cç][aã]o distribu[ií]da`),
-		Weight: 3, Class: Complex,
+		Weight:  3, Class: Complex,
 	}},
 	{Domain: "backend", ID: "be-api-contract-versioning", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActPlan, `api contract versioning|versionamento de contrato da api|versionamento de contratos?|backward compatibility|compatibilidade retroativa|openapi contract|contrato openapi`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "fullstack", ID: "fs-api-ui-feature", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActBuild, `(?:ui|front[ -]?end|interface|tela).{0,100}(?:backend|back[ -]?end|api|database|banco de dados)`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "fullstack", ID: "fs-end-to-end-feature", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActBuild, `(?:feature|funcionalidade).{0,65}(?:end[ -]?to[ -]?end|ponta a ponta|front[ -]?end.{0,30}back[ -]?end|api.{0,30}ui)`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "fullstack", ID: "fs-coordinated-rollout", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActPlan, `(?:rollout|deploy|implanta[cç][aã]o|lan[cç]amento).{0,100}(?:schema|database|banco de dados).{0,100}(?:frontend|front[ -]?end|client|clientes?)`),
-		Weight: 3, Class: Complex,
+		Weight:  3, Class: Complex,
 	}},
 	{Domain: "fullstack", ID: "fs-contract-compatibility", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActBuild, `contract compatibility|compatibilidade de contratos?|compatibilidade de contrato|backward[ -]?compatible api|api retrocompat[ií]vel|client[ -]?server contract|contrato entre cliente e servidor`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "devops", ID: "ops-crashloop-debug", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `crashloopbackoff|oomkilled|pod eviction|evic[cç][aã]o de pods|pods? reiniciando|kubernetes scheduling|agendamento de pods`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "devops", ID: "ops-helm-automation", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActAutomate, `helm chart|charts? helm|terraform module|m[oó]dulo terraform|kubernetes operator|operador kubernetes`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "devops", ID: "ops-multi-region-recovery", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActPlan, `disaster recovery|recupera[cç][aã]o de desastres|multi[ -]?region failover|failover multirregional|active[ -]?active|ativo[ -]?ativo`),
-		Weight: 3, Class: Complex,
+		Weight:  3, Class: Complex,
 	}},
 	{Domain: "devops", ID: "ops-terraform-drift", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `terraform drift|infrastructure drift|drift de infraestrutura|configuration drift|diverg[eê]ncia da infraestrutura`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "finops", ID: "finops-anomaly-investigation", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `cloud cost anomal\w*|anomalia de custos?|unexpected spend|gasto inesperado|egress cost|custo de egress|despesa de sa[ií]da de dados`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "finops", ID: "finops-rightsizing-plan", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActOptimize, `cloud cost|custos? de nuvem|compute spend|gasto computacional|reserved instances|inst[aâ]ncias reservadas|savings plans?|planos? de economia`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "finops", ID: "finops-chargeback-design", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActPlan, `multi[ -]?account chargeback|rateio de custos entre contas|showback model|modelo de showback|cost allocation across accounts|aloca[cç][aã]o de custos entre contas`),
-		Weight: 3, Class: Complex,
+		Weight:  3, Class: Complex,
 	}},
 	{Domain: "finops", ID: "finops-amortized-cost", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `amortized cost|custo amortizado|effective cost|custo efetivo|commitment discount|desconto por compromisso|cost allocation|aloca[cç][aã]o de custos`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "devsecops", ID: "sec-sast-triage", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `sast|dast|dependency scanning|varredura de depend[eê]ncias|an[aá]lise est[aá]tica de seguran[cç]a|secret scanning|scan de segredos|an[aá]lise din[aâ]mica de seguran[cç]a`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "devsecops", ID: "sec-supply-chain-hardening", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActProtect, `slsa|sbom|provenance attestations?|atestados? de proveni[eê]ncia|sigstore|cosign|software supply chain|cadeia de suprimentos de software`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "devsecops", ID: "sec-threat-model-design", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActPlan, `threat model|modelo de amea[cç]as|zero trust architecture|arquitetura zero trust|trust boundar\w*|fronteiras? de confian[cç]a`),
-		Weight: 3, Class: Complex,
+		Weight:  3, Class: Complex,
 	}},
 	{Domain: "devsecops", ID: "sec-asvs-access-control", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `broken access control|falha de controle de acesso|authorization bypass|bypass de autoriza[cç][aã]o|idor|privilege escalation|eleva[cç][aã]o de privil[eé]gios`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "mobile", ID: "mob-deep-link-integration", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActBuild, `deep links?|universal links?|app links?|links? universais?|navega[cç][aã]o profunda|links? profundos?`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "mobile", ID: "mob-anr-crash-debug", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `android anr|anr|ios crash|app crash|crash no aplicativo|travamento no aplicativo|memory pressure|press[aã]o de mem[oó]ria`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "mobile", ID: "mob-offline-conflict-design", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActPlan, `offline[ -]?first sync|offline sync conflict|conflict resolution offline|resolu[cç][aã]o de conflitos offline|sincroniza[cç][aã]o offline|cross[ -]?device state replication`),
-		Weight: 3, Class: Complex,
+		Weight:  3, Class: Complex,
 	}},
 	{Domain: "mobile", ID: "mob-ui-lifecycle-debug", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActInspect, `swiftui lifecycle|jetpack compose lifecycle|lifecycle.{0,35}(?:swiftui|jetpack compose)|ciclo de vida.{0,35}(?:swiftui|jetpack compose)|problema de ciclo de vida.{0,35}jetpack compose`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "cicd", ID: "ci-flaky-test-repair", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActFix, `flaky tests?|testes? intermitentes?|pipeline flak\w*|instabilidade do pipeline|testes? inst[aá]veis`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "cicd", ID: "ci-build-matrix", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActAutomate, `build matrix|matriz de builds?|test matrix|matriz de testes?|parallel jobs|jobs paralelos`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 	{Domain: "cicd", ID: "ci-progressive-delivery", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActPlan, `progressive delivery|canary rollout|blue[ -]?green deployment|automated rollback|rollback autom[aá]tico|deploy progressivo|entrega progressiva`),
-		Weight: 3, Class: Complex,
+		Weight:  3, Class: Complex,
 	}},
 	{Domain: "cicd", ID: "ci-cache-invalidation", SignalDef: SignalDef{
 		Pattern: domainPattern(domainActFix, `pipeline cache invalidation|invalida[cç][aã]o de cache da pipeline|cache misses? no ci|falhas? de cache no ci|cache misses? in ci`),
-		Weight: 2, Class: Medium,
+		Weight:  2, Class: Medium,
 	}},
 }
 
@@ -193,18 +193,19 @@ func compileEnrichedSignals() []signal {
 	out = append(out, signals...)
 	for _, s := range RawDomainSignals {
 		out = append(out, signal{
-			re: regexp.MustCompile(`(?i)` + s.Pattern),
+			re:     regexp.MustCompile(`(?i)` + s.Pattern),
 			weight: s.Weight,
-			class: s.Class,
+			class:  s.Class,
 		})
 	}
 	return out
 }
 
-// Opt-in until bilingual parity and full classifier/eval regressions pass.
+// Enabled by default. Set DOWNSHIFT_DOMAIN_SIGNALS=0 to restore the
+// original production rule table without this domain enrichment.
 func activeSignals() []signal {
-	if os.Getenv("DOWNSHIFT_DOMAIN_SIGNALS") == "1" {
-		return enrichedSignals
+	if os.Getenv("DOWNSHIFT_DOMAIN_SIGNALS") == "0" {
+		return signals
 	}
-	return signals
+	return enrichedSignals
 }
