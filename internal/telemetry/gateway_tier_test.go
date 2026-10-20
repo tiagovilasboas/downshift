@@ -97,3 +97,28 @@ func TestGatewayRun_SmallRowSavedInTotals(t *testing.T) {
 		t.Fatalf("saved %d, unattributed %d; want 1 and 0", s.SavedChildren, s.GatewayUnattributed)
 	}
 }
+
+// liveResolver exposes an allowlisted row the user made live, the routing the
+// owner's row carries. It is the catalog plus LiveGateways only.
+type liveResolver struct {
+	core.Resolver
+	rows []core.Model
+}
+
+func (r liveResolver) LiveGateways() []core.Model { return r.rows }
+
+// A vendor-prefixed requested id (anthropic/claude-opus-4.6) resolves to its
+// catalog family, and a run on a live small gateway row is saved against it.
+func TestTokenDirection_VendorPrefixedRequestedWithLiveRowIsCheaper(t *testing.T) {
+	const liveSmall = "deepseek/deepseek-v4.1-flash-1017"
+	prev := DirectionCatalog
+	DirectionCatalog = liveResolver{Resolver: catalog.Load(), rows: []core.Model{
+		{ID: liveSmall, Tier: core.TierSmall, Harness: rankHarness, Gateway: "openrouter"},
+	}}
+	t.Cleanup(func() { DirectionCatalog = prev })
+
+	usage, decision := gatewayEvents("anthropic/claude-opus-4.6", liveSmall)
+	if got := tokenDirection(usage, decision, true, false, false); got != TokenCheaper {
+		t.Fatalf("tokenDirection = %q, want %q", got, TokenCheaper)
+	}
+}
