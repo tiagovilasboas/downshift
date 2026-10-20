@@ -56,8 +56,9 @@ func main() {
 		os.Exit(h.Hook(os.Stdin, cat))
 	}
 	// compact wraps a shell command; it needs no catalog, so it skips the load.
-	// exec is the old name, kept so commands rewritten by an older version still run.
-	if args[0] == "compact" || args[0] == "exec" {
+	// exec is the old name, kept so commands rewritten by an older version still run;
+	// compactor is the product name and runs the same wrapper.
+	if args[0] == "compact" || args[0] == "compactor" || args[0] == "exec" {
 		os.Exit(runExec(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	}
 
