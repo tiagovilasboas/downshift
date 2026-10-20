@@ -146,6 +146,24 @@ func perMillion(s string) *float64 {
 	return &m
 }
 
+// SnapshotPrice returns the OpenRouter list price of model from a discovery
+// cache, in USD per million input and output tokens. Only entries fetched from
+// the OpenRouter public list count; a model without both prices is not priced.
+// It only reads the cache: no network call.
+func SnapshotPrice(f File, model string) (inM, outM float64, ok bool) {
+	for _, e := range f.Harnesses {
+		if e.Source != (OpenRouterAPI{}).Name() {
+			continue
+		}
+		for _, m := range e.Models {
+			if m.ID == model && m.InputM != nil && m.OutputM != nil {
+				return *m.InputM, *m.OutputM, true
+			}
+		}
+	}
+	return 0, 0, false
+}
+
 // openRouterEnabled reports whether the operator opted in.
 func openRouterEnabled() bool {
 	return os.Getenv(OpenRouterEnv) == "1"

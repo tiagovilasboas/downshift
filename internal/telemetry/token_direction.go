@@ -25,6 +25,9 @@ func tokenDirection(usage, decision Event, found, unrouted, refuted bool) string
 		return TokenUnattributed
 	}
 	requested, ran := tokenModels(usage, decision, found, refuted)
+	if IsGatewayModel(ran) {
+		return gatewayDirection(usage, requested, ran)
+	}
 	return tierDirection(usage.Harness, requested, ran)
 }
 

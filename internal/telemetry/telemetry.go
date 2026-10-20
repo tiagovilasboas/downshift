@@ -190,6 +190,11 @@ type Event struct {
 	// GatewayWouldTier that tier. Slug and tier only: no prompt, no task text.
 	GatewayWould     string `json:"gateway_would,omitempty"`
 	GatewayWouldTier string `json:"gateway_would_tier,omitempty"`
+	// GatewayPrice is set on a usage record whose child ran on an OpenRouter
+	// model (ToModel is its vendor/model slug): "snapshot" when the price came
+	// from the OpenRouter list snapshot, "unknown" when none was found. See
+	// gateway_price.go. Absent on every other record.
+	GatewayPrice string `json:"gateway_price,omitempty"`
 	// Optional Code Intelligence (DCI) record. Set on OutcomeDCI events.
 	DCI *DCIRecord `json:"dci,omitempty"`
 
