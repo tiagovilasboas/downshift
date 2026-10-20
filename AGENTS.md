@@ -148,7 +148,7 @@ internal/routingv2/shadow/ training/ — opt-in candidate observation; never cha
 - Task text stays in memory for feature extraction and is never persisted. Only explicit reviewed `required_tier` labels enter supervised training.
 - Hooks fail open: 1 MiB stdin cap, 2 s read timeout, 1.5 s deadline, panic and catalog-load panic become an unchanged spawn.
 - The install example omits `claude-fable-5-1` on purpose (upshift writes the last listed id); do not add it.
-- `hooks/cache-tax/`, `mods/savvy-progress/` and `mods/filetree/` are vendored third-party mods (MIT, pinned in NOTICE): re-vendor per their READMEs; edit only through the documented local patch (`downshift-local.patch` + README section + NOTICE), then re-vendor and reapply it (owner decision 2026-10-19); they hold no routing logic. `mods/downshift-dock/` and `mods/downshift-theme/` are original Downshift code.
+- `hooks/cache-tax/` (no longer loaded by the plugin; separate install), `mods/savvy-progress/` and `mods/filetree/` are vendored third-party mods (MIT, pinned in NOTICE): re-vendor per their READMEs; edit only through the documented local patch (`downshift-local.patch` + README section + NOTICE), then re-vendor and reapply it (owner decision 2026-10-19); they hold no routing logic. `mods/downshift-dock/` and `mods/downshift-theme/` are original Downshift code.
 
 ### Reference (read on demand)
 
@@ -157,8 +157,8 @@ Context compressor, telemetry and cost commands, and the embedded-vs-user `catal
 prompts, tasks or file paths; and "do not commit catalog.json" means the **user override** under the state dir, never the
 embedded `internal/catalog/catalog.json`. Companions (Headroom default) are detected and documented,
 never installed or wrapped by Downshift: [docs/guides/companions.md](docs/guides/companions.md).
-One exception to "Downshift does not wrap commands" (owner decision 2026-10-19): the opt-in, default-off
-`downshift compact` wrapper (`downshift context enable native`; `DOWNSHIFT_EXEC=0` kills it) may rewrite an
+One exception to "Downshift does not wrap commands" (owner decision 2026-10-19): the default-on
+`downshift compact` wrapper (the plugin registers its Bash hook; `"exec": false` in the config or `DOWNSHIFT_EXEC=0` turns it off) may rewrite an
 allowlisted shell command with no shell metacharacters to `downshift compact -- <argv>`, which keeps the exit code
 and compacts only clean output. Its policy lives in `internal/execwrap`, never in an adapter; it never wraps a companion.
 
