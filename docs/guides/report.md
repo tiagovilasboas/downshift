@@ -4,7 +4,7 @@
 
 `downshift stats` estimates savings against a counterfactual baseline. `downshift report`
 measures them: a small share of spawns is left unrouted on purpose (the control group), and
-the report compares what routed and control spawns cost per completed task.
+the report compares what routed and control spawns use per completed task.
 
 ```bash
 downshift report              # last 30 days
@@ -13,9 +13,10 @@ downshift report --json       # same numbers, machine-readable
 ```
 
 Reading the log is all it does. Nothing is written, and nothing in it is a prompt, a task or a
-path: counts, rates and catalog-priced dollars only.
+path: counts, rates and token counts. The JSON report also carries catalog-priced dollars (see
+"Dollars in the JSON report" below).
 
-Cost per completed task needs to see a child end. The report ends with a "Completion measurable, by
+Tokens per completed task need to see a child end. The report ends with a "Completion measurable, by
 harness" section: a harness is measurable once it declares an end event and at least one end record
 (a usage record, or a `child_ended` that is not a launch) is in the window. Harnesses whose end
 event is unverified or unknown say so instead of printing zeros. See
@@ -63,46 +64,61 @@ ended (the same events `stats` reads).
 - **Rework**: a respawn in the same session within 10 minutes after a child ended in error or
   was interrupted (the same rule as `session` and `stats`). The failed child counts as reworked
   in its own group.
-- **Cost per completed task** = the completed child's cost plus the cost of every failed
-  attempt it redid. Failed work that never got a successful redo is not added to anyone.
-- **Tokens per completed task** = the input, output and cache tokens of the same tasks
-  (priced usage records, failed attempts they redid included) over the number of completed
-  tasks. It is the A/B check that a cheaper model did not need more tokens: the report prints
-  routed against control once the savings figure is stated. It is a plain ratio, with no
-  interval of its own.
+- **Tokens per completed task** = the input, output and cache tokens of the same tasks over the
+  number of completed tasks. A failed attempt that a completed task redid is counted with that
+  task. Failed work that never got a successful redo is not added to anyone. It is the A/B check
+  that a cheaper model did not need more tokens. It is a plain ratio, with no interval of its own.
 - **Rework rate** = reworked spawns divided by spawns with an observed end (completed, error or
   interrupted).
 
-## Savings and the interval
+## What the text report prints
 
-`--json` carries `tokens` (by class: `input`, `output`, `cache_read`, `cache_write`, `total`,
-`records`) and `tokens_per_completed_task` in each group.
+The text report shows tokens only. Its table has one row per group:
 
-The report reads the same numbers through two lenses (owner decision 2026-10-19):
+| Column | Meaning |
+|--------|---------|
+| `spawns` | Decisions in the group. |
+| `ended` | Spawns with an observed end: completed, error or interrupted. |
+| `completed` | Completed tasks in the group. |
+| `tokens/completed` | Tokens per completed task (see above). `-` when the group has no completed task. |
+| `rework` | Rework rate. |
 
-- **API lens**, for whoever pays per token. Dollars are the recorded tokens priced at the
-  catalog's current list prices when the report runs (`telemetry.RepriceUsage`; the header names
-  `prices_as_of`), so a catalog correction reaches the whole history. Which records are priced
-  stays what the recorder decided; only the numbers change. Savings are `control cost per
-  completed task - routed cost per completed task`, in dollars only: no percentage, which would
-  hide the price table it rests on. The interval is a 95% percentile bootstrap (2,000 resamples of
-  each group, independent, fixed seed), so the same log always prints the same numbers. When the
-  interval includes zero the report says the window does not show a saving.
-- **Plan lens**, for plans with no per-token bill (Claude Code Pro, Max, Team; Cursor plans):
-  tokens only. Tokens saved from the requested model in the window, work (input+output) and cache
-  (read+write) apart (`tokens_saved` in `--json`), and tokens per completed task, routed against
-  control.
+Below the table, a tokens-per-completed-task check compares routed against control once both
+groups have enough data.
 
-`downshift stats` and every live view (session tree, panel, statusline, watch) show tokens only;
-dollars appear here.
+The plan lens follows, labelled `Plan lens (tokens only)`. It is for plans with no per-token bill
+(Claude Code Pro, Max, Team; Cursor plans), and shows:
+
+- **Tokens saved**: tokens that ran on a cheaper model than the one requested in the window. Work
+  (input+output) and cache (read+write) are counted apart, because cache reads carry the smallest
+  price gap.
+- **Tokens per completed task**, routed against control.
+
+`downshift stats` and every live view (session tree, panel, statusline, watch) show tokens only.
 
 With fewer than 20 completed, priced tasks in either group the report prints
-`not enough data` and no savings figure. At a 10% control share that means roughly 200 completed
+`not enough data` and no comparison. At a 10% control share that means roughly 200 completed
 tasks before the first estimate.
+
+## Dollars in the JSON report
+
+`--json` carries the token figures (`tokens` by class: `input`, `output`, `cache_read`,
+`cache_write`, `total`, `records`; `tokens_per_completed_task`; `tokens_saved`) and keeps its
+dollar fields: each group's cost and cost per completed task, and the savings with their interval.
+The same applies to `downshift stats --export`. Dollars are the recorded tokens priced at the
+catalog's current list prices when the report runs (`telemetry.RepriceUsage`; `prices_as_of` names
+the price date), so a catalog correction reaches the whole history. Which records are priced stays
+what the recorder decided; only the numbers change.
+
+The savings figure is `control cost per completed task - routed cost per completed task`. Its
+interval is a 95% percentile bootstrap (2,000 resamples of each group, independent, fixed seed), so
+the same log always gives the same numbers. When the interval includes zero, the window does not
+show a saving.
 
 ## Limits
 
-- Dollars are catalog list prices applied to recorded tokens, not provider invoices.
+- Dollars in the JSON report are catalog list prices applied to recorded tokens, not provider
+  invoices.
 - Tasks differ in size. Random assignment balances that in expectation, but a small window can
   still be skewed: read the interval, not only the point estimate.
 - A harness that does not report usage or child ends contributes spawns but no completed tasks.
@@ -112,7 +128,7 @@ tasks before the first estimate.
 - Before 2026-10-19 a Cursor spawn could also be logged as a claude-code decision (Cursor runs
   the Claude Code hooks); those copies never end, so they inflate the routed spawn count of
   older windows. Current versions leave the copy to the cursor hook and record nothing.
-- The control group costs money by design: about `DOWNSHIFT_CONTROL_SHARE` of the saving. Lower
-  it once the interval is tight, or set it to `0`.
+- The control group forgoes the saving by design: about `DOWNSHIFT_CONTROL_SHARE` of the spawns
+  run on the requested model. Lower it once the interval is tight, or set it to `0`.
 
 See [stats-export.md](../reference/stats-export.md) for the counters `stats --export` adds around this.
