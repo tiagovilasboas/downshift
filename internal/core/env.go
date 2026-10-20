@@ -151,7 +151,7 @@ func ConfigFromEnv(getenv func(string) string) Config {
 		DiscoveryTTLInvalid: sc.DiscoveryTTLInvalid,
 		NBUpshift:           getenv(NBUpshiftEnv) == "1",
 		NBDownshift:         getenv(NBDownshiftEnv) == "1",
-		Economy:             getenv(ModeEnv) == "economy",
+		Economy:             economyFrom(getenv),
 		ScoreRouting:        getenv(ScoreRoutingEnv) == "1",
 	}
 	for _, n := range AllHarnessCaps() {
