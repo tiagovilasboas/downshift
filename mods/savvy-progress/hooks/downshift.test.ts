@@ -123,3 +123,38 @@ test('band fallback: Downshift inactive or its data missing, the mod draws as up
   // Upstream draws nothing here: the engine's own placeholder is all that is left, which the test engine refuses.
   await expect(shows($, 'AbovePrompt', /Subagents|running · /)).rejects.toThrow(/engine drew its own/)
 })
+
+// A finished batch stays in the band until a new agent starts, and its band row counts the finished agents.
+const runAgents = async ($: Engine, on: On, ids: string[]) => {
+  const clock = mock.clock(on, { now: Date.parse('2026-10-19T10:00:00Z') })
+  on('session.id', () => ({ value: 'S-1' }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: JSON.stringify(PANEL), stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  let n = 0
+  on('agent.spawn', () => ({ model: 'claude-sonnet-5-5', agentId: `a${++n}` }))
+  on('turn.complete', () => ({ text: '' }) as never)
+  for (const id of ids) {
+    await $.agent.spawn({ tool_use_id: id, prompt: 'p', description: `Work ${id}`, subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
+  }
+  for (let i = 1; i <= ids.length; i++) {
+    await ($.turn.complete as (e: unknown) => Promise<unknown>)({ agentId: `a${i}`, reason: 'answer', answer: 'ok' })
+  }
+  return clock
+}
+
+test('band fallback: a finished batch stays in the band and counts its finished agents', async ($, on) => {
+  const clock = await runAgents($, on, ['t1', 't2', 't3', 't4', 't5'])
+  // Two minutes after the batch ended: no time limit hides it.
+  await clock.set(Date.parse('2026-10-19T10:02:00Z'))
+  expect(await shows($, 'AbovePrompt', /^Subagents$/)).toBe(true)
+  expect(await shows($, 'AbovePrompt', /^5 done$/)).toBe(true)
+})
+
+test('band fallback: the finished batch is replaced when a new agent starts', async ($, on) => {
+  const clock = await runAgents($, on, ['t1', 't2'])
+  expect(await shows($, 'AbovePrompt', /^2 done$/)).toBe(true)
+  // The new agent starts well after the finished batch ended.
+  await clock.set(Date.parse('2026-10-19T10:05:00Z'))
+  await $.agent.spawn({ tool_use_id: 't3', prompt: 'p', description: 'Next', subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
+  expect(await shows($, 'AbovePrompt', /^1 running · 0 done$/)).toBe(true)
+})

@@ -1,3 +1,7 @@
+// Downshift local patch: the panel no longer draws a dollar cost per agent (it
+// shows tokens saved), so the display checks below are off (SHOWN_DOLLARS). The
+// price math itself is unchanged in register.tsx.
+const SHOWN_DOLLARS = false
 import type { On } from 'claude-code'
 import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
@@ -48,7 +52,7 @@ const PRICED: readonly (readonly [model: string, shown: string])[] = [
 ]
 
 for (const [model, shown] of PRICED) {
-  test(`cost: a turn on ${model} shows ≈${shown}`, async ($, on) => {
+  if (SHOWN_DOLLARS) test(`cost: a turn on ${model} shows ≈${shown}`, async ($, on) => {
     await worker($, on, model)
     await ($.turn.complete as (e: unknown) => Promise<unknown>)({ agentId: 'a1', reason: 'answer', answer: 'ok', usage: { model, ...TURN } })
 
@@ -59,14 +63,14 @@ for (const [model, shown] of PRICED) {
 // Haiku 5.5 is priced by prompt length, per request: 120K of prompt is over the 100K line.
 const LONG: Usage = { input_tokens: 20_000, output_tokens: 10_000, cache_read_input_tokens: 50_000, cache_creation_input_tokens: 50_000 }
 
-test('cost: a Haiku 5.5 request over 100K prompt tokens pays the long-prompt prices', async ($, on) => {
+if (SHOWN_DOLLARS) test('cost: a Haiku 5.5 request over 100K prompt tokens pays the long-prompt prices', async ($, on) => {
   await worker($, on, 'claude-haiku-5-5', LONG)
   await step($, 'claude-haiku-5-5')
   // (20K × 0.50 + 10K × 2.50 + 50K × 0.05 + 50K × 1.00) / 1M = 0.0875; at the short-prompt prices it is 0.0175.
   expect(await shows($, /≈\$0\.09 /)).toBeDefined()
 })
 
-test('cost: Haiku 4.5 has one price whatever the prompt length', async ($, on) => {
+if (SHOWN_DOLLARS) test('cost: Haiku 4.5 has one price whatever the prompt length', async ($, on) => {
   await worker($, on, 'claude-haiku-4-5', LONG)
   await step($, 'claude-haiku-4-5')
   // (20K × 1 + 10K × 5 + 50K × 0.10 + 50K × 2) / 1M = 0.175
