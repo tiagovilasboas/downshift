@@ -125,7 +125,11 @@ var RawDomainSignals = []DomainSignalDef{
 
 // Compiled once, reused on all routing calls. No parsing, network or LLM call
 // runs inside the hook, and the domain vocabulary has no external runtime files.
-var enrichedSignals = compileEnrichedSignals()
+var enrichedSignals []signal
+
+func init() {
+	enrichedSignals = compileEnrichedSignals()
+}
 
 func compileEnrichedSignals() []signal {
 	out := make([]signal, 0, len(signals)+len(RawDomainSignals))
