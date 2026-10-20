@@ -205,7 +205,7 @@ downshift dci benchmark
 # Verificações observadas e custo estimado por tier (Claude Code)
 downshift verification-report
 
-# Visão ao vivo da sessão no terminal (dólares: downshift report)
+# Visão ao vivo da sessão no terminal (tokens por tarefa: downshift report)
 downshift watch
 ```
 
