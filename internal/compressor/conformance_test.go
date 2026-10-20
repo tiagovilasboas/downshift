@@ -223,17 +223,9 @@ func dangerLinesAdded(original, mutated []byte) []string {
 // suite, so fixed gaps leave the list.
 var knownViolations = buildKnownViolations()
 
+// buildKnownViolations is empty: every family now keeps its danger lines.
 func buildKnownViolations() map[string]string {
-	const summaryOnly = "TODO(%s): the summary-only compressor keys on its summary line and drops a stdout line with a danger word injected into an otherwise clean run"
-	m := map[string]string{}
-	for _, f := range []struct{ fixture, family string }{
-		{"pytest_pass_clean.txt", "pytest"},
-	} {
-		for _, w := range []string{"error", "FAIL", "warning", "panic"} {
-			m[f.fixture+"|danger-"+w] = fmt.Sprintf(summaryOnly, f.family)
-		}
-	}
-	return m
+	return map[string]string{}
 }
 
 func TestConformanceMutationClosure(t *testing.T) {
