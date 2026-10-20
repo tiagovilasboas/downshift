@@ -12,17 +12,17 @@ me here" is observed, and how much is arithmetic on list prices. It changes no c
 ## What a routed spawn changes, and what it does not
 
 Routing does not reduce tokens. The child does the same work and reads and writes about the same tokens, on a
-different model. The only thing that changes is the price per token. The dollar saving Downshift reports is therefore
+different model. The only thing that changes is the price per token. The saving Downshift reports (tokens only) is therefore
 the **same tokens priced on the requested model and again on the model that ran**
 ([evidence.md](../guides/evidence.md#b-saving-estimated-by-telemetry)). The tokens are an observation (where a harness
-reports them). The dollars are an estimate. The baseline (the tokens on the model nobody ran) is a counterfactual.
+reports them). A dollar reading of that is a list-price estimate, which Downshift does not print. The baseline (the tokens on the model nobody ran) is a counterfactual.
 
 Two consequences:
 
 - Where a plan has no per-token bill (Claude Code Pro, Max and Team; Cursor plans; a Codex or Antigravity plan quota),
   the invoice does not move with the model in the way list prices suggest. **Tokens by tier** (how many observed tokens
-  ran on the small, mid and frontier model) is the more faithful figure there, because it is what was observed. Dollars
-  stay a list-price estimate in every case.
+  ran on the small, mid and frontier model) is the more faithful figure there, because it is what was observed. A dollar reading
+  stays a list-price estimate in every case, and Downshift prints none.
 - A catalog price is not an invoice ([evidence.md](../guides/evidence.md#why-catalog-prices-are-not-the-invoice)).
 
 ## Measurement matrix
@@ -31,16 +31,16 @@ Two consequences:
 Downshift reads the fact: `payload` (the hook input), `transcript` (a file the payload points to), `none` (nothing is
 read). Status words are those of [harness-matrix.md](harness-matrix.md#status-per-harness).
 
-| Harness | Status | Decisions | Rewrite emitted | Rewrite honored | Child end | Child tokens | Dollars |
+| Harness | Status | Decisions | Rewrite emitted | Rewrite honored | Child end | Child tokens | Dollars printed |
 |---|---|---|---|---|---|---|---|
-| Claude Code | Completed | yes, payload | yes, `updatedInput.model` | **observed** 2026-10-06 (child transcript carries the API-reported model) | yes, `SubagentStop`, source transcript | **yes**, `UsageSource: transcript` (`agent_transcript_path`) | estimated: tokens x catalog list price, linked to the decision by `tool_use_hash` |
+| Claude Code | Completed | yes, payload | yes, `updatedInput.model` | **observed** 2026-10-06 (child transcript carries the API-reported model) | yes, `SubagentStop`, source transcript | **yes**, `UsageSource: transcript` (`agent_transcript_path`) | no: tokens only, linked to the decision by `tool_use_hash` |
 | Cursor | Functional | yes, payload | yes, `updated_input.model` | **unconfirmed** (silently discarded on Free and legacy Pro; unconfirmed on usage-based Pro and Ultra) | `subagentStop`, **unverified**; links only when the payload repeats the tool-call id | **none** (`UsageSource: none`) | none per spawn |
 | Codex | Functional | yes, payload (`model` on every payload) | yes, `updatedInput.model` and `reasoning_effort` | **inferred** 2026-10-02 (a later spawn asked for the model the hook wrote) | `PostToolUse` on `spawn_agent`, **unverified** | **none** (`UsageSource: none`); a rollout `token_count` parser exists but stays off | none per spawn |
 | OpenCode | Beta | yes, plugin envelope | yes, route answer with target model | **not observed**, no live spawn yet | `child_done` envelope, **unverified**, no live run | **none** (`UsageSource: none`); the parser reads inline counts but nothing is priced | none: every catalog entry is unpriced |
 | Antigravity | Experimental | yes, payload | yes, tier alias (`flash_lite`, `flash`, `pro`) | one exact child observed 2026-10-09 (`pro` requested, `flash_lite` executed) | none declared | none | none per spawn |
 | KiroCrew | Experimental | yes, policy mode | no in-place rewrite; block and retry observed once 2026-10-10 | not applicable | none declared | none | none per spawn |
 
-**Only Claude Code records child tokens today.** Every dollar figure that `downshift stats` or `downshift report`
+**Only Claude Code records child tokens today.** Every token figure that `downshift stats`, `downshift report` or `downshift session`
 prints per spawn (`input_tokens`, `output_tokens`, `cached_tokens`, and the tier direction they place) comes from Claude Code transcripts. For the
 other five harnesses Downshift records the decision, and for some a rewrite or an end status, never the tokens that ran.
 Any "tokens rerouted" figure below is a Claude Code figure until a second harness gets a proven token source.
@@ -121,7 +121,7 @@ The inversions above appear only through non-default session models (1 to 3) or 
 
 | If you run | Trust | Do not read as |
 |---|---|---|
-| Claude Code on an API key | Observed child tokens, estimated dollars at list price, refuted rewrites excluded | An invoice: parent session tokens are not in it |
+| Claude Code on an API key | Observed child tokens, refuted rewrites excluded (no dollar printed) | An invoice: parent session tokens are not in it |
 | Claude Code on Pro, Max or Team | Observed child tokens by model and tier; the number of spawns moved to a cheaper or pricier model | Dollars saved: there is no per-token bill to save against |
 | Cursor | Decisions and rewrites emitted; model changes are unconfirmed on usage-based plans and discarded on Free and legacy Pro | Any token or dollar figure: none is recorded |
 | Codex | Decisions, effort and model emitted; honored inferred | Any token or dollar figure: none is recorded; the catalog's frontier-below-mid order (anomaly 1) is unresolved |

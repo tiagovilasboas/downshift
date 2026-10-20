@@ -121,7 +121,7 @@ the quota windows:
   `saved N% of work · M% of cache`: the share of the session's child tokens
   that ran on a cheaper model than requested, work (input+output) and cache
   apart; a child on a pricier model is never counted as saved. A zero reads `already on the cheapest model` when every child had asked for it, and `nothing saved yet` otherwise. No dollars here:
-  `downshift report` prices tokens. `N on doubt`: frontier decisions
+  `downshift report` counts tokens too. `N on doubt`: frontier decisions
   that rest on an unconfident classification with no deterministic lift.
   Segments with no data are left out; a session with no spawns prints no summary.
 - Each part fails on its own. With no event log the quota windows print alone;

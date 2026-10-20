@@ -77,7 +77,7 @@ Code: `internal/core/selfcheck.go` (R6/R7/R9), `claudecode.go` (`Decision.Baseli
 - `Explore` under Fable stays unknown even with a settings hit (point 6 above).
 
 The cost record follows the same honesty: a `usage` row whose decision was `BASELINE_FROM_SETTINGS` is
-counted as "inferred baseline" in `downshift stats`, and an unknown requested model prices the spawn
+counted as "inferred baseline" in `downshift stats`, and an unknown requested model counts the spawn
 as unrouted with zero savings (`internal/telemetry/usage.go`).
 
 ## 4. `/model` and `--model` are invisible to a hook

@@ -184,9 +184,9 @@ Every feature is implemented in harness-agnostic shared layers and validated via
 
 Downshift follows a strict 5-rung [Evidence Ladder](docs/guides/evidence.md) (from catalog list prices to multi-week invoice verification):
 
-- **Estimates are not invoices**: `stats` and `dsmon` price routing at the catalog's dated list-price snapshot (`downshift models check` compares it with the providers). Treat them as estimates until `downshift report` or your invoice confirms them.
+- **Tokens are not invoices**: `stats`, `report`, the session views and `dsmon` count the tokens the harness reported, and show no dollar figure. `downshift models check` compares the catalog's dated list prices with the providers. Treat the token counts as observations; your invoice is the only money figure.
 - **Measured in A/B Trials**: In a controlled trial on Claude Code (2026-10-15), mechanical delegated tasks saved ~12% in list-price token costs with 12/12 hidden test suites passing. On complex, natural tasks, guardrails held most spawns at baseline ([full report](docs/evidence/subagent-routing-ab-2026-10-15.md)).
-- **Built-in Control Group**: Downshift leaves ~1 in 10 spawns unrouted (`DOWNSHIFT_CONTROL_SHARE=0.10`). `downshift report` statistically contrasts routed vs control arms to measure real cost per completed task and rework rates ([report guide](docs/guides/report.md)).
+- **Built-in Control Group**: Downshift leaves ~1 in 10 spawns unrouted (`DOWNSHIFT_CONTROL_SHARE=0.10`). `downshift report` statistically contrasts routed vs control arms to compare tokens per completed task and rework rates ([report guide](docs/guides/report.md)).
 - **Prompt Privacy**: Task instructions, user messages, and file contents are evaluated in-memory only and never logged to disk or sent across the network. Local telemetry (`.downshift/events.jsonl`) contains counts, hashes, and timings only ([stats export](docs/reference/stats-export.md)).
 
 ---

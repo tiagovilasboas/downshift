@@ -74,7 +74,7 @@ The PostToolUse payload of an async `Agent`/`Task` subagent is **launch** metada
 ]
 ```
 
-It appends one `outcome: "usage"` record per agent: tokens (the last line per message id, since streaming repeats it), the model the API reported, and real cost. The hashed agent id (`agent_hash`) ties it to the launch-time `resolved` record and, through it, to the routing decision. Savings are real only when the decision knows the model the spawn would otherwise have used; when the original model was `unknown` the spawn is priced as unrouted and saves nothing. It never blocks and skips an agent it has already priced. `loop-events.jsonl` stores classifier feedback metadata. Neither file is a copy of hook stdin and neither lists the models the picker offered.
+It appends one `outcome: "usage"` record per agent: tokens (the last line per message id, since streaming repeats it), the model the API reported, and the tokens by class. The hashed agent id (`agent_hash`) ties it to the launch-time `resolved` record and, through it, to the routing decision. Savings are real only when the decision knows the model the spawn would otherwise have used; when the original model was `unknown` the spawn is priced as unrouted and saves nothing. It never blocks and skips an agent it has already priced. `loop-events.jsonl` stores classifier feedback metadata. Neither file is a copy of hook stdin and neither lists the models the picker offered.
 
 Native config is not a session allowlist either:
 
@@ -182,10 +182,9 @@ Claude Code shows `systemMessage` text from hooks. Downshift uses it twice:
 - when it rewrites a spawn: `downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper than opus)`;
 - when a subagent ends and its tokens are known (**SubagentStop** on Claude Code,
   after the child transcript is complete; not PostToolUse on an async launch,
-  which has no tokens yet): `↳ downshift: finished on haiku · 14k tokens · $0.01 (opus would be $0.38)`.
-  The model is the one the child ran on; the would-be cost is the requested
-  model's price for the same tokens, and appears only when that model is known
-  and differs. Missing parts are left out, never guessed. PostToolUse at launch
+  which has no tokens yet): `↳ downshift: finished on haiku · 14k tokens (work N, cache N) · saved from opus`.
+  The model is the one the child ran on. `saved from` (or `pricier than`) appears only when the requested model is
+  known, differs and the tokens moved tier; no dollar is printed. Missing parts are left out, never guessed. PostToolUse at launch
   records `resolvedModel` but prints no finish line until SubagentStop supplies usage.
 
 `DOWNSHIFT_QUIET=1` silences both lines. Routing, telemetry and the stderr notes

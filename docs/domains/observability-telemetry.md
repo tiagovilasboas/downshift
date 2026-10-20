@@ -10,7 +10,7 @@ You cannot manage what you cannot measure. Downshift incorporates an end-to-end 
 
 1. **Prompt-Free & Privacy First**: Telemetry events (`events.jsonl`) log metadata only: correlation IDs, model names, complexity classes, guardrail triggers, and numeric token counts. Prompt text, file paths, and tool outputs never reach disk or logs.
 2. **Empirical Control Group**: Approximately 1 in 10 spawns (`DOWNSHIFT_CONTROL_SHARE=0.10`) is left unrouted as an automated control group, enabling scientific, statistically valid comparisons between routed and unrouted workloads.
-3. **Epistemic Honesty**: Downshift clearly distinguishes **catalog-priced estimates** from **provider invoices**. Savings figures represent counterfactual catalog benchmarks unless corroborated by native provider billing.
+3. **Epistemic Honesty**: Downshift reports tokens, not invoices. A saving is a counterfactual share of observed tokens, and only native provider billing can confirm money.
 4. **Child Outcome Observability**: Telemetry observes not only what model was picked, but also whether the child subagent completed, errored, or required rework.
 5. **One Tokens-Saved Definition**: `telemetry.TokenSavings` gives the share of child tokens that ran on a cheaper model than requested, work and cache apart, per agent type, for `stats`, the session views and `dsmon`; none of them shows a dollar, and `downshift try` names only where one decision's tokens would run. No view shows a dollar: `downshift report` is tokens only (tokens per completed task, routed against control). The embedded catalog's `prices_as_of` date, refreshed by the weekly `sync-prices` workflow, stays in `downshift doctor` ([prices policy](../reference/prices.md)).
 6. **No Per-Spawn fsync**: Event appends are plain `write(2)` calls. A process crash loses nothing; a power loss can drop the last events. The logs are statistics ([measurement](../evidence/perf-2026-10-19.md)).
@@ -27,15 +27,15 @@ You cannot manage what you cannot measure. Downshift incorporates an end-to-end 
 [Local Event Logger] ──(writes to `.downshift/events.jsonl`)
        ├── Decision Event: timestamp, correlation_id, harness, requested_model, routed_model, rule_tags
        ├── Control Event: outcome: baseline, reason: CONTROL
-       ├── Usage Event (Claude Code): input_tokens, output_tokens, cache_read_tokens, list_price_usd
+       ├── Usage Event (Claude Code): input_tokens, output_tokens, cache_read_tokens, cache_write_tokens
        ├── Child Ended Event: end_status (completed, error, interrupted, stopped)
        └── DCI Event: prompts_evaluated, injections, abstentions, duration_ms, bytes_emitted
        │
        ▼
 [Local Query & Analysis Engines]
-       ├── `downshift stats`  ──► Aggregates decisions, guardrail holds, estimated net savings, DCI metrics
-       ├── `downshift report` ──► Statistical comparison of routed vs control arms (cost per completed task)
-       ├── `downshift session`──► Interactive tree view of active session subagent hierarchy & costs
+       ├── `downshift stats`  ──► Aggregates decisions, guardrail holds, tokens saved, DCI metrics
+       ├── `downshift report` ──► Statistical comparison of routed vs control arms (tokens per completed task)
+       ├── `downshift session`──► Interactive tree view of active session subagent hierarchy & tokens
        └── `downshift watch`  ──► Real-time terminal streaming of routing decisions
 ```
 
@@ -43,11 +43,11 @@ You cannot manage what you cannot measure. Downshift incorporates an end-to-end 
 
 ## 3. The Built-in Control Group
 
-To evaluate whether routing actually saves money without degrading completion rates, Downshift implements a built-in control arm:
+To evaluate whether routing lowers the tokens per completed task without raising rework, Downshift implements a built-in control arm:
 
 - **Deterministic Hash Assignment**: Spawns are deterministically assigned based on the correlation ID. Approximately 10% of spawns run on the unrouted baseline model requested by the harness.
 - **Fail-Open Baseline Execution**: Control spawns are classified and logged identically to routed spawns, but the hook returns the fail-open response, allowing the subagent to run on its requested model.
-- **Scientific A/B Comparison**: `downshift report` joins decision logs, token usage, and completion records to calculate cost per completed task and rework rates across both groups with a 95% bootstrap confidence interval.
+- **Scientific A/B Comparison**: `downshift report` joins decision logs, token usage, and completion records to compare tokens per completed task and rework rates across both groups. The text report states the token difference as a point percentage, without an interval.
 
 ---
 
@@ -57,7 +57,7 @@ Subagent failures that trigger immediate re-delegation erase any savings from ch
 
 - **End Status Classifications**: `completed`, `launched` (background task), `interrupted`, `error`, `stopped`, or `unknown`.
 - **Rework Detection**: When an errored or interrupted subagent is followed by another spawn in the same session within 10 minutes, the second spawn is flagged as rework.
-- **Completion Accounting**: The cost of failed attempts is attributed to the eventual completed task, penalizing aggressive downshifts that lead to rework.
+- **Completion Accounting**: The tokens of failed attempts are attributed to the eventual completed task, penalizing aggressive downshifts that lead to rework.
 
 ---
 
@@ -68,7 +68,7 @@ Downshift categorizes claims according to a rigorous 5-rung evidence ladder:
 | Rung | Standard of Proof | Downshift Status |
 |---|---|---|
 | **Rung A: List Price Math** | Theoretical savings based on model catalog rate cards (e.g., Haiku vs Opus) | Fully verified (`internal/catalog/catalog_test.go`) |
-| **Rung B: Telemetry Estimates** | Counterfactual savings computed from observed child tokens against list prices | Implemented (`downshift stats`) |
+| **Rung B: Telemetry Estimates** | Counterfactual share of observed child tokens that ran on a cheaper model than requested | Implemented (`downshift stats`, tokens only) |
 | **Rung C: Controlled Benchmarks** | Fixed task suites evaluated under isolated test conditions | Implemented (`benchmark-protocol.md`) |
 | **Rung D: Real-Task A/B** | Side-by-side comparison of real tasks judged by objective test suites | Verified on Claude Code (2026-10-15 A/B trial: -12% on mechanical pieces) |
 | **Rung E: Team Cost per Task** | Longitudinal multi-week provider invoice reductions across multiple operators | In progress (tracked under [beta exit criteria](../reference/beta-exit.md)) |
@@ -77,10 +77,10 @@ Downshift categorizes claims according to a rigorous 5-rung evidence ladder:
 
 ## 6. Observability CLI Reference
 
-- `downshift stats [--days=N] [--dci] [--by-harness]`: Summarize routing decisions, guardrail interventions, estimated dollars saved, and DCI latency/injection metrics.
+- `downshift stats [--days=N] [--dci] [--by-harness]`: Summarize routing decisions, guardrail interventions, tokens saved, and DCI latency/injection metrics.
 - `downshift stats --export`: Generate a sanitized, privacy-safe JSON export containing aggregate counts and rates for beta graduation tracking or bug reports.
-- `downshift report [--days=N] [--json]`: Run an empirical comparison between the routed group and the control group, measuring cost per completed task and rework rate.
-- `downshift session --tree`: Render the current session's subagent execution hierarchy, showing assigned models, completion marks, and individual subagent costs.
+- `downshift report [--days=N] [--json]`: Run an empirical comparison between the routed group and the control group, measuring tokens per completed task and rework rate.
+- `downshift session --tree`: Render the current session's subagent execution hierarchy, showing assigned models, completion marks, and each subagent's tokens.
 - `downshift watch`: Live, low-overhead terminal dashboard displaying subagent spawns and routing choices as they occur.
 
 ---
@@ -88,6 +88,6 @@ Downshift categorizes claims according to a rigorous 5-rung evidence ladder:
 ## 7. Deep References
 
 - [Sharing Stats Export Specification](../reference/stats-export.md): Complete schema documentation for sanitized telemetry exports and field definitions.
-- [`downshift report` Guide](../guides/report.md): Methodology for routed versus control group calculations, rework attribution, and bootstrap intervals.
+- [`downshift report` Guide](../guides/report.md): Methodology for routed versus control group calculations, rework attribution, and the token check.
 - [Evidence Ladder & Method](../guides/evidence.md): Epistemic framework for validating AI coding agent cost reduction.
 - [Session View Guide](../guides/session-view.md): Detailed usage guide for interactive session trees and statusline indicators.

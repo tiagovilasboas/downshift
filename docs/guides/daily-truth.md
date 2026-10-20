@@ -110,6 +110,6 @@ not a live child-usage observation.
 
 The number is the sum of observed child tokens (`ObservedChildTokens` /
 `observed_child_tokens`). An unobserved harness contributes nothing and is not
-shown as a measured zero (`observed_child_usage == 0` means unobserved). Catalog
-USD savings stay a list-price counterfactual, not this token sum. This is not an
+shown as a measured zero (`observed_child_usage == 0` means unobserved). No dollar
+saving is printed, and the token sum is not a saving either. This is not an
 invoice or provider billing claim.

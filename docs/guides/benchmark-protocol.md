@@ -100,7 +100,7 @@ The answer has four parts, and each is reported even when it is "no" or "unknown
 
 No prompts, task text, repository paths, transcripts or `events.jsonl` leave the machine. Published material is the
 per-run table with opaque ids, the two exports per arm, and the task category definitions. This is the same rule
-telemetry follows: counts, rates and catalog-priced dollars only.
+telemetry follows: counts, rates and tokens only.
 
 ## Limits to state in the result
 
