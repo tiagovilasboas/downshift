@@ -24,10 +24,10 @@ type shellEvent interface {
 	// ShellRewrite returns the wire output that replaces the command,
 	// preserving every other input field.
 	ShellRewrite(command string) (any, error)
-	// ShellAllowed reports whether the harness's own permission rules would
-	// run the original command without asking: an allow rule matches and no
-	// deny or ask rule does. Any rule-reading error is false.
-	ShellAllowed(command string) bool
+	// ShellBlocked reports whether the harness's own permission rules forbid
+	// rewriting the command: a deny or ask rule matches it. Any rule-reading
+	// error is true (fail closed).
+	ShellBlocked(command string) bool
 }
 
 // execEnvKillSwitch turns the exec wrapper off everywhere when set to "0".
@@ -67,9 +67,9 @@ var execExecutable = func() (string, error) {
 
 // shellWrapDecision is the shared, harness-free decision for one shell
 // command: kill switch, config, policy, the harness's declared capability,
-// the user's own permission rules, and the running binary's absolute path.
+// the user's own deny and ask rules, and the running binary's absolute path.
 // Anything short of all of them leaves the command unchanged.
-func shellWrapDecision(harness, command string, allowed func(string) bool) execwrap.Decision {
+func shellWrapDecision(harness, command string, blocked func(string) bool) execwrap.Decision {
 	if hookGetenv(execEnvKillSwitch) == "0" || hookGetenv(execwrap.DepthEnv) != "" || !execConfigEnabled() {
 		return execwrap.Decision{Reason: "disabled"}
 	}
@@ -84,11 +84,13 @@ func shellWrapDecision(harness, command string, allowed func(string) bool) execw
 	if caps, ok := core.CapsFor(harness); !ok || !caps.CanRewriteShellCommand {
 		return execwrap.Decision{Family: d.Family, Reason: "harness_cannot_rewrite"}
 	}
-	// The user's own rules decide: the original command must be allowed and
-	// not denied or asked, as written and as normalised. The rewritten text
-	// would match none of those rules.
-	if allowed == nil || !allowed(command) || !allowed(d.Argv) {
-		return execwrap.Decision{Family: d.Family, Reason: "not_allowed_by_user_rules"}
+	// The user's own deny and ask rules decide: the original command, as
+	// written and as normalised, must match none of them. The rewritten text
+	// would match none of those rules, so they are checked here. No allow rule
+	// is required; the rewrite carries no permissionDecision, so the harness's
+	// permission flow still applies to the rewritten command.
+	if blocked == nil || blocked(command) || blocked(d.Argv) {
+		return execwrap.Decision{Family: d.Family, Reason: "blocked_by_user_rules"}
 	}
 	return d
 }
@@ -106,7 +108,7 @@ func shellRewrite[E any](harness string, ev E) (out any, isShell bool) {
 	if !isShell {
 		return nil, false
 	}
-	d := shellWrapDecision(harness, command, s.ShellAllowed)
+	d := shellWrapDecision(harness, command, s.ShellBlocked)
 	if !d.Rewrite {
 		return nil, true
 	}
