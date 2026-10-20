@@ -83,6 +83,7 @@ var expectedFormat = map[Family]compressor.Format{
 	FamilyPHPUnit:     compressor.FormatPHPUnit,
 	FamilyFlutterTest: compressor.FormatFlutterTest,
 	FamilyDartTest:    compressor.FormatFlutterTest,
+	FamilyGradle:      compressor.FormatGradle,
 }
 
 // Run executes argv directly (no shell) with the caller's stdin, and exits

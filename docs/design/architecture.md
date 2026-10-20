@@ -171,8 +171,7 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    drop the last events; a process crash cannot). `telemetry.TokenSavings` is the
    single tokens-saved definition (work and cache apart, per agent type) shared
    by `stats`, the session views, `dsmon` and the dashboard `/api/status`; none of
-   them shows a dollar. `report` prices tokens at report time, from the catalog's
-   `prices_as_of`;
+   them shows a dollar, and neither does `report`.
    `report` compares routed spawns with the control group, counting "completed"
    only for harnesses that declare an end event and have end records;
    `verification-report` groups observed checks and estimated cost by tier;

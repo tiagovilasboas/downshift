@@ -156,6 +156,9 @@ func detectFormat(input []byte) (Format, bool) {
 	if isFlutterTest(input) {
 		return FormatFlutterTest, reFlutterTestFailure.Match(input)
 	}
+	if isGradle(input) {
+		return FormatGradle, reGradleFailure.Match(input)
+	}
 
 	// Verbose Go output ends with PASS, which otherwise matches Jest's generic
 	// PASS header. Identify a Go test transcript before the broader Jest check.
@@ -299,6 +302,8 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressPHPUnit(input)
 	case FormatFlutterTest:
 		return compressFlutterTest(input)
+	case FormatGradle:
+		return compressGradle(input)
 	case FormatGitStatus:
 		return compressGitStatus(input)
 	case FormatGitLog:
