@@ -5,10 +5,10 @@ package main
 
 import (
 	"errors"
+	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"os"
 	"path/filepath"
 
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
 )
@@ -32,11 +32,15 @@ type shellEvent interface {
 // execEnvKillSwitch turns the exec wrapper off everywhere when set to "0".
 const execEnvKillSwitch = "DOWNSHIFT_EXEC"
 
-// execConfigEnabled reports whether the exec wrapper is on in the context
-// config. Tests swap it.
+// execConfigEnabled reports whether the compact wrapper is on: on unless the
+// config file says "exec": false. A config that cannot be read counts as on,
+// the default. Tests swap it.
 var execConfigEnabled = func() bool {
 	cfg, err := contextopt.LoadConfig()
-	return err == nil && cfg.Enabled && cfg.ExecOn()
+	if err != nil {
+		return true
+	}
+	return cfg.ExecOn()
 }
 
 // execExecutable is the absolute, symlink-resolved path of the running

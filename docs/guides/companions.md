@@ -53,11 +53,11 @@ supports; the Downshift side of that table is in
   and [filetree](../../mods/filetree/README.md) as sibling plugins of the marketplace
   (`savvy-progress@downshift`, `filetree@downshift`), each vendored and pinned with its
   licence in NOTICE.
-- Its own opt-in `downshift exec` wrapper (owner decision 2026-10-19, off
+- Its own opt-in `downshift compact` wrapper (owner decision 2026-10-19, off
   by default) is not a companion integration. With
-  `downshift context enable native --exec` the hook may rewrite an
+  `downshift context enable native` the hook may rewrite an
   allowlisted shell command (`go test`, `git status`, no shell
-  metacharacters) to `downshift exec -- <command>`. That runs the program
+  metacharacters) to `downshift compact -- <command>`. That runs the program
   itself and compacts only clean output with the in-process compressor. It
   never wraps, launches or rewrites a companion's command, and its saving
   is reported separately (`exec_metrics` in `downshift context metrics`,
@@ -91,7 +91,7 @@ know about the other.
 | `downshift context status` | prints `Companion available: headroom vX detected` when the binary is on PATH and not recorded, or `Companion: headroom (recorded as active)` |
 | `downshift context enable` | enables the native provider and, if Headroom is detected, records it as companion (prints the wrap command per harness) |
 | `downshift context enable headroom` | records the companion only; refuses with the install command when the binary is absent |
-| `downshift context disable headroom` | clears the record; `downshift context disable` clears provider and companion |
+| `downshift context disable headroom` | clears the companion record; native compact stays on |
 | `downshift doctor` | a `companion` row: ok when recorded and present; warn with the exact fix when detected but not recorded, or recorded but missing; silent (verbose: ok) when absent |
 | `downshift context providers` / `context doctor` | capability and per-harness table below, plus the privacy note |
 

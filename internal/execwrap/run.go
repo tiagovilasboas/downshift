@@ -93,14 +93,14 @@ var expectedFormat = map[Family]compressor.Format{
 // Any internal error prints the raw output: output is never lost.
 func Run(argv []string, o Options) (res Result) {
 	if len(argv) == 0 {
-		fmt.Fprintln(o.Stderr, "downshift exec: no command (usage: downshift exec -- <program> [args...])")
+		fmt.Fprintln(o.Stderr, "downshift compact: no command (usage: downshift compact -- <program> [args...])")
 		return Result{ExitCode: 2, ExitClass: ExitClassStartError}
 	}
 	res.Family = FamilyOf(argv)
 	if res.Family == FamilyNone {
 		// exec is not a generic runner: only the allowlisted families run, so
 		// a wrapped command can never be anything the hook would not wrap.
-		fmt.Fprintln(o.Stderr, "downshift exec: refused: only allowlisted test, build, and status commands may run through exec")
+		fmt.Fprintln(o.Stderr, "downshift compact: refused: only allowlisted test, build, and status commands may run through exec")
 		return Result{ExitCode: ExitCannotExecute, ExitClass: ExitClassRefused}
 	}
 	path, err := exec.LookPath(argv[0])
@@ -148,10 +148,10 @@ func Run(argv []string, o Options) (res Result) {
 // startFailure answers like a shell when the program cannot start.
 func startFailure(name string, err error, stderr io.Writer, family Family) Result {
 	if errors.Is(err, exec.ErrNotFound) || errors.Is(err, fs.ErrNotExist) {
-		fmt.Fprintf(stderr, "downshift exec: %s: command not found\n", name)
+		fmt.Fprintf(stderr, "downshift compact: %s: command not found\n", name)
 		return Result{ExitCode: ExitNotFound, ExitClass: ExitClassNotFound, Family: family}
 	}
-	fmt.Fprintf(stderr, "downshift exec: %s: %v\n", name, err)
+	fmt.Fprintf(stderr, "downshift compact: %s: %v\n", name, err)
 	return Result{ExitCode: ExitCannotExecute, ExitClass: ExitClassStartError, Family: family}
 }
 
@@ -298,5 +298,5 @@ func compactSafely(data []byte, want compressor.Format) (out []byte, ok bool) {
 // Marker is the last line of compacted output. It tells the reader that the
 // text above is a summary, not what the program printed.
 func Marker(rawBytes, summaryBytes int) string {
-	return fmt.Sprintf("[downshift exec: compacted %d to %d bytes]\n", rawBytes, summaryBytes)
+	return fmt.Sprintf("[downshift compact: compacted %d to %d bytes]\n", rawBytes, summaryBytes)
 }

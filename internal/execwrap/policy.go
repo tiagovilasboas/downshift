@@ -3,7 +3,7 @@
 
 // Package execwrap is the opt-in shell-command wrapper: a harness-free rewrite
 // policy (Decide) that turns an allowlisted shell command into
-// `downshift exec -- <argv>`, and the runner (Run) that executes it, keeps the
+// `downshift compact -- <argv>`, and the runner (Run) that executes it, keeps the
 // exit code and compacts only unambiguously clean output with the internal
 // compressor. Nothing here knows a harness; adapters only expose the command
 // and emit the rewritten input.
@@ -31,7 +31,7 @@ const (
 )
 
 // execTail follows the quoted binary path in a wrapped command.
-const execTail = " exec -- "
+const execTail = " compact -- "
 
 // QuoteExecutable single-quotes an absolute binary path for the shell. It
 // reports false for a path that is not absolute or holds a quote or a control
