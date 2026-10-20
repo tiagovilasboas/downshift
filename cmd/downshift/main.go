@@ -100,6 +100,8 @@ func main() {
 		os.Exit(runQuota(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "stats":
 		os.Exit(runStats(args[1:]))
+	case "replay":
+		os.Exit(runReplay(args[1:], os.Stdout, os.Stderr))
 	case "report":
 		os.Exit(runReport(args[1:], os.Stdout, os.Stderr))
 	case "probe":
