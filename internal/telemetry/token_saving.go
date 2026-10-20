@@ -39,6 +39,9 @@ type TokenSaving struct {
 	// AtFloor counts unchanged children whose requested model already sat on
 	// the lowest catalog tier: no cheaper model existed, so a zero is not a miss.
 	AtFloor int `json:"at_floor,omitempty"`
+	// GatewayUnpriced counts children that ran on an OpenRouter model with no
+	// snapshot price: never saved, never guessed from a tier.
+	GatewayUnpriced int `json:"gateway_unpriced,omitempty"`
 }
 
 // Observed reports whether any child's tokens are known.
@@ -85,7 +88,18 @@ func (s TokenSaving) Line() string {
 	if s.SavedInferred > 0 {
 		out += " · baseline inferred"
 	}
+	if s.GatewayUnpriced > 0 {
+		out += " · " + gatewayUnpricedText(s.GatewayUnpriced)
+	}
 	return out
+}
+
+// gatewayUnpricedText counts gateway runs that no saving was credited for.
+func gatewayUnpricedText(n int) string {
+	if n == 1 {
+		return "1 gateway run without a snapshot price (not counted as saved)"
+	}
+	return fmt.Sprintf("%d gateway runs without a snapshot price (not counted as saved)", n)
 }
 
 func (s *TokenSaving) add(o TokenSaving) {
@@ -99,6 +113,7 @@ func (s *TokenSaving) add(o TokenSaving) {
 	s.CachePricier += o.CachePricier
 	s.SavedInferred += o.SavedInferred
 	s.AtFloor += o.AtFloor
+	s.GatewayUnpriced += o.GatewayUnpriced
 }
 
 // TokenSavingView is TokenSavings folded three ways.
@@ -140,6 +155,7 @@ func TokenSavings(events []Event) TokenSavingView {
 		typ      string
 		inferred bool
 		floor    bool
+		gateway  bool
 	}
 	children := map[string]*child{}
 	for _, ev := range events {
@@ -155,7 +171,7 @@ func TokenSavings(events []Event) TokenSavingView {
 		work, cache := c.Input+c.Output, c.Cache()
 		s := TokenSaving{WorkTokens: work, CacheTokens: cache}
 		dir := tokenDirection(ev, decision, found, a.unrouted[key], a.refuted[key])
-		requested, _ := tokenModels(ev, decision, found, a.refuted[key])
+		requested, ran := tokenModels(ev, decision, found, a.refuted[key])
 		switch dir {
 		case TokenCheaper:
 			s.WorkSaved, s.CacheSaved = work, cache
@@ -178,10 +194,14 @@ func TokenSavings(events []Event) TokenSavingView {
 		ch.s.add(s)
 		ch.inferred = ch.inferred || ev.BaselineSource == BaselineInferred || hasReason(decision.ReasonCodes, ReasonBaselineFromSettings)
 		ch.floor = ch.floor || dir == TokenUnchanged && atTierFloor(ev.Harness, requested)
+		ch.gateway = ch.gateway || isUnpricedGateway(dir, ran, found)
 	}
 	v := TokenSavingView{ByAgentType: map[string]TokenSaving{}, byChild: map[string]TokenSaving{}}
 	for id, ch := range children {
 		ch.s.Children = 1
+		if ch.gateway {
+			ch.s.GatewayUnpriced = 1
+		}
 		if ch.s.Direction() == TokenCheaper {
 			ch.s.SavedChildren = 1
 			if ch.inferred {

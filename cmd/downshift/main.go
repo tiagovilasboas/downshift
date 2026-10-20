@@ -43,6 +43,9 @@ func main() {
 		usageShort(os.Stderr)
 		os.Exit(2)
 	}
+	// Set before the hooks: a usage record written by a hook prices its gateway
+	// run from the same snapshot the reports read.
+	telemetry.GatewayPriceLookup = gatewaySnapshotPrice()
 
 	// A hook must never block a spawn (a Go panic exits 2, which every harness
 	// reads as "deny"), so its catalog load runs under a recover and a failure

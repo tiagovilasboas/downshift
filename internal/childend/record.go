@@ -91,14 +91,14 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 		return res // nothing billable reported
 	}
 
-	var target *telemetry.Event
+	var target, resolved *telemetry.Event
 	if ce.Source == hookport.SourceTranscript {
 		// A stop event: the agent id joins this record to the launch-time
 		// observation, and through it to the decision.
 		if agentHash == "" {
 			return res
 		}
-		var resolved, firstUsage *telemetry.Event
+		var firstUsage *telemetry.Event
 		var recorded telemetry.TokenUsage
 		for i := range prior {
 			ev := &prior[i]
@@ -154,6 +154,9 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 	// a foreground child is neither double counted nor announced twice.
 	ev.AgentHash = agentHash
 	ev.Verification = ce.Verification
+	if slug := gatewayRanModel(resolved, ce); slug != "" {
+		markGatewayRun(&ev, slug)
+	}
 	telemetry.Record(ev)
 	res.Usage = &ev
 	if ce.IsChild && !priced {
@@ -366,6 +369,29 @@ func buildUsageEvent(harness string, usage telemetry.TokenUsage, payloadModel, s
 		}
 	}
 	return ev
+}
+
+// gatewayRanModel returns the OpenRouter slug the child ran on, when the harness
+// reported one: the launch observation first, then the payload's resolved and
+// usage models. "" for a native run.
+func gatewayRanModel(resolved *telemetry.Event, ce hookport.ChildEnd) string {
+	candidates := []string{ce.ResolvedModel, ce.Model}
+	if resolved != nil {
+		candidates = append([]string{resolved.ToModel}, candidates...)
+	}
+	for _, c := range candidates {
+		if telemetry.IsGatewayModel(c) {
+			return c
+		}
+	}
+	return ""
+}
+
+// markGatewayRun names the model an OpenRouter route ran and the price source
+// for it, so the record is priced from what ran and not from the requested tier.
+func markGatewayRun(ev *telemetry.Event, slug string) {
+	ev.ToModel = slug
+	ev.GatewayPrice = telemetry.GatewayPriceStatus(slug)
 }
 
 // recordResolved appends a "resolved" observation for the decision this spawn
