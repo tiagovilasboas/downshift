@@ -12,7 +12,7 @@
 import { atom, read, update } from 'claude-code'
 import type { CommandInfo, EngineInterface, Register } from 'claude-code'
 
-import type { Available, DciMode, Status } from '../types'
+import type { Available, DciMode, Mode, Status } from '../types'
 
 // Downshift brand tokens (docs/brand/downshift-brand-tokens.json). Black first:
 // text follows the terminal theme, grey carries the chrome, green is a small
@@ -29,6 +29,7 @@ export const TARGETS: readonly Target[] = [
 
 const available = atom({ plugin: 'downshift-dock', key: 'available' } as const, null)
 const statusAtom = atom({ plugin: 'downshift-dock', key: 'status' } as const, null)
+const modeAtom = atom({ plugin: 'downshift-dock', key: 'mode' } as const, null)
 const RECHECK_MS = 2000
 
 /** Which target commands the session lists as a plugin's command. */
@@ -45,6 +46,54 @@ export function visibleTargets(a: Available | null): Target[] {
 /** Green means live: the dot is green while at least one of the dock's panels is open, else grey. */
 export function dotColor(paneIds: readonly string[]): string {
   return TARGETS.some(t => paneIds.includes(t.pane)) ? ACCENT : IDLE
+}
+
+/** The mode file's value. Missing or unknown counts as performance, as in core. */
+export function parseMode(text: string | null): Mode {
+  try {
+    const mode = (JSON.parse(text ?? '') as { mode?: unknown } | null)?.mode
+    return mode === 'economy' ? 'economy' : 'performance'
+  } catch {
+    return 'performance'
+  }
+}
+
+export function nextMode(m: Mode): Mode {
+  return m === 'economy' ? 'performance' : 'economy'
+}
+
+export function modeLabel(m: Mode): string {
+  return m === 'economy' ? '\u25C6 economy' : '\u25C7 performance'
+}
+
+/** The mode file lives in the state dir: DOWNSHIFT_STATE_DIR, else ~/.downshift. */
+async function modePath($: EngineInterface): Promise<string> {
+  const dir = (await $.env.get('DOWNSHIFT_STATE_DIR')) || `${(await $.env.get('HOME')) ?? ''}/.downshift`
+  return `${dir.replace(/\/+$/, '')}/mode.json`
+}
+
+async function readModeText($: EngineInterface): Promise<string | null> {
+  try {
+    return String(await $.fs.read(await modePath($)))
+  } catch {
+    return null
+  }
+}
+
+async function refreshMode($: EngineInterface): Promise<void> {
+  const next = parseMode(await readModeText($))
+  await update($, modeAtom, () => next)
+}
+
+async function toggleMode($: EngineInterface): Promise<void> {
+  const next = nextMode(parseMode(await readModeText($)))
+  try {
+    await $.fs.write(await modePath($), JSON.stringify({ mode: next }) + '\n')
+    await update($, modeAtom, () => next)
+    $.ui.toast(`downshift: ${modeLabel(next)}. Applies to the next subagent spawn.`)
+  } catch {
+    $.ui.toast('downshift-dock: could not write the mode file. Check the state dir.')
+  }
 }
 
 /** DCI mode from `<workspace>/.downshift/dci.json`; anything unreadable counts as off. */
@@ -140,6 +189,7 @@ export const register: Register = on => {
     const result = await next(e)
     await refresh($)
     await refreshStatus($)
+    await refreshMode($)
     // Other mods register their commands in their own session.start; look once more.
     $.clock.after(RECHECK_MS, () => void refresh($))
     return result
@@ -148,6 +198,7 @@ export const register: Register = on => {
   on('turn.complete', async ($, e, next) => {
     await refresh($)
     await refreshStatus($)
+    await refreshMode($)
     return next(e)
   })
 
@@ -157,12 +208,16 @@ export const register: Register = on => {
     const targets = visibleTargets(await read($, available))
     const dot = dotColor(await openPaneIds($))
     const status = await read($, statusAtom)
+    const mode: Mode = (await read($, modeAtom)) ?? 'performance'
     const { Box, Text, Button } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
         {rest}
         <Box flexDirection="row" columnGap={2}>
           <Box flexGrow={1} />
+          <Button key="mode" plain onPress={() => void toggleMode($)}>
+            <Text>{modeLabel(mode)}</Text>
+          </Button>
           {chips(status).map(c => (
             <Button key={c.key} plain dimColor={!c.on} onPress={() => $.ui.toast(c.detail)}>
               <Text color={c.on ? ACCENT : IDLE}>{'\u25CF'}</Text> {c.label}
