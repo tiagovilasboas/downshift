@@ -4,6 +4,7 @@
 package telemetry
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -116,11 +117,6 @@ func TestBuildReport_NoSavingsIntervalIncludesZero(t *testing.T) {
 	if rep.Savings == nil || rep.Savings.PerTaskLowUSD > 0 || rep.Savings.PerTaskHighUSD < 0 {
 		t.Fatalf("identical groups must give an interval around zero: %+v", rep.Savings)
 	}
-	var b strings.Builder
-	PrintReport(&b, rep)
-	if !strings.Contains(b.String(), "includes zero") {
-		t.Errorf("report must flag an interval that includes zero:\n%s", b.String())
-	}
 }
 
 func TestBuildTasks_ReworkLinkingAndCost(t *testing.T) {
@@ -202,5 +198,35 @@ func TestBuildTasks_UsageMarksBackgroundChildCompleted(t *testing.T) {
 	failed := Event{Timestamp: "2026-10-13T10:00:30Z", Harness: "claude-code", SessionID: "s", Outcome: OutcomeChildEnded, ChildStatus: ChildError, LinkedDecision: key}
 	if tasks := BuildTasks([]Event{dec, failed, usage}); tasks[0].Completed() {
 		t.Fatal("an error end must outrank the usage record")
+	}
+}
+
+func TestPrintReport_NoTokensSavedSaysSo(t *testing.T) {
+	rep := Report{TokensSaved: TokenSaving{Children: 3, WorkTokens: 1000, CacheTokens: 500}}
+	var b strings.Builder
+	PrintReport(&b, rep)
+	if !strings.Contains(b.String(), "no tokens ran on a cheaper model in this window") {
+		t.Errorf("a window with observed tokens and none saved must say so:\n%s", b.String())
+	}
+}
+
+// The JSON report is tokens only: no dollar key at the top level, and the saved
+// quantity is there.
+func TestReportJSON_TokensOnly(t *testing.T) {
+	out, err := ReportJSON(BuildReport(nil, 30))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var top map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(out), &top); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"savings", "prices_as_of"} {
+		if _, ok := top[key]; ok {
+			t.Errorf("report JSON must not carry top-level %q", key)
+		}
+	}
+	if _, ok := top["tokens_saved"]; !ok {
+		t.Errorf("report JSON must carry tokens_saved")
 	}
 }

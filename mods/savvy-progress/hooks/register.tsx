@@ -53,7 +53,7 @@ type Lang = 'en' | 'ru' | 'he'
 const STRINGS = {
   en: {
     pane: 'Agents',
-    cost: 'Cost',
+    saved: 'Saved',
     tokens: 'Tokens',
     time: 'Time',
     collapse: 'Collapse',
@@ -84,7 +84,7 @@ const STRINGS = {
   },
   ru: {
     pane: 'Агенты',
-    cost: 'Стоимость',
+    saved: 'Сэкономлено',
     tokens: 'Токены',
     time: 'Время',
     collapse: 'Свернуть',
@@ -115,7 +115,7 @@ const STRINGS = {
   },
   he: {
     pane: 'סוכנים',
-    cost: 'עלות',
+    saved: 'נחסך',
     tokens: 'טוקנים',
     time: 'זמן',
     collapse: 'כיווץ',
@@ -221,12 +221,13 @@ const merge = (prev: Flow | null, input: ProgressInput): Flow => {
 }
 
 const DERIVED_TITLE = 'Subagents'
-const DERIVED_LINGER_MS = 30_000
 
 const label = (f: Flow): string => {
   const s = tr()
+  if (f.title === DERIVED_TITLE && f.tasks.length === 0 && f.total > 0) {
+    return f.isFinished ? `${f.done} done` : `${f.running} running · ${f.done} done`
+  }
   if (f.isFinished) return s.done
-  if (f.title === DERIVED_TITLE && f.tasks.length === 0 && f.total > 0) return `${f.running} running · ${f.done} done`
   if (f.phase === 'plan') return s.plan
   if (f.phase === 'design') return s.design
   const count = f.total ? `${f.done}/${f.total}` : `${f.running} ${s.busy}`
@@ -469,6 +470,9 @@ const fmtTokens = (n: number): string =>
 
 const fmtCost = (usd: number): string => `$${usd < 10 ? usd.toFixed(2) : usd.toFixed(1)}`
 
+/** Tokens Downshift saved in this session, from the session panel; 0 until it answers. */
+const savedOf = (): number => (ds && dsSessionKnown ? ds.saved : 0)
+
 const fmtTime = (ms: number): string => {
   const s = Math.max(0, Math.round(ms / 1000))
   const h = Math.floor(s / 3600)
@@ -617,7 +621,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
     W,
     headerHeight(title),
     `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
-${tile(0, s.cost, '≈' + fmtCost(t.cost))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
+${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
   )
 }
 
@@ -645,7 +649,7 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
   if (a.status === 'failed') meta.push(s.failed)
   const barW = textW
   const progress = progressOf(a)
-  const stats = `${s.ctx} ${ctx}% · ${fmtTokens(a.contextTokens)}  ≈${fmtCost(a.costUsd)}  ${fmtTime(elapsed(a, at))}`
+  const stats = `${s.ctx} ${ctx}% · ${fmtTokens(a.contextTokens)}  ${fmtTime(elapsed(a, at))}`
   const steps = a.stepTotal ? `${a.stepDone ?? 0}/${a.stepTotal}${a.stepNote ? ' · ' + a.stepNote : ''}` : ''
   const stepsW = Math.max(0, barW - textWidth(stats, 11) - 12)
   // Without reported steps the bar falls back to the context, drawn grey.
@@ -698,7 +702,7 @@ const compactSvg = (W: number, list: AgentRun[], planned: Planned[], t: ReturnTy
     W,
     32,
     `${body}${more ? `<text class="s" ${startText(W, x, 21, false)} font-family="${FONT}" font-size="12">+${more}</text>` : ''}
-<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">≈${fmtCost(t.cost)} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
+<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtTokens(savedOf())} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
   )
 }
 
@@ -740,7 +744,7 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 // Data contract: docs/reference/spawn-state.md in the Downshift repo.
 
 type DsSpawn = { tool_use?: string; label: string; tokens_label: string }
-type DsView = { switched: number; held: number; tokens_line: string; types: string[]; spawns: DsSpawn[] }
+type DsView = { switched: number; held: number; saved: number; tokens_line: string; types: string[]; spawns: DsSpawn[] }
 
 let ds: DsView | null = null
 let dsSessionKnown = false // the figures are only drawn for a session we could name
@@ -753,11 +757,12 @@ const dsParse = (raw: unknown): DsView | null => {
   if (!v || typeof v !== 'object' || !Array.isArray(v.spawns)) return null
   const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : 0)
   const str = (x: unknown, max: number) => (typeof x === 'string' ? x.slice(0, max) : '')
-  const raw2 = raw as { tokens_line?: unknown; by_agent_type?: unknown }
+  const raw2 = raw as { tokens_line?: unknown; by_agent_type?: unknown; tokens?: { work_saved?: unknown; cache_saved?: unknown } }
   const types = Array.isArray(raw2.by_agent_type) ? raw2.by_agent_type : []
   return {
     switched: num(v.switched),
     held: num(v.held),
+    saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
     tokens_line: str(raw2.tokens_line, 120),
     types: types.map(t => str((t as { line?: unknown } | null)?.line, 80)).filter(l => l !== '').slice(0, 6),
     spawns: v.spawns
@@ -801,16 +806,25 @@ async function dsRefresh($: EngineInterface, force = false): Promise<void> {
 }
 
 
-/** Band state from the live subagents when no flow with a total is registered; null when nothing is live. */
-const derivedFlow = (list: AgentRun[], at: number): Flow | null => {
-  const live = list.filter(a => a.status === 'running')
-  let batch: AgentRun[]
-  if (live.length) {
-    const since = Math.min(...live.map(a => a.startedAt))
-    batch = list.filter(a => a.startedAt >= since)
-  } else {
-    batch = list.filter(a => a.endedAt !== undefined && at - a.endedAt <= DERIVED_LINGER_MS)
+/**
+ * The latest batch: agents that overlapped in time, back to the last moment nothing was running.
+ * It stays until a new agent starts, so the last finished batch remains visible.
+ */
+const lastBatch = (list: AgentRun[]): AgentRun[] => {
+  let batch: AgentRun[] = []
+  let reach = -Infinity
+  for (const a of [...list].sort((x, y) => x.startedAt - y.startedAt)) {
+    if (a.startedAt > reach) batch = []
+    batch.push(a)
+    reach = Math.max(reach, a.endedAt ?? Infinity)
   }
+  return batch
+}
+
+/** Band state from the live subagents (or the last finished batch); null when there is none. */
+const derivedFlow = (list: AgentRun[]): Flow | null => {
+  const live = list.filter(a => a.status === 'running')
+  const batch = live.length ? list.filter(a => a.startedAt >= Math.min(...live.map(a => a.startedAt))) : lastBatch(list)
   if (!batch.length) return null
   const running = batch.filter(a => a.status === 'running').length
   return { title: DERIVED_TITLE, total: batch.length, done: batch.length - running, running, phase: 'delegate', isFinished: running === 0, tasks: [] }
@@ -1113,7 +1127,7 @@ export const register: Register = (on, options) => {
       />
     )
     const isEmpty = list.length === 0 && planned.length === 0
-    const summary = `≈${fmtCost(t.cost)}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
+    const summary = `${fmtTokens(savedOf())} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
 
     if (e.surface === 'desktop' && 'Svg' in ui) {
       const { Svg } = ui
@@ -1198,7 +1212,7 @@ export const register: Register = (on, options) => {
             {progress === null ? <Text dimColor>{ctxBar(ctx, barW)}</Text> : <Text color={color}>{ctxBar(progress * 100, barW)}</Text>}
             <Text dimColor>
               {' '}
-              {steps}{s.ctx} {ctx}% · {fmtTokens(a.contextTokens)} ≈{fmtCost(a.costUsd)} {fmtTime(elapsed(a, at))}
+              {steps}{s.ctx} {ctx}% · {fmtTokens(a.contextTokens)} {fmtTime(elapsed(a, at))}
             </Text>
           </Text>
         </Box>
@@ -1214,7 +1228,7 @@ export const register: Register = (on, options) => {
           {toggleCompact}
         </Box>
         <Text dimColor>
-          ≈{fmtCost(t.cost)} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
+          {fmtTokens(savedOf())} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
         </Text>
         {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
         {dsTypes() !== '' && <Text dimColor wrap="truncate-end">{dsTypes()}</Text>}
@@ -1271,7 +1285,7 @@ export const register: Register = (on, options) => {
       registered !== null && registered.total > 0
         ? registered
         : dsActive
-          ? derivedFlow(await read($, agents), await read($, now))
+          ? derivedFlow(await read($, agents))
           : registered
     if (f === null || e.props.hasSurvey) return next(e)
     // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is

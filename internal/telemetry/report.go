@@ -28,8 +28,9 @@ type GroupSummary struct {
 	// CostUSD and CostPerTaskUSD.
 	Completed int `json:"completed_tasks"`
 	// CostUSD is the cost of those tasks plus the failed attempts they redid.
-	CostUSD        float64 `json:"cost_usd"`
-	CostPerTaskUSD float64 `json:"cost_per_completed_task_usd"`
+	// Not in the JSON report: dollars are not an output (tokens only).
+	CostUSD        float64 `json:"-"`
+	CostPerTaskUSD float64 `json:"-"`
 	// Tokens is the token count of the same tasks (priced usage records, the
 	// failed attempts they redid included), by billing class; Tokens.Records is
 	// the number of usage records. TokensPerTask is Tokens.Total over Completed.
@@ -50,9 +51,9 @@ type GroupSummary struct {
 // same numbers. There is no percentage: a dollar share would hide the price
 // table it rests on; the plan lens states the share in tokens.
 type Savings struct {
-	PerTaskUSD     float64 `json:"per_task_usd"`
-	PerTaskLowUSD  float64 `json:"per_task_low_usd"`
-	PerTaskHighUSD float64 `json:"per_task_high_usd"`
+	PerTaskUSD     float64 `json:"-"`
+	PerTaskLowUSD  float64 `json:"-"`
+	PerTaskHighUSD float64 `json:"-"`
 	Resamples      int     `json:"resamples"`
 }
 
@@ -67,12 +68,12 @@ type Report struct {
 	MinTasks        int          `json:"min_tasks_per_group"`
 	Enough          bool         `json:"enough_data"`
 	Message         string       `json:"message,omitempty"`
-	Savings         *Savings     `json:"savings,omitempty"`
+	Savings         *Savings     `json:"-"`
 	// Completion says, per harness, whether the end of a child is measurable.
 	Completion []HarnessCompletion `json:"completion"`
 	// PricesAsOf is the catalog date the dollars were priced at (API lens);
 	// the caller sets it after RepriceUsage. Empty means as recorded.
-	PricesAsOf string `json:"prices_as_of,omitempty"`
+	PricesAsOf string `json:"-"`
 	// TokensSaved is the plan lens: tokens saved from the requested model in
 	// the window, work and cache apart, with no price at all.
 	TokensSaved TokenSaving `json:"tokens_saved"`
@@ -191,15 +192,11 @@ func PrintReport(w io.Writer, r Report) {
 		window = "all time"
 	}
 	fmt.Fprintf(w, "Routed vs control, %s\n\n", window)
-	fmt.Fprintf(w, "%-9s %7s %7s %10s %14s %17s %9s\n", "group", "spawns", "ended", "completed", "$/completed", "tokens/completed", "rework")
+	fmt.Fprintf(w, "%-9s %7s %7s %10s %17s %9s\n", "group", "spawns", "ended", "completed", "tokens/completed", "rework")
 	for _, row := range []struct {
 		name string
 		g    GroupSummary
 	}{{"routed", r.Routed}, {"control", r.Control}} {
-		cost := "-"
-		if row.g.Completed > 0 {
-			cost = fmt.Sprintf("$%.4f", row.g.CostPerTaskUSD)
-		}
 		tokens := "-"
 		if row.g.Completed > 0 {
 			tokens = formatTokens(int64(row.g.TokensPerTask + 0.5))
@@ -208,31 +205,20 @@ func PrintReport(w io.Writer, r Report) {
 		if row.g.Ended > 0 {
 			rework = fmt.Sprintf("%.1f%%", row.g.ReworkRate*100)
 		}
-		fmt.Fprintf(w, "%-9s %7d %7d %10d %14s %17s %9s\n", row.name, row.g.Spawns, row.g.Ended, row.g.Completed, cost, tokens, rework)
+		fmt.Fprintf(w, "%-9s %7d %7d %10d %17s %9s\n", row.name, row.g.Spawns, row.g.Ended, row.g.Completed, tokens, rework)
 	}
 	fmt.Fprintln(w)
-
-	// API lens: tokens priced at list prices, for whoever pays per token.
-	basis := "list prices as recorded"
-	if r.PricesAsOf != "" {
-		basis = "list prices as of " + r.PricesAsOf
-	}
-	fmt.Fprintf(w, "API lens (tokens x %s; not an invoice)\n", basis)
-	if r.Savings != nil {
-		s := r.Savings
-		fmt.Fprintf(w, "  Savings per completed task  $%.4f  (95%% CI $%.4f to $%.4f)\n", s.PerTaskUSD, s.PerTaskLowUSD, s.PerTaskHighUSD)
-		if s.PerTaskLowUSD <= 0 && s.PerTaskHighUSD >= 0 {
-			fmt.Fprintln(w, "  The interval includes zero: this window does not show a saving.")
-		}
-	} else {
-		fmt.Fprintf(w, "  %s.\n", r.Message)
+	if r.Savings == nil {
+		fmt.Fprintf(w, "%s.\n\n", r.Message)
 	}
 
-	// Plan lens: no per-token bill (Pro, Max, Team, Cursor plans), so tokens
-	// by where they ran, never dollars.
-	fmt.Fprintln(w, "\nPlan lens (no per-token bill: tokens only)")
+	// Tokens only: the plan lens, tokens by where they ran. No dollars.
+	fmt.Fprintln(w, "Plan lens (tokens only)")
 	if line := r.TokensSaved.Line(); line != "" {
 		fmt.Fprintf(w, "  %s\n", line)
+		if r.TokensSaved.WorkSaved+r.TokensSaved.CacheSaved == 0 {
+			fmt.Fprintln(w, "  no tokens ran on a cheaper model in this window")
+		}
 	} else {
 		fmt.Fprintln(w, "  tokens not observed in this window")
 	}
@@ -252,8 +238,7 @@ func PrintReport(w io.Writer, r Report) {
 	}
 	fmt.Fprintln(w, "Tokens per completed task = input, output and cache tokens of the same tasks; a cheaper model should not need more of them.")
 	fmt.Fprintln(w, "Tokens saved = tokens that ran on a cheaper model than requested; work (input+output) and cache are counted apart.")
-	fmt.Fprintln(w, "Cost per completed task = completed children plus the failed attempts they redid (respawn in the same session within 10 minutes).")
-	fmt.Fprintln(w, "Dollars are the recorded tokens priced at catalog list prices when the report runs, not provider invoices. Prompt-free.")
+	fmt.Fprintln(w, "Completed tasks include the failed attempts they redid (respawn in the same session within 10 minutes). Prompt-free.")
 }
 
 // printTokenCheck compares tokens per completed task between the groups, once
