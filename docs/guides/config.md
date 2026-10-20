@@ -43,7 +43,7 @@ hook payload overrides them at spawn time.
 | `events.jsonl` | Routing telemetry (no prompt text) |
 | `agents.jsonl` | Optional spawn log (dsmon-hook) |
 | `catalog.json` | User catalog override (`downshift models pull`) |
-| `openrouter.json` | Optional OpenRouter allowlist: the only way an OpenRouter model becomes a routing target (below) |
+| `openrouter.json` | Optional OpenRouter shadow list: recorded as `gateway_would`, never a routing target (below) |
 | `session-models.json` | Per-harness session allowlists |
 | `loop-events.jsonl` | Routing v2 training events |
 | `weights.json` | Classifier weight override |
@@ -70,8 +70,10 @@ Outside the core: `DOWNSHIFT_EXEC=0` (kill switch for the `downshift compact` sh
 ## OpenRouter allowlist (optional)
 
 OpenRouter models are gateway rows (`provider: "openrouter"`, full `vendor/model` id).
-They are never chosen automatically unless you list them in `openrouter.json` under the
-state dir. Nothing is listed by default, so the file is off until you create it.
+They are never chosen automatically. Listing a row in `openrouter.json` under the state
+dir makes it a shadow row: Downshift records which listed row it would have used, and
+never routes a spawn to it. Nothing is listed by default, so the file is off until you
+create it.
 
 ```json
 {
@@ -96,8 +98,28 @@ slash, a duplicate id, a file over 256 KiB, or an id that clashes with another r
 Downshift ignore the whole file and print one warning to stderr. The embedded catalog
 stays in force, and a bad file never blocks a spawn.
 
-Listed rows go ahead of the catalog rows for their tier, so a listed model is picked
-before a catalog model of the same tier. Remove the row to go back to the catalog choice.
+### Shadow behaviour
+
+A listed row is shadow only. The live route, the rewrite and the model written to the
+spawn are the same with and without `openrouter.json`. A spawn that already runs a listed
+model keeps it, as for any explicit-only model.
+
+For every decision Downshift records `gateway_would` (the slug) and `gateway_would_tier`
+(the decision tier) in the telemetry event, but only when a listed row of that tier exists.
+The row is the smallest listed row of the tier: the lowest known list price, and listed rows
+have no price, so ties break on the slug in alphabetical order. The event carries no prompt,
+task text or path, and no token or dollar figure is computed for the row.
+
+`downshift stats --detail` prints one line, and only when at least one decision would have
+been served by a listed row:
+
+```text
+shadow: would route 12 of 80 spawns to x-ai/grok-x
+```
+
+If several slugs appear, the most frequent one is shown with the count of distinct slugs.
+The same choice is made for every harness, because the list is a user fact. Remove the file
+to stop recording. Use this shadow evidence before any row is made a live target.
 
 ## Project tier floor (optional)
 

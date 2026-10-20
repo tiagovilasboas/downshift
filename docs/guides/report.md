@@ -72,7 +72,7 @@ ended (the same events `stats` reads).
 
 ## What the text report prints
 
-The text report shows tokens only. Its table has one row per group:
+The routed-versus-control comparison shows tokens only. Its table has one row per group:
 
 | Column | Meaning |
 |--------|---------|
@@ -84,6 +84,10 @@ The text report shows tokens only. Its table has one row per group:
 
 Once both groups have enough data, one line below the table gives tokens per completed task for
 routed and control and the change between them, as a point percentage. It is not an interval.
+
+When decisions in the window carry a permission mode, the text report also prints
+`Decisions by permission mode`, with a count per recorded label. Claude Code supplies this field;
+the count is descriptive and does not change routing or the routed-versus-control comparison.
 
 The plan lens follows, labelled `Plan lens (tokens only)`. It is for plans with no per-token bill
 (Claude Code Pro, Max, Team; Cursor plans), and shows:
@@ -101,9 +105,14 @@ tasks before the first estimate.
 
 ## The JSON report
 
-`--json` carries token figures only: `tokens` by class (`input`, `output`, `cache_read`, `cache_write`,
+`--json` includes counts and rates, plus token figures: `tokens` by class (`input`, `output`,
+`cache_read`, `cache_write`,
 `total`, `records`) for each group, `tokens_per_completed_task`, `tokens_saved` and the completion status per
-harness. It has no dollar key and no interval. `downshift stats --export` has no dollar key either (schema 3; see
+harness. When permission-mode data exists, it also includes the optional `decisions_by_permission_mode`
+map. Only built-in Claude Code mode names are stored (`default`, `acceptEdits`, `bypassPermissions`,
+`plan`, `auto`, `dontAsk`); an unrecognized value is recorded as `other`, and a missing value is omitted.
+This count is informational and does not affect routing or comparisons. The report has no dollar key and no
+interval. `downshift stats --export` has no dollar key either (schema 3; see
 [stats-export.md](../reference/stats-export.md)).
 
 ## Limits

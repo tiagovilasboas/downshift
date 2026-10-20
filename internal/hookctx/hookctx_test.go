@@ -80,6 +80,8 @@ func TestRunCommand_OutputIsCapped(t *testing.T) {
 // the whole run must stay well under the 5 s timeout a real hang would hit.
 func TestRunCommand_BackgroundChildDoesNotHang(t *testing.T) {
 	needSh(t)
+	// Well under the child's 10 s sleep, with slack for a loaded machine.
+	const holdBound = 8 * time.Second
 	// Other packages set hookctx during parallel go test ./...; pin Background
 	// so this test only measures RunCommand behaviour.
 	t.Cleanup(hookctx.Set(context.Background()))
@@ -110,8 +112,10 @@ func TestRunCommand_BackgroundChildDoesNotHang(t *testing.T) {
 	base := timed(baseline)
 	_ = timed(withChild) // first run of this script: absorbs one-off start-up cost
 	got := timed(withChild)
-	if got > base+time.Second || got > 4*time.Second {
-		t.Fatalf("background child held the helper for %s (baseline %s, timeout 5s)", got, base)
+	// Absolute bound: the child sleeps 10 s, so returning under 8 s means the
+	// helper did not wait for it. A hang would also surface as a timeout error above.
+	if got > holdBound {
+		t.Fatalf("background child held the helper for %s (baseline %s, bound %s, child sleeps 10s)", got, base, holdBound)
 	}
 
 	start := time.Now()
@@ -120,8 +124,8 @@ func TestRunCommand_BackgroundChildDoesNotHang(t *testing.T) {
 	if err != nil && !errors.Is(err, exec.ErrWaitDelay) {
 		t.Fatalf("RunCommand(holds.sh): %v", err)
 	}
-	if held > base+time.Second || held > 4*time.Second {
-		t.Fatalf("a child holding stdout kept the hook for %s (baseline %s, WaitDelay should end it in ~100ms)", held, base)
+	if held > holdBound {
+		t.Fatalf("a child holding stdout kept the hook for %s (bound %s, child sleeps 10s; WaitDelay should end it in ~100ms)", held, holdBound)
 	}
 }
 

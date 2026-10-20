@@ -29,7 +29,7 @@ type openRouterAllowlistRow struct {
 	ZDR       bool   `json:"zdr"`
 }
 
-// parseOpenRouterAllowlist validates the whole file and returns one automatic
+// parseOpenRouterAllowlist validates the whole file and returns one shadow
 // gateway row per listed model. Any violation rejects the file: no row is
 // returned, so nothing is applied partially. The rows carry no price; the
 // catalog never invents one for a gateway model.
@@ -70,7 +70,7 @@ func parseOpenRouterAllowlist(data []byte) ([]Entry, error) {
 			Provider: ProviderOpenRouter,
 			Harness:  openRouterAllowlistHarness,
 			Tier:     strings.ToLower(m.Tier),
-			Routing:  "automatic",
+			Routing:  RoutingShadow,
 			Efforts:  efforts,
 			ZDR:      m.ZDR,
 		})

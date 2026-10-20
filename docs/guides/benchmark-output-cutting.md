@@ -118,12 +118,12 @@ is a decision rule, not a prediction.
 
 Rung per [evidence.md](evidence.md): once run, this protocol produces **rung D evidence** (real tasks, arms against
 control, acceptance by hidden tests, one operator) and, if the sample passes, a first input to rung E. It cannot reach
-E by itself: `downshift report` defines E on its own rule and needs 20 priced completions per group.
+E by itself: `downshift report` defines E on its own rule and needs 20 completed tasks with token usage per group.
 
 | Figure | Class |
 |---|---|
 | Cost per run from `total_cost_usd` | measured by the harness, at list price |
-| Child tokens and child cost from usage events | measured tokens, catalog-priced dollars (rung B) |
+| Child usage in current events | tokens reported by the harness; current usage events and reports expose no dollar values. Historical schema 2 records may contain catalog-priced USD fields |
 | Whole-session tokens and parent coordination | measured by the harness, read by hand; the hook does not see the parent |
 | Quota-window consumption | measured, coarse, manual |
 | Any ceiling or composition figure in [evidence.md](evidence.md#where-the-saving-can-come-from) | hypothetical until this runs |
