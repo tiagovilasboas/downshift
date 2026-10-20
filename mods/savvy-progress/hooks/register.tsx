@@ -764,7 +764,14 @@ const dsParse = (raw: unknown): DsView | null => {
     held: num(v.held),
     saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
     tokens_line: str(raw2.tokens_line, 120),
-    types: types.map(t => str((t as { line?: unknown } | null)?.line, 80)).filter(l => l !== '').slice(0, 6),
+    types: types
+      .filter(t => {
+        const k = (t as { tokens?: { work_saved?: unknown; cache_saved?: unknown } } | null)?.tokens
+        return num(k?.work_saved) + num(k?.cache_saved) > 0
+      })
+      .map(t => str((t as { line?: unknown } | null)?.line, 80))
+      .filter(l => l !== '')
+      .slice(0, 6),
     spawns: v.spawns
       .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
       .map(x => ({
@@ -841,13 +848,14 @@ const dsLabel = (a: AgentRun): string | undefined => {
 const dsSummary = (): string => {
   // Without a session id the log's latest session could be another one: draw no figure.
   if (!ds || !dsSessionKnown || ds.switched + ds.held === 0 && ds.tokens_line === '') return ''
-  const parts: string[] = [ds.tokens_line ? `Downshift ${ds.tokens_line}` : 'Downshift on']
-  parts.push(`${ds.switched} switched · ${ds.held} held`)
+  const parts: string[] = ['Downshift', ds.tokens_line || 'on']
+  if (ds.switched > 0) parts.push(`${ds.switched} switched`)
+  if (ds.held > 0) parts.push(`${ds.held} held`)
   return parts.join(' · ')
 }
 
 /** Tokens saved per agent type, for the panel header; '' when spawns name no type. */
-const dsTypes = (): string => (ds && dsSessionKnown && ds.types.length > 0 ? `by agent type: ${ds.types.join(' · ')}` : '')
+const dsTypes = (): string => (ds && dsSessionKnown && ds.types.length > 0 ? `by type: ${ds.types.join(' · ')}` : '')
 
 export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
