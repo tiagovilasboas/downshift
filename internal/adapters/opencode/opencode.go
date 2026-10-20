@@ -224,9 +224,14 @@ func Handle(req Request, r ...core.Resolver) (Response, string, core.Decision) {
 	}
 }
 
-// routed is the answer that moves the child onto another model.
+// routed is the answer that moves the child onto another model. A gateway
+// model is addressed by its gateway as provider (OpenCode's provider/model
+// form: "openrouter" + the slug); a native model keeps the harness provider.
 func routed(m core.Model) Response {
-	provider := m.Harness
+	provider := m.Gateway
+	if provider == "" {
+		provider = m.Harness
+	}
 	if provider == "" {
 		provider = harnessID
 	}

@@ -50,6 +50,9 @@ type Model struct {
 	CacheReadM  float64
 	CacheWriteM float64
 	Harness     string // which harness this model id belongs to
+	// Gateway names the model gateway that serves the id, so the harness can
+	// address it as provider/model. Empty for a harness-native model.
+	Gateway string
 }
 
 // WriteName is the string a hook writes into the harness's model field: the

@@ -6,8 +6,8 @@ package catalog
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
-	"unicode"
 )
 
 // AllowlistProvider is the gateway the user allowlist file belongs to. Its rows
@@ -32,6 +32,9 @@ type openRouterAllowlistRow struct {
 	Tier      string `json:"tier"`
 	MaxEffort string `json:"max_effort"`
 	ZDR       bool   `json:"zdr"`
+	// Route is "shadow" (the default when absent) or "live". Only the owner's
+	// file sets live; a live row is the rewrite target for its tier.
+	Route string `json:"route"`
 }
 
 // parseOpenRouterAllowlist validates the whole file and returns one shadow
@@ -70,12 +73,17 @@ func parseOpenRouterAllowlist(data []byte) ([]Entry, error) {
 			return nil, fmt.Errorf("model %q: unknown max_effort %q (want low, medium or high)", m.ID, m.MaxEffort)
 		}
 
+		routing, ok := allowlistRouting(m.Route)
+		if !ok {
+			return nil, fmt.Errorf("model %q: unknown route %q (want shadow or live)", m.ID, m.Route)
+		}
+
 		rows = append(rows, Entry{
 			ID:       m.ID,
 			Provider: AllowlistProvider,
 			Harness:  openRouterAllowlistHarness,
 			Tier:     strings.ToLower(m.Tier),
-			Routing:  RoutingShadow,
+			Routing:  routing,
 			Efforts:  efforts,
 			ZDR:      m.ZDR,
 		})
@@ -83,22 +91,29 @@ func parseOpenRouterAllowlist(data []byte) ([]Entry, error) {
 	return rows, nil
 }
 
-// isFullSlug reports a "vendor/model" id with both parts non-empty and no
-// control character or whitespace anywhere in it.
-func isFullSlug(id string) bool {
-	vendor, model, ok := strings.Cut(id, "/")
-	return ok && vendor != "" && model != "" && !strings.Contains(model, "/") && !hasControlOrSpace(id)
+// allowlistRouting maps the route field to a routing value. An absent route is
+// shadow, so a row stays observation-only unless the file says live.
+func allowlistRouting(route string) (string, bool) {
+	switch route {
+	case "", RoutingShadow:
+		return RoutingShadow, true
+	case RoutingLive:
+		return RoutingLive, true
+	default:
+		return "", false
+	}
 }
 
-// hasControlOrSpace reports whether s holds a control character or whitespace,
-// such as a newline, which must never reach a model id.
-func hasControlOrSpace(s string) bool {
-	for _, r := range s {
-		if unicode.IsControl(r) || unicode.IsSpace(r) {
-			return true
-		}
-	}
-	return false
+// slugPattern is the closed character set of an allowlisted id. The vendor
+// part takes letters, digits, '.', '-' and '_'; the model part also takes ':'
+// for a variant suffix such as ":free". Nothing else passes: no whitespace,
+// control characters, quotes, '~' or shell metacharacters. The id is written
+// into the harness wire and later into logs, so it stays inside this set.
+var slugPattern = regexp.MustCompile(`^[A-Za-z0-9._-]+/[A-Za-z0-9._:-]+$`)
+
+// isFullSlug reports a "vendor/model" id drawn only from slugPattern.
+func isFullSlug(id string) bool {
+	return slugPattern.MatchString(id)
 }
 
 // effortsUpTo turns a max_effort cap into the list of effort levels the model

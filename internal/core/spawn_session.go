@@ -26,7 +26,7 @@ func (d *Decision) PlanSession(caps HarnessCapabilities, res Resolver, session S
 		session = InferSessionFromCurrent(d.Harness, currentModelID, res)
 	}
 	d.RecordSession(session, currentModelID)
-	plan := d.PlanForSession(caps, res, session)
+	plan := d.applyLiveGateway(d.PlanForSession(caps, res, session), res)
 	plan.Session = session
 	d.Session.CreditHeld = plan.CreditHeld
 	if plan.RewriteModel {

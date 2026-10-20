@@ -28,20 +28,25 @@ func (d *Decision) RecordGatewayWould(res Resolver) {
 // empty. Smallest means the lowest known list price; rows with no price rank
 // after priced rows, and ties break on id so the result is deterministic.
 func gatewayWouldFor(tier Tier, rows []Model) string {
-	var best Model
-	found := false
-	for _, m := range rows {
-		if m.ID == "" || m.Tier != tier {
-			continue
-		}
-		if !found || smallerGateway(m, best) {
-			best, found = m, true
-		}
-	}
-	if !found {
+	best, ok := smallestRow(rows, func(m Model) bool { return m.Tier == tier })
+	if !ok {
 		return ""
 	}
 	return best.ID
+}
+
+// smallestRow returns the smallest gateway row that match accepts, using
+// smallerGateway. ok is false when no row matches.
+func smallestRow(rows []Model, match func(Model) bool) (best Model, ok bool) {
+	for _, m := range rows {
+		if m.ID == "" || !match(m) {
+			continue
+		}
+		if !ok || smallerGateway(m, best) {
+			best, ok = m, true
+		}
+	}
+	return best, ok
 }
 
 // smallerGateway orders gateway rows: priced before unpriced, then by price,
