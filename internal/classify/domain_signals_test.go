@@ -36,6 +36,7 @@ func TestDomainSignalsIntegrity(t *testing.T) {
 // examples must all trigger the SAME rule, complexity and weight. This guards
 // against silently dropping Portuguese verb forms during lexical tuning.
 func TestDomainSignalsBilingualParity(t *testing.T) {
+	t.Setenv("DOWNSHIFT_DOMAIN_SIGNALS", "1")
 	examples := []struct{ id, en, pt, mixed string }{
 		{"fe-hydration-debug", "Debug hydration mismatch in React SSR", "Corrija a hidratação na aplicação React", "Investigue hydration mismatch no React"},
 		{"fe-component-integration", "Integrate React component with backend API", "Integre componente React com API do backend", "Conecte UI ao backend via API"},
@@ -89,6 +90,11 @@ func TestDomainSignalsBilingualParity(t *testing.T) {
 			} {
 				if !re.MatchString(prompt.text) {
 					t.Errorf("no match for %s: %q", prompt.lang, prompt.text)
+				}
+				// The Go scorer must honor the enriched rule as a non-small task.
+				got := Classify(prompt.text)
+				if got.Complexity < Medium {
+					t.Errorf("under-routed %s to %s: %q", prompt.lang, got.Complexity, prompt.text)
 				}
 			}
 		})
