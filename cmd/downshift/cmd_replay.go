@@ -25,7 +25,7 @@ func runReplay(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("replay", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	projects := fs.String("projects", "", "Claude Code projects directory (default ~/.claude/projects)")
-	policies := fs.String("policies", "current,nb_downshift", "comma-separated policy names: current, nb_downshift, explicit_upshift, or nb_downshift+explicit_upshift")
+	policies := fs.String("policies", "current,nb_downshift", "comma-separated policy names: current, nb_downshift, explicit_upshift, nb_downshift+explicit_upshift, or economy")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -61,6 +61,7 @@ func parsePolicies(spec string) ([]replay.Policy, error) {
 		"nb_downshift":                  {corerouter.KnobNBDownshift: "1"},
 		"explicit_upshift":              {corerouter.KnobExplicitUpshift: "1"},
 		"nb_downshift+explicit_upshift": {corerouter.KnobNBDownshift: "1", corerouter.KnobExplicitUpshift: "1"},
+		"economy":                       {corerouter.KnobEconomy: "1"},
 	}
 	var out []replay.Policy
 	for _, name := range strings.Split(spec, ",") {

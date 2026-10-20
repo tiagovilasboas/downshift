@@ -43,7 +43,7 @@ func TestRun_HoldIsBounded(t *testing.T) {
 	if early := <-seen; !strings.Contains(early, "github.com/x/p") {
 		t.Fatalf("nothing shown while the program was still running: %q", early)
 	}
-	if r.Compacted || strings.Contains(merged.b.String(), "downshift exec:") {
+	if r.Compacted || strings.Contains(merged.b.String(), "downshift compact:") {
 		t.Fatalf("a run past the hold bound must stay raw: %+v %q", r, merged.b.String())
 	}
 	if r.RawBytes != r.EmittedBytes {
@@ -78,7 +78,7 @@ func TestRun_BatchCommandHoldsBufferUntilExit(t *testing.T) {
 	if !strings.Contains(out.String(), "8 packages ok, 2 without tests") {
 		t.Fatalf("expected summary to count ok and no-test packages: %s", out.String())
 	}
-	if !strings.Contains(out.String(), "[downshift exec: compacted") {
+	if !strings.Contains(out.String(), "[downshift compact: compacted") {
 		t.Fatalf("expected compaction marker: %s", out.String())
 	}
 	if errb.Len() != 0 {

@@ -200,6 +200,10 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 	}
 
 	tier, cls, nbUp, nbDown := classifyTask(prompt)
+	if economyEnv() && cls.Confident && !cls.RiskFloor && len(RiskCategories(prompt)) == 0 && tier > TierSmall {
+		tier--
+		cls.Complexity = complexityForTier(tier)
+	}
 	effort := EffortFor(tier)
 	recommended := resolveModel(harness, tier, res)
 	verdict, savings, current := compareToCurrentModel(harness, currentModelID, recommended, res)

@@ -8,7 +8,7 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 
 1. **Zero External Runtime**: Written purely in Go, with zero Python, Rust, Node, network or LLM dependencies. `context enable` persiste o provider nativo e o contrato de exit code. O PostToolUse do Claude Code grava `CompressExit` em modo observe, com o exit code real, só quando essa flag está ligada. O hook não substitui a saída da ferramenta e não comprime prompt.
 2. **Fowler Harness Taxonomy (Guia vs. Sensor)**:
-   - **Guia (Execution / Transformation)**: Canal ativo de reescrita e execução opt-in (`downshift exec`, `internal/execwrap`). Intervém apenas em comandos estritamente allowlistados (`go test`, `pytest`, `vitest`, `jest`, `playwright`, `cypress run`, `next build`, `phpunit`, `cargo test`, `tsc`, `git status`) quando habilitado pelo usuário.
+   - **Guia (Execution / Transformation)**: Canal ativo de reescrita e execução opt-in (`downshift compact`, `internal/execwrap`). Intervém apenas em comandos estritamente allowlistados (`go test`, `pytest`, `vitest`, `jest`, `playwright`, `cypress run`, `next build`, `phpunit`, `cargo test`, `tsc`, `git status`) quando habilitado pelo usuário.
    - **Sensor (Observability)**: Canal puramente passivo (`internal/sensor`, `PostToolUse`). Registra apenas agregados de bytes, classificações de formato e contadores de execução. Nunca altera a saída e nunca persiste comandos.
 3. **Clean Code, SRP & Dependency Rule**: O `internal/compressor` é uma biblioteca pura (leaf package) sem dependências externas ou conhecimento de harnesses. O `sensor` observa métricas sem executar comandos; o `execwrap` orquestra subprocessos e gates de buffer sem alterar regras de negócio de harnesses.
 4. **Deterministic & Fail-Open**: Compacta sucesso repetido só com exit code 0. **Preserva erro, stack trace, exit diferente de zero, linha que não seja `ok`/`passed`, busca, lista de arquivos e `git log`.**
@@ -115,8 +115,8 @@ downshift context doctor
 # Reativar o compressor nativo se tiver sido desativado
 downshift context enable
 
-# Desativar a qualquer momento (opt-out persistido)
-downshift context disable
+# Desativar um companion registrado (o compressor nativo fica sempre ligado)
+downshift context disable headroom
 
 # Processar saída de ferramentas via stdin. Sem --exit 0, safe preserva a entrada.
 cat verbose_test_output.txt | downshift context compress safe --exit 0
@@ -184,6 +184,6 @@ Para suportar suítes modernas como `pytest`, `vitest`, `playwright`, `cargo tes
 
 ### Fullstack (Experiência do Desenvolvedor e Integração)
 - **Zero-Dependency Runtime**: Executado inteiramente no binário compilado em Go, sem exigir bibliotecas Python (`pytest-json-report`), pacotes npm (`vitest-custom-reporter`, reporters customizados do Playwright) ou crates adicionais do Rust.
-- **Transparência de Compactação**: Adição padronizada do marcador `[downshift exec: compacted N to M bytes]` ao final da saída, permitindo ao desenvolvedor e ao LLM saberem exatamente que a visualização foi resumida de forma segura.
+- **Transparência de Compactação**: Adição padronizada do marcador `[downshift compact: compacted N to M bytes]` ao final da saída, permitindo ao desenvolvedor e ao LLM saberem exatamente que a visualização foi resumida de forma segura.
 - **Kill-Switch Imediato**: Suporte a desligamento sem reinicialização de daemon via flag `--no-compact` ou variável de ambiente `DOWNSHIFT_EXEC=0`.
 

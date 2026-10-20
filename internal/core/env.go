@@ -87,6 +87,9 @@ const (
 	// the opinion is still computed and recorded (shadow mode) but routing is
 	// unchanged.
 	NBDownshiftEnv = "DOWNSHIFT_NB_DOWNSHIFT"
+	// ModeEnv selects the routing mode. "economy" lowers the tier of a confident,
+	// risk-free task by one step; anything else (default) is performance.
+	ModeEnv = "DOWNSHIFT_MODE"
 	// ScoreRoutingEnv makes the capability pick live. Default off (shadow only).
 	ScoreRoutingEnv = "DOWNSHIFT_SCORE_ROUTING"
 )
@@ -122,6 +125,9 @@ type Config struct {
 	NBUpshift bool
 	// NBDownshift is DOWNSHIFT_NB_DOWNSHIFT == "1".
 	NBDownshift bool
+	// Economy is DOWNSHIFT_MODE == "economy": lower the tier of a confident,
+	// risk-free task by one step. Guardrails still apply after the change.
+	Economy bool
 	// ScoreRouting is DOWNSHIFT_SCORE_ROUTING == "1".
 	ScoreRouting bool
 	// NativeSessionPaths holds the value of every HarnessCapabilities.
@@ -145,6 +151,7 @@ func ConfigFromEnv(getenv func(string) string) Config {
 		DiscoveryTTLInvalid: sc.DiscoveryTTLInvalid,
 		NBUpshift:           getenv(NBUpshiftEnv) == "1",
 		NBDownshift:         getenv(NBDownshiftEnv) == "1",
+		Economy:             economyFrom(getenv),
 		ScoreRouting:        getenv(ScoreRoutingEnv) == "1",
 	}
 	for _, n := range AllHarnessCaps() {
@@ -217,6 +224,7 @@ func discoveryOff() bool       { return config().DiscoveryOff }
 func discoveredEnv() string    { return config().DiscoveredPath }
 func nbUpshiftEnv() bool       { return config().NBUpshift }
 func nbDownshiftEnv() bool     { return config().NBDownshift }
+func economyEnv() bool         { return config().Economy }
 func scoreRoutingEnv() bool    { return config().ScoreRouting }
 
 // nativeSessionPathEnv returns the path held by the named native-export

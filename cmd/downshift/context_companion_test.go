@@ -100,12 +100,12 @@ func TestContext_CompanionRecordedByDefaultWhenDetected(t *testing.T) {
 	if rc != 0 {
 		t.Fatal("enable headroom")
 	}
-	rc, _, _ = run(t, "disable")
+	rc, _, _ = run(t, "disable", "headroom")
 	if rc != 0 {
-		t.Fatal("disable")
+		t.Fatal("disable headroom")
 	}
 	cfg, _ = contextopt.LoadConfig()
-	if cfg.Enabled || cfg.Companion != "" {
+	if cfg.Companion != "" {
 		t.Fatalf("plain disable clears everything, got %+v", cfg)
 	}
 }

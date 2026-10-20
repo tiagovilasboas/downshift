@@ -103,19 +103,14 @@ type Config struct {
 	// It cannot replace the tool result the model sees, and it does not
 	// compress prompts.
 	ExitCodeContract string `json:"exit_code_contract,omitempty"`
-	// Exec turns the shell wrapper on or off: the PreToolUse hook rewrites an
-	// allowlisted shell command to `downshift exec -- <argv>` (see
-	// internal/execwrap). Absent means on, so a config written before this key
-	// existed gets the wrapper too; an explicit false turns it off. It applies
-	// only while Enabled is true, and DOWNSHIFT_EXEC=0 overrides it.
+	// Exec is the one file switch for the compact wrapper. Absent or true means
+	// on; an explicit false turns it off. There is no CLI command for it, and
+	// DOWNSHIFT_EXEC=0 still overrides both.
 	Exec *bool `json:"exec,omitempty"`
 }
 
-// ExecOn reports whether the shell wrapper is on: absent or true.
+// ExecOn reports whether the compact wrapper is on: absent or true.
 func (c Config) ExecOn() bool { return c.Exec == nil || *c.Exec }
-
-// SetExec stores an explicit on or off, so the choice is kept in the file.
-func (c *Config) SetExec(on bool) { c.Exec = &on }
 
 // ExitCodeContractObserve is the rule Configure persists for the native provider.
 const ExitCodeContractObserve = "observe_only;nonzero_exit_preserved;hook_cannot_replace_tool_output"
