@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "revision": 1,
+  "release_stage": "candidate",
+  "tuning_policy": "manual_promotion_after_reviewed_holdout_evals",
+  "domains": [
+    {
+      "domain": "frontend",
+      "rules": [
+        {
+          "id": "fe-hydration-debug",
+          "pattern": "\\b(?:debug|investigat\\w*|corrig\\w*|depur\\w*|fix)\\b.{0,80}\\b(?:hydration mismatch|hidrata[cç][aã]o|lcp|cls|inp|web vitals)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "fe-component-integration",
+          "pattern": "\\b(?:integrat\\w*|integrar|integre|connect|conectar|sincroniz\\w*)\\b.{0,80}\\b(?:react|vue|angular|front.?end|ui|component|componente)\\b.{0,60}\\b(?:api|state|estado|backend|back.?end)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "fe-design-system-migration",
+          "pattern": "\\b(?:migrat\\w*|migrar|redesign|redesenh\\w*|rebuild|reconstru\\w*)\\b.{0,100}\\b(?:design system|micro.frontends?|server components?|rendering architecture|arquitetura de renderiza[cç][aã]o)\\b",
+          "complexity": "COMPLEX",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "domain": "backend",
+      "rules": [
+        {
+          "id": "be-pagination-endpoint",
+          "pattern": "\\b(?:implement\\w*|implementar|implemente|add|adicion\\w*|criar|crie)\\b.{0,80}\\b(?:cursor pagination|pagina[cç][aã]o|rate limiting|endpoint pagination|paginat\\w*)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "be-query-profiling",
+          "pattern": "\\b(?:debug|investigat\\w*|diagnos\\w*|corrig\\w*|fix|optimis\\w*|optimiz\\w*|otimiz\\w*)\\b.{0,80}\\b(?:n\\+1|slow quer\\w*|consulta lenta|query plan|execution plan|plano de execu[cç][aã]o)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "be-consistency-design",
+          "pattern": "\\b(?:design|projet\\w*|desenh\\w*|implement\\w*|implementar)\\b.{0,100}\\b(?:transactional outbox|saga pattern|exactly.once|eventual consistency|consist[eê]ncia eventual|distributed transaction|transa[cç][aã]o distribu)\\w*",
+          "complexity": "COMPLEX",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "domain": "fullstack",
+      "rules": [
+        {
+          "id": "fs-api-ui-feature",
+          "pattern": "\\b(?:implement\\w*|implementar|constru\\w*|build|integrat\\w*|integrar)\\b.{0,100}\\b(?:ui|frontend|front.?end|interface|tela)\\b.{0,100}\\b(?:backend|back.?end|api|database|banco de dados)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "fs-end-to-end-feature",
+          "pattern": "\\b(?:feature|funcionalidade)\\b.{0,70}\\b(?:end.to.end|ponta a ponta|front.?end.{0,30}back.?end|api.{0,30}ui)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "fs-coordinated-rollout",
+          "pattern": "\\b(?:coordinate|coorden\\w*|orchestr\\w*|orquestr\\w*|plan|planej\\w*)\\b.{0,80}\\b(?:rollout|deploy|implant\\w*|lan[cç]amento)\\b.{0,100}\\b(?:schema|database|banco de dados)\\b.{0,100}\\b(?:frontend|front.?end|client|clientes)\\b",
+          "complexity": "COMPLEX",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "domain": "devops",
+      "rules": [
+        {
+          "id": "ops-crashloop-debug",
+          "pattern": "\\b(?:debug|investigat\\w*|troubleshoot|diagnos\\w*|corrig\\w*|fix)\\b.{0,80}\\b(?:crashloopbackoff|oomkilled|pod eviction|evic[cç][aã]o de pods|kubernetes scheduling)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "ops-helm-automation",
+          "pattern": "\\b(?:automate|automatiz\\w*|implement\\w*|implementar)\\b.{0,80}\\b(?:helm chart|terraform module|m[oó]dulo terraform|kubernetes operator)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "ops-multi-region-recovery",
+          "pattern": "\\b(?:design|projet\\w*|implement\\w*|implementar|rearchitect|re.?arquitet\\w*)\\b.{0,100}\\b(?:disaster recovery|recupera[cç][aã]o de desastres|multi.region failover|failover multirregional|active.active)\\b",
+          "complexity": "COMPLEX",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "domain": "finops",
+      "rules": [
+        {
+          "id": "finops-anomaly-investigation",
+          "pattern": "\\b(?:investigat\\w*|analis\\w*|analy[sz]\\w*|diagnos\\w*)\\b.{0,90}\\b(?:cloud cost anomal\\w*|anomalia de custos?|unexpected spend|gasto inesperado|egress cost|custo de egress)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "finops-rightsizing-plan",
+          "pattern": "\\b(?:optimiz\\w*|optimis\\w*|otimiz\\w*|rightsiz\\w*|dimension\\w*)\\b.{0,90}\\b(?:cloud cost|custos? de nuvem|compute spend|reserved instances|inst[aâ]ncias reservadas|savings plans?)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "finops-chargeback-design",
+          "pattern": "\\b(?:design|projet\\w*|implement\\w*|implementar|architect\\w*|arquitet\\w*)\\b.{0,100}\\b(?:multi.account chargeback|rateio de custos entre contas|showback model|cost allocation across accounts|aloca[cç][aã]o de custos entre contas)\\b",
+          "complexity": "COMPLEX",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "domain": "devsecops",
+      "rules": [
+        {
+          "id": "sec-sast-triage",
+          "pattern": "\\b(?:triage|investigat\\w*|corrig\\w*|remediat\\w*|remedi\\w*|fix)\\b.{0,100}\\b(?:sast|dast|dependency scanning|varredura de depend[eê]ncias|secret scanning|scan de segredos)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "sec-supply-chain-hardening",
+          "pattern": "\\b(?:implement\\w*|implementar|harden|hardening|endurec\\w*|proteger)\\b.{0,100}\\b(?:slsa|sbom|provenance attestations?|atestados? de proveni[eê]ncia|sigstore|cosign)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "sec-threat-model-design",
+          "pattern": "\\b(?:design|projet\\w*|create|criar|implementar|implement\\w*)\\b.{0,100}\\b(?:threat model|modelo de amea[cç]as|zero trust architecture|arquitetura zero trust|trust boundar\\w*|fronteiras? de confian[cç]a)\\b",
+          "complexity": "COMPLEX",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "domain": "mobile",
+      "rules": [
+        {
+          "id": "mob-deep-link-integration",
+          "pattern": "\\b(?:implement\\w*|implementar|integrat\\w*|integrar|configur\\w*)\\b.{0,90}\\b(?:deep links?|universal links?|app links?|navega[cç][aã]o profunda)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "mob-anr-crash-debug",
+          "pattern": "\\b(?:debug|investigat\\w*|diagnos\\w*|corrig\\w*|fix)\\b.{0,90}\\b(?:android anr|anr|ios crash|app crash|crash no aplicativo|memory pressure)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "mob-offline-conflict-design",
+          "pattern": "\\b(?:design|projet\\w*|implement\\w*|implementar|redesign|redesenh\\w*)\\b.{0,100}\\b(?:offline.first sync|offline sync conflict|conflict resolution offline|resolu[cç][aã]o de conflitos offline|cross.device state replication)\\b",
+          "complexity": "COMPLEX",
+          "weight": 3
+        }
+      ]
+    },
+    {
+      "domain": "cicd",
+      "rules": [
+        {
+          "id": "ci-flaky-test-repair",
+          "pattern": "\\b(?:fix|corrig\\w*|investigat\\w*|debug|diagnos\\w*)\\b.{0,80}\\b(?:flaky tests?|testes? intermitentes?|pipeline flak\\w*|instabilidade do pipeline)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "ci-build-matrix",
+          "pattern": "\\b(?:implement\\w*|implementar|build|criar|crie|configur\\w*)\\b.{0,80}\\b(?:build matrix|matriz de builds?|test matrix|matriz de testes?|parallel jobs|jobs paralelos)\\b",
+          "complexity": "MEDIUM",
+          "weight": 2
+        },
+        {
+          "id": "ci-progressive-delivery",
+          "pattern": "\\b(?:design|projet\\w*|implement\\w*|implementar|orchestrat\\w*|orquestr\\w*)\\b.{0,100}\\b(?:progressive delivery|canary rollout|blue.green deployment|automated rollback|rollback autom[aá]tico|deploy progressivo)\\b",
+          "complexity": "COMPLEX",
+          "weight": 3
+        }
+      ]
+    }
+  ]
+}
