@@ -5,7 +5,7 @@ diff --git a/mods/savvy-progress/.claude-plugin/plugin.json b/mods/savvy-progres
  {
    "name": "savvy-progress",
 -  "version": "1.2.1",
-+  "version": "1.2.7",
++  "version": "1.2.8",
    "description": "Progress bar above the prompt for /savvy-flow, plus an agents panel (/agents-info): running, finished and planned subagents with model, task progress, context, cost and time.",
    "author": {
      "name": "johnnyvizz",
@@ -197,7 +197,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  const fmtTime = (ms: number): string => {
    const s = Math.max(0, Math.round(ms / 1000))
    const h = Math.floor(s / 3600)
-@@ -469,6 +497,15 @@ const fmtTime = (ms: number): string => {
+@@ -469,6 +497,19 @@ const fmtTime = (ms: number): string => {
  
  const elapsed = (a: AgentRun, at: number): number => (a.endedAt ?? Math.max(at, a.startedAt)) - a.startedAt
  
@@ -210,10 +210,14 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +  return finished.filter(a => at - (finishedSeenAt.get(a.id) ?? at) < FINISHED_SHOW_MS)
 +}
 +
++// The live clock the panel and the band share: the stored `now` only ticks while an agent runs, so it would freeze after the last finish.
++const liveNow = async ($: EngineInterface, list: AgentRun[]): Promise<number> =>
++  Math.max(await Promise.resolve($.clock.now()).catch(() => 0), ...list.map(a => a.startedAt), 0)
++
  type Planned = PlannedTask & { n: number }
  
  const plannedOf = (f: Flow | null, list: AgentRun[]): Planned[] => {
-@@ -509,25 +546,24 @@ const PANE_CSS = `<style>
+@@ -509,25 +550,24 @@ const PANE_CSS = `<style>
  @media (prefers-reduced-motion: reduce){.live{animation:none}}
  </style>`
  
@@ -251,7 +255,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    f(7, 22, 2, 4, CLAY, 'la')
    f(17, 22, 2, 4, CLAY, 'la')
    f(11, 22, 2, 4, CLAY, 'lb')
-@@ -535,106 +571,36 @@ const crabBody = (f: Fill, armFront = 0, armCls?: string): void => {
+@@ -535,106 +575,36 @@ const crabBody = (f: Fill, armFront = 0, armCls?: string): void => {
  }
  
  // Pure CSS, run by the compositor: no redraws. Periods divide one second, so the
@@ -364,7 +368,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    if (status === 'failed') return `<path d="M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8" stroke="#D0453F" stroke-width="1.8" stroke-linecap="round"/>`
    return `<circle cx="${x}" cy="${y}" r="5" fill="none" stroke="#9a9a96" stroke-width="1.4"/><path d="M${x} ${y - 2.5}v2.8l1.8 1.2" fill="none" stroke="#9a9a96" stroke-width="1.4" stroke-linecap="round"/>`
  }
-@@ -658,8 +624,8 @@ const endText = (W: number, x: number, y: number, words = false): string =>
+@@ -658,8 +628,8 @@ const endText = (W: number, x: number, y: number, words = false): string =>
  const crabWidth = (scale: number): number => Math.round(CRAB_BOX * scale * 100) / 100
  
  // A panel crab at x in a row of width W: on the mirrored side and facing left in Hebrew.
@@ -375,7 +379,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
  const svg = (W: number, H: number, body: string): string =>
    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${PANE_CSS}${CRAB_CSS}${body}</svg>`
-@@ -668,7 +634,9 @@ const svg = (W: number, H: number, body: string): string =>
+@@ -668,7 +638,9 @@ const svg = (W: number, H: number, body: string): string =>
  const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): string => {
    const s = tr()
    const gap = 6
@@ -386,7 +390,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    const top = title ? 28 : 0
    const tile = (i: number, k: string, v: string) =>
      `<rect class="tile" x="${mx(W, i * (tw + gap), tw)}" y="${top}" width="${tw}" height="40" rx="8"/>
-@@ -678,7 +646,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
+@@ -678,7 +650,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
      W,
      headerHeight(title),
      `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
@@ -395,7 +399,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    )
  }
  
-@@ -700,11 +668,13 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
+@@ -700,11 +672,13 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
    const ctx = ctxOf(a)
    const textW = W - 42 - 22
    const meta = [runModel(a)]
@@ -410,7 +414,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    const steps = a.stepTotal ? `${a.stepDone ?? 0}/${a.stepTotal}${a.stepNote ? ' · ' + a.stepNote : ''}` : ''
    const stepsW = Math.max(0, barW - textWidth(stats, 11) - 12)
    // Without reported steps the bar falls back to the context, drawn grey.
-@@ -712,7 +682,7 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
+@@ -712,7 +686,7 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
    return svg(
      W,
      66,
@@ -419,7 +423,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  <text class="t" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(a.description || a.type, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tier === 'other' ? a.type : tierWord(tier))}</tspan><tspan class="s">  ${xml(meta.join('  ·  '))}</tspan></text>
  ${steps && stepsW > 30 ? `<text class="t" ${startText(W, 42, 49)} font-family="${FONT}" font-size="11" font-variant-numeric="tabular-nums">${xml(fitText(steps, 11, stepsW))}</text>` : ''}
-@@ -732,7 +702,7 @@ const plannedSvg = (W: number, p: Planned): string => {
+@@ -732,7 +706,7 @@ const plannedSvg = (W: number, p: Planned): string => {
    return svg(
      W,
      46,
@@ -428,7 +432,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  <text class="s" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(`${p.n}. ${p.title}`, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tierWord(tier))}</tspan><tspan class="m">  ${xml(meta.filter(Boolean).join('  ·  '))}</tspan></text>
  ${statusMark(mx(W, W - 8), 16, 'planned', color)}
-@@ -742,22 +712,22 @@ ${statusMark(mx(W, W - 8), 16, 'planned', color)}
+@@ -742,22 +716,22 @@ ${statusMark(mx(W, W - 8), 16, 'planned', color)}
  
  const compactSvg = (W: number, list: AgentRun[], planned: Planned[], t: ReturnType<typeof totals>): string => {
    const icons = [
@@ -456,7 +460,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    )
  }
  
-@@ -790,6 +760,135 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
+@@ -790,6 +764,135 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
    void $.ui.open({ id: PANE, title: tr().pane })
  }
  
@@ -592,7 +596,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  export const register: Register = (on, options) => {
    on('session.start', async ($, e, next) => {
      const started = await next(e)
-@@ -948,6 +1047,12 @@ export const register: Register = (on, options) => {
+@@ -948,6 +1051,12 @@ export const register: Register = (on, options) => {
        return [...list.filter(a => a.id !== run.id), run].slice(-200)
      })
      await update($, now, () => at)
@@ -605,7 +609,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (e.subagentType.startsWith('savvy-')) {
        const f = await read($, flow)
        await autoOpen($, f && !f.isFinished ? f.title : 'savvy-flow')
-@@ -998,6 +1103,7 @@ export const register: Register = (on, options) => {
+@@ -998,6 +1107,7 @@ export const register: Register = (on, options) => {
    on('turn.complete', async ($, e, next) => {
      const agentId = e.agentId
      if (agentId) {
@@ -613,7 +617,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
        const at = await $.clock.now()
        await update($, agents, list =>
          list.map((a): AgentRun => {
-@@ -1031,15 +1137,18 @@ export const register: Register = (on, options) => {
+@@ -1031,15 +1141,17 @@ export const register: Register = (on, options) => {
      const s = tr()
      const ui = $.ui.resolve(e)
      const { Box, Text, Button } = ui
@@ -622,8 +626,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      const f = await read($, flow)
      const p: Panel = await read($, panel)
 -    const at = Math.max(await read($, now), ...list.map(a => a.startedAt), 0)
-+    // The live clock: the stored `now` only ticks while an agent runs, so it would freeze after the last finish.
-+    const at = Math.max(await Promise.resolve($.clock.now()).catch(() => 0), ...list.map(a => a.startedAt), 0)
++    const at = await liveNow($, list)
  
      const running = list.filter(a => a.status === 'running').reverse()
      const finished = list.filter(a => a.status !== 'running').reverse()
@@ -633,7 +636,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      // The pane's title says "Agents"; inside, only the flow's own name.
      const title = f && !f.isFinished ? f.title : ''
  
-@@ -1060,7 +1169,7 @@ export const register: Register = (on, options) => {
+@@ -1060,7 +1172,7 @@ export const register: Register = (on, options) => {
        />
      )
      const isEmpty = list.length === 0 && planned.length === 0
@@ -642,7 +645,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
      if (e.surface === 'desktop' && 'Svg' in ui) {
        const { Svg } = ui
-@@ -1081,7 +1190,7 @@ export const register: Register = (on, options) => {
+@@ -1081,7 +1193,7 @@ export const register: Register = (on, options) => {
            </Box>
          )
        }
@@ -651,7 +654,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
        const lines = 1 + (isEmpty ? 1 : 0) + (running.length > 0 ? 1 : 0) + (finished.length > 0 ? 1 : 0) + (planned.length > 0 ? 1 : 0)
        const gridH = headerHeight(title) + lines * LINE_H + (running.length + shownDone) * 66 + planned.length * 46
        return (
-@@ -1093,6 +1202,7 @@ export const register: Register = (on, options) => {
+@@ -1093,6 +1205,7 @@ export const register: Register = (on, options) => {
            ))}
            <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
              <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
@@ -659,7 +662,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {toggleCompact}
              {isEmpty && <Text dimColor>{s.empty}</Text>}
              {running.length > 0 && section('h-run', `${s.running} · ${running.length}`)}
-@@ -1101,7 +1211,7 @@ export const register: Register = (on, options) => {
+@@ -1101,7 +1214,7 @@ export const register: Register = (on, options) => {
              ))}
              {finished.length > 0 && toggleDone}
              {!p.isDoneCollapsed &&
@@ -668,7 +671,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
                  <Svg key={a.id} source={agentSvg(W, a, at)} alt={`${a.description}: ${modelName(a.model)}, ${s.isFinished}`} width={W} height={66} />
                ))}
              {planned.length > 0 && section('h-plan', `${s.planned} · ${planned.length}`)}
-@@ -1135,6 +1245,7 @@ export const register: Register = (on, options) => {
+@@ -1135,6 +1248,7 @@ export const register: Register = (on, options) => {
            <Text dimColor wrap="truncate-end">
              {'  '}
              {tier === 'other' ? a.type : tierWord(tier)} · {model}
@@ -676,7 +679,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
            </Text>
            <Text wrap="truncate-end">
-@@ -1142,7 +1253,7 @@ export const register: Register = (on, options) => {
+@@ -1142,7 +1256,7 @@ export const register: Register = (on, options) => {
              {progress === null ? <Text dimColor>{ctxBar(ctx, barW)}</Text> : <Text color={color}>{ctxBar(progress * 100, barW)}</Text>}
              <Text dimColor>
                {' '}
@@ -685,7 +688,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              </Text>
            </Text>
          </Box>
-@@ -1158,11 +1269,12 @@ export const register: Register = (on, options) => {
+@@ -1158,11 +1272,12 @@ export const register: Register = (on, options) => {
            {toggleCompact}
          </Box>
          <Text dimColor>
@@ -700,7 +703,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
                <Text key={a.id} color={colorOf(tierOf(a.type))}>
                  {STATUS_GLYPH[a.status]}{' '}
                </Text>
-@@ -1179,7 +1291,7 @@ export const register: Register = (on, options) => {
+@@ -1179,7 +1294,7 @@ export const register: Register = (on, options) => {
              {running.length > 0 && <Text dimColor>{s.running} · {running.length}</Text>}
              {running.map(row)}
              {finished.length > 0 && toggleDone}
@@ -709,7 +712,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {planned.length > 0 && <Text dimColor>{s.planned} · {planned.length}</Text>}
              {planned.map(pl => {
                const tier = pl.tier in TIER_COLOR ? pl.tier : 'other'
-@@ -1203,7 +1315,18 @@ export const register: Register = (on, options) => {
+@@ -1203,7 +1318,18 @@ export const register: Register = (on, options) => {
    })
  
    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -729,7 +732,21 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (f === null || e.props.hasSurvey) return next(e)
      // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
      // never nested: the desktop drops a band that nests it.
-@@ -1225,7 +1348,12 @@ export const register: Register = (on, options) => {
+@@ -1213,7 +1339,12 @@ export const register: Register = (on, options) => {
+     const ui = $.ui.resolve(e)
+     const { Box, Text, Button } = ui
+     const list = await read($, agents)
+-    const crew = list.length + plannedOf(f, list).length
++    // The same agents the panel lists: running, finished within FINISHED_SHOW_MS (same filter, same clock), and planned.
++    const at = await liveNow($, list)
++    const crew =
++      list.filter(a => a.status === 'running').length +
++      shownFinished(list.filter(a => a.status !== 'running'), at).length +
++      plannedOf(f, list).length
+     const isWorking = list.some(a => a.status === 'running')
+     const crewButton = (
+       <Button key="savvy-agents" label={`×${crew}`} plain onPress={() => void togglePane($)} />
+@@ -1225,7 +1356,12 @@ export const register: Register = (on, options) => {
          label="✕"
          plain
          role="dismiss"
@@ -743,7 +760,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
        />
      )
  
-@@ -1237,11 +1365,14 @@ export const register: Register = (on, options) => {
+@@ -1237,11 +1373,14 @@ export const register: Register = (on, options) => {
        const width = Math.max(180, Math.min(1600, (e.props.bodyColumns || 100) * 8 - 96))
        return (
          <Box flexDirection="column">
@@ -761,7 +778,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
            {below}
          </Box>
        )
-@@ -1252,18 +1383,21 @@ export const register: Register = (on, options) => {
+@@ -1252,18 +1391,21 @@ export const register: Register = (on, options) => {
      const width = Math.max(6, Math.min(40, cols - titleW - 32))
      return (
        <Box flexDirection="column">
