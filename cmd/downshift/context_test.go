@@ -182,3 +182,46 @@ func TestRunContext_UnknownSubcommand(t *testing.T) {
 		t.Errorf("expected rc 2 for unknown subcommand, got %d", rc)
 	}
 }
+
+// The status line follows the same switches the hook honors: it must not say
+// "Compact: on" when the config says "exec": false or DOWNSHIFT_EXEC=0.
+func TestRunContext_StatusReportsCompactSwitches(t *testing.T) {
+	status := func(t *testing.T) string {
+		t.Helper()
+		var out, errOut bytes.Buffer
+		if rc := runContext([]string{"status"}, &out, &errOut); rc != 0 {
+			t.Fatalf("rc %d: %s", rc, errOut.String())
+		}
+		return out.String()
+	}
+	t.Run("on by default", func(t *testing.T) {
+		t.Setenv(paths.EnvStateDir, t.TempDir())
+		t.Setenv(execEnvKillSwitch, "")
+		if out := status(t); !strings.Contains(out, "Compact: on") {
+			t.Errorf("want Compact: on:\n%s", out)
+		}
+	})
+	t.Run("config exec false", func(t *testing.T) {
+		t.Setenv(paths.EnvStateDir, t.TempDir())
+		t.Setenv(execEnvKillSwitch, "")
+		cfg, err := contextopt.LoadConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+		off := false
+		cfg.Exec = &off
+		if err := contextopt.SaveConfig(cfg); err != nil {
+			t.Fatal(err)
+		}
+		if out := status(t); !strings.Contains(out, "Compact: off") || strings.Contains(out, "Compact: on") {
+			t.Errorf("want Compact: off:\n%s", out)
+		}
+	})
+	t.Run("environment kill switch", func(t *testing.T) {
+		t.Setenv(paths.EnvStateDir, t.TempDir())
+		t.Setenv(execEnvKillSwitch, "0")
+		if out := status(t); !strings.Contains(out, "Compact: off") {
+			t.Errorf("want Compact: off:\n%s", out)
+		}
+	})
+}
