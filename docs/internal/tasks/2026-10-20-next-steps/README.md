@@ -15,9 +15,9 @@ the owner before code.
 Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 
 - [x] Part 3: `stats --export` drops `*_usd`. **Decision:** operator contract (issue #104). Bump the export version, update `docs/reference/stats-export.md`, adjust `simbench` invariants. (Done: schema v2, `*_usd` omitted, simbench invariants updated).
-- [ ] Part 4: event log stops writing `actual_cost_usd` / `baseline_cost_usd`; summaries move to tokens. Keeps reading old lines. **Decision:** changes accounting history.
+- [x] Part 4: event log stops writing `actual_cost_usd` / `baseline_cost_usd`; summaries move to tokens. Keeps reading old lines. **Decision:** changes accounting history.
 - [ ] Part 5: remove catalog-price valuation (`RepriceUsage`) from report and stats. Routing keeps the catalog.
-- [ ] Open question from the JSON change: the price date no longer appears in the report. Confirm that is acceptable.
+- [x] Open question from the JSON change: the price date no longer appears in the report. Decided (2026-10-20): the report is tokens only; the catalog date stays in `downshift doctor` ("prices as of"), not in report output.
 
 ## 2. Use it on this machine
 
@@ -31,13 +31,13 @@ Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 
 - [ ] Finished agents stay in the band until the next batch, with `N done` (#274). Check in a real session.
 - [ ] One band (#277): running count, mode, compact and DCI chips, Files and Agents buttons. Check the running count against a real run; the test mock does not cover it.
-- [ ] Decide whether to hide the separate savvy-progress band now that the dock shows the count. **Decision.**
+- [ ] Savvy-progress band: kept for now (2026-10-20). The mod documents the band fallback as an owner-requested behaviour, so removing it is a change to that request, not a cleanup. Revisit after the dock has been used for a few sessions.
 
 ## 4. Economy mode (merged, off by default)
 
 - [x] Measure economy against performance with `downshift replay --policies current,economy`. Last run: economy moves 80 more decisions to a cheaper tier. Quality is not measured. (Done: 370.4M vs 59.7M cheaper tokens over 282 spawns).
-- [ ] Needs quality labels. `downshift feedback stats` has 974 pending and 0 labelled for claude-code. **Decision:** who labels, and on which cases (the 19 moved cases are the first set).
-- [ ] Only then decide whether economy becomes the default. **Decision.**
+- [ ] Economy stays off by default (2026-10-20). Needs quality labels first. `downshift feedback stats` has 974 pending and 0 labelled for claude-code. **Decision:** who labels, and on which cases (the 19 moved cases are the first set).
+- [ ] Economy as default: no. Revisit only after labels exist.
 
 ## 5. Compact
 
