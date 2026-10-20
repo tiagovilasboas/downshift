@@ -342,6 +342,12 @@ func TestCompress_Pytest_ClosedGrammarPreservesRaw(t *testing.T) {
 		{"rootdir without a path", header + "rootdir: FAILED\n" + summary},
 		{"summary with trailing space", header + "tests/test_a.py ..........\n=============================== 10 passed in 0.42s =============================== \n"},
 		{"summary with trailing tab", header + "tests/test_a.py ..........\n=============================== 10 passed in 0.42s ===============================\t\n"},
+		{"summary time with a failure suffix", header + "tests/test_a.py ..........\n=== 10 passed in 0.42s - 1 failed ===\n"},
+		{"summary time not a number", header + "tests/test_a.py ..........\n=== 10 passed in FAILED ===\n"},
+		{"configfile value FAILED", header + "configfile: FAILED\n" + summary},
+		{"configfile value with a space", header + "configfile: pytest ini FAILED\n" + summary},
+		{"cachedir value with a space", header + "cachedir: .pytest_cache FAILED\n" + summary},
+		{"platform python version with text", header + "platform darwin -- Python 3.12.3 FAILED, pytest-8.1.1\n" + summary},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

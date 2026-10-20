@@ -14,6 +14,12 @@ import (
 const (
 	// MaxProcessableBytes prevents unbounded memory usage.
 	MaxProcessableBytes = 2 * 1024 * 1024 // 2 MB
+
+	// pytestPathChars is the closed character set of a pytest path value.
+	pytestPathChars = `[A-Za-z0-9_./@+~-]+`
+	// pytestPathValue is a relative or absolute path: the closed set, with at
+	// least one separator or dot, so a bare word such as FAILED is refused.
+	pytestPathValue = `[A-Za-z0-9_@+~-]*[./][A-Za-z0-9_./@+~-]*`
 )
 
 var (
@@ -23,21 +29,23 @@ var (
 	reGitLogCommit      = regexp.MustCompile(`(?m)^commit\s+[0-9a-f]{40}`)
 	reGitStatusHead     = regexp.MustCompile(`(?m)^(?:On branch |HEAD detached at )`)
 	reRipgrepMatch      = regexp.MustCompile(`(?m)^(?:\d+:)?[^:\n]+:\d+:`)
-	rePytestSummary     = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d[^\n=]*?)\s*=+$`)
+	rePytestSummary     = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d+(?:\.\d+)?s) =+$`)
 	rePytestHeader      = regexp.MustCompile(`(?m)^=+\s*test session starts\s*=+`)
 	rePytestFailSummary = regexp.MustCompile(`(?m)^=+\s*.*?(?:failed|error).*?\s+in\s+`)
 	// rePytestPlainLine lists every line shape a clean pytest run emits. A
 	// transcript is compacted only when each line matches one of these shapes
 	// (or is the single passing summary); any other line keeps the output raw.
+	// Path values use one closed character set and no spaces; a value outside
+	// it keeps the whole transcript raw.
 	rePytestPlainLine = regexp.MustCompile(`^(?:` +
 		`|=+ test session starts =+` +
-		`|platform [A-Za-z0-9_.-]+ -- Python [0-9][^\s,]*(?:, (?:pytest|pluggy)-[0-9][^\s,]*)*(?: -- /\S+)?` +
-		`|rootdir: /\S+` +
-		`|configfile: \S+` +
-		`|cachedir: \S+` +
+		`|platform [A-Za-z0-9_.-]+ -- Python [0-9][0-9A-Za-z.+-]*(?:, (?:pytest|pluggy)-[0-9][0-9A-Za-z.+-]*)*(?: -- /` + pytestPathChars + `)?` +
+		`|rootdir: /` + pytestPathChars +
+		`|configfile: ` + pytestPathValue +
+		`|cachedir: ` + pytestPathValue +
 		`|plugins: [A-Za-z0-9_.-]+-[0-9][A-Za-z0-9_.+-]*(?:, [A-Za-z0-9_.-]+-[0-9][A-Za-z0-9_.+-]*)*` +
 		`|collected \d+ items?(?: / \d+ deselected)?` +
-		`|\S+\.py [.s]+(?: +\[ *\d+%\])?` +
+		`|` + pytestPathChars + `\.py [.s]+(?: +\[ *\d+%\])?` +
 		`)$`)
 	reVitestTests       = regexp.MustCompile(`(?m)^\s*Tests\s+(\d+)\s+passed`)
 	reVitestFiles       = regexp.MustCompile(`(?m)^\s*Test Files\s+(\d+)\s+passed`)
