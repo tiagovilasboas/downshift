@@ -86,6 +86,12 @@ Labels: `opus → sonnet (mid)`, `held: original model kept`, `kept`,
 `tool_use` is `telemetry.ToolUseKey(tool_use_id)`: sha256 of
 `harness-downshift-session-v1:` + the harness tool call id.
 
+`observed_model` is optional and per spawn (`telemetry.PanelSpawn`): the model
+the child was observed to run on, taken from its resolved record or else its
+usage record. It is set only when that model is known and differs from
+`to_model`; an equal, dated-equal, unknown or missing observation leaves the key
+out. It holds model ids only, never prompts.
+
 Tokens, never dollars (owner decision 2026-10-19). "Saved" means a child's
 tokens ran on a cheaper model than the one requested (`telemetry.TokenSavings`,
 the same buckets as `stats --export` `tokens_rerouted`); work (input+output)
@@ -117,16 +123,28 @@ the hashed session on the wrapped command (`downshift compact --session=<hash> -
 `exec-events.jsonl`. No wrapped command in the session, or records written before
 this field existed, means no block, never zeros.
 
+The session comes from the hook payload's `session_id`. When that is absent
+(some live Bash payloads carry none), it is the uuid file name of
+`transcript_path`, since Claude Code names each transcript `<uuid>.jsonl`. A
+name that is not a uuid gives no session. `session_id` always wins when present.
+Without a session the command is still wrapped, but the runner logs no session
+hash, so no block appears for it.
+
 ### `mods/savvy-progress`
 
 Vendored, so it is patched only through its documented local patch
 (`mods/savvy-progress/downshift-local.patch`, README section "Downshift local
-patch"). The patch runs `downshift session --panel` and draws a short row
-status plus the tokens that agent moved to a smaller model (`↓58k`, from the
-spawn's `tokens.work_saved` + `cache_saved`) and one line, `Downshift · N switched · M held`,
-in the panel and the band; `tokens_line`, `tokens_label` and `by_agent_type` stay in the
-contract for the CLI but the mod no longer draws them; with no binary or bad output it draws what upstream draws. No routing logic lives
-in the mod.
+patch"; mod version 1.2.6). The patch runs `downshift session --panel` and shows
+two tiles in the panel. The first reads `Downshifted` and draws the tokens that
+ran on a smaller model. A `Compactor` tile, with ↓, draws the bytes the
+Compactor cut in the session, only when the `compactor` block is present. The two
+are never added together: one is measured tokens, the other measured bytes. The
+header and the band show one line, `Downshift · N switched · M held`, and each
+agent row shows a one-word status, ↓ and the tokens that agent moved to a smaller
+model (`work_saved` + `cache_saved`). `tokens_line`, `tokens_label`,
+`by_agent_type` and `observed_model` stay in the contract for the CLI; the mod
+does not draw them. With no binary or bad output it draws what upstream draws. No
+routing logic lives in the mod.
 
 ## What a harness cannot honor
 
