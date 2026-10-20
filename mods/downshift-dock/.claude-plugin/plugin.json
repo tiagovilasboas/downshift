@@ -1,6 +1,6 @@
 {
   "name": "downshift-dock",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A right-aligned band above the prompt: DCI and native compactor status chips, plus icon buttons for the Files (filetree) and Agents (savvy-progress) panels.",
   "types": "./types/index.d.ts",
   "author": {
