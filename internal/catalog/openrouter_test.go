@@ -78,11 +78,11 @@ func TestParseOpenRouterAllowlist_Accepts(t *testing.T) {
 	}
 	want := []Entry{
 		{
-			ID: "deepseek/deepseek-v4.1-flash", Provider: ProviderOpenRouter, Harness: "opencode",
+			ID: "deepseek/deepseek-v4.1-flash", Provider: "openrouter", Harness: "opencode",
 			Tier: "mid", Routing: RoutingShadow, Efforts: []string{"low", "medium"}, ZDR: true,
 		},
 		{
-			ID: "x-ai/grok-x", Provider: ProviderOpenRouter, Harness: "opencode",
+			ID: "x-ai/grok-x", Provider: "openrouter", Harness: "opencode",
 			Tier: "frontier", Routing: RoutingShadow, Efforts: []string{"low", "medium", "high"},
 		},
 	}
@@ -120,7 +120,7 @@ func TestOpenRouterAllowlist_MissingFileIsSilent(t *testing.T) {
 
 func TestOpenRouterAllowlist_ValidFileIsShadowOnly(t *testing.T) {
 	useStateDir(t)
-	writeStateFile(t, paths.OpenRouterAllowlistPath, allowlist(
+	writeStateFile(t, paths.GatewayAllowlistPath, allowlist(
 		`{"id":"x-ai/grok-x","tier":"small","max_effort":"low","zdr":true}`))
 
 	var warn strings.Builder
@@ -157,7 +157,7 @@ func TestOpenRouterAllowlist_BadFileLeavesCatalogUnchanged(t *testing.T) {
 	}
 	for name, body := range bad {
 		t.Run(name, func(t *testing.T) {
-			writeStateFile(t, paths.OpenRouterAllowlistPath, body)
+			writeStateFile(t, paths.GatewayAllowlistPath, body)
 			var warn strings.Builder
 			c := load(&warn)
 			if !strings.Contains(warn.String(), "ignoring it") {
@@ -167,7 +167,7 @@ func TestOpenRouterAllowlist_BadFileLeavesCatalogUnchanged(t *testing.T) {
 				t.Errorf("entries = %d, want the %d embedded ones", len(c.Entries()), len(baseline.Entries()))
 			}
 			for _, e := range c.Entries() {
-				if e.Provider == ProviderOpenRouter {
+				if e.Provider == "openrouter" {
 					t.Errorf("a rejected file added gateway row %+v", e)
 				}
 			}
@@ -184,7 +184,7 @@ func TestOpenRouterAllowlist_IdClashingWithOverrideIsRejected(t *testing.T) {
 	useStateDir(t)
 	writeStateFile(t, paths.CatalogPath, `{"entries":[
 		{"id":"z-ai/glm","harness":"opencode","provider":"openrouter","tier":"mid"}]}`)
-	writeStateFile(t, paths.OpenRouterAllowlistPath, allowlist(
+	writeStateFile(t, paths.GatewayAllowlistPath, allowlist(
 		`{"id":"z-ai/glm","tier":"small","max_effort":"low"}`))
 
 	var warn strings.Builder
@@ -203,7 +203,7 @@ func TestOpenRouterRow_NotAllowlistedIsNeverAutomatic(t *testing.T) {
 	useStateDir(t)
 	writeStateFile(t, paths.CatalogPath, `{"entries":[
 		{"id":"z-ai/glm","harness":"opencode","provider":"openrouter","tier":"mid"}]}`)
-	writeStateFile(t, paths.OpenRouterAllowlistPath, allowlist(
+	writeStateFile(t, paths.GatewayAllowlistPath, allowlist(
 		`{"id":"x-ai/grok-x","tier":"small","max_effort":"low"}`))
 
 	c := load(&strings.Builder{})
@@ -247,7 +247,7 @@ func TestEmbeddedCatalog_HasNoGatewayRows(t *testing.T) {
 		t.Fatalf("decode: %v", err)
 	}
 	for _, e := range f.Entries {
-		if e.Provider == ProviderOpenRouter {
+		if e.Provider == "openrouter" {
 			t.Errorf("embedded catalog ships gateway row %q; gateway rows come from the user allowlist", e.ID)
 		}
 	}

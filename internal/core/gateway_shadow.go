@@ -4,7 +4,7 @@
 package core
 
 // GatewayShadowResolver is an optional Resolver extension. It lists the
-// allowlisted OpenRouter rows, which are shadow-only: they are never an
+// allowlisted gateway rows, which are shadow-only: they are never an
 // automatic target, only a candidate for Decision.Shadow.GatewayWould.
 // Resolvers that do not implement it record no gateway candidate.
 type GatewayShadowResolver interface {
