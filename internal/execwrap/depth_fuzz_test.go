@@ -68,7 +68,7 @@ func TestDecide_ShellSplitsWrappedCommandIntoOriginalWords(t *testing.T) {
 			// `for a in 'x' exec -- ...` form: ok if the shell accepts it.
 			t.Fatalf("sh: %v", err)
 		}
-		want := "[/opt/my dir/downshift][exec][--]"
+		want := "[/opt/my dir/downshift][compact][--]"
 		for _, w := range strings.Fields(c) {
 			want += "[" + w + "]"
 		}

@@ -119,13 +119,19 @@ func TestSetupFreshClaudeCode(t *testing.T) {
 	}
 	for event, cmd := range want {
 		got := hookCommands(t, doc, event)
+		if event == "PreToolUse" || event == "PostToolUse" {
+			// Agent|Task spawns and Bash (the exec wrapper) share the handler.
+			if len(got) != 2 || got[0] != cmd || got[1] != cmd {
+				t.Errorf("%s = %v, want [%s, %s]", event, got, cmd, cmd)
+			}
+			continue
+		}
 		if len(got) != 1 || got[0] != cmd {
 			t.Errorf("%s = %v, want [%s]", event, got, cmd)
 		}
 	}
-	pre := doc["hooks"].(map[string]any)["PreToolUse"].([]any)[0].(map[string]any)
-	if pre["matcher"] != "Agent|Task" {
-		t.Errorf("matcher = %v", pre["matcher"])
+	if !hasMatcher(doc, "PreToolUse", "Agent|Task") || !hasMatcher(doc, "PreToolUse", "Bash") {
+		t.Errorf("PreToolUse must carry the Agent|Task and Bash matchers: %v", doc["hooks"].(map[string]any)["PreToolUse"])
 	}
 	sl := doc["statusLine"].(map[string]any)
 	if sl["type"] != "command" || sl["command"] != testBin+" quota claude-statusline" {
@@ -161,7 +167,7 @@ func TestSetupKeepsUnrelatedKeysAndHooks(t *testing.T) {
 		t.Errorf("Stop hook changed: %v", got)
 	}
 	got := hookCommands(t, doc, "PreToolUse")
-	if len(got) != 2 || got[0] != "/usr/local/bin/guard" || got[1] != testBin+" claude-code" {
+	if len(got) != 3 || got[0] != "/usr/local/bin/guard" || got[1] != testBin+" claude-code" || got[2] != testBin+" claude-code" {
 		t.Errorf("PreToolUse = %v", got)
 	}
 	if strings.Index(raw, `"model"`) > strings.Index(raw, `"hooks"`) {
@@ -203,11 +209,11 @@ func TestSetupReplacesStaleBinaryAndOldMatcher(t *testing.T) {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
 	doc := parseDoc(t, e.read(".claude/settings.json"))
-	if got := hookCommands(t, doc, "PreToolUse"); len(got) != 1 || got[0] != testBin+" claude-code" {
+	if got := hookCommands(t, doc, "PreToolUse"); len(got) != 2 || got[0] != testBin+" claude-code" {
 		t.Errorf("PreToolUse = %v", got)
 	}
-	if m := doc["hooks"].(map[string]any)["PreToolUse"].([]any)[0].(map[string]any)["matcher"]; m != "Agent|Task" {
-		t.Errorf("matcher = %v", m)
+	if !hasMatcher(doc, "PreToolUse", "Agent|Task") {
+		t.Errorf("PreToolUse lost its Agent|Task matcher")
 	}
 	if got := hookCommands(t, doc, "SubagentStop"); len(got) != 1 || got[0] != testBin+" claude-code-subagent-stop" {
 		t.Errorf("SubagentStop = %v", got)
@@ -732,4 +738,14 @@ func TestSetupDiscoverModelsGuards(t *testing.T) {
 	if _, err := os.Stat(cacheFile); !os.IsNotExist(err) {
 		t.Fatalf("expected cache file not created when Undo is true")
 	}
+}
+
+// hasMatcher reports whether event carries an entry with the given matcher.
+func hasMatcher(doc map[string]any, event, matcher string) bool {
+	for _, e := range doc["hooks"].(map[string]any)[event].([]any) {
+		if e.(map[string]any)["matcher"] == matcher {
+			return true
+		}
+	}
+	return false
 }
