@@ -184,10 +184,10 @@ func isGradleProgram(p string) bool {
 }
 
 // gradleTaskName is the exact allowlist of task names: the plain tasks, and
-// test, assemble or lint variants of the Debug and Release build types (for
-// example testDebugUnitTest, assembleRelease, lintDebug). Any other suffix,
-// such as testPublish or testDeploy, is not allowlisted.
-var gradleTaskName = regexp.MustCompile(`^(?:build|check|clean|test|assemble|lint|connectedAndroidTest|(?:test|assemble|lint)(?:Debug|Release)[A-Za-z]*)$`)
+// the unit-test, assemble and lint tasks of the Debug and Release build types.
+// Nothing else is allowlisted; there is no open suffix, so names such as
+// testDebugPublish or lintDebugUpload are not wrapped.
+var gradleTaskName = regexp.MustCompile(`^(?:build|check|clean|test|assemble|lint|connectedAndroidTest|testDebugUnitTest|testReleaseUnitTest|assembleDebug|assembleRelease|lintDebug|lintRelease)$`)
 
 // gradleTask reports whether there is at least one positional task and every
 // positional task is allowlisted (build, check, clean, test*, assemble*,
