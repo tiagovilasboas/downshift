@@ -13,7 +13,7 @@ folded into the `downshift` plugin unchanged.
 | | |
 |---|---|
 | Upstream | https://github.com/JohnnyVizz/claude-kit, path `plugins/savvy-progress` |
-| Version | 1.2.1 upstream; shipped here as **1.2.7** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
+| Version | 1.2.1 upstream; shipped here as **1.2.8** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
 | Commit | `c871c153ead54ad9547cc717d0f3e5a676c73986` (2026-10-13) |
 | Files | `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `.claude-plugin/plugin.json` byte-identical except `version` (1.2.3, see below); `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; three of the four `hooks/*.test.ts(x)` files byte-identical (`hooks/cost.test.ts` is gated by `SHOWN_DOLLARS`, see the local patch) (they import nothing by relative path) |
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `savvy-progress`, source `./mods/savvy-progress` |
@@ -26,7 +26,7 @@ white and grey carry the interface, green only as a small accent;
 `docs/brand/downshift-brand-tokens.json`). The only local change to upstream is
 in `hooks/register.tsx`: colours, the shown tier words and one simpler sprite, no
 behaviour; plus the `version` line of `.claude-plugin/plugin.json` (1.2.1 to
-1.2.7, 2026-10-20; 1.2.2 on 2026-10-19 was superseded before the agents panel changes reached the cache). Claude Code keys its plugin cache by that version, so a
+1.2.8, 2026-10-20; 1.2.2 on 2026-10-19 was superseded before the agents panel changes reached the cache). Claude Code keys its plugin cache by that version, so a
 machine that installed 1.2.1 before the colour patch keeps upstream's purple
 `#8f8cf4` until the version changes. The panel's header tile, summary lines and per-agent rows show the tokens Downshift saved in the session (`downshift session --panel`, `work_saved` + `cache_saved`) instead of the estimated dollar cost; the dollar estimate is no longer drawn. The reapplyable diff is [`downshift-local.patch`](downshift-local.patch),
 regenerated 2026-10-20 against the pinned upstream commit.
@@ -54,7 +54,7 @@ draws; every number and label is computed by Downshift
 | row | the model line gains one short status and, when tokens moved to a smaller model, `↓` and their count: `opus → sonnet (mid) · ↓58k`; `held`, `kept`, `control`, `paused`, `blocked` stand alone |
 | header and band | one short line: `Downshift · N switched · M held` (zero counts are left out; `Downshift · on` when tokens moved but nothing was switched or held). The first tile reads `Downshifted` (tokens that ran on a smaller model) and a fourth tile, `Compactor`, shows, with a ↓, the bytes the Compactor cut in the session (`compactor.saved_bytes` from `session --panel`, only when present); the two are never added together, because one is measured tokens and the other measured bytes. The work/cache percentages and the per-type line are gone from the mod (the CLI still prints them) |
 
-| finished rows (`shownFinished`, `FINISHED_SHOW_MS`) | a finished agent's row leaves the panel 10 s after the panel first sees it finished; running rows are never hidden. The band's `N done` and the section label still count every finished agent. The render time is the live clock, not the stored `now` |
+| finished rows (`shownFinished`, `FINISHED_SHOW_MS`) | a finished agent's row leaves the panel 10 s after the panel first sees it finished; running rows are never hidden. The band's `N done` and the section label still count every finished agent. The band's `×N` badge (the crew button) counts the same rows the panel lists: running agents, finished agents still shown by `shownFinished` at the same render time, and planned tasks. The render time is the live clock, not the stored `now` (`liveNow`) |
 
 | band fallback (`derivedFlow`) | when no flow is registered, or its total is 0, **and Downshift is working in this session** (`downshift session --panel` for the session names at least one decided spawn), the band is drawn from the subagents the mod already tracks: title `Subagents`, `N running · M done`, bar `M/(N+M)` over the current batch (spawns since the oldest running one; a finished batch lingers 30 s). A registered flow with a total keeps upstream drawing |
 
