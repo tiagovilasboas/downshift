@@ -15,8 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-TASKS_DIR = HERE / "tasks"
-OUT_DIR = HERE / "outputs"
+TASKS_DIR = Path(os.environ.get("BENCH_TASKS_DIR", str(HERE / "tasks")))
+OUT_DIR = Path(os.environ.get("BENCH_OUT_DIR", str(HERE / "outputs")))
 RESULTS = HERE / "results.jsonl"
 
 URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -26,7 +26,7 @@ MODELS = [
     "anthropic/claude-haiku-4.5",
 ]
 REPS = 3
-MAX_TOKENS = 1500
+MAX_TOKENS = int(os.environ.get("BENCH_MAX_TOKENS", "1500"))
 CHECK_TIMEOUT_S = 10
 FENCE = re.compile(r"```(?:python|py)?[ \t]*\n(.*?)```", re.S)
 

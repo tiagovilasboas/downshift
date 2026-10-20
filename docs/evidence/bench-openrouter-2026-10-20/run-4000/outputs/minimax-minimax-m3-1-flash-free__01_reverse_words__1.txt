@@ -1,0 +1,26 @@
+```python
+def reverse_words(s: str) -> str:
+    spans = []
+    words = []
+    i = 0
+
+    while i < len(s):
+        if s[i].isalnum():
+            start = i
+            while i < len(s) and s[i].isalnum():
+                i += 1
+            spans.append((start, i))
+            words.append(s[start:i])
+        else:
+            i += 1
+
+    result = []
+    cursor = 0
+    for (start, end), word in zip(spans, reversed(words)):
+        result.append(s[cursor:start])
+        result.append(word)
+        cursor = end
+    result.append(s[cursor:])
+
+    return "".join(result)
+```

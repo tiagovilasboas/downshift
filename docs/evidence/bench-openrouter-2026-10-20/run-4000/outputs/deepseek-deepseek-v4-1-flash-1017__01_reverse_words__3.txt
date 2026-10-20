@@ -1,0 +1,35 @@
+```python
+def reverse_words(s: str) -> str:
+    segments = []
+    i = 0
+    n = len(s)
+
+    while i < n:
+        if s[i].isalnum():
+            j = i
+            while j < n and s[j].isalnum():
+                j += 1
+            segments.append((True, s[i:j]))
+            i = j
+        else:
+            j = i
+            while j < n and not s[j].isalnum():
+                j += 1
+            segments.append((False, s[i:j]))
+            i = j
+
+    words = [text for is_word, text in segments if is_word]
+    words.reverse()
+
+    result = []
+    word_index = 0
+
+    for is_word, text in segments:
+        if is_word:
+            result.append(words[word_index])
+            word_index += 1
+        else:
+            result.append(text)
+
+    return ''.join(result)
+```

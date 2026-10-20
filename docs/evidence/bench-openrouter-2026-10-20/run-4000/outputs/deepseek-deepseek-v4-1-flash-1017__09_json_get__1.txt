@@ -1,0 +1,52 @@
+```python
+def json_get(data, path, default=None):
+    if path == "":
+        return data
+    if not isinstance(path, str):
+        return default
+
+    current = data
+
+    for segment in path.split('.'):
+        if not segment:
+            return default
+
+        bracket = segment.find('[')
+        if bracket == -1:
+            key = segment
+            indexes = []
+        else:
+            key = segment[:bracket]
+            if not key:
+                return default
+
+            rest = segment[bracket:]
+            indexes = []
+
+            while rest:
+                if rest[0] != '[':
+                    return default
+
+                end = rest.find(']')
+                if end == -1:
+                    return default
+
+                num = rest[1:end]
+                if not num.isdigit():
+                    return default
+
+                indexes.append(int(num))
+                rest = rest[end + 1:]
+
+        if not isinstance(current, dict) or key not in current:
+            return default
+
+        current = current[key]
+
+        for idx in indexes:
+            if not isinstance(current, list) or idx >= len(current):
+                return default
+            current = current[idx]
+
+    return current
+```

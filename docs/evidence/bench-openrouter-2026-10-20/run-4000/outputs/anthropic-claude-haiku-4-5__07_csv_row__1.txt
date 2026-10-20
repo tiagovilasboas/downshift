@@ -1,0 +1,24 @@
+
+```python
+def csv_row(fields):
+    def escape_field(value):
+        # Convert None to empty string, everything else to str
+        if value is None:
+            field = ""
+        else:
+            field = str(value)
+        
+        # Check if field needs quoting
+        needs_quoting = ',' in field or '"' in field or '\r' in field or '\n' in field
+        
+        if needs_quoting:
+            # Double every double quote
+            field = field.replace('"', '""')
+            # Wrap in double quotes
+            field = f'"{field}"'
+        
+        return field
+    
+    # Process each field and join with commas
+    return ','.join(escape_field(field) for field in fields)
+```

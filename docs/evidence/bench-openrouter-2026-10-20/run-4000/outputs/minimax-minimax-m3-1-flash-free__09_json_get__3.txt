@@ -1,0 +1,33 @@
+```python
+def json_get(data, path, default=None):
+    import re
+
+    if path == "":
+        return data
+    if not isinstance(path, str):
+        return default
+
+    current = data
+    for segment in path.split("."):
+        match = re.fullmatch(r"([^.\[\]]+)((?:\[0-9]+\])*)", segment)
+        if match is None:
+            return default
+
+        key, index_suffix = match.groups()
+        if not isinstance(current, dict) or key not in current:
+            return default
+        current = current[key]
+
+        for index_text in re.findall(r"\[([0-9]+)\]", index_suffix):
+            if not isinstance(current, list):
+                return default
+            try:
+                index = int(index_text)
+            except ValueError:
+                return default
+            if index >= len(current):
+                return default
+            current = current[index]
+
+    return current
+```
