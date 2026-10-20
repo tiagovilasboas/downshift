@@ -31,6 +31,9 @@ type Event struct {
 	EmittedBytes int64  `json:"emitted_bytes"`
 	ExitClass    string `json:"exit_class"`
 	Compacted    bool   `json:"compacted"`
+	// Session is the hashed session id (telemetry.HashSessionID) the hook put on
+	// the wrapped command; empty when the harness gave none. Never the raw id.
+	Session string `json:"session,omitempty"`
 }
 
 // EventFrom builds the log record for a Result.
@@ -90,7 +93,12 @@ type Summary struct {
 
 // Summarize reads the exec log at path. A missing file is an empty summary.
 // Malformed lines are skipped.
-func Summarize(path string) (Summary, error) {
+func Summarize(path string) (Summary, error) { return SummarizeSession(path, "") }
+
+// SummarizeSession totals only the records of one hashed session; an empty
+// session totals the whole log. Records written before the session field
+// existed belong to no session.
+func SummarizeSession(path, session string) (Summary, error) {
 	s := Summary{TokenEstimate: "estimated: saved_bytes / 4"}
 	f, err := os.Open(path)
 	if err != nil {
@@ -104,6 +112,9 @@ func Summarize(path string) (Summary, error) {
 	for sc.Scan() {
 		var ev Event
 		if json.Unmarshal(sc.Bytes(), &ev) != nil {
+			continue
+		}
+		if session != "" && ev.Session != session {
 			continue
 		}
 		s.Commands++

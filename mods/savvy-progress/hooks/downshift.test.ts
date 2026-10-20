@@ -14,6 +14,7 @@ const PANEL = {
   session: 'a1b2c3d4', switched: 2, held: 1, observed: 0,
   tokens: { children: 2, saved_children: 1, work_tokens: 1000, work_saved: 620, cache_tokens: 100000, cache_saved: 58000 },
   tokens_line: 'saved 62% of work · 58% of cache',
+  compactor: { commands: 4, compacted: 3, raw_bytes: 90000, saved_bytes: 61440, estimated_tokens_saved: 15360, token_estimate: 'estimated: saved_bytes / 4' },
   by_agent_type: [{ agent_type: 'general-purpose', line: 'general-purpose: 62% work · 58% cache', tokens: { work_saved: 620, cache_saved: 58000 } }],
   spawns: [{ tool_use: T1, state: 'switched', from_model: 'claude-opus-5-5', to_model: 'claude-sonnet-5-5', label: 'opus → sonnet (mid)', tokens_label: '48k tokens · saved from opus', tokens: { work_saved: 620, cache_saved: 58000 } }],
 }
@@ -159,4 +160,16 @@ test('band fallback: the finished batch is replaced when a new agent starts', as
   await clock.set(Date.parse('2026-10-19T10:05:00Z'))
   await $.agent.spawn({ tool_use_id: 't3', prompt: 'p', description: 'Next', subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
   expect(await shows($, 'AbovePrompt', /^1 running · 0 done$/)).toBe(true)
+})
+
+test('downshift: the Compactor shows in its own unit and is never added to the tokens moved', async ($, on) => {
+  await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
+  expect(await shows($, 'Pane', /59k downshifted · .* · 60 KB compactor/)).toBe(true)
+  expect(await shows($, 'Pane', /estimated|≈|total/i)).toBe(false)
+})
+
+test('downshift: without a compactor block the header says nothing about it', async ($, on) => {
+  const { compactor: _c, ...noCompactor } = PANEL
+  await world($, on, { stdout: JSON.stringify(noCompactor) }, 'S-1')
+  expect(await shows($, 'Pane', /compactor/)).toBe(false)
 })

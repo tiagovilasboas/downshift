@@ -55,6 +55,22 @@ func QuoteExecutable(exe string) (string, bool) {
 	return "'" + exe + "'", true
 }
 
+// WithSession puts the hashed session on a wrapped command so the runner can
+// log it: `<exe> compact -- x` becomes `<exe> compact --session=<hash> -- x`. A
+// session that is not lowercase hex, or a command that is not wrapped, is
+// returned unchanged.
+func WithSession(command, session string) string {
+	if session == "" || strings.Contains(command, " compact --session=") {
+		return command
+	}
+	for _, c := range session {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'f') {
+			return command
+		}
+	}
+	return strings.Replace(command, execTail, " compact --session="+session+" -- ", 1)
+}
+
 // maxCommandBytes bounds the command the policy considers. Longer commands
 // are left alone.
 const maxCommandBytes = 512
