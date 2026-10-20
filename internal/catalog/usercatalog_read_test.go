@@ -46,6 +46,9 @@ func TestReadUserCatalogReadsRegularFile(t *testing.T) {
 // The override is untrusted input read on every hook: whatever it holds, load
 // returns the embedded entries and never panics.
 func TestLoadSurvivesHostileOverrides(t *testing.T) {
+	// Count the embedded entries under an empty HOME: a real ~/.downshift
+	// (user overrides, openrouter.json) would otherwise change the baseline.
+	t.Setenv("HOME", t.TempDir())
 	embedded := len(load(&strings.Builder{}).Entries())
 	for name, body := range map[string]string{
 		"null":           `null`,
