@@ -72,7 +72,7 @@ Prompt-free JSON for the selected session (latest, or `--session`), built in
 {"session":"a1b2c3d4","switched":2,"held":1,"observed":4,
  "tokens":{"children":4,"saved_children":2,"work_tokens":5200,"work_saved":3200,
            "cache_tokens":180000,"cache_saved":104000},
- "tokens_line":"tokens saved: work 62% · cache 58% (107k of 185k)",
+ "tokens_line":"saved 62% of work · 58% of cache",
  "by_agent_type":[{"agent_type":"general-purpose","tokens":{...},
                    "line":"general-purpose: work 70% · cache 64% (2 of 3 agents)"}],
  "spawns":[{"tool_use":"<sha256 hex>","state":"switched",
@@ -98,7 +98,7 @@ Codex, OpenCode today) have no token figures, never zeros. Dollars:
 `downshift report`, priced at report time.
 
 The same figures appear in `downshift session` (header, a tokens column per row,
-a `by agent type` line), the statusline (`tokens saved work N% · cache M%`),
+a `by type` line, shown only for types that saved something), the statusline (`saved N% of work · M% of cache`),
 `downshift watch`, `dsmon`, the child-end line (`48k tokens (work 2.1k,
 cache 46k) · saved from opus`) and the dashboard (`downshift serve`:
 `stats.tokens_saved` and `stats.tokens_saved_by_harness` in `/api/status`, each

@@ -100,11 +100,28 @@ func TestTokenSaving_Line(t *testing.T) {
 		t.Errorf("unobserved line %q, want empty", got)
 	}
 	s := TokenSaving{Children: 2, WorkTokens: 1000, WorkSaved: 620, CacheTokens: 100_000, CacheSaved: 58_000}
-	if got, want := s.Line(), "tokens saved: work 62% · cache 58% (59k of 101k)"; got != want {
+	if got, want := s.Line(), "saved 62% of work · 58% of cache"; got != want {
 		t.Errorf("line %q, want %q", got, want)
 	}
 	s.WorkPricier = 2000
-	if got := s.Line(); got != "tokens saved: work 62% · cache 58% (59k of 101k) · 2.0k on a pricier model" {
+	if got := s.Line(); got != "saved 62% of work · 58% of cache · 2.0k on a pricier model" {
 		t.Errorf("pricier line %q", got)
+	}
+}
+
+// A zero says why: children that already ran on the cheapest model had nothing
+// cheaper to move to, which is not the same as nothing being tried.
+func TestTokenSaving_LineExplainsAZero(t *testing.T) {
+	s := TokenSaving{Children: 2, WorkTokens: 1000, CacheTokens: 5000, AtFloor: 2}
+	if got, want := s.Line(), "already on the cheapest model"; got != want {
+		t.Errorf("all at floor: %q, want %q", got, want)
+	}
+	s.AtFloor = 1
+	if got, want := s.Line(), "nothing saved yet"; got != want {
+		t.Errorf("some above floor: %q, want %q", got, want)
+	}
+	s.WorkSaved = 400
+	if got, want := s.Line(), "saved 40% of work · 0% of cache"; got != want {
+		t.Errorf("a saving wins: %q, want %q", got, want)
 	}
 }

@@ -66,7 +66,7 @@ func TestSessionTree_OneSubagentWithRealCost(t *testing.T) {
 		tuse("d1", sessA, time.Minute, "claude-sonnet-5-5", 0.22, 0.60),
 	}
 	got := lines(SessionTree(ev, sessA, TreeOptions{}))
-	if got[0] != "session · 1 subagent · 1 switched, 0 held · tokens saved: work 100% · cache 100% (10k of 10k)" {
+	if got[0] != "session · 1 subagent · 1 switched, 0 held · saved 100% of work · 100% of cache" {
 		t.Fatalf("header: %q", got[0])
 	}
 	if got[1] != "└─ subagent 1  sonnet  ✓  10k tokens · saved from opus  switched from opus, MEDIUM, confident" {
@@ -81,7 +81,7 @@ func TestSessionTree_PricierIsNeverSaved(t *testing.T) {
 	}
 	out := SessionTree(ev, sessA, TreeOptions{})
 	hdr := lines(out)[0]
-	if !strings.Contains(hdr, "work 0% · cache 0%") || !strings.Contains(hdr, "10k on a pricier model") {
+	if !strings.Contains(hdr, "nothing saved yet") || !strings.Contains(hdr, "10k on a pricier model") {
 		t.Fatalf("header: %q", hdr)
 	}
 	if !strings.Contains(out, "pricier than haiku") || strings.Contains(out, "saved from") || strings.Contains(out, "$") {
@@ -218,7 +218,7 @@ func TestSessionTree_TokensNotDollars(t *testing.T) {
 		t.Fatalf("an unpriced child is not a priced token observation, and no dollar is shown:\n%s", out)
 	}
 	priced := append(ev, tuse("d1", sessA, 2*time.Minute, "claude-sonnet-5-5", 0.5, 0.5))
-	if out = SessionTree(priced, sessA, TreeOptions{}); strings.Contains(out, "$") || !strings.Contains(out, "tokens saved: work") {
+	if out = SessionTree(priced, sessA, TreeOptions{}); strings.Contains(out, "$") || !strings.Contains(out, "saved 100% of work") {
 		t.Fatalf("priced child shows tokens, no dollars:\n%s", out)
 	}
 }
