@@ -8,7 +8,7 @@ routing is the **main lever today, not the whole product**: a deterministic
 local hook classifies each subagent spawn and rewrites that child's model and
 effort from the session list. Around the router sit guardrails (doubt never
 spends money), a project tier floor, a quota and credit gate, session view
-and statusline, telemetry and cost reports with a control group, context
+and statusline, telemetry and token reports with a control group, context
 policy from `setup`, vendored mods and documented companions; one sentence
 and a status word for each is in the
 [README](../../README.md#the-suite-at-a-glance) and the

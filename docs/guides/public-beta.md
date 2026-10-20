@@ -15,7 +15,7 @@ a real operator. It is not a release announcement.
 | Cursor | Functional wire path. **Rewrite honored is not closed** (beta-exit P1.6). Do not treat a hook JSON rewrite as proof the child ran that model. |
 | KiroCrew, Antigravity | Experimental. Matrix rows stay honest when a plan drops the rewrite. |
 | Classifier | Deterministic regex (EN + PT) plus an in-process FNV hash boost. No Graphify, no E5, no external MiniLM command. |
-| Money | `stats` and `report` are list-price estimates plus a 10% control group. They are not a provider invoice. |
+| Usage reporting | `stats`, `report` and `stats --export` report observed tokens; they show no dollar amount. The 10% control group lets `report` compare routed and unrouted tokens per completed task. It is not a billing comparison. |
 
 Local checks that do not spend provider credit:
 

@@ -66,8 +66,9 @@ draws; every number and label is computed by Downshift
 Nothing here touches routing and it spends nothing. Downshift's lines carry
 tokens only, never dollars (owner decision 2026-10-19): "saved" means the
 agent's tokens ran on a cheaper model than the one requested, not that fewer
-tokens were used. `downshift report` prices tokens at report time. The
-agents panel's own per-agent cost estimate is upstream's and is unchanged. The new
+tokens were used. `downshift report` compares routed and control token counts;
+it prints no dollar values. The agents panel's own per-agent cost estimate is
+upstream's and is unchanged. The new
 test file `hooks/downshift.test.ts` is Downshift's own (not upstream). The
 spawn and the Downshift hook must see the same `tool_use_id`; if they do not
 (unverified live), rows show no label and the summary still draws.
