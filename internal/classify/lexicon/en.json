@@ -1,0 +1,1330 @@
+{
+  "schema_version": 1,
+  "language": "en",
+  "actions": {
+    "inspect": [
+      {
+        "order": 0,
+        "pattern": "debug\\w*"
+      },
+      {
+        "order": 1,
+        "pattern": "investig\\w*"
+      },
+      {
+        "order": 2,
+        "pattern": "troubleshoot"
+      },
+      {
+        "order": 3,
+        "pattern": "diagnos\\w*"
+      },
+      {
+        "order": 7,
+        "pattern": "fix"
+      },
+      {
+        "order": 9,
+        "pattern": "analy[sz]\\w*"
+      }
+    ],
+    "integrate": [
+      {
+        "order": 0,
+        "pattern": "integrat\\w*"
+      },
+      {
+        "order": 2,
+        "pattern": "connect\\w*"
+      },
+      {
+        "order": 5,
+        "pattern": "implement\\w*"
+      }
+    ],
+    "build": [
+      {
+        "order": 0,
+        "pattern": "implement\\w*"
+      },
+      {
+        "order": 5,
+        "pattern": "create"
+      },
+      {
+        "order": 6,
+        "pattern": "build"
+      },
+      {
+        "order": 9,
+        "pattern": "configure"
+      },
+      {
+        "order": 12,
+        "pattern": "add"
+      }
+    ],
+    "plan": [
+      {
+        "order": 0,
+        "pattern": "design\\w*"
+      },
+      {
+        "order": 5,
+        "pattern": "architect\\w*"
+      },
+      {
+        "order": 7,
+        "pattern": "plan\\w*"
+      },
+      {
+        "order": 9,
+        "pattern": "implement\\w*"
+      },
+      {
+        "order": 12,
+        "pattern": "rebuild"
+      },
+      {
+        "order": 18,
+        "pattern": "orchestrat\\w*"
+      },
+      {
+        "order": 21,
+        "pattern": "coordinat\\w*"
+      }
+    ],
+    "automate": [
+      {
+        "order": 3,
+        "pattern": "configure"
+      },
+      {
+        "order": 5,
+        "pattern": "provision\\w*"
+      },
+      {
+        "order": 6,
+        "pattern": "implement\\w*"
+      },
+      {
+        "order": 9,
+        "pattern": "create"
+      },
+      {
+        "order": 12,
+        "pattern": "build"
+      }
+    ],
+    "optimize": [
+      {
+        "order": 0,
+        "pattern": "optimi[sz]\\w*"
+      },
+      {
+        "order": 3,
+        "pattern": "rightsiz\\w*"
+      },
+      {
+        "order": 6,
+        "pattern": "reduce"
+      }
+    ],
+    "protect": [
+      {
+        "order": 0,
+        "pattern": "implement\\w*"
+      },
+      {
+        "order": 3,
+        "pattern": "harden\\w*"
+      },
+      {
+        "order": 6,
+        "pattern": "protect\\w*"
+      },
+      {
+        "order": 8,
+        "pattern": "configure"
+      },
+      {
+        "order": 10,
+        "pattern": "sign"
+      }
+    ],
+    "fix": [
+      {
+        "order": 0,
+        "pattern": "fix"
+      },
+      {
+        "order": 3,
+        "pattern": "investig\\w*"
+      },
+      {
+        "order": 4,
+        "pattern": "debug\\w*"
+      },
+      {
+        "order": 5,
+        "pattern": "diagnos\\w*"
+      },
+      {
+        "order": 7,
+        "pattern": "repair"
+      }
+    ],
+    "verify": [
+      {
+        "order": 0,
+        "pattern": "test\\w*"
+      },
+      {
+        "order": 3,
+        "pattern": "validat\\w*"
+      },
+      {
+        "order": 7,
+        "pattern": "assert\\w*"
+      }
+    ]
+  },
+  "terms": {
+    "fe-hydration-debug": [
+      {
+        "order": 0,
+        "pattern": "hydration mismatch"
+      },
+      {
+        "order": 2,
+        "pattern": "lcp"
+      },
+      {
+        "order": 3,
+        "pattern": "cls"
+      },
+      {
+        "order": 4,
+        "pattern": "inp"
+      },
+      {
+        "order": 5,
+        "pattern": "web vitals"
+      }
+    ],
+    "fe-component-integration": [
+      {
+        "order": 0,
+        "pattern": "(?:react|vue|angular|front[ -]?end|ui|component\\w*|componentes?|interface|tela).{0,70}(?:api|state|estado|back[ -]?end|servidor)"
+      }
+    ],
+    "fe-design-system-migration": [
+      {
+        "order": 0,
+        "pattern": "design system"
+      },
+      {
+        "order": 2,
+        "pattern": "micro[ -]?frontends?"
+      },
+      {
+        "order": 3,
+        "pattern": "server components?"
+      },
+      {
+        "order": 5,
+        "pattern": "rendering architecture"
+      }
+    ],
+    "fe-typescript-typecheck": [
+      {
+        "order": 0,
+        "pattern": "typescript type errors?"
+      },
+      {
+        "order": 1,
+        "pattern": "typecheck"
+      },
+      {
+        "order": 2,
+        "pattern": "tsx"
+      }
+    ],
+    "be-pagination-endpoint": [
+      {
+        "order": 0,
+        "pattern": "cursor pagination"
+      },
+      {
+        "order": 3,
+        "pattern": "rate limit(?:ing)?"
+      }
+    ],
+    "be-query-profiling": [
+      {
+        "order": 0,
+        "pattern": "n\\+1"
+      },
+      {
+        "order": 1,
+        "pattern": "slow quer\\w*"
+      },
+      {
+        "order": 4,
+        "pattern": "query plan"
+      },
+      {
+        "order": 5,
+        "pattern": "execution plan"
+      }
+    ],
+    "be-consistency-design": [
+      {
+        "order": 0,
+        "pattern": "transactional outbox"
+      },
+      {
+        "order": 1,
+        "pattern": "outbox transacional"
+      },
+      {
+        "order": 2,
+        "pattern": "saga pattern"
+      },
+      {
+        "order": 4,
+        "pattern": "exactly[ -]?once"
+      },
+      {
+        "order": 5,
+        "pattern": "eventual consistency"
+      },
+      {
+        "order": 7,
+        "pattern": "distributed transactions?"
+      }
+    ],
+    "be-api-contract-versioning": [
+      {
+        "order": 0,
+        "pattern": "api contract versioning"
+      },
+      {
+        "order": 3,
+        "pattern": "backward compatibility"
+      },
+      {
+        "order": 4,
+        "pattern": "compatibilidade retroativa"
+      },
+      {
+        "order": 5,
+        "pattern": "openapi contract"
+      },
+      {
+        "order": 6,
+        "pattern": "contrato openapi"
+      }
+    ],
+    "fs-end-to-end-feature": [
+      {
+        "order": 0,
+        "pattern": "(?:feature|funcionalidade).{0,65}(?:end[ -]?to[ -]?end|ponta a ponta|front[ -]?end.{0,30}back[ -]?end|api.{0,30}ui)"
+      }
+    ],
+    "fs-contract-compatibility": [
+      {
+        "order": 0,
+        "pattern": "contract compatibility"
+      },
+      {
+        "order": 3,
+        "pattern": "backward[ -]?compatible api"
+      },
+      {
+        "order": 5,
+        "pattern": "client[ -]?server contract"
+      }
+    ],
+    "ops-crashloop-debug": [
+      {
+        "order": 0,
+        "pattern": "crashloopbackoff"
+      },
+      {
+        "order": 1,
+        "pattern": "oomkilled"
+      },
+      {
+        "order": 2,
+        "pattern": "pod eviction"
+      },
+      {
+        "order": 4,
+        "pattern": "pods? reiniciando"
+      },
+      {
+        "order": 5,
+        "pattern": "kubernetes scheduling"
+      }
+    ],
+    "ops-helm-automation": [
+      {
+        "order": 0,
+        "pattern": "helm chart"
+      },
+      {
+        "order": 1,
+        "pattern": "charts? helm"
+      },
+      {
+        "order": 2,
+        "pattern": "terraform module"
+      },
+      {
+        "order": 4,
+        "pattern": "kubernetes operator"
+      },
+      {
+        "order": 5,
+        "pattern": "operador kubernetes"
+      }
+    ],
+    "ops-multi-region-recovery": [
+      {
+        "order": 0,
+        "pattern": "disaster recovery"
+      },
+      {
+        "order": 2,
+        "pattern": "multi[ -]?region failover"
+      },
+      {
+        "order": 3,
+        "pattern": "failover multirregional"
+      },
+      {
+        "order": 4,
+        "pattern": "active[ -]?active"
+      },
+      {
+        "order": 5,
+        "pattern": "ativo[ -]?ativo"
+      }
+    ],
+    "ops-terraform-drift": [
+      {
+        "order": 0,
+        "pattern": "terraform drift"
+      },
+      {
+        "order": 1,
+        "pattern": "infrastructure drift"
+      },
+      {
+        "order": 3,
+        "pattern": "configuration drift"
+      }
+    ],
+    "finops-anomaly-investigation": [
+      {
+        "order": 0,
+        "pattern": "cloud cost anomal\\w*"
+      },
+      {
+        "order": 2,
+        "pattern": "unexpected spend"
+      },
+      {
+        "order": 3,
+        "pattern": "gasto inesperado"
+      },
+      {
+        "order": 4,
+        "pattern": "egress cost"
+      }
+    ],
+    "finops-rightsizing-plan": [
+      {
+        "order": 0,
+        "pattern": "cloud cost"
+      },
+      {
+        "order": 2,
+        "pattern": "compute spend"
+      },
+      {
+        "order": 3,
+        "pattern": "gasto computacional"
+      },
+      {
+        "order": 4,
+        "pattern": "reserved instances"
+      },
+      {
+        "order": 5,
+        "pattern": "inst[aâ]ncias reservadas"
+      },
+      {
+        "order": 6,
+        "pattern": "savings plans?"
+      }
+    ],
+    "finops-chargeback-design": [
+      {
+        "order": 0,
+        "pattern": "multi[ -]?account chargeback"
+      },
+      {
+        "order": 2,
+        "pattern": "showback model"
+      },
+      {
+        "order": 4,
+        "pattern": "cost allocation across accounts"
+      }
+    ],
+    "finops-amortized-cost": [
+      {
+        "order": 0,
+        "pattern": "amortized cost"
+      },
+      {
+        "order": 2,
+        "pattern": "effective cost"
+      },
+      {
+        "order": 4,
+        "pattern": "commitment discount"
+      },
+      {
+        "order": 6,
+        "pattern": "cost allocation"
+      }
+    ],
+    "sec-sast-triage": [
+      {
+        "order": 0,
+        "pattern": "sast"
+      },
+      {
+        "order": 1,
+        "pattern": "dast"
+      },
+      {
+        "order": 2,
+        "pattern": "dependency scanning"
+      },
+      {
+        "order": 5,
+        "pattern": "secret scanning"
+      }
+    ],
+    "sec-supply-chain-hardening": [
+      {
+        "order": 0,
+        "pattern": "slsa"
+      },
+      {
+        "order": 1,
+        "pattern": "sbom"
+      },
+      {
+        "order": 2,
+        "pattern": "provenance attestations?"
+      },
+      {
+        "order": 4,
+        "pattern": "sigstore"
+      },
+      {
+        "order": 5,
+        "pattern": "cosign"
+      },
+      {
+        "order": 6,
+        "pattern": "software supply chain"
+      }
+    ],
+    "sec-threat-model-design": [
+      {
+        "order": 0,
+        "pattern": "threat model"
+      },
+      {
+        "order": 2,
+        "pattern": "zero trust architecture"
+      },
+      {
+        "order": 3,
+        "pattern": "arquitetura zero trust"
+      },
+      {
+        "order": 4,
+        "pattern": "trust boundar\\w*"
+      }
+    ],
+    "sec-asvs-access-control": [
+      {
+        "order": 0,
+        "pattern": "broken access control"
+      },
+      {
+        "order": 2,
+        "pattern": "authorization bypass"
+      },
+      {
+        "order": 4,
+        "pattern": "idor"
+      },
+      {
+        "order": 5,
+        "pattern": "privilege escalation"
+      }
+    ],
+    "mob-deep-link-integration": [
+      {
+        "order": 0,
+        "pattern": "deep links?"
+      },
+      {
+        "order": 1,
+        "pattern": "universal links?"
+      },
+      {
+        "order": 2,
+        "pattern": "app links?"
+      },
+      {
+        "order": 3,
+        "pattern": "links? universais?"
+      },
+      {
+        "order": 5,
+        "pattern": "links? profundos?"
+      }
+    ],
+    "mob-anr-crash-debug": [
+      {
+        "order": 0,
+        "pattern": "android anr"
+      },
+      {
+        "order": 1,
+        "pattern": "anr"
+      },
+      {
+        "order": 2,
+        "pattern": "ios crash"
+      },
+      {
+        "order": 3,
+        "pattern": "app crash"
+      },
+      {
+        "order": 6,
+        "pattern": "memory pressure"
+      }
+    ],
+    "mob-offline-conflict-design": [
+      {
+        "order": 0,
+        "pattern": "offline[ -]?first sync"
+      },
+      {
+        "order": 1,
+        "pattern": "offline sync conflict"
+      },
+      {
+        "order": 2,
+        "pattern": "conflict resolution offline"
+      },
+      {
+        "order": 5,
+        "pattern": "cross[ -]?device state replication"
+      }
+    ],
+    "mob-ui-lifecycle-debug": [
+      {
+        "order": 0,
+        "pattern": "swiftui lifecycle"
+      },
+      {
+        "order": 1,
+        "pattern": "jetpack compose lifecycle"
+      },
+      {
+        "order": 2,
+        "pattern": "lifecycle.{0,35}(?:swiftui|jetpack compose)"
+      }
+    ],
+    "ci-flaky-test-repair": [
+      {
+        "order": 0,
+        "pattern": "flaky tests?"
+      },
+      {
+        "order": 2,
+        "pattern": "pipeline flak\\w*"
+      }
+    ],
+    "ci-build-matrix": [
+      {
+        "order": 0,
+        "pattern": "build matrix"
+      },
+      {
+        "order": 2,
+        "pattern": "test matrix"
+      },
+      {
+        "order": 4,
+        "pattern": "parallel jobs"
+      },
+      {
+        "order": 5,
+        "pattern": "jobs paralelos"
+      }
+    ],
+    "ci-progressive-delivery": [
+      {
+        "order": 0,
+        "pattern": "progressive delivery"
+      },
+      {
+        "order": 1,
+        "pattern": "canary rollout"
+      },
+      {
+        "order": 2,
+        "pattern": "blue[ -]?green deployment"
+      },
+      {
+        "order": 3,
+        "pattern": "automated rollback"
+      },
+      {
+        "order": 5,
+        "pattern": "deploy progressivo"
+      },
+      {
+        "order": 6,
+        "pattern": "entrega progressiva"
+      }
+    ],
+    "ci-cache-invalidation": [
+      {
+        "order": 0,
+        "pattern": "pipeline cache invalidation"
+      },
+      {
+        "order": 4,
+        "pattern": "cache misses? in ci"
+      }
+    ],
+    "fe-keyboard-a11y": [
+      {
+        "order": 0,
+        "pattern": "keyboard navigation"
+      },
+      {
+        "order": 2,
+        "pattern": "focus management"
+      }
+    ],
+    "fe-bundle-size": [
+      {
+        "order": 0,
+        "pattern": "bundle size"
+      },
+      {
+        "order": 2,
+        "pattern": "javascript payload"
+      }
+    ],
+    "fe-state-sync": [
+      {
+        "order": 0,
+        "pattern": "state synchronization"
+      },
+      {
+        "order": 2,
+        "pattern": "state update loops?"
+      }
+    ],
+    "fe-form-validation": [
+      {
+        "order": 0,
+        "pattern": "client[ -]?side form validation"
+      },
+      {
+        "order": 2,
+        "pattern": "form validation"
+      }
+    ],
+    "fe-ssr-streaming": [
+      {
+        "order": 0,
+        "pattern": "ssr streaming architecture"
+      },
+      {
+        "order": 2,
+        "pattern": "multi[ -]?route server rendering"
+      }
+    ],
+    "fe-visual-regression": [
+      {
+        "order": 0,
+        "pattern": "visual regression tests?"
+      },
+      {
+        "order": 2,
+        "pattern": "screenshot diff"
+      }
+    ],
+    "be-dlq-debug": [
+      {
+        "order": 0,
+        "pattern": "dead[ -]?letter queue"
+      },
+      {
+        "order": 2,
+        "pattern": "dlq backlog"
+      }
+    ],
+    "be-cache-stampede": [
+      {
+        "order": 0,
+        "pattern": "cache stampede"
+      },
+      {
+        "order": 2,
+        "pattern": "cache thundering herd"
+      }
+    ],
+    "be-idempotency-keys": [
+      {
+        "order": 0,
+        "pattern": "idempotency key validation"
+      },
+      {
+        "order": 2,
+        "pattern": "idempotency middleware"
+      }
+    ],
+    "be-websocket-reconnect": [
+      {
+        "order": 0,
+        "pattern": "websocket reconnect logic"
+      },
+      {
+        "order": 2,
+        "pattern": "websocket backoff"
+      }
+    ],
+    "be-transaction-boundary": [
+      {
+        "order": 0,
+        "pattern": "transaction boundary across services"
+      },
+      {
+        "order": 2,
+        "pattern": "multi[ -]?service transaction strategy"
+      }
+    ],
+    "be-batch-throughput": [
+      {
+        "order": 0,
+        "pattern": "batch processing"
+      },
+      {
+        "order": 2,
+        "pattern": "batch throughput"
+      }
+    ],
+    "fs-session-flow": [
+      {
+        "order": 0,
+        "pattern": "end[ -]?to[ -]?end session flow"
+      },
+      {
+        "order": 2,
+        "pattern": "client[ -]?server session lifecycle"
+      }
+    ],
+    "fs-upload-progress": [
+      {
+        "order": 0,
+        "pattern": "upload progress ui and api"
+      },
+      {
+        "order": 1,
+        "pattern": "upload com progresso ui e api"
+      },
+      {
+        "order": 2,
+        "pattern": "upload progress across client and server"
+      }
+    ],
+    "fs-realtime-clients": [
+      {
+        "order": 0,
+        "pattern": "realtime synchronization across clients"
+      },
+      {
+        "order": 2,
+        "pattern": "cross[ -]?client realtime state"
+      }
+    ],
+    "fs-internationalization": [
+      {
+        "order": 0,
+        "pattern": "internationalization across frontend and backend"
+      },
+      {
+        "order": 2,
+        "pattern": "shared localization between ui and api"
+      }
+    ],
+    "fs-api-ui-errors": [
+      {
+        "order": 0,
+        "pattern": "api error handling in ui"
+      },
+      {
+        "order": 2,
+        "pattern": "client[ -]?server error states"
+      }
+    ],
+    "fs-tenant-isolation": [
+      {
+        "order": 0,
+        "pattern": "tenant isolation across frontend and backend"
+      },
+      {
+        "order": 2,
+        "pattern": "multi[ -]?tenant access boundaries"
+      }
+    ],
+    "ops-hpa-autoscale": [
+      {
+        "order": 0,
+        "pattern": "horizontal pod autoscaler"
+      },
+      {
+        "order": 2,
+        "pattern": "hpa configuration"
+      }
+    ],
+    "ops-dns-discovery": [
+      {
+        "order": 0,
+        "pattern": "service discovery dns"
+      },
+      {
+        "order": 2,
+        "pattern": "kubernetes dns resolution"
+      }
+    ],
+    "ops-container-permissions": [
+      {
+        "order": 2,
+        "pattern": "rootless container setup"
+      }
+    ],
+    "ops-config-reload": [
+      {
+        "order": 0,
+        "pattern": "configmap reload"
+      },
+      {
+        "order": 2,
+        "pattern": "configuration reload across pods"
+      }
+    ],
+    "ops-volume-expansion": [
+      {
+        "order": 0,
+        "pattern": "persistent volume expansion without downtime"
+      },
+      {
+        "order": 2,
+        "pattern": "stateful storage migration across clusters"
+      }
+    ],
+    "ops-service-mesh-mtls": [
+      {
+        "order": 0,
+        "pattern": "service mesh mtls rollout"
+      },
+      {
+        "order": 2,
+        "pattern": "cross[ -]?cluster service mesh identity"
+      }
+    ],
+    "finops-cost-tags": [
+      {
+        "order": 0,
+        "pattern": "cost allocation tags"
+      },
+      {
+        "order": 2,
+        "pattern": "tagging for cloud chargeback"
+      }
+    ],
+    "finops-spot-usage": [
+      {
+        "order": 0,
+        "pattern": "spot instance utilization"
+      },
+      {
+        "order": 2,
+        "pattern": "preemptible workload costs"
+      }
+    ],
+    "finops-idle-resources": [
+      {
+        "order": 0,
+        "pattern": "idle cloud resources"
+      },
+      {
+        "order": 2,
+        "pattern": "unused provisioned compute"
+      }
+    ],
+    "finops-budget-anomalies": [
+      {
+        "order": 0,
+        "pattern": "budget anomaly alerts"
+      }
+    ],
+    "finops-commitment-portfolio": [
+      {
+        "order": 0,
+        "pattern": "reserved instance commitment portfolio"
+      },
+      {
+        "order": 2,
+        "pattern": "multi[ -]?provider savings commitments"
+      }
+    ],
+    "finops-cross-region-egress": [
+      {
+        "order": 0,
+        "pattern": "cross[ -]?region data transfer costs"
+      },
+      {
+        "order": 2,
+        "pattern": "inter[ -]?region egress"
+      }
+    ],
+    "sec-csp-policy": [
+      {
+        "order": 0,
+        "pattern": "content security policy"
+      },
+      {
+        "order": 2,
+        "pattern": "csp rollout"
+      }
+    ],
+    "sec-dependency-cve": [
+      {
+        "order": 0,
+        "pattern": "vulnerable dependenc(?:y|ies) cve"
+      },
+      {
+        "order": 2,
+        "pattern": "dependency advisory"
+      }
+    ],
+    "sec-workload-identity": [
+      {
+        "order": 0,
+        "pattern": "workload identity federation"
+      },
+      {
+        "order": 2,
+        "pattern": "oidc workload identity"
+      }
+    ],
+    "sec-sbom-license": [
+      {
+        "order": 0,
+        "pattern": "sbom license compliance"
+      },
+      {
+        "order": 2,
+        "pattern": "software license policy"
+      }
+    ],
+    "sec-cross-cluster-rbac": [
+      {
+        "order": 0,
+        "pattern": "kubernetes rbac migration across clusters"
+      }
+    ],
+    "sec-key-rotation-policy": [
+      {
+        "order": 0,
+        "pattern": "key rotation policy"
+      },
+      {
+        "order": 2,
+        "pattern": "service credential lifecycle"
+      }
+    ],
+    "mob-cold-start": [
+      {
+        "order": 0,
+        "pattern": "app cold start"
+      },
+      {
+        "order": 2,
+        "pattern": "mobile app startup time"
+      }
+    ],
+    "mob-testflight-release": [
+      {
+        "order": 0,
+        "pattern": "testflight rollout"
+      },
+      {
+        "order": 2,
+        "pattern": "play console staged release"
+      }
+    ],
+    "mob-offline-db-migration": [
+      {
+        "order": 0,
+        "pattern": "offline database schema migration"
+      },
+      {
+        "order": 2,
+        "pattern": "on[ -]?device data migration"
+      }
+    ],
+    "mob-battery-background": [
+      {
+        "order": 0,
+        "pattern": "background battery consumption"
+      },
+      {
+        "order": 2,
+        "pattern": "background wakelock usage"
+      }
+    ],
+    "ci-actions-permissions": [
+      {
+        "order": 2,
+        "pattern": "ci workflow token scope"
+      }
+    ],
+    "ci-artifact-provenance": [
+      {
+        "order": 0,
+        "pattern": "build artifact provenance"
+      },
+      {
+        "order": 2,
+        "pattern": "artifact attestations"
+      }
+    ],
+    "ci-monorepo-cache": [
+      {
+        "order": 0,
+        "pattern": "monorepo cache"
+      },
+      {
+        "order": 2,
+        "pattern": "affected build cache"
+      }
+    ],
+    "ci-semver-release": [
+      {
+        "order": 0,
+        "pattern": "semantic version release"
+      },
+      {
+        "order": 2,
+        "pattern": "semver changelog"
+      }
+    ],
+    "ci-affected-matrix": [
+      {
+        "order": 0,
+        "pattern": "affected packages? matrix"
+      },
+      {
+        "order": 2,
+        "pattern": "monorepo affected jobs"
+      }
+    ],
+    "ci-secret-exposure": [
+      {
+        "order": 0,
+        "pattern": "pipeline secret exposure"
+      },
+      {
+        "order": 2,
+        "pattern": "ci leaked credentials"
+      }
+    ],
+    "qa-consumer-contract": [
+      {
+        "order": 0,
+        "pattern": "consumer[ -]?driven contract tests"
+      },
+      {
+        "order": 2,
+        "pattern": "contract test compatibility"
+      }
+    ],
+    "qa-property-based": [
+      {
+        "order": 0,
+        "pattern": "property[ -]?based tests"
+      },
+      {
+        "order": 2,
+        "pattern": "generative test cases"
+      }
+    ],
+    "qa-load-p99": [
+      {
+        "order": 0,
+        "pattern": "load test(?:ing)? latency p99"
+      },
+      {
+        "order": 2,
+        "pattern": "performance test p99"
+      }
+    ],
+    "qa-e2e-flakiness": [
+      {
+        "order": 0,
+        "pattern": "e2e flakiness"
+      }
+    ],
+    "data-cdc-multi-db": [
+      {
+        "order": 0,
+        "pattern": "cdc across multiple databases"
+      },
+      {
+        "order": 2,
+        "pattern": "change data capture across services"
+      }
+    ],
+    "data-online-backfill": [
+      {
+        "order": 0,
+        "pattern": "large table backfill without downtime"
+      },
+      {
+        "order": 2,
+        "pattern": "online historical data backfill"
+      }
+    ],
+    "data-quality-constraints": [
+      {
+        "order": 0,
+        "pattern": "data quality constraints"
+      },
+      {
+        "order": 2,
+        "pattern": "data freshness checks"
+      }
+    ],
+    "data-stream-consumer-lag": [
+      {
+        "order": 0,
+        "pattern": "stream consumer lag"
+      },
+      {
+        "order": 2,
+        "pattern": "kafka consumer lag"
+      }
+    ],
+    "ai-rag-retrieval": [
+      {
+        "order": 0,
+        "pattern": "rag retrieval recall"
+      },
+      {
+        "order": 2,
+        "pattern": "retrieval reranking quality"
+      }
+    ],
+    "ai-agent-tool-errors": [
+      {
+        "order": 0,
+        "pattern": "agent tool calling failures"
+      },
+      {
+        "order": 2,
+        "pattern": "agent tool schema mismatch"
+      }
+    ],
+    "ai-eval-regression-set": [
+      {
+        "order": 0,
+        "pattern": "regression eval dataset"
+      },
+      {
+        "order": 2,
+        "pattern": "llm evaluation fixtures"
+      }
+    ],
+    "ai-multi-agent-hitl": [
+      {
+        "order": 0,
+        "pattern": "multi[ -]?agent orchestration with hitl"
+      },
+      {
+        "order": 2,
+        "pattern": "human[ -]?in[ -]?the[ -]?loop agent workflow"
+      }
+    ],
+    "obs-trace-correlation": [
+      {
+        "order": 0,
+        "pattern": "distributed trace correlation"
+      },
+      {
+        "order": 2,
+        "pattern": "trace[ -]?log correlation"
+      }
+    ],
+    "obs-cross-service-slo": [
+      {
+        "order": 0,
+        "pattern": "cross[ -]?service slo error budget policy"
+      },
+      {
+        "order": 2,
+        "pattern": "cross[ -]?service reliability objectives"
+      }
+    ],
+    "obs-metric-cardinality": [
+      {
+        "order": 0,
+        "pattern": "metric label cardinality"
+      },
+      {
+        "order": 2,
+        "pattern": "high cardinality metrics"
+      }
+    ],
+    "obs-alert-fatigue": [
+      {
+        "order": 0,
+        "pattern": "alert noise reduction"
+      },
+      {
+        "order": 2,
+        "pattern": "alert fatigue"
+      }
+    ]
+  }
+}
