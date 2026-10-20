@@ -1,0 +1,7 @@
+Write a Python function `reverse_words(s: str) -> str`.
+A word is a maximal run of letters or digits. Reverse the order of the words, but keep every non-word character (spaces, punctuation) in its original position.
+Examples:
+reverse_words('Hi, there!') == 'there, Hi!'
+reverse_words('one two  three') == 'three two  one'
+reverse_words('') == ''
+Return only one Python code block containing the function. No explanation.

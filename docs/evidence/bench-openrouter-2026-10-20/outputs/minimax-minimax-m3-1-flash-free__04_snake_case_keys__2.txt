@@ -1,0 +1,14 @@
+```python
+import re
+
+
+def to_snake_case_keys(obj):
+    if isinstance(obj, dict):
+        return {
+            (
+                re.sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", key)
+                .replace("-", "_")
+                .lower()
+                if isinstance(key, str)
+                else key
+           

@@ -1,0 +1,47 @@
+```python
+def json_get(data, path, default=None):
+    if path == "":
+        return data
+
+    current = data
+
+    for segment in path.split("."):
+        bracket = segment.find("[")
+
+        if bracket == -1:
+            key = segment
+            indexes = []
+        else:
+            key = segment[:bracket]
+            indexes = []
+            i = bracket
+
+            while i < len(segment):
+                if segment[i] != "[":
+                    return default
+
+                end = segment.find("]", i + 1)
+                if end == -1:
+                    return default
+
+                index_text = segment[i + 1:end]
+                if not index_text.isdigit():
+                    return default
+
+                indexes.append(int(index_text))
+                i = end + 1
+
+        if not isinstance(current, dict) or key not in current:
+            return default
+
+        current = current[key]
+
+        for index in indexes:
+            if not isinstance(current, list):
+                return default
+            if index < 0 or index >= len(current):
+                return default
+            current = current[index]
+
+    return current
+```

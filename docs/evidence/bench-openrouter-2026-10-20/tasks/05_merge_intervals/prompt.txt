@@ -1,0 +1,4 @@
+Write a Python function `merge_intervals(intervals)`. `intervals` is a list of [start, end] integer pairs (start <= end), possibly unsorted.
+Return a new list of merged [start, end] lists sorted by start. Intervals that overlap or touch (next start <= current end) are merged.
+Return [] for empty input. Do not mutate the input.
+Return only one Python code block containing the function. No explanation.
