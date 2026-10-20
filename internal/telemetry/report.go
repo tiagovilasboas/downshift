@@ -24,13 +24,9 @@ const (
 type GroupSummary struct {
 	Spawns int `json:"spawns"` // decisions in the group
 	Ended  int `json:"ended"`  // spawns with an observed end: completed, error or interrupted
-	// Completed counts completed tasks with a priced cost; only these enter
-	// CostUSD and CostPerTaskUSD.
+	// Completed counts completed tasks with usage observed; only these enter
+	// the token figures below.
 	Completed int `json:"completed_tasks"`
-	// CostUSD is the cost of those tasks plus the failed attempts they redid.
-	// Not in the JSON report: dollars are not an output (tokens only).
-	CostUSD        float64 `json:"-"`
-	CostPerTaskUSD float64 `json:"-"`
 	// Tokens is the token count of the same tasks (priced usage records, the
 	// failed attempts they redid included), by billing class; Tokens.Records is
 	// the number of usage records. TokensPerTask is Tokens.Total over Completed.
@@ -42,23 +38,23 @@ type GroupSummary struct {
 	Reworked   int     `json:"reworked"`
 	ReworkRate float64 `json:"rework_rate"`
 
-	costs []float64
+	// tasks holds each completed task's total tokens, for the interval.
+	tasks []float64
 }
 
-// Savings compares control with routed cost per completed task, in dollars
-// (the API lens). Positive means routing was cheaper. The interval is a 95%
-// percentile bootstrap with a fixed seed, so the same log always prints the
-// same numbers. There is no percentage: a dollar share would hide the price
-// table it rests on; the plan lens states the share in tokens.
+// Savings compares control with routed tokens per completed task. Positive
+// means routing used fewer tokens. The interval is a 95% percentile bootstrap
+// with a fixed seed, so the same log always prints the same numbers. Tokens
+// only: no price enters the report.
 type Savings struct {
-	PerTaskUSD     float64 `json:"-"`
-	PerTaskLowUSD  float64 `json:"-"`
-	PerTaskHighUSD float64 `json:"-"`
-	Resamples      int     `json:"resamples"`
+	PerTaskTokens     float64 `json:"-"`
+	PerTaskTokensLow  float64 `json:"-"`
+	PerTaskTokensHigh float64 `json:"-"`
+	Resamples         int     `json:"resamples"`
 }
 
 // Report is the routed-versus-control comparison. Prompt-free: counts, rates
-// and catalog-priced dollars only.
+// and tokens only.
 type Report struct {
 	Days            int          `json:"days"`
 	Routed          GroupSummary `json:"routed"`
@@ -71,9 +67,6 @@ type Report struct {
 	Savings         *Savings     `json:"-"`
 	// Completion says, per harness, whether the end of a child is measurable.
 	Completion []HarnessCompletion `json:"completion"`
-	// PricesAsOf is the catalog date the dollars were priced at (API lens);
-	// the caller sets it after RepriceUsage. Empty means as recorded.
-	PricesAsOf string `json:"-"`
 	// TokensSaved is the plan lens: tokens saved from the requested model in
 	// the window, work and cache apart, with no price at all.
 	TokensSaved TokenSaving `json:"tokens_saved"`
@@ -107,14 +100,12 @@ func BuildReport(events []Event, days int) Report {
 		}
 		if t.Completed() && t.Priced {
 			g.Completed++
-			g.CostUSD += t.TotalUSD
 			g.Tokens.add(t.TotalTokens)
-			g.costs = append(g.costs, t.TotalUSD)
+			g.tasks = append(g.tasks, float64(t.TotalTokens.Total))
 		}
 	}
 	for _, g := range []*GroupSummary{&rep.Routed, &rep.Control} {
 		if g.Completed > 0 {
-			g.CostPerTaskUSD = g.CostUSD / float64(g.Completed)
 			g.TokensPerTask = float64(g.Tokens.Total) / float64(g.Completed)
 		}
 		if g.Ended > 0 {
@@ -128,11 +119,11 @@ func BuildReport(events []Event, days int) Report {
 	case rep.Routed.Completed < MinReportTasks || rep.Control.Completed < MinReportTasks:
 		rep.Message = fmt.Sprintf("not enough data: need at least %d completed tasks per group (routed %d, control %d)",
 			MinReportTasks, rep.Routed.Completed, rep.Control.Completed)
-	case rep.Control.CostPerTaskUSD <= 0:
-		rep.Message = "not enough data: control cost per completed task is zero"
+	case rep.Control.TokensPerTask <= 0:
+		rep.Message = "not enough data: control tokens per completed task is zero"
 	default:
 		rep.Enough = true
-		rep.Savings = bootstrapSavings(rep.Control.costs, rep.Routed.costs)
+		rep.Savings = bootstrapSavings(rep.Control.tasks, rep.Routed.tasks)
 	}
 	return rep
 }
@@ -164,7 +155,7 @@ func percentile(sorted []float64, p float64) float64 {
 // bootstrapSavings resamples both groups independently with a fixed seed.
 func bootstrapSavings(control, routed []float64) *Savings {
 	mc, mr := mean(control), mean(routed)
-	s := &Savings{PerTaskUSD: mc - mr, Resamples: bootstrapResamples}
+	s := &Savings{PerTaskTokens: mc - mr, Resamples: bootstrapResamples}
 	rng := rand.New(rand.NewSource(bootstrapSeed))
 	deltas := make([]float64, 0, bootstrapResamples)
 	for i := 0; i < bootstrapResamples; i++ {
@@ -172,7 +163,7 @@ func bootstrapSavings(control, routed []float64) *Savings {
 		deltas = append(deltas, c-r)
 	}
 	sort.Float64s(deltas)
-	s.PerTaskLowUSD, s.PerTaskHighUSD = percentile(deltas, 0.025), percentile(deltas, 0.975)
+	s.PerTaskTokensLow, s.PerTaskTokensHigh = percentile(deltas, 0.025), percentile(deltas, 0.975)
 	return s
 }
 

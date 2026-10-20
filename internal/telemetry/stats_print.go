@@ -32,7 +32,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	}
 
 	printHeadline(w, s, TokenSavings(filtered), opts.Days)
-	fmt.Fprintf(w, "Tokens saved = ran on a cheaper model than requested. Dollars, priced now, and the control group: downshift report\n")
+	fmt.Fprintf(w, "Tokens saved = ran on a cheaper model than requested. The routed-versus-control comparison: downshift report\n")
 	if !opts.Detail && !opts.ShowDCI {
 		fmt.Fprintf(w, "\nFull report: downshift stats --detail\n")
 		return
