@@ -42,6 +42,17 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 | `file_listing` | `find`, `ls -R`, tree structures | Preserved verbatim | A prefix would hide names |
 | `logs` | Repeating log line prefixes | Collapses consecutive identical lines (`[Repeated N times]`) | Preserves first and last timestamp + all error logs |
 
+### Adding a family
+
+A new `downshift compact` family ships all of the following; the conformance suite is the gate.
+
+1. **Match rule**: a `Family` constant and its `FamilyOf` case in `internal/execwrap/policy.go`, plus its `expectedFormat` entry in `internal/execwrap/run.go`.
+2. **Detector**: a `Format` constant (`internal/compressor/types.go`) and its branch in `detectFormat`; failures and warnings must set the error flag so the output stays raw.
+3. **Compressor**: the format's branch in `applyFormatCompression`, summarising only an output that is provably clean.
+4. **Fixtures**: at least one clean and one preserve fixture in `internal/compressor/testdata/corpus/`, each classified in `testdata/corpus/MANIFEST` as `<clean|preserve> <format> <file>`.
+
+The gate needs no edit when a family is added. `go test ./internal/compressor ./internal/execwrap` checks, for every fixture in the MANIFEST: a clean fixture compacts as its format and gets strictly shorter; a preserve fixture comes back byte-identical; and for each deterministic mutation of a clean fixture (unknown line, no final newline, `\r`, ANSI colour, truncation, duplicated summary, an injected `error`/`FAIL`/`warning`/`panic` line) the result is byte-identical to the mutated input or keeps every danger line the mutation added. The execwrap registry test fails with the missing piece when a `Family` has no `expectedFormat` entry or no clean and preserve fixture. A known gap is listed in `knownViolations` in `conformance_test.go` with a reason and a TODO naming the family; do not use it for a new family.
+
 ---
 
 ## 3. Economia de tokens & Multi-Turn Cache Inflation
