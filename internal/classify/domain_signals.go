@@ -189,14 +189,16 @@ func init() {
 }
 
 func compileEnrichedSignals() []signal {
-	out := make([]signal, 0, len(signals)+len(RawDomainSignals))
+	out := make([]signal, 0, len(signals)+len(RawDomainSignals)+len(RawExtendedDomainSignals))
 	out = append(out, signals...)
-	for _, s := range RawDomainSignals {
-		out = append(out, signal{
-			re:     regexp.MustCompile(`(?i)` + s.Pattern),
-			weight: s.Weight,
-			class:  s.Class,
-		})
+	for _, table := range [][]DomainSignalDef{RawDomainSignals, RawExtendedDomainSignals} {
+		for _, s := range table {
+			out = append(out, signal{
+				re:     regexp.MustCompile(`(?i)` + s.Pattern),
+				weight: s.Weight,
+				class:  s.Class,
+			})
+		}
 	}
 	return out
 }
