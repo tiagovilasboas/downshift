@@ -7,6 +7,8 @@ import (
 	_ "embed"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 )
 
 // kirocrewCompactSteering is the versioned steering asset `setup` installs into
@@ -44,4 +46,14 @@ func planSteering(o setupOptions, t setupTarget) (p setupPlan, ok bool) {
 		p.err = err
 	}
 	return p, true
+}
+
+// osWrapperHint rewrites a Manual message that names the POSIX `.sh` wrapper so
+// that on Windows it names the `.cmd` sibling instead. KiroCrew on Windows has
+// no `/bin/sh`, so the hint must point at the runnable wrapper for the host OS.
+func osWrapperHint(manual string) string {
+	if runtime.GOOS != "windows" {
+		return manual
+	}
+	return strings.ReplaceAll(manual, "kirocrew-pre-tool-use.sh", "kirocrew-pre-tool-use.cmd")
 }

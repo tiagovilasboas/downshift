@@ -57,6 +57,21 @@ change this repository), read **[docs/guides/install.md](docs/guides/install.md)
 - Plan / rewrite-honored limits: [docs/reference/harness-matrix.md](docs/reference/harness-matrix.md).
 - Do not invent hook paths, matchers, or catalog entries without checking INSTALL and examples.
 
+### Native compact works in ANY harness (supported or not)
+
+`downshift compact -- <command>` cuts the output of an allowlisted test/build/
+status command (go test, pytest, vitest, jest, tsc, cargo test, playwright,
+phpunit, next build, git status/log) to its PASS/FAIL summary and keeps the real
+exit code. It is a plain shell command, so it needs NO hook and NO adapter: it
+runs the same on every OS and in every harness, including one Downshift has no
+integration for. When a harness lacks a model-routing hook (KiroCrew has only a
+binary allow/block preToolUse, no in-place rewrite), compact is still available
+by invoking the command directly — the agent wraps the command itself. Tell
+users this: an unsupported harness still gets compaction via the command, even
+though it gets no automatic model routing. Auto-rewrite of a bare command into
+the compact form needs a shell-rewrite hook channel (`CanRewriteShellCommand`,
+Claude Code only); everywhere else it is the direct command.
+
 ### Shared RAG memory
 
 Maintainers may use a **private** Logseq vault (not in this repository) as durable
@@ -181,6 +196,12 @@ Adapter smoke (requires `downshift` on PATH):
 
 Classifier or signal changes need a table-driven test in `classifier_edge_test.go` (or adjacent `*_test.go`). See [CONTRIBUTING.md](CONTRIBUTING.md).
 
+If you touched paths, HOME, symlinks, setup, wrappers or the exec layer, confirm
+it is OS-agnostic: no `/`-hardcoded path, no `$HOME`, no POSIX-only wrapper on a
+Windows path. The `test-os` CI job runs the OS-sensitive packages on
+`windows-latest` and `macos-latest` — it must be green, not just the Linux
+`test` job.
+
 ---
 
 ## What NOT to do
@@ -188,6 +209,16 @@ Classifier or signal changes need a table-driven test in `classifier_edge_test.g
 - Do not remove copyright headers.
 - Do not change the licence without explicit instruction from the Author.
 - Do not add model IDs as hardcoded strings in Go source — use `catalog.json`.
+- Do not write OS-specific paths or assumptions. Downshift ships on Windows,
+  Linux and macOS. Build paths with `filepath.Join` / `filepath.FromSlash`
+  (store `/`-separated, convert per-OS), resolve HOME with `os.UserHomeDir()`
+  (never `os.Getenv("HOME")`), and put any OS-specific behavior behind a build
+  tag (`_windows.go` / `_unix.go`), as `scorerefresh_*.go`, `procgroup_*.go`
+  and `internal/paths/owned_*.go` already do. A `/bin/sh` wrapper is POSIX-only:
+  a harness install that must run on Windows needs a `.cmd`/`.ps1` sibling or a
+  no-wrapper path. Setup must not auto-write a symlinked target (e.g.
+  `~/.kiro/steering` → a versioned repo); `EvalSymlinks` resolves it and behaves
+  differently on Windows.
 - Do not commit the **user override** catalog in the repo (lives under `~/.downshift/`).
   The **embedded** `internal/catalog/catalog.json` IS committed intentionally.
 - Do not add a model as an automatic routing target if it should be
