@@ -75,19 +75,29 @@ func gatewayDirection(harness, requested, ran string) string {
 }
 
 // gatewayTier returns the tier of the allowlisted gateway row whose id is ran.
-// The catalog exposes its shadow rows through the optional
-// core.GatewayShadowResolver; a resolver without them knows no gateway tier.
+// The catalog exposes shadow rows and live rows through the optional
+// core.GatewayShadowResolver and core.GatewayLiveResolver; a resolver with
+// neither knows no gateway tier.
 func gatewayTier(ran string) (core.Tier, bool) {
-	gr, ok := DirectionCatalog.(core.GatewayShadowResolver)
-	if !ok {
-		return 0, false
-	}
-	for _, m := range gr.ShadowGateways() {
+	for _, m := range allowlistRows() {
 		if m.ID == ran {
 			return m.Tier, true
 		}
 	}
 	return 0, false
+}
+
+// allowlistRows lists every allowlisted gateway row the catalog exposes, shadow
+// and live. A live row is the one a run goes through when the user made it live.
+func allowlistRows() []core.Model {
+	var rows []core.Model
+	if gr, ok := DirectionCatalog.(core.GatewayShadowResolver); ok {
+		rows = append(rows, gr.ShadowGateways()...)
+	}
+	if lr, ok := DirectionCatalog.(core.GatewayLiveResolver); ok {
+		rows = append(rows, lr.LiveGateways()...)
+	}
+	return rows
 }
 
 // rankTiers is the one ranking rule for native and gateway runs: a ran tier
