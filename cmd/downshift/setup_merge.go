@@ -64,7 +64,7 @@ func asObj(v any) (*jobj, bool) { o, ok := v.(*jobj); return o, ok }
 // skipOptional leaves out the optional defaults (the main-session policy).
 // optIn turns on the defaults that cost money; without it they are only
 // suggested, and only when their key is unset.
-func mergeTarget(doc *jobj, t setupTarget, binary string, skipOptional, optIn bool) ([]string, error) {
+func mergeTarget(doc *jobj, t setupTarget, binary, stateDir string, skipOptional, optIn bool) ([]string, error) {
 	var notes []string
 	for _, d := range t.Defaults {
 		if skipOptional && d.Optional {
@@ -126,6 +126,9 @@ func mergeTarget(doc *jobj, t setupTarget, binary string, skipOptional, optIn bo
 			list = arr
 		}
 		cmd := quoteCommand(binary, h.Args)
+		if h.Wrapper != "" {
+			cmd = wrapperPath(stateDir, h)
+		}
 		if repointElsewhere(holder, h, cmd) {
 			continue
 		}
@@ -162,7 +165,7 @@ func repointElsewhere(holder *jobj, h setupHook, cmd string) bool {
 	walk = func(v any, under bool) {
 		switch x := v.(type) {
 		case *jobj:
-			if c, ok := x.vals["command"].(string); ok && under && isDownshiftCommand(c, h.Args) {
+			if c, ok := x.vals["command"].(string); ok && under && ownsCommand(c, h) {
 				if c != cmd {
 					x.set("command", cmd)
 				}
@@ -211,7 +214,7 @@ func ensureNestedHook(list []any, h setupHook, cmd string, owned []string) []any
 		inner, _ := group.vals["hooks"].([]any)
 		for j, hk := range inner {
 			ho, ok := asObj(hk)
-			if !ok || !isDownshiftCommand(hookCommand(ho), h.Args) {
+			if !ok || !ownsCommand(hookCommand(ho), h) {
 				continue
 			}
 			cur, _ := group.vals["matcher"].(string)
@@ -253,7 +256,7 @@ func newNestedGroup(h setupHook, cmd string) *jobj {
 func ensureFlatHook(list []any, h setupHook, cmd string) []any {
 	for _, item := range list {
 		e, ok := asObj(item)
-		if !ok || !isDownshiftCommand(hookCommand(e), h.Args) {
+		if !ok || !ownsCommand(hookCommand(e), h) {
 			continue
 		}
 		if hookCommand(e) != cmd {

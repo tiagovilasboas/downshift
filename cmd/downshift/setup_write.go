@@ -36,6 +36,9 @@ func setupWrite(p setupPlan, stamp string) (string, error) {
 		}
 		bak = ""
 	}
+	if p.mode != 0 {
+		mode = p.mode // a generated script must stay executable
+	}
 	if err := atomicWriteFile(p.path, p.after, mode); err != nil {
 		return "", err
 	}
@@ -90,6 +93,9 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 		}
 		if t.Steering != nil {
 			addRestore(t, filepath.Join(o.Home, filepath.FromSlash(t.Steering.Path)))
+		}
+		for _, w := range wrapperPathsFor(o, t) {
+			addRestore(t, w)
 		}
 	}
 	if readErr {

@@ -56,8 +56,14 @@ func (e *setupEnv) read(rel string) string {
 // run executes setup with a fixed binary path and a strictly increasing clock.
 func (e *setupEnv) run(args ...string) (code int, out, errOut string) {
 	e.t.Helper()
+	return e.runBin(testBin, args...)
+}
+
+// runBin is run with the binary path the hooks should name.
+func (e *setupEnv) runBin(binary string, args ...string) (code int, out, errOut string) {
+	e.t.Helper()
 	var o, er bytes.Buffer
-	opts := setupOptions{Home: e.home, Binary: testBin, SkipDiscovery: true, In: strings.NewReader(""), Out: &o, Err: &er}
+	opts := setupOptions{Home: e.home, Binary: binary, SkipDiscovery: true, In: strings.NewReader(""), Out: &o, Err: &er}
 	opts.Now = func() time.Time {
 		e.tick++
 		return time.Date(2026, 10, 13, 12, 0, 0, e.tick*1000, time.UTC)

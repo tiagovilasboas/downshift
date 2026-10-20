@@ -50,11 +50,14 @@ type setupOptions struct {
 	// (installed now, or assumed in a dry run).
 	PluginActive map[string]bool
 	Home         string
-	Binary       string
-	Now          func() time.Time
-	In           io.Reader
-	Out          io.Writer
-	Err          io.Writer
+	// StateDir is where setup keeps what it generates (wrapper scripts). Empty
+	// means <Home>/.downshift.
+	StateDir string
+	Binary   string
+	Now      func() time.Time
+	In       io.Reader
+	Out      io.Writer
+	Err      io.Writer
 }
 
 // runSetup is the CLI entry: it resolves HOME and the running binary.
@@ -96,6 +99,9 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 		return 1
 	}
 	opts.Binary = exe
+	if dir, err := paths.StateDir(); err == nil {
+		opts.StateDir = dir
+	}
 	if !opts.DryRun && !opts.Undo {
 		// Older releases created the state directory and its files with the
 		// default umask; tighten what the product owns. Best effort.
@@ -137,32 +143,42 @@ func setupRun(o setupOptions) int {
 	for _, t := range targets {
 		if t.File == "" {
 			fmt.Fprintf(o.Out, "%s: detected, not wired by setup\n  %s\n\n", t.Name, osWrapperHint(t.Manual))
-			if p, ok := planSteering(o, t); ok {
-				plans = append(plans, p)
+		} else {
+			if active, notes := ensurePlugin(o, t); active || len(notes) > 0 {
+				if o.PluginActive == nil {
+					o.PluginActive = map[string]bool{}
+				}
+				o.PluginActive[t.Name] = active
+				extra[t.Name] = notes
 			}
-			continue
+			extra[t.Name] = append(extra[t.Name], ensureMods(o, t)...)
+			p := planTarget(o, t)
+			p.notes = append(extra[t.Name], p.notes...)
+			// A file the config points at is written before the config.
+			plans = append(plans, p.companions...)
+			plans = append(plans, p)
 		}
-		if active, notes := ensurePlugin(o, t); active || len(notes) > 0 {
-			if o.PluginActive == nil {
-				o.PluginActive = map[string]bool{}
-			}
-			o.PluginActive[t.Name] = active
-			extra[t.Name] = notes
+		if p, ok := planSteering(o, t); ok {
+			plans = append(plans, p)
 		}
-		extra[t.Name] = append(extra[t.Name], ensureMods(o, t)...)
-		p := planTarget(o, t)
-		p.notes = append(extra[t.Name], p.notes...)
-		plans = append(plans, p)
 	}
 
 	failed := false
 	pending := 0
+	unwritable := map[string]bool{} // paths whose plan failed, here or while writing
+	for _, p := range plans {
+		if p.err != nil {
+			unwritable[p.path] = true
+		}
+	}
 	for _, p := range plans {
 		shown := setupDisplay(o.Home, p.path)
 		switch {
 		case p.err != nil:
 			failed = true
 			fmt.Fprintf(o.Err, "%s: %s: %v\n  nothing was written for %s\n\n", p.target.Name, shown, p.err, p.target.Name)
+		case p.skip != "":
+			fmt.Fprintf(o.Out, "%s: skipped: %s\n\n", p.target.Name, p.skip)
 		case !p.changed():
 			fmt.Fprintf(o.Out, "%s: %s already up to date\n", p.target.Name, shown)
 			setupPrintNotes(o.Out, p.notes)
@@ -198,9 +214,17 @@ func setupRun(o setupOptions) int {
 		if !p.changed() {
 			continue
 		}
+		if dep := failedCompanion(p, unwritable); dep != "" {
+			failed = true
+			unwritable[p.path] = true
+			fmt.Fprintf(o.Err, "%s: %s not written: %s could not be written, and the config would point at it\n",
+				p.target.Name, setupDisplay(o.Home, p.path), setupDisplay(o.Home, dep))
+			continue
+		}
 		bak, err := setupWrite(p, stamp)
 		if err != nil {
 			failed = true
+			unwritable[p.path] = true
 			fmt.Fprintf(o.Err, "%s: write failed: %v\n", p.target.Name, err)
 			continue
 		}
