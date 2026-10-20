@@ -618,6 +618,7 @@ func TestRun_NextBuildAndPHPUnitCompact(t *testing.T) {
 	}{
 		{"Next.js build", "next", "next build", "next_build_pass.txt", "Next.js Build: SUCCESS (5 routes: 3 app, 2 pages; shared First Load JS 96.7 kB in 8.2s)", FamilyNextBuild},
 		{"PHPUnit", "phpunit", "phpunit", "phpunit_pass_default.txt", "PHPUnit: PASS (58 tests, 143 assertions", FamilyPHPUnit},
+		{"Maven", "mvn", "mvn test", "maven_pass_test.txt", "[INFO] BUILD SUCCESS", FamilyMaven},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			data, err := os.ReadFile(filepath.Join("..", "compressor", "testdata", "corpus", tc.fixture))

@@ -28,6 +28,7 @@ const (
 	FamilyCypress    Family = "cypress"
 	FamilyNextBuild  Family = "next-build"
 	FamilyPHPUnit    Family = "phpunit"
+	FamilyMaven      Family = "maven"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -153,6 +154,9 @@ func FamilyOf(argv []string) Family {
 	if argv[0] == "phpunit" || argv[0] == "vendor/bin/phpunit" || argv[0] == "./vendor/bin/phpunit" {
 		return FamilyPHPUnit
 	}
+	if isMavenCommand(argv) {
+		return FamilyMaven
+	}
 	if len(argv) >= 3 && argv[0] == "npx" && argv[1] == "playwright" && argv[2] == "test" {
 		return FamilyPlaywright
 	}
@@ -170,6 +174,21 @@ func FamilyOf(argv []string) Family {
 		return FamilyPlaywright
 	}
 	return FamilyNone
+}
+
+// mavenGoals are the lifecycle phases the maven family wraps. A phase must be
+// the first argument, so option-first forms ("mvn -q test") and plugin goals
+// ("mvn spring-boot:run") are never wrapped.
+var mavenGoals = map[string]bool{
+	"test": true, "verify": true, "package": true, "install": true, "clean": true,
+}
+
+func isMavenCommand(argv []string) bool {
+	switch argv[0] {
+	case "mvn", "mvnw", "./mvnw":
+		return len(argv) >= 2 && mavenGoals[argv[1]]
+	}
+	return false
 }
 
 func safeByte(c byte) bool {

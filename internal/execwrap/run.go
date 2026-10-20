@@ -81,6 +81,7 @@ var expectedFormat = map[Family]compressor.Format{
 	FamilyCypress:    compressor.FormatCypress,
 	FamilyNextBuild:  compressor.FormatNextBuild,
 	FamilyPHPUnit:    compressor.FormatPHPUnit,
+	FamilyMaven:      compressor.FormatMaven,
 }
 
 // Run executes argv directly (no shell) with the caller's stdin, and exits

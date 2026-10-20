@@ -97,6 +97,12 @@ var rawFixtures = []string{
 	"next_build_truncated.txt",
 	"next_build_unknown_output.txt",
 	"phpunit_fail_actionable.txt",
+	"maven_fail_test.txt",
+	"maven_warning.txt",
+	"maven_downloads.txt",
+	"maven_ansi.txt",
+	"maven_skipped.txt",
+	"maven_multimodule.txt",
 }
 
 // cleanFixture is output that may be compacted on exit 0. facts are substrings
@@ -122,6 +128,8 @@ var cleanFixtures = []cleanFixture{
 	{"jest_pass_clean.txt", []string{"25 passed", "3 suites", "1 suite skipped", "1 todo"}},
 	{"next_build_pass.txt", []string{"5 routes", "8.2s"}},
 	{"phpunit_pass_default.txt", []string{"58 tests", "143 assertions", "00:00.019", "12.00 MB"}},
+	{"maven_pass_test.txt", []string{"inventory 1.4.0", "surefire:test", "Tests run: 13, Failures: 0, Errors: 0, Skipped: 0", "BUILD SUCCESS", "Total time:  2.915 s"}},
+	{"maven_pass_package.txt", []string{"jar:jar", "Tests run: 13, Failures: 0, Errors: 0, Skipped: 0", "BUILD SUCCESS", "Total time:  4.302 s"}},
 }
 
 func readFixture(t *testing.T, name string) []byte {

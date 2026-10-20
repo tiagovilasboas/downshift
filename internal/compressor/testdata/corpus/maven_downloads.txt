@@ -1,0 +1,21 @@
+[INFO] Scanning for projects...
+[INFO]
+[INFO] -------------------------< com.acme:inventory >-------------------------
+[INFO] Building inventory 1.4.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ inventory ---
+[INFO] Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/3.3.1/maven-filtering-3.3.1.pom
+[INFO] Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/shared/maven-filtering/3.3.1/maven-filtering-3.3.1.pom (5.9 kB at 41 kB/s)
+[INFO] Copying 2 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ inventory ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  18.730 s
+[INFO] Finished at: 2026-10-20T10:15:32-03:00
+[INFO] ------------------------------------------------------------------------
