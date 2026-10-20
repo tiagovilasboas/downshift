@@ -1,7 +1,7 @@
 {
   "name": "downshift",
   "displayName": "Downshift",
-  "description": "Right-sized models for every subagent: deterministic PreToolUse routing, session tree (/downshift:status), setup, audit and cost-reducer skills, and the bundled cache-tax mod (/keepwarm, a priced cold-send guard). Needs the downshift binary on PATH; the mod needs Claude Code 2.1.287+.",
+  "description": "Right-sized models for every subagent: deterministic PreToolUse routing, session tree (/downshift:status), setup, audit and cost-reducer skills, and the shell exec wrapper (downshift exec, compacts clean command output). The cache-tax mod is a separate, optional install. Needs the downshift binary on PATH.",
   "author": { "name": "Tiago Vilas Boas", "url": "https://github.com/tiagovilasboas" },
   "homepage": "https://github.com/tiagovilasboas/downshift",
   "repository": "https://github.com/tiagovilasboas/downshift",
