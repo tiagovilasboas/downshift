@@ -95,8 +95,8 @@ func TestShellRewrite_ThroughSharedRunner(t *testing.T) {
 		ask     []string
 		want    string // rewritten command; "" means unchanged ({})
 	}{
-		{"enabled go test", true, nil, true, "go test ./...", okRules, nil, nil, "'" + testExe + "' exec -- go test ./..."},
-		{"enabled git status", true, nil, true, "git status", okRules, nil, nil, "'" + testExe + "' exec -- git status"},
+		{"enabled go test", true, nil, true, "go test ./...", okRules, nil, nil, "'" + testExe + "' compact -- go test ./..."},
+		{"enabled git status", true, nil, true, "git status", okRules, nil, nil, "'" + testExe + "' compact -- git status"},
 		{"no allow rule", true, nil, true, "go test ./...", nil, nil, nil, ""},
 		{"allow rule for another command", true, nil, true, "go test ./...", []string{"Bash(git status)"}, nil, nil, ""},
 		{"deny rule wins", true, nil, true, "go test ./...", okRules, []string{"Bash(go test:*)"}, nil, ""},
@@ -104,7 +104,7 @@ func TestShellRewrite_ThroughSharedRunner(t *testing.T) {
 		{"bare Bash deny", true, nil, true, "git status", okRules, []string{"Bash"}, nil, ""},
 		{"disabled by default", false, nil, true, "go test ./...", okRules, nil, nil, ""},
 		{"kill switch", true, map[string]string{"DOWNSHIFT_EXEC": "0"}, true, "go test ./...", okRules, nil, nil, ""},
-		{"kill switch other value keeps it on", true, map[string]string{"DOWNSHIFT_EXEC": "1"}, true, "git status", okRules, nil, nil, "'" + testExe + "' exec -- git status"},
+		{"kill switch other value keeps it on", true, map[string]string{"DOWNSHIFT_EXEC": "1"}, true, "git status", okRules, nil, nil, "'" + testExe + "' compact -- git status"},
 		{"metacharacter", true, nil, true, "go test ./... | tail -5", okRules, nil, nil, ""},
 		{"list", true, nil, true, "git status && rm -rf x", okRules, nil, nil, ""},
 		{"not allowlisted", true, nil, true, "git log", okRules, nil, nil, ""},
@@ -218,63 +218,30 @@ func TestShellRewrite_CapabilityDeclaredOnlyForClaudeCode(t *testing.T) {
 	}
 }
 
-func TestShellRewrite_ConfigFlag(t *testing.T) {
+func TestShellRewrite_CompactIsOnUnlessFileSaysFalse(t *testing.T) {
 	t.Setenv(paths.EnvStateDir, t.TempDir())
-	// No file: the default config is enabled and its exec key is absent, so the
-	// wrapper is on for a fresh install and for an upgrade with no key.
 	if !execConfigEnabled() {
-		t.Fatal("exec must be on with no config file (absent key means on)")
+		t.Fatal("compact must be on with no config file")
 	}
 	cfg := contextopt.DefaultConfig()
-	cfg.SetExec(false)
+	off := false
+	cfg.Exec = &off
 	if err := contextopt.SaveConfig(cfg); err != nil {
 		t.Fatal(err)
 	}
 	if execConfigEnabled() {
-		t.Fatal("an explicit exec:false must turn the wrapper off")
-	}
-	cfg.SetExec(true)
-	if err := contextopt.SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-	if !execConfigEnabled() {
-		t.Fatal("exec should be on after SetExec(true)")
-	}
-	cfg.Enabled = false
-	if err := contextopt.SaveConfig(cfg); err != nil {
-		t.Fatal(err)
-	}
-	if execConfigEnabled() {
-		t.Fatal("exec must be off while context optimization is disabled")
+		t.Fatal(`"exec": false in the config must turn compact off`)
 	}
 }
 
-func TestContextEnableExecFlag(t *testing.T) {
+func TestContextDisableRefusesNative(t *testing.T) {
 	t.Setenv(paths.EnvStateDir, t.TempDir())
 	var out, errb strings.Builder
-	if rc := runContext([]string{"enable", "native", "--exec"}, &out, &errb); rc != 0 {
-		t.Fatalf("rc=%d stderr=%s", rc, errb.String())
+	if rc := runContext([]string{"disable"}, &out, &errb); rc != 2 {
+		t.Fatalf("disable with no companion: rc=%d, want 2", rc)
 	}
-	cfg, _ := contextopt.LoadConfig()
-	if !cfg.ExecOn() || !cfg.Enabled {
-		t.Fatalf("cfg = %+v", cfg)
-	}
-	if !strings.Contains(out.String(), `"matcher": "Bash"`) || !strings.Contains(out.String(), "Add no rule for `downshift exec`") {
-		t.Fatalf("enable --exec must print the hook entry and the permission note:\n%s", out.String())
-	}
-	if rc := runContext([]string{"enable", "--no-exec"}, &out, &errb); rc != 0 {
-		t.Fatalf("rc=%d stderr=%s", rc, errb.String())
-	}
-	if cfg, _ := contextopt.LoadConfig(); cfg.ExecOn() {
-		t.Fatal("--no-exec must turn it off")
-	}
-	runContext([]string{"enable", "--exec"}, &out, &errb)
-	runContext([]string{"disable"}, &out, &errb)
-	if cfg, _ := contextopt.LoadConfig(); cfg.ExecOn() {
-		t.Fatal("disable must turn exec off")
-	}
-	if rc := runContext([]string{"enable", "headroom", "--exec"}, &out, &errb); rc != 2 {
-		t.Fatalf("--exec on a companion: rc=%d, want 2", rc)
+	if !strings.Contains(errb.String(), "always on") {
+		t.Fatalf("refusal must say compact is always on:\n%s", errb.String())
 	}
 }
 

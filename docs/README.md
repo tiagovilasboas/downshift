@@ -36,7 +36,7 @@ Markdown file names under `docs/` are lowercase kebab-case; only names a tool re
 | [guides/claude-code.md](guides/claude-code.md) | Primary harness: opusplan, baseline inference, plan mode, emitted vs honored vs used |
 | [guides/evidence.md](guides/evidence.md) | Evidence ladder: list price, telemetry estimate, controlled benchmark, real tasks, cost per completed task |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Reproducible comparison: fixed Opus vs native opusplan vs opusplan + Downshift |
-| [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Protocol: routing vs output cutting (Headroom, `downshift exec`) vs RTK, with a pre-registered cut criterion |
+| [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Protocol: routing vs output cutting (Headroom, `downshift compact`) vs RTK, with a pre-registered cut criterion |
 | [guides/when-to-use.md](guides/when-to-use.md) | Downshift vs gateways and direct SDK; Claude Code is the primary harness |
 | [guides/config.md](guides/config.md) | State dir, env vars, project tier floor, migration |
 | [reference/beta-exit.md](reference/beta-exit.md) | Beta graduation criteria |

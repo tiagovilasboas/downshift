@@ -52,12 +52,12 @@ func TestRunContext_StatusEnabledByDefault(t *testing.T) {
 	// Now disable
 	out.Reset()
 	rc = runContext([]string{"disable"}, &out, &errOut)
-	if rc != 0 {
-		t.Fatalf("expected rc 0 on disable, got %d", rc)
+	if rc != 2 {
+		t.Fatalf("native disable must be refused (rc 2), got %d", rc)
 	}
 	out.Reset()
 	rc = runContext([]string{"status"}, &out, &errOut)
-	if !strings.Contains(out.String(), "Status: Disabled") {
+	if !strings.Contains(out.String(), "Status: Enabled") {
 		t.Errorf("expected disabled status in output:\n%s", out.String())
 	}
 
@@ -136,8 +136,8 @@ func TestRunContext_EnablePersistsNativeWithoutClaimingHooks(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chdir(prev) })
 
 	var out, errOut bytes.Buffer
-	if rc := runContext([]string{"disable"}, &out, &errOut); rc != 0 {
-		t.Fatalf("disable rc=%d stderr=%s", rc, errOut.String())
+	if rc := runContext([]string{"disable"}, &out, &errOut); rc != 2 {
+		t.Fatalf("native disable must be refused (rc 2), got rc=%d stderr=%s", rc, errOut.String())
 	}
 	out.Reset()
 	errOut.Reset()

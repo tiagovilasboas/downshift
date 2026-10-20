@@ -10,7 +10,7 @@ Context bloat degrades agent reasoning quality and accelerates token exhaustion.
 
 1. **Zero External Runtime**: The native compressor (`internal/compressor`) and sensor (`internal/sensor`) are written in pure Go, requiring no Python, Rust, Node, external daemons, or remote LLM calls.
 2. **Fail-Open & Diagnostic Preservation**: Never modifies or squelches error outputs, stack traces, compiler failures, non-zero exit codes, git commit logs, grep search matches, or directory trees.
-3. **Observability vs. Transformation**: In harnesses like Claude Code, hooks cannot rewrite tool output in flight. Downshift honestly operates in **observe mode**, recording real tool exit codes and byte volumes without fabricating token reductions. The one transforming path is opt-in and off by default: `downshift context enable native --exec` lets the PreToolUse hook rewrite an allowlisted shell command (`go test`, `git status`, no shell metacharacters) to `downshift exec -- <command>`, which runs it, keeps the exit code and compacts only clean output (exit 0, empty stderr, the command's own format). Policy: `internal/execwrap`; per-harness status: [harness matrix](../reference/harness-matrix.md#shell-command-rewrite-downshift-exec-opt-in-2026-10-19). Its metrics are measured bytes; the token figure is labelled estimated (bytes / 4).
+3. **Observability vs. Transformation**: In harnesses like Claude Code, hooks cannot rewrite tool output in flight. Downshift honestly operates in **observe mode**, recording real tool exit codes and byte volumes without fabricating token reductions. The one transforming path is opt-in and off by default: `downshift context enable native` lets the PreToolUse hook rewrite an allowlisted shell command (`go test`, `git status`, no shell metacharacters) to `downshift compact -- <command>`, which runs it, keeps the exit code and compacts only clean output (exit 0, empty stderr, the command's own format). Policy: `internal/execwrap`; per-harness status: [harness matrix](../reference/harness-matrix.md#shell-command-rewrite-downshift-exec-opt-in-2026-10-19). Its metrics are measured bytes; the token figure is labelled estimated (bytes / 4).
 4. **Epistemic Honesty**: Downshift measures context reduction in **bytes**. It does not claim synthetic token counts or hypothetical dollar savings for context compaction unless backed by provider-level token accounting.
 5. **Prompt Privacy**: Sensor records store format classifications, byte counters, and session hashes only. Prompts, source code, and tool stdout are never persisted.
 
@@ -66,7 +66,7 @@ Downshift respects domain boundaries by integrating with companions rather than 
 
 - `downshift context status`: Show context optimization mode, active provider, and observed metrics.
 - `downshift context enable [native|headroom]`: Enable the native compressor or record a companion provider.
-- `downshift context disable`: Revert context optimization to raw pass-through.
+- Native compact and model routing have no off switch. `downshift context disable <companion>` clears one companion record. `"exec": false` in the context config is the only file switch for the compact wrapper.
 - `downshift context doctor`: Verify local compression engine, provider availability, and harness configuration.
 - `downshift context metrics`: Inspect observed command counts, format classifications, and byte aggregates.
 - `downshift context compress`: Stream compaction utility for CLI pipelines (requires `--exit 0` in safe mode).
