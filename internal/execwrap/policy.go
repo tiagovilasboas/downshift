@@ -28,6 +28,7 @@ const (
 	FamilyCypress    Family = "cypress"
 	FamilyNextBuild  Family = "next-build"
 	FamilyPHPUnit    Family = "phpunit"
+	FamilyGradle     Family = "gradle"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -153,6 +154,9 @@ func FamilyOf(argv []string) Family {
 	if argv[0] == "phpunit" || argv[0] == "vendor/bin/phpunit" || argv[0] == "./vendor/bin/phpunit" {
 		return FamilyPHPUnit
 	}
+	if len(argv) >= 2 && isGradleProgram(argv[0]) && gradleTask(argv[1:]) {
+		return FamilyGradle
+	}
 	if len(argv) >= 3 && argv[0] == "npx" && argv[1] == "playwright" && argv[2] == "test" {
 		return FamilyPlaywright
 	}
@@ -170,6 +174,29 @@ func FamilyOf(argv []string) Family {
 		return FamilyPlaywright
 	}
 	return FamilyNone
+}
+
+func isGradleProgram(p string) bool {
+	return p == "gradle" || p == "gradlew" || p == "./gradlew"
+}
+
+// gradleTask reports whether the first non-flag word names an allowlisted
+// task (build, check, clean, test*, assemble*, lint*), optionally qualified by
+// a project path such as :app:assembleDebug. An option that takes a value
+// shifts the word and fails the check, which leaves the command unwrapped.
+func gradleTask(args []string) bool {
+	for _, a := range args {
+		if strings.HasPrefix(a, "-") {
+			continue
+		}
+		name := a[strings.LastIndexByte(a, ':')+1:]
+		switch name {
+		case "build", "check", "clean":
+			return true
+		}
+		return strings.HasPrefix(name, "test") || strings.HasPrefix(name, "assemble") || strings.HasPrefix(name, "lint")
+	}
+	return false
 }
 
 func safeByte(c byte) bool {
