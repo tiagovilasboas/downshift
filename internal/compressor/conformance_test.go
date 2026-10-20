@@ -227,15 +227,10 @@ func buildKnownViolations() map[string]string {
 	const summaryOnly = "TODO(%s): the summary-only compressor keys on its summary line and drops a stdout line with a danger word injected into an otherwise clean run"
 	m := map[string]string{}
 	for _, f := range []struct{ fixture, family string }{
-		{"cargo_pass_clean.txt", "cargo-test"},
 		{"playwright_pass_clean.txt", "playwright"},
 		{"tsc_pass_clean.txt", "tsc"},
-		{"vitest_pass_clean.txt", "vitest"},
 	} {
 		for _, w := range []string{"error", "FAIL", "warning", "panic"} {
-			if f.family == "vitest" && w == "FAIL" {
-				continue // the vitest detector already preserves a FAIL line
-			}
 			m[f.fixture+"|danger-"+w] = fmt.Sprintf(summaryOnly, f.family)
 		}
 	}
