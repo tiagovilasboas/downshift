@@ -53,7 +53,7 @@ type Lang = 'en' | 'ru' | 'he'
 const STRINGS = {
   en: {
     pane: 'Agents',
-    saved: 'On smaller model',
+    saved: 'Downshifted',
     tokens: 'Tokens',
     time: 'Time',
     collapse: 'Collapse',
@@ -473,6 +473,16 @@ const fmtCost = (usd: number): string => `$${usd < 10 ? usd.toFixed(2) : usd.toF
 /** Tokens Downshift saved in this session, from the session panel; 0 until it answers. */
 const savedOf = (): number => (ds && dsSessionKnown ? ds.saved : 0)
 
+const fmtBytes = (n: number): string =>
+  n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${Math.round(n)} B`
+
+/** Bytes the Compactor cut in this session (measured); null when it did not run or the session is unknown. Never added to the tokens above. */
+const compactorOf = (): number | null => (ds && dsSessionKnown && ds.compactor ? ds.compactor.savedBytes : null)
+const compactorSuffix = (): string => {
+  const b = compactorOf()
+  return b === null ? '' : ` · ${fmtBytes(b)} compactor`
+}
+
 const fmtTime = (ms: number): string => {
   const s = Math.max(0, Math.round(ms / 1000))
   const h = Math.floor(s / 3600)
@@ -611,7 +621,9 @@ const svg = (W: number, H: number, body: string): string =>
 const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): string => {
   const s = tr()
   const gap = 6
-  const tw = (W - gap * 2) / 3
+  const cb = compactorOf()
+  const n = cb === null ? 3 : 4
+  const tw = (W - gap * (n - 1)) / n
   const top = title ? 28 : 0
   const tile = (i: number, k: string, v: string) =>
     `<rect class="tile" x="${mx(W, i * (tw + gap), tw)}" y="${top}" width="${tw}" height="40" rx="8"/>
@@ -621,7 +633,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
     W,
     headerHeight(title),
     `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
-${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
+${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, 'Compactor', fmtBytes(cb))}`,
   )
 }
 
@@ -702,7 +714,7 @@ const compactSvg = (W: number, list: AgentRun[], planned: Planned[], t: ReturnTy
     W,
     32,
     `${body}${more ? `<text class="s" ${startText(W, x, 21, false)} font-family="${FONT}" font-size="12">+${more}</text>` : ''}
-<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtTokens(savedOf())} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
+<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtTokens(savedOf())} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}${xml(compactorSuffix())}</text>`,
   )
 }
 
@@ -744,7 +756,8 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 // Data contract: docs/reference/spawn-state.md in the Downshift repo.
 
 type DsSpawn = { tool_use?: string; label: string; saved: number }
-type DsView = { switched: number; held: number; saved: number; spawns: DsSpawn[] }
+type DsCompactor = { savedBytes: number; commands: number }
+type DsView = { switched: number; held: number; saved: number; compactor: DsCompactor | null; spawns: DsSpawn[] }
 
 let ds: DsView | null = null
 let dsSessionKnown = false // the figures are only drawn for a session we could name
@@ -757,11 +770,12 @@ const dsParse = (raw: unknown): DsView | null => {
   if (!v || typeof v !== 'object' || !Array.isArray(v.spawns)) return null
   const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : 0)
   const str = (x: unknown, max: number) => (typeof x === 'string' ? x.slice(0, max) : '')
-  const raw2 = raw as { tokens?: { work_saved?: unknown; cache_saved?: unknown } }
+  const raw2 = raw as { tokens?: { work_saved?: unknown; cache_saved?: unknown }; compactor?: { saved_bytes?: unknown; commands?: unknown } }
   return {
     switched: num(v.switched),
     held: num(v.held),
     saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
+    compactor: raw2.compactor && typeof raw2.compactor === 'object' ? { savedBytes: num(raw2.compactor.saved_bytes), commands: num(raw2.compactor.commands) } : null,
     spawns: v.spawns
       .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
       .map(x => ({
@@ -1130,7 +1144,7 @@ export const register: Register = (on, options) => {
       />
     )
     const isEmpty = list.length === 0 && planned.length === 0
-    const summary = `${fmtTokens(savedOf())} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
+    const summary = `${fmtTokens(savedOf())} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}${compactorSuffix().replace(' · ', ', ')}`
 
     if (e.surface === 'desktop' && 'Svg' in ui) {
       const { Svg } = ui
@@ -1230,7 +1244,7 @@ export const register: Register = (on, options) => {
           {toggleCompact}
         </Box>
         <Text dimColor>
-          {fmtTokens(savedOf())} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
+          {fmtTokens(savedOf())} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}{compactorSuffix()}
         </Text>
         {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
         {p.isCompact ? (
