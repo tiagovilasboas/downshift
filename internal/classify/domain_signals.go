@@ -176,6 +176,7 @@ func compileEnrichedSignals() []signal {
 				re:     regexp.MustCompile(`(?i)` + s.Pattern),
 				weight: s.Weight,
 				class:  s.Class,
+				domain: s.Domain,
 			})
 		}
 	}
