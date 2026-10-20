@@ -54,6 +54,7 @@ func (o OpenRouterAPI) Discover(ctx context.Context) ([]Model, error) {
 			CreatedAt: m.CreatedAt,
 			InputM:    m.InputM,
 			OutputM:   m.OutputM,
+			Gateway:   true,
 		})
 	}
 	return out, nil

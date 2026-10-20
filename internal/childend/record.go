@@ -390,8 +390,10 @@ func gatewayRanModel(resolved *telemetry.Event, ce hookport.ChildEnd) string {
 // markGatewayRun names the model an OpenRouter route ran and the price source
 // for it, so the record is priced from what ran and not from the requested tier.
 func markGatewayRun(ev *telemetry.Event, slug string) {
-	ev.ToModel = slug
-	ev.GatewayPrice = telemetry.GatewayPriceStatus(slug)
+	// The slug comes from the harness payload: bound it like the native path.
+	bounded := telemetry.ModelOrUnknown(slug)
+	ev.ToModel = bounded
+	ev.GatewayPrice = telemetry.GatewayPriceStatus(bounded)
 }
 
 // recordResolved appends a "resolved" observation for the decision this spawn

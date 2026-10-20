@@ -167,9 +167,13 @@ func perMillion(s string) *float64 {
 		return nil
 	}
 	v, err := strconv.ParseFloat(s, 64)
-	if err != nil || v < 0 || math.IsNaN(v) || math.IsInf(v, 0) {
+	if err != nil {
 		return nil
 	}
+	// Scale first: a finite price near the float limit overflows to +Inf here.
 	m := v * 1e6
+	if math.IsNaN(m) || math.IsInf(m, 0) || m < 0 {
+		return nil
+	}
 	return &m
 }

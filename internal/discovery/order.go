@@ -62,24 +62,7 @@ func Order(harness string, models []Model, cat Catalog) Ranked {
 	var groupOrder []string
 	for _, m := range models {
 		r.Metadata = append(r.Metadata, core.SessionModel{ID: m.ID, Tier: m.Tier, Efforts: m.Efforts, InputM: m.InputM, OutputM: m.OutputM, Harness: harness})
-		var e catalog.Entry
-		var ok bool
-		if cat != nil {
-			e, ok = cat.EntryFor(harness, m.ID)
-		}
-		nativeTier := strings.ToLower(m.Tier)
-		if _, valid := tierRank[nativeTier]; valid {
-			// A provider descriptor outranks the fallback catalog. Keep native
-			// IDs separate instead of deduplicating them using catalog families.
-			e = catalog.Entry{ID: m.ID, Harness: harness, Tier: nativeTier}
-			if m.OutputM != nil {
-				e.OutputCostM = *m.OutputM
-			}
-			ok = true
-		} else if m.Tier != "" {
-			// Explicit malformed capability evidence cannot silently fall back.
-			ok = false
-		}
+		e, ok := rankEntry(harness, m, cat)
 		if !ok {
 			r.Unranked = append(r.Unranked, m.ID)
 			continue
@@ -88,7 +71,7 @@ func Order(harness string, models []Model, cat Catalog) Ranked {
 			r.Unranked = append(r.Unranked, m.ID)
 			continue
 		}
-		if m.Tier == "" && cat != nil && !cat.IsExactID(harness, m.ID) {
+		if m.Tier == "" && !m.Gateway && cat != nil && !cat.IsExactID(harness, m.ID) {
 			r.FamilyOnly = append(r.FamilyOnly, FamilyMatch{ID: m.ID, CatalogID: e.ID})
 		}
 		key := strings.ToLower(e.Family) + "|" + strings.ToLower(e.Effort)
@@ -132,6 +115,53 @@ func Order(harness string, models []Model, cat Catalog) Ranked {
 		r.IDs = append(r.IDs, w.m.ID)
 	}
 	return r
+}
+
+// rankEntry returns the catalog row that gives a discovered model its tier.
+// A gateway id is ranked only by an allowlist row that names it exactly and
+// routes live; the vendor prefix is never stripped for it, so a native
+// homonym's tier cannot be reused.
+func rankEntry(harness string, m Model, cat Catalog) (catalog.Entry, bool) {
+	if m.Gateway {
+		return gatewayRankEntry(harness, m.ID, cat)
+	}
+	var e catalog.Entry
+	var ok bool
+	if cat != nil {
+		e, ok = cat.EntryFor(harness, m.ID)
+	}
+	nativeTier := strings.ToLower(m.Tier)
+	if _, valid := tierRank[nativeTier]; valid {
+		// A provider descriptor outranks the fallback catalog. Keep native
+		// IDs separate instead of deduplicating them using catalog families.
+		e = catalog.Entry{ID: m.ID, Harness: harness, Tier: nativeTier}
+		if m.OutputM != nil {
+			e.OutputCostM = *m.OutputM
+		}
+		ok = true
+	} else if m.Tier != "" {
+		// Explicit malformed capability evidence cannot silently fall back.
+		ok = false
+	}
+	return e, ok
+}
+
+// gatewayRankEntry resolves a discovered gateway id only against the gateway
+// rows of the allowlist, by exact slug. A shadow or explicit-only row does not
+// rank it: a row must route live.
+func gatewayRankEntry(harness, id string, cat Catalog) (catalog.Entry, bool) {
+	if cat == nil {
+		return catalog.Entry{}, false
+	}
+	routeID := catalog.AllowlistProvider + "/" + id
+	if !cat.IsExactID(harness, routeID) {
+		return catalog.Entry{}, false
+	}
+	e, ok := cat.EntryFor(harness, routeID)
+	if !ok || e.Routing == "explicit_only" || e.Routing == catalog.RoutingShadow {
+		return catalog.Entry{}, false
+	}
+	return e, true
 }
 
 // newer reports whether a is a later release than b.
