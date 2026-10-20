@@ -112,11 +112,11 @@ describe('status', () => {
     expect(dciMode(null)).toBe('off')
   })
 
-  test('the compactor is on only for the enabled native provider', () => {
-    expect(compactorOn({ enabled: true, provider: 'native' })).toBe(true)
-    expect(compactorOn({ enabled: false, provider: 'native' })).toBe(false)
-    expect(compactorOn({ enabled: true, provider: 'headroom' })).toBe(false)
-    expect(compactorOn(null)).toBe(false)
+  test('compact is on unless the config file says exec false', () => {
+    expect(compactorOn({ exec: true })).toBe(true)
+    expect(compactorOn({})).toBe(true)
+    expect(compactorOn(null)).toBe(true)
+    expect(compactorOn({ exec: false })).toBe(false)
   })
 
   test('a chip is lit only when its feature does work, and the detail says what to run', () => {
@@ -126,7 +126,7 @@ describe('status', () => {
     expect(obs!.on).toBe(false)
     expect(obs!.detail).toContain('downshift dci enable active')
     expect(chips(null).map(c => c.on)).toEqual([false, false])
-    expect(chips({ dci: 'off', compactor: false })[1]!.detail).toContain('downshift context enable native')
+    expect(chips({ dci: 'off', compactor: false })[1]!.detail).toContain('"exec": false')
   })
 })
 
