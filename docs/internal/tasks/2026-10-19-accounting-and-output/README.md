@@ -16,7 +16,7 @@ headers, shared layers only (no feature for one harness, [layering.md](../../../
 | Dollars only in `downshift report`, priced at report time with the current catalog (`prices_as_of`), through an **API lens** (dollars per completed task) and a **plan lens** (tokens); no dollar percentage anywhere | `telemetry.RepriceUsage`, [report.md](../../../guides/report.md) |
 | No price guard in `core`. The Codex frontier-under-mid price inversion is the vendor's list price; whether to change the Codex tiers is **undecided** | [value-per-harness.md](../../../reference/value-per-harness.md) anomaly 1 |
 | Downshift also cuts tool-output tokens itself, opt-in, default off (`downshift exec`), after AppSec and QA review | PR #259 and the PRs under it (below) |
-| Routing becomes an optional feature if it adds less than 10% over RTK alone and shows no quota gain | [benchmark-output-cutting.md](../../../guides/benchmark-output-cutting.md) |
+| Routing becomes an optional feature if it adds less than 10% over a third-party output-cutting tool alone and shows no quota gain | [benchmark-output-cutting.md](../../../guides/benchmark-output-cutting.md) |
 
 ## Landed on main today
 
@@ -84,7 +84,7 @@ The AppSec must-fix list and the QA defects, closed and verified:
 2. Merge #260 and #262 (independent of the above). Owner runs `claude plugin marketplace update downshift` and `claude plugin update savvy-progress@downshift`, reinstalls the binary from main and runs `downshift setup`.
 3. After a few days of normal use: `downshift report`, `downshift context metrics` (the sensor now has bytes) and the reason-code mix of `stats --export`. This is the first real number after the day's fixes.
 4. Owner decides the Codex tiers (finding 1 above).
-5. Run the pilot of [benchmark-output-cutting.md](../../../guides/benchmark-output-cutting.md) (routing alone, + Headroom, + `downshift exec`, RTK alone), then apply its pre-registered cut criterion.
+5. Run the pilot of [benchmark-output-cutting.md](../../../guides/benchmark-output-cutting.md) (routing alone, + Headroom, + `downshift exec`, a third-party output-cutting tool alone), then apply its pre-registered cut criterion.
 6. Capture child-token payloads for Cursor, Codex and OpenCode so the tokens-first views cover them.
 7. Continue the native output cutting candidate roadmap in [output-cutting-candidates.md](output-cutting-candidates.md): Phase 1 is landed (Playwright, Cargo, TSC, verbose Go tests); Jest, Cypress, Next.js build, and PHPUnit are landed. Formatter checks are deferred because their clean output is already short; Mypy/Pyright still needs measurement. Pest, PHPStan, Maven, and Gradle need representative output or demonstrated savings before implementation.
 
