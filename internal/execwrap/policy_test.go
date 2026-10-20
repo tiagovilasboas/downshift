@@ -36,6 +36,12 @@ func TestDecide(t *testing.T) {
 		{"npx next build", "npx next build", true, FamilyNextBuild, "'/opt/ds/downshift' compact -- npx next build", ReasonAllowlisted},
 		{"phpunit", "phpunit", true, FamilyPHPUnit, "'/opt/ds/downshift' compact -- phpunit", ReasonAllowlisted},
 		{"vendor phpunit", "./vendor/bin/phpunit", true, FamilyPHPUnit, "'/opt/ds/downshift' compact -- ./vendor/bin/phpunit", ReasonAllowlisted},
+		{"flutter test", "flutter test", true, FamilyFlutterTest, "'/opt/ds/downshift' compact -- flutter test", ReasonAllowlisted},
+		{"flutter test args", "flutter test test/a_test.dart -r expanded", true, FamilyFlutterTest, "'/opt/ds/downshift' compact -- flutter test test/a_test.dart -r expanded", ReasonAllowlisted},
+		{"dart test", "dart test --no-color", true, FamilyDartTest, "'/opt/ds/downshift' compact -- dart test --no-color", ReasonAllowlisted},
+		{"flutter analyze not allowlisted", "flutter analyze", false, "", "", ReasonNotAllowlisted},
+		{"dart run not allowlisted", "dart run", false, "", "", ReasonNotAllowlisted},
+		{"flutter pub get not allowlisted", "flutter pub get", false, "", "", ReasonNotAllowlisted},
 
 		{"git log not allowlisted", "git log", false, "", "", ReasonNotAllowlisted},
 		{"git diff", "git diff", false, "", "", ReasonNotAllowlisted},

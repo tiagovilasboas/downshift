@@ -97,6 +97,12 @@ var rawFixtures = []string{
 	"next_build_truncated.txt",
 	"next_build_unknown_output.txt",
 	"phpunit_fail_actionable.txt",
+	// flutter test and dart test: failures, test print output, pub get chatter
+	// and ANSI colour stay raw.
+	"flutter_fail.txt",
+	"flutter_print_output.txt",
+	"flutter_pub_get_noise.txt",
+	"dart_pass_ansi.txt",
 }
 
 // cleanFixture is output that may be compacted on exit 0. facts are substrings
@@ -122,6 +128,10 @@ var cleanFixtures = []cleanFixture{
 	{"jest_pass_clean.txt", []string{"25 passed", "3 suites", "1 suite skipped", "1 todo"}},
 	{"next_build_pass.txt", []string{"5 routes", "8.2s"}},
 	{"phpunit_pass_default.txt", []string{"58 tests", "143 assertions", "00:00.019", "12.00 MB"}},
+	{"flutter_pass_compact.txt", []string{"PASS", "3 passed", "1 skipped", "00:02"}},
+	{"flutter_pass_expanded.txt", []string{"PASS", "3 passed", "1 skipped"}},
+	{"dart_pass_compact.txt", []string{"PASS", "3 passed", "1 skipped"}},
+	{"dart_pass_expanded.txt", []string{"PASS", "3 passed", "1 skipped"}},
 }
 
 func readFixture(t *testing.T, name string) []byte {
