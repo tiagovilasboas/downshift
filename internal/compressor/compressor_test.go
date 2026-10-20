@@ -283,6 +283,86 @@ func TestCompress_Pytest_ErrorsPreserveRaw(t *testing.T) {
 	}
 }
 
+// TestCompress_Pytest_UnrecognisedLinePreservesRaw injects lines that a clean
+// run never emits (danger words and a plain unknown line) at the head, middle
+// and tail of a passing transcript. Each must come back byte-identical: a
+// failure or warning must never be hidden behind the one-line summary.
+func TestCompress_Pytest_UnrecognisedLinePreservesRaw(t *testing.T) {
+	clean := []string{
+		"============================= test session starts ==============================",
+		"platform darwin -- Python 3.12.3, pytest-8.1.1, pluggy-1.4.0",
+		"rootdir: /Users/tiago.boas/project",
+		"collected 10 items",
+		"",
+		"tests/test_a.py ..........                                             [100%]",
+		"",
+		"============================== 10 passed in 0.42s ==============================",
+	}
+	injected := []string{
+		"unexpected error in output",
+		"unexpected FAIL in output",
+		"unexpected warning in output",
+		"unexpected panic in output",
+		"zz-unrecognised-line 42",
+	}
+	for _, line := range injected {
+		for _, pos := range []int{0, len(clean) / 2, len(clean)} {
+			lines := append(append(append([]string{}, clean[:pos]...), line), clean[pos:]...)
+			in := []byte(strings.Join(lines, "\n") + "\n")
+			t.Run(fmt.Sprintf("%s@%d", line, pos), func(t *testing.T) {
+				res := compressor.Compress(in, compressor.ModeSafe)
+				if res.Applied {
+					t.Fatalf("compacted pytest with an unrecognised line: %q", res.Reason)
+				}
+				if !bytes.Equal(res.Output, in) {
+					t.Fatalf("output not byte-identical to input:\n got %q\nwant %q", res.Output, in)
+				}
+			})
+		}
+	}
+	// Without the injected line the same transcript still compacts.
+	res := compressor.Compress([]byte(strings.Join(clean, "\n")+"\n"), compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("clean transcript not compacted: %s", res.Reason)
+	}
+}
+
+// TestCompress_Pytest_ClosedGrammarPreservesRaw covers free text that a loose
+// pattern used to accept: a header or plugin line carrying a failure, and a
+// passing summary with trailing spaces. Each must come back byte-identical.
+func TestCompress_Pytest_ClosedGrammarPreservesRaw(t *testing.T) {
+	const header = "============================= test session starts ==============================\n"
+	const summary = "============================== 10 passed in 0.42s ==============================\n"
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"plugins line carries FAILED text", header + "plugins: FAILED tests/test_a.py::t - AssertionError\n" + summary},
+		{"rootdir with spaces", header + "rootdir: /tmp/my project\n" + summary},
+		{"rootdir without a path", header + "rootdir: FAILED\n" + summary},
+		{"summary with trailing space", header + "tests/test_a.py ..........\n=============================== 10 passed in 0.42s =============================== \n"},
+		{"summary with trailing tab", header + "tests/test_a.py ..........\n=============================== 10 passed in 0.42s ===============================\t\n"},
+		{"summary time with a failure suffix", header + "tests/test_a.py ..........\n=== 10 passed in 0.42s - 1 failed ===\n"},
+		{"summary time not a number", header + "tests/test_a.py ..........\n=== 10 passed in FAILED ===\n"},
+		{"configfile value FAILED", header + "configfile: FAILED\n" + summary},
+		{"configfile value with a space", header + "configfile: pytest ini FAILED\n" + summary},
+		{"cachedir value with a space", header + "cachedir: .pytest_cache FAILED\n" + summary},
+		{"platform python version with text", header + "platform darwin -- Python 3.12.3 FAILED, pytest-8.1.1\n" + summary},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("compacted pytest with free text: %q", res.Reason)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("output not byte-identical to input:\n got %q\nwant %q", res.Output, in)
+			}
+		})
+	}
+}
+
 func TestCompress_Vitest_PassCompaction(t *testing.T) {
 	in := []byte("\n RUN  v1.6.0 /web\n\n ✓ a.test.ts (2)\n ✓ b.test.ts (3)\n\n Test Files  2 passed (2)\n      Tests  5 passed (5)\n   Start at  12:00:00\n   Duration  350ms (transform 50ms, tests 35ms)\n")
 	res := compressor.Compress(in, compressor.ModeSafe)
@@ -402,6 +482,37 @@ func TestCompress_Playwright_ErrorsPreserveRaw(t *testing.T) {
 			}
 			if res.Format != compressor.FormatPlaywright {
 				t.Errorf("expected format playwright, got %v", res.Format)
+			}
+		})
+	}
+}
+
+// TestCompress_Playwright_UnrecognisedLinePreservesRaw injects lines that the
+// plain success grammar does not recognise into a clean run. Each transcript
+// must come back byte-identical, whatever the injected words are.
+func TestCompress_Playwright_UnrecognisedLinePreservesRaw(t *testing.T) {
+	const clean = "Running 2 tests using 1 worker\n\n  ✓  1 e2e/a.spec.ts:10:5 › login flow (1.0s)\n  ✓  2 e2e/b.spec.ts (1.2s)\n\n  2 passed (2.2s)\n"
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"injected error line", "Running 2 tests using 1 worker\nerror\n\n  ✓  1 e2e/a.spec.ts:10:5 › login flow (1.0s)\n  2 passed (2.2s)\n"},
+		{"injected warning line", "Running 2 tests using 1 worker\n\n  ✓  1 e2e/a.spec.ts:10:5 › login flow (1.0s)\nwarning: slow browser\n  2 passed (2.2s)\n"},
+		{"injected FAIL line", "Running 2 tests using 1 worker\n\n  ✓  1 e2e/a.spec.ts:10:5 › login flow (1.0s)\nFAIL\n  2 passed (2.2s)\n"},
+		{"free text after a passed-test line", "Running 2 tests using 1 worker\n\n  ✓  1 e2e/a.spec.ts:10:5 › login flow (1.0s) retried by hand\n  ✓  2 e2e/b.spec.ts (1.2s)\n\n  2 passed (2.2s)\n"},
+		{"free text after the summary line", "Running 2 tests using 1 worker\n\n  ✓  1 e2e/a.spec.ts:10:5 › login flow (1.0s)\n  ✓  2 e2e/b.spec.ts (1.2s)\n\n  2 passed (2.2s) with a note\n"},
+		{"free text in a second summary line", clean + "  2 passed (2.2s)\n"},
+		{"unrecognised skipped line", "Running 2 tests using 1 worker\n\n  ✓  1 e2e/a.spec.ts:10:5 › login flow (1.0s)\n  -  2 e2e/b.spec.ts (skipped)\n  1 passed (2.2s)\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("must not compact an unrecognised playwright line: reason=%q", res.Reason)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("must preserve raw output byte-identical, got %q", res.Output)
 			}
 		})
 	}
@@ -560,6 +671,43 @@ func TestCompress_TSC_ErrorsPreserveRaw(t *testing.T) {
 			}
 			if res.Format != compressor.FormatTSC {
 				t.Errorf("expected format tsc, got %v", res.Format)
+			}
+		})
+	}
+}
+
+// TestCompress_TSC_UnrecognisedLinePreservesRaw covers injected lines that the
+// plain tsc success grammar does not recognise: each must return the input
+// byte-identical, even when the run otherwise ends with the 0-errors summary.
+func TestCompress_TSC_UnrecognisedLinePreservesRaw(t *testing.T) {
+	const head = "[19:20:00] Projects in this build:\n    * tsconfig.json\n"
+	const tail = "[19:20:02] Found 0 errors. Watching for file changes.\n"
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"injected error word", head + "unexpected error in output\n" + tail},
+		{"injected warning word", head + "unexpected warning in output\n" + tail},
+		{"injected FAIL word", head + "unexpected FAIL in output\n" + tail},
+		{"injected panic word", head + "unexpected panic in output\n" + tail},
+		{"injected unknown line", head + "zz-unrecognised-line 42\n" + tail},
+		{"project line with spaces", "[19:20:00] Projects in this build:\n    * unexpected error in output\n" + tail},
+		{"ANSI-wrapped summary", head + "[19:20:02] \x1b[32mFound 0 errors. Watching for file changes.\x1b[0m\n"},
+		{"no summary line", head},
+		{"project named error.json", "[19:20:00] Projects in this build:\n    * error.json\n" + tail},
+		{"building panic project", "[19:20:00] Projects in this build:\n    * tsconfig.json\n[19:20:01] Building project 'panic'...\n" + tail},
+		{"project tsconfig.panic.json", "[19:20:00] Projects in this build:\n    * tsconfig.panic.json\n" + tail},
+		{"project tsconfig.error.json", "[19:20:00] Projects in this build:\n    * tsconfig.error.json\n" + tail},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("must not compact tsc with unrecognised line: %s", res.Reason)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("must preserve raw output byte-identical, got %q", res.Output)
 			}
 		})
 	}
