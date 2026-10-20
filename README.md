@@ -72,7 +72,7 @@ Downshift is three capabilities behind one `setup`, running as native Go hooks i
 ### 2. Output compaction (`downshift compact`, on by default)
 - On Claude Code, the plugin registers a Bash hook that rewrites a short allowlist of shell commands (`go test`, `git status`, with no pipe, list, redirection, quote, glob or expansion) to `downshift compact -- <command>`. That runs the program with no shell, keeps its exit code, and compacts stdout only when the exit code is 0, stderr is empty and the compressor recognises that command's own format. Errors, stack traces, diffs, grep matches and non-zero exits stay byte for byte the same.
 - **Honest scope:** it saves tokens only on clean runs of those commands (for example a `go test` where every package line is `ok`); a hook cannot rewrite the output of any other tool in flight, which needs a proxy such as [Headroom](https://github.com/chopratejas/headroom) (Downshift detects and records it, never starts it). Wired on Claude Code only.
-- Turn it off with `"exec": false` in the Downshift config or `DOWNSHIFT_EXEC=0`. `downshift context metrics` shows the bytes saved, with tokens estimated as bytes / 4. Details: [harness matrix](docs/reference/harness-matrix.md#shell-command-rewrite-downshift-compact-opt-in-2026-10-19).
+- Turn it off with `"exec": false` in the Downshift config or `DOWNSHIFT_EXEC=0`. `downshift context metrics` shows the bytes saved, with tokens estimated as bytes / 4. Details: [harness matrix](docs/reference/harness-matrix.md#shell-command-rewrite-downshift-compact-on-by-default-2026-10-19).
 
 ### 3. Code intelligence (DCI, opt-in)
 - Indexes the repository in-process: Go AST, plus TypeScript/JavaScript, Python, Rust, PHP, Java, and C# by pattern.
