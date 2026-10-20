@@ -408,7 +408,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    )
  }
  
-@@ -790,6 +735,120 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
+@@ -790,6 +735,128 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
    void $.ui.open({ id: PANE, title: tr().pane })
  }
  
@@ -441,7 +441,14 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +    held: num(v.held),
 +    saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
 +    tokens_line: str(raw2.tokens_line, 120),
-+    types: types.map(t => str((t as { line?: unknown } | null)?.line, 80)).filter(l => l !== '').slice(0, 6),
++    types: types
++      .filter(t => {
++        const k = (t as { tokens?: { work_saved?: unknown; cache_saved?: unknown } } | null)?.tokens
++        return num(k?.work_saved) + num(k?.cache_saved) > 0
++      })
++      .map(t => str((t as { line?: unknown } | null)?.line, 80))
++      .filter(l => l !== '')
++      .slice(0, 6),
 +    spawns: v.spawns
 +      .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
 +      .map(x => ({
@@ -518,18 +525,19 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +const dsSummary = (): string => {
 +  // Without a session id the log's latest session could be another one: draw no figure.
 +  if (!ds || !dsSessionKnown || ds.switched + ds.held === 0 && ds.tokens_line === '') return ''
-+  const parts: string[] = [ds.tokens_line ? `Downshift ${ds.tokens_line}` : 'Downshift on']
-+  parts.push(`${ds.switched} switched · ${ds.held} held`)
++  const parts: string[] = ['Downshift', ds.tokens_line || 'on']
++  if (ds.switched > 0) parts.push(`${ds.switched} switched`)
++  if (ds.held > 0) parts.push(`${ds.held} held`)
 +  return parts.join(' · ')
 +}
 +
 +/** Tokens saved per agent type, for the panel header; '' when spawns name no type. */
-+const dsTypes = (): string => (ds && dsSessionKnown && ds.types.length > 0 ? `by agent type: ${ds.types.join(' · ')}` : '')
++const dsTypes = (): string => (ds && dsSessionKnown && ds.types.length > 0 ? `by type: ${ds.types.join(' · ')}` : '')
 +
  export const register: Register = (on, options) => {
    on('session.start', async ($, e, next) => {
      const started = await next(e)
-@@ -948,6 +1007,12 @@ export const register: Register = (on, options) => {
+@@ -948,6 +1015,12 @@ export const register: Register = (on, options) => {
        return [...list.filter(a => a.id !== run.id), run].slice(-200)
      })
      await update($, now, () => at)
@@ -542,7 +550,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (e.subagentType.startsWith('savvy-')) {
        const f = await read($, flow)
        await autoOpen($, f && !f.isFinished ? f.title : 'savvy-flow')
-@@ -998,6 +1063,7 @@ export const register: Register = (on, options) => {
+@@ -998,6 +1071,7 @@ export const register: Register = (on, options) => {
    on('turn.complete', async ($, e, next) => {
      const agentId = e.agentId
      if (agentId) {
@@ -550,7 +558,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
        const at = await $.clock.now()
        await update($, agents, list =>
          list.map((a): AgentRun => {
-@@ -1031,6 +1097,7 @@ export const register: Register = (on, options) => {
+@@ -1031,6 +1105,7 @@ export const register: Register = (on, options) => {
      const s = tr()
      const ui = $.ui.resolve(e)
      const { Box, Text, Button } = ui
@@ -558,7 +566,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      const list = await read($, agents)
      const f = await read($, flow)
      const p: Panel = await read($, panel)
-@@ -1060,7 +1127,7 @@ export const register: Register = (on, options) => {
+@@ -1060,7 +1135,7 @@ export const register: Register = (on, options) => {
        />
      )
      const isEmpty = list.length === 0 && planned.length === 0
@@ -567,7 +575,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
  
      if (e.surface === 'desktop' && 'Svg' in ui) {
        const { Svg } = ui
-@@ -1093,6 +1160,8 @@ export const register: Register = (on, options) => {
+@@ -1093,6 +1168,8 @@ export const register: Register = (on, options) => {
            ))}
            <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
              <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
@@ -576,7 +584,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {toggleCompact}
              {isEmpty && <Text dimColor>{s.empty}</Text>}
              {running.length > 0 && section('h-run', `${s.running} · ${running.length}`)}
-@@ -1135,6 +1204,7 @@ export const register: Register = (on, options) => {
+@@ -1135,6 +1212,7 @@ export const register: Register = (on, options) => {
            <Text dimColor wrap="truncate-end">
              {'  '}
              {tier === 'other' ? a.type : tierWord(tier)} · {model}
@@ -584,7 +592,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
            </Text>
            <Text wrap="truncate-end">
-@@ -1142,7 +1212,7 @@ export const register: Register = (on, options) => {
+@@ -1142,7 +1220,7 @@ export const register: Register = (on, options) => {
              {progress === null ? <Text dimColor>{ctxBar(ctx, barW)}</Text> : <Text color={color}>{ctxBar(progress * 100, barW)}</Text>}
              <Text dimColor>
                {' '}
@@ -593,7 +601,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              </Text>
            </Text>
          </Box>
-@@ -1158,8 +1228,10 @@ export const register: Register = (on, options) => {
+@@ -1158,8 +1236,10 @@ export const register: Register = (on, options) => {
            {toggleCompact}
          </Box>
          <Text dimColor>
@@ -605,7 +613,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
          {p.isCompact ? (
            <Text wrap="truncate-end">
              {[...running, ...finished].map(a => (
-@@ -1203,7 +1275,18 @@ export const register: Register = (on, options) => {
+@@ -1203,7 +1283,18 @@ export const register: Register = (on, options) => {
    })
  
    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -625,7 +633,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      if (f === null || e.props.hasSurvey) return next(e)
      // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
      // never nested: the desktop drops a band that nests it.
-@@ -1242,6 +1325,7 @@ export const register: Register = (on, options) => {
+@@ -1242,6 +1333,7 @@ export const register: Register = (on, options) => {
              {crewButton}
              {dismiss}
            </Box>
@@ -633,7 +641,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
            {below}
          </Box>
        )
-@@ -1264,6 +1348,7 @@ export const register: Register = (on, options) => {
+@@ -1264,6 +1356,7 @@ export const register: Register = (on, options) => {
            {crewButton}
            {dismiss}
          </Box>
