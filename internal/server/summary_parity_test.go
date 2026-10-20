@@ -82,7 +82,7 @@ func TestStatus_TokensSavedEqualTokenSavings(t *testing.T) {
 	if got.TokensSaved.Tokens != want.Total || got.TokensSaved.Line != want.Total.Line() {
 		t.Fatalf("dashboard tokens %+v %q != TokenSavings %+v %q", got.TokensSaved.Tokens, got.TokensSaved.Line, want.Total, want.Total.Line())
 	}
-	if !strings.HasPrefix(got.TokensSaved.Line, "tokens saved: work 80% · cache 100%") {
+	if !strings.HasPrefix(got.TokensSaved.Line, "saved 80% of work · 100% of cache") {
 		t.Fatalf("line = %q", got.TokensSaved.Line)
 	}
 	types := telemetry.AgentTypeLines(want)

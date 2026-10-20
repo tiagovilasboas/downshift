@@ -762,6 +762,7 @@ func parseEvents(r io.Reader) ([]Event, error) {
 		}
 		events = append(events, ev)
 	}
+	linkLateUsage(events)
 	return events, sc.Err()
 }
 

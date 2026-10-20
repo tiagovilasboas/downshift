@@ -138,7 +138,7 @@ func (s SessionRouting) Line() string {
 		parts = append(parts, fmt.Sprintf("%d on %s", s.TopModelN, s.TopModel))
 	}
 	if s.Tokens.Observed() {
-		parts = append(parts, fmt.Sprintf("tokens saved work %s · cache %s", percentText(s.Tokens.WorkPercent()), percentText(s.Tokens.CachePercent())))
+		parts = append(parts, s.Tokens.Line())
 	}
 	parts = append(parts, fmt.Sprintf("%d on doubt", s.OnDoubt))
 	if s.QuotaStale {
@@ -180,13 +180,6 @@ func ChildEndLine(ev Event) string {
 		return ""
 	}
 	return "↳ downshift: " + strings.Join(parts, " · ")
-}
-
-func formatUSD(v float64) string {
-	if v > 0 && v < 0.005 {
-		return "<$0.01"
-	}
-	return fmt.Sprintf("$%.2f", v)
 }
 
 func formatTokens(n int64) string {
