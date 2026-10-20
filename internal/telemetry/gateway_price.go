@@ -5,11 +5,11 @@ package telemetry
 
 import "strings"
 
-// Gateway runs: a child the harness sent through an OpenRouter route. Its
-// usage is priced from the model that ran, read from the OpenRouter public
-// list snapshot the operator opted in to. Without a snapshot price the run is
-// unknown: it is never credited as saved, and the tier of the requested model
-// is never assumed for it.
+// Gateway runs: a child the harness sent through an OpenRouter route. The run
+// is ranked by the tier of its allowlisted row (see gatewayDirection). The
+// price snapshot only labels the run's price source. A gateway id no row names
+// is unknown: it is never credited as saved, and the tier of the requested
+// model is never assumed for it.
 
 // Price sources recorded in Event.GatewayPrice.
 const (
@@ -40,32 +40,6 @@ func GatewayPriceStatus(model string) string {
 		return GatewayPriceSnapshot
 	}
 	return GatewayPriceUnknown
-}
-
-// gatewayDirection places a usage record that ran on a gateway model. The run
-// is priced from what ran (the snapshot price) against the requested model's
-// catalog price, by input plus output per million. Anything missing is
-// unattributed: never a saving, never a tier guess.
-func gatewayDirection(usage Event, requested, ran string) string {
-	if usage.GatewayPrice != GatewayPriceSnapshot || GatewayPriceLookup == nil || DirectionCatalog == nil {
-		return TokenUnattributed
-	}
-	inM, outM, ok := GatewayPriceLookup(ran)
-	if !ok {
-		return TokenUnattributed
-	}
-	req, ok := DirectionCatalog.LookupByID(usage.Harness, requested)
-	if !ok || req.InputM <= 0 || req.OutputM <= 0 {
-		return TokenUnattributed
-	}
-	ranCost, reqCost := inM+outM, req.InputM+req.OutputM
-	switch {
-	case ranCost < reqCost:
-		return TokenCheaper
-	case ranCost > reqCost:
-		return TokenPricier
-	}
-	return TokenUnchanged
 }
 
 // isUnpricedGateway reports a gateway run that a saving could not be credited

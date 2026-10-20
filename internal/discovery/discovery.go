@@ -31,6 +31,10 @@ type Model struct {
 	Efforts []string `json:"efforts,omitempty"`
 	InputM  *float64 `json:"input_per_million,omitempty"`
 	OutputM *float64 `json:"output_per_million,omitempty"`
+	// Gateway marks an id from a gateway listing ("vendor/model", not a
+	// harness id). It is ranked only through an allowlist row, never by
+	// stripping the vendor prefix.
+	Gateway bool `json:"gateway,omitempty"`
 }
 
 // Source reports the models one harness offers to the current account.

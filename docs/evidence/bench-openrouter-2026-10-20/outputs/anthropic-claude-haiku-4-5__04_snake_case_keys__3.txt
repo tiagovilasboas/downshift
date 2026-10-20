@@ -1,0 +1,68 @@
+
+```python
+import anthropic
+import re
+
+
+def to_snake_case_keys(obj):
+    """
+    Recursively converts all dictionary keys to snake_case.
+    
+    Rules for conversion:
+    - Insert '_' before an uppercase letter that follows a lowercase letter or digit
+    - Replace '-' with '_'
+    - Lowercase everything
+    
+    Args:
+        obj: A Python object (dict, list, or primitive value)
+    
+    Returns:
+        A new structure with all dict keys converted to snake_case
+    """
+    
+    def to_snake_case(key):
+        """Convert a single key to snake_case."""
+        # Replace hyphens with underscores
+        key = key.replace('-', '_')
+        
+        # Insert underscore before uppercase letters that follow lowercase letters or digits
+        key = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', key)
+        
+        # Lowercase everything
+        return key.lower()
+    
+    if isinstance(obj, dict):
+        # Create a new dict with snake_case keys
+        new_dict = {}
+        for key, value in obj.items():
+            # Convert the key to snake_case
+            new_key = to_snake_case(key) if isinstance(key, str) else key
+            # Recursively process the value
+            new_dict[new_key] = to_snake_case_keys(value)
+        return new_dict
+    elif isinstance(obj, list):
+        # Recursively process each item in the list
+        return [to_snake_case_keys(item) for item in obj]
+    else:
+        # Return primitive values unchanged
+        return obj
+
+
+# Test the function with examples
+if __name__ == "__main__":
+    # Test cases
+    test_cases = [
+        {'userName': 'john'},
+        {'HelloWorld2Go': 'test'},
+        {'Nested-Key': 'value'},
+        {'nested': {'innerKey': 'value'}},
+        [{'userName': 'john'}, {'HelloWorld': 'world'}],
+        {'complex': {'nested-structure': [{'CamelCase': 'value'}]}},
+    ]
+    
+    for test in test_cases:
+        result = to_snake_case_keys(test)
+        print(f"Input:  {test}")
+        print(f"Output: {result}")
+        print()
+```

@@ -1,0 +1,6 @@
+Write a Python class `TokenBucket` with `__init__(self, capacity: float, refill_per_second: float, clock)`, where `clock` is a zero-argument callable returning the current time in seconds as a float.
+- The bucket starts full.
+- `allow(self, cost: float = 1.0) -> bool` first refills tokens continuously according to the elapsed clock time, capped at capacity.
+- If at least `cost` tokens are available, it deducts them and returns True; otherwise it returns False and deducts nothing.
+- Do not call any real time function.
+Return only one Python code block containing the class. No explanation.

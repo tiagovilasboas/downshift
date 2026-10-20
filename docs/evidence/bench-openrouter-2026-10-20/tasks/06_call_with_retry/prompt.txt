@@ -1,0 +1,8 @@
+Write a Python function `call_with_retry(fn, max_attempts, base_delay, sleep)`.
+- Call fn() with no arguments. If it raises any Exception, wait before the next attempt by calling sleep(delay).
+- The delay after the first failure is base_delay, after the second failure 2*base_delay, after the third 4*base_delay (base_delay * 2 ** (failures - 1)).
+- Make at most max_attempts calls in total.
+- Return fn's result on the first success.
+- If every attempt fails, re-raise the last exception and do not sleep after the final failed attempt.
+- Never call time.sleep directly; use the `sleep` argument.
+Return only one Python code block containing the function. No explanation.

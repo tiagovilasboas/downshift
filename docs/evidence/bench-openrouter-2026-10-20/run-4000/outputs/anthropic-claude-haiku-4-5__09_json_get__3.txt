@@ -1,0 +1,84 @@
+
+```python
+import re
+
+def json_get(data, path, default=None):
+    """
+    Get a value from nested data structure using dot-separated path with optional bracket indexes.
+    
+    Args:
+        data: The data structure to traverse (dict or list)
+        path: Dot-separated path with optional bracket indexes (e.g., 'user.items[0].name')
+        default: Value to return if path doesn't exist
+    
+    Returns:
+        The value at the path, or default if not found
+    """
+    if not path:
+        return data
+    
+    current = data
+    
+    # Split by dots, but we need to handle brackets carefully
+    # We'll parse the path manually to handle bracket notation
+    i = 0
+    while i < len(path):
+        # Find the next dot or bracket
+        dot_pos = path.find('.', i)
+        bracket_pos = path.find('[', i)
+        
+        # Determine what comes next
+        if dot_pos == -1 and bracket_pos == -1:
+            # No more separators, take the rest
+            key = path[i:]
+            i = len(path)
+        elif dot_pos == -1:
+            # Only bracket ahead
+            key = path[i:bracket_pos]
+            i = bracket_pos
+        elif bracket_pos == -1:
+            # Only dot ahead
+            key = path[i:dot_pos]
+            i = dot_pos + 1
+        else:
+            # Both ahead, take whichever comes first
+            if dot_pos < bracket_pos:
+                key = path[i:dot_pos]
+                i = dot_pos + 1
+            else:
+                key = path[i:bracket_pos]
+                i = bracket_pos
+        
+        # Process the key part (before any brackets)
+        if key:
+            if not isinstance(current, dict):
+                return default
+            if key not in current:
+                return default
+            current = current[key]
+        
+        # Process any brackets that follow
+        while i < len(path) and path[i] == '[':
+            # Find the matching closing bracket
+            close_bracket = path.find(']', i)
+            if close_bracket == -1:
+                return default
+            
+            # Extract the index
+            index_str = path[i+1:close_bracket]
+            try:
+                index = int(index_str)
+            except ValueError:
+                return default
+            
+            # Access the index
+            if not isinstance(current, list):
+                return default
+            if index < 0 or index >= len(current):
+                return default
+            current = current[index]
+            
+            i = close_bracket + 1
+    
+    return current
+```

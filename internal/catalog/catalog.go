@@ -772,6 +772,13 @@ func automaticRoutable(e Entry) bool {
 	return e.Routing != "explicit_only" && e.Routing != RoutingShadow && e.Routing != RoutingLive
 }
 
+// IsShadow reports whether modelID resolves to an allowlist shadow row. Core
+// uses it to keep shadow rows out of every session selection path.
+func (c *Catalog) IsShadow(harness, modelID string) bool {
+	entry, ok := c.EntryFor(harness, modelID)
+	return ok && entry.Routing == RoutingShadow
+}
+
 // ShadowGateways lists the allowlisted gateway rows (Routing "shadow") as
 // models. Harness-agnostic: the allowlist is a user fact, not a harness fact.
 // Rows carry only the tier and id; no price is invented for them.

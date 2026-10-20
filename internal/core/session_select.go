@@ -14,7 +14,7 @@ const inheritID = "inherit"
 // set is not a credit denial. An explicit_only id is writable only when
 // explicit upshift is on.
 func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bool {
-	if rejectedSessionModel(harness, id, res) {
+	if rejectedSessionModel(harness, id, res) || shadowSessionModel(harness, id, res) {
 		return false
 	}
 	if liveGatewayWritable(harness, id, session, res) {
@@ -175,6 +175,11 @@ func selectableSessionIDs(harness string, session SessionList, res Resolver, all
 		if id == "" || id == inheritID || session.Blocks(id) || rejectedSessionModel(harness, id, res) {
 			continue
 		}
+		if shadowSessionModel(harness, id, res) {
+			// An allowlist shadow row is never a selection, not even with
+			// DOWNSHIFT_EXPLICIT_UPSHIFT on.
+			continue
+		}
 		explicit := res != nil && res.IsExplicitOnly(harness, id)
 		if explicit && !allowExplicit {
 			continue
@@ -185,6 +190,15 @@ func selectableSessionIDs(harness string, session SessionList, res Resolver, all
 		ids = append(ids, id)
 	}
 	return ids
+}
+
+// shadowSessionModel reports whether id resolves to an allowlist shadow row.
+// Resolvers that do not expose shadow rows report false.
+func shadowSessionModel(harness, id string, res Resolver) bool {
+	if checked, ok := res.(interface{ IsShadow(string, string) bool }); ok {
+		return checked.IsShadow(harness, id)
+	}
+	return false
 }
 
 func rejectedSessionModel(harness, id string, res Resolver) bool {

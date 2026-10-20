@@ -1,0 +1,29 @@
+```python
+def to_snake_case_keys(obj):
+    def convert_key(key):
+        if not isinstance(key, str):
+            return key
+
+        s = key.replace('-', '_')
+        result = []
+
+        for i, ch in enumerate(s):
+            if ch.isupper() and i > 0:
+                prev = s[i - 1]
+                if prev.islower() or prev.isdigit():
+                    result.append('_')
+            result.append(ch.lower())
+
+        return ''.join(result)
+
+    if isinstance(obj, dict):
+        return {
+            convert_key(key): to_snake_case_keys(value)
+            for key, value in obj.items()
+        }
+
+    if isinstance(obj, list):
+        return [to_snake_case_keys(item) for item in obj]
+
+    return obj
+```

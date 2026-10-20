@@ -8,13 +8,17 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/discovery"
 	"github.com/tiagovilasboas/downshift/internal/gateway"
+	"github.com/tiagovilasboas/downshift/internal/gateway/omniroute"
 	"github.com/tiagovilasboas/downshift/internal/gateway/openrouter"
 )
 
 // registerGateways is the composition root for gateway adapters. Each adapter
 // is registered here and nowhere else; shared layers see only the port.
+// OmniRoute gets no price snapshot: the discovery cache holds OpenRouter's
+// list prices, which do not describe OmniRoute, so it prices nothing.
 func registerGateways() {
 	gateway.Register(openrouter.New(gatewaySnapshotPrice()))
+	gateway.Register(omniroute.New(nil))
 }
 
 // gatewaySnapshotPrice reads gateway list prices from the discovery cache,

@@ -1,0 +1,22 @@
+```python
+def to_snake_case_keys(obj):
+    def to_snake_case(key):
+        result = []
+        for i, ch in enumerate(key):
+            if ch == '-':
+                result.append('_')
+            else:
+                if ch.isupper() and i > 0 and (key[i - 1].islower() or key[i - 1].isdigit()):
+                    result.append('_')
+                result.append(ch.lower())
+        return ''.join(result)
+
+    if isinstance(obj, dict):
+        return {
+            (to_snake_case(k) if isinstance(k, str) else k): to_snake_case_keys(v)
+            for k, v in obj.items()
+        }
+    if isinstance(obj, list):
+        return [to_snake_case_keys(v) for v in obj]
+    return obj
+```
