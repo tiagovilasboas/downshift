@@ -13,7 +13,7 @@ folded into the `downshift` plugin unchanged.
 | | |
 |---|---|
 | Upstream | https://github.com/JohnnyVizz/claude-kit, path `plugins/savvy-progress` |
-| Version | 1.2.1 upstream; shipped here as **1.2.6** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
+| Version | 1.2.1 upstream; shipped here as **1.2.7** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
 | Commit | `c871c153ead54ad9547cc717d0f3e5a676c73986` (2026-10-13) |
 | Files | `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `.claude-plugin/plugin.json` byte-identical except `version` (1.2.3, see below); `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; three of the four `hooks/*.test.ts(x)` files byte-identical (`hooks/cost.test.ts` is gated by `SHOWN_DOLLARS`, see the local patch) (they import nothing by relative path) |
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `savvy-progress`, source `./mods/savvy-progress` |
@@ -26,7 +26,7 @@ white and grey carry the interface, green only as a small accent;
 `docs/brand/downshift-brand-tokens.json`). The only local change to upstream is
 in `hooks/register.tsx`: colours, the shown tier words and one simpler sprite, no
 behaviour; plus the `version` line of `.claude-plugin/plugin.json` (1.2.1 to
-1.2.6, 2026-10-20; 1.2.2 on 2026-10-19 was superseded before the agents panel changes reached the cache). Claude Code keys its plugin cache by that version, so a
+1.2.7, 2026-10-20; 1.2.2 on 2026-10-19 was superseded before the agents panel changes reached the cache). Claude Code keys its plugin cache by that version, so a
 machine that installed 1.2.1 before the colour patch keeps upstream's purple
 `#8f8cf4` until the version changes. The panel's header tile, summary lines and per-agent rows show the tokens Downshift saved in the session (`downshift session --panel`, `work_saved` + `cache_saved`) instead of the estimated dollar cost; the dollar estimate is no longer drawn. The reapplyable diff is [`downshift-local.patch`](downshift-local.patch),
 regenerated 2026-10-20 against the pinned upstream commit.
@@ -58,6 +58,7 @@ draws; every number and label is computed by Downshift
 
 | band fallback (`derivedFlow`) | when no flow is registered, or its total is 0, **and Downshift is working in this session** (`downshift session --panel` for the session names at least one decided spawn), the band is drawn from the subagents the mod already tracks: title `Subagents`, `N running · M done`, bar `M/(N+M)` over the current batch (spawns since the oldest running one; a finished batch lingers 30 s). A registered flow with a total keeps upstream drawing |
 
+| dismiss | the `✕` clears the registered flow and records the time; the band that follows the live subagents (the fallback above) then draws only agents started after it, so the button works and the band returns with the next agent. The `✕` sits at the right edge of the row, the count `×N` stays with the bar. |
 | session | `dsRefresh` passes `--session=<id>` (`$.session.id()`, else `CLAUDE_CODE_SESSION_ID`). With no id the summary line is not drawn at all, so another session's figure can never appear; row labels stay (keyed by the spawn's own tool call) |
 
 **Behaviour change, owner-requested:** while Downshift is working in the session, the band above the prompt also appears when subagents run with no registered flow (see the band fallback row above). When Downshift is not active, or its data is missing or the session unknown, the mod draws exactly what upstream draws.

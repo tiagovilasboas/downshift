@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `savvy-progress` 1.2.7: the `✕` on the band now works when the band follows the live subagents (it cleared a flow the band no longer used, so the band came straight back); the band returns with the next agent. The `✕` moves to the right edge of the row. The finished-agents clock read (#333) no longer throws when the host gives no clock, which turned two upstream tests red on `main`.
+
 - The savvy-progress bar kept coming back purple: Claude Code caches a plugin by its version, and the cached 1.2.1 on machines that installed it before the colour patch still held upstream's `#8f8cf4`. The mod now ships as 1.2.2 (only `plugin.json` `version` differs from upstream, carried by `downshift-local.patch`), so a plugin update replaces the cache. To get it: `claude plugin marketplace update downshift`, then `claude plugin update savvy-progress@downshift`, then restart Claude Code.
 
 - Context sensor recorded 0 bytes for every Bash result (598 commands measured, `total_output_bytes` 0 everywhere): Claude Code's Bash `tool_response` carries `{stdout, stderr}`, and the observer read only a `content` string. It now reads stdout and stderr, content blocks and a plain `output` string, and the plugin and `setup` register the PostToolUse hook for `Bash` too (observe only: byte counts and the compressor's potential, never the text). Existing installs need `downshift setup` or a plugin update to add the Bash matcher; the sensor then shows how much `downshift context compress` would cut on real commands.
