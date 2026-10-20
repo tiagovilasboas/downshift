@@ -39,6 +39,7 @@ func TestSessionSummaryLine(t *testing.T) {
 	const s = "sess-a"
 	haiku, opus := "claude-haiku-4-5", "claude-opus-4-7"
 	rewrite := func() Event { return liveDecision(s, OutcomeRewriteEmitted, opus, haiku, "small") }
+	up := func() Event { return liveDecision(s, OutcomeRewriteEmitted, haiku, opus, "frontier") } // an upshift: tier goes up
 	cases := []struct {
 		name   string
 		events []Event
@@ -50,8 +51,8 @@ func TestSessionSummaryLine(t *testing.T) {
 		{"one spawn, no cost", []Event{rewrite()}, "◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · 0 on doubt"},
 		{"saved", []Event{rewrite(), liveUsage(s, rewrite().CorrelationID, 0.10, 0.50)},
 			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · tokens saved work 100% · cache 100% · 0 on doubt"},
-		{"pricier is no saving", []Event{rewrite(), liveUsage(s, rewrite().CorrelationID, 0.50, 0.10)},
-			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · tokens saved work 0% · cache 0% · 0 on doubt"},
+		{"pricier is no saving", []Event{up(), liveUsage(s, up().CorrelationID, 0.50, 0.10)},
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on opus · tokens saved work 0% · cache 0% · 0 on doubt"},
 		{"control child counts in the total", []Event{rewrite(), liveUsage(s, rewrite().CorrelationID, 0.10, 0.50),
 			liveDecision(s, OutcomeBaseline, opus, opus, "frontier", ReasonControl), liveUsage(s, opus+opus+OutcomeBaseline+ReasonControl, 0.50, 0.50)},
 			// The statusline counts routed spawns; the control child's tokens
@@ -132,6 +133,7 @@ func TestChildEndLine(t *testing.T) {
 		{"nothing known", Event{ToModel: "unknown"}, ""},
 	}
 	for _, c := range cases {
+		c.ev.Harness = "claude-code" // a real child event always names its harness
 		if got := ChildEndLine(c.ev); got != c.want {
 			t.Errorf("%s:\n got %q\nwant %q", c.name, got, c.want)
 		}

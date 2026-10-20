@@ -26,6 +26,7 @@ import (
 	_ "github.com/tiagovilasboas/downshift/internal/quota"
 	_ "github.com/tiagovilasboas/downshift/internal/routeadapt"
 	dsserver "github.com/tiagovilasboas/downshift/internal/server"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // buildVersion, buildCommit and buildDate are set by release builds with
@@ -64,6 +65,7 @@ func main() {
 	// user override at ~/.harness-downshift/catalog.json. Fail-open: if the
 	// user file is invalid, the embedded catalog is used automatically.
 	catalog := catalog.Load()
+	telemetry.DirectionCatalog = catalog
 
 	switch args[0] {
 	case "honor":

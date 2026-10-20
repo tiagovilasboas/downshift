@@ -78,7 +78,7 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 		const (
 			decisionID = "dec-cursor"
 			sessionID  = "sess-cursor"
-			written    = "model-small"
+			written    = "claude-haiku-4-5"
 		)
 		decision := appliedDownshift("cursor", decisionID, "unknown", false, 0.55)
 		decision.SessionID = sessionID
@@ -192,7 +192,7 @@ func appliedDownshift(harness, id, quota string, creditHeld bool, savings float6
 		QuotaStatus:      quota,
 		CreditHeld:       creditHeld,
 		FromModel:        "model-frontier",
-		ToModel:          "model-small",
+		ToModel:          "claude-haiku-4-5",
 	}
 }
 

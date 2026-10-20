@@ -38,7 +38,7 @@ func exportEvent(stamp time.Time, complexity string, verdict string, savings flo
 		Harness:          "claude-code",
 		Complexity:       complexity,
 		FromModel:        "model-frontier",
-		ToModel:          "model-small",
+		ToModel:          "claude-haiku-4-5",
 		Verdict:          verdict,
 		EstimatedSavings: savings,
 	}

@@ -46,6 +46,12 @@ func TestStatus_TokensSavedEqualTokenSavings(t *testing.T) {
 			"requested_model": "claude-opus-5-5", "final_model": "claude-haiku-4-5", "agent_type": agentType,
 		})
 	}
+	upshift := func(id, agentType string) string {
+		return eventLine(ts, map[string]any{
+			"harness": "claude-code", "correlation_id": id, "verdict": "UPSHIFT", "outcome": "rewrite_emitted",
+			"requested_model": "claude-haiku-4-5", "final_model": "claude-opus-5-5", "agent_type": agentType,
+		})
+	}
 	usage := func(id string, in, out, cached int64, baseline, actual float64) string {
 		return eventLine(ts, map[string]any{
 			"harness": "claude-code", "linked_decision": id, "outcome": "usage",
@@ -55,7 +61,7 @@ func TestStatus_TokensSavedEqualTokenSavings(t *testing.T) {
 	}
 	body := strings.Join([]string{
 		decision("d1", "general-purpose"), usage("d1", 100, 300, 9000, 1.0, 0.2),
-		decision("d2", "Explore"), usage("d2", 40, 60, 0, 0.1, 0.4),
+		upshift("d2", "Explore"), usage("d2", 40, 60, 0, 0.1, 0.4),
 		eventLine(ts, map[string]any{"harness": "cursor", "correlation_id": "c1", "verdict": "OK", "outcome": "allow"}),
 	}, "\n") + "\n"
 	path := filepath.Join(dir, "events.jsonl")

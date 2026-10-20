@@ -30,7 +30,7 @@ func makeEvent(harness, complexity, verdict string, savings float64) telemetry.E
 		Harness:          harness,
 		Complexity:       complexity,
 		FromModel:        "model-frontier",
-		ToModel:          "model-small",
+		ToModel:          "claude-haiku-4-5",
 		Verdict:          verdict,
 		EstimatedSavings: savings,
 	}

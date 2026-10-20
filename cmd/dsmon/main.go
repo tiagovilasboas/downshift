@@ -16,6 +16,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"io"
 	"os"
 	"os/signal"
@@ -538,6 +539,7 @@ func render(s *state) {
 // ── main ──────────────────────────────────────────────────────────────────────
 
 func main() {
+	telemetry.DirectionCatalog = catalog.Load()
 	home, _ := os.UserHomeDir()
 	path, err := paths.EventsPath()
 	if err != nil {

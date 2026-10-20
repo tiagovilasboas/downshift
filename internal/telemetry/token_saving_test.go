@@ -36,7 +36,8 @@ func TestTokenSavings_PerChildTypeAndSession(t *testing.T) {
 		decisionEv("h1", OutcomeAllow, "Explore", "R1"),
 		usageEv("h1", 10, 90, 900, 0, 0.02, 0.02),
 		// pricier: an applied upshift
-		decisionEv("u1", OutcomeRewriteEmitted, "custom"),
+		{CorrelationID: "u1", Harness: "claude-code", Outcome: OutcomeRewriteEmitted, Verdict: "UPSHIFT",
+			FromModel: "claude-haiku-4-5", ToModel: "claude-opus-5-5", AgentType: "custom"},
 		usageEv("u1", 40, 60, 0, 0, 0.03, 0.01),
 		// refuted: the harness ran the requested model
 		decisionEv("r1", OutcomeRewriteEmitted, "custom"),

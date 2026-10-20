@@ -5,14 +5,15 @@ package telemetry
 
 import "github.com/tiagovilasboas/downshift/internal/core"
 
-// tokenDirectionByRank places one priced usage record without comparing
-// dollars. It applies the same gates as tokenDirection, then ranks the model
-// that ran against the model requested by catalog tier (small < mid <
-// frontier). Same tier reads unchanged, whatever the prices say.
-//
-// Parallel to tokenDirection while part 4a is in review; it is not wired into
-// the aggregate yet (tokens-only part 4b).
-func tokenDirectionByRank(usage, decision Event, found, unrouted, refuted bool, cat core.Resolver) string {
+// DirectionCatalog ranks the requested and the ran model by catalog tier
+// (small < mid < frontier). The composition root sets it at startup; with nil
+// no record can be placed, so every priced record is unattributed.
+var DirectionCatalog core.Resolver
+
+// tokenDirection places one priced usage record without comparing dollars. The
+// gates come first; then the model that ran is ranked against the model that
+// was requested, by tier. Same tier reads unchanged, whatever the prices say.
+func tokenDirection(usage, decision Event, found, unrouted, refuted bool) string {
 	switch {
 	case unrouted:
 		return TokenUnchanged
@@ -24,8 +25,17 @@ func tokenDirectionByRank(usage, decision Event, found, unrouted, refuted bool, 
 		return TokenUnattributed
 	}
 	requested, ran := tokenModels(usage, decision, found, refuted)
-	req, okReq := cat.LookupByID(usage.Harness, requested)
-	got, okRan := cat.LookupByID(usage.Harness, ran)
+	return tierDirection(usage.Harness, requested, ran)
+}
+
+// tierDirection ranks a ran model against a requested one by catalog tier.
+// A model the catalog does not know is unattributed, never a guess.
+func tierDirection(harness, requested, ran string) string {
+	if DirectionCatalog == nil {
+		return TokenUnattributed
+	}
+	req, okReq := DirectionCatalog.LookupByID(harness, requested)
+	got, okRan := DirectionCatalog.LookupByID(harness, ran)
 	if !okReq || !okRan {
 		return TokenUnattributed
 	}

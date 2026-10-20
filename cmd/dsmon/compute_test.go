@@ -55,10 +55,10 @@ func TestCompute_TokensSaved(t *testing.T) {
 	base1, act1, base2, act2 := 1.0, 0.2, 0.1, 0.4
 	in1, in2 := int64(800), int64(200)
 	all := []event{
-		ev(telemetry.Event{CorrelationID: "a", Timestamp: ts, Harness: "h", Outcome: "rewrite_emitted", Verdict: "DOWNSHIFT", FromModel: "big", ToModel: "small"}),
-		ev(telemetry.Event{Timestamp: ts, Harness: "h", Outcome: "usage", LinkedDecision: "a", InputTokens: &in1, BaselineCostUSD: &base1, ActualCostUSD: &act1}),
-		ev(telemetry.Event{CorrelationID: "b", Timestamp: ts, Harness: "h", Outcome: "rewrite_emitted", Verdict: "UPSHIFT", FromModel: "small", ToModel: "big"}),
-		ev(telemetry.Event{Timestamp: ts, Harness: "h", Outcome: "usage", LinkedDecision: "b", InputTokens: &in2, BaselineCostUSD: &base2, ActualCostUSD: &act2}),
+		ev(telemetry.Event{CorrelationID: "a", Timestamp: ts, Harness: "claude-code", Outcome: "rewrite_emitted", Verdict: "DOWNSHIFT", FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5"}),
+		ev(telemetry.Event{Timestamp: ts, Harness: "claude-code", Outcome: "usage", LinkedDecision: "a", InputTokens: &in1, BaselineCostUSD: &base1, ActualCostUSD: &act1}),
+		ev(telemetry.Event{CorrelationID: "b", Timestamp: ts, Harness: "claude-code", Outcome: "rewrite_emitted", Verdict: "UPSHIFT", FromModel: "claude-haiku-4-5", ToModel: "claude-opus-4-7"}),
+		ev(telemetry.Event{Timestamp: ts, Harness: "claude-code", Outcome: "usage", LinkedDecision: "b", InputTokens: &in2, BaselineCostUSD: &base2, ActualCostUSD: &act2}),
 	}
 	st, _ := compute(all)
 	if st.tokens.WorkTokens != 1000 || st.tokens.WorkSaved != 800 || st.tokens.WorkPricier != 200 {

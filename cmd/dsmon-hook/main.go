@@ -11,6 +11,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"io"
 	"os"
 	"path/filepath"
@@ -46,6 +47,7 @@ type agentEvent struct {
 }
 
 func main() {
+	telemetry.DirectionCatalog = catalog.Load()
 	// Always exit 0 — we are observers only, never gatekeepers
 	defer os.Exit(0)
 	run()

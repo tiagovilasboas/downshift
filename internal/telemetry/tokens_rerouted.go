@@ -153,30 +153,6 @@ func (t TokensRerouted) HarnessOrder() []string {
 	return append(out, rest...)
 }
 
-// tokenDirection places one priced usage record. decision is the linked
-// decision (found); unrouted marks a linked decision the router left alone on
-// purpose (control group, DOWNSHIFT_NO_ROUTE, pause); refuted marks an applied
-// rewrite a resolved record says the harness did not run.
-func tokenDirection(usage Event, decision Event, found, unrouted, refuted bool) string {
-	switch {
-	case unrouted:
-		return TokenUnchanged
-	case !found:
-		return TokenUnattributed
-	case !AppliedRewrite(decision.Outcome, decision.Corrections), refuted:
-		return TokenUnchanged
-	case !usage.HasRealCost():
-		return TokenUnattributed
-	}
-	switch delta := usage.RealDeltaUSD(); {
-	case delta > 0:
-		return TokenCheaper
-	case delta < 0:
-		return TokenPricier
-	}
-	return TokenUnchanged
-}
-
 type pairKey struct {
 	requested, ran, direction string
 }
