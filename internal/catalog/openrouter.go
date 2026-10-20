@@ -6,6 +6,7 @@ package catalog
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -103,10 +104,16 @@ func allowlistRouting(route string) (string, bool) {
 	}
 }
 
-// isFullSlug reports a "vendor/model" id with both parts non-empty.
+// slugPattern is the closed character set of an allowlisted id. The vendor
+// part takes letters, digits, '.', '-' and '_'; the model part also takes ':'
+// for a variant suffix such as ":free". Nothing else passes: no whitespace,
+// control characters, quotes, '~' or shell metacharacters. The id is written
+// into the harness wire and later into logs, so it stays inside this set.
+var slugPattern = regexp.MustCompile(`^[A-Za-z0-9._-]+/[A-Za-z0-9._:-]+$`)
+
+// isFullSlug reports a "vendor/model" id drawn only from slugPattern.
 func isFullSlug(id string) bool {
-	vendor, model, ok := strings.Cut(id, "/")
-	return ok && vendor != "" && model != "" && !strings.Contains(model, "/")
+	return slugPattern.MatchString(id)
 }
 
 // effortsUpTo turns a max_effort cap into the list of effort levels the model
