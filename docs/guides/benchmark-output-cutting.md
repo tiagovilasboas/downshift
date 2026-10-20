@@ -23,7 +23,7 @@ All arms: same harness version, same plan, same repository state, same prompts, 
 | 0 (control) | off (`DOWNSHIFT_NO_ROUTE=1`, hooks still record) | none | as arm B of the protocol it extends |
 | a | Downshift routing only | none | `DOWNSHIFT_CONTROL_SHARE=0` |
 | b | routing | Headroom companion in the request path | arm a plus `headroom wrap` for the harness (Headroom's own command, see [companions.md](companions.md)) |
-| c | routing | `downshift compact` wrapper (opt-in) | arm a plus the wrapper as documented once released |
+| c | routing | `downshift compact` wrapper (on by default) | arm a plus the wrapper as documented once released |
 | d | off | RTK alone, if installed | RTK's own hook setup; `DOWNSHIFT_NO_ROUTE=1` |
 | e (optional, isolates routing) | off | `downshift compact` | arm c with `DOWNSHIFT_NO_ROUTE=1` |
 
