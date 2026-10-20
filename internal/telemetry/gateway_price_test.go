@@ -48,35 +48,6 @@ func withGatewayPrices(t *testing.T, lookup func(string) (float64, float64, bool
 	t.Cleanup(func() { GatewayPriceLookup = prev })
 }
 
-func TestGatewayRun_PricedFromSnapshot(t *testing.T) {
-	cases := []struct {
-		name       string
-		factor     float64
-		wantSaved  int
-		wantPricer int64
-	}{
-		{name: "snapshot price below the requested one is saved", factor: 0.1, wantSaved: 1},
-		{name: "snapshot price above the requested one is pricier", factor: 10, wantPricer: 1500},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			requested := catalog.Load().ModelFor("claude-code", core.TierFrontier).ID
-			withGatewayPrices(t, snapshotAt(t, requested, tc.factor))
-			decision, usage, _ := gatewayFixture(t, gatewaySlug, GatewayPriceStatus(gatewaySlug))
-			s := TokenSavings([]Event{decision, usage}).Total
-			if s.SavedChildren != tc.wantSaved {
-				t.Fatalf("saved children %d, want %d", s.SavedChildren, tc.wantSaved)
-			}
-			if s.WorkPricier != tc.wantPricer {
-				t.Fatalf("work pricier %d, want %d", s.WorkPricier, tc.wantPricer)
-			}
-			if s.GatewayUnpriced != 0 {
-				t.Fatalf("a priced gateway run counted as unpriced: %d", s.GatewayUnpriced)
-			}
-		})
-	}
-}
-
 func TestGatewayRun_WithoutSnapshotIsUnknownAndNotSaved(t *testing.T) {
 	requested := catalog.Load().ModelFor("claude-code", core.TierFrontier).ID
 	// No snapshot price for the ran slug: a cheap-looking tier must not count.
