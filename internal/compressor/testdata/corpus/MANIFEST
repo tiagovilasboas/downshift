@@ -102,3 +102,21 @@ clean     maven         maven_pass_package.txt
 clean     maven         maven_pass_test.txt
 preserve  maven         maven_skipped.txt
 preserve  maven         maven_warning.txt
+# Pass-through families (execwrap): never compacted, so no clean fixture. The format column is the family name.
+preserve  git-log          gitlog_default_real.txt
+preserve  git-diff         gitdiff_unstaged_change.txt
+preserve  git-show         gitshow_head.txt
+preserve  git-branch       gitbranch_verbose.txt
+preserve  git-fetch        gitfetch_new_commits.txt
+preserve  git-fetch        gitfetch_up_to_date.txt
+preserve  git-pull         gitpull_fast_forward.txt
+preserve  git-pull         gitpull_up_to_date.txt
+preserve  git-push         gitpush_new_commit.txt
+preserve  git-push         gitpush_up_to_date.txt
+preserve  git-commit       gitcommit_summary.txt
+preserve  git-add          gitadd_verbose.txt
+preserve  git-stash        gitstash_push.txt
+preserve  git-remote       gitremote_verbose.txt
+preserve  git-tag          gittag_list.txt
+preserve  git-config-read  gitconfig_list_local.txt
+preserve  git-other        gitother_ls_files.txt

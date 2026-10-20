@@ -68,7 +68,9 @@ type Result struct {
 
 // expectedFormat is the compressor format each family may be compacted as.
 // Any other detected format (a repetitive-log match, a search match) keeps the
-// raw output.
+// raw output. A family with no entry here is a pass-through: it runs and its
+// output is never compacted (the git families other than git-status, whose
+// clean success has no output worth compacting over the marker line).
 var expectedFormat = map[Family]compressor.Format{
 	FamilyGoTest:      compressor.FormatGoTest,
 	FamilyGitStatus:   compressor.FormatGitStatus,

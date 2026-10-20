@@ -78,12 +78,20 @@ func manifestKinds(t *testing.T) map[string]map[string]int {
 	return out
 }
 
+// A family with no expectedFormat entry is a pass-through: it is never
+// compacted, so it has no clean fixture (the suite requires clean output to
+// compact) and keeps at least one preserve fixture keyed by its family name.
 func TestRegistryEveryFamilyHasFormatAndCorpus(t *testing.T) {
 	kinds := manifestKinds(t)
 	for name, fam := range familyConstants(t) {
 		format, ok := expectedFormat[fam]
 		if !ok {
-			t.Errorf("%s (%q) has no expectedFormat entry in run.go", name, fam)
+			if kinds[string(fam)]["preserve"] == 0 {
+				t.Errorf("%s (%q) is a pass-through with no preserve fixture keyed %q in compressor/testdata/corpus/MANIFEST", name, fam, fam)
+			}
+			if kinds[string(fam)]["clean"] != 0 {
+				t.Errorf("%s (%q) is a pass-through but has a clean fixture; give it an expectedFormat entry instead", name, fam)
+			}
 			continue
 		}
 		for _, kind := range []string{"clean", "preserve"} {

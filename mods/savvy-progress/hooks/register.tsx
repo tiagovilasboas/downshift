@@ -506,6 +506,10 @@ const shownFinished = (finished: AgentRun[], at: number): AgentRun[] => {
   return finished.filter(a => at - (finishedSeenAt.get(a.id) ?? at) < FINISHED_SHOW_MS)
 }
 
+// The live clock the panel and the band share: the stored `now` only ticks while an agent runs, so it would freeze after the last finish.
+const liveNow = async ($: EngineInterface, list: AgentRun[]): Promise<number> =>
+  Math.max(await Promise.resolve($.clock.now()).catch(() => 0), ...list.map(a => a.startedAt), 0)
+
 type Planned = PlannedTask & { n: number }
 
 const plannedOf = (f: Flow | null, list: AgentRun[]): Planned[] => {
@@ -764,8 +768,9 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 // Downshift local patch (2026-10-19): what Downshift did per spawn and this session.
 // Reads `downshift session --panel` (prompt-free JSON, computed by Downshift; this
 // mod only draws it). Tokens only: the tokens each agent and the session saved from
-// the requested model, work and cache apart; no dollars (`downshift report` prices
-// them). Fail-open: no binary, bad output or no match means nothing extra is drawn.
+// the requested model, work and cache apart; no dollars (`downshift report` compares
+// routed and control tokens per completed task). Fail-open: no binary, bad output
+// or no match means nothing extra is drawn.
 // Data contract: docs/reference/spawn-state.md in the Downshift repo.
 
 type DsSpawn = { tool_use?: string; label: string; saved: number }
@@ -1141,8 +1146,7 @@ export const register: Register = (on, options) => {
     const list = await read($, agents)
     const f = await read($, flow)
     const p: Panel = await read($, panel)
-    // The live clock: the stored `now` only ticks while an agent runs, so it would freeze after the last finish.
-    const at = Math.max(await Promise.resolve($.clock.now()).catch(() => 0), ...list.map(a => a.startedAt), 0)
+    const at = await liveNow($, list)
 
     const running = list.filter(a => a.status === 'running').reverse()
     const finished = list.filter(a => a.status !== 'running').reverse()
@@ -1336,7 +1340,12 @@ export const register: Register = (on, options) => {
     const ui = $.ui.resolve(e)
     const { Box, Text, Button } = ui
     const list = await read($, agents)
-    const crew = list.length + plannedOf(f, list).length
+    // The same agents the panel lists: running, finished within FINISHED_SHOW_MS (same filter, same clock), and planned.
+    const at = await liveNow($, list)
+    const crew =
+      list.filter(a => a.status === 'running').length +
+      shownFinished(list.filter(a => a.status !== 'running'), at).length +
+      plannedOf(f, list).length
     const isWorking = list.some(a => a.status === 'running')
     const crewButton = (
       <Button key="savvy-agents" label={`×${crew}`} plain onPress={() => void togglePane($)} />

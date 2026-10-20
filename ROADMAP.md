@@ -40,7 +40,7 @@ product priorities, not a claim of equal release readiness across the three.
 | Session discovery | `downshift models discover` per harness ([session-discovery.md](docs/reference/session-discovery.md)); Cursor and Antigravity sources, catalog as an opt-in fallback |
 | Safe by default | Doubt never spends money (R7, R8, semantic boost capped); inferred session on Claude Code; `SEMANTIC_BOOST` provenance and a frontier-on-doubt alarm in `stats` |
 | Real cost | SubagentStop usage linkage (Claude Code); expand as harnesses expose usage |
-| Tokens first | Live views show tokens saved from the requested model (work and cache apart), per agent, agent type and session; dollars only in `downshift report`, priced at report time (API and plan lenses) |
+| Tokens first | Live views show tokens moved to cheaper models (work and cache apart), per agent, agent type and session; `downshift report` compares routed and control tokens per completed task, with no dollar output |
 | Evaluation | Public [benchmark/report.md](benchmark/report.md); full regression in maintainer downshift-labs; shadow observation |
 | Docs | User docs (install, session models), [classifier contrib](docs/contrib/classifier.md), misroute workflow |
 | Eval rigor | [router-generalization](docs/design/router-generalization.md) summary; detailed study in labs |
@@ -58,10 +58,13 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 | P0 | ~~Rename to **Downshift**~~ — done ([rename.md](docs/brand/rename.md)) |
 | P0 | ~~State directory `~/.downshift`~~ — done ([config.md](docs/guides/config.md)) |
 | P1 | ~~Condensed docs~~ — [WHEN-TO-USE](docs/guides/when-to-use.md), trimmed [CAPABILITY-ROUTER-V2](docs/design/capability-router-v2.md) |
-| P0 | Opt-in `downshift exec` (tool-output cutting for `go test` and `git status`, default off) after AppSec and QA review; decide with the output-cutting benchmark whether routing stays a headline ([protocol](docs/guides/benchmark-output-cutting.md)) |
-| P1 | Child-token payloads for Cursor, Codex and OpenCode so tokens-first views cover them; Codex tier order decision |
+| ~~P0~~ | ~~Opt-in `downshift exec`~~ — superseded: the native compactor (`downshift compact`) is on by default with the plugin, `"exec": false` turns it off. Families: go test, git status, pytest, vitest, jest, tsc, cargo test, playwright, phpunit, next build, Gradle, Maven, Flutter/Dart. The conformance suite gates every family. |
+| P1 | Child-token payloads for Cursor, Codex, OpenCode, KiroCrew and Antigravity so tokens-first views cover them (today `stats` shows all five as unobserved); Codex tier order decision |
 | P1 | More harness matrix rows (Cursor paid plans, etc.) |
+| P1 | OpenRouter, parts 4–6: shadow routing for gateway rows, harness wiring (OpenCode first), same-vendor live rewrite behind a flag. Parts 1–3 are merged or in review; the research in [verification](docs/internal/tasks/2026-10-20-openrouter/verification.md) changes the OpenCode id form to `openrouter/<slug>` |
+| P1 | DCI hook through the shared runner (layering rule); measure injected-context savings before any default change |
 | P1 | Optional: container image on GHCR |
+| P1 | Control group: 14 completed tasks against a minimum of 20 per group (`downshift report`), before any routing-cost claim |
 | P1 | Independent outcome suite and cost per completed task before any tier-memory promotion ([gap-tasks](docs/internal/gap-tasks.md): GAP-SUITE, GAP-MEMORY-COUNTS) |
 | P1 | Real hook payloads for Cursor, Codex, Kiro, Antigravity, and the Claude Code failure event (GAP-PAYLOADS, GAP-CHILD-FAILURE) |
 | P1 | Learned complexity scorer for EN and PT-BR (hashed word and char n-grams plus structural features, embedded JSON under 1 MB, shadow first, abstain to MEDIUM). Needs about 2,400 labelled prompts, at least 40% PT-BR |

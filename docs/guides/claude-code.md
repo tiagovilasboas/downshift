@@ -90,6 +90,8 @@ these switches are picked up after the first response. Before that, or whenever 
 empty (section 5), the settings fallback can name the wrong baseline. Consequences: a session started
 with `--model haiku` could be "downshifted" from a guessed Sonnet, which is why only the small tier is
 written on a guess; `downshift session --why` shows `BASELINE_FROM_SETTINGS` on such decisions.
+When present in the decision record, the same command also shows its permission mode and recorded
+quota status. These are observations for diagnosis; the mode label does not change routing.
 
 ## 5. `claude -p` and parallel Agent calls in the first message
 

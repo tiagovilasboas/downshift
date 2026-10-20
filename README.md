@@ -122,7 +122,7 @@ Detailed architectural boundaries, deep specifications, and design contracts are
 | **Subagent Routing** | Deterministic PreToolUse delegation routing, BDI deliberation, invariant guardrails (R1–R9), session catalog resolution | [docs/domains/subagent-routing.md](docs/domains/subagent-routing.md) |
 | **Code Intelligence (DCI)** | Zero-runtime AST symbol extraction, reverse call-graphs (blast radius), BM25 ranking, prompt context packaging | [docs/domains/code-intelligence.md](docs/domains/code-intelligence.md) |
 | **Context Optimization** | Native context compressor, context sensor, Claude Code session policies (`opusplan`), companion integration | [docs/domains/context-optimization.md](docs/domains/context-optimization.md) |
-| **Observability & Telemetry** | Local prompt-free telemetry (`events.jsonl`), automated empirical control groups, child outcome tracking, cost reports | [docs/domains/observability-telemetry.md](docs/domains/observability-telemetry.md) |
+| **Observability & Telemetry** | Local prompt-free telemetry (`events.jsonl`), automated empirical control groups, child outcome tracking, token reports | [docs/domains/observability-telemetry.md](docs/domains/observability-telemetry.md) |
 
 ---
 
@@ -136,7 +136,7 @@ Commands for daily setup, diagnostics, and routine reporting:
 | Command | Description |
 |---|---|
 | `downshift setup [--dry-run] [--undo]` | Wire, preview, or restore transparent harness hooks |
-| `downshift stats [--days=N] [--dci]` | Summarize routing decisions, estimated savings, and DCI telemetry |
+| `downshift stats [--days=N] [--dci]` | Summarize routing decisions, tokens saved, and DCI telemetry |
 | `downshift doctor [--verbose] [--json]` | Diagnostic health-check for binary, hooks, permissions, and caches |
 
 ### Inspection & Simulation
@@ -147,7 +147,7 @@ Dry-run simulation and operational inspection utilities:
 | `downshift try "<task>"` | Simulate routing classification, guardrails, and model selection for any prompt |
 | `downshift dci impact [--json] <target>` | Query downstream blast radius and caller dependencies for a symbol |
 | `downshift dci inspect [--json] "<prompt>"` | Dry-run code intelligence retrieval, BM25 ranking, and packed context |
-| `downshift session --tree` | Interactive tree view of current session's subagents and costs |
+| `downshift session --tree` | Interactive tree view of current session's subagents and token usage |
 | `downshift watch` | Live terminal dashboard of real-time subagent routing events |
 
 ### Plumbing & Maintainer

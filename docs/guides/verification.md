@@ -13,8 +13,9 @@ downshift verification-report --events=/path/to/events.jsonl
 ```
 
 The command emits JSON grouped by tier, with usage-event counts, verification
-coverage, priced-call counts and catalog-priced cost. It reads the event log;
-it does not run checks or change routing.
+coverage and the number of events carrying token counts. It reads the event
+log; it does not run checks or change routing. The report includes no prices or
+dollar amounts.
 
 | Value | What the sensor observed |
 |---|---|
@@ -33,8 +34,9 @@ output are not persisted by this sensor.
 **Limits:** `passed` is not task acceptance, security approval or proof of
 correctness. `none` does not prove that no verification happened. Coverage is
 the share of usage events with a recognized verification field, not test
-coverage. Costs are estimates from catalog prices, not invoices. Other harnesses
-have no equivalent validated child-usage sensor today.
+coverage. `token_calls` counts usage events with token counts; it is not a cost
+or billing measure. Other harnesses have no equivalent validated child-usage
+sensor today.
 
 Guia: interpret these values using this contract (inferencial, behaviour).
 Sensor: transcript matching and report counters (computacional, behaviour).

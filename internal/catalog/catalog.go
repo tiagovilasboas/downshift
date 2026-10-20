@@ -42,6 +42,11 @@ const ProviderOpenRouter = "openrouter"
 // "openrouter/<vendor>/<model>". Such an id resolves only to OpenRouter rows.
 const gatewayPrefix = ProviderOpenRouter + "/"
 
+// RoutingShadow marks an allowlisted gateway row. It is never an automatic
+// routing target and never a current-model write target; it is only a
+// candidate the shadow would_route field may name (see ShadowGateways).
+const RoutingShadow = "shadow"
+
 // Entry is one row in the catalog JSON.
 type Entry struct {
 	ID          string            `json:"id"`
@@ -328,7 +333,7 @@ func build(f catalogFile) *Catalog {
 			c.index[e.Harness] = make(map[core.Tier]core.Model)
 		}
 		// Explicit-only models are valid current selections, but never automatic targets.
-		if e.Routing != "explicit_only" {
+		if automaticRoutable(e) {
 			if _, exists := c.index[e.Harness][tier]; !exists {
 				c.index[e.Harness][tier] = m
 			}
@@ -738,7 +743,31 @@ func (c *Catalog) IsExplicitOnly(harness, modelID string) bool {
 	if !ok {
 		return false
 	}
-	return entry.Routing == "explicit_only"
+	return entry.Routing == "explicit_only" || entry.Routing == RoutingShadow
+}
+
+// automaticRoutable reports whether a row may be indexed as an automatic
+// target. Explicit-only and shadow rows are never indexed.
+func automaticRoutable(e Entry) bool {
+	return e.Routing != "explicit_only" && e.Routing != RoutingShadow
+}
+
+// ShadowGateways lists the allowlisted gateway rows (Routing "shadow") as
+// models. Harness-agnostic: the allowlist is a user fact, not a harness fact.
+// Rows carry only the tier and id; no price is invented for them.
+func (c *Catalog) ShadowGateways() []core.Model {
+	var out []core.Model
+	for _, e := range c.entries {
+		if e.Provider != ProviderOpenRouter || e.Routing != RoutingShadow || e.ID == "" {
+			continue
+		}
+		tier, ok := parseTier(e.Tier)
+		if !ok {
+			continue
+		}
+		out = append(out, core.Model{ID: e.ID, Tier: tier, InputM: e.InputCostM, OutputM: e.OutputCostM, Harness: e.Harness})
+	}
+	return out
 }
 
 // EffortFor implements core.Resolver. It translates a core.Effort level to the

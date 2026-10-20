@@ -95,6 +95,7 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Usage                 observed %d  unobserved %d\n", s.UsageObserved, s.UsageUnobserved)
 		fmt.Fprintf(w, "Frontier decisions    %d  (rewritten on doubt, no deterministic lift: %d)\n", s.FrontierDecisions, s.FrontierOnDoubt)
 		printScoreLine(w, s)
+		printGatewayLine(w, s)
 		if n := s.ReasonCodes[ReasonSemanticBoost]; n > 0 {
 			fmt.Fprintf(w, "Semantic boost        %d of %d decisions (%.0f%%) were raised by the embedder, not a rule\n", n, s.Total, pct(n, s.Total))
 		}
@@ -171,6 +172,26 @@ func printScoreLine(w io.Writer, s Stats) {
 		}
 	}
 	fmt.Fprintf(w, " (shadow unless DOWNSHIFT_SCORE_ROUTING=1)\n")
+}
+
+// printGatewayLine reports the OpenRouter allowlist shadow. It prints nothing
+// unless at least one decision would have been served by an allowlisted row.
+// The slug shown is the most frequent one; ties break on the slug.
+func printGatewayLine(w io.Writer, s Stats) {
+	if s.GatewayObserved == 0 {
+		return
+	}
+	top, topN := "", 0
+	for slug, n := range s.GatewaySlugs {
+		if n > topN || (n == topN && slug < top) {
+			top, topN = slug, n
+		}
+	}
+	fmt.Fprintf(w, "shadow: would route %d of %d spawns to %s", s.GatewayObserved, s.Total, top)
+	if len(s.GatewaySlugs) > 1 {
+		fmt.Fprintf(w, " (most frequent of %d slugs)", len(s.GatewaySlugs))
+	}
+	fmt.Fprintf(w, "\n")
 }
 
 func pct(n, total int) float64 {

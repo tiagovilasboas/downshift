@@ -578,11 +578,15 @@ go build -o dsmon ./cmd/dsmon
 | Est. saved (tokens) | Tokens that ran on a cheaper model than requested, the shared `telemetry.TokenSavings` view | Observed where the harness reports tokens; not a bill |
 | Tokens | Observed child tokens, when the harness reports them | Not from a provider invoice |
 
-**Token consumption note.** The router has no access to provider-reported token
-counts — it only sees what the harness passes to the preToolUse hook, which
-does not include usage data. The estimates are directionally correct (more
-downshifts = more savings) but not a substitute for your provider's billing
-dashboard. On Claude Code, real token counts come from a `SubagentStop` hook (`downshift claude-code-subagent-stop`), which prices the subagent from its own transcript once it finishes; see [session-models.md](../reference/session-models.md#claude-code-real-usage).
+**Token consumption note.** The `PreToolUse` routing hook does not receive
+token usage. On Claude Code, a separate `SubagentStop` hook
+(`downshift claude-code-subagent-stop`) reads the completed child's transcript
+and records its reported token counts and model; see
+[session-models.md](../reference/session-models.md#claude-code-real-usage).
+Current Downshift views attribute and compare those tokens, with no dollar
+amounts. Tokens moved to a cheaper model do not prove that fewer tokens were
+consumed or that the bill was lower. Check the provider's billing dashboard
+separately for charges.
 
 ## Grok CLI (config, not hook)
 
