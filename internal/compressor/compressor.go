@@ -46,6 +46,9 @@ var (
 	reJestHeader        = regexp.MustCompile(`(?m)^\s*(?:PASS|Test Suites:)\s+`)
 	reJestFail          = regexp.MustCompile(`(?m)^\s*(?:FAIL|Test Suites:.*\bfailed\b|Tests:.*\bfailed\b|Snapshots:.*\bfailed\b)`)
 	reJestError         = regexp.MustCompile(`(?m)(?:^\s*Error:|^\s*●|\bSnapshot\s+Summary\b|\bTest suite failed to run\b)`)
+	reJestPass          = regexp.MustCompile(`^PASS\s+\S.*$`)
+	reJestSnapshots     = regexp.MustCompile(`^Snapshots:\s+(?:(?:\d+ (?:failed|passed|obsolete),\s*)*\d+ total|\d+ total)$`)
+	reJestTime          = regexp.MustCompile(`^Time:\s+\d+(?:\.\d+)? s(?:, estimated \d+(?:\.\d+)? s)?$`)
 )
 
 // Compress evaluates the input according to the policy and selected mode.
@@ -644,6 +647,9 @@ func isJest(input []byte) bool {
 // test counts. It requires both suite and test summaries to avoid treating
 // incomplete or otherwise unrecognized output as a successful run.
 func compressJest(input []byte) ([]byte, bool, string) {
+	if !isKnownJestTranscript(input) {
+		return input, false, "jest_unknown_output_preserved"
+	}
 	suites := reJestSuites.FindSubmatch(input)
 	tests := reJestTests.FindSubmatch(input)
 	if suites == nil || tests == nil {
@@ -672,6 +678,19 @@ func compressJest(input []byte) ([]byte, bool, string) {
 		return input, false, "no_compression_gain"
 	}
 	return []byte(out), true, fmt.Sprintf("compressed jest summary (%s tests across %s suites)", tests[3], suites[3])
+}
+
+func isKnownJestTranscript(input []byte) bool {
+	for _, line := range strings.Split(strings.TrimSuffix(string(input), "\n"), "\n") {
+		if strings.TrimSpace(line) == "" || reJestPass.MatchString(line) ||
+			reJestSuites.MatchString(line) || reJestTests.MatchString(line) ||
+			reJestSnapshots.MatchString(line) || reJestTime.MatchString(line) ||
+			line == "Ran all test suites." {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // compressTSC compacts clean tsc output to a one-line summary:

@@ -11,8 +11,14 @@ import (
 )
 
 var (
-	reCypressStat  = regexp.MustCompile(`^\s*(Tests|Passing|Failing|Pending|Skipped):\s+(\d+)\s*$`)
-	reCypressError = regexp.MustCompile(`(?i)(?:AssertionError|Error:|uncaught (?:exception|error)|failed|timed out|warning)`)
+	reCypressStat     = regexp.MustCompile(`^\s*(Tests|Passing|Failing|Pending|Skipped):\s+(\d+)\s*$`)
+	reCypressError    = regexp.MustCompile(`(?i)(?:AssertionError|Error:|uncaught (?:exception|error)|failed|timed out|warning)`)
+	reCypressVersion  = regexp.MustCompile(`^Cypress: \d+\.\d+\.\d+(?:-.*)?$`)
+	reCypressBrowser  = regexp.MustCompile(`^Browser: .+ \d+(?:\.\d+)*$`)
+	reCypressCount    = regexp.MustCompile(`^Screenshots:\s+\d+$`)
+	reCypressVideo    = regexp.MustCompile(`^Video:\s+(?:true|false)$`)
+	reCypressDuration = regexp.MustCompile(`^Duration:\s+\d+(?:\.\d+)? (?:ms|seconds?|minutes?)$`)
+	reCypressSpec     = regexp.MustCompile(`^Spec Ran:\s+\S.*$`)
 )
 
 type cypressSummary struct {
@@ -74,6 +80,9 @@ func parseCypressSummary(output string) (cypressSummary, bool) {
 	seen := make(map[string]bool, 5)
 	for _, line := range strings.Split(output, "\n") {
 		trimmed := strings.TrimSpace(strings.Trim(strings.TrimSpace(line), "│"))
+		if !isKnownCypressLine(trimmed) {
+			return cypressSummary{}, false
+		}
 		if matches := reCypressStat.FindStringSubmatch(trimmed); matches != nil {
 			key := strings.ToLower(matches[1])
 			if seen[key] {
@@ -112,4 +121,17 @@ func parseCypressSummary(output string) (cypressSummary, bool) {
 		return cypressSummary{}, false
 	}
 	return summary, true
+}
+
+func isKnownCypressLine(line string) bool {
+	if line == "" || line == "(Run Starting)" || line == "(Run Finished)" ||
+		reCypressVersion.MatchString(line) || reCypressBrowser.MatchString(line) ||
+		reCypressCount.MatchString(line) || reCypressVideo.MatchString(line) ||
+		reCypressDuration.MatchString(line) || reCypressSpec.MatchString(line) {
+		return true
+	}
+	if reCypressStat.MatchString(line) {
+		return true
+	}
+	return strings.Trim(line, "─┌┐└┘ ") == ""
 }

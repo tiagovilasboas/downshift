@@ -58,6 +58,14 @@ func TestCompressCypressPreservesWarningsWithPassingSummary(t *testing.T) {
 	}
 }
 
+func TestCompressCypressPreservesUnknownOutputWithPassingSummary(t *testing.T) {
+	in := []byte("(Run Starting)\nCypress: 13.6.0\nBrowser: Electron 118\nconsole.log CUSTOMER_ID=12345\n(Run Finished)\n│ Tests: 1\n│ Passing: 1\n│ Failing: 0\n│ Pending: 0\n│ Skipped: 0\n│ Duration: 1 second\n")
+	res := CompressExit(in, ModeSafe, 0)
+	if res.Applied || !bytes.Equal(res.Output, in) {
+		t.Fatalf("unknown Cypress output must be preserved byte-identically: applied=%v output=%q", res.Applied, res.Output)
+	}
+}
+
 func TestCompressCypress_FailurePreservesActionableOutput(t *testing.T) {
 	in, err := os.ReadFile(filepath.Join("testdata", "corpus", "cypress_fail_actionable.txt"))
 	if err != nil {

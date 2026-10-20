@@ -12,7 +12,7 @@ This document comprehensively maps developer CLI tools for native output cutting
 
 Every candidate must satisfy the following four core principles:
 
-1. **Strict Fail-Open Safety:** An exit code != 0, unhandled exception, assertion error, compiler error, traceback, or non-empty stderr stream MUST preserve 100% of the raw, uncompressed output verbatim. A developer agent must never hallucinate or fail to diagnose a bug due to squelched error details.
+1. **Strict Fail-Open Safety:** An exit code != 0, unhandled exception, assertion error, compiler error, traceback, non-empty stderr stream, or unknown stdout line MUST preserve 100% of the raw, uncompressed output verbatim. A developer agent must never hallucinate or fail to diagnose a bug due to squelched error details.
 2. **Zero Shell Layer:** Execution bypasses `/bin/sh` or `/bin/zsh`. Binaries are resolved via `exec.LookPath` and invoked directly with `os/exec.Command`, using a strict argument whitelist (`safeByte`).
 3. **Deterministic In-Memory Compression:** No remote APIs, local LLM calls, or background daemons. Parsing uses pre-compiled regular expressions and bounded byte buffers (< 2 MB) executing in under 1ms.
 4. **ROI Focus (80/20 Rule):** Target repetitive test runners, compiler checks, progress bars, dependency trees, and ASCII art generators that inflate multi-turn cache debt across long agentic sessions.

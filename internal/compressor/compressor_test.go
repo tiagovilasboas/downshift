@@ -502,6 +502,14 @@ func TestCompress_Jest_ErrorsPreserveRaw(t *testing.T) {
 	}
 }
 
+func TestCompress_Jest_PreservesUnknownOutput(t *testing.T) {
+	in := []byte("PASS src/auth.test.ts\nconsole.log CUSTOMER_ID=12345\nTest Suites: 1 passed, 1 total\nTests: 25 passed, 25 total\n")
+	res := compressor.CompressExit(in, compressor.ModeSafe, 0)
+	if res.Applied || !bytes.Equal(res.Output, in) {
+		t.Fatalf("unknown Jest output must be preserved byte-identically: applied=%v output=%q", res.Applied, res.Output)
+	}
+}
+
 func TestCompress_PrecedenceOverSearch(t *testing.T) {
 	// e2e/auth.spec.ts:10:5 › login flow looks like rg match (file:line:col:)
 	playwrightIn := []byte("Running 5 tests using 2 workers\n  ✓ 1 e2e/auth.spec.ts:10:5 › login flow (1.0s)\n  5 passed (2.0s)\n")
