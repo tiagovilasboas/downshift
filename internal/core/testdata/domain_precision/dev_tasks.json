@@ -1,0 +1,722 @@
+[
+  {
+    "id": "SM-01-en",
+    "scenario": "SM-01",
+    "language": "en",
+    "domain": "frontend",
+    "want_tier": "small",
+    "prompt": "Change the button label from Continue to Next in checkout.tsx."
+  },
+  {
+    "id": "SM-01-pt",
+    "scenario": "SM-01",
+    "language": "pt-BR",
+    "domain": "frontend",
+    "want_tier": "small",
+    "prompt": "Troque o texto do botão de Continuar para Próximo em checkout.tsx."
+  },
+  {
+    "id": "SM-01-mixed",
+    "scenario": "SM-01",
+    "language": "mixed",
+    "domain": "frontend",
+    "want_tier": "small",
+    "prompt": "Change o label do botão de Continuar para Próximo em checkout.tsx."
+  },
+  {
+    "id": "SM-02-en",
+    "scenario": "SM-02",
+    "language": "en",
+    "domain": "backend",
+    "want_tier": "small",
+    "prompt": "Rename local variable rawID to parsedID in handler.go, without changing behavior."
+  },
+  {
+    "id": "SM-02-pt",
+    "scenario": "SM-02",
+    "language": "pt-BR",
+    "domain": "backend",
+    "want_tier": "small",
+    "prompt": "Renomeie a variável local rawID para parsedID em handler.go, sem alterar o comportamento."
+  },
+  {
+    "id": "SM-02-mixed",
+    "scenario": "SM-02",
+    "language": "mixed",
+    "domain": "backend",
+    "want_tier": "small",
+    "prompt": "Rename a variável rawID para parsedID em handler.go, sem alterar comportamento."
+  },
+  {
+    "id": "SM-03-en",
+    "scenario": "SM-03",
+    "language": "en",
+    "domain": "devops",
+    "want_tier": "small",
+    "prompt": "Change the default timeout to 30 seconds in staging YAML only."
+  },
+  {
+    "id": "SM-03-pt",
+    "scenario": "SM-03",
+    "language": "pt-BR",
+    "domain": "devops",
+    "want_tier": "small",
+    "prompt": "Altere o timeout padrão para 30 segundos apenas no YAML de staging."
+  },
+  {
+    "id": "SM-03-mixed",
+    "scenario": "SM-03",
+    "language": "mixed",
+    "domain": "devops",
+    "want_tier": "small",
+    "prompt": "Change o timeout padrão para 30 segundos no YAML de staging."
+  },
+  {
+    "id": "SM-04-en",
+    "scenario": "SM-04",
+    "language": "en",
+    "domain": "cicd",
+    "want_tier": "small",
+    "prompt": "Run prettier on modified UI files and report errors."
+  },
+  {
+    "id": "SM-04-pt",
+    "scenario": "SM-04",
+    "language": "pt-BR",
+    "domain": "cicd",
+    "want_tier": "small",
+    "prompt": "Rode o prettier nos arquivos de interface alterados e relate os erros."
+  },
+  {
+    "id": "SM-04-mixed",
+    "scenario": "SM-04",
+    "language": "mixed",
+    "domain": "cicd",
+    "want_tier": "small",
+    "prompt": "Run prettier nos arquivos de UI alterados e reporte erros."
+  },
+  {
+    "id": "SM-05-en",
+    "scenario": "SM-05",
+    "language": "en",
+    "domain": "testing",
+    "want_tier": "small",
+    "prompt": "Fix one typo in the unit-test README heading."
+  },
+  {
+    "id": "SM-05-pt",
+    "scenario": "SM-05",
+    "language": "pt-BR",
+    "domain": "testing",
+    "want_tier": "small",
+    "prompt": "Corrija um erro de digitação no título do README de testes unitários."
+  },
+  {
+    "id": "SM-05-mixed",
+    "scenario": "SM-05",
+    "language": "mixed",
+    "domain": "testing",
+    "want_tier": "small",
+    "prompt": "Fix um typo no título do README de testes unitários."
+  },
+  {
+    "id": "SM-06-en",
+    "scenario": "SM-06",
+    "language": "en",
+    "domain": "mobile",
+    "want_tier": "small",
+    "prompt": "Update the iOS app title string to My Wallet."
+  },
+  {
+    "id": "SM-06-pt",
+    "scenario": "SM-06",
+    "language": "pt-BR",
+    "domain": "mobile",
+    "want_tier": "small",
+    "prompt": "Atualize o título do aplicativo iOS para Minha Carteira."
+  },
+  {
+    "id": "SM-06-mixed",
+    "scenario": "SM-06",
+    "language": "mixed",
+    "domain": "mobile",
+    "want_tier": "small",
+    "prompt": "Update o título do app iOS para Minha Carteira."
+  },
+  {
+    "id": "SM-07-en",
+    "scenario": "SM-07",
+    "language": "en",
+    "domain": "finops",
+    "want_tier": "small",
+    "prompt": "List the available cost tags from the example configuration, without making changes."
+  },
+  {
+    "id": "SM-07-pt",
+    "scenario": "SM-07",
+    "language": "pt-BR",
+    "domain": "finops",
+    "want_tier": "small",
+    "prompt": "Liste as tags de custo disponíveis na configuração de exemplo, sem alterar nada."
+  },
+  {
+    "id": "SM-07-mixed",
+    "scenario": "SM-07",
+    "language": "mixed",
+    "domain": "finops",
+    "want_tier": "small",
+    "prompt": "List as tags de custos no config de exemplo sem alterar arquivos."
+  },
+  {
+    "id": "SM-08-en",
+    "scenario": "SM-08",
+    "language": "en",
+    "domain": "ai",
+    "want_tier": "small",
+    "prompt": "Translate the sentence about RAG metrics into Portuguese."
+  },
+  {
+    "id": "SM-08-pt",
+    "scenario": "SM-08",
+    "language": "pt-BR",
+    "domain": "ai",
+    "want_tier": "small",
+    "prompt": "Traduza para inglês a frase sobre métricas RAG."
+  },
+  {
+    "id": "SM-08-mixed",
+    "scenario": "SM-08",
+    "language": "mixed",
+    "domain": "ai",
+    "want_tier": "small",
+    "prompt": "Translate a frase sobre métricas RAG para português."
+  },
+  {
+    "id": "SM-09-en",
+    "scenario": "SM-09",
+    "language": "en",
+    "domain": "observability",
+    "want_tier": "small",
+    "prompt": "Show the most recent five commits affecting metrics.go."
+  },
+  {
+    "id": "SM-09-pt",
+    "scenario": "SM-09",
+    "language": "pt-BR",
+    "domain": "observability",
+    "want_tier": "small",
+    "prompt": "Mostre os últimos cinco commits que alteraram metrics.go."
+  },
+  {
+    "id": "SM-09-mixed",
+    "scenario": "SM-09",
+    "language": "mixed",
+    "domain": "observability",
+    "want_tier": "small",
+    "prompt": "Show os últimos cinco commits em metrics.go."
+  },
+  {
+    "id": "SM-10-en",
+    "scenario": "SM-10",
+    "language": "en",
+    "domain": "data",
+    "want_tier": "small",
+    "prompt": "Change the batch size constant to 100 in export.py."
+  },
+  {
+    "id": "SM-10-pt",
+    "scenario": "SM-10",
+    "language": "pt-BR",
+    "domain": "data",
+    "want_tier": "small",
+    "prompt": "Altere a constante de tamanho de lote para 100 em export.py."
+  },
+  {
+    "id": "SM-10-mixed",
+    "scenario": "SM-10",
+    "language": "mixed",
+    "domain": "data",
+    "want_tier": "small",
+    "prompt": "Change a constante batch size para 100 em export.py."
+  },
+  {
+    "id": "MD-01-en",
+    "scenario": "MD-01",
+    "language": "en",
+    "domain": "frontend",
+    "want_tier": "mid",
+    "prompt": "Investigate state synchronization after a user switches workspace, and update the existing UI test."
+  },
+  {
+    "id": "MD-01-pt",
+    "scenario": "MD-01",
+    "language": "pt-BR",
+    "domain": "frontend",
+    "want_tier": "mid",
+    "prompt": "Investigue a sincronização de estado após trocar de workspace e atualize o teste da interface."
+  },
+  {
+    "id": "MD-01-mixed",
+    "scenario": "MD-01",
+    "language": "mixed",
+    "domain": "frontend",
+    "want_tier": "mid",
+    "prompt": "Investigate sincronização de estado ao trocar workspace e atualize o teste de UI."
+  },
+  {
+    "id": "MD-02-en",
+    "scenario": "MD-02",
+    "language": "en",
+    "domain": "backend",
+    "want_tier": "mid",
+    "prompt": "Implement idempotency key validation for repeated POST requests in existing API middleware."
+  },
+  {
+    "id": "MD-02-pt",
+    "scenario": "MD-02",
+    "language": "pt-BR",
+    "domain": "backend",
+    "want_tier": "mid",
+    "prompt": "Implemente validação de chave de idempotência para POST repetido no middleware existente."
+  },
+  {
+    "id": "MD-02-mixed",
+    "scenario": "MD-02",
+    "language": "mixed",
+    "domain": "backend",
+    "want_tier": "mid",
+    "prompt": "Implement validação de chave de idempotência no middleware atual."
+  },
+  {
+    "id": "MD-03-en",
+    "scenario": "MD-03",
+    "language": "en",
+    "domain": "devops",
+    "want_tier": "mid",
+    "prompt": "Investigate ConfigMap reload problems and fix the deployment manifest for one service."
+  },
+  {
+    "id": "MD-03-pt",
+    "scenario": "MD-03",
+    "language": "pt-BR",
+    "domain": "devops",
+    "want_tier": "mid",
+    "prompt": "Investigue o problema de recarga de ConfigMap e corrija o manifesto de um serviço."
+  },
+  {
+    "id": "MD-03-mixed",
+    "scenario": "MD-03",
+    "language": "mixed",
+    "domain": "devops",
+    "want_tier": "mid",
+    "prompt": "Investigate recarga de ConfigMap e corrija o manifest de um serviço."
+  },
+  {
+    "id": "MD-04-en",
+    "scenario": "MD-04",
+    "language": "en",
+    "domain": "cicd",
+    "want_tier": "mid",
+    "prompt": "Optimize monorepo cache to avoid rebuilding unaffected packages."
+  },
+  {
+    "id": "MD-04-pt",
+    "scenario": "MD-04",
+    "language": "pt-BR",
+    "domain": "cicd",
+    "want_tier": "mid",
+    "prompt": "Otimize o cache de monorepo para evitar builds de pacotes não afetados."
+  },
+  {
+    "id": "MD-04-mixed",
+    "scenario": "MD-04",
+    "language": "mixed",
+    "domain": "cicd",
+    "want_tier": "mid",
+    "prompt": "Optimize cache de monorepo para evitar rebuild desnecessário."
+  },
+  {
+    "id": "MD-05-en",
+    "scenario": "MD-05",
+    "language": "en",
+    "domain": "testing",
+    "want_tier": "mid",
+    "prompt": "Implement property-based tests for existing money parser and keep the public API."
+  },
+  {
+    "id": "MD-05-pt",
+    "scenario": "MD-05",
+    "language": "pt-BR",
+    "domain": "testing",
+    "want_tier": "mid",
+    "prompt": "Implemente testes baseados em propriedades no parser de valores e mantenha a API pública."
+  },
+  {
+    "id": "MD-05-mixed",
+    "scenario": "MD-05",
+    "language": "mixed",
+    "domain": "testing",
+    "want_tier": "mid",
+    "prompt": "Implement testes baseados em propriedades no parser atual sem mudar API."
+  },
+  {
+    "id": "MD-06-en",
+    "scenario": "MD-06",
+    "language": "en",
+    "domain": "mobile",
+    "want_tier": "mid",
+    "prompt": "Investigate app cold start after adding splash and reduce startup delay."
+  },
+  {
+    "id": "MD-06-pt",
+    "scenario": "MD-06",
+    "language": "pt-BR",
+    "domain": "mobile",
+    "want_tier": "mid",
+    "prompt": "Investigue a inicialização a frio do aplicativo após o splash e reduza a demora."
+  },
+  {
+    "id": "MD-06-mixed",
+    "scenario": "MD-06",
+    "language": "mixed",
+    "domain": "mobile",
+    "want_tier": "mid",
+    "prompt": "Investigate inicialização a frio do app após splash e reduza o delay."
+  },
+  {
+    "id": "MD-07-en",
+    "scenario": "MD-07",
+    "language": "en",
+    "domain": "finops",
+    "want_tier": "mid",
+    "prompt": "Investigate idle cloud resources in development account and prepare a cleanup list."
+  },
+  {
+    "id": "MD-07-pt",
+    "scenario": "MD-07",
+    "language": "pt-BR",
+    "domain": "finops",
+    "want_tier": "mid",
+    "prompt": "Investigue recursos ociosos em nuvem na conta de desenvolvimento e prepare uma lista."
+  },
+  {
+    "id": "MD-07-mixed",
+    "scenario": "MD-07",
+    "language": "mixed",
+    "domain": "finops",
+    "want_tier": "mid",
+    "prompt": "Investigate recursos ociosos em nuvem na conta dev e gere uma lista."
+  },
+  {
+    "id": "MD-08-en",
+    "scenario": "MD-08",
+    "language": "en",
+    "domain": "ai",
+    "want_tier": "mid",
+    "prompt": "Investigate agent tool calling failures caused by mismatched JSON schemas in one tool."
+  },
+  {
+    "id": "MD-08-pt",
+    "scenario": "MD-08",
+    "language": "pt-BR",
+    "domain": "ai",
+    "want_tier": "mid",
+    "prompt": "Investigue falhas de chamadas de ferramentas dos agentes por schema JSON incompatível."
+  },
+  {
+    "id": "MD-08-mixed",
+    "scenario": "MD-08",
+    "language": "mixed",
+    "domain": "ai",
+    "want_tier": "mid",
+    "prompt": "Investigate falhas de chamadas de ferramentas dos agentes por schema mismatch."
+  },
+  {
+    "id": "MD-09-en",
+    "scenario": "MD-09",
+    "language": "en",
+    "domain": "observability",
+    "want_tier": "mid",
+    "prompt": "Implement distributed trace correlation in existing HTTP middleware and verify spans."
+  },
+  {
+    "id": "MD-09-pt",
+    "scenario": "MD-09",
+    "language": "pt-BR",
+    "domain": "observability",
+    "want_tier": "mid",
+    "prompt": "Implemente correlação de traces distribuídos no middleware HTTP existente."
+  },
+  {
+    "id": "MD-09-mixed",
+    "scenario": "MD-09",
+    "language": "mixed",
+    "domain": "observability",
+    "want_tier": "mid",
+    "prompt": "Implement correlação de traces distribuídos no middleware HTTP existente."
+  },
+  {
+    "id": "MD-10-en",
+    "scenario": "MD-10",
+    "language": "en",
+    "domain": "data",
+    "want_tier": "mid",
+    "prompt": "Investigate Kafka consumer lag for one topic and adjust consumer batch setting."
+  },
+  {
+    "id": "MD-10-pt",
+    "scenario": "MD-10",
+    "language": "pt-BR",
+    "domain": "data",
+    "want_tier": "mid",
+    "prompt": "Investigue atraso de consumidor Kafka de um tópico e ajuste o tamanho de lote."
+  },
+  {
+    "id": "MD-10-mixed",
+    "scenario": "MD-10",
+    "language": "mixed",
+    "domain": "data",
+    "want_tier": "mid",
+    "prompt": "Investigate atraso de consumidor Kafka e ajuste o batch size."
+  },
+  {
+    "id": "FX-01-en",
+    "scenario": "FX-01",
+    "language": "en",
+    "domain": "devops",
+    "want_tier": "frontier",
+    "prompt": "Design disaster recovery for regional services with documented failover decisions."
+  },
+  {
+    "id": "FX-01-pt",
+    "scenario": "FX-01",
+    "language": "pt-BR",
+    "domain": "devops",
+    "want_tier": "frontier",
+    "prompt": "Projete recuperação de desastres para serviços em várias regiões, com decisões de failover."
+  },
+  {
+    "id": "FX-01-mixed",
+    "scenario": "FX-01",
+    "language": "mixed",
+    "domain": "devops",
+    "want_tier": "frontier",
+    "prompt": "Design recuperação de desastres para serviços regionais e defina o failover."
+  },
+  {
+    "id": "FX-02-en",
+    "scenario": "FX-02",
+    "language": "en",
+    "domain": "mobile",
+    "want_tier": "frontier",
+    "prompt": "Design offline-first sync with conflict resolution for concurrent edits on different devices."
+  },
+  {
+    "id": "FX-02-pt",
+    "scenario": "FX-02",
+    "language": "pt-BR",
+    "domain": "mobile",
+    "want_tier": "frontier",
+    "prompt": "Projete sincronização offline com resolução de conflitos para edições em dispositivos distintos."
+  },
+  {
+    "id": "FX-02-mixed",
+    "scenario": "FX-02",
+    "language": "mixed",
+    "domain": "mobile",
+    "want_tier": "frontier",
+    "prompt": "Design sincronização offline com resolução de conflitos entre dispositivos."
+  },
+  {
+    "id": "FX-03-en",
+    "scenario": "FX-03",
+    "language": "en",
+    "domain": "devsecops",
+    "want_tier": "frontier",
+    "prompt": "Design a threat model covering permissions and service boundaries across the organization."
+  },
+  {
+    "id": "FX-03-pt",
+    "scenario": "FX-03",
+    "language": "pt-BR",
+    "domain": "devsecops",
+    "want_tier": "frontier",
+    "prompt": "Projete um modelo de ameaças para permissões e fronteiras dos serviços da organização."
+  },
+  {
+    "id": "FX-03-mixed",
+    "scenario": "FX-03",
+    "language": "mixed",
+    "domain": "devsecops",
+    "want_tier": "frontier",
+    "prompt": "Design um modelo de ameaças para permissões e limites entre serviços."
+  },
+  {
+    "id": "FX-04-en",
+    "scenario": "FX-04",
+    "language": "en",
+    "domain": "data",
+    "want_tier": "frontier",
+    "prompt": "Design CDC across multiple databases, handling ordering guarantees and replay after failures."
+  },
+  {
+    "id": "FX-04-pt",
+    "scenario": "FX-04",
+    "language": "pt-BR",
+    "domain": "data",
+    "want_tier": "frontier",
+    "prompt": "Projete CDC entre múltiplos bancos de dados, cobrindo ordenação e reprocessamento."
+  },
+  {
+    "id": "FX-04-mixed",
+    "scenario": "FX-04",
+    "language": "mixed",
+    "domain": "data",
+    "want_tier": "frontier",
+    "prompt": "Design CDC entre múltiplos bancos de dados com replay e garantias de ordem."
+  },
+  {
+    "id": "FX-05-en",
+    "scenario": "FX-05",
+    "language": "en",
+    "domain": "ai",
+    "want_tier": "frontier",
+    "prompt": "Plan multi-agent orchestration with HITL for asynchronous tool execution and human approvals."
+  },
+  {
+    "id": "FX-05-pt",
+    "scenario": "FX-05",
+    "language": "pt-BR",
+    "domain": "ai",
+    "want_tier": "frontier",
+    "prompt": "Planeje orquestração multiagente com HITL para execução assíncrona e aprovações humanas."
+  },
+  {
+    "id": "FX-05-mixed",
+    "scenario": "FX-05",
+    "language": "mixed",
+    "domain": "ai",
+    "want_tier": "frontier",
+    "prompt": "Plan orquestração multiagente com HITL para tools e aprovações humanas."
+  },
+  {
+    "id": "FX-06-en",
+    "scenario": "FX-06",
+    "language": "en",
+    "domain": "observability",
+    "want_tier": "frontier",
+    "prompt": "Design cross-service SLO error budget policy covering incident ownership and escalation."
+  },
+  {
+    "id": "FX-06-pt",
+    "scenario": "FX-06",
+    "language": "pt-BR",
+    "domain": "observability",
+    "want_tier": "frontier",
+    "prompt": "Projete política de orçamento de erro SLO entre serviços, com responsáveis e escalonamento."
+  },
+  {
+    "id": "FX-06-mixed",
+    "scenario": "FX-06",
+    "language": "mixed",
+    "domain": "observability",
+    "want_tier": "frontier",
+    "prompt": "Design política de orçamento de erro SLO entre serviços com incident ownership."
+  },
+  {
+    "id": "FX-07-en",
+    "scenario": "FX-07",
+    "language": "en",
+    "domain": "fullstack",
+    "want_tier": "frontier",
+    "prompt": "Design tenant isolation across frontend and backend for shared data and access boundaries."
+  },
+  {
+    "id": "FX-07-pt",
+    "scenario": "FX-07",
+    "language": "pt-BR",
+    "domain": "fullstack",
+    "want_tier": "frontier",
+    "prompt": "Projete isolamento de tenant entre frontend e backend para dados compartilhados e acessos."
+  },
+  {
+    "id": "FX-07-mixed",
+    "scenario": "FX-07",
+    "language": "mixed",
+    "domain": "fullstack",
+    "want_tier": "frontier",
+    "prompt": "Design isolamento de tenant entre frontend e backend com limites de acesso."
+  },
+  {
+    "id": "FX-08-en",
+    "scenario": "FX-08",
+    "language": "en",
+    "domain": "backend",
+    "want_tier": "frontier",
+    "prompt": "Plan transaction boundary across services including compensation when one step fails."
+  },
+  {
+    "id": "FX-08-pt",
+    "scenario": "FX-08",
+    "language": "pt-BR",
+    "domain": "backend",
+    "want_tier": "frontier",
+    "prompt": "Planeje fronteira transacional entre serviços incluindo compensações em caso de falha."
+  },
+  {
+    "id": "FX-08-mixed",
+    "scenario": "FX-08",
+    "language": "mixed",
+    "domain": "backend",
+    "want_tier": "frontier",
+    "prompt": "Plan fronteira transacional entre serviços com compensação de falhas."
+  },
+  {
+    "id": "FX-09-en",
+    "scenario": "FX-09",
+    "language": "en",
+    "domain": "frontend",
+    "want_tier": "frontier",
+    "prompt": "Design SSR streaming architecture across product pages with error recovery and caching."
+  },
+  {
+    "id": "FX-09-pt",
+    "scenario": "FX-09",
+    "language": "pt-BR",
+    "domain": "frontend",
+    "want_tier": "frontier",
+    "prompt": "Projete arquitetura de streaming SSR nas páginas de produto com cache e recuperação."
+  },
+  {
+    "id": "FX-09-mixed",
+    "scenario": "FX-09",
+    "language": "mixed",
+    "domain": "frontend",
+    "want_tier": "frontier",
+    "prompt": "Design arquitetura de streaming SSR para páginas de produto com recovery."
+  },
+  {
+    "id": "FX-10-en",
+    "scenario": "FX-10",
+    "language": "en",
+    "domain": "cicd",
+    "want_tier": "frontier",
+    "prompt": "Design progressive delivery with canary rollback across environments and health gates."
+  },
+  {
+    "id": "FX-10-pt",
+    "scenario": "FX-10",
+    "language": "pt-BR",
+    "domain": "cicd",
+    "want_tier": "frontier",
+    "prompt": "Projete entrega progressiva com rollback canário entre ambientes e verificações de saúde."
+  },
+  {
+    "id": "FX-10-mixed",
+    "scenario": "FX-10",
+    "language": "mixed",
+    "domain": "cicd",
+    "want_tier": "frontier",
+    "prompt": "Design entrega progressiva com canary rollback entre ambientes e health gates."
+  }
+]
