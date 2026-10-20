@@ -22,6 +22,7 @@ const Harness = "claude-code"
 const (
 	KnobNBDownshift     = "nb_downshift"
 	KnobExplicitUpshift = "explicit_upshift"
+	KnobEconomy         = "economy"
 )
 
 // Router decides cases with core.
@@ -37,6 +38,7 @@ func (r Router) Route(c replay.Case, p replay.Policy) (replay.Verdict, error) {
 	cfg := core.Config{
 		NBDownshift:     p.Knobs[KnobNBDownshift] == "1",
 		ExplicitUpshift: p.Knobs[KnobExplicitUpshift] == "1",
+		Economy:         p.Knobs[KnobEconomy] == "1",
 	}
 	restore := core.SetConfig(cfg)
 	defer restore()
