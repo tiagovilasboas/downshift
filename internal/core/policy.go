@@ -157,6 +157,10 @@ type Shadow struct {
 	// ScoreApplied is true when DOWNSHIFT_SCORE_ROUTING=1 and the plan
 	// rewrote the model to ScoreWould.
 	ScoreApplied bool
+	// GatewayWould is the id of the allowlisted OpenRouter row that would
+	// serve this decision's tier, or empty when there is no allowlist or no
+	// row of that tier. Shadow only: it never changes the routed model.
+	GatewayWould string
 }
 
 // Verdict tells the caller what to do about the current model.

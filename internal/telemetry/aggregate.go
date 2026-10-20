@@ -158,6 +158,7 @@ func (a *aggregator) countDecision(ev Event) {
 	isRefuted := a.refuted[linkKey{ev.Harness, DecisionKey(ev)}]
 	a.countModelMix(ev, isRefuted)
 	a.countScoreShadow(ev)
+	a.countGatewayShadow(ev)
 	for _, code := range ev.ReasonCodes {
 		a.s.ReasonCodes[code]++
 	}
@@ -207,6 +208,18 @@ func (a *aggregator) countScoreShadow(ev Event) {
 		a.s.ScoreRatioN++
 		a.s.ScoreRatioSum += ev.ScoreWouldCostRatio
 	}
+}
+
+// countGatewayShadow tallies the OpenRouter allowlist shadow observation.
+func (a *aggregator) countGatewayShadow(ev Event) {
+	if ev.GatewayWould == "" {
+		return
+	}
+	a.s.GatewayObserved++
+	if a.s.GatewaySlugs == nil {
+		a.s.GatewaySlugs = make(map[string]int)
+	}
+	a.s.GatewaySlugs[ev.GatewayWould]++
 }
 
 // countFrontier counts frontier picks and the subset spent on doubt.

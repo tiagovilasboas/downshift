@@ -79,11 +79,11 @@ func TestParseOpenRouterAllowlist_Accepts(t *testing.T) {
 	want := []Entry{
 		{
 			ID: "deepseek/deepseek-v4.1-flash", Provider: ProviderOpenRouter, Harness: "opencode",
-			Tier: "mid", Routing: "automatic", Efforts: []string{"low", "medium"}, ZDR: true,
+			Tier: "mid", Routing: RoutingShadow, Efforts: []string{"low", "medium"}, ZDR: true,
 		},
 		{
 			ID: "x-ai/grok-x", Provider: ProviderOpenRouter, Harness: "opencode",
-			Tier: "frontier", Routing: "automatic", Efforts: []string{"low", "medium", "high"},
+			Tier: "frontier", Routing: RoutingShadow, Efforts: []string{"low", "medium", "high"},
 		},
 	}
 	if !reflect.DeepEqual(rows, want) {
@@ -118,7 +118,7 @@ func TestOpenRouterAllowlist_MissingFileIsSilent(t *testing.T) {
 	}
 }
 
-func TestOpenRouterAllowlist_ValidFileAddsAutomaticRowFirst(t *testing.T) {
+func TestOpenRouterAllowlist_ValidFileIsShadowOnly(t *testing.T) {
 	useStateDir(t)
 	writeStateFile(t, paths.OpenRouterAllowlistPath, allowlist(
 		`{"id":"x-ai/grok-x","tier":"small","max_effort":"low","zdr":true}`))
@@ -128,12 +128,14 @@ func TestOpenRouterAllowlist_ValidFileAddsAutomaticRowFirst(t *testing.T) {
 	if warn.Len() != 0 {
 		t.Fatalf("valid allowlist warned: %q", warn.String())
 	}
-	m := c.ModelFor("opencode", core.TierSmall)
-	if m.ID != "x-ai/grok-x" {
-		t.Errorf("ModelFor small = %q, want the allowlisted row", m.ID)
+	if got := c.ModelFor("opencode", core.TierSmall); got.ID == "x-ai/grok-x" {
+		t.Errorf("ModelFor small = %q: an allowlisted row must not be automatic", got.ID)
 	}
-	if c.IsExplicitOnly("opencode", "x-ai/grok-x") {
-		t.Error("an allowlisted row is automatic, not explicit_only")
+	if !c.IsExplicitOnly("opencode", "x-ai/grok-x") {
+		t.Error("an allowlisted row must not be writable as a current model")
+	}
+	if shadow := c.ShadowGateways(); len(shadow) != 1 || shadow[0].ID != "x-ai/grok-x" || shadow[0].Tier != core.TierSmall {
+		t.Errorf("ShadowGateways = %+v, want the allowlisted row", shadow)
 	}
 	e, ok := c.EntryFor("opencode", "x-ai/grok-x")
 	if !ok || !e.ZDR || e.InputCostM != 0 || e.OutputCostM != 0 {

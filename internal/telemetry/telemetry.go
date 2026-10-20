@@ -178,6 +178,11 @@ type Event struct {
 	// price over that model's (input plus output per 1M); absent when unknown.
 	ScoreDiffers        bool    `json:"score_differs,omitempty"`
 	ScoreWouldCostRatio float64 `json:"score_would_cost_ratio,omitempty"`
+	// GatewayWould is the slug of the allowlisted OpenRouter row that would
+	// serve this tier (shadow only; the routed model is unchanged), and
+	// GatewayWouldTier that tier. Slug and tier only: no prompt, no task text.
+	GatewayWould     string `json:"gateway_would,omitempty"`
+	GatewayWouldTier string `json:"gateway_would_tier,omitempty"`
 	// Optional Code Intelligence (DCI) record. Set on OutcomeDCI events.
 	DCI *DCIRecord `json:"dci,omitempty"`
 
@@ -432,6 +437,10 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 			ev.ScoreWouldCostRatio = math.Round(r*1e4) / 1e4
 		}
 	}
+	if d.Shadow.GatewayWould != "" {
+		ev.GatewayWould = ModelOrUnknown(d.Shadow.GatewayWould)
+		ev.GatewayWouldTier = d.Tier.String()
+	}
 	if len(d.Corrections) > 0 {
 		ev.SafeVerdict = d.SafeVerdict.String()
 		ev.Corrections = d.Corrections
@@ -639,6 +648,10 @@ type Stats struct {
 	ScoreDiffers  int
 	ScoreRatioN   int
 	ScoreRatioSum float64
+	// GatewayObserved counts decisions an allowlisted OpenRouter row would
+	// have served; GatewaySlugs counts them per slug. Shadow only.
+	GatewayObserved int
+	GatewaySlugs    map[string]int
 	// ChildStatus counts how children ended (child_ended events), by status.
 	ChildStatus map[ChildStatus]int
 	// RespawnAfterFailure counts failed children followed by another spawn in
