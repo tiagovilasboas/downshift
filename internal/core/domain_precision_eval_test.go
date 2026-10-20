@@ -179,7 +179,12 @@ func TestDomainPrecisionComparison(t *testing.T) {
 	comparePrecisionPredictions(t, cases, out["baseline_without_domains"].pred, out["96_domains_without_pairs"].pred, "domains vs baseline")
 	comparePrecisionPredictions(t, cases, out["96_domains_without_pairs"].pred, out["96_domains_with_pairs"].pred, "pairwise interactions vs domains")
 	comparePrecisionPredictions(t, cases, out["baseline_without_domains"].pred, out["96_domains_with_pairs"].pred, "full candidate vs baseline")
-	t.Error("TEMPORARY EVALUATION REPORT: review metrics, then restore passing assertions")
+	// Regression guard: expanded vocabulary should improve or retain tier
+	// agreement on the fixed multilingual label set and avoid extra under-routing.
+	baseline, candidate := out["baseline_without_domains"].stats, out["96_domains_with_pairs"].stats
+	if candidate.Correct < baseline.Correct || candidate.Under > baseline.Under {
+		t.Errorf("native domains regressed: baseline=%s candidate=%s", baseline.summary(), candidate.summary())
+	}
 }
 
 // Each changed prediction is reported, including regressions. Pairwise
@@ -238,7 +243,6 @@ func TestDomainPrecisionLegacyCorpus(t *testing.T) {
 		}
 		t.Logf("%s on original corpus: %s", config.name, stats.summary())
 	}
-	t.Error("TEMPORARY LEGACY REPORT: review metrics, then restore passing assertions")
 }
 
 func BenchmarkDomainPrecisionRoute(b *testing.B) {
