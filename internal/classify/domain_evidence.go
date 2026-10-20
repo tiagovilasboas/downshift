@@ -9,6 +9,13 @@ func osDomainDedupEnabled() bool {
 	return os.Getenv("DOWNSHIFT_DOMAIN_DEDUP") != "0"
 }
 
+// Independent domains can corroborate a tier, but pairwise agreement is
+// limited to one point. The feature is always enabled unless explicitly
+// disabled for A/B evaluations.
+func osDomainInteractionsEnabled() bool {
+	return os.Getenv("DOWNSHIFT_DOMAIN_INTERACTIONS") != "0"
+}
+
 // domainEvidenceKey groups overlapping signals from one specialty and class.
 // General signals and risk floors are deliberately not aggregated.
 type domainEvidenceKey struct {
@@ -49,6 +56,7 @@ func (d *domainEvidence) apply(scores map[Complexity]int) {
 	// Explicit opt-out lets benchmark comparisons isolate this mathematical
 	// change without disabling the bilingual dictionary or risk policies.
 	raw := !osDomainDedupEnabled()
+	var distinctDomains [4]int
 	for key, vote := range d.groups {
 		value := vote.total
 		if !raw {
@@ -58,5 +66,17 @@ func (d *domainEvidence) apply(scores map[Complexity]int) {
 			}
 		}
 		scores[key.class] += value
+		distinctDomains[key.class]++
+	}
+	// A single rule does not imply cross-domain agreement. Two independent
+	// specialties with evidence for the same tier produce one bounded
+	// interaction (min(1, n*(n-1)/2)), never a quadratic explosion in votes.
+	// Trivial and Simple stay untouched; existing risk floors stay authoritative.
+	if osDomainInteractionsEnabled() && !raw {
+		for _, tier := range [...]Complexity{Medium, Complex} {
+			if distinctDomains[tier] >= 2 {
+				scores[tier]++
+			}
+		}
 	}
 }
