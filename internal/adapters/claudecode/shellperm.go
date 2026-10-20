@@ -6,6 +6,7 @@ package claudecode
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -83,7 +84,7 @@ func loadPermissionRules(cwd string) (allow, deny, ask []string, err error) {
 		return nil, nil, nil, err
 	}
 	for _, f := range files {
-		data, err := os.ReadFile(f)
+		data, err := readSettings(f)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				continue
@@ -167,3 +168,27 @@ func WithManagedSettings(paths []string) func() {
 	managedSettingsPaths = func() []string { return paths }
 	return func() { managedSettingsPaths = old }
 }
+
+// maxSettingsBytes caps one settings file read on every Bash call: a cloned
+// repository can carry a huge .claude/settings.json, and the hook has a 1.5 s
+// deadline. A larger file is an error, which ShellAllowed reads as "ask".
+const maxSettingsBytes = 1 << 20
+
+// readSettings reads one settings file up to maxSettingsBytes.
+func readSettings(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	data, err := io.ReadAll(io.LimitReader(f, maxSettingsBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxSettingsBytes {
+		return nil, errSettingsTooLarge
+	}
+	return data, nil
+}
+
+var errSettingsTooLarge = errors.New("settings file larger than 1 MiB")

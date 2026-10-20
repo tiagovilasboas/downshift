@@ -182,13 +182,6 @@ func ChildEndLine(ev Event) string {
 	return "↳ downshift: " + strings.Join(parts, " · ")
 }
 
-func formatUSD(v float64) string {
-	if v > 0 && v < 0.005 {
-		return "<$0.01"
-	}
-	return fmt.Sprintf("$%.2f", v)
-}
-
 func formatTokens(n int64) string {
 	switch {
 	case n >= 1_000_000:

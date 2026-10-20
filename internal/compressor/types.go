@@ -37,6 +37,7 @@ const (
 	FormatNextBuild  Format = "next_build"
 	FormatPHPUnit    Format = "phpunit"
 	FormatMaven      Format = "maven"
+	FormatGradle     Format = "gradle"
 	FormatSearch     Format = "search"       // rg, grep
 	FormatFileList   Format = "file_listing" // ls -R, tree, find
 	FormatLogs       Format = "logs"         // repetitive log lines

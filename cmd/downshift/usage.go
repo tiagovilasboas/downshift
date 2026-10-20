@@ -22,10 +22,9 @@ Everyday
   downshift feedback list        List routing IDs awaiting engineer review
 
 More about what happened
-  downshift stats --detail       Full report: units, honor, quota, usage, per-session cost
+  downshift stats --detail       Full report: units, honor, quota, usage, per-session tokens
   downshift stats --dci          Code Intelligence (DCI) telemetry: injections, abstentions, latencies
   downshift stats --export       Print a pasteable JSON summary without prompts
-  downshift stats --cost-per-unit=<USD>   Convert normalised units to dollars
   downshift watch [--session=<id>] [--interval=1s]      Live session tree, redrawn every interval (Ctrl-C to quit)
   downshift feedback stats       Summarize outcomes per harness
   downshift feedback <id> <outcome>  Record success, retry, or failed

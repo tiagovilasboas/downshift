@@ -18,7 +18,6 @@ import (
 // Usage: downshift stats [--days=N] [--export]
 //
 // --days=N           time window in days (default 30; 0 = all time)
-// --cost-per-unit=X  convert normalised units to dollars at rate X per unit
 // --export           print a pasteable JSON summary for multi-user evidence
 // --by-harness       Markdown review table: spawns, tier, effort and linked tokens per harness
 func runStats(args []string) int {
