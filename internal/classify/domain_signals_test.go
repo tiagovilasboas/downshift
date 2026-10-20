@@ -119,7 +119,7 @@ func TestDomainSignalsNoBareTechnologyPromotions(t *testing.T) {
 
 func TestDomainSignalsEnabledByDefault(t *testing.T) {
 	t.Setenv("DOWNSHIFT_DOMAIN_SIGNALS", "")
-	if len(activeSignals()) != len(signals)+len(RawDomainSignals) {
+	if len(activeSignals()) != len(signals)+len(RawDomainSignals)+len(RawExtendedDomainSignals) {
 		t.Fatal("default must include domain signals")
 	}
 	t.Setenv("DOWNSHIFT_DOMAIN_SIGNALS", "0")
@@ -127,7 +127,7 @@ func TestDomainSignalsEnabledByDefault(t *testing.T) {
 		t.Fatal("explicit opt-out must restore original classifier signals")
 	}
 	t.Setenv("DOWNSHIFT_DOMAIN_SIGNALS", "1")
-	if len(activeSignals()) != len(signals)+len(RawDomainSignals) {
+	if len(activeSignals()) != len(signals)+len(RawDomainSignals)+len(RawExtendedDomainSignals) {
 		t.Fatal("explicit opt-in must include domain signals")
 	}
 }
