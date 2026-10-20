@@ -63,7 +63,7 @@ func runSession(args []string, stdout, stderr io.Writer, catalog core.Resolver) 
 		fmt.Fprint(stdout, telemetry.Why(events, hash))
 		return 0
 	case *panel:
-		out, err := json.Marshal(telemetry.BuildPanel(events, hash))
+		out, err := json.Marshal(panelWithCompactor(telemetry.BuildPanel(events, hash), hash))
 		if err != nil {
 			return 1
 		}

@@ -13,7 +13,7 @@ folded into the `downshift` plugin unchanged.
 | | |
 |---|---|
 | Upstream | https://github.com/JohnnyVizz/claude-kit, path `plugins/savvy-progress` |
-| Version | 1.2.1 upstream; shipped here as **1.2.3** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
+| Version | 1.2.1 upstream; shipped here as **1.2.6** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
 | Commit | `c871c153ead54ad9547cc717d0f3e5a676c73986` (2026-10-13) |
 | Files | `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `.claude-plugin/plugin.json` byte-identical except `version` (1.2.3, see below); `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; three of the four `hooks/*.test.ts(x)` files byte-identical (`hooks/cost.test.ts` is gated by `SHOWN_DOLLARS`, see the local patch) (they import nothing by relative path) |
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `savvy-progress`, source `./mods/savvy-progress` |
@@ -26,10 +26,10 @@ white and grey carry the interface, green only as a small accent;
 `docs/brand/downshift-brand-tokens.json`). The only local change to upstream is
 in `hooks/register.tsx`: colours, the shown tier words and one simpler sprite, no
 behaviour; plus the `version` line of `.claude-plugin/plugin.json` (1.2.1 to
-1.2.3, 2026-10-20; 1.2.2 on 2026-10-19 was superseded before the agents panel changes reached the cache). Claude Code keys its plugin cache by that version, so a
+1.2.6, 2026-10-20; 1.2.2 on 2026-10-19 was superseded before the agents panel changes reached the cache). Claude Code keys its plugin cache by that version, so a
 machine that installed 1.2.1 before the colour patch keeps upstream's purple
 `#8f8cf4` until the version changes. The panel's header tile, summary lines and per-agent rows show the tokens Downshift saved in the session (`downshift session --panel`, `work_saved` + `cache_saved`) instead of the estimated dollar cost; the dollar estimate is no longer drawn. The reapplyable diff is [`downshift-local.patch`](downshift-local.patch),
-regenerated 2026-10-19 against the pinned upstream commit.
+regenerated 2026-10-20 against the pinned upstream commit.
 
 | In `hooks/register.tsx` | Upstream | Downshift | Why |
 |---|---|---|---|
@@ -51,9 +51,8 @@ draws; every number and label is computed by Downshift
 |---|---|
 | `dsRefresh` | runs `downshift session --panel` (`$.process.run`, 2 s timeout, at most every 3 s on render; forced at spawn and at turn end). Any failure leaves the panel exactly as upstream draws it |
 | `dsKeyOf` | sha256 of `harness-downshift-session-v1:` + the spawn's `tool_use_id` (Web Crypto), so a panel row finds Downshift's record for that spawn |
-| row | the model line gains the label, then the agent's tokens once it ended: `opus → sonnet (mid) · 48k tokens · saved from opus` (`pricier than …` when it ran on a dearer model); `held: original model kept`, `kept`, `control (unrouted)` |
-| header and band | one line: `Downshift · saved 62% of work · 58% of cache · N switched · M held` (zero counts are left out; `already on the cheapest model` when nothing cheaper existed; `Downshift · on` before any agent's tokens are known). Work is input+output, cache is cache read+write, counted apart |
-| panel header | a second line, tokens saved per agent type: `by type: general-purpose: 70% work · 64% cache · …` (only types that saved something) |
+| row | the model line gains one short status and, when tokens moved to a smaller model, `↓` and their count: `opus → sonnet (mid) · ↓58k`; `held`, `kept`, `control`, `paused`, `blocked` stand alone |
+| header and band | one short line: `Downshift · N switched · M held` (zero counts are left out; `Downshift · on` when tokens moved but nothing was switched or held). The first tile reads `Downshifted` (tokens that ran on a smaller model) and a fourth tile, `Compactor`, shows, with a ↓, the bytes the Compactor cut in the session (`compactor.saved_bytes` from `session --panel`, only when present); the two are never added together, because one is measured tokens and the other measured bytes. The work/cache percentages and the per-type line are gone from the mod (the CLI still prints them) |
 
 | band fallback (`derivedFlow`) | when no flow is registered, or its total is 0, **and Downshift is working in this session** (`downshift session --panel` for the session names at least one decided spawn), the band is drawn from the subagents the mod already tracks: title `Subagents`, `N running · M done`, bar `M/(N+M)` over the current batch (spawns since the oldest running one; a finished batch lingers 30 s). A registered flow with a total keeps upstream drawing |
 

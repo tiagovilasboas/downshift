@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 // The file names are a contract with the docs and with users' backups; each
@@ -64,7 +65,7 @@ func TestSessionModelsPathEnvOverrideWinsOverTheStateDir(t *testing.T) {
 
 func TestDisplayStateDirUsesTildeUnderHome(t *testing.T) {
 	home := t.TempDir()
-	t.Setenv("HOME", home)
+	testenv.SetHome(t, home)
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", "")
 
 	t.Setenv(paths.EnvStateDir, "")

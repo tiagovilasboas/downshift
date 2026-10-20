@@ -64,15 +64,12 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 		want   []byte
 	}
 	var todo []restore
-	for _, t := range targets {
-		if t.File == "" {
-			continue
-		}
-		path := filepath.Join(o.Home, filepath.FromSlash(t.File))
+	readErr := false
+	addRestore := func(t setupTarget, path string) {
 		b, marker := latestBackup(path)
 		if b == "" {
 			fmt.Fprintf(o.Out, "%s: no backup of %s, nothing to undo\n", t.Name, setupDisplay(o.Home, path))
-			continue
+			return
 		}
 		r := restore{t: t, path: path, backup: b, marker: marker}
 		r.cur, _ = os.ReadFile(path)
@@ -80,11 +77,23 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 			data, err := os.ReadFile(b)
 			if err != nil {
 				fmt.Fprintf(o.Err, "%s: cannot read backup %s: %v\n", t.Name, b, err)
-				return 1
+				readErr = true
+				return
 			}
 			r.want = data
 		}
 		todo = append(todo, r)
+	}
+	for _, t := range targets {
+		if t.File != "" {
+			addRestore(t, filepath.Join(o.Home, filepath.FromSlash(t.File)))
+		}
+		if t.Steering != nil {
+			addRestore(t, filepath.Join(o.Home, filepath.FromSlash(t.Steering.Path)))
+		}
+	}
+	if readErr {
+		return 1
 	}
 	if len(todo) == 0 {
 		return 0

@@ -24,7 +24,7 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 |---|---|---|---|
 | `go test` | `ok` package lines | Summarizes a suite only when every non-empty line is `ok` | Any other line, `FAIL`, or non-zero exit is preserved verbatim |
 | `go test -v` | Complete single-package `=== RUN` / `--- PASS` transcript and final `PASS` summary | Drops test names and timings only when there is no test output, then emits test counts | Any failure, test log output, incomplete or unrecognized line, stderr, or non-zero exit is preserved verbatim |
-| `pytest` | `=== N passed in X.XXs ===`, test progress dots/names | Summarizes clean suite to `pytest: PASS (N passed in X.XXs)` with package/module overview | Any `FAILED`, `ERROR`, `AssertionError`, traceback, warning flag, stderr output, or non-zero exit is preserved verbatim |
+| `pytest` | `=== N passed in X.XXs ===`, test progress dots/names | Summarizes clean suite to `pytest: PASS (N passed in X.XXs)` with package/module overview | Compacted only when every line is a recognised plain pytest line and there is one passing summary; any other line (a failure, traceback, warning, stderr, or an unknown line) or a non-zero exit is preserved verbatim |
 | `vitest` | `Test Files N passed`, `Tests N passed`, `✓` checks | Summarizes clean suite to `vitest: PASS (N test files, M passed in X.XXs)` | Any `FAIL`, `Error:`, unhandled rejection, assertion diff, stderr output, or non-zero exit is preserved verbatim |
 | `jest` | `Test Suites` and `Tests` totals | Summarizes only matching complete pass totals, preserving skipped and todo counts | Failure markers, mismatched or missing totals, stderr output, or non-zero exit is preserved verbatim |
 | `playwright` | `Running N tests using M workers`, `N passed (X.XXs)`, browser run lines (`[chromium]`, `[firefox]`, `[webkit]`) | Summarizes clean suite to `playwright: PASS (N passed across M workers in X.XXs)` | Any `failed`, `timed out`, `Error:`, assertion diff, trace attachment, retry warning, stderr output, or non-zero exit is preserved verbatim |
@@ -158,7 +158,7 @@ downshift context benchmark
 
 ## 8. Providers e companions
 
-`internal/contextopt` tem dois tipos de provider. O **nativo** roda no processo e é o default (seção 1). Um **companion** (`contextopt.Companion`) é uma ferramenta externa que o usuário instala e executa; o Downshift a detecta, registra que está em uso (`Config.Companion`) e aponta para o comando dela. Nunca instala, lança, faz `wrap` ou configura (a integração RTK fazia `init` em nome do usuário e foi removida no #71).
+`internal/contextopt` tem dois tipos de provider. O **nativo** roda no processo e é o default (seção 1). Um **companion** (`contextopt.Companion`) é uma ferramenta externa que o usuário instala e executa; o Downshift a detecta, registra que está em uso (`Config.Companion`) e aponta para o comando dela. Nunca instala, lança, faz `wrap` ou configura (uma integração anterior fazia `init` em nome do usuário e foi removida no #71).
 
 | Provider | Tipo | Detecção | `enable` persiste | O que muda no hook |
 |---|---|---|---|---|

@@ -539,8 +539,36 @@ func TestSetupManualHarnessIsReportedNotWritten(t *testing.T) {
 	if code != 0 || !strings.Contains(out, "kirocrew-pre-tool-use.sh") {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
-	if m, _ := filepath.Glob(e.path(".kiro/*")); len(m) != 0 {
-		t.Errorf("kiro dir modified: %v", m)
+	// A Manual harness is still not hook-wired: no config.json is touched.
+	if m, _ := filepath.Glob(e.path(".kiro/crew/config.json")); len(m) != 0 {
+		t.Errorf("kirocrew config.json was written by setup: %v", m)
+	}
+	// But KiroCrew now gets its compact steering installed.
+	steer := e.path(".kiro/crew/workspace/.kiro/steering/downshift-compact.md")
+	body, err := os.ReadFile(steer)
+	if err != nil {
+		t.Fatalf("steering not installed: %v", err)
+	}
+	if !strings.Contains(string(body), "downshift compact --") {
+		t.Errorf("steering missing the compact rule:\n%s", body)
+	}
+}
+
+// --undo removes a steering setup created (marker-backup path), same as a hook file.
+func TestSetupManualHarnessSteeringUndo(t *testing.T) {
+	e := newSetupEnv(t, ".kiro")
+	if code, out, _ := e.run("--yes"); code != 0 {
+		t.Fatalf("setup exit %d\n%s", code, out)
+	}
+	steer := e.path(".kiro/crew/workspace/.kiro/steering/downshift-compact.md")
+	if _, err := os.Stat(steer); err != nil {
+		t.Fatalf("steering not installed: %v", err)
+	}
+	if code, out, _ := e.run("--undo", "--yes"); code != 0 {
+		t.Fatalf("undo exit %d\n%s", code, out)
+	}
+	if _, err := os.Stat(steer); !os.IsNotExist(err) {
+		t.Errorf("steering should be removed by undo, stat err=%v", err)
 	}
 }
 

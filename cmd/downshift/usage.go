@@ -59,7 +59,6 @@ Maintainer (needs labelled data, which lives in downshift-labs)
   downshift models pull          Write user catalog.json under the state dir
 
 Experimental (kept, not part of the routing pitch; may change or move)
-  downshift serve                Start the web dashboard at http://localhost:7474 (serves web/)
   downshift context status       Show context optimization status and active provider
   downshift context providers    List supported context optimization companion providers
   downshift context doctor       Run diagnostics on context optimization providers

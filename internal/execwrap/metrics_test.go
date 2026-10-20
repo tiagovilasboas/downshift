@@ -6,6 +6,7 @@ package execwrap
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -49,7 +50,9 @@ func TestMetrics_AppendSummarize(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Mode().Perm() != 0o600 {
+	// POSIX file permissions do not apply on Windows (Go reports 0666/0444),
+	// so only assert the 0600 mode on Unix-like systems.
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
 		t.Fatalf("mode = %v, want 0600", info.Mode().Perm())
 	}
 }

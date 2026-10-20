@@ -108,14 +108,26 @@ run: `→ small: opus → haiku · its tokens would run on a cheaper model than
 requested`, or `(not applied, tokens stay on opus)` when the hook would leave
 the spawn alone.
 
+### Compactor in the panel JSON
+
+`session --panel` adds an optional `compactor` block for the session:
+`{commands, compacted, raw_bytes, saved_bytes, estimated_tokens_saved, token_estimate}`.
+Bytes are measured; `estimated_tokens_saved` is `saved_bytes / 4` and is never
+added to the routing `tokens` (different units, different certainty). The hook puts
+the hashed session on the wrapped command (`downshift compact --session=<hash> -- …`,
+`telemetry.HashSessionID`, never the raw id) and the runner logs it in
+`exec-events.jsonl`. No wrapped command in the session, or records written before
+this field existed, means no block, never zeros.
+
 ### `mods/savvy-progress`
 
 Vendored, so it is patched only through its documented local patch
 (`mods/savvy-progress/downshift-local.patch`, README section "Downshift local
-patch"). The patch runs `downshift session --panel` and draws the row label
-(with the agent's `tokens_label`), the summary line (`Downshift tokens saved: …`)
-in the panel and the band, and the `by agent type` line in the panel header;
-with no binary or bad output it draws what upstream draws. No routing logic lives
+patch"). The patch runs `downshift session --panel` and draws a short row
+status plus the tokens that agent moved to a smaller model (`↓58k`, from the
+spawn's `tokens.work_saved` + `cache_saved`) and one line, `Downshift · N switched · M held`,
+in the panel and the band; `tokens_line`, `tokens_label` and `by_agent_type` stay in the
+contract for the CLI but the mod no longer draws them; with no binary or bad output it draws what upstream draws. No routing logic lives
 in the mod.
 
 ## What a harness cannot honor
