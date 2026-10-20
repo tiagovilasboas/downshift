@@ -1,0 +1,20 @@
+  (Run Starting)
+  Cypress: 13.6.0
+  Browser: Electron 118
+
+  (Run Finished)
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        25
+  │ Passing:      23
+  │ Failing:      1
+  │ Pending:      1
+  │ Skipped:      0
+  │ Screenshots:  1
+  │ Video:        true
+  │ Duration:     9 seconds
+  │ Spec Ran:     cypress/e2e/accounting.cy.ts
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  1) account transfer
+     AssertionError: expected 200 to equal 201
+     cypress/e2e/accounting.cy.ts:42:18

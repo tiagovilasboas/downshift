@@ -143,6 +143,34 @@ func TestRun_ExitCodesAndCompaction(t *testing.T) {
 	}
 }
 
+func TestRun_JestCompactionAndFailOpen(t *testing.T) {
+	clean := "PASS src/a.test.ts\nPASS src/b.test.ts\n\nTest Suites: 2 passed, 2 total\nTests:       25 passed, 25 total\nSnapshots:   0 total\nTime:        1.234 s\n"
+	fail := "FAIL src/a.test.ts\n\nTest Suites: 1 failed, 1 total\nTests:       1 failed, 24 passed, 25 total\n"
+	cases := []struct {
+		name, raw, want string
+		code            int
+	}{
+		{"passing Jest compacts", clean, compactedWant(clean), 0},
+		{"failing Jest stays raw", fail, fail, 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			script := "cat <<'EOF'\n" + tc.raw + "EOF\n"
+			if tc.code != 0 {
+				script += "exit 1\n"
+			}
+			fakeBin(t, "jest", script)
+			r, out, errOut := run(t, []string{"jest"}, true)
+			if r.ExitCode != tc.code || out != tc.want || errOut != "" {
+				t.Fatalf("result=%+v stdout=%q stderr=%q, want code=%d stdout=%q", r, out, errOut, tc.code, tc.want)
+			}
+			if tc.code == 0 && (!r.Compacted || r.Family != FamilyJest) {
+				t.Fatalf("passing Jest should compact under its family: %+v", r)
+			}
+		})
+	}
+}
+
 func TestRun_NotFound127(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	r, out, errOut := run(t, []string{"go", "test"}, true)
@@ -563,6 +591,44 @@ func TestRun_PlaywrightCargoTscExecution(t *testing.T) {
 			}
 			if !r.Compacted && r.RawBytes != r.EmittedBytes {
 				t.Fatalf("raw %d != emitted %d without compaction", r.RawBytes, r.EmittedBytes)
+			}
+		})
+	}
+}
+
+func TestRun_CypressPassingRunCompacts(t *testing.T) {
+	const output = "  (Run Starting)\n  (Run Finished)\n  │ Tests: 2\n  │ Passing: 2\n  │ Failing: 0\n  │ Pending: 0\n  │ Skipped: 0\n  │ Duration: 1 second\n  │ Spec Ran: cypress/e2e/accounting.cy.ts\n"
+	fakeBin(t, "cypress", "cat <<'EOF'\n"+output+"EOF")
+	r, stdout, stderr := run(t, []string{"cypress", "run"}, true)
+	if r.ExitCode != 0 || r.ExitClass != ExitClassZero {
+		t.Fatalf("exit = %d/%s, want 0/zero; stderr=%q", r.ExitCode, r.ExitClass, stderr)
+	}
+	if !r.Compacted || r.Family != FamilyCypress {
+		t.Fatalf("compacted=%v family=%q, want true cypress", r.Compacted, r.Family)
+	}
+	if !strings.Contains(stdout, "Cypress: PASS (2 tests") || strings.Contains(stdout, "Run Starting") {
+		t.Fatalf("unexpected Cypress output: %q", stdout)
+	}
+}
+
+func TestRun_NextBuildAndPHPUnitCompact(t *testing.T) {
+	for _, tc := range []struct {
+		name, bin, command, fixture, want string
+		family                            Family
+	}{
+		{"Next.js build", "next", "next build", "next_build_pass.txt", "Next.js Build: SUCCESS (5 routes: 3 app, 2 pages; shared First Load JS 96.7 kB in 8.2s)", FamilyNextBuild},
+		{"PHPUnit", "phpunit", "phpunit", "phpunit_pass_default.txt", "PHPUnit: PASS (58 tests, 143 assertions", FamilyPHPUnit},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := os.ReadFile(filepath.Join("..", "compressor", "testdata", "corpus", tc.fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+			fakeBin(t, tc.bin, "cat <<'EOF'\n"+string(data)+"EOF\n")
+			argv := strings.Fields(tc.command)
+			r, stdout, stderr := run(t, argv, true)
+			if r.ExitCode != 0 || !r.Compacted || r.Family != tc.family || stderr != "" || !strings.Contains(stdout, tc.want) {
+				t.Fatalf("result=%+v stdout=%q stderr=%q", r, stdout, stderr)
 			}
 		})
 	}

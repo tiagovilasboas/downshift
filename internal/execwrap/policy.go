@@ -24,6 +24,10 @@ const (
 	FamilyPlaywright Family = "playwright"
 	FamilyCargoTest  Family = "cargo-test"
 	FamilyTSC        Family = "tsc"
+	FamilyJest       Family = "jest"
+	FamilyCypress    Family = "cypress"
+	FamilyNextBuild  Family = "next-build"
+	FamilyPHPUnit    Family = "phpunit"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -121,8 +125,9 @@ func Decide(command, exe string) Decision {
 	}
 }
 
-// FamilyOf names the allowlisted family of an argv, or FamilyNone. The
-// program must be the bare name ("go", "git", "pytest", "vitest", "playwright", "cargo", "tsc", "npx"), not a path.
+// FamilyOf names the allowlisted family of an argv, or FamilyNone. Commands
+// must match an explicit program and subcommand prefix; only PHPUnit also
+// accepts its common project-local vendor/bin paths.
 func FamilyOf(argv []string) Family {
 	if len(argv) == 0 {
 		return FamilyNone
@@ -133,8 +138,20 @@ func FamilyOf(argv []string) Family {
 	if argv[0] == "vitest" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "vitest") {
 		return FamilyVitest
 	}
+	if argv[0] == "jest" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "jest") {
+		return FamilyJest
+	}
 	if argv[0] == "tsc" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "tsc") {
 		return FamilyTSC
+	}
+	if (argv[0] == "cypress" && len(argv) >= 2 && argv[1] == "run") || (len(argv) >= 3 && argv[0] == "npx" && argv[1] == "cypress" && argv[2] == "run") {
+		return FamilyCypress
+	}
+	if (argv[0] == "next" && len(argv) >= 2 && argv[1] == "build") || (len(argv) >= 3 && argv[0] == "npx" && argv[1] == "next" && argv[2] == "build") {
+		return FamilyNextBuild
+	}
+	if argv[0] == "phpunit" || argv[0] == "vendor/bin/phpunit" || argv[0] == "./vendor/bin/phpunit" {
+		return FamilyPHPUnit
 	}
 	if len(argv) >= 3 && argv[0] == "npx" && argv[1] == "playwright" && argv[2] == "test" {
 		return FamilyPlaywright

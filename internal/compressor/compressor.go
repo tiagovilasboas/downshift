@@ -41,6 +41,14 @@ var (
 	reCargoTestError    = regexp.MustCompile(`(?m)(?:FAILED|error\[E[^\]]*\]:|warning:|panicked at)`)
 	reTSCPass           = regexp.MustCompile(`(?m)Found 0 errors`)
 	reTSCError          = regexp.MustCompile(`(?m)(?:error\s+TS\d+:|Found\s+[1-9]\d*\s+errors?)`)
+	reJestSuites        = regexp.MustCompile(`(?m)^Test Suites:\s+(?:(\d+) skipped,\s*)?(\d+) passed,\s+(\d+) total\s*$`)
+	reJestTests         = regexp.MustCompile(`(?m)^Tests:\s+(?:(\d+) skipped,\s*)?(?:(\d+) todo,\s*)?(\d+) passed,\s+(\d+) total\s*$`)
+	reJestHeader        = regexp.MustCompile(`(?m)^\s*(?:PASS|Test Suites:)\s+`)
+	reJestFail          = regexp.MustCompile(`(?m)^\s*(?:FAIL|Test Suites:.*\bfailed\b|Tests:.*\bfailed\b|Snapshots:.*\bfailed\b)`)
+	reJestError         = regexp.MustCompile(`(?m)(?:^\s*Error:|^\s*●|\bSnapshot\s+Summary\b|\bTest suite failed to run\b)`)
+	reJestPass          = regexp.MustCompile(`^PASS\s+\S.*$`)
+	reJestSnapshots     = regexp.MustCompile(`^Snapshots:\s+(?:(?:\d+ (?:failed|passed|obsolete),\s*)*\d+ total|\d+ total)$`)
+	reJestTime          = regexp.MustCompile(`^Time:\s+\d+(?:\.\d+)? s(?:, estimated \d+(?:\.\d+)? s)?$`)
 )
 
 // Compress evaluates the input according to the policy and selected mode.
@@ -137,7 +145,34 @@ func CompressExit(input []byte, mode Mode, exitCode int) Result {
 }
 
 func detectFormat(input []byte) (Format, bool) {
-	// 1. Go test
+	if isNextBuild(input) {
+		return FormatNextBuild, reNextBuildError.Match(input)
+	}
+	if isPHPUnit(input) {
+		return FormatPHPUnit, rePHPUnitFailure.Match(input)
+	}
+
+	// Verbose Go output ends with PASS, which otherwise matches Jest's generic
+	// PASS header. Identify a Go test transcript before the broader Jest check.
+	if reGoVerboseRun.Match(input) {
+		if reGoTestFail.Match(input) {
+			return FormatGoTest, true
+		}
+		return FormatGoTest, false
+	}
+
+	// 1. Jest must precede go test because both use a leading FAIL marker.
+	if isJest(input) {
+		if reJestFail.Match(input) || reJestError.Match(input) {
+			return FormatJest, true
+		}
+		if reJestSuites.Match(input) && reJestTests.Match(input) {
+			return FormatJest, false
+		}
+		return FormatJest, true
+	}
+
+	// 2. Go test
 	if reGoTestFail.Match(input) {
 		return FormatGoTest, true // Error detected! Preserve raw!
 	}
@@ -145,7 +180,7 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatGoTest, false
 	}
 
-	// 2. Pytest
+	// 3. Pytest
 	if isPytest(input) {
 		if rePytestError.Match(input) {
 			return FormatPytest, true // Error detected! Fail open!
@@ -156,7 +191,7 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatPytest, true
 	}
 
-	// 3. Vitest
+	// 4. Vitest
 	if isVitest(input) {
 		if reVitestError.Match(input) {
 			return FormatVitest, true // Error detected! Fail open!
@@ -167,7 +202,7 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatVitest, true
 	}
 
-	// 4. Playwright
+	// 5. Playwright
 	if isPlaywright(input) {
 		if rePlaywrightError.Match(input) {
 			return FormatPlaywright, true // Error detected! Fail open!
@@ -178,7 +213,12 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatPlaywright, true
 	}
 
-	// 5. Cargo test
+	// 6. Cypress
+	if isCypress(input) {
+		return FormatCypress, false
+	}
+
+	// 7. Cargo test
 	if isCargoTest(input) {
 		if reCargoTestError.Match(input) {
 			return FormatCargoTest, true // Error detected! Fail open!
@@ -189,7 +229,7 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatCargoTest, true
 	}
 
-	// 6. TSC
+	// 8. TSC
 	if isTSC(input) {
 		if reTSCError.Match(input) {
 			return FormatTSC, true // Error detected! Fail open!
@@ -200,29 +240,29 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatTSC, true
 	}
 
-	// 7. Git status
+	// 9. Git status
 	if reGitStatusHead.Match(input) {
 		return FormatGitStatus, false
 	}
 
-	// 8. Git log
+	// 10. Git log
 	if reGitLogCommit.Match(input) {
 		return FormatGitLog, false
 	}
 
-	// 9. Repetitive logs, only after test suites, git status and git log had their
+	// 11. Repetitive logs, only after test suites, git status and git log had their
 	// say: a failing test run or a git log with repeated lines must stay raw.
 	// Timestamps can look like search hits, so this precedes the search check.
 	if isRepetitiveLog(input) {
 		return FormatLogs, false
 	}
 
-	// 10. Search results (rg / grep)
+	// 12. Search results (rg / grep)
 	if reRipgrepMatch.Match(input) {
 		return FormatSearch, false
 	}
 
-	// 11. File listings / tree
+	// 13. File listings / tree
 	if bytes.Contains(input, []byte("total ")) && bytes.Contains(input, []byte("drwx")) {
 		return FormatFileList, false
 	}
@@ -244,6 +284,14 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressCargoTest(input)
 	case FormatTSC:
 		return compressTSC(input)
+	case FormatJest:
+		return compressJest(input)
+	case FormatCypress:
+		return compressCypress(input)
+	case FormatNextBuild:
+		return compressNextBuild(input)
+	case FormatPHPUnit:
+		return compressPHPUnit(input)
 	case FormatGitStatus:
 		return compressGitStatus(input)
 	case FormatGitLog:
@@ -267,6 +315,10 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 // figure when present; it drops only timings and "(cached)".
 // If that is not strictly shorter than the input, the input is returned.
 func compressGoTest(input []byte) ([]byte, bool, string) {
+	if reGoVerboseRun.Match(input) {
+		return parseGoVerbose(input)
+	}
+
 	type pkg struct {
 		name    string
 		cover   string
@@ -585,6 +637,60 @@ func compressCargoTest(input []byte) ([]byte, bool, string) {
 
 func isTSC(input []byte) bool {
 	return reTSCPass.Match(input) || reTSCError.Match(input) || bytes.Contains(input, []byte("error TS"))
+}
+
+func isJest(input []byte) bool {
+	return reJestHeader.Match(input) || reJestSuites.Match(input) || reJestTests.Match(input) || reJestFail.Match(input)
+}
+
+// compressJest compacts a clean Jest summary while retaining skipped and todo
+// test counts. It requires both suite and test summaries to avoid treating
+// incomplete or otherwise unrecognized output as a successful run.
+func compressJest(input []byte) ([]byte, bool, string) {
+	if !isKnownJestTranscript(input) {
+		return input, false, "jest_unknown_output_preserved"
+	}
+	suites := reJestSuites.FindSubmatch(input)
+	tests := reJestTests.FindSubmatch(input)
+	if suites == nil || tests == nil {
+		return input, false, "jest_missing_summary"
+	}
+	if len(suites) < 4 || len(tests) < 5 {
+		return input, false, "jest_invalid_summary"
+	}
+	var details []string
+	if tests[1] != nil {
+		details = append(details, string(tests[1])+" skipped")
+	}
+	if tests[2] != nil {
+		details = append(details, string(tests[2])+" todo")
+	}
+	details = append(details, string(tests[3])+" passed across "+string(suites[3])+" suites")
+	if suites[1] != nil {
+		unit := "suites"
+		if string(suites[1]) == "1" {
+			unit = "suite"
+		}
+		details = append(details, string(suites[1])+" "+unit+" skipped")
+	}
+	out := fmt.Sprintf("Jest: PASS (%s)\n", strings.Join(details, ", "))
+	if len(out) >= len(input) {
+		return input, false, "no_compression_gain"
+	}
+	return []byte(out), true, fmt.Sprintf("compressed jest summary (%s tests across %s suites)", tests[3], suites[3])
+}
+
+func isKnownJestTranscript(input []byte) bool {
+	for _, line := range strings.Split(strings.TrimSuffix(string(input), "\n"), "\n") {
+		if strings.TrimSpace(line) == "" || reJestPass.MatchString(line) ||
+			reJestSuites.MatchString(line) || reJestTests.MatchString(line) ||
+			reJestSnapshots.MatchString(line) || reJestTime.MatchString(line) ||
+			line == "Ran all test suites." {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // compressTSC compacts clean tsc output to a one-line summary:

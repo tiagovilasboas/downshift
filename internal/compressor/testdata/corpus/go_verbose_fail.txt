@@ -1,0 +1,7 @@
+=== RUN   TestLoadConfiguration
+--- PASS: TestLoadConfiguration (0.00s)
+=== RUN   TestBrokenInvariant
+    go_verbose_test.go:42: want 2, got 3
+--- FAIL: TestBrokenInvariant (0.00s)
+FAIL
+FAIL example.test/internal/config 0.004s

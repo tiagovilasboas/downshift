@@ -12,7 +12,7 @@ This document comprehensively maps developer CLI tools for native output cutting
 
 Every candidate must satisfy the following four core principles:
 
-1. **Strict Fail-Open Safety:** An exit code != 0, unhandled exception, assertion error, compiler error, traceback, or non-empty stderr stream MUST preserve 100% of the raw, uncompressed output verbatim. A developer agent must never hallucinate or fail to diagnose a bug due to squelched error details.
+1. **Strict Fail-Open Safety:** An exit code != 0, unhandled exception, assertion error, compiler error, traceback, non-empty stderr stream, or unknown stdout line MUST preserve 100% of the raw, uncompressed output verbatim. A developer agent must never hallucinate or fail to diagnose a bug due to squelched error details.
 2. **Zero Shell Layer:** Execution bypasses `/bin/sh` or `/bin/zsh`. Binaries are resolved via `exec.LookPath` and invoked directly with `os/exec.Command`, using a strict argument whitelist (`safeByte`).
 3. **Deterministic In-Memory Compression:** No remote APIs, local LLM calls, or background daemons. Parsing uses pre-compiled regular expressions and bounded byte buffers (< 2 MB) executing in under 1ms.
 4. **ROI Focus (80/20 Rule):** Target repetitive test runners, compiler checks, progress bars, dependency trees, and ASCII art generators that inflate multi-turn cache debt across long agentic sessions.
@@ -25,38 +25,39 @@ Every candidate must satisfy the following four core principles:
 | Tool / Command | Typical Raw Output | Compacted Target | Token Reduction | Fail-Open Trigger | Phase |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`go test`** | 300 – 2,500 tokens (package list, durations, cached tags) | `Go test: PASS (N packages ok)` | **~85%** | `FAIL`, `--- FAIL`, `panic:`, exit != 0 | **Landed (v0.1)** |
-| **`go test -v`** | 1,000 – 5,000 tokens (one line per test, package summaries) | `Go test: PASS (N tests across M packages)` | **~90%** | `FAIL`, `--- FAIL`, `panic:`, unrecognized output, exit != 0 | **Phase 1 (In Progress)** |
+| **`go test -v`** | 1,000 – 5,000 tokens (one line per test, package summary) | `Go test -v: PASS (N passed, 0 failed, S skipped) in Xs` | **~90%** | Any failure, test log output, incomplete or unrecognized output, exit != 0 | **Landed** |
 | **`git status`** | 100 – 400 tokens (boilerplate branch info) | `On branch X (working tree clean)` | **~65%** | Modified files, untracked, exit != 0 | **Landed (v0.1)** |
 | **`pytest`** | 500 – 3,000 tokens (rootdir, session starts, dots, duration) | `Pytest: PASS (N passed in Xs)` | **~95%** | `FAILED`, `ERROR`, `Traceback`, exit != 0 | **Landed (PR #267)** |
 | **`vitest`** | 500 – 2,500 tokens (test files, runner headers, transform times) | `Vitest: PASS (N passed across M files in Xs)` | **~86%** | `FAIL`, `Error:`, `AssertionError`, exit != 0 | **Landed (PR #267)** |
-| **`playwright test`** | 2,000 – 6,000 tokens (workers, browser matrix, step timings, HTML links) | `Playwright: PASS (N passed across B browsers in Xs)` | **~97%** | `failed`, `flaky`, timeout, retry, trace, `Error:`, exit != 0 | **Phase 1 (In Progress)** |
-| **`cargo test`** | 1,000 – 3,000 tokens (compilation banners, individual `test ... ok`) | `Cargo test: PASS (N passed in Xs)` | **~92%** | `FAILED`, `error[E...]`, warning, panic, exit != 0 | **Phase 1 (In Progress)** |
-| **`jest`** | 1,000 – 3,500 tokens (spec trees, test suites summary) | `Jest: PASS (N passed across M suites in Xs)` | **~90%** | `FAIL`, `Error:`, exit != 0 | **Phase 2** |
-| **`cypress run`** | 2,500 – 6,500 tokens (spec tables, video links, browser launch) | `Cypress: PASS (N passed across M specs in Xs)` | **~96%** | `failed`, `AssertionError`, exit != 0 | **Phase 2** |
-| **`mvn test`** | 3,000 – 8,000 tokens (`[INFO]` downloads, plugin resolutions, build logs) | `Maven: PASS (N tests run, 0 failures in Xs)` | **~98%** | `BUILD FAILURE`, `FAILURE!`, exceptions, exit != 0 | **Phase 3** |
-| **`gradle test`** | 2,500 – 6,000 tokens (task execution tree, daemon banners) | `Gradle: PASS (N tests passed in Xs)` | **~97%** | `BUILD FAILED`, task failure, exit != 0 | **Phase 3** |
+| **`playwright test`** | 2,000 – 6,000 tokens (workers, browser matrix, step timings, HTML links) | `Playwright: PASS (N passed across B browsers in Xs)` | **~97%** | `failed`, `flaky`, timeout, retry, trace, `Error:`, exit != 0 | **Landed** |
+| **`cargo test`** | 1,000 – 3,000 tokens (compilation banners, individual `test ... ok`) | `Cargo test: PASS (N passed in Xs)` | **~92%** | `FAILED`, `error[E...]`, warning, panic, exit != 0 | **Landed** |
+| **`jest`** | 1,000 – 3,500 tokens (spec trees, test suites summary) | `Jest: PASS (N passed across M suites)` | **~90%** | `FAIL`, `Error:`, incomplete summary, exit != 0 | **Landed (Jest support)** |
+| **`cypress run`** | 2,500 – 6,500 tokens (spec tables, video links, browser launch) | `Cypress: PASS (N tests: P passing, Q pending, R skipped; spec S; Xs)` | **~96%** | `failed`, `AssertionError`, error output, incomplete/inconsistent summary, exit != 0 | **Landed** |
+| **`mvn test`** | No local Maven project or Surefire transcript to establish the default output | Unmeasured | Unmeasured | Build/test failures and plugin diagnostics stay raw | **Deferred (no local baseline)** |
+| **`gradle test`** | No local Gradle project or transcript; CLI unavailable in this environment | Unmeasured | Unmeasured | Build/test failures and task diagnostics stay raw | **Deferred (no local baseline)** |
 | **`flutter test`** | 1,000 – 3,500 tokens (engine init, simulator status, test lines) | `Flutter: PASS (N tests passed in Xs)` | **~92%** | `Some tests failed`, exceptions, exit != 0 | **Phase 4** |
-| **`phpunit` / `pest`** | 500 – 3,000 tokens (per-test progress, suite summaries) | `PHP tests: PASS (N tests, 0 failures)` | **~90%** | Failure/error details, exceptions, exit != 0 | **Phase 3** |
+| **`phpunit`** | 1,000 – 4,000 tokens (dot progress, runtime details, test/assertion totals) | `PHPUnit: PASS (N tests, M assertions in Xs)` | **~93%** | Failures, warnings, test output, alternate printer, inconsistent totals, exit != 0 | **Landed** |
+| **`pest`** | Official two-test sample is 186 bytes; larger local suite transcript unavailable | Pest has a native `--compact` mode | Unmeasured | Failures, warnings, test output and diagnostics stay raw | **Deferred (needs real suite measurement)** |
 
 ---
 
 ### Category B: Typecheckers, Compilers & Linters
 | Tool / Command | Typical Raw Output | Compacted Target | Token Reduction | Fail-Open Trigger | Phase |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`tsc --noEmit`** | 500 – 2,000 tokens (or clean 0 bytes / header noise) | `TSC: PASS (0 errors)` | **~95%** | `error TS...`, `Found N errors`, exit != 0 | **Phase 1 (In Progress)** |
-| **`mypy` / `pyright`** | 600 – 2,500 tokens (file-by-file checks, environment warnings) | `Mypy: PASS (no issues found in N source files)` | **~90%** | `Found N errors`, type mismatch, exit != 0 | **Phase 2** |
+| **`tsc --noEmit`** | 500 – 2,000 tokens (or clean 0 bytes / header noise) | `TSC: PASS (0 errors)` | **~95%** | `error TS...`, `Found N errors`, exit != 0 | **Landed** |
+| **`mypy` / `pyright`** | Usually a short clean summary; failures carry file-level diagnostics | No change to clean summary | **Deferred** | Type errors and file-level diagnostics remain raw | **Phase 2 (needs measurement)** |
 | **`eslint` / `biome`** | 800 – 3,000 tokens (dozens of non-blocking style/import warnings) | `ESLint: PASS (0 errors, W warnings)` | **~85%** | `X errors`, exit != 0 | **Phase 3** |
 | **`ruff check`** | 500 – 2,000 tokens (rule descriptions, code fix snippets) | `Ruff: PASS (All checks passed)` | **~90%** | Syntax/rule errors, exit != 0 | **Phase 3** |
 | **`golangci-lint run`** | 1,000 – 4,000 tokens (multi-linter diagnostic trees) | `golangci-lint: PASS (no issues)` | **~92%** | Linter violations, exit != 0 | **Phase 3** |
-| **`phpstan analyse`** | 500 – 3,000 tokens (file progress, memory/time footer) | `PHPStan: PASS (N files, 0 errors)` | **~90%** | Any diagnostic, baseline error, internal error, exit != 0 | **Phase 3** |
+| **`phpstan analyse`** | Default is a progress bar plus a short result; per-file output requires `--debug` | No change to clean default output | **~0% in default mode** | Type diagnostics and debug output stay raw | **Deferred (no default-mode ROI)** |
 
 ---
 
 ### Category C: Formatters & Pretty-Printers
 | Tool / Command | Typical Raw Output | Compacted Target | Token Reduction | Fail-Open Trigger | Phase |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`prettier --check`** | 1,500 – 4,000 tokens (lists every unchanged file checked) | `Prettier: PASS (N files checked, clean)` | **~99%** | `Code style issues found`, exit != 0 | **Phase 2** |
-| **`black --check`** / **`ruff format --check`** | 400 – 1,500 tokens (lists all checked Python files) | `Format: PASS (N files left unchanged)` | **~95%** | `would be reformatted`, exit != 0 | **Phase 2** |
+| **`prettier --check`** | Two-line success summary; failure lists only unformatted files | Existing success message (no useful reduction) | **~0%** | Unformatted file paths and diagnostics remain raw | **Deferred (no demonstrated ROI)** |
+| **`black --check` / `ruff format --check`** | One- or two-line success summary; failures identify files | Existing success message (no useful reduction) | **~0%** | File paths, formatting differences, warnings, or errors remain raw | **Deferred (no demonstrated ROI)** |
 | **`pint --test`** | 300 – 1,500 tokens (file-by-file style results) | `Pint: PASS (N files clean)` | **~90%** | Any file needing a fix, formatter error, exit != 0 | **Phase 3** |
 
 ---
@@ -64,7 +65,7 @@ Every candidate must satisfy the following four core principles:
 ### Category D: Build Bundlers & ORM ASCII Art
 | Tool / Command | Typical Raw Output | Compacted Target | Token Reduction | Fail-Open Trigger | Phase |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`next build`** | 2,000 – 4,500 tokens (massive ASCII route tables, chunk sizes, symbols) | `Next.js Build: SUCCESS (N routes compiled in Xs)` | **~96%** | `Failed to compile`, build errors, exit != 0 | **Phase 2** |
+| **`next build`** | 2,000 – 4,500 tokens (massive ASCII route tables, chunk sizes, symbols) | `Next.js Build: SUCCESS (N routes: A app, P pages; shared First Load JS SIZE in Xs)` | **~96%** | Warnings, errors, incomplete route/chunk tables, unfamiliar output, exit != 0 | **Landed** |
 | **`prisma generate` / `migrate`** | 800 – 2,000 tokens (ASCII pyramid banner, telemetry notes) | `Prisma: SUCCESS (Client generated for schema)` | **~95%** | `Error: P...`, migration failed, exit != 0 | **Phase 3** |
 | **`alembic upgrade`** | 400 – 1,200 tokens (revision migration logs) | `Alembic: SUCCESS (Upgraded to revision REV)` | **~85%** | Migration errors, exit != 0 | **Phase 4** |
 
@@ -111,8 +112,11 @@ The following tools are explicitly excluded from `downshift exec` wrapping to pr
 
 ## 4. Execution Roadmap Summary
 
-- **Phase 1 (In Progress):** `playwright` (E2E), `cargo test` (Rust), `tsc` (TypeScript typecheck), and verbose `go test`.
-- **Phase 2 (Web & Unit):** `jest`, `cypress`, `next build`, `prettier --check`, `black/ruff format --check`, `mypy`.
-- **Phase 3 (Enterprise & Linters):** `mvn test`, `gradle test`, `prisma generate/migrate`, `eslint`, `ruff check`, `golangci-lint`, PHP test/type/format tools, `go generate`, and `sqlc`.
+- **Phase 1 (Landed):** `playwright` (E2E), `cargo test` (Rust), `tsc` (TypeScript typecheck), and verbose `go test`.
+- **Phase 2 (In Progress):** `jest`, `cypress`, and `next build` landed; `mypy` / `pyright` still needs measurement. Prettier and Black/Ruff formatting are deferred because clean output is already short.
+- **Phase 3 (Enterprise & Linters):** `phpunit` landed; candidates still under evaluation are `prisma generate/migrate`, `eslint`, `ruff check`, `golangci-lint`, PHP format/type tools, `go generate`, and `sqlc`. Maven, Gradle, Pest, and PHPStan are deferred pending a representative local transcript or evidence of meaningful savings.
 - **Phase 4 (Deps & Audits):** `pnpm install`, `npm install`, `pip/uv`, `npm/cargo/pip audit`, `alembic`, `flutter test`.
 - **Phase 5 (Noise & Search Bounds):** `git diff` lockfile squelcher, `ripgrep` (`rg`) hierarchical match bounds.
+
+Deferred evidence: a local Prettier 3.6.2 `--check package.json` pass emitted 66 bytes in two lines. The [Prettier CLI docs](https://prettier.io/docs/cli) show that same two-line success output and list files only when formatting differs. The [Black `--check` docs](https://black.readthedocs.io/en/latest/usage_and_configuration/the_basics.html) show a two-line success result; [Ruff formatter docs](https://docs.astral.sh/ruff/formatter/) define `--check` as a status check. Black and Ruff are not configured in this repository, so no local output baseline exists. These candidates remain deferred unless a real workload shows material savings.
+Pest’s [official installation docs](https://pestphp.com/docs/installation) show per-test output, but the available sample covers only two tests; the [CLI reference](https://pestphp.com/docs/cli-api-reference) already offers `--compact`. PHPStan’s [CLI docs](https://phpstan.org/user-guide/command-line-usage) say default mode uses a progress bar, while `--debug` prints every file and disables result caching and parallelism. The local environment has no Composer/Pest/PHPStan setup, and the installed PHP is below Pest’s current minimum. Maven and Gradle also have no local project/transcript; Gradle is unavailable. Do not implement these parsers until representative output demonstrates worthwhile savings.

@@ -1,0 +1,10 @@
+FAIL src/auth.test.ts
+
+  ● creates invoice
+
+    Error: expected 110 to equal 100
+
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       1 failed, 25 passed, 26 total
+Snapshots:   0 total
+Time:        1.234 s
