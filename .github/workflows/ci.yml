@@ -1,3 +1,18 @@
+# Three gates keep PR CI narrow without weakening main. Do not move the heavy
+# jobs back onto every pull request.
+#
+#   1. Every PR: `changes` classifies the diff; `test` (the required check) runs
+#      the Go build, vet, gofmt, changed-package tests and smoke tests.
+#   2. OS gate: `test-os` runs only when the classifier sets os_sensitive=1
+#      (paths, execwrap, setup/hook wiring, workflow file). On main it always runs.
+#   3. Race gate: `race` runs the race detector on the changed packages on a PR,
+#      and on every package except internal/core on push to main and tags.
+#   Cross-platform build: `build-cross-platform` runs only on push (main, tags).
+#
+# Event matrix: pull_request runs changes, test, race (changed packages) and
+# test-os when OS-sensitive; push to main or a tag runs all of them in full.
+# See scripts/ci-classify-changes.sh for the classifier rules.
+
 name: ci
 
 on:
@@ -28,6 +43,7 @@ jobs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
       go: ${{ steps.classify.outputs.go }}
       python: ${{ steps.classify.outputs.python }}
+      os_sensitive: ${{ steps.classify.outputs.os_sensitive }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -51,6 +67,7 @@ jobs:
           echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
           echo "go=$go" >> "$GITHUB_OUTPUT"
           echo "python=$python" >> "$GITHUB_OUTPUT"
+          echo "os_sensitive=$os_sensitive" >> "$GITHUB_OUTPUT"
 
   test:
     needs: changes
@@ -125,7 +142,7 @@ jobs:
   # scripts, which are POSIX-only).
   test-os:
     needs: changes
-    if: needs.changes.outputs.go == '1'
+    if: needs.changes.outputs.os_sensitive == '1'
     strategy:
       fail-fast: false
       matrix:
@@ -154,8 +171,10 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: go test -timeout 15m -run 'Setup|Steering|Wrapper|Config|Session|Display|Path|Project' ./cmd/downshift/
 
-  # Race detector on every package except internal/core, whose -race run takes
-  # 4-5 minutes (the scheduled ci-full covers it). Not the required `test` check.
+  # Race detector. Pull requests run it only on the changed packages (the same
+  # selection as `test`); pushes to main and tags run every package except
+  # internal/core, whose -race run takes 4-5 minutes (the scheduled ci-full
+  # covers it). Not the required `test` check.
   race:
     needs: changes
     if: needs.changes.outputs.go == '1'
@@ -165,13 +184,36 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # ci-test-packages.sh diffs against the PR base commit, which a
+          # shallow checkout does not contain.
+          fetch-depth: 0
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "1.27"
           cache: true
 
+      - name: Race detector on changed packages (pull request)
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          pkgs=$(bash scripts/ci-test-packages.sh)
+          if [ "$pkgs" = "./..." ]; then
+            pkgs=$(go list ./...)
+          fi
+          pkgs=$(printf '%s\n' "$pkgs" | grep -v '/internal/core$' || true)
+          if [ -z "$pkgs" ]; then
+            echo "No Go packages to race-test."
+            exit 0
+          fi
+          echo "Race-testing $(echo "$pkgs" | wc -l | tr -d ' ') package(s)"
+          go test -race -timeout 15m $pkgs
+
       - name: Test with the race detector (all but internal/core)
+        if: github.event_name != 'pull_request'
         run: go test -race -timeout 15m $(go list ./... | grep -v '/internal/core$')
 
   python:
@@ -202,9 +244,11 @@ jobs:
       - name: Test catalog price sync validation
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_sync_catalog_prices.py' -v
 
+  # Cross-compiles on push only (main and tags). The linux build on a PR is
+  # already covered by `test`, which builds ./cmd/downshift.
   build-cross-platform:
     needs: [changes, test]
-    if: needs.changes.outputs.go == '1'
+    if: github.event_name == 'push' && needs.changes.outputs.go == '1'
     runs-on: ubuntu-latest
     strategy:
       matrix:
