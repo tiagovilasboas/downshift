@@ -87,6 +87,32 @@ Reference vocabularies used for manual curation (do not bulk-copy rules):
 - [Stack Exchange tag synonyms](https://api.stackexchange.com/docs/synonyms-by-tags):
   terminology discovery; verify context and PT-BR translations independently
 
+### Bilingual dictionaries and bounded evidence
+
+The Go tables store rule identity, domain, weight, complexity, and an action
+family reference; synonyms and technical target regex fragments live in two
+embedded dictionaries:
+
+- `internal/classify/lexicon/en.json`
+- `internal/classify/lexicon/pt-BR.json`
+
+The JSON schema keeps the original `order` of every regex alternative,
+allowing compilation into the original Go/RE2 patterns without losing aliases.
+`domain_lexicon.go` validates both dictionaries once at startup; no JSON,
+network, or LLM work runs during per-prompt classification. Every new rule
+must have EN/PT-BR/mixed-language positive examples and negative controls.
+
+**Bounded domain evidence** (default on) limits correlated regex hits in the
+same specialty and complexity class to `peak weight + 1 corroboration point`.
+The original general signals and risk floors remain unchanged. This is an
+interpretable, deterministic heuristic, not a learned probability estimate.
+Set `DOWNSHIFT_DOMAIN_DEDUP=0` to compare the old additive scoring against
+the grouped candidate without disabling the bilingual dictionary.
+
+This change is not a substitute for independent real-task benchmarking.
+Review cost, task success, tier over-routing, bilingual parity and p95
+latency before tuning weights based on telemetry.
+
 Calibration is **reviewed evaluation**, not LLM fine-tuning: propose candidate
 regex/weights from labeled misroutes, test against EN/PT/mixed positives and
 negative controls, then promote only after independent holdout evidence.
