@@ -81,6 +81,7 @@ var expectedFormat = map[Family]compressor.Format{
 	FamilyCypress:    compressor.FormatCypress,
 	FamilyNextBuild:  compressor.FormatNextBuild,
 	FamilyPHPUnit:    compressor.FormatPHPUnit,
+	FamilyMaven:      compressor.FormatMaven,
 	FamilyGradle:     compressor.FormatGradle,
 }
 

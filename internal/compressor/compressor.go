@@ -151,6 +151,9 @@ func detectFormat(input []byte) (Format, bool) {
 	if isPHPUnit(input) {
 		return FormatPHPUnit, rePHPUnitFailure.Match(input)
 	}
+	if isMaven(input) {
+		return FormatMaven, reMavenFailure.Match(input)
+	}
 	if isGradle(input) {
 		return FormatGradle, reGradleFailure.Match(input)
 	}
@@ -295,6 +298,8 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressNextBuild(input)
 	case FormatPHPUnit:
 		return compressPHPUnit(input)
+	case FormatMaven:
+		return compressMaven(input)
 	case FormatGradle:
 		return compressGradle(input)
 	case FormatGitStatus:

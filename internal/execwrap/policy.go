@@ -31,6 +31,7 @@ const (
 	FamilyCypress    Family = "cypress"
 	FamilyNextBuild  Family = "next-build"
 	FamilyPHPUnit    Family = "phpunit"
+	FamilyMaven      Family = "maven"
 	FamilyGradle     Family = "gradle"
 )
 
@@ -157,6 +158,9 @@ func FamilyOf(argv []string) Family {
 	if argv[0] == "phpunit" || argv[0] == "vendor/bin/phpunit" || argv[0] == "./vendor/bin/phpunit" {
 		return FamilyPHPUnit
 	}
+	if isMavenCommand(argv) {
+		return FamilyMaven
+	}
 	if len(argv) >= 2 && isGradleProgram(argv[0]) && gradleTask(argv[1:]) {
 		return FamilyGradle
 	}
@@ -177,6 +181,39 @@ func FamilyOf(argv []string) Family {
 		return FamilyPlaywright
 	}
 	return FamilyNone
+}
+
+// mavenGoals are the lifecycle phases the maven family wraps. A phase must be
+// the first argument and every other positional must be one too, so option-first forms ("mvn -q test") and plugin goals
+// ("mvn spring-boot:run") are never wrapped.
+var mavenGoals = map[string]bool{
+	"test": true, "verify": true, "package": true, "install": true, "clean": true,
+}
+
+// mavenFlags are the only options a wrapped Maven command may carry. Each takes
+// no value, so no file, settings or profile path can ride along.
+var mavenFlags = map[string]bool{
+	"-o": true, "-q": true, "-B": true, "-DskipTests": true, "-DskipITs": true,
+}
+
+func isMavenCommand(argv []string) bool {
+	switch argv[0] {
+	case "mvn", "mvnw", "./mvnw":
+		if len(argv) < 2 || !mavenGoals[argv[1]] {
+			return false
+		}
+		for _, a := range argv[2:] {
+			if strings.HasPrefix(a, "-") {
+				if !mavenFlags[a] {
+					return false
+				}
+			} else if !mavenGoals[a] {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }
 
 func isGradleProgram(p string) bool {
