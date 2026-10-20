@@ -18,6 +18,8 @@ package claudecode
 
 import (
 	"encoding/json"
+	"path/filepath"
+	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/childend"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
@@ -29,7 +31,50 @@ import (
 // SessionIdentifier returns the raw session id supplied by the harness, if
 // any. runHookAdapter hashes it via telemetry.HashSessionID before durable
 // logging, so future PostToolUse records can link by session.
-func (ev Event) SessionIdentifier() string { return ev.SessionID }
+//
+// Some live Bash PreToolUse payloads carry no session_id. Claude Code names
+// each transcript file after the session uuid (<uuid>.jsonl), so when
+// session_id is absent the id is derived from transcript_path, and only when
+// that file name has a uuid shape. session_id always wins when present.
+func (ev Event) SessionIdentifier() string {
+	if ev.SessionID != "" {
+		return ev.SessionID
+	}
+	return sessionFromTranscript(ev.TranscriptPath)
+}
+
+// sessionFromTranscript returns the uuid file name of a transcript path, or ""
+// when the path is empty or the base name is not a uuid.
+func sessionFromTranscript(path string) string {
+	if path == "" {
+		return ""
+	}
+	base := filepath.Base(path)
+	id := strings.TrimSuffix(base, filepath.Ext(base))
+	if !isUUID(id) {
+		return ""
+	}
+	return id
+}
+
+// isUUID reports whether s is a canonical 8-4-4-4-12 hexadecimal uuid.
+func isUUID(s string) bool {
+	if len(s) != 36 {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; {
+		case i == 8 || i == 13 || i == 18 || i == 23:
+			if c != '-' {
+				return false
+			}
+		case c >= '0' && c <= '9', c >= 'a' && c <= 'f', c >= 'A' && c <= 'F':
+		default:
+			return false
+		}
+	}
+	return true
+}
 
 // stringFieldAny reads a string value from a decoded payload map.
 func stringFieldAny(m map[string]any, keys ...string) string {
