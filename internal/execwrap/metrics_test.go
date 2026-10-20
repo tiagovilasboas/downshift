@@ -27,11 +27,20 @@ func TestMetrics_AppendSummarize(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if s.Commands != 3 || s.Compacted != 1 || s.SavedBytes != 3960 || s.EstimatedTokensSaved != 990 {
+	if s.Commands != 3 || s.Compacted != 1 || s.Failures != 2 || s.SavedBytes != 3960 || s.EstimatedTokensSaved != 990 {
 		t.Fatalf("summary = %+v", s)
 	}
 	if s.ByFamily[FamilyGoTest] != 1 || s.ByFamily["other"] != 1 {
 		t.Fatalf("by family = %v", s.ByFamily)
+	}
+	if s.SavedBytesByFamily[FamilyGoTest] != 3960 {
+		t.Fatalf("saved bytes by family = %v", s.SavedBytesByFamily)
+	}
+	if s.CompactedByFamily[FamilyGoTest] != 1 {
+		t.Fatalf("compacted by family = %v", s.CompactedByFamily)
+	}
+	if s.FailuresByFamily[FamilyGitStatus] != 1 || s.FailuresByFamily["other"] != 1 {
+		t.Fatalf("failures by family = %v", s.FailuresByFamily)
 	}
 	if !strings.HasPrefix(s.TokenEstimate, "estimated") {
 		t.Fatalf("token figure must be labelled estimated: %q", s.TokenEstimate)

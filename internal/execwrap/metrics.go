@@ -76,12 +76,16 @@ func Append(path string, ev Event) error {
 type Summary struct {
 	Commands             int64            `json:"commands"`
 	Compacted            int64            `json:"compacted"`
+	Failures             int64            `json:"failures,omitempty"`
 	RawBytes             int64            `json:"raw_bytes"`
 	EmittedBytes         int64            `json:"emitted_bytes"`
 	SavedBytes           int64            `json:"saved_bytes"`
 	EstimatedTokensSaved int64            `json:"estimated_tokens_saved"`
 	TokenEstimate        string           `json:"token_estimate"`
 	ByFamily             map[Family]int64 `json:"commands_by_family,omitempty"`
+	SavedBytesByFamily   map[Family]int64 `json:"saved_bytes_by_family,omitempty"`
+	CompactedByFamily    map[Family]int64 `json:"compacted_by_family,omitempty"`
+	FailuresByFamily     map[Family]int64 `json:"failures_by_family,omitempty"`
 }
 
 // Summarize reads the exec log at path. A missing file is an empty summary.
@@ -105,11 +109,27 @@ func Summarize(path string) (Summary, error) {
 		s.Commands++
 		if ev.Compacted {
 			s.Compacted++
+			if s.CompactedByFamily == nil {
+				s.CompactedByFamily = map[Family]int64{}
+			}
+			s.CompactedByFamily[ev.Family]++
+		}
+		if ev.ExitClass != "" && ev.ExitClass != ExitClassZero {
+			s.Failures++
+			if s.FailuresByFamily == nil {
+				s.FailuresByFamily = map[Family]int64{}
+			}
+			s.FailuresByFamily[ev.Family]++
 		}
 		s.RawBytes += ev.RawBytes
 		s.EmittedBytes += ev.EmittedBytes
 		if ev.RawBytes > ev.EmittedBytes {
-			s.SavedBytes += ev.RawBytes - ev.EmittedBytes
+			saved := ev.RawBytes - ev.EmittedBytes
+			s.SavedBytes += saved
+			if s.SavedBytesByFamily == nil {
+				s.SavedBytesByFamily = map[Family]int64{}
+			}
+			s.SavedBytesByFamily[ev.Family] += saved
 		}
 		if s.ByFamily == nil {
 			s.ByFamily = map[Family]int64{}
