@@ -104,10 +104,67 @@ must have EN/PT-BR/mixed-language positive examples and negative controls.
 
 **Bounded domain evidence** (default on) limits correlated regex hits in the
 same specialty and complexity class to `peak weight + 1 corroboration point`.
-The original general signals and risk floors remain unchanged. This is an
-interpretable, deterministic heuristic, not a learned probability estimate.
-Set `DOWNSHIFT_DOMAIN_DEDUP=0` to compare the old additive scoring against
-the grouped candidate without disabling the bilingual dictionary.
+**Independent cross-domain interaction evidence** (also default on) adds
+at most one extra point per Medium/Complex tier when at least two different
+engineering specialties agree on that tier. This is a deterministic,
+bounded pairwise corroboration heuristic, **not** a Factorization Machine,
+learned likelihood, or calibrated success probability.
+
+The original general signals and risk floors remain unchanged. Use these
+independent switches only for counterfactual experiments:
+
+- `DOWNSHIFT_DOMAIN_DEDUP=0`: restore raw additive domain weights
+- `DOWNSHIFT_DOMAIN_INTERACTIONS=0`: disable cross-domain corroboration
+- `DOWNSHIFT_DOMAIN_SIGNALS=0`: disable domain enrichment altogether
+
+Run `go test ./internal/classify -run 'TestNativeInteractions|TestDomainSignals|TestExtendedDomainSignals'`
+for bilingual and safety invariants; `go test ./internal/core` maintains the
+existing corpus and golden stability check. `go test ./internal/classify -bench BenchmarkNativeInteractions -run '^
+
+This change is not a substitute for independent real-task benchmarking.
+Review cost, task success, tier over-routing, bilingual parity and p95
+latency before tuning weights based on telemetry.
+
+Calibration is **reviewed evaluation**, not LLM fine-tuning: propose candidate
+regex/weights from labeled misroutes, test against EN/PT/mixed positives and
+negative controls, then promote only after independent holdout evidence.
+Prefer a small number of reviewed domain changes per iteration, measure
+classifier latency and over-routing in the corpus, and avoid adding
+generic framework-name-only or documentation-keyword signals. The current
+96-rule expansion is a deliberate coverage checkpoint, **not a target to
+maximize regex count**. Avoid changing multiple unrelated weights in one PR. Neither externally
+sourced text nor model output becomes a rule automatically.
+
+---
+
+## Tuning workflow
+
+1. Reproduce with `downshift try "<prompt>" [harness]`.
+2. Open a `misroute:` issue (see [CONTRIBUTING.md](../../CONTRIBUTING.md)).
+3. Add a case to `internal/core/classifier_edge_test.go` (or related edge tests).
+4. Adjust `RawSignals` in `internal/classify/signals.go`; never tune against maintainer eval-only splits (downshift-labs).
+
+---
+
+## Shadow / v2 (observation only)
+
+`DOWNSHIFT_SHADOW_WEIGHTS` records a v2 candidate next to the production decision.
+It does **not** change hook JSON. Labels for supervised training require explicit
+`--required-tier` on feedback. See [classifier-shadow.md](../design/classifier-shadow.md).
+
+---
+
+## Tests and benchmarks
+
+| Asset | Role |
+|-------|------|
+| `internal/core/classifier_edge_test.go` | Regression from misroute reports |
+| `benchmark/seed.json` | Train/tune signals (not in same PR as signal edits + fresh) |
+| Eval-only splits (labs) | Never use to edit signals in the same change set |
+ -benchmem`
+measures local inference cost. None of these synthetic checks alone
+proves a real-task improvement in first-pass completion or dollars per
+completed task.
 
 This change is not a substitute for independent real-task benchmarking.
 Review cost, task success, tier over-routing, bilingual parity and p95
