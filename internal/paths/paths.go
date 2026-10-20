@@ -70,9 +70,9 @@ func AgentsPath() (string, error) { return Join("agents.jsonl") }
 // CatalogPath is the user catalog override file.
 func CatalogPath() (string, error) { return Join("catalog.json") }
 
-// OpenRouterAllowlistPath is the user allowlist of OpenRouter models that may
+// GatewayAllowlistPath is the user allowlist of gateway models that may
 // be routing targets.
-func OpenRouterAllowlistPath() (string, error) { return Join("openrouter.json") }
+func GatewayAllowlistPath() (string, error) { return Join("openrouter.json") }
 
 // SessionModelsPath is session-models.json unless DOWNSHIFT_SESSION_MODELS is set.
 func SessionModelsPath() (string, error) {

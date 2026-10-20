@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+// AllowlistProvider is the gateway the user allowlist file belongs to. Its rows
+// carry this provider, so the registry must hold a gateway of this name.
+const AllowlistProvider = "openrouter"
+
 // openRouterAllowlistHarness is the only harness the allowlist may target.
 const openRouterAllowlistHarness = "opencode"
 
@@ -67,7 +71,7 @@ func parseOpenRouterAllowlist(data []byte) ([]Entry, error) {
 
 		rows = append(rows, Entry{
 			ID:       m.ID,
-			Provider: ProviderOpenRouter,
+			Provider: AllowlistProvider,
 			Harness:  openRouterAllowlistHarness,
 			Tier:     strings.ToLower(m.Tier),
 			Routing:  RoutingShadow,

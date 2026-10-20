@@ -26,7 +26,7 @@ type Resolver interface {
 	//    with a known family prefix (e.g. "claude-opus") will match even if the
 	//    exact version (e.g. "claude-opus-4-9") is not yet in the catalog.
 	//
-	// Implementations must also normalise "provider/model-id" format (OpenRouter)
+	// Implementations must also normalise "provider/model-id" format (gateway)
 	// by stripping the provider prefix before matching, so routing works
 	// transparently for users who route subagents through a meta-provider.
 	//

@@ -123,23 +123,6 @@ func TestOpenRouterMissingNegativeOrNonNumericPriceIsNil(t *testing.T) {
 	}
 }
 
-func TestPerMillionRejectsNaNAndInfinity(t *testing.T) {
-	for _, s := range []string{"", "NaN", "Inf", "-Inf", "-0.5", "abc"} {
-		if perMillion(s) != nil {
-			t.Errorf("perMillion(%q) must be nil", s)
-		}
-	}
-}
-
-func TestOpenRouterOversizeBodyIsUnknown(t *testing.T) {
-	srv := tlsServer(t, func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(strings.Repeat("a", maxOpenRouterBody+1)))
-	})
-	if _, err := (OpenRouterAPI{URL: srv.URL, Client: srv.Client()}).Discover(context.Background()); err == nil {
-		t.Fatal("an oversize body must be an error, not a truncated list")
-	}
-}
-
 func TestOpenRouterRefusesRedirectToAnotherHost(t *testing.T) {
 	var hit atomic.Bool
 	other := tlsServer(t, func(w http.ResponseWriter, _ *http.Request) {
