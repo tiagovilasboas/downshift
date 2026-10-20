@@ -76,6 +76,20 @@ func TestCompressFlutterTestPreservesAnythingAmbiguous(t *testing.T) {
 	}
 }
 
+func TestCompressFlutterTestDangerWordsArePreserved(t *testing.T) {
+	for _, w := range []string{"Error: boom", "an Exception", "FAILED to connect", "WARNING secret=x", "panic now", "Fatal", "secret", "api token", "Password"} {
+		in := []byte("00:00 +0: loading t.dart\n00:01 +1: " + w + "\n00:01 +2: All tests passed!\n")
+		out, applied, reason := compressFlutterTest(in)
+		if applied || !bytes.Equal(out, in) || reason != "flutter_test_danger_word_preserved" {
+			t.Errorf("%q: applied=%v reason=%q", w, applied, reason)
+		}
+	}
+	in := []byte("00:00 +0: loading t.dart\n00:01 +1: group parses input\n00:01 +2: group renders widget\n00:01 +2: All tests passed!\n")
+	if _, applied, reason := compressFlutterTest(in); !applied {
+		t.Errorf("ordinary names must compact: %q", reason)
+	}
+}
+
 func TestFlutterTestDetectionIsNarrow(t *testing.T) {
 	for _, s := range []string{
 		"",

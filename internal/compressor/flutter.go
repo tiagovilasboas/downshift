@@ -20,6 +20,10 @@ var reFlutterProgress = regexp.MustCompile(`^(\d{2,}:\d{2}) \+(\d+)(?: -(\d+))?(
 // reports it as an error so the raw output is kept.
 var reFlutterTestFailure = regexp.MustCompile(`\[E\]|Some tests failed|\+\d+ -\d+|Expected:|Actual:|EXCEPTION CAUGHT`)
 
+// reFlutterDanger marks segment text that must never be dropped: a print can
+// imitate the status format, so such a segment makes the run ambiguous.
+var reFlutterDanger = regexp.MustCompile(`(?i)error|exception|fail|warning|panic|fatal|secret|token|password`)
+
 const flutterAllPassed = "All tests passed!"
 
 // flutterSegments splits input into reporter segments. The compact reporter
@@ -79,6 +83,9 @@ func compressFlutterTest(input []byte) ([]byte, bool, string) {
 			// glued to the status line (test print output).
 			if m == nil || strings.Contains(seg, "  ") || strings.ContainsRune(seg, '\t') {
 				return input, false, "flutter_test_unrecognized_output_preserved"
+			}
+			if reFlutterDanger.MatchString(m[5]) {
+				return input, false, "flutter_test_danger_word_preserved"
 			}
 			if m[3] != "" && m[3] != "0" {
 				return input, false, "flutter_test_failure_counter_preserved"
