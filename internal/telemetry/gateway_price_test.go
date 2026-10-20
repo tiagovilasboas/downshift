@@ -57,11 +57,38 @@ func TestGatewayRun_WithoutSnapshotIsUnknownAndNotSaved(t *testing.T) {
 	if s.SavedChildren != 0 || s.WorkSaved != 0 {
 		t.Fatalf("an unpriced gateway run was credited as saved: %+v", s)
 	}
-	if s.GatewayUnpriced != 1 {
-		t.Fatalf("unpriced gateway runs %d, want 1", s.GatewayUnpriced)
+	if s.GatewayUnattributed != 1 {
+		t.Fatalf("unattributed gateway runs %d, want 1", s.GatewayUnattributed)
 	}
-	if line := s.Line(); !strings.Contains(line, "1 gateway run without a snapshot price (not counted as saved)") {
-		t.Fatalf("savings line does not count the unpriced run: %q", line)
+	if line := s.Line(); !strings.Contains(line, "1 gateway run unattributed: no tier for this gateway id") {
+		t.Fatalf("savings line does not count the unattributed run: %q", line)
+	}
+}
+
+func TestGatewayRun_AllowlistedIdIsNotCalledUnpriced(t *testing.T) {
+	withAllowlist(t)
+	withGatewayPrices(t, nil)
+	requested := catalog.Load().ModelFor(rankHarness, core.TierMid).ID
+	decision, usage := gatewayEvents(requested, allowlistSmallID)
+	s := TokenSavings([]Event{decision, usage}).Total
+	if s.SavedChildren != 1 || s.GatewayUnattributed != 0 {
+		t.Fatalf("saved %d, unattributed %d; want 1 and 0", s.SavedChildren, s.GatewayUnattributed)
+	}
+	if line := s.Line(); strings.Contains(line, "snapshot") || strings.Contains(line, "unattributed") {
+		t.Fatalf("allowlisted gateway run described by price or as unattributed: %q", line)
+	}
+}
+
+func TestGatewayRun_UnknownIdIsNoTier(t *testing.T) {
+	withAllowlist(t)
+	requested := catalog.Load().ModelFor(rankHarness, core.TierMid).ID
+	decision, usage := gatewayEvents(requested, "vendor/unlisted-model")
+	s := TokenSavings([]Event{decision, usage}).Total
+	if s.SavedChildren != 0 || s.GatewayUnattributed != 1 {
+		t.Fatalf("saved %d, unattributed %d; want 0 and 1", s.SavedChildren, s.GatewayUnattributed)
+	}
+	if line := s.Line(); !strings.Contains(line, "1 gateway run unattributed: no tier for this gateway id") {
+		t.Fatalf("unknown gateway id not reported as no tier: %q", line)
 	}
 }
 
@@ -70,8 +97,8 @@ func TestGatewayRun_SnapshotGoneAtReadIsUnknown(t *testing.T) {
 	withGatewayPrices(t, func(string) (float64, float64, bool) { return 0, 0, false })
 	decision, usage, _ := gatewayFixture(t, gatewaySlug, GatewayPriceSnapshot)
 	s := TokenSavings([]Event{decision, usage}).Total
-	if s.SavedChildren != 0 || s.GatewayUnpriced != 1 {
-		t.Fatalf("saved %d, unpriced %d; want 0 and 1", s.SavedChildren, s.GatewayUnpriced)
+	if s.SavedChildren != 0 || s.GatewayUnattributed != 1 {
+		t.Fatalf("saved %d, unattributed %d; want 0 and 1", s.SavedChildren, s.GatewayUnattributed)
 	}
 }
 
@@ -131,8 +158,8 @@ func TestNativeRun_UnchangedByGatewayRule(t *testing.T) {
 			if s.SavedChildren != tc.wantSaved {
 				t.Fatalf("saved children %d, want %d", s.SavedChildren, tc.wantSaved)
 			}
-			if s.GatewayUnpriced != tc.wantUnpric {
-				t.Fatalf("gateway unpriced %d, want %d", s.GatewayUnpriced, tc.wantUnpric)
+			if s.GatewayUnattributed != tc.wantUnpric {
+				t.Fatalf("gateway unattributed %d, want %d", s.GatewayUnattributed, tc.wantUnpric)
 			}
 		})
 	}

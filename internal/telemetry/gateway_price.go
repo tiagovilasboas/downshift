@@ -42,8 +42,9 @@ func GatewayPriceStatus(model string) string {
 	return GatewayPriceUnknown
 }
 
-// isUnpricedGateway reports a gateway run that a saving could not be credited
-// for because its price is unknown, on an applied rewrite with a linked decision.
-func isUnpricedGateway(dir, ran string, found bool) bool {
-	return found && dir == TokenUnattributed && IsGatewayModel(ran)
+// isUnattributedGateway reports a gateway run whose id has no allowlisted row,
+// so it has no tier and no saving can be credited. A run whose id has a row is
+// ranked by that tier like a native run, whatever the requested model is.
+func isUnattributedGateway(dir, ran string, found bool) bool {
+	return found && dir == TokenUnattributed && IsGatewayModel(ran) && !gatewayRowKnown(ran)
 }
