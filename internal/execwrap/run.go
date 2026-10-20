@@ -70,19 +70,21 @@ type Result struct {
 // Any other detected format (a repetitive-log match, a search match) keeps the
 // raw output.
 var expectedFormat = map[Family]compressor.Format{
-	FamilyGoTest:     compressor.FormatGoTest,
-	FamilyGitStatus:  compressor.FormatGitStatus,
-	FamilyPytest:     compressor.FormatPytest,
-	FamilyVitest:     compressor.FormatVitest,
-	FamilyPlaywright: compressor.FormatPlaywright,
-	FamilyCargoTest:  compressor.FormatCargoTest,
-	FamilyTSC:        compressor.FormatTSC,
-	FamilyJest:       compressor.FormatJest,
-	FamilyCypress:    compressor.FormatCypress,
-	FamilyNextBuild:  compressor.FormatNextBuild,
-	FamilyPHPUnit:    compressor.FormatPHPUnit,
-	FamilyMaven:      compressor.FormatMaven,
-	FamilyGradle:     compressor.FormatGradle,
+	FamilyGoTest:      compressor.FormatGoTest,
+	FamilyGitStatus:   compressor.FormatGitStatus,
+	FamilyPytest:      compressor.FormatPytest,
+	FamilyVitest:      compressor.FormatVitest,
+	FamilyPlaywright:  compressor.FormatPlaywright,
+	FamilyCargoTest:   compressor.FormatCargoTest,
+	FamilyTSC:         compressor.FormatTSC,
+	FamilyJest:        compressor.FormatJest,
+	FamilyCypress:     compressor.FormatCypress,
+	FamilyNextBuild:   compressor.FormatNextBuild,
+	FamilyPHPUnit:     compressor.FormatPHPUnit,
+	FamilyFlutterTest: compressor.FormatFlutterTest,
+	FamilyDartTest:    compressor.FormatFlutterTest,
+	FamilyGradle:      compressor.FormatGradle,
+	FamilyMaven:       compressor.FormatMaven,
 }
 
 // Run executes argv directly (no shell) with the caller's stdin, and exits

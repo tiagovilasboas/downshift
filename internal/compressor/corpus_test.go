@@ -97,6 +97,12 @@ var rawFixtures = []string{
 	"next_build_truncated.txt",
 	"next_build_unknown_output.txt",
 	"phpunit_fail_actionable.txt",
+	// flutter test and dart test: failures, test print output, pub get chatter
+	// and ANSI colour stay raw.
+	"flutter_fail.txt",
+	"flutter_print_output.txt",
+	"flutter_pub_get_noise.txt",
+	"dart_pass_ansi.txt",
 	"maven_fail_test.txt",
 	"maven_warning.txt",
 	"maven_downloads.txt",
@@ -136,6 +142,10 @@ var cleanFixtures = []cleanFixture{
 	{"gradle_pass_uptodate.txt", []string{"BUILD SUCCESSFUL in 1s", "14 actionable tasks: 14 up-to-date", "Starting a Gradle Daemon"}},
 	{"gradle_pass_test.txt", []string{"BUILD SUCCESSFUL in 8s", "6 actionable tasks: 2 executed, 4 up-to-date"}},
 	{"phpunit_pass_default.txt", []string{"58 tests", "143 assertions", "00:00.019", "12.00 MB"}},
+	{"flutter_pass_compact.txt", []string{"PASS", "3 passed", "1 skipped", "00:02"}},
+	{"flutter_pass_expanded.txt", []string{"PASS", "3 passed", "1 skipped"}},
+	{"dart_pass_compact.txt", []string{"PASS", "3 passed", "1 skipped"}},
+	{"dart_pass_expanded.txt", []string{"PASS", "3 passed", "1 skipped"}},
 	{"maven_pass_test.txt", []string{"inventory 1.4.0", "surefire:test", "Tests run: 13, Failures: 0, Errors: 0, Skipped: 0", "BUILD SUCCESS", "Total time:  2.915 s"}},
 	{"maven_pass_package.txt", []string{"jar:jar", "Tests run: 13, Failures: 0, Errors: 0, Skipped: 0", "BUILD SUCCESS", "Total time:  4.302 s"}},
 }

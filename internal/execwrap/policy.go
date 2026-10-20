@@ -19,20 +19,22 @@ import (
 type Family string
 
 const (
-	FamilyNone       Family = ""
-	FamilyGoTest     Family = "go-test"
-	FamilyGitStatus  Family = "git-status"
-	FamilyPytest     Family = "pytest"
-	FamilyVitest     Family = "vitest"
-	FamilyPlaywright Family = "playwright"
-	FamilyCargoTest  Family = "cargo-test"
-	FamilyTSC        Family = "tsc"
-	FamilyJest       Family = "jest"
-	FamilyCypress    Family = "cypress"
-	FamilyNextBuild  Family = "next-build"
-	FamilyPHPUnit    Family = "phpunit"
-	FamilyMaven      Family = "maven"
-	FamilyGradle     Family = "gradle"
+	FamilyNone        Family = ""
+	FamilyGoTest      Family = "go-test"
+	FamilyGitStatus   Family = "git-status"
+	FamilyPytest      Family = "pytest"
+	FamilyVitest      Family = "vitest"
+	FamilyPlaywright  Family = "playwright"
+	FamilyCargoTest   Family = "cargo-test"
+	FamilyTSC         Family = "tsc"
+	FamilyJest        Family = "jest"
+	FamilyCypress     Family = "cypress"
+	FamilyNextBuild   Family = "next-build"
+	FamilyPHPUnit     Family = "phpunit"
+	FamilyFlutterTest Family = "flutter-test"
+	FamilyDartTest    Family = "dart-test"
+	FamilyGradle      Family = "gradle"
+	FamilyMaven       Family = "maven"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -175,6 +177,10 @@ func FamilyOf(argv []string) Family {
 		return FamilyGoTest
 	case argv[0] == "git" && argv[1] == "status":
 		return FamilyGitStatus
+	case argv[0] == "flutter" && argv[1] == "test":
+		return FamilyFlutterTest
+	case argv[0] == "dart" && argv[1] == "test":
+		return FamilyDartTest
 	case argv[0] == "cargo" && argv[1] == "test":
 		return FamilyCargoTest
 	case argv[0] == "playwright" && argv[1] == "test":
