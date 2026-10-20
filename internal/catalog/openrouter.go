@@ -31,6 +31,9 @@ type openRouterAllowlistRow struct {
 	Tier      string `json:"tier"`
 	MaxEffort string `json:"max_effort"`
 	ZDR       bool   `json:"zdr"`
+	// Route is "shadow" (the default when absent) or "live". Only the owner's
+	// file sets live; a live row is the rewrite target for its tier.
+	Route string `json:"route"`
 }
 
 // parseOpenRouterAllowlist validates the whole file and returns one shadow
@@ -69,17 +72,35 @@ func parseOpenRouterAllowlist(data []byte) ([]Entry, error) {
 			return nil, fmt.Errorf("model %q: unknown max_effort %q (want low, medium or high)", m.ID, m.MaxEffort)
 		}
 
+		routing, ok := allowlistRouting(m.Route)
+		if !ok {
+			return nil, fmt.Errorf("model %q: unknown route %q (want shadow or live)", m.ID, m.Route)
+		}
+
 		rows = append(rows, Entry{
 			ID:       m.ID,
 			Provider: AllowlistProvider,
 			Harness:  openRouterAllowlistHarness,
 			Tier:     strings.ToLower(m.Tier),
-			Routing:  RoutingShadow,
+			Routing:  routing,
 			Efforts:  efforts,
 			ZDR:      m.ZDR,
 		})
 	}
 	return rows, nil
+}
+
+// allowlistRouting maps the route field to a routing value. An absent route is
+// shadow, so a row stays observation-only unless the file says live.
+func allowlistRouting(route string) (string, bool) {
+	switch route {
+	case "", RoutingShadow:
+		return RoutingShadow, true
+	case RoutingLive:
+		return RoutingLive, true
+	default:
+		return "", false
+	}
 }
 
 // isFullSlug reports a "vendor/model" id with both parts non-empty.

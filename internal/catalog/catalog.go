@@ -62,6 +62,11 @@ func gatewaySlug(id string) (string, bool) {
 // candidate the shadow would_route field may name (see ShadowGateways).
 const RoutingShadow = "shadow"
 
+// RoutingLive marks an allowlisted gateway row the user made live. It is an
+// explicit target for the rewrite of its own harness and tier (see
+// LiveGateways); it is still never indexed as a native automatic target.
+const RoutingLive = "live"
+
 // Entry is one row in the catalog JSON.
 type Entry struct {
 	ID          string            `json:"id"`
@@ -764,23 +769,34 @@ func (c *Catalog) IsExplicitOnly(harness, modelID string) bool {
 // automaticRoutable reports whether a row may be indexed as an automatic
 // target. Explicit-only and shadow rows are never indexed.
 func automaticRoutable(e Entry) bool {
-	return e.Routing != "explicit_only" && e.Routing != RoutingShadow
+	return e.Routing != "explicit_only" && e.Routing != RoutingShadow && e.Routing != RoutingLive
 }
 
 // ShadowGateways lists the allowlisted gateway rows (Routing "shadow") as
 // models. Harness-agnostic: the allowlist is a user fact, not a harness fact.
 // Rows carry only the tier and id; no price is invented for them.
 func (c *Catalog) ShadowGateways() []core.Model {
+	return c.gatewayRows(RoutingShadow)
+}
+
+// LiveGateways lists the allowlisted gateway rows the user made live (Routing
+// "live"). core targets them only for the harness and tier they name.
+func (c *Catalog) LiveGateways() []core.Model {
+	return c.gatewayRows(RoutingLive)
+}
+
+// gatewayRows lists the gateway rows with the given routing as models.
+func (c *Catalog) gatewayRows(routing string) []core.Model {
 	var out []core.Model
 	for _, e := range c.entries {
-		if !isGatewayProvider(e.Provider) || e.Routing != RoutingShadow || e.ID == "" {
+		if !isGatewayProvider(e.Provider) || e.Routing != routing || e.ID == "" {
 			continue
 		}
 		tier, ok := parseTier(e.Tier)
 		if !ok {
 			continue
 		}
-		out = append(out, core.Model{ID: e.ID, Tier: tier, InputM: e.InputCostM, OutputM: e.OutputCostM, Harness: e.Harness})
+		out = append(out, core.Model{ID: e.ID, Tier: tier, InputM: e.InputCostM, OutputM: e.OutputCostM, Harness: e.Harness, Gateway: e.Provider})
 	}
 	return out
 }
