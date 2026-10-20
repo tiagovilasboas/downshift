@@ -41,7 +41,7 @@ Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 
 ## 5. Compact
 
-- [ ] FinOps: compact saved 0 tokens across 609 commands on this machine. Add per-family bytes saved and a failure count, so zero can be read.
+- [x] FinOps: compact saved 0 tokens across 609 commands on this machine. Add per-family bytes saved and a failure count, so zero can be read. (Done: `saved_bytes_by_family`, `compacted_by_family`, `failures`, and `failures_by_family` added to execwrap summary and context metrics).
 - [ ] Keep `"exec": false` documented as the only file switch. No CLI off switch, per the owner decision of 2026-10-20.
 
 ## 6. DCI
