@@ -231,8 +231,8 @@ func detectFormat(input []byte) (Format, bool) {
 
 	// 7. Cargo test
 	if isCargoTest(input) {
-		if reCargoTestError.Match(input) {
-			return FormatCargoTest, true // Error detected! Fail open!
+		if reCargoTestError.Match(input) || !cargoTestLinesRecognised(input) {
+			return FormatCargoTest, true // Error or unrecognised line! Fail open!
 		}
 		if reCargoTestSummary.Match(input) {
 			return FormatCargoTest, false
@@ -626,10 +626,50 @@ func isCargoTest(input []byte) bool {
 		reCargoTestError.Match(input)
 }
 
+// cargoTestLinePatterns are the only line shapes a clean cargo test run emits.
+// Recognition is the rule: a line that matches none of them (a compiler
+// diagnostic, a panic, a failure marker, an injected warning) keeps the whole
+// transcript raw, whatever its words are.
+var cargoTestLinePatterns = []*regexp.Regexp{
+	regexp.MustCompile(`^\s*Compiling \S+ v\S+ \(.*\)$`),
+	regexp.MustCompile(`^\s*Finished .+ profile \[[^\]]+\] target\(s\) in \S+$`),
+	regexp.MustCompile(`^\s*Running (?:unittests )?\S+ \(.*\)$`),
+	regexp.MustCompile(`^\s*Doc-tests \S+$`),
+	regexp.MustCompile(`^running \d+ tests?$`),
+	regexp.MustCompile(`^test \S.* \.\.\. ok$`),
+	regexp.MustCompile(`^test result: ok\. \d+ passed; 0 failed; \d+ ignored; \d+ measured; \d+ filtered out; finished in \S+$`),
+}
+
+// cargoTestLinesRecognised reports whether every non-empty line of input is a
+// plain cargo test success line. Empty lines are structural and always allowed.
+func cargoTestLinesRecognised(input []byte) bool {
+	for _, line := range bytes.Split(input, []byte("\n")) {
+		if len(line) == 0 {
+			continue
+		}
+		if !matchesAnyCargoTestLine(line) {
+			return false
+		}
+	}
+	return true
+}
+
+func matchesAnyCargoTestLine(line []byte) bool {
+	for _, re := range cargoTestLinePatterns {
+		if re.Match(line) {
+			return true
+		}
+	}
+	return false
+}
+
 // compressCargoTest compacts clean cargo test output to a one-line summary:
 // Cargo test: PASS (N passed in <time>)
 // If not strictly shorter than raw input, the input is returned.
 func compressCargoTest(input []byte) ([]byte, bool, string) {
+	if !cargoTestLinesRecognised(input) {
+		return input, false, "cargo_test_unrecognised_line_preserved"
+	}
 	matches := reCargoTestSummary.FindAllSubmatch(input, -1)
 	if len(matches) == 0 {
 		return input, false, "cargo_test_missing_summary"
