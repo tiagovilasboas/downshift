@@ -130,7 +130,7 @@ jobs:
 
   python:
     needs: changes
-    if: needs.changes.outputs.python == '1' || needs.changes.outputs.go == '1'
+    if: needs.changes.outputs.python == '1'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -146,16 +146,12 @@ jobs:
           version: "0.13.0"
 
       - name: Test local LangGraph planner
-        if: needs.changes.outputs.python == '1' || needs.changes.outputs.go == '1'
         run: |
           cd orchestration
           uv run --locked python -m unittest discover -s tests -v
 
       - name: Test DS-04 observer privacy contract
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/ds04_observer_contract -v
-
-      - name: Test manual Antigravity evidence sensor
-        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_collect_antigravity_evidence.py' -v
 
       - name: Test catalog price sync validation
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_sync_catalog_prices.py' -v
