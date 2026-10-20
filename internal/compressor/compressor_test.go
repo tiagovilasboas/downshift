@@ -283,6 +283,50 @@ func TestCompress_Pytest_ErrorsPreserveRaw(t *testing.T) {
 	}
 }
 
+// TestCompress_Pytest_UnrecognisedLinePreservesRaw injects lines that a clean
+// run never emits (danger words and a plain unknown line) at the head, middle
+// and tail of a passing transcript. Each must come back byte-identical: a
+// failure or warning must never be hidden behind the one-line summary.
+func TestCompress_Pytest_UnrecognisedLinePreservesRaw(t *testing.T) {
+	clean := []string{
+		"============================= test session starts ==============================",
+		"platform darwin -- Python 3.12.3, pytest-8.1.1, pluggy-1.4.0",
+		"rootdir: /Users/tiago.boas/project",
+		"collected 10 items",
+		"",
+		"tests/test_a.py ..........                                             [100%]",
+		"",
+		"============================== 10 passed in 0.42s ==============================",
+	}
+	injected := []string{
+		"unexpected error in output",
+		"unexpected FAIL in output",
+		"unexpected warning in output",
+		"unexpected panic in output",
+		"zz-unrecognised-line 42",
+	}
+	for _, line := range injected {
+		for _, pos := range []int{0, len(clean) / 2, len(clean)} {
+			lines := append(append(append([]string{}, clean[:pos]...), line), clean[pos:]...)
+			in := []byte(strings.Join(lines, "\n") + "\n")
+			t.Run(fmt.Sprintf("%s@%d", line, pos), func(t *testing.T) {
+				res := compressor.Compress(in, compressor.ModeSafe)
+				if res.Applied {
+					t.Fatalf("compacted pytest with an unrecognised line: %q", res.Reason)
+				}
+				if !bytes.Equal(res.Output, in) {
+					t.Fatalf("output not byte-identical to input:\n got %q\nwant %q", res.Output, in)
+				}
+			})
+		}
+	}
+	// Without the injected line the same transcript still compacts.
+	res := compressor.Compress([]byte(strings.Join(clean, "\n")+"\n"), compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("clean transcript not compacted: %s", res.Reason)
+	}
+}
+
 func TestCompress_Vitest_PassCompaction(t *testing.T) {
 	in := []byte("\n RUN  v1.6.0 /web\n\n ✓ a.test.ts (2)\n ✓ b.test.ts (3)\n\n Test Files  2 passed (2)\n      Tests  5 passed (5)\n   Start at  12:00:00\n   Duration  350ms (transform 50ms, tests 35ms)\n")
 	res := compressor.Compress(in, compressor.ModeSafe)

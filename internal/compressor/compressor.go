@@ -23,10 +23,20 @@ var (
 	reGitLogCommit      = regexp.MustCompile(`(?m)^commit\s+[0-9a-f]{40}`)
 	reGitStatusHead     = regexp.MustCompile(`(?m)^(?:On branch |HEAD detached at )`)
 	reRipgrepMatch      = regexp.MustCompile(`(?m)^(?:\d+:)?[^:\n]+:\d+:`)
-	rePytestSummary     = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+([^\n=]+?)\s*=+\s*$`)
+	rePytestSummary     = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d[^\n=]*?)\s*=+\s*$`)
 	rePytestHeader      = regexp.MustCompile(`(?m)^=+\s*test session starts\s*=+`)
 	rePytestFailSummary = regexp.MustCompile(`(?m)^=+\s*.*?(?:failed|error).*?\s+in\s+`)
-	rePytestError       = regexp.MustCompile(`(?:FAILED|ERROR|Traceback|AssertionError)`)
+	// rePytestPlainLine lists every line shape a clean pytest run emits. A
+	// transcript is compacted only when each line matches one of these shapes
+	// (or is the single passing summary); any other line keeps the output raw.
+	rePytestPlainLine = regexp.MustCompile(`^(?:` +
+		`|=+ test session starts =+` +
+		`|platform [A-Za-z0-9_.-]+ -- Python [0-9][^\s,]*(?:, (?:pytest|pluggy)-[0-9][^\s,]*)*(?: -- \S.*)?` +
+		`|(?:rootdir|configfile|cachedir): \S.*` +
+		`|plugins: .+` +
+		`|collected \d+ items?(?: / \d+ deselected)?` +
+		`|\S+\.py [.s]+(?: +\[ *\d+%\])?` +
+		`)$`)
 	reVitestTests       = regexp.MustCompile(`(?m)^\s*Tests\s+(\d+)\s+passed`)
 	reVitestFiles       = regexp.MustCompile(`(?m)^\s*Test Files\s+(\d+)\s+passed`)
 	reVitestHeader      = regexp.MustCompile(`(?m)^\s*RUN\s+v\d+\.\d+`)
@@ -193,13 +203,8 @@ func detectFormat(input []byte) (Format, bool) {
 
 	// 3. Pytest
 	if isPytest(input) {
-		if rePytestError.Match(input) {
-			return FormatPytest, true // Error detected! Fail open!
-		}
-		if rePytestSummary.Match(input) {
-			return FormatPytest, false
-		}
-		return FormatPytest, true
+		// Recognition, not a danger-word list: any unrecognised line fails open.
+		return FormatPytest, !isPlainPytestPass(input)
 	}
 
 	// 4. Vitest
@@ -522,6 +527,22 @@ func isPytest(input []byte) bool {
 		rePytestFailSummary.Match(input)
 }
 
+// isPlainPytestPass reports whether every line of input is a recognised plain
+// pytest line and exactly one line is a passing summary. A failure, a warning,
+// a traceback or any other unrecognised line, injected or not, makes it false.
+func isPlainPytestPass(input []byte) bool {
+	summaries := 0
+	for _, line := range strings.Split(strings.TrimSuffix(string(input), "\n"), "\n") {
+		switch {
+		case rePytestSummary.MatchString(line):
+			summaries++
+		case !rePytestPlainLine.MatchString(line):
+			return false
+		}
+	}
+	return summaries == 1
+}
+
 func isVitest(input []byte) bool {
 	return reVitestTests.Match(input) ||
 		reVitestFiles.Match(input) ||
@@ -533,6 +554,9 @@ func isVitest(input []byte) bool {
 // Pytest: PASS (N passed[ , M skipped] in <time>)
 // If not strictly shorter than raw input, the input is returned.
 func compressPytest(input []byte) ([]byte, bool, string) {
+	if !isPlainPytestPass(input) {
+		return input, false, "pytest_unrecognised_line_preserved"
+	}
 	m := rePytestSummary.FindSubmatch(input)
 	if m == nil {
 		return input, false, "pytest_missing_summary"
