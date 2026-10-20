@@ -22,8 +22,8 @@ const (
 	domainActInspect   = `(?:debug\w*|investig\w*|troubleshoot|diagnos\w*|diagn[oó]stic\w*|corrig\w*|fix|depur\w*|analy[sz]\w*|analis\w*|an[aá]lis\w*)`
 	domainActIntegrate = `(?:integrat\w*|integr\w*|connect\w*|conect\w*|sincroniz\w*|implement\w*|implementar|implemente)`
 	domainActBuild     = `(?:implement\w*|implementa[cç][aã]o|criar|crie|cria|create|build|constru\w*|configur\w*|configure|add|adicion\w*)`
-	domainActPlan      = `(?:design\w*|desenh\w*|redesenh\w*|arquitet\w*|rearquitet\w*|architect\w*|projet\w*|plan\w*|planej\w*|implement\w*|implementar|implemente|rebuild|reconstru\w*|orchestrat\w*|orquestr\w*|coorden\w*|coordinat\w*)`
-	domainActAutomate  = `(?:automat\w*|automate|automatiz\w*|configure|configur\w*|provision\w*|implement\w*|implementar|implemente)`
+	domainActPlan      = `(?:design\w*|desenh\w*|redesenh\w*|arquitet\w*|rearquitet\w*|architect\w*|projet\w*|plan\w*|planej\w*|implement\w*|implementar|implemente|rebuild|reconstru\w*|migrat\w*|migrar|migre|migra\w*|orchestrat\w*|orquestr\w*|coorden\w*|coordinat\w*)`
+	domainActAutomate  = `(?:automat\w*|automate|automatiz\w*|configure|configur\w*|provision\w*|implement\w*|implementar|implemente|create|criar|crie|build)`
 	domainActOptimize  = `(?:optimi[sz]\w*|otimiz\w*|dimension\w*|rightsiz\w*|ajust\w*|reduz\w*|reduce)`
 	domainActProtect   = `(?:implement\w*|implementar|implemente|harden\w*|endurec\w*|proteg\w*|protect\w*|configur\w*|configure|assinar|sign)`
 	domainActFix       = `(?:fix|corrig\w*|investig\w*|debug\w*|diagnos\w*|diagn[oó]stic\w*|repair|repar\w*)`
