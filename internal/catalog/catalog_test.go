@@ -1010,3 +1010,59 @@ func TestParse_GatewayRowNeedsItsFullSlug(t *testing.T) {
 		}
 	}
 }
+
+// --- openrouter/<vendor>/<model>: the OpenCode form of a gateway model ---
+
+func TestGatewayForm_ResolvesOnlyGatewayRows(t *testing.T) {
+	c, err := parse([]byte(gatewayCatalog))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	cases := []struct {
+		name   string
+		id     string
+		wantID string // "" = unknown
+		exact  bool
+	}{
+		{"gateway form resolves to the gateway row", "openrouter/x-ai/grok-x", "x-ai/grok-x", true},
+		{"bare slug still resolves to the gateway row", "x-ai/grok-x", "x-ai/grok-x", true},
+		{"native id is unchanged", "grok-x", "grok-x", true},
+		{"gateway family matches the slug after the prefix", "openrouter/deepseek/deepseek-v4.2-flash", "deepseek/deepseek-v4.1-flash", false},
+		{"bare prefix is unknown", "openrouter/", "", false},
+		{"native tail is never reached through the gateway form", "openrouter/grok-x", "", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			m, ok := c.LookupByID("opencode", tc.id)
+			if ok != (tc.wantID != "") || (ok && m.ID != tc.wantID) {
+				t.Errorf("LookupByID(%q) = %q ok=%v, want %q", tc.id, m.ID, ok, tc.wantID)
+			}
+			e, ok := c.EntryFor("opencode", tc.id)
+			if ok != (tc.wantID != "") || (ok && e.ID != tc.wantID) {
+				t.Errorf("EntryFor(%q) = %q ok=%v, want %q", tc.id, e.ID, ok, tc.wantID)
+			}
+			if got := c.IsExactID("opencode", tc.id); got != tc.exact {
+				t.Errorf("IsExactID(%q) = %v, want %v", tc.id, got, tc.exact)
+			}
+		})
+	}
+}
+
+func TestGatewayForm_AllowedEffortsIsExactAndGatewayOnly(t *testing.T) {
+	c, err := parse([]byte(`{"entries":[
+		{"id":"grok-x","harness":"opencode","provider":"opencode","tier":"small","efforts":["low"]},
+		{"id":"x-ai/grok-x","harness":"opencode","provider":"openrouter","tier":"frontier","efforts":["high"]}
+	]}`))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if got := c.AllowedEfforts("opencode", "openrouter/x-ai/grok-x"); len(got) != 1 || got[0] != "high" {
+		t.Errorf("gateway form efforts = %v, want [high]", got)
+	}
+	if got := c.AllowedEfforts("opencode", "openrouter/grok-x"); got != nil {
+		t.Errorf("native tail via gateway form efforts = %v, want nil", got)
+	}
+	if got := c.AllowedEfforts("opencode", "openrouter/"); got != nil {
+		t.Errorf("bare prefix efforts = %v, want nil", got)
+	}
+}

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -36,6 +37,10 @@ var embeddedJSON []byte
 // known only by its full "vendor/model" slug. Gateway rows default to
 // routing "explicit_only" unless the row says otherwise.
 const ProviderOpenRouter = "openrouter"
+
+// gatewayPrefix is the OpenCode form of a gateway model:
+// "openrouter/<vendor>/<model>". Such an id resolves only to OpenRouter rows.
+const gatewayPrefix = ProviderOpenRouter + "/"
 
 // Entry is one row in the catalog JSON.
 type Entry struct {
@@ -86,6 +91,12 @@ type Catalog struct {
 	byID map[string]map[string]core.Model
 	// byFamily: harness → family prefix → Model (version-agnostic fallback)
 	byFamily map[string][]familyEntry
+	// gateway: harness → gateway row id/alias → Model. Only OpenRouter rows
+	// are here; the "openrouter/<slug>" form resolves through these two
+	// gateway indexes and never through byID or byFamily.
+	gateway map[string]map[string]core.Model
+	// gatewayFamily: harness → family prefix of the gateway rows.
+	gatewayFamily map[string][]familyEntry
 	// byFamEff: harness → family (lowercased) → effort (lowercased) → Model.
 	// Only entries with an explicit effort tag that are not explicit_only are
 	// indexed here. Powers FamilyModelFor (Option A: family + effort routing).
@@ -281,12 +292,14 @@ func decode(data []byte) (catalogFile, error) {
 
 func build(f catalogFile) *Catalog {
 	c := &Catalog{
-		index:     make(map[string]map[core.Tier]core.Model),
-		harnesses: make(map[string]struct{}),
-		byID:      make(map[string]map[string]core.Model),
-		byFamily:  make(map[string][]familyEntry),
-		byFamEff:  make(map[string]map[string]map[string]core.Model),
-		entries:   f.Entries,
+		index:         make(map[string]map[core.Tier]core.Model),
+		harnesses:     make(map[string]struct{}),
+		byID:          make(map[string]map[string]core.Model),
+		byFamily:      make(map[string][]familyEntry),
+		gateway:       make(map[string]map[string]core.Model),
+		gatewayFamily: make(map[string][]familyEntry),
+		byFamEff:      make(map[string]map[string]map[string]core.Model),
+		entries:       f.Entries,
 
 		pricesAsOf: f.PricesAsOf,
 	}
@@ -358,8 +371,27 @@ func build(f catalogFile) *Catalog {
 			fe := familyEntry{prefix: strings.ToLower(e.Family), model: m}
 			c.byFamily[e.Harness] = append(c.byFamily[e.Harness], fe)
 		}
+
+		if e.Provider == ProviderOpenRouter {
+			indexGateway(c, e, m)
+		}
 	}
 	return c
+}
+
+// indexGateway adds one OpenRouter row to the gateway indexes.
+func indexGateway(c *Catalog, e Entry, m core.Model) {
+	if c.gateway[e.Harness] == nil {
+		c.gateway[e.Harness] = make(map[string]core.Model)
+	}
+	c.gateway[e.Harness][e.ID] = m
+	for _, alias := range e.Aliases {
+		c.gateway[e.Harness][alias] = m
+	}
+	if e.Family != "" {
+		fe := familyEntry{prefix: strings.ToLower(e.Family), model: m}
+		c.gatewayFamily[e.Harness] = append(c.gatewayFamily[e.Harness], fe)
+	}
 }
 
 // parseTier converts the JSON string tier to a core.Tier constant.
@@ -467,6 +499,10 @@ func (c *Catalog) IsExactID(harness, id string) bool {
 	if c == nil || harness == "" || id == "" {
 		return false
 	}
+	if slug, ok := strings.CutPrefix(id, gatewayPrefix); ok {
+		_, exact := c.gateway[harness][slug]
+		return exact && slug != ""
+	}
 	h, ok := c.byID[harness]
 	if !ok {
 		return false
@@ -498,6 +534,9 @@ func (c *Catalog) LookupByID(harness, modelID string) (core.Model, bool) {
 	if modelID == "" {
 		return core.Model{}, false
 	}
+	if slug, ok := strings.CutPrefix(modelID, gatewayPrefix); ok {
+		return c.lookupGateway(harness, slug)
+	}
 
 	// Normalise: strip the "provider/" prefix used by OpenRouter and similar
 	// meta-providers (e.g. "anthropic/claude-opus-4-8" → "claude-opus-4-8").
@@ -524,6 +563,24 @@ func (c *Catalog) LookupByID(harness, modelID string) (core.Model, bool) {
 		}
 	}
 
+	return core.Model{}, false
+}
+
+// lookupGateway resolves the slug of an "openrouter/<slug>" id against the
+// gateway rows only: exact slug or alias first, then the family prefix.
+func (c *Catalog) lookupGateway(harness, slug string) (core.Model, bool) {
+	if slug == "" {
+		return core.Model{}, false
+	}
+	if m, ok := c.gateway[harness][slug]; ok {
+		return m, true
+	}
+	lower := strings.ToLower(slug)
+	for _, fe := range c.gatewayFamily[harness] {
+		if strings.HasPrefix(lower, fe.prefix) {
+			return fe.model, true
+		}
+	}
 	return core.Model{}, false
 }
 
@@ -606,6 +663,9 @@ func (c *Catalog) EntryFor(harness, modelID string) (Entry, bool) {
 	if modelID == "" {
 		return Entry{}, false
 	}
+	if slug, ok := strings.CutPrefix(modelID, gatewayPrefix); ok {
+		return c.gatewayEntryFor(harness, slug)
+	}
 	normalised := normaliseModelID(modelID)
 
 	// Exact and alias match — try both original and normalised.
@@ -641,6 +701,32 @@ func (c *Catalog) EntryFor(harness, modelID string) (Entry, bool) {
 	return Entry{}, false
 }
 
+// gatewayEntryFor is EntryFor for the "openrouter/<slug>" form: an OpenRouter
+// row by exact slug or alias, then by family prefix. No other row matches.
+func (c *Catalog) gatewayEntryFor(harness, slug string) (Entry, bool) {
+	if slug == "" {
+		return Entry{}, false
+	}
+	for _, e := range c.entries {
+		if e.Provider == ProviderOpenRouter && e.Harness == harness && isGatewayName(e, slug) {
+			return e, true
+		}
+	}
+	lower := strings.ToLower(slug)
+	for _, e := range c.entries {
+		if e.Provider == ProviderOpenRouter && e.Harness == harness && e.Family != "" &&
+			strings.HasPrefix(lower, strings.ToLower(e.Family)) {
+			return e, true
+		}
+	}
+	return Entry{}, false
+}
+
+// isGatewayName reports whether slug is the id or an alias of a gateway row.
+func isGatewayName(e Entry, slug string) bool {
+	return e.ID == slug || slices.Contains(e.Aliases, slug)
+}
+
 // IsExplicitOnly implements core.Resolver. Returns true when the model ID is
 // marked routing:"explicit_only" — meaning it is a valid current selection
 // but must never be chosen as an automatic routing target.
@@ -672,6 +758,17 @@ func (c *Catalog) EffortFor(harness, modelID string, effort core.Effort) string 
 // verified on. Nil means unknown.
 func (c *Catalog) AllowedEfforts(harness, modelID string) []string {
 	if c == nil || modelID == "" {
+		return nil
+	}
+	if slug, ok := strings.CutPrefix(modelID, gatewayPrefix); ok {
+		if slug == "" {
+			return nil
+		}
+		for _, e := range c.entries {
+			if e.Provider == ProviderOpenRouter && e.Harness == harness && isGatewayName(e, slug) {
+				return e.Efforts
+			}
+		}
 		return nil
 	}
 	for _, id := range uniqueStrings(modelID, normaliseModelID(modelID)) {
