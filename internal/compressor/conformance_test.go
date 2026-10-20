@@ -229,7 +229,6 @@ func buildKnownViolations() map[string]string {
 	for _, f := range []struct{ fixture, family string }{
 		{"cargo_pass_clean.txt", "cargo-test"},
 		{"playwright_pass_clean.txt", "playwright"},
-		{"pytest_pass_clean.txt", "pytest"},
 		{"tsc_pass_clean.txt", "tsc"},
 		{"vitest_pass_clean.txt", "vitest"},
 	} {
