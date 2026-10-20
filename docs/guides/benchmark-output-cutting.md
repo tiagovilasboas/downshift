@@ -40,7 +40,7 @@ delegation-heavy, and one added here, **output-heavy** (a bounded fix whose loop
 Complex and security-sensitive tasks stay in the set as safety checks (acceptance only), not as a saving claim. Each
 task keeps its hidden acceptance check, validated on base and fix.
 
-### Ecosystem Coverage: Go, Python, TypeScript/Node (vitest, Jest, Playwright, Cypress, Next.js, tsc), PHP (PHPUnit), and Rust (cargo test)
+### Ecosystem Coverage: Go, Python, TypeScript/Node (vitest, Jest, Playwright, Cypress, Next.js, tsc), PHP (PHPUnit), Rust (cargo test), Dart and Flutter, and the JVM (Gradle, Maven)
 
 The output-heavy category explicitly evaluates suites across the primary agent engineering ecosystems:
 - **Go (`go test`)**: Multi-package unit and integration suites with package summaries. A verbose single-package pass is compacted only when test bodies are absent; failure transcripts and test logs remain raw.
@@ -53,6 +53,8 @@ The output-heavy category explicitly evaluates suites across the primary agent e
 - **End-to-End Browser Testing (`playwright`)**: Suites running 10–30 E2E tests across Chromium, Firefox, and WebKit. Clean runs emit hundreds of worker step notifications, browser launch events, test titles, and timing breakdowns, generating **3,000 to 5,000 tokens** per run. Squelching clean runs to `playwright: PASS (N passed across M workers in X.XXs)` (~25 tokens) delivers a ~99% token reduction. Fail-open guarantee: any `failed`, `timed out`, `Error:`, assertion diff, trace attachment, or non-zero exit is preserved 100% verbatim.
 - **Systems Engineering (`cargo test`)**: Rust crate builds and test runners. Clean runs output compilation steps, test suite discovery, and lines for dozens of unit/integration tests (`test foo ... ok`), generating **1,000 to 2,500 tokens**. Squelching clean runs to `cargo test: PASS (N passed; 0 failed in X.XXs)` (~20 tokens) achieves 98%+ reduction. Fail-open guarantee: any `FAILED`, compiler warning (`warning:`), compiler error (`error[E...]`), `panicked at`, or non-zero exit is preserved verbatim.
 - **Static Typechecking (`tsc --noEmit`)**: Canonical TypeScript typecheck loops in agentic refactorings. When clean, `tsc` exits with code 0 and either an empty string or `Found 0 errors.`. Squelching to `tsc: PASS (0 errors)` (< 5 tokens) provides clear, unambiguous confirmation while preventing tool output ambiguity. Fail-open guarantee: any `error TS\d+:`, diagnostic chain, syntax/semantic error, or non-zero exit is preserved verbatim.
+- **Dart and Flutter (`dart test`, `flutter test`)**: A clean run prints progress segments and ends with `All tests passed!`. Downshift summarises only a run with no failure counter and no unknown line; failures, test print output and any stderr stay raw. `dart analyze` and `flutter analyze` are not wrapped.
+- **JVM builds (`gradle`, `./gradlew`, `mvn`, `./mvnw`)**: A successful Gradle build collapses its task lines into one count line and keeps `BUILD SUCCESSFUL`. A Maven run keeps its goal lines, Surefire totals and `BUILD SUCCESS`. Any `FAILED`, `[WARNING]`, `[ERROR]` or unknown line stays verbatim.
 
 Tasks in this category simulate realistic agent iterative workflows (e.g., TDD loops, localized bug fixing) where tests and typechecks are executed 2 to 5 times across a multi-turn conversation.
 

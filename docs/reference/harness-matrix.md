@@ -303,10 +303,39 @@ decoders. Until then the safe answer is the documented one.
 On by default on Claude Code: the plugin registers the `Bash` PreToolUse hook. Set
 `"exec": false` in the Downshift config or `DOWNSHIFT_EXEC=0` to turn it off. The decision is
 shared (`internal/execwrap.Decide` plus `shellWrapDecision` in the hook
-runner): allowlist `go test` and `git status`, no shell metacharacter, never
-twice, and the running binary's absolute path (single-quoted in the command, no PATH lookup). The harness fact is
+runner): the command must start with one of the families below, contain no
+shell metacharacter, not already start with `downshift`, and be rewritten to the
+running binary's absolute path (single-quoted in the command, no PATH lookup).
+No Bash allow rule is needed. The rewrite is skipped when a deny or ask rule
+matches the command, or when the settings cannot be read, and never when
+`"exec": false` or `DOWNSHIFT_EXEC=0` is set. The harness fact is
 `HarnessCapabilities.CanRewriteShellCommand`. An adapter takes part by
 exposing `ShellCommand()` and `ShellRewrite()`.
+
+**Accepted families.** `FamilyOf` in `internal/execwrap/policy.go` decides. The
+first words must match one of these forms; words after them are passed on as
+written. The family name is the only command fact telemetry keeps.
+
+| family | accepted forms |
+|---|---|
+| `go-test` | `go test` |
+| `git-status` | `git status` only; `git log` and other git commands are not wrapped |
+| `pytest` | `pytest` (not `python -m pytest`) |
+| `vitest` | `vitest`, `npx vitest` |
+| `jest` | `jest`, `npx jest` |
+| `tsc` | `tsc`, `npx tsc` |
+| `cypress` | `cypress run`, `npx cypress run` |
+| `playwright` | `playwright test`, `npx playwright test` |
+| `next-build` | `next build`, `npx next build` |
+| `phpunit` | `phpunit`, `vendor/bin/phpunit`, `./vendor/bin/phpunit` |
+| `cargo-test` | `cargo test` |
+| `flutter-test` | `flutter test` |
+| `dart-test` | `dart test` |
+| `gradle` | `gradle`, `gradlew`, `./gradlew` with tasks named exactly `build`, `check`, `clean`, `test`, `assemble`, `lint`, `connectedAndroidTest`, `testDebugUnitTest`, `testReleaseUnitTest`, `assembleDebug`, `assembleRelease`, `lintDebug` or `lintRelease`, each optionally prefixed by a project path such as `:app:`; the value of `-x` / `--exclude-task` is skipped |
+| `maven` | `mvn`, `mvnw`, `./mvnw` with the goals `test`, `verify`, `package`, `install` or `clean`, and only the options `-o`, `-q`, `-B`, `-DskipTests`, `-DskipITs` |
+
+Any other command, including `npm test`, is not wrapped. The shell still parses the wrapped command, so the words after the
+family expand as they would have.
 
 | harness | shell rewrite | status | limit |
 |---|---|---|---|
@@ -322,7 +351,7 @@ exposing `ShellCommand()` and `ShellRewrite()`.
 
 **Re-check on a live session (C14).** A unit test cannot show that Claude Code applies `updatedInput.command` when the hook returns no `permissionDecision`. To check it after a Claude Code upgrade:
 
-1. Make sure the Downshift plugin is installed and no deny or ask rule matches `go test`.
+1. Make sure the Downshift plugin is installed and no deny or ask rule matches `go test`. No allow rule is needed, and none should be added for `downshift compact`.
 2. Start a new Claude Code session in a Go repository and ask it to run `go test ./...` (a repository with a dozen or more packages, all passing).
 3. Look at the tool call Claude Code shows. The command must read `'<path>/downshift' compact -- go test ./...`, and a passing result must end with a `[downshift compact: compacted N to M bytes]` line.
 4. Run `downshift context metrics`: `exec_metrics.commands` must have grown. With `DOWNSHIFT_EXEC=0` in the environment the command must run as typed.

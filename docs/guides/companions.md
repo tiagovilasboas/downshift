@@ -56,9 +56,11 @@ supports; the Downshift side of that table is in
 - Its own native `downshift compact` wrapper (on by default since 2026-10-19;
   `"exec": false` or `DOWNSHIFT_EXEC=0` turns it off) is not a companion
   integration. On Claude Code the plugin hook may rewrite an
-  allowlisted shell command (`go test`, `git status`, no shell
-  metacharacters) to `downshift compact -- <command>`. That runs the program
-  itself and compacts only clean output with the in-process compressor. It
+  allowlisted shell command (one of the families listed in the harness
+  matrix, no shell metacharacters) to `downshift compact -- <command>`. No
+  Bash allow rule is needed; a deny or ask rule that matches the command
+  stops the rewrite, and the harness's own permission flow decides any
+  prompt. The program runs itself and only clean output is compacted by the in-process compressor. It
   never wraps, launches or rewrites a companion's command, and its saving
   is reported separately (`exec_metrics` in `downshift context metrics`,
   bytes measured, tokens estimated). When Headroom also runs, it sees the
