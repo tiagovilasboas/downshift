@@ -204,7 +204,7 @@ func TestPrintReport_NoTokensSavedSaysSo(t *testing.T) {
 	rep := Report{TokensSaved: TokenSaving{Children: 3, WorkTokens: 1000, CacheTokens: 500}}
 	var b strings.Builder
 	PrintReport(&b, rep)
-	if !strings.Contains(b.String(), "no tokens saved in this window") {
+	if !strings.Contains(b.String(), "no tokens ran on a cheaper model in this window") {
 		t.Errorf("a window with observed tokens and none saved must say so:\n%s", b.String())
 	}
 }
