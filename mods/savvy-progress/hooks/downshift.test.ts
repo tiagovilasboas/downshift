@@ -164,7 +164,7 @@ test('band fallback: the finished batch is replaced when a new agent starts', as
 
 test('downshift: the Compactor shows in its own unit and is never added to the tokens moved', async ($, on) => {
   await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
-  expect(await shows($, 'Pane', /59k downshifted · .* · 60 KB compactor/)).toBe(true)
+  expect(await shows($, 'Pane', /59k downshifted · .* · ↓ 60 KB compactor/)).toBe(true)
   expect(await shows($, 'Pane', /estimated|≈|total/i)).toBe(false)
 })
 

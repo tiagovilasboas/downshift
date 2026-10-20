@@ -5,7 +5,7 @@ diff --git a/mods/savvy-progress/.claude-plugin/plugin.json b/mods/savvy-progres
  {
    "name": "savvy-progress",
 -  "version": "1.2.1",
-+  "version": "1.2.5",
++  "version": "1.2.6",
    "description": "Progress bar above the prompt for /savvy-flow, plus an agents panel (/agents-info): running, finished and planned subagents with model, task progress, context, cost and time.",
    "author": {
      "name": "johnnyvizz",
@@ -180,7 +180,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
 +const compactorOf = (): number | null => (ds && dsSessionKnown && ds.compactor ? ds.compactor.savedBytes : null)
 +const compactorSuffix = (): string => {
 +  const b = compactorOf()
-+  return b === null ? '' : ` · ${fmtBytes(b)} compactor`
++  return b === null ? '' : ` · ↓ ${fmtBytes(b)} compactor`
 +}
 +
  const fmtTime = (ms: number): string => {
@@ -364,7 +364,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
      headerHeight(title),
      `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
 -${tile(0, s.cost, '≈' + fmtCost(t.cost))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
-+${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, 'Compactor', fmtBytes(cb))}`,
++${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, 'Compactor', `↓ ${fmtBytes(cb)}`)}`,
    )
  }
  
