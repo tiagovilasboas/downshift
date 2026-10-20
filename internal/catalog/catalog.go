@@ -38,10 +38,6 @@ var embeddedJSON []byte
 const ProviderOpenRouter = "openrouter"
 
 // Entry is one row in the catalog JSON.
-// ProviderOpenRouter marks a gateway row: a model reached through OpenRouter,
-// known only by its full "vendor/model" slug.
-const ProviderOpenRouter = "openrouter"
-
 type Entry struct {
 	ID          string            `json:"id"`
 	Aliases     []string          `json:"aliases"`
