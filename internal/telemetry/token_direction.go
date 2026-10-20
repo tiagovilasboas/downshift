@@ -26,7 +26,7 @@ func tokenDirection(usage, decision Event, found, unrouted, refuted bool) string
 	}
 	requested, ran := tokenModels(usage, decision, found, refuted)
 	if IsGatewayModel(ran) {
-		return gatewayDirection(usage, requested, ran)
+		return gatewayDirection(usage.Harness, requested, ran)
 	}
 	return tierDirection(usage.Harness, requested, ran)
 }
@@ -53,10 +53,50 @@ func tierDirection(harness, requested, ran string) string {
 	if !okReq || !okRan {
 		return TokenUnattributed
 	}
+	return rankTiers(req.Tier, got.Tier)
+}
+
+// gatewayDirection ranks a run that went through a gateway by the tier of its
+// allowlisted row, under the same rule as a native run. An id no allowlisted
+// row names is unattributed, never a guess.
+func gatewayDirection(harness, requested, ran string) string {
+	if DirectionCatalog == nil {
+		return TokenUnattributed
+	}
+	req, ok := DirectionCatalog.LookupByID(harness, requested)
+	if !ok {
+		return TokenUnattributed
+	}
+	tier, ok := gatewayTier(ran)
+	if !ok {
+		return TokenUnattributed
+	}
+	return rankTiers(req.Tier, tier)
+}
+
+// gatewayTier returns the tier of the allowlisted gateway row whose id is ran.
+// The catalog exposes its shadow rows through the optional
+// core.GatewayShadowResolver; a resolver without them knows no gateway tier.
+func gatewayTier(ran string) (core.Tier, bool) {
+	gr, ok := DirectionCatalog.(core.GatewayShadowResolver)
+	if !ok {
+		return 0, false
+	}
+	for _, m := range gr.ShadowGateways() {
+		if m.ID == ran {
+			return m.Tier, true
+		}
+	}
+	return 0, false
+}
+
+// rankTiers is the one ranking rule for native and gateway runs: a ran tier
+// below the requested one is saved, above it pricier, equal is unchanged.
+func rankTiers(requested, ran core.Tier) string {
 	switch {
-	case got.Tier < req.Tier:
+	case ran < requested:
 		return TokenCheaper
-	case got.Tier > req.Tier:
+	case ran > requested:
 		return TokenPricier
 	}
 	return TokenUnchanged
