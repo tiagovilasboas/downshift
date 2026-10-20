@@ -171,7 +171,7 @@ func TestSession_SelectionExplicitThenEnvThenLatest(t *testing.T) {
 		t.Fatal("no harness declares SessionEnv")
 	}
 	t.Setenv(envName, a)
-	if out, _, _ := sessionCmd(t); !strings.Contains(out, "tokens saved: work 100% · cache 100% (10k of 10k)") {
+	if out, _, _ := sessionCmd(t); !strings.Contains(out, "saved 100% of work · 100% of cache") {
 		t.Fatalf("env session:\n%s", out)
 	}
 	// --session beats the env, and accepts a hash prefix as printed in --json.
@@ -279,7 +279,7 @@ func TestSession_PanelIsPromptFreeStateAndSavings(t *testing.T) {
 		t.Fatalf("not JSON: %v\n%s", err, out)
 	}
 	if v.Switched != 1 || v.Held != 0 || v.Tokens.WorkSaved != 1000 || v.Tokens.CacheSaved != 9000 ||
-		v.TokensLine != "tokens saved: work 100% · cache 100% (10k of 10k)" {
+		v.TokensLine != "saved 100% of work · 100% of cache" {
 		t.Fatalf("panel: %+v", v)
 	}
 	if len(v.Spawns) != 1 || v.Spawns[0].Label != "opus → sonnet (mid)" || v.Spawns[0].TokensLabel != "10k tokens · saved from opus" {

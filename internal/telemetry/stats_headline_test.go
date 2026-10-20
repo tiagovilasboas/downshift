@@ -36,7 +36,7 @@ func TestPrintStats_HeadlineIsTokensSaved(t *testing.T) {
 	var b bytes.Buffer
 	telemetry.PrintStats(evs, telemetry.StatsOptions{Days: 7}, &b)
 	lines := strings.Split(b.String(), "\n")
-	if want := "Last 7 days · 2 subagents · tokens saved: work 83% · cache 100% (10k of 10k) · 200 on a pricier model"; lines[0] != want {
+	if want := "Last 7 days · 2 subagents · saved 83% of work · 100% of cache · 200 on a pricier model"; lines[0] != want {
 		t.Errorf("line 1 = %q, want %q", lines[0], want)
 	}
 	if !strings.HasPrefix(lines[1], "Guardrails held 0 risky moves · frontier rewrites on doubt: ") {
@@ -69,7 +69,7 @@ func TestPrintStats_HeadlineByAgentType(t *testing.T) {
 	evs := []telemetry.Event{gp, usageFor(gp, 600, 400, 9000, 1, 5), ex, usageFor(ex, 500, 500, 0, 2, 2)}
 	var b bytes.Buffer
 	telemetry.PrintStats(evs, telemetry.StatsOptions{Days: 7}, &b)
-	if !strings.Contains(b.String(), "By agent type: general-purpose: work 100% · cache 100% (1 of 1 agent) · Explore: work 0% · cache 0% (0 of 1 agent)") {
+	if !strings.Contains(b.String(), "By type: general-purpose: 100% work · 100% cache") {
 		t.Errorf("missing the per agent type line:\n%s", b.String())
 	}
 }
