@@ -6,6 +6,7 @@ package telemetry
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -40,9 +41,13 @@ func (f *reportFixture) spawn(group string, cost float64, status ChildStatus, se
 	f.events = append(f.events, d)
 	if cost >= 0 {
 		c := cost
+		// Tokens scale with the cost: 1 dollar here is 10,000 input tokens,
+		// so every figure the report prints is tokens.
+		in := int64(math.Round(cost * 1e4))
 		f.events = append(f.events, Event{
 			CorrelationID: fmt.Sprintf("u%031x", f.n), Timestamp: f.at.Add(10 * time.Second).Format(time.RFC3339Nano),
 			Harness: "claude-code", SessionID: session, Outcome: OutcomeUsage, LinkedDecision: id, ActualCostUSD: &c,
+			InputTokens: &in,
 		})
 	}
 	if status != "" {
@@ -85,11 +90,11 @@ func TestBuildReport_SavingsAndDeterministicCI(t *testing.T) {
 		t.Fatalf("expected savings: %+v", rep)
 	}
 	s := rep.Savings
-	// control averages $0.14 a task, routed $0.07: about $0.07 saved per task.
-	if s.PerTaskUSD < 0.065 || s.PerTaskUSD > 0.075 {
-		t.Errorf("savings per task = %.4f, want about 0.07", s.PerTaskUSD)
+	// control averages 1,400 tokens a task, routed 700: about 700 saved per task.
+	if s.PerTaskTokens < 650 || s.PerTaskTokens > 750 {
+		t.Errorf("savings per task = %.1f tokens, want about 700", s.PerTaskTokens)
 	}
-	if !(s.PerTaskLowUSD <= s.PerTaskUSD && s.PerTaskUSD <= s.PerTaskHighUSD) || s.PerTaskLowUSD <= 0 {
+	if !(s.PerTaskTokensLow <= s.PerTaskTokens && s.PerTaskTokens <= s.PerTaskTokensHigh) || s.PerTaskTokensLow <= 0 {
 		t.Errorf("CI must bracket a positive estimate: %+v", s)
 	}
 	if raw, _ := ReportJSON(rep); strings.Contains(raw, "percent") {
@@ -114,7 +119,7 @@ func TestBuildReport_NoSavingsIntervalIncludesZero(t *testing.T) {
 		f.spawn(GroupControl, c, ChildCompleted, "s1")
 	}
 	rep := BuildReport(f.events, 30)
-	if rep.Savings == nil || rep.Savings.PerTaskLowUSD > 0 || rep.Savings.PerTaskHighUSD < 0 {
+	if rep.Savings == nil || rep.Savings.PerTaskTokensLow > 0 || rep.Savings.PerTaskTokensHigh < 0 {
 		t.Fatalf("identical groups must give an interval around zero: %+v", rep.Savings)
 	}
 }
@@ -157,9 +162,9 @@ func TestBuildTasks_ReworkLinkingAndCost(t *testing.T) {
 	if rep.Routed.Completed != 3 {
 		t.Errorf("completed = %d, want 3", rep.Routed.Completed)
 	}
-	wantCost := 0.50 + 0.05 + 0.16
-	if rep.Routed.CostUSD < wantCost-1e-6 || rep.Routed.CostUSD > wantCost+1e-6 {
-		t.Errorf("cost = %.4f, want %.4f", rep.Routed.CostUSD, wantCost)
+	// 0.50 + 0.05 + 0.16 dollars at 10,000 tokens each.
+	if want := int64(7100); rep.Routed.Tokens.Total != want {
+		t.Errorf("tokens = %d, want %d", rep.Routed.Tokens.Total, want)
 	}
 }
 

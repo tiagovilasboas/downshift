@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -40,12 +39,7 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "error reading event log: %v\n", err)
 		return 1
 	}
-	// Dollars are a valuation of the measured tokens, done now with the
-	// current catalog, so a price correction reaches the whole history.
-	cat := catalog.Load()
-	events = telemetry.RepriceUsage(events, cat.LookupByID)
 	rep := telemetry.BuildReport(events, days)
-	rep.PricesAsOf = cat.PricesAsOf()
 	if asJSON {
 		out, err := telemetry.ReportJSON(rep)
 		if err != nil {

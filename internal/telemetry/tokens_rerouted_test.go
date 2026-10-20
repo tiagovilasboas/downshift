@@ -405,7 +405,7 @@ func TestPrintStats_TokensDetail(t *testing.T) {
 		"token mix by model: haiku 130",
 		"cursor       unobserved (usage source: none)",
 		"codex        unobserved",
-		"Dollars, priced now, and the control group: downshift report",
+		"The routed-versus-control comparison: downshift report",
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("--detail is missing %q:\n%s", want, text)

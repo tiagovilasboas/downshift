@@ -10,7 +10,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
-// stats shows tokens; report prices them and compares with a control group.
+// stats shows tokens; report compares the routed and control groups in tokens.
 // The headline points at report once, in the short and the detailed view, and
 // stats prints no dollar figure.
 func TestPrintStats_PointsAtReportForTheMeasuredNumber(t *testing.T) {
@@ -18,7 +18,7 @@ func TestPrintStats_PointsAtReportForTheMeasuredNumber(t *testing.T) {
 		var b strings.Builder
 		telemetry.PrintStats(nil, telemetry.StatsOptions{Days: 30, Detail: detail}, &b)
 		out := b.String()
-		if !strings.Contains(out, "Dollars, priced now") || !strings.Contains(out, "downshift report") || strings.Contains(out, "$") {
+		if !strings.Contains(out, "The routed-versus-control comparison") || !strings.Contains(out, "downshift report") || strings.Contains(out, "$") {
 			t.Errorf("detail=%v: no pointer to report in:\n%s", detail, out)
 		}
 		if strings.Count(out, "downshift report") != 1 {
