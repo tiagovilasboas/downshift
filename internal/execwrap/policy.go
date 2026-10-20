@@ -9,7 +9,10 @@
 // and emit the rewritten input.
 package execwrap
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // Family names an allowlisted command family. It is the only command fact
 // that reaches telemetry: never the command text, arguments or paths.
@@ -28,6 +31,7 @@ const (
 	FamilyCypress    Family = "cypress"
 	FamilyNextBuild  Family = "next-build"
 	FamilyPHPUnit    Family = "phpunit"
+	FamilyGradle     Family = "gradle"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -153,6 +157,9 @@ func FamilyOf(argv []string) Family {
 	if argv[0] == "phpunit" || argv[0] == "vendor/bin/phpunit" || argv[0] == "./vendor/bin/phpunit" {
 		return FamilyPHPUnit
 	}
+	if len(argv) >= 2 && isGradleProgram(argv[0]) && gradleTask(argv[1:]) {
+		return FamilyGradle
+	}
 	if len(argv) >= 3 && argv[0] == "npx" && argv[1] == "playwright" && argv[2] == "test" {
 		return FamilyPlaywright
 	}
@@ -170,6 +177,42 @@ func FamilyOf(argv []string) Family {
 		return FamilyPlaywright
 	}
 	return FamilyNone
+}
+
+func isGradleProgram(p string) bool {
+	return p == "gradle" || p == "gradlew" || p == "./gradlew"
+}
+
+// gradleTaskName is the exact allowlist of task names: the plain tasks, and
+// the unit-test, assemble and lint tasks of the Debug and Release build types.
+// Nothing else is allowlisted; there is no open suffix, so names such as
+// testDebugPublish or lintDebugUpload are not wrapped.
+var gradleTaskName = regexp.MustCompile(`^(?:build|check|clean|test|assemble|lint|connectedAndroidTest|testDebugUnitTest|testReleaseUnitTest|assembleDebug|assembleRelease|lintDebug|lintRelease)$`)
+
+// gradleTask reports whether there is at least one positional task and every
+// positional task is allowlisted (build, check, clean, test*, assemble*,
+// lint*), optionally qualified by a project path such as :app:assembleDebug.
+// The value of -x / --exclude-task is skipped; any other option that takes a
+// separate value leaves that value as a positional word, which fails the
+// check and keeps the command unwrapped.
+func gradleTask(args []string) bool {
+	found := false
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if a == "-x" || a == "--exclude-task" {
+			i++
+			continue
+		}
+		if strings.HasPrefix(a, "-") {
+			continue
+		}
+		name := a[strings.LastIndexByte(a, ':')+1:]
+		if !gradleTaskName.MatchString(name) {
+			return false
+		}
+		found = true
+	}
+	return found
 }
 
 func safeByte(c byte) bool {

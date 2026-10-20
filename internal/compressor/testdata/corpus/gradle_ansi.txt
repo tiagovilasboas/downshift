@@ -1,0 +1,5 @@
+[1m> Task :app:preBuild[0m UP-TO-DATE
+[1m> Task :app:assembleDebug[0m
+
+[32;1mBUILD SUCCESSFUL[0m in 12s
+14 actionable tasks: 9 executed, 5 up-to-date

@@ -1,0 +1,11 @@
+> Task :app:compileDebugKotlin UP-TO-DATE
+> Task :app:compileDebugUnitTestKotlin
+> Task :app:processDebugUnitTestJavaRes NO-SOURCE
+> Task :app:testDebugUnitTest
+> Task :app:test
+> Task :app:preBuild UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+
+BUILD SUCCESSFUL in 8s
+6 actionable tasks: 2 executed, 4 up-to-date

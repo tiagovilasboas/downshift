@@ -617,6 +617,7 @@ func TestRun_NextBuildAndPHPUnitCompact(t *testing.T) {
 		family                            Family
 	}{
 		{"Next.js build", "next", "next build", "next_build_pass.txt", "Next.js Build: SUCCESS (5 routes: 3 app, 2 pages; shared First Load JS 96.7 kB in 8.2s)", FamilyNextBuild},
+		{"Gradle", "gradle", "gradle build", "gradle_pass_build.txt", "gradle: 14 tasks", FamilyGradle},
 		{"PHPUnit", "phpunit", "phpunit", "phpunit_pass_default.txt", "PHPUnit: PASS (58 tests, 143 assertions", FamilyPHPUnit},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

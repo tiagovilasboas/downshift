@@ -97,6 +97,11 @@ var rawFixtures = []string{
 	"next_build_truncated.txt",
 	"next_build_unknown_output.txt",
 	"phpunit_fail_actionable.txt",
+	"gradle_fail.txt",
+	"gradle_kotlin_warning.txt",
+	"gradle_deprecation.txt",
+	"gradle_ansi.txt",
+	"gradle_test_output.txt",
 }
 
 // cleanFixture is output that may be compacted on exit 0. facts are substrings
@@ -121,6 +126,9 @@ var cleanFixtures = []cleanFixture{
 	{"tsc_pass_clean.txt", []string{"0 errors"}},
 	{"jest_pass_clean.txt", []string{"25 passed", "3 suites", "1 suite skipped", "1 todo"}},
 	{"next_build_pass.txt", []string{"5 routes", "8.2s"}},
+	{"gradle_pass_build.txt", []string{"BUILD SUCCESSFUL in 12s", "14 actionable tasks: 9 executed, 5 up-to-date", "14 tasks"}},
+	{"gradle_pass_uptodate.txt", []string{"BUILD SUCCESSFUL in 1s", "14 actionable tasks: 14 up-to-date", "Starting a Gradle Daemon"}},
+	{"gradle_pass_test.txt", []string{"BUILD SUCCESSFUL in 8s", "6 actionable tasks: 2 executed, 4 up-to-date"}},
 	{"phpunit_pass_default.txt", []string{"58 tests", "143 assertions", "00:00.019", "12.00 MB"}},
 }
 
