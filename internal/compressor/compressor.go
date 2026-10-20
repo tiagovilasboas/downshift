@@ -33,6 +33,10 @@ var (
 	reVitestFail        = regexp.MustCompile(`(?m)^\s*(?:Test Files|Tests)\s+.*failed`)
 	reVitestDuration    = regexp.MustCompile(`(?m)^\s*Duration\s+([^\s\n()]+)`)
 	reVitestError       = regexp.MustCompile(`(?:FAIL|Error:|AssertionError)`)
+	// reVitestPlainLine matches the only lines a clean vitest run prints.
+	// Any other line, including an unexpected error, warning or FAIL, makes
+	// the whole transcript raw. Recognition is the rule, not a danger list.
+	reVitestPlainLine   = regexp.MustCompile(`^(?:\s*|\s*RUN\s+v\d+\.\d+\.\d+(?:\s+\S+)?|\s*✓\s+\S+\s+\(\d+\)|\s*Test Files\s+\d+\s+passed\s+\(\d+\)|\s*Tests\s+\d+\s+passed\s+\(\d+\)|\s*Start at\s+\d{2}:\d{2}:\d{2}|\s*Duration\s+\d+(?:\.\d+)?(?:ms|s)(?:\s+\((?:\w+ \d+ms)(?:, \w+ \d+ms)*\))?)$`)
 	rePlaywrightHeader  = regexp.MustCompile(`(?m)^\s*Running\s+(\d+)\s+tests\s+using\s+(\d+)\s+workers?`)
 	rePlaywrightSummary = regexp.MustCompile(`(?m)^\s*(\d+)\s+passed\s+\(([^)]+)\)`)
 	rePlaywrightError   = regexp.MustCompile(`(?i)(?:failed|flaky|timed out|Error:|AssertionError|trace(?: file| attached)?|retry(?:ing| #))`)
@@ -567,6 +571,9 @@ func compressPytest(input []byte) ([]byte, bool, string) {
 // Vitest: PASS (N passed across M files[ in <time>])
 // If not strictly shorter than raw input, the input is returned.
 func compressVitest(input []byte) ([]byte, bool, string) {
+	if !vitestLinesRecognized(input) {
+		return input, false, "vitest_unrecognized_line_preserved"
+	}
 	mt := reVitestTests.FindSubmatch(input)
 	if mt == nil {
 		return input, false, "vitest_missing_tests_summary"
@@ -594,6 +601,17 @@ func compressVitest(input []byte) ([]byte, bool, string) {
 		return input, false, "no_compression_gain"
 	}
 	return []byte(out), true, fmt.Sprintf("compressed vitest summary (%s passed across %s files)", nPassed, mFiles)
+}
+
+// vitestLinesRecognized reports whether every line of input is a plain vitest
+// success line. A single unrecognised line makes the transcript unsafe to compact.
+func vitestLinesRecognized(input []byte) bool {
+	for _, line := range bytes.Split(input, []byte("\n")) {
+		if !reVitestPlainLine.Match(line) {
+			return false
+		}
+	}
+	return true
 }
 
 func isPlaywright(input []byte) bool {

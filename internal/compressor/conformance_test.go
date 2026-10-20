@@ -230,12 +230,8 @@ func buildKnownViolations() map[string]string {
 		{"playwright_pass_clean.txt", "playwright"},
 		{"pytest_pass_clean.txt", "pytest"},
 		{"tsc_pass_clean.txt", "tsc"},
-		{"vitest_pass_clean.txt", "vitest"},
 	} {
 		for _, w := range []string{"error", "FAIL", "warning", "panic"} {
-			if f.family == "vitest" && w == "FAIL" {
-				continue // the vitest detector already preserves a FAIL line
-			}
 			m[f.fixture+"|danger-"+w] = fmt.Sprintf(summaryOnly, f.family)
 		}
 	}
