@@ -9,7 +9,10 @@
 // and emit the rewritten input.
 package execwrap
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 // Family names an allowlisted command family. It is the only command fact
 // that reaches telemetry: never the command text, arguments or paths.
@@ -180,6 +183,12 @@ func isGradleProgram(p string) bool {
 	return p == "gradle" || p == "gradlew" || p == "./gradlew"
 }
 
+// gradleTaskName is the exact allowlist of task names: the plain tasks, and
+// test, assemble or lint variants of the Debug and Release build types (for
+// example testDebugUnitTest, assembleRelease, lintDebug). Any other suffix,
+// such as testPublish or testDeploy, is not allowlisted.
+var gradleTaskName = regexp.MustCompile(`^(?:build|check|clean|test|assemble|lint|connectedAndroidTest|(?:test|assemble|lint)(?:Debug|Release)[A-Za-z]*)$`)
+
 // gradleTask reports whether there is at least one positional task and every
 // positional task is allowlisted (build, check, clean, test*, assemble*,
 // lint*), optionally qualified by a project path such as :app:assembleDebug.
@@ -198,13 +207,10 @@ func gradleTask(args []string) bool {
 			continue
 		}
 		name := a[strings.LastIndexByte(a, ':')+1:]
-		switch {
-		case name == "build", name == "check", name == "clean",
-			strings.HasPrefix(name, "test"), strings.HasPrefix(name, "assemble"), strings.HasPrefix(name, "lint"):
-			found = true
-		default:
+		if !gradleTaskName.MatchString(name) {
 			return false
 		}
+		found = true
 	}
 	return found
 }
