@@ -19,12 +19,9 @@ Fields useful for graduation tracking:
 
 | Field | Meaning |
 |-------|---------|
-| `schema_version` | Schema version (`2` in tokens-only builds) |
+| `schema_version` | Schema version (`3`: tokens only, no dollar keys) |
 | `total` | Routing decisions in window |
 | `downshift_rate` | Fraction downshifted |
-| `actual_cost_events` | Events with observed token usage priced against a known routed model, including unknown-baseline events |
-| `real_cost_events` | Events with both actual and baseline catalog-priced USD |
-| `real_cost_inferred_baseline` | Of those, events whose baseline was guessed from settings (`baseline_source: inferred`), not requested by the harness |
 | `observed_child_tokens` | Sum of input, output, and cached tokens from usage events that carry token counts |
 | `observed_child_usage` | Count of those usage events; `0` means unobserved, not a measured zero |
 | `usage_records` | All post-hoc usage records, including unlinked records |
@@ -38,10 +35,10 @@ Fields useful for graduation tracking:
 | `tokens_rerouted` | The token facts behind the savings, per harness and per model pair. Always present. Object `{basis, by_harness, totals}`; see [Tokens rerouted](#tokens-rerouted) |
 
 > [!NOTE]
-> In schema version 2 (Tokens only), dollar fields (`actual_cost_usd`, `real_saved_usd`, `real_cost_delta_usd`, `real_overspend_usd`, `max_session_cost_usd`, `max_subagent_cost_usd`) are omitted from the export JSON. `tokens_rerouted` is the authoritative source for token quantities rerouted to cheaper models.
+> Schema version 3 is tokens only. The export has no dollar keys: `actual_cost_usd`, `real_saved_usd`, `real_cost_delta_usd`, `real_overspend_usd`, `max_session_cost_usd`, `max_subagent_cost_usd`, `actual_cost_events`, `real_cost_events`, `real_cost_inferred_baseline`, `cost_sessions` and `cost_subagents` are gone. `tokens_rerouted` is the source for the token quantities rerouted to cheaper and pricier tiers.
 
-`downshift stats` text (short and `--detail`) prints no dollar figure since 2026-10-19: its headline is tokens
-saved from the requested model, and dollars are `downshift report`'s, priced at report time. Machine readers use `tokens_rerouted` from the export.
+`downshift stats` text (short and `--detail`) prints no dollar figure and takes no `--cost-per-unit`: its headline is tokens
+saved from the requested model. `downshift report` compares routed and control groups in tokens per completed task. Machine readers use `tokens_rerouted` from the export.
 
 ## Tokens rerouted
 
@@ -182,9 +179,5 @@ no-signal abstention can instead carry `NO_SIGNAL` without this code. See
 [language coverage](complexity-weights.md#language-coverage).
 
 `child_ended` events record how a Claude Code Agent/Task child ended. Their `child_status` is one of `completed`, `launched`, `interrupted`, `error`, `stopped` or `unknown`. They are observations, not decisions: they never change `total`, the verdict counts or savings. The error text is never stored. Recording them requires `claude-code-post-tool-use` registered under `PostToolUseFailure` as well as `PostToolUse`; the failure payload was documented but not captured from a real session, so the field names should be checked against one before relying on them.
-
-`cost_sessions`, `cost_subagents`, `max_session_cost_usd` and `max_subagent_cost_usd` summarise observed, catalog-priced cost grouped by the hashed session id and agent id on usage records. Records without an id are in the totals but not in the groups. No individual session id is exported. These are estimates, not invoices.
-
-`real_cost_delta_usd` and `real_overspend_usd` are additive: older readers ignore them, and older exports lack them. Read `real_saved_usd` together with `real_overspend_usd`, since the first hides overspend by clamping each event. `downshift stats` prints both next to "Real saved".
 
 The normalised units (`norm_baseline`, `norm_routed`) charge an applied UPSHIFT its extra catalog list-price cost (the `upshift_cost_ratio` recorded on the decision event, routed over requested price). When either price is unknown the upshift stays neutral at 1.0, so `norm_routed` can exceed `norm_baseline` and the normalised savings can be negative.
