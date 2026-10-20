@@ -102,10 +102,10 @@ export function dciMode(cfg: unknown): DciMode {
   return mode === 'active' || mode === 'observe' ? mode : 'off'
 }
 
-/** The native compactor is on when `~/.downshift/context-optimization.json` enables the native provider. */
+/** Compact is always on; only `"exec": false` in `~/.downshift/context-optimization.json` turns it off. */
 export function compactorOn(cfg: unknown): boolean {
-  const c = cfg as { enabled?: unknown; provider?: unknown } | null
-  return c?.enabled === true && c?.provider === 'native'
+  const c = cfg as { exec?: unknown } | null
+  return c?.exec !== false
 }
 
 export type Chip = { key: 'dci' | 'compactor'; label: string; on: boolean; detail: string }
@@ -131,8 +131,8 @@ export function chips(s: Status | null): Chip[] {
       label: 'Compact',
       on: compactor,
       detail: compactor
-        ? 'Native compactor on. In Claude Code it measures only; a hook cannot rewrite tool output. It compresses in the other harnesses.'
-        : 'Native compactor off. `downshift context enable native` turns it on.',
+        ? 'Compact on: allowlisted shell commands (tests, status) run through `downshift compact` and keep only the useful output.'
+        : 'Compact off: `"exec": false` is set in ~/.downshift/context-optimization.json. Remove that line to turn it back on.',
     },
   ]
 }
@@ -156,6 +156,15 @@ async function refreshStatus($: EngineInterface): Promise<void> {
     await update($, statusAtom, () => next)
   } catch {
     // Keep what is known; the chips show grey until a read answers.
+  }
+}
+
+/** Subagents whose loop is running now, from the engine's agent list; 0 when it cannot answer. */
+async function runningAgents($: EngineInterface): Promise<number> {
+  try {
+    return (await $.agent.list()).filter(a => a.status === 'running').length
+  } catch {
+    return 0
   }
 }
 
@@ -209,12 +218,14 @@ export const register: Register = on => {
     const dot = dotColor(await openPaneIds($))
     const status = await read($, statusAtom)
     const mode: Mode = (await read($, modeAtom)) ?? 'performance'
+    const running = await runningAgents($)
     const { Box, Text, Button } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
         {rest}
         <Box flexDirection="row" columnGap={2}>
           <Box flexGrow={1} />
+          {running > 0 && <Text color={ACCENT}>{`${running} running`}</Text>}
           <Button key="mode" plain onPress={() => void toggleMode($)}>
             <Text>{modeLabel(mode)}</Text>
           </Button>
