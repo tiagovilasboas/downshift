@@ -68,4 +68,3 @@ func TestChildEnd_IgnoresNonAgentToolsAndDoesNotCountAsDecision(t *testing.T) {
 		t.Fatalf("child status not aggregated: %+v", stats.ChildStatus)
 	}
 }
-
