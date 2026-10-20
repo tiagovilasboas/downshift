@@ -108,6 +108,12 @@ func Why(events []Event, sessionHash string) string {
 	}
 	row("verdict", strings.TrimSpace(verdict+" ("+detail+")"))
 	row("outcome", outcomeWords(*last))
+	if last.PermissionMode != "" {
+		row("mode", last.PermissionMode)
+	}
+	if last.QuotaStatus != "" || last.CreditHeld {
+		row("quota", ProjectQuota(last.QuotaStatus, last.CreditHeld))
+	}
 
 	var shaped, guards []string
 	for _, c := range last.ReasonCodes {

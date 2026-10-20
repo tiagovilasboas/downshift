@@ -333,6 +333,9 @@ func runHookAdapter[E any](
 		if typed, ok := any(ev).(interface{ AgentTypeIdentifier() string }); ok {
 			event.AgentType = telemetry.AgentTypeLabel(typed.AgentTypeIdentifier())
 		}
+		if typed, ok := any(ev).(interface{ PermissionModeIdentifier() string }); ok {
+			event.PermissionMode = telemetry.PermissionModeLabel(typed.PermissionModeIdentifier())
+		}
 		if requested, ok := any(ev).(interface{ RequestedReasoningEffort() string }); ok {
 			event.RequestedEffort = telemetry.EffortOrUnknown(requested.RequestedReasoningEffort())
 		}
