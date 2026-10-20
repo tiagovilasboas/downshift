@@ -16,6 +16,7 @@ package codex
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -167,7 +168,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	decision := core.Route(subPrompt, harnessID, currentModel, res)
 	decision.Baseline.RequestedID = currentModel
 
-	plan := decision.PlanSession(core.CodexCaps, res, session, currentModel)
+	plan := decision.PlanSession(spawnCapabilities(ti), res, session, currentModel)
 	if plan.HoldForeign || plan.PreserveExplicit || (!plan.RewriteModel && !plan.ApplyEffort) {
 		return allow(), "", decision
 	}
@@ -216,6 +217,29 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		},
 	}
 	return out, note, decision
+}
+
+// spawnCapabilities translates Codex's fork protocol into per-call capabilities.
+// In rust-v0.163.0, MultiAgentV2 requires task_name (V1 has no such field),
+// defaults an absent/null/blank fork_turns to all, and treats positive turn
+// counts as full history too. A full-history fork inherits model and effort,
+// so neither can be overridden. Preserve its history choice and let the shared
+// planner compute the recommendation without applying an unsupported rewrite.
+func spawnCapabilities(ti map[string]any) core.HarnessCapabilities {
+	caps := core.CodexCaps
+	mode := strings.TrimSpace(hookutil.StringField(ti, "fork_turns"))
+	fullHistory := strings.EqualFold(mode, "all")
+	if count, err := strconv.ParseUint(strings.TrimPrefix(mode, "+"), 10, strconv.IntSize); err == nil && count > 0 {
+		fullHistory = true
+	}
+	if mode == "" {
+		_, fullHistory = ti["task_name"].(string)
+	}
+	if fullHistory {
+		caps.CanRewriteModel = false
+		caps.CanApplyEffort = false
+	}
+	return caps
 }
 
 func effortOrInherit(v string) string {
