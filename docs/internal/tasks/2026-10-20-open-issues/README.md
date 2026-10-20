@@ -62,3 +62,17 @@ owner first. Companion to [the evidence roadmap](../2026-10-20-evidence-roadmap/
 2. Item 3 follows from item 2.
 3. Item 4 is a product decision, then a test.
 4. Item 7 waits for 1 to 3.
+
+## Parts (agreed 2026-10-20): one reason to change, one PR each
+
+| Part | What | Depends on | Status |
+|---|---|---|---|
+| 1 | QA of #326 (honored, same family) and #327 (Compactor session fallback): tests, vet, new tests fail without the fix | none | running |
+| 2 | Merge #326 and #327, one at a time, only with green CI; check on main afterwards | 1 | waiting |
+| 5a | `session --panel` exposes the observed model per spawn (`observed_model`, omitted when equal) | none | running |
+| 5b | The mod shows the observed model when it differs from the decided one | 5a | waiting |
+| 3 | Catalog decision: `haiku` alias points to 5.5 in the catalog, or 4.5 and the two are equivalent | owner decision | blocked |
+| 4 | Classifier: review prompts classed COMPLEX; table-driven test in classifier_edge_test.go | owner decision | blocked |
+| 6 | Experiment Haiku vs DeepSeek via OpenRouter | 1 to 3, and the spend cap | blocked |
+
+Rule: a part that needs an owner decision does not start until the decision is recorded here.
