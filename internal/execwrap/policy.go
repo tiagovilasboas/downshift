@@ -180,23 +180,33 @@ func isGradleProgram(p string) bool {
 	return p == "gradle" || p == "gradlew" || p == "./gradlew"
 }
 
-// gradleTask reports whether the first non-flag word names an allowlisted
-// task (build, check, clean, test*, assemble*, lint*), optionally qualified by
-// a project path such as :app:assembleDebug. An option that takes a value
-// shifts the word and fails the check, which leaves the command unwrapped.
+// gradleTask reports whether there is at least one positional task and every
+// positional task is allowlisted (build, check, clean, test*, assemble*,
+// lint*), optionally qualified by a project path such as :app:assembleDebug.
+// The value of -x / --exclude-task is skipped; any other option that takes a
+// separate value leaves that value as a positional word, which fails the
+// check and keeps the command unwrapped.
 func gradleTask(args []string) bool {
-	for _, a := range args {
+	found := false
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if a == "-x" || a == "--exclude-task" {
+			i++
+			continue
+		}
 		if strings.HasPrefix(a, "-") {
 			continue
 		}
 		name := a[strings.LastIndexByte(a, ':')+1:]
-		switch name {
-		case "build", "check", "clean":
-			return true
+		switch {
+		case name == "build", name == "check", name == "clean",
+			strings.HasPrefix(name, "test"), strings.HasPrefix(name, "assemble"), strings.HasPrefix(name, "lint"):
+			found = true
+		default:
+			return false
 		}
-		return strings.HasPrefix(name, "test") || strings.HasPrefix(name, "assemble") || strings.HasPrefix(name, "lint")
 	}
-	return false
+	return found
 }
 
 func safeByte(c byte) bool {
