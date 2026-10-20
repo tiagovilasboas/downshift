@@ -176,3 +176,38 @@ func TestGatewayShadow_BadAllowlistIsIgnored(t *testing.T) {
 		})
 	}
 }
+
+// The production path wraps the catalog in a session resolver whenever the
+// session is known (every hook payload that names its session). The shadow
+// record must survive that wrapper, and the route must stay the same with
+// the allowlist present.
+func TestGatewayShadow_RecordsThroughKnownSessionResolver(t *testing.T) {
+	useEmptyHome(t)
+	bare := catalog.Load()
+	writeStateFileAt(t, paths.OpenRouterAllowlistPath, gatewayAllowlist)
+	withList := catalog.Load()
+
+	session := core.KnownSession([]string{"claude-sonnet-5"})
+	prompt := "fix a typo in the README"
+
+	want := core.Route(prompt, "opencode", "", bare)
+	if want.Tier != core.TierSmall {
+		t.Fatalf("prompt tier = %v, want small", want.Tier)
+	}
+	wantPlan := want.PlanSession(core.OpenCodeCaps, core.ResolveSessionModels("opencode", session, bare), session, "")
+
+	got := core.Route(prompt, "opencode", "", core.ResolveSessionModels("opencode", session, withList))
+	gotPlan := got.PlanSession(core.OpenCodeCaps, core.ResolveSessionModels("opencode", session, withList), session, "")
+
+	if got.Shadow.GatewayWould != "x-ai/grok-x" {
+		t.Errorf("GatewayWould = %q through the session resolver, want x-ai/grok-x", got.Shadow.GatewayWould)
+	}
+	if got.Model.ID != want.Model.ID || got.Tier != want.Tier || got.Verdict != want.Verdict {
+		t.Errorf("route changed with the allowlist: got %s/%v/%v, want %s/%v/%v",
+			got.Model.ID, got.Tier, got.Verdict, want.Model.ID, want.Tier, want.Verdict)
+	}
+	if gotPlan.Model.ID != wantPlan.Model.ID || gotPlan.RewriteModel != wantPlan.RewriteModel {
+		t.Errorf("plan changed with the allowlist: got %s rewrite=%v, want %s rewrite=%v",
+			gotPlan.Model.ID, gotPlan.RewriteModel, wantPlan.Model.ID, wantPlan.RewriteModel)
+	}
+}
