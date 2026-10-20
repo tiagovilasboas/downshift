@@ -112,11 +112,11 @@ describe('status', () => {
     expect(dciMode(null)).toBe('off')
   })
 
-  test('the compactor is on only for the enabled native provider', () => {
-    expect(compactorOn({ enabled: true, provider: 'native' })).toBe(true)
-    expect(compactorOn({ enabled: false, provider: 'native' })).toBe(false)
-    expect(compactorOn({ enabled: true, provider: 'headroom' })).toBe(false)
-    expect(compactorOn(null)).toBe(false)
+  test('compact is on unless the config file says exec false', () => {
+    expect(compactorOn({ exec: true })).toBe(true)
+    expect(compactorOn({})).toBe(true)
+    expect(compactorOn(null)).toBe(true)
+    expect(compactorOn({ exec: false })).toBe(false)
   })
 
   test('a chip is lit only when its feature does work, and the detail says what to run', () => {
@@ -126,7 +126,24 @@ describe('status', () => {
     expect(obs!.on).toBe(false)
     expect(obs!.detail).toContain('downshift dci enable active')
     expect(chips(null).map(c => c.on)).toEqual([false, false])
-    expect(chips({ dci: 'off', compactor: false })[1]!.detail).toContain('downshift context enable native')
+    expect(chips({ dci: 'off', compactor: false })[1]!.detail).toContain('"exec": false')
+  })
+})
+
+describe('mode', () => {
+  test('a valid mode file is read; a missing, invalid or unknown one is performance', () => {
+    expect(parseMode('{"mode":"economy"}')).toBe('economy')
+    expect(parseMode('{"mode":"performance"}')).toBe('performance')
+    expect(parseMode(null)).toBe('performance')
+    expect(parseMode('not json')).toBe('performance')
+    expect(parseMode('{"mode":"turbo"}')).toBe('performance')
+  })
+
+  test('a press switches between the two modes and the label names the current one', () => {
+    expect(nextMode('performance')).toBe('economy')
+    expect(nextMode('economy')).toBe('performance')
+    expect(modeLabel('economy')).toContain('economy')
+    expect(modeLabel('performance')).toContain('performance')
   })
 })
 
