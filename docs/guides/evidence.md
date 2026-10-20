@@ -206,7 +206,7 @@ has named a model. "Shown by" names a test or an evidence file; a claim with nei
 What Downshift does not do, by design ([when-to-use.md](when-to-use.md), [companions.md](companions.md)): it is not
 a gateway and terminates no HTTP chat or completions traffic; it holds no provider keys; it proxies no request and
 adds no markup; it never installs, launches, wraps or configures a companion (`downshift context enable headroom`
-writes one field in its own file; the earlier RTK `init` call was removed in #71); it does not rewrite tool results
+writes one field in its own file; an earlier `init` call was removed in #71); it does not rewrite tool results
 (its compressor observes); it stores no prompt, task text or path. The only network call on the hook path is the
 optional, at-most-daily refresh of public capability scores, off with `DOWNSHIFT_SCORES=off`. A companion's saving is
 never counted as routing: `doctor` reports the companion so a before/after is not attributed to Downshift alone.
@@ -229,7 +229,7 @@ near 3%: the first inflates the subagent share and the routable share, the secon
 quantities worth logging, not their product.
 
 **Output cutting acts elsewhere and multiplies.** A tool that shrinks command and tool output (a compression proxy
-such as Headroom, an output wrapper such as `downshift compact`, or RTK) reduces the tokens the main session reads and
+such as Headroom, an output wrapper such as `downshift compact`, or a third-party output-cutting tool) reduces the tokens the main session reads and
 then re-reads from cache on every later turn: the part of spend routing cannot touch. The two levers act on different
 tokens, so their savings compose roughly as (1 - r)(1 - o), not as a sum. Hypothetical: a 5% routing saving on top of
 a 20% output saving takes spend to 0.95 x 0.80, a 24% total saving. The composition breaks if cutting changes
