@@ -311,7 +311,7 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    )
  }
  
-@@ -700,6 +642,8 @@
+@@ -700,11 +642,13 @@
    const ctx = ctxOf(a)
    const textW = W - 42 - 22
    const meta = [runModel(a)]
@@ -320,6 +320,12 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
    if (a.round > 1) meta.push(`${s.round} ${a.round}`)
    if (a.status === 'failed') meta.push(s.failed)
    const barW = textW
+   const progress = progressOf(a)
+-  const stats = `${s.ctx} ${ctx}% · ${fmtTokens(a.contextTokens)}  ≈${fmtCost(a.costUsd)}  ${fmtTime(elapsed(a, at))}`
++  const stats = `${s.ctx} ${ctx}% · ${fmtTokens(a.contextTokens)}  ${fmtTime(elapsed(a, at))}`
+   const steps = a.stepTotal ? `${a.stepDone ?? 0}/${a.stepTotal}${a.stepNote ? ' · ' + a.stepNote : ''}` : ''
+   const stepsW = Math.max(0, barW - textWidth(stats, 11) - 12)
+   // Without reported steps the bar falls back to the context, drawn grey.
 @@ -712,7 +656,7 @@
    return svg(
      W,
@@ -533,6 +539,15 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
              {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
            </Text>
            <Text wrap="truncate-end">
+@@ -1142,7 +1202,7 @@
+             {progress === null ? <Text dimColor>{ctxBar(ctx, barW)}</Text> : <Text color={color}>{ctxBar(progress * 100, barW)}</Text>}
+             <Text dimColor>
+               {' '}
+-              {steps}{s.ctx} {ctx}% · {fmtTokens(a.contextTokens)} ≈{fmtCost(a.costUsd)} {fmtTime(elapsed(a, at))}
++              {steps}{s.ctx} {ctx}% · {fmtTokens(a.contextTokens)} {fmtTime(elapsed(a, at))}
+             </Text>
+           </Text>
+         </Box>
 @@ -1158,8 +1218,10 @@
            {toggleCompact}
          </Box>
@@ -581,3 +596,40 @@ diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/
          {below}
        </Box>
      )
+diff --git a/mods/savvy-progress/hooks/cost.test.ts b/mods/savvy-progress/hooks/cost.test.ts
+--- a/mods/savvy-progress/hooks/cost.test.ts
++++ b/mods/savvy-progress/hooks/cost.test.ts
+@@ -1,3 +1,7 @@
++// Downshift local patch: the panel no longer draws a dollar cost per agent (it
++// shows tokens saved), so the display checks below are off (SHOWN_DOLLARS). The
++// price math itself is unchanged in register.tsx.
++const SHOWN_DOLLARS = false
+ import type { On } from 'claude-code'
+ import { expect, mock, test } from 'claude-code/testing'
+ import type { Engine } from 'claude-code/testing'
+@@ -48,7 +52,7 @@
+ ]
+ 
+ for (const [model, shown] of PRICED) {
+-  test(`cost: a turn on ${model} shows ≈${shown}`, async ($, on) => {
++  if (SHOWN_DOLLARS) test(`cost: a turn on ${model} shows ≈${shown}`, async ($, on) => {
+     await worker($, on, model)
+     await ($.turn.complete as (e: unknown) => Promise<unknown>)({ agentId: 'a1', reason: 'answer', answer: 'ok', usage: { model, ...TURN } })
+ 
+@@ -59,14 +63,14 @@
+ // Haiku 5.5 is priced by prompt length, per request: 120K of prompt is over the 100K line.
+ const LONG: Usage = { input_tokens: 20_000, output_tokens: 10_000, cache_read_input_tokens: 50_000, cache_creation_input_tokens: 50_000 }
+ 
+-test('cost: a Haiku 5.5 request over 100K prompt tokens pays the long-prompt prices', async ($, on) => {
++if (SHOWN_DOLLARS) test('cost: a Haiku 5.5 request over 100K prompt tokens pays the long-prompt prices', async ($, on) => {
+   await worker($, on, 'claude-haiku-5-5', LONG)
+   await step($, 'claude-haiku-5-5')
+   // (20K × 0.50 + 10K × 2.50 + 50K × 0.05 + 50K × 1.00) / 1M = 0.0875; at the short-prompt prices it is 0.0175.
+   expect(await shows($, /≈\$0\.09 /)).toBeDefined()
+ })
+ 
+-test('cost: Haiku 4.5 has one price whatever the prompt length', async ($, on) => {
++if (SHOWN_DOLLARS) test('cost: Haiku 4.5 has one price whatever the prompt length', async ($, on) => {
+   await worker($, on, 'claude-haiku-4-5', LONG)
+   await step($, 'claude-haiku-4-5')
+   // (20K × 1 + 10K × 5 + 50K × 0.10 + 50K × 2) / 1M = 0.175
