@@ -13,8 +13,8 @@ const T1 = 'c0c017fb725c209fb6150a1a4c15c346e736441dd739277bc61a35b253b22e66'
 const PANEL = {
   session: 'a1b2c3d4', switched: 2, held: 1, observed: 0,
   tokens: { children: 2, saved_children: 1, work_tokens: 1000, work_saved: 620, cache_tokens: 100000, cache_saved: 58000 },
-  tokens_line: 'tokens saved: work 62% · cache 58% (59k of 101k)',
-  by_agent_type: [{ agent_type: 'general-purpose', line: 'general-purpose: work 62% · cache 58% (1 of 2 agents)' }],
+  tokens_line: 'saved 62% of work · 58% of cache',
+  by_agent_type: [{ agent_type: 'general-purpose', line: 'general-purpose: 62% work · 58% cache', tokens: { work_saved: 620, cache_saved: 58000 } }],
   spawns: [{ tool_use: T1, state: 'switched', from_model: 'claude-opus-5-5', to_model: 'claude-sonnet-5-5', label: 'opus → sonnet (mid)', tokens_label: '48k tokens · saved from opus' }],
 }
 
@@ -41,9 +41,9 @@ const shows = async ($: Engine, component: 'Pane' | 'AbovePrompt', text: RegExp)
 test('downshift: the row says what happened to this spawn, the header and band say the tokens it saved', async ($, on) => {
   await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
   expect(await shows($, 'Pane', /opus → sonnet \(mid\) · 48k tokens · saved from opus/)).toBe(true)
-  expect(await shows($, 'Pane', /Downshift tokens saved: work 62% · cache 58% \(59k of 101k\) · 2 switched · 1 held/)).toBe(true)
-  expect(await shows($, 'Pane', /by agent type: general-purpose: work 62% · cache 58% \(1 of 2 agents\)/)).toBe(true)
-  expect(await shows($, 'AbovePrompt', /Downshift tokens saved: work 62% · cache 58%/)).toBe(true)
+  expect(await shows($, 'Pane', /Downshift · saved 62% of work · 58% of cache · 2 switched · 1 held/)).toBe(true)
+  expect(await shows($, 'Pane', /by type: general-purpose: 62% work · 58% cache/)).toBe(true)
+  expect(await shows($, 'AbovePrompt', /Downshift · saved 62% of work/)).toBe(true)
 })
 
 test('downshift: the Downshift lines carry no dollar figure', async ($, on) => {
@@ -54,7 +54,7 @@ test('downshift: the Downshift lines carry no dollar figure', async ($, on) => {
 
 test('downshift: before any agent ended the band says Downshift is on, with no figure', async ($, on) => {
   await world($, on, { stdout: JSON.stringify({ ...PANEL, tokens_line: '', by_agent_type: [] }) }, 'S-1')
-  expect(await shows($, 'AbovePrompt', /^Downshift on · 2 switched · 1 held$/)).toBe(true)
+  expect(await shows($, 'AbovePrompt', /^Downshift · on · 2 switched · 1 held$/)).toBe(true)
 })
 
 for (const [name, answer] of [
@@ -105,14 +105,14 @@ test('band fallback: a registered flow with a total keeps upstream drawing', asy
 test('session: the mod asks Downshift for its own session and draws the figure', async ($, on) => {
   const argvs: string[][] = []
   await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-123', argvs)
-  expect(await shows($, 'AbovePrompt', /Downshift tokens saved/)).toBe(true)
+  expect(await shows($, 'AbovePrompt', /Downshift · saved/)).toBe(true)
   expect(argvs.at(-1)).toEqual(['downshift', 'session', '--panel', '--session=S-123'])
 })
 
 test('session: with no session id the figure is not drawn (it could be another session\'s)', async ($, on) => {
   const argvs: string[][] = []
   await world($, on, { stdout: JSON.stringify(PANEL) }, '', argvs)
-  expect(await shows($, 'AbovePrompt', /Downshift tokens saved/)).toBe(false)
+  expect(await shows($, 'AbovePrompt', /Downshift · saved/)).toBe(false)
   expect(argvs.at(-1)).toEqual(['downshift', 'session', '--panel'])
   // The row label is keyed by the spawn's own tool call, so it is still exact.
   expect(await shows($, 'Pane', /opus → sonnet \(mid\)/)).toBe(true)

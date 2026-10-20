@@ -138,7 +138,7 @@ func (s SessionRouting) Line() string {
 		parts = append(parts, fmt.Sprintf("%d on %s", s.TopModelN, s.TopModel))
 	}
 	if s.Tokens.Observed() {
-		parts = append(parts, fmt.Sprintf("tokens saved work %s · cache %s", percentText(s.Tokens.WorkPercent()), percentText(s.Tokens.CachePercent())))
+		parts = append(parts, s.Tokens.Line())
 	}
 	parts = append(parts, fmt.Sprintf("%d on doubt", s.OnDoubt))
 	if s.QuotaStale {

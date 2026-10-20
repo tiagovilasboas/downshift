@@ -64,12 +64,12 @@ func TestStatusline_RoutingSummaryForTheCurrentSession(t *testing.T) {
 
 	got := renderStatusline(t, statusInput("sess-ui", true))
 	t.Logf("statusline: %s", strings.TrimSpace(got))
-	want := "5h 25% · 7d 40% │ ◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · tokens saved work 100% · cache 100% · 0 on doubt\n"
+	want := "5h 25% · 7d 40% │ ◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved 100% of work · 100% of cache · 0 on doubt\n"
 	if got != want {
 		t.Errorf("got %q\nwant %q", got, want)
 	}
 	// Without a quota block only the routing summary prints.
-	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · tokens saved work 100% · cache 100% · 0 on doubt\n" {
+	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved 100% of work · 100% of cache · 0 on doubt\n" {
 		t.Errorf("routing only: %q", got)
 	}
 	// Another session sees only its own spawns.
@@ -147,7 +147,7 @@ func TestStatusline_QuotaStaleMarkerWhileSnapshotHolds(t *testing.T) {
 		}
 	}
 	storeAged(10 * time.Minute)
-	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · tokens saved work 100% · cache 100% · 0 on doubt · quota stale\n" {
+	if got := renderStatusline(t, statusInput("sess-ui", false)); got != "◆ downshift · 2 subagents · 2 switched · 0 held · 2 on haiku · saved 100% of work · 100% of cache · 0 on doubt · quota stale\n" {
 		t.Errorf("holding snapshot: %q", got)
 	}
 	// No spawns and an unusable session still flag the hold.

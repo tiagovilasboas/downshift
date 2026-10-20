@@ -145,11 +145,23 @@ func AgentTypeLines(v TokenSavingView) []PanelAgentType {
 	return out
 }
 
-// AgentTypeLine is "general-purpose: work 70% · cache 64% (3 of 4 agents)".
-func AgentTypeLine(typ string, s TokenSaving) string {
-	noun := "agents"
-	if s.Children == 1 {
-		noun = "agent"
+// SavedTypeLines is the AgentTypeLine of every type that saved something, or
+// nil when there is nothing worth a line: one untyped group repeats the total,
+// and a row of zeros is noise.
+func SavedTypeLines(types []PanelAgentType) []string {
+	var out []string
+	for _, t := range types {
+		if t.Tokens.WorkSaved+t.Tokens.CacheSaved > 0 {
+			out = append(out, t.Line)
+		}
 	}
-	return fmt.Sprintf("%s: work %s · cache %s (%d of %d %s)", typ, percentText(s.WorkPercent()), percentText(s.CachePercent()), s.SavedChildren, s.Children, noun)
+	if len(out) == 1 && len(types) == 1 && types[0].AgentType == UntypedAgent {
+		return nil
+	}
+	return out
+}
+
+// AgentTypeLine is "general-purpose: 70% work · 64% cache".
+func AgentTypeLine(typ string, s TokenSaving) string {
+	return fmt.Sprintf("%s: %s work · %s cache", typ, percentText(s.WorkPercent()), percentText(s.CachePercent()))
 }

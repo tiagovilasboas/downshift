@@ -50,14 +50,14 @@ func TestSessionSummaryLine(t *testing.T) {
 		{"only quota-like noise", []Event{{Outcome: "error", SessionID: s}, {Outcome: OutcomeResolved, SessionID: s}}, ""},
 		{"one spawn, no cost", []Event{rewrite()}, "◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · 0 on doubt"},
 		{"saved", []Event{rewrite(), liveUsage(s, rewrite().CorrelationID, 0.10, 0.50)},
-			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · tokens saved work 100% · cache 100% · 0 on doubt"},
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · saved 100% of work · 100% of cache · 0 on doubt"},
 		{"pricier is no saving", []Event{up(), liveUsage(s, up().CorrelationID, 0.50, 0.10)},
-			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on opus · tokens saved work 0% · cache 0% · 0 on doubt"},
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on opus · nothing saved yet · 10k on a pricier model · 0 on doubt"},
 		{"control child counts in the total", []Event{rewrite(), liveUsage(s, rewrite().CorrelationID, 0.10, 0.50),
 			liveDecision(s, OutcomeBaseline, opus, opus, "frontier", ReasonControl), liveUsage(s, opus+opus+OutcomeBaseline+ReasonControl, 0.50, 0.50)},
 			// The statusline counts routed spawns; the control child's tokens
 			// still enter the token total, so the share is not inflated.
-			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · tokens saved work 50% · cache 50% · 0 on doubt"},
+			"◆ downshift · 1 subagent · 1 switched · 0 held · 1 on haiku · saved 50% of work · 50% of cache · 0 on doubt"},
 		{"allow counts the requested model", []Event{liveDecision(s, OutcomeAllow, opus, opus, "frontier"), rewrite(), rewrite()},
 			"◆ downshift · 3 subagents · 2 switched · 0 held · 2 on haiku · 0 on doubt"},
 		{"doubt", []Event{
