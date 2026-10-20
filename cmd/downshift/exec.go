@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // runExec is `downshift exec -- <program> [args...]`: run the program with no
@@ -18,8 +20,15 @@ import (
 // passthrough. The exec log records the family, byte counts and exit class
 // only; a log failure changes nothing the command prints or returns.
 func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	session := ""
+	if len(args) > 0 && strings.HasPrefix(args[0], "--session=") {
+		if h := strings.TrimPrefix(args[0], "--session="); telemetry.ValidSessionHash(h) {
+			session = h
+		}
+		args = args[1:]
+	}
 	if len(args) == 0 || args[0] != "--" {
-		fmt.Fprintln(stderr, "usage: downshift exec -- <program> [args...]")
+		fmt.Fprintln(stderr, "usage: downshift compact [--session=<hash>] -- <program> [args...]")
 		return 2
 	}
 	res := execwrap.Run(args[1:], execwrap.Options{
@@ -30,7 +39,9 @@ func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	})
 	if len(args) > 1 {
 		if path, err := execwrap.EventsPath(); err == nil {
-			_ = execwrap.Append(path, execwrap.EventFrom(res, time.Now()))
+			ev := execwrap.EventFrom(res, time.Now())
+			ev.Session = session
+			_ = execwrap.Append(path, ev)
 		}
 	}
 	return res.ExitCode

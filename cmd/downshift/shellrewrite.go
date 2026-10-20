@@ -11,6 +11,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // shellEvent is the optional adapter seam for the opt-in exec wrapper. An
@@ -109,7 +110,11 @@ func shellRewrite[E any](harness string, ev E) (out any, isShell bool) {
 	if !d.Rewrite {
 		return nil, true
 	}
-	out, err := s.ShellRewrite(d.Command)
+	wrapped := d.Command
+	if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
+		wrapped = execwrap.WithSession(wrapped, telemetry.HashSessionID(identified.SessionIdentifier()))
+	}
+	out, err := s.ShellRewrite(wrapped)
 	if err != nil {
 		return nil, true
 	}
