@@ -28,6 +28,17 @@ func tokenDirection(usage, decision Event, found, unrouted, refuted bool) string
 	return tierDirection(usage.Harness, requested, ran)
 }
 
+// atTierFloor reports whether the requested model already sits on the lowest
+// catalog tier, so no cheaper model exists to move the child to. An unknown
+// model or no catalog is false, never a guess.
+func atTierFloor(harness, requested string) bool {
+	if DirectionCatalog == nil {
+		return false
+	}
+	m, ok := DirectionCatalog.LookupByID(harness, requested)
+	return ok && m.Tier == core.TierSmall
+}
+
 // tierDirection ranks a ran model against a requested one by catalog tier.
 // A model the catalog does not know is unattributed, never a guess.
 func tierDirection(harness, requested, ran string) string {

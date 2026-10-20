@@ -365,11 +365,11 @@ func TestPrintStats_TokensLine(t *testing.T) {
 		{"cheaper tokens", []telemetry.Event{
 			tokDecision("d", telemetry.OutcomeRewriteEmitted, "DOWNSHIFT", modelBig, modelSmall),
 			tokUsage("d", "claude-code", modelBig, modelSmall, tokUse{in: 40_000, out: 90_000, cached: 1_100_000, write: 100_000}, 1, 4)},
-			"tokens saved: work 100% · cache 100% (1.2M of 1.2M)"},
+			"saved 100% of work · 100% of cache"},
 		{"pricier tokens", []telemetry.Event{
 			tokDecision("d", telemetry.OutcomeRewriteEmitted, "UPSHIFT", modelSmall, modelBig),
 			tokUsage("d", "claude-code", modelSmall, modelBig, tokUse{in: 10, out: 20}, 4, 1)},
-			"tokens saved: work 0% · cache 0% (0 of 30) · 30 on a pricier model"},
+			"nothing saved yet · 30 on a pricier model"},
 		{"no priced usage reads not observed, not zero", []telemetry.Event{
 			tokDecision("d", telemetry.OutcomeAllow, "OK", modelBig, modelBig)},
 			"tokens not observed yet: wire SubagentStop with downshift setup"},
