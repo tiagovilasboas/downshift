@@ -107,7 +107,10 @@ func DisplayStateDir() string {
 	home, err := os.UserHomeDir()
 	if err == nil {
 		if rel, err := filepath.Rel(home, dir); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) && !filepath.IsAbs(rel) {
-			return "~/" + rel
+			// filepath.Rel uses the OS separator (backslash on Windows); the
+			// display label is always forward-slash so docs and stderr read the
+			// same on every OS.
+			return "~/" + filepath.ToSlash(rel)
 		}
 	}
 	return dir
