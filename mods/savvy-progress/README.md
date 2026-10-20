@@ -15,7 +15,7 @@ folded into the `downshift` plugin unchanged.
 | Upstream | https://github.com/JohnnyVizz/claude-kit, path `plugins/savvy-progress` |
 | Version | 1.2.1 upstream; shipped here as **1.2.8** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
 | Commit | `c871c153ead54ad9547cc717d0f3e5a676c73986` (2026-10-13) |
-| Files | `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `.claude-plugin/plugin.json` byte-identical except `version` (1.2.3, see below); `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; three of the four `hooks/*.test.ts(x)` files byte-identical (`hooks/cost.test.ts` is gated by `SHOWN_DOLLARS`, see the local patch) (they import nothing by relative path) |
+| Files | `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `.claude-plugin/plugin.json` byte-identical except `version` (1.2.8); `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; three of the four `hooks/*.test.ts(x)` files byte-identical (`hooks/cost.test.ts` is gated by `SHOWN_DOLLARS`, see the local patch) (they import nothing by relative path) |
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `savvy-progress`, source `./mods/savvy-progress` |
 | Needs | Claude Code 2.1.287 or later (mods on by default); a pane for `/agents-info` (desktop docks it; the terminal needs the fullscreen layout) |
 
@@ -66,8 +66,9 @@ draws; every number and label is computed by Downshift
 Nothing here touches routing and it spends nothing. Downshift's lines carry
 tokens only, never dollars (owner decision 2026-10-19): "saved" means the
 agent's tokens ran on a cheaper model than the one requested, not that fewer
-tokens were used. `downshift report` prices tokens at report time. The
-agents panel's own per-agent cost estimate is upstream's and is unchanged. The new
+tokens were used. `downshift report` compares routed and control token counts;
+it prints no dollar values. The agents panel's own per-agent cost estimate is
+upstream's and is unchanged. The new
 test file `hooks/downshift.test.ts` is Downshift's own (not upstream). The
 spawn and the Downshift hook must see the same `tool_use_id`; if they do not
 (unverified live), rows show no label and the summary still draws.

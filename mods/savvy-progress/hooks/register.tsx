@@ -768,8 +768,9 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 // Downshift local patch (2026-10-19): what Downshift did per spawn and this session.
 // Reads `downshift session --panel` (prompt-free JSON, computed by Downshift; this
 // mod only draws it). Tokens only: the tokens each agent and the session saved from
-// the requested model, work and cache apart; no dollars (`downshift report` prices
-// them). Fail-open: no binary, bad output or no match means nothing extra is drawn.
+// the requested model, work and cache apart; no dollars (`downshift report` compares
+// routed and control tokens per completed task). Fail-open: no binary, bad output
+// or no match means nothing extra is drawn.
 // Data contract: docs/reference/spawn-state.md in the Downshift repo.
 
 type DsSpawn = { tool_use?: string; label: string; saved: number }
