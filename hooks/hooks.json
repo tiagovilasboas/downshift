@@ -1,23 +1,76 @@
 {
-  "modules": [
-    "./cache-tax/register.ts"
-  ],
+  "modules": [],
   "hooks": {
     "PreToolUse": [
-      { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code" } ] }
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "downshift claude-code"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "downshift claude-code"
+          }
+        ]
+      }
     ],
     "PostToolUse": [
-      { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code-post-tool-use" } ] },
-      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "downshift claude-code-post-tool-use" } ] }
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "downshift claude-code-post-tool-use"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "downshift claude-code-post-tool-use"
+          }
+        ]
+      }
     ],
     "PostToolUseFailure": [
-      { "matcher": "Agent|Task", "hooks": [ { "type": "command", "command": "downshift claude-code-post-tool-use" } ] }
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "downshift claude-code-post-tool-use"
+          }
+        ]
+      }
     ],
     "SubagentStop": [
-      { "hooks": [ { "type": "command", "command": "downshift claude-code-subagent-stop" } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "downshift claude-code-subagent-stop"
+          }
+        ]
+      }
     ],
     "UserPromptSubmit": [
-      { "hooks": [ { "type": "command", "command": "downshift dci hook claude-code" } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "downshift dci hook claude-code"
+          }
+        ]
+      }
     ]
   }
 }

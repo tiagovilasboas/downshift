@@ -23,9 +23,9 @@ All arms: same harness version, same plan, same repository state, same prompts, 
 | 0 (control) | off (`DOWNSHIFT_NO_ROUTE=1`, hooks still record) | none | as arm B of the protocol it extends |
 | a | Downshift routing only | none | `DOWNSHIFT_CONTROL_SHARE=0` |
 | b | routing | Headroom companion in the request path | arm a plus `headroom wrap` for the harness (Headroom's own command, see [companions.md](companions.md)) |
-| c | routing | `downshift exec` wrapper (opt-in) | arm a plus the wrapper as documented once released |
+| c | routing | `downshift compact` wrapper (opt-in) | arm a plus the wrapper as documented once released |
 | d | off | RTK alone, if installed | RTK's own hook setup; `DOWNSHIFT_NO_ROUTE=1` |
-| e (optional, isolates routing) | off | `downshift exec` | arm c with `DOWNSHIFT_NO_ROUTE=1` |
+| e (optional, isolates routing) | off | `downshift compact` | arm c with `DOWNSHIFT_NO_ROUTE=1` |
 
 Arm d is dropped, and the result says so, if RTK is not available. Arm e is what separates the marginal value of
 routing on top of exec (c against e); without it, c against d is the only stack comparison. Confirm each arm's

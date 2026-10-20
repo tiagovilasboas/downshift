@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -129,7 +130,7 @@ func mergeTarget(doc *jobj, t setupTarget, binary string, skipOptional, optIn bo
 			continue
 		}
 		if t.Nested {
-			list = ensureNestedHook(list, h, cmd)
+			list = ensureNestedHook(list, h, cmd, ownedMatchers(t.Hooks, h.Event))
 		} else {
 			list = ensureFlatHook(list, h, cmd)
 		}
@@ -189,7 +190,19 @@ func hookCommand(o *jobj) string {
 	return c
 }
 
-func ensureNestedHook(list []any, h setupHook, cmd string) []any {
+// ownedMatchers lists the non-empty matchers this setup writes for event.
+// A group under one of them is another hook of ours, never a stale one to move.
+func ownedMatchers(hooks []setupHook, event string) []string {
+	var out []string
+	for _, h := range hooks {
+		if h.Event == event && h.Matcher != "" {
+			out = append(out, h.Matcher)
+		}
+	}
+	return out
+}
+
+func ensureNestedHook(list []any, h setupHook, cmd string, owned []string) []any {
 	for _, item := range list {
 		group, ok := asObj(item)
 		if !ok {
@@ -201,10 +214,14 @@ func ensureNestedHook(list []any, h setupHook, cmd string) []any {
 			if !ok || !isDownshiftCommand(hookCommand(ho), h.Args) {
 				continue
 			}
+			cur, _ := group.vals["matcher"].(string)
+			if h.Matcher != "" && cur != h.Matcher && slices.Contains(owned, cur) {
+				// Another of our hooks (say Bash beside Agent|Task): not ours to move.
+				break
+			}
 			if hookCommand(ho) != cmd {
 				ho.set("command", cmd)
 			}
-			cur, _ := group.vals["matcher"].(string)
 			if h.Matcher == "" || cur == h.Matcher {
 				return list
 			}

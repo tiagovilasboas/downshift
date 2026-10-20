@@ -298,9 +298,9 @@ driven). To change either, first capture how the host treats `{}` for a spawn it
 a rule for, then add the harness to the neutral set and extend the conformance
 decoders. Until then the safe answer is the documented one.
 
-## Shell command rewrite: `downshift exec` (opt-in, 2026-10-19)
+## Shell command rewrite: `downshift compact` (opt-in, 2026-10-19)
 
-Off by default. `downshift context enable native --exec` turns it on;
+Off by default. `downshift context enable native` turns it on;
 `DOWNSHIFT_EXEC=0` turns it off without a config change. The decision is
 shared (`internal/execwrap.Decide` plus `shellWrapDecision` in the hook
 runner): allowlist `go test` and `git status`, no shell metacharacter, never
@@ -310,7 +310,7 @@ exposing `ShellCommand()` and `ShellRewrite()`.
 
 | harness | shell rewrite | status | limit |
 |---|---|---|---|
-| claude-code | `PreToolUse` on `Bash` → `updatedInput.command`, every sibling field kept, no `permissionDecision` | Wired, not observed live | Needs a manual `{"matcher": "Bash", ...}` PreToolUse entry running `downshift claude-code`; `setup` does not write it. Not verified on a live session that Claude Code applies `updatedInput` without a `permissionDecision`. If it does not, the command runs unchanged: nothing breaks, nothing is saved. Permissions: the rewrite happens only when the user's own allow rule (for example `Bash(go test:*)`) matches the **original** command and no deny or ask rule in the managed, user (`CLAUDE_CONFIG_DIR` honoured), project or local settings does; an unreadable or invalid settings file means no rewrite. The harness then checks the rewritten command, so add no `downshift exec` rule and never a broad `Bash(downshift exec:*)`. |
+| claude-code | `PreToolUse` on `Bash` → `updatedInput.command`, every sibling field kept, no `permissionDecision` | Wired, not observed live | Needs a manual `{"matcher": "Bash", ...}` PreToolUse entry running `downshift claude-code`; `setup` does not write it. Not verified on a live session that Claude Code applies `updatedInput` without a `permissionDecision`. If it does not, the command runs unchanged: nothing breaks, nothing is saved. Permissions: the rewrite happens only when the user's own allow rule (for example `Bash(go test:*)`) matches the **original** command and no deny or ask rule in the managed, user (`CLAUDE_CONFIG_DIR` honoured), project or local settings does; an unreadable or invalid settings file means no rewrite. The harness then checks the rewritten command, so add no `downshift compact` rule and never a broad `Bash(downshift compact:*)`. |
 | codex | not wired | Unverified | The adapter exposes no shell command. The decision would be computed if it did. |
 | cursor | not wired | Unverified | Same. |
 | opencode | not wired | Unverified | Same. |
@@ -318,13 +318,13 @@ exposing `ShellCommand()` and `ShellRewrite()`.
 | kirocrew | not wired | No rewrite channel | Policy-mode only (allow or block), so it can never rewrite a command. |
 | grok | none | No hook | Config only. |
 
-`downshift exec -- <argv>` works the same from any shell, harness or not.
+`downshift compact -- <argv>` works the same from any shell, harness or not.
 
 **Unverified on a live session (C14).** A unit test cannot show that Claude Code applies `updatedInput.command` when the hook returns no `permissionDecision`. To check it:
 
-1. `downshift context enable native --exec`, add the printed `Bash` PreToolUse entry, and make sure `Bash(go test:*)` is in your allow rules.
+1. `downshift context enable native`, add the printed `Bash` PreToolUse entry, and make sure `Bash(go test:*)` is in your allow rules.
 2. Start a new Claude Code session in a Go repository and ask it to run `go test ./...` (a repository with a dozen or more packages, all passing).
-3. Look at the tool call Claude Code shows. The command must read `'<path>/downshift' exec -- go test ./...`, and a passing result must end with a `[downshift exec: compacted N to M bytes]` line.
+3. Look at the tool call Claude Code shows. The command must read `'<path>/downshift' exec -- go test ./...`, and a passing result must end with a `[downshift compact: compacted N to M bytes]` line.
 4. Run `downshift context metrics`: `exec_metrics.commands` must have grown. With `DOWNSHIFT_EXEC=0` in the environment the command must run as typed.
 
 If the command runs as typed with the hook on, Claude Code ignores the rewrite without a decision: nothing breaks and nothing is saved, and this feature should stay documented as not working there.

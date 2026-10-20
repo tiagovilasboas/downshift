@@ -94,9 +94,8 @@ Subcommands:
   providers            List supported context optimization companion providers
   doctor               Run diagnostics on context optimization providers and harnesses
   enable [provider]    Enable the native provider (default) or record a companion (headroom)
-                       --exec: also turn on the opt-in shell wrapper (downshift exec); --no-exec: turn it off
-  disable [companion]  Disable context optimization, or clear one companion record
-  metrics              Show command metrics, and bytes saved by downshift exec (tokens estimated)
+  disable [companion]  Clear one companion record. Native compact is always on and cannot be disabled
+  metrics              Show command metrics, and bytes saved by downshift compact (tokens estimated)
   compress [mode]      Compress stdin tool output (mode: observe, safe, off)
   benchmark            Print the scenario matrix and measured compressor bytes`)
 }
@@ -124,11 +123,7 @@ func runContextStatus(ctx context.Context, reg *contextopt.Registry, w, errW io.
 		fmt.Fprintln(w, "  Claude Code: measures only. A Claude Code hook cannot rewrite tool output, so the native provider saves no tokens there;")
 		fmt.Fprintln(w, "    real compression needs the Headroom proxy (`headroom wrap claude`), which Downshift does not start.")
 	}
-	if cfg.Exec {
-		fmt.Fprintln(w, "  Exec wrapper: on (allowlisted shell commands run through `downshift exec`; DOWNSHIFT_EXEC=0 disables)")
-	} else {
-		fmt.Fprintln(w, "  Exec wrapper: off (`downshift context enable native --exec` turns it on)")
-	}
+	fmt.Fprintln(w, "  Compact: on (allowlisted shell commands run through `downshift compact`)")
 	fmt.Fprintf(w, "  Main Agent: %v, Subagents: %v\n", cfg.Scope.MainAgent, cfg.Scope.SpawnedAgents)
 	fmt.Fprintf(w, "  Preserve Original Output: %v\n", cfg.Safety.PreserveOriginalOutput)
 
@@ -264,12 +259,6 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	if providerID == "native" {
 		cfg.ExitCodeContract = contextopt.ExitCodeContractObserve
 	}
-	switch execFlag {
-	case "--exec":
-		cfg.Exec = true
-	case "--no-exec":
-		cfg.Exec = false
-	}
 	if err := contextopt.SaveConfig(cfg); err != nil {
 		fmt.Fprintf(errW, "error: failed to save config: %v\n", err)
 		return 1
@@ -279,9 +268,7 @@ func runContextEnable(ctx context.Context, reg *contextopt.Registry, args []stri
 	fmt.Fprintln(w, "Exit-code contract: observe_only; nonzero_exit_preserved; hook_cannot_replace_tool_output.")
 	fmt.Fprintln(w, "Claude Code PostToolUse records CompressExit in observe mode when this flag is on, using the tool exit code.")
 	fmt.Fprintln(w, "The hook cannot replace tool output. The model still sees the original result. Prompts are not compressed.")
-	if cfg.Exec {
-		printExecEnabled(w)
-	}
+	printExecEnabled(w)
 	// A detected companion is recorded by default. Recording changes no hook
 	// and runs no third-party command; it only tells doctor and the docs
 	// that savings are not routing alone.
@@ -320,50 +307,23 @@ func printWrapHints(w io.Writer, p contextopt.Provider) {
 }
 
 func runContextDisable(ctx context.Context, reg *contextopt.Registry, args []string, w, errW io.Writer) int {
-	cfg, err := contextopt.LoadConfig()
-	if err != nil {
-		fmt.Fprintf(errW, "error: loading config: %v\n", err)
-		return 1
+	// Native compact and model routing have no off switch: only a companion
+	// record can be cleared.
+	if len(args) == 0 {
+		fmt.Fprintln(errW, "Native compact is always on and cannot be disabled. To clear a companion record: downshift context disable <companion>")
+		return 2
 	}
 	cwd, _ := os.Getwd()
-	if len(args) > 0 {
-		p, ok := reg.Get(args[0])
-		if !ok || !contextopt.IsCompanion(p) {
-			fmt.Fprintf(errW, "error: %q is not a registered companion. Run `downshift context providers`\n", args[0])
-			return 2
-		}
-		if err := p.Disable(ctx, cwd, ""); err != nil {
-			fmt.Fprintf(errW, "error: clearing companion %s: %v\n", p.ID(), err)
-			return 1
-		}
-		fmt.Fprintf(w, "✓ Companion %s cleared. Unwrap your harness with its own command if it is still wrapped.\n", p.ID())
-		return 0
+	p, ok := reg.Get(args[0])
+	if !ok || !contextopt.IsCompanion(p) {
+		fmt.Fprintf(errW, "error: %q is not a registered companion. Run `downshift context providers`\n", args[0])
+		return 2
 	}
-	if !cfg.Enabled && cfg.Companion == "" {
-		fmt.Fprintln(w, "Context optimization is already disabled.")
-		return 0
-	}
-
-	if p, ok := reg.Get(cfg.Provider); ok {
-		for _, h := range cfg.ActiveHarness {
-			_ = p.Disable(ctx, cwd, h)
-		}
-	}
-	if c, ok := reg.Get(cfg.Companion); ok {
-		_ = c.Disable(ctx, cwd, "")
-	}
-
-	cfg.Enabled = false
-	cfg.Exec = false
-	cfg.Provider = ""
-	cfg.Companion = ""
-	cfg.ActiveHarness = nil
-	if err := contextopt.SaveConfig(cfg); err != nil {
-		fmt.Fprintf(errW, "error: saving config: %v\n", err)
+	if err := p.Disable(ctx, cwd, ""); err != nil {
+		fmt.Fprintf(errW, "error: clearing companion %s: %v\n", p.ID(), err)
 		return 1
 	}
-
-	fmt.Fprintln(w, "✓ Context optimization disabled. Project configurations reverted.")
+	fmt.Fprintf(w, "✓ Companion %s cleared. Unwrap your harness with its own command if it is still wrapped.\n", p.ID())
 	return 0
 }
 
@@ -479,14 +439,12 @@ func runContextCompress(args []string, w, errW io.Writer) int {
 	return 0
 }
 
-// printExecEnabled says what --exec turned on and the one hook entry it needs.
-// It writes no harness settings: the user adds the entry.
+// printExecEnabled says what compact does and the one hook entry it needs.
+// It writes no harness settings: the plugin and setup carry the Bash hook.
 func printExecEnabled(w io.Writer) {
-	fmt.Fprintln(w, "Exec wrapper: on. Allowlisted shell commands (go test, git status) with no shell metacharacters")
-	fmt.Fprintln(w, "are rewritten to `downshift exec -- <command>`, which keeps the exit code and compacts only clean output.")
-	fmt.Fprintln(w, "Claude Code: add a PreToolUse entry for the Bash tool (setup does not write it):")
-	fmt.Fprintln(w, `  {"matcher": "Bash", "hooks": [{"type": "command", "command": "downshift claude-code"}]}`)
+	fmt.Fprintln(w, "Compact: on. Allowlisted shell commands (go test, git status) with no shell metacharacters")
+	fmt.Fprintln(w, "are rewritten to `downshift compact -- <command>`, which keeps the exit code and compacts only clean output.")
 	fmt.Fprintln(w, "Your own rules gate it: a command is rewritten only when a Bash allow rule (for example `Bash(go test:*)`)")
-	fmt.Fprintln(w, "matches it and no deny or ask rule in any settings scope does. Add no rule for `downshift exec`.")
-	fmt.Fprintln(w, "Other harnesses: not wired. DOWNSHIFT_EXEC=0 turns it off without a config change.")
+	fmt.Fprintln(w, "matches it and no deny or ask rule in any settings scope does. Add no rule for `downshift compact`.")
+	fmt.Fprintln(w, "Other harnesses: not wired.")
 }
