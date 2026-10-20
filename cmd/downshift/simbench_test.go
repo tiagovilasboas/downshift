@@ -18,6 +18,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/simbench"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
@@ -144,14 +145,25 @@ func checkCLIMatchesLibrary(t *testing.T, res simbench.Result) {
 	if err := json.Unmarshal([]byte(export), &sum); err != nil {
 		t.Fatalf("stats --export: %v\n%s", err, export)
 	}
-	lib := telemetry.Summarize(res.Events)
-	saved := 0.0
-	if sum.RealSavedUSD != nil {
-		saved = *sum.RealSavedUSD
+	if sum.SchemaVersion != 2 {
+		t.Errorf("stats --export schema_version %d, want 2", sum.SchemaVersion)
 	}
-	if math.Abs(saved-lib.GrossSavedUSD) > 1e-6 || math.Abs(sum.RealOverspendUSD-lib.OverspendUSD) > 1e-6 ||
-		math.Abs(sum.RealCostDeltaUSD-lib.NetSavedUSD) > 1e-6 {
-		t.Errorf("stats --export saved %v overspend %v net %v, Summarize %+v", saved, sum.RealOverspendUSD, sum.RealCostDeltaUSD, lib)
+	for _, key := range []string{"actual_cost_usd", "real_saved_usd", "real_cost_delta_usd", "real_overspend_usd", "max_session_cost_usd", "max_subagent_cost_usd"} {
+		if strings.Contains(export, `"`+key+`"`) {
+			t.Errorf("stats --export schema v2 carries dollar key %q", key)
+		}
+	}
+	// The library continues to compute the internal dollar math until part 4.
+	// Verify that the underlying accounting invariants still hold in ExportSummary:
+	lib := telemetry.Summarize(res.Events)
+	expSum := telemetry.ExportSummary(res.Events, 0, time.Now())
+	saved := 0.0
+	if expSum.RealSavedUSD != nil {
+		saved = *expSum.RealSavedUSD
+	}
+	if math.Abs(saved-lib.GrossSavedUSD) > 1e-6 || math.Abs(expSum.RealOverspendUSD-lib.OverspendUSD) > 1e-6 ||
+		math.Abs(expSum.RealCostDeltaUSD-lib.NetSavedUSD) > 1e-6 {
+		t.Errorf("ExportSummary saved %v overspend %v net %v, Summarize %+v", saved, expSum.RealOverspendUSD, expSum.RealCostDeltaUSD, lib)
 	}
 	if strings.Contains(export, simbench.Canary) {
 		t.Error("stats --export carries task text")

@@ -12,7 +12,7 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 |---|------|-------|------|--------|
 | 1 | `downshift report --json`: drop dollar keys (`cost_usd`, `cost_per_completed_task_usd`, `per_task_*_usd`, `savings`, `prices_as_of`). Go fields stay, `json:"-"`. | high (what users read) | low: one output | in progress |
 | 2 | Text report and docs already show tokens only | high | done | done (`63fdfdc4`, `95deac3f`, `ff53579b`) |
-| 3 | `downshift stats --export`: drop `*_usd` keys. This is the operator contract (issue #104): bump the export version, update `docs/reference/stats-export.md` and the `simbench` invariants that read those keys. | high (external operators) | medium: contract | not started |
+| 3 | `downshift stats --export`: drop `*_usd` keys. This is the operator contract (issue #104): bump the export version, update `docs/reference/stats-export.md` and the `simbench` invariants that read those keys. | high (external operators) | medium: contract | done |
 | 4 | Event log: stop writing `actual_cost_usd` / `baseline_cost_usd`. Keep reading old lines. Summaries (`GrossSavedUSD`, `NetSavedUSD`, overspend) move to tokens. | medium | high: changes accounting history | not started |
 | 5 | Remove the catalog-price valuation from report and stats (`RepriceUsage`). Routing keeps using the catalog. | low | medium | not started |
 

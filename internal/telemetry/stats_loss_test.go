@@ -104,33 +104,36 @@ func TestExportSummary_LossFieldsRoundTrip(t *testing.T) {
 	loses := costEvent(6.0, 2.0)
 	loses.Timestamp = exportNow.Format(time.RFC3339Nano)
 	got := telemetry.ExportSummary([]telemetry.Event{loses}, 30, exportNow)
+	if got.RealCostDeltaUSD != -4 || got.RealOverspendUSD != 4 || got.RealSavedUSD == nil || *got.RealSavedUSD != 0 {
+		t.Errorf("Go struct delta=%f overspend=%f saved=%v", got.RealCostDeltaUSD, got.RealOverspendUSD, got.RealSavedUSD)
+	}
+
 	raw, err := telemetry.ExportJSON(got)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, key := range []string{`"real_cost_delta_usd": -4`, `"real_overspend_usd": 4`} {
-		if !strings.Contains(raw, key) {
-			t.Errorf("export missing %s:\n%s", key, raw)
+	for _, key := range []string{"real_cost_delta_usd", "real_overspend_usd", "real_saved_usd", "actual_cost_usd"} {
+		if strings.Contains(raw, key) {
+			t.Errorf("export v2 must omit %s:\n%s", key, raw)
 		}
 	}
+	if !strings.Contains(raw, `"schema_version": 2`) {
+		t.Errorf("export v2 missing schema_version 2:\n%s", raw)
+	}
+
+	// Unmarshaling into Summary parses valid v2 fields and ignores older dollar keys.
 	var back telemetry.Summary
 	if err := json.Unmarshal([]byte(raw), &back); err != nil {
 		t.Fatal(err)
 	}
-	if back.RealCostDeltaUSD != -4 || back.RealOverspendUSD != 4 || back.RealSavedUSD == nil || *back.RealSavedUSD != 0 {
-		t.Errorf("round trip delta=%f overspend=%f saved=%v", back.RealCostDeltaUSD, back.RealOverspendUSD, back.RealSavedUSD)
+	if back.SchemaVersion != 2 {
+		t.Errorf("SchemaVersion = %d, want 2", back.SchemaVersion)
 	}
 
-	// Additive: a clean window omits both keys, and older JSON still parses.
-	clean, _ := telemetry.ExportJSON(telemetry.ExportSummary(nil, 30, exportNow))
-	for _, key := range []string{"real_cost_delta_usd", "real_overspend_usd", "real_saved_usd", "actual_cost_usd"} {
-		if strings.Contains(clean, key) {
-			t.Errorf("unmeasured export must omit %q:\n%s", key, clean)
-		}
-	}
+	// Additive / backwards-compatibility: older export JSON still parses without error.
 	var old telemetry.Summary
-	if err := json.Unmarshal([]byte(`{"total":1,"real_saved_usd":0.5}`), &old); err != nil || old.RealCostDeltaUSD != 0 {
-		t.Errorf("older export must parse unchanged: %v %+v", err, old)
+	if err := json.Unmarshal([]byte(`{"total":1,"real_saved_usd":0.5}`), &old); err != nil || old.Total != 1 {
+		t.Errorf("older export must parse: %v %+v", err, old)
 	}
 }
 

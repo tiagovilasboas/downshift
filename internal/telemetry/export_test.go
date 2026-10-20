@@ -179,7 +179,7 @@ func TestExportJSON_RoundTrip(t *testing.T) {
 	if !strings.Contains(raw, "\n") || !strings.Contains(raw, `"window_days"`) {
 		t.Fatalf("expected indented JSON with window_days, got: %s", raw)
 	}
-	for _, field := range []string{`"total"`, `"downshifted"`, `"downshift_rate"`, `"note"`, `"by_complexity"`, `"generated_at"`, `"rewrite_honored_inferred"`} {
+	for _, field := range []string{`"total"`, `"downshifted"`, `"downshift_rate"`, `"note"`, `"by_complexity"`, `"generated_at"`, `"rewrite_honored_inferred"`, `"schema_version": 2`} {
 		if !strings.Contains(raw, field) {
 			t.Errorf("JSON missing field %s: %s", field, raw)
 		}
@@ -189,7 +189,7 @@ func TestExportJSON_RoundTrip(t *testing.T) {
 	if err := json.Unmarshal([]byte(raw), &back); err != nil {
 		t.Fatalf("Unmarshal ExportJSON: %v", err)
 	}
-	if back.Total != summary.Total || back.Downshifted != summary.Downshifted || back.Note != summary.Note {
+	if back.SchemaVersion != 2 || back.Total != summary.Total || back.Downshifted != summary.Downshifted || back.Note != summary.Note {
 		t.Errorf("round-trip mismatch: got %+v, want %+v", back, summary)
 	}
 	if math.Abs(back.DownshiftRate-summary.DownshiftRate) > 1e-9 {
@@ -197,24 +197,29 @@ func TestExportJSON_RoundTrip(t *testing.T) {
 	}
 }
 
-func TestExportJSON_OmitsUnmeasuredCostUSD(t *testing.T) {
+func TestExportJSON_OmitsAllCostUSD_SchemaV2(t *testing.T) {
+	dollarKeys := []string{
+		"actual_cost_usd",
+		"real_saved_usd",
+		"real_cost_delta_usd",
+		"real_overspend_usd",
+		"max_session_cost_usd",
+		"max_subagent_cost_usd",
+	}
+
 	tests := []struct {
-		name        string
-		events      []telemetry.Event
-		wantAbsent  []string
-		wantPresent map[string]float64
+		name   string
+		events []telemetry.Event
 	}{
 		{
-			name:       "no events",
-			events:     nil,
-			wantAbsent: []string{"actual_cost_usd", "real_saved_usd", "max_session_cost_usd", "max_subagent_cost_usd"},
+			name:   "no events",
+			events: nil,
 		},
 		{
 			name: "routing only",
 			events: []telemetry.Event{
 				exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT", 0.8),
 			},
-			wantAbsent: []string{"actual_cost_usd", "real_saved_usd", "max_session_cost_usd", "max_subagent_cost_usd"},
 		},
 		{
 			name: "observed spend without baseline comparison",
@@ -225,24 +230,22 @@ func TestExportJSON_OmitsUnmeasuredCostUSD(t *testing.T) {
 				u.InputTokens = exportInt64Ptr(1000)
 				return []telemetry.Event{u}
 			}(),
-			wantAbsent:  []string{"real_saved_usd", "max_session_cost_usd", "max_subagent_cost_usd"},
-			wantPresent: map[string]float64{"actual_cost_usd": 0.25},
 		},
 		{
-			name: "measured zero savings still present",
+			name: "measured zero savings",
 			events: func() []telemetry.Event {
 				ev := exportEvent(exportNow, "COMPLEX", "UPSHIFT", 0)
 				ev.ActualCostUSD = exportFloat64Ptr(6.0)
 				ev.BaselineCostUSD = exportFloat64Ptr(2.0)
 				return []telemetry.Event{ev}
 			}(),
-			wantPresent: map[string]float64{"real_saved_usd": 0},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			raw, err := telemetry.ExportJSON(telemetry.ExportSummary(tt.events, 30, exportNow))
+			sum := telemetry.ExportSummary(tt.events, 30, exportNow)
+			raw, err := telemetry.ExportJSON(sum)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -250,22 +253,17 @@ func TestExportJSON_OmitsUnmeasuredCostUSD(t *testing.T) {
 			if err := json.Unmarshal([]byte(raw), &m); err != nil {
 				t.Fatal(err)
 			}
-			for _, key := range tt.wantAbsent {
-				if _, ok := m[key]; ok {
-					t.Errorf("key %q must be absent, got %s", key, raw)
-				}
+			rawSchema, ok := m["schema_version"]
+			if !ok {
+				t.Fatalf("schema_version missing from export:\n%s", raw)
 			}
-			for key, want := range tt.wantPresent {
-				rawVal, ok := m[key]
-				if !ok {
-					t.Fatalf("key %q missing from export:\n%s", key, raw)
-				}
-				var got float64
-				if err := json.Unmarshal(rawVal, &got); err != nil {
-					t.Fatal(err)
-				}
-				if math.Abs(got-want) > 1e-9 {
-					t.Errorf("%s = %f, want %f", key, got, want)
+			var schemaVer int
+			if err := json.Unmarshal(rawSchema, &schemaVer); err != nil || schemaVer != 2 {
+				t.Fatalf("expected schema_version 2, got %d (err: %v)", schemaVer, err)
+			}
+			for _, key := range dollarKeys {
+				if _, ok := m[key]; ok {
+					t.Errorf("dollar key %q must be omitted from schema v2 export, got %s", key, raw)
 				}
 			}
 		})
