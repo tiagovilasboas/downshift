@@ -14,7 +14,7 @@ the owner before code.
 
 Plan: `docs/internal/tasks/2026-10-20-tokens-only/README.md`.
 
-- [ ] Part 3: `stats --export` drops `*_usd`. **Decision:** operator contract (issue #104). Bump the export version, update `docs/reference/stats-export.md`, adjust `simbench` invariants.
+- [x] Part 3: `stats --export` drops `*_usd`. **Decision:** operator contract (issue #104). Bump the export version, update `docs/reference/stats-export.md`, adjust `simbench` invariants. (Done: schema v2, `*_usd` omitted, simbench invariants updated).
 - [ ] Part 4: event log stops writing `actual_cost_usd` / `baseline_cost_usd`; summaries move to tokens. Keeps reading old lines. **Decision:** changes accounting history.
 - [ ] Part 5: remove catalog-price valuation (`RepriceUsage`) from report and stats. Routing keeps the catalog.
 - [ ] Open question from the JSON change: the price date no longer appears in the report. Confirm that is acceptable.

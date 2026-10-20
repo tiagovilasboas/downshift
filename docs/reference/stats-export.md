@@ -19,15 +19,12 @@ Fields useful for graduation tracking:
 
 | Field | Meaning |
 |-------|---------|
+| `schema_version` | Schema version (`2` in tokens-only builds) |
 | `total` | Routing decisions in window |
 | `downshift_rate` | Fraction downshifted |
 | `actual_cost_events` | Events with observed token usage priced against a known routed model, including unknown-baseline events |
-| `actual_cost_usd` | Sum of observed token costs at catalog list prices (not provider invoices) |
 | `real_cost_events` | Events with both actual and baseline catalog-priced USD |
 | `real_cost_inferred_baseline` | Of those, events whose baseline was guessed from settings (`baseline_source: inferred`), not requested by the harness |
-| `real_saved_usd` | Sum of baseline − actual (catalog pricing), each event clamped at zero, so it never goes negative |
-| `real_cost_delta_usd` | Signed sum of baseline − actual over the same events. Negative means the router cost more than the baseline overall. Omitted when `0` |
-| `real_overspend_usd` | Sum of the negative per-event deltas as a positive number: money spent above baseline. Omitted when `0` |
 | `observed_child_tokens` | Sum of input, output, and cached tokens from usage events that carry token counts |
 | `observed_child_usage` | Count of those usage events; `0` means unobserved, not a measured zero |
 | `usage_records` | All post-hoc usage records, including unlinked records |
@@ -40,9 +37,11 @@ Fields useful for graduation tracking:
 | `dci` | Object containing Downshift Code Intelligence telemetry: `prompts_evaluated`, `injections_applied`, `injection_rate`, `injection_pct`, `abstentions` (and breakdown: `conversational_greeting`, `chatter`, `no_candidates`, `insufficient_evidence`), `context_bytes_emitted`, `avg_bytes_per_injection`, `latency_ms_p50`, and `latency_ms_p95`. Strictly observed empirical measurements; zero synthetic token counts, zero fictitious dollar estimates. Omitted when no DCI events exist in the window |
 | `tokens_rerouted` | The token facts behind the savings, per harness and per model pair. Always present. Object `{basis, by_harness, totals}`; see [Tokens rerouted](#tokens-rerouted) |
 
+> [!NOTE]
+> In schema version 2 (Tokens only), dollar fields (`actual_cost_usd`, `real_saved_usd`, `real_cost_delta_usd`, `real_overspend_usd`, `max_session_cost_usd`, `max_subagent_cost_usd`) are omitted from the export JSON. `tokens_rerouted` is the authoritative source for token quantities rerouted to cheaper models.
+
 `downshift stats` text (short and `--detail`) prints no dollar figure since 2026-10-19: its headline is tokens
-saved from the requested model, and dollars are `downshift report`'s, priced at report time. The export below keeps
-its dollar fields unchanged for machine readers and the evidence files.
+saved from the requested model, and dollars are `downshift report`'s, priced at report time. Machine readers use `tokens_rerouted` from the export.
 
 ## Tokens rerouted
 

@@ -21,9 +21,10 @@ const baseNote string = "Single-user dogfood: directional only, not billing. Com
 const unknownCautionThreshold float64 = 0.25
 
 // Summary is a pasteable aggregate of routing events for issues and reports.
-// It carries no prompt text, only counts and cost proxies. JSON field order
+// It carries no prompt text, only counts and token quantities. JSON field order
 // follows struct order so ExportJSON output is stable across runs.
 type Summary struct {
+	SchemaVersion       int                       `json:"schema_version"`
 	WindowDays          int                       `json:"window_days"`
 	GeneratedAt         string                    `json:"generated_at"`
 	Total               int                       `json:"total"`
@@ -35,12 +36,12 @@ type Summary struct {
 	NotApplied          int                       `json:"not_applied"`
 	PolicyFloor         int                       `json:"policy_floor"`
 	ActualCostEvents    int                       `json:"actual_cost_events"`
-	ActualCostUSD       *float64                  `json:"actual_cost_usd,omitempty"`
+	ActualCostUSD       *float64                  `json:"-"`
 	RealCostEvents      int                       `json:"real_cost_events"`
 	RealCostInferred    int                       `json:"real_cost_inferred_baseline"`
-	RealSavedUSD        *float64                  `json:"real_saved_usd,omitempty"`
-	RealCostDeltaUSD    float64                   `json:"real_cost_delta_usd,omitempty"`
-	RealOverspendUSD    float64                   `json:"real_overspend_usd,omitempty"`
+	RealSavedUSD        *float64                  `json:"-"`
+	RealCostDeltaUSD    float64                   `json:"-"`
+	RealOverspendUSD    float64                   `json:"-"`
 	UsageRecords        int                       `json:"usage_records"`
 	UsageLinked         int                       `json:"usage_linked"`
 	Baseline            int                       `json:"baseline_no_route"`
@@ -54,8 +55,8 @@ type Summary struct {
 	ObservedChildUsage  int                       `json:"observed_child_usage"`
 	CostSessions        int                       `json:"cost_sessions"`
 	CostSubagents       int                       `json:"cost_subagents"`
-	MaxSessionCostUSD   *float64                  `json:"max_session_cost_usd,omitempty"`
-	MaxSubagentCostUSD  *float64                  `json:"max_subagent_cost_usd,omitempty"`
+	MaxSessionCostUSD   *float64                  `json:"-"`
+	MaxSubagentCostUSD  *float64                  `json:"-"`
 	ChildStatus         map[string]int            `json:"child_status"`
 	ReasonCodes         map[string]int            `json:"reason_codes,omitempty"`
 	AgentTypes          map[string]AgentTypeCount `json:"agent_types,omitempty"`
@@ -102,6 +103,7 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 	}
 
 	return Summary{
+		SchemaVersion:       2,
 		WindowDays:          days,
 		GeneratedAt:         now.UTC().Format(time.RFC3339Nano),
 		Total:               stats.Total,
