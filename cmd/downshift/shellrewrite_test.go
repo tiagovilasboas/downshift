@@ -101,8 +101,11 @@ func TestShellRewrite_ThroughSharedRunner(t *testing.T) {
 	}{
 		{"enabled go test", true, nil, true, "go test ./...", okRules, nil, nil, "'" + testExe + "' compact --session=" + testSession + " -- go test ./..."},
 		{"enabled git status", true, nil, true, "git status", okRules, nil, nil, "'" + testExe + "' compact --session=" + testSession + " -- git status"},
-		{"no allow rule", true, nil, true, "go test ./...", nil, nil, nil, ""},
-		{"allow rule for another command", true, nil, true, "go test ./...", []string{"Bash(git status)"}, nil, nil, ""},
+		{"no rules at all", true, nil, true, "go test ./...", nil, nil, nil, "'" + testExe + "' compact --session=" + testSession + " -- go test ./..."},
+		{"allow rule for another command", true, nil, true, "go test ./...", []string{"Bash(git status)"}, nil, nil, "'" + testExe + "' compact --session=" + testSession + " -- go test ./..."},
+		{"deny rule for another command", true, nil, true, "go test ./...", nil, []string{"Bash(git status)"}, nil, "'" + testExe + "' compact --session=" + testSession + " -- go test ./..."},
+		{"ask rule matches with no allow rule", true, nil, true, "go test ./...", nil, nil, []string{"Bash(go test:*)"}, ""},
+		{"deny rule matches with no allow rule", true, nil, true, "go test ./...", nil, []string{"Bash(go test:*)"}, nil, ""},
 		{"deny rule wins", true, nil, true, "go test ./...", okRules, []string{"Bash(go test:*)"}, nil, ""},
 		{"ask rule wins", true, nil, true, "go test ./...", okRules, nil, []string{"Bash(go test ./...)"}, ""},
 		{"bare Bash deny", true, nil, true, "git status", okRules, []string{"Bash"}, nil, ""},
@@ -183,7 +186,7 @@ func assertShellRewrite(t *testing.T, out, want string) {
 type fakeShellEvent struct{ Command string }
 
 func (e fakeShellEvent) ShellCommand() (string, bool) { return e.Command, true }
-func (fakeShellEvent) ShellAllowed(string) bool       { return true }
+func (fakeShellEvent) ShellBlocked(string) bool       { return false }
 func (e fakeShellEvent) ShellRewrite(c string) (any, error) {
 	return map[string]string{"command": c}, nil
 }
@@ -191,7 +194,7 @@ func (e fakeShellEvent) ShellRewrite(c string) (any, error) {
 func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 	withExec(t, true, nil, true)
 	for _, n := range []string{"cursor", "codex", "kirocrew", "antigravity", "opencode", "unknown"} {
-		d := shellWrapDecision(n, "go test ./...", func(string) bool { return true })
+		d := shellWrapDecision(n, "go test ./...", func(string) bool { return false })
 		if d.Rewrite || d.Reason != "harness_cannot_rewrite" || d.Family != execwrap.FamilyGoTest {
 			t.Fatalf("%s: decision = %+v", n, d)
 		}
@@ -217,7 +220,7 @@ func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 // fact is data, read through AllHarnessCaps.
 func TestShellRewrite_CapabilityDeclaredOnlyForClaudeCode(t *testing.T) {
 	withExec(t, true, nil, true)
-	if d := shellWrapDecision("claude-code", "go test ./...", func(string) bool { return true }); !d.Rewrite {
+	if d := shellWrapDecision("claude-code", "go test ./...", func(string) bool { return false }); !d.Rewrite {
 		t.Fatalf("claude-code decision = %+v", d)
 	}
 }

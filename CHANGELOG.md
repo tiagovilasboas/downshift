@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Compactor hook no longer requires a Bash allow rule on the original command (owner decision 2026-10-20). It rewrites an allowlisted command unless a deny or ask rule in the managed, user, project or local settings matches it (as written or normalised); unreadable or unparsable settings still mean no rewrite. The hook emits no `permissionDecision`, so approval prompts follow the user's permission mode. No allow rule is installed or required.
+
 ### Added
 
 - `downshift session --panel` gains an optional `compactor` block (commands, compacted, raw and saved bytes, estimated tokens) for the session. The hook adds the hashed session to the wrapped command (`downshift compact --session=<hash> -- …`) and the runner logs it in `exec-events.jsonl`; older records belong to no session. Bytes are measured, tokens are bytes / 4 and are not added to the routing figures.

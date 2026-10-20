@@ -102,24 +102,20 @@ func loadPermissionRules(cwd string) (allow, deny, ask []string, err error) {
 	return allow, deny, ask, nil
 }
 
-// ShellAllowed reports whether Claude Code would run command without asking:
-// some allow rule matches it and no deny or ask rule does, across the managed,
-// user, project and local scopes. Any settings read or parse error answers
-// false. The deny and ask match is deliberately wide (a prefix rule also
-// matches the bare prefix), the allow match is exact to the rule syntax.
-func (ev Event) ShellAllowed(command string) bool {
-	allow, deny, ask, err := loadPermissionRules(ev.Cwd)
+// ShellBlocked reports whether a permission rule forbids a rewrite of command:
+// some deny or ask rule matches it, across the managed, user, project and
+// local scopes. Any settings read or parse error answers true (fail closed).
+// The deny and ask match is deliberately wide (a prefix rule also matches the
+// bare prefix). Allow rules are not consulted: the rewrite emits no
+// permissionDecision, so the harness's own permission flow still decides.
+func (ev Event) ShellBlocked(command string) bool {
+	_, deny, ask, err := loadPermissionRules(ev.Cwd)
 	if err != nil {
-		return false
+		return true
 	}
 	command = strings.TrimSpace(command)
 	for _, r := range append(append([]string{}, deny...), ask...) {
 		if bashRuleMatches(r, command, true) {
-			return false
-		}
-	}
-	for _, r := range allow {
-		if bashRuleMatches(r, command, false) {
 			return true
 		}
 	}
@@ -171,7 +167,7 @@ func WithManagedSettings(paths []string) func() {
 
 // maxSettingsBytes caps one settings file read on every Bash call: a cloned
 // repository can carry a huge .claude/settings.json, and the hook has a 1.5 s
-// deadline. A larger file is an error, which ShellAllowed reads as "ask".
+// deadline. A larger file is an error, which ShellBlocked reads as blocked.
 const maxSettingsBytes = 1 << 20
 
 // readSettings reads one settings file up to maxSettingsBytes.

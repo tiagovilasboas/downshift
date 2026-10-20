@@ -82,7 +82,7 @@ func TestRunExec_DepthGuardDisablesCompaction(t *testing.T) {
 
 func TestShellRewrite_DepthGuardBlocksHook(t *testing.T) {
 	withExec(t, true, map[string]string{execwrap.DepthEnv: "1"}, true)
-	if d := shellWrapDecision("claude-code", "go test ./...", func(string) bool { return true }); d.Rewrite {
+	if d := shellWrapDecision("claude-code", "go test ./...", func(string) bool { return false }); d.Rewrite {
 		t.Fatalf("decision = %+v", d)
 	}
 }
