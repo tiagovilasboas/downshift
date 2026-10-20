@@ -283,6 +283,86 @@ func TestCompress_Pytest_ErrorsPreserveRaw(t *testing.T) {
 	}
 }
 
+// TestCompress_Pytest_UnrecognisedLinePreservesRaw injects lines that a clean
+// run never emits (danger words and a plain unknown line) at the head, middle
+// and tail of a passing transcript. Each must come back byte-identical: a
+// failure or warning must never be hidden behind the one-line summary.
+func TestCompress_Pytest_UnrecognisedLinePreservesRaw(t *testing.T) {
+	clean := []string{
+		"============================= test session starts ==============================",
+		"platform darwin -- Python 3.12.3, pytest-8.1.1, pluggy-1.4.0",
+		"rootdir: /Users/tiago.boas/project",
+		"collected 10 items",
+		"",
+		"tests/test_a.py ..........                                             [100%]",
+		"",
+		"============================== 10 passed in 0.42s ==============================",
+	}
+	injected := []string{
+		"unexpected error in output",
+		"unexpected FAIL in output",
+		"unexpected warning in output",
+		"unexpected panic in output",
+		"zz-unrecognised-line 42",
+	}
+	for _, line := range injected {
+		for _, pos := range []int{0, len(clean) / 2, len(clean)} {
+			lines := append(append(append([]string{}, clean[:pos]...), line), clean[pos:]...)
+			in := []byte(strings.Join(lines, "\n") + "\n")
+			t.Run(fmt.Sprintf("%s@%d", line, pos), func(t *testing.T) {
+				res := compressor.Compress(in, compressor.ModeSafe)
+				if res.Applied {
+					t.Fatalf("compacted pytest with an unrecognised line: %q", res.Reason)
+				}
+				if !bytes.Equal(res.Output, in) {
+					t.Fatalf("output not byte-identical to input:\n got %q\nwant %q", res.Output, in)
+				}
+			})
+		}
+	}
+	// Without the injected line the same transcript still compacts.
+	res := compressor.Compress([]byte(strings.Join(clean, "\n")+"\n"), compressor.ModeSafe)
+	if !res.Applied {
+		t.Fatalf("clean transcript not compacted: %s", res.Reason)
+	}
+}
+
+// TestCompress_Pytest_ClosedGrammarPreservesRaw covers free text that a loose
+// pattern used to accept: a header or plugin line carrying a failure, and a
+// passing summary with trailing spaces. Each must come back byte-identical.
+func TestCompress_Pytest_ClosedGrammarPreservesRaw(t *testing.T) {
+	const header = "============================= test session starts ==============================\n"
+	const summary = "============================== 10 passed in 0.42s ==============================\n"
+	cases := []struct {
+		name string
+		in   string
+	}{
+		{"plugins line carries FAILED text", header + "plugins: FAILED tests/test_a.py::t - AssertionError\n" + summary},
+		{"rootdir with spaces", header + "rootdir: /tmp/my project\n" + summary},
+		{"rootdir without a path", header + "rootdir: FAILED\n" + summary},
+		{"summary with trailing space", header + "tests/test_a.py ..........\n=============================== 10 passed in 0.42s =============================== \n"},
+		{"summary with trailing tab", header + "tests/test_a.py ..........\n=============================== 10 passed in 0.42s ===============================\t\n"},
+		{"summary time with a failure suffix", header + "tests/test_a.py ..........\n=== 10 passed in 0.42s - 1 failed ===\n"},
+		{"summary time not a number", header + "tests/test_a.py ..........\n=== 10 passed in FAILED ===\n"},
+		{"configfile value FAILED", header + "configfile: FAILED\n" + summary},
+		{"configfile value with a space", header + "configfile: pytest ini FAILED\n" + summary},
+		{"cachedir value with a space", header + "cachedir: .pytest_cache FAILED\n" + summary},
+		{"platform python version with text", header + "platform darwin -- Python 3.12.3 FAILED, pytest-8.1.1\n" + summary},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			in := []byte(tc.in)
+			res := compressor.Compress(in, compressor.ModeSafe)
+			if res.Applied {
+				t.Fatalf("compacted pytest with free text: %q", res.Reason)
+			}
+			if !bytes.Equal(res.Output, in) {
+				t.Fatalf("output not byte-identical to input:\n got %q\nwant %q", res.Output, in)
+			}
+		})
+	}
+}
+
 func TestCompress_Vitest_PassCompaction(t *testing.T) {
 	in := []byte("\n RUN  v1.6.0 /web\n\n ✓ a.test.ts (2)\n ✓ b.test.ts (3)\n\n Test Files  2 passed (2)\n      Tests  5 passed (5)\n   Start at  12:00:00\n   Duration  350ms (transform 50ms, tests 35ms)\n")
 	res := compressor.Compress(in, compressor.ModeSafe)
