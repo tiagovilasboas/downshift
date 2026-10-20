@@ -228,7 +228,7 @@ near 3%: the first inflates the subagent share and the routable share, the secon
 quantities worth logging, not their product.
 
 **Output cutting acts elsewhere and multiplies.** A tool that shrinks command and tool output (a compression proxy
-such as Headroom, an output wrapper such as `downshift exec`, or RTK) reduces the tokens the main session reads and
+such as Headroom, an output wrapper such as `downshift compact`, or RTK) reduces the tokens the main session reads and
 then re-reads from cache on every later turn: the part of spend routing cannot touch. The two levers act on different
 tokens, so their savings compose roughly as (1 - r)(1 - o), not as a sum. Hypothetical: a 5% routing saving on top of
 a 20% output saving takes spend to 0.95 x 0.80, a 24% total saving. The composition breaks if cutting changes
