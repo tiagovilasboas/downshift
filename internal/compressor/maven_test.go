@@ -50,18 +50,20 @@ func TestCompressMavenPreservesAmbiguousOutputByteIdentically(t *testing.T) {
 		return []byte(strings.Replace(good, old, repl, 1))
 	}
 	cases := map[string][]byte{
-		"no final newline":    []byte(strings.TrimSuffix(good, "\n")),
-		"crlf":                []byte(strings.ReplaceAll(good, "\n", "\r\n")),
-		"unknown line":        mutate("[INFO] Results:\n", "[INFO] Results:\nsome test stdout\n"),
-		"deprecation":         mutate("[INFO] Results:\n", "[INFO] Results:\n[INFO] Some problems were encountered\n"),
-		"download":            mutate("[INFO] Copying 2", "[INFO] Downloading from central: https://x/y.pom\n[INFO] Copying 2"),
-		"skipped class":       mutate("Skipped: 0, Time elapsed: 0.012", "Skipped: 1, Time elapsed: 0.012"),
-		"total mismatch":      mutate("Tests run: 13,", "Tests run: 14,"),
-		"class name mismatch": mutate("-- in com.acme.inventory.PriceTest", "-- in com.acme.Other"),
-		"second project":      mutate("[INFO] Scanning for projects...\n", "[INFO] Scanning for projects...\n[INFO] Reactor Build Order:\n"),
-		"no success":          mutate("[INFO] BUILD SUCCESS\n", ""),
-		"trailing output":     []byte(good + "[INFO] extra\n"),
-		"wrong first line":    []byte("[INFO] Hello\n" + good),
+		"no final newline":       []byte(strings.TrimSuffix(good, "\n")),
+		"crlf":                   []byte(strings.ReplaceAll(good, "\n", "\r\n")),
+		"unknown line":           mutate("[INFO] Results:\n", "[INFO] Results:\nsome test stdout\n"),
+		"deprecation":            mutate("[INFO] Results:\n", "[INFO] Results:\n[INFO] Some problems were encountered\n"),
+		"download":               mutate("[INFO] Copying 2", "[INFO] Downloading from central: https://x/y.pom\n[INFO] Copying 2"),
+		"skipped class":          mutate("Skipped: 0, Time elapsed: 0.012", "Skipped: 1, Time elapsed: 0.012"),
+		"total mismatch":         mutate("Tests run: 13,", "Tests run: 14,"),
+		"class name mismatch":    mutate("-- in com.acme.inventory.PriceTest", "-- in com.acme.Other"),
+		"second project":         mutate("[INFO] Scanning for projects...\n", "[INFO] Scanning for projects...\n[INFO] Reactor Build Order:\n"),
+		"chatter in test region": mutate("-- in com.acme.inventory.StockTest\n", "-- in com.acme.inventory.StockTest\n[INFO] Deleting /home/u/.aws/credentials\n"),
+		"chatter with spaces":    mutate("[INFO] Copying 2", "[INFO] Deleting /a b/c\n[INFO] Copying 2"),
+		"no success":             mutate("[INFO] BUILD SUCCESS\n", ""),
+		"trailing output":        []byte(good + "[INFO] extra\n"),
+		"wrong first line":       []byte("[INFO] Hello\n" + good),
 	}
 	for name, in := range cases {
 		out, applied, reason := compressMaven(in)
@@ -84,5 +86,13 @@ func TestMavenDetectionIsExclusive(t *testing.T) {
 	}
 	if !isMaven([]byte("[INFO] Scanning for projects...\n")) {
 		t.Error("must detect Maven's first line")
+	}
+}
+
+func TestCompressMavenChatterOutsideTestRegionStillCompacts(t *testing.T) {
+	good := string(readMavenFixture(t, "maven_pass_test.txt"))
+	in := []byte(strings.Replace(good, "[INFO] Copying 2", "[INFO] Deleting /work/inventory/target\n[INFO] Copying 2", 1))
+	if _, applied, reason := compressMaven(in); !applied {
+		t.Fatalf("expected compression, reason=%q", reason)
 	}
 }

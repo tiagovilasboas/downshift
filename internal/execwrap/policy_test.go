@@ -44,6 +44,9 @@ func TestDecide(t *testing.T) {
 		{"mvn option first", "mvn -q test", false, "", "", ReasonNotAllowlisted},
 		{"mvn plugin goal", "mvn spring-boot:run", false, "", "", ReasonNotAllowlisted},
 		{"mvn deploy", "mvn deploy", false, "", "", ReasonNotAllowlisted},
+		{"mvn clean deploy", "mvn clean deploy", false, "", "", ReasonNotAllowlisted},
+		{"mvn settings file", "mvn clean install -s /tmp/s.xml", false, "", "", ReasonNotAllowlisted},
+		{"mvn clean install", "mvn clean install -DskipTests", true, FamilyMaven, "'/opt/ds/downshift' compact -- mvn clean install -DskipTests", ReasonAllowlisted},
 		{"bare mvn", "mvn", false, "", "", ReasonNotAllowlisted},
 
 		{"git log not allowlisted", "git log", false, "", "", ReasonNotAllowlisted},

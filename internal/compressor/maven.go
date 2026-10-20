@@ -10,6 +10,9 @@ import (
 	"strings"
 )
 
+// mavenPath is a single path token: no spaces or shell/URL punctuation.
+const mavenPath = `[A-Za-z0-9_.\-/+@:~]+`
+
 const mavenScanLine = "[INFO] Scanning for projects..."
 
 var (
@@ -25,11 +28,11 @@ var (
 		`|Compiling \d+ source files? with javac \[[^\]]*\] to \S+` +
 		`|Copying \d+ resources?(?: from \S+ to \S+)?` +
 		`|Using '[A-Za-z0-9\-]+' encoding to copy filtered resources\.` +
-		`|skip non existing resourceDirectory \S.*` +
+		`|skip non existing resourceDirectory ` + mavenPath + `` +
 		`|Using auto detected provider \S+` +
-		`|Building jar: \S.*` +
-		`|Installing \S.* to \S.*` +
-		`|Deleting \S.*)$`)
+		`|Building jar: ` + mavenPath + `` +
+		`|Installing ` + mavenPath + ` to ` + mavenPath + `` +
+		`|Deleting ` + mavenPath + `)$`)
 	reMavenTestsHeader = regexp.MustCompile(`^\[INFO\]  T E S T S$`)
 	reMavenRunning     = regexp.MustCompile(`^\[INFO\] Running (\S+)$`)
 	reMavenClassTests  = regexp.MustCompile(`^\[INFO\] Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [0-9.,]+ (?:s|sec) -- in (\S+)$`)
@@ -125,7 +128,7 @@ func compressMaven(input []byte) ([]byte, bool, string) {
 			}
 			m := reMavenGoal.FindStringSubmatch(line)
 			goals = append(goals, m[1]+":"+m[3]+" ("+m[4]+")")
-		case len(goals) > 0 && reMavenChatter.MatchString(line):
+		case len(goals) > 0 && !(seenHeader && totalRun < 0) && reMavenChatter.MatchString(line):
 		case len(goals) > 0 && reMavenTestsHeader.MatchString(line):
 			seenHeader = true
 		case seenHeader && reMavenRunning.MatchString(line):

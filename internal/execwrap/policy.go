@@ -177,7 +177,7 @@ func FamilyOf(argv []string) Family {
 }
 
 // mavenGoals are the lifecycle phases the maven family wraps. A phase must be
-// the first argument, so option-first forms ("mvn -q test") and plugin goals
+// the first argument and every other positional must be one too, so option-first forms ("mvn -q test") and plugin goals
 // ("mvn spring-boot:run") are never wrapped.
 var mavenGoals = map[string]bool{
 	"test": true, "verify": true, "package": true, "install": true, "clean": true,
@@ -186,7 +186,15 @@ var mavenGoals = map[string]bool{
 func isMavenCommand(argv []string) bool {
 	switch argv[0] {
 	case "mvn", "mvnw", "./mvnw":
-		return len(argv) >= 2 && mavenGoals[argv[1]]
+		if len(argv) < 2 || !mavenGoals[argv[1]] {
+			return false
+		}
+		for _, a := range argv[2:] {
+			if !strings.HasPrefix(a, "-") && !mavenGoals[a] {
+				return false
+			}
+		}
+		return true
 	}
 	return false
 }
