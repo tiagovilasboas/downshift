@@ -10,8 +10,8 @@ func TestNativeInteractionsRewardIndependentDomainsOnce(t *testing.T) {
 	t.Setenv("DOWNSHIFT_DOMAIN_INTERACTIONS", "1")
 	var e domainEvidence
 	e.add("backend", Medium, 2)
-	e.add("backend", Medium, 2) // Same specialty: capped at 3.
-	e.add("data", Medium, 2)    // Independent corroboration: +1.
+	e.add("backend", Medium, 2)             // Same specialty: capped at 3.
+	e.add("data", Medium, 2)                // Independent corroboration: +1.
 	scores := map[Complexity]int{Medium: 4} // Generic evidence stays additive.
 	e.apply(scores)
 	if scores[Medium] != 10 { // 4 generic + 3 backend + 2 data + 1 agreement.
