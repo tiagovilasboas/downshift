@@ -1,17 +1,19 @@
-# Three gates keep PR CI narrow without weakening main. Do not move the heavy
-# jobs back onto every pull request.
+# Three events, three jobs of the same pipeline. Heavy jobs must not move back
+# onto the main push path without an owner decision.
 #
-#   1. Every PR: `changes` classifies the diff; `test` (the required check) runs
-#      the Go build, vet, gofmt, changed-package tests and smoke tests.
-#   2. OS gate: `test-os` runs only when the classifier sets os_sensitive=1
-#      (paths, execwrap, setup/hook wiring, workflow file). On main it always runs.
-#   3. Race gate: `race` runs the race detector on the changed packages on a PR,
-#      and on every package except internal/core on push to main and tags.
-#   Cross-platform build: `build-cross-platform` runs only on push (main, tags).
+#   pull_request  CI gates: `changes`, `test` (the required check), `race` on the
+#                 changed packages, `test-os` when os_sensitive=1, `python` when
+#                 python=1.
+#   push to main  Fast sanity: `changes`, `test` (same required check, so main
+#                 keeps the gate the PR passed), `python` when python=1. Nothing else.
+#   tag v*        CD path with full verification: `test`, `test-os`, full `race`,
+#                 `build-cross-platform`, then `release` (goreleaser and
+#                 attestation) only after all four pass.
+#   nightly       ci-full.yml runs the full race suite and cross-OS tests, so a
+#                 Windows or macOS regression surfaces the same night.
 #
-# Event matrix: pull_request runs changes, test, race (changed packages) and
-# test-os when OS-sensitive; push to main or a tag runs all of them in full.
-# See scripts/ci-classify-changes.sh for the classifier rules.
+# The classifier (scripts/ci-classify-changes.sh) still forces os_sensitive=1
+# and go=1 on main and tags; the job conditions below decide what runs.
 
 name: ci
 
@@ -142,7 +144,9 @@ jobs:
   # scripts, which are POSIX-only).
   test-os:
     needs: changes
-    if: needs.changes.outputs.os_sensitive == '1'
+    if: >-
+      (github.event_name == 'pull_request' && needs.changes.outputs.os_sensitive == '1')
+      || startsWith(github.ref, 'refs/tags/v')
     strategy:
       fail-fast: false
       matrix:
@@ -172,12 +176,14 @@ jobs:
         run: go test -timeout 15m -run 'Setup|Steering|Wrapper|Config|Session|Display|Path|Project' ./cmd/downshift/
 
   # Race detector. Pull requests run it only on the changed packages (the same
-  # selection as `test`); pushes to main and tags run every package except
-  # internal/core, whose -race run takes 4-5 minutes (the scheduled ci-full
-  # covers it). Not the required `test` check.
+  # selection as `test`); tags run every package except internal/core, whose
+  # -race run takes 4-5 minutes (the nightly ci-full covers it). Not on push to
+  # main, and not the required `test` check.
   race:
     needs: changes
-    if: needs.changes.outputs.go == '1'
+    if: >-
+      needs.changes.outputs.go == '1'
+      && (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -213,7 +219,7 @@ jobs:
           go test -race -timeout 15m $pkgs
 
       - name: Test with the race detector (all but internal/core)
-        if: github.event_name != 'pull_request'
+        if: startsWith(github.ref, 'refs/tags/v')
         run: go test -race -timeout 15m $(go list ./... | grep -v '/internal/core$')
 
   python:
@@ -244,11 +250,11 @@ jobs:
       - name: Test catalog price sync validation
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_sync_catalog_prices.py' -v
 
-  # Cross-compiles on push only (main and tags). The linux build on a PR is
-  # already covered by `test`, which builds ./cmd/downshift.
+  # Cross-compiles on tags only. Main and PRs skip it: the linux build is already
+  # covered by `test`, which builds ./cmd/downshift.
   build-cross-platform:
     needs: [changes, test]
-    if: github.event_name == 'push' && needs.changes.outputs.go == '1'
+    if: startsWith(github.ref, 'refs/tags/v') && needs.changes.outputs.go == '1'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -273,8 +279,9 @@ jobs:
           go build -o downshift-${{ matrix.goos }}-${{ matrix.goarch }} \
           -ldflags="-s -w" ./cmd/downshift
 
+  # CD: publishes only after every verification job has passed on the tag.
   release:
-    needs: test
+    needs: [test, test-os, race, build-cross-platform]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:

@@ -14,6 +14,36 @@ permissions:
   contents: read
 
 jobs:
+  # Cross-OS run of the same packages and commands as ci.yml `test-os`. The PR
+  # gate runs it only for OS-sensitive diffs; the nightly catches a regression
+  # the PR path did not touch. The full race suite is in the `full` job below.
+  test-os:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.27"
+          cache: true
+
+      - name: Build downshift CLI
+        run: go build -o downshift ./cmd/downshift
+
+      - name: Test OS-sensitive packages (all)
+        run: go test -timeout 15m ./internal/paths/ ./internal/execwrap/ ./internal/contextopt/ ./internal/hookctx/
+
+      - name: Test cmd/downshift (macOS only)
+        if: matrix.os == 'macos-latest'
+        run: go test -timeout 15m -run 'Setup|Steering|Wrapper|Config|Session|Display|Path|Project' ./cmd/downshift/
+
   full:
     runs-on: ubuntu-latest
     timeout-minutes: 60
