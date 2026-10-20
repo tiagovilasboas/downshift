@@ -298,3 +298,29 @@ func TestShellRewrite_DenyInAnyScope(t *testing.T) {
 		})
 	}
 }
+
+// A live Bash payload may omit session_id; the Claude Code adapter then derives
+// it from the transcript file name, so the rewrite still carries --session.
+func TestShellRewrite_SessionFromTranscriptWhenSessionIDAbsent(t *testing.T) {
+	const id = "0b1c2d3e-4f50-4a6b-8c7d-9e0f1a2b3c4d"
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("DOWNSHIFT_EVENT_LOG", filepath.Join(t.TempDir(), "events.jsonl"))
+	withExec(t, true, nil, true)
+	cwd := userSettings(t, okRules, nil, nil)
+
+	var p map[string]any
+	if err := json.Unmarshal([]byte(bashPayload(t, "git status", cwd)), &p); err != nil {
+		t.Fatal(err)
+	}
+	delete(p, "session_id")
+	p["transcript_path"] = "/home/u/.claude/projects/proj/" + id + ".jsonl"
+	body, err := json.Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out := captureStdout(func() {
+		harnessRegistry["claude-code"].Hook(strings.NewReader(string(body)), cmdCat)
+	})
+	assertShellRewrite(t, out, "'"+testExe+"' compact --session="+telemetry.HashSessionID(id)+" -- git status")
+}

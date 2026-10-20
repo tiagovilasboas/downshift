@@ -66,6 +66,7 @@ type signal struct {
 	re     *regexp.Regexp
 	weight int
 	class  Complexity
+	domain string // empty for unchanged general signals
 }
 
 // signals are ordered from strongest to weakest evidence. We score every
@@ -224,10 +225,18 @@ func applyBoundedBrief(prompt, lower string, scores map[Complexity]int, implemen
 	if implementSpec {
 		rows++
 	}
+	seenDomains := map[string]bool{}
 	for _, s := range activeSignals() {
-		if s.class == Complex && s.re.MatchString(lower) {
-			rows++
+		if s.class != Complex || !s.re.MatchString(lower) {
+			continue
 		}
+		if s.domain != "" && osDomainDedupEnabled() {
+			if seenDomains[s.domain] {
+				continue
+			}
+			seenDomains[s.domain] = true
+		}
+		rows++
 	}
 	if rows <= 1 && !briefStrongRE.MatchString(prompt) {
 		scores[Complex] = 0
@@ -313,8 +322,10 @@ func Classify(prompt string) Classification {
 		explicitTask = task != nil
 	}
 	focus := map[Complexity]int{Trivial: 0, Simple: 0, Medium: 0, Complex: 0}
+	var domainScores, domainFocus domainEvidence
 	taskSignal := false
 	mentions := 0 // Complex rows that matched only outside the task
+	mentionDomains := map[string]bool{}
 
 	for _, s := range activeSignals() {
 		if !s.re.MatchString(lower) {
@@ -331,7 +342,11 @@ func Classify(prompt string) Classification {
 		if len(locs) == 0 {
 			continue
 		}
-		scores[s.class] += s.weight
+		if s.domain == "" {
+			scores[s.class] += s.weight
+		} else {
+			domainScores.add(s.domain, s.class, s.weight)
+		}
 		if task == nil {
 			continue
 		}
@@ -339,13 +354,27 @@ func Classify(prompt string) Classification {
 		taskSignal = taskSignal || inTask
 		switch {
 		case s.class == Medium || inTask || (s.class == Complex && strongMention(lower, locs)):
-			focus[s.class] += s.weight
+			if s.domain == "" {
+				focus[s.class] += s.weight
+			} else {
+				domainFocus.add(s.domain, s.class, s.weight)
+			}
 		case s.class == Complex:
-			mentions++
+			if s.domain == "" || !osDomainDedupEnabled() || !mentionDomains[s.domain] {
+				mentions++
+			}
+			if s.domain != "" {
+				mentionDomains[s.domain] = true
+			}
 		}
 		// Trivial and Simple words outside the task are side steps and
 		// constraints ("commit in English", "add a comment if needed").
 	}
+	// Domain matches are pooled by specialty and complexity; generic matches
+	// keep the original additive scoring and risk signals are not touched.
+	domainScores.apply(scores)
+	domainFocus.apply(focus)
+
 	// Outside the task a Complex word describes the project, not the work.
 	// Each such row counts 1. Under an explicit "Task:" section the author has
 	// said the rest is context, so all of them together count 1.
