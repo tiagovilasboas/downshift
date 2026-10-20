@@ -1,0 +1,80 @@
+{
+  "data": [
+    {
+      "id": "anthropic/claude-haiku-5.5",
+      "canonical_slug": "anthropic/claude-haiku-5.5",
+      "name": "Anthropic: Claude Haiku 5.5",
+      "created": 1790000000,
+      "description": "Hand-trimmed test fixture, not a captured response.",
+      "context_length": 200000,
+      "pricing": {
+        "prompt": "0.000001",
+        "completion": "0.000005",
+        "request": "0",
+        "image": "0"
+      },
+      "top_provider": {"context_length": 200000, "max_completion_tokens": 64000, "is_moderated": true}
+    },
+    {
+      "id": "deepseek/deepseek-v4.1-flash",
+      "canonical_slug": "deepseek/deepseek-v4.1-flash",
+      "name": "DeepSeek: DeepSeek V4.1 Flash",
+      "created": 1788000000,
+      "description": "Hand-trimmed test fixture, not a captured response.",
+      "context_length": 128000,
+      "pricing": {
+        "prompt": "0.00000014",
+        "completion": "0.00000028"
+      },
+      "top_provider": {"context_length": 128000, "is_moderated": false}
+    },
+    {
+      "id": "openrouter/auto",
+      "canonical_slug": "openrouter/auto",
+      "name": "Auto Router",
+      "created": 1700000000,
+      "description": "Hand-trimmed test fixture: dynamic price is reported as -1.",
+      "context_length": 2000000,
+      "pricing": {
+        "prompt": "-1",
+        "completion": "-1"
+      },
+      "top_provider": {"context_length": null, "is_moderated": false}
+    },
+    {
+      "id": "qwen/qwen3-free-preview",
+      "canonical_slug": "qwen/qwen3-free-preview",
+      "name": "Qwen: Qwen3 Free Preview",
+      "created": 1770000000,
+      "description": "Hand-trimmed test fixture: price is the string 0 (free).",
+      "context_length": 32768,
+      "pricing": {
+        "prompt": "0",
+        "completion": "0"
+      },
+      "top_provider": {"context_length": 32768, "is_moderated": false}
+    },
+    {
+      "id": "moonshotai/kimi-test-no-pricing",
+      "canonical_slug": "moonshotai/kimi-test-no-pricing",
+      "name": "Moonshot: Test Model Without Pricing",
+      "created": 1765000000,
+      "description": "Hand-trimmed test fixture: no pricing block at all.",
+      "context_length": 65536,
+      "top_provider": {"context_length": 65536, "is_moderated": false}
+    },
+    {
+      "id": "meta-llama/test-non-numeric-price",
+      "canonical_slug": "meta-llama/test-non-numeric-price",
+      "name": "Meta: Test Model With Non-numeric Price",
+      "created": 1760000000,
+      "description": "Hand-trimmed test fixture: price text that is not a number.",
+      "context_length": 8192,
+      "pricing": {
+        "prompt": "call us",
+        "completion": "0.000002"
+      },
+      "top_provider": {"context_length": 8192, "is_moderated": false}
+    }
+  ]
+}
