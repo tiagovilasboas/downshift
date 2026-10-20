@@ -36,7 +36,7 @@ var (
 	// reVitestPlainLine matches the only lines a clean vitest run prints.
 	// Any other line, including an unexpected error, warning or FAIL, makes
 	// the whole transcript raw. Recognition is the rule, not a danger list.
-	reVitestPlainLine   = regexp.MustCompile(`^(?:\s*|\s*RUN\s+v\d+\.\d+\.\d+(?:\s+\S.*)?|\s*✓\s+\S+\s+\(\d+\)|\s*Test Files\s+\d+\s+passed\s+\(\d+\)|\s*Tests\s+\d+\s+passed\s+\(\d+\)|\s*Start at\s+\d{2}:\d{2}:\d{2}|\s*Duration\s+\d+(?:\.\d+)?(?:ms|s)(?:\s+\(.*\))?)$`)
+	reVitestPlainLine   = regexp.MustCompile(`^(?:\s*|\s*RUN\s+v\d+\.\d+\.\d+(?:\s+\S+)?|\s*✓\s+\S+\s+\(\d+\)|\s*Test Files\s+\d+\s+passed\s+\(\d+\)|\s*Tests\s+\d+\s+passed\s+\(\d+\)|\s*Start at\s+\d{2}:\d{2}:\d{2}|\s*Duration\s+\d+(?:\.\d+)?(?:ms|s)(?:\s+\((?:\w+ \d+ms)(?:, \w+ \d+ms)*\))?)$`)
 	rePlaywrightHeader  = regexp.MustCompile(`(?m)^\s*Running\s+(\d+)\s+tests\s+using\s+(\d+)\s+workers?`)
 	rePlaywrightSummary = regexp.MustCompile(`(?m)^\s*(\d+)\s+passed\s+\(([^)]+)\)`)
 	rePlaywrightError   = regexp.MustCompile(`(?i)(?:failed|flaky|timed out|Error:|AssertionError|trace(?: file| attached)?|retry(?:ing| #))`)

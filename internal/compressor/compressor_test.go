@@ -321,6 +321,9 @@ func TestCompress_Vitest_UnrecognisedLinePreservesRaw(t *testing.T) {
 		"panic":   "panic: runtime boom\n",
 		"FAIL":    " FAIL  a.test.ts > case\n",
 		"failed":  " 1 failed\n",
+		// Success-looking lines with free text after the grammar must not pass.
+		"run-free-text":      " RUN  v1.6.0 × a.test.ts > case\n",
+		"duration-free-text": "   Duration  1ms (× case)\n",
 	}
 	for name, line := range injected {
 		t.Run(name, func(t *testing.T) {
