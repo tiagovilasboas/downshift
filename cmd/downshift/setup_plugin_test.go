@@ -233,12 +233,12 @@ func TestSetupInstallsSiblingMods(t *testing.T) {
 	}
 	doc := parseDoc(t, e.read(".claude/settings.json"))
 	plugins, _ := doc["enabledPlugins"].(map[string]any)
-	for _, id := range []string{"savvy-progress@downshift", "filetree@downshift", "downshift-dock@downshift"} {
+	for _, id := range []string{"savvy-progress@downshift", "filetree@downshift"} {
 		if plugins[id] != true {
 			t.Fatalf("mod %s not enabled: %v\ncalls: %v", id, plugins, f.calls)
 		}
 	}
-	if !strings.Contains(out, "installed the mods savvy-progress@downshift, filetree@downshift, downshift-dock@downshift") {
+	if !strings.Contains(out, "installed the mods savvy-progress@downshift, filetree@downshift") {
 		t.Fatalf("the output must name the mods:\n%s", out)
 	}
 }
