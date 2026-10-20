@@ -28,7 +28,7 @@ in `hooks/register.tsx`: colours, the shown tier words and one simpler sprite, n
 behaviour; plus the `version` line of `.claude-plugin/plugin.json` (1.2.1 to
 1.2.2, 2026-10-19). Claude Code keys its plugin cache by that version, so a
 machine that installed 1.2.1 before the colour patch keeps upstream's purple
-`#8f8cf4` until the version changes. The reapplyable diff is [`downshift-local.patch`](downshift-local.patch),
+`#8f8cf4` until the version changes. The panel's header tile and summary lines show the tokens Downshift saved in the session (`downshift session --panel`, `work_saved` + `cache_saved`) instead of the estimated dollar cost; the dollar estimate is no longer drawn. The reapplyable diff is [`downshift-local.patch`](downshift-local.patch),
 regenerated 2026-10-19 against the pinned upstream commit.
 
 | In `hooks/register.tsx` | Upstream | Downshift | Why |

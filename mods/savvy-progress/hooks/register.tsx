@@ -53,7 +53,7 @@ type Lang = 'en' | 'ru' | 'he'
 const STRINGS = {
   en: {
     pane: 'Agents',
-    cost: 'Cost',
+    saved: 'Saved',
     tokens: 'Tokens',
     time: 'Time',
     collapse: 'Collapse',
@@ -84,7 +84,7 @@ const STRINGS = {
   },
   ru: {
     pane: 'Агенты',
-    cost: 'Стоимость',
+    saved: 'Сэкономлено',
     tokens: 'Токены',
     time: 'Время',
     collapse: 'Свернуть',
@@ -115,7 +115,7 @@ const STRINGS = {
   },
   he: {
     pane: 'סוכנים',
-    cost: 'עלות',
+    saved: 'נחסך',
     tokens: 'טוקנים',
     time: 'זמן',
     collapse: 'כיווץ',
@@ -469,6 +469,9 @@ const fmtTokens = (n: number): string =>
 
 const fmtCost = (usd: number): string => `$${usd < 10 ? usd.toFixed(2) : usd.toFixed(1)}`
 
+/** Tokens Downshift saved in this session, from the session panel; 0 until it answers. */
+const savedOf = (): number => (ds && dsSessionKnown ? ds.saved : 0)
+
 const fmtTime = (ms: number): string => {
   const s = Math.max(0, Math.round(ms / 1000))
   const h = Math.floor(s / 3600)
@@ -617,7 +620,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
     W,
     headerHeight(title),
     `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
-${tile(0, s.cost, '≈' + fmtCost(t.cost))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
+${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
   )
 }
 
@@ -698,7 +701,7 @@ const compactSvg = (W: number, list: AgentRun[], planned: Planned[], t: ReturnTy
     W,
     32,
     `${body}${more ? `<text class="s" ${startText(W, x, 21, false)} font-family="${FONT}" font-size="12">+${more}</text>` : ''}
-<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">≈${fmtCost(t.cost)} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
+<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtTokens(savedOf())} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
   )
 }
 
@@ -740,7 +743,7 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 // Data contract: docs/reference/spawn-state.md in the Downshift repo.
 
 type DsSpawn = { tool_use?: string; label: string; tokens_label: string }
-type DsView = { switched: number; held: number; tokens_line: string; types: string[]; spawns: DsSpawn[] }
+type DsView = { switched: number; held: number; saved: number; tokens_line: string; types: string[]; spawns: DsSpawn[] }
 
 let ds: DsView | null = null
 let dsSessionKnown = false // the figures are only drawn for a session we could name
@@ -753,11 +756,12 @@ const dsParse = (raw: unknown): DsView | null => {
   if (!v || typeof v !== 'object' || !Array.isArray(v.spawns)) return null
   const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : 0)
   const str = (x: unknown, max: number) => (typeof x === 'string' ? x.slice(0, max) : '')
-  const raw2 = raw as { tokens_line?: unknown; by_agent_type?: unknown }
+  const raw2 = raw as { tokens_line?: unknown; by_agent_type?: unknown; tokens?: { work_saved?: unknown; cache_saved?: unknown } }
   const types = Array.isArray(raw2.by_agent_type) ? raw2.by_agent_type : []
   return {
     switched: num(v.switched),
     held: num(v.held),
+    saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
     tokens_line: str(raw2.tokens_line, 120),
     types: types.map(t => str((t as { line?: unknown } | null)?.line, 80)).filter(l => l !== '').slice(0, 6),
     spawns: v.spawns
@@ -1113,7 +1117,7 @@ export const register: Register = (on, options) => {
       />
     )
     const isEmpty = list.length === 0 && planned.length === 0
-    const summary = `≈${fmtCost(t.cost)}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
+    const summary = `${fmtTokens(savedOf())} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
 
     if (e.surface === 'desktop' && 'Svg' in ui) {
       const { Svg } = ui
@@ -1214,7 +1218,7 @@ export const register: Register = (on, options) => {
           {toggleCompact}
         </Box>
         <Text dimColor>
-          ≈{fmtCost(t.cost)} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
+          {fmtTokens(savedOf())} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
         </Text>
         {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
         {dsTypes() !== '' && <Text dimColor wrap="truncate-end">{dsTypes()}</Text>}
