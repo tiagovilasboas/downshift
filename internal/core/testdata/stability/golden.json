@@ -300,9 +300,9 @@
   "tier": "mid"
  },
  "hard.json/HARD-21": {
-  "complexity": "MEDIUM",
-  "confident": false,
-  "tier": "mid"
+  "complexity": "COMPLEX",
+  "confident": true,
+  "tier": "frontier"
  },
  "hard.json/HARD-22": {
   "complexity": "MEDIUM",
@@ -746,7 +746,7 @@
  },
  "standard.json/STD-30": {
   "complexity": "MEDIUM",
-  "confident": false,
+  "confident": true,
   "tier": "mid"
  },
  "standard.json/STD-31": {

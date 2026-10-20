@@ -224,7 +224,7 @@ func applyBoundedBrief(prompt, lower string, scores map[Complexity]int, implemen
 	if implementSpec {
 		rows++
 	}
-	for _, s := range signals {
+	for _, s := range activeSignals() {
 		if s.class == Complex && s.re.MatchString(lower) {
 			rows++
 		}
@@ -316,7 +316,7 @@ func Classify(prompt string) Classification {
 	taskSignal := false
 	mentions := 0 // Complex rows that matched only outside the task
 
-	for _, s := range signals {
+	for _, s := range activeSignals() {
 		if !s.re.MatchString(lower) {
 			continue
 		}
