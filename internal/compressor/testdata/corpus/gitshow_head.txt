@@ -1,0 +1,17 @@
+commit 53a145c26dfe37de4fb32fd47ee1f6b9aa57833c
+Author: FixtureAuthor <fixture@example.com>
+Date:   Tue Oct 20 15:17:12 2026 -0300
+
+    Tweak-team-greeting
+
+diff --git a/src/main.go b/src/main.go
+index 73d83e6..63294b2 100644
+--- a/src/main.go
++++ b/src/main.go
+@@ -1,5 +1,5 @@
+ package main
+ 
+ func main() {
+-	println("hello, world")
++	println("hello, team")
+ }

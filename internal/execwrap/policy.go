@@ -22,6 +22,20 @@ const (
 	FamilyNone        Family = ""
 	FamilyGoTest      Family = "go-test"
 	FamilyGitStatus   Family = "git-status"
+	FamilyGitLog      Family = "git-log"
+	FamilyGitDiff     Family = "git-diff"
+	FamilyGitShow     Family = "git-show"
+	FamilyGitBranch   Family = "git-branch"
+	FamilyGitFetch    Family = "git-fetch"
+	FamilyGitPull     Family = "git-pull"
+	FamilyGitPush     Family = "git-push"
+	FamilyGitCommit   Family = "git-commit"
+	FamilyGitAdd      Family = "git-add"
+	FamilyGitStash    Family = "git-stash"
+	FamilyGitRemote   Family = "git-remote"
+	FamilyGitTag      Family = "git-tag"
+	FamilyGitConfig   Family = "git-config-read"
+	FamilyGitOther    Family = "git-other"
 	FamilyPytest      Family = "pytest"
 	FamilyVitest      Family = "vitest"
 	FamilyPlaywright  Family = "playwright"
@@ -188,11 +202,12 @@ func FamilyOf(argv []string) Family {
 	if len(argv) < 2 {
 		return FamilyNone
 	}
+	if argv[0] == "git" {
+		return gitFamilyOf(argv[1:])
+	}
 	switch {
 	case argv[0] == "go" && argv[1] == "test":
 		return FamilyGoTest
-	case argv[0] == "git" && argv[1] == "status":
-		return FamilyGitStatus
 	case argv[0] == "flutter" && argv[1] == "test":
 		return FamilyFlutterTest
 	case argv[0] == "dart" && argv[1] == "test":
@@ -203,6 +218,53 @@ func FamilyOf(argv []string) Family {
 		return FamilyPlaywright
 	}
 	return FamilyNone
+}
+
+// gitSubcommands names the family of each git subcommand that has one. Every
+// other subcommand is FamilyGitOther.
+var gitSubcommands = map[string]Family{
+	"status": FamilyGitStatus,
+	"log":    FamilyGitLog,
+	"diff":   FamilyGitDiff,
+	"show":   FamilyGitShow,
+	"branch": FamilyGitBranch,
+	"fetch":  FamilyGitFetch,
+	"pull":   FamilyGitPull,
+	"push":   FamilyGitPush,
+	"commit": FamilyGitCommit,
+	"add":    FamilyGitAdd,
+	"stash":  FamilyGitStash,
+	"remote": FamilyGitRemote,
+	"tag":    FamilyGitTag,
+}
+
+// gitConfigReadFlags are the config options that only read. A config call
+// without one of them can write or edit, so it stays in FamilyGitOther.
+var gitConfigReadFlags = map[string]bool{
+	"--get": true, "--get-all": true, "--get-regexp": true, "--get-urlmatch": true,
+	"--list": true, "-l": true,
+}
+
+// gitFamilyOf names the family of a git command, given its words after
+// "git". A first word that starts with "-" is a global option (-c, -C,
+// --git-dir, --work-tree, --exec-path, ...) and is never wrapped: a config
+// injection or a repository override must not hide behind the wrapper.
+func gitFamilyOf(args []string) Family {
+	if len(args) == 0 || strings.HasPrefix(args[0], "-") {
+		return FamilyNone
+	}
+	if args[0] == "config" {
+		for _, a := range args[1:] {
+			if gitConfigReadFlags[a] {
+				return FamilyGitConfig
+			}
+		}
+		return FamilyGitOther
+	}
+	if family, ok := gitSubcommands[args[0]]; ok {
+		return family
+	}
+	return FamilyGitOther
 }
 
 // mavenGoals are the lifecycle phases the maven family wraps. A phase must be

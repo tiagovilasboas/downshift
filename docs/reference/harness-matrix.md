@@ -319,7 +319,7 @@ written. The family name is the only command fact telemetry keeps.
 | family | accepted forms |
 |---|---|
 | `go-test` | `go test` |
-| `git-status` | `git status` only; `git log` and other git commands are not wrapped |
+| `git-*` | any `git <subcommand>` with no leading global option (`-c`, `-C`, `--git-dir`, `--exec-path`). One family per subcommand group (`git-status`, `git-log`, `git-diff`, `git-show`, `git-branch`, `git-fetch`, `git-pull`, `git-push`, `git-commit`, `git-add`, `git-stash`, `git-remote`, `git-tag`, `git-config-read`), the rest in `git-other`. Only `git-status` compacts; the other git families run and keep their output byte-identical |
 | `pytest` | `pytest` (not `python -m pytest`) |
 | `vitest` | `vitest`, `npx vitest` |
 | `jest` | `jest`, `npx jest` |

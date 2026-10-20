@@ -1,0 +1,11 @@
+diff --git a/src/main.go b/src/main.go
+index 73d83e6..63294b2 100644
+--- a/src/main.go
++++ b/src/main.go
+@@ -1,5 +1,5 @@
+ package main
+ 
+ func main() {
+-	println("hello, world")
++	println("hello, team")
+ }

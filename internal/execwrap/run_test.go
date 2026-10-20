@@ -105,6 +105,18 @@ func TestRun_ExitCodesAndCompaction(t *testing.T) {
 			wantCode: 0, wantClass: ExitClassZero, wantOut: "On branch main\nChanges not staged for commit:\n\tmodified:   a.go\n", wantFamily: FamilyGitStatus,
 		},
 		{
+			name: "git log is wrapped and passes through raw", bin: "git",
+			script: "printf 'commit 0123456789abcdef0123456789abcdef01234567\\nAuthor: A <a@example.com>\\n\\n    Init\\n'",
+			argv:   []string{"git", "log"}, compact: true,
+			wantCode: 0, wantClass: ExitClassZero, wantOut: "commit 0123456789abcdef0123456789abcdef01234567\nAuthor: A <a@example.com>\n\n    Init\n", wantFamily: FamilyGitLog,
+		},
+		{
+			name: "git push progress on stderr stays raw", bin: "git",
+			script: "echo 'Everything up-to-date' >&2",
+			argv:   []string{"git", "push"}, compact: true,
+			wantCode: 0, wantClass: ExitClassZero, wantErr: "Everything up-to-date\n", wantFamily: FamilyGitPush,
+		},
+		{
 			name: "git status output under a go test argv is not compacted", bin: "go",
 			script: "printf 'On branch main\\nnothing to commit, working tree clean\\n'",
 			argv:   []string{"go", "test"}, compact: true,
@@ -194,7 +206,8 @@ func TestRun_RefusesNonAllowlisted(t *testing.T) {
 		{"rm", "-rf", marker},
 		{"downshift", "exec", "--", "go", "test"}, // recursion
 		{"/usr/bin/git", "status"},
-		{"git", "log"},
+		{"git", "--version"},
+		{"git", "-c", "core.pager=x", "log"},
 		{"go", "build"},
 		{"go"},
 	} {
