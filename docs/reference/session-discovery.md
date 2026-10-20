@@ -39,6 +39,7 @@ so run `discover` on a schedule (cron, launchd, or a session-start hook).
 | grok | `grok models` | Works without login. Grok has no catalog tiers, so nothing is usable for routing yet. |
 | claude-code | Anthropic Models API | Needs `ANTHROPIC_API_KEY`. Subscription-only sessions have no listing endpoint and are skipped. |
 | cursor | `cursor-agent models`, or verified `agent models`; native-file consumer | CLI listing needs its own login. The consumer accepts complete fresh native availability, but the experimental external bridge is blocked by Cursor 3.24.9's built-in-only API and produced no export. [Runtime diagnostic](../evidence/cursor-gap-diagnostic.md). |
+| opencode (opt-in) | OpenRouter public `GET /api/v1/models`, no key | Implemented, opt-in. Off unless `DOWNSHIFT_DISCOVERY_OPENROUTER=1`; the default `discover` run makes no new network call. Redirects, plain http and bodies over 8 MiB are refused; prices are reported per million tokens and never used to rank. Ids are ranked only when the catalog knows them. |
 | antigravity | native `agy` can list parent-picker models; no routing discovery integration | The separate native CLI was verified locally and remains outside PATH. Parent-picker IDs are not proven `invoke_subagent` aliases or pool membership; [source evidence](../evidence/antigravity-runtime-source.md). Explicit hook lists or the operator file remain necessary for the routing namespace. |
 
 A source that fails (not installed, offline, no existing login/key), returns no
