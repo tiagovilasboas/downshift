@@ -16,7 +16,7 @@ To get it, the agent invokes the command through `downshift compact` itself.
 When you run an allowlisted test, build, or status command, ALWAYS run it as:
 
 ```
-downshift compact -- <command> [args...]
+downshift compactor -- <command> [args...]
 ```
 
 `downshift` resolves from PATH. This cuts clean, verbose output to its
@@ -29,16 +29,16 @@ go test · pytest · vitest · jest · tsc · cargo test · playwright test ·
 phpunit (incl. `vendor/bin/phpunit`) · next build · git status · git log
 
 ```
-downshift compact -- go test ./...
-downshift compact -- vendor/bin/phpunit --no-coverage
-downshift compact -- npx vitest run
+downshift compactor -- go test ./...
+downshift compactor -- vendor/bin/phpunit --no-coverage
+downshift compactor -- npx vitest run
 ```
 
 ## Do not
 
-- Do not pipe a non-allowlisted command through compact — it is refused.
-- Do not use compact to hide a FAILURE: it keeps the failure summary and exit
+- Do not pipe a non-allowlisted command through compactor — it is refused.
+- Do not use compactor to hide a FAILURE: it keeps the failure summary and exit
   code, so a red run stays red.
 - Do not assume the preToolUse hook did this for you — it cannot. You invoke it.
 
-`compact` is the current verb; `exec` is the kept legacy alias.
+`compactor` is the product name and the official verb; `compact` and `exec` are kept aliases.

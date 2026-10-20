@@ -558,7 +558,7 @@ func TestSetupKiroCrewWithoutAConfigInstallsOnlyTheSteering(t *testing.T) {
 		t.Errorf("setup created the KiroCrew config: %v", m)
 	}
 	body, err := os.ReadFile(e.path(".kiro/crew/workspace/.kiro/steering/downshift-compact.md"))
-	if err != nil || !strings.Contains(string(body), "downshift compact --") {
+	if err != nil || !strings.Contains(string(body), "downshift compactor --") {
 		t.Fatalf("steering not installed: %v\n%s", err, body)
 	}
 }
