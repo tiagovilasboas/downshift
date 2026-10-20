@@ -25,19 +25,25 @@ func TestNativeInteractionsRewardIndependentDomainsOnce(t *testing.T) {
 	}
 }
 
+type interactionTestVote struct {
+	domain string
+	class  Complexity
+	weight int
+}
+
 func TestNativeInteractionsRequireSeparateDomainsAndMatchingTiers(t *testing.T) {
 	t.Setenv("DOWNSHIFT_DOMAIN_DEDUP", "1")
 	t.Setenv("DOWNSHIFT_DOMAIN_INTERACTIONS", "1")
 	cases := []struct {
-		name   string
-		rules  []struct{ domain string; class Complexity; weight int }
-		wantM  int
-		wantC  int
+		name  string
+		rules []interactionTestVote
+		wantM int
+		wantC int
 	}{
-		{"one domain repeated", []struct{ domain string; class Complexity; weight int }{{"backend", Medium, 2}, {"backend", Medium, 2}}, 3, 0},
-		{"opposing tiers", []struct{ domain string; class Complexity; weight int }{{"backend", Medium, 2}, {"devops", Complex, 3}}, 2, 3},
-		{"two complex domains", []struct{ domain string; class Complexity; weight int }{{"devops", Complex, 3}, {"data", Complex, 3}}, 0, 7},
-		{"simple work unaffected", []struct{ domain string; class Complexity; weight int }{{"backend", Simple, 2}, {"data", Simple, 2}}, 0, 0},
+		{"one domain repeated", []interactionTestVote{{"backend", Medium, 2}, {"backend", Medium, 2}}, 3, 0},
+		{"opposing tiers", []interactionTestVote{{"backend", Medium, 2}, {"devops", Complex, 3}}, 2, 3},
+		{"two complex domains", []interactionTestVote{{"devops", Complex, 3}, {"data", Complex, 3}}, 0, 7},
+		{"simple work unaffected", []interactionTestVote{{"backend", Simple, 2}, {"data", Simple, 2}}, 0, 0},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
