@@ -143,7 +143,7 @@ func setupRun(o setupOptions) int {
 	extra := map[string][]string{}
 	for _, t := range targets {
 		if t.File == "" {
-			fmt.Fprintf(o.Out, "%s: detected, not wired by setup\n  %s\n\n", t.Name, osWrapperHint(t.Manual))
+			fmt.Fprintf(o.Out, "%s: detected, not wired by setup\n  %s\n\n", t.Name, t.Manual)
 			if p, ok := planSteering(o, t); ok {
 				plans = append(plans, p)
 			}
@@ -161,6 +161,9 @@ func setupRun(o setupOptions) int {
 		p.notes = append(extra[t.Name], p.notes...)
 		plans = append(plans, p.companions...)
 		plans = append(plans, p)
+		if sp, ok := planSteering(o, t); ok {
+			plans = append(plans, sp)
+		}
 	}
 
 	failed := false

@@ -533,24 +533,33 @@ func TestSetupAntigravityNamedGroupIsNotDuplicated(t *testing.T) {
 	}
 }
 
+// A harness setup cannot write (opencode has no hook file yet) is reported and
+// nothing is created for it.
 func TestSetupManualHarnessIsReportedNotWritten(t *testing.T) {
-	e := newSetupEnv(t, ".kiro")
+	e := newSetupEnv(t, ".config/opencode")
 	code, out, _ := e.run("--yes")
-	if code != 0 || !strings.Contains(out, "kirocrew-pre-tool-use.sh") {
+	if code != 0 || !strings.Contains(out, "opencode: detected, not wired by setup") {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
-	// A Manual harness is still not hook-wired: no config.json is touched.
+	if entries, _ := os.ReadDir(e.path(".config/opencode")); len(entries) != 0 {
+		t.Errorf("setup wrote into the opencode directory: %v", entries)
+	}
+}
+
+// KiroCrew creates its own config. Without it setup writes no hook, but the
+// compact steering does not depend on it.
+func TestSetupKiroCrewWithoutAConfigInstallsOnlyTheSteering(t *testing.T) {
+	e := newSetupEnv(t, ".kiro")
+	code, out, _ := e.run("--yes")
+	if code != 0 || !strings.Contains(out, "not set up yet") {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
 	if m, _ := filepath.Glob(e.path(".kiro/crew/config.json")); len(m) != 0 {
-		t.Errorf("kirocrew config.json was written by setup: %v", m)
+		t.Errorf("setup created the KiroCrew config: %v", m)
 	}
-	// But KiroCrew now gets its compact steering installed.
-	steer := e.path(".kiro/crew/workspace/.kiro/steering/downshift-compact.md")
-	body, err := os.ReadFile(steer)
-	if err != nil {
-		t.Fatalf("steering not installed: %v", err)
-	}
-	if !strings.Contains(string(body), "downshift compact --") {
-		t.Errorf("steering missing the compact rule:\n%s", body)
+	body, err := os.ReadFile(e.path(".kiro/crew/workspace/.kiro/steering/downshift-compact.md"))
+	if err != nil || !strings.Contains(string(body), "downshift compact --") {
+		t.Fatalf("steering not installed: %v\n%s", err, body)
 	}
 }
 

@@ -211,9 +211,18 @@ var setupTargets = []setupTarget{
 	{
 		Name:      "kirocrew",
 		ConfigDir: ".kiro",
-		Manual: "KiroCrew accepts only an absolute executable path with no arguments, so it needs the wrapper script " +
-			"scripts/kirocrew-pre-tool-use.sh registered in ~/.kiro/crew/config.json (agent.kiro_hooks.preToolUse). " +
-			"See docs/guides/install.md, section KiroCrew.",
+		// The hook goes in agent.kiro_hooks, not in the generated agent spec
+		// (~/.kiro/agents/kirocrew.json is rewritten on every restart).
+		// KiroCrew takes one executable and no arguments, hence the wrapper.
+		File:        ".kiro/crew/config.json",
+		HooksPath:   []string{"agent", "kiro_hooks"},
+		RequireFile: true,
+		Hooks: []setupHook{
+			{Event: "preToolUse", Matcher: "*", Args: "kirocrew", Wrapper: "kirocrew-pre-tool-use"},
+		},
+		Notes: []string{
+			"Restart KiroCrew so it regenerates its agent spec with the hook, then run `downshift doctor`.",
+		},
 		Steering: &setupSteering{
 			Path:    ".kiro/crew/workspace/.kiro/steering/downshift-compact.md",
 			Content: kirocrewCompactSteering,
