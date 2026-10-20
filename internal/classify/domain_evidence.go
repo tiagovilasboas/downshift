@@ -23,7 +23,9 @@ type domainEvidenceVote struct {
 
 // domainEvidence applies a bounded corroboration bonus within a domain.
 // Five closely related regex hits are not five independent observations:
-//     contribution = max(weight) + min(1, sum(weight)-max(weight))
+//
+//	contribution = max(weight) + min(1, sum(weight)-max(weight))
+//
 // One hit is unchanged; two or more contribute at most one extra point.
 // This is a conservative saturation heuristic, not a calibrated probability.
 type domainEvidence struct {
