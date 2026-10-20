@@ -215,6 +215,9 @@ func PrintReport(w io.Writer, r Report) {
 	fmt.Fprintln(w, "Plan lens (tokens only)")
 	if line := r.TokensSaved.Line(); line != "" {
 		fmt.Fprintf(w, "  %s\n", line)
+		if r.TokensSaved.WorkSaved+r.TokensSaved.CacheSaved == 0 {
+			fmt.Fprintln(w, "  no tokens saved in this window: every observed spawn ran on the requested model")
+		}
 	} else {
 		fmt.Fprintln(w, "  tokens not observed in this window")
 	}
