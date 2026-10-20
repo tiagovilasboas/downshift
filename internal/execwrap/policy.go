@@ -183,6 +183,12 @@ var mavenGoals = map[string]bool{
 	"test": true, "verify": true, "package": true, "install": true, "clean": true,
 }
 
+// mavenFlags are the only options a wrapped Maven command may carry. Each takes
+// no value, so no file, settings or profile path can ride along.
+var mavenFlags = map[string]bool{
+	"-o": true, "-q": true, "-B": true, "-DskipTests": true, "-DskipITs": true,
+}
+
 func isMavenCommand(argv []string) bool {
 	switch argv[0] {
 	case "mvn", "mvnw", "./mvnw":
@@ -190,7 +196,11 @@ func isMavenCommand(argv []string) bool {
 			return false
 		}
 		for _, a := range argv[2:] {
-			if !strings.HasPrefix(a, "-") && !mavenGoals[a] {
+			if strings.HasPrefix(a, "-") {
+				if !mavenFlags[a] {
+					return false
+				}
+			} else if !mavenGoals[a] {
 				return false
 			}
 		}

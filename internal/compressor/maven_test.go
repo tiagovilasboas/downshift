@@ -60,6 +60,9 @@ func TestCompressMavenPreservesAmbiguousOutputByteIdentically(t *testing.T) {
 		"class name mismatch":    mutate("-- in com.acme.inventory.PriceTest", "-- in com.acme.Other"),
 		"second project":         mutate("[INFO] Scanning for projects...\n", "[INFO] Scanning for projects...\n[INFO] Reactor Build Order:\n"),
 		"chatter in test region": mutate("-- in com.acme.inventory.StockTest\n", "-- in com.acme.inventory.StockTest\n[INFO] Deleting /home/u/.aws/credentials\n"),
+		"javac secret note":      mutate("[INFO] Copying 2", "[INFO] Compiling 1 source file with javac [secret exfil note] to /x\n[INFO] Copying 2"),
+		"copy suffix free text":  mutate("[INFO] Copying 2", "[INFO] Copying 2 resources from src to dst leaks text\n[INFO] Copying 2"),
+		"chatter after totals":   mutate("Tests run: 13, Failures: 0, Errors: 0, Skipped: 0\n", "Tests run: 13, Failures: 0, Errors: 0, Skipped: 0\n[INFO] Deleting /home/u/.aws/credentials\n"),
 		"chatter with spaces":    mutate("[INFO] Copying 2", "[INFO] Deleting /a b/c\n[INFO] Copying 2"),
 		"no success":             mutate("[INFO] BUILD SUCCESS\n", ""),
 		"trailing output":        []byte(good + "[INFO] extra\n"),
@@ -91,7 +94,7 @@ func TestMavenDetectionIsExclusive(t *testing.T) {
 
 func TestCompressMavenChatterOutsideTestRegionStillCompacts(t *testing.T) {
 	good := string(readMavenFixture(t, "maven_pass_test.txt"))
-	in := []byte(strings.Replace(good, "[INFO] Copying 2", "[INFO] Deleting /work/inventory/target\n[INFO] Copying 2", 1))
+	in := []byte(strings.Replace(good, "[INFO] Copying 2", "[INFO] skip non existing resourceDirectory /work/inventory/src/extra\n[INFO] Copying 2", 1))
 	if _, applied, reason := compressMaven(in); !applied {
 		t.Fatalf("expected compression, reason=%q", reason)
 	}

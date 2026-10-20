@@ -13,6 +13,10 @@ import (
 // mavenPath is a single path token: no spaces or shell/URL punctuation.
 const mavenPath = `[A-Za-z0-9_.\-/+@:~]+`
 
+// mavenJavacOptions is the closed set of bracketed javac options Maven prints,
+// for example "[debug release 17]" or "[debug target 17 -parameters]".
+const mavenJavacOptions = `(?:debug|release|source|target|parameters|nowarn|deprecation|encoding)(?: \d+)?(?: (?:debug|release|source|target|parameters|nowarn|deprecation|encoding)(?: \d+)?)*`
+
 const mavenScanLine = "[INFO] Scanning for projects..."
 
 var (
@@ -23,16 +27,20 @@ var (
 	reMavenFrom      = regexp.MustCompile(`^\[INFO\]   from [A-Za-z0-9_.\-/]+$`)
 	reMavenPackaging = regexp.MustCompile(`^\[INFO\] -+\[ [a-z0-9\-]+ \]-+$`)
 	reMavenGoal      = regexp.MustCompile(`^\[INFO\] --- ([A-Za-z0-9_.\-]+):([A-Za-z0-9_.\-]+):([A-Za-z0-9_.\-]+) \(([A-Za-z0-9_.\-]+)\) @ ([A-Za-z0-9_.\-]+) ---$`)
-	reMavenChatter   = regexp.MustCompile(`^\[INFO\] (?:Nothing to compile - all classes are up to date\.?` +
-		`|Changes detected - recompiling the module!(?: :\w+)?` +
-		`|Compiling \d+ source files? with javac \[[^\]]*\] to \S+` +
-		`|Copying \d+ resources?(?: from \S+ to \S+)?` +
+	// reMavenChatter lists the goal chatter that may precede the Surefire
+	// header. Only the javac option tokens of a real compile line are accepted,
+	// and every path or copy target is one path token.
+	reMavenChatter = regexp.MustCompile(`^\[INFO\] (?:Nothing to compile - all classes are up to date\.?` +
+		`|Changes detected - recompiling the module!(?: :(?:source|resources))?` +
+		`|Compiling \d+ source files? with javac \[` + mavenJavacOptions + `\] to ` + mavenPath +
+		`|Copying \d+ resources?(?: from ` + mavenPath + ` to ` + mavenPath + `)?` +
 		`|Using '[A-Za-z0-9\-]+' encoding to copy filtered resources\.` +
-		`|skip non existing resourceDirectory ` + mavenPath + `` +
-		`|Using auto detected provider \S+` +
-		`|Building jar: ` + mavenPath + `` +
-		`|Installing ` + mavenPath + ` to ` + mavenPath + `` +
-		`|Deleting ` + mavenPath + `)$`)
+		`|skip non existing resourceDirectory ` + mavenPath +
+		`|Using auto detected provider ` + mavenPath + `)$`)
+	// reMavenPostTests lists the only chatter allowed between the Surefire
+	// totals and BUILD SUCCESS: a packaged jar or an install step.
+	reMavenPostTests = regexp.MustCompile(`^\[INFO\] (?:Building jar: ` + mavenPath +
+		`|Installing ` + mavenPath + ` to ` + mavenPath + `)$`)
 	reMavenTestsHeader = regexp.MustCompile(`^\[INFO\]  T E S T S$`)
 	reMavenRunning     = regexp.MustCompile(`^\[INFO\] Running (\S+)$`)
 	reMavenClassTests  = regexp.MustCompile(`^\[INFO\] Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [0-9.,]+ (?:s|sec) -- in (\S+)$`)
@@ -128,7 +136,8 @@ func compressMaven(input []byte) ([]byte, bool, string) {
 			}
 			m := reMavenGoal.FindStringSubmatch(line)
 			goals = append(goals, m[1]+":"+m[3]+" ("+m[4]+")")
-		case len(goals) > 0 && !(seenHeader && totalRun < 0) && reMavenChatter.MatchString(line):
+		case len(goals) > 0 && !seenHeader && reMavenChatter.MatchString(line):
+		case len(goals) > 0 && totalRun >= 0 && reMavenPostTests.MatchString(line):
 		case len(goals) > 0 && reMavenTestsHeader.MatchString(line):
 			seenHeader = true
 		case seenHeader && reMavenRunning.MatchString(line):
