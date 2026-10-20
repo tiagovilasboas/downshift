@@ -64,7 +64,7 @@ external tool. Dotted boxes are opt-in or shadow and never change the route.
    docs/reference/harness-matrix.md)
              ▼
  child end [D ← H]  PostToolUse: resolvedModel (honored / refuted), no tokens for
-   async children · SubagentStop: child transcript → tokens, catalog price ·
+   async children · SubagentStop: child transcript → token counts and model ·
    `downshift end <harness>` is the same recorder; Cursor/Codex ends unverified
              ▼
  event log [D]  ~/.downshift/events.jsonl, prompt-free · loop-events.jsonl
@@ -160,8 +160,9 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
 8. **Child end and usage** `[D]` from `[H]` payloads. PostToolUse on Claude Code
    is the launch of an async child: it carries `resolvedModel` (honored or
    refuted) and no tokens. SubagentStop supplies the child transcript, from
-   which the shared recorder (`internal/childend`) prices tokens with catalog
-   list prices. A nil port stays unobserved; absence is never inferred.
+   which the shared recorder (`internal/childend`) records token counts and
+   model. Current usage records contain no dollar amount. A nil port stays
+   unobserved; absence is never inferred.
    Per-step routing latency is not a supported telemetry measurement. Claude
    Code also records the last recognized check command's result as
    `verification: passed|failed|none`; this is a transcript sensor, not proof
@@ -174,7 +175,7 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    them shows a dollar, and neither does `report`.
    `report` compares routed spawns with the control group, counting "completed"
    only for harnesses that declare an end event and have end records;
-   `verification-report` groups observed checks and estimated cost by tier;
+   `verification-report` groups observed checks and token-call counts by tier;
    `session` and `watch` read the same log.
 10. **Benchmarks and tuning** `[D]`, offline. `benchmark` scores the classifier
     on labelled fixtures (tier accuracy, unsafe downgrade, over-routing);
@@ -280,8 +281,10 @@ choice.
 
 **Telemetry and stats.** appenders (`telemetry`, `childend`, `hookport`) write
 JSONL; `stats`, `report`, `session`, `watch` and `dsmon` read it.
-`telemetry.Summarize` produces the one savings figure (gross, overspend, net);
-`prices_as_of` dates the list prices behind it.
+`telemetry.Summarize` reports gross, pricier-tier and net token counts from
+observed usage; no prices enter this summary. `stats` also shows dimensionless
+normalised units. `prices_as_of` dates the catalog snapshot used for routing and
+price analysis, not a dollar figure in current reports.
 
 ## Where state lives
 
@@ -360,7 +363,7 @@ tests, a security review or a production signal.
 | Subagent routing | The flow above: one decision per spawn, rewrite or allow, fail open. | D decides, H applies | `internal/core`, adapters, `runHookAdapter` |
 | Context optimization | Native provider is **observe-only**: PostToolUse records tool output bytes and the reduction `safe` mode would reach; the hook never replaces the tool result the model sees. `downshift context compress` compacts piped output in `safe` mode as an explicit CLI step. Headroom is a companion: detected on PATH, recorded with `context enable headroom`, never installed, launched or wrapped. | D observes; X compresses | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` |
 | Code Intelligence (DCI) | Independent subsystem: discovers repository code via Git (`discover.go`), extracts Go AST and multi-language structural symbols & calls (`parse.go`, `parse_lang.go`), builds incremental inverted index with reverse call graph (`index.go`), scores via BM25 with Production-First weighting & Call-Graph Co-Reference boost (`rank.go`), abstains on conversational chatter (`abstain.go`), packages structural sketches with downstream blast radius and prompt-injection defense within configurable budget (`pack.go`), and auto-injects via multi-harness hooks (`UserPromptSubmit`). CLI queries via `downshift dci impact` and `inspect`. Strictly decoupled from model routing. | D | `internal/codeintel/` |
-| Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `probe` (maintainer). Prices come from the embedded catalog (`prices_as_of`, refreshed by the weekly `sync-prices` PR, [prices.md](../reference/prices.md)). | D | `internal/telemetry`, `internal/childend`, `.github/workflows/sync-prices.yml` |
+| Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `probe` (maintainer). Catalog list prices (`prices_as_of`, refreshed by the weekly `sync-prices` PR, [prices.md](../reference/prices.md)) inform routing; current reports expose token counts and no dollar amounts. | D | `internal/telemetry`, `internal/childend`, `.github/workflows/sync-prices.yml` |
 | Diagnosis and recommendations | `doctor` (binary, state dir, catalog, hooks per harness, model override, quota, policy, context optimization, companion, semantic boost) with a `fix` per failed check; skills `downshift-setup`, `downshift-audit`, `cost-reducer` write nothing without a yes. | D | `cmd/downshift/doctor*.go`, `skills/` |
 | Benchmark and economic evaluation | Classifier KPIs, outcome evals, control-group report with its token check, feedback and offline training. Public `benchmark/` holds the published report; datasets stay in downshift-labs. | D | `internal/benchmark`, `internal/outcome`, `internal/routingv2/training` |
 

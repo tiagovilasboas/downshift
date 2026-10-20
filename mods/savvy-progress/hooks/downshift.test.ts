@@ -175,6 +175,33 @@ test('band fallback: a finished row leaves the panel 10 seconds after the panel 
   expect(await shows($, 'AbovePrompt', /^2 done$/)).toBe(true)
 })
 
+// The crew badge counts what the panel lists: running agents, finished ones still inside FINISHED_SHOW_MS, and planned tasks.
+const crewLabel = async ($: Engine): Promise<unknown> => {
+  const ui = await $.ui.mount({ plugin: PLUGIN, surface: 'terminal', component: 'AbovePrompt', props: band as never })
+  const label = (await ui.find({ key: 'savvy-agents' }))?.props.label
+  await ui.unmount()
+  return label
+}
+
+test('crew badge: once the finished rows leave the panel, the badge counts only the running agents', async ($, on) => {
+  const clock = await runAgents($, on, ['t1', 't2'])
+  // First rendered at the finish time, so the window starts there.
+  expect(await crewLabel($)).toBe('×2')
+  await $.agent.spawn({ tool_use_id: 't3', prompt: 'p', description: 'Work t3', subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
+  await clock.set(Date.parse('2026-10-19T10:00:11Z'))
+  expect(await shows($, 'Pane', /Work t1/)).toBe(false)
+  expect(await crewLabel($)).toBe('×1')
+})
+
+test('crew badge: a finished agent still inside the window is counted with the running ones', async ($, on) => {
+  const clock = await runAgents($, on, ['t1', 't2'])
+  expect(await crewLabel($)).toBe('×2')
+  await $.agent.spawn({ tool_use_id: 't3', prompt: 'p', description: 'Work t3', subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
+  await clock.set(Date.parse('2026-10-19T10:00:09Z'))
+  expect(await shows($, 'Pane', /Work t1/)).toBe(true)
+  expect(await crewLabel($)).toBe('×3')
+})
+
 test('downshift: the Compactor shows in its own unit and is never added to the tokens moved', async ($, on) => {
   await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
   expect(await shows($, 'Pane', /59k downshifted · .* · ↓ 60 KB compactor/)).toBe(true)

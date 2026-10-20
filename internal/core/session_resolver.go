@@ -234,6 +234,15 @@ func (r *sessionResolver) IsExplicitOnly(harness, id string) bool {
 	return r.fallback != nil && r.fallback.IsExplicitOnly(harness, id)
 }
 
+// ShadowGateways forwards the optional allowlist extension. The allowlist is
+// a user fact, not a session fact, so it comes from the fallback unchanged.
+func (r *sessionResolver) ShadowGateways() []Model {
+	if g, ok := r.fallback.(GatewayShadowResolver); ok {
+		return g.ShadowGateways()
+	}
+	return nil
+}
+
 func (r *sessionResolver) IsExactID(harness, id string) bool {
 	if harness == r.harness && r.session.Contains(id) {
 		return true

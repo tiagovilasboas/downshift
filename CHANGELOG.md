@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `savvy-progress` 1.2.8: the band's `×N` badge counts only the agents the panel lists (running ones, finished ones still inside the 10 s window, and planned tasks), not every agent of the session. The mod's tests cover both cases.
 - `savvy-progress` 1.2.7: the `✕` on the band now works when the band follows the live subagents (it cleared a flow the band no longer used, so the band came straight back); the band returns with the next agent. The `✕` moves to the right edge of the row. The finished-agents clock read (#333) no longer throws when the host gives no clock, which turned two upstream tests red on `main`.
 
 - The savvy-progress bar kept coming back purple: Claude Code caches a plugin by its version, and the cached 1.2.1 on machines that installed it before the colour patch still held upstream's `#8f8cf4`. The mod now ships as 1.2.2 (only `plugin.json` `version` differs from upstream, carried by `downshift-local.patch`), so a plugin update replaces the cache. To get it: `claude plugin marketplace update downshift`, then `claude plugin update savvy-progress@downshift`, then restart Claude Code.

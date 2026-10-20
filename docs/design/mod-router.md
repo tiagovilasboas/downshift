@@ -188,8 +188,8 @@ next({ ...e, model })   or   next(e)            [fail open; never deny]
 3. **Phase 2b (done, this change).** A `turn.complete` hook in the mod accumulates `e.usage`
    per `e.agentId` and, once `$.agent.list()` shows the loop finished, records the totals through
    `downshift end claude-code` with inline usage (same ChildEnd recorder `SubagentStop` feeds; the
-   Claude Code adapter prefers inline `usage` over a transcript path). Dedup still prices each
-   agent once, so a live settings `SubagentStop` and the mod do not double-bill. A `turn.step`
+   Claude Code adapter prefers inline `usage` over a transcript path). Dedup records each agent's
+   usage once when the settings `SubagentStop` hook and the mod overlap. A `turn.step`
    hook stores `reasoning_effort` from the mod spawn's binary stdout (the adapter emits it in
    `updatedInput` only when `entry` is `mod`) and returns `next({ ...e, effort })` per subagent
    request. Still open: live `PostToolUse` `resolvedModel` evidence for mod-written models (the

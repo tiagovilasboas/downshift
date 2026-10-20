@@ -10,12 +10,12 @@ a real operator. It is not a release announcement.
 
 | Surface | Claim that matches the code |
 |---------|-----------------------------|
-| Claude Code | Primary path. PreToolUse can rewrite a subagent model. Honor evidence exists for one paid session (2026-10-06) via the child transcript model, not an invoice. Usage can be priced from a SubagentStop transcript (`internal/adapters/claudecode/subagentstop_test.go`). |
+| Claude Code | Primary path. PreToolUse can rewrite a subagent model. Honor evidence exists for one paid session (2026-10-06) via the child transcript model, not an invoice. `SubagentStop` records transcript token counts and model; current Downshift reports show no dollar amount (`internal/adapters/claudecode/subagentstop_test.go`). |
 | Codex | Functional wire path. Honor write-up is inferred (2026-10-02), not a billing receipt. |
 | Cursor | Functional wire path. **Rewrite honored is not closed** (beta-exit P1.6). Do not treat a hook JSON rewrite as proof the child ran that model. |
 | KiroCrew, Antigravity | Experimental. Matrix rows stay honest when a plan drops the rewrite. |
 | Classifier | Deterministic regex (EN + PT) plus an in-process FNV hash boost. No Graphify, no E5, no external MiniLM command. |
-| Money | `stats` and `report` are list-price estimates plus a 10% control group. They are not a provider invoice. |
+| Usage reporting | `stats`, `report` and `stats --export` report observed tokens; they show no dollar amount. The 10% control group lets `report` compare routed and unrouted tokens per completed task. It is not a billing comparison. |
 
 Local checks that do not spend provider credit:
 
