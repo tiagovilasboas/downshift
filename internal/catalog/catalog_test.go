@@ -929,3 +929,84 @@ func TestLookupByID_GatewayForeignAndComboStayUnknown(t *testing.T) {
 		}
 	}
 }
+
+// --- OpenRouter gateway rows keep their full "vendor/model" slug ---
+
+const gatewayCatalog = `{
+	"entries": [
+		{"id":"deepseek-v4.1-flash-free","harness":"opencode","provider":"opencode","tier":"small"},
+		{"id":"grok-x","harness":"opencode","provider":"opencode","tier":"small"},
+		{"id":"deepseek/deepseek-v4.1-flash","family":"deepseek/deepseek-v4","harness":"opencode","provider":"openrouter","tier":"mid"},
+		{"id":"x-ai/grok-x","harness":"opencode","provider":"openrouter","tier":"frontier"}
+	]
+}`
+
+func TestLookupByID_GatewayRowWinsByFullSlug(t *testing.T) {
+	c, err := parse([]byte(gatewayCatalog))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	// Exact full slug: the gateway row, not the native row sharing its tail.
+	m, ok := c.LookupByID("opencode", "x-ai/grok-x")
+	if !ok || m.ID != "x-ai/grok-x" || m.Tier != core.TierFrontier {
+		t.Errorf("x-ai/grok-x = %+v ok=%v, want the gateway row (frontier)", m, ok)
+	}
+	// The native id itself still resolves to the native row.
+	m, ok = c.LookupByID("opencode", "grok-x")
+	if !ok || m.ID != "grok-x" || m.Tier != core.TierSmall {
+		t.Errorf("grok-x = %+v ok=%v, want the native row (small)", m, ok)
+	}
+}
+
+func TestLookupByID_GatewayFamilyMatchesTheFullSlug(t *testing.T) {
+	c, err := parse([]byte(gatewayCatalog))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	m, ok := c.LookupByID("opencode", "deepseek/deepseek-v4.2-flash")
+	if !ok || m.ID != "deepseek/deepseek-v4.1-flash" || m.Tier != core.TierMid {
+		t.Errorf("version bump = %+v ok=%v, want the gateway family row (mid)", m, ok)
+	}
+	e, ok := c.EntryFor("opencode", "deepseek/deepseek-v4.2-flash")
+	if !ok || e.ID != "deepseek/deepseek-v4.1-flash" {
+		t.Errorf("EntryFor = %+v ok=%v, want the same row as LookupByID", e, ok)
+	}
+}
+
+func TestLookupByID_GatewayRowIsNotReachedByItsTail(t *testing.T) {
+	c, err := parse([]byte(`{"entries":[
+		{"id":"deepseek/deepseek-v4.1-flash","family":"deepseek/deepseek-v4","harness":"opencode","provider":"openrouter","tier":"mid"}
+	]}`))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	for _, id := range []string{"deepseek-v4.1-flash", "deepseek-v4.2-flash", "other/deepseek-v4.1-flash"} {
+		if m, ok := c.LookupByID("opencode", id); ok {
+			t.Errorf("%q resolved to %+v: a gateway row is reachable only by its full slug", id, m)
+		}
+	}
+}
+
+func TestLookupByID_NativeStripUnchangedWithoutGatewayRows(t *testing.T) {
+	c, err := parse([]byte(`{"entries":[
+		{"id":"grok-x","harness":"opencode","provider":"opencode","tier":"small"}
+	]}`))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	m, ok := c.LookupByID("opencode", "x-ai/grok-x")
+	if !ok || m.ID != "grok-x" {
+		t.Errorf("without gateway rows the prefix strip must still apply, got %+v ok=%v", m, ok)
+	}
+}
+
+func TestParse_GatewayRowNeedsItsFullSlug(t *testing.T) {
+	for name, body := range map[string]string{
+		"id without a slash":     `{"entries":[{"id":"grok-x","harness":"opencode","provider":"openrouter","tier":"small"}]}`,
+		"family without a slash": `{"entries":[{"id":"x-ai/grok-x","family":"grok","harness":"opencode","provider":"openrouter","tier":"small"}]}`,
+	} {
+		if _, err := parse([]byte(body)); err == nil {
+			t.Errorf("%s: want a validation error", name)
+		}
+	}
+}
