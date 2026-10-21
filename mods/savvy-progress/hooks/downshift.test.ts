@@ -191,6 +191,39 @@ test('finished section: the header counts the shown rows and the section expires
   expect(await finishedHeader($)).toBeUndefined()
 })
 
+// The engine redraws a mounted surface only when an atom it read while drawing changes. A panel that stays mounted
+// must therefore read the tick atom, or no clock tick redraws it once nothing else changes.
+test('finished section: a panel left mounted drops its rows on the clock tick alone, with no other atom changing', async ($, on) => {
+  const clock = mock.clock(on, { now: Date.parse('2026-10-19T10:00:00Z') })
+  on('session.id', () => ({ value: 'S-1' }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: JSON.stringify(PANEL), stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  let n = 0
+  on('agent.spawn', () => ({ model: 'claude-sonnet-5-5', agentId: `a${++n}` }))
+  on('turn.complete', () => ({ text: '' }) as never)
+  on('env.get', () => ({ value: undefined }))
+  on('settings.read', async () => ({ value: {} }) as never)
+  on('tool.register', () => ({ value: undefined }) as never)
+  on('command.register', () => ({ value: undefined }) as never)
+  on('session.start', async () => ({ cwd: '/repo' }) as never)
+  await $.session.start({ source: 'startup', cwd: '/repo', surface: 'terminal', isInteractive: true } as never)
+  for (const id of ['t1', 't2']) {
+    await $.agent.spawn({ tool_use_id: id, prompt: 'p', description: `Work ${id}`, subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
+  }
+  const ui = await $.ui.mount({ plugin: PLUGIN, surface: 'terminal', component: 'Pane', requestId: 'savvy-agents', props: pane })
+  const band_ = await $.ui.mount({ plugin: PLUGIN, surface: 'terminal', component: 'AbovePrompt', props: band as never })
+  for (let i = 1; i <= 2; i++) await ($.turn.complete as (e: unknown) => Promise<unknown>)({ agentId: `a${i}`, reason: 'answer', answer: 'ok' })
+  expect((await ui.find({ key: 'done' }))?.props.label).toMatch(/Finished · 2$/)
+  expect((await band_.find({ key: 'savvy-agents' }))?.props.label).toBe('×2')
+  // The mounted drawings are not touched again: only the clock moves.
+  await clock.advance(31_000)
+  expect(await ui.find({ type: 'Text', text: /Work t1/ })).toBeUndefined()
+  expect(await ui.find({ key: 'done' })).toBeUndefined()
+  expect((await band_.find({ key: 'savvy-agents' }))?.props.label).toBe('×0')
+  await ui.unmount()
+  await band_.unmount()
+})
+
 // The crew badge counts what the panel lists: running agents, finished ones still inside FINISHED_SHOW_MS, and planned tasks.
 const crewLabel = async ($: Engine): Promise<unknown> => {
   const ui = await $.ui.mount({ plugin: PLUGIN, surface: 'terminal', component: 'AbovePrompt', props: band as never })
