@@ -27,8 +27,9 @@ const (
 	FamilyTurboRun Family = "turbo-run"
 
 	// Package manager test/build wrappers
-	FamilyNpmTest   Family = "npm-test"
-	FamilyNpmBuild  Family = "npm-build"
+	FamilyNpmInstall Family = "npm-install"
+	FamilyNpmTest    Family = "npm-test"
+	FamilyNpmBuild   Family = "npm-build"
 	FamilyPnpmTest  Family = "pnpm-test"
 	FamilyPnpmBuild Family = "pnpm-build"
 	FamilyYarnTest  Family = "yarn-test"
@@ -191,6 +192,8 @@ func packageManagerFamily(argv []string) Family {
 			return FamilyNpmTest
 		case "build":
 			return FamilyNpmBuild
+		case "install", "ci", "i", "ls", "list", "outdated", "audit", "pack", "version":
+			return FamilyNpmInstall
 		}
 	case "pnpm":
 		switch cmd {

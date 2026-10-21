@@ -298,3 +298,4 @@ preserve  direnv   direnv_output.txt
 preserve  lerna       lerna_output.txt
 preserve  changesets  changesets_output.txt
 preserve  cargo-update  cargo_update_output.txt
+preserve  npm-install npm_install_clean.txt
