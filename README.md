@@ -231,9 +231,16 @@ Downshift was built with Claude Code and works across all major coding agent har
 - **Cursor** — Rules-based integration. Compaction via command wrapper, routing via
   composer rules.
 
-- **KiroCrew** — Steering-based. Agent follows `downshift-compact.md` steering to wrap
-  commands. Model routing is policy-mode only (allow/block, no rewrite) because
-  KiroCrew's preToolUse hook has no `updated_input` channel.
+- **KiroCrew** — Steering-based. Compaction works, but with a key difference:
+  KiroCrew's preToolUse hook is allow/block only (no `updated_input` channel to
+  rewrite commands), so the agent must follow a steering file that instructs it
+  to wrap commands with `downshift compactor --`. This is ~90% reliable — LLMs
+  generally follow steering, but it's not guaranteed like hook-based rewriting.
+  For additional reliability, add `eval "$(downshift shell-init)"` to your
+  `~/.zshrc` — this creates shell aliases that compact transparently, independent
+  of whether the model follows the steering. We've opened
+  [kirodotdev/KiroCrew#22767](https://github.com/kirodotdev/KiroCrew/issues/22767)
+  to request native hook rewriting support.
 
 - **OpenCode** — Plugin-based integration. Currently in beta testing.
 
