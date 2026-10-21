@@ -141,10 +141,17 @@ Each run still logs the hashed session when one is known (`telemetry.HashSession
 never the raw id): the hook puts it on the wrapped command
 (`downshift compact --session=<hash> -- …`), from the payload's `session_id` or,
 when absent, the uuid file name of `transcript_path`. A run with no flag (a
-direct `downshift compact -- …` by an agent or a script) takes the session from
-the harness's own variable (`HarnessCapabilities.SessionEnv`, today only
-`CLAUDE_CODE_SESSION_ID`). KiroCrew declares no session variable, so its direct
-calls log no session; they still count in the total.
+direct `downshift compact -- …` by an agent or a script) carries no session —
+it does not fall back to a harness env var. This prevents attributing direct
+compactor calls to a harness they did not originate from (audit A22).
+
+Each run also records two new fields (additive; absent in old rows, treated as
+`"unknown"` by callers):
+- **`harness`**: the harness detected from the environment
+  (`HarnessCapabilities.SessionEnv` lookup, e.g. `"claude-code"`, `"kirocrew"`)
+  or `"unknown"` when none is found.
+- **`entry`**: `"hook"` when `--session=` was set by a harness adapter;
+  `"direct"` when the agent or user ran the compactor without `--session=`.
 
 ### `mods/savvy-progress`
 
