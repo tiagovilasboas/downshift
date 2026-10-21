@@ -24,8 +24,8 @@ and every hook fails open. Three pillars, in this order:
    touches. Implemented (v0.4). Bytes and latency measured; answer quality is
    not measured.
 
-Numbers keep their qualifiers. Routing: about 12% cheaper on mechanical tasks
-in one controlled trial (one operator, Claude Code, 2026-10-15, list price;
+Numbers keep their qualifiers. Routing: up to about 12% cheaper on mechanical tasks
+in one controlled trial (one operator, three runs per cell, Claude Code, 2026-10-15, list price;
 checks verify structure, not quality); no savings from natural use are
 attributable yet (docs/evidence/subagent-routing-ab-2026-10-15.md). Compaction:
 bytes on a synthetic test corpus, 82.3% on the 26 of 248 files compacted, 23.7%

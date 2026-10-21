@@ -14,7 +14,7 @@ O **Downshift** dá ao seu agente de código o modelo certo e menos ruído, sem 
 
 **Números, sempre com a ressalva ao lado:**
 
-- Roteamento: cerca de 12% mais barato em tarefas mecânicas, em um único teste controlado (um operador, Claude Code, 2026-10-15, preço de tabela; as checagens verificam estrutura, não qualidade). Do uso natural ainda não há economia atribuível. Veja o [registro do A/B (EN)](../evidence/subagent-routing-ab-2026-10-15.md).
+- Roteamento: até cerca de 12% mais barato em tarefas mecânicas, em um único teste controlado (um operador, três execuções por célula, Claude Code, 2026-10-15, preço de tabela; as checagens verificam estrutura, não qualidade). Do uso natural ainda não há economia atribuível. Veja o [registro do A/B (EN)](../evidence/subagent-routing-ab-2026-10-15.md).
 - Compactação: medida em bytes num corpus sintético de teste. 82,3% nos 26 de 248 arquivos que foram compactados, 23,7% no total. Sua mistura de saídas vai variar. Veja o [registro do corpus (EN)](../evidence/compaction-corpus-2026-10-21.md).
 - DCI: frio 295 ms, quente p95 5,64 ms, pacotes de 568 a 2801 bytes. Veja o [registro do DCI (EN)](../evidence/dci-v04-blast-radius.md).
 - Relatórios mostram tokens, não dólares.

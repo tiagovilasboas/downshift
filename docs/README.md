@@ -14,7 +14,7 @@ Downshift gives your coding agent the right model and less noise, with no extra 
 
 Numbers keep their qualifiers:
 
-- Routing: about 12% cheaper on mechanical tasks in one controlled trial (one operator, Claude Code, 2026-10-15, list price, checks verify structure, not quality). No savings from natural use are attributable yet. See [the A/B record](evidence/subagent-routing-ab-2026-10-15.md).
+- Routing: up to about 12% cheaper on mechanical tasks in one controlled trial (one operator, three runs per cell, Claude Code, 2026-10-15, list price, checks verify structure, not quality). No savings from natural use are attributable yet. See [the A/B record](evidence/subagent-routing-ab-2026-10-15.md).
 - Compaction: measured in bytes on a synthetic test corpus. 82.3% on the 26 of 248 files it compacted, 23.7% overall. Your mix will differ. See [the corpus record](evidence/compaction-corpus-2026-10-21.md).
 - DCI: cold 295 ms, warm p95 5.64 ms, packs of 568 to 2801 bytes. See [the DCI record](evidence/dci-v04-blast-radius.md).
 - Reports show tokens, not dollars.
