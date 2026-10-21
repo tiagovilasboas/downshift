@@ -50,7 +50,7 @@ func TestRecordAndSuggestions(t *testing.T) {
 
 	// Record several commands
 	for i := 0; i < 10; i++ {
-		err := Record([]string{"npm", "audit"}, []byte("output sample"), execwrap.FamilyNpmInstall)
+		err := Record([]string{"npm", "audit"}, []byte("output sample"), "")
 		if err != nil {
 			t.Fatalf("Record failed: %v", err)
 		}
