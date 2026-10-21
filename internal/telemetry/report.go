@@ -70,9 +70,24 @@ type Report struct {
 	// TokensSaved is the plan lens: tokens saved from the requested model in
 	// the window, work and cache apart, with no price at all.
 	TokensSaved TokenSaving `json:"tokens_saved"`
+	// CompactorSavedBytes and CompactorTokensEstimate are the Compactor's
+	// running totals over the whole exec log (not windowed; bytes / 4 is an
+	// estimate). TokensSavedEstimate is the final figure: routing tokens saved
+	// in the window plus CompactorTokensEstimate. See SetCompactor.
+	CompactorSavedBytes     int64 `json:"compactor_saved_bytes"`
+	CompactorTokensEstimate int64 `json:"compactor_tokens_estimate"`
+	TokensSavedEstimate     int64 `json:"tokens_saved_estimate"`
 	// DecisionsByPermissionMode counts decisions per permission mode name in
 	// the window (see PermissionModeLabel). Display only: no comparison uses it.
 	DecisionsByPermissionMode map[string]int `json:"decisions_by_permission_mode,omitempty"`
+}
+
+// SetCompactor records the Compactor's totals and recomputes the final
+// TokensSavedEstimate. The caller owns the exec log and passes bytes and the
+// estimated tokens (bytes / execwrap.BytesPerToken).
+func (r *Report) SetCompactor(savedBytes, tokens int64) {
+	r.CompactorSavedBytes, r.CompactorTokensEstimate = savedBytes, tokens
+	r.TokensSavedEstimate = TokensSavedEstimate(r.TokensSaved, tokens)
 }
 
 // BuildReport filters events to the last days (<= 0 means all time) and
@@ -82,6 +97,7 @@ func BuildReport(events []Event, days int) Report {
 	windowed := FilterByDays(events, days)
 	rep.Completion = CompletionByHarness(windowed)
 	rep.TokensSaved = TokenSavings(windowed).Total
+	rep.SetCompactor(0, 0)
 	rep.DecisionsByPermissionMode = CountPermissionModes(windowed)
 	tasks := BuildTasks(windowed)
 	for _, t := range tasks {
@@ -233,7 +249,7 @@ func PrintReport(w io.Writer, r Report) {
 		fmt.Fprintf(w, "%d spawn(s) left unrouted by DOWNSHIFT_NO_ROUTE or a session pause are not part of the comparison.\n", r.Excluded)
 	}
 	fmt.Fprintln(w, "Tokens per completed task = input, output and cache tokens of the same tasks; a cheaper model should not need more of them.")
-	fmt.Fprintln(w, "Tokens saved = tokens that ran on a cheaper model than requested; work (input+output) and cache are counted apart.")
+	fmt.Fprintln(w, "Tokens saved (estimate) = tokens that ran on a cheaper model than requested (window) + tokens the Compactor cut (bytes / 4, all time).")
 	fmt.Fprintln(w, "Completed tasks include the failed attempts they redid (respawn in the same session within 10 minutes). Prompt-free.")
 }
 

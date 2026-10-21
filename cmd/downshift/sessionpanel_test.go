@@ -31,9 +31,12 @@ func TestPanel_CompactorIsTheTotalOfAllRuns(t *testing.T) {
 			t.Setenv(n.Caps.SessionEnv, "")
 		}
 	}
-	empty, _ := json.Marshal(panelWithCompactor(telemetry.PanelView{}))
+	empty, _ := json.Marshal(panelWithCompactor(telemetry.PanelView{Tokens: telemetry.TokenSaving{WorkSaved: 40}}))
 	if strings.Contains(string(empty), "compactor") {
 		t.Fatalf("an empty exec log must carry no compactor block: %s", empty)
+	}
+	if !strings.Contains(string(empty), `"tokens_saved_estimate":40`) {
+		t.Fatalf("routing-only total missing: %s", empty)
 	}
 
 	bin := t.TempDir()
@@ -68,13 +71,22 @@ func TestPanel_CompactorIsTheTotalOfAllRuns(t *testing.T) {
 		t.Fatal(err)
 	}
 	var got struct {
-		Compactor *compactorPanel `json:"compactor"`
+		Compactor           *compactorPanel `json:"compactor"`
+		TokensSavedEstimate int64           `json:"tokens_saved_estimate"`
 	}
 	if err := json.Unmarshal(raw, &got); err != nil {
 		t.Fatal(err)
 	}
 	if got.Compactor == nil || got.Compactor.Scope != "all" || got.Compactor.Commands != 4 || got.Compactor.Compacted != 4 || got.Compactor.SavedBytes <= 0 {
 		t.Fatalf("compactor block = %+v, want 4 compacted runs across every session, scope all", got.Compactor)
+	}
+	if want := got.Compactor.EstimatedTokensSaved; got.TokensSavedEstimate != want || want <= 0 {
+		t.Fatalf("tokens_saved_estimate = %d, want the compactor estimate %d (no routing tokens)", got.TokensSavedEstimate, want)
+	}
+	view := telemetry.PanelView{Session: mine, Tokens: telemetry.TokenSaving{WorkSaved: 300, CacheSaved: 200}}
+	both := panelWithCompactor(view)
+	if both.TokensSavedEstimate != 500+got.Compactor.EstimatedTokensSaved {
+		t.Fatalf("both = %d, want routing 500 + compactor %d", both.TokensSavedEstimate, got.Compactor.EstimatedTokensSaved)
 	}
 	if strings.Contains(string(raw), "s-mine") || strings.Contains(string(raw), "s-other") {
 		t.Fatalf("a raw session id leaked into the panel: %s", raw)

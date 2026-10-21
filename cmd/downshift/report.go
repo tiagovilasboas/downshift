@@ -44,6 +44,13 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	}
 
 	rep := telemetry.BuildReport(events, days)
+	// Compactor totals come from the exec log, not the event log, and are not
+	// windowed. They feed the one final figure, tokens saved (estimate).
+	var compactor execwrap.Summary
+	if path, err := execwrap.EventsPath(); err == nil {
+		compactor, _ = execwrap.Summarize(path)
+	}
+	rep.SetCompactor(compactor.SavedBytes, compactor.EstimatedTokensSaved)
 
 	if asJSON {
 		out, err := telemetry.ReportJSON(rep)
@@ -62,19 +69,12 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 
 	// Compactor and code-intelligence savings are produced outside the event
 	// log, so they are appended here rather than inside telemetry.PrintReport.
-	var compactor execwrap.Summary
-	if path, err := execwrap.EventsPath(); err == nil {
-		compactor, _ = execwrap.Summarize(path)
-	}
 	dciEvents, _ := codeintel.ReadTelemetryEvents()
 	dciFiltered := codeintel.FilterTelemetryByDays(dciEvents, days)
 	dciSummary := codeintel.AggregateTelemetry(dciFiltered)
 
 	fmt.Fprintln(stdout, "\n📦 COMPACTOR")
 	fmt.Fprintf(stdout, "   Commands: %d · Compacted: %d\n", compactor.Commands, compactor.Compacted)
-	fmt.Fprintf(stdout, "   Bytes: %d → %d (saved %d)\n",
-		compactor.RawBytes, compactor.EmittedBytes, compactor.SavedBytes)
-	fmt.Fprintf(stdout, "   Tokens saved: ~%d\n", compactor.EstimatedTokensSaved)
 
 	fmt.Fprintln(stdout, "\n🔍 CODE INTELLIGENCE (DCI)")
 	fmt.Fprintf(stdout, "   Prompts: %d · Injections: %d (%.0f%%)\n",
@@ -84,6 +84,9 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stdout, "   Latency p50/p95: %.0fms / %.0fms\n",
 			dciSummary.LatencyP50Ms, dciSummary.LatencyP95Ms)
 	}
+
+	// The one final figure; the parts are in `--json`.
+	fmt.Fprintf(stdout, "\n%s\n", telemetry.TokensSavedEstimateLine(rep.TokensSavedEstimate))
 
 	return 0
 }

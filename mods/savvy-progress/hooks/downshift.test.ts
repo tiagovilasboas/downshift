@@ -14,6 +14,7 @@ const PANEL = {
   session: 'a1b2c3d4', switched: 2, held: 1, observed: 0,
   tokens: { children: 2, saved_children: 1, work_tokens: 1000, work_saved: 620, cache_tokens: 100000, cache_saved: 58000 },
   tokens_line: 'saved 62% of work · 58% of cache',
+  tokens_saved_estimate: 73980, // routing 58620 + Compactor 15360
   compactor: { commands: 4, compacted: 3, raw_bytes: 90000, saved_bytes: 61440, estimated_tokens_saved: 15360, token_estimate: 'estimated: saved_bytes / 4' },
   by_agent_type: [{ agent_type: 'general-purpose', line: 'general-purpose: 62% work · 58% cache', tokens: { work_saved: 620, cache_saved: 58000 } }],
   spawns: [{ tool_use: T1, state: 'switched', from_model: 'claude-opus-5-5', to_model: 'claude-sonnet-5-5', label: 'opus → sonnet (mid)', tokens_label: '48k tokens · saved from opus', tokens: { work_saved: 620, cache_saved: 58000 } }],
@@ -251,35 +252,26 @@ test('crew badge: a finished agent still inside the window is counted with the r
   expect(await crewLabel($)).toBe('×3')
 })
 
-test('downshift: the Compactor shows in its own unit and is never added to the tokens moved', async ($, on) => {
+test('tokens saved: one tile and the summary draw the estimated total, routing plus Compactor', async ($, on) => {
   await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
-  expect(await shows($, 'Pane', /59k downshifted · .* · Compactor total 4 cmds · 60 KB saved$/)).toBe(true)
-  expect(await shows($, 'Pane', /estimated|≈|nothing to cut/i)).toBe(false)
+  expect(await shows($, 'Pane', /~74k tokens saved · .*$/)).toBe(true)
+  expect(await shows($, 'Pane', /Compactor|Downshifted|nothing to cut|KB saved/)).toBe(false)
 })
 
-test('compactor: commands that cut nothing say so, with the bytes they saw', async ($, on) => {
-  const quiet = { ...PANEL, compactor: { commands: 4, compacted: 0, raw_bytes: 878, saved_bytes: 0 } }
-  await world($, on, { stdout: JSON.stringify(quiet) }, 'S-1')
-  expect(await shows($, 'Pane', /Compactor total 4 cmds · 0 B saved · nothing to cut$/)).toBe(true)
-  expect(await shows($, 'Pane', /↓ 0 B/)).toBe(false)
+test('tokens saved: an older binary without the total falls back to the routing tokens', async ($, on) => {
+  const { tokens_saved_estimate: _t, ...old } = PANEL
+  await world($, on, { stdout: JSON.stringify(old) }, 'S-1')
+  expect(await shows($, 'Pane', /~59k tokens saved/)).toBe(true)
 })
 
-test('compactor: a single command is named in the singular', async ($, on) => {
-  const one = { ...PANEL, compactor: { commands: 1, compacted: 0, raw_bytes: 100, saved_bytes: 0 } }
-  await world($, on, { stdout: JSON.stringify(one) }, 'S-1')
-  expect(await shows($, 'Pane', /Compactor total 1 cmd · 0 B saved · nothing to cut$/)).toBe(true)
-})
-
-test('compactor: the total is drawn even when the session is unknown, because it is not a session figure', async ($, on) => {
+test('tokens saved: without a session the total is withheld', async ($, on) => {
   await world($, on, { stdout: JSON.stringify(PANEL) }, '')
-  expect(await shows($, 'Pane', /· Compactor total 4 cmds · 60 KB saved$/)).toBe(true)
-  // The per-session tokens are still withheld without a session.
-  expect(await shows($, 'Pane', /^59k downshifted/)).toBe(false)
+  expect(await shows($, 'Pane', /~74k|~59k/)).toBe(false)
 })
 
-test('compactor: raw output that was compacted is not called nothing to cut', async ($, on) => {
-  await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
-  expect(await shows($, 'Pane', /nothing to cut/)).toBe(false)
+test('tokens saved: zero carries no estimate marker', async ($, on) => {
+  await world($, on, { stdout: JSON.stringify({ ...PANEL, tokens_saved_estimate: 0 }) }, 'S-1')
+  expect(await shows($, 'Pane', /~0|~/)).toBe(false)
 })
 
 test('effort: when effort changed the summary says model and effort, not switched', async ($, on) => {
@@ -307,7 +299,7 @@ test('effort: a non-numeric field is treated as absent', async ($, on) => {
   expect(await shows($, 'AbovePrompt', /^Downshift · 2 switched · 1 held$/)).toBe(true)
 })
 
-test('downshift: without a compactor block the header says nothing about it', async ($, on) => {
+test('downshift: without a compactor block the header is unchanged', async ($, on) => {
   const { compactor: _c, ...noCompactor } = PANEL
   await world($, on, { stdout: JSON.stringify(noCompactor) }, 'S-1')
   expect(await shows($, 'Pane', /compactor/)).toBe(false)
@@ -346,16 +338,3 @@ test('effort: a session where only the effort changed says 0 model, never a mode
   expect(await shows($, 'AbovePrompt', /switched/)).toBe(false)
 })
 
-test('compactor: under 10 KB the saving keeps one decimal, from 10 KB it does not', async ($, on) => {
-  const small = { ...PANEL, compactor: { commands: 2, compacted: 1, raw_bytes: 20000, saved_bytes: 9216 } }
-  await world($, on, { stdout: JSON.stringify(small) }, 'S-1')
-  expect(await shows($, 'Pane', /Compactor total 2 cmds · 9\.0 KB saved$/)).toBe(true)
-})
-
-test('compactor: big raw output that cut nothing is not called nothing to cut', async ($, on) => {
-  // Over the 4 KB threshold a zero saving means the output was not compactable, not that there was nothing there.
-  const bigNone = { ...PANEL, compactor: { commands: 3, compacted: 0, raw_bytes: 50000, saved_bytes: 0 } }
-  await world($, on, { stdout: JSON.stringify(bigNone) }, 'S-1')
-  expect(await shows($, 'Pane', /Compactor total 3 cmds · 0 B saved$/)).toBe(true)
-  expect(await shows($, 'Pane', /nothing to cut/)).toBe(false)
-})
