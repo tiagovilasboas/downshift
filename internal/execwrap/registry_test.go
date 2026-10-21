@@ -4,8 +4,9 @@
 package execwrap
 
 // Registry check: a new family is complete only when every shared list names
-// it. Family constants are read from policy.go, so adding one without an
-// expectedFormat entry or corpus fixtures fails here with the missing piece.
+// it. Family constants are read from every policy*.go file (the router plus
+// each action domain), so adding one in any domain without an expectedFormat
+// entry or corpus fixtures fails here with the missing piece.
 
 import (
 	"go/ast"
@@ -21,38 +22,48 @@ import (
 const corpusManifest = "../compressor/testdata/corpus/MANIFEST"
 
 // familyConstants returns the name and value of every Family constant declared
-// in policy.go, except FamilyNone.
+// across the policy files (policy.go and every policy_*.go domain), except
+// FamilyNone.
 func familyConstants(t *testing.T) map[string]Family {
 	t.Helper()
-	file, err := parser.ParseFile(token.NewFileSet(), "policy.go", nil, 0)
+	files, err := filepath.Glob("policy*.go")
 	if err != nil {
 		t.Fatal(err)
 	}
 	out := map[string]Family{}
-	for _, d := range file.Decls {
-		gd, ok := d.(*ast.GenDecl)
-		if !ok || gd.Tok != token.CONST {
+	for _, name := range files {
+		if strings.HasSuffix(name, "_test.go") {
 			continue
 		}
-		for _, spec := range gd.Specs {
-			vs := spec.(*ast.ValueSpec)
-			id, ok := vs.Type.(*ast.Ident)
-			if !ok || id.Name != "Family" || len(vs.Values) != 1 {
+		file, err := parser.ParseFile(token.NewFileSet(), name, nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, d := range file.Decls {
+			gd, ok := d.(*ast.GenDecl)
+			if !ok || gd.Tok != token.CONST {
 				continue
 			}
-			lit, ok := vs.Values[0].(*ast.BasicLit)
-			if !ok {
-				continue
+			for _, spec := range gd.Specs {
+				vs := spec.(*ast.ValueSpec)
+				id, ok := vs.Type.(*ast.Ident)
+				if !ok || id.Name != "Family" || len(vs.Values) != 1 {
+					continue
+				}
+				lit, ok := vs.Values[0].(*ast.BasicLit)
+				if !ok {
+					continue
+				}
+				val, err := strconv.Unquote(lit.Value)
+				if err != nil || val == "" {
+					continue
+				}
+				out[vs.Names[0].Name] = Family(val)
 			}
-			val, err := strconv.Unquote(lit.Value)
-			if err != nil || val == "" {
-				continue
-			}
-			out[vs.Names[0].Name] = Family(val)
 		}
 	}
 	if len(out) == 0 {
-		t.Fatal("no Family constants found in policy.go")
+		t.Fatal("no Family constants found in policy*.go")
 	}
 	return out
 }

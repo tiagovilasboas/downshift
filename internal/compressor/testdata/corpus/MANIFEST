@@ -120,3 +120,88 @@ preserve  git-remote       gitremote_verbose.txt
 preserve  git-tag          gittag_list.txt
 preserve  git-config-read  gitconfig_list_local.txt
 preserve  git-other        gitother_ls_files.txt
+
+# Package manager wrappers (pass-through)
+preserve  npm-test       npm_test_output.txt
+preserve  npm-build      npm_build_output.txt
+preserve  pnpm-test      pnpm_test_output.txt
+preserve  pnpm-build     pnpm_build_output.txt
+preserve  yarn-test      yarn_test_output.txt
+preserve  yarn-build     yarn_build_output.txt
+preserve  bun-test       bun_test_output.txt
+preserve  bun-build      bun_build_output.txt
+
+# PHP ecosystem (pass-through)
+preserve  composer       composer_output.txt
+preserve  artisan        artisan_output.txt
+preserve  phpstan        phpstan_output.txt
+preserve  psalm          psalm_output.txt
+preserve  php-cs-fixer   php_cs_fixer_output.txt
+preserve  pint           pint_output.txt
+
+# Linters (pass-through)
+preserve  eslint         eslint_output.txt
+preserve  prettier       prettier_output.txt
+preserve  biome          biome_output.txt
+
+# Kubernetes (pass-through)
+preserve  kubectl-get       kubectl_get_output.txt
+preserve  kubectl-describe  kubectl_describe_output.txt
+preserve  kubectl-logs      kubectl_logs_output.txt
+
+# Helm (pass-through)
+preserve  helm-list      helm_list_output.txt
+preserve  helm-status    helm_status_output.txt
+
+# Terraform (pass-through)
+preserve  terraform-plan terraform_plan_output.txt
+preserve  terraform-fmt  terraform_fmt_output.txt
+
+# Azure CLI (pass-through)
+preserve  az-list        az_list_output.txt
+preserve  az-show        az_show_output.txt
+
+# AWS CLI (pass-through)
+preserve  aws-describe   aws_describe_output.txt
+preserve  aws-list       aws_list_output.txt
+preserve  aws-get        aws_get_output.txt
+preserve  aws-s3-ls      aws_s3_ls_output.txt
+preserve  aws-s3-cp      aws_s3_cp_output.txt
+preserve  aws-logs       aws_logs_output.txt
+
+# Docker (pass-through)
+preserve  docker-ps      docker_ps_output.txt
+preserve  docker-logs    docker_logs_output.txt
+preserve  docker-images  docker_images_output.txt
+preserve  docker-build   docker_build_output.txt
+# GitOps (pass-through)
+preserve  argocd-list    argocd_list_output.txt
+preserve  argocd-get     argocd_get_output.txt
+preserve  argocd-diff    argocd_diff_output.txt
+
+# Kustomize / Azure Pipelines (pass-through)
+preserve  kustomize-build  kustomize_build_output.txt
+
+# Azure Pipelines
+preserve  az-pipelines   az_pipelines_output.txt
+
+# Database (pass-through)
+preserve  mysql-query    mysql_query_output.txt
+
+# Redis
+preserve  redis-read     redis_read_output.txt
+# Observability (pass-through)
+preserve  logcli         logcli_output.txt
+
+preserve  sentry-cli     sentry_cli_output.txt
+preserve  grafana-cli    grafana_cli_output.txt
+preserve  datadog-ci     datadog_ci_output.txt
+
+# Vite / Turborepo / PHP extras (pass-through)
+preserve  vite-build     vite_build_output.txt
+preserve  vite-preview   vite_preview_output.txt
+preserve  turbo-run      turbo_run_output.txt
+preserve  pest           pest_output.txt
+preserve  sail-test      sail_test_output.txt
+preserve  sail-artisan   sail_artisan_output.txt
+preserve  rector         rector_output.txt

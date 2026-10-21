@@ -390,6 +390,25 @@ func AppliedRewrite(outcome string, corrections []string) bool {
 	return outcome == OutcomeRewriteEmitted || outcome == ""
 }
 
+// AppliedRouting reports whether a decision event effectively changed the
+// model that will run. This is broader than AppliedRewrite: it also counts
+// blocked outcomes where the harness is forced to respawn on a different
+// model (e.g. KiroCrew's allow/block-only contract).
+func AppliedRouting(ev Event) bool {
+	if len(ev.Corrections) > 0 {
+		return false
+	}
+	// Classic rewrite: hook modified the spawn in place
+	if ev.Outcome == OutcomeRewriteEmitted || ev.Outcome == "" {
+		return true
+	}
+	// Blocked with model change: harness must respawn on the recommended model
+	if ev.Outcome == OutcomeBlocked && ev.ToModel != "" && ev.FromModel != "" && ev.ToModel != ev.FromModel {
+		return true
+	}
+	return false
+}
+
 // MarkUnchanged rewrites final_model/final_reasoning_effort on an event
 // whose hook response left the spawn unchanged (allow or baseline), so the
 // log records what the child actually runs on. The recommendation moves to

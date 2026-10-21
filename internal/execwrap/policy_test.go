@@ -99,6 +99,84 @@ func TestDecide(t *testing.T) {
 		{"git other subcommand", "git rev-parse HEAD", true, FamilyGitOther, "'/opt/ds/downshift' compact -- git rev-parse HEAD", ReasonAllowlisted},
 		{"git bare", "git", false, "", "", ReasonNotAllowlisted},
 		{"git version option", "git --version", false, "", "", ReasonNotAllowlisted},
+
+		// Package manager wrappers
+		{"npm test", "npm test", true, FamilyNpmTest, "'/opt/ds/downshift' compact -- npm test", ReasonAllowlisted},
+		{"npm run test", "npm run test", true, FamilyNpmTest, "'/opt/ds/downshift' compact -- npm run test", ReasonAllowlisted},
+		{"npm t", "npm t", true, FamilyNpmTest, "'/opt/ds/downshift' compact -- npm t", ReasonAllowlisted},
+		{"npm run build", "npm run build", true, FamilyNpmBuild, "'/opt/ds/downshift' compact -- npm run build", ReasonAllowlisted},
+		{"pnpm test", "pnpm test", true, FamilyPnpmTest, "'/opt/ds/downshift' compact -- pnpm test", ReasonAllowlisted},
+		{"pnpm build", "pnpm build", true, FamilyPnpmBuild, "'/opt/ds/downshift' compact -- pnpm build", ReasonAllowlisted},
+		{"yarn test", "yarn test", true, FamilyYarnTest, "'/opt/ds/downshift' compact -- yarn test", ReasonAllowlisted},
+		{"yarn build", "yarn build", true, FamilyYarnBuild, "'/opt/ds/downshift' compact -- yarn build", ReasonAllowlisted},
+		{"bun test", "bun test", true, FamilyBunTest, "'/opt/ds/downshift' compact -- bun test", ReasonAllowlisted},
+		{"bun build", "bun build", true, FamilyBunBuild, "'/opt/ds/downshift' compact -- bun build", ReasonAllowlisted},
+
+		// PHP ecosystem
+		{"phpstan", "phpstan analyse", true, FamilyPHPStan, "'/opt/ds/downshift' compact -- phpstan analyse", ReasonAllowlisted},
+		{"vendor phpstan", "./vendor/bin/phpstan analyse src/", true, FamilyPHPStan, "'/opt/ds/downshift' compact -- ./vendor/bin/phpstan analyse src/", ReasonAllowlisted},
+		{"psalm", "psalm", true, FamilyPsalm, "'/opt/ds/downshift' compact -- psalm", ReasonAllowlisted},
+		{"vendor psalm", "./vendor/bin/psalm --no-cache", true, FamilyPsalm, "'/opt/ds/downshift' compact -- ./vendor/bin/psalm --no-cache", ReasonAllowlisted},
+		{"composer validate", "composer validate", true, FamilyComposer, "'/opt/ds/downshift' compact -- composer validate", ReasonAllowlisted},
+		{"composer show", "composer show", true, FamilyComposer, "'/opt/ds/downshift' compact -- composer show", ReasonAllowlisted},
+		{"composer audit", "composer audit", true, FamilyComposer, "'/opt/ds/downshift' compact -- composer audit", ReasonAllowlisted},
+		{"composer install not allowed", "composer install", false, "", "", ReasonNotAllowlisted},
+		{"artisan test", "php artisan test", true, FamilyArtisan, "'/opt/ds/downshift' compact -- php artisan test", ReasonAllowlisted},
+		{"artisan route list", "php artisan route:list", true, FamilyArtisan, "'/opt/ds/downshift' compact -- php artisan route:list", ReasonAllowlisted},
+		{"artisan migrate not allowed", "php artisan migrate", false, "", "", ReasonNotAllowlisted},
+
+		// Linters
+		{"eslint", "eslint src/", true, FamilyESLint, "'/opt/ds/downshift' compact -- eslint src/", ReasonAllowlisted},
+		{"npx eslint", "npx eslint .", true, FamilyESLint, "'/opt/ds/downshift' compact -- npx eslint .", ReasonAllowlisted},
+		{"prettier check", "prettier --check .", true, FamilyPrettier, "'/opt/ds/downshift' compact -- prettier --check .", ReasonAllowlisted},
+		{"prettier write not allowed", "prettier --write .", false, "", "", ReasonNotAllowlisted},
+		{"biome check", "biome check", true, FamilyBiome, "'/opt/ds/downshift' compact -- biome check", ReasonAllowlisted},
+		{"biome lint", "biome lint src/", true, FamilyBiome, "'/opt/ds/downshift' compact -- biome lint src/", ReasonAllowlisted},
+
+		// Kubernetes
+		{"kubectl get pods", "kubectl get pods", true, FamilyKubectlGet, "'/opt/ds/downshift' compact -- kubectl get pods", ReasonAllowlisted},
+		{"kubectl get all", "kubectl get all -n voomp-creators-back", true, FamilyKubectlGet, "'/opt/ds/downshift' compact -- kubectl get all -n voomp-creators-back", ReasonAllowlisted},
+		{"kubectl describe pod", "kubectl describe pod my-pod", true, FamilyKubectlDescribe, "'/opt/ds/downshift' compact -- kubectl describe pod my-pod", ReasonAllowlisted},
+		{"kubectl logs", "kubectl logs my-pod -f", true, FamilyKubectlLogs, "'/opt/ds/downshift' compact -- kubectl logs my-pod -f", ReasonAllowlisted},
+		{"kubectl delete not allowed", "kubectl delete pod my-pod", false, "", "", ReasonNotAllowlisted},
+		{"kubectl apply not allowed", "kubectl apply -f deploy.yaml", false, "", "", ReasonNotAllowlisted},
+
+		// Helm
+		{"helm list", "helm list -A", true, FamilyHelmList, "'/opt/ds/downshift' compact -- helm list -A", ReasonAllowlisted},
+		{"helm status", "helm status my-release", true, FamilyHelmStatus, "'/opt/ds/downshift' compact -- helm status my-release", ReasonAllowlisted},
+		{"helm install not allowed", "helm install my-release ./chart", false, "", "", ReasonNotAllowlisted},
+
+		// Terraform
+		{"terraform plan", "terraform plan", true, FamilyTerraformPlan, "'/opt/ds/downshift' compact -- terraform plan", ReasonAllowlisted},
+		{"terraform fmt check", "terraform fmt -check", true, FamilyTerraformFmt, "'/opt/ds/downshift' compact -- terraform fmt -check", ReasonAllowlisted},
+		{"terraform fmt no check not allowed", "terraform fmt", false, "", "", ReasonNotAllowlisted},
+		{"terraform apply not allowed", "terraform apply", false, "", "", ReasonNotAllowlisted},
+
+		// Azure CLI
+		{"az aks list", "az aks list", true, FamilyAzList, "'/opt/ds/downshift' compact -- az aks list", ReasonAllowlisted},
+		{"az storage account show", "az storage account show -n myaccount", true, FamilyAzShow, "'/opt/ds/downshift' compact -- az storage account show -n myaccount", ReasonAllowlisted},
+		{"az aks delete not allowed", "az aks delete -n mycluster", false, "", "", ReasonNotAllowlisted},
+
+		// AWS CLI
+		{"aws ec2 describe-instances", "aws ec2 describe-instances", true, FamilyAwsDescribe, "'/opt/ds/downshift' compact -- aws ec2 describe-instances", ReasonAllowlisted},
+		{"aws s3 ls", "aws s3 ls", true, FamilyAwsS3Ls, "'/opt/ds/downshift' compact -- aws s3 ls", ReasonAllowlisted},
+		{"aws s3 ls bucket", "aws s3 ls s3://my-bucket/", true, FamilyAwsS3Ls, "'/opt/ds/downshift' compact -- aws s3 ls s3://my-bucket/", ReasonAllowlisted},
+		{"aws s3 cp", "aws s3 cp s3://bucket/file.txt .", true, FamilyAwsS3Cp, "'/opt/ds/downshift' compact -- aws s3 cp s3://bucket/file.txt .", ReasonAllowlisted},
+		{"aws logs tail", "aws logs tail /aws/lambda/my-fn --follow", true, FamilyAwsLogs, "'/opt/ds/downshift' compact -- aws logs tail /aws/lambda/my-fn --follow", ReasonAllowlisted},
+		{"aws ecs list-clusters", "aws ecs list-clusters", true, FamilyAwsList, "'/opt/ds/downshift' compact -- aws ecs list-clusters", ReasonAllowlisted},
+		{"aws lambda get-function", "aws lambda get-function --function-name my-fn", true, FamilyAwsGet, "'/opt/ds/downshift' compact -- aws lambda get-function --function-name my-fn", ReasonAllowlisted},
+		{"aws ec2 terminate-instances not allowed", "aws ec2 terminate-instances --instance-ids i-123", false, "", "", ReasonNotAllowlisted},
+		{"aws s3 rm not allowed", "aws s3 rm s3://bucket/file.txt", false, "", "", ReasonNotAllowlisted},
+
+		// Docker (safe commands only)
+		{"docker ps", "docker ps", true, FamilyDockerPS, "'/opt/ds/downshift' compact -- docker ps", ReasonAllowlisted},
+		{"docker ps all", "docker ps -a", true, FamilyDockerPS, "'/opt/ds/downshift' compact -- docker ps -a", ReasonAllowlisted},
+		{"docker logs", "docker logs my-container -f", true, FamilyDockerLogs, "'/opt/ds/downshift' compact -- docker logs my-container -f", ReasonAllowlisted},
+		{"docker images", "docker images", true, FamilyDockerImages, "'/opt/ds/downshift' compact -- docker images", ReasonAllowlisted},
+		{"docker build", "docker build -t myapp .", true, FamilyDockerBuild, "'/opt/ds/downshift' compact -- docker build -t myapp .", ReasonAllowlisted},
+		{"docker rm not allowed", "docker rm my-container", false, "", "", ReasonNotAllowlisted},
+		{"docker run not allowed", "docker run nginx", false, "", "", ReasonNotAllowlisted},
+
 		{"go build", "go build ./...", false, "", "", ReasonNotAllowlisted},
 		{"bare go", "go", false, "", "", ReasonNotAllowlisted},
 		{"path to git", "/usr/bin/git status", false, "", "", ReasonNotAllowlisted},
