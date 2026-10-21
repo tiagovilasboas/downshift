@@ -63,7 +63,7 @@ func runSession(args []string, stdout, stderr io.Writer, catalog core.Resolver) 
 		fmt.Fprint(stdout, telemetry.Why(events, hash))
 		return 0
 	case *panel:
-		out, err := json.Marshal(panelWithCompactor(telemetry.BuildPanel(events, hash), hash))
+		out, err := json.Marshal(panelWithCompactor(telemetry.BuildPanel(events, hash)))
 		if err != nil {
 			return 1
 		}
@@ -115,17 +115,27 @@ func selectSession(flagVal string, events []telemetry.Event) (string, error) {
 	if v := strings.TrimSpace(flagVal); v != "" {
 		return sessionFromID(v, events)
 	}
+	if h := envSessionHash(); h != "" {
+		return h, nil
+	}
+	return telemetry.LatestSessionHash(events), nil
+}
+
+// envSessionHash is the hashed session id from the environment variable some
+// harness declares (HarnessCapabilities.SessionEnv), or "" when none is set.
+// The raw id is never returned.
+func envSessionHash() string {
 	for _, n := range core.AllHarnessCaps() {
 		if n.Caps.SessionEnv == "" {
 			continue
 		}
 		if raw := os.Getenv(n.Caps.SessionEnv); raw != "" {
 			if h := telemetry.HashSessionID(raw); h != "" {
-				return h, nil
+				return h
 			}
 		}
 	}
-	return telemetry.LatestSessionHash(events), nil
+	return ""
 }
 
 func sessionFromID(v string, events []telemetry.Event) (string, error) {

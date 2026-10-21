@@ -14,16 +14,28 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
-// A wrapped command carries the hashed session, the runner logs it, and the
-// session panel reports only that session's Compactor bytes.
-func TestPanel_CompactorIsPerSession(t *testing.T) {
+// The compactor block totals the whole exec log: runs of this session, of
+// another session and with no session at all. The raw session id never
+// reaches the panel, and an empty log carries no block.
+func TestPanel_CompactorIsTheTotalOfAllRuns(t *testing.T) {
 	t.Setenv(paths.EnvStateDir, t.TempDir())
 	t.Setenv(execwrap.DepthEnv, "") // clear in case we're running inside `downshift compactor`
+	for _, n := range core.AllHarnessCaps() {
+		if n.Caps.SessionEnv != "" {
+			t.Setenv(n.Caps.SessionEnv, "")
+		}
+	}
+	empty, _ := json.Marshal(panelWithCompactor(telemetry.PanelView{}))
+	if strings.Contains(string(empty), "compactor") {
+		t.Fatalf("an empty exec log must carry no compactor block: %s", empty)
+	}
+
 	bin := t.TempDir()
 	var suite strings.Builder
 	for i := 0; i < 8; i++ {
@@ -39,17 +51,19 @@ func TestPanel_CompactorIsPerSession(t *testing.T) {
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 
 	mine, other := telemetry.HashSessionID("s-mine"), telemetry.HashSessionID("s-other")
-	for _, h := range []string{mine, mine, other} {
+	for _, args := range [][]string{
+		{"--session=" + mine, "--"},
+		{"--session=" + other, "--"},
+		{"--"},                   // a direct call with no session
+		{"--session=../x", "--"}, // a malformed session is ignored, the run still counts
+	} {
 		var out, errb bytes.Buffer
-		if rc := runExec([]string{"--session=" + h, "--", "go", "test", "./secret/..."}, strings.NewReader(""), &out, &errb); rc != 0 {
+		if rc := runExec(append(args, "go", "test", "./secret/..."), strings.NewReader(""), &out, &errb); rc != 0 {
 			t.Fatalf("rc = %d, stderr %q", rc, errb.String())
 		}
 	}
-	// A malformed session is ignored, not logged.
-	var out, errb bytes.Buffer
-	runExec([]string{"--session=../x", "--", "go", "test", "./secret/..."}, strings.NewReader(""), &out, &errb)
 
-	raw, err := json.Marshal(panelWithCompactor(telemetry.PanelView{Session: mine}, mine))
+	raw, err := json.Marshal(panelWithCompactor(telemetry.PanelView{Session: mine}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,15 +73,10 @@ func TestPanel_CompactorIsPerSession(t *testing.T) {
 	if err := json.Unmarshal(raw, &got); err != nil {
 		t.Fatal(err)
 	}
-	if got.Compactor == nil || got.Compactor.Commands != 2 || got.Compactor.Compacted != 2 || got.Compactor.SavedBytes <= 0 {
-		t.Fatalf("compactor block = %+v, want 2 compacted commands of this session", got.Compactor)
+	if got.Compactor == nil || got.Compactor.Scope != "all" || got.Compactor.Commands != 4 || got.Compactor.Compacted != 4 || got.Compactor.SavedBytes <= 0 {
+		t.Fatalf("compactor block = %+v, want 4 compacted runs across every session, scope all", got.Compactor)
 	}
-	if strings.Contains(string(raw), "s-mine") {
-		t.Fatalf("the raw session id leaked into the panel: %s", raw)
-	}
-
-	empty, _ := json.Marshal(panelWithCompactor(telemetry.PanelView{}, telemetry.HashSessionID("none")))
-	if strings.Contains(string(empty), "compactor") {
-		t.Fatalf("a session with no wrapped commands must carry no compactor block: %s", empty)
+	if strings.Contains(string(raw), "s-mine") || strings.Contains(string(raw), "s-other") {
+		t.Fatalf("a raw session id leaked into the panel: %s", raw)
 	}
 }

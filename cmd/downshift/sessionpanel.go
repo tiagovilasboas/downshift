@@ -6,10 +6,17 @@ package main
 import "github.com/tiagovilasboas/downshift/internal/execwrap"
 import "github.com/tiagovilasboas/downshift/internal/telemetry"
 
-// compactorPanel is what the Compactor did in one session. Bytes are measured;
-// the token figure is bytes / 4, an estimate, and is never added to the tokens
-// the panel reports for model routing (different units, different certainty).
+// compactorScopeAll says the compactor block totals the whole exec log, every
+// session and every run, attributed or not (owner decision 2026-10-21). The
+// routing figures beside it stay per session.
+const compactorScopeAll = "all"
+
+// compactorPanel is what the Compactor did across the whole exec log. Bytes
+// are measured; the token figure is bytes / 4, an estimate, and is never added
+// to the tokens the panel reports for model routing (different units,
+// different certainty).
 type compactorPanel struct {
+	Scope                string `json:"scope"`
 	Commands             int64  `json:"commands"`
 	Compacted            int64  `json:"compacted"`
 	RawBytes             int64  `json:"raw_bytes"`
@@ -19,29 +26,27 @@ type compactorPanel struct {
 }
 
 // panelOut is the `session --panel` JSON: the routing view as before plus, when
-// the session has wrapped commands, the compactor block.
+// the exec log has any run, the compactor block.
 type panelOut struct {
 	telemetry.PanelView
 	Compactor *compactorPanel `json:"compactor,omitempty"`
 }
 
-// panelWithCompactor adds the session's Compactor totals. No log, no session
-// hash or no wrapped command of this session means no block, never zeros.
-func panelWithCompactor(v telemetry.PanelView, sessionHash string) panelOut {
+// panelWithCompactor adds the Compactor totals of the whole exec log. It does
+// not depend on the session: a run with no session hash counts too. No log or
+// no run means no block, never zeros.
+func panelWithCompactor(v telemetry.PanelView) panelOut {
 	out := panelOut{PanelView: v}
-	if sessionHash == "" {
-		return out
-	}
 	path, err := execwrap.EventsPath()
 	if err != nil {
 		return out
 	}
-	s, err := execwrap.SummarizeSession(path, sessionHash)
+	s, err := execwrap.Summarize(path)
 	if err != nil || s.Commands == 0 {
 		return out
 	}
 	out.Compactor = &compactorPanel{
-		Commands: s.Commands, Compacted: s.Compacted, RawBytes: s.RawBytes,
+		Scope: compactorScopeAll, Commands: s.Commands, Compacted: s.Compacted, RawBytes: s.RawBytes,
 		SavedBytes: s.SavedBytes, EstimatedTokensSaved: s.EstimatedTokensSaved, TokenEstimate: s.TokenEstimate,
 	}
 	return out

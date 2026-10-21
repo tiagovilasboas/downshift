@@ -480,19 +480,21 @@ const savedOf = (): number => (ds && dsSessionKnown ? ds.saved : 0)
 const fmtBytes = (n: number): string =>
   n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${Math.round(n)} B`
 
-/** Compactor figures for this session (measured); null when it did not run or the session is unknown. Bytes only, never added to the tokens above. */
-const compactorOf = (): DsCompactor | null => (ds && dsSessionKnown && ds.compactor ? ds.compactor : null)
+/** Compactor figures, the total of every run in the exec log (measured, every session); null when it never ran. Not tied to the session, so it shows when the session is unknown. Bytes only, never added to the tokens above. */
+const compactorOf = (): DsCompactor | null => (ds && ds.compactor ? ds.compactor : null)
+/** The Compactor's label says it is a total, so it never reads as this session's figure. */
+const COMPACTOR_LABEL = 'Compactor total'
 
 /** Under this much raw output and nothing compacted, the Compactor had nothing to cut. */
 const NOTHING_TO_CUT_BYTES = 4096
 const compactorNothing = (c: DsCompactor): boolean => c.compacted === 0 && c.rawBytes < NOTHING_TO_CUT_BYTES
 const compactorCmds = (c: DsCompactor): string => `${c.commands} ${c.commands === 1 ? 'cmd' : 'cmds'}`
 
-/** The line after the figures: `Compactor 4 cmds · 0 B saved`, and `· nothing to cut` when there was nothing to cut. */
+/** The line after the figures: `Compactor total 4 cmds · 0 B saved`, and `· nothing to cut` when there was nothing to cut. */
 const compactorSuffix = (): string => {
   const c = compactorOf()
   if (!c) return ''
-  return ` · Compactor ${compactorCmds(c)} · ${fmtBytes(c.savedBytes)} saved${compactorNothing(c) ? ' · nothing to cut' : ''}`
+  return ` · ${COMPACTOR_LABEL} ${compactorCmds(c)} · ${fmtBytes(c.savedBytes)} saved${compactorNothing(c) ? ' · nothing to cut' : ''}`
 }
 
 const fmtTime = (ms: number): string => {
@@ -659,7 +661,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
     W,
     headerHeight(title),
     `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
-${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, 'Compactor', compactorNothing(cb) ? 'nothing to cut' : `${fmtBytes(cb.savedBytes)} saved`, 12)}`,
+${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, COMPACTOR_LABEL, compactorNothing(cb) ? 'nothing to cut' : `${fmtBytes(cb.savedBytes)} saved`, 12)}`,
   )
 }
 
