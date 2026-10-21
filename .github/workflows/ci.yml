@@ -55,6 +55,9 @@ jobs:
       - name: Test the path classifier
         run: bash scripts/test-ci-classify-changes.sh
 
+      - name: Test the race package filter
+        run: bash scripts/test-ci-race-packages.sh
+
       - name: Classify changed paths
         id: classify
         env:
@@ -175,10 +178,12 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: go test -timeout 15m -run 'Setup|Steering|Wrapper|Config|Session|Display|Path|Project' ./cmd/downshift/
 
-  # Race detector. Pull requests run it only on the changed packages (the same
-  # selection as `test`); tags run every package except internal/core, whose
-  # -race run takes 4-5 minutes (the nightly ci-full covers it). Not on push to
-  # main, and not the required `test` check.
+  # Race detector. Pull requests run it on the changed packages and their
+  # dependents (the same selection as `test`); internal/core, whose -race run
+  # takes ~5 minutes, is kept only when a file under internal/core/ changed
+  # (scripts/ci-race-packages.sh). Tags run every package except internal/core
+  # (the nightly ci-full covers it). Not on push to main, and not the required
+  # `test` check.
   race:
     needs: changes
     if: >-
@@ -210,7 +215,7 @@ jobs:
           if [ "$pkgs" = "./..." ]; then
             pkgs=$(go list ./...)
           fi
-          pkgs=$(printf '%s\n' "$pkgs" | grep -v '/internal/core$' || true)
+          pkgs=$(printf '%s\n' "$pkgs" | bash scripts/ci-race-packages.sh)
           if [ -z "$pkgs" ]; then
             echo "No Go packages to race-test."
             exit 0
