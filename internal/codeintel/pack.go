@@ -35,10 +35,9 @@ func PackContext(candidates []*Candidate, maxFiles, maxBytes int) *ContextPack {
 	snippetsCount := 0
 
 	// 1. Build Header
+	boundary := newBoundaryID()
 	var header strings.Builder
-	header.WriteString(UntrustedContextStartMarker)
-	header.WriteString("\n")
-	header.WriteString(UntrustedContextSecurityNotice)
+	header.WriteString(untrustedHeader(boundary))
 	header.WriteString("\n\n### Repository Code Intelligence\n")
 
 	// 2. Build Structural Sketch
@@ -99,10 +98,15 @@ func PackContext(candidates []*Candidate, maxFiles, maxBytes int) *ContextPack {
 		}
 	}
 
-	footer := "\n" + UntrustedContextEndMarker + "\n"
+	footer := "\n" + untrustedFooter(boundary) + "\n"
+
+	// Everything between the markers is repository text (paths, symbol names,
+	// callers, snippet bodies): defang it once, after assembly.
+	sketch := SanitizeUntrustedContent(structSketch.String())
+	snippets := SanitizeUntrustedContent(snippetsBlock.String())
 
 	// Attempt Full: Header + Structural + Snippets + Footer
-	fullAttempt := header.String() + structSketch.String() + snippetsBlock.String() + footer
+	fullAttempt := header.String() + sketch + snippets + footer
 	if len([]byte(fullAttempt)) <= maxBytes {
 		return &ContextPack{
 			FormattedText: fullAttempt,
@@ -116,7 +120,7 @@ func PackContext(candidates []*Candidate, maxFiles, maxBytes int) *ContextPack {
 	}
 
 	// Fallback 1: Structural-only (Header + Structural + Footer) without snippets
-	structAttempt := header.String() + structSketch.String() + footer
+	structAttempt := header.String() + sketch + footer
 	if len([]byte(structAttempt)) <= maxBytes {
 		return &ContextPack{
 			FormattedText: structAttempt,

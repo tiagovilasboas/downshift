@@ -31,10 +31,6 @@ type FileLock struct {
 	removeOnUnlock bool
 }
 
-// staleLockAge bounds how long an O_EXCL fallback lock may be held before it
-// is considered orphaned. Appends take milliseconds.
-const staleLockAge = 2 * time.Second
-
 // LockFile acquires an exclusive lock for path, waiting at most timeout.
 func LockFile(path string, timeout time.Duration) (*FileLock, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {

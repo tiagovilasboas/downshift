@@ -64,6 +64,7 @@ type setupOptions struct {
 // runSetup is the CLI entry: it resolves HOME and the running binary.
 func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	opts := setupOptions{In: in, Out: out, Err: errw, Now: time.Now, Exec: realSetupExec()}
+	allowUnsafe := false
 	for _, a := range args {
 		switch {
 		case a == "--dry-run":
@@ -78,6 +79,8 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 			opts.YouShouldKnow = true
 		case a == "--no-plugin":
 			opts.NoPlugin = true
+		case a == "--allow-unsafe-binary":
+			allowUnsafe = true
 		case a == "-h" || a == "--help":
 			fmt.Fprint(out, setupUsage)
 			return 0
@@ -100,6 +103,9 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 		return 1
 	}
 	opts.Binary = exe
+	if code := guardHookBinary(opts, allowUnsafe, os.TempDir()); code != 0 {
+		return code
+	}
 	if dir, err := paths.StateDir(); err == nil {
 		opts.StateDir = dir
 	}
@@ -111,7 +117,24 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	return setupRun(opts)
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy] [--you-should-know] [--no-plugin]
+// guardHookBinary refuses to write hooks that point at a binary which will
+// vanish or which another user can replace. A dry run and --undo only warn
+// (they write no hook command); --allow-unsafe-binary overrides.
+func guardHookBinary(o setupOptions, allow bool, tmp string) int {
+	why := unsafeBinaryReason(o.Binary, tmp)
+	if why == "" {
+		return 0
+	}
+	msg := "setup: this binary (" + o.Binary + ") is not a safe hook target: " + why
+	if allow || o.DryRun || o.Undo {
+		fmt.Fprintln(o.Err, "warning: "+msg)
+		return 0
+	}
+	fmt.Fprintln(o.Err, msg+".\nInstall downshift to a stable directory (e.g. `go install`, Homebrew, /usr/local/bin) and run setup from there, or pass --allow-unsafe-binary.")
+	return 1
+}
+
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy] [--you-should-know] [--no-plugin] [--allow-unsafe-binary]
 
 Wire every Downshift hook into the harnesses found on this machine.
   --dry-run            show the diff, write nothing
@@ -126,6 +149,9 @@ Wire every Downshift hook into the harnesses found on this machine.
                        installing the Downshift plugin (the plugin carries the
                        same hooks plus the cache-tax mod) and skip the sibling
                        mods (savvy-progress, filetree)
+  --allow-unsafe-binary
+                       write hooks that point at this binary even when it sits
+                       in a temporary, Go build or world-writable directory
 
 Claude Code gets the policy by default, only for keys it does not already set.
 `

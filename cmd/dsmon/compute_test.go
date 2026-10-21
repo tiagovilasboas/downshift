@@ -4,7 +4,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -36,18 +35,6 @@ func TestCompute_CountsOnlyAppliedRewrites(t *testing.T) {
 	}
 }
 
-func usageLine(t *testing.T, ts string, baseline, actual float64) string {
-	t.Helper()
-	b, err := json.Marshal(telemetry.Event{
-		Timestamp: ts, Harness: "claude-code", Outcome: "usage",
-		BaselineCostUSD: &baseline, ActualCostUSD: &actual,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return string(b) + "\n"
-}
-
 // The widget shows tokens saved, from the shared definition: a child that ran
 // on a cheaper model counts, a pricier one never does.
 func TestCompute_TokensSaved(t *testing.T) {
@@ -64,11 +51,6 @@ func TestCompute_TokensSaved(t *testing.T) {
 	if st.tokens.WorkTokens != 1000 || st.tokens.WorkSaved != 800 || st.tokens.WorkPricier != 200 {
 		t.Fatalf("tokens = %+v, want 800 of 1000 saved and 200 pricier", st.tokens)
 	}
-}
-
-func diff(a, b float64) bool {
-	d := a - b
-	return d > 1e-9 || d < -1e-9
 }
 
 // Lines appended after the first read are read once, partial lines wait for

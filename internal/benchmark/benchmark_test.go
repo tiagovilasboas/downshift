@@ -81,7 +81,7 @@ func TestLoadDataset_RoundTrip(t *testing.T) {
 
 func TestRun_EmptyDataset(t *testing.T) {
 	results := benchmark.Run(nil, io.Discard)
-	if results != nil && len(results) != 0 {
+	if len(results) != 0 {
 		t.Errorf("expected empty results, got %d", len(results))
 	}
 }

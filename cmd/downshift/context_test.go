@@ -56,7 +56,9 @@ func TestRunContext_StatusEnabledByDefault(t *testing.T) {
 		t.Fatalf("native disable must be refused (rc 2), got %d", rc)
 	}
 	out.Reset()
-	rc = runContext([]string{"status"}, &out, &errOut)
+	if rc = runContext([]string{"status"}, &out, &errOut); rc != 0 {
+		t.Fatalf("status: rc %d, want 0", rc)
+	}
 	if !strings.Contains(out.String(), "Status: Enabled") {
 		t.Errorf("expected disabled status in output:\n%s", out.String())
 	}
@@ -68,7 +70,9 @@ func TestRunContext_StatusEnabledByDefault(t *testing.T) {
 		t.Fatalf("expected rc 0 on enable, got %d", rc)
 	}
 	out.Reset()
-	rc = runContext([]string{"status"}, &out, &errOut)
+	if rc = runContext([]string{"status"}, &out, &errOut); rc != 0 {
+		t.Fatalf("status: rc %d, want 0", rc)
+	}
 	if !strings.Contains(out.String(), "Status: Enabled") {
 		t.Errorf("expected enabled status in output:\n%s", out.String())
 	}

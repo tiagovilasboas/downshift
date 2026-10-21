@@ -24,13 +24,6 @@ func exportFloat64Ptr(value float64) *float64 {
 	return &value
 }
 
-func exportUSDPtr(v *float64) float64 {
-	if v == nil {
-		return 0
-	}
-	return *v
-}
-
 // exportEvent builds a minimal Event with an explicit timestamp.
 func exportEvent(stamp time.Time, complexity string, verdict string, savings float64) telemetry.Event {
 	return telemetry.Event{

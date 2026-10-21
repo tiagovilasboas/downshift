@@ -147,12 +147,12 @@ internal/discovery/ models/ — `models discover/list/check/pull`; setup runs di
 internal/policyfile/ adapt/ routeadapt/ scoreindex/ — project tier floor, shadow memory, score cache (via hooks)
 internal/hookctx/ hookutil/ hookport/ childend/ — hook deadline, field helpers, honor/usage ports, child-end recorder
 internal/telemetry/  — prompt-free JSONL (no per-spawn fsync), Summarize (the one savings definition)
-internal/server/ sensor/ contextopt/ compressor/ codeintel/ — dashboard, tool-output sensor, compaction, DCI
+internal/sensor/ contextopt/ compressor/ codeintel/ — tool-output sensor, compaction, DCI
 internal/routingv2/shadow/ training/ — opt-in candidate observation; never changes Route()
 ```
 
 **Key invariants** (each checked on 2026-10-19; recheck with `go list -deps ./internal/core`):
-- Core production sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter. Core test files do import `catalog`, `nbopinion`, `nbtier` and `quota`; they are not in the binary. No test enforces this graph yet: it is a manual check.
+- Core production sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter. Core test files do import `catalog`, `nbopinion`, `nbtier` and `quota`; they are not in the binary. `internal/archtest` enforces this graph for core, session, fuse, codeintel and replay (`go test ./internal/archtest`).
 - Adapters do not choose the tier; they call `core.Route`, then apply the plan core returns.
 - `session` does not import `core`. `fuse` does not import `core`. `codeintel` imports only `paths`. Score selection stays in `core` through `ScoreHook`; do not merge it with the naive-Bayes opinion.
 - The semantic boost and the naive-Bayes opinion stay in-process and do not exec. The boost ignores no-signal prompts, never creates COMPLEX alone, and is logged as `SEMANTIC_BOOST`.

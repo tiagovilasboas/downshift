@@ -5,7 +5,6 @@ package telemetry
 
 import (
 	"bytes"
-	"github.com/tiagovilasboas/downshift/internal/testrace"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/testrace"
 )
 
 // A leftover lock file with no live holder (a hook killed mid-append) must

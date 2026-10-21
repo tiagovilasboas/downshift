@@ -78,8 +78,8 @@ func TestCompressFlutterTestPreservesAnythingAmbiguous(t *testing.T) {
 
 func TestCompressFlutterTestNonASCIIIsPreservedByteIdentically(t *testing.T) {
 	for name, text := range map[string]string{
-		"zero-width space":  "Err​or",
-		"soft hyphen":       "sec­ret",
+		"zero-width space":  "Err\u200bor",
+		"soft hyphen":       "sec\u00adret",
 		"NUL byte":          "Err\x00or",
 		"cyrillic e":        "еrror",
 		"fullwidth letters": "ＥＲＲＯＲ",
