@@ -13,9 +13,10 @@ import (
 var shellInitScript string
 
 // runShellInit prints a shell script that sets up transparent compaction
-// aliases. Users source it in their shell rc or eval it directly:
+// aliases. The canonical command is `downshift enable`; `shell-init` is kept
+// as a legacy alias. Users source it in their shell rc or eval it directly:
 //
-//	eval "$(downshift shell-init)"
+//	eval "$(downshift enable)"
 //
 // The script only activates when stdout is not a terminal (agent environment),
 // preserving full output for interactive debugging.
@@ -30,18 +31,13 @@ func runShellInit(args []string, out, errw io.Writer) int {
 	return 0
 }
 
-const shellInitUsage = `Usage: downshift shell-init
+const shellInitUsage = `Usage: downshift enable
 
 Print a shell script that sets up transparent compaction for agent environments.
 Add to your shell configuration:
 
   # ~/.bashrc or ~/.zshrc
-  eval "$(downshift shell-init)"
-
-Or for the KiroCrew agent environment:
-
-  # ~/.kiro/crew/shell-init.sh
-  eval "$(downshift shell-init)"
+  eval "$(downshift enable)"
 
 The script:
 • Wraps allowlisted commands (go, cargo, npm, git, etc.) through the compactor
@@ -52,4 +48,6 @@ The script:
 Environment variables:
   DOWNSHIFT_SHELL_ALIASES=0    Disable all aliases
   DOWNSHIFT_FORCE_COMPACT=1    Force compaction even in interactive terminals
+
+Note: shell-init is kept as a legacy alias for this command.
 `

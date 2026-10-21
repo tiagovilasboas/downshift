@@ -13,7 +13,7 @@ func usage(w io.Writer) {
 
 Everyday
   downshift setup [--dry-run]    Wire the hooks into every harness found (backup, diff, --undo)
-  downshift shell-init           Print shell aliases for transparent compaction (eval in .bashrc/.zshrc)
+  downshift enable               Print shell aliases for transparent compaction (eval in .bashrc/.zshrc)
   downshift doctor [--verbose] [--json]  Checklist with a fix command per failure
   downshift try "<task>" [harness] [model]   Test classification from the terminal
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
