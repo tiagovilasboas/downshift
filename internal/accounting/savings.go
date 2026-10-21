@@ -71,7 +71,7 @@ func CalculateSavings(days int) (UnifiedSavings, error) {
 		Period:          periodLabel(days),
 		RoutingTokens:   routingTokens,
 		CompactorTokens: compactorTokens,
-		TotalTokens:     routingTokens + compactorTokens,
+		TotalTokens:     telemetry.TokensSavedEstimate(telemetry.TokenSaving{WorkSaved: routingTokens}, compactorTokens),
 	}, nil
 }
 

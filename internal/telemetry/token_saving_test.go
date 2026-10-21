@@ -5,6 +5,7 @@ package telemetry
 
 import (
 	"math"
+	"strings"
 	"testing"
 )
 
@@ -123,5 +124,49 @@ func TestTokenSaving_LineExplainsAZero(t *testing.T) {
 	s.WorkSaved = 400
 	if got, want := s.Line(), "saved 40% of work · 0% of cache"; got != want {
 		t.Errorf("a saving wins: %q, want %q", got, want)
+	}
+}
+
+func TestTokensSavedEstimate(t *testing.T) {
+	cases := []struct {
+		name      string
+		routing   TokenSaving
+		compactor int64
+		want      int64
+		line      string
+	}{
+		{"zero", TokenSaving{}, 0, 0, "Tokens saved (estimate): 0"},
+		{"routing only", TokenSaving{WorkSaved: 1000, CacheSaved: 500}, 0, 1500, "Tokens saved (estimate): 1.5k"},
+		{"compactor only", TokenSaving{}, 2500, 2500, "Tokens saved (estimate): 2.5k"},
+		{"both", TokenSaving{WorkSaved: 10000, CacheSaved: 2000}, 3000, 15000, "Tokens saved (estimate): 15k"},
+		{"negative compactor ignored", TokenSaving{WorkSaved: 7}, -5, 7, "Tokens saved (estimate): 7"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := TokensSavedEstimate(c.routing, c.compactor)
+			if got != c.want {
+				t.Fatalf("total = %d, want %d", got, c.want)
+			}
+			if l := TokensSavedEstimateLine(got); l != c.line {
+				t.Fatalf("line = %q, want %q", l, c.line)
+			}
+		})
+	}
+}
+
+func TestReport_SetCompactorAddsToRouting(t *testing.T) {
+	r := Report{TokensSaved: TokenSaving{WorkSaved: 100, CacheSaved: 50}}
+	r.SetCompactor(4000, 1000)
+	if r.TokensSavedEstimate != 1150 || r.CompactorSavedBytes != 4000 || r.CompactorTokensEstimate != 1000 {
+		t.Fatalf("report = %+v", r)
+	}
+	out, err := ReportJSON(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{`"tokens_saved_estimate": 1150`, `"compactor_saved_bytes": 4000`, `"compactor_tokens_estimate": 1000`, `"tokens_saved"`} {
+		if !strings.Contains(out, key) {
+			t.Errorf("JSON misses %s:\n%s", key, out)
+		}
 	}
 }

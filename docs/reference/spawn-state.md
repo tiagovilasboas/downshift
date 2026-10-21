@@ -120,8 +120,22 @@ with or without a session hash. It does not depend on `--session`; the routing
 figures beside it stay per session.
 `{scope, commands, compacted, raw_bytes, saved_bytes, estimated_tokens_saved, token_estimate}`,
 where `scope` is `"all"`. Bytes are measured; `estimated_tokens_saved` is
-`saved_bytes / 4` and is never added to the routing `tokens` (different units,
-different certainty). An empty or missing log means no block, never zeros.
+`saved_bytes / 4`, an estimate. An empty or missing log means no block, never zeros.
+
+### The final figure: `tokens_saved_estimate`
+
+One number, owner decision 2026-10-21, defined once in
+`telemetry.TokensSavedEstimate`:
+`tokens_saved_estimate = routing tokens saved + Compactor saved_bytes / 4`.
+Routing tokens are `work_saved + cache_saved` (tokens that ran on a cheaper
+model than requested, measured); the Compactor part is bytes / 4, so the sum is
+an estimate and is labelled one everywhere (`~` in the panel,
+`Tokens saved (estimate)` in `downshift report`). In `session --panel` the scope
+is routing for **this session** plus the Compactor total of the **whole exec
+log** (the same scopes the tiles had). In `downshift report` it is routing for
+the `--days` window plus the Compactor all-time total (the exec log is not
+windowed). The parts stay in the JSON (`tokens`, `compactor`; in `report --json`
+`tokens_saved`, `compactor_saved_bytes`, `compactor_tokens_estimate`).
 
 Each run still logs the hashed session when one is known (`telemetry.HashSessionID`,
 never the raw id): the hook puts it on the wrapped command
@@ -136,12 +150,10 @@ calls log no session; they still count in the total.
 
 Vendored, so it is patched only through its documented local patch
 (`mods/savvy-progress/downshift-local.patch`, README section "Downshift local
-patch"; mod version 1.2.11). The patch runs `downshift session --panel` and shows
-two tiles in the panel. The first reads `Downshifted` and draws the tokens that
-ran on a smaller model. A `Compactor total` tile draws the bytes the
-Compactor cut across every run in the exec log, only when the `compactor` block
-is present; it shows even when the session is unknown. The two
-are never added together: one is measured tokens, the other measured bytes. The
+patch"; mod version 1.2.12). The patch runs `downshift session --panel` and shows
+one tile for the saving. It reads `Tokens saved` and draws `tokens_saved_estimate`
+with a `~` (an estimate); the Tokens and Time tiles stay. With an unknown session
+the figure is withheld. The mod never splits the total. The
 header and the band show one line, `Downshift · N switched · M held`, and each
 agent row shows a one-word status, ↓ and the tokens that agent moved to a smaller
 model (`work_saved` + `cache_saved`). `tokens_line`, `tokens_label`,

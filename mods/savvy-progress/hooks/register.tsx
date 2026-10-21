@@ -57,7 +57,7 @@ type Lang = 'en' | 'ru' | 'he'
 const STRINGS = {
   en: {
     pane: 'Agents',
-    saved: 'Downshifted',
+    saved: 'Tokens saved',
     tokens: 'Tokens',
     time: 'Time',
     collapse: 'Collapse',
@@ -88,7 +88,7 @@ const STRINGS = {
   },
   ru: {
     pane: 'Агенты',
-    saved: 'Сэкономлено',
+    saved: 'Токенов сэкономлено',
     tokens: 'Токены',
     time: 'Время',
     collapse: 'Свернуть',
@@ -119,7 +119,7 @@ const STRINGS = {
   },
   he: {
     pane: 'סוכנים',
-    saved: 'נחסך',
+    saved: 'טוקנים נחסכו',
     tokens: 'טוקנים',
     time: 'זמן',
     collapse: 'כיווץ',
@@ -474,27 +474,13 @@ const fmtTokens = (n: number): string =>
 
 const fmtCost = (usd: number): string => `$${usd < 10 ? usd.toFixed(2) : usd.toFixed(1)}`
 
-/** Tokens Downshift saved in this session, from the session panel; 0 until it answers. */
-const savedOf = (): number => (ds && dsSessionKnown ? ds.saved : 0)
+/** Estimated tokens saved (routing + Compactor), from the session panel; 0 until it answers. */
+const savedOf = (): number => (ds && dsSessionKnown ? ds.total : 0)
 
-const fmtBytes = (n: number): string =>
-  n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${Math.round(n)} B`
-
-/** Compactor figures, the total of every run in the exec log (measured, every session); null when it never ran. Not tied to the session, so it shows when the session is unknown. Bytes only, never added to the tokens above. */
-const compactorOf = (): DsCompactor | null => (ds && ds.compactor ? ds.compactor : null)
-/** The Compactor's label says it is a total, so it never reads as this session's figure. */
-const COMPACTOR_LABEL = 'Compactor total'
-
-/** Under this much raw output and nothing compacted, the Compactor had nothing to cut. */
-const NOTHING_TO_CUT_BYTES = 4096
-const compactorNothing = (c: DsCompactor): boolean => c.compacted === 0 && c.rawBytes < NOTHING_TO_CUT_BYTES
-const compactorCmds = (c: DsCompactor): string => `${c.commands} ${c.commands === 1 ? 'cmd' : 'cmds'}`
-
-/** The line after the figures: `Compactor total 4 cmds · 0 B saved`, and `· nothing to cut` when there was nothing to cut. */
-const compactorSuffix = (): string => {
-  const c = compactorOf()
-  if (!c) return ''
-  return ` · ${COMPACTOR_LABEL} ${compactorCmds(c)} · ${fmtBytes(c.savedBytes)} saved${compactorNothing(c) ? ' · nothing to cut' : ''}`
+/** The final figure, `tokens_saved_estimate` from the session panel: routing tokens saved in this session plus the Compactor's estimate (bytes / 4); the mod only draws it. `~` marks it an estimate. */
+const fmtSaved = (): string => {
+  const n = savedOf()
+  return n > 0 ? `~${fmtTokens(n)}` : fmtTokens(n)
 }
 
 const fmtTime = (ms: number): string => {
@@ -651,11 +637,10 @@ const svg = (W: number, H: number, body: string): string =>
 const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): string => {
   const s = tr()
   const gap = 6
-  const cb = compactorOf()
-  const n = cb === null ? 3 : 4
+  const n = 3
   const tw = (W - gap * (n - 1)) / n
   const top = title ? 28 : 0
-  // A tile's text is cut to the tile (`fitText`), so a long Compactor line never runs out of its box.
+  // A tile's text is cut to the tile (`fitText`), so a long value never runs out of its box.
   const tile = (i: number, k: string, v: string, vSize = 15) =>
     `<rect class="tile" x="${mx(W, i * (tw + gap), tw)}" y="${top}" width="${tw}" height="40" rx="8"/>
 <text class="s" ${startText(W, i * (tw + gap) + 9, top + 16)} font-family="${FONT}" font-size="11">${xml(fitText(k, 11, tw - 18))}</text>
@@ -664,7 +649,7 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
     W,
     headerHeight(title),
     `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
-${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, COMPACTOR_LABEL, compactorNothing(cb) ? 'nothing to cut' : `${fmtBytes(cb.savedBytes)} saved`, 12)}`,
+${tile(0, s.saved, fmtSaved())}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
   )
 }
 
@@ -745,7 +730,7 @@ const compactSvg = (W: number, list: AgentRun[], planned: Planned[], t: ReturnTy
     W,
     32,
     `${body}${more ? `<text class="s" ${startText(W, x, 21, false)} font-family="${FONT}" font-size="12">+${more}</text>` : ''}
-<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtTokens(savedOf())} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}${xml(compactorSuffix())}</text>`,
+<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtSaved()} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
   )
 }
 
@@ -788,15 +773,14 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 // Data contract: docs/reference/spawn-state.md in the Downshift repo.
 
 type DsSpawn = { tool_use?: string; label: string; saved: number }
-type DsCompactor = { savedBytes: number; commands: number; compacted: number; rawBytes: number }
 // modelSwitched and effortChanged are absent from an older binary: undefined, and the summary keeps `N switched`.
 type DsView = {
   switched: number
   held: number
   modelSwitched?: number
   effortChanged?: number
-  saved: number
-  compactor: DsCompactor | null
+  saved: number // routing tokens moved to a smaller model, this session
+  total: number // tokens_saved_estimate: routing + Compactor estimate; falls back to `saved` on an older binary
   spawns: DsSpawn[]
 }
 
@@ -819,7 +803,7 @@ const dsParse = (raw: unknown): DsView | null => {
   const opt = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
   const raw2 = raw as {
     tokens?: { work_saved?: unknown; cache_saved?: unknown }
-    compactor?: { saved_bytes?: unknown; commands?: unknown; compacted?: unknown; raw_bytes?: unknown }
+    tokens_saved_estimate?: unknown
     model_switched?: unknown
     effort_changed?: unknown
   }
@@ -829,15 +813,7 @@ const dsParse = (raw: unknown): DsView | null => {
     modelSwitched: opt(raw2.model_switched),
     effortChanged: opt(raw2.effort_changed),
     saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
-    compactor:
-      raw2.compactor && typeof raw2.compactor === 'object'
-        ? {
-            savedBytes: num(raw2.compactor.saved_bytes),
-            commands: num(raw2.compactor.commands),
-            compacted: num(raw2.compactor.compacted),
-            rawBytes: num(raw2.compactor.raw_bytes),
-          }
-        : null,
+    total: opt(raw2.tokens_saved_estimate) ?? num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
     spawns: v.spawns
       .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
       .map(x => ({
@@ -1217,7 +1193,7 @@ export const register: Register = (on, options) => {
       />
     )
     const isEmpty = list.length === 0 && planned.length === 0
-    const summary = `${fmtTokens(savedOf())} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}${compactorSuffix().replace(' · ', ', ')}`
+    const summary = `${fmtSaved()} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
 
     if (e.surface === 'desktop' && 'Svg' in ui) {
       const { Svg } = ui
@@ -1326,7 +1302,7 @@ export const register: Register = (on, options) => {
           {toggleCompact}
         </Box>
         <Text dimColor>
-          {fmtTokens(savedOf())} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}{compactorSuffix()}
+          {fmtSaved()} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
         </Text>
         {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
         {p.isCompact ? (

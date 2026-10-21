@@ -12,9 +12,8 @@ import "github.com/tiagovilasboas/downshift/internal/telemetry"
 const compactorScopeAll = "all"
 
 // compactorPanel is what the Compactor did across the whole exec log. Bytes
-// are measured; the token figure is bytes / 4, an estimate, and is never added
-// to the tokens the panel reports for model routing (different units,
-// different certainty).
+// are measured; the token figure is bytes / 4, an estimate. The panel's final
+// figure, tokens_saved_estimate, adds it to the session's routing tokens.
 type compactorPanel struct {
 	Scope                string `json:"scope"`
 	Commands             int64  `json:"commands"`
@@ -26,17 +25,23 @@ type compactorPanel struct {
 }
 
 // panelOut is the `session --panel` JSON: the routing view as before plus, when
-// the exec log has any run, the compactor block.
+// the exec log has any run, the compactor block, and the final figure.
+//
+// TokensSavedEstimate scope: routing tokens saved in THIS session plus the
+// Compactor's all-sessions total (the same scopes the tiles had). The panel is
+// session-centred, but the Compactor total is also shown when the session is
+// unknown, so the sum stays consistent with what the user already saw.
 type panelOut struct {
 	telemetry.PanelView
-	Compactor *compactorPanel `json:"compactor,omitempty"`
+	Compactor           *compactorPanel `json:"compactor,omitempty"`
+	TokensSavedEstimate int64           `json:"tokens_saved_estimate"`
 }
 
 // panelWithCompactor adds the Compactor totals of the whole exec log. It does
 // not depend on the session: a run with no session hash counts too. No log or
 // no run means no block, never zeros.
 func panelWithCompactor(v telemetry.PanelView) panelOut {
-	out := panelOut{PanelView: v}
+	out := panelOut{PanelView: v, TokensSavedEstimate: telemetry.TokensSavedEstimate(v.Tokens, 0)}
 	path, err := execwrap.EventsPath()
 	if err != nil {
 		return out
@@ -49,5 +54,6 @@ func panelWithCompactor(v telemetry.PanelView) panelOut {
 		Scope: compactorScopeAll, Commands: s.Commands, Compacted: s.Compacted, RawBytes: s.RawBytes,
 		SavedBytes: s.SavedBytes, EstimatedTokensSaved: s.EstimatedTokensSaved, TokenEstimate: s.TokenEstimate,
 	}
+	out.TokensSavedEstimate = telemetry.TokensSavedEstimate(v.Tokens, s.EstimatedTokensSaved)
 	return out
 }
