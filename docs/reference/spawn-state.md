@@ -136,7 +136,7 @@ calls log no session; they still count in the total.
 
 Vendored, so it is patched only through its documented local patch
 (`mods/savvy-progress/downshift-local.patch`, README section "Downshift local
-patch"; mod version 1.2.10). The patch runs `downshift session --panel` and shows
+patch"; mod version 1.2.11). The patch runs `downshift session --panel` and shows
 two tiles in the panel. The first reads `Downshifted` and draws the tokens that
 ran on a smaller model. A `Compactor total` tile draws the bytes the
 Compactor cut across every run in the exec log, only when the `compactor` block

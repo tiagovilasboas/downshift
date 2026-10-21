@@ -517,8 +517,11 @@ const shownFinished = (finished: AgentRun[], at: number): AgentRun[] => {
 }
 
 // The live clock the panel and the band share: the stored `now` only ticks while an agent runs, so it would freeze after the last finish.
-const liveNow = async ($: EngineInterface, list: AgentRun[]): Promise<number> =>
-  Math.max(await Promise.resolve($.clock.now()).catch(() => 0), ...list.map(a => a.startedAt), 0)
+// Reading the `now` atom while drawing subscribes the surface to the 1 s tick: the engine redraws only when an atom the drawing read changes.
+const liveNow = async ($: EngineInterface, list: AgentRun[]): Promise<number> => {
+  const tick = await read($, now)
+  return Math.max(tick, await Promise.resolve($.clock.now()).catch(() => 0), ...list.map(a => a.startedAt), 0)
+}
 
 type Planned = PlannedTask & { n: number }
 
@@ -993,12 +996,12 @@ export const register: Register = (on, options) => {
       description: 'Show or hide the panel of subagents: running, finished and planned, with model, context, cost and time',
     })
 
-    // Ticks the running agents' clocks, and keeps ticking while a finished row is still inside its window so it can expire; quiet otherwise.
+    // Ticks the running agents' clocks, and keeps ticking while a finished row is still inside its window, plus one tick so the redraw that drops it happens; quiet otherwise.
     $.clock.every(1000, () => {
       void (async () => {
         const list = await read($, agents)
         const at = await $.clock.now()
-        const isFading = list.some(a => a.status !== 'running' && at - (finishedSeenAt.get(a.id) ?? -Infinity) < FINISHED_SHOW_MS)
+        const isFading = list.some(a => a.status !== 'running' && at - (finishedSeenAt.get(a.id) ?? -Infinity) < FINISHED_SHOW_MS + 1000)
         if (!list.some(a => a.status === 'running') && !isFading) return
         await update($, now, () => at)
       })()
