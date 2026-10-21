@@ -9,20 +9,19 @@ import (
 // Dependency tree patterns
 var (
 	// npm ls / pnpm ls / yarn list
-	reNpmLsHeader   = regexp.MustCompile(`(?m)^[a-z@][\w./-]*@[\d.]+`)
-	reNpmLsTree     = regexp.MustCompile(`(?m)^[├└│ ]+[a-z@][\w./-]*@`)
-	reNpmLsDeduped  = regexp.MustCompile(`deduped`)
+	reNpmLsHeader     = regexp.MustCompile(`(?m)^[a-z@][\w./-]*@[\d.]+`)
+	reNpmLsTree       = regexp.MustCompile(`(?m)^[├└│ ]+[a-z@][\w./-]*@`)
+	reNpmLsDeduped    = regexp.MustCompile(`deduped`)
 	reNpmLsExtraneous = regexp.MustCompile(`extraneous`)
-	reNpmLsMissing  = regexp.MustCompile(`(?i)(MISSING|UNMET|INVALID|peer dep missing)`)
+	reNpmLsMissing    = regexp.MustCompile(`(?i)(MISSING|UNMET|INVALID|peer dep missing)`)
 
 	// cargo tree
-	reCargoTree     = regexp.MustCompile(`(?m)^[a-z_][\w-]* v[\d.]+`)
-	reCargoTreeDep  = regexp.MustCompile(`(?m)^[│├└ ]+[a-z_][\w-]* v[\d.]+`)
-	reCargoTreeDup  = regexp.MustCompile(`\(\*\)`)
+	reCargoTree    = regexp.MustCompile(`(?m)^[a-z_][\w-]* v[\d.]+`)
+	reCargoTreeDep = regexp.MustCompile(`(?m)^[│├└ ]+[a-z_][\w-]* v[\d.]+`)
+	reCargoTreeDup = regexp.MustCompile(`\(\*\)`)
 
 	// go mod graph
-	reGoModGraph    = regexp.MustCompile(`(?m)^[\w./]+@v[\d.]+ [\w./]+@v[\d.]+`)
-	reGoModWhy      = regexp.MustCompile(`(?m)^# [\w./]+`)
+	reGoModGraph = regexp.MustCompile(`(?m)^[\w./]+@v[\d.]+ [\w./]+@v[\d.]+`)
 )
 
 func isNpmLs(input []byte) bool {

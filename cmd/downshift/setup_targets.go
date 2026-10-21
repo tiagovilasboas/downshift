@@ -219,6 +219,8 @@ var setupTargets = []setupTarget{
 		RequireFile: true,
 		Hooks: []setupHook{
 			{Event: "preToolUse", Matcher: "*", Args: "kirocrew", Wrapper: "kirocrew-pre-tool-use"},
+			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
+			{Event: "postToolUse", Matcher: "spawn_run", Args: "end kirocrew", Wrapper: "kirocrew-post-tool-use"},
 		},
 		Notes: []string{
 			"Restart KiroCrew so it regenerates its agent spec with the hook, then run `downshift doctor`.",

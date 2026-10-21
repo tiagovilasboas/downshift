@@ -182,6 +182,6 @@ To read a real shadow log instead of a fixture, run the hooks with `DOWNSHIFT_E5
 - Baseline: `downshift-labs/eval/multilang/results/baseline-2026-10-17.{json,md}`, `scripts/baseline_eval.py`, `scripts/baseline_eval/harness.go`
 - E5 environment, routes, latency, Go-side tables, constants, commands: `downshift-labs/eval/multilang/results/e5-env-2026-10-17.{json,md}`
 - Runbook: `downshift-labs/scripts/e5_eval.sh`, `e5_eval.py`, `e5_replay_helper.py`, `e5_embed_tokenizers.py`
-- Contract and gates: `docs/internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md` §14, §15
+- Contract and gates: see git history at 2026-10-16 for multilingual semantic intelligence task §14, §15
 - Helper: `tools/e5-shadow/`
 - Earlier M4 result (MiniLM path, rejected: no M3 gain, cold helper 6.5 s, one-shot 1103 ms): initiative doc §5

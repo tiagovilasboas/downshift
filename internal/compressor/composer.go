@@ -16,19 +16,13 @@ import (
 
 var (
 	// Composer summary patterns
-	reComposerInstalling   = regexp.MustCompile(`(?m)^  - Installing `)
-	reComposerUpdating     = regexp.MustCompile(`(?m)^  - Updating `)
-	reComposerRemoving     = regexp.MustCompile(`(?m)^  - Removing `)
-	reComposerDownloading  = regexp.MustCompile(`(?m)^  - Downloading `)
-	reComposerLocking      = regexp.MustCompile(`(?m)^  - Locking `)
-	reComposerPackageOps   = regexp.MustCompile(`Package operations: (\d+) installs?, (\d+) updates?, (\d+) removals?`)
-	reComposerNothingTo    = regexp.MustCompile(`(?m)^Nothing to install,? (?:update|modify)`)
-	reComposerLockFresh    = regexp.MustCompile(`(?m)^Installing dependencies from lock file`)
-	reComposerGenerating   = regexp.MustCompile(`(?m)^Generating (?:optimized )?autoload files`)
-	reComposerRunScript    = regexp.MustCompile(`(?m)^> [\w@:/-]+`)
-	reComposerWarning      = regexp.MustCompile(`(?i)warning|deprecated`)
-	reComposerError        = regexp.MustCompile(`(?i)^  \[[\w\\]+Exception\]|fatal error|composer install failed`)
-	reComposerTimeSummary  = regexp.MustCompile(`(?m)^(?:[\d.]+ (?:MiB|KiB|GiB) of memory used|Memory usage: )`)
+	reComposerPackageOps = regexp.MustCompile(`Package operations: (\d+) installs?, (\d+) updates?, (\d+) removals?`)
+	reComposerNothingTo  = regexp.MustCompile(`(?m)^Nothing to install,? (?:update|modify)`)
+	reComposerLockFresh  = regexp.MustCompile(`(?m)^Installing dependencies from lock file`)
+	reComposerGenerating = regexp.MustCompile(`(?m)^Generating (?:optimized )?autoload files`)
+	reComposerRunScript  = regexp.MustCompile(`(?m)^> [\w@:/-]+`)
+	reComposerWarning    = regexp.MustCompile(`(?i)warning|deprecated`)
+	reComposerError      = regexp.MustCompile(`(?i)^  \[[\w\\]+Exception\]|fatal error|composer install failed`)
 )
 
 // isComposer detects composer install/update output.

@@ -1,0 +1,1 @@
+# Sample output for journalctl_output - pass-through

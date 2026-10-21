@@ -17,10 +17,6 @@ var (
 	reRspecSummary = regexp.MustCompile(`(?m)^(\d+) examples?, (\d+) failures?(?:, (\d+) pending)?`)
 	// Detect failures
 	reRspecFailure = regexp.MustCompile(`(?m)(?:^\s*Failures?:|^\s*\d+\)\s+|FAILED|Error:|RuntimeError)`)
-	// Progress dots: "..." or "..F.." — a line of only dots, F, *, P
-	reRspecProgress = regexp.MustCompile(`(?m)^[.FP*]+$`)
-	// File path lines in verbose mode: "./spec/foo_spec.rb"
-	reRspecVerboseLine = regexp.MustCompile(`(?m)^  [a-zA-Z]`)
 )
 
 // isRspec returns true if input looks like RSpec output.

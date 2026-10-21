@@ -12,7 +12,6 @@ var (
 	reTerraformNoChanges = regexp.MustCompile(`(?m)^No changes\. (Your infrastructure matches|Infrastructure is up-to-date)`)
 	reTerraformResource  = regexp.MustCompile(`(?m)^  # (\S+) (will be|must be|has been) (created|destroyed|updated|replaced|read)`)
 	reTerraformPlanLine  = regexp.MustCompile(`(?m)^Plan: (\d+) to add, (\d+) to change, (\d+) to destroy`)
-	reTerraformAttr      = regexp.MustCompile(`(?m)^\s+[~+-]\s+\S+\s+=`)
 	reTerraformSensitive = regexp.MustCompile(`(?i)(password|secret|key|token|credential)`)
 )
 

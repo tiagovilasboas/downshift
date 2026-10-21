@@ -23,8 +23,6 @@ var (
 	// Progress / resolution noise to strip (used only for detection intent).
 	rePipCollecting  = regexp.MustCompile(`(?m)^Collecting `)
 	rePipDownloading = regexp.MustCompile(`(?m)^\s*Downloading `)
-	// Non-fatal upgrade hint pip prints on a successful run.
-	rePipUpgradeNotice = regexp.MustCompile(`(?m)^\[notice\]`)
 
 	// Error indicators (fail-open). pip reports failures with ERROR:, a
 	// traceback, or a non-resolvable dependency message.

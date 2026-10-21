@@ -1,0 +1,10 @@
+Doctor summary (to see all details, run flutter doctor -v):
+[✓] Flutter (Channel stable, 3.16.0, on macOS 14.1, locale en-US)
+[✓] Android toolchain - develop for Android devices
+[✓] Xcode - develop for iOS and macOS
+[✓] Chrome - develop for the web
+[✓] Android Studio
+[✓] VS Code
+[✓] Connected device (2 available)
+
+• No issues found!

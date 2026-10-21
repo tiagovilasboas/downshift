@@ -141,3 +141,88 @@ func BuildComparisonReport(events []telemetry.Event, days int) ComparisonReport 
 
 	return result
 }
+
+// DailySummary is one UTC day's routing and compactor metrics.
+type DailySummary struct {
+	Date      string           `json:"date"`
+	Sessions  int              `json:"sessions"`
+	Routing   RoutingMetrics   `json:"routing"`
+	Compactor CompactorMetrics `json:"compactor"`
+}
+
+// BuildDailyTrend returns a per-UTC-day breakdown over the last days days
+// (0 = all time), oldest first. Days with no activity on either source are
+// omitted.
+func BuildDailyTrend(days int) ([]DailySummary, error) {
+	events, err := loadRoutingEvents()
+	if err != nil {
+		return nil, err
+	}
+	routingByDay := bucketRoutingByDay(telemetry.FilterByDays(events, days))
+
+	compactorByDay := map[string]CompactorMetrics{}
+	if recs, cErr := loadCompactorEvents(); cErr == nil {
+		compactorByDay = bucketCompactorByDay(recs, days)
+	}
+
+	dates := unionDays(routingByDay, compactorByDay)
+	sort.Strings(dates)
+
+	trend := make([]DailySummary, 0, len(dates))
+	for _, date := range dates {
+		day := DailySummary{Date: date}
+		if r, ok := routingByDay[date]; ok {
+			day.Routing = r.metrics
+			day.Sessions = len(r.sessions)
+		}
+		if c, ok := compactorByDay[date]; ok {
+			day.Compactor = c
+		}
+		trend = append(trend, day)
+	}
+	return trend, nil
+}
+
+// dayRouting holds one day's routing aggregate plus the distinct session ids
+// seen, so the per-day session count is accurate.
+type dayRouting struct {
+	metrics  RoutingMetrics
+	sessions map[string]struct{}
+}
+
+// bucketRoutingByDay groups routing events by UTC date and folds each bucket
+// through BuildGlobalSummary so the per-day metrics match the global roll-up.
+func bucketRoutingByDay(events []telemetry.Event) map[string]dayRouting {
+	grouped := map[string][]telemetry.Event{}
+	sessions := map[string]map[string]struct{}{}
+	for _, ev := range events {
+		date, ok := utcDate(ev.Timestamp)
+		if !ok {
+			continue
+		}
+		grouped[date] = append(grouped[date], ev)
+		if ev.SessionID != "" {
+			if sessions[date] == nil {
+				sessions[date] = map[string]struct{}{}
+			}
+			sessions[date][ev.SessionID] = struct{}{}
+		}
+	}
+
+	out := make(map[string]dayRouting, len(grouped))
+	for date, evs := range grouped {
+		summary := BuildGlobalSummary(evs, SummaryOptions{Days: 0})
+		out[date] = dayRouting{metrics: summary.Routing, sessions: sessions[date]}
+	}
+	return out
+}
+
+// loadCompactorEvents is the exec-log load seam for the daily trend. Tests
+// override it to inject records without touching the real exec log.
+var loadCompactorEvents = func() ([]execwrap.Event, error) {
+	path, err := execwrap.EventsPath()
+	if err != nil {
+		return nil, err
+	}
+	return execwrap.ReadEvents(path)
+}

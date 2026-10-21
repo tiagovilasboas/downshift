@@ -122,14 +122,13 @@ const (
 	FamilyPodInstall Family = "pod"
 	FamilyExpo       Family = "expo"
 	FamilyReactNative Family = "react-native"
-	FamilyAdb        Family = "adb"
+	FamilyAdb         Family = "adb"
 
-	// Mobile/Native build — Android (gradle for app builds, beyond test)
-	FamilyGradleAndroid Family = "gradle-android"
+	// Note: Gradle is handled by FamilyGradle in policy_backend.go
 
 	// Package managers — install commands (verbose output)
-	FamilyNpmInstall  Family = "npm-install"
-	FamilyPipInstall  Family = "pip-install"
+	// FamilyNpmInstall declared in policy_frontend.go
+	FamilyPipInstall Family = "pip-install"
 
 	// Other languages
 	FamilyMix   Family = "mix"
@@ -774,15 +773,7 @@ func mobileNativeFamily(argv []string) Family {
 				return FamilyAdb
 			}
 		}
-	case "gradle", "gradlew", "./gradlew":
-		// Android app build tasks
-		for _, a := range argv[1:] {
-			if strings.Contains(a, "assemble") || strings.Contains(a, "bundle") ||
-				strings.Contains(a, "install") || strings.Contains(a, "Android") ||
-				a == "build" || a == "clean" {
-				return FamilyGradleAndroid
-			}
-		}
+	// Note: gradle/gradlew handled by FamilyGradle in policy_backend.go
 	}
 	return FamilyNone
 }

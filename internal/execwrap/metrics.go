@@ -95,6 +95,30 @@ type Summary struct {
 // Malformed lines are skipped.
 func Summarize(path string) (Summary, error) { return SummarizeSession(path, "") }
 
+// ReadEvents reads every record from the exec log at path. A missing file is
+// an empty slice, not an error. Malformed lines are skipped, mirroring
+// Summarize. Callers that only need totals should use Summarize instead.
+func ReadEvents(path string) ([]Event, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer f.Close()
+	var out []Event
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		var ev Event
+		if json.Unmarshal(sc.Bytes(), &ev) != nil {
+			continue
+		}
+		out = append(out, ev)
+	}
+	return out, sc.Err()
+}
+
 // SummarizeSession totals only the records of one hashed session; an empty
 // session totals the whole log. Records written before the session field
 // existed belong to no session.

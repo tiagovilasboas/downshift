@@ -19,9 +19,8 @@ var (
 	reAzPipelinesBuildID = regexp.MustCompile(`"buildNumber":\s*"([^"]+)"`)
 	reAzPipelinesStatus  = regexp.MustCompile(`"status":\s*"([^"]+)"`)
 	reAzPipelinesResult  = regexp.MustCompile(`"result":\s*"([^"]+)"`)
-	reAzPipelinesName    = regexp.MustCompile(`"definition":\s*\{[^}]*"name":\s*"([^"]+)"`)
 	reAzPipelinesBranch  = regexp.MustCompile(`"sourceBranch":\s*"refs/heads/([^"]+)"`)
-	
+
 	// az pipelines table output (--output table)
 	reAzPipelinesTableHeader = regexp.MustCompile(`(?m)^(?:ID|Build Number|Run ID)\s+`)
 )
@@ -57,7 +56,7 @@ func compressAzPipelines(input []byte) ([]byte, bool, string) {
 func compressAzPipelinesJSON(input []byte) ([]byte, bool, string) {
 	// Extract key fields from JSON without full parsing
 	builds := bytes.Split(input, []byte("},{"))
-	
+
 	var out bytes.Buffer
 	out.WriteString("az pipelines: ")
 	out.WriteString(itoa(len(builds)))
@@ -122,7 +121,7 @@ func compressAzPipelinesJSON(input []byte) ([]byte, bool, string) {
 
 func compressAzPipelinesTable(input []byte) ([]byte, bool, string) {
 	lines := strings.Split(string(input), "\n")
-	
+
 	var dataLines int
 	for _, line := range lines {
 		line = strings.TrimSpace(line)

@@ -15,19 +15,17 @@ import (
 
 var (
 	// artisan migrate patterns
-	reArtisanMigrating     = regexp.MustCompile(`(?m)^\s*Migrating:\s+(.+)$`)
-	reArtisanMigrated      = regexp.MustCompile(`(?m)^\s*Migrated:\s+(.+)\s+\([\d.]+ms\)$`)
+	reArtisanMigrating      = regexp.MustCompile(`(?m)^\s*Migrating:\s+(.+)$`)
+	reArtisanMigrated       = regexp.MustCompile(`(?m)^\s*Migrated:\s+(.+)\s+\([\d.]+ms\)$`)
 	reArtisanNothingMigrate = regexp.MustCompile(`(?m)Nothing to migrate`)
-	reArtisanRollingBack   = regexp.MustCompile(`(?m)^\s*Rolling back:\s+`)
-	
+	reArtisanRollingBack    = regexp.MustCompile(`(?m)^\s*Rolling back:\s+`)
+
 	// artisan route:list patterns (table with lots of columns)
-	reArtisanRouteHeader   = regexp.MustCompile(`(?m)^\s*(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\|`)
-	reArtisanRouteDomain   = regexp.MustCompile(`(?m)^\s*Domain\s+\|\s+Method\s+\|`)
-	
+	reArtisanRouteHeader = regexp.MustCompile(`(?m)^\s*(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\|`)
+	reArtisanRouteDomain = regexp.MustCompile(`(?m)^\s*Domain\s+\|\s+Method\s+\|`)
+
 	// artisan general patterns
-	reArtisanInfo          = regexp.MustCompile(`(?m)^\s*INFO\s+`)
-	reArtisanWarn          = regexp.MustCompile(`(?m)^\s*WARN\s+`)
-	reArtisanError         = regexp.MustCompile(`(?m)^\s*ERROR\s+|Exception|SQLSTATE`)
+	reArtisanError = regexp.MustCompile(`(?m)^\s*ERROR\s+|Exception|SQLSTATE`)
 )
 
 // isArtisanMigrate detects artisan migrate output.
@@ -35,8 +33,8 @@ func isArtisanMigrate(input []byte) bool {
 	if len(input) > MaxProcessableBytes || !utf8.Valid(input) {
 		return false
 	}
-	return reArtisanMigrating.Match(input) || 
-		reArtisanMigrated.Match(input) || 
+	return reArtisanMigrating.Match(input) ||
+		reArtisanMigrated.Match(input) ||
 		reArtisanNothingMigrate.Match(input) ||
 		reArtisanRollingBack.Match(input)
 }
@@ -92,7 +90,7 @@ func compressArtisanMigrate(input []byte) ([]byte, bool, string) {
 		if len(migrations) > 3 {
 			start = len(migrations) - 3
 			out.WriteString("  ... and ")
-			out.WriteString(itoa(len(migrations)-3))
+			out.WriteString(itoa(len(migrations) - 3))
 			out.WriteString(" more\n")
 		}
 		for _, m := range migrations[start:] {
@@ -118,7 +116,7 @@ func compressArtisanRouteList(input []byte) ([]byte, bool, string) {
 	}
 
 	lines := strings.Split(string(input), "\n")
-	
+
 	var getCount, postCount, putCount, deleteCount, otherCount int
 	var middlewareSet = make(map[string]bool)
 
@@ -191,5 +189,5 @@ func compressArtisanRouteList(input []byte) ([]byte, bool, string) {
 // FormatArtisanMigrate constant
 const FormatArtisanMigrate Format = "artisan_migrate"
 
-// FormatArtisanRoutes constant  
+// FormatArtisanRoutes constant
 const FormatArtisanRoutes Format = "artisan_routes"
