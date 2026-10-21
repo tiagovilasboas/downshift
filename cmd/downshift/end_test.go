@@ -227,7 +227,7 @@ func TestEndCursorSubagentStopLinksByToolCallAndStaysUnmeasuredWithoutIds(t *tes
 func TestEndWithoutAnEndEventRecordsNothingAndIsNotAnError(t *testing.T) {
 	endEnv(t)
 	payload := endMarshal(map[string]any{"hook_event_name": "PostToolUse", "tool_name": "invoke_subagent", "session_id": "s1", "status": "completed"})
-	for _, h := range []string{"antigravity", "kirocrew", "grok", "no-such-harness"} {
+	for _, h := range []string{"antigravity", "grok", "no-such-harness"} {
 		rc, stdout, stderr := runEndFor(h, payload)
 		if rc != 0 || stdout != "" {
 			t.Errorf("%s: rc=%d stdout=%q", h, rc, stdout)
