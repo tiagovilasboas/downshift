@@ -1,7 +1,7 @@
 {
   "name": "downshift",
   "displayName": "Downshift",
-  "description": "Right-sized models for every subagent: deterministic PreToolUse routing, session tree (/downshift:status), setup, audit and cost-reducer skills, and the shell exec wrapper (downshift compact, compacts clean command output). The cache-tax mod is a separate, optional install. Needs the downshift binary on PATH.",
+  "description": "Right-sized models for every subagent: deterministic PreToolUse routing, session tree (/downshift:status), setup, audit, cost-reducer and harness-engineer skills, and the shell exec wrapper (downshift compact, compacts clean command output). The cache-tax mod is a separate, optional install. Needs the downshift binary on PATH.",
   "author": { "name": "Tiago Vilas Boas", "url": "https://github.com/tiagovilasboas" },
   "homepage": "https://github.com/tiagovilasboas/downshift",
   "repository": "https://github.com/tiagovilasboas/downshift",
