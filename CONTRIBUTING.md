@@ -131,6 +131,8 @@ Requires Go 1.27.3+ (see `go.mod`).
 
 Docs-only diffs skip the Go job. Nightly `ci-full` catches regressions if a PR did not touch scoped paths.
 
+`make e2e` builds the binary and runs `scripts/e2e/battery.py` against it in a throwaway state dir: routing and guardrails on Claude Code payloads, the spawn lifecycle up to the panel JSON, the compactor on real `go` commands, the Bash rewrite, the gateway shadow row and fail-open input. It never touches `~/.downshift`. Mod tests run with `claude plugin test mods/<name>`.
+
 ## Ground rules
 
 - **Keep tests green.** Run `go test ./...` before every commit; run `go test -race -cover ./...` before router/core changes (or wait for `ci-full`).
