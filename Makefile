@@ -1,4 +1,4 @@
-.PHONY: build test lint vet install build-all clean report
+.PHONY: build test lint vet install build-all clean report e2e
 
 BINARY=downshift
 
@@ -45,3 +45,7 @@ clean:
 ## help: list targets
 help:
 	@sed -n 's/^##//p' $(MAKEFILE_LIST) | column -t -s ':' | sed -e 's/^/ /'
+
+## e2e: build, then run the end-to-end battery against ./downshift in a temp state dir
+e2e: build
+	DOWNSHIFT_BIN=./$(BINARY) python3 -I scripts/e2e/battery.py
