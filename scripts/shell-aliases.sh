@@ -5,7 +5,7 @@
 # Usage:
 #   source /path/to/shell-aliases.sh
 #   # or
-#   eval "$(downshift shell-init)"
+#   eval "$(downshift enable)"
 #
 # These aliases intercept allowlisted commands and route them through the
 # compactor automatically, so agents get compressed output without remembering
