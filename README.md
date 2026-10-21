@@ -287,7 +287,7 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 
 ## Status
 
-**Beta** (v0.1.0-beta.14). Not yet stable: the beta label stays until the exit criteria close. See [Beta Exit Criteria](docs/reference/beta-exit.md).
+**Beta** (v0.1.1). Not yet stable: the beta label stays until the exit criteria close. See [Beta Exit Criteria](docs/reference/beta-exit.md).
 
 ---
 
