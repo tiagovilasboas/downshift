@@ -35,7 +35,8 @@ func parseFamilyInventory(t *testing.T) []inventoryRow {
 	if err != nil {
 		t.Fatalf("read %s: %v", familyInventoryDoc, err)
 	}
-	lines := strings.Split(string(raw), "\n")
+	// A Windows checkout turns the doc into CRLF; drop the CR so the header still matches.
+	lines := strings.Split(strings.ReplaceAll(string(raw), "\r\n", "\n"), "\n")
 	start := -1
 	for i, line := range lines {
 		if line == familyInventoryHeader {
