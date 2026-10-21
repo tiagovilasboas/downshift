@@ -1,0 +1,3 @@
+cargo update
+    Updating crates.io index
+    Updating serde v1.0.0 -> v1.0.100

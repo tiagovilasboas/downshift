@@ -1,0 +1,4 @@
+lerna list
+lerna info cli 7.0.0
+@scope/package-a
+@scope/package-b

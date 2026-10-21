@@ -1,0 +1,3 @@
+bandit -r .
+Run started
+No issues found.

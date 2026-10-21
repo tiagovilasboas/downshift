@@ -1,0 +1,2 @@
+go mod tidy
+go: downloading example.com/pkg v1.2.3

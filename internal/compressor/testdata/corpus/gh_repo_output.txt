@@ -1,0 +1,3 @@
+gh repo list
+owner/repo1  Public  2d
+owner/repo2  Private 5d

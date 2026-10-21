@@ -205,3 +205,96 @@ preserve  pest           pest_output.txt
 preserve  sail-test      sail_test_output.txt
 preserve  sail-artisan   sail_artisan_output.txt
 preserve  rector         rector_output.txt
+
+# GitHub CLI (pass-through)
+preserve  gh-pr      gh_pr_output.txt
+preserve  gh-run     gh_run_output.txt
+
+# Go toolchain (pass-through)
+preserve  go-build     go_build_output.txt
+preserve  go-run       go_run_output.txt
+preserve  go-mod       go_mod_output.txt
+preserve  go-vet       go_vet_output.txt
+preserve  go-fmt       go_fmt_output.txt
+preserve  go-version   go_version_output.txt
+preserve  go-env       go_env_output.txt
+preserve  go-list      go_list_output.txt
+
+# Go linters (pass-through)
+preserve  staticcheck    staticcheck_output.txt
+preserve  golangci-lint  golangci_lint_output.txt
+preserve  govulncheck    govulncheck_output.txt
+
+# Cargo/Rust toolchain (pass-through)
+preserve  cargo-build    cargo_build_output.txt
+preserve  cargo-run      cargo_run_output.txt
+preserve  cargo-check    cargo_check_output.txt
+preserve  cargo-clippy   cargo_clippy_output.txt
+preserve  cargo-tree     cargo_tree_output.txt
+
+# Python tooling (pass-through)
+preserve  pip-list   pip_list_output.txt
+preserve  pip-show   pip_show_output.txt
+preserve  ruff       ruff_output.txt
+preserve  mypy       mypy_output.txt
+preserve  pyright    pyright_output.txt
+preserve  poetry     poetry_output.txt
+
+# Build systems (pass-through)
+preserve  make     make_output.txt
+preserve  cmake    cmake_output.txt
+preserve  ninja    ninja_output.txt
+preserve  bazel    bazel_output.txt
+preserve  just     just_output.txt
+preserve  task     task_output.txt
+preserve  nx       nx_output.txt
+
+# Version managers (pass-through)
+preserve  mise     mise_output.txt
+preserve  fnm      fnm_output.txt
+preserve  volta    volta_output.txt
+
+# GitHub CLI extras (pass-through)
+preserve  gh-auth    gh_auth_output.txt
+preserve  gh-repo    gh_repo_output.txt
+preserve  gh-issue   gh_issue_output.txt
+preserve  gh-api     gh_api_output.txt
+preserve  gh-search  gh_search_output.txt
+
+# Go extras (pass-through)
+preserve  go-doc       go_doc_output.txt
+preserve  go-get       go_get_output.txt
+preserve  go-work      go_work_output.txt
+preserve  go-install   go_install_output.txt
+preserve  go-generate  go_generate_output.txt
+
+# Cargo extras (pass-through)
+preserve  cargo-fmt       cargo_fmt_output.txt
+preserve  cargo-add       cargo_add_output.txt
+preserve  cargo-doc       cargo_doc_output.txt
+preserve  cargo-audit     cargo_audit_output.txt
+preserve  cargo-outdated  cargo_outdated_output.txt
+
+# Python extras (pass-through)
+preserve  pip-freeze   pip_freeze_output.txt
+preserve  pip-check    pip_check_output.txt
+preserve  uv-pip       uv_pip_output.txt
+preserve  uv-run       uv_run_output.txt
+preserve  black        black_output.txt
+preserve  isort        isort_output.txt
+preserve  bandit       bandit_output.txt
+preserve  pdm          pdm_output.txt
+
+# Version managers extras (pass-through)
+preserve  nvm      nvm_output.txt
+preserve  rbenv    rbenv_output.txt
+preserve  pyenv    pyenv_output.txt
+preserve  asdf     asdf_output.txt
+preserve  rtx      rtx_output.txt
+preserve  proto    proto_output.txt
+preserve  direnv   direnv_output.txt
+
+# Build systems extras (pass-through)
+preserve  lerna       lerna_output.txt
+preserve  changesets  changesets_output.txt
+preserve  cargo-update  cargo_update_output.txt
