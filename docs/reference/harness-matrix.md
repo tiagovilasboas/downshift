@@ -312,27 +312,194 @@ matches the command, or when the settings cannot be read, and never when
 `HarnessCapabilities.CanRewriteShellCommand`. An adapter takes part by
 exposing `ShellCommand()` and `ShellRewrite()`.
 
-**Accepted families.** `FamilyOf` in `internal/execwrap/policy.go` decides. The
-first words must match one of these forms; words after them are passed on as
+**Accepted families.** `FamilyOf` in `internal/execwrap/policy*.go` decides. The
+first words must match one of these forms (the inventory below is checked against the code by `internal/execwrap/families_inventory_test.go`; the policy files decide the exact flags and subcommands); words after them are passed on as
 written. The family name is the only command fact telemetry keeps.
 
-| family | accepted forms |
-|---|---|
-| `go-test` | `go test` |
-| `git-*` | any `git <subcommand>` with no leading global option (`-c`, `-C`, `--git-dir`, `--exec-path`). One family per subcommand group (`git-status`, `git-log`, `git-diff`, `git-show`, `git-branch`, `git-fetch`, `git-pull`, `git-push`, `git-commit`, `git-add`, `git-stash`, `git-remote`, `git-tag`, `git-config-read`), the rest in `git-other`. Only `git-status` compacts; the other git families run and keep their output byte-identical |
-| `pytest` | `pytest` (not `python -m pytest`) |
-| `vitest` | `vitest`, `npx vitest` |
-| `jest` | `jest`, `npx jest` |
-| `tsc` | `tsc`, `npx tsc` |
-| `cypress` | `cypress run`, `npx cypress run` |
-| `playwright` | `playwright test`, `npx playwright test` |
-| `next-build` | `next build`, `npx next build` |
-| `phpunit` | `phpunit`, `vendor/bin/phpunit`, `./vendor/bin/phpunit` |
-| `cargo-test` | `cargo test` |
-| `flutter-test` | `flutter test` |
-| `dart-test` | `dart test` |
-| `gradle` | `gradle`, `gradlew`, `./gradlew` with tasks named exactly `build`, `check`, `clean`, `test`, `assemble`, `lint`, `connectedAndroidTest`, `testDebugUnitTest`, `testReleaseUnitTest`, `assembleDebug`, `assembleRelease`, `lintDebug` or `lintRelease`, each optionally prefixed by a project path such as `:app:`; the value of `-x` / `--exclude-task` is skipped |
-| `maven` | `mvn`, `mvnw`, `./mvnw` with the goals `test`, `verify`, `package`, `install` or `clean`, and only the options `-o`, `-q`, `-B`, `-DskipTests`, `-DskipITs` |
+| family | command forms | behaviour |
+|---|---|---|
+| `go-test` | `go test` | compresses |
+| `pytest` | `pytest` | compresses |
+| `cargo-test` | `cargo test` | compresses |
+| `flutter-test` | `flutter test` | compresses |
+| `dart-test` | `dart test` | compresses |
+| `flutter-build` | `flutter build` | passes through |
+| `flutter-run` | `flutter run` | passes through |
+| `flutter-analyze` | `flutter analyze` | passes through |
+| `flutter-pub` | `flutter pub` | passes through |
+| `flutter-doctor` | `flutter doctor` | passes through |
+| `flutter-clean` | `flutter clean` | passes through |
+| `flutter-devices` | `flutter devices` | passes through |
+| `dart-run` | `dart run` | passes through |
+| `dart-analyze` | `dart analyze` | passes through |
+| `dart-pub` | `dart pub` | passes through |
+| `dart-format` | `dart format` | passes through |
+| `dart-compile` | `dart compile` | passes through |
+| `dart-fix` | `dart fix` | passes through |
+| `gradle` | `gradle`, `gradlew`, `./gradlew` with the allowlisted tasks (build, check, test, assemble, lint, ...) | compresses |
+| `maven` | `mvn`, `mvnw`, `./mvnw` with test, verify, package, install or clean | compresses |
+| `phpunit` | `phpunit`, `vendor/bin/phpunit`, `./vendor/bin/phpunit` | compresses |
+| `composer` | `composer` | passes through |
+| `artisan` | `php artisan <command>` | passes through |
+| `phpstan` | `phpstan` | passes through |
+| `psalm` | `psalm` | passes through |
+| `php-cs-fixer` | `php-cs-fixer` | passes through |
+| `pint` | `pint` | passes through |
+| `pest` | `pest` | passes through |
+| `rector` | `rector` | passes through |
+| `sail-test` | `sail test` | passes through |
+| `sail-artisan` | `sail artisan <command>` | passes through |
+| `vitest` | `vitest`, `npx vitest` | compresses |
+| `jest` | `jest`, `npx jest` | compresses |
+| `playwright` | `playwright test`, `npx playwright test` | compresses |
+| `cypress` | `cypress run`, `npx cypress run` | compresses |
+| `tsc` | `tsc`, `npx tsc` | compresses |
+| `next-build` | `next build`, `npx next build` | compresses |
+| `vite-build` | `vite build` | passes through |
+| `vite-preview` | `vite preview` | passes through |
+| `turbo-run` | `turbo run` | passes through |
+| `npm-install` | `npm install` | passes through |
+| `npm-test` | `npm test` | passes through |
+| `npm-build` | `npm build` | passes through |
+| `pnpm-test` | `pnpm test` | passes through |
+| `pnpm-build` | `pnpm build` | passes through |
+| `yarn-test` | `yarn test` | passes through |
+| `yarn-build` | `yarn build` | passes through |
+| `bun-test` | `bun test` | passes through |
+| `bun-build` | `bun build` | passes through |
+| `eslint` | `eslint` | passes through |
+| `prettier` | `prettier` | passes through |
+| `biome` | `biome` | passes through |
+| `mysql-query` | `mysql -e <read-only statement>` | passes through |
+| `redis-read` | `redis-cli <read-only command>` (and `valkey-cli`) | passes through |
+| `kubectl-get` | `kubectl get` | passes through |
+| `kubectl-describe` | `kubectl describe` | passes through |
+| `kubectl-logs` | `kubectl logs` | passes through |
+| `helm-list` | `helm list` | passes through |
+| `helm-status` | `helm status` | passes through |
+| `terraform-plan` | `terraform plan` | passes through |
+| `terraform-fmt` | `terraform fmt` | passes through |
+| `az-list` | `az list` | passes through |
+| `az-show` | `az show` | passes through |
+| `aws-describe` | `aws describe` | passes through |
+| `aws-list` | `aws list` | passes through |
+| `aws-get` | `aws get` | passes through |
+| `aws-s3-ls` | `aws s3 ls` | passes through |
+| `aws-s3-cp` | `aws s3 cp` (read-only forms only) | passes through |
+| `aws-logs` | `aws logs` | passes through |
+| `docker-ps` | `docker ps` | passes through |
+| `docker-logs` | `docker logs` | passes through |
+| `docker-images` | `docker images` | passes through |
+| `docker-build` | `docker build` | passes through |
+| `argocd-list` | `argocd list` | passes through |
+| `argocd-get` | `argocd get` | passes through |
+| `argocd-diff` | `argocd diff` | passes through |
+| `kustomize-build` | `kustomize build` | passes through |
+| `az-pipelines` | `az pipelines <read form>` | passes through |
+| `logcli` | `logcli` | passes through |
+| `sentry-cli` | `sentry-cli` | passes through |
+| `grafana-cli` | `grafana-cli` | passes through |
+| `datadog-ci` | `datadog-ci` | passes through |
+| `git-status` | `git status` | compresses |
+| `git-log` | `git log` | passes through |
+| `git-diff` | `git diff` | passes through |
+| `git-show` | `git show` | passes through |
+| `git-branch` | `git branch` | passes through |
+| `git-fetch` | `git fetch` | passes through |
+| `git-pull` | `git pull` | passes through |
+| `git-push` | `git push` | passes through |
+| `git-commit` | `git commit` | passes through |
+| `git-add` | `git add` | passes through |
+| `git-stash` | `git stash` | passes through |
+| `git-remote` | `git remote` | passes through |
+| `git-tag` | `git tag` | passes through |
+| `git-config-read` | `git config --get`, `--get-all`, `--get-regexp`, `--list` (read flags only) | passes through |
+| `git-other` | any other `git <subcommand>` not listed above | passes through |
+| `gh-pr` | `gh pr` | passes through |
+| `gh-run` | `gh run` | passes through |
+| `gh-api` | `gh api` | passes through |
+| `gh-issue` | `gh issue` | passes through |
+| `gh-repo` | `gh repo` | passes through |
+| `gh-auth` | `gh auth` | passes through |
+| `gh-search` | `gh search` | passes through |
+| `go-build` | `go build` | passes through |
+| `go-run` | `go run` | passes through |
+| `go-install` | `go install` | passes through |
+| `go-mod` | `go mod` | passes through |
+| `go-generate` | `go generate` | passes through |
+| `go-fmt` | `go fmt` | passes through |
+| `go-vet` | `go vet` | passes through |
+| `go-doc` | `go doc` | passes through |
+| `go-version` | `go version` | passes through |
+| `go-env` | `go env` | passes through |
+| `go-list` | `go list` | passes through |
+| `go-get` | `go get` | passes through |
+| `go-work` | `go work` | passes through |
+| `staticcheck` | `staticcheck` | passes through |
+| `golangci-lint` | `golangci-lint` | passes through |
+| `govulncheck` | `govulncheck` | passes through |
+| `cargo-build` | `cargo build` | passes through |
+| `cargo-run` | `cargo run` | passes through |
+| `cargo-check` | `cargo check` | passes through |
+| `cargo-clippy` | `cargo clippy` | passes through |
+| `cargo-fmt` | `cargo fmt` | passes through |
+| `cargo-doc` | `cargo doc` | passes through |
+| `cargo-add` | `cargo add` | passes through |
+| `cargo-update` | `cargo update` | passes through |
+| `cargo-tree` | `cargo tree` | passes through |
+| `cargo-audit` | `cargo audit` | passes through |
+| `cargo-outdated` | `cargo outdated` | passes through |
+| `pip-list` | `pip list` | passes through |
+| `pip-show` | `pip show` | passes through |
+| `pip-freeze` | `pip freeze` | passes through |
+| `pip-check` | `pip check` | passes through |
+| `uv-pip` | `uv pip <read or install form>` | passes through |
+| `uv-run` | `uv run <command>` | passes through |
+| `ruff` | `ruff` | passes through |
+| `mypy` | `mypy` | passes through |
+| `black` | `black` | passes through |
+| `isort` | `isort` | passes through |
+| `pyright` | `pyright` | passes through |
+| `bandit` | `bandit` | passes through |
+| `poetry` | `poetry` | passes through |
+| `pdm` | `pdm` | passes through |
+| `make` | `make <target>` | passes through |
+| `cmake` | `cmake` | passes through |
+| `ninja` | `ninja` | passes through |
+| `bazel` | `bazel` | passes through |
+| `just` | `just` | passes through |
+| `task` | `task` | passes through |
+| `nx` | `nx` | passes through |
+| `lerna` | `lerna` | passes through |
+| `changesets` | `changesets` | passes through |
+| `mkdir` | `mkdir` | passes through |
+| `touch` | `touch` | passes through |
+| `cp` | `cp` | passes through |
+| `mv` | `mv` | passes through |
+| `rm` | `rm` | passes through |
+| `ast-grep` | `ast-grep` | passes through |
+| `dotnet-build` | `dotnet build` | passes through |
+| `dotnet-test` | `dotnet test` | passes through |
+| `dotnet-run` | `dotnet run` | passes through |
+| `rspec` | `rspec` | passes through |
+| `rubocop` | `rubocop` | passes through |
+| `mise` | `mise` | passes through |
+| `asdf` | `asdf` | passes through |
+| `direnv` | `direnv` | passes through |
+| `psql` | `psql` | passes through |
+| `gcloud` | `gcloud` | passes through |
+| `journalctl` | `journalctl` | passes through |
+| `systemctl` | `systemctl` | passes through |
+| `kubectl-top` | `kubectl top` | passes through |
+| `xcodebuild` | `xcodebuild` | passes through |
+| `pod` | `pod` | passes through |
+| `expo` | `expo` | passes through |
+| `react-native` | `react-native` | passes through |
+| `adb` | `adb` | passes through |
+| `pip-install` | `pip install` (install form) | passes through |
+| `mix` | `mix` | passes through |
+| `swift` | `swift` | passes through |
+| `sbt` | `sbt` | passes through |
 
 Any other command, including `npm test`, is not wrapped. The shell still parses the wrapped command, so the words after the
 family expand as they would have.
