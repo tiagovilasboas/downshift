@@ -157,7 +157,7 @@ func TestSession_SelectionExplicitThenEnvThenLatest(t *testing.T) {
 
 	// Latest decision in the log is session b: one subagent, unpriced.
 	out, _, rc := sessionCmd(t)
-	if rc != 0 || !strings.HasPrefix(out, header+"1 subagent · 0 switched, 0 held · tokens not observed") || !strings.Contains(out, "opus") {
+	if rc != 0 || !strings.HasPrefix(out, header+"1 subagent · 0 switched, 0 held · 1 upshift not applied · tokens not observed") || !strings.Contains(out, "opus") {
 		t.Fatalf("latest session: rc=%d\n%s", rc, out)
 	}
 	// The harness's declared env var beats "latest" (read from capabilities, no name in code).
