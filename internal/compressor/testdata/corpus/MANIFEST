@@ -104,8 +104,8 @@ preserve  maven         maven_skipped.txt
 preserve  maven         maven_warning.txt
 # Pass-through families (execwrap): never compacted, so no clean fixture. The format column is the family name.
 preserve  git-log          gitlog_default_real.txt
-preserve  git_diff     gitdiff_unstaged_change.txt
-preserve  git_show     gitshow_head.txt
+preserve  git-diff         gitdiff_unstaged_change.txt
+preserve  git-show         gitshow_head.txt
 preserve  git-branch       gitbranch_verbose.txt
 preserve  git-fetch        gitfetch_new_commits.txt
 preserve  git-fetch        gitfetch_up_to_date.txt
@@ -298,4 +298,19 @@ preserve  direnv   direnv_output.txt
 preserve  lerna       lerna_output.txt
 preserve  changesets  changesets_output.txt
 preserve  cargo-update  cargo_update_output.txt
+preserve  dart-analyze    dart_analyze_clean.txt
+preserve  dart-pub        dart_pub_clean.txt
+preserve  dart-run        dart_run_clean.txt
+preserve  flutter-pub     flutter_pub_clean.txt
+preserve  flutter-doctor  flutter_doctor_clean.txt
+preserve  flutter-clean   flutter_clean_clean.txt
+preserve  git-diff        git_diff_clean.txt
+preserve  git-show        git_show_clean.txt
+preserve  flutter-build   flutter_build_clean.txt
+preserve  flutter-run     flutter_run_clean.txt
+preserve  flutter-analyze flutter_analyze_clean.txt
+preserve  flutter-devices flutter_devices_clean.txt
+preserve  dart-compile    dart_compile_clean.txt
+preserve  dart-format     dart_format_clean.txt
+preserve  dart-fix        dart_fix_clean.txt
 preserve  npm-install npm_install_clean.txt
