@@ -805,7 +805,7 @@ const DS_TTL_MS = 3000
 
 // A finished row leaves the panel this long after the render that first saw it finished (no timer:
 // the panel gets the current time on each render). Running rows are never hidden.
-const FINISHED_SHOW_MS = 10_000
+const FINISHED_SHOW_MS = 30_000
 const finishedSeenAt = new Map<string, number>() // finished agent id -> render time it was first seen finished
 
 const dsParse = (raw: unknown): DsView | null => {
@@ -993,12 +993,13 @@ export const register: Register = (on, options) => {
       description: 'Show or hide the panel of subagents: running, finished and planned, with model, context, cost and time',
     })
 
-    // Ticks the running agents' clocks; quiet when nothing runs.
+    // Ticks the running agents' clocks, and keeps ticking while a finished row is still inside its window so it can expire; quiet otherwise.
     $.clock.every(1000, () => {
       void (async () => {
         const list = await read($, agents)
-        if (!list.some(a => a.status === 'running')) return
         const at = await $.clock.now()
+        const isFading = list.some(a => a.status !== 'running' && at - (finishedSeenAt.get(a.id) ?? -Infinity) < FINISHED_SHOW_MS)
+        if (!list.some(a => a.status === 'running') && !isFading) return
         await update($, now, () => at)
       })()
     })
@@ -1207,7 +1208,7 @@ export const register: Register = (on, options) => {
     const toggleDone = (
       <Button
         key="done"
-        label={`${p.isDoneCollapsed ? (isRtl() ? '◂' : '▸') : '▾'} ${s.finished} · ${finished.length}`}
+        label={`${p.isDoneCollapsed ? (isRtl() ? '◂' : '▸') : '▾'} ${s.finished} · ${shown.length}`}
         plain
         onPress={() => update($, panel, prev => ({ ...prev, isDoneCollapsed: !prev.isDoneCollapsed }))}
       />
@@ -1243,7 +1244,7 @@ export const register: Register = (on, options) => {
         (dsLine !== '' ? 1 : 0) +
         (isEmpty ? 1 : 0) +
         (running.length > 0 ? 1 : 0) +
-        (finished.length > 0 ? 1 : 0) +
+        (shown.length > 0 ? 1 : 0) +
         (planned.length > 0 ? 1 : 0)
       const gridH = headerHeight(title) + lines * LINE_H + (running.length + shownDone) * 66 + planned.length * 46
       return (
@@ -1262,7 +1263,7 @@ export const register: Register = (on, options) => {
             {running.map(a => (
               <Svg key={a.id} source={agentSvg(W, a, at)} alt={`${a.description}: ${modelName(a.model)}, ${s.isRunning}`} width={W} height={66} />
             ))}
-            {finished.length > 0 && toggleDone}
+            {shown.length > 0 && toggleDone}
             {!p.isDoneCollapsed &&
               shown.map(a => (
                 <Svg key={a.id} source={agentSvg(W, a, at)} alt={`${a.description}: ${modelName(a.model)}, ${s.isFinished}`} width={W} height={66} />
@@ -1343,7 +1344,7 @@ export const register: Register = (on, options) => {
             {isEmpty && <Text dimColor>{s.empty}</Text>}
             {running.length > 0 && <Text dimColor>{s.running} · {running.length}</Text>}
             {running.map(row)}
-            {finished.length > 0 && toggleDone}
+            {shown.length > 0 && toggleDone}
             {!p.isDoneCollapsed && shown.map(row)}
             {planned.length > 0 && <Text dimColor>{s.planned} · {planned.length}</Text>}
             {planned.map(pl => {
