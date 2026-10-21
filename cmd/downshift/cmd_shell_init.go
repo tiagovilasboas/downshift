@@ -40,7 +40,8 @@ Add to your shell configuration:
   eval "$(downshift enable)"
 
 The script:
-• Wraps allowlisted commands (go, cargo, npm, git, etc.) through the compactor
+• Wraps allowlisted commands (go test, git status, npm test, etc.) through the compactor
+• Runs any other command as typed (it asks the binary first: compactor --allowlisted)
 • Only activates when stdout is not a terminal (agent context)
 • Preserves full output for interactive debugging
 • Respects DOWNSHIFT_SHELL_ALIASES=0 to disable
