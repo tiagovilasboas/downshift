@@ -22,7 +22,6 @@ var (
 
 	// go mod graph
 	reGoModGraph    = regexp.MustCompile(`(?m)^[\w./]+@v[\d.]+ [\w./]+@v[\d.]+`)
-	reGoModWhy      = regexp.MustCompile(`(?m)^# [\w./]+`)
 )
 
 func isNpmLs(input []byte) bool {

@@ -16,8 +16,6 @@ import (
 var (
 	// kubectl get pods header detection
 	reKubectlPodsHeader = regexp.MustCompile(`^NAME\s+READY\s+STATUS\s+RESTARTS\s+AGE`)
-	// kubectl get all/deployments/services patterns
-	reKubectlResourceHeader = regexp.MustCompile(`^NAME\s+.*?(READY|STATUS|TYPE|CLUSTER-IP)`)
 )
 
 // isKubectlGetPods detects kubectl get pods output.

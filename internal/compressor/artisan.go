@@ -25,8 +25,6 @@ var (
 	reArtisanRouteDomain   = regexp.MustCompile(`(?m)^\s*Domain\s+\|\s+Method\s+\|`)
 	
 	// artisan general patterns
-	reArtisanInfo          = regexp.MustCompile(`(?m)^\s*INFO\s+`)
-	reArtisanWarn          = regexp.MustCompile(`(?m)^\s*WARN\s+`)
 	reArtisanError         = regexp.MustCompile(`(?m)^\s*ERROR\s+|Exception|SQLSTATE`)
 )
 

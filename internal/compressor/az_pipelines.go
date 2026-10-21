@@ -19,7 +19,6 @@ var (
 	reAzPipelinesBuildID = regexp.MustCompile(`"buildNumber":\s*"([^"]+)"`)
 	reAzPipelinesStatus  = regexp.MustCompile(`"status":\s*"([^"]+)"`)
 	reAzPipelinesResult  = regexp.MustCompile(`"result":\s*"([^"]+)"`)
-	reAzPipelinesName    = regexp.MustCompile(`"definition":\s*\{[^}]*"name":\s*"([^"]+)"`)
 	reAzPipelinesBranch  = regexp.MustCompile(`"sourceBranch":\s*"refs/heads/([^"]+)"`)
 	
 	// az pipelines table output (--output table)

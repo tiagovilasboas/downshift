@@ -9,19 +9,14 @@ import (
 // Docker build output patterns
 var (
 	reDockerBuildStep    = regexp.MustCompile(`(?m)^(Step \d+/\d+|#\d+) `)
-	reDockerBuildFrom    = regexp.MustCompile(`(?mi)^(Step \d+/\d+|#\d+) : FROM`)
-	reDockerBuildRun     = regexp.MustCompile(`(?mi)^(Step \d+/\d+|#\d+) : RUN`)
-	reDockerBuildCopy    = regexp.MustCompile(`(?mi)^(Step \d+/\d+|#\d+) : (COPY|ADD)`)
 	reDockerBuildCached  = regexp.MustCompile(`(?i)(CACHED|\-\-\-> Using cache)`)
 	reDockerBuildSuccess = regexp.MustCompile(`(?m)^Successfully (built|tagged)`)
 	reDockerBuildError   = regexp.MustCompile(`(?mi)^(error|failed|ERROR|FAILED)`)
-	reDockerBuildHash    = regexp.MustCompile(`\-\-\-> [a-f0-9]{12}`)
 	reDockerBuildPush    = regexp.MustCompile(`(?m)^(Pushing|The push refers)`)
 	reDockerBuildLayer   = regexp.MustCompile(`(?m)^[a-f0-9]{12}: (Pushed|Waiting|Preparing|Layer already exists)`)
 
 	// Buildx / BuildKit patterns
-	reBuildKit       = regexp.MustCompile(`(?m)^\[[\w/\s]+\]`)
-	reBuildKitExport = regexp.MustCompile(`(?m)^exporting to`)
+	reBuildKit = regexp.MustCompile(`(?m)^\[[\w/\s]+\]`)
 )
 
 func isDockerBuild(input []byte) bool {

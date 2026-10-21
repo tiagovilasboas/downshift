@@ -26,24 +26,7 @@ var (
 	reGitDiffIndex = regexp.MustCompile(`^index [0-9a-f]+\.\.[0-9a-f]+(?: \d+)?$`)
 	// Hunk header: "@@ -12,7 +12,6 @@ optional context".
 	reGitDiffHunk = regexp.MustCompile(`(?m)^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@`)
-	// "commit <40 hex>" begins a `git show` transcript.
-	reGitShowCommit = regexp.MustCompile(`(?m)^commit [0-9a-f]{40}\b`)
 )
-
-// isGitDiff reports whether the input looks like `git diff` output: it carries
-// at least one "diff --git" header and at least one hunk. A plain `git show`
-// (which leads with a commit line) is routed to the show compressor instead.
-func isGitDiff(input []byte) bool {
-	return !reGitShowCommit.Match(input) &&
-		reGitDiffHeader.Match(input) &&
-		reGitDiffHunk.Match(input)
-}
-
-// isGitShow reports whether the input is a `git show` transcript: a commit
-// header followed by a unified diff.
-func isGitShow(input []byte) bool {
-	return reGitShowCommit.Match(input) && reGitDiffHunk.Match(input)
-}
 
 // contextLines is the number of unchanged context lines RTK keeps on each side
 // of a run of changes (git's default is 3).
