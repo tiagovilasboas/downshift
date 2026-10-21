@@ -67,6 +67,9 @@ type TreeRow struct {
 
 	// switchesModel is true when the child ran on another model than requested.
 	switchesModel bool
+	// upshiftNotApplied and heldByGuardrail classify the row (see UpshiftNotApplied).
+	upshiftNotApplied bool
+	heldByGuardrail   bool
 
 	mark string
 }
@@ -84,10 +87,14 @@ type SessionTreeView struct {
 	// considered and kept.
 	Switched int `json:"switched"`
 	// ModelSwitched and EffortChanged split Switched (see PanelView).
-	ModelSwitched int       `json:"model_switched"`
-	EffortChanged int       `json:"effort_changed"`
-	Held          int       `json:"held"`
-	Rows          []TreeRow `json:"rows"`
+	ModelSwitched int `json:"model_switched"`
+	EffortChanged int `json:"effort_changed"`
+	Held          int `json:"held"`
+	// HeldGuardrail and UpshiftNotApplied split the held rows and count the
+	// observed-or-held UPSHIFT verdicts that did not change the spawn (see PanelView).
+	HeldGuardrail     int       `json:"held_guardrail"`
+	UpshiftNotApplied int       `json:"upshift_not_applied"`
+	Rows              []TreeRow `json:"rows"`
 }
 
 // IsDecisionRow reports whether an event is a routing decision of a subagent:
@@ -230,6 +237,12 @@ func BuildSessionTree(events []Event, sessionHash string, opt TreeOptions) Sessi
 		case StateHeld:
 			view.Held++
 		}
+		if r.upshiftNotApplied {
+			view.UpshiftNotApplied++
+		}
+		if r.heldByGuardrail {
+			view.HeldGuardrail++
+		}
 	}
 	return view
 }
@@ -238,8 +251,10 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 	row := TreeRow{
 		Index: n, Label: fmt.Sprintf("subagent %d", n), Status: "running", mark: markRunning,
 		Reason: ShortReason(d), Time: d.Timestamp,
-		Paused:        hasCode(d.ReasonCodes, ReasonPaused),
-		switchesModel: switchesModel(d.FromModel, d.ToModel),
+		Paused:            hasCode(d.ReasonCodes, ReasonPaused),
+		switchesModel:     switchesModel(d.FromModel, d.ToModel),
+		upshiftNotApplied: UpshiftNotApplied(d),
+		heldByGuardrail:   HeldByGuardrail(d),
 	}
 	if f == nil {
 		f = &childFacts{}
@@ -391,9 +406,12 @@ func (v SessionTreeView) Render() string {
 	} else {
 		head = append(head, fmt.Sprintf("%d %s", v.Subagents, noun))
 		if v.EffortChanged > 0 {
-			head = append(head, fmt.Sprintf("%d model · %d effort · %d held", v.ModelSwitched, v.EffortChanged, v.Held))
+			head = append(head, fmt.Sprintf("%d model · %d effort · %d held", v.ModelSwitched, v.EffortChanged, v.HeldGuardrail))
 		} else {
-			head = append(head, fmt.Sprintf("%d switched, %d held", v.Switched, v.Held))
+			head = append(head, fmt.Sprintf("%d switched, %d held", v.Switched, v.HeldGuardrail))
+		}
+		if v.UpshiftNotApplied > 0 {
+			head = append(head, fmt.Sprintf("%d upshift not applied", v.UpshiftNotApplied))
 		}
 		if line := v.Tokens.Line(); line != "" {
 			head = append(head, line)

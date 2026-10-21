@@ -24,7 +24,12 @@ type PanelView struct {
 	ModelSwitched int `json:"model_switched"`
 	EffortChanged int `json:"effort_changed"`
 	Held          int `json:"held"`
-	Observed      int `json:"observed"`
+	// HeldGuardrail is the held spawns kept by a guardrail (R1, R5, R7, R8,
+	// HELD_*) or the credit gate; UpshiftNotApplied counts the UPSHIFT verdicts
+	// that did not change the spawn. Held stays the sum of the held spawns.
+	HeldGuardrail     int `json:"held_guardrail"`
+	UpshiftNotApplied int `json:"upshift_not_applied"`
+	Observed          int `json:"observed"`
 	// Tokens is the session's tokens saved from the requested model, work
 	// (input+output) and cache counted apart; TokensLine is its final text, ""
 	// until a child's tokens are known. No dollars: those are `downshift
@@ -114,6 +119,14 @@ func BuildPanel(events []Event, sessionHash string) PanelView {
 			}
 		case StateHeld:
 			v.Held++
+		}
+		if UpshiftNotApplied(ev) {
+			v.UpshiftNotApplied++
+		}
+		if HeldByGuardrail(ev) {
+			v.HeldGuardrail++
+		}
+		switch r.State {
 		case StateObserved:
 			v.Observed++
 		}
