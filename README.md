@@ -80,6 +80,14 @@ Downshift is three capabilities behind one `setup`, running as native Go hooks i
 - Reverse call graph: who calls whom, before the model edits anything (`downshift dci impact`).
 - Packs only the affected symbols with BM25 under a strict byte cap, so the model gets the relevant slice instead of the whole tree. Measured so far: latency and bytes, not answer quality. Off by default; `downshift dci enable` turns it on.
 
+### 4. Compressor Learning (auto-discovery)
+- Observes commands that pass through `downshift compactor` but are not compacted (unknown format).
+- Extracts a signature (first 3 words, normalised) and tracks frequency + total bytes.
+- When a pattern repeats 5+ times, it becomes a suggestion for a new compressor.
+- **Zero impact on command execution**: the hook runs asynchronously in a separate goroutine after the output is written. Fire-and-forget.
+- Kill switch: `DOWNSHIFT_LEARNING=0` disables entirely.
+- Commands: `downshift learning suggestions` (highest impact first), `learning stats`, `learning export`, `learning clear`.
+
 The flow, end to end:
 
 ```
@@ -138,6 +146,10 @@ Commands for daily setup, diagnostics, and routine reporting:
 | `downshift setup [--dry-run] [--undo]` | Wire, preview, or restore transparent harness hooks |
 | `downshift stats [--days=N] [--dci]` | Summarize routing decisions, tokens saved, and DCI telemetry |
 | `downshift doctor [--verbose] [--json]` | Diagnostic health-check for binary, hooks, permissions, and caches |
+| `downshift session` | Current session savings summary |
+| `downshift report --period=7d` | Savings report over time |
+| `downshift learning suggestions` | Show compressor candidates (highest impact first) |
+| `downshift learning stats` | Learning store statistics |
 
 ### Inspection & Simulation
 Dry-run simulation and operational inspection utilities:
