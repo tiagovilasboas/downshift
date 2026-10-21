@@ -67,8 +67,8 @@ func mysqlFamily(argv []string) Family {
 			if i+1 >= len(argv) {
 				return FamilyNone
 			}
-			stmt = argv[i+1]
 			i++
+			stmt = argv[i]
 		case strings.HasPrefix(a, "--execute="):
 			stmt = strings.TrimPrefix(a, "--execute=")
 		case strings.HasPrefix(a, "-e") && len(a) > 2:
