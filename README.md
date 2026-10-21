@@ -46,10 +46,10 @@ Downshift compacts that to:
 ✓ PASS · 54 packages · 0.156s
 ```
 
-**~50 bytes.** Same information. That is a ~97% byte reduction for this shape of output.
-On the synthetic test corpus, the best clean pass outputs reach 97.4% fewer bytes, the average
-compacted file 82.3%, and the whole corpus 23.7%
-([evidence](docs/evidence/compaction-corpus-2026-10-21.md)). Bytes, not billed tokens.
+**~50 bytes.** Same information. This example is an illustration of the shape of the output, not a
+measurement. Measured in bytes on a synthetic test corpus: 82.3% fewer bytes on compacted files
+(26 of 248), 23.7% overall
+([evidence](docs/evidence/compaction-corpus-2026-10-21.md)). Bytes, not LLM tokens.
 
 ---
 
@@ -144,13 +144,14 @@ downshift dci impact MyFunction  # Who calls this?
 
 ### Compaction (bytes, measured on a synthetic test corpus)
 
-Compaction reduces clean, success-case outputs. Measured in bytes on a synthetic test
-corpus of 248 fixtures, of which 26 were compacted
+Compaction reduces clean, success-case outputs. Measured in bytes (not LLM tokens) on a
+synthetic test corpus of 248 fixtures (Rung B evidence, not real-world traffic), of which 26 were compacted
 ([evidence](docs/evidence/compaction-corpus-2026-10-21.md)):
 
 | Metric | Value |
 |--------|-------|
 | Compacted files (26 of 248, clean outputs) | 82.3% fewer bytes |
+| Best cases (test runners, all pass) | 90–97% fewer bytes (flutter 97.4%, dart 97.3%, cargo 95.0%, pytest 95.0%, playwright 91.2%) |
 | Overall corpus (all 248, includes failures and edge cases) | 23.7% fewer bytes |
 
 *Your savings depend on your command mix. Clean outputs compress well; failures
