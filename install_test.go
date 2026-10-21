@@ -548,7 +548,7 @@ func TestInstallSaysWhatWasVerified(t *testing.T) {
 func TestInstallLeavesNoStagingFileAndKeepsTheOldBinaryOnFailure(t *testing.T) {
 	r := runInstall(t, "v1.0.0", "")
 	assertInstalled(t, r)
-	entries, _ := os.ReadDir(r.binDir)
+	entries, _ := os.ReadDir(r.binDir) // not even created
 	if len(entries) != 1 || entries[0].Name() != "downshift" {
 		t.Errorf("install dir = %v, want only downshift", entries)
 	}
@@ -580,7 +580,7 @@ func TestInstallExplainsAMissingReleaseArchive(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(r.binDir, "downshift")); err == nil {
 		t.Error("binary was installed despite the missing archive")
 	}
-	entries, _ := os.ReadDir(r.binDir)
+	entries, _ := os.ReadDir(r.binDir) // not even created
 	if len(entries) != 0 {
 		t.Errorf("install dir must stay empty, has %d entries", len(entries))
 	}
