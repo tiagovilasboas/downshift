@@ -51,7 +51,7 @@ The suite (one sentence each; status words from docs/reference/capability-matrix
     ~1 in 10 spawns unrouted, downshift stats / report. Implemented; estimates.
   - Context policy: setup sets opusplan, plan mode, You should know for unset
     keys (Claude Code only); native compressor observes bytes. Implemented, limited.
-  - Mods: savvy-progress, filetree and downshift-dock as sibling plugins;
+  - Mods: savvy-progress and filetree as sibling plugins;
     downshift-router opt-in prototype (Experimental). mods/README.md
   - Companions: a compression proxy (detected and recorded),
     never installed or wrapped. docs/guides/companions.md

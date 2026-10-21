@@ -23,15 +23,18 @@ const (
 )
 
 var (
-	reGoTestPass        = regexp.MustCompile(`(?m)^ok\s+([^\s]+)\s+([^\s]+)(?:\s+coverage:\s+(.+))?$`)
-	reGoTestNoTest      = regexp.MustCompile(`(?m)^\?\s+([^\s]+)\s+\[no test files\]\s*$`)
-	reGoTestFail        = regexp.MustCompile(`(?m)^(?:--- FAIL:|FAIL|\s*panic:)`)
-	reGitLogCommit      = regexp.MustCompile(`(?m)^commit\s+[0-9a-f]{40}`)
-	reGitStatusHead     = regexp.MustCompile(`(?m)^(?:On branch |HEAD detached at )`)
-	reRipgrepMatch      = regexp.MustCompile(`(?m)^(?:\d+:)?[^:\n]+:\d+:`)
-	rePytestSummary     = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d+(?:\.\d+)?s) =+$`)
-	rePytestHeader      = regexp.MustCompile(`(?m)^=+\s*test session starts\s*=+`)
-	rePytestFailSummary = regexp.MustCompile(`(?m)^=+\s*.*?(?:failed|error).*?\s+in\s+`)
+	reGoTestPass   = regexp.MustCompile(`(?m)^ok\s+([^\s]+)\s+([^\s]+)(?:\s+coverage:\s+(.+))?$`)
+	reGoTestNoTest = regexp.MustCompile(`(?m)^\?\s+([^\s]+)\s+\[no test files\]\s*$`)
+	// reGoTestCoverNoFiles is the line `go test -cover` prints for a package
+	// with no test files under the tab-indented form (no "ok" or "?" prefix).
+	reGoTestCoverNoFiles = regexp.MustCompile(`^\t(\S+)\t+coverage: [\d.]+% of statements$`)
+	reGoTestFail         = regexp.MustCompile(`(?m)^(?:--- FAIL:|FAIL|\s*panic:)`)
+	reGitLogCommit       = regexp.MustCompile(`(?m)^commit\s+[0-9a-f]{40}`)
+	reGitStatusHead      = regexp.MustCompile(`(?m)^(?:On branch |HEAD detached at )`)
+	reRipgrepMatch       = regexp.MustCompile(`(?m)^(?:\d+:)?[^:\n]+:\d+:`)
+	rePytestSummary      = regexp.MustCompile(`(?m)^=+\s*(?:(\d+)\s+skipped,\s*)?(\d+)\s+passed(?:,\s*(\d+)\s+skipped)?\s+in\s+(\d+(?:\.\d+)?s) =+$`)
+	rePytestHeader       = regexp.MustCompile(`(?m)^=+\s*test session starts\s*=+`)
+	rePytestFailSummary  = regexp.MustCompile(`(?m)^=+\s*.*?(?:failed|error).*?\s+in\s+`)
 	// rePytestPlainLine lists every line shape a clean pytest run emits. A
 	// transcript is compacted only when each line matches one of these shapes
 	// (or is the single passing summary); any other line keeps the output raw.
@@ -625,6 +628,12 @@ func compressGoTest(input []byte) ([]byte, bool, string) {
 				noTests: true,
 			})
 			noTestCount++
+		} else if m := reGoTestCoverNoFiles.FindStringSubmatch(line); m != nil {
+			pkgs = append(pkgs, pkg{
+				name:    m[1],
+				noTests: true,
+			})
+			noTestCount++
 		} else {
 			return input, false, "go_test_preserved_non_pass_lines"
 		}
@@ -933,6 +942,9 @@ func playwrightLinesRecognised(input []byte) bool {
 // Playwright: PASS (N passed in <time>)
 // If not strictly shorter than raw input, the input is returned.
 func compressPlaywright(input []byte) ([]byte, bool, string) {
+	if linesHaveDangerWord(input, nil) {
+		return input, false, "playwright_danger_word_preserved"
+	}
 	if !playwrightLinesRecognised(input) {
 		return input, false, "playwright_unrecognised_line_preserved"
 	}
@@ -1087,6 +1099,9 @@ func isKnownJestTranscript(input []byte) bool {
 // TSC: PASS (0 errors)
 // If not strictly shorter than raw input, the input is returned.
 func compressTSC(input []byte) ([]byte, bool, string) {
+	if linesHaveDangerWord(input, reTSCSuccessLine) {
+		return input, false, "tsc_danger_word_preserved"
+	}
 	if !tscLinesRecognized(input) {
 		return input, false, "tsc_unrecognized_line_preserved"
 	}
