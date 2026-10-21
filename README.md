@@ -127,7 +127,7 @@ Compressor suggestions (highest impact first):
       Count: 23 runs · Avg: 1.2 KB · Total: 27.6 KB
 ```
 
-Runs asynchronously after command completion.
+Runs after the output is written; stores counts and output shapes, never output text.
 
 ### 4. Code Intelligence (opt-in)
 

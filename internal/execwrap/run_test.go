@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -649,5 +650,41 @@ func TestRun_NextBuildAndPHPUnitCompact(t *testing.T) {
 				t.Fatalf("result=%+v stdout=%q stderr=%q", r, stdout, stderr)
 			}
 		})
+	}
+}
+
+func TestRun_WaitsForObserveHookUnderDeadline(t *testing.T) {
+	fakeBin(t, "go", "printf 'not a go test output\\n'")
+	prevHook, prevDeadline := ObserveUncompactedHook, ObserveHookDeadline
+	defer func() { ObserveUncompactedHook, ObserveHookDeadline = prevHook, prevDeadline }()
+
+	var done atomic.Bool
+	ObserveUncompactedHook = func(argv []string, sample []byte, family Family) {
+		time.Sleep(50 * time.Millisecond)
+		if string(sample) == "not a go test output\n" && family == FamilyGoTest {
+			done.Store(true)
+		}
+	}
+	r, out, _ := run(t, []string{"go", "test"}, true)
+	if r.ExitCode != 0 || r.Compacted || out != "not a go test output\n" {
+		t.Fatalf("exit=%d compacted=%v out=%q", r.ExitCode, r.Compacted, out)
+	}
+	if !done.Load() {
+		t.Error("Run returned before the hook finished")
+	}
+
+	// A hook that overruns the deadline neither blocks Run nor changes the exit code.
+	ObserveHookDeadline = 20 * time.Millisecond
+	ObserveUncompactedHook = func([]string, []byte, Family) { time.Sleep(2 * time.Second) }
+	start := time.Now()
+	r, _, _ = run(t, []string{"go", "test"}, true)
+	if r.ExitCode != 0 || time.Since(start) > time.Second {
+		t.Fatalf("overrunning hook changed the result: exit=%d elapsed=%s", r.ExitCode, time.Since(start))
+	}
+
+	// A panicking hook is swallowed.
+	ObserveUncompactedHook = func([]string, []byte, Family) { panic("boom") }
+	if r, _, _ = run(t, []string{"go", "test"}, true); r.ExitCode != 0 {
+		t.Fatalf("panicking hook changed the exit code: %d", r.ExitCode)
 	}
 }

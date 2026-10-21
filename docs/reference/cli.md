@@ -155,7 +155,7 @@ downshift learning stats
 
 ### `downshift learning export`
 
-Export raw learning data as JSON.
+Export the learning store as JSON: signatures, counts and output shapes, never output text.
 
 ```bash
 downshift learning export
