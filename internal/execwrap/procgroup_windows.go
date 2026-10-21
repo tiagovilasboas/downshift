@@ -13,3 +13,6 @@ import (
 func ownProcessGroup(*exec.Cmd) {}
 
 func signalChild(cmd *exec.Cmd, sig os.Signal) { _ = cmd.Process.Signal(sig) }
+
+// watchGroup is a no-op on Windows: there is no process group to orphan.
+func watchGroup(*exec.Cmd) func() { return func() {} }

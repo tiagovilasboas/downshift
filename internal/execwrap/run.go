@@ -133,6 +133,7 @@ func Run(argv []string, o Options) (res Result) {
 	if err := cmd.Start(); err != nil {
 		return startFailure(argv[0], err, o.Stderr, res.Family)
 	}
+	release := watchGroup(cmd)
 	done := make(chan struct{})
 	defer close(done)
 	go func() {
@@ -147,6 +148,7 @@ func Run(argv []string, o Options) (res Result) {
 	}()
 
 	res.ExitCode, res.ExitClass = exitStatus(cmd.Wait())
+	release()
 	res.RawBytes, res.EmittedBytes, res.Compacted = g.finish(res.ExitCode == 0, expectedFormat[res.Family])
 	return res
 }
