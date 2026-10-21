@@ -13,6 +13,8 @@ Get Downshift running in 5 minutes.
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 ```
 
+If it reports that a release has no archive for your platform, choose another tag from [Releases](https://github.com/tiagovilasboas/downshift/releases) (`sh -s <tag>`); see [install troubleshooting](install.md#404-when-downloading-no-archive-for-this-release).
+
 ## Configure
 
 ```bash
