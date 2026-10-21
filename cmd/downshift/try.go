@@ -27,6 +27,39 @@ func stripDetail(args []string) ([]string, bool) {
 	return out, detail
 }
 
+// stripTryOptions removes --harness X and --model X (or --harness=X) from try
+// arguments and returns them with the remaining positional arguments. The
+// positional form "<prompt> [harness] [current-model]" keeps working; an
+// option wins over the positional slot it names. Any other leading "--flag"
+// is reported so it is never read as the task prompt.
+func stripTryOptions(args []string) (rest []string, harness, model, badFlag string) {
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		name, val, hasVal := strings.Cut(a, "=")
+		switch name {
+		case "--harness", "--model":
+			if !hasVal {
+				if i+1 >= len(args) {
+					return nil, "", "", a
+				}
+				i++
+				val = args[i]
+			}
+			if name == "--harness" {
+				harness = val
+			} else {
+				model = val
+			}
+		default:
+			if len(rest) == 0 && strings.HasPrefix(a, "--") {
+				return nil, "", "", a
+			}
+			rest = append(rest, a)
+		}
+	}
+	return rest, harness, model, ""
+}
+
 // harnessDefaultModel is the model a session on harness runs when nothing else
 // is said: the catalog frontier model of that harness. Empty when unknown.
 func harnessDefaultModel(resolver core.Resolver, harness string) string {
