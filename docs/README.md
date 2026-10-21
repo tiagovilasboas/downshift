@@ -182,7 +182,7 @@ The harness adapters and packaging domain connects Downshift's core intelligence
 | [../skills/downshift-setup/SKILL.md](../skills/downshift-setup/SKILL.md) | Skill | Agent skill: install or repair hooks on any harness |
 | [../skills/downshift-audit/SKILL.md](../skills/downshift-audit/SKILL.md) | Skill | Agent skill: audit hook wiring, stats, and fixed context size |
 | [../.claude-plugin/plugin.json](../.claude-plugin/plugin.json) | Packaging | Claude Code plugin definition |
-| [../mods/README.md](../mods/README.md) | Packaging | Claude Code mods: savvy-progress, filetree, downshift-dock |
+| [../mods/README.md](../mods/README.md) | Packaging | Claude Code mods: savvy-progress, filetree |
 | [../mods/downshift-router/README.md](../mods/downshift-router/README.md) | Packaging | Experimental in-process routing mod |
 | [../examples/README.md](../examples/README.md) | Examples | Sample hook JSON payloads across harnesses |
 | [evidence/claude-code-rewrite-honored-2026-10-06.md](evidence/claude-code-rewrite-honored-2026-10-06.md) | Evidence | Observed rewrite honor on Claude Code |
