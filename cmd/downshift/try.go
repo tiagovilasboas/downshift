@@ -217,7 +217,8 @@ func tryNotApplied(res tryResult, known bool, d core.Decision, harness string) s
 	}
 	switch {
 	case d.Session.Unknown:
-		return fmt.Sprintf("not rewritten: session models unknown for %s (see docs/reference/session-models.md)", harness)
+		return fmt.Sprintf("not rewritten: session models unknown for %s. Downshift writes only a model the session lists: add \"%s\": [<model ids, least to most capable>] to %s, or run `downshift models discover`; allowlisted gateway rows are not session models (see docs/reference/session-models.md)",
+			harness, harness, sessionModelsPathForDisplay())
 	case d.Intent == core.PreservedIntent:
 		return "not rewritten: the current model is explicit_only"
 	case d.Session.CreditHeld:
