@@ -119,6 +119,57 @@ trivial_max_words = 10
 small_max_words = 50
 ```
 
+## Feedback and Training
+
+Downshift learns from your corrections to improve routing decisions over time.
+
+### Feedback Loop
+
+When routing decisions are made, they're recorded with a unique ID. You can
+review and correct them:
+
+```bash
+# List pending decisions
+downshift feedback list
+
+# Mark a decision as correct
+downshift feedback <id> success
+
+# Mark a decision that needed retry
+downshift feedback <id> retry --retry-tier=MID
+
+# Mark a decision that failed
+downshift feedback <id> failed --required-tier=FRONTIER
+
+# See feedback statistics
+downshift feedback stats
+```
+
+### Training from Feedback
+
+Once you've accumulated feedback, train a new routing model:
+
+```bash
+# Train from local feedback events
+downshift train --from-events
+
+# Train from a labelled dataset file
+downshift train dataset.jsonl
+
+# Compare current vs candidate weights
+downshift benchmark dataset.jsonl --compare
+```
+
+Training happens locally — no data is sent anywhere. The trained weights are
+saved and can be manually activated by copying to `~/.downshift/weights.json`.
+
+### Privacy
+
+- **Only features are stored**, never the raw prompts
+- Features are derived signals (word counts, keyword presence, complexity markers)
+- Training data stays in `~/.downshift/events.jsonl`
+- You control when and if training runs
+
 ## Metrics
 
 ```bash

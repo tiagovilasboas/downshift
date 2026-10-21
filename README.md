@@ -107,12 +107,24 @@ why: trivial task, no risk, confident
 **How it works:** Strict heuristics + FNV word-hash scoring. Local, deterministic,
 milliseconds. When unsure, keeps the requested model — doubt never spends money.
 
-### 3. Local Telemetry
+### 3. Feedback and Training
+
+Improve routing over time by reviewing decisions and training locally:
+
+```bash
+downshift feedback list           # Pending decisions to review
+downshift feedback <id> success   # Mark as correct
+downshift train --from-events     # Train from your feedback
+```
+
+Only features are stored, never prompts. Training is local.
+
+### 4. Local Telemetry
 
 All metrics stay on your machine in `~/.downshift/events.jsonl`. No data leaves
 your system. Run `downshift stats` to see what Downshift observed.
 
-### 4. Code Intelligence (opt-in)
+### 5. Code Intelligence (opt-in)
 
 Indexes your repository in-process for reverse call graphs and targeted context.
 
