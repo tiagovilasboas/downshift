@@ -32,7 +32,7 @@ func buildBenchmarkCorpus(numDocs int) (map[string]string, *InvertedIndex) {
 		docTerm3 := termsPool[(i+7)%len(termsPool)]
 
 		contentBuilder.WriteString(fmt.Sprintf("// %s %s implementation\n", docTerm1, docTerm2))
-		contentBuilder.WriteString(fmt.Sprintf("func Process%s%d() error {\n", strings.Title(docTerm1), i))
+		contentBuilder.WriteString(fmt.Sprintf("func Process%s%d() error {\n", strings.ToUpper(docTerm1[:1])+docTerm1[1:], i))
 		contentBuilder.WriteString(fmt.Sprintf("    // handles %s and %s\n", docTerm2, docTerm3))
 		contentBuilder.WriteString("    return nil\n}\n")
 
@@ -42,7 +42,7 @@ func buildBenchmarkCorpus(numDocs int) (map[string]string, *InvertedIndex) {
 		termFreqs, total := TermFrequencies(content)
 		symbols := []Symbol{
 			{
-				Name:         fmt.Sprintf("Process%s%d", strings.Title(docTerm1), i),
+				Name:         fmt.Sprintf("Process%s%d", strings.ToUpper(docTerm1[:1])+docTerm1[1:], i),
 				Kind:         KindFunction,
 				RelativePath: relPath,
 				StartLine:    3,

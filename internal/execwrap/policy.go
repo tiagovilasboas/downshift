@@ -7,48 +7,43 @@
 // exit code and compacts only unambiguously clean output with the internal
 // compressor. Nothing here knows a harness; adapters only expose the command
 // and emit the rewritten input.
+//
+// policy.go is the router. It owns the policy machinery (Decide, quoting,
+// session tagging, the safe-byte gate) and the cross-cutting git family. Each
+// action domain owns its own constants and detection in a sibling file:
+// frontend, backend, infra, db and observability. FamilyOf only routes.
 package execwrap
 
 import (
-	"regexp"
 	"strings"
 )
 
 // Family names an allowlisted command family. It is the only command fact
 // that reaches telemetry: never the command text, arguments or paths.
+//
+// Family constants live in the domain file that detects them (policy_*.go);
+// the registry test parses every policy file, so a new family is checked
+// against the corpus wherever it is declared. Only the git families and the
+// FamilyNone sentinel stay here, with the git router.
 type Family string
 
 const (
-	FamilyNone        Family = ""
-	FamilyGoTest      Family = "go-test"
-	FamilyGitStatus   Family = "git-status"
-	FamilyGitLog      Family = "git-log"
-	FamilyGitDiff     Family = "git-diff"
-	FamilyGitShow     Family = "git-show"
-	FamilyGitBranch   Family = "git-branch"
-	FamilyGitFetch    Family = "git-fetch"
-	FamilyGitPull     Family = "git-pull"
-	FamilyGitPush     Family = "git-push"
-	FamilyGitCommit   Family = "git-commit"
-	FamilyGitAdd      Family = "git-add"
-	FamilyGitStash    Family = "git-stash"
-	FamilyGitRemote   Family = "git-remote"
-	FamilyGitTag      Family = "git-tag"
-	FamilyGitConfig   Family = "git-config-read"
-	FamilyGitOther    Family = "git-other"
-	FamilyPytest      Family = "pytest"
-	FamilyVitest      Family = "vitest"
-	FamilyPlaywright  Family = "playwright"
-	FamilyCargoTest   Family = "cargo-test"
-	FamilyTSC         Family = "tsc"
-	FamilyJest        Family = "jest"
-	FamilyCypress     Family = "cypress"
-	FamilyNextBuild   Family = "next-build"
-	FamilyPHPUnit     Family = "phpunit"
-	FamilyFlutterTest Family = "flutter-test"
-	FamilyDartTest    Family = "dart-test"
-	FamilyGradle      Family = "gradle"
-	FamilyMaven       Family = "maven"
+	FamilyNone      Family = ""
+	FamilyGitStatus Family = "git-status"
+	FamilyGitLog    Family = "git-log"
+	FamilyGitDiff   Family = "git-diff"
+	FamilyGitShow   Family = "git-show"
+	FamilyGitBranch Family = "git-branch"
+	FamilyGitFetch  Family = "git-fetch"
+	FamilyGitPull   Family = "git-pull"
+	FamilyGitPush   Family = "git-push"
+	FamilyGitCommit Family = "git-commit"
+	FamilyGitAdd    Family = "git-add"
+	FamilyGitStash  Family = "git-stash"
+	FamilyGitRemote Family = "git-remote"
+	FamilyGitTag    Family = "git-tag"
+	FamilyGitConfig Family = "git-config-read"
+	FamilyGitOther  Family = "git-other"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -162,60 +157,31 @@ func Decide(command, exe string) Decision {
 	}
 }
 
-// FamilyOf names the allowlisted family of an argv, or FamilyNone. Commands
-// must match an explicit program and subcommand prefix; only PHPUnit also
-// accepts its common project-local vendor/bin paths.
+// FamilyOf names the allowlisted family of an argv, or FamilyNone. It is a
+// pure router: each action domain owns its detection in a sibling file. The
+// cross-cutting git family is handled here because git spans every domain and
+// has its own global-option rules.
 func FamilyOf(argv []string) Family {
 	if len(argv) == 0 {
 		return FamilyNone
 	}
-	if argv[0] == "pytest" {
-		return FamilyPytest
-	}
-	if argv[0] == "vitest" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "vitest") {
-		return FamilyVitest
-	}
-	if argv[0] == "jest" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "jest") {
-		return FamilyJest
-	}
-	if argv[0] == "tsc" || (len(argv) >= 2 && argv[0] == "npx" && argv[1] == "tsc") {
-		return FamilyTSC
-	}
-	if (argv[0] == "cypress" && len(argv) >= 2 && argv[1] == "run") || (len(argv) >= 3 && argv[0] == "npx" && argv[1] == "cypress" && argv[2] == "run") {
-		return FamilyCypress
-	}
-	if (argv[0] == "next" && len(argv) >= 2 && argv[1] == "build") || (len(argv) >= 3 && argv[0] == "npx" && argv[1] == "next" && argv[2] == "build") {
-		return FamilyNextBuild
-	}
-	if argv[0] == "phpunit" || argv[0] == "vendor/bin/phpunit" || argv[0] == "./vendor/bin/phpunit" {
-		return FamilyPHPUnit
-	}
-	if isMavenCommand(argv) {
-		return FamilyMaven
-	}
-	if len(argv) >= 2 && isGradleProgram(argv[0]) && gradleTask(argv[1:]) {
-		return FamilyGradle
-	}
-	if len(argv) >= 3 && argv[0] == "npx" && argv[1] == "playwright" && argv[2] == "test" {
-		return FamilyPlaywright
-	}
-	if len(argv) < 2 {
-		return FamilyNone
-	}
-	if argv[0] == "git" {
+	if argv[0] == "git" && len(argv) >= 2 {
 		return gitFamilyOf(argv[1:])
 	}
-	switch {
-	case argv[0] == "go" && argv[1] == "test":
-		return FamilyGoTest
-	case argv[0] == "flutter" && argv[1] == "test":
-		return FamilyFlutterTest
-	case argv[0] == "dart" && argv[1] == "test":
-		return FamilyDartTest
-	case argv[0] == "cargo" && argv[1] == "test":
-		return FamilyCargoTest
-	case argv[0] == "playwright" && argv[1] == "test":
-		return FamilyPlaywright
+	if family := frontendFamily(argv); family != FamilyNone {
+		return family
+	}
+	if family := backendFamily(argv); family != FamilyNone {
+		return family
+	}
+	if family := infraFamily(argv); family != FamilyNone {
+		return family
+	}
+	if family := dbFamily(argv); family != FamilyNone {
+		return family
+	}
+	if family := observabilityFamily(argv); family != FamilyNone {
+		return family
 	}
 	return FamilyNone
 }
@@ -267,75 +233,9 @@ func gitFamilyOf(args []string) Family {
 	return FamilyGitOther
 }
 
-// mavenGoals are the lifecycle phases the maven family wraps. A phase must be
-// the first argument and every other positional must be one too, so option-first forms ("mvn -q test") and plugin goals
-// ("mvn spring-boot:run") are never wrapped.
-var mavenGoals = map[string]bool{
-	"test": true, "verify": true, "package": true, "install": true, "clean": true,
-}
-
-// mavenFlags are the only options a wrapped Maven command may carry. Each takes
-// no value, so no file, settings or profile path can ride along.
-var mavenFlags = map[string]bool{
-	"-o": true, "-q": true, "-B": true, "-DskipTests": true, "-DskipITs": true,
-}
-
-func isMavenCommand(argv []string) bool {
-	switch argv[0] {
-	case "mvn", "mvnw", "./mvnw":
-		if len(argv) < 2 || !mavenGoals[argv[1]] {
-			return false
-		}
-		for _, a := range argv[2:] {
-			if strings.HasPrefix(a, "-") {
-				if !mavenFlags[a] {
-					return false
-				}
-			} else if !mavenGoals[a] {
-				return false
-			}
-		}
-		return true
-	}
-	return false
-}
-
-func isGradleProgram(p string) bool {
-	return p == "gradle" || p == "gradlew" || p == "./gradlew"
-}
-
-// gradleTaskName is the exact allowlist of task names: the plain tasks, and
-// the unit-test, assemble and lint tasks of the Debug and Release build types.
-// Nothing else is allowlisted; there is no open suffix, so names such as
-// testDebugPublish or lintDebugUpload are not wrapped.
-var gradleTaskName = regexp.MustCompile(`^(?:build|check|clean|test|assemble|lint|connectedAndroidTest|testDebugUnitTest|testReleaseUnitTest|assembleDebug|assembleRelease|lintDebug|lintRelease)$`)
-
-// gradleTask reports whether there is at least one positional task and every
-// positional task is allowlisted (build, check, clean, test*, assemble*,
-// lint*), optionally qualified by a project path such as :app:assembleDebug.
-// The value of -x / --exclude-task is skipped; any other option that takes a
-// separate value leaves that value as a positional word, which fails the
-// check and keeps the command unwrapped.
-func gradleTask(args []string) bool {
-	found := false
-	for i := 0; i < len(args); i++ {
-		a := args[i]
-		if a == "-x" || a == "--exclude-task" {
-			i++
-			continue
-		}
-		if strings.HasPrefix(a, "-") {
-			continue
-		}
-		name := a[strings.LastIndexByte(a, ':')+1:]
-		if !gradleTaskName.MatchString(name) {
-			return false
-		}
-		found = true
-	}
-	return found
-}
-
+// safeByte reports whether a byte may appear in a command the policy will
+// wrap. The set excludes every shell metacharacter, so a wrapped command can
+// hold no pipe, redirection, substitution, quote, glob or newline.
 func safeByte(c byte) bool {
 	switch {
 	case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9':

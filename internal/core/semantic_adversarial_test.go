@@ -18,6 +18,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/semantic"
+	"github.com/tiagovilasboas/downshift/internal/testrace"
 )
 
 // semAdvEnv pins the environment so results do not depend on the operator's
@@ -72,7 +73,7 @@ func semAdvNoSignalCases() []semAdvCase {
 		{"punctuation", "?!...;;--", true},
 		{"punctuation brackets", "{}[]()<>//\\\\", true},
 		{"digits", "42 1337 3.14159", true},
-		{"zero width and nbsp", "​ ​", true},
+		{"zero width and nbsp", "\u200b \u200b", true},
 		// Volume and repetition.
 		{"filler 5k words", filler, true},
 		{"repeated hook x1000", strings.TrimSpace(strings.Repeat("hook ", 1000)), true},
@@ -289,6 +290,43 @@ func semAdvAllPrompts() []string {
 	return out
 }
 
+// semAdvLongPrompt is the size above which a prompt is left out of the
+// repeated loops under -race. The four prompts above it (2.8k-24k chars) take
+// ~87% of one corpus pass under the detector, and TestSemAdvDeterministic
+// alone ran 432s, pushing internal/core past the 10 min package timeout
+// (ci-full 2026-10-16, run 38910867924). They are still classified once per
+// test under -race and in every loop in a normal build.
+const semAdvLongPrompt = 2000
+
+// semAdvLoopPrompts is the corpus for loops that repeat every prompt: all of
+// it in a normal build, only the short prompts under -race.
+func semAdvLoopPrompts(prompts []string) []int {
+	idx := make([]int, 0, len(prompts))
+	for i, p := range prompts {
+		if testrace.Enabled && len(p) > semAdvLongPrompt {
+			continue
+		}
+		idx = append(idx, i)
+	}
+	return idx
+}
+
+// semAdvRepeats and semAdvWorkers size TestSemAdvDeterministic. Under -race
+// fewer passes still put concurrent calls on every shared table.
+func semAdvRepeats() int {
+	if testrace.Enabled {
+		return 5
+	}
+	return 20
+}
+
+func semAdvWorkers() int {
+	if testrace.Enabled {
+		return 16
+	}
+	return 50
+}
+
 type semAdvResult struct {
 	complexity core.Complexity
 	confident  bool
@@ -314,28 +352,30 @@ func TestSemAdvDeterministic(t *testing.T) {
 		ref[i] = semAdvEval(p)
 	}
 
-	t.Run("repeat_20", func(t *testing.T) {
-		for i, p := range prompts {
-			for n := 0; n < 20; n++ {
-				if got := semAdvEval(p); got != ref[i] {
-					t.Fatalf("run %d of %q: got %+v want %+v", n, semAdvShort(p), got, ref[i])
+	loop := semAdvLoopPrompts(prompts)
+
+	t.Run("repeat", func(t *testing.T) {
+		for _, i := range loop {
+			for n := 0; n < semAdvRepeats(); n++ {
+				if got := semAdvEval(prompts[i]); got != ref[i] {
+					t.Fatalf("run %d of %q: got %+v want %+v", n, semAdvShort(prompts[i]), got, ref[i])
 				}
 			}
 		}
 	})
 
-	t.Run("goroutines_50", func(t *testing.T) {
-		const workers = 50
+	t.Run("goroutines", func(t *testing.T) {
+		workers := semAdvWorkers()
 		var wg sync.WaitGroup
-		errs := make(chan string, workers*len(prompts))
+		errs := make(chan string, workers*len(loop))
 		for w := 0; w < workers; w++ {
 			wg.Add(1)
 			go func(w int) {
 				defer wg.Done()
 				// Each worker walks the corpus from a different offset so
 				// different prompts run at the same time.
-				for k := range prompts {
-					i := (k + w*7) % len(prompts)
+				for k := range loop {
+					i := loop[(k+w*7)%len(loop)]
 					if got := semAdvEval(prompts[i]); got != ref[i] {
 						errs <- fmt.Sprintf("worker %d %q: got %+v want %+v", w, semAdvShort(prompts[i]), got, ref[i])
 					}
@@ -357,7 +397,9 @@ func TestSemAdvEnvOffIsNoop(t *testing.T) {
 		t.Run(strings.TrimSpace(off)+"_"+fmt.Sprint(len(off)), func(t *testing.T) {
 			semAdvEnv(t)
 			t.Setenv("DOWNSHIFT_MINILM", off)
-			for _, p := range semAdvAllPrompts() {
+			prompts := semAdvAllPrompts()
+			for _, i := range semAdvLoopPrompts(prompts) {
+				p := prompts[i]
 				base := core.Classify(p)
 				sem := core.ClassifyWithSemantic(p)
 				if sem.Complexity != base.Complexity || sem.Confident != base.Confident ||

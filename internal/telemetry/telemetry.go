@@ -390,6 +390,25 @@ func AppliedRewrite(outcome string, corrections []string) bool {
 	return outcome == OutcomeRewriteEmitted || outcome == ""
 }
 
+// AppliedRouting reports whether a decision event effectively changed the
+// model that will run. This is broader than AppliedRewrite: it also counts
+// blocked outcomes where the harness is forced to respawn on a different
+// model (e.g. KiroCrew's allow/block-only contract).
+func AppliedRouting(ev Event) bool {
+	if len(ev.Corrections) > 0 {
+		return false
+	}
+	// Classic rewrite: hook modified the spawn in place
+	if ev.Outcome == OutcomeRewriteEmitted || ev.Outcome == "" {
+		return true
+	}
+	// Blocked with model change: harness must respawn on the recommended model
+	if ev.Outcome == OutcomeBlocked && ev.ToModel != "" && ev.FromModel != "" && ev.ToModel != ev.FromModel {
+		return true
+	}
+	return false
+}
+
 // MarkUnchanged rewrites final_model/final_reasoning_effort on an event
 // whose hook response left the spawn unchanged (allow or baseline), so the
 // log records what the child actually runs on. The recommendation moves to
@@ -475,22 +494,6 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		}
 	}
 	return ev
-}
-
-// finiteRounded is v rounded to four decimals, or 0 when v is NaN or infinite.
-func finiteRounded(v float64) float64 {
-	if math.IsNaN(v) || math.IsInf(v, 0) {
-		return 0
-	}
-	return math.Round(v*1e4) / 1e4
-}
-
-// finiteNonNegative is v, or 0 when v is NaN, infinite or negative.
-func finiteNonNegative(v float64) float64 {
-	if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 {
-		return 0
-	}
-	return v
 }
 
 // Failure records a hook fail-open path without accepting raw input or errors

@@ -16,6 +16,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -59,7 +60,7 @@ func batch(lines ...string) []byte {
 // seedRoutedDecision writes the decision event a real hook run would have
 // left: a routed opencode decision whose session and tool-use hashes are the
 // spawn correlation (the one pair the port links by, see hookrun.go).
-func seedRoutedDecision(t *testing.T, small, mid, frontier string) {
+func seedRoutedDecision(t *testing.T, small, mid, frontier string, cat *catalog.Catalog) {
 	t.Helper()
 	allowlist(t, small, mid, frontier)
 	resp, _, d := opencode.Handle(request(trivialRename, frontier), cat)
@@ -94,8 +95,8 @@ func resolvedEvent(t *testing.T, events []telemetry.Event) telemetry.Event {
 
 func TestHonor_ArrivalOrderResolvesToTheDecisionTarget(t *testing.T) {
 	log := portEnv(t)
-	small, mid, frontier := tierIDs(t)
-	seedRoutedDecision(t, small, mid, frontier)
+	small, mid, frontier, cat := tierIDs(t)
+	seedRoutedDecision(t, small, mid, frontier, cat)
 	raw := batch(
 		obsLine(t, "switch_attempt", map[string]any{"from": frontier, "to": small, "result": "ok"}),
 		obsLine(t, "model_selected", map[string]any{"model": small, "previous": frontier}),
@@ -144,8 +145,8 @@ func TestHonor_NoSwitchChainNoClaim(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			log := portEnv(t)
-			small, mid, frontier := tierIDs(t)
-			seedRoutedDecision(t, small, mid, frontier)
+			small, mid, frontier, cat := tierIDs(t)
+			seedRoutedDecision(t, small, mid, frontier, cat)
 			stdout, note := opencode.Honor(batch(tc.lines...), "test", cat)
 			if stdout != nil {
 				t.Fatalf("unobserved chain returned stdout=%v", stdout)
@@ -166,8 +167,8 @@ func TestHonor_NoSwitchChainNoClaim(t *testing.T) {
 
 func TestHonor_ResolvedMismatchRefutesTheRewrite(t *testing.T) {
 	log := portEnv(t)
-	small, mid, frontier := tierIDs(t)
-	seedRoutedDecision(t, small, mid, frontier)
+	small, mid, frontier, cat := tierIDs(t)
+	seedRoutedDecision(t, small, mid, frontier, cat)
 	raw := batch(
 		obsLine(t, "switch_attempt", map[string]any{"from": frontier, "to": small, "result": "ok"}),
 		obsLine(t, "model_selected", map[string]any{"model": small, "previous": frontier}),
@@ -187,8 +188,8 @@ func TestHonor_ResolvedMismatchRefutesTheRewrite(t *testing.T) {
 
 func TestHonor_NegativeControlWritesNothing(t *testing.T) {
 	log := portEnv(t)
-	small, mid, frontier := tierIDs(t)
-	seedRoutedDecision(t, small, mid, frontier)
+	small, mid, frontier, cat := tierIDs(t)
+	seedRoutedDecision(t, small, mid, frontier, cat)
 	raw := batch(
 		obsLine(t, "model_selected", map[string]any{"model": small}),
 		obsLine(t, "child_context", map[string]any{"model": small}),
@@ -206,8 +207,8 @@ func TestHonor_NegativeControlWritesNothing(t *testing.T) {
 
 func TestHonor_DroppedLinesAreCounted(t *testing.T) {
 	log := portEnv(t)
-	small, mid, frontier := tierIDs(t)
-	seedRoutedDecision(t, small, mid, frontier)
+	small, mid, frontier, cat := tierIDs(t)
+	seedRoutedDecision(t, small, mid, frontier, cat)
 	other := `{"v":1,"kind":"observation","correlation":{"child":"` + otherChild + `"},"event":"child_context","model":"` + mid + `"}`
 	raw := batch(
 		`{"v":1,"kind":"observation",`,
@@ -227,7 +228,7 @@ func TestHonor_DroppedLinesAreCounted(t *testing.T) {
 
 func TestParseChildEnd_FirstDoneWinsWithUsageMapping(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
-	small, mid, _ := tierIDs(t)
+	small, mid, _, _ := tierIDs(t)
 	done := obsLine(t, "child_done", map[string]any{
 		"model":  small,
 		"status": "completed",
@@ -292,7 +293,7 @@ func TestParseChildEnd_RejectsBadInput(t *testing.T) {
 }
 
 func TestParseChildEnd_DropsUnknownObservationFields(t *testing.T) {
-	small, _, _ := tierIDs(t)
+	small, _, _, _ := tierIDs(t)
 	line := obsLine(t, "child_done", map[string]any{
 		"model":   small,
 		"status":  "done",
@@ -318,6 +319,7 @@ func TestParseChildEnd_DropsUnknownObservationFields(t *testing.T) {
 
 func TestPort_HonorIsObservedUsageIsNot(t *testing.T) {
 	portEnv(t)
+	_, _, _, cat := tierIDs(t)
 	port := opencode.Port()
 	if port.ID != "opencode" || port.Honor == nil || port.ParseChildEnd == nil {
 		t.Fatalf("port seam incomplete: %+v", port)

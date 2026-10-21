@@ -55,6 +55,9 @@ jobs:
       - name: Test the path classifier
         run: bash scripts/test-ci-classify-changes.sh
 
+      - name: Test the race package filter
+        run: bash scripts/test-ci-race-packages.sh
+
       - name: Classify changed paths
         id: classify
         env:
@@ -86,7 +89,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         if: needs.changes.outputs.go == '1'
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: true
 
       - name: No Go changes
@@ -100,6 +103,12 @@ jobs:
       - name: Vet
         if: needs.changes.outputs.go == '1'
         run: go vet ./...
+
+      - name: Staticcheck
+        if: needs.changes.outputs.go == '1'
+        # Pinned release; checks are in staticcheck.conf. Build it with the
+        # module's toolchain (go.mod), or it rejects the go1.27 packages.
+        run: GOTOOLCHAIN="$(go env GOVERSION)" go run honnef.co/go/tools/cmd/staticcheck@2026.2.2 ./...
 
       - name: Format check
         if: needs.changes.outputs.go == '1'
@@ -159,7 +168,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: true
       - name: Build downshift CLI
         run: go build -o downshift ./cmd/downshift
@@ -175,10 +184,12 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: go test -timeout 15m -run 'Setup|Steering|Wrapper|Config|Session|Display|Path|Project' ./cmd/downshift/
 
-  # Race detector. Pull requests run it only on the changed packages (the same
-  # selection as `test`); tags run every package except internal/core, whose
-  # -race run takes 4-5 minutes (the nightly ci-full covers it). Not on push to
-  # main, and not the required `test` check.
+  # Race detector. Pull requests run it on the changed packages and their
+  # dependents (the same selection as `test`); internal/core, whose -race run
+  # takes ~5 minutes, is kept only when a file under internal/core/ changed
+  # (scripts/ci-race-packages.sh). Tags run every package except internal/core
+  # (the nightly ci-full covers it). Not on push to main, and not the required
+  # `test` check.
   race:
     needs: changes
     if: >-
@@ -196,7 +207,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: true
 
       - name: Race detector on changed packages (pull request)
@@ -210,7 +221,7 @@ jobs:
           if [ "$pkgs" = "./..." ]; then
             pkgs=$(go list ./...)
           fi
-          pkgs=$(printf '%s\n' "$pkgs" | grep -v '/internal/core$' || true)
+          pkgs=$(printf '%s\n' "$pkgs" | bash scripts/ci-race-packages.sh)
           if [ -z "$pkgs" ]; then
             echo "No Go packages to race-test."
             exit 0
@@ -270,7 +281,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: true
 
       - name: Build downshift for ${{ matrix.goos }}/${{ matrix.goarch }}
@@ -296,7 +307,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: false # the job that signs and attests must not restore a cache written by other runs
 
       - name: Run goreleaser

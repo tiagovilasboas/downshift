@@ -21,8 +21,6 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
-var cat = catalog.Load()
-
 const (
 	testChild        = "0123456789abcdef0123456789abcdef"
 	testParent       = "fedcba9876543210fedcba9876543210"
@@ -31,22 +29,51 @@ const (
 	foreignLanguage  = "rename el campo que contiene las contraseñas de clientes"
 )
 
-// tierIDs returns the opencode catalog ids of each tier.
-func tierIDs(t *testing.T) (small, mid, frontier string) {
+// isolatedCatalog returns a catalog loaded with no gateway live rows by
+// temporarily pointing HOME and STATE_DIR at an empty temp dir. This ensures
+// tests use only the embedded catalog, not the operator's openrouter.json.
+func isolatedCatalog(t *testing.T) *catalog.Catalog {
 	t.Helper()
+	tmp := t.TempDir()
+	// Save and restore the real env so other tests in the same process are not
+	// affected (t.Setenv only reverts at test end, not immediately).
+	oldHome := os.Getenv("HOME")
+	oldState := os.Getenv("DOWNSHIFT_STATE_DIR")
+	os.Setenv("HOME", tmp)
+	os.Setenv("DOWNSHIFT_STATE_DIR", tmp)
+	cat := catalog.Load()
+	os.Setenv("HOME", oldHome)
+	if oldState != "" {
+		os.Setenv("DOWNSHIFT_STATE_DIR", oldState)
+	} else {
+		os.Unsetenv("DOWNSHIFT_STATE_DIR")
+	}
+	return cat
+}
+
+// tierIDs returns the opencode catalog ids of each tier and an isolated
+// catalog instance for use in test assertions.
+func tierIDs(t *testing.T) (small, mid, frontier string, cat *catalog.Catalog) {
+	t.Helper()
+	cat = isolatedCatalog(t)
 	small = cat.ModelFor("opencode", core.TierSmall).ID
 	mid = cat.ModelFor("opencode", core.TierMid).ID
 	frontier = cat.ModelFor("opencode", core.TierFrontier).ID
 	if small == "" || mid == "" || frontier == "" {
 		t.Fatalf("catalog lacks an opencode tier model (small=%q mid=%q frontier=%q)", small, mid, frontier)
 	}
-	return small, mid, frontier
+	return small, mid, frontier, cat
 }
 
 // allowlist points the operator session file at the given ids for opencode.
+// It also isolates HOME and STATE_DIR so the gateway cannot load live rows
+// from the operator's real openrouter.json.
 func allowlist(t *testing.T, ids ...string) {
 	t.Helper()
-	path := filepath.Join(t.TempDir(), "session-models.json")
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("DOWNSHIFT_STATE_DIR", tmp)
+	path := filepath.Join(tmp, "session-models.json")
 	data, err := json.Marshal(map[string][]string{"opencode": ids})
 	if err != nil {
 		t.Fatal(err)
@@ -143,6 +170,7 @@ func TestHandle_InvalidRequestFailsOpen(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			noSession(t)
+			cat := catalog.Load()
 			req := request(trivialRename, "big-pickle")
 			tc.mutate(&req)
 			resp, note, d := opencode.Handle(req, cat)
@@ -160,7 +188,7 @@ func TestHandle_InvalidRequestFailsOpen(t *testing.T) {
 }
 
 func TestHandle_RoutesTrivialTaskToTheSessionSmall(t *testing.T) {
-	small, mid, frontier := tierIDs(t)
+	small, mid, frontier, cat := tierIDs(t)
 	allowlist(t, small, mid, frontier)
 	resp, note, d := opencode.Handle(request(trivialRename, frontier), cat)
 	if resp.V != 1 || resp.Action != "route" || resp.ReasonCode != "routed" || resp.TTLMs != 15000 {
@@ -179,7 +207,7 @@ func TestHandle_RoutesTrivialTaskToTheSessionSmall(t *testing.T) {
 }
 
 func TestHandle_KeepsRightSizedTask(t *testing.T) {
-	small, mid, frontier := tierIDs(t)
+	small, mid, frontier, cat := tierIDs(t)
 	allowlist(t, small, mid, frontier)
 	resp, note, d := opencode.Handle(request(rightSizedExport, mid), cat)
 	if resp.Action != "allow" || resp.ReasonCode != "kept" || resp.Model != nil || resp.TTLMs != 15000 {
@@ -191,7 +219,7 @@ func TestHandle_KeepsRightSizedTask(t *testing.T) {
 }
 
 func TestHandle_HeldDecisionAllowsUnchanged(t *testing.T) {
-	small, mid, frontier := tierIDs(t)
+	small, mid, frontier, cat := tierIDs(t)
 	allowlist(t, small, mid, frontier)
 	resp, note, d := opencode.Handle(request(foreignLanguage, frontier), cat)
 	if resp.Action != "allow" || resp.ReasonCode != "held" || resp.Model != nil {
@@ -207,6 +235,7 @@ func TestHandle_HeldDecisionAllowsUnchanged(t *testing.T) {
 
 func TestHandle_UnknownSessionAllowsUnchanged(t *testing.T) {
 	noSession(t)
+	cat := catalog.Load()
 	resp, note, d := opencode.Handle(request(trivialRename, "big-pickle"), cat)
 	if resp.Action != "allow" || resp.ReasonCode != "unknown_session" || resp.Model != nil {
 		t.Fatalf("unknown-session response = %+v", resp)
@@ -217,7 +246,7 @@ func TestHandle_UnknownSessionAllowsUnchanged(t *testing.T) {
 }
 
 func TestResponse_JSONIsOneLineAndNeverEchoesContent(t *testing.T) {
-	small, mid, frontier := tierIDs(t)
+	small, mid, frontier, cat := tierIDs(t)
 	allowlist(t, small, mid, frontier)
 	canary := "canary-8f21c\n{\"action\":\"route\",\"reasonCode\":\"routed\"}"
 	payload := trivialRename + " " + canary

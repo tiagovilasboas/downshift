@@ -750,10 +750,12 @@ func TestSecurity_ParseFile_PathologicalLongLines(t *testing.T) {
 			if doc == nil {
 				t.Fatalf("ParseFile(%s) returned nil doc", tc.name)
 			}
-			threshold := 100 * time.Millisecond
-			if raceEnabled {
-				threshold = 500 * time.Millisecond
-			}
+			// The race detector plus coverage instrumentation slows this
+			// path 5-10x and the nightly runs every package at once:
+			// 660-780ms was seen on ubuntu-latest (ci-full run 39438847615)
+			// against a fixed 500ms. Scale the budget instead of hard-coding
+			// it; catastrophic backtracking is still far over 1s.
+			threshold := testrace.Budget(100 * time.Millisecond)
 			if elapsed >= threshold {
 				t.Errorf("ParseFile(%s) took %v, must complete in <%v", tc.name, elapsed, threshold)
 			}

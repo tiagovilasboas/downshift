@@ -120,7 +120,7 @@ go vet ./...                    # vet
 goreleaser check                # validate release config (needs goreleaser installed)
 ```
 
-Requires Go 1.27+.
+Requires Go 1.27.3+ (see `go.mod`).
 
 ### CI tiers
 

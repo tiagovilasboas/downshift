@@ -99,16 +99,44 @@ func (ev Event) currentModel(ti map[string]any) string {
 
 // TaskText returns task content for local feature extraction. Raw text is
 // never returned from the shared loop's persistence layer.
+// Returns empty when the message looks like an encrypted Fernet token so that
+// classifiers do not train on ciphertext or leak the task_name as a signal.
 func (ev Event) TaskText() string {
 	var ti map[string]any
 	if json.Unmarshal(ev.ToolInput, &ti) != nil {
 		return ""
 	}
 	message := hookutil.StringField(ti, "message")
+	if isOpaqueToken(message) {
+		return "" // encrypted instruction, no features
+	}
 	if taskName := hookutil.StringField(ti, "task_name"); taskName != "" {
 		message = strings.TrimSpace(message + " " + taskName)
 	}
 	return message
+}
+
+// isOpaqueToken returns true when s looks like a Fernet-encrypted token that
+// the hook has no key to decode. Fernet tokens are URL-safe base64, start with
+// "gAAAAA" (version 0x80 + 8-byte timestamp), and are at least 57 bytes.
+func isOpaqueToken(s string) bool {
+	s = strings.TrimSpace(s)
+	if len(s) < 57 {
+		return false
+	}
+	// Fernet version byte 0x80 encodes as "gA" in base64; a realistic token
+	// starts with "gAAAAA" (version + all-zero or low timestamp bytes).
+	if !strings.HasPrefix(s, "gAAAAA") {
+		return false
+	}
+	// Accept with or without padding; a truncated token is still opaque.
+	for _, c := range s {
+		if !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+			(c >= '0' && c <= '9') || c == '-' || c == '_' || c == '=') {
+			return false
+		}
+	}
+	return true
 }
 
 // Output is the JSON we print on stdout to steer Codex's PreToolUse.
@@ -138,6 +166,20 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// Structural detection: a Codex subagent spawn carries "message" and/or
 	// "task_name" in tool_input. Tool name is deliberately not checked.
 	subPrompt := hookutil.StringField(ti, "message")
+
+	// If the message looks like a Fernet-encrypted token, it is opaque: we
+	// cannot read or classify the task, so we leave the spawn unchanged and
+	// return a Decision that records the observation without any features.
+	if isOpaqueToken(subPrompt) {
+		d := core.Decision{
+			Harness:        harnessID,
+			TaskNotVisible: true,
+			NoSignal:       true,
+			Confident:      false,
+		}
+		return allow(), "", d
+	}
+
 	if tn := hookutil.StringField(ti, "task_name"); tn != "" {
 		subPrompt = strings.TrimSpace(subPrompt + " " + tn)
 	}

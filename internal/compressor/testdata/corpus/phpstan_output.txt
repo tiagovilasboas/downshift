@@ -1,0 +1,1 @@
+phpstan analyse output
