@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -30,6 +31,8 @@ type doctorEnv struct {
 	Home       string
 	Executable func() (string, error)
 	LookPath   func(string) (string, error)
+	// BuildInfo reads the running binary's build stamp; nil reports unknown.
+	BuildInfo func() (*debug.BuildInfo, bool)
 	// Companions lists the external companions to probe (the registry's by
 	// default); tests inject fakes. Nil skips the companion row.
 	Companions func() []contextopt.Provider
@@ -42,6 +45,7 @@ type doctorEnv struct {
 func defaultDoctorEnv(cat *catalog.Catalog) doctorEnv {
 	home, _ := os.UserHomeDir()
 	return doctorEnv{Home: home, Executable: os.Executable, LookPath: exec.LookPath,
+		BuildInfo:  debug.ReadBuildInfo,
 		Companions: func() []contextopt.Provider { return companions(contextRegistry()) },
 		Now:        time.Now, Getenv: os.Getenv, Cat: cat}
 }
@@ -190,6 +194,7 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 		ver += " (commit " + buildCommit + ")"
 	}
 	rep.add(doctorCheck{ID: "version", Status: doctorOK, Detail: ver})
+	rep.add(buildProvenanceCheck(env))
 
 	pathBin := checkBinary(rep, env)
 	events := checkState(rep, env)
@@ -230,6 +235,42 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 	}
 	rep.OK = rep.Failed == 0
 	return rep
+}
+
+// buildProvenanceCheck reports the VCS stamp of the running binary. A binary
+// built from a dirty tree warns; a clean build shows its short commit; a
+// binary without VCS data (release builds) is unknown and never warns. Doctor
+// cannot tell whether a commit is on main, so it reports only what the stamp says.
+func buildProvenanceCheck(env doctorEnv) doctorCheck {
+	const id = "build provenance"
+	var info *debug.BuildInfo
+	if env.BuildInfo != nil {
+		info, _ = env.BuildInfo()
+	}
+	var rev, modified string
+	if info != nil {
+		for _, s := range info.Settings {
+			switch s.Key {
+			case "vcs.revision":
+				rev = s.Value
+			case "vcs.modified":
+				modified = s.Value
+			}
+		}
+	}
+	switch {
+	case modified == "true":
+		return doctorCheck{ID: id, Status: doctorWarn, Detail: "built from a dirty tree",
+			Fix: "rebuild from a clean checkout (git status must be empty), then reinstall the binary"}
+	case rev != "":
+		short := rev
+		if len(short) > 7 {
+			short = short[:7]
+		}
+		return doctorCheck{ID: id, Status: doctorOK, Detail: short}
+	default:
+		return doctorCheck{ID: id, Status: doctorOK, Detail: "unknown"}
+	}
 }
 
 func fileExists(p string) bool { _, err := os.Stat(p); return err == nil }
