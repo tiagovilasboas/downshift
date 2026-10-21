@@ -1,0 +1,1 @@
+# Sample output for dotnet_build_output - pass-through

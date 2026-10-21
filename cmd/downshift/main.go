@@ -138,6 +138,8 @@ func main() {
 		os.Exit(runSetup(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "doctor":
 		os.Exit(runDoctor(args[1:], os.Stdout, os.Stderr, catalog))
+	case "shell-init":
+		os.Exit(runShellInit(args[1:], os.Stdout, os.Stderr))
 	case "config":
 		os.Exit(runConfig(args[1:], os.Stdout, os.Stderr, catalog))
 	case "version", "--version":

@@ -314,3 +314,48 @@ preserve  dart-compile    dart_compile_clean.txt
 preserve  dart-format     dart_format_clean.txt
 preserve  dart-fix        dart_fix_clean.txt
 preserve  npm-install   npm_install_error.txt
+
+# Mobile/Native build (pass-through) — added for stack coverage
+preserve  xcodebuild      xcodebuild_output.txt
+preserve  pod             pod_output.txt
+preserve  expo            expo_output.txt
+preserve  react-native    react_native_output.txt
+preserve  adb             adb_output.txt
+
+# .NET toolchain (pass-through)
+preserve  dotnet-build  dotnet_build_output.txt
+preserve  dotnet-test   dotnet_test_output.txt
+preserve  dotnet-run    dotnet_run_output.txt
+
+# Ruby ecosystem (pass-through)
+preserve  rspec    rspec_output.txt
+preserve  rubocop  rubocop_output.txt
+
+# Cloud CLI (pass-through)
+preserve  gcloud  gcloud_output.txt
+preserve  psql    psql_output.txt
+
+# System diagnostics (pass-through)
+preserve  journalctl  journalctl_output.txt
+preserve  systemctl   systemctl_output.txt
+
+# Kubernetes extended (pass-through)
+preserve  kubectl-top  kubectl_top_output.txt
+
+# Filesystem commands (pass-through, tracked for safety)
+preserve  mkdir  mkdir_output.txt
+preserve  touch  touch_output.txt
+preserve  cp     cp_output.txt
+preserve  mv     mv_output.txt
+preserve  rm     rm_output.txt
+
+# AST tools (pass-through)
+preserve  ast-grep  ast_grep_output.txt
+
+# Package managers install (pass-through)
+preserve  pip-install  pip_install_output.txt
+
+# Other languages (pass-through)
+preserve  mix    mix_output.txt
+preserve  swift  swift_output.txt
+preserve  sbt    sbt_output.txt
