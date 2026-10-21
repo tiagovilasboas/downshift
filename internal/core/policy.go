@@ -52,6 +52,9 @@ type Decision struct {
 	// NoSignal is true when the classifier matched no content signal and the
 	// complexity is only the safe Medium default (Classification.NoSignal).
 	NoSignal bool
+	// TaskNotVisible is true when the task text is opaque (encrypted or
+	// inaccessible) and routing cannot be based on content classification.
+	TaskNotVisible bool
 	// UnsupportedLanguage records the language guard without persisting text.
 	UnsupportedLanguage bool
 

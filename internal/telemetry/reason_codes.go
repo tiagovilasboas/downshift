@@ -21,6 +21,7 @@ const (
 	ReasonClassifierConfident   = "CLASSIFIER_CONFIDENT"
 	ReasonClassifierUnconfident = "CLASSIFIER_UNCONFIDENT"
 	ReasonNoSignal              = "NO_SIGNAL"
+	ReasonTaskNotVisible        = "TASK_NOT_VISIBLE"
 	ReasonSemanticBoost         = "SEMANTIC_BOOST"
 	// ReasonTaskFocus marks a long brief whose actionable task, with the rest
 	// of the brief weighed as context, lowered the class or its confidence.
@@ -81,6 +82,9 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.NoSignal {
 		set[ReasonNoSignal] = true
+	}
+	if d.TaskNotVisible {
+		set[ReasonTaskNotVisible] = true
 	}
 	if d.UnsupportedLanguage {
 		set[ReasonUnsupportedLanguage] = true
