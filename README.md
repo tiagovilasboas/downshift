@@ -58,6 +58,8 @@ measurement. Measured in bytes on a synthetic test corpus: 82.3% fewer bytes on 
 ```bash
 # Install
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+# "has no <os>/<arch> archive yet"? Pick a tag from https://github.com/tiagovilasboas/downshift/releases
+# (sh -s <tag>) or run: go install github.com/tiagovilasboas/downshift/cmd/downshift@<tag>
 
 # Configure your harness (Claude Code, Cursor, Codex, KiroCrew, ...)
 downshift setup

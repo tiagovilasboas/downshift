@@ -351,3 +351,37 @@ jobs:
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-checksums: dist/checksums.txt
+
+  # A tag whose release has no assets must fail loudly, not leave an installer
+  # that 404s. Runs even when `release` was skipped or failed.
+  verify-release:
+    needs: [release]
+    if: always() && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check the release job and its assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_RESULT: ${{ needs.release.result }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          fail=0
+          if [ "$RELEASE_RESULT" != success ]; then
+            echo "::error::release job result is '$RELEASE_RESULT', not 'success': tag $TAG has no verified assets"
+            fail=1
+          fi
+          ver="${TAG#v}"
+          assets=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' || true)
+          for want in checksums.txt \
+            "downshift_${ver}_linux_amd64.tar.gz" "downshift_${ver}_linux_arm64.tar.gz" \
+            "downshift_${ver}_darwin_amd64.tar.gz" "downshift_${ver}_darwin_arm64.tar.gz" \
+            "downshift_${ver}_windows_amd64.zip"; do
+            if ! printf '%s\n' "$assets" | grep -qxF "$want"; then
+              echo "::error::release $TAG is missing asset $want"
+              fail=1
+            fi
+          done
+          exit "$fail"

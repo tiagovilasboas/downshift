@@ -683,6 +683,19 @@ On free plans or legacy Cursor pricing, the hook runs but model rewrites may be 
 
 ## Troubleshooting
 
+### 404 when downloading (no archive for this release)
+
+`install.sh` prints `error: release <tag> has no <os>/<arch> archive yet`.
+The tag exists, but its release has no archive for your platform (for example a
+release created before its build finished). Nothing is wrong on your machine,
+and the installer never falls back to another version on its own. Options:
+
+1. Pick another tag from [Releases](https://github.com/tiagovilasboas/downshift/releases), then
+   `curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh -s <tag>`.
+2. With Go installed: `go install github.com/tiagovilasboas/downshift/cmd/downshift@<tag>`
+   (the binary lands in `~/go/bin`).
+3. Report it at https://github.com/tiagovilasboas/downshift/issues.
+
 ### `downshift: command not found` after `go install`
 
 `go install` places the binary in `~/go/bin`, which may not be in your PATH.
