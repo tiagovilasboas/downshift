@@ -13,15 +13,6 @@ func decisionRow(id, outcome, verdict, from, to string) telemetry.Event {
 	return telemetry.Event{CorrelationID: id, Harness: "claude-code", SessionID: "s1", Outcome: outcome, Verdict: verdict, FromModel: from, ToModel: to}
 }
 
-func usageRow(link, ran string, actual, baseline float64) telemetry.Event {
-	in := int64(100)
-	return telemetry.Event{InputTokens: &in,
-		CorrelationID: "u-" + link, Harness: "claude-code", SessionID: "s1", Outcome: telemetry.OutcomeUsage,
-		LinkedDecision: link, ToModel: ran, ActualCostUSD: &actual, BaselineCostUSD: &baseline,
-		BaselineSource: telemetry.BaselineRequested,
-	}
-}
-
 // A usage record is priced against the model its decision asked for. Only an
 // applied rewrite makes that a counterfactual: when the hook left the spawn
 // alone, a child that ran on another model than the one the transcript showed

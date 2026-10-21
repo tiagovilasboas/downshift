@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+// staleLockAge bounds how long an O_EXCL fallback lock may be held before it
+// is considered orphaned. Appends take milliseconds.
+const staleLockAge = 2 * time.Second
+
 // tryLock creates "<path>.lock" exclusively and writes the owner PID. An
 // existing lock older than staleLockAge is removed as orphaned.
 func tryLock(path string) (*FileLock, bool, error) {

@@ -4,7 +4,6 @@
 package telemetry_test
 
 import (
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,15 +11,6 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
-
-func usage(id string, baseline, actual float64) telemetry.Event {
-	return telemetry.Event{
-		CorrelationID: id, Harness: "claude-code", Outcome: telemetry.OutcomeUsage,
-		BaselineCostUSD: &baseline, ActualCostUSD: &actual,
-	}
-}
-
-func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
 func TestParseEvents_OversizedLineSurfacesError(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "events.jsonl")

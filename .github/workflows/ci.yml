@@ -104,6 +104,12 @@ jobs:
         if: needs.changes.outputs.go == '1'
         run: go vet ./...
 
+      - name: Staticcheck
+        if: needs.changes.outputs.go == '1'
+        # Pinned release; checks are in staticcheck.conf. Build it with the
+        # module's toolchain (go.mod), or it rejects the go1.27 packages.
+        run: GOTOOLCHAIN="$(go env GOVERSION)" go run honnef.co/go/tools/cmd/staticcheck@2026.2.2 ./...
+
       - name: Format check
         if: needs.changes.outputs.go == '1'
         run: |

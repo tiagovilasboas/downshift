@@ -477,22 +477,6 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 	return ev
 }
 
-// finiteRounded is v rounded to four decimals, or 0 when v is NaN or infinite.
-func finiteRounded(v float64) float64 {
-	if math.IsNaN(v) || math.IsInf(v, 0) {
-		return 0
-	}
-	return math.Round(v*1e4) / 1e4
-}
-
-// finiteNonNegative is v, or 0 when v is NaN, infinite or negative.
-func finiteNonNegative(v float64) float64 {
-	if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 {
-		return 0
-	}
-	return v
-}
-
 // Failure records a hook fail-open path without accepting raw input or errors
 // that could contain prompt content.
 func Failure(correlationID, binaryVersion, harness, errorCode string) Event {

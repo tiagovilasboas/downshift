@@ -13,8 +13,8 @@ import (
 // language a risk word is invisible, while an English verb ("rename",
 // "format") or a code identifier in the same prompt still scores, so the
 // classifier can be confident about a task whose risk it cannot read.
-// unsupportedLanguage spots such prompts so Classify can drop confidence:
-// every guardrail then holds the requested model. partialForeignLanguage is
+// languageGuardState spots such prompts so Classify can drop confidence:
+// every guardrail then holds the requested model. Its partialForeign result is
 // the weaker hint (one foreign cue) for mixed briefs that are still mostly
 // English. Neither changes the class and neither raises cost.
 
@@ -49,7 +49,7 @@ var mixedEnglishHelperBrief = regexp.MustCompile(`(?i)^(rename|format|move|add|f
 
 // partialForeignAmbiguous lists function words that also appear in English
 // prose (locale codes, Python del, etc.). They still count toward
-// unsupportedLanguage at two hits but not toward partialForeignLanguage.
+// the unsupported result at two hits but not toward partialForeign.
 var partialForeignAmbiguous = map[string]bool{
 	"en": true, "del": true, "y": true,
 }
@@ -119,20 +119,4 @@ func identifierToken(w string) bool {
 		}
 	}
 	return false
-}
-
-// unsupportedLanguage reports whether the prompt reads as a language the
-// signal and risk tables do not cover.
-func unsupportedLanguage(prompt string) bool {
-	u, _ := languageGuardState(prompt)
-	return u
-}
-
-// partialForeignLanguage is true when the prompt shows a single foreign cue
-// (one function word or one foreign letter in prose) but not enough to flag
-// unsupportedLanguage. Classify drops confidence so mixed EN+foreign risk
-// briefs are not downshifted confidently.
-func partialForeignLanguage(prompt string) bool {
-	u, p := languageGuardState(prompt)
-	return !u && p
 }
