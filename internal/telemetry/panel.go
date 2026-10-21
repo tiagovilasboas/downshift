@@ -16,10 +16,15 @@ import (
 // No task text, path or raw id is in it; spawns are keyed by the hashed tool
 // call id (see ToolUseKey).
 type PanelView struct {
-	Session  string `json:"session"`
-	Switched int    `json:"switched"`
-	Held     int    `json:"held"`
-	Observed int    `json:"observed"`
+	Session string `json:"session"`
+	// Switched counts the spawns Downshift changed: a model or an effort.
+	// ModelSwitched and EffortChanged split it: the model differs from the
+	// requested one, or the model is the same and only the effort changed.
+	Switched      int `json:"switched"`
+	ModelSwitched int `json:"model_switched"`
+	EffortChanged int `json:"effort_changed"`
+	Held          int `json:"held"`
+	Observed      int `json:"observed"`
 	// Tokens is the session's tokens saved from the requested model, work
 	// (input+output) and cache counted apart; TokensLine is its final text, ""
 	// until a child's tokens are known. No dollars: those are `downshift
@@ -102,6 +107,11 @@ func BuildPanel(events []Event, sessionHash string) PanelView {
 		switch r.State {
 		case StateSwitched:
 			v.Switched++
+			if switchesModel(r.FromModel, r.ToModel) {
+				v.ModelSwitched++
+			} else {
+				v.EffortChanged++
+			}
 		case StateHeld:
 			v.Held++
 		case StateObserved:
