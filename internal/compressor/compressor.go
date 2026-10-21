@@ -366,6 +366,99 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatFileList, false
 	}
 
+	// 16. Linters
+	if isEslint(input) {
+		return FormatEslint, false
+	}
+	if isRuff(input) {
+		return FormatRuff, false
+	}
+	if isMypy(input) {
+		return FormatMypy, false
+	}
+	if isGolangciLint(input) {
+		return FormatGolangciLint, false
+	}
+	if isCargoClippy(input) {
+		return FormatCargoClippy, false
+	}
+
+	// 17. Build errors
+	if isCargoBuild(input) {
+		return FormatCargoBuild, false
+	}
+	if isGoBuild(input) {
+		return FormatGoBuild, false
+	}
+	if isDotnetBuild(input) {
+		return FormatDotnetBuild, false
+	}
+
+	// 18. Package managers
+	if isNpmInstall(input) {
+		return FormatNpmInstall, false
+	}
+	if isPipInstall(input) {
+		return FormatPipInstall, false
+	}
+
+	// 19. Docker
+	if isDockerPs(input) {
+		return FormatDockerPs, false
+	}
+	if isDockerImages(input) {
+		return FormatDockerImages, false
+	}
+	if isDockerBuild(input) {
+		return FormatDockerBuild, false
+	}
+	if isDockerPush(input) {
+		return FormatDockerPush, false
+	}
+
+	// 20. Kubernetes
+	if isKubectlGetPods(input) {
+		return FormatKubectlPods, false
+	}
+
+	// 21. Terraform
+	if isTerraformPlan(input) {
+		return FormatTerraformPlan, false
+	}
+
+	// 22. Dependency trees
+	if isNpmLs(input) {
+		return FormatNpmLs, false
+	}
+	if isCargoTree(input) {
+		return FormatCargoTree, false
+	}
+	if isGoModGraph(input) {
+		return FormatGoModGraph, false
+	}
+
+	// 23. PHP ecosystem
+	if isComposer(input) {
+		return FormatComposer, false
+	}
+	if isPHPStan(input) {
+		return FormatPHPStan, false
+	}
+	if isPsalm(input) {
+		return FormatPsalm, false
+	}
+	if isArtisanMigrate(input) {
+		return FormatArtisanMigrate, false
+	}
+	if isArtisanRouteList(input) {
+		return FormatArtisanRoutes, false
+	}
+
+	// 24. Azure DevOps
+	if isAzPipelines(input) {
+		return FormatAzPipelines, false
+	}
+
 	return FormatUnknown, false
 }
 
@@ -437,6 +530,61 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressKubectlGetPods(input)
 	case FormatKubectlLogs:
 		return compressKubectlLogs(input)
+
+	// Linters
+	case FormatEslint:
+		return compressEslint(input)
+	case FormatRuff:
+		return compressRuff(input)
+	case FormatMypy:
+		return compressMypy(input)
+	case FormatGolangciLint:
+		return compressGolangciLint(input)
+	case FormatCargoClippy:
+		return compressCargoClippy(input)
+
+	// Build errors
+	case FormatCargoBuild:
+		return compressCargoBuild(input)
+	case FormatGoBuild:
+		return compressGoBuild(input)
+	case FormatDotnetBuild:
+		return compressDotnetBuild(input)
+
+	// Docker build/push
+	case FormatDockerBuild:
+		return compressDockerBuild(input)
+	case FormatDockerPush:
+		return compressDockerPush(input)
+
+	// Terraform
+	case FormatTerraformPlan:
+		return compressTerraformPlan(input)
+
+	// Dependency trees
+	case FormatNpmLs:
+		return compressNpmLs(input)
+	case FormatCargoTree:
+		return compressCargoTree(input)
+	case FormatGoModGraph:
+		return compressGoModGraph(input)
+
+	// PHP ecosystem
+	case FormatComposer:
+		return compressComposer(input)
+	case FormatPHPStan:
+		return compressPHPStan(input)
+	case FormatPsalm:
+		return compressPsalm(input)
+	case FormatArtisanMigrate:
+		return compressArtisanMigrate(input)
+	case FormatArtisanRoutes:
+		return compressArtisanRouteList(input)
+
+	// Azure DevOps
+	case FormatAzPipelines:
+		return compressAzPipelines(input)
+
 	default:
 		return input, false, "unrecognized_format"
 	}

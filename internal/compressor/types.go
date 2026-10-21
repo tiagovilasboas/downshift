@@ -77,6 +77,9 @@ const (
 	// Docker build/push
 	FormatDockerBuild Format = "docker_build" // docker build
 	FormatDockerPush  Format = "docker_push"  // docker push
+
+	// PHP ecosystem and Azure DevOps formats are declared in their respective
+	// compressor files (composer.go, phpstan.go, artisan.go, az_pipelines.go)
 )
 
 // Result is the deterministic outcome of a compression attempt.
