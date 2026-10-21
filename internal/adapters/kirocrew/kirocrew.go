@@ -137,6 +137,11 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
+	// KiroCrew cannot report quota (its hook contract is allow/block only), so
+	// treating quota as required would hold every downshift indefinitely.
+	// Disable the requirement: policy-mode enforcement is safe because the agent
+	// must explicitly respawn, and the harness itself enforces its own limits.
+	session.QuotaRequired = false
 	if ev.ModelMetadata != nil {
 		session.Metadata = ev.ModelMetadata
 	}
@@ -181,7 +186,14 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	if len(decision.Corrections) > 0 {
 		return allow(), "", decision
 	}
-	if !core.CanWriteSessionID(harnessID, plan.Model.ID, session, res) {
+	// KiroCrew cannot report quota (its hook contract is allow/block, no
+	// payload), so the credit gate would always hold when quota is unknown.
+	// Skip the gate: policy-mode enforcement is safe because the agent must
+	// explicitly respawn with the recommended model, and the harness itself
+	// enforces whatever limits it has.
+	// Other checks (session membership, explicit-only, blocks) are already
+	// covered by the plan gates above.
+	if session.Blocks(plan.Model.ID) {
 		return allow(), "", decision
 	}
 
