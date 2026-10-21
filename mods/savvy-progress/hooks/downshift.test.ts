@@ -163,16 +163,32 @@ test('band fallback: the finished batch is replaced when a new agent starts', as
   expect(await shows($, 'AbovePrompt', /^1 running · 0 done$/)).toBe(true)
 })
 
-test('band fallback: a finished row leaves the panel 10 seconds after the panel first saw it finished', async ($, on) => {
+test('band fallback: a finished row leaves the panel 30 seconds after the panel first saw it finished', async ($, on) => {
   const clock = await runAgents($, on, ['t1', 't2'])
-  // First rendered at the finish time: still listed nine seconds later, gone after ten.
+  // First rendered at the finish time: still listed 29 seconds later, gone after 30.
   expect(await shows($, 'Pane', /Work t1/)).toBe(true)
-  await clock.set(Date.parse('2026-10-19T10:00:09Z'))
+  await clock.set(Date.parse('2026-10-19T10:00:29Z'))
   expect(await shows($, 'Pane', /Work t1/)).toBe(true)
-  await clock.set(Date.parse('2026-10-19T10:00:11Z'))
+  await clock.set(Date.parse('2026-10-19T10:00:31Z'))
   expect(await shows($, 'Pane', /Work t1/)).toBe(false)
   // The band still counts the batch.
   expect(await shows($, 'AbovePrompt', /^2 done$/)).toBe(true)
+})
+
+const finishedHeader = async ($: Engine): Promise<string | undefined> => {
+  const ui = await $.ui.mount({ plugin: PLUGIN, surface: 'terminal', component: 'Pane', requestId: 'savvy-agents', props: pane })
+  const label = (await ui.find({ key: 'done' }))?.props.label as string | undefined
+  await ui.unmount()
+  return label
+}
+
+test('finished section: the header counts the shown rows and the section expires with no agent running', async ($, on) => {
+  const clock = await runAgents($, on, ['t1', 't2'])
+  expect(await finishedHeader($)).toMatch(/Finished · 2$/)
+  // Nothing runs, yet the clock ticks until the rows expire.
+  await clock.advance(31_000)
+  expect(await shows($, 'Pane', /Work t1/)).toBe(false)
+  expect(await finishedHeader($)).toBeUndefined()
 })
 
 // The crew badge counts what the panel lists: running agents, finished ones still inside FINISHED_SHOW_MS, and planned tasks.
@@ -188,7 +204,7 @@ test('crew badge: once the finished rows leave the panel, the badge counts only 
   // First rendered at the finish time, so the window starts there.
   expect(await crewLabel($)).toBe('×2')
   await $.agent.spawn({ tool_use_id: 't3', prompt: 'p', description: 'Work t3', subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
-  await clock.set(Date.parse('2026-10-19T10:00:11Z'))
+  await clock.set(Date.parse('2026-10-19T10:00:31Z'))
   expect(await shows($, 'Pane', /Work t1/)).toBe(false)
   expect(await crewLabel($)).toBe('×1')
 })
