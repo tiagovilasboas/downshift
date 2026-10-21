@@ -41,16 +41,16 @@ const (
 	FamilyGovulncheck  Family = "govulncheck"
 
 	// Rust toolchain — medium usage
-	FamilyCargoBuild   Family = "cargo-build"
-	FamilyCargoRun     Family = "cargo-run"
-	FamilyCargoCheck   Family = "cargo-check"
-	FamilyCargoClippy  Family = "cargo-clippy"
-	FamilyCargoFmt     Family = "cargo-fmt"
-	FamilyCargoDoc     Family = "cargo-doc"
-	FamilyCargoAdd     Family = "cargo-add"
-	FamilyCargoUpdate  Family = "cargo-update"
-	FamilyCargoTree    Family = "cargo-tree"
-	FamilyCargoAudit   Family = "cargo-audit"
+	FamilyCargoBuild    Family = "cargo-build"
+	FamilyCargoRun      Family = "cargo-run"
+	FamilyCargoCheck    Family = "cargo-check"
+	FamilyCargoClippy   Family = "cargo-clippy"
+	FamilyCargoFmt      Family = "cargo-fmt"
+	FamilyCargoDoc      Family = "cargo-doc"
+	FamilyCargoAdd      Family = "cargo-add"
+	FamilyCargoUpdate   Family = "cargo-update"
+	FamilyCargoTree     Family = "cargo-tree"
+	FamilyCargoAudit    Family = "cargo-audit"
 	FamilyCargoOutdated Family = "cargo-outdated"
 
 	// Python tooling — high usage
@@ -118,9 +118,9 @@ const (
 	FamilyKubectlTop Family = "kubectl-top"
 
 	// Mobile/Native build — iOS
-	FamilyXcodebuild Family = "xcodebuild"
-	FamilyPodInstall Family = "pod"
-	FamilyExpo       Family = "expo"
+	FamilyXcodebuild  Family = "xcodebuild"
+	FamilyPodInstall  Family = "pod"
+	FamilyExpo        Family = "expo"
 	FamilyReactNative Family = "react-native"
 	FamilyAdb         Family = "adb"
 
@@ -773,7 +773,7 @@ func mobileNativeFamily(argv []string) Family {
 				return FamilyAdb
 			}
 		}
-	// Note: gradle/gradlew handled by FamilyGradle in policy_backend.go
+		// Note: gradle/gradlew handled by FamilyGradle in policy_backend.go
 	}
 	return FamilyNone
 }
