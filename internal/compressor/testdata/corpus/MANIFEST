@@ -174,3 +174,34 @@ preserve  docker-ps      docker_ps_output.txt
 preserve  docker-logs    docker_logs_output.txt
 preserve  docker-images  docker_images_output.txt
 preserve  docker-build   docker_build_output.txt
+# GitOps (pass-through)
+preserve  argocd-list    argocd_list_output.txt
+preserve  argocd-get     argocd_get_output.txt
+preserve  argocd-diff    argocd_diff_output.txt
+
+# Kustomize / Azure Pipelines (pass-through)
+preserve  kustomize-build  kustomize_build_output.txt
+
+# Azure Pipelines
+preserve  az-pipelines   az_pipelines_output.txt
+
+# Database (pass-through)
+preserve  mysql-query    mysql_query_output.txt
+
+# Redis
+preserve  redis-read     redis_read_output.txt
+# Observability (pass-through)
+preserve  logcli         logcli_output.txt
+
+preserve  sentry-cli     sentry_cli_output.txt
+preserve  grafana-cli    grafana_cli_output.txt
+preserve  datadog-ci     datadog_ci_output.txt
+
+# Vite / Turborepo / PHP extras (pass-through)
+preserve  vite-build     vite_build_output.txt
+preserve  vite-preview   vite_preview_output.txt
+preserve  turbo-run      turbo_run_output.txt
+preserve  pest           pest_output.txt
+preserve  sail-test      sail_test_output.txt
+preserve  sail-artisan   sail_artisan_output.txt
+preserve  rector         rector_output.txt
