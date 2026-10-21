@@ -30,12 +30,12 @@ const (
 	FamilyNpmInstall Family = "npm-install"
 	FamilyNpmTest    Family = "npm-test"
 	FamilyNpmBuild   Family = "npm-build"
-	FamilyPnpmTest  Family = "pnpm-test"
-	FamilyPnpmBuild Family = "pnpm-build"
-	FamilyYarnTest  Family = "yarn-test"
-	FamilyYarnBuild Family = "yarn-build"
-	FamilyBunTest   Family = "bun-test"
-	FamilyBunBuild  Family = "bun-build"
+	FamilyPnpmTest   Family = "pnpm-test"
+	FamilyPnpmBuild  Family = "pnpm-build"
+	FamilyYarnTest   Family = "yarn-test"
+	FamilyYarnBuild  Family = "yarn-build"
+	FamilyBunTest    Family = "bun-test"
+	FamilyBunBuild   Family = "bun-build"
 
 	// Linters and formatters
 	FamilyESLint   Family = "eslint"
