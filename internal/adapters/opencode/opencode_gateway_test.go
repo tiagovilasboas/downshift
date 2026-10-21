@@ -37,10 +37,13 @@ func liveRouteSetup(t *testing.T, route string) (opencode.Request, core.Resolver
 	if err := os.WriteFile(filepath.Join(state, "openrouter.json"), []byte(body), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	small, mid, frontier := tierIDs(t)
-	_ = mid
+	// Load catalog from THIS isolated state (with the gateway file we just wrote),
+	// not from tierIDs which would re-isolate to a different TempDir.
+	cat := catalog.Load()
+	small := cat.ModelFor("opencode", core.TierSmall).ID
+	frontier := cat.ModelFor("opencode", core.TierFrontier).ID
 	allowlist(t, small, frontier)
-	return request(trivialRename, frontier), catalog.Load()
+	return request(trivialRename, frontier), cat
 }
 
 // A live row answers the spawn with the exact OpenCode provider/model pair:

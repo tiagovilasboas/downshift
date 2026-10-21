@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/tiagovilasboas/downshift/internal/codeintel"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -34,12 +36,15 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 			return 2
 		}
 	}
+
 	events, err := telemetry.ReadEvents()
 	if err != nil {
 		fmt.Fprintf(stderr, "error reading event log: %v\n", err)
 		return 1
 	}
+
 	rep := telemetry.BuildReport(events, days)
+
 	if asJSON {
 		out, err := telemetry.ReportJSON(rep)
 		if err != nil {
@@ -49,6 +54,36 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stdout, out)
 		return 0
 	}
+
+	// The routed-vs-control comparison, the plan lens and the per-harness
+	// completion lines are the canonical report; telemetry owns their wording
+	// (the tests read those strings), so delegate instead of reprinting them.
 	telemetry.PrintReport(stdout, rep)
+
+	// Compactor and code-intelligence savings are produced outside the event
+	// log, so they are appended here rather than inside telemetry.PrintReport.
+	var compactor execwrap.Summary
+	if path, err := execwrap.EventsPath(); err == nil {
+		compactor, _ = execwrap.Summarize(path)
+	}
+	dciEvents, _ := codeintel.ReadTelemetryEvents()
+	dciFiltered := codeintel.FilterTelemetryByDays(dciEvents, days)
+	dciSummary := codeintel.AggregateTelemetry(dciFiltered)
+
+	fmt.Fprintln(stdout, "\n📦 COMPACTOR")
+	fmt.Fprintf(stdout, "   Commands: %d · Compacted: %d\n", compactor.Commands, compactor.Compacted)
+	fmt.Fprintf(stdout, "   Bytes: %d → %d (saved %d)\n",
+		compactor.RawBytes, compactor.EmittedBytes, compactor.SavedBytes)
+	fmt.Fprintf(stdout, "   Tokens saved: ~%d\n", compactor.EstimatedTokensSaved)
+
+	fmt.Fprintln(stdout, "\n🔍 CODE INTELLIGENCE (DCI)")
+	fmt.Fprintf(stdout, "   Prompts: %d · Injections: %d (%.0f%%)\n",
+		dciSummary.TotalPrompts, dciSummary.InjectionsApplied, dciSummary.InjectionPct)
+	fmt.Fprintf(stdout, "   Context bytes: %d\n", dciSummary.TotalContextBytes)
+	if dciSummary.LatencyP50Ms > 0 {
+		fmt.Fprintf(stdout, "   Latency p50/p95: %.0fms / %.0fms\n",
+			dciSummary.LatencyP50Ms, dciSummary.LatencyP95Ms)
+	}
+
 	return 0
 }
