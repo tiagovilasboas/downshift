@@ -98,6 +98,30 @@ func TestGatewayLive_NoRewriteStaysPut(t *testing.T) {
 	}
 }
 
+// With several rows of the tier, a live row beats the embedded native small
+// row of the harness, and a shadow row never wins, whatever its id sorts to.
+func TestGatewayLive_LiveRowBeatsNativeAndShadowRows(t *testing.T) {
+	useEmptyHome(t)
+	body := `{"version":1,"harness":"opencode","models":[` +
+		`{"id":"aaa/shadow-small","tier":"small","max_effort":"medium","zdr":false,"route":"shadow"},` +
+		`{"id":"` + liveSlug + `","tier":"small","max_effort":"medium","zdr":false,"route":"live"},` +
+		`{"id":"minimax/minimax-m3.1-flash:free","tier":"small","max_effort":"medium","zdr":false,"route":"live"}]}`
+	writeStateFileAt(t, paths.GatewayAllowlistPath, body)
+	res := catalog.Load()
+	small := res.ModelFor("opencode", core.TierSmall).ID
+	frontier := res.ModelFor("opencode", core.TierFrontier).ID
+	if small == liveSlug {
+		t.Fatalf("test needs a native small row distinct from the live row")
+	}
+	session := core.KnownSession([]string{small, frontier})
+
+	d := core.Route("rename the userId variable to userIdentifier", "opencode", frontier, res)
+	plan := d.PlanSession(core.OpenCodeCaps, res, session, frontier)
+	if !plan.RewriteModel || plan.Model.ID != liveSlug || plan.Model.Gateway != "openrouter" {
+		t.Fatalf("plan.Model = %+v, want the live row %s", plan.Model, liveSlug)
+	}
+}
+
 // Without a known session nothing is rewritten, live rows included.
 func TestGatewayLive_UnknownSessionNeverTargets(t *testing.T) {
 	liveAllowlist(t, "small", "live")
