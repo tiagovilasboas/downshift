@@ -1,0 +1,3 @@
+gh run list
+STATUS  TITLE         BRANCH  EVENT  ID          ELAPSED  AGE
+✓       CI            main    push   1234567890  2m34s    5m

@@ -1,0 +1,3 @@
+nx run myapp:build
+> nx run myapp:build
+Build completed.

@@ -183,6 +183,9 @@ func FamilyOf(argv []string) Family {
 	if family := observabilityFamily(argv); family != FamilyNone {
 		return family
 	}
+	if family := toolingFamily(argv); family != FamilyNone {
+		return family
+	}
 	return FamilyNone
 }
 

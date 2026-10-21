@@ -1,0 +1,2 @@
+cmake --build .
+[100%] Built target myapp

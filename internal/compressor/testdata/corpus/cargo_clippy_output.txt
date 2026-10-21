@@ -1,0 +1,3 @@
+cargo clippy
+    Checking myapp v0.1.0
+    Finished dev [unoptimized + debuginfo] target(s) in 0.5s

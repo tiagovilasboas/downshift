@@ -1,0 +1,3 @@
+black --check .
+All done! ✨ 🍰 ✨
+42 files would be left unchanged.

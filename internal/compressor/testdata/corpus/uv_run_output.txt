@@ -1,0 +1,2 @@
+uv run pytest
+All tests passed!

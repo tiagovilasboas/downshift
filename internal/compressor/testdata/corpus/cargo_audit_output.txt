@@ -1,0 +1,4 @@
+cargo audit
+    Fetching advisory database
+    Scanning Cargo.lock
+No vulnerabilities found!

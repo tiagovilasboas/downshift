@@ -1,0 +1,5 @@
+gh pr list
+Showing 5 of 42 open pull requests in owner/repo
+
+#123  feat: add feature   user:feat-branch  OPEN
+#122  fix: bug fix        user:fix-branch   OPEN

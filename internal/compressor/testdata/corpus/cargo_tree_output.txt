@@ -1,0 +1,5 @@
+cargo tree
+myapp v0.1.0
+├── serde v1.0.0
+│   └── serde_derive v1.0.0
+└── tokio v1.0.0

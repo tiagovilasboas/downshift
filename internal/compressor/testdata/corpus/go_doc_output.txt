@@ -1,0 +1,4 @@
+go doc fmt.Println
+package fmt // import "fmt"
+
+func Println(a ...any) (n int, err error)

@@ -208,7 +208,8 @@ func TestRun_RefusesNonAllowlisted(t *testing.T) {
 		{"/usr/bin/git", "status"},
 		{"git", "--version"},
 		{"git", "-c", "core.pager=x", "log"},
-		{"go", "build"},
+		{"sudo", "rm", "-rf", "/"},
+		{"eval", "echo", "test"},
 		{"go"},
 	} {
 		r, out, errOut := run(t, argv, true)

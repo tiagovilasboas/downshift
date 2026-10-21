@@ -177,7 +177,7 @@ func TestDecide(t *testing.T) {
 		{"docker rm not allowed", "docker rm my-container", false, "", "", ReasonNotAllowlisted},
 		{"docker run not allowed", "docker run nginx", false, "", "", ReasonNotAllowlisted},
 
-		{"go build", "go build ./...", false, "", "", ReasonNotAllowlisted},
+		{"go build", "go build ./...", true, FamilyGoBuild, "'/opt/ds/downshift' compact -- go build ./...", ReasonAllowlisted},
 		{"bare go", "go", false, "", "", ReasonNotAllowlisted},
 		{"path to git", "/usr/bin/git status", false, "", "", ReasonNotAllowlisted},
 		{"git global option first", "git -C /tmp status", false, "", "", ReasonNotAllowlisted},
