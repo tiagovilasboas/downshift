@@ -2,11 +2,30 @@
 
 Downshift is organized around **Domain Architecture Layers** following Clean Architecture, Single Responsibility Principle (SRP), and strict domain boundaries. Every domain encapsulates its own logic, telemetry, and contracts without leaky cross-imports or circular dependencies.
 
-Docs are grouped into 5 decoupled domain layers, detailed in [domains/](domains/), plus cross-cutting start guides and governance:
-- **[Domain 1: Subagent Model Routing & Guardrails](domains/subagent-routing.md)** (Core policy, classifier, catalog, quota gate, session discovery)
-- **[Domain 2: Code Intelligence & Context Layer (DCI)](domains/code-intelligence.md)** (Multi-language parsing, reverse call-graph blast radius, BM25 ranking, prompt injection delimiters)
-- **[Domain 3: Output Compaction & Context Optimization](domains/context-optimization.md)** (CLI compaction, sensor, headroom companion)
-- **[Domain 4: Observability, Evidence & Verification](domains/observability-telemetry.md)** (Telemetry, control group A/B, verification report, capability matrix)
+Downshift gives your coding agent the right model and less noise, with no extra AI call. Everything runs locally. Prompts are never stored, nothing goes over the network, and every hook fails open.
+
+## What it does
+
+| Pillar | What you get | Status |
+|---|---|---|
+| **1. Model routing per subagent** | Each subagent gets a right-sized model and effort. When Downshift is unsure, your model stays. About 1 in 10 spawns stay unrouted as a control group. | Implemented. Claude Code Completed (rewrite observed honored); Codex and Cursor Functional; OpenCode Beta; Antigravity and KiroCrew Experimental. See the [harness matrix](reference/harness-matrix.md). |
+| **2. The Compactor** (`downshift compact`) | Shorter output from allowlisted commands. It wraps every `git` subcommand and the listed test and build families (the `git-*` row in the [harness matrix](reference/harness-matrix.md#shell-command-rewrite-downshift-compact-on-by-default-2026-10-19)). It keeps the exit code and leaves failures raw. It is not the `/compact` command. | Implemented, on by default. Automatic rewrite into compact form is Claude Code only; elsewhere the agent runs `downshift compact -- <command>`. |
+| **3. DCI** (code intelligence) | The agent reads only the code a change touches. Opt-in. | Implemented (v0.4). Bytes and latency measured; answer quality not measured. |
+
+Numbers keep their qualifiers:
+
+- Routing: up to about 12% cheaper on mechanical tasks in one controlled trial (one operator, three runs per cell, Claude Code, 2026-10-15, list price, checks verify structure, not quality). No savings from natural use are attributable yet. See [the A/B record](evidence/subagent-routing-ab-2026-10-15.md).
+- Compaction: measured in bytes on a synthetic test corpus. 82.3% on the 26 of 248 files it compacted, 23.7% overall. Your mix will differ. See [the corpus record](evidence/compaction-corpus-2026-10-21.md).
+- DCI: cold 295 ms, warm p95 5.64 ms, packs of 568 to 2801 bytes. See [the DCI record](evidence/dci-v04-blast-radius.md).
+- Reports show tokens, not dollars.
+
+Where to go next: [install](guides/install.md), [how it works](design/architecture.md), [evidence](guides/evidence.md), [capability matrix](reference/capability-matrix.md).
+
+Docs are grouped into 5 domain layers, detailed in [domains/](domains/), plus start guides and governance:
+- **[Domain 1: Subagent Model Routing & Guardrails](domains/subagent-routing.md)** (core policy, classifier, catalog, quota gate, session discovery)
+- **[Domain 2: Code Intelligence & Context Layer (DCI)](domains/code-intelligence.md)** (multi-language parsing, reverse call-graph blast radius, BM25 ranking, prompt injection delimiters)
+- **[Domain 3: Output Compaction & Context Optimization](domains/context-optimization.md)** (the Compactor, sensor, context policy)
+- **[Domain 4: Observability, Evidence & Verification](domains/observability-telemetry.md)** (telemetry, control group, verification report, capability matrix)
 - **[Domain 5: Harness Adapters & Packaging](domains/harness-adapters-packaging.md)** (Claude Code, Cursor, Codex, OpenCode, plugins, mods)
 
 Markdown file names under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`, `SKILL.md`, `AGENTS.md`) keep their exact casing.
@@ -19,9 +38,9 @@ Markdown file names under `docs/` are lowercase kebab-case; only names a tool re
 |---|---|---|---|---|---|
 | **Domain 1: Subagent Model Routing & Guardrails** | Core Domain / Business Logic | Deterministic subagent routing, signal scoring, hash boost, R1-R9 guardrails, project tier floor, session discovery & quota gates. Bounded reads, fail open. | `internal/core`, `internal/classify`, `internal/fuse`, `internal/session`, `internal/quotamodel`, `internal/catalog` | Implemented; honored on Claude Code | [domains/subagent-routing.md](domains/subagent-routing.md), [design/architecture.md](design/architecture.md) |
 | **Domain 2: Code Intelligence & Context Layer (DCI)** | Autonomous Subsystem | Zero-runtime AST symbol & call extraction across 7+ languages, incremental inverted index, reverse call-graph blast radius (`InvertedIndex.Callers`), BM25 ranking (Production-First + Co-Reference boost), conversational abstention, structural packaging with prompt injection delimiters. Zero imports with core/classify. | `internal/codeintel` | Implemented (v0.1 – v0.4) | [domains/code-intelligence.md](domains/code-intelligence.md), [design/code-intelligence.md](design/code-intelligence.md) |
-| **Domain 3: Output Compaction & Context Optimization** | Supporting Domain / Optimization | Native AST/JSON context compressor (`safe` mode CLI), observe-only tool output sensor (PostToolUse byte accounting), Headroom companion detection & telemetry (`context enable headroom`), session context policy (`opusplan`, plan mode). | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` | Implemented, observe-only | [domains/context-optimization.md](domains/context-optimization.md), [design/context-optimization.md](design/context-optimization.md) |
+| **Domain 3: Output Compaction & Context Optimization** | Supporting Domain / Optimization | Native AST/JSON context compressor (`safe` mode CLI), observe-only tool output sensor (PostToolUse byte accounting), companion detection, session context policy (`opusplan`, plan mode). | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` | Implemented, observe-only | [domains/context-optimization.md](domains/context-optimization.md), [design/context-optimization.md](design/context-optimization.md) |
 | **Domain 4: Observability, Evidence & Verification** | Telemetry, Auditing & Evaluation | Prompt-free event logging (`events.jsonl`), 10% unrouted control group A/B, token savings reports (`stats`, `report`), verification reports (`verification: passed|failed|none`), capability matrix, evidence ladder (rungs A-E). | `internal/telemetry`, `internal/childend`, `internal/hookport`, `internal/benchmark`, `internal/outcome` | Implemented; estimates, not an invoice | [domains/observability-telemetry.md](domains/observability-telemetry.md), [reference/capability-matrix.md](reference/capability-matrix.md) |
-| **Domain 5: Harness Adapters & Packaging** | Interface Adapters & Delivery | Harness-specific edge I/O (Claude Code, Cursor, Codex, OpenCode, KiroCrew, Antigravity), fail-open runner (`runHookAdapter`), 5 packaging layers (Memory, Skills, Hooks, Agents, Plugin), Claude Code plugin, mods (`cache-tax`, `downshift-router`). Zero policy in adapters. | `internal/adapters/*`, `cmd/downshift`, `plugins`, `mods` | Completed to Experimental per harness | [domains/harness-adapters-packaging.md](domains/harness-adapters-packaging.md), [reference/harness-matrix.md](reference/harness-matrix.md) |
+| **Domain 5: Harness Adapters & Packaging** | Interface Adapters & Delivery | Harness-specific edge I/O (Claude Code, Cursor, Codex, OpenCode, KiroCrew, Antigravity), fail-open runner (`runHookAdapter`), 5 packaging layers (Memory, Skills, Hooks, Agents, Plugin), Claude Code plugin, mods (`downshift-router`). Zero policy in adapters. | `internal/adapters/*`, `cmd/downshift`, `plugins`, `mods` | Completed to Experimental per harness | [domains/harness-adapters-packaging.md](domains/harness-adapters-packaging.md), [reference/harness-matrix.md](reference/harness-matrix.md) |
 
 ---
 
@@ -36,8 +55,8 @@ Markdown file names under `docs/` are lowercase kebab-case; only names a tool re
 | [guides/claude-code.md](guides/claude-code.md) | Primary harness: opusplan, baseline inference, plan mode, emitted vs honored vs used |
 | [guides/evidence.md](guides/evidence.md) | Evidence ladder: list price, telemetry estimate, controlled benchmark, real tasks, cost per completed task |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Reproducible comparison: fixed Opus vs native opusplan vs opusplan + Downshift |
-| [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Protocol: routing vs output cutting (Headroom, `downshift compact`) vs a third-party output-cutting tool, with a pre-registered cut criterion |
-| [guides/when-to-use.md](guides/when-to-use.md) | Downshift vs gateways and direct SDK; Claude Code is the primary harness |
+| [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Protocol: routing vs output cutting (`downshift compact`) with a pre-registered cut criterion |
+| [guides/when-to-use.md](guides/when-to-use.md) | Where Downshift fits, and where something else does; Claude Code is the primary harness |
 | [guides/config.md](guides/config.md) | State dir, env vars, project tier floor, migration |
 | [reference/beta-exit.md](reference/beta-exit.md) | Beta graduation criteria |
 | [reference/prices.md](reference/prices.md) | Where list prices come from, the weekly sync PR, staleness warning, user override |
@@ -98,13 +117,13 @@ Downshift Code Intelligence (DCI) is a zero-runtime, deterministic, privacy-firs
 
 ## Domain 3: Output Compaction & Context Optimization
 
-The context optimization domain manages context window consumption without intercepting or altering model generation in flight. The native compressor provides AST, JSON, text, and test output compaction in `safe` mode as an explicit CLI step (`downshift context compress`). The PostToolUse hook sensor is strictly observe-only: it records tool output bytes and potential token reductions without rewriting tool outputs seen by the model. Companion tools like Headroom (a compression proxy) are detected on PATH and recorded via `downshift context enable headroom`, but never installed, launched, or wrapped. Context policy also configures initial session posture (`opusplan`, plan mode; You should know is opt-in).
+The context optimization domain manages context window consumption without intercepting or altering model generation in flight. The native compressor provides AST, JSON, text, and test output compaction in `safe` mode as an explicit CLI step (`downshift context compress`). The PostToolUse hook sensor is strictly observe-only: it records tool output bytes and potential token reductions without rewriting tool outputs seen by the model. Companion tools (a compression proxy, for example) are detected on PATH and recorded via `downshift context enable headroom`, but never installed, launched, or wrapped. Context policy also configures initial session posture (`opusplan`, plan mode; You should know is opt-in).
 
 | Doc | Type | Topic |
 |-----|------|-------|
 | [domains/context-optimization.md](domains/context-optimization.md) | Domain Hub | Domain specification: native compressor, observe-only sensor, companion integration |
 | [design/context-optimization.md](design/context-optimization.md) | Design | Native context compressor, observe-only tool output sensor, companion contracts, and failure handling |
-| [guides/companions.md](guides/companions.md) | Guide | Companions: Headroom proxy detection, recommended Claude Code mods (You should know, Token Weather, Replay Theater, reflect-mod) |
+| [guides/companions.md](guides/companions.md) | Guide | Companions: proxy detection, recommended Claude Code mods (You should know, Token Weather, Replay Theater, reflect-mod) |
 | [../skills/cost-reducer/SKILL.md](../skills/cost-reducer/SKILL.md) | Skill | Agent skill: cut session tokens in fixed order (routing, fixed context, tool output, policy, misroutes) |
 | [evidence/report-e2e/status-compaction.json](evidence/report-e2e/status-compaction.json) | Evidence | Context compaction status telemetry record |
 | [evidence/report-e2e/compaction-block.png](evidence/report-e2e/compaction-block.png) | Evidence | Visual evidence of compaction blocks |
@@ -125,7 +144,7 @@ The observability and verification domain delivers empirical proof of routing be
 | [guides/verification.md](guides/verification.md) | Guide | `verification-report`: observed child checks and estimated cost by tier, sensor limits |
 | [guides/evidence.md](guides/evidence.md) | Guide | Evidence ladder: list price, telemetry estimate, controlled benchmark, real tasks, cost per task |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Guide | Protocol for reproducible three-arm comparison (Opus vs opusplan vs opusplan+Downshift) |
-| [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Guide | Protocol, not yet run: routing, output cutting and a third-party tool alone, cut criterion |
+| [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Guide | Protocol, not yet run: routing and output cutting, cut criterion |
 | [guides/pilot.md](guides/pilot.md) | Guide | Two-week team pilot methodology: routed vs control |
 | [guides/billing-comparison-template.md](guides/billing-comparison-template.md) | Guide | Template to compare provider billing with `downshift stats --export` |
 | [design/engineering-loop.md](design/engineering-loop.md) | Design | Feedback loop: telemetry, outcome evals, reviewed feedback, and offline tuning |
@@ -163,7 +182,7 @@ The harness adapters and packaging domain connects Downshift's core intelligence
 | [../skills/downshift-setup/SKILL.md](../skills/downshift-setup/SKILL.md) | Skill | Agent skill: install or repair hooks on any harness |
 | [../skills/downshift-audit/SKILL.md](../skills/downshift-audit/SKILL.md) | Skill | Agent skill: audit hook wiring, stats, and fixed context size |
 | [../.claude-plugin/plugin.json](../.claude-plugin/plugin.json) | Packaging | Claude Code plugin definition |
-| [../mods/README.md](../mods/README.md) | Packaging | Claude Code mods: cache-tax, savvy-progress, filetree |
+| [../mods/README.md](../mods/README.md) | Packaging | Claude Code mods: savvy-progress, filetree, downshift-dock |
 | [../mods/downshift-router/README.md](../mods/downshift-router/README.md) | Packaging | Experimental in-process routing mod |
 | [../examples/README.md](../examples/README.md) | Examples | Sample hook JSON payloads across harnesses |
 | [evidence/claude-code-rewrite-honored-2026-10-06.md](evidence/claude-code-rewrite-honored-2026-10-06.md) | Evidence | Observed rewrite honor on Claude Code |
