@@ -933,6 +933,9 @@ func playwrightLinesRecognised(input []byte) bool {
 // Playwright: PASS (N passed in <time>)
 // If not strictly shorter than raw input, the input is returned.
 func compressPlaywright(input []byte) ([]byte, bool, string) {
+	if linesHaveDangerWord(input, nil) {
+		return input, false, "playwright_danger_word_preserved"
+	}
 	if !playwrightLinesRecognised(input) {
 		return input, false, "playwright_unrecognised_line_preserved"
 	}
@@ -1087,6 +1090,9 @@ func isKnownJestTranscript(input []byte) bool {
 // TSC: PASS (0 errors)
 // If not strictly shorter than raw input, the input is returned.
 func compressTSC(input []byte) ([]byte, bool, string) {
+	if linesHaveDangerWord(input, reTSCSuccessLine) {
+		return input, false, "tsc_danger_word_preserved"
+	}
 	if !tscLinesRecognized(input) {
 		return input, false, "tsc_unrecognized_line_preserved"
 	}
