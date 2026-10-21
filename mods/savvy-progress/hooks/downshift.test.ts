@@ -204,7 +204,7 @@ test('crew badge: a finished agent still inside the window is counted with the r
 
 test('downshift: the Compactor shows in its own unit and is never added to the tokens moved', async ($, on) => {
   await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
-  expect(await shows($, 'Pane', /59k downshifted · .* · Compactor 4 cmds · 60\.0 KB saved$/)).toBe(true)
+  expect(await shows($, 'Pane', /59k downshifted · .* · Compactor 4 cmds · 60 KB saved$/)).toBe(true)
   expect(await shows($, 'Pane', /estimated|≈|total|nothing to cut/i)).toBe(false)
 })
 
@@ -280,4 +280,26 @@ test('dismiss: the band that follows the live subagents stays away after the dis
   await clock.advance(1000)
   await $.agent.spawn({ tool_use_id: 't3', prompt: 'p', description: 'Work t3', subagentType: 'general-purpose', provider: 'engine', parentModel: 'claude-opus-5-5', background: false, fork: false } as never)
   expect(await bandDrawn($, /running/)).toBe(true)
+})
+
+test('effort: a session where only the effort changed says 0 model, never a model downshift', async ($, on) => {
+  // The owner's real case: two haiku -> haiku rewrites that changed only the effort, nothing moved down.
+  const effortOnly = { ...PANEL, switched: 2, held: 1, model_switched: 0, effort_changed: 2, tokens: { children: 3, saved_children: 0, work_tokens: 25167, work_saved: 0, cache_tokens: 3043758, cache_saved: 0 } }
+  await world($, on, { stdout: JSON.stringify(effortOnly) }, 'S-1')
+  expect(await shows($, 'AbovePrompt', /^Downshift · 0 model · 2 effort · 1 held$/)).toBe(true)
+  expect(await shows($, 'AbovePrompt', /switched/)).toBe(false)
+})
+
+test('compactor: under 10 KB the saving keeps one decimal, from 10 KB it does not', async ($, on) => {
+  const small = { ...PANEL, compactor: { commands: 2, compacted: 1, raw_bytes: 20000, saved_bytes: 9216 } }
+  await world($, on, { stdout: JSON.stringify(small) }, 'S-1')
+  expect(await shows($, 'Pane', /Compactor 2 cmds · 9\.0 KB saved$/)).toBe(true)
+})
+
+test('compactor: big raw output that cut nothing is not called nothing to cut', async ($, on) => {
+  // Over the 4 KB threshold a zero saving means the output was not compactable, not that there was nothing there.
+  const bigNone = { ...PANEL, compactor: { commands: 3, compacted: 0, raw_bytes: 50000, saved_bytes: 0 } }
+  await world($, on, { stdout: JSON.stringify(bigNone) }, 'S-1')
+  expect(await shows($, 'Pane', /Compactor 3 cmds · 0 B saved$/)).toBe(true)
+  expect(await shows($, 'Pane', /nothing to cut/)).toBe(false)
 })
