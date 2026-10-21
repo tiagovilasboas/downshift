@@ -89,7 +89,7 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         if: needs.changes.outputs.go == '1'
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: true
 
       - name: No Go changes
@@ -162,7 +162,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: true
       - name: Build downshift CLI
         run: go build -o downshift ./cmd/downshift
@@ -201,7 +201,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: true
 
       - name: Race detector on changed packages (pull request)
@@ -275,7 +275,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: true
 
       - name: Build downshift for ${{ matrix.goos }}/${{ matrix.goarch }}
@@ -301,7 +301,7 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: "1.27"
+          go-version-file: go.mod
           cache: false # the job that signs and attests must not restore a cache written by other runs
 
       - name: Run goreleaser
