@@ -205,16 +205,33 @@ downshift models check         # Verify catalog pricing
 
 ## Harness Support
 
-| Harness | Compaction | Model Routing | Setup |
-|---------|------------|---------------|-------|
-| **Claude Code** | ✅ Auto | ✅ Full | `downshift setup` |
-| **Cursor** | ✅ Manual | ✅ Full | `downshift setup` |
-| **Codex** | ✅ Manual | ✅ Full | `downshift setup` |
-| **KiroCrew** | ✅ Manual | ⚠️ Allow/block only | Steering/Skill |
-| **OpenCode** | ✅ Manual | 🔄 Beta | Plugin |
+Downshift was built with Claude Code and works across all major coding agent harnesses:
 
-**Manual** = agent wraps commands via skill/steering instruction.
-**Auto** = plugin rewrites commands automatically.
+| Harness | Compaction | Model Routing | Status | Setup |
+|---------|------------|---------------|--------|-------|
+| **Claude Code** | ✅ Auto | ✅ Full | 🟢 Primary | `downshift setup claude-code` |
+| **Codex** | ✅ Auto | ✅ Full | 🟢 Production | `downshift setup codex` |
+| **Cursor** | ✅ Auto | ✅ Full | 🟢 Production | `downshift setup cursor` |
+| **KiroCrew** | ✅ Via steering | ⚠️ Policy mode | 🟢 Production | `downshift setup kirocrew` |
+| **OpenCode** | ✅ Auto | ✅ Full | 🟡 Beta | Plugin |
+
+### How Each Harness Works
+
+- **Claude Code** — Native PreToolUse/PostToolUse hooks. Downshift rewrites shell commands
+  automatically via plugin. Model routing via spawn interception. *This is the reference implementation.*
+
+- **Codex** — Same hook architecture as Claude Code. Full compaction and routing support.
+
+- **Cursor** — Rules-based integration. Compaction via command wrapper, routing via
+  composer rules.
+
+- **KiroCrew** — Steering-based. Agent follows `downshift-compact.md` steering to wrap
+  commands. Model routing is policy-mode only (allow/block, no rewrite) because
+  KiroCrew's preToolUse hook has no `updated_input` channel.
+
+- **OpenCode** — Plugin-based integration. Currently in beta testing.
+
+Run `downshift setup` to auto-detect and configure all installed harnesses.
 
 ---
 
