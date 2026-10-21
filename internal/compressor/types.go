@@ -65,6 +65,18 @@ const (
 	FormatCargoBuild   Format = "cargo_build"   // Rust cargo build
 	FormatGoBuild      Format = "go_build"      // Go go build
 	FormatDotnetBuild  Format = "dotnet_build"  // .NET dotnet build (MSBuild)
+
+	// Terraform
+	FormatTerraformPlan Format = "terraform_plan" // terraform plan
+
+	// Dependency trees
+	FormatNpmLs      Format = "npm_ls"       // npm ls / pnpm ls / yarn list
+	FormatCargoTree  Format = "cargo_tree"   // cargo tree
+	FormatGoModGraph Format = "go_mod_graph" // go mod graph
+
+	// Docker build/push
+	FormatDockerBuild Format = "docker_build" // docker build
+	FormatDockerPush  Format = "docker_push"  // docker push
 )
 
 // Result is the deterministic outcome of a compression attempt.
