@@ -38,11 +38,10 @@ command to exist.
   under the pointer); the separator is brand green `#22C55E` only while at least one of the two panels
   is open and grey `#5C6168` otherwise. No background is set.
 
-## Install and test
+## Status and test
 
-```text
-/plugin install downshift-dock@downshift
-```
+Not in the marketplace since 2026-10-21 (owner decision): `setup` does not install it and
+no install command is offered. The code stays here for maintainers.
 
 ```bash
 claude plugin validate mods/downshift-dock
