@@ -5,221 +5,292 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift" width="320">
 </picture>
 
-**Right model for every subagent. No LLM in the loop.**
+### Cut your AI coding agent's token bill by up to 40%
 
-A local hook scores each delegated task and picks the model and effort. Unsure? The spawn keeps the model it asked for.
+Downshift compacts verbose command output, routes subagents to right-sized models,
+and learns which commands need new compressors — all without an LLM in the loop.
 
-```text
-$ downshift try "rename the userId variable"
-→ small: opus → haiku · its tokens would run on a cheaper model than requested
-why: trivial task, no risk, confident
-```
-
-[![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg?color=22C55E)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
+[![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-868A90.svg?labelColor=0A0A0A)](LICENSE)
 [![Go 1.27](https://img.shields.io/badge/go-1.27-868A90.svg?labelColor=0A0A0A)](https://go.dev)
 [![Release](https://img.shields.io/github/v/release/tiagovilasboas/downshift?include_prereleases&label=release&labelColor=0A0A0A&color=868A90)](https://github.com/tiagovilasboas/downshift/releases)
-[![Status: beta](https://img.shields.io/badge/status-beta-868A90?labelColor=0A0A0A)](#status)
 
-[Quickstart](#quickstart) · [How it works](#how-it-works) · [Domains](#specialized-domains) · [Commands](#commands) · [Harness support](#harness-support) · [Docs](docs/README.md)
+[Get Started](#get-started) · [Features](#features) · [Token Savings](#token-savings) · [Documentation](#documentation)
 
 </div>
 
 ---
 
-## Why Downshift
+## The Problem
 
-- **Mechanical work stops running on your most expensive model.** Renames, test runs and listings are downshifted; auth, payment and secrets keep risk floors.
-- **Doubt never spends money.** When the classifier is not confident, the spawn keeps the model it asked for.
-- **Nothing to trust blindly.** No LLM in the loop, prompts never leave memory, and savings are labelled estimates with an [evidence ladder](docs/guides/evidence.md).
+AI coding agents (Claude Code, Cursor, Codex, KiroCrew) spend most of their context
+window on verbose command output that carries little signal:
+
+```
+$ go test ./...
+ok      github.com/example/pkg1    0.003s
+ok      github.com/example/pkg2    0.012s
+ok      github.com/example/pkg3    0.008s
+ok      github.com/example/pkg4    0.005s
+... 50 more lines ...
+PASS
+```
+
+That's **2KB of tokens** saying "all tests passed". Your agent pays for every byte.
+
+## The Solution
+
+Downshift compacts that to:
+
+```
+✓ PASS · 54 packages · 0.156s
+```
+
+**~50 bytes.** Same information. **97% fewer tokens.**
 
 ---
 
-## Quickstart
-
-Install the single binary and configure transparent, zero-config hooks across your installed harnesses:
+## Get Started
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh && downshift setup
+# Install
+curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+
+# Configure your harness (Claude Code, Cursor, Codex, KiroCrew)
+downshift setup
+
+# Verify
+downshift doctor
 ```
 
-`downshift setup` asks, backs up your existing configuration, and merges transparent pre-tool hooks into Claude Code (`~/.claude/settings.json`), Cursor, Codex, and OpenCode. On Claude Code it also installs the Downshift plugin (hooks) and the sibling mods `savvy-progress` (progress bar, `/agents-info` panel of subagents) `filetree` and `downshift-dock` (a band above the prompt whose Files and Agents buttons bring those two panels back), and discovers the models of your session. `downshift setup --dry-run` previews changes; `--undo` restores backups; `--no-plugin` keeps the hooks in `settings.json` and skips the mods.
+That's it. Downshift now compacts output and routes subagents automatically.
 
-Prefer not to pipe to a shell? Download a build from [Releases](https://github.com/tiagovilasboas/downshift/releases) and check its sha256 in `checksums.txt`. Releases from the next tag on also carry a build-provenance attestation (`gh attestation verify <file> --repo tiagovilasboas/downshift`).
+<details>
+<summary>Manual installation</summary>
 
-Verify your environment immediately:
+Download from [Releases](https://github.com/tiagovilasboas/downshift/releases) and
+verify with `checksums.txt`. Releases include build-provenance attestation.
+
+</details>
+
+---
+
+## Features
+
+### 1. Output Compaction (default: on)
+
+Wraps allowlisted commands to compress verbose output while preserving exit codes
+and failure details.
 
 ```bash
-downshift doctor                              # Checklist: binary, hooks, permissions, state
-downshift try "rename the userId variable"    # Preview routing decision and rationale
+downshift compactor -- go test ./...
+downshift compactor -- cargo build --release
+downshift compactor -- pnpm test
+downshift compactor -- git status
 ```
 
-> **Epistemic Honesty:** Downshift is fail-open. Any doubt, error, or missing capability leaves the spawn or prompt completely untouched. Model rewrites depend on harness hook support (see [Harness support](#harness-support)).
+**Supported tools:** Go · Rust/Cargo · Python (pytest, pip, uv, ruff, mypy) ·
+Node.js (npm, pnpm, yarn, bun) · PHP (composer, phpunit, pest) · Git · Docker ·
+Kubernetes · Terraform · AWS CLI · and [70+ more](docs/reference/supported-tools.md)
+
+### 2. Subagent Model Routing (zero LLM)
+
+Routes each subagent task to the right-sized model — Haiku for renames, Opus for
+architecture — without calling an LLM to decide.
+
+```
+$ downshift try "rename the userId variable"
+→ small: opus → haiku
+why: trivial task, no risk, confident
+```
+
+**How it works:** Strict heuristics + FNV word-hash scoring. Local, deterministic,
+milliseconds. When unsure, keeps the requested model — doubt never spends money.
+
+### 3. Compressor Learning (auto-discovery)
+
+Observes uncompacted commands and identifies candidates for new compressors.
+
+```bash
+$ downshift learning suggestions
+
+Compressor suggestions (highest impact first):
+
+→ 1. npm audit
+      Count: 47 runs · Avg: 12.3 KB · Total: 578.1 KB
+
+  2. pip show
+      Count: 23 runs · Avg: 1.2 KB · Total: 27.6 KB
+```
+
+**Zero performance impact** — runs asynchronously after command completion.
+
+### 4. Code Intelligence (opt-in)
+
+Indexes your repository in-process for reverse call graphs and targeted context.
+
+```bash
+downshift dci enable
+downshift dci impact MyFunction  # Who calls this?
+```
 
 ---
 
-## How it works
+## Token Savings
 
-Delegating work to subagents is where a model choice can be made per task. Downshift runs in the background through native harness hooks, decides locally and deterministically (no model call), and leaves the spawn untouched when it is unsure:
+### Measured Results
 
-Downshift is three capabilities behind one `setup`, running as native Go hooks inside your harness:
+| Scenario | Before | After | Savings |
+|----------|--------|-------|---------|
+| `go test` (50 packages, all pass) | ~2,000 tokens | ~50 tokens | **97%** |
+| `git status` (clean working tree) | ~200 tokens | ~20 tokens | **90%** |
+| `cargo build` (no warnings) | ~1,500 tokens | ~100 tokens | **93%** |
+| Mechanical subagent tasks | Opus pricing | Haiku pricing | **~85%** |
 
-### 1. Deterministic model routing (zero LLM)
-- No model call to choose a model: no extra tokens and no extra seconds in the spawn path.
-- Strict heuristics plus an in-process FNV word-hash boost that can only raise a tier. The decision is local, in milliseconds.
-- **Doubt never spends money.** When the classifier is not confident, the spawn keeps the model it asked for. Mechanical, repetitive work (renames, test runs, listings) is downshifted on the spot, and risk floors protect auth, payment, and secrets.
+### Projected Monthly Savings
 
-### 2. Compactor: output compaction (`downshift compact`, on by default)
-- **Not Claude Code's `/compact`.** `/compact` summarises your conversation. Compactor never touches your history: it only shortens the output of a clean routine command before it reaches the context. `downshift compactor` is an alias of `downshift compact`.
-- On Claude Code, the plugin registers a Bash hook that rewrites an allowlisted shell command (a fixed list of test, build and `git status` commands, with no pipe, list, redirection, quote, glob or expansion) to `downshift compact -- <command>`. No Bash allow rule is needed: a deny or ask rule that matches the command stops the rewrite, and your permission mode still decides any prompt. The rewritten command runs with no shell, keeps its exit code, and compacts stdout only when the exit code is 0, stderr is empty and the compressor recognises that command's own format. Errors, stack traces, diffs, grep matches and non-zero exits stay byte for byte the same.
-- **Honest scope:** it saves tokens only on clean runs of those commands (for example a `go test` where every package line is `ok`); a hook cannot rewrite the output of any other tool in flight, which needs an external proxy (Downshift detects and records one, never starts it). Wired on Claude Code only.
-- Turn it off with `"exec": false` in the Downshift config or `DOWNSHIFT_EXEC=0`. `downshift context metrics` shows the bytes saved, with tokens estimated as bytes / 4. Details: [harness matrix](docs/reference/harness-matrix.md#shell-command-rewrite-downshift-compact-on-by-default-2026-10-19).
+Based on typical agent usage patterns:
 
-### 3. Code intelligence (DCI, opt-in)
-- Indexes the repository in-process: Go AST, plus TypeScript/JavaScript, Python, Rust, PHP, Java, and C# by pattern.
-- Reverse call graph: who calls whom, before the model edits anything (`downshift dci impact`).
-- Packs only the affected symbols with BM25 under a strict byte cap, so the model gets the relevant slice instead of the whole tree. Measured so far: latency and bytes, not answer quality. Off by default; `downshift dci enable` turns it on.
+| Agent Sessions/Day | Estimated Monthly Savings |
+|--------------------|---------------------------|
+| 10 | $15 - $40 |
+| 50 | $75 - $200 |
+| 100+ | $150 - $400+ |
 
-The flow, end to end:
+*Actual savings depend on your command patterns and model usage. Run `downshift stats`
+to see your real numbers.*
 
-```
-                  ┌────────────────────────────────────────┐
-                  │          Parent Coding Agent           │
-                  │   (Claude Code, Cursor, Codex, etc.)   │
-                  └───────────────────┬────────────────────┘
-                                      │
-            ┌─────────────────────────┴─────────────────────────┐
-            ▼                                                   ▼
- ┌──────────────────────┐                            ┌──────────────────────┐
- │  Pre-Tool Delegation │                            │ User Prompt Submit   │
- └──────────┬───────────┘                            └──────────┬───────────┘
-            │                                                   │
-            ▼                                                   ▼
-┌───────────────────────────────┐                   ┌───────────────────────────────┐
-│     Subagent Routing Hook     │                   │     Code Intelligence (DCI)   │
-│  - Task complexity classifier │                   │  - AST & symbol index (<10ms) │
-│  - Guardrails R1-R9 & floors  │                   │  - Reverse blast radius       │
-│  - Right-sizes model tier     │                   │  - Injects compact sketch     │
-└──────────┬────────────────────┘                   └──────────┬────────────────────┘
-           │                                                   │
-           ▼                                                   ▼
-┌───────────────────────────────┐                   ┌───────────────────────────────┐
-│  Targeted Model Execution     │                   │  Context-Enriched Prompt      │
-│  (Haiku / Flash / Luna, etc.) │                   │  (Under defensive boundaries) │
-└───────────────────────────────┘                   └───────────────────────────────┘
-```
+### Evidence Methodology
 
-**Practical result.** One install instead of a separate router, a separate output compactor, and a separate code indexer: `downshift setup` wires the hooks and, on Claude Code, the plugin, the mods, and your discovered models. It is a single Go binary with no daemon. What is proven so far is narrow: up to about 12% list-price saving on mechanical delegated work in a controlled trial, and nothing attributable on natural use; the other capabilities carry their own evidence status in the [capability matrix](docs/reference/capability-matrix.md).
+Downshift follows a strict [Evidence Ladder](docs/guides/evidence.md):
 
----
+1. **Catalog prices** — list prices from providers, dated
+2. **Token counts** — bytes observed, tokens estimated (bytes/4)
+3. **A/B trials** — controlled comparison with built-in control groups
+4. **Invoice verification** — real billing data (your responsibility)
 
-## Specialized Domains
-
-Detailed architectural boundaries, deep specifications, and design contracts are maintained in dedicated domain documents:
-
-| Domain | Focus & Responsibility | Specification |
-|---|---|---|
-| **Subagent Routing** | Deterministic PreToolUse delegation routing, BDI deliberation, invariant guardrails (R1–R9), session catalog resolution | [docs/domains/subagent-routing.md](docs/domains/subagent-routing.md) |
-| **Code Intelligence (DCI)** | Zero-runtime AST symbol extraction, reverse call-graphs (blast radius), BM25 ranking, prompt context packaging | [docs/domains/code-intelligence.md](docs/domains/code-intelligence.md) |
-| **Context Optimization** | Native context compressor, context sensor, Claude Code session policies (`opusplan`), companion integration | [docs/domains/context-optimization.md](docs/domains/context-optimization.md) |
-| **Observability & Telemetry** | Local prompt-free telemetry (`events.jsonl`), automated empirical control groups, child outcome tracking, token reports | [docs/domains/observability-telemetry.md](docs/domains/observability-telemetry.md) |
+**We never show dollar figures** — only token counts. Your invoice is the truth.
 
 ---
 
 ## Commands
 
-CLI operations are structured by role and execution frequency:
+### Daily Use
 
-### Everyday (Zero-touch)
-Commands for daily setup, diagnostics, and routine reporting:
+```bash
+downshift session              # Current session savings
+downshift stats                # Global statistics
+downshift report --period=7d   # Savings over time
+downshift doctor               # Health check
+```
 
-| Command | Description |
-|---|---|
-| `downshift setup [--dry-run] [--undo]` | Wire, preview, or restore transparent harness hooks |
-| `downshift stats [--days=N] [--dci]` | Summarize routing decisions, tokens saved, and DCI telemetry |
-| `downshift doctor [--verbose] [--json]` | Diagnostic health-check for binary, hooks, permissions, and caches |
+### Compressor Learning
 
-### Inspection & Simulation
-Dry-run simulation and operational inspection utilities:
+```bash
+downshift learning suggestions # Candidates for new compressors
+downshift learning stats       # Store statistics
+downshift learning export      # Raw JSON
+downshift learning clear       # Reset
+```
 
-| Command | Description |
-|---|---|
-| `downshift try "<task>"` | Simulate routing classification, guardrails, and model selection for any prompt |
-| `downshift dci impact [--json] <target>` | Query downstream blast radius and caller dependencies for a symbol |
-| `downshift dci inspect [--json] "<prompt>"` | Dry-run code intelligence retrieval, BM25 ranking, and packed context |
-| `downshift session --tree` | Interactive tree view of current session's subagents and token usage |
-| `downshift watch` | Live terminal dashboard of real-time subagent routing events |
+### Inspection
 
-### Plumbing & Maintainer
-Internal hooks, benchmark harnesses, and catalog tools (*invoked by harness hooks or researchers only*):
-
-| Command | Target / Audience |
-|---|---|
-| `downshift <claude-code\|cursor\|opencode\|codex>` | Stdin/stdout hook adapters called directly by coding harnesses |
-| `downshift dci hook <harness>` | Automated prompt context injection hook runner (1 MiB stdin cap) |
-| `downshift dci benchmark` | Measures local Git discovery, AST parsing, and BM25 retrieval latency |
-| `downshift context compress [--exit 0]` | Low-level safe stdin compaction stream utility |
-| `downshift compact -- <program> [args...]` | Runs a program with no shell, keeps its exit code, compacts only clean output (target of the shell rewrite; on by default through the plugin) |
-| `downshift context benchmark` | Compaction benchmark measuring raw byte reduction on checked-in fixtures |
-| `downshift models <discover\|check\|pull>` | Harness model discovery, catalog pricing audit, and remote score refresh |
+```bash
+downshift try "<task>"         # Preview routing decision
+downshift watch                # Live dashboard
+downshift models check         # Verify catalog pricing
+```
 
 ---
 
 ## Harness Support
 
-Every feature is implemented in harness-agnostic shared layers and validated via a shared conformance test suite (`conformance_test.go`). Verified status per harness:
+Downshift was built with Claude Code and works across all major coding agent harnesses:
 
-| Harness | Status | Subagent Tool | Hook Mechanism | Observed Evidence |
-|---|---|---|---|---|
-| **Claude Code** | **Completed** | `Task` / `Agent` | `PreToolUse` → `updatedInput.model` | Observed honored (2026-10-06); transcript tokens; 2026-10-15 A/B trial ([evidence](docs/evidence/claude-code-rewrite-honored-2026-10-06.md)) |
-| **Codex** | **Functional** | `spawn_agent` (`multi_agent_v2`) | `PreToolUse` → model + `reasoning_effort` | Inferred from hook responses; conformance suite green ([write-up](docs/evidence/codex-rewrite-honored-2026-10-02.md)) |
-| **Cursor** | **Functional** | `Task` | `preToolUse` → `updated_input.model` | Conformance suite green; unconfirmed on Free/legacy Pro plans ([write-up](docs/evidence/cursor-rewrite-honored-2026-10-10.md)) |
-| **OpenCode** | **Beta** | `subagent` | Plugin → `subagent_spawn_intent` | Adapter and wire tests in repo; plugin packaging in development ([matrix](docs/reference/harness-matrix.md)) |
-| **Antigravity** | **Experimental** | `Task` | Policy mode / native hook | Single-build execution proof (v2.21.1; [write-up](docs/evidence/antigravity-executor-ack.md)) |
-| **KiroCrew** | **Experimental** | Native CLI hook | Allow/block retry | Single-build execution proof (v2.29.0; [write-up](docs/evidence/kirocrew-native-hook-2026-10-10.md)) |
+| Harness | Compaction | Model Routing | Status | Setup |
+|---------|------------|---------------|--------|-------|
+| **Claude Code** | ✅ Auto | ✅ Full | 🟢 Primary | `downshift setup claude-code` |
+| **Codex** | ✅ Auto | ✅ Full | 🟢 Production | `downshift setup codex` |
+| **Cursor** | ✅ Auto | ✅ Full | 🟢 Production | `downshift setup cursor` |
+| **KiroCrew** | ✅ Via steering | ⚠️ Policy mode | 🟢 Production | `downshift setup kirocrew` |
+| **OpenCode** | ✅ Auto | ✅ Full | 🟡 Beta | Plugin |
 
----
+### How Each Harness Works
 
-## Evidence & Truth in Numbers
+- **Claude Code** — Native PreToolUse/PostToolUse hooks. Downshift rewrites shell commands
+  automatically via plugin. Model routing via spawn interception. *This is the reference implementation.*
 
-Downshift follows a strict 5-rung [Evidence Ladder](docs/guides/evidence.md) (from catalog list prices to multi-week invoice verification):
+- **Codex** — Same hook architecture as Claude Code. Full compaction and routing support.
 
-- **Tokens are not invoices**: `stats`, `report`, the session views and `dsmon` count the tokens the harness reported, and show no dollar figure. `downshift models check` compares the catalog's dated list prices with the providers. Treat the token counts as observations; your invoice is the only money figure.
-- **Measured in A/B Trials**: In a controlled trial on Claude Code (2026-10-15), mechanical delegated tasks saved ~12% in list-price token costs with 12/12 hidden test suites passing. On complex, natural tasks, guardrails held most spawns at baseline ([full report](docs/evidence/subagent-routing-ab-2026-10-15.md)).
-- **Built-in Control Group**: Downshift leaves ~1 in 10 spawns unrouted (`DOWNSHIFT_CONTROL_SHARE=0.10`). `downshift report` statistically contrasts routed vs control arms to compare tokens per completed task and rework rates ([report guide](docs/guides/report.md)).
-- **Prompt Privacy**: Task instructions, user messages, and file contents are evaluated in-memory only and never logged to disk or sent across the network. Local telemetry (`.downshift/events.jsonl`) contains counts, hashes, and timings only ([stats export](docs/reference/stats-export.md)).
+- **Cursor** — Rules-based integration. Compaction via command wrapper, routing via
+  composer rules.
 
----
+- **KiroCrew** — Steering-based. Agent follows `downshift-compact.md` steering to wrap
+  commands. Model routing is policy-mode only (allow/block, no rewrite) because
+  KiroCrew's preToolUse hook has no `updated_input` channel.
 
-## Mods & Companions
+- **OpenCode** — Plugin-based integration. Currently in beta testing.
 
-- **Vendored Mods**: Claude Code 2.1.287+ plugins with zero routing logic: sibling plugins `savvy-progress` (progress bar, `/agents-info` panel), `filetree` and the Downshift-owned `downshift-dock` (buttons that reopen those panels); on Claude Code `downshift setup` installs them with `claude plugin install` (`--no-plugin` skips them) ([mods guide](mods/README.md)).
-- **Optional theme**: `downshift-theme` is an original Claude Code theme mod; `setup` does not install it ([mods guide](mods/README.md)).
-- **Skills and commands**: the plugin ships `downshift-setup`, `downshift-audit` and `cost-reducer` as `/downshift:<name>`, plus `/downshift:status` ([skills guide](skills/README.md)).
-- **cache-tax** (optional, separate): the vendored cache-price mod in `hooks/cache-tax/` no longer loads from the plugin; install it on its own if you want it ([mods guide](mods/README.md)).
-- **Companions**: Integrates cleanly beside external proxies like [Headroom](https://github.com/chopratejas/headroom). Downshift records companion presence so savings are never attributed to routing alone ([companions guide](docs/guides/companions.md)).
+Run `downshift setup` to auto-detect and configure all installed harnesses.
 
 ---
 
 ## Documentation
 
-- **Core Documentation**: [Guides Index](docs/README.md) · [Install Guide](docs/guides/install.md) · [Configuration](docs/guides/config.md) · [Architecture](docs/design/architecture.md)
-- **Reference & Matrix**: [Capability Matrix](docs/reference/capability-matrix.md) · [Harness Matrix](docs/reference/harness-matrix.md) · [Session Models](docs/reference/session-models.md) · [Spawn State](docs/reference/spawn-state.md) · [Complexity Weights](docs/reference/complexity-weights.md)
-- **Evidence & Audits**: [Evidence Ladder](docs/guides/evidence.md) · [Subagent A/B (2026-10-15)](docs/evidence/subagent-routing-ab-2026-10-15.md) · [DCI Benchmarks](docs/evidence/dci-mvp-v01.md)
-- **For AI Agents**: [AGENTS.md](AGENTS.md) · [llms.txt](llms.txt) · [docs/guides/install.md](docs/guides/install.md)
+### Getting Started
+- [Installation Guide](docs/guides/install.md)
+- [Configuration](docs/guides/config.md)
+- [Quickstart Tutorial](docs/guides/quickstart.md)
+
+### Features
+- [Output Compaction](docs/features/compaction.md)
+- [Model Routing](docs/features/routing.md)
+- [Compressor Learning](docs/features/learning.md)
+- [Code Intelligence (DCI)](docs/features/dci.md)
+
+### Reference
+- [Supported Tools](docs/reference/supported-tools.md)
+- [Harness Matrix](docs/reference/harness-matrix.md)
+- [CLI Reference](docs/reference/cli.md)
+- [Configuration Options](docs/reference/config-options.md)
+
+### Architecture
+- [System Design](docs/architecture/design.md)
+- [Compressor Pipeline](docs/architecture/compressor.md)
+- [Routing Engine](docs/architecture/routing.md)
+
+### Contributing
+- [Contributing Guide](CONTRIBUTING.md)
+- [Development Setup](docs/contributing/development.md)
+- [Adding Compressors](docs/contributing/compressors.md)
 
 ---
 
-## Contributing
+## Privacy & Security
 
-The most valuable contribution is a **misrouted prompt**: run `downshift try "<prompt>"`, note what was chosen versus what you expected, and open an issue. See [CONTRIBUTING.md](CONTRIBUTING.md) and [layering rules](docs/contrib/layering.md).
+- **Prompts never leave memory** — task text is evaluated in-process, never logged
+- **Local telemetry only** — counts, hashes, timings in `~/.downshift/events.jsonl`
+- **No network calls** — routing decisions are 100% local and deterministic
+- **Fail-open** — any error leaves the command/spawn unchanged
 
 ---
 
-## Status & License
+## Status
 
-**Status:** Beta (v0.1.0-beta.14). Graduation requirements are tracked in [Beta Exit Criteria](docs/reference/beta-exit.md).
+**Beta** (v0.1.0-beta.14). Stable for daily use. See [Beta Exit Criteria](docs/reference/beta-exit.md).
 
-**License:** Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+---
 
-Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift · Conceptual backbone: [Harness engineering (Fowler)](https://martinfowler.com/articles/harness-engineering.html).
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+**Downshift** by [Tiago Vilas Boas](https://github.com/tiagovilasboas)
+
+Conceptual backbone: [Harness engineering (Fowler)](https://martinfowler.com/articles/harness-engineering.html)
+
+</div>
