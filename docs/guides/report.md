@@ -97,6 +97,12 @@ The plan lens follows, labelled `Plan lens (tokens only)`. It is for plans with 
   price gap.
 - **Tokens per completed task**, routed against control.
 
+The text report ends with one line, `Tokens saved (estimate): N`: the tokens saved in the window by
+routing plus the Compactor's saved bytes / 4. The Compactor part covers the whole exec log (it is
+not windowed) and bytes / 4 is an estimate, so the sum is an estimate. `--json` keeps the parts
+(`tokens_saved`, `compactor_saved_bytes`, `compactor_tokens_estimate`) and adds
+`tokens_saved_estimate`.
+
 `downshift stats` and every live view (session tree, panel, statusline, watch) show tokens only.
 
 With fewer than 20 completed tasks in either group the report prints

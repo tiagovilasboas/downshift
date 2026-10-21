@@ -1,12 +1,12 @@
 diff --git a/mods/savvy-progress/.claude-plugin/plugin.json b/mods/savvy-progress/.claude-plugin/plugin.json
-index 8389fc0..15f6ad6 100644
+index 8389fc0..a6ceb48 100644
 --- a/mods/savvy-progress/.claude-plugin/plugin.json
 +++ b/mods/savvy-progress/.claude-plugin/plugin.json
 @@ -1,6 +1,6 @@
  {
    "name": "savvy-progress",
 -  "version": "1.2.1",
-+  "version": "1.2.11",
++  "version": "1.2.12",
    "description": "Progress bar above the prompt for /savvy-flow, plus an agents panel (/agents-info): running, finished and planned subagents with model, task progress, context, cost and time.",
    "author": {
      "name": "johnnyvizz",
@@ -49,7 +49,7 @@ index ed52eba..8c40dc5 100644
    await step($, 'claude-haiku-4-5')
    // (20K × 1 + 10K × 5 + 50K × 0.10 + 50K × 2) / 1M = 0.175
 diff --git a/mods/savvy-progress/hooks/register.tsx b/mods/savvy-progress/hooks/register.tsx
-index 5e2e7dd..b1ea0bb 100644
+index 5e2e7dd..b7e2b22 100644
 --- a/mods/savvy-progress/hooks/register.tsx
 +++ b/mods/savvy-progress/hooks/register.tsx
 @@ -11,6 +11,10 @@ const panel = atom({ plugin: 'savvy-progress', key: 'panel' } as const, {
@@ -83,7 +83,7 @@ index 5e2e7dd..b1ea0bb 100644
    en: {
      pane: 'Agents',
 -    cost: 'Cost',
-+    saved: 'Downshifted',
++    saved: 'Tokens saved',
      tokens: 'Tokens',
      time: 'Time',
      collapse: 'Collapse',
@@ -98,7 +98,7 @@ index 5e2e7dd..b1ea0bb 100644
    ru: {
      pane: 'Агенты',
 -    cost: 'Стоимость',
-+    saved: 'Сэкономлено',
++    saved: 'Токенов сэкономлено',
      tokens: 'Токены',
      time: 'Время',
      collapse: 'Свернуть',
@@ -113,7 +113,7 @@ index 5e2e7dd..b1ea0bb 100644
    he: {
      pane: 'סוכנים',
 -    cost: 'עלות',
-+    saved: 'נחסך',
++    saved: 'טוקנים נחסכו',
      tokens: 'טוקנים',
      time: 'זמן',
      collapse: 'כיווץ',
@@ -180,37 +180,23 @@ index 5e2e7dd..b1ea0bb 100644
  
  const TIER_MODEL: Record<string, [model: string, effort: string]> = {
    fable: ['Fable', 'high'],
-@@ -459,6 +474,29 @@ const fmtTokens = (n: number): string =>
+@@ -459,6 +474,15 @@ const fmtTokens = (n: number): string =>
  
  const fmtCost = (usd: number): string => `$${usd < 10 ? usd.toFixed(2) : usd.toFixed(1)}`
  
-+/** Tokens Downshift saved in this session, from the session panel; 0 until it answers. */
-+const savedOf = (): number => (ds && dsSessionKnown ? ds.saved : 0)
++/** Estimated tokens saved (routing + Compactor), from the session panel; 0 until it answers. */
++const savedOf = (): number => (ds && dsSessionKnown ? ds.total : 0)
 +
-+const fmtBytes = (n: number): string =>
-+  n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${Math.round(n)} B`
-+
-+/** Compactor figures, the total of every run in the exec log (measured, every session); null when it never ran. Not tied to the session, so it shows when the session is unknown. Bytes only, never added to the tokens above. */
-+const compactorOf = (): DsCompactor | null => (ds && ds.compactor ? ds.compactor : null)
-+/** The Compactor's label says it is a total, so it never reads as this session's figure. */
-+const COMPACTOR_LABEL = 'Compactor total'
-+
-+/** Under this much raw output and nothing compacted, the Compactor had nothing to cut. */
-+const NOTHING_TO_CUT_BYTES = 4096
-+const compactorNothing = (c: DsCompactor): boolean => c.compacted === 0 && c.rawBytes < NOTHING_TO_CUT_BYTES
-+const compactorCmds = (c: DsCompactor): string => `${c.commands} ${c.commands === 1 ? 'cmd' : 'cmds'}`
-+
-+/** The line after the figures: `Compactor total 4 cmds · 0 B saved`, and `· nothing to cut` when there was nothing to cut. */
-+const compactorSuffix = (): string => {
-+  const c = compactorOf()
-+  if (!c) return ''
-+  return ` · ${COMPACTOR_LABEL} ${compactorCmds(c)} · ${fmtBytes(c.savedBytes)} saved${compactorNothing(c) ? ' · nothing to cut' : ''}`
++/** The final figure, `tokens_saved_estimate` from the session panel: routing tokens saved in this session plus the Compactor's estimate (bytes / 4); the mod only draws it. `~` marks it an estimate. */
++const fmtSaved = (): string => {
++  const n = savedOf()
++  return n > 0 ? `~${fmtTokens(n)}` : fmtTokens(n)
 +}
 +
  const fmtTime = (ms: number): string => {
    const s = Math.max(0, Math.round(ms / 1000))
    const h = Math.floor(s / 3600)
-@@ -469,6 +507,22 @@ const fmtTime = (ms: number): string => {
+@@ -469,6 +493,22 @@ const fmtTime = (ms: number): string => {
  
  const elapsed = (a: AgentRun, at: number): number => (a.endedAt ?? Math.max(at, a.startedAt)) - a.startedAt
  
@@ -233,7 +219,7 @@ index 5e2e7dd..b1ea0bb 100644
  type Planned = PlannedTask & { n: number }
  
  const plannedOf = (f: Flow | null, list: AgentRun[]): Planned[] => {
-@@ -509,25 +563,24 @@ const PANE_CSS = `<style>
+@@ -509,25 +549,24 @@ const PANE_CSS = `<style>
  @media (prefers-reduced-motion: reduce){.live{animation:none}}
  </style>`
  
@@ -271,7 +257,7 @@ index 5e2e7dd..b1ea0bb 100644
    f(7, 22, 2, 4, CLAY, 'la')
    f(17, 22, 2, 4, CLAY, 'la')
    f(11, 22, 2, 4, CLAY, 'lb')
-@@ -535,106 +588,36 @@ const crabBody = (f: Fill, armFront = 0, armCls?: string): void => {
+@@ -535,106 +574,36 @@ const crabBody = (f: Fill, armFront = 0, armCls?: string): void => {
  }
  
  // Pure CSS, run by the compositor: no redraws. Periods divide one second, so the
@@ -384,7 +370,7 @@ index 5e2e7dd..b1ea0bb 100644
    if (status === 'failed') return `<path d="M${x - 4} ${y - 4}l8 8M${x + 4} ${y - 4}l-8 8" stroke="#D0453F" stroke-width="1.8" stroke-linecap="round"/>`
    return `<circle cx="${x}" cy="${y}" r="5" fill="none" stroke="#9a9a96" stroke-width="1.4"/><path d="M${x} ${y - 2.5}v2.8l1.8 1.2" fill="none" stroke="#9a9a96" stroke-width="1.4" stroke-linecap="round"/>`
  }
-@@ -658,8 +641,8 @@ const endText = (W: number, x: number, y: number, words = false): string =>
+@@ -658,8 +627,8 @@ const endText = (W: number, x: number, y: number, words = false): string =>
  const crabWidth = (scale: number): number => Math.round(CRAB_BOX * scale * 100) / 100
  
  // A panel crab at x in a row of width W: on the mirrored side and facing left in Hebrew.
@@ -395,17 +381,16 @@ index 5e2e7dd..b1ea0bb 100644
  
  const svg = (W: number, H: number, body: string): string =>
    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${PANE_CSS}${CRAB_CSS}${body}</svg>`
-@@ -668,17 +651,20 @@ const svg = (W: number, H: number, body: string): string =>
+@@ -668,17 +637,19 @@ const svg = (W: number, H: number, body: string): string =>
  const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): string => {
    const s = tr()
    const gap = 6
 -  const tw = (W - gap * 2) / 3
-+  const cb = compactorOf()
-+  const n = cb === null ? 3 : 4
++  const n = 3
 +  const tw = (W - gap * (n - 1)) / n
    const top = title ? 28 : 0
 -  const tile = (i: number, k: string, v: string) =>
-+  // A tile's text is cut to the tile (`fitText`), so a long Compactor line never runs out of its box.
++  // A tile's text is cut to the tile (`fitText`), so a long value never runs out of its box.
 +  const tile = (i: number, k: string, v: string, vSize = 15) =>
      `<rect class="tile" x="${mx(W, i * (tw + gap), tw)}" y="${top}" width="${tw}" height="40" rx="8"/>
 -<text class="s" ${startText(W, i * (tw + gap) + 9, top + 16)} font-family="${FONT}" font-size="11">${k}</text>
@@ -417,11 +402,11 @@ index 5e2e7dd..b1ea0bb 100644
      headerHeight(title),
      `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
 -${tile(0, s.cost, '≈' + fmtCost(t.cost))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
-+${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, COMPACTOR_LABEL, compactorNothing(cb) ? 'nothing to cut' : `${fmtBytes(cb.savedBytes)} saved`, 12)}`,
++${tile(0, s.saved, fmtSaved())}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
    )
  }
  
-@@ -700,11 +686,13 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
+@@ -700,11 +671,13 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
    const ctx = ctxOf(a)
    const textW = W - 42 - 22
    const meta = [runModel(a)]
@@ -436,7 +421,7 @@ index 5e2e7dd..b1ea0bb 100644
    const steps = a.stepTotal ? `${a.stepDone ?? 0}/${a.stepTotal}${a.stepNote ? ' · ' + a.stepNote : ''}` : ''
    const stepsW = Math.max(0, barW - textWidth(stats, 11) - 12)
    // Without reported steps the bar falls back to the context, drawn grey.
-@@ -712,7 +700,7 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
+@@ -712,7 +685,7 @@ const agentSvg = (W: number, a: AgentRun, at: number): string => {
    return svg(
      W,
      66,
@@ -445,7 +430,7 @@ index 5e2e7dd..b1ea0bb 100644
  <text class="t" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(a.description || a.type, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tier === 'other' ? a.type : tierWord(tier))}</tspan><tspan class="s">  ${xml(meta.join('  ·  '))}</tspan></text>
  ${steps && stepsW > 30 ? `<text class="t" ${startText(W, 42, 49)} font-family="${FONT}" font-size="11" font-variant-numeric="tabular-nums">${xml(fitText(steps, 11, stepsW))}</text>` : ''}
-@@ -732,7 +720,7 @@ const plannedSvg = (W: number, p: Planned): string => {
+@@ -732,7 +705,7 @@ const plannedSvg = (W: number, p: Planned): string => {
    return svg(
      W,
      46,
@@ -454,7 +439,7 @@ index 5e2e7dd..b1ea0bb 100644
  <text class="s" ${startText(W, 42, 18)} font-family="${FONT}" font-size="13" font-weight="600">${xml(fitText(`${p.n}. ${p.title}`, 13, textW))}</text>
  <text ${startText(W, 42, 34)} font-family="${FONT}" font-size="11"><tspan fill="${color}">${xml(tierWord(tier))}</tspan><tspan class="m">  ${xml(meta.filter(Boolean).join('  ·  '))}</tspan></text>
  ${statusMark(mx(W, W - 8), 16, 'planned', color)}
-@@ -742,22 +730,22 @@ ${statusMark(mx(W, W - 8), 16, 'planned', color)}
+@@ -742,22 +715,22 @@ ${statusMark(mx(W, W - 8), 16, 'planned', color)}
  
  const compactSvg = (W: number, list: AgentRun[], planned: Planned[], t: ReturnType<typeof totals>): string => {
    const icons = [
@@ -478,11 +463,11 @@ index 5e2e7dd..b1ea0bb 100644
      32,
      `${body}${more ? `<text class="s" ${startText(W, x, 21, false)} font-family="${FONT}" font-size="12">+${more}</text>` : ''}
 -<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">≈${fmtCost(t.cost)} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
-+<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtTokens(savedOf())} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}${xml(compactorSuffix())}</text>`,
++<text class="s" ${endText(W, W, 21)} font-family="${FONT}" font-size="12" font-variant-numeric="tabular-nums">${fmtSaved()} ${xml(tr().saved.toLowerCase())} · ${fmtTokens(t.tokens)} · ${fmtTime(t.time)}</text>`,
    )
  }
  
-@@ -790,6 +778,165 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
+@@ -790,6 +763,156 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
    void $.ui.open({ id: PANE, title: tr().pane })
  }
  
@@ -496,15 +481,14 @@ index 5e2e7dd..b1ea0bb 100644
 +// Data contract: docs/reference/spawn-state.md in the Downshift repo.
 +
 +type DsSpawn = { tool_use?: string; label: string; saved: number }
-+type DsCompactor = { savedBytes: number; commands: number; compacted: number; rawBytes: number }
 +// modelSwitched and effortChanged are absent from an older binary: undefined, and the summary keeps `N switched`.
 +type DsView = {
 +  switched: number
 +  held: number
 +  modelSwitched?: number
 +  effortChanged?: number
-+  saved: number
-+  compactor: DsCompactor | null
++  saved: number // routing tokens moved to a smaller model, this session
++  total: number // tokens_saved_estimate: routing + Compactor estimate; falls back to `saved` on an older binary
 +  spawns: DsSpawn[]
 +}
 +
@@ -527,7 +511,7 @@ index 5e2e7dd..b1ea0bb 100644
 +  const opt = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
 +  const raw2 = raw as {
 +    tokens?: { work_saved?: unknown; cache_saved?: unknown }
-+    compactor?: { saved_bytes?: unknown; commands?: unknown; compacted?: unknown; raw_bytes?: unknown }
++    tokens_saved_estimate?: unknown
 +    model_switched?: unknown
 +    effort_changed?: unknown
 +  }
@@ -537,15 +521,7 @@ index 5e2e7dd..b1ea0bb 100644
 +    modelSwitched: opt(raw2.model_switched),
 +    effortChanged: opt(raw2.effort_changed),
 +    saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
-+    compactor:
-+      raw2.compactor && typeof raw2.compactor === 'object'
-+        ? {
-+            savedBytes: num(raw2.compactor.saved_bytes),
-+            commands: num(raw2.compactor.commands),
-+            compacted: num(raw2.compactor.compacted),
-+            rawBytes: num(raw2.compactor.raw_bytes),
-+          }
-+        : null,
++    total: opt(raw2.tokens_saved_estimate) ?? num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
 +    spawns: v.spawns
 +      .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
 +      .map(x => ({
@@ -648,7 +624,7 @@ index 5e2e7dd..b1ea0bb 100644
  export const register: Register = (on, options) => {
    on('session.start', async ($, e, next) => {
      const started = await next(e)
-@@ -849,12 +996,13 @@ export const register: Register = (on, options) => {
+@@ -849,12 +972,13 @@ export const register: Register = (on, options) => {
        description: 'Show or hide the panel of subagents: running, finished and planned, with model, context, cost and time',
      })
  
@@ -664,7 +640,7 @@ index 5e2e7dd..b1ea0bb 100644
          await update($, now, () => at)
        })()
      })
-@@ -948,6 +1096,12 @@ export const register: Register = (on, options) => {
+@@ -948,6 +1072,12 @@ export const register: Register = (on, options) => {
        return [...list.filter(a => a.id !== run.id), run].slice(-200)
      })
      await update($, now, () => at)
@@ -677,7 +653,7 @@ index 5e2e7dd..b1ea0bb 100644
      if (e.subagentType.startsWith('savvy-')) {
        const f = await read($, flow)
        await autoOpen($, f && !f.isFinished ? f.title : 'savvy-flow')
-@@ -998,6 +1152,7 @@ export const register: Register = (on, options) => {
+@@ -998,6 +1128,7 @@ export const register: Register = (on, options) => {
    on('turn.complete', async ($, e, next) => {
      const agentId = e.agentId
      if (agentId) {
@@ -685,7 +661,7 @@ index 5e2e7dd..b1ea0bb 100644
        const at = await $.clock.now()
        await update($, agents, list =>
          list.map((a): AgentRun => {
-@@ -1031,15 +1186,17 @@ export const register: Register = (on, options) => {
+@@ -1031,15 +1162,17 @@ export const register: Register = (on, options) => {
      const s = tr()
      const ui = $.ui.resolve(e)
      const { Box, Text, Button } = ui
@@ -704,7 +680,7 @@ index 5e2e7dd..b1ea0bb 100644
      // The pane's title says "Agents"; inside, only the flow's own name.
      const title = f && !f.isFinished ? f.title : ''
  
-@@ -1054,13 +1211,13 @@ export const register: Register = (on, options) => {
+@@ -1054,13 +1187,13 @@ export const register: Register = (on, options) => {
      const toggleDone = (
        <Button
          key="done"
@@ -716,11 +692,11 @@ index 5e2e7dd..b1ea0bb 100644
      )
      const isEmpty = list.length === 0 && planned.length === 0
 -    const summary = `≈${fmtCost(t.cost)}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
-+    const summary = `${fmtTokens(savedOf())} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}${compactorSuffix().replace(' · ', ', ')}`
++    const summary = `${fmtSaved()} ${s.saved.toLowerCase()}, ${fmtTokens(t.tokens)} ${s.tokensWord}, ${fmtTime(t.time)}`
  
      if (e.surface === 'desktop' && 'Svg' in ui) {
        const { Svg } = ui
-@@ -1081,8 +1238,17 @@ export const register: Register = (on, options) => {
+@@ -1081,8 +1214,17 @@ export const register: Register = (on, options) => {
            </Box>
          )
        }
@@ -740,7 +716,7 @@ index 5e2e7dd..b1ea0bb 100644
        const gridH = headerHeight(title) + lines * LINE_H + (running.length + shownDone) * 66 + planned.length * 46
        return (
          <Box flexDirection="column">
-@@ -1093,15 +1259,16 @@ export const register: Register = (on, options) => {
+@@ -1093,15 +1235,16 @@ export const register: Register = (on, options) => {
            ))}
            <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
              <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
@@ -759,7 +735,7 @@ index 5e2e7dd..b1ea0bb 100644
                  <Svg key={a.id} source={agentSvg(W, a, at)} alt={`${a.description}: ${modelName(a.model)}, ${s.isFinished}`} width={W} height={66} />
                ))}
              {planned.length > 0 && section('h-plan', `${s.planned} · ${planned.length}`)}
-@@ -1135,6 +1302,7 @@ export const register: Register = (on, options) => {
+@@ -1135,6 +1278,7 @@ export const register: Register = (on, options) => {
            <Text dimColor wrap="truncate-end">
              {'  '}
              {tier === 'other' ? a.type : tierWord(tier)} · {model}
@@ -767,7 +743,7 @@ index 5e2e7dd..b1ea0bb 100644
              {a.round > 1 ? ` · ${s.round} ${a.round}` : ''}
            </Text>
            <Text wrap="truncate-end">
-@@ -1142,7 +1310,7 @@ export const register: Register = (on, options) => {
+@@ -1142,7 +1286,7 @@ export const register: Register = (on, options) => {
              {progress === null ? <Text dimColor>{ctxBar(ctx, barW)}</Text> : <Text color={color}>{ctxBar(progress * 100, barW)}</Text>}
              <Text dimColor>
                {' '}
@@ -776,12 +752,12 @@ index 5e2e7dd..b1ea0bb 100644
              </Text>
            </Text>
          </Box>
-@@ -1158,11 +1326,12 @@ export const register: Register = (on, options) => {
+@@ -1158,11 +1302,12 @@ export const register: Register = (on, options) => {
            {toggleCompact}
          </Box>
          <Text dimColor>
 -          ≈{fmtCost(t.cost)} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
-+          {fmtTokens(savedOf())} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}{compactorSuffix()}
++          {fmtSaved()} {s.saved.toLowerCase()} · {fmtTokens(t.tokens)} {s.tokensWord} · {fmtTime(t.time)}
          </Text>
 +        {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
          {p.isCompact ? (
@@ -791,7 +767,7 @@ index 5e2e7dd..b1ea0bb 100644
                <Text key={a.id} color={colorOf(tierOf(a.type))}>
                  {STATUS_GLYPH[a.status]}{' '}
                </Text>
-@@ -1178,8 +1347,8 @@ export const register: Register = (on, options) => {
+@@ -1178,8 +1323,8 @@ export const register: Register = (on, options) => {
              {isEmpty && <Text dimColor>{s.empty}</Text>}
              {running.length > 0 && <Text dimColor>{s.running} · {running.length}</Text>}
              {running.map(row)}
@@ -802,7 +778,7 @@ index 5e2e7dd..b1ea0bb 100644
              {planned.length > 0 && <Text dimColor>{s.planned} · {planned.length}</Text>}
              {planned.map(pl => {
                const tier = pl.tier in TIER_COLOR ? pl.tier : 'other'
-@@ -1203,7 +1372,18 @@ export const register: Register = (on, options) => {
+@@ -1203,7 +1348,18 @@ export const register: Register = (on, options) => {
    })
  
    on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -822,7 +798,7 @@ index 5e2e7dd..b1ea0bb 100644
      if (f === null || e.props.hasSurvey) return next(e)
      // Draw this row with the other mods' bands beneath it. Claude Code's own placeholder ({ type: 'engine' }) is
      // never nested: the desktop drops a band that nests it.
-@@ -1213,7 +1393,12 @@ export const register: Register = (on, options) => {
+@@ -1213,7 +1369,12 @@ export const register: Register = (on, options) => {
      const ui = $.ui.resolve(e)
      const { Box, Text, Button } = ui
      const list = await read($, agents)
@@ -836,7 +812,7 @@ index 5e2e7dd..b1ea0bb 100644
      const isWorking = list.some(a => a.status === 'running')
      const crewButton = (
        <Button key="savvy-agents" label={`×${crew}`} plain onPress={() => void togglePane($)} />
-@@ -1225,7 +1410,12 @@ export const register: Register = (on, options) => {
+@@ -1225,7 +1386,12 @@ export const register: Register = (on, options) => {
          label="✕"
          plain
          role="dismiss"
@@ -850,7 +826,7 @@ index 5e2e7dd..b1ea0bb 100644
        />
      )
  
-@@ -1237,11 +1427,14 @@ export const register: Register = (on, options) => {
+@@ -1237,11 +1403,14 @@ export const register: Register = (on, options) => {
        const width = Math.max(180, Math.min(1600, (e.props.bodyColumns || 100) * 8 - 96))
        return (
          <Box flexDirection="column">
@@ -868,7 +844,7 @@ index 5e2e7dd..b1ea0bb 100644
            {below}
          </Box>
        )
-@@ -1252,18 +1445,21 @@ export const register: Register = (on, options) => {
+@@ -1252,18 +1421,21 @@ export const register: Register = (on, options) => {
      const width = Math.max(6, Math.min(40, cols - titleW - 32))
      return (
        <Box flexDirection="column">

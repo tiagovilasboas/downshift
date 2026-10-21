@@ -252,3 +252,21 @@ func share(part, whole int64) float64 {
 }
 
 func percentText(v float64) string { return fmt.Sprintf("%.0f%%", v) }
+
+// TokensSavedEstimate is the one final figure: the tokens routing moved to a
+// cheaper model (work + cache, measured) plus the tokens the Compactor kept
+// out of the context (estimated from bytes / execwrap.BytesPerToken by the
+// caller, who owns the exec log). The sum is an estimate: it mixes a measured
+// part with a bytes-to-tokens proxy, and routing tokens are tokens that ran on
+// a cheaper model, not tokens that were not spent. Zero when neither saved.
+func TokensSavedEstimate(routing TokenSaving, compactorTokens int64) int64 {
+	if compactorTokens < 0 {
+		compactorTokens = 0
+	}
+	return routing.WorkSaved + routing.CacheSaved + compactorTokens
+}
+
+// TokensSavedEstimateLine is the final text: `Tokens saved (estimate): 12.3k`.
+func TokensSavedEstimateLine(total int64) string {
+	return "Tokens saved (estimate): " + formatTokens(total)
+}
