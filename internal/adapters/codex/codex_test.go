@@ -142,6 +142,7 @@ func TestHandle_TaskNameAddsSignal(t *testing.T) {
 		ToolInput: json.RawMessage(`{
 			"task_name": "review_agent",
 			"message": "rename the userId variable to userIdentifier",
+			"fork_turns": "none",
 			"reasoning_effort": "low"
 		}`),
 	}
