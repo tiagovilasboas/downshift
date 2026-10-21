@@ -8,14 +8,22 @@ command -v downshift >/dev/null 2>&1 || return 0 2>/dev/null || exit 0
 # Kill switch: set DOWNSHIFT_SHELL_ALIASES=0 to disable
 [ "${DOWNSHIFT_SHELL_ALIASES:-1}" = "0" ] && return 0 2>/dev/null
 
-# Helper that decides whether to compact or passthrough
+# Helper that decides whether to compact or passthrough.
+# The allowlist lives in the binary: the helper asks it (one extra fork, no
+# run, no output, no log row) and wraps only an allowlisted command. Anything
+# else (go version, go build, git -C, npm install, docker run, ...) runs as
+# typed; the compactor itself would refuse it with exit 126.
 __downshift_wrap() {
   _cmd="$1"; shift
   # Skip if already inside compactor (prevent double-wrap)
   [ -n "${DOWNSHIFT_COMPACTOR_ACTIVE:-}" ] && { command "$_cmd" "$@"; return $?; }
   # Skip in interactive terminal unless forced (preserve human debugging)
   [ -t 1 ] && [ -z "${DOWNSHIFT_FORCE_COMPACT:-}" ] && { command "$_cmd" "$@"; return $?; }
-  DOWNSHIFT_COMPACTOR_ACTIVE=1 downshift compactor -- "$_cmd" "$@"
+  if downshift compactor --allowlisted -- "$_cmd" "$@" >/dev/null 2>&1; then
+    DOWNSHIFT_COMPACTOR_ACTIVE=1 downshift compactor -- "$_cmd" "$@"
+  else
+    command "$_cmd" "$@"
+  fi
 }
 
 # Test runners
@@ -42,7 +50,13 @@ git()     { __downshift_wrap git "$@"; }
 eslint()        { __downshift_wrap eslint "$@"; }
 prettier()      { __downshift_wrap prettier "$@"; }
 staticcheck()   { __downshift_wrap staticcheck "$@"; }
-golangci-lint() { __downshift_wrap golangci-lint "$@"; }
+# A hyphen is not a POSIX function name: dash rejects it and would abort the
+# whole eval. Define it where the shell allows it, alias it elsewhere.
+if (eval 'golangci-lint() { :; }') 2>/dev/null; then
+  eval 'golangci-lint() { __downshift_wrap golangci-lint "$@"; }'
+else
+  alias golangci-lint='__downshift_wrap golangci-lint'
+fi
 
 # Cloud/Infra
 kubectl()   { __downshift_wrap kubectl "$@"; }

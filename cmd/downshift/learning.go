@@ -16,7 +16,7 @@ import (
 // Subcommands:
 //   - suggestions: show commands that would benefit from a compressor
 //   - stats: show learning store statistics
-//   - export: dump the raw store as JSON
+//   - export: dump the store as JSON (shapes and counts, no output text)
 //   - clear: reset the learning store
 func runLearning(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
@@ -69,6 +69,10 @@ func learningShowSuggestions(stdout, stderr io.Writer) int {
 		fmt.Fprintf(stdout, "      Count: %d runs · Avg: %.1f KB · Total: %.1f KB\n", s.Count, avgKB, totalKB)
 		if s.Family != "" {
 			fmt.Fprintf(stdout, "      Family: %s\n", s.Family)
+		}
+		if sh := s.Shape; sh != nil {
+			fmt.Fprintf(stdout, "      Shape: %d lines · %d path-like · %d url-like · %d status-like · %d number-heavy\n",
+				sh.Lines, sh.PathLike, sh.URLLike, sh.StatusLike, sh.NumberHeavy)
 		}
 		fmt.Fprintln(stdout)
 	}

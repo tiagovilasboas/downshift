@@ -128,6 +128,43 @@ downshift compactor -- git status
 **Exit codes:**
 - Returns the wrapped command's exit code
 - Compaction only happens on exit 0 with empty stderr
+- 126 when the command is outside the allowlist (nothing runs)
+
+**Allowlist query** (`--allowlisted`): answers whether argv is allowlisted
+without running it. Exit 0 when it is, 1 when it is not, 2 without the `--`.
+Prints nothing and writes no exec log row. The shell helper from
+`downshift enable` calls it before wrapping.
+
+```bash
+downshift compactor --allowlisted -- go test ./...   # exit 0
+downshift compactor --allowlisted -- docker run x    # exit 1
+```
+
+### `downshift enable`
+
+Print a POSIX sh script that defines shell functions for common tools (go,
+cargo, npm, git, docker, kubectl, pip, gh, ...). Add it to your shell rc:
+
+```bash
+eval "$(downshift enable)"
+```
+
+**Alias:** `shell-init` (legacy)
+
+Each function asks the binary whether the command is allowlisted
+(`compactor --allowlisted`, one extra fork, no run, no log row). An allowlisted
+command runs as `downshift compactor -- <command>`; any other command runs as
+typed with `command`, so `git -C <dir> status`, `npm --version` or
+`docker run` behave exactly as without the helper. The functions only act
+when stdout is not a terminal (agent context, pipes, `$(...)`, CI); an
+interactive terminal always sees the raw output.
+
+**Environment variables:**
+- `DOWNSHIFT_SHELL_ALIASES=0` — the script defines nothing
+- `DOWNSHIFT_FORCE_COMPACT=1` — compact in an interactive terminal too
+
+After upgrading Downshift, re-run `eval "$(downshift enable)"` (or open a new
+shell) so the functions pick up the current script.
 
 ---
 
@@ -155,7 +192,7 @@ downshift learning stats
 
 ### `downshift learning export`
 
-Export raw learning data as JSON.
+Export the learning store as JSON: signatures, counts and output shapes, never output text.
 
 ```bash
 downshift learning export

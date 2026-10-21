@@ -3,37 +3,44 @@
 
 // Package learning observes unrecognised command outputs and identifies
 // candidates for new compressors. It records frequency by command signature
-// (the first N words, never the full command or its arguments) and keeps one
-// sample per signature so a developer can inspect the output shape.
+// (the first N words, never the full command or its arguments) and keeps the
+// Shape of one output per signature so a developer can judge whether a
+// compressor is worth writing.
+//
+// Privacy: the store never holds output text. Schema 2 keeps, per signature:
+//
+//   - signature: the first MaxSignatureWords words, normalised
+//   - count, first_seen, last_seen, total_bytes, family
+//   - sample_bytes: the size of the output whose shape is kept
+//   - shape: per-line class counts (blank, short, long, indented,
+//     number_heavy, path_like, url_like, status_like), line-length buckets,
+//     a byte-class histogram and a truncated hash of the first line's
+//     character-class mask (see Shape)
+//
+// Schema 1 stored up to 4 KiB of raw output per signature. A schema 1 file
+// is migrated on first load: the sample is dropped and the file rewritten.
 //
 // This is a guia layer (Fowler): it surfaces patterns before the developer
 // writes the compressor, and it is never in the hot path of the compressor
-// itself.
-//
-// Performance: all writes are asynchronous and non-blocking. The hook runs
-// in a separate goroutine and never delays command execution.
+// itself. The runner calls the hook after the command's output is written,
+// under a short deadline, so a record is on disk when the command returns
+// without delaying its output or changing its exit code.
 package learning
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
-	"errors"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
-	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 func init() {
-	// Register the learning hook only when enabled. This is fire-and-forget:
-	// errors are silently ignored and the hook never blocks the command.
-	// DOWNSHIFT_LEARNING=0 disables it entirely.
+	// Register the learning hook only when enabled. Errors are ignored and
+	// the hook never fails the command. DOWNSHIFT_LEARNING=0 disables it.
 	if os.Getenv("DOWNSHIFT_LEARNING") == "0" {
 		return
 	}
@@ -42,50 +49,11 @@ func init() {
 	}
 }
 
-// StoreFileName is the local store under the state directory.
-const StoreFileName = "compressor-learning.json"
-
 // MaxSignatureWords limits the words in a command signature.
 const MaxSignatureWords = 3
 
-// MaxSampleBytes limits the sample output stored per signature.
-const MaxSampleBytes = 4096
-
 // MinCountToSuggest is the threshold for suggesting a new compressor.
 const MinCountToSuggest = 5
-
-// Signature identifies a repeating command pattern.
-// It is the first N words of the command, never full arguments.
-type Signature struct {
-	// Words is the command signature, e.g. ["npm", "audit"] or ["pip", "show"].
-	Words []string `json:"words"`
-	// Hash is the sha256 of the joined words, for stable ordering.
-	Hash string `json:"hash"`
-}
-
-// Entry is one observed command pattern.
-type Entry struct {
-	Signature   Signature `json:"signature"`
-	Count       int64     `json:"count"`
-	FirstSeen   string    `json:"first_seen"`
-	LastSeen    string    `json:"last_seen"`
-	TotalBytes  int64     `json:"total_bytes"`
-	SampleBytes int       `json:"sample_bytes"`
-	// Sample is a truncated output sample for inspection; never logged.
-	Sample string `json:"sample,omitempty"`
-	// Family is the execwrap family, if known.
-	Family execwrap.Family `json:"family,omitempty"`
-}
-
-// Store is the persistent learning state.
-type Store struct {
-	// Version for future migrations.
-	Version int `json:"version"`
-	// Entries by signature hash.
-	Entries map[string]*Entry `json:"entries"`
-	// UpdatedAt is the last write timestamp.
-	UpdatedAt string `json:"updated_at"`
-}
 
 // Suggestion is a candidate for a new compressor.
 type Suggestion struct {
@@ -93,26 +61,10 @@ type Suggestion struct {
 	Count       int64     `json:"count"`
 	TotalBytes  int64     `json:"total_bytes"`
 	AvgBytes    int64     `json:"avg_bytes"`
-	Sample      string    `json:"sample,omitempty"`
+	Shape       *Shape    `json:"shape,omitempty"`
 	Family      string    `json:"family,omitempty"`
 	Recommended bool      `json:"recommended"`
 }
-
-var (
-	storeMu   sync.Mutex
-	storePath string
-)
-
-// StorePath returns the learning store path.
-func StorePath() (string, error) {
-	if storePath != "" {
-		return storePath, nil
-	}
-	return paths.Join(StoreFileName)
-}
-
-// SetStorePath overrides the store path (for tests).
-func SetStorePath(p string) { storePath = p }
 
 // signatureOf extracts the command signature from argv.
 func signatureOf(argv []string) Signature {
@@ -121,10 +73,7 @@ func signatureOf(argv []string) Signature {
 		n = MaxSignatureWords
 	}
 	words := make([]string, n)
-	copy(words, argv[:n])
-
-	// Normalise: lowercase, remove version-like suffixes
-	for i, w := range words {
+	for i, w := range argv[:n] {
 		words[i] = normaliseWord(w)
 	}
 
@@ -146,8 +95,8 @@ func normaliseWord(w string) string {
 	return w
 }
 
-// Record observes one unrecognised command output.
-// It is called only when the compressor returned FormatUnknown.
+// Record observes one unrecognised command output. Only the output's size
+// and Shape are kept; the bytes themselves are never written.
 func Record(argv []string, output []byte, family execwrap.Family) error {
 	if len(argv) == 0 {
 		return nil
@@ -180,68 +129,14 @@ func Record(argv []string, output []byte, family execwrap.Family) error {
 		entry.Family = family
 	}
 
-	// Keep a sample for inspection (truncated)
-	if entry.Sample == "" && len(output) > 0 {
-		sample := output
-		if len(sample) > MaxSampleBytes {
-			sample = sample[:MaxSampleBytes]
-		}
-		entry.Sample = string(sample)
+	if entry.Shape == nil && len(output) > 0 {
+		shape := ShapeOf(output)
+		entry.Shape = &shape
 		entry.SampleBytes = len(output)
 	}
 
 	store.UpdatedAt = now
 	return save(store)
-}
-
-// load reads the store from disk. Returns an empty store if the file does not exist.
-func load() (*Store, error) {
-	p, err := StorePath()
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := os.ReadFile(p)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return &Store{Version: 1, Entries: make(map[string]*Entry)}, nil
-		}
-		return nil, err
-	}
-
-	var store Store
-	if err := json.Unmarshal(data, &store); err != nil {
-		// Corrupted file: start fresh
-		return &Store{Version: 1, Entries: make(map[string]*Entry)}, nil
-	}
-	if store.Entries == nil {
-		store.Entries = make(map[string]*Entry)
-	}
-	return &store, nil
-}
-
-// save writes the store to disk atomically.
-func save(store *Store) error {
-	p, err := StorePath()
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(filepath.Dir(p), 0o700); err != nil {
-		return err
-	}
-
-	data, err := json.MarshalIndent(store, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	// Atomic write via temp file
-	tmp := p + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, p)
 }
 
 // Suggestions returns the top N command patterns that would benefit
@@ -266,13 +161,12 @@ func Suggestions(limit int) ([]Suggestion, error) {
 			Count:       entry.Count,
 			TotalBytes:  entry.TotalBytes,
 			AvgBytes:    entry.TotalBytes / entry.Count,
-			Sample:      entry.Sample,
+			Shape:       entry.Shape,
 			Family:      string(entry.Family),
 			Recommended: entry.Count >= 10 && entry.TotalBytes >= 10*1024,
 		})
 	}
 
-	// Sort by total bytes descending (highest impact first)
 	sort.Slice(suggestions, func(i, j int) bool {
 		return suggestions[i].TotalBytes > suggestions[j].TotalBytes
 	})
@@ -281,6 +175,15 @@ func Suggestions(limit int) ([]Suggestion, error) {
 		suggestions = suggestions[:limit]
 	}
 	return suggestions, nil
+}
+
+// StoreStats summarises the learning store.
+type StoreStats struct {
+	TotalSignatures  int    `json:"total_signatures"`
+	TotalCommands    int64  `json:"total_commands"`
+	TotalBytes       int64  `json:"total_bytes"`
+	SuggestableCount int    `json:"suggestable_count"`
+	UpdatedAt        string `json:"updated_at"`
 }
 
 // Stats returns summary statistics of the learning store.
@@ -309,15 +212,6 @@ func Stats() (StoreStats, error) {
 	return stats, nil
 }
 
-// StoreStats summarises the learning store.
-type StoreStats struct {
-	TotalSignatures  int    `json:"total_signatures"`
-	TotalCommands    int64  `json:"total_commands"`
-	TotalBytes       int64  `json:"total_bytes"`
-	SuggestableCount int    `json:"suggestable_count"`
-	UpdatedAt        string `json:"updated_at"`
-}
-
 // Clear resets the learning store (for tests or user request).
 func Clear() error {
 	storeMu.Lock()
@@ -327,11 +221,11 @@ func Clear() error {
 	if err != nil {
 		return err
 	}
-
+	removeStaleTemp(p)
 	return os.Remove(p)
 }
 
-// Export returns the raw store for inspection.
+// Export returns the store for inspection. It holds no output text.
 func Export() (*Store, error) {
 	storeMu.Lock()
 	defer storeMu.Unlock()

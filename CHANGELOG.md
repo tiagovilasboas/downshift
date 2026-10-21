@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Privacy: the compressor learning store (`~/.downshift/compressor-learning.json`) no longer holds output text. Schema 1 kept up to 4 KiB of raw command output per signature, which could contain branch names, PR URLs and file paths. Schema 2 keeps the output's size and a shape (per-line class counts, line-length buckets, a byte-class histogram and a hash of the first line's character-class mask; documented in `docs/features/learning.md`). An existing store is migrated on first use: the samples are dropped and the file is rewritten at schema 2; `downshift learning clear` purges it now. `export` and `suggestions` carry the shape only. The runner also waits for the learning write under a 500 ms deadline instead of leaving it in a goroutine that process exit cut off (a 0-byte `compressor-learning.json.tmp` was left behind); saves go through a unique temp file and rename, and stale temp files are removed on load. The command's output and exit code are unchanged.
+- `install.sh` probes the archive URL before downloading. A release with no archive for your platform now ends with an explicit message (pick another tag, `go install`, or report it) instead of a bare `curl: (22) 404`. CI gains a `verify-release` job that fails a tag whose release is missing `checksums.txt` or an archive, or whose `release` job did not succeed.
+
 ### Changed
 
 - One final metric, `tokens_saved_estimate` (owner decision 2026-10-21): routing tokens saved plus the Compactor's saved bytes / 4, labelled an estimate. Defined once in `telemetry.TokensSavedEstimate`. `downshift report` ends with `Tokens saved (estimate): N` and drops the separate Compactor bytes and tokens lines (`--json` keeps the parts and adds the total); `session --panel` adds `tokens_saved_estimate` (this session's routing plus the Compactor all-time total); `savvy-progress` 1.2.12 replaces the `Downshifted` and `Compactor total` tiles with one `Tokens saved` tile. This reverses the earlier rule that the Compactor bytes are never added to the tokens.
@@ -33,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The shell helper from `downshift enable` broke every wrapped tool outside the allowlist. Its functions for go, git, npm, docker, aws, gh, make, pip and the rest ran `downshift compactor -- <command>` whenever stdout was not a terminal, and the compactor refuses a command it does not allowlist with exit 126, so `git -C <dir> status`, `npm --version`, `docker run` and similar never ran inside `$(...)`, pipes, scripts, CI or an agent shell. The helper now asks the binary first (`downshift compactor --allowlisted -- <command>`: exit 0 or 1, no run, no output, no exec log row, one extra fork) and wraps only an allowlisted command; anything else runs as typed through `command`. The script also parses under dash (`sh` on Debian and Ubuntu): the hyphenated `golangci-lint` function, which dash rejected and which aborted the whole eval, is now defined only where the shell accepts it and aliased elsewhere. Affects everyone who ran `downshift enable`: re-run `eval "$(downshift enable)"` or open a new shell after upgrading.
 - `savvy-progress` 1.2.8: the band's `×N` badge counts only the agents the panel lists (running ones, finished ones still inside the 10 s window, and planned tasks), not every agent of the session. The mod's tests cover both cases.
 - `savvy-progress` 1.2.7: the `✕` on the band now works when the band follows the live subagents (it cleared a flow the band no longer used, so the band came straight back); the band returns with the next agent. The `✕` moves to the right edge of the row. The finished-agents clock read (#333) no longer throws when the host gives no clock, which turned two upstream tests red on `main`.
 

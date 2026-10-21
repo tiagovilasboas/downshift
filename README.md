@@ -58,6 +58,8 @@ measurement. Measured in bytes on a synthetic test corpus: 82.3% fewer bytes on 
 ```bash
 # Install
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+# "has no <os>/<arch> archive yet"? Pick a tag from https://github.com/tiagovilasboas/downshift/releases
+# (sh -s <tag>) or run: go install github.com/tiagovilasboas/downshift/cmd/downshift@<tag>
 
 # Configure your harness (Claude Code, Cursor, Codex, KiroCrew, ...)
 downshift setup
@@ -127,7 +129,7 @@ Compressor suggestions (highest impact first):
       Count: 23 runs · Avg: 1.2 KB · Total: 27.6 KB
 ```
 
-Runs asynchronously after command completion.
+Runs after the output is written; stores counts and output shapes, never output text.
 
 ### 4. Code Intelligence (opt-in)
 
@@ -285,7 +287,7 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 
 ## Status
 
-**Beta** (v0.1.0-beta.14). Not yet stable: the beta label stays until the exit criteria close. See [Beta Exit Criteria](docs/reference/beta-exit.md).
+**Beta** (v0.1.1). Not yet stable: the beta label stays until the exit criteria close. See [Beta Exit Criteria](docs/reference/beta-exit.md).
 
 ---
 

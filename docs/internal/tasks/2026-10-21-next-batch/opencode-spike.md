@@ -58,6 +58,33 @@ downshift try --harness opencode "rename the userId variable to userIdentifier"
 With `--model glm-5.3-flash-free --detail`: `Verdict: DOWNSHIFT`,
 `Rewrite: yes → deepseek/deepseek-v4.1-flash-1017`.
 
+## Correction (2026-10-21, after #419 merged)
+
+The live check above ran with a `session-models.json` entry for opencode, which
+the closing repro on main did not have. Two separate facts:
+
+1. **Live row versus native row.** The embedded native small row wins the
+   catalog index (`ModelFor`), so `Decision.Model` names it. That is by design:
+   `applyLiveGateway` (`internal/core/gateway_live.go`) replaces the target of a
+   rewrite that is already moving with the smallest **live** row of the
+   decision's harness and tier; shadow rows never qualify. Covered by
+   `TestGatewayLive_RewriteTargetsLiveRow` and the new
+   `TestGatewayLive_LiveRowBeatsNativeAndShadowRows` (two live rows plus a
+   shadow row with the smallest id). With a known session the repro prints the
+   gateway id (checked on this branch).
+2. **No OpenCode session list.** Downshift writes only a model the session
+   lists (`session-models.md`), and OpenCode sends no list, so nothing is
+   applied (`TestGatewayLive_UnknownSessionNeverTargets`). The owner must either
+   put `"opencode": ["deepseek-v4.1-flash-free", "big-pickle"]` (least to most
+   capable) in `session-models.json` under the state dir, or run
+   `downshift models discover`. `try` now says this in its note.
+
+Proposal, not implemented: count the allowlisted **live** rows as session
+members for OpenCode. It would let a live row apply with no list, but it widens
+the write guard (`CanWriteSessionID`) and makes "the session has this model"
+true for a model the user never selected in OpenCode, so it needs an owner
+decision first.
+
 ## Open item
 
 One live OpenCode spawn with the plugin marker enabled would settle the single
