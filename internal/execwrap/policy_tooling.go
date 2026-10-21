@@ -11,7 +11,7 @@ import "strings"
 
 // Developer tooling family constants
 const (
-	// GitHub CLI
+	// GitHub CLI — high usage, compacted via gh output parsing
 	FamilyGhPr     Family = "gh-pr"
 	FamilyGhRun    Family = "gh-run"
 	FamilyGhApi    Family = "gh-api"
@@ -20,7 +20,7 @@ const (
 	FamilyGhAuth   Family = "gh-auth"
 	FamilyGhSearch Family = "gh-search"
 
-	// Go toolchain
+	// Go toolchain — high usage
 	FamilyGoBuild    Family = "go-build"
 	FamilyGoRun      Family = "go-run"
 	FamilyGoInstall  Family = "go-install"
@@ -35,12 +35,12 @@ const (
 	FamilyGoGet      Family = "go-get"
 	FamilyGoWork     Family = "go-work"
 
-	// Go linters
+	// Go linters — medium usage
 	FamilyStaticcheck  Family = "staticcheck"
 	FamilyGolangciLint Family = "golangci-lint"
 	FamilyGovulncheck  Family = "govulncheck"
 
-	// Rust toolchain
+	// Rust toolchain — medium usage
 	FamilyCargoBuild   Family = "cargo-build"
 	FamilyCargoRun     Family = "cargo-run"
 	FamilyCargoCheck   Family = "cargo-check"
@@ -53,23 +53,23 @@ const (
 	FamilyCargoAudit   Family = "cargo-audit"
 	FamilyCargoOutdated Family = "cargo-outdated"
 
-	// Python tooling
-	FamilyPipList     Family = "pip-list"
-	FamilyPipShow     Family = "pip-show"
-	FamilyPipFreeze   Family = "pip-freeze"
-	FamilyPipCheck    Family = "pip-check"
-	FamilyUvPip       Family = "uv-pip"
-	FamilyUvRun       Family = "uv-run"
-	FamilyRuff        Family = "ruff"
-	FamilyMypy        Family = "mypy"
-	FamilyBlack       Family = "black"
-	FamilyIsort       Family = "isort"
-	FamilyPyright     Family = "pyright"
-	FamilyBandit      Family = "bandit"
-	FamilyPoetry      Family = "poetry"
-	FamilyPdm         Family = "pdm"
+	// Python tooling — high usage
+	FamilyPipList   Family = "pip-list"
+	FamilyPipShow   Family = "pip-show"
+	FamilyPipFreeze Family = "pip-freeze"
+	FamilyPipCheck  Family = "pip-check"
+	FamilyUvPip     Family = "uv-pip"
+	FamilyUvRun     Family = "uv-run"
+	FamilyRuff      Family = "ruff"
+	FamilyMypy      Family = "mypy"
+	FamilyBlack     Family = "black"
+	FamilyIsort     Family = "isort"
+	FamilyPyright   Family = "pyright"
+	FamilyBandit    Family = "bandit"
+	FamilyPoetry    Family = "poetry"
+	FamilyPdm       Family = "pdm"
 
-	// Build systems
+	// Build systems — high usage
 	FamilyMake       Family = "make"
 	FamilyCMake      Family = "cmake"
 	FamilyNinja      Family = "ninja"
@@ -80,17 +80,62 @@ const (
 	FamilyLerna      Family = "lerna"
 	FamilyChangesets Family = "changesets"
 
-	// Version managers / misc
-	FamilyNvm     Family = "nvm"
-	FamilyRbenv   Family = "rbenv"
-	FamilyPyenv   Family = "pyenv"
-	FamilyAsdf    Family = "asdf"
-	FamilyRtx     Family = "rtx"
-	FamilyMise    Family = "mise"
-	FamilyFnm     Family = "fnm"
-	FamilyVolta   Family = "volta"
-	FamilyProto   Family = "proto"
-	FamilyDirenv  Family = "direnv"
+	// Filesystem write commands — tracked for safety, not compacted
+	FamilyMkdir Family = "mkdir"
+	FamilyTouch Family = "touch"
+	FamilyCp    Family = "cp"
+	FamilyMv    Family = "mv"
+	FamilyRm    Family = "rm"
+
+	// AST tools — useful for refactoring
+	FamilyAstGrep Family = "ast-grep"
+
+	// .NET toolchain — rspec needs real compressor
+	FamilyDotnetBuild Family = "dotnet-build"
+	FamilyDotnetTest  Family = "dotnet-test"
+	FamilyDotnetRun   Family = "dotnet-run"
+
+	// Ruby ecosystem — rspec needs real compressor
+	FamilyRspec   Family = "rspec"
+	FamilyRubocop Family = "rubocop"
+
+	// Version managers — lightweight, keep for compatibility
+	FamilyMise   Family = "mise"
+	FamilyAsdf   Family = "asdf"
+	FamilyDirenv Family = "direnv"
+
+	// Database CLI — read-only queries
+	FamilyPsql Family = "psql"
+
+	// Cloud CLI — GCP (symmetry with aws/az)
+	FamilyGcloud Family = "gcloud"
+
+	// System/host diagnostics
+	FamilyJournalctl Family = "journalctl"
+	FamilySystemctl  Family = "systemctl"
+
+	// Kubernetes extended
+	FamilyKubectlTop Family = "kubectl-top"
+
+	// Mobile/Native build — iOS
+	FamilyXcodebuild Family = "xcodebuild"
+	FamilyPodInstall Family = "pod"
+	FamilyExpo       Family = "expo"
+	FamilyReactNative Family = "react-native"
+	FamilyAdb        Family = "adb"
+
+	// Mobile/Native build — Android (gradle for app builds, beyond test)
+	FamilyGradleAndroid Family = "gradle-android"
+
+	// Package managers — install commands (verbose output)
+	FamilyNpmInstall  Family = "npm-install"
+	FamilyPipInstall  Family = "pip-install"
+
+	// Other languages
+	FamilyMix   Family = "mix"
+	FamilySwift Family = "swift"
+	FamilySbt   Family = "sbt"
+	// FamilyFlutterBuild already declared in policy_backend.go
 )
 
 // toolingFamily detects developer tooling: gh, go build/run, cargo, make, etc.
@@ -99,7 +144,7 @@ func toolingFamily(argv []string) Family {
 		return FamilyNone
 	}
 
-	// GitHub CLI
+	// GitHub CLI — very high usage
 	if family := ghFamily(argv); family != FamilyNone {
 		return family
 	}
@@ -129,8 +174,63 @@ func toolingFamily(argv []string) Family {
 		return family
 	}
 
-	// Version managers
+	// Version managers (only the most used)
 	if family := versionManagerFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// Filesystem write commands (tracked for safety)
+	if family := filesystemWriteFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// AST tools
+	if family := astToolFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// .NET toolchain
+	if family := dotnetFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// Ruby test runners
+	if family := rubyTestFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// Database CLI
+	if family := databaseFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// Cloud CLI (GCP)
+	if family := gcloudFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// System diagnostics
+	if family := systemFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// Kubernetes extended
+	if family := kubectlExtFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// Mobile/Native build
+	if family := mobileNativeFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// Package managers (install)
+	if family := packageInstallFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// Other languages
+	if family := otherLanguagesFamily(argv); family != FamilyNone {
 		return family
 	}
 
@@ -156,7 +256,6 @@ func ghFamily(argv []string) Family {
 	case "repo":
 		return FamilyGhRepo
 	case "auth":
-		// Only safe auth commands
 		if len(argv) >= 3 {
 			switch argv[2] {
 			case "status", "token", "switch":
@@ -166,22 +265,10 @@ func ghFamily(argv []string) Family {
 	case "search":
 		return FamilyGhSearch
 	case "workflow":
-		return FamilyGhRun // workflow is part of run family
-	case "release":
-		// Only list/view, not create/delete
-		if len(argv) >= 3 {
-			switch argv[2] {
-			case "list", "view":
-				return FamilyGhRepo
-			}
-		}
-	case "gist":
-		// Only list/view
-		if len(argv) >= 3 {
-			switch argv[2] {
-			case "list", "view":
-				return FamilyGhRepo
-			}
+		return FamilyGhRun
+	case "release", "gist":
+		if len(argv) >= 3 && (argv[2] == "list" || argv[2] == "view") {
+			return FamilyGhRepo
 		}
 	case "browse", "status":
 		return FamilyGhRepo
@@ -235,10 +322,8 @@ func goToolchainFamily(argv []string) Family {
 			}
 		}
 	case "clean":
-		// go clean is safe
 		return FamilyGoBuild
 	case "tool":
-		// go tool pprof, go tool trace, etc.
 		return FamilyGoDoc
 	}
 
@@ -298,7 +383,6 @@ func cargoToolchainFamily(argv []string) Family {
 	case "clippy":
 		return FamilyCargoClippy
 	case "fmt":
-		// Only check mode
 		for _, a := range argv[2:] {
 			if a == "--check" {
 				return FamilyCargoFmt
@@ -316,12 +400,8 @@ func cargoToolchainFamily(argv []string) Family {
 		return FamilyCargoAudit
 	case "outdated":
 		return FamilyCargoOutdated
-	case "clean":
+	case "clean", "fetch", "vendor":
 		return FamilyCargoBuild
-	case "fetch":
-		return FamilyCargoUpdate
-	case "vendor":
-		return FamilyCargoUpdate
 	case "metadata":
 		return FamilyCargoTree
 	}
@@ -369,20 +449,15 @@ func pythonToolingFamily(argv []string) Family {
 	}
 
 	// Ruff
-	if prog == "ruff" {
-		if len(argv) >= 2 {
-			switch argv[1] {
-			case "check", "format":
-				// format needs --check to not modify
-				if argv[1] == "format" {
-					for _, a := range argv[2:] {
-						if a == "--check" || a == "--diff" {
-							return FamilyRuff
-						}
-					}
-					return FamilyNone
+	if prog == "ruff" && len(argv) >= 2 {
+		switch argv[1] {
+		case "check":
+			return FamilyRuff
+		case "format":
+			for _, a := range argv[2:] {
+				if a == "--check" || a == "--diff" {
+					return FamilyRuff
 				}
-				return FamilyRuff
 			}
 		}
 	}
@@ -392,9 +467,8 @@ func pythonToolingFamily(argv []string) Family {
 		return FamilyMypy
 	}
 
-	// Black
+	// Black (check mode only)
 	if prog == "black" {
-		// Only check mode
 		for _, a := range argv[1:] {
 			if a == "--check" || a == "--diff" {
 				return FamilyBlack
@@ -402,9 +476,8 @@ func pythonToolingFamily(argv []string) Family {
 		}
 	}
 
-	// isort
+	// isort (check mode only)
 	if prog == "isort" {
-		// Only check mode
 		for _, a := range argv[1:] {
 			if a == "--check" || a == "--check-only" || a == "--diff" {
 				return FamilyIsort
@@ -413,7 +486,7 @@ func pythonToolingFamily(argv []string) Family {
 	}
 
 	// Pyright
-	if prog == "pyright" || prog == "npx" && len(argv) >= 2 && argv[1] == "pyright" {
+	if prog == "pyright" {
 		return FamilyPyright
 	}
 
@@ -422,24 +495,15 @@ func pythonToolingFamily(argv []string) Family {
 		return FamilyBandit
 	}
 
-	// Poetry
+	// Poetry (read-only commands)
 	if prog == "poetry" && len(argv) >= 2 {
 		switch argv[1] {
-		case "show", "check", "lock", "export", "env", "version", "about", "list", "search":
+		case "show", "check", "lock", "export", "env", "version", "about", "list", "search", "run":
 			return FamilyPoetry
-		case "run":
-			return FamilyPoetry
-		case "install":
-			// install --dry-run or --no-root
-			for _, a := range argv[2:] {
-				if a == "--dry-run" {
-					return FamilyPoetry
-				}
-			}
 		}
 	}
 
-	// PDM
+	// PDM (read-only commands)
 	if prog == "pdm" && len(argv) >= 2 {
 		switch argv[1] {
 		case "list", "show", "lock", "export", "info", "search", "run":
@@ -459,7 +523,6 @@ func buildSystemFamily(argv []string) Family {
 	prog := argv[0]
 	switch prog {
 	case "make", "gmake":
-		// All make targets allowed (it's user-defined)
 		return FamilyMake
 	case "cmake":
 		return FamilyCMake
@@ -483,13 +546,9 @@ func buildSystemFamily(argv []string) Family {
 				return FamilyNx
 			}
 		}
-	case "lerna", "npx":
-		cmdIdx := 1
-		if prog == "npx" && len(argv) >= 2 && argv[1] == "lerna" {
-			cmdIdx = 2
-		}
-		if (prog == "lerna" || argv[1] == "lerna") && len(argv) > cmdIdx {
-			switch argv[cmdIdx] {
+	case "lerna":
+		if len(argv) >= 2 {
+			switch argv[1] {
 			case "run", "exec", "list", "info", "diff", "changed":
 				return FamilyLerna
 			}
@@ -501,99 +560,301 @@ func buildSystemFamily(argv []string) Family {
 				return FamilyChangesets
 			}
 		}
-		// Bare changeset is interactive add
-		return FamilyNone
 	}
 
 	return FamilyNone
 }
 
-// versionManagerFamily detects version managers: nvm, rbenv, pyenv, asdf, rtx, mise, fnm, volta, proto.
+// versionManagerFamily detects the most common version managers.
 func versionManagerFamily(argv []string) Family {
+	if len(argv) < 2 {
+		return FamilyNone
+	}
+
+	prog := argv[0]
+	switch prog {
+	case "mise", "rtx":
+		switch argv[1] {
+		case "list", "ls", "current", "where", "which", "env", "doctor", "version", "plugins",
+			"use", "global", "local", "shell", "install":
+			return FamilyMise
+		}
+	case "asdf":
+		switch argv[1] {
+		case "list", "current", "where", "which", "info", "plugin", "global", "local", "shell":
+			return FamilyAsdf
+		}
+	case "direnv":
+		switch argv[1] {
+		case "status", "allow", "deny", "reload", "exec", "export":
+			return FamilyDirenv
+		}
+	}
+
+	return FamilyNone
+}
+
+// filesystemWriteFamily detects filesystem write commands (tracked for safety, not compacted).
+func filesystemWriteFamily(argv []string) Family {
 	if len(argv) == 0 {
 		return FamilyNone
 	}
 
 	prog := argv[0]
 	switch prog {
-	case "nvm":
-		if len(argv) >= 2 {
-			switch argv[1] {
-			case "list", "ls", "current", "version", "which", "alias":
-				return FamilyNvm
-			case "use", "install":
-				return FamilyNvm
+	case "mkdir":
+		return FamilyMkdir
+	case "touch":
+		return FamilyTouch
+	case "cp", "gcp":
+		return FamilyCp
+	case "mv", "gmv":
+		return FamilyMv
+	case "rm", "grm":
+		// Block dangerous rm -rf
+		for _, a := range argv[1:] {
+			if a == "-rf" || a == "-fr" || a == "--recursive" {
+				return FamilyNone
 			}
 		}
-	case "rbenv":
-		if len(argv) >= 2 {
-			switch argv[1] {
-			case "versions", "version", "which", "whence", "global", "local", "shell":
-				return FamilyRbenv
-			}
+		return FamilyRm
+	}
+	return FamilyNone
+}
+
+// astToolFamily detects AST-based search tools.
+func astToolFamily(argv []string) Family {
+	if len(argv) == 0 {
+		return FamilyNone
+	}
+	if argv[0] == "ast-grep" || argv[0] == "sg" {
+		return FamilyAstGrep
+	}
+	return FamilyNone
+}
+
+// dotnetFamily detects .NET CLI commands.
+func dotnetFamily(argv []string) Family {
+	if len(argv) < 2 || argv[0] != "dotnet" {
+		return FamilyNone
+	}
+	switch argv[1] {
+	case "build":
+		return FamilyDotnetBuild
+	case "test":
+		return FamilyDotnetTest
+	case "run":
+		return FamilyDotnetRun
+	case "restore", "clean", "publish", "pack":
+		return FamilyDotnetBuild
+	}
+	return FamilyNone
+}
+
+// rubyTestFamily detects Ruby test runners that need compaction.
+func rubyTestFamily(argv []string) Family {
+	if len(argv) == 0 {
+		return FamilyNone
+	}
+	switch argv[0] {
+	case "rspec":
+		return FamilyRspec
+	case "rubocop":
+		return FamilyRubocop
+	}
+	return FamilyNone
+}
+
+// databaseFamily detects database CLI tools (read-only queries).
+func databaseFamily(argv []string) Family {
+	if len(argv) == 0 {
+		return FamilyNone
+	}
+	if argv[0] == "psql" {
+		// Allow read-only usage; actual query safety is the user's responsibility
+		return FamilyPsql
+	}
+	return FamilyNone
+}
+
+// gcloudFamily detects GCP CLI (read-only commands).
+func gcloudFamily(argv []string) Family {
+	if len(argv) < 2 || argv[0] != "gcloud" {
+		return FamilyNone
+	}
+	// Allow describe, list, get patterns
+	for _, a := range argv[1:] {
+		if a == "describe" || a == "list" || a == "get" || a == "info" ||
+			a == "logs" || a == "read" || a == "config" || a == "auth" {
+			return FamilyGcloud
 		}
-	case "pyenv":
-		if len(argv) >= 2 {
-			switch argv[1] {
-			case "versions", "version", "which", "whence", "global", "local", "shell", "virtualenvs":
-				return FamilyPyenv
-			}
+	}
+	return FamilyNone
+}
+
+// systemFamily detects system diagnostic commands.
+func systemFamily(argv []string) Family {
+	if len(argv) == 0 {
+		return FamilyNone
+	}
+	switch argv[0] {
+	case "journalctl":
+		return FamilyJournalctl
+	case "systemctl":
+		if len(argv) >= 2 && argv[1] == "status" {
+			return FamilySystemctl
 		}
-	case "asdf":
+		// Also allow show, list-units, is-active (read-only)
 		if len(argv) >= 2 {
 			switch argv[1] {
-			case "list", "current", "where", "which", "info", "plugin":
-				return FamilyAsdf
-			case "global", "local", "shell":
-				return FamilyAsdf
-			}
-		}
-	case "rtx", "mise":
-		if len(argv) >= 2 {
-			switch argv[1] {
-			case "list", "ls", "current", "where", "which", "env", "doctor", "version", "plugins":
-				if prog == "rtx" {
-					return FamilyRtx
-				}
-				return FamilyMise
-			case "use", "global", "local", "shell", "install":
-				if prog == "rtx" {
-					return FamilyRtx
-				}
-				return FamilyMise
-			}
-		}
-	case "fnm":
-		if len(argv) >= 2 {
-			switch argv[1] {
-			case "list", "ls", "current", "default", "env":
-				return FamilyFnm
-			case "use", "install":
-				return FamilyFnm
-			}
-		}
-	case "volta":
-		if len(argv) >= 2 {
-			switch argv[1] {
-			case "list", "which", "pin", "run":
-				return FamilyVolta
-			}
-		}
-	case "proto":
-		if len(argv) >= 2 {
-			switch argv[1] {
-			case "list", "bin", "run", "status", "tools":
-				return FamilyProto
-			}
-		}
-	case "direnv":
-		if len(argv) >= 2 {
-			switch argv[1] {
-			case "status", "allow", "deny", "reload", "exec", "export":
-				return FamilyDirenv
+			case "show", "list-units", "list-unit-files", "is-active", "is-enabled", "cat":
+				return FamilySystemctl
 			}
 		}
 	}
+	return FamilyNone
+}
 
+// kubectlExtFamily detects extended kubectl commands.
+func kubectlExtFamily(argv []string) Family {
+	if len(argv) < 2 || argv[0] != "kubectl" {
+		return FamilyNone
+	}
+	if argv[1] == "top" {
+		return FamilyKubectlTop
+	}
+	return FamilyNone
+}
+
+// mobileNativeFamily detects mobile/native build tools.
+func mobileNativeFamily(argv []string) Family {
+	if len(argv) == 0 {
+		return FamilyNone
+	}
+	prog := argv[0]
+
+	switch prog {
+	case "xcodebuild":
+		return FamilyXcodebuild
+	case "pod":
+		if len(argv) >= 2 {
+			switch argv[1] {
+			case "install", "update", "outdated", "repo", "spec", "list":
+				return FamilyPodInstall
+			}
+		}
+	case "expo":
+		if len(argv) >= 2 {
+			switch argv[1] {
+			case "start", "prebuild", "export", "doctor", "install", "upgrade", "config", "diagnostics":
+				return FamilyExpo
+			}
+		}
+	case "react-native":
+		if len(argv) >= 2 {
+			switch argv[1] {
+			case "run-android", "run-ios", "bundle", "start", "info", "doctor", "log-android", "log-ios":
+				return FamilyReactNative
+			}
+		}
+	case "npx":
+		// Handle npx react-native and npx expo
+		if len(argv) >= 2 {
+			if argv[1] == "react-native" || strings.HasPrefix(argv[1], "react-native@") {
+				return FamilyReactNative
+			}
+			if argv[1] == "expo" || strings.HasPrefix(argv[1], "expo@") {
+				return FamilyExpo
+			}
+		}
+	case "adb":
+		if len(argv) >= 2 {
+			switch argv[1] {
+			case "install", "logcat", "devices", "shell", "push", "pull", "bugreport":
+				return FamilyAdb
+			}
+		}
+	case "gradle", "gradlew", "./gradlew":
+		// Android app build tasks
+		for _, a := range argv[1:] {
+			if strings.Contains(a, "assemble") || strings.Contains(a, "bundle") ||
+				strings.Contains(a, "install") || strings.Contains(a, "Android") ||
+				a == "build" || a == "clean" {
+				return FamilyGradleAndroid
+			}
+		}
+	}
+	return FamilyNone
+}
+
+// packageInstallFamily detects package manager install commands.
+func packageInstallFamily(argv []string) Family {
+	if len(argv) < 2 {
+		return FamilyNone
+	}
+	prog := argv[0]
+
+	// npm/pnpm/yarn/bun install
+	switch prog {
+	case "npm", "pnpm", "yarn", "bun":
+		if argv[1] == "install" || argv[1] == "i" || argv[1] == "add" || argv[1] == "ci" {
+			return FamilyNpmInstall
+		}
+	case "pip", "pip3":
+		if argv[1] == "install" {
+			return FamilyPipInstall
+		}
+	case "uv":
+		if len(argv) >= 2 && (argv[1] == "add" || argv[1] == "pip") {
+			if argv[1] == "pip" && len(argv) >= 3 && argv[2] == "install" {
+				return FamilyPipInstall
+			}
+			if argv[1] == "add" {
+				return FamilyPipInstall
+			}
+		}
+	}
+	return FamilyNone
+}
+
+// otherLanguagesFamily detects other language toolchains.
+func otherLanguagesFamily(argv []string) Family {
+	if len(argv) == 0 {
+		return FamilyNone
+	}
+	prog := argv[0]
+
+	switch prog {
+	case "mix":
+		if len(argv) >= 2 {
+			switch argv[1] {
+			case "test", "compile", "deps.get", "deps.compile", "format", "clean", "run", "do", "hex.info":
+				return FamilyMix
+			}
+		}
+	case "swift":
+		if len(argv) >= 2 {
+			switch argv[1] {
+			case "build", "test", "run", "package":
+				return FamilySwift
+			}
+		}
+	case "sbt":
+		return FamilySbt // sbt is always verbose
+	case "flutter":
+		if len(argv) >= 2 {
+			switch argv[1] {
+			case "build", "analyze", "pub":
+				return FamilyFlutterBuild
+			}
+		}
+	case "dart":
+		if len(argv) >= 2 {
+			switch argv[1] {
+			case "analyze", "pub":
+				return FamilyFlutterBuild // Share with flutter
+			}
+		}
+	}
 	return FamilyNone
 }

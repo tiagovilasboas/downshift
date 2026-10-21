@@ -23,9 +23,26 @@ const (
 	// Rust
 	FamilyCargoTest Family = "cargo-test"
 
-	// Dart/Flutter
+	// Dart/Flutter test
 	FamilyFlutterTest Family = "flutter-test"
 	FamilyDartTest    Family = "dart-test"
+
+	// Flutter toolchain
+	FamilyFlutterBuild   Family = "flutter-build"
+	FamilyFlutterRun     Family = "flutter-run"
+	FamilyFlutterAnalyze Family = "flutter-analyze"
+	FamilyFlutterPub     Family = "flutter-pub"
+	FamilyFlutterDoctor  Family = "flutter-doctor"
+	FamilyFlutterClean   Family = "flutter-clean"
+	FamilyFlutterDevices Family = "flutter-devices"
+
+	// Dart toolchain
+	FamilyDartRun     Family = "dart-run"
+	FamilyDartAnalyze Family = "dart-analyze"
+	FamilyDartPub     Family = "dart-pub"
+	FamilyDartFormat  Family = "dart-format"
+	FamilyDartCompile Family = "dart-compile"
+	FamilyDartFix     Family = "dart-fix"
 
 	// Java/Kotlin
 	FamilyGradle Family = "gradle"
@@ -88,15 +105,97 @@ func backendFamily(argv []string) Family {
 		switch {
 		case argv[0] == "go" && argv[1] == "test":
 			return FamilyGoTest
-		case argv[0] == "flutter" && argv[1] == "test":
-			return FamilyFlutterTest
-		case argv[0] == "dart" && argv[1] == "test":
-			return FamilyDartTest
 		case argv[0] == "cargo" && argv[1] == "test":
 			return FamilyCargoTest
 		}
 	}
 
+	// Flutter toolchain
+	if family := flutterFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	// Dart toolchain
+	if family := dartFamily(argv); family != FamilyNone {
+		return family
+	}
+
+	return FamilyNone
+}
+
+// flutterFamily detects Flutter CLI commands.
+func flutterFamily(argv []string) Family {
+	if len(argv) < 2 || argv[0] != "flutter" {
+		return FamilyNone
+	}
+
+	cmd := argv[1]
+	switch cmd {
+	case "test":
+		return FamilyFlutterTest
+	case "build":
+		return FamilyFlutterBuild
+	case "run":
+		return FamilyFlutterRun
+	case "analyze":
+		return FamilyFlutterAnalyze
+	case "pub":
+		// Only read-safe commands
+		if len(argv) >= 3 {
+			switch argv[2] {
+			case "get", "upgrade", "outdated", "deps", "cache":
+				return FamilyFlutterPub
+			}
+		}
+	case "doctor":
+		return FamilyFlutterDoctor
+	case "clean":
+		return FamilyFlutterClean
+	case "devices":
+		return FamilyFlutterDevices
+	}
+	return FamilyNone
+}
+
+// dartFamily detects Dart CLI commands.
+func dartFamily(argv []string) Family {
+	if len(argv) < 2 || argv[0] != "dart" {
+		return FamilyNone
+	}
+
+	cmd := argv[1]
+	switch cmd {
+	case "test":
+		return FamilyDartTest
+	case "run":
+		return FamilyDartRun
+	case "analyze":
+		return FamilyDartAnalyze
+	case "pub":
+		// Only read-safe commands
+		if len(argv) >= 3 {
+			switch argv[2] {
+			case "get", "upgrade", "outdated", "deps", "cache":
+				return FamilyDartPub
+			}
+		}
+	case "format":
+		// Only check mode (--output=none or --set-exit-if-changed)
+		for _, a := range argv[2:] {
+			if a == "--output=none" || a == "--set-exit-if-changed" || a == "-o" {
+				return FamilyDartFormat
+			}
+		}
+	case "compile":
+		return FamilyDartCompile
+	case "fix":
+		// Only dry-run
+		for _, a := range argv[2:] {
+			if a == "--dry-run" || a == "-n" {
+				return FamilyDartFix
+			}
+		}
+	}
 	return FamilyNone
 }
 
