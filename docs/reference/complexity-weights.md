@@ -152,7 +152,7 @@ coverage as calibrated accuracy or support for all multilingual prompts.
 
 English and Portuguese coverage is the shipped language contract. Multilingual E5
 and external MiniLM were removed on 2026-10-17; they do not extend coverage.
-The archived initiative note is [multilingual semantic intelligence](../internal/tasks/2026-10-16-multilingual-semantic-intelligence/README.md).
+The archived initiative note is multilingual semantic intelligence (removed, see git history at 2026-10-16).
 
 ## Weights
 
