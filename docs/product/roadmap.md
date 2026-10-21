@@ -7,6 +7,7 @@ https://github.com/tiagovilasboas/downshift
 
 Owner-facing plan. Status as of 2026-10-13. The public summary stays in
 [ROADMAP.md](../../ROADMAP.md); engineering task specs live in `docs/internal/tasks/`.
+Staff review follow-up checklist: [review-2026-10-20.md](review-2026-10-20.md).
 
 ## Positioning
 
