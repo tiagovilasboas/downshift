@@ -73,7 +73,7 @@ func semAdvNoSignalCases() []semAdvCase {
 		{"punctuation", "?!...;;--", true},
 		{"punctuation brackets", "{}[]()<>//\\\\", true},
 		{"digits", "42 1337 3.14159", true},
-		{"zero width and nbsp", "​ ​", true},
+		{"zero width and nbsp", "\u200b \u200b", true},
 		// Volume and repetition.
 		{"filler 5k words", filler, true},
 		{"repeated hook x1000", strings.TrimSpace(strings.Repeat("hook ", 1000)), true},

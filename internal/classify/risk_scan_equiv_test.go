@@ -128,7 +128,7 @@ var equivVocab = []string{
 	"HTTPServer", "userID", "use", "send", "route", "small", "mini", "cheapest", "haiku", "tier",
 	"model", "race", "rotação", "pci", "ssl", "tls", "ssn", "acl", "mfa", "sso", "dados", "produção",
 	"ſecurity", "toKen", "Key", "paſsword", "ＳＥＣＲＥＴ", "İstanbul", "ı", "ß", "ẞ",
-	"ç", "Ç", "ã", "é", "ñ", " ", "\t", "\n", "\r\n", "\x80", "😀", "‍", "ǅ", "ǈ",
+	"ç", "Ç", "ã", "é", "ñ", " ", "\t", "\n", "\r\n", "\x80", "😀", "\u200d", "ǅ", "ǈ",
 	"x", "a", "B", "", " ", "_", "-", ".", "/", ",", ";", "(", ")", "'", `"`, "::", "=>",
 }
 

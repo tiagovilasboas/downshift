@@ -296,16 +296,13 @@ func TestSplitLines(t *testing.T) {
 
 	for _, tc := range tests {
 		lines := splitLines([]byte(tc.input))
-		// Filter empty lines for counting
-		nonEmpty := 0
-		for _, l := range lines {
-			if len(l) > 0 {
-				nonEmpty++
-			}
+		if len(lines) != tc.want {
+			t.Errorf("splitLines(%q) = %d lines, want %d", tc.input, len(lines), tc.want)
 		}
-		// This is a bit fuzzy; the main test is that it doesn't panic
-		if len(lines) < 0 {
-			t.Errorf("splitLines(%q) failed", tc.input)
+		for _, l := range lines {
+			if strings.HasSuffix(string(l), "\r") {
+				t.Errorf("splitLines(%q) kept a trailing CR in %q", tc.input, l)
+			}
 		}
 	}
 }

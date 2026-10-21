@@ -18,16 +18,6 @@ func wordCount(s string) int {
 	return len(strings.Fields(s))
 }
 
-// hasAny returns true if text contains any of the keywords.
-func hasAny(text string, keywords ...string) bool {
-	for _, kw := range keywords {
-		if strings.Contains(text, kw) {
-			return true
-		}
-	}
-	return false
-}
-
 // countMatches returns how many keywords appear in text.
 func countMatches(text string, keywords ...string) int {
 	count := 0

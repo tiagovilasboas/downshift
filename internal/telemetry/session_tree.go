@@ -450,13 +450,6 @@ func padRight(s string, w int) string {
 	return s
 }
 
-func padLeft(s string, w int) string {
-	if n := utf8.RuneCountInString(s); n < w {
-		return strings.Repeat(" ", w-n) + s
-	}
-	return s
-}
-
 // foldUsage merges a child's usage records into one view. A child that stopped,
 // was sent another message and stopped again has one record per stop, each
 // holding that stretch's tokens and cost, so the child's cost is their sum. The

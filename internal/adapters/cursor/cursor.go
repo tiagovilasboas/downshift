@@ -165,7 +165,6 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	}
 
 	target := plan.Model
-	note := decision.Summary()
 	if target.ID == "" || target.ID == decision.Baseline.CurrentModel.ID {
 		return allow(), "", decision
 	}
@@ -192,7 +191,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		target.Native = ""
 	}
 	decision.Model = target
-	note = decision.Summary()
+	note := decision.Summary()
 
 	ti["model"] = writeName
 	updated, err := json.Marshal(ti)
