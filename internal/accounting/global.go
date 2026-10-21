@@ -4,6 +4,9 @@
 package accounting
 
 import (
+	"sort"
+	"time"
+
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -225,4 +228,66 @@ var loadCompactorEvents = func() ([]execwrap.Event, error) {
 		return nil, err
 	}
 	return execwrap.ReadEvents(path)
+}
+
+// bucketCompactorByDay groups exec records by UTC date within the window and
+// totals each day's bytes. days <= 0 keeps every record.
+func bucketCompactorByDay(recs []execwrap.Event, days int) map[string]CompactorMetrics {
+	var cutoff time.Time
+	if days > 0 {
+		cutoff = time.Now().UTC().Add(-time.Duration(days) * 24 * time.Hour)
+	}
+	out := map[string]CompactorMetrics{}
+	for _, ev := range recs {
+		parsed, err := time.Parse(time.RFC3339, ev.TS)
+		if err != nil {
+			continue
+		}
+		if days > 0 && !parsed.After(cutoff) {
+			continue
+		}
+		date := parsed.UTC().Format("2006-01-02")
+		m := out[date]
+		m.Commands++
+		if ev.Compacted {
+			m.Compacted++
+		}
+		m.RawBytes += ev.RawBytes
+		if ev.RawBytes > ev.EmittedBytes {
+			m.SavedBytes += ev.RawBytes - ev.EmittedBytes
+		}
+		m.EstimatedTokensSaved = m.SavedBytes / execwrap.BytesPerToken
+		m.TokenEstimate = "estimated: saved_bytes / 4"
+		out[date] = m
+	}
+	return out
+}
+
+// utcDate parses an RFC3339/RFC3339Nano timestamp and returns its UTC date as
+// YYYY-MM-DD. ok is false when the timestamp is unparsable.
+func utcDate(ts string) (string, bool) {
+	parsed, err := time.Parse(time.RFC3339Nano, ts)
+	if err != nil {
+		parsed, err = time.Parse(time.RFC3339, ts)
+	}
+	if err != nil {
+		return "", false
+	}
+	return parsed.UTC().Format("2006-01-02"), true
+}
+
+// unionDays returns the distinct dates present in either bucket.
+func unionDays(a map[string]dayRouting, b map[string]CompactorMetrics) []string {
+	seen := map[string]struct{}{}
+	for d := range a {
+		seen[d] = struct{}{}
+	}
+	for d := range b {
+		seen[d] = struct{}{}
+	}
+	out := make([]string, 0, len(seen))
+	for d := range seen {
+		out = append(out, d)
+	}
+	return out
 }
