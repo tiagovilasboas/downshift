@@ -1,7 +1,13 @@
 .PHONY: build test lint vet install build-all clean report
 
 BINARY=downshift
-LDFLAGS=-ldflags "-s -w"
+
+# Version stamp, same main.build* variables as .goreleaser.yml. Falls back to
+# "dev" outside a git checkout. Untagged repos get a "main-" prefix.
+VERSION := $(shell git describe --tags --dirty 2>/dev/null || (d=$$(git describe --always --dirty 2>/dev/null) && echo main-$$d) || echo dev)
+COMMIT  := $(shell git rev-parse --short HEAD 2>/dev/null)
+DATE    := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+LDFLAGS=-ldflags "-s -w -X main.buildVersion=$(VERSION) -X main.buildCommit=$(COMMIT) -X main.buildDate=$(DATE)"
 
 ## build: compile the downshift binary
 build:
