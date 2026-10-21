@@ -49,7 +49,7 @@ func TestRunShellInit_Help(t *testing.T) {
 	if rc != 0 {
 		t.Errorf("exit code = %d, want 0", rc)
 	}
-	if !strings.Contains(out.String(), "shell-init") {
-		t.Error("help should mention shell-init")
+	if !strings.Contains(out.String(), "enable") {
+		t.Error("help should mention enable")
 	}
 }
