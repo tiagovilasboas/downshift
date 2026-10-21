@@ -49,6 +49,48 @@ const (
 	FamilyDartTest    Family = "dart-test"
 	FamilyGradle      Family = "gradle"
 	FamilyMaven       Family = "maven"
+	// Package manager test/build wrappers
+	FamilyNpmTest   Family = "npm-test"
+	FamilyNpmBuild  Family = "npm-build"
+	FamilyPnpmTest  Family = "pnpm-test"
+	FamilyPnpmBuild Family = "pnpm-build"
+	FamilyYarnTest  Family = "yarn-test"
+	FamilyYarnBuild Family = "yarn-build"
+	FamilyBunTest   Family = "bun-test"
+	FamilyBunBuild  Family = "bun-build"
+	// PHP ecosystem
+	FamilyComposer    Family = "composer"
+	FamilyArtisan     Family = "artisan"
+	FamilyPHPStan     Family = "phpstan"
+	FamilyPsalm       Family = "psalm"
+	FamilyPHPCSFixer  Family = "php-cs-fixer"
+	FamilyPint        Family = "pint"
+	// Linters and formatters
+	FamilyESLint   Family = "eslint"
+	FamilyPrettier Family = "prettier"
+	FamilyBiome    Family = "biome"
+	// Infrastructure (read-only)
+	FamilyKubectlGet      Family = "kubectl-get"
+	FamilyKubectlDescribe Family = "kubectl-describe"
+	FamilyKubectlLogs     Family = "kubectl-logs"
+	FamilyHelmList        Family = "helm-list"
+	FamilyHelmStatus      Family = "helm-status"
+	FamilyTerraformPlan   Family = "terraform-plan"
+	FamilyTerraformFmt    Family = "terraform-fmt"
+	FamilyAzList          Family = "az-list"
+	FamilyAzShow          Family = "az-show"
+	// AWS CLI (read-only)
+	FamilyAwsDescribe Family = "aws-describe"
+	FamilyAwsList     Family = "aws-list"
+	FamilyAwsGet      Family = "aws-get"
+	FamilyAwsS3Ls     Family = "aws-s3-ls"
+	FamilyAwsS3Cp     Family = "aws-s3-cp"
+	FamilyAwsLogs     Family = "aws-logs"
+	// Docker (read-only and safe commands)
+	FamilyDockerPS     Family = "docker-ps"
+	FamilyDockerLogs   Family = "docker-logs"
+	FamilyDockerImages Family = "docker-images"
+	FamilyDockerBuild  Family = "docker-build"
 )
 
 // execTail follows the quoted binary path in a wrapped command.
@@ -199,6 +241,26 @@ func FamilyOf(argv []string) Family {
 	if len(argv) >= 3 && argv[0] == "npx" && argv[1] == "playwright" && argv[2] == "test" {
 		return FamilyPlaywright
 	}
+	// Package manager wrappers: npm, pnpm, yarn, bun
+	if family := packageManagerFamily(argv); family != FamilyNone {
+		return family
+	}
+	// PHP ecosystem: composer, artisan, phpstan, psalm, php-cs-fixer, pint
+	if family := phpEcosystemFamily(argv); family != FamilyNone {
+		return family
+	}
+	// Linters: eslint, prettier, biome
+	if family := linterFamily(argv); family != FamilyNone {
+		return family
+	}
+	// Infrastructure: kubectl, helm, terraform, az, aws
+	if family := infraFamily(argv); family != FamilyNone {
+		return family
+	}
+	// Docker: ps, logs, images, build
+	if family := dockerFamily(argv); family != FamilyNone {
+		return family
+	}
 	if len(argv) < 2 {
 		return FamilyNone
 	}
@@ -346,4 +408,271 @@ func safeByte(c byte) bool {
 		return true
 	}
 	return false
+}
+
+// packageManagerFamily detects npm, pnpm, yarn, bun test/build commands.
+// Only "test" and "build" (or "run test", "run build") are allowed.
+func packageManagerFamily(argv []string) Family {
+	if len(argv) < 2 {
+		return FamilyNone
+	}
+	pm := argv[0]
+	cmd := argv[1]
+	// Handle "npm run test" / "pnpm run build" forms
+	if cmd == "run" && len(argv) >= 3 {
+		cmd = argv[2]
+	}
+	switch pm {
+	case "npm":
+		switch cmd {
+		case "test", "t":
+			return FamilyNpmTest
+		case "build":
+			return FamilyNpmBuild
+		}
+	case "pnpm":
+		switch cmd {
+		case "test", "t":
+			return FamilyPnpmTest
+		case "build":
+			return FamilyPnpmBuild
+		}
+	case "yarn":
+		switch cmd {
+		case "test":
+			return FamilyYarnTest
+		case "build":
+			return FamilyYarnBuild
+		}
+	case "bun":
+		switch cmd {
+		case "test":
+			return FamilyBunTest
+		case "build":
+			return FamilyBunBuild
+		}
+	}
+	return FamilyNone
+}
+
+// phpEcosystemFamily detects PHP tools: composer, artisan, phpstan, psalm, php-cs-fixer, pint.
+func phpEcosystemFamily(argv []string) Family {
+	if len(argv) == 0 {
+		return FamilyNone
+	}
+	prog := argv[0]
+	// Composer: only read-only and validation commands
+	if prog == "composer" && len(argv) >= 2 {
+		switch argv[1] {
+		case "validate", "check-platform-reqs", "show", "outdated", "licenses", "why", "why-not", "diagnose", "audit":
+			return FamilyComposer
+		}
+	}
+	// Artisan: only safe commands (no make:*, migrate, db:*, etc.)
+	if (prog == "artisan" || prog == "php" && len(argv) >= 2 && argv[1] == "artisan") && len(argv) >= 2 {
+		artisanCmd := argv[1]
+		if prog == "php" && len(argv) >= 3 {
+			artisanCmd = argv[2]
+		}
+		switch artisanCmd {
+		case "test", "route:list", "config:show", "env", "about", "list", "help":
+			return FamilyArtisan
+		}
+	}
+	// PHPStan
+	if prog == "phpstan" || prog == "vendor/bin/phpstan" || prog == "./vendor/bin/phpstan" {
+		return FamilyPHPStan
+	}
+	// Psalm
+	if prog == "psalm" || prog == "vendor/bin/psalm" || prog == "./vendor/bin/psalm" {
+		return FamilyPsalm
+	}
+	// PHP-CS-Fixer (dry-run only)
+	if (prog == "php-cs-fixer" || prog == "vendor/bin/php-cs-fixer" || prog == "./vendor/bin/php-cs-fixer") && len(argv) >= 2 {
+		if argv[1] == "fix" {
+			for _, a := range argv[2:] {
+				if a == "--dry-run" {
+					return FamilyPHPCSFixer
+				}
+			}
+		}
+		if argv[1] == "check" {
+			return FamilyPHPCSFixer
+		}
+	}
+	// Laravel Pint (dry-run only)
+	if (prog == "pint" || prog == "vendor/bin/pint" || prog == "./vendor/bin/pint") {
+		for _, a := range argv[1:] {
+			if a == "--test" {
+				return FamilyPint
+			}
+		}
+	}
+	return FamilyNone
+}
+
+// linterFamily detects eslint, prettier, biome.
+func linterFamily(argv []string) Family {
+	if len(argv) == 0 {
+		return FamilyNone
+	}
+	prog := argv[0]
+	// Also handle npx variants
+	if prog == "npx" && len(argv) >= 2 {
+		prog = argv[1]
+	}
+	switch prog {
+	case "eslint":
+		return FamilyESLint
+	case "prettier":
+		// Only check mode, not write
+		for _, a := range argv {
+			if a == "--check" || a == "-c" || a == "--list-different" || a == "-l" {
+				return FamilyPrettier
+			}
+		}
+	case "biome":
+		if len(argv) >= 2 {
+			cmd := argv[1]
+			if prog == "npx" && len(argv) >= 3 {
+				cmd = argv[2]
+			}
+			if cmd == "check" || cmd == "lint" || cmd == "format" {
+				// format needs --write to actually write
+				for _, a := range argv {
+					if a == "--write" {
+						return FamilyNone
+					}
+				}
+				return FamilyBiome
+			}
+		}
+	}
+	return FamilyNone
+}
+
+// infraFamily detects kubectl, helm, terraform, az, aws read-only commands.
+func infraFamily(argv []string) Family {
+	if len(argv) < 2 {
+		return FamilyNone
+	}
+	prog := argv[0]
+	cmd := argv[1]
+	switch prog {
+	case "kubectl":
+		switch cmd {
+		case "get":
+			return FamilyKubectlGet
+		case "describe":
+			return FamilyKubectlDescribe
+		case "logs":
+			return FamilyKubectlLogs
+		}
+	case "helm":
+		switch cmd {
+		case "list", "ls":
+			return FamilyHelmList
+		case "status":
+			return FamilyHelmStatus
+		}
+	case "terraform":
+		switch cmd {
+		case "plan":
+			return FamilyTerraformPlan
+		case "fmt":
+			// Only check mode
+			for _, a := range argv[2:] {
+				if a == "-check" || a == "--check" {
+					return FamilyTerraformFmt
+				}
+			}
+		}
+	case "az":
+		// Azure CLI: az <resource-type> <action> e.g. az aks list, az storage account show
+		// The action (list/show) can be at index 2 or later depending on resource type depth
+		for i := 2; i < len(argv); i++ {
+			if argv[i] == "list" {
+				return FamilyAzList
+			}
+			if argv[i] == "show" {
+				return FamilyAzShow
+			}
+			// Stop at first flag
+			if strings.HasPrefix(argv[i], "-") {
+				break
+			}
+		}
+	case "aws":
+		return awsFamily(argv[1:])
+	}
+	return FamilyNone
+}
+
+// awsFamily detects read-only AWS CLI commands.
+func awsFamily(args []string) Family {
+	if len(args) == 0 {
+		return FamilyNone
+	}
+	service := args[0]
+	// Skip global options to find subcommand
+	cmdIdx := 1
+	for cmdIdx < len(args) && strings.HasPrefix(args[cmdIdx], "-") {
+		cmdIdx++
+		// Skip option values
+		if cmdIdx < len(args) && !strings.HasPrefix(args[cmdIdx], "-") {
+			cmdIdx++
+		}
+	}
+	if cmdIdx >= len(args) {
+		return FamilyNone
+	}
+	subCmd := args[cmdIdx]
+	// S3 commands
+	if service == "s3" {
+		switch subCmd {
+		case "ls":
+			return FamilyAwsS3Ls
+		case "cp":
+			// Only allow cp for download (no upload without explicit destination check)
+			return FamilyAwsS3Cp
+		}
+	}
+	// CloudWatch Logs
+	if service == "logs" {
+		switch subCmd {
+		case "describe-log-groups", "describe-log-streams", "get-log-events", "filter-log-events", "tail":
+			return FamilyAwsLogs
+		}
+	}
+	// Generic read-only patterns across services
+	switch {
+	case strings.HasPrefix(subCmd, "describe"):
+		return FamilyAwsDescribe
+	case strings.HasPrefix(subCmd, "list"):
+		return FamilyAwsList
+	case strings.HasPrefix(subCmd, "get") && !strings.Contains(subCmd, "password") && !strings.Contains(subCmd, "secret"):
+		return FamilyAwsGet
+	}
+	return FamilyNone
+}
+
+// dockerFamily detects safe docker commands.
+func dockerFamily(argv []string) Family {
+	if len(argv) < 2 {
+		return FamilyNone
+	}
+	if argv[0] != "docker" {
+		return FamilyNone
+	}
+	switch argv[1] {
+	case "ps":
+		return FamilyDockerPS
+	case "logs":
+		return FamilyDockerLogs
+	case "images":
+		return FamilyDockerImages
+	case "build":
+		return FamilyDockerBuild
+	}
+	return FamilyNone
 }
