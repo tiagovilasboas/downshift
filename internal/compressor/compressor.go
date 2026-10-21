@@ -184,6 +184,26 @@ func detectFormat(input []byte) (Format, bool) {
 	if isNextBuild(input) {
 		return FormatNextBuild, reNextBuildError.Match(input)
 	}
+	// Docker and kubectl table outputs have unambiguous headers, so they can be
+	// identified early. They carry no pass/fail semantics, so isError is false.
+	if isDockerPs(input) {
+		return FormatDockerPs, false
+	}
+	if isDockerImages(input) {
+		return FormatDockerImages, false
+	}
+	if isKubectlGetPods(input) {
+		return FormatKubectlPods, false
+	}
+	// Package install output (npm/pnpm/yarn/bun and pip) has unambiguous
+	// anchors and carries error semantics via error-shaped lines only, so it
+	// is identified before the test-suite heuristics.
+	if isNpmInstall(input) {
+		return detectNpmInstall(input)
+	}
+	if isPipInstall(input) {
+		return detectPipInstall(input)
+	}
 	if isPHPUnit(input) {
 		return FormatPHPUnit, rePHPUnitFailure.Match(input)
 	}
@@ -285,9 +305,38 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatGitStatus, false
 	}
 
+	// Git diff and git show carry a unified diff. A show transcript begins with
+	// a commit line, so it is checked before git log (which also starts with
+	// "commit"). Diffs carry no pass/fail semantics, so isError is false; the
+	// top-level guards already preserve CRLF and non-newline-terminated output.
+	// TODO: git_diff/git_show compressors need mutation-closure safety before activation.
+	// if isGitShow(input) {
+	// 	return FormatGitShow, false
+	// }
+	// if isGitDiff(input) {
+	// 	return FormatGitDiff, false
+	// }
+	// git stash list: every line is a "stash@{N}: ..." entry.
+	if isGitStashList(input) {
+		return FormatGitStash, false
+	}
+
 	// 10. Git log
 	if reGitLogCommit.Match(input) {
 		return FormatGitLog, false
+	}
+
+	// gh CLI table outputs (pr view / pr checks / run list). gh exits non-zero
+	// when a check or run fails, which CompressExit already preserves raw, so
+	// a compacted table is only produced for a zero/unknown exit.
+	if isGhPrView(input) {
+		return FormatGhPr, false
+	}
+	if isGhPrChecks(input) {
+		return FormatGhChecks, false
+	}
+	if isGhRunList(input) {
+		return FormatGhRunList, false
 	}
 
 	// 11. Repetitive logs, only after test suites, git status and git log had their
@@ -302,9 +351,112 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatSearch, false
 	}
 
-	// 13. File listings / tree
+	// 13. RSpec (Ruby)
+	if isRspec(input) {
+		return FormatRspec, reRspecFailure.Match(input)
+	}
+
+	// 14. .NET test
+	if isDotnetTest(input) {
+		return FormatDotnetTest, reDotnetTestFailure.Match(input)
+	}
+
+	// 15. File listings / tree
 	if bytes.Contains(input, []byte("total ")) && bytes.Contains(input, []byte("drwx")) {
 		return FormatFileList, false
+	}
+
+	// 16. Linters
+	if isEslint(input) {
+		return FormatEslint, false
+	}
+	if isRuff(input) {
+		return FormatRuff, false
+	}
+	if isMypy(input) {
+		return FormatMypy, false
+	}
+	if isGolangciLint(input) {
+		return FormatGolangciLint, false
+	}
+	if isCargoClippy(input) {
+		return FormatCargoClippy, false
+	}
+
+	// 17. Build errors
+	if isCargoBuild(input) {
+		return FormatCargoBuild, false
+	}
+	if isGoBuild(input) {
+		return FormatGoBuild, false
+	}
+	if isDotnetBuild(input) {
+		return FormatDotnetBuild, false
+	}
+
+	// 18. Package managers
+	if isNpmInstall(input) {
+		return FormatNpmInstall, false
+	}
+	if isPipInstall(input) {
+		return FormatPipInstall, false
+	}
+
+	// 19. Docker
+	if isDockerPs(input) {
+		return FormatDockerPs, false
+	}
+	if isDockerImages(input) {
+		return FormatDockerImages, false
+	}
+	if isDockerBuild(input) {
+		return FormatDockerBuild, false
+	}
+	if isDockerPush(input) {
+		return FormatDockerPush, false
+	}
+
+	// 20. Kubernetes
+	if isKubectlGetPods(input) {
+		return FormatKubectlPods, false
+	}
+
+	// 21. Terraform
+	if isTerraformPlan(input) {
+		return FormatTerraformPlan, false
+	}
+
+	// 22. Dependency trees
+	if isNpmLs(input) {
+		return FormatNpmLs, false
+	}
+	if isCargoTree(input) {
+		return FormatCargoTree, false
+	}
+	if isGoModGraph(input) {
+		return FormatGoModGraph, false
+	}
+
+	// 23. PHP ecosystem
+	if isComposer(input) {
+		return FormatComposer, false
+	}
+	if isPHPStan(input) {
+		return FormatPHPStan, false
+	}
+	if isPsalm(input) {
+		return FormatPsalm, false
+	}
+	if isArtisanMigrate(input) {
+		return FormatArtisanMigrate, false
+	}
+	if isArtisanRouteList(input) {
+		return FormatArtisanRoutes, false
+	}
+
+	// 24. Azure DevOps
+	if isAzPipelines(input) {
+		return FormatAzPipelines, false
 	}
 
 	return FormatUnknown, false
@@ -338,16 +490,101 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressMaven(input)
 	case FormatGradle:
 		return compressGradle(input)
+	case FormatRspec:
+		return compressRspec(input)
+	case FormatDotnetTest:
+		return compressDotnetTest(input)
+	case FormatNpmInstall:
+		return compressNpmInstall(input)
+	case FormatPipInstall:
+		return compressPipInstall(input)
 	case FormatGitStatus:
 		return compressGitStatus(input)
 	case FormatGitLog:
 		return compressGitLog(input)
+	case FormatGitDiff:
+		return compressGitDiff(input)
+	case FormatGitShow:
+		return compressGitShow(input)
+	case FormatGitStash:
+		return compressGitStashList(input)
+	case FormatGhPr:
+		return compressGhPrView(input)
+	case FormatGhChecks:
+		return compressGhPrChecks(input)
+	case FormatGhRunList:
+		return compressGhRunList(input)
 	case FormatSearch:
 		return compressSearchResults(input)
 	case FormatFileList:
 		return compressFileList(input)
 	case FormatLogs:
 		return deduplicateLogs(input)
+	case FormatDockerPs:
+		return compressDockerPs(input)
+	case FormatDockerImages:
+		return compressDockerImages(input)
+	case FormatDockerLogs:
+		return compressDockerLogs(input)
+	case FormatKubectlPods:
+		return compressKubectlGetPods(input)
+	case FormatKubectlLogs:
+		return compressKubectlLogs(input)
+
+	// Linters
+	case FormatEslint:
+		return compressEslint(input)
+	case FormatRuff:
+		return compressRuff(input)
+	case FormatMypy:
+		return compressMypy(input)
+	case FormatGolangciLint:
+		return compressGolangciLint(input)
+	case FormatCargoClippy:
+		return compressCargoClippy(input)
+
+	// Build errors
+	case FormatCargoBuild:
+		return compressCargoBuild(input)
+	case FormatGoBuild:
+		return compressGoBuild(input)
+	case FormatDotnetBuild:
+		return compressDotnetBuild(input)
+
+	// Docker build/push
+	case FormatDockerBuild:
+		return compressDockerBuild(input)
+	case FormatDockerPush:
+		return compressDockerPush(input)
+
+	// Terraform
+	case FormatTerraformPlan:
+		return compressTerraformPlan(input)
+
+	// Dependency trees
+	case FormatNpmLs:
+		return compressNpmLs(input)
+	case FormatCargoTree:
+		return compressCargoTree(input)
+	case FormatGoModGraph:
+		return compressGoModGraph(input)
+
+	// PHP ecosystem
+	case FormatComposer:
+		return compressComposer(input)
+	case FormatPHPStan:
+		return compressPHPStan(input)
+	case FormatPsalm:
+		return compressPsalm(input)
+	case FormatArtisanMigrate:
+		return compressArtisanMigrate(input)
+	case FormatArtisanRoutes:
+		return compressArtisanRouteList(input)
+
+	// Azure DevOps
+	case FormatAzPipelines:
+		return compressAzPipelines(input)
+
 	default:
 		return input, false, "unrecognized_format"
 	}

@@ -1,37 +1,52 @@
 # Compressor Learning
 
-Downshift learns which commands produce uncompacted output and suggests candidates
-for new compressors. This is a **guia layer** (Fowler): it surfaces patterns before
-you write the compressor.
+The compressor learning system observes unrecognised command outputs and
+identifies candidates for new compressors. It is a **guia layer** (Fowler):
+it surfaces patterns before the developer writes the compressor.
 
-## How It Works
+## How it works
 
-When a command passes through `downshift compactor` but its output is not compacted
-(unknown format), the learning system:
+1. When `downshift compact` runs a command whose output is not compacted
+   (format unknown or not matching the expected format), the learning hook
+   is called **asynchronously** in a separate goroutine.
 
-1. **Extracts a signature** — first 3 words, normalized (lowercase, versions stripped)
-2. **Records metadata** — count, timestamps, total bytes, truncated sample
-3. **Stores locally** — `~/.downshift/compressor-learning.json`
-4. **Suggests when ready** — patterns with 5+ occurrences become suggestions
+2. The hook extracts a **signature** from the command: the first 3 words,
+   normalised (lowercase, version suffixes stripped). This never includes
+   file paths, arguments, or other sensitive data.
 
-## Zero Performance Impact
+3. The signature, count, and a truncated sample are stored in
+   `~/.downshift/compressor-learning.json`.
 
-The learning hook runs **asynchronously** in a separate goroutine:
+4. When a signature reaches 5+ occurrences, it becomes a **suggestion**
+   for a new compressor.
 
-```
-Command runs → Output written → Exit code returned → [async] Learning hook
-                                      ↑
-                              User sees this immediately
-```
+## Performance
 
-Your command completes at full speed. The learning hook runs fire-and-forget
-after the output is already written.
+- **Zero impact on command execution**: The hook runs in a goroutine after
+  the command output is already written. The command exit code returns
+  immediately.
+- **Fire-and-forget**: Errors in the hook are silently ignored.
+- **Kill switch**: Set `DOWNSHIFT_LEARNING=0` to disable entirely.
 
 ## Commands
 
-### View Suggestions
-
 ```bash
+# Show suggestions (highest impact first)
+downshift learning suggestions
+
+# Show statistics
+downshift learning stats
+
+# Export raw store as JSON
+downshift learning export
+
+# Clear the store
+downshift learning clear
+```
+
+## Example output
+
+```
 $ downshift learning suggestions
 
 Compressor suggestions (highest impact first):
@@ -46,105 +61,24 @@ Compressor suggestions (highest impact first):
 → = recommended for new compressor (high count + high bytes)
 ```
 
-### View Statistics
+## What it records
 
-```bash
-$ downshift learning stats
+- Command signature (first 3 words, normalised)
+- Count of executions
+- First and last seen timestamps
+- Total bytes and average bytes
+- One truncated sample (4 KB max) for inspection
+- execwrap family, when known
 
-Compressor Learning Stats
-─────────────────────────
-Unique signatures:  12
-Total commands:     156
-Total bytes:        2.3 MB
-Ready to suggest:   3
-```
-
-### Export Raw Data
-
-```bash
-$ downshift learning export
-{
-  "version": 1,
-  "entries": {
-    "abc123": {
-      "signature": {"words": ["npm", "audit"], "hash": "abc123"},
-      "count": 47,
-      "first_seen": "2026-10-01T10:00:00Z",
-      "last_seen": "2026-10-21T12:00:00Z",
-      "total_bytes": 591052,
-      "sample_bytes": 4096,
-      "sample": "...",
-      "family": "npm-install"
-    }
-  }
-}
-```
-
-### Clear Store
-
-```bash
-$ downshift learning clear
-Cleared learning store
-```
-
-## Kill Switch
-
-Disable learning entirely:
-
-```bash
-export DOWNSHIFT_LEARNING=0
-```
-
-Or in config:
-
-```json
-{
-  "learning": false
-}
-```
-
-## What Gets Recorded
-
-| Field | Description |
-|-------|-------------|
-| Signature | First 3 words, normalized |
-| Count | Number of occurrences |
-| Timestamps | First and last seen |
-| Total bytes | Cumulative output size |
-| Sample | Truncated output (4KB max) |
-| Family | execwrap family, when known |
-
-## What Never Gets Recorded
+## What it never records
 
 - Full command line
 - File paths or arguments
+- Output content beyond the truncated sample
 - User data or environment variables
-- Output beyond the truncated sample
 
-## Privacy
+## For compressor authors
 
-The learning system records only:
-- Normalized command names (no paths, no arguments)
-- Byte counts and timestamps
-- One truncated sample per signature
-
-It never records:
-- Full command lines
-- File contents
-- Environment variables
-- User data
-
-## For Compressor Authors
-
-Use `downshift learning export` to inspect samples. The `sample` field shows
-the format structure, helping you write detection regexes and compression logic.
-
-Example workflow:
-
-1. Run `downshift learning suggestions` to find high-impact candidates
-2. Export and inspect the sample for the top candidate
-3. Write a compressor in `internal/compressor/`
-4. Test with the corpus: `go test ./internal/compressor/...`
-5. Submit a PR
-
-See [Adding Compressors](../contributing/compressors.md) for the full guide.
+Use `downshift learning export` to see the raw samples. The `sample` field
+contains a truncated output that shows the format structure. This helps you
+write detection regexes and compression logic for the new format.

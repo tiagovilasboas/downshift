@@ -24,8 +24,21 @@ const (
 	FamilyCargoTest Family = "cargo-test"
 
 	// Dart/Flutter
-	FamilyFlutterTest Family = "flutter-test"
-	FamilyDartTest    Family = "dart-test"
+	FamilyFlutterTest    Family = "flutter-test"
+	FamilyFlutterBuild   Family = "flutter-build"
+	FamilyFlutterRun     Family = "flutter-run"
+	FamilyFlutterAnalyze Family = "flutter-analyze"
+	FamilyFlutterPub     Family = "flutter-pub"
+	FamilyFlutterDoctor  Family = "flutter-doctor"
+	FamilyFlutterClean   Family = "flutter-clean"
+	FamilyFlutterDevices Family = "flutter-devices"
+	FamilyDartTest       Family = "dart-test"
+	FamilyDartRun        Family = "dart-run"
+	FamilyDartAnalyze    Family = "dart-analyze"
+	FamilyDartPub        Family = "dart-pub"
+	FamilyDartCompile    Family = "dart-compile"
+	FamilyDartFormat     Family = "dart-format"
+	FamilyDartFix        Family = "dart-fix"
 
 	// Java/Kotlin
 	FamilyGradle Family = "gradle"
@@ -88,10 +101,42 @@ func backendFamily(argv []string) Family {
 		switch {
 		case argv[0] == "go" && argv[1] == "test":
 			return FamilyGoTest
-		case argv[0] == "flutter" && argv[1] == "test":
-			return FamilyFlutterTest
-		case argv[0] == "dart" && argv[1] == "test":
-			return FamilyDartTest
+		case argv[0] == "flutter":
+			switch argv[1] {
+			case "test":
+				return FamilyFlutterTest
+			case "build":
+				return FamilyFlutterBuild
+			case "run":
+				return FamilyFlutterRun
+			case "analyze":
+				return FamilyFlutterAnalyze
+			case "pub":
+				return FamilyFlutterPub
+			case "doctor":
+				return FamilyFlutterDoctor
+			case "clean":
+				return FamilyFlutterClean
+			case "devices":
+				return FamilyFlutterDevices
+			}
+		case argv[0] == "dart":
+			switch argv[1] {
+			case "test":
+				return FamilyDartTest
+			case "run":
+				return FamilyDartRun
+			case "analyze":
+				return FamilyDartAnalyze
+			case "pub":
+				return FamilyDartPub
+			case "compile":
+				return FamilyDartCompile
+			case "format":
+				return FamilyDartFormat
+			case "fix":
+				return FamilyDartFix
+			}
 		case argv[0] == "cargo" && argv[1] == "test":
 			return FamilyCargoTest
 		}
