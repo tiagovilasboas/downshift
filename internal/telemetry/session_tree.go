@@ -65,6 +65,9 @@ type TreeRow struct {
 	Paused      bool     `json:"paused,omitempty"`
 	Time        string   `json:"time,omitempty"`
 
+	// switchesModel is true when the child ran on another model than requested.
+	switchesModel bool
+
 	mark string
 }
 
@@ -79,9 +82,12 @@ type SessionTreeView struct {
 	Paused      bool             `json:"paused"`
 	// Switched and Held count the rows Downshift changed and the rows it
 	// considered and kept.
-	Switched int       `json:"switched"`
-	Held     int       `json:"held"`
-	Rows     []TreeRow `json:"rows"`
+	Switched int `json:"switched"`
+	// ModelSwitched and EffortChanged split Switched (see PanelView).
+	ModelSwitched int       `json:"model_switched"`
+	EffortChanged int       `json:"effort_changed"`
+	Held          int       `json:"held"`
+	Rows          []TreeRow `json:"rows"`
 }
 
 // IsDecisionRow reports whether an event is a routing decision of a subagent:
@@ -216,6 +222,11 @@ func BuildSessionTree(events []Event, sessionHash string, opt TreeOptions) Sessi
 		switch r.State {
 		case StateSwitched:
 			view.Switched++
+			if r.switchesModel {
+				view.ModelSwitched++
+			} else {
+				view.EffortChanged++
+			}
 		case StateHeld:
 			view.Held++
 		}
@@ -227,7 +238,8 @@ func buildRow(n int, d Event, f *childFacts, opt TreeOptions) TreeRow {
 	row := TreeRow{
 		Index: n, Label: fmt.Sprintf("subagent %d", n), Status: "running", mark: markRunning,
 		Reason: ShortReason(d), Time: d.Timestamp,
-		Paused: hasCode(d.ReasonCodes, ReasonPaused),
+		Paused:        hasCode(d.ReasonCodes, ReasonPaused),
+		switchesModel: switchesModel(d.FromModel, d.ToModel),
 	}
 	if f == nil {
 		f = &childFacts{}
@@ -378,7 +390,11 @@ func (v SessionTreeView) Render() string {
 		head = append(head, "no subagents yet")
 	} else {
 		head = append(head, fmt.Sprintf("%d %s", v.Subagents, noun))
-		head = append(head, fmt.Sprintf("%d switched, %d held", v.Switched, v.Held))
+		if v.EffortChanged > 0 {
+			head = append(head, fmt.Sprintf("%d model · %d effort · %d held", v.ModelSwitched, v.EffortChanged, v.Held))
+		} else {
+			head = append(head, fmt.Sprintf("%d switched, %d held", v.Switched, v.Held))
+		}
 		if line := v.Tokens.Line(); line != "" {
 			head = append(head, line)
 		} else {

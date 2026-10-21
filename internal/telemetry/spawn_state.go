@@ -142,6 +142,13 @@ func (r SpawnRecord) Line() string {
 	return s
 }
 
+// switchesModel reports whether a switched spawn ran on another model than the
+// requested one. A switch that keeps the model can only have changed the
+// effort, so it is an effort change.
+func switchesModel(from, to string) bool {
+	return !sameModel(from, to)
+}
+
 func shortOrQ(id string) string {
 	if id == "" || id == "unknown" {
 		return "?"
