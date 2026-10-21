@@ -100,6 +100,7 @@ Agent skills in skills/: downshift-setup, downshift-audit, cost-reducer (SKILL.m
 
 Assisted setup for AI agents (ask the user before any write outside the repo):
   1. curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
+     (if it says the release has no archive for this platform: sh -s <tag> from https://github.com/tiagovilasboas/downshift/releases, or go install ...@<tag>)
   2. downshift setup --dry-run        # show the diff to the user
   3. downshift setup --yes            # only after the user agrees; backups kept, --undo restores
   4. downshift doctor --json          # every check has status ok|warn|fail and a fix command

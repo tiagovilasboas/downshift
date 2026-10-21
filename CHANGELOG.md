@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `install.sh` probes the archive URL before downloading. A release with no archive for your platform now ends with an explicit message (pick another tag, `go install`, or report it) instead of a bare `curl: (22) 404`. CI gains a `verify-release` job that fails a tag whose release is missing `checksums.txt` or an archive, or whose `release` job did not succeed.
+
 ### Changed
 
 - One final metric, `tokens_saved_estimate` (owner decision 2026-10-21): routing tokens saved plus the Compactor's saved bytes / 4, labelled an estimate. Defined once in `telemetry.TokensSavedEstimate`. `downshift report` ends with `Tokens saved (estimate): N` and drops the separate Compactor bytes and tokens lines (`--json` keeps the parts and adds the total); `session --panel` adds `tokens_saved_estimate` (this session's routing plus the Compactor all-time total); `savvy-progress` 1.2.12 replaces the `Downshifted` and `Compactor total` tiles with one `Tokens saved` tile. This reverses the earlier rule that the Compactor bytes are never added to the tokens.

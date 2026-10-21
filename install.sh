@@ -128,6 +128,22 @@ VER="${VERSION#v}"
 ARCHIVE="downshift_${VER}_${OS}_${ARCH}.tar.gz"
 URL="https://github.com/${REPO}/releases/download/${VERSION}/${ARCHIVE}"
 
+# Probe the archive first: a release without this platform's asset (for example
+# one created by hand, before the build finished) must read as "this tag has no
+# archive", not as a bare curl 404. No fallback to another version.
+if ! fetch -fsSLI -o /dev/null "$URL" 2>/dev/null; then
+  {
+    echo "error: release ${VERSION} has no ${OS}/${ARCH} archive yet (${ARCHIVE} was not found)."
+    echo "This is a missing release asset, not a problem with your machine. Options:"
+    echo "  1. Install another tag (list: https://github.com/${REPO}/releases):"
+    echo "       curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | sh -s <tag>"
+    echo "  2. With Go installed, build it from source (lands in ~/go/bin):"
+    echo "       go install github.com/${REPO}/cmd/downshift@${VERSION}"
+    echo "  3. Report it: https://github.com/${REPO}/issues"
+  } >&2
+  exit 1
+fi
+
 # ── Choose install dir ────────────────────────────────────────────────────────
 if [ -n "${DOWNSHIFT_INSTALL_DIR:-}" ]; then
   INSTALL_DIR="$DOWNSHIFT_INSTALL_DIR"
