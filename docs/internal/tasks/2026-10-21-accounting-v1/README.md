@@ -131,9 +131,9 @@ only with the label of point 2 and only after phase 4 (parity proven in CI).
 | 2 Core | T3 formula layer, T4a children, T4b compactor + scope, T4c display contract | 13 | `Compute(scope)` passes the golden tests; rounding and labels fixed once |
 | 3 Surfaces | T5 report, T6 panel, T7 stats fold, T8 mod | 10 | each surface renders `Numbers`, no own sums |
 | 4 Proof | T9 parity test | 3 | CI fails if any surface drifts |
-| 5 Clean | T10 docs align, T11 delete legacy | 4 | fewer lines than on 2026-10-21 |
+| 5 Clean | T10 docs align, T11 delete legacy, T12 split large files | 7 | fewer lines than on 2026-10-21; no telemetry file above 500 lines |
 
-Total 43 points, 18 cards, each one PR of at most 5 points. Dependencies and parallel waves are in
+Total 46 points, 19 cards, each one PR of at most 5 points. Dependencies and parallel waves are in
 `tasks.md`. Public claims (retraction, site, evidence page) are not here: see the curation report,
 section 1; they resume only after phase 4.
 

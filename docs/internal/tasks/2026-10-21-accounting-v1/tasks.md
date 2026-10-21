@@ -169,6 +169,27 @@ header on new Go files, OS-agnostic paths, table-driven tests, `go test ./...` a
 - **Done when:** the diff removes more lines than it adds.
 - **Depends on:** T9. **Files:** as above.
 
+### T12. Split the large telemetry files (3)
+- Owner rule (2026-10-21): about 300 lines per file, never above 500. On `main` today
+  `internal/telemetry/telemetry.go` has 891 lines and `session_tree.go` 514. Split each by
+  responsibility, with no change in behaviour or output:
+  - `telemetry.go`: event types and records (`Event`, DCI, NB, E5, shadow records), event
+    constructors and outcome predicates (`FromDecision`, `Failure`, `AppliedRewrite`, ...), log
+    writing (`Record`, `AppendTo`, `defaultEventPath`), log reading (`ReadEvents`, `parseEvents`,
+    `FilterByDays`) and `Stats` with its tallies.
+  - `session_tree.go`: building the tree (`BuildSessionTree`, `buildRow`, `foldUsage`) and rendering
+    it (`Render`, `ShortReason`, `padRight`, ordering).
+  - Recount `tokens_rerouted.go`, `aggregate.go` and `report.go` (326, 317 and 304 lines today)
+    after T11; split any that is still above 300.
+- Fix `AGENTS.md`: the architecture block calls `Summarize` "the one savings definition"; after T4
+  the definition lives in `internal/accounting` (L3), so the line names that layer.
+- Pure moves: no renamed exported symbol, no new package, copyright header on every new file.
+- **Done when:** no non-test file in `internal/telemetry` is above 500 lines and none of the split
+  files is above 300; `go test ./...`, `make e2e` and the T9 parity test are green with the same
+  output; `git diff --stat` shows moves, not rewrites.
+- **Depends on:** T11 (it deletes code from the same files). **Files:** `internal/telemetry`,
+  `AGENTS.md`.
+
 ## Order and waves (cap 5 active agents including the root)
 
 | Wave | Cards in parallel | Why they do not collide |
@@ -181,9 +202,10 @@ header on new Go files, OS-agnostic paths, table-driven tests, `go test ./...` a
 | 6 | T8 | mod |
 | 7 | T9 | needs all surfaces |
 | 8 | T10, T11 | docs; deletions |
+| 9 | T12 | file split after the deletions; moves only |
 
 Points: spikes 7, T0 2, T1 2, T2 2, T3 5, T4a 5, T4b 2, T4c 1, T5 3, T6 2, T7 2, T8 3, T9 3, T10 2,
-T11 2 = **43**, 18 cards. If D6 keeps `stats` separate, T7 becomes the audit fixes only and still costs 2.
+T11 2, T12 3 = **46**, 19 cards. If D6 keeps `stats` separate, T7 becomes the audit fixes only and still costs 2.
 
 ## Not in this plan
 
