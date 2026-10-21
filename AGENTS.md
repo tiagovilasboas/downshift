@@ -59,7 +59,7 @@ change this repository), read **[docs/guides/install.md](docs/guides/install.md)
 
 ### Native compact works in ANY harness (supported or not)
 
-`downshift compact -- <command>` cuts the output of an allowlisted test/build/
+`downshift compactor -- <command>` (aliases: `compact`, `exec`) cuts the output of an allowlisted test/build/
 status command (go test, git status, pytest, vitest, jest, tsc, cypress run,
 playwright test, next build, phpunit, cargo test, flutter test, dart test,
 gradle, maven; the exact forms are in docs/reference/harness-matrix.md) to its PASS/FAIL summary and keeps the real
@@ -72,6 +72,28 @@ users this: an unsupported harness still gets compaction via the command, even
 though it gets no automatic model routing. Auto-rewrite of a bare command into
 the compact form needs a shell-rewrite hook channel (`CanRewriteShellCommand`,
 Claude Code only); everywhere else it is the direct command.
+
+**Rule for agents:** When you run an allowlisted command, ALWAYS wrap it:
+
+```bash
+downshift compactor -- <command> [args...]
+```
+
+This saves context tokens without hiding problems. The exit code is preserved.
+
+**Allowlisted families:** go test/build/run/mod · cargo test/build/clippy ·
+pytest · vitest · jest · phpunit · pest · playwright test · cypress · tsc ·
+next build · git (all) · kubectl · helm · aws · docker · make · npm/pnpm/yarn/bun test/build
+
+**Learning:** Commands not compacted (unknown format) are observed asynchronously.
+When a pattern repeats 5+ times, `downshift learning suggestions` shows candidates
+for new compressors. Zero performance impact (async goroutine). Kill switch: `DOWNSHIFT_LEARNING=0`.
+
+**Other commands:**
+- `downshift session` — current session savings
+- `downshift report --period=7d` — savings over time  
+- `downshift learning stats` — learning store statistics
+- `downshift doctor` — check installation health
 
 ### Shared RAG memory
 
