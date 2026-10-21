@@ -59,6 +59,46 @@ func SpawnStateOf(ev Event) string {
 	return StateObserved
 }
 
+// UpshiftNotApplied reports an UPSHIFT verdict that did not change the spawn:
+// the child ran on the requested, smaller model. A blocked, paused or control
+// spawn is never counted. A guardrail that held the upshift (R1, R5, R7, R8
+// or a HELD_* reason) is a held_guardrail row, not this one.
+func UpshiftNotApplied(ev Event) bool {
+	if ev.Verdict != "UPSHIFT" || SpawnStateOf(ev) == StateSwitched {
+		return false
+	}
+	switch SpawnStateOf(ev) {
+	case StateBlocked, StatePaused, StateControl:
+		return false
+	}
+	return !guardrailHeld(ev)
+}
+
+// HeldByGuardrail reports a held spawn kept by a guardrail or the credit gate:
+// a held decision that is not an upshift not applied. Held (the field) is the
+// sum of this and UpshiftNotApplied among held spawns.
+func HeldByGuardrail(ev Event) bool {
+	return SpawnStateOf(ev) == StateHeld && !UpshiftNotApplied(ev)
+}
+
+// guardrailHeld reports the corrections and reason codes that name a guardrail
+// rather than the credit gate or the baseline.
+func guardrailHeld(ev Event) bool {
+	for _, c := range ev.Corrections {
+		for _, rule := range []string{"R1_", "R5_", "R7_", "R8_"} {
+			if strings.HasPrefix(c, rule) {
+				return true
+			}
+		}
+	}
+	for _, c := range ev.ReasonCodes {
+		if strings.HasPrefix(c, "HELD_") {
+			return true
+		}
+	}
+	return false
+}
+
 func isHeld(ev Event) bool {
 	if len(ev.Corrections) > 0 || ev.CreditHeld {
 		return true

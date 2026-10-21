@@ -53,7 +53,7 @@ func TestTokenDirection_Gates(t *testing.T) {
 		{"control group", decision, true, true, false, TokenUnchanged},
 		{"no linked decision", decision, false, false, false, TokenUnattributed},
 		{"held decision", withCorrections(decision), true, false, false, TokenUnchanged},
-		{"allow, no rewrite", withOutcome(decision, OutcomeAllow), true, false, false, TokenUnchanged},
+		{"blocked, no rewrite", withOutcome(decision, OutcomeBlocked), true, false, false, TokenUnchanged},
 		{"rewrite not honored", decision, true, false, true, TokenUnchanged},
 	}
 	for _, tc := range cases {
