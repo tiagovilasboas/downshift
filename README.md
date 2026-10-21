@@ -177,6 +177,19 @@ downshift report --period=7d   # Savings over time
 downshift doctor               # Health check
 ```
 
+### Shell Aliases (Transparent Compaction)
+
+```bash
+eval "$(downshift shell-init)" # Load aliases for the current shell
+```
+
+This wraps common commands (`go`, `cargo`, `pytest`, `git`, etc.) so compaction
+happens automatically without changing your workflow. Designed for agent harnesses
+where stdout goes to context, not a terminal — interactive shells stay unchanged.
+
+- **DOWNSHIFT_SHELL_ALIASES=0** — kill switch, disables all aliases
+- **DOWNSHIFT_FORCE_COMPACT=1** — force compaction even in terminals (debugging)
+
 ### Compressor Learning
 
 ```bash
