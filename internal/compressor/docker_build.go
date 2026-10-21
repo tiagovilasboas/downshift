@@ -28,7 +28,13 @@ func isDockerBuild(input []byte) bool {
 	if len(input) > MaxProcessableBytes || !utf8.Valid(input) {
 		return false
 	}
-	return reDockerBuildStep.Match(input) || reBuildKit.Match(input)
+	// Need both a step pattern AND either success or a dockerfile reference
+	hasStep := reDockerBuildStep.Match(input)
+	hasBuildKit := reBuildKit.Match(input) && bytes.Contains(input, []byte("FROM"))
+	hasSuccess := reDockerBuildSuccess.Match(input)
+	hasDockerfile := bytes.Contains(input, []byte("Dockerfile")) || bytes.Contains(input, []byte("FROM "))
+
+	return (hasStep && (hasSuccess || hasDockerfile)) || (hasBuildKit && hasDockerfile)
 }
 
 func compressDockerBuild(input []byte) ([]byte, bool, string) {
