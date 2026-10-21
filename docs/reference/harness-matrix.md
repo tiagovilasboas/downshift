@@ -304,7 +304,7 @@ On by default on Claude Code: the plugin registers the `Bash` PreToolUse hook. S
 `"exec": false` in the Downshift config or `DOWNSHIFT_EXEC=0` to turn it off. The decision is
 shared (`internal/execwrap.Decide` plus `shellWrapDecision` in the hook
 runner): the command must start with one of the families below, contain no
-shell metacharacter, not already start with `downshift`, and be rewritten to the
+shell metacharacter (or match one of the compound shapes below), not already start with `downshift`, and be rewritten to the
 running binary's absolute path (single-quoted in the command, no PATH lookup).
 No Bash allow rule is needed. The rewrite is skipped when a deny or ask rule
 matches the command, or when the settings cannot be read, and never when
@@ -336,6 +336,30 @@ written. The family name is the only command fact telemetry keeps.
 
 Any other command, including `npm test`, is not wrapped. The shell still parses the wrapped command, so the words after the
 family expand as they would have.
+
+**Compound shapes (2026-10-21).** `internal/execwrap/policy_compound.go` also
+accepts the shapes agents use most, matched word by word, and wraps only the
+allowlisted command inside them; the rest is kept as written:
+
+| shape | rewritten to | exit code |
+|---|---|---|
+| `cd <dir> && <cmd>` | `cd <dir> && '<bin>' compact -- <cmd>` | cd's on failure, else the command's |
+| `<cmd> \| tail -N` (also `head`, `-n N`, `-nN`, N up to 5 digits) | `'<bin>' compact -- <cmd> \| tail -N` | the pipe's last command, as before |
+| `<cmd> 2>&1 \| tail -N` | `'<bin>' compact -- <cmd> 2>&1 \| tail -N` | same |
+| `cd <dir> && <cmd> 2>&1 \| tail -N` | both of the above | same |
+
+`<dir>` passes the same safe-byte gate as the command (no `~`, `$`, quote, glob)
+and cannot start with `-`. A deny or ask rule that matches the whole command,
+the inner command, `cd <dir>` or the `tail`/`head` part stops the rewrite. Under
+`| head -N` the wrapped command runs to its end before the output is cut, where
+the bare command could have been stopped early by the closed pipe.
+
+Left unwrapped on purpose: more than one `&&`, `||`, `;`, `&`, a pipe into
+anything but `tail`/`head -N` (`grep`, `tee`, a second pipe), `tail -f`, `tail
+-n +N`, file redirects (`>`, `>>`, `1>&2`), a pipe with no spaces around `|`,
+and anything with an expansion or a quote. Each of these can change what the
+command does or which exit code the agent sees in ways a word match cannot
+prove safe.
 
 | harness | shell rewrite | status | limit |
 |---|---|---|---|

@@ -94,6 +94,9 @@ type Decision struct {
 	// Argv is the command with whitespace normalised: the text a permission
 	// rule of the original command is matched against.
 	Argv string
+	// Segments are the other commands of a compound shape (`cd <dir>`,
+	// `tail -N`), kept as written; each must also match no deny or ask rule.
+	Segments []string
 	// Reason is a fixed code, safe to log.
 	Reason string
 }
@@ -123,7 +126,19 @@ const (
 // exe is the absolute path of the running downshift binary; the wrapped
 // command invokes exactly that file, single-quoted, never a name looked up on
 // the Bash tool's PATH.
+//
+// A command that fails the safe-byte gate gets one more chance as one of the
+// compound shapes in policy_compound.go.
 func Decide(command, exe string) Decision {
+	d := decideSimple(command, exe)
+	if d.Reason != ReasonUnsafeChar {
+		return d
+	}
+	return decideCompound(strings.Trim(command, " "), exe)
+}
+
+// decideSimple is the policy for one command with no shell metacharacter.
+func decideSimple(command, exe string) Decision {
 	trimmed := strings.Trim(command, " ")
 	switch {
 	case trimmed == "":

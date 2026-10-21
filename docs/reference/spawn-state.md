@@ -114,30 +114,33 @@ the spawn alone.
 
 ### Compactor in the panel JSON
 
-`session --panel` adds an optional `compactor` block for the session:
-`{commands, compacted, raw_bytes, saved_bytes, estimated_tokens_saved, token_estimate}`.
-Bytes are measured; `estimated_tokens_saved` is `saved_bytes / 4` and is never
-added to the routing `tokens` (different units, different certainty). The hook puts
-the hashed session on the wrapped command (`downshift compact --session=<hash> -- …`,
-`telemetry.HashSessionID`, never the raw id) and the runner logs it in
-`exec-events.jsonl`. No wrapped command in the session, or records written before
-this field existed, means no block, never zeros.
+`session --panel` adds an optional `compactor` block that totals the **whole**
+`exec-events.jsonl` (owner decision 2026-10-21): every session and every run,
+with or without a session hash. It does not depend on `--session`; the routing
+figures beside it stay per session.
+`{scope, commands, compacted, raw_bytes, saved_bytes, estimated_tokens_saved, token_estimate}`,
+where `scope` is `"all"`. Bytes are measured; `estimated_tokens_saved` is
+`saved_bytes / 4` and is never added to the routing `tokens` (different units,
+different certainty). An empty or missing log means no block, never zeros.
 
-The session comes from the hook payload's `session_id`. When that is absent
-(some live Bash payloads carry none), it is the uuid file name of
-`transcript_path`, since Claude Code names each transcript `<uuid>.jsonl`. A
-name that is not a uuid gives no session. `session_id` always wins when present.
-Without a session the command is still wrapped, but the runner logs no session
-hash, so no block appears for it.
+Each run still logs the hashed session when one is known (`telemetry.HashSessionID`,
+never the raw id): the hook puts it on the wrapped command
+(`downshift compact --session=<hash> -- …`), from the payload's `session_id` or,
+when absent, the uuid file name of `transcript_path`. A run with no flag (a
+direct `downshift compact -- …` by an agent or a script) takes the session from
+the harness's own variable (`HarnessCapabilities.SessionEnv`, today only
+`CLAUDE_CODE_SESSION_ID`). KiroCrew declares no session variable, so its direct
+calls log no session; they still count in the total.
 
 ### `mods/savvy-progress`
 
 Vendored, so it is patched only through its documented local patch
 (`mods/savvy-progress/downshift-local.patch`, README section "Downshift local
-patch"; mod version 1.2.6). The patch runs `downshift session --panel` and shows
+patch"; mod version 1.2.9). The patch runs `downshift session --panel` and shows
 two tiles in the panel. The first reads `Downshifted` and draws the tokens that
-ran on a smaller model. A `Compactor` tile, with ↓, draws the bytes the
-Compactor cut in the session, only when the `compactor` block is present. The two
+ran on a smaller model. A `Compactor total` tile draws the bytes the
+Compactor cut across every run in the exec log, only when the `compactor` block
+is present; it shows even when the session is unknown. The two
 are never added together: one is measured tokens, the other measured bytes. The
 header and the band show one line, `Downshift · N switched · M held`, and each
 agent row shows a one-word status, ↓ and the tokens that agent moved to a smaller

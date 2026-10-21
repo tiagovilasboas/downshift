@@ -89,10 +89,21 @@ func shellWrapDecision(harness, command string, blocked func(string) bool) execw
 	// would match none of those rules, so they are checked here. No allow rule
 	// is required; the rewrite carries no permissionDecision, so the harness's
 	// permission flow still applies to the rewritten command.
-	if blocked == nil || blocked(command) || blocked(d.Argv) {
+	if blocked == nil || blocked(command) || blocked(d.Argv) || anyBlocked(blocked, d.Segments) {
 		return execwrap.Decision{Family: d.Family, Reason: "blocked_by_user_rules"}
 	}
 	return d
+}
+
+// anyBlocked reports whether a deny or ask rule matches any segment of a
+// compound shape (`cd <dir>`, `tail -N`).
+func anyBlocked(blocked func(string) bool, segments []string) bool {
+	for _, s := range segments {
+		if blocked(s) {
+			return true
+		}
+	}
+	return false
 }
 
 // shellRewrite handles a shell-tool call inside runHookAdapter. isShell is
