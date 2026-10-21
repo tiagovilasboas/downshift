@@ -66,6 +66,12 @@ type Result struct {
 	Compacted    bool
 }
 
+// ObserveUncompactedHook is called when a command's output was not compacted.
+// It receives the argv, raw output (truncated), and family. Callers register
+// a function to learn from uncompacted outputs. The hook must be fast and
+// must not fail the command.
+var ObserveUncompactedHook func(argv []string, sample []byte, family Family)
+
 // expectedFormat is the compressor format each family may be compacted as.
 // Any other detected format (a repetitive-log match, a search match) keeps the
 // raw output. A family with no entry here is a pass-through: it runs and its
@@ -114,7 +120,7 @@ func Run(argv []string, o Options) (res Result) {
 		return startFailure(argv[0], err, o.Stderr, res.Family)
 	}
 
-	g := newGate(o.Stdout, o.Stderr, o.Compact)
+	g := newGate(o.Stdout, o.Stderr, o.Compact, argv, res.Family)
 	cmd := exec.Command(path, argv[1:]...)
 	cmd.Args[0] = argv[0]
 	cmd.Env = append(os.Environ(), DepthEnv+"=1")
@@ -202,10 +208,12 @@ type gate struct {
 	timer     *time.Timer
 	nOut      int64
 	nErr      int64
+	argv      []string // for learning hook
+	family    Family   // for learning hook
 }
 
-func newGate(out, err io.Writer, hold bool) *gate {
-	return &gate{out: out, err: err, streaming: !hold}
+func newGate(out, err io.Writer, hold bool, argv []string, family Family) *gate {
+	return &gate{out: out, err: err, streaming: !hold, argv: argv, family: family}
 }
 
 // release flushes held stdout and switches to streaming. Callers hold g.mu.
@@ -281,6 +289,21 @@ func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64
 		}
 	}
 	_, _ = g.out.Write(out)
+
+	// Call the learning hook asynchronously when output was not compacted.
+	// This never blocks or slows down the command return.
+	if !compacted && ObserveUncompactedHook != nil && len(data) > 0 {
+		// Copy data for the goroutine (data slice will be invalidated)
+		sample := make([]byte, len(data))
+		copy(sample, data)
+		argv := g.argv
+		family := g.family
+		go func() {
+			defer func() { recover() }() // never panic the caller
+			ObserveUncompactedHook(argv, sample, family)
+		}()
+	}
+
 	return raw, int64(len(out)), compacted
 }
 

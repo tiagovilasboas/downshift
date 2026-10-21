@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
+	_ "github.com/tiagovilasboas/downshift/internal/compressor/learning"
 	"github.com/tiagovilasboas/downshift/internal/gateway"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	_ "github.com/tiagovilasboas/downshift/internal/nbopinion"
@@ -131,6 +132,8 @@ func main() {
 		os.Exit(runContext(args[1:], os.Stdout, os.Stderr))
 	case "dci":
 		os.Exit(runDCI(args[1:], os.Stdin, os.Stdout, os.Stderr))
+	case "learning":
+		os.Exit(runLearning(args[1:], os.Stdout, os.Stderr))
 	case "setup":
 		os.Exit(runSetup(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "doctor":
