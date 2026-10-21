@@ -20,8 +20,13 @@ type catalogEntryReader interface {
 // runTry classifies a prompt from the command line for quick testing.
 func runTry(resolver core.Resolver, args []string) int {
 	args, detail := stripDetail(args)
+	args, optHarness, optModel, badFlag := stripTryOptions(args)
+	if badFlag != "" {
+		fmt.Fprintf(os.Stderr, "unknown or incomplete option %q\nusage: downshift try \"<task prompt>\" [harness] [current-model] [--harness H] [--model M]\n", badFlag)
+		return 2
+	}
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: downshift try \"<task prompt>\" [harness] [current-model]")
+		fmt.Fprintln(os.Stderr, "usage: downshift try \"<task prompt>\" [harness] [current-model] [--harness H] [--model M]")
 		return 2
 	}
 	prompt := args[0]
@@ -36,6 +41,12 @@ func runTry(resolver core.Resolver, args []string) int {
 	}
 	if len(args) >= 3 {
 		current = args[2]
+	}
+	if optHarness != "" {
+		harness = optHarness
+	}
+	if optModel != "" {
+		current = optModel
 	}
 	if !knownTryHarness(resolver, harness) {
 		fmt.Fprintf(os.Stderr, "unknown harness %q; valid harnesses: %s\n", harness, strings.Join(validTryHarnesses(resolver), ", "))

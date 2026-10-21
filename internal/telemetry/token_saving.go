@@ -29,6 +29,10 @@ type TokenSaving struct {
 	WorkSaved   int64 `json:"work_saved"`
 	CacheTokens int64 `json:"cache_tokens"`
 	CacheSaved  int64 `json:"cache_saved"`
+	// SavedWithoutRewrite is the part of the saving that came from verdict OK
+	// children with no applied rewrite: they ran on a cheaper tier than the
+	// requested model. It is a subset of the saved counts, shown apart.
+	SavedWithoutRewrite SavedWithoutRewrite `json:"saved_without_rewrite"`
 	// WorkPricier and CachePricier ran on a pricier model than requested (an
 	// upshift, or a tier move to a model that costs more): never a saving.
 	WorkPricier  int64 `json:"work_pricier,omitempty"`
@@ -43,6 +47,14 @@ type TokenSaving struct {
 	// allowlisted row names: never saved, never guessed from a tier.
 	// The JSON key is kept: it is a published field and only its wording changed.
 	GatewayUnattributed int `json:"gateway_unpriced,omitempty"`
+}
+
+// SavedWithoutRewrite counts the saving with no applied rewrite (owner decision
+// C3): children, work tokens and cache tokens.
+type SavedWithoutRewrite struct {
+	Children int   `json:"children"`
+	Work     int64 `json:"work"`
+	Cache    int64 `json:"cache"`
 }
 
 // Observed reports whether any child's tokens are known.
@@ -86,6 +98,9 @@ func (s TokenSaving) Line() string {
 	if p := s.WorkPricier + s.CachePricier; p > 0 {
 		out += " · " + formatTokens(p) + " on a pricier model"
 	}
+	if n := s.SavedWithoutRewrite.Children; n > 0 {
+		out += fmt.Sprintf(" · %d without a rewrite", n)
+	}
 	if s.SavedInferred > 0 {
 		out += " · baseline inferred"
 	}
@@ -112,6 +127,9 @@ func (s *TokenSaving) add(o TokenSaving) {
 	s.CacheSaved += o.CacheSaved
 	s.WorkPricier += o.WorkPricier
 	s.CachePricier += o.CachePricier
+	s.SavedWithoutRewrite.Children += o.SavedWithoutRewrite.Children
+	s.SavedWithoutRewrite.Work += o.SavedWithoutRewrite.Work
+	s.SavedWithoutRewrite.Cache += o.SavedWithoutRewrite.Cache
 	s.SavedInferred += o.SavedInferred
 	s.AtFloor += o.AtFloor
 	s.GatewayUnattributed += o.GatewayUnattributed
@@ -176,6 +194,9 @@ func TokenSavings(events []Event) TokenSavingView {
 		switch dir {
 		case TokenCheaper:
 			s.WorkSaved, s.CacheSaved = work, cache
+			if savedWithoutRewrite(decision, found) {
+				s.SavedWithoutRewrite = SavedWithoutRewrite{Work: work, Cache: cache}
+			}
 		case TokenPricier:
 			s.WorkPricier, s.CachePricier = work, cache
 		}
@@ -205,6 +226,9 @@ func TokenSavings(events []Event) TokenSavingView {
 		}
 		if ch.s.Direction() == TokenCheaper {
 			ch.s.SavedChildren = 1
+			if ch.s.SavedWithoutRewrite.Work+ch.s.SavedWithoutRewrite.Cache > 0 {
+				ch.s.SavedWithoutRewrite.Children = 1
+			}
 			if ch.inferred {
 				ch.s.SavedInferred = 1
 			}

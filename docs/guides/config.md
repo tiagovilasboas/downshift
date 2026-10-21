@@ -153,6 +153,56 @@ directory or any parent (nearest file wins, at most 8 levels up). A floor only
   Only Claude Code is confirmed. For the others, capture a real payload under `docs/evidence/` before relying on the floor; if the field is absent the floor is looked up from the process directory, so run the hook from the project directory.
 - A floor changes nothing when the current model already sits at that tier. Where a harness does not honor model rewrites (see the harness matrix), the floor stops a downshift from being attempted but cannot force the model.
 
+## Gateway profile for Claude Code (alias workaround)
+
+Some owners run Claude Code through an OpenRouter-compatible endpoint with a launcher
+such as `~/.local/bin/claude-gateway`. This section documents that pattern and its
+limits. It is a workaround, not a supported Downshift feature.
+
+The launcher does four things:
+
+1. Exports `ANTHROPIC_BASE_URL` to the gateway endpoint.
+2. Reads the gateway key from the OS keychain at launch (on macOS, for example,
+   `security find-generic-password -s <service> -w`) and passes it to the process
+   environment for that run only. The key is never written to a file, a shell profile
+   or the state dir.
+3. Maps the aliases to gateway ids with `ANTHROPIC_DEFAULT_HAIKU_MODEL` and
+   `ANTHROPIC_DEFAULT_SONNET_MODEL`.
+4. Starts `claude` with the launcher's arguments.
+
+Why it is an alias workaround: Claude Code accepts only `sonnet`, `opus`, `haiku` or
+`fable` in the subagent `model` field. A gateway id such as `vendor/model` cannot go
+there. Downshift therefore records the alias the router chose. The model that actually
+ran comes from the `resolved` and usage records, which show the real id reported for
+each run. Do not read the alias in the subagent frontmatter as the model that ran.
+
+Warning about the context window: when Claude Code does not recognize a gateway id it
+prints `unrecognized_model` at startup and assumes a 200K window. The official page
+([model configuration](https://code.claude.com/docs/en/model-config), section "Correct
+the window for a gateway or custom model ID") does not name a variable whose only job is
+to silence that warning. It says the warning stops once Claude Code recognizes the id or
+uses the window you give it. The variable it names for the window is
+`CLAUDE_CODE_MAX_CONTEXT_TOKENS` (for example `CLAUDE_CODE_MAX_CONTEXT_TOKENS=400000`).
+Setting it sets the window; it is not documented as a silencer. Other remedies the page
+lists: `claude update`, a `modelOverrides` entry, or a `[1m]` suffix for a 1M-window model.
+
+Example shape, without secrets (`~/.local/bin/claude-gateway`):
+
+```bash
+#!/usr/bin/env bash
+# Key is read from the keychain at launch and kept only in this process.
+export ANTHROPIC_BASE_URL="https://<gateway-host>/api/v1"   # endpoint from the gateway docs
+export ANTHROPIC_AUTH_TOKEN="$(security find-generic-password -s claude-gateway -w)"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="<vendor/small-model-id>"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="<vendor/mid-model-id>"
+exec claude "$@"
+```
+
+Check the variable name your gateway expects for the key; the example uses
+`ANTHROPIC_AUTH_TOKEN`. The model ids are the gateway's own; the example leaves them as
+placeholders. A `claude-or -p` run that prints no `unrecognized_model` line needs the
+window set with `CLAUDE_CODE_MAX_CONTEXT_TOKENS`, or a recognized id. This was not run against a live gateway in this change.
+
 ## Migrating from `~/.harness-downshift`
 
 ```bash
