@@ -521,11 +521,29 @@ the inner command, `cd <dir>` or the `tail`/`head` part stops the rewrite. Under
 `| head -N` the wrapped command runs to its end before the output is cut, where
 the bare command could have been stopped early by the closed pipe.
 
-Left unwrapped on purpose: more than one `&&`, `||`, `;`, `&`, a pipe into
-anything but `tail`/`head -N` (`grep`, `tee`, a second pipe), `tail -f`, `tail
--n +N`, file redirects (`>`, `>>`, `1>&2`), a pipe with no spaces around `|`,
-and anything with an expansion or a quote. Each of these can change what the
-command does or which exit code the agent sees in ways a word match cannot
+**Chains (2026-10-21).** `internal/execwrap/policy_chain.go` splits a command
+at each `;` and `&&` and decides every segment alone, as a plain command or one
+of the shapes above. Only allowlisted segments are wrapped; every other segment
+and every separator stays byte-identical:
+
+| shape | rewritten to | exit code |
+|---|---|---|
+| `gofmt -l x; go test ./pkg` | `gofmt -l x; '<bin>' compact -- go test ./pkg` | the last segment's, as before |
+| `go build ./... && go test ./...` | each segment wrapped | `&&` short-circuits on the first failure, as before |
+| `git diff; go test ./... 2>&1 \| tail -15` | both wrapped, the pipe kept | same |
+
+The session tag goes on each wrapped segment once. A deny or ask rule that
+matches the whole command or any segment (wrapped or kept, and the `cd` or
+`tail` part of a shape) stops the rewrite. A command that already holds
+`downshift compact` is never wrapped again.
+
+Left unwrapped on purpose, and a chain is refused whole when any segment holds
+one: `||`, a lone `&`, an empty segment (`;;`, a trailing `;`), a pipe into
+anything but `tail`/`head -N` (`git diff | grep '^[+-]'`, `tee`, a second
+pipe), `tail -f`, `tail -n +N`, file redirects (`>`, `>>`, `1>&2`), heredocs,
+subshells, a pipe with no spaces around `|`, and anything with an expansion, a
+glob or a quote (a quoted `;` is never split). Each of these can change what
+the command does or which exit code the agent sees in ways a word match cannot
 prove safe.
 
 | harness | shell rewrite | status | limit |
