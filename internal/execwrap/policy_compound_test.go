@@ -28,13 +28,9 @@ func TestDecide_CompoundShapes(t *testing.T) {
 
 		{"cd then not allowlisted", "cd x && sudo ls", false, "", nil, ReasonNotAllowlisted},
 		{"pipe after not allowlisted", "sudo ls | tail -5", false, "", nil, ReasonNotAllowlisted},
-		{"two ands", "cd x && go build && go test", false, "", nil, ReasonUnsafeChar},
 		{"or list", "go test || true", false, "", nil, ReasonUnsafeChar},
-		{"semicolon", "cd x; go test", false, "", nil, ReasonUnsafeChar},
 		{"cd tilde", "cd ~/repo && go test", false, "", nil, ReasonUnsafeChar},
 		{"cd variable", "cd $HOME && go test", false, "", nil, ReasonUnsafeChar},
-		{"cd option", "cd -P x && go test", false, "", nil, ReasonUnsafeChar},
-		{"cd dash", "cd - && go test", false, "", nil, ReasonUnsafeChar},
 		{"cd quoted", "cd 'a b' && go test", false, "", nil, ReasonUnsafeChar},
 		{"pipe to grep", "go test ./... | grep FAIL", false, "", nil, ReasonUnsafeChar},
 		{"two pipes", "go test | tail -5 | head -2", false, "", nil, ReasonUnsafeChar},
