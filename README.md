@@ -5,7 +5,7 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift" width="320">
 </picture>
 
-### Cut your AI coding agent's token bill by up to 40%
+### Compact verbose output. Route subagents to right-sized models.
 
 Downshift compacts verbose command output, routes subagents to right-sized models,
 and learns which commands need new compressors — all without an LLM in the loop.
@@ -138,38 +138,31 @@ downshift dci impact MyFunction  # Who calls this?
 
 ## Token Savings
 
-### Measured Results
+### Compaction (measured on test corpus)
 
-| Scenario | Before | After | Savings |
-|----------|--------|-------|---------|
-| `go test` (50 packages, all pass) | ~2,000 tokens | ~50 tokens | **97%** |
-| `git status` (clean working tree) | ~200 tokens | ~20 tokens | **90%** |
-| `cargo build` (no warnings) | ~1,500 tokens | ~100 tokens | **93%** |
-| Mechanical subagent tasks | Opus pricing | Haiku pricing | **~85%** |
+Compaction reduces clean, success-case outputs. Measured on the test corpus
+([evidence](docs/evidence/compaction-corpus-2026-10-21.md)):
 
-### Projected Monthly Savings
+| Metric | Value |
+|--------|-------|
+| Compacted files (clean outputs) | 82% average reduction |
+| Best cases (test runners, all pass) | 90–97% reduction |
+| Overall corpus (includes failures) | 24% reduction |
 
-Based on typical agent usage patterns:
-
-| Agent Sessions/Day | Estimated Monthly Savings |
-|--------------------|---------------------------|
-| 10 | $15 - $40 |
-| 50 | $75 - $200 |
-| 100+ | $150 - $400+ |
-
-*Actual savings depend on your command patterns and model usage. Run `downshift stats`
-to see your real numbers.*
+*Your savings depend on your command mix. Clean outputs compress well; failures
+and edge cases pass through unchanged (by design). Run `downshift stats` to see
+your real numbers.*
 
 ### Evidence Methodology
 
 Downshift follows a strict [Evidence Ladder](docs/guides/evidence.md):
 
-1. **Catalog prices** — list prices from providers, dated
-2. **Token counts** — bytes observed, tokens estimated (bytes/4)
-3. **A/B trials** — controlled comparison with built-in control groups
-4. **Invoice verification** — real billing data (your responsibility)
+1. **Bytes measured** — before/after on test corpus, reproducible
+2. **Token estimate** — bytes/4, an approximation
+3. **Control groups** — `DOWNSHIFT_CONTROL_SHARE` enables A/B comparison
+4. **Your invoice** — the only source of truth for cost
 
-**We never show dollar figures** — only token counts. Your invoice is the truth.
+We show byte counts and percentages, not dollar figures.
 
 ---
 

@@ -10,48 +10,22 @@ Location: `~/.downshift/config.json`
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DOWNSHIFT_EXEC` | `1` | Enable/disable compaction |
-| `DOWNSHIFT_ROUTE` | `1` | Enable/disable routing |
-| `DOWNSHIFT_LEARNING` | `1` | Enable/disable learning |
-| `DOWNSHIFT_CONTROL_SHARE` | `0.10` | Control group fraction |
+| `DOWNSHIFT_EXEC` | `1` | Enable/disable compaction (`0` to disable) |
+| `DOWNSHIFT_NO_ROUTE` | `0` | Disable routing (`1` to disable) |
+| `DOWNSHIFT_LEARNING` | `1` | Enable/disable compressor learning |
+| `DOWNSHIFT_CONTROL_SHARE` | `0.10` | Control group fraction (0 to disable) |
 | `DOWNSHIFT_STATE_DIR` | `~/.downshift` | State directory |
-| `DOWNSHIFT_LOG_LEVEL` | `info` | Log verbosity |
-| `DOWNSHIFT_TELEMETRY` | `1` | Enable/disable telemetry |
+| `DOWNSHIFT_QUIET` | `0` | Suppress non-error output |
+| `DOWNSHIFT_SEMANTIC_BOOST` | `1` | Enable semantic scoring |
 
-## Config Commands
-
-```bash
-# View all config
-downshift config list
-
-# Get a value
-downshift config get <key>
-
-# Set a value
-downshift config set <key> <value>
-```
-
-## Common Settings
-
-### Telemetry
+## Viewing Configuration
 
 ```bash
-downshift config set telemetry.retention_days 30
-downshift config set telemetry.log_prompts false
-```
+# View all effective settings with their source
+downshift config
 
-### Routing
-
-```bash
-downshift config set routing.confidence_threshold 0.6
-downshift config set routing.risk_floor true
-```
-
-### Learning
-
-```bash
-downshift config set learning.min_observations 3
-downshift config set learning.decay_days 30
+# JSON output
+downshift config --json
 ```
 
 ## Project-Level Config
