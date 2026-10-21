@@ -480,11 +480,19 @@ const savedOf = (): number => (ds && dsSessionKnown ? ds.saved : 0)
 const fmtBytes = (n: number): string =>
   n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB` : `${Math.round(n)} B`
 
-/** Bytes the Compactor cut in this session (measured); null when it did not run or the session is unknown. Never added to the tokens above. */
-const compactorOf = (): number | null => (ds && dsSessionKnown && ds.compactor ? ds.compactor.savedBytes : null)
+/** Compactor figures for this session (measured); null when it did not run or the session is unknown. Bytes only, never added to the tokens above. */
+const compactorOf = (): DsCompactor | null => (ds && dsSessionKnown && ds.compactor ? ds.compactor : null)
+
+/** Under this much raw output and nothing compacted, the Compactor had nothing to cut. */
+const NOTHING_TO_CUT_BYTES = 4096
+const compactorNothing = (c: DsCompactor): boolean => c.compacted === 0 && c.rawBytes < NOTHING_TO_CUT_BYTES
+const compactorCmds = (c: DsCompactor): string => `${c.commands} ${c.commands === 1 ? 'cmd' : 'cmds'}`
+
+/** The line after the figures: `Compactor 4 cmds · 0 B saved`, and `· nothing to cut` when there was nothing to cut. */
 const compactorSuffix = (): string => {
-  const b = compactorOf()
-  return b === null ? '' : ` · ↓ ${fmtBytes(b)} compactor`
+  const c = compactorOf()
+  if (!c) return ''
+  return ` · Compactor ${compactorCmds(c)} · ${fmtBytes(c.savedBytes)} saved${compactorNothing(c) ? ' · nothing to cut' : ''}`
 }
 
 const fmtTime = (ms: number): string => {
@@ -642,15 +650,16 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
   const n = cb === null ? 3 : 4
   const tw = (W - gap * (n - 1)) / n
   const top = title ? 28 : 0
-  const tile = (i: number, k: string, v: string) =>
+  // A tile's text is cut to the tile (`fitText`), so a long Compactor line never runs out of its box.
+  const tile = (i: number, k: string, v: string, vSize = 15) =>
     `<rect class="tile" x="${mx(W, i * (tw + gap), tw)}" y="${top}" width="${tw}" height="40" rx="8"/>
-<text class="s" ${startText(W, i * (tw + gap) + 9, top + 16)} font-family="${FONT}" font-size="11">${k}</text>
-<text class="t" ${startText(W, i * (tw + gap) + 9, top + 33, false)} font-family="${FONT}" font-size="15" font-weight="600" font-variant-numeric="tabular-nums">${v}</text>`
+<text class="s" ${startText(W, i * (tw + gap) + 9, top + 16)} font-family="${FONT}" font-size="11">${xml(fitText(k, 11, tw - 18))}</text>
+<text class="t" ${startText(W, i * (tw + gap) + 9, top + 33, false)} font-family="${FONT}" font-size="${vSize}" font-weight="600" font-variant-numeric="tabular-nums">${xml(fitText(v, vSize, tw - 18))}</text>`
   return svg(
     W,
     headerHeight(title),
     `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
-${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, 'Compactor', `↓ ${fmtBytes(cb)}`)}`,
+${tile(0, s.saved, fmtTokens(savedOf()))}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}${cb === null ? '' : tile(3, 'Compactor', compactorNothing(cb) ? 'nothing to cut' : `${fmtBytes(cb.savedBytes)} saved`, 12)}`,
   )
 }
 
@@ -774,8 +783,17 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 // Data contract: docs/reference/spawn-state.md in the Downshift repo.
 
 type DsSpawn = { tool_use?: string; label: string; saved: number }
-type DsCompactor = { savedBytes: number; commands: number }
-type DsView = { switched: number; held: number; saved: number; compactor: DsCompactor | null; spawns: DsSpawn[] }
+type DsCompactor = { savedBytes: number; commands: number; compacted: number; rawBytes: number }
+// modelSwitched and effortChanged are absent from an older binary: undefined, and the summary keeps `N switched`.
+type DsView = {
+  switched: number
+  held: number
+  modelSwitched?: number
+  effortChanged?: number
+  saved: number
+  compactor: DsCompactor | null
+  spawns: DsSpawn[]
+}
 
 let ds: DsView | null = null
 let dsSessionKnown = false // the figures are only drawn for a session we could name
@@ -793,12 +811,28 @@ const dsParse = (raw: unknown): DsView | null => {
   if (!v || typeof v !== 'object' || !Array.isArray(v.spawns)) return null
   const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : 0)
   const str = (x: unknown, max: number) => (typeof x === 'string' ? x.slice(0, max) : '')
-  const raw2 = raw as { tokens?: { work_saved?: unknown; cache_saved?: unknown }; compactor?: { saved_bytes?: unknown; commands?: unknown } }
+  const opt = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
+  const raw2 = raw as {
+    tokens?: { work_saved?: unknown; cache_saved?: unknown }
+    compactor?: { saved_bytes?: unknown; commands?: unknown; compacted?: unknown; raw_bytes?: unknown }
+    model_switched?: unknown
+    effort_changed?: unknown
+  }
   return {
     switched: num(v.switched),
     held: num(v.held),
+    modelSwitched: opt(raw2.model_switched),
+    effortChanged: opt(raw2.effort_changed),
     saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
-    compactor: raw2.compactor && typeof raw2.compactor === 'object' ? { savedBytes: num(raw2.compactor.saved_bytes), commands: num(raw2.compactor.commands) } : null,
+    compactor:
+      raw2.compactor && typeof raw2.compactor === 'object'
+        ? {
+            savedBytes: num(raw2.compactor.saved_bytes),
+            commands: num(raw2.compactor.commands),
+            compacted: num(raw2.compactor.compacted),
+            rawBytes: num(raw2.compactor.raw_bytes),
+          }
+        : null,
     spawns: v.spawns
       .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
       .map(x => ({
@@ -881,9 +915,13 @@ const dsLabel = (a: AgentRun): string | undefined => {
 /** One short line for the band and the panel: what Downshift decided this session; '' when there is nothing true to say. */
 const dsSummary = (): string => {
   // Without a session id the log's latest session could be another one: draw no figure.
-  if (!ds || !dsSessionKnown || ds.switched + ds.held === 0 && ds.saved === 0) return ''
+  if (!ds || !dsSessionKnown) return ''
+  const effort = ds.effortChanged ?? 0
+  if (ds.switched + ds.held + effort + (ds.modelSwitched ?? 0) === 0 && ds.saved === 0) return ''
   const parts: string[] = ['Downshift']
-  if (ds.switched > 0) parts.push(`${ds.switched} switched`)
+  // A newer binary reports model and effort changes apart: `N model · M effort` replaces `N switched`.
+  if (effort > 0) parts.push(`${ds.modelSwitched ?? 0} model`, `${effort} effort`)
+  else if (ds.switched > 0) parts.push(`${ds.switched} switched`)
   if (ds.held > 0) parts.push(`${ds.held} held`)
   if (parts.length === 1) parts.push('on')
   return parts.join(' · ')
@@ -1195,7 +1233,16 @@ export const register: Register = (on, options) => {
         )
       }
       const shownDone = p.isDoneCollapsed ? 0 : shown.length
-      const lines = 1 + (isEmpty ? 1 : 0) + (running.length > 0 ? 1 : 0) + (finished.length > 0 ? 1 : 0) + (planned.length > 0 ? 1 : 0)
+      // Every Text or Button row placed over the grid is counted here, the Downshift line included: the grid
+      // is the only thing that gives the pane its height, so a row it does not count runs past the box.
+      const dsLine = dsSummary()
+      const lines =
+        1 + // toggle
+        (dsLine !== '' ? 1 : 0) +
+        (isEmpty ? 1 : 0) +
+        (running.length > 0 ? 1 : 0) +
+        (finished.length > 0 ? 1 : 0) +
+        (planned.length > 0 ? 1 : 0)
       const gridH = headerHeight(title) + lines * LINE_H + (running.length + shownDone) * 66 + planned.length * 46
       return (
         <Box flexDirection="column">
@@ -1206,7 +1253,7 @@ export const register: Register = (on, options) => {
           ))}
           <Box flexDirection="column" position="absolute" top={0} left={0} right={0} alignItems={align}>
             <Svg source={headerSvg(W, title, t)} alt={title ? `${title}: ${summary}` : summary} width={W} height={headerHeight(title)} />
-            {dsSummary() !== '' && <Text dimColor wrap="truncate-end">{dsSummary()}</Text>}
+            {dsLine !== '' && <Text dimColor wrap="truncate-end">{dsLine}</Text>}
             {toggleCompact}
             {isEmpty && <Text dimColor>{s.empty}</Text>}
             {running.length > 0 && section('h-run', `${s.running} · ${running.length}`)}
