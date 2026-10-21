@@ -222,15 +222,26 @@ func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolve
 		return "", Model{}, false, false
 	}
 	if tiers, ok := catalogTiers(harness, ids, res); ok {
+		// Find the model with the lowest tier that is at or above the floor and
+		// passes quota. The session list is not guaranteed to be sorted by tier
+		// (e.g. KiroCrew may list opus, sonnet, haiku), so scan all candidates.
 		found := false
+		bestIdx := -1
+		bestTier := TierFrontier + 1 // sentinel above any real tier
 		for i, id := range ids {
 			if tiers[i] < minTier {
 				continue
 			}
 			found = true
-			if session.QuotaAllows(harness, id) {
-				return id, modelForSessionID(harness, id, res), true, false
+			if !session.QuotaAllows(harness, id) {
+				continue
 			}
+			if tiers[i] < bestTier {
+				bestIdx, bestTier = i, tiers[i]
+			}
+		}
+		if bestIdx >= 0 {
+			return ids[bestIdx], modelForSessionID(harness, ids[bestIdx], res), true, false
 		}
 		// found: every id at or above the floor was refused by the credit gate.
 		// Otherwise nothing in the list reaches the floor: hold, never go below.

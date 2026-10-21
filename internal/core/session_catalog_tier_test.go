@@ -59,7 +59,9 @@ func TestSessionSelect_ByCatalogTier(t *testing.T) {
 		want    string // "" means no rewrite
 	}{
 		{"small, four models", core.TierSmall, []string{tHaiku, tSonnet, tOpus, tFable}, tHaiku},
-		{"small, opus+haiku order: first at or above small", core.TierSmall, []string{tOpus, tHaiku}, tOpus},
+		// The selector picks the lowest tier at or above the floor, regardless
+		// of list order (KiroCrew may list opus before haiku).
+		{"small, opus+haiku order: picks lowest tier at or above floor", core.TierSmall, []string{tOpus, tHaiku}, tHaiku},
 		{"mid, four models", core.TierMid, []string{tHaiku, tSonnet, tOpus, tFable}, tSonnet},
 		{"mid, haiku+opus", core.TierMid, []string{tHaiku, tOpus}, tOpus},
 		{"mid, sonnet+opus", core.TierMid, []string{tSonnet, tOpus}, tSonnet},
