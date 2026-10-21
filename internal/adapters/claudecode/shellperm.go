@@ -105,8 +105,7 @@ func loadPermissionRules(cwd string) (allow, deny, ask []string, err error) {
 // ShellBlocked reports whether a permission rule forbids a rewrite of command:
 // some deny or ask rule matches it, across the managed, user, project and
 // local scopes. Any settings read or parse error answers true (fail closed).
-// The deny and ask match is deliberately wide (a prefix rule also matches the
-// bare prefix). Allow rules are not consulted: the rewrite emits no
+// Allow rules are not consulted: the rewrite emits no
 // permissionDecision, so the harness's own permission flow still decides.
 func (ev Event) ShellBlocked(command string) bool {
 	_, deny, ask, err := loadPermissionRules(ev.Cwd)
@@ -115,7 +114,7 @@ func (ev Event) ShellBlocked(command string) bool {
 	}
 	command = strings.TrimSpace(command)
 	for _, r := range append(append([]string{}, deny...), ask...) {
-		if bashRuleMatches(r, command, true) {
+		if bashRuleMatches(r, command) {
 			return true
 		}
 	}
@@ -123,8 +122,10 @@ func (ev Event) ShellBlocked(command string) bool {
 }
 
 // bashRuleMatches reports whether a permission rule of the Bash tool matches
-// command. wide widens the match for deny and ask rules.
-func bashRuleMatches(rule, command string, wide bool) bool {
+// command, as the Claude Code permissions docs define it (see
+// shellperm_conformance_test.go): a trailing " *" that is the rule's only
+// wildcard, or ":*", also matches the bare command.
+func bashRuleMatches(rule, command string) bool {
 	rule = strings.TrimSpace(rule)
 	if rule == shellToolName {
 		return true
@@ -140,7 +141,7 @@ func bashRuleMatches(rule, command string, wide bool) bool {
 		prefix := strings.TrimSuffix(pattern, ":*")
 		return command == prefix || strings.HasPrefix(command, prefix+" ")
 	case strings.Contains(pattern, "*"):
-		if wide && strings.HasSuffix(pattern, " *") && command == strings.TrimSuffix(pattern, " *") {
+		if strings.Count(pattern, "*") == 1 && strings.HasSuffix(pattern, " *") && command == strings.TrimSuffix(pattern, " *") {
 			return true
 		}
 		return globMatch(pattern, command)
