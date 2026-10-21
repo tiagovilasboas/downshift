@@ -66,6 +66,32 @@ func TestTokenDirection_Gates(t *testing.T) {
 	}
 }
 
+// TestTokenSavings_SameModelEffortChangeIsNotSaved: a spawn whose model did not
+// change (the panel's "effort changed") moves no tokens to a cheaper tier, even
+// when the requested model is the native alias and the ran id is the dated one.
+func TestTokenSavings_SameModelEffortChangeIsNotSaved(t *testing.T) {
+	cat := catalog.Load()
+	prev := DirectionCatalog
+	DirectionCatalog = cat
+	defer func() { DirectionCatalog = prev }()
+	for _, pair := range [][2]string{
+		{"claude-haiku-4-5", "claude-haiku-4-5"},
+		{"haiku", "claude-haiku-4-5-20251001"},
+		{"claude-haiku-5-5", "claude-haiku-5-5"},
+	} {
+		t.Run(pair[0]+"->"+pair[1], func(t *testing.T) {
+			usage, decision := rankEvents(t, cat, pair[0], pair[1], OutcomeRewriteEmitted)
+			if got := tokenDirection(usage, decision, true, false, false); got != TokenUnchanged {
+				t.Fatalf("direction = %q, want %q", got, TokenUnchanged)
+			}
+			v := TokenSavings([]Event{decision, usage})
+			if got := v.Total; got.SavedChildren != 0 || got.WorkSaved != 0 || got.CacheSaved != 0 {
+				t.Fatalf("total = %+v, want nothing saved", got)
+			}
+		})
+	}
+}
+
 // TestTokenDirection_NoTokens: a record without token counts is not placed.
 func TestTokenDirection_NoTokens(t *testing.T) {
 	cat := catalog.Load()
