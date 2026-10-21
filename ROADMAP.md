@@ -5,7 +5,7 @@ Public direction for the open-source project. Timelines are indicative.
 **Status:** beta — exit criteria in [docs/reference/beta-exit.md](docs/reference/beta-exit.md).  
 **Product roadmap (owner, milestones and tasks):** [docs/product/roadmap.md](docs/product/roadmap.md)  
 **Maintainer execution:** [docs/internal/launch-waves.md](docs/internal/launch-waves.md) (see [publishing boundaries](docs/reference/publishing-boundaries.md)).  
-**Latest handoff (open PRs, findings, next steps):** [2026-10-19](docs/internal/tasks/2026-10-19-accounting-and-output/README.md).
+**Latest handoff (open PRs, findings, next steps):** [2026-10-20](docs/internal/tasks/2026-10-20-next-steps/README.md).
 
 Downshift by Tiago Vilas Boas\
 https://github.com/tiagovilasboas/downshift
