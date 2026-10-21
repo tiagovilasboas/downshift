@@ -90,6 +90,7 @@ func runStats(args []string) int {
 		telemetry.PrintStats(events, opts, os.Stdout)
 		if n := telemetry.RotatedBackupCount(); n > 0 {
 			fmt.Fprintf(os.Stdout, "Note: %d rotated log backup(s) next to events.jsonl are not included in these totals.\n", n)
+			telemetry.PrintBackupLine(os.Stdout)
 		}
 	}
 	if dciSummary.TotalPrompts > 0 {
