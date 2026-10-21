@@ -3,14 +3,38 @@
 
 ## Project
 
-Downshift is an open-source suite for optimizing token use in coding agents.
-For coding harnesses (Claude Code first; Cursor, Codex, Antigravity,
-KiroCrew), it intercepts subagent spawns via PreToolUse hooks and selects tier,
-model and reasoning effort before execution, holds back under doubt, applies
-risk and project floors, records what each child used and how it ended, and
-measures routed versus control tokens per completed task. Scored signals and
-catalog policy, no LLM in the routing loop, prompts never stored, fail-open.
-Model routing is the main lever, not the whole product. CLI binary: downshift.
+Downshift gives a coding agent the right model and less noise, with no extra
+AI call. It runs locally as a single Go binary (CLI: downshift) through hooks in
+the coding harness. Prompts are never stored, nothing goes over the network,
+and every hook fails open. Three pillars, in this order:
+
+1. Model routing per subagent. A PreToolUse hook picks tier, model and effort
+   for each spawn from scored signals and catalog policy (no LLM in the loop);
+   when unsure, the session's own model stays. About 1 in 10 spawns stay
+   unrouted as a control group. Implemented. Harness status: Claude Code
+   Completed (rewrite observed honored), Codex and Cursor Functional, OpenCode
+   Beta, Antigravity and KiroCrew Experimental (docs/reference/harness-matrix.md).
+2. The Compactor (downshift compact). Shorter output from allowlisted commands:
+   every git subcommand and the listed test and build families (the git-* row
+   of the harness matrix). It keeps the exit code and leaves failures raw. It
+   is not the /compact command. Implemented, on by default. Automatic rewrite
+   into compact form is Claude Code only; elsewhere the agent runs
+   `downshift compact -- <command>`.
+3. DCI (code intelligence). Opt-in; the agent reads only the code a change
+   touches. Implemented (v0.4). Bytes and latency measured; answer quality is
+   not measured.
+
+Numbers keep their qualifiers. Routing: about 12% cheaper on mechanical tasks
+in one controlled trial (one operator, Claude Code, 2026-10-15, list price;
+checks verify structure, not quality); no savings from natural use are
+attributable yet (docs/evidence/subagent-routing-ab-2026-10-15.md). Compaction:
+bytes on a synthetic test corpus, 82.3% on the 26 of 248 files compacted, 23.7%
+overall (docs/evidence/compaction-corpus-2026-10-21.md). Reports show tokens,
+not dollars.
+
+Where next: install docs/guides/install.md; how it works
+docs/design/architecture.md; evidence docs/guides/evidence.md; status of every
+capability docs/reference/capability-matrix.md.
 
 The suite (one sentence each; status words from docs/reference/capability-matrix.md):
   - Deterministic subagent routing: PreToolUse hook rewrites one subagent's model
@@ -27,9 +51,9 @@ The suite (one sentence each; status words from docs/reference/capability-matrix
     ~1 in 10 spawns unrouted, downshift stats / report. Implemented; estimates.
   - Context policy: setup sets opusplan, plan mode, You should know for unset
     keys (Claude Code only); native compressor observes bytes. Implemented, limited.
-  - Mods: cache-tax in the plugin; savvy-progress and filetree as sibling plugins;
+  - Mods: savvy-progress, filetree and downshift-dock as sibling plugins;
     downshift-router opt-in prototype (Experimental). mods/README.md
-  - Companions: Headroom (default compression proxy, detected and recorded),
+  - Companions: a compression proxy (detected and recorded),
     never installed or wrapped. docs/guides/companions.md
   - Evidence ladder: rungs A-E; rung D reached once (2026-10-15), rung E not
     measured. docs/guides/evidence.md
@@ -82,15 +106,13 @@ Assisted setup for AI agents (ask the user before any write outside the repo):
   5. ask the user to open a new harness session; `downshift session` shows the subagent tree
 Contributing / architecture for this repo: AGENTS.md and CONTRIBUTING.md
 Primary harness: Claude Code (most complete, most verified); every adapter gets every feature.
-Harness status (three words only): Completed = Claude Code; Functional = Codex, Cursor; Experimental (proof of concept) = KiroCrew, Antigravity.
+Harness status (four words): Completed = Claude Code; Functional = Codex, Cursor; Beta = OpenCode; Experimental (proof of concept) = KiroCrew, Antigravity.
 Evidence per harness: docs/reference/harness-matrix.md
-The Claude Code plugin bundles one third-party mod, cache-tax (MIT, vendored, priced cold-send
-guard and /keepwarm; the ping spends usage): hooks/cache-tax/README.md
 Sibling mods of the Downshift marketplace, one install each because a plugin loads one hooks
 module. `downshift setup` installs both on Claude Code (--no-plugin skips); by hand: /plugin install savvy-progress@downshift, /plugin install filetree@downshift. mods/README.md
 Experimental mod downshift-router (off by default; routes from agent.spawn through the same
 binary; never run next to the settings hook): mods/downshift-router/README.md, docs/design/mod-router.md
-Companions (Headroom default, detected and recorded, never installed by Downshift;
+Companions (compression proxies, detected and recorded, never installed by Downshift;
 recommended Claude Code mods You should know (built in,
 off by default, billed checks), Token Weather, Replay Theater and reflect-mod):
 docs/guides/companions.md
