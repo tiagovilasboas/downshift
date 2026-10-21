@@ -113,6 +113,7 @@ var harnessRegistry = map[string]harnessEntry{
 				func(e kirocrew.Event) string { return e.TaskText() },
 			)
 		},
+		Port: portPtr(kirocrew.Port()),
 		Try:  tryKiroCrew,
 		Caps: core.KiroCrewCaps,
 	},

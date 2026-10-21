@@ -70,8 +70,8 @@ func TestSetupKiroCrewReplacesTheManualWrapperOfTheInstallGuide(t *testing.T) {
 // doctor reads the KiroCrew wiring from the same table setup writes from.
 func TestDoctorRecognisesTheWrapperSetupWrites(t *testing.T) {
 	w, ok := doctorWiringFor("kirocrew")
-	if !ok || !w.Setup || len(w.Hooks) != 1 || !w.Hooks[0].Required {
-		t.Fatalf("kirocrew wiring = %+v, ok=%v: want one required hook that setup can write", w, ok)
+	if !ok || !w.Setup || len(w.Hooks) < 1 || !w.Hooks[0].Required {
+		t.Fatalf("kirocrew wiring = %+v, ok=%v: want at least one required hook that setup can write", w, ok)
 	}
 	for _, cmd := range []string{
 		filepath.Join("/h", ".downshift", "bin", wrapperFile(kirocrewStem, runtime.GOOS)),

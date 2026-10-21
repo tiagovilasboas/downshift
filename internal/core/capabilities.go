@@ -108,7 +108,9 @@ var (
 	// exit 0 (allow) / exit 2 (block + stderr to the LLM), with NO updated_input
 	// rewrite path. So the model cannot be replaced in place; the adapter blocks
 	// a mismatched spawn and instructs the agent to respawn at the right tier.
-	KiroCrewCaps = HarnessCapabilities{CanRewriteModel: false, CanApplyEffort: false}
+	// Child end (N5): postToolUse carries the spawn result; UsageSource stays
+	// UsageNone until a real payload proves where the child's tokens come from.
+	KiroCrewCaps = HarnessCapabilities{CanRewriteModel: false, CanApplyEffort: false, ChildEndEvent: "postToolUse", UsageSource: UsageNone}
 
 	// AntigravityCaps — the Antigravity hook accepts a model override on the
 	// subagent payload. The wire format carries tier aliases (flash_lite,
