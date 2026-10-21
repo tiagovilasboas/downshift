@@ -58,6 +58,7 @@ case "$url" in
       printf '%s  downshift_%s_%s_%s.tar.gz\n' "$sha" "$ver" "$os" "$arch" >> "$out"
     done; done ;;
   */releases/download/*)
+    [ "$FAKE_NO_ARCHIVE" = 1 ] && exit 22
     cp "$FAKE_TARBALL" "$out" ;;
   *) exit 22 ;;
 esac
@@ -290,9 +291,9 @@ func TestInstallResolvesLatestWithoutGitHubAPI(t *testing.T) {
 func TestInstallExplicitVersionSkipsLookup(t *testing.T) {
 	r := runInstall(t, "", "", "v0.1.0-beta.1")
 	assertInstalled(t, r)
-	// Explicit version: no lookup, only the archive and its checksums.txt.
-	if len(r.urls) != 2 {
-		t.Errorf("explicit version should only download the archive and checksums, got curl calls: %v", r.urls)
+	// Explicit version: no lookup, only the archive (HEAD probe, then download) and its checksums.txt.
+	if len(r.urls) != 3 {
+		t.Errorf("explicit version should only probe and download the archive and checksums, got curl calls: %v", r.urls)
 	}
 	for _, u := range r.urls {
 		if strings.Contains(u, "/releases/latest") || strings.Contains(u, "releases.atom") {
@@ -550,5 +551,37 @@ func TestInstallLeavesNoStagingFileAndKeepsTheOldBinaryOnFailure(t *testing.T) {
 	entries, _ := os.ReadDir(r.binDir)
 	if len(entries) != 1 || entries[0].Name() != "downshift" {
 		t.Errorf("install dir = %v, want only downshift", entries)
+	}
+}
+
+// Regression: a release published without assets made the one-liner end in a
+// bare "curl: (22) 404". It must name the version and platform, offer the
+// three ways out, exit non-zero and write nothing.
+func TestInstallExplainsAMissingReleaseArchive(t *testing.T) {
+	r := runInstallEnv(t, "v0.1.0", "", []string{"FAKE_NO_ARCHIVE=1"})
+	if r.code == 0 {
+		t.Fatalf("install.sh exit 0 for a release without an archive\noutput:\n%s", r.output)
+	}
+	for _, want := range []string{
+		"release v0.1.0 has no ",
+		"/" + runtime.GOARCH + " archive yet",
+		"go install github.com/tiagovilasboas/downshift/cmd/downshift@v0.1.0",
+		"https://github.com/tiagovilasboas/downshift/releases",
+		"https://github.com/tiagovilasboas/downshift/issues",
+		"sh -s <tag>",
+	} {
+		if !strings.Contains(r.output, want) {
+			t.Errorf("output missing %q:\n%s", want, r.output)
+		}
+	}
+	if strings.Contains(r.output, "Downloading downshift") {
+		t.Errorf("must not start the download:\n%s", r.output)
+	}
+	if _, err := os.Stat(filepath.Join(r.binDir, "downshift")); err == nil {
+		t.Error("binary was installed despite the missing archive")
+	}
+	entries, _ := os.ReadDir(r.binDir)
+	if len(entries) != 0 {
+		t.Errorf("install dir must stay empty, has %d entries", len(entries))
 	}
 }
