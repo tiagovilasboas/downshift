@@ -20,15 +20,18 @@ func TestRun_ChildGetsDepthGuard(t *testing.T) {
 	}
 }
 
-// FuzzDecide holds the policy invariants for arbitrary input: a rewrite is
-// only ever the quoted binary, " exec -- " and the original fields, every
-// byte of the original is in the safe set, and a wrapped command is never
-// wrapped again.
+// FuzzDecide holds the policy invariants for arbitrary input: a rewrite only
+// inserts the quoted binary and " compact -- " before words of the original,
+// the only metacharacters it lets through are the separators and the pipe
+// suffix of policy_chain.go and policy_compound.go, a command with no
+// metacharacter is wrapped only when allowlisted, and a wrapped command is
+// never wrapped again.
 func FuzzDecide(f *testing.F) {
-	for _, seed := range []string{"go test ./...", "git status", "go test $(x)", "git status; id", "go test 'a b'", "go\ttest", "go test ./a\nb", ""} {
+	for _, seed := range []string{"go test ./...", "git status", "go test $(x)", "git status; id", "go test 'a b'", "go\ttest", "go test ./a\nb", "", "gofmt -l x; go test ./... 2>&1 | tail -5", "a && b ; go build"} {
 		f.Add(seed)
 	}
 	const fuzzExe = "/opt/ds/downshift"
+	const prefix = "'" + fuzzExe + "'" + execTail
 	f.Fuzz(func(t *testing.T, command string) {
 		d := Decide(command, fuzzExe)
 		if !d.Rewrite {
@@ -38,16 +41,20 @@ func FuzzDecide(f *testing.F) {
 			return
 		}
 		trimmed := strings.Trim(command, " ")
+		simple := true
 		for i := 0; i < len(trimmed); i++ {
 			if !safeByte(trimmed[i]) {
-				t.Fatalf("unsafe byte %q accepted in %q", trimmed[i], command)
+				simple = false
+				if !strings.ContainsRune(";&|>", rune(trimmed[i])) {
+					t.Fatalf("unsafe byte %q accepted in %q", trimmed[i], command)
+				}
 			}
 		}
-		want := "'" + fuzzExe + "'" + execTail + strings.Join(strings.Fields(trimmed), " ")
-		if d.Command != want {
-			t.Fatalf("Command = %q, want %q", d.Command, want)
+		stripped := strings.ReplaceAll(d.Command, prefix, "")
+		if strings.Join(strings.Fields(stripped), " ") != strings.Join(strings.Fields(trimmed), " ") {
+			t.Fatalf("Command = %q changes the words of %q", d.Command, command)
 		}
-		if FamilyOf(strings.Fields(trimmed)) == FamilyNone {
+		if simple && FamilyOf(strings.Fields(trimmed)) == FamilyNone {
 			t.Fatalf("rewrote a non-allowlisted command %q", command)
 		}
 		if again := Decide(d.Command, fuzzExe); again.Rewrite {
