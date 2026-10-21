@@ -23,7 +23,7 @@ and learns which commands need new compressors — all without an LLM in the loo
 
 ## The Problem
 
-AI coding agents (Claude Code, Cursor, Codex, KiroCrew) spend most of their context
+AI coding agents (Claude Code, Cursor, Codex, KiroCrew, and others) spend most of their context
 window on verbose command output that carries little signal:
 
 ```
@@ -36,7 +36,7 @@ ok      github.com/example/pkg4    0.005s
 PASS
 ```
 
-That's **2KB of tokens** saying "all tests passed". Your agent pays for every byte.
+That's about **2KB of output** saying "all tests passed". Your agent's context window holds every byte.
 
 ## The Solution
 
@@ -46,7 +46,10 @@ Downshift compacts that to:
 ✓ PASS · 54 packages · 0.156s
 ```
 
-**~50 bytes.** Same information. **97% fewer tokens.**
+**~50 bytes.** Same information. That is a ~97% byte reduction for this shape of output.
+On the synthetic test corpus, the best clean pass outputs reach 97.4% fewer bytes, the average
+compacted file 82.3%, and the whole corpus 23.7%
+([evidence](docs/evidence/compaction-corpus-2026-10-21.md)). Bytes, not billed tokens.
 
 ---
 
@@ -56,14 +59,15 @@ Downshift compacts that to:
 # Install
 curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/install.sh | sh
 
-# Configure your harness (Claude Code, Cursor, Codex, KiroCrew)
+# Configure your harness (Claude Code, Cursor, Codex, KiroCrew, ...)
 downshift setup
 
 # Verify
 downshift doctor
 ```
 
-That's it. Downshift now compacts output and routes subagents automatically.
+That's it. On Claude Code, Downshift now rewrites allowlisted commands and routes subagents
+automatically. Other harnesses differ; see [Harness Support](#harness-support).
 
 <details>
 <summary>Manual installation</summary>
@@ -105,7 +109,7 @@ why: trivial task, no risk, confident
 ```
 
 **How it works:** Strict heuristics + FNV word-hash scoring. Local, deterministic,
-milliseconds. When unsure, keeps the requested model — doubt never spends money.
+no model call on the routing path. When unsure, keeps the requested model — doubt never spends money.
 
 ### 3. Compressor Learning (auto-discovery)
 
@@ -123,7 +127,7 @@ Compressor suggestions (highest impact first):
       Count: 23 runs · Avg: 1.2 KB · Total: 27.6 KB
 ```
 
-**Zero performance impact** — runs asynchronously after command completion.
+Runs asynchronously after command completion.
 
 ### 4. Code Intelligence (opt-in)
 
@@ -136,18 +140,18 @@ downshift dci impact MyFunction  # Who calls this?
 
 ---
 
-## Token Savings
+## Output Savings
 
-### Compaction (measured on test corpus)
+### Compaction (bytes, measured on a synthetic test corpus)
 
-Compaction reduces clean, success-case outputs. Measured on the test corpus
+Compaction reduces clean, success-case outputs. Measured in bytes on a synthetic test
+corpus of 248 fixtures, of which 26 were compacted
 ([evidence](docs/evidence/compaction-corpus-2026-10-21.md)):
 
 | Metric | Value |
 |--------|-------|
-| Compacted files (clean outputs) | 82% average reduction |
-| Best cases (test runners, all pass) | 90–97% reduction |
-| Overall corpus (includes failures) | 24% reduction |
+| Compacted files (26 of 248, clean outputs) | 82.3% fewer bytes |
+| Overall corpus (all 248, includes failures and edge cases) | 23.7% fewer bytes |
 
 *Your savings depend on your command mix. Clean outputs compress well; failures
 and edge cases pass through unchanged (by design). Run `downshift stats` to see
@@ -198,31 +202,41 @@ downshift models check         # Verify catalog pricing
 
 ## Harness Support
 
-Downshift was built with Claude Code and works across all major coding agent harnesses:
+Downshift was built with Claude Code. The status word says how much was verified on the real
+harness, per the [Harness Matrix](docs/reference/harness-matrix.md):
 
 | Harness | Compaction | Model Routing | Status | Setup |
 |---------|------------|---------------|--------|-------|
-| **Claude Code** | ✅ Auto | ✅ Full | 🟢 Primary | `downshift setup claude-code` |
-| **Codex** | ✅ Auto | ✅ Full | 🟢 Production | `downshift setup codex` |
-| **Cursor** | ✅ Auto | ✅ Full | 🟢 Production | `downshift setup cursor` |
-| **KiroCrew** | ✅ Via steering | ⚠️ Policy mode | 🟢 Production | `downshift setup kirocrew` |
-| **OpenCode** | ✅ Auto | ✅ Full | 🟡 Beta | Plugin |
+| **Claude Code** | Automatic rewrite | Rewrite, observed honored | Completed | `downshift setup claude-code` |
+| **Codex** | `downshift compact` run by the agent | Rewrite emitted, honored inferred | Functional | `downshift setup codex` |
+| **Cursor** | `downshift compact` run by the agent | Rewrite emitted, honored unconfirmed | Functional | `downshift setup cursor` |
+| **OpenCode** | `downshift compact` run by the agent | Adapter and conformance tests; no live spawn yet | Beta | Plugin in development |
+| **Antigravity** | `downshift compact` run by the agent | One observed child on one build | Experimental | `downshift setup antigravity` |
+| **KiroCrew** | `downshift compact` run by the agent | Policy mode (allow or block and retry, no rewrite) | Experimental | `downshift setup kirocrew` |
+
+Only Claude Code rewrites a command into its compact form automatically. On every other
+harness the compact command works when the agent runs it directly.
 
 ### How Each Harness Works
 
 - **Claude Code** — Native PreToolUse/PostToolUse hooks. Downshift rewrites shell commands
   automatically via plugin. Model routing via spawn interception. *This is the reference implementation.*
 
-- **Codex** — Same hook architecture as Claude Code. Full compaction and routing support.
+- **Codex** — PreToolUse hook rewrites the spawn model. The next spawn is the only signal that
+  it was honored (inferred, not observed). Compaction is `downshift compact`, run by the agent.
 
-- **Cursor** — Rules-based integration. Compaction via command wrapper, routing via
-  composer rules.
+- **Cursor** — preToolUse hook on `Task`. The child model is absent from the transcript, so
+  honored is unconfirmed. Compaction is `downshift compact`, run by the agent.
 
 - **KiroCrew** — Steering-based. Agent follows `downshift-compact.md` steering to wrap
   commands. Model routing is policy-mode only (allow/block, no rewrite) because
   KiroCrew's preToolUse hook has no `updated_input` channel.
 
-- **OpenCode** — Plugin-based integration. Currently in beta testing.
+- **OpenCode** — Adapter and shared conformance suite are in the repository; the forwarding
+  plugin is in development and no live spawn is observed yet.
+
+- **Antigravity** — One child observed on desktop 2.21.1 (requested `pro`, executed
+  `flash_lite`). Experimental.
 
 Run `downshift setup` to auto-detect and configure all installed harnesses.
 
@@ -263,14 +277,14 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 
 - **Prompts never leave memory** — task text is evaluated in-process, never logged
 - **Local telemetry only** — counts, hashes, timings in `~/.downshift/events.jsonl`
-- **No network calls** — routing decisions are 100% local and deterministic
+- **No LLM in the routing loop** — routing decisions are local and deterministic
 - **Fail-open** — any error leaves the command/spawn unchanged
 
 ---
 
 ## Status
 
-**Beta** (v0.1.0-beta.14). Stable for daily use. See [Beta Exit Criteria](docs/reference/beta-exit.md).
+**Beta** (v0.1.0-beta.14). Not yet stable: the beta label stays until the exit criteria close. See [Beta Exit Criteria](docs/reference/beta-exit.md).
 
 ---
 
