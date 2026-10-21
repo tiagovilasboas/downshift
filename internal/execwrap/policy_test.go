@@ -199,8 +199,8 @@ func TestDecide(t *testing.T) {
 		{"wrapped twice", "downshift exec -- downshift exec -- git status", false, "", "", ReasonAlreadyWrapped},
 
 		{"pipe", "go test ./... | tail", false, "", "", ReasonUnsafeChar},
-		{"semicolon", "git status; rm -rf x", false, "", "", ReasonUnsafeChar},
-		{"and list", "go test ./... && echo ok", false, "", "", ReasonUnsafeChar},
+		{"or list", "git status || rm -rf x", false, "", "", ReasonUnsafeChar},
+		{"background list", "go test ./... & echo ok", false, "", "", ReasonUnsafeChar},
 		{"background", "go test ./... &", false, "", "", ReasonUnsafeChar},
 		{"redirect out", "go test ./... > out.txt", false, "", "", ReasonUnsafeChar},
 		{"redirect in", "git status < x", false, "", "", ReasonUnsafeChar},

@@ -65,9 +65,11 @@ func QuoteExecutable(exe string) (string, bool) {
 }
 
 // WithSession puts the hashed session on a wrapped command so the runner can
-// log it: `<exe> compact -- x` becomes `<exe> compact --session=<hash> -- x`. A
-// session that is not lowercase hex, or a command that is not wrapped, is
-// returned unchanged.
+// log it: `<exe> compact -- x` becomes `<exe> compact --session=<hash> -- x`,
+// once per wrapped segment of a chain. Only the quoted binary is tagged, so a
+// segment left as written is never touched. A session that is not lowercase
+// hex, or a command that is not wrapped or already tagged, is returned
+// unchanged.
 func WithSession(command, session string) string {
 	if session == "" || strings.Contains(command, " compact --session=") {
 		return command
@@ -77,7 +79,7 @@ func WithSession(command, session string) string {
 			return command
 		}
 	}
-	return strings.Replace(command, execTail, " compact --session="+session+" -- ", 1)
+	return strings.ReplaceAll(command, "'"+execTail, "' compact --session="+session+" -- ")
 }
 
 // maxCommandBytes bounds the command the policy considers. Longer commands
@@ -128,13 +130,18 @@ const (
 // the Bash tool's PATH.
 //
 // A command that fails the safe-byte gate gets one more chance as one of the
-// compound shapes in policy_compound.go.
+// compound shapes in policy_compound.go, then as a `;`/`&&` chain in
+// policy_chain.go.
 func Decide(command, exe string) Decision {
 	d := decideSimple(command, exe)
 	if d.Reason != ReasonUnsafeChar {
 		return d
 	}
-	return decideCompound(strings.Trim(command, " "), exe)
+	trimmed := strings.Trim(command, " ")
+	if d = decideCompound(trimmed, exe); d.Reason != ReasonUnsafeChar {
+		return d
+	}
+	return decideChain(trimmed, exe)
 }
 
 // decideSimple is the policy for one command with no shell metacharacter.

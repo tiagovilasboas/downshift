@@ -79,8 +79,9 @@ func pipeSuffix(command string) (core, suffix, seg string) {
 	if i < 0 {
 		return command, "", ""
 	}
-	words := strings.Fields(command[i+len(pipeSep):])
-	if !lineFilter(words) {
+	tail := command[i+len(pipeSep):]
+	words := strings.Fields(tail)
+	if !allSafe(tail) || !lineFilter(words) {
 		return command, "", ""
 	}
 	seg = strings.Join(words, " ")

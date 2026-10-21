@@ -80,6 +80,10 @@ type Report struct {
 	// DecisionsByPermissionMode counts decisions per permission mode name in
 	// the window (see PermissionModeLabel). Display only: no comparison uses it.
 	DecisionsByPermissionMode map[string]int `json:"decisions_by_permission_mode,omitempty"`
+	// GatewayPriceSources counts the usage records of gateway runs in the window
+	// by price source: snapshot or unknown (gateway_price.go). Empty when there
+	// were no gateway runs.
+	GatewayPriceSources map[string]int `json:"gateway_price_sources,omitempty"`
 }
 
 // SetCompactor records the Compactor's totals and recomputes the final
@@ -99,6 +103,7 @@ func BuildReport(events []Event, days int) Report {
 	rep.TokensSaved = TokenSavings(windowed).Total
 	rep.SetCompactor(0, 0)
 	rep.DecisionsByPermissionMode = CountPermissionModes(windowed)
+	rep.GatewayPriceSources = CountGatewayPriceSources(windowed)
 	tasks := BuildTasks(windowed)
 	for _, t := range tasks {
 		var g *GroupSummary
@@ -237,6 +242,10 @@ func PrintReport(w io.Writer, r Report) {
 		printTokenCheck(w, r)
 	}
 
+	if line := gatewayPriceLine(r.GatewayPriceSources); line != "" {
+		fmt.Fprintf(w, "  %s\n", line)
+	}
+
 	printPermissionModes(w, r.DecisionsByPermissionMode)
 	if len(r.Completion) > 0 {
 		fmt.Fprintln(w, "\nCompletion measurable, by harness")
@@ -264,4 +273,32 @@ func printTokenCheck(w io.Writer, r Report) {
 	change := (d - c) / c * 100
 	fmt.Fprintf(w, "Tokens per completed task   routed %s vs control %s  (%+.1f%%; not an interval)\n",
 		formatTokens(int64(d+0.5)), formatTokens(int64(c+0.5)), change)
+}
+
+// CountGatewayPriceSources counts the gateway usage records by their price
+// source. A gateway run is never priced at a tier price: the source says
+// whether the snapshot priced it, and unknown is the answer otherwise.
+func CountGatewayPriceSources(events []Event) map[string]int {
+	var out map[string]int
+	for _, ev := range events {
+		if ev.Outcome != OutcomeUsage || ev.GatewayPrice == "" {
+			continue
+		}
+		if out == nil {
+			out = map[string]int{}
+		}
+		out[ev.GatewayPrice]++
+	}
+	return out
+}
+
+// gatewayPriceLine names the price source of the gateway runs in the window.
+// Empty when there are none.
+func gatewayPriceLine(sources map[string]int) string {
+	if len(sources) == 0 {
+		return ""
+	}
+	total := sources[GatewayPriceSnapshot] + sources[GatewayPriceUnknown]
+	return fmt.Sprintf("Gateway runs: %d (price source: %s %d, %s %d); never priced at a tier price",
+		total, GatewayPriceSnapshot, sources[GatewayPriceSnapshot], GatewayPriceUnknown, sources[GatewayPriceUnknown])
 }
