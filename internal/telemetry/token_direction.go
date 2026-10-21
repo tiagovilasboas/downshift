@@ -13,13 +13,18 @@ var DirectionCatalog core.Resolver
 // tokenDirection places one priced usage record without comparing dollars. The
 // gates come first; then the model that ran is ranked against the model that
 // was requested, by tier. Same tier reads unchanged, whatever the prices say.
+// A verdict OK child (allow, no correction) is ranked too, with or without an
+// applied rewrite (owner decision C3): it saved only when it ran on a cheaper
+// tier. Held, blocked and refuted decisions never rank.
 func tokenDirection(usage, decision Event, found, unrouted, refuted bool) string {
 	switch {
 	case unrouted:
 		return TokenUnchanged
 	case !found:
 		return TokenUnattributed
-	case !AppliedRewrite(decision.Outcome, decision.Corrections), refuted:
+	case refuted:
+		return TokenUnchanged
+	case !AppliedRewrite(decision.Outcome, decision.Corrections) && !verdictOK(decision):
 		return TokenUnchanged
 	case !usage.HasTokenUsage():
 		return TokenUnattributed
@@ -29,6 +34,18 @@ func tokenDirection(usage, decision Event, found, unrouted, refuted bool) string
 		return gatewayDirection(usage.Harness, requested, ran)
 	}
 	return tierDirection(usage.Harness, requested, ran)
+}
+
+// verdictOK reports a decision the guardrails let through unchanged: an allow
+// with no correction. Such a child may still have run on a cheaper model.
+func verdictOK(decision Event) bool {
+	return decision.Outcome == OutcomeAllow && len(decision.Corrections) == 0
+}
+
+// savedWithoutRewrite reports whether a child's saving came with no applied
+// rewrite, so the saving is shown apart (SavedWithoutRewrite).
+func savedWithoutRewrite(decision Event, found bool) bool {
+	return found && !AppliedRewrite(decision.Outcome, decision.Corrections)
 }
 
 // atTierFloor reports whether the requested model already sits on the lowest
