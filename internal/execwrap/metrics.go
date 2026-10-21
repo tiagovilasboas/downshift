@@ -34,6 +34,16 @@ type Event struct {
 	// Session is the hashed session id (telemetry.HashSessionID) the hook put on
 	// the wrapped command; empty when the harness gave none. Never the raw id.
 	Session string `json:"session,omitempty"`
+	// Harness is the harness that wrapped this call ("claude-code", "kirocrew",
+	// etc.) when one can be identified from the adapter's environment, or
+	// "unknown" when none is detected. Always present in new rows.
+	Harness string `json:"harness,omitempty"`
+	// Entry is "hook" when the call arrived through a harness hook
+	// (--session= was set by the adapter), "direct" when the agent or user ran
+	// downshift compactor directly, or "unknown" for rows written before this
+	// field was added (old readers can ignore it; new readers treat absence as
+	// "unknown").
+	Entry string `json:"entry,omitempty"`
 }
 
 // EventFrom builds the log record for a Result.

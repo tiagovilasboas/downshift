@@ -138,6 +138,22 @@ func envSessionHash() string {
 	return ""
 }
 
+// envHarness returns the harness name whose SessionEnv is set in the current
+// process environment, or "unknown" when none is detected. It is used to tag
+// exec events so per-harness stats are attributable without storing prompts or
+// session ids.
+func envHarness() string {
+	for _, n := range core.AllHarnessCaps() {
+		if n.Caps.SessionEnv == "" {
+			continue
+		}
+		if os.Getenv(n.Caps.SessionEnv) != "" {
+			return n.Harness
+		}
+	}
+	return "unknown"
+}
+
 func sessionFromID(v string, events []telemetry.Event) (string, error) {
 	if telemetry.ValidSessionHash(v) {
 		return v, nil

@@ -30,19 +30,19 @@ const allowlistedFlag = "--allowlisted"
 // allowlisted (see allowlistedFlag).
 //
 // The session is the hook's --session=<hash>; without it (a direct call by an
-// agent or a script, a compound command the hook did not rewrite) it is the
-// harness's own session variable, hashed, so the run still counts for the
-// session that ran it.
+// agent or a script, a compound command the hook did not rewrite) there is no
+// session fallback to a harness env var: a direct call carries no session
+// unless --session is given. This avoids attributing direct calls to a harness
+// they did not originate from (audit A22).
 func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	session := ""
+	entry := "direct"
 	if len(args) > 0 && strings.HasPrefix(args[0], "--session=") {
 		if h := strings.TrimPrefix(args[0], "--session="); telemetry.ValidSessionHash(h) {
 			session = h
+			entry = "hook"
 		}
 		args = args[1:]
-	}
-	if session == "" {
-		session = envSessionHash()
 	}
 	if len(args) > 0 && args[0] == allowlistedFlag {
 		return runAllowlistedQuery(args[1:], stderr)
@@ -61,6 +61,8 @@ func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		if path, err := execwrap.EventsPath(); err == nil {
 			ev := execwrap.EventFrom(res, time.Now())
 			ev.Session = session
+			ev.Harness = envHarness()
+			ev.Entry = entry
 			_ = execwrap.Append(path, ev)
 		}
 	}
