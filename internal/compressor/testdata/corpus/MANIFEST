@@ -313,4 +313,4 @@ preserve  flutter-devices flutter_devices_clean.txt
 preserve  dart-compile    dart_compile_clean.txt
 preserve  dart-format     dart_format_clean.txt
 preserve  dart-fix        dart_fix_clean.txt
-preserve  npm-install npm_install_clean.txt
+preserve  npm-install   npm_install_error.txt
