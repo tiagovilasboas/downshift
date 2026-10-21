@@ -67,6 +67,30 @@ func TestHandle_LiveRowEmitsExactGatewayID(t *testing.T) {
 	}
 }
 
+// The requested model arrives in the payload as the child session's model
+// object ({id, providerID, variant}), the shape OpenCode 2.0.32 stores in
+// session_v2.model. A catalog id with a variant must reach the decision as a
+// known baseline, never as an unknown one.
+func TestHandle_ChildSessionModelObjectIsTheRequestedModel(t *testing.T) {
+	_, res := liveRouteSetup(t, "live")
+	payload := `{"v":1,"kind":"route","harness":{"id":"opencode","version":"2.0.32"},
+	 "event":"subagent_spawn_intent",
+	 "correlation":{"child":"0123456789abcdef0123456789abcdef","parent":"fedcba9876543210"},
+	 "agent":"explore","model":{"providerID":"opencode","id":"glm-5.3-flash-free","variant":"max"},
+	 "taskText":"rename the userId variable to userIdentifier","tsUtc":"2026-10-21T00:00:00Z"}`
+	req, err := opencode.ParseRequest([]byte(payload))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.RequestedModel() != "glm-5.3-flash-free" {
+		t.Fatalf("RequestedModel() = %q", req.RequestedModel())
+	}
+	_, _, d := opencode.Handle(req, res)
+	if d.Verdict == core.VerdictUnknown {
+		t.Fatalf("baseline unknown for a catalog model")
+	}
+}
+
 // A shadow row never changes the emitted model: the answer is native.
 func TestHandle_ShadowRowKeepsNativeModel(t *testing.T) {
 	req, res := liveRouteSetup(t, "shadow")
