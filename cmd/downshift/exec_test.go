@@ -21,6 +21,7 @@ import (
 func TestRunExec_ExitCodeAndPromptFreeLog(t *testing.T) {
 	state := t.TempDir()
 	t.Setenv(paths.EnvStateDir, state)
+	t.Setenv(execwrap.DepthEnv, "") // clear in case we're running inside `downshift compactor`
 	bin := t.TempDir()
 	var suite strings.Builder
 	for i := 0; i < 8; i++ {

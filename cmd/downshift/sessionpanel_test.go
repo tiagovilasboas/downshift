@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -22,6 +23,7 @@ import (
 // session panel reports only that session's Compactor bytes.
 func TestPanel_CompactorIsPerSession(t *testing.T) {
 	t.Setenv(paths.EnvStateDir, t.TempDir())
+	t.Setenv(execwrap.DepthEnv, "") // clear in case we're running inside `downshift compactor`
 	bin := t.TempDir()
 	var suite strings.Builder
 	for i := 0; i < 8; i++ {

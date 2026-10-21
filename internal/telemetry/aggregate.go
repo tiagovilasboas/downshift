@@ -163,7 +163,7 @@ func (a *aggregator) countDecision(ev Event) {
 		a.s.ReasonCodes[code]++
 	}
 	a.countFrontier(ev, isRefuted)
-	applied := AppliedRewrite(ev.Outcome, ev.Corrections) && !isRefuted
+	applied := AppliedRouting(ev) && !isRefuted
 	a.countVerdict(ev, applied)
 	a.sumNormalisedCost(ev, applied)
 	// Self-correction: the verdict stands, the safe action applied.
