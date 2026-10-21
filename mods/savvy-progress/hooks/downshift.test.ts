@@ -204,8 +204,51 @@ test('crew badge: a finished agent still inside the window is counted with the r
 
 test('downshift: the Compactor shows in its own unit and is never added to the tokens moved', async ($, on) => {
   await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
-  expect(await shows($, 'Pane', /59k downshifted · .* · ↓ 60 KB compactor/)).toBe(true)
-  expect(await shows($, 'Pane', /estimated|≈|total/i)).toBe(false)
+  expect(await shows($, 'Pane', /59k downshifted · .* · Compactor 4 cmds · 60\.0 KB saved$/)).toBe(true)
+  expect(await shows($, 'Pane', /estimated|≈|total|nothing to cut/i)).toBe(false)
+})
+
+test('compactor: commands that cut nothing say so, with the bytes they saw', async ($, on) => {
+  const quiet = { ...PANEL, compactor: { commands: 4, compacted: 0, raw_bytes: 878, saved_bytes: 0 } }
+  await world($, on, { stdout: JSON.stringify(quiet) }, 'S-1')
+  expect(await shows($, 'Pane', /Compactor 4 cmds · 0 B saved · nothing to cut$/)).toBe(true)
+  expect(await shows($, 'Pane', /↓ 0 B/)).toBe(false)
+})
+
+test('compactor: a single command is named in the singular', async ($, on) => {
+  const one = { ...PANEL, compactor: { commands: 1, compacted: 0, raw_bytes: 100, saved_bytes: 0 } }
+  await world($, on, { stdout: JSON.stringify(one) }, 'S-1')
+  expect(await shows($, 'Pane', /Compactor 1 cmd · 0 B saved · nothing to cut$/)).toBe(true)
+})
+
+test('compactor: raw output that was compacted is not called nothing to cut', async ($, on) => {
+  await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
+  expect(await shows($, 'Pane', /nothing to cut/)).toBe(false)
+})
+
+test('effort: when effort changed the summary says model and effort, not switched', async ($, on) => {
+  const effort = { ...PANEL, model_switched: 1, effort_changed: 2 }
+  await world($, on, { stdout: JSON.stringify(effort) }, 'S-1')
+  expect(await shows($, 'AbovePrompt', /^Downshift · 1 model · 2 effort · 1 held$/)).toBe(true)
+  expect(await shows($, 'Pane', /switched/)).toBe(false)
+})
+
+test('effort: a zero effort_changed keeps the switched wording', async ($, on) => {
+  const zero = { ...PANEL, model_switched: 2, effort_changed: 0 }
+  await world($, on, { stdout: JSON.stringify(zero) }, 'S-1')
+  expect(await shows($, 'AbovePrompt', /^Downshift · 2 switched · 1 held$/)).toBe(true)
+})
+
+test('effort: an older binary without the fields keeps the switched wording', async ($, on) => {
+  await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
+  expect(await shows($, 'AbovePrompt', /^Downshift · 2 switched · 1 held$/)).toBe(true)
+  expect(await shows($, 'AbovePrompt', /effort|model ·/)).toBe(false)
+})
+
+test('effort: a non-numeric field is treated as absent', async ($, on) => {
+  const junk = { ...PANEL, model_switched: 'x', effort_changed: null }
+  await world($, on, { stdout: JSON.stringify(junk) }, 'S-1')
+  expect(await shows($, 'AbovePrompt', /^Downshift · 2 switched · 1 held$/)).toBe(true)
 })
 
 test('downshift: without a compactor block the header says nothing about it', async ($, on) => {
