@@ -146,8 +146,8 @@ func TestExport(t *testing.T) {
 		t.Fatalf("Export failed: %v", err)
 	}
 
-	if store.Version != 1 {
-		t.Errorf("expected version 1, got %d", store.Version)
+	if store.Version != SchemaVersion {
+		t.Errorf("expected version %d, got %d", SchemaVersion, store.Version)
 	}
 	if len(store.Entries) != 1 {
 		t.Errorf("expected 1 entry, got %d", len(store.Entries))

@@ -290,21 +290,36 @@ func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64
 	}
 	_, _ = g.out.Write(out)
 
-	// Call the learning hook asynchronously when output was not compacted.
-	// This never blocks or slows down the command return.
+	// The output is already written and the exit code already known, so the
+	// learning hook runs here, under a deadline, and its write is on disk
+	// when Run returns instead of being cut off by process exit.
 	if !compacted && ObserveUncompactedHook != nil && len(data) > 0 {
-		// Copy data for the goroutine (data slice will be invalidated)
-		sample := make([]byte, len(data))
-		copy(sample, data)
-		argv := g.argv
-		family := g.family
-		go func() {
-			defer func() { recover() }() // never panic the caller
-			ObserveUncompactedHook(argv, sample, family)
-		}()
+		observeUncompacted(ObserveUncompactedHook, g.argv, data, g.family)
 	}
 
 	return raw, int64(len(out)), compacted
+}
+
+// ObserveHookDeadline bounds how long finish waits for ObserveUncompactedHook.
+// A hook that overruns keeps running until the process exits; the command's
+// output and exit code are never affected.
+var ObserveHookDeadline = 500 * time.Millisecond
+
+// observeUncompacted calls hook with a copy of data and waits for it until
+// ObserveHookDeadline. A panic in the hook is swallowed.
+func observeUncompacted(hook func([]string, []byte, Family), argv []string, data []byte, family Family) {
+	sample := make([]byte, len(data))
+	copy(sample, data)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		defer func() { recover() }() // never panic the caller
+		hook(argv, sample, family)
+	}()
+	select {
+	case <-done:
+	case <-time.After(ObserveHookDeadline):
+	}
 }
 
 // compactSafely runs the compressor under recover: a compressor bug prints

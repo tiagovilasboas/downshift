@@ -68,7 +68,7 @@ Exit 1 → Summary + failure details + last N lines
 Unknown formats are observed by the learning system:
 
 1. Command completes with unrecognized output
-2. Learning system records pattern hash
+2. Learning system records the signature and the output's shape (counts, never text)
 3. After N observations, surfaces as suggestion
 
 See [Compressor Learning](../features/learning.md).
