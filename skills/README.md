@@ -1,12 +1,13 @@
 # Skills shipped with Downshift
 
-Three skills, three jobs, no overlap. They are plain `SKILL.md` files any
+Four skills, four jobs, no overlap. They are plain `SKILL.md` files any
 harness can read; the Claude Code plugin ships them as `/downshift:<name>`.
 
 | Skill | Job | Writes? | When to stop using it |
 |---|---|---|---|
 | `downshift-setup` | install, repair and first validation of the hooks; dry-run before any write, backups and `--undo` | yes, after a yes | once `downshift doctor` is clean; a hand-copied install can delete it |
 | `downshift-audit` | independent, read-only inspection: is it wired, what did it do, what loads every session | never | keep; it is the second opinion |
+| `harness-engineer` | six steps: restate, split by story points, parallelize, keep small work local, leave mechanical spawns unpinned, check with `session --why` and `report` | never | keep while you delegate work |
 | `cost-reducer` | the one entry point for "we spend too much": fixed diagnosis order, biggest lever first, one change at a time | only after a yes | keep; it defers to setup when nothing is wired |
 
 ## What they cost
@@ -20,10 +21,11 @@ tokenizer):
 | `cost-reducer/SKILL.md` | ~86 tokens | ~750 tokens, plus the one reference file it opens (~400 each) |
 | `downshift-audit/SKILL.md` | ~70 tokens | ~890 tokens |
 | `downshift-setup/SKILL.md` | ~66 tokens | ~730 tokens |
+| `harness-engineer/SKILL.md` (2026-10-21) | ~50 tokens | ~170 tokens |
 | `agents/mechanical-worker.md` | ~55 tokens | ~270 tokens |
 | `commands/status.md` | ~16 tokens | ~90 tokens |
 
-About 290 tokens per session for the whole set when installed through the
+About 340 tokens per session for the whole set when installed through the
 plugin. A skill does not save anything by recommending savings; it pays off
 only when its advice is applied. Descriptions therefore trigger only when the
 user names Downshift or asks about its hooks and cost, not on any mention of

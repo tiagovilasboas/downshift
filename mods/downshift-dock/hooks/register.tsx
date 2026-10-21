@@ -66,15 +66,40 @@ export function modeLabel(m: Mode): string {
   return m === 'economy' ? '\u25C6 economy' : '\u25C7 performance'
 }
 
-/** The mode file lives in the state dir: DOWNSHIFT_STATE_DIR, else ~/.downshift. */
-async function modePath($: EngineInterface): Promise<string> {
-  const dir = (await $.env.get('DOWNSHIFT_STATE_DIR')) || `${(await $.env.get('HOME')) ?? ''}/.downshift`
-  return `${dir.replace(/\/+$/, '')}/mode.json`
+/** Strips trailing path separators of either kind ('/' or '\\'). */
+const trimSep = (p: string): string => p.replace(/[\\/]+$/, '')
+
+/**
+ * The Downshift state dir, as the binary resolves it: DOWNSHIFT_STATE_DIR, else
+ * <home>/.downshift, where home is HOME or, on Windows, USERPROFILE. Null when
+ * none is set: the caller reads nothing and writes nothing, rather than using a
+ * path at the filesystem root.
+ */
+export function stateDirFrom(env: { DOWNSHIFT_STATE_DIR?: string | null; HOME?: string | null; USERPROFILE?: string | null }): string | null {
+  const explicit = trimSep(env.DOWNSHIFT_STATE_DIR ?? '')
+  if (explicit !== '') return explicit
+  const home = trimSep(env.HOME || env.USERPROFILE || '')
+  return home === '' ? null : `${home}/.downshift`
+}
+
+async function stateDir($: EngineInterface): Promise<string | null> {
+  return stateDirFrom({
+    DOWNSHIFT_STATE_DIR: await $.env.get('DOWNSHIFT_STATE_DIR'),
+    HOME: await $.env.get('HOME'),
+    USERPROFILE: await $.env.get('USERPROFILE'),
+  })
+}
+
+/** The mode file lives in the state dir; null when no state dir can be named. */
+async function modePath($: EngineInterface): Promise<string | null> {
+  const dir = await stateDir($)
+  return dir === null ? null : `${dir}/mode.json`
 }
 
 async function readModeText($: EngineInterface): Promise<string | null> {
   try {
-    return String(await $.fs.read(await modePath($)))
+    const path = await modePath($)
+    return path === null ? null : String(await $.fs.read(path))
   } catch {
     return null
   }
@@ -88,7 +113,9 @@ async function refreshMode($: EngineInterface): Promise<void> {
 async function toggleMode($: EngineInterface): Promise<void> {
   const next = nextMode(parseMode(await readModeText($)))
   try {
-    await $.fs.write(await modePath($), JSON.stringify({ mode: next }) + '\n')
+    const path = await modePath($)
+    if (path === null) throw new Error('no state dir')
+    await $.fs.write(path, JSON.stringify({ mode: next }) + '\n')
     await update($, modeAtom, () => next)
     $.ui.toast(`downshift: ${modeLabel(next)}. Applies to the next subagent spawn.`)
   } catch {
@@ -147,11 +174,12 @@ async function readJson($: EngineInterface, path: string): Promise<unknown> {
 
 async function refreshStatus($: EngineInterface): Promise<void> {
   try {
-    const home = ((await $.env.get('HOME')) ?? '').replace(/\/+$/, '')
-    const cwd = (await $.session.cwd()).replace(/\/+$/, '')
+    const dir = await stateDir($)
+    const cwd = trimSep(await $.session.cwd())
     const next: Status = {
       dci: dciMode(await readJson($, `${cwd}/.downshift/dci.json`)),
-      compactor: compactorOn(await readJson($, `${home}/.downshift/context-optimization.json`)),
+      // Same state dir as the binary: DOWNSHIFT_STATE_DIR is honoured here too, not only for the mode file.
+      compactor: compactorOn(dir === null ? null : await readJson($, `${dir}/context-optimization.json`)),
     }
     await update($, statusAtom, () => next)
   } catch {

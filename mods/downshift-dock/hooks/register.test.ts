@@ -11,7 +11,7 @@
 import { describe, expect, mock, test } from 'claude-code/testing'
 import type { CommandInfo, RenderPropsOf, SessionStartInput } from 'claude-code'
 
-import { ACCENT, IDLE, chips, compactorOn, countRunning, dciMode, detect, dotColor, modeLabel, nextMode, parseMode, visibleTargets } from './register'
+import { ACCENT, IDLE, chips, compactorOn, countRunning, dciMode, detect, dotColor, modeLabel, nextMode, parseMode, stateDirFrom, visibleTargets } from './register'
 
 const plug = (name: string): CommandInfo => ({ name, description: name, source: 'plugin', plugin: name })
 const builtin = (name: string): CommandInfo => ({ name, description: name, source: 'builtin' })
@@ -175,5 +175,24 @@ describe('mode', () => {
     expect(nextMode('economy')).toBe('performance')
     expect(modeLabel('economy')).toContain('economy')
     expect(modeLabel('performance')).toContain('performance')
+  })
+})
+
+describe('state dir', () => {
+  test('DOWNSHIFT_STATE_DIR wins, with its trailing separators removed', () => {
+    expect(stateDirFrom({ DOWNSHIFT_STATE_DIR: '/tmp/ds/', HOME: '/home/u' })).toBe('/tmp/ds')
+    expect(stateDirFrom({ DOWNSHIFT_STATE_DIR: 'C:\\ds\\', HOME: '/home/u' })).toBe('C:\\ds')
+  })
+
+  test('otherwise HOME, else USERPROFILE on Windows, plus .downshift', () => {
+    expect(stateDirFrom({ HOME: '/home/u/' })).toBe('/home/u/.downshift')
+    expect(stateDirFrom({ USERPROFILE: 'C:\\Users\\u' })).toBe('C:\\Users\\u/.downshift')
+    expect(stateDirFrom({ HOME: '', USERPROFILE: 'C:\\Users\\u' })).toBe('C:\\Users\\u/.downshift')
+  })
+
+  test('no variable set names no state dir, never a path at the filesystem root', () => {
+    expect(stateDirFrom({})).toBeNull()
+    expect(stateDirFrom({ DOWNSHIFT_STATE_DIR: '', HOME: '', USERPROFILE: '' })).toBeNull()
+    expect(stateDirFrom({ HOME: '/' })).toBeNull()
   })
 })

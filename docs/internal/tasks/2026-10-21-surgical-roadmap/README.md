@@ -52,7 +52,7 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 | # | Change | Closes when |
 |---|--------|-------------|
 | F1 | The scheduled `ci-full` run of 2026-10-20 failed (before #335); #371 opens a tracking issue on failure. Read that issue, fix or close it, and confirm the first nightly after #335 ran `test-os` on windows and macos | one green scheduled run with both `test-os` jobs |
-| F2 | Mods have no CI job and the `claude-code/testing` runner is not on this machine, so dock and savvy-progress tests are never executed | **decision**: add a job if a runner exists in CI; otherwise state it in each mod README |
+| F2 | Mods have no CI job. The runner exists locally (`claude plugin test mods/<name>`: savvy-progress 42, dock 21, filetree 68 tests, all green on 2026-10-21), but CI has no `claude` CLI, so mod tests only run on a maintainer machine | **decision**: install the CLI in a CI job, or keep a documented local gate before merging a mod change |
 
 ## G. Owner decisions (not small, listed so they stop blocking)
 
