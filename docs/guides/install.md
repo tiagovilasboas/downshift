@@ -186,7 +186,7 @@ natural work most spawns are held, and that is by design.
 
 The same four hooks and the `/downshift:status` command ship as a Claude Code plugin
 whose root is this repository. It needs the `downshift` binary on PATH (step 1
-above) and replaces step 2 for Claude Code only. `downshift setup` does this install for you when it can: it runs `claude plugin marketplace add` and `claude plugin install downshift@downshift`, then removes the Downshift hooks it wrote earlier into `settings.json` (the plugin carries them; keeping both would route every spawn twice). It installs the plugin only when `claude` is on PATH and a login shell resolves `downshift` to the same binary that runs `setup`, because the plugin's hooks call `downshift` by name; otherwise it keeps writing the settings hooks and says why. `--no-plugin` always keeps them in `settings.json`. The other harnesses still use
+above) and replaces step 2 for Claude Code only. `downshift setup` does this install for you when it can: it runs `claude plugin marketplace add` and `claude plugin install downshift@downshift`, then removes the Downshift hooks it wrote earlier into `settings.json` (the plugin carries them; keeping both would route every spawn twice). It installs the plugin only when `claude` is on PATH and a login shell resolves `downshift` to the same binary that runs `setup`, because the plugin's hooks call `downshift` by name; otherwise it keeps writing the settings hooks and says why. `--no-plugin` always keeps them in `settings.json`. Setup also refuses to point hooks at a binary in the temporary directory, a Go build directory or a world-writable directory (install it somewhere stable first; `--allow-unsafe-binary` overrides). The other harnesses still use
 `downshift setup`.
 
 ```text

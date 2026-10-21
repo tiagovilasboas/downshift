@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `downshift setup` refuses to write hooks that point at a binary under the temporary directory, a Go build directory (`go run`, `go test`) or a world-writable directory without the sticky bit: the hook would break when the file is cleaned, or run whatever another user puts there. `--dry-run` and `--undo` only warn; `--allow-unsafe-binary` overrides.
 - The Compactor hook no longer requires a Bash allow rule on the original command (owner decision 2026-10-20). It rewrites an allowlisted command unless a deny or ask rule in the managed, user, project or local settings matches it (as written or normalised); unreadable or unparsable settings still mean no rewrite. The hook emits no `permissionDecision`, so approval prompts follow the user's permission mode. No allow rule is installed or required.
 - Docs: the harness matrix, companion guide, README, AGENTS.md and the Portuguese README now describe the Compactor's native rewrite as the code does: no Bash allow rule is needed, and only a matching deny or ask rule stops it.
 
