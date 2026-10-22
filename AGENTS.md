@@ -3,7 +3,6 @@
 This file is read by AI coding agents (Claude Code, Codex, Cursor, and
 compatible tools) when they open this repository. Follow these instructions
 throughout the session.
-
 ---
 
 ## Project identity
@@ -123,63 +122,37 @@ By contributing, you license your contribution under Apache 2.0. See
 
 ## Architecture — understand before changing
 
-Imports point inward. Checked with `go list` on 2026-10-19; the graph, flows and
-known gaps are in [docs/design/architecture.md](docs/design/architecture.md).
+Imports point inward. Full graph, domain map, key invariants and known gaps:
+[docs/design/architecture.md](docs/design/architecture.md).
 
-```
-cmd/downshift/       — CLI, harnessRegistry, runHookAdapter, setup, doctor. Blank-imports
-                       nbopinion, policyfile, quota, routeadapt (their init registers core hooks)
-internal/adapters/   — claudecode cursor codex antigravity kirocrew opencode: parse the payload,
-                       declare HarnessCapabilities, emit the wire response. No policy
-internal/core/       — Route, Check (R1-R9), PlanSession, HarnessCapabilities, Resolver, EscalationIntent.
-                       Imports only classify, fuse, quotamodel, session (and paths, semantic below them).
-                       Optional layers plug in through hook vars: MemoryAdjustHook, TierFloorHook,
-                       ScoreHook, NBSuggestHook/NBTrivialHook, quota hooks. ClassifyWithSemantic wraps fuse
-internal/classify/   — regex signals, language guard, risk floor (large prompts scan categories concurrently). No tier
-internal/fuse/       — raise-only semantic boost (imports classify, semantic; not core)
-internal/session/    — SessionList and loaders (not core). PlanForSession, RouteForSession,
-                       InferSessionFromCurrent and CanWriteSessionID stay in core
-internal/quotamodel/ — pure quota types, no I/O. internal/quota/ does the file I/O and registers the hooks
-internal/nbtier/ nbopinion/ — naive-Bayes opinion; nbopinion registers the hooks, may import core
-internal/catalog/    — embedded catalog.json (prices_as_of, synced weekly), user override, Resolver;
-                       Load runs under recover in the hooks (loadCatalogFailOpen)
-internal/discovery/ models/ — `models discover/list/check/pull`; setup runs discovery
-internal/policyfile/ adapt/ routeadapt/ scoreindex/ — project tier floor, shadow memory, score cache (via hooks)
-internal/hookctx/ hookutil/ hookport/ childend/ — hook deadline, field helpers, honor/usage ports, child-end recorder
-internal/telemetry/  — prompt-free JSONL (no per-spawn fsync), Summarize (the one savings definition)
-internal/sensor/ contextopt/ compressor/ codeintel/ — tool-output sensor, compaction, DCI
-internal/routingv2/shadow/ training/ — opt-in candidate observation; never changes Route()
-```
+Before proposing a phase that touches the binary, read that doc and fill
+[docs/contrib/coverage.md](docs/contrib/coverage.md). A phase with an empty
+or `unknown` cell in the inventory is not ready to implement.
 
-**Key invariants** (each checked on 2026-10-19; recheck with `go list -deps ./internal/core`):
-- Core production sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter. Core test files do import `catalog`, `nbopinion`, `nbtier` and `quota`; they are not in the binary. `internal/archtest` enforces this graph for core, session, fuse, codeintel and replay (`go test ./internal/archtest`).
-- Adapters do not choose the tier; they call `core.Route`, then apply the plan core returns.
-- `session` does not import `core`. `fuse` does not import `core`. `codeintel` imports only `paths`. Score selection stays in `core` through `ScoreHook`; do not merge it with the naive-Bayes opinion.
-- The semantic boost and the naive-Bayes opinion stay in-process and do not exec. The boost ignores no-signal prompts, never creates COMPLEX alone, and is logged as `SEMANTIC_BOOST`.
-- Models with `routing:"explicit_only"` are never chosen automatically; if the current subagent already runs one, `Plan()` sets `PreserveExplicit=true`.
+Key invariants (enforced by `go test ./internal/archtest`):
+- Core production sources never import `telemetry`, `catalog`, `quota`, or an adapter.
+- Adapters call `core.Route`; they do not choose the tier.
+- Doubt stays allow: unconfident UPSHIFT (R8) and unconfident frontier (R7) are held.
 - `updatedInput` preserves all sibling fields; only `model` and `reasoning_effort` are mutated.
-- Doubt never spends money: an unconfident UPSHIFT (R8) and an unconfident frontier pick with no current model (R7) are held in `Check`; only `deterministicLift` (selfcheck.go) may move up.
-- `InferSession` (Claude Code only) infers an unknown session from the current model; adapters pass `plan.Session` to the write guard.
-- Shadow only, never auto-activated: `DOWNSHIFT_SHADOW_WEIGHTS`, candidate weights, adapt memory, and score selection unless `DOWNSHIFT_SCORE_ROUTING=1`. `success` feedback never creates a `required_tier` label.
-- Task text stays in memory for feature extraction and is never persisted. Only explicit reviewed `required_tier` labels enter supervised training.
-- Hooks fail open: 1 MiB stdin cap, 2 s read timeout, 1.5 s deadline, panic and catalog-load panic become an unchanged spawn.
-- The install example omits `claude-fable-5-1` on purpose (upshift writes the last listed id); do not add it.
-- `hooks/cache-tax/` (no longer loaded by the plugin; separate install), `mods/savvy-progress/` and `mods/filetree/` are vendored third-party mods (MIT, pinned in NOTICE): re-vendor per their READMEs; edit only through the documented local patch (`downshift-local.patch` + README section + NOTICE), then re-vendor and reapply it (owner decision 2026-10-19); they hold no routing logic. `mods/downshift-dock/` and `mods/downshift-theme/` are original Downshift code.
+- Task text stays in memory only; never persisted.
+- Hooks fail open: 1 MiB cap, 2 s read, 1.5 s deadline, panic → unchanged spawn.
+
+**Compactor exception** (`internal/execwrap`, never an adapter): `downshift compact -- <argv>`
+rewrites allowlisted shell commands with no metacharacters; `"exec": false` or
+`DOWNSHIFT_EXEC=0` turns it off; a deny or ask rule stops the rewrite.
+
+Third-party mods (`hooks/cache-tax/`, `mods/savvy-progress/`, `mods/filetree/`): re-vendor
+per their READMEs; edit only through `downshift-local.patch`. `mods/downshift-dock/` and
+`mods/downshift-theme/` are original Downshift code.
 
 ### Reference (read on demand)
 
-Context compressor, telemetry and cost commands, and the embedded-vs-user `catalog.json` rules are in
-[docs/contrib/agent-reference.md](docs/contrib/agent-reference.md). Two rules that always apply: telemetry never stores
-prompts, tasks or file paths; and "do not commit catalog.json" means the **user override** under the state dir, never the
-embedded `internal/catalog/catalog.json`. Companions (Headroom default) are detected and documented,
-never installed or wrapped by Downshift: [docs/guides/companions.md](docs/guides/companions.md).
-One exception to "Downshift does not wrap commands" (owner decision 2026-10-19): the default-on
-`downshift compact` wrapper, product name Compactor (`downshift compactor` is an alias; the plugin registers its Bash hook; `"exec": false` in the config or `DOWNSHIFT_EXEC=0` turns it off) may rewrite an
-allowlisted shell command with no shell metacharacters to `downshift compact -- <argv>` (no Bash allow rule is needed; a deny or ask rule that matches the command stops the rewrite), which keeps the exit code
-and compacts only clean output. Its policy lives in `internal/execwrap`, never in an adapter; it never wraps a companion.
+[docs/contrib/agent-reference.md](docs/contrib/agent-reference.md) — compressor, telemetry,
+cost commands, catalog rules. Two invariants: telemetry never stores prompts or file paths;
+"do not commit catalog.json" means the user override, never `internal/catalog/catalog.json`.
+Companions: detected and documented, never installed or wrapped.
 
 ---
-
 ## Before declaring a code change done
 
 From the repository root:
@@ -204,7 +177,6 @@ Windows path. The `test-os` CI job runs the OS-sensitive packages on
 `test` job.
 
 ---
-
 ## What NOT to do
 
 - Do not remove copyright headers.
