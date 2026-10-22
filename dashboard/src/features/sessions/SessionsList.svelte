@@ -250,14 +250,14 @@
     {/each}
   </div>
 
-  <!-- Total stats -->
-  {#if sessions.length > 0}
-    {@const totalSaved = sessions.reduce((sum, s) => sum + s.tokens_saved, 0)}
-    {@const totalSwitched = sessions.reduce((sum, s) => sum + s.switched, 0)}
+  <!-- Total stats (respects active filter) -->
+  {#if filteredSessions.length > 0}
+    {@const totalSaved = filteredSessions.reduce((sum, s) => sum + s.tokens_saved, 0)}
+    {@const totalSwitched = filteredSessions.reduce((sum, s) => sum + s.switched, 0)}
     <div class="p-3 rounded-lg bg-ds-surface border border-ds-line">
       <div class="flex items-center justify-between">
         <div class="text-[10px] text-ds-muted">
-          {sessions.length} sessions · {totalSwitched} total switched
+          {filteredSessions.length} sessions · {totalSwitched} total switched
         </div>
         <span class="text-sm font-bold text-ds-body">{formatTokens(totalSaved)} saved</span>
       </div>

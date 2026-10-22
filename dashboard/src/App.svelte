@@ -43,6 +43,13 @@
   }
 
   onMount(() => {
+    // Read initial tab from URL
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'tokens' || tabParam === 'compactor' || tabParam === 'sessions') {
+      activeTab = tabParam;
+    }
+    
     session.startAutoRefresh(3000);
     loadSessions();
     // Refresh sessions list every 10s
@@ -134,21 +141,50 @@
         />
       {/if}
     {:else if activeTab === 'tokens'}
-      {#if session.error}
-        <div class="bg-ds-surface border border-ds-warning/30 rounded-lg p-3 text-center">
-          <p class="text-xs text-ds-warning">⚠️ {session.error}</p>
-          <button onclick={() => session.refresh()} class="mt-2 text-[10px] text-ds-muted hover:underline">
-            Retry
-          </button>
-        </div>
-      {:else if !session.panel}
+      {#if sessions.length === 0}
         <div class="flex items-center justify-center py-12">
           <div class="w-6 h-6 rounded-full border-2 border-ds-muted border-t-transparent animate-spin"></div>
         </div>
       {:else}
+        {@const totalSaved = sessions.reduce((sum, s) => sum + s.tokens_saved, 0)}
+        {@const totalSwitched = sessions.reduce((sum, s) => sum + s.switched, 0)}
+        {@const totalAgents = sessions.reduce((sum, s) => sum + s.spawn_count, 0)}
         <div class="space-y-3">
-          <TokensSummary tokens={session.panel.tokens} />
-          {#if session.panel.cost_saved}
+          <!-- Aggregated tokens from all sessions -->
+          <div class="bg-ds-surface border border-ds-line rounded-lg p-4">
+            <div class="flex items-center gap-4">
+              <!-- Simple percentage visualization -->
+              <div class="w-20 h-20 rounded-full border-4 border-ds-line flex items-center justify-center relative">
+                <div class="absolute inset-0 rounded-full" 
+                  style="background: conic-gradient(var(--ds-body) {Math.min(totalSwitched / Math.max(totalAgents, 1) * 100, 100)}%, var(--ds-line) 0)">
+                </div>
+                <div class="absolute inset-1 rounded-full bg-ds-surface flex items-center justify-center">
+                  <span class="text-lg font-bold text-ds-body">{totalSwitched}</span>
+                </div>
+              </div>
+              
+              <div class="flex-1">
+                <div class="text-2xl font-bold text-ds-body">{totalSaved >= 1_000_000 ? `${(totalSaved / 1_000_000).toFixed(1)}M` : totalSaved >= 1_000 ? `${Math.round(totalSaved / 1_000)}k` : totalSaved}</div>
+                <div class="text-[10px] text-ds-muted">tokens saved across all sessions</div>
+                <div class="mt-2 space-y-1 text-[9px]">
+                  <div class="flex justify-between">
+                    <span class="text-ds-inactive">Sessions</span>
+                    <span class="text-ds-body">{sessions.length}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-ds-inactive">Agents spawned</span>
+                    <span class="text-ds-body">{totalAgents}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-ds-inactive">Downshifted</span>
+                    <span class="text-ds-body">{totalSwitched} ({totalAgents > 0 ? Math.round(totalSwitched / totalAgents * 100) : 0}%)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {#if session.panel?.cost_saved}
             <CostSaved cost={session.panel.cost_saved} />
           {/if}
         </div>
