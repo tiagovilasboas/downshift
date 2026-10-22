@@ -37,6 +37,11 @@ import (
 
 // Event is one routing decision persisted to the event log.
 // Prompt text is intentionally excluded — only routing metadata is stored.
+//
+// Row discriminator: the kind of record is identified by the Outcome field
+// (its "outcome" JSON key), never a "type" field. The native harness
+// transcript format (e.g. Claude Code JSON lines with {"type":"assistant",...})
+// is a distinct schema and is never the downshift events.jsonl schema.
 type Event struct {
 	CorrelationID        string                `json:"correlation_id"`             // opaque ID generated per hook invocation
 	Timestamp            string                `json:"timestamp"`                  // RFC3339Nano

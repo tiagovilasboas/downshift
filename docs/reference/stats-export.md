@@ -11,6 +11,12 @@ downshift stats --days=30 --export
 Paste the JSON into an issue or PR. The export contains **counts only** — no task
 text, no file paths from your machine. Redact `state_dir` if your paste includes it.
 
+> [!NOTE]
+> In `events.jsonl` the row type is identified by the `outcome` field, not a
+> `type` field. The native harness transcript format (for example Claude Code
+> JSON lines with `{"type":"assistant",...}`) is a distinct schema and is not
+> the downshift `events.jsonl` schema; do not look for a `type` field here.
+
 Reason codes `E5_BOOST`, `E5_ABSTAIN`, and `GRAPH_ESCALATION` can appear on logs
 written before 2026-10-17. Current builds do not emit them. `shadow-report`
 summarises routing-v2 candidate observations, not an E5 fuse.
