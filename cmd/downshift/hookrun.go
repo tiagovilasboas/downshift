@@ -221,11 +221,12 @@ func runHookAdapter[E any](
 			responded = true
 			return 0
 		}
-		if _, err := wire.emit(out, correlationID); err != nil {
+		code, err := wire.emit(out, correlationID)
+		if err != nil {
 			return fail("OUTPUT_ENCODE_ERROR")
 		}
 		responded = true
-		return 0
+		return code
 	}
 	sentCorrelation := false
 	if identified, ok := any(ev).(interface{ CorrelationIdentifier() string }); ok {

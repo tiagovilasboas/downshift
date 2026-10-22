@@ -115,7 +115,9 @@ var (
 	// a mismatched spawn and instructs the agent to respawn at the right tier.
 	// Child end (N5): postToolUse carries the spawn result; UsageSource stays
 	// UsageNone until a real payload proves where the child's tokens come from.
-	KiroCrewCaps = HarnessCapabilities{CanRewriteModel: false, CanApplyEffort: false, ChildEndEvent: "postToolUse", UsageSource: UsageNone}
+	// CanAdviseShellWrap: a shell call of a compressing family is answered with
+	// exit 2 and the wrapped command, so the model retries it compacted.
+	KiroCrewCaps = HarnessCapabilities{CanRewriteModel: false, CanApplyEffort: false, ChildEndEvent: "postToolUse", UsageSource: UsageNone, CanAdviseShellWrap: true}
 
 	// AntigravityCaps — the Antigravity hook accepts a model override on the
 	// subagent payload. The wire format carries tier aliases (flash_lite,
