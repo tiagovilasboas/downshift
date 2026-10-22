@@ -43,10 +43,30 @@ func TestParseGoVerbosePreservesFailureOutput(t *testing.T) {
 	}
 }
 
+// A parent whose subtests all pass and print nothing compacts. Counts are the
+// top-level tests; the subtests are reported separately and never inflate them.
+func TestParseGoVerboseCompactsPassingSubtests(t *testing.T) {
+	in := []byte("=== RUN   TestParent\n=== RUN   TestParent/a\n=== RUN   TestParent/b,_c\n=== RUN   TestParent/b,_c/deep\n" +
+		"--- PASS: TestParent (0.00s)\n    --- PASS: TestParent/a (0.00s)\n    --- SKIP: TestParent/b,_c (0.00s)\n        --- PASS: TestParent/b,_c/deep (0.00s)\n" +
+		"=== RUN   TestOther\n--- PASS: TestOther (0.00s)\nPASS\nok  \texample.test/pkg\t0.012s\n")
+	out, applied, reason := parseGoVerbose(in)
+	if !applied {
+		t.Fatalf("passing subtests must compact, reason=%q", reason)
+	}
+	for _, fact := range []string{"PASS", "2 passed", "0 failed", "Subtests: 3", "example.test/pkg", "0.012s"} {
+		if !strings.Contains(string(out), fact) {
+			t.Errorf("compacted output lost %q: %s", fact, out)
+		}
+	}
+}
+
 func TestParseGoVerboseFallsBackForUnexpectedOrAmbiguousOutput(t *testing.T) {
 	fixtures := [][]byte{
 		[]byte("=== RUN   TestExample\n--- PASS: TestExample (0.00s)\nPASS\nok example.test/pkg 0.001s\nextra output\n"),
-		[]byte("=== RUN   TestParent\n=== RUN   TestParent/child\n--- PASS: TestParent/child (0.00s)\n--- PASS: TestParent (0.00s)\nPASS\nok example.test/pkg 0.001s\n"),
+		[]byte("=== RUN   TestParent\n=== RUN   TestParent/child\n--- FAIL: TestParent (0.00s)\n    --- FAIL: TestParent/child (0.00s)\nFAIL\nFAIL\texample.test/pkg\t0.001s\n"),
+		[]byte("=== RUN   TestParent\n=== RUN   TestParent/child\n    log line\n--- PASS: TestParent (0.00s)\n    --- PASS: TestParent/child (0.00s)\nPASS\nok example.test/pkg 0.001s\n"),
+		[]byte("=== RUN   TestParent\n=== RUN   TestParent/child\n=== PAUSE TestParent/child\n=== CONT  TestParent/child\n--- PASS: TestParent (0.00s)\n    --- PASS: TestParent/child (0.00s)\nPASS\nok example.test/pkg 0.001s\n"),
+		[]byte("=== RUN   TestParent\n=== RUN   Other/child\n--- PASS: TestParent (0.00s)\n    --- PASS: Other/child (0.00s)\nPASS\nok example.test/pkg 0.001s\n"),
 		[]byte("=== RUN   TestExample\n--- PASS: TestExample (0.00s)\nPASS\n"),
 		[]byte("=== RUN   TestExample\n    useful output\n--- PASS: TestExample (0.00s)\nPASS\nok example.test/pkg 0.001s\n"),
 	}
@@ -67,4 +87,23 @@ func readGoVerboseFixture(t *testing.T, name string) []byte {
 		t.Fatalf("read Go verbose fixture %s: %v", name, err)
 	}
 	return b
+}
+
+// Real `go test -v` output of a package whose tests use subtests and print
+// nothing (hookutil, durations normalised): Go prints each parent's outcome
+// first and its indented subtest outcomes after it.
+func TestParseGoVerboseCompactsRealSubtestTranscript(t *testing.T) {
+	in := readGoVerboseFixture(t, "go_verbose_subtests_pass.txt")
+	out, applied, reason := parseGoVerbose(in)
+	if !applied {
+		t.Fatalf("real subtest transcript must compact, reason=%q", reason)
+	}
+	for _, fact := range []string{"Go test -v: PASS", "Subtests: ", "hookutil"} {
+		if !strings.Contains(string(out), fact) {
+			t.Errorf("compacted output lost %q: %s", fact, out)
+		}
+	}
+	if len(out)*4 > len(in) {
+		t.Errorf("expected at least 4x smaller, got %d of %d bytes", len(out), len(in))
+	}
 }

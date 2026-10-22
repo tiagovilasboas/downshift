@@ -1,0 +1,7 @@
+=== RUN   TestParent
+=== RUN   TestParent/child
+    child says something useful
+--- PASS: TestParent (0.00s)
+    --- PASS: TestParent/child (0.00s)
+PASS
+ok  	example.test/pkg	0.004s
