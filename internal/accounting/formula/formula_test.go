@@ -51,8 +51,8 @@ func TestSaved_UnpricedBaseline(t *testing.T) {
 	if result.Quality != SummaryUnpriced {
 		t.Errorf("Quality = %q, want %q", result.Quality, SummaryUnpriced)
 	}
-	if !result.IsValid() {
-		// IsValid should be false for unpriced baseline
+	if result.IsValid() {
+		t.Error("IsValid should be false for unpriced baseline")
 	}
 }
 
