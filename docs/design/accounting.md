@@ -4,7 +4,7 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-**Status:** T0 spec complete. Implementation: T2 (PriceBook) → T3 (formula package).
+**Status:** Wave 1 complete (T0-T3 merged). Next: T4a golden fixtures, T4b per-harness aggregation.
 
 ---
 
@@ -213,9 +213,9 @@ When publishing any `Saved` figure, include:
 |------|--------|-------------|
 | T0 | ✅ done | This spec |
 | T1 | ✅ merged | Exec event `harness` and `entry` fields (PR #433) |
-| T2 | pending | `catalog.PriceBook{Version, AsOf}` and `PriceFor(model)` |
-| T3 | pending | `internal/accounting/formula` with pure functions |
-| T4a | pending | Golden tests and fuzz |
+| T2 | ✅ merged | `catalog.PriceBook{Version, AsOf}` and `PriceFor(model)` (PR #437) |
+| T3 | ✅ merged | `internal/accounting/formula` with pure functions (PR #437) |
+| T4a | pending | Golden tests JSON fixtures for regression testing |
 | T4b | pending | Per-harness aggregation using T1 fields |
 
 ---
