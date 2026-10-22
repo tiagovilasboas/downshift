@@ -9,6 +9,7 @@ export default defineConfig({
       $lib: path.resolve('./src/lib'),
     },
   },
+  publicDir: 'static',
   build: {
     outDir: '../internal/api/dashboard',
     emptyOutDir: true,
