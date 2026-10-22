@@ -1,0 +1,35 @@
+{
+  "name": "downshift-panel",
+  "version": "0.1.0",
+  "description": "Native Downshift agents panel: tokens saved, cost breakdown, and real-time routing decisions. Replaces savvy-progress with a first-party experience.",
+  "author": {
+    "name": "Tiago Vilas Boas",
+    "url": "https://github.com/tiagovilasboas"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Panel language",
+      "description": "auto follows Claude Code's language setting; en or pt-BR",
+      "default": "auto",
+      "options": ["auto", "en", "pt-BR"]
+    },
+    "autoOpen": {
+      "type": "string",
+      "title": "Open the agents panel",
+      "description": "always: when any subagent starts; manual: only via /agents-info",
+      "default": "always",
+      "options": ["always", "manual"]
+    },
+    "showCost": {
+      "type": "boolean",
+      "title": "Show cost estimate",
+      "description": "Show estimated $ saved alongside tokens (requires accounting v1)",
+      "default": false
+    }
+  },
+  "homepage": "https://github.com/tiagovilasboas/downshift",
+  "repository": "https://github.com/tiagovilasboas/downshift",
+  "license": "Apache-2.0"
+}
