@@ -44,6 +44,9 @@ var forwardedSignals = []os.Signal{os.Interrupt, syscall.SIGTERM, syscall.SIGHUP
 // program that itself runs commands never nests compaction.
 const DepthEnv = "DOWNSHIFT_EXEC_DEPTH"
 
+// KillSwitchEnv turns the exec wrapper off everywhere when set to "0".
+const KillSwitchEnv = "DOWNSHIFT_EXEC"
+
 // Options configures one Run.
 type Options struct {
 	Stdin          io.Reader

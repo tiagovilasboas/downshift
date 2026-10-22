@@ -1,3 +1,6 @@
+> **Histórico — 2026-10-22.** Este documento descreve um design anterior.
+> A fonte viva é [`docs/design/architecture.md`](../design/architecture.md).
+
 # Downshift — Arquitetura do Projeto
 
 Visão técnica da estrutura, componentes e fluxo de dados do Downshift.

@@ -1,3 +1,6 @@
+> **Histórico — 2026-10-22.** Este documento descreve um design anterior.
+> A fonte viva é [`docs/design/architecture.md`](../design/architecture.md).
+
 # Downshift — Arquitetura Agentic AI BDI
 
 Este documento descreve como o Downshift implementa uma arquitetura inspirada em

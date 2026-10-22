@@ -5,33 +5,19 @@ package main
 
 import (
 	"errors"
-	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"os"
 	"path/filepath"
 
+	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift/internal/shellwrap"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
-// shellEvent is the optional adapter seam for the opt-in exec wrapper. An
-// adapter whose harness has a shell tool says which call is that tool and
-// how to emit a rewritten command; the decision stays here.
-type shellEvent interface {
-	// ShellCommand returns the command and true when the call is the
-	// harness's shell tool.
-	ShellCommand() (command string, isShell bool)
-	// ShellRewrite returns the wire output that replaces the command,
-	// preserving every other input field.
-	ShellRewrite(command string) (any, error)
-	// ShellBlocked reports whether the harness's own permission rules forbid
-	// rewriting the command: a deny or ask rule matches it. Any rule-reading
-	// error is true (fail closed).
-	ShellBlocked(command string) bool
-}
-
 // execEnvKillSwitch turns the exec wrapper off everywhere when set to "0".
-const execEnvKillSwitch = "DOWNSHIFT_EXEC"
+// Kept here so the existing tests in this package can reference it directly.
+const execEnvKillSwitch = execwrap.KillSwitchEnv
 
 // execConfigEnabled reports whether the compact wrapper is on: on unless the
 // config file says "exec": false. A config that cannot be read counts as on,
@@ -65,10 +51,20 @@ var execExecutable = func() (string, error) {
 	return exe, nil
 }
 
-// shellWrapDecision is the shared, harness-free decision for one shell
-// command: kill switch, config, policy, the harness's declared capability,
-// the user's own deny and ask rules, and the running binary's absolute path.
-// Anything short of all of them leaves the command unchanged.
+func init() {
+	// Wire the three env accessors the shellwrap domain reads. Tests swap the
+	// package-level vars above before calling shellwrap functions; SetEnvFuncs
+	// is re-called in withExec so the domain sees the swapped values.
+	shellwrap.SetEnvFuncs(
+		func() bool { return execConfigEnabled() },
+		func() (string, error) { return execExecutable() },
+		func(k string) string { return hookGetenv(k) },
+	)
+}
+
+// shellWrapDecision is the shared, harness-free decision for one shell command.
+// Kept as a package-level function so existing tests in this package can call
+// it directly without going through a full event parse.
 func shellWrapDecision(harness, command string, blocked func(string) bool) execwrap.Decision {
 	if hookGetenv(execEnvKillSwitch) == "0" || hookGetenv(execwrap.DepthEnv) != "" || !execConfigEnabled() {
 		return execwrap.Decision{Reason: "disabled"}
@@ -81,22 +77,17 @@ func shellWrapDecision(harness, command string, blocked func(string) bool) execw
 	if !d.Rewrite {
 		return d
 	}
-	if caps, ok := core.CapsFor(harness); !ok || !caps.CanRewriteShellCommand {
+	caps, ok := core.CapsFor(harness)
+	if !ok || (!caps.CanRewriteShellCommand && !caps.CanAdviseShellWrap) {
 		return execwrap.Decision{Family: d.Family, Reason: "harness_cannot_rewrite"}
 	}
-	// The user's own deny and ask rules decide: the original command, as
-	// written and as normalised, must match none of them. The rewritten text
-	// would match none of those rules, so they are checked here. No allow rule
-	// is required; the rewrite carries no permissionDecision, so the harness's
-	// permission flow still applies to the rewritten command.
 	if blocked == nil || blocked(command) || blocked(d.Argv) || anyBlocked(blocked, d.Segments) {
 		return execwrap.Decision{Family: d.Family, Reason: "blocked_by_user_rules"}
 	}
 	return d
 }
 
-// anyBlocked reports whether a deny or ask rule matches any segment of a
-// compound shape (`cd <dir>`, `tail -N`).
+// anyBlocked reports whether a deny or ask rule matches any segment.
 func anyBlocked(blocked func(string) bool, segments []string) bool {
 	for _, s := range segments {
 		if blocked(s) {
@@ -106,30 +97,24 @@ func anyBlocked(blocked func(string) bool, segments []string) bool {
 	return false
 }
 
-// shellRewrite handles a shell-tool call inside runHookAdapter. isShell is
-// false when ev is not a shell call, and the spawn path runs as before. When
-// isShell is true the call is never routed: out is the rewrite to emit, or nil
-// to allow it unchanged.
+// shellRewrite handles a shell-tool call inside runHookAdapter. It delegates
+// entirely to the shellwrap domain. isShell is false when ev is not a shell
+// call; out is the wire response, or nil to allow the command unchanged.
 func shellRewrite[E any](harness string, ev E) (out any, isShell bool) {
-	s, ok := any(ev).(shellEvent)
-	if !ok {
-		return nil, false
-	}
-	command, isShell := s.ShellCommand()
-	if !isShell {
-		return nil, false
-	}
-	d := shellWrapDecision(harness, command, s.ShellBlocked)
-	if !d.Rewrite {
-		return nil, true
-	}
-	wrapped := d.Command
+	sessionTag := ""
 	if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
-		wrapped = execwrap.WithSession(wrapped, telemetry.HashSessionID(identified.SessionIdentifier()))
+		sessionTag = telemetry.HashSessionID(identified.SessionIdentifier())
 	}
-	out, err := s.ShellRewrite(wrapped)
-	if err != nil {
-		return nil, true
+	r := shellwrap.Handle(harness, ev, sessionTag)
+	if !r.IsShell {
+		return nil, false
 	}
-	return out, true
+	if r.Rewrite != nil {
+		return r.Rewrite, true
+	}
+	// Advise path: hookrun exits 2 and writes r.Advise to stderr.
+	if r.Advise != "" {
+		return shellwrap.AdviseResult{Message: r.Advise}, true
+	}
+	return nil, true
 }
