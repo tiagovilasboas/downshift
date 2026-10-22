@@ -222,7 +222,7 @@ O Downshift implementa uma arquitetura BDI (Belief-Desire-Intention):
 - **Desires**: Minimizar custo, manter qualidade, garantir segurança
 - **Intentions**: Rotear para tier, compactar output, aprender padrão
 
-Ver: `docs/architecture/agentic-bdi.md`
+Ver: [`docs/design/architecture.md`](../design/architecture.md)
 
 ## Harnesses Suportados
 
@@ -276,8 +276,7 @@ Para reportar: https://github.com/tiagovilasboas/downshift/issues
 ## Referências
 
 - README: https://github.com/tiagovilasboas/downshift/blob/main/README.md
-- Arquitetura: `docs/architecture/project-architecture.md`
-- BDI: `docs/architecture/agentic-bdi.md`
+- Arquitetura (fonte viva): [`docs/design/architecture.md`](../design/architecture.md)
 - Harness Matrix: `docs/reference/harness-matrix.md`
 - Config Options: `docs/reference/config-options.md`
 

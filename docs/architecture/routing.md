@@ -1,3 +1,6 @@
+> **Historical — 2026-10-22.** This document describes an earlier design.
+> The live reference is [`docs/design/architecture.md`](../design/architecture.md).
+
 # Routing Engine
 
 The routing engine classifies task complexity and selects the optimal model
