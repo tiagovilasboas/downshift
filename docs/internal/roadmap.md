@@ -84,7 +84,7 @@ sessões kiro-cli em modo não-trusted. A flag permanece ligada (fail-open e ino
 | Fase | Pts | O que é | Depende de | Status |
 |------|-----|---------|------------|--------|
 | **B-W1** | 6 | #454 URL bidirecional + #453 rótulo + #451 doc (bundle reembarcado) | — | ✅ mergeado (#458) |
-| **B-W2** | 3 | DASH-2: harness E2E Playwright com flag `?e2e=1` — sensor computacional para #456 (auto-refresh re-render + Motion instável) | — | 🔲 |
+| **B-W2** | 3 | DASH-2: harness E2E Playwright com flag `?e2e=1` — sensor computacional para #456 (auto-refresh re-render + Motion instável) | — | ✅ |
 | **B-W3** | 3 | DASH-1: endpoint agregado de tokens — `tokens: TokenSaving` por sessão em `/api/sessions` para mostrar % real na aba Tokens (hoje mostra taxa de switch) | decisão de API shape | 🔲 |
 
 **Decisão aberta para B-W3:** adicionar `tokens` em `/api/sessions` (cada sessão já retorna) ou criar `GET /api/tokens/aggregate` separado?

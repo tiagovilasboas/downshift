@@ -141,6 +141,10 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleCurrentSession(w http.ResponseWriter, r *http.Request) {
+	if e2eStubEnabled(r) {
+		writeJSON(w, e2ePanelStub())
+		return
+	}
 	events, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
 	hash := latestSessionHash(events)
 	if hash == "" {
@@ -188,6 +192,12 @@ func (s *Server) writePanel(w http.ResponseWriter, events []telemetry.Event, has
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(out)
+}
+
+// writeJSON writes v as a JSON response with the dashboard content type.
+func writeJSON(w http.ResponseWriter, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(v)
 }
 
 // latestSessionHash returns the most recent session hash from the events.
@@ -273,6 +283,10 @@ type sessionsResponse struct {
 }
 
 func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
+	if e2eStubEnabled(r) {
+		writeJSON(w, e2eSessionsStub())
+		return
+	}
 	events, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
 
 	// Extract unique sessions with their harness

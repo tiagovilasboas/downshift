@@ -5,7 +5,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"os"
 	"time"
@@ -54,49 +53,24 @@ type hookSpecificOutput struct {
 	AdditionalContext string `json:"additionalContext"`
 }
 
-// runDCIHook executes DCI hook handling for the specified harness.
-// It enforces fail-open semantics: errors, timeouts, or abstentions always exit 0.
-func runDCIHook(harness string, r io.Reader, w io.Writer, stderr io.Writer) int {
-	defer func() {
-		// Recover from unexpected panics to guarantee fail-open
-		_ = recover()
-	}()
+// runDCIHook runs the DCI hook for the harness through the shared
+// prompt-context runner (hookprompt.go). The harness gate comes from
+// HarnessCapabilities.CanInjectPromptContext.
+func runDCIHook(harness string, r io.Reader, w io.Writer, _ io.Writer) int {
+	return runPromptContext(harness, r, w, dciContext)
+}
 
-	switch harness {
-	case "claude-code", "cursor", "opencode", "codex", "generic":
-	default:
-		return 0 // Unknown harness: fail-open
-	}
-
-	if r == nil {
-		return 0
-	}
-
-	data, err := io.ReadAll(io.LimitReader(r, 1<<20))
-	if err != nil || len(data) == 0 {
-		return 0 // Empty or unreadable stdin: fail-open
-	}
-
-	var input userPromptSubmitInput
-	if err := json.Unmarshal(data, &input); err != nil {
-		return 0 // Invalid JSON: fail-open
-	}
-
-	prompt := input.PromptText()
-	if prompt == "" {
-		return 0
-	}
-
-	repoRoot := input.Cwd
+// dciContext is the DCI domain step: the formatted context pack for a prompt,
+// or "" to abstain (disabled, observe mode, nothing relevant). Fail-open.
+func dciContext(prompt, cwd string) string {
+	repoRoot := cwd
 	if repoRoot == "" {
 		repoRoot, _ = os.Getwd()
 	}
-
 	cfg, err := codeintel.LoadConfig(repoRoot)
 	if err != nil || cfg.Mode == codeintel.ModeOff {
-		return 0 // Disabled or error loading config: fail-open
+		return ""
 	}
-
 	// Budget enforcement: hard 2500ms deadline (fail-open)
 	ctx, cancel := context.WithTimeout(context.Background(), 2500*time.Millisecond)
 	defer cancel()
@@ -106,20 +80,7 @@ func runDCIHook(harness string, r io.Reader, w io.Writer, stderr io.Writer) int 
 	_ = codeintel.RecordTelemetry(telemetry)
 
 	if pack == nil || pack.OutputBytes == 0 || !telemetry.InjectionApplied {
-		return 0 // Abstained, observe mode, or empty context: exit 0
+		return ""
 	}
-
-	out := userPromptSubmitOutput{
-		HookSpecificOutput: hookSpecificOutput{
-			HookEventName:     "UserPromptSubmit",
-			AdditionalContext: pack.FormattedText,
-		},
-	}
-	if harness != "claude-code" {
-		out.AdditionalContext = pack.FormattedText
-	}
-
-	enc := json.NewEncoder(w)
-	_ = enc.Encode(out)
-	return 0
+	return pack.FormattedText
 }
