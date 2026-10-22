@@ -138,6 +138,8 @@ func main() {
 		os.Exit(runSetup(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "serve":
 		os.Exit(runServe(args[1:], os.Stdout, os.Stderr))
+	case "dashboard":
+		os.Exit(runDashboard(args[1:], os.Stdout, os.Stderr))
 	case "doctor":
 		os.Exit(runDoctor(args[1:], os.Stdout, os.Stderr, catalog))
 	case "enable", "shell-init":

@@ -13,6 +13,7 @@ func usage(w io.Writer) {
 
 Everyday
   downshift setup [--dry-run]    Wire the hooks into every harness found (backup, diff, --undo)
+  downshift dashboard [--port=1337]  Open the Downshift dashboard in browser (sessions, agents, tokens)
   downshift enable               Print shell aliases for transparent compaction (eval in .bashrc/.zshrc)
   downshift doctor [--verbose] [--json]  Checklist with a fix command per failure
   downshift try "<task>" [harness] [model]   Test classification from the terminal

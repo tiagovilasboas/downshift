@@ -66,6 +66,32 @@ func NewServer(port int) (*Server, error) {
 	return s, nil
 }
 
+// NewDashboardServer creates a server that serves both the API and the SPA.
+func NewDashboardServer(port int) (*Server, error) {
+	addr := fmt.Sprintf("127.0.0.1:%d", port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("dashboard: listen %s: %w", addr, err)
+	}
+
+	mux := http.NewServeMux()
+	s := &Server{
+		listener: listener,
+		server:   &http.Server{Handler: withCORS(mux)},
+	}
+
+	// API routes
+	mux.HandleFunc("GET /api/sessions", s.handleSessions)
+	mux.HandleFunc("GET /api/session/current", s.handleCurrentSession)
+	mux.HandleFunc("GET /api/session/{id}", s.handleSession)
+	mux.HandleFunc("GET /api/health", s.handleHealth)
+
+	// SPA routes - serve embedded assets or fallback to index.html
+	mux.Handle("/", spaHandler())
+
+	return s, nil
+}
+
 // Addr returns the address the server is listening on.
 func (s *Server) Addr() string {
 	return s.listener.Addr().String()

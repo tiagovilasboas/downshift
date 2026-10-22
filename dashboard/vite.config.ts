@@ -9,11 +9,15 @@ export default defineConfig({
       $lib: path.resolve('./src/lib'),
     },
   },
+  build: {
+    outDir: '../internal/api/dashboard',
+    emptyOutDir: true,
+  },
   server: {
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8765',
+        target: 'http://localhost:1337',
         changeOrigin: true,
       },
     },
