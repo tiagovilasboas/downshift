@@ -1,0 +1,74 @@
+=== RUN   TestLastInTranscriptTail_FIFODoesNotBlock
+--- PASS: TestLastInTranscriptTail_FIFODoesNotBlock (0.00s)
+=== RUN   TestLastInTranscriptTail
+=== RUN   TestLastInTranscriptTail/last_value_wins
+=== RUN   TestLastInTranscriptTail/no_match
+=== RUN   TestLastInTranscriptTail/only_the_tail_is_read
+=== RUN   TestLastInTranscriptTail/missing_file
+=== RUN   TestLastInTranscriptTail/wrong_extension
+=== RUN   TestLastInTranscriptTail/empty_path
+--- PASS: TestLastInTranscriptTail (0.00s)
+    --- PASS: TestLastInTranscriptTail/last_value_wins (0.00s)
+    --- PASS: TestLastInTranscriptTail/no_match (0.00s)
+    --- PASS: TestLastInTranscriptTail/only_the_tail_is_read (0.00s)
+    --- PASS: TestLastInTranscriptTail/missing_file (0.00s)
+    --- PASS: TestLastInTranscriptTail/wrong_extension (0.00s)
+    --- PASS: TestLastInTranscriptTail/empty_path (0.00s)
+=== RUN   TestTranscriptModel
+=== RUN   TestTranscriptModel/claude:_last_real_assistant_model,_placeholder_skipped
+=== RUN   TestTranscriptModel/codex:_last_turn_context,_nested_type_and_non-object_payload_ignored
+=== RUN   TestTranscriptModel/wrong_container_reads_nothing
+=== RUN   TestTranscriptModel/type_without_a_model_field
+=== RUN   TestTranscriptModel/missing_file
+=== RUN   TestTranscriptModel/empty_path
+--- PASS: TestTranscriptModel (0.00s)
+    --- PASS: TestTranscriptModel/claude:_last_real_assistant_model,_placeholder_skipped (0.00s)
+    --- PASS: TestTranscriptModel/codex:_last_turn_context,_nested_type_and_non-object_payload_ignored (0.00s)
+    --- PASS: TestTranscriptModel/wrong_container_reads_nothing (0.00s)
+    --- PASS: TestTranscriptModel/type_without_a_model_field (0.00s)
+    --- PASS: TestTranscriptModel/missing_file (0.00s)
+    --- PASS: TestTranscriptModel/empty_path (0.00s)
+=== RUN   TestStringField
+=== RUN   TestStringField/present_string_value
+=== RUN   TestStringField/absent_key_returns_empty
+=== RUN   TestStringField/nil_map_returns_empty
+=== RUN   TestStringField/empty_map_returns_empty
+=== RUN   TestStringField/value_is_int_not_string
+=== RUN   TestStringField/value_is_bool_not_string
+=== RUN   TestStringField/value_is_nil
+=== RUN   TestStringField/value_is_nested_map_not_string
+=== RUN   TestStringField/empty_string_value
+=== RUN   TestStringField/key_with_spaces
+--- PASS: TestStringField (0.00s)
+    --- PASS: TestStringField/present_string_value (0.00s)
+    --- PASS: TestStringField/absent_key_returns_empty (0.00s)
+    --- PASS: TestStringField/nil_map_returns_empty (0.00s)
+    --- PASS: TestStringField/empty_map_returns_empty (0.00s)
+    --- PASS: TestStringField/value_is_int_not_string (0.00s)
+    --- PASS: TestStringField/value_is_bool_not_string (0.00s)
+    --- PASS: TestStringField/value_is_nil (0.00s)
+    --- PASS: TestStringField/value_is_nested_map_not_string (0.00s)
+    --- PASS: TestStringField/empty_string_value (0.00s)
+    --- PASS: TestStringField/key_with_spaces (0.00s)
+=== RUN   TestTaskText
+=== RUN   TestTaskText/first_key_match
+=== RUN   TestTaskText/second_key_match_when_first_absent
+=== RUN   TestTaskText/no_keys_match_returns_empty
+=== RUN   TestTaskText/empty_string_trimmed_returns_empty
+=== RUN   TestTaskText/whitespace_trimmed
+=== RUN   TestTaskText/first_non-empty_wins_even_if_others_exist
+=== RUN   TestTaskText/skip_empty_values_and_use_next
+=== RUN   TestTaskText/no_keys_provided_returns_empty
+=== RUN   TestTaskText/nil_map_returns_empty
+--- PASS: TestTaskText (0.00s)
+    --- PASS: TestTaskText/first_key_match (0.00s)
+    --- PASS: TestTaskText/second_key_match_when_first_absent (0.00s)
+    --- PASS: TestTaskText/no_keys_match_returns_empty (0.00s)
+    --- PASS: TestTaskText/empty_string_trimmed_returns_empty (0.00s)
+    --- PASS: TestTaskText/whitespace_trimmed (0.00s)
+    --- PASS: TestTaskText/first_non-empty_wins_even_if_others_exist (0.00s)
+    --- PASS: TestTaskText/skip_empty_values_and_use_next (0.00s)
+    --- PASS: TestTaskText/no_keys_provided_returns_empty (0.00s)
+    --- PASS: TestTaskText/nil_map_returns_empty (0.00s)
+PASS
+ok  	github.com/tiagovilasboas/downshift/internal/hookutil	0.004s

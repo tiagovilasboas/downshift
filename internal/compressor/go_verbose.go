@@ -14,23 +14,43 @@ var (
 	reGoVerboseOutcome = regexp.MustCompile(`^--- (PASS|FAIL|SKIP): ([A-Za-z0-9_]+) \([^()]*\)$`)
 	reGoVerboseOK      = regexp.MustCompile(`^ok\s+(\S+)\s+(\S+)(?:\s+coverage: .+)?$`)
 	reGoVerboseFAIL    = regexp.MustCompile(`^FAIL\s+(\S+)\s+(\S+)$`)
+	// Subtest scaffolding: a nested run header, and its indented outcome line.
+	reGoVerboseSubRun     = regexp.MustCompile(`^=== RUN\s+(\S+)$`)
+	reGoVerboseSubOutcome = regexp.MustCompile(`^\s+--- (PASS|FAIL|SKIP): (\S+) \([^()]*\)$`)
 )
 
 // parseGoVerbose compacts a complete, single-package `go test -v` transcript
-// only when every test passes and emits no output. Failures, test logs, and
-// unrecognized, nested, incomplete, or ambiguous output are returned unchanged.
+// only when every test passes and emits no output. Subtests count as
+// scaffolding of their parent only when they are plain PASS or SKIP run/outcome
+// lines under it. Failures, test logs, parallel markers (=== PAUSE, === CONT),
+// and unrecognized, incomplete, or ambiguous output are returned unchanged.
 func parseGoVerbose(input []byte) ([]byte, bool, string) {
 	lines := strings.Split(string(input), "\n")
 	var blocks [][]string
 	var current []string
 	var currentName string
-	var passed, failed, skipped int
-	var packageName, packageTime string
+	var passed, failed, skipped, subtests int
+	testOutput := false
+	var packageName, packageTime, lastName string
 	terminal := ""
 	seenPassMarker := false
 
 	for _, line := range lines {
 		if line == "" {
+			continue
+		}
+		if current != nil {
+			if m := reGoVerboseSubRun.FindStringSubmatch(line); m != nil && strings.HasPrefix(m[1], currentName+"/") {
+				current = append(current, line)
+				continue
+			}
+		} else if m := reGoVerboseSubOutcome.FindStringSubmatch(line); m != nil && lastName != "" && strings.HasPrefix(m[2], lastName+"/") {
+			// Go prints a parent's own outcome first and its indented subtest
+			// outcomes right after it.
+			if m[1] == "FAIL" {
+				return input, false, "go_test_verbose_failure_preserved"
+			}
+			subtests++
 			continue
 		}
 		if m := reGoVerboseRun.FindStringSubmatch(line); m != nil {
@@ -48,6 +68,7 @@ func parseGoVerbose(input []byte) ([]byte, bool, string) {
 			current = append(current, line)
 			blocks = append(blocks, current)
 			current = nil
+			lastName = currentName
 			currentName = ""
 			switch m[1] {
 			case "PASS":
@@ -62,6 +83,7 @@ func parseGoVerbose(input []byte) ([]byte, bool, string) {
 		if current != nil {
 			// Captured test output is safe to discard only for a passing test.
 			// Keep it in the block until the outcome is known.
+			testOutput = true
 			current = append(current, line)
 			continue
 		}
@@ -104,14 +126,15 @@ func parseGoVerbose(input []byte) ([]byte, bool, string) {
 
 	var out strings.Builder
 	fmt.Fprintf(&out, "Go test -v: PASS (%d passed, 0 failed, %d skipped) in %s\n", passed, skipped, packageTime)
+	if subtests > 0 {
+		fmt.Fprintf(&out, "Subtests: %d passed or skipped under those tests\n", subtests)
+	}
 	if packageName != "" {
 		fmt.Fprintf(&out, "Package: %s\n", packageName)
 	}
-	for _, block := range blocks {
-		if len(block) > 2 {
-			// Test output may carry useful facts even when the test passes.
-			return input, false, "go_test_verbose_test_output_preserved"
-		}
+	if testOutput {
+		// Test output may carry useful facts even when the test passes.
+		return input, false, "go_test_verbose_test_output_preserved"
 	}
 	compacted := []byte(out.String())
 	if len(compacted) >= len(input) {

@@ -61,15 +61,16 @@ func TestCompress_GoTest_CoverRunWithFailurePreservesRaw(t *testing.T) {
 	}
 }
 
-// Preserved by design: `go test -v` compaction covers one package with no
-// nested output (go_verbose.go). A multi-package -v run and nested subtests
-// (indented "--- PASS" lines, "#NN" names) are not compacted, and that is pinned
-// here so the limit stays a decision rather than an accident.
+// Preserved by design: `go test -v` compaction covers one package. A
+// multi-package -v run is not compacted, and a subtest transcript with a log
+// line or a parallel marker is not either; that is pinned here so the limit
+// stays a decision rather than an accident. (Passing, silent subtests do
+// compact: see TestParseGoVerboseCompactsPassingSubtests.)
 func TestCompress_GoVerbose_MultiPackageAndSubtestsPreservedByDesign(t *testing.T) {
 	multi := "=== RUN   TestAdd1\n--- PASS: TestAdd1 (0.00s)\nPASS\nok  \texample.com/many/p1\t0.282s\n" +
 		"=== RUN   TestAdd2\n--- PASS: TestAdd2 (0.00s)\nPASS\nok  \texample.com/many/p2\t0.281s\n"
-	subtests := "=== RUN   TestAdd1\n=== RUN   TestAdd1/case\n    --- PASS: TestAdd1/case (0.00s)\n--- PASS: TestAdd1 (0.00s)\nPASS\nok  \texample.com/many/p1\t0.282s\n"
-	for name, raw := range map[string]string{"multi-package -v": multi, "nested subtests": subtests} {
+	subtests := "=== RUN   TestAdd1\n=== RUN   TestAdd1/case\n    note from the subtest\n--- PASS: TestAdd1 (0.00s)\n    --- PASS: TestAdd1/case (0.00s)\nPASS\nok  \texample.com/many/p1\t0.282s\n"
+	for name, raw := range map[string]string{"multi-package -v": multi, "subtests with a log line": subtests} {
 		in := []byte(raw)
 		res := compressor.Compress(in, compressor.ModeSafe)
 		if res.Applied || !bytes.Equal(res.Output, in) {
