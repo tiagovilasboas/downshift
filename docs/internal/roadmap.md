@@ -34,7 +34,7 @@ prova ao vivo por harness.
 | **A-P4** | 2 | Parsear token do child-end num `postToolUse` real do KiroCrew | payload capturado ao vivo (não a P1) | 🔲 |
 | **A-P5** | 3 | `updated_input.command` no Cursor e no Codex, um harness por mudança | prova ao vivo por harness + A-P4 | 🔲 |
 | **A-P6** | 1 | Auditar que `downshift kirocrew` sai com 0 em todo caminho de erro, panic e timeout. No KiroCrew o gate do `PreToolUse` falha fechado: outro código, timeout (5 s no `hooks.json`) ou crash bloqueia a ferramenta. Teste que força cada falha e exige exit 0 | nada | ✅ auditado (2026-10-22) — já coberto pelos testes existentes, sem código novo necessário |
-| **A-P7** | 1 | Ler o contrato do kiro-cli em `kiro.dev/docs/hooks`: o `PreToolUse` não impede uma chamada que o kiro-cli já aprovou. Descobrir se isso explica a A-P2 não bloquear e registrar o resultado aqui | nada | 🔲 |
+| **A-P7** | 1 | Ler o contrato do kiro-cli em `kiro.dev/docs/hooks`: o `PreToolUse` não impede uma chamada que o kiro-cli já aprovou. Descobrir se isso explica a A-P2 não bloquear e registrar o resultado aqui | nada | ✅ lido (2026-10-22) — ver achado abaixo |
 | **A-P8** | 1 | Decidir o hook "Downshift KiroCrew" do `~/.kiro/crew/hooks.json` (`enabled: false`, aponta para `harness-downshift/downshift`): ligar apontando para o binário de `~/.local/bin`, ou remover. Doc: ele é o sistema de hooks próprio do Crew, separado do spec de agente | A-P6 | 🔲 |
 
 **Achado de 2026-10-22: o hook `kirocrew` só atua no backend kiro-cli.** Com
@@ -48,6 +48,17 @@ carrega o hook, só `kirocrew.json` carrega. Consequências: a A-P2 precisa de u
 sessão kiro-cli, e A-P3/A-P4 só valem para quem usa esse backend. A flag
 `CanAdviseShellWrap` fica ligada (fail-open). Não investir mais no advise antes
 de a A-P2 ter evidência.
+
+**Achado de 2026-10-22 (A-P7): contrato oficial do PreToolUse no Crew.** Fonte:
+[kiro.dev/docs/crew/capabilities/hooks](https://kiro.dev/docs/crew/capabilities/hooks/)
+(atualizado 12/10/2026). Trecho exato: *"A PreToolUse hook can block only when the
+Gateway controls approval. If Kiro CLI already approved the call, the hook reports
+the event but cannot stop it."* Isso explica definitivamente por que a A-P2 não
+bloqueou nas provas: quando o kiro-cli aprova a tool antecipadamente (modo
+auto-approve / trust level), o hook roda mas não pode mais parar a chamada — apenas
+registra o evento. O exit 2 só tem efeito quando o Gateway ainda controla a aprovação
+(modo interativo / não-trusted). Consequência: `CanAdviseShellWrap` só vale para
+sessões kiro-cli em modo não-trusted. A flag permanece ligada (fail-open e inofensiva).
 
 **Arquivos tocados pela A-P1 (como entregue):**
 
