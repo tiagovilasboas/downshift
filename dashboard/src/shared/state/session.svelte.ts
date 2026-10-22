@@ -1,5 +1,5 @@
 // Shared: Session state management with Svelte 5 runes
-import { mockPanel, fetchPanel } from '../data/api';
+import { fetchPanel } from '../data/api';
 import type { PanelOut } from '../data/types';
 import { summaryMetrics } from '../data/transform';
 
@@ -8,7 +8,6 @@ let panel = $state<PanelOut | null>(null);
 let error = $state<string | null>(null);
 let loading = $state(false);
 let lastUpdate = $state<Date | null>(null);
-let useMock = $state(true);
 let currentSessionId = $state<string | null>(null);
 
 // Derived values
@@ -21,20 +20,11 @@ async function refresh(sessionId?: string) {
   error = null;
   const idToFetch = sessionId ?? currentSessionId ?? undefined;
   try {
-    if (useMock) {
-      await new Promise((r) => setTimeout(r, 150));
-      panel = mockPanel();
-      if (panel) {
-        panel.switched += Math.floor(Math.random() * 2);
-        panel.tokens.work_saved += Math.floor(Math.random() * 10000);
-        panel.tokens_saved_estimate += Math.floor(Math.random() * 5000);
-      }
-    } else {
-      panel = await fetchPanel(idToFetch);
-    }
+    panel = await fetchPanel(idToFetch);
     lastUpdate = new Date();
   } catch (e) {
-    error = e instanceof Error ? e.message : 'Unknown error';
+    error = e instanceof Error ? e.message : 'Failed to connect to API';
+    panel = null;
   } finally {
     loading = false;
   }
@@ -61,11 +51,6 @@ function stopAutoRefresh() {
   }
 }
 
-function toggleMock() {
-  useMock = !useMock;
-  refresh();
-}
-
 export function getSessionState() {
   return {
     get panel() { return panel; },
@@ -74,12 +59,10 @@ export function getSessionState() {
     get lastUpdate() { return lastUpdate; },
     get metrics() { return metrics; },
     get isConnected() { return isConnected; },
-    get useMock() { return useMock; },
     get currentSessionId() { return currentSessionId; },
     refresh,
     setSessionId,
     startAutoRefresh,
     stopAutoRefresh,
-    toggleMock,
   };
 }
