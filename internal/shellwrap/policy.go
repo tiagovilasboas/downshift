@@ -30,6 +30,10 @@ type AdviseResult struct {
 	Message string
 }
 
+// Denied makes AdviseResult a policy-wire output: the hook exits 2 and the
+// message is relayed to the model.
+func (a AdviseResult) Denied() (bool, string) { return true, a.Message }
+
 // configEnabled and executable are vars so tests in cmd/ can swap them.
 // They are set by the cmd/ orchestrator via SetEnvFuncs before any call.
 var configEnabled func() bool
@@ -102,6 +106,9 @@ func handleAdvise(harness string, caps core.HarnessCapabilities, ad AdviseAdapte
 	d := decide(harness, command, ad.ShellBlocked, caps.CanAdviseShellWrap)
 	if !d.Rewrite {
 		return Result{IsShell: true, Decision: d}
+	}
+	if !execwrap.WorthAdvising(d.Family) {
+		return Result{IsShell: true, Decision: execwrap.Decision{Family: d.Family, Reason: "advise_not_worth_retry"}}
 	}
 	wrapped := d.Command
 	if sessionTag != "" {
