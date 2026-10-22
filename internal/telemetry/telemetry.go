@@ -53,6 +53,10 @@ type Event struct {
 	Tier                 string                `json:"tier"`                       // SMALL|MID|FRONTIER
 	PolicyVersion        string                `json:"policy_version"`
 	BinaryVersion        string                `json:"binary_version"`
+	// Outcome is the row discriminator for events.jsonl: use it, not a "type"
+	// field, to tell one kind of record from another. The native harness
+	// transcript format (e.g. Claude Code JSON lines with {"type":"assistant",...})
+	// is a distinct schema and is never the downshift events.jsonl schema.
 	Outcome              string                `json:"outcome"` // rewrite_emitted|allow|blocked|error|usage|baseline
 	ErrorCode            string                `json:"error_code,omitempty"`
 	DecisionIntelligence *ShadowRecommendation `json:"decision_intelligence,omitempty"`
