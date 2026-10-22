@@ -5,7 +5,7 @@
   import { getSessionState } from './shared/state';
   import { fetchSessions } from './shared/data';
   import type { SessionSummary } from './shared/data';
-  import { AgentsList } from './features/agents';
+  import { AgentsList, HarnessList } from './features/agents';
   import { TokensSummary, CostSaved } from './features/tokens';
   import { CompactorStats } from './features/compactor';
   import { SessionSelector } from './features/sessions';
@@ -24,6 +24,25 @@
   const liveCount = $derived(
     session.panel?.spawns.filter((s) => !s.tokens_label || s.tokens.work_tokens === 0).length ?? 0
   );
+
+  // Compute harness stats from sessions
+  const harnessStats = $derived(() => {
+    const stats = new Map<string, { sessions: number; active: number; tokensSaved: number }>();
+    for (const s of sessions) {
+      const curr = stats.get(s.harness) || { sessions: 0, active: 0, tokensSaved: 0 };
+      curr.sessions++;
+      curr.tokensSaved += s.tokens_saved;
+      // Consider active if last seen within 5 minutes
+      const lastSeen = new Date(s.last_seen);
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      if (lastSeen > fiveMinutesAgo) curr.active++;
+      stats.set(s.harness, curr);
+    }
+    return Array.from(stats.entries()).map(([harness, data]) => ({
+      harness,
+      ...data
+    }));
+  });
 
   async function loadSessions() {
     loadingSessions = true;
@@ -50,6 +69,7 @@
 
   function handleSelectHarness(harness: string | null) {
     selectedHarness = harness;
+    activeTab = 'sessions'; // Navigate to sessions tab with filter
   }
 
   onMount(() => {
@@ -64,13 +84,13 @@
   <header class="sticky top-0 z-10 bg-ds-bg/95 backdrop-blur border-b border-ds-line px-3 py-2">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <!-- Logo: Downshift mark -->
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
-          <path d="M7 7L12 12L7 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-ds-body"/>
-          <path d="M12 7L17 12L12 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-ds-body"/>
-          <path d="M17 7L22 12L17 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="text-ds-accent"/>
+        <!-- Logo: Downshift mark from docs/brand/downshift-mark-darkbg.svg -->
+        <svg class="w-6 h-6" viewBox="0 0 200 220" fill="none">
+          <path d="M28 22 H104 L168 86 V140 L137 171 V98 L94 55 H28 Z" fill="#F9FAFB"/>
+          <path d="M28 80 H81 L120 119 V164 L94 190 V130 L74 110 H28 Z" fill="#F9FAFB"/>
+          <path d="M28 138 H65 L103 176 L78 201 L55 178 H28 Z" fill="#22C55E"/>
         </svg>
-        <span class="text-sm font-semibold text-ds-body">Downshift</span>
+        <span class="text-sm font-semibold text-ds-body tracking-tight">downshift</span>
       </div>
       
       <div class="flex items-center gap-2">
@@ -81,7 +101,7 @@
         {:else}
           <div class="w-2 h-2 rounded-full bg-ds-warning"></div>
         {/if}
-        <button onclick={() => session.toggleMock()} class="text-[9px] text-ds-inactive hover:text-ds-muted">
+        <button onclick={() => session.toggleMock()} class="text-[9px] text-ds-inactive hover:text-ds-muted font-mono">
           {session.useMock ? 'mock' : 'live'}
         </button>
       </div>
@@ -131,7 +151,7 @@
     >
       Sessions
       {#if harnesses.length > 1}
-        <span class="px-1.5 py-0.5 text-[9px] rounded-full bg-ds-surface text-ds-muted">
+        <span class="px-1.5 py-0.5 text-[9px] rounded-full bg-ds-surface text-ds-muted font-mono">
           {harnesses.length}
         </span>
       {/if}
@@ -153,7 +173,15 @@
       </div>
     {:else}
       {#if activeTab === 'agents'}
-        <AgentsList spawns={session.panel?.spawns ?? []} />
+        <div class="space-y-6">
+          <!-- Live agents first -->
+          <AgentsList spawns={session.panel?.spawns ?? []} />
+          
+          <!-- Harness overview (clickable) -->
+          {#if harnessStats().length > 0}
+            <HarnessList stats={harnessStats()} onSelectHarness={handleSelectHarness} />
+          {/if}
+        </div>
       {:else if activeTab === 'tokens'}
         <div class="space-y-3">
           {#if session.panel}
@@ -169,8 +197,8 @@
         {:else}
           <div class="text-center py-8">
             <p class="text-xs text-ds-muted">No compactor data</p>
-            <p class="text-[10px] text-ds-inactive mt-1">
-              Run <code class="px-1 py-0.5 bg-ds-surface rounded">downshift compactor -- cmd</code>
+            <p class="text-[10px] text-ds-inactive mt-1 font-mono">
+              downshift compactor -- cmd
             </p>
           </div>
         {/if}
@@ -195,15 +223,15 @@
 
   <!-- Footer -->
   <footer class="fixed bottom-0 left-0 right-0 px-3 py-1.5 bg-ds-bg/95 backdrop-blur border-t border-ds-line">
-    <div class="flex items-center justify-between text-[9px] text-ds-inactive">
+    <div class="flex items-center justify-between text-[9px] text-ds-inactive font-mono">
       <div class="flex items-center gap-2">
-        <span>Session: {session.panel?.session ?? '—'}</span>
+        <span>localhost:1337</span>
         {#if selectedHarness}
-          <span class="px-1.5 py-0.5 rounded bg-ds-accent/10 text-ds-accent capitalize">{selectedHarness}</span>
+          <span class="px-1.5 py-0.5 rounded bg-ds-accent/10 text-ds-accent">{selectedHarness}</span>
         {/if}
       </div>
       {#if session.lastUpdate}
-        <span>Updated {session.lastUpdate.toLocaleTimeString()}</span>
+        <span>{session.lastUpdate.toLocaleTimeString()}</span>
       {/if}
     </div>
   </footer>
