@@ -3,23 +3,63 @@
   // Features handle their own domain logic
   import { onMount, onDestroy } from 'svelte';
   import { getSessionState } from './shared/state';
+  import { fetchSessions } from './shared/data';
+  import type { SessionSummary } from './shared/data';
   import { AgentsList } from './features/agents';
   import { TokensSummary, CostSaved } from './features/tokens';
   import { CompactorStats } from './features/compactor';
+  import { SessionSelector } from './features/sessions';
 
   const session = getSessionState();
-  let activeTab = $state<'agents' | 'tokens' | 'compactor'>('agents');
+  let activeTab = $state<'agents' | 'tokens' | 'compactor' | 'sessions'>('agents');
+  
+  // Sessions state
+  let sessions = $state<SessionSummary[]>([]);
+  let harnesses = $state<string[]>([]);
+  let selectedSession = $state<string | null>(null);
+  let selectedHarness = $state<string | null>(null);
+  let loadingSessions = $state(false);
 
   // Count live agents for badge
   const liveCount = $derived(
     session.panel?.spawns.filter((s) => !s.tokens_label || s.tokens.work_tokens === 0).length ?? 0
   );
 
-  onMount(() => session.startAutoRefresh(3000));
+  async function loadSessions() {
+    loadingSessions = true;
+    try {
+      const data = await fetchSessions();
+      sessions = data.sessions;
+      harnesses = data.harnesses;
+    } catch (e) {
+      console.error('Failed to load sessions:', e);
+    } finally {
+      loadingSessions = false;
+    }
+  }
+
+  function handleSelectSession(id: string | null) {
+    selectedSession = id;
+    if (id) {
+      session.setSessionId(id);
+      activeTab = 'agents'; // Switch to agents tab to show selected session
+    } else {
+      session.setSessionId(null); // Back to current session
+    }
+  }
+
+  function handleSelectHarness(harness: string | null) {
+    selectedHarness = harness;
+  }
+
+  onMount(() => {
+    session.startAutoRefresh(3000);
+    loadSessions();
+  });
   onDestroy(() => session.stopAutoRefresh());
 </script>
 
-<div class="min-h-screen bg-ds-bg text-ds-body">
+<div class="min-h-screen bg-ds-bg text-ds-body pb-10">
   <!-- Header -->
   <header class="sticky top-0 z-10 bg-ds-bg/95 backdrop-blur border-b border-ds-line px-3 py-2">
     <div class="flex items-center justify-between">
@@ -82,33 +122,49 @@
     >
       Compactor
     </button>
+    <button
+      onclick={() => { activeTab = 'sessions'; loadSessions(); }}
+      class="px-3 py-1.5 text-xs rounded-md transition-colors flex items-center gap-1.5"
+      class:bg-ds-surface={activeTab === 'sessions'}
+      class:text-ds-body={activeTab === 'sessions'}
+      class:text-ds-muted={activeTab !== 'sessions'}
+    >
+      Sessions
+      {#if harnesses.length > 1}
+        <span class="px-1.5 py-0.5 text-[9px] rounded-full bg-ds-surface text-ds-muted">
+          {harnesses.length}
+        </span>
+      {/if}
+    </button>
   </nav>
 
   <!-- Content -->
   <main class="p-3">
-    {#if session.error}
+    {#if session.error && activeTab !== 'sessions'}
       <div class="bg-ds-surface border border-ds-warning/30 rounded-lg p-3 text-center">
         <p class="text-xs text-ds-warning">⚠️ {session.error}</p>
         <button onclick={() => session.refresh()} class="mt-2 text-[10px] text-ds-accent hover:underline">
           Retry
         </button>
       </div>
-    {:else if !session.panel}
+    {:else if !session.panel && activeTab !== 'sessions'}
       <div class="flex items-center justify-center py-12">
         <div class="w-6 h-6 rounded-full border-2 border-ds-accent border-t-transparent animate-spin"></div>
       </div>
     {:else}
       {#if activeTab === 'agents'}
-        <AgentsList spawns={session.panel.spawns} />
+        <AgentsList spawns={session.panel?.spawns ?? []} />
       {:else if activeTab === 'tokens'}
         <div class="space-y-3">
-          <TokensSummary tokens={session.panel.tokens} />
-          {#if session.panel.cost_saved}
-            <CostSaved cost={session.panel.cost_saved} />
+          {#if session.panel}
+            <TokensSummary tokens={session.panel.tokens} />
+            {#if session.panel.cost_saved}
+              <CostSaved cost={session.panel.cost_saved} />
+            {/if}
           {/if}
         </div>
       {:else if activeTab === 'compactor'}
-        {#if session.panel.compactor}
+        {#if session.panel?.compactor}
           <CompactorStats compactor={session.panel.compactor} />
         {:else}
           <div class="text-center py-8">
@@ -118,6 +174,21 @@
             </p>
           </div>
         {/if}
+      {:else if activeTab === 'sessions'}
+        {#if loadingSessions}
+          <div class="flex items-center justify-center py-12">
+            <div class="w-6 h-6 rounded-full border-2 border-ds-accent border-t-transparent animate-spin"></div>
+          </div>
+        {:else}
+          <SessionSelector
+            {sessions}
+            {harnesses}
+            {selectedSession}
+            {selectedHarness}
+            onSelectSession={handleSelectSession}
+            onSelectHarness={handleSelectHarness}
+          />
+        {/if}
       {/if}
     {/if}
   </main>
@@ -125,7 +196,12 @@
   <!-- Footer -->
   <footer class="fixed bottom-0 left-0 right-0 px-3 py-1.5 bg-ds-bg/95 backdrop-blur border-t border-ds-line">
     <div class="flex items-center justify-between text-[9px] text-ds-inactive">
-      <span>Session: {session.panel?.session ?? '—'}</span>
+      <div class="flex items-center gap-2">
+        <span>Session: {session.panel?.session ?? '—'}</span>
+        {#if selectedHarness}
+          <span class="px-1.5 py-0.5 rounded bg-ds-accent/10 text-ds-accent capitalize">{selectedHarness}</span>
+        {/if}
+      </div>
       {#if session.lastUpdate}
         <span>Updated {session.lastUpdate.toLocaleTimeString()}</span>
       {/if}

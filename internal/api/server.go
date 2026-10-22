@@ -58,6 +58,7 @@ func NewServer(port int) (*Server, error) {
 	}
 
 	// Routes
+	mux.HandleFunc("GET /api/sessions", s.handleSessions)
 	mux.HandleFunc("GET /api/session/current", s.handleCurrentSession)
 	mux.HandleFunc("GET /api/session/{id}", s.handleSession)
 	mux.HandleFunc("GET /api/health", s.handleHealth)
@@ -225,4 +226,97 @@ func isHexPrefix(v string) bool {
 		}
 	}
 	return true
+}
+
+// sessionSummary is the metadata for one session in the /api/sessions list.
+type sessionSummary struct {
+	SessionID   string `json:"session_id"`
+	Harness     string `json:"harness"`
+	FirstSeen   string `json:"first_seen"`
+	LastSeen    string `json:"last_seen"`
+	SpawnCount  int    `json:"spawn_count"`
+	Switched    int    `json:"switched"`
+	Held        int    `json:"held"`
+	TokensSaved int64  `json:"tokens_saved"`
+}
+
+// sessionsResponse is the /api/sessions response.
+type sessionsResponse struct {
+	Sessions  []sessionSummary `json:"sessions"`
+	Harnesses []string         `json:"harnesses"`
+}
+
+func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
+	events, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
+
+	// Extract unique sessions with their harness
+	sessions := make(map[string]*sessionSummary)
+	harnessSet := make(map[string]bool)
+
+	for _, ev := range events {
+		if !telemetry.ValidSessionHash(ev.SessionID) {
+			continue
+		}
+
+		sum, exists := sessions[ev.SessionID]
+		if !exists {
+			sum = &sessionSummary{
+				SessionID: ev.SessionID,
+				Harness:   ev.Harness,
+				FirstSeen: ev.Timestamp,
+				LastSeen:  ev.Timestamp,
+			}
+			sessions[ev.SessionID] = sum
+		}
+
+		// Update last seen
+		if ev.Timestamp > sum.LastSeen {
+			sum.LastSeen = ev.Timestamp
+		}
+		if ev.Timestamp < sum.FirstSeen {
+			sum.FirstSeen = ev.Timestamp
+		}
+
+		// Count spawns
+		if telemetry.IsDecisionRow(ev) {
+			sum.SpawnCount++
+			switch ev.Verdict {
+			case "DOWNSHIFT":
+				sum.Switched++
+			case "OK", "UPSHIFT":
+				if ev.Outcome == "allow" {
+					sum.Held++
+				}
+			}
+		}
+
+		harnessSet[ev.Harness] = true
+	}
+
+	// Build response
+	var list []sessionSummary
+	for _, sum := range sessions {
+		// Calculate tokens saved for this session
+		panel := telemetry.BuildPanel(events, sum.SessionID)
+		sum.TokensSaved = telemetry.TokensSavedEstimate(panel.Tokens, 0)
+		list = append(list, *sum)
+	}
+
+	// Sort by last seen (most recent first)
+	for i := 0; i < len(list)-1; i++ {
+		for j := i + 1; j < len(list); j++ {
+			if list[i].LastSeen < list[j].LastSeen {
+				list[i], list[j] = list[j], list[i]
+			}
+		}
+	}
+
+	// Build harness list
+	var harnesses []string
+	for h := range harnessSet {
+		harnesses = append(harnesses, h)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(sessionsResponse{Sessions: list, Harnesses: harnesses})
 }
