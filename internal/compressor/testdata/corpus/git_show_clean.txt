@@ -1,5 +1,0 @@
-commit abc123def456
-Author: Test User <test@example.com>
-Date:   Mon Oct 21 10:00:00 2026 -0300
-
-    feat: add new feature

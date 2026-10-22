@@ -26,7 +26,34 @@ var (
 	reGitDiffIndex = regexp.MustCompile(`^index [0-9a-f]+\.\.[0-9a-f]+(?: \d+)?$`)
 	// Hunk header: "@@ -12,7 +12,6 @@ optional context".
 	reGitDiffHunk = regexp.MustCompile(`(?m)^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@`)
+	// A git show transcript opens with a 40-hex commit line.
+	reGitShowCommit = regexp.MustCompile(`^commit [0-9a-f]{7,40}\b`)
+	// Lines that carry a secret and must never be summarised away even when
+	// they sit in a stretch of unchanged context: a diff can show a key being
+	// moved or printed. If one appears anywhere, the whole input is preserved.
+	reGitDiffSecret = regexp.MustCompile(`(?i)(secret|token|password|passwd|api[_-]?key|private[_-]?key|access[_-]?key|BEGIN [A-Z ]*PRIVATE KEY|aws_secret|bearer )`)
 )
+
+// isGitDiff reports whether input is a bare unified diff: it opens with a
+// "diff --git a/.. b/.." header and every file section carries at least one
+// hunk. A transcript that opens with a commit line is a git show, not a diff.
+func isGitDiff(input []byte) bool {
+	s := string(input)
+	if !strings.HasPrefix(s, "diff --git a/") {
+		return false
+	}
+	return reGitDiffHunk.Match(input)
+}
+
+// isGitShow reports whether input is a git show transcript: a commit metadata
+// block followed by a unified diff. The diff section is what distinguishes it
+// from git log, which also opens with "commit <hash>" but carries no diff.
+func isGitShow(input []byte) bool {
+	if !reGitShowCommit.Match(input) {
+		return false
+	}
+	return reGitDiffHeader.Match(input) && reGitDiffHunk.Match(input)
+}
 
 // contextLines is the number of unchanged context lines RTK keeps on each side
 // of a run of changes (git's default is 3).
@@ -37,9 +64,15 @@ const contextLines = 2
 // hunk header and every file boundary. If the result is not strictly shorter,
 // the raw input is returned.
 func compressGitDiff(input []byte) ([]byte, bool, string) {
+	if reason, ok := gitDiffUnsafe(input); !ok {
+		return input, false, reason
+	}
 	out, files, ok := rewriteUnifiedDiff(input, false)
 	if !ok {
 		return input, false, "git_diff_unrecognized_structure_preserved"
+	}
+	if !changeLinesPreserved(input, out) {
+		return input, false, "git_diff_change_line_dropped_preserved"
 	}
 	if len(out) >= len(input) {
 		return input, false, "no_compression_gain"
@@ -50,14 +83,65 @@ func compressGitDiff(input []byte) ([]byte, bool, string) {
 // compressGitShow keeps the commit metadata block verbatim (hash, author,
 // date, message) and applies the same diff trimming to the patch body.
 func compressGitShow(input []byte) ([]byte, bool, string) {
+	if reason, ok := gitDiffUnsafe(input); !ok {
+		return input, false, reason
+	}
 	out, files, ok := rewriteUnifiedDiff(input, true)
 	if !ok {
 		return input, false, "git_show_unrecognized_structure_preserved"
+	}
+	if !changeLinesPreserved(input, out) {
+		return input, false, "git_show_change_line_dropped_preserved"
 	}
 	if len(out) >= len(input) {
 		return input, false, "no_compression_gain"
 	}
 	return out, true, fmt.Sprintf("compressed git show (%d files)", files)
+}
+
+// gitDiffUnsafe is the fail-open safety gate for the diff/show compressors.
+// It returns (reason, false) when the input must be passed through unchanged:
+// any danger word (error/fail/panic/warning/...) or any secret-looking line
+// makes compaction unsafe, because trimming unchanged context could drop a
+// line an agent needs to read. When it returns ("", true), compaction may
+// proceed but is still verified line-by-line by changeLinesPreserved.
+func gitDiffUnsafe(input []byte) (string, bool) {
+	if linesHaveDangerWord(input, nil) {
+		return "git_diff_danger_word_preserved", false
+	}
+	if reGitDiffSecret.Match(input) {
+		return "git_diff_secret_preserved", false
+	}
+	return "", true
+}
+
+// changeLinesPreserved is the mutation-closure invariant: every added ("+"),
+// removed ("-") or commit-metadata line of the raw diff must appear verbatim
+// in the compacted output. Context lines (space-prefixed) and the dropped
+// "index" provenance line are exempt; everything an agent acts on must
+// survive. A single missing change line forces a byte-identical pass-through.
+func changeLinesPreserved(input, out []byte) bool {
+	have := map[string]int{}
+	for _, l := range strings.Split(string(out), "\n") {
+		have[l]++
+	}
+	for _, l := range strings.Split(string(input), "\n") {
+		if l == "" || strings.HasPrefix(l, " ") || strings.HasPrefix(l, `\ `) {
+			continue // unchanged context or "no newline" marker
+		}
+		if reGitDiffIndex.MatchString(l) {
+			continue // provenance line the compressor is allowed to drop
+		}
+		if strings.HasPrefix(l, "diff --git a/") {
+			continue // header the compressor keeps but may reformat per file
+		}
+		if have[l] > 0 {
+			have[l]--
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // rewriteUnifiedDiff walks a unified diff (optionally preceded by a git show

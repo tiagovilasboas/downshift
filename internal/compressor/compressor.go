@@ -312,13 +312,14 @@ func detectFormat(input []byte) (Format, bool) {
 	// a commit line, so it is checked before git log (which also starts with
 	// "commit"). Diffs carry no pass/fail semantics, so isError is false; the
 	// top-level guards already preserve CRLF and non-newline-terminated output.
-	// TODO: git_diff/git_show compressors need mutation-closure safety before activation.
-	// if isGitShow(input) {
-	// 	return FormatGitShow, false
-	// }
-	// if isGitDiff(input) {
-	// 	return FormatGitDiff, false
-	// }
+	// The compressors themselves fail open on any danger word or secret line
+	// (git_diff.go: gitDiffUnsafe) and verify every change line survives.
+	if isGitShow(input) {
+		return FormatGitShow, false
+	}
+	if isGitDiff(input) {
+		return FormatGitDiff, false
+	}
 	// git stash list: every line is a "stash@{N}: ..." entry.
 	if isGitStashList(input) {
 		return FormatGitStash, false
