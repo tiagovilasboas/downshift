@@ -22,7 +22,7 @@
   <div class="flex-1 min-w-0">
     <div class="flex items-center gap-2">
       <span class="text-xs font-medium text-ds-body">{modelName}</span>
-      <span class="w-1.5 h-1.5 rounded-full bg-ds-accent"></span>
+      <span class="w-1.5 h-1.5 rounded-full bg-ds-body"></span>
     </div>
     
     {#if spawn.state === 'switched' && spawn.from_model !== spawn.to_model}

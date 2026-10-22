@@ -51,7 +51,7 @@
           <div class="flex items-center gap-2">
             <span class="text-sm text-ds-body">{item.harness}</span>
             {#if item.active > 0}
-              <span class="w-1.5 h-1.5 rounded-full bg-ds-accent"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-ds-body"></span>
             {/if}
           </div>
           <span class="text-[10px] text-ds-muted">{item.sessions} session{item.sessions !== 1 ? 's' : ''}</span>

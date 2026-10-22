@@ -56,7 +56,7 @@
   <!-- Harness filter chips -->
   <div class="flex flex-wrap gap-2">
     <button
-      class="px-3 py-1.5 text-xs rounded-full transition-all {selectedHarness === null ? 'bg-ds-accent text-ds-bg font-semibold' : 'bg-ds-surface text-ds-muted hover:bg-ds-surface/80'}"
+      class="px-3 py-1.5 text-xs rounded-full transition-all {selectedHarness === null ? 'bg-ds-body text-ds-bg font-semibold' : 'bg-ds-surface text-ds-muted hover:bg-ds-surface/80'}"
       onclick={() => onSelectHarness(null)}
     >
       All harnesses
@@ -64,7 +64,7 @@
     {#each harnesses as harness}
       {@const stats = harnessStats().get(harness)}
       <button
-        class="px-3 py-1.5 text-xs rounded-full transition-all flex items-center gap-1.5 {selectedHarness === harness ? 'bg-ds-accent text-ds-bg font-semibold' : 'bg-ds-surface text-ds-muted hover:bg-ds-surface/80'}"
+        class="px-3 py-1.5 text-xs rounded-full transition-all flex items-center gap-1.5 {selectedHarness === harness ? 'bg-ds-body text-ds-bg font-semibold' : 'bg-ds-surface text-ds-muted hover:bg-ds-surface/80'}"
         onclick={() => onSelectHarness(harness === selectedHarness ? null : harness)}
       >
         <span class="capitalize">{harness.replace('-', ' ')}</span>
@@ -80,7 +80,7 @@
     {#each filteredSessions as session (session.session_id)}
       {@const isSelected = selectedSession === session.session_id}
       <button
-        class="session-item w-full p-3 rounded-lg text-left transition-all border {isSelected ? 'bg-ds-accent/10 border-ds-accent/30' : 'bg-ds-surface/50 border-transparent hover:bg-ds-surface'}"
+        class="session-item w-full p-3 rounded-lg text-left transition-all border {isSelected ? 'bg-ds-surface border-ds-muted' : 'bg-ds-surface/50 border-transparent hover:bg-ds-surface'}"
         onclick={() => onSelectSession(isSelected ? null : session.session_id)}
       >
         <div class="flex items-center justify-between">
@@ -92,11 +92,11 @@
         </div>
         <div class="flex items-center justify-between mt-1.5">
           <div class="flex items-center gap-3 text-[10px]">
-            <span class="text-ds-accent">{session.switched} switched</span>
+            <span class="text-ds-body">{session.switched} switched</span>
             <span class="text-ds-muted">{session.held} held</span>
           </div>
           {#if session.tokens_saved > 0}
-            <span class="text-xs font-semibold text-ds-accent">{formatTokens(session.tokens_saved)} saved</span>
+            <span class="text-xs font-semibold text-ds-body">{formatTokens(session.tokens_saved)} saved</span>
           {/if}
         </div>
       </button>
@@ -107,10 +107,10 @@
   {#if selectedHarness}
     {@const stats = harnessStats().get(selectedHarness)}
     {#if stats}
-      <div class="p-3 rounded-lg bg-ds-accent/5 border border-ds-accent/20">
+      <div class="p-3 rounded-lg bg-ds-surface border border-ds-line">
         <div class="flex items-center justify-between">
           <span class="text-xs text-ds-muted capitalize">{selectedHarness.replace('-', ' ')} total</span>
-          <span class="text-sm font-bold text-ds-accent">{formatTokens(stats.saved)} saved</span>
+          <span class="text-sm font-bold text-ds-body">{formatTokens(stats.saved)} saved</span>
         </div>
       </div>
     {/if}

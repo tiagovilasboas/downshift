@@ -18,9 +18,9 @@
   const modelTo = $derived(spawn.to_model.replace('claude-', '').replace(/-\d+$/, ''));
   const didSwitch = $derived(spawn.state === 'switched' && spawn.from_model !== spawn.to_model);
   
-  // State-based styling
+  // State-based styling - zinc palette
   const stateConfig = $derived({
-    switched: { color: 'text-ds-accent', bg: 'bg-ds-accent/10', border: 'border-ds-accent/20', icon: '↓' },
+    switched: { color: 'text-ds-body', bg: 'bg-ds-body/10', border: 'border-ds-body/20', icon: '↓' },
     held: { color: 'text-ds-muted', bg: 'bg-ds-muted/10', border: 'border-ds-line', icon: '—' },
     paused: { color: 'text-ds-warning', bg: 'bg-ds-warning/10', border: 'border-ds-warning/20', icon: '⏸' },
     control: { color: 'text-ds-muted', bg: 'bg-ds-muted/10', border: 'border-ds-line', icon: '◆' },
@@ -49,8 +49,8 @@
       
       <!-- Completion checkmark -->
       <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-ds-bg flex items-center justify-center">
-        <div class="w-3 h-3 rounded-full bg-ds-accent/20 flex items-center justify-center">
-          <svg class="w-2 h-2 text-ds-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+        <div class="w-3 h-3 rounded-full bg-ds-body/20 flex items-center justify-center">
+          <svg class="w-2 h-2 text-ds-body" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
             <path d="M5 12l5 5L20 7" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
@@ -62,7 +62,7 @@
       <div class="flex items-center gap-2">
         {#if didSwitch}
           <span class="text-[10px] text-ds-inactive">{modelFrom}</span>
-          <svg class="w-3 h-3 text-ds-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="w-3 h-3 text-ds-body" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
           <span class="text-xs font-semibold text-ds-body">{modelTo}</span>
@@ -80,7 +80,7 @@
     <!-- Savings badge -->
     {#if pct > 0}
       <div class="flex flex-col items-end">
-        <span class="text-sm font-bold text-ds-accent">{formatPercent(pct, 0)}</span>
+        <span class="text-sm font-bold text-ds-body">{formatPercent(pct, 0)}</span>
         <span class="text-[8px] text-ds-inactive uppercase tracking-wider">saved</span>
       </div>
     {/if}
@@ -89,7 +89,7 @@
   <!-- Subtle progress bar at bottom -->
   {#if pct > 0}
     <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-ds-line/50 rounded-b-xl overflow-hidden">
-      <div class="h-full bg-gradient-to-r from-ds-accent/50 to-ds-accent" style="width: {pct}%"></div>
+      <div class="h-full bg-gradient-to-r from-ds-body/50 to-ds-body" style="width: {pct}%"></div>
     </div>
   {/if}
 </div>

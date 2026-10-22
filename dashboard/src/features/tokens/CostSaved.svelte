@@ -14,7 +14,7 @@
   <div class="flex items-center justify-between">
     <div>
       <div class="text-[10px] text-ds-muted uppercase tracking-wider">Cost Saved</div>
-      <div class="text-lg font-bold text-ds-accent">{formatUSD(cost.saved_usd)}</div>
+      <div class="text-lg font-bold text-ds-body">{formatUSD(cost.saved_usd)}</div>
     </div>
     <div class="text-right">
       <div class="text-xs text-ds-body">{formatPercent(cost.saved_percent, 0)}</div>

@@ -27,14 +27,14 @@
       </div>
     </div>
     <div class="text-right">
-      <div class="text-sm font-medium text-ds-accent">{formatPercent(rate, 0)}</div>
+      <div class="text-sm font-medium text-ds-body">{formatPercent(rate, 0)}</div>
       <div class="text-[9px] text-ds-inactive">compacted</div>
     </div>
   </div>
 
   <!-- Progress bar -->
   <div class="h-1.5 bg-ds-line rounded-full overflow-hidden">
-    <div use:progressFill={rate} class="h-full bg-ds-accent rounded-full"></div>
+    <div use:progressFill={rate} class="h-full bg-ds-body rounded-full"></div>
   </div>
 
   <!-- Details -->

@@ -95,15 +95,12 @@
       
       <div class="flex items-center gap-2">
         {#if session.loading}
-          <div class="w-3 h-3 rounded-full border-2 border-ds-accent border-t-transparent animate-spin"></div>
+          <div class="w-3 h-3 rounded-full border-2 border-ds-muted border-t-transparent animate-spin"></div>
         {:else if session.isConnected}
-          <div class="w-2 h-2 rounded-full bg-ds-accent"></div>
+          <div class="w-2 h-2 rounded-full bg-ds-body"></div>
         {:else}
           <div class="w-2 h-2 rounded-full bg-ds-warning"></div>
         {/if}
-        <button onclick={() => session.toggleMock()} class="text-[9px] text-ds-inactive hover:text-ds-muted font-mono">
-          {session.useMock ? 'mock' : 'live'}
-        </button>
       </div>
     </div>
   </header>
@@ -119,7 +116,7 @@
     >
       Agents
       {#if liveCount > 0}
-        <span class="px-1.5 py-0.5 text-[9px] rounded-full bg-ds-accent text-ds-bg font-medium">
+        <span class="px-1.5 py-0.5 text-[9px] rounded-full bg-ds-surface border border-ds-line text-ds-body font-medium">
           {liveCount}
         </span>
       {/if}
@@ -163,13 +160,13 @@
     {#if session.error && activeTab !== 'sessions'}
       <div class="bg-ds-surface border border-ds-warning/30 rounded-lg p-3 text-center">
         <p class="text-xs text-ds-warning">⚠️ {session.error}</p>
-        <button onclick={() => session.refresh()} class="mt-2 text-[10px] text-ds-accent hover:underline">
+        <button onclick={() => session.refresh()} class="mt-2 text-[10px] text-ds-muted hover:underline">
           Retry
         </button>
       </div>
     {:else if !session.panel && activeTab !== 'sessions'}
       <div class="flex items-center justify-center py-12">
-        <div class="w-6 h-6 rounded-full border-2 border-ds-accent border-t-transparent animate-spin"></div>
+        <div class="w-6 h-6 rounded-full border-2 border-ds-muted border-t-transparent animate-spin"></div>
       </div>
     {:else}
       {#if activeTab === 'agents'}
@@ -205,7 +202,7 @@
       {:else if activeTab === 'sessions'}
         {#if loadingSessions}
           <div class="flex items-center justify-center py-12">
-            <div class="w-6 h-6 rounded-full border-2 border-ds-accent border-t-transparent animate-spin"></div>
+            <div class="w-6 h-6 rounded-full border-2 border-ds-muted border-t-transparent animate-spin"></div>
           </div>
         {:else}
           <SessionSelector
@@ -227,7 +224,7 @@
       <div class="flex items-center gap-2">
         <span>localhost:1337</span>
         {#if selectedHarness}
-          <span class="px-1.5 py-0.5 rounded bg-ds-accent/10 text-ds-accent">{selectedHarness}</span>
+          <span class="px-1.5 py-0.5 rounded bg-ds-surface border border-ds-line text-ds-muted">{selectedHarness}</span>
         {/if}
       </div>
       {#if session.lastUpdate}
