@@ -47,7 +47,11 @@ const harnessID = "kirocrew"
 type Event struct {
 	HookEventName string `json:"hook_event_name"`
 	// Cwd is the working directory, used to find a project policy file.
-	Cwd               string              `json:"cwd,omitempty"`
+	Cwd string `json:"cwd,omitempty"`
+	// SessionID is the opaque session identifier supplied by KiroCrew. Enables
+	// PostToolUse cost linkage by session and makes the session visible in the
+	// dashboard's /api/sessions list.
+	SessionID         string              `json:"session_id,omitempty"`
 	CorrelationID     string              `json:"correlation_id,omitempty"`
 	ToolName          string              `json:"tool_name"`
 	ToolInput         json.RawMessage     `json:"tool_input"`
@@ -62,6 +66,10 @@ type Event struct {
 
 // ProjectDir returns the working directory the harness reported, if any.
 func (ev Event) ProjectDir() string { return ev.Cwd }
+
+// SessionIdentifier returns the session ID for telemetry correlation, enabling
+// the session to appear in the dashboard's /api/sessions list.
+func (ev Event) SessionIdentifier() string { return ev.SessionID }
 
 // CorrelationIdentifier returns the optional opaque ID supplied by a caller.
 func (ev Event) CorrelationIdentifier() string { return ev.CorrelationID }
