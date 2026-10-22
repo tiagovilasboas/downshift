@@ -102,7 +102,9 @@
   <!-- Harness filter chips -->
   <div class="flex flex-wrap gap-2">
     <button
-      class="px-3 py-1.5 text-xs rounded-full transition-all {selectedHarness === null ? 'bg-ds-body text-ds-bg font-semibold' : 'bg-ds-surface text-ds-muted hover:bg-ds-surface/80'}"
+      type="button"
+      data-testid="filter-all"
+      class="px-3 py-1.5 text-xs rounded-full transition-colors {selectedHarness === null ? 'bg-ds-body text-ds-bg font-semibold' : 'bg-ds-surface text-ds-muted hover:bg-ds-surface/80'}"
       onclick={() => selectedHarness = null}
     >
       All
@@ -110,7 +112,9 @@
     {#each harnesses as harness}
       {@const stats = harnessStats().get(harness)}
       <button
-        class="px-3 py-1.5 text-xs rounded-full transition-all flex items-center gap-1.5 {selectedHarness === harness ? 'bg-ds-body text-ds-bg font-semibold' : 'bg-ds-surface text-ds-muted hover:bg-ds-surface/80'}"
+        type="button"
+        data-testid="filter-{harness}"
+        class="px-3 py-1.5 text-xs rounded-full transition-colors flex items-center gap-1.5 {selectedHarness === harness ? 'bg-ds-body text-ds-bg font-semibold' : 'bg-ds-surface text-ds-muted hover:bg-ds-surface/80'}"
         onclick={() => selectedHarness = (harness === selectedHarness ? null : harness)}
       >
         <span class="capitalize">{harness.replace('-', ' ')}</span>
@@ -130,9 +134,11 @@
       {@const active = isActive(session)}
       {@const { live, finished } = getSpawnsForSession(session.session_id)}
       
-      <div class="rounded-lg border transition-all {isCurrent ? 'border-ds-accent/50 bg-ds-surface' : 'border-ds-line bg-ds-surface/50'}">
+      <div class="rounded-lg border transition-colors {isCurrent ? 'border-ds-accent/50 bg-ds-surface' : 'border-ds-line bg-ds-surface/50'}">
         <!-- Session header (clickable) -->
         <button
+          type="button"
+          data-testid="session-{session.session_id.slice(0, 8)}"
           class="w-full p-3 text-left flex items-start gap-2"
           onclick={() => toggleSession(session.session_id)}
         >

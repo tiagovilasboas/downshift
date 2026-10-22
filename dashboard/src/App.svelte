@@ -88,6 +88,8 @@
   <!-- Navigation tabs -->
   <nav class="px-3 pt-2 pb-1 flex gap-1 border-b border-ds-line bg-ds-bg">
     <button
+      type="button"
+      data-testid="tab-sessions"
       onclick={() => { activeTab = 'sessions'; loadSessions(); }}
       class="px-3 py-1.5 text-xs rounded-md transition-colors flex items-center gap-1.5"
       class:bg-ds-surface={activeTab === 'sessions'}
@@ -102,6 +104,8 @@
       {/if}
     </button>
     <button
+      type="button"
+      data-testid="tab-tokens"
       onclick={() => activeTab = 'tokens'}
       class="px-3 py-1.5 text-xs rounded-md transition-colors"
       class:bg-ds-surface={activeTab === 'tokens'}
@@ -111,6 +115,8 @@
       Tokens
     </button>
     <button
+      type="button"
+      data-testid="tab-compactor"
       onclick={() => activeTab = 'compactor'}
       class="px-3 py-1.5 text-xs rounded-md transition-colors"
       class:bg-ds-surface={activeTab === 'compactor'}
