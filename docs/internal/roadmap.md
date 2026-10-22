@@ -103,6 +103,103 @@ prova ao vivo por harness.
 
 ---
 
+## Trilha F — Documentação e drift
+
+> Fonte: análise de 22/10/2026 comparando `docs/architecture/`, `docs/guides/harness-engineer.md`
+> e `docs/design/architecture.md` contra o código em main.
+
+### F-1: `docs/architecture/agentic-bdi.md` — drift crítico (2 pts)
+
+O doc descreve T0-T4 com T4 "cravado em Opus", risco força tier ≥ T3, Naive Bayes como
+classificador, learning loop que altera o próximo roteamento, e o hook como `dsmon-hook`
+com resposta `{allow, model_override}`.
+
+O código tem: 3 tiers (small/mid/frontier), risco é piso dentro dos 3 tiers, regex
+decide e o Bayes opina depois, learning guarda forma de saída do compressor e treino de
+rota só entra com rótulo revisado fora do hook, e o hook é `downshift <harness>`.
+
+**Fix:** reescrever o doc para refletir o código real ou mover para `docs/archive/`.
+Não corrigir parcialmente — o doc atual é enganoso para quem contribui.
+
+| Ação | Pts |
+|------|-----|
+| F-1a: Reescrever `agentic-bdi.md` alinhado ao código (tiers, classificador, risco, learning, hook) | 2 |
+
+### F-2: `docs/architecture/project-architecture.md` — drift moderado (1 pt)
+
+Referenciado por `harness-engineer.md` como fonte de arquitetura de produção. Descreve
+tipos `Session`, `Policy`, `ShouldEscalate` que não existem no núcleo (a decisão é
+`Decision` + `PlanSession`).
+
+| Ação | Pts |
+|------|-----|
+| F-2a: Atualizar ou arquivar `project-architecture.md`; remover referência do harness-engineer | 1 |
+
+### F-3: `docs/guides/harness-engineer.md` — afirmações incorretas de produção (2 pts)
+
+Marca Cursor, Codex e KiroCrew como "✅ Produção" em roteamento. O estado real:
+- Cursor: roteamento funciona, shell wrap sem payload capturado, usage source bloqueada
+- Codex: roteamento funciona, shell wrap sem payload, usage none
+- KiroCrew: advise-only (shell rewrite sem updated_input), usage none
+
+Aponta para `docs/architecture/agentic-bdi.md` e `docs/architecture/project-architecture.md`
+(dois docs com drift crítico).
+
+| Ação | Pts |
+|------|-----|
+| F-3a: Corrigir status de cada harness (tabela com nível de evidência real, não ✅/❌ binário) | 1 |
+| F-3b: Substituir links para `agentic-bdi.md`/`project-architecture.md` por `docs/design/architecture.md` | 1 |
+
+### F-4: `docs/design/architecture.md` — 3 gaps internos (3 pts)
+
+O doc tem known gaps abertos que divergem do código atual:
+
+| Gap | Doc diz | Código tem |
+|-----|---------|-----------|
+| Telemetria grande | "31 non-test files" | 40 arquivos não-test hoje |
+| Import graph | "No test or CI step" | `internal/archtest.TestImportGraph` existe e roda no `go test` |
+| Compactação | "measure-only PostToolUse" + "`downshift context compress`" | `internal/shellwrap`, `internal/execwrap`, `AdviseAdapter` existem; rewrite de shell do CC ativo |
+| Pacotes ausentes no grafo | Grafo de 19/10/2026 não inclui `accounting`, `execwrap`, `shellwrap`, `replay`, `api`, `cursorbridge`, `gateway` | Todos existem em main |
+| `internal/accounting` | ADR Proposed, `cmd/downshift` não importa | Pacote existe, ADR continua Proposed, não integrado em `stats` |
+| `internal/gateway` | "HTTP gateway ainda é futuro" | `internal/gateway` já é porta para OmniRoute e OpenRouter |
+
+| Ação | Pts |
+|------|-----|
+| F-4a: Atualizar contagem de telemetria (31→40) e nota do import graph sensor | 1 |
+| F-4b: Atualizar seção de compactação para incluir shellwrap/execwrap/AdviseAdapter | 1 |
+| F-4c: Atualizar grafo de imports (adicionar accounting, execwrap, shellwrap, replay, api, gateway) | 1 |
+
+### F-5: Sensor de import graph — sem CI gate (3 pts)
+
+`docs/design/architecture.md` diz "no test or CI step" mas `internal/archtest.TestImportGraph`
+existe. O gap real: o teste existe mas **não está no CI como gate bloqueante para imports
+proibidos** (ex: `internal/core` importar `telemetry`). Um import proibido passa verde.
+
+| Ação | Pts |
+|------|-----|
+| F-5a: Verificar se `archtest.TestImportGraph` está na suite padrão e bloqueia imports proibidos | 1 |
+| F-5b: Se não bloqueia: adicionar ao CI como gate com casos específicos dos invariantes do architecture.md | 2 |
+
+---
+
+## Ordem de execução recomendada para trilha F
+
+```
+F-4a (contagem + sensor) — trivial, 30min, só edição de doc
+F-3b (substituir links) — trivial, remove referência a docs ruins
+F-4c (grafo de imports) — 1h, atualiza o ascii no architecture.md
+F-3a (status dos harnesses) — 1h, requer decisão de nível de evidência por harness
+F-2a (project-architecture.md) — 2h, archivar ou reescrever
+F-1a (agentic-bdi.md) — 3h, reescrita completa alinhada ao código
+F-4b (seção de compactação) — 1h, após extração shellwrap concluída
+F-5a/b (CI gate) — 2h, após confirmar o que archtest cobre hoje
+```
+
+**Obs:** F-1a e F-2a devem ser feitos no mesmo PR para evitar que harness-engineer fique
+apontando para docs atualizados parcialmente.
+
+---
+
 ## Caminho crítico recomendado
 
 ```

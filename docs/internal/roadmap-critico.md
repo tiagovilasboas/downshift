@@ -196,7 +196,51 @@ confirmar `tool_name` de shell nem que `updated_input` é honrado.
 
 ---
 
-## Caminho crítico mínimo (o que bloqueia beta exit)
+## Domínio extra — Drift de documentação
+
+### Crítica
+
+Três docs em `docs/architecture/` e `docs/guides/` divergem do código de forma
+enganosa para quem contribui:
+
+**`docs/architecture/agentic-bdi.md` — drift crítico:**
+
+| Doc afirma | Código faz |
+|-----------|------------|
+| Tiers T0-T4, T4 cravado em Opus | 3 tiers: small/mid/frontier |
+| Naive Bayes é o classificador | Regex decide; Bayes opina depois |
+| Risco força tier ≥ T3 e "pin opus" | Risco é piso e abstenção dentro dos 3 tiers |
+| Learning loop altera o próximo roteamento | Learning do compressor guarda forma de saída; treino de rota só entra com rótulo revisado fora do hook |
+| Hook é `dsmon-hook`, resposta `{allow, model_override}` | Hook é `downshift <harness>`; `dsmon` é monitor do `events.jsonl` |
+
+**`docs/guides/harness-engineer.md` — afirmações incorretas:**
+- Marca Cursor, Codex e KiroCrew como "✅ Produção" — estado real é parcialmente validado
+- Aponta para `agentic-bdi.md` e `project-architecture.md` (ambos com drift crítico)
+
+**`docs/design/architecture.md` — 3 gaps internos desatualizados:**
+- Telemetria: diz "31 non-test files" — hoje são 40
+- Import graph: diz "no test or CI step" — `archtest.TestImportGraph` existe e roda
+- Compactação: descreve como "measure-only PostToolUse" — `internal/shellwrap`,
+  `internal/execwrap` e `AdviseAdapter` existem mas não estão no grafo
+- Grafo de 19/10/2026 não inclui `accounting`, `execwrap`, `shellwrap`, `replay`,
+  `api`, `cursorbridge`, `gateway`
+- Gateway: "HTTP gateway ainda é futuro" — `internal/gateway` já é porta para OmniRoute
+  e OpenRouter
+
+### O que fazer (Trilha F)
+
+| # | Ação | Pts | Prioridade |
+|---|------|-----|-----------|
+| F-4a | Atualizar contagem telemetria (31→40) + nota sensor import no architecture.md | 1 | imediato |
+| F-3b | Substituir links `agentic-bdi.md`/`project-architecture.md` → `docs/design/architecture.md` no harness-engineer | 1 | imediato |
+| F-4c | Atualizar grafo de imports (adicionar accounting, execwrap, shellwrap, replay, api, gateway) | 1 | curto prazo |
+| F-3a | Corrigir status dos harnesses (evidência real por harness, não ✅/❌ binário) | 1 | curto prazo |
+| F-4b | Atualizar seção compactação para incluir shellwrap/execwrap/AdviseAdapter | 1 | após A-P1 |
+| F-2a | Arquivar ou reescrever `project-architecture.md` (tipos que não existem) | 1 | curto prazo |
+| F-1a | Reescrever `agentic-bdi.md` alinhado ao código real | 2 | curto prazo |
+| F-5a/b | Verificar + fortalecer `archtest.TestImportGraph` como gate de CI bloqueante | 3 | médio prazo |
+
+F-1a e F-2a devem ir no mesmo PR (harness-engineer aponta para ambos).
 
 Beta exit tem três pilares: P2 multi-user exports, P3 billing evidence,
 comunidade/dogfood. Nenhum deles está verde.
