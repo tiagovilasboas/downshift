@@ -28,13 +28,25 @@ prova ao vivo por harness.
 
 | Fase | Pts | O que é | Depende de | Status |
 |------|-----|---------|------------|--------|
-| **A-P1** | 2 | KiroCrew: exit 2 com o comando já embrulhado, só nas famílias que o compactor comprime. Passthrough e `git status` ficam allow. `DOWNSHIFT_EXEC=0` e `"exec":false` mantêm allow. | nada | 🔲 código a escrever |
-| **A-P2** | 1 | Um `execute_bash` ao vivo: stderr chega ao modelo e o retry roda embrulhado. Se a volta morrer sem essa linha, reverter o flag | A-P1 instalado | 🔲 evidência necessária |
+| **A-P1** | 2 | KiroCrew: exit 2 com o comando já embrulhado, só nas famílias que o compactor comprime. Passthrough e `git status` ficam allow. `DOWNSHIFT_EXEC=0` e `"exec":false` mantêm allow. | nada | ✅ mergeado (#461, #462, #464) |
+| **A-P2** | 1 | Um shell ao vivo **no backend kiro-cli**: stderr chega ao modelo e o retry roda embrulhado. Se a volta morrer sem essa linha, reverter o flag | A-P1 instalado | 🔲 evidência pendente (ver achado abaixo) |
 | **A-P3** | 2 | Contar esses bloqueios na telemetria do hook (quantas vezes o retry disparou por semana) | A-P2 segurou | 🔲 |
 | **A-P4** | 2 | Parsear token do child-end num `postToolUse` real do KiroCrew | payload capturado ao vivo (não a P1) | 🔲 |
 | **A-P5** | 3 | `updated_input.command` no Cursor e no Codex, um harness por mudança | prova ao vivo por harness + A-P4 | 🔲 |
 
-**Arquivos tocados pela A-P1:**
+**Achado de 2026-10-22: o hook `kirocrew` só atua no backend kiro-cli.** Com
+`agent.acp_backend = claude` em `~/.kiro/crew/config.json`, as sessões normais do
+KiroCrew rodam no backend do Claude: o shell passa pelo hook do Claude Code, que
+reescreve o comando no lugar (`CanRewriteShellCommand`) e já compacta. O caminho
+exit 2 (A-P1) só dispara em sessões do backend kiro-cli (as que escrevem em
+`~/.kiro/crew/audit.log`; o `tool_name` real é `shell`, não `execute_bash`). Um
+subagente `senior-staff-ai-finops` também não serve de prova: o spec dele não
+carrega o hook, só `kirocrew.json` carrega. Consequências: a A-P2 precisa de uma
+sessão kiro-cli, e A-P3/A-P4 só valem para quem usa esse backend. A flag
+`CanAdviseShellWrap` fica ligada (fail-open). Não investir mais no advise antes
+de a A-P2 ter evidência.
+
+**Arquivos tocados pela A-P1 (como entregue):**
 
 | Arquivo | Mudança |
 |---------|---------|
@@ -72,6 +84,9 @@ prova ao vivo por harness.
 | **C-1** | 8 | Git diff/show compressor com safety gate fail-open | — | ✅ mergeado (#459) |
 | **C-2** | 3 cada | Promover compressors de pass-through para compresses: linters (eslint, ruff, mypy, golangci-lint), builds (go build, cargo build, dotnet build) — um PR por grupo | corpus clean+preserve por família | 🔲 |
 | **C-3** | 3 cada | Novas famílias citadas nas steerings sem compressor: `bazel`, `nx`, `psql` — avaliar volume real via `downshift learning` antes de implementar | dados de uso real | 🔲 |
+
+| **C-4** | 3 | `go test -v` com subtestes que passam sem log: Go imprime o `--- PASS` do pai e depois as linhas indentadas dos subtestes; antes qualquer subteste deixava o log inteiro passar (33 KB no `execwrap -v`). FAIL, linha de log, `=== PAUSE/CONT` e multi-pacote continuam byte-idênticos | achado ao testar o hook ao vivo | ✅ PR #465 (transcrição real: 4071 → 171 bytes) |
+| **C-5** | 2 | Medir quanto do `go test -v` real ainda cai em pass-through (subteste com `t.Log`, `-parallel`, multi-pacote) antes de abrir mais parsers; hoje só há 1 amostra | `downshift learning` com dados de uso | 🔲 |
 
 **Tradeoff conhecido de C-1:** diffs com `error`/`fail` em qualquer linha caem em pass-through (conservative). Decisão aberta: afrouxar o gate para comprimir mesmo quando danger word aparece só em linha `+`/`-` (já preservada verbatim)?
 
