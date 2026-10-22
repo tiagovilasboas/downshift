@@ -68,9 +68,9 @@ func TestPriceBook_SlugInference(t *testing.T) {
 	//   sonnet → claude-sonnet-5-5
 	//   opus   → claude-opus-5-5
 	cases := []struct {
-		slug    string
-		wantQ   Quality
-		wantID  string // expected ModelID (empty = same as slug for unpriced)
+		slug   string
+		wantQ  Quality
+		wantID string // expected ModelID (empty = same as slug for unpriced)
 	}{
 		// Direct aliases in catalog → exact
 		{"haiku", QualityExact, "claude-haiku-4-5"},
@@ -123,8 +123,8 @@ func TestPriceResult_ComputeCost(t *testing.T) {
 
 func TestPriceResult_ComputeCost_ZeroTokens(t *testing.T) {
 	pr := PriceResult{
-		Quality:    QualityExact,
-		InputCostM: 2.0,
+		Quality:     QualityExact,
+		InputCostM:  2.0,
 		OutputCostM: 8.0,
 	}
 

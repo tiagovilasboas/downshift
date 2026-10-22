@@ -109,9 +109,9 @@ func Saved(requestedModel string, buckets []TokenBucket, pb *catalog.PriceBook) 
 	// Aggregate tokens and compute actual cost.
 	var (
 		totalInput, totalOutput, totalCacheRead, totalCacheWrite int64
-		actualCost                                                float64
-		unpricedCount, inferredCount                              int
-		allExact                                                  = true
+		actualCost                                               float64
+		unpricedCount, inferredCount                             int
+		allExact                                                 = true
 	)
 
 	for _, b := range buckets {
