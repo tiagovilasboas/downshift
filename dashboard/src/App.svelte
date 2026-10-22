@@ -5,7 +5,7 @@
   import { getSessionState } from './shared/state';
   import { fetchSessions } from './shared/data';
   import type { SessionSummary } from './shared/data';
-  import { TokensSummary, CostSaved } from './features/tokens';
+  import { CostSaved } from './features/tokens';
   import { CompactorStats } from './features/compactor';
   import { SessionsList } from './features/sessions';
 
@@ -28,6 +28,14 @@
     }
     return activeHarnesses.size;
   });
+
+  function setTab(tab: 'sessions' | 'tokens' | 'compactor') {
+    activeTab = tab;
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', tab);
+    history.pushState({ tab }, '', url);
+    if (tab === 'sessions') loadSessions();
+  }
 
   async function loadSessions() {
     loadingSessions = true;
@@ -52,9 +60,18 @@
     
     session.startAutoRefresh(3000);
     loadSessions();
+    // Keep activeTab in sync with browser back/forward navigation
+    const onPop = () => {
+      const t = new URLSearchParams(window.location.search).get('tab');
+      if (t === 'tokens' || t === 'compactor' || t === 'sessions') activeTab = t;
+    };
+    window.addEventListener('popstate', onPop);
     // Refresh sessions list every 10s
     const sessionsInterval = setInterval(loadSessions, 10000);
-    return () => clearInterval(sessionsInterval);
+    return () => {
+      clearInterval(sessionsInterval);
+      window.removeEventListener('popstate', onPop);
+    };
   });
   onDestroy(() => session.stopAutoRefresh());
 </script>
@@ -90,7 +107,7 @@
     <button
       type="button"
       data-testid="tab-sessions"
-      onclick={() => { activeTab = 'sessions'; loadSessions(); }}
+      onclick={() => setTab('sessions')}
       class="px-3 py-1.5 text-xs rounded-md transition-colors flex items-center gap-1.5"
       class:bg-ds-surface={activeTab === 'sessions'}
       class:text-ds-body={activeTab === 'sessions'}
@@ -106,7 +123,7 @@
     <button
       type="button"
       data-testid="tab-tokens"
-      onclick={() => activeTab = 'tokens'}
+      onclick={() => setTab('tokens')}
       class="px-3 py-1.5 text-xs rounded-md transition-colors"
       class:bg-ds-surface={activeTab === 'tokens'}
       class:text-ds-body={activeTab === 'tokens'}
@@ -117,7 +134,7 @@
     <button
       type="button"
       data-testid="tab-compactor"
-      onclick={() => activeTab = 'compactor'}
+      onclick={() => setTab('compactor')}
       class="px-3 py-1.5 text-xs rounded-md transition-colors"
       class:bg-ds-surface={activeTab === 'compactor'}
       class:text-ds-body={activeTab === 'compactor'}
@@ -182,8 +199,8 @@
                     <span class="text-ds-body">{totalAgents}</span>
                   </div>
                   <div class="flex justify-between">
-                    <span class="text-ds-inactive">Downshifted</span>
-                    <span class="text-ds-body">{totalSwitched} ({totalAgents > 0 ? Math.round(totalSwitched / totalAgents * 100) : 0}%)</span>
+                    <span class="text-ds-inactive">Agents routed</span>
+                    <span class="text-ds-body">{totalSwitched} of {totalAgents}</span>
                   </div>
                 </div>
               </div>
