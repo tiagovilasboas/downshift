@@ -8,13 +8,19 @@ import (
 	"testing"
 )
 
-// kirocrewShell runs the registered KiroCrew hook on one execute_bash call.
+// kirocrewShell runs the registered KiroCrew hook on one shell call, named as
+// the live payload names it.
 func kirocrewShell(t *testing.T, command string, env map[string]string) (rc int, stdout, stderr string) {
+	t.Helper()
+	return kirocrewShellTool(t, "shell", command, env)
+}
+
+func kirocrewShellTool(t *testing.T, tool, command string, env map[string]string) (rc int, stdout, stderr string) {
 	t.Helper()
 	withExec(t, true, env, true)
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("DOWNSHIFT_EVENT_LOG", t.TempDir()+"/events.jsonl")
-	stdin := `{"tool_name":"execute_bash","tool_input":{"command":"` + command + `"}}`
+	stdin := `{"tool_name":"` + tool + `","tool_input":{"command":"` + command + `"}}`
 	stdout = captureStdout(func() {
 		stderr = captureStderr(func() {
 			rc = harnessRegistry["kirocrew"].Hook(strings.NewReader(stdin), cmdCat)
@@ -34,6 +40,16 @@ func TestKiroCrewShellAdvise_CompressingFamilyExits2(t *testing.T) {
 	}
 	if !strings.Contains(stderr, "compact") || !strings.Contains(stderr, "go test ./...") {
 		t.Errorf("stderr does not carry the wrapped command: %q", stderr)
+	}
+}
+
+// The older tool name still counts; an unrelated tool is never a shell call.
+func TestKiroCrewShellAdvise_ToolNames(t *testing.T) {
+	if rc, _, _ := kirocrewShellTool(t, "execute_bash", "go test ./...", nil); rc != 2 {
+		t.Errorf("execute_bash rc = %d, want 2", rc)
+	}
+	if rc, _, _ := kirocrewShellTool(t, "fs_read", "go test ./...", nil); rc != 0 {
+		t.Errorf("fs_read rc = %d, want 0", rc)
 	}
 }
 
