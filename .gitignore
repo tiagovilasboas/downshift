@@ -54,3 +54,4 @@ __pycache__/
 # Downshift Code Intelligence runtime state and cache
 .downshift/
 
+dashboard/node_modules/
