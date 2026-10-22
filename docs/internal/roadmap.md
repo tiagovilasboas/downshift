@@ -33,6 +33,9 @@ prova ao vivo por harness.
 | **A-P3** | 2 | Contar esses bloqueios na telemetria do hook (quantas vezes o retry disparou por semana) | A-P2 segurou | 🔲 |
 | **A-P4** | 2 | Parsear token do child-end num `postToolUse` real do KiroCrew | payload capturado ao vivo (não a P1) | 🔲 |
 | **A-P5** | 3 | `updated_input.command` no Cursor e no Codex, um harness por mudança | prova ao vivo por harness + A-P4 | 🔲 |
+| **A-P6** | 1 | Auditar que `downshift kirocrew` sai com 0 em todo caminho de erro, panic e timeout. No KiroCrew o gate do `PreToolUse` falha fechado: outro código, timeout (5 s no `hooks.json`) ou crash bloqueia a ferramenta. Teste que força cada falha e exige exit 0 | nada | 🔲 |
+| **A-P7** | 1 | Ler o contrato do kiro-cli em `kiro.dev/docs/hooks`: o `PreToolUse` não impede uma chamada que o kiro-cli já aprovou. Descobrir se isso explica a A-P2 não bloquear e registrar o resultado aqui | nada | 🔲 |
+| **A-P8** | 1 | Decidir o hook "Downshift KiroCrew" do `~/.kiro/crew/hooks.json` (`enabled: false`, aponta para `harness-downshift/downshift`): ligar apontando para o binário de `~/.local/bin`, ou remover. Doc: ele é o sistema de hooks próprio do Crew, separado do spec de agente | A-P6 | 🔲 |
 
 **Achado de 2026-10-22: o hook `kirocrew` só atua no backend kiro-cli.** Com
 `agent.acp_backend = claude` em `~/.kiro/crew/config.json`, as sessões normais do
