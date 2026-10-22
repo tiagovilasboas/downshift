@@ -8,13 +8,15 @@ import (
 	"fmt"
 )
 
-// shellToolName is KiroCrew's shell tool.
-const shellToolName = "execute_bash"
+// isShellTool reports whether name is KiroCrew's shell tool. A live payload
+// (2026-10-22, audit.log) names it "shell" with tool_tags ["shell","@builtin"];
+// "execute_bash" is the older name its bundled hook matchers still use.
+func isShellTool(name string) bool { return name == "shell" || name == "execute_bash" }
 
 // ShellCommand returns tool_input.command and true when this call is the
 // shell tool. This implements shellwrap.AdviseAdapter.
 func (ev Event) ShellCommand() (string, bool) {
-	if ev.ToolName != shellToolName {
+	if !isShellTool(ev.ToolName) {
 		return "", false
 	}
 	var ti map[string]any
