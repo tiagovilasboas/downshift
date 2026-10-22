@@ -1,0 +1,4 @@
+# Playwright E2E artifacts (local run output, never committed)
+test-results/
+playwright-report/
+.playwright/

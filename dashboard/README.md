@@ -39,6 +39,29 @@ pnpm build
 The dashboard starts in mock mode by default. Click the "Mock/Live" toggle
 to switch to live data (requires a local server that proxies to the CLI).
 
+## End-to-end tests (`?e2e=1`)
+
+Playwright drives the real embedded dashboard against deterministic stub data,
+served when a request carries the `?e2e=1` flag. This is the behaviour sensor
+for issue #456 (auto-refresh re-render + Motion instability): it proves the
+dashboard renders, tabs switch, and the 3s auto-refresh logs no console errors.
+With `?e2e=1` the server returns fixed fixtures instead of reading the user's
+`events.jsonl`, so the render is identical on every run.
+
+```bash
+# One-time: install the Chromium browser
+pnpm e2e:install
+
+# Build the bundle and the CLI, then run the suite against the embedded SPA
+pnpm build
+go build -o ../downshift ../cmd/downshift
+DOWNSHIFT_BIN=../downshift pnpm e2e
+```
+
+The computational sensor that gates CI is the Go test
+`internal/api/e2e_stub_test.go`; the Playwright suite is a local browser harness
+(no CI browser job yet).
+
 ## Components
 
 | Component | Purpose |
