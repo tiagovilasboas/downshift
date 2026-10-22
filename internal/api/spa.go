@@ -39,6 +39,16 @@ func spaHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 
+		// Unknown /api/* routes should return 404, not the SPA.
+		// Known API routes are registered on the mux before this handler,
+		// so anything reaching here under /api/ is genuinely not found.
+		if strings.HasPrefix(path, "/api/") {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"error":"not found"}`))
+			return
+		}
+
 		// Serve static assets directly
 		if strings.HasPrefix(path, "/assets/") ||
 			path == "/favicon.svg" ||
