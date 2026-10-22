@@ -402,8 +402,8 @@ written. The family name is the only command fact telemetry keeps.
 | `datadog-ci` | `datadog-ci` | passes through |
 | `git-status` | `git status` | compresses |
 | `git-log` | `git log` | passes through |
-| `git-diff` | `git diff` | passes through |
-| `git-show` | `git show` | passes through |
+| `git-diff` | `git diff` | compresses |
+| `git-show` | `git show` | compresses |
 | `git-branch` | `git branch` | passes through |
 | `git-fetch` | `git fetch` | passes through |
 | `git-pull` | `git pull` | passes through |

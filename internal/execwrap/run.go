@@ -80,6 +80,8 @@ var ObserveUncompactedHook func(argv []string, sample []byte, family Family)
 var expectedFormat = map[Family]compressor.Format{
 	FamilyGoTest:      compressor.FormatGoTest,
 	FamilyGitStatus:   compressor.FormatGitStatus,
+	FamilyGitDiff:     compressor.FormatGitDiff,
+	FamilyGitShow:     compressor.FormatGitShow,
 	FamilyPytest:      compressor.FormatPytest,
 	FamilyVitest:      compressor.FormatVitest,
 	FamilyPlaywright:  compressor.FormatPlaywright,
