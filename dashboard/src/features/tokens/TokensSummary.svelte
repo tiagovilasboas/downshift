@@ -30,7 +30,7 @@
         class="text-ds-line" stroke-width="8" />
       <!-- Progress arc -->
       <circle cx="50" cy="50" r={radius} fill="none" stroke="currentColor"
-        class="text-ds-accent" stroke-width="8" stroke-linecap="round"
+        class="text-ds-body" stroke-width="8" stroke-linecap="round"
         stroke-dasharray={circumference} stroke-dashoffset={offset} />
     </svg>
     

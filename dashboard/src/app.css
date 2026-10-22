@@ -2,50 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Downshift Dashboard - Brand Identity */
-
 :root {
-  /* Brand tokens */
+  /* Downshift official brand tokens */
   --ds-bg: #0A0A0A;
   --ds-surface: #1A1A1A;
   --ds-line: #1F2329;
-  --ds-border: #2A2D31;
   --ds-text: #FFFFFF;
   --ds-body: #D6DAE2;
   --ds-muted: #868A90;
-  --ds-inactive: #5C6168;
+  --ds-inactive: #52555A;
   --ds-accent: #22C55E;
   --ds-accent-deep: #16A34A;
-  --ds-error: #F87171;
-  --ds-warning: #E0B34A;
-}
-
-html {
-  background: var(--ds-bg);
-  color: var(--ds-body);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  
+  /* Status */
+  --ds-warning: #f59e0b;
+  --ds-error: #ef4444;
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Smooth scrolling */
-* {
-  scroll-behavior: smooth;
-}
-
-/* Focus rings with brand accent */
-:focus-visible {
-  outline: 2px solid var(--ds-accent);
-  outline-offset: 2px;
-}
-
-/* Selection */
-::selection {
-  background: var(--ds-accent);
-  color: var(--ds-bg);
-}
+/* Utility classes */
+.bg-ds-bg { background-color: var(--ds-bg); }
+.bg-ds-surface { background-color: var(--ds-surface); }
+.border-ds-line { border-color: var(--ds-line); }
+.text-ds-body { color: var(--ds-body); }
+.text-ds-muted { color: var(--ds-muted); }
+.text-ds-inactive { color: var(--ds-inactive); }
+.text-ds-accent { color: var(--ds-accent); }
+.text-ds-warning { color: var(--ds-warning); }
+.bg-ds-accent { background-color: var(--ds-accent); }
