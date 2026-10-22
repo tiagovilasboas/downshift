@@ -1,13 +1,15 @@
 <script lang="ts">
-  // Feature: Agents - Premium live agent card with breathing glow
+  // Feature: Agents - Premium live agent card with animated character
   import type { Spawn } from '../../shared';
-  import { breathe, glowPulse } from '../../shared';
+  import { glowPulse } from '../../shared';
+  import AnimatedAgent from './AnimatedAgent.svelte';
 
   interface Props {
     spawn: Spawn;
+    harness?: string;
   }
 
-  let { spawn }: Props = $props();
+  let { spawn, harness = 'kirocrew' }: Props = $props();
   
   const modelName = $derived(spawn.to_model.replace('claude-', '').replace(/-\d+$/, ''));
 </script>
@@ -20,16 +22,8 @@
   <div class="absolute inset-0 bg-gradient-to-r from-transparent via-ds-accent/5 to-transparent -translate-x-full animate-shimmer"></div>
   
   <div class="relative flex items-center gap-3">
-    <!-- Breathing orb -->
-    <div class="relative">
-      <div use:breathe class="w-10 h-10 rounded-full bg-gradient-to-br from-ds-accent/30 to-ds-accent/10 flex items-center justify-center">
-        <div class="w-6 h-6 rounded-full bg-ds-accent/40 flex items-center justify-center">
-          <div class="w-3 h-3 rounded-full bg-ds-accent"></div>
-        </div>
-      </div>
-      <!-- Pulse ring -->
-      <div class="absolute inset-0 rounded-full border-2 border-ds-accent/30 animate-ping"></div>
-    </div>
+    <!-- Animated character -->
+    <AnimatedAgent {harness} agentState="working" size={40} />
     
     <!-- Info -->
     <div class="flex-1 min-w-0">
