@@ -72,6 +72,11 @@ type HarnessCapabilities struct {
 	// False means the wrap decision is still computed by the shared runner
 	// when the adapter exposes the command, but never written.
 	CanRewriteShellCommand bool
+	// CanAdviseShellWrap means the hook can show the model one stderr line
+	// (exit 2) suggesting a retry with the wrapped command. Used by harnesses
+	// whose protocol is exit-0/exit-2 with no updated_input rewrite path.
+	// KiroCrew uses this; set by A-P1.
+	CanAdviseShellWrap bool
 }
 
 // UsageSource values for HarnessCapabilities.UsageSource.
