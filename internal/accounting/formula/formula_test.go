@@ -4,7 +4,9 @@
 package formula
 
 import (
+	"encoding/json"
 	"math"
+	"os"
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
@@ -284,5 +286,126 @@ func TestSavedResult_SavedPercent_Valid(t *testing.T) {
 	}
 	if got := r.SavedPercent(); math.Abs(got-25) > 0.01 {
 		t.Errorf("SavedPercent() = %f, want 25", got)
+	}
+}
+
+// --- Golden fixtures from JSON ---
+
+type goldenFixtures struct {
+	Description string       `json:"description"`
+	Version     string       `json:"version"`
+	Cases       []goldenCase `json:"cases"`
+}
+
+type goldenCase struct {
+	Name           string         `json:"name"`
+	Description    string         `json:"description"`
+	RequestedModel string         `json:"requested_model"`
+	Buckets        []goldenBucket `json:"buckets"`
+	Expected       goldenExpected `json:"expected"`
+}
+
+type goldenBucket struct {
+	Model      string `json:"model"`
+	Input      int64  `json:"input"`
+	Output     int64  `json:"output"`
+	CacheRead  int64  `json:"cache_read"`
+	CacheWrite int64  `json:"cache_write"`
+}
+
+type goldenExpected struct {
+	Quality         string  `json:"quality,omitempty"`
+	Saved           float64 `json:"saved,omitempty"`
+	SavedApprox     float64 `json:"saved_approx,omitempty"`
+	SavedPositive   *bool   `json:"saved_positive,omitempty"`
+	TotalTokens     int64   `json:"total_tokens,omitempty"`
+	Valid           *bool   `json:"valid,omitempty"`
+	InferredBuckets int     `json:"inferred_buckets,omitempty"`
+	UnpricedBuckets int     `json:"unpriced_buckets,omitempty"`
+}
+
+func TestSaved_GoldenFixtures(t *testing.T) {
+	data, err := os.ReadFile("testdata/golden_cases.json")
+	if err != nil {
+		t.Fatalf("failed to read golden_cases.json: %v", err)
+	}
+
+	var fixtures goldenFixtures
+	if err := json.Unmarshal(data, &fixtures); err != nil {
+		t.Fatalf("failed to parse golden_cases.json: %v", err)
+	}
+
+	pb := mustPriceBook(t)
+
+	for _, tc := range fixtures.Cases {
+		t.Run(tc.Name, func(t *testing.T) {
+			buckets := make([]TokenBucket, len(tc.Buckets))
+			for i, b := range tc.Buckets {
+				buckets[i] = TokenBucket{
+					Model:            b.Model,
+					InputTokens:      b.Input,
+					OutputTokens:     b.Output,
+					CacheReadTokens:  b.CacheRead,
+					CacheWriteTokens: b.CacheWrite,
+				}
+			}
+
+			result := Saved(tc.RequestedModel, buckets, pb)
+
+			// Check quality
+			if tc.Expected.Quality != "" {
+				wantQuality := SummaryQuality(tc.Expected.Quality)
+				if result.Quality != wantQuality {
+					t.Errorf("Quality = %q, want %q", result.Quality, wantQuality)
+				}
+			}
+
+			// Check saved_approx (allows small float diff)
+			if tc.Expected.SavedApprox != 0 || tc.Expected.Saved != 0 {
+				want := tc.Expected.Saved
+				if tc.Expected.SavedApprox != 0 {
+					want = tc.Expected.SavedApprox
+				}
+				if math.Abs(result.Saved-want) > 0.01 {
+					t.Errorf("Saved = %f, want ~%f", result.Saved, want)
+				}
+			}
+
+			// Check saved_positive
+			if tc.Expected.SavedPositive != nil {
+				gotPositive := result.Saved > 0
+				if gotPositive != *tc.Expected.SavedPositive {
+					t.Errorf("Saved positive = %v, want %v (saved=%f)", gotPositive, *tc.Expected.SavedPositive, result.Saved)
+				}
+			}
+
+			// Check total_tokens
+			if tc.Expected.TotalTokens != 0 {
+				if result.TotalTokens != tc.Expected.TotalTokens {
+					t.Errorf("TotalTokens = %d, want %d", result.TotalTokens, tc.Expected.TotalTokens)
+				}
+			}
+
+			// Check valid
+			if tc.Expected.Valid != nil {
+				if result.IsValid() != *tc.Expected.Valid {
+					t.Errorf("IsValid = %v, want %v", result.IsValid(), *tc.Expected.Valid)
+				}
+			}
+
+			// Check inferred_buckets
+			if tc.Expected.InferredBuckets != 0 {
+				if result.InferredBuckets != tc.Expected.InferredBuckets {
+					t.Errorf("InferredBuckets = %d, want %d", result.InferredBuckets, tc.Expected.InferredBuckets)
+				}
+			}
+
+			// Check unpriced_buckets
+			if tc.Expected.UnpricedBuckets != 0 {
+				if result.UnpricedBuckets != tc.Expected.UnpricedBuckets {
+					t.Errorf("UnpricedBuckets = %d, want %d", result.UnpricedBuckets, tc.Expected.UnpricedBuckets)
+				}
+			}
+		})
 	}
 }
