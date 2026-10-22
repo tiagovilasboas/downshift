@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Accounting v1**: New cost-accounting layer that measures what routing saves.
+  - `internal/catalog/pricebook.go`: PriceBook wrapper with `PriceFor(model)` that
+    returns `exact`, `upper_bound`, `inferred`, or `unpriced` quality. Slug
+    inference maps gateway slugs (HAIKU, SONNET) to canonical model ids.
+  - `internal/accounting/formula/`: Pure `Saved()` function implementing the
+    spec formula: `Saved = C_baseline − C_actual` where actual cost is the sum
+    of each bucket's tokens at its model's price, and baseline cost is all
+    tokens at the requested model's price.
+  - `internal/accounting/harness.go`: `AggregateByHarness()` groups exec events
+    by harness and entry type, enabling per-harness cost reporting.
+  - Golden test fixtures: 12 regression test cases in JSON format covering
+    all quality levels and edge cases.
+  - Spec with documented limitations: +15% positive bias on downshifted runs
+    (more turns at cheaper model inflates the baseline), compaction priced
+    conservatively at input cost once. See `docs/design/accounting.md`.
+
 ### Changed
 
 - Exec events gain two attribution fields (`harness` and `entry`). Direct

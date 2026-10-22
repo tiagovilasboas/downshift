@@ -140,6 +140,21 @@ downshift dci enable
 downshift dci impact MyFunction  # Who calls this?
 ```
 
+### 5. Cost Accounting (v1)
+
+Measures what routing actually saves: the difference between what you would have
+paid if every token ran on the requested model and what you actually paid.
+
+```go
+// Saved = C_baseline − C_actual
+// C_actual   = Σ price(model_i, tokens_i)
+// C_baseline = price(requested_model, Σ tokens_i)
+```
+
+**Caveats documented:** +15% positive bias when routing to cheaper models (more
+turns inflate the baseline), compaction priced conservatively at input cost once.
+See [docs/reference/accounting.md](docs/reference/accounting.md).
+
 ---
 
 ## Output Savings

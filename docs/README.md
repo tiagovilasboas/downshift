@@ -11,6 +11,7 @@ Downshift gives your coding agent the right model and less noise, with no extra 
 | **1. Model routing per subagent** | Each subagent gets a right-sized model and effort. When Downshift is unsure, your model stays. About 1 in 10 spawns stay unrouted as a control group. | Implemented. Claude Code Completed (rewrite observed honored); Codex and Cursor Functional; OpenCode Beta; Antigravity and KiroCrew Experimental. See the [harness matrix](reference/harness-matrix.md). |
 | **2. The Compactor** (`downshift compact`) | Shorter output from allowlisted commands. It wraps every `git` subcommand and the listed test and build families (the `git-*` row in the [harness matrix](reference/harness-matrix.md#shell-command-rewrite-downshift-compact-on-by-default-2026-10-19)). It keeps the exit code and leaves failures raw. It is not the `/compact` command. | Implemented, on by default. Automatic rewrite into compact form is Claude Code only; elsewhere the agent runs `downshift compact -- <command>`. |
 | **3. DCI** (code intelligence) | The agent reads only the code a change touches. Opt-in. | Implemented (v0.4). Bytes and latency measured; answer quality not measured. |
+| **4. Accounting** (v1) | Measures what routing saves: `Saved = C_baseline − C_actual`. Documents +15% positive bias on downshifted runs and compaction pricing. See [reference/accounting.md](reference/accounting.md). | Implemented. |
 
 Numbers keep their qualifiers:
 
