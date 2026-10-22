@@ -242,22 +242,22 @@ type sessionSummary struct {
 
 // sessionsResponse is the /api/sessions response.
 type sessionsResponse struct {
-	Sessions []sessionSummary `json:"sessions"`
-	Harnesses []string        `json:"harnesses"`
+	Sessions  []sessionSummary `json:"sessions"`
+	Harnesses []string         `json:"harnesses"`
 }
 
 func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
 	events, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
-	
+
 	// Extract unique sessions with their harness
 	sessions := make(map[string]*sessionSummary)
 	harnessSet := make(map[string]bool)
-	
+
 	for _, ev := range events {
 		if !telemetry.ValidSessionHash(ev.SessionID) {
 			continue
 		}
-		
+
 		sum, exists := sessions[ev.SessionID]
 		if !exists {
 			sum = &sessionSummary{
@@ -268,7 +268,7 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
 			}
 			sessions[ev.SessionID] = sum
 		}
-		
+
 		// Update last seen
 		if ev.Timestamp > sum.LastSeen {
 			sum.LastSeen = ev.Timestamp
@@ -276,7 +276,7 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
 		if ev.Timestamp < sum.FirstSeen {
 			sum.FirstSeen = ev.Timestamp
 		}
-		
+
 		// Count spawns
 		if telemetry.IsDecisionRow(ev) {
 			sum.SpawnCount++
@@ -289,10 +289,10 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		
+
 		harnessSet[ev.Harness] = true
 	}
-	
+
 	// Build response
 	var list []sessionSummary
 	for _, sum := range sessions {
@@ -301,7 +301,7 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
 		sum.TokensSaved = telemetry.TokensSavedEstimate(panel.Tokens, 0)
 		list = append(list, *sum)
 	}
-	
+
 	// Sort by last seen (most recent first)
 	for i := 0; i < len(list)-1; i++ {
 		for j := i + 1; j < len(list); j++ {
@@ -310,13 +310,13 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	
+
 	// Build harness list
 	var harnesses []string
 	for h := range harnessSet {
 		harnesses = append(harnesses, h)
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(sessionsResponse{Sessions: list, Harnesses: harnesses})
 }
