@@ -472,7 +472,7 @@ bundled: [companions.md](../guides/companions.md).
 
 These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
 
-1. **`telemetry` is large.** 31 non-test files (events, cost, stats, report,
+1. **`telemetry` is large.** 40 non-test files (events, cost, stats, report,
    control group, rotation, pause, session tree, completion) behind one
    package, imported by adapters, `childend`, `hookport` and `server`. A split
    (event log and appenders vs read-outs) is proposed, not done.
@@ -484,9 +484,10 @@ These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
    `nbopinion` or `routeadapt`, so they run without the tier floor and the
    opinion. Behaviour is covered at `runHookAdapter` and `core.Route` tests, but
    an adapter test alone does not prove production routing.
-3. **No import-graph sensor.** The invariants above are checked by hand with
-   `go list`. There is no test or CI step that fails when core gains a
-   forbidden import.
+3. **Import-graph sensor is partial.** `internal/archtest.TestImportGraph`
+   (run by `go test ./...`) fails on the forbidden imports listed under the
+   dependency check above. Rules outside that list are still checked by hand
+   with `go list`.
 4. **Rotated log backups are not read.** `stats` prints a note and counts only
    the live `events.jsonl`; totals drop after a rotation (100 MB by default).
 5. **DCI is opt-in** and measured only for latency and injected bytes. No
