@@ -13,7 +13,7 @@ def _telemetry_path() -> Path:
     configured = os.environ.get("DOWNSHIFT_ORCHESTRATION_TELEMETRY_PATH")
     if configured:
         return Path(configured)
-    return Path.home() / ".harness-downshift" / "orchestration-events.jsonl"
+    return Path.home() / ".downshift" / "orchestration-events.jsonl"
 
 
 def record(state: dict[str, Any]) -> None:
