@@ -9,6 +9,7 @@ let error = $state<string | null>(null);
 let loading = $state(false);
 let lastUpdate = $state<Date | null>(null);
 let useMock = $state(true);
+let currentSessionId = $state<string | null>(null);
 
 // Derived values
 const metrics = $derived(panel ? summaryMetrics(panel) : null);
@@ -18,6 +19,7 @@ const isConnected = $derived(!error && panel !== null);
 async function refresh(sessionId?: string) {
   loading = true;
   error = null;
+  const idToFetch = sessionId ?? currentSessionId ?? undefined;
   try {
     if (useMock) {
       await new Promise((r) => setTimeout(r, 150));
@@ -28,7 +30,7 @@ async function refresh(sessionId?: string) {
         panel.tokens_saved_estimate += Math.floor(Math.random() * 5000);
       }
     } else {
-      panel = await fetchPanel(sessionId);
+      panel = await fetchPanel(idToFetch);
     }
     lastUpdate = new Date();
   } catch (e) {
@@ -38,13 +40,18 @@ async function refresh(sessionId?: string) {
   }
 }
 
+function setSessionId(id: string | null) {
+  currentSessionId = id;
+  refresh();
+}
+
 // Auto-refresh
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
 function startAutoRefresh(intervalMs = 3000) {
   stopAutoRefresh();
   refresh();
-  intervalId = setInterval(refresh, intervalMs);
+  intervalId = setInterval(() => refresh(), intervalMs);
 }
 
 function stopAutoRefresh() {
@@ -68,7 +75,9 @@ export function getSessionState() {
     get metrics() { return metrics; },
     get isConnected() { return isConnected; },
     get useMock() { return useMock; },
+    get currentSessionId() { return currentSessionId; },
     refresh,
+    setSessionId,
     startAutoRefresh,
     stopAutoRefresh,
     toggleMock,

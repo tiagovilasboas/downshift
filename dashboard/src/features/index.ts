@@ -4,3 +4,4 @@
 export * from './agents';
 export * from './tokens';
 export * from './compactor';
+export * from './sessions';

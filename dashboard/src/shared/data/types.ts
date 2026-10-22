@@ -72,3 +72,20 @@ export interface PanelOut extends PanelView {
   tokens_saved_estimate: number;
   cost_saved?: CostSaved;
 }
+
+// Session listing types
+export interface SessionSummary {
+  session_id: string;
+  harness: string;
+  first_seen: string;
+  last_seen: string;
+  spawn_count: number;
+  switched: number;
+  held: number;
+  tokens_saved: number;
+}
+
+export interface SessionsResponse {
+  sessions: SessionSummary[];
+  harnesses: string[];
+}
