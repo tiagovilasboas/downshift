@@ -257,6 +257,10 @@ Coleta passiva, em paralelo ao uso:
 **Próxima ação de maior valor:** A-P5 (Cursor/Codex rewrite real, com payload capturado)
 ou E-M5/M6 (site) quando a Vercel liberar.
 
+**Plano em dois docs:**
+- [`phase6-downshift-owned.md`](phase6-downshift-owned.md) — 8 pts que o downshift fecha sozinho
+- [`roadmap-external-deps.md`](roadmap-external-deps.md) — itens com bloqueio externo
+
 ---
 
 ## Decisões abertas
