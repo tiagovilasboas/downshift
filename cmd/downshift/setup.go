@@ -187,6 +187,9 @@ func setupRun(o setupOptions) int {
 		p.notes = append(extra[t.Name], p.notes...)
 		plans = append(plans, p.companions...)
 		plans = append(plans, p)
+		if reg, ok := planCrewRegistry(o, t); ok {
+			plans = append(plans, reg)
+		}
 		if sp, ok := planSteering(o, t); ok {
 			plans = append(plans, sp)
 		}

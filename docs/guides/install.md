@@ -433,7 +433,8 @@ the agent must retry a blocked spawn with the recommended model.
 
 * writes a wrapper to `~/.downshift/bin/kirocrew-pre-tool-use.sh` (`.cmd` on Windows) that runs the binary doing the setup, passes the payload on stdin and the exit code through, and exits 0 with a line on stderr when the binary is gone, so a removed install never breaks KiroCrew;
 * adds that wrapper to `agent.kiro_hooks.preToolUse` in `~/.kiro/crew/config.json`, next to the hooks already there. A `kirocrew-pre-tool-use` wrapper you registered by hand, from any directory, is pointed at the generated one instead of being added twice;
-* installs the compact steering.
+* installs the compact steering;
+* removes a Downshift row from `~/.kiro/crew/hooks.json` when that file exists. That list does not enforce policy. The row duplicates `agent.kiro_hooks` and goes stale when it still points at a checkout. Other rows in the file stay. Quit KiroCrew before setup and start it again afterwards: a running Crew keeps that file in memory and writes the old copy back on the next hook run.
 
 It edits `config.json` only if the file exists (KiroCrew creates it; a missing file means KiroCrew is not set up, and setup says so). It writes the wrapper before the config and skips the config if the wrapper fails. `downshift setup --undo` restores both. Then restart KiroCrew so it regenerates its agent spec, and run `downshift doctor`.
 
@@ -502,6 +503,8 @@ Run it from your own terminal. If KiroCrew's policy blocks an agent session from
 after the tool starts, and their exit code does not block that path. A growing
 `run_count` proves invocation only. Do not use that registration as policy
 enforcement or keep an informational duplicate of the native policy hook.
+`downshift setup kirocrew` removes a Downshift row from that file. Do not
+turn the row back on: enabling it does not make the exit code enforce policy.
 
 #### Acceptance evidence and coverage
 
