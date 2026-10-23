@@ -142,7 +142,7 @@ permanece ligada (fail-open e inofensiva).
 > Fonte: análise de 22/10/2026 comparando `docs/architecture/`, `docs/guides/harness-engineer.md`
 > e `docs/design/architecture.md` contra o código em main.
 
-### F-1: `docs/architecture/agentic-bdi.md` — drift crítico (2 pts)
+### F-1: `docs/archive/agentic-bdi.md` — drift crítico (2 pts)
 
 O doc descreve T0-T4 com T4 "cravado em Opus", risco força tier ≥ T3, Naive Bayes como
 classificador, learning loop que altera o próximo roteamento, e o hook como `dsmon-hook`
@@ -159,7 +159,7 @@ Não corrigir parcialmente — o doc atual é enganoso para quem contribui.
 |------|-----|
 | F-1a: ~~Reescrever `agentic-bdi.md`~~ → arquivado em `docs/archive/agentic-bdi.md`; doc já se marcava como design antigo e apontava para `architecture.md` como fonte viva; reescrever manteria drift | ✅ #475 |
 
-### F-2: `docs/architecture/project-architecture.md` — drift moderado (1 pt)
+### F-2: `docs/archive/project-architecture.md` — drift moderado (1 pt)
 
 Referenciado por `harness-engineer.md` como fonte de arquitetura de produção. Descreve
 tipos `Session`, `Policy`, `ShouldEscalate` que não existem no núcleo (a decisão é
@@ -167,7 +167,7 @@ tipos `Session`, `Policy`, `ShouldEscalate` que não existem no núcleo (a decis
 
 | Ação | Pts |
 |------|-----|
-| F-2a: Atualizar ou arquivar `project-architecture.md`; remover referência do harness-engineer | 1 |
+| F-2a: ~~Atualizar ou arquivar `project-architecture.md`~~ → arquivado em `docs/archive/project-architecture.md`; estruturas Session/Policy/ShouldEscalate descritas no doc divergem do código real (Session usa Unknown/QuotaStatus/CreditHeld; Policy usa Version/MinTier/MinTierBy*; ShouldEscalate não existe); doc já apontava para `docs/design/architecture.md` como fonte viva | ✅ #XXX |
 
 ### F-3: `docs/guides/harness-engineer.md` — afirmações incorretas de produção (2 pts)
 
@@ -176,13 +176,13 @@ Marca Cursor, Codex e KiroCrew como "✅ Produção" em roteamento. O estado rea
 - Codex: roteamento funciona, shell wrap sem payload, usage none
 - KiroCrew: advise-only (shell rewrite sem updated_input), usage none
 
-Aponta para `docs/architecture/agentic-bdi.md` e `docs/architecture/project-architecture.md`
+Aponta para `docs/archive/agentic-bdi.md` e `docs/archive/project-architecture.md`
 (dois docs com drift crítico).
 
 | Ação | Pts |
 |------|-----|
 | F-3a: Tabela por nível de evidência real em `harness-engineer.md` (Claude Code=rewrite nativo; KiroCrew=advise-only pós-A-P7; Cursor/Codex=routing ok, sem payload; OpenCode/Antigravity=experimental) | ✅ #475 |
-| F-3b: Substituir links para `agentic-bdi.md`/`project-architecture.md` por `docs/design/architecture.md` | 1 |
+| F-3b: ~~Substituir links para `agentic-bdi.md`/`project-architecture.md` por `docs/design/architecture.md`~~ → concluído; roadmap.md e roadmap-critico.md atualizado para refletir docs arquivados | ✅ #XXX |
 
 ### F-4: `docs/design/architecture.md` — 3 gaps internos (3 pts)
 
