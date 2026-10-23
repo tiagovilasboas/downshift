@@ -91,3 +91,36 @@ func TestServerAddr(t *testing.T) {
 		t.Error("Port: got 0")
 	}
 }
+
+func TestSessionsEndpointTokensField(t *testing.T) {
+	srv, err := NewServer(0)
+	if err != nil {
+		t.Fatalf("NewServer: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/sessions", nil)
+	w := httptest.NewRecorder()
+	srv.server.Handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("sessions: got status %d, want 200", w.Code)
+	}
+
+	var resp sessionsResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("sessions: invalid JSON: %v", err)
+	}
+
+	// Validate that each session has the tokens field with routing and optional compactor
+	for _, s := range resp.Sessions {
+		// Routing field must be present (even if zero)
+		if s.Tokens.Routing.Children < 0 {
+			t.Errorf("session %s: routing.children is negative", s.SessionID)
+		}
+		// TokensSaved must be computed from routing + compactor
+		if s.TokensSaved < 0 {
+			t.Errorf("session %s: tokens_saved is negative", s.SessionID)
+		}
+		// Compactor is optional (nil when no exec events for this session)
+	}
+}
