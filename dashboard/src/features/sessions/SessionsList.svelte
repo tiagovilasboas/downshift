@@ -5,6 +5,7 @@
   import { fetchPanel } from '../../shared/data';
   import LiveAgent from '../agents/LiveAgent.svelte';
   import FinishedAgent from '../agents/FinishedAgent.svelte';
+  import TokensSummary from '../tokens/TokensSummary.svelte';
   import { ChevronDown, ChevronRight, Cpu, Zap, Clock } from 'lucide-svelte';
 
   interface Props {
@@ -207,7 +208,28 @@
         
         <!-- Expanded: agents list -->
         {#if isExpanded}
+          {@const routing = session.tokens?.routing}
+          {@const compactor = session.tokens?.compactor}
           <div class="border-t border-ds-line px-3 pb-3">
+            <!-- Real token savings for this session (routing donut + compactor) -->
+            {#if (routing && (routing.work_tokens > 0 || routing.cache_tokens > 0)) || compactor}
+              <div class="pt-3 space-y-2">
+                {#if routing && (routing.work_tokens > 0 || routing.cache_tokens > 0)}
+                  <TokensSummary tokens={routing} label="routing tokens saved" />
+                {/if}
+                {#if compactor}
+                  <div class="bg-ds-surface border border-ds-line rounded-lg p-2.5">
+                    <div class="flex items-center justify-between">
+                      <div class="text-[10px] text-ds-muted uppercase tracking-wider">Compactor</div>
+                      <div class="text-xs text-ds-body">{formatTokens(compactor.estimated_tokens_saved)} tokens</div>
+                    </div>
+                    <div class="mt-0.5 text-[9px] text-ds-inactive">
+                      {compactor.compacted} / {compactor.commands} commands compacted
+                    </div>
+                  </div>
+                {/if}
+              </div>
+            {/if}
             {#if isLoading}
               <div class="flex items-center justify-center py-4">
                 <div class="w-4 h-4 rounded-full border-2 border-ds-muted border-t-transparent animate-spin"></div>

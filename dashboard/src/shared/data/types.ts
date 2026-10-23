@@ -74,6 +74,11 @@ export interface PanelOut extends PanelView {
 }
 
 // Session listing types
+export interface TokensDetail {
+  routing: TokenSaving;
+  compactor?: Compactor;
+}
+
 export interface SessionSummary {
   session_id: string;
   harness: string;
@@ -83,6 +88,7 @@ export interface SessionSummary {
   switched: number;
   held: number;
   tokens_saved: number;
+  tokens: TokensDetail;
 }
 
 export interface SessionsResponse {
