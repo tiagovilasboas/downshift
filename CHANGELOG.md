@@ -9,9 +9,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-23
+
 ### Added
 
-- **Accounting v1**: New cost-accounting layer that measures what routing saves.
+- **Compactor — linters now compress (C-2a):** `eslint`, `ruff`, `mypy` and `golangci-lint`
+  outputs are now compacted. The compressors existed but were shadowed by generic detectors
+  (ripgrep stole golangci-lint's `file:line:col:`, TSC stole ruff/mypy's `Found N errors`).
+  Detectors moved before TSC/ripgrep, multiline-aware `(?m)` regexes, ANSI guard (fail-open).
+  Measured: eslint 304→189, ruff 174→112, mypy 214→113, golangci 167→132 bytes.
+
+- **Compactor — builds now compress (C-2b):** `go build`, `cargo build` and `dotnet build`
+  compiler diagnostics are now compacted. `go build` had the same shadowing issue (ripgrep);
+  `cargo build` and `dotnet build` were misidentified as `cargo test` via the error danger word.
+  Reordering + per-build fingerprint guards (Compiling marker for cargo, MSBuild grammar for
+  dotnet, go vet exclusion for go build). ANSI guard. Measured: go 128→113, cargo 164→82,
+  dotnet 171→107 bytes.
+
+- **Dashboard — real token savings per session (B-W3):**
+  - `GET /api/sessions` now includes a `tokens` field per session: `routing: TokenSaving`
+    (routing decisions) + optional `compactor` (exec events for that session). Fixes a bug
+    where the endpoint passed 0 to `TokensSavedEstimate` for the compactor, unlike the
+    individual session endpoint.
+  - Sessions tab: expanded session shows a `TokensSummary` donut (% real saved from routing)
+    and a compactor line when the session has exec events.
+
+- **Dashboard v2:** sessions-first UI with expandable agents, harness filter chips, bidirectional
+  URL sync for tab navigation, E2E harness with `?e2e=1` deterministic stub, `downshift dashboard`
+  command.
+
+- **KiroCrew — shell advise (A-P1):** the KiroCrew `preToolUse` hook now advises a compacted
+  retry when a shell command is in an allowlisted family. The hook emits exit 2 with a stderr
+  message showing the exact wrapped command to run.
+
+- **KiroCrew setup (A-P8):** `downshift setup kirocrew` strips the informational
+  "Downshift KiroCrew" row from `~/.kiro/crew/hooks.json` (it had no effect as the real hook
+  lives in `agent.kiro_hooks`). `doctor` warns when the row persists; `--undo` restores the
+  backup.
+
+### Fixed
+
+- **KiroCrew:** hook now recognises the live shell tool name (`shell` instead of the old name).
+- **DCI:** code intelligence hook runs through the shared prompt-context runner, fixing a layering
+  violation where it bypassed the runner's session/harness context.
+
+### Changed
+
+- **Shellwrap domain extracted** to `internal/shellwrap/` (was inline in the hook runner).
+  Architecture docs updated to reflect the real package graph.
+- Accounting v1
   - `internal/catalog/pricebook.go`: PriceBook wrapper with `PriceFor(model)` that
     returns `exact`, `upper_bound`, `inferred`, or `unpriced` quality. Slug
     inference maps gateway slugs (HAIKU, SONNET) to canonical model ids.
