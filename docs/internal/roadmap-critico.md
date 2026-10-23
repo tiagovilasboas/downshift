@@ -203,7 +203,7 @@ confirmar `tool_name` de shell nem que `updated_input` é honrado.
 Três docs em `docs/architecture/` e `docs/guides/` divergem do código de forma
 enganosa para quem contribui:
 
-**`docs/architecture/agentic-bdi.md` — drift crítico:**
+**`docs/archive/agentic-bdi.md` — drift crítico:**
 
 | Doc afirma | Código faz |
 |-----------|------------|
@@ -215,7 +215,7 @@ enganosa para quem contribui:
 
 **`docs/guides/harness-engineer.md` — afirmações incorretas:**
 - Marca Cursor, Codex e KiroCrew como "✅ Produção" — estado real é parcialmente validado
-- Aponta para `agentic-bdi.md` e `project-architecture.md` (ambos com drift crítico)
+- Aponta para `docs/archive/agentic-bdi.md` e `docs/archive/project-architecture.md` (ambos com drift crítico)
 
 **`docs/design/architecture.md` — 3 gaps internos desatualizados:**
 - Telemetria: diz "31 non-test files" — hoje são 40
@@ -232,12 +232,12 @@ enganosa para quem contribui:
 | # | Ação | Pts | Prioridade |
 |---|------|-----|-----------|
 | F-4a | Atualizar contagem telemetria (31→40) + nota sensor import no architecture.md | 1 | imediato |
-| F-3b | Substituir links `agentic-bdi.md`/`project-architecture.md` → `docs/design/architecture.md` no harness-engineer | 1 | imediato |
+| F-3b | ~~Substituir links `agentic-bdi.md`/`project-architecture.md` → `docs/design/architecture.md` no harness-engineer~~ → concluído | 1 | ✅ #XXX |
 | F-4c | Atualizar grafo de imports (adicionar accounting, execwrap, shellwrap, replay, api, gateway) | 1 | curto prazo |
 | F-3a | Corrigir status dos harnesses (evidência real por harness, não ✅/❌ binário) | 1 | curto prazo |
 | F-4b | Atualizar seção compactação para incluir shellwrap/execwrap/AdviseAdapter | 1 | após A-P1 |
-| F-2a | Arquivar ou reescrever `project-architecture.md` (tipos que não existem) | 1 | curto prazo |
-| F-1a | Reescrever `agentic-bdi.md` alinhado ao código real | 2 | curto prazo |
+| F-2a | ~~Arquivar ou reescrever `project-architecture.md` (tipos que não existem)~~ → arquivado em `docs/archive/` | 1 | ✅ #XXX |
+| F-1a | ~~Reescrever `agentic-bdi.md` alinhado ao código real~~ → arquivado em `docs/archive/` | 2 | ✅ #475 |
 | F-5a/b | Verificar + fortalecer `archtest.TestImportGraph` como gate de CI bloqueante | 3 | médio prazo |
 
 F-1a e F-2a devem ir no mesmo PR (harness-engineer aponta para ambos).
