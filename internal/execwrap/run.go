@@ -102,6 +102,9 @@ var expectedFormat = map[Family]compressor.Format{
 	FamilyRuff:         compressor.FormatRuff,
 	FamilyMypy:         compressor.FormatMypy,
 	FamilyGolangciLint: compressor.FormatGolangciLint,
+	FamilyGoBuild:      compressor.FormatGoBuild,
+	FamilyCargoBuild:   compressor.FormatCargoBuild,
+	FamilyDotnetBuild:  compressor.FormatDotnetBuild,
 }
 
 // Run executes argv directly (no shell) with the caller's stdin, and exits

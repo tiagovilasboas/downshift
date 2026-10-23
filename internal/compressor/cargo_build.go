@@ -4,6 +4,7 @@
 package compressor
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
@@ -53,9 +54,21 @@ var (
 )
 
 // isCargoBuild returns true when the output carries at least one rustc
-// diagnostic header and its location line: the fingerprint of cargo build.
+// diagnostic header and its location line AND a cargo build marker (a
+// "Compiling/Checking" progress line or an "aborting due to"/"could not
+// compile" roll-up): the fingerprint of a cargo build invocation. A cargo test
+// transcript (a "running N tests" header or a "test result:" line) is excluded,
+// as is a bare "error[E...]: ... --> file:line" fragment with no build marker,
+// which stays with cargo test (checked after this detector).
+var reCargoBuildMarker = regexp.MustCompile(`(?m)^\s*(?:Compiling|Checking)\s+\S|^error:\s+(?:aborting due to|could not compile)\b`)
+
 func isCargoBuild(input []byte) bool {
-	return reCargoBuildHeaderM.Match(input) && reCargoBuildLocationM.Match(input)
+	if reCargoTestHeader.Match(input) || bytes.Contains(input, []byte("test result:")) {
+		return false
+	}
+	return reCargoBuildHeaderM.Match(input) &&
+		reCargoBuildLocationM.Match(input) &&
+		reCargoBuildMarker.Match(input)
 }
 
 // compressCargoBuild groups cargo build errors and warnings by the file in
@@ -63,7 +76,7 @@ func isCargoBuild(input []byte) bool {
 // lost. Progress, code frames and notes are dropped. An input with any
 // unrecognized line, or no diagnostics to group, is returned byte-for-byte.
 func compressCargoBuild(input []byte) ([]byte, bool, string) {
-	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00") {
+	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00\x1b") {
 		return input, false, "cargo_build_invalid_or_incomplete_input"
 	}
 	if !reCargoBuildHeaderM.Match(input) {

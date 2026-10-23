@@ -1,0 +1,5 @@
+# example.com/app/internal/core
+internal/core/parse.go:12:5: undefined: Foo
+panic: runtime error: invalid memory address or nil pointer dereference
+	goroutine 1 [running]:
+	main.main()

@@ -422,7 +422,7 @@ written. The family name is the only command fact telemetry keeps.
 | `gh-repo` | `gh repo` | passes through |
 | `gh-auth` | `gh auth` | passes through |
 | `gh-search` | `gh search` | passes through |
-| `go-build` | `go build` | passes through |
+| `go-build` | `go build` | compresses |
 | `go-run` | `go run` | passes through |
 | `go-install` | `go install` | passes through |
 | `go-mod` | `go mod` | passes through |
@@ -438,7 +438,7 @@ written. The family name is the only command fact telemetry keeps.
 | `staticcheck` | `staticcheck` | passes through |
 | `golangci-lint` | `golangci-lint` | compresses |
 | `govulncheck` | `govulncheck` | passes through |
-| `cargo-build` | `cargo build` | passes through |
+| `cargo-build` | `cargo build` | compresses |
 | `cargo-run` | `cargo run` | passes through |
 | `cargo-check` | `cargo check` | passes through |
 | `cargo-clippy` | `cargo clippy` | passes through |
@@ -478,7 +478,7 @@ written. The family name is the only command fact telemetry keeps.
 | `mv` | `mv` | passes through |
 | `rm` | `rm` | passes through |
 | `ast-grep` | `ast-grep` | passes through |
-| `dotnet-build` | `dotnet build` | passes through |
+| `dotnet-build` | `dotnet build` | compresses |
 | `dotnet-test` | `dotnet test` | passes through |
 | `dotnet-run` | `dotnet run` | passes through |
 | `rspec` | `rspec` | passes through |

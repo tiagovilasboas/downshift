@@ -1,0 +1,10 @@
+Determining projects to restore...
+  Restored /path/App.csproj (in 1.2 sec).
+  App -> /path/bin/Debug/net8.0/App.dll
+/path/Program.cs(12,5): error CS0103: The name 'x' does not exist in the current context [/path/App.csproj]
+/path/Program.cs(20,9): warning CS0168: The variable 'y' is declared but never used [/path/App.csproj]
+/path/Service.cs(30,13): error CS1002: ; expected [/path/App.csproj]
+Build FAILED.
+    1 Warning(s)
+    2 Error(s)
+Time Elapsed 00:00:01.23

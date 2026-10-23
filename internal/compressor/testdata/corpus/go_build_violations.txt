@@ -1,0 +1,5 @@
+go: downloading github.com/foo/bar v1.2.3
+# example.com/app/internal/core
+internal/core/parse.go:12:5: undefined: Foo
+internal/core/parse.go:20:2: cannot use x (untyped int constant) as string value
+internal/core/render.go:8:9: not enough arguments in call to render
