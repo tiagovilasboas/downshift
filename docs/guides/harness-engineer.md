@@ -226,14 +226,20 @@ Ver: [`docs/design/architecture.md`](../design/architecture.md)
 
 ## Harnesses Suportados
 
-| Harness | Status | Hook Type |
-|---------|--------|-----------|
-| Claude Code | ✅ Produção | preToolUse |
-| Cursor | ✅ Produção | preToolUse |
-| KiroCrew | ✅ Produção | preToolUse + postToolUse |
-| Codex | ✅ Produção | preToolUse |
-| OpenCode | 🔄 Beta | preToolUse |
-| Antigravity | 🔄 Beta | preToolUse |
+| Harness | Routing | Shell Wrap | Usage Source | Notes |
+|---------|---------|------------|--------------|-------|
+| Claude Code | ✅ Works | ✅ Native rewrite (5/5) | ✅ Captured | Hook rewrites in-place via `updated_input` + compactor |
+| Cursor | ✅ Works | ⚠️ No payload | 🚫 Blocked | Routing functional; shell wrap exists but no captured payload; usage source blocked |
+| Codex | ✅ Works | ⚠️ No payload | ⚠️ None | Routing functional; shell wrap exists but no captured payload; usage source absent |
+| KiroCrew | ⚠️ Advise-only | ⚠️ No rewrite | ⚠️ None | Exit 0/2 without `updated_input` (A-P7 discovery); no in-place rewrite capability; usage source absent |
+| OpenCode | 🔄 Beta | 🔄 Untested | 🔄 Untested | Experimental support |
+| Antigravity | 🔄 Beta | 🔄 Untested | 🔄 Untested | Experimental support |
+
+**Legend:**
+- ✅ Confirmed working with payload capture
+- ⚠️ Partial/advise-only or missing evidence
+- 🚫 Blocked by policy/access
+- 🔄 Experimental, not yet verified
 
 ## Fluxo de Decisão
 
