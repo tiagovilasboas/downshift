@@ -105,6 +105,12 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 		for _, w := range wrapperPathsFor(o, t) {
 			addRestore(t, w)
 		}
+		if t.Registry != "" {
+			path := filepath.Join(o.Home, filepath.FromSlash(t.Registry))
+			if b, _ := latestBackup(path); b != "" {
+				addRestore(t, path)
+			}
+		}
 	}
 	if readErr {
 		return 1

@@ -35,7 +35,7 @@ prova ao vivo por harness.
 | **A-P5** | 3 | `updated_input.command` no Cursor e no Codex, um harness por mudança | prova ao vivo por harness + A-P4 | 🔲 |
 | **A-P6** | 1 | Auditar que `downshift kirocrew` sai com 0 em todo caminho de erro, panic e timeout. No KiroCrew o gate do `PreToolUse` falha fechado: outro código, timeout (5 s no `hooks.json`) ou crash bloqueia a ferramenta. Teste que força cada falha e exige exit 0 | nada | ✅ auditado (2026-10-22) — já coberto pelos testes existentes, sem código novo necessário |
 | **A-P7** | 1 | Ler o contrato do kiro-cli em `kiro.dev/docs/hooks`: o `PreToolUse` não impede uma chamada que o kiro-cli já aprovou. Descobrir se isso explica a A-P2 não bloquear e registrar o resultado aqui | nada | ✅ lido (2026-10-22) — ver achado abaixo |
-| **A-P8** | 1 | Decidir o hook "Downshift KiroCrew" do `~/.kiro/crew/hooks.json` (`enabled: false`, aponta para `harness-downshift/downshift`): ligar apontando para o binário de `~/.local/bin`, ou remover. Doc: ele é o sistema de hooks próprio do Crew, separado do spec de agente | A-P6 | 🔲 |
+| **A-P8** | 1 | Decidir o hook "Downshift KiroCrew" do `~/.kiro/crew/hooks.json` (`enabled: false`, aponta para `harness-downshift/downshift`): ligar apontando para o binário de `~/.local/bin`, ou remover. Doc: ele é o sistema de hooks próprio do Crew, separado do spec de agente | A-P6 | ✅ 2026-10-23 — remover. `setup kirocrew` tira a linha Downshift desse arquivo; o hook que vale continua em `agent.kiro_hooks`. Ligar a linha não faz o exit code bloquear |
 
 **Achado de 2026-10-22: o hook `kirocrew` só atua no backend kiro-cli.** Com
 `agent.acp_backend = claude` em `~/.kiro/crew/config.json`, as sessões normais do
@@ -84,7 +84,7 @@ sessões kiro-cli em modo não-trusted. A flag permanece ligada (fail-open e ino
 | Fase | Pts | O que é | Depende de | Status |
 |------|-----|---------|------------|--------|
 | **B-W1** | 6 | #454 URL bidirecional + #453 rótulo + #451 doc (bundle reembarcado) | — | ✅ mergeado (#458) |
-| **B-W2** | 3 | DASH-2: harness E2E Playwright com flag `?e2e=1` — sensor computacional para #456 (auto-refresh re-render + Motion instável) | — | ✅ |
+| **B-W2** | 3 | DASH-2: harness E2E Playwright com flag `?e2e=1` — sensor computacional para #456 (auto-refresh re-render + Motion instável) | — | ✅ mergeado (#470) |
 | **B-W3** | 3 | DASH-1: endpoint agregado de tokens — `tokens: TokenSaving` por sessão em `/api/sessions` para mostrar % real na aba Tokens (hoje mostra taxa de switch) | decisão de API shape | 🔲 |
 
 **Decisão aberta para B-W3:** adicionar `tokens` em `/api/sessions` (cada sessão já retorna) ou criar `GET /api/tokens/aggregate` separado?

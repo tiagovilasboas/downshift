@@ -39,7 +39,10 @@ type doctorWiring struct {
 	Plugin string // plugin id that can carry the same hooks (setupTarget.Plugin)
 	// ModConflicts: plugin ids whose mod the Plugin already bundles (setupTarget.ModConflicts).
 	ModConflicts []string
-	Hooks        []doctorHook
+	// Registry is an informational hook list (setupTarget.Registry). A Downshift
+	// entry there duplicates the policy hook in File.
+	Registry string
+	Hooks    []doctorHook
 }
 
 func doctorWiringFor(harness string) (doctorWiring, bool) {
@@ -47,7 +50,7 @@ func doctorWiringFor(harness string) (doctorWiring, bool) {
 		if t.Name != harness || t.File == "" {
 			continue
 		}
-		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin, ModConflicts: t.ModConflicts}
+		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin, ModConflicts: t.ModConflicts, Registry: t.Registry}
 		for i, h := range t.Hooks {
 			w.Hooks = append(w.Hooks, doctorHook{Event: h.Event, Matcher: h.Matcher, Args: h.Args, Wrapper: h.Wrapper, Required: i == 0})
 		}
@@ -152,6 +155,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	// With the plugin carrying the hooks, found is empty and the hook binary
 	// check has nothing to look at.
 	checkEvidence(add, env, nc, file, found, pathBin, events)
+	checkCrewRegistry(add, env, h, w)
 }
 
 // readHookFile reads and parses the harness hook file. On failure it adds the

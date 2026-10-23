@@ -87,6 +87,11 @@ type setupTarget struct {
 	// harness (KiroCrew), independent of hook wiring. A Manual target may still
 	// carry one.
 	Steering *setupSteering
+	// Registry is an informational hook list the harness owns, relative to HOME.
+	// Setup removes a Downshift entry from it. The policy hook stays in File.
+	// Empty when the harness has no such list. Undo restores a backup only
+	// when setup actually rewrote the file.
+	Registry string
 	// Plugin is the id ("name@marketplace") under which this harness can load
 	// the same hooks from a plugin instead of File. Empty when the harness has
 	// no plugin system. Doctor reads it; setup warns when it is enabled.
@@ -229,6 +234,10 @@ var setupTargets = []setupTarget{
 			Path:    ".kiro/crew/workspace/.kiro/steering/downshift-compact.md",
 			Content: kirocrewCompactSteering,
 		},
+		// Crew's own hook page. Exit codes there do not enforce policy, and a
+		// Downshift row duplicates agent.kiro_hooks (often still pointing at a
+		// checkout). Setup drops that row; other hooks in the file stay.
+		Registry: ".kiro/crew/hooks.json",
 	},
 	{
 		Name:      "opencode",

@@ -4,6 +4,7 @@
 package main
 
 import (
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -83,5 +84,82 @@ func TestDoctorRecognisesTheWrapperSetupWrites(t *testing.T) {
 	}
 	if _, ok := matchHook(guardHook, w.Hooks[0]); ok {
 		t.Error("doctor took an unrelated hook for the KiroCrew one")
+	}
+}
+
+// The Crew hook page is not the policy hook. A Downshift row there, even one
+// already pointed at the installed binary and enabled, is removed. A neighbour
+// row stays. Undo puts the page back.
+func TestSetupKiroCrewRemovesInformationalRegistry(t *testing.T) {
+	e := newSetupEnv(t, ".kiro")
+	e.write(kirocrewConfig, kirocrewBefore)
+	const registry = ".kiro/crew/hooks.json"
+	before := `{
+  "hooks": [
+    {
+      "name": "Downshift KiroCrew",
+      "command": "/home/dev/Github/harness-downshift/downshift kirocrew",
+      "enabled": false
+    },
+    {
+      "name": "Other",
+      "command": "/usr/bin/true",
+      "enabled": true
+    }
+  ]
+}
+`
+	e.write(registry, before)
+	if code, out, errOut := e.run("--yes"); code != 0 {
+		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
+	}
+	if strings.Contains(e.read(registry), "downshift") || strings.Contains(e.read(registry), "Downshift") {
+		t.Fatalf("registry still has Downshift:\n%s", e.read(registry))
+	}
+	if !strings.Contains(e.read(registry), "/usr/bin/true") {
+		t.Fatalf("neighbour hook was dropped:\n%s", e.read(registry))
+	}
+	if code, out, _ := e.run("--undo", "--yes"); code != 0 || e.read(registry) != before {
+		t.Fatalf("undo exit %d, registry restored=%v\n%s", code, e.read(registry) == before, out)
+	}
+}
+
+func TestSetupKiroCrewLeavesACleanRegistryAlone(t *testing.T) {
+	e := newSetupEnv(t, ".kiro")
+	e.write(kirocrewConfig, kirocrewBefore)
+	const registry = ".kiro/crew/hooks.json"
+	clean := "{\"hooks\":[{\"name\":\"Other\",\"command\":\"/usr/bin/true\"}]}\n"
+	e.write(registry, clean)
+	code, out, _ := e.run("--dry-run")
+	if code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	if strings.Contains(out, "hooks.json") {
+		t.Fatalf("dry-run mentioned the registry:\n%s", out)
+	}
+	if e.read(registry) != clean {
+		t.Fatalf("registry changed:\n%s", e.read(registry))
+	}
+}
+
+func TestDoctorWarnsWhenCrewRegistryStillHasDownshift(t *testing.T) {
+	home := t.TempDir()
+	body := `{"hooks":[{"name":"Downshift KiroCrew","command":"/Users/x/.local/bin/downshift kirocrew","enabled":true}]}`
+	if err := os.MkdirAll(filepath.Join(home, ".kiro", "crew"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, ".kiro", "crew", "hooks.json"), []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var got doctorCheck
+	add := func(id, status, detail, fix string) {
+		got = doctorCheck{ID: id, Status: status, Detail: detail, Fix: fix}
+	}
+	checkCrewRegistry(add, doctorEnv{Home: home}, "kirocrew", doctorWiring{Registry: ".kiro/crew/hooks.json"})
+	if got.Status != doctorWarn || got.Fix != "downshift setup kirocrew" {
+		t.Fatalf("check = %+v", got)
+	}
+	if !strings.Contains(got.Detail, "1 Downshift") {
+		t.Fatalf("detail = %s", got.Detail)
 	}
 }
