@@ -35,7 +35,7 @@ func isEslint(input []byte) bool {
 // non-zero signal by reporting error/warning counts per file and the rules
 // involved. Unrecognized transcripts are returned byte-for-byte.
 func compressEslint(input []byte) ([]byte, bool, string) {
-	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00") {
+	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00\x1b") {
 		return input, false, "eslint_invalid_or_incomplete_input"
 	}
 	if !reEslintSummary.Match(input) {

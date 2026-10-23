@@ -22,16 +22,20 @@ import (
 var (
 	// "path/file.go:12:6: message (linter)" — col may be absent.
 	reGolangciViolation = regexp.MustCompile(`^(\S+\.go):(\d+):(?:(\d+):)?\s+.*\(([a-z0-9_-]+)\)\s*$`)
+	// Multiline detector: at least one row anywhere carries the "(linter)"
+	// suffix. The per-line regex above is anchored for use inside the compressor
+	// loop, so detection needs its own (?m) scan.
+	reGolangciDetect = regexp.MustCompile(`(?m)^(\S+\.go):(\d+):(?:(\d+):)?\s+.*\([a-z0-9_-]+\)\s*$`)
 )
 
 func isGolangciLint(input []byte) bool {
-	return reGolangciViolation.Match(input)
+	return reGolangciDetect.Match(input)
 }
 
 // compressGolangciLint groups golangci-lint violations by file, preserving the
 // linter names and the non-zero signal. Unrecognized transcripts pass through.
 func compressGolangciLint(input []byte) ([]byte, bool, string) {
-	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00") {
+	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00\x1b") {
 		return input, false, "golangci_lint_invalid_or_incomplete_input"
 	}
 

@@ -226,7 +226,7 @@ preserve  go-list      go_list_output.txt
 
 # Go linters (pass-through)
 preserve  staticcheck    staticcheck_output.txt
-preserve  golangci-lint  golangci_lint_output.txt
+preserve  golangci_lint  golangci_lint_output.txt
 preserve  govulncheck    govulncheck_output.txt
 
 # Cargo/Rust toolchain (pass-through)
@@ -361,3 +361,9 @@ preserve  pip-install  pip_install_output.txt
 preserve  mix    mix_output.txt
 preserve  swift  swift_output.txt
 preserve  sbt    sbt_output.txt
+
+# Linters — failure transcripts (compressed: grouped by file, counts + rule codes kept)
+clean     eslint         eslint_violations.txt
+clean     ruff           ruff_violations.txt
+clean     mypy           mypy_violations.txt
+clean     golangci_lint  golangci_lint_violations.txt
