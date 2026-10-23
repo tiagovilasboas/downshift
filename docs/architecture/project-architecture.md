@@ -420,7 +420,8 @@ type Adapter interface {
 
 ## Referências
 
-- BDI Architecture: [docs/architecture/agentic-bdi.md](agentic-bdi.md)
+- BDI Architecture (archived): [docs/archive/agentic-bdi.md](../archive/agentic-bdi.md)
+- Architecture (live): [docs/design/architecture.md](../design/architecture.md)
 - Beta Exit Criteria: [docs/reference/beta-exit.md](../reference/beta-exit.md)
 - Harness Matrix: [docs/reference/harness-matrix.md](../reference/harness-matrix.md)
 
