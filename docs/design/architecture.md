@@ -205,7 +205,7 @@ points down or sideways to an inner package, and `core` never points back out.
  │ internal/adapters/{claudecode cursor codex opencode kirocrew         │
  │   antigravity}: parse, HarnessCapabilities, wire response. No policy │
  │   imports: core hookutil quota · hookport childend telemetry         │
- │   (claudecode also contextopt sensor lifecycleobserver)              │
+ │   (claudecode also contextopt sensor lifecycleobserver shellwrap)    │
  └──────┬───────────────────────────────────────────────────────────────┘
         ▼
  ┌─────────────────────────────────────────────────────────────────────┐
@@ -222,7 +222,9 @@ points down or sideways to an inner package, and `core` never points back out.
  │ policyfile → TierFloor    │   │ telemetry · hookport · childend       │
  │ adapt/routeadapt → Memory │   │ contextopt · sensor · server          │
  │ scoreindex → ScoreHook    │   │ benchmark · outcome · routingv2/*     │
- │ nbopinion (+nbtier) → NB  │   │ decisionintelligence                  │
+ │ nbopinion (+nbtier) → NB  │   │ decisionintelligence · accounting     │
+ │                           │   │ api · gateway · cursorbridge · replay │
+ │                           │   │ shellwrap · execwrap (compressor)     │
  └───────────────────────────┘   └───────────────────────────────────────┘
  leaf packages used by the layers above: classify semantic quotamodel paths
    fuse (classify, semantic) · session (paths, quotamodel) · hookctx · codeintel (paths)
@@ -272,12 +274,17 @@ a `<downshift-code-context>` block, or nothing. Imports no routing package.
 Measured only for latency and bytes (`dci-events.jsonl`); no benefit to answer
 quality or cost is claimed.
 
-**Output compaction (observe only).** `PostToolUse` → `sensor` records tool
-output bytes and the reduction `safe` mode would reach → `{}` (plus an optional
-status line). The model never sees a shorter result. Compaction only happens
-when the user pipes output through `downshift context compress`. Claude Code
-hooks cannot rewrite tool output, so measure-only is a platform limit, not a
-choice.
+**Output compaction.** Two paths: (1) **Shell wrapping (Claude Code only):**
+`PreToolUse` → `shellwrap.Policy` → if shell command and harness supports
+`updatedInput`, `AdviseAdapter` returns rewritten command with `downshift
+compactor -- <cmd>` prefix; the harness runs the wrapped command and
+`execwrap` compacts output in real time when the family is recognized. (2)
+**Observe-only (all harnesses):** `PostToolUse` → `sensor` records tool output
+bytes and the hypothetical reduction `safe` mode would reach → `{}` (plus an
+optional status line). The model never sees a shorter result unless the
+wrapping path ran. For manual use, the user pipes output through `downshift
+context compress` or `downshift compactor --`. Packages: `internal/shellwrap`,
+`internal/execwrap`, `internal/compressor`, `internal/sensor`.
 
 **Telemetry and stats.** appenders (`telemetry`, `childend`, `hookport`) write
 JSONL; `stats`, `report`, `session`, `watch` and `dsmon` read it.
@@ -472,10 +479,12 @@ bundled: [companions.md](../guides/companions.md).
 
 These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
 
-1. **`telemetry` is large.** 40 non-test files (events, cost, stats, report,
-   control group, rotation, pause, session tree, completion) behind one
-   package, imported by adapters, `childend`, `hookport` and `server`. A split
-   (event log and appenders vs read-outs) is proposed, not done.
+1. **`telemetry` is large.** The `internal/` tree holds 292 non-test `.go`
+   files across 43 packages as of 2026-10-23. `telemetry` alone spans events,
+   cost, stats, report, control group, rotation, pause, session tree, and
+   completion behind one package, imported by adapters, `childend`, `hookport`
+   and `server`. A split (event log and appenders vs read-outs) is proposed,
+   not done.
 2. **`init`-registered hooks in `core` (Fullstack P1-1).** The result of
    `core.Route` depends on which packages were blank-imported: the tier floor
    (`policyfile`), shadow memory (`routeadapt`), naive-Bayes (`nbopinion`) and
@@ -484,10 +493,10 @@ These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
    `nbopinion` or `routeadapt`, so they run without the tier floor and the
    opinion. Behaviour is covered at `runHookAdapter` and `core.Route` tests, but
    an adapter test alone does not prove production routing.
-3. **Import-graph sensor is partial.** `internal/archtest.TestImportGraph`
-   (run by `go test ./...`) fails on the forbidden imports listed under the
-   dependency check above. Rules outside that list are still checked by hand
-   with `go list`.
+3. **Import-graph sensor is automated.** `internal/archtest/imports_test.go`
+   (`TestImportGraph`, run by `go test ./...`) fails on the forbidden imports
+   listed under the dependency check above. Rules outside that list are still
+   checked by hand with `go list`.
 4. **Rotated log backups are not read.** `stats` prints a note and counts only
    the live `events.jsonl`; totals drop after a rotation (100 MB by default).
 5. **DCI is opt-in** and measured only for latency and injected bytes. No
