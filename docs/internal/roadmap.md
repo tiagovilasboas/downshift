@@ -1,79 +1,78 @@
 # Roadmap — Downshift (execução interna)
 
-**Atualizado:** 2026-10-22  
+**Atualizado:** 2026-10-23  
 **Autor:** Tiago Vilas Boas  
 **Fonte pública:** [`ROADMAP.md`](../../ROADMAP.md) — este doc detalha fases, pontos e dependências por trilha.
 
 ---
 
-## Estado atual (main, 2026-10-22)
+## Premissa após a semana de 20-23/10
+
+Duas descobertas reposicionam o roadmap:
+
+1. **O exit-2 do hook não entrega valor no backend em uso (A-P7).** O contrato
+   oficial do PreToolUse só bloqueia quando o Gateway controla a aprovação. Com
+   `agent.acp_backend = claude` (o setup normal) a chamada já está aprovada: o
+   hook registra mas não para nada. Quem entrega ganho real no uso diário é o
+   **hook do Claude Code reescrevendo o comando** (`CanRewriteShellCommand`, 5/5
+   honrados) e o **compactor**. A Trilha A deixa de ser "shell-wrap advise" e
+   vira **compactor-first**: o advise fica como camada inofensiva (fail-open),
+   não como fonte de economia.
+2. **O que não é código é coleta passiva, não tarefa.** As linhas de dogfood
+   (payloads child-end, control group, feedbacks) não "se fazem" — acontecem com
+   uso. Ficam listadas como coleta, fora do caminho crítico.
+
+## Estado atual (main, 2026-10-23)
 
 | Área | Status |
 |------|--------|
-| `go test ./...` | ✅ verde (61 pacotes) |
+| `go test ./...` | ✅ verde |
 | Dashboard Wave 1 (#453, #454, #451) | ✅ mergeado (#458) |
-| Git diff/show compressor | ✅ mergeado (#459) |
+| Dashboard E2E `?e2e=1` (#470) | ✅ mergeado |
+| Git diff/show compressor (#459) | ✅ mergeado |
+| `go test -v` subtestes limpos (#465) | ✅ mergeado |
+| DCI shared runner (#468) | ✅ mergeado |
+| Doc drift + CI gate G1-G3 (#460) | ✅ mergeado |
+| Setup remove linha morta do `hooks.json` A-P8 (#471) | ✅ mergeado |
 | Downshift-site Next.js M1–M4 | ✅ mergeado |
 | Downshift-site M5+M6 | 🔲 aguardando rate limit Vercel (~17h UTC 23/10) |
 
 ---
 
-## Trilha A — Performance: shell wrap agnostic
+## Trilha A — Shell wrap (encerrada como fonte de economia)
 
 **Fonte:** `docs/spikes/kirocrew-shell-policy.md`  
-**Princípio de design:** cada fase é agnóstica de harness — a camada de decisão
-(`shellWrapDecision`) e a de telemetria funcionam para qualquer harness que
-implemente a capability. KiroCrew é o piloto; Cursor e Codex entram só após
-prova ao vivo por harness.
+**Veredito após A-P7:** o exit-2 só morde no backend kiro-cli não-trusted. No
+backend em uso (claude) o hook não bloqueia — o ganho vem do rewrite do Claude
+Code e do compactor. O advise permanece ligado por ser fail-open e inofensivo,
+mas **não é mais um workstream ativo**. A expansão real de valor migrou para a
+Trilha C (compactor).
 
-| Fase | Pts | O que é | Depende de | Status |
-|------|-----|---------|------------|--------|
-| **A-P1** | 2 | KiroCrew: exit 2 com o comando já embrulhado, só nas famílias que o compactor comprime. Passthrough e `git status` ficam allow. `DOWNSHIFT_EXEC=0` e `"exec":false` mantêm allow. | nada | ✅ mergeado (#461, #462, #464) |
-| **A-P2** | 1 | Um shell ao vivo **no backend kiro-cli**: stderr chega ao modelo e o retry roda embrulhado. Se a volta morrer sem essa linha, reverter o flag | A-P1 instalado | 🔲 evidência pendente (ver achado abaixo) |
-| **A-P3** | 2 | Contar esses bloqueios na telemetria do hook (quantas vezes o retry disparou por semana) | A-P2 segurou | 🔲 |
-| **A-P4** | 2 | Parsear token do child-end num `postToolUse` real do KiroCrew | payload capturado ao vivo (não a P1) | 🔲 |
-| **A-P5** | 3 | `updated_input.command` no Cursor e no Codex, um harness por mudança | prova ao vivo por harness + A-P4 | 🔲 |
-| **A-P6** | 1 | Auditar que `downshift kirocrew` sai com 0 em todo caminho de erro, panic e timeout. No KiroCrew o gate do `PreToolUse` falha fechado: outro código, timeout (5 s no `hooks.json`) ou crash bloqueia a ferramenta. Teste que força cada falha e exige exit 0 | nada | ✅ auditado (2026-10-22) — já coberto pelos testes existentes, sem código novo necessário |
-| **A-P7** | 1 | Ler o contrato do kiro-cli em `kiro.dev/docs/hooks`: o `PreToolUse` não impede uma chamada que o kiro-cli já aprovou. Descobrir se isso explica a A-P2 não bloquear e registrar o resultado aqui | nada | ✅ lido (2026-10-22) — ver achado abaixo |
-| **A-P8** | 1 | Decidir o hook "Downshift KiroCrew" do `~/.kiro/crew/hooks.json` (`enabled: false`, aponta para `harness-downshift/downshift`): ligar apontando para o binário de `~/.local/bin`, ou remover. Doc: ele é o sistema de hooks próprio do Crew, separado do spec de agente | A-P6 | ✅ 2026-10-23 — remover. `setup kirocrew` tira a linha Downshift desse arquivo; o hook que vale continua em `agent.kiro_hooks`. Ligar a linha não faz o exit code bloquear |
+| Fase | Pts | O que é | Status |
+|------|-----|---------|--------|
+| **A-P1** | 2 | KiroCrew: exit 2 com o comando já embrulhado, só nas famílias comprimíveis. Passthrough e `git status` allow. `DOWNSHIFT_EXEC=0`/`"exec":false` allow. | ✅ mergeado (#461, #462, #464) |
+| **A-P6** | 1 | Auditar exit 0 em todo erro, panic e timeout de `downshift kirocrew` | ✅ auditado (2026-10-22) — já coberto pelos testes existentes |
+| **A-P7** | 1 | Contrato do PreToolUse: não impede chamada já aprovada pelo kiro-cli | ✅ lido (2026-10-22) — ver achado abaixo |
+| **A-P8** | 1 | `setup kirocrew` remove a linha morta "Downshift KiroCrew" do `hooks.json`; o hook que vale fica em `agent.kiro_hooks` | ✅ mergeado (#471) |
+| **A-P2** | 1 | Prova ao vivo do bloqueio no backend kiro-cli | ⛔ won't-fix no backend claude — inalcançável no setup em uso (A-P7). Reabrir só se migrar para kiro-cli não-trusted |
+| **A-P3** | 2 | Contar bloqueios do advise na telemetria | ⛔ won't-fix — conta um evento que quase nunca dispara no backend em uso |
+| **A-P4** | 2 | Parsear token do child-end num `postToolUse` real | 🔲 coleta — depende de payload capturado ao vivo (ver Trilha D) |
+| **A-P5** | 3 | `updated_input.command` no Cursor e no Codex (rewrite real, não exit-2), um harness por mudança | 🔲 depende de payload ao vivo por harness. **Este sim entrega valor**: Cursor/Codex reescrevem de verdade |
 
 **Achado de 2026-10-22: o hook `kirocrew` só atua no backend kiro-cli.** Com
 `agent.acp_backend = claude` em `~/.kiro/crew/config.json`, as sessões normais do
 KiroCrew rodam no backend do Claude: o shell passa pelo hook do Claude Code, que
 reescreve o comando no lugar (`CanRewriteShellCommand`) e já compacta. O caminho
 exit 2 (A-P1) só dispara em sessões do backend kiro-cli (as que escrevem em
-`~/.kiro/crew/audit.log`; o `tool_name` real é `shell`, não `execute_bash`). Um
-subagente `senior-staff-ai-finops` também não serve de prova: o spec dele não
-carrega o hook, só `kirocrew.json` carrega. Consequências: a A-P2 precisa de uma
-sessão kiro-cli, e A-P3/A-P4 só valem para quem usa esse backend. A flag
-`CanAdviseShellWrap` fica ligada (fail-open). Não investir mais no advise antes
-de a A-P2 ter evidência.
+`~/.kiro/crew/audit.log`; o `tool_name` real é `shell`, não `execute_bash`).
 
 **Achado de 2026-10-22 (A-P7): contrato oficial do PreToolUse no Crew.** Fonte:
 [kiro.dev/docs/crew/capabilities/hooks](https://kiro.dev/docs/crew/capabilities/hooks/)
 (atualizado 12/10/2026). Trecho exato: *"A PreToolUse hook can block only when the
 Gateway controls approval. If Kiro CLI already approved the call, the hook reports
-the event but cannot stop it."* Isso explica definitivamente por que a A-P2 não
-bloqueou nas provas: quando o kiro-cli aprova a tool antecipadamente (modo
-auto-approve / trust level), o hook roda mas não pode mais parar a chamada — apenas
-registra o evento. O exit 2 só tem efeito quando o Gateway ainda controla a aprovação
-(modo interativo / não-trusted). Consequência: `CanAdviseShellWrap` só vale para
-sessões kiro-cli em modo não-trusted. A flag permanece ligada (fail-open e inofensiva).
-
-**Arquivos tocados pela A-P1 (como entregue):**
-
-| Arquivo | Mudança |
-|---------|---------|
-| `internal/core/capabilities.go` | `CanAdviseShellWrap bool` na struct `KiroCrewCaps` |
-| `internal/adapters/kirocrew/kirocrew.go` | `ShellCommand()` para `execute_bash` quando `tool_input.command` está presente |
-| `cmd/downshift/shellrewrite.go` | Em `harness_cannot_rewrite` + `CanAdviseShellWrap` + família comprimível → `policyOutput` com `Message = d.Command` |
-| `cmd/downshift/hookrun.go` | Shell branch retorna o código de `wire.emit` em vez de sempre 0 |
-| `shellrewrite_test.go`, testes kirocrew | Block em `go test ./...`; allow em `git status`, tool não-shell, `DOWNSHIFT_EXEC=0`, Cursor |
-
-**Critério de aceite A-P1:**
-1. `go test ./...` num payload KiroCrew: exit 2, stderr contém `compact -- go test ./...`
-2. Payload Cursor com o mesmo comando: `{"permission":"allow"}`
-3. Sessão ao vivo: `execute_bash` bloqueado mostra a linha stderr ao modelo e o retry roda embrulhado
+the event but cannot stop it."* O exit 2 só tem efeito quando o Gateway ainda
+controla a aprovação (modo interativo / não-trusted). A flag `CanAdviseShellWrap`
+permanece ligada (fail-open e inofensiva).
 
 **Fora do escopo desta trilha:** routing `use_subagent` sem `model`, process reaping, log trimming, promoção do Haiku 4.5.
 
@@ -108,14 +107,21 @@ sessões kiro-cli em modo não-trusted. A flag permanece ligada (fail-open e ino
 
 ## Trilha D — Roteamento e telemetria
 
+**Código (ativo):**
+
 | Fase | Pts | O que é | Depende de | Status |
 |------|-----|---------|------------|--------|
 | **D-1** | 5 | OpenRouter part 4: shadow routing para gateway rows | parts 1–3 mergeadas | 🔲 |
 | **D-2** | 5 | OpenRouter part 5: wiring OpenCode com id `openrouter/<slug>` | D-1 | 🔲 |
-| **D-3** | 5 | DCI hook via shared runner (layering rule) + medir economia de contexto injetado antes de mudar default | — | 🔲 |
-| **D-4** | — | Child-token payloads: KiroCrew/Cursor/Codex/Antigravity (infra pronta, falta payload real) | evidência por harness (GAP-PAYLOADS) | 🔲 coleta |
-| **D-5** | — | Control group 20+ tasks para `downshift report` (hoje 14, precisa 20+) | dogfood | 🔲 coleta |
-| **D-6** | — | Economy mode: 974 feedbacks pendentes, 0 rotulados | rotulagem | 🔲 coleta |
+| **D-3** | 5 | DCI hook via shared runner (layering rule) | — | ✅ mergeado (#468) |
+
+**Coleta passiva (não é tarefa — acontece com uso, não se "faz"):**
+
+| Fase | O que falta | Como se resolve |
+|------|-------------|-----------------|
+| **D-4** | Child-token payloads: KiroCrew/Cursor/Codex/Antigravity (infra pronta, falta payload real) | usar os harnesses; capturar 1 payload ao vivo por harness |
+| **D-5** | Control group 20+ tasks para `downshift report` (hoje 14) | dogfood até somar 20+ |
+| **D-6** | Economy mode: 974 feedbacks pendentes, 0 rotulados | sessão de rotulagem dedicada |
 
 ---
 
@@ -231,19 +237,27 @@ apontando para docs atualizados parcialmente.
 
 ## Caminho crítico recomendado
 
+A Trilha A saiu do caminho crítico (A-P7: exit-2 não entrega valor no backend em
+uso). O valor real está no compactor e no dashboard.
+
 ```
-Agora:        A-P1 (shell wrap KiroCrew, 2 pts)
-              ↓ ao vivo
-Evidência:    A-P2 (1 sessão real, não é código)
-              ↓ se segurou
-Paralelo:     A-P3 (telemetria) + B-W2 (E2E Playwright) + E-M5/M6 (amanhã)
-              ↓
-Dados:        A-P4 (payload child-end) · D-4 (child-tokens) em dogfood
-              ↓ com prova
-Expansão:     A-P5 (Cursor/Codex) · D-1/D-2 (OpenRouter) · C-2 (linters)
+Agora (código, entrega direta):
+  C-2 (comprimir linters + builds)  ─ ganho no que já funciona no backend claude
+  B-W3 (% de tokens real na aba)    ─ precisa só da decisão de API shape (abaixo)
+  F-1a/F-3a (corrigir docs de "✅ Produção" que A-P7 desmentiu)
+
+Quando a Vercel liberar (~17h UTC):
+  E-M5 + E-M6 (SEO + deploy do site)
+
+Com prova real (valor, mas depende de payload ao vivo):
+  A-P5 (Cursor/Codex updated_input — rewrite de verdade, não exit-2)
+
+Coleta passiva, em paralelo ao uso:
+  D-4 (child-token payloads) · D-5 (control group) · C-5 (pass-through do go test -v)
 ```
 
-**Próxima ação imediata:** implementar A-P1 (2 pts, sem dependência, toca 4 arquivos).
+**Próxima ação de maior valor:** C-2 (comprimir linters/builds) ou B-W3 (% de
+tokens no dashboard, após a decisão de API shape).
 
 ---
 
