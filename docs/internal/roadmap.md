@@ -84,9 +84,7 @@ permanece ligada (fail-open e inofensiva).
 |------|-----|---------|------------|--------|
 | **B-W1** | 6 | #454 URL bidirecional + #453 rótulo + #451 doc (bundle reembarcado) | — | ✅ mergeado (#458) |
 | **B-W2** | 3 | DASH-2: harness E2E Playwright com flag `?e2e=1` — sensor computacional para #456 (auto-refresh re-render + Motion instável) | — | ✅ mergeado (#470) |
-| **B-W3** | 3 | DASH-1: endpoint agregado de tokens — `tokens: TokenSaving` por sessão em `/api/sessions` para mostrar % real na aba Tokens (hoje mostra taxa de switch) | decisão de API shape | 🔲 |
-
-**Decisão aberta para B-W3:** adicionar `tokens` em `/api/sessions` (cada sessão já retorna) ou criar `GET /api/tokens/aggregate` separado?
+| **B-W3** | 3 | DASH-1: campo `tokens` embutido em `/api/sessions` — `routing: TokenSaving` + `compactor?` por sessão; aba Tokens mostra donut de % real ao expandir a sessão. Decisão: campo inline (KISS/YAGNI, sem endpoint separado); front wired com `TokensSummary` | ✅ #476 API + #477 front |
 
 ---
 
@@ -159,7 +157,7 @@ Não corrigir parcialmente — o doc atual é enganoso para quem contribui.
 
 | Ação | Pts |
 |------|-----|
-| F-1a: Reescrever `agentic-bdi.md` alinhado ao código (tiers, classificador, risco, learning, hook) | 2 |
+| F-1a: ~~Reescrever `agentic-bdi.md`~~ → arquivado em `docs/archive/agentic-bdi.md`; doc já se marcava como design antigo e apontava para `architecture.md` como fonte viva; reescrever manteria drift | ✅ #475 |
 
 ### F-2: `docs/architecture/project-architecture.md` — drift moderado (1 pt)
 
@@ -183,7 +181,7 @@ Aponta para `docs/architecture/agentic-bdi.md` e `docs/architecture/project-arch
 
 | Ação | Pts |
 |------|-----|
-| F-3a: Corrigir status de cada harness (tabela com nível de evidência real, não ✅/❌ binário) | 1 |
+| F-3a: Tabela por nível de evidência real em `harness-engineer.md` (Claude Code=rewrite nativo; KiroCrew=advise-only pós-A-P7; Cursor/Codex=routing ok, sem payload; OpenCode/Antigravity=experimental) | ✅ #475 |
 | F-3b: Substituir links para `agentic-bdi.md`/`project-architecture.md` por `docs/design/architecture.md` | 1 |
 
 ### F-4: `docs/design/architecture.md` — 3 gaps internos (3 pts)
@@ -224,15 +222,12 @@ proibidos** (ex: `internal/core` importar `telemetry`). Um import proibido passa
 F-4a (contagem + sensor) — trivial, 30min, só edição de doc
 F-3b (substituir links) — trivial, remove referência a docs ruins
 F-4c (grafo de imports) — 1h, atualiza o ascii no architecture.md
-F-3a (status dos harnesses) — 1h, requer decisão de nível de evidência por harness
 F-2a (project-architecture.md) — 2h, archivar ou reescrever
-F-1a (agentic-bdi.md) — 3h, reescrita completa alinhada ao código
 F-4b (seção de compactação) — 1h, após extração shellwrap concluída
 F-5a/b (CI gate) — 2h, após confirmar o que archtest cobre hoje
 ```
 
-**Obs:** F-1a e F-2a devem ser feitos no mesmo PR para evitar que harness-engineer fique
-apontando para docs atualizados parcialmente.
+**Obs:** F-2a pode ser feito junto com F-3b (ambos tocam referências a docs antigos).
 
 ---
 
@@ -242,23 +237,25 @@ A Trilha A saiu do caminho crítico (A-P7: exit-2 não entrega valor no backend 
 uso). O valor real está no compactor e no dashboard.
 
 ```
-Agora (código, entrega direta):
-  C-2 (comprimir linters + builds)  ─ ganho no que já funciona no backend claude
-  B-W3 (% de tokens real na aba)    ─ precisa só da decisão de API shape (abaixo)
-  F-1a/F-3a (corrigir docs de "✅ Produção" que A-P7 desmentiu)
+✅ Entregue (23/10/2026):
+  C-2a (linters)  ─ eslint/ruff/mypy/golangci-lint compactam (#473)
+  C-2b (builds)   ─ go/cargo/dotnet build compactam (#474)
+  B-W3            ─ campo tokens por sessão + donut no front (#476 + #477)
+  F-1a/F-3a       ─ docs corrigidos pós-A-P7 (#475)
 
-Quando a Vercel liberar (~17h UTC):
+Próximo (código, entrega direta):
+  C-5     — medir pass-through restante do go test -v (coleta)
+  A-P5    — Cursor/Codex updated_input (payload ao vivo necessário)
+
+Quando a Vercel liberar:
   E-M5 + E-M6 (SEO + deploy do site)
 
-Com prova real (valor, mas depende de payload ao vivo):
-  A-P5 (Cursor/Codex updated_input — rewrite de verdade, não exit-2)
-
 Coleta passiva, em paralelo ao uso:
-  D-4 (child-token payloads) · D-5 (control group) · C-5 (pass-through do go test -v)
+  D-4 (child-token payloads) · D-5 (control group) · R-1/R-2 (dogfood)
 ```
 
-**Próxima ação de maior valor:** C-2 (comprimir linters/builds) ou B-W3 (% de
-tokens no dashboard, após a decisão de API shape).
+**Próxima ação de maior valor:** A-P5 (Cursor/Codex rewrite real, com payload capturado)
+ou E-M5/M6 (site) quando a Vercel liberar.
 
 ---
 
