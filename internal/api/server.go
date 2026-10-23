@@ -266,14 +266,21 @@ func isHexPrefix(v string) bool {
 
 // sessionSummary is the metadata for one session in the /api/sessions list.
 type sessionSummary struct {
-	SessionID   string `json:"session_id"`
-	Harness     string `json:"harness"`
-	FirstSeen   string `json:"first_seen"`
-	LastSeen    string `json:"last_seen"`
-	SpawnCount  int    `json:"spawn_count"`
-	Switched    int    `json:"switched"`
-	Held        int    `json:"held"`
-	TokensSaved int64  `json:"tokens_saved"`
+	SessionID   string       `json:"session_id"`
+	Harness     string       `json:"harness"`
+	FirstSeen   string       `json:"first_seen"`
+	LastSeen    string       `json:"last_seen"`
+	SpawnCount  int          `json:"spawn_count"`
+	Switched    int          `json:"switched"`
+	Held        int          `json:"held"`
+	TokensSaved int64        `json:"tokens_saved"`
+	Tokens      tokensDetail `json:"tokens"`
+}
+
+// tokensDetail exposes routing and compactor savings for one session.
+type tokensDetail struct {
+	Routing   telemetry.TokenSaving `json:"routing"`
+	Compactor *compactorPanel       `json:"compactor,omitempty"`
 }
 
 // sessionsResponse is the /api/sessions response.
@@ -335,10 +342,32 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
 
 	// Build response
 	var list []sessionSummary
+	execPath, _ := execwrap.EventsPath()
 	for _, sum := range sessions {
 		// Calculate tokens saved for this session
 		panel := telemetry.BuildPanel(events, sum.SessionID)
-		sum.TokensSaved = telemetry.TokensSavedEstimate(panel.Tokens, 0)
+		sum.Tokens.Routing = panel.Tokens
+
+		// Add compactor data for this session
+		if execPath != "" {
+			if compSum, err := execwrap.SummarizeSession(execPath, sum.SessionID); err == nil && compSum.Commands > 0 {
+				sum.Tokens.Compactor = &compactorPanel{
+					Scope:                sum.SessionID[:8],
+					Commands:             compSum.Commands,
+					Compacted:            compSum.Compacted,
+					RawBytes:             compSum.RawBytes,
+					SavedBytes:           compSum.SavedBytes,
+					EstimatedTokensSaved: compSum.EstimatedTokensSaved,
+					TokenEstimate:        compSum.TokenEstimate,
+				}
+			}
+		}
+
+		compactorTokens := int64(0)
+		if sum.Tokens.Compactor != nil {
+			compactorTokens = sum.Tokens.Compactor.EstimatedTokensSaved
+		}
+		sum.TokensSaved = telemetry.TokensSavedEstimate(sum.Tokens.Routing, compactorTokens)
 		list = append(list, *sum)
 	}
 
