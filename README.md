@@ -95,7 +95,12 @@ downshift compactor -- pnpm test
 downshift compactor -- git status
 ```
 
-**Supported tools:** Go · Rust/Cargo · Python (pytest, pip, uv, ruff, mypy) ·
+**Compresses** (output is strictly shorter): `go test`, `go test -v`, `git diff/show`,
+`eslint`, `ruff`, `mypy`, `golangci-lint`, `go build`, `cargo build`, `dotnet build`,
+`tsc`, `pytest`, `jest`, `vitest`, `playwright`, `cargo test`, `phpunit`, `gradle`, `maven`
+and more — see [harness matrix](docs/reference/harness-matrix.md) for the full list.
+
+**Allowlisted** (pass-through, safe to wrap): Go · Rust/Cargo · Python (pytest, pip, uv, ruff, mypy) ·
 Node.js (npm, pnpm, yarn, bun) · PHP (composer, phpunit, pest) · Git · Docker ·
 Kubernetes · Terraform · AWS CLI · and [70+ more](docs/reference/supported-tools.md)
 
