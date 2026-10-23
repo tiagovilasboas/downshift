@@ -95,7 +95,8 @@ permanece ligada (fail-open e inofensiva).
 | Fase | Pts | O que é | Depende de | Status |
 |------|-----|---------|------------|--------|
 | **C-1** | 8 | Git diff/show compressor com safety gate fail-open | — | ✅ mergeado (#459) |
-| **C-2** | 3 cada | Promover compressors de pass-through para compresses: linters (eslint, ruff, mypy, golangci-lint), builds (go build, cargo build, dotnet build) — um PR por grupo | corpus clean+preserve por família | 🔲 |
+| **C-2a** | 3 | Linters de pass-through para compresses: eslint, ruff, mypy, golangci-lint. Os compressors já existiam mas eram sombreados por detectores genéricos (ripgrep/tsc) e os detectores `is*` não eram multiline; movidos para antes do TSC, detectores com `(?m)`, guarda rejeita ANSI (fail-open), fixtures clean+preserve e `expectedFormat` por família | corpus clean+preserve por família | ✅ linters compactam (eslint 304→189, ruff 174→112, mypy 214→113, golangci 167→132) |
+| **C-2b** | 3 | Builds de pass-through para compresses: go build, cargo build, dotnet build. Hoje sombreados por ripgrep (`.go:L:C:`) e cargo-test (danger word `error`); exige reordenar com cuidado para não roubar search/cargo-test reais | C-2a | 🔲 |
 | **C-3** | 3 cada | Novas famílias citadas nas steerings sem compressor: `bazel`, `nx`, `psql` — avaliar volume real via `downshift learning` antes de implementar | dados de uso real | 🔲 |
 
 | **C-4** | 3 | `go test -v` com subtestes que passam sem log: Go imprime o `--- PASS` do pai e depois as linhas indentadas dos subtestes; antes qualquer subteste deixava o log inteiro passar (33 KB no `execwrap -v`). FAIL, linha de log, `=== PAUSE/CONT` e multi-pacote continuam byte-idênticos | achado ao testar o hook ao vivo | ✅ PR #465 (transcrição real: 4071 → 171 bytes) |

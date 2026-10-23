@@ -20,18 +20,21 @@ import (
 var (
 	// "path/file.py:10:1: F401 message..." — rule code is a letter run + digits.
 	reRuffViolation = regexp.MustCompile(`^(\S+?):(\d+):(\d+):\s+([A-Z]+\d+)\s+.*$`)
+	// Multiline detector for the whole-input scan (the per-line regex above is
+	// anchored for the compressor loop).
+	reRuffViolationDetect = regexp.MustCompile(`(?m)^(\S+?):(\d+):(\d+):\s+([A-Z]+\d+)\s+.*$`)
 	// "Found 3 errors." / "Found 1 error." / "Found 3 errors (2 fixable...)."
 	reRuffSummary = regexp.MustCompile(`(?m)^Found\s+(\d+)\s+errors?\b`)
 )
 
 func isRuff(input []byte) bool {
-	return reRuffSummary.Match(input) && reRuffViolation.Match(input)
+	return reRuffSummary.Match(input) && reRuffViolationDetect.Match(input)
 }
 
 // compressRuff groups ruff violations by file, preserving rule codes and the
 // non-zero signal. Unrecognized transcripts are returned byte-for-byte.
 func compressRuff(input []byte) ([]byte, bool, string) {
-	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00") {
+	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00\x1b") {
 		return input, false, "ruff_invalid_or_incomplete_input"
 	}
 	if !reRuffSummary.Match(input) {

@@ -21,6 +21,9 @@ import (
 var (
 	// "path/file.py:10: error: message  [code]"  (column optional: ":10:5:")
 	reMypyViolation = regexp.MustCompile(`^(\S+?):(\d+):(?:(\d+):)?\s+(error|warning):\s+.*?(?:\[([a-z-]+)\])?\s*$`)
+	// Multiline detector for the whole-input scan (the per-line regex above is
+	// anchored for the compressor loop).
+	reMypyViolationDetect = regexp.MustCompile(`(?m)^(\S+?):(\d+):(?:(\d+):)?\s+(?:error|warning):\s+.*$`)
 	// "path/file.py:10: note: ..." — context, ignored but allowed.
 	reMypyNote = regexp.MustCompile(`^(\S+?):(\d+):(?:(\d+):)?\s+note:\s+.*$`)
 	// "Found 2 errors in 1 file (checked 5 source files)"
@@ -28,13 +31,13 @@ var (
 )
 
 func isMypy(input []byte) bool {
-	return reMypySummary.Match(input) && reMypyViolation.Match(input)
+	return reMypySummary.Match(input) && reMypyViolationDetect.Match(input)
 }
 
 // compressMypy groups mypy type errors by file, preserving error codes where
 // present and the non-zero signal. Unrecognized transcripts pass through.
 func compressMypy(input []byte) ([]byte, bool, string) {
-	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00") {
+	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00\x1b") {
 		return input, false, "mypy_invalid_or_incomplete_input"
 	}
 	if !reMypySummary.Match(input) {

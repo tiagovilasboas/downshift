@@ -292,6 +292,27 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatCargoTest, true
 	}
 
+	// Linters (eslint, ruff, mypy, golangci-lint) carry file:line:col grammars
+	// that the generic TSC and ripgrep heuristics below would otherwise claim.
+	// Each detector requires a tool-specific fingerprint (a summary line plus a
+	// rule-coded violation, or the "(linter)" suffix golangci stamps on every
+	// row), so a real tsc, cargo, or search transcript never matches here. The
+	// compressors group violations by file and fail open on any unrecognised
+	// line, keeping every error and warning count. isError is false: a non-zero
+	// exit is preserved raw by CompressExit before this format ever compacts.
+	if isEslint(input) {
+		return FormatEslint, false
+	}
+	if isRuff(input) {
+		return FormatRuff, false
+	}
+	if isMypy(input) {
+		return FormatMypy, false
+	}
+	if isGolangciLint(input) {
+		return FormatGolangciLint, false
+	}
+
 	// 8. TSC
 	if isTSC(input) {
 		if reTSCError.Match(input) {
@@ -370,19 +391,9 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatFileList, false
 	}
 
-	// 16. Linters
-	if isEslint(input) {
-		return FormatEslint, false
-	}
-	if isRuff(input) {
-		return FormatRuff, false
-	}
-	if isMypy(input) {
-		return FormatMypy, false
-	}
-	if isGolangciLint(input) {
-		return FormatGolangciLint, false
-	}
+	// 16. Linters: eslint/ruff/mypy/golangci-lint are detected earlier (before
+	// TSC) so the generic heuristics do not claim them. cargo clippy shares the
+	// cargo test grammar, so it stays here after the test-suite checks.
 	if isCargoClippy(input) {
 		return FormatCargoClippy, false
 	}

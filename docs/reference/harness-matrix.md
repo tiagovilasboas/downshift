@@ -367,7 +367,7 @@ written. The family name is the only command fact telemetry keeps.
 | `yarn-build` | `yarn build` | passes through |
 | `bun-test` | `bun test` | passes through |
 | `bun-build` | `bun build` | passes through |
-| `eslint` | `eslint` | passes through |
+| `eslint` | `eslint` | compresses |
 | `prettier` | `prettier` | passes through |
 | `biome` | `biome` | passes through |
 | `mysql-query` | `mysql -e <read-only statement>` | passes through |
@@ -436,7 +436,7 @@ written. The family name is the only command fact telemetry keeps.
 | `go-get` | `go get` | passes through |
 | `go-work` | `go work` | passes through |
 | `staticcheck` | `staticcheck` | passes through |
-| `golangci-lint` | `golangci-lint` | passes through |
+| `golangci-lint` | `golangci-lint` | compresses |
 | `govulncheck` | `govulncheck` | passes through |
 | `cargo-build` | `cargo build` | passes through |
 | `cargo-run` | `cargo run` | passes through |
@@ -455,8 +455,8 @@ written. The family name is the only command fact telemetry keeps.
 | `pip-check` | `pip check` | passes through |
 | `uv-pip` | `uv pip <read or install form>` | passes through |
 | `uv-run` | `uv run <command>` | passes through |
-| `ruff` | `ruff` | passes through |
-| `mypy` | `mypy` | passes through |
+| `ruff` | `ruff` | compresses |
+| `mypy` | `mypy` | compresses |
 | `black` | `black` | passes through |
 | `isort` | `isort` | passes through |
 | `pyright` | `pyright` | passes through |
