@@ -56,7 +56,7 @@ func isDotnetBuild(input []byte) bool {
 // banner, the "->" output artifacts and the final summary. An input with any
 // unrecognized line, or no diagnostics to group, is returned byte-for-byte.
 func compressDotnetBuild(input []byte) ([]byte, bool, string) {
-	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00") {
+	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00\x1b") {
 		return input, false, "dotnet_build_invalid_or_incomplete_input"
 	}
 	if !reDotnetBuildDiagM.Match(input) {

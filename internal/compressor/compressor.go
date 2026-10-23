@@ -281,6 +281,23 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatCypress, false
 	}
 
+	// Build errors: cargo build and dotnet build carry compiler diagnostics
+	// that the cargo-test (step 7) and TSC heuristics below would otherwise
+	// claim (a rustc "error[E...]:" header reads as a cargo-test error; an
+	// MSBuild "file(line,col): error CODE:" reads as cargo-test via the "FAILED"
+	// marker). Each detector requires a build-specific fingerprint and cargo
+	// build excludes any cargo-test transcript, so a real test run never
+	// matches. go build is detected later (after the linters) because its bare
+	// "file.go:line:col:" grammar overlaps golangci-lint and go vet, which must
+	// win. isError is false: a non-zero exit is preserved raw by CompressExit
+	// before this format compacts.
+	if isCargoBuild(input) {
+		return FormatCargoBuild, false
+	}
+	if isDotnetBuild(input) {
+		return FormatDotnetBuild, false
+	}
+
 	// 7. Cargo test
 	if isCargoTest(input) {
 		if reCargoTestError.Match(input) || !cargoTestLinesRecognised(input) {
@@ -311,6 +328,15 @@ func detectFormat(input []byte) (Format, bool) {
 	}
 	if isGolangciLint(input) {
 		return FormatGolangciLint, false
+	}
+
+	// go build: a "file.go:line:col: message" compiler error. Detected after the
+	// linters (golangci-lint stamps the same file.go:line grammar with a
+	// "(linter)" suffix and must win) and guarded against go vet, whose
+	// "# [package]" bracketed marker shares the shape. Checked before TSC and
+	// ripgrep, which would otherwise claim the bare file:line:col lines.
+	if isGoBuild(input) {
+		return FormatGoBuild, false
 	}
 
 	// 8. TSC
@@ -398,16 +424,9 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatCargoClippy, false
 	}
 
-	// 17. Build errors
-	if isCargoBuild(input) {
-		return FormatCargoBuild, false
-	}
-	if isGoBuild(input) {
-		return FormatGoBuild, false
-	}
-	if isDotnetBuild(input) {
-		return FormatDotnetBuild, false
-	}
+	// 17. Build errors (cargo build, go build, dotnet build) are detected
+	// earlier, before cargo test, so the test/search/tsc heuristics do not
+	// claim their compiler diagnostics.
 
 	// 18. Package managers
 	if isNpmInstall(input) {

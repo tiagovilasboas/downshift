@@ -1,0 +1,3 @@
+/path/Program.cs(12,5): error CS0103: The name 'x' does not exist [/path/App.csproj]
+Unhandled exception. System.NullReferenceException: Object reference not set.
+   at App.Program.Main(String[] args) in /path/Program.cs:line 15

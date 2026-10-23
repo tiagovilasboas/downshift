@@ -367,3 +367,11 @@ clean     eslint         eslint_violations.txt
 clean     ruff           ruff_violations.txt
 clean     mypy           mypy_violations.txt
 clean     golangci_lint  golangci_lint_violations.txt
+
+# Builds — failure transcripts (compressed: compiler diagnostics grouped by file)
+clean     go_build       go_build_violations.txt
+preserve  go_build       go_build_panic_preserved.txt
+clean     cargo_build    cargo_build_violations.txt
+preserve  cargo_build    cargo_build_panic_preserved.txt
+clean     dotnet_build   dotnet_build_violations.txt
+preserve  dotnet_build   dotnet_build_crash_preserved.txt

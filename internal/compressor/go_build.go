@@ -26,6 +26,16 @@ import (
 var (
 	// "internal/core/parse.go:12:5: message" — column may be absent.
 	reGoBuildError = regexp.MustCompile(`^(\S+\.go):(\d+):(?:(\d+):)?\s+(.*)$`)
+	// Multiline guard: at least one "file.go:line: message" compiler error
+	// anywhere in the input. The per-line reGoBuildError stays single-line for
+	// the compressor's line loop; this scans the whole transcript for detection.
+	reGoBuildErrorM = regexp.MustCompile(`(?m)^\S+\.go:\d+:(?:\d+:)?\s+\S`)
+	// go vet marks its target with a bracketed "# [package]" header that go
+	// build never prints; its diagnostics otherwise share the ".go:line:col:"
+	// grammar, so this marker keeps a vet transcript out of the build compressor.
+	reGoVetMarker = regexp.MustCompile(`(?m)^# \[`)
+	// golangci-lint stamps every violation with a trailing "(linter)" suffix.
+	reGolangciSuffix = regexp.MustCompile(`(?m)^\S+:\d+:\d+:.*\([a-z0-9_-]+\)\s*$`)
 	// "go: downloading github.com/foo/bar v1.2.3" and sibling module status.
 	reGoBuildDownloading = regexp.MustCompile(`^go: (?:downloading|extracting|finding|found|added|upgraded|downgraded)\b`)
 	// "# example.com/app/internal/core" package marker.
@@ -35,7 +45,10 @@ var (
 // isGoBuild returns true when the output carries at least one
 // "file.go:line: message" compiler error: the fingerprint of a failing build.
 func isGoBuild(input []byte) bool {
-	return reGoBuildError.Match(input)
+	if reGoVetMarker.Match(input) || reGolangciSuffix.Match(input) {
+		return false
+	}
+	return reGoBuildErrorM.Match(input)
 }
 
 // compressGoBuild groups go build errors by file, dropping the module
@@ -43,7 +56,7 @@ func isGoBuild(input []byte) bool {
 // compiler message. An input with any unrecognized line, or no errors to
 // group, is returned byte-for-byte.
 func compressGoBuild(input []byte) ([]byte, bool, string) {
-	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00") {
+	if len(input) == 0 || len(input) > MaxProcessableBytes || input[len(input)-1] != '\n' || !utf8.Valid(input) || strings.ContainsAny(string(input), "\r\x00\x1b") {
 		return input, false, "go_build_invalid_or_incomplete_input"
 	}
 
