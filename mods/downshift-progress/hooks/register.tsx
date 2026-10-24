@@ -10,12 +10,13 @@ import type { Register } from 'claude-code'
 
 import { registerAgents } from './features/agents'
 import { registerBand } from './features/band'
-import { registerFlow } from './features/flow'
+import { declareFlowTools, registerFlow } from './features/flow'
 import { COMMAND, registerStatus } from './features/status'
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register(COMMAND)
+    await declareFlowTools($)
     return next(e)
   })
   registerStatus(on)
