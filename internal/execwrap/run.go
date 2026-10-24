@@ -126,7 +126,7 @@ func Run(argv []string, o Options) (res Result) {
 	if res.Family == FamilyNone {
 		// exec is not a generic runner: only the allowlisted families run, so
 		// a wrapped command can never be anything the hook would not wrap.
-		fmt.Fprintln(o.Stderr, "downshift compact: refused: only allowlisted test, build, and status commands may run through exec")
+		fmt.Fprintf(o.Stderr, "downshift compact: refused: not allowlisted. Allowed: %s; run the command without downshift compact\n", AllowlistSummary())
 		return Result{ExitCode: ExitCannotExecute, ExitClass: ExitClassRefused, Passthrough: PassthroughRefused}
 	}
 	path, err := exec.LookPath(argv[0])
