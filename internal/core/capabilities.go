@@ -113,7 +113,7 @@ var (
 	// Child usage stays UsageNone until a real payload proves transcript_path is
 	// the child's rollout and not the parent's (2026-10-13); the end status is
 	// still recorded.
-	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true, RewritePreservesInput: true, TranscriptQuota: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone, CanInjectPromptContext: true}
+	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true, RewritePreservesInput: true, TranscriptQuota: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone, CanRewriteShellCommand: true, CanInjectPromptContext: true}
 
 	// KiroCrewCaps — KiroCrew's preToolUse hook is policy-only: its contract is
 	// exit 0 (allow) / exit 2 (block + stderr to the LLM), with NO updated_input

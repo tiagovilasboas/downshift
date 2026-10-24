@@ -210,14 +210,14 @@ func (e fakeShellEvent) ShellRewrite(c string) (any, error) {
 
 func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 	withExec(t, true, nil, true)
-	for _, n := range []string{"codex", "antigravity", "opencode", "unknown"} {
+	for _, n := range []string{"antigravity", "opencode", "unknown"} {
 		d := shellWrapDecision(n, "go test ./...", func(string) bool { return false })
 		if d.Rewrite || d.Reason != "harness_cannot_rewrite" || d.Family != execwrap.FamilyGoTest {
 			t.Fatalf("%s: decision = %+v", n, d)
 		}
 	}
 	out := captureStdout(func() {
-		rc := runHookAdapter("codex", strings.NewReader(`{"Command":"go test ./..."}`),
+		rc := runHookAdapter("antigravity", strings.NewReader(`{"Command":"go test ./..."}`),
 			func(b []byte) (fakeShellEvent, error) { var e fakeShellEvent; return e, json.Unmarshal(b, &e) },
 			func(fakeShellEvent) (any, string, core.Decision) {
 				t.Fatal("a shell call must not be routed")
