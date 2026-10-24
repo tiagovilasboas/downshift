@@ -28,9 +28,9 @@ tab show a different total than `/api/sessions` and `/api/session/current`.
 | E2 | 2 | `pnpm e2e` green on this machine (Chromium installed, `DOWNSHIFT_BIN` built) |
 | E3 | 3 | Same comparison against a temp event log, not only the stub, so a live accounting change cannot drift from the page |
 
-E1 is the spec in this change. E2 runs when the browser binary is present. E3
-stays open: it needs a fixture log and a dashboard start that points
-`DOWNSHIFT_EVENT_LOG` at it, which the stub flag currently bypasses.
+E1 and E3 are `compare.spec.ts` (`?e2e=1`) and `compare-live.spec.ts` (temp
+`events.jsonl` plus `exec-events.jsonl`, no stub flag). E2 is `pnpm e2e` with
+Chromium and `DOWNSHIFT_BIN`.
 
 ## Out of scope
 
