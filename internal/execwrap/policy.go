@@ -93,8 +93,9 @@ type Decision struct {
 	// Command is the wrapped command; empty when Rewrite is false.
 	Command string
 	Family  Family
-	// Argv is the command with whitespace normalised: the text a permission
-	// rule of the original command is matched against.
+	// Argv is the command with whitespace normalised and its leading env
+	// assignments removed: the text a permission rule is matched against, so a
+	// deny rule on `go test` still applies to `FOO=1 go test`.
 	Argv string
 	// Segments are the other commands of a compound shape (`cd <dir>`,
 	// `tail -N`), kept as written; each must also match no deny or ask rule.
@@ -121,9 +122,10 @@ const (
 // letters, digits, space and - _ . / : = , + @ %), so no pipe, list,
 // redirection, expansion, substitution, quote, glob, escape, comment, tilde
 // or newline can appear, and its first two words name an allowlisted family.
-// Env assignments and sudo fail the family check because the first word must
-// be exactly "go" or "git". The shell still parses the wrapped command, so the
-// words after the prefix expand exactly as they would have.
+// Leading NAME=value assignments are kept in front of the quoted binary and
+// skipped for the family check (policy_env.go); sudo and other prefixes fail
+// it. The shell still parses the wrapped command, so the words after the
+// prefix expand exactly as they would have.
 //
 // exe is the absolute path of the running downshift binary; the wrapped
 // command invokes exactly that file, single-quoted, never a name looked up on
@@ -158,7 +160,10 @@ func decideSimple(command, exe string) Decision {
 			return Decision{Reason: ReasonUnsafeChar}
 		}
 	}
-	argv := strings.Fields(trimmed)
+	assigns, argv := splitEnvAssignments(strings.Fields(trimmed))
+	if len(argv) == 0 {
+		return Decision{Reason: ReasonNotAllowlisted}
+	}
 	if argv[0] == "downshift" {
 		return Decision{Reason: ReasonAlreadyWrapped}
 	}
@@ -170,9 +175,13 @@ func decideSimple(command, exe string) Decision {
 	if !ok {
 		return Decision{Family: family, Reason: ReasonBadExecutable}
 	}
+	wrapped := quoted + execTail + strings.Join(argv, " ")
+	if len(assigns) > 0 {
+		wrapped = strings.Join(assigns, " ") + " " + wrapped
+	}
 	return Decision{
 		Rewrite: true,
-		Command: quoted + execTail + strings.Join(argv, " "),
+		Command: wrapped,
 		Argv:    strings.Join(argv, " "),
 		Family:  family,
 		Reason:  ReasonAllowlisted,
