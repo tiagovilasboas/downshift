@@ -3,7 +3,10 @@
 
 package execwrap
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 const exe = "/opt/ds/downshift"
 
@@ -270,5 +273,38 @@ func TestDecide_BadExecutable(t *testing.T) {
 	}
 	if q, ok := QuoteExecutable("/opt/my dir/$x/downshift"); !ok || q != "'/opt/my dir/$x/downshift'" {
 		t.Fatalf("quote = %q %v", q, ok)
+	}
+}
+
+// A lone argv word that holds spaces and only safe bytes is split; every other
+// argv comes back unchanged, so its refusal stands.
+func TestSplitSingleWord(t *testing.T) {
+	cases := []struct {
+		name string
+		argv []string
+		want []string
+	}{
+		{"quoted command", []string{"go test ./..."}, []string{"go", "test", "./..."}},
+		{"extra spaces", []string{"  git   status  "}, []string{"git", "status"}},
+		{"already split", []string{"go", "test", "./..."}, []string{"go", "test", "./..."}},
+		{"single word", []string{"go"}, []string{"go"}},
+		{"empty", []string{}, []string{}},
+		{"spaces only", []string{"   "}, []string{"   "}},
+		{"tab inside", []string{"go\ttest ./..."}, []string{"go\ttest ./..."}},
+		{"newline inside", []string{"git status\nrm -rf x"}, []string{"git status\nrm -rf x"}},
+		{"double quote", []string{`go test -run "X" ./...`}, []string{`go test -run "X" ./...`}},
+		{"dollar", []string{"go test $PKG"}, []string{"go test $PKG"}},
+		{"pipe", []string{"go test ./... | tail"}, []string{"go test ./... | tail"}},
+		{"semicolon", []string{"git status; id"}, []string{"git status; id"}},
+		{"glob", []string{"go test ./internal/*"}, []string{"go test ./internal/*"}},
+		{"redirect", []string{"go test ./... > out"}, []string{"go test ./... > out"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := SplitSingleWord(tc.argv)
+			if !reflect.DeepEqual(got, tc.want) {
+				t.Fatalf("SplitSingleWord(%q) = %q, want %q", tc.argv, got, tc.want)
+			}
+		})
 	}
 }
