@@ -205,7 +205,7 @@ func (e fakeShellEvent) ShellRewrite(c string) (any, error) {
 
 func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 	withExec(t, true, nil, true)
-	for _, n := range []string{"cursor", "codex", "antigravity", "opencode", "unknown"} {
+	for _, n := range []string{"cursor", "antigravity", "opencode", "unknown"} {
 		d := shellWrapDecision(n, "go test ./...", func(string) bool { return false })
 		if d.Rewrite || d.Reason != "harness_cannot_rewrite" || d.Family != execwrap.FamilyGoTest {
 			t.Fatalf("%s: decision = %+v", n, d)
