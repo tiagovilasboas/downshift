@@ -54,10 +54,72 @@ output, errors, subcommands, next steps).
 | U7 | `stats` becomes `report --days` (accounting-v1 D6), `--export` kept as a deprecated alias for one release | 5 | `stats`, `report` | **yes**, flags |
 | U8 | `--json` on `models list` and `feedback`; `--period` alias of `--days` | 3 | those commands | new flags only |
 
-## 4. Order
+## 4. Compactor: more commands, more harnesses (owner request, 2026-10-23)
+
+Voomp runs Playwright, PHPUnit and Jest all day. The rewrite policy (`internal/execwrap`) is a
+shared layer, so every family or shape added below serves every harness that has a shell
+channel; nothing here is built for one harness.
+
+### 4.1 Shapes and families (shared layer)
+
+Checked against `Decide` on `main`: wrapped today are `npx playwright test`, `playwright test …`,
+`npx jest`, `jest`, `npm test`, `npm run test`, `yarn test`, `pnpm test`, `phpunit`,
+`vendor/bin/phpunit`, `php artisan test`, `vendor/bin/pest`. Not wrapped: `pnpm exec playwright
+test`, `yarn playwright test`, `yarn jest`, `npm run test:e2e`, `php vendor/bin/phpunit`,
+`composer test`, `vendor/bin/paratest`, and anything under `docker compose exec <service> …`.
+Exec log: Jest 0 of 3 compacted, `pnpm test` 0 of 8, Playwright 8 of 17 (clean runs only);
+`gh run view --log` holds 2.3 MB raw with nothing compacted, more than all `go test` runs.
+
+| # | Task | Pts | Files |
+|---|------|--:|-------|
+| V1 | New shapes: `yarn jest`, `pnpm exec`/`yarn playwright test`, `php vendor/bin/phpunit`, `vendor/bin/paratest`, `composer test` | 2 | `policy_frontend.go`, `policy_backend.go` |
+| V2 | `docker compose exec <service> <allowlisted argv>` and `docker exec <container> <allowlisted argv>` | 3 | `policy_infra.go` |
+| V3 | `npm`/`pnpm`/`yarn run <script>`: resolve the script in `package.json` of the cwd and wrap when it runs Jest, Vitest or Playwright | 3 | `policy_frontend.go` |
+| V4 | Jest: confirm whether the stderr summary blocks compaction (0 of 3 compacted) and compact the summary that arrives on stderr | 3 | jest compressor |
+| V5 | Failed Jest run: keep every `●` block with its diff, cut `PASS` lines (same rule as C5) | 5 | jest compressor |
+| V6 | Failed Playwright run: keep each failed test with its error and trace link, cut `✓` lines | 5 | playwright compressor |
+| V7 | Failed PHPUnit run: keep each failure and error, cut the progress dots | 3 | phpunit compressor |
+| V8 | Jest `--coverage` table folded to the `All files` line | 2 | jest compressor |
+| V9 | `gh run view --log`: keep only the failed steps | 5 | gh compressor |
+
+V5 to V7 follow C5 and wait for its review. The rest are independent.
+
+### 4.2 Shell channel per harness (adapters only parse and emit)
+
+Read on 2026-10-23 in the official hook docs:
+
+- **Codex** (`learn.chatgpt.com/docs/hooks`): `PreToolUse` matches shell as `Bash` (unified
+  `exec_command` matches as `Bash` too); `hookSpecificOutput.updatedInput` with a string
+  `command` replaces the command; `additionalContext` adds model-visible text; `ask` is parsed
+  but not supported. Hooks are on by default and need trust review in `/hooks`.
+- **Cursor** (`cursor.com/docs/agent/hooks`): `preToolUse` matcher `Shell`, output
+  `updated_input` ("Modified tool input to use instead"; the doc's own example changes a Shell
+  `command`), `agent_message` on deny; `beforeShellExecution` has only `permission`,
+  `user_message`, `agent_message` (no rewrite, but a message to the agent: the KiroCrew advise
+  shape). Known caveat: Cursor silently discarded `updated_input` for `Task` on some plans; the
+  Shell path needs its own live proof.
+
+Today both adapters have a stub `shell.go` (`ShellCommand` returns false) and
+`CanRewriteShellCommand` is false; `setup` wires only the subagent matchers (`Task` for Cursor,
+`(^Agent$|.*spawn_agent$)` for Codex).
+
+| # | Task | Pts | Files |
+|---|------|--:|-------|
+| H1 | Codex shell rewrite: `shell.go` for tool `Bash` emitting `updatedInput.command`, `CanRewriteShellCommand: true`, `setup` adds the `PreToolUse` `Bash` entry, matrix row | 5 | `internal/adapters/codex`, `core/capabilities.go`, `setup_targets.go`, matrix |
+| H2 | Cursor shell rewrite: `shell.go` for tool `Shell` emitting `updated_input.command`, capability, `setup` adds the `preToolUse` `Shell` entry, matrix row | 5 | `internal/adapters/cursor`, caps, setup, matrix |
+| H3 | Cursor advise fallback: `beforeShellExecution` with `agent_message` "rerun as downshift compact -- …" through the shared advise path (`CanAdviseShellWrap`), for plans where `updated_input` is ignored | 3 | cursor adapter, setup |
+| H4 | Live proof on the owner's machine: one rewritten `go test` in Codex and one in Cursor, recorded in `docs/evidence` | 2 each | evidence notes |
+| H5 | `doctor`: a check per harness that the shell entry is wired and honored (counts of rewritten vs run) | 2 | doctor |
+
+### 4.3 Order
+
+V1, V2, V4, V8, H1, H2 are independent and run in parallel; V3 and V9 next; V5 to V7 after C5;
+H3 after H2; H4 after H1/H2 are installed; H5 last.
+
+## 5. Order (all sections)
 
 - Now, in parallel: C1, C2, C4.
 - Then C3 (reads C2's reasons). C5 and C6 wait for the owner.
 - Then U1, U2, U3, U5, U6 in parallel; U4 after R1 and R2 of the previous plan; U7 last; U8 any time.
 
-Total: 46 points, 14 tasks.
+Total: 46 points (sections 2 and 3) + 31 (section 4.1) + 19 (section 4.2) = 96 points, 28 tasks.
