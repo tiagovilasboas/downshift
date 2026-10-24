@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Cursor adapter:** composer baseline cache (`downshift cursor-touch` on
+  `sessionStart` and `beforeSubmitPrompt`, `~/.downshift/cursor-composer-model.json`);
+  `subagentStop` links by `subagent_id` on Cursor 3.27.12+. `downshift setup cursor`
+  wires the full hook set. Rewrite honor on Cursor remains unconfirmed.
+
 ### Removed
 
 - The vendored `filetree` mod (`mods/filetree/`, plugin `filetree@downshift`) left the repository and the marketplace (owner decision 2026-10-24); `downshift setup` no longer installs it and never uninstalls it from existing users.
