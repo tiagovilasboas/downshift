@@ -13,6 +13,18 @@ the deterministic router's post-gate `BaseTier`; it never lowers it. Its output
 has `Apply: false`, so deterministic policy remains the sole authority for
 safety, permissions, budget enforcement and final model selection.
 
+## Signal sources
+
+`SignalsFromDecision` fills the signals from fields the deterministic policy
+already computed. It never reads task text.
+
+| Signal | Source | Mapping |
+| --- | --- | --- |
+| Risk | `Decision.Risk` (`RISK_CATEGORY`), `Guards.RiskFloor` (`RISK_FLOOR`) | any category but `concurrency` → high; `concurrency` or a floor alone → moderate; opaque task → unknown; else low |
+| Budget | `Session.QuotaStatus` | `available` → available, `exhausted` → exhausted; `stale` and `unknown` → unknown |
+| Reviewed outcome | `Shadow.AdaptWould` (adapt memory, built only from `downshift feedback`) | memory picks a higher tier after a reviewed miss at this tier → failed; anything else → unknown |
+| Sensitivity | not wired | unknown |
+
 ## Jev boundary
 
 `JevAdapter` is a disabled-by-default extension point only. The repository has
