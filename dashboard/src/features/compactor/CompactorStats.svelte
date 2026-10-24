@@ -48,7 +48,7 @@
     </div>
     <div>
       <div class="text-ds-inactive">Est. tokens saved</div>
-      <div class="text-ds-body font-medium">{formatTokens(compactor.estimated_tokens_saved)}</div>
+      <div class="text-ds-body font-medium" data-testid="compactor-tokens">{formatTokens(compactor.estimated_tokens_saved)}</div>
     </div>
   </div>
 </div>
