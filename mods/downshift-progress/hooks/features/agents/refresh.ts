@@ -81,6 +81,7 @@ async function tick($: Host): Promise<void> {
   try {
     await syncTicker($)
     if (ticker !== null) await refreshFigures($)
+    redraw($) // elapsed times move even when the binary answers nothing
   } catch {
     // Next period tries again.
   }
