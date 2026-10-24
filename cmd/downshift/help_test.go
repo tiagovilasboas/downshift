@@ -132,3 +132,25 @@ func TestWantsAllHelp(t *testing.T) {
 		}
 	}
 }
+
+// Compact is the one command users type while working, so the short help
+// shows it with the -- form. The full help lists it too.
+func TestHelpListsCompact(t *testing.T) {
+	var short, full bytes.Buffer
+	usageShort(&short)
+	usage(&full)
+	for name, text := range map[string]string{"help": short.String(), "help --all": full.String()} {
+		if !strings.Contains(text, "downshift compact -- <cmd>") {
+			t.Errorf("%s does not list compact with the -- form", name)
+		}
+	}
+}
+
+// shell-init stays callable; help --all shows it as a deprecated alias of enable.
+func TestHelpAllShowsShellInitAsDeprecatedAlias(t *testing.T) {
+	var full bytes.Buffer
+	usage(&full)
+	if !strings.Contains(full.String(), "downshift shell-init") || !strings.Contains(full.String(), "Deprecated alias of enable") {
+		t.Error("help --all must show shell-init as a deprecated alias of enable")
+	}
+}

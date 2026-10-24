@@ -6,8 +6,10 @@ package telemetry
 import "github.com/tiagovilasboas/downshift/internal/core"
 
 // DirectionCatalog ranks the requested and the ran model by catalog tier
-// (small < mid < frontier). The composition root sets it at startup; with nil
-// no record can be placed, so every priced record is unattributed.
+// (small < mid < frontier), and Record writes model ids as its catalog ids
+// (canonicalizeModels). The composition root sets it at startup; with nil no
+// record can be placed, so every priced record is unattributed, and model ids
+// are recorded as the harness sent them.
 var DirectionCatalog core.Resolver
 
 // tokenDirection places one priced usage record without comparing dollars. The

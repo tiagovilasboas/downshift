@@ -45,6 +45,10 @@ func main() {
 		usageShort(os.Stderr)
 		os.Exit(2)
 	}
+	// Help is answered before anything loads: no catalog, no stdin, no telemetry.
+	if code, handled := commandHelpRequest(args, os.Stdout, os.Stderr); handled {
+		os.Exit(code)
+	}
 	// Set before the hooks: a usage record written by a hook prices its gateway
 	// run from the same snapshot the reports read.
 	registerGateways()
@@ -58,6 +62,7 @@ func main() {
 		if !loaded {
 			os.Exit(0)
 		}
+		telemetry.DirectionCatalog = cat
 		os.Exit(h.Hook(os.Stdin, cat))
 	}
 	// compact wraps a shell command; it needs no catalog, so it skips the load.
@@ -157,8 +162,7 @@ func main() {
 		}
 		os.Exit(0)
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", args[0])
-		usageShort(os.Stderr)
+		fmt.Fprintln(os.Stderr, unknownCommandLine(args[0]))
 		os.Exit(2)
 	}
 }
