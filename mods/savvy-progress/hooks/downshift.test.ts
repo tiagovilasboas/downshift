@@ -17,7 +17,32 @@ const PANEL = {
   tokens_saved_estimate: 73980, // routing 58620 + Compactor 15360
   compactor: { commands: 4, compacted: 3, raw_bytes: 90000, saved_bytes: 61440, estimated_tokens_saved: 15360, token_estimate: 'estimated: saved_bytes / 4' },
   by_agent_type: [{ agent_type: 'general-purpose', line: 'general-purpose: 62% work · 58% cache', tokens: { work_saved: 620, cache_saved: 58000 } }],
+  report: {
+    tokens_saved_estimate: 73980,
+    routing: { work_saved: 620, cache_saved: 58000 },
+    compactor: { commands: 4, compacted: 3, raw_bytes: 90000, saved_bytes: 61440, tokens: 15360 },
+    held: 1,
+    held_guardrail: 0,
+    upshift_not_applied: 0,
+    model_switched: 1,
+    effort_changed: 0,
+    display: {
+      tokens_saved: 'Tokens saved (estimate): 74k (last 30 days: routing + compactor)',
+      routing: 'saved 62% of work · 58% of cache',
+      compactor: 'Commands: 4 · Compacted: 3',
+    },
+    scope: { kind: 'days', days: 30 },
+  },
   spawns: [{ tool_use: T1, state: 'switched', from_model: 'claude-opus-5-5', to_model: 'claude-sonnet-5-5', label: 'opus → sonnet (mid)', tokens_label: '48k tokens · saved from opus', tokens: { work_saved: 620, cache_saved: 58000 } }],
+}
+
+// The text of the first tile, read from the svg the desktop panel draws.
+const tileSource = async ($: Engine, on: On, panel: object): Promise<string> => {
+  await world($, on, { stdout: JSON.stringify(panel) }, 'S-1')
+  const ui = await $.ui.mount({ plugin: PLUGIN, surface: 'desktop', component: 'Pane', requestId: 'savvy-agents', props: pane })
+  const drawn = (await ui.findAll({ type: 'Svg' })).map(el => String(el.props.source)).join('')
+  await ui.unmount()
+  return drawn
 }
 
 const world = async ($: Engine, on: On, answer: { stdout?: string; exitCode?: number }, sessionId?: string, argvs: string[][] = []) => {
@@ -255,16 +280,33 @@ test('crew badge: a finished agent still inside the window is counted with the r
   expect(await crewLabel($)).toBe('×3')
 })
 
-test('tokens saved: one tile and the summary draw the estimated total, routing plus Compactor', async ($, on) => {
-  await world($, on, { stdout: JSON.stringify(PANEL) }, 'S-1')
+test('tokens saved: the summary draws the report total, the tile prints the report display verbatim with its scope', async ($, on) => {
+  const tile = await tileSource($, on, PANEL)
   expect(await shows($, 'Pane', /~74k tokens saved · .*$/)).toBe(true)
+  // The tile cuts the verbatim string to its width (fitText): the drawn start is the report's own text.
+  expect(tile).toMatch(/>Tokens saved \(es/)
   expect(await shows($, 'Pane', /Compactor|Downshifted|nothing to cut|KB saved/)).toBe(false)
 })
 
-test('tokens saved: an older binary without the total falls back to the routing tokens', async ($, on) => {
-  const { tokens_saved_estimate: _t, ...old } = PANEL
-  await world($, on, { stdout: JSON.stringify(old) }, 'S-1')
-  expect(await shows($, 'Pane', /~59k tokens saved/)).toBe(true)
+test('tokens saved: the tile label names the report window', async ($, on) => {
+  expect(await tileSource($, on, PANEL)).toContain('Tokens saved · 30 days')
+})
+
+test('tokens saved: a session-scoped report says this session', async ($, on) => {
+  expect(await tileSource($, on, { ...PANEL, report: { ...PANEL.report, scope: { kind: 'session' } } })).toContain('Tokens saved · this ses')
+})
+
+test('tokens saved: an older binary without report draws its tokens_saved_estimate and no scope', async ($, on) => {
+  const { report: _r, ...old } = PANEL
+  const tile = await tileSource($, on, old)
+  expect(await shows($, 'Pane', /~74k tokens saved/)).toBe(true)
+  expect(tile).not.toContain('days')
+})
+
+test('tokens saved: an older binary without any total draws zero, never a routing sum', async ($, on) => {
+  const { report: _r, tokens_saved_estimate: _t, ...old } = PANEL
+  await tileSource($, on, old)
+  expect(await shows($, 'Pane', /~\d/)).toBe(false)
 })
 
 test('tokens saved: without a session the total is withheld', async ($, on) => {
@@ -273,7 +315,8 @@ test('tokens saved: without a session the total is withheld', async ($, on) => {
 })
 
 test('tokens saved: zero carries no estimate marker', async ($, on) => {
-  await world($, on, { stdout: JSON.stringify({ ...PANEL, tokens_saved_estimate: 0 }) }, 'S-1')
+  const zero = { ...PANEL, tokens_saved_estimate: 0, report: { ...PANEL.report, tokens_saved_estimate: 0 } }
+  await world($, on, { stdout: JSON.stringify(zero) }, 'S-1')
   expect(await shows($, 'Pane', /~0|~/)).toBe(false)
 })
 

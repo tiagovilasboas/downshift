@@ -58,6 +58,9 @@ const STRINGS = {
   en: {
     pane: 'Agents',
     saved: 'Tokens saved',
+    scopeDays: '{n} days',
+    scopeSession: 'this session',
+    scopeAll: 'all time',
     tokens: 'Tokens',
     time: 'Time',
     collapse: 'Collapse',
@@ -89,6 +92,9 @@ const STRINGS = {
   ru: {
     pane: 'Агенты',
     saved: 'Токенов сэкономлено',
+    scopeDays: '{n} дн.',
+    scopeSession: 'эта сессия',
+    scopeAll: 'всё время',
     tokens: 'Токены',
     time: 'Время',
     collapse: 'Свернуть',
@@ -120,6 +126,9 @@ const STRINGS = {
   he: {
     pane: 'סוכנים',
     saved: 'טוקנים נחסכו',
+    scopeDays: '{n} ימים',
+    scopeSession: 'הסשן הזה',
+    scopeAll: 'כל הזמן',
     tokens: 'טוקנים',
     time: 'זמן',
     collapse: 'כיווץ',
@@ -477,6 +486,19 @@ const fmtCost = (usd: number): string => `$${usd < 10 ? usd.toFixed(2) : usd.toF
 /** Estimated tokens saved (routing + Compactor), from the session panel; 0 until it answers. */
 const savedOf = (): number => (ds && dsSessionKnown ? ds.total : 0)
 
+/** The window of the report's figures in the panel language ('30 days', 'this session'); '' without a report. */
+const scopeOf = (): string => {
+  const r = ds?.report
+  if (!r || !dsSessionKnown) return ''
+  const s = tr()
+  if (r.scopeKind === 'session') return s.scopeSession
+  if (r.scopeKind === 'days' && r.scopeDays > 0) return s.scopeDays.replace('{n}', String(r.scopeDays))
+  return s.scopeAll
+}
+
+/** The tile's figure: the report's display string verbatim; without a report, the estimated total as before. */
+const savedTile = (): string => (ds && dsSessionKnown && ds.report ? ds.report.tokensSaved : fmtSaved())
+
 /** The final figure, `tokens_saved_estimate` from the session panel: routing tokens saved in this session plus the Compactor's estimate (bytes / 4); the mod only draws it. `~` marks it an estimate. */
 const fmtSaved = (): string => {
   const n = savedOf()
@@ -649,11 +671,16 @@ const headerSvg = (W: number, title: string, t: ReturnType<typeof totals>): stri
     W,
     headerHeight(title),
     `${title ? `<text class="t" ${startText(W, 0, 15)} font-family="${FONT}" font-size="14" font-weight="600">${xml(fitText(title, 14, W))}</text>` : ''}
-${tile(0, s.saved, fmtSaved())}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
+${tile(0, savedLabel(), savedTile())}${tile(1, s.tokens, fmtTokens(t.tokens))}${tile(2, s.time, fmtTime(t.time))}`,
   )
 }
 
 const headerHeight = (title: string): number => (title ? 72 : 44)
+
+const savedLabel = (): string => {
+  const scope = scopeOf()
+  return scope ? `${tr().saved} · ${scope}` : tr().saved
+}
 
 // The task's own progress when the worker reports steps; a finished run is full.
 const progressOf = (a: AgentRun): number | null => {
@@ -774,13 +801,16 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 
 type DsSpawn = { tool_use?: string; label: string; saved: number }
 // modelSwitched and effortChanged are absent from an older binary: undefined, and the summary keeps `N switched`.
+// The report's figures the tile prints: the display string as Downshift wrote it, and the window it covers.
+type DsReport = { tokensSaved: string; scopeKind: string; scopeDays: number }
 type DsView = {
   switched: number
   held: number
   modelSwitched?: number
   effortChanged?: number
-  saved: number // routing tokens moved to a smaller model, this session
-  total: number // tokens_saved_estimate: routing + Compactor estimate; falls back to `saved` on an older binary
+  moved: boolean // this session's routing put tokens on a smaller model (a flag; the counts are Downshift's)
+  report?: DsReport // absent on an older binary
+  total: number // tokens_saved_estimate: the report's, else the top-level one; 0 when neither is there
   spawns: DsSpawn[]
 }
 
@@ -801,19 +831,28 @@ const dsParse = (raw: unknown): DsView | null => {
   const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : 0)
   const str = (x: unknown, max: number) => (typeof x === 'string' ? x.slice(0, max) : '')
   const opt = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
+  type Saved = { work_saved?: unknown; cache_saved?: unknown }
   const raw2 = raw as {
-    tokens?: { work_saved?: unknown; cache_saved?: unknown }
+    tokens?: Saved
     tokens_saved_estimate?: unknown
     model_switched?: unknown
     effort_changed?: unknown
+    report?: {
+      tokens_saved_estimate?: unknown
+      display?: { tokens_saved?: unknown }
+      scope?: { kind?: unknown; days?: unknown }
+    }
   }
+  const rep = raw2.report
+  const display = typeof rep?.display?.tokens_saved === 'string' ? rep.display.tokens_saved.slice(0, 200) : ''
   return {
     switched: num(v.switched),
     held: num(v.held),
     modelSwitched: opt(raw2.model_switched),
     effortChanged: opt(raw2.effort_changed),
-    saved: num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
-    total: opt(raw2.tokens_saved_estimate) ?? num(raw2.tokens?.work_saved) + num(raw2.tokens?.cache_saved),
+    moved: num(raw2.tokens?.work_saved) > 0 || num(raw2.tokens?.cache_saved) > 0,
+    report: display ? { tokensSaved: display, scopeKind: str(rep?.scope?.kind, 20), scopeDays: num(rep?.scope?.days) } : undefined,
+    total: opt(rep?.tokens_saved_estimate) ?? opt(raw2.tokens_saved_estimate) ?? 0,
     spawns: v.spawns
       .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
       .map(x => ({
@@ -898,7 +937,7 @@ const dsSummary = (): string => {
   // Without a session id the log's latest session could be another one: draw no figure.
   if (!ds || !dsSessionKnown) return ''
   const effort = ds.effortChanged ?? 0
-  if (ds.switched + ds.held + effort + (ds.modelSwitched ?? 0) === 0 && ds.saved === 0) return ''
+  if (ds.switched + ds.held + effort + (ds.modelSwitched ?? 0) === 0 && !ds.moved) return ''
   const parts: string[] = ['Downshift']
   // A newer binary reports model and effort changes apart: `N model · M effort` replaces `N switched`.
   if (effort > 0) parts.push(`${ds.modelSwitched ?? 0} model`, `${effort} effort`)
