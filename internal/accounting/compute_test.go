@@ -125,6 +125,44 @@ func TestCompute_DisplayNamesTheWindow(t *testing.T) {
 	}
 }
 
+func TestDisplay_ShortAndScopeLabel(t *testing.T) {
+	cases := []struct {
+		name  string
+		total int64
+		want  string
+	}{
+		{"zero", 0, "0"},
+		{"hundreds", 999, "999"},
+		{"thousands", 15121, "15k"},
+		{"millions", 20_700_000, "20.7M"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			d := displayOf(Numbers{Scope: Scope{Kind: ScopeAll}, TokensSavedEstimate: c.total})
+			if d.TokensSavedShort != c.want {
+				t.Errorf("tokens_saved_short = %q, want %q", d.TokensSavedShort, c.want)
+			}
+		})
+	}
+
+	scopes := []struct {
+		scope Scope
+		want  string
+	}{
+		{Scope{Kind: ScopeDays, Days: 30}, "last 30 days"},
+		{Scope{Kind: ScopeSession, SessionHash: "abc"}, "this session"},
+		{Scope{Kind: ScopeAll}, "all time"},
+	}
+	for _, s := range scopes {
+		t.Run(s.want, func(t *testing.T) {
+			n := Compute(nil, nil, s.scope)
+			if n.Display.ScopeLabel != s.want {
+				t.Errorf("scope_label = %q, want %q", n.Display.ScopeLabel, s.want)
+			}
+		})
+	}
+}
+
 func TestNumbers_JSONKeys(t *testing.T) {
 	b, err := json.Marshal(Compute(nil, nil, Scope{Kind: ScopeSession, SessionHash: "abc"}))
 	if err != nil {
@@ -138,6 +176,13 @@ func TestNumbers_JSONKeys(t *testing.T) {
 		"held_guardrail", "upshift_not_applied", "tokens_saved_estimate", "display"} {
 		if _, ok := m[key]; !ok {
 			t.Errorf("Numbers JSON lacks %q: %s", key, b)
+		}
+	}
+	var d map[string]json.RawMessage
+	json.Unmarshal(m["display"], &d)
+	for _, key := range []string{"tokens_saved", "tokens_saved_short", "scope_label", "routing", "compactor"} {
+		if _, ok := d[key]; !ok {
+			t.Errorf("display JSON lacks %q", key)
 		}
 	}
 	var c map[string]json.RawMessage
