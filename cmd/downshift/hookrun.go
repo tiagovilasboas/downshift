@@ -147,6 +147,16 @@ func (f spawnFate) recordOutcome(event *telemetry.Event) {
 	}
 }
 
+// recordedDecisions returns the routing decisions one spawn produced: every
+// entry when the adapter output reports them (a spawn_run batch), otherwise
+// the single decision returned by the handler.
+func recordedDecisions(first core.Decision, out any) []core.Decision {
+	if multi, ok := out.(interface{ Decisions() []core.Decision }); ok && multi.Decisions() != nil {
+		return multi.Decisions()
+	}
+	return []core.Decision{first}
+}
+
 // runHookAdapter is the single hook-runner template shared by all harness
 // adapters, rewrite and policy mode alike. It reads a JSON event from in,
 // calls handle, hands the result to wire, and records telemetry for any
@@ -285,7 +295,12 @@ func runHookAdapter[E any](
 	warnSessionUnknown(decision)
 	// Record telemetry only when a real routing decision was made.
 	// A zero Decision (Harness == "") means the event was not a subagent spawn.
-	if decision.Harness != "" {
+	// A batch adapter reports one decision per entry; each gets its own record.
+	for _, routed := range recordedDecisions(decision, out) {
+		decision := routed
+		if decision.Harness == "" {
+			continue
+		}
 		// Spawn-time surface. Honor and usage stay unobserved until that
 		// harness's own post-spawn port records them. One line, spawn events only.
 		fmt.Fprintf(os.Stderr, "downshift: honor=unobserved quota=%s usage=unobserved\n", telemetry.ProjectQuota(decision.Session.QuotaStatus, decision.Session.CreditHeld))
@@ -349,7 +364,8 @@ func runHookAdapter[E any](
 			fmt.Fprintf(os.Stderr, "downshift: spawn %s\n", spawn.Line())
 		}
 		_ = telemetry.WriteLive(spawn)
-		if len(taskText) > 0 {
+		// A batch carries no top-level task text, so it gets no feedback id.
+		if len(taskText) > 0 && taskText[0](ev) != "" {
 			if id, err := training.RecordRoutedDecision(taskText[0](ev), decision); err == nil && id != "" {
 				fmt.Fprintf(os.Stderr, "downshift: feedback id %s (run `downshift feedback %s success|retry|failed` after review)\n", id, id)
 			}
