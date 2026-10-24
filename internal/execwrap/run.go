@@ -113,7 +113,8 @@ var expectedFormat = map[Family]compressor.Format{
 // with the program's own status. Only the allowlisted families run (anything
 // else is refused with 126). Output keeps the order the program wrote it in.
 // With compaction on, stdout is held (see gate) and compacted only
-// when the program exited 0, wrote nothing on stderr, stayed under
+// when the program wrote nothing on stderr (and exited 0, or exited non-zero
+// in a family CompressFailed supports, which keeps every failure), stayed under
 // compressor.MaxProcessableBytes and HoldBound (when configured), and the
 // compressor recognised the family's own format. Otherwise it is byte-identical.
 // Any internal error prints the raw output: output is never lost.
@@ -169,7 +170,7 @@ func Run(argv []string, o Options) (res Result) {
 
 	res.ExitCode, res.ExitClass = exitStatus(cmd.Wait())
 	release()
-	res.RawBytes, res.EmittedBytes, res.Compacted, res.Passthrough = g.finish(res.ExitCode == 0, expectedFormat[res.Family])
+	res.RawBytes, res.EmittedBytes, res.Compacted, res.Passthrough = g.finish(res.ExitCode, expectedFormat[res.Family])
 	return res
 }
 
@@ -281,17 +282,18 @@ func (w stderrWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-// finish writes any still-held stdout, compacted when the exit code was 0,
+// finish writes any still-held stdout, compacted (a failed run only for the
+// formats CompressFailed supports),
 // nothing was released early and the compressor applied the expected format,
 // raw otherwise. It returns the raw and emitted byte counts and, when the
 // output was not compacted, the Passthrough reason. Output that streamed
 // before the gate decided has no reason beyond a non-zero exit.
-func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64, compacted bool, passthrough string) {
+func (g *gate) finish(exitCode int, want compressor.Format) (raw, emitted int64, compacted bool, passthrough string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	raw = g.nOut + g.nErr
 	if g.streaming {
-		if !exitZero {
+		if exitCode != 0 {
 			passthrough = PassthroughNonZeroExit
 		}
 		return raw, raw, false, passthrough
@@ -303,7 +305,7 @@ func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64
 	g.streaming = true // a timer that fires after finish finds nothing to flush
 	g.buf = bytes.Buffer{}
 	var out []byte
-	out, passthrough = compactOutput(exitZero, data, want)
+	out, passthrough = compactOutput(exitCode, data, want)
 	compacted = passthrough == ""
 	_, _ = g.out.Write(out)
 
@@ -340,18 +342,21 @@ func observeUncompacted(hook func([]string, []byte, Family), argv []string, data
 }
 
 // compactOutput returns the bytes to print and, when they are raw, why. A
-// non-zero exit is checked first: a failed run always passes through.
-func compactOutput(exitZero bool, data []byte, want compressor.Format) ([]byte, string) {
+// failed run goes through the family's failure compressor (CompressFailed):
+// every failure line is kept and only passing noise is cut; when that is not
+// possible the run passes through whole, reason non-zero exit.
+func compactOutput(exitCode int, data []byte, want compressor.Format) ([]byte, string) {
 	switch {
-	case !exitZero:
-		return data, PassthroughNonZeroExit
 	case len(data) == 0:
 		return data, PassthroughSmallOutput
 	case want == "":
 		return data, PassthroughUnrecognized
 	}
-	out, reason := compactSafely(data, want)
+	out, reason := compactSafely(data, want, exitCode)
 	if reason != "" {
+		if exitCode != 0 {
+			reason = PassthroughNonZeroExit
+		}
 		return data, reason
 	}
 	return out, ""
@@ -364,14 +369,17 @@ const noGainReason = "no_compression_gain"
 
 // compactSafely runs the compressor under recover: a compressor bug prints
 // the raw output instead. It returns the summary and marker, or the reason
-// the output stays raw.
-func compactSafely(data []byte, want compressor.Format) (out []byte, reason string) {
+// the output stays raw. A non-zero exit uses the failure compressor.
+func compactSafely(data []byte, want compressor.Format, exitCode int) (out []byte, reason string) {
 	defer func() {
 		if recover() != nil {
 			out, reason = nil, PassthroughUnrecognized
 		}
 	}()
 	r := compressor.CompressExit(data, compressor.ModeSafe, 0)
+	if exitCode != 0 {
+		r = compressor.CompressFailed(data, want)
+	}
 	if r.Format != want {
 		return nil, PassthroughUnrecognized
 	}
