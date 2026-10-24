@@ -73,10 +73,22 @@ var harnessRegistry = map[string]harnessEntry{
 			return runHookAdapter(
 				"cursor",
 				in,
-				func(b []byte) (cursor.Event, error) { var e cursor.Event; return e, json.Unmarshal(b, &e) },
-				func(e cursor.Event) (any, string, core.Decision) { return cursor.Handle(e, catalog) },
-				printCursorAllow,
-				func(e cursor.Event) string { return e.TaskText() },
+				// The payload is either a preToolUse Event or a beforeShellExecution
+				// ShellExec; the shell advise path answers the latter.
+				cursor.ParsePayload,
+				func(e any) (any, string, core.Decision) {
+					if ev, ok := e.(cursor.Event); ok {
+						return cursor.Handle(ev, catalog)
+					}
+					return cursor.Output{Permission: "allow"}, "", core.Decision{}
+				},
+				cursorWire{printCursorAllow},
+				func(e any) string {
+					if ev, ok := e.(cursor.Event); ok {
+						return ev.TaskText()
+					}
+					return ""
+				},
 			)
 		},
 		Port: portPtr(cursor.Port()),
