@@ -65,7 +65,11 @@ func runFeedback(args []string) int {
 		}
 		return 0
 	}
-	if len(args) == 0 || args[0] == "list" {
+	if len(args) == 0 {
+		fmt.Fprint(os.Stderr, helpTopics["feedback"])
+		return 2
+	}
+	if args[0] == "list" {
 		pendingOnly := len(args) == 2 && args[1] == "--pending"
 		if len(args) > 2 || (len(args) == 2 && !pendingOnly) {
 			fmt.Fprintln(os.Stderr, "usage: downshift feedback list [--pending] | stats")
