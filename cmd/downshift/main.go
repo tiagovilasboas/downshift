@@ -115,6 +115,8 @@ func main() {
 		os.Exit(runReport(args[1:], os.Stdout, os.Stderr))
 	case "probe":
 		os.Exit(runProbe(args[1:], os.Stdin, os.Stdout, os.Stderr))
+	case "cursor-touch":
+		os.Exit(runCursorTouch(os.Stdin))
 	case "session":
 		os.Exit(runSession(args[1:], os.Stdout, os.Stderr, catalog))
 	case "watch":

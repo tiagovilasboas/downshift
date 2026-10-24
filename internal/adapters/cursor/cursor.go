@@ -27,6 +27,9 @@ type Event struct {
 	// empty in places, so it is the fallback source for the project directory.
 	WorkspaceRoots []string `json:"workspace_roots,omitempty"`
 	CorrelationID  string   `json:"correlation_id,omitempty"`
+	// SessionID is Cursor's conversation/session id on preToolUse (3.27+).
+	SessionID      string `json:"session_id,omitempty"`
+	ConversationID string `json:"conversation_id,omitempty"`
 	// ToolUseID is the harness id of this tool call (documented in its hook payload).
 	ToolUseID string          `json:"tool_use_id,omitempty"`
 	ToolName  string          `json:"tool_name"`
@@ -45,10 +48,17 @@ type Event struct {
 	IncludedModels    *[]string       `json:"included_models,omitempty"`
 	UnavailableModels *[]string       `json:"unavailable_models,omitempty"`
 	UsageQuota        *quota.Snapshot `json:"usage_quota,omitempty"`
+	// TranscriptPath is the parent conversation JSONL (Claude-shaped). Used when
+	// model_id and model are absent on Task preToolUse (live 3.27.12).
+	TranscriptPath string `json:"transcript_path,omitempty"`
 }
 
 // ToolUseIdentifier returns the harness id of this tool call, if any.
 func (ev Event) ToolUseIdentifier() string { return ev.ToolUseID }
+
+// SessionIdentifier returns the session id for telemetry correlation when
+// Cursor sends session_id on preToolUse (live probe 3.27.12).
+func (ev Event) SessionIdentifier() string { return ev.SessionID }
 
 // ProjectDir returns the working directory the harness reported, if any.
 func (ev Event) ProjectDir() string {
@@ -76,15 +86,10 @@ func (ev Event) RequestedReasoningEffort() string {
 // RequestedModel returns the model received before Downshift emitted a rewrite.
 func (ev Event) RequestedModel() string {
 	var ti map[string]any
-	if json.Unmarshal(ev.ToolInput, &ti) == nil {
-		if model := hookutil.StringField(ti, "model"); model != "" && model != "inherit" {
-			return model
-		}
+	if json.Unmarshal(ev.ToolInput, &ti) != nil {
+		return baselineCurrentModel(ev, nil)
 	}
-	if ev.ModelID != "" {
-		return ev.ModelID
-	}
-	return ev.Model
+	return baselineCurrentModel(ev, ti)
 }
 
 // TaskText returns the task content used for local, prompt-free feature
@@ -109,6 +114,7 @@ type Output struct {
 // Returns the hook output, a human-readable note, and the full routing Decision
 // so callers can record telemetry without re-classifying the prompt.
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
+	touchComposer(ev)
 	var ti map[string]any
 	if err := json.Unmarshal(ev.ToolInput, &ti); err != nil {
 		return allow(), "", core.Decision{}
@@ -121,17 +127,10 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", core.Decision{}
 	}
 
-	currentModel := hookutil.StringField(ti, "model")
-	// fromParent: the baseline is the parent's model (model_id, model), not
-	// one the call names. Cursor documents inherit as the default, but a
-	// child can also run on Composer or a fast variant.
-	fromParent := currentModel == "" || currentModel == "inherit"
-	if currentModel == "" || currentModel == "inherit" {
-		currentModel = ev.ModelID
-	}
-	if currentModel == "" {
-		currentModel = ev.Model
-	}
+	tiModel := hookutil.StringField(ti, "model")
+	// fromParent: baseline from inherit, empty tool_input.model, model_id, or transcript.
+	fromParent := tiModel == "" || tiModel == "inherit"
+	currentModel := baselineCurrentModel(ev, ti)
 
 	var res core.Resolver
 	if len(r) > 0 {

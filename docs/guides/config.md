@@ -45,6 +45,7 @@ hook payload overrides them at spawn time.
 | `catalog.json` | User catalog override (`downshift models pull`) |
 | `openrouter.json` | Optional OpenRouter shadow list: recorded as `gateway_would`, never a routing target (below) |
 | `session-models.json` | Per-harness session allowlists |
+| `cursor-composer-model.json` | Cursor only: last seen composer slug per `session_id` (written by `cursor-touch` and `end cursor`; read for Task baseline when `preToolUse` omits `model`) |
 | `loop-events.jsonl` | Routing v2 training events |
 | `weights.json` | Classifier weight override |
 | `scores.json` | Public capability score cache (sources, selected source, rows); see [scores.md](../reference/scores.md) |
