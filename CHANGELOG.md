@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Compactor:** `go test` clean runs fold passed tests that logged output (#497); failed runs keep every failure line, cutting only passing noise (#491); `2>&1` and a single quoted command word are accepted (#499); `VAR=value` prefixes (#494); Jest reports on stderr compact (#505); pnpm/yarn exec, PHP and `docker compose exec` forms (#507, #506); refusal and steering lists name the allowed families for every harness (#498).
+- **Shell rewrite:** Codex (`^Bash$` PreToolUse, #503) and Cursor (`Shell` preToolUse, #512); Cursor advise fallback on `beforeShellExecution` (#512).
+- **Routing:** the subagent type is a doubt-filling signal for Claude Code (`Explore`, `Plan`, #496); `spawn_run` batches are routed per entry (#504); confident short read-only lookups classify as Simple (#492).
+- **Accounting:** one `Compute` feeds `report`, `session --panel`, the dashboard API and the mods (#489, #500, #508, #520); the panel carries the report block (#500); `tokens_saved_short` and `scope_label` (#531); `summary`, `saved_total` and `--no-report` / `--brief` on `session --panel` (#530, #540).
+- **downshift-progress** (in development, not in the marketplace yet): scaffold, flow tools, data client, band, Agents pane and roster (#528, #529, #532, #533, #535, #538, #539, #541, #542).
+- **CI:** `make check` with Windows and Linux vet; `merge_group` trigger; lefthook pre-commit (gofmt, vet, staticcheck, tests of staged packages) and pre-push gates (#522, #523, #526, #534).
+
+### Fixed
+
+- `downshift session`: switches and effort changes are counted apart; held rows split into guardrail holds and upshifts not applied (#422, #400, #509).
+- Compactor: Playwright and tsc output with danger words stay raw (#414); cover runs with no-test packages compact (#421).
+- Routing: native haiku canonicalises to `claude-haiku-5-5` (#525 closed as obsolete, fixed on main); the timing budgets run only on CI (#524).
+- Tests: the test env drops git hook variables so a test cannot rewrite the shared repo config (#536).
+
 ### Removed
 
 - The vendored `filetree` mod (`mods/filetree/`, plugin `filetree@downshift`) left the repository and the marketplace (owner decision 2026-10-24); `downshift setup` no longer installs it and never uninstalls it from existing users.
