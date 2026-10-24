@@ -15,11 +15,15 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
+// defaultReportDays is the window `downshift report` uses without --days. The
+// Agents panel uses the same window, so both read this one constant.
+const defaultReportDays = 30
+
 // runReport compares routed spawns with the built-in control group: cost per
 // completed task (API lens, priced now), tokens saved (plan lens), rework rate
 // and savings with a bootstrap interval. It only reads the event log.
 func runReport(args []string, stdout, stderr io.Writer) int {
-	days := 30
+	days := defaultReportDays
 	asJSON := false
 	for _, arg := range args {
 		switch {
