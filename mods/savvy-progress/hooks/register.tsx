@@ -496,8 +496,8 @@ const scopeOf = (): string => {
   return s.scopeAll
 }
 
-/** The tile's figure: the report's display string verbatim; without a report, the estimated total as before. */
-const savedTile = (): string => (ds && dsSessionKnown && ds.report ? ds.report.tokensSaved : fmtSaved())
+/** The tile's figure: the report's total through the token formatter (the window is in the label); without a report, the estimated total as before. */
+const savedTile = (): string => (ds && dsSessionKnown && ds.report ? fmtTokens(ds.report.tokensSavedEstimate) : fmtSaved())
 
 /** The final figure, `tokens_saved_estimate` from the session panel: routing tokens saved in this session plus the Compactor's estimate (bytes / 4); the mod only draws it. `~` marks it an estimate. */
 const fmtSaved = (): string => {
@@ -801,8 +801,8 @@ async function autoOpen($: EngineInterface, key: string): Promise<void> {
 
 type DsSpawn = { tool_use?: string; label: string; saved: number }
 // modelSwitched and effortChanged are absent from an older binary: undefined, and the summary keeps `N switched`.
-// The report's figures the tile prints: the display string as Downshift wrote it, and the window it covers.
-type DsReport = { tokensSaved: string; scopeKind: string; scopeDays: number }
+// The report's figures the tile prints: its estimated total, and the window it covers.
+type DsReport = { tokensSavedEstimate: number; scopeKind: string; scopeDays: number }
 type DsView = {
   switched: number
   held: number
@@ -839,20 +839,19 @@ const dsParse = (raw: unknown): DsView | null => {
     effort_changed?: unknown
     report?: {
       tokens_saved_estimate?: unknown
-      display?: { tokens_saved?: unknown }
       scope?: { kind?: unknown; days?: unknown }
     }
   }
   const rep = raw2.report
-  const display = typeof rep?.display?.tokens_saved === 'string' ? rep.display.tokens_saved.slice(0, 200) : ''
+  const reported = opt(rep?.tokens_saved_estimate)
   return {
     switched: num(v.switched),
     held: num(v.held),
     modelSwitched: opt(raw2.model_switched),
     effortChanged: opt(raw2.effort_changed),
     moved: num(raw2.tokens?.work_saved) > 0 || num(raw2.tokens?.cache_saved) > 0,
-    report: display ? { tokensSaved: display, scopeKind: str(rep?.scope?.kind, 20), scopeDays: num(rep?.scope?.days) } : undefined,
-    total: opt(rep?.tokens_saved_estimate) ?? opt(raw2.tokens_saved_estimate) ?? 0,
+    report: reported === undefined ? undefined : { tokensSavedEstimate: reported, scopeKind: str(rep?.scope?.kind, 20), scopeDays: num(rep?.scope?.days) },
+    total: reported ?? opt(raw2.tokens_saved_estimate) ?? 0,
     spawns: v.spawns
       .filter((x): x is DsSpawn => !!x && typeof (x as DsSpawn).label === 'string')
       .map(x => ({

@@ -283,9 +283,17 @@ test('crew badge: a finished agent still inside the window is counted with the r
 test('tokens saved: the summary draws the report total, the tile prints the report display verbatim with its scope', async ($, on) => {
   const tile = await tileSource($, on, PANEL)
   expect(await shows($, 'Pane', /~74k tokens saved · .*$/)).toBe(true)
-  // The tile cuts the verbatim string to its width (fitText): the drawn start is the report's own text.
-  expect(tile).toMatch(/>Tokens saved \(es/)
+  expect(tile).toContain('>74k</text>')
+  expect(tile).not.toContain('Tokens saved (estimate)')
   expect(await shows($, 'Pane', /Compactor|Downshifted|nothing to cut|KB saved/)).toBe(false)
+})
+
+test('tokens saved: a 7-digit total is drawn as one formatted number, no ellipsis, at the narrowest test width', async ($, on) => {
+  // 472 px is the width the tests draw at (bodyColumns 60); the label and the number both fit the tile.
+  const tile = await tileSource($, on, { ...PANEL, tokens_saved_estimate: 1234567, report: { ...PANEL.report, tokens_saved_estimate: 1234567 } })
+  expect(tile).toContain('>1.2M</text>')
+  expect(tile).toContain('Tokens saved · 30 days')
+  expect(tile).not.toContain('…')
 })
 
 test('tokens saved: the tile label names the report window', async ($, on) => {
