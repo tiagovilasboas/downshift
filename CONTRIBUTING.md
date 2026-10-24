@@ -13,6 +13,9 @@ cd downshift
 # Build
 go build -o downshift ./cmd/downshift
 
+# Gate before declaring a change done (see Before you push below)
+make check
+
 # Run tests
 go test ./...
 
@@ -28,6 +31,19 @@ go test -v ./internal/compressor/...
 - Go 1.27+
 - Git
 - Make (optional, for convenience commands)
+
+### Before you push
+
+`make check` is the gate before you declare a change done. It runs gofmt, `go vet`
+for the host, Windows and Linux (which type-checks test files for those OSes
+without running them), then `go test -count=1 ./...`. Run `go test` alone and you
+miss the Windows check: in the last 80 CI runs, 11 of 12 failures were the Windows
+job, from test files that call helpers defined behind `//go:build !windows`.
+
+- `make check-fast`: the same checks without the test run, for quick loops.
+- `make hooks`: opt in to `.githooks/pre-push`, which runs `make check-fast` on push.
+  Skip it once with `git push --no-verify`; undo with `git config --unset core.hooksPath`.
+- Windows: the hook needs Git Bash and `make`. Otherwise run `make check-fast` by hand.
 
 ---
 
@@ -294,7 +310,7 @@ test(classify): add edge case for empty prompts
 
 ### PR Checklist
 
-- [ ] Tests pass locally (`go test ./...`)
+- [ ] Gate passes locally (`make check`)
 - [ ] New compressor has test fixtures
 - [ ] Documentation updated
 - [ ] No breaking changes (or clearly marked)
