@@ -66,10 +66,10 @@ func TestSessionTree_OneSubagentWithRealCost(t *testing.T) {
 		tuse("d1", sessA, time.Minute, "claude-sonnet-5-5", 0.22, 0.60),
 	}
 	got := lines(SessionTree(ev, sessA, TreeOptions{}))
-	if got[0] != "session · 1 subagent · 1 switched, 0 held · saved 100% of work · 100% of cache" {
+	if got[0] != "session · 1 subagent · 1 model changed · saved 100% of work · 100% of cache" {
 		t.Fatalf("header: %q", got[0])
 	}
-	if got[1] != "└─ subagent 1  sonnet  ✓  10k tokens · saved from opus  switched from opus, MEDIUM, confident" {
+	if got[1] != "└─ subagent 1  sonnet  ✓  10k tokens · saved from opus  moved to sonnet" {
 		t.Fatalf("row: %q", got[1])
 	}
 }
@@ -227,7 +227,7 @@ func TestSessionTree_PausedDecisionsAreRows(t *testing.T) {
 	d := td("d1", sessA, 0, "claude-opus-5-5", ReasonClassifierConfident, ReasonPaused)
 	d.Outcome = OutcomeBaseline
 	out := SessionTree([]Event{d}, sessA, TreeOptions{Paused: true})
-	if !strings.Contains(out, "1 subagent") || !strings.Contains(out, "paused") || !strings.Contains(out, "PAUSED") {
+	if !strings.Contains(out, "1 subagent") || !strings.Contains(out, "paused") || !strings.Contains(out, "routing paused for this session") {
 		t.Fatalf("paused control-group decision must be a row, header flagged:\n%s", out)
 	}
 }
