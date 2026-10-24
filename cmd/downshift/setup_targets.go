@@ -185,6 +185,8 @@ var setupTargets = []setupTarget{
 		HooksPath: []string{"hooks"},
 		Defaults:  []setupDefault{{Key: "version", Value: 1}},
 		Hooks: []setupHook{
+			{Event: "sessionStart", Args: "cursor-touch"},
+			{Event: "beforeSubmitPrompt", Matcher: "UserPromptSubmit", Args: "cursor-touch"},
 			{Event: "preToolUse", Matcher: "Task", Args: "cursor"},
 			// Shell command compaction (updated_input.command). Unverified live.
 			{Event: "preToolUse", Matcher: "Shell", Args: "cursor"},
