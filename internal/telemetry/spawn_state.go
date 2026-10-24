@@ -154,7 +154,7 @@ func (r SpawnRecord) Line() string {
 		if r.FromModel == r.ToModel {
 			s = "switched effort on " + from
 		}
-		if r.FromEffort != "" && r.FromEffort != "unknown" && r.ToEffort != "" && r.ToEffort != r.FromEffort {
+		if r.FromEffort != "" && r.FromEffort != "unknown" && r.FromEffort != EffortUnobserved && r.ToEffort != "" && r.ToEffort != r.FromEffort {
 			s += fmt.Sprintf(", effort %s → %s", r.FromEffort, r.ToEffort)
 		}
 	case StateHeld:

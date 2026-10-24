@@ -165,8 +165,8 @@ Mods (plugins with a hooks module that run inside Claude Code, 2.1.287+) are a t
 plugin carries one, the vendored [cache-tax](../../hooks/cache-tax/README.md) (MIT, owner decision
 2026-10-17): a priced cold-send guard, `/keepwarm`, and a band above the prompt while a window is
 armed. It holds no routing logic, `setup` cannot write it (a mod is plugin-only), and it is the one
-place a plugin install does more than `setup`. The Downshift marketplace also offers two vendored sibling
-mods as their own plugins, [savvy-progress and filetree](../../mods/README.md) (MIT, one install each, because a
+place a plugin install does more than `setup`. The Downshift marketplace also offers a vendored sibling
+mod as its own plugin, [savvy-progress](../../mods/README.md) (MIT, one install, because a
 plugin loads one hooks module). Two more mods are recommended, not bundled: Anthropic's
 built-in You should know and the Token Weather sample
 ([companions](companions.md#claude-code-mods-downshift-recommends)).

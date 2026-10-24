@@ -29,7 +29,7 @@ one into `~/.claude/themes/` to edit it.
 
 - The tokens only recolor Claude Code's own UI. They cannot change fonts, and
   the terminal's own background and palette stay yours.
-- Mod panels (filetree, savvy-progress, downshift-dock) follow the active
+- Mod panels (savvy-progress, downshift-dock) follow the active
   theme; they carry no colors of their own here.
 - Diff tokens are backgrounds: added and removed lines use dark green and red
   tints so the grey text stays readable (checked at 4.5:1 or better).
