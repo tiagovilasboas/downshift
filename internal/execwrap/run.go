@@ -111,7 +111,8 @@ var expectedFormat = map[Family]compressor.Format{
 // with the program's own status. Only the allowlisted families run (anything
 // else is refused with 126). Output keeps the order the program wrote it in.
 // With compaction on, stdout is held (see gate) and compacted only
-// when the program exited 0, wrote nothing on stderr, stayed under
+// when the program wrote nothing on stderr (and exited 0, or exited non-zero
+// in a family CompressFailed supports, which keeps every failure), stayed under
 // compressor.MaxProcessableBytes and HoldBound (when configured), and the
 // compressor recognised the family's own format. Otherwise it is byte-identical.
 // Any internal error prints the raw output: output is never lost.
@@ -167,7 +168,7 @@ func Run(argv []string, o Options) (res Result) {
 
 	res.ExitCode, res.ExitClass = exitStatus(cmd.Wait())
 	release()
-	res.RawBytes, res.EmittedBytes, res.Compacted = g.finish(res.ExitCode == 0, expectedFormat[res.Family])
+	res.RawBytes, res.EmittedBytes, res.Compacted = g.finish(res.ExitCode, expectedFormat[res.Family])
 	return res
 }
 
@@ -278,10 +279,11 @@ func (w stderrWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-// finish writes any still-held stdout, compacted when the exit code was 0,
+// finish writes any still-held stdout, compacted (a failed run only for the
+// formats CompressFailed supports),
 // nothing was released early and the compressor applied the expected format,
 // raw otherwise. It returns the raw and emitted byte counts.
-func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64, compacted bool) {
+func (g *gate) finish(exitCode int, want compressor.Format) (raw, emitted int64, compacted bool) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	raw = g.nOut + g.nErr
@@ -295,8 +297,8 @@ func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64
 	g.streaming = true // a timer that fires after finish finds nothing to flush
 	g.buf = bytes.Buffer{}
 	out := data
-	if exitZero && want != "" {
-		if c, ok := compactSafely(data, want); ok {
+	if want != "" {
+		if c, ok := compactSafely(data, want, exitCode); ok {
 			out, compacted = c, true
 		}
 	}
@@ -336,13 +338,16 @@ func observeUncompacted(hook func([]string, []byte, Family), argv []string, data
 
 // compactSafely runs the compressor under recover: a compressor bug prints
 // the raw output instead.
-func compactSafely(data []byte, want compressor.Format) (out []byte, ok bool) {
+func compactSafely(data []byte, want compressor.Format, exitCode int) (out []byte, ok bool) {
 	defer func() {
 		if recover() != nil {
 			out, ok = nil, false
 		}
 	}()
 	r := compressor.CompressExit(data, compressor.ModeSafe, 0)
+	if exitCode != 0 {
+		r = compressor.CompressFailed(data, want)
+	}
 	if !r.Applied || r.Format != want {
 		return nil, false
 	}

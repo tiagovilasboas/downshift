@@ -22,7 +22,8 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 
 | Format | Detection Heuristic | Safe Action | Fail-Open Guarantee |
 |---|---|---|---|
-| `go test` | `ok` package lines | Summarizes a suite only when every non-empty line is `ok` | Any other line, `FAIL`, or non-zero exit is preserved verbatim |
+| `go test` | `ok` package lines | Summarizes a suite only when every non-empty line is `ok` | Any other line or `FAIL` is preserved verbatim |
+| `go test` (non-zero exit, `downshift compact` only) | A failed run: `--- FAIL`, `FAIL`, `panic:`, `[build failed]`, `[setup failed]`, `WARNING: DATA RACE` | Cuts only `ok <pkg>` lines (no coverage), `--- PASS` lines and the `=== RUN/PAUSE/CONT/NAME` headers of tests that passed; adds one `Go test: ok: N packages` line | Every other line stays byte-identical and in order. Raw on `-json`, CRLF, no final newline, stderr output or no failure signal; exit code unchanged. Other families still keep a non-zero exit raw |
 | `go test -v` | Complete single-package `=== RUN` / `--- PASS` transcript and final `PASS` summary | Drops test names and timings only when there is no test output, then emits test counts | Any failure, test log output, incomplete or unrecognized line, stderr, or non-zero exit is preserved verbatim |
 | `pytest` | `=== N passed in X.XXs ===`, test progress dots/names | Summarizes clean suite to `pytest: PASS (N passed in X.XXs)` with package/module overview | Compacted only when every line is a recognised plain pytest line and there is one passing summary; any other line (a failure, traceback, warning, stderr, or an unknown line) or a non-zero exit is preserved verbatim |
 | `vitest` | `Test Files N passed`, `Tests N passed`, `✓` checks | Summarizes clean suite to `vitest: PASS (N test files, M passed in X.XXs)` | Any `FAIL`, `Error:`, unhandled rejection, assertion diff, stderr output, or non-zero exit is preserved verbatim |

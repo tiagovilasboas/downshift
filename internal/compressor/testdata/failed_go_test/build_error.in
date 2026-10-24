@@ -1,0 +1,8 @@
+# example.com/acme/widget/internal/auth
+internal/auth/token.go:17:2: undefined: jwtParse
+internal/auth/token.go:23:9: cannot use x (variable of type int) as string value in return statement
+ok  	example.com/acme/widget/internal/api	0.212s
+ok  	example.com/acme/widget/internal/cache	0.031s
+ok  	example.com/acme/widget/internal/store	(cached)
+FAIL	example.com/acme/widget/internal/auth [build failed]
+FAIL
