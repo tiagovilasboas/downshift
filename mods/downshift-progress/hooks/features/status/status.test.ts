@@ -9,7 +9,7 @@ test('/downshift-progress is registered and answers one line', async ($, on) => 
   on('session.start', (_$: any, e: any) => ({ cwd: e.cwd }))
 
   await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
-  expect(registered).toEqual(['downshift-progress'])
+  expect(registered).toEqual(['downshift-progress', 'downshift-agents'])
 
   const r = await $.command.run({ command: 'downshift-progress', args: '' } as Parameters<typeof $.command.run>[0])
   expect(JSON.stringify(r)).toContain('downshift-progress 0.1.0 loaded')
