@@ -117,6 +117,8 @@ func infraFamily(argv []string) Family {
 		return awsFamily(argv[1:])
 	case "docker":
 		return dockerFamily(argv)
+	case "docker-compose":
+		return containerExecFamily(argv)
 	case "argocd":
 		return argocdFamily(argv[1:])
 	case "kustomize":
@@ -176,12 +178,15 @@ func awsFamily(args []string) Family {
 }
 
 // dockerFamily detects safe docker commands: ps, logs, images and a local
-// image build. Mutating commands (run, rm, exec, push, rmi) never match.
+// image build, and the inner command of a container exec (policy_container.go).
+// Mutating commands (run, rm, push, rmi) never match.
 func dockerFamily(argv []string) Family {
 	if len(argv) < 2 || argv[0] != "docker" {
 		return FamilyNone
 	}
 	switch argv[1] {
+	case "exec", "compose":
+		return containerExecFamily(argv)
 	case "ps":
 		return FamilyDockerPS
 	case "logs":
