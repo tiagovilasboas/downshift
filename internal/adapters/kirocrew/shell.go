@@ -5,7 +5,8 @@ package kirocrew
 
 import (
 	"encoding/json"
-	"fmt"
+
+	"github.com/tiagovilasboas/downshift/internal/shellwrap"
 )
 
 // isShellTool reports whether name is KiroCrew's shell tool. A live payload
@@ -33,5 +34,5 @@ func (ev Event) ShellBlocked(_ string) bool { return false }
 
 // AdviseMessage is the stderr line KiroCrew relays to the model.
 func (ev Event) AdviseMessage(wrappedCommand string) string {
-	return fmt.Sprintf("downshift: this command prints a long log. Run it again exactly as: %s", wrappedCommand)
+	return shellwrap.AdviseText(wrappedCommand)
 }

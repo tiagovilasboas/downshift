@@ -62,13 +62,13 @@ func TestSwitchKind_TreeHeader(t *testing.T) {
 		want   string
 	}{
 		{"zero effort keeps the old header", []Event{modelSwitch("a", 0)},
-			"session · 1 subagent · 1 switched, 0 held · tokens not observed"},
+			"session · 1 subagent · 1 model changed · tokens not observed"},
 		{"held only keeps the old header", []Event{heldRewrite("a", 0)},
-			"session · 1 subagent · 0 switched, 1 held · tokens not observed"},
+			"session · 1 subagent · no model changed · 1 kept as requested (why: --why) · tokens not observed"},
 		{"effort-only rewrites split the header", []Event{effortOnly("a", 0), effortOnly("b", time.Minute)},
-			"session · 2 subagents · 0 model · 2 effort · 0 held · tokens not observed"},
+			"session · 2 subagents · no model changed · 2 effort changed · tokens not observed"},
 		{"mixed header", []Event{effortOnly("a", 0), modelSwitch("b", time.Minute), heldRewrite("c", 2*time.Minute)},
-			"session · 3 subagents · 1 model · 1 effort · 1 held · tokens not observed"},
+			"session · 3 subagents · 1 model changed · 1 effort changed · 1 kept as requested (why: --why) · tokens not observed"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -85,7 +85,7 @@ func TestSwitchKind_TreeCounts(t *testing.T) {
 	if v.Switched != 2 || v.ModelSwitched != 0 || v.EffortChanged != 2 {
 		t.Fatalf("switched=%d model=%d effort=%d, want 2 0 2", v.Switched, v.ModelSwitched, v.EffortChanged)
 	}
-	if strings.Contains(v.Render(), "switched, 0 held") {
-		t.Fatalf("effort-only tree still says switched: %q", v.Render())
+	if !strings.Contains(v.Render(), "no model changed") {
+		t.Fatalf("effort-only tree must say no model changed: %q", v.Render())
 	}
 }

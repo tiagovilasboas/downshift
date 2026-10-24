@@ -11,34 +11,37 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/accounting"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
-// The compactor block totals the whole exec log: runs of this session, of
-// another session and with no session at all. The raw session id never
-// reaches the panel, and an empty log carries no block.
-func TestPanel_CompactorIsTheTotalOfAllRuns(t *testing.T) {
+// panelFixtureEnv isolates the state dir and clears the harness session env,
+// so `session --panel` reads only what the test writes.
+func panelFixtureEnv(t *testing.T) {
+	t.Helper()
+	endEnv(t)
 	t.Setenv(paths.EnvStateDir, t.TempDir())
-	t.Setenv(execwrap.DepthEnv, "") // clear in case we're running inside `downshift compactor`
+	t.Setenv(execwrap.DepthEnv, "")
 	for _, n := range core.AllHarnessCaps() {
 		if n.Caps.SessionEnv != "" {
 			t.Setenv(n.Caps.SessionEnv, "")
 		}
 	}
-	empty, _ := json.Marshal(panelWithCompactor(telemetry.PanelView{Tokens: telemetry.TokenSaving{WorkSaved: 40}}))
-	if strings.Contains(string(empty), "compactor") {
-		t.Fatalf("an empty exec log must carry no compactor block: %s", empty)
-	}
-	if !strings.Contains(string(empty), `"tokens_saved_estimate":40`) {
-		t.Fatalf("routing-only total missing: %s", empty)
-	}
+}
 
+// The compactor block is the report's Compactor over the report's window.
+// It totals every session's runs, attributed or not, and the raw session id
+// never reaches the panel.
+func TestPanel_CompactorIsTheReportWindowOfAllRuns(t *testing.T) {
+	panelFixtureEnv(t)
 	bin := t.TempDir()
 	var suite strings.Builder
 	for i := 0; i < 8; i++ {
@@ -66,29 +69,145 @@ func TestPanel_CompactorIsTheTotalOfAllRuns(t *testing.T) {
 		}
 	}
 
-	raw, err := json.Marshal(panelWithCompactor(telemetry.PanelView{Session: mine}))
+	execEvents, err := accounting.ReadExecEvents()
 	if err != nil {
 		t.Fatal(err)
 	}
-	var got struct {
-		Compactor           *compactorPanel `json:"compactor"`
-		TokensSavedEstimate int64           `json:"tokens_saved_estimate"`
+	raw, err := json.Marshal(panelWithReport(telemetry.PanelView{Session: mine}, nil, execEvents))
+	if err != nil {
+		t.Fatal(err)
 	}
+	var got panelOut
 	if err := json.Unmarshal(raw, &got); err != nil {
 		t.Fatal(err)
 	}
-	if got.Compactor == nil || got.Compactor.Scope != "all" || got.Compactor.Commands != 4 || got.Compactor.Compacted != 4 || got.Compactor.SavedBytes <= 0 {
-		t.Fatalf("compactor block = %+v, want 4 compacted runs across every session, scope all", got.Compactor)
+	c := got.Compactor
+	if c == nil || c.Scope != "last 30 days" || c.Commands != 4 || c.Compacted != 4 || c.SavedBytes <= 0 {
+		t.Fatalf("compactor block = %+v, want 4 compacted runs across every session, scope = report window", c)
 	}
-	if want := got.Compactor.EstimatedTokensSaved; got.TokensSavedEstimate != want || want <= 0 {
-		t.Fatalf("tokens_saved_estimate = %d, want the compactor estimate %d (no routing tokens)", got.TokensSavedEstimate, want)
-	}
-	view := telemetry.PanelView{Session: mine, Tokens: telemetry.TokenSaving{WorkSaved: 300, CacheSaved: 200}}
-	both := panelWithCompactor(view)
-	if both.TokensSavedEstimate != 500+got.Compactor.EstimatedTokensSaved {
-		t.Fatalf("both = %d, want routing 500 + compactor %d", both.TokensSavedEstimate, got.Compactor.EstimatedTokensSaved)
+	if got.TokensSavedEstimate != c.EstimatedTokensSaved || c.EstimatedTokensSaved <= 0 {
+		t.Fatalf("tokens_saved_estimate = %d, want the compactor estimate %d (no routing tokens)", got.TokensSavedEstimate, c.EstimatedTokensSaved)
 	}
 	if strings.Contains(string(raw), "s-mine") || strings.Contains(string(raw), "s-other") {
 		t.Fatalf("a raw session id leaked into the panel: %s", raw)
+	}
+}
+
+// The panel's report block equals `downshift report --json` for the same logs:
+// same window, same numbers, same final figure, and the compactor block is the
+// report's. An exec run older than the window is in neither.
+func TestPanel_ReportEqualsReportJSON(t *testing.T) {
+	panelFixtureEnv(t)
+	ev := telemetry.Event{
+		Timestamp: time.Now().UTC().Format(time.RFC3339Nano), Harness: "claude-code", SessionID: "s-1",
+		Agent: "worker", Complexity: "SIMPLE", FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5",
+		Verdict: "DOWNSHIFT", Outcome: "rewrite_emitted", Tier: "SMALL",
+	}
+	if err := telemetry.AppendTo(os.Getenv("DOWNSHIFT_EVENT_LOG"), ev); err != nil {
+		t.Fatal(err)
+	}
+	execPath, err := execwrap.EventsPath()
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := execwrap.Event{TS: time.Now().UTC().Add(-40 * 24 * time.Hour).Format(time.RFC3339), RawBytes: 4000, Compacted: true}
+	recent := execwrap.Event{TS: time.Now().UTC().Add(-time.Hour).Format(time.RFC3339), RawBytes: 400, EmittedBytes: 100, Compacted: true, Session: telemetry.HashSessionID("s-1")}
+	for _, e := range []execwrap.Event{old, recent} {
+		if err := execwrap.Append(execPath, e); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	var repOut, repErr bytes.Buffer
+	if rc := runReport([]string{"--json"}, &repOut, &repErr); rc != 0 {
+		t.Fatalf("report rc=%d %s", rc, repErr.String())
+	}
+	var rep struct {
+		TokensSavedEstimate int64              `json:"tokens_saved_estimate"`
+		Numbers             accounting.Numbers `json:"numbers"`
+	}
+	if err := json.Unmarshal(repOut.Bytes(), &rep); err != nil {
+		t.Fatal(err)
+	}
+
+	var panOut, panErr bytes.Buffer
+	if rc := runSession([]string{"--panel"}, &panOut, &panErr, nil); rc != 0 {
+		t.Fatalf("session --panel rc=%d %s", rc, panErr.String())
+	}
+	var pan panelOut
+	if err := json.Unmarshal(panOut.Bytes(), &pan); err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(pan.Report, rep.Numbers) {
+		t.Fatalf("panel report = %+v\nreport numbers = %+v", pan.Report, rep.Numbers)
+	}
+	if pan.TokensSavedEstimate != rep.TokensSavedEstimate || pan.TokensSavedEstimate != rep.Numbers.TokensSavedEstimate {
+		t.Fatalf("panel tokens_saved_estimate = %d, report = %d", pan.TokensSavedEstimate, rep.TokensSavedEstimate)
+	}
+	if pan.Compactor == nil || pan.Compactor.Scope != rep.Numbers.Scope.Label() ||
+		pan.Compactor.Commands != rep.Numbers.Compactor.Commands || pan.Compactor.SavedBytes != rep.Numbers.Compactor.SavedBytes ||
+		pan.Compactor.EstimatedTokensSaved != rep.Numbers.Compactor.Tokens {
+		t.Fatalf("panel compactor = %+v, report compactor = %+v", pan.Compactor, rep.Numbers.Compactor)
+	}
+	if pan.Compactor.Commands != 1 || pan.Compactor.SavedBytes != 300 {
+		t.Fatalf("compactor = %+v, want the recent run only (1 command, 300 bytes)", pan.Compactor)
+	}
+}
+
+// The session fields of the panel are the PanelView unchanged: every key the
+// view marshals keeps its value in the panel JSON.
+func TestPanel_SessionFieldsUnchanged(t *testing.T) {
+	view := telemetry.PanelView{Session: "h", Switched: 2, ModelSwitched: 2, Held: 1, Tokens: telemetry.TokenSaving{WorkSaved: 300, CacheSaved: 200}}
+	viewRaw, err := json.Marshal(view)
+	if err != nil {
+		t.Fatal(err)
+	}
+	panelRaw, err := json.Marshal(panelWithReport(view, nil, nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want, got map[string]json.RawMessage
+	if err := json.Unmarshal(viewRaw, &want); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(panelRaw, &got); err != nil {
+		t.Fatal(err)
+	}
+	for key, w := range want {
+		if string(got[key]) != string(w) {
+			t.Errorf("panel %q = %s, want the session view's %s", key, got[key], w)
+		}
+	}
+	if _, ok := got["report"]; !ok {
+		t.Errorf("panel lacks the report block: %s", panelRaw)
+	}
+}
+
+// A log with no exec events has no compactor block; the final figure is the
+// report's routing figure alone.
+func TestPanel_NoExecEventsNoCompactorBlock(t *testing.T) {
+	events := []telemetry.Event{{
+		Timestamp: time.Now().UTC().Format(time.RFC3339Nano), Harness: "claude-code", SessionID: "s-1",
+		Agent: "worker", Complexity: "SIMPLE", FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5",
+		Verdict: "DOWNSHIFT", Outcome: "rewrite_emitted", Tier: "SMALL",
+	}}
+	out := panelWithReport(telemetry.PanelView{Session: "h"}, events, nil)
+	raw, err := json.Marshal(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var top map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &top); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := top["compactor"]; ok {
+		t.Fatalf("an empty exec log must carry no compactor block: %s", raw)
+	}
+	if out.Report.Compactor.Commands != 0 {
+		t.Fatalf("report compactor commands = %d, want 0", out.Report.Compactor.Commands)
+	}
+	if out.TokensSavedEstimate != out.Report.Routing.WorkSaved+out.Report.Routing.CacheSaved {
+		t.Fatalf("tokens_saved_estimate = %d, want the routing figure alone (%+v)", out.TokensSavedEstimate, out.Report.Routing)
 	}
 }
