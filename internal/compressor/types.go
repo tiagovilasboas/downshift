@@ -62,6 +62,7 @@ const (
 	FormatGhPr         Format = "gh_pr"         // gh pr view
 	FormatGhChecks     Format = "gh_checks"     // gh pr checks
 	FormatGhRunList    Format = "gh_run_list"   // gh run list
+	FormatGhRunLog     Format = "gh_run_log"    // gh run view --log
 	FormatCargoBuild   Format = "cargo_build"   // Rust cargo build
 	FormatGoBuild      Format = "go_build"      // Go go build
 	FormatDotnetBuild  Format = "dotnet_build"  // .NET dotnet build (MSBuild)
