@@ -1,4 +1,4 @@
-.PHONY: build test lint vet check check-fast hooks install build-all clean report e2e
+.PHONY: build test lint vet check check-fast test-changed hooks hooks-uninstall install build-all clean report e2e
 
 BINARY=downshift
 
@@ -37,10 +37,22 @@ check: check-fast
 	@echo "[5/5] go test -count=1 ./..."
 	go test -count=1 ./...
 
-## hooks: opt in to the pre-push hook (.githooks/pre-push runs check-fast) by setting core.hooksPath
+## test-changed: go test -count=1 on the packages changed since origin/main and their dependents, the CI selection (./... when unsure); run by the pre-push hook
+test-changed:
+	@base=$$(git merge-base origin/main HEAD 2>/dev/null); \
+	pkgs=$$(GITHUB_EVENT_NAME=pull_request GITHUB_BASE_SHA=$$base bash scripts/ci-test-packages.sh) || exit 1; \
+	echo "[test-changed] $$(echo $$pkgs)"; \
+	go test -count=1 $$pkgs
+
+## hooks: install the lefthook git hooks (lefthook.yml); lefthook is pinned as a go.mod tool, so no global install
 hooks:
-	git config core.hooksPath .githooks
-	@echo "git hooks: core.hooksPath=.githooks (pre-push runs make check-fast; undo with git config --unset core.hooksPath)"
+	@git config --local --unset core.hooksPath 2>/dev/null || true
+	go tool lefthook install
+	@echo "git hooks installed (pre-commit, pre-push). Skip once: LEFTHOOK=0 git commit / git push"
+
+## hooks-uninstall: remove the lefthook git hooks
+hooks-uninstall:
+	go tool lefthook uninstall
 
 ## install: install downshift into GOBIN
 install:
