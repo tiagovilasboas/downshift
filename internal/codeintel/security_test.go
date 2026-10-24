@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 	"github.com/tiagovilasboas/downshift/internal/testrace"
 	"os"
 	"path/filepath"
@@ -756,9 +757,7 @@ func TestSecurity_ParseFile_PathologicalLongLines(t *testing.T) {
 			// against a fixed 500ms. Scale the budget instead of hard-coding
 			// it; catastrophic backtracking is still far over 1s.
 			threshold := testrace.Budget(100 * time.Millisecond)
-			if elapsed >= threshold {
-				t.Errorf("ParseFile(%s) took %v, must complete in <%v", tc.name, elapsed, threshold)
-			}
+			testenv.CheckBudget(t, "ParseFile("+tc.name+")", elapsed, threshold)
 		})
 	}
 }
@@ -809,9 +808,7 @@ func TestSecurity_ParseFile_UnbalancedBracesAndIndentation(t *testing.T) {
 			if doc == nil {
 				t.Fatalf("ParseFile(%s) returned nil doc", tc.name)
 			}
-			if elapsed >= testrace.Budget(100*time.Millisecond) {
-				t.Errorf("ParseFile(%s) took %v, must complete in <100ms", tc.name, elapsed)
-			}
+			testenv.CheckBudget(t, "ParseFile("+tc.name+")", elapsed, testrace.Budget(100*time.Millisecond))
 		})
 	}
 }
@@ -870,9 +867,7 @@ func TestSecurity_ParseFile_UnclosedLiteralsAndComments(t *testing.T) {
 			if doc == nil {
 				t.Fatalf("ParseFile(%s) returned nil doc", tc.name)
 			}
-			if elapsed >= testrace.Budget(100*time.Millisecond) {
-				t.Errorf("ParseFile(%s) took %v, must complete in <100ms", tc.name, elapsed)
-			}
+			testenv.CheckBudget(t, "ParseFile("+tc.name+")", elapsed, testrace.Budget(100*time.Millisecond))
 		})
 	}
 }
@@ -1087,9 +1082,7 @@ func TestSecurity_GoAST_CallGraphAndImportsCap(t *testing.T) {
 		t.Fatalf("ParseFile returned nil doc")
 	}
 
-	if elapsed >= testrace.Budget(50*time.Millisecond) {
-		t.Errorf("ParseFile took %v, must complete in <50ms without ReDoS or stack explosion", elapsed)
-	}
+	testenv.CheckBudget(t, "ParseFile (no ReDoS or stack explosion)", elapsed, testrace.Budget(50*time.Millisecond))
 
 	// 1. Verify Imports hard cap (<= 32, exactly 32 when 100 provided)
 	if len(doc.Imports) > 32 {
@@ -1183,9 +1176,7 @@ func TestSecurity_CircularCallGraphsAndPathologicalMultiLangLimits(t *testing.T)
 	idx.RebuildPostings()
 	rebuildDuration := time.Since(start)
 
-	if rebuildDuration > testrace.Budget(250*time.Millisecond) {
-		t.Errorf("RebuildPostings on 1000 circular documents took %v, want <= 250ms", rebuildDuration)
-	}
+	testenv.CheckBudget(t, "RebuildPostings on 1000 circular documents", rebuildDuration, testrace.Budget(250*time.Millisecond))
 
 	// Verify TargetHotspot callers hard cap (<= 32, exactly 32 when 50 callers exist)
 	hotspotCallers := idx.GetCallers("TargetHotspot")
