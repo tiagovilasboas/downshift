@@ -306,10 +306,7 @@ func runHookAdapter[E any](
 		fmt.Fprintf(os.Stderr, "downshift: honor=unobserved quota=%s usage=unobserved\n", telemetry.ProjectQuota(decision.Session.QuotaStatus, decision.Session.CreditHeld))
 		event := telemetry.FromDecision(decision, correlationID, buildVersion)
 		fate.recordOutcome(&event)
-		shadow := decisionintelligence.Evaluate(decisionintelligence.Signals{
-			BaseTier:             decision.Tier,
-			ClassifierConfidence: confidenceValue(decision.Confident),
-		})
+		shadow := decisionintelligence.Evaluate(decisionintelligence.SignalsFromDecision(decision))
 		event.DecisionIntelligence = &telemetry.ShadowRecommendation{
 			Tier:              shadow.Tier.String(),
 			Confidence:        shadow.Confidence,
@@ -436,13 +433,6 @@ func foreignPayloadOwner(harness string, data []byte) string {
 
 func foreignPayloadNote(harness, owner string) string {
 	return fmt.Sprintf("downshift: %s payload reached the %s hook; left to the %s hook, nothing recorded\n", owner, harness, owner)
-}
-
-func confidenceValue(confident bool) float64 {
-	if confident {
-		return 1
-	}
-	return 0
 }
 
 // withHookDeadline installs the global classification deadline that bounds

@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -60,7 +59,9 @@ func printDCIHelp(w io.Writer) {
 
 Commands:
   status                              Show current DCI operational mode, index cache, and statistics
-  enable [active|obs] [--budget=N]    Enable DCI (active: injects context; observe: telemetry only; budget: 512..16384 bytes, default 3500)
+  enable [active|obs] [--budget=N] [--dry-run]
+                                      Enable DCI (active: injects context; observe: telemetry only;
+                                      budget: 512..16384 bytes, default 3500; --dry-run writes nothing)
   disable                             Disable DCI (mode off)
   doctor                              Diagnose DCI health, file limits, permissions, and budgets
   inspect [--json] <prompt>           Simulate retrieval and context generation for a query
@@ -118,88 +119,6 @@ func runDCIStatus(w io.Writer, stderr io.Writer) int {
 
 	fmt.Fprintf(w, "  Context Budget: max %d bytes UTF-8\n", cfg.MaxContextBytes)
 	fmt.Fprintf(w, "  File Limit:     max %d files (max %d KiB/file)\n", cfg.MaxFiles, cfg.MaxFileSizeBytes/1024)
-	return 0
-}
-
-func clampDCIBudget(b int) int {
-	if b < 512 {
-		return 512
-	}
-	if b > 16384 {
-		return 16384
-	}
-	return b
-}
-
-func runDCIEnable(args []string, w io.Writer, stderr io.Writer) int {
-	repoRoot := findRepoRoot()
-	mode := codeintel.ModeActive
-	modeSet := false
-	budget := 0
-	budgetSet := false
-
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if strings.HasPrefix(arg, "--budget=") {
-			valStr := strings.TrimPrefix(arg, "--budget=")
-			val, err := strconv.Atoi(valStr)
-			if err != nil {
-				fmt.Fprintf(stderr, "invalid budget %q: must be an integer\n", valStr)
-				return 2
-			}
-			budget = clampDCIBudget(val)
-			budgetSet = true
-		} else if arg == "--budget" {
-			if i+1 >= len(args) {
-				fmt.Fprintln(stderr, "missing value for --budget")
-				return 2
-			}
-			i++
-			val, err := strconv.Atoi(args[i])
-			if err != nil {
-				fmt.Fprintf(stderr, "invalid budget %q: must be an integer\n", args[i])
-				return 2
-			}
-			budget = clampDCIBudget(val)
-			budgetSet = true
-		} else if !modeSet {
-			m := strings.ToLower(arg)
-			if m == "observe" || m == "obs" {
-				mode = codeintel.ModeObserve
-				modeSet = true
-			} else if m == "active" {
-				mode = codeintel.ModeActive
-				modeSet = true
-			} else {
-				fmt.Fprintf(stderr, "invalid mode %q: choose 'active' or 'observe'\n", arg)
-				return 2
-			}
-		} else {
-			fmt.Fprintf(stderr, "unexpected argument %q\n", arg)
-			return 2
-		}
-	}
-
-	cfg, err := codeintel.LoadConfig(repoRoot)
-	if err != nil {
-		cfg = codeintel.DefaultConfig()
-	}
-	cfg.Mode = mode
-	if cfg.MaxContextBytes <= 0 {
-		cfg.MaxContextBytes = 3500
-	}
-	if budgetSet {
-		cfg.MaxContextBytes = budget
-	} else {
-		cfg.MaxContextBytes = clampDCIBudget(cfg.MaxContextBytes)
-	}
-
-	if err := codeintel.SaveConfig(repoRoot, cfg); err != nil {
-		fmt.Fprintf(stderr, "failed to enable DCI: %v\n", err)
-		return 1
-	}
-
-	fmt.Fprintf(w, "Downshift Code Intelligence (DCI) enabled in mode %q (budget: %d bytes).\n", mode, cfg.MaxContextBytes)
 	return 0
 }
 

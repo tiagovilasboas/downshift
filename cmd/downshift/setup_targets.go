@@ -173,9 +173,10 @@ var setupTargets = []setupTarget{
 		// The upstream marketplace install of the mod vendored under hooks/cache-tax/.
 		ModConflicts: []string{"cache-tax@claude-code-mods"},
 		// Sibling mods of the Downshift marketplace (mods/, listed in
-		// .claude-plugin/marketplace.json): progress bar and /agents-info panel,
-		// file tree pane. The dock band is not installed by setup. mods/downshift-router stays out: it would route twice.
-		Mods: []string{"savvy-progress@downshift", "filetree@downshift"},
+		// .claude-plugin/marketplace.json): progress bar and /agents-info panel.
+		// A leftover filetree@downshift from an older install is left alone.
+		// The dock band is not installed by setup. mods/downshift-router stays out: it would route twice.
+		Mods: []string{"savvy-progress@downshift"},
 	},
 	{
 		Name:      "cursor",
@@ -184,7 +185,15 @@ var setupTargets = []setupTarget{
 		HooksPath: []string{"hooks"},
 		Defaults:  []setupDefault{{Key: "version", Value: 1}},
 		Hooks: []setupHook{
+			{Event: "sessionStart", Args: "cursor-touch"},
+			{Event: "beforeSubmitPrompt", Matcher: "UserPromptSubmit", Args: "cursor-touch"},
 			{Event: "preToolUse", Matcher: "Task", Args: "cursor"},
+			// Shell command compaction (updated_input.command). Unverified live.
+			{Event: "preToolUse", Matcher: "Shell", Args: "cursor"},
+			// Shell advise fallback: when the Shell rewrite is ignored, the agent is
+			// told to rerun a compressing command through downshift compact. Matcher
+			// "*" sends every shell command to the hook; the family check is inside.
+			{Event: "beforeShellExecution", Matcher: "*", Args: "cursor"},
 			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
 			{Event: "subagentStop", Args: "end cursor"},
 		},
@@ -197,6 +206,8 @@ var setupTargets = []setupTarget{
 		Nested:    true,
 		Hooks: []setupHook{
 			{Event: "PreToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "codex"},
+			// Shell rewrite: allowlisted Bash commands become `downshift compact -- ...` (shellrewrite.go).
+			{Event: "PreToolUse", Matcher: "^Bash$", Args: "codex"},
 			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
 			{Event: "PostToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "end codex"},
 		},

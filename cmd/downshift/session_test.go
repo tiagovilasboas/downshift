@@ -17,6 +17,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 const pauseSession = "sess-pause"
@@ -157,7 +158,7 @@ func TestSession_SelectionExplicitThenEnvThenLatest(t *testing.T) {
 
 	// Latest decision in the log is session b: one subagent, unpriced.
 	out, _, rc := sessionCmd(t)
-	if rc != 0 || !strings.HasPrefix(out, header+"1 subagent · 0 switched, 0 held · 1 upshift not applied · tokens not observed") || !strings.Contains(out, "opus") {
+	if rc != 0 || !strings.HasPrefix(out, header+"1 subagent · no model changed · 1 bigger model not applied · tokens not observed") || !strings.Contains(out, "opus") {
 		t.Fatalf("latest session: rc=%d\n%s", rc, out)
 	}
 	// The harness's declared env var beats "latest" (read from capabilities, no name in code).
@@ -192,7 +193,7 @@ func TestSession_TreeWhyAndJSONWriteNothing(t *testing.T) {
 	state := t.TempDir()
 	t.Setenv("DOWNSHIFT_STATE_DIR", state)
 	tree, _, _ := sessionCmd(t, "--session="+a)
-	if !strings.Contains(tree, "└─ subagent 1  sonnet  ✓  10k tokens · saved from opus  switched from opus, MEDIUM, confident") {
+	if !strings.Contains(tree, "└─ subagent 1  sonnet  ✓  10k tokens · saved from opus  moved to sonnet") {
 		t.Fatalf("tree:\n%s", tree)
 	}
 	why, _, _ := sessionCmd(t, "--why", "--session="+a)
@@ -262,9 +263,7 @@ func TestSession_FastOnALargeLog(t *testing.T) {
 	}
 	// Locally this is ~25ms; decoding the whole 50 MB log takes ~400ms. 200ms
 	// leaves shared-runner headroom and still catches a full read.
-	if best > 200*time.Millisecond {
-		t.Fatalf("session tree took %v on a 50 MB log, want < 200ms (it must read only the tail)", best)
-	}
+	testenv.CheckBudget(t, "session tree on a 50 MB log (must read only the tail)", best, 200*time.Millisecond)
 }
 
 func TestSession_PanelIsPromptFreeStateAndSavings(t *testing.T) {

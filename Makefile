@@ -1,4 +1,4 @@
-.PHONY: build test lint vet install build-all clean report e2e
+.PHONY: build test lint vet check check-fast test-changed test-staged hooks hooks-uninstall install build-all clean report e2e
 
 BINARY=downshift
 
@@ -20,6 +20,46 @@ test:
 ## vet: run go vet
 vet:
 	go vet ./...
+
+## check-fast: gofmt, then go vet for host, windows and linux (no tests; quick loop, also run by the pre-push hook)
+check-fast:
+	@echo "[1/4] gofmt -l ."
+	@out=$$(gofmt -l .); if [ -n "$$out" ]; then echo "$$out"; echo "gofmt: format the files above (gofmt -w <file>)"; exit 1; fi
+	@echo "[2/4] go vet ./...  (host)"
+	@go vet ./...
+	@echo "[3/4] go vet ./...  (GOOS=windows: type-checks test files the Windows CI job compiles)"
+	@GOOS=windows GOARCH=amd64 go vet ./...
+	@echo "[4/4] go vet ./...  (GOOS=linux)"
+	@GOOS=linux GOARCH=amd64 go vet ./...
+
+## check: gate before declaring a change done; runs check-fast, then go test -count=1 ./... (no cache)
+check: check-fast
+	@echo "[5/5] go test -count=1 ./..."
+	go test -count=1 ./...
+
+## test-changed: go test -count=1 on the packages changed since origin/main and their dependents, the CI selection (./... when unsure); run by the pre-push hook
+test-changed:
+	@base=$$(git merge-base origin/main HEAD 2>/dev/null); \
+	pkgs=$$(GITHUB_EVENT_NAME=pull_request GITHUB_BASE_SHA=$$base bash scripts/ci-test-packages.sh) || exit 1; \
+	echo "[test-changed] $$(echo $$pkgs)"; \
+	go test -count=1 $$pkgs
+
+## test-staged: go test -count=1 on the packages of the staged .go files only (fast); run by the pre-commit hook
+test-staged:
+	@pkgs=$$(git diff --cached --name-only --diff-filter=ACMR -- '*.go' | xargs -n1 dirname 2>/dev/null | sort -u | sed 's|^|./|'); \
+	if [ -z "$$pkgs" ]; then echo "[test-staged] no staged Go packages"; exit 0; fi; \
+	echo "[test-staged] $$(echo $$pkgs)"; \
+	go test -count=1 $$pkgs
+
+## hooks: install the lefthook git hooks (lefthook.yml); lefthook is pinned as a go.mod tool, so no global install
+hooks:
+	@git config --local --unset core.hooksPath 2>/dev/null || true
+	go tool lefthook install
+	@echo "git hooks installed (pre-commit, pre-push). Skip once: LEFTHOOK=0 git commit / git push"
+
+## hooks-uninstall: remove the lefthook git hooks
+hooks-uninstall:
+	go tool lefthook uninstall
 
 ## install: install downshift into GOBIN
 install:

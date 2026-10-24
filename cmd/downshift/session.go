@@ -11,7 +11,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tiagovilasboas/downshift/internal/accounting"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -36,6 +35,8 @@ func runSession(args []string, stdout, stderr io.Writer, catalog core.Resolver) 
 	session := fs.String("session", "", "session id (default: the harness's own, else the most recent in the log)")
 	asJSON := fs.Bool("json", false, "tree as JSON")
 	panel := fs.Bool("panel", false, "prompt-free per-spawn state and session savings as JSON, for a panel mod")
+	noReport := fs.Bool("no-report", false, "with --panel: skip the 30-day report (fast; no report, compactor or tokens_saved_estimate)")
+	brief := fs.Bool("brief", false, "with --panel: only the fields the agents band draws")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -45,8 +46,8 @@ func runSession(args []string, stdout, stderr io.Writer, catalog core.Resolver) 
 			modes++
 		}
 	}
-	if modes > 1 || (*asJSON && (*why || *pause || *resume || *panel)) || fs.NArg() > 0 {
-		fmt.Fprintln(stderr, "usage: downshift session [--tree|--why|--pause|--resume|--panel] [--session=<id>] [--json]  (--json applies to --tree)")
+	if modes > 1 || (*asJSON && (*why || *pause || *resume || *panel)) || fs.NArg() > 0 || ((*noReport || *brief) && !*panel) {
+		fmt.Fprintln(stderr, "usage: downshift session [--tree|--why|--pause|--resume|--panel [--no-report] [--brief]] [--session=<id>] [--json]  (--json applies to --tree)")
 		return 2
 	}
 
@@ -64,15 +65,7 @@ func runSession(args []string, stdout, stderr io.Writer, catalog core.Resolver) 
 		fmt.Fprint(stdout, telemetry.Why(events, hash))
 		return 0
 	case *panel:
-		// The report's window reads the whole logs; the per-session view is from the tail.
-		allEvents, _ := telemetry.ReadEvents()
-		execEvents, _ := accounting.ReadExecEvents()
-		out, err := json.Marshal(panelWithReport(telemetry.BuildPanel(events, hash), allEvents, execEvents))
-		if err != nil {
-			return 1
-		}
-		fmt.Fprintln(stdout, string(out))
-		return 0
+		return writePanel(events, hash, panelOptions{NoReport: *noReport, Brief: *brief}, stdout, stderr)
 	}
 
 	opt := telemetry.TreeOptions{Paused: telemetry.SessionPaused(hash)}

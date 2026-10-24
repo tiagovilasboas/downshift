@@ -3,25 +3,60 @@
 
 package cursor
 
-// Shell wrap stub — awaiting live payload confirmation.
-//
-// To activate in-place command replacement for Cursor:
-//  1. Capture a live PreToolUse payload with Cursor's shell tool and confirm
-//     that updated_input.command changes the command the harness runs.
-//     Record the evidence in docs/evidence/cursor-shell-payload-YYYY-MM-DD.json.
-//  2. Set shellToolName to the confirmed tool_name.
-//  3. Implement ShellRewrite the same way claudecode/shell.go does.
-//  4. Set CanRewriteShellCommand: true in core.CursorCaps.
-//
-// Until that evidence exists, ShellCommand always returns false so Handle
-// never enters the rewrite path, regardless of the capability flag.
+import (
+	"encoding/json"
+	"errors"
+)
 
-// ShellCommand always returns false until the shell tool name is confirmed
-// from a live payload. This implements shellwrap.RewriteAdapter as a stub.
-func (ev Event) ShellCommand() (string, bool) { return "", false }
+// shellToolName is Cursor's shell tool as a preToolUse matcher value
+// (cursor.com/docs/agent/hooks, read 2026-10-23).
+const shellToolName = "Shell"
 
-// ShellRewrite is unreachable while ShellCommand returns false.
-func (ev Event) ShellRewrite(_ string) (any, error) { return nil, nil }
+// ShellCommand returns tool_input.command and true when this call is the
+// shell tool. The shared runner decides whether to wrap it; the adapter only
+// parses.
+func (ev Event) ShellCommand() (string, bool) {
+	if ev.ToolName != shellToolName {
+		return "", false
+	}
+	var ti map[string]any
+	if json.Unmarshal(ev.ToolInput, &ti) != nil {
+		return "", true
+	}
+	command, _ := ti["command"].(string)
+	return command, true
+}
 
-// ShellBlocked always returns false (no deny/ask rules apply to shell in this stub).
+// shellOutput is the preToolUse answer that replaces the shell command. It
+// carries no permission field on purpose, so Cursor's own permission flow
+// applies to the rewritten command.
+type shellOutput struct {
+	UpdatedInput json.RawMessage `json:"updated_input"`
+}
+
+// ShellRewrite returns the hook output that sets tool_input.command to
+// command. Every sibling field is copied through unchanged.
+func (ev Event) ShellRewrite(command string) (any, error) {
+	var ti map[string]json.RawMessage
+	if err := json.Unmarshal(ev.ToolInput, &ti); err != nil {
+		return nil, err
+	}
+	if ti == nil {
+		return nil, errors.New("tool_input is not an object")
+	}
+	encoded, err := json.Marshal(command)
+	if err != nil {
+		return nil, err
+	}
+	ti["command"] = encoded
+	updated, err := json.Marshal(ti)
+	if err != nil {
+		return nil, err
+	}
+	return shellOutput{UpdatedInput: updated}, nil
+}
+
+// ShellBlocked is false: Cursor keeps no settings file of allow/deny rules
+// that Downshift can read, so there is nothing to check. Cursor's own
+// permission flow still applies to the rewritten command.
 func (ev Event) ShellBlocked(_ string) bool { return false }

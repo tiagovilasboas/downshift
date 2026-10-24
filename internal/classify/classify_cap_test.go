@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 	"unicode/utf8"
+
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 func TestClassifyHeadRuneBoundary(t *testing.T) {
@@ -74,7 +76,5 @@ func TestClassify900KBUnder500ms(t *testing.T) {
 	t.Logf("Classify 900KB (warm): %v", elapsed)
 	// 1 s warm path: order-of-magnitude guard. Full wall-clock including semantic
 	// fuse is in TestClassifyLatencyLargePrompts (900 KB, 10 s).
-	if elapsed > time.Second {
-		t.Errorf("Classify of 900 KB took %v, warm limit 1s", elapsed)
-	}
+	testenv.CheckBudget(t, "Classify of 900 KB", elapsed, time.Second)
 }

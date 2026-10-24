@@ -56,9 +56,12 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	rep := telemetry.BuildReport(events, days)
 	rep.TokensSaved = nums.Routing
 	rep.SetCompactor(nums.Compactor.SavedBytes, nums.Compactor.Tokens)
+	currentHarness, segments := telemetry.SegmentReports(events, days)
 
 	if asJSON {
-		out, err := json.MarshalIndent(reportOut{Report: rep, Numbers: nums}, "", "  ")
+		out, err := json.MarshalIndent(reportOut{
+			Report: rep, Numbers: nums, CurrentHarness: currentHarness, ByHarness: segments,
+		}, "", "  ")
 		if err != nil {
 			fmt.Fprintf(stderr, "error encoding report: %v\n", err)
 			return 1
@@ -70,7 +73,7 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	// The routed-vs-control comparison, the plan lens and the per-harness
 	// completion lines are the canonical report; telemetry owns their wording
 	// (the tests read those strings), so delegate instead of reprinting them.
-	telemetry.PrintReport(stdout, rep)
+	telemetry.PrintSegmentedReport(stdout, events, days)
 
 	// Compactor and code-intelligence savings are produced outside the event
 	// log, so they are appended here rather than inside telemetry.PrintReport.
@@ -101,5 +104,7 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 // plus the Numbers every surface shares.
 type reportOut struct {
 	telemetry.Report
-	Numbers accounting.Numbers `json:"numbers"`
+	Numbers        accounting.Numbers        `json:"numbers"`
+	CurrentHarness string                    `json:"current_harness,omitempty"`
+	ByHarness      []telemetry.HarnessReport `json:"by_harness,omitempty"`
 }
