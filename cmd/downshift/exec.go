@@ -51,7 +51,7 @@ func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, execUsage)
 		return 2
 	}
-	res := execwrap.Run(args[1:], execwrap.Options{
+	res := execwrap.Run(execwrap.SplitSingleWord(args[1:]), execwrap.Options{
 		Stdin:   stdin,
 		Stdout:  stdout,
 		Stderr:  stderr,
@@ -79,7 +79,7 @@ func runAllowlistedQuery(args []string, stderr io.Writer) int {
 		fmt.Fprintln(stderr, execUsage)
 		return 2
 	}
-	if execwrap.FamilyOf(args[1:]) == execwrap.FamilyNone {
+	if execwrap.FamilyOf(execwrap.SplitSingleWord(args[1:])) == execwrap.FamilyNone {
 		return 1
 	}
 	return 0
