@@ -125,6 +125,11 @@ func TestShellRewrite_ThroughSharedRunner(t *testing.T) {
 		{"chain later wrapped segment asks", true, nil, true, "git status; go test ./pkg", nil, nil, []string{"Bash(go test:*)"}, ""},
 		{"chain whole command denied", true, nil, true, "gofmt -l x; go test ./pkg", nil, []string{"Bash(gofmt -l x; go test ./pkg)"}, nil, ""},
 		{"chain with grep pipe", true, nil, true, "git diff --stat && git diff | grep '^[+-]'", nil, nil, nil, ""},
+		{"stderr merge alone", true, nil, true, "go test ./... 2>&1", okRules, nil, nil, "'" + testExe + "' compact --session=" + testSession + " -- go test ./... 2>&1"},
+		{"stderr merge and cd", true, nil, true, "cd sub && go test 2>&1", nil, nil, nil, "cd sub && '" + testExe + "' compact --session=" + testSession + " -- go test 2>&1"},
+		{"stderr merge denied on the typed text", true, nil, true, "go test ./... 2>&1", nil, []string{"Bash(go test ./... 2>&1)"}, nil, ""},
+		{"stderr merge inner denied", true, nil, true, "cd sub && go test 2>&1", nil, []string{"Bash(go test:*)"}, nil, ""},
+		{"stderr to devnull stays unwrapped", true, nil, true, "go test ./... 2>/dev/null", okRules, nil, nil, ""},
 		{"enabled git log", true, nil, true, "git log", okRules, nil, nil, "'" + testExe + "' compact --session=" + testSession + " -- git log"},
 		{"not allowlisted", true, nil, true, "git -c core.pager=x log", okRules, nil, nil, ""},
 		{"already wrapped", true, nil, true, "downshift exec -- go test ./...", okRules, nil, nil, ""},
@@ -205,14 +210,14 @@ func (e fakeShellEvent) ShellRewrite(c string) (any, error) {
 
 func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 	withExec(t, true, nil, true)
-	for _, n := range []string{"cursor", "codex", "antigravity", "opencode", "unknown"} {
+	for _, n := range []string{"antigravity", "opencode", "unknown"} {
 		d := shellWrapDecision(n, "go test ./...", func(string) bool { return false })
 		if d.Rewrite || d.Reason != "harness_cannot_rewrite" || d.Family != execwrap.FamilyGoTest {
 			t.Fatalf("%s: decision = %+v", n, d)
 		}
 	}
 	out := captureStdout(func() {
-		rc := runHookAdapter("cursor", strings.NewReader(`{"Command":"go test ./..."}`),
+		rc := runHookAdapter("antigravity", strings.NewReader(`{"Command":"go test ./..."}`),
 			func(b []byte) (fakeShellEvent, error) { var e fakeShellEvent; return e, json.Unmarshal(b, &e) },
 			func(fakeShellEvent) (any, string, core.Decision) {
 				t.Fatal("a shell call must not be routed")
@@ -228,10 +233,13 @@ func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 	}
 }
 
-// Claude Code is the only harness that declares the capability today; the
-// fact is data, read through AllHarnessCaps.
+// Claude Code and Cursor declare the capability; the fact is data, read
+// through AllHarnessCaps.
 func TestShellRewrite_CapabilityDeclaredOnlyForClaudeCode(t *testing.T) {
 	withExec(t, true, nil, true)
+	if d := shellWrapDecision("cursor", "go test ./...", func(string) bool { return false }); !d.Rewrite {
+		t.Fatalf("cursor decision = %+v", d)
+	}
 	if d := shellWrapDecision("claude-code", "go test ./...", func(string) bool { return false }); !d.Rewrite {
 		t.Fatalf("claude-code decision = %+v", d)
 	}

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/hookctx"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 func needSh(t *testing.T) {
@@ -38,9 +39,13 @@ func TestRunCommand_GlobalDeadlineKillsHungHelper(t *testing.T) {
 	if err == nil {
 		t.Fatal("hung helper must fail")
 	}
-	if d := time.Since(start); d > time.Second {
+	// The helper sleeps 10 s: returning before 5 s proves the deadline killed it
+	// (always checked); the tight bound is a performance budget.
+	d := time.Since(start)
+	if d > 5*time.Second {
 		t.Fatalf("helper ran %s past a 200ms deadline", d)
 	}
+	testenv.CheckBudget(t, "helper kill at a 200ms deadline", d, time.Second)
 }
 
 // After the deadline, helpers are not started at all.
@@ -64,9 +69,7 @@ func TestRunCommand_OutputIsCapped(t *testing.T) {
 	if err == nil {
 		t.Fatal("unbounded output must fail")
 	}
-	if d := time.Since(start); d > 2*time.Second {
-		t.Fatalf("capped helper took %s", d)
-	}
+	testenv.CheckBudget(t, "capped helper", time.Since(start), 2*time.Second)
 }
 
 // A helper whose background child keeps stdout open does not hold the hook:

@@ -45,7 +45,7 @@ func TestHeldSplit_FixtureLog(t *testing.T) {
 		t.Fatalf("tree held %d held_guardrail %d upshift_not_applied %d, want 4 3 2",
 			tree.Held, tree.HeldGuardrail, tree.UpshiftNotApplied)
 	}
-	if out := tree.Render(); !strings.Contains(out, "3 held") || !strings.Contains(out, "2 upshift not applied") {
+	if out := tree.Render(); !strings.Contains(out, "3 kept as requested") || !strings.Contains(out, "2 bigger model not applied") {
 		t.Fatalf("header lacks both counts:\n%s", out)
 	}
 }

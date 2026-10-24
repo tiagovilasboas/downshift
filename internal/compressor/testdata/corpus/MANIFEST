@@ -43,7 +43,7 @@ preserve  git_status  gitstatus_untracked.txt
 preserve  go_test     go_verbose_fail.txt
 clean     go_test     go_verbose_pass.txt
 clean     go_test     go_verbose_subtests_pass.txt
-preserve  go_test     go_verbose_subtests_log.txt
+clean     go_test     go_verbose_subtests_log.txt
 preserve  go_test     gotest_ansi.txt
 preserve  go_test     gotest_build_failed.txt
 preserve  go_test     gotest_crlf.txt

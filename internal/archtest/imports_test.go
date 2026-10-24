@@ -7,6 +7,28 @@
 // imports of a package and fails when one is forbidden. Test files are not part
 // of that graph, which is the point: a core test may import nbtier, the binary
 // does not.
+//
+// Accounting layers (docs/internal/tasks/2026-10-21-accounting-v1, section 2).
+// Every surface shows the numbers of accounting.Compute, so the layers are
+// enforced here:
+//
+//	L0 internal/telemetry, internal/execwrap  parse and store events; they must
+//	   not import accounting or api (rules table, closure check).
+//	L2 internal/accounting/formula            pure formula; imports only catalog
+//	   (rules table plus TestLayerDirectImports).
+//	L3 internal/accounting                    Compute; its direct imports are
+//	   telemetry, execwrap, catalog and accounting/formula, and its closure never
+//	   reaches api or an adapter (TestLayerDirectImports, rules table).
+//	L4 internal/api, cmd/downshift report.go and sessionpanel.go  surfaces; they
+//	   must import accounting (TestSurfacesImportAccounting) and must not add up
+//	   telemetry fields themselves: no `WorkSaved +`, `CacheSaved +` or
+//	   `SavedBytes +` arithmetic outside the allowlist of TestNoSurfaceArithmetic.
+//	   That allowlist holds the one Compute implementation (compute.go) and the
+//	   legacy aggregations A6 deletes; an entry that stops matching fails, so the
+//	   list can only shrink.
+//
+// The numbers themselves are held equal by the parity test in cmd/downshift
+// (accounting_parity_test.go) over the golden logs in testdata/parity.
 package archtest
 
 import (
@@ -32,6 +54,10 @@ var rules = []rule{
 	{"session", []string{"core"}, "session is a leaf loader; PlanForSession and friends stay in core"},
 	{"fuse", []string{"core"}, "fuse imports classify and semantic, never core (core wraps fuse)"},
 	{"codeintel", []string{"core", "classify"}, "code intelligence is independent of routing"},
+	{"telemetry", []string{"accounting", "api"}, "L0: events are parsed here; the numbers are computed in accounting"},
+	{"execwrap", []string{"accounting", "api"}, "L0: the exec log is parsed here; the numbers are computed in accounting"},
+	{"accounting", []string{"api", "adapters"}, "L3: Compute serves the surfaces, so it cannot depend on them"},
+	{"accounting/formula", []string{"telemetry", "execwrap", "api", "adapters"}, "L2: the formula is pure and reads only prices"},
 	{"replay", []string{"core", "catalog", "telemetry", "adapters", "session", "classify", "hookport"}, "the replay domain reaches the router, the catalog and the transcripts only through its ports (Source, Router, Comparer)"},
 }
 

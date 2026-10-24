@@ -67,6 +67,8 @@ type Result struct {
 	RawBytes     int64 // stdout plus stderr the program wrote
 	EmittedBytes int64 // stdout plus stderr the wrapper wrote
 	Compacted    bool
+	// Passthrough is the Passthrough* reason when Compacted is false.
+	Passthrough string
 }
 
 // ObserveUncompactedHook is called when a command's output was not compacted.
@@ -107,25 +109,37 @@ var expectedFormat = map[Family]compressor.Format{
 	FamilyDotnetBuild:  compressor.FormatDotnetBuild,
 }
 
+// stderrIsReport lists the families whose own reporter writes its progress and
+// final summary to stderr by design (Jest's reporters use process.stderr, so a
+// green run has an empty stdout). For these the gate merges stderr into the
+// held buffer, in write order, and lets the compressor decide: failure markers
+// and errors still keep the output raw. Every other family keeps the rule that
+// any stderr byte releases the output untouched.
+var stderrIsReport = map[Family]bool{
+	FamilyJest: true,
+}
+
 // Run executes argv directly (no shell) with the caller's stdin, and exits
 // with the program's own status. Only the allowlisted families run (anything
 // else is refused with 126). Output keeps the order the program wrote it in.
 // With compaction on, stdout is held (see gate) and compacted only
-// when the program exited 0, wrote nothing on stderr, stayed under
+// when the program wrote nothing on stderr (except families in stderrIsReport,
+// whose reporter writes there) and exited 0, or exited non-zero in a family
+// CompressFailed supports, which keeps every failure; stayed under
 // compressor.MaxProcessableBytes and HoldBound (when configured), and the
 // compressor recognised the family's own format. Otherwise it is byte-identical.
 // Any internal error prints the raw output: output is never lost.
 func Run(argv []string, o Options) (res Result) {
 	if len(argv) == 0 {
 		fmt.Fprintln(o.Stderr, "downshift compact: no command (usage: downshift compact -- <program> [args...])")
-		return Result{ExitCode: 2, ExitClass: ExitClassStartError}
+		return Result{ExitCode: 2, ExitClass: ExitClassStartError, Passthrough: PassthroughNonZeroExit}
 	}
 	res.Family = FamilyOf(argv)
 	if res.Family == FamilyNone {
 		// exec is not a generic runner: only the allowlisted families run, so
 		// a wrapped command can never be anything the hook would not wrap.
-		fmt.Fprintln(o.Stderr, "downshift compact: refused: only allowlisted test, build, and status commands may run through exec")
-		return Result{ExitCode: ExitCannotExecute, ExitClass: ExitClassRefused}
+		fmt.Fprintf(o.Stderr, "downshift compact: refused: not allowlisted. Allowed: %s; run the command without downshift compact\n", AllowlistSummary())
+		return Result{ExitCode: ExitCannotExecute, ExitClass: ExitClassRefused, Passthrough: PassthroughRefused}
 	}
 	path, err := exec.LookPath(argv[0])
 	if err != nil {
@@ -167,18 +181,19 @@ func Run(argv []string, o Options) (res Result) {
 
 	res.ExitCode, res.ExitClass = exitStatus(cmd.Wait())
 	release()
-	res.RawBytes, res.EmittedBytes, res.Compacted = g.finish(res.ExitCode == 0, expectedFormat[res.Family])
+	res.RawBytes, res.EmittedBytes, res.Compacted, res.Passthrough = g.finish(res.ExitCode, expectedFormat[res.Family])
 	return res
 }
 
-// startFailure answers like a shell when the program cannot start.
+// startFailure answers like a shell when the program cannot start. The exit
+// code is non-zero, so the reason is a non-zero exit.
 func startFailure(name string, err error, stderr io.Writer, family Family) Result {
 	if errors.Is(err, exec.ErrNotFound) || errors.Is(err, fs.ErrNotExist) {
 		fmt.Fprintf(stderr, "downshift compact: %s: command not found\n", name)
-		return Result{ExitCode: ExitNotFound, ExitClass: ExitClassNotFound, Family: family}
+		return Result{ExitCode: ExitNotFound, ExitClass: ExitClassNotFound, Family: family, Passthrough: PassthroughNonZeroExit}
 	}
 	fmt.Fprintf(stderr, "downshift compact: %s: %v\n", name, err)
-	return Result{ExitCode: ExitCannotExecute, ExitClass: ExitClassStartError, Family: family}
+	return Result{ExitCode: ExitCannotExecute, ExitClass: ExitClassStartError, Family: family, Passthrough: PassthroughNonZeroExit}
 }
 
 // exitStatus maps a Wait error to the shell's exit status: the program's own
@@ -216,6 +231,8 @@ type gate struct {
 	mu        sync.Mutex
 	out, err  io.Writer
 	buf       bytes.Buffer
+	merge     bool    // stderr is part of the held report (stderrIsReport)
+	chunks    []chunk // held writes in order, kept only when merge is set
 	streaming bool
 	timer     *time.Timer
 	nOut      int64
@@ -225,7 +242,37 @@ type gate struct {
 }
 
 func newGate(out, err io.Writer, hold bool, argv []string, family Family) *gate {
-	return &gate{out: out, err: err, streaming: !hold, argv: argv, family: family}
+	return &gate{out: out, err: err, streaming: !hold, merge: stderrIsReport[family], argv: argv, family: family}
+}
+
+// chunk is one held write and the stream it was written to.
+type chunk struct {
+	isErr bool
+	b     []byte
+}
+
+// replay writes the held bytes raw, each to the stream it came from.
+func (g *gate) replay(data []byte) {
+	if !g.merge {
+		_, _ = g.out.Write(data) // a closed reader must not kill the program
+		return
+	}
+	for _, c := range g.chunks {
+		if c.isErr {
+			_, _ = g.err.Write(c.b)
+		} else {
+			_, _ = g.out.Write(c.b)
+		}
+	}
+	g.chunks = nil
+}
+
+// hold appends a write to the held buffer. Callers hold g.mu.
+func (g *gate) hold(p []byte, isErr bool) {
+	g.buf.Write(p)
+	if g.merge {
+		g.chunks = append(g.chunks, chunk{isErr, append([]byte(nil), p...)})
+	}
 }
 
 // release flushes held stdout and switches to streaming. Callers hold g.mu.
@@ -237,7 +284,7 @@ func (g *gate) release() {
 	if g.timer != nil {
 		g.timer.Stop()
 	}
-	_, _ = g.out.Write(g.buf.Bytes()) // a closed reader must not kill the program
+	g.replay(g.buf.Bytes())
 	g.buf = bytes.Buffer{}
 }
 
@@ -262,7 +309,7 @@ func (w stdoutWriter) Write(p []byte) (int, error) {
 			g.release()
 		})
 	}
-	g.buf.Write(p)
+	g.hold(p, false)
 	return len(p), nil
 }
 
@@ -273,20 +320,34 @@ func (w stderrWriter) Write(p []byte) (int, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	g.nErr += int64(len(p))
+	if g.merge && !g.streaming {
+		if g.buf.Len()+len(p) > compressor.MaxProcessableBytes {
+			g.release()
+		} else {
+			g.hold(p, true)
+			return len(p), nil
+		}
+	}
 	g.release()
 	_, _ = g.err.Write(p)
 	return len(p), nil
 }
 
-// finish writes any still-held stdout, compacted when the exit code was 0,
+// finish writes any still-held stdout, compacted (a failed run only for the
+// formats CompressFailed supports),
 // nothing was released early and the compressor applied the expected format,
-// raw otherwise. It returns the raw and emitted byte counts.
-func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64, compacted bool) {
+// raw otherwise. It returns the raw and emitted byte counts and, when the
+// output was not compacted, the Passthrough reason. Output that streamed
+// before the gate decided has no reason beyond a non-zero exit.
+func (g *gate) finish(exitCode int, want compressor.Format) (raw, emitted int64, compacted bool, passthrough string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	raw = g.nOut + g.nErr
 	if g.streaming {
-		return raw, raw, false
+		if exitCode != 0 {
+			passthrough = PassthroughNonZeroExit
+		}
+		return raw, raw, false, passthrough
 	}
 	if g.timer != nil {
 		g.timer.Stop()
@@ -294,13 +355,14 @@ func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64
 	data := g.buf.Bytes()
 	g.streaming = true // a timer that fires after finish finds nothing to flush
 	g.buf = bytes.Buffer{}
-	out := data
-	if exitZero && want != "" {
-		if c, ok := compactSafely(data, want); ok {
-			out, compacted = c, true
-		}
+	var out []byte
+	out, passthrough = compactOutput(exitCode, data, want)
+	compacted = passthrough == ""
+	if compacted {
+		_, _ = g.out.Write(out)
+	} else {
+		g.replay(data)
 	}
-	_, _ = g.out.Write(out)
 
 	// The output is already written and the exit code already known, so the
 	// learning hook runs here, under a deadline, and its write is on disk
@@ -309,7 +371,7 @@ func (g *gate) finish(exitZero bool, want compressor.Format) (raw, emitted int64
 		observeUncompacted(ObserveUncompactedHook, g.argv, data, g.family)
 	}
 
-	return raw, int64(len(out)), compacted
+	return raw, int64(len(out)), compacted, passthrough
 }
 
 // ObserveHookDeadline bounds how long finish waits for ObserveUncompactedHook.
@@ -334,23 +396,61 @@ func observeUncompacted(hook func([]string, []byte, Family), argv []string, data
 	}
 }
 
+// compactOutput returns the bytes to print and, when they are raw, why. A
+// failed run goes through the family's failure compressor (CompressFailed):
+// every failure line is kept and only passing noise is cut; when that is not
+// possible the run passes through whole, reason non-zero exit.
+func compactOutput(exitCode int, data []byte, want compressor.Format) ([]byte, string) {
+	switch {
+	case len(data) == 0:
+		return data, PassthroughSmallOutput
+	case want == "":
+		return data, PassthroughUnrecognized
+	}
+	out, reason := compactSafely(data, want, exitCode)
+	if reason != "" {
+		if exitCode != 0 {
+			reason = PassthroughNonZeroExit
+		}
+		return data, reason
+	}
+	return out, ""
+}
+
+// noGainReason is the compressor's Result.Reason when it recognised a shape
+// but the summary would not be shorter. The compressor exports no constant
+// for it; the table test in passthrough_test.go pins this value.
+const noGainReason = "no_compression_gain"
+
 // compactSafely runs the compressor under recover: a compressor bug prints
-// the raw output instead.
-func compactSafely(data []byte, want compressor.Format) (out []byte, ok bool) {
+// the raw output instead. It returns the summary and marker, or the reason
+// the output stays raw. A non-zero exit uses the failure compressor.
+func compactSafely(data []byte, want compressor.Format, exitCode int) (out []byte, reason string) {
 	defer func() {
 		if recover() != nil {
-			out, ok = nil, false
+			out, reason = nil, PassthroughUnrecognized
 		}
 	}()
 	r := compressor.CompressExit(data, compressor.ModeSafe, 0)
-	if !r.Applied || r.Format != want {
-		return nil, false
+	if exitCode != 0 {
+		r = compressor.CompressFailed(data, want)
+	}
+	if r.Format != want {
+		return nil, PassthroughUnrecognized
+	}
+	if !r.Applied {
+		if r.Reason == noGainReason {
+			return nil, PassthroughSmallOutput
+		}
+		// The shape was recognised but kept raw for safety (a danger word, an
+		// unknown line): the family's compressor did not summarise it.
+		return nil, PassthroughUnrecognized
 	}
 	out = append(append([]byte{}, r.Output...), Marker(len(data), len(r.Output))...)
 	if len(out) >= len(data) {
-		return nil, false
+		return nil, PassthroughSmallOutput
 	}
-	return out, true
+	return out, ""
 }
 
 // Marker is the last line of compacted output. It tells the reader that the

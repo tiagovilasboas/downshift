@@ -19,6 +19,7 @@ var briefWords = map[string]string{
 	ReasonGuessHeld:            "guessed baseline held a mid downshift",
 	ReasonPaused:               "routing paused",
 	ReasonAgentPinsModel:       "agent pins its model",
+	ReasonAgentTypeHint:        "tier from subagent type",
 }
 
 // ReasonBrief renders reason codes as one short phrase such as

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 // fakeBin writes an executable shell script named name into a fresh PATH
@@ -678,13 +679,40 @@ func TestRun_WaitsForObserveHookUnderDeadline(t *testing.T) {
 	ObserveUncompactedHook = func([]string, []byte, Family) { time.Sleep(2 * time.Second) }
 	start := time.Now()
 	r, _, _ = run(t, []string{"go", "test"}, true)
-	if r.ExitCode != 0 || time.Since(start) > time.Second {
-		t.Fatalf("overrunning hook changed the result: exit=%d elapsed=%s", r.ExitCode, time.Since(start))
+	// The hook sleeps 2 s: finishing under 2 s proves Run did not wait for it
+	// (always checked); the tighter 1 s bound is a performance budget.
+	elapsed := time.Since(start)
+	if r.ExitCode != 0 || elapsed >= 2*time.Second {
+		t.Fatalf("overrunning hook changed the result: exit=%d elapsed=%s", r.ExitCode, elapsed)
 	}
+	testenv.CheckBudget(t, "Run with an overrunning hook", elapsed, time.Second)
 
 	// A panicking hook is swallowed.
 	ObserveUncompactedHook = func([]string, []byte, Family) { panic("boom") }
 	if r, _, _ = run(t, []string{"go", "test"}, true); r.ExitCode != 0 {
 		t.Fatalf("panicking hook changed the exit code: %d", r.ExitCode)
+	}
+}
+
+// TestRun_ContainerExecKeepsExitCode runs a fake docker that prints a PHPUnit
+// transcript. A zero exit compacts under the inner family; a non-zero exit
+// keeps the raw output and the real exit code.
+func TestRun_ContainerExecKeepsExitCode(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "compressor", "testdata", "corpus", "phpunit_pass_default.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	argv := strings.Fields("docker compose exec -T app vendor/bin/phpunit")
+
+	fakeBin(t, "docker", "cat <<'EOF'\n"+string(data)+"EOF\nexit 0")
+	r, stdout, stderr := run(t, argv, true)
+	if r.ExitCode != 0 || !r.Compacted || r.Family != FamilyPHPUnit || stderr != "" || !strings.Contains(stdout, "PHPUnit: PASS (58 tests, 143 assertions") {
+		t.Fatalf("pass: result=%+v stdout=%q stderr=%q", r, stdout, stderr)
+	}
+
+	fakeBin(t, "docker", "cat <<'EOF'\n"+string(data)+"EOF\nexit 3")
+	r, stdout, _ = run(t, argv, true)
+	if r.ExitCode != 3 || r.Compacted || r.Family != FamilyPHPUnit || stdout != string(data) {
+		t.Fatalf("fail: result=%+v stdout=%q", r, stdout)
 	}
 }

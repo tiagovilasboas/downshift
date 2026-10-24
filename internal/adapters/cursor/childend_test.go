@@ -23,6 +23,7 @@ func TestParseChildEnd(t *testing.T) {
 		agent   string
 	}{
 		{"completed", `{"hook_event_name":"subagentStop","status":"completed","tool_call_id":"tc1","subagent_id":"sa1"}`, true, telemetry.ChildCompleted, "tc1", "sa1"},
+		{"3.27 subagent_id only", `{"hook_event_name":"subagentStop","status":"completed","session_id":"s1","subagent_id":"tc-spawn","cursor_version":"3.27.12"}`, true, telemetry.ChildCompleted, "tc-spawn", "tc-spawn"},
 		{"error", `{"hook_event_name":"subagentStop","status":"error","tool_use_id":"tc2"}`, true, telemetry.ChildError, "tc2", "tc2"},
 		{"aborted", `{"status":"aborted","tool_call_id":"tc3"}`, true, telemetry.ChildInterrupted, "tc3", "tc3"},
 		{"unknown status is a stop with no claim", `{"hook_event_name":"subagentStop","status":"weird"}`, true, telemetry.ChildStopped, "", ""},

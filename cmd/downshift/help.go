@@ -35,6 +35,9 @@ See the effect
   downshift report                 Measured: routed vs control group, cost per completed task, with CI
   downshift session                This session's subagents as a tree (--why, --pause)
 
+Save context
+  downshift compact -- <cmd>       Cut go test, git status, vitest output to its PASS/FAIL summary (exit code kept)
+
 Fix things
   downshift config                 Every effective setting with its value and source
   downshift feedback list          Routing ids waiting for your review

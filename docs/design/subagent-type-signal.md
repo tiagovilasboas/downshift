@@ -109,3 +109,15 @@ leave such a copy to the cursor hook (`PayloadMarkers`, see
 Code transcripts named only `general-purpose`, `Explore` and
 `claude-code-guide`, so there is still no measurement of real custom types, and
 the recommendation above stands.
+
+## Addendum 3, 2026-10-23: the built-in type is a hint, not a name match
+
+Option 1 stays rejected for free-text names. Two Claude Code built-ins have a fixed job
+(`Explore` read-only search, `Plan` design), and the owner's log showed 4 of 7 `Explore`
+spawns ending UNKNOWN or held and 46 `general-purpose` decisions CLASSIFIER_UNCONFIDENT.
+`HarnessCapabilities.AgentTypeHints` (data) plus `core.RouteAgent` now let the type fill doubt,
+never override evidence: only when the text read is unconfident, with no risk signal and no
+COMPLEX read, with the current model known and the hint capped at its tier. A confident
+classifier read wins over the type in both directions (owner can flip this in
+`agentTypeHintTier`). Reason code `AGENT_TYPE_HINT`. Cursor and Codex pass their field, with no
+hint names until evidence.

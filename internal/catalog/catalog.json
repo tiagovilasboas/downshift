@@ -527,7 +527,7 @@
       "output_cost_per_1m": 6.00
     },
 
-    { "_section": "kirocrew — spawn_run models (Anthropic families; Crew accepts canonical key or provider id)" },
+    { "_section": "kirocrew — spawn_run models (Anthropic families; Crew accepts canonical key or provider id). Exact rows for every Anthropic id kiro-cli chat --list-models --format json listed on 2026-10-23, so an older version is not priced as its family's 5.5 row. Prices from the OpenRouter model list, 2026-10-24." },
 
     {
       "id": "claude-haiku-4-5",
@@ -596,6 +596,84 @@
       "output_cost_per_1m": 25.00,
       "cache_read_cost_per_1m": 0.50,
       "cache_write_cost_per_1m": 6.25
+    },
+    {
+      "id": "claude-opus-5",
+      "aliases": [],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 5.00,
+      "output_cost_per_1m": 25.00,
+      "cache_read_cost_per_1m": 0.50,
+      "cache_write_cost_per_1m": 6.25
+    },
+    {
+      "id": "claude-opus-4-7",
+      "aliases": ["claude-opus-4.7"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 5.00,
+      "output_cost_per_1m": 25.00,
+      "cache_read_cost_per_1m": 0.50,
+      "cache_write_cost_per_1m": 6.25
+    },
+    {
+      "id": "claude-opus-4-6",
+      "aliases": ["claude-opus-4.6"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 5.00,
+      "output_cost_per_1m": 25.00,
+      "cache_read_cost_per_1m": 0.50,
+      "cache_write_cost_per_1m": 6.25
+    },
+    {
+      "id": "claude-opus-4-5",
+      "aliases": ["claude-opus-4.5"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "input_cost_per_1m": 5.00,
+      "output_cost_per_1m": 25.00,
+      "cache_read_cost_per_1m": 0.50,
+      "cache_write_cost_per_1m": 6.25
+    },
+    {
+      "id": "claude-sonnet-5",
+      "aliases": [],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
+      "input_cost_per_1m": 2.00,
+      "output_cost_per_1m": 10.00,
+      "cache_read_cost_per_1m": 0.20,
+      "cache_write_cost_per_1m": 2.50
+    },
+    {
+      "id": "claude-sonnet-4-5",
+      "aliases": ["claude-sonnet-4.5"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
+      "input_cost_per_1m": 3.00,
+      "output_cost_per_1m": 15.00,
+      "cache_read_cost_per_1m": 0.30,
+      "cache_write_cost_per_1m": 3.75
     },
 
     { "_section": "opencode — zen model IDs (no published list price: zero cost fields mean not in the catalog, never a real $0)" },

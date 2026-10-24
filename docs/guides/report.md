@@ -72,6 +72,8 @@ ended (the same events `stats` reads).
 
 ## What the text report prints
 
+When the window has more than one harness, the text report leads with the **current harness** (the harness of the latest event in the window): the full routed-versus-control comparison and the plan lens. **Other harnesses** follow, one block each, in name order, with the same table and the plan-lens line. A window with a single harness keeps the original report, with no extra headings. `--json` keeps the window-wide totals and adds `current_harness` and `by_harness` (current first).
+
 The routed-versus-control comparison shows tokens only. Its table has one row per group:
 
 | Column | Meaning |

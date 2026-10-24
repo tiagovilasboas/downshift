@@ -25,6 +25,9 @@ on:
       - "v*"
   pull_request:
     branches: [main]
+  # Merge queue runs: the same gates on the queued merge result, so `test`
+  # reports on the queue branch and the queue can merge without a rebase.
+  merge_group:
   # Also started by sync-prices on chore/sync-prices, whose PR (opened with
   # GITHUB_TOKEN) cannot trigger pull_request runs.
   workflow_dispatch:
@@ -66,8 +69,8 @@ jobs:
           GITHUB_REF: ${{ github.ref }}
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_EVENT_BEFORE: ${{ github.event.before }}
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
         run: |
           eval "$(bash scripts/ci-classify-changes.sh)"
           echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
@@ -78,6 +81,8 @@ jobs:
   test:
     needs: changes
     runs-on: ubuntu-latest
+    env:
+      DOWNSHIFT_TEST_TIMING: "1" # enforce wall-clock test budgets (internal/testenv/timing.go)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -124,8 +129,8 @@ jobs:
         if: needs.changes.outputs.go == '1'
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
         run: |
           # Pull requests test the changed packages and their dependents; pushes
           # to main, and any change outside Go package directories, test ./...
@@ -155,7 +160,7 @@ jobs:
   test-os:
     needs: changes
     if: >-
-      (github.event_name == 'pull_request' && needs.changes.outputs.os_sensitive == '1')
+      ((github.event_name == 'pull_request' || github.event_name == 'merge_group') && needs.changes.outputs.os_sensitive == '1')
       || startsWith(github.ref, 'refs/tags/v')
     strategy:
       fail-fast: false
@@ -163,6 +168,8 @@ jobs:
         os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    env:
+      DOWNSHIFT_TEST_TIMING: "1" # enforce wall-clock test budgets (internal/testenv/timing.go)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -198,6 +205,8 @@ jobs:
       && (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      DOWNSHIFT_TEST_TIMING: "1" # enforce wall-clock test budgets (internal/testenv/timing.go)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -215,8 +224,8 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
         run: |
           pkgs=$(bash scripts/ci-test-packages.sh)
           if [ "$pkgs" = "./..." ]; then

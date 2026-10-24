@@ -52,6 +52,9 @@ const (
 	// ReasonAgentPinsModel marks a decision for a child whose agent definition
 	// pins its model: the baseline is known and the spawn is left unchanged.
 	ReasonAgentPinsModel = "AGENT_PINS_MODEL"
+	// ReasonAgentTypeHint marks a decision whose tier came from the subagent
+	// type (HarnessCapabilities.AgentTypeHints) because the text read was unsure.
+	ReasonAgentTypeHint = "AGENT_TYPE_HINT"
 	// ReasonHeldUnmapped stands for a guardrail rule this version has no code
 	// for, so a hold is never silently dropped from the trace.
 	ReasonHeldUnmapped = "HELD_UNMAPPED_RULE"
@@ -121,6 +124,9 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.Baseline.FromSettings {
 		set[ReasonBaselineFromSettings] = true
+	}
+	if d.Guards.AgentTypeHint {
+		set[ReasonAgentTypeHint] = true
 	}
 	if d.Baseline.Pinned {
 		set[ReasonAgentPinsModel] = true

@@ -36,7 +36,7 @@ rewrite to the child subagent, not just that downshift emitted one.
 | cursor | Pro legacy (request-based) | No: silently dropped | Task model takes only `"fast"` (README.md:735) |
 | cursor | Pro / Ultra usage-based | Unconfirmed | Actual child-model proof remains P1.6. Separately, Cursor 3.24.9 blocks the external native quota collector before transport; see [diagnostic](../evidence/cursor-gap-diagnostic.md). |
 | codex | multi_agent_v2 + hooks on | Yes, inferred (2026-10-02) | Inferred, not observed: same-session follow-up: spawn requested `gpt-5.6-terra` after hook emitted Terra (`docs/evidence/codex-rewrite-honored-2026-10-02.md`). Payload >1MB still fail-open. Schema still evolving upstream. |
-| kirocrew | Kiro CLI 2.29 native spec hook; MCP `spawn_run` with explicit `task` + `model` | Policy/block + retry observed 2026-10-10; no in-place rewrite | Persistent `agent.kiro_hooks.preToolUse` + executable wrapper; no `updated_input` channel. Native `use_subagent` without child model is outside coverage. `hooks.json` tool-call hooks are informational and do not enforce blocks. [Native evidence](../evidence/kirocrew-native-hook-2026-10-10.md); [setup and limits](../guides/install.md#kirocrew-policy-mode-through-the-native-kiro-cli-hook). |
+| kirocrew | Kiro CLI 2.29 native spec hook; MCP `spawn_run` with explicit `task` + `model`, or `spawn_run` with `tasks[]` (each entry `{task, model, reasoning_effort}`) | Policy/block + retry observed 2026-10-10; no in-place rewrite | Persistent `agent.kiro_hooks.preToolUse` + executable wrapper; no `updated_input` channel. Native `use_subagent` without child model is outside coverage. `hooks.json` tool-call hooks are informational and do not enforce blocks. [Native evidence](../evidence/kirocrew-native-hook-2026-10-10.md); [setup and limits](../guides/install.md#kirocrew-policy-mode-through-the-native-kiro-cli-hook). `spawn_run` `tasks[]`: each entry is routed on its own, with one decision and one telemetry row per entry; a block names every entry to respawn and the whole call is blocked (KiroCrew cannot rewrite one entry). Batch rows carry no top-level model, so their telemetry `FromModel` is `unknown`. A top-level `spawn_run` without `tasks` routes as before. `spawn_sub_agents` is **not routed** (passes through unchanged). Shape verified in the KiroCrew 2.29 backend source (`validation.py` `SPAWN_SUB_AGENTS_SCHEMA`, `mcp_tools/spawn.py`), not a captured payload: `agents: [{agent_or_mode, prompt}]` with no per-entry model; the handler forwards only task, agent and context flags, so the child model is set by the named agent. Downshift cannot route it. The postToolUse matcher stays `spawn_run`. Table tests: `internal/adapters/kirocrew/batch_test.go`. |
 | antigravity | desktop 2.21.1, `invoke_subagent` | Yes, observed 2026-10-09 | One exact child: original `pro`, executed `flash_lite`, native executor/generation model `gemini-3.5-flash-lite`. [Evidence and QA](../evidence/antigravity-executor-ack.md). Manual read-only, build-specific sensor; quota/picker/alias mapping remains unresolved. |
 | opencode | zen models (no published list price) | Not observed yet | Adapter and conformance only (the forwarding plugin is phase 2). The route answer carries the target model; the observation side reports a resolved model only from an arrival-ordered switch chain (`switch_attempt` ok, then `model_selected`, then the first `child_context`) compared against the decision target. Usage seam not proven: no cost recorded. |
 | grok | any (single model grok-4.6) | No hook rewrite: config only | PreToolUse is allow/deny; pin `reasoning_effort` in config.toml (README.md:520-531) |
@@ -156,8 +156,12 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
 - **cursor current model.** In 144 captured Task payloads (2026-10-09/10) the
   top-level `model` was always empty; the subagent `model` was a real id,
   `inherit` (28) or absent (30). With `model_id` on the payload, `inherit` is
-  resolved like a missing `tool_input.model` and logged as that parent id; without
-  `model_id` it logs as `unknown`.
+  resolved like a missing `tool_input.model` and logged as that parent id. On
+  Cursor 3.27.12 (2026-10-24) Task `preToolUse` often omits `model_id`; when
+  `transcript_path` is present the adapter reads the Claude-shaped parent JSONL
+  (last assistant `message.model`, or the model on the line that carries this
+  `tool_use_id`), bounded wait as Claude Code. Without payload model fields or
+  a readable transcript, baseline stays `unknown`.
 - **Unrecognised models (all harnesses).** When the requested model is
   non-empty but not in the catalog, the shared runner records it in
   `requested_model_raw` if it looks like a model id (64 chars,
@@ -174,7 +178,7 @@ access to the tiers below it.
 |---|---|---|---|---|---|
 | claude-code | `SessionStart.model` (optional); the Agent `tool_input.model` when the parent set it; `PostToolUse.tool_response.resolvedModel` | No listing for subscriptions; `availableModels`/`deniedModels` exist only in managed settings; the Models API needs `ANTHROPIC_API_KEY` | statusline `rate_limits.five_hour` / `seven_day` (global, Pro/Max only, after the first response); not per model | `SessionStart` (add context, `CLAUDE_ENV_FILE`) | yes |
 | codex | `model` on every payload; effort only if the parent put `reasoning_effort` in `spawn_agent` | `models_cache.json` (offline; `hide` means not shown in the picker, not unusable); app-server `model/list` is experimental | per meter (`codex`, `premium`), never per model | `SessionStart` can only add context | no |
-| cursor | `model`, `model_id`, `model_params`; `subagent_model` on `subagentStart` | `cursor-agent models` (text, needs login; failed here with "Authentication required"); Cloud `/v1/models` needs an API key | Cursor Models vs Other Models pools, UI/dashboard only; CLI `/usage` is interactive | `sessionStart` (env reaches later hooks; not for cloud agents) | no |
+| cursor | `model`, `model_id`, `model_params`; `transcript_path` on `preToolUse` (3.27+); `subagent_model` on `subagentStart` (observe only, no rewrite) | `cursor-agent models` (text, needs login; failed here with "Authentication required"); Cloud `/v1/models` needs an API key | Cursor Models vs Other Models pools, UI/dashboard only; CLI `/usage` is interactive | `sessionStart` (env reaches later hooks; not for cloud agents) | no |
 | antigravity | `modelName` (parent) and `conversationId`; the adapter does not read them yet | `agy --output-format json models` (parent picker); no alias-to-model or pool mapping | `agy -p /usage --output-format json` per account, group and window; not tied to an alias | none (Pre/PostToolUse, Pre/PostInvocation, Stop) | no |
 | kirocrew | none in the payload; `session_id` maps to `~/.kiro/sessions/cli/<id>.json` (`agent_name`, `model_id`, undocumented) | `kiro-cli chat --list-models --format json` (10 models plus `auto`, with `rate_multiplier`) | no supported non-interactive credit source | `agentSpawn` (renamed `SessionStart` in V3); stdout goes to the agent context; any non-zero exit blocks | no |
 
@@ -198,7 +202,7 @@ not an end). Claude Code keeps `claude-code-post-tool-use` and
 |---|---|---|---|
 | claude-code | `SubagentStop` (launch and failure also on `PostToolUse` / `PostToolUseFailure`) | transcript (`agent_transcript_path`) | verified 2026-10-06 (launch payload, SubagentStop transcript); failure payload still GAP-CHILD-FAILURE |
 | codex | `PostToolUse` for `spawn_agent` | **none** (`UsageSource: none`): end and status are recorded, cost is not. A parser for the rollout `token_count` exists but stays off until a real payload proves `transcript_path` is the child's rollout | **unverified: needs a real payload.** `tool_response.status` / `model` are assumed names; the `token_count` usage shape is from the Codex rollout format, not from a captured hook. A spawn that reports no status is a launch: it records `launched`, reads no usage and does not make completion measurable. `transcript_path` is the parent rollout, so until a real payload shows a child-scoped rollout the tokens may be the parent thread's. |
-| cursor | `subagentStop` | none (no usage field is read) | **unverified: needs a real payload.** Linked only when the payload names the spawn tool call (`tool_use_id` / `tool_call_id`); Cursor sends no session id, so otherwise nothing is recorded. No model is read. |
+| cursor | `subagentStop` | none (no usage field is read) | **verified on 3.27.12 (2026-10-24):** `subagentStop` carries `status`, `session_id`, and `subagent_id` (matches Task `tool_use_id`; no `tool_call_id`). PreToolUse on the same build sends `session_id` and `tool_use_id` but leaves `model`, `model_id`, and `tool_input.model` empty, so routing baseline stays unknown and R9 may hold. No executed child model field is read. |
 | antigravity | none | none | no documented subagent-end payload (PostToolUse exists; its result fields are not documented). Nothing recorded. |
 | kirocrew | none | none | PostToolUse `tool_response` not confirmed (see `evidence/vendor-hook-docs-2026-10-11.md`). Nothing recorded. |
 | opencode | `child_done` (observation envelope the plugin forwards) | none (`UsageSource: none`): the `child_done` parser reads status and inline usage counts, but nothing is priced. | **unverified: needs a live run.** The envelope shape comes from the phase-0 probes, not from a captured plugin forward. The honor reader reports a resolved model only from the arrival-ordered switch chain; a batch without it records nothing. |
@@ -214,6 +218,22 @@ PostToolUse and SubagentStop), pending a live check. cursor, codex, antigravity,
 kirocrew, opencode: false; the line is still computed by `telemetry.ChildEndLine` (by the
 shared recorder, for every harness) and no adapter prints it. `DOWNSHIFT_QUIET=1` turns it off. See
 [session-models.md](session-models.md#what-downshift-shows-while-it-works).
+
+## Subagent type hint (`AgentTypeHints`)
+
+`HarnessCapabilities.AgentTypeHints` maps a subagent type, exactly as the harness
+sends it, to a tier. `core.RouteAgent` uses it only to fill doubt: the text read
+must be unconfident, with no risk signal, no NB or semantic lift and no COMPLEX
+read, the current model must be known, and the hint is capped at that model's
+tier (no upshift). Reason code `AGENT_TYPE_HINT`. Every harness computes it the
+same way; the table is data.
+
+| harness | type field read | hints | status |
+|---|---|---|---|
+| claude-code | `tool_input.subagent_type` | `Explore` small, `Plan` mid | from the built-in types' documented jobs; pinned built-ins carry none |
+| cursor | `tool_input.subagent_type` | none | field read, no stable names observed yet (lowercase `explore` seen); add only from evidence |
+| codex | `tool_input.agent_type` | none | field read (seen in spawn inputs); no hint names until evidence |
+| kirocrew, antigravity, opencode | not read | none | no type field in the adapter payload |
 
 ## Spawn state (2026-10-19)
 
@@ -260,18 +280,17 @@ capability path abstain for that decision (see [scores.md](scores.md#when-it-abs
 
 The Claude Code plugin's `hooks/hooks.json` lists one mod module,
 [`hooks/cache-tax/`](../../hooks/cache-tax/README.md) (third-party, MIT,
-vendored and pinned; owner decision 2026-10-17). Two more vendored mods ship in
-the same marketplace as sibling plugins, one install each, because a plugin
-loads a single hooks module and the three all hook `session.start`:
+vendored and pinned; owner decision 2026-10-17). One more vendored mod ships in
+the same marketplace as a sibling plugin, one install, because a plugin
+loads a single hooks module and both hook `session.start`:
 [`mods/savvy-progress/`](../../mods/savvy-progress/README.md)
-(`savvy-progress@downshift`) and [`mods/filetree/`](../../mods/filetree/README.md)
-(`filetree@downshift`); see [`mods/README.md`](../../mods/README.md). None is a
+(`savvy-progress@downshift`); see [`mods/README.md`](../../mods/README.md). None is a
 routing feature and nothing in the shared layers computes it: a mod is code
 Claude Code runs in its own process, so it exists only where mods load.
 
 | harness | mods | why |
 |---|---|---|
-| claude-code | cache-tax loads with the plugin on 2.1.287+; savvy-progress and filetree are separate plugin installs (CLI, Desktop Code tab, VS Code extension; hooks also run in `claude -p`, nothing is drawn there) | mods are a Claude Code plugin feature; `setup` cannot write one |
+| claude-code | cache-tax loads with the plugin on 2.1.287+; savvy-progress is a separate plugin install (CLI, Desktop Code tab, VS Code extension; hooks also run in `claude -p`, nothing is drawn there) | mods are a Claude Code plugin feature; `setup` cannot write one |
 | codex, cursor, kirocrew, antigravity, grok | not available | no mod system; the cold-cache question is the harness's own |
 
 What each does is in its README; the one fact that matters here is that the
@@ -338,7 +357,7 @@ written. The family name is the only command fact telemetry keeps.
 | `dart-fix` | `dart fix` | passes through |
 | `gradle` | `gradle`, `gradlew`, `./gradlew` with the allowlisted tasks (build, check, test, assemble, lint, ...) | compresses |
 | `maven` | `mvn`, `mvnw`, `./mvnw` with test, verify, package, install or clean | compresses |
-| `phpunit` | `phpunit`, `vendor/bin/phpunit`, `./vendor/bin/phpunit` | compresses |
+| `phpunit` | `phpunit`, `vendor/bin/phpunit`, `./vendor/bin/phpunit`, `php vendor/bin/phpunit`, `php ./vendor/bin/phpunit` | compresses |
 | `composer` | `composer` | passes through |
 | `artisan` | `php artisan <command>` | passes through |
 | `phpstan` | `phpstan` | passes through |
@@ -349,12 +368,12 @@ written. The family name is the only command fact telemetry keeps.
 | `rector` | `rector` | passes through |
 | `sail-test` | `sail test` | passes through |
 | `sail-artisan` | `sail artisan <command>` | passes through |
-| `vitest` | `vitest`, `npx vitest` | compresses |
-| `jest` | `jest`, `npx jest` | compresses |
-| `playwright` | `playwright test`, `npx playwright test` | compresses |
-| `cypress` | `cypress run`, `npx cypress run` | compresses |
-| `tsc` | `tsc`, `npx tsc` | compresses |
-| `next-build` | `next build`, `npx next build` | compresses |
+| `vitest` | `vitest`, `npx vitest`, `pnpm exec vitest`, `yarn vitest` | compresses |
+| `jest` | `jest`, `npx jest`, `pnpm exec jest`, `yarn jest` | compresses |
+| `playwright` | `playwright test`, `npx playwright test`, `pnpm exec playwright test`, `yarn playwright test` | compresses |
+| `cypress` | `cypress run`, `npx cypress run`, `pnpm exec cypress run`, `yarn cypress run` | compresses |
+| `tsc` | `tsc`, `npx tsc`, `pnpm exec tsc`, `yarn tsc` | compresses |
+| `next-build` | `next build`, `npx next build`, `pnpm exec next build` | compresses |
 | `vite-build` | `vite build` | passes through |
 | `vite-preview` | `vite preview` | passes through |
 | `turbo-run` | `turbo run` | passes through |
@@ -367,7 +386,7 @@ written. The family name is the only command fact telemetry keeps.
 | `yarn-build` | `yarn build` | passes through |
 | `bun-test` | `bun test` | passes through |
 | `bun-build` | `bun build` | passes through |
-| `eslint` | `eslint` | compresses |
+| `eslint` | `eslint`, `pnpm exec eslint`, `yarn eslint` | compresses |
 | `prettier` | `prettier` | passes through |
 | `biome` | `biome` | passes through |
 | `mysql-query` | `mysql -e <read-only statement>` | passes through |
@@ -501,6 +520,8 @@ written. The family name is the only command fact telemetry keeps.
 | `swift` | `swift` | passes through |
 | `sbt` | `sbt` | passes through |
 
+Container exec (`docker exec`, `docker compose exec`, `docker-compose exec`) is wrapped when its inner command is an allowlisted family above (`phpunit`, `npm-test`, `artisan`, ...); the recorded family is the inner one. Accepted flags before the service or container: `-T`, `--no-TTY`, `-i`, `-u`/`--user`, `-w`/`--workdir`, `-e`/`--env KEY=VAL`. `-t`, `-it` and any other flag (`-d`, `--index`, `--privileged`) leave the command unwrapped, because a TTY changes the output the compressor reads. Nested docker is not wrapped.
+
 Any other command, including `npm test`, is not wrapped. The shell still parses the wrapped command, so the words after the
 family expand as they would have.
 
@@ -549,8 +570,8 @@ prove safe.
 | harness | shell rewrite | status | limit |
 |---|---|---|---|
 | claude-code | `PreToolUse` on `Bash` → `updatedInput.command`, every sibling field kept, no `permissionDecision` | Wired, on by default | The plugin's `hooks.json` carries the `Bash` PreToolUse entry running `downshift claude-code`. Verified live on 2026-10-20 (see `docs/internal/tasks/2026-10-20-next-steps`). If Claude Code ever ignores `updatedInput` without a `permissionDecision`, the command runs unchanged: nothing breaks, nothing is saved. Permissions: no allow rule is installed or required. The rewrite is skipped when a deny or ask rule in the managed, user (`CLAUDE_CONFIG_DIR` honoured), project or local settings matches the **original** command (as written and normalised); an unreadable or invalid settings file also means no rewrite. The hook emits no `permissionDecision`, so Claude Code's own permission flow, including any approval prompt, applies to the rewritten command as it would to the original. Never add a broad `Bash(downshift compact:*)`. |
-| codex | not wired | Unverified | The adapter exposes no shell command. The decision would be computed if it did. |
-| cursor | not wired | Unverified | Same. |
+| codex | `PreToolUse` on `Bash` (also reported for `exec_command`) → `permissionDecision: "allow"` plus `updatedInput.command`, every sibling field kept | Wired, Unverified live | `downshift setup` writes a `^Bash$` entry running `downshift codex` next to the `Agent` one. Codex honors `updatedInput` only together with `permissionDecision: "allow"`, so a rewritten call is auto-approved by the hook; an unchanged call emits `{}`. Codex has no deny or ask rules the adapter can read, so `ShellBlocked` is always false and only the shared policy (allowlist, no metacharacters, kill switches) limits the rewrite. Unverified live until a Codex session runs a wrapped `go test` (the hook must be trusted in `/hooks`). |
+| cursor | `preToolUse` on `Shell` → `updated_input.command`, every sibling field kept, no `permission` field | Wired | Unverified live; Cursor ignored `updated_input` for Task on some plans, Shell needs its own proof. `downshift setup` writes the `Shell` entry in `hooks.json`. No deny/ask rule is read (Cursor has no readable rule file), so the rewrite is not skipped by rules. Advise fallback: `beforeShellExecution` (matcher `*`) answers `allow` with `agent_message` naming the `downshift compact` form for an allowlisted family (`CanAdviseShellWrap`). It never denies and cannot rewrite. Unverified live: that Cursor shows `agent_message` to the agent on allow. |
 | opencode | not wired | Unverified | Same. |
 | antigravity | not wired | Unverified | Same. |
 | kirocrew | not wired | No rewrite channel | Policy-mode only (allow or block), so it can never rewrite a command. |

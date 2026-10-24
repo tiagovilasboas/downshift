@@ -47,8 +47,12 @@ type SavedResult struct {
 	// on a more expensive model than requested.
 	Saved float64 `json:"saved_usd"`
 
-	// TotalTokens is the sum of all tokens across all buckets.
+	// TotalTokens is the sum of all tokens across all buckets, priced or not.
 	TotalTokens int64 `json:"total_tokens"`
+
+	// UnpricedTokens is the token count of the unpriced buckets. They are
+	// excluded from ActualCost and BaselineCost; they stay in TotalTokens.
+	UnpricedTokens int64 `json:"unpriced_tokens,omitempty"`
 
 	// Quality summarizes the pricing confidence across all buckets.
 	Quality SummaryQuality `json:"quality"`
@@ -84,20 +88,17 @@ const (
 //
 // The formula:
 //
-//	C_actual   = Σ price(model_i, tokens_i)
-//	C_baseline = price(requested_model, Σ tokens_i)
+//	C_actual   = Σ price(model_i, tokens_i)   over priced buckets
+//	C_baseline = price(requested_model, Σ tokens_i)   over priced buckets
 //	Saved      = C_baseline − C_actual
 //
-// Unpriced buckets are excluded from C_actual but their tokens still count
-// toward TotalTokens and are priced in C_baseline. This is conservative:
-// it overstates savings when unpriced models are cheaper, understates when
-// they are more expensive.
+// An unpriced bucket contributes to neither cost figure. It is counted in
+// UnpricedBuckets and its tokens in UnpricedTokens (TotalTokens includes them).
 func Saved(requestedModel string, buckets []TokenBucket, pb *catalog.PriceBook) SavedResult {
 	if pb == nil {
 		return SavedResult{Quality: SummaryUnpriced}
 	}
 
-	// Get baseline pricing.
 	baselinePrice := pb.PriceFor(requestedModel)
 	if !baselinePrice.IsPriced() {
 		return SavedResult{
@@ -106,48 +107,44 @@ func Saved(requestedModel string, buckets []TokenBucket, pb *catalog.PriceBook) 
 		}
 	}
 
-	// Aggregate tokens and compute actual cost.
 	var (
-		totalInput, totalOutput, totalCacheRead, totalCacheWrite int64
-		actualCost                                               float64
-		unpricedCount, inferredCount                             int
-		allExact                                                 = true
+		pricedTokens            TokenBucket // summed over priced buckets only
+		actualCost              float64
+		unpricedTokens          int64
+		unpricedCount, inferred int
+		allExact                = true
 	)
 
 	for _, b := range buckets {
-		totalInput += b.InputTokens
-		totalOutput += b.OutputTokens
-		totalCacheRead += b.CacheReadTokens
-		totalCacheWrite += b.CacheWriteTokens
-
 		price := pb.PriceFor(b.Model)
 		if !price.IsPriced() {
 			unpricedCount++
+			unpricedTokens += b.TotalTokens()
 			allExact = false
-			// Unpriced: tokens still count in baseline, but actual cost is unknown.
-			// Conservative: assume actual cost = baseline cost for this bucket.
-			actualCost += baselinePrice.ComputeCost(
-				b.InputTokens, b.OutputTokens, b.CacheReadTokens, b.CacheWriteTokens,
-			)
-		} else {
-			actualCost += price.ComputeCost(
-				b.InputTokens, b.OutputTokens, b.CacheReadTokens, b.CacheWriteTokens,
-			)
-			if price.Quality == catalog.QualityInferred {
-				inferredCount++
-				allExact = false
-			} else if price.Quality != catalog.QualityExact {
-				allExact = false
-			}
+			continue
+		}
+
+		pricedTokens.InputTokens += b.InputTokens
+		pricedTokens.OutputTokens += b.OutputTokens
+		pricedTokens.CacheReadTokens += b.CacheReadTokens
+		pricedTokens.CacheWriteTokens += b.CacheWriteTokens
+		actualCost += price.ComputeCost(
+			b.InputTokens, b.OutputTokens, b.CacheReadTokens, b.CacheWriteTokens,
+		)
+
+		if price.Quality == catalog.QualityInferred {
+			inferred++
+		}
+		if price.Quality != catalog.QualityExact {
+			allExact = false
 		}
 	}
 
-	// Compute baseline cost: all tokens at requested model.
 	baselineCost := baselinePrice.ComputeCost(
-		totalInput, totalOutput, totalCacheRead, totalCacheWrite,
+		pricedTokens.InputTokens, pricedTokens.OutputTokens,
+		pricedTokens.CacheReadTokens, pricedTokens.CacheWriteTokens,
 	)
 
-	// Determine summary quality.
 	var quality SummaryQuality
 	switch {
 	case unpricedCount > 0:
@@ -162,10 +159,11 @@ func Saved(requestedModel string, buckets []TokenBucket, pb *catalog.PriceBook) 
 		ActualCost:      actualCost,
 		BaselineCost:    baselineCost,
 		Saved:           baselineCost - actualCost,
-		TotalTokens:     totalInput + totalOutput + totalCacheRead + totalCacheWrite,
+		TotalTokens:     pricedTokens.TotalTokens() + unpricedTokens,
+		UnpricedTokens:  unpricedTokens,
 		Quality:         quality,
 		UnpricedBuckets: unpricedCount,
-		InferredBuckets: inferredCount,
+		InferredBuckets: inferred,
 		BaselineQuality: baselinePrice.Quality,
 	}
 }
@@ -183,10 +181,12 @@ func (r SavedResult) IsValid() bool {
 }
 
 // SavedPercent returns the saving as a percentage of baseline cost.
-// Returns 0 if baseline is zero or invalid.
-func (r SavedResult) SavedPercent() float64 {
-	if r.BaselineCost <= 0 || !r.IsValid() {
-		return 0
+// The second result is false when the percentage is not applicable (n/a):
+// the baseline is unpriced, or no priced bucket gives a positive baseline cost
+// (for example, every bucket is unpriced or there are no buckets).
+func (r SavedResult) SavedPercent() (float64, bool) {
+	if !r.IsValid() || r.BaselineCost <= 0 {
+		return 0, false
 	}
-	return (r.Saved / r.BaselineCost) * 100
+	return (r.Saved / r.BaselineCost) * 100, true
 }

@@ -58,7 +58,7 @@ func TestE2EStubPanel(t *testing.T) {
 		t.Fatalf("session/current?e2e=1: got status %d, want 200", w.Code)
 	}
 
-	var resp panelOut
+	var resp sessionPanelResponse
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("session/current?e2e=1: invalid JSON: %v", err)
 	}

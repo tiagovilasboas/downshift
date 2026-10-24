@@ -67,16 +67,18 @@ func ParseChildEnd(raw []byte) (hookport.ChildEnd, bool) {
 		status = telemetry.ChildStatusFromText(hookutil.StringField(resp, "outcome"), telemetry.ChildLaunched)
 	}
 
+	// ResolvedModel stays empty: no KiroCrew payload field names the model that
+	// actually ran (tool_input.model is the request, not evidence of the served
+	// model). Copying it here would record a served model without evidence.
 	ce := hookport.ChildEnd{
-		Harness:       harnessID,
-		AgentKey:      p.ToolUseID,
-		ToolUseID:     p.ToolUseID,
-		SessionID:     p.SessionID,
-		ResolvedModel: requestedModel, // No separate resolved model in payload yet
-		Model:         requestedModel,
-		Status:        status,
-		Source:        hookport.SourcePayload,
-		IsChild:       true,
+		Harness:   harnessID,
+		AgentKey:  p.ToolUseID,
+		ToolUseID: p.ToolUseID,
+		SessionID: p.SessionID,
+		Model:     requestedModel,
+		Status:    status,
+		Source:    hookport.SourcePayload,
+		IsChild:   true,
 	}
 
 	// Try to read usage from tool_response if present.

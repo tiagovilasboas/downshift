@@ -229,6 +229,14 @@ func detectFormat(input []byte) (Format, bool) {
 		return FormatGoTest, false
 	}
 
+	// Package-directory `go test -cover` prints a bare PASS line, which Jest's
+	// loose header pattern also matches across the newline. An `ok` line and no
+	// Jest summary identify it as Go.
+	if reGoTestPass.Match(input) && bytes.HasPrefix(input, []byte("PASS\n")) &&
+		!reJestSuites.Match(input) && !reJestTests.Match(input) && !reGoTestFail.Match(input) {
+		return FormatGoTest, false
+	}
+
 	// 1. Jest must precede go test because both use a leading FAIL marker.
 	if isJest(input) {
 		if reJestFail.Match(input) || reJestError.Match(input) {
@@ -629,93 +637,19 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 	}
 }
 
-// compressGoTest summarises a suite only when every non-empty line is an
-// "ok" package line or a "? <pkg> [no test files]" line. Any other line
-// (warning, skip, fail text the detector missed) keeps the original output.
-// The summary keeps the pass and no-test counts, every package name (the
-// module prefix shared by all of them is stated once) and the coverage
-// figure when present; it drops only timings and "(cached)".
-// If that is not strictly shorter than the input, the input is returned.
+// compressGoTest folds a clean (exit 0) go test run. A -v transcript goes to
+// parseGoVerbose; a plain run goes to foldGoTestPlain. Both keep every line
+// they cannot positively account for, and fall back to the raw output when
+// the result is not strictly shorter.
 func compressGoTest(input []byte) ([]byte, bool, string) {
+	// Our own summary fed back in: leave it alone so compaction is idempotent.
+	if bytes.HasPrefix(input, []byte("Go test")) {
+		return input, false, "go_test_already_folded"
+	}
 	if reGoVerboseRun.Match(input) {
 		return parseGoVerbose(input)
 	}
-
-	type pkg struct {
-		name    string
-		cover   string
-		noTests bool
-	}
-	var pkgs []pkg
-	var okCount, noTestCount int
-	for _, line := range strings.Split(string(input), "\n") {
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-		if m := reGoTestPass.FindStringSubmatch(line); m != nil {
-			pkgs = append(pkgs, pkg{
-				name:  m[1],
-				cover: strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(m[3]), "of statements")),
-			})
-			okCount++
-		} else if m := reGoTestNoTest.FindStringSubmatch(line); m != nil {
-			pkgs = append(pkgs, pkg{
-				name:    m[1],
-				noTests: true,
-			})
-			noTestCount++
-		} else if m := reGoTestCoverNoFiles.FindStringSubmatch(line); m != nil {
-			pkgs = append(pkgs, pkg{
-				name:    m[1],
-				noTests: true,
-			})
-			noTestCount++
-		} else {
-			return input, false, "go_test_preserved_non_pass_lines"
-		}
-	}
-	if len(pkgs) < 2 {
-		return input, false, "go_test_too_few_packages_to_compress"
-	}
-	names := make([]string, len(pkgs))
-	for i, p := range pkgs {
-		names[i] = p.name
-	}
-	prefix := commonPathPrefix(names)
-
-	var b strings.Builder
-	if noTestCount > 0 {
-		fmt.Fprintf(&b, "Go test: PASS (%d packages ok, %d without tests)", okCount, noTestCount)
-	} else {
-		fmt.Fprintf(&b, "Go test: PASS (%d packages ok)", okCount)
-	}
-	if prefix != "" {
-		fmt.Fprintf(&b, " under %s", prefix)
-	}
-	b.WriteString("\n")
-	for _, p := range pkgs {
-		rel := strings.TrimPrefix(p.name, prefix)
-		if p.noTests {
-			b.WriteString("? " + rel + " [no test files]\n")
-		} else {
-			b.WriteString("ok " + rel)
-			if p.cover != "" {
-				b.WriteString(" " + p.cover)
-			}
-			b.WriteString("\n")
-		}
-	}
-	out := b.String()
-	if len(out) >= len(input) {
-		return input, false, "no_compression_gain"
-	}
-	var reason string
-	if noTestCount > 0 {
-		reason = fmt.Sprintf("compressed %d packages (%d ok, %d without tests) into summary", len(pkgs), okCount, noTestCount)
-	} else {
-		reason = fmt.Sprintf("compressed %d passing packages into summary", len(pkgs))
-	}
-	return []byte(out), true, reason
+	return foldGoTestPlain(input)
 }
 
 // commonPathPrefix returns the longest prefix shared by all names that ends

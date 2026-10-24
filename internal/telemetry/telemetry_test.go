@@ -73,6 +73,11 @@ func TestUntrustedIdentifiersAreBoundedBeforePersistence(t *testing.T) {
 	if got := telemetry.EffortOrUnknown("ignore-guardrails"); got != "unknown" {
 		t.Fatalf("EffortOrUnknown = %q", got)
 	}
+	for in, want := range map[string]string{"": telemetry.EffortUnobserved, "inherit": telemetry.EffortInherit, "xhigh": "xhigh"} {
+		if got := telemetry.EffortOrUnknown(in); got != want {
+			t.Fatalf("EffortOrUnknown(%q) = %q, want %q", in, got, want)
+		}
+	}
 	if got := telemetry.HashSessionID(strings.Repeat("x", 257)); got != "" {
 		t.Fatalf("HashSessionID oversized = %q", got)
 	}

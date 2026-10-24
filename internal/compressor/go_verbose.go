@@ -16,6 +16,7 @@ var (
 	reGoVerboseFAIL    = regexp.MustCompile(`^FAIL\s+(\S+)\s+(\S+)$`)
 	// Subtest scaffolding: a nested run header, and its indented outcome line.
 	reGoVerboseSubRun     = regexp.MustCompile(`^=== RUN\s+(\S+)$`)
+	reGoVerbosePauseCont  = regexp.MustCompile(`^=== (?:PAUSE|CONT|NAME)\s+\S+$`)
 	reGoVerboseSubOutcome = regexp.MustCompile(`^\s+--- (PASS|FAIL|SKIP): (\S+) \([^()]*\)$`)
 )
 
@@ -30,7 +31,8 @@ func parseGoVerbose(input []byte) ([]byte, bool, string) {
 	var current []string
 	var currentName string
 	var passed, failed, skipped, subtests int
-	testOutput := false
+	var kept []string
+	folded := 0
 	var packageName, packageTime, lastName string
 	terminal := ""
 	seenPassMarker := false
@@ -73,17 +75,23 @@ func parseGoVerbose(input []byte) ([]byte, bool, string) {
 			switch m[1] {
 			case "PASS":
 				passed++
+				if logged, foldable := classifyPassedBlock(current0(blocks)); !foldable {
+					kept = append(kept, current0(blocks)...)
+				} else if logged {
+					folded++
+				}
 			case "FAIL":
 				failed++
 			case "SKIP":
 				skipped++
+				if len(current0(blocks)) > 2 {
+					kept = append(kept, current0(blocks)...)
+				}
 			}
 			continue
 		}
 		if current != nil {
-			// Captured test output is safe to discard only for a passing test.
-			// Keep it in the block until the outcome is known.
-			testOutput = true
+			// Captured test output is only folded once the outcome is known.
 			current = append(current, line)
 			continue
 		}
@@ -109,7 +117,12 @@ func parseGoVerbose(input []byte) ([]byte, bool, string) {
 			packageName, packageTime = m[1], m[2]
 			continue
 		}
-		return input, false, "go_test_verbose_unrecognized_line"
+		// A line outside every test block that we cannot account for stays
+		// verbatim, unless it carries a failure signal: then the run is raw.
+		if goFoldDanger.MatchString(line) {
+			return input, false, "go_test_verbose_danger_line_preserved"
+		}
+		kept = append(kept, line)
 	}
 	if current != nil || len(blocks) == 0 || packageName == "" || terminal == "" {
 		return input, false, "go_test_verbose_incomplete_transcript"
@@ -132,13 +145,40 @@ func parseGoVerbose(input []byte) ([]byte, bool, string) {
 	if packageName != "" {
 		fmt.Fprintf(&out, "Package: %s\n", packageName)
 	}
-	if testOutput {
-		// Test output may carry useful facts even when the test passes.
-		return input, false, "go_test_verbose_test_output_preserved"
+	if folded > 0 {
+		fmt.Fprintf(&out, "%d passed tests logged output (folded)\n", folded)
+	}
+	if len(kept) > 0 {
+		out.WriteString("Kept verbatim:\n")
+		for _, l := range kept {
+			out.WriteString(l + "\n")
+		}
 	}
 	compacted := []byte(out.String())
 	if len(compacted) >= len(input) {
 		return input, false, "no_compression_gain"
 	}
 	return compacted, true, fmt.Sprintf("compressed go test -v results (%d passed, %d failed, %d skipped)", passed, failed, skipped)
+}
+
+// current0 returns the block that was just closed.
+func current0(blocks [][]string) []string { return blocks[len(blocks)-1] }
+
+// classifyPassedBlock decides whether a passed test's block can fold into the
+// counts. Scaffolding (subtest run headers, PAUSE/CONT markers) folds silently;
+// indented log lines fold and report logged=true. Any unindented unknown line,
+// or a line with a failure signal, makes the block non-foldable (kept verbatim).
+func classifyPassedBlock(block []string) (logged, foldable bool) {
+	for _, l := range block[1 : len(block)-1] {
+		switch {
+		case goFoldDanger.MatchString(l):
+			return false, false
+		case reGoVerboseSubRun.MatchString(l), reGoVerbosePauseCont.MatchString(l):
+		case strings.HasPrefix(l, " ") || strings.HasPrefix(l, "\t"):
+			logged = true
+		default:
+			return false, false
+		}
+	}
+	return logged, true
 }

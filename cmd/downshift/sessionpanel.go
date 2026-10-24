@@ -3,17 +3,58 @@
 
 package main
 
-import "github.com/tiagovilasboas/downshift/internal/execwrap"
-import "github.com/tiagovilasboas/downshift/internal/telemetry"
+import (
+	"encoding/json"
+	"fmt"
+	"io"
 
-// compactorScopeAll says the compactor block totals the whole exec log, every
-// session and every run, attributed or not (owner decision 2026-10-21). The
-// routing figures beside it stay per session.
-const compactorScopeAll = "all"
+	"github.com/tiagovilasboas/downshift/internal/accounting"
+	"github.com/tiagovilasboas/downshift/internal/execwrap"
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
+)
 
-// compactorPanel is what the Compactor did across the whole exec log. Bytes
-// are measured; the token figure is bytes / 4, an estimate. The panel's final
-// figure, tokens_saved_estimate, adds it to the session's routing tokens.
+// panelOptions are the `session --panel` flags that trim the answer.
+type panelOptions struct {
+	// NoReport skips the 30-day report: no report, compactor or
+	// tokens_saved_estimate, and the full logs are not read (the tail only).
+	NoReport bool
+	// Brief prints only what the agents band draws (panelBrief).
+	Brief bool
+}
+
+// writePanel prints the panel JSON for hash. events is the session tail; the
+// full logs are read only when the report is wanted.
+func writePanel(events []telemetry.Event, hash string, opt panelOptions, stdout, stderr io.Writer) int {
+	view := telemetry.BuildPanel(events, hash)
+	var out any = view
+	if !opt.NoReport {
+		// The report's window reads the whole logs; the per-session view is from the tail.
+		allEvents, _ := telemetry.ReadEvents()
+		execEvents, _ := accounting.ReadExecEvents()
+		full := panelWithReport(view, allEvents, execEvents)
+		out = full
+		if opt.Brief {
+			out = briefWithTokens(view, full.TokensSavedEstimate)
+		}
+	} else if opt.Brief {
+		out = briefOf(view)
+	}
+	raw, err := json.Marshal(out)
+	if err != nil {
+		fmt.Fprintf(stderr, "downshift session: %v\n", err)
+		return 1
+	}
+	fmt.Fprintln(stdout, string(raw))
+	return 0
+}
+
+// compactorTokenEstimate names how Compactor tokens are estimated; it is the
+// same text execwrap.Summarize gives.
+const compactorTokenEstimate = "estimated: saved_bytes / 4"
+
+// compactorPanel is the Compactor block of the panel. It is the report's
+// Compactor over the report's window (Scope is that window's label), so the
+// panel and `downshift report` show the same figures.
 type compactorPanel struct {
 	Scope                string `json:"scope"`
 	Commands             int64  `json:"commands"`
@@ -24,36 +65,31 @@ type compactorPanel struct {
 	TokenEstimate        string `json:"token_estimate"`
 }
 
-// panelOut is the `session --panel` JSON: the routing view as before plus, when
-// the exec log has any run, the compactor block, and the final figure.
-//
-// TokensSavedEstimate scope: routing tokens saved in THIS session plus the
-// Compactor's all-sessions total (the same scopes the tiles had). The panel is
-// session-centred, but the Compactor total is also shown when the session is
-// unknown, so the sum stays consistent with what the user already saw.
+// panelOut is the `session --panel` JSON. The session fields (PanelView) are
+// per session and unchanged. Report is the accounting.Numbers of `downshift
+// report` (same window, full event and exec logs). TokensSavedEstimate and the
+// Compactor block are the report's figures, so the Agents panel and the
+// progress bar show what `report` shows.
 type panelOut struct {
 	telemetry.PanelView
-	Compactor           *compactorPanel `json:"compactor,omitempty"`
-	TokensSavedEstimate int64           `json:"tokens_saved_estimate"`
+	Report              accounting.Numbers `json:"report"`
+	Compactor           *compactorPanel    `json:"compactor,omitempty"`
+	TokensSavedEstimate int64              `json:"tokens_saved_estimate"`
 }
 
-// panelWithCompactor adds the Compactor totals of the whole exec log. It does
-// not depend on the session: a run with no session hash counts too. No log or
-// no run means no block, never zeros.
-func panelWithCompactor(v telemetry.PanelView) panelOut {
-	out := panelOut{PanelView: v, TokensSavedEstimate: telemetry.TokensSavedEstimate(v.Tokens, 0)}
-	path, err := execwrap.EventsPath()
-	if err != nil {
-		return out
-	}
-	s, err := execwrap.Summarize(path)
-	if err != nil || s.Commands == 0 {
+// panelWithReport builds the panel from the session view and the full logs.
+// The window is the one `downshift report` uses by default. No exec run in
+// that window means no Compactor block, never zeros.
+func panelWithReport(v telemetry.PanelView, events []telemetry.Event, execEvents []execwrap.Event) panelOut {
+	nums := accounting.Compute(events, execEvents, accounting.Scope{Kind: accounting.ScopeDays, Days: defaultReportDays})
+	out := panelOut{PanelView: v, Report: nums, TokensSavedEstimate: nums.TokensSavedEstimate}
+	c := nums.Compactor
+	if c.Commands == 0 {
 		return out
 	}
 	out.Compactor = &compactorPanel{
-		Scope: compactorScopeAll, Commands: s.Commands, Compacted: s.Compacted, RawBytes: s.RawBytes,
-		SavedBytes: s.SavedBytes, EstimatedTokensSaved: s.EstimatedTokensSaved, TokenEstimate: s.TokenEstimate,
+		Scope: nums.Scope.Label(), Commands: c.Commands, Compacted: c.Compacted, RawBytes: c.RawBytes,
+		SavedBytes: c.SavedBytes, EstimatedTokensSaved: c.Tokens, TokenEstimate: compactorTokenEstimate,
 	}
-	out.TokensSavedEstimate = telemetry.TokensSavedEstimate(v.Tokens, s.EstimatedTokensSaved)
 	return out
 }

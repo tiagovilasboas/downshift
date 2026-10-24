@@ -95,8 +95,8 @@ func TestSaved_CheaperModel_PositiveSaving(t *testing.T) {
 	if result.ActualCost >= result.BaselineCost {
 		t.Errorf("ActualCost (%f) should be < BaselineCost (%f)", result.ActualCost, result.BaselineCost)
 	}
-	if result.SavedPercent() <= 0 {
-		t.Errorf("SavedPercent = %f, want positive", result.SavedPercent())
+	if pct, ok := result.SavedPercent(); !ok || pct <= 0 {
+		t.Errorf("SavedPercent = %f (ok=%v), want positive", pct, ok)
 	}
 }
 
@@ -137,6 +137,56 @@ func TestSaved_MixedModels(t *testing.T) {
 	}
 	if result.TotalTokens != 150000 {
 		t.Errorf("TotalTokens = %d, want 150000", result.TotalTokens)
+	}
+}
+
+func TestSaved_UnpricedBucket_ExcludedFromCosts(t *testing.T) {
+	pb := mustPriceBook(t)
+	// The unknown bucket is 10x larger than the priced one. If it leaked into
+	// either cost, the figures below would move.
+	buckets := []TokenBucket{
+		{Model: "unknown-model", InputTokens: 1000000, OutputTokens: 500000},
+		{Model: "claude-haiku-4-5", InputTokens: 100000, OutputTokens: 50000},
+	}
+	withUnpriced := Saved("claude-sonnet-5-5", buckets, pb)
+	onlyPriced := Saved("claude-sonnet-5-5", buckets[1:], pb)
+
+	if math.Abs(withUnpriced.ActualCost-onlyPriced.ActualCost) > 1e-9 {
+		t.Errorf("ActualCost = %f, want %f (unpriced bucket must not contribute)", withUnpriced.ActualCost, onlyPriced.ActualCost)
+	}
+	if math.Abs(withUnpriced.BaselineCost-onlyPriced.BaselineCost) > 1e-9 {
+		t.Errorf("BaselineCost = %f, want %f (unpriced tokens must not be priced at baseline)", withUnpriced.BaselineCost, onlyPriced.BaselineCost)
+	}
+	if withUnpriced.UnpricedBuckets != 1 {
+		t.Errorf("UnpricedBuckets = %d, want 1", withUnpriced.UnpricedBuckets)
+	}
+	if withUnpriced.UnpricedTokens != 1500000 {
+		t.Errorf("UnpricedTokens = %d, want 1500000", withUnpriced.UnpricedTokens)
+	}
+	if withUnpriced.TotalTokens != 1650000 {
+		t.Errorf("TotalTokens = %d, want 1650000 (includes unpriced)", withUnpriced.TotalTokens)
+	}
+}
+
+func TestSaved_AllBucketsUnpriced_SavedPercentNA(t *testing.T) {
+	pb := mustPriceBook(t)
+	buckets := []TokenBucket{
+		{Model: "unknown-a", InputTokens: 1000},
+		{Model: "unknown-b", OutputTokens: 500},
+	}
+	result := Saved("claude-sonnet-5-5", buckets, pb)
+
+	if !result.IsValid() {
+		t.Fatal("baseline is priced, result should be valid")
+	}
+	if result.ActualCost != 0 || result.BaselineCost != 0 || result.Saved != 0 {
+		t.Errorf("costs = (%f, %f, %f), want all zero", result.ActualCost, result.BaselineCost, result.Saved)
+	}
+	if result.UnpricedBuckets != 2 {
+		t.Errorf("UnpricedBuckets = %d, want 2", result.UnpricedBuckets)
+	}
+	if _, ok := result.SavedPercent(); ok {
+		t.Error("SavedPercent ok = true, want false (n/a) when no bucket is priced")
 	}
 }
 
@@ -265,16 +315,16 @@ func TestTokenBucket_TotalTokens_Zero(t *testing.T) {
 // --- SavedResult method tests ---
 
 func TestSavedResult_SavedPercent_ZeroBaseline(t *testing.T) {
-	r := SavedResult{BaselineCost: 0, Saved: 100}
-	if got := r.SavedPercent(); got != 0 {
-		t.Errorf("SavedPercent() = %f, want 0 for zero baseline", got)
+	r := SavedResult{Quality: SummaryExact, BaselineCost: 0, Saved: 100}
+	if _, ok := r.SavedPercent(); ok {
+		t.Error("SavedPercent() ok = true, want false (n/a) for zero baseline")
 	}
 }
 
 func TestSavedResult_SavedPercent_Invalid(t *testing.T) {
 	r := SavedResult{Quality: SummaryUnpriced, BaselineCost: 100, Saved: 50}
-	if got := r.SavedPercent(); got != 0 {
-		t.Errorf("SavedPercent() = %f, want 0 for invalid result", got)
+	if _, ok := r.SavedPercent(); ok {
+		t.Error("SavedPercent() ok = true, want false (n/a) for invalid result")
 	}
 }
 
@@ -284,7 +334,11 @@ func TestSavedResult_SavedPercent_Valid(t *testing.T) {
 		BaselineCost: 100,
 		Saved:        25,
 	}
-	if got := r.SavedPercent(); math.Abs(got-25) > 0.01 {
+	got, ok := r.SavedPercent()
+	if !ok {
+		t.Fatal("SavedPercent() ok = false, want true")
+	}
+	if math.Abs(got-25) > 0.01 {
 		t.Errorf("SavedPercent() = %f, want 25", got)
 	}
 }
@@ -322,6 +376,9 @@ type goldenExpected struct {
 	Valid           *bool   `json:"valid,omitempty"`
 	InferredBuckets int     `json:"inferred_buckets,omitempty"`
 	UnpricedBuckets int     `json:"unpriced_buckets,omitempty"`
+	UnpricedTokens  int64   `json:"unpriced_tokens,omitempty"`
+	// SavedPercentApplicable: pointer so that an explicit false is checked.
+	SavedPercentApplicable *bool `json:"saved_percent_applicable,omitempty"`
 }
 
 func TestSaved_GoldenFixtures(t *testing.T) {
@@ -404,6 +461,21 @@ func TestSaved_GoldenFixtures(t *testing.T) {
 			if tc.Expected.UnpricedBuckets != 0 {
 				if result.UnpricedBuckets != tc.Expected.UnpricedBuckets {
 					t.Errorf("UnpricedBuckets = %d, want %d", result.UnpricedBuckets, tc.Expected.UnpricedBuckets)
+				}
+			}
+
+			// Check unpriced_tokens
+			if tc.Expected.UnpricedTokens != 0 {
+				if result.UnpricedTokens != tc.Expected.UnpricedTokens {
+					t.Errorf("UnpricedTokens = %d, want %d", result.UnpricedTokens, tc.Expected.UnpricedTokens)
+				}
+			}
+
+			// Check saved_percent_applicable (n/a when false)
+			if tc.Expected.SavedPercentApplicable != nil {
+				_, ok := result.SavedPercent()
+				if ok != *tc.Expected.SavedPercentApplicable {
+					t.Errorf("SavedPercent applicable = %v, want %v", ok, *tc.Expected.SavedPercentApplicable)
 				}
 			}
 		})
