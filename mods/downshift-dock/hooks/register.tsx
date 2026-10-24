@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0
 //
-// downshift-dock: a one-line band above the prompt, right aligned. Two icon
-// buttons bring back panels that went away: Files (the filetree mod's pane) and
-// Agents (the savvy-progress mod's panel); a press runs the other mod's own slash
+// downshift-dock: a one-line band above the prompt, right aligned. One icon
+// button brings back a panel that went away: Agents (the savvy-progress mod's
+// panel); a press runs the other mod's own slash
 // command through `$.command.run`, as if the person typed it. Two status chips
 // show whether DCI and the native compactor are on; a press on a chip toasts what
 // it means. The dock opens nothing itself and holds no routing logic.
@@ -20,10 +20,9 @@ import type { Available, DciMode, Mode, Status } from '../types'
 export const ACCENT = '#22C55E'
 export const IDLE = '#5C6168'
 
-export type Target = { key: 'files' | 'agents'; label: string; icon: string; command: string; args: string; plugin: string; pane: string }
+export type Target = { key: 'agents'; label: string; icon: string; command: string; args: string; plugin: string; pane: string }
 
 export const TARGETS: readonly Target[] = [
-  { key: 'files', label: 'Files', icon: '\u25A4', command: 'filetree', args: '', plugin: 'filetree', pane: 'filetree' },
   { key: 'agents', label: 'Agents', icon: '\u25C8', command: 'agents-info', args: 'open', plugin: 'savvy-progress', pane: 'savvy-agents' },
 ]
 
@@ -34,8 +33,7 @@ const RECHECK_MS = 2000
 
 /** Which target commands the session lists as a plugin's command. */
 export function detect(list: readonly CommandInfo[]): Available {
-  const has = (t: Target) => list.some(c => c.name === t.command && c.source === 'plugin')
-  return { files: has(TARGETS[0]!), agents: has(TARGETS[1]!) }
+  return { agents: list.some(c => c.name === TARGETS[0]!.command && c.source === 'plugin') }
 }
 
 /** The buttons to draw: both while detection has not answered, else the installed ones. */

@@ -3,7 +3,7 @@
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 A Claude Code mod (2.1.287+) that draws one line above the prompt, right aligned. Two status chips
-and two icon buttons:
+and an icon button:
 
 - **DCI** chip: green when `<workspace>/.downshift/dci.json` has mode `active`, grey for `observe` or `off`.
 - **Running** count: `N running` while subagents are in progress (from the engine's agent list). Hidden when none run.
@@ -15,7 +15,6 @@ and two icon buttons:
   file on every call, so the change applies to the next spawn, not to a spawn already running.
 - Pressing a chip shows a toast with what it means and the command that changes it. The mod API has no
   tooltip, so the toast is the detail.
-- **▤ Files** runs `/filetree`, which opens the filetree mod's pane.
 - **◈ Agents** runs `/agents-info open`, which opens the savvy-progress agents panel.
 
 The dock reads those two config files and writes only `mode.json`.
@@ -35,7 +34,7 @@ command to exist.
 - The command is queued until the session is idle. A press during a streaming turn runs when the
   turn ends. If the run is rejected, a toast names the plugin to enable.
 - Black-first look: icons and labels follow the terminal theme (`plain` buttons, dim at rest, inverted
-  under the pointer); the separator is brand green `#22C55E` only while at least one of the two panels
+  under the pointer); the separator is brand green `#22C55E` only while the Agents panel
   is open and grey `#5C6168` otherwise. No background is set.
 
 ## Status and test
@@ -49,4 +48,4 @@ claude plugin test mods/downshift-dock
 ```
 
 The tests run against the mock engine: they prove which buttons are drawn and which command a
-press runs. They do not prove that the real filetree or agents panel opens in a live session.
+press runs. They do not prove that the real agents panel opens in a live session.
