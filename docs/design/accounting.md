@@ -4,7 +4,7 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-**Status:** Implementation complete (T0-T4b merged). Accounting v1 ready for integration.
+**Status (checked 2026-10-23):** T0 to T3 merged; the formula and `AggregateByHarness` exist but no surface calls them yet (T4a to T12 not started). Today `report`, `session --panel`, `stats` and the dashboard API still use the older telemetry sums. Plan: [`../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md`](../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md).
 
 ---
 
