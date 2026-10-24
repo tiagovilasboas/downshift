@@ -76,8 +76,12 @@ type Compactor struct {
 // Display is the final text of the figures, so no surface formats them again.
 type Display struct {
 	TokensSaved string `json:"tokens_saved"`
-	Routing     string `json:"routing"`
-	Compactor   string `json:"compactor"`
+	// TokensSavedShort is the estimate in the CLI token format ("20.7M"), "0" when zero.
+	TokensSavedShort string `json:"tokens_saved_short"`
+	// ScopeLabel is Scope.Label(): "last 30 days", "this session", "all time".
+	ScopeLabel string `json:"scope_label"`
+	Routing    string `json:"routing"`
+	Compactor  string `json:"compactor"`
 }
 
 // Compute returns the Numbers for scope. It is pure: the caller reads the
@@ -163,8 +167,10 @@ func compactorTotals(evs []execwrap.Event) Compactor {
 
 func displayOf(n Numbers) Display {
 	return Display{
-		TokensSaved: telemetry.TokensSavedEstimateLine(n.TokensSavedEstimate) + " (" + n.Scope.Label() + ": routing + compactor)",
-		Routing:     n.Routing.Line(),
-		Compactor:   fmt.Sprintf("Commands: %d · Compacted: %d", n.Compactor.Commands, n.Compactor.Compacted),
+		TokensSaved:      telemetry.TokensSavedEstimateLine(n.TokensSavedEstimate) + " (" + n.Scope.Label() + ": routing + compactor)",
+		TokensSavedShort: telemetry.ShortTokens(n.TokensSavedEstimate),
+		ScopeLabel:       n.Scope.Label(),
+		Routing:          n.Routing.Line(),
+		Compactor:        fmt.Sprintf("Commands: %d · Compacted: %d", n.Compactor.Commands, n.Compactor.Compacted),
 	}
 }
