@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 // feedStdin swaps os.Stdin with a pipe carrying payload and returns a
@@ -62,9 +63,7 @@ func TestReadPayloadTimesOutOnStalledStdin(t *testing.T) {
 	if _, ok := readPayload(r, 50*time.Millisecond); ok {
 		t.Fatal("stalled stdin must not yield a payload")
 	}
-	if time.Since(start) > 2*time.Second {
-		t.Fatal("readPayload did not honour its deadline")
-	}
+	testenv.CheckBudget(t, "readPayload (must honour its 50ms deadline)", time.Since(start), 2*time.Second)
 }
 
 func TestReadPayloadRejectsOversizedInput(t *testing.T) {
