@@ -131,6 +131,9 @@ type Guards struct {
 	// TaskFocus is true when the actionable task of a long brief, with the
 	// rest scored as context, lowered the class or changed its confidence.
 	TaskFocus bool
+	// AgentTypeHint is true when the subagent type, not the task text, set the
+	// tier (RouteAgent): the text read was unconfident and the type's hint won.
+	AgentTypeHint bool
 }
 
 // Shadow collects the observe-only opinions computed beside the routing.
@@ -201,6 +204,13 @@ func (v Verdict) String() string {
 // returns a zero Model and the verdict stays Unknown, so the caller fails open.
 // Hooks always pass the catalog; offline commands may not.
 func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
+	return RouteAgent(prompt, harness, "", currentModelID, r...)
+}
+
+// RouteAgent is Route with the spawn's subagent type, when the harness sent
+// one. The type is a classifier signal only: see applyAgentTypeHint. An empty
+// or unmapped type routes exactly as Route does.
+func RouteAgent(prompt, harness, agentType, currentModelID string, r ...Resolver) Decision {
 	var res Resolver
 	if len(r) > 0 && r[0] != nil {
 		res = r[0]
@@ -210,6 +220,12 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 	if economyEnv() && cls.Confident && !cls.RiskFloor && len(RiskCategories(prompt)) == 0 && tier > TierSmall {
 		tier--
 		cls.Complexity = complexityForTier(tier)
+	}
+	hinted := false
+	if t, ok := agentTypeHintTier(harness, agentType, prompt, tier, cls, nbUp, currentModelID, res); ok {
+		tier, hinted = t, true
+		cls.Complexity, cls.Confident = complexityForTier(t), true
+		nbDown.Applied = false
 	}
 	effort := EffortFor(tier)
 	recommended := resolveModel(harness, tier, res)
@@ -231,10 +247,11 @@ func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
 			CurrentModel: current,
 		},
 		Guards: Guards{
-			RiskFloor:    cls.RiskFloor,
-			RiskAbstain:  cls.RiskAbstain,
-			SemanticLift: cls.SemanticLift,
-			TaskFocus:    cls.TaskFocus,
+			RiskFloor:     cls.RiskFloor,
+			RiskAbstain:   cls.RiskAbstain,
+			SemanticLift:  cls.SemanticLift,
+			TaskFocus:     cls.TaskFocus,
+			AgentTypeHint: hinted,
 		},
 		Shadow: Shadow{
 			NBUpshift:   nbUp,

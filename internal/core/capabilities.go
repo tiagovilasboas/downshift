@@ -81,6 +81,11 @@ type HarnessCapabilities struct {
 	// extra context for the model (the opt-in code-intelligence hook, run by
 	// the shared prompt-context runner). False means the hook is never run.
 	CanInjectPromptContext bool
+	// AgentTypeHints maps a subagent type name, exactly as the harness sends
+	// it, to the tier that type's job needs (see RouteAgent). A type absent
+	// from the map is no signal. Empty means no type has shown a stable
+	// meaning on this harness; names are added only from evidence.
+	AgentTypeHints map[string]Tier
 }
 
 // UsageSource values for HarnessCapabilities.UsageSource.
@@ -97,7 +102,9 @@ var (
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
 	// The same hook can return updatedInput.command for the Bash tool
 	// (CanRewriteShellCommand, opt-in exec wrapper).
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true, CanInjectPromptContext: true}
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true, CanInjectPromptContext: true,
+		// Explore is read-only search, Plan is design work (built-in types).
+		AgentTypeHints: map[string]Tier{"Explore": TierSmall, "Plan": TierMid}}
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.

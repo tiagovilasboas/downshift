@@ -144,7 +144,7 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		session.Metadata = ev.ModelMetadata
 	}
 	res = core.ResolveSessionModels(harnessID, session, res)
-	decision := core.Route(subPrompt, harnessID, currentModel, res)
+	decision := core.RouteAgent(subPrompt, harnessID, hookutil.StringField(ti, "subagent_type"), currentModel, res)
 	decision.Baseline.RequestedID = currentModel
 	decision.Baseline.Guessed = fromParent
 
