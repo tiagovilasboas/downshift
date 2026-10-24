@@ -76,7 +76,6 @@ for (const [name, answer] of [
 // With no flow registered the band follows the live subagents; a registered flow keeps upstream drawing.
 const spawnTwo = async ($: Engine, on: On, active = true) => {
   const clock = mock.clock(on)
-  if (!active) on('ui.render', () => ({ type: 'engine' }) as never)
   on('session.id', () => ({ value: 'S-1' }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('process.run', () => ({ value: { exitCode: active ? 0 : 1, stdout: active ? JSON.stringify(PANEL) : '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
@@ -125,8 +124,12 @@ test('session: with no session id the figure is not drawn (it could be another s
 
 test('band fallback: Downshift inactive or its data missing, the mod draws as upstream (no derived band)', async ($, on) => {
   await spawnTwo($, on, false)
-  // Upstream draws nothing here: the engine's own placeholder is all that is left, which the test engine refuses.
-  await expect(shows($, 'AbovePrompt', /Subagents|running · /)).rejects.toThrow(/engine drew its own/)
+  // Upstream draws nothing here, so no hook answers the mount. Match only the stable part of the runner's message, which changes between versions.
+  const outcome = await shows($, 'AbovePrompt', /Subagents|running · /).then(
+    (drawn) => ({ drawn }),
+    (error: Error) => ({ error: error.message }),
+  )
+  expect(outcome).toEqual({ error: expect.stringMatching(/no implementation for ui\.render/) })
 })
 
 // A finished batch stays in the band until a new agent starts, and its band row counts the finished agents.
