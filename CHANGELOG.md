@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Routing:** the subagent type is a doubt-filling signal for Claude Code (`Explore`, `Plan`, #496); `spawn_run` batches are routed per entry (#504); confident short read-only lookups classify as Simple (#492).
 - **Accounting:** one `Compute` feeds `report`, `session --panel`, the dashboard API and the mods (#489, #500, #508, #520); the panel carries the report block (#500); `tokens_saved_short` and `scope_label` (#531); `summary`, `saved_total` and `--no-report` / `--brief` on `session --panel` (#530, #540).
 - **Report:** a window with more than one harness prints the current harness first and groups the others by name. `--json` adds `current_harness` and `by_harness`.
+- **Cursor:** a picker slug whose catalog id is already in the session (for example `grok-4.7` → `grok-4.7-xhigh`) is a session model, so a confident downshift rewrites. A slug that resolves outside the session stays unchanged.
 - **downshift-progress** (in development, not in the marketplace yet): scaffold, flow tools, data client, band, Agents pane and roster (#528, #529, #532, #533, #535, #538, #539, #541, #542).
 - **CI:** `make check` with Windows and Linux vet; `merge_group` trigger; lefthook pre-commit (gofmt, vet, staticcheck, tests of staged packages) and pre-push gates (#522, #523, #526, #534).
 
