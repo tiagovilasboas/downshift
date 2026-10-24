@@ -17,6 +17,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 type phRunner struct {
@@ -82,9 +83,7 @@ func TestPostHooks_PostHooksFailOpen(t *testing.T) {
 				t.Fatalf("%s: rc=%d", label, rc)
 			}
 			assertNeutral(t, label, out)
-			if d := time.Since(start); d > time.Second {
-				t.Fatalf("%s: took %v", label, d)
-			}
+			testenv.CheckBudget(t, label, time.Since(start), time.Second)
 		}
 	}
 }

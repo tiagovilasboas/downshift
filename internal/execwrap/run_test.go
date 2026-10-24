@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/compressor"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 // fakeBin writes an executable shell script named name into a fresh PATH
@@ -678,9 +679,13 @@ func TestRun_WaitsForObserveHookUnderDeadline(t *testing.T) {
 	ObserveUncompactedHook = func([]string, []byte, Family) { time.Sleep(2 * time.Second) }
 	start := time.Now()
 	r, _, _ = run(t, []string{"go", "test"}, true)
-	if r.ExitCode != 0 || time.Since(start) > time.Second {
-		t.Fatalf("overrunning hook changed the result: exit=%d elapsed=%s", r.ExitCode, time.Since(start))
+	// The hook sleeps 2 s: finishing under 2 s proves Run did not wait for it
+	// (always checked); the tighter 1 s bound is a performance budget.
+	elapsed := time.Since(start)
+	if r.ExitCode != 0 || elapsed >= 2*time.Second {
+		t.Fatalf("overrunning hook changed the result: exit=%d elapsed=%s", r.ExitCode, elapsed)
 	}
+	testenv.CheckBudget(t, "Run with an overrunning hook", elapsed, time.Second)
 
 	// A panicking hook is swallowed.
 	ObserveUncompactedHook = func([]string, []byte, Family) { panic("boom") }
