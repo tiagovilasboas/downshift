@@ -155,11 +155,10 @@ Companions: detected and documented, never installed or wrapped.
 ---
 ## Before declaring a code change done
 
-From the repository root:
+From the repository root. `make check` is the gate, not `go test` alone: its Windows vet catches `!windows`-only test helpers, which fail only the `test-os` CI job.
 
 ```bash
-go test ./...
-make test    # if available — same as go test
+make check
 ```
 
 Adapter smoke (requires `downshift` on PATH):
