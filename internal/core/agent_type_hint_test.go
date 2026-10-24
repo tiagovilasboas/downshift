@@ -17,15 +17,6 @@ const (
 	hintHarness = "claude-code"
 )
 
-func hasCorrection(d core.Decision, rule string) bool {
-	for _, c := range d.Corrections {
-		if c == rule {
-			return true
-		}
-	}
-	return false
-}
-
 func TestRouteAgent_TypeHint(t *testing.T) {
 	opus := catID(hintHarness, core.TierFrontier)
 	haiku := catID(hintHarness, core.TierSmall)
