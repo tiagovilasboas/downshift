@@ -26,7 +26,21 @@ func TestDecide_CompoundShapes(t *testing.T) {
 		{"cd, stderr dup and tail", "cd cmd && go test -count=1 ./... 2>&1 | tail -5", true, "cd cmd && " + w + "go test -count=1 ./... 2>&1 | tail -5", []string{"cd cmd", "tail -5"}, ReasonAllowlistedCompound},
 		{"extra spaces normalised", "cd  x  &&  go  test   |  tail  -3", true, "cd x && " + w + "go test | tail -3", []string{"cd x", "tail -3"}, ReasonAllowlistedCompound},
 
+		{"stderr merge alone", "go test ./... 2>&1", true, w + "go test ./... 2>&1", nil, ReasonAllowlistedCompound},
+		{"cd and stderr merge", "cd x && go test 2>&1", true, "cd x && " + w + "go test 2>&1", []string{"cd x"}, ReasonAllowlistedCompound},
+		{"stderr merge, extra spaces", "git   status   2>&1", true, w + "git status 2>&1", nil, ReasonAllowlistedCompound},
+
 		{"cd then not allowlisted", "cd x && sudo ls", false, "", nil, ReasonNotAllowlisted},
+		{"stderr merge after not allowlisted", "sudo ls 2>&1", false, "", nil, ReasonNotAllowlisted},
+		{"stderr to devnull", "go test ./... 2>/dev/null", false, "", nil, ReasonUnsafeChar},
+		{"stderr merge then devnull", "go test ./... 2>&1 2>/dev/null", false, "", nil, ReasonUnsafeChar},
+		{"stderr merge twice", "go test ./... 2>&1 2>&1", false, "", nil, ReasonUnsafeChar},
+		{"stdout to stderr", "go test ./... 1>&2", false, "", nil, ReasonUnsafeChar},
+		{"stderr merge then file", "go test ./... 2>&1 > out.txt", false, "", nil, ReasonUnsafeChar},
+		{"stderr merge glued", "go test ./...2>&1", false, "", nil, ReasonUnsafeChar},
+		{"stderr merge then pipe to grep", "go test ./... 2>&1 | grep FAIL", false, "", nil, ReasonUnsafeChar},
+		{"stderr merge in front of pipe to grep", "go test 2>&1 | grep FAIL", false, "", nil, ReasonUnsafeChar},
+		{"cd and stderr merge then devnull", "cd x && go test 2>&1 2>/dev/null", false, "", nil, ReasonUnsafeChar},
 		{"pipe after not allowlisted", "sudo ls | tail -5", false, "", nil, ReasonNotAllowlisted},
 		{"or list", "go test || true", false, "", nil, ReasonUnsafeChar},
 		{"cd tilde", "cd ~/repo && go test", false, "", nil, ReasonUnsafeChar},
@@ -64,5 +78,23 @@ func TestWithSession_Compound(t *testing.T) {
 	want := "cd x && '/opt/ds/downshift' compact --session=" + hashA + " -- go test 2>&1 | tail -5"
 	if got != want {
 		t.Fatalf("WithSession = %q, want %q", got, want)
+	}
+}
+
+// A trailing 2>&1 in a chain is wrapped with its segment; the merge stays.
+func TestDecide_StderrMergeInChain(t *testing.T) {
+	d := Decide("gofmt -l x; go test ./... 2>&1", exe)
+	want := "gofmt -l x; '/opt/ds/downshift' compact -- go test ./... 2>&1"
+	if !d.Rewrite || d.Command != want || d.Reason != ReasonAllowlistedChain {
+		t.Fatalf("Decide = %+v, want command %q", d, want)
+	}
+}
+
+// The permission check still sees the original command text: the rule
+// matcher runs on Command-as-typed, and the normalised Argv keeps the core.
+func TestDecide_StderrMergeKeepsArgvForRules(t *testing.T) {
+	d := Decide("go   test ./...  2>&1", exe)
+	if !d.Rewrite || d.Argv != "go test ./..." {
+		t.Fatalf("Argv = %q, want %q (rewrite=%v)", d.Argv, "go test ./...", d.Rewrite)
 	}
 }
