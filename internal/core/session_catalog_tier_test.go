@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	tHaiku  = "claude-haiku-4-5"  // catalog: small (native 'haiku' alias)
-	tHaiku5 = "claude-haiku-5-5"  // catalog: small, but no native name: never written
+	tHaiku  = "claude-haiku-5-5"  // catalog: small (native 'haiku' alias)
+	tHaiku4 = "claude-haiku-4-5"  // catalog: small, but no native name: never written
 	tSonnet = "claude-sonnet-5-5" // catalog: mid
 	tOpus   = "claude-opus-5-5"   // catalog: frontier
 	tFable  = "claude-fable-5-1"  // catalog: frontier
@@ -69,7 +69,7 @@ func TestSessionSelect_ByCatalogTier(t *testing.T) {
 		{"frontier, four models", core.TierFrontier, []string{tHaiku, tSonnet, tOpus, tFable}, tOpus},
 		{"frontier, sonnet only: hold, never below the floor", core.TierFrontier, []string{tHaiku, tSonnet}, ""},
 		{"mid, haiku only: hold, never below the floor", core.TierMid, []string{tHaiku}, ""},
-		{"small, only haiku 5.5 listed: hold, the native haiku alias is 4.5 and may not be listed", core.TierSmall, []string{tHaiku5, tSonnet}, ""},
+		{"small, only haiku 4.5 listed: hold, the native haiku alias is 5.5 and may not be listed", core.TierSmall, []string{tHaiku4, tSonnet}, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Catalog — Claude Code `haiku` is Haiku 5.5 again:** Claude Code 2.1.308 resolves the native
+  alias `haiku` to `claude-haiku-5-5` (every resolved record for a requested `haiku` on
+  2026-10-21 and 2026-10-24). The claude-code small target, the `haiku` native name and the
+  `claude-haiku` family move to `claude-haiku-5-5` ($0.10/$0.50, up to 100k prompt tokens), so
+  decision rows record the model that runs and the decision-time saving is ~98% from Opus and
+  ~95% from Sonnet. `claude-haiku-4-5` keeps its own row and price on its exact, dated and dotted
+  ids. A `session-models.json` that lists `claude-haiku-4-5` instead of `claude-haiku-5-5` now
+  holds small-tier spawns: replace the id.
+
 ## [0.1.3] - 2026-10-23
 
 ### Added

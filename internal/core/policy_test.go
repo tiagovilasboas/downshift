@@ -137,22 +137,23 @@ func TestDecisionSummary_Downshift(t *testing.T) {
 }
 
 // Regression: the claude-code small target is the model the native 'haiku'
-// alias runs (Haiku 4.5, $1/$5). The note must name it and state the real
-// list-price saving: 50% from Sonnet ($2/$10), 75% from Opus ($4/$20).
-func TestDecisionSummary_ClaudeCodeTrivialNamesHaiku45WithHonestSavings(t *testing.T) {
+// alias runs (Haiku 5.5 since Claude Code 2.1.308, $0.10/$0.50). The note must
+// name it and state its list-price saving: 95% from Sonnet ($2/$10), 98% from
+// Opus ($4/$20). Haiku 4.5 ($1/$5, 50% and 75%) is the old alias target.
+func TestDecisionSummary_ClaudeCodeTrivialNamesNativeHaikuWithHonestSavings(t *testing.T) {
 	cases := []struct {
 		current string
 		pct     string
 	}{
-		{"claude-sonnet-5-5", "50%"},
-		{"claude-opus-5-5", "75%"},
+		{"claude-sonnet-5-5", "95%"},
+		{"claude-opus-5-5", "98%"},
 	}
 	for _, tc := range cases {
 		d := core.Route("rename the variable", "claude-code", tc.current, cat)
 		if d.Verdict != core.VerdictDownshift {
 			t.Fatalf("%s: verdict = %s, want DOWNSHIFT", tc.current, d.Verdict)
 		}
-		want := "downshift to claude-haiku-4-5 (~" + tc.pct + " cheaper)"
+		want := "downshift to claude-haiku-5-5 (~" + tc.pct + " cheaper)"
 		if s := d.Summary(); !strings.Contains(s, want) {
 			t.Errorf("%s: Summary() = %q, want it to contain %q", tc.current, s, want)
 		}
