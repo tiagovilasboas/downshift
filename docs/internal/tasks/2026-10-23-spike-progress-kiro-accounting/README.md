@@ -74,29 +74,47 @@ most 5 story points.
 | K5 | Live proof in an interactive Kiro session: one shell advise row and one blocked spawn in the log | 3 | evidence note | K1; needs the owner |
 | A1 | Dashboard API: held and switched from the telemetry definitions, one Compactor scope per session, full log for the session list, sort with `sort.Slice` | 3 | `internal/api/server.go` + test | — |
 | A2 | Formula: exclude unpriced buckets from both costs and count them; `SavedPercent` reports `n/a` with no priced baseline | 2 | `internal/accounting/formula` | — |
-| A3 | `accounting.Compute(scope)` returns `Numbers` (tokens, saved, compactor, held) from `TokenSavings`, with the display strings once | 5 | `internal/accounting` | A2 |
-| A4 | `report`, `session --panel` and the dashboard API render `Numbers`; the copies of `panelOut` and `compactorPanel` go | 5 | cmd/downshift, internal/api | A1, A3 |
-| A5 | `archtest` rules for the layers, then a golden-log parity test across the surfaces | 3 | `internal/archtest`, testdata | A4 |
+| R1 | `accounting.Compute(scope)` returns `Numbers` (routing tokens from `TokenSavings`, Compactor tokens of the **same** window, held, model and effort changes, final estimate, display strings); `report` renders it, so its Compactor stops being all time | 5 | `internal/accounting`, `cmd/downshift/report.go` | — |
+| R2 | `session --panel` carries a `report` block from `Compute` with the report's default window, next to the session block; the panel stops building its own totals | 3 | `cmd/downshift/sessionpanel.go` | R1 |
+| A4 | Dashboard API renders `Numbers`; the copies of `panelOut` and `compactorPanel` go | 3 | `internal/api` | A1, R1 |
+| A5 | `archtest` rules for the layers, then a golden-log parity test: report, panel `report` block, mod tiles and API give the same numbers | 3 | `internal/archtest`, testdata | R3, A4 |
 | A6 | Delete the unused aggregations; split `telemetry.go` and `session_tree.go` (T11 and T12) | 3 | `internal/telemetry` | A5 |
 | M1 | savvy-progress: update the runner-text expectation in `downshift.test.ts`, through `downshift-local.patch` | 2 | `mods/savvy-progress` | — |
-| M2 | Panel exposes `saved_total` per spawn and per session, with its scope; the mod renders it and stops adding | 3 | `cmd/downshift/sessionpanel.go`, `mods/savvy-progress` | M1, A4 |
+| R3 | savvy-progress tiles (Downshifted, Compactor, Tokens saved) print the `report` block strings verbatim; the mod stops adding; per-spawn rows keep the session view | 3 | `mods/savvy-progress` (local patch) | M1, R2 |
 | M3 | Local: update the installed savvy-progress to the version on `main` | 1 | owner's machine | asks first |
 
-Total: 39 points, 14 tasks.
+Total: 40 points, 15 tasks.
 
 ## 3. Waves (cap: 5 agents including the root)
 
 | Wave | In parallel | Why they do not collide |
 |---|---|---|
 | 1 | K1, A1, A2, M1 | kirocrew adapter, api server, formula package, mod test |
-| 2 | K2, A3 | kirocrew child end, accounting package |
-| 3 | K3, A4 | kirocrew, surfaces |
-| 4 | K4, A5, M2 | shared runner, archtest, panel field and mod |
+| 2 | K2, R1 | kirocrew child end, accounting package and report |
+| 3 | K3, R2, A4 | kirocrew, session panel, dashboard API |
+| 4 | K4, R3 | shared runner, mod |
+| 4b | A5 | archtest and parity, after every surface |
 | 5 | A6 | telemetry deletions and split |
 
 K5 and M3 wait for the owner.
 
-## 4. Not in this plan
+## 4. Owner rule (2026-10-23): the mods show the report's numbers
+
+The progress bar and the Agents panel must show the same accounting as `downshift report`.
+Measured on a copy of the state dir the same day:
+
+| Number | `report` (30 days) | Agents panel (current session) |
+|---|---|---|
+| Routing tokens saved | work 6,565 · cache 15,895,193 | 0 · 0 |
+| Compactor tokens (bytes / 4) | 15,121 (all time) | 15,121 (all time) |
+| Tokens saved (estimate) | 15,916,879 | 15,121 |
+| Switched | not shown | 5, all effort-only (model 0) |
+
+Two causes: the panel scopes routing to the session while the report uses 30 days, and both add
+an all-time Compactor to a windowed routing figure. R1 to R3 give every surface one `Numbers`
+for one window; the session view stays for the per-spawn rows only.
+
+## 5. Not in this plan
 
 - Splitting the vendored `mods/savvy-progress/hooks/register.tsx` (1443 lines): it must stay
   byte-identical to upstream apart from the local patch. A policy note on vendored files is an
