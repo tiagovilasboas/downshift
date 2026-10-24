@@ -97,6 +97,11 @@ func frontendFamily(argv []string) Family {
 		return family
 	}
 
+	// Package-manager runners: pnpm exec <tool>, yarn <tool>
+	if family := runnerFamily(argv); family != FamilyNone {
+		return family
+	}
+
 	// Linters
 	if family := linterFamily(argv); family != FamilyNone {
 		return family
@@ -216,6 +221,38 @@ func packageManagerFamily(argv []string) Family {
 		case "build":
 			return FamilyBunBuild
 		}
+	}
+	return FamilyNone
+}
+
+// runnerTools are the families a package-manager runner may wrap. Only these
+// JS tools are reached through `pnpm exec` or `yarn`; a runner never reaches
+// git, a shell or any other family.
+var runnerTools = map[Family]bool{
+	FamilyVitest: true, FamilyJest: true, FamilyPlaywright: true, FamilyCypress: true,
+	FamilyTSC: true, FamilyNextBuild: true, FamilyESLint: true, FamilyPrettier: true, FamilyBiome: true,
+}
+
+// runnerFamily detects `pnpm exec <tool> ...` and `yarn <tool> ...`, where the
+// tool is an allowlisted JS tool. The wrapped command still runs the package
+// manager, which runs the tool, so the output keeps the tool's own shape.
+// A runner whose tool is itself a package manager is refused.
+func runnerFamily(argv []string) Family {
+	var tool []string
+	switch {
+	case len(argv) >= 3 && argv[0] == "pnpm" && argv[1] == "exec":
+		tool = argv[2:]
+	case len(argv) >= 2 && argv[0] == "yarn":
+		tool = argv[1:]
+	default:
+		return FamilyNone
+	}
+	switch tool[0] {
+	case "pnpm", "yarn", "npm", "bun":
+		return FamilyNone
+	}
+	if family := FamilyOf(tool); runnerTools[family] {
+		return family
 	}
 	return FamilyNone
 }

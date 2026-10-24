@@ -13,9 +13,9 @@ folded into the `downshift` plugin unchanged.
 | | |
 |---|---|
 | Upstream | https://github.com/JohnnyVizz/claude-kit, path `plugins/savvy-progress` |
-| Version | 1.2.1 upstream; shipped here as **1.2.12** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
+| Version | 1.2.1 upstream; shipped here as **1.2.13** (Downshift build: only `plugin.json` `version` differs, so Claude Code replaces a cached copy of 1.2.1 that still has upstream's purple) |
 | Commit | `c871c153ead54ad9547cc717d0f3e5a676c73986` (2026-10-13) |
-| Files | `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `.claude-plugin/plugin.json` byte-identical except `version` (1.2.12); `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; three of the four `hooks/*.test.ts(x)` files byte-identical (`hooks/cost.test.ts` is gated by `SHOWN_DOLLARS`, see the local patch) (they import nothing by relative path) |
+| Files | `hooks/hooks.json`, `types/index.d.ts` byte-identical to upstream; `.claude-plugin/plugin.json` byte-identical except `version` (1.2.13); `hooks/register.tsx` byte-identical except the Downshift local patch below; plus Downshift's own `hooks/downshift.test.ts`; three of the four `hooks/*.test.ts(x)` files byte-identical (`hooks/cost.test.ts` is gated by `SHOWN_DOLLARS`, see the local patch) (they import nothing by relative path) |
 | Loaded by | its own `hooks/hooks.json`, `"modules": ["./register.tsx"]`; listed in [`../../.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json) as `savvy-progress`, source `./mods/savvy-progress` |
 | Needs | Claude Code 2.1.287 or later (mods on by default); a pane for `/agents-info` (desktop docks it; the terminal needs the fullscreen layout) |
 
@@ -26,9 +26,9 @@ white and grey carry the interface, green only as a small accent;
 `docs/brand/downshift-brand-tokens.json`). The only local change to upstream is
 in `hooks/register.tsx`: colours, the shown tier words and one simpler sprite, no
 behaviour; plus the `version` line of `.claude-plugin/plugin.json` (1.2.1 to
-1.2.12, 2026-10-21; 1.2.2 on 2026-10-19 was superseded before the agents panel changes reached the cache). Claude Code keys its plugin cache by that version, so a
+1.2.12, 2026-10-21, and to 1.2.13 on 2026-10-23; 1.2.2 on 2026-10-19 was superseded before the agents panel changes reached the cache). Claude Code keys its plugin cache by that version, so a
 machine that installed 1.2.1 before the colour patch keeps upstream's purple
-`#8f8cf4` until the version changes. The panel's header tile, summary lines and per-agent rows show the tokens Downshift saved in the session (`downshift session --panel`, `work_saved` + `cache_saved`) instead of the estimated dollar cost; the dollar estimate is no longer drawn. The reapplyable diff is [`downshift-local.patch`](downshift-local.patch),
+`#8f8cf4` until the version changes. The panel's header tile, summary lines and per-agent rows show the tokens Downshift saved in the session (`downshift session --panel`, the report's figures) instead of the estimated dollar cost; the dollar estimate is no longer drawn. The reapplyable diff is [`downshift-local.patch`](downshift-local.patch),
 regenerated 2026-10-21 (finished rows expire after 30 s; the surfaces read the `now` tick atom so the engine redraws them as the rows expire) against the pinned upstream commit.
 
 | In `hooks/register.tsx` | Upstream | Downshift | Why |
@@ -52,7 +52,7 @@ draws; every number and label is computed by Downshift
 | `dsRefresh` | runs `downshift session --panel` (`$.process.run`, 2 s timeout, at most every 3 s on render; forced at spawn and at turn end). Any failure leaves the panel exactly as upstream draws it |
 | `dsKeyOf` | sha256 of `harness-downshift-session-v1:` + the spawn's `tool_use_id` (Web Crypto), so a panel row finds Downshift's record for that spawn |
 | row | the model line gains one short status and, when tokens moved to a smaller model, `↓` and their count: `opus → sonnet (mid) · ↓58k`; `held`, `kept`, `control`, `paused`, `blocked` stand alone |
-| header and band | one short line: `Downshift · N switched · M held` (zero counts are left out; `Downshift · on` when tokens moved but nothing was switched or held). When `session --panel` reports `effort_changed` above zero, `N switched` becomes `N model · M effort` (`model_switched`, `effort_changed`); an older binary without those fields keeps `N switched`. The first tile reads `Tokens saved` and shows one estimated total (`tokens_saved_estimate` from `session --panel`, drawn with a `~`; owner decision 2026-10-21): the tokens that ran on a smaller model in this session plus the Compactor's estimated tokens (all-sessions saved bytes / 4). The old `Downshifted` and `Compactor total` tiles and the Compactor suffix are gone; the mod shows only the total and never splits it. An older binary without the field falls back to the routing tokens. With an unknown session the total is withheld, like every session figure. The pane's grid counts every row placed over it, the Downshift line included, so the pane is never shorter than its content | The work/cache percentages and the per-type line are gone from the mod (the CLI still prints them) |
+| header and band | one short line: `Downshift · N switched · M held` (zero counts are left out; `Downshift · on` when tokens moved but nothing was switched or held). When `session --panel` reports `effort_changed` above zero, `N switched` becomes `N model · M effort` (`model_switched`, `effort_changed`); an older binary without those fields keeps `N switched`. The first tile is `Tokens saved · <window>` (`last 30 days`, `this session` or `all time`, from `report.scope`; the window words are in the panel language) and its value is `report.tokens_saved_estimate` from `session --panel`, through the panel's token formatter (`74k`, `1.2M`); the label carries the window, so the value is the number alone. The mod adds nothing to the report's figures. The summary line's `~N` is the same `report.tokens_saved_estimate`. An older binary without `report` draws its top-level `tokens_saved_estimate` with a `~` and no window; without either field it draws `0`. With an unknown session the figures are withheld, like every session figure. The per-row `↓N` is the spawn's work plus cache saved, the one sum left in the mod (the panel's spawn JSON has no single saved figure). The pane's grid counts every row placed over it, the Downshift line included, so the pane is never shorter than its content | The work/cache percentages and the per-type line are gone from the mod (the CLI still prints them) |
 
 | finished rows (`shownFinished`, `FINISHED_SHOW_MS`) | a finished agent's row leaves the panel 30 s after the panel first sees it finished; running rows are never hidden. The band's `N done` still counts every finished agent; the section label counts only the rows shown, and the section disappears when none is. The panel keeps ticking while a finished row is inside the window, so rows expire with no agent running. The band's `×N` badge (the crew button) counts the same rows the panel lists: running agents, finished agents still shown by `shownFinished` at the same render time, and planned tasks. The render time is the live clock, not the stored `now` (`liveNow`) |
 
@@ -149,5 +149,5 @@ Then restore this README, update the version and commit here and in
 
 ```bash
 claude plugin validate mods/savvy-progress   # hooks: ... calls: ... env reads: LANG, LC_ALL, LC_MESSAGES
-claude plugin test mods/savvy-progress       # 44 tests across 5 files
+claude plugin test mods/savvy-progress       # 46 tests across 5 files
 ```

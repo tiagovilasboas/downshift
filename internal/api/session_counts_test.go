@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/tiagovilasboas/downshift/internal/accounting"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -61,7 +62,7 @@ func TestSessionCountsMatchPanel(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			events := []telemetry.Event{decision("alpha", "2026-10-22T10:00:00Z", tc.ev)}
-			list := buildSessionsResponse(events, "").Sessions
+			list := buildSessionsResponse(events, nil, accounting.Numbers{}).Sessions
 			if len(list) != 1 {
 				t.Fatalf("sessions: got %d, want 1", len(list))
 			}
@@ -87,7 +88,7 @@ func TestSessionsSortedMostRecentFirst(t *testing.T) {
 		decision("new", "2026-10-22T08:00:00Z", telemetry.Event{Verdict: "OK", Outcome: telemetry.OutcomeAllow}),
 		decision("mid", "2026-10-21T08:00:00Z", telemetry.Event{Verdict: "OK", Outcome: telemetry.OutcomeAllow}),
 	}
-	list := buildSessionsResponse(events, "").Sessions
+	list := buildSessionsResponse(events, nil, accounting.Numbers{}).Sessions
 	want := []string{telemetry.HashSessionID("new"), telemetry.HashSessionID("mid"), telemetry.HashSessionID("old")}
 	for i, id := range want {
 		if list[i].SessionID != id {
@@ -111,20 +112,24 @@ func TestCompactorScopeEqualInBothEndpoints(t *testing.T) {
 			t.Fatalf("append exec run: %v", err)
 		}
 	}
+	execEvents, err := execwrap.ReadEvents(logPath)
+	if err != nil {
+		t.Fatalf("read exec log: %v", err)
+	}
 	events := []telemetry.Event{
 		decision("alpha", "2026-10-22T10:00:00Z", telemetry.Event{Verdict: "OK", Outcome: telemetry.OutcomeAllow}),
 		decision("beta", "2026-10-22T11:00:00Z", telemetry.Event{Verdict: "OK", Outcome: telemetry.OutcomeAllow}),
 	}
 
-	var fromList *compactorPanel
+	var fromList *compactorWire
 	var listSaved int64
-	for _, s := range buildSessionsResponse(events, logPath).Sessions {
+	for _, s := range buildSessionsResponse(events, execEvents, accounting.Numbers{}).Sessions {
 		if s.SessionID == alpha {
 			fromList = s.Tokens.Compactor
 			listSaved = s.TokensSaved
 		}
 	}
-	fromPanel := buildPanelOut(events, alpha, logPath)
+	fromPanel := buildSessionPanel(events, execEvents, accounting.Numbers{}, alpha)
 
 	if fromList == nil || fromPanel.Compactor == nil {
 		t.Fatalf("compactor block missing: list=%v panel=%v", fromList, fromPanel.Compactor)
