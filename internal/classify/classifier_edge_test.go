@@ -325,3 +325,42 @@ func TestTaskSpans(t *testing.T) {
 		})
 	}
 }
+
+// TestClassify_ReadOnlyLookupShapes covers short read-only subagent briefs
+// (find, search, where-is, summarise history). A clear lookup is Simple and
+// confident; anything that adds an edit, a harder topic or a review stays
+// where it was, and an ambiguous brief stays unconfident (doubt keeps the
+// requested model).
+func TestClassify_ReadOnlyLookupShapes(t *testing.T) {
+	tests := []struct {
+		name      string
+		prompt    string
+		want      Complexity
+		confident bool
+	}{
+		{"explore find definition", "Explore: find where Route is defined", Simple, true},
+		{"find and list callers", "Find where the classifier is defined and list callers", Simple, true},
+		{"search codebase usages", "Search the codebase for usages of ApplyRiskFloor", Simple, true},
+		{"where is config loaded", "Where is the config loaded?", Simple, true},
+		{"summarise recent commits", "Summarize the changes in the last 5 commits", Simple, true},
+		{"portuguese find", "Encontre onde a função Route é definida", Simple, true},
+
+		// An edit rides along: the lead is within one point of the edit, so it stays
+		// unconfident and the spawn keeps its requested model.
+		{"find then refactor stays unconfident", "Find where Route is defined and refactor every caller", Simple, false},
+		{"find the race stays complex", "Find the race condition in the quota package", Complex, false},
+		// Ambiguous shapes with no clear tier stay unconfident.
+		{"review diff stays unconfident", "Review this diff and list problems", Medium, false},
+		{"fix failing test stays unconfident", "Fix the failing test in internal/quota", Medium, false},
+		{"check build stays unconfident", "Check whether the build passes", Medium, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Classify(tt.prompt)
+			if got.Complexity != tt.want || got.Confident != tt.confident {
+				t.Errorf("Classify(%q) = %v confident=%v, want %v confident=%v (scores %v)",
+					tt.prompt, got.Complexity, got.Confident, tt.want, tt.confident, got.Scores)
+			}
+		})
+	}
+}
