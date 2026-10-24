@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/tiagovilasboas/downshift/internal/accounting"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -63,7 +64,10 @@ func runSession(args []string, stdout, stderr io.Writer, catalog core.Resolver) 
 		fmt.Fprint(stdout, telemetry.Why(events, hash))
 		return 0
 	case *panel:
-		out, err := json.Marshal(panelWithCompactor(telemetry.BuildPanel(events, hash)))
+		// The report's window reads the whole logs; the per-session view is from the tail.
+		allEvents, _ := telemetry.ReadEvents()
+		execEvents, _ := accounting.ReadExecEvents()
+		out, err := json.Marshal(panelWithReport(telemetry.BuildPanel(events, hash), allEvents, execEvents))
 		if err != nil {
 			return 1
 		}

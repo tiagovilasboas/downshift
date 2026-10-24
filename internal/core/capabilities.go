@@ -101,7 +101,11 @@ var (
 
 	// CursorCaps — preToolUse hook accepts updated_input.model.
 	// Note: model rewrite is silently ignored on free/legacy plans.
-	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, NativeSessionEnv: "DOWNSHIFT_CURSOR_NATIVE_FILE", NativeUsageSource: "cursor-usage", ChildEndEvent: "subagentStop", UsageSource: UsageNone, CanInjectPromptContext: true,
+	// CanRewriteShellCommand: preToolUse on the Shell tool may return
+	// updated_input.command (documented; unverified live). CanAdviseShellWrap:
+	// beforeShellExecution answers allow with agent_message naming the wrapped
+	// command, the fallback when that rewrite is ignored (never a deny).
+	CursorCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, CanRewriteShellCommand: true, CanAdviseShellWrap: true, NativeSessionEnv: "DOWNSHIFT_CURSOR_NATIVE_FILE", NativeUsageSource: "cursor-usage", ChildEndEvent: "subagentStop", UsageSource: UsageNone, CanInjectPromptContext: true,
 		// Cursor's common hook input; Claude Code sends none of these. A live
 		// preToolUse on 3.13 carried conversation_id, generation_id and
 		// workspace_roots (docs/evidence/vendor-hook-docs-2026-10-11.md).
@@ -111,7 +115,7 @@ var (
 	// Child usage stays UsageNone until a real payload proves transcript_path is
 	// the child's rollout and not the parent's (2026-10-13); the end status is
 	// still recorded.
-	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true, RewritePreservesInput: true, TranscriptQuota: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone, CanInjectPromptContext: true}
+	CodexCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: true, RewritePreservesInput: true, TranscriptQuota: true, ChildEndEvent: "PostToolUse", UsageSource: UsageNone, CanRewriteShellCommand: true, CanInjectPromptContext: true}
 
 	// KiroCrewCaps — KiroCrew's preToolUse hook is policy-only: its contract is
 	// exit 0 (allow) / exit 2 (block + stderr to the LLM), with NO updated_input

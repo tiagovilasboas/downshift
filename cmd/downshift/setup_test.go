@@ -358,7 +358,7 @@ func TestSetupDetectionAndNames(t *testing.T) {
 		t.Error("undetected harness was written")
 	}
 	doc := parseDoc(t, e.read(".codex/hooks.json"))
-	if got := hookCommands(t, doc, "PreToolUse"); len(got) != 1 || got[0] != testBin+" codex" {
+	if got := hookCommands(t, doc, "PreToolUse"); len(got) != 2 || got[0] != testBin+" codex" || got[1] != testBin+" codex" {
 		t.Errorf("codex PreToolUse = %v", got)
 	}
 	if code, _, errOut := e.run("cursor", "--yes"); code == 0 || !strings.Contains(errOut, "~/.cursor does not exist") {
@@ -499,7 +499,7 @@ func TestSetupFlatShapes(t *testing.T) {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
 	cur := parseDoc(t, e.read(".cursor/hooks.json"))["hooks"].(map[string]any)["preToolUse"].([]any)
-	if len(cur) != 2 || cur[0].(map[string]any)["command"] != testBin+" cursor" || cur[1].(map[string]any)["command"] != "other" {
+	if len(cur) != 3 || cur[0].(map[string]any)["command"] != testBin+" cursor" || cur[1].(map[string]any)["command"] != "other" || cur[2].(map[string]any)["matcher"] != "Shell" {
 		t.Errorf("cursor = %v", cur)
 	}
 	ag := parseDoc(t, e.read(".gemini/config/hooks.json"))["PreToolUse"].([]any)
@@ -791,4 +791,60 @@ func hasMatcher(doc map[string]any, event, matcher string) bool {
 		}
 	}
 	return false
+}
+
+func TestSetupCursorShellHook(t *testing.T) {
+	e := newSetupEnv(t, ".cursor")
+	code, out, _ := e.run("--dry-run")
+	if code != 0 || !strings.Contains(out, `"matcher": "Shell"`) {
+		t.Fatalf("dry-run exit %d, want the Shell entry\n%s", code, out)
+	}
+	if _, err := os.Stat(e.path(".cursor/hooks.json")); err == nil {
+		t.Fatal("dry-run wrote the file")
+	}
+	for i := 0; i < 2; i++ { // second run must be idempotent
+		if code, out, _ := e.run("--yes"); code != 0 {
+			t.Fatalf("exit %d\n%s", code, out)
+		}
+	}
+	doc := parseDoc(t, e.read(".cursor/hooks.json"))
+	var shell, task int
+	for _, h := range doc["hooks"].(map[string]any)["preToolUse"].([]any) {
+		m := h.(map[string]any)
+		if m["command"] != testBin+" cursor" {
+			continue
+		}
+		switch m["matcher"] {
+		case "Shell":
+			shell++
+		case "Task":
+			task++
+		}
+	}
+	if shell != 1 || task != 1 {
+		t.Errorf("Shell entries %d, Task entries %d, want 1 each: %s", shell, task, e.read(".cursor/hooks.json"))
+	}
+}
+
+// The cursor setup writes one beforeShellExecution entry running `downshift cursor`
+// (shell advise fallback), idempotently, with matcher "*" (every shell command).
+func TestSetupCursorShellExecHook(t *testing.T) {
+	e := newSetupEnv(t, ".cursor")
+	if code, out, _ := e.run("--dry-run"); code != 0 || !strings.Contains(out, "beforeShellExecution") {
+		t.Fatalf("dry-run exit %d, want the beforeShellExecution entry\n%s", code, out)
+	}
+	for i := 0; i < 2; i++ {
+		if code, out, _ := e.run("--yes"); code != 0 {
+			t.Fatalf("exit %d\n%s", code, out)
+		}
+	}
+	doc := parseDoc(t, e.read(".cursor/hooks.json"))
+	entries, _ := doc["hooks"].(map[string]any)["beforeShellExecution"].([]any)
+	if len(entries) != 1 {
+		t.Fatalf("beforeShellExecution entries = %d, want 1: %s", len(entries), e.read(".cursor/hooks.json"))
+	}
+	m := entries[0].(map[string]any)
+	if m["command"] != testBin+" cursor" || m["matcher"] != "*" {
+		t.Errorf("entry = %v, want %q with matcher *", m, testBin+" cursor")
+	}
 }
