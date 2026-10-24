@@ -57,11 +57,12 @@ func runDoctor(args []string, w, errW io.Writer, cat *catalog.Catalog) int {
 	fs.SetOutput(errW)
 	asJSON := fs.Bool("json", false, "machine-readable checklist")
 	verbose := fs.Bool("verbose", false, "list every model without a verified efforts list, and more detail")
+	quiet := fs.Bool("quiet", false, "print only failed and warning checks")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
 	if fs.NArg() > 0 {
-		fmt.Fprintln(errW, "usage: downshift doctor [--verbose] [--json]")
+		fmt.Fprintln(errW, "usage: downshift doctor [--verbose] [--quiet] [--json]")
 		return 2
 	}
 	env := defaultDoctorEnv(cat)
@@ -72,7 +73,8 @@ func runDoctor(args []string, w, errW io.Writer, cat *catalog.Catalog) int {
 		enc.SetIndent("", "  ")
 		_ = enc.Encode(rep)
 	} else {
-		rep.write(w, env.Verbose)
+		rep.home, rep.width = env.Home, terminalWidth(w)
+		rep.writeText(w, env.Verbose, *quiet)
 	}
 	if rep.Failed > 0 {
 		return 1
@@ -104,6 +106,11 @@ type doctorReport struct {
 	NotDetected         []string      `json:"not_detected,omitempty"`
 	EffortUnknownCount  int           `json:"effort_unknown_count"`
 	EffortUnknownModels []string      `json:"effort_unknown_models,omitempty"` // --verbose only
+
+	// home and width shape the text output only (doctor_text.go): paths under
+	// home print as ~, and no line is wider than width. JSON never sees them.
+	home  string
+	width int
 }
 
 func (r *doctorReport) add(c doctorCheck) {
@@ -114,52 +121,6 @@ func (r *doctorReport) add(c doctorCheck) {
 		r.Warnings++
 	}
 	r.Checks = append(r.Checks, c)
-}
-
-func (r *doctorReport) write(w io.Writer, verbose bool) {
-	fmt.Fprintf(w, "downshift doctor\n")
-	section := "\x00"
-	for _, c := range r.Checks {
-		if c.Harness != section {
-			section = c.Harness
-			if section != "" {
-				fmt.Fprintf(w, "\n%s\n", section)
-			} else {
-				fmt.Fprintln(w)
-			}
-		}
-		mark := map[string]string{doctorOK: "✓", doctorWarn: "!", doctorFail: "✗"}[c.Status]
-		fmt.Fprintf(w, "  %s %-15s %s\n", mark, c.ID, c.Detail)
-		if c.Fix != "" && c.Status != doctorOK {
-			for i, line := range strings.Split(c.Fix, "\n") {
-				prefix := "fix: "
-				if i > 0 {
-					prefix = "     "
-				}
-				fmt.Fprintf(w, "      %s%s\n", prefix, line)
-			}
-		}
-	}
-	if len(r.NotDetected) > 0 {
-		fmt.Fprintf(w, "\nnot detected (no hook file, skipped): %s\n", strings.Join(r.NotDetected, ", "))
-		if !r.anyHarnessChecked() {
-			fmt.Fprintf(w, "next: downshift setup --dry-run%s\n", pluginInstallHint())
-		}
-	}
-	if verbose && len(r.EffortUnknownModels) > 0 {
-		fmt.Fprintf(w, "\nmodels without a verified efforts list:\n")
-		for _, m := range r.EffortUnknownModels {
-			fmt.Fprintf(w, "  %s\n", m)
-		}
-	}
-	switch {
-	case r.Failed > 0:
-		fmt.Fprintf(w, "\n%d failed, %d warnings\n", r.Failed, r.Warnings)
-	case r.Warnings > 0:
-		fmt.Fprintf(w, "\nno failures, %d warnings\n", r.Warnings)
-	default:
-		fmt.Fprintf(w, "\nall good\n")
-	}
 }
 
 // anyHarnessChecked reports whether at least one harness had a hook file.
