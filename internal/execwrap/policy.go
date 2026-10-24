@@ -179,6 +179,22 @@ func decideSimple(command, exe string) Decision {
 	}
 }
 
+// SplitSingleWord is for the direct `downshift compact -- "go test ./..."`
+// call, where a caller quotes a whole command as one argv word. A lone word
+// that holds spaces and only safe bytes is split on those spaces; any other
+// argv, including a word with a metacharacter, a tab or a newline, is returned
+// unchanged and keeps its refusal. The split never reaches the hook path,
+// which already emits one word per argument.
+func SplitSingleWord(argv []string) []string {
+	if len(argv) != 1 || !strings.Contains(argv[0], " ") || !allSafe(argv[0]) {
+		return argv
+	}
+	if words := strings.Fields(argv[0]); len(words) > 1 {
+		return words
+	}
+	return argv
+}
+
 // FamilyOf names the allowlisted family of an argv, or FamilyNone. It is a
 // pure router: each action domain owns its detection in a sibling file. The
 // cross-cutting git family is handled here because git spans every domain and
