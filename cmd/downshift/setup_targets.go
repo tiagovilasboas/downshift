@@ -83,9 +83,9 @@ type setupTarget struct {
 	RequireFile bool
 	// Manual explains why setup does not write this harness.
 	Manual string
-	// Steering is an optional whole-file steering asset setup installs for this
-	// harness (KiroCrew), independent of hook wiring. A Manual target may still
-	// carry one.
+	// Steering is the optional compact steering setup installs for this harness,
+	// independent of hook wiring: a dedicated file (KiroCrew) or a managed block
+	// in the harness's global instructions file. A Manual target may still carry one.
 	Steering *setupSteering
 	// Registry is an informational hook list the harness owns, relative to HOME.
 	// Setup removes a Downshift entry from it. The policy hook stays in File.
@@ -204,6 +204,9 @@ var setupTargets = []setupTarget{
 			"Codex also needs [features] hooks = true and [features.multi_agent_v2] enabled = true in config.toml.",
 			"Codex skips a new hook until you trust it: run /hooks in Codex, then start a new session.",
 		},
+		// Global instructions. Codex reads AGENTS.override.md first; if that file
+		// exists it wins and the managed block is not read.
+		Steering: &setupSteering{Path: ".codex/AGENTS.md", Content: compactSteering, Managed: true},
 	},
 	{
 		Name:      "antigravity",
@@ -212,6 +215,7 @@ var setupTargets = []setupTarget{
 		Hooks: []setupHook{
 			{Event: "PreToolUse", Matcher: "invoke_subagent", Args: "antigravity"},
 		},
+		Steering: &setupSteering{Path: ".gemini/AGENTS.md", Content: compactSteering, Managed: true},
 	},
 	{
 		Name:      "kirocrew",
@@ -230,9 +234,12 @@ var setupTargets = []setupTarget{
 		Notes: []string{
 			"Restart KiroCrew so it regenerates its agent spec with the hook, then run `downshift doctor`.",
 		},
+		// Dedicated workspace steering file (KiroCrew reads steering/*.md with
+		// frontmatter), so setup owns the whole file.
 		Steering: &setupSteering{
-			Path:    ".kiro/crew/workspace/.kiro/steering/downshift-compact.md",
-			Content: kirocrewCompactSteering,
+			Path:        ".kiro/crew/workspace/.kiro/steering/downshift-compact.md",
+			Frontmatter: "---\ninclusion: always\n---\n\n",
+			Content:     compactSteering,
 		},
 		// Crew's own hook page. Exit codes there do not enforce policy, and a
 		// Downshift row duplicates agent.kiro_hooks (often still pointing at a
@@ -250,5 +257,6 @@ var setupTargets = []setupTarget{
 			// (F1 parses the child_done JSON envelope; see internal/adapters/opencode).
 			{Event: "child_done", Args: "end opencode"},
 		},
+		Steering: &setupSteering{Path: ".config/opencode/AGENTS.md", Content: compactSteering, Managed: true},
 	},
 }
