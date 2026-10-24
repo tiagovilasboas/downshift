@@ -69,7 +69,7 @@ Prompt-free JSON for the selected session (latest, or `--session`), built in
 `telemetry.BuildPanel`. Ready-made labels, so a panel only draws:
 
 ```json
-{"session":"a1b2c3d4","switched":2,"held":1,"observed":4,
+{"session":"a1b2c3d4","summary":"Downshift · 2 model · 1 held","switched":2,"model_switched":2,"held":1,"observed":4,
  "tokens":{"children":4,"saved_children":2,"work_tokens":5200,"work_saved":3200,
            "cache_tokens":180000,"cache_saved":104000},
  "tokens_line":"saved 62% of work · 58% of cache",
@@ -78,13 +78,22 @@ Prompt-free JSON for the selected session (latest, or `--session`), built in
  "spawns":[{"tool_use":"<sha256 hex>","state":"switched",
             "from_model":"claude-opus-5-5","to_model":"claude-sonnet-5-5",
             "label":"opus → sonnet (mid)",
-            "tokens":{...},"tokens_label":"48k tokens · saved from opus"}]}
+            "tokens":{...},"tokens_label":"48k tokens · saved from opus",
+            "saved_total":58000,"saved_short":"58k"}]}
 ```
 
 Labels: `opus → sonnet (mid)`, `held: original model kept`, `kept`,
 `control (unrouted)`, `paused (unrouted)`, `blocked: respawn on another model`.
 `tool_use` is `telemetry.ToolUseKey(tool_use_id)`: sha256 of
 `harness-downshift-session-v1:` + the harness tool call id.
+
+`summary` is the band's one line, composed in Go (`telemetry.PanelSummary`):
+`Downshift · N model · M effort · K held`, a zero count left out, `""` when
+nothing was changed or held. A panel prints it verbatim and does no arithmetic.
+
+`saved_total` is a spawn's work plus cache tokens saved from the requested model
+(`telemetry.SpawnSaved`), `0` while unknown; `saved_short` is the same figure in
+the CLI's token format (`58k`, `1.2M`), `""` when `saved_total` is 0.
 
 `observed_model` is optional and per spawn (`telemetry.PanelSpawn`): the model
 the child was observed to run on, taken from its resolved record or else its
