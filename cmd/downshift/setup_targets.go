@@ -197,6 +197,8 @@ var setupTargets = []setupTarget{
 		Nested:    true,
 		Hooks: []setupHook{
 			{Event: "PreToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "codex"},
+			// Shell rewrite: allowlisted Bash commands become `downshift compact -- ...` (shellrewrite.go).
+			{Event: "PreToolUse", Matcher: "^Bash$", Args: "codex"},
 			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
 			{Event: "PostToolUse", Matcher: "(^Agent$|.*spawn_agent$)", Args: "end codex"},
 		},
