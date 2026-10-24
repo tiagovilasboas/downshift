@@ -109,12 +109,23 @@ var expectedFormat = map[Family]compressor.Format{
 	FamilyDotnetBuild:  compressor.FormatDotnetBuild,
 }
 
+// stderrIsReport lists the families whose own reporter writes its progress and
+// final summary to stderr by design (Jest's reporters use process.stderr, so a
+// green run has an empty stdout). For these the gate merges stderr into the
+// held buffer, in write order, and lets the compressor decide: failure markers
+// and errors still keep the output raw. Every other family keeps the rule that
+// any stderr byte releases the output untouched.
+var stderrIsReport = map[Family]bool{
+	FamilyJest: true,
+}
+
 // Run executes argv directly (no shell) with the caller's stdin, and exits
 // with the program's own status. Only the allowlisted families run (anything
 // else is refused with 126). Output keeps the order the program wrote it in.
 // With compaction on, stdout is held (see gate) and compacted only
-// when the program wrote nothing on stderr (and exited 0, or exited non-zero
-// in a family CompressFailed supports, which keeps every failure), stayed under
+// when the program wrote nothing on stderr (except families in stderrIsReport,
+// whose reporter writes there) and exited 0, or exited non-zero in a family
+// CompressFailed supports, which keeps every failure; stayed under
 // compressor.MaxProcessableBytes and HoldBound (when configured), and the
 // compressor recognised the family's own format. Otherwise it is byte-identical.
 // Any internal error prints the raw output: output is never lost.
@@ -220,6 +231,8 @@ type gate struct {
 	mu        sync.Mutex
 	out, err  io.Writer
 	buf       bytes.Buffer
+	merge     bool    // stderr is part of the held report (stderrIsReport)
+	chunks    []chunk // held writes in order, kept only when merge is set
 	streaming bool
 	timer     *time.Timer
 	nOut      int64
@@ -229,7 +242,37 @@ type gate struct {
 }
 
 func newGate(out, err io.Writer, hold bool, argv []string, family Family) *gate {
-	return &gate{out: out, err: err, streaming: !hold, argv: argv, family: family}
+	return &gate{out: out, err: err, streaming: !hold, merge: stderrIsReport[family], argv: argv, family: family}
+}
+
+// chunk is one held write and the stream it was written to.
+type chunk struct {
+	isErr bool
+	b     []byte
+}
+
+// replay writes the held bytes raw, each to the stream it came from.
+func (g *gate) replay(data []byte) {
+	if !g.merge {
+		_, _ = g.out.Write(data) // a closed reader must not kill the program
+		return
+	}
+	for _, c := range g.chunks {
+		if c.isErr {
+			_, _ = g.err.Write(c.b)
+		} else {
+			_, _ = g.out.Write(c.b)
+		}
+	}
+	g.chunks = nil
+}
+
+// hold appends a write to the held buffer. Callers hold g.mu.
+func (g *gate) hold(p []byte, isErr bool) {
+	g.buf.Write(p)
+	if g.merge {
+		g.chunks = append(g.chunks, chunk{isErr, append([]byte(nil), p...)})
+	}
 }
 
 // release flushes held stdout and switches to streaming. Callers hold g.mu.
@@ -241,7 +284,7 @@ func (g *gate) release() {
 	if g.timer != nil {
 		g.timer.Stop()
 	}
-	_, _ = g.out.Write(g.buf.Bytes()) // a closed reader must not kill the program
+	g.replay(g.buf.Bytes())
 	g.buf = bytes.Buffer{}
 }
 
@@ -266,7 +309,7 @@ func (w stdoutWriter) Write(p []byte) (int, error) {
 			g.release()
 		})
 	}
-	g.buf.Write(p)
+	g.hold(p, false)
 	return len(p), nil
 }
 
@@ -277,6 +320,14 @@ func (w stderrWriter) Write(p []byte) (int, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	g.nErr += int64(len(p))
+	if g.merge && !g.streaming {
+		if g.buf.Len()+len(p) > compressor.MaxProcessableBytes {
+			g.release()
+		} else {
+			g.hold(p, true)
+			return len(p), nil
+		}
+	}
 	g.release()
 	_, _ = g.err.Write(p)
 	return len(p), nil
@@ -307,7 +358,11 @@ func (g *gate) finish(exitCode int, want compressor.Format) (raw, emitted int64,
 	var out []byte
 	out, passthrough = compactOutput(exitCode, data, want)
 	compacted = passthrough == ""
-	_, _ = g.out.Write(out)
+	if compacted {
+		_, _ = g.out.Write(out)
+	} else {
+		g.replay(data)
+	}
 
 	// The output is already written and the exit code already known, so the
 	// learning hook runs here, under a deadline, and its write is on disk
