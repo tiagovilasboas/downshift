@@ -1,4 +1,4 @@
-.PHONY: build test lint vet install build-all clean report e2e
+.PHONY: build test lint vet check check-fast hooks install build-all clean report e2e
 
 BINARY=downshift
 
@@ -20,6 +20,27 @@ test:
 ## vet: run go vet
 vet:
 	go vet ./...
+
+## check-fast: gofmt, then go vet for host, windows and linux (no tests; quick loop, also run by the pre-push hook)
+check-fast:
+	@echo "[1/4] gofmt -l ."
+	@out=$$(gofmt -l .); if [ -n "$$out" ]; then echo "$$out"; echo "gofmt: format the files above (gofmt -w <file>)"; exit 1; fi
+	@echo "[2/4] go vet ./...  (host)"
+	@go vet ./...
+	@echo "[3/4] go vet ./...  (GOOS=windows: type-checks test files the Windows CI job compiles)"
+	@GOOS=windows GOARCH=amd64 go vet ./...
+	@echo "[4/4] go vet ./...  (GOOS=linux)"
+	@GOOS=linux GOARCH=amd64 go vet ./...
+
+## check: gate before declaring a change done; runs check-fast, then go test -count=1 ./... (no cache)
+check: check-fast
+	@echo "[5/5] go test -count=1 ./..."
+	go test -count=1 ./...
+
+## hooks: opt in to the pre-push hook (.githooks/pre-push runs check-fast) by setting core.hooksPath
+hooks:
+	git config core.hooksPath .githooks
+	@echo "git hooks: core.hooksPath=.githooks (pre-push runs make check-fast; undo with git config --unset core.hooksPath)"
 
 ## install: install downshift into GOBIN
 install:
