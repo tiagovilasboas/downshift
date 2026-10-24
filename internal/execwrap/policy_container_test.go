@@ -3,9 +3,7 @@
 
 package execwrap
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestDecideContainerExec(t *testing.T) {
 	const pre = "'/opt/ds/downshift' compact -- "

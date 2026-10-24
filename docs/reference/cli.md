@@ -248,11 +248,16 @@ downshift models <subcommand>
 
 ### `downshift dci enable`
 
-Enable code intelligence.
+Enable code intelligence for the current repository (`.downshift/dci.json`).
+DCI only acts where its prompt hook runs; `downshift setup` installs it for
+Claude Code (`UserPromptSubmit`), and the Claude Code plugin ships the same hook.
 
 ```bash
-downshift dci enable
+downshift dci enable [active|observe] [--budget=N] [--dry-run]
 ```
+
+`--dry-run` prints the config it would write and the prompt hooks setup
+installs, and writes nothing.
 
 ### `downshift dci disable`
 
