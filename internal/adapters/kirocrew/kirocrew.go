@@ -24,7 +24,8 @@
 // Spawn detection: only the KiroCrew spawn tools listed in spawnToolNames are
 // routed. Any other tool (for example an image generator that takes model and
 // prompt) passes through silently. Within a spawn tool, a tool_input without a
-// model field or without task text is also passed through.
+// model field or without task text is also passed through. A spawn_run with a
+// tasks[] array is a batch: each entry is routed on its own (see batch.go).
 package kirocrew
 
 import (
@@ -44,6 +45,11 @@ var spawnToolNames = map[string]bool{
 	"spawn_run":        true,
 	"spawn_sub_agents": true,
 }
+
+// smallTierHint is appended to a block that names a small-tier target: the
+// context-trim advice only applies when moving DOWN to a small window.
+const smallTierHint = " For a small tier, also trim context (include_memory/include_lessons/" +
+	"include_project=false) so it fits the model's window."
 
 // Event is the JSON a harness sends on stdin for a hook.
 // Field names follow KiroCrew's documented hook event schema; the same
@@ -123,31 +129,28 @@ type Output struct {
 	Block bool
 	// Message is the actionable text shown to the LLM on a block. Empty on allow.
 	Message string
+	// decisions holds one routing decision per routed batch entry. Nil for a
+	// single spawn, where the decision returned by Handle is the only one.
+	decisions []core.Decision
 }
 
-// Handle classifies a preToolUse event and decides allow vs block.
-// Returns the policy output, a human-readable note for telemetry/stderr, and
-// the full routing Decision so the runner can record telemetry without
-// re-classifying. A zero Decision (Harness == "") means "not a routable spawn".
-func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
-	var ti map[string]any
-	if err := json.Unmarshal(ev.ToolInput, &ti); err != nil {
-		return allow(), "", core.Decision{}
-	}
+// Decisions returns every routing decision of a spawn_run batch, one per
+// routed entry, or nil for a single spawn.
+func (o Output) Decisions() []core.Decision { return o.decisions }
 
-	// Only spawn tools with both model and task text are routed. Everything
-	// else passes through.
-	if !isSubagentSpawn(ev.ToolName, ti) {
-		return allow(), "", core.Decision{}
-	}
+// spawnRoute is the routing outcome for one subagent spawn.
+type spawnRoute struct {
+	decision core.Decision
+	// block is true when the spawn should respawn on target.
+	block  bool
+	target core.Model
+	// note is the decision summary, set only when block is true.
+	note string
+}
 
-	subPrompt := hookutil.TaskText(ti, "task", "prompt", "description")
-	currentModel := hookutil.StringField(ti, "model")
-
-	var res core.Resolver
-	if len(r) > 0 {
-		res = r[0]
-	}
+// routeSpawn classifies one subagent spawn (task text plus requested model)
+// against the session and reports whether it should respawn on another model.
+func routeSpawn(ev Event, res core.Resolver, task, currentModel string) spawnRoute {
 	session := core.ResolveSession(harnessID, ev.SessionModels, ev.AvailableModels)
 	session = session.WithHookQuota(ev.IncludedModels, ev.UnavailableModels)
 	session = session.WithUsageQuota(harnessID, ev.UsageQuota)
@@ -160,19 +163,20 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		session.Metadata = ev.ModelMetadata
 	}
 	res = core.ResolveSessionModels(harnessID, session, res)
-	decision := core.Route(subPrompt, harnessID, currentModel, res)
+	decision := core.Route(task, harnessID, currentModel, res)
 	decision.Baseline.RequestedID = currentModel
 	decision.RecordSession(session, currentModel)
+	allow := spawnRoute{decision: decision}
 
 	// The user deliberately picked an explicit_only model: never block it or
 	// ask for a respawn on another model.
 	if decision.ShouldPreserveExplicitModel(currentModel, res) {
-		return allow(), "", decision
+		return allow
 	}
 
 	// Right gear already: nothing to do.
 	if decision.Verdict == core.VerdictOK {
-		return allow(), "", decision
+		return allow
 	}
 
 	// An uncertain downshift must never block: blocking on doubt would trade
@@ -181,13 +185,13 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// but like every block they still need an actionable, held-free,
 	// in-session target (see the policy-mode gate below).
 	if decision.Verdict == core.VerdictDownshift && !decision.Confident {
-		return allow(), "", decision
+		return allow
 	}
 
 	// VerdictUnknown means we could not compare (no current model, or an
 	// unrecognised one). Fail open — do not block a spawn we cannot reason about.
 	if decision.Verdict == core.VerdictUnknown {
-		return allow(), "", decision
+		return allow
 	}
 
 	// Policy-mode gate: use the same session-only target plan as rewrite
@@ -195,10 +199,10 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// only when the exact target is selectable in this session.
 	plan := decision.PlanSession(core.KiroCrewCaps, res, session, currentModel)
 	if plan.HoldForeign || plan.PreserveExplicit || plan.Model.ID == "" || plan.Model.ID == currentModel || !session.Contains(plan.Model.ID) {
-		return allow(), "", decision
+		return allow
 	}
 	if len(decision.Corrections) > 0 {
-		return allow(), "", decision
+		return allow
 	}
 	// KiroCrew cannot report quota (its hook contract is allow/block, no
 	// payload), so the credit gate would always hold when quota is unknown.
@@ -208,23 +212,54 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 	// Other checks (session membership, explicit-only, blocks) are already
 	// covered by the plan gates above.
 	if session.Blocks(plan.Model.ID) {
-		return allow(), "", decision
+		return allow
 	}
 
 	// A confident mismatch with an actionable in-session target (downshift or
-	// upshift): block and tell the agent exactly which model to respawn with.
+	// upshift): the caller blocks and tells the agent exactly which model to
+	// respawn with.
 	decision.Model = plan.Model
-	note := decision.Summary()
+	return spawnRoute{decision: decision, block: true, target: plan.Model, note: decision.Summary()}
+}
+
+// Handle classifies a preToolUse event and decides allow vs block.
+// Returns the policy output, a human-readable note for telemetry/stderr, and
+// the full routing Decision so the runner can record telemetry without
+// re-classifying. A zero Decision (Harness == "") means "not a routable spawn".
+// For a spawn_run batch the Output carries one Decision per entry; the returned
+// Decision is the first of them.
+func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
+	var ti map[string]any
+	if err := json.Unmarshal(ev.ToolInput, &ti); err != nil {
+		return allow(), "", core.Decision{}
+	}
+	var res core.Resolver
+	if len(r) > 0 {
+		res = r[0]
+	}
+
+	if ev.ToolName == spawnRunTool && hasTasksBatch(ti) {
+		return handleBatch(ev, ti, res)
+	}
+
+	// Only spawn tools with both model and task text are routed. Everything
+	// else passes through.
+	if !isSubagentSpawn(ev.ToolName, ti) {
+		return allow(), "", core.Decision{}
+	}
+	rt := routeSpawn(ev, res, hookutil.TaskText(ti, "task", "prompt", "description"), hookutil.StringField(ti, "model"))
+	if !rt.block {
+		return allow(), "", rt.decision
+	}
 	msg := fmt.Sprintf("downshift: %s\nRespawn this subagent with model=%s (tier %s).",
-		note, plan.Model.ID, plan.Model.Tier)
+		rt.note, rt.target.ID, rt.target.Tier)
 	// The context-trim hint only applies when moving DOWN to a small window;
 	// an upshift to a frontier model has room to spare. It follows the target
 	// written, which can sit above the decision's tier (nearest in session).
-	if plan.Model.Tier == core.TierSmall {
-		msg += " For a small tier, also trim context (include_memory/include_lessons/" +
-			"include_project=false) so it fits the model's window."
+	if rt.target.Tier == core.TierSmall {
+		msg += smallTierHint
 	}
-	return Output{Block: true, Message: msg}, note, decision
+	return Output{Block: true, Message: msg}, rt.note, rt.decision
 }
 
 // Denied is the policy-mode wire contract read by the shared hook runner:
