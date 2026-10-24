@@ -156,8 +156,12 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
 - **cursor current model.** In 144 captured Task payloads (2026-10-09/10) the
   top-level `model` was always empty; the subagent `model` was a real id,
   `inherit` (28) or absent (30). With `model_id` on the payload, `inherit` is
-  resolved like a missing `tool_input.model` and logged as that parent id; without
-  `model_id` it logs as `unknown`.
+  resolved like a missing `tool_input.model` and logged as that parent id. On
+  Cursor 3.27.12 (2026-10-24) Task `preToolUse` often omits `model_id`; when
+  `transcript_path` is present the adapter reads the Claude-shaped parent JSONL
+  (last assistant `message.model`, or the model on the line that carries this
+  `tool_use_id`), bounded wait as Claude Code. Without payload model fields or
+  a readable transcript, baseline stays `unknown`.
 - **Unrecognised models (all harnesses).** When the requested model is
   non-empty but not in the catalog, the shared runner records it in
   `requested_model_raw` if it looks like a model id (64 chars,
@@ -174,7 +178,7 @@ access to the tiers below it.
 |---|---|---|---|---|---|
 | claude-code | `SessionStart.model` (optional); the Agent `tool_input.model` when the parent set it; `PostToolUse.tool_response.resolvedModel` | No listing for subscriptions; `availableModels`/`deniedModels` exist only in managed settings; the Models API needs `ANTHROPIC_API_KEY` | statusline `rate_limits.five_hour` / `seven_day` (global, Pro/Max only, after the first response); not per model | `SessionStart` (add context, `CLAUDE_ENV_FILE`) | yes |
 | codex | `model` on every payload; effort only if the parent put `reasoning_effort` in `spawn_agent` | `models_cache.json` (offline; `hide` means not shown in the picker, not unusable); app-server `model/list` is experimental | per meter (`codex`, `premium`), never per model | `SessionStart` can only add context | no |
-| cursor | `model`, `model_id`, `model_params`; `subagent_model` on `subagentStart` | `cursor-agent models` (text, needs login; failed here with "Authentication required"); Cloud `/v1/models` needs an API key | Cursor Models vs Other Models pools, UI/dashboard only; CLI `/usage` is interactive | `sessionStart` (env reaches later hooks; not for cloud agents) | no |
+| cursor | `model`, `model_id`, `model_params`; `transcript_path` on `preToolUse` (3.27+); `subagent_model` on `subagentStart` (observe only, no rewrite) | `cursor-agent models` (text, needs login; failed here with "Authentication required"); Cloud `/v1/models` needs an API key | Cursor Models vs Other Models pools, UI/dashboard only; CLI `/usage` is interactive | `sessionStart` (env reaches later hooks; not for cloud agents) | no |
 | antigravity | `modelName` (parent) and `conversationId`; the adapter does not read them yet | `agy --output-format json models` (parent picker); no alias-to-model or pool mapping | `agy -p /usage --output-format json` per account, group and window; not tied to an alias | none (Pre/PostToolUse, Pre/PostInvocation, Stop) | no |
 | kirocrew | none in the payload; `session_id` maps to `~/.kiro/sessions/cli/<id>.json` (`agent_name`, `model_id`, undocumented) | `kiro-cli chat --list-models --format json` (10 models plus `auto`, with `rate_multiplier`) | no supported non-interactive credit source | `agentSpawn` (renamed `SessionStart` in V3); stdout goes to the agent context; any non-zero exit blocks | no |
 
@@ -198,7 +202,7 @@ not an end). Claude Code keeps `claude-code-post-tool-use` and
 |---|---|---|---|
 | claude-code | `SubagentStop` (launch and failure also on `PostToolUse` / `PostToolUseFailure`) | transcript (`agent_transcript_path`) | verified 2026-10-06 (launch payload, SubagentStop transcript); failure payload still GAP-CHILD-FAILURE |
 | codex | `PostToolUse` for `spawn_agent` | **none** (`UsageSource: none`): end and status are recorded, cost is not. A parser for the rollout `token_count` exists but stays off until a real payload proves `transcript_path` is the child's rollout | **unverified: needs a real payload.** `tool_response.status` / `model` are assumed names; the `token_count` usage shape is from the Codex rollout format, not from a captured hook. A spawn that reports no status is a launch: it records `launched`, reads no usage and does not make completion measurable. `transcript_path` is the parent rollout, so until a real payload shows a child-scoped rollout the tokens may be the parent thread's. |
-| cursor | `subagentStop` | none (no usage field is read) | **unverified: needs a real payload.** Linked only when the payload names the spawn tool call (`tool_use_id` / `tool_call_id`); Cursor sends no session id, so otherwise nothing is recorded. No model is read. |
+| cursor | `subagentStop` | none (no usage field is read) | **verified on 3.27.12 (2026-10-24):** `subagentStop` carries `status`, `session_id`, and `subagent_id` (matches Task `tool_use_id`; no `tool_call_id`). PreToolUse on the same build sends `session_id` and `tool_use_id` but leaves `model`, `model_id`, and `tool_input.model` empty, so routing baseline stays unknown and R9 may hold. No executed child model field is read. |
 | antigravity | none | none | no documented subagent-end payload (PostToolUse exists; its result fields are not documented). Nothing recorded. |
 | kirocrew | none | none | PostToolUse `tool_response` not confirmed (see `evidence/vendor-hook-docs-2026-10-11.md`). Nothing recorded. |
 | opencode | `child_done` (observation envelope the plugin forwards) | none (`UsageSource: none`): the `child_done` parser reads status and inline usage counts, but nothing is priced. | **unverified: needs a live run.** The envelope shape comes from the phase-0 probes, not from a captured plugin forward. The honor reader reports a resolved model only from the arrival-ordered switch chain; a batch without it records nothing. |

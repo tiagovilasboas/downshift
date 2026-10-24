@@ -11,9 +11,8 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
-// Characterization: Cursor sends no transcript, so the requested model comes
-// only from the payload: tool_input.model, then model_id, then model. The
-// literal "inherit" means use the parent model, same as an empty tool_input.model.
+// Characterization: baseline is tool_input.model (not inherit), then model_id,
+// payload model, then parent transcript at transcript_path when present.
 func TestRequestedModel_Baseline(t *testing.T) {
 	cases := []struct {
 		name      string
