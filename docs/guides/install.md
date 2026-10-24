@@ -321,6 +321,17 @@ tool names:
 }
 ```
 
+### Shell command compaction (Unverified live)
+
+`downshift setup` also registers a second `PreToolUse` entry with matcher
+`^Bash$` running the same `downshift codex`. It rewrites an allowlisted test or
+build command (for example `go test ./...`) into `downshift compact -- ...`
+through `updatedInput.command`, so only the PASS/FAIL summary reaches the model.
+Codex applies `updatedInput` only with `permissionDecision: "allow"`, which the
+hook sets on a rewrite and nowhere else. Turn it off with `DOWNSHIFT_EXEC=0` or
+`"exec": false`. Trust the new entry in `/hooks` like the first one. Not yet
+observed in a live Codex session ([harness matrix](../reference/harness-matrix.md)).
+
 ### Trust the hook before testing
 
 Codex does not run newly configured local hooks until you review and trust
