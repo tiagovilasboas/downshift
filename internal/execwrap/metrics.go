@@ -21,6 +21,23 @@ const EventsFileName = "exec-events.jsonl"
 // estimate, labelled as one wherever it is shown.
 const BytesPerToken = 4
 
+// Passthrough reasons: why an exec run's output went through raw. Each is a
+// constant, so the log holds no free text.
+const (
+	// PassthroughSmallOutput: the output was empty, or the compressed summary
+	// would not be shorter than the raw output.
+	PassthroughSmallOutput = "small_output"
+	// PassthroughNonZeroExit: the program failed (or never started), and a
+	// failed run passes through by design.
+	PassthroughNonZeroExit = "nonzero_exit"
+	// PassthroughUnrecognized: the family's compressor did not recognise the
+	// output shape, or the family has no compressor.
+	PassthroughUnrecognized = "unrecognized_output"
+	// PassthroughRefused: the command was not allowlisted and did not run
+	// (exit 126).
+	PassthroughRefused = "refused"
+)
+
 // Event is one `downshift exec` run. It carries the family, byte counts, the
 // exit-code class and whether the output was compacted: never the command
 // text, arguments, paths, working directory or output.
@@ -31,6 +48,10 @@ type Event struct {
 	EmittedBytes int64  `json:"emitted_bytes"`
 	ExitClass    string `json:"exit_class"`
 	Compacted    bool   `json:"compacted"`
+	// Passthrough is one of the Passthrough* reasons when Compacted is false,
+	// and empty when Compacted is true. Empty on a not-compacted row also means
+	// the reason was not recorded (output streamed before the gate decided).
+	Passthrough string `json:"passthrough,omitempty"`
 	// Session is the hashed session id (telemetry.HashSessionID) the hook put on
 	// the wrapped command; empty when the harness gave none. Never the raw id.
 	Session string `json:"session,omitempty"`
@@ -59,6 +80,7 @@ func EventFrom(r Result, now time.Time) Event {
 		EmittedBytes: r.EmittedBytes,
 		ExitClass:    r.ExitClass,
 		Compacted:    r.Compacted,
+		Passthrough:  r.Passthrough,
 	}
 }
 
