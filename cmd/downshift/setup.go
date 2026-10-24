@@ -148,7 +148,7 @@ Wire every Downshift hook into the harnesses found on this machine.
   --no-plugin          Claude Code: keep the hooks in settings.json instead of
                        installing the Downshift plugin (the plugin carries the
                        same hooks plus the cache-tax mod) and skip the sibling
-                       mods (savvy-progress, filetree)
+                       mods (savvy-progress)
   --allow-unsafe-binary
                        write hooks that point at this binary even when it sits
                        in a temporary, Go build or world-writable directory
