@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 	"github.com/tiagovilasboas/downshift/internal/testrace"
 )
 
@@ -33,9 +34,7 @@ func TestLockFile_LeftoverLockFileDoesNotBlock(t *testing.T) {
 		t.Fatalf("leftover lock file blocked the writer: %v", err)
 	}
 	lock.Close()
-	if d := time.Since(start); d > testrace.Budget(300*time.Millisecond) {
-		t.Fatalf("acquiring past a leftover lock took %s", d)
-	}
+	testenv.CheckBudget(t, "acquiring past a leftover lock", time.Since(start), testrace.Budget(300*time.Millisecond))
 }
 
 // TestHelperHoldLock is re-executed as a child process by

@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 const (
@@ -61,7 +63,5 @@ func TestParentModelAtSpawn_NoFileNoWait(t *testing.T) {
 	if got := parentModelAtSpawn(t.TempDir()+"/absent.jsonl", "toolu_AAA"); got != "" {
 		t.Fatalf("got %q", got)
 	}
-	if d := time.Since(start); d > 200*time.Millisecond {
-		t.Errorf("waited %s for a file that does not exist", d)
-	}
+	testenv.CheckBudget(t, "wait for a file that does not exist", time.Since(start), 200*time.Millisecond)
 }

@@ -14,6 +14,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/quota"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 func statusInput(session string, withQuota bool) []byte {
@@ -124,9 +125,8 @@ func TestStatusline_FastOnALargeLogAndReadsOnlyTheTail(t *testing.T) {
 	if raceEnabled {
 		t.Skip("latency bound does not apply under -race (the tail read still returned the right session)")
 	}
-	if took > 250*time.Millisecond { // target is 50 ms; this bound only catches a full scan
-		t.Errorf("render took %v on a 50 MB log, tail read expected", took)
-	}
+	// Target is 50 ms; this bound only catches a full scan.
+	testenv.CheckBudget(t, "render of a 50 MB log (tail read expected)", took, 250*time.Millisecond)
 }
 
 func TestStatusline_QuotaStaleMarkerWhileSnapshotHolds(t *testing.T) {
