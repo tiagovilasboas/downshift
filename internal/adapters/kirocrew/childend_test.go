@@ -113,3 +113,39 @@ func TestParseChildEndUsage(t *testing.T) {
 		t.Errorf("CachedTokens = %d, want 200", ce.Usage.CachedTokens)
 	}
 }
+
+// The requested model from tool_input is not evidence of the model that ran,
+// so ResolvedModel must stay empty whatever the payload says about the request.
+func TestParseChildEndResolvedModelEmptyWithoutServedModel(t *testing.T) {
+	cases := []struct {
+		name    string
+		payload string
+	}{
+		{
+			name:    "requested model only",
+			payload: `{"hook_event_name":"PostToolUse","tool_name":"spawn_run","tool_use_id":"rm-1","tool_input":{"model":"claude-haiku-4.5","task":"t"},"tool_response":{"status":"completed"}}`,
+		},
+		{
+			name:    "no tool_response",
+			payload: `{"hook_event_name":"PostToolUse","tool_name":"spawn_run","tool_use_id":"rm-2","tool_input":{"model":"claude-sonnet-4.6"}}`,
+		},
+		{
+			name:    "tool_response without model",
+			payload: `{"hook_event_name":"PostToolUse","tool_name":"spawn_run","tool_use_id":"rm-3","tool_input":{"model":"claude-opus-4.5"},"tool_response":{"status":"error","usage":{"input_tokens":10,"output_tokens":5}}}`,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			ce, ok := kirocrew.ParseChildEnd([]byte(c.payload))
+			if !ok {
+				t.Fatal("ParseChildEnd() ok = false, want true")
+			}
+			if ce.ResolvedModel != "" {
+				t.Errorf("ResolvedModel = %q, want empty", ce.ResolvedModel)
+			}
+			if ce.Model == "" {
+				t.Errorf("Model is empty, want the requested model from tool_input")
+			}
+		})
+	}
+}
