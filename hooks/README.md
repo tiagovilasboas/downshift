@@ -18,9 +18,8 @@ third-party component Downshift bundles (owner decision 2026-10-17), Claude
 Code only because only Claude Code loads mods, and it holds no routing logic.
 `setup` never writes the mod into a settings file: it arrives with the plugin that `setup` installs through `claude plugin install` (`--no-plugin` skips it).
 
-Two more vendored mods, [`savvy-progress`](../mods/savvy-progress/README.md) and
-[`filetree`](../mods/filetree/README.md), ship as sibling plugins of the Downshift
-marketplace under [`mods/`](../mods/README.md), one install each, because a plugin
-loads a single hooks module. Neither is part of the `downshift` plugin.
+One more vendored mod, [`savvy-progress`](../mods/savvy-progress/README.md), ships as a sibling plugin of the Downshift
+marketplace under [`mods/`](../mods/README.md), one install, because a plugin
+loads a single hooks module. It is not part of the `downshift` plugin.
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift

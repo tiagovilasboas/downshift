@@ -22,13 +22,6 @@ vendored with one local patch (colours, shown tier words, a single crab sprite, 
 mods/savvy-progress/README.md and mods/savvy-progress/downshift-local.patch). The MIT notice is in mods/savvy-progress/LICENSE; its text
 is the MIT text retained below, under the copyright line above.
 
-mods/filetree/ is the Claude Code mod filetree by Kurt Buhler
-(https://github.com/data-goblin/claude-code-filetree, version 0.2.26, commit
-1b3e72c), MIT License, Copyright (c) 2026 Kurt Buhler, vendored with a local colour patch
-(documented in mods/filetree/README.md and mods/filetree/downshift-local.patch).
-The MIT notice is in mods/filetree/LICENSE; its text is the MIT text retained
-below, under the copyright line above.
-
 Portions of internal/adapt/count_predictor.go are adapted from
 litellm/router_strategy/complexity_router/tier_predictor.py in BerriAI/litellm
 (commit 4b8a846), MIT License, Copyright (c) 2023 Berri AI. The MIT notice is

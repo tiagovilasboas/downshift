@@ -173,9 +173,10 @@ var setupTargets = []setupTarget{
 		// The upstream marketplace install of the mod vendored under hooks/cache-tax/.
 		ModConflicts: []string{"cache-tax@claude-code-mods"},
 		// Sibling mods of the Downshift marketplace (mods/, listed in
-		// .claude-plugin/marketplace.json): progress bar and /agents-info panel,
-		// file tree pane. The dock band is not installed by setup. mods/downshift-router stays out: it would route twice.
-		Mods: []string{"savvy-progress@downshift", "filetree@downshift"},
+		// .claude-plugin/marketplace.json): progress bar and /agents-info panel.
+		// A leftover filetree@downshift from an older install is left alone.
+		// The dock band is not installed by setup. mods/downshift-router stays out: it would route twice.
+		Mods: []string{"savvy-progress@downshift"},
 	},
 	{
 		Name:      "cursor",
