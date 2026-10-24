@@ -42,8 +42,8 @@ job, from test files that call helpers defined behind `//go:build !windows`.
 
 - `make check-fast`: the same checks without the test run, for quick loops.
 - `make hooks`: install the [lefthook](https://github.com/evilmartians/lefthook) git hooks once
-  (`make hooks-uninstall` removes them). Pre-commit runs gofmt (fixes and re-stages), `go vet` and
-  staticcheck on staged Go changes; pre-push runs `make check-fast` and `make test-changed`
+  (`make hooks-uninstall` removes them). Pre-commit runs gofmt (fixes and re-stages), `go vet`,
+  staticcheck and `make test-staged` (the tests of the staged packages) on staged Go changes; pre-push runs `make check-fast` and `make test-changed`
   (tests for the packages changed since `origin/main`). Skip once with `LEFTHOOK=0 git push`.
 - Windows: the pre-push hook calls `make`, so it needs Make (for example from Git Bash or
   chocolatey). Without it, run `make check-fast` by hand.

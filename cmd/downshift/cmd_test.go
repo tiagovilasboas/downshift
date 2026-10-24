@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -504,8 +505,11 @@ func TestHookTelemetryEndToEnd(t *testing.T) {
 	if recorded.RequestedEffort != "high" || recorded.FinalEffort == "" || recorded.Tier == "" || recorded.Verdict == "" || recorded.PolicyVersion == "" || recorded.BinaryVersion == "" || recorded.Outcome != "allow" || recorded.ToModel != recorded.FromModel {
 		t.Fatalf("missing routing decision telemetry: %#v", recorded)
 	}
-	if recorded.DecisionIntelligence == nil || recorded.DecisionIntelligence.Apply || recorded.DecisionIntelligence.Tier != recorded.Tier || len(recorded.DecisionIntelligence.Reasons) == 0 {
-		t.Fatalf("shadow recommendation must be present and advisory: %#v", recorded.DecisionIntelligence)
+	// The prompt names a secret: the routing risk category reaches the shadow
+	// recommendation, which stays advisory.
+	shadow := recorded.DecisionIntelligence
+	if shadow == nil || shadow.Apply || shadow.Tier != core.TierFrontier.String() || !shadow.RequiresReview || !slices.Contains(shadow.Reasons, "high_risk") {
+		t.Fatalf("shadow recommendation must carry the risk signal and stay advisory: %#v", shadow)
 	}
 }
 

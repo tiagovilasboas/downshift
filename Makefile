@@ -1,4 +1,4 @@
-.PHONY: build test lint vet check check-fast test-changed hooks hooks-uninstall install build-all clean report e2e
+.PHONY: build test lint vet check check-fast test-changed test-staged hooks hooks-uninstall install build-all clean report e2e
 
 BINARY=downshift
 
@@ -42,6 +42,13 @@ test-changed:
 	@base=$$(git merge-base origin/main HEAD 2>/dev/null); \
 	pkgs=$$(GITHUB_EVENT_NAME=pull_request GITHUB_BASE_SHA=$$base bash scripts/ci-test-packages.sh) || exit 1; \
 	echo "[test-changed] $$(echo $$pkgs)"; \
+	go test -count=1 $$pkgs
+
+## test-staged: go test -count=1 on the packages of the staged .go files only (fast); run by the pre-commit hook
+test-staged:
+	@pkgs=$$(git diff --cached --name-only --diff-filter=ACMR -- '*.go' | xargs -n1 dirname 2>/dev/null | sort -u | sed 's|^|./|'); \
+	if [ -z "$$pkgs" ]; then echo "[test-staged] no staged Go packages"; exit 0; fi; \
+	echo "[test-staged] $$(echo $$pkgs)"; \
 	go test -count=1 $$pkgs
 
 ## hooks: install the lefthook git hooks (lefthook.yml); lefthook is pinned as a go.mod tool, so no global install
