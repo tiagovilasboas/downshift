@@ -82,7 +82,7 @@ func (d Decision) PlanForSession(c HarnessCapabilities, res Resolver, session Se
 	}
 
 	id, model, ok, creditHeld := selectSessionTarget(d, res, session)
-	if !ok || id == "" || !session.Contains(id) || id == currentID {
+	if !ok || id == "" || !session.Contains(id) || isBaselineModel(d, id, res) {
 		apply := c.CanApplyEffort && currentID != "" && session.Contains(currentID) && d.Model.ID != "" && session.QuotaAllows(d.Harness, currentID)
 		return RewritePlan{Model: d.Baseline.CurrentModel, ApplyEffort: apply, CreditHeld: creditHeld}
 	}
