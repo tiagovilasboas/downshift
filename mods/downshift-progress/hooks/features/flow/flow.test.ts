@@ -85,3 +85,15 @@ test('step is keyed by the calling agent and matches the planned task by descrip
   await $.tool.call({ tool: PROGRESS_TOOL, title: 'Other' } as never)
   expect(text(await $.tool.call({ tool: STEP_TOOL, agentId: 'w1', done: 1 } as never))).toContain('cannot exceed')
 })
+
+// The engine checks a registered tool's answer against its output shape: a
+// string result, or a deny. An object result was refused live on 2026-10-24.
+test('answers are a string result or a deny, never an object', async ($) => {
+  const ok = (await $.tool.call({ tool: PROGRESS_TOOL, title: 'Shape', total: 2, done: 1 } as never)) as { result?: unknown }
+  expect(typeof ok.result).toBe('string')
+  const bad = (await $.tool.call({ tool: PROGRESS_TOOL, done: 9 } as never)) as { result?: unknown; deny?: unknown }
+  expect(bad.result).toBeUndefined()
+  expect(typeof bad.deny).toBe('string')
+  const step = (await $.tool.call({ tool: STEP_TOOL, total: 2, done: 1, agentId: 'w1' } as never)) as { result?: unknown; deny?: unknown }
+  expect(typeof (step.result ?? step.deny)).toBe('string')
+})
