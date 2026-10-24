@@ -63,6 +63,7 @@ file or from `AGENTS.md`.
 | `internal/execwrap` | Shell | Allowlist policy, family classification, compactor runner |
 | `internal/fuse` | Routing | Raise-only semantic boost |
 | `internal/gateway` | — | OmniRoute and OpenRouter HTTP gateway |
+| `internal/harness2export` | Quality | Local Harness² lab matrix, judge and receipt. Does not change routing |
 | `internal/hookctx` | Adapters | Hook deadline context |
 | `internal/hookport` | Telemetry | Honor and usage ports |
 | `internal/hookutil` | Adapters | Field helpers for hook payloads |
