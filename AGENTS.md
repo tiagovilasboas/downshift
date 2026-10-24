@@ -141,7 +141,7 @@ Key invariants (enforced by `go test ./internal/archtest`):
 rewrites allowlisted shell commands with no metacharacters; `"exec": false` or
 `DOWNSHIFT_EXEC=0` turns it off; a deny or ask rule stops the rewrite.
 
-Third-party mods (`hooks/cache-tax/`, `mods/savvy-progress/`, `mods/filetree/`): re-vendor
+Third-party mods (`hooks/cache-tax/`, `mods/savvy-progress/`): re-vendor
 per their READMEs; edit only through `downshift-local.patch`. `mods/downshift-dock/` and
 `mods/downshift-theme/` are original Downshift code.
 
@@ -155,7 +155,7 @@ Companions: detected and documented, never installed or wrapped.
 ---
 ## Before declaring a code change done
 
-From the repository root. `make check` is the gate, not `go test` alone: its Windows vet catches `!windows`-only test helpers, which fail only the `test-os` CI job.
+From the repository root. `make check` is the gate, not `go test` alone: its Windows vet catches `!windows`-only test helpers, which fail only the `test-os` CI job. Run `make hooks` once per clone: lefthook (`lefthook.yml`) then runs these gates on commit and push; `LEFTHOOK=0` skips one command.
 
 ```bash
 make check

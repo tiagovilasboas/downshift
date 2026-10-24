@@ -14,6 +14,17 @@ case "$event" in
     fi
     git diff --name-only "$base" "$head"
     ;;
+  merge_group)
+    # A merge queue run: GitHub gives the queue branch's base and head.
+    # Without them the whole tree counts as changed (never a smaller run).
+    base="${GITHUB_BASE_SHA:-}"
+    head="${GITHUB_HEAD_SHA:-${GITHUB_SHA:-HEAD}}"
+    if [ -z "$base" ]; then
+      git ls-files
+    else
+      git diff --name-only "$base" "$head"
+    fi
+    ;;
   push)
     before="${GITHUB_EVENT_BEFORE:-}"
     head="${GITHUB_SHA:-HEAD}"

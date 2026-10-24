@@ -215,6 +215,22 @@ kirocrew, opencode: false; the line is still computed by `telemetry.ChildEndLine
 shared recorder, for every harness) and no adapter prints it. `DOWNSHIFT_QUIET=1` turns it off. See
 [session-models.md](session-models.md#what-downshift-shows-while-it-works).
 
+## Subagent type hint (`AgentTypeHints`)
+
+`HarnessCapabilities.AgentTypeHints` maps a subagent type, exactly as the harness
+sends it, to a tier. `core.RouteAgent` uses it only to fill doubt: the text read
+must be unconfident, with no risk signal, no NB or semantic lift and no COMPLEX
+read, the current model must be known, and the hint is capped at that model's
+tier (no upshift). Reason code `AGENT_TYPE_HINT`. Every harness computes it the
+same way; the table is data.
+
+| harness | type field read | hints | status |
+|---|---|---|---|
+| claude-code | `tool_input.subagent_type` | `Explore` small, `Plan` mid | from the built-in types' documented jobs; pinned built-ins carry none |
+| cursor | `tool_input.subagent_type` | none | field read, no stable names observed yet (lowercase `explore` seen); add only from evidence |
+| codex | `tool_input.agent_type` | none | field read (seen in spawn inputs); no hint names until evidence |
+| kirocrew, antigravity, opencode | not read | none | no type field in the adapter payload |
+
 ## Spawn state (2026-10-19)
 
 `switched` / `held` / `observed` is computed in `telemetry.SpawnStateOf` and
@@ -260,18 +276,17 @@ capability path abstain for that decision (see [scores.md](scores.md#when-it-abs
 
 The Claude Code plugin's `hooks/hooks.json` lists one mod module,
 [`hooks/cache-tax/`](../../hooks/cache-tax/README.md) (third-party, MIT,
-vendored and pinned; owner decision 2026-10-17). Two more vendored mods ship in
-the same marketplace as sibling plugins, one install each, because a plugin
-loads a single hooks module and the three all hook `session.start`:
+vendored and pinned; owner decision 2026-10-17). One more vendored mod ships in
+the same marketplace as a sibling plugin, one install, because a plugin
+loads a single hooks module and both hook `session.start`:
 [`mods/savvy-progress/`](../../mods/savvy-progress/README.md)
-(`savvy-progress@downshift`) and [`mods/filetree/`](../../mods/filetree/README.md)
-(`filetree@downshift`); see [`mods/README.md`](../../mods/README.md). None is a
+(`savvy-progress@downshift`); see [`mods/README.md`](../../mods/README.md). None is a
 routing feature and nothing in the shared layers computes it: a mod is code
 Claude Code runs in its own process, so it exists only where mods load.
 
 | harness | mods | why |
 |---|---|---|
-| claude-code | cache-tax loads with the plugin on 2.1.287+; savvy-progress and filetree are separate plugin installs (CLI, Desktop Code tab, VS Code extension; hooks also run in `claude -p`, nothing is drawn there) | mods are a Claude Code plugin feature; `setup` cannot write one |
+| claude-code | cache-tax loads with the plugin on 2.1.287+; savvy-progress is a separate plugin install (CLI, Desktop Code tab, VS Code extension; hooks also run in `claude -p`, nothing is drawn there) | mods are a Claude Code plugin feature; `setup` cannot write one |
 | codex, cursor, kirocrew, antigravity, grok | not available | no mod system; the cold-cache question is the harness's own |
 
 What each does is in its README; the one fact that matters here is that the

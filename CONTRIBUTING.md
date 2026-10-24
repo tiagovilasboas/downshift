@@ -41,9 +41,12 @@ miss the Windows check: in the last 80 CI runs, 11 of 12 failures were the Windo
 job, from test files that call helpers defined behind `//go:build !windows`.
 
 - `make check-fast`: the same checks without the test run, for quick loops.
-- `make hooks`: opt in to `.githooks/pre-push`, which runs `make check-fast` on push.
-  Skip it once with `git push --no-verify`; undo with `git config --unset core.hooksPath`.
-- Windows: the hook needs Git Bash and `make`. Otherwise run `make check-fast` by hand.
+- `make hooks`: install the [lefthook](https://github.com/evilmartians/lefthook) git hooks once
+  (`make hooks-uninstall` removes them). Pre-commit runs gofmt (fixes and re-stages), `go vet`,
+  staticcheck and `make test-staged` (the tests of the staged packages) on staged Go changes; pre-push runs `make check-fast` and `make test-changed`
+  (tests for the packages changed since `origin/main`). Skip once with `LEFTHOOK=0 git push`.
+- Windows: the pre-push hook calls `make`, so it needs Make (for example from Git Bash or
+  chocolatey). Without it, run `make check-fast` by hand.
 
 ---
 
