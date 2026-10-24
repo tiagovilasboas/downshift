@@ -17,6 +17,9 @@ import (
 // call id (see ToolUseKey).
 type PanelView struct {
 	Session string `json:"session"`
+	// Summary is the band's one line ("Downshift · 2 model · 1 effort · 1 held"),
+	// composed here; "" when nothing changed or was held. See PanelSummary.
+	Summary string `json:"summary"`
 	// Switched counts the spawns Downshift changed: a model or an effort.
 	// ModelSwitched and EffortChanged split it: the model differs from the
 	// requested one, or the model is the same and only the effort changed.
@@ -63,6 +66,11 @@ type PanelSpawn struct {
 	// "48k tokens · saved from opus" ("" while it runs).
 	Tokens      TokenSaving `json:"tokens"`
 	TokensLabel string      `json:"tokens_label"`
+	// SavedTotal is work plus cache tokens saved from the requested model (0
+	// while unknown); SavedShort its token-formatted text, "" when 0. See
+	// SpawnSaved.
+	SavedTotal int64  `json:"saved_total"`
+	SavedShort string `json:"saved_short"`
 }
 
 // ToolUseKey is the hash a decision event stores for a harness tool call id
@@ -131,13 +139,16 @@ func BuildPanel(events []Event, sessionHash string) PanelView {
 			v.Observed++
 		}
 		child := saved.Child(ev)
+		total, short := SpawnSaved(child)
 		v.Spawns = append(v.Spawns, PanelSpawn{
 			ToolUse: ev.ToolUseHash, State: r.State, FromModel: r.FromModel, ToModel: r.ToModel,
 			ObservedModel: differentModel(observed[ev.Harness+"\n"+DecisionKey(ev)], r.ToModel),
 			Label:         PanelLabel(r, ev),
 			Tokens:        child, TokensLabel: ChildTokensLabel(child, ev),
+			SavedTotal: total, SavedShort: short,
 		})
 	}
+	v.Summary = PanelSummary(v)
 	return v
 }
 
