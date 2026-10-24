@@ -62,6 +62,9 @@ type ChildEnd struct {
 	// Verification is "passed", "failed" or "none" when the harness transcript
 	// let the adapter check the child's own verification; "" otherwise.
 	Verification string
+	// Effort is the reasoning effort the child ran at, as its transcript
+	// reports it; "" when the harness does not say.
+	Effort string
 }
 
 // ParseChildEndFunc reads one post-spawn or stop payload. ok is false when the
