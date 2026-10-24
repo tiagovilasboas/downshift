@@ -155,7 +155,7 @@ Companions: detected and documented, never installed or wrapped.
 ---
 ## Before declaring a code change done
 
-From the repository root. `make check` is the gate, not `go test` alone: its Windows vet catches `!windows`-only test helpers, which fail only the `test-os` CI job.
+From the repository root. `make check` is the gate, not `go test` alone: its Windows vet catches `!windows`-only test helpers, which fail only the `test-os` CI job. Run `make hooks` once per clone: lefthook (`lefthook.yml`) then runs these gates on commit and push; `LEFTHOOK=0` skips one command.
 
 ```bash
 make check
