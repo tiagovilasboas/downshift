@@ -87,7 +87,7 @@
     },
     {
       "name": "unpriced_bucket_partial",
-      "description": "One unknown model bucket = partial quality",
+      "description": "One unknown model bucket = partial quality; excluded from costs (priced: baseline 3.50, actual 1.75)",
       "requested_model": "claude-sonnet-5-5",
       "buckets": [
         {"model": "unknown-xyz", "input": 500000, "output": 250000},
@@ -95,7 +95,46 @@
       ],
       "expected": {
         "quality": "partial",
+        "saved_approx": 1.75,
         "unpriced_buckets": 1,
+        "unpriced_tokens": 750000,
+        "total_tokens": 1500000,
+        "valid": true
+      }
+    },
+    {
+      "name": "mixed_priced_unpriced_excludes_unpriced_from_costs",
+      "description": "Unknown bucket is larger than the priced one and must not enter C_actual or C_baseline. Priced: 0.5M in / 0.25M out; baseline sonnet 3.50, actual haiku 1.75, saved 1.75 (50%)",
+      "requested_model": "claude-sonnet-5-5",
+      "buckets": [
+        {"model": "unknown-xyz", "input": 1000000, "output": 500000},
+        {"model": "claude-haiku-4-5", "input": 500000, "output": 250000}
+      ],
+      "expected": {
+        "quality": "partial",
+        "saved_approx": 1.75,
+        "saved_positive": true,
+        "unpriced_buckets": 1,
+        "unpriced_tokens": 1500000,
+        "total_tokens": 2250000,
+        "saved_percent_applicable": true,
+        "valid": true
+      }
+    },
+    {
+      "name": "all_buckets_unpriced_saved_percent_na",
+      "description": "Priced baseline but every bucket unpriced: no priced tokens, costs are zero, SavedPercent is n/a",
+      "requested_model": "claude-sonnet-5-5",
+      "buckets": [
+        {"model": "unknown-a", "input": 500000, "output": 250000},
+        {"model": "unknown-b", "input": 500000, "output": 250000}
+      ],
+      "expected": {
+        "quality": "partial",
+        "unpriced_buckets": 2,
+        "unpriced_tokens": 1500000,
+        "total_tokens": 1500000,
+        "saved_percent_applicable": false,
         "valid": true
       }
     },
