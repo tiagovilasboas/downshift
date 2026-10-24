@@ -1,0 +1,23 @@
+=== RUN   TestAdd
+--- PASS: TestAdd (0.00s)
+=== RUN   TestSub
+--- PASS: TestSub (0.00s)
+=== RUN   TestCharge
+    billing_test.go:42: got 100, want 110
+--- FAIL: TestCharge (0.01s)
+=== RUN   TestMul
+--- PASS: TestMul (0.00s)
+=== RUN   TestTable
+=== RUN   TestTable/a
+=== RUN   TestTable/b
+    table_test.go:9: b: got 1, want 2
+--- FAIL: TestTable (0.00s)
+    --- PASS: TestTable/a (0.00s)
+    --- FAIL: TestTable/b (0.00s)
+=== RUN   TestPar
+=== PAUSE  TestPar
+=== CONT   TestPar
+--- PASS: TestPar (0.00s)
+FAIL
+FAIL	example.com/acme/widget/internal/billing	0.092s
+ok  	example.com/acme/widget/internal/api	0.212s
