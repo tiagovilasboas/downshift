@@ -127,7 +127,7 @@ func TestDoctorPluginWiring(t *testing.T) {
 	rep := buildDoctorReport(f.env)
 	if rep.Failed != 0 {
 		var b bytes.Buffer
-		rep.write(&b, false)
+		rep.writeText(&b, false, false)
 		t.Fatalf("plugin alone must not fail:\n%s", b.String())
 	}
 	wantStatus(t, f.check(t, rep, "claude-code", "hooks wired"), doctorOK)
@@ -210,14 +210,14 @@ func TestDoctorNextStepWhenNothingWired(t *testing.T) {
 	rep := &doctorReport{NotDetected: []string{"a", "b"}}
 	rep.add(doctorCheck{ID: "version", Status: doctorOK, Detail: "x"})
 	var b bytes.Buffer
-	rep.write(&b, false)
+	rep.writeText(&b, false, false)
 	out := b.String()
 	if !strings.Contains(out, "next: downshift setup --dry-run") || !strings.Contains(out, "/plugin install downshift --marketplace") {
 		t.Fatalf("missing next step:\n%s", out)
 	}
 	rep.add(doctorCheck{ID: "hooks wired", Harness: "a", Status: doctorOK, Detail: "x"})
 	b.Reset()
-	rep.write(&b, false)
+	rep.writeText(&b, false, false)
 	if strings.Contains(b.String(), "next: downshift setup") {
 		t.Fatal("a checked harness must silence the next step")
 	}
