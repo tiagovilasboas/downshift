@@ -52,7 +52,7 @@ func e2eSessionsStub() sessionsResponse {
 // e2ePanelStub returns a fixed current-session panel for the E2E harness. It
 // mirrors the shape writePanel produces, including a compactor block, so every
 // dashboard tab has content to render deterministically.
-func e2ePanelStub() panelOut {
+func e2ePanelStub() sessionPanelResponse {
 	tokens := telemetry.TokenSaving{
 		Children:      4,
 		SavedChildren: 3,
@@ -61,7 +61,7 @@ func e2ePanelStub() panelOut {
 		CacheTokens:   20000,
 		CacheSaved:    6000,
 	}
-	return panelOut{
+	return sessionPanelResponse{
 		PanelView: telemetry.PanelView{
 			Session:       "e2e0000000000000000000000000000000000000000000000000000000000001",
 			Switched:      3,
@@ -90,7 +90,7 @@ func e2ePanelStub() panelOut {
 				},
 			},
 		},
-		Compactor: &compactorPanel{
+		Compactor: &compactorWire{
 			Scope:                "all",
 			Commands:             12,
 			Compacted:            9,
