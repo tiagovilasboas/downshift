@@ -23,8 +23,9 @@ const maxTranscriptBytes = 32 << 20
 
 // subagentUsage is what a finished subagent's transcript reports.
 type subagentUsage struct {
-	Model string // model of the last assistant message
-	Usage telemetry.TokenUsage
+	Model  string // model of the last assistant message
+	Effort string // reasoning effort of the last assistant line that names one
+	Usage  telemetry.TokenUsage
 }
 
 // readSubagentUsage reads a Claude Code subagent transcript (JSONL). The API
@@ -53,13 +54,14 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 	}
 	byID := map[string]usage{}
 	var order []string
-	var model string
+	var model, effort string
 	rd := bufio.NewReaderSize(io.LimitReader(f, maxTranscriptBytes), 1<<20)
 	for {
 		line, err := rd.ReadBytes('\n')
 		if len(line) > 0 {
 			var row struct {
 				Type    string `json:"type"`
+				Effort  string `json:"effort"`
 				Message struct {
 					ID    string         `json:"id"`
 					Model string         `json:"model"`
@@ -74,6 +76,9 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 				byID[row.Message.ID] = usage{u.InputTokens, u.OutputTokens, u.CachedTokens, u.CacheWriteTokens}
 				if row.Message.Model != "" {
 					model = row.Message.Model
+				}
+				if row.Effort != "" {
+					effort = row.Effort
 				}
 			}
 		}
@@ -92,7 +97,7 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 	if total == (telemetry.TokenUsage{}) {
 		return subagentUsage{}, false
 	}
-	return subagentUsage{Model: model, Usage: total}, true
+	return subagentUsage{Model: model, Effort: effort, Usage: total}, true
 }
 
 // parseSubagentStop turns a SubagentStop payload into a ChildEnd: the agent id
@@ -148,6 +153,7 @@ func parseSubagentStop(payload map[string]any) (hookport.ChildEnd, bool) {
 		Source:       hookport.SourceTranscript,
 		IsChild:      true,
 		Verification: readSubagentVerification(path),
+		Effort:       got.Effort,
 	}, true
 }
 

@@ -52,7 +52,7 @@ type Event struct {
 	Complexity           string                `json:"complexity"`                 // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
 	FromModel            string                `json:"requested_model"`            // model supplied by the harness
 	ToModel              string                `json:"final_model"`                // selected model after policy
-	RequestedEffort      string                `json:"requested_reasoning_effort"` // absent from most hook protocols
+	RequestedEffort      string                `json:"requested_reasoning_effort"` // level, "inherit" or "unobserved"
 	FinalEffort          string                `json:"final_reasoning_effort"`     // policy recommendation
 	Verdict              string                `json:"verdict"`                    // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
 	Tier                 string                `json:"tier"`                       // SMALL|MID|FRONTIER
@@ -343,10 +343,24 @@ func RawModelOrInvalid(candidate string) string {
 	return "invalid"
 }
 
-// EffortOrUnknown accepts only the cross-harness effort vocabulary.
+// Reasons recorded in place of a reasoning effort level.
+const (
+	// EffortInherit is a spawn that sets no effort of its own, so the harness
+	// applies its default (Claude Code: the session effort).
+	EffortInherit = "inherit"
+	// EffortUnobserved is a hook payload that carries no effort at all.
+	EffortUnobserved = "unobserved"
+)
+
+// EffortOrUnknown accepts only the cross-harness effort vocabulary and
+// EffortInherit. An empty value is EffortUnobserved; anything else is
+// "unknown", so a malformed value never reaches the log.
 func EffortOrUnknown(candidate string) string {
-	if effortPattern.MatchString(candidate) {
+	switch {
+	case effortPattern.MatchString(candidate), candidate == EffortInherit:
 		return candidate
+	case candidate == "":
+		return EffortUnobserved
 	}
 	return "unknown"
 }
@@ -444,7 +458,7 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 		Complexity:       d.Complexity.String(),
 		FromModel:        ModelOrUnknown(d.Baseline.CurrentModel.ID),
 		ToModel:          ModelOrUnknown(d.Model.ID),
-		RequestedEffort:  "unknown",
+		RequestedEffort:  EffortUnobserved,
 		FinalEffort:      EffortOrUnknown(d.Effort.String()),
 		Verdict:          d.Verdict.String(),
 		Tier:             d.Tier.String(),

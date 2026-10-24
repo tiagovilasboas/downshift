@@ -89,13 +89,26 @@ func (ev Event) AgentTypeIdentifier() string {
 	return hookutil.StringField(ti, "subagent_type")
 }
 
-// RequestedReasoningEffort reads an optional input field for future-compatible telemetry.
+// RequestedReasoningEffort is the effort the child would run at without a
+// rewrite, in Claude Code's order: the Agent call's `effort`, the agent
+// definition's `effort:`, then the session's. The Downshift mod's
+// `reasoning_effort` counts as a per-call value. With neither, the child
+// inherits the session effort, which the hook does not see: "inherit".
 func (ev Event) RequestedReasoningEffort() string {
 	var ti map[string]any
 	if json.Unmarshal(ev.ToolInput, &ti) != nil {
 		return ""
 	}
-	return hookutil.StringField(ti, "reasoning_effort")
+	if e := hookutil.StringField(ti, "effort"); e != "" {
+		return e
+	}
+	if e := hookutil.StringField(ti, "reasoning_effort"); e != "" {
+		return e
+	}
+	if def := lookupAgentDefinition(ev.Cwd, hookutil.StringField(ti, "subagent_type")); def.Effort != "" {
+		return def.Effort
+	}
+	return telemetry.EffortInherit
 }
 
 // RequestedModel returns the model received before Downshift emitted a rewrite.
