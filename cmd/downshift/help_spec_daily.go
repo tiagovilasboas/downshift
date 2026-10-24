@@ -93,7 +93,7 @@ Next: downshift session, to see one run as a tree
 	"session": `downshift session — This session's subagents as a tree (every harness)
 
 Usage:
-  downshift session [--tree | --why | --pause | --resume | --panel] [--session=ID] [--json]
+  downshift session [--tree | --why | --pause | --resume | --panel [--no-report] [--brief]] [--session=ID] [--json]
 
 Flags:
   --tree          The subagents as a tree (default)
@@ -103,6 +103,8 @@ Flags:
   --session=ID    Session id (default: the harness's own, else the most recent)
   --json          The tree as JSON
   --panel         Per-spawn state and session savings as JSON, for a panel mod
+  --no-report     With --panel: skip the 30-day report (fast)
+  --brief         With --panel: only the fields the agents band draws
 
 Examples:
   downshift session

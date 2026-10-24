@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 // TestClassifyLatencyLargePrompts guards the hook hot path against input that
@@ -38,9 +40,7 @@ func TestClassifyLatencyLargePrompts(t *testing.T) {
 		_ = ClassifyWithSemantic(prompt)
 		elapsed := time.Since(start)
 		t.Logf("%s: %v", c.name, elapsed)
-		if elapsed > c.limit {
-			t.Errorf("%s classification took %v, limit %v", c.name, elapsed, c.limit)
-		}
+		testenv.CheckBudget(t, c.name+" classification", elapsed, c.limit)
 	}
 }
 
@@ -58,9 +58,7 @@ func TestClassifyLatencyAdversarialInput(t *testing.T) {
 		_ = ClassifyWithSemantic(in)
 		elapsed := time.Since(start)
 		t.Logf("%s: %v", name, elapsed)
-		if elapsed > 5*time.Second {
-			t.Errorf("%s took %v", name, elapsed)
-		}
+		testenv.CheckBudget(t, name, elapsed, 5*time.Second)
 	}
 }
 

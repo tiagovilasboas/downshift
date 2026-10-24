@@ -1,5 +1,6 @@
 # Git hooks for Downshift, run by lefthook (pinned in go.mod as a tool).
 # Install once: make hooks. Skip one commit or push: LEFTHOOK=0 git commit / git push.
+# pre-commit: format, vet, staticcheck and the tests of the staged packages.
 # Commands mirror the CI gates in .github/workflows/ci.yml; keep them in step.
 
 pre-commit:
@@ -15,6 +16,9 @@ pre-commit:
     staticcheck:
       glob: "*.go"
       run: go run honnef.co/go/tools/cmd/staticcheck@2026.2.2 ./...
+    tests:
+      glob: "*.go"
+      run: make test-staged
 
 pre-push:
   piped: true # stop at the first failure: no test run when check-fast already failed

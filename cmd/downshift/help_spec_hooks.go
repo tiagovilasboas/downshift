@@ -40,6 +40,7 @@ func harnessFor(name string) string {
 var hookHelpTopics = map[string]string{
 	"claude-code":               hookHelp("claude-code", "Claude Code PreToolUse hook: rewrites a subagent's model"),
 	"cursor":                    hookHelp("cursor", "Cursor preToolUse hook: rewrites a subagent's model"),
+	"cursor-touch":              hookHelp("cursor-touch", "Cursor session hooks: remembers the composer model for Task baseline"),
 	"codex":                     hookHelp("codex", "Codex PreToolUse hook: rewrites a subagent's model"),
 	"antigravity":               hookHelp("antigravity", "Antigravity PreToolUse hook: rewrites a subagent's model"),
 	"kirocrew":                  hookHelp("kirocrew", "KiroCrew preToolUse hook: policy mode, exit 0 allow or 2 block"),

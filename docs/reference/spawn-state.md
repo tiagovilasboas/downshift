@@ -69,7 +69,7 @@ Prompt-free JSON for the selected session (latest, or `--session`), built in
 `telemetry.BuildPanel`. Ready-made labels, so a panel only draws:
 
 ```json
-{"session":"a1b2c3d4","switched":2,"held":1,"observed":4,
+{"session":"a1b2c3d4","summary":"Downshift · 2 model · 1 held","switched":2,"model_switched":2,"held":1,"observed":4,
  "tokens":{"children":4,"saved_children":2,"work_tokens":5200,"work_saved":3200,
            "cache_tokens":180000,"cache_saved":104000},
  "tokens_line":"saved 62% of work · 58% of cache",
@@ -78,13 +78,43 @@ Prompt-free JSON for the selected session (latest, or `--session`), built in
  "spawns":[{"tool_use":"<sha256 hex>","state":"switched",
             "from_model":"claude-opus-5-5","to_model":"claude-sonnet-5-5",
             "label":"opus → sonnet (mid)",
-            "tokens":{...},"tokens_label":"48k tokens · saved from opus"}]}
+            "tokens":{...},"tokens_label":"48k tokens · saved from opus",
+            "saved_total":58000,"saved_short":"58k"}]}
 ```
 
 Labels: `opus → sonnet (mid)`, `held: original model kept`, `kept`,
 `control (unrouted)`, `paused (unrouted)`, `blocked: respawn on another model`.
 `tool_use` is `telemetry.ToolUseKey(tool_use_id)`: sha256 of
 `harness-downshift-session-v1:` + the harness tool call id.
+
+`summary` is the band's one line, composed in Go (`telemetry.PanelSummary`):
+`Downshift · N model · M effort · K held`, a zero count left out, `""` when
+nothing was changed or held. A panel prints it verbatim and does no arithmetic.
+
+`saved_total` is a spawn's work plus cache tokens saved from the requested model
+(`telemetry.SpawnSaved`), `0` while unknown; `saved_short` is the same figure in
+the CLI's token format (`58k`, `1.2M`), `""` when `saved_total` is 0.
+
+### Trimming the panel: `--no-report` and `--brief`
+
+Both need `--panel` (alone they are a usage error). The default answer is the
+whole panel above and is unchanged.
+
+- `--no-report` skips the 30-day report. The full logs are not read, only the
+  tail, so the call stays flat as the log grows. The output has no `report`,
+  `compactor` or `tokens_saved_estimate`; the session fields are the same.
+- `--brief` prints only what the agents band draws:
+  `{session, summary, switched, model_switched, effort_changed, held,
+  held_guardrail, upshift_not_applied, observed, spawns[]}`, where each spawn is
+  `{tool_use, state, from_model, to_model, observed_model, label, saved_total,
+  saved_short}`. It drops `tokens`, `tokens_line`, `by_agent_type` and each
+  spawn's `tokens` and `tokens_label`. Without `--no-report` it adds
+  `tokens_saved_estimate` (the report's figure, a number) and
+  `tokens_saved_short` (`74k`, `1.2M`, `""` when 0). With `--no-report` neither
+  appears.
+
+The counts, `summary` and spawn rows of `--brief` equal the full panel's
+(`TestPanelBrief_FieldsMatchFullPanel`).
 
 `observed_model` is optional and per spawn (`telemetry.PanelSpawn`): the model
 the child was observed to run on, taken from its resolved record or else its

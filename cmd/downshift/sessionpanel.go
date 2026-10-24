@@ -4,10 +4,49 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+
 	"github.com/tiagovilasboas/downshift/internal/accounting"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
+
+// panelOptions are the `session --panel` flags that trim the answer.
+type panelOptions struct {
+	// NoReport skips the 30-day report: no report, compactor or
+	// tokens_saved_estimate, and the full logs are not read (the tail only).
+	NoReport bool
+	// Brief prints only what the agents band draws (panelBrief).
+	Brief bool
+}
+
+// writePanel prints the panel JSON for hash. events is the session tail; the
+// full logs are read only when the report is wanted.
+func writePanel(events []telemetry.Event, hash string, opt panelOptions, stdout, stderr io.Writer) int {
+	view := telemetry.BuildPanel(events, hash)
+	var out any = view
+	if !opt.NoReport {
+		// The report's window reads the whole logs; the per-session view is from the tail.
+		allEvents, _ := telemetry.ReadEvents()
+		execEvents, _ := accounting.ReadExecEvents()
+		full := panelWithReport(view, allEvents, execEvents)
+		out = full
+		if opt.Brief {
+			out = briefWithTokens(view, full.TokensSavedEstimate)
+		}
+	} else if opt.Brief {
+		out = briefOf(view)
+	}
+	raw, err := json.Marshal(out)
+	if err != nil {
+		fmt.Fprintf(stderr, "downshift session: %v\n", err)
+		return 1
+	}
+	fmt.Fprintln(stdout, string(raw))
+	return 0
+}
 
 // compactorTokenEstimate names how Compactor tokens are estimated; it is the
 // same text execwrap.Summarize gives.
