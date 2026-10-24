@@ -135,7 +135,7 @@ func mergeTarget(doc *jobj, t setupTarget, binary, stateDir string, skipOptional
 		if t.Nested {
 			list = ensureNestedHook(list, h, cmd, ownedMatchers(t.Hooks, h.Event))
 		} else {
-			list = ensureFlatHook(list, h, cmd)
+			list = ensureFlatHook(list, h, cmd, ownedMatchers(t.Hooks, h.Event))
 		}
 		holder.set(h.Event, list)
 	}
@@ -253,10 +253,14 @@ func newNestedGroup(h setupHook, cmd string) *jobj {
 	return g
 }
 
-func ensureFlatHook(list []any, h setupHook, cmd string) []any {
+func ensureFlatHook(list []any, h setupHook, cmd string, owned []string) []any {
 	for _, item := range list {
 		e, ok := asObj(item)
 		if !ok || !ownsCommand(hookCommand(e), h) {
+			continue
+		}
+		if cur, _ := e.vals["matcher"].(string); h.Matcher != "" && cur != h.Matcher && slices.Contains(owned, cur) {
+			// Another of our hooks (say Shell beside Task): not ours to move.
 			continue
 		}
 		if hookCommand(e) != cmd {
