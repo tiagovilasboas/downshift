@@ -7,7 +7,7 @@ import type { On } from 'claude-code'
 import { mock } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 
-export type World = { clock: ReturnType<typeof mock.clock>; state: <T>(key: string) => T; argvs: string[][]; setPanel: (json: string | null) => void }
+export type World = { panes: string[]; clock: ReturnType<typeof mock.clock>; state: <T>(key: string) => T; argvs: string[][]; setPanel: (json: string | null) => void }
 
 /** Mocks clock, session id, process and the spawn; `setPanel(null)` makes the binary fail. */
 export function world($: Engine, on: On, start = 1_000_000): World {
@@ -20,7 +20,11 @@ export function world($: Engine, on: On, start = 1_000_000): World {
   on('state.set', (_$, e, next) => { written.set(e.key, e.value); return next(e) })
   on('turn.complete', () => ({ text: '' }))
   on('session.id', () => ({ value: 'S-1' }))
-  on('ui.open', () => ({ value: { isPlaced: true } }))
+  const panes: string[] = []
+  const opened = new Set<string>()
+  on('ui.panes', () => ({ value: [...opened].map(id => ({ id, title: id, isShown: true, isFocused: false, isPlaced: true })) }))
+  on('ui.open', (_$, e) => { panes.push(`open:${e.id}`); opened.add(e.id); return { value: { isPlaced: true } } })
+  on('ui.close', (_$, e) => { panes.push(`close:${e.id}`); opened.delete(e.id); return { value: undefined } })
   on('process.run', (_$, e) => {
     argvs.push([...e.argv])
     if (panel === null) throw new Error('spawn ENOENT')
@@ -31,7 +35,7 @@ export function world($: Engine, on: On, start = 1_000_000): World {
     ids.set(e.tool_use_id, agentId)
     return { model: 'claude-sonnet-5-5', agentId }
   })
-  return { clock, state: <T>(key: string) => written.get(key) as T, argvs, setPanel: json => { panel = json } }
+  return { panes, clock, state: <T>(key: string) => written.get(key) as T, argvs, setPanel: json => { panel = json } }
 }
 
 /** The binary leaves the report block out under --no-report. */
