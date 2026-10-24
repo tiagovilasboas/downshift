@@ -173,12 +173,30 @@ func TestEvent_RequestedReasoningEffort(t *testing.T) {
 		want  string
 	}{
 		{"with field", `{"reasoning_effort":"low"}`, "low"},
-		{"missing field", `{"prompt":"test"}`, ""},
+		{"agent call effort", `{"effort":"high"}`, "high"},
+		{"agent call effort wins", `{"effort":"high","reasoning_effort":"low"}`, "high"},
+		{"definition effort", `{"subagent_type":"effort-def-agent"}`, "xhigh"},
+		{"call effort over definition", `{"subagent_type":"effort-def-agent","effort":"low"}`, "low"},
+		{"definition without effort inherits", `{"subagent_type":"model-only-agent"}`, "inherit"},
+		{"missing field inherits", `{"prompt":"test"}`, "inherit"},
 		{"malformed json", `{not valid}`, ""},
 	}
+	cwd := t.TempDir()
+	agents := filepath.Join(cwd, ".claude", "agents")
+	if err := os.MkdirAll(agents, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeAgent := func(name, body string) {
+		if err := os.WriteFile(filepath.Join(agents, name+".md"), []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	writeAgent("effort-def-agent", "---\nname: effort-def-agent\nmodel: haiku\neffort: xhigh\n---\nbody\n")
+	writeAgent("model-only-agent", "---\nname: model-only-agent\nmodel: haiku\n---\nbody\n")
+	t.Setenv("CLAUDE_CONFIG_DIR", t.TempDir())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ev := claudecode.Event{ToolInput: json.RawMessage(tt.input)}
+			ev := claudecode.Event{ToolInput: json.RawMessage(tt.input), Cwd: cwd}
 			if got := ev.RequestedReasoningEffort(); got != tt.want {
 				t.Errorf("RequestedReasoningEffort() = %q, want %q", got, tt.want)
 			}

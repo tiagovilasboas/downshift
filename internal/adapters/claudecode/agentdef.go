@@ -49,6 +49,8 @@ type agentDefinition struct {
 	Found bool
 	// Model is the frontmatter `model:` value; empty or "inherit" means none.
 	Model string
+	// Effort is the frontmatter `effort:` value; empty means the session's.
+	Effort string
 }
 
 // Inherits reports a found definition that leaves the model to the parent.
@@ -156,7 +158,7 @@ func pluginAgentDirs(plugin string) []string {
 // `name:` is it.
 func definitionInDir(dir, name string) agentDefinition {
 	if fm, ok := readFrontmatter(filepath.Join(dir, name+".md")); ok {
-		return agentDefinition{Found: true, Model: fm["model"]}
+		return agentDefinition{Found: true, Model: fm["model"], Effort: fm["effort"]}
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -170,15 +172,15 @@ func definitionInDir(dir, name string) agentDefinition {
 			continue
 		}
 		if fm, ok := readFrontmatter(filepath.Join(dir, e.Name())); ok && fm["name"] == name {
-			return agentDefinition{Found: true, Model: fm["model"]}
+			return agentDefinition{Found: true, Model: fm["model"], Effort: fm["effort"]}
 		}
 	}
 	return agentDefinition{}
 }
 
-// readFrontmatter returns the top-level `name` and `model` values of a file's
-// YAML frontmatter. ok is false when the file is missing, unreadable or has no
-// frontmatter. Only those two keys are kept.
+// readFrontmatter returns the top-level `name`, `model` and `effort` values of
+// a file's YAML frontmatter. ok is false when the file is missing, unreadable
+// or has no frontmatter. Only those keys are kept.
 func readFrontmatter(path string) (map[string]string, bool) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -201,7 +203,7 @@ func readFrontmatter(path string) (map[string]string, bool) {
 			return out, true
 		}
 		key, value, ok := strings.Cut(line, ":")
-		if !ok || key != "name" && key != "model" {
+		if !ok || key != "name" && key != "model" && key != "effort" {
 			continue
 		}
 		out[key] = unquote(strings.TrimSpace(value))
