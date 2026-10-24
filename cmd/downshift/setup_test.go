@@ -358,7 +358,7 @@ func TestSetupDetectionAndNames(t *testing.T) {
 		t.Error("undetected harness was written")
 	}
 	doc := parseDoc(t, e.read(".codex/hooks.json"))
-	if got := hookCommands(t, doc, "PreToolUse"); len(got) != 1 || got[0] != testBin+" codex" {
+	if got := hookCommands(t, doc, "PreToolUse"); len(got) != 2 || got[0] != testBin+" codex" || got[1] != testBin+" codex" {
 		t.Errorf("codex PreToolUse = %v", got)
 	}
 	if code, _, errOut := e.run("cursor", "--yes"); code == 0 || !strings.Contains(errOut, "~/.cursor does not exist") {
