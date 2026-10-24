@@ -1,0 +1,13 @@
+#!/bin/sh
+# Opt-in pre-push gate: runs `make check-fast` (gofmt + go vet for host, windows
+# and linux; no tests). Enable with `make hooks`. Skip once with `git push --no-verify`.
+# Windows: needs Git Bash and make; otherwise run `make check-fast` by hand.
+
+if ! command -v make >/dev/null 2>&1; then
+	echo "pre-push: make not found; run 'make check-fast' by hand before pushing" >&2
+	exit 1
+fi
+
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+exec make check-fast
