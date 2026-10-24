@@ -49,7 +49,7 @@ func TestCurrentSessionEndpoint(t *testing.T) {
 	}
 
 	// Should return valid JSON even with no session data
-	var resp panelOut
+	var resp sessionPanelResponse
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("session/current: invalid JSON: %v", err)
 	}
