@@ -28,6 +28,7 @@ var reasonWords = map[string]string{
 	ReasonScoreRouted:           "public capability scores picked the model",
 	ReasonBaselineFromSettings:  "the session model was inferred from the configured model (env or settings), not seen in the transcript",
 	ReasonAgentPinsModel:        "the agent definition pins its model, an explicit choice, so the spawn was left unchanged",
+	ReasonAgentTypeHint:         "the task text was unsure, so the subagent type (for example Explore or Plan) set the tier",
 	ReasonHeldUnmapped:          "a guardrail this version cannot name held the decision",
 
 	"HELD_UNCONFIDENT_DOWNSHIFT":        "a cheaper model was held: the classifier was not confident enough to downshift",
