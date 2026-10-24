@@ -29,11 +29,6 @@ export function registerBand(on: On, live: LiveCount = runningSpawns): void {
     return next(e)
   })
 
-  on('turn.complete', ($, e, next) => {
-    if (e.agentId !== undefined) afterSubagent($, live)
-    return next(e)
-  })
-
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     try {
       if (e.props.hasSurvey) return next(e)

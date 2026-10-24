@@ -1,11 +1,17 @@
 // Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
+//
+// Agents feature: the roster of this session's subagents (and, in the next task,
+// the pane that lists them).
+//
+// Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 import type { On } from 'claude-code'
+import { registerRoster } from './track'
 
-import { PLUGIN } from '../../shared/data/plugin'
+export { formatTokens, readRoster, runningCount } from '../../shared/roster'
+export type { Roster, RosterRow } from '../../shared/roster'
 
-/** Placeholder: the agents feature hooks arrive in a later task. */
-export function registerAgents(_on: On): void {
-  void PLUGIN
+export function registerAgents(on: On): void {
+  registerRoster(on)
 }
