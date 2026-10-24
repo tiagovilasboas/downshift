@@ -116,7 +116,7 @@ func TestDoctor_AllGood(t *testing.T) {
 	rep := buildDoctorReport(f.env)
 	if rep.Failed != 0 || rep.Warnings != 0 {
 		var b bytes.Buffer
-		rep.write(&b, false)
+		rep.writeText(&b, false, false)
 		t.Fatalf("want a clean report:\n%s", b.String())
 	}
 	for _, id := range []string{"hooks wired", "hook binary", "session list", "last hook event", "rewrite honored"} {
@@ -154,7 +154,7 @@ func TestDoctor_HookMissing(t *testing.T) {
 		t.Error("a missing routing hook must fail the report")
 	}
 	var out bytes.Buffer
-	rep.write(&out, false)
+	rep.writeText(&out, false, false)
 	if !strings.Contains(out.String(), "✗ hooks wired") || !strings.Contains(out.String(), "fix: downshift setup codex") {
 		t.Errorf("text output:\n%s", out.String())
 	}
