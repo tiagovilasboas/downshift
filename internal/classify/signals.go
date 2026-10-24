@@ -166,6 +166,16 @@ var RawSignals = []SignalDef{
 	{`\b(cargo (fmt|clippy)|terraform fmt|npm (audit|outdated|ls))\b`, 3, Trivial},
 	// Showing something that already exists.
 	{`^\W*(list|show|print|mostre|liste|imprima|exiba)\b.{0,40}\b(files|logs?|commits?|versions|vers[oõ]es|packages|pacotes|pods|arquivos)\b`, 2, Trivial},
+	// Read-only lookups: "find where X is defined", "search the codebase for
+	// Y", "where is Z loaded?". The prompt leads with the lookup verb and stays
+	// short, so "find the cause of the race and fix it" (long, or carrying a
+	// harder verb) is not a lookup. A leading "Explore:" prefix is the Explore
+	// subagent's own label. Simple, never Trivial: it reads code, it is not a
+	// mechanical edit.
+	{`^\W*(?:explore\W+)?(?:find|locate|search|grep|look\s+up|encontre|ache|procure|localize)\b.{0,70}$`, 3, Simple},
+	{`^\W*(?:explore\W+)?(?:where|onde)\s+(?:is|are|does|do|fica|ficam|est[aá]|est[aã]o)\b.{0,60}$`, 3, Simple},
+	// Summarising what already exists (a file, a diff of past commits).
+	{`^\W*(?:summari[sz]e|resuma)\s+(?:the\s+|os\s+|as\s+)?(?:changes|commits|history|mudan[cç]as|hist[oó]rico)\b.{0,50}$`, 2, Simple},
 	// PT-BR counterparts of the leading "explain" (short prompts only: a long
 	// one is an analysis) and a translation request. The run-a-tool signal above
 	// is likewise limited to short prompts; "run X and summarise by root cause"
