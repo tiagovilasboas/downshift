@@ -38,6 +38,9 @@ func TestDCIStatus(t *testing.T) {
 }
 
 func TestDCIEnableAndDisable(t *testing.T) {
+	// Outside a temp dir, findRepoRoot reaches the checkout and the test would
+	// leave its .downshift/dci.json at mode off.
+	t.Chdir(t.TempDir())
 	var stdout, stderr bytes.Buffer
 	// Test enable observe
 	code := runDCI([]string{"enable", "observe"}, nil, &stdout, &stderr)
