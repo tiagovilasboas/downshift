@@ -12,6 +12,8 @@ Each harness carries exactly one of four status words (owner decision 2026-10-17
 - **Beta:** first-class integration under active development — adapter, route wire and shared conformance in the repository and green; the harness-side plugin and the first live observation are still ahead, so no live spawn is observed yet and there is no production claim (owner decision 2026-10-18).
 - **Experimental (proof of concept):** policy mode or one observed child on one build; shipped, but no production claim.
 
+The local Harness² lab (`downshift harness2 lab`, [recursive-harnessing.md](../guides/recursive-harnessing.md)) reads this status column. **Completed** is the only mutation role. **Functional**, **Beta** and **Experimental** are observation roles. **Config only** stays on the classifier track. `internal/harness2export` fails its test when the table and the lab catalog diverge.
+
 `cmd/downshift/conformance_test.go` drives the same 8 routing scenarios against every registered hook, so each harness below, whatever its status, computes every feature (layering rule); the status says how much has been verified on the real harness, not how much code it runs.
 
 | harness | status | why | evidence |

@@ -1,0 +1,10 @@
+[
+  {"prompt": "fix typo in README", "label": "TRIVIAL"},
+  {"prompt": "run git status", "label": "TRIVIAL"},
+  {"prompt": "add email field to User struct", "label": "SIMPLE"},
+  {"prompt": "write unit test for formatDate", "label": "SIMPLE"},
+  {"prompt": "add Redis caching to product catalog queries", "label": "MEDIUM"},
+  {"prompt": "implement dark mode using existing theme context", "label": "MEDIUM"},
+  {"prompt": "rearchitect authentication for multi-tenant organisations", "label": "COMPLEX"},
+  {"prompt": "investigate race condition in subscription renewal worker", "label": "COMPLEX"}
+]

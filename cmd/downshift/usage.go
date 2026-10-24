@@ -51,6 +51,8 @@ Plumbing (your harness or statusline calls these, you do not)
   downshift quota claude-statusline   Opt-in Claude statusLine quota bridge
 
 Maintainer (needs labelled data, which lives in downshift-labs)
+  downshift harness2 matrix     Local lab matrix: Completed mutates, the rest are observed
+  downshift harness2 lab        Judge the matrix and write benchmark/harness2-lab/receipt.json
   downshift benchmark <file>     Run classifier against a labelled dataset; print confusion matrix
   downshift benchmark <file> --compare  Compare Legacy vs CapabilityRouter v2 side by side
   downshift eval-outcome --verify|--report  Outcome eval: executable checks, small vs frontier pass rate

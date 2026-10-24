@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "kind": "local_lab_receipt",
+  "mutation_targets": [
+    "claude-code"
+  ],
+  "observation_targets": [
+    "cursor",
+    "codex",
+    "opencode",
+    "kirocrew",
+    "antigravity"
+  ],
+  "classifier_only_targets": [
+    "grok"
+  ],
+  "smoke_dataset": "benchmark/routing-tasks.public.json",
+  "smoke_promotion_gate": false,
+  "judge": "matrix_role_invariant",
+  "judge_passed": true,
+  "effect": "Receipt is committed in this checkout. Push it so the remote project carries the same lab result. Routing policy is unchanged."
+}

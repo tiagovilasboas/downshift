@@ -6,6 +6,24 @@ package main
 // maintainerHelp covers the commands for people who train and evaluate the
 // classifier. They need labelled data that ships outside this repository.
 var maintainerHelp = map[string]string{
+	"harness2": `downshift harness2 — Local lab for recursive harness maturation
+
+Usage:
+  downshift harness2 matrix [--json]
+  downshift harness2 lab [--json]
+  downshift harness2 eval <dataset.json> [--json]
+
+Flags:
+  --json    Print machine-readable JSON
+
+Completed harnesses are the only mutation targets. Functional, Beta and Experimental stay observation targets. The public dataset is a smoke fixture, not a promotion gate. The lab writes benchmark/harness2-lab/receipt.json in the checkout.
+
+Examples:
+  downshift harness2 matrix
+  downshift harness2 lab
+
+Next: commit and push the receipt so the remote checkout matches this lab run
+`,
 	"benchmark": `downshift benchmark — Run the classifier on a labelled dataset: confusion matrix and false-downshift rate
 
 Usage:

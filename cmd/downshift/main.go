@@ -123,6 +123,8 @@ func main() {
 		os.Exit(runWatch(args[1:], os.Stdout, os.Stderr, catalog))
 	case "benchmark":
 		os.Exit(runBenchmark(args[1:]))
+	case "harness2":
+		os.Exit(runHarness2(args[1:]))
 	case "eval-outcome":
 		os.Exit(runEvalOutcome(args[1:], os.Stdout, os.Stderr))
 	case "eval-adapt":
