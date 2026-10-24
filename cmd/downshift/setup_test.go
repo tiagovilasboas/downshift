@@ -825,3 +825,26 @@ func TestSetupCursorShellHook(t *testing.T) {
 		t.Errorf("Shell entries %d, Task entries %d, want 1 each: %s", shell, task, e.read(".cursor/hooks.json"))
 	}
 }
+
+// The cursor setup writes one beforeShellExecution entry running `downshift cursor`
+// (shell advise fallback), idempotently, with matcher "*" (every shell command).
+func TestSetupCursorShellExecHook(t *testing.T) {
+	e := newSetupEnv(t, ".cursor")
+	if code, out, _ := e.run("--dry-run"); code != 0 || !strings.Contains(out, "beforeShellExecution") {
+		t.Fatalf("dry-run exit %d, want the beforeShellExecution entry\n%s", code, out)
+	}
+	for i := 0; i < 2; i++ {
+		if code, out, _ := e.run("--yes"); code != 0 {
+			t.Fatalf("exit %d\n%s", code, out)
+		}
+	}
+	doc := parseDoc(t, e.read(".cursor/hooks.json"))
+	entries, _ := doc["hooks"].(map[string]any)["beforeShellExecution"].([]any)
+	if len(entries) != 1 {
+		t.Fatalf("beforeShellExecution entries = %d, want 1: %s", len(entries), e.read(".cursor/hooks.json"))
+	}
+	m := entries[0].(map[string]any)
+	if m["command"] != testBin+" cursor" || m["matcher"] != "*" {
+		t.Errorf("entry = %v, want %q with matcher *", m, testBin+" cursor")
+	}
+}

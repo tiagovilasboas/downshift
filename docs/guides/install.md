@@ -276,6 +276,9 @@ hook to `.cursor/hooks.json` (project level) or `~/.cursor/hooks.json` (global):
     "preToolUse": [
       { "command": "downshift cursor", "matcher": "Task" },
       { "command": "downshift cursor", "matcher": "Shell" }
+    ],
+    "beforeShellExecution": [
+      { "command": "downshift cursor", "matcher": "*" }
     ]
   }
 }
@@ -289,6 +292,15 @@ plans, so Shell needs its own proof (see the
 [shell rewrite table](../reference/harness-matrix.md)). To check, run `go test ./...`
 in the agent and look for `downshift compact` in the command Cursor shows. Cursor
 watches the config and reloads it on save.
+
+The `beforeShellExecution` entry is the fallback for the same compaction. Cursor
+sends every shell command (matcher `*`) with no tool envelope; when the command
+belongs to an allowlisted test or build family, the hook answers
+`{"permission":"allow","agent_message":"downshift: this command prints a long log. Run it again exactly as: …downshift compact -- …"}`
+so the agent reruns it compacted, and otherwise answers a bare `{"permission":"allow"}`.
+It never denies. If the `Shell` rewrite above is honored, the command Cursor then reports
+is already wrapped and this entry stays silent. Cursor's docs say `agent_message` is sent to
+the agent for `beforeShellExecution`; that is unverified on a live build.
 
 ## Install (Codex)
 

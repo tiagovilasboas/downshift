@@ -187,6 +187,10 @@ var setupTargets = []setupTarget{
 			{Event: "preToolUse", Matcher: "Task", Args: "cursor"},
 			// Shell command compaction (updated_input.command). Unverified live.
 			{Event: "preToolUse", Matcher: "Shell", Args: "cursor"},
+			// Shell advise fallback: when the Shell rewrite is ignored, the agent is
+			// told to rerun a compressing command through downshift compact. Matcher
+			// "*" sends every shell command to the hook; the family check is inside.
+			{Event: "beforeShellExecution", Matcher: "*", Args: "cursor"},
 			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
 			{Event: "subagentStop", Args: "end cursor"},
 		},
