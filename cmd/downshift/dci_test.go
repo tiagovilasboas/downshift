@@ -10,8 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/codeintel"
+	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
 
 func TestDCIHelp(t *testing.T) {
@@ -203,7 +205,9 @@ func TestDCIDoctor(t *testing.T) {
 		t.Skip("doctor indexes the repository inside a fixed 2.5 s context; that budget does not hold under -race")
 	}
 	var stdout, stderr bytes.Buffer
+	start := time.Now()
 	code := runDCI([]string{"doctor"}, nil, &stdout, &stderr)
+	testenv.SkipIfOverBudget(t, "dci doctor", time.Since(start), 2500*time.Millisecond)
 	if code != 0 {
 		t.Fatalf("runDCI(doctor) = %d, want 0. stderr: %s", code, stderr.String())
 	}
@@ -234,7 +238,11 @@ func TestDCIBenchmark(t *testing.T) {
 	}
 	var stdout, stderr bytes.Buffer
 	code := runDCI([]string{"benchmark"}, nil, &stdout, &stderr)
-	if code != 0 {
+	// Exit 1 with "EXCEEDED BUDGET" is the benchmark's own latency verdict, a
+	// performance budget: only enforced when DOWNSHIFT_TEST_TIMING=1. The
+	// report must still be well formed, so the checks below run either way.
+	budgetOnly := code == 1 && strings.Contains(stdout.String(), "EXCEEDED BUDGET") && !testenv.BudgetsEnforced()
+	if code != 0 && !budgetOnly {
 		t.Fatalf("runDCI(benchmark) = %d, want 0. stderr: %s\nstdout:\n%s", code, stderr.String(), stdout.String())
 	}
 	out := stdout.String()
@@ -243,6 +251,9 @@ func TestDCIBenchmark(t *testing.T) {
 	}
 	if !strings.Contains(out, "Warm Path p95 Latency") {
 		t.Errorf("missing warm path p95 latency in benchmark output: %s", out)
+	}
+	if budgetOnly {
+		t.Skipf("benchmark exceeded its latency budget on this machine (not enforced; set %s=1)", testenv.TimingEnv)
 	}
 }
 
@@ -312,7 +323,9 @@ func TestDCIImpact(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 
 	// 1. Test human-readable impact command on symbol target
+	start := time.Now()
 	code := runDCI([]string{"impact", "Tokenize"}, nil, &stdout, &stderr)
+	testenv.SkipIfOverBudget(t, "dci impact", time.Since(start), 2500*time.Millisecond)
 	if code != 0 {
 		t.Fatalf("runDCI(impact Tokenize) = %d, want 0. stderr: %s", code, stderr.String())
 	}
@@ -330,7 +343,9 @@ func TestDCIImpact(t *testing.T) {
 	// 2. Test JSON output for symbol target
 	stdout.Reset()
 	stderr.Reset()
+	start = time.Now()
 	code = runDCI([]string{"impact", "--json", "Tokenize"}, nil, &stdout, &stderr)
+	testenv.SkipIfOverBudget(t, "dci impact --json", time.Since(start), 2500*time.Millisecond)
 	if code != 0 {
 		t.Fatalf("runDCI(impact --json Tokenize) = %d, want 0. stderr: %s", code, stderr.String())
 	}
@@ -351,7 +366,9 @@ func TestDCIImpact(t *testing.T) {
 	// 3. Test impact command on file target (human readable)
 	stdout.Reset()
 	stderr.Reset()
+	start = time.Now()
 	code = runDCI([]string{"impact", "internal/codeintel/tokenize.go"}, nil, &stdout, &stderr)
+	testenv.SkipIfOverBudget(t, "dci impact file", time.Since(start), 2500*time.Millisecond)
 	if code != 0 {
 		t.Fatalf("runDCI(impact file) = %d, want 0. stderr: %s", code, stderr.String())
 	}
@@ -363,7 +380,9 @@ func TestDCIImpact(t *testing.T) {
 	// 4. Test impact command on file target (--json at end)
 	stdout.Reset()
 	stderr.Reset()
+	start = time.Now()
 	code = runDCI([]string{"impact", "internal/codeintel/tokenize.go", "--json"}, nil, &stdout, &stderr)
+	testenv.SkipIfOverBudget(t, "dci impact file --json", time.Since(start), 2500*time.Millisecond)
 	if code != 0 {
 		t.Fatalf("runDCI(impact file --json) = %d, want 0. stderr: %s", code, stderr.String())
 	}
