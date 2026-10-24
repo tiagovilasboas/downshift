@@ -4,7 +4,7 @@
 // The other mods are stood in for by a `command.list` answer and a recording
 // `command.run` hook, so these prove the dock's own contract: which buttons it
 // draws and which slash command a press runs. They do not prove that the real
-// filetree or savvy-progress panel opens.
+// savvy-progress panel opens.
 //
 // Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
@@ -31,15 +31,16 @@ const base = (on: any) => {
 
 describe('detection', () => {
   test('a target counts only as a plugin command', () => {
-    expect(detect([plug('filetree'), plug('agents-info')])).toEqual({ files: true, agents: true })
-    expect(detect([builtin('filetree')])).toEqual({ files: false, agents: false })
-    expect(detect([])).toEqual({ files: false, agents: false })
+    expect(detect([plug('agents-info')])).toEqual({ agents: true })
+    expect(detect([plug('filetree')])).toEqual({ agents: false })
+    expect(detect([builtin('agents-info')])).toEqual({ agents: false })
+    expect(detect([])).toEqual({ agents: false })
   })
 
-  test('both buttons show until a listing answers, then only the installed ones', () => {
-    expect(visibleTargets(null).map(t => t.key)).toEqual(['files', 'agents'])
-    expect(visibleTargets({ files: true, agents: false }).map(t => t.key)).toEqual(['files'])
-    expect(visibleTargets({ files: false, agents: false })).toEqual([])
+  test('the button shows until a listing answers, then only when the panel is installed', () => {
+    expect(visibleTargets(null).map(t => t.key)).toEqual(['agents'])
+    expect(visibleTargets({ agents: true }).map(t => t.key)).toEqual(['agents'])
+    expect(visibleTargets({ agents: false })).toEqual([])
   })
 })
 
@@ -47,7 +48,7 @@ describe('dot', () => {
   test('green only while a dock panel is open, grey otherwise', () => {
     expect(dotColor([])).toBe(IDLE)
     expect(dotColor(['other'])).toBe(IDLE)
-    expect(dotColor(['filetree'])).toBe(ACCENT)
+    expect(dotColor(['filetree'])).toBe(IDLE)
     expect(dotColor(['savvy-agents', 'x'])).toBe(ACCENT)
     expect(IDLE).toBe('#5C6168')
   })
@@ -58,18 +59,16 @@ describe('band', () => {
     test(`${surface}: a press runs the other mod's own command`, async ($, on) => {
       base(on)
       const ran: { command: string; args: string; origin: unknown }[] = []
-      on('command.list', () => ({ value: [plug('filetree'), plug('agents-info')] }))
+      on('command.list', () => ({ value: [plug('agents-info')] }))
       on('command.run', (_$, e) => {
         ran.push({ command: e.command, args: e.args, origin: e.origin })
         return { text: 'ok' }
       })
       await $.session.start({ ...session, surface, isInteractive: true })
       const ui = await $.ui.mount({ plugin: 'downshift-dock', surface, component: 'AbovePrompt', props: bandProps })
-      expect(await ui.find({ type: 'Button', key: 'files' })).toBeDefined()
       expect(await ui.find({ type: 'Button', key: 'agents' })).toBeDefined()
-      await ui.press({ plugin: 'downshift-dock', key: 'files' })
       await ui.press({ plugin: 'downshift-dock', key: 'agents' })
-      expect(ran.map(r => [r.command, r.args])).toEqual([['filetree', ''], ['agents-info', 'open']])
+      expect(ran.map(r => [r.command, r.args])).toEqual([['agents-info', 'open']])
     })
   }
 
@@ -78,7 +77,6 @@ describe('band', () => {
     on('command.list', () => ({ value: [plug('filetree')] }))
     await $.session.start({ ...session, surface: 'terminal', isInteractive: true })
     const ui = await $.ui.mount({ plugin: 'downshift-dock', surface: 'terminal', component: 'AbovePrompt', props: bandProps })
-    expect(await ui.find({ type: 'Button', key: 'files' })).toBeDefined()
     expect(await ui.find({ type: 'Button', key: 'agents' })).toBeUndefined()
   })
 
@@ -89,17 +87,17 @@ describe('band', () => {
     const ui = await $.ui.mount({ plugin: 'downshift-dock', surface: 'terminal', component: 'AbovePrompt', props: bandProps })
     expect(await ui.find({ type: 'Button', key: 'dci' })).toBeDefined()
     expect(await ui.find({ type: 'Button', key: 'compactor' })).toBeDefined()
-    expect(await ui.find({ type: 'Button', key: 'files' })).toBeUndefined()
+    expect(await ui.find({ type: 'Button', key: 'agents' })).toBeUndefined()
   })
 
   test('a survey on screen hides the band', async ($, on) => {
     base(on)
-    on('command.list', () => ({ value: [plug('filetree'), plug('agents-info')] }))
+    on('command.list', () => ({ value: [plug('agents-info')] }))
     await $.session.start({ ...session, surface: 'terminal', isInteractive: true })
     const ui = await $.ui.mount({
       plugin: 'downshift-dock', surface: 'terminal', component: 'AbovePrompt', props: { ...bandProps, hasSurvey: true },
     })
-    expect(await ui.find({ type: 'Button', key: 'files' })).toBeUndefined()
+    expect(await ui.find({ type: 'Button', key: 'agents' })).toBeUndefined()
   })
 })
 

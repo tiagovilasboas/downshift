@@ -50,8 +50,8 @@ supports; the Downshift side of that table is in
   network call but its own opt-in warming ping). The NOTICE file carries its
   licence. Mods are the exception category to the never-bundle rule (owner decision
   2026-10-17): cache-tax inside the plugin, [savvy-progress](../../mods/savvy-progress/README.md)
-  and [filetree](../../mods/filetree/README.md) as sibling plugins of the marketplace
-  (`savvy-progress@downshift`, `filetree@downshift`), each vendored and pinned with its
+  as a sibling plugin of the marketplace (`savvy-progress@downshift`), vendored and
+  pinned with its
   licence in NOTICE.
 - Its own native `downshift compact` wrapper (on by default since 2026-10-19;
   `"exec": false` or `DOWNSHIFT_EXEC=0` turns it off) is not a companion
@@ -227,7 +227,7 @@ the last turn's edits), install the same way and are unrelated to routing.
 
 **What Downshift does with it.** Nothing, by the rule above: it does not
 install, detect or configure these recommended mods. (`downshift setup` does
-install its own plugin and the sibling mods savvy-progress and filetree, and
+install its own plugin and the sibling mod savvy-progress, and
 turns on You should know only when you pass `--you-should-know`; see [mods/README.md](../../mods/README.md).)
 This section is the whole integration.
 

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The vendored `filetree` mod (`mods/filetree/`, plugin `filetree@downshift`) left the repository and the marketplace (owner decision 2026-10-24); `downshift setup` no longer installs it and never uninstalls it from existing users.
+
 ## [0.1.3] - 2026-10-23
 
 ### Added
