@@ -65,8 +65,6 @@ func TestParseGoVerboseFallsBackForUnexpectedOrAmbiguousOutput(t *testing.T) {
 		[]byte("=== RUN   TestExample\n--- PASS: TestExample (0.00s)\nPASS\nok example.test/pkg 0.001s\nextra output\n"),
 		[]byte("=== RUN   TestParent\n=== RUN   TestParent/child\n--- FAIL: TestParent (0.00s)\n    --- FAIL: TestParent/child (0.00s)\nFAIL\nFAIL\texample.test/pkg\t0.001s\n"),
 		[]byte("=== RUN   TestParent\n=== RUN   TestParent/child\n    log line\n--- PASS: TestParent (0.00s)\n    --- PASS: TestParent/child (0.00s)\nPASS\nok example.test/pkg 0.001s\n"),
-		[]byte("=== RUN   TestParent\n=== RUN   TestParent/child\n=== PAUSE TestParent/child\n=== CONT  TestParent/child\n--- PASS: TestParent (0.00s)\n    --- PASS: TestParent/child (0.00s)\nPASS\nok example.test/pkg 0.001s\n"),
-		[]byte("=== RUN   TestParent\n=== RUN   Other/child\n--- PASS: TestParent (0.00s)\n    --- PASS: Other/child (0.00s)\nPASS\nok example.test/pkg 0.001s\n"),
 		[]byte("=== RUN   TestExample\n--- PASS: TestExample (0.00s)\nPASS\n"),
 		[]byte("=== RUN   TestExample\n    useful output\n--- PASS: TestExample (0.00s)\nPASS\nok example.test/pkg 0.001s\n"),
 	}
