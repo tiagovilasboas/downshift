@@ -354,7 +354,7 @@ written. The family name is the only command fact telemetry keeps.
 | `dart-fix` | `dart fix` | passes through |
 | `gradle` | `gradle`, `gradlew`, `./gradlew` with the allowlisted tasks (build, check, test, assemble, lint, ...) | compresses |
 | `maven` | `mvn`, `mvnw`, `./mvnw` with test, verify, package, install or clean | compresses |
-| `phpunit` | `phpunit`, `vendor/bin/phpunit`, `./vendor/bin/phpunit` | compresses |
+| `phpunit` | `phpunit`, `vendor/bin/phpunit`, `./vendor/bin/phpunit`, `php vendor/bin/phpunit`, `php ./vendor/bin/phpunit` | compresses |
 | `composer` | `composer` | passes through |
 | `artisan` | `php artisan <command>` | passes through |
 | `phpstan` | `phpstan` | passes through |
@@ -365,12 +365,12 @@ written. The family name is the only command fact telemetry keeps.
 | `rector` | `rector` | passes through |
 | `sail-test` | `sail test` | passes through |
 | `sail-artisan` | `sail artisan <command>` | passes through |
-| `vitest` | `vitest`, `npx vitest` | compresses |
-| `jest` | `jest`, `npx jest` | compresses |
-| `playwright` | `playwright test`, `npx playwright test` | compresses |
-| `cypress` | `cypress run`, `npx cypress run` | compresses |
-| `tsc` | `tsc`, `npx tsc` | compresses |
-| `next-build` | `next build`, `npx next build` | compresses |
+| `vitest` | `vitest`, `npx vitest`, `pnpm exec vitest`, `yarn vitest` | compresses |
+| `jest` | `jest`, `npx jest`, `pnpm exec jest`, `yarn jest` | compresses |
+| `playwright` | `playwright test`, `npx playwright test`, `pnpm exec playwright test`, `yarn playwright test` | compresses |
+| `cypress` | `cypress run`, `npx cypress run`, `pnpm exec cypress run`, `yarn cypress run` | compresses |
+| `tsc` | `tsc`, `npx tsc`, `pnpm exec tsc`, `yarn tsc` | compresses |
+| `next-build` | `next build`, `npx next build`, `pnpm exec next build` | compresses |
 | `vite-build` | `vite build` | passes through |
 | `vite-preview` | `vite preview` | passes through |
 | `turbo-run` | `turbo run` | passes through |
@@ -383,7 +383,7 @@ written. The family name is the only command fact telemetry keeps.
 | `yarn-build` | `yarn build` | passes through |
 | `bun-test` | `bun test` | passes through |
 | `bun-build` | `bun build` | passes through |
-| `eslint` | `eslint` | compresses |
+| `eslint` | `eslint`, `pnpm exec eslint`, `yarn eslint` | compresses |
 | `prettier` | `prettier` | passes through |
 | `biome` | `biome` | passes through |
 | `mysql-query` | `mysql -e <read-only statement>` | passes through |
