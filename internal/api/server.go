@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -145,7 +146,7 @@ func (s *Server) handleCurrentSession(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, e2ePanelStub())
 		return
 	}
-	events, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
+	events := readDashboardEvents()
 	hash := latestSessionHash(events)
 	if hash == "" {
 		// Check environment for session ID from any harness
@@ -160,7 +161,7 @@ func (s *Server) handleSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"session id required"}`, http.StatusBadRequest)
 		return
 	}
-	events, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
+	events := readDashboardEvents()
 	hash, err := sessionFromID(id, events)
 	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":%q}`, err.Error()), http.StatusBadRequest)
@@ -170,28 +171,67 @@ func (s *Server) handleSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) writePanel(w http.ResponseWriter, events []telemetry.Event, hash string) {
+	writeJSON(w, buildPanelOut(events, hash, execLogPath()))
+}
+
+// buildPanelOut is one session's panel: the routing view, the session's
+// Compactor block and the final tokens-saved figure.
+func buildPanelOut(events []telemetry.Event, hash, execPath string) panelOut {
 	v := telemetry.BuildPanel(events, hash)
-	out := panelOut{PanelView: v, TokensSavedEstimate: telemetry.TokensSavedEstimate(v.Tokens, 0)}
-
-	// Add compactor data
-	path, err := execwrap.EventsPath()
-	if err == nil {
-		if sum, err := execwrap.Summarize(path); err == nil && sum.Commands > 0 {
-			out.Compactor = &compactorPanel{
-				Scope:                "all",
-				Commands:             sum.Commands,
-				Compacted:            sum.Compacted,
-				RawBytes:             sum.RawBytes,
-				SavedBytes:           sum.SavedBytes,
-				EstimatedTokensSaved: sum.EstimatedTokensSaved,
-				TokenEstimate:        sum.TokenEstimate,
-			}
-			out.TokensSavedEstimate = telemetry.TokensSavedEstimate(v.Tokens, sum.EstimatedTokensSaved)
-		}
+	comp := sessionCompactor(execPath, hash)
+	return panelOut{
+		PanelView:           v,
+		Compactor:           comp,
+		TokensSavedEstimate: telemetry.TokensSavedEstimate(v.Tokens, compactorTokens(comp)),
 	}
+}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(out)
+// readDashboardEvents is the event window every endpoint reads, so the session
+// list and the session panel count the same events.
+func readDashboardEvents() []telemetry.Event {
+	events, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
+	return events
+}
+
+// execLogPath is the exec log path, or "" when the state directory is unknown.
+func execLogPath() string {
+	path, err := execwrap.EventsPath()
+	if err != nil {
+		return ""
+	}
+	return path
+}
+
+// sessionCompactor is the Compactor block of one session: the exec-log runs
+// that carry its hash. Nil without a hash or without a run, never zeros.
+func sessionCompactor(execPath, hash string) *compactorPanel {
+	if execPath == "" || hash == "" {
+		return nil
+	}
+	sum, err := execwrap.SummarizeSession(execPath, hash)
+	if err != nil || sum.Commands == 0 {
+		return nil
+	}
+	scope := hash
+	if len(scope) > 8 {
+		scope = scope[:8]
+	}
+	return &compactorPanel{
+		Scope:                scope,
+		Commands:             sum.Commands,
+		Compacted:            sum.Compacted,
+		RawBytes:             sum.RawBytes,
+		SavedBytes:           sum.SavedBytes,
+		EstimatedTokensSaved: sum.EstimatedTokensSaved,
+		TokenEstimate:        sum.TokenEstimate,
+	}
+}
+
+func compactorTokens(c *compactorPanel) int64 {
+	if c == nil {
+		return 0
+	}
+	return c.EstimatedTokensSaved
 }
 
 // writeJSON writes v as a JSON response with the dashboard content type.
@@ -265,16 +305,23 @@ func isHexPrefix(v string) bool {
 }
 
 // sessionSummary is the metadata for one session in the /api/sessions list.
+// The counts are the session panel's (telemetry.PanelView), so a row and its
+// panel always agree: Switched = ModelSwitched + EffortChanged, and Held =
+// HeldGuardrail + UpshiftNotApplied among the held spawns.
 type sessionSummary struct {
-	SessionID   string       `json:"session_id"`
-	Harness     string       `json:"harness"`
-	FirstSeen   string       `json:"first_seen"`
-	LastSeen    string       `json:"last_seen"`
-	SpawnCount  int          `json:"spawn_count"`
-	Switched    int          `json:"switched"`
-	Held        int          `json:"held"`
-	TokensSaved int64        `json:"tokens_saved"`
-	Tokens      tokensDetail `json:"tokens"`
+	SessionID         string       `json:"session_id"`
+	Harness           string       `json:"harness"`
+	FirstSeen         string       `json:"first_seen"`
+	LastSeen          string       `json:"last_seen"`
+	SpawnCount        int          `json:"spawn_count"`
+	Switched          int          `json:"switched"`
+	ModelSwitched     int          `json:"model_switched"`
+	EffortChanged     int          `json:"effort_changed"`
+	Held              int          `json:"held"`
+	HeldGuardrail     int          `json:"held_guardrail"`
+	UpshiftNotApplied int          `json:"upshift_not_applied"`
+	TokensSaved       int64        `json:"tokens_saved"`
+	Tokens            tokensDetail `json:"tokens"`
 }
 
 // tokensDetail exposes routing and compactor savings for one session.
@@ -294,9 +341,13 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, e2eSessionsStub())
 		return
 	}
-	events, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)
+	writeJSON(w, buildSessionsResponse(readDashboardEvents(), execLogPath()))
+}
 
-	// Extract unique sessions with their harness
+// buildSessionsResponse lists the sessions in events, most recent first. Each
+// row takes its counts and tokens from that session's panel, and its Compactor
+// block from the same per-session exec-log scope as /api/session/{id}.
+func buildSessionsResponse(events []telemetry.Event, execPath string) sessionsResponse {
 	sessions := make(map[string]*sessionSummary)
 	harnessSet := make(map[string]bool)
 
@@ -315,77 +366,45 @@ func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
 			}
 			sessions[ev.SessionID] = sum
 		}
-
-		// Update last seen
 		if ev.Timestamp > sum.LastSeen {
 			sum.LastSeen = ev.Timestamp
 		}
 		if ev.Timestamp < sum.FirstSeen {
 			sum.FirstSeen = ev.Timestamp
 		}
-
-		// Count spawns
 		if telemetry.IsDecisionRow(ev) {
 			sum.SpawnCount++
-			switch ev.Verdict {
-			case "DOWNSHIFT":
-				sum.Switched++
-			case "OK", "UPSHIFT":
-				if ev.Outcome == "allow" {
-					sum.Held++
-				}
-			}
 		}
-
 		harnessSet[ev.Harness] = true
 	}
 
-	// Build response
 	var list []sessionSummary
-	execPath, _ := execwrap.EventsPath()
-	for _, sum := range sessions {
-		// Calculate tokens saved for this session
-		panel := telemetry.BuildPanel(events, sum.SessionID)
+	for id, sum := range sessions {
+		panel := telemetry.BuildPanel(events, id)
+		sum.Switched = panel.Switched
+		sum.ModelSwitched = panel.ModelSwitched
+		sum.EffortChanged = panel.EffortChanged
+		sum.Held = panel.Held
+		sum.HeldGuardrail = panel.HeldGuardrail
+		sum.UpshiftNotApplied = panel.UpshiftNotApplied
+
 		sum.Tokens.Routing = panel.Tokens
-
-		// Add compactor data for this session
-		if execPath != "" {
-			if compSum, err := execwrap.SummarizeSession(execPath, sum.SessionID); err == nil && compSum.Commands > 0 {
-				sum.Tokens.Compactor = &compactorPanel{
-					Scope:                sum.SessionID[:8],
-					Commands:             compSum.Commands,
-					Compacted:            compSum.Compacted,
-					RawBytes:             compSum.RawBytes,
-					SavedBytes:           compSum.SavedBytes,
-					EstimatedTokensSaved: compSum.EstimatedTokensSaved,
-					TokenEstimate:        compSum.TokenEstimate,
-				}
-			}
-		}
-
-		compactorTokens := int64(0)
-		if sum.Tokens.Compactor != nil {
-			compactorTokens = sum.Tokens.Compactor.EstimatedTokensSaved
-		}
-		sum.TokensSaved = telemetry.TokensSavedEstimate(sum.Tokens.Routing, compactorTokens)
+		sum.Tokens.Compactor = sessionCompactor(execPath, id)
+		sum.TokensSaved = telemetry.TokensSavedEstimate(panel.Tokens, compactorTokens(sum.Tokens.Compactor))
 		list = append(list, *sum)
 	}
 
-	// Sort by last seen (most recent first)
-	for i := 0; i < len(list)-1; i++ {
-		for j := i + 1; j < len(list); j++ {
-			if list[i].LastSeen < list[j].LastSeen {
-				list[i], list[j] = list[j], list[i]
-			}
+	// Most recent first; equal times fall back to the id so the order is stable.
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].LastSeen != list[j].LastSeen {
+			return list[i].LastSeen > list[j].LastSeen
 		}
-	}
+		return list[i].SessionID < list[j].SessionID
+	})
 
-	// Build harness list
 	var harnesses []string
 	for h := range harnessSet {
 		harnesses = append(harnesses, h)
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(sessionsResponse{Sessions: list, Harnesses: harnesses})
+	return sessionsResponse{Sessions: list, Harnesses: harnesses}
 }
