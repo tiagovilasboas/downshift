@@ -8,6 +8,7 @@
 // Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 import type { On } from 'claude-code'
+import { afterSubagent, runningSpawns } from '../band/feed'
 import { PROGRESS_TOOL } from '../flow'
 import { toolUseKey } from '../../shared/roster/key'
 import { addTokens, endRun, startRun } from '../../shared/roster/state'
@@ -51,6 +52,8 @@ export function registerRoster(on: On): void {
     return result
   })
 
+  // The one turn.complete handler of the plugin: the roster closes the run, then
+  // the band refreshes (the band no longer registers its own, the engine refuses two).
   on('turn.complete', async ($, e, next) => {
     const result = await next(e)
     try {
@@ -61,6 +64,7 @@ export function registerRoster(on: On): void {
           await syncTicker($)
           void refreshFigures($)
         }
+        afterSubagent($, runningSpawns)
       }
     } catch {
       // The row stays running until the next turn event or a reload.
