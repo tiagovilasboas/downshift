@@ -270,3 +270,8 @@ func TokensSavedEstimate(routing TokenSaving, compactorTokens int64) int64 {
 func TokensSavedEstimateLine(total int64) string {
 	return "Tokens saved (estimate): " + formatTokens(total)
 }
+
+// ShortTokens is the CLI token format without a label: "0", "999", "15k", "20.7M".
+func ShortTokens(n int64) string {
+	return formatTokens(n)
+}
