@@ -248,8 +248,12 @@ harness the compact command works when the agent runs it directly.
 - **Codex** — PreToolUse hook rewrites the spawn model. The next spawn is the only signal that
   it was honored (inferred, not observed). Compaction is `downshift compact`, run by the agent.
 
-- **Cursor** — preToolUse hook on `Task`. The child model is absent from the transcript, so
-  honored is unconfirmed. Compaction is `downshift compact`, run by the agent.
+- **Cursor** — `preToolUse` on `Task` plus `cursor-touch` on `sessionStart` /
+  `beforeSubmitPrompt` (composer baseline cache when the spawn omits `model`);
+  `subagentStop` → `end cursor` (child-end link verified on 3.27.12). Child
+  executor model is still absent from the transcript, so honor is unconfirmed.
+  Compaction: agent runs `downshift compact`; `setup` also adds Shell hooks
+  (unverified live).
 
 - **KiroCrew** — Steering-based. Agent follows `downshift-compact.md` steering to wrap
   commands. Model routing is policy-mode only (allow/block, no rewrite) because

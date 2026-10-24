@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Cursor adapter:** composer baseline cache (`downshift cursor-touch` on
+  `sessionStart` and `beforeSubmitPrompt`, `~/.downshift/cursor-composer-model.json`);
+  `subagentStop` links by `subagent_id` on Cursor 3.27.12+. `downshift setup cursor`
+  wires the full hook set. Rewrite honor on Cursor remains unconfirmed.
 - **Compactor:** `go test` clean runs fold passed tests that logged output (#497); failed runs keep every failure line, cutting only passing noise (#491); `2>&1` and a single quoted command word are accepted (#499); `VAR=value` prefixes (#494); Jest reports on stderr compact (#505); pnpm/yarn exec, PHP and `docker compose exec` forms (#507, #506); refusal and steering lists name the allowed families for every harness (#498).
 - **Shell rewrite:** Codex (`^Bash$` PreToolUse, #503) and Cursor (`Shell` preToolUse, #512); Cursor advise fallback on `beforeShellExecution` (#512).
 - **Routing:** the subagent type is a doubt-filling signal for Claude Code (`Explore`, `Plan`, #496); `spawn_run` batches are routed per entry (#504); confident short read-only lookups classify as Simple (#492).

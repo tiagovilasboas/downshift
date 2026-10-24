@@ -256,9 +256,10 @@ Coleta passiva, em paralelo ao uso:
 
 **Próxima ação de maior valor:** fechar A-P5 Cursor com observação ao vivo de
 `rewrite_emitted` após o cache de composer ([lote
-2026-10-24-cursor-live](tasks/2026-10-24-cursor-live/README.md); código T4–T7
-no adapter). Honor no Cursor continua P1.6. Codex segue em A-P5, separado.
-E-M5/M6 (site) quando a Vercel liberar.
+2026-10-24-cursor-live](tasks/2026-10-24-cursor-live/README.md); docs públicas
+[2026-10-24-cursor-docs-site](tasks/2026-10-24-cursor-docs-site/README.md)).
+Honor no Cursor continua P1.6. Codex segue em A-P5, separado. E-M5/M6 (site)
+quando a Vercel liberar.
 
 **Plano em dois docs:**
 - [`phase6-downshift-owned.md`](phase6-downshift-owned.md) — 8 pts que o downshift fecha sozinho

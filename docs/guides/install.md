@@ -263,26 +263,44 @@ See [code-intelligence.md](../design/code-intelligence.md) for full architectura
 
 ## Install (Cursor)
 
-**Status: Functional.** The rewrite is emitted on a real spawn; the harness applying it is unconfirmed, and it is discarded on Free and legacy Pro plans ([evidence](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](../evidence/cursor-gap-diagnostic.md)).
+**Status: Functional.** The rewrite is emitted on a real spawn; the harness applying it is unconfirmed, and it is discarded on Free and legacy Pro plans ([evidence](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](../evidence/cursor-gap-diagnostic.md)). On Cursor 3.27.12, Task `preToolUse` often omits `model` and `model_id`; Downshift remembers the parent composer slug from earlier hooks and from `subagentStop` ([internal spike](../internal/tasks/2026-10-24-cursor-live/spike.md)).
 
-Cursor's hook protocol mirrors Claude Code's — same `preToolUse` interception,
-`updated_input` to rewrite the subagent's model. Build the binary, then add the
-hook to `.cursor/hooks.json` (project level) or `~/.cursor/hooks.json` (global):
+**Fastest path:** `downshift setup cursor --dry-run`, then `downshift setup cursor --yes`. That merges the hooks below (and your existing entries) and points them at the binary that ran setup.
+
+Cursor's hook protocol mirrors Claude Code's for routing — `preToolUse` with
+`updated_input.model` on matcher `Task`. Build the binary, then add hooks to
+`.cursor/hooks.json` (project) or `~/.cursor/hooks.json` (global):
 
 ```json
 {
   "version": 1,
   "hooks": {
+    "sessionStart": [
+      { "command": "downshift cursor-touch" }
+    ],
+    "beforeSubmitPrompt": [
+      { "command": "downshift cursor-touch", "matcher": "UserPromptSubmit" }
+    ],
     "preToolUse": [
       { "command": "downshift cursor", "matcher": "Task" },
       { "command": "downshift cursor", "matcher": "Shell" }
     ],
     "beforeShellExecution": [
       { "command": "downshift cursor", "matcher": "*" }
+    ],
+    "subagentStop": [
+      { "command": "downshift end cursor" }
     ]
   }
 }
 ```
+
+`cursor-touch` records the session composer model into
+`~/.downshift/cursor-composer-model.json` (see [config.md](config.md)) so Task
+routing has a baseline when the spawn payload is empty. It always exits 0 with
+`{}` on stdout. `subagentStop` runs `end cursor`, which links child-end telemetry
+(`subagent_id` on 3.27.12+) and refreshes the cache from the parent slug in the
+stop payload.
 
 The `matcher: "Task"` entry handles subagent spawns. The `matcher: "Shell"` entry
 lets `downshift compact` shorten the output of allowlisted test and build commands:
@@ -758,6 +776,23 @@ On Cursor free plans and legacy request-based plans, `updated_input.model` is
 silently discarded by the harness — this is a [known Cursor issue](https://forum.cursor.com/t/pretooluse-hook-updated-input-is-silently-ignored-for-the-task-tool/151985).
 The hook fires and the binary runs (you'll see output on stderr), but the model
 rewrite has no effect. See [Plan compatibility](#plan-compatibility--read-before-installing).
+
+### Task spawn held with R9 / `requested_model: unknown` (Cursor)
+
+On recent Cursor builds, Task `preToolUse` may carry `session_id` but leave
+`model` and `model_id` empty. Without a warm composer cache, Downshift keeps the
+spawn unchanged (`R9_UNCONFIDENT_UNKNOWN_MID`). Fix:
+
+1. Run `downshift setup cursor --yes` so `sessionStart` and `beforeSubmitPrompt`
+   call `downshift cursor-touch` (or add those hooks manually).
+2. Start a **new** Cursor session (hooks load at session start).
+3. Send at least one user message (warms cache via `beforeSubmitPrompt`) before
+   spawning a Task subagent.
+4. Confirm `~/.downshift/cursor-composer-model.json` exists and
+   `downshift doctor --json` shows cursor hooks wired.
+
+Honor of the rewrite is still [unconfirmed](../reference/harness-matrix.md) even
+when routing emits a rewrite.
 
 ### No output on stderr — hook is not firing
 
