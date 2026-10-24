@@ -65,7 +65,7 @@ For Claude Code operators, Downshift packages hooks, skills, commands, and optio
   ```
 - **Cache-Tax Mod (`hooks/cache-tax`)**: Bundled inside the plugin. Monitors cold cache read fees on idle sessions and offers `/keepwarm` to maintain prompt cache warmth.
 - **Downshift Router Mod (`mods/downshift-router`)**: An experimental in-process routing prototype that intercepts `agent.spawn` inside the node runtime, eliminating CLI process invocation overhead.
-- **Sibling Mods (`mods/`)**: `savvy-progress` (progress bar, `/agents-info`), `filetree` (file tree pane) and `downshift-dock` (original Downshift code, kept in `mods/` but no longer in the marketplace since 2026-10-21). On Claude Code, `downshift setup` installs `savvy-progress` and `filetree` with `claude plugin install` (`--no-plugin` skips); setup also runs model discovery so session lists do not stay on handwritten values, and `You should know` stays opt-in (`--you-should-know`). The vendored mods are pinned in NOTICE and never edited in place, except documented local patches.
+- **Sibling Mods (`mods/`)**: `savvy-progress` (progress bar, `/agents-info`) and `downshift-dock` (original Downshift code, kept in `mods/` but no longer in the marketplace since 2026-10-21). On Claude Code, `downshift setup` installs `savvy-progress` with `claude plugin install` (`--no-plugin` skips); setup also runs model discovery so session lists do not stay on handwritten values, and `You should know` stays opt-in (`--you-should-know`). The vendored mods are pinned in NOTICE and never edited in place, except documented local patches.
 
 ---
 
