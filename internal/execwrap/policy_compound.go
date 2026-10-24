@@ -13,6 +13,12 @@ import "strings"
 //	<allowlisted> | tail -N        (also head, -n N, -nN)
 //	<allowlisted> 2>&1 | tail -N
 //	cd <dir> && <allowlisted> 2>&1 | tail -N
+//	<allowlisted> 2>&1             (a trailing stderr merge, no pipe)
+//	cd <dir> && <allowlisted> 2>&1
+//
+// The 2>&1 merge is kept as written: the wrapper already captures both
+// streams of the command, so the rewritten command keeps the same merge on
+// the wrapper's own output.
 //
 // Only the allowlisted command is wrapped; the cd prefix and the pipe suffix
 // are kept as written, so the exit code is what it was: cd's on failure, the
@@ -40,6 +46,9 @@ func decideCompound(trimmed, exe string) Decision {
 		rest = after
 	}
 	rest, suffix, pipeSeg := pipeSuffix(rest)
+	if suffix == "" {
+		rest, suffix = stderrSuffix(rest)
+	}
 	if prefix == "" && suffix == "" {
 		return Decision{Reason: ReasonUnsafeChar}
 	}
@@ -92,6 +101,16 @@ func pipeSuffix(command string) (core, suffix, seg string) {
 		core = strings.TrimRight(strings.TrimSuffix(core, stderrDup), " ")
 	}
 	return core, redirect + pipeSep + seg, seg
+}
+
+// stderrSuffix splits a trailing ` 2>&1` off a command that has no pipe. The
+// token must be exactly that, at the end, so every other redirect (2>/dev/null,
+// >file, 1>&2) keeps the command unsafe.
+func stderrSuffix(command string) (core, suffix string) {
+	if !strings.HasSuffix(command, stderrDup) {
+		return command, ""
+	}
+	return strings.TrimRight(strings.TrimSuffix(command, stderrDup), " "), stderrDup
 }
 
 // lineFilter reports whether words are exactly `tail|head -N`, `-n N` or
