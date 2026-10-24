@@ -205,14 +205,14 @@ func (e fakeShellEvent) ShellRewrite(c string) (any, error) {
 
 func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 	withExec(t, true, nil, true)
-	for _, n := range []string{"cursor", "codex", "antigravity", "opencode", "unknown"} {
+	for _, n := range []string{"codex", "antigravity", "opencode", "unknown"} {
 		d := shellWrapDecision(n, "go test ./...", func(string) bool { return false })
 		if d.Rewrite || d.Reason != "harness_cannot_rewrite" || d.Family != execwrap.FamilyGoTest {
 			t.Fatalf("%s: decision = %+v", n, d)
 		}
 	}
 	out := captureStdout(func() {
-		rc := runHookAdapter("cursor", strings.NewReader(`{"Command":"go test ./..."}`),
+		rc := runHookAdapter("codex", strings.NewReader(`{"Command":"go test ./..."}`),
 			func(b []byte) (fakeShellEvent, error) { var e fakeShellEvent; return e, json.Unmarshal(b, &e) },
 			func(fakeShellEvent) (any, string, core.Decision) {
 				t.Fatal("a shell call must not be routed")
@@ -228,10 +228,13 @@ func TestShellRewrite_HarnessWithoutCapabilityIsUnchanged(t *testing.T) {
 	}
 }
 
-// Claude Code is the only harness that declares the capability today; the
-// fact is data, read through AllHarnessCaps.
+// Claude Code and Cursor declare the capability; the fact is data, read
+// through AllHarnessCaps.
 func TestShellRewrite_CapabilityDeclaredOnlyForClaudeCode(t *testing.T) {
 	withExec(t, true, nil, true)
+	if d := shellWrapDecision("cursor", "go test ./...", func(string) bool { return false }); !d.Rewrite {
+		t.Fatalf("cursor decision = %+v", d)
+	}
 	if d := shellWrapDecision("claude-code", "go test ./...", func(string) bool { return false }); !d.Rewrite {
 		t.Fatalf("claude-code decision = %+v", d)
 	}

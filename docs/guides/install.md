@@ -274,14 +274,21 @@ hook to `.cursor/hooks.json` (project level) or `~/.cursor/hooks.json` (global):
   "version": 1,
   "hooks": {
     "preToolUse": [
-      { "command": "downshift cursor", "matcher": "Task" }
+      { "command": "downshift cursor", "matcher": "Task" },
+      { "command": "downshift cursor", "matcher": "Shell" }
     ]
   }
 }
 ```
 
-The `matcher: "Task"` scopes the hook to subagent spawns only. Cursor watches
-the config and reloads it on save.
+The `matcher: "Task"` entry handles subagent spawns. The `matcher: "Shell"` entry
+lets `downshift compact` shorten the output of allowlisted test and build commands:
+the hook answers `{"updated_input": {...}}` with `command` replaced and every other
+field kept. This is unverified live: Cursor ignored `updated_input` for Task on some
+plans, so Shell needs its own proof (see the
+[shell rewrite table](../reference/harness-matrix.md)). To check, run `go test ./...`
+in the agent and look for `downshift compact` in the command Cursor shows. Cursor
+watches the config and reloads it on save.
 
 ## Install (Codex)
 

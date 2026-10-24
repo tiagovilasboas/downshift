@@ -185,6 +185,8 @@ var setupTargets = []setupTarget{
 		Defaults:  []setupDefault{{Key: "version", Value: 1}},
 		Hooks: []setupHook{
 			{Event: "preToolUse", Matcher: "Task", Args: "cursor"},
+			// Shell command compaction (updated_input.command). Unverified live.
+			{Event: "preToolUse", Matcher: "Shell", Args: "cursor"},
 			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
 			{Event: "subagentStop", Args: "end cursor"},
 		},
