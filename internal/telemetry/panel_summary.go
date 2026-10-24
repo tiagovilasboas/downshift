@@ -13,10 +13,16 @@ import (
 // Both are zero (short "") when the child saved nothing or is not observed.
 func SpawnSaved(c TokenSaving) (int64, string) {
 	total := c.WorkSaved + c.CacheSaved
-	if total <= 0 {
-		return 0, ""
+	return total, TokensShort(total)
+}
+
+// TokensShort is a token count in the CLI's format ("58k", "1.2M"), "" when
+// there is nothing to show.
+func TokensShort(n int64) string {
+	if n <= 0 {
+		return ""
 	}
-	return total, formatTokens(total)
+	return formatTokens(n)
 }
 
 // PanelSummary is the band's one line: what Downshift changed and held in this
