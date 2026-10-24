@@ -4,13 +4,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
 
+	"github.com/tiagovilasboas/downshift/internal/accounting"
 	"github.com/tiagovilasboas/downshift/internal/codeintel"
-	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -43,22 +44,22 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
+	// The exec log is read as a whole and windowed by accounting.Compute, so the
+	// routing and the Compactor share the --days window.
+	execEvents, _ := accounting.ReadExecEvents()
+	nums := accounting.Compute(events, execEvents, accounting.Scope{Kind: accounting.ScopeDays, Days: days})
+
 	rep := telemetry.BuildReport(events, days)
-	// Compactor totals come from the exec log, not the event log, and are not
-	// windowed. They feed the one final figure, tokens saved (estimate).
-	var compactor execwrap.Summary
-	if path, err := execwrap.EventsPath(); err == nil {
-		compactor, _ = execwrap.Summarize(path)
-	}
-	rep.SetCompactor(compactor.SavedBytes, compactor.EstimatedTokensSaved)
+	rep.TokensSaved = nums.Routing
+	rep.SetCompactor(nums.Compactor.SavedBytes, nums.Compactor.Tokens)
 
 	if asJSON {
-		out, err := telemetry.ReportJSON(rep)
+		out, err := json.MarshalIndent(reportOut{Report: rep, Numbers: nums}, "", "  ")
 		if err != nil {
 			fmt.Fprintf(stderr, "error encoding report: %v\n", err)
 			return 1
 		}
-		fmt.Fprintln(stdout, out)
+		fmt.Fprintln(stdout, string(out))
 		return 0
 	}
 
@@ -73,8 +74,8 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	dciFiltered := codeintel.FilterTelemetryByDays(dciEvents, days)
 	dciSummary := codeintel.AggregateTelemetry(dciFiltered)
 
-	fmt.Fprintln(stdout, "\n📦 COMPACTOR")
-	fmt.Fprintf(stdout, "   Commands: %d · Compacted: %d\n", compactor.Commands, compactor.Compacted)
+	fmt.Fprintf(stdout, "\n📦 COMPACTOR (%s)\n", nums.Scope.Label())
+	fmt.Fprintf(stdout, "   %s\n", nums.Display.Compactor)
 
 	fmt.Fprintln(stdout, "\n🔍 CODE INTELLIGENCE (DCI)")
 	fmt.Fprintf(stdout, "   Prompts: %d · Injections: %d (%.0f%%)\n",
@@ -85,8 +86,16 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 			dciSummary.LatencyP50Ms, dciSummary.LatencyP95Ms)
 	}
 
-	// The one final figure; the parts are in `--json`.
-	fmt.Fprintf(stdout, "\n%s\n", telemetry.TokensSavedEstimateLine(rep.TokensSavedEstimate))
+	// The one final figure, in the same window as the parts above; the parts
+	// are in `--json`.
+	fmt.Fprintf(stdout, "\n%s\n", nums.Display.TokensSaved)
 
 	return 0
+}
+
+// reportOut is the `--json` report: the comparison and its keys as before,
+// plus the Numbers every surface shares.
+type reportOut struct {
+	telemetry.Report
+	Numbers accounting.Numbers `json:"numbers"`
 }

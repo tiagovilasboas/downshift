@@ -187,3 +187,51 @@ func TestHandle_AllowsExplicitOnlyCurrentModel(t *testing.T) {
 		t.Fatalf("must not block an explicit_only current model (message=%q)", out.Message)
 	}
 }
+
+// Only KiroCrew spawn tools are routed. A tool that carries model and prompt
+// fields (an image generator, for example) is not a subagent spawn and must
+// pass through with no decision and no note, so nothing is logged or blocked.
+func TestHandle_SpawnToolGate(t *testing.T) {
+	writeSessionFile(t, []string{smallID, midID, frontierID})
+	const (
+		task   = "rename the userId variable to userIdentifier"
+		prompt = "a red bicycle on a beach at sunset"
+	)
+	cases := []struct {
+		name      string
+		toolName  string
+		input     string
+		wantRoute bool
+	}{
+		{"spawn_run with model and task is a spawn", "spawn_run",
+			`{"task": "` + task + `", "model": "` + frontierID + `"}`, true},
+		{"spawn_sub_agents with model and task is a spawn", "spawn_sub_agents",
+			`{"task": "` + task + `", "model": "` + frontierID + `"}`, true},
+		{"non-spawn tool with model and prompt is not a spawn", "mcp_images_generate",
+			`{"prompt": "` + prompt + `", "model": "` + frontierID + `"}`, false},
+		{"missing tool name is not a spawn", "",
+			`{"task": "` + task + `", "model": "` + frontierID + `"}`, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ev := kirocrew.Event{ToolName: tc.toolName, ToolInput: json.RawMessage(tc.input)}
+			out, note, decision := kirocrew.Handle(ev, cat)
+			if tc.wantRoute {
+				if decision.Harness == "" {
+					t.Fatal("expected a routing decision for a spawn, got none")
+				}
+				if !out.Block {
+					t.Errorf("expected the mismatched spawn to be blocked, message=%q", out.Message)
+				}
+				return
+			}
+			if decision.Harness != "" {
+				t.Errorf("expected no routing decision, got harness %q", decision.Harness)
+			}
+			if out.Block || out.Message != "" || note != "" {
+				t.Errorf("expected pass-through with no block, message or note; got block=%t message=%q note=%q",
+					out.Block, out.Message, note)
+			}
+		})
+	}
+}

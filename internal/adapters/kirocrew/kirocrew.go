@@ -21,13 +21,10 @@
 // spawn on its own doubt, and a block must never name a model id the session
 // does not have.
 //
-// Tool-name agnosticism: the adapter does NOT maintain a list of known subagent
-// tool names. The hook JSON's matcher field is the right place to scope which
-// tools are intercepted. The adapter detects a spawn structurally: a tool_input
-// that contains both a model field and a task/prompt/description field is
-// treated as a subagent spawn, regardless of the tool name. A tool_input with
-// no model field is passed through silently (not a routable spawn). This makes
-// the adapter work with any harness tool name without code changes.
+// Spawn detection: only the KiroCrew spawn tools listed in spawnToolNames are
+// routed. Any other tool (for example an image generator that takes model and
+// prompt) passes through silently. Within a spawn tool, a tool_input without a
+// model field or without task text is also passed through.
 package kirocrew
 
 import (
@@ -40,6 +37,13 @@ import (
 )
 
 const harnessID = "kirocrew"
+
+// spawnToolNames are the KiroCrew tools that spawn a subagent. Only these are
+// routed; a tool that merely carries model and prompt fields is not a spawn.
+var spawnToolNames = map[string]bool{
+	"spawn_run":        true,
+	"spawn_sub_agents": true,
+}
 
 // Event is the JSON a harness sends on stdin for a hook.
 // Field names follow KiroCrew's documented hook event schema; the same
@@ -94,12 +98,14 @@ func (ev Event) TaskText() string {
 	return hookutil.TaskText(ti, "task", "prompt", "description")
 }
 
-// isSubagentSpawn reports whether the tool_input looks like a subagent spawn
-// that the router should classify. Detection is structural: the input must
-// carry a model field (something to route) and a task/prompt/description field
-// (something to classify). The tool name is deliberately ignored so the adapter
-// stays agnostic to harness-specific naming.
-func isSubagentSpawn(ti map[string]any) bool {
+// isSubagentSpawn reports whether the call is a subagent spawn that the router
+// should classify: the tool must be a spawn tool in spawnToolNames, and the
+// tool_input must carry a model field (something to route) and a
+// task/prompt/description field (something to classify).
+func isSubagentSpawn(toolName string, ti map[string]any) bool {
+	if !spawnToolNames[toolName] {
+		return false
+	}
 	model := hookutil.StringField(ti, "model")
 	if model == "" {
 		return false
@@ -129,9 +135,9 @@ func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
 		return allow(), "", core.Decision{}
 	}
 
-	// Structural detection: only route tool calls that look like subagent
-	// spawns (have both model and task text). Everything else passes through.
-	if !isSubagentSpawn(ti) {
+	// Only spawn tools with both model and task text are routed. Everything
+	// else passes through.
+	if !isSubagentSpawn(ev.ToolName, ti) {
 		return allow(), "", core.Decision{}
 	}
 
