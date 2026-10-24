@@ -88,3 +88,21 @@ func TestPlanSession_PinnedBaselineIsNeverRewritten(t *testing.T) {
 		}
 	}
 }
+
+// An inferred list ends at the raw requested alias, so an upshift that finds
+// nothing above it lands on the alias itself. That is the current model, not
+// a rewrite: writing "sonnet" over "sonnet" changes nothing in the harness.
+func TestPlanSession_InferredAliasUpshiftIsNotARewrite(t *testing.T) {
+	const task = "Rearchitect the payment flow across services, migrate the auth tokens and redesign the webhook idempotency guarantees for the distributed system"
+	for _, alias := range []string{"haiku", "sonnet"} {
+		d := core.Route(task, "claude-code", alias, cat)
+		d.Baseline.RequestedID = alias
+		plan := d.PlanSession(core.ClaudeCodeCaps, cat, core.UnknownSession(), alias)
+		if d.Verdict != core.VerdictUpshift {
+			t.Fatalf("%s: want an UPSHIFT verdict to exercise the path, got %s", alias, d.Verdict)
+		}
+		if plan.RewriteModel {
+			t.Errorf("%s: plan rewrites to %q (write %q), the model the spawn already runs", alias, plan.Model.ID, plan.WriteName)
+		}
+	}
+}
