@@ -154,6 +154,9 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 	// a foreground child is neither double counted nor announced twice.
 	ev.AgentHash = agentHash
 	ev.Verification = ce.Verification
+	if ce.Effort != "" {
+		ev.FinalEffort = telemetry.EffortOrUnknown(ce.Effort)
+	}
 	if slug := gatewayRanModel(resolved, ce); slug != "" {
 		markGatewayRun(&ev, slug)
 	}
