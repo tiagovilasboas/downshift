@@ -338,7 +338,7 @@ written. The family name is the only command fact telemetry keeps.
 | `dart-fix` | `dart fix` | passes through |
 | `gradle` | `gradle`, `gradlew`, `./gradlew` with the allowlisted tasks (build, check, test, assemble, lint, ...) | compresses |
 | `maven` | `mvn`, `mvnw`, `./mvnw` with test, verify, package, install or clean | compresses |
-| `phpunit` | `phpunit`, `vendor/bin/phpunit`, `./vendor/bin/phpunit` | compresses |
+| `phpunit` | `phpunit`, `vendor/bin/phpunit`, `./vendor/bin/phpunit`, `php vendor/bin/phpunit`, `php ./vendor/bin/phpunit` | compresses |
 | `composer` | `composer` | passes through |
 | `artisan` | `php artisan <command>` | passes through |
 | `phpstan` | `phpstan` | passes through |
@@ -349,12 +349,12 @@ written. The family name is the only command fact telemetry keeps.
 | `rector` | `rector` | passes through |
 | `sail-test` | `sail test` | passes through |
 | `sail-artisan` | `sail artisan <command>` | passes through |
-| `vitest` | `vitest`, `npx vitest` | compresses |
-| `jest` | `jest`, `npx jest` | compresses |
-| `playwright` | `playwright test`, `npx playwright test` | compresses |
-| `cypress` | `cypress run`, `npx cypress run` | compresses |
-| `tsc` | `tsc`, `npx tsc` | compresses |
-| `next-build` | `next build`, `npx next build` | compresses |
+| `vitest` | `vitest`, `npx vitest`, `pnpm exec vitest`, `yarn vitest` | compresses |
+| `jest` | `jest`, `npx jest`, `pnpm exec jest`, `yarn jest` | compresses |
+| `playwright` | `playwright test`, `npx playwright test`, `pnpm exec playwright test`, `yarn playwright test` | compresses |
+| `cypress` | `cypress run`, `npx cypress run`, `pnpm exec cypress run`, `yarn cypress run` | compresses |
+| `tsc` | `tsc`, `npx tsc`, `pnpm exec tsc`, `yarn tsc` | compresses |
+| `next-build` | `next build`, `npx next build`, `pnpm exec next build` | compresses |
 | `vite-build` | `vite build` | passes through |
 | `vite-preview` | `vite preview` | passes through |
 | `turbo-run` | `turbo run` | passes through |
@@ -367,7 +367,7 @@ written. The family name is the only command fact telemetry keeps.
 | `yarn-build` | `yarn build` | passes through |
 | `bun-test` | `bun test` | passes through |
 | `bun-build` | `bun build` | passes through |
-| `eslint` | `eslint` | compresses |
+| `eslint` | `eslint`, `pnpm exec eslint`, `yarn eslint` | compresses |
 | `prettier` | `prettier` | passes through |
 | `biome` | `biome` | passes through |
 | `mysql-query` | `mysql -e <read-only statement>` | passes through |
@@ -501,6 +501,8 @@ written. The family name is the only command fact telemetry keeps.
 | `swift` | `swift` | passes through |
 | `sbt` | `sbt` | passes through |
 
+Container exec (`docker exec`, `docker compose exec`, `docker-compose exec`) is wrapped when its inner command is an allowlisted family above (`phpunit`, `npm-test`, `artisan`, ...); the recorded family is the inner one. Accepted flags before the service or container: `-T`, `--no-TTY`, `-i`, `-u`/`--user`, `-w`/`--workdir`, `-e`/`--env KEY=VAL`. `-t`, `-it` and any other flag (`-d`, `--index`, `--privileged`) leave the command unwrapped, because a TTY changes the output the compressor reads. Nested docker is not wrapped.
+
 Any other command, including `npm test`, is not wrapped. The shell still parses the wrapped command, so the words after the
 family expand as they would have.
 
@@ -549,7 +551,7 @@ prove safe.
 | harness | shell rewrite | status | limit |
 |---|---|---|---|
 | claude-code | `PreToolUse` on `Bash` → `updatedInput.command`, every sibling field kept, no `permissionDecision` | Wired, on by default | The plugin's `hooks.json` carries the `Bash` PreToolUse entry running `downshift claude-code`. Verified live on 2026-10-20 (see `docs/internal/tasks/2026-10-20-next-steps`). If Claude Code ever ignores `updatedInput` without a `permissionDecision`, the command runs unchanged: nothing breaks, nothing is saved. Permissions: no allow rule is installed or required. The rewrite is skipped when a deny or ask rule in the managed, user (`CLAUDE_CONFIG_DIR` honoured), project or local settings matches the **original** command (as written and normalised); an unreadable or invalid settings file also means no rewrite. The hook emits no `permissionDecision`, so Claude Code's own permission flow, including any approval prompt, applies to the rewritten command as it would to the original. Never add a broad `Bash(downshift compact:*)`. |
-| codex | not wired | Unverified | The adapter exposes no shell command. The decision would be computed if it did. |
+| codex | `PreToolUse` on `Bash` (also reported for `exec_command`) → `permissionDecision: "allow"` plus `updatedInput.command`, every sibling field kept | Wired, Unverified live | `downshift setup` writes a `^Bash$` entry running `downshift codex` next to the `Agent` one. Codex honors `updatedInput` only together with `permissionDecision: "allow"`, so a rewritten call is auto-approved by the hook; an unchanged call emits `{}`. Codex has no deny or ask rules the adapter can read, so `ShellBlocked` is always false and only the shared policy (allowlist, no metacharacters, kill switches) limits the rewrite. Unverified live until a Codex session runs a wrapped `go test` (the hook must be trusted in `/hooks`). |
 | cursor | not wired | Unverified | Same. |
 | opencode | not wired | Unverified | Same. |
 | antigravity | not wired | Unverified | Same. |

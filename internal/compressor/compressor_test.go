@@ -778,3 +778,14 @@ func TestCompress_PrecedenceOverSearch(t *testing.T) {
 		t.Fatalf("tsc output must have precedence over search, got %v", resT.Format)
 	}
 }
+
+func TestCompress_Jest_CleanRunSummary(t *testing.T) {
+	in := "PASS src/a.test.ts\nPASS src/b.test.ts\nPASS src/c.test.ts\n\nTest Suites: 3 passed, 3 total\nTests:       12 passed, 12 total\nSnapshots:   0 total\nTime:        1.234 s\nRan all test suites.\n"
+	res := compressor.CompressExit([]byte(in), compressor.ModeSafe, 0)
+	if !res.Applied || res.Format != compressor.FormatJest {
+		t.Fatalf("clean Jest run should compact: %+v", res)
+	}
+	if got, want := string(res.Output), "Jest: PASS (12 passed across 3 suites)\n"; got != want {
+		t.Fatalf("output = %q, want %q", got, want)
+	}
+}
