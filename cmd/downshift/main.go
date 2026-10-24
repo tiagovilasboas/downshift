@@ -58,6 +58,7 @@ func main() {
 		if !loaded {
 			os.Exit(0)
 		}
+		telemetry.DirectionCatalog = cat
 		os.Exit(h.Hook(os.Stdin, cat))
 	}
 	// compact wraps a shell command; it needs no catalog, so it skips the load.

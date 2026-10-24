@@ -73,9 +73,14 @@ type Event struct {
 	PolicyFloor bool `json:"policy_floor,omitempty"`
 	// RequestedModelRaw keeps a non-empty requested model the catalog did not
 	// recognise (requested_model is then "unknown"), so "auto" or an unlisted
-	// id is distinguishable from an absent field. Bounded by RawModelOrInvalid;
-	// absent when the harness sent no model or the catalog recognised it.
+	// id is distinguishable from an absent field. It also keeps the alias the
+	// harness sent when requested_model was recorded as its catalog id (see
+	// canonicalizeModels). Bounded by RawModelOrInvalid; absent when the
+	// harness sent no model or sent the catalog id itself.
 	RequestedModelRaw string `json:"requested_model_raw,omitempty"`
+	// FinalModelRaw keeps the alias final_model had before it was recorded as
+	// its catalog id. Absent when final_model was already the catalog id.
+	FinalModelRaw string `json:"final_model_raw,omitempty"`
 
 	// Optional real-cost fields (nil = provider usage not tracked for this event).
 	// When absent, fall back to the normalised estimate above; never fake dollars.
@@ -563,6 +568,7 @@ var recordErrOut io.Writer = os.Stderr
 // interrupts a hook, but it is not silent either: one short line goes to
 // stderr so a lost event is visible.
 func Record(ev Event) {
+	canonicalizeModels(&ev)
 	if err := AppendTo(defaultEventPath(), ev); err != nil {
 		fmt.Fprintf(recordErrOut, "downshift: telemetry event not recorded: %v\n", err)
 	}
