@@ -385,6 +385,18 @@ Installing that extension does not currently enable collection on that build.
 See [the runtime diagnostic](../evidence/cursor-gap-diagnostic.md). Provider
 membership remains authoritative; do not replace it with a fixed model list.
 
+## Compact steering (harnesses without a shell hook)
+
+Claude Code rewrites an allowlisted Bash command in place, so it needs no steering. The other harnesses cannot, so `downshift setup` also installs the compact steering: one short text that tells the agent to run an allowlisted test, build or status command as `downshift compactor -- <command>`, and to run anything else without the compactor. The family list in it is the one the refusal message names, generated from the same policy (`downshift setup --dry-run` shows the exact text). Setup is idempotent, `--dry-run` writes nothing and `--undo` restores the file it changed.
+
+- **Codex**: `~/.codex/AGENTS.md`, the global instructions file. Setup adds a marked block (`<!-- downshift:compact:begin -->` to `:end -->`) and keeps everything else in the file. Codex reads `AGENTS.override.md` first when it exists, and then ignores `AGENTS.md`, so the block is not read in that case; the compactor still works when invoked by hand.
+- **Antigravity**: `~/.gemini/AGENTS.md`, one of the global rules files Antigravity reads (documented alongside `~/.gemini/GEMINI.md`). Same marked block; existing text is kept.
+- **OpenCode**: `~/.config/opencode/AGENTS.md`, the documented global rules file. Same marked block. OpenCode is wired by its own plugin, so the steering is the only thing setup writes for it.
+- **KiroCrew**: `~/.kiro/crew/workspace/.kiro/steering/downshift-compact.md`, a dedicated steering file with `inclusion: always` frontmatter. Setup owns the whole file.
+- **Cursor**: not installed by setup. Cursor reads rules only from the project (`.cursor/rules/*.mdc`, with `alwaysApply: true` in the frontmatter), and its User Rules live in Settings, not in a file under `~/.cursor`. To add it to a project, copy the steering text from `cmd/downshift/assets/compact-steering.md` into `.cursor/rules/downshift-compact.mdc` with that frontmatter.
+
+If a harness you use reads a different global file, the same block can be pasted there by hand between the two markers.
+
 ## Experimental harnesses
 
 > **Experimental (proof of concept).** KiroCrew runs in policy mode only (block and retry, no in-place rewrite) and Antigravity's rewrite rides an `overwrite` envelope that is not a documented vendor field; each has one observed child on one build and neither records a child end. Every feature is still computed for them (layering rule, `cmd/downshift/conformance_test.go`), and the adapters, tests and hooks stay in the repository, but treat them as proofs of concept, not as supported installs. Install them only if you accept that.

@@ -533,16 +533,22 @@ func TestSetupAntigravityNamedGroupIsNotDuplicated(t *testing.T) {
 	}
 }
 
-// A harness setup cannot write (opencode has no hook file yet) is reported and
-// nothing is created for it.
+// A harness setup cannot wire (opencode has no hook file yet) is reported, and
+// the only thing written for it is its compact steering block in AGENTS.md.
 func TestSetupManualHarnessIsReportedNotWritten(t *testing.T) {
 	e := newSetupEnv(t, ".config/opencode")
 	code, out, _ := e.run("--yes")
 	if code != 0 || !strings.Contains(out, "opencode: detected, not wired by setup") {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
-	if entries, _ := os.ReadDir(e.path(".config/opencode")); len(entries) != 0 {
-		t.Errorf("setup wrote into the opencode directory: %v", entries)
+	entries, _ := os.ReadDir(e.path(".config/opencode"))
+	for _, entry := range entries {
+		if name := entry.Name(); name != "AGENTS.md" && !strings.Contains(name, setupBackupInfix) {
+			t.Errorf("setup wrote %s into the opencode directory", name)
+		}
+	}
+	if !strings.Contains(e.read(".config/opencode/AGENTS.md"), steeringBlockBegin) {
+		t.Errorf("compact steering block missing from opencode AGENTS.md")
 	}
 }
 

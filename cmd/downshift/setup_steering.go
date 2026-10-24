@@ -7,25 +7,40 @@ import (
 	_ "embed"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-// kirocrewCompactSteering is the versioned steering asset `setup` installs into
-// the KiroCrew workspace so every agent turn is told to wrap test/build/status
-// commands in `downshift compact`. KiroCrew has no shell-rewrite hook channel,
-// so this guia is the only way compaction reaches it; the source of truth is
-// the embedded file, never a hand-written copy on one machine.
+// compactSteering is the versioned compact steering every harness with an
+// instructions file receives. It is the body only; a harness that needs
+// frontmatter (KiroCrew) declares it on its setupSteering. The source of truth
+// is the embedded file, never a hand-written copy on one machine. The family
+// list inside it is checked against execwrap.FamilyOf by setup_steering_test.go.
 //
-//go:embed assets/kirocrew-compact-steering.md
-var kirocrewCompactSteering string
+//go:embed assets/compact-steering.md
+var compactSteering string
+
+// Markers around the block setup owns inside a shared instructions file.
+const (
+	steeringBlockBegin = "<!-- downshift:compact:begin -->"
+	steeringBlockEnd   = "<!-- downshift:compact:end -->"
+)
 
 // setupSteering is an optional steering file a target installs. Path is
-// relative to HOME. Unlike a hook File it is a whole-file asset: setup writes
-// Content when the file is absent or differs, and leaves it untouched when it
-// already matches, so it is idempotent and `--undo`-able through the same
-// backup path as hook files.
+// relative to HOME. Two shapes:
+//
+//   - a dedicated file (KiroCrew's workspace steering): setup writes the whole
+//     file, Frontmatter first, and rewrites it only when it differs;
+//   - a Managed file (Codex, OpenCode, Antigravity global instructions): the
+//     user owns the file, so setup keeps everything outside the marked block
+//     and only inserts or replaces that block.
+//
+// Both are idempotent and `--undo`-able through the same backup path as hook
+// files.
 type setupSteering struct {
-	Path    string // relative to HOME
-	Content string
+	Path        string // relative to HOME
+	Frontmatter string // written before Content for a dedicated file
+	Content     string
+	Managed     bool
 }
 
 // planSteering plans the steering write for a target that declares one,
@@ -36,12 +51,44 @@ func planSteering(o setupOptions, t setupTarget) (p setupPlan, ok bool) {
 		return setupPlan{}, false
 	}
 	path := filepath.Join(o.Home, filepath.FromSlash(t.Steering.Path))
-	p = setupPlan{target: t, path: path, after: []byte(t.Steering.Content)}
+	p = setupPlan{target: t, path: path}
 	if b, err := os.ReadFile(path); err == nil {
 		p.before = b
 		p.existed = true
 	} else if !os.IsNotExist(err) {
 		p.err = err
+		return p, true
+	}
+	if t.Steering.Managed {
+		p.after = mergeSteeringBlock(p.before, t.Steering.Content)
+	} else {
+		p.after = []byte(t.Steering.Frontmatter + t.Steering.Content)
 	}
 	return p, true
+}
+
+// mergeSteeringBlock returns before with the managed block set to body. A
+// block already present is replaced in place, so a second run is a no-op; a
+// file without the block gets the block appended after a blank line. Text
+// outside the markers is never touched.
+func mergeSteeringBlock(before []byte, body string) []byte {
+	block := steeringBlockBegin + "\n" + strings.TrimRight(body, "\n") + "\n" + steeringBlockEnd
+	text := string(before)
+	start := strings.Index(text, steeringBlockBegin)
+	end := strings.Index(text, steeringBlockEnd)
+	if start >= 0 && end > start {
+		rest := strings.TrimPrefix(text[end+len(steeringBlockEnd):], "\n")
+		out := text[:start] + block + "\n"
+		if rest != "" {
+			out += rest
+		}
+		return []byte(out)
+	}
+	if text == "" {
+		return []byte(block + "\n")
+	}
+	if !strings.HasSuffix(text, "\n") {
+		text += "\n"
+	}
+	return []byte(text + "\n" + block + "\n")
 }
