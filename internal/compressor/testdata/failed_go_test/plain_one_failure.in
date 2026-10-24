@@ -1,0 +1,35 @@
+ok  	example.com/acme/widget/internal/pkg00	0.010s
+ok  	example.com/acme/widget/internal/pkg01	0.011s
+ok  	example.com/acme/widget/internal/pkg02	0.012s
+ok  	example.com/acme/widget/internal/pkg03	0.013s
+ok  	example.com/acme/widget/internal/pkg04	0.014s
+ok  	example.com/acme/widget/internal/pkg05	0.015s
+ok  	example.com/acme/widget/internal/pkg06	0.016s
+ok  	example.com/acme/widget/internal/pkg07	0.017s
+ok  	example.com/acme/widget/internal/pkg08	0.018s
+ok  	example.com/acme/widget/internal/pkg09	0.019s
+ok  	example.com/acme/widget/internal/pkg10	0.020s
+ok  	example.com/acme/widget/internal/pkg11	0.021s
+--- FAIL: TestCharge (0.01s)
+    billing_test.go:42: got 100, want 110
+FAIL
+FAIL	example.com/acme/widget/internal/billing	0.087s
+ok  	example.com/acme/widget/internal/pkg12	(cached)
+ok  	example.com/acme/widget/internal/pkg13	(cached)
+ok  	example.com/acme/widget/internal/pkg14	(cached)
+ok  	example.com/acme/widget/internal/pkg15	(cached)
+ok  	example.com/acme/widget/internal/pkg16	(cached)
+ok  	example.com/acme/widget/internal/pkg17	(cached)
+ok  	example.com/acme/widget/internal/pkg18	(cached)
+ok  	example.com/acme/widget/internal/pkg19	(cached)
+ok  	example.com/acme/widget/internal/pkg20	(cached)
+ok  	example.com/acme/widget/internal/pkg21	(cached)
+ok  	example.com/acme/widget/internal/pkg22	(cached)
+ok  	example.com/acme/widget/internal/pkg23	(cached)
+ok  	example.com/acme/widget/internal/pkg24	(cached)
+ok  	example.com/acme/widget/internal/pkg25	(cached)
+ok  	example.com/acme/widget/internal/pkg26	(cached)
+ok  	example.com/acme/widget/internal/pkg27	(cached)
+ok  	example.com/acme/widget/internal/pkg28	(cached)
+ok  	example.com/acme/widget/internal/pkg29	(cached)
+FAIL
