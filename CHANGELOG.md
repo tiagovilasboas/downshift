@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **KiroCrew harness detection:** `SessionEnv: "KIRO_SESSION_ID"` in `KiroCrewCaps` enables
+  `envHarness()` to attribute exec-events to `kirocrew` instead of `unknown`. The `Model` field
+  in exec-events is populated via `InferKiroCrewModel()`, which reads the session model from
+  `~/.kiro/crew/sessions/<id>/state.json`. PRs #559, #560, #561.
+- **REA curation:** reverse engineering analysis content moved to
+  [downshift-labs](https://github.com/tiagovilasboas/downshift-labs); integration evidence
+  (rewrite-honored, executor-ack, benchmarks) stays in Downshift. Added `scripts/curate-rea.sh`
+  for future curation. PR #562.
+
 - **Cursor adapter:** composer baseline cache (`downshift cursor-touch` on
   `sessionStart` and `beforeSubmitPrompt`, `~/.downshift/cursor-composer-model.json`);
   `subagentStop` links by `subagent_id` on Cursor 3.27.12+. `downshift setup cursor`
