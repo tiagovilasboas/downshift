@@ -103,3 +103,13 @@ uma sessão ao vivo com o dono).
 3. Depois: AC-2, AC-3 → UX-1; AC-4 quando o dono decidir.
 4. Prova ao vivo (RT-4, DP-2) com o dono.
 5. Corte (DP-3), RL-1..3, release (RL-4), site (RL-5), e só depois DP-4.
+
+## 9. Nota do downshift-progress: linhas de subagente sem fim
+
+- **Sintoma (2026-10-24):** três subagentes Haiku aparecem "rodando" no savvy-progress mesmo
+  parados. Foram interrompidos à força, então o engine não emitiu o evento de fim.
+- **Causa:** o roster só fecha uma execução no evento de fim (`turn.complete`); sem ele a linha fica.
+- **Tarefa DP-5 (ABERTO, 2 pts):** o roster marca a linha como "parada" após N minutos sem
+  atividade (ex.: 10 min) e a remove no mesmo prazo de expiração. Arquivos:
+  `mods/downshift-progress/hooks/features/agents/track.ts`, `refresh.ts`. Pronto quando um teste
+  com relógio falso fecha uma execução sem evento de fim.
