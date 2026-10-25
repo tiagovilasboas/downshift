@@ -65,6 +65,7 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 | P1 | DCI hook through the shared runner (layering rule); measure injected-context savings before any default change |
 | P1 | Optional: container image on GHCR |
 | P1 | Control group: 14 completed tasks against a minimum of 20 per group (`downshift report`), before any routing-cost claim |
+| P1 | Publish the real-use measurement behind the "up to ~53% fewer tokens per task" figure as a file under `docs/evidence/` (1 pt): KiroCrew, 2026-10-21, routing and compactor combined, 6 control tasks, one session, plus the routing-only ~24% from the four-arm Claude Code test (46 runs). Third parties already quote the figure (the Montanha Tech site), so it needs a durable source with method and sample size, and it keeps the "directional, not definitive" qualifier |
 | P1 | Independent outcome suite and cost per completed task before any tier-memory promotion ([gap-tasks](docs/internal/gap-tasks.md): GAP-SUITE, GAP-MEMORY-COUNTS) |
 | P1 | Real hook payloads for Cursor, Codex, Kiro, Antigravity, and the Claude Code failure event (GAP-PAYLOADS, GAP-CHILD-FAILURE) |
 | P1 | Learned complexity scorer for EN and PT-BR (hashed word and char n-grams plus structural features, embedded JSON under 1 MB, shadow first, abstain to MEDIUM). Needs about 2,400 labelled prompts, at least 40% PT-BR |
