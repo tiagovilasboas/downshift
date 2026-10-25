@@ -9,6 +9,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -43,6 +44,9 @@ const EnvKiroCrewDir = "DOWNSHIFT_KIROCREW_DIR"
 const maxJSONLBytes = 64 << 10
 
 var errKiroModelUnresolved = errors.New("kirocrew: model not resolved for session")
+
+// sessionIDPattern matches a UUID-style session ID to prevent path traversal.
+var sessionIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 
 // kiroModelCache memoizes resolution per session id. The routing hot path can
 // ask for the same session many times; the JSONL is read at most once per id
@@ -113,22 +117,67 @@ func resolveKiroModel(crew, sessionID string) string {
 	if crew == "" {
 		return ""
 	}
+
+	// 1. Try subagent state file (for spawned children).
 	state, ok := findKiroState(crew, sessionID)
-	if !ok {
-		return ""
+	if ok {
+		if m := cleanModel(state.ResolvedModel); m != "" {
+			return m
+		}
+		if m := cleanModel(state.RequestedModel); m != "" {
+			return m
+		}
+		// Follow the parent chat session's log to the live model.
+		if state.ParentSession != "" {
+			if m := modelFromSessionLog(crew, state.ParentSession); m != "" {
+				return m
+			}
+		}
 	}
-	// A concrete model recorded on the state file is the most direct signal.
-	if m := cleanModel(state.ResolvedModel); m != "" {
+
+	// 2. Try CLI session file (for main sessions started from dashboard/CLI).
+	// These live in ~/.kiro/sessions/cli/<session_id>.json, not under crew/.
+	if m := modelFromCLISession(sessionID); m != "" {
 		return m
 	}
-	if m := cleanModel(state.RequestedModel); m != "" {
-		return m
-	}
-	// Otherwise follow the parent chat session's log to the live model.
-	if state.ParentSession == "" {
+
+	return ""
+}
+
+// cliSessionModel is the subset of the CLI session JSON this inference reads.
+// The full structure is ~/.kiro/sessions/cli/<id>.json.
+type cliSessionModel struct {
+	SessionState struct {
+		RTSModelState struct {
+			ModelInfo struct {
+				ModelID string `json:"model_id"`
+			} `json:"model_info"`
+		} `json:"rts_model_state"`
+	} `json:"session_state"`
+}
+
+// modelFromCLISession reads the model from a CLI session file. These are main
+// sessions started from the dashboard or kiro-cli, not spawned subagents.
+// Path: ~/.kiro/sessions/cli/<session_id>.json
+func modelFromCLISession(sessionID string) string {
+	home, err := os.UserHomeDir()
+	if err != nil {
 		return ""
 	}
-	return modelFromSessionLog(crew, state.ParentSession)
+	// Validate session ID looks like a UUID to avoid path traversal.
+	if !sessionIDPattern.MatchString(sessionID) {
+		return ""
+	}
+	path := filepath.Join(home, ".kiro", "sessions", "cli", sessionID+".json")
+	data, err := readBounded(path)
+	if err != nil {
+		return ""
+	}
+	var sess cliSessionModel
+	if json.Unmarshal(data, &sess) != nil {
+		return ""
+	}
+	return cleanModel(sess.SessionState.RTSModelState.ModelInfo.ModelID)
 }
 
 // kiroState is the subset of state.json this inference reads.
