@@ -67,6 +67,7 @@ file or from `AGENTS.md`.
 | `internal/hookport` | Telemetry | Honor and usage ports |
 | `internal/hookutil` | Adapters | Field helpers for hook payloads |
 | `internal/lifecycleobserver` | Telemetry | Process lifecycle events |
+| `internal/limits` | Adapters | Centralized harness limitations registry |
 | `internal/models` | Routing | `models` subcommand helpers |
 | `internal/nbopinion` | Routing | Naive-Bayes opinion; registers hooks |
 | `internal/nbtier` | Routing | Naive-Bayes tier types |
