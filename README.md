@@ -2,10 +2,10 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/brand/downshift-logo-dark.svg">
-  <img src="docs/brand/downshift-logo-light.svg" alt="Downshift" width="320">
+  <img src="docs/brand/downshift-logo-light.svg" alt="Downshift — token optimization and model routing for AI coding agents" width="320">
 </picture>
 
-### Compact verbose output. Route subagents to right-sized models.
+### Compact verbose output. Route subagents to right-sized models. Cut AI coding agent costs.
 
 Downshift compacts verbose command output, routes subagents to right-sized models,
 and learns which commands need new compressors — all without an LLM in the loop.
@@ -17,6 +17,12 @@ and learns which commands need new compressors — all without an LLM in the loo
 
 [Get Started](#get-started) · [Features](#features) · [Token Savings](#token-savings) · [Documentation](#documentation)
 
+**Reduce AI coding agent costs without an LLM in the loop.** Downshift is a token optimization
+and model routing tool for AI coding agents — Claude Code, Cursor, Codex, OpenCode,
+Antigravity, and KiroCrew. It compacts verbose command output before it fills the context
+window, routes subagent spawns to right-sized models, and accounts for the LLM API cost you
+actually saved.
+
 </div>
 
 ---
@@ -24,7 +30,9 @@ and learns which commands need new compressors — all without an LLM in the loo
 ## The Problem
 
 AI coding agents (Claude Code, Cursor, Codex, KiroCrew, and others) spend most of their context
-window on verbose command output that carries little signal:
+window on verbose command output that carries little signal — a problem that context engineering
+and token optimization guides keep circling back to. Every byte of tool output is a token you
+pay for at API rates, on every turn:
 
 ```
 $ go test ./...
@@ -69,7 +77,7 @@ downshift doctor
 ```
 
 That's it. On Claude Code, Downshift now rewrites allowlisted commands and routes subagents
-automatically. Other harnesses differ; see [Harness Support](#harness-support).
+automatically. Other harnesses differ; see [Harness Support](#harness-support-claude-code-cursor-codex-and-more).
 
 <details>
 <summary>Manual installation</summary>
@@ -106,8 +114,10 @@ Kubernetes · Terraform · AWS CLI · and [70+ more](docs/reference/supported-to
 
 ### 2. Subagent Model Routing (zero LLM)
 
-Routes each subagent task to the right-sized model — Haiku for renames, Opus for
-architecture — without calling an LLM to decide.
+Intelligent model routing for subagent spawns: routes each subagent task to the
+right-sized model — Haiku for renames, Opus for architecture — without calling an LLM to
+decide, and without touching your main session's model mid-turn (so your prompt cache
+stays intact).
 
 ```
 $ downshift try "rename the userId variable"
@@ -147,8 +157,9 @@ downshift dci impact MyFunction  # Who calls this?
 
 ### 5. Cost Accounting (v1)
 
-Measures what routing actually saves: the difference between what you would have
-paid if every token ran on the requested model and what you actually paid.
+Local LLM cost tracking: measures what routing actually saves — the difference between
+what you would have paid if every token ran on the requested model and what you actually
+paid. Counts and prices stay on your machine.
 
 ```go
 // Saved = C_baseline − C_actual
@@ -162,7 +173,7 @@ See [docs/reference/accounting.md](docs/reference/accounting.md).
 
 ---
 
-## Output Savings
+## Token Savings
 
 ### Compaction (bytes, measured on a synthetic test corpus)
 
@@ -223,7 +234,7 @@ downshift models check         # Verify catalog pricing
 
 ---
 
-## Harness Support
+## Harness Support: Claude Code, Cursor, Codex and more
 
 Downshift was built with Claude Code. The status word says how much was verified on the real
 harness, per the [Harness Matrix](docs/reference/harness-matrix.md):
@@ -306,6 +317,50 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 - **Local telemetry only** — counts, hashes, timings in `~/.downshift/events.jsonl`
 - **No LLM in the routing loop** — routing decisions are local and deterministic
 - **Fail-open** — any error leaves the command/spawn unchanged
+
+---
+
+## FAQ
+
+### How do I reduce token usage and cost in Claude Code, Cursor, or Codex?
+
+Install Downshift, run `downshift setup`, and it hooks into your harness. Verbose command
+output is compacted before it reaches the context window, and subagents are routed to
+right-sized models. On Claude Code the rewrite is automatic; on other harnesses the agent
+runs `downshift compact -- <command>` directly. Check your own numbers with
+`downshift session` and `downshift report`.
+
+### Does subagent model routing break prompt caching?
+
+No. Downshift routes whole subagent spawns, not individual turns of your main session. Your
+main session keeps the same model for the entire conversation, so its cached prefix is never
+invalidated by a mid-session model switch.
+
+### Does it work with harnesses other than Claude Code?
+
+Yes — see [Harness Support](#harness-support-claude-code-cursor-codex-and-more). Compaction works on every harness because it
+is a plain shell command, no hook required. Model routing depth varies per harness and is
+documented honestly in the [harness matrix](docs/reference/harness-matrix.md).
+
+### How much does it save?
+
+Compaction measured 82.3% fewer bytes on compacted outputs (23.7% over the whole synthetic
+corpus) — see [Token Savings](#token-savings) for the full methodology. Routing savings
+depend on your task mix and are measured, not promised, by `downshift report`.
+
+### How is this different from `/compact` in Claude Code?
+
+Claude Code's `/compact` summarizes conversation history after it is already in your context
+window. Downshift's compactor shrinks command output — `go test`, `git diff`, `pytest` —
+before it enters the context at all. They are complementary, and Downshift's compaction
+works the same way on every harness, including ones without a compact command.
+
+### What is context engineering for coding agents?
+
+Keeping the smallest set of high-signal tokens in the model's context window. Downshift
+automates the tool-output half of it deterministically: verbose command output is one of the
+largest avoidable consumers of context in a coding-agent session, and compaction cuts it
+before it is ever sent to the model.
 
 ---
 
