@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/discovery"
+	"github.com/tiagovilasboas/downshift/internal/limits"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -156,6 +157,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	// check has nothing to look at.
 	checkEvidence(add, env, nc, file, found, pathBin, events)
 	checkCrewRegistry(add, env, h, w)
+	checkHarnessLimitations(add, h)
 }
 
 // readHookFile reads and parses the harness hook file. On failure it adds the
@@ -527,4 +529,25 @@ func checkMainPolicy(add func(id, status, detail, fix string), harness string, r
 			}
 		}
 	}
+}
+
+// checkHarnessLimitations reports known limitations of the harness so users
+// know what features may not work as expected. This makes the doctor output
+// frank about capabilities instead of silently degrading.
+func checkHarnessLimitations(add func(id, status, detail, fix string), harness string) {
+	lims := limits.ForHarness(harness)
+	if lims == nil {
+		return
+	}
+	unsupported := lims.UnsupportedFeatures()
+	if len(unsupported) == 0 {
+		return
+	}
+	// Build a compact summary of limitations
+	var parts []string
+	for _, lim := range unsupported {
+		parts = append(parts, lim.Feature+":"+lim.Status)
+	}
+	detail := strings.Join(parts, ", ")
+	add("limitations", doctorWarn, detail, "see 'downshift help "+harness+"' for details")
 }
