@@ -8,6 +8,23 @@
 // be frank about what works and what doesn't.
 package limits
 
+// Standard feature names. All harnesses are evaluated against these.
+const (
+	FeatureModelRewrite      = "model_rewrite"       // Can the hook change the subagent model?
+	FeatureTokenCounts       = "token_counts"        // Does the harness expose actual token usage?
+	FeatureCompaction        = "compaction"          // Is output compaction automatic or manual?
+	FeatureMidSessionRouting = "mid_session_routing" // Can model be changed during session?
+	FeatureSavingsEstimation = "savings_estimation"  // Based on real tokens or proxy?
+)
+
+// Standard status values.
+const (
+	StatusFull    = "full"    // Fully supported
+	StatusPartial = "partial" // Works in some conditions
+	StatusNone    = "none"    // Not supported
+	StatusManual  = "manual"  // Requires manual invocation
+)
+
 // Limitation describes a specific capability limitation of a harness.
 type Limitation struct {
 	// Feature is the capability name (e.g., "model_rewrite", "token_counts").
