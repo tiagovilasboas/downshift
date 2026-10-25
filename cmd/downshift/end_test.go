@@ -198,6 +198,24 @@ func TestEndCodexIgnoresOtherToolsOtherEventsAndGarbage(t *testing.T) {
 	}
 }
 
+func TestEndCursorSubagentStopLinksBySubagentIDWhenToolCallAbsent(t *testing.T) {
+	endEnv(t)
+	frontier := cmdCat.ModelFor("cursor", core.TierFrontier).ID
+	dec := seedDecision(t, "cursor", "conv-live", "spawn-1", frontier, frontier, telemetry.OutcomeAllow)
+
+	rc, stdout, _ := runEndFor("cursor", endMarshal(map[string]any{
+		"hook_event_name": "subagentStop", "status": "completed", "session_id": "conv-live",
+		"subagent_id": "spawn-1", "cursor_version": "3.27.12", "model": "composer-2.5-fast",
+	}))
+	if rc != 0 || stdout != "" {
+		t.Fatalf("rc=%d stdout=%q", rc, stdout)
+	}
+	ended := eventsOf(t, telemetry.OutcomeChildEnded)
+	if len(ended) != 1 || ended[0].ChildStatus != telemetry.ChildCompleted || ended[0].LinkedDecision != telemetry.DecisionKey(dec) {
+		t.Fatalf("child_ended = %+v", ended)
+	}
+}
+
 func TestEndCursorSubagentStopLinksByToolCallAndStaysUnmeasuredWithoutIds(t *testing.T) {
 	endEnv(t)
 	frontier := cmdCat.ModelFor("cursor", core.TierFrontier).ID

@@ -131,6 +131,8 @@ later milestone needs its numbers.
 5. Network: the daily refresh is the first outbound call triggered by a hook
    (anonymous GET, no user data). Keep on by default with `DOWNSHIFT_SCORES=off`,
    or make it opt-in.
+6. **OpenRouter parts 4–6** — owner 2026-10-24: last in queue; finish M1 path,
+   compactor, harness honor, and 0.1.4 before D-1/D-2.
 
 ## What not to do now
 
@@ -138,3 +140,5 @@ later milestone needs its numbers.
   proof and trust are.
 - Do not let a public index decide a task's tier: it measures models, not tasks.
 - Do not turn capability selection live before M1 numbers exist.
+- Do not start OpenRouter parts 4–6 before M1, compactor P1 items, and harness
+  honor land (owner 2026-10-24).

@@ -108,6 +108,7 @@ Assisted setup for AI agents (ask the user before any write outside the repo):
 Contributing / architecture for this repo: AGENTS.md and CONTRIBUTING.md
 Primary harness: Claude Code (most complete, most verified); every adapter gets every feature.
 Harness status (four words): Completed = Claude Code; Functional = Codex, Cursor; Beta = OpenCode; Experimental (proof of concept) = KiroCrew, Antigravity.
+Cursor setup: downshift setup cursor merges preToolUse (Task, Shell), beforeShellExecution, subagentStop (end cursor), sessionStart and beforeSubmitPrompt (cursor-touch for composer baseline cache in ~/.downshift/cursor-composer-model.json). docs/guides/install.md#install-cursor
 Evidence per harness: docs/reference/harness-matrix.md
 Sibling mod of the Downshift marketplace, one install because a plugin loads one hooks
 module. `downshift setup` installs it on Claude Code (--no-plugin skips); by hand: /plugin install savvy-progress@downshift. mods/README.md

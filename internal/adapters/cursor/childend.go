@@ -38,15 +38,22 @@ func ParseChildEnd(raw []byte) (hookport.ChildEnd, bool) {
 	if call == "" {
 		call = hookutil.StringField(p, "tool_call_id")
 	}
+	// Cursor 3.27 subagentStop carries subagent_id only; it matches the Task
+	// tool_use_id from preToolUse on the same spawn (probe 2026-10-24).
+	if call == "" {
+		call = hookutil.StringField(p, "subagent_id")
+	}
 	agent := hookutil.StringField(p, "subagent_id")
 	if agent == "" {
 		agent = call
 	}
+	sid := hookutil.StringField(p, "session_id")
+	TouchFromStop(sid, hookutil.StringField(p, "model_id"), hookutil.StringField(p, "model"))
 	return hookport.ChildEnd{
 		Harness:   harnessID,
 		AgentKey:  agent,
 		ToolUseID: call,
-		SessionID: hookutil.StringField(p, "session_id"),
+		SessionID: sid,
 		Status:    telemetry.ChildStatusFromText(hookutil.StringField(p, "status"), telemetry.ChildStopped),
 		Source:    hookport.SourcePayload,
 		IsChild:   true,

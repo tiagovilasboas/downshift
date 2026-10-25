@@ -848,3 +848,36 @@ func TestSetupCursorShellExecHook(t *testing.T) {
 		t.Errorf("entry = %v, want %q with matcher *", m, testBin+" cursor")
 	}
 }
+
+func TestSetupCursorTouchHooks(t *testing.T) {
+	e := newSetupEnv(t, ".cursor")
+	if code, out, _ := e.run("--yes"); code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	doc := parseDoc(t, e.read(".cursor/hooks.json"))
+	hooks := doc["hooks"].(map[string]any)
+	want := testBin + " cursor-touch"
+	for _, ev := range []struct {
+		event   string
+		matcher string
+	}{
+		{event: "sessionStart", matcher: ""},
+		{event: "beforeSubmitPrompt", matcher: "UserPromptSubmit"},
+	} {
+		list, _ := hooks[ev.event].([]any)
+		var found bool
+		for _, h := range list {
+			m := h.(map[string]any)
+			if m["command"] != want {
+				continue
+			}
+			if ev.matcher == "" || m["matcher"] == ev.matcher {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("%s: missing %q (matcher %q): %s", ev.event, want, ev.matcher, e.read(".cursor/hooks.json"))
+		}
+	}
+}

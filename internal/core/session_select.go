@@ -42,14 +42,20 @@ func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bo
 }
 
 // HarnessOwnsID reports whether id belongs to this harness. Session membership
-// counts; otherwise only exact catalog identities are used to avoid treating
-// a family-prefix match as ownership.
+// counts, including a slug whose catalog resolution is already a member of
+// this session. Otherwise only exact catalog identities count, so a
+// family-prefix match of a model the session does not list is not ownership.
 func HarnessOwnsID(harness, id string, session SessionList, res Resolver) bool {
 	if id == "" {
 		return false
 	}
 	if session.Known && session.Contains(id) {
 		return true
+	}
+	if res != nil && session.Known {
+		if m, ok := res.LookupByID(harness, id); ok && m.ID != "" && session.Contains(m.ID) {
+			return true
+		}
 	}
 	if res == nil {
 		return false
