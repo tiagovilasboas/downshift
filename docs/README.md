@@ -188,13 +188,13 @@ The harness adapters and packaging domain connects Downshift's core intelligence
 | [../examples/README.md](../examples/README.md) | Examples | Sample hook JSON payloads across harnesses |
 | [evidence/claude-code-rewrite-honored-2026-10-06.md](evidence/claude-code-rewrite-honored-2026-10-06.md) | Evidence | Observed rewrite honor on Claude Code |
 | [evidence/cursor-rewrite-honored-2026-10-10.md](evidence/cursor-rewrite-honored-2026-10-10.md) | Evidence | Cursor rewrite evaluation (discarded on Free/legacy Pro) |
-| [evidence/cursor-gap-diagnostic.md](evidence/cursor-gap-diagnostic.md) | Evidence | Cursor integration diagnostic and plan differences |
+| [https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md) | Evidence | Cursor integration diagnostic and plan differences |
 | [evidence/codex-rewrite-honored-2026-10-02.md](evidence/codex-rewrite-honored-2026-10-02.md) | Evidence | Inferred rewrite honor on Codex |
 | [evidence/multilang-codex-2026-10-16.md](evidence/multilang-codex-2026-10-16.md) | Evidence | Multilingual checks through Codex adapter |
 | [evidence/benchmark-opencode-2026-10-18.md](evidence/benchmark-opencode-2026-10-18.md) | Evidence | OpenCode integration benchmark |
-| [evidence/kirocrew-native-hook-2026-10-10.md](evidence/kirocrew-native-hook-2026-10-10.md) | Evidence | KiroCrew native hook policy mode verification |
+| [https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/findings/F5-kirocrew-native-hook.md](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/findings/F5-kirocrew-native-hook.md) | Evidence | KiroCrew native hook policy mode verification |
 | [evidence/antigravity-executor-ack.md](evidence/antigravity-executor-ack.md) | Evidence | Antigravity runtime execution acknowledgment |
-| [evidence/antigravity-runtime-source.md](evidence/antigravity-runtime-source.md) | Evidence | Antigravity runtime source inspection |
+| [https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/antigravity/findings/F1-antigravity-runtime-source.md](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/antigravity/findings/F1-antigravity-runtime-source.md) | Evidence | Antigravity runtime source inspection |
 | [evidence/plugin-mods-smoke-2026-10-17.md](evidence/plugin-mods-smoke-2026-10-17.md) | Evidence | Plugin and mods smoke testing under headless Claude Code |
 
 ---

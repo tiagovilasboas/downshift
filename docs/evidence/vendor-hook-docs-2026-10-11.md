@@ -15,7 +15,7 @@ Forum and third-party items are marked and carry no weight as contract.
 ## Follow-ups (each needs the live page or a real payload)
 1. Antigravity: confirm whether any documented output field rewrites tool args; if none, mark the rewrite as unsupported-by-docs in `harness-matrix.md`.
 2. Cursor: confirm `model_id` and `workspace_roots` on the page; re-test `updated_input` on `Task` on the current build.
-3. Kiro: capture a real PostToolUse payload (see `kirocrew-native-hook-2026-10-10.md`).
+3. Kiro: capture a real PostToolUse payload (see [labs/kirocrew/F5](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/findings/F5-kirocrew-native-hook.md)).
 4. Codex: confirm the no-rewrite path never emits a bare `allow`.
 
 ## Antigravity follow-up (search summary, same day)

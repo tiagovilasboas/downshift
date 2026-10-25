@@ -66,7 +66,7 @@ whose probe answer is "absent" does not become a code change.
 - Public copy (install, README, site): [2026-10-24-cursor-docs-site](../2026-10-24-cursor-docs-site/README.md).
 - harness-core `gen-cursor-rules.sh --apply` (the always-on compactor rule is stale; that is the rules repo).
 - Rebuilding the Downshift binary for the two commits after `480391dc` (changelog and `gh run view --log`).
-- Native Cursor quota export (built-in-only API, [diagnostic](../../../evidence/cursor-gap-diagnostic.md)).
+- Native Cursor quota export (built-in-only API, [diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md)).
 - Wiring `subagentStart` as a router. The hooks page gives it no `updated_input`.
 - A rewrite-honored claim. Cursor's child transcript still has no executor model on the 2026-10-10 capture.
 - Codex A-P5. Separate payload, separate task, when this Cursor slice is closed.
