@@ -5,6 +5,7 @@ package models
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
@@ -12,7 +13,10 @@ import (
 )
 
 func TestWriteOverride_AtomicallyWritesPrivateCatalog(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	state := filepath.Join(home, ".downshift")
+	t.Setenv("HOME", home)
+	t.Setenv("DOWNSHIFT_STATE_DIR", state)
 	entries := []catalog.Entry{{ID: "test-model", Harness: "codex", Tier: "small"}}
 
 	if err := writeOverride(entries); err != nil {
