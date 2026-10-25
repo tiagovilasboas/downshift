@@ -153,7 +153,13 @@ func seedTreeLog(t *testing.T) (log, sessA, sessB string) {
 func TestSession_SelectionExplicitThenEnvThenLatest(t *testing.T) {
 	_, a, _ := seedTreeLog(t)
 	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
-	t.Setenv("CLAUDE_CODE_SESSION_ID", "")
+	// Clear ALL session env vars so the test does not inherit one from the
+	// environment (e.g. KIRO_SESSION_ID when running inside KiroCrew).
+	for _, n := range core.AllHarnessCaps() {
+		if n.Caps.SessionEnv != "" {
+			t.Setenv(n.Caps.SessionEnv, "")
+		}
+	}
 	const header = "session · "
 
 	// Latest decision in the log is session b: one subagent, unpriced.
@@ -162,10 +168,12 @@ func TestSession_SelectionExplicitThenEnvThenLatest(t *testing.T) {
 		t.Fatalf("latest session: rc=%d\n%s", rc, out)
 	}
 	// The harness's declared env var beats "latest" (read from capabilities, no name in code).
+	// Pick the first SessionEnv that declares one (Claude Code in the usual order).
 	var envName string
 	for _, n := range core.AllHarnessCaps() {
 		if n.Caps.SessionEnv != "" {
 			envName = n.Caps.SessionEnv
+			break
 		}
 	}
 	if envName == "" {
