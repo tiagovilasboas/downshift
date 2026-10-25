@@ -104,6 +104,25 @@ uma sessão ao vivo com o dono).
 4. Prova ao vivo (RT-4, DP-2) com o dono.
 5. Corte (DP-3), RL-1..3, release (RL-4), site (RL-5), e só depois DP-4.
 
+## 8. Code review final (2026-10-24): onde o impacto real está
+
+Medido nos logs do dono (agregados; 157 decisões, 1.249 execuções do Compactor). A revisão
+profunda por frente foi interrompida por limite de orçamento; o que segue é o que foi medido
+pelo mantenedor e vale como gap aberto.
+
+| ID | Achado | Evidência | Tarefa | Pts |
+|---|---|---|---|--:|
+| RV-1 | O roteador não decide na maioria dos casos | 96/157 `CLASSIFIER_UNCONFIDENT`, 55 `NO_SIGNAL`; só 8 downshifts aplicados contra 22 upshifts | Calibrar o classificador nos briefs reais de subagente (Explore/Plan/general-purpose escritos pelo próprio Claude) com corpus rotulado da sessão; meta: inseguro < 40% | 5 |
+| RV-2 | "Dúvida não gasta" também segura downshift seguro | 13 `HELD_UNCONFIDENT_DOWNSHIFT`; pai Opus → Sonnet em tarefa MEDIUM é retido | **DECISÃO**: permitir downshift inseguro de frontier para mid (nunca para small) quando não há `RISK_CATEGORY`; registrar como `DOWNSHIFT_ON_DOUBT` e medir retrabalho | 3 |
+| RV-3 | Compactor poupa 1,4% dos bytes | 68 KB de 4,9 MB; `gh run view --log` 2,3 MB (#537 aberto), `go test` 1,8 MB (anterior ao C5/W1) | Fechar #537; medir de novo após 7 dias com C5+W1 no binário instalado (hoje o binário local é anterior) | 2 |
+| RV-4 | Falhas de teste passam inteiras | 946 KB em 289 execuções com exit ≠ 0; só `go test` tem `CompressFailed` | CP-2/3/4 (Jest, Playwright, PHPUnit com falha) | 13 |
+| RV-5 | Economia contada sobre bytes que o modelo nunca viu | 21 execuções > 30 KB; 3,0 MB acima do teto do Bash do Claude Code | AC-4: teto por harness em `HarnessCapabilities` antes de qualquer número público | 3 |
+| RV-6 | Binário e mod instalados ficam atrás do main por horas | hoje: binário anterior às correções do Compactor; savvy-progress 1.2.11 vs 1.2.13 | `downshift doctor` avisa versão instalada ≠ release; `make install` + reinstalar mods no fim de cada onda | 2 |
+| RV-7 | Processo: ordem invertida | 2 dias em contabilidade e UI antes de medir onde o dinheiro vaza | Regra: toda onda começa com `report --json` e os agregados do log; nenhuma UI antes do número existir | — |
+
+**O que deveríamos ter feito primeiro:** RV-1 e RV-4 (a economia que não aconteceu) antes do painel,
+do report e dos tiles. **Ganhos rápidos (< 1 dia):** RV-3, RV-6, e a decisão RV-2.
+
 ## 9. Nota do downshift-progress: linhas de subagente sem fim
 
 - **Sintoma (2026-10-24):** três subagentes Haiku aparecem "rodando" no savvy-progress mesmo
