@@ -77,7 +77,7 @@ For Claude Code operators, Downshift packages hooks, skills, commands, and optio
 | **Codex** | `PreToolUse` (`spawn_agent`) | `model` + `reasoning_effort` | Functional | [Codex write-up](../evidence/codex-rewrite-honored-2026-10-02.md) |
 | **Cursor** | `preToolUse` (`Task`) | `updated_input.model` | Functional | [Cursor write-up](../evidence/cursor-rewrite-honored-2026-10-10.md) |
 | **OpenCode** | `subagent` spawn intent | Hook JSON response | Beta | [OpenCode benchmark](../evidence/benchmark-opencode-2026-10-18.md) |
-| **KiroCrew** | Native CLI hook | Policy block / exit 2 | Experimental | [KiroCrew evidence](../evidence/kirocrew-native-hook-2026-10-10.md) |
+| **KiroCrew** | Native CLI hook | Policy block / exit 2 | Experimental | [KiroCrew evidence](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/findings/F5-kirocrew-native-hook.md) |
 | **Antigravity** | `PreToolUse` (`Task`) | Hook response | Experimental | [Antigravity evidence](../evidence/antigravity-executor-ack.md) |
 
 ---

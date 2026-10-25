@@ -263,7 +263,7 @@ See [code-intelligence.md](../design/code-intelligence.md) for full architectura
 
 ## Install (Cursor)
 
-**Status: Functional.** The rewrite is emitted on a real spawn; the harness applying it is unconfirmed, and it is discarded on Free and legacy Pro plans ([evidence](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](../evidence/cursor-gap-diagnostic.md)). On Cursor 3.27.12, Task `preToolUse` often omits `model` and `model_id`; Downshift remembers the parent composer slug from earlier hooks and from `subagentStop` ([internal spike](../internal/tasks/2026-10-24-cursor-live/spike.md)).
+**Status: Functional.** The rewrite is emitted on a real spawn; the harness applying it is unconfirmed, and it is discarded on Free and legacy Pro plans ([evidence](../evidence/cursor-rewrite-honored-2026-10-10.md), [gap diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md)). On Cursor 3.27.12, Task `preToolUse` often omits `model` and `model_id`; Downshift remembers the parent composer slug from earlier hooks and from `subagentStop` ([internal spike](../internal/tasks/2026-10-24-cursor-live/spike.md)).
 
 **Fastest path:** `downshift setup cursor --dry-run`, then `downshift setup cursor --yes`. That merges the hooks below (and your existing entries) and points them at the binary that ran setup.
 
@@ -423,7 +423,7 @@ malformed or stale configured export holds routing. The external experimental
 extension was tested on Cursor 3.24.9 and could not access the built-in-only
 `cursor` API, even with an explicit proposed-API flag; no export was produced.
 Installing that extension does not currently enable collection on that build.
-See [the runtime diagnostic](../evidence/cursor-gap-diagnostic.md). Provider
+See [the runtime diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md). Provider
 membership remains authoritative; do not replace it with a fixed model list.
 
 ## Compact steering (harnesses without a shell hook)
@@ -465,7 +465,7 @@ When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model 
 
 ### KiroCrew (policy mode through the native Kiro CLI hook)
 
-**Status: Experimental.** Block and retry observed once on Kiro CLI 2.29.0; no in-place rewrite ([evidence](../evidence/kirocrew-native-hook-2026-10-10.md)).
+**Status: Experimental.** Block and retry observed once on Kiro CLI 2.29.0; no in-place rewrite ([evidence](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/findings/F5-kirocrew-native-hook.md)).
 
 For Kiro CLI 2.29, register Downshift through KiroCrew's persistent
 `agent.kiro_hooks` configuration. KiroCrew generates the agent spec consumed
@@ -584,7 +584,7 @@ it does not prove successful child execution, usage, or savings. A PostToolUse
 compliance observer remains separate maintainer tooling (DS-04); this setup
 does not install one. Native block, retry and served-model acknowledgement were
 observed on 2026-10-10 with Kiro CLI 2.29.0; see
-[the build-specific evidence](../evidence/kirocrew-native-hook-2026-10-10.md).
+[the build-specific evidence](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/findings/F5-kirocrew-native-hook.md).
 
 KiroCrew's Agent Dashboard app shows the run history and health of your agents.
 It reads the agent run records of the ecosystem it is pointed at (`runs.db`),

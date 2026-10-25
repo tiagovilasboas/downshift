@@ -102,7 +102,7 @@ privados nem gerou novo turno pago para repetir essas observações.
 
 ## Pendências externas preservadas
 
-O [diagnóstico Cursor](cursor-gap-diagnostic.md) documenta que Cursor 3.24.9
+O [diagnóstico Cursor](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md) documenta que Cursor 3.24.9
 restringe `vscode.cursor` a extensões built-in. A tentativa falhou em `transport`,
 antes dos RPCs; nenhum export foi produzido. A extensão temporária foi removida
 e sua ausência conferida pelo responsável. SOURCE, AUTOLOAD e HONOR continuam

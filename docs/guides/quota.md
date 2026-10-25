@@ -182,7 +182,7 @@ restricted to built-in extensions. The external experimental bridge failed at
 transport access even with the explicit per-extension API flag, before any RPC;
 no native file was produced. The file consumer is implemented and tested, but
 this bridge is not an operational collector on that build. A supported source
-remains an open dependency. [Diagnostic](../evidence/cursor-gap-diagnostic.md).
+remains an open dependency. [Diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md).
 
 ## Operator observations and observability
 

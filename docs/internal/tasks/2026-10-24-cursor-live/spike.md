@@ -64,5 +64,5 @@ text, and a test through `runEnd`.
 
 - Rebuilding the binary. The row above was written by `v0.1.2-65-g480391dc`. The two commits after it are the changelog close and `gh run view --log` compression.
 - Syncing `~/.cursor/rules/kiro-*.mdc` from harness-core. That is the rules generator, not the router.
-- The native quota bridge. Cursor still blocks that transport for non-built-in extensions ([gap diagnostic](../../../evidence/cursor-gap-diagnostic.md)).
+- The native quota bridge. Cursor still blocks that transport for non-built-in extensions ([gap diagnostic](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/cursor/findings/F1-cursor-gap-diagnostic.md)).
 - Claiming the rewrite was honored. This spawn emitted no rewrite. The 2026-10-10 spawn emitted one and the child transcript had no executor model ([rewrite evidence](../../../evidence/cursor-rewrite-honored-2026-10-10.md)).
