@@ -178,3 +178,84 @@ func TestCleanModel(t *testing.T) {
 		}
 	}
 }
+
+func TestInferKiroCrewMetrics(t *testing.T) {
+	// Create a temp CLI sessions directory
+	tmp := t.TempDir()
+	cliDir := filepath.Join(tmp, ".kiro", "sessions", "cli")
+	if err := os.MkdirAll(cliDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock home directory
+	oldHome := os.Getenv("HOME")
+	os.Setenv("HOME", tmp)
+	defer os.Setenv("HOME", oldHome)
+
+	sessionID := "12345678-1234-1234-1234-123456789abc"
+	sessionJSON := `{
+		"session_state": {
+			"rts_model_state": {
+				"model_info": {
+					"model_id": "claude-sonnet-4"
+				}
+			},
+			"conversation_metadata": {
+				"user_turn_metadatas": [
+					{"context_used": 50000, "context_window": 200000},
+					{"context_used": 96745, "context_window": 200000}
+				]
+			}
+		}
+	}`
+	if err := os.WriteFile(filepath.Join(cliDir, sessionID+".json"), []byte(sessionJSON), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	metrics, err := InferKiroCrewMetrics(sessionID)
+	if err != nil {
+		t.Fatalf("InferKiroCrewMetrics failed: %v", err)
+	}
+
+	if metrics.Model != "claude-sonnet-4" {
+		t.Errorf("Model = %q; want claude-sonnet-4", metrics.Model)
+	}
+	if metrics.ContextUsed != 96745 {
+		t.Errorf("ContextUsed = %d; want 96745", metrics.ContextUsed)
+	}
+	if metrics.ContextWindow != 200000 {
+		t.Errorf("ContextWindow = %d; want 200000", metrics.ContextWindow)
+	}
+}
+
+func TestKiroSessionMetrics_ContextUtilization(t *testing.T) {
+	cases := []struct {
+		name    string
+		metrics KiroSessionMetrics
+		want    float64
+	}{
+		{
+			name:    "normal",
+			metrics: KiroSessionMetrics{ContextUsed: 100000, ContextWindow: 200000},
+			want:    50.0,
+		},
+		{
+			name:    "zero window",
+			metrics: KiroSessionMetrics{ContextUsed: 100000, ContextWindow: 0},
+			want:    0.0,
+		},
+		{
+			name:    "full",
+			metrics: KiroSessionMetrics{ContextUsed: 200000, ContextWindow: 200000},
+			want:    100.0,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.metrics.ContextUtilization()
+			if got != tc.want {
+				t.Errorf("ContextUtilization() = %f; want %f", got, tc.want)
+			}
+		})
+	}
+}

@@ -192,3 +192,20 @@ type SavingsEstimate struct {
 	// PerTaskTokensHigh is the 97.5th percentile.
 	PerTaskTokensHigh float64 `json:"per_task_tokens_high"`
 }
+
+// KiroCrewSessionMetrics holds context metrics from a KiroCrew session.
+// These are best-effort values; any field may be zero if unavailable.
+// Tokens are not included because KiroCrew's ACP provider always reports zero
+// (see F7 in downshift-labs/reverse/kirocrew/).
+type KiroCrewSessionMetrics struct {
+	// SessionID is the KiroCrew session identifier.
+	SessionID string `json:"session_id"`
+	// Model is the model ID used in this session.
+	Model string `json:"model"`
+	// ContextUsed is the number of context tokens consumed in the last turn.
+	ContextUsed int64 `json:"context_used"`
+	// ContextWindow is the model's maximum context window.
+	ContextWindow int64 `json:"context_window"`
+	// ContextUtilization is ContextUsed / ContextWindow * 100.
+	ContextUtilization float64 `json:"context_utilization_pct"`
+}
