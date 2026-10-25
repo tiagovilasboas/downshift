@@ -94,6 +94,7 @@ uma sessão ao vivo com o dono).
 4. **CI-2:** cobrança do Actions (sem isso, repo privado não roda CI).
 5. **CI-3:** mod tests em CI.
 6. **RL-4:** tag da release.
+7. **OpenRouter (D-1/D-2, parts 4–6):** por último — não antecipar antes dos itens 1–5 e release/site (dono 2026-10-24).
 
 ## Ordem sugerida
 

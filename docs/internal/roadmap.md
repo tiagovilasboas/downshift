@@ -110,8 +110,8 @@ permanece ligada (fail-open e inofensiva).
 
 | Fase | Pts | O que é | Depende de | Status |
 |------|-----|---------|------------|--------|
-| **D-1** | 5 | OpenRouter part 4: shadow routing para gateway rows | parts 1–3 mergeadas | 🔲 |
-| **D-2** | 5 | OpenRouter part 5: wiring OpenCode com id `openrouter/<slug>` | D-1 | 🔲 |
+| **D-1** | 5 | OpenRouter part 4: shadow routing para gateway rows | parts 1–3 mergeadas; **por último** na fila (dono 2026-10-24) | ⏸ |
+| **D-2** | 5 | OpenRouter part 5: wiring OpenCode com id `openrouter/<slug>` | D-1; depois de M1, honor Cursor/Codex, compactor P1 e release 0.1.4 | ⏸ |
 | **D-3** | 5 | DCI hook via shared runner (layering rule) | — | ✅ mergeado (#468) |
 
 **Coleta passiva (não é tarefa — acontece com uso, não se "faz"):**
@@ -252,6 +252,9 @@ Quando a Vercel liberar:
 
 Coleta passiva, em paralelo ao uso:
   D-4 (child-token payloads) · D-5 (control group) · R-1/R-2 (dogfood)
+
+Por último (dono 2026-10-24 — não puxar antes do resto):
+  D-1 → D-2 (OpenRouter parts 4–6; parts 1–3 já mergeadas/review)
 ```
 
 **Próxima ação de maior valor:** fechar A-P5 Cursor com observação ao vivo de
@@ -274,3 +277,4 @@ quando a Vercel liberar.
 | 1 | Gate do git diff/show: danger word em linha `+`/`-` → pass-through ou comprimir? | Conservador (atual) · Afrouxar para linhas de mudança |
 | 2 | DASH-1 API shape: como agregar tokens por sessão? | Campo `tokens` em `/api/sessions` · `GET /api/tokens/aggregate` |
 | 3 | `adapt_eval` ainda imprime USD: manter como ferramenta interna opt-in ou alinhar ao "no dollar output"? | Manter (atual) · Alinhar |
+| 4 | **OpenRouter (D-1/D-2, parts 4–6)** | **Decidido 2026-10-24:** por último — depois de proof M1, compactor CP-*, honor A-P5/RT-4, accounting AC-*, release 0.1.4 |
