@@ -397,6 +397,9 @@ func detectFormat(input []byte) (Format, bool) {
 	if isGhRunList(input) {
 		return FormatGhRunList, false
 	}
+	if isGhRunLog(input) {
+		return FormatGhRunLog, false
+	}
 
 	// 11. Repetitive logs, only after test suites, git status and git log had their
 	// say: a failing test run or a git log with repeated lines must stay raw.
@@ -556,6 +559,8 @@ func applyFormatCompression(input []byte, f Format) ([]byte, bool, string) {
 		return compressGhPrChecks(input)
 	case FormatGhRunList:
 		return compressGhRunList(input)
+	case FormatGhRunLog:
+		return compressGhRunLog(input)
 	case FormatSearch:
 		return compressSearchResults(input)
 	case FormatFileList:

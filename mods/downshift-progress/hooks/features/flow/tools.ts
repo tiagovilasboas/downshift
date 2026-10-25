@@ -16,9 +16,9 @@ import { readFlow, readStepOf, writeFlow, writeStep } from './state'
 export const PROGRESS_TOOL = `mcp__${PLUGIN}__progress`
 export const STEP_TOOL = `mcp__${PLUGIN}__step`
 
-// A registered tool's result is a string (the engine checks the output shape);
-// a refused call is a `deny`, which the model reads as an error result.
-const text = (message: string, isError = false) => (isError ? { deny: message } : { result: message })
+const text = (message: string, isError = false) => ({
+  result: { content: [{ type: 'text', text: message }], ...(isError ? { isError: true } : {}) },
+})
 
 export const PROGRESS_SPEC = {
   name: 'progress',

@@ -61,10 +61,11 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 | ~~P0~~ | ~~Opt-in `downshift exec`~~ — superseded: the native compactor (`downshift compact`) is on by default with the plugin, `"exec": false` turns it off. Families: go test, git status, pytest, vitest, jest, tsc, cargo test, playwright, phpunit, next build, Gradle, Maven, Flutter/Dart. The conformance suite gates every family. |
 | P1 | Child-token payloads for Cursor, Codex, OpenCode, KiroCrew and Antigravity so tokens-first views cover them (today `stats` shows all five as unobserved); Codex tier order decision |
 | P1 | More harness matrix rows (Cursor paid plans, etc.) |
-| P1 | OpenRouter, parts 4–6: shadow routing for gateway rows, harness wiring (OpenCode first), same-vendor live rewrite behind a flag. Parts 1–3 are merged or in review; the research in [verification](docs/internal/tasks/2026-10-20-openrouter/verification.md) changes the OpenCode id form to `openrouter/<slug>` |
+| ~~P1~~ | **OpenRouter parts 4–6 deferred (owner 2026-10-24):** shadow routing, OpenCode wiring (`openrouter/<slug>`), live rewrite behind a flag — after M1 proof, compactor backlog, and harness honor. Parts 1–3 merged or in review; [verification](docs/internal/tasks/2026-10-20-openrouter/verification.md) |
 | P1 | DCI hook through the shared runner (layering rule); measure injected-context savings before any default change |
 | P1 | Optional: container image on GHCR |
 | P1 | Control group: 14 completed tasks against a minimum of 20 per group (`downshift report`), before any routing-cost claim |
+| P1 | Publish the real-use measurement behind the "up to ~53% fewer tokens per task" figure as a file under `docs/evidence/` (1 pt): KiroCrew, 2026-10-21, routing and compactor combined, 6 control tasks, one session, plus the routing-only ~24% from the four-arm Claude Code test (46 runs). Third parties already quote the figure (the Montanha Tech site), so it needs a durable source with method and sample size, and it keeps the "directional, not definitive" qualifier |
 | P1 | Independent outcome suite and cost per completed task before any tier-memory promotion ([gap-tasks](docs/internal/gap-tasks.md): GAP-SUITE, GAP-MEMORY-COUNTS) |
 | P1 | Real hook payloads for Cursor, Codex, Kiro, Antigravity, and the Claude Code failure event (GAP-PAYLOADS, GAP-CHILD-FAILURE) |
 | P1 | Learned complexity scorer for EN and PT-BR (hashed word and char n-grams plus structural features, embedded JSON under 1 MB, shadow first, abstain to MEDIUM). Needs about 2,400 labelled prompts, at least 40% PT-BR |
@@ -82,6 +83,7 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 | SDKs | TypeScript/Python clients scoped (`@downshift/*`, not npm `downshift`) |
 | Cloud (optional paid) | Hosted routing, analytics, governance — see [MONETIZATION.md](MONETIZATION.md) |
 | Learned routing | Upshift-only second opinions; see [router-generalization](docs/design/router-generalization.md) |
+| OpenRouter integration | Parts 4–6 (shadow, OpenCode `openrouter/<slug>`, flagged live rewrite) — **last** among near-term work (owner 2026-10-24); parts 1–3 already landed or in review |
 
 ---
 
