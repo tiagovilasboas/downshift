@@ -38,14 +38,14 @@ var (
 
 	// Skip these noisy setup steps
 	ghRunLogSkipSteps = map[string]bool{
-		"Set up job":                        true,
-		"Post Run actions/checkout":         true,
-		"Post Run actions/setup-go":         true,
-		"Post Run actions/setup-node":       true,
-		"Post Run actions/setup-python":     true,
-		"Post Run actions/cache":            true,
-		"Complete job":                       true,
-		"Run actions/checkout":              true,
+		"Set up job":                    true,
+		"Post Run actions/checkout":     true,
+		"Post Run actions/setup-go":     true,
+		"Post Run actions/setup-node":   true,
+		"Post Run actions/setup-python": true,
+		"Post Run actions/cache":        true,
+		"Complete job":                  true,
+		"Run actions/checkout":          true,
 	}
 
 	// These step prefixes are setup noise
@@ -84,12 +84,12 @@ func compressGhRunLog(input []byte) ([]byte, bool, string) {
 	lines := strings.Split(string(input), "\n")
 
 	type jobInfo struct {
-		name       string
-		steps      []string
-		errors     []string
-		warnings   []string
-		important  []string // test failures, build errors
-		lineCount  int
+		name      string
+		steps     []string
+		errors    []string
+		warnings  []string
+		important []string // test failures, build errors
+		lineCount int
 	}
 
 	jobs := make(map[string]*jobInfo)
