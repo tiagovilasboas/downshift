@@ -10,10 +10,23 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 var watchT0 = time.Date(2026, 10, 13, 9, 0, 0, 0, time.UTC)
+
+// clearAllSessionEnvs clears every declared SessionEnv variable so tests do
+// not inherit a harness identity from the environment (e.g. KIRO_SESSION_ID
+// when running inside KiroCrew).
+func clearAllSessionEnvs(t *testing.T) {
+	t.Helper()
+	for _, n := range core.AllHarnessCaps() {
+		if n.Caps.SessionEnv != "" {
+			t.Setenv(n.Caps.SessionEnv, "")
+		}
+	}
+}
 
 func watchEv(id, sess string, d time.Duration, outcome string) telemetry.Event {
 	return telemetry.Event{
@@ -25,7 +38,7 @@ func watchEv(id, sess string, d time.Duration, outcome string) telemetry.Event {
 
 func TestWatchFrame_FakeClockAndTimeoutToUnknown(t *testing.T) {
 	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
-	t.Setenv("CLAUDE_CODE_SESSION_ID", "")
+	clearAllSessionEnvs(t)
 	sess := telemetry.HashSessionID("w-sess")
 	events := []telemetry.Event{
 		watchEv("d1", sess, 0, telemetry.OutcomeRewriteEmitted),
@@ -54,7 +67,7 @@ func TestWatchFrame_FakeClockAndTimeoutToUnknown(t *testing.T) {
 
 func TestWatchFrame_NoSessionFallback(t *testing.T) {
 	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
-	t.Setenv("CLAUDE_CODE_SESSION_ID", "")
+	clearAllSessionEnvs(t)
 	out, err := watchFrame(nil, "", cmdCat, watchT0, time.Second)
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +82,7 @@ func TestWatchFrame_NoSessionFallback(t *testing.T) {
 
 func TestWatchRun_LoopClearsAndStopsOnCancel(t *testing.T) {
 	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
-	t.Setenv("CLAUDE_CODE_SESSION_ID", "")
+	clearAllSessionEnvs(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	frames := 0
 	read := func() []telemetry.Event {
@@ -91,7 +104,7 @@ func TestWatchRun_LoopClearsAndStopsOnCancel(t *testing.T) {
 
 func TestWatchRun_OnceHasNoAnsiAndRejectsBadArgs(t *testing.T) {
 	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
-	t.Setenv("CLAUDE_CODE_SESSION_ID", "")
+	clearAllSessionEnvs(t)
 	var o, e bytes.Buffer
 	if rc := watchRun(context.Background(), []string{"--once"}, &o, &e, cmdCat, func() time.Time { return watchT0 }, func() []telemetry.Event { return nil }); rc != 0 || strings.Contains(o.String(), "\x1b") {
 		t.Fatalf("once: rc=%d %q", rc, o.String())
@@ -106,7 +119,7 @@ func TestWatchRun_OnceHasNoAnsiAndRejectsBadArgs(t *testing.T) {
 func TestWatch_RealLogOnceFrame(t *testing.T) {
 	seedTreeLog(t)
 	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
-	t.Setenv("CLAUDE_CODE_SESSION_ID", "")
+	clearAllSessionEnvs(t)
 	var o, e bytes.Buffer
 	rc := watchRun(context.Background(), []string{"--once", "--session=sess-a"}, &o, &e, cmdCat, time.Now, func() []telemetry.Event {
 		ev, _ := telemetry.ReadEventsTail(telemetry.DefaultTailBytes)

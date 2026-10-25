@@ -26,6 +26,7 @@ func TestRunExec_EntryAndHarness(t *testing.T) {
 	cases := []struct {
 		name        string
 		env         string
+		envVar      string // which SessionEnv var to set (default: ClaudeCodeCaps.SessionEnv)
 		args        []string
 		wantSession string
 		wantEntry   string
@@ -63,6 +64,24 @@ func TestRunExec_EntryAndHarness(t *testing.T) {
 			wantEntry:   "direct",
 			wantHarness: "claude-code",
 		},
+		{
+			name:        "kirocrew — detected via KIRO_SESSION_ID",
+			env:         "70156318-1c75-44f0-ab31-e6adb7ebe0f5",
+			envVar:      "KIRO_SESSION_ID",
+			args:        []string{"--"},
+			wantSession: "",
+			wantEntry:   "direct",
+			wantHarness: "kirocrew",
+		},
+		{
+			name:        "kirocrew hook — session from flag",
+			env:         "70156318-1c75-44f0-ab31-e6adb7ebe0f5",
+			envVar:      "KIRO_SESSION_ID",
+			args:        []string{"--session=" + flagHash, "--"},
+			wantSession: flagHash,
+			wantEntry:   "hook",
+			wantHarness: "kirocrew",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -74,7 +93,12 @@ func TestRunExec_EntryAndHarness(t *testing.T) {
 					t.Setenv(n.Caps.SessionEnv, "")
 				}
 			}
-			t.Setenv(core.ClaudeCodeCaps.SessionEnv, tc.env)
+			// Set the appropriate env var (default to Claude Code)
+			envVar := tc.envVar
+			if envVar == "" {
+				envVar = core.ClaudeCodeCaps.SessionEnv
+			}
+			t.Setenv(envVar, tc.env)
 
 			var out, errb bytes.Buffer
 			runExec(append(tc.args, "downshift-test-no-such-program"), strings.NewReader(""), &out, &errb)
