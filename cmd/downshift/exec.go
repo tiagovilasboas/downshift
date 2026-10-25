@@ -62,6 +62,7 @@ func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			ev := execwrap.EventFrom(res, time.Now())
 			ev.Session = session
 			ev.Harness = envHarness()
+			ev.Model = envModel(ev.Harness)
 			ev.Entry = entry
 			_ = execwrap.Append(path, ev)
 		}
