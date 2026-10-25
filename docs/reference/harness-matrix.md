@@ -249,13 +249,19 @@ statusline segment needs a statusline bridge (Claude Code today). Details:
 `downshift session` (tree, `--why`, `--pause`) is shared code; what differs is
 whether a harness gives it a session id. `HarnessCapabilities.SessionEnv` names
 the variable a harness exports to commands run from it: Claude Code
-`CLAUDE_CODE_SESSION_ID` (seen set in a Bash tool call on Claude Code 2.1.289);
-others declare none and the command uses the latest session in the log. The
-hook payload carries a session id for Claude Code and Codex only, so only they
-group in the tree and can be paused per session. Cursor, Antigravity and
-KiroCrew events carry none: computed and logged, not groupable, not pausable
-(the global `DOWNSHIFT_NO_ROUTE=1` still applies). The `/downshift` slash
-command is Claude Code only. See [session-view.md](../guides/session-view.md).
+`CLAUDE_CODE_SESSION_ID` (seen set in a Bash tool call on Claude Code 2.1.289)
+and KiroCrew `KIRO_SESSION_ID` (set by the KiroCrew gateway for every agent
+process, PR #559, 2026-10-25); Cursor, Codex and Antigravity declare none and
+the command uses the latest session in the log. The hook payload carries a
+session id for Claude Code and Codex only, so only they group in the tree and
+can be paused per session. Antigravity, Cursor and KiroCrew carry none in the
+hook payload: computed and logged, not groupable, not pausable (the global
+`DOWNSHIFT_NO_ROUTE=1` still applies). KiroCrew's `SessionEnv` does let a
+command run from the harness (the `downshift compactor`/`exec` shell wrap)
+attribute its exec event to `kirocrew` instead of `unknown`, through
+`envHarness()` reading `KIRO_SESSION_ID`; the tree grouping still needs a
+hook-payload id it does not have. The `/downshift` slash command is Claude
+Code only. See [session-view.md](../guides/session-view.md).
 
 ## Public score coverage (capability path)
 
@@ -606,6 +612,7 @@ acknowledgement, so the Codex row above is not refreshed. See
 - Cursor free/legacy discard: README.md:734-735, README.md:738, README.md:1012-1013
 - Codex flags + honored: README.md:744, README.md:746; evidence 2026-10-02: docs/evidence/codex-rewrite-honored-2026-10-02.md; evolving schema: README.md:373
 - KiroCrew adapter capability and integration limits: [native hook setup](../guides/install.md#kirocrew-policy-mode-through-the-native-kiro-cli-hook), [routing guia](../guides/kirocrew-routing-guide.md), `internal/adapters/kirocrew/kirocrew.go`. A hook invocation counter or direct adapter smoke test does not prove live enforcement or the served child model.
+- KiroCrew harness detection and `SessionEnv: KIRO_SESSION_ID` (PR #559, merged 2026-10-25): [kirocrew-harness-detection.md](../spikes/kirocrew-harness-detection.md), `internal/core/capabilities.go` (`KiroCrewCaps`), `cmd/downshift/session.go` (`envHarness`). The env var lets `envHarness()` attribute `downshift compactor`/`exec` events to `kirocrew`; it is not a hook-payload session id, so the `downshift session` tree still cannot group or pause KiroCrew. The spike lists the model set reported by `kiro-cli chat --list-models` (with `rate_multiplier`); catalog membership for those ids (T4), `InferSession` (T5), `PayloadMarkers` (T2) and `AgentTypeHints` (T7) are open follow-ups in that spike, not shipped, so they stay documented as the matrix shows: `InferSession` no, no payload markers, no type hints.
 - Vendor hook docs vs adapters (search summaries, 2026-10-11): [vendor-hook-docs](../evidence/vendor-hook-docs-2026-10-11.md)
 - Antigravity observed child, dated build and evidence limits: [native evidence](../evidence/antigravity-executor-ack.md) and [final QA](../evidence/final-gap-qa.md)
 - Grok config-only: README.md:520-531, README.md:691, README.md:1236
