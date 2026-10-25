@@ -3,31 +3,20 @@
 
 package accounting
 
-import (
-	"os"
-
-	"github.com/tiagovilasboas/downshift/internal/discovery"
-)
-
-// GetKiroCrewMetrics returns session metrics for the current KiroCrew session.
-// Returns nil if not running in KiroCrew or metrics cannot be determined.
-func GetKiroCrewMetrics() *KiroCrewSessionMetrics {
-	sessionID := os.Getenv("KIRO_SESSION_ID")
-	if sessionID == "" {
-		return nil
+// NewKiroCrewSessionMetrics creates session metrics from raw values.
+// The caller is responsible for obtaining these values from discovery.InferKiroCrewMetrics.
+// This separation maintains the layer boundary: accounting does not import discovery.
+func NewKiroCrewSessionMetrics(sessionID, model string, contextUsed, contextWindow int64) *KiroCrewSessionMetrics {
+	var utilization float64
+	if contextWindow > 0 {
+		utilization = float64(contextUsed) / float64(contextWindow)
 	}
-
-	metrics, err := discovery.InferKiroCrewMetrics(sessionID)
-	if err != nil {
-		return nil
-	}
-
 	return &KiroCrewSessionMetrics{
 		SessionID:          sessionID,
-		Model:              metrics.Model,
-		ContextUsed:        metrics.ContextUsed,
-		ContextWindow:      metrics.ContextWindow,
-		ContextUtilization: metrics.ContextUtilization(),
+		Model:              model,
+		ContextUsed:        contextUsed,
+		ContextWindow:      contextWindow,
+		ContextUtilization: utilization,
 	}
 }
 
