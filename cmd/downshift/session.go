@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/discovery"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -149,6 +150,26 @@ func envHarness() string {
 		}
 	}
 	return "unknown"
+}
+
+// envModel returns the LLM model for the given harness when it can be inferred
+// from the harness's session data. Returns empty when the harness does not
+// expose model information or when detection fails.
+func envModel(harness string) string {
+	switch harness {
+	case "kirocrew":
+		sessionID := os.Getenv(core.KiroCrewCaps.SessionEnv)
+		if sessionID == "" {
+			return ""
+		}
+		model, err := discovery.InferKiroCrewModel(sessionID)
+		if err != nil || model == discovery.KiroModelUnknown {
+			return ""
+		}
+		return model
+	default:
+		return "" // Claude Code, Codex, etc. do not expose model
+	}
 }
 
 func sessionFromID(v string, events []telemetry.Event) (string, error) {

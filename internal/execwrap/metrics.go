@@ -65,6 +65,10 @@ type Event struct {
 	// field was added (old readers can ignore it; new readers treat absence as
 	// "unknown").
 	Entry string `json:"entry,omitempty"`
+	// Model is the LLM model that ran this command, when detectable from the
+	// harness's session data (e.g. KiroCrew's session files). Empty when the
+	// harness does not expose model information or when detection fails.
+	Model string `json:"model,omitempty"`
 }
 
 // EventFrom builds the log record for a Result.
