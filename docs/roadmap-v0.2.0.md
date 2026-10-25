@@ -1,7 +1,6 @@
 # Downshift v0.2.0 Roadmap — KiroCrew Deep Integration
 
-**Status:** Planning
-**Target:** After v0.1.4 stabilizes
+**Status:** ✅ Released (2026-10-25)
 **Theme:** Leverage F8 discoveries for performance metrics
 
 ## Background
@@ -9,126 +8,122 @@
 O REA profundo (F8) revelou que o KiroCrew é Electron + Python backend completo.
 Isso abre oportunidades de integração que não dependem de mudanças no produto.
 
-## Features Planejadas
+## Features Entregues
 
-### 1. Savings Estimation via context_used (2 pts)
+### 1. ✅ Savings Estimation via context_used (2 pts)
 
 **O que:** Estimar economia de tokens baseado em output compactado vs original.
 
-**Como:**
+**Implementação:**
 ```go
-// internal/metrics/savings.go
-type SavingsEstimate struct {
-    OriginalBytes   int
-    CompactedBytes  int
-    ReductionPct    float64
-    ContextUsed     int     // from KiroCrew session
-    EstimatedTokens int     // context_used / 4 (rough estimate)
+// internal/discovery/kirocrew.go
+type KiroSessionMetrics struct {
+    ContextUsed   int64  `json:"context_used"`
+    ContextWindow int64  `json:"context_window"`
+    DurationMs    int64  `json:"duration_ms"`
+    Model         string `json:"model"`
 }
+
+func InferKiroCrewMetrics(sessionID string) (KiroSessionMetrics, error)
+func (m KiroSessionMetrics) ContextUtilization() float64
+
+// internal/accounting/kirocrew.go
+func EstimateContextSavings(compactorSaved int64, contextUsed int64) float64
 ```
 
-**Dados disponíveis:**
+**Dados utilizados:**
 - `context_used` em `~/.kiro/sessions/cli/<id>.json`
-- Output original vs compactado (já medimos)
+- `context_window` para calcular utilização
 
-**Entrega:** `downshift stats` com savings estimado.
+### 2. ✅ Harness Limitations Registry (novo)
 
-### 2. Model-Aware Routing Advisory (3 pts)
+**O que:** Registry centralizado de limitações por harness para transparência.
 
-**O que:** Recomendar modelo baseado no tipo de comando e contexto.
-
-**Como:**
+**Implementação:**
 ```go
-// internal/routing/advisory.go
-func RecommendModel(cmd string, contextUsed int) string {
-    // Comandos simples + contexto baixo → Haiku
-    // Testes + contexto médio → Sonnet
-    // Build complexo + contexto alto → manter atual
-}
+// internal/limits/limits.go
+const (
+    FeatureModelRewrite      = "model_rewrite"
+    FeatureTokenCounts       = "token_counts"
+    FeatureCompaction        = "compaction"
+    FeatureMidSessionRouting = "mid_session_routing"
+    FeatureSavingsEstimation = "savings_estimation"
+)
+
+const (
+    StatusFull    = "full"
+    StatusPartial = "partial"
+    StatusNone    = "none"
+    StatusManual  = "manual"
+)
+
+func ForHarness(harnessID string) *HarnessLimits
 ```
 
-**Entrega:** Flag `--recommend-model` no compactor.
+**Harnesses cobertos:** kirocrew, claudecode, cursor, codex, antigravity, opencode
 
-### 3. Metrics Dashboard (3 pts)
+### 3. ✅ Doctor Integration
 
-**O que:** Visualização de métricas acumuladas.
+**O que:** Mostrar limitações no output do doctor.
 
-**Como:**
-```bash
-$ downshift dashboard
-┌─────────────────────────────────────┐
-│ Downshift Metrics (last 7 days)     │
-├─────────────────────────────────────┤
-│ Commands compacted: 847             │
-│ Output reduced: 12.4 MB → 2.1 MB    │
-│ Reduction: 83%                      │
-│ Estimated tokens saved: ~3.1M       │
-│ Model distribution:                 │
-│   claude-sonnet-4: 72%              │
-│   claude-opus-4: 18%                │
-│   claude-haiku-4: 10%               │
-└─────────────────────────────────────┘
+**Exemplo:**
+```
+kirocrew
+  ✓ hooks wired     2 of 2 expected
+  ✓ session list    file (3 models)
+  ! limitations     model_rewrite:none, token_counts:none, compaction:manual
+      fix: see 'downshift help kirocrew' for details
 ```
 
-**Entrega:** `downshift dashboard` ou `downshift stats --week`.
+## Features Movidas para v0.3.0
 
-### 4. preToolUse Hook Integration (5 pts)
+### Model-Aware Routing Advisory (3 pts)
+- Recomendar modelo baseado no tipo de comando e contexto
+- Flag `--recommend-model` no compactor
 
-**O que:** Hook nativo no KiroCrew para métricas em tempo real.
+### Metrics Dashboard Aprimorado (3 pts)
+- Visualização de métricas acumuladas
+- `downshift dashboard` ou `downshift stats --week`
 
-**Como:**
-```json
-// ~/.kiro/hooks/downshift-metrics.json
-{
-  "name": "Downshift Metrics",
-  "when": { "type": "preToolUse" },
-  "then": {
-    "type": "runScript",
-    "script": "downshift hook --pre"
-  }
-}
-```
-
-**Entrega:** `downshift hook --install` para setup automático.
-
-## Dependências
-
-| Feature | Depende de |
-|---------|-----------|
-| Savings | context_used (já disponível) |
-| Routing | Model detection (v0.1.4 ✅) |
-| Dashboard | Exec-events (já temos) |
-| Hook | preToolUse (F5 documentado) |
+### preToolUse Hook Integration (5 pts)
+- Hook nativo no KiroCrew para métricas em tempo real
+- `downshift hook --install` para setup automático
 
 ## Timeline
 
 ```
-v0.1.4 (atual) ─────────────────────────────────────────────
+v0.1.4 (2026-10-25) ────────────────────────────────────────
   ✅ KiroCrew harness detection
   ✅ Model inference
   ✅ Compactor steering
 
-v0.2.0 (próximo) ───────────────────────────────────────────
-  🔲 Savings estimation
-  🔲 Model advisory
-  🔲 Metrics dashboard
+v0.2.0 (2026-10-25) ────────────────────────────────────────
+  ✅ Savings estimation (context_used proxy)
+  ✅ Harness limitations registry
+  ✅ Doctor integration
 
-v0.3.0 (futuro) ────────────────────────────────────────────
-  🔲 preToolUse hook
-  🔲 Real-time metrics
-  🔲 Cost projection
+v0.3.0 (próximo) ───────────────────────────────────────────
+  🔲 Model advisory
+  🔲 Metrics dashboard aprimorado
+  🔲 preToolUse hook nativo
 ```
 
-## Não Planejado (bloqueado pelo KiroCrew)
+## Bloqueios Conhecidos (KiroCrew)
 
-| Feature | Bloqueio |
-|---------|----------|
-| Token counting real | ACP não expõe tokens |
-| Cost calculation real | Sem tokens, sem custo |
-| Auto model switching | Sem API para trocar modelo |
+| Feature | Bloqueio | Workaround |
+|---------|----------|------------|
+| Token counting real | ACP não expõe tokens | Usar context_used como proxy |
+| Cost calculation real | Sem tokens, sem custo | Estimativa baseada em context |
+| Auto model switching | preToolUse é allow/block only | Policy mode (block + retry) |
+| Automatic compaction | Sem updated_input | Steering para invocação manual |
 
-## Métricas de Sucesso
+## PRs Incluídos
 
-- Savings estimation dentro de 20% do real (quando tokens forem expostos)
-- Dashboard útil sem tokens reais
-- Hook instalável em < 1 minuto
+- #565: docs: add v0.2.0 roadmap
+- #566: feat(accounting): add context metrics for savings estimation
+
+## Documentação Relacionada
+
+- F1-F8 findings: `downshift-labs/reverse/kirocrew/findings/`
+- SPIKE: `downshift-labs/reverse/kirocrew/SPIKE.md`
+- harness-registry: seção "REA: KiroCrew Integration"

@@ -246,7 +246,12 @@ harness, per the [Harness Matrix](docs/reference/harness-matrix.md):
 | **Cursor** | `downshift compact` run by the agent | Rewrite emitted, honored unconfirmed | Functional | `downshift setup cursor` |
 | **OpenCode** | `downshift compact` run by the agent | Adapter and conformance tests; no live spawn yet | Beta | Plugin in development |
 | **Antigravity** | `downshift compact` run by the agent | One observed child on one build | Experimental | `downshift setup antigravity` |
-| **KiroCrew** | `downshift compact` run by the agent | Policy mode (allow or block and retry, no rewrite) | Experimental | `downshift setup kirocrew` |
+| **KiroCrew** | `downshift compact` run by the agent | Policy mode (allow/block, no rewrite) | Functional | `downshift setup kirocrew` |
+
+**KiroCrew note:** KiroCrew's preToolUse hook only supports allow/block decisions (no `updated_input`),
+so model routing works in policy mode — blocking a spawn with a message telling the agent to respawn
+at the recommended tier. Token counts are not exposed by the ACP provider; `downshift doctor` shows
+these limitations with a `!` warning. See `downshift help kirocrew` for details.
 
 Only Claude Code rewrites a command into its compact form automatically. On every other
 harness the compact command works when the agent runs it directly.
