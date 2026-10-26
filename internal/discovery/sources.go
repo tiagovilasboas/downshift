@@ -92,7 +92,7 @@ func (KiroCLI) Name() string    { return "kiro-cli chat --list-models" }
 func (k KiroCLI) Discover(ctx context.Context) ([]Model, error) {
 	bin := k.Bin
 	if bin == "" {
-		bin = "kiro-cli"
+		bin = defaultKiroCLI()
 	}
 	out, err := runCLI(ctx, bin, "chat", "--list-models", "--format", "json")
 	if err != nil {
@@ -311,7 +311,7 @@ var cliEnvAllow = map[string]bool{
 // cliOwnPrefix is the variable prefix a given CLI may read for itself.
 func cliOwnPrefix(bin string) string {
 	switch strings.TrimSuffix(filepath.Base(bin), ".exe") {
-	case "kiro-cli":
+	case "kiro-cli", "kiro-cli-chat":
 		return "KIRO_"
 	case "cursor-agent", "agent":
 		return "CURSOR_"
