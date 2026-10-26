@@ -211,8 +211,9 @@ func TestWrapperScriptPOSIX(t *testing.T) {
 	}
 	for _, want := range []string{
 		"#!/bin/sh\n",
-		`bin='/opt/my tools/it'\''s/downshift'`, // quoted, not interpreted
-		`[ -x "$bin" ] || { echo "downshift: $bin not found, hook skipped" >&2; exit 0; }`,
+		`recorded='/opt/my tools/it'\''s/downshift'`, // quoted, not interpreted
+		`if [ ! -x "$bin" ]; then bin=$(command -v downshift 2>/dev/null); fi`,
+		`echo "downshift: $recorded not found and no downshift on PATH, hook skipped" >&2; exit 0; }`,
 	} {
 		if !strings.Contains(s, want) {
 			t.Errorf("missing %q:\n%s", want, s)
@@ -282,11 +283,7 @@ func TestGeneratedWrapperRuns(t *testing.T) {
 	}
 	dir := t.TempDir()
 	hostile := filepath.Join(dir, "a'b$(touch PWNED1)`touch PWNED2`;touch PWNED3 c")
-	script := "#!/bin/sh\n" + `[ "$1" = ` + fakeArgs + ` ] || exit 64` + "\n" +
-		`cat > "$0.stdin"` + "\n" + `exit "${FAKE_EXIT:-0}"` + "\n"
-	if err := os.WriteFile(hostile, []byte(script), 0o755); err != nil {
-		t.Fatal(err)
-	}
+	fakeBinary(t, hostile)
 	body, err := wrapperScript("linux", hostile, fakeArgs)
 	if err != nil {
 		t.Fatal(err)
@@ -295,23 +292,7 @@ func TestGeneratedWrapperRuns(t *testing.T) {
 	if err := os.WriteFile(wrapper, []byte(body), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	run := func(exit string) (int, string) {
-		cmd := exec.Command(wrapper)
-		cmd.Dir = dir
-		cmd.Env = append(os.Environ(), "FAKE_EXIT="+exit)
-		cmd.Stdin = strings.NewReader(`{"tool_name":"spawn_run"}`)
-		var stderr bytes.Buffer
-		cmd.Stderr = &stderr
-		code := 0
-		if err := cmd.Run(); err != nil {
-			ee, ok := err.(*exec.ExitError)
-			if !ok {
-				t.Fatal(err)
-			}
-			code = ee.ExitCode()
-		}
-		return code, stderr.String()
-	}
+	run := func(exit string) (int, string) { return runWrapper(t, wrapper, os.Getenv("PATH"), exit) }
 	for _, want := range []int{0, 2} {
 		if got, _ := run(strconv.Itoa(want)); got != want {
 			t.Errorf("exit = %d, want %d", got, want)
@@ -328,7 +309,72 @@ func TestGeneratedWrapperRuns(t *testing.T) {
 	if err := os.Remove(hostile); err != nil {
 		t.Fatal(err)
 	}
-	if code, stderr := run("0"); code != 0 || !strings.Contains(stderr, "not found, hook skipped") {
+	empty := t.TempDir() // no downshift on PATH either
+	if code, stderr := runWrapper(t, wrapper, empty, "0"); code != 0 || !strings.Contains(stderr, "no downshift on PATH, hook skipped") {
 		t.Errorf("a vanished binary must exit 0 and say so: exit %d, stderr %q", code, stderr)
 	}
+}
+
+// When the recorded binary has moved, the POSIX wrapper runs the downshift on
+// PATH with the payload and passes its exit code through.
+func TestGeneratedWrapperFallsBackToPATH(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX shell wrapper")
+	}
+	dir := t.TempDir()
+	body, err := wrapperScript("linux", filepath.Join(dir, "moved", "downshift"), fakeArgs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wrapper := filepath.Join(dir, "wrapper.sh")
+	if err := os.WriteFile(wrapper, []byte(body), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	bin := filepath.Join(dir, "path-bin")
+	if err := os.Mkdir(bin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	onPATH := filepath.Join(bin, "downshift")
+	fakeBinary(t, onPATH)
+	pathEnv := bin + string(os.PathListSeparator) + "/bin:/usr/bin" // cat lives in /bin
+	for _, want := range []int{0, 2} {
+		if got, stderr := runWrapper(t, wrapper, pathEnv, strconv.Itoa(want)); got != want {
+			t.Errorf("exit = %d, want %d (stderr %q)", got, want, stderr)
+		}
+	}
+	if seen, _ := os.ReadFile(onPATH + ".stdin"); string(seen) != `{"tool_name":"spawn_run"}` {
+		t.Errorf("the payload did not reach the PATH downshift: %q", seen)
+	}
+}
+
+// fakeBinary writes a stand-in binary at path. It accepts only fakeArgs, copies
+// its stdin next to itself and exits with $FAKE_EXIT.
+func fakeBinary(t *testing.T, path string) {
+	t.Helper()
+	script := "#!/bin/sh\n" + `[ "$1" = ` + fakeArgs + ` ] || exit 64` + "\n" +
+		`cat > "$0.stdin"` + "\n" + `exit "${FAKE_EXIT:-0}"` + "\n"
+	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// runWrapper runs the wrapper with the hook payload on stdin, FAKE_EXIT set to
+// exit and PATH set to pathEnv. It returns the exit code and stderr.
+func runWrapper(t *testing.T, wrapper, pathEnv, exit string) (int, string) {
+	t.Helper()
+	cmd := exec.Command(wrapper)
+	cmd.Dir = filepath.Dir(wrapper)
+	cmd.Env = append(os.Environ(), "PATH="+pathEnv, "FAKE_EXIT="+exit)
+	cmd.Stdin = strings.NewReader(`{"tool_name":"spawn_run"}`)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	code := 0
+	if err := cmd.Run(); err != nil {
+		ee, ok := err.(*exec.ExitError)
+		if !ok {
+			t.Fatal(err)
+		}
+		code = ee.ExitCode()
+	}
+	return code, stderr.String()
 }
