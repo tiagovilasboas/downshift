@@ -11,21 +11,24 @@ Este documento fecha o spike de [KiroCrew shell policy](kirocrew-shell-policy.md
 resume o trabalho de reverse engineering (REA). O REA completo fica no repositório
 privado do mantenedor; a versão pública é este resumo.
 
-## Nota: 5/10
+## Nota: 6/10
 
 - **Detecção (7/10):** o harness é identificado pela variável `KIRO_SESSION_ID`. O modelo
   da sessão é inferido dos arquivos do KiroCrew. Após a correção do leitor de log
   (RV2-1, PR #568), a inferência devolve o modelo certo nos logs reais medidos.
-- **Roteamento de modelo (0/10):** o hook do KiroCrew só permite ou bloqueia a chamada
-  (exit 0 ou 2). Não há canal de `updated_input`, então o Downshift não troca o modelo do
-  subagente nesse harness.
+- **Roteamento por bloqueio e nova tentativa (7/10):** o hook do KiroCrew não reescreve
+  o modelo (não há `updated_input`), mas bloqueia o spawn com exit 2 e recomenda o modelo
+  certo. O agente refaz o spawn com esse modelo. O REA observou isso ao vivo em
+  2026-10-10 (o subagente gravou `resolved_model=claude-haiku-4.5`). Em 2026-10-26, com a
+  lista real de modelos do KiroCrew, o hook bloqueou um spawn TRIVIAL em opus e recomendou
+  `claude-haiku-4.5`. Falta a prova ao vivo deste build.
 - **Compactação (5/10):** funciona por comando explícito (`downshift compact -- <cmd>`).
   Não há reescrita automática de comando.
 - **Tokens (0/10 por enquanto):** o provedor ACP zera os campos de uso. A economia só
   pode ser estimada por proxy (`context_used`), e isso é `partial`.
 
-A nota fica em 5 porque a parte que o Downshift vende, roteamento, não existe nesse
-harness. Detecção e compactação funcionam, mas sem prova ao vivo.
+A nota fica em 6 porque o roteamento funciona por bloqueio e nova tentativa, e isso foi
+observado ao vivo uma vez, em outro build. Sem prova ao vivo deste build, não passa de 6.
 
 ## Capacidades hoje
 
@@ -34,7 +37,8 @@ harness. Detecção e compactação funcionam, mas sem prova ao vivo.
 | Detecção de harness | Feito | `SessionEnv: "KIRO_SESSION_ID"` em `KiroCrewCaps` |
 | Detecção de modelo | Feito, sem prova ao vivo | `discovery.InferKiroCrewModel`, lendo `subagents/<id>/state.json` e o log do pai |
 | Modelo nos exec-events | Feito | `execwrap.Event.Model`, preenchido por `envModel` |
-| Troca de modelo (rewrite) | Não suportado | Hook só permite ou bloqueia |
+| Roteamento por bloqueio | Feito | Exit 2 com modelo recomendado; o agente refaz o spawn |
+| Troca de modelo (rewrite) | Não suportado | Hook não tem `updated_input` |
 | Troca de esforço (effort) | Não suportado | Mesmo motivo |
 | Compactação de shell | Manual | Agente chama `downshift compact --` |
 | Uso de tokens | Bloqueado | Campos zerados no provedor ACP |
@@ -93,3 +97,7 @@ Código removido sem chamador: `EstimateContextSavings`, `NewKiroCrewSessionMetr
 2. Release: as seções `[0.1.4]` e `[0.2.0]` do CHANGELOG ainda não existem. Decisão do
    dono sobre editar a release publicada ou abrir `0.2.1` (RV2-3).
 3. README: ainda usa o nome antigo `compactor` em uma seção. Corrigir junto com a release.
+4. Binário do hook: o hook do KiroCrew chama `~/.local/bin/downshift`, e `make install`
+   escreve em `~/go/bin/downshift`. O primeiro ficou para trás. Em 2026-10-26 os dois
+   binários tomaram a mesma decisão no caso testado, mas o hook deve apontar para o build
+   atual. Ajuste na máquina do dono, feito com aprovação.
