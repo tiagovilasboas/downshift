@@ -1,66 +1,67 @@
 <!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
 
-# Spike: o KiroCrew chama o hook do Downshift num spawn de verdade?
+# Spike: o KiroCrew chama o hook do Downshift num spawn real?
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-**Data:** 2026-10-26 · **Status:** aberto · **Dono do resultado:** Downshift (hook, doctor, setup).
+**Data:** 2026-10-26 · **Status:** aberto — falta prova operacional · **Dono:** Downshift (hook e doctor).
 
 ## Pergunta
 
-Quando o agente do KiroCrew dispara um subagente (`spawn_run`) a partir do chat, o `preToolUse` do Downshift é
-chamado? Se for, o Downshift grava a decisão. Se não for, o roteamento não existe nesse caminho, e o usuário
-não tem como saber.
+Quando o KiroCrew dispara um subagente por **spawn_run**, o hook **preToolUse** do Downshift é executado? A execução gera uma decisão de roteamento que corresponde ao modelo resolvido pelo KiroCrew?
 
-## O que já sabemos
+## Evidência disponível
 
-| Fato | Evidência |
-|---|---|
-| O hook funciona isolado: um payload de spawn em opus é bloqueado com recomendação de haiku | Rodado à mão com o binário instalado e com a bancada `harnesssim` |
-| O wrapper e os specs dos agentes apontam para um script que existe | `~/.downshift/bin/kirocrew-pre-tool-use.sh` e `~/.kiro/agents/*.json` |
-| Um spawn do chat às 01:37 rodou o subagente em `claude-opus-4.5` e escreveu o arquivo pedido | `~/.kiro/crew/subagents/9b566318912a531b/state.json` |
-| Esse mesmo spawn **não deixou nenhum evento** do Downshift | Sem o session id em `events.jsonl`, `exec-events.jsonl` e `agents.jsonl` |
-| O log do gateway não mostra erro de hook nesse horário | `gateway-launch.log` |
-| O último evento de roteamento do KiroCrew é de 23/10 | `events.jsonl` |
+| Fato | Evidência | Limite |
+|---|---|---|
+| O setup do Downshift declara **preToolUse** para todas as ferramentas e **postToolUse** para **spawn_run** no KiroCrew | **cmd/downshift/setup_targets.go** e testes do setup | Configuração versionada prova a intenção, não a chamada em runtime |
+| O wrapper procura o executável configurado e faz fallback para o **downshift** disponível no PATH | **cmd/downshift/setup_wrapper.go** e testes | O ambiente real do gateway ainda pode divergir |
+| O doctor valida a configuração do hook e procura eventos de roteamento | **cmd/downshift/doctor_hooks.go** | Um hook executado sem decisão não gera evidência própria |
+| O runner registra eventos depois de obter uma decisão de roteamento | **cmd/downshift/hookrun.go** | Ausência do evento não distingue hook ausente, payload ignorado e falha de escrita |
+| Um spawn anterior iniciou um subagente, mas não deixou evento do Downshift | Registro operacional da investigação | Sem batimento, não prova se o hook foi chamado |
+| Existe **downshift probe**, que registra campos selecionados e hashes de IDs | **cmd/downshift/probe.go** e testes | É opt-in e não comprova a execução normal do hook |
 
 ## Hipóteses
 
-| # | Hipótese | Como refuta |
+| # | Hipótese | Evidência que a diferencia |
 |---|---|---|
-| H1 | O `preToolUse` não é chamado para `spawn_run` disparado pelo chat | Batimento presente para outros tools, ausente para `spawn_run` |
-| H2 | O hook é chamado, mas o resultado não é gravado (falha silenciosa, fail open) | Batimento presente com `tool_name=spawn_run` e nenhum evento de decisão |
-| H3 | O hook é chamado, mas por um wrapper com caminho antigo que não existe | O doctor reprova o comando; o gateway loga "command not found" |
-| H4 | O sandbox do gateway impede o hook de gravar no estado do Downshift | Batimento ausente com sandbox em `auto`, presente com `off` |
+| H1 | O KiroCrew não chama **preToolUse** para um **spawn_run** iniciado no chat | Não aparece batimento específico de **spawn_run** após uma chamada real |
+| H2 | O hook roda, mas o payload não produz uma decisão ou a gravação falha | O batimento de **spawn_run** aparece sem evento de roteamento |
+| H3 | O gateway executa um comando antigo ou indisponível | Doctor e log do gateway mostram o comando que foi encontrado ou a falha |
+| H4 | O ambiente impede a persistência do batimento | O hook é identificado, mas o registro falha; uma comparação de sandbox exigiria decisão separada |
 
-## Método
+## Contrato proposto
 
-O Downshift passa a registrar um **batimento** em toda chamada de hook, em qualquer harness e qualquer tool:
-só horário, harness e nome do tool. Nenhum texto de prompt, nenhum caminho, nenhum conteúdo de sessão. O
-`downshift doctor` mostra a idade do último batimento por harness e avisa quando o harness está ligado e nunca foi
-chamado nas últimas 24 h.
+- Registrar uma evidência pequena e limitada por chamada do hook, antes de depender da decisão de roteamento.
+- Guardar somente horário UTC, harness registrado e nome de ferramenta validado. Não gravar prompt, tarefa, caminho, ID de sessão ou payload.
+- Limitar crescimento e permissões do armazenamento. Falha de escrita não muda a resposta do hook nem bloqueia o harness.
+- O doctor deve separar “hook configurado”, “chamada observada” e “decisão de roteamento observada”. Deve identificar especificamente a idade do último **spawn_run**, para que chamadas de outras ferramentas não escondam sua ausência.
 
-Com o batimento, um único spawn de teste no KiroCrew separa as hipóteses:
+## Experimento operacional
 
-1. O batimento aparece para `spawn_run` → H1 refutada; se não houver evento de decisão, é H2.
-2. O batimento não aparece → H1 ou H4. Repetir com o sandbox em `auto` e em `off`.
-3. O doctor reprova o comando do hook → H3, e `downshift setup --yes` corrige.
+1. Rodar o doctor antes do teste e confirmar a configuração e o binário do hook.
+2. Manter a descoberta automática desligada (**DOWNSHIFT_DISCOVERY=off**) para que o teste não chame a descoberta de modelos.
+3. Pedir explicitamente uma única chamada **spawn_run** no KiroCrew para comparar, em leitura, o setup, o runner e o doctor; não usar o pipeline nativo nem alterar arquivos.
+4. Conferir, nesta ordem: batimento **spawn_run**; evento de roteamento com **requested_model** e **final_model**; modelo **resolved_model** no registro nativo do subagente.
+5. Se o hook for chamado e negar o spawn, o batimento prova liveness, mas ainda não prova execução nem correspondência de modelo. Não repetir indefinidamente.
+6. Não mudar configuração de sandbox ou outra proteção durante este experimento. Se a hipótese H4 exigir comparação entre modos, abrir uma decisão específica antes de alterar a configuração.
 
-## Critério de pronto
+## Critérios de conclusão
 
-- `downshift doctor` mostra, para o KiroCrew: o comando existe, a prova viva passa e há um batimento recente.
-- Um spawn real no KiroCrew produz um batimento e um evento com `requested_model` e `final_model`, e o
-  `resolved_model` do `state.json` do subagente bate com o `final_model`.
+- Testes determinísticos cobrem chamada válida, payload inválido, ausência de modelo e falha de escrita; o hook continua fail-open e a saída do harness permanece compatível.
+- O registro é limitado e não contém prompt, tarefa, caminho, IDs ou conteúdo do payload.
+- **downshift doctor** informa configuração, chamada recente e **spawn_run** recente sem confundir esses estados com uma decisão de roteamento.
+- Um spawn real produz batimento e decisão; o **resolved_model** reportado pelo KiroCrew corresponde ao **final_model** registrado pelo Downshift.
+- Se o spawn real não puder ser executado, registrar o bloqueio observado e manter o status aberto. Teste unitário não substitui a prova em runtime.
 
-## Riscos
+## Guia e sensor (Harness Fowler)
 
-- **Loop de login.** Qualquer teste que rode o kiro-cli dentro de um HOME sem sessão abre a tela de login. Os
-  testes deste trabalho usam fakes e `DOWNSHIFT_DISCOVERY=off`. Nada chama o kiro-cli de verdade.
-- **Sandbox em `off`.** O config do KiroCrew está com `agent.sandbox = off` desde 2026-10-26, para testar a
-  hipótese H4. O backup do valor anterior (`auto`) está guardado. Decidir se volta para `auto` depois do teste.
-- **O agente do KiroCrew recusa spawn trivial** e pede 3 GB livres de RAM para iniciar um subagente. O teste
-  precisa de uma tarefa que justifique o subagente.
+- **Guia inferencial, eixo behaviour:** **docs/guides/kirocrew-routing-guide.md** explica a chamada recomendada e como interpretar os sinais do doctor.
+- **Sensor computacional, eixo behaviour:** batimento limitado, estado específico de **spawn_run**, testes automatizados e CI.
+- **Sensor inferencial, eixo maintainability/architecture fitness:** revisão do limite de privacidade, fail-open e separação de responsabilidades.
 
 ## Fora de escopo
 
-- Reescrever modelo ou comando no KiroCrew: o hook só permite ou bloqueia (exit 0 ou 2).
-- Contagem de tokens: o provedor ACP do KiroCrew reporta zero.
+- Alterar modelo ou comando no KiroCrew; o hook permite ou bloqueia, não reescreve a chamada.
+- Investigar a lista de modelos 5-5, reporte de tokens, loop de login ou publicação/release.
+- Alterar sandbox ou outras configurações de segurança do KiroCrew.
