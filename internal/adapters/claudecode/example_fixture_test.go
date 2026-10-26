@@ -27,7 +27,7 @@ func TestHandle_ExampleFixtures(t *testing.T) {
 			if err := json.Unmarshal(readExample(t, name), &ev); err != nil {
 				t.Fatalf("fixture is not a Claude Code event: %v", err)
 			}
-			out, note, _ := claudecode.Handle(ev, cat)
+			out, note, _ := claudecode.Handle(withCatalogSession(ev), cat)
 			m := decodeUpdated(t, out)
 			want := nativeOf(core.TierSmall)
 			if m == nil || m["model"] != want || note == "" {

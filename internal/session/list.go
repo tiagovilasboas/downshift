@@ -39,9 +39,6 @@ type SessionList struct {
 	// Unordered marks a hook availability inventory without a capability order.
 	// Unlike a native quota export, this alone is not quota evidence.
 	Unordered bool
-	// Inferred marks a list derived from the current model's catalog tier
-	// ladder rather than learned from the harness.
-	Inferred bool
 	// NativeAvailability contains provider IDs without an operator capability
 	// order. These candidates require resolver metadata before selection.
 	NativeAvailability bool

@@ -127,8 +127,7 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 	case res.written != "":
 		fmt.Fprintf(w, "Rewrite:    yes → %s\n", res.written)
 	case d.Session.Unknown:
-		fmt.Fprintf(w, "Rewrite:    no: session unknown. Add \"%s\": [<model ids>] to %s (see docs/reference/session-models.md)\n",
-			harness, sessionModelsPathForDisplay())
+		fmt.Fprintf(w, "Rewrite:    no: session unknown. The list comes from `downshift models discover` or the session payload (see docs/reference/session-models.md)\n")
 	case d.Intent == core.PreservedIntent:
 		fmt.Fprintf(w, "Rewrite:    no (current model is explicit_only)\n")
 	case len(d.Corrections) > 0:
@@ -217,8 +216,7 @@ func tryNotApplied(res tryResult, known bool, d core.Decision, harness string) s
 	}
 	switch {
 	case d.Session.Unknown:
-		return fmt.Sprintf("not rewritten: session models unknown for %s. Downshift writes only a model the session lists: add \"%s\": [<model ids, least to most capable>] to %s, or run `downshift models discover`; allowlisted gateway rows are not session models (see docs/reference/session-models.md)",
-			harness, harness, sessionModelsPathForDisplay())
+		return "not rewritten: session models unknown. The list comes from `downshift models discover` or the session payload (see docs/reference/session-models.md)"
 	case d.Intent == core.PreservedIntent:
 		return "not rewritten: the current model is explicit_only"
 	case d.Session.CreditHeld:

@@ -35,11 +35,6 @@ type HarnessCapabilities struct {
 	// SingleModelReasoning means the harness runs one model and exposes only
 	// reasoning effort as a knob, so `try` reports an effort, not a model.
 	SingleModelReasoning bool
-	// InferSession means the current model proves access to the catalog tiers
-	// below it, so an unknown session may be inferred from it (see
-	// InferSessionFromCurrent). False where quota pools or tier aliases make
-	// that unsafe: the session stays unknown and nothing is rewritten.
-	InferSession bool
 	// CanShowChildLine means the hook protocol can show the developer one line
 	// of text when a subagent ends (U2). Verified per harness; false until a
 	// harness is shown to display it. The line is computed either way.
@@ -102,7 +97,7 @@ var (
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
 	// The same hook can return updatedInput.command for the Bash tool
 	// (CanRewriteShellCommand, opt-in exec wrapper).
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", InferSession: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true, CanInjectPromptContext: true,
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true, CanInjectPromptContext: true,
 		// Explore is read-only search, Plan is design work (built-in types).
 		AgentTypeHints: map[string]Tier{"Explore": TierSmall, "Plan": TierMid}}
 

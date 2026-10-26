@@ -401,18 +401,15 @@ func checkSessionList(add func(id, status, detail, fix string), env doctorEnv, n
 		add("session list", doctorOK, fmt.Sprintf("file (%d models)", len(s.IDs)), "")
 		return
 	}
-	if nc.Caps.InferSession {
-		add("session list", doctorOK, "inferred from the current model (downshift only, never above it)", "")
-		return
-	}
-	fix := fmt.Sprintf("add %q: [\"<model-id>\", ...] to %s", h, core.DefaultSessionModelsPath())
+	// No fixed list is ever configured: a harness with a listing source is
+	// discovered; one without gets its list from the session payload only.
 	for _, src := range discovery.Defaults() {
 		if src.Harness() == h {
-			fix = "downshift models discover --harness=" + h
-			break
+			add("session list", doctorWarn, "none: no discovery cache yet; rewrites are held", "downshift models discover --harness="+h)
+			return
 		}
 	}
-	add("session list", doctorWarn, "none: no hook list, discovery or file; rewrites are held", fix)
+	add("session list", doctorOK, "from the session payload only (no listing source); rewrites are held until it sends one", "")
 }
 
 // checkQuotaHold warns while an expired quota snapshot still holds rewrites. It

@@ -107,6 +107,7 @@ func wantStatus(t *testing.T, c doctorCheck, status string) {
 
 func TestDoctor_AllGood(t *testing.T) {
 	f := newDoctorFixture(t)
+	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
 	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), claudeSettings(f.bin))
 	f.writeEvents(t, filepath.Join(f.home, ".downshift"), time.Hour, true)
 	if err := os.MkdirAll(filepath.Join(f.home, ".downshift"), 0o755); err != nil {

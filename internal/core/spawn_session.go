@@ -22,11 +22,8 @@ func (d *Decision) RecordSession(session SessionList, currentModelID string) {
 // proposed model. Adapters then only apply their own wire-format rules to the
 // returned plan.
 func (d *Decision) PlanSession(caps HarnessCapabilities, res Resolver, session SessionList, currentModelID string) RewritePlan {
-	if !session.Known && caps.InferSession {
-		session = InferSessionFromCurrent(d.Harness, currentModelID, res)
-	}
 	d.RecordSession(session, currentModelID)
-	plan := d.applyLiveGateway(d.PlanForSession(caps, res, session), res)
+	plan := d.PlanForSession(caps, res, session)
 	plan.Session = session
 	d.Session.CreditHeld = plan.CreditHeld
 	if plan.RewriteModel {
