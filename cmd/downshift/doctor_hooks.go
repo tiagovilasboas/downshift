@@ -550,7 +550,6 @@ func checkHarnessLimitations(add func(id, status, detail, fix string), harness s
 	}
 	detail := strings.Join(parts, ", ")
 	// No command explains harness limitations: `help <harness>` prints hook
-	// usage only. The evidence is in docs/reference/harness-matrix.md, so the
-	// warning has no fix line.
-	add("limitations", doctorWarn, detail, "")
+	// usage only. The evidence is in docs/reference/harness-matrix.md.
+	add("limitations", doctorWarn, detail, "see docs/reference/harness-matrix.md for the evidence")
 }
