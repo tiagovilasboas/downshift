@@ -10,8 +10,8 @@
   "_doc6": "Claude Code's native alias 'haiku' resolves to claude-haiku-4-5-20251001 (Claude Code 2.1.289, observed 2026-10-15 in eval run b5/mech-rename/claude-routed-force-r1: stream lines, resolved records and Claude Code's own modelUsage), so the claude-code small entry is claude-haiku-4-5 at $1.00/$5.00, cache $0.10 read / $1.25 write per 1M. claude-haiku-5-5 ($0.10/$0.50 up to 100k prompt tokens, $0.50/$2.50 above; the catalog stores the up-to-100k price, so above 100k the gap to the frontier model is ~87%, not ~97%) is its own claude-code entry with no native name and no family: it is priced only on its exact id and is never the automatic small target. Older claude-haiku-4-5 ids match through the claude-haiku family; they are not an alias of 5-5 because KiroCrew owns that canonical id.",
   "_doc10": "Cursor prices verified 2026-10-19 against https://cursor.com/docs/models: the per-1M rates Cursor charges beyond the included usage pool, not a plan invoice. Cursor's own and the xAI, Gemini, GLM and Muse rows list no cache-write price, so cost bills cache writes at the cache-read rate there. Grok rows store the under-200k-token rate (xAI and Cursor double every rate at 200k and above, and Cursor's 500k variants are their own slugs); a Fast variant is priced on its own row, never as an alias of the standard model. Claude 4.5 Opus and Claude Fable 5.1 are not on that page and keep their earlier prices.",
   "version": "2",
-  "updated": "2026-10-19",
-  "prices_as_of": "2026-10-19",
+  "updated": "2026-10-26",
+  "prices_as_of": "2026-10-26",
   "entries": [
 
     { "_section": "claude-code — native Anthropic models" },
