@@ -17,9 +17,6 @@ func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bo
 	if rejectedSessionModel(harness, id, res) || shadowSessionModel(harness, id, res) {
 		return false
 	}
-	if liveGatewayWritable(harness, id, session, res) {
-		return true
-	}
 	if harness == "" || id == "" || id == inheritID || !session.Known || !session.Contains(id) || session.Blocks(id) || !session.QuotaAllows(harness, id) {
 		return false
 	}

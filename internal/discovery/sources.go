@@ -92,7 +92,7 @@ func (KiroCLI) Name() string    { return "kiro-cli chat --list-models" }
 func (k KiroCLI) Discover(ctx context.Context) ([]Model, error) {
 	bin := k.Bin
 	if bin == "" {
-		bin = "kiro-cli"
+		bin = defaultKiroCLI()
 	}
 	out, err := runCLI(ctx, bin, "chat", "--list-models", "--format", "json")
 	if err != nil {
@@ -239,14 +239,15 @@ func (a AnthropicAPI) Discover(ctx context.Context) ([]Model, error) {
 	return out, nil
 }
 
-// Defaults is the source set `models discover` uses when none is named.
-// Experimental harnesses (Kiro, KiroCrew) are not run by default.
-// Antigravity has no verified listing mechanism and is absent. The OpenRouter
+// Defaults is the source registry `models discover` and `setup` use when no
+// harness is named. Every harness with a verified listing mechanism belongs
+// here, whatever its maturity; a harness without one (Antigravity, OpenCode)
+// is absent and relies on the hook payload or the operator file. The OpenRouter
 // public list is added only when DOWNSHIFT_DISCOVERY_OPENROUTER=1, so the
 // default run makes no new network call. Failed sources preserve their cache;
 // discovery does not imply included credit.
 func Defaults() []Source {
-	sources := []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, GrokCLI{}}
+	sources := []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, GrokCLI{}, KiroCLI{}}
 	if openRouterEnabled() {
 		sources = append(sources, OpenRouterAPI{})
 	}
@@ -310,7 +311,7 @@ var cliEnvAllow = map[string]bool{
 // cliOwnPrefix is the variable prefix a given CLI may read for itself.
 func cliOwnPrefix(bin string) string {
 	switch strings.TrimSuffix(filepath.Base(bin), ".exe") {
-	case "kiro-cli":
+	case "kiro-cli", "kiro-cli-chat":
 		return "KIRO_"
 	case "cursor-agent", "agent":
 		return "CURSOR_"

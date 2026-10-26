@@ -30,7 +30,7 @@ func TestHandle_SettingsBaselineHoldsMidTierDownshift(t *testing.T) {
 		Cwd:            t.TempDir(),
 		ToolInput:      json.RawMessage(`{"subagent_type":"general-purpose","prompt":"implement the feature to export sales as CSV"}`),
 	}
-	out, note, d := claudecode.Handle(ev, cat)
+	out, note, d := claudecode.Handle(withCatalogSession(ev), cat)
 	if !d.Baseline.FromSettings || !d.Confident {
 		t.Fatalf("precondition: want confident decision on a settings baseline, got fromSettings=%v confident=%v", d.Baseline.FromSettings, d.Confident)
 	}
@@ -56,7 +56,7 @@ func TestHandle_SettingsBaselineStillWritesSmallTier(t *testing.T) {
 		Cwd:            t.TempDir(),
 		ToolInput:      json.RawMessage(`{"subagent_type":"general-purpose","prompt":"rename the userId variable to userIdentifier"}`),
 	}
-	out, note, d := claudecode.Handle(ev, cat)
+	out, note, d := claudecode.Handle(withCatalogSession(ev), cat)
 	if !d.Baseline.FromSettings || d.Verdict != core.VerdictDownshift || d.Tier != core.TierSmall {
 		t.Fatalf("precondition: want a small-tier downshift on a settings baseline, got fromSettings=%v verdict=%v tier=%v", d.Baseline.FromSettings, d.Verdict, d.Tier)
 	}
