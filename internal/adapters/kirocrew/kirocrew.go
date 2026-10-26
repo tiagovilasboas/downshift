@@ -31,6 +31,7 @@ package kirocrew
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookutil"
@@ -102,6 +103,19 @@ func (ev Event) TaskText() string {
 		return ""
 	}
 	return hookutil.TaskText(ti, "task", "prompt", "description")
+}
+
+// canonicalToolName drops the MCP server prefix KiroCrew adds when the agent
+// reaches a tool through a server: "@kirocrew-core/spawn_run" is spawn_run.
+// Any other name is returned unchanged.
+func canonicalToolName(name string) string {
+	if !strings.HasPrefix(name, "@") {
+		return name
+	}
+	if i := strings.LastIndex(name, "/"); i >= 0 {
+		return name[i+1:]
+	}
+	return name
 }
 
 // isSubagentSpawn reports whether the call is a subagent spawn that the router
@@ -229,6 +243,7 @@ func routeSpawn(ev Event, res core.Resolver, task, currentModel string) spawnRou
 // For a spawn_run batch the Output carries one Decision per entry; the returned
 // Decision is the first of them.
 func Handle(ev Event, r ...core.Resolver) (Output, string, core.Decision) {
+	ev.ToolName = canonicalToolName(ev.ToolName)
 	var ti map[string]any
 	if err := json.Unmarshal(ev.ToolInput, &ti); err != nil {
 		return allow(), "", core.Decision{}
