@@ -73,9 +73,9 @@ echo "OK: claude-code rewrites updatedInput.model"
 
 # Claude Code without a session allowlist: the current model proves access to
 # the tiers below it, so a trivial Task on opus is still downshifted (inferred).
-cc_inf=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
-expect "claude-code inferred session" "$cc_inf" '"updatedInput":{'
-expect "claude-code inferred session" "$cc_inf" '"model":"haiku"'
+cc_inf=$(echo '{"session_models":["claude-haiku-4-5","claude-sonnet-4-5","claude-opus-4-8"],"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+expect "claude-code payload session list" "$cc_inf" '"updatedInput":{'
+expect "claude-code payload session list" "$cc_inf" '"model":"haiku"'
 echo "OK: claude-code without allowlist infers the session from the current model"
 
 # Without a current model there is nothing to infer from: no rewrite and no

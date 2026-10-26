@@ -13,6 +13,8 @@ import hashlib, json, os, shutil, subprocess, sys, tempfile, uuid
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # DOWNSHIFT_BIN picks the binary under test; default is ./downshift at the repo root (make build).
 BIN = os.path.abspath(os.environ.get("DOWNSHIFT_BIN", os.path.join(REPO, "downshift")))
+# The session list a Claude Code payload reports. Downshift never ships one.
+CLAUDE_SESSION = ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-5-5"]
 results = []
 
 
@@ -45,7 +47,7 @@ def session_hash(sid):
 
 
 def pre(state, sid, prompt, model, tool_use):
-    payload = {"session_id": sid, "tool_name": "Task", "tool_use_id": tool_use,
+    payload = {"session_id": sid, "session_models": CLAUDE_SESSION, "tool_name": "Task", "tool_use_id": tool_use,
                "tool_input": {"prompt": prompt, "model": model, "subagent_type": "general-purpose", "description": "battery"}}
     p = run(["claude-code"], payload, state)
     try:
@@ -121,8 +123,10 @@ def main():
         sid = "battery-" + uuid.uuid4().hex[:8]
         got, _ = pre(st, sid, "add a unit test for the parser edge cases and refactor the helper", "haiku", "toolu_e1")
         pj = panel(st, sid)
-        check("panel: a haiku request never counts as a model downshift",
-              pj.get("model_switched", 0) == 0, f"requested haiku -> {got or 'unchanged'}; model_switched={pj.get('model_switched')}")
+        # haiku is the smallest model in the session list, so it can only stay or move up.
+        # The panel counts any model switch in one number, so an upshift shows there too.
+        check("panel: a haiku request is never moved below haiku",
+              got not in ("haiku", "claude-haiku-4-5"), f"requested haiku -> {got or 'unchanged'}; model_switched={pj.get('model_switched')}")
 
         # ---------- 4. Compactor on real commands ----------
         st = os.path.join(base, "compact"); os.makedirs(st)

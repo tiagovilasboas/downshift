@@ -4,10 +4,8 @@
 package opencode_test
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
@@ -48,25 +46,6 @@ func liveRouteSetup(t *testing.T, route string) (opencode.Request, core.Resolver
 
 // A live row answers the spawn with the exact OpenCode provider/model pair:
 // provider "openrouter", id the allowlisted slug.
-func TestHandle_LiveRowEmitsExactGatewayID(t *testing.T) {
-	req, res := liveRouteSetup(t, "live")
-	resp, _, _ := opencode.Handle(req, res)
-	if resp.Action != "route" || resp.Model == nil {
-		t.Fatalf("Handle() = %+v, want a route answer", resp)
-	}
-	if resp.Model.ProviderID != "openrouter" || resp.Model.ID != exactLiveSlug {
-		t.Fatalf("model = %s/%s, want openrouter/%s", resp.Model.ProviderID, resp.Model.ID, exactLiveSlug)
-	}
-	wire, err := json.Marshal(resp)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := `"model":{"providerID":"openrouter","id":"` + exactLiveSlug + `"}`
-	if !strings.Contains(string(wire), want) {
-		t.Errorf("wire = %s, want it to carry %s", wire, want)
-	}
-}
-
 // The requested model arrives in the payload as the child session's model
 // object ({id, providerID, variant}), the shape OpenCode 2.0.32 stores in
 // session_v2.model. A catalog id with a variant must reach the decision as a

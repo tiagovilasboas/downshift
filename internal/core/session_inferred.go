@@ -3,45 +3,12 @@
 
 package core
 
-// InferSessionFromCurrent builds the last-resort session list for a harness
-// whose real list could not be learned (no hook list, native export,
-// discovery cache or operator file). The current model is proof of access, and
-// the catalog tier ladder below it is reachable by downshift. The ladder is
-// ordered least to most capable and ends at the current model, so upshift can
-// never go past what the session already runs.
-//
-// It is model-agnostic: tiers come from Resolver.ModelFor, never from names.
-// An unknown or empty current model, or a disabled layer, is an unknown
-// session, which never rewrites.
-func InferSessionFromCurrent(harness, currentID string, res Resolver) SessionList {
-	if harness == "" || currentID == "" || res == nil || inferSessionOff() {
-		return UnknownSession()
-	}
-	cur, ok := res.LookupByID(harness, currentID)
-	if !ok || cur.Tier < TierSmall || cur.Tier > TierFrontier {
-		return UnknownSession()
-	}
-	ids := make([]string, 0, 3)
-	seen := map[string]bool{currentID: true}
-	for t := TierSmall; t < cur.Tier; t++ {
-		m := res.ModelFor(harness, t)
-		if m.ID == "" || m.Tier != t || seen[m.ID] {
-			continue
-		}
-		seen[m.ID] = true
-		ids = append(ids, m.ID)
-	}
-	s := KnownSession(append(ids, currentID))
-	s.Inferred = true
-	return s
-}
-
 // isBaselineModel reports whether a session id names the model the spawn
-// already runs. An inferred list ends at the raw requested id (an alias such
-// as "sonnet") while the baseline holds the catalog id, so string equality
-// alone would plan a rewrite that writes the same model back: a no-op the
-// harness runs unchanged but telemetry would count as applied. Identity is the
-// catalog's, so an alias and its id are one model.
+// already runs. A session list carries the id the harness reported, which may
+// be an alias such as "sonnet", while the baseline holds the catalog id, so
+// string equality alone would plan a rewrite that writes the same model back:
+// a no-op the harness runs unchanged but telemetry would count as applied.
+// Identity is the catalog's, so an alias and its id are one model.
 func isBaselineModel(d Decision, id string, res Resolver) bool {
 	current := d.Baseline.CurrentModel.ID
 	if id == current {

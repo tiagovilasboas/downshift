@@ -23,7 +23,7 @@ func TestEnvAccessorsReadTheSeam(t *testing.T) {
 	withEnv(t, map[string]string{})
 	ttl, invalid := discoveryTTL()
 	if sessionModelsEnv() != "" || quotaModeRequired() || explicitUpshiftEnv() ||
-		inferSessionOff() || discoveryOff() || discoveredEnv() != "" ||
+		discoveryOff() || discoveredEnv() != "" ||
 		ttl != defaultDiscoveryTTL || invalid || nbUpshiftEnv() || nbDownshiftEnv() ||
 		scoreRoutingEnv() || NBUpshiftEnabled() || NBDownshiftEnabled() ||
 		ScoreRoutingEnabled() ||
@@ -41,7 +41,6 @@ func TestEnvAccessorsReadTheSeam(t *testing.T) {
 		{"session models", EnvSessionModels, "/x/sm.json", func() any { return sessionModelsEnv() }, "/x/sm.json"},
 		{"quota mode", EnvQuotaMode, "required", func() any { return quotaModeRequired() }, true},
 		{"explicit upshift", EnvExplicitUpshift, "1", func() any { return explicitUpshiftEnv() }, true},
-		{"infer session", EnvInferSession, "off", func() any { return inferSessionOff() }, true},
 		{"discovery", EnvDiscovery, "off", func() any { return discoveryOff() }, true},
 		{"discovered", EnvDiscovered, "/x/d.json", func() any { return discoveredEnv() }, "/x/d.json"},
 		{"discovery ttl", EnvDiscoveryTTL, "1h", func() any { d, _ := discoveryTTL(); return d }, time.Hour},
@@ -67,13 +66,12 @@ func TestEnvAccessorsKeepExactMatching(t *testing.T) {
 	withEnv(t, map[string]string{
 		EnvQuotaMode:       "REQUIRED",
 		EnvExplicitUpshift: "true",
-		EnvInferSession:    "OFF",
 		EnvDiscovery:       "0",
 		NBUpshiftEnv:       "yes",
 		NBDownshiftEnv:     "on",
 		ScoreRoutingEnv:    "true",
 	})
-	if quotaModeRequired() || explicitUpshiftEnv() || inferSessionOff() || discoveryOff() ||
+	if quotaModeRequired() || explicitUpshiftEnv() || discoveryOff() ||
 		NBUpshiftEnabled() || NBDownshiftEnabled() || ScoreRoutingEnabled() {
 		t.Fatal("only the documented literal values may switch a variable")
 	}
@@ -104,7 +102,7 @@ func TestSetConfigPinsTheSnapshot(t *testing.T) {
 func TestConfigFromEnvMatchesAccessors(t *testing.T) {
 	m := map[string]string{
 		EnvSessionModels: "/x/sm.json", EnvQuotaMode: "required", EnvExplicitUpshift: "1",
-		EnvInferSession: "off", EnvDiscovery: "off", EnvDiscovered: "/x/d.json",
+		EnvDiscovery: "off", EnvDiscovered: "/x/d.json",
 		EnvDiscoveryTTL: "90m", NBUpshiftEnv: "1", NBDownshiftEnv: "1", ScoreRoutingEnv: "1",
 	}
 	for _, n := range AllHarnessCaps() {
@@ -115,7 +113,7 @@ func TestConfigFromEnvMatchesAccessors(t *testing.T) {
 	got := ConfigFromEnv(func(k string) string { return m[k] })
 	want := Config{
 		SessionModelsPath: "/x/sm.json", QuotaRequired: true, ExplicitUpshift: true,
-		InferSessionOff: true, DiscoveryOff: true, DiscoveredPath: "/x/d.json",
+		DiscoveryOff: true, DiscoveredPath: "/x/d.json",
 		DiscoveryTTL: 90 * time.Minute, NBUpshift: true, NBDownshift: true, ScoreRouting: true,
 	}
 	paths := got.NativeSessionPaths

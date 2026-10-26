@@ -58,7 +58,6 @@ func TestConfig_DefaultsNameTheirSource(t *testing.T) {
 		"quiet":          {"off", cfgDefault},
 		"catalog":        {"embedded", cfgDefault},
 		"semantic_boost": {"on (hash embedder)", cfgDefault},
-		"infer_session":  {"on", cfgDefault},
 	}
 	for k, w := range want {
 		if e, ok := m[k]; !ok || e.Value != w[0] || e.Source != w[1] {
@@ -68,7 +67,7 @@ func TestConfig_DefaultsNameTheirSource(t *testing.T) {
 	if e := m["state_dir"]; e.Source != cfgDefault || !strings.HasSuffix(e.Value, ".downshift") {
 		t.Errorf("state_dir = %+v", e)
 	}
-	if e := m["session_models.claude-code"]; e.Source != cfgDefault || !strings.Contains(e.Value, "inferred") {
+	if e := m["session_models.claude-code"]; e.Source != cfgDefault || !strings.Contains(e.Value, "rewrites held") {
 		t.Errorf("claude-code session = %+v", e)
 	}
 	if e := m["session_models.codex"]; e.Source != cfgDefault || !strings.Contains(e.Value, "none") {
@@ -86,7 +85,6 @@ func TestConfig_EnvAndFileSources(t *testing.T) {
 	t.Setenv("DOWNSHIFT_CONTROL_SHARE", "0.25")
 	t.Setenv("DOWNSHIFT_QUIET", "1")
 	t.Setenv("DOWNSHIFT_MINILM", "off")
-	t.Setenv("DOWNSHIFT_INFER_SESSION", "off")
 	writeFile(t, filepath.Join(state, "catalog.json"), "{}")
 	writeFile(t, filepath.Join(state, "session-models.json"), `{"codex":["gpt-x","gpt-y"]}`)
 
@@ -99,7 +97,6 @@ func TestConfig_EnvAndFileSources(t *testing.T) {
 		"control_share":  {"0.25", cfgEnv},
 		"quiet":          {"on", cfgEnv},
 		"semantic_boost": {"off", cfgEnv},
-		"infer_session":  {"off", cfgEnv},
 	}
 	for k, w := range want {
 		if e := m[k]; e.Value != w[0] || e.Source != w[1] {
