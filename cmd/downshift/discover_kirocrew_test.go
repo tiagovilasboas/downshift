@@ -30,6 +30,7 @@ func fakeKiroCLI(t *testing.T, listing string, exit int) string {
 	dir := t.TempDir()
 	bin := filepath.Join(dir, "kiro-cli")
 	script := "#!/bin/sh\n" +
+		"[ \"$1\" = whoami ] && { echo 'Logged in with IAM Identity Center'; exit 0; }\n" +
 		"[ \"$1\" = chat ] && [ \"$2\" = --list-models ] && [ \"$3\" = --format ] && [ \"$4\" = json ] || exit 9\n" +
 		"cat <<'LISTING'\n" + listing + "\nLISTING\n" +
 		"exit " + strconv.Itoa(exit) + "\n"
