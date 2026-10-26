@@ -174,6 +174,8 @@ func runHookAdapter[E any](
 	// Registered first so it runs last: after the response is written and
 	// after the panic recovery below. Fail-open, never waits (scorerefresh.go).
 	defer maybeRefreshScores()
+	// Same rule for every harness: a stale model list starts a detached refresh.
+	defer maybeRefreshDiscovery(harness)
 	correlationID := telemetry.NewCorrelationID()
 	responded := false
 	fail := func(code string) int {
