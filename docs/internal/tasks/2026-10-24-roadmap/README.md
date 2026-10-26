@@ -132,3 +132,7 @@ do report e dos tiles. **Ganhos rápidos (< 1 dia):** RV-3, RV-6, e a decisão R
   atividade (ex.: 10 min) e a remove no mesmo prazo de expiração. Arquivos:
   `mods/downshift-progress/hooks/features/agents/track.ts`, `refresh.ts`. Pronto quando um teste
   com relógio falso fecha uma execução sem evento de fim.
+
+## 10. Code review pós v0.2.0 (2026-10-25)
+
+Nota 6,5/10. Três P1 confirmados (leitor de log do KiroCrew, registro `limits` contra a matriz, release sem CHANGELOG), mais higiene e estrutura. Tarefas RV2-1 a RV2-11 em [2026-10-25-review-v0.2.0](../2026-10-25-review-v0.2.0/README.md).

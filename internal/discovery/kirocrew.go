@@ -4,7 +4,6 @@
 package discovery
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"os"
@@ -37,11 +36,6 @@ const KiroModelUnknown = "unknown"
 // EnvKiroCrewDir overrides the KiroCrew data directory (~/.kiro/crew). Tests
 // and operators set it; the hook never does.
 const EnvKiroCrewDir = "DOWNSHIFT_KIROCREW_DIR"
-
-// maxJSONLBytes bounds how much of one session log is scanned. Session logs
-// grow without limit; the model only needs the last assistant turn, so the log
-// is read line by line with a bounded scan buffer rather than loaded whole.
-const maxJSONLBytes = 64 << 10
 
 var errKiroModelUnresolved = errors.New("kirocrew: model not resolved for session")
 
@@ -213,61 +207,6 @@ func findKiroState(crew, sessionID string) (kiroState, bool) {
 		}
 	}
 	return kiroState{}, false
-}
-
-// sessionLogName turns a parent_session reference into its log file name.
-// KiroCrew stores "dashboard:chat-7-1790861092" as
-// "dashboard_chat-7-1790861092.jsonl": only the first ":" separates the
-// namespace from the id, and it becomes "_". A "/" or ".." never leaves the
-// sessions directory: the name is used as a single path element.
-func sessionLogName(parent string) string {
-	name := strings.Replace(parent, ":", "_", 1)
-	return name + ".jsonl"
-}
-
-// modelFromSessionLog reads the parent chat log and returns the model on the
-// last assistant line (meta.turn_stats.model). The log mixes models over its
-// lifetime; the last assistant turn is the current one. Reads are bounded and
-// confined to the sessions directory.
-func modelFromSessionLog(crew, parent string) string {
-	name := sessionLogName(parent)
-	if name != filepath.Base(name) || strings.Contains(name, "..") {
-		return "" // reject a parent ref that is not a plain file name
-	}
-	path := filepath.Join(crew, "sessions", name)
-	f, err := os.Open(path)
-	if err != nil {
-		return ""
-	}
-	defer f.Close()
-
-	sc := bufio.NewScanner(f)
-	sc.Buffer(make([]byte, 0, 4096), maxJSONLBytes)
-	last := ""
-	for sc.Scan() {
-		line := sc.Bytes()
-		if len(line) == 0 {
-			continue
-		}
-		var rec struct {
-			Role string `json:"role"`
-			Meta struct {
-				TurnStats struct {
-					Model string `json:"model"`
-				} `json:"turn_stats"`
-			} `json:"meta"`
-		}
-		if json.Unmarshal(line, &rec) != nil {
-			continue
-		}
-		if rec.Role != "assistant" {
-			continue
-		}
-		if m := cleanModel(rec.Meta.TurnStats.Model); m != "" {
-			last = m
-		}
-	}
-	return last
 }
 
 // cleanModel normalizes a model field and rejects values that are not a model

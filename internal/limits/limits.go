@@ -41,7 +41,10 @@ type HarnessLimits struct {
 	Limitations []Limitation
 }
 
-// registry holds limitations for all known harnesses.
+// registry holds limitations for all known harnesses. Statuses follow the
+// harness matrix (docs/reference/harness-matrix.md): only a Completed harness
+// claims full support, and only Completed records usage. parity_test.go holds
+// this table to the matrix rows.
 var registry = map[string]HarnessLimits{
 	"kirocrew": {
 		HarnessID: "kirocrew",
@@ -54,12 +57,12 @@ var registry = map[string]HarnessLimits{
 			{
 				Feature: "token_counts",
 				Status:  "none",
-				Reason:  "ACP provider does not expose inputTokens/outputTokens (F7)",
+				Reason:  "ACP provider does not expose inputTokens/outputTokens (F7); nothing recorded",
 			},
 			{
 				Feature: "compaction",
 				Status:  "manual",
-				Reason:  "agent must invoke 'downshift compactor --' explicitly",
+				Reason:  "no rewrite channel; agent must run 'downshift compact --' itself",
 			},
 			{
 				Feature: "mid_session_routing",
@@ -73,18 +76,18 @@ var registry = map[string]HarnessLimits{
 			},
 		},
 	},
-	"claudecode": {
-		HarnessID: "claudecode",
+	"claude-code": {
+		HarnessID: "claude-code",
 		Limitations: []Limitation{
 			{
 				Feature: "model_rewrite",
 				Status:  "full",
-				Reason:  "preToolUse supports updated_input for model swap",
+				Reason:  "rewrite observed honored on a real child (2026-10-06)",
 			},
 			{
 				Feature: "token_counts",
 				Status:  "full",
-				Reason:  "postToolUse reports usage in tool_response",
+				Reason:  "usage read from the child transcript at SubagentStop",
 			},
 			{
 				Feature: "compaction",
@@ -99,7 +102,7 @@ var registry = map[string]HarnessLimits{
 			{
 				Feature: "savings_estimation",
 				Status:  "full",
-				Reason:  "based on actual token usage",
+				Reason:  "based on actual token usage from the child transcript",
 			},
 		},
 	},
@@ -109,27 +112,27 @@ var registry = map[string]HarnessLimits{
 			{
 				Feature: "model_rewrite",
 				Status:  "partial",
-				Reason:  "depends on Pro/Ultra plan; not verified at runtime",
+				Reason:  "rewrite emitted; honored unconfirmed, discarded on Free and legacy Pro",
 			},
 			{
 				Feature: "token_counts",
-				Status:  "partial",
-				Reason:  "available in some plans",
+				Status:  "none",
+				Reason:  "no usage field is read at subagentStop",
 			},
 			{
 				Feature: "compaction",
 				Status:  "partial",
-				Reason:  "plan-dependent",
+				Reason:  "shell rewrite wired but unverified live; otherwise run 'downshift compact --' by hand",
 			},
 			{
 				Feature: "mid_session_routing",
 				Status:  "partial",
-				Reason:  "plan-dependent",
+				Reason:  "honored unconfirmed: the child executor model is absent from the transcript",
 			},
 			{
 				Feature: "savings_estimation",
 				Status:  "partial",
-				Reason:  "accuracy depends on plan features",
+				Reason:  "no usage source; list-price estimate only",
 			},
 		},
 	},
@@ -138,28 +141,28 @@ var registry = map[string]HarnessLimits{
 		Limitations: []Limitation{
 			{
 				Feature: "model_rewrite",
-				Status:  "full",
-				Reason:  "preToolUse supports model routing",
+				Status:  "partial",
+				Reason:  "rewrite emitted on a real spawn; honored inferred from the next spawn, not observed",
 			},
 			{
 				Feature: "token_counts",
-				Status:  "full",
-				Reason:  "postToolUse reports usage",
+				Status:  "none",
+				Reason:  "no usage source; child end parser unverified",
 			},
 			{
 				Feature: "compaction",
-				Status:  "full",
-				Reason:  "automatic via preToolUse",
+				Status:  "partial",
+				Reason:  "Bash PreToolUse rewrite wired, unverified live",
 			},
 			{
 				Feature: "mid_session_routing",
-				Status:  "full",
-				Reason:  "full control over subagent model",
+				Status:  "partial",
+				Reason:  "same evidence as model_rewrite: honored inferred, not observed",
 			},
 			{
 				Feature: "savings_estimation",
-				Status:  "full",
-				Reason:  "based on actual token usage",
+				Status:  "partial",
+				Reason:  "no usage source; list-price estimate only",
 			},
 		},
 	},
@@ -168,28 +171,28 @@ var registry = map[string]HarnessLimits{
 		Limitations: []Limitation{
 			{
 				Feature: "model_rewrite",
-				Status:  "full",
-				Reason:  "preToolUse supports model routing",
+				Status:  "partial",
+				Reason:  "one observed child on desktop 2.21.1 (requested pro, executed flash_lite)",
 			},
 			{
 				Feature: "token_counts",
-				Status:  "full",
-				Reason:  "postToolUse reports usage",
+				Status:  "none",
+				Reason:  "no child end recorded; postToolUse result fields are undocumented",
 			},
 			{
 				Feature: "compaction",
-				Status:  "full",
-				Reason:  "automatic via preToolUse",
+				Status:  "manual",
+				Reason:  "no shell rewrite wired; agent must run 'downshift compact --' itself",
 			},
 			{
 				Feature: "mid_session_routing",
-				Status:  "full",
-				Reason:  "full control over subagent model",
+				Status:  "partial",
+				Reason:  "one observed child on one build; quota and alias mapping unresolved",
 			},
 			{
 				Feature: "savings_estimation",
-				Status:  "full",
-				Reason:  "based on actual token usage",
+				Status:  "partial",
+				Reason:  "no usage source; list-price estimate only",
 			},
 		},
 	},
@@ -198,28 +201,28 @@ var registry = map[string]HarnessLimits{
 		Limitations: []Limitation{
 			{
 				Feature: "model_rewrite",
-				Status:  "full",
-				Reason:  "wire v1 supports subagent_spawn_intent routing",
+				Status:  "partial",
+				Reason:  "route wire v1 and conformance green; forwarding plugin in development, no live spawn observed",
 			},
 			{
 				Feature: "token_counts",
-				Status:  "partial",
-				Reason:  "depends on upstream provider",
+				Status:  "none",
+				Reason:  "usage seam not proven; no child end recorded",
 			},
 			{
 				Feature: "compaction",
-				Status:  "full",
-				Reason:  "automatic via spawn intent hook",
+				Status:  "manual",
+				Reason:  "shell rewrite not wired; agent must run 'downshift compact --' itself",
 			},
 			{
 				Feature: "mid_session_routing",
-				Status:  "full",
-				Reason:  "full control via wire v1",
+				Status:  "partial",
+				Reason:  "route answer computed; forwarding plugin in development, no live spawn observed",
 			},
 			{
 				Feature: "savings_estimation",
 				Status:  "partial",
-				Reason:  "free models only; limited telemetry",
+				Reason:  "no usage seam; list-price estimate only",
 			},
 		},
 	},

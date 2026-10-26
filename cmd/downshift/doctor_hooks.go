@@ -549,5 +549,7 @@ func checkHarnessLimitations(add func(id, status, detail, fix string), harness s
 		parts = append(parts, lim.Feature+":"+lim.Status)
 	}
 	detail := strings.Join(parts, ", ")
-	add("limitations", doctorWarn, detail, "see 'downshift help "+harness+"' for details")
+	// No command explains harness limitations: `help <harness>` prints hook
+	// usage only. The evidence is in docs/reference/harness-matrix.md.
+	add("limitations", doctorWarn, detail, "see docs/reference/harness-matrix.md for the evidence")
 }
