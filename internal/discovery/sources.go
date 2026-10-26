@@ -239,14 +239,15 @@ func (a AnthropicAPI) Discover(ctx context.Context) ([]Model, error) {
 	return out, nil
 }
 
-// Defaults is the source set `models discover` uses when none is named.
-// Experimental harnesses (Kiro, KiroCrew) are not run by default.
-// Antigravity has no verified listing mechanism and is absent. The OpenRouter
+// Defaults is the source registry `models discover` and `setup` use when no
+// harness is named. Every harness with a verified listing mechanism belongs
+// here, whatever its maturity; a harness without one (Antigravity, OpenCode)
+// is absent and relies on the hook payload or the operator file. The OpenRouter
 // public list is added only when DOWNSHIFT_DISCOVERY_OPENROUTER=1, so the
 // default run makes no new network call. Failed sources preserve their cache;
 // discovery does not imply included credit.
 func Defaults() []Source {
-	sources := []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, GrokCLI{}}
+	sources := []Source{AnthropicAPI{}, CodexCache{}, CursorCLI{}, GrokCLI{}, KiroCLI{}}
 	if openRouterEnabled() {
 		sources = append(sources, OpenRouterAPI{})
 	}
