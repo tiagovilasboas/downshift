@@ -144,3 +144,23 @@ Um agente chegou a começar esse trabalho, mas foi parado antes de commitar. Nad
 
 Próxima ação quando você liberar: experimento do sinal (item 2), depois o spawn com o subagente de
 roteamento (item 3).
+
+## Plano de execução (pontos Fibonacci, teto 5 por tarefa)
+
+Spike que sustenta o plano: [kirocrew-hook-liveness](../../../spikes/kirocrew-hook-liveness.md).
+
+| ID | Tarefa | Pts | Depende de | Arquivos | Paralelo com |
+|---|---|--:|---|---|---|
+| K1 | Wrapper resolve o binário na execução; doctor reprova comando de hook inexistente; prova viva no doctor | 5 | — | `setup_wrapper.go`, novo `doctor_hookprobe.go` | K2 |
+| K2 | Batimento no runner compartilhado e linha "hook heartbeat" no doctor | 3 | — | novo `heartbeat.go`, `hookrun.go`, novo `doctor_heartbeat.go` | K1 |
+| K3 | Reinstalar o binário a partir do `main` e confirmar `downshift version` | 1 | K1, K2 mergeados | máquina do dono | — |
+| K4 | Spawn real no KiroCrew; ler batimento, evento e `resolved_model` | 2 | K3 | máquina do dono, com o dono presente | — |
+| K5 | Decidir sandbox (`auto` ou `off`) com base no K4 | 1 | K4 | `~/.kiro/crew/config.json` | — |
+| K6 | Cenários da bancada do labs: wrapper, kiro-cli sem PATH, cópia embutida com checagem de login | 3 | K1 | `downshift-labs/harnesssim` | K4 |
+| K7 | Investigar `claude-haiku-5-5` e `claude-sonnet-5-5` fora da lista | 2 | K4 | `internal/catalog`, `internal/core` | K6 |
+| K8 | Pausar tarefas agendadas do KiroCrew que chamem o kiro-cli sem ordem do dono | 1 | decisão do dono | KiroCrew | — |
+
+Ordem: K1 e K2 em paralelo (arquivos separados) → K3 → K4 → K5, K6, K7 em paralelo. Fora do plano, por
+decisão do dono: release 0.2.x, token do gateway e limpeza das sessões de teste.
+
+Atualização 2026-10-26: o loop de login parou depois de `agent.sandbox: off`; falta observar após um reinício.
