@@ -61,8 +61,21 @@ harness. Detecção e compactação funcionam, mas sem prova ao vivo.
   `unknown`. Depois, os três valores batem com o último turno do arquivo.
 - A suíte `harnesssim` do KiroCrew passa.
 
-Números de desempenho e as remoções de código ficam nos PRs de fechamento e não são
-repetidos aqui.
+Tempo de leitura do log do pai, mediana de 5 execuções (medido em 2026-10-26):
+
+| Log | Tamanho | Antes (forward) | Depois (do fim) | Modelo |
+|---|---|---|---|---|
+| dashboard_chat-7-1790861092 | 18,6 MB | 189 ms | 0,42 ms | claude-sonnet-4.6 |
+| dashboard_chat-20-1792621265 | 15,2 MB | 106 ms | 0,06 ms | claude-opus-4.5 |
+| dashboard_chat-4-1789525326 | 7,6 MB | 79 ms | 0,03 ms | claude-opus-4.5 |
+
+Uma comparação de 400 logs sintéticos entre o leitor antigo e o novo deu zero divergências.
+A medição cobre só a leitura do log. O custo da varredura de `subagents/*` a cada exec
+ainda não foi medido.
+
+Código removido sem chamador: `EstimateContextSavings`, `NewKiroCrewSessionMetrics`,
+`KiroCrewSessionMetrics`, `InferKiroCrewMetrics`, `KiroSessionMetrics`. Ficaram o campo
+`Model` do exec-event e o caminho `envModel`.
 
 ## O que não foi provado
 
