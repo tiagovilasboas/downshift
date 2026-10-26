@@ -62,9 +62,11 @@ func wrapperPath(stateDir string, h setupHook) string {
 }
 
 // wrapperScript renders the wrapper that runs `<binary> <args>` and passes the
-// hook payload (stdin) and the exit code through. A missing binary lets the
-// call through (exit 0) and says so on stderr: the router never blocks on its
-// own doubt, but it must not fail silently. Because the hook chain also runs the
+// hook payload (stdin) and the exit code through. The recorded binary is used
+// while it exists; when it has moved or been reinstalled, the POSIX script falls
+// back to the `downshift` on PATH. If neither exists, the call goes through
+// (exit 0) and says so on stderr: the router never blocks on its own doubt, but
+// it must not fail silently. Because the hook chain also runs the
 // operator's own guards, that is a deliberate trade: a vanished router cannot
 // stop their guards from running, only stop being a router.
 //
@@ -105,8 +107,11 @@ func wrapperScript(goos, binary, args string) (string, error) {
 		"# https://github.com/tiagovilasboas/downshift",
 		"# Written by `downshift setup`, which rewrites it. Edit nothing here.",
 		"# The harness takes one executable and no arguments, so this carries the subcommand.",
-		"bin=" + q,
-		`[ -x "$bin" ] || { echo "downshift: $bin not found, hook skipped" >&2; exit 0; }`,
+		"# The recorded binary wins while it exists; otherwise the downshift on PATH.",
+		"recorded=" + q,
+		`bin=$recorded`,
+		`if [ ! -x "$bin" ]; then bin=$(command -v downshift 2>/dev/null); fi`,
+		`[ -n "$bin" ] && [ -x "$bin" ] || { echo "downshift: $recorded not found and no downshift on PATH, hook skipped" >&2; exit 0; }`,
 		`exec "$bin" ` + args,
 	}
 	return strings.Join(lines, "\n") + "\n", nil
