@@ -1,0 +1,103 @@
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+
+# KiroCrew: fechamento do spike e do REA
+
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+
+**Data:** 2026-10-26 · **Escopo:** o que o Downshift faz no KiroCrew hoje, o que foi
+provado, o que não foi, e a nota honesta.
+
+Este documento fecha o spike de [KiroCrew shell policy](kirocrew-shell-policy.md) e
+resume o trabalho de reverse engineering (REA). O REA completo fica no repositório
+privado do mantenedor; a versão pública é este resumo.
+
+## Nota: 6/10
+
+- **Detecção (7/10):** o harness é identificado pela variável `KIRO_SESSION_ID`. O modelo
+  da sessão é inferido dos arquivos do KiroCrew. Após a correção do leitor de log
+  (RV2-1, PR #568), a inferência devolve o modelo certo nos logs reais medidos.
+- **Roteamento por bloqueio e nova tentativa (7/10):** o hook do KiroCrew não reescreve
+  o modelo (não há `updated_input`), mas bloqueia o spawn com exit 2 e recomenda o modelo
+  certo. O agente refaz o spawn com esse modelo. O REA observou isso ao vivo em
+  2026-10-10 (o subagente gravou `resolved_model=claude-haiku-4.5`). Em 2026-10-26, com a
+  lista real de modelos do KiroCrew, o hook bloqueou um spawn TRIVIAL em opus e recomendou
+  `claude-haiku-4.5`. Falta a prova ao vivo deste build.
+- **Compactação (5/10):** funciona por comando explícito (`downshift compact -- <cmd>`).
+  Não há reescrita automática de comando.
+- **Tokens (0/10 por enquanto):** o provedor ACP zera os campos de uso. A economia só
+  pode ser estimada por proxy (`context_used`), e isso é `partial`.
+
+A nota fica em 6 porque o roteamento funciona por bloqueio e nova tentativa, e isso foi
+observado ao vivo uma vez, em outro build. Sem prova ao vivo deste build, não passa de 6.
+
+## Capacidades hoje
+
+| Capacidade | Estado | Como |
+|---|---|---|
+| Detecção de harness | Feito | `SessionEnv: "KIRO_SESSION_ID"` em `KiroCrewCaps` |
+| Detecção de modelo | Feito, sem prova ao vivo | `discovery.InferKiroCrewModel`, lendo `subagents/<id>/state.json` e o log do pai |
+| Modelo nos exec-events | Feito | `execwrap.Event.Model`, preenchido por `envModel` |
+| Roteamento por bloqueio | Feito | Exit 2 com modelo recomendado; o agente refaz o spawn |
+| Troca de modelo (rewrite) | Não suportado | Hook não tem `updated_input` |
+| Troca de esforço (effort) | Não suportado | Mesmo motivo |
+| Compactação de shell | Manual | Agente chama `downshift compact --` |
+| Uso de tokens | Bloqueado | Campos zerados no provedor ACP |
+| Economia por contexto | Parcial | Proxy `context_used`, sem tokens reais |
+
+## O que o REA descobriu
+
+| ID | Descoberta | Consequência |
+|---|---|---|
+| F1 | `KIRO_SESSION_ID` está no ambiente | Identifica o harness e a sessão |
+| F2 | O modelo não está no ambiente | Inferência pelos arquivos da sessão |
+| F3 | O exec-event pode carregar o modelo | Campo `model` gravado, com a mesma inferência |
+| F4 | Os campos de uso de tokens existem, mas vêm zerados | Economia em tokens não é medível |
+| F5 | O hook nativo só tem exit 0 ou 2, sem `updated_input` | Sem reescrita de modelo nem de comando |
+| F6 | O modelo de uma sessão principal fica em `~/.kiro/sessions/cli/<id>.json` | Segundo caminho de inferência |
+| F7 | A causa dos zeros é o provedor ACP, que não reporta tokens | Limitação do produto, não do Downshift |
+| F8 | O KiroCrew é Electron com backend Python | Explica onde ficam os arquivos de sessão |
+
+## O que foi medido
+
+- Os logs reais de `~/.kiro/crew/sessions` (7 a 18 MB cada) devolvem o modelo do
+  último turno do assistente.
+- Antes da correção, um log devolvia um modelo antigo e outros dois devolviam
+  `unknown`. Depois, os três valores batem com o último turno do arquivo.
+- A suíte `harnesssim` do KiroCrew passa.
+
+Tempo de leitura do log do pai, mediana de 5 execuções (medido em 2026-10-26):
+
+| Log | Tamanho | Antes (forward) | Depois (do fim) | Modelo |
+|---|---|---|---|---|
+| dashboard_chat-7-1790861092 | 18,6 MB | 189 ms | 0,42 ms | claude-sonnet-4.6 |
+| dashboard_chat-20-1792621265 | 15,2 MB | 106 ms | 0,06 ms | claude-opus-4.5 |
+| dashboard_chat-4-1789525326 | 7,6 MB | 79 ms | 0,03 ms | claude-opus-4.5 |
+
+Uma comparação de 400 logs sintéticos entre o leitor antigo e o novo deu zero divergências.
+A medição cobre só a leitura do log. O custo da varredura de `subagents/*` a cada exec
+ainda não foi medido.
+
+Código removido sem chamador: `EstimateContextSavings`, `NewKiroCrewSessionMetrics`,
+`KiroCrewSessionMetrics`, `InferKiroCrewMetrics`, `KiroSessionMetrics`. Ficaram o campo
+`Model` do exec-event e o caminho `envModel`.
+
+## O que não foi provado
+
+- **Prova ao vivo (P3):** nenhuma sessão real do kiro-cli rodou com este build para
+  confirmar que o modelo detectado é o que o KiroCrew usou. Essa prova depende de uma
+  sessão do dono.
+- **Economia em tokens:** sem campos de uso, não há número de tokens economizados.
+- **Compactação automática:** não existe no KiroCrew. Não há como provar o ganho em uso
+  real sem o comando explícito.
+
+## Pendências
+
+1. Prova ao vivo: rodar um spawn real no kiro-cli com este build e comparar o modelo
+   detectado com o modelo da sessão. Dono: maintainer.
+2. Release: as seções `[0.1.4]` e `[0.2.0]` do CHANGELOG ainda não existem. Decisão do
+   dono sobre editar a release publicada ou abrir `0.2.1` (RV2-3).
+3. README: ainda usa o nome antigo `compactor` em uma seção. Corrigir junto com a release.
+4. Binário do hook: o hook do KiroCrew chama `~/.local/bin/downshift`, e `make install`
+   escreve em `~/go/bin/downshift`. O primeiro ficou para trás. Em 2026-10-26 os dois
+   binários tomaram a mesma decisão no caso testado, mas o hook deve apontar para o build
+   atual. Ajuste na máquina do dono, feito com aprovação.

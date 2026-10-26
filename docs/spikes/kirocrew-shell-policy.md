@@ -3,6 +3,7 @@
 **Status:** P2 implemented (PRs #461, #462, #464); live proof (P3) pending on a
 kiro-cli session. Tracked in `docs/internal/roadmap.md`, track A.
 **Created:** 2026-10-22
+**Closed:** 2026-10-26, see [KiroCrew close-out](kirocrew-close-out.md) for the final status and score.
 **Author:** Tiago Vilas Boas
 
 > **Update 2026-10-22.** Two corrections to the text below. (1) The live
