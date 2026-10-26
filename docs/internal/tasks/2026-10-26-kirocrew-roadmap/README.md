@@ -24,6 +24,9 @@ Legenda: **FEITO**, **ABERTO**, **DECISÃO** (depende do dono), **PROVA** (depen
 | Login do painel do KiroCrew restaurado | FEITO | Feito pelo dono no chat, em `localhost:5476` |
 | Abas de login e item de login do KiroCrew | FEITO | Abas fechadas; KiroCrew removido dos itens de login |
 | Spawn de teste via chat | PARCIAL | Subagente rodou e escreveu o arquivo; `resolved_model=claude-opus-4.5`; **nenhum evento do Downshift** |
+| Testes não disparam refresh real da descoberta (stub em `TestMain`) | FEITO | `cmd/downshift/main_test.go` no `main` |
+| Resolvedor do kiro-cli: override, cópia embutida só se logada, PATH | FEITO | `internal/discovery/kiro_bin.go` no `main` |
+| Causa do loop de abas de login identificada | FEITO | Seção "Loop de login" abaixo |
 
 ## Pendências
 
@@ -105,3 +108,39 @@ Um agente chegou a começar esse trabalho, mas foi parado antes de commitar. Nad
 - Um spawn real no KiroCrew gera evento no Downshift com o `requested_model`, o `final_model` e o
   `resolved_model` do subagente.
 - `make check` passa no `main`.
+
+## Loop de login (causa identificada)
+
+- O painel do KiroCrew e o Mochi, quando aberto, consultam `/api/sessions/usage` a cada 30 s.
+- Cada consulta roda `kiro-cli chat --no-interactive ... /usage`. Sem sessão válida no contexto do gateway,
+  o kiro-cli abre a página de login. Cada tentativa abre uma aba (até 14 abertas nesta máquina).
+- A trava que pausa essas tentativas fica na memória do gateway. Cada reinício do gateway zera a trava, e o
+  gateway reiniciou dezenas de vezes.
+- Com o login do painel restaurado, o loop parou. Falta confirmar se o kiro-cli do gateway continua logado
+  após o próximo reinício.
+- **Dono do ajuste:** KiroCrew (a sonda de usage). No Downshift, nenhuma chamada de hook dispara essa sonda;
+  o refresh da descoberta roda o kiro-cli só pelo `models discover`, e só com a checagem de login (#575).
+
+## Artefatos de teste a limpar (decisão do dono)
+
+- `/tmp/downshift-kirocrew-task.txt`, criado pelo subagente do teste. Serve de evidência do spawn; apagar depois.
+- Sessões de teste no KiroCrew: "Rename Variable userId Task", "KiroCrew subagent spawn check" e
+  "Subagent spawn file write check". Ficam no histórico do chat; apagar só com ok.
+- Subagente `9b566318912a531b` aparece como "running" no painel, apesar de já ter terminado.
+
+## Aprovações do KiroCrew (comportamento do produto)
+
+- Cada subagente pede "Permitir uma vez" ou "Aprovar" para escrever arquivo. Para um teste automatizado,
+  isso exige o dono presente. Não é falha do Downshift.
+
+## Onde paramos (2026-10-26, 04:40 BRT)
+
+1. **Mergeado e no `main`:** #569, #570, #574, #575. Downshift reinstalado (`6f52d5d2`).
+2. **Parado antes de commitar:** a correção do hook (item 4 a 7). O agente que começou foi parado, e o worktree
+   `wt-hook` ficou parcial. Nada foi aberto como PR.
+3. **Aguardando o dono:** o ok para o experimento do item 2 (sinal de chamada do hook). Sem isso, não há como
+   confirmar se o `preToolUse` roda para `spawn_run` do chat.
+4. **Este roadmap:** commitado em `docs/kirocrew-roadmap` (`ab1178f5`), sem push.
+
+Próxima ação quando você liberar: experimento do sinal (item 2), depois o spawn com o subagente de
+roteamento (item 3).
