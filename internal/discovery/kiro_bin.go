@@ -6,6 +6,7 @@ package discovery
 import (
 	"bytes"
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +17,10 @@ import (
 // EnvKiroBin is the override the KiroCrew docs name (KIROCREW_KIRO_BIN): an
 // absolute path to a kiro-cli that the owner wants used.
 const EnvKiroBin = "KIROCREW_KIRO_BIN"
+
+// errKiroNotSignedIn is returned, without running the list command, when the
+// chosen kiro-cli does not confirm a session. The caller keeps its cache.
+var errKiroNotSignedIn = errors.New("kiro-cli: not signed in, model list skipped")
 
 // kiroWhoamiTimeout bounds the sign-in probe. It is a variable so a test can
 // shorten it; production code never changes it.

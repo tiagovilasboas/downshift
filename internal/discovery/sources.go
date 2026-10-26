@@ -94,6 +94,12 @@ func (k KiroCLI) Discover(ctx context.Context) ([]Model, error) {
 	if bin == "" {
 		bin = defaultKiroCLI()
 	}
+	// The list command opens a sign-in page when the CLI has no session in
+	// this context, so it runs only after whoami confirms one. Any other
+	// binary, including the PATH name, is checked the same way.
+	if !signedInKiroCLI(bin) {
+		return nil, errKiroNotSignedIn
+	}
 	out, err := runCLI(ctx, bin, "chat", "--list-models", "--format", "json")
 	if err != nil {
 		return nil, err
