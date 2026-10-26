@@ -7,7 +7,7 @@ name = "harness-downshift-orchestration"
 version = "0.1.0"
 description = "Opt-in, local LangGraph delegation planner for harness-downshift"
 requires-python = ">=3.11"
-dependencies = ["langgraph==1.2.15"]
+dependencies = ["langgraph==1.2.16"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
