@@ -73,6 +73,33 @@ func (s fixedResolver) IsExplicitOnly(harness, id string) bool {
 	return s.Resolver.IsExplicitOnly(harness, id)
 }
 
+// The agent calls a spawn through its MCP server, so the hook sees the prefixed
+// name. It must be routed exactly like the plain name.
+func TestHandle_RoutesMCPPrefixedSpawn(t *testing.T) {
+	writeSessionFile(t, []string{smallID, midID, frontierID})
+	for _, name := range []string{"@kirocrew-core/spawn_run", "spawn_run"} {
+		ev := spawnEvent("rename the userId variable to userIdentifier", frontierID)
+		ev.ToolName = name
+		out, _, decision := kirocrew.Handle(ev, cat)
+		if decision.Harness == "" {
+			t.Fatalf("%s: expected a routing decision, got none", name)
+		}
+		if !out.Block {
+			t.Errorf("%s: expected Block=true for the in-session held-free target", name)
+		}
+	}
+}
+
+// A prefixed tool that is not a spawn passes through with no decision.
+func TestHandle_PassesThroughPrefixedNonSpawn(t *testing.T) {
+	ev := spawnEvent("list the open tickets", frontierID)
+	ev.ToolName = "@kirocrew-core/tool_search"
+	out, _, decision := kirocrew.Handle(ev, cat)
+	if out.Block || decision.Harness != "" {
+		t.Errorf("a non-spawn must pass through: block=%v decision=%q", out.Block, decision.Harness)
+	}
+}
+
 func TestHandle_BlocksConfidentMismatchInSession(t *testing.T) {
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	ev := spawnEvent("rename the userId variable to userIdentifier", frontierID)
