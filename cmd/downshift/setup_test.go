@@ -606,7 +606,7 @@ func TestSetupBinaryPathWithSpaceIsQuoted(t *testing.T) {
 func TestSetupDeclinedPromptWritesNothing(t *testing.T) {
 	e := newSetupEnv(t, ".codex")
 	var o, er bytes.Buffer
-	code := setupRun(setupOptions{Home: e.home, Binary: testBin, In: strings.NewReader("n\n"), Out: &o, Err: &er, Now: time.Now})
+	code := setupRun(setupOptions{Home: e.home, Binary: testBin, SkipDiscovery: true, In: strings.NewReader("n\n"), Out: &o, Err: &er, Now: time.Now})
 	if code == 0 {
 		t.Error("declined prompt should not exit 0")
 	}

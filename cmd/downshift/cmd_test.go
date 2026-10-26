@@ -126,6 +126,7 @@ func TestRunTry_RejectsUnknownHarness(t *testing.T) {
 }
 
 func TestRunTry_TrivialTask(t *testing.T) {
+	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
 	out := captureStdout(func() {
 		if rc := runTry(cmdCat, []string{"rename the userId variable", "claude-code"}); rc != 0 {
 			t.Errorf("rc = %d, want 0", rc)
@@ -154,6 +155,7 @@ func TestRunTry_TrivialTask(t *testing.T) {
 }
 
 func TestRunTry_TrivialTask_Detail(t *testing.T) {
+	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rename the userId variable", "claude-code", "--detail"})
 	})
@@ -169,6 +171,7 @@ func TestRunTry_TrivialTask_Detail(t *testing.T) {
 }
 
 func TestRunTry_ExplicitCurrentModel_NoAssumption(t *testing.T) {
+	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rename the userId variable", "claude-code", claudeCodeFrontierID()})
 	})

@@ -251,15 +251,6 @@ func (r *sessionResolver) ShadowGateways() []Model {
 	return nil
 }
 
-// LiveGateways forwards the optional live-route extension, for the same
-// reason as ShadowGateways: the allowlist is a user fact.
-func (r *sessionResolver) LiveGateways() []Model {
-	if g, ok := r.fallback.(GatewayLiveResolver); ok {
-		return g.LiveGateways()
-	}
-	return nil
-}
-
 func (r *sessionResolver) IsExactID(harness, id string) bool {
 	if harness == r.harness && r.session.Contains(id) {
 		return true

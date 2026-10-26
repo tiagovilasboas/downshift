@@ -454,11 +454,8 @@ var conformanceScenarios = []conformanceScenario{
 		name: "missing session list never rewrites",
 		run: func(t *testing.T, h conformanceHarness) {
 			// No allowlist anywhere: the session file is absent (see
-			// conformanceEnv) and a harness that infers the session from the
-			// current model has that inference turned off.
-			if h.caps.InferSession {
-				t.Setenv(core.EnvInferSession, "off")
-			}
+			// conformanceEnv). Nothing but a listing or the payload supplies
+			// candidates, so the spawn is allowed unchanged.
 			res := h.run(t, spawnSpec{task: conformanceTrivialTask, model: h.frontier.ID})
 			if res.changed || res.rc != 0 || res.fields != nil {
 				t.Fatalf("unknown session must allow unchanged, got %+v", res)

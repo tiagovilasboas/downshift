@@ -182,24 +182,11 @@ func buildConfigReport(getenv func(string) string, now time.Time, cat *catalog.C
 		add(configEntry{Key: "semantic_boost", Value: "off", Source: cfgEnv, Env: "DOWNSHIFT_SEMANTIC_BOOST"})
 	}
 
-	// Inferred session.
-	var inferring []string
-	for _, nc := range core.AllHarnessCaps() {
-		if nc.Caps.InferSession {
-			inferring = append(inferring, nc.Harness)
-		}
-	}
-	note := "harnesses: " + strings.Join(inferring, ", ")
-	if getenv(core.EnvInferSession) == "off" {
-		add(configEntry{Key: "infer_session", Value: "off", Source: cfgEnv, Env: core.EnvInferSession, Note: "an unknown session never rewrites"})
-	} else {
-		add(configEntry{Key: "infer_session", Value: "on", Source: cfgDefault, Env: core.EnvInferSession, Note: note})
-	}
 	return configReport{Settings: out}
 }
 
 // sessionConfigEntry mirrors the order the hooks use for the allowlist: native
-// export, discovery cache, operator file, inferred from the current model.
+// export, discovery cache, operator file. Nothing else supplies candidates.
 func sessionConfigEntry(nc core.NamedCaps, getenv func(string) string, now time.Time) configEntry {
 	e := configEntry{Key: "session_models", Harness: nc.Harness}
 	if nc.Caps.NativeSessionEnv != "" {
@@ -229,10 +216,6 @@ func sessionConfigEntry(nc core.NamedCaps, getenv func(string) string, now time.
 		return e
 	}
 	e.Source = cfgDefault
-	if nc.Caps.InferSession {
-		e.Value, e.Env = "inferred from the current model", core.EnvInferSession
-		return e
-	}
 	e.Value, e.Env = "none: rewrites held", "DOWNSHIFT_SESSION_MODELS"
 	return e
 }

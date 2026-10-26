@@ -419,9 +419,9 @@ func TestHandle_PolicyFloorFailsOpen(t *testing.T) {
 	}
 }
 
-// With no session list, the current model proves access to the tiers below it:
-// a trivial task on a frontier parent is downshifted inside that ladder.
-func TestHandle_MissingSessionInfersFromCurrentModel(t *testing.T) {
+// With no session list the current model proves nothing about the tiers below
+// it: no ladder is inferred, so a trivial task on a frontier parent holds.
+func TestHandle_MissingSessionHoldsWithoutInference(t *testing.T) {
 	frontierID := catID(core.TierFrontier)
 	ev := claudecode.Event{
 		ToolName: "Task",
@@ -430,11 +430,11 @@ func TestHandle_MissingSessionInfersFromCurrentModel(t *testing.T) {
 			"model": "` + frontierID + `"
 		}`),
 	}
-	out, note, d := claudecode.Handle(ev, cat)
-	if note == "" || out.HookSpecificOutput == nil || out.HookSpecificOutput.UpdatedInput == nil {
-		t.Fatalf("inferred session should downshift, note=%q", note)
+	out, _, d := claudecode.Handle(ev, cat)
+	if out.HookSpecificOutput != nil && out.HookSpecificOutput.UpdatedInput != nil {
+		t.Fatal("no session list must hold: nothing may be written")
 	}
-	if d.Session.Unknown {
-		t.Fatal("decision must record the inferred session as known")
+	if !d.Session.Unknown {
+		t.Fatal("decision must record the session as unknown")
 	}
 }

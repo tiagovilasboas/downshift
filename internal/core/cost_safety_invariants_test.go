@@ -318,7 +318,7 @@ func costSweep(t *testing.T) []costCase {
 		kind string
 		s    core.SessionList
 	}{
-		{"unknown(inferred)", core.UnknownSession()},
+		{"unknown", core.UnknownSession()},
 		{"known-ladder", core.KnownSession([]string{small, mid, frontier})},
 		{"known-single", core.KnownSession([]string{mid})},
 	}
@@ -352,8 +352,7 @@ func costAboveCurrent(t *testing.T, c costCase) bool {
 // the decision's rules, so a known session list above the current model was
 // written (since closed by R8).
 func costUnconfidentUpshiftGap(c costCase) bool {
-	return c.d.Verdict == core.VerdictUpshift && !c.d.Confident && !costDeterministicLift(c.d) &&
-		!c.plan.Session.Inferred
+	return c.d.Verdict == core.VerdictUpshift && !c.d.Confident && !costDeterministicLift(c.d)
 }
 
 func TestCostPropertySweep(t *testing.T) {
@@ -381,27 +380,13 @@ func TestCostPropertySweep(t *testing.T) {
 			}
 		}
 
-		// (b) an inferred session never holds an id above the current model.
-		if plan.Session.Inferred {
-			cur, ok := costTierOf(t, ccHarness, c.current)
-			if !ok {
-				t.Errorf("(b) inferred session without a catalog current model: %s", c)
-			}
-			for _, id := range plan.Session.IDs {
-				m, ok := costTierOf(t, ccHarness, id)
-				if !ok || m.Tier > cur.Tier {
-					t.Errorf("(b) inferred session id %q (tier %s) above current %q: %s", id, m.Tier, c.current, c)
-				}
-			}
-		}
-
 		// (c) a rewrite always targets a member of the planned session.
 		if plan.RewriteModel && !plan.Session.Contains(plan.Model.ID) {
 			t.Errorf("(c) rewrite target %q not in plan.Session %v: %s", plan.Model.ID, plan.Session.IDs, c)
 		}
 
 		// (d) no current, unknown session, doubt on frontier, no lift → hold.
-		if c.current == "" && c.sessionKind == "unknown(inferred)" && !d.Confident &&
+		if c.current == "" && c.sessionKind == "unknown" && !d.Confident &&
 			d.Tier == core.TierFrontier && !lift && plan.RewriteModel {
 			t.Errorf("(d) unconfident frontier with no current model rewrites: %s", c)
 		}
@@ -433,14 +418,12 @@ func TestCostNoInferenceNeverRewrites(t *testing.T) {
 		name string
 		caps core.HarnessCapabilities
 	}{
+		{"claude-code", core.ClaudeCodeCaps},
 		{"cursor", core.CursorCaps},
 		{"codex", core.CodexCaps},
 	}
 	n := 0
 	for _, h := range harnesses {
-		if h.caps.InferSession {
-			t.Fatalf("%s unexpectedly declares InferSession", h.name)
-		}
 		currents := []string{""}
 		for _, tier := range []core.Tier{core.TierSmall, core.TierMid, core.TierFrontier} {
 			if id := catID(h.name, tier); id != "" {
