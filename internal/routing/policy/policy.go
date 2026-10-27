@@ -76,7 +76,7 @@ type Rule struct {
 	Enabled bool
 	Kinds   []contract.Kind        // empty admits any kind
 	Efforts []contract.EffortClass // empty admits any effort
-	Gates   []Gate                 // all must pass; a gate with no reading passes
+	Gates   []Gate                 // declared, not evaluated yet: all must pass; a gate with no reading passes
 	Profile contract.ProfileName
 	Tier    contract.Tier
 	source  string
@@ -103,10 +103,11 @@ func (p *Policy) ProfileNamed(name contract.ProfileName) (Profile, bool) {
 }
 
 // Match returns the first enabled rule that admits the kind and effort, in
-// declaration order. Gates are not evaluated here; headroom does that. A rule
-// with a non-empty list admits only a call that declares a value in it, so a
-// call with no declared kind or effort matches only rules open on that
-// dimension. Nil-safe.
+// declaration order. It ignores Gates: no code evaluates them yet, and
+// headroom.Assess returns only the strain of each provider. A rule with a
+// non-empty list admits only a call that declares a value in it, so a call
+// with no declared kind or effort matches only rules open on that dimension.
+// Nil-safe.
 func (p *Policy) Match(kind contract.Kind, effort contract.EffortClass) (Rule, bool) {
 	if p == nil {
 		return Rule{}, false
