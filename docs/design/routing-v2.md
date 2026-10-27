@@ -182,3 +182,23 @@ No phase changes R7/R8 semantics.
 No saving figure is claimed for v2 before it runs. The four-arm battery measured v1 on mechanical tasks; it
 does not transfer. The owner decided on 2026-10-26 to stop experiments for now; v2 is gated by deterministic
 golden tests and by the measured routing note in real use, read with `downshift report`.
+
+## 11. Reference patterns (Anthropic cookbooks, MIT)
+
+Read in the owner's order. Each row says what v2 takes and what it leaves; no code is copied.
+
+| Pattern | What it shows | What v2 takes |
+|---|---|---|
+| [Orchestrator-workers](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/orchestrator_workers.ipynb) | a lead decomposes, workers run bounded subtasks, the lead merges | the Claude Code parent is the orchestrator; each delegation carries its own profile or hint, so the tier is decided per subtask, not per session |
+| [Async multi-agent](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/async_multi_agent_orchestration.ipynb) | workers run concurrently in isolated contexts | the decision is per spawn and stateless; nothing in `routing/*` assumes order or a shared session list (the #570 lesson) |
+| [Plan big, execute small](https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/CMA_plan_big_execute_small.ipynb) | a frontier orchestrator with no tools plans and synthesizes; cheap workers do the token-heavy reading; on the authors' runs 84–98% of team input tokens billed at the worker rate | **the core of v2.** Frontier parent plans, profiles send reading and mechanical subagents to the small tier, the guard keeps risk prompts off it. Its caveats become rules: compare only at matched rigor (the acceptance suite, not raw spend); delegation has a floor cost, so too-narrow briefs lose; it does not pay on narrow tasks or when judgment is needed on the raw material (keep the requested model there) |
+| [Dynamic workflows](https://github.com/anthropics/claude-cookbooks/blob/main/claude_agent_sdk/08_Dynamic_workflows.ipynb) | Claude Code's `Workflow` tool runs a script that spawns many subagents; `agent(prompt, {model})` sets a model per stage; `CLAUDE_CODE_SUBAGENT_MODEL` overrides all | a fifth channel candidate: the skill tells the parent to put the declared tier in each stage's `model`. **Unverified:** whether PreToolUse sees workflow `agent()` spawns at all. Card R0b checks it before any design depends on it |
+| [Coordination patterns](https://claude.com/blog/multi-agent-coordination-patterns) (article) | five patterns; start with orchestrator-subagent, move only when a need appears; set budgets and stop rules | v2 stays orchestrator-subagent: no bus, no shared state, no supervisor. Budgets are shown (headroom in the routing note), not enforced by rerouting |
+
+What v2 rejects from these: an LLM selector in the routing loop (the cookbooks' `route()` picks from a closed set
+with a model call; v2 keeps the closed set and drops the call, the parent declares it), and long-lived worker
+supervision (an orchestrator's job, §3 of the tasks out-of-scope list).
+
+Measurement follows the cookbook's method: per-delegation usage from the child-end events, compared with a
+rigor-matched control. A run where the parent did not delegate paid a frontier round trip for nothing; the
+routing note records `delegated=false` for that, and the report counts it.

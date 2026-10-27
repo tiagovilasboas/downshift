@@ -25,6 +25,7 @@ Each card is one PR, at most 5 points, mergeable alone. v2 ships behind `DOWNSHI
 | # | Card | Pts | Depends on | Parallel with |
 |---|---|--:|---|---|
 | R0 | **Fix #570 regression:** Claude Code candidate set `haiku/sonnet/opus` as `HarnessCapabilities` data; routing never needs a session list | 2 | — | R1 |
+| R0b | Verify whether Claude Code PreToolUse fires for `Workflow` `agent()` spawns and what `model` it carries; result goes into design §11 | 1 | — | R0, R1 |
 | R1 | Approve design (this PR) and inventory rows in `docs/contrib/coverage.md` for `internal/routing/*` | 1 | — | R0 |
 | R2 | `routing/policy`: schema (profiles, rules, gates, tiers), loader, `downshift policy check`; config errors refused at load | 5 | R1 | R3, R4 |
 | R3 | `routing/headroom`: strain from existing quota readings (worst window, rate-limited = +inf, TTL → missing; missing passes) | 3 | R1 | R2, R4 |
@@ -42,13 +43,13 @@ Each card is one PR, at most 5 points, mergeable alone. v2 ships behind `DOWNSHI
 | R12b | Delete shadow stack, part 2: `routingv2` shadow, `decisionintelligence`, gateway shadow; classifier demoted to offline suggester | 3 | R9 | R12a |
 | R13 | Docs: harness matrix, capability matrix, README routing section, install guide, AGENTS.md architecture lines (≤200 lines) | 3 | R9 | R12* |
 
-Total 50 points, 17 cards.
+Total 51 points, 18 cards.
 
-**Stage 1: Claude Code end to end** (35 points)
+**Stage 1: Claude Code end to end** (36 points)
 
 | Wave | Cards | Why they do not collide |
 |---|---|---|
-| 1 | R0, R1 | capabilities data vs docs |
+| 1 | R0, R0b, R1 | capabilities data vs a read-only probe vs docs |
 | 2 | R2, R3, R4, R5 | four new packages, no shared files |
 | 3 | R6 | integrates the four; touches the hook runner (Claude Code adapter is the reference) |
 | 4 | R8a, R10 (Claude Code links only: `~/.claude/skills` → `~/.agents/skills`), R11 | agent-definition writer / skill + setup link / telemetry |
