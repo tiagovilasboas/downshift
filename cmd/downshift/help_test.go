@@ -31,14 +31,14 @@ func TestUsageShortIsShortAndPointsToAll(t *testing.T) {
 	}
 }
 
-// The default help is a contract for a new user: eight commands, one per step
+// The default help is a contract for a new user: seven commands, one per step
 // of the install-check-use-fix loop. Everything else is in help --all.
-func TestUsageShortListsTheEightEverydayCommands(t *testing.T) {
+func TestUsageShortListsTheSevenEverydayCommands(t *testing.T) {
 	var short, full bytes.Buffer
 	usageShort(&short)
 	usage(&full)
 	out := short.String()
-	for _, cmd := range []string{"setup", "doctor", "try", "stats", "report", "session", "config", "feedback"} {
+	for _, cmd := range []string{"setup", "doctor", "try", "stats", "report", "session", "config"} {
 		if !strings.Contains(out, "  downshift "+cmd) {
 			t.Errorf("short help is missing the everyday command %q", cmd)
 		}
@@ -54,14 +54,14 @@ func TestUsageShortListsTheEightEverydayCommands(t *testing.T) {
 	var cmds []string
 	commands, _, _ := strings.Cut(out, "Examples")
 	for _, line := range strings.Split(commands, "\n") {
-		for _, c := range []string{"setup", "doctor", "try", "stats", "report", "session", "config", "feedback"} {
+		for _, c := range []string{"setup", "doctor", "try", "stats", "report", "session", "config"} {
 			if strings.HasPrefix(line, "  downshift "+c+" ") {
 				cmds = append(cmds, c)
 			}
 		}
 	}
-	if len(cmds) != 8 {
-		t.Errorf("short help lists the everyday commands %v, want exactly 8 lines", cmds)
+	if len(cmds) != 7 {
+		t.Errorf("short help lists the everyday commands %v, want exactly 7 lines", cmds)
 	}
 }
 
@@ -94,9 +94,9 @@ func TestUsageAllIsGroupedAndComplete(t *testing.T) {
 		return rest
 	}
 	for name, cmds := range map[string][]string{
-		"Everyday":     {"downshift setup", "downshift doctor", "downshift try", "downshift stats ", "downshift report", "downshift session", "downshift config", "downshift feedback list"},
+		"Everyday":     {"downshift setup", "downshift doctor", "downshift try", "downshift stats ", "downshift report", "downshift session", "downshift config"},
 		"Plumbing":     {"downshift claude-code", "downshift cursor", "downshift codex", "downshift antigravity", "downshift kirocrew", "downshift quota import", "downshift quota collect", "downshift quota claude-statusline"},
-		"Maintainer":   {"downshift benchmark", "downshift eval-outcome", "downshift eval-adapt", "downshift train", "downshift shadow-report", "downshift models check", "downshift models pull"},
+		"Maintainer":   {"downshift eval-outcome", "downshift models check", "downshift models pull"},
 		"Experimental": {"downshift context status", "downshift context compress", "dsmon"},
 	} {
 		sec := section(name)
@@ -112,7 +112,7 @@ func TestUsageAllIsGroupedAndComplete(t *testing.T) {
 		"downshift setup", "downshift doctor", "downshift try", "downshift stats", "downshift stats --detail", "downshift stats --export",
 		"downshift report", "downshift session", "downshift watch", "downshift config",
 		"downshift models list", "downshift models discover", "downshift models check", "downshift models pull",
-		"downshift quota status", "downshift feedback list", "downshift feedback stats", "downshift feedback <id>",
+		"downshift quota status",
 		"downshift context benchmark", "downshift context metrics", "downshift context providers", "downshift context enable", "downshift context disable",
 		"downshift version", "Grok note",
 	} {

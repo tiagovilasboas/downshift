@@ -3,8 +3,8 @@
 
 package main
 
-// modelsHelp covers the model catalog, the quota evidence, and the offline
-// replay and learning views.
+// modelsHelp covers the model catalog, the quota evidence, and the probe and
+// learning views.
 var modelsHelp = map[string]string{
 	"models": `downshift models — Inspect and refresh the model catalog
 
@@ -101,24 +101,6 @@ Examples:
   downshift quota collect --harness=codex --transcript=/path/to/rollout.jsonl
 
 Next: downshift quota status --harness=ID, to confirm the evidence is fresh
-`,
-	"replay": `downshift replay — Re-decide recorded Claude Code spawns under each policy (offline)
-
-Usage:
-  downshift replay [--projects=DIR] [--policies=LIST]
-
-Flags:
-  --projects=DIR    Claude Code projects directory (default ~/.claude/projects)
-  --policies=LIST   Comma-separated: current, nb_downshift, explicit_upshift,
-                    nb_downshift+explicit_upshift, or economy (default current,nb_downshift)
-
-No model call, no network, and no prompt is printed or written.
-
-Examples:
-  downshift replay
-  downshift replay --policies=current,economy
-
-Next: downshift report, for the measured numbers from real runs
 `,
 	"probe": `downshift probe — Maintainer tool: record a hook payload's field names (never prompts or paths)
 

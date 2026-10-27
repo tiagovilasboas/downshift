@@ -142,51 +142,6 @@ Examples:
 
 Next: downshift doctor, if a value looks wrong
 `,
-	"feedback": `downshift feedback — Review routings and record their outcome
-
-Usage:
-  downshift feedback list [--pending]
-  downshift feedback stats
-  downshift feedback <id> <success|retry|failed> [--retry-tier=MID|FRONTIER] [--required-tier=SMALL|MID|FRONTIER]
-
-Flags:
-  --pending             With list: only routings without an outcome
-  --retry-tier=TIER     With retry: the tier that finally succeeded (MID or FRONTIER)
-  --required-tier=TIER  The tier the task really needed (SMALL, MID or FRONTIER)
-
-Examples:
-  downshift feedback list --pending
-  downshift feedback abc123 success --required-tier=SMALL
-
-Next: downshift feedback stats, for outcomes per harness
-`,
-	"feedback list": `downshift feedback list — The latest routings, newest first (50 at most)
-
-Usage:
-  downshift feedback list [--pending]
-
-Flags:
-  --pending   Only routings without an outcome yet
-
-Examples:
-  downshift feedback list
-  downshift feedback list --pending
-
-Next: downshift feedback <id> success|retry|failed
-`,
-	"feedback stats": `downshift feedback stats — Outcomes per harness: success, retry, failed, pending
-
-Usage:
-  downshift feedback stats
-
-Flags:
-  (none)
-
-Examples:
-  downshift feedback stats
-
-Next: downshift feedback list --pending
-`,
 	"enable": `downshift enable — Print shell aliases for transparent compaction (eval in .bashrc/.zshrc)
 
 Usage:

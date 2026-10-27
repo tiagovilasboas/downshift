@@ -137,7 +137,7 @@ var harnessRegistry = map[string]harnessEntry{
 	// and applies the route answer itself; the hook reads the v1 wire, drops
 	// unknown fields and answers one allow-listed JSON object. Its taskText is
 	// the classification input: it stays in memory and only derived features
-	// reach the feedback store (see training.RecordRoutedDecision).
+	// reach the event log.
 	"opencode": {
 		Hook: func(in io.Reader, catalog core.Resolver) int {
 			return runHookAdapter(

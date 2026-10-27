@@ -40,13 +40,12 @@ Save context
 
 Fix things
   downshift config                 Every effective setting with its value and source
-  downshift feedback list          Routing ids waiting for your review
 
 Hooks (your harness calls these, you do not)
   downshift claude-code | cursor | codex | antigravity | kirocrew | opencode
 
 More
-  downshift help --all             Every command: watch, models, quota, context, benchmark and the rest
+  downshift help --all             Every command: watch, models, quota, context, dci and the rest
   downshift version                Print the binary version
 
 Examples
