@@ -1,115 +1,91 @@
 # Accounting
 
-Downshift's accounting layer measures what routing saves: the difference
-between what you would have paid if every token ran on the requested model
-and what you actually paid with routing.
+Downshift's accounting layer measures tokens. It counts the tokens that routing
+moved to a cheaper model and the tokens that compaction kept out of the context
+window, per harness. It reports tokens only and never converts them to money.
 
-## The Saved formula
+## The token account
 
+```text
+Routing tokens   = Σ (work + cache tokens) of child spawns that ran on a cheaper model than requested
+Compactor tokens = Σ max(raw bytes − emitted bytes, 0) / 4     # estimate: one token per 4 bytes
+Tokens saved     = routing tokens + compactor tokens
 ```
-C_actual   = Σ price(model_i, tokens_i)           # actual models and tokens
-C_baseline = price(requested_model, Σ tokens_i)  # all tokens at session model
-Saved      = C_baseline − C_actual
-```
 
-Where:
-- `model_i` is the model that actually executed token bucket `i`
-- `tokens_i` is the token count (input/output/cache_read/cache_write) for that bucket
-- `requested_model` is the session's requested model (the model the user asked for)
-- `price(model, tokens)` applies the catalog rates to compute cost
+- **Work tokens** are a child's input and output tokens. **Cache tokens** are its
+  cache read and cache write tokens.
+- A child counts as routing savings when its model is cheaper than the one the
+  harness requested. Its whole token count counts; the account does not subtract
+  what the requested model would have used.
+- Routing tokens come from each child's usage record. Compactor tokens are an
+  estimate from the bytes of command output.
 
-## Price quality
+## What the account does not measure
 
-Not every model lookup returns exact pricing. The `PriceFor(model)` function
-returns a quality alongside the price:
+- **Money.** No figure is a price or a cost. Catalog prices are an internal
+  routing signal (see [Price book](#price-book)).
+- **Extra turns.** A cheaper child can take more turns than the requested model
+  would. The account counts its tokens as moved and does not model that difference.
+- **Quality and capability trade-offs.** That is a policy question, not accounting.
+- **Quota and overage.**
 
-| Quality | Meaning | Treatment |
-|---------|---------|-----------|
-| `exact` | All four price fields present | Used directly |
-| `upper_bound` | Partial data; cache prices assumed zero or max | Used with caveat |
-| `inferred` | Slug mapped to family member (e.g., HAIKU → claude-haiku-5-5) | Used with caveat |
-| `unpriced` | No resolvable id | Excluded from Saved; counted separately |
+Routing tokens therefore mean tokens moved to a cheaper model, not tokens avoided
+against the requested model.
 
-## Known limitations
+## Scopes
 
-### Positive bias on downshifted runs (~15%)
-
-When a child runs on a cheaper model (e.g., haiku instead of sonnet), it often
-generates more tokens (more turns, more cache reads). The formula prices those
-extra tokens at the baseline model rate, making `C_baseline` larger than the
-true counterfactual.
-
-**Measured bias:** +15% mean, ±7% std dev (n=9 runs with actual downshifts in
-the four-arm battery part 1).
-
-**Mitigation:** Every published `Saved` figure carries the caveat:
-> (estimate, may overstate by ~15% when routing to cheaper models)
-
-### Compaction priced once as input
-
-Compacted output blocks are priced at input cost once, when injected into the
-context. If the block stays in cache across multiple turns, the actual cost is
-lower (cache read rate vs. input rate).
-
-**Measured impact:** <$0.001 per run — below the noise floor.
+`accounting.Compute` takes one scope for every surface: `ScopeDays` (last N days),
+`ScopeSession` (one hashed session id) or `ScopeAll`. The result carries the routing
+tokens, the compactor totals and `TokensSavedEstimate`, the sum of both token parts.
 
 ## Per-harness aggregation
 
-Exec events carry `harness` (kirocrew, claude-code, cursor, etc.) and `entry`
-(hook vs. direct) fields. The `AggregateByHarness()` function groups events by
-harness, enabling per-harness cost and compression reporting.
+Exec events carry `harness` and `entry` (hook or direct). `accounting.AggregateByHarness`
+groups the compactor totals by harness. Telemetry events carry the harness too.
+
+## Price book
+
+The catalog (`internal/catalog/catalog.json`) keeps model prices as an internal
+routing signal. `catalog.PriceBook.PriceFor(model)` returns a price and a quality:
+
+| Quality | Meaning |
+|---------|---------|
+| `exact` | All four price fields present |
+| `upper_bound` | Partial data; cache prices assumed zero or max |
+| `inferred` | Slug mapped to a family member (e.g., HAIKU → claude-haiku-5-5) |
+| `unpriced` | No resolvable id |
+
+No accounting output shows a price or a quality value.
+`internal/accounting/formula` still implements the old price formula (`Saved`) as a
+pure function with golden tests. No production code calls it.
 
 ## API
 
-### PriceBook
-
 ```go
-pb := catalog.NewPriceBook(catalog.Load())
+// One scope: routing and compactor tokens, plus the text that surfaces print.
+n := accounting.Compute(events, execEvents, accounting.Scope{Kind: accounting.ScopeDays, Days: 7})
+// n.TokensSavedEstimate == n.Routing.WorkSaved + n.Routing.CacheSaved + n.Compactor.Tokens
 
-result := pb.PriceFor("claude-haiku-4-5")
-// result.Quality == QualityExact
-// result.InputCostM, result.OutputCostM, ...
+// Routing tokens from telemetry usage events.
+routing := telemetry.TokenSavings(events).Total
 
-cost := result.ComputeCost(inputTokens, outputTokens, cacheRead, cacheWrite)
+// Compactor totals per harness from exec events.
+summary := accounting.AggregateByHarness(execEvents)
 ```
 
-### Saved
+## Caveats to print
 
-```go
-buckets := []formula.TokenBucket{
-    {Model: "claude-haiku-4-5", InputTokens: 100000, OutputTokens: 50000},
-}
+When publishing a token figure, include:
 
-result := formula.Saved("claude-sonnet-5-5", buckets, pb)
-// result.Saved > 0 when haiku is cheaper than sonnet
-// result.Quality indicates confidence (exact, mixed, partial, unpriced)
-// result.IsValid() returns false if baseline is unpriced
-```
-
-### AggregateByHarness
-
-```go
-events := execwrap.LoadEvents(path)
-summary := accounting.AggregateByHarness(events)
-// summary.ByHarness[0].Harness == "kirocrew"
-// summary.ByHarness[0].Commands == 42
-// summary.ByHarness[0].SavedBytes == 123456
-```
-
-## Assumptions summary
-
-When publishing any `Saved` figure, include:
-
-1. **Bias caveat:** "(estimate, may overstate by ~15% when routing to cheaper models)"
-2. **Compaction caveat:** "Compactor saving priced at input cost once per block"
-3. **Scope caveat:** "Routing saving only; excludes quota/overage and quality trade-offs"
-4. **Catalog date:** "Prices as of YYYY-MM-DD"
+1. **Compactor caveat:** "Compactor tokens are an estimate: bytes saved divided by four."
+2. **Routing caveat:** "Routing tokens are tokens that ran on a cheaper model. They count the whole child, without modelling its extra turns."
+3. **Scope caveat:** "Tokens only, no money. Excludes quota, overage and quality trade-offs."
 
 ## Evidence
 
 | Spike | Finding |
 |-------|---------|
-| S0: Formula validation | GO with +15% bias caveat |
+| S0: Formula validation | GO with +15% bias caveat (measured the price formula, now retired from reporting) |
 | S1: Compaction persistence | D2 confirmed (v1 pricing) |
 | S2: Price coverage | 100% battery coverage |
 
