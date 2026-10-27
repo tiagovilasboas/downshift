@@ -128,6 +128,16 @@ why: trivial task, no risk, confident
 **How it works:** Strict heuristics + FNV word-hash scoring. Local, deterministic,
 no model call on the routing path. When unsure, keeps the requested model — doubt never spends money.
 
+**Inspiration (routing v2, in progress on `downshift/true-north`):** the next routing model comes from
+Anthropic's own agent patterns, read in this order:
+[Orchestrator-workers](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/orchestrator_workers.ipynb) (smart delegation),
+[Async multi-agent orchestration](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/async_multi_agent_orchestration.ipynb) (concurrency and isolated contexts),
+[Plan big, execute small](https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/CMA_plan_big_execute_small.ipynb) (cost by model),
+[Dynamic workflows](https://github.com/anthropics/claude-cookbooks/blob/main/claude_agent_sdk/08_Dynamic_workflows.ipynb) (scale and deterministic execution),
+and the article [Multi-agent coordination patterns](https://claude.com/blog/multi-agent-coordination-patterns).
+The third is the closest fit: spend frontier intelligence on planning and cheap models on execution.
+Design: [docs/design/routing-v2.md](docs/design/routing-v2.md).
+
 ### 3. Compressor Learning (auto-discovery)
 
 Observes uncompacted commands and identifies candidates for new compressors.
@@ -386,5 +396,7 @@ Apache License 2.0. See [LICENSE](LICENSE).
 **Downshift** by [Tiago Vilas Boas](https://github.com/tiagovilasboas)
 
 Conceptual backbone: [Harness engineering (Fowler)](https://martinfowler.com/articles/harness-engineering.html)
+
+Routing inspiration: [Anthropic agent patterns](https://github.com/anthropics/claude-cookbooks/tree/main/patterns/agents) · [Plan big, execute small](https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/CMA_plan_big_execute_small.ipynb)
 
 </div>
