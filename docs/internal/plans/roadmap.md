@@ -173,7 +173,13 @@ The owner changed the route for Phases 1 and 2 on 2026-10-27. These notes amend 
 - **N6 One branch, no PR per card.** The cards land as commits on `downshift/mvp-ponto-zero`, gated by `make check` on each commit. The branch named in D5 is now this one. The one-PR-per-part rule does not apply to this line.
 - **N7 Real-session proof before default.** R6 does not become the default until the acceptance suite (V2) shows no regression and a real Claude Code session shows the decision. Owner authorized the session on 2026-10-27.
 
-**Status at this note.** R1, R2 and R3 are done. R4 (hint) and R5 (risk guard) are in progress. R0 is unverified: a candidate list exists in `HarnessCapabilities`, but the 2026-10-26 card was not checked against it. R0b is not run. R6 is next. R7, R8a, R10, R11 and R13 are not started. Phases 5 and 6 are not started.
+**Status (updated 2026-10-27, branch `downshift/mvp-ponto-zero` at `2330a3e1`, QA PASS).**
+- **Phase 1:** done on the branch with the decisions N1 to N3. Cleanup still open: the NB files, `internal/nbtier`, the gateway files and the docs that still cite `try`.
+- **Phase 2:** R1, R2 and R3 are done. R4 (hint) and R5 (risk guard) are done. R6 (the v2 decider wired to the hook, replacing v1) is done on the branch. R0 is unverified against the 2026-10-26 card. R0b is not run. The real-session proof is pending.
+- **Phase 3:** R7, R8a and R10 are not started.
+- **Phase 4:** R9 is done, as decision N4. R11 and R13 are not started.
+- **Phases 5 and 6:** not started.
+- **Release:** nothing is on `main`. It waits for the real-session proof (D5).
 
 ## 9. Conflicts in the sources (fix when accepted)
 
