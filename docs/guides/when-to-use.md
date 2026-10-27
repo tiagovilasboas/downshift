@@ -15,7 +15,7 @@ Every harness with an adapter gets every feature, computed in shared layers. **C
 - You run **agentic coding sessions** where subagents inherit the session’s most expensive model.
 - You want **rule-based routing** (classifier + catalog policy) with **no LLM in the routing loop**.
 - You need **offline, keyless tier selection** for hooks: classify on CPU, pick model from your catalog, rewrite `updatedInput` before the child starts.
-- You care about **testability**: `downshift try`, [benchmark/report.md](../../benchmark/report.md), optional shadow classifier (`DOWNSHIFT_SHADOW_WEIGHTS`).
+- You care about **testability**: `downshift try`, [benchmark/report.md](../../benchmark/report.md).
 - You want **local telemetry** (`events.jsonl`) and explicit training labels (`--required-tier`), not a hosted analytics product.
 
 ## Consider something else when
