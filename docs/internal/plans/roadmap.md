@@ -161,6 +161,20 @@ Status of each item: all 13 accepted on 2026-10-26. D1 to D4, D6, D8 to D12 foll
 - **D12 docscheck scope: accepted.** Extend `docscheck` to `README.md` and `docs/design/architecture.md` after Phase 1.
 - **D13 Family aliases: chosen (not in the first draft).** `haiku`, `sonnet` and `opus` move into `catalog.json` as data, and Go code reads them from there. This follows the `AGENTS.md` rule against hardcoded model IDs in Go source, so the rule does not need amending.
 
+## 8a. Decision notes (2026-10-27)
+
+The owner changed the route for Phases 1 and 2 on 2026-10-27. These notes amend the items above. They do not reopen the 2026-10-26 acceptances.
+
+- **N1 No flag. v2 replaces v1 in one change.** `DOWNSHIFT_ROUTING` and the keep default are dropped. Phase 1 wave B and R6 land together: the v2 decider becomes the only decider in the same change that removes the v1 decider. This supersedes the flag wording in R6, the no-op exit of Phase 1, and D10: with no flag there is no flag-off path, and rollback is a revert.
+- **N2 Routing is never off on the branch.** A consequence of N1: the no-op state of Phase 1 does not exist. The release gate holds: nothing reaches `main` before R6 and R13 are proven (D5).
+- **N3 Kept: `internal/session`, `classify`, `fuse`, `semantic`.** Outcome and benchmark use `ClassifyWithSemantic`, and session selection still uses `internal/session`. Phase 1 units 3 and 4 are partial: only the v1 parts go. The rest is a later card.
+- **N4 R9 moves into the R6 change.** Making v2 the default is the same change as the decider (N1), so R9 is done in Phase 2. R11 and R13 stay in Phase 4 and must be done before the release.
+- **N5 R0b before R6.** R0b (does PreToolUse fire on workflow `agent()` spawns) is still unverified in the design, §11. It runs before R6. The real-session proof, authorized by the owner on 2026-10-27, is its evidence.
+- **N6 One branch, no PR per card.** The cards land as commits on `downshift/mvp-ponto-zero`, gated by `make check` on each commit. The branch named in D5 is now this one. The one-PR-per-part rule does not apply to this line.
+- **N7 Real-session proof before default.** R6 does not become the default until the acceptance suite (V2) shows no regression and a real Claude Code session shows the decision. Owner authorized the session on 2026-10-27.
+
+**Status at this note.** R1, R2 and R3 are done. R4 (hint) and R5 (risk guard) are in progress. R0 is unverified: a candidate list exists in `HarnessCapabilities`, but the 2026-10-26 card was not checked against it. R0b is not run. R6 is next. R7, R8a, R10, R11 and R13 are not started. Phases 5 and 6 are not started.
+
 ## 9. Conflicts in the sources (fix when accepted)
 
 1. README stage totals (36 and 15) do not match its cards: stage 1 cards sum to 42 points; stage 2 (R7, R8b, R8c) to 9.
