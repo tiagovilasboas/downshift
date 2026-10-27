@@ -92,3 +92,22 @@ func TestQuotaCollectGatedByCapability(t *testing.T) {
 		t.Fatalf("capable harness rejected: %d %q", rc, msg)
 	}
 }
+
+// The status view carries the headroom verdict built from the same statusline
+// snapshot, so a critical week window reads as critical here too.
+func TestQuotaStatusCarriesClaudeHeadroom(t *testing.T) {
+	t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "quota.json"))
+	reset := time.Now().Add(time.Hour).Unix()
+	b, _ := json.Marshal(map[string]any{"rate_limits": map[string]any{"five_hour": map[string]any{"used_percentage": 25, "resets_at": reset}, "seven_day": map[string]any{"used_percentage": 100, "resets_at": reset}}})
+	var out, errOut bytes.Buffer
+	if rc := runQuota([]string{"claude-statusline"}, bytes.NewReader(b), &out, &errOut); rc != 0 {
+		t.Fatalf("bridge rc%d %s", rc, errOut.String())
+	}
+	out.Reset()
+	if rc := runQuota([]string{"status", "--harness", "claude-code"}, strings.NewReader(""), &out, &errOut); rc != 0 {
+		t.Fatalf("status rc%d %s", rc, errOut.String())
+	}
+	if !strings.Contains(out.String(), `"headroom":{"harness":"claude-code","strain":"critical","window":"week","used_pct":100}`) {
+		t.Fatalf("status lacks the headroom verdict: %s", out.String())
+	}
+}
