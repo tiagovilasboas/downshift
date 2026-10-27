@@ -13,7 +13,6 @@ var briefWords = map[string]string{
 	ReasonNBUpshiftApplied:     "raised by the second-opinion model",
 	ReasonNBDownshiftApplied:   "lowered by the second-opinion model",
 	ReasonTierFloor:            "project tier floor",
-	ReasonScoreRouted:          "picked by public capability scores",
 	ReasonBaselineFromSettings: "baseline inferred from the configured model",
 	ReasonCreditHeld:           "credit gate held the rewrite",
 	ReasonGuessHeld:            "guessed baseline held a mid downshift",

@@ -15,7 +15,7 @@ func TestReasonWords_EveryCodeHasWords(t *testing.T) {
 	codes := []string{
 		ReasonClassifierConfident, ReasonClassifierUnconfident, ReasonNoSignal, ReasonSemanticBoost, ReasonTaskFocus, ReasonUnsupportedLanguage,
 		ReasonRiskCategory, ReasonRiskFloor, ReasonNBUpshiftApplied,
-		ReasonNBDownshiftApplied, ReasonTierFloor, ReasonCreditHeld, ReasonGuessHeld, ReasonPaused, ReasonScoreRouted, ReasonBaselineFromSettings, ReasonAgentPinsModel, ReasonAgentTypeHint, ReasonHeldUnmapped,
+		ReasonNBDownshiftApplied, ReasonTierFloor, ReasonCreditHeld, ReasonGuessHeld, ReasonPaused, ReasonBaselineFromSettings, ReasonAgentPinsModel, ReasonAgentTypeHint, ReasonHeldUnmapped,
 	}
 	for _, c := range heldReason {
 		codes = append(codes, c)

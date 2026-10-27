@@ -85,7 +85,6 @@ The subagent routing domain provides deterministic model selection for delegated
 | [reference/session-models.md](reference/session-models.md) | Reference | Session candidate allowlists, Claude usage hooks, fallback resolution |
 | [reference/session-discovery.md](reference/session-discovery.md) | Reference | `models discover`: harness-native model discovery and ranking |
 | [reference/complexity-weights.md](reference/complexity-weights.md) | Reference | Signal weights, tier thresholds, and per-harness model mapping |
-| [reference/scores.md](reference/scores.md) | Reference | Public capability scores: sources, cache, refresh, shadow selection |
 | [examples/session-models.example.json](examples/session-models.example.json) | Example | Sample session model configurations across harnesses |
 | [../README.md#the-llms-it-knows](../README.md#the-llms-it-knows) | Reference | Embedded catalog, families per harness, `explicit_only` handling |
 | [design/minilm-semantic.md](design/minilm-semantic.md) | Design | Semantic boost: in-process word-hash embedder (raise-only gate) |

@@ -31,7 +31,7 @@ it comes from. It is read-only: it reads what the hooks read and writes nothing.
 
 Settings shown: `state_dir`; `session_models` per harness (native export, discovery
 cache, `session-models.json`, inferred from the current model, or none); `quota_mode`;
-`scores` on/off and `score_routing` (shadow or live); `control_share`; `quiet`;
+`control_share`; `quiet`;
 `catalog` (embedded or user override); `semantic_boost` and `semantic_embedder`;
 `infer_session`. The session lists reflect the files on this machine; a list in a
 hook payload overrides them at spawn time.
@@ -48,15 +48,12 @@ hook payload overrides them at spawn time.
 | `cursor-composer-model.json` | Cursor only: last seen composer slug per `session_id` (written by `cursor-touch` and `end cursor`; read for Task baseline when `preToolUse` omits `model`) |
 | `loop-events.jsonl` | Routing v2 training events |
 | `weights.json` | Classifier weight override |
-| `scores.json` | Public capability score cache (sources, selected source, rows); see [scores.md](../reference/scores.md) |
 
 Override paths:
 
 - `DOWNSHIFT_EVENT_LOG` — telemetry JSONL (advanced)
 - `DOWNSHIFT_SESSION_MODELS` — session allowlist file
 - `DOWNSHIFT_INFER_SESSION=off` — disable the inferred session (Claude Code); an unknown session then never rewrites
-- `DOWNSHIFT_SCORES=off` — no network for public capability scores: no hook, install or doctor refresh, and the router ignores `scores.json`. Details: [scores.md](../reference/scores.md)
-- `DOWNSHIFT_SCORE_ROUTING=1` — let the public-score pick change the routed model (default: shadow only, recorded in telemetry as `score_would`). Details: [scores.md](../reference/scores.md#capability-selection)
 
 Every variable the routing core reads, with its default, is listed in one place: the doc comment of `internal/core/env.go`. The ones not covered above:
 

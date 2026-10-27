@@ -185,7 +185,7 @@ Windows path. The `test-os` CI job runs the OS-sensitive packages on
   Linux and macOS. Build paths with `filepath.Join` / `filepath.FromSlash`
   (store `/`-separated, convert per-OS), resolve HOME with `os.UserHomeDir()`
   (never `os.Getenv("HOME")`), and put any OS-specific behavior behind a build
-  tag (`_windows.go` / `_unix.go`), as `scorerefresh_*.go`, `procgroup_*.go`
+  tag (`_windows.go` / `_unix.go`), as `detach_*.go`, `procgroup_*.go`
   and `internal/paths/owned_*.go` already do. A `/bin/sh` wrapper is POSIX-only:
   a harness install that must run on Windows needs a `.cmd`/`.ps1` sibling or a
   no-wrapper path. Setup must not auto-write a symlinked target (e.g.

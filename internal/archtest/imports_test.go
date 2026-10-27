@@ -49,7 +49,7 @@ type rule struct {
 }
 
 var rules = []rule{
-	{"core", []string{"quota", "nbtier", "nbopinion", "catalog", "telemetry", "adapt", "policyfile", "scoreindex", "adapters"},
+	{"core", []string{"quota", "nbtier", "nbopinion", "catalog", "telemetry", "adapt", "policyfile", "adapters"},
 		"core production sources reach those packages only through hooks registered by cmd"},
 	{"session", []string{"core"}, "session is a leaf loader; PlanForSession and friends stay in core"},
 	{"fuse", []string{"core"}, "fuse imports classify and semantic, never core (core wraps fuse)"},

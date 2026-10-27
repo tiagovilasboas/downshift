@@ -40,10 +40,6 @@ const (
 	// for the session (`downshift session --pause`): classified and logged as a
 	// control-group baseline, the spawn left unchanged.
 	ReasonPaused = "PAUSED"
-	// ReasonScoreRouted marks a model chosen by the public-score capability
-	// path (DOWNSHIFT_SCORE_ROUTING=1). A shadow pick is never a reason: it
-	// has its own event field, score_would.
-	ReasonScoreRouted = "SCORE_ROUTED"
 	// ReasonBaselineFromSettings marks a decision whose baseline model was
 	// inferred from the configured session model (env or settings) because the
 	// transcript had none; a --model flag or /model can make it wrong.
@@ -118,9 +114,6 @@ func ReasonCodes(d core.Decision) []string {
 	}
 	if d.Baseline.GuessHeld {
 		set[ReasonGuessHeld] = true
-	}
-	if d.Shadow.ScoreApplied {
-		set[ReasonScoreRouted] = true
 	}
 	if d.Baseline.FromSettings {
 		set[ReasonBaselineFromSettings] = true

@@ -45,11 +45,11 @@ external tool. Dotted boxes are opt-in or shadow and never change the route.
    native exports (never fetched during a hook)
              ▼
  classify + risk [D]  Classify (signals) → hash semantic boost → risk floor /
-   abstain → NB second opinion (shadow unless opted in) ┆ adapt / score (shadow) ┆
+   abstain → NB second opinion (shadow unless opted in) ┆ adapt ┆
              ▼
  Route + Check [D]  tier → effort → session-resolved model → verdict vs current →
    R1 R2 R4 R5 R6 R7 R8 R9 (any hit ⇒ OK, keep current) → project floor
-   (.downshift/policy.json, re-checked) ┆ adapt memory, score path (shadow/opt-in) ┆
+   (.downshift/policy.json, re-checked) ┆ adapt memory ┆
              ▼
  PlanSession [D]  foreign id → hold · explicit_only → preserve · unknown
    session → keep · pick the session model at the tier (exhausted quota never
@@ -140,8 +140,7 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    Only a deterministic lift (risk, opted-in NB upshift, operator floor)
    may move up. The project floor (`internal/policyfile`, `TierFloorHook`) runs
    after `Check` and re-checks. Adapt memory records a would-be tier and does
-   not change it; the capability score path runs only with
-   `DOWNSHIFT_SCORE_ROUTING=1` and behind the same safe-verdict gate.
+   not change it.
 6. **Session plan and fate** `[D]`. `PlanSession` holds foreign ids, preserves
    `explicit_only` models, keeps the model when the session is unknown, and
    selects the session model at the needed tier, skipping exhausted quota. The
@@ -205,7 +204,7 @@ points down or sideways to an inner package, and `core` never points back out.
  ┌─────────────────────────────────────────────────────────────────────┐
  │ internal/core  Route · Check R1-R9 · PlanSession · Resolver · Caps   │
  │   imports only: classify fuse quotamodel session                     │
- │   hook vars (ports): MemoryAdjustHook TierFloorHook ScoreHook        │
+ │   hook vars (ports): MemoryAdjustHook TierFloorHook                  │
  │   NBSuggestHook NBTrivialHook LoadQuotaHook LoadNativeQuotaHook      │
  │   ParseNativeQuotaHook RegisterNativeQuotaHook                       │
  └──▲───────────────────────────────▲──────────────────────────────────┘
@@ -215,7 +214,7 @@ points down or sideways to an inner package, and `core` never points back out.
  │ quota → LoadQuota*        │   │ catalog (Resolver) · discovery · models│
  │ policyfile → TierFloor    │   │ telemetry · hookport · childend       │
  │                           │   │ contextopt · sensor · server          │
- │ scoreindex → ScoreHook    │   │ outcome                               │
+ │                           │   │ outcome                               │
  │                           │   │ accounting                            │
  │                           │   │ api · cursorbridge                    │
  │                           │   │ shellwrap · execwrap (compressor)     │
@@ -244,7 +243,7 @@ Invariant checks run for this refresh (all from the repository root):
 
 | Invariant | Command | Result |
 |---|---|---|
-| Core production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter | `go list -deps ./internal/core \| grep -E 'internal/(quota\|nbtier\|nbopinion\|catalog\|telemetry\|adapt\|policyfile\|scoreindex\|adapters)(/\|$)'` | holds (no match) |
+| Core production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile` or an adapter | `go list -deps ./internal/core \| grep -E 'internal/(quota\|nbtier\|nbopinion\|catalog\|telemetry\|adapt\|policyfile\|adapters)(/\|$)'` | holds (no match) |
 | `session` does not import `core` | `go list -deps ./internal/session \| grep 'internal/core$'` | holds |
 | `fuse` does not import `core` | `go list -deps ./internal/fuse \| grep 'internal/core$'` | holds |
 | `codeintel` does not import `core` or `classify` | `go list -deps ./internal/codeintel \| grep -E 'internal/(core\|classify)$'` | holds |
@@ -299,7 +298,6 @@ All under `~/.downshift/` (override `DOWNSHIFT_STATE_DIR`; legacy
 | `session-models.json` (operator), `discovered.json` (24 h TTL cache) | operator; `setup` and `models discover` | operator-owned; temp file `0600` |
 | `catalog.json` (user override), `weights.json`, `adapt-memory.json` | operator, offline tools | operator-owned; `adapt-memory.json` `0600` |
 | `paused/<session hash>` | `downshift session --pause` | `0600` |
-| score cache and refresh stamp | `scoreindex`, `scorerefresh` | `0600` |
 | `context-optimization.json` | `context enable` | `0644` (no secret inside) |
 | DCI index cache | `codeintel` | dir `0700`, file `0600` |
 
@@ -371,7 +369,6 @@ tests, a security review or a production signal.
 
 | Path | Status | Switch |
 |---|---|---|
-| capability score routing | live only when enabled, behind the safe-verdict gate | `DOWNSHIFT_SCORE_ROUTING=1` |
 | NB upshift | opinion always logged; applied only when enabled | `DOWNSHIFT_NB_UPSHIFT=1` |
 | lifecycle observer | disabled by default; pick no models | config |
 
@@ -409,7 +406,7 @@ Downshift's codebase and documentation are structured strictly according to Clea
 | Package | Responsibility |
 |---------|----------------|
 | `internal/classify` | Regex classifier, `signals.go`, language guard, risk floor. No tier, no harness, no catalog |
-| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify`, `fuse`, `quotamodel` and `session` (checked 2026-10-19: `go list -deps ./internal/core` lists only those plus `semantic` and `paths`). Production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter. Core test files do import `catalog`, `nbtier` and `quota`; they are not in the binary. Optional layers plug in through hook variables set in their `init` (see Known gaps). Score selection stays here on purpose (`ScoreHook`); do not merge it with the naive-Bayes opinion. `NBUpshift` and `NBDownshift` stay on `Decision`. Env stays a typed snapshot set at the edge (`SetConfig`) |
+| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify`, `fuse`, `quotamodel` and `session` (checked 2026-10-19: `go list -deps ./internal/core` lists only those plus `semantic` and `paths`). Production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile` or an adapter. Core test files do import `catalog`, `nbtier` and `quota`; they are not in the binary. Optional layers plug in through hook variables set in their `init` (see Known gaps). `NBUpshift` and `NBDownshift` stay on `Decision`. Env stays a typed snapshot set at the edge (`SetConfig`) |
 | `internal/quotamodel` | Pure quota evidence types: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O. Landed: `core` imports this package; file reads and native parsing enter through `LoadQuotaHook`, `LoadNativeQuotaHook`, `ParseNativeQuotaHook` and `RegisterNativeQuotaHook`, registered by `quota`, the same pattern as `MemoryAdjustHook` |
 | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed (`5f94e07`): `core` imports this package; this package must not import `core`. `PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent` and `CanWriteSessionID` stay in `core` |
 | `internal/fuse` | Landed (`110ef31`). Semantic boost policy: raise-only, no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper. Stays in-process and does not exec |
@@ -417,7 +414,7 @@ Downshift's codebase and documentation are structured strictly according to Clea
 | `internal/catalog` | Embedded `catalog.json` (with `prices_as_of`), user override merge (recovers into the embedded data on a panic), `Resolver` |
 | `internal/discovery`, `internal/models` | Session model discovery (sources, order, `discovered.json` cache; run by `setup` and `models discover`) and `models list/check/pull`. Both import `catalog` and `core` |
 | `internal/adapters/*` | Harness-specific I/O only. Adapters do not choose the tier; they call `core.Route`, then apply the plan core returns |
-| `internal/policyfile`, `internal/scoreindex` | Project tier floor (`TierFloorHook`) and the score cache (`ScoreHook`), plugged into core at `init`. `cmd` blank-imports `policyfile` and imports `scoreindex` directly |
+| `internal/policyfile` | Project tier floor (`TierFloorHook`), plugged into core at `init`. `cmd` blank-imports `policyfile` |
 | `internal/quota`, `internal/hookctx`, `internal/hookutil` | Offline budget evidence (file I/O); per-hook deadline and project dir; shared field helpers. `quota` keeps `Load`, `Store`, `ParseNative` and native registration, aliases the `quotamodel` types so adapters can keep saying `quota.Snapshot`, and registers `LoadQuotaHook` and the native quota hooks. Core production sources do not import `quota` |
 | `internal/hookport`, `internal/childend` | Honor, usage and child-end contract; one shared recorder for every harness |
 | `internal/telemetry` | Append-only local JSONL (no per-spawn fsync); prompt-free events; `Summarize` (single savings definition), stats, report, control group, session tree. Imports `core` (tiers, prices) and `codeintel` (DCI summary type in the export) |
@@ -430,7 +427,7 @@ Downshift's codebase and documentation are structured strictly according to Clea
 **Invariants:** adapters embed no routing rules; adding a harness is one
 `harnessRegistry` entry plus its adapter package, with a port entry only when
 that harness's own hook sends honor or usage fields; a nil port is unobserved,
-never inferred. Dependency check: `internal/archtest` (`TestImportGraph`, run by `go test ./...` in the `test` job) fails when the production closure of `core` reaches quota, nbtier, nbopinion, catalog, telemetry, adapt, policyfile, scoreindex or an adapter, when `session` or `fuse` reach `core`, or when `codeintel` reaches `core` or `classify`; a negative test proves the matcher detects a violation. Rules not listed there (for example adapters importing policy) are still manual: `go list -deps ./internal/<pkg>`.
+never inferred. Dependency check: `internal/archtest` (`TestImportGraph`, run by `go test ./...` in the `test` job) fails when the production closure of `core` reaches quota, nbtier, nbopinion, catalog, telemetry, adapt, policyfile or an adapter, when `session` or `fuse` reach `core`, or when `codeintel` reaches `core` or `classify`; a negative test proves the matcher detects a violation. Rules not listed there (for example adapters importing policy) are still manual: `go list -deps ./internal/<pkg>`.
 
 ---
 

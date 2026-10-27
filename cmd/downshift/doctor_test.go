@@ -31,7 +31,6 @@ func newDoctorFixture(t *testing.T) *doctorFixture {
 	for _, k := range []string{paths.EnvStateDir, "DOWNSHIFT_EVENT_LOG", "DOWNSHIFT_SESSION_MODELS", "DOWNSHIFT_DISCOVERED", "DOWNSHIFT_CURSOR_NATIVE_FILE", "CLAUDE_CODE_SUBAGENT_MODEL", "DOWNSHIFT_QUOTA_FILE", "DOWNSHIFT_QUOTA_MODE"} {
 		t.Setenv(k, "")
 	}
-	t.Setenv("DOWNSHIFT_SCORES", "off") // never start a refresh from a test
 	bin := filepath.Join(home, "bin", "downshift")
 	writeFile(t, bin, "#!/bin/sh\n")
 	if err := os.Chmod(bin, 0o755); err != nil {

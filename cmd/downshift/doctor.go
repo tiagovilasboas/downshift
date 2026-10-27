@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -161,7 +160,6 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 	events := checkState(rep, env)
 	checkCatalog(rep, env)
 	checkPrices(rep, env)
-	checkScores(rep)
 	checkContext(rep, env)
 	for _, note := range modelOverrideNotes(core.AllHarnessCaps(), env.Getenv) {
 		name := strings.TrimPrefix(note, "model_override_env: ")
@@ -345,20 +343,6 @@ func checkPrices(rep *doctorReport, env doctorEnv) {
 	default:
 		rep.add(doctorCheck{ID: "prices", Status: doctorOK, Detail: "list prices as of " + asOf})
 	}
-}
-
-// checkScores reuses writeScoreStatus, so the refresh trigger and wording stay
-// in one place.
-func checkScores(rep *doctorReport) {
-	var b bytes.Buffer
-	writeScoreStatus(&b)
-	line := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(b.String()), "scores: "))
-	status := doctorOK
-	fix := ""
-	if strings.HasPrefix(line, "stale") || strings.HasPrefix(line, scoreStatusNone) {
-		status, fix = doctorWarn, "downshift models scores --refresh"
-	}
-	rep.add(doctorCheck{ID: "scores cache", Status: status, Detail: line, Fix: fix})
 }
 
 func checkContext(rep *doctorReport, env doctorEnv) {

@@ -184,16 +184,6 @@ type Event struct {
 	// known and whose target costs more. It lets stats charge the extra cost.
 	// Absent on old logs and when either price is unknown (then neutral).
 	UpshiftCostRatio float64 `json:"upshift_cost_ratio,omitempty"`
-	// ScoreWould is the session model id the public-score capability path
-	// would pick (shadow unless DOWNSHIFT_SCORE_ROUTING=1). Model id only: no
-	// prompt, no score value, not a reason code. Absent when the path
-	// abstained or no score index is linked.
-	ScoreWould string `json:"score_would,omitempty"`
-	// ScoreDiffers is true when ScoreWould is not the model the catalog-tier
-	// path leaves the child on. ScoreWouldCostRatio is the pick's catalog list
-	// price over that model's (input plus output per 1M); absent when unknown.
-	ScoreDiffers        bool    `json:"score_differs,omitempty"`
-	ScoreWouldCostRatio float64 `json:"score_would_cost_ratio,omitempty"`
 	// GatewayWould is the slug of the allowlisted OpenRouter row that would
 	// serve this tier (shadow only; the routed model is unchanged), and
 	// GatewayWouldTier that tier. Slug and tier only: no prompt, no task text.
@@ -473,13 +463,6 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
 			ev.UpshiftCostRatio = to / from
 		}
 	}
-	if d.Shadow.ScoreWould != "" {
-		ev.ScoreWould = ModelOrUnknown(d.Shadow.ScoreWould)
-		ev.ScoreDiffers = d.Shadow.ScoreDiffers
-		if r := d.Shadow.ScoreWouldCostRatio; r > 0 && !math.IsInf(r, 0) && !math.IsNaN(r) {
-			ev.ScoreWouldCostRatio = math.Round(r*1e4) / 1e4
-		}
-	}
 	if d.Shadow.GatewayWould != "" {
 		ev.GatewayWould = ModelOrUnknown(d.Shadow.GatewayWould)
 		ev.GatewayWouldTier = d.Tier.String()
@@ -668,14 +651,6 @@ type Stats struct {
 	// DuplicateToolUse counts distinct tool_use_hash values that appear on
 	// more than one decision (both entry points live on the same spawn).
 	DuplicateToolUse int
-	// ScoreObserved counts decisions the capability path produced a pick for;
-	// ScoreDiffers those where the pick is another model than the catalog
-	// path leaves; ScoreRatioN and ScoreRatioSum average the pick's list price
-	// over that model's price (events where both are known).
-	ScoreObserved int
-	ScoreDiffers  int
-	ScoreRatioN   int
-	ScoreRatioSum float64
 	// GatewayObserved counts decisions an allowlisted OpenRouter row would
 	// have served; GatewaySlugs counts them per slug. Shadow only.
 	GatewayObserved int

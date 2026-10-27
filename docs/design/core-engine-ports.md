@@ -19,7 +19,6 @@ from `init()` (blank imports in `cmd/downshift/main.go`):
 | `TierFloorHook` | `policyfile` | no project tier floor |
 | `MemoryAdjustHook` | `routeadapt` | no adapt-memory adjustment |
 | `LoadQuotaHook`, `LoadNativeQuotaHook`, `ParseNativeQuotaHook`, `RegisterNativeQuotaHook` | `quota` | quota unknown |
-| `ScoreHook` | `scoreindex` | no score selection |
 
 Consequences, all observed in the code and tests:
 
@@ -57,7 +56,6 @@ type Ports struct {
     TierFloor      func(d *Decision, currentModelID string, r Resolver)
     MemoryAdjust   func(prompt string, d *Decision, res Resolver)
     Quota          QuotaPort   // Load, LoadNative, ParseNative, RegisterNative
-    Score          func(harness, id string) (float64, bool)
 }
 
 type Engine struct { ports Ports; cfg Config }
