@@ -272,3 +272,16 @@ func scanCommand(dir string) (imports []string, installs bool, err error) {
 	}
 	return imports, installs, nil
 }
+
+// decideImports is what internal/routing/decide may import directly: the
+// shared core and paths, and the routing packages it composes. It never
+// imports the risk scanner, the catalog, quota or an adapter; those arrive as
+// input (the caller scans risk, reads quota and passes the catalog).
+var decideImports = []string{"core", "paths", "routing/contract", "routing/policy",
+	"routing/guard", "routing/hint", "routing/headroom"}
+
+func TestDecideDirectImports(t *testing.T) {
+	if bad := outsideAllowlist(directImports(t, "routing/decide"), decideImports); len(bad) > 0 {
+		t.Errorf("internal/routing/decide imports %v; it may import only %v", bad, decideImports)
+	}
+}

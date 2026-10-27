@@ -46,6 +46,9 @@ type Decision struct {
 	SafeVerdict Verdict
 	Corrections []string // guardrail rule IDs that held this decision, empty when clean
 	Checked     bool
+	// Reason names why routing v2 held or refused a move (a
+	// routing/contract.Reason value as a string); empty when nothing was held.
+	Reason string
 	// Risk lists the risk categories (risk.go) the prompt touches, whatever
 	// its complexity. Guardrail R5 holds any downshift of such a task.
 	Risk []string
