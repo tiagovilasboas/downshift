@@ -145,19 +145,21 @@ Conflicts with invariants (REA, "not worth copying"):
 
 ## 8. Owner decisions
 
-- **D1** Policy file location (design D1). Needed before R2. README recommends a project file plus a user default, project wins.
-- **D2** Whether the hint (R4) exists, and its syntax (design D2). The REA warns that an outcome depending on the LLM sending a hint is fragile. v2 bounds it: no hint means keep, and a hint only moves down. Needed before R4.
-- **D3** `policy apply` on demand only, or also run by `setup` (design D3).
-- **D4** Tier classifier: delete (this roadmap assumes it, per true-north "no leftovers"), or keep as an offline suggester for one release (design D4).
-- **D5** Release gating. After Phase 1, routing is a no-op until R6 (true-north D-T4). This roadmap merges Phase 1 with R6, which breaks the README rule that each card is mergeable alone.
-- **D6** Ship R0 early on `main` as a fix, or with Phase 1.
-- **D7** Dollar line in Phase 4. Design §9 marks accounting "out", and the [accounting v1 plan](../tasks/2026-10-21-accounting-v1/README.md) is paused. Either un-pause it for a labelled USD line, or report percent only.
-- **D8** Price source for the USD line: `catalog.json` (no prices in Go source). Gateway pricing was removed in 8c1afdfa.
-- **D9** R7 timing: the brief puts it in Phase 3 (stage 1); the README says start of stage 2. This roadmap follows the brief.
-- **D10** Rollback after Phase 1: the v1 decider is gone, so `DOWNSHIFT_ROUTING=v1` cannot keep it. This roadmap uses "flag off keeps the requested model".
-- **D11** Historical docs (`docs/archive`, `docs/evidence`, dated task folders) keep their references under a banner (true-north D-T3).
-- **D12** Extend `docscheck` to README.md and `docs/design/architecture.md` after Phase 1.
-- **D13** Family aliases `haiku`, `sonnet`, `opus` as Go data for R0. `AGENTS.md` forbids hardcoded model IDs in Go source and says to use `catalog.json`. Either the aliases move to `catalog.json`, or the rule is amended to allow family aliases.
+Status of each item: all 13 accepted on 2026-10-26. D1 to D4, D6, D8 to D12 follow the recommendation written below. D5, D7 and D13 had no explicit recommendation in the first draft; the choice is the one the premises imply, and the owner can override it before the card that needs it.
+
+- **D1 Policy file location: accepted.** Project `.downshift/policy.json` is the source; a user default lives in the state dir; the project wins. Needed before R2.
+- **D2 Hint syntax: accepted.** The hint is an enum prefix, `[kind=… effort=…]`. No hint keeps the requested model; a hint can only move a request down. Needed before R4. The REA warning stands: the outcome must not depend on the LLM sending a hint.
+- **D3 Native config compile: accepted.** `policy apply` runs on demand only. `setup` prints the suggestion and never writes.
+- **D4 Tier classifier: accepted, delete.** The v1 tier classifier is removed with no offline suggester. Only `risk.go` survives, until R5 moves it. This supersedes the business plan's D8.
+- **D5 Release gating: chosen (not in the first draft).** Phase 1 lands only on `downshift/true-north`, never on `main`. Phase 1 reaches `main` together with R6, as one release, because the hook keeps the requested model until then. This is an explicit exception to the rule that each card is mergeable alone, and it applies to Phase 1 only.
+- **D6 Ship R0 early: accepted as briefed.** R0 stays in Phase 2. Shipping it earlier on `main` is possible later, but it is not part of this plan.
+- **D7 Dollar line in Phase 4: chosen (not in the first draft).** Un-pause the accounting v1 plan for one labelled secondary line, shown only in `progress` and `report`. Percent stays primary. Routing never reads dollars (premise P2).
+- **D8 Price source: accepted.** Prices live in `catalog.json`. No prices in Go source.
+- **D9 R7 timing: accepted as briefed.** R7 is in Phase 3 (stage 1).
+- **D10 Rollback after Phase 1: accepted.** With the flag off, the requested model is kept. There is no `DOWNSHIFT_ROUTING=v1` path after Phase 1.
+- **D11 Historical docs: accepted.** `docs/archive`, `docs/evidence` and dated task folders keep their old references under a banner.
+- **D12 docscheck scope: accepted.** Extend `docscheck` to `README.md` and `docs/design/architecture.md` after Phase 1.
+- **D13 Family aliases: chosen (not in the first draft).** `haiku`, `sonnet` and `opus` move into `catalog.json` as data, and Go code reads them from there. This follows the `AGENTS.md` rule against hardcoded model IDs in Go source, so the rule does not need amending.
 
 ## 9. Conflicts in the sources (fix when accepted)
 

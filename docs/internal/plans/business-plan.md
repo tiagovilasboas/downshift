@@ -128,6 +128,8 @@ Adoption, user counts, revenue and maintainer hours have no source in this repos
 
 ## 9. Open decisions for the owner
 
+Status, 2026-10-26: the owner accepted the roadmap decisions D1 to D13 (see [roadmap section 8](roadmap.md#8-owner-decisions)). The items below are the business plan’s own questions and stay open unless the roadmap settles them. D8 here is superseded by roadmap D4.
+
 - **D1. Publish the 4.1% and 8 of 158 figures?** Recommendation: not yet. The diagnosis reads events from 2026-10-21 to 2026-10-27 plus legacy backups from 2026-09-21 to 2026-10-13. That does not match one "30 days" window, and 10-27 is after today. Fix the window and keep the diagnosis in a durable place first.
 - **D2. Where SKU and price detail lives.** Recommendation: keep MONETIZATION at the four options. Move any detail to the private `downshift-labs` repository, as [publishing-boundaries](../../reference/publishing-boundaries.md) asks.
 - **D3. First revenue option, if any.** Recommendation: support. It needs no new build. Keep hosted unbuilt until a user asks for it.
