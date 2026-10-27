@@ -15,9 +15,9 @@ from `init()` (blank imports in `cmd/downshift/main.go`):
 
 | Hook (in `internal/core`) | Set by | Effect when unset |
 |---|---|---|
-| `NBSuggestHook`, `NBTrivialHook` | `nbopinion` | no naive-Bayes opinion |
+| `NBSuggestHook`, `NBTrivialHook` | none (`nbopinion` removed in wave A) | no naive-Bayes opinion |
 | `TierFloorHook` | `policyfile` | no project tier floor |
-| `MemoryAdjustHook` | `routeadapt` | no adapt-memory adjustment |
+| `MemoryAdjustHook` | none (`routeadapt` removed in wave A) | no adapt-memory adjustment |
 | `LoadQuotaHook`, `LoadNativeQuotaHook`, `ParseNativeQuotaHook`, `RegisterNativeQuotaHook` | `quota` | quota unknown |
 
 Consequences, all observed in the code and tests:

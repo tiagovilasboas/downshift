@@ -60,7 +60,6 @@ file or from `AGENTS.md`.
 | `internal/docscheck` | Quality | CI gates for markdown layout and package inventory |
 | `internal/execwrap` | Shell | Allowlist policy, family classification, compactor runner |
 | `internal/fuse` | Routing | Raise-only semantic boost |
-| `internal/gateway` | — | OmniRoute and OpenRouter HTTP gateway |
 | `internal/hookctx` | Adapters | Hook deadline context |
 | `internal/hookport` | Telemetry | Honor and usage ports |
 | `internal/hookutil` | Adapters | Field helpers for hook payloads |

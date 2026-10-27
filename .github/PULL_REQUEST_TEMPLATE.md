@@ -19,7 +19,7 @@
 
 <!-- What areas are affected? -->
 
-- [ ] Routing logic (`core`, `routingv2`)
+- [ ] Routing logic (`core`)
 - [ ] Adapters (Claude Code, Cursor, Codex, Antigravity, KiroCrew)
 - [ ] Catalog (`catalog.json`, model matching)
 - [ ] CLI (`downshift`, `dsmon`)
