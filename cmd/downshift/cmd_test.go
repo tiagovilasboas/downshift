@@ -95,6 +95,7 @@ func TestRunTry_RejectsUnknownHarness(t *testing.T) {
 }
 
 func TestRunTry_TrivialTask(t *testing.T) {
+	useV1Decider(t)
 	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
 	out := captureStdout(func() {
 		if rc := runTry(cmdCat, []string{"rename the userId variable", "claude-code"}); rc != 0 {
@@ -124,6 +125,7 @@ func TestRunTry_TrivialTask(t *testing.T) {
 }
 
 func TestRunTry_TrivialTask_Detail(t *testing.T) {
+	useV1Decider(t)
 	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rename the userId variable", "claude-code", "--detail"})
@@ -177,6 +179,7 @@ func TestRunTry_ComplexTask(t *testing.T) {
 }
 
 func TestRunTry_ComplexTask_Detail(t *testing.T) {
+	useV1Decider(t)
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code", "--detail"})
 	})
@@ -189,6 +192,7 @@ func TestRunTry_ComplexTask_Detail(t *testing.T) {
 }
 
 func TestRunTry_CodeReviewIntent(t *testing.T) {
+	useV1Decider(t)
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"do a code review of the auth module", "claude-code", "--detail"})
 	})
@@ -554,3 +558,7 @@ func TestRunTry_NoSavingClaimedWhenTheMoveIsNotApplied(t *testing.T) {
 		t.Errorf("--detail lost its rewrite line or the not-applied summary:\n%s", detail)
 	}
 }
+
+// useV1Decider restores the core default (v1) for a test of the try command,
+// which exists only to show the v1 decision.
+func useV1Decider(t *testing.T) { t.Cleanup(core.SetDecider(nil)) }

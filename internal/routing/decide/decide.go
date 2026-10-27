@@ -141,7 +141,9 @@ func moved(in Input, current, target core.Model, requested contract.Tier, c choi
 func kept(in Input, current core.Model, requested contract.Tier, c choice) (core.Decision, contract.Note) {
 	d := base(in, current)
 	d.Reason = string(c.reason)
-	d.Verdict, d.SafeVerdict = core.VerdictUnknown, core.VerdictUnknown
+	// Unknown requested tier: nothing was classified, and the safe verdict is
+	// OK so channel planning never picks a target for a spawn that is kept.
+	d.Verdict, d.SafeVerdict = core.VerdictUnknown, core.VerdictOK
 	if t, ok := requested.Core(); ok {
 		d.Tier, d.Model = t, current
 		d.Effort = core.EffortFor(t)
@@ -155,7 +157,7 @@ func kept(in Input, current core.Model, requested contract.Tier, c choice) (core
 func failOpen(in Input) (core.Decision, contract.Note) {
 	d := base(in, core.Model{})
 	d.Reason = string(contract.ReasonFailOpen)
-	d.Verdict, d.SafeVerdict = core.VerdictUnknown, core.VerdictUnknown
+	d.Verdict, d.SafeVerdict = core.VerdictUnknown, core.VerdictOK
 	n := contract.Note{Verdict: contract.VerdictRefusedConfig, Reason: contract.ReasonFailOpen, Harness: in.Request.Harness}
 	return d, n
 }

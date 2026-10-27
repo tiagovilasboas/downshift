@@ -254,3 +254,28 @@ func TestDecideRecordsHeadroom(t *testing.T) {
 		})
 	}
 }
+
+// Doubt keeps: a decision that moved nothing carries a safe verdict of OK, so
+// the channel plan cannot pick a model for it (PlanForSession writes a target
+// for an UNKNOWN safe verdict).
+func TestDecideKeptNeverAsksForATarget(t *testing.T) {
+	boom := newCatalog()
+	boom.boom = true
+	cases := []struct {
+		name    string
+		request contract.Request
+		cat     fakeCatalog
+	}{
+		{"unknown requested model", req(func(r *contract.Request) { r.RequestedModel = "who-knows"; r.Profile = "cheap" }), newCatalog()},
+		{"no requested model", req(func(r *contract.Request) { r.RequestedModel = ""; r.Hint.Tier = contract.TierSmall }), newCatalog()},
+		{"fail open after a panic", req(func(r *contract.Request) { r.Profile = "cheap" }), boom},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			d, _ := Decide(Input{Request: tc.request, Policy: testPolicy(), Now: now, Catalog: tc.cat})
+			if d.Verdict != core.VerdictUnknown || d.SafeVerdict != core.VerdictOK || d.Model.ID != "" {
+				t.Fatalf("verdict %v safe %v model %q, want UNKNOWN, OK and no model", d.Verdict, d.SafeVerdict, d.Model.ID)
+			}
+		})
+	}
+}
