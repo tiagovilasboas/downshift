@@ -45,7 +45,7 @@ Each card is one PR, at most 5 points, mergeable alone. v2 ships behind `DOWNSHI
 
 Total 51 points, 18 cards.
 
-**Stage 1: Claude Code end to end** (36 points)
+**Stage 1: Claude Code end to end** (42 points)
 
 | Wave | Cards | Why they do not collide |
 |---|---|---|
@@ -60,7 +60,7 @@ Exit of stage 1: on Claude Code, a declared profile or hint moves an Opus reques
 prompts never go small; with nothing declared the requested model is kept; `report`, `session --panel` and the
 Agents panel show the routing note; golden tables green.
 
-**Stage 2: the other harnesses** (15 points), one harness per PR, in this order: KiroCrew (R8b native agent
+**Stage 2: the other harnesses** (9 points), one harness per PR, in this order: KiroCrew (R8b native agent
 config + R7 launch flags + block and retry with the v2 decider), Codex (R8c), OpenCode (R8c), Cursor and
 Antigravity (hook channel with the v2 decider), skill links for each (`.codex`, `.config/opencode`,
 `.gemini`, `.kiro`). R7 (`downshift route`) lands at the start of stage 2: it is the channel for launchers.
