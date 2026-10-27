@@ -26,8 +26,7 @@ sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`,
 `classify` and `semantic` and does not import `core`. `PlanForSession`,
 `RouteForSession`, `CatalogSessionFromCurrent` and `CanWriteSessionID` stay in
 `core`. The naive-Bayes hooks were removed with `internal/nbopinion` in wave A; the hook variables stay until wave B. Optional
-layers plug into core through a hook variable (`core.MemoryAdjustHook`,
-`core.TierFloorHook`) registered in their `init`. Debt status (2026-10-19):
+layers plug into core through a hook variable (`core.TierFloorHook`) registered in their `init`. Debt status (2026-10-19):
 
 - Configuration read once at the edge: done. `core.Config` (`internal/core/env.go`)
   types every `DOWNSHIFT_*` variable core reads; `runHookAdapter` calls
@@ -48,7 +47,7 @@ layers plug into core through a hook variable (`core.MemoryAdjustHook`,
   registration, and aliases those types so adapters can keep saying
   `quota.Snapshot`. File reads and native parsing enter through hooks
   registered by `quota` (`LoadQuotaHook`, `LoadNativeQuotaHook`,
-  `ParseNativeQuotaHook`), the same pattern as `MemoryAdjustHook`.
+  `ParseNativeQuotaHook`), the same pattern as `core.TierFloorHook`.
 - Session list: done (`5f94e07`, PR 152). `internal/session` owns `SessionList`
   and the loaders that do not need `Decision` or `Resolver`: the operator
   file, hook marks, the discovered file, and quota snapshot attachment.
