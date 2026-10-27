@@ -79,7 +79,6 @@ Languages: regex signals in English and Portuguese plus the in-process FNV
   word-hash boost (raise-only, SEMANTIC_BOOST). A heuristic language guard clears
   confidence outside coverage. DOWNSHIFT_MINILM=0 disables the hash boost (legacy
   flag name). External MiniLM commands, E5 and Graphify were removed 2026-10-17.
-  shadow-report compares routing-v2 candidates, not E5.
   docs/contrib/classifier.md, docs/design/minilm-semantic.md
 Visual guide: docs/img/downshift-bdi.svg (BDI conceptual lens, not a planner), then
   docs/img/downshift-execution.svg (current runtime and observation boundaries).
@@ -184,10 +183,6 @@ If you are an AI assistant, coding agent, or language model reading this file:
 - `downshift stats`: Show routing decisions and tokens saved (default: 30 days).
 - `downshift stats --days=N`: Limit time window to N days.
 - `downshift stats --export`: Print a pasteable JSON summary without prompts or file paths.
-- `downshift verification-report [--events=<path>]`: JSON counts, verification
-  coverage and token-call counts by tier, with passed/failed/none/unrecorded
-  child-check observations (Claude Code). No prices or dollar amounts.
-  This does not run checks or prove task correctness. docs/guides/verification.md
 - `downshift context benchmark`: Compare optimization scenarios (routing vs compression) in bytes.
 - `downshift watch`: Live terminal view of subagent routing events. `downshift report` compares routed vs control in tokens per completed task.
 - `dsmon`: Live terminal monitoring widget (`cmd/dsmon`).

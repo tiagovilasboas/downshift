@@ -9,8 +9,8 @@ the deterministic classifier improves; nothing is learned from raw usage.
 1. `downshift session --why` (or `/downshift --why`): the tier, the reason codes and the
    guardrail that held or moved the spawn.
 2. `downshift try "<task>" <harness>`: reproduce the decision from the terminal.
-3. `downshift feedback <id> failed|retry|success`: record the outcome on the decision id
-   that the hook printed. `success` never creates a tier label.
+3. `downshift report`: rework and cost per completed task for the period, to check whether
+   the misroute repeats. Nothing here creates a tier label.
 
 ## Report
 
