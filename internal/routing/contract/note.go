@@ -44,7 +44,7 @@ type Reason string
 const (
 	ReasonNone            Reason = ""
 	ReasonRiskFloor       Reason = "risk_floor"       // risk vocabulary: never small
-	ReasonNeverWiden      Reason = "never_widen"      // target not honoured by the harness
+	ReasonNeverWiden      Reason = "never_widen"      // target above the requested tier is refused
 	ReasonExplicitOnly    Reason = "explicit_only"    // catalog routing:"explicit_only"
 	ReasonForeignID       Reason = "foreign_id"       // id from another harness
 	ReasonProfileOverride Reason = "profile_override" // profile plus a pinned model or effort
