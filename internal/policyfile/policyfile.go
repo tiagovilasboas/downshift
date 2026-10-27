@@ -52,6 +52,10 @@ type Policy struct {
 	MinTier        string            `json:"min_tier,omitempty"`
 	MinTierByClass map[string]string `json:"min_tier_by_class,omitempty"`
 	MinTierByRisk  map[string]string `json:"min_tier_by_risk,omitempty"`
+	// Routing is the routing policy section. internal/routing/policy reads and
+	// validates it; it is accepted here so that a routing section in the same
+	// file does not refuse the tier floor (the decoder rejects unknown keys).
+	Routing json.RawMessage `json:"routing,omitempty"`
 }
 
 var classNames = map[string]bool{"TRIVIAL": true, "SIMPLE": true, "MEDIUM": true, "COMPLEX": true}

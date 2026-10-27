@@ -106,6 +106,20 @@ func TestFloorTakesHighestApplicableRule(t *testing.T) {
 	}
 }
 
+// The routing section shares the file with the tier floor. Its presence must
+// not refuse the floor, and the floor must still apply.
+func TestRoutingSectionDoesNotDisableFloor(t *testing.T) {
+	dir := t.TempDir()
+	write(t, dir, `{"version":1,"min_tier":"mid","routing":{"rules":[]}}`)
+	p, _, err := LoadNearest(dir)
+	if err != nil {
+		t.Fatalf("routing section refused the floor: %v", err)
+	}
+	if got, ok := p.Floor("SIMPLE", nil); !ok || got != core.TierMid {
+		t.Fatalf("Floor = %v,%v; want mid,true", got, ok)
+	}
+}
+
 func TestInvalidFilesAreRejectedWithPath(t *testing.T) {
 	bad := map[string]string{
 		"not json":      `nope`,
