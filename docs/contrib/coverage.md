@@ -72,6 +72,8 @@ file or from `AGENTS.md`.
 | `internal/policyfile` | Routing | Project tier floor; registers via hook |
 | `internal/quota` | Routing | File I/O for quota; registers hooks |
 | `internal/quotamodel` | Routing | Pure quota types, no I/O |
+| `internal/routing` | Routing | Routing v2 domain (`docs/design/routing-v2.md` section 7); imports only `core`, `paths`, `routing/*` (archtest) |
+| `internal/routing/contract` | Routing | v2 types only: `Request`, `Hint`, `Tier`, `Verdict`, `Reason`, `Note`, `Reading`; no logic |
 | `internal/semantic` | Routing | Semantic boost (BM25 / embedding-free) |
 | `internal/sensor` | Telemetry | Tool-output sensor (observe-only PostToolUse) |
 | `internal/session` | Routing | `SessionList`, loaders |
