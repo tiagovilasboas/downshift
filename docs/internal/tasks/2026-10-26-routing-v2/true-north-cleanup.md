@@ -26,16 +26,16 @@ imports per package, line counts with tests. Nothing is deleted yet; this is the
 
 | Package / file | Lines (src+test) | Who imports it today | Also delete |
 |---|--:|---|---|
-| `internal/routingv2` (shadow v2) | 4764 | nobody | `docs/design/capability-router-v2.md` |
+| done: `internal/routingv2` (shadow v2) | 4764 | nobody | `docs/design/capability-router-v2.md`
 | `internal/scoreindex` | 1871 | `cmd/downshift` config.go, scores.go | `scores*.go`, `scorerefresh*.go` |
-| `internal/adapt` | 1398 | `cmd` adapt_eval.go, `routeadapt`, `routingv2/training` | `adapt_eval.go`, `eval-adapt` command, `docs/advanced/adaptive-memory.md` |
-| `internal/routeadapt` | 74 | `cmd` main.go | — |
-| `internal/nbopinion` | 55 | `cmd` main.go | — |
-| `internal/decisionintelligence` | 385 | `cmd` hookrun.go | `docs/design/decision-intelligence.md` |
-| `internal/replay` | 873 | `cmd` cmd_replay.go | `replay` command, `docs/advanced/replay.md` |
-| `cmd/downshift`: `shadow*.go`, `verification*.go`, `cmd_feedback*.go`, `train` | — | main.go switch | `shadow-report`, `verification-report`, `feedback`, `train` commands; `docs/advanced/shadow-mode.md`, `docs/design/classifier-shadow.md` |
-| `orchestration/` (Python LangGraph planner) | — | nothing in the binary | `docs/design/langgraph-orchestration.md`, its dependabot entry |
-| `tools/hashv2`, `tools/multilang` | — | `multilang` imports `semantic` | `tools/README.md` NB lines |
+| done: `internal/adapt` | 1398 | `cmd` adapt_eval.go, `routeadapt`, `routingv2/training` | `adapt_eval.go`, `eval-adapt` command, `docs/advanced/adaptive-memory.md`
+| done: `internal/routeadapt` | 74 | `cmd` main.go | —
+| done: `internal/nbopinion` | 55 | `cmd` main.go | —
+| done: `internal/decisionintelligence` | 385 | `cmd` hookrun.go | `docs/design/decision-intelligence.md`
+| done: `internal/replay` | 873 | `cmd` cmd_replay.go | `replay` command, `docs/advanced/replay.md`
+| done: `cmd/downshift`: `shadow*.go`, `verification*.go`, `cmd_feedback*.go`, `train` | — | main.go switch | `shadow-report`, `verification-report`, `feedback`, `train` commands; `docs/advanced/shadow-mode.md`, `docs/design/classifier-shadow.md` |
+| done: `orchestration/` (Python LangGraph planner) | — | nothing in the binary | `docs/design/langgraph-orchestration.md`, its dependabot entry |
+| done: `tools/hashv2`, `tools/multilang` | — | `multilang` imports `semantic` | `tools/README.md` NB lines |
 
 About 9.4k Go lines plus docs. Every row is checked by `make check` after the cut; a row that breaks a
 kept package moves to wave B.

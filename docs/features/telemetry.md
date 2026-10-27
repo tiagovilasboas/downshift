@@ -211,14 +211,6 @@ downshift try --verbose "your task"
 
 Shows classification signals, tier selection, and model mapping.
 
-### Replay Past Decisions
-
-```bash
-downshift replay --period=1h
-```
-
-Re-runs classification on recent events to validate policy changes.
-
 ## Integration
 
 ### Prometheus/Grafana

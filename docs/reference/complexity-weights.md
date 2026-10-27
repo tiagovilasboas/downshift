@@ -224,7 +224,4 @@ the rewrite, not the score:
 | KiroCrew | No rewrite channel. Exit 0 allows, exit 2 blocks and asks for the cheaper model. |
 | Grok CLI | No hook rewrite. Effort is pinned in `config.toml`. |
 
-Local tier memory (`internal/adapt`) runs after this score. It does not add
-weight. It can move the tier only when a reviewed outcome already recorded a
-hit or a miss for the same task shape. No memory file means the table above
-is the whole decision.
+The v1 local tier memory was removed with the v1 experiments; the v2 design is in `docs/design/routing-v2.md`. The table above is the whole decision.

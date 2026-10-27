@@ -58,7 +58,6 @@ var rules = []rule{
 	{"execwrap", []string{"accounting", "api"}, "L0: the exec log is parsed here; the numbers are computed in accounting"},
 	{"accounting", []string{"api", "adapters"}, "L3: Compute serves the surfaces, so it cannot depend on them"},
 	{"accounting/formula", []string{"telemetry", "execwrap", "api", "adapters"}, "L2: the formula is pure and reads only prices"},
-	{"replay", []string{"core", "catalog", "telemetry", "adapters", "session", "classify", "hookport"}, "the replay domain reaches the router, the catalog and the transcripts only through its ports (Source, Router, Comparer)"},
 }
 
 // violations returns the entries of deps (import paths) that match a forbidden

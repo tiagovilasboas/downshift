@@ -3,7 +3,7 @@
 Contributor reference for the deterministic classifier that powers **hook routing**.
 User-facing Portuguese overview: [pt/02-classificador.md](../pt/02-classificador.md).
 
-Experimental v2 is documented in [capability-router-v2.md](../design/capability-router-v2.md).
+Experimental v2 is documented in [routing-v2.md](../design/routing-v2.md).
 
 ---
 
@@ -150,7 +150,7 @@ sourced text nor model output becomes a rule automatically.
 
 `DOWNSHIFT_SHADOW_WEIGHTS` records a v2 candidate next to the production decision.
 It does **not** change hook JSON. Labels for supervised training require explicit
-`--required-tier` on feedback. See [classifier-shadow.md](../design/classifier-shadow.md).
+See [routing-v2.md](../design/routing-v2.md).
 
 ---
 
@@ -195,7 +195,7 @@ sourced text nor model output becomes a rule automatically.
 
 `DOWNSHIFT_SHADOW_WEIGHTS` records a v2 candidate next to the production decision.
 It does **not** change hook JSON. Labels for supervised training require explicit
-`--required-tier` on feedback. See [classifier-shadow.md](../design/classifier-shadow.md).
+See [routing-v2.md](../design/routing-v2.md).
 
 ---
 

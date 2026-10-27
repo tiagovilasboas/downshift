@@ -44,7 +44,6 @@ file or from `AGENTS.md`.
 | Package | Surface | Notes |
 |---------|---------|-------|
 | `internal/accounting` | Accounting | Exists; ADR Proposed; `cmd/downshift` does not import it |
-| `internal/adapt` | Routing | Shadow memory adapter; registers via hook |
 | `internal/adapters` | Adapters | Subdirs: `claudecode`, `cursor`, `codex`, `antigravity`, `kirocrew`, `opencode` |
 | `internal/api` | — | Dashboard HTTP server (`downshift dashboard`) |
 | `internal/archtest` | Quality | Import-graph enforcement tests |
@@ -57,7 +56,6 @@ file or from `AGENTS.md`.
 | `internal/contextopt` | Shell | Config for compaction and headroom |
 | `internal/core` | Routing | `Route`, `Check` (R1-R9), `PlanSession`, `HarnessCapabilities` |
 | `internal/cursorbridge` | Adapters | Cursor native session bridge |
-| `internal/decisionintelligence` | Routing | Shadow decision evaluation |
 | `internal/discovery` | Routing | `models discover/list/check/pull` |
 | `internal/docscheck` | Quality | CI gates for markdown layout and package inventory |
 | `internal/execwrap` | Shell | Allowlist policy, family classification, compactor runner |
@@ -69,16 +67,12 @@ file or from `AGENTS.md`.
 | `internal/lifecycleobserver` | Telemetry | Process lifecycle events |
 | `internal/limits` | Adapters | Centralized harness limitations registry |
 | `internal/models` | Routing | `models` subcommand helpers |
-| `internal/nbopinion` | Routing | Naive-Bayes opinion; registers hooks |
 | `internal/nbtier` | Routing | Naive-Bayes tier types |
 | `internal/outcome` | Quality | Offline eval runner |
 | `internal/paths` | — | Cross-platform path helpers |
 | `internal/policyfile` | Routing | Project tier floor; registers via hook |
 | `internal/quota` | Routing | File I/O for quota; registers hooks |
 | `internal/quotamodel` | Routing | Pure quota types, no I/O |
-| `internal/replay` | Quality | Event-log replay for offline eval |
-| `internal/routeadapt` | Routing | Shadow memory; registers via hook |
-| `internal/routingv2` | Routing | Subdirs: `shadow`, `training`, `classifier`, `domain`, `policy`, `safety`, `extractor` |
 | `internal/scoreindex` | Routing | Score cache; registers via hook |
 | `internal/semantic` | Routing | Semantic boost (BM25 / embedding-free) |
 | `internal/sensor` | Telemetry | Tool-output sensor (observe-only PostToolUse) |

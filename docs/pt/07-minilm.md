@@ -19,4 +19,4 @@ Uma subida limpa a confiança e entra na telemetria como `SEMANTIC_BOOST`.
 
 O comando externo MiniLM (`DOWNSHIFT_MINILM_EMBED`) e o arquivo `minilm.json` foram removidos em 2026-10-17. Números antigos de holdout neural não descrevem o binário atual.
 
-Este boost entra no `core.Route`. O candidato softmax da v2 só observa: [10 · Candidato em shadow](10-candidato-shadow.md).
+Este boost entra no `core.Route`. O candidato softmax da v2 foi removido do binário; a direção atual está em [routing v2](../design/routing-v2.md).

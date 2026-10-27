@@ -12,7 +12,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -22,9 +21,6 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/classifier"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -63,34 +59,6 @@ func setSessionAllowlist(t *testing.T, harness string, ids []string) {
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", path)
 }
 
-func TestLegacyTasksForComparisonMapsV2Tiers(t *testing.T) {
-	tasks, err := legacyTasksForComparison([]training.Example{
-		{Prompt: "rename a variable", Label: "small"},
-		{Prompt: "add a field", Label: "MID"},
-		{Prompt: "rearchitect payments", Label: "FRONTIER"},
-	})
-	if err != nil {
-		t.Fatalf("legacyTasksForComparison() error = %v", err)
-	}
-	want := []string{"TRIVIAL", "MEDIUM", "COMPLEX"}
-	if len(tasks) != len(want) {
-		t.Fatalf("got %d tasks, want %d", len(tasks), len(want))
-	}
-	for i := range want {
-		if tasks[i].Label != want[i] {
-			t.Errorf("task %d label = %q, want %q", i, tasks[i].Label, want[i])
-		}
-	}
-}
-
-func TestLegacyTasksForComparisonRejectsUnknownTier(t *testing.T) {
-	_, err := legacyTasksForComparison([]training.Example{{Prompt: "task", Label: "UNKNOWN"}})
-	if err == nil {
-		t.Fatal("legacyTasksForComparison() expected an error for an unsupported tier")
-	}
-}
-
-// claudeCodeFrontierID returns the current frontier model ID for claude-code.
 func claudeCodeFrontierID() string { return cmdCat.ModelFor("claude-code", core.TierFrontier).ID }
 
 // --- runTry ---
@@ -410,61 +378,6 @@ func TestRunHookAdapter_Codex_Downshift(t *testing.T) {
 	}
 }
 
-func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	t.Setenv("DOWNSHIFT_EVENT_LOG", "")
-	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
-	setSessionAllowlist(t, "codex", []string{
-		cmdCat.ModelFor("codex", core.TierSmall).ID,
-		cmdCat.ModelFor("codex", core.TierMid).ID,
-		frontierID,
-	})
-	privatePrompt := "review private incident token abc123"
-	event := []byte(`{"hook_event_name":"PreToolUse","session_id":"codex-session-privacy-test","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"` + privatePrompt + `"}}`)
-	captureStdout(func() {
-		runHookAdapter(
-			"codex",
-			bytes.NewReader(event),
-			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
-			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-			printAllow,
-			func(e codex.Event) string { return e.TaskText() },
-		)
-	})
-	data, err := os.ReadFile(training.DefaultEventsPath())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(data), privatePrompt) || strings.Contains(string(data), "abc123") {
-		t.Fatal("hook feedback log persisted raw prompt content")
-	}
-	eventPath, err := paths.EventsPath()
-	if err != nil {
-		t.Fatal(err)
-	}
-	eventData, err := os.ReadFile(eventPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var eventRecord map[string]any
-	if err := json.Unmarshal(bytes.TrimSpace(eventData), &eventRecord); err != nil {
-		t.Fatalf("decode telemetry event: %v", err)
-	}
-	if eventRecord["session_id"] != telemetry.HashSessionID("codex-session-privacy-test") {
-		t.Fatalf("session_id = %v, want hashed Codex session identifier", eventRecord["session_id"])
-	}
-	events, err := training.NewEventStore(training.DefaultEventsPath()).Load()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(events) != 1 || events[0].ID == "" || events[0].Harness != "codex" {
-		t.Fatalf("expected a routed codex event with feedback ID, got %#v", events)
-	}
-}
-
-// TestHookTelemetryEndToEnd proves that a realistic Codex PreToolUse payload
-// reaches the JSONL sensor with a correlation ID and routing metadata, while
-// its private task content remains outside the event.
 func TestHookTelemetryEndToEnd(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "hook-events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
@@ -507,12 +420,6 @@ func TestHookTelemetryEndToEnd(t *testing.T) {
 	}
 	if recorded.RequestedEffort != "high" || recorded.FinalEffort == "" || recorded.Tier == "" || recorded.Verdict == "" || recorded.PolicyVersion == "" || recorded.BinaryVersion == "" || recorded.Outcome != "allow" || recorded.ToModel != recorded.FromModel {
 		t.Fatalf("missing routing decision telemetry: %#v", recorded)
-	}
-	// The prompt names a secret: the routing risk category reaches the shadow
-	// recommendation, which stays advisory.
-	shadow := recorded.DecisionIntelligence
-	if shadow == nil || shadow.Apply || shadow.Tier != core.TierFrontier.String() || !shadow.RequiresReview || !slices.Contains(shadow.Reasons, "high_risk") {
-		t.Fatalf("shadow recommendation must carry the risk signal and stay advisory: %#v", shadow)
 	}
 }
 
@@ -616,101 +523,6 @@ func TestRunHookAdapter_OversizedPayload_FailOpen(t *testing.T) {
 	}
 }
 
-func TestRunFeedbackRecordsHarnessAgnosticOutcome(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	store := training.NewEventStore(training.DefaultEventsPath())
-	if err := store.Record(training.Event{ID: "route-test", Harness: "cursor", SelectedTier: core.TierSmall}); err != nil {
-		t.Fatal(err)
-	}
-	if rc := runFeedback([]string{"route-test", "success", "--required-tier=SMALL"}); rc != 0 {
-		t.Fatalf("runFeedback() = %d, want 0", rc)
-	}
-	events, err := training.NewEventStore(training.DefaultEventsPath()).Load()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(events) != 1 || events[0].Outcome == nil || !events[0].Outcome.Success || events[0].Outcome.RequiredTier == nil || *events[0].Outcome.RequiredTier != core.TierSmall {
-		t.Fatalf("feedback event = %#v", events)
-	}
-	stats := captureStdout(func() {
-		if rc := runFeedback([]string{"stats"}); rc != 0 {
-			t.Fatalf("feedback stats rc = %d", rc)
-		}
-	})
-	if !strings.Contains(stats, "cursor") || !strings.Contains(stats, "Success") {
-		t.Fatalf("feedback stats missing harness outcome: %s", stats)
-	}
-}
-
-func TestRunFeedbackRejectsInvalidRetry(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	store := training.NewEventStore(training.DefaultEventsPath())
-	if err := store.Record(training.Event{ID: "route-mid", Harness: "codex", SelectedTier: core.TierMid}); err != nil {
-		t.Fatal(err)
-	}
-	if rc := runFeedback([]string{"route-mid", "retry", "--retry-tier=MID"}); rc == 0 {
-		t.Fatal("retry at the same tier should be rejected")
-	}
-}
-
-func TestFeedbackEventStoreUsesSeparateLoopLog(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	if filepath.Base(training.DefaultEventsPath()) != "loop-events.jsonl" {
-		t.Fatalf("loop event file is not isolated from routing stats: %s", training.DefaultEventsPath())
-	}
-}
-
-func TestEngineeringLoopEndToEnd(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
-	event := []byte(`{"hook_event_name":"PreToolUse","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"rename the userId variable"}}`)
-	captureStdout(func() {
-		if rc := runHookAdapter(
-			"codex",
-			bytes.NewReader(event),
-			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
-			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-			printAllow,
-			func(e codex.Event) string { return e.TaskText() },
-		); rc != 0 {
-			t.Fatalf("hook rc = %d", rc)
-		}
-	})
-	events, err := training.NewEventStore(training.DefaultEventsPath()).Load()
-	if err != nil || len(events) != 1 {
-		t.Fatalf("events = %d, err = %v", len(events), err)
-	}
-	if rc := runFeedback([]string{events[0].ID, "success", "--required-tier=SMALL"}); rc != 0 {
-		t.Fatalf("feedback rc = %d", rc)
-	}
-
-	candidate := filepath.Join(t.TempDir(), "candidate.json")
-	result, err := training.TrainFromEvents(training.DefaultEventsPath(), training.DefaultTrainConfig())
-	if err != nil || result.Weights == nil {
-		t.Fatalf("TrainFromEvents result=%+v err=%v", result, err)
-	}
-	if err := classifier.SaveWeights(result.Weights, candidate); err != nil {
-		t.Fatal(err)
-	}
-	dataset := filepath.Join(t.TempDir(), "holdout.json")
-	contents := `[{"prompt":"rename a local variable","label":"SMALL"},{"prompt":"implement a CSV export feature","label":"MID"},{"prompt":"rearchitect authentication across services","label":"FRONTIER"}]`
-	if err := os.WriteFile(dataset, []byte(contents), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	output := captureStdout(func() {
-		if rc := runBenchmark([]string{dataset, "--compare", "--candidate-weights=" + candidate}); rc != 0 {
-			t.Fatalf("benchmark rc = %d", rc)
-		}
-	})
-	if !strings.Contains(output, "Candidate weights:") {
-		t.Fatalf("candidate was not evaluated: %s", output)
-	}
-}
-
-// A move is only claimed when the hook would apply it. With an allowlist that
-// lists nothing cheaper, try says "not applied", that the tokens stay on the
-// current model, and claims no cheaper model.
 func TestRunTry_NoSavingClaimedWhenTheMoveIsNotApplied(t *testing.T) {
 	setSessionAllowlist(t, "cursor", []string{cmdCat.ModelFor("cursor", core.TierFrontier).ID})
 	out := captureStdout(func() {

@@ -21,12 +21,9 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	_ "github.com/tiagovilasboas/downshift/internal/compressor/learning"
-	"github.com/tiagovilasboas/downshift/internal/gateway"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
-	_ "github.com/tiagovilasboas/downshift/internal/nbopinion"
 	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 	_ "github.com/tiagovilasboas/downshift/internal/quota"
-	_ "github.com/tiagovilasboas/downshift/internal/routeadapt"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -49,11 +46,6 @@ func main() {
 	if code, handled := commandHelpRequest(args, os.Stdout, os.Stderr); handled {
 		os.Exit(code)
 	}
-	// Set before the hooks: a usage record written by a hook prices its gateway
-	// run from the same snapshot the reports read.
-	registerGateways()
-	telemetry.GatewayPriceLookup = gateway.PriceOf
-
 	// A hook must never block a spawn (a Go panic exits 2, which every harness
 	// reads as "deny"), so its catalog load runs under a recover and a failure
 	// allows the spawn unchanged.
@@ -109,8 +101,6 @@ func main() {
 		os.Exit(runQuota(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "stats":
 		os.Exit(runStats(args[1:]))
-	case "replay":
-		os.Exit(runReplay(args[1:], os.Stdout, os.Stderr))
 	case "report":
 		os.Exit(runReport(args[1:], os.Stdout, os.Stderr))
 	case "probe":
@@ -121,20 +111,8 @@ func main() {
 		os.Exit(runSession(args[1:], os.Stdout, os.Stderr, catalog))
 	case "watch":
 		os.Exit(runWatch(args[1:], os.Stdout, os.Stderr, catalog))
-	case "benchmark":
-		os.Exit(runBenchmark(args[1:]))
 	case "eval-outcome":
 		os.Exit(runEvalOutcome(args[1:], os.Stdout, os.Stderr))
-	case "eval-adapt":
-		os.Exit(runEvalAdapt(args[1:], os.Stdout, os.Stderr))
-	case "shadow-report":
-		os.Exit(runShadowReport(args[1:]))
-	case "verification-report":
-		os.Exit(runVerificationReport(args[1:], os.Stdout, os.Stderr))
-	case "train":
-		os.Exit(runTrain(args[1:]))
-	case "feedback":
-		os.Exit(runFeedback(args[1:]))
 	case "context":
 		os.Exit(runContext(args[1:], os.Stdout, os.Stderr))
 	case "dci":

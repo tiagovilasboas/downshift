@@ -27,23 +27,19 @@ import (
 	_ "embed"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/gateway"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
 //go:embed catalog.json
 var embeddedJSON []byte
 
-// isGatewayProvider reports whether a catalog row's provider names a registered
-// gateway. A gateway row is reachable only by its full "vendor/model" slug and
-// defaults to routing "explicit_only" unless the row says otherwise. The
-// registry, not this package, decides which names are gateways.
+// isGatewayProvider reports whether a catalog row's provider is the user
+// allowlist gateway (AllowlistProvider). Such a row is reachable only by its
+// full "vendor/model" slug and defaults to routing "explicit_only" unless the
+// row says otherwise. No gateway registry remains: the allowlist name is the
+// only gateway the catalog recognises.
 func isGatewayProvider(provider string) bool {
-	if provider == "" {
-		return false
-	}
-	_, ok := gateway.Lookup(provider)
-	return ok
+	return provider != "" && provider == AllowlistProvider
 }
 
 // gatewaySlug splits the OpenCode form of a gateway model,
