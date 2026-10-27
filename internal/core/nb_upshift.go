@@ -16,7 +16,8 @@ type NBUpshift struct {
 }
 
 // NBSuggestHook is that opinion: upshift, destination tier, and margin.
-// internal/nbopinion registers it in init. A nil hook is no opinion.
+// No package in this binary registers it (internal/nbopinion was removed), so
+// a nil hook is no opinion.
 var NBSuggestHook func(prompt string, prodTier int) (upshift bool, to int, margin float64)
 
 // NBUpshiftEnabled reports whether DOWNSHIFT_NB_UPSHIFT=1.
