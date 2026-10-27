@@ -29,7 +29,7 @@ Task call's `subagent_type` (for example `mechanical-worker`) as information?
 
 | `subagent_type` | Rewrite | Baseline | Message |
 |---|---|---|---|
-| `general-purpose` | `model: haiku` | parent (Opus) | "downshift to claude-haiku-4-5 (~75% cheaper)" |
+| `general-purpose` | `model: haiku` | parent (Opus) | "downshift to claude-haiku-4-5 (smaller model)" |
 | `mechanical-worker` | `model: haiku` | unknown | "use claude-haiku-4-5 (small tier)", no saving claim |
 
 So routing works for the custom type, because the text is classified. What is
