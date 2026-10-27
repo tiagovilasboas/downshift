@@ -11,6 +11,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 // stripDetail removes the --detail flag from try arguments, wherever it sits.
@@ -97,7 +98,7 @@ func printTry(w io.Writer, res tryResult, known bool, d core.Decision, prompt, h
 	} else {
 		fmt.Fprintf(w, "%s\n", tryHeadline(d))
 	}
-	fmt.Fprintf(w, "why: %s task, %s\n", strings.ToLower(d.Complexity.String()), telemetry.ReasonBrief(telemetry.ReasonCodes(d)))
+	fmt.Fprintf(w, "why: %s task, %s\n", strings.ToLower(d.Complexity.String()), telemetry.ReasonBrief(fromcore.ReasonCodes(d)))
 	if note != "" {
 		fmt.Fprintf(w, "note: %s\n", note)
 	}

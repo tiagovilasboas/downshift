@@ -20,6 +20,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 var spawnTools = map[string]bool{
@@ -47,7 +48,7 @@ type agentEvent struct {
 }
 
 func main() {
-	telemetry.DirectionCatalog = catalog.Load()
+	fromcore.Install(catalog.Load())
 	// Always exit 0 — we are observers only, never gatekeepers
 	defer os.Exit(0)
 	run()

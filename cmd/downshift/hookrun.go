@@ -19,6 +19,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 var hookReadTimeout = 2 * time.Second
@@ -303,7 +304,7 @@ func runHookAdapter[E any](
 		// Spawn-time surface. Honor and usage stay unobserved until that
 		// harness's own post-spawn port records them. One line, spawn events only.
 		fmt.Fprintf(os.Stderr, "downshift: honor=unobserved quota=%s usage=unobserved\n", telemetry.ProjectQuota(decision.Session.QuotaStatus, decision.Session.CreditHeld))
-		event := telemetry.FromDecision(decision, correlationID, buildVersion)
+		event := fromcore.FromDecision(decision, correlationID, buildVersion)
 		fate.recordOutcome(&event)
 		// Provenance is stricter than routing: never replace an absent or
 		// unrecognised requested model with the policy recommendation in the

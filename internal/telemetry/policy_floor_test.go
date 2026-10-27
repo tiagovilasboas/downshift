@@ -12,17 +12,18 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 func TestFromDecisionRecordsPolicyFloor(t *testing.T) {
-	if ev := telemetry.FromDecision(core.Decision{Harness: "cursor"}, "id", "v"); ev.PolicyFloor {
+	if ev := fromcore.FromDecision(core.Decision{Harness: "cursor"}, "id", "v"); ev.PolicyFloor {
 		t.Fatal("no floor must not be recorded")
 	}
-	ev := telemetry.FromDecision(core.Decision{Harness: "cursor", Guards: core.Guards{PolicyFloor: true}}, "id", "v")
+	ev := fromcore.FromDecision(core.Decision{Harness: "cursor", Guards: core.Guards{PolicyFloor: true}}, "id", "v")
 	if !ev.PolicyFloor {
 		t.Fatal("floor must be recorded")
 	}
-	raw, _ := json.Marshal(telemetry.FromDecision(core.Decision{Harness: "cursor"}, "id", "v"))
+	raw, _ := json.Marshal(fromcore.FromDecision(core.Decision{Harness: "cursor"}, "id", "v"))
 	if strings.Contains(string(raw), "policy_floor") {
 		t.Fatal("absent floor must stay out of the JSON so old readers are unaffected")
 	}

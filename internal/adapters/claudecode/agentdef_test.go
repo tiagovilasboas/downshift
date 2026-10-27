@@ -13,6 +13,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 const mechanicalBrief = "rename the userId variable to userIdentifier in user.go"
@@ -97,7 +98,7 @@ func TestHandle_AgentDefinitionDecidesBaseline(t *testing.T) {
 			if got := decodeUpdated(t, out) != nil; got != tc.wantRewrite {
 				t.Errorf("rewrite written = %v, want %v (verdict %v, tier %v, note %q)", got, tc.wantRewrite, d.Verdict, d.Tier, note)
 			}
-			if got := slices.Contains(telemetry.ReasonCodes(d), telemetry.ReasonAgentPinsModel); got != tc.wantPinned {
+			if got := slices.Contains(fromcore.ReasonCodes(d), telemetry.ReasonAgentPinsModel); got != tc.wantPinned {
 				t.Errorf("AGENT_PINS_MODEL reason = %v, want %v", got, tc.wantPinned)
 			}
 		})

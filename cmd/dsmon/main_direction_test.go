@@ -8,11 +8,11 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 // main sets the direction catalog at startup; tests stand in for it.
 func TestMain(m *testing.M) {
-	telemetry.DirectionCatalog = catalog.Load()
+	fromcore.Install(catalog.Load())
 	os.Exit(m.Run())
 }

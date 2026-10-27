@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 // TestMain isolates HOME before any test runs. Several tests drive the real
@@ -20,7 +20,7 @@ import (
 func TestMain(m *testing.M) {
 	// Tests run hooks; the background refresh must never start a real harness CLI.
 	discoverRefreshSpawn = func(string) error { return nil }
-	telemetry.DirectionCatalog = catalog.Load()
+	fromcore.Install(catalog.Load())
 	root, err := os.MkdirTemp("", "downshift-cmd-test-")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "TestMain: temp dir:", err)

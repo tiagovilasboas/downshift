@@ -21,6 +21,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 const otherChild = "ffffffffffffffffffffffffffffffff"
@@ -71,7 +72,7 @@ func seedRoutedDecision(t *testing.T, small, mid, frontier string, cat *catalog.
 	if resp.Action != "route" || d.Model.ID != small {
 		t.Fatalf("seed decision did not route: resp=%+v decision=%+v", resp, d)
 	}
-	ev := telemetry.FromDecision(d, "seed-correlation", "test")
+	ev := fromcore.FromDecision(d, "seed-correlation", "test")
 	ev.SessionID = telemetry.HashSessionID(testChild)
 	ev.ToolUseHash = telemetry.HashSessionID(testChild)
 	telemetry.Record(ev)

@@ -3,14 +3,33 @@
 
 package telemetry
 
-import "github.com/tiagovilasboas/downshift/internal/core"
+// Catalog tier ranks, lowest first. A ModelCatalog reports tiers on this scale.
+const (
+	TierRankSmall = iota
+	TierRankMid
+	TierRankFrontier
+)
+
+// TierFrontier is the event-log name of the frontier tier (Event.Tier).
+const TierFrontier = "frontier"
+
+// ModelCatalog is the view of the model catalog telemetry needs: the catalog
+// id and tier rank of a model, whether an id is an exact catalog id, and the
+// tier rank of an allowlisted gateway row (shadow or live). It uses plain
+// values only, so the routing catalog is adapted to it at the edge
+// (internal/telemetry/catalogtier) and telemetry never imports the router.
+type ModelCatalog interface {
+	Lookup(harness, id string) (catalogID string, tier int, ok bool)
+	IsExactID(harness, id string) bool
+	GatewayTier(id string) (tier int, ok bool)
+}
 
 // DirectionCatalog ranks the requested and the ran model by catalog tier
 // (small < mid < frontier), and Record writes model ids as its catalog ids
 // (canonicalizeModels). The composition root sets it at startup; with nil no
 // record can be placed, so every priced record is unattributed, and model ids
 // are recorded as the harness sent them.
-var DirectionCatalog core.Resolver
+var DirectionCatalog ModelCatalog
 
 // tokenDirection places one priced usage record without comparing dollars. The
 // gates come first; then the model that ran is ranked against the model that
@@ -57,8 +76,8 @@ func atTierFloor(harness, requested string) bool {
 	if DirectionCatalog == nil {
 		return false
 	}
-	m, ok := DirectionCatalog.LookupByID(harness, requested)
-	return ok && m.Tier == core.TierSmall
+	_, tier, ok := DirectionCatalog.Lookup(harness, requested)
+	return ok && tier == TierRankSmall
 }
 
 // tierDirection ranks a ran model against a requested one by catalog tier.
@@ -67,12 +86,12 @@ func tierDirection(harness, requested, ran string) string {
 	if DirectionCatalog == nil {
 		return TokenUnattributed
 	}
-	req, okReq := DirectionCatalog.LookupByID(harness, requested)
-	got, okRan := DirectionCatalog.LookupByID(harness, ran)
+	_, req, okReq := DirectionCatalog.Lookup(harness, requested)
+	_, got, okRan := DirectionCatalog.Lookup(harness, ran)
 	if !okReq || !okRan {
 		return TokenUnattributed
 	}
-	return rankTiers(req.Tier, got.Tier)
+	return rankTiers(req, got)
 }
 
 // gatewayDirection ranks a run that went through a gateway by the tier of its
@@ -82,52 +101,29 @@ func gatewayDirection(harness, requested, ran string) string {
 	if DirectionCatalog == nil {
 		return TokenUnattributed
 	}
-	req, ok := DirectionCatalog.LookupByID(harness, requested)
+	_, req, ok := DirectionCatalog.Lookup(harness, requested)
 	if !ok {
 		return TokenUnattributed
 	}
-	tier, ok := gatewayTier(ran)
+	tier, ok := DirectionCatalog.GatewayTier(ran)
 	if !ok {
 		return TokenUnattributed
 	}
-	return rankTiers(req.Tier, tier)
-}
-
-// gatewayTier returns the tier of the allowlisted gateway row whose id is ran.
-// The catalog exposes shadow rows and live rows through the optional
-// core.GatewayShadowResolver and core.GatewayLiveResolver; a resolver with
-// neither knows no gateway tier.
-func gatewayTier(ran string) (core.Tier, bool) {
-	for _, m := range allowlistRows() {
-		if m.ID == ran {
-			return m.Tier, true
-		}
-	}
-	return 0, false
-}
-
-// allowlistRows lists every allowlisted gateway row the catalog exposes, shadow
-// and live. A live row is the one a run goes through when the user made it live.
-func allowlistRows() []core.Model {
-	var rows []core.Model
-	if gr, ok := DirectionCatalog.(core.GatewayShadowResolver); ok {
-		rows = append(rows, gr.ShadowGateways()...)
-	}
-	if lr, ok := DirectionCatalog.(core.GatewayLiveResolver); ok {
-		rows = append(rows, lr.LiveGateways()...)
-	}
-	return rows
+	return rankTiers(req, tier)
 }
 
 // gatewayRowKnown reports whether an allowlisted gateway row names ran.
 func gatewayRowKnown(ran string) bool {
-	_, ok := gatewayTier(ran)
+	if DirectionCatalog == nil {
+		return false
+	}
+	_, ok := DirectionCatalog.GatewayTier(ran)
 	return ok
 }
 
 // rankTiers is the one ranking rule for native and gateway runs: a ran tier
 // below the requested one is saved, above it pricier, equal is unchanged.
-func rankTiers(requested, ran core.Tier) string {
+func rankTiers(requested, ran int) string {
 	switch {
 	case ran < requested:
 		return TokenCheaper
