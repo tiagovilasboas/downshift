@@ -7,7 +7,7 @@ import "fmt"
 
 // HarnessCompletion says whether the end of a child spawn is measurable for one
 // harness: the harness declares an end event and at least one end record has
-// been seen. Without that, "completed" and cost per completed task cannot be
+// been seen. Without that, "completed" and tokens per completed task cannot be
 // computed for the harness, and the report says so instead of showing zeros.
 type HarnessCompletion struct {
 	Harness string `json:"harness"`

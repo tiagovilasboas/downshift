@@ -20,7 +20,7 @@ Everyday
   downshift doctor [--verbose] [--json]  Checklist with a fix command per failure
   downshift try "<task>" [harness] [model]   Test classification from the terminal
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
-  downshift report [--days=N] [--json]   Routed vs control cost per completed task, rework, savings with 95% CI
+  downshift report [--days=N] [--json]   Routed vs control tokens per completed task, rework, savings with 95% CI
   downshift session [--why|--pause|--resume] [--json]  This session's subagents as a tree (every harness)
   downshift config [--json]      Every effective setting with its value and source
 

@@ -453,7 +453,7 @@ func checkLastEvent(add func(id, status, detail, fix string), env doctorEnv, h s
 
 // checkCompletion says whether the end of a child spawn is measurable for the
 // harness. It is information, not a failure: a harness with no known end event
-// simply has no cost per completed task.
+// simply has no tokens per completed task.
 func checkCompletion(add func(id, status, detail, fix string), h string, events []telemetry.Event) {
 	for _, c := range telemetry.CompletionByHarness(events) {
 		if c.Harness == h {

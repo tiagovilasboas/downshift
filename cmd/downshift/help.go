@@ -32,7 +32,7 @@ Get started
 
 See the effect
   downshift stats                  Decisions and estimated savings (list price, not an invoice)
-  downshift report                 Measured: routed vs control group, cost per completed task, with CI
+  downshift report                 Measured: routed vs control group, tokens per completed task, with CI
   downshift session                This session's subagents as a tree (--why, --pause)
 
 Save context

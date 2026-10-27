@@ -57,7 +57,7 @@ Examples:
 
 Next: downshift stats, once real subagents have run
 `,
-	"stats": `downshift stats — Decisions and estimated savings (list price, not an invoice)
+	"stats": `downshift stats — Decisions and estimated token savings
 
 Usage:
   downshift stats [--days=N] [--by-harness] [--detail | --dci | --export]
@@ -75,7 +75,7 @@ Examples:
 
 Next: downshift report, for measured savings against a control group
 `,
-	"report": `downshift report — Measured: routed vs control group, cost per completed task, with CI
+	"report": `downshift report — Measured: routed vs control group, tokens per completed task, with CI
 
 Usage:
   downshift report [--days=N] [--json]

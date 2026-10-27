@@ -61,7 +61,7 @@ Examples:
 
 Next: downshift session, to see the recorded decisions
 `,
-	"usage": `downshift usage — Post-spawn usage observation for a harness: records tokens and cost
+	"usage": `downshift usage — Post-spawn usage observation for a harness: records tokens
 
 Usage:
   downshift usage <harness>

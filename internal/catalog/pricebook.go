@@ -21,7 +21,7 @@ const (
 	// QualityInferred means a slug was mapped to its family member.
 	QualityInferred Quality = "inferred"
 
-	// QualityUnpriced means no resolvable id; excluded from Saved calculations.
+	// QualityUnpriced means no resolvable id; the catalog has no price for it.
 	QualityUnpriced Quality = "unpriced"
 )
 
