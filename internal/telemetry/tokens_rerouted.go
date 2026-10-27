@@ -51,7 +51,7 @@ type TokenClasses struct {
 	Total int64 `json:"total"`
 }
 
-// classesOf splits a usage into billing classes; the split mirrors CostUSD.
+// classesOf splits a usage into the token classes the reports count.
 func classesOf(u TokenUsage) TokenClasses {
 	cached := max(u.CachedTokens, 0)
 	write := min(max(u.CacheWriteTokens, 0), cached)

@@ -85,10 +85,6 @@ type Event struct {
 	OutputTokens     *int64 `json:"output_tokens,omitempty"`      // provider-reported output tokens
 	CachedTokens     *int64 `json:"cached_tokens,omitempty"`      // provider-reported cached input tokens
 	CacheWriteTokens *int64 `json:"cache_write_tokens,omitempty"` // cache-creation part of cached_tokens, billed at the cache-write price
-	// ActualCostUSD and BaselineCostUSD are read from lines written before the
-	// tokens-only change; nothing writes them now.
-	ActualCostUSD   *float64 `json:"actual_cost_usd,omitempty"`
-	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"`
 	// BaselineSource says where the baseline model came from: "requested" (the
 	// model the harness asked for) or "inferred" (the configured model, used
 	// when the harness named none). Absent when no baseline was computed.

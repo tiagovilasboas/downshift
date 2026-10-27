@@ -126,7 +126,7 @@ The `schema_version` field tracks format changes:
 ```
 
 Version 2 added:
-- `actual_cost_usd` / `baseline_cost_usd` (legacy: read from older lines only, never written now)
+- `actual_cost_usd` / `baseline_cost_usd` (legacy: older builds wrote them; the reader ignores them)
 - `decision_intelligence` for DCI metadata
 - `quota_status` for budget integration
 

@@ -20,8 +20,7 @@ func liveDecision(sess, outcome, from, to, tier string, codes ...string) Event {
 
 func liveUsage(sess, linked string, actual, baseline float64) Event {
 	return Event{Outcome: OutcomeUsage, Harness: "claude-code", SessionID: sess, LinkedDecision: linked,
-		InputTokens: i64(600), OutputTokens: i64(400), CachedTokens: i64(9000),
-		ActualCostUSD: f64(actual), BaselineCostUSD: f64(baseline)}
+		InputTokens: i64(600), OutputTokens: i64(400), CachedTokens: i64(9000)}
 }
 
 func TestShortModel(t *testing.T) {
@@ -118,15 +117,12 @@ func TestChildEndLine(t *testing.T) {
 		ev   Event
 		want string
 	}{
-		{"full", Event{FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5-20251001", InputTokens: i64(12000), OutputTokens: i64(2000),
-			ActualCostUSD: f64(0.014), BaselineCostUSD: f64(0.38)}, "↳ downshift: finished on haiku · 14k tokens (work 14k, cache 0) · saved from opus"},
-		{"same model says nothing about saving", Event{FromModel: "claude-haiku-4-5", ToModel: "claude-haiku-4-5", InputTokens: i64(900),
-			ActualCostUSD: f64(0.02), BaselineCostUSD: f64(0.02)}, "↳ downshift: finished on haiku · 900 tokens (work 900, cache 0)"},
-		{"pricier", Event{FromModel: "claude-sonnet-5-5", ToModel: "claude-opus-5-5", InputTokens: i64(100), CachedTokens: i64(5000),
-			ActualCostUSD: f64(0.2), BaselineCostUSD: f64(0.1)}, "↳ downshift: finished on opus · 5.1k tokens (work 100, cache 5.0k) · pricier than sonnet"},
-		{"unknown requested model", Event{FromModel: "unknown", ToModel: "claude-haiku-4-5", ActualCostUSD: f64(0.5), BaselineCostUSD: f64(1)},
+		{"full", Event{FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5-20251001", InputTokens: i64(12000), OutputTokens: i64(2000)}, "↳ downshift: finished on haiku · 14k tokens (work 14k, cache 0) · saved from opus"},
+		{"same model says nothing about saving", Event{FromModel: "claude-haiku-4-5", ToModel: "claude-haiku-4-5", InputTokens: i64(900)}, "↳ downshift: finished on haiku · 900 tokens (work 900, cache 0)"},
+		{"pricier", Event{FromModel: "claude-sonnet-5-5", ToModel: "claude-opus-5-5", InputTokens: i64(100), CachedTokens: i64(5000)}, "↳ downshift: finished on opus · 5.1k tokens (work 100, cache 5.0k) · pricier than sonnet"},
+		{"unknown requested model", Event{FromModel: "unknown", ToModel: "claude-haiku-4-5"},
 			"↳ downshift: finished on haiku"},
-		{"no baseline: the tier comparison needs no dollar", Event{FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5", InputTokens: i64(1500), ActualCostUSD: f64(0.004)},
+		{"no baseline: the tier comparison needs no dollar", Event{FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5", InputTokens: i64(1500)},
 			"↳ downshift: finished on haiku · 1.5k tokens (work 1.5k, cache 0) · saved from opus"},
 		{"model only", Event{ToModel: "claude-sonnet-4-5"}, "↳ downshift: finished on sonnet"},
 		{"tokens only", Event{ToModel: "unknown", OutputTokens: i64(2500000)}, "↳ downshift: 2.5M tokens (work 2.5M, cache 0)"},

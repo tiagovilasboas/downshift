@@ -17,8 +17,7 @@ func decisionEv(id, outcome, agentType string, corrections ...string) Event {
 
 func usageEv(linked string, in, out, read, write int64, actual, baseline float64) Event {
 	return Event{Harness: "claude-code", Outcome: OutcomeUsage, LinkedDecision: linked,
-		InputTokens: i64(in), OutputTokens: i64(out), CachedTokens: i64(read + write), CacheWriteTokens: i64(write),
-		ActualCostUSD: f64(actual), BaselineCostUSD: f64(baseline)}
+		InputTokens: i64(in), OutputTokens: i64(out), CachedTokens: i64(read + write), CacheWriteTokens: i64(write)}
 }
 
 func TestTokenSavings_PerChildTypeAndSession(t *testing.T) {

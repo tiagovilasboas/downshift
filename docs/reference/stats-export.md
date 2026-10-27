@@ -149,8 +149,7 @@ link in that window. Token totals still include usage without a link;
 linkage alone does not prove the requested baseline is known or a bill changed.
 
 Unknown requested models get no tier comparison: their tokens are `unattributed`. New usage events write no dollar
-figure at all. Older lines keep the `actual_cost_usd` and `baseline_cost_usd` they were written with; they are read but
-no longer exported.
+figure at all. Older lines may still carry `actual_cost_usd` and `baseline_cost_usd`; the reader ignores them and they are never exported.
 
 Tokens are the harness-reported counts. The tier comparison is a counterfactual, not a second measured execution, and
 nothing in the export is a provider invoice.

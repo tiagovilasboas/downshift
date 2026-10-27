@@ -139,11 +139,10 @@ func seedTreeLog(t *testing.T) (log, sessA, sessB string) {
 	ha, hb := telemetry.HashSessionID(sessA), telemetry.HashSessionID(sessB)
 	now := time.Now().UTC()
 	ts := func(d time.Duration) string { return now.Add(d).Format(time.RFC3339Nano) }
-	cost, base := 0.22, 0.60
 	in, out, cached := int64(600), int64(400), int64(9000)
 	for _, ev := range []telemetry.Event{
 		{CorrelationID: "a1", Timestamp: ts(-3 * time.Minute), Harness: "claude-code", SessionID: ha, Outcome: telemetry.OutcomeRewriteEmitted, Complexity: "MEDIUM", FromModel: "claude-opus-5-5", ToModel: "claude-sonnet-5-5", Tier: "mid", Verdict: "DOWNSHIFT", ReasonCodes: []string{telemetry.ReasonClassifierConfident}},
-		{CorrelationID: "au", Timestamp: ts(-2 * time.Minute), Harness: "claude-code", SessionID: ha, Outcome: telemetry.OutcomeUsage, LinkedDecision: "a1", ToModel: "claude-sonnet-5-5", ActualCostUSD: &cost, BaselineCostUSD: &base, InputTokens: &in, OutputTokens: &out, CachedTokens: &cached},
+		{CorrelationID: "au", Timestamp: ts(-2 * time.Minute), Harness: "claude-code", SessionID: ha, Outcome: telemetry.OutcomeUsage, LinkedDecision: "a1", ToModel: "claude-sonnet-5-5", InputTokens: &in, OutputTokens: &out, CachedTokens: &cached},
 		{CorrelationID: "b1", Timestamp: ts(-time.Minute), Harness: "claude-code", SessionID: hb, Outcome: telemetry.OutcomeAllow, Complexity: "COMPLEX", FromModel: "claude-opus-5-5", ToModel: "claude-opus-5-5", Tier: "frontier", Verdict: "UPSHIFT"},
 	} {
 		if err := telemetry.AppendTo(log, ev); err != nil {

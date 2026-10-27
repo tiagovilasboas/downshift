@@ -125,8 +125,8 @@ func TestSubagentStop_PricesFromTranscriptAndLinksToTheDecision(t *testing.T) {
 	if ev.LinkedDecision != "decision-1" || ev.AgentHash != telemetry.HashSessionID(stopAgent) {
 		t.Fatalf("link = %q agent=%q", ev.LinkedDecision, ev.AgentHash)
 	}
-	if !ev.HasTokenUsage() || ev.ActualCostUSD != nil || ev.BaselineCostUSD != nil {
-		t.Fatalf("want tokens on the linked usage record and no dollar figure, got %+v", ev)
+	if !ev.HasTokenUsage() {
+		t.Fatalf("want tokens on the linked usage record, got %+v", ev)
 	}
 }
 
@@ -214,7 +214,7 @@ func TestSubagentStop_UnlinkedSpawnRecordsSpendWithoutSavings(t *testing.T) {
 		t.Fatalf("note = %q", note)
 	}
 	got := usageEvents(t)
-	if len(got) != 1 || got[0].LinkedDecision != "" || got[0].ActualCostUSD != nil {
+	if len(got) != 1 || got[0].LinkedDecision != "" {
 		t.Fatalf("want one unlinked event with zero savings, got %+v", got)
 	}
 }

@@ -39,7 +39,7 @@ type TaskRecord struct {
 	// Reworked is set on a failed spawn that a later spawn redid.
 	Reworked bool
 	// TotalTokens is Tokens plus the tokens of every failed attempt it redid,
-	// transitively: the same scope as TotalUSD.
+	// transitively.
 	TotalTokens TokenClasses
 }
 
