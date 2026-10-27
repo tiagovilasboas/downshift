@@ -16,6 +16,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 	"github.com/tiagovilasboas/downshift/internal/testenv"
 )
@@ -50,6 +51,7 @@ func sessionCmd(t *testing.T, args ...string) (stdout, stderr string, rc int) {
 }
 
 func TestSessionPause_IsAControlGroupThroughTheSharedRunner(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	log, _, frontier := childLineEnv(t)
 	state := t.TempDir()
 	t.Setenv("DOWNSHIFT_STATE_DIR", state)
@@ -107,6 +109,7 @@ func TestSessionPause_IsAControlGroupThroughTheSharedRunner(t *testing.T) {
 }
 
 func TestSessionPause_UnreadableStateFailsOpen(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	_, _, frontier := childLineEnv(t)
 	state := t.TempDir()
 	t.Setenv("DOWNSHIFT_STATE_DIR", state)

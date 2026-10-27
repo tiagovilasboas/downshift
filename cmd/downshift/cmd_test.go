@@ -21,6 +21,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -301,6 +302,7 @@ func hookEvent(toolName, modelID, prompt string) []byte {
 }
 
 func TestRunHookAdapter_ClaudeCode_Downshift(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := claudeCodeFrontierID()
 	setSessionAllowlist(t, "claude-code", []string{
 		cmdCat.ModelFor("claude-code", core.TierSmall).ID,
@@ -427,6 +429,7 @@ func TestHookTelemetryEndToEnd(t *testing.T) {
 // a catalog-allowlisted original value. The policy recommendation is not an
 // observation and must never fill this field.
 func TestHookTelemetryDoesNotBackfillRequestedModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	path := filepath.Join(t.TempDir(), "hook-events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
 	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID

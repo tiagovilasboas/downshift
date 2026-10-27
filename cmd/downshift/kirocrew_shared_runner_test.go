@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -61,6 +62,7 @@ func hasReasonCode(ev telemetry.Event, code string) bool {
 // A confident mismatch with an in-session target: exit 2, the block message
 // on stderr under the correlation id, nothing on stdout, outcome "blocked".
 func TestKiroCrewSharedRunner_BlockExits2(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	rc, stdout, stderr, events := kirocrewSpawn(t, kirocrewTrivialTask, nil)
 	if rc != 2 {
 		t.Fatalf("rc = %d, want 2 (block)\nstderr:\n%s", rc, stderr)
@@ -85,6 +87,7 @@ func TestKiroCrewSharedRunner_BlockExits2(t *testing.T) {
 // The right gear already: exit 0, silence on stdout, outcome "allow" with the
 // unchanged model recorded.
 func TestKiroCrewSharedRunner_AllowExits0(t *testing.T) {
+	decidertest.Use(t, decidertest.Keep())
 	rc, stdout, _, events := kirocrewSpawn(t, kirocrewReadTask, nil)
 	if rc != 0 {
 		t.Fatalf("rc = %d, want 0", rc)

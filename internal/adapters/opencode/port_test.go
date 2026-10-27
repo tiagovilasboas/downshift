@@ -17,6 +17,8 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -62,6 +64,8 @@ func batch(lines ...string) []byte {
 // spawn correlation (the one pair the port links by, see hookrun.go).
 func seedRoutedDecision(t *testing.T, small, mid, frontier string, cat *catalog.Catalog) {
 	t.Helper()
+	// The routed decision is the precondition, not the subject: pin it.
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	allowlist(t, small, mid, frontier)
 	resp, _, d := opencode.Handle(request(trivialRename, frontier), cat)
 	if resp.Action != "route" || d.Model.ID != small {
