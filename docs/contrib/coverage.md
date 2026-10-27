@@ -78,6 +78,8 @@ file or from `AGENTS.md`.
 | `internal/quotamodel` | Routing | Pure quota types, no I/O |
 | `internal/replay` | Quality | Event-log replay for offline eval |
 | `internal/routeadapt` | Routing | Shadow memory; registers via hook |
+| `internal/routing` | Routing | Routing v2 domain (`docs/design/routing-v2.md` section 7); imports only `core`, `paths`, `routing/*` (archtest) |
+| `internal/routing/contract` | Routing | v2 types only: `Request`, `Hint`, `Tier`, `Verdict`, `Reason`, `Note`, `Reading`; no logic |
 | `internal/routingv2` | Routing | Subdirs: `shadow`, `training`, `classifier`, `domain`, `policy`, `safety`, `extractor` |
 | `internal/scoreindex` | Routing | Score cache; registers via hook |
 | `internal/semantic` | Routing | Semantic boost (BM25 / embedding-free) |
