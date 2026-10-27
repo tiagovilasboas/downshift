@@ -32,7 +32,7 @@ func (f DeciderFunc) Decide(req Request) Decision { return f(req) }
 
 var (
 	deciderMu sync.RWMutex
-	// activeDecider is the Decider Route asks. nil means the default (v1).
+	// activeDecider is the Decider Route asks. nil means keep the requested model.
 	activeDecider Decider
 )
 
@@ -51,13 +51,13 @@ func SetDecider(d Decider) (restore func()) {
 	}
 }
 
-// currentDecider returns the installed Decider, or the v1 default.
+// currentDecider returns the installed Decider, or the keep-requested default.
 func currentDecider() Decider {
 	deciderMu.RLock()
 	d := activeDecider
 	deciderMu.RUnlock()
 	if d == nil {
-		return v1Decider{}
+		return DeciderFunc(keepRequested)
 	}
 	return d
 }
@@ -85,4 +85,22 @@ func RouteAgent(prompt, harness, agentType, currentModelID string, r ...Resolver
 		CurrentModelID: currentModelID,
 		Resolver:       res,
 	})
+}
+
+// keepRequested is the default Decider: the spawn runs on the model it asked
+// for. The binary installs the routing decider at startup, so this only
+// answers where none is installed (an adapter test, an offline command).
+func keepRequested(req Request) Decision {
+	d := Decision{Harness: req.Harness, Checked: true}
+	d.Verdict, d.SafeVerdict = VerdictUnknown, VerdictOK
+	if req.Resolver == nil || req.CurrentModelID == "" {
+		return d
+	}
+	if cur, ok := req.Resolver.LookupByID(req.Harness, req.CurrentModelID); ok {
+		d.Tier, d.Effort, d.Model = cur.Tier, EffortFor(cur.Tier), cur
+		d.Baseline.CurrentModel = cur
+		d.Verdict, d.SafeVerdict = VerdictOK, VerdictOK
+		d.Confident = true
+	}
+	return d
 }

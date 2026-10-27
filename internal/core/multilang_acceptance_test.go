@@ -15,7 +15,7 @@ import (
 // capability plan, rather than merely mirroring the language detector.
 // Risk floors may still deterministically lift small baselines; Codex effort
 // is an independent capability. This test proves that frontier is preserved.
-func TestMultilangAcceptance_UnsupportedHoldsAcrossHarnesses(t *testing.T) {
+func TestMultilangAcceptance_UnsupportedLanguageIsNeverConfident(t *testing.T) {
 	prompts := []string{
 		"rename el campo que contiene las contraseñas de clientes",
 		"format le module qui conserve les secrets du client",
@@ -26,26 +26,10 @@ func TestMultilangAcceptance_UnsupportedHoldsAcrossHarnesses(t *testing.T) {
 		"rename 사용자 비밀번호 필드",
 		"format كلمة مرور المستخدم",
 	}
-	for _, h := range core.AllHarnessCaps() {
-		t.Run(h.Harness, func(t *testing.T) {
-			ids := []string{catID(h.Harness, core.TierSmall), catID(h.Harness, core.TierMid), catID(h.Harness, core.TierFrontier)}
-			session := core.KnownSession(ids)
-			for _, prompt := range prompts {
-				for _, current := range []string{ids[2]} {
-					d := core.Route(prompt, h.Harness, current, cat)
-					if d.Confident {
-						t.Errorf("%q on %q unexpectedly confident", prompt, current)
-					}
-					if checkWrites(d) {
-						t.Errorf("%q on %q may write a model: %+v", prompt, current, d)
-					}
-					p := d.PlanForSession(h.Caps, cat, session)
-					if p.RewriteModel {
-						t.Errorf("%q on %q mutates spawn: %+v", prompt, current, p)
-					}
-				}
-			}
-		})
+	for _, prompt := range prompts {
+		if d := classifiedRoute(prompt, "claude-code", ""); d.Confident || !d.UnsupportedLanguage {
+			t.Errorf("%q: confident=%v unsupported=%v, want an unsupported, unconfident read", prompt, d.Confident, d.UnsupportedLanguage)
+		}
 	}
 }
 

@@ -257,7 +257,7 @@ func corpusEnv(t *testing.T, minilm string) {
 }
 
 func corpusRoute(prompt string) core.Decision {
-	return core.Route(prompt, "claude-code", "", cat)
+	return classifiedRoute(prompt, "claude-code", "")
 }
 
 // corpusViolation returns a non-empty reason when d breaks the bound.

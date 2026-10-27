@@ -19,20 +19,10 @@ Flags:
   Fails open: on any error the subagent runs unchanged.
 
 Examples:
-  downshift try "rename the variable userId" %s
+  downshift %s < event.json
 
 Next: downshift doctor, to check the hook is wired
-`, name, purpose, name, harnessFor(name))
-}
-
-// harnessFor names the harness a hook command belongs to, for the example line.
-func harnessFor(name string) string {
-	switch name {
-	case "claude-code", "claude-code-post-tool-use", "claude-code-subagent-stop":
-		return "claude-code"
-	default:
-		return name
-	}
+`, name, purpose, name, name)
 }
 
 // hookHelpTopics covers the harness hooks and the observation commands the

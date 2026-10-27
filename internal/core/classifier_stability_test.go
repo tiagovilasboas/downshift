@@ -24,8 +24,6 @@ import (
 	"path/filepath"
 	"sort"
 	"testing"
-
-	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 var updateStability = flag.Bool("update-stability", false, "rewrite testdata/stability/golden.json")
@@ -42,7 +40,7 @@ func TestClassifierStability(t *testing.T) {
 	got := map[string]stabilityRow{}
 	for file, cases := range loadPromptCorpus(t) {
 		for _, c := range cases {
-			d := core.Route(c.Prompt, "claude-code", "", cat)
+			d := classifiedRoute(c.Prompt, "claude-code", "", cat)
 			got[file+"/"+c.ID] = stabilityRow{d.Complexity.String(), d.Confident, d.Tier.String()}
 		}
 	}

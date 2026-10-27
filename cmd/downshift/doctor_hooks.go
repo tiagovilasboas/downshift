@@ -485,7 +485,7 @@ func checkHonored(add func(id, status, detail, fix string), mine []telemetry.Eve
 			"downshift stats --detail  (then see docs/reference/harness-matrix.md)")
 	default:
 		add("rewrite honored", doctorWarn, "no rewrite emitted yet, so none observed",
-			`downshift try "rename a variable"  (shows what would be rewritten), then spawn that task`)
+			`spawn a subagent task, then run: downshift stats --detail`)
 	}
 }
 

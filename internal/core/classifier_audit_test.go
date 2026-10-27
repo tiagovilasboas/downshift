@@ -103,7 +103,7 @@ func TestClassify_SystemDesignIsComplex(t *testing.T) {
 		"design consensus algorithm for cross-datacenter state machine replication",
 		"projete a estratégia de sharding do banco de pedidos",
 	} {
-		if d := core.Route(p, "claude-code", ""); d.Tier != core.TierFrontier {
+		if d := classifiedRoute(p, "claude-code", ""); d.Tier != core.TierFrontier {
 			t.Errorf("%q: tier %s (complexity %s), want frontier", p, d.Tier, d.Complexity)
 		}
 	}
@@ -145,7 +145,7 @@ func TestRiskFloor_AuthAndPortuguese(t *testing.T) {
 		if cls.Scores[core.Complex] != 0 {
 			t.Errorf("%q: risk leaked into the Complex score (%d)", c.prompt, cls.Scores[core.Complex])
 		}
-		if d := core.Route(c.prompt, "claude-code", ""); d.Tier == core.TierSmall {
+		if d := classifiedRoute(c.prompt, "claude-code", ""); d.Tier == core.TierSmall {
 			t.Errorf("Route(%q).Tier = small", c.prompt)
 		}
 	}

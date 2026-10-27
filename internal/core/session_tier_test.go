@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // When the catalog target is not in the session, the fallback must never
@@ -24,6 +25,7 @@ func TestPlanForSession_FallbackNeverBelowClassifiedTier(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			decidertest.Use(t, decidertest.Tier(core.TierMid))
 			d := core.Route(tc.prompt, "claude-code", tc.current, cat)
 			if d.Tier != tc.wantTier {
 				t.Fatalf("precondition: tier=%s complexity=%s", d.Tier, d.Complexity)

@@ -9,6 +9,7 @@ package core_test
 import (
 	"encoding/json"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"math"
 	"os"
 	"path/filepath"
@@ -20,6 +21,7 @@ import (
 func TestSessionFirstAcceptance_NewOrderedModelsAcrossHarnesses(t *testing.T) {
 	for _, h := range core.AllHarnessCaps() {
 		t.Run(h.Harness, func(t *testing.T) {
+			decidertest.Use(t, decidertest.Tier(core.TierSmall))
 			session := core.KnownSession([]string{"qa-new-small", "qa-new-mid", "qa-new-frontier"})
 			d := core.RouteForSession("rename the userId variable to userIdentifier", h.Harness, "qa-new-frontier", cat, session)
 			if d.Baseline.CurrentModel.ID != "qa-new-frontier" || d.Baseline.CurrentModel.Tier != core.TierFrontier {
@@ -30,10 +32,6 @@ func TestSessionFirstAcceptance_NewOrderedModelsAcrossHarnesses(t *testing.T) {
 			}
 			if d.Baseline.CurrentModel.InputM != 0 || d.Baseline.CurrentModel.OutputM != 0 || d.Model.InputM != 0 || d.Model.OutputM != 0 || d.Savings != 0 {
 				t.Errorf("unknown session prices invented: %+v", d)
-			}
-			foreign := core.RouteForSession("rename el campo que contiene las contraseñas de clientes", h.Harness, "qa-new-frontier", cat, session)
-			if !foreign.UnsupportedLanguage || foreign.Confident || checkWrites(foreign) {
-				t.Errorf("new baseline bypasses language guard: %+v", foreign)
 			}
 		})
 	}

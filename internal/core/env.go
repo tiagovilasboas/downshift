@@ -210,7 +210,6 @@ func discoveryOff() bool       { return config().DiscoveryOff }
 func discoveredEnv() string    { return config().DiscoveredPath }
 func nbUpshiftEnv() bool       { return config().NBUpshift }
 func nbDownshiftEnv() bool     { return config().NBDownshift }
-func economyEnv() bool         { return config().Economy }
 
 // nativeSessionPathEnv returns the path held by the named native-export
 // variable. A pinned Config carries every name the capability table declares;

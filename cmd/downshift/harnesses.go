@@ -21,20 +21,17 @@ import (
 
 // harnessEntry is everything the CLI needs to know about one harness. Adding
 // a harness means adding one entry to harnessRegistry (plus its adapter
-// package and caps var); main.go, portFor and tryHook read from here.
+// package and caps var); main.go and portFor read from here.
 type harnessEntry struct {
 	// Hook runs the PreToolUse hook for this harness and returns the exit
-	// code. Nil means the harness has no hook subcommand (try-only). Every
+	// code. Nil means the harness has no hook subcommand. Every
 	// hook is runHookAdapter with that harness's hookWire: rewriteWire for a
 	// JSON rewrite response, policyWire for an exit-code-only contract.
 	Hook func(in io.Reader, catalog core.Resolver) int
 	// Port is the optional post-spawn observation port (honor / usage).
 	// Zero value means unobserved.
 	Port *hookport.Port
-	// Try runs the real adapter on a synthetic payload for `downshift try`.
-	// Nil means try falls back to core.Route.
-	Try func(prompt, current string, catalog core.Resolver) tryResult
-	// Caps are the harness facts; try reads SingleModelReasoning from here.
+	// Caps are the harness facts.
 	Caps core.HarnessCapabilities
 }
 
@@ -50,7 +47,6 @@ var harnessRegistry = map[string]harnessEntry{
 				func(e antigravity.Event) string { return e.TaskText() },
 			)
 		},
-		Try:  tryAntigravity,
 		Caps: core.AntigravityCaps,
 	},
 	"claude-code": {
@@ -65,7 +61,6 @@ var harnessRegistry = map[string]harnessEntry{
 			)
 		},
 		Port: portPtr(claudecode.Port()),
-		Try:  tryClaudeCode,
 		Caps: core.ClaudeCodeCaps,
 	},
 	"cursor": {
@@ -92,7 +87,6 @@ var harnessRegistry = map[string]harnessEntry{
 			)
 		},
 		Port: portPtr(cursor.Port()),
-		Try:  tryCursor,
 		Caps: core.CursorCaps,
 	},
 	"codex": {
@@ -107,7 +101,6 @@ var harnessRegistry = map[string]harnessEntry{
 			)
 		},
 		Port: portPtr(codex.Port()),
-		Try:  tryCodex,
 		Caps: core.CodexCaps,
 	},
 	// kirocrew has no rewrite channel (exit 0 allows, exit 2 blocks with
@@ -126,11 +119,10 @@ var harnessRegistry = map[string]harnessEntry{
 			)
 		},
 		Port: portPtr(kirocrew.Port()),
-		Try:  tryKiroCrew,
 		Caps: core.KiroCrewCaps,
 	},
-	// grok has no hook: a single model with configurable reasoning, so try
-	// reports an effort instead of a model (SingleModelReasoning).
+	// grok has no hook: a single model with configurable reasoning
+	// (SingleModelReasoning).
 	"grok": {Caps: core.GrokCaps},
 
 	// opencode's plugin (phase 2) forwards subagent_spawn_intent to the hook
@@ -150,7 +142,6 @@ var harnessRegistry = map[string]harnessEntry{
 			)
 		},
 		Port: portPtr(opencode.Port()),
-		Try:  tryOpenCode,
 		Caps: core.OpenCodeCaps,
 	},
 }
@@ -165,111 +156,4 @@ func harnessIDs() []string {
 	}
 	sort.Strings(out)
 	return out
-}
-
-// tryInput builds the synthetic tool input for try.
-func tryInput(promptKey, prompt, current string) json.RawMessage {
-	m := map[string]any{promptKey: prompt}
-	if current != "" {
-		m["model"] = current
-	}
-	raw, _ := json.Marshal(m)
-	return raw
-}
-
-// tryWritten reads a string key from an updatedInput blob.
-func tryWritten(raw json.RawMessage, key string) string {
-	if len(raw) == 0 {
-		return ""
-	}
-	var m map[string]any
-	if json.Unmarshal(raw, &m) != nil {
-		return ""
-	}
-	v, _ := m[key].(string)
-	return v
-}
-
-func tryClaudeCode(prompt, current string, catalog core.Resolver) tryResult {
-	out, _, d := claudecode.Handle(claudecode.Event{ToolName: "Task", ToolInput: tryInput("prompt", prompt, current)}, catalog)
-	r := tryResult{decision: d}
-	if out.HookSpecificOutput != nil {
-		if w := tryWritten(out.HookSpecificOutput.UpdatedInput, "model"); w != current {
-			r.written = w
-		}
-	}
-	return r
-}
-
-func tryCursor(prompt, current string, catalog core.Resolver) tryResult {
-	out, _, d := cursor.Handle(cursor.Event{ToolName: "Task", ToolInput: tryInput("task", prompt, current)}, catalog)
-	r := tryResult{decision: d}
-	if w := tryWritten(out.UpdatedInput, "model"); w != current {
-		r.written = w
-	}
-	return r
-}
-
-func tryCodex(prompt, current string, catalog core.Resolver) tryResult {
-	out, _, d := codex.Handle(codex.Event{ToolName: "spawn_agent", ToolInput: tryInput("message", prompt, current)}, catalog)
-	r := tryResult{decision: d}
-	if out.HookSpecificOutput != nil {
-		if w := tryWritten(out.HookSpecificOutput.UpdatedInput, "model"); w != current {
-			r.written = w
-		}
-		r.effort = tryWritten(out.HookSpecificOutput.UpdatedInput, "reasoning_effort")
-	}
-	return r
-}
-
-func tryKiroCrew(prompt, current string, catalog core.Resolver) tryResult {
-	out, _, d := kirocrew.Handle(kirocrew.Event{ToolName: "spawn_run", ToolInput: tryInput("task", prompt, current)}, catalog)
-	r := tryResult{decision: d, blocked: out.Block}
-	if out.Block {
-		r.written = d.Model.ID
-	}
-	return r
-}
-
-func tryAntigravity(prompt, current string, catalog core.Resolver) tryResult {
-	sub := map[string]any{"Prompt": prompt}
-	if current != "" {
-		sub["Model"] = current
-	}
-	args, _ := json.Marshal(map[string]any{"Subagents": []any{sub}})
-	out, _, d := antigravity.Handle(antigravity.Event{ToolCall: antigravity.ToolCall{Name: "invoke_subagent", Args: args}}, catalog)
-	r := tryResult{decision: d}
-	if len(out.Overwrite) > 0 {
-		var m struct {
-			Subagents []map[string]any `json:"Subagents"`
-		}
-		if json.Unmarshal(out.Overwrite, &m) == nil && len(m.Subagents) > 0 {
-			if w, _ := m.Subagents[0]["Model"].(string); w != current {
-				r.written = w
-			}
-		}
-	}
-	return r
-}
-
-// tryOpenCode runs the v1 route path on a synthetic request. The correlation
-// id is a fixed all-zero hex: it matches the wire contract, so the try path
-// exercises the same validation, routing and answer a real spawn would get.
-func tryOpenCode(prompt, current string, catalog core.Resolver) tryResult {
-	req := opencode.Request{
-		V:           1,
-		Kind:        "route",
-		Harness:     opencode.RequestHarness{ID: "opencode"},
-		Event:       "subagent_spawn_intent",
-		Correlation: opencode.RequestRelation{Child: "00000000000000000000000000000000"},
-		Agent:       "try",
-		Model:       opencode.RequestModel{ProviderID: "opencode", ID: current},
-		TaskText:    prompt,
-	}
-	resp, _, d := opencode.Handle(req, catalog)
-	r := tryResult{decision: d}
-	if resp.Action == "route" && resp.Model != nil && resp.Model.ID != current {
-		r.written = resp.Model.ID
-	}
-	return r
 }

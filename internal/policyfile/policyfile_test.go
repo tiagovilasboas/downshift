@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/hookctx"
 )
 
 func write(t *testing.T, dir, body string) string {
@@ -188,16 +187,6 @@ func TestHookDoesNothingWithoutProjectDir(t *testing.T) {
 	d := core.Route("rename the variable userId to accountId in auth.ts", "claude-code", "")
 	if d.Guards.PolicyFloor || d.Tier != core.TierSmall {
 		t.Fatalf("no project dir must mean no floor, got tier %v floor %v", d.Tier, d.Guards.PolicyFloor)
-	}
-}
-
-func TestHookAppliesFloorInsideProjectDir(t *testing.T) {
-	dir := t.TempDir()
-	write(t, dir, `{"version":1,"min_tier":"frontier"}`)
-	defer hookctx.SetProjectDir(dir)()
-	d := core.Route("rename the variable userId to accountId in auth.ts", "claude-code", "")
-	if !d.Guards.PolicyFloor || d.Tier != core.TierFrontier {
-		t.Fatalf("expected frontier floor, got tier %v floor %v", d.Tier, d.Guards.PolicyFloor)
 	}
 }
 

@@ -41,22 +41,6 @@ Examples:
 
 Next: open a new harness session, then run "downshift session"
 `,
-	"try": `downshift try — What Downshift would pick for a task, without spawning anything
-
-Usage:
-  downshift try "<task>" [harness] [current-model] [--harness H] [--model M] [--detail]
-
-Flags:
-  --harness H   Harness to classify for (claude-code, cursor, codex, ...)
-  --model M     Model the parent session runs on
-  --detail      Show the reasoning behind the pick
-
-Examples:
-  downshift try "rename the variable userId"
-  downshift try "rearchitect the payment flow" cursor claude-haiku-5-5
-
-Next: downshift stats, once real subagents have run
-`,
 	"stats": `downshift stats — Decisions and estimated token savings
 
 Usage:

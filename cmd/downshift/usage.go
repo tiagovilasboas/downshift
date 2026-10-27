@@ -18,7 +18,6 @@ Everyday
   downshift shell-init           Deprecated alias of enable; kept for old shell rc files
   downshift compact -- <cmd>     Cut a test or build command's output to its PASS/FAIL summary
   downshift doctor [--verbose] [--json]  Checklist with a fix command per failure
-  downshift try "<task>" [harness] [model]   Test classification from the terminal
   downshift stats [--days=N]     Show routing decisions and estimated savings (default: 30 days)
   downshift report [--days=N] [--json]   Routed vs control tokens per completed task, rework, savings with 95% CI
   downshift session [--why|--pause|--resume] [--json]  This session's subagents as a tree (every harness)
@@ -74,14 +73,10 @@ Experimental (kept, not part of the routing pitch; may change or move)
 
 Grok note:
   Grok routes subagent models via config, not a hook (its PreToolUse is
-  allow/deny only). Run  downshift try "<task>" grok  to see the reasoning
-  effort to pin on a subagent role in ~/.grok/config.toml. See the README.
+  allow/deny only). Pin the reasoning effort on a subagent role in
+  ~/.grok/config.toml. See the README.
 
 Examples:
-  downshift try "rename the variable userId"
-  downshift try "rearchitect the payment flow" cursor claude-haiku-5-5
-  downshift try "add a subagent to scan for secrets" codex gpt-5.6-sol
-  downshift try "explore the auth module" grok
   downshift stats
   downshift stats --days=7
 `)

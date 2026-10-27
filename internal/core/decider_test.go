@@ -45,3 +45,39 @@ func TestSetDecider_NilMeansDefault(t *testing.T) {
 		t.Fatalf("nil decider: got %+v, want the default decision %+v", got, want)
 	}
 }
+
+// TestDefaultDecider_KeepsTheRequestedModel pins the decider used where none
+// is installed: the spawn runs on the model it asked for, and a model the
+// catalog does not know is kept without a target (safe verdict OK, so the
+// channel plan has nothing to write).
+func TestDefaultDecider_KeepsTheRequestedModel(t *testing.T) {
+	defer core.SetDecider(nil)()
+	frontier := cat.ModelFor("claude-code", core.TierFrontier)
+	cases := []struct {
+		name      string
+		current   string
+		res       core.Resolver
+		verdict   core.Verdict
+		wantID    string
+		confident bool
+	}{
+		{"known model", frontier.ID, cat, core.VerdictOK, frontier.ID, true},
+		{"unknown model", "no-such-model", cat, core.VerdictUnknown, "", false},
+		{"no model", "", cat, core.VerdictUnknown, "", false},
+		{"no resolver", frontier.ID, nil, core.VerdictUnknown, "", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var d core.Decision
+			if tc.res == nil {
+				d = core.Route("rename the variable", "claude-code", tc.current)
+			} else {
+				d = core.Route("rename the variable", "claude-code", tc.current, tc.res)
+			}
+			if d.Verdict != tc.verdict || d.SafeVerdict != core.VerdictOK || d.Model.ID != tc.wantID || d.Confident != tc.confident {
+				t.Fatalf("verdict %v safe %v model %q confident %v, want %v OK %q %v",
+					d.Verdict, d.SafeVerdict, d.Model.ID, d.Confident, tc.verdict, tc.wantID, tc.confident)
+			}
+		})
+	}
+}

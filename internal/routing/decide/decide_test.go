@@ -133,6 +133,14 @@ func TestDecide(t *testing.T) {
 			request: req(func(r *contract.Request) { r.Hint.Tier = contract.TierMid }),
 			risk:    []string{"payment"},
 			want:    want{contract.VerdictGuardFloor, contract.ReasonRiskFloor, "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		{name: "risk blocks a rule downshift",
+			request: req(func(r *contract.Request) { r.Hint.Kind = contract.KindDocs }),
+			pol:     testPolicy(), risk: []string{"secret", "payment"},
+			want: want{contract.VerdictGuardFloor, contract.ReasonRiskFloor, "frontier-model", "gated-docs", "", contract.TierFrontier, core.VerdictOK}},
+		{name: "a rule is not applied to a requested model the catalog does not know",
+			request: req(func(r *contract.Request) { r.RequestedModel = "who-knows"; r.Hint.Kind = contract.KindDocs }),
+			pol:     testPolicy(),
+			want:    want{contract.VerdictKept, "", "", "gated-docs", "", contract.TierUnknown, core.VerdictUnknown}},
 		{name: "explicit_only target is refused",
 			cat: func() fakeCatalog {
 				c := newCatalog()

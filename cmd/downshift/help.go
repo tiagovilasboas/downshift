@@ -28,7 +28,6 @@ func usageShort(w io.Writer) {
 Get started
   downshift setup [--dry-run]      Wire the hooks into every harness found (backup, diff, --undo)
   downshift doctor                 Checklist: binary, hooks per harness, state, with a fix per failure
-  downshift try "<task>"           What Downshift would pick for a task, without spawning anything
 
 See the effect
   downshift stats                  Decisions and estimated savings (list price, not an invoice)
@@ -49,7 +48,7 @@ More
   downshift version                Print the binary version
 
 Examples
-  downshift try "rename the variable userId"
-  downshift try "rearchitect the payment flow" cursor claude-haiku-5-5
+  downshift stats --days=7
+  downshift session --why
 `)
 }

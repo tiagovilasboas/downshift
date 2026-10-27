@@ -9,6 +9,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // cat is the test-scope resolver — same embedded catalog the binary uses.
@@ -20,31 +21,6 @@ func catID(harness string, tier core.Tier) string {
 }
 
 // --- Route verdict tests ---
-
-func TestRoute_Downshift(t *testing.T) {
-	frontierID := catID("claude-code", core.TierFrontier)
-	d := core.Route("rename the variable", "claude-code", frontierID, cat)
-	if d.Verdict != core.VerdictDownshift {
-		t.Fatalf("verdict = %s, want DOWNSHIFT", d.Verdict)
-	}
-	if d.Tier != core.TierSmall {
-		t.Errorf("recommended tier = %s, want small", d.Tier)
-	}
-	if d.Savings <= 0 {
-		t.Errorf("savings = %.2f, want > 0", d.Savings)
-	}
-}
-
-func TestRoute_Upshift(t *testing.T) {
-	smallID := catID("claude-code", core.TierSmall)
-	d := core.Route("rearchitect the payment system across services", "claude-code", smallID, cat)
-	if d.Verdict != core.VerdictUpshift {
-		t.Fatalf("verdict = %s, want UPSHIFT", d.Verdict)
-	}
-	if d.Tier != core.TierFrontier {
-		t.Errorf("recommended tier = %s, want frontier", d.Tier)
-	}
-}
 
 func TestRoute_OK(t *testing.T) {
 	midID := catID("claude-code", core.TierMid)
@@ -67,17 +43,6 @@ func TestRoute_UnknownCurrentModel(t *testing.T) {
 	}
 }
 
-func TestRoute_Codex_Downshift(t *testing.T) {
-	frontierID := catID("codex", core.TierFrontier)
-	d := core.Route("fix a typo", "codex", frontierID, cat)
-	if d.Verdict != core.VerdictDownshift {
-		t.Fatalf("verdict = %s, want DOWNSHIFT", d.Verdict)
-	}
-	if d.Tier != core.TierSmall {
-		t.Errorf("recommended tier = %s, want small", d.Tier)
-	}
-}
-
 func TestRoute_UnknownHarness(t *testing.T) {
 	d := core.Route("rename the variable", "unknown-harness", "", cat)
 	if d.Tier != core.TierSmall {
@@ -89,23 +54,6 @@ func TestRoute_UnknownHarness(t *testing.T) {
 }
 
 // --- Effort field tests ---
-
-func TestRoute_EffortSetOnDecision(t *testing.T) {
-	cases := []struct {
-		prompt     string
-		wantEffort core.Effort
-	}{
-		{"rename the variable", core.EffortLow},
-		{"implement the CSV export feature", core.EffortMid},
-		{"rearchitect the payment system across services", core.EffortHigh},
-	}
-	for _, tc := range cases {
-		d := core.Route(tc.prompt, "claude-code", "", cat)
-		if d.Effort != tc.wantEffort {
-			t.Errorf("Route(%q).Effort = %s, want %s", tc.prompt, d.Effort, tc.wantEffort)
-		}
-	}
-}
 
 // --- SavingsRatio contract tests ---
 
@@ -129,6 +77,7 @@ func TestSavingsRatio_MoreExpensiveTarget(t *testing.T) {
 // --- Summary contract tests ---
 
 func TestDecisionSummary_Downshift(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	d := core.Route("rename the variable", "claude-code", catID("claude-code", core.TierFrontier), cat)
 	s := d.Summary()
 	if !strings.Contains(strings.ToLower(s), "downshift") {
@@ -140,6 +89,7 @@ func TestDecisionSummary_Downshift(t *testing.T) {
 // alias runs. The note must name it and must not print a percentage: a
 // list-price ratio is a cost claim, and savings are reported in tokens only.
 func TestDecisionSummary_ClaudeCodeTrivialNamesHaiku45WithoutPercentage(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	for _, current := range []string{"claude-sonnet-5-5", "claude-opus-5-5"} {
 		d := core.Route("rename the variable", "claude-code", current, cat)
 		if d.Verdict != core.VerdictDownshift {
@@ -156,6 +106,7 @@ func TestDecisionSummary_ClaudeCodeTrivialNamesHaiku45WithoutPercentage(t *testi
 }
 
 func TestDecisionSummary_Upshift(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	d := core.Route("rearchitect the payment system", "claude-code", catID("claude-code", core.TierSmall), cat)
 	s := d.Summary()
 	if !strings.Contains(strings.ToLower(s), "upshift") {

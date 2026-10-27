@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 func upshiftTestEnv(t *testing.T) {
@@ -22,13 +23,17 @@ func upshiftTestEnv(t *testing.T) {
 func TestUpshift_WritesLeastModelAtNeededTier(t *testing.T) {
 	upshiftTestEnv(t)
 	sess := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-1"})
-	cases := []struct{ name, prompt, current, want string }{
-		{"medium from haiku", "implement the feature to export sales as CSV", "claude-haiku-4-5", "claude-sonnet-5-5"},
-		{"medium from opus (same task, downshift)", "implement the feature to export sales as CSV", "claude-opus-5-5", "claude-sonnet-5-5"},
-		{"complex from haiku", "rearchitect the analytics pipeline to support multi-tenant organisations", "claude-haiku-4-5", "claude-fable-5-1"},
+	cases := []struct {
+		name, prompt, current, want string
+		tier                        core.Tier
+	}{
+		{"medium from haiku", "implement the feature to export sales as CSV", "claude-haiku-4-5", "claude-sonnet-5-5", core.TierMid},
+		{"medium from opus (same task, downshift)", "implement the feature to export sales as CSV", "claude-opus-5-5", "claude-sonnet-5-5", core.TierMid},
+		{"complex from haiku", "rearchitect the analytics pipeline to support multi-tenant organisations", "claude-haiku-4-5", "claude-fable-5-1", core.TierFrontier},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			decidertest.Use(t, decidertest.Tier(tc.tier))
 			d := core.Route(tc.prompt, "claude-code", tc.current, cat)
 			d.Baseline.RequestedID = tc.current
 			if !d.Confident {
@@ -64,6 +69,7 @@ func TestUpshift_NeededTierMissingOrExhausted(t *testing.T) {
 
 func TestUpshift_GuessedBaselineKeepsNeededTierAndExplicitKeepsStrongest(t *testing.T) {
 	upshiftTestEnv(t)
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	sess := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
 	route := func() core.Decision {
 		d := core.Route("implement the feature to export sales as CSV", "claude-code", "claude-haiku-4-5", cat)

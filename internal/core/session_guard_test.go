@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // A downshift held by the guardrails (R1/R5, SafeVerdict OK) must keep the
@@ -38,6 +39,7 @@ func TestPlanForSession_GuardrailHoldKeepsCurrentModel(t *testing.T) {
 // A confident, unheld downshift still rewrites inside a known session.
 func TestPlanForSession_CleanDownshiftStillRewrites(t *testing.T) {
 	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	d := core.Route("fix a typo in the README", "claude-code", "claude-opus-5-5", cat)
 	if len(d.Corrections) != 0 || d.Verdict != core.VerdictDownshift {
 		t.Fatalf("precondition: verdict=%s corrections=%v", d.Verdict, d.Corrections)

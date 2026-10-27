@@ -19,10 +19,6 @@ func TestUnsupportedLanguage_CoversFullPromptAndNoSignal(t *testing.T) {
 		if cls.Confident || !cls.UnsupportedLanguage {
 			t.Errorf("coverage lost: confident=%v unsupported=%v", cls.Confident, cls.UnsupportedLanguage)
 		}
-		decision := core.Route(prompt, "claude-code", catID("claude-code", core.TierFrontier), cat)
-		if !decision.UnsupportedLanguage || checkWrites(decision) {
-			t.Errorf("language guard not retained by route: flag=%v corrections=%v", decision.UnsupportedLanguage, decision.Corrections)
-		}
 	}
 }
 

@@ -14,19 +14,19 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 var updateGolden = flag.Bool("update-decision-golden", false, "rewrite testdata/decision_events.golden.jsonl")
 
 // goldenDecisions are the decisions whose events the golden file pins: every
-// prompt of the core corpus routed on a known frontier baseline and on an
-// unknown one, plus hand-built decisions for the shadow and held fields the
-// corpus does not reach.
+// prompt of the core corpus classified, with the tier it asks for decided by a
+// fixed stub on a known frontier baseline and on an unknown one, plus
+// hand-built decisions for the shadow and held fields the corpus does not
+// reach. No routing policy runs, so the file pins the event shape only.
 func goldenDecisions(t *testing.T) []core.Decision {
 	t.Helper()
-	t.Setenv(core.NBUpshiftEnv, "")
-	t.Setenv(core.NBDownshiftEnv, "")
 	t.Setenv("DOWNSHIFT_GRAPHIFY_CMD", "")
 	cat := catalog.Load()
 	files, err := filepath.Glob(filepath.Join("..", "..", "core", "testdata", "corpus", "*.json"))
@@ -48,11 +48,24 @@ func goldenDecisions(t *testing.T) []core.Decision {
 			t.Fatalf("%s: %v", f, err)
 		}
 		for _, c := range cases {
-			out = append(out, core.Route(c.Prompt, "claude-code", frontier, cat))
-			out = append(out, core.Route(c.Prompt, "codex", "", cat))
+			out = append(out, classifiedDecision(c.Prompt, "claude-code", frontier, cat))
+			out = append(out, classifiedDecision(c.Prompt, "codex", "", cat))
 		}
 	}
 	return append(out, handBuiltDecisions()...)
+}
+
+// classifiedDecision is the decision a fixed stub takes for the tier the
+// classifier asks for, carrying the classifier's own facts (confidence, risk,
+// guards).
+func classifiedDecision(prompt, harness, current string, cat core.Resolver) core.Decision {
+	cls := core.ClassifyWithSemantic(prompt)
+	stub := decidertest.Mark(decidertest.Tier(core.TierOf(cls.Complexity)), func(d *core.Decision) {
+		d.Complexity, d.Confident = cls.Complexity, cls.Confident
+		d.Risk, d.NoSignal, d.UnsupportedLanguage = core.RiskCategories(prompt), cls.NoSignal, cls.UnsupportedLanguage
+		d.Guards = core.Guards{RiskFloor: cls.RiskFloor, RiskAbstain: cls.RiskAbstain, SemanticLift: cls.SemanticLift, TaskFocus: cls.TaskFocus}
+	})
+	return stub.Decide(core.Request{Prompt: prompt, Harness: harness, CurrentModelID: current, Resolver: cat})
 }
 
 func handBuiltDecisions() []core.Decision {

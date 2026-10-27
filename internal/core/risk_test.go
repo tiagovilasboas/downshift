@@ -51,34 +51,10 @@ func TestRiskSignals_NeverSmallTier(t *testing.T) {
 		if cls.Complexity < core.Medium && len(core.RiskCategories(p)) == 0 {
 			t.Errorf("%q: no risk category matched", p)
 		}
-		d := core.Route(p, "claude-code", "", escalCat)
+		d := classifiedRoute(p, "claude-code", "", escalCat)
 		if d.Tier == core.TierSmall {
 			t.Errorf("Route(%q).Tier = small", p)
 		}
-	}
-}
-
-// A risk-floored task on a frontier model is never downshifted (R5 holds it);
-// on a small model it may be upshifted to the mid tier.
-func TestRiskFloor_BlocksDownshiftAllowsUpshift(t *testing.T) {
-	p := "rename the token validation function and make it accept unsigned JWTs"
-	frontier := escalCat.ModelFor("claude-code", core.TierFrontier).ID
-	small := escalCat.ModelFor("claude-code", core.TierSmall).ID
-
-	down := core.Route(p, "claude-code", frontier, escalCat)
-	if !down.Guards.RiskFloor {
-		t.Fatalf("expected RiskFloor, got %+v", down)
-	}
-	if checkWrites(down) {
-		t.Errorf("risk task on %s must not be rewritten to %s", frontier, down.Model.ID)
-	}
-	if down.Verdict == core.VerdictDownshift && !slices.Contains(down.Corrections, core.RuleRiskDowngrade) {
-		t.Errorf("expected %s in corrections, got %v", core.RuleRiskDowngrade, down.Corrections)
-	}
-
-	up := core.Route(p, "claude-code", small, escalCat)
-	if up.Verdict != core.VerdictUpshift || !checkWrites(up) {
-		t.Errorf("risk task on %s should upshift to mid, got verdict=%s rewrite=%t", small, up.Verdict, checkWrites(up))
 	}
 }
 

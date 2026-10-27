@@ -222,26 +222,6 @@ func (d *Decision) recheck() {
 	}
 }
 
-// classifyTask classifies the prompt once (regex, semantic boost, risk floor)
-// and returns the target tier and the final classification. Route uses this
-// single result for complexity, confidence and intent so they never disagree.
-// The naive-Bayes second opinion runs last, on the final tier.
-func classifyTask(prompt string) (Tier, Classification, NBUpshift, NBDownshift) {
-	cls := ClassifyWithSemantic(prompt)
-
-	nbDown := nbTrivialOpinion(prompt, cls)
-	if nbDown.Applied {
-		cls.Complexity = Trivial
-		cls.Confident = false
-	}
-	nbUp := nbSecondOpinion(prompt, TierOf(cls.Complexity))
-	if nbUp.Applied {
-		cls.Complexity = complexityForTier(nbUp.To)
-		cls.Confident = false
-	}
-	return TierOf(cls.Complexity), cls, nbUp, nbDown
-}
-
 // resolveModel returns the catalog model for the given harness and tier.
 // With a nil Resolver it returns a zero Model that only carries the tier.
 func resolveModel(harness string, tier Tier, r Resolver) Model {

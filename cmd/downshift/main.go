@@ -8,10 +8,6 @@
 // Usage as a Claude Code PreToolUse hook:
 //
 //	{ "type": "command", "command": "downshift claude-code" }
-//
-// It also has a `try` subcommand to test classification from the terminal:
-//
-//	downshift try "rename the variable userId"
 package main
 
 import (
@@ -93,8 +89,6 @@ func main() {
 		os.Exit(runHonor(os.Stdin, portFor("claude-code"), catalog))
 	case "claude-code-subagent-stop":
 		os.Exit(runUsage(os.Stdin, portFor("claude-code"), catalog))
-	case "try":
-		os.Exit(runTry(catalog, args[1:]))
 	case "models":
 		os.Exit(runModels(catalog, args[1:]))
 	case "quota":

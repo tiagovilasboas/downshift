@@ -19,7 +19,7 @@ func TestUsageShortIsShortAndPointsToAll(t *testing.T) {
 	if !strings.Contains(short.String(), "help --all") {
 		t.Error("short help must point to help --all")
 	}
-	for _, cmd := range []string{"doctor", "try", "stats"} {
+	for _, cmd := range []string{"doctor", "stats"} {
 		if !strings.Contains(short.String(), "downshift "+cmd) {
 			t.Errorf("short help is missing %q", cmd)
 		}
@@ -31,14 +31,14 @@ func TestUsageShortIsShortAndPointsToAll(t *testing.T) {
 	}
 }
 
-// The default help is a contract for a new user: seven commands, one per step
+// The default help is a contract for a new user: six commands, one per step
 // of the install-check-use-fix loop. Everything else is in help --all.
-func TestUsageShortListsTheSevenEverydayCommands(t *testing.T) {
+func TestUsageShortListsTheSixEverydayCommands(t *testing.T) {
 	var short, full bytes.Buffer
 	usageShort(&short)
 	usage(&full)
 	out := short.String()
-	for _, cmd := range []string{"setup", "doctor", "try", "stats", "report", "session", "config"} {
+	for _, cmd := range []string{"setup", "doctor", "stats", "report", "session", "config"} {
 		if !strings.Contains(out, "  downshift "+cmd) {
 			t.Errorf("short help is missing the everyday command %q", cmd)
 		}
@@ -54,14 +54,14 @@ func TestUsageShortListsTheSevenEverydayCommands(t *testing.T) {
 	var cmds []string
 	commands, _, _ := strings.Cut(out, "Examples")
 	for _, line := range strings.Split(commands, "\n") {
-		for _, c := range []string{"setup", "doctor", "try", "stats", "report", "session", "config"} {
+		for _, c := range []string{"setup", "doctor", "stats", "report", "session", "config"} {
 			if strings.HasPrefix(line, "  downshift "+c+" ") {
 				cmds = append(cmds, c)
 			}
 		}
 	}
-	if len(cmds) != 7 {
-		t.Errorf("short help lists the everyday commands %v, want exactly 7 lines", cmds)
+	if len(cmds) != 6 {
+		t.Errorf("short help lists the everyday commands %v, want exactly 6 lines", cmds)
 	}
 }
 
@@ -94,7 +94,7 @@ func TestUsageAllIsGroupedAndComplete(t *testing.T) {
 		return rest
 	}
 	for name, cmds := range map[string][]string{
-		"Everyday":     {"downshift setup", "downshift doctor", "downshift try", "downshift stats ", "downshift report", "downshift session", "downshift config"},
+		"Everyday":     {"downshift setup", "downshift doctor", "downshift stats ", "downshift report", "downshift session", "downshift config"},
 		"Plumbing":     {"downshift claude-code", "downshift cursor", "downshift codex", "downshift antigravity", "downshift kirocrew", "downshift quota import", "downshift quota collect", "downshift quota claude-statusline"},
 		"Maintainer":   {"downshift eval-outcome", "downshift models check", "downshift models pull"},
 		"Experimental": {"downshift context status", "downshift context compress", "dsmon"},
@@ -109,7 +109,7 @@ func TestUsageAllIsGroupedAndComplete(t *testing.T) {
 
 	// Every command the earlier flat list had is still here.
 	for _, c := range []string{
-		"downshift setup", "downshift doctor", "downshift try", "downshift stats", "downshift stats --detail", "downshift stats --export",
+		"downshift setup", "downshift doctor", "downshift stats", "downshift stats --detail", "downshift stats --export",
 		"downshift report", "downshift session", "downshift watch", "downshift config",
 		"downshift models list", "downshift models discover", "downshift models check", "downshift models pull",
 		"downshift quota status",

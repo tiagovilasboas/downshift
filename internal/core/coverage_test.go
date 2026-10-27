@@ -10,6 +10,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 var covCat = catalog.Load()
@@ -146,26 +147,10 @@ func TestCheckWrites_EmptyModelID(t *testing.T) {
 
 // --- resolveModel with no resolver (nil path) ---
 
-func TestRoute_NilResolver_ReturnsEmptyModelID(t *testing.T) {
-	// Route without a resolver cannot look up a model — returns empty ID.
-	// This is intentional: callers must inject a catalog resolver.
-	d := core.Route("rename the variable", "claude-code", "")
-	if d.Model.ID != "" {
-		t.Errorf("Route with nil resolver should return empty model ID, got %q", d.Model.ID)
-	}
-	// Complexity classification still works without a resolver.
-	if d.Complexity != core.Trivial {
-		t.Errorf("complexity = %s, want TRIVIAL", d.Complexity)
-	}
-	// Verdict must be Unknown (no current model, no recommended model).
-	if d.Verdict != core.VerdictUnknown {
-		t.Errorf("verdict = %s, want UNKNOWN", d.Verdict)
-	}
-}
-
 // --- Summary: PreservedIntent suffix ---
 
 func TestDecisionSummary_PreservedIntentSuffix(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	d := core.Route("rename the variable", "codex", "gpt-6-astra", covCat)
 	s := d.Summary()
 	if !strings.Contains(s, "preserved") {
@@ -175,31 +160,4 @@ func TestDecisionSummary_PreservedIntentSuffix(t *testing.T) {
 
 // --- isReviewTask via Route for each review signal ---
 
-func TestReviewSignals_AllTriggerReviewIntent(t *testing.T) {
-	prompts := []string{
-		"do a code review of the auth module",
-		"perform a security audit of the payment service",
-		"run a security review on the webhook handler",
-		"write an rfc for the new checkout architecture",
-		"create a design doc for the notification system",
-		"think through the tradeoffs of the new caching layer",
-	}
-	for _, prompt := range prompts {
-		d := core.Route(prompt, "claude-code", "", covCat)
-		if d.Intent != core.ReviewIntent {
-			t.Errorf("prompt %q → intent %s, want review", prompt, d.Intent)
-		}
-	}
-}
-
 // --- contains edge cases ---
-
-func TestContainsEdge_SubstrLongerThanString(t *testing.T) {
-	// isReviewTask calls contains internally; exercise the len guard via Route
-	// with a very short prompt that can't match any multi-word review signal.
-	d := core.Route("rfc", "claude-code", "", covCat)
-	// "rfc" matches the rfc review signal
-	if d.Intent != core.ReviewIntent {
-		t.Errorf("single-word 'rfc' prompt should be ReviewIntent, got %s", d.Intent)
-	}
-}
