@@ -4,8 +4,11 @@
 package policyfile
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -36,7 +39,7 @@ func TestNoFileIsNoOp(t *testing.T) {
 }
 
 func TestEmptyStartDir(t *testing.T) {
-	if _, ok := Find(""); ok {
+	if _, ok, err := Find(""); ok || err != nil {
 		t.Fatal("empty start dir must find nothing")
 	}
 }
@@ -75,7 +78,7 @@ func TestNearestFileWinsAndSearchIsBounded(t *testing.T) {
 	if err := os.MkdirAll(far, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := Find(far); ok {
+	if _, ok, _ := Find(far); ok {
 		t.Fatal("search must stop after MaxDepth levels")
 	}
 }
@@ -158,7 +161,7 @@ func TestOversizedAndNonRegularFilesAreRejected(t *testing.T) {
 	if err := os.Symlink(target, link); err != nil {
 		t.Skip("symlinks unavailable")
 	}
-	if _, ok := Find(d2); ok {
+	if _, ok, _ := Find(d2); ok {
 		t.Fatal("a symlinked policy must be ignored")
 	}
 }
@@ -196,4 +199,44 @@ func TestHookAppliesFloorInsideProjectDir(t *testing.T) {
 	if !d.Guards.PolicyFloor || d.Tier != core.TierFrontier {
 		t.Fatalf("expected frontier floor, got tier %v floor %v", d.Tier, d.Guards.PolicyFloor)
 	}
+}
+
+// Find reports a failed lookup as an error, and only a missing entry as absent.
+// Treating a permission failure as absent would route as if no file existed.
+func TestFindTellsAbsentFromUnlookable(t *testing.T) {
+	t.Run("no file is absent without error", func(t *testing.T) {
+		dir := filepath.Join(t.TempDir(), "missing", "start")
+		if p, ok, err := Find(dir); ok || err != nil || p != "" {
+			t.Fatalf("got %q %v %v, want absent with no error", p, ok, err)
+		}
+	})
+	t.Run("nearest regular file is found", func(t *testing.T) {
+		root := t.TempDir()
+		want := write(t, root, `{"version":1}`)
+		p, ok, err := Find(filepath.Join(root, "a"))
+		if !ok || err != nil || p != want {
+			t.Fatalf("got %q %v %v, want %q", p, ok, err, want)
+		}
+	})
+	t.Run("unsearchable directory is a permission error", func(t *testing.T) {
+		if runtime.GOOS == "windows" {
+			t.Skip("directory search permission is not enforced on Windows")
+		}
+		if os.Geteuid() == 0 {
+			t.Skip("root bypasses directory search permission")
+		}
+		parent := t.TempDir()
+		sub := filepath.Join(parent, "sub")
+		if err := os.Mkdir(sub, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chmod(parent, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = os.Chmod(parent, 0o755) })
+		p, ok, err := Find(sub)
+		if ok || p != "" || !errors.Is(err, fs.ErrPermission) {
+			t.Fatalf("got %q %v %v, want a permission error and no file", p, ok, err)
+		}
+	})
 }

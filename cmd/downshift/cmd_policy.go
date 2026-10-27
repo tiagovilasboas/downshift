@@ -4,8 +4,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 
 	"github.com/tiagovilasboas/downshift/internal/policyfile"
@@ -28,19 +30,27 @@ func runPolicyCheck(stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "policy check:", err)
 		return 1
 	}
-	project, _ := policyfile.Find(cwd)
+	project, _, err := policyfile.Find(cwd)
+	if err != nil {
+		fmt.Fprintln(stderr, "policy check:", err)
+		return 1
+	}
 	user, err := policy.UserPath()
 	if err != nil {
 		fmt.Fprintln(stderr, "policy check:", err)
 		return 1
 	}
 	// The same files also hold the tier floor, and policyfile refuses keys it
-	// does not know, so the floor reader must accept each file too.
+	// does not know, so the floor reader must accept each file too. A missing
+	// file is fine; any other failure to read one is reported.
 	for _, path := range []string{project, user} {
-		if path == "" || !exists(path) {
+		if path == "" {
 			continue
 		}
 		if _, err := policyfile.Load(path); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
 			fmt.Fprintln(stderr, "policy check:", err)
 			return 1
 		}

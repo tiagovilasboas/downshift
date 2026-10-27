@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,16 +62,23 @@ type Policy struct {
 var classNames = map[string]bool{"TRIVIAL": true, "SIMPLE": true, "MEDIUM": true, "COMPLEX": true}
 
 // Find returns the nearest policy file at or above startDir, searching at most
-// MaxDepth directories. It reports ok=false when none exists.
-func Find(startDir string) (string, bool) {
+// MaxDepth directories. ok is false when none exists. Only a missing entry
+// (ENOENT) counts as absent: any other failure to look, such as a directory
+// without search permission, is returned so the caller can refuse instead of
+// routing as if no file were there.
+func Find(startDir string) (path string, ok bool, err error) {
 	dir := startDir
 	if dir == "" {
-		return "", false
+		return "", false, nil
 	}
 	for i := 0; i <= MaxDepth; i++ {
 		p := filepath.Join(dir, filepath.FromSlash(RelPath))
-		if fi, err := os.Lstat(p); err == nil && fi.Mode().IsRegular() {
-			return p, true
+		fi, statErr := os.Lstat(p)
+		switch {
+		case statErr == nil && fi.Mode().IsRegular():
+			return p, true, nil
+		case statErr != nil && !errors.Is(statErr, fs.ErrNotExist):
+			return "", false, statErr
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
@@ -78,14 +86,18 @@ func Find(startDir string) (string, bool) {
 		}
 		dir = parent
 	}
-	return "", false
+	return "", false, nil
 }
 
 // LoadNearest finds and parses the nearest policy. It returns (nil, "", nil)
-// when no file exists. When a file exists but cannot be used, it returns the
-// path and an error; the caller routes without a floor.
+// when no file exists. When a file exists but cannot be used, or cannot be
+// looked up, it returns the path (empty when the lookup failed) and an error;
+// the caller routes without a floor.
 func LoadNearest(startDir string) (*Policy, string, error) {
-	path, ok := Find(startDir)
+	path, ok, err := Find(startDir)
+	if err != nil {
+		return nil, "", err
+	}
 	if !ok {
 		return nil, "", nil
 	}
