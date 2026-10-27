@@ -35,6 +35,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Claude Code session list:** PR #570 removed the session inferred from the current
+  model, but Claude Code sends no session list in the hook payload, so every spawn had an
+  unknown session and kept its model: no rewrite reached a subscriber. Tests and the smoke
+  passed only because they sent `session_models`, which the real harness does not. The
+  candidates are now catalog data (`session_candidates` in `catalog.json`) read when a
+  harness declares `SessionFromCatalog` (on only for Claude Code): one automatic candidate
+  per tier below the current model, ending at the current model, so an upshift never goes
+  past it. explicit_only rows are never added; an unknown or empty current model still
+  holds; a list from the payload or discovery wins. The smoke now covers a payload without
+  `session_models`.
+
 - `downshift session`: switches and effort changes are counted apart; held rows split into guardrail holds and upshifts not applied (#422, #400, #509).
 - Compactor: Playwright and tsc output with danger words stay raw (#414); cover runs with no-test packages compact (#421).
 - Routing: native haiku canonicalises to `claude-haiku-5-5` (#525 closed as obsolete, fixed on main); the timing budgets run only on CI (#524).

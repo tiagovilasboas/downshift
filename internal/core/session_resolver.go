@@ -251,6 +251,15 @@ func (r *sessionResolver) ShadowGateways() []Model {
 	return nil
 }
 
+// SessionCandidates forwards the optional candidate extension: the names are
+// catalog data, not a session fact.
+func (r *sessionResolver) SessionCandidates(harness string) []string {
+	if c, ok := r.fallback.(SessionCandidateResolver); ok {
+		return c.SessionCandidates(harness)
+	}
+	return nil
+}
+
 func (r *sessionResolver) IsExactID(harness, id string) bool {
 	if harness == r.harness && r.session.Contains(id) {
 		return true

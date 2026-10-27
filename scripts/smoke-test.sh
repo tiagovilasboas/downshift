@@ -71,14 +71,21 @@ expect "claude-code rewrite" "$cc_res" '"model":"haiku"'
 expect "claude-code rewrite" "$cc_res" 'claude-haiku-4-5'
 echo "OK: claude-code rewrites updatedInput.model"
 
-# Claude Code without a session allowlist: the current model proves access to
-# the tiers below it, so a trivial Task on opus is still downshifted (inferred).
-cc_inf=$(echo '{"session_models":["claude-haiku-4-5","claude-sonnet-4-5","claude-opus-4-8"],"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
-expect "claude-code payload session list" "$cc_inf" '"updatedInput":{'
-expect "claude-code payload session list" "$cc_inf" '"model":"haiku"'
-echo "OK: claude-code without allowlist infers the session from the current model"
+# Claude Code with a session list in the payload: the payload list is used.
+cc_pl=$(echo '{"session_models":["claude-haiku-4-5","claude-sonnet-4-5","claude-opus-4-8"],"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+expect "claude-code payload session list" "$cc_pl" '"updatedInput":{'
+expect "claude-code payload session list" "$cc_pl" '"model":"haiku"'
+echo "OK: claude-code uses the payload session list"
 
-# Without a current model there is nothing to infer from: no rewrite and no
+# The real Claude Code payload: no session_models, no operator file, the family
+# alias as the model. The catalog session_candidates below the current model
+# stand in for the list, so a trivial Task on opus is still downshifted.
+cc_real=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier","model":"opus"}}' | HOME="$(mktemp -d)" DOWNSHIFT_STATE_DIR="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+expect "claude-code without session_models" "$cc_real" '"updatedInput":{'
+expect "claude-code without session_models" "$cc_real" '"model":"haiku"'
+echo "OK: claude-code without session_models downshifts from the catalog candidates"
+
+# Without a current model there is nothing to build a list from: no rewrite and no
 # permission decision, so the user's own ask rules for Agent/Task still apply.
 cc_none=$(echo '{"tool_name":"Task","tool_input":{"prompt":"rename the userId variable to userIdentifier"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
 if printf '%s' "$cc_none" | grep -qF permissionDecision; then
@@ -91,7 +98,7 @@ if printf '%s' "$cc_none" | grep -qF updatedInput; then
 fi
 echo "OK: claude-code with no session and no model does not rewrite"
 
-# A harness without InferSession (codex) never rewrites on an unknown session.
+# A harness without SessionFromCatalog (codex) never rewrites on an unknown session.
 cx_none=$(echo '{"tool_name":"spawn_agent","tool_input":{"message":"rename the userId variable to userIdentifier","model":"gpt-5.6-sol"}}' | HOME="$(mktemp -d)" "$BIN" codex 2>/dev/null)
 if printf '%s' "$cx_none" | grep -qF updatedInput; then
   echo "FAIL: codex rewrote without a session allowlist: $cx_none" >&2

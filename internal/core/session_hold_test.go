@@ -12,11 +12,15 @@ import (
 const holdTask = "rename the userId variable to userIdentifier"
 
 // With no session list (no listing, no payload, no operator file), no harness
-// rewrites: the catalog tier ladder is never a candidate source. Claude Code
-// included, which used to infer a ladder from its current model.
+// rewrites unless it declares SessionFromCatalog: the catalog tier ladder is
+// never a candidate source. The catalog candidates path has its own table
+// (TestCatalogSessionCandidates).
 func TestNoListingNoPayloadHoldsForEveryHarness(t *testing.T) {
 	for _, n := range core.AllHarnessCaps() {
 		t.Run(n.Harness, func(t *testing.T) {
+			if n.Caps.SessionFromCatalog {
+				t.Skip("declares SessionFromCatalog")
+			}
 			current := cat.ModelFor(n.Harness, core.TierFrontier).ID
 			if current == "" {
 				t.Skipf("catalog has no frontier model for %s", n.Harness)

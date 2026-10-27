@@ -12,6 +12,10 @@
   "version": "2",
   "updated": "2026-10-26",
   "prices_as_of": "2026-10-26",
+  "_doc11": "session_candidates: per harness, the native model names every session accepts, least to most capable. Used only when the harness declares SessionFromCatalog and its payload carries no session list (Claude Code sends none): the list keeps one candidate per tier below the current model and ends at the current model, so it never upshifts past it. explicit_only rows are never added. A list from the payload or discovery always wins.",
+  "session_candidates": {
+    "claude-code": ["haiku", "sonnet", "opus", "fable"]
+  },
   "entries": [
 
     { "_section": "claude-code — native Anthropic models" },

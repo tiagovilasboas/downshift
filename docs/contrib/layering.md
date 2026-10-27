@@ -9,7 +9,7 @@ adapter, hook, command or policy.
 | Layer | Where | Holds |
 |---|---|---|
 | Classification | `internal/classify` | Regex class, signals, language guard, risk floor. No tier and no harness |
-| Policy | `internal/core` | `Route`, `TierOf`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `InferSessionFromCurrent`, `CanWriteSessionID`), self-check, `HarnessCapabilities`. Calls `classify`. Imports `fuse`, `quotamodel` and `session`. Score selection stays here: `ScoreHook` is the port, and `core` does not import `scoreindex` |
+| Policy | `internal/core` | `Route`, `TierOf`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent`, `CanWriteSessionID`), self-check, `HarnessCapabilities`. Calls `classify`. Imports `fuse`, `quotamodel` and `session`. Score selection stays here: `ScoreHook` is the port, and `core` does not import `scoreindex` |
 | Quota types | `internal/quotamodel` | Pure evidence: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O |
 | Session list | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed: `core` imports `session`; `session` must not import `core` |
 | Semantic boost policy | `internal/fuse` | Landed. Raise-only boost, including the no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper |
@@ -25,7 +25,7 @@ sources never import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`,
 -deps ./internal/core`; re-verified 2026-10-19). Core test files import `catalog`,
 `nbopinion`, `nbtier` and `quota`; they are not in the binary. `session` must not import `core`. `fuse` imports
 `classify` and `semantic` and does not import `core`. `PlanForSession`,
-`RouteForSession`, `InferSessionFromCurrent` and `CanWriteSessionID` stay in
+`RouteForSession`, `CatalogSessionFromCurrent` and `CanWriteSessionID` stay in
 `core`. Score selection stays in `core` on purpose: `ScoreHook` is already
 the port, and `core` does not import `scoreindex`. Do not propose a package
 that merges score selection with the naive-Bayes opinion. The naive-Bayes
@@ -59,7 +59,7 @@ layers plug into core through a hook variable (`core.MemoryAdjustHook`,
   file, hook marks, the discovered file, and quota snapshot attachment.
   `go list -deps ./internal/core` includes `session`. `go list -deps
   ./internal/session` does not include `core`. `PlanForSession`,
-  `RouteForSession`, `InferSessionFromCurrent` and `CanWriteSessionID` stay
+  `RouteForSession`, `CatalogSessionFromCurrent` and `CanWriteSessionID` stay
   in `internal/core` because they need `Decision`, `Tier`, `Model` and
   `Resolver`.
 - Semantic boost policy: done (`110ef31`, PR 154). `internal/fuse` owns the

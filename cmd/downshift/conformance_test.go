@@ -451,12 +451,20 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "missing session list never rewrites",
+		name: "missing session list never rewrites (unless SessionFromCatalog)",
 		run: func(t *testing.T, h conformanceHarness) {
 			// No allowlist anywhere: the session file is absent (see
 			// conformanceEnv). Nothing but a listing or the payload supplies
-			// candidates, so the spawn is allowed unchanged.
+			// candidates, so the spawn is allowed unchanged. A harness whose
+			// payload never carries a list (SessionFromCatalog) builds one
+			// from the catalog candidates below the current model instead.
 			res := h.run(t, spawnSpec{task: conformanceTrivialTask, model: h.frontier.ID})
+			if h.caps.SessionFromCatalog {
+				if !res.changed || res.rc != 0 || res.model != h.small.WriteName() {
+					t.Fatalf("catalog candidates must downshift to %q, got %+v", h.small.WriteName(), res)
+				}
+				return
+			}
 			if res.changed || res.rc != 0 || res.fields != nil {
 				t.Fatalf("unknown session must allow unchanged, got %+v", res)
 			}
