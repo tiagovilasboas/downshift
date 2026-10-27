@@ -3,19 +3,13 @@
 
 package telemetry
 
-import (
-	"sort"
-
-	"github.com/tiagovilasboas/downshift/internal/core"
-)
-
 // RoutingPolicy names the deterministic routing policy whose decision a
 // reason-code trace explains. Bump it when the meaning of a code changes or a
 // rule that can hold or lift a decision is added, so old traces stay readable.
 const RoutingPolicy = "deterministic-v1"
 
 // Reason codes are stable, prompt-free names for the signals and rules that
-// shaped one decision. They are derived only from core.Decision fields; no
+// shaped one decision. They are derived only from decision fields (internal/telemetry/fromcore); no
 // prompt text, matched word, risk category name or path ever enters a code.
 const (
 	ReasonClassifierConfident   = "CLASSIFIER_CONFIDENT"
@@ -58,90 +52,14 @@ const (
 	// ReasonHeldUnmapped stands for a guardrail rule this version has no code
 	// for, so a hold is never silently dropped from the trace.
 	ReasonHeldUnmapped = "HELD_UNMAPPED_RULE"
+
+	// Hold codes name the guardrail rule that held a decision (Decision.Corrections).
+	ReasonHeldUnconfidentDownshift       = "HELD_UNCONFIDENT_DOWNSHIFT"
+	ReasonHeldComplexDownshift           = "HELD_COMPLEX_DOWNSHIFT"
+	ReasonHeldForeignModel               = "HELD_FOREIGN_MODEL"
+	ReasonHeldRiskDownshift              = "HELD_RISK_DOWNSHIFT"
+	ReasonHeldUnconfidentUnknownSmall    = "HELD_UNCONFIDENT_UNKNOWN_SMALL"
+	ReasonHeldUnconfidentUnknownFrontier = "HELD_UNCONFIDENT_UNKNOWN_FRONTIER"
+	ReasonHeldUnconfidentUpshift         = "HELD_UNCONFIDENT_UPSHIFT"
+	ReasonHeldUnconfidentUnknownMid      = "HELD_UNCONFIDENT_UNKNOWN_MID"
 )
-
-// heldReason maps each self-check rule ID to its hold code.
-var heldReason = map[string]string{
-	core.RuleUnconfidentDowngrade:       "HELD_UNCONFIDENT_DOWNSHIFT",
-	core.RuleComplexDowngrade:           "HELD_COMPLEX_DOWNSHIFT",
-	core.RuleForeignModel:               "HELD_FOREIGN_MODEL",
-	core.RuleRiskDowngrade:              "HELD_RISK_DOWNSHIFT",
-	core.RuleUnconfidentUnknownSmall:    "HELD_UNCONFIDENT_UNKNOWN_SMALL",
-	core.RuleUnconfidentUnknownFrontier: "HELD_UNCONFIDENT_UNKNOWN_FRONTIER",
-	core.RuleUnconfidentUpshift:         "HELD_UNCONFIDENT_UPSHIFT",
-	core.RuleUnconfidentUnknownMid:      "HELD_UNCONFIDENT_UNKNOWN_MID",
-}
-
-// ReasonCodes returns the sorted, de-duplicated reason codes for d: the
-// signals that fired, the deterministic lifts that applied and the guardrails
-// that held the decision. Shadow-only opinions (NB not applied, adapt memory)
-// are not reasons; they have their own event fields.
-func ReasonCodes(d core.Decision) []string {
-	set := make(map[string]bool)
-	if d.Confident {
-		set[ReasonClassifierConfident] = true
-	} else {
-		set[ReasonClassifierUnconfident] = true
-	}
-	if d.NoSignal {
-		set[ReasonNoSignal] = true
-	}
-	if d.TaskNotVisible {
-		set[ReasonTaskNotVisible] = true
-	}
-	if d.UnsupportedLanguage {
-		set[ReasonUnsupportedLanguage] = true
-	}
-	if d.Guards.SemanticLift {
-		set[ReasonSemanticBoost] = true
-	}
-	if d.Guards.TaskFocus {
-		set[ReasonTaskFocus] = true
-	}
-	if len(d.Risk) > 0 {
-		set[ReasonRiskCategory] = true
-	}
-	if d.Guards.RiskFloor {
-		set[ReasonRiskFloor] = true
-	}
-	if d.Shadow.NBUpshift.Applied {
-		set[ReasonNBUpshiftApplied] = true
-	}
-	if d.Shadow.NBDownshift.Applied {
-		set[ReasonNBDownshiftApplied] = true
-	}
-	if d.Guards.PolicyFloor {
-		set[ReasonTierFloor] = true
-	}
-	if d.Session.CreditHeld {
-		set[ReasonCreditHeld] = true
-	}
-	if d.Baseline.GuessHeld {
-		set[ReasonGuessHeld] = true
-	}
-	if d.Shadow.ScoreApplied {
-		set[ReasonScoreRouted] = true
-	}
-	if d.Baseline.FromSettings {
-		set[ReasonBaselineFromSettings] = true
-	}
-	if d.Guards.AgentTypeHint {
-		set[ReasonAgentTypeHint] = true
-	}
-	if d.Baseline.Pinned {
-		set[ReasonAgentPinsModel] = true
-	}
-	for _, rule := range d.Corrections {
-		if code, ok := heldReason[rule]; ok {
-			set[code] = true
-		} else {
-			set[ReasonHeldUnmapped] = true
-		}
-	}
-	codes := make([]string, 0, len(set))
-	for code := range set {
-		codes = append(codes, code)
-	}
-	sort.Strings(codes)
-	return codes
-}

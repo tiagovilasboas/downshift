@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package telemetry
+package fromcore
 
 import (
 	"bytes"
@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 func scoreDecision() core.Decision {
@@ -40,7 +42,7 @@ func TestFromDecision_RecordsScoreWouldPromptFree(t *testing.T) {
 	}
 	// A shadow pick is not a reason, and an event with no pick stays unchanged.
 	for _, c := range ev.ReasonCodes {
-		if c == ReasonScoreRouted {
+		if c == telemetry.ReasonScoreRouted {
 			t.Fatalf("shadow pick produced %s", c)
 		}
 	}
@@ -65,33 +67,33 @@ func TestReasonCodes_ScoreRoutedOnlyWhenApplied(t *testing.T) {
 	d.Shadow.ScoreApplied = true
 	found := false
 	for _, c := range ReasonCodes(d) {
-		found = found || c == ReasonScoreRouted
+		found = found || c == telemetry.ReasonScoreRouted
 	}
 	if !found {
-		t.Fatalf("applied pick has no %s: %v", ReasonScoreRouted, ReasonCodes(d))
+		t.Fatalf("applied pick has no %s: %v", telemetry.ReasonScoreRouted, ReasonCodes(d))
 	}
 }
 
 func TestStats_ScoreLine(t *testing.T) {
-	mk := func(would string, differs bool, ratio float64) Event {
+	mk := func(would string, differs bool, ratio float64) telemetry.Event {
 		ev := FromDecision(scoreDecision(), "abcdef0123456789", "test")
 		ev.ScoreWould, ev.ScoreDiffers, ev.ScoreWouldCostRatio = would, differs, ratio
 		return ev
 	}
-	events := []Event{mk("m-40", true, 0.5), mk("m-70", false, 1), mk("m-90", true, 0), mk("", false, 0)}
-	s := Aggregate(events)
+	events := []telemetry.Event{mk("m-40", true, 0.5), mk("m-70", false, 1), mk("m-90", true, 0), mk("", false, 0)}
+	s := telemetry.Aggregate(events)
 	if s.ScoreObserved != 3 || s.ScoreDiffers != 2 || s.ScoreRatioN != 2 {
 		t.Fatalf("stats = %+v", s)
 	}
 	var out bytes.Buffer
-	PrintStats(events, StatsOptions{Detail: true}, &out)
+	telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true}, &out)
 	want := "Score pick differs    2 of 3 decisions (67%), list price 25% lower on average"
 	if !strings.Contains(out.String(), want) {
 		t.Fatalf("stats lack %q:\n%s", want, out.String())
 	}
 	// No pick anywhere: the report has no score line.
 	out.Reset()
-	PrintStats([]Event{mk("", false, 0)}, StatsOptions{Detail: true}, &out)
+	telemetry.PrintStats([]telemetry.Event{mk("", false, 0)}, telemetry.StatsOptions{Detail: true}, &out)
 	if strings.Contains(out.String(), "Score pick") {
 		t.Fatalf("score line printed without picks:\n%s", out.String())
 	}

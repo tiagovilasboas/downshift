@@ -3,11 +3,7 @@
 
 package telemetry
 
-import (
-	"sort"
-
-	"github.com/tiagovilasboas/downshift/internal/core"
-)
+import "sort"
 
 // Tokens rerouted: the token facts behind a saving.
 //
@@ -99,7 +95,7 @@ type ModelTokens struct {
 // HarnessTokens is one harness's token picture.
 type HarnessTokens struct {
 	// UsageSource is the harness's declared token seam: payload, transcript or
-	// none (core.HarnessCapabilities.UsageSource).
+	// none (HarnessSeam.UsageSource).
 	UsageSource string `json:"usage_source"`
 	// Status is observed, none_in_window (a token seam exists, no priced
 	// record in the window) or unobserved (no seam and no record).
@@ -133,11 +129,11 @@ type TokensRerouted struct {
 }
 
 // HarnessOrder lists the harness ids in print order: declared harnesses first,
-// in core.AllHarnessCaps order, then any other id seen in the log, sorted.
+// in DeclaredHarnesses order, then any other id seen in the log, sorted.
 func (t TokensRerouted) HarnessOrder() []string {
 	seen := map[string]bool{}
 	var out []string
-	for _, n := range core.AllHarnessCaps() {
+	for _, n := range DeclaredHarnesses {
 		if _, ok := t.ByHarness[n.Harness]; ok {
 			out = append(out, n.Harness)
 			seen[n.Harness] = true
@@ -234,15 +230,15 @@ func (a *aggregator) countTokens(ev Event, decision Event, found, unrouted, refu
 var tokenDirectionOrder = map[string]int{TokenCheaper: 0, TokenPricier: 1, TokenUnchanged: 2}
 
 // finalizeTokens builds the per-harness view. Every harness declared in
-// core.AllHarnessCaps appears, whether or not it has records, so a harness with
+// DeclaredHarnesses appears, whether or not it has records, so a harness with
 // no token source reads "unobserved" instead of vanishing or showing zeros.
 func (a *aggregator) finalizeTokens() TokensRerouted {
 	out := TokensRerouted{Basis: TokensBasis, ByHarness: map[string]HarnessTokens{}}
 	sources := map[string]string{}
-	for _, n := range core.AllHarnessCaps() {
-		src := n.Caps.UsageSource
+	for _, n := range DeclaredHarnesses {
+		src := n.UsageSource
 		if src == "" {
-			src = core.UsageNone
+			src = UsageNone
 		}
 		sources[n.Harness] = src
 	}
@@ -259,7 +255,7 @@ func (a *aggregator) finalizeTokens() TokensRerouted {
 		switch {
 		case acc != nil && acc.records > 0:
 			ht.Status = TokenStatusObserved
-		case src == core.UsageNone:
+		case src == UsageNone:
 			ht.Status = TokenStatusUnobserved
 		default:
 			ht.Status = TokenStatusNoneInRange

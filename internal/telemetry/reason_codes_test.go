@@ -18,6 +18,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 var traceCat = catalog.Load()
@@ -34,7 +35,7 @@ func routeTrace(t *testing.T, prompt string, current core.Tier, known bool) tele
 		currentID = traceCat.ModelFor("claude-code", current).ID
 	}
 	d := core.Route(prompt, "claude-code", currentID, traceCat)
-	return telemetry.FromDecision(d, "0123456789abcdef", "test")
+	return fromcore.FromDecision(d, "0123456789abcdef", "test")
 }
 
 func TestReasonCodes_FromRoutedDecisions(t *testing.T) {
@@ -120,16 +121,16 @@ func TestReasonCodes_EveryRuleHasACode(t *testing.T) {
 		core.RuleUnconfidentUpshift, core.RuleUnconfidentUnknownMid,
 	}
 	for _, r := range rules {
-		codes := telemetry.ReasonCodes(core.Decision{Confident: true, Corrections: []string{r}})
+		codes := fromcore.ReasonCodes(core.Decision{Confident: true, Corrections: []string{r}})
 		if len(codes) != 2 || !strings.HasPrefix(codes[1], "HELD_") || codes[1] == telemetry.ReasonHeldUnmapped {
 			t.Errorf("rule %s -> %v, want CLASSIFIER_CONFIDENT plus one specific HELD_ code", r, codes)
 		}
 	}
-	codes := telemetry.ReasonCodes(core.Decision{Confident: true, Corrections: []string{"R99_FUTURE"}})
+	codes := fromcore.ReasonCodes(core.Decision{Confident: true, Corrections: []string{"R99_FUTURE"}})
 	if !slices.Contains(codes, telemetry.ReasonHeldUnmapped) {
 		t.Errorf("unknown rule must still leave a hold code, got %v", codes)
 	}
-	lifts := telemetry.ReasonCodes(core.Decision{
+	lifts := fromcore.ReasonCodes(core.Decision{
 		Session: core.Session{
 			CreditHeld: true,
 		},

@@ -29,7 +29,7 @@ func gatewayFixture(t *testing.T, ran, price string) (decision, usage Event, req
 // catalog price, so the test does not depend on the catalog's current numbers.
 func snapshotAt(t *testing.T, requested string, factor float64) func(string) (float64, float64, bool) {
 	t.Helper()
-	req, ok := DirectionCatalog.LookupByID("claude-code", requested)
+	req, ok := catalog.Load().LookupByID("claude-code", requested)
 	if !ok || req.InputM <= 0 || req.OutputM <= 0 {
 		t.Fatalf("requested model %q has no catalog price", requested)
 	}

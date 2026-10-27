@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package telemetry
+package fromcore
 
 import (
 	"encoding/json"
@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+
+	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // A shadow NB upshift is recorded on the event without changing its tier.
@@ -25,7 +27,7 @@ func TestFromDecision_RecordsNBShadowUpshift(t *testing.T) {
 	if ev.Tier != "mid" || ev.NBUpshift == nil {
 		t.Fatalf("event tier=%s nb=%+v", ev.Tier, ev.NBUpshift)
 	}
-	want := NBUpshiftRecord{FromTier: "mid", ToTier: "frontier", Margin: 0.1235, Applied: false}
+	want := telemetry.NBUpshiftRecord{FromTier: "mid", ToTier: "frontier", Margin: 0.1235, Applied: false}
 	if *ev.NBUpshift != want {
 		t.Fatalf("nb record %+v, want %+v", *ev.NBUpshift, want)
 	}
@@ -44,7 +46,7 @@ func TestFromDecision_OmitsNBWhenNoUpshift(t *testing.T) {
 func TestFromDecision_RecordsNBShadowDownshift(t *testing.T) {
 	d := core.Decision{Tier: core.TierMid, Shadow: core.Shadow{NBDownshift: core.NBDownshift{Would: true, Margin: 0.31234}}}
 	ev := FromDecision(d, "0123456789abcdef", "test")
-	want := NBUpshiftRecord{FromTier: "mid", ToTier: "small", Margin: 0.3123, Applied: false}
+	want := telemetry.NBUpshiftRecord{FromTier: "mid", ToTier: "small", Margin: 0.3123, Applied: false}
 	if ev.Tier != "mid" || ev.NBDownshift == nil || *ev.NBDownshift != want {
 		t.Fatalf("event tier=%s nb_downshift=%+v, want %+v", ev.Tier, ev.NBDownshift, want)
 	}

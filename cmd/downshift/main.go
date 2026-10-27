@@ -28,6 +28,7 @@ import (
 	_ "github.com/tiagovilasboas/downshift/internal/quota"
 	_ "github.com/tiagovilasboas/downshift/internal/routeadapt"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 // buildVersion, buildCommit and buildDate are set by release builds with
@@ -62,7 +63,7 @@ func main() {
 		if !loaded {
 			os.Exit(0)
 		}
-		telemetry.DirectionCatalog = cat
+		fromcore.Install(cat)
 		os.Exit(h.Hook(os.Stdin, cat))
 	}
 	// compact wraps a shell command; it needs no catalog, so it skips the load.
@@ -76,7 +77,7 @@ func main() {
 	// user override at ~/.harness-downshift/catalog.json. Fail-open: if the
 	// user file is invalid, the embedded catalog is used automatically.
 	catalog := catalog.Load()
-	telemetry.DirectionCatalog = catalog
+	fromcore.Install(catalog)
 
 	switch args[0] {
 	case "honor":

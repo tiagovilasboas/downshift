@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package telemetry_test
+package fromcore_test
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 var updateGolden = flag.Bool("update-decision-golden", false, "rewrite testdata/decision_events.golden.jsonl")
@@ -29,7 +29,7 @@ func goldenDecisions(t *testing.T) []core.Decision {
 	t.Setenv(core.NBDownshiftEnv, "")
 	t.Setenv("DOWNSHIFT_GRAPHIFY_CMD", "")
 	cat := catalog.Load()
-	files, err := filepath.Glob(filepath.Join("..", "core", "testdata", "corpus", "*.json"))
+	files, err := filepath.Glob(filepath.Join("..", "..", "core", "testdata", "corpus", "*.json"))
 	if err != nil || len(files) == 0 {
 		t.Fatalf("corpus files: %v (%d)", err, len(files))
 	}
@@ -88,7 +88,7 @@ func handBuiltDecisions() []core.Decision {
 func TestDecisionEventsGolden(t *testing.T) {
 	var buf bytes.Buffer
 	for _, d := range goldenDecisions(t) {
-		ev := telemetry.FromDecision(d, "0123456789abcdef", "test")
+		ev := fromcore.FromDecision(d, "0123456789abcdef", "test")
 		ev.Timestamp = ""
 		line, err := json.Marshal(ev)
 		if err != nil {

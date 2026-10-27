@@ -12,6 +12,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 func TestRunHonorNilCursorPort(t *testing.T) {
@@ -128,7 +129,7 @@ func TestCodexTranscriptPathIsNotObservedChildUsage(t *testing.T) {
 	if decision.Harness == "" {
 		t.Fatal("spawn payload produced no decision")
 	}
-	event := telemetry.FromDecision(decision, "corr-codex-transcript", "test")
+	event := fromcore.FromDecision(decision, "corr-codex-transcript", "test")
 	if note == "" {
 		event.Outcome = telemetry.OutcomeAllow
 	}

@@ -13,7 +13,10 @@
 // enforced here:
 //
 //	L0 internal/telemetry, internal/execwrap  parse and store events; they must
-//	   not import accounting or api (rules table, closure check).
+//	   not import accounting or api (rules table, closure check). telemetry
+//	   must not import core either: router values reach it translated by the
+//	   edge sub-packages telemetry/fromcore and telemetry/catalogtier, the
+//	   explicit exceptions (go list -deps of telemetry does not list them).
 //	L2 internal/accounting/formula            pure formula; imports only catalog
 //	   (rules table plus TestLayerDirectImports).
 //	L3 internal/accounting                    Compute; its direct imports are
@@ -54,7 +57,7 @@ var rules = []rule{
 	{"session", []string{"core"}, "session is a leaf loader; PlanForSession and friends stay in core"},
 	{"fuse", []string{"core"}, "fuse imports classify and semantic, never core (core wraps fuse)"},
 	{"codeintel", []string{"core", "classify"}, "code intelligence is independent of routing"},
-	{"telemetry", []string{"accounting", "api"}, "L0: events are parsed here; the numbers are computed in accounting"},
+	{"telemetry", []string{"accounting", "api", "core"}, "L0: events are parsed here; the numbers are computed in accounting. Router values arrive translated by the edge packages telemetry/fromcore and telemetry/catalogtier, the only telemetry packages that import core"},
 	{"execwrap", []string{"accounting", "api"}, "L0: the exec log is parsed here; the numbers are computed in accounting"},
 	{"accounting", []string{"api", "adapters"}, "L3: Compute serves the surfaces, so it cannot depend on them"},
 	{"accounting/formula", []string{"telemetry", "execwrap", "api", "adapters"}, "L2: the formula is pure and reads only prices"},

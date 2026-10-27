@@ -10,11 +10,12 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 func TestFromDecision_OmitsCorrectionFieldsWhenClean(t *testing.T) {
 	d := core.Decision{Verdict: core.VerdictDownshift, SafeVerdict: core.VerdictDownshift, Checked: true}
-	ev := telemetry.FromDecision(d, telemetry.NewCorrelationID(), "test")
+	ev := fromcore.FromDecision(d, telemetry.NewCorrelationID(), "test")
 	if ev.SafeVerdict != "" || ev.Corrections != nil {
 		t.Errorf("clean decision must omit correction fields, got %+v", ev)
 	}
@@ -27,7 +28,7 @@ func TestFromDecision_RecordsHeldDecision(t *testing.T) {
 		Corrections: []string{core.RuleUnconfidentDowngrade},
 		Checked:     true,
 	}
-	ev := telemetry.FromDecision(d, telemetry.NewCorrelationID(), "test")
+	ev := fromcore.FromDecision(d, telemetry.NewCorrelationID(), "test")
 	if ev.Verdict != "DOWNSHIFT" {
 		t.Errorf("Verdict = %q, want classified DOWNSHIFT", ev.Verdict)
 	}

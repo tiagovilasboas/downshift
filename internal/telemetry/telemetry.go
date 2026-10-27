@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -31,7 +30,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -448,78 +446,6 @@ func MarkUnchanged(ev *Event) {
 	ev.FinalEffort = ev.RequestedEffort
 }
 
-// FromDecision builds an Event from a core.Decision and hook runtime context.
-// It assumes a rewrite was emitted; callers set OutcomeAllow when the adapter
-// returned the spawn unchanged.
-// Self-correction fields are recorded only for held decisions, keeping clean
-// events compact and old log readers unaffected.
-func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
-	ev := Event{
-		CorrelationID:    correlationID,
-		Timestamp:        time.Now().UTC().Format(time.RFC3339Nano),
-		Source:           "hook",
-		Agent:            "subagent",
-		Harness:          d.Harness,
-		Complexity:       d.Complexity.String(),
-		FromModel:        ModelOrUnknown(d.Baseline.CurrentModel.ID),
-		ToModel:          ModelOrUnknown(d.Model.ID),
-		RequestedEffort:  EffortUnobserved,
-		FinalEffort:      EffortOrUnknown(d.Effort.String()),
-		Verdict:          d.Verdict.String(),
-		Tier:             d.Tier.String(),
-		PolicyVersion:    PolicyVersion,
-		BinaryVersion:    binaryVersion,
-		Outcome:          OutcomeRewriteEmitted,
-		EstimatedSavings: d.Savings,
-		QuotaStatus:      d.Session.QuotaStatus,
-		QuotaSource:      d.Session.QuotaSource,
-		CreditHeld:       d.Session.CreditHeld,
-		PolicyFloor:      d.Guards.PolicyFloor,
-		RoutingPolicy:    RoutingPolicy,
-		ReasonCodes:      ReasonCodes(d),
-	}
-	if d.Verdict == core.VerdictUpshift {
-		from := d.Baseline.CurrentModel.InputM + d.Baseline.CurrentModel.OutputM
-		to := d.Model.InputM + d.Model.OutputM
-		if from > 0 && to > from {
-			ev.UpshiftCostRatio = to / from
-		}
-	}
-	if d.Shadow.ScoreWould != "" {
-		ev.ScoreWould = ModelOrUnknown(d.Shadow.ScoreWould)
-		ev.ScoreDiffers = d.Shadow.ScoreDiffers
-		if r := d.Shadow.ScoreWouldCostRatio; r > 0 && !math.IsInf(r, 0) && !math.IsNaN(r) {
-			ev.ScoreWouldCostRatio = math.Round(r*1e4) / 1e4
-		}
-	}
-	if d.Shadow.GatewayWould != "" {
-		ev.GatewayWould = ModelOrUnknown(d.Shadow.GatewayWould)
-		ev.GatewayWouldTier = d.Tier.String()
-	}
-	if len(d.Corrections) > 0 {
-		ev.SafeVerdict = d.SafeVerdict.String()
-		ev.Corrections = d.Corrections
-	}
-	if d.Shadow.NBUpshift.Would {
-		ev.NBUpshift = &NBUpshiftRecord{
-			FromTier: d.Shadow.NBUpshift.From.String(),
-			ToTier:   d.Shadow.NBUpshift.To.String(),
-			Margin:   math.Round(d.Shadow.NBUpshift.Margin*1e4) / 1e4,
-			Applied:  d.Shadow.NBUpshift.Applied,
-		}
-	}
-	if d.Shadow.NBDownshift.Would {
-		// The opinion only exists for the Medium default, so it is mid -> small.
-		ev.NBDownshift = &NBUpshiftRecord{
-			FromTier: core.TierMid.String(),
-			ToTier:   core.TierSmall.String(),
-			Margin:   math.Round(d.Shadow.NBDownshift.Margin*1e4) / 1e4,
-			Applied:  d.Shadow.NBDownshift.Applied,
-		}
-	}
-	return ev
-}
-
 // Failure records a hook fail-open path without accepting raw input or errors
 // that could contain prompt content.
 func Failure(correlationID, binaryVersion, harness, errorCode string) Event {
@@ -895,7 +821,7 @@ func tallySpawnSurface(events []Event, s *Stats) {
 // guardrail held, or one that left the spawn unchanged, spent nothing and is not
 // counted: the alarm must only fire for money that was really spent.
 func spentOnDoubt(ev Event) bool {
-	return strings.EqualFold(ev.Tier, core.TierFrontier.String()) &&
+	return strings.EqualFold(ev.Tier, TierFrontier) &&
 		ev.Outcome == OutcomeRewriteEmitted && AppliedRewrite(ev.Outcome, ev.Corrections) &&
 		frontierOnDoubt(ev.ReasonCodes)
 }

@@ -6,8 +6,6 @@ package telemetry
 import (
 	"sort"
 	"strings"
-
-	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // Aggregate computes Stats from a slice of events.
@@ -224,7 +222,7 @@ func (a *aggregator) countGatewayShadow(ev Event) {
 
 // countFrontier counts frontier picks and the subset spent on doubt.
 func (a *aggregator) countFrontier(ev Event, isRefuted bool) {
-	if !strings.EqualFold(ev.Tier, core.TierFrontier.String()) {
+	if !strings.EqualFold(ev.Tier, TierFrontier) {
 		return
 	}
 	a.s.FrontierDecisions++

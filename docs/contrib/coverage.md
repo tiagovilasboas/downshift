@@ -85,6 +85,8 @@ file or from `AGENTS.md`.
 | `internal/session` | Routing | `SessionList`, loaders |
 | `internal/shellwrap` | Shell | Shell wrap domain: `RewriteAdapter`, `AdviseAdapter`, `Handle` |
 | `internal/telemetry` | Telemetry | Prompt-free JSONL; `Summarize` (the one token savings definition) |
+| `internal/telemetry/fromcore` | Telemetry | Edge from the router to the log: `FromDecision`, `ReasonCodes`, `Install` (catalog and harness list); the only telemetry package that imports `core` with `catalogtier` |
+| `internal/telemetry/catalogtier` | Telemetry | Adapts `core.Resolver` to `telemetry.ModelCatalog` (plain ids and tier ranks); imports `core`, never `telemetry` |
 | `internal/testenv` | Quality | Test helpers (no test files) |
 | `internal/testrace` | Quality | Race detector helpers (no test files) |
 | `cmd/downshift` | — | CLI, `harnessRegistry`, `runHookAdapter`, setup, doctor |

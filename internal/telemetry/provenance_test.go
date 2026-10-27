@@ -10,26 +10,27 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 func TestReasonCodes_SemanticBoostIsRecorded(t *testing.T) {
 	d := core.Decision{Harness: "claude-code", Tier: core.TierMid, Guards: core.Guards{SemanticLift: true}}
-	if !hasCode(telemetry.ReasonCodes(d), telemetry.ReasonSemanticBoost) {
-		t.Fatalf("a semantic lift must leave SEMANTIC_BOOST in the trace: %v", telemetry.ReasonCodes(d))
+	if !hasCode(fromcore.ReasonCodes(d), telemetry.ReasonSemanticBoost) {
+		t.Fatalf("a semantic lift must leave SEMANTIC_BOOST in the trace: %v", fromcore.ReasonCodes(d))
 	}
 	d.Guards.SemanticLift = false
-	if hasCode(telemetry.ReasonCodes(d), telemetry.ReasonSemanticBoost) {
+	if hasCode(fromcore.ReasonCodes(d), telemetry.ReasonSemanticBoost) {
 		t.Fatal("no lift must not record SEMANTIC_BOOST")
 	}
 }
 
 func TestReasonCodes_TaskFocusIsRecorded(t *testing.T) {
 	d := core.Decision{Harness: "claude-code", Tier: core.TierSmall, Guards: core.Guards{TaskFocus: true}}
-	if !hasCode(telemetry.ReasonCodes(d), telemetry.ReasonTaskFocus) {
-		t.Fatalf("a task-focused read must leave TASK_FOCUS in the trace: %v", telemetry.ReasonCodes(d))
+	if !hasCode(fromcore.ReasonCodes(d), telemetry.ReasonTaskFocus) {
+		t.Fatalf("a task-focused read must leave TASK_FOCUS in the trace: %v", fromcore.ReasonCodes(d))
 	}
 	d.Guards.TaskFocus = false
-	if hasCode(telemetry.ReasonCodes(d), telemetry.ReasonTaskFocus) {
+	if hasCode(fromcore.ReasonCodes(d), telemetry.ReasonTaskFocus) {
 		t.Fatal("no focus must not record TASK_FOCUS")
 	}
 }

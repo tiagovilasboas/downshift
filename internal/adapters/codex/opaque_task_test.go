@@ -12,6 +12,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 // A synthetic Fernet-shaped envelope, not an encrypted real instruction. The
@@ -42,10 +43,10 @@ func TestHandle_OpaqueTaskCannotRouteFromTaskName(t *testing.T) {
 					if !d.TaskNotVisible || !d.NoSignal || d.Confident || len(d.Risk) != 0 || d.Harness != "codex" {
 						t.Fatalf("decision must observe unavailable task without classifying name/ciphertext: %+v", d)
 					}
-					if !slices.Contains(telemetry.ReasonCodes(d), telemetry.ReasonTaskNotVisible) {
-						t.Fatalf("missing task visibility reason: %v", telemetry.ReasonCodes(d))
+					if !slices.Contains(fromcore.ReasonCodes(d), telemetry.ReasonTaskNotVisible) {
+						t.Fatalf("missing task visibility reason: %v", fromcore.ReasonCodes(d))
 					}
-					stored, err := json.Marshal(telemetry.FromDecision(d, "test", "test"))
+					stored, err := json.Marshal(fromcore.FromDecision(d, "test", "test"))
 					if err != nil {
 						t.Fatal(err)
 					}
