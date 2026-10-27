@@ -240,7 +240,7 @@ downshift models <subcommand>
 **Subcommands:**
 - `discover` — Discover models from current session
 - `check` — Verify catalog pricing
-- `pull` — Refresh remote scores
+- `pull` — Write new provider models to the user catalog, with tier unknown
 
 ---
 
