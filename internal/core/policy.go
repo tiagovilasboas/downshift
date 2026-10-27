@@ -285,8 +285,8 @@ func (d Decision) Summary() string {
 
 	switch d.Verdict {
 	case VerdictDownshift:
-		return fmt.Sprintf("%s task%s → downshift to %s (~%.0f%% cheaper)",
-			d.Complexity, intentSuffix, d.Model.ID, d.Savings*100)
+		return fmt.Sprintf("%s task%s → downshift to %s (smaller model)",
+			d.Complexity, intentSuffix, d.Model.ID)
 	case VerdictUpshift:
 		return fmt.Sprintf("%s task%s → upshift to %s (needs more torque)",
 			d.Complexity, intentSuffix, d.Model.ID)
