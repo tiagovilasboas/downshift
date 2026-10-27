@@ -17,7 +17,7 @@ const TierFrontier = "frontier"
 // id and tier rank of a model, whether an id is an exact catalog id, and the
 // tier rank of an allowlisted gateway row (shadow or live). It uses plain
 // values only, so the routing catalog is adapted to it at the edge
-// (internal/telemetry/catalogtier) and telemetry never imports the router.
+// (catalog.TierView, wired by fromcore) and telemetry never imports the router.
 type ModelCatalog interface {
 	Lookup(harness, id string) (catalogID string, tier int, ok bool)
 	IsExactID(harness, id string) bool

@@ -48,7 +48,7 @@ file or from `AGENTS.md`.
 | `internal/api` | — | Dashboard HTTP server (`downshift dashboard`) |
 | `internal/archtest` | Quality | Import-graph enforcement tests |
 | `internal/benchmark` | Quality | Offline classifier accuracy |
-| `internal/catalog` | Routing | Embedded `catalog.json`, user override, Resolver |
+| `internal/catalog` | Routing | Embedded `catalog.json`, user override, Resolver, `TierView` (the tier lookup telemetry reads through `fromcore`) |
 | `internal/childend` | Telemetry | Child-end recorder |
 | `internal/classify` | Routing | Regex signals, language guard, risk floor |
 | `internal/codeintel` | DCI | Opt-in context injection |
@@ -81,8 +81,7 @@ file or from `AGENTS.md`.
 | `internal/session` | Routing | `SessionList`, loaders |
 | `internal/shellwrap` | Shell | Shell wrap domain: `RewriteAdapter`, `AdviseAdapter`, `Handle` |
 | `internal/telemetry` | Telemetry | Prompt-free JSONL; `Summarize` (the one token savings definition) |
-| `internal/telemetry/fromcore` | Telemetry | Edge from the router to the log: `FromDecision`, `ReasonCodes`, `Install` (catalog and harness list); the only telemetry package that imports `core` with `catalogtier` |
-| `internal/telemetry/catalogtier` | Telemetry | Adapts `core.Resolver` to `telemetry.ModelCatalog` (plain ids and tier ranks); imports `core`, never `telemetry` |
+| `internal/telemetry/fromcore` | Telemetry | Edge from the router to the log: `FromDecision`, `ReasonCodes`, `Install` (wires `catalog.TierViewOf` and the harness list); the only telemetry package that imports `core` |
 | `internal/testenv` | Quality | Test helpers (no test files) |
 | `internal/testrace` | Quality | Race detector helpers (no test files) |
 | `cmd/downshift` | — | CLI, `harnessRegistry`, `runHookAdapter`, setup, doctor |

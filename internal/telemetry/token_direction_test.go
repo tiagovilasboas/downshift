@@ -8,7 +8,6 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/catalogtier"
 )
 
 const rankHarness = "claude-code"
@@ -73,7 +72,7 @@ func TestTokenDirection_Gates(t *testing.T) {
 func TestTokenSavings_SameModelEffortChangeIsNotSaved(t *testing.T) {
 	cat := catalog.Load()
 	prev := DirectionCatalog
-	DirectionCatalog = catalogtier.Of(cat)
+	DirectionCatalog = catalog.TierViewOf(cat)
 	defer func() { DirectionCatalog = prev }()
 	for _, pair := range [][2]string{
 		{"claude-haiku-4-5", "claude-haiku-4-5"},

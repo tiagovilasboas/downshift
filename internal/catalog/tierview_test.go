@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-package catalogtier_test
+package catalog_test
 
 import (
 	"testing"
@@ -9,10 +9,9 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/catalogtier"
 )
 
-var _ telemetry.ModelCatalog = catalogtier.View{}
+var _ telemetry.ModelCatalog = catalog.TierView{}
 
 // The adapter reports int(core.Tier); telemetry ranks on its own scale. The
 // two must stay the same numbers.
@@ -45,7 +44,7 @@ func (r shadowAndLive) LiveGateways() []core.Model   { return r.live }
 func TestViewLooksUpCatalogAndGatewayRows(t *testing.T) {
 	cat := catalog.Load()
 	small := cat.ModelFor("claude-code", core.TierSmall)
-	v := catalogtier.Of(shadowAndLive{
+	v := catalog.TierViewOf(shadowAndLive{
 		Resolver: cat,
 		shadow:   []core.Model{{ID: "x/a", Tier: core.TierMid}},
 		live:     []core.Model{{ID: "x/a", Tier: core.TierSmall}, {ID: "x/b", Tier: core.TierFrontier}},
@@ -53,7 +52,7 @@ func TestViewLooksUpCatalogAndGatewayRows(t *testing.T) {
 	if id, tier, ok := v.Lookup("claude-code", small.ID); !ok || id != small.ID || tier != telemetry.TierRankSmall {
 		t.Fatalf("Lookup = %q %d %v", id, tier, ok)
 	}
-	if !catalogtier.Of(cat).IsExactID("claude-code", small.ID) {
+	if !catalog.TierViewOf(cat).IsExactID("claude-code", small.ID) {
 		t.Fatalf("%s should be an exact id", small.ID)
 	}
 	if v.IsExactID("claude-code", small.ID) {
@@ -68,7 +67,7 @@ func TestViewLooksUpCatalogAndGatewayRows(t *testing.T) {
 	if _, ok := v.GatewayTier("x/none"); ok {
 		t.Fatal("unknown gateway id must not resolve")
 	}
-	if _, ok := catalogtier.Of(cat).GatewayTier("x/a"); ok {
+	if _, ok := catalog.TierViewOf(cat).GatewayTier("x/a"); ok {
 		t.Fatal("a resolver without gateway rows knows no gateway tier")
 	}
 }

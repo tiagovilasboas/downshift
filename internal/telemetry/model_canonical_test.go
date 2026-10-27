@@ -8,12 +8,11 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/catalogtier"
 )
 
 func TestCanonicalizeModels(t *testing.T) {
 	prev := DirectionCatalog
-	DirectionCatalog = catalogtier.Of(catalog.Load())
+	DirectionCatalog = catalog.TierViewOf(catalog.Load())
 	t.Cleanup(func() { DirectionCatalog = prev })
 
 	cases := []struct {
@@ -66,7 +65,7 @@ func TestCanonicalizeModels_NoCatalogKeepsValues(t *testing.T) {
 // the canonical id reaches the log whichever path wrote the event.
 func TestRecord_WritesCatalogIDs(t *testing.T) {
 	prev := DirectionCatalog
-	DirectionCatalog = catalogtier.Of(catalog.Load())
+	DirectionCatalog = catalog.TierViewOf(catalog.Load())
 	t.Cleanup(func() { DirectionCatalog = prev })
 	log := filepath.Join(t.TempDir(), "events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", log)

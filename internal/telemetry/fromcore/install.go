@@ -4,9 +4,9 @@
 package fromcore
 
 import (
+	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
-	"github.com/tiagovilasboas/downshift/internal/telemetry/catalogtier"
 )
 
 // Install wires telemetry to the router at the composition root: r becomes
@@ -16,7 +16,7 @@ import (
 func Install(r core.Resolver) {
 	telemetry.DirectionCatalog = nil
 	if r != nil {
-		telemetry.DirectionCatalog = catalogtier.Of(r)
+		telemetry.DirectionCatalog = catalog.TierViewOf(r)
 	}
 	telemetry.DeclaredHarnesses = HarnessSeams()
 }
