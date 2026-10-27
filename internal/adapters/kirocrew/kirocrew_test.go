@@ -103,6 +103,7 @@ func TestHandle_PassesThroughPrefixedNonSpawn(t *testing.T) {
 }
 
 func TestHandle_BlocksConfidentMismatchInSession(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	ev := spawnEvent("rename the userId variable to userIdentifier", frontierID)
 
@@ -162,6 +163,7 @@ func TestHandle_AllowsHeldDecision(t *testing.T) {
 }
 
 func TestHandle_SkipsExplicitOnlyTargetForNextSessionModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	res := fixedResolver{
 		Resolver:     cat,

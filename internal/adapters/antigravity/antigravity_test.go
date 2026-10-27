@@ -11,6 +11,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // stubResolver is a minimal core.Resolver modeling an Antigravity-native
@@ -164,6 +165,7 @@ func TestHandle_EmptySubagentsIgnored(t *testing.T) {
 }
 
 func TestHandle_DownshiftsTrivialToFlashLite(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",
@@ -205,6 +207,7 @@ func TestHandle_DownshiftsTrivialToFlashLite(t *testing.T) {
 }
 
 func TestHandle_MidTaskToFlash(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",
@@ -234,6 +237,7 @@ func TestHandle_MidTaskToFlash(t *testing.T) {
 }
 
 func TestHandle_FrontierTaskToPro(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",
@@ -324,6 +328,7 @@ func TestHandle_HeldDecisionDoesNotRewrite(t *testing.T) {
 }
 
 func TestHandle_ExplicitOnlyTargetIsSkippedForNextSessionModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",

@@ -14,6 +14,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 func captureStderr(fn func()) string {
@@ -31,6 +32,7 @@ func captureStderr(fn func()) string {
 // Without a session allowlist the hook never rewrites, so `try` must not
 // claim it would.
 func TestRunTry_SessionUnknownSaysNoRewrite(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "absent.json"))
 	out := captureStdout(func() {
@@ -46,6 +48,7 @@ func TestRunTry_SessionUnknownSaysNoRewrite(t *testing.T) {
 
 // With a session allowlist `try` reports the model the hook would write.
 func TestRunTry_SessionKnownReportsHookRewrite(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	t.Setenv("HOME", t.TempDir())
 	frontierID := cmdCat.ModelFor("claude-code", core.TierFrontier).ID
 	setSessionAllowlist(t, "claude-code", []string{

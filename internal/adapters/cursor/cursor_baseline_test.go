@@ -71,6 +71,7 @@ func TestHandle_InheritUsesParentModelID(t *testing.T) {
 // The parent's model_id is a guessed baseline: a mid-tier downshift on it is
 // held, since the child may already run on something cheaper.
 func TestHandle_ParentModelIDHoldsMidTierDownshift(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	ev := withCatalogSession(cursor.Event{
 		ToolName:  "Task",
 		ModelID:   catID(core.TierFrontier),
@@ -90,6 +91,7 @@ func TestHandle_ParentModelIDHoldsMidTierDownshift(t *testing.T) {
 
 // A small-tier downshift on the parent's model_id is still written.
 func TestHandle_ParentModelIDStillWritesSmallTier(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	ev := withCatalogSession(cursor.Event{
 		ToolName:  "Task",
 		ModelID:   catID(core.TierFrontier),

@@ -349,8 +349,8 @@ func writeProjectFloor(t *testing.T, dir, tier string) {
 // conformanceScenario is one harness-free behaviour. skip names the
 // capability that excuses a harness; it never names a harness. decider, when
 // set, pins the decision a contract scenario checks the wire against (a stub
-// from decidertest). nil runs the scenario under the default v1 decider, so the
-// classifier is proven on the wire of every harness.
+// from decidertest). nil runs the scenario under the default v1 decider: only
+// scenarios that check v1 policy (the project floor) leave it unset.
 type conformanceScenario struct {
 	name    string
 	skip    func(caps core.HarnessCapabilities) string
@@ -360,7 +360,8 @@ type conformanceScenario struct {
 
 var conformanceScenarios = []conformanceScenario{
 	{
-		name: "trivial task on the frontier moves to the small tier",
+		name:    "trivial task on the frontier moves to the small tier",
+		decider: decidertest.Tier(core.TierSmall),
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceTrivialTask, model: h.frontier.ID})
@@ -385,7 +386,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "complex task on the small tier moves to the frontier",
+		name:    "complex task on the small tier moves to the frontier",
+		decider: decidertest.Tier(core.TierFrontier),
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceComplexTask, model: h.small.ID})
@@ -398,7 +400,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "right-sized task keeps its model",
+		name:    "right-sized task keeps its model",
+		decider: decidertest.Tier(core.TierMid),
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceMediumTask, model: h.mid.ID})
@@ -502,7 +505,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "session without the small tier uses the next session model",
+		name:    "session without the small tier uses the next session model",
+		decider: decidertest.Tier(core.TierSmall),
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceTrivialTask, model: h.frontier.ID})
@@ -512,7 +516,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "session's own small model wins over the catalog default",
+		name:    "session's own small model wins over the catalog default",
+		decider: decidertest.Tier(core.TierSmall),
 		run: func(t *testing.T, h conformanceHarness) {
 			alt := h.alternateSmall()
 			if alt.ID == "" {

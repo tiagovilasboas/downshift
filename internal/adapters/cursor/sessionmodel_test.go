@@ -11,6 +11,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 func writeCursorTranscript(t *testing.T, lines ...string) string {
@@ -60,6 +61,7 @@ func TestRequestedModel_TranscriptCallWinsOverTail(t *testing.T) {
 }
 
 func TestHandle_TranscriptBaselineTrivialDownshift(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	path := writeCursorTranscript(t,
 		`{"type":"assistant","message":{"model":"`+catID(core.TierFrontier)+`","content":[{"type":"text"}]}}`,
 	)

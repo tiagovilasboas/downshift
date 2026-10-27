@@ -104,6 +104,7 @@ func TestHandle_FallsBackToEventModel(t *testing.T) {
 
 // Session candidates, not catalog family aliases, determine every harness target.
 func TestHandle_UsesSessionTierForModelFamily(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	// Current opus high, MEDIUM task → midpoint of the ordered session list.
 	ev := cursor.Event{
 		ToolName: "Task",
@@ -138,6 +139,7 @@ func TestHandle_DoesNotSwitchModelForCatalogFamilyEffort(t *testing.T) {
 }
 
 func TestHandle_FamilyWithoutVariantFallsBackToTierDefault(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	// Grok has no effort-tagged variants: a confidently trivial task falls
 	// back to the tier-default small model, exactly like the legacy path.
 	ev := cursor.Event{
@@ -172,6 +174,7 @@ func TestHandle_UnknownIDIsNotRewritten(t *testing.T) {
 }
 
 func TestHandle_CursorUpshiftDoesNotEmitRejectedMuseSpark(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	const rejected = "muse-spark-1.3-high"
 	muse, ok := cat.LookupByID("cursor", "muse-spark")
 	if !ok {
@@ -282,6 +285,7 @@ func TestHandle_CursorUpshiftDoesNotEmitRejectedMuseSpark(t *testing.T) {
 }
 
 func TestHandle_UnlabeledSessionIDIsEligible(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	session := []string{"composer-2.5"}
 	ev := cursor.Event{

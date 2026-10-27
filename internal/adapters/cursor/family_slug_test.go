@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // A Cursor picker slug such as grok-4.7 is not the catalog id (grok-4.7-xhigh)
@@ -15,6 +17,7 @@ import (
 // is on a session model and a confident trivial task must rewrite. When the
 // resolved id is absent, the slug stays foreign and the spawn is unchanged.
 func TestHandle_FamilySlugRewritesOnlyWhenResolvedIDIsInSession(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	const task = `{"task":"rename the userId variable to userIdentifier"}`
 	inSession := []string{"composer-2.5-fast", "composer-2.5", "grok-4.7-xhigh"}
 	ev := cursor.Event{ToolName: "Task", ModelID: "grok-4.7", SessionModels: &inSession, ToolInput: json.RawMessage(task)}

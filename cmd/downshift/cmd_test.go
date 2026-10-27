@@ -140,6 +140,7 @@ func TestRunTry_TrivialTask_Detail(t *testing.T) {
 }
 
 func TestRunTry_ExplicitCurrentModel_NoAssumption(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rename the userId variable", "claude-code", claudeCodeFrontierID()})
@@ -163,6 +164,7 @@ func TestRunTry_CurrentAlreadyRight_StaysOn(t *testing.T) {
 }
 
 func TestRunTry_ComplexTask(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code"})
 	})
@@ -196,6 +198,7 @@ func TestRunTry_CodeReviewIntent(t *testing.T) {
 }
 
 func TestRunTry_WithCurrentModel_ShowsVerdict(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := claudeCodeFrontierID()
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rename the userId variable", "claude-code", frontierID, "--detail"})
@@ -527,6 +530,7 @@ func TestRunHookAdapter_OversizedPayload_FailOpen(t *testing.T) {
 }
 
 func TestRunTry_NoSavingClaimedWhenTheMoveIsNotApplied(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	setSessionAllowlist(t, "cursor", []string{cmdCat.ModelFor("cursor", core.TierFrontier).ID})
 	out := captureStdout(func() {
 		runTry(cmdCat, []string{"rename the userId variable", "cursor", cmdCat.ModelFor("cursor", core.TierFrontier).ID})

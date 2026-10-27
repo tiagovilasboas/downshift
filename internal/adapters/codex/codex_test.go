@@ -178,6 +178,7 @@ func TestHandle_FallsBackToEventModel(t *testing.T) {
 }
 
 func TestHandle_UnknownCurrentModelStillRoutes(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	ev := codex.Event{ToolName: "spawn_agent", ToolInput: json.RawMessage(`{"message":"do a code review"}`)}
 	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
@@ -299,6 +300,7 @@ func TestHandle_UnconfidentOKDoesNotLowerEffort(t *testing.T) {
 
 // A confident decision may still set effort (unchanged behaviour).
 func TestHandle_ConfidentDownshiftSetsLowEffort(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := withCatalogSession(codex.Event{
 		ToolName:  "spawn_agent",

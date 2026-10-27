@@ -32,6 +32,7 @@ func TestHandle_ModEntry_EmitsReasoningEffortOnDownshift(t *testing.T) {
 }
 
 func TestHandle_SettingsEntry_NoReasoningEffortOnDownshift(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := claudecode.Event{
 		ToolName:  "Task",

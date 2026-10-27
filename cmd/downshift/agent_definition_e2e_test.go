@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // A custom agent is no longer an unknown baseline just because its type is not
@@ -16,6 +17,7 @@ import (
 // parent's model (the event records it and the downshift is measurable), and one
 // that pins a model records that model as the baseline and is left unchanged.
 func TestHookE2E_ClaudeCodeAgentDefinitionBaseline(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := cmdCat.ModelFor("claude-code", core.TierFrontier).ID
 	cases := []struct {
 		name        string
