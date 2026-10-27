@@ -332,10 +332,11 @@ func (s foreignFamilyResolver) FamilyModelFor(harness, family string, effort cor
 }
 
 func TestHandle_HeldDecisionDoesNotRewriteViaFamilyPath(t *testing.T) {
-	// Current opus high, COMPLEX task: tiers match (OK gear), but the
-	// recommended model is foreign-harness, so the decision is held (R4)
-	// and the session plan says "do not rewrite". Before the hold gate,
-	// the in-family medium variant rewrote anyway.
+	// Current opus high, frontier decision: tiers match (OK gear), but the
+	// recommended model is foreign-harness and the decision is held, so the
+	// session plan says "do not rewrite". Before the hold gate, the
+	// in-family medium variant rewrote anyway.
+	decidertest.Use(t, decidertest.Held(core.TierFrontier))
 	familyTarget, ok := cat.LookupByID("cursor", "claude-opus-5.5-medium")
 	if !ok {
 		t.Fatal("catalog missing claude-opus-5.5-medium")
@@ -354,7 +355,7 @@ func TestHandle_HeldDecisionDoesNotRewriteViaFamilyPath(t *testing.T) {
 	}
 	out, note, decision := cursor.Handle(withCatalogSession(ev), res)
 	if len(decision.Corrections) == 0 {
-		t.Fatal("expected a held decision (R4), got none — test is vacuous")
+		t.Fatal("expected a held decision, got none — test is vacuous")
 	}
 	if out.UpdatedInput != nil {
 		m := decodeUpdated(t, out)

@@ -23,6 +23,7 @@ func Keep() core.Decider {
 		if known {
 			d.Tier, d.Effort, d.Model = cur.Tier, core.EffortFor(cur.Tier), cur
 			d.Baseline.CurrentModel = cur
+			preserveExplicit(&d, req, cur)
 		}
 		d.Verdict, d.SafeVerdict = core.VerdictOK, core.VerdictOK
 		return d
@@ -44,6 +45,7 @@ func Tier(t core.Tier) core.Decider {
 		d.Verdict = core.VerdictUnknown
 		if cur, known := lookup(req); known {
 			d.Baseline.CurrentModel = cur
+			preserveExplicit(&d, req, cur)
 			switch {
 			case cur.Tier == t:
 				d.Verdict = core.VerdictOK
@@ -72,6 +74,15 @@ func base(req core.Request) core.Decision {
 		Harness:    req.Harness,
 		Confident:  true,
 		Checked:    true,
+	}
+}
+
+// preserveExplicit marks the decision with the preserved intent when the
+// current model is explicit_only: the owner's deliberate choice, which routing
+// never replaces.
+func preserveExplicit(d *core.Decision, req core.Request, cur core.Model) {
+	if req.Resolver.IsExplicitOnly(req.Harness, cur.ID) {
+		d.Intent = core.PreservedIntent
 	}
 }
 

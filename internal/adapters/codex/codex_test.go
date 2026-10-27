@@ -250,6 +250,7 @@ func TestMain(m *testing.M) {
 // A spawn without a model and an unconfident small-tier classification must
 // leave both the model and the effort untouched (guardrail R6).
 func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	session := []string{"gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"}
 	ev := codex.Event{
 		ToolName:      "spawn_agent",
@@ -268,6 +269,7 @@ func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
 // A downshift held by guardrail R1 must not lower the requested effort on
 // the kept model, and the decision must record the model actually kept.
 func TestHandle_HeldDownshiftKeepsRequestedEffort(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := withCatalogSession(codex.Event{
 		ToolName:  "spawn_agent",
@@ -284,6 +286,7 @@ func TestHandle_HeldDownshiftKeepsRequestedEffort(t *testing.T) {
 
 // An unconfident same-tier decision must not lower an explicit effort.
 func TestHandle_UnconfidentOKDoesNotLowerEffort(t *testing.T) {
+	decidertest.Use(t, decidertest.Unconfident(core.TierMid))
 	midID := catID(core.TierMid)
 	ev := withCatalogSession(codex.Event{
 		ToolName:  "spawn_agent",

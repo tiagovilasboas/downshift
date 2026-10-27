@@ -12,6 +12,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
@@ -62,6 +63,13 @@ func TestHandle_AgentDefinitionDecidesBaseline(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.wantRewrite || tc.wantPinned {
+				// A pinned agent is kept by the adapter, not by a hold.
+				decidertest.Use(t, decidertest.Tier(core.TierSmall))
+			} else {
+				// The risky brief: the small pick is held.
+				decidertest.Use(t, decidertest.Held(core.TierSmall))
+			}
 			home, cwd, user := t.TempDir(), t.TempDir(), t.TempDir()
 			t.Setenv("HOME", home)
 			t.Setenv("CLAUDE_CONFIG_DIR", user)

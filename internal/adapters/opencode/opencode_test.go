@@ -221,6 +221,7 @@ func TestHandle_KeepsRightSizedTask(t *testing.T) {
 }
 
 func TestHandle_HeldDecisionAllowsUnchanged(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	small, mid, frontier, cat := tierIDs(t)
 	allowlist(t, small, mid, frontier)
 	resp, note, d := opencode.Handle(request(foreignLanguage, frontier), cat)

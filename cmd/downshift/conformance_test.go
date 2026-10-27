@@ -481,7 +481,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "project floor raises the tier",
+		name:    "project floor raises the tier",
+		decider: decidertest.Floor(decidertest.Tier(core.TierSmall)),
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			project := t.TempDir()

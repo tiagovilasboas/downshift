@@ -9,6 +9,7 @@ package main
 import (
 	"encoding/json"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 	"os"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 )
 
 func TestHookE2E_SessionFirstNewIDsAcrossHarnesses(t *testing.T) {
+	decidertest.Use(t, guardedLanguageStub())
 	t.Setenv("HOME", t.TempDir())
 	const current = "qa-new-frontier"
 	ids := []string{"qa-new-small", "qa-new-mid", current}

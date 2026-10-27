@@ -149,6 +149,7 @@ func TestMain(m *testing.M) {
 // A Task payload without a model field and an unconfident small-tier
 // classification must not be rewritten: the child keeps the harness default.
 func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	ev := withCatalogSession(claudecode.Event{
 		ToolName:  "Task",
 		ToolInput: json.RawMessage(`{"prompt": "write a function to parse dates"}`),
@@ -406,6 +407,7 @@ func writePolicy(t *testing.T, dir, body string) {
 }
 
 func TestHandle_PolicyFloorFailsOpen(t *testing.T) {
+	decidertest.Use(t, decidertest.Floor(decidertest.Tier(core.TierSmall)))
 	for name, body := range map[string]string{
 		"invalid": `{"version":1,"min_tier":"huge"}`,
 		"garbage": `not json`,

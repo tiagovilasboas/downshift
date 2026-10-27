@@ -144,8 +144,9 @@ func TestHandle_AllowsOutOfSessionTarget(t *testing.T) {
 }
 
 func TestHandle_AllowsHeldDecision(t *testing.T) {
-	// R4 foreign-model hold: same id the block test names, but recommended
-	// from another harness, so Corrections is non-empty.
+	// A held decision on the same spawn the block test names: Corrections
+	// is non-empty, so the hook allows instead of blocking.
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	res := fixedResolver{
 		Resolver: cat,
@@ -155,7 +156,7 @@ func TestHandle_AllowsHeldDecision(t *testing.T) {
 
 	out, _, decision := kirocrew.Handle(ev, res)
 	if len(decision.Corrections) == 0 {
-		t.Fatal("expected a held decision (R4), got none — test is vacuous")
+		t.Fatal("expected a held decision, got none — test is vacuous")
 	}
 	if out.Block {
 		t.Errorf("must not block a held decision (corrections=%v)", decision.Corrections)
@@ -203,6 +204,7 @@ func TestMain(m *testing.M) {
 // A current model marked explicit_only is the user's deliberate choice: the
 // hook must neither block it nor ask for a respawn on another model.
 func TestHandle_AllowsExplicitOnlyCurrentModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	res := fixedResolver{
 		Resolver:     cat,
