@@ -52,11 +52,28 @@ const (
 // UsedPct and RateLimited map to the headroom fields of contract.Note. A Verdict
 // with StrainUnknown has no window and no percentage.
 type Verdict struct {
-	Harness     contract.HarnessID
-	Strain      Strain
-	Window      contract.Window
-	UsedPct     float64
-	RateLimited bool
+	Harness     contract.HarnessID `json:"harness"`
+	Strain      Strain             `json:"strain"`
+	Window      contract.Window    `json:"window,omitempty"`
+	UsedPct     float64            `json:"used_pct,omitempty"`
+	RateLimited bool               `json:"rate_limited,omitempty"`
+}
+
+// AllCritical is the O3 condition (mvp-plan section 2): every provider in
+// verdicts is critical. The decision then warns and keeps the requested model;
+// it never blocks and never forces the cheapest model. An unknown or ok
+// provider is not critical, so one provider with usable headroom leaves routing
+// open. No verdicts is not all critical.
+func AllCritical(verdicts []Verdict) bool {
+	if len(verdicts) == 0 {
+		return false
+	}
+	for _, v := range verdicts {
+		if v.Strain != StrainCritical {
+			return false
+		}
+	}
+	return true
 }
 
 // Assess returns one Verdict per distinct provider in providers, sorted by

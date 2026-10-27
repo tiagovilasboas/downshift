@@ -252,3 +252,52 @@ func permutations[T any](xs []T, visit func([]T)) {
 	}
 	gen(len(a))
 }
+
+// TestAllCriticalIsTheO3Condition: only a set where every provider is critical
+// warns and keeps the requested model. One usable provider is enough to route.
+func TestAllCriticalIsTheO3Condition(t *testing.T) {
+	cases := []struct {
+		name      string
+		providers []contract.HarnessID
+		readings  []contract.Reading
+		want      bool
+	}{
+		{
+			name:      "every provider critical",
+			providers: []contract.HarnessID{claude, codex},
+			readings:  []contract.Reading{live(claude, contract.WindowWeek, 85), reading(codex, contract.WindowShort, 10, true, time.Minute)},
+			want:      true,
+		},
+		{
+			name:      "one provider ok leaves routing open",
+			providers: []contract.HarnessID{claude, codex},
+			readings:  []contract.Reading{live(claude, contract.WindowWeek, 85), live(codex, contract.WindowShort, 20)},
+			want:      false,
+		},
+		{
+			name:      "one provider unknown is not critical",
+			providers: []contract.HarnessID{claude, codex},
+			readings:  []contract.Reading{live(claude, contract.WindowWeek, 99)},
+			want:      false,
+		},
+		{
+			name:      "a stale reading never makes a provider critical",
+			providers: []contract.HarnessID{claude},
+			readings:  []contract.Reading{reading(claude, contract.WindowWeek, 99, false, 11*time.Minute)},
+			want:      false,
+		},
+		{
+			name:      "no providers is not all critical",
+			providers: nil,
+			readings:  []contract.Reading{live(claude, contract.WindowWeek, 99)},
+			want:      false,
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := AllCritical(Assess(c.providers, c.readings, now, DefaultCriticalThreshold)); got != c.want {
+				t.Fatalf("AllCritical() = %v, want %v", got, c.want)
+			}
+		})
+	}
+}
