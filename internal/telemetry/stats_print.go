@@ -94,7 +94,6 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 		fmt.Fprintf(w, "Quota                 available %d  held %d  unknown %d\n", s.QuotaAvailable, s.QuotaHeld, s.QuotaUnknown)
 		fmt.Fprintf(w, "Usage                 observed %d  unobserved %d\n", s.UsageObserved, s.UsageUnobserved)
 		fmt.Fprintf(w, "Frontier decisions    %d  (rewritten on doubt, no deterministic lift: %d)\n", s.FrontierDecisions, s.FrontierOnDoubt)
-		printScoreLine(w, s)
 		printGatewayLine(w, s)
 		if n := s.ReasonCodes[ReasonSemanticBoost]; n > 0 {
 			fmt.Fprintf(w, "Semantic boost        %d of %d decisions (%.0f%%) were raised by the embedder, not a rule\n", n, s.Total, pct(n, s.Total))
@@ -151,27 +150,6 @@ func printDCISection(w io.Writer, dci DCIStats) {
 			fmt.Fprintf(w, "    error:%-12s  %6d\n", code, count)
 		}
 	}
-}
-
-// printScoreLine reports the public-score capability path. It prints nothing
-// when no decision carries a pick, so output without a score index is unchanged.
-func printScoreLine(w io.Writer, s Stats) {
-	if s.ScoreObserved == 0 {
-		return
-	}
-	fmt.Fprintf(w, "Score pick differs    %d of %d decisions (%.0f%%)", s.ScoreDiffers, s.ScoreObserved, pct(s.ScoreDiffers, s.ScoreObserved))
-	if s.ScoreRatioN > 0 {
-		avg := s.ScoreRatioSum / float64(s.ScoreRatioN)
-		switch {
-		case avg < 1:
-			fmt.Fprintf(w, ", list price %.0f%% lower on average", (1-avg)*100)
-		case avg > 1:
-			fmt.Fprintf(w, ", list price %.0f%% higher on average", (avg-1)*100)
-		default:
-			fmt.Fprintf(w, ", same list price on average")
-		}
-	}
-	fmt.Fprintf(w, " (shadow unless DOWNSHIFT_SCORE_ROUTING=1)\n")
 }
 
 // printGatewayLine reports the OpenRouter allowlist shadow. It prints nothing

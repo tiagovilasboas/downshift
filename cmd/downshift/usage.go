@@ -36,7 +36,6 @@ More about what happened
 Models and quota
   downshift models list          Show the effective catalog (embedded or override)
   downshift models discover      Ask each harness which models the account can use; hooks read the result
-  downshift models scores        Public capability scores cache (--refresh, --status, --quiet, --json)
   downshift quota status         Inspect budget evidence and freshness for a harness/model
 
 Plumbing (your harness or statusline calls these, you do not)

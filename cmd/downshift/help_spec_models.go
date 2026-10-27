@@ -6,17 +6,16 @@ package main
 // modelsHelp covers the model catalog, the quota evidence, and the offline
 // replay and learning views.
 var modelsHelp = map[string]string{
-	"models": `downshift models — Inspect and refresh the model catalog and capability scores
+	"models": `downshift models — Inspect and refresh the model catalog
 
 Usage:
-  downshift models <list|check|pull|discover|scores> [flags]
+  downshift models <list|check|pull|discover> [flags]
 
 Subcommands:
   list       Show the effective catalog (embedded, or the user override)
   check      Query provider APIs and report new or untiered models
   pull       Write the user catalog.json under the state dir
   discover   Ask each harness which models the account can use
-  scores     Show or refresh the public capability scores cache
 
 Flags:
   (see each subcommand: downshift models <name> --help)
@@ -25,7 +24,7 @@ Examples:
   downshift models list
   downshift models discover --dry-run
 
-Next: downshift models scores --status
+Next: downshift models list
 `,
 	"models list": `downshift models list — Show the effective model catalog
 
@@ -81,23 +80,6 @@ Examples:
   downshift models discover --harness=claude-code --dry-run
 
 Next: downshift doctor, to check the discovered models are in use
-`,
-	"models scores": `downshift models scores — Show or refresh the public capability scores cache
-
-Usage:
-  downshift models scores [--refresh | --status] [--quiet] [--json]
-
-Flags:
-  --refresh   Fetch the public sources now and rewrite scores.json
-  --status    Print cache age, selected source and per-harness coverage (default)
-  --quiet     No output on success (the background refresh uses this)
-  --json      Print the status as JSON
-
-Examples:
-  downshift models scores --status
-  downshift models scores --refresh
-
-Next: downshift doctor, to see whether the scores are stale
 `,
 	"quota": `downshift quota — Budget evidence for a harness (status, import, collect)
 

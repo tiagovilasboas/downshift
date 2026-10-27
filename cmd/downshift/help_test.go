@@ -111,7 +111,7 @@ func TestUsageAllIsGroupedAndComplete(t *testing.T) {
 	for _, c := range []string{
 		"downshift setup", "downshift doctor", "downshift try", "downshift stats", "downshift stats --detail", "downshift stats --export",
 		"downshift report", "downshift session", "downshift watch", "downshift config",
-		"downshift models list", "downshift models discover", "downshift models scores", "downshift models check", "downshift models pull",
+		"downshift models list", "downshift models discover", "downshift models check", "downshift models pull",
 		"downshift quota status", "downshift feedback list", "downshift feedback stats", "downshift feedback <id>",
 		"downshift context benchmark", "downshift context metrics", "downshift context providers", "downshift context enable", "downshift context disable",
 		"downshift version", "Grok note",

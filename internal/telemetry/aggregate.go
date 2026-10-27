@@ -157,7 +157,6 @@ func (a *aggregator) countDecision(ev Event) {
 	a.s.ByComplexity[ev.Complexity]++
 	isRefuted := a.refuted[linkKey{ev.Harness, DecisionKey(ev)}]
 	a.countModelMix(ev, isRefuted)
-	a.countScoreShadow(ev)
 	a.countGatewayShadow(ev)
 	for _, code := range ev.ReasonCodes {
 		a.s.ReasonCodes[code]++
@@ -192,21 +191,6 @@ func (a *aggregator) countModelMix(ev Event, isRefuted bool) {
 	}
 	if ran != "" && ran != "unknown" {
 		a.s.ModelMix[ShortModel(ran)]++
-	}
-}
-
-// countScoreShadow tallies the score-routing shadow observation.
-func (a *aggregator) countScoreShadow(ev Event) {
-	if ev.ScoreWould == "" {
-		return
-	}
-	a.s.ScoreObserved++
-	if ev.ScoreDiffers {
-		a.s.ScoreDiffers++
-	}
-	if ev.ScoreWouldCostRatio > 0 {
-		a.s.ScoreRatioN++
-		a.s.ScoreRatioSum += ev.ScoreWouldCostRatio
 	}
 }
 

@@ -208,8 +208,7 @@ What Downshift does not do, by design ([when-to-use.md](when-to-use.md), [compan
 a gateway and terminates no HTTP chat or completions traffic; it holds no provider keys; it proxies no request and
 adds no markup; it never installs, launches, wraps or configures a companion (`downshift context enable headroom`
 writes one field in its own file; an earlier `init` call was removed in #71); it does not rewrite tool results
-(its compressor observes); it stores no prompt, task text or path. The only network call on the hook path is the
-optional, at-most-daily refresh of public capability scores, off with `DOWNSHIFT_SCORES=off`. A companion's saving is
+(its compressor observes); it stores no prompt, task text or path. A companion's saving is
 never counted as routing: `doctor` reports the companion so a before/after is not attributed to Downshift alone.
 
 ## Where the saving can come from

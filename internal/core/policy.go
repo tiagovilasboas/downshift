@@ -151,18 +151,6 @@ type Shadow struct {
 	// AdaptWouldSet is false when memory is absent or agrees with Tier.
 	AdaptWould    Tier
 	AdaptWouldSet bool
-	// ScoreWould is the session model id the public-score capability path
-	// (score_select.go) would pick for this task, or empty when it abstained.
-	// Shadow by default: it changes the routing only when ScoreApplied is set.
-	// ScoreWouldCostRatio is the list price of that pick over the price of the
-	// model the catalog-tier path leaves the child on (0 when either price is
-	// unknown). ScoreDiffers is true when the pick is a different model.
-	ScoreWould          string
-	ScoreDiffers        bool
-	ScoreWouldCostRatio float64
-	// ScoreApplied is true when DOWNSHIFT_SCORE_ROUTING=1 and the plan
-	// rewrote the model to ScoreWould.
-	ScoreApplied bool
 	// GatewayWould is the id of the allowlisted gateway row that would
 	// serve this decision's tier, or empty when there is no allowlist or no
 	// row of that tier. Shadow only: it never changes the routed model.

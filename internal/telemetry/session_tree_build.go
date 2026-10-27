@@ -181,7 +181,6 @@ var shortCode = map[string]string{
 	ReasonTierFloor:        "tier floor",
 	ReasonCreditHeld:       "credit held",
 	ReasonGuessHeld:        "guessed baseline",
-	ReasonScoreRouted:      "by score",
 	ReasonPaused:           "paused",
 }
 

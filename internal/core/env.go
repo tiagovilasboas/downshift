@@ -54,9 +54,6 @@ import (
 //	                                         TRIVIAL downshift. Off: shadow
 //	                                         only. Guardrail R1 still holds
 //	                                         an unconfident downshift.
-//	DOWNSHIFT_SCORE_ROUTING     off          "1" lets the public-score
-//	                                         capability pick change the model.
-//	                                         Off: shadow only.
 //	<HarnessCapabilities.       unset        Per-harness path of a native
 //	 NativeSessionEnv>                       session export (Cursor:
 //	                                         DOWNSHIFT_CURSOR_NATIVE_FILE).
@@ -88,8 +85,6 @@ const (
 	// ModeEnv selects the routing mode. "economy" lowers the tier of a confident,
 	// risk-free task by one step; anything else (default) is performance.
 	ModeEnv = "DOWNSHIFT_MODE"
-	// ScoreRoutingEnv makes the capability pick live. Default off (shadow only).
-	ScoreRoutingEnv = "DOWNSHIFT_SCORE_ROUTING"
 )
 
 // defaultDiscoveryTTL is the discovery cache TTL when DOWNSHIFT_DISCOVERY_TTL
@@ -124,8 +119,6 @@ type Config struct {
 	// Economy is DOWNSHIFT_MODE == "economy": lower the tier of a confident,
 	// risk-free task by one step. Guardrails still apply after the change.
 	Economy bool
-	// ScoreRouting is DOWNSHIFT_SCORE_ROUTING == "1".
-	ScoreRouting bool
 	// NativeSessionPaths holds the value of every HarnessCapabilities.
 	// NativeSessionEnv variable, keyed by variable name. The names come from
 	// the capability table, never from a branch.
@@ -147,7 +140,6 @@ func ConfigFromEnv(getenv func(string) string) Config {
 		NBUpshift:           getenv(NBUpshiftEnv) == "1",
 		NBDownshift:         getenv(NBDownshiftEnv) == "1",
 		Economy:             economyFrom(getenv),
-		ScoreRouting:        getenv(ScoreRoutingEnv) == "1",
 	}
 	for _, n := range AllHarnessCaps() {
 		name := n.Caps.NativeSessionEnv
@@ -219,7 +211,6 @@ func discoveredEnv() string    { return config().DiscoveredPath }
 func nbUpshiftEnv() bool       { return config().NBUpshift }
 func nbDownshiftEnv() bool     { return config().NBDownshift }
 func economyEnv() bool         { return config().Economy }
-func scoreRoutingEnv() bool    { return config().ScoreRouting }
 
 // nativeSessionPathEnv returns the path held by the named native-export
 // variable. A pinned Config carries every name the capability table declares;
