@@ -1,0 +1,69 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+
+	"github.com/tiagovilasboas/downshift/internal/policyfile"
+	"github.com/tiagovilasboas/downshift/internal/routing/policy"
+)
+
+// runPolicy dispatches 'downshift policy'. check validates the routing policy
+// the hooks read, without routing anything.
+func runPolicy(args []string, stdout, stderr io.Writer) int {
+	if len(args) != 1 || args[0] != "check" {
+		fmt.Fprintln(stderr, "usage: downshift policy check")
+		return 2
+	}
+	return runPolicyCheck(stdout, stderr)
+}
+
+func runPolicyCheck(stdout, stderr io.Writer) int {
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Fprintln(stderr, "policy check:", err)
+		return 1
+	}
+	project, _ := policyfile.Find(cwd)
+	user, err := policy.UserPath()
+	if err != nil {
+		fmt.Fprintln(stderr, "policy check:", err)
+		return 1
+	}
+	// The same files also hold the tier floor, and policyfile refuses keys it
+	// does not know, so the floor reader must accept each file too.
+	for _, path := range []string{project, user} {
+		if path == "" || !exists(path) {
+			continue
+		}
+		if _, err := policyfile.Load(path); err != nil {
+			fmt.Fprintln(stderr, "policy check:", err)
+			return 1
+		}
+	}
+	p, err := policy.Load(policy.Locations{Project: project, User: user})
+	if err != nil {
+		fmt.Fprintln(stderr, "policy check:", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "project file: %s\nuser file:    %s\n", orNone(project), orNone(user))
+	fmt.Fprintf(stdout, "policy ok: %d profiles, %d rules; critical threshold %g, both critical %s, quota TTL %s\n",
+		len(p.Profiles), len(p.Rules), p.CriticalThreshold, p.BothCritical, p.QuotaTTL)
+	return 0
+}
+
+func exists(path string) bool {
+	_, err := os.Lstat(path)
+	return err == nil
+}
+
+func orNone(path string) string {
+	if path == "" || !exists(path) {
+		return "none"
+	}
+	return path
+}

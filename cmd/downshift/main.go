@@ -130,6 +130,8 @@ func main() {
 	case "enable", "shell-init":
 		// enable is the canonical name; shell-init is kept as a legacy alias.
 		os.Exit(runShellInit(args[1:], os.Stdout, os.Stderr))
+	case "policy":
+		os.Exit(runPolicy(args[1:], os.Stdout, os.Stderr))
 	case "config":
 		os.Exit(runConfig(args[1:], os.Stdout, os.Stderr, catalog))
 	case "version", "--version":

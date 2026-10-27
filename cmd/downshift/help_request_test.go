@@ -96,7 +96,7 @@ func TestUnknownCommandNeverSuggestsLegacyNames(t *testing.T) {
 // TestHelpTopicsAreUnique: mergeTopics overwrites on a repeated key, so a
 // duplicate would silently drop one command's help.
 func TestHelpTopicsAreUnique(t *testing.T) {
-	total := len(dailyHelp) + len(modelsHelp) + len(hookHelpTopics) + len(maintainerHelp) + len(experimentalHelp)
+	total := len(dailyHelp) + len(modelsHelp) + len(hookHelpTopics) + len(maintainerHelp) + len(experimentalHelp) + len(policyHelp)
 	if total != len(helpTopics) {
 		t.Errorf("help groups hold %d entries but the merged table has %d: a key is in two groups", total, len(helpTopics))
 	}
