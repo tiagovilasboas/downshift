@@ -56,8 +56,7 @@ routing signal. `catalog.PriceBook.PriceFor(model)` returns a price and a qualit
 | `unpriced` | No resolvable id |
 
 No accounting output shows a price or a quality value.
-`internal/accounting/formula` still implements the old price formula (`Saved`) as a
-pure function with golden tests. No production code calls it.
+The old price formula (`Saved`, package `internal/accounting/formula`) was removed; no code computes a dollar figure.
 
 ## API
 

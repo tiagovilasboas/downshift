@@ -16,11 +16,9 @@
 //	   not import accounting or api (rules table, closure check). telemetry
 //	   must not import core either: router values reach it through
 //	   telemetry/fromcore, the one telemetry package that imports core.
-//	L2 internal/accounting/formula            pure formula; imports only catalog
-//	   (rules table plus TestLayerDirectImports).
 //	L3 internal/accounting                    Compute; its direct imports are
-//	   telemetry, execwrap, catalog and accounting/formula, and its closure never
-//	   reaches api or an adapter (TestLayerDirectImports, rules table).
+//	   telemetry, execwrap and catalog, and its closure never reaches api or an
+//	   adapter (TestLayerDirectImports, rules table).
 //	L4 internal/api, cmd/downshift report.go and sessionpanel.go  surfaces; they
 //	   must import accounting (TestSurfacesImportAccounting) and must not add up
 //	   telemetry fields themselves: no `WorkSaved +`, `CacheSaved +` or
@@ -65,7 +63,6 @@ var rules = []rule{
 	{"telemetry", []string{"accounting", "api", "core"}, "L0: events are parsed here; the numbers are computed in accounting. Router values arrive through telemetry/fromcore, the only telemetry package that imports core (TestTelemetryTreeImportsCoreOnlyThroughFromcore checks the rest of the tree)"},
 	{"execwrap", []string{"accounting", "api"}, "L0: the exec log is parsed here; the numbers are computed in accounting"},
 	{"accounting", []string{"api", "adapters"}, "L3: Compute serves the surfaces, so it cannot depend on them"},
-	{"accounting/formula", []string{"telemetry", "execwrap", "api", "adapters"}, "L2: the formula is pure and reads only prices"},
 }
 
 // violations returns the entries of deps (import paths) that match a forbidden

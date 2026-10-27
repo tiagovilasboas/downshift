@@ -29,9 +29,6 @@ type UnifiedSavings struct {
 	CompactorTokens int64 `json:"compactor_tokens_saved"`
 	// TotalTokens is RoutingTokens + CompactorTokens.
 	TotalTokens int64 `json:"total_tokens_saved"`
-	// EstimatedCost is a dollar figure only when a price is supplied; omitted
-	// otherwise. This layer never invents a price.
-	EstimatedCost float64 `json:"estimated_cost_saved_usd,omitempty"`
 }
 
 // loadRoutingEvents is the routing-telemetry load seam. Tests override it to

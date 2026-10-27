@@ -5,10 +5,8 @@
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 **Status (2026-10-27):** owner decision O1 makes the accounting account tokens only. This spec
-defines the routing and compactor token figures (§1). The price formula (§5) is kept as an internal
-pure function with no production caller and is not reported. Go surfaces that still print dollars
-are tracked separately, so until they change this spec describes the intended output, not the
-current one. Plan history: [`../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md`](../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md).
+defines the routing and compactor token figures (§1). The price formula was removed (§5). Go computes no dollar figure; the price book stays as a routing
+signal. Plan history: [`../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md`](../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md).
 
 ---
 
@@ -117,29 +115,12 @@ A catalog older than 30 days should trigger a warning.
 
 ---
 
-## 5. Price formula (retired from reporting)
+## 5. Price formula (removed)
 
-`internal/accounting/formula` implements the price formula as pure functions. No report prints its
-result, and no production code calls it.
-
-```text
-C_actual   = Σ price(model_i, tokens_i)
-C_baseline = price(requested_model, Σ tokens_i)
-Saved      = C_baseline − C_actual
-```
-
-- Entry point: `formula.Saved(requestedModel, buckets, pb)` returns `SavedResult` with `ActualCost`,
-  `BaselineCost` and `Saved` in catalog price units. The JSON tags still end in `_usd` (legacy
-  names); the values are not reported money.
-- The formula prices a cheaper child's extra turns at the baseline rate, which causes the +15%
-  positive bias recorded in the S0 evidence (see §2.1 for the token-side equivalent).
-
-### 5.1 Testing
-
-- Golden tests with known inputs → expected outputs (`formula/testdata/golden_cases.json`)
-- Fuzz testing on token counts and model combinations
-- Property: `Saved >= 0` when all buckets used the requested model
-- Property: `Saved >= 0` when all buckets used cheaper or equal models
+The price formula (`C_actual`, `C_baseline`, `Saved`) and its package, `internal/accounting/formula`,
+were removed in the tokens-only cut. Nothing in Downshift computes or prints a dollar figure. The token
+account in section 1.1 is the only saving measure; the price book in section 3 stays as a routing signal.
+The formula's positive bias on extra turns went with it; section 2.1 names the token-side equivalent.
 
 ---
 
@@ -182,7 +163,7 @@ When publishing a token figure, include:
 | T0 | ✅ done | This spec |
 | T1 | ✅ merged | Exec event `harness` and `entry` fields (PR #433) |
 | T2 | ✅ merged | `catalog.PriceBook{Version, AsOf}` and `PriceFor(model)` (PR #437) |
-| T3 | ✅ merged | `internal/accounting/formula` with pure functions (PR #437) |
+| T3 | ✅ merged, removed | `internal/accounting/formula` with pure functions (PR #437); removed in the tokens-only cut (section 5) |
 | T4a | ✅ merged | Golden tests JSON fixtures for regression testing (PR #439) |
 | T4b | ✅ merged | Per-harness aggregation using T1 fields (PR #439) |
 
