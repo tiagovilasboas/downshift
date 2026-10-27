@@ -36,7 +36,7 @@ PASTE EXPORT JSON HERE
 
 ## Quality
 
-- **Misroutes flagged with `downshift feedback` this week:** (count)
+- **Misroutes you noticed this week:** (count)
 - **Anything that failed because the model was too small:** (one line each, no task text)
 
 ## Notes (optional)
