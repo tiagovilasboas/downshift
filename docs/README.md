@@ -89,11 +89,8 @@ The subagent routing domain provides deterministic model selection for delegated
 | [examples/session-models.example.json](examples/session-models.example.json) | Example | Sample session model configurations across harnesses |
 | [../README.md#the-llms-it-knows](../README.md#the-llms-it-knows) | Reference | Embedded catalog, families per harness, `explicit_only` handling |
 | [design/minilm-semantic.md](design/minilm-semantic.md) | Design | Semantic boost: in-process word-hash embedder (raise-only gate) |
-| [design/classifier-shadow.md](design/classifier-shadow.md) | Design | Shadow classifier candidate evaluation without affecting live routing |
 | [design/router-generalization.md](design/router-generalization.md) | Design | Eval methodology and holdout discipline |
-| [design/capability-router-v2.md](design/capability-router-v2.md) | Design | Router v2 architecture (experimental) |
-| [design/decision-intelligence.md](design/decision-intelligence.md) | Design | Advisory decision intelligence layer |
-| [design/langgraph-orchestration.md](design/langgraph-orchestration.md) | Design | Optional orchestration planner |
+| [design/routing-v2.md](design/routing-v2.md) | Design | Router v2 architecture (experimental) |
 | [img/downshift-bdi.svg](img/downshift-bdi.svg) | Diagram | Editable BDI decision lens map (beliefs, desires, intentions) |
 | [img/downshift-execution.svg](img/downshift-execution.svg) | Diagram | Complete numbered execution flow with ownership boundaries |
 | [contrib/classifier.md](contrib/classifier.md) | Contrib | Classifier tuning: signal weights, margin thresholds, shadow testing |
@@ -142,7 +139,7 @@ The observability and verification domain delivers empirical proof of routing be
 | [reference/stats-export.md](reference/stats-export.md) | Reference | Sanitized telemetry export format for safe sharing |
 | [reference/beta-exit.md](reference/beta-exit.md) | Reference | Beta graduation criteria and open blockers |
 | [guides/report.md](guides/report.md) | Guide | `downshift report`: routed vs control group, tokens per completed task, rework, token check |
-| [guides/verification.md](guides/verification.md) | Guide | `verification-report`: observed child checks and estimated cost by tier, sensor limits |
+| [guides/verification.md](guides/verification.md) | Guide | Observed child checks and estimated cost by tier, sensor limits |
 | [guides/evidence.md](guides/evidence.md) | Guide | Evidence ladder: list price, telemetry estimate, controlled benchmark, real tasks, cost per task |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Guide | Protocol for reproducible three-arm comparison (Opus vs opusplan vs opusplan+Downshift) |
 | [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Guide | Protocol, not yet run: routing and output cutting, cut criterion |

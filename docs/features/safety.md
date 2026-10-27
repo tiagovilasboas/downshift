@@ -63,20 +63,6 @@ func riskFloor(prompt string) bool {
 }
 ```
 
-### Confidence Threshold
-
-```go
-// internal/routingv2/policy/policy.go
-const LowConfidenceThreshold = 0.6
-
-func Decide(probs TierProbabilities, safety Constraint) Tier {
-    if probs.Confidence() < LowConfidenceThreshold {
-        return conservativeTier(probs)  // Route up, not down
-    }
-    return probs.Best()
-}
-```
-
 ### Safe Verdict
 
 Every routing decision carries a `SafeVerdict` that adapters must respect:
@@ -143,15 +129,6 @@ An under-tier event means a task was routed to a lower tier and:
 - Resulted in user correction
 - Had poor outcome signal
 
-### Verification Report
-
-```bash
-downshift verification-report --period=7d
-```
-
-Shows tasks where the model might have been insufficient based on
-post-hoc signals.
-
 ## Configuration
 
 ### Project Floor
@@ -183,8 +160,6 @@ Or in your shell profile for specific projects.
 If a task fails due to insufficient model:
 
 1. **Retry** — The harness will retry, and the next spawn may route higher
-2. **Feedback** — `downshift feedback --task=<id> --outcome=failed`
-3. **Adapt** — The adaptive memory learns from failures
 
 ### Rollback
 
@@ -204,8 +179,4 @@ Every routing decision is logged with:
 - Final tier and model
 - SafeVerdict
 
-For compliance or debugging:
-
-```bash
-downshift replay --verbose --period=24h
-```
+The `replay` command was removed (2026-10-26). The routing v2 direction is in [routing v2](../design/routing-v2.md).

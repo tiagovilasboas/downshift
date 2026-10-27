@@ -478,7 +478,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CI); [BETA-EXIT](docs/reference/beta-exit.md) P4.5 note; `Makefile report` no longer
   overwrites README ([#58](https://github.com/tiagovilasboas/downshift/pull/58) hygiene).
 - **Docs:** Maintainer shadow/engineering/v2 long form stubbed in OSS; full copies
-  in downshift-labs. [classifier-shadow.md](docs/design/classifier-shadow.md) shortened.
+  in downshift-labs. classifier-shadow.md shortened (file since removed).
 - **CI:** Public `ci` / `ci-full` run `go test` and adapter smoke only (sample
   fixture). Removed obsolete outcome-scope scripts.
 
@@ -501,7 +501,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Docs:** [publishing-boundaries.md](docs/reference/publishing-boundaries.md) (public vs
   `docs/internal/` vs private). Launch waves and test coverage moved under
   `docs/internal/` with stubs at old paths.
-- **Docs (wave 2):** Public [capability-router-v2.md](docs/design/capability-router-v2.md) condensed;
+- **Docs (wave 2):** Public capability-router-v2.md condensed (file since removed);
   full design moved to [docs/internal/capability-router-v2-full.md](docs/internal/capability-router-v2-full.md).
   Contributor classifier guide: [docs/contrib/classifier.md](docs/contrib/classifier.md).
   ROADMAP and CONTRIBUTING aligned with Downshift branding.

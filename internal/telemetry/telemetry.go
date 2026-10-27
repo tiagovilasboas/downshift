@@ -43,27 +43,26 @@ import (
 // transcript format (e.g. Claude Code JSON lines with {"type":"assistant",...})
 // is a distinct schema and is never the downshift events.jsonl schema.
 type Event struct {
-	CorrelationID        string                `json:"correlation_id"`             // opaque ID generated per hook invocation
-	Timestamp            string                `json:"timestamp"`                  // RFC3339Nano
-	Source               string                `json:"source"`                     // hook|cli
-	Agent                string                `json:"agent"`                      // subagent, never task text
-	Harness              string                `json:"harness"`                    // e.g. "claude-code"
-	SessionID            string                `json:"session_id,omitempty"`       // Codex session identifier, when provided
-	Complexity           string                `json:"complexity"`                 // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
-	FromModel            string                `json:"requested_model"`            // model supplied by the harness
-	ToModel              string                `json:"final_model"`                // selected model after policy
-	RequestedEffort      string                `json:"requested_reasoning_effort"` // level, "inherit" or "unobserved"
-	FinalEffort          string                `json:"final_reasoning_effort"`     // policy recommendation
-	Verdict              string                `json:"verdict"`                    // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
-	Tier                 string                `json:"tier"`                       // SMALL|MID|FRONTIER
-	PolicyVersion        string                `json:"policy_version"`
-	BinaryVersion        string                `json:"binary_version"`
-	Outcome              string                `json:"outcome"` // rewrite_emitted|allow|blocked|error|usage|baseline
-	ErrorCode            string                `json:"error_code,omitempty"`
-	DecisionIntelligence *ShadowRecommendation `json:"decision_intelligence,omitempty"`
-	EstimatedSavings     float64               `json:"estimated_savings"` // normalised fraction 0–1
-	QuotaStatus          string                `json:"quota_status,omitempty"`
-	QuotaSource          string                `json:"quota_source,omitempty"`
+	CorrelationID    string  `json:"correlation_id"`             // opaque ID generated per hook invocation
+	Timestamp        string  `json:"timestamp"`                  // RFC3339Nano
+	Source           string  `json:"source"`                     // hook|cli
+	Agent            string  `json:"agent"`                      // subagent, never task text
+	Harness          string  `json:"harness"`                    // e.g. "claude-code"
+	SessionID        string  `json:"session_id,omitempty"`       // Codex session identifier, when provided
+	Complexity       string  `json:"complexity"`                 // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
+	FromModel        string  `json:"requested_model"`            // model supplied by the harness
+	ToModel          string  `json:"final_model"`                // selected model after policy
+	RequestedEffort  string  `json:"requested_reasoning_effort"` // level, "inherit" or "unobserved"
+	FinalEffort      string  `json:"final_reasoning_effort"`     // policy recommendation
+	Verdict          string  `json:"verdict"`                    // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
+	Tier             string  `json:"tier"`                       // SMALL|MID|FRONTIER
+	PolicyVersion    string  `json:"policy_version"`
+	BinaryVersion    string  `json:"binary_version"`
+	Outcome          string  `json:"outcome"` // rewrite_emitted|allow|blocked|error|usage|baseline
+	ErrorCode        string  `json:"error_code,omitempty"`
+	EstimatedSavings float64 `json:"estimated_savings"` // normalised fraction 0–1
+	QuotaStatus      string  `json:"quota_status,omitempty"`
+	QuotaSource      string  `json:"quota_source,omitempty"`
 	// CreditHeld records that the credit gate refused this rewrite. It is
 	// not a guardrail correction. Exhausted and stale status are holds
 	// without this flag.
@@ -286,17 +285,6 @@ func (e Event) TokenUsageOrZero() TokenUsage {
 		u.CacheWriteTokens = *e.CacheWriteTokens
 	}
 	return u
-}
-
-// ShadowRecommendation is advisory metadata emitted beside, never into, the
-// deterministic hook rewrite. It contains no task text or provider selection.
-type ShadowRecommendation struct {
-	Tier              string   `json:"tier"`
-	Confidence        float64  `json:"confidence"`
-	Reasons           []string `json:"reasons"`
-	RequiresReview    bool     `json:"requires_review"`
-	BudgetConstrained bool     `json:"budget_constrained"`
-	Apply             bool     `json:"apply"`
 }
 
 const PolicyVersion = "core-route-v1"

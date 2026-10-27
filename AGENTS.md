@@ -31,7 +31,7 @@ allowed under the licence terms. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
 
 Owner decision, 2026-10-11. Never build a feature for one harness.
 
-1. Behaviour lives in shared layers: `internal/core`, shared packages (`policyfile`, `adapt`, `quota`, `telemetry`) and the shared hook runner (`runHookAdapter`). Adapters hold no policy.
+1. Behaviour lives in shared layers: `internal/core`, shared packages (`policyfile`, `quota`, `telemetry`) and the shared hook runner (`runHookAdapter`). Adapters hold no policy.
 2. Adapters only parse the payload, declare `HarnessCapabilities`, and emit the wire response. Shared code needs something from a payload? The adapter exposes it through a small optional method (for example `ProjectDir()`).
 3. Harness facts are data in `HarnessCapabilities` (read via `core.AllHarnessCaps()`), never branches in shared tools.
 4. Test at the shared layer (`runHookAdapter` or `core.Route`). Logic that appears in more than one adapter is a defect.

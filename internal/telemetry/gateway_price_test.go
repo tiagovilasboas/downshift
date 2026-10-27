@@ -11,8 +11,6 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
-const gatewaySlug = "vendor/cheap-model"
-
 // gatewayFixture returns an applied rewrite from a frontier request and the
 // usage of its child, which ran on ran and carries price (GatewayPrice).
 func gatewayFixture(t *testing.T, ran, price string) (decision, usage Event, requested string) {
@@ -25,33 +23,8 @@ func gatewayFixture(t *testing.T, ran, price string) (decision, usage Event, req
 	return decision, usage, requested
 }
 
-// snapshotAt prices every gateway model at a multiple of the requested model's
-// catalog price, so the test does not depend on the catalog's current numbers.
-func snapshotAt(t *testing.T, requested string, factor float64) func(string) (float64, float64, bool) {
-	t.Helper()
-	req, ok := DirectionCatalog.LookupByID("claude-code", requested)
-	if !ok || req.InputM <= 0 || req.OutputM <= 0 {
-		t.Fatalf("requested model %q has no catalog price", requested)
-	}
-	return func(model string) (float64, float64, bool) {
-		if model != gatewaySlug {
-			return 0, 0, false
-		}
-		return req.InputM * factor, req.OutputM * factor, true
-	}
-}
-
-func withGatewayPrices(t *testing.T, lookup func(string) (float64, float64, bool)) {
-	t.Helper()
-	prev := GatewayPriceLookup
-	GatewayPriceLookup = lookup
-	t.Cleanup(func() { GatewayPriceLookup = prev })
-}
-
 func TestGatewayRun_WithoutSnapshotIsUnknownAndNotSaved(t *testing.T) {
-	requested := catalog.Load().ModelFor("claude-code", core.TierFrontier).ID
-	// No snapshot price for the ran slug: a cheap-looking tier must not count.
-	withGatewayPrices(t, snapshotAt(t, requested, 0.1))
+	// No price source is read: a gateway run is unknown and never credited.
 	decision, usage, _ := gatewayFixture(t, "vendor/other-model", GatewayPriceUnknown)
 	s := TokenSavings([]Event{decision, usage}).Total
 	if s.SavedChildren != 0 || s.WorkSaved != 0 {
@@ -67,7 +40,6 @@ func TestGatewayRun_WithoutSnapshotIsUnknownAndNotSaved(t *testing.T) {
 
 func TestGatewayRun_AllowlistedIdIsNotCalledUnpriced(t *testing.T) {
 	withAllowlist(t)
-	withGatewayPrices(t, nil)
 	requested := catalog.Load().ModelFor(rankHarness, core.TierMid).ID
 	decision, usage := gatewayEvents(requested, allowlistSmallID)
 	s := TokenSavings([]Event{decision, usage}).Total
@@ -89,27 +61,6 @@ func TestGatewayRun_UnknownIdIsNoTier(t *testing.T) {
 	}
 	if line := s.Line(); !strings.Contains(line, "1 gateway run unattributed: no tier for this gateway id") {
 		t.Fatalf("unknown gateway id not reported as no tier: %q", line)
-	}
-}
-
-func TestGatewayRun_SnapshotGoneAtReadIsUnknown(t *testing.T) {
-	// Recorded as priced, but the snapshot no longer lists the model.
-	withGatewayPrices(t, func(string) (float64, float64, bool) { return 0, 0, false })
-	decision, usage, _ := gatewayFixture(t, gatewaySlug, GatewayPriceSnapshot)
-	s := TokenSavings([]Event{decision, usage}).Total
-	if s.SavedChildren != 0 || s.GatewayUnattributed != 1 {
-		t.Fatalf("saved %d, unattributed %d; want 0 and 1", s.SavedChildren, s.GatewayUnattributed)
-	}
-}
-
-func TestGatewayPriceStatus(t *testing.T) {
-	withGatewayPrices(t, nil)
-	if got := GatewayPriceStatus(gatewaySlug); got != GatewayPriceUnknown {
-		t.Fatalf("no lookup: %q, want unknown", got)
-	}
-	withGatewayPrices(t, func(string) (float64, float64, bool) { return 1, 2, true })
-	if got := GatewayPriceStatus(gatewaySlug); got != GatewayPriceSnapshot {
-		t.Fatalf("priced: %q, want snapshot", got)
 	}
 }
 
@@ -135,7 +86,6 @@ func TestNativeRun_UnchangedByGatewayRule(t *testing.T) {
 	cat := catalog.Load()
 	requested := cat.ModelFor("claude-code", core.TierFrontier).ID
 	small := cat.ModelFor("claude-code", core.TierSmall).ID
-	withGatewayPrices(t, func(string) (float64, float64, bool) { return 0, 0, false })
 	cases := []struct {
 		name       string
 		outcome    string

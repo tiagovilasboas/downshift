@@ -15,11 +15,9 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/decisionintelligence"
 	"github.com/tiagovilasboas/downshift/internal/hookctx"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -308,15 +306,6 @@ func runHookAdapter[E any](
 		fmt.Fprintf(os.Stderr, "downshift: honor=unobserved quota=%s usage=unobserved\n", telemetry.ProjectQuota(decision.Session.QuotaStatus, decision.Session.CreditHeld))
 		event := telemetry.FromDecision(decision, correlationID, buildVersion)
 		fate.recordOutcome(&event)
-		shadow := decisionintelligence.Evaluate(decisionintelligence.SignalsFromDecision(decision))
-		event.DecisionIntelligence = &telemetry.ShadowRecommendation{
-			Tier:              shadow.Tier.String(),
-			Confidence:        shadow.Confidence,
-			Reasons:           shadow.Reasons,
-			RequiresReview:    shadow.RequiresReview,
-			BudgetConstrained: shadow.BudgetConstrained,
-			Apply:             shadow.Apply,
-		}
 		// Provenance is stricter than routing: never replace an absent or
 		// unrecognised requested model with the policy recommendation in the
 		// evidence record. A catalog lookup is the local allowlist.
@@ -363,12 +352,6 @@ func runHookAdapter[E any](
 			fmt.Fprintf(os.Stderr, "downshift: spawn %s\n", spawn.Line())
 		}
 		_ = telemetry.WriteLive(spawn)
-		// A batch carries no top-level task text, so it gets no feedback id.
-		if len(taskText) > 0 && taskText[0](ev) != "" {
-			if id, err := training.RecordRoutedDecision(taskText[0](ev), decision); err == nil && id != "" {
-				fmt.Fprintf(os.Stderr, "downshift: feedback id %s (run `downshift feedback %s success|retry|failed` after review)\n", id, id)
-			}
-		}
 	}
 	return rc
 }

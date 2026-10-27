@@ -312,22 +312,6 @@ downshift context compress [flags]
 **Flags:**
 - `--exit=N` — Pretend exit code is N (default: use real)
 
-### `downshift replay`
-
-Replay events from telemetry.
-
-```bash
-downshift replay [flags]
-```
-
-### `downshift benchmark`
-
-Run performance benchmarks.
-
-```bash
-downshift benchmark
-```
-
 ### `downshift version`
 
 Print version information.

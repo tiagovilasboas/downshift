@@ -17,12 +17,6 @@ const (
 	GatewayPriceUnknown  = "unknown"
 )
 
-// GatewayPriceLookup returns the list price of an OpenRouter model in USD per
-// million input and output tokens, from the snapshot. ok is false when the
-// snapshot has no price for it. The composition root sets it; nil means no
-// snapshot is read, so every gateway run is unknown.
-var GatewayPriceLookup func(model string) (inM, outM float64, ok bool)
-
 // IsGatewayModel reports a "vendor/model" slug, the id an OpenRouter route
 // reports. Native catalog ids never contain a slash.
 func IsGatewayModel(id string) bool {
@@ -30,15 +24,9 @@ func IsGatewayModel(id string) bool {
 	return ok && vendor != "" && model != "" && !strings.Contains(model, "/")
 }
 
-// GatewayPriceStatus is the price source for a gateway model: snapshot when the
-// lookup prices it, unknown otherwise.
-func GatewayPriceStatus(model string) string {
-	if GatewayPriceLookup == nil {
-		return GatewayPriceUnknown
-	}
-	if _, _, ok := GatewayPriceLookup(model); ok {
-		return GatewayPriceSnapshot
-	}
+// GatewayPriceStatus is the price source for a gateway model. No price snapshot
+// is read any more, so every gateway run is unknown.
+func GatewayPriceStatus(string) string {
 	return GatewayPriceUnknown
 }
 

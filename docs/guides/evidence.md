@@ -96,9 +96,7 @@ repository; the public repo holds aggregates and two sample tasks under `interna
 | Held-out suite (GAP-SUITE) | 6 tasks, 1 smoke run | Go tasks outside the development suite | small 2/6, mid 4/6, frontier 6/6, USD 0.14 total ([gap-tasks.md](../internal/gap-tasks.md)) | Total only, not per task |
 
 Two notes. The small-versus-frontier gap on TRIVIAL+SIMPLE labels is −20.0 points on fixed-model runs, with
-overlapping intervals; the suite's own rule is to revisit the downshift below −5. And `downshift eval-adapt` prints a
-"cost per completed task" per policy, but it is a model: reference tokens per attempt (`--ref-in`, `--ref-out`), tier
-prices you pass, escalation one tier up on failure, an optional `--fail-penalty`. It uses no observed tokens.
+overlapping intervals; the suite's own rule is to revisit the downshift below −5.
 
 ## D. Saving demonstrated on real tasks
 
@@ -135,10 +133,10 @@ failed attempt it redid (a respawn in the same session within 10 minutes of an `
 rate is reworked spawns over spawns with an observed end; the token check gives routed against control per completed task as a point percentage, with no interval printed. It needs 20 completed tasks per group
 (`MinReportTasks`); at the default `DOWNSHIFT_CONTROL_SHARE=0.10` that is roughly 200 completed tasks.
 
-What is missing to produce it: enough completed tasks in one log (the [pilot](pilot.md) at share 0.5); a captured
+What is missing for a per-task cost figure: enough completed tasks in one log (the [pilot](pilot.md) at share 0.5); a captured
 `PostToolUseFailure` payload, without which rework undercounts (GAP-CHILD-FAILURE); and a quality judgment, because
 "acceptable quality" is not in the log: `completed` means the child returned, not that its work was right.
-`downshift feedback <id> failed|retry` is the manual backstop. The 2026-10-15 A/B measured cost per run with an
+The 2026-10-15 A/B measured cost per run with an
 acceptance check, which is close to E for those tasks but is not the `report` definition and had no rework term.
 
 ## Metrics table
@@ -156,11 +154,11 @@ decisions but not usage or ends ([harness-matrix.md](../reference/harness-matrix
 | Latency, total and per step | not available | no duration field on decision, usage or end events (`latency_ms` exists only on the E5 shadow record); the A/B timed runs externally |
 | Completion rate | available | `child_status` counts in `stats` ("How children ended") and `--export`; `report` `ended` / `completed_tasks` |
 | Failure rate | available, undercounted | `child_status` `error` / `interrupted`; `PostToolUseFailure` payload never captured (GAP-CHILD-FAILURE) |
-| Retries | inferred | "Respawned after a failure" in `stats`, `↻` in the session tree (10-minute rule, a hint); explicit via `downshift feedback <id> retry` |
-| Result quality | not available | hidden tests in the A/B only; `feedback <id> success|failed` is manual |
+| Retries | inferred | "Respawned after a failure" in `stats`, `↻` in the session tree (10-minute rule, a hint) |
+| Result quality | not available | hidden tests in the A/B only |
 | Coordination and delegation cost | not available | parent turns and tokens are outside the hook; GAP-COORDINATION open |
 | Fixed-context cost | available per child, as tokens | `cached_tokens` / `cache_write_tokens` counted apart by class; parent context not seen; `context metrics` token fields unavailable |
-| Abstention rate | available | reason codes `NO_SIGNAL`, `CLASSIFIER_UNCONFIDENT` in `stats --export` `reason_codes`; `downshift benchmark` prints abstentions per split |
+| Abstention rate | available | reason codes `NO_SIGNAL`, `CLASSIFIER_UNCONFIDENT` in `stats --export` `reason_codes` |
 | Routing decisions and guardrails fired | available | `verdict`, `corrections`, `HELD_*` codes; `stats` "Guardrails held"; `session --why`; `stats --by-harness` |
 | Requested versus executed model | available / inferred | `requested_model` and `final_model` on the decision; `resolved` record with `rewrite_honored` when the harness reports the child's model; otherwise `rewrite_honored_inferred` from a later spawn |
 | Baseline comparison | available (control) / estimated (counterfactual) | `report` routed versus `CONTROL` spawns; `stats` same-token counterfactual, marked `baseline_source: inferred` when guessed |

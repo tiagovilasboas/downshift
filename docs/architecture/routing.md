@@ -79,8 +79,6 @@ Task fails on SMALL → Memory: key needs MID
 Similar task arrives → Route to MID
 ```
 
-See [Adaptive Memory](../advanced/adaptive-memory.md).
-
 ## See Also
 
 - [Classification](../features/classification.md)

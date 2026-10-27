@@ -18,7 +18,7 @@ usage events) and P3.7 (period comparison), if the numbers are there.
 | Control share | `DOWNSHIFT_CONTROL_SHARE=0.5` during the pilot | At the default 0.10 the first estimate needs about 200 completed tasks. At 0.5 it needs about 40. Reset to 0.10 or 0 afterwards |
 | Harness | Claude Code only | It is the only harness where completion and cost are measurable today (SubagentStop reads the child transcript). See [harness-matrix.md](../reference/harness-matrix.md#child-end-n5-2026-10-13) |
 | Primary metric | Tokens per completed task, routed versus control, with the token check | What `downshift report` prints |
-| Quality guardrail | Rework rate per group, plus misroutes flagged with `downshift feedback` | Downshifting has a measured quality cost on executable tasks; the pilot has to show whether it turns into rework |
+| Quality guardrail | Rework rate per group | Downshifting has a measured quality cost on executable tasks; the pilot has to show whether it turns into rework |
 | Secondary | `usage_linked`, honored rewrites (`resolved`) | Linkage and provenance |
 | Duration | 2 weeks, 3 or more people | One machine is not a pilot |
 | Stop rule | At least 20 completed tasks per group (the report unlocks); aim for 50+ per group | Below that the report prints `not enough data` and the pilot shows nothing either way |
@@ -45,9 +45,6 @@ usage events) and P3.7 (period comparison), if the numbers are there.
 ## During the pilot
 
 - Work normally. Do not steer which tasks go to subagents.
-- When a routed child clearly failed because its model was too small, mark it:
-  `downshift feedback <id> retry --retry-tier=<TIER> --required-tier=<TIER>`. List pending ids with
-  `downshift feedback list`.
 - Do not set `DOWNSHIFT_NO_ROUTE=1` or pause sessions during the pilot. Those events are excluded
   from the control group because they are not random, so they shrink the sample.
 - Once a week, each participant opens an issue with the
@@ -77,8 +74,7 @@ From [the first measurements](../evidence/subagent-routing-ab-2026-10-15.md); ea
 - Dollars are catalog list prices applied to recorded tokens, not invoice amounts, unless the
   invoice comparison in [billing-comparison-template.md](billing-comparison-template.md) is filled.
 - Rework detection depends on the PostToolUseFailure payload, which has not been captured from a
-  real session yet (GAP-CHILD-FAILURE). The guardrail may undercount; `downshift feedback` is the
-  backstop.
+  real session yet (GAP-CHILD-FAILURE). The guardrail may undercount.
 - The result holds for this team's workload, not for every team.
 - The control group costs money by design, roughly the control share times the saving.
 

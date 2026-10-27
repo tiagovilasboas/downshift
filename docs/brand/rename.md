@@ -82,8 +82,8 @@ Add `downshift doctor` or extend `downshift try --verbose` to print **effective 
 
 1. Replace README hero from [`readme-hero.md`](readme-hero.md).
 2. Rename Python package (optional separate release):
-   - `harness-downshift-orchestration` → `downshift-orchestration` on PyPI
-   - `orchestration/src/harness_downshift_orchestration/` → `downshift_orchestration/`
+   - `harness-downshift-orchestration` → `downshift-orchestration` on PyPI (package removed 2026-10-26)
+   - `orchestration/src/harness_downshift_orchestration/` → `downshift_orchestration/` (directory removed 2026-10-26)
 3. One **migration release note** with copy-paste for hooks (unchanged command names).
 
 ### Phase 5 — Cleanup (v1.0 or +90 days)
@@ -177,7 +177,7 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 | `CHANGELOG.md` | Historical + rename entry |
 | `docs/reference/beta-exit.md`, `docs/design/engineering-loop.md`, `docs/design/graphify-integration.md` | Cross-links |
 | `docs/pt/*.md` | PT docs + attribution footer |
-| `docs/design/capability-router-v2.md`, `docs/design/classifier-shadow.md`, `docs/design/langgraph-orchestration.md` | Technical |
+| `docs/design/capability-router-v2.md`, `docs/design/classifier-shadow.md`, `docs/design/langgraph-orchestration.md` (all removed) | Technical |
 | `benchmark/blind-vitrine.README.md`, `tools/minilm/README.md` | Secondary |
 | `.github/ISSUE_TEMPLATE/*.md` | Templates |
 
@@ -186,7 +186,7 @@ Counts from repo scan (2026-10-06). Use `rg 'harness-downshift'` before release 
 | File | Change |
 |------|--------|
 | `orchestration/pyproject.toml` | `name`, `description` |
-| `orchestration/src/harness_downshift_orchestration/*` | package rename |
+| `orchestration/src/harness_downshift_orchestration/*` (removed) | package rename |
 | `orchestration/tests/test_graph.py` | imports |
 | `orchestration/uv.lock` | regen after rename |
 

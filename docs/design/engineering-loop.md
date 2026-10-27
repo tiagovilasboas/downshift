@@ -41,8 +41,6 @@ and a hook result are separate acceptance evidence. Neither a parser test nor
 ## How to improve routing (community)
 
 1. **Misroute reports** — best contribution. See [CONTRIBUTING.md](../../CONTRIBUTING.md).
-2. **Optional shadow** — `DOWNSHIFT_SHADOW_WEIGHTS` + [classifier-shadow.md](classifier-shadow.md) (observation only).
-3. **Offline train/compare** — `downshift train --from-events`, `downshift benchmark --compare` (does not change the production hook).
 
 Classifier tuning detail: [contrib/classifier.md](../contrib/classifier.md).
 

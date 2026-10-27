@@ -22,7 +22,7 @@ Operational rules for adding docs: [publishing-boundaries.md](publishing-boundar
 Apache 2.0 Downshift **forks the router implementation**. These stay **public**
 and are classified **B** (community / reproducibility), not hidden as C:
 
-- Deterministic signals and scoring (`internal/core/`, `internal/routingv2/`)
+- Deterministic signals and scoring (`internal/core/`)
 - Embedded catalog (`internal/catalog/catalog.json`)
 - Adapter hook shapes (`internal/adapters/`)
 - Tiny **test fixtures** only (`internal/benchmark/testdata/sample.json`, `internal/outcome/testdata/`)
@@ -72,13 +72,11 @@ discipline, velocity, and **ops you keep private** — see
 | `docs/design/router-generalization.md` | Public summary (full study in labs) |
 | `docs/design/classifier-shadow.md`, `docs/design/engineering-loop.md` | Offline improvement (short); full ops in labs |
 | `docs/design/capability-router-v2.md` | Short experimental status |
-| `docs/design/decision-intelligence.md`, `docs/design/langgraph-orchestration.md` | Extension points |
 | `docs/internal/ds-04-codex-observer-contract.md` | Privacy contract |
 | `benchmark/report.md`, `benchmark/eval-private.md` | Published metrics + policy only |
 | `tools/README.md` | Pointer to labs training scripts |
 | `internal/**` (implementation) | Forkable OSS |
 | `.github/ISSUE_TEMPLATE/` | Misroute, stats export, harness |
-| `orchestration/` | Optional planner (LangGraph) |
 | `tests/ds04_observer_contract/` | Privacy tests |
 
 ### C — Competitive / internal (minimize in public clone)
