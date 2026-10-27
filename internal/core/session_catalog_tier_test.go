@@ -23,8 +23,11 @@ const (
 func TestPlanForSession_MidTaskPicksCatalogMidNotListPosition(t *testing.T) {
 	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	d := core.Route("implement the feature flag integration in the billing module", "claude-code", tOpus, cat)
-	if d.Tier != core.TierMid {
-		t.Fatalf("precondition: tier=%s complexity=%s", d.Tier, d.Complexity)
+	// The state the cases below need: a checked mid-tier downshift from the opus
+	// parent. The stub sets the tier, so this confirms the stub reached the
+	// decision with that baseline.
+	if d.Tier != core.TierMid || d.Verdict != core.VerdictDownshift || !d.Checked || d.Baseline.CurrentModel.ID != tOpus {
+		t.Fatalf("precondition: tier=%s verdict=%s checked=%v baseline=%q, want a checked mid downshift from %s", d.Tier, d.Verdict, d.Checked, d.Baseline.CurrentModel.ID, tOpus)
 	}
 	cases := []struct {
 		name    string
