@@ -19,8 +19,10 @@
 //     Decision.Savings stays zero;
 //   - the decision is per spawn: it reads no session list.
 //
-// A profile's Fallback and the policy's BothCritical are not applied here:
-// strain is advice for gates and the note, and never reroutes.
+// Strain (gates.go): a rule whose quota gate fails is dropped; when every
+// provider is critical the requested model is kept and the note warns; a
+// profile's Fallback replaces the profile when its provider is critical. The
+// project tier floor (floor.go) runs last and only raises the tier.
 //
 // Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
@@ -53,6 +55,10 @@ type Input struct {
 	Now      time.Time
 	Risk     []string
 	Catalog  Catalog
+	// Floor is the project tier floor, loaded by the caller; nil applies none.
+	// Class is the classifier class (TRIVIAL..COMPLEX) the floor keys on.
+	Floor *policy.FloorPolicy
+	Class string
 }
 
 // Decide returns the decision and its routing note. The note's Channel is left
@@ -63,6 +69,12 @@ func Decide(in Input) (d core.Decision, note contract.Note) {
 			d, note = failOpen(in)
 		}
 	}()
+	d, note = route(in)
+	return raiseToFloor(in, d, note)
+}
+
+// route is the precedence ladder, the strain gates and the guard.
+func route(in Input) (core.Decision, contract.Note) {
 	if in.Catalog == nil {
 		return kept(in, core.Model{}, contract.TierUnknown, choice{verdict: contract.VerdictKept})
 	}
@@ -77,6 +89,9 @@ func Decide(in Input) (d core.Decision, note contract.Note) {
 	}
 
 	c := resolve(in, requested)
+	if c.tier.Valid() {
+		c = relieveStrain(in, c)
+	}
 	if !c.tier.Valid() {
 		return kept(in, current, requested, c)
 	}

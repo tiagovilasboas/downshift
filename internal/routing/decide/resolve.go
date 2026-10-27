@@ -5,7 +5,6 @@ package decide
 
 import (
 	"slices"
-	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/routing/contract"
 	"github.com/tiagovilasboas/downshift/internal/routing/policy"
@@ -94,23 +93,6 @@ func ruleChoice(in Input) (choice, bool) {
 		return profileChoice(in.Policy, in.Request, rule.Profile, contract.VerdictRule, rule.ID), true
 	}
 	return choice{verdict: contract.VerdictRule, tier: rule.Tier, ruleID: rule.ID}, true
-}
-
-// gatesPass reports whether every gate admits the call. A gate passes while
-// its window is below the limit; a window with no fresh reading passes
-// (missing data allows), and a rate-limited window never does.
-func gatesPass(gates []policy.Gate, readings []contract.Reading, now time.Time) bool {
-	for _, g := range gates {
-		for _, r := range readings {
-			if r.Harness != g.Harness || r.Window != g.Window || !r.Fresh(now) {
-				continue
-			}
-			if r.RateLimited || r.UsedPct >= g.Below {
-				return false
-			}
-		}
-	}
-	return true
 }
 
 // rank orders tiers from cheapest (0); an unknown tier is -1.
