@@ -17,12 +17,6 @@ export function formatPercent(value: number, decimals = 0): string {
   return `${value.toFixed(decimals)}%`;
 }
 
-export function formatUSD(value: number): string {
-  if (value < 0.01) return `$${value.toFixed(4)}`;
-  if (value < 1) return `$${value.toFixed(3)}`;
-  return `$${value.toFixed(2)}`;
-}
-
 export function savedPercent(saving: TokenSaving): { work: number; cache: number } {
   return {
     work: saving.work_tokens > 0 ? (saving.work_saved / saving.work_tokens) * 100 : 0,

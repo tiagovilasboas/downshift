@@ -5,7 +5,6 @@
   import { getSessionState } from './shared/state';
   import { fetchSessions } from './shared/data';
   import type { SessionSummary } from './shared/data';
-  import { CostSaved } from './features/tokens';
   import { CompactorStats } from './features/compactor';
   import { SessionsList } from './features/sessions';
 
@@ -206,10 +205,6 @@
               </div>
             </div>
           </div>
-          
-          {#if session.panel?.cost_saved}
-            <CostSaved cost={session.panel.cost_saved} />
-          {/if}
         </div>
       {/if}
     {:else if activeTab === 'compactor'}
