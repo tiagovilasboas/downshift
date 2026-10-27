@@ -13,6 +13,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 var cat = catalog.Load()
@@ -76,6 +77,7 @@ func (s fixedResolver) IsExplicitOnly(harness, id string) bool {
 // The agent calls a spawn through its MCP server, so the hook sees the prefixed
 // name. It must be routed exactly like the plain name.
 func TestHandle_RoutesMCPPrefixedSpawn(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	for _, name := range []string{"@kirocrew-core/spawn_run", "spawn_run"} {
 		ev := spawnEvent("rename the userId variable to userIdentifier", frontierID)
@@ -219,6 +221,7 @@ func TestHandle_AllowsExplicitOnlyCurrentModel(t *testing.T) {
 // fields (an image generator, for example) is not a subagent spawn and must
 // pass through with no decision and no note, so nothing is logged or blocked.
 func TestHandle_SpawnToolGate(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	const (
 		task   = "rename the userId variable to userIdentifier"

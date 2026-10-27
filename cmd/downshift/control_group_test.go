@@ -15,6 +15,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -74,6 +75,7 @@ func TestControlGroup_NeverRewritesThroughSharedRunner(t *testing.T) {
 }
 
 func TestControlGroup_ZeroDisablesAndRoutedStillRewrites(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	t.Setenv("HOME", t.TempDir())
 	eventLog := filepath.Join(t.TempDir(), "events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)

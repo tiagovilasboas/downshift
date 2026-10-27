@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -28,15 +29,18 @@ func TestRunKiroCrewHook_RecordsAllowAndBlocked(t *testing.T) {
 	cases := []struct {
 		task, wantOutcome string
 		wantRC            int
+		decider           core.Decider
 	}{
-		{"rename the userId variable to userIdentifier", telemetry.OutcomeBlocked, 2},
-		{"look at the logs folder and tell me what you see", telemetry.OutcomeAllow, 0},
-		{"rearchitect the payment system across services", telemetry.OutcomeAllow, 0},
+		{"rename the userId variable to userIdentifier", telemetry.OutcomeBlocked, 2, decidertest.Tier(core.TierSmall)},
+		{"look at the logs folder and tell me what you see", telemetry.OutcomeAllow, 0, decidertest.Keep()},
+		{"rearchitect the payment system across services", telemetry.OutcomeAllow, 0, decidertest.Tier(core.TierFrontier)},
 	}
 	for _, tc := range cases {
 		stdin := `{"tool_name":"spawn_run","tool_input":{"task":"` + tc.task + `","model":"` + frontierID + `"}}`
 		var rc int
+		restore := core.SetDecider(tc.decider)
 		captureStderr(func() { rc = harnessRegistry["kirocrew"].Hook(strings.NewReader(stdin), cmdCat) })
+		restore()
 		if rc != tc.wantRC {
 			t.Fatalf("%q: rc=%d, want %d", tc.task, rc, tc.wantRC)
 		}

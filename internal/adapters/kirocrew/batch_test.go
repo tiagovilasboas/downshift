@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 const trivialTask = "rename the userId variable to userIdentifier"
@@ -28,6 +30,7 @@ func entryJSON(task, model string) string {
 // A batch of two: the first trivial task sits on the frontier tier and must
 // respawn on the small one; the second is already on the small tier.
 func TestHandle_BatchBlocksOnlyTheWrongTierEntry(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	ev := batchEvent("[" + entryJSON(trivialTask, frontierID) + "," + entryJSON(trivialTask, smallID) + "]")
 
@@ -99,6 +102,7 @@ func TestHandle_BatchUnchangedWhenNoRoutableEntry(t *testing.T) {
 
 // A tasks field that is null is absent: the single top-level spawn keeps today's behaviour.
 func TestHandle_NullTasksKeepsSingleSpawn(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	ev := kirocrew.Event{
 		ToolName:  "spawn_run",

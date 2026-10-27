@@ -11,12 +11,14 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // parent_model is a fact from the mod's agent.spawn event. For an inheriting
 // type with no per-call model it is the baseline before the transcript, and it
 // is never marked as a settings guess.
 func TestHandle_ParentModelBeatsEmptyTranscript(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("CLAUDE_CONFIG_DIR", t.TempDir())
 	t.Setenv("ANTHROPIC_MODEL", "opus") // would be the settings guess without parent_model

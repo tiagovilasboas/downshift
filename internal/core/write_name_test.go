@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 func TestModel_WriteName(t *testing.T) {
@@ -45,6 +46,7 @@ func planFor(t *testing.T, caps core.HarnessCapabilities, res core.Resolver) cor
 }
 
 func TestPlan_StrictHarnessWritesNativeName(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	plan := planFor(t, core.ClaudeCodeCaps, cat)
 	if !plan.RewriteModel {
 		t.Fatal("expected a rewrite")
@@ -66,6 +68,7 @@ func TestPlan_StrictHarnessWithoutNativeNameDoesNotRewrite(t *testing.T) {
 
 // A non-strict harness falls back to the id.
 func TestPlan_NonStrictHarnessFallsBackToID(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	caps := core.ClaudeCodeCaps
 	caps.StrictModelName = false
 	plan := planFor(t, caps, noNative{cat})

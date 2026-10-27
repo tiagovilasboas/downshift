@@ -11,10 +11,12 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
 func TestHandleQuotaGovernsRewriteAndPreservesSiblings(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "missing"))
 	now := time.Now()
 	used := 10.0

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 // A confident MEDIUM task on an opus parent must land on the mid-tier model
 // whenever the catalog says one is mid, wherever it sits in the list.
 func TestPlanForSession_MidTaskPicksCatalogMidNotListPosition(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	d := core.Route("implement the feature flag integration in the billing module", "claude-code", tOpus, cat)
 	if d.Tier != core.TierMid {
 		t.Fatalf("precondition: tier=%s complexity=%s", d.Tier, d.Complexity)

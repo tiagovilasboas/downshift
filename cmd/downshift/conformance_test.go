@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -346,16 +347,20 @@ func writeProjectFloor(t *testing.T, dir, tier string) {
 }
 
 // conformanceScenario is one harness-free behaviour. skip names the
-// capability that excuses a harness; it never names a harness.
+// capability that excuses a harness; it never names a harness. decider pins
+// the decision the wire is checked against; nil means the scenario checks
+// the v1 policy itself and runs only in TestHarnessConformance_V1Policy.
 type conformanceScenario struct {
-	name string
-	skip func(caps core.HarnessCapabilities) string
-	run  func(t *testing.T, h conformanceHarness)
+	name    string
+	skip    func(caps core.HarnessCapabilities) string
+	run     func(t *testing.T, h conformanceHarness)
+	decider core.Decider
 }
 
 var conformanceScenarios = []conformanceScenario{
 	{
-		name: "trivial task on the frontier moves to the small tier",
+		name:    "trivial task on the frontier moves to the small tier",
+		decider: decidertest.Tier(core.TierSmall),
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceTrivialTask, model: h.frontier.ID})
@@ -380,7 +385,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "complex task on the small tier moves to the frontier",
+		name:    "complex task on the small tier moves to the frontier",
+		decider: decidertest.Tier(core.TierFrontier),
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceComplexTask, model: h.small.ID})
@@ -393,7 +399,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "right-sized task keeps its model",
+		name:    "right-sized task keeps its model",
+		decider: decidertest.Keep(),
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.small, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceMediumTask, model: h.mid.ID})
@@ -409,7 +416,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "sibling tool-input fields survive the rewrite",
+		name:    "sibling tool-input fields survive the rewrite",
+		decider: decidertest.Tier(core.TierSmall),
 		skip: func(caps core.HarnessCapabilities) string {
 			if !caps.CanRewriteModel {
 				return "harness has no rewrite channel (CanRewriteModel=false)"
@@ -451,7 +459,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "missing session list never rewrites (unless SessionFromCatalog)",
+		name:    "missing session list never rewrites (unless SessionFromCatalog)",
+		decider: decidertest.Tier(core.TierSmall),
 		run: func(t *testing.T, h conformanceHarness) {
 			// No allowlist anywhere: the session file is absent (see
 			// conformanceEnv). Nothing but a listing or the payload supplies
@@ -495,7 +504,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "session without the small tier uses the next session model",
+		name:    "session without the small tier uses the next session model",
+		decider: decidertest.Tier(core.TierSmall),
 		run: func(t *testing.T, h conformanceHarness) {
 			h.session(t, h.mid, h.frontier)
 			res := h.run(t, spawnSpec{task: conformanceTrivialTask, model: h.frontier.ID})
@@ -505,7 +515,8 @@ var conformanceScenarios = []conformanceScenario{
 		},
 	},
 	{
-		name: "session's own small model wins over the catalog default",
+		name:    "session's own small model wins over the catalog default",
+		decider: decidertest.Tier(core.TierSmall),
 		run: func(t *testing.T, h conformanceHarness) {
 			alt := h.alternateSmall()
 			if alt.ID == "" {
@@ -536,6 +547,17 @@ func conformanceEnv(t *testing.T) string {
 // registry. Harness ids come from the registry and core.AllHarnessCaps, never
 // from a literal in a loop.
 func TestHarnessConformance(t *testing.T) {
+	runConformance(t, func(sc conformanceScenario) bool { return sc.decider != nil })
+}
+
+// TestHarnessConformance_V1Policy runs the scenarios that check the v1 policy
+// itself (the project floor) under the default decider.
+func TestHarnessConformance_V1Policy(t *testing.T) {
+	runConformance(t, func(sc conformanceScenario) bool { return sc.decider == nil })
+}
+
+func runConformance(t *testing.T, want func(conformanceScenario) bool) {
+	t.Helper()
 	// Every declared harness must be routable through the registry, and every
 	// registered hook must have conformance data.
 	for _, n := range core.AllHarnessCaps() {
@@ -565,7 +587,13 @@ func TestHarnessConformance(t *testing.T) {
 				t.Fatalf("catalog lacks a tier model for %s (small=%q mid=%q frontier=%q)", id, h.small.ID, h.mid.ID, h.frontier.ID)
 			}
 			for _, sc := range conformanceScenarios {
+				if !want(sc) {
+					continue
+				}
 				t.Run(sc.name, func(t *testing.T) {
+					if sc.decider != nil {
+						decidertest.Use(t, sc.decider)
+					}
 					if sc.skip != nil {
 						if reason := sc.skip(h.caps); reason != "" {
 							t.Skip(reason)

@@ -14,6 +14,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
@@ -61,6 +62,7 @@ func TestHandle_IgnoresNonTaskTools(t *testing.T) {
 }
 
 func TestHandle_FallsBackToPromptField(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := cursor.Event{
 		ToolName: "Task",
@@ -82,6 +84,7 @@ func TestHandle_FallsBackToPromptField(t *testing.T) {
 }
 
 func TestHandle_FallsBackToEventModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := cursor.Event{
 		ToolName:  "Task",
