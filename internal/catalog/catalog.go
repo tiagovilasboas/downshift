@@ -102,6 +102,9 @@ type catalogFile struct {
 	// a user override merges entries, not freshness.
 	PricesAsOf string  `json:"prices_as_of"`
 	Entries    []Entry `json:"entries"`
+	// SessionCandidates maps a harness to the model names it accepts in any
+	// session, least to most capable (see core.CatalogSessionFromCurrent).
+	SessionCandidates map[string][]string `json:"session_candidates"`
 }
 
 // Catalog is the resolved in-memory model store, implementing core.Resolver.
@@ -130,6 +133,8 @@ type Catalog struct {
 	entries []Entry
 	// pricesAsOf: catalogFile.PricesAsOf, empty when absent.
 	pricesAsOf string
+	// sessionCandidates: catalogFile.SessionCandidates.
+	sessionCandidates map[string][]string
 }
 
 // familyEntry pairs a stable family prefix with the model it maps to.
@@ -200,6 +205,7 @@ func applyUserOverride(base *catalogFile, warning io.Writer) {
 		return
 	}
 	base.Entries = merged
+	base.SessionCandidates = mergeSessionCandidates(base.SessionCandidates, override.SessionCandidates)
 }
 
 // maxOpenRouterAllowlistBytes caps the OpenRouter allowlist read.
@@ -326,7 +332,8 @@ func build(f catalogFile) *Catalog {
 		byFamEff:      make(map[string]map[string]map[string]core.Model),
 		entries:       f.Entries,
 
-		pricesAsOf: f.PricesAsOf,
+		pricesAsOf:        f.PricesAsOf,
+		sessionCandidates: f.SessionCandidates,
 	}
 
 	for _, e := range f.Entries {

@@ -39,6 +39,9 @@ type SessionList struct {
 	// Unordered marks a hook availability inventory without a capability order.
 	// Unlike a native quota export, this alone is not quota evidence.
 	Unordered bool
+	// FromCatalog marks a list built from the catalog's session candidates
+	// for a harness whose payload carries none, cut at the current model.
+	FromCatalog bool
 	// NativeAvailability contains provider IDs without an operator capability
 	// order. These candidates require resolver metadata before selection.
 	NativeAvailability bool

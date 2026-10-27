@@ -54,10 +54,12 @@ model the child would otherwise run on, in Claude Code's own order:
    may run Explore on Opus there (subscription, Console, gateway) or keep the main model (Bedrock
    and similar), and a hook cannot tell which.
 
-A model found in the transcript always wins over settings. The session **list** is then inferred from
-that baseline (`core.InferSessionFromCurrent`, `InferSession: true` in `ClaudeCodeCaps`): the catalog
-tiers below it plus the model itself, so downshift can descend and upshift never passes the current
-model without a `session-models.json` list. `DOWNSHIFT_INFER_SESSION=off` disables it.
+A model found in the transcript always wins over settings. Claude Code sends no session **list**, so
+without one from discovery or `session-models.json` it is built from that baseline
+(`core.CatalogSessionFromCurrent`, `SessionFromCatalog: true` in `ClaudeCodeCaps`): one catalog
+`session_candidates` name per tier below it plus the model itself, so downshift can descend and
+upshift never passes the current model. `"session_candidates": {"claude-code": []}` in the user
+catalog turns it off.
 
 ## 3. When the baseline is unknown or guessed
 

@@ -380,6 +380,20 @@ func TestCostPropertySweep(t *testing.T) {
 			}
 		}
 
+		// (b) a catalog-built session never holds an id above the current model.
+		if plan.Session.FromCatalog {
+			cur, ok := costTierOf(t, ccHarness, c.current)
+			if !ok {
+				t.Errorf("(b) catalog session without a catalog current model: %s", c)
+			}
+			for _, id := range plan.Session.IDs {
+				m, ok := costTierOf(t, ccHarness, id)
+				if !ok || m.Tier > cur.Tier {
+					t.Errorf("(b) catalog session id %q (tier %s) above current %q: %s", id, m.Tier, c.current, c)
+				}
+			}
+		}
+
 		// (c) a rewrite always targets a member of the planned session.
 		if plan.RewriteModel && !plan.Session.Contains(plan.Model.ID) {
 			t.Errorf("(c) rewrite target %q not in plan.Session %v: %s", plan.Model.ID, plan.Session.IDs, c)
@@ -411,19 +425,22 @@ func TestCostPropertySweep(t *testing.T) {
 		len(costPrompts), len(cases), unconf, rewrites, gaps)
 }
 
-// TestCostNoInferenceNeverRewrites covers (e): a harness without InferSession
-// keeps an unknown session unknown and never rewrites, whatever the prompt.
+// TestCostNoInferenceNeverRewrites covers (e): a harness without
+// SessionFromCatalog keeps an unknown session unknown and never rewrites,
+// whatever the prompt.
 func TestCostNoInferenceNeverRewrites(t *testing.T) {
 	harnesses := []struct {
 		name string
 		caps core.HarnessCapabilities
 	}{
-		{"claude-code", core.ClaudeCodeCaps},
 		{"cursor", core.CursorCaps},
 		{"codex", core.CodexCaps},
 	}
 	n := 0
 	for _, h := range harnesses {
+		if h.caps.SessionFromCatalog {
+			t.Fatalf("%s unexpectedly declares SessionFromCatalog", h.name)
+		}
 		currents := []string{""}
 		for _, tier := range []core.Tier{core.TierSmall, core.TierMid, core.TierFrontier} {
 			if id := catID(h.name, tier); id != "" {

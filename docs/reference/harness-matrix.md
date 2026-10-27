@@ -30,7 +30,7 @@ rewrite to the child subagent, not just that downshift emitted one.
 
 | harness | plan / build | rewrite honored? | evidence / limit |
 |---|---|---|---|
-| claude-code | paid: Pro / Max / Teams / API | Yes, 2026-10-06 (two spawns; API-reported model in the child transcript) | `updatedInput.model` must be a family name (`haiku`/`sonnet`/`opus`/`fable`); a full id is rejected and blocks the spawn. The catalog `native_name` supplies it. Write-up: `docs/evidence/claude-code-rewrite-honored-2026-10-06.md`. Without `session-models.json` the session is inferred from the current model (downshift only, never above it); a list is needed only to allow upshifts. |
+| claude-code | paid: Pro / Max / Teams / API | Yes, 2026-10-06 (two spawns; API-reported model in the child transcript) | `updatedInput.model` must be a family name (`haiku`/`sonnet`/`opus`/`fable`); a full id is rejected and blocks the spawn. The catalog `native_name` supplies it. Write-up: `docs/evidence/claude-code-rewrite-honored-2026-10-06.md`. The payload carries no session list; without one (payload, discovery or `session-models.json`) the catalog `session_candidates` below the current model stand in for it (`SessionFromCatalog`, downshift only, never above the current model); a list is needed only to allow upshifts. |
 | claude-code | Free | No: no real subagents | Sandboxed, no egress; subagents need paid (README.md:728) |
 | cursor | Free | No: silently discarded | `updated_input.model` ignored, known issue (README.md:734) |
 | cursor | Pro legacy (request-based) | No: silently dropped | Task model takes only `"fast"` (README.md:735) |
@@ -171,10 +171,11 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
 
 Findings from the official docs plus local read-only inspection. Rows say what a
 hook or local source can tell Downshift; anything not listed was not found.
-`InferSession` (HarnessCapabilities) is on only where the current model proves
-access to the tiers below it.
+`SessionFromCatalog` (HarnessCapabilities) is on only where the payload sends no
+session list and every session accepts the catalog `session_candidates` names
+(Claude Code family aliases). A list from the payload or discovery wins.
 
-| harness | current model in hook | available models | quota | session-start hook | InferSession |
+| harness | current model in hook | available models | quota | session-start hook | SessionFromCatalog |
 |---|---|---|---|---|---|
 | claude-code | `SessionStart.model` (optional); the Agent `tool_input.model` when the parent set it; `PostToolUse.tool_response.resolvedModel` | No listing for subscriptions; `availableModels`/`deniedModels` exist only in managed settings; the Models API needs `ANTHROPIC_API_KEY` | statusline `rate_limits.five_hour` / `seven_day` (global, Pro/Max only, after the first response); not per model | `SessionStart` (add context, `CLAUDE_ENV_FILE`) | yes |
 | codex | `model` on every payload; effort only if the parent put `reasoning_effort` in `spawn_agent` | `models_cache.json` (offline; `hide` means not shown in the picker, not unusable); app-server `model/list` is experimental | per meter (`codex`, `premium`), never per model | `SessionStart` can only add context | no |
@@ -182,8 +183,9 @@ access to the tiers below it.
 | antigravity | `modelName` (parent) and `conversationId`; the adapter does not read them yet | `agy --output-format json models` (parent picker); no alias-to-model or pool mapping | `agy -p /usage --output-format json` per account, group and window; not tied to an alias | none (Pre/PostToolUse, Pre/PostInvocation, Stop) | no |
 | kirocrew | none in the payload; `session_id` maps to `~/.kiro/sessions/cli/<id>.json` (`agent_name`, `model_id`, undocumented) | `kiro-cli chat --list-models --format json` (10 models plus `auto`, with `rate_multiplier`) | no supported non-interactive credit source | `agentSpawn` (renamed `SessionStart` in V3); stdout goes to the agent context; any non-zero exit blocks | no |
 
-Consequences: Claude Code is the only harness where the inferred ladder is
-safe; every other harness needs a real list (hook payload, discovery cache or
+Consequences: Claude Code is the only harness where the catalog candidates are
+safe (restored 2026-10-27 after PR #570 removed the inferred ladder and left
+every Claude Code spawn unknown); every other harness needs a real list (hook payload, discovery cache or
 the operator file). Quota stays `unknown` everywhere except through the Claude
 Code statusline bridge and operator imports. Re-verify per release.
 
@@ -612,7 +614,7 @@ acknowledgement, so the Codex row above is not refreshed. See
 - Cursor free/legacy discard: README.md:734-735, README.md:738, README.md:1012-1013
 - Codex flags + honored: README.md:744, README.md:746; evidence 2026-10-02: docs/evidence/codex-rewrite-honored-2026-10-02.md; evolving schema: README.md:373
 - KiroCrew adapter capability and integration limits: [native hook setup](../guides/install.md#kirocrew-policy-mode-through-the-native-kiro-cli-hook), [routing guia](../guides/kirocrew-routing-guide.md), `internal/adapters/kirocrew/kirocrew.go`. A hook invocation counter or direct adapter smoke test does not prove live enforcement or the served child model.
-- KiroCrew harness detection and `SessionEnv: KIRO_SESSION_ID` (PR #559, merged 2026-10-25): [kirocrew-harness-detection.md](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/SPIKE.md), `internal/core/capabilities.go` (`KiroCrewCaps`), `cmd/downshift/session.go` (`envHarness`). The env var lets `envHarness()` attribute `downshift compactor`/`exec` events to `kirocrew`; it is not a hook-payload session id, so the `downshift session` tree still cannot group or pause KiroCrew. The spike lists the model set reported by `kiro-cli chat --list-models` (with `rate_multiplier`); catalog membership for those ids (T4), `InferSession` (T5), `PayloadMarkers` (T2) and `AgentTypeHints` (T7) are open follow-ups in that spike, not shipped, so they stay documented as the matrix shows: `InferSession` no, no payload markers, no type hints.
+- KiroCrew harness detection and `SessionEnv: KIRO_SESSION_ID` (PR #559, merged 2026-10-25): [kirocrew-harness-detection.md](https://github.com/tiagovilasboas/downshift-labs/blob/main/reverse/kirocrew/SPIKE.md), `internal/core/capabilities.go` (`KiroCrewCaps`), `cmd/downshift/session.go` (`envHarness`). The env var lets `envHarness()` attribute `downshift compactor`/`exec` events to `kirocrew`; it is not a hook-payload session id, so the `downshift session` tree still cannot group or pause KiroCrew. The spike lists the model set reported by `kiro-cli chat --list-models` (with `rate_multiplier`); catalog membership for those ids (T4), `SessionFromCatalog` (T5), `PayloadMarkers` (T2) and `AgentTypeHints` (T7) are open follow-ups in that spike, not shipped, so they stay documented as the matrix shows: `SessionFromCatalog` no, no payload markers, no type hints.
 - Vendor hook docs vs adapters (search summaries, 2026-10-11): [vendor-hook-docs](../evidence/vendor-hook-docs-2026-10-11.md)
 - Antigravity observed child, dated build and evidence limits: [native evidence](../evidence/antigravity-executor-ack.md) and [final QA](../evidence/final-gap-qa.md)
 - Grok config-only: README.md:520-531, README.md:691, README.md:1236

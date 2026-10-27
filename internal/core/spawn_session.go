@@ -19,9 +19,15 @@ func (d *Decision) RecordSession(session SessionList, currentModelID string) {
 
 // PlanSession records the session evidence, builds the harness-agnostic rewrite
 // plan for caps, and stamps the credit gate result and the quota status of the
-// proposed model. Adapters then only apply their own wire-format rules to the
+// proposed model. An unknown session on a harness that declares
+// SessionFromCatalog is first built from the catalog candidates (see
+// CatalogSessionFromCurrent); a list learned from the harness always wins.
+// Adapters then only apply their own wire-format rules to the
 // returned plan.
 func (d *Decision) PlanSession(caps HarnessCapabilities, res Resolver, session SessionList, currentModelID string) RewritePlan {
+	if !session.Known && caps.SessionFromCatalog {
+		session = CatalogSessionFromCurrent(d.Harness, currentModelID, res)
+	}
 	d.RecordSession(session, currentModelID)
 	plan := d.PlanForSession(caps, res, session)
 	plan.Session = session

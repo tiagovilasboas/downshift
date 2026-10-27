@@ -419,9 +419,10 @@ func TestHandle_PolicyFloorFailsOpen(t *testing.T) {
 	}
 }
 
-// With no session list the current model proves nothing about the tiers below
-// it: no ladder is inferred, so a trivial task on a frontier parent holds.
-func TestHandle_MissingSessionHoldsWithoutInference(t *testing.T) {
+// Claude Code sends no session list. The catalog's session candidates below
+// the current model stand in for it, so a trivial task on a frontier parent is
+// written to the small family name.
+func TestHandle_MissingSessionUsesCatalogCandidates(t *testing.T) {
 	frontierID := catID(core.TierFrontier)
 	ev := claudecode.Event{
 		ToolName: "Task",
@@ -431,10 +432,10 @@ func TestHandle_MissingSessionHoldsWithoutInference(t *testing.T) {
 		}`),
 	}
 	out, _, d := claudecode.Handle(ev, cat)
-	if out.HookSpecificOutput != nil && out.HookSpecificOutput.UpdatedInput != nil {
-		t.Fatal("no session list must hold: nothing may be written")
+	if m := decodeUpdated(t, out); m == nil || m["model"] != nativeOf(core.TierSmall) {
+		t.Fatalf("no payload list must use the catalog candidates, got %v", m)
 	}
-	if !d.Session.Unknown {
-		t.Fatal("decision must record the session as unknown")
+	if d.Session.Unknown {
+		t.Fatal("decision must record the catalog-built session as known")
 	}
 }
