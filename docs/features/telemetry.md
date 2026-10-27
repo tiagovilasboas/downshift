@@ -63,11 +63,6 @@ Tokens:
   Without routing: 145,000
   With routing: 89,000
   Saved: 56,000 (39%)
-
-Cost estimate:
-  Without routing: $2.90
-  With routing: $1.78
-  Saved: $1.12
 ```
 
 ### Historical Stats
@@ -92,13 +87,13 @@ Downshift maintains a control group for accurate measurement:
 ├─────────────────────┬───────────────────┤
 │   Routed (90%)      │  Control (10%)    │
 │   Model changed     │  No change        │
-│   Savings applied   │  Baseline cost    │
+│   Savings applied   │  Baseline tokens  │
 └─────────────────────┴───────────────────┘
 ```
 
 The control group runs unchanged so you can compare:
-- Actual cost with routing
-- What cost would have been without routing
+- Tokens used with routing
+- Tokens the same work would have used without routing
 
 ### Configure Control Share
 
@@ -131,7 +126,7 @@ The `schema_version` field tracks format changes:
 ```
 
 Version 2 added:
-- `actual_cost_usd` / `baseline_cost_usd` for real pricing
+- `actual_cost_usd` / `baseline_cost_usd` (legacy: read from older lines only, never written now)
 - `decision_intelligence` for DCI metadata
 - `quota_status` for budget integration
 

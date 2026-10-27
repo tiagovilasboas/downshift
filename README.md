@@ -5,7 +5,7 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift — token optimization and model routing for AI coding agents" width="320">
 </picture>
 
-### Compact verbose output. Route subagents to right-sized models. Cut AI coding agent costs.
+### Compact verbose output. Route subagents to right-sized models. Cut AI coding agent token use.
 
 Downshift compacts verbose command output, routes subagents to right-sized models,
 and learns which commands need new compressors — all without an LLM in the loop.
@@ -17,11 +17,10 @@ and learns which commands need new compressors — all without an LLM in the loo
 
 [Get Started](#get-started) · [Features](#features) · [Token Savings](#token-savings) · [Documentation](#documentation)
 
-**Reduce AI coding agent costs without an LLM in the loop.** Downshift is a token optimization
+**Reduce AI coding agent token use without an LLM in the loop.** Downshift is a token optimization
 and model routing tool for AI coding agents — Claude Code, Cursor, Codex, OpenCode,
 Antigravity, and KiroCrew. It compacts verbose command output before it fills the context
-window, routes subagent spawns to right-sized models, and accounts for the LLM API cost you
-actually saved.
+window, routes subagent spawns to right-sized models, and counts the tokens it saved, per harness.
 
 </div>
 
@@ -155,20 +154,20 @@ downshift dci enable
 downshift dci impact MyFunction  # Who calls this?
 ```
 
-### 5. Cost Accounting (v1)
+### 5. Token Accounting (v1)
 
-Local LLM cost tracking: measures what routing actually saves — the difference between
-what you would have paid if every token ran on the requested model and what you actually
-paid. Counts and prices stay on your machine.
+Local token accounting: counts the tokens that ran on a cheaper model than the one requested,
+and the tokens compaction removed from command output. Counts stay on your machine, and no
+figure is converted to money.
 
-```go
-// Saved = C_baseline − C_actual
-// C_actual   = Σ price(model_i, tokens_i)
-// C_baseline = price(requested_model, Σ tokens_i)
+```text
+Routing tokens   = work + cache tokens of child spawns that ran on a cheaper model than requested
+Compactor tokens = (raw bytes − emitted bytes) / 4        (estimate)
+Tokens saved     = routing tokens + compactor tokens
 ```
 
-**Caveats documented:** +15% positive bias when routing to cheaper models (more
-turns inflate the baseline), compaction priced conservatively at input cost once.
+**Caveats documented:** a cheaper child's whole token count counts as saved, with no
+counterfactual for the extra turns it may need; compactor tokens are a bytes-per-4 estimate.
 See [docs/reference/accounting.md](docs/reference/accounting.md).
 
 ---
@@ -327,7 +326,7 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 
 ## FAQ
 
-### How do I reduce token usage and cost in Claude Code, Cursor, or Codex?
+### How do I reduce token usage in Claude Code, Cursor, or Codex?
 
 Install Downshift, run `downshift setup`, and it hooks into your harness. Verbose command
 output is compacted before it reaches the context window, and subagents are routed to
