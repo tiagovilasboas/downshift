@@ -10,6 +10,12 @@ rules, headroom), clean-room; keep the Compactor and DCI as they are; screaming 
 responsibility per domain package; harness-agnostic; skills through the shared `.agents/skills` store; Kiro
 covered through native agent config and launch flags.
 
+**Order (owner decision, 2026-10-26): Claude Code first.** Claude Code is the central harness: v2 is
+delivered and proven there end to end (stage 1), then the other harnesses get their channels (stage 2).
+This keeps the layering rule: the decision (`routing/*`) lives in shared layers from day one and every
+harness computes it; only the *apply* channels arrive per harness. A harness without its channel yet keeps
+today's behaviour and says so in the harness matrix.
+
 Gate for every code card: `make check`, `./examples/run-all.sh`, golden decision tables, the layering rule,
 copyright headers, OS-agnostic paths, no file over 300 lines, tests isolate `HOME` and `DOWNSHIFT_STATE_DIR`.
 Each card is one PR, at most 5 points, mergeable alone. v2 ships behind `DOWNSHIFT_ROUTING=v2` until R9.
@@ -36,17 +42,27 @@ Each card is one PR, at most 5 points, mergeable alone. v2 ships behind `DOWNSHI
 | R12b | Delete shadow stack, part 2: `routingv2` shadow, `decisionintelligence`, gateway shadow; classifier demoted to offline suggester | 3 | R9 | R12a |
 | R13 | Docs: harness matrix, capability matrix, README routing section, install guide, AGENTS.md architecture lines (≤200 lines) | 3 | R9 | R12* |
 
-Total 50 points, 17 cards. Waves (cap 5 active agents including the root):
+Total 50 points, 17 cards.
+
+**Stage 1: Claude Code end to end** (35 points)
 
 | Wave | Cards | Why they do not collide |
 |---|---|---|
 | 1 | R0, R1 | capabilities data vs docs |
 | 2 | R2, R3, R4, R5 | four new packages, no shared files |
-| 3 | R6 | integrates the four; touches the hook runner |
-| 4 | R7, R8a, R8b, R11 | separate commands / writers / telemetry |
-| 5 | R8c, R10 | writers vs skill + setup links |
-| 6 | R9 | flag flip |
-| 7 | R12a, R12b, R13 | disjoint deletions, docs |
+| 3 | R6 | integrates the four; touches the hook runner (Claude Code adapter is the reference) |
+| 4 | R8a, R10 (Claude Code links only: `~/.claude/skills` → `~/.agents/skills`), R11 | agent-definition writer / skill + setup link / telemetry |
+| 5 | R9 for Claude Code (default v2 there; other harnesses stay on v1 until stage 2) | flag flip |
+| 6 | R12a, R12b, R13 (Claude Code sections) | disjoint deletions, docs |
+
+Exit of stage 1: on Claude Code, a declared profile or hint moves an Opus request to the declared tier; risk
+prompts never go small; with nothing declared the requested model is kept; `report`, `session --panel` and the
+Agents panel show the routing note; golden tables green.
+
+**Stage 2: the other harnesses** (15 points), one harness per PR, in this order: KiroCrew (R8b native agent
+config + R7 launch flags + block and retry with the v2 decider), Codex (R8c), OpenCode (R8c), Cursor and
+Antigravity (hook channel with the v2 decider), skill links for each (`.codex`, `.config/opencode`,
+`.gemini`, `.kiro`). R7 (`downshift route`) lands at the start of stage 2: it is the channel for launchers.
 
 ## Out of scope (stays as is)
 
