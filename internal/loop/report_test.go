@@ -46,3 +46,10 @@ func TestBuildReportNoDecisionHasNoRate(t *testing.T) {
 		t.Errorf("rate = %v, want nil when nothing was decided", *r.AcceptanceRate)
 	}
 }
+
+func TestBuildReportEmptyHasEmptySessionList(t *testing.T) {
+	r := BuildReport(nil, "")
+	if r.Sessions == nil {
+		t.Error("Sessions must be an empty slice so JSON prints [] and not null")
+	}
+}

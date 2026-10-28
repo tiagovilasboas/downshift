@@ -98,7 +98,7 @@ func (r *Runner) Run(ctx context.Context) (Result, error) {
 		res.FinalStep = StepAccept
 		if r.cfg.SessionID != "" {
 			_ = telemetry.RecordAcceptance(r.cfg.SessionID, telemetry.AcceptanceUsed, r.cfg.Harness)
-			cascade.ClearSession(r.cfg.SessionID)
+			cascade.ClearTask(r.cfg.SessionID, r.cfg.Task)
 			res.Accepted = true
 		}
 

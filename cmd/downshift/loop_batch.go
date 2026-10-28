@@ -29,6 +29,10 @@ func runLoopBatch(base loop.Config, path string, continueOnError, asJSON bool, o
 		fmt.Fprintf(errw, "loop: %v\n", err)
 		return 2
 	}
+	if err := loop.ValidateBatch(items, base); err != nil {
+		fmt.Fprintf(errw, "loop: %v\n", err)
+		return 2
+	}
 	res := loop.RunBatch(context.Background(), loop.BatchConfig{
 		Items:           items,
 		Base:            base,

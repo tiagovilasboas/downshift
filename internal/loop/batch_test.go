@@ -119,3 +119,26 @@ func TestRunBatchCancelledContextSkipsAll(t *testing.T) {
 		t.Errorf("ran %v, skipped %d", *ran, got.Skipped)
 	}
 }
+
+func TestParseBatchRejectsStrayClosingBracket(t *testing.T) {
+	if _, err := ParseBatch(strings.NewReader(`[{"task":"a"}]]`)); err == nil {
+		t.Fatal("a stray closing bracket after the array must be an error")
+	}
+	if _, err := ParseBatch(strings.NewReader(`[{"task":"a"}]` + "\n")); err != nil {
+		t.Fatalf("trailing whitespace must be fine: %v", err)
+	}
+}
+
+func TestValidateBatch(t *testing.T) {
+	withSensor := []Item{{Task: "a", Sensor: "true"}}
+	noSensor := []Item{{Task: "a", Sensor: "true"}, {Task: "b"}}
+	if err := ValidateBatch(withSensor, Config{}); err != nil {
+		t.Errorf("every item has a sensor: %v", err)
+	}
+	if err := ValidateBatch(noSensor, Config{}); err == nil || !strings.Contains(err.Error(), "item 2") {
+		t.Errorf("item 2 has no sensor: err = %v", err)
+	}
+	if err := ValidateBatch(noSensor, Config{SensorCmd: "true"}); err != nil {
+		t.Errorf("the base sensor covers item 2: %v", err)
+	}
+}

@@ -28,6 +28,7 @@ func runLoop(args []string, out, errw io.Writer) int {
 	cfg.Harness = envHarness()
 	jsonOutput := false
 	batchPath := ""
+	batchSet := false
 	continueOnError := false
 
 	var sensorArgs []string
@@ -56,6 +57,7 @@ func runLoop(args []string, out, errw io.Writer) int {
 			cfg.Model = strings.TrimPrefix(a, "--model=")
 		case strings.HasPrefix(a, "--batch="):
 			batchPath = strings.TrimPrefix(a, "--batch=")
+			batchSet = true
 		case a == "--continue-on-error":
 			continueOnError = true
 		case a == "--json":
@@ -75,6 +77,14 @@ func runLoop(args []string, out, errw io.Writer) int {
 
 	if len(sensorArgs) > 0 {
 		cfg.SensorCmd = strings.Join(sensorArgs, " ")
+	}
+	if batchSet && batchPath == "" {
+		fmt.Fprintf(errw, "loop: --batch needs a file path\n%s\n", loopUsage)
+		return 2
+	}
+	if continueOnError && !batchSet {
+		fmt.Fprintf(errw, "loop: --continue-on-error only applies with --batch\n%s\n", loopUsage)
+		return 2
 	}
 	if batchPath != "" && cfg.Task != "" {
 		fmt.Fprintf(errw, "loop: --batch and --task cannot be combined\n%s\n", loopUsage)

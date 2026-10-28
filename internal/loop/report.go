@@ -32,7 +32,7 @@ type Report struct {
 // outcome count; a session filter, when given, keeps the rest out.
 func BuildReport(events []telemetry.Event, sessionFilter string) Report {
 	bySession := map[string]*SessionReport{}
-	var r Report
+	r := Report{Sessions: []SessionReport{}}
 	for _, ev := range events {
 		if ev.Outcome != telemetry.OutcomeAcceptance {
 			continue

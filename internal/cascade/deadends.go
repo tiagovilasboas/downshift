@@ -176,6 +176,35 @@ func ClearSession(sessionID string) {
 	saveEntries(p, filtered)
 }
 
+// ClearTask removes the failure record of one task in a session and leaves the
+// session's other tasks alone. A batch shares one session, so a task that
+// passes must not erase the recovery state of a sibling that failed.
+func ClearTask(sessionID, taskText string) {
+	fp := TaskFingerprint(taskText)
+	if sessionID == "" || fp == "" {
+		return
+	}
+	p, err := deadEndsPath()
+	if err != nil {
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	unlock := acquireLock()
+	defer unlock()
+
+	entries := loadEntries(p)
+	filtered := entries[:0]
+	for _, e := range entries {
+		if e.SessionID != sessionID || e.Fingerprint != fp {
+			filtered = append(filtered, e)
+		}
+	}
+	saveEntries(p, filtered)
+}
+
 func loadEntries(path string) []DeadEnd {
 	data, err := os.ReadFile(path)
 	if err != nil {

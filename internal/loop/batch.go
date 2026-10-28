@@ -22,7 +22,8 @@ const (
 )
 
 // Item is one entry of a batch file: a task, the sensor that verifies it and
-// optionally the model it runs on. Sensor and Model fall back to the base
+// optionally the model name recorded in the cascade record when it fails (the
+// loop does not switch models). Sensor and Model fall back to the base
 // Config when empty.
 type Item struct {
 	Task   string `json:"task"`
@@ -46,7 +47,7 @@ func ParseBatch(r io.Reader) ([]Item, error) {
 	if err := dec.Decode(&items); err != nil {
 		return nil, fmt.Errorf("parse batch: %w", err)
 	}
-	if dec.More() {
+	if _, err := dec.Token(); err != io.EOF {
 		return nil, errors.New("parse batch: trailing data after the array")
 	}
 	if len(items) == 0 {
@@ -61,6 +62,18 @@ func ParseBatch(r io.Reader) ([]Item, error) {
 		}
 	}
 	return items, nil
+}
+
+// ValidateBatch refuses a batch where a task would run with no sensor. A run
+// with nothing to verify it would pass and be recorded as accepted, so a batch
+// must say how each task is checked, either per item or through the base sensor.
+func ValidateBatch(items []Item, base Config) error {
+	for i, it := range items {
+		if it.Sensor == "" && base.SensorCmd == "" {
+			return fmt.Errorf("batch item %d has no sensor and no --sensor default", i+1)
+		}
+	}
+	return nil
 }
 
 // RunFunc runs one loop. The default is the real Runner; tests inject a fake.

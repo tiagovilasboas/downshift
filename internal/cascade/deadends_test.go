@@ -73,3 +73,28 @@ func TestCascade_StateFileCap(t *testing.T) {
 		t.Errorf("entries count = %d; want cap of <= 100", len(entries))
 	}
 }
+
+func TestCascade_ClearTaskKeepsSiblings(t *testing.T) {
+	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
+
+	RecordFailure("s", "task a", "m", "failed a")
+	RecordFailure("s", "task b", "m", "failed b")
+	RecordFailure("other", "task a", "m", "failed elsewhere")
+
+	ClearTask("s", "task b")
+
+	if _, found := HasRecentFailure("s", "task b", time.Minute); found {
+		t.Error("task b should be cleared")
+	}
+	if _, found := HasRecentFailure("s", "task a", time.Minute); !found {
+		t.Error("task a in the same session must survive ClearTask(task b)")
+	}
+	if _, found := HasRecentFailure("other", "task a", time.Minute); !found {
+		t.Error("another session must be untouched")
+	}
+	ClearTask("", "task a")
+	ClearTask("s", "")
+	if _, found := HasRecentFailure("s", "task a", time.Minute); !found {
+		t.Error("an empty session or task must clear nothing")
+	}
+}

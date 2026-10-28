@@ -78,6 +78,8 @@ func TestRunLoop_Batch(t *testing.T) {
 		{name: "continue on error", body: `[{"task":"a","sensor":"false"},{"task":"b","sensor":"true"}]`,
 			extra: []string{"--iterations=1", "--continue-on-error"}, wantRC: 1, wantOut: "1 passed, 1 failed, 0 skipped"},
 		{name: "bad file", body: `not json`, wantRC: 2, wantErr: "parse batch"},
+		{name: "empty batch path", body: `[{"task":"a","sensor":"true"}]`, extra: []string{"--batch="}, wantRC: 2, wantErr: "needs a file path"},
+		{name: "item without sensor", body: `[{"task":"a"}]`, wantRC: 2, wantErr: "no sensor"},
 		{name: "task flag conflicts", body: `[{"task":"a"}]`, extra: []string{"--task=x"}, wantRC: 2, wantErr: "cannot be combined"},
 	}
 	for _, c := range cases {
@@ -118,5 +120,13 @@ func TestRunLoopReport_Empty(t *testing.T) {
 	}
 	if rc := runLoop([]string{"report", "--bogus"}, &stdout, &stderr); rc != 2 {
 		t.Errorf("unknown arg rc = %d, want 2", rc)
+	}
+}
+
+func TestRunLoop_ContinueOnErrorNeedsBatch(t *testing.T) {
+	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
+	var stdout, stderr bytes.Buffer
+	if rc := runLoop([]string{"--continue-on-error", "--", "true"}, &stdout, &stderr); rc != 2 {
+		t.Fatalf("rc = %d, want 2; stderr: %s", rc, stderr.String())
 	}
 }

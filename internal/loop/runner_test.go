@@ -100,3 +100,16 @@ func TestRunner_AllowlistedSensorPass(t *testing.T) {
 		t.Errorf("expected res.SensorPassed = true")
 	}
 }
+
+func TestRunnerPassKeepsSiblingTaskFailure(t *testing.T) {
+	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
+	cascade.RecordFailure("sess-batch", "task a", "m", "failed a")
+
+	res, err := NewRunner(Config{Task: "task b", SensorCmd: "true", SessionID: "sess-batch", MaxIterations: 1}).Run(context.Background())
+	if err != nil || !res.Success {
+		t.Fatalf("run = %+v, %v", res, err)
+	}
+	if _, found := cascade.HasRecentFailure("sess-batch", "task a", time.Minute); !found {
+		t.Error("a passing sibling task must not erase the failure record of task a")
+	}
+}
