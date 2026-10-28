@@ -4,8 +4,9 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 `downshift loop` is a **sensor retry loop**. It does not plan, write code or
 spawn subagents; the harness (or you) does the work. The loop runs your check,
-records the outcome, and feeds the failure record that the routing cascade
-reads on the next spawn of the same task.
+records the outcome, and keeps a failure record per task. The automatic upgrade
+after a recorded failure was removed on 2026-10-28 (O8): the orchestrator
+decides the next model, so no routing step reads this record.
 
 ## What one run does (`internal/loop/runner.go`)
 
@@ -23,8 +24,7 @@ For each iteration, up to `--iterations` (default 3) and within `--timeout`:
 
 The sensor is re-run unchanged on each iteration, so a retry passes only if
 something outside the loop changed in between (for example, the agent fixed the
-code). The failure record is what lets the next spawn of that task move up a
-tier.
+code). The failure record no longer moves the next spawn up a tier (removed with the cascade on 2026-10-28); the orchestrator chooses.
 
 ## Usage
 

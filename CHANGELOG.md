@@ -9,9 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The orchestrator LLM chooses the model; Downshift applies and measures it (owner decision O8, 2026-10-28).**
+  The decider keeps a pinned model, then applies a declared profile, the first matching declared rule and the
+  orchestrator's tier hint (down only for now); everything else keeps the requested model. The guard still refuses
+  foreign ids and `explicit_only` models and keeps on doubt. Downshift's own code still calls no LLM.
+- `downshift setup` no longer writes `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`: with it, Claude Code overrides the
+  per-call model the orchestrator chose. A value you set yourself is left alone.
+
+### Removed (O8)
+
+- The built-in default agent-type table (N11) and the economy-mode step that read it. `downshift policy economy`
+  still exists and now acts only on declared policy; its removal is pending.
+- The automatic upgrade after a recorded failure (`CASCADE_UPGRADE`).
+- The built-in risk veto in the guard. Protection is now the orchestrator's judgment, guided by the playbook, and
+  tier floors you declare in `policy.json`.
+
 ### Added
 
-- **Default profile table (W7.1):** built-in agent type mapping for Claude Code (`Explore` -> small/Haiku, `claude-code-guide` -> small/Haiku, `statusline-setup` -> small/Haiku; `general-purpose` and `Plan` keep requested model). Table runs as default precedence (level 5), preserved behind explicit project policies and hints, with automatic elevation to mid (Sonnet) when risk signals are detected.
+- `downshift playbook` (`list`, `show`, `edit`, `add`, `remove`, `restore`, `check`): named working rules a delegated
+  worker receives. General always applies; a delegation may name one more set. Shipped: General, Backend, Frontend.
+- The `downshift-orchestrator` skill, installed by `downshift setup`: how to split work and choose model and effort
+  per spawn (it carries the defaults the removed table used to hold).
+- **Default profile table (W7.1):** (removed again by O8, see above) built-in agent type mapping for Claude Code (`Explore` -> small/Haiku, `claude-code-guide` -> small/Haiku, `statusline-setup` -> small/Haiku; `general-purpose` and `Plan` keep requested model). Table runs as default precedence (level 5), preserved behind explicit project policies and hints, with automatic elevation to mid (Sonnet) when risk signals are detected.
 - **Policy init command (W7.2):** `downshift policy init` generates `.downshift/policy.json` with dry-run preview and interactive confirmation gate, exposing the full profile and rule configuration schema.
 - **Economy mode (W7.9):** `"mode": "economy"` in `policy.json` and `downshift policy economy [on|off]` command to shift all agent profiles down one tier within safety boundaries (risk never drops to small, explicit_only preserved).
 - **Autonomous engineering loop (F1.6):** `downshift loop` command running an autonomous BDI loop (`Plan -> Implement -> Sensor -> Cascade -> Accept`) with sensor verification via compactor and automatic failure registration.

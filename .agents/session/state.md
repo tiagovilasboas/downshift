@@ -26,3 +26,8 @@
   - `50f80a0a`: feat(setup): add policy init step with dry run and yes gate (W7.2)
   - `fffde0a3`: fix(routing): keep declared profiles and hint tiers ahead of the default table
   - `9c1a3e62`: feat(routing): add economy mode as policy data (W7.9)
+
+## Estado em 2026-10-28 (O8)
+- Decisão do dono: o LLM orquestrador escolhe agente, provedor, modelo e esforço (como o caminho MCP do Alethe e o padrão Orchestrator-Workers da Anthropic). O Downshift aplica dentro da política declarada e mede. Removidos: tabela N11, escalonamento automático após falha, veto de risco embutido, escrita de `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` no setup.
+- Novo: playbooks de regras de trabalho (`internal/playbook`, `downshift playbook`) e skill `downshift-orchestrator`. O servidor MCP (`downshift mcp serve`) está só especificado.
+

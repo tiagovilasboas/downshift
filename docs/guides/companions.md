@@ -5,8 +5,8 @@ https://github.com/tiagovilasboas/downshift
 
 Downshift is a **suite for optimizing token use in coding agents**. Model
 routing is the **main lever today, not the whole product**: a deterministic
-local hook classifies each subagent spawn and rewrites that child's model and
-effort from the session list. Around the router sit guardrails (doubt never
+local hook applies the orchestrator's model choice for each subagent spawn (bounded by
+your declared policy) and rewrites that child's model and effort from the session list. Around the router sit guardrails (doubt never
 spends money), a project tier floor, a quota and credit gate, session view
 and statusline, telemetry and token reports with a control group, context
 policy from `setup`, vendored mods and documented companions; one sentence
@@ -307,7 +307,7 @@ and the expected tier are enough.
 
 Skills such as `usage-limit-reducer` or `claude-cost-optimizer` read local
 transcripts and suggest, among other rules, "use a cheaper model for simple
-tasks". That is the rule Downshift applies deterministically at spawn time,
+tasks". That is a choice the orchestrator makes at spawn time and Downshift applies,
 so they overlap rather than complement. Their fixed-context advice (smaller
 `CLAUDE.md`, fewer always-loaded tools) is covered by section 3 of the
 [audit skill](../../skills/downshift-audit/SKILL.md). Their dollar figures

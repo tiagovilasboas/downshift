@@ -4,7 +4,7 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-Status: **Proposal, 2026-10-26; updated 2026-10-27.** Execution order and the owner decisions of 2026-10-27 (O1 to O7) are in the [MVP plan](mvp-plan.md). Remaining open items are in section 9.
+Status: **Proposal, 2026-10-26; updated 2026-10-27 and 2026-10-28.** Execution order and the owner decisions (O1 to O8) are in the [MVP plan](mvp-plan.md). O8 (2026-10-28) changes who decides the model: the orchestrator LLM chooses and Downshift applies and measures; the sections below are updated to match. Remaining open items are in section 9.
 
 Scope: the product on `main` and the routing v2 plan in [routing-v2](../../design/routing-v2.md). The Compactor and DCI are out of scope, as they are there. This plan contains no market size, price, user count or revenue figure. None is in the repository, and none is invented here.
 
@@ -32,13 +32,14 @@ The usable lever is narrow: routing can only lower a request that asks for Opus.
 - **P1 Clean room.** The clean-room behavioural analysis of Alethe (kept outside the repository, read at Alethe commit 17acb090) is the learning base. No Alethe code, prompt or schema is copied. Alethe is AGPL-3.0.
 - **P2 Tokens, never dollars.** Savings are reported as tokens per harness: tokens the Compactor avoided, tokens routing moved to a smaller model, and quota used. No dollar figure is computed or shown (owner decision O1, 2026-10-27). Routing reads quota, never cost.
 - **P3 Setup like Alethe, in Downshift's form.** A declared policy (profiles, ordered rules, quota gates, thresholds) written by one setup command; a deterministic decision in code; a routing note on every decision.
+- **P5 The LLM chooses (O8, 2026-10-28).** The orchestrator LLM chooses agent, provider, model and effort for each delegation, as in the Alethe MCP path and in Anthropic's Orchestrator-Workers pattern. Downshift applies the choice within the user's declared policy and measures it. No built-in tier table, no automatic upgrade, no built-in risk floor.
 - **P4 Keep only what serves this product.** Drop the Tauri UI, personas, prompt rule-sets, pricing UI, long-lived orchestrator shells, steering and approvals. A batch plan runner with one-shot workers is in scope (A1, stage 4 of the MVP plan).
 
 P1 and P3 are the header and section 2 of [routing-v2](../../design/routing-v2.md) and the [routing-v2 task README](../tasks/2026-10-26-routing-v2/README.md). P2 is routing-v2 section 9. P4 is only partly reflected: the README's out-of-scope list keeps worker supervision and experiments out, but names none of the dropped Alethe features, so P4 is not yet written in any repository doc.
 
 ## 3. Value proposition and evidence
 
-**Promise:** on a declared policy, Downshift moves delegated work to a smaller tier when the guard allows it, records why in a routing note, and never sends a risk prompt to a small model.
+**Promise (O8):** Downshift applies the model the orchestrator chose, inside the policy the user declared, records why in a routing note, and reports the tokens that moved. It no longer keeps a risk prompt off the small tier by itself: that judgment belongs to the orchestrator, guided by the playbook, and a project can declare a tier floor in `policy.json`.
 
 | Claim | Figure | Level | Source |
 |---|---|---|---|
@@ -69,14 +70,14 @@ The free layer is the distribution: the binary, the harness integrations and the
 
 **Alethe** (AGPL-3.0, Tauri desktop app), from the clean-room analysis:
 
-- On its MCP path, the planner LLM (a Claude Code or Codex session) picks agent, model and effort by default. Deterministic rules (roles, rules with quota gates) fire only when the planner names a role or sends a kind.
+- On its MCP path, the planner LLM (a Claude Code or Codex session) picks agent, model and effort by default. Deterministic rules (roles, rules with quota gates) fire only when the planner names a role or sends a kind. Downshift now has the same shape (O8): the orchestrator chooses, and declared rules apply only to what it names.
 - Workers on the MCP path are Claude and Codex. The skill path also runs Kimi, Antigravity and custom CLIs.
 - Vendor usage readings are polled by the UI every five minutes, partly from other tools' credential files. The default is advisory ("notify, do not reroute"). Opt-in auto-switch is still roadmap. Downshift reads native snapshots only and acts on them: simple spawns go down near a limit, and the plan runner picks the provider with headroom.
 - Personas and Kiro are not built.
 
 **Downshift's position:**
 
-- **Deterministic.** The decision is code. No LLM is in the routing loop.
+- **The orchestrator chooses (O8).** The choice is the orchestrator LLM's. Downshift's code applies it deterministically and runs no LLM of its own.
 - **Harness-agnostic.** One decider in shared layers. Adapters only parse the payload and declare capabilities (the layering rule in AGENTS.md). Seven harness entries; Claude Code is the only one "Completed".
 - **Fail-open.** 1 MiB input cap, 2 s read, 1.5 s deadline; a panic leaves the spawn unchanged.
 - **Prompt-free telemetry.** Events hold enums, tiers and token counts, never task text or paths.
@@ -92,7 +93,7 @@ Alethe is broader: a desktop orchestrator with worktrees, approvals and long-liv
 - **Gate per routing card.** `make check`, `./examples/run-all.sh`, golden decision tables, copyright headers, no file over 300 lines, tests that isolate `HOME` and `DOWNSHIFT_STATE_DIR` (routing-v2 README).
 - **Clean-room cost.** P1 limits how routing v2 is written. The analysis sits in a scratch location, which is not a durable home (D6).
 - **Harness drift cost.** Each harness has its own hook payload and version. One upstream change (#570) removed every Claude Code rewrite for subscription users.
-- **Runtime cost.** The decision uses no LLM tokens. The parent's hint is a short enum prefix.
+- **Runtime cost.** Downshift makes no LLM call. The orchestrator's choice costs what the orchestrator already spends; the hint is a short enum prefix.
 - **Not measured:** maintainer hours and infrastructure spend. No figure is recorded here.
 
 ## 7. Risks and mitigations
@@ -101,7 +102,7 @@ Alethe is broader: a desktop orchestrator with worktrees, approvals and long-liv
 |---|---|---|
 | Harness API drift (the #570 class) | #570 removed the session list; 0 Claude Code rewrites for subscription users (E1, E2) | Candidate sets become `HarnessCapabilities` data (routing-v2 R0). A shared conformance test drives the same 8 scenarios through every hook. Golden decision tables. |
 | Vendor usage readings | GAP-CLAUDE-QUOTA: statusline `rate_limits` not yet seen live; Cursor export blocked on 3.24.9 | Native snapshots only, with the 1 h stale grace in the [quota guide](../../guides/quota.md). Missing readings pass. No undocumented endpoint as a hard dependency. |
-| Quality regression | Blind-set tier accuracy 42% to 53%; a small task called mid on 70% to 85% of small items (E4) | No tier change ships without matched-rigor evidence: acceptance suite and an A/B like the four-arm battery. The guard keeps risk prompts off the small tier. Declared rules replace regex inference. |
+| Quality regression | Blind-set tier accuracy 42% to 53%; a small task called mid on 70% to 85% of small items (E4) | No tier change ships without matched-rigor evidence: acceptance suite and an A/B like the four-arm battery. The orchestrator's judgment, guided by the playbook, replaces the built-in risk floor (O8); a project can declare a tier floor. Declared rules replace regex inference. |
 | Claims drift from evidence | The "last 30 days" label does not match the source's date span (D1); 73% of rewrite rows were no-ops | Every number carries its level. Count from-to changes and honored rewrites, never verdicts. No saving claim before v2 runs. |
 | Headroom ceiling | 76% of Claude Code spawns already on haiku or sonnet (E1) | Describe the Opus-request case honestly. Measure the share of Opus-requested tokens that move. |
 | Single-operator evidence | Every E1 and E3 figure comes from one machine | Stage 1 evidence from more machines through voluntary `downshift report` output. No telemetry leaves the machine by default. |
@@ -113,7 +114,7 @@ Alethe is broader: a desktop orchestrator with worktrees, approvals and long-liv
 
 - **M1 Moved child-token share, Claude Code.** Child tokens whose honored final model is a smaller tier than requested, over all child tokens. Baseline: 0 on `main` after #570 (E1); 4.1% under the old inferred ladder (E1, window to fix).
 - **M2 Tokens per accepted task, acceptance suite.** Tokens per accepted run, reported with the acceptance count, under the same rigor in every arm. Baseline: 24.1% fewer tokens per accepted run than opusplan, on mechanical tasks (E3, 12 accepted per routed arm).
-- **M3 Guard integrity.** Spawns with risk vocabulary that moved to the small tier. Target 0. This is a gate, not a goal.
+- **M3 Risk exposure (O8).** Spawns with risk vocabulary that ran on the small tier. Reported, not gated: there is no built-in floor any more, so the owner reads this as the residual risk of the orchestrator's choice and declares a floor if it is too high.
 - **M4 Routing-note coverage.** Share of decisions that carry a routing note. Target 100%.
 - **M5 Acceptance.** Acceptance rate per arm. It must not fall below the requested-model arm.
 - **M6 Token economy per harness.** Tokens the Compactor avoided and tokens moved to a smaller model, reported in separate columns per harness, never summed and never converted to dollars.

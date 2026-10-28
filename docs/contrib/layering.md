@@ -8,8 +8,8 @@ adapter, hook, command or policy.
 
 | Layer | Where | Holds |
 |---|---|---|
-| Classification | `internal/classify` | Regex class, signals, language guard, risk floor. No tier and no harness |
-| Policy | `internal/core` | `Route`, `TierOf`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent`, `CanWriteSessionID`), self-check, `HarnessCapabilities`. Calls `classify`. Imports `fuse`, `quotamodel` and `session`. |
+| Classification | `internal/classify` | Regex class, signals, language guard, risk categories (telemetry, floors the user declares and DCI; not a decider since O8, 2026-10-28). No tier and no harness |
+| Policy | `internal/core` | `Route` (calls the decider, which applies the orchestrator's choice within the declared policy), `TierOf`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent`, `CanWriteSessionID`), self-check, `HarnessCapabilities`. Calls `classify`. Imports `fuse`, `quotamodel` and `session`. |
 | Quota types | `internal/quotamodel` | Pure evidence: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O |
 | Session list | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed: `core` imports `session`; `session` must not import `core` |
 | Semantic boost policy | `internal/fuse` | Landed. Raise-only boost, including the no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper |

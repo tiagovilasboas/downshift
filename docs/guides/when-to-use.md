@@ -2,7 +2,7 @@
 
 Downshift gives your coding agent the right model and less noise, with no extra AI call. It runs locally, hooks into your coding harness, and rests on three pillars, in this order:
 
-1. **Model routing per subagent.** A right-sized model and effort for each spawn; when unsure, your model stays. Implemented; honored on Claude Code (Completed), inferred on Codex and Cursor (Functional).
+1. **Model delegation per subagent.** The orchestrator chooses model and effort for each spawn; Downshift applies the choice within your declared policy, and when unsure your model stays. Implemented; honored on Claude Code (Completed), inferred on Codex and Cursor (Functional).
 2. **The Compactor** (`downshift compact`). Shorter output from allowlisted commands, exit code kept, failures left raw. Implemented, on by default. Automatic rewrite is Claude Code only; elsewhere the agent runs `downshift compact -- <command>`.
 3. **DCI.** Opt-in; the agent reads only the code a change touches. Implemented (v0.4); bytes and latency measured, answer quality not measured.
 
@@ -13,7 +13,7 @@ Every harness with an adapter gets every feature, computed in shared layers. **C
 ## Use Downshift when
 
 - You run **agentic coding sessions** where subagents inherit the session’s most expensive model.
-- You want **rule-based routing** (classifier + catalog policy) with **no LLM in the routing loop**.
+- You want **declared policy** (profiles, rules, floors) bounding the orchestrator's model choices, with **no LLM call in Downshift's own code**.
 - You need **offline, keyless tier selection** for hooks: classify on CPU, pick model from your catalog, rewrite `updatedInput` before the child starts.
 - You care about **testability**: `downshift try`, [benchmark/report.md](../../benchmark/report.md).
 - You want **local telemetry** (`events.jsonl`) and explicit training labels (`--required-tier`), not a hosted analytics product.
@@ -26,7 +26,7 @@ Every harness with an adapter gets every feature, computed in shared layers. **C
 | **Hosted model marketplace** and billing in one dashboard | A hosted model API from your provider | Downshift does not proxy traffic or add a provider markup layer. |
 | **Compress what the agent reads** (tool output, logs, files) in the request path | A compression proxy (a companion, detected and recorded) | The Compactor shortens the output of allowlisted commands (it wraps every `git` subcommand and the listed test and build families), but a hook cannot replace an arbitrary tool result; a proxy can. Downshift detects and records a companion, never wraps it. |
 | **One model for everything** in a simple script | Direct provider SDK | No spawn delegation → little value from subagent routing. |
-| **LLM decides which model to use** | Router products that call a model for routing | Downshift deliberately avoids that on the hot path. |
+| **A separate model call that picks the model** | Router products that call a model for routing | Downshift adds no such call. The orchestrator you already run chooses the model; Downshift applies it, bounds it with your policy, and measures. |
 
 ## Downshift + gateways and compressors (complementary)
 

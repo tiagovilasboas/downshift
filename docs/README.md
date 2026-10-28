@@ -71,7 +71,7 @@ Markdown file names under `docs/` are lowercase kebab-case; only names a tool re
 
 ## Domain 1: Subagent Model Routing & Guardrails
 
-The subagent routing domain provides deterministic model selection for delegated tasks. When a coding agent delegates to a subagent (`Agent`, `Task`, `spawn_agent`, `invoke_subagent`), Downshift evaluates task signals, applies a monotonic semantic boost, enforces safety guardrails (R1–R9: holding unconfident downshifts, maintaining risk floors), validates session model allowlists and quota availability, and emits updated tool inputs (`model` and `reasoning_effort`). The hot path runs in-process with zero network, zero LLMs, and zero prompt storage, failing open on any timeout.
+The subagent routing domain applies the orchestrator's model choice to delegated tasks (owner decision O8, 2026-10-28). When a coding agent delegates to a subagent (`Agent`, `Task`, `spawn_agent`, `invoke_subagent`), the orchestrator has already chosen the model and effort. Downshift keeps a pinned model, applies a declared profile, the first matching declared rule or the orchestrator's tier hint (down only for now), refuses ids the catalog does not know and `explicit_only` models, and emits the updated tool input (`model` and `reasoning_effort`). It keeps the requested model on doubt. There is no built-in risk floor or default table any more. The hot path runs in-process with no network, no LLM call of Downshift's own and no prompt storage, failing open on any timeout.
 
 | Doc | Type | Topic |
 |-----|------|-------|

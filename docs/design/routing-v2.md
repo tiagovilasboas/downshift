@@ -2,7 +2,7 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-Status: **Proposed** (owner review). Date: 2026-10-26. Roadmap and task cards:
+Status: **Proposed** (owner review); **superseded in part by O8 (2026-10-28)**, see the section at the end. Date: 2026-10-26. Roadmap and task cards:
 [`../internal/tasks/2026-10-26-routing-v2/README.md`](../internal/tasks/2026-10-26-routing-v2/README.md).
 Inputs: a read-only diagnosis of today's routing (`origin/main` 800a8e4e) and a clean-room behavioural
 analysis of the Alethe orchestrator (AGPL-3.0, read only; no code, prompt or schema copied).
@@ -202,3 +202,23 @@ supervision (an orchestrator's job, §3 of the tasks out-of-scope list).
 Measurement follows the cookbook's method: per-delegation usage from the child-end events, compared with a
 rigor-matched control. A run where the parent did not delegate paid a frontier round trip for nothing; the
 routing note records `delegated=false` for that, and the report counts it.
+
+## 12. Superseded by O8 (2026-10-28)
+
+Owner decision O8: the orchestrator LLM chooses agent, model and effort; Downshift applies the choice, enforces
+the user's declared policy and measures. Sections 1 to 11 stay as the historical design. Where they disagree
+with this section, this section wins.
+
+| Section above | Status |
+|---|---|
+| §2 precedence | Now: a pinned model is kept; a declared profile; the first matching declared rule; the orchestrator's hint, **down only for now** (moving up is specified, not built); else keep the requested model |
+| §2 guard: risk floor | **Removed.** The protection is the orchestrator's judgment, guided by the `downshift-orchestrator` playbook skill, plus tier floors the user declares in `policy.json`. Residual risk: with no declared floor, nothing stops a risky task from going small |
+| §2 guard: never widen | Kept. The guard now refuses only a foreign id or an `explicit_only` model, and keeps on doubt |
+| Built-in default agent-type table (N11) | **Removed.** Its content became guidance in the playbook skill |
+| Automatic upgrade after a recorded failure | **Removed.** The orchestrator decides the next model |
+| Economy mode on built-in types | **Removed** (no built-in rows to act on); `policy economy` still exists, its removal is pending |
+| §8 "no LLM in the hook", "risk never goes small" | Read as: Downshift's own code never calls an LLM and the orchestrator's choice is applied deterministically; "risk never goes small" no longer holds |
+| Classifier | Telemetry, key of user-declared floors and DCI input; not a decider |
+
+Added by O8: playbooks (`downshift playbook`, implemented) and the `downshift-orchestrator` skill installed by
+`downshift setup` (implemented); the MCP delegation server `downshift mcp serve` (specified, not built).

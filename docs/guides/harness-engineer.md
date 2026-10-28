@@ -243,6 +243,8 @@ Ver: [`docs/design/architecture.md`](../design/architecture.md)
 
 ## Fluxo de Decisão
 
+> Decisão O8 (2026-10-28): o orquestrador (LLM) escolhe o modelo; o Downshift aplica a escolha dentro da política declarada em `policy.json`. O diagrama abaixo descreve o fluxo anterior (classificador e piso de risco embutido, removidos em 2026-10-28); o piso de risco agora só existe se o projeto o declarar.
+
 ```
 Prompt do usuário
        │

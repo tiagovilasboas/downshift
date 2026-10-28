@@ -2,7 +2,7 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-Downshift provides deterministic subagent routing governed by local policy files (`.downshift/policy.json`).
+The orchestrator chooses each subagent's model; Downshift applies that choice deterministically within the policy you declare in local policy files (`.downshift/policy.json`): profiles, ordered rules, quota gates and tier floors. The built-in risk floor was removed on 2026-10-28 (O8); declare a floor here if a project needs one.
 
 ## Initializing Project Policy
 

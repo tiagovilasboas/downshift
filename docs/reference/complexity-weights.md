@@ -1,6 +1,6 @@
 # Complexity weights and model choice
 
-How Downshift scores a task and turns that score into a model. The weights
+How Downshift scores a task. Since O8 (2026-10-28) the score is **telemetry and the key of floors the user declares**; the orchestrator chooses the model, and the built-in risk floor described below was removed. The tier mapping here is the pre-O8 behaviour. The weights
 are harness-agnostic. The harness only chooses which model id represents the
 tier, and whether the rewrite is applied.
 
@@ -86,7 +86,7 @@ Examples (80+ word briefs unless the word count says otherwise):
 |---|---|---|
 | Background names the architecture and a consensus protocol; `Task: rename cnt to count in summary.go` | COMPLEX, confident | TRIVIAL, confident (downshift applied) |
 | Same background; `Task: add a verbose flag to the stats command` | COMPLEX, confident | COMPLEX, unconfident (held) |
-| Background names JWTs and refresh tokens; `Task: rename fmtTok to formatToken` | COMPLEX, unconfident | MEDIUM, unconfident (risk floor; no write below the requested model) |
+| Background names JWTs and refresh tokens; `Task: rename fmtTok to formatToken` | COMPLEX, unconfident | MEDIUM, unconfident (risk lift; classification only, no routing effect since O8) |
 | `Task: rewrite the replication layer and migrate the slots` | COMPLEX, confident | unchanged |
 | No marker; one sentence names the architecture, then `Rename the field amount to amountCents …` | COMPLEX, unconfident | unchanged (imperative extraction keeps the nudge: 3 against 2) |
 | 65 words on one line: background names the architecture, a redesign, the migration plan and concurrency; `… in scope here. Task: rename the variable totalAmt to totalAmount …` | COMPLEX, confident | TRIVIAL, confident (downshift applied) |
@@ -124,7 +124,7 @@ cannot create COMPLEX without regex evidence. Turn it off with `DOWNSHIFT_MINILM
 
 English and Portuguese are covered by the signal and risk rules. Portuguese risk
 terms include permission, privilege, security, injection and personal-data terms;
-the risk floor is shared by every harness.
+the risk categories are shared by every harness. (Since O8, 2026-10-28, they feed telemetry and the floors a project declares; there is no built-in floor.)
 
 The language guard (`internal/core/lang_guard.go`) detects unsupported-language
 indications before a confident routing change can be applied. It looks for distinct
@@ -206,7 +206,7 @@ Grok config). It is the same mapping everywhere.
 
 ## How the harness picks the model
 
-The weights stop at the tier. The model id comes from the operator's session
+The weights stop at the tier (pre-O8: the tier the router chose; now the tier the orchestrator chose or your policy declared). The model id comes from the operator's session
 list for that harness, ordered from least to most capable
 (`~/.downshift/session-models.json`). Downshift picks the listed model whose
 catalog tier matches the decision. It does not invent an id that is not on

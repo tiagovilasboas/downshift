@@ -41,6 +41,10 @@ checks (computacional, architecture fitness / behaviour).
 
 Claude Code often spawns a Task without `tool_input.model`; the child then inherits the harness default (usually the parent's model). The router has no current model to compare against (`verdict: UNKNOWN`), so it applies guardrails **R6** (`R6_UNCONFIDENT_UNKNOWN_SMALL`), **R9** (`R9_UNCONFIDENT_UNKNOWN_MID`) and **R7** (`R7_UNCONFIDENT_UNKNOWN_FRONTIER`):
 
+> **O8 (2026-10-28).** The rules R1 to R9 below belong to the earlier router. The routing decider no longer passes
+> its decisions through them; they run only in the older operator tier-floor path (`RaiseTier`). The built-in risk
+> floor named here was removed. The text is kept as the record of that behaviour.
+
 - confident classification → the recommended model is written (any tier);
 - unconfident classification with a **mid** recommendation → not written (R9), unless a deterministic rule lifted it (risk floor, an opted-in NB upshift, an operator tier floor). A prompt with no recognised signal falls to MEDIUM by default, so writing mid over the harness default could move a task up for no reason;
 - unconfident classification with a **small** recommendation → not written (R6); the event records `safe_verdict: OK` and `corrections: ["R6_UNCONFIDENT_UNKNOWN_SMALL"]`;

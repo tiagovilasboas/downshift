@@ -10,9 +10,10 @@ throughout the session.
 - **Name:** Downshift
 - **Author:** Tiago Vilas Boas
 - **Repository:** https://github.com/tiagovilasboas/downshift
-- **Purpose:** Deterministic subagent model router. Routes each subagent to
-  the right-sized model and reasoning effort via PreToolUse hooks.
-  Zero LLM in the routing loop.
+- **Purpose:** Applies the orchestrator's model choice to each subagent via
+  PreToolUse hooks (owner decision O8): the orchestrator LLM chooses model and
+  effort, Downshift applies it within the user's declared policy and measures
+  the result. Downshift's own code never calls an LLM.
 
 ---
 

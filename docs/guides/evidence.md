@@ -165,6 +165,11 @@ decisions but not usage or ends ([harness-matrix.md](../reference/harness-matrix
 
 ## Three saving scenarios and what each must prove
 
+> **O8 (2026-10-28).** The orchestrator now chooses the model; Downshift applies it within the declared policy. The
+> built-in risk floor (R5 below), the automatic upgrade after a failure and the classifier-driven tier pick were
+> removed. The measured trials in this guide ran on the pre-O8 router and are kept as the record of that behaviour;
+> they do not describe the product today. Re-measure with `downshift report` before quoting a saving.
+
 The objective is one sentence: minimise cost per task completed correctly, with safety and developer experience
 preserved. It is never "pick the cheapest". The guardrails in `internal/core/selfcheck.go` (`Check`) encode that:
 R1 holds an unconfident downshift, R2 any downshift of a COMPLEX task, R5 any downshift of a task that touches a risk
@@ -196,7 +201,7 @@ has named a model. "Shown by" names a test or an evidence file; a claim with nei
 
 | Claim | Against | Shown by | Status |
 |---|---|---|---|
-| Acts at delegation time, per spawn, from the task text, before the request leaves the harness | `opusplan` decides once per session mode; a gateway decides per request, after the harness chose | `PreToolUse` on `Agent\|Task` in `internal/adapters/claudecode/claudecode.go`, shared `runHookAdapter` in `cmd/downshift/hookrun.go`, `cmd/downshift/hook_e2e_test.go`; A/B b5: 19 of 56 spawns rewritten under a Sonnet session | Shown |
+| Acts at delegation time, per spawn, on the orchestrator's choice (pre-O8: from the task text), before the request leaves the harness | `opusplan` decides once per session mode; a gateway decides per request, after the harness chose | `PreToolUse` on `Agent\|Task` in `internal/adapters/claudecode/claudecode.go`, shared `runHookAdapter` in `cmd/downshift/hookrun.go`, `cmd/downshift/hook_e2e_test.go`; A/B b5: 19 of 56 spawns rewritten under a Sonnet session | Shown |
 | Harness-honest observation: emitted, honored and used are three records (`rewrite_emitted`; `resolved` with `rewrite_honored`; `usage`), and a refuted rewrite saves nothing | A gateway sees the model named in each request, not which spawn it belongs to or whether the harness applied a rewrite | [claude-code-rewrite-honored-2026-10-06.md](../evidence/claude-code-rewrite-honored-2026-10-06.md) (two spawns); [billing-gap-audit.md](../evidence/billing-gap-audit.md) (5 of 5 linked records matched); `TestAggregate_RefutedRewriteSavesNothing`, `TestCountInferredHonored_RefutedBeatsLaterSpawn` in `internal/telemetry/refuted_inferred_test.go` | Shown on Claude Code. Codex honored is inferred (2026-10-02), Cursor unconfirmed (2026-10-10); other harnesses record decisions only ([harness-matrix.md](../reference/harness-matrix.md)) |
 | Per-spawn guardrails: R1–R9, risk floor, `explicit_only`, quota gate; a held decision changes nothing | `opusplan` has none; gateway fallbacks fire on errors and quotas, not on task risk or classifier confidence | `internal/core/selfcheck_test.go`, `cost_safety_invariants_test.go`, `risk_downshift_test.go`; [hardening-audit-2026-10-15.md](../evidence/hardening-audit-2026-10-15.md) (23 regression tests fail on the base commit); A/B b6: 2 upshift and 1 downshift verdicts held | Shown |
 | Project tier floors: `.downshift/policy.json` by class and by risk, raise-only, applied by the shared runner for every harness | Neither `opusplan` nor a gateway reads a per-project floor from the repository | `internal/policyfile/policyfile_test.go`, `TestHookE2E_ProjectFloorThroughSharedRunner` (`cmd/downshift/policy_floor_e2e_test.go`), `TestRunKiroCrewHook_ProjectFloorApplies`; counted as `policy_floor` in `stats --export` | Shown by tests; no dated evidence file records a floor firing on a real project |

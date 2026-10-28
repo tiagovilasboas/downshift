@@ -5,10 +5,11 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift — token optimization and model routing for AI coding agents" width="320">
 </picture>
 
-### Compact verbose output. Route subagents to right-sized models. Cut AI coding agent token use.
+### Compact verbose output. Let the orchestrator pick each subagent's model. Cut AI coding agent token use.
 
-Downshift compacts verbose command output, routes subagents to right-sized models,
-and learns which commands need new compressors — all without an LLM in the loop.
+Downshift compacts verbose command output, applies the model the orchestrator chose for each
+subagent (bounded by your policy), and learns which commands need new compressors. Its own code
+never calls an LLM.
 
 [![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-868A90.svg?labelColor=0A0A0A)](LICENSE)
@@ -17,10 +18,11 @@ and learns which commands need new compressors — all without an LLM in the loo
 
 [Get Started](#get-started) · [Features](#features) · [Token Savings](#token-savings) · [Documentation](#documentation)
 
-**Reduce AI coding agent token use without an LLM in the loop.** Downshift is a token optimization
-and model routing tool for AI coding agents — Claude Code, Cursor, Codex, OpenCode,
+**Reduce AI coding agent token use, with no LLM call in Downshift's own code.** Downshift is a token
+optimization and model delegation tool for AI coding agents — Claude Code, Cursor, Codex, OpenCode,
 Antigravity, and KiroCrew. It compacts verbose command output before it fills the context
-window, routes subagent spawns to right-sized models, and counts the tokens it saved, per harness.
+window, applies the orchestrator's model choice for each subagent within the bounds you declare,
+and counts the tokens it saved, per harness.
 
 </div>
 
@@ -75,8 +77,8 @@ downshift setup
 downshift doctor
 ```
 
-That's it. On Claude Code, Downshift now rewrites allowlisted commands and routes subagents
-automatically. Other harnesses differ; see [Harness Support](#harness-support-claude-code-cursor-codex-and-more).
+That's it. On Claude Code, Downshift now rewrites allowlisted commands and applies the orchestrator's subagent model choices
+within your policy. Other harnesses differ; see [Harness Support](#harness-support-claude-code-cursor-codex-and-more).
 
 <details>
 <summary>Manual installation</summary>
@@ -111,21 +113,33 @@ and more — see [harness matrix](docs/reference/harness-matrix.md) for the full
 Node.js (npm, pnpm, yarn, bun) · PHP (composer, phpunit, pest) · Git · Docker ·
 Kubernetes · Terraform · AWS CLI · and [70+ more](docs/reference/supported-tools.md)
 
-### 2. Subagent Model Routing (zero LLM)
+### 2. Subagent Model Delegation (the orchestrator chooses)
 
-Intelligent model routing for subagent spawns: routes each subagent task to the
-right-sized model — Haiku for renames, Opus for architecture — without calling an LLM to
-decide, and without touching your main session's model mid-turn (so your prompt cache
-stays intact).
+**The orchestrator chooses, Downshift applies, your policy bounds it, and Downshift measures.**
+The lead session picks agent, model and effort for every delegation (the Orchestrator-Workers
+pattern). Downshift never picks a model on its own: it applies that choice deterministically,
+enforces what you declared in `policy.json` (profiles, ordered rules, quota gates, tier floors),
+and reports the tokens, per harness. Your main session's model is never touched mid-turn, so
+your prompt cache stays intact.
 
-```
-$ downshift try "rename the userId variable"
-→ small: opus → haiku
-why: trivial task, no risk, confident
-```
+- **Precedence** (first match wins): a pinned model is kept; a declared profile; the first
+  matching declared rule; the orchestrator's tier hint, which can only move down for now; else the
+  requested model is kept. Doubt keeps the requested model (fail-open).
+- **Refusals:** a model id the harness catalog does not know, and an `explicit_only` model, are
+  never written.
+- **Playbooks** (implemented): `downshift playbook list|show|edit|add|remove|restore|check` edits the
+  work rules a delegated worker receives (General always applies; Backend and Frontend ship).
+- **Orchestrator skill** (implemented): `downshift setup` installs `downshift-orchestrator`, guidance
+  on splitting work and choosing model and effort per spawn.
+- **MCP delegation server** (specified, not built): `downshift mcp serve`, see
+  `docs/internal/plans/mcp-delegation-spec.md`.
 
-**How it works:** Strict heuristics + FNV word-hash scoring. Local, deterministic,
-no model call on the routing path. When unsure, keeps the requested model — doubt never spends money.
+Removed on 2026-10-28 (decision O8): the built-in agent-type table, the automatic upgrade after a
+failure and the built-in risk floor. The protection against a risky task going to a small model is
+now the orchestrator's judgment, guided by the playbook, plus floors you declare in `policy.json`.
+A project that wants a hard floor must declare one; without it nothing stops a wrong choice.
+
+Downshift's own code makes no LLM call, adds no token cost to the hot path and fails open.
 
 ### 3. Compressor Learning (auto-discovery)
 
@@ -226,7 +240,7 @@ downshift learning clear       # Reset
 ### Inspection
 
 ```bash
-downshift try "<task>"         # Preview routing decision
+downshift session --why        # Why each spawn changed or was kept
 downshift watch                # Live dashboard
 downshift models check         # Verify catalog pricing
 ```
@@ -319,7 +333,7 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 
 - **Prompts never leave memory** — task text is evaluated in-process, never logged
 - **Local telemetry only** — counts, hashes, timings in `~/.downshift/events.jsonl`
-- **No LLM in the routing loop** — routing decisions are local and deterministic
+- **No LLM call in Downshift's code** — the orchestrator's model choice is applied locally and deterministically
 - **Fail-open** — any error leaves the command/spawn unchanged
 
 ---
@@ -329,14 +343,13 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 ### How do I reduce token usage in Claude Code, Cursor, or Codex?
 
 Install Downshift, run `downshift setup`, and it hooks into your harness. Verbose command
-output is compacted before it reaches the context window, and subagents are routed to
-right-sized models. On Claude Code the rewrite is automatic; on other harnesses the agent
+output is compacted before it reaches the context window, and each subagent runs on the model the orchestrator chose, bounded by your policy. On Claude Code the rewrite is automatic; on other harnesses the agent
 runs `downshift compact -- <command>` directly. Check your own numbers with
 `downshift session` and `downshift report`.
 
 ### Does subagent model routing break prompt caching?
 
-No. Downshift routes whole subagent spawns, not individual turns of your main session. Your
+No. Downshift applies the model choice to whole subagent spawns, not individual turns of your main session. Your
 main session keeps the same model for the entire conversation, so its cached prefix is never
 invalidated by a mid-session model switch.
 

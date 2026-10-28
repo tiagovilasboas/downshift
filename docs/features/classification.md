@@ -1,7 +1,13 @@
 # Task Classification
 
-Downshift classifies every agent task into a complexity level to determine which
-model tier can handle it. This happens in microseconds with zero API calls.
+Downshift classifies every agent task into a complexity level in microseconds, with zero API calls.
+
+> **Status under O8 (2026-10-28).** The classification **does not choose the model any more**: the orchestrator
+> does, and Downshift applies that choice within your `policy.json` (see [routing](routing.md)). The
+> classifier (complexity class, risk categories) remains as **telemetry**, as the **key of the floors you
+> declare**, and in DCI. The built-in risk floor that forced COMPLEX and kept risky work off small models was
+> removed on 2026-10-28; sections below that describe a tier mapping or a risk floor as a routing decision
+> describe the pre-O8 behaviour.
 
 ## The Problem
 
@@ -29,7 +35,7 @@ Downshift maps tasks to four complexity levels:
 
 ### Tier Mapping
 
-Complexity maps to model tiers:
+Pre-O8, complexity mapped to model tiers (now only a label; the orchestrator picks the tier):
 
 ```
 TRIVIAL  →  SMALL tier    (e.g., Haiku, GPT-4o-mini)
@@ -48,7 +54,7 @@ Classification uses pattern matching, not another LLM call:
 
 1. **Regex patterns** — ~100 weighted patterns for task signals
 2. **Structural rules** — word count, code references, file mentions
-3. **Risk floor** — security/data/money keywords force COMPLEX
+3. **Risk categories** — security/data/money keywords are recorded (they no longer force COMPLEX)
 4. **Domain signals** — architecture, migration, debugging
 
 The classifier processes 32KB of prompt in <1ms.
@@ -66,16 +72,17 @@ The classifier processes 32KB of prompt in <1ms.
 Signals are weighted and combined. The highest-scoring complexity wins,
 with ties breaking toward higher complexity (safe side).
 
-### Risk Floor
+### Risk categories (the built-in floor was removed)
 
-Certain keywords automatically elevate to COMPLEX regardless of other signals:
+Pre-O8, certain keywords automatically elevated to COMPLEX regardless of other signals:
 
 - **Security**: auth, permission, credential, secret, vulnerability
 - **Data**: migration, schema change, database alter
 - **Money**: payment, billing, subscription, refund
 - **Architecture**: system design, cross-service, distributed
 
-The risk floor ensures critical work never gets an underpowered model.
+These categories are still detected and recorded as telemetry. They no longer force a tier. Declare a floor in
+`policy.json` if a project needs one.
 
 ## Confidence and Safety
 
@@ -105,8 +112,10 @@ These are tested in `cost_safety_invariants_test.go`.
 ### Preview Classification
 
 ```bash
-downshift try "your task description"
+downshift session --why   # the classification recorded for the latest decision
 ```
+
+(The `downshift try` command was deleted; the output below is historical.)
 
 Output:
 ```
@@ -121,11 +130,7 @@ Final: TRIVIAL (score: 15 vs SIMPLE: 5)
 
 ### Verbose Classification
 
-```bash
-downshift try --verbose "implement OAuth2 with PKCE"
-```
-
-Shows all matched patterns and their weights.
+Historical: `downshift try --verbose` showed all matched patterns and their weights.
 
 ## Customization
 
@@ -145,7 +150,7 @@ codebase still gets MID-tier models.
 ### Environment Override
 
 ```bash
-DOWNSHIFT_ROUTE=0  # Disable routing entirely
+DOWNSHIFT_NO_ROUTE=1  # Disable routing entirely
 ```
 
 ## Accuracy

@@ -14,9 +14,9 @@ https://github.com/tiagovilasboas/downshift
 
 ## Product vision
 
-**Downshift** is an open-source **model router**: classify workload complexity,
-apply catalog policy, and select model tier **before execution**, without an LLM
-in the routing loop.
+**Downshift** is an open-source **model control layer**: the orchestrator chooses
+the model of each subagent, and Downshift applies that choice within your declared
+policy **before execution** and measures the result. It adds no LLM call of its own.
 
 Today the primary integration is **coding harness hooks** (Claude Code, Cursor,
 Codex, and others). The core is intentionally **gateway-shaped** for a future

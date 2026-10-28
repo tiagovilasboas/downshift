@@ -9,8 +9,8 @@ and an icon button:
 - **Running** count: `N running` while subagents are in progress (from the engine's agent list). Hidden when none run.
 - **Compact** chip: green when `~/.downshift/context-optimization.json` enables the native provider.
   In Claude Code the native compactor measures only (a hook cannot rewrite tool output).
-- **Mode** button: shows `◇ performance` or `◆ economy` and switches between them. Economy lowers
-  the tier of a confident, risk-free subagent task one step; risk and doubt still hold. The press
+- **Mode** button: shows `◇ performance` or `◆ economy` and switches between them. Economy acts only on
+  the policy you declared (O8, 2026-10-28: there is no built-in agent-type table to lower). The press
   writes `mode.json` in the state dir (`DOWNSHIFT_STATE_DIR`, else `~/.downshift`). Hooks read that
   file on every call, so the change applies to the next spawn, not to a spawn already running.
 - Pressing a chip shows a toast with what it means and the command that changes it. The mod API has no

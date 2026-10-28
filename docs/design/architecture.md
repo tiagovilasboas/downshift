@@ -11,17 +11,31 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 A **single Go binary** (`downshift`) that runs as a **harness hook** (JSON on
 stdin, JSON on stdout) and as an offline CLI over its own event log. On the hook
-path it classifies the task a main agent delegates, applies policy, catalog and
-session rules, and returns an **updated tool input** with `model` (and, where
-the harness takes it, `reasoning_effort`) rewritten. Around that one decision
+path it reads the delegation a main agent makes, applies the orchestrator's model
+choice within the user's declared policy, catalog and session rules, and returns
+an **updated tool input** with `model` (and, where the harness takes it,
+`reasoning_effort`) rewritten, or the request unchanged. Around that one decision
 it keeps the evidence needed to say whether the rewrite was honored, what the
 child used, and whether routing beat a measured baseline.
 
 Read it as an **optimization layer for agent execution**, not only a router:
-one deterministic decision per delegation, guardrails that hold under doubt,
+the orchestrator's choice applied deterministically per delegation, guardrails that hold under doubt,
 observation of what the harness then did, and offline evaluation that feeds
-the next policy change. The hook itself stays small: **no network, no LLM, no
-prompt storage** on the hot path, and every failure fails open.
+the next policy change. The hook itself stays small: **no network, no LLM call by
+Downshift's code, no prompt storage** on the hot path, and every failure fails open.
+
+> **Status under O8 (2026-10-28).** The orchestrator LLM chooses agent, model and
+> effort; Downshift applies the choice, enforces `policy.json` and measures. The
+> decider (`internal/routing/decide`) resolves: a pinned model is kept, then a declared
+> profile, then the first matching declared rule, then the orchestrator's tier hint
+> (down only for now), else the requested model is kept. The guard refuses only a
+> foreign id or an `explicit_only` model and keeps on doubt. Removed on 2026-10-28: the
+> built-in agent-type table (N11), the automatic upgrade after a failure, the built-in
+> risk floor and veto, and the economy effect on built-in types. The classifier now
+> feeds telemetry, user-declared floors and DCI; it does not decide. Where the sections
+> below describe the classifier or the risk floor as the decision, they are the
+> pre-O8 pipeline. Added: playbooks (`downshift playbook`) and the `downshift-orchestrator`
+> skill (implemented); `downshift mcp serve` (specified, not built).
 
 ---
 

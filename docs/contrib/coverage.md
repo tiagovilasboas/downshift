@@ -48,10 +48,10 @@ file or from `AGENTS.md`.
 | `internal/api` | — | Dashboard HTTP server (`downshift dashboard`) |
 | `internal/archtest` | Quality | Import-graph enforcement tests |
 | `internal/benchmark` | Quality | Offline classifier accuracy |
-| `internal/cascade` | Routing | Sensor-guided auto-upgrade and episodic failure tracking (dead-ends) |
+| `internal/cascade` | Routing | Episodic failure tracking (dead-ends) for the loop runner and `exec`. The decider no longer reads it: the automatic upgrade was removed (O8) |
 | `internal/catalog` | Routing | Embedded `catalog.json`, user override, Resolver, `TierView` (the tier lookup telemetry reads through `fromcore`) |
 | `internal/childend` | Telemetry | Child-end recorder |
-| `internal/classify` | Routing | Regex signals, language guard, risk floor |
+| `internal/classify` | Routing | Regex signals, language guard, risk categories (telemetry and declared floors; no built-in floor since O8) |
 | `internal/codeintel` | DCI | Opt-in context injection |
 | `internal/compressor` | Shell | Output compressor (families, corpus, mutation-closure tests) |
 | `internal/contextopt` | Shell | Config for compaction and headroom |

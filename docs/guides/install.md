@@ -461,7 +461,7 @@ Register the hook in `~/.gemini/config/hooks.json`:
 }
 ```
 
-When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, classifies the **last** entry in `Subagents` that has a non-empty `Prompt` (not necessarily `Subagents[0]`; trailing rows without `Prompt` are skipped), and rewrites **that** subagent's `Model` (`flash_lite` for mechanical tasks, `flash` for the mid tier) through an `overwrite` envelope that is not a documented vendor field, logging the routing event to `~/.downshift/events.jsonl`.
+When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, evaluates the **last** entry in `Subagents` that has a non-empty `Prompt` (not necessarily `Subagents[0]`; trailing rows without `Prompt` are skipped), and rewrites **that** subagent's `Model` (`flash_lite` for mechanical tasks, `flash` for the mid tier) through an `overwrite` envelope that is not a documented vendor field, logging the routing event to `~/.downshift/events.jsonl`.
 
 ### KiroCrew (policy mode through the native Kiro CLI hook)
 
@@ -471,7 +471,7 @@ For Kiro CLI 2.29, register Downshift through KiroCrew's persistent
 `agent.kiro_hooks` configuration. KiroCrew generates the agent spec consumed
 by Kiro CLI, whose native `preToolUse` hook runs before the tool: `exit 0`
 allows it; `exit 2` blocks it and returns stderr to the agent. There is no
-`updated_input` channel, so the adapter uses **policy mode**. It classifies a
+`updated_input` channel, so the adapter uses **policy mode**. It evaluates a
 pending spawn with an explicit child model and:
 
 - **right tier already** → `exit 0`, allow silently;

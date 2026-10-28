@@ -8,9 +8,10 @@ AI call. It runs locally as a single Go binary (CLI: downshift) through hooks in
 the coding harness. Prompts are never stored, nothing goes over the network,
 and every hook fails open. Three pillars, in this order:
 
-1. Model routing per subagent. A PreToolUse hook picks tier, model and effort
-   for each spawn from scored signals and catalog policy (no LLM in the loop);
-   when unsure, the session's own model stays. About 1 in 10 spawns stay
+1. Model choice per subagent. The orchestrator (the session's LLM) chooses the
+   model and effort of each spawn; a PreToolUse hook applies that choice within
+   your declared policy.json and measures the result. Downshift adds no LLM
+   call of its own; when it cannot read the request, the session's model stays. About 1 in 10 spawns stay
    unrouted as a control group. Implemented. Harness status: Claude Code
    Completed (rewrite observed honored), Codex and Cursor Functional, OpenCode
    Beta, Antigravity and KiroCrew Experimental (docs/reference/harness-matrix.md).
@@ -37,8 +38,8 @@ docs/design/architecture.md; evidence docs/guides/evidence.md; status of every
 capability docs/reference/capability-matrix.md.
 
 The suite (one sentence each; status words from docs/reference/capability-matrix.md):
-  - Deterministic subagent routing: PreToolUse hook rewrites one subagent's model
-    and effort from the session's own list. Implemented; honored on Claude Code.
+  - Applying the orchestrator's choice: a PreToolUse hook sets one subagent's model
+    and effort as chosen, within your declared policy. Implemented; honored on Claude Code.
   - Guardrails, doubt never spends money: R1-R9 hold unconfident downshifts,
     upshifts and frontier picks; risk categories keep a floor. Implemented.
   - Project tier floor: .downshift/policy.json raises a minimum tier, never lowers.

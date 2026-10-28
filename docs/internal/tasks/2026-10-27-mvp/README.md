@@ -37,7 +37,7 @@ at most 5 points, with the gate in the MVP plan section 5.
 |---|---|--:|---|
 | C0 | Verify whether PreToolUse fires for workflow `agent()` spawns and which `model` it carries (R0b) | 1 | — |
 | C1 | Hint parser, enum prefix and agent type; can only move down (R4) | 2 | B2 |
-| C2 | Risk guard: risk never goes small, never widen, `explicit_only`, foreign ids (R5) | 3 | B2 |
+| C2 | Guard: never widen, `explicit_only`, foreign ids (R5). The risk veto was removed 2026-10-28 (O8) | 3 | B2 |
 | C3 | Decider and routing note: precedence explicit > profile > rule > hint > keep; behind `DOWNSHIFT_ROUTING=v2` (R6) | 5 | B4–B7, C1, C2 |
 | C4 | Claude quota from the statusline into headroom; all critical warns and keeps (O3) | 3 | B5, S3 |
 
@@ -100,8 +100,8 @@ Branch `downshift/mvp-ponto-zero`, published, no open PR, no worktree, no unpubl
 | Stage 5 and other harnesses | Not started | none |
 | Business plan waves W0 to W6 | Cards in roadmap 8d and 8c-ter | BP1 accepted; BP2 deferred; G14 to G16 resolved |
 | Dashboard | Discontinued (N9) | removal card W6.6 waits for the owner |
-| Release readiness (W7.1 to W7.11) | Cards in roadmap 8d and 8c-quater; W7.1 and W7.2 first, because v2 routes nothing on a fresh install without them | Approved: profile table (N11) |
-| Economy mode | W7.9, one tier down on every harness, same bounds | Owner approved the idea; table approved |
+| Release readiness (W7.1 to W7.11) | Cards in roadmap 8d and 8c-quater; W7.1 and W7.2 first. W7.1 (the N11 table) was delivered and then removed on 2026-10-28 (O8): its defaults moved to the orchestrator playbook | N11 approved, then superseded by O8 |
+| Economy mode | W7.9, built on the N11 table; with the table gone (O8) it acts only on declared policy and its removal is pending | Superseded by O8 |
 | Harness-agnostic rule | N12: tiers are abstract, harness facts are data | None |
 | Stage 4 decisions | G1, G4, G10, G12 | Owner |
 | Clean-room | Plan runner built from behaviour notes only | none |

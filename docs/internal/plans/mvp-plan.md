@@ -50,7 +50,7 @@ is a warning chip with no redirect, by its own roadmap.
 |---|---|--:|---|---|
 | 0 Clean base | Nothing visible; v1 experiments gone, contract and seams in place | 8 left | worst-window headroom | — |
 | 1 Setup | Install that marks what it owns, backs up, installs the skill, proves the hook fires | 8 | owned install, skills | — |
-| 2 Right model in Claude Code | Spawns move to the declared tier; risk never goes small; near the limit simple work goes down | 14 | tiers, declared decision | routing |
+| 2 Right model in Claude Code | The orchestrator's choice is applied; declared rules and hints bound it; no built-in table or risk floor (O8); near the limit declared rules send simple work down | 14 | tiers, declared decision | routing |
 | 3 Show and prove | Why each spawn changed or not; tokens per harness; acceptance unchanged; default on | 9 | visible quota state | evaluator |
 | **MVP** | stages 0 to 3 | **39** | | |
 | 4 Plan runner | A batch of tasks across Claude and Codex with strategy, budget, worktrees, acceptance | 26 | strategies, budgets, worktrees, worker contract | plan big, execute small; orchestrator-workers; parallelization |

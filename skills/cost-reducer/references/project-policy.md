@@ -16,7 +16,7 @@ inherits it.
 - Tiers `small`, `mid`, `frontier`. Classes `TRIVIAL`, `SIMPLE`, `MEDIUM`, `COMPLEX`.
   Risk names are those in `internal/core/risk.go` (`secret`, `payment`, `destructive`, ...).
 - Invalid or oversized files are ignored (fail open), so validate by eye and with
-  `downshift try "<task>"` run from the project directory.
+  `downshift policy check` run from the project directory.
 - Use it to stop rework, not to save money: a floor costs tokens. Propose one when
   `downshift stats` shows failed or respawned children on a risky repository, or when a
   low-risk repository needs no floor at all and the user can remove one.
