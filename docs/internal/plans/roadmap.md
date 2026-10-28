@@ -286,6 +286,21 @@ Wave totals: W0 14, W2 13, W3 13, W4 13, W5 8. The plan-runner spec (33 points) 
 
 W6.3 can start now. W6.4 and W6.5 are pieces of the plan-runner fronts and are merged with them, not built apart. All W6 cards use tokens only (O1).
 
+**Release readiness cards (W7), each at most 5 points**
+
+These close gaps that no stage covered. W7.1 and W7.2 come first: without them v2 routes nothing on a fresh install, because with nothing declared the requested model is kept.
+
+| Card | Pts | What it delivers | Depends on |
+|---|--:|---|---|
+| W7.1 | 3 | A default policy shipped with the binary: profiles by agent type, read from catalog data, with the risk guard unchanged, so v2 routes without configuration | Owner approves the profile table |
+| W7.2 | 2 | `downshift policy init` in `setup`: dry run first, writes `.downshift/policy.json` only after a yes | W7.1 |
+| W7.3 | 3 | Hint skill (R10) moved earlier: the parent writes the hint the decider reads | Real-session proof (where the hint arrives) |
+| W7.4 | 3 | AppSec review of the hook-path change (decider cut) before anything reaches `main` | None |
+| W7.5 | 2 | Remote CI on the branch, including the Windows and macOS job | None |
+| W7.6 | 2 | Release note and migration: version bump, `try` removed, NB variables ignored, new default behaviour, rollback by revert | W7.1 |
+| W7.7 | 3 | Dogfooding protocol: duration, sessions, opt-in control arm, fields measured in tokens, stop criteria from the business plan | Real-session proof |
+| W7.8 | 1 | Estimate against actual for stages 0 and 2, as the harness-core rule asks at closing | None |
+
 ## 9. Conflicts in the sources (fix when accepted)
 
 1. README stage totals (36 and 15) do not match its cards: stage 1 cards sum to 42 points; stage 2 (R7, R8b, R8c) to 9.

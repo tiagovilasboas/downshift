@@ -100,4 +100,5 @@ Branch `downshift/mvp-ponto-zero`, published, no open PR, no worktree, no unpubl
 | Stage 5 and other harnesses | Not started | none |
 | Business plan waves W0 to W6 | Cards in roadmap 8d and 8c-ter | BP1 accepted; BP2 deferred; G14 to G16 resolved |
 | Dashboard | Discontinued (N9) | removal card W6.6 waits for the owner |
+| Release readiness (W7.1 to W7.8) | Cards in roadmap 8d; W7.1 and W7.2 first, because v2 routes nothing on a fresh install without them | W7.1 profile table |
 | Clean-room | Plan runner built from behaviour notes only | none |
