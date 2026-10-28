@@ -3,7 +3,7 @@
 - **Branch Atual:** `downshift/mvp-ponto-zero`
 - **Fase Atual:** Onda 1.5 (Setup Completo & Release Readiness — Business Plan W7)
 - **Status:** Roadmap e Ondas alinhados com o Business Plan (`downshift-business-plan`).
-- **Próximo Objetivo:** Implementar W7.1 (Default Profile Table N11) e W7.2 (`downshift policy init`).
+- **Próximo Objetivo:** Implementar W7.2 (`downshift policy init`).
 - **Bloqueios:** Nenhum
 - **Commits na Branch:**
   - `7a9becc1`: feat(cli): add smart zero-prompt default entry when invoked without args (F0.1)
@@ -21,3 +21,5 @@
   - `8af04fc7`: chore(session): update session tracking for uninstall purge feature
   - `4fc254ed`: fix(cascade): add inter-process directory lock and atomic rename to dead_ends, pass active model in loop failure
   - `b79162eb`: feat(setup): configure CLAUDE_CODE_SUBAGENT_MODEL_FORCE in claude-code settings env
+  - `cda89de8`: test(claudecode): clear subagent model force env in session model test
+  - `532bd279`: feat(routing): add default profile table for claude code built-in agent types (W7.1)
