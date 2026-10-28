@@ -110,7 +110,7 @@ func TestPlaybookEditToEmptyNoLongerActive(t *testing.T) {
 	playbookEnv(t)
 	fakeEditor(t, `: > "$1"`)
 	code, out, _ := runPB(t, "edit", "backend")
-	if code != 0 || !strings.Contains(out, "empty") {
+	if code != 0 || !strings.Contains(out, "no text") {
 		t.Fatalf("exit %d, out %q", code, out)
 	}
 	if _, found := runPBFind(t, "backend"); found {
@@ -136,4 +136,19 @@ func runPBFind(t *testing.T, name string) (string, bool) {
 	t.Helper()
 	code, out, _ := runPB(t, "show", name)
 	return out, code == 0
+}
+
+func TestPlaybookAddLeftWithoutTextIsNotKept(t *testing.T) {
+	dir := playbookEnv(t)
+	fakeEditor(t, `:`)
+	code, out, _ := runPB(t, "add", "Dados")
+	if code != 0 || !strings.Contains(out, "no text") {
+		t.Fatalf("exit %d, out %q", code, out)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "playbooks", "dados.md")); !os.IsNotExist(err) {
+		t.Fatalf("an empty playbook file was kept: %v", err)
+	}
+	if code, _, _ := runPB(t, "check"); code != 0 {
+		t.Fatal("check fails after an abandoned add")
+	}
 }

@@ -86,10 +86,6 @@ func playbookCheck(dir string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	for _, s := range sets {
-		if s.Text == "" {
-			fmt.Fprintf(stderr, "playbook check: %s has no text\n", s.Name)
-			return 1
-		}
 		if s.Chars() > playbook.WarnChars {
 			fmt.Fprintf(stdout, "warning: %s is %d characters; it travels with every task of its area\n", s.Name, s.Chars())
 		}
@@ -184,7 +180,11 @@ func editAndCheck(dir, id string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stdout, "%s: %d chars%s\n", s.Name, s.Chars(), sizeNote(s))
 		return 0
 	}
-	fmt.Fprintf(stdout, "%s was empty, so it is not active\n", id)
+	if err := playbook.Remove(dir, id); err != nil {
+		fmt.Fprintln(stderr, "playbook:", err)
+		return 1
+	}
+	fmt.Fprintf(stdout, "%s has no text, so it is not active\n", id)
 	return 0
 }
 

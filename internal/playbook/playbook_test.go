@@ -187,3 +187,27 @@ func TestCharsCountsRunes(t *testing.T) {
 		t.Fatalf("Chars = %d, want 3", n)
 	}
 }
+
+func TestHeadingOnlyFileIsNotAPlaybook(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "dados.md"), []byte("# Dados\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := byID(mustLoad(t, dir), "dados"); ok {
+		t.Fatal("a heading with no text became an active playbook")
+	}
+}
+
+func TestSymlinkedPlaybookIsRefused(t *testing.T) {
+	dir := t.TempDir()
+	target := filepath.Join(t.TempDir(), "secret.md")
+	if err := os.WriteFile(target, []byte("# X\n\n- text\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(target, filepath.Join(dir, "x.md")); err != nil {
+		t.Skip("symlinks are not available here")
+	}
+	if _, err := Load(dir); err == nil {
+		t.Fatal("a symlinked playbook was followed")
+	}
+}

@@ -26,8 +26,8 @@ func Dir() (string, error) {
 }
 
 // Load returns the active sets: the shipped defaults with the person's edits
-// applied, then the person's own sets. A default whose file is empty was
-// removed by the person; General cannot be removed, so an empty General file
+// applied, then the person's own sets. A file with no text (empty, or only a
+// heading) is not a playbook: for a default it means the person removed it; General cannot be removed, so an empty General file
 // means ours. A missing folder is the shipped set.
 func Load(dir string) ([]Set, error) {
 	files, err := readFiles(dir)
@@ -145,12 +145,17 @@ func readFiles(dir string) (map[string]file, error) {
 		if e.IsDir() || !ok || id == "" {
 			continue
 		}
+		// A playbook is prefixed to a worker's prompt, so a link that could point
+		// at any file is refused rather than followed.
+		if !e.Type().IsRegular() {
+			return nil, fmt.Errorf("playbook %s is not a regular file (links are refused)", e.Name())
+		}
 		b, err := os.ReadFile(filepath.Join(dir, e.Name()))
 		if err != nil {
 			return nil, err
 		}
 		name, text := splitHeading(string(b))
-		out[id] = file{name: name, text: text, empty: strings.TrimSpace(string(b)) == ""}
+		out[id] = file{name: name, text: text, empty: text == ""}
 	}
 	return out, nil
 }

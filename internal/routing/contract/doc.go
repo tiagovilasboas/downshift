@@ -18,7 +18,7 @@
 //     The REA records that the orchestrator trusts its last push with no TTL
 //     and lists that as a failure (REA section 5, section 8).
 //   - The chosen/ignored verdict is kept but recorded as HeadroomVerdict, a
-//     separate field, because here no LLM picks the provider: it says whether
+//     separate field, because here the orchestrator names the provider: it says whether
 //     the model the decision landed on was past the strain threshold while a
 //     fresh reading said so. It never causes a reroute (REA section 2 "notify,
 //     do not reroute"; design section 2 "strain never forces an upshift").

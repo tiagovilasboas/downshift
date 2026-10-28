@@ -49,7 +49,7 @@ func setupTUI(o setupOptions) int {
 	for i, t := range targets {
 		sb.WriteString(fmt.Sprintf("  [%d] %-14s ~/%s\n", i+1, highlightStyle.Render(t.Name), t.ConfigDir))
 	}
-	sb.WriteString("\n" + subtleStyle.Render("Downshift will configure deterministic model routing and terminal compaction."))
+	sb.WriteString("\n" + subtleStyle.Render("Downshift will apply your model choices within your policy and compact terminal output."))
 
 	fmt.Fprintln(o.Out, cardStyle.Render(sb.String()))
 
