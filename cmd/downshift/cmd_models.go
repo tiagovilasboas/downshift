@@ -13,7 +13,7 @@ import (
 // runModels dispatches the 'models' subcommands: list, check, pull.
 func runModels(catalog models.CatalogReader, args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: downshift models <list|check|pull|discover>")
+		fmt.Fprintln(os.Stderr, "usage: downshift models <list|check|pull|discover|available>")
 		return 2
 	}
 	switch args[0] {
@@ -26,6 +26,8 @@ func runModels(catalog models.CatalogReader, args []string) int {
 		return models.Pull(catalog, os.Stdout, os.Stderr)
 	case "discover":
 		return runModelsDiscover(catalog, args[1:], os.Stdout, os.Stderr)
+	case "available":
+		return runModelsAvailable(catalog, args[1:], os.Stdout, os.Stderr)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown models subcommand %q\n", args[0])
 		return 2

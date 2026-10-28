@@ -135,6 +135,8 @@ func main() {
 		os.Exit(runPolicy(args[1:], os.Stdout, os.Stderr))
 	case "playbook":
 		os.Exit(runPlaybook(args[1:], os.Stdout, os.Stderr))
+	case "route":
+		os.Exit(runRoute(args[1:], os.Stdout, os.Stderr))
 	case "config":
 		os.Exit(runConfig(args[1:], os.Stdout, os.Stderr, catalog))
 	case "version", "--version":

@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `downshift models available --harness ID`: the models a spawn can use right now on a harness, from the payload, the discovery cache or your session-models file (the catalog only fills in tiers, and is the last-resort stand-in on Claude Code, flagged as such). `doctor` gets an `available models` check.
+- `downshift route --harness ID`: show what would be applied for one spawn given the orchestrator's choice; the hook uses the same code.
 - The MCP server core: the tool port and the stdio transport on the official Go SDK, serving both protocol eras (the `initialize` handshake and the per-request metadata of 2026-07-28). Not reachable from a command yet.
 - `downshift playbook` (`list`, `show`, `edit`, `add`, `remove`, `restore`, `check`): named working rules a delegated
   worker receives. General always applies; a delegation may name one more set. Shipped: General, Backend, Frontend.

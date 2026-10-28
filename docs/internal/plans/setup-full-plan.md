@@ -28,7 +28,7 @@ chooses the model; Downshift applies and measures). Nothing here is built yet un
 
 - `downshift route` (roadmap R7) stops being a decider. It takes the orchestrator's explicit harness, model and
   effort (the hint stays optional) and returns what Downshift would apply under the declared policy, in the contract's
-  JSON. It is the command-line twin of the hook and of `downshift.delegate`, and it shares one apply core with them.
+  JSON. It is the command-line twin of the hook and of `delegate`, and it shares one apply core with them.
 - `policy apply` (R8a) is unchanged in meaning: it compiles the user's declared profiles into the harness's own agent
   definitions. It never writes a default of its own, because there is no built-in table.
 - The skill of R10 is `downshift-orchestrator`, not `downshift-route`. The shared hub is still planned; today setup

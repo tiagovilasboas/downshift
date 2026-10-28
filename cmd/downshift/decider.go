@@ -27,43 +27,11 @@ type routingDecider struct {
 }
 
 // Decide returns the v2 decision, or the unchanged-spawn decision on any error.
+// The gathering lives in decideSpawn (apply_core.go), shared with `downshift
+// route` and the MCP apply tool.
 func (r routingDecider) Decide(req core.Request) core.Decision {
-	cat, _ := req.Resolver.(decide.Catalog)
-	in, ok := r.input(req, cat)
-	if !ok {
-		in = unchangedInput(req, cat)
-	}
-	d, _ := decide.Decide(in)
+	d, _ := decideSpawn(req, hookctx.ProjectDir(), r.now())
 	return d
-}
-
-// unchangedInput is a spawn with no policy, hint, floor or risk: v2 keeps the
-// requested model for it. The agent type is dropped too: no risk scan ran, so
-// the default profile table must not move the spawn.
-func unchangedInput(req core.Request, cat decide.Catalog) decide.Input {
-	r := contractRequest(req, contract.Hint{})
-	r.AgentType = ""
-	return decide.Input{Request: r, Catalog: cat}
-}
-
-// input gathers everything the decision reads. It reports false on a policy or
-// floor that cannot be used.
-func (r routingDecider) input(req core.Request, cat decide.Catalog) (decide.Input, bool) {
-	pol, floor, ok := loadProjectPolicy(hookctx.ProjectDir())
-	if !ok {
-		return decide.Input{}, false
-	}
-	h := hint.Parse(req.Prompt, requestedTier(req, cat))
-	return decide.Input{
-		Request:  contractRequest(req, h),
-		Policy:   pol,
-		Readings: quotaReadings(req.Harness, pol),
-		Now:      r.now(),
-		Risk:     core.RiskCategories(req.Prompt),
-		Catalog:  cat,
-		Floor:    floor,
-		Class:    core.Classify(req.Prompt).Complexity.String(),
-	}, true
 }
 
 // loadProjectPolicy reads the routing policy and the tier floor from the same

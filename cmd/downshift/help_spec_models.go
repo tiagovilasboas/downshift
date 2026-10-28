@@ -9,13 +9,14 @@ var modelsHelp = map[string]string{
 	"models": `downshift models — Inspect and refresh the model catalog
 
 Usage:
-  downshift models <list|check|pull|discover> [flags]
+  downshift models <list|check|pull|discover|available> [flags]
 
 Subcommands:
   list       Show the effective catalog (embedded, or the user override)
   check      Query provider APIs and report new or untiered models
   pull       Write the user catalog.json under the state dir
   discover   Ask each harness which models the account can use
+  available  Show the models a spawn can use now on one harness, and their source
 
 Flags:
   (see each subcommand: downshift models <name> --help)
@@ -80,6 +81,21 @@ Examples:
   downshift models discover --harness=claude-code --dry-run
 
 Next: downshift doctor, to check the discovered models are in use
+`,
+	"models available": `downshift models available — Models a spawn can use now on one harness
+
+Usage:
+  downshift models available --harness=ID [--json]
+
+Flags:
+  --harness=ID   Harness id (required): claude-code, cursor, codex, kirocrew, antigravity, opencode
+  --json         Print a stable JSON object: harness, models[], fallback, cache_written_at
+
+Examples:
+  downshift models available --harness=claude-code
+  downshift models available --harness=codex --json
+
+Next: downshift models discover --harness=ID, when no detected list exists
 `,
 	"quota": `downshift quota — Budget evidence for a harness (status, import, collect)
 

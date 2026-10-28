@@ -6,6 +6,25 @@ Order every list from **least to most capable**. This ordering is the model-agno
 
 If the session list cannot be determined, the hook does not rewrite the model.
 
+## Detected models only (`downshift models available`)
+
+No model is fixed in Downshift: the models a spawn can use come from what the harness offers. `models.Resolve`
+(`internal/models`) joins the pieces in one shared answer, used by `downshift models available --harness <id>` and by the
+`available models` doctor check. It tries the sources in this order and the first one that lists models wins:
+
+| Source | Where it comes from |
+|---|---|
+| `payload` | the list a hook payload carried (a non-nil list is authoritative, even when empty) |
+| `discovery` | the cache written by `downshift models discover` (expires after the discovery TTL) |
+| `file` | `session-models.json` |
+| `catalog-fallback` | the catalog `session_candidates`, only for a harness that declares `SessionFromCatalog` (Claude Code) and has no other source |
+
+The catalog supplies tier and effort data for an id a real source listed, and never adds an id. Metadata a source
+carries (`model_metadata`) wins over the catalog. An id with no tier evidence is listed with tier `unknown` and
+`untiered: true`; discovery ids the catalog could not rank are listed this way too. A fallback list is flagged
+(`fallback: true`) so the orchestrator knows it is a stand-in and `doctor` warns. With no source the list is empty and
+routing holds.
+
 ## Session metadata before catalog fallback
 
 All five hook adapters resolve the session before classifying its current model.

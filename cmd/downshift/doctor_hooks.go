@@ -259,6 +259,7 @@ func checkEvidence(add func(id, status, detail, fix string), env doctorEnv, nc c
 	h := nc.Harness
 	checkHookBinary(add, env, file, found, pathBin)
 	checkSessionList(add, env, nc)
+	checkAvailableModels(add, env, h)
 	checkQuotaHold(add, env, h)
 	checkQuotaSource(add, env, h)
 

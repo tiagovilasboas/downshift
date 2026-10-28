@@ -17,15 +17,20 @@ checks it against the project policy and measures it. It does not pick a model o
 
 ## 2. Choose the model per spawn
 
-| Kind of work | Model | Effort |
+Run `downshift models available --harness <your harness>` first and read the live list: you may only
+pick a model it shows. Each line gives the tier (small, mid, frontier), the source and the efforts.
+A model marked untiered has no tier evidence: name it only on purpose, never through a tier hint.
+If the command is missing or prints no list, use the models the harness itself offers and say so.
+
+| Kind of work | Tier | Effort |
 |---|---|---|
-| Read-only lookup: find, list, summarise existing files | small (Haiku) | low |
-| Mechanical edit: rename, format, boilerplate, one-file change | small (Haiku) | low |
-| Review, documentation audit, test writing, a bounded implementation | mid (Sonnet) | medium |
-| Design, debugging a hard failure, decisions that span modules | frontier (Opus) | high |
+| Read-only lookup: find, list, summarise existing files | small | low |
+| Mechanical edit: rename, format, boilerplate, one-file change | small | low |
+| Review, documentation audit, test writing, a bounded implementation | mid | medium |
+| Design, debugging a hard failure, decisions that span modules | frontier | high |
 
 - Built-in agent types have no default model here: `Explore`, `claude-code-guide` and
-  `statusline-setup` follow the first row unless you say otherwise; `general-purpose` and
+  `statusline-setup` follow the first row's tier unless you say otherwise; `general-purpose` and
   `Plan` follow the parent unless you say otherwise. Say it on the call.
 - Pass the model on the call (`model`). If the harness does not accept a per-call model,
   send a tier hint in the prompt (`[tier=small]`, `[tier=mid]`, `[tier=frontier]`).

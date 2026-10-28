@@ -210,23 +210,31 @@ downshift learning clear
 
 ## Model Routing
 
-### `downshift try`
+### `downshift route`
 
-Preview routing decision for a task.
+Show what Downshift would apply for one spawn, given the orchestrator's choice. It never picks a model on its own and
+accepts no prompt text.
 
 ```bash
-downshift try "<task>" [flags]
+downshift route --harness=ID [--model=ID] [--effort=E] [--tier=T] [--agent-type=T] [--dir=DIR] [--json]
 ```
 
 **Flags:**
-- `--verbose` — Show detailed classification
-- `--check` — Verify guardrails
-- `--json` — Output as JSON
+- `--harness` — the harness id (required); an unknown id exits 2 and lists the valid ones
+- `--model` — the model the orchestrator chose (the request)
+- `--effort`, `--tier` — the orchestrator's effort and tier hint (a hint only moves a request down)
+- `--agent-type` — the subagent type, when it matters to a declared profile
+- `--dir` — the project directory whose `.downshift/policy.json` applies
+- `--json` — a stable object: `schema_version` 1, `harness`, `requested_model`, `selected_model`, `tier`, `effort`,
+  `verdict`, `reason`, `applied` and `note` (enums, tiers and numbers only)
+
+A model the harness catalog does not know, or an invalid policy file, keeps the requested model and says so in
+`reason`. The hook, this command and the MCP tool `apply` use the same code.
 
 **Examples:**
 ```bash
-downshift try "rename the userId variable"
-downshift try --verbose "implement OAuth2 authentication"
+downshift route --harness=claude-code --model=<id> --tier=small
+downshift route --harness=codex --json
 ```
 
 ### `downshift models`
@@ -241,6 +249,21 @@ downshift models <subcommand>
 - `discover` — Discover models from current session
 - `check` — Verify catalog pricing
 - `pull` — Write new provider models to the user catalog, with tier unknown
+- `available` — Show the models a spawn can use now on one harness, and where each came from
+
+#### `downshift models available`
+
+```bash
+downshift models available --harness <id> [--json]
+```
+
+Lists the detected models for one harness: id, tier (`small`, `mid`, `frontier` or `unknown`), efforts when known and
+source (`payload`, `discovery`, `file`, `catalog-fallback`). A model with no tier evidence is marked untiered: it is
+never the target of a hint or a rule, though the orchestrator may name it. The text output starts with when the
+discovery cache was written. With no list it prints `no detected list for <id>; run downshift models discover
+--harness <id>` and exits 0. `--json` prints `harness`, `models[]`, `fallback` (true when only the catalog stand-in
+exists) and `cache_written_at` when known. An unknown harness exits 2 and names the valid ids. It reads local files
+only. `downshift doctor` reports the same list as the `available models` check.
 
 ---
 

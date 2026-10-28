@@ -31,6 +31,9 @@ More about what happened
 
 Models and quota
   downshift models list          Show the effective catalog (embedded or override)
+  downshift models available --harness ID   The models a spawn can use now on that harness, and where each came from
+  downshift route --harness ID [--model ID] [--tier T] [--json]   Show what would be applied for one spawn
+  downshift playbook list|show|edit|add|remove|restore|check   The working rules a delegated worker receives
   downshift models discover      Ask each harness which models the account can use; hooks read the result
   downshift quota status         Inspect budget evidence and freshness for a harness/model
 
