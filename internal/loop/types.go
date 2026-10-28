@@ -27,6 +27,7 @@ type Config struct {
 	SessionID     string        // Session correlation identifier
 	Harness       string        // Harness context (e.g. "claude-code")
 	RepoDir       string        // Target repository root
+	Model         string        // Specific model running the task (if known)
 	MaxIterations int           // Max retry attempts before tripwire stop (default 3)
 	Timeout       time.Duration // Max wall-clock time for the entire loop
 }

@@ -72,10 +72,14 @@ func (r *Runner) Run(ctx context.Context) (Result, error) {
 				// Sensor failed: record dead-end to trigger Cascade Auto-Upgrade on next turn
 				res.SensorPassed = false
 				res.FinalStep = StepCascade
+				failedModel := r.cfg.Model
+				if failedModel == "" {
+					failedModel = r.cfg.Harness + "-small"
+				}
 				cascade.RecordFailure(
 					r.cfg.SessionID,
 					r.cfg.Task,
-					"cheap-tier",
+					failedModel,
 					fmt.Sprintf("sensor %q failed with exit code %d (err: %v)", r.cfg.SensorCmd, exitCode, err),
 				)
 

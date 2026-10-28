@@ -12,6 +12,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -47,8 +48,32 @@ func deadEndsPath() (string, error) {
 	return paths.Join("dead_ends.json")
 }
 
+// acquireLock provides cross-process atomic file locking using an atomic directory lock.
+// It fails open after 500ms and evicts stale locks older than 3 seconds.
+func acquireLock() func() {
+	lockDir, err := paths.Join("dead_ends.lock")
+	if err != nil {
+		return func() {}
+	}
+	deadline := time.Now().Add(500 * time.Millisecond)
+	for {
+		err := os.Mkdir(lockDir, 0700)
+		if err == nil {
+			return func() { _ = os.Remove(lockDir) }
+		}
+		if fi, serr := os.Stat(lockDir); serr == nil && time.Since(fi.ModTime()) > 3*time.Second {
+			_ = os.Remove(lockDir)
+			continue
+		}
+		if time.Now().After(deadline) {
+			return func() {}
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
 // RecordFailure records a failure event in the dead-ends store.
-// Thread-safe and fail-open.
+// Thread-safe, multi-process safe and fail-open.
 func RecordFailure(sessionID, taskText, failedModel, reason string) {
 	fp := TaskFingerprint(taskText)
 	if sessionID == "" && fp == "" {
@@ -62,8 +87,10 @@ func RecordFailure(sessionID, taskText, failedModel, reason string) {
 	mu.Lock()
 	defer mu.Unlock()
 
+	unlock := acquireLock()
+	defer unlock()
+
 	entries := loadEntries(p)
-	// Deduplicate / update existing failure for the same fingerprint and session
 	now := time.Now().UTC()
 	updated := false
 	for i := range entries {
@@ -136,6 +163,9 @@ func ClearSession(sessionID string) {
 	mu.Lock()
 	defer mu.Unlock()
 
+	unlock := acquireLock()
+	defer unlock()
+
 	entries := loadEntries(p)
 	filtered := entries[:0]
 	for _, e := range entries {
@@ -161,5 +191,21 @@ func saveEntries(path string, entries []DeadEnd) {
 	if err != nil {
 		return
 	}
-	_ = os.WriteFile(path, data, 0o600)
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0700); err != nil {
+		return
+	}
+	tmp, err := os.CreateTemp(dir, ".dead_ends-*")
+	if err != nil {
+		return
+	}
+	defer os.Remove(tmp.Name())
+	if _, err := tmp.Write(append(data, '\n')); err != nil {
+		tmp.Close()
+		return
+	}
+	if err := tmp.Close(); err != nil {
+		return
+	}
+	_ = os.Rename(tmp.Name(), path)
 }

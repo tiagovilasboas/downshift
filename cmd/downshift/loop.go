@@ -47,6 +47,8 @@ func runLoop(args []string, out, errw io.Writer) int {
 			}
 		case strings.HasPrefix(a, "--session="):
 			cfg.SessionID = strings.TrimPrefix(a, "--session=")
+		case strings.HasPrefix(a, "--model="):
+			cfg.Model = strings.TrimPrefix(a, "--model=")
 		case a == "--json":
 			jsonOutput = true
 		case a == "-h" || a == "--help":
