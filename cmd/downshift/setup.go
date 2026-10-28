@@ -61,12 +61,15 @@ type setupOptions struct {
 	// StateDir is where setup keeps what it generates (wrapper scripts).
 	// Empty means <Home>/.downshift.
 	StateDir string
+	// ProjectDir is the project whose .downshift/policy.json setup offers to
+	// create. Empty skips that step.
+	ProjectDir string
 }
 
 // runSetup is the CLI entry: it resolves HOME and the running binary.
 func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	opts := setupOptions{In: in, Out: out, Err: errw, Now: time.Now, Exec: realSetupExec()}
-	allowUnsafe := false
+	allowUnsafe, noPolicy := false, false
 	for _, a := range args {
 		switch {
 		case a == "--dry-run":
@@ -83,6 +86,8 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 			opts.YouShouldKnow = true
 		case a == "--no-plugin":
 			opts.NoPlugin = true
+		case a == "--no-policy":
+			noPolicy = true
 		case a == "--allow-unsafe-binary":
 			allowUnsafe = true
 		case a == "-h" || a == "--help":
@@ -113,6 +118,9 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	if dir, err := paths.StateDir(); err == nil {
 		opts.StateDir = dir
 	}
+	if cwd, err := os.Getwd(); err == nil && !noPolicy {
+		opts.ProjectDir = cwd
+	}
 	if !opts.DryRun && !opts.Undo {
 		// Older releases created the state directory and its files with the
 		// default umask; tighten what the product owns. Best effort.
@@ -141,7 +149,7 @@ func guardHookBinary(o setupOptions, allow bool, tmp string) int {
 	return 1
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--allow-unsafe-binary]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--no-policy] [--allow-unsafe-binary]
 
 Wire every Downshift hook into the harnesses found on this machine.
   --tui                run interactive terminal UI onboarding
@@ -157,6 +165,8 @@ Wire every Downshift hook into the harnesses found on this machine.
                        installing the Downshift plugin (the plugin carries the
                        same hooks plus the cache-tax mod) and skip the sibling
                        mods (savvy-progress)
+  --no-policy          do not offer .downshift/policy.json in the current
+                       directory (see downshift policy init)
   --allow-unsafe-binary
                        write hooks that point at this binary even when it sits
                        in a temporary, Go build or world-writable directory
@@ -203,71 +213,15 @@ func setupRun(o setupOptions) int {
 		}
 	}
 
-	failed := false
-	pending := 0
-	unwritable := map[string]bool{} // files that failed to write
-	for _, p := range plans {
-		shown := setupDisplay(o.Home, p.path)
-		switch {
-		case p.err != nil:
-			failed = true
-			fmt.Fprintf(o.Err, "%s: %s: %v\n  nothing was written for %s\n\n", p.target.Name, shown, p.err, p.target.Name)
-		case p.skip != "":
-			fmt.Fprintf(o.Out, "%s: skipped: %s\n\n", p.target.Name, p.skip)
-		case !p.changed():
-			fmt.Fprintf(o.Out, "%s: %s already up to date\n", p.target.Name, shown)
-			setupPrintNotes(o.Out, p.notes)
-			fmt.Fprintln(o.Out)
-		default:
-			pending++
-			verb := "will change"
-			if o.DryRun {
-				verb = "would change"
-			}
-			fmt.Fprintf(o.Out, "%s: %s %s\n", p.target.Name, shown, verb)
-			fmt.Fprint(o.Out, unifiedDiff(diffName(shown, p.existed, "a"), diffName(shown, true, "b"), string(p.before), string(p.after)))
-			setupPrintNotes(o.Out, p.notes)
-			fmt.Fprintln(o.Out)
-		}
+	if p, ok := planPolicyInit(o); ok {
+		plans = append(plans, p)
 	}
-
-	if pending == 0 || o.DryRun {
-		if o.DryRun && pending > 0 {
-			fmt.Fprintln(o.Out, "Dry run: nothing was written.")
-		}
+	failed, proceed := applyPlans(o, plans)
+	if !proceed {
 		if failed {
 			return 1
 		}
 		return 0
-	}
-	if !setupConfirm(o, "Write these changes? A backup of each existing file is kept. [y/N] ") {
-		fmt.Fprintln(o.Out, "Not applied. Re-run with --yes to skip this question.")
-		return 1
-	}
-	stamp := o.Now().UTC().Format("20060102T150405.000000")
-	for _, p := range plans {
-		if !p.changed() {
-			continue
-		}
-		if dep := failedCompanion(p, unwritable); dep != "" {
-			failed = true
-			unwritable[p.path] = true
-			fmt.Fprintf(o.Err, "%s: %s not written: %s could not be written, and the config would point at it\n",
-				p.target.Name, setupDisplay(o.Home, p.path), setupDisplay(o.Home, dep))
-			continue
-		}
-		bak, err := setupWrite(p, stamp)
-		if err != nil {
-			failed = true
-			unwritable[p.path] = true
-			fmt.Fprintf(o.Err, "%s: write failed: %v\n", p.target.Name, err)
-			continue
-		}
-		if bak != "" {
-			fmt.Fprintf(o.Out, "%s: written. Backup: %s\n", p.target.Name, setupDisplay(o.Home, bak))
-		} else {
-			fmt.Fprintf(o.Out, "%s: written (new file).\n", p.target.Name)
-		}
 	}
 	// Ensure native context optimization is enabled by default.
 	if optCfg, err := contextopt.LoadConfig(); err == nil {

@@ -15,10 +15,14 @@ import (
 )
 
 // runPolicy dispatches 'downshift policy'. check validates the routing policy
-// the hooks read, without routing anything.
+// the hooks read, without routing anything; init creates the project policy
+// file after a yes.
 func runPolicy(args []string, stdout, stderr io.Writer) int {
+	if len(args) >= 1 && args[0] == "init" {
+		return runPolicyInit(args[1:], os.Stdin, stdout, stderr)
+	}
 	if len(args) != 1 || args[0] != "check" {
-		fmt.Fprintln(stderr, "usage: downshift policy check")
+		fmt.Fprintln(stderr, "usage: downshift policy check | downshift policy init [--dry-run] [--yes]")
 		return 2
 	}
 	return runPolicyCheck(stdout, stderr)
