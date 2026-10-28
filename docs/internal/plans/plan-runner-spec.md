@@ -326,8 +326,10 @@ All four limits are optional; absent means unlimited. There is no money limit (O
 - R42. Final text extraction follows the descriptor's ordered list of fields; the session id, when present, is
   recorded (the MVP never resumes it). Raw stdout and stderr are never written to disk (they may echo the task,
   O4); they are parsed in memory and dropped.
-- R43. Timeout and cancel kill the whole process tree: polite signal, 3 s wait, then forced; on Windows a forced
-  tree kill. The runner always imposes its own deadline, whatever the CLI does.
+- R43. Timeout and cancel kill the whole process tree in three steps: SIGINT to the group, wait 1.5 s, SIGTERM,
+  wait 2 s, then SIGKILL. On Windows: Ctrl-Break, wait 1.5 s, then terminate the job object. The runner always
+  imposes its own deadline, whatever the CLI does. (Timings from the business plan, section 5 of its
+  orchestration spec.)
 
 **Gap, stated in every output:** `succeeded` means "exited cleanly and left a final text". It does not mean the
 task's definition of done was met. There is no acceptance by task criterion (tests, lint, expected files); the
@@ -473,3 +475,47 @@ Waves (no two fronts in a wave share a file, a generated artifact or a pending d
 Decisions to settle before wave 3: G1 (changes P3, P8 and the schema if `accept` is added; adding a field later is
 a schema change), G12 (default tiers, P6) and G13 (scope cut). G10 can wait: moving descriptor facts into
 `core.HarnessCapabilities` later touches only P3's table.
+
+## 12. Absorbed from the business plan (2026-10-27)
+
+Source: `downshift-business-plan`, files `architecture/worktree-isolation-spec.md`,
+`architecture/multi-vendor-orchestration-spec.md` and `architecture/domain-boundaries.md`. They are the owner's own
+documents. Everything is tokens and calls only (O1), and no prompt or path is ever written to disk.
+
+- R53. **Output ring buffer.** Each worker keeps stdout and stderr in memory only, in a circular buffer of 256 KiB
+  each. Overflow drops the oldest bytes and counts them in `dropped_bytes`, shown in the result. Nothing from the
+  buffer is written to disk (reinforces O4).
+- R54. **Identifier grammar.** A worker id used in a path or a branch name matches `^[a-z0-9][a-z0-9._-]{0,63}$`.
+  A leading `-`, `..`, a trailing `.lock`, `@{`, a control character or a path separator is refused at validation.
+- R55. **Hermetic git.** Every git call is an argv, never a shell string, uses `--` before paths, and sets
+  `GIT_TERMINAL_PROMPT=0` and `LC_ALL=C`. Read-only diagnostics (`status`, `diff --numstat`) also set
+  `GIT_OPTIONAL_LOCKS=0`, so the runner never blocks an editor watching the repository.
+- R56. **Symlink escape.** The repository root and the state directory are resolved with `filepath.EvalSymlinks`.
+  Every path the runner writes or removes must be a strict descendant of `<state dir>/wt/`; anything else is an
+  error before any write.
+- R57. **Read-only check.** After a read-only attempt, `git status --porcelain --untracked-files=all` in its
+  worktree must be empty. A mutation marks the attempt `read_only_violated`, fails it, and keeps the worktree.
+- R58. **Quarantine.** An attempt whose process died or failed and whose worktree has changes or commits is
+  recorded as `quarantined` in `state.json`. `plan clean` lists it and never removes it without `--yes --force`.
+  A clean abandoned worktree is removed only by `plan clean --yes`. No code path removes a worktree on its own
+  (R34 stays).
+- R59. **Zero-prompt events and rework.** The runner emits only these fields per worker event: task id (UUIDv7),
+  tool-use hash (first 16 hex of SHA-256 of a per-run salt plus the raw id), harness, phase, duration in
+  milliseconds and exit code. A scope hash is computed in memory from hashed relative paths of the diff and then
+  dropped. An attempt is marked `reworked` when a later attempt names it as parent after a quarantine, or when
+  its worktree is discarded and a new attempt touches the same scope hash within 15 minutes.
+- R60. **Per-harness admission.** At most 2 running workers per provider by default, on top of the strategy cap
+  of section 3.1. A provider in cool-down (strain above any percentage, R22) defers the attempt to the next
+  provider in plan order, or parks it until the reset time, never failing it silently.
+
+Tests for R53 to R60 are added to section 9 as rows, each on the fakes described there. The estimate grows by
+3 points: new front **P11 Events and rework ids** (R59, 3 points, after P8, files
+`internal/plan/events/*`). R53, R55 to R58 and R60 are folded into P5, P8 and P4.
+
+New gaps:
+
+| ID | Gap | Owner |
+|---|---|---|
+| G14 | The business plan caps workers at 16 and defaults to 4. This spec caps `parallel` at 8. Pick one cap. | Tiago Vilas Boas |
+| G15 | The business plan lets the merge gate fast-forward the user's branch after verification. This spec never applies work back (R34, R35). Pick manual apply or an opt-in gate. | Tiago Vilas Boas |
+| G16 | The business plan keeps worktrees under the repository on an ephemeral branch. This spec keeps them in the state directory, detached. Pick one location. | Tiago Vilas Boas |
