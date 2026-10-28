@@ -29,7 +29,7 @@ at most 5 points, with the gate in the MVP plan section 5.
 |---|---|--:|---|
 | S1 | Ownership markers on every file setup writes; `--undo` and reinstall respect them. Done for whole files (wrappers, dedicated steering); the hook JSON and shared steering blocks keep their own rules | 3 | — |
 | S2 | Install the Downshift skill into `~/.claude/skills` and `~/.codex/skills` (marker, backup, dry run; copy on Windows) | 3 | S1 |
-| S3 | `doctor` proves the hook fired: last hook time and decision; statusline quota source present | 2 | — |
+| S3 | `doctor` proves the hook fired: last hook time and decision; statusline quota source present | 2 | done |
 
 ## Stage 2: right model in Claude Code (done except the real-session proof)
 

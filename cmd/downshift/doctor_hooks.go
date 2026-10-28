@@ -264,6 +264,7 @@ func checkEvidence(add func(id, status, detail, fix string), env doctorEnv, nc c
 	checkHookBinary(add, env, file, found, pathBin)
 	checkSessionList(add, env, nc)
 	checkQuotaHold(add, env, h)
+	checkQuotaSource(add, env, h)
 
 	var mine []telemetry.Event
 	for _, ev := range events {
@@ -427,28 +428,6 @@ func checkQuotaHold(add func(id, status, detail, fix string), env doctorEnv, h s
 	fix := fmt.Sprintf("downshift quota status --harness %s  (refresh the snapshot with the harness statusline bridge or `quota import`; to drop it, delete the %s entry in quota.json)", h, h)
 	add("quota snapshot", doctorWarn,
 		fmt.Sprintf("expired %s ago and still holding model rewrites; %s", humanAge(age), left), fix)
-}
-
-const lastEventStale = 7 * 24 * time.Hour
-
-func checkLastEvent(add func(id, status, detail, fix string), env doctorEnv, h string, mine []telemetry.Event) {
-	fix := fmt.Sprintf("restart %s (hooks load at session start), spawn one subagent, then run: downshift stats --days=1", h)
-	var last time.Time
-	for _, ev := range mine {
-		if t, err := time.Parse(time.RFC3339Nano, ev.Timestamp); err == nil && t.After(last) {
-			last = t
-		}
-	}
-	if last.IsZero() {
-		add("last hook event", doctorWarn, "none in the event log yet", fix)
-		return
-	}
-	age := env.Now().Sub(last)
-	if age > lastEventStale {
-		add("last hook event", doctorWarn, humanAge(age)+" ago (older than 7 days)", fix)
-		return
-	}
-	add("last hook event", doctorOK, humanAge(age)+" ago", "")
 }
 
 // checkCompletion says whether the end of a child spawn is measurable for the
