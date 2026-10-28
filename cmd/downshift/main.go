@@ -35,8 +35,9 @@ var (
 func main() {
 	args := os.Args[1:]
 	if len(args) == 0 {
-		usageShort(os.Stderr)
-		os.Exit(2)
+		cat := catalog.Load()
+		fromcore.Install(cat)
+		os.Exit(runDefaultEntry(os.Stdin, os.Stdout, os.Stderr, cat))
 	}
 	// Help is answered before anything loads: no catalog, no stdin, no telemetry.
 	if code, handled := commandHelpRequest(args, os.Stdout, os.Stderr); handled {
