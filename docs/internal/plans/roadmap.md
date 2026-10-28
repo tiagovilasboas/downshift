@@ -224,6 +224,19 @@ Approved by the owner. Tiers follow the harness-core model table: small is Haiku
 
 The owner's own agents (harness-core roster and `mechanical-worker`) go in the owner's `policy.json`, not in the binary. Economy mode (W7.9) lowers each row one tier within the same bounds.
 
+### 8c-quinquies. Harness-agnostic by construction (N12, 2026-10-27)
+
+Owner direction: every feature is harness-agnostic, so the next harness costs data, not code. This restates the layering rule of `AGENTS.md` for the roadmap.
+- **Tiers are abstract** (small, mid, frontier). Each harness maps them to its own model names in `catalog.json`.
+- **Harness facts are data** in `HarnessCapabilities`: whether the harness accepts only its own model names (`StrictModelName`), whether effort can be applied (`CanApplyEffort`), which environment variable can override the hook (`ModelOverrideEnv`). Shared code never branches on a harness name.
+- **Defaults, economy mode and the plan runner** are the same on every harness. A harness that cannot apply a decision still computes it, and the harness matrix says so.
+
+**Claude Code facts from the official subagent docs (read 2026-10-27).** These are Claude Code only; other harnesses use their own formats.
+- The Agent tool `model` parameter accepts only the aliases `sonnet`, `opus`, `haiku` and `fable`, not a full model id. The catalog already writes the `native_name` alias (`StrictModelName`).
+- Precedence: the per-invocation parameter (which a mod's `agent.spawn` hook can replace), then the subagent `model` frontmatter, then `CLAUDE_CODE_SUBAGENT_MODEL`, then the main conversation's model. `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` overrides the first two; the adapter already knows it.
+- Built-in `Explore` and `Plan` keep their listed model when only the default variable is set.
+- Effort per subagent: `effort` frontmatter, and an Agent tool `effort` parameter since v2.1.292. `CLAUDE_CODE_EFFORT_LEVEL` wins over both. `ClaudeCodeCaps` still says `CanApplyEffort: false`, which is stale for that version.
+
 ### 8c-ter. Business plan divergences resolved (N10, 2026-10-27)
 
 Owner decision: follow the business plan where it diverges from the plan runner spec.
@@ -315,6 +328,7 @@ These close gaps that no stage covered. W7.1 and W7.2 come first: without them v
 | W7.7 | 3 | Dogfooding protocol: duration, sessions, opt-in control arm, fields measured in tokens, stop criteria from the business plan | Real-session proof |
 | W7.8 | 1 | Estimate against actual for stages 0 and 2, as the harness-core rule asks at closing | None |
 | W7.9 | 3 | Economy mode as policy data (`"mode": "economy"` in `policy.json`, toggled by a command), the same on every harness: every default goes one tier down; a type that keeps the requested model goes one tier below it. Bounds stay: risk never goes small, `explicit_only` never picked, never above the requested model | W7.1 |
+| W7.11 | 2 | Claude Code effort: confirm the Agent tool `effort` parameter on the installed version (v2.1.292 or later), then set `CanApplyEffort` from data for that version; `doctor` warns when `CLAUDE_CODE_EFFORT_LEVEL` or `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` would override the hook | Real-session proof |
 | W7.10 | 2 | Per-harness defaults beyond Claude Code: read the agent types each harness really sends (OpenCode first), add its rows to the default table; until then its types keep the requested model while economy mode still applies | W7.1, that harness's real payload |
 
 ## 9. Conflicts in the sources (fix when accepted)
