@@ -45,15 +45,19 @@ var defaultSessionModels = map[string][]string{
 	},
 }
 
-// seedList is what a harness without an entry is seeded with: the list the
-// discovery cache ranked for it when there is one, else the fixed fallback.
-// OpenCode has no fixed fallback; its ids come from `opencode models` only.
+// seedList is what a harness without an entry is seeded with. A harness with
+// fixed tiers keeps them: a discovery snapshot can be partial (one account
+// lists two models, not three), and once written the file is never reseeded.
+// A harness with no fixed tiers, OpenCode, takes the list the discovery cache
+// ranked for it, because its ids exist only in `opencode models`.
 func seedList(harness string, cache discovery.File) ([]string, bool) {
+	if defs, ok := defaultSessionModels[harness]; ok {
+		return defs, true
+	}
 	if e, ok := cache.Harnesses[harness]; ok && len(e.Ranked.IDs) > 0 {
 		return e.Ranked.IDs, true
 	}
-	defs, ok := defaultSessionModels[harness]
-	return defs, ok
+	return nil, false
 }
 
 // setupEnsureSessionModels discovers and seeds session-models.json for detected harnesses.

@@ -97,3 +97,13 @@ func TestSeedListPrefersDiscoveryCache(t *testing.T) {
 		t.Errorf("claude-code without cache = %v, %v; want the fixed tiers", got, ok)
 	}
 }
+
+func TestSeedListIgnoresPartialSnapshotForFixedTiers(t *testing.T) {
+	partial := discovery.File{Harnesses: map[string]discovery.Entry{
+		"claude-code": {Ranked: discovery.Ranked{IDs: []string{"claude-sonnet-5-5", "claude-opus-5-5"}}},
+	}}
+	got, ok := seedList("claude-code", partial)
+	if !ok || len(got) != 3 {
+		t.Fatalf("seedList(claude-code) = %v, %v; a partial snapshot must not replace the three fixed tiers", got, ok)
+	}
+}
