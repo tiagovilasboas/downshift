@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/cascade"
 	"github.com/tiagovilasboas/downshift/internal/execwrap"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -65,6 +66,9 @@ func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			ev.Model = envModel(ev.Harness)
 			ev.Entry = entry
 			_ = execwrap.Append(path, ev)
+		}
+		if res.ExitCode != 0 {
+			cascade.RecordFailure(session, strings.Join(args[1:], " "), envModel(envHarness()), fmt.Sprintf("command exited with code %d", res.ExitCode))
 		}
 	}
 	return res.ExitCode
