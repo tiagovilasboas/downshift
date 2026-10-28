@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The docs no longer say "zero dependencies": the binary links a few third-party libraries through its command layer. What holds, and is now checked by a test, is that every package under `internal/` uses the Go standard library only, except the MCP transport that wraps the official Go SDK.
 
+### Added
+
+- `downshift report` shows why spawns changed or stayed (verdict and reason counts per harness) and tokens per harness in two columns that are never summed; `downshift session --panel` shows the requested model, the final model, the verdict and the reason per spawn. Tokens only, no money. Events carry a prompt-free `routing_note`.
+- The MCP `providers` tool accepts the model ids the orchestrator sees. They are stored in the discovery cache as a hint (`source: "mcp"`): a fresh detection always wins and the hint expires after one hour.
+
+### Changed (models)
+
+- `downshift setup` no longer writes `session-models.json`. Models are always the ones the harness reports; the file is only an optional manual override, and setup names the `downshift models discover` command when a harness has no detected list yet. `doctor` no longer warns forever for Claude Code, which uses the catalog stand-in.
+
 ### Removed (O8)
 
 - The built-in default agent-type table (N11) and the economy-mode step that read it. `downshift policy economy`

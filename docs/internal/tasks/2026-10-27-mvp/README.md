@@ -53,12 +53,13 @@ Spec: `docs/internal/plans/mcp-delegation-spec.md`. The tools that start workers
 | K4 | **Done.** MCP information tools: `providers` (K1), `playbook`, `status`, `apply` (K2); a `strain` block on every result | 3 | K1, K2, K3 |
 | K5 | **Done.** `downshift mcp serve` command, help and end-to-end tests over pipes; a real Claude Code session called the tools (`docs/evidence/mcp-real-session-2026-10-28.md`) | 1 | K4 |
 | K6 | **Done.** `setup --mcp`: register the server in Claude Code (through `claude mcp add -s user`) and Codex (the `[mcp_servers.downshift]` block); opt-in, dry run, backup, undo by marker, other servers untouched. Research done: `docs/internal/plans/mcp-registration.md`; the other four harnesses are stage 5 | 2 | K5, S1 |
+| K7 | **Done 2026-10-28, pending the owner's acceptance.** One detected list per harness, no fixed ids: `setup` no longer writes `session-models.json` (it stays an optional manual override) and only says which `models discover` command is missing; the hook keeps reading the live discovery cache (payload, cache, file). The `providers` tool takes an optional `models` list; `discovery.MergeReported` stores it as `source: "mcp"` (a fresh detection always wins, 1 h expiry, 64 ids at most, atomic write); `doctor` stops warning forever about the Claude Code stand-in | 5 | K1, K4 |
 
-## Stage 3: show and prove (closes the MVP; not started)
+## Stage 3: show and prove (closes the MVP; V1 built, V2 and V3 not started)
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
-| V1 | Routing note in `report` and `session --panel`; tokens per harness in two columns (R11, O1) | 3 | C3 |
+| V1 | **Built 2026-10-28, pending the owner's acceptance.** Routing note in `report` ("Why spawns changed") and `session --panel`; tokens per harness in two columns; no money; the hook writes `routing_note` into the event and a shared-layer test proves it holds enums, ids and tiers only | 3 | C3 |
 | V2 | Acceptance suite baseline: v2 against the requested-model arm, regressions reported | 3 | C3 |
 | V3 | Real Claude Code session as evidence; default on in Claude Code; pause switch; release and migration note (R9, R13) | 3 | V1, V2 |
 
@@ -108,7 +109,7 @@ Branch `downshift/mvp-ponto-zero`, published, no open PR, no worktree, no unpubl
 | Stage 0 | Done | none |
 | Stage 2, real-session proof (C0, R0b) | Authorized by the owner, not run | none; run when the owner says go |
 | Stage 1, setup | Not started | none |
-| Stage 3, report and acceptance (V1, V2, V3) | Not started | none |
+| Stage 3, report and acceptance (V1, V2, V3) | V1 built; V2 needs the owner's budget approval; V3 waits for V1 and V2 | V2 budget |
 | Stage 4, plan runner | Spec done (54 requirements + R53 to R62); not started | G1 acceptance criterion; G4 CLI flags; G10 harness contract table; G12 default tiers |
 | Stage 5 and other harnesses | Not started | none |
 | Business plan waves W0 to W6 | Cards in roadmap 8d and 8c-ter | BP1 accepted; BP2 deferred; G14 to G16 resolved |

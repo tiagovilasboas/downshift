@@ -22,7 +22,7 @@ No model is fixed in Downshift: the models a spawn can use come from what the ha
 The catalog supplies tier and effort data for an id a real source listed, and never adds an id. Metadata a source
 carries (`model_metadata`) wins over the catalog. An id with no tier evidence is listed with tier `unknown` and
 `untiered: true`; discovery ids the catalog could not rank are listed this way too. A fallback list is flagged
-(`fallback: true`) so the orchestrator knows it is a stand-in and `doctor` warns. With no source the list is empty and
+(`fallback: true`) so the orchestrator knows it is a stand-in; `doctor` reports it as ok for a harness that sends no list (Claude Code) and warns for any other harness. With no source the list is empty and
 routing holds.
 
 ## Session metadata before catalog fallback
@@ -136,6 +136,8 @@ Same order for every harness:
 3. Otherwise the models recovered for that harness by `downshift models discover` (`discovered.json`). See [session-discovery.md](session-discovery.md). A recovered list beats a handwritten allowlist.
 4. Otherwise `~/.downshift/session-models.json` (legacy `~/.harness-downshift/`) (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key is the fallback. This file is not a credit report. `quota` in it is ignored.
 
+`downshift setup` never writes `session-models.json`. The detected list lives in the discovery cache, which the hook reads before the file, so a copy in the file would only go stale. The file is an optional manual override you write yourself. When a target harness has no fresh discovery entry and no file list, `setup` prints `models: no detected list for <harness>; run \`downshift models discover --harness <harness>\``, and `doctor` says the same through its `available models` check (it also warns when an explicit list for Claude Code has no id with a native name the hook can write).
+
 The file is operator-curated. For Codex, `model` identifies the active model in that event and `session_id` identifies its session. Downshift does not call a picker API, discover account entitlements, or assume every catalog entry is selectable. Verify the session's actual choices before adding them to the allowlist.
 
 Example with a per-session override (replace the session ID with the value in Codex hook input):
@@ -234,3 +236,13 @@ Turn the flag on with any of:
 Cursor `claude-fable-5-1-thinking-high` and Codex `gpt-6-astra` are `explicit_only`. Claude Code `claude-fable-5-1` is not: list that id in the session when you want upshift to reach it. Do not alias another harness's canonical id.
 
 For example, a list `["session-small", "session-mid", "session-frontier"]` makes those three positions available to all routing decisions without requiring any of the IDs or their prices in Downshift's catalog. If the session list is missing, the active model stays.
+
+## Reported by the MCP server
+
+The orchestrator may report the model ids it can see through the MCP `providers` tool. Downshift stores them in `discovered.json` as an entry with `"source": "mcp"`, ranked by the catalog like any other entry (the catalog never adds an id). This data is a hint for `providers` only. Routing never reads it (the hook ignores `mcp` entries), it ranks below `session-models.json`, and it never overrides a real detection:
+
+- A fresh entry from `models discover` (inside the discovery TTL) wins. The report is not written, and ids it lacks are not added.
+- A stale or absent detection is replaced by the report.
+- `models discover` always replaces an `mcp` entry.
+- An `mcp` entry expires at read time after the shorter of the configured TTL and one hour; an expired entry is an unknown list.
+- Ids must match the discovery id pattern; invalid and duplicate ids are dropped and at most 64 are kept.

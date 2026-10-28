@@ -112,6 +112,23 @@ Token classes, per bucket: `input`, `output`, `cache_read` (cached minus cache w
 when no priced usage exists; `--detail` adds the per-harness and per-pair table. Records without
 a price are not in these figures; `observed_child_tokens` still counts them.
 
+## Routing note and tokens per harness (`downshift report`)
+
+`downshift report` (text and `--json`) carries two sections with no money in them, built from the
+same events and window as the rest of the report.
+
+- `why_spawns_changed`: per harness, `decisions`, `recorded`, `not_recorded`, `by_verdict` and
+  `top_reasons` (at most five). Keys are enums, tiers and declared rule or profile ids; any value that
+  is not an identifier is dropped when read, so prose, a path or a prompt cannot reach it. The source
+  is the optional `routing_note` object on a decision event (`verdict`, `reason`, `rule_id`,
+  `profile`, `tier_from`, `tier_to`). Events written before it, or by a path that does not record it,
+  count under `not_recorded`.
+- `tokens_by_harness`: per harness `compactor_tokens_avoided` (estimated, saved bytes / 4),
+  `moved_observed` with `tokens_moved_to_smaller_model` (child tokens, work plus cache, whose honored
+  model is a smaller tier than requested; meaningful only when `moved_observed` is true), and
+  `quota_used` (`status` `native` or `unknown`, `five_hour_pct`, `week_pct`, `observed_at`, `stale`).
+  The two token columns are never added.
+
 ## Before you paste
 
 - Redact `generated_at` if you prefer (optional).

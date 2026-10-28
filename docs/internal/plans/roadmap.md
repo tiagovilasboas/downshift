@@ -296,6 +296,8 @@ The plan runner estimate is now 41 points, with two new fronts (P11 events, P12 
 
 Wave totals: W0 14, W2 13, W3 13, W4 13, W5 8. The plan-runner spec (33 points) overlaps W2 and W3; it is reconciled in BP3 to BP5.
 
+**State on 2026-10-28 (MVP stage 2b and 3).** Built: the MCP server with four information tools and `setup --mcp` (K3 to K6), detected models only (K1, K7: no id is fixed in code, `setup` no longer writes `session-models.json`, the `providers` tool can store reported ids as a one-hour hint that a fresh detection overrides), and the routing note in `report` and `session --panel` with tokens per harness in two columns (V1). Pending the owner's acceptance. Next: V2 (acceptance baseline, needs the owner's budget approval) and V3 (real-session proof, default on, release note). Cards: `docs/internal/tasks/2026-10-27-mvp/README.md`.
+
 **Open reconciliations (owner decisions)**
 
 - **BP1 Surfaces (accepted by the owner, 2026-10-27).** The product starts on Claude Code and becomes harness-agnostic later, so the contract is neutral from the first card. Order: (1) the plan runner engine with JSON commands as the contract (`plan status`, `worktree apply|rework|discard`, `route --json`); (2) a Claude Code skin on top (dock and statusline) that holds no policy; (3) an MCP stdio server as a thin neutral channel over the same engine, after the engine exists; (4) the TUI as a neutral cockpit only once a second harness runs workers. The MCP server is a tool the orchestrator calls, so it fits O7: Claude Code stays the orchestrator. Wave 4 is deferred to step 4.

@@ -82,18 +82,39 @@ downshift stats [flags]
 Generate a savings report.
 
 ```bash
-downshift report [flags]
+downshift report [--days=N] [--json]
 ```
 
 **Flags:**
-- `--period=DURATION` — Time period (e.g., `7d`, `30d`, `1w`)
-- `--format=FORMAT` — Output format (`text`, `json`, `csv`)
+- `--days=N` — Window in days (default: 30, the same window as the Agents panel)
+- `--json` — Output JSON instead of text
+
+Any other flag exits 2 with the usage line.
 
 **Examples:**
 ```bash
-downshift report --period=7d
-downshift report --period=30d --format=json
+downshift report --days=7
+downshift report --days=30 --json
 ```
+
+The report ends with two sections before its final figure. They carry no money and no `$`.
+
+- **Why spawns changed**, per harness: the spawns in the window counted by routing verdict
+  (`kept`, `profile`, `rule`, `hint_down`, `default`, `guard_floor`, `held_unknown`, `refused_config`)
+  and the top reasons (`rule:<id>`, `profile:<name>`, `<verdict>:<reason>`). It is built from the
+  routing note each decision event holds (enums, tiers and declared ids only). A decision with no note
+  is counted as "without a routing note", never guessed. Harnesses with no events are listed as `no events`.
+- **Tokens per harness**: one line per harness, `tokens avoided (Compactor)` and `tokens moved to a
+  smaller model` in two columns that are never added, then `quota used (5h · week)` from the native
+  snapshot (`unknown` when none exists, and marked when the snapshot has expired). A harness with no
+  usage bound to a decision shows `unobserved`, not 0.
+
+`--json` carries the same data as `why_spawns_changed` and `tokens_by_harness`. An empty event log
+prints a plain sentence for each section and exits 0.
+
+`downshift session --panel` adds `routing_why`: one entry per spawn of the session with the requested
+model, the final model, the verdict and the reason, plus `cell`, the same in one short line
+(`requested → final · rule:fast-lane`, or `note not recorded`).
 
 ### `downshift watch`
 
