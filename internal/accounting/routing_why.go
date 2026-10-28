@@ -54,9 +54,6 @@ func BuildRoutingWhy(events []telemetry.Event, scope Scope) RoutingWhy {
 			continue
 		}
 		hname := ev.Harness
-		if hname == "" {
-			hname = "unknown"
-		}
 		a := byHarness[hname]
 		if a == nil {
 			a = &acc{h: WhyHarness{Harness: hname}, verdicts: map[string]int{}, reasons: map[string]int{}}
