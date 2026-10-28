@@ -181,6 +181,35 @@ The owner changed the route for Phases 1 and 2 on 2026-10-27. These notes amend 
 - **Phases 5 and 6:** not started.
 - **Release:** nothing is on `main`. It waits for the real-session proof (D5).
 
+### 8b. Assessment (2026-10-27)
+
+**Grade: 6 of 10.** The grade is for the product, not the effort. The branch is `downshift/mvp-ponto-zero`, QA PASS at `2330a3e1`.
+
+**Delivered and verified**
+- Clean base (MVP stage 0): v1 experiments, gateway, orchestration and `scoreindex` removed; telemetry no longer imports `core`; routing contract, policy and headroom in place.
+- No dollar in code (O1): the cost formula and the dollar event fields are gone; reports and dashboard are in tokens only; the hook note carries no percentage. The catalog price table stays as an internal routing signal.
+- Routing v2 (MVP stage 2): hint reader, risk guard, Claude statusline quota, tier floor and the v2 decider wired to the hook. The v1 decider is removed with no flag and no intermediate state. `make check` is green and the adapter smoke passes.
+- Process: one branch, no open PR, harness-core agents installed and called by name, model table and open-PR cap in harness-core and the global rules.
+- Plan runner specification (MVP stage 4 input): 54 requirements, written clean-room from behaviour notes. No upstream code or text is used (see N8).
+
+**Gaps, in order of impact**
+1. **No real-session proof.** Nobody has seen the v2 decide in a real Claude Code session. Everything is proven by tests and smoke only. This also closes R0b.
+2. **The hint may not reach the decider.** The adapter passes the prompt before the description, and the hint lives in the description.
+3. **Profile and pinned model do not fire through the hook.** The request carries neither field, so precedence steps 1 and 2 are inert.
+4. **`explicit_only` preservation test removed.** The v2 protects the target, not the requested model. Needs an owner decision.
+5. **The all-critical warning has no field of its own.** It is a `kept` verdict with the quota marked ignored, which is hard to tell apart in a report. Fixing it changes the contract.
+6. **Acceptance suite (V2) has not run** against the requested-model arm, so "no regression" is not proven.
+7. **Cleanup pending.** NB files, `internal/nbtier`, gateway files, and about 40 docs that cite the removed `try` command.
+8. **`main` still holds v1.** Nothing from the branch may reach it before gap 1 is closed (D5).
+
+**Stages not started:** setup (stage 1, R7/R8a/R10), report and prove (stage 3, R11/R13 and V1/V3), plan runner (stage 4), other harnesses (stage 5). About 17 points of the 39-point MVP remain; the plan runner spec sums to 33 points against 26 in the MVP plan.
+
+**Next:** the real Claude Code session (authorized by the owner on 2026-10-27), before stage 1 and the plan runner.
+
+### 8c. Clean-room note (N8)
+
+The upstream project studied for the plan runner is AGPL-3.0-or-later; its copyright belongs to its author and contributors. A local MIT relicense commit exists only in a local clone, is unpublished, and grants nothing. The `downshift-plan` copy was deleted on 2026-10-27. Downshift uses behaviour notes and its own specification only. No upstream file, function, comment or string is copied.
+
 ## 9. Conflicts in the sources (fix when accepted)
 
 1. README stage totals (36 and 15) do not match its cards: stage 1 cards sum to 42 points; stage 2 (R7, R8b, R8c) to 9.
