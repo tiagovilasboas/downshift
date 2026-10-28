@@ -77,12 +77,11 @@ func TestClaudeCodeMVP_E2E(t *testing.T) {
 		}
 	})
 
-	// --- 3. Sensor-guided Auto-Upgrade Cascade ---
-	t.Run("3_AutoUpgradeCascadeOnFailure", func(t *testing.T) {
-		// Record sensor failure for this task
+	// --- 3. No automatic upgrade after a failure (owner decision O8) ---
+	// A failed run does not move the next spawn back up on its own: the
+	// orchestrator decides what to send next, and the hook keeps the request.
+	t.Run("3_NoAutoUpgradeAfterFailure", func(t *testing.T) {
 		cascade.RecordFailure(sessionID, taskPrompt, smallID, "go test failed with exit code 1")
-
-		// Re-run the hook: should upgrade back to frontier model
 		ev := runClaudeCodeHook(t, eventLog, map[string]any{
 			"hook_event_name": "PreToolUse",
 			"tool_name":       "Agent",
@@ -94,9 +93,8 @@ func TestClaudeCodeMVP_E2E(t *testing.T) {
 				"model":         frontierID,
 			},
 		})
-
-		if ev["verdict"] != "UPSHIFT" {
-			t.Errorf("verdict = %v, want UPSHIFT after failure", ev["verdict"])
+		if ev["verdict"] == "UPSHIFT" {
+			t.Errorf("verdict = %v: a failure must not upgrade the spawn on its own", ev["verdict"])
 		}
 		cascade.ClearSession(sessionID)
 	})

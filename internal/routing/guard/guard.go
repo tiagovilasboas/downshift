@@ -6,8 +6,6 @@
 // already decide on, and it never changes anything but the answer.
 //
 // Rules (docs/design/routing-v2.md section 2, guard):
-//   - risk: a task that touches a risk category keeps its requested tier, so
-//     risk never goes down a tier;
 //   - never widen: a target above the requested tier is refused;
 //   - explicit_only: a model marked routing:"explicit_only" is never chosen
 //     automatically;
@@ -15,12 +13,9 @@
 //   - doubt: an unconfident decision, or an unknown tier, keeps the requested
 //     model.
 //
-// Risk categories are an input. The scanner lives in internal/classify, and
-// routing packages may import only core, paths and other routing packages
-// (internal/archtest/routing_test.go), so the caller runs
-// classify.RiskCategories and passes the result in. The catalog is an
-// interface for the same reason: catalog.Catalog satisfies it, and routing
-// never imports catalog.
+// The catalog is an interface because routing packages may import only core,
+// paths and other routing packages (internal/archtest/routing_test.go):
+// catalog.Catalog satisfies it, and routing never imports catalog.
 //
 // Downshift by Tiago Vilas Boas
 // https://github.com/tiagovilasboas/downshift
@@ -44,7 +39,6 @@ type Catalog interface {
 // names only, never task text.
 type Input struct {
 	Harness   contract.HarnessID
-	Risk      []string      // risk categories of the task text; empty when none
 	Confident bool          // false is doubt: the requested model is kept
 	Requested contract.Tier // tier of the model the spawn asked for
 	Target    contract.Tier // tier the decision proposes
@@ -66,9 +60,11 @@ type Result struct {
 //     requested model;
 //  2. never widen: a target above the requested tier is refused; an equal tier
 //     has nothing to move;
-//  3. risk: any risk category keeps the requested tier;
-//  4. explicit_only: the target model is marked explicit_only;
-//  5. foreign id: the target id is not known to the harness catalog.
+//  3. explicit_only: the target model is marked explicit_only;
+//  4. foreign id: the target id is not known to the harness catalog.
+//
+// The built-in risk veto is gone (owner decision O8): the orchestrator chooses
+// the model, and a project that wants a floor declares it in policy.json.
 func Check(cat Catalog, in Input) Result {
 	from, to := rank(in.Requested), rank(in.Target)
 	if cat == nil || !in.Confident || from < 0 || to < 0 {
@@ -79,9 +75,6 @@ func Check(cat Catalog, in Input) Result {
 		return refuse(contract.ReasonNeverWiden)
 	case to == from:
 		return Result{}
-	}
-	if len(in.Risk) > 0 {
-		return refuse(contract.ReasonRiskFloor)
 	}
 	harness := string(in.Harness)
 	if cat.IsExplicitOnly(harness, in.TargetID) {

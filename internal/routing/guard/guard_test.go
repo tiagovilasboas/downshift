@@ -54,29 +54,13 @@ func TestCheck(t *testing.T) {
 		want Result
 	}{
 		{
-			name: "high risk tries to go down to small: refused",
-			cat:  testCatalog,
-			in:   with(func(in *Input) { in.Risk = []string{"secret"} }),
-			want: Result{Reason: contract.ReasonRiskFloor},
-		},
-		{
-			name: "high risk tries to go down one tier: refused, risk never goes down a tier",
-			cat:  testCatalog,
-			in: with(func(in *Input) {
-				in.Risk = []string{"authz", "payment"}
-				in.Target = contract.TierMid
-				in.TargetID = "mid-model"
-			}),
-			want: Result{Reason: contract.ReasonRiskFloor},
-		},
-		{
-			name: "low risk goes down to small: allowed",
+			name: "goes down to small: allowed",
 			cat:  testCatalog,
 			in:   base,
 			want: Result{Allowed: true},
 		},
 		{
-			name: "low risk goes down one tier: allowed",
+			name: "goes down one tier: allowed",
 			cat:  testCatalog,
 			in: with(func(in *Input) {
 				in.Requested = contract.TierMid
@@ -109,28 +93,10 @@ func TestCheck(t *testing.T) {
 			want: Result{Reason: contract.ReasonForeignID},
 		},
 		{
-			name: "risk is checked before explicit_only",
-			cat:  testCatalog,
-			in: with(func(in *Input) {
-				in.Risk = []string{"secret"}
-				in.TargetID = "explicit-model"
-			}),
-			want: Result{Reason: contract.ReasonRiskFloor},
-		},
-		{
 			name: "doubt: unconfident keeps the requested model",
 			cat:  testCatalog,
 			in: with(func(in *Input) {
 				in.Confident = false
-			}),
-			want: Result{},
-		},
-		{
-			name: "doubt: unconfident with risk keeps without a risk reason",
-			cat:  testCatalog,
-			in: with(func(in *Input) {
-				in.Confident = false
-				in.Risk = []string{"crypto"}
 			}),
 			want: Result{},
 		},

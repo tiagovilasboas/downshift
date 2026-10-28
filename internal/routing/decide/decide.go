@@ -101,7 +101,7 @@ func route(in Input) (core.Decision, contract.Note) {
 		return kept(in, current, requested, c)
 	}
 	res := guard.Check(in.Catalog, guard.Input{
-		Harness: req.Harness, Risk: in.Risk, Confident: known,
+		Harness: req.Harness, Confident: known,
 		Requested: requested, Target: c.tier, TargetID: target.ID,
 	})
 	if res.Allowed {
@@ -110,8 +110,6 @@ func route(in Input) (core.Decision, contract.Note) {
 	switch res.Reason {
 	case contract.ReasonNone:
 		c.verdict = contract.VerdictKept
-	case contract.ReasonRiskFloor:
-		c.verdict, c.reason = contract.VerdictGuardFloor, res.Reason
 	default:
 		c.verdict, c.reason = contract.VerdictHeldUnknown, res.Reason
 	}

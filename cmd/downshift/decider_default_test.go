@@ -13,8 +13,9 @@ import (
 )
 
 // TestRoutingDeciderDefaultProfile runs the built-in agent types through the
-// production decider. The default table moves them down only when the project
-// policy loads; an unusable policy drops the agent type, so the spawn is kept.
+// production decider. There is no built-in table any more (owner decision O8):
+// the model the spawn asked for is kept for every agent type, and a downshift
+// comes only from the project policy or the orchestrator's hint.
 func TestRoutingDeciderDefaultProfile(t *testing.T) {
 	cases := []struct {
 		name      string
@@ -22,7 +23,7 @@ func TestRoutingDeciderDefaultProfile(t *testing.T) {
 		agentType string
 		wantModel string
 	}{
-		{"no policy: Explore goes small", "", "Explore", smallID},
+		{"no policy: Explore keeps the requested model (O8)", "", "Explore", frontierID},
 		{"no policy: general-purpose keeps", "", "general-purpose", frontierID},
 		{"invalid policy: Explore is kept", `{"version":1,"routing":{"rules":[{"id":"x"}]}}`, "Explore", frontierID},
 		{"malformed policy: Explore is kept", `{not json`, "Explore", frontierID},

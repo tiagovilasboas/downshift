@@ -32,8 +32,9 @@ func refused(reason contract.Reason) choice {
 //  2. a profile, named by the request or matching its agent type;
 //  3. the first enabled rule whose kind, effort and quota gates admit it;
 //  4. the hint's tier, only when it is below the requested tier;
-//  5. the default profile table shipped with the binary, by agent type;
-//  6. otherwise the requested model is kept.
+//  5. otherwise the requested model is kept. There is no built-in table: the
+//     orchestrator chooses the model, and the playbook carries the defaults
+//     (owner decision O8).
 //
 // requested is the tier of the requested model; it is unknown (empty) when the
 // catalog does not know the model, and only the hint step reads it.
@@ -62,35 +63,7 @@ func resolve(in Input, requested contract.Tier) choice {
 	if t := req.Hint.Tier; t.Valid() && requested.Valid() && rank(t) < rank(requested) {
 		return choice{verdict: contract.VerdictHintDown, tier: t}
 	}
-	// A declared hint tier, even one equal to the request, is the parent's
-	// word: the default table does not override it.
-	if req.Hint.Tier.Valid() {
-		return keep
-	}
-	return defaultChoice(in, requested)
-}
-
-// defaultChoice reads the default profile table for the agent type. It keeps
-// when no row applies, when the row keeps (standard mode), when the policy
-// declares a profile of that name (a declared profile is never replaced by the
-// table, even one refused for another harness), or when the row would raise
-// the tier: a default only moves down, and an upshift is the guard's business,
-// not the table's. Economy mode (economy.go) changes the tier a row asks for,
-// never the precedence above.
-func defaultChoice(in Input, requested contract.Tier) choice {
-	req := in.Request
-	if _, declared := in.Policy.ProfileNamed(contract.ProfileName(req.AgentType)); declared {
-		return keep
-	}
-	d, ok := policy.DefaultFor(req.Harness, req.AgentType)
-	if !ok {
-		return keep
-	}
-	tier, ok := rowTier(d, len(in.Risk) > 0, requested, in.Policy.EconomyMode())
-	if !ok || rank(tier) > rank(requested) {
-		return keep
-	}
-	return choice{verdict: contract.VerdictDefault, tier: tier}
+	return keep
 }
 
 // profileChoice reads the tier of a profile of this harness. A profile that
