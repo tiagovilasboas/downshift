@@ -80,6 +80,26 @@ func TestDecideDefaultProfiles(t *testing.T) {
 		{name: "the table is keyed by harness",
 			request: contract.Request{Harness: h, RequestedModel: "frontier-model", AgentType: "Explore"},
 			want:    want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		// A declared profile of the same name, refused for another harness, is
+		// not replaced by the table: the spawn keeps its model.
+		{name: "declared profile of another harness is not replaced by the table",
+			request: ccReq("Explore", "frontier-model"),
+			pol: &policy.Policy{Profiles: []policy.Profile{
+				{Name: "Explore", Tier: contract.TierSmall, Harness: "other"}}},
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		// A hint tier equal to the request is a declared word: the table keeps out.
+		{name: "equal hint tier blocks the default table",
+			request: func() contract.Request {
+				r := ccReq("Explore", "frontier-model")
+				r.Hint.Tier = contract.TierFrontier
+				return r
+			}(),
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		// The table never widens: a risky Explore on a small model is kept as
+		// kept, not recorded as a refused upshift.
+		{name: "risky default on a small model is kept, not an upshift refusal",
+			request: ccReq("Explore", "small-model"), risk: []string{"secret"},
+			want: want{contract.VerdictKept, "", "small-model", "", "", contract.TierSmall, core.VerdictOK}},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

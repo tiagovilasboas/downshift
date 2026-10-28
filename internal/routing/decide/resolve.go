@@ -62,17 +62,33 @@ func resolve(in Input, requested contract.Tier) choice {
 	if t := req.Hint.Tier; t.Valid() && requested.Valid() && rank(t) < rank(requested) {
 		return choice{verdict: contract.VerdictHintDown, tier: t}
 	}
-	return defaultChoice(req, len(in.Risk) > 0)
+	// A declared hint tier, even one equal to the request, is the parent's
+	// word: the default table does not override it.
+	if req.Hint.Tier.Valid() {
+		return keep
+	}
+	return defaultChoice(in, requested)
 }
 
-// defaultChoice reads the default profile table for the agent type. A type
-// with no row, or a row that keeps, leaves the requested model in place.
-func defaultChoice(req contract.Request, risky bool) choice {
+// defaultChoice reads the default profile table for the agent type. It keeps
+// when no row applies, when the row keeps, when the policy declares a profile
+// of that name (a declared profile is never replaced by the table, even one
+// refused for another harness), or when the row would raise the tier: a default
+// only moves down, and an upshift is the guard's business, not the table's.
+func defaultChoice(in Input, requested contract.Tier) choice {
+	req := in.Request
+	if _, declared := in.Policy.ProfileNamed(contract.ProfileName(req.AgentType)); declared {
+		return keep
+	}
 	d, ok := policy.DefaultFor(req.Harness, req.AgentType)
 	if !ok || d.Keeps() {
 		return keep
 	}
-	return choice{verdict: contract.VerdictDefault, tier: d.TierFor(risky)}
+	tier := d.TierFor(len(in.Risk) > 0)
+	if rank(tier) > rank(requested) {
+		return keep
+	}
+	return choice{verdict: contract.VerdictDefault, tier: tier}
 }
 
 // profileChoice reads the tier of a profile of this harness. A profile that
