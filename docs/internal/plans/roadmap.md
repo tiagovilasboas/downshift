@@ -210,6 +210,10 @@ The owner changed the route for Phases 1 and 2 on 2026-10-27. These notes amend 
 
 The upstream project studied for the plan runner is AGPL-3.0-or-later; its copyright belongs to its author and contributors. A local MIT relicense commit exists only in a local clone, is unpublished, and grants nothing. The `downshift-plan` copy was deleted on 2026-10-27. Downshift uses behaviour notes and its own specification only. No upstream file, function, comment or string is copied.
 
+### 8c-bis. Dashboard decision (N9)
+
+**N9 Dashboard discontinued (owner, 2026-10-27).** The web dashboard (`dashboard/` and the embedded assets under `internal/api/dashboard`) gets no new work. It is not extended for workers, quota or diffs. Whether to remove it is a separate cleanup card (W6.6). The visual surface for multi-worker supervision, when it comes, is the terminal (see BP1), not a browser.
+
 ### 8d. Business plan alignment (2026-10-27)
 
 **Source of truth.** The `downshift-business-plan` repository (MIT, commit `e4a3b91`) is the strategic, product and architecture reference. Read for this section: `README.md`, `roadmap/execution-waves.md`, `roadmap/evaluation-and-gates.md`, `product/capability-matrix.md` and the five files in `architecture/`. Not yet read: `business/*`, `product/multi-harness-governance.md` and `product/tui-command-center-spec.md`; they are mapped by title only. The plan rests on the public Orchestrator-Workers pattern. Nothing here copies third-party code.
@@ -260,6 +264,19 @@ Wave totals: W0 14, W2 13, W3 13, W4 13, W5 8. The plan-runner spec (33 points) 
 - **Product decisions** are open: preserving an explicit-only requested model, and a field for the all-critical warning.
 - **Business plan files not read yet:** `business/*`, `product/multi-harness-governance.md`, `product/tui-command-center-spec.md` was read; the first two sets were not.
 - **Cleanup:** NB files, `internal/nbtier`, gateway files. The upstream study clone at `~/Github/alethe-agents` should be deleted once the behaviour notes are final.
+
+**Absorbed design cards (W6), each at most 5 points**
+
+| Card | Pts | What it delivers | Depends on |
+|---|--:|---|---|
+| W6.1 | 5 | Measurement frame in tokens: confirm the 10 percent control arm survived the v1 removal, then a paired routed-versus-control report with the guardrails (`frontier-on-doubt` is zero, rework rate) | Real-session proof, V2 |
+| W6.2 | 3 | Zero-prompt rework correlation: task id, salted tool-use hash and salted scope hash, and the `reworked` flag | W6.1 |
+| W6.3 | 3 | Event schema aligned with the plan table (`route.decided`, `worker.lifecycle`, `worktree.gated`, `quota.observed`), allowed fields only | None |
+| W6.4 | 3 | Plan runner admission: 4 workers by default (cap 16), 2 per harness, defer on cool-down, in-memory output ring buffer of 256 KiB | Plan runner engine |
+| W6.5 | 3 | Cross-platform cancel: SIGINT, SIGTERM, SIGKILL on the process group, and a job object on Windows, in per-OS files | Plan runner engine |
+| W6.6 | 3 | Dashboard removal, if the owner confirms (N9): `dashboard/`, embedded assets, the API route and the docs | Owner decision |
+
+W6.3 can start now. W6.4 and W6.5 are pieces of the plan-runner fronts and are merged with them, not built apart. All W6 cards use tokens only (O1).
 
 ## 9. Conflicts in the sources (fix when accepted)
 
