@@ -19,5 +19,6 @@
 - [x] **F2.2 (2 pts):** Relatório Consolidado de Fábrica (`downshift loop report`) com telemetria e taxa de aceitação git
 - [ ] **F2.3 (3 pts):** Multi-Harness Universal Seeder com auto-descoberta de OpenCode, Cursor e Codex em `session-models.json`
   - parte 1 feita: fonte `opencode models` em `internal/discovery`
-  - pendente: o seeder do `setup` ainda grava listas fixas (`defaultSessionModels`), incluindo IDs de OpenCode que `opencode models` não lista nesta máquina; trocar pela descoberta e depois remover as listas fixas
+  - parte 2 feita: o seeder do `setup` usa a lista ranqueada do cache de descoberta e só cai nas listas fixas sem cache; OpenCode saiu das listas fixas
+  - pendente: arquivos `session-models.json` já gravados com IDs antigos de OpenCode não são reescritos (o seeder só cria entradas ausentes)
 - [ ] **F2.4 (5 pts):** Worktree isolado e hermético (`internal/worktree`, W2.1 do business plan)

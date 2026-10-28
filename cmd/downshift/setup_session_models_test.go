@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/tiagovilasboas/downshift/internal/discovery"
 )
 
 func TestSetupEnsureSessionModels_SeedsMissingHarnesses(t *testing.T) {
@@ -77,5 +79,21 @@ func TestSetupEnsureSessionModels_PreservesExistingUserConfig(t *testing.T) {
 
 	if data["claude-code"][0] != "custom-small" {
 		t.Errorf("user custom model was overwritten: got %v", data["claude-code"])
+	}
+}
+
+func TestSeedListPrefersDiscoveryCache(t *testing.T) {
+	cache := discovery.File{Harnesses: map[string]discovery.Entry{
+		"opencode": {Ranked: discovery.Ranked{IDs: []string{"opencode/beam-free", "opencode/big-pickle"}}},
+	}}
+	got, ok := seedList("opencode", cache)
+	if !ok || len(got) != 2 || got[0] != "opencode/beam-free" {
+		t.Fatalf("seedList(opencode) = %v, %v; want the discovered ids", got, ok)
+	}
+	if _, ok := seedList("opencode", discovery.File{}); ok {
+		t.Error("opencode has no fixed fallback: without discovery it must not be seeded")
+	}
+	if got, ok := seedList("claude-code", discovery.File{}); !ok || len(got) != 3 {
+		t.Errorf("claude-code without cache = %v, %v; want the fixed tiers", got, ok)
 	}
 }

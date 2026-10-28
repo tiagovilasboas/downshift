@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/tiagovilasboas/downshift/internal/discovery"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -42,11 +43,17 @@ var defaultSessionModels = map[string][]string{
 		"claude-sonnet-5-5",
 		"claude-opus-5-5",
 	},
-	"opencode": {
-		"minimax/minimax-m3.1-flash:free",
-		"deepseek/deepseek-v4.1-flash-1017",
-		"big-pickle",
-	},
+}
+
+// seedList is what a harness without an entry is seeded with: the list the
+// discovery cache ranked for it when there is one, else the fixed fallback.
+// OpenCode has no fixed fallback; its ids come from `opencode models` only.
+func seedList(harness string, cache discovery.File) ([]string, bool) {
+	if e, ok := cache.Harnesses[harness]; ok && len(e.Ranked.IDs) > 0 {
+		return e.Ranked.IDs, true
+	}
+	defs, ok := defaultSessionModels[harness]
+	return defs, ok
 }
 
 // setupEnsureSessionModels discovers and seeds session-models.json for detected harnesses.
@@ -65,14 +72,17 @@ func setupEnsureSessionModels(o setupOptions, targets []setupTarget) {
 		_ = json.Unmarshal(raw, &data)
 	}
 
+	cachePath, _ := discovery.Path()
+	cache := discovery.Read(cachePath)
 	changed := false
 	for _, target := range targets {
 		h := target.Name
-		if _, exists := data[h]; !exists {
-			if defs, ok := defaultSessionModels[h]; ok {
-				data[h] = defs
-				changed = true
-			}
+		if _, exists := data[h]; exists {
+			continue
+		}
+		if list, ok := seedList(h, cache); ok {
+			data[h] = list
+			changed = true
 		}
 	}
 
