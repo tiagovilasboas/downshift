@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
@@ -47,13 +48,15 @@ func runUninstall(args []string, in io.Reader, out, errw io.Writer) int {
 	}
 
 	if !dryRun {
+		home, _ := os.UserHomeDir()
 		if stateDir, err := paths.StateDir(); err == nil {
-			binDir := filepath.Join(stateDir, "bin")
-			_ = os.RemoveAll(binDir)
 			if purge {
-				cacheDir := filepath.Join(stateDir, "cache")
-				_ = os.RemoveAll(cacheDir)
-				fmt.Fprintln(out, "Downshift: caches purged.")
+				_ = os.RemoveAll(stateDir)
+				purgeBackups(home)
+				fmt.Fprintln(out, "Downshift: all state files, caches, and backups purged.")
+			} else {
+				binDir := filepath.Join(stateDir, "bin")
+				_ = os.RemoveAll(binDir)
 			}
 		}
 		fmt.Fprintln(out, "\n✓ Downshift uninstalled. All harness hooks restored to previous state.")
@@ -64,10 +67,35 @@ func runUninstall(args []string, in io.Reader, out, errw io.Writer) int {
 	return 0
 }
 
+func purgeBackups(home string) {
+	if home == "" {
+		return
+	}
+	harnessDirs := []string{
+		filepath.Join(home, ".claude"),
+		filepath.Join(home, ".codex"),
+		filepath.Join(home, ".cursor"),
+		filepath.Join(home, ".kiro"),
+		filepath.Join(home, ".gemini", "config"),
+		filepath.Join(home, ".config", "opencode"),
+	}
+	for _, dir := range harnessDirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if !e.IsDir() && strings.Contains(e.Name(), setupBackupInfix) {
+				_ = os.Remove(filepath.Join(dir, e.Name()))
+			}
+		}
+	}
+}
+
 const uninstallUsage = `usage: downshift uninstall [--dry-run] [--yes] [--purge]
 
 Restore every harness hook configuration from its latest backup and remove wrappers.
   --dry-run   Show what would be restored, write nothing
   --yes, -y   Do not prompt before restoring
-  --purge     Also remove local cache directories in ~/.downshift
+  --purge     Also remove ~/.downshift state dir and purge all backup files
 `
