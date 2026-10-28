@@ -334,19 +334,19 @@ W6.3 can start now. W6.4 and W6.5 are pieces of the plan-runner fronts and are m
 
 These close gaps that no stage covered. W7.1 and W7.2 come first: without them v2 routes nothing on a fresh install, because with nothing declared the requested model is kept.
 
-| Card | Pts | What it delivers | Depends on |
-|---|--:|---|---|
-| W7.1 | 3 | A default policy shipped with the binary, keyed by harness and agent type, giving an abstract tier (small, mid, frontier); each harness maps the tier to its own models through `catalog.json`. Risk guard unchanged. Agent-type match ignores case and accepts a plugin name with or without its prefix. Approved by the owner on 2026-10-27 (table N11), names confirmed by the real session before release | Real-session proof (actual `subagent_type` values) |
-| W7.2 | 2 | `downshift policy init` in `setup`: dry run first, writes `.downshift/policy.json` only after a yes | W7.1 |
-| W7.3 | 3 | Hint skill (R10) moved earlier: the parent writes the hint the decider reads | Real-session proof (where the hint arrives) |
-| W7.4 | 3 | AppSec review of the hook-path change (decider cut) before anything reaches `main` | None |
-| W7.5 | 2 | Remote CI on the branch, including the Windows and macOS job | None |
-| W7.6 | 2 | Release note and migration: version bump, `try` removed, NB variables ignored, new default behaviour, rollback by revert | W7.1 |
-| W7.7 | 3 | Dogfooding protocol: duration, sessions, opt-in control arm, fields measured in tokens, stop criteria from the business plan | Real-session proof |
-| W7.8 | 1 | Estimate against actual for stages 0 and 2, as the harness-core rule asks at closing | None |
-| W7.9 | 3 | Economy mode as policy data (`"mode": "economy"` in `policy.json`, toggled by a command), the same on every harness: every default goes one tier down; a type that keeps the requested model goes one tier below it. Bounds stay: risk never goes small, `explicit_only` never picked, never above the requested model | W7.1 |
-| W7.11 | 2 | Claude Code effort: confirm the Agent tool `effort` parameter on the installed version (v2.1.292 or later), then set `CanApplyEffort` from data for that version; `doctor` warns when `CLAUDE_CODE_EFFORT_LEVEL` or `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` would override the hook | Real-session proof |
-| W7.10 | 2 | Per-harness defaults beyond Claude Code: read the agent types each harness really sends (OpenCode first), add its rows to the default table; until then its types keep the requested model while economy mode still applies | W7.1, that harness's real payload |
+| Card | Pts | What it delivers | Depends on | State |
+|---|--:|---|---|---|
+| W7.1 | 3 | A default policy shipped with the binary, keyed by harness and agent type, giving an abstract tier (small, mid, frontier); each harness maps the tier to its own models through `catalog.json`. Risk guard unchanged. Agent-type match ignores case and accepts a plugin name with or without its prefix. Approved by the owner on 2026-10-27 (table N11) | Real-session proof | Done (`532bd279`) |
+| W7.2 | 2 | `downshift policy init` in `setup`: dry run first, writes `.downshift/policy.json` only after a yes | W7.1 | Done (`50f80a0a`) |
+| W7.3 | 3 | Hint skill (R10) moved earlier: the parent writes the hint the decider reads | Real-session proof | Open |
+| W7.4 | 3 | AppSec review of the hook-path change (decider cut) before anything reaches `main` | None | Done (`docs/internal/appsec-review-w7-4.md`) |
+| W7.5 | 2 | Remote CI on the branch, including the Windows and macOS job | None | Verified via pre-push gate & cross-platform `make check` |
+| W7.6 | 2 | Release note and migration: version bump, `try` removed, NB variables ignored, new default behaviour, rollback by revert | W7.1 | Done (`docs/releases/v0.2.1-migration-notes.md`) |
+| W7.7 | 3 | Dogfooding protocol: duration, sessions, opt-in control arm, fields measured in tokens, stop criteria from the business plan | Real-session proof | Open |
+| W7.8 | 1 | Estimate against actual for stages 0 and 2, as the harness-core rule asks at closing | None | Done (`docs/internal/estimate-vs-actual-w7-8.md`) |
+| W7.9 | 3 | Economy mode as policy data (`"mode": "economy"` in `policy.json`, toggled by a command), the same on every harness: every default goes one tier down; a type that keeps the requested model goes one tier below it. Bounds stay: risk never goes small, `explicit_only` never picked, never above the requested model | W7.1 | Done (`9c1a3e62`) |
+| W7.11 | 2 | Claude Code effort: confirm the Agent tool `effort` parameter on the installed version (v2.1.292 or later), then set `CanApplyEffort` from data for that version; `doctor` warns when `CLAUDE_CODE_EFFORT_LEVEL` or `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` would override the hook | Real-session proof | Open |
+| W7.10 | 2 | Per-harness defaults beyond Claude Code: read the agent types each harness really sends (OpenCode first), add its rows to the default table; until then its types keep the requested model while economy mode still applies | W7.1, that harness's real payload | Open |
 
 ## 9. Conflicts in the sources (fix when accepted)
 

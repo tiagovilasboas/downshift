@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Default profile table (W7.1):** built-in agent type mapping for Claude Code (`Explore` -> small/Haiku, `claude-code-guide` -> small/Haiku, `statusline-setup` -> small/Haiku; `general-purpose` and `Plan` keep requested model). Table runs as default precedence (level 5), preserved behind explicit project policies and hints, with automatic elevation to mid (Sonnet) when risk signals are detected.
+- **Policy init command (W7.2):** `downshift policy init` generates `.downshift/policy.json` with dry-run preview and interactive confirmation gate, exposing the full profile and rule configuration schema.
+- **Economy mode (W7.9):** `"mode": "economy"` in `policy.json` and `downshift policy economy [on|off]` command to shift all agent profiles down one tier within safety boundaries (risk never drops to small, explicit_only preserved).
+- **Autonomous engineering loop (F1.6):** `downshift loop` command running an autonomous BDI loop (`Plan -> Implement -> Sensor -> Cascade -> Accept`) with sensor verification via compactor and automatic failure registration.
+- **Episodic failure cascade & inter-process dead-ends sensor (F1.1, F1.2):** cross-process directory lock (`dead_ends.lock`) and atomic JSON state tracking to automatically auto-upgrade subagent tiers on repeated task failures.
+- **Zero-prompt CLI entry (F0.1):** running `downshift` without arguments now launches an intelligent status and telemetry summary view.
+- **Interactive TUI setup (F0.3):** `downshift setup --tui` providing interactive terminal interface for harness configuration and dry-run preview.
+- **Uninstall and purge (F0.2):** `downshift uninstall` with `--purge` flag completely removing state directory and restoring all harness backups.
+- **Dynamic model tier discovery (F0.4):** auto-seeding relative tiers (`cheap`, `standard`, `frontier`) in `session-models.json` on `downshift setup`.
+- **Subagent model force configuration:** setup configures `"CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"` in Claude Code's `settings.json`, ensuring subagent rewrites by Downshift are honored across built-in agent types.
+
 - **KiroCrew harness detection:** `SessionEnv: "KIRO_SESSION_ID"` in `KiroCrewCaps` enables
   `envHarness()` to attribute exec-events to `kirocrew` instead of `unknown`. The `Model` field
   in exec-events is populated via `InferKiroCrewModel()`, which reads the session model from
