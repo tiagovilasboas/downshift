@@ -18,7 +18,7 @@ var deciderNow = time.Date(2026, 10, 27, 12, 0, 0, 0, time.UTC)
 
 const (
 	frontierID = "claude-opus-4-5"
-	smallID    = "claude-haiku-4-5"
+	smallID    = "claude-haiku-5-5"
 	gatedRule  = `{"version":1,"routing":{"rules":[{"id":"cheap","tier":"small",
 		"gates":[{"harness":"claude-code","window":"short","below":50}]}]}}`
 )

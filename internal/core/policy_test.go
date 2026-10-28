@@ -88,7 +88,7 @@ func TestDecisionSummary_Downshift(t *testing.T) {
 // Regression: the claude-code small target is the model the native 'haiku'
 // alias runs. The note must name it and must not print a percentage: a
 // list-price ratio is a cost claim, and savings are reported in tokens only.
-func TestDecisionSummary_ClaudeCodeTrivialNamesHaiku45WithoutPercentage(t *testing.T) {
+func TestDecisionSummary_ClaudeCodeTrivialNamesHaiku55WithoutPercentage(t *testing.T) {
 	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	for _, current := range []string{"claude-sonnet-5-5", "claude-opus-5-5"} {
 		d := core.Route("rename the variable", "claude-code", current, cat)
@@ -96,7 +96,7 @@ func TestDecisionSummary_ClaudeCodeTrivialNamesHaiku45WithoutPercentage(t *testi
 			t.Fatalf("%s: verdict = %s, want DOWNSHIFT", current, d.Verdict)
 		}
 		s := d.Summary()
-		if want := "downshift to claude-haiku-4-5 (smaller model)"; !strings.Contains(s, want) {
+		if want := "downshift to claude-haiku-5-5 (smaller model)"; !strings.Contains(s, want) {
 			t.Errorf("%s: Summary() = %q, want it to contain %q", current, s, want)
 		}
 		if strings.Contains(s, "%") {

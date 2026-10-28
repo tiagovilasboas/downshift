@@ -22,7 +22,7 @@ func TestCanonicalizeModels(t *testing.T) {
 		wantFromRaw, wantToRaw string
 	}{
 		{name: "claude code native names", harness: "claude-code", from: "sonnet", to: "haiku",
-			wantFrom: "claude-sonnet-5-5", wantTo: "claude-haiku-4-5", wantFromRaw: "sonnet", wantToRaw: "haiku"},
+			wantFrom: "claude-sonnet-5-5", wantTo: "claude-haiku-5-5", wantFromRaw: "sonnet", wantToRaw: "haiku"},
 		{name: "catalog ids unchanged", harness: "claude-code", from: "claude-sonnet-5-5", to: "claude-opus-5-5",
 			wantFrom: "claude-sonnet-5-5", wantTo: "claude-opus-5-5"},
 		{name: "kirocrew dotted aliases", harness: "kirocrew", from: "claude-opus-4.8", to: "claude-haiku-4.5",

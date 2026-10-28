@@ -38,14 +38,14 @@ func TestPlanForSession_GuardrailHoldKeepsCurrentModel(t *testing.T) {
 
 // A confident, unheld downshift still rewrites inside a known session.
 func TestPlanForSession_CleanDownshiftStillRewrites(t *testing.T) {
-	session := core.KnownSession([]string{"claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"})
+	session := core.KnownSession([]string{"claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"})
 	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	d := core.Route("fix a typo in the README", "claude-code", "claude-opus-5-5", cat)
 	if len(d.Corrections) != 0 || d.Verdict != core.VerdictDownshift {
 		t.Fatalf("precondition: verdict=%s corrections=%v", d.Verdict, d.Corrections)
 	}
 	plan := d.PlanForSession(core.ClaudeCodeCaps, cat, session)
-	if !plan.RewriteModel || plan.Model.ID != "claude-haiku-4-5" {
+	if !plan.RewriteModel || plan.Model.ID != "claude-haiku-5-5" {
 		t.Fatalf("clean downshift: model=%q rewrite=%v", plan.Model.ID, plan.RewriteModel)
 	}
 }
