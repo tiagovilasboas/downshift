@@ -278,6 +278,8 @@ func setupRun(o setupOptions) int {
 	}
 	// Run discovery for harnesses with a source so sessions don't stay on handwritten lists.
 	setupDiscoverModels(o)
+	// Ensure detected harnesses have their relative tiers in session-models.json.
+	setupEnsureSessionModels(o, targets)
 
 	fmt.Fprint(o.Out, setupSummary(plans))
 	fmt.Fprintln(o.Out, "Undo with: downshift setup --undo")
