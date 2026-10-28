@@ -14,3 +14,4 @@
   - `aa188066`: test(e2e): add end-to-end battery test for claude-code mvp lifecycle (F1.4)
   - `7de4a14f`: docs(coverage): inventory internal/cascade package in architecture coverage matrix (F1.5)
   - `cfb96ded`: feat(loop): implement autonomous engineering loop command with sensor check, cascade auto-upgrade and acceptance (F1.6)
+  - `dce5db45`: feat(setup): auto-discover and seed relative model tiers in session-models.json for detected harnesses (F0.4)
