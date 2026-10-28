@@ -65,7 +65,7 @@ func runDefaultEntry(in io.Reader, out, errw io.Writer, cat *catalog.Catalog) in
 	home, _ := os.UserHomeDir()
 	if !isConfigured(home) {
 		fmt.Fprintln(out, "Downshift: first run detected. Setting up hooks automatically (1s)...")
-		code := runSetup([]string{"--yes", "--no-policy"}, in, out, errw)
+		code := runSetup([]string{"--yes", "--no-policy", "--keep-binaries"}, in, out, errw)
 		if code == 0 {
 			fmt.Fprintln(out, "\n✓ Downshift is now active! Subagent routing and terminal compaction are running.")
 			fmt.Fprintln(out, "Run `downshift` anytime to inspect your token savings and session health.")

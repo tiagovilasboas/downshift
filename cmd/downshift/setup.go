@@ -64,12 +64,16 @@ type setupOptions struct {
 	// ProjectDir is the project whose .downshift/policy.json setup offers to
 	// create. Empty skips that step.
 	ProjectDir string
+	// BinDirs are the directories searched for other downshift executables that
+	// setup offers to remove. Nil skips the step; the CLI entry sets it, so
+	// tests that call setupRun directly never touch the real PATH.
+	BinDirs []string
 }
 
 // runSetup is the CLI entry: it resolves HOME and the running binary.
 func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	opts := setupOptions{In: in, Out: out, Err: errw, Now: time.Now, Exec: realSetupExec()}
-	allowUnsafe, noPolicy := false, false
+	allowUnsafe, noPolicy, keepBinaries := false, false, false
 	for _, a := range args {
 		switch {
 		case a == "--dry-run":
@@ -90,6 +94,8 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 			noPolicy = true
 		case a == "--allow-unsafe-binary":
 			allowUnsafe = true
+		case a == "--keep-binaries":
+			keepBinaries = true
 		case a == "-h" || a == "--help":
 			fmt.Fprint(out, setupUsage)
 			return 0
@@ -121,6 +127,9 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 	if cwd, err := os.Getwd(); err == nil && !noPolicy {
 		opts.ProjectDir = cwd
 	}
+	if !keepBinaries {
+		opts.BinDirs = defaultBinDirs(home)
+	}
 	if !opts.DryRun && !opts.Undo {
 		// Older releases created the state directory and its files with the
 		// default umask; tighten what the product owns. Best effort.
@@ -149,7 +158,7 @@ func guardHookBinary(o setupOptions, allow bool, tmp string) int {
 	return 1
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--no-policy] [--allow-unsafe-binary]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--no-policy] [--keep-binaries] [--allow-unsafe-binary]
 
 Wire every Downshift hook into the harnesses found on this machine.
   --tui                run interactive terminal UI onboarding
@@ -167,6 +176,8 @@ Wire every Downshift hook into the harnesses found on this machine.
                        mods (savvy-progress)
   --no-policy          do not offer .downshift/policy.json in the current
                        directory (see downshift policy init)
+  --keep-binaries      do not offer to remove other downshift copies on PATH
+                       and in the Go and per-user bin directories
   --allow-unsafe-binary
                        write hooks that point at this binary even when it sits
                        in a temporary, Go build or world-writable directory
@@ -217,6 +228,9 @@ func setupRun(o setupOptions) int {
 		plans = append(plans, p)
 	}
 	failed, proceed := applyPlans(o, plans)
+	if !failed && !o.Undo {
+		failed = pruneBinaries(o, plans)
+	}
 	if !proceed {
 		if failed {
 			return 1
