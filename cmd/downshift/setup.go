@@ -222,6 +222,7 @@ func setupRun(o setupOptions) int {
 		if sp, ok := planSteering(o, t); ok {
 			plans = append(plans, sp)
 		}
+		plans = append(plans, planSkills(o, t)...)
 	}
 
 	if p, ok := planPolicyInit(o); ok {

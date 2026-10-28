@@ -45,7 +45,12 @@ Packaging note: the plugin (`.claude-plugin/`, `hooks/hooks.json`, `agents/`)
 loads only on Claude Code. Every other harness gets the same hooks through
 `downshift setup` or the manual sections of
 [install.md](../guides/install.md); the skills under `skills/` are plain
-SKILL.md files any harness can read.
+SKILL.md files any harness can read. `downshift setup` also copies the
+read-only `downshift-audit` skill into `~/.claude/skills` and `~/.codex/skills`
+(the `SkillsDir` field of the setup target); a harness without that field gets
+no skill from setup and can read `skills/` directly. Setup skips the copy when
+the plugin is active, and `--undo` removes only files that still carry the
+ownership phrase.
 
 "Inferred" means a later spawn in the same session asked for the model the
 hook had written (`rewrite_honored_inferred` in `stats --export`). It is

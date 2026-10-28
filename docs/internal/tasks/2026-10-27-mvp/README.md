@@ -23,7 +23,7 @@ at most 5 points, with the gate in the MVP plan section 5.
 | B8 | Remove the dollar accounting (O1) | 2 | Done. The catalog price table stays as a routing signal |
 | B9 | Move the competitive analysis out of the public history | 1 | Done |
 
-## Stage 1: setup (S1 done on the branch, 2026-10-28; S2 and S3 not started)
+## Stage 1: setup (S1 and S2 done on the branch, 2026-10-28; S3 not started)
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|

@@ -87,6 +87,9 @@ type setupTarget struct {
 	// independent of hook wiring: a dedicated file (KiroCrew) or a managed block
 	// in the harness's global instructions file. A Manual target may still carry one.
 	Steering *setupSteering
+	// SkillsDir is where the harness reads user skills, relative to HOME. Setup
+	// installs the Downshift skills there; empty for a harness without one.
+	SkillsDir string
 	// Registry is an informational hook list the harness owns, relative to HOME.
 	// Setup removes a Downshift entry from it. The policy hook stays in File.
 	// Empty when the harness has no such list. Undo restores a backup only
@@ -109,6 +112,7 @@ var setupTargets = []setupTarget{
 	{
 		Name:      "claude-code",
 		ConfigDir: ".claude",
+		SkillsDir: ".claude/skills",
 		File:      ".claude/settings.json",
 		HooksPath: []string{"hooks"},
 		Nested:    true,
@@ -207,6 +211,7 @@ var setupTargets = []setupTarget{
 	{
 		Name:      "codex",
 		ConfigDir: ".codex",
+		SkillsDir: ".codex/skills",
 		File:      ".codex/hooks.json",
 		HooksPath: []string{"hooks"},
 		Nested:    true,

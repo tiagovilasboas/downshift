@@ -73,6 +73,7 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 		marker bool
 		cur    []byte
 		want   []byte
+		prune  bool // drop the folders emptied by removing it (a skill)
 	}
 	var todo []restore
 	readErr := false
@@ -110,6 +111,13 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 		}
 		for _, w := range wrapperPathsFor(o, t) {
 			addRestore(t, w, true)
+		}
+		for _, sk := range skillPathsFor(o, t) {
+			n := len(todo)
+			addRestore(t, sk, true)
+			if len(todo) > n {
+				todo[n].prune = true
+			}
 		}
 		if t.Registry != "" {
 			path := filepath.Join(o.Home, filepath.FromSlash(t.Registry))
@@ -153,6 +161,15 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 			err = os.Remove(r.path)
 			if errors.Is(err, os.ErrNotExist) {
 				err = nil
+			}
+			if err == nil && r.prune {
+				// The "did not exist" markers are spent; leaving them would keep the
+				// folders non-empty and make the next install see a foreign folder.
+				stale, _ := filepath.Glob(r.path + setupBackupInfix + "*.new")
+				for _, m := range stale {
+					os.Remove(m)
+				}
+				removeEmptyDirs(filepath.Dir(r.path), 2) // a skill folder setup made
 			}
 		} else {
 			mode := os.FileMode(0o600) // never wider than the backup; no 0644 window
@@ -216,4 +233,15 @@ func atomicWriteFile(path string, data []byte, mode os.FileMode) error {
 		d.Close()
 	}
 	return nil
+}
+
+// removeEmptyDirs removes dir and up to depth-1 of its parents while they are
+// empty; os.Remove refuses a directory that still holds anything.
+func removeEmptyDirs(dir string, depth int) {
+	for i := 0; i < depth; i++ {
+		if os.Remove(dir) != nil {
+			return
+		}
+		dir = filepath.Dir(dir)
+	}
 }

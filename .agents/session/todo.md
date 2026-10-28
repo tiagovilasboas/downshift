@@ -11,7 +11,7 @@
 - [x] **W7.1 (3 pts):** Default Profile Table (N11) embutida no binário — mapeamento de tipos padrão (`Explore` -> small, `claude-code-guide` -> small, `statusline-setup` -> small; `general-purpose` e `Plan` mantidos), sem risco
 - [x] **W7.2 (2 pts):** `downshift policy init` integrado no `setup` — gera `.downshift/policy.json` com confirmação e preview
 - [x] **S1 (3 pts):** Ownership Markers: arquivos inteiros gerados pelo setup (wrappers e steering dedicado) levam a frase `Written by \`downshift setup\``; `--undo` deixa intacto um arquivo sem a frase e o setup recusa sobrescrever arquivo não gerado por ele
-- [ ] **S2 (3 pts):** Instalação automática da Skill do Downshift em `~/.claude/skills` e `~/.codex/skills` via setup
+- [x] **S2 (3 pts):** Instalação da skill `downshift-audit` (somente leitura) em `~/.claude/skills` e `~/.codex/skills` via setup, com marcador, backup, dry run e conflito em pasta que não é nossa
 - [x] **W7.9 (3 pts):** Modo Economia (`economy mode` no `policy.json` ou flag `--economy`), rebaixando um tier com segurança
 
 ## Onda 2: Cloud Software Factory & Escala Multi-Harness (W2 & Factory)
