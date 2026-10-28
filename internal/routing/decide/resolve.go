@@ -86,7 +86,7 @@ func defaultChoice(in Input, requested contract.Tier) choice {
 	if !ok {
 		return keep
 	}
-	tier, ok := rowTier(d, len(in.Risk) > 0, in.routine(), requested, in.Policy.EconomyMode())
+	tier, ok := rowTier(d, len(in.Risk) > 0, requested, in.Policy.EconomyMode())
 	if !ok || rank(tier) > rank(requested) {
 		return keep
 	}

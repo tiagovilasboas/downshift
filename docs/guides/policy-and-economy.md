@@ -23,10 +23,8 @@ Out of the box without any policy file, Downshift applies the following defaults
 | `Explore` | `small` (Haiku) | `mid` (Sonnet) |
 | `claude-code-guide` | `small` (Haiku) | `mid` (Sonnet) |
 | `statusline-setup` | `small` (Haiku) | `mid` (Sonnet) |
-| `general-purpose` | `mid` (Sonnet) when the classifier is confident the task is below COMPLEX; otherwise keep requested | Keep requested |
+| `general-purpose` | Keep requested | Keep requested |
 | `Plan` | Keep requested | Keep requested |
-
-`general-purpose` is the catch-all type, so it inherits the main session's model. Without the class step a read-only review spawned from an Opus session ran on Opus. The class step only moves down, never below `mid`, and never on doubt: an unconfident or COMPLEX class, or any risk signal, keeps the requested model. A bounded brief (80+ words that state a read-only scope and a reply budget such as `Output (max 300 words)`) is a confident MEDIUM on its own.
 
 ## Economy Mode (W7.9)
 

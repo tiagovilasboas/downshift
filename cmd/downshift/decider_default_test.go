@@ -20,16 +20,12 @@ func TestRoutingDeciderDefaultProfile(t *testing.T) {
 		name      string
 		policy    string // project policy.json; "" writes none
 		agentType string
-		prompt    string // "" is a plain task the classifier is unsure of
 		wantModel string
 	}{
-		{"no policy: Explore goes small", "", "Explore", "", smallID},
-		{"no policy: general-purpose keeps", "", "general-purpose", "", frontierID},
-		// The read-only review that ran on the frontier model on 2026-10-28.
-		{"no policy: a routine general-purpose review goes mid", "", "general-purpose", reviewPrompt, midID()},
-		{"no policy: Plan keeps a routine review", "", "Plan", reviewPrompt, frontierID},
-		{"invalid policy: Explore is kept", `{"version":1,"routing":{"rules":[{"id":"x"}]}}`, "Explore", "", frontierID},
-		{"malformed policy: Explore is kept", `{not json`, "Explore", "", frontierID},
+		{"no policy: Explore goes small", "", "Explore", smallID},
+		{"no policy: general-purpose keeps", "", "general-purpose", frontierID},
+		{"invalid policy: Explore is kept", `{"version":1,"routing":{"rules":[{"id":"x"}]}}`, "Explore", frontierID},
+		{"malformed policy: Explore is kept", `{not json`, "Explore", frontierID},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -41,12 +37,8 @@ func TestRoutingDeciderDefaultProfile(t *testing.T) {
 			}
 			t.Cleanup(hookctx.SetProjectDir(dir))
 
-			prompt := tc.prompt
-			if prompt == "" {
-				prompt = "plain task"
-			}
 			d := routingDecider{now: func() time.Time { return deciderNow }}.Decide(core.Request{
-				Prompt: prompt, Harness: "claude-code", AgentType: tc.agentType,
+				Prompt: "plain task", Harness: "claude-code", AgentType: tc.agentType,
 				CurrentModelID: frontierID, Resolver: cmdCat,
 			})
 			got := d.Model.ID
@@ -59,16 +51,3 @@ func TestRoutingDeciderDefaultProfile(t *testing.T) {
 		})
 	}
 }
-
-// reviewPrompt is a read-only documentation review brief handed to a
-// general-purpose subagent: read files, grade them, change nothing. It is the
-// shape of the reviews that ran on the frontier model on 2026-10-28.
-const reviewPrompt = "First read your role file: agents/senior-staff-qa.md. You are reviewing documentation of the repo. " +
-	"READ-ONLY: do not edit, create, move or delete any file; no state-changing git; no network. " +
-	"Read-only commands (grep, ls, find, a small script that only reads) are fine. " +
-	"Your scope (verifiability): docs/evidence/**, docs/spikes/**, docs/releases/**, CHANGELOG.md. " +
-	"Also check relative links: count total relative links and how many point to a file that does not exist. " +
-	"Output (max 350 words): a grade 0-10 with one sentence of justification; 4-6 findings with file:line evidence; " +
-	"top 3 fixes in priority order."
-
-func midID() string { return cmdCat.ModelFor("claude-code", core.TierMid).ID }

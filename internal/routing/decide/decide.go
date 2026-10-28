@@ -59,22 +59,6 @@ type Input struct {
 	// Class is the classifier class (TRIVIAL..COMPLEX) the floor keys on.
 	Floor *policy.FloorPolicy
 	Class string
-	// Confident is the classifier's own confidence in Class. Only a confident
-	// class below COMPLEX lets a keeping default row take its ClassTier.
-	Confident bool
-}
-
-// routine is true when the classifier is confident the task is below COMPLEX.
-// An unknown or unconfident class is doubt, and doubt keeps.
-func (in Input) routine() bool {
-	if !in.Confident {
-		return false
-	}
-	switch in.Class {
-	case "TRIVIAL", "SIMPLE", "MEDIUM":
-		return true
-	}
-	return false
 }
 
 // Decide returns the decision and its routing note. The note's Channel is left
