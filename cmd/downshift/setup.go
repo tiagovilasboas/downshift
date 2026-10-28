@@ -31,6 +31,8 @@ type setupOptions struct {
 	DryRun bool
 	Undo   bool
 	Yes    bool
+	// TUI triggers interactive terminal UI setup.
+	TUI bool
 	// SkipDiscovery disables automatic model discovery during setup (useful in tests).
 	SkipDiscovery bool
 	// NoSessionPolicy skips the optional main-session policy (model opusplan and
@@ -71,6 +73,8 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 			opts.DryRun = true
 		case a == "--undo":
 			opts.Undo = true
+		case a == "--tui":
+			opts.TUI = true
 		case a == "--yes" || a == "-y":
 			opts.Yes = true
 		case a == "--no-session-policy":
@@ -114,6 +118,9 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 		// default umask; tighten what the product owns. Best effort.
 		_ = paths.Harden()
 	}
+	if opts.TUI {
+		return setupTUI(opts)
+	}
 	return setupRun(opts)
 }
 
@@ -134,9 +141,10 @@ func guardHookBinary(o setupOptions, allow bool, tmp string) int {
 	return 1
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy] [--you-should-know] [--no-plugin] [--allow-unsafe-binary]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--allow-unsafe-binary]
 
 Wire every Downshift hook into the harnesses found on this machine.
+  --tui                run interactive terminal UI onboarding
   --dry-run            show the diff, write nothing
   --undo               restore the latest backup of each hook file
   --yes                do not ask before writing

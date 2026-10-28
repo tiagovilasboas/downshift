@@ -9,9 +9,10 @@ var dailyHelp = map[string]string{
 	"setup": `downshift setup — Wire the hooks into every harness found (backup, diff, --undo)
 
 Usage:
-  downshift setup [harness...] [--dry-run] [--undo] [--yes]
+  downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui]
 
 Flags:
+  --tui                  Interactive terminal UI onboarding
   --dry-run              Show the diff, write nothing
   --undo                 Restore the latest backup of each hook file
   --yes, -y              Do not ask before writing
