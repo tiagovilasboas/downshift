@@ -22,3 +22,5 @@
   - parte 2 feita: o seeder do `setup` usa a lista ranqueada do cache de descoberta e só cai nas listas fixas sem cache; OpenCode saiu das listas fixas
   - pendente: arquivos `session-models.json` já gravados com IDs antigos de OpenCode não são reescritos (o seeder só cria entradas ausentes)
 - [ ] **F2.4 (5 pts):** Worktree isolado e hermético (`internal/worktree`, W2.1 do business plan)
+  - dividido em slices (pacote `internal/worktree`): S0 sensor em RepoDir (1), S1 slug e contenção (2) feito, S2 runner git hermético (2) feito, S3 lease (2), S4 provision (3), S5 verify (1); ligação ao loop com `--isolate` (2) em card separado
+  - decisão aberta: política de órfãos (R34) antes de S3 e S4
