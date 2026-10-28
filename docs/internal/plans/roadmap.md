@@ -240,14 +240,26 @@ Wave totals: W0 14, W2 13, W3 13, W4 13, W5 8. The plan-runner spec (33 points) 
 
 **Open reconciliations (owner decisions)**
 
-- **BP1 TUI and MCP orchestrator vs O7.** The plan lists a native terminal TUI and an MCP stdio orchestrator. O7 forbids an external orchestrator, proxy or desktop app. A terminal TUI is not a desktop app, but the MCP orchestrator server is. Wave 4 and the orchestrator stay blocked until the owner decides.
-- **BP2 TUI dependency.** The plan names a Bubble Tea style library. The binary promises zero external Go dependencies on critical paths. A TUI outside the hook path may be acceptable; needs a decision.
+- **BP1 Surfaces (accepted by the owner, 2026-10-27).** The product starts on Claude Code and becomes harness-agnostic later, so the contract is neutral from the first card. Order: (1) the plan runner engine with JSON commands as the contract (`plan status`, `worktree apply|rework|discard`, `route --json`); (2) a Claude Code skin on top (dock and statusline) that holds no policy; (3) an MCP stdio server as a thin neutral channel over the same engine, after the engine exists; (4) the TUI as a neutral cockpit only once a second harness runs workers. The MCP server is a tool the orchestrator calls, so it fits O7: Claude Code stays the orchestrator. Wave 4 is deferred to step 4.
+- **BP2 TUI dependency.** Deferred with wave 4. A TUI library is an external Go dependency and must stay off the hook path. Decide it when step 4 starts.
 - **BP3 Merge gate.** The plan fast-forwards the operator's branch after verification. The plan-runner spec never applies work back automatically. Pick one.
 - **BP4 Worktree layout.** The plan puts worktrees under the repository with an ephemeral branch. The plan-runner spec puts them in the state directory, detached, with no branch.
 - **BP5 Capability matrix is wrong today.** It marks v2 routing as in production. v2 is on the branch only, not on `main`. The fix belongs in the business plan repository.
 - **BP6 Thresholds.** The plan uses 70, 85 and 95 percent. Our default critical threshold is 80. Make all of them policy data.
 - **BP7 Stale model names.** The plan names old models in examples. Models stay in `catalog.json`, never in code or specs.
 - **BP8 Package names.** The plan names `internal/orchestration` and `internal/worktree`. The plan-runner spec uses its own package names. Align them before the first card starts.
+- **BP9 Dollar in the TUI sketch.** The plan's TUI mock shows an estimated saving in USD. O1 forbids it. The header shows tokens only.
+- **BP10 Compaction claim.** The capability matrix says compaction cuts up to about 50 percent. The measured figure is 82.3 percent fewer bytes on clean outputs and 23.7 percent overall. Use the measured figures.
+
+**More gaps found (2026-10-27)**
+- **No remote CI evidence for the branch.** `gh run list` shows no run for `downshift/mvp-ponto-zero`. The `test-os` job (Windows and macOS) has never run on the new code, and `internal/worktree` will need build tags for process-group calls.
+- **Docs still describe v1.** `docs/contrib/layering.md`, `docs/design/architecture.md` and `docs/contrib/coverage.md` still mention NB hooks, `nbtier`, the score index and `RouteAgent`. About 40 other docs cite the removed `try` command.
+- **Hook latency of v2 is not measured.** The decider reads the policy file and the quota snapshot per spawn, inside the 1.5 s budget. Card W5.2 covers it.
+- **Real-session proof and R0b** are still open (see 8b).
+- **Plan-runner spec decisions** are open: the acceptance criterion (G1), the estimate of 33 points against 26 (G13), the harness contract table (G10), default tiers (G12) and the CLI flags (G4).
+- **Product decisions** are open: preserving an explicit-only requested model, and a field for the all-critical warning.
+- **Business plan files not read yet:** `business/*`, `product/multi-harness-governance.md`, `product/tui-command-center-spec.md` was read; the first two sets were not.
+- **Cleanup:** NB files, `internal/nbtier`, gateway files. The upstream study clone at `~/Github/alethe-agents` should be deleted once the behaviour notes are final.
 
 ## 9. Conflicts in the sources (fix when accepted)
 
