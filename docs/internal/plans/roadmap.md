@@ -210,6 +210,20 @@ The owner changed the route for Phases 1 and 2 on 2026-10-27. These notes amend 
 
 The upstream project studied for the plan runner is AGPL-3.0-or-later; its copyright belongs to its author and contributors. A local MIT relicense commit exists only in a local clone, is unpublished, and grants nothing. The `downshift-plan` copy was deleted on 2026-10-27. Downshift uses behaviour notes and its own specification only. No upstream file, function, comment or string is copied.
 
+### 8c-quater. Default profile table (N11, 2026-10-27)
+
+Approved by the owner. Tiers follow the harness-core model table: small is Haiku, mid is Sonnet, frontier is Opus on Claude Code; Fable is never picked automatically.
+
+| Harness | Agent type | Default tier | With a risk signal |
+|---|---|---|---|
+| Claude Code | `Explore` | small | mid |
+| Claude Code | `claude-code-guide` | small | mid |
+| Claude Code | `statusline-setup` | small | mid |
+| Claude Code | `general-purpose` | keep requested | keep requested |
+| Claude Code | `Plan` | keep requested | keep requested |
+
+The owner's own agents (harness-core roster and `mechanical-worker`) go in the owner's `policy.json`, not in the binary. Economy mode (W7.9) lowers each row one tier within the same bounds.
+
 ### 8c-ter. Business plan divergences resolved (N10, 2026-10-27)
 
 Owner decision: follow the business plan where it diverges from the plan runner spec.
@@ -292,7 +306,7 @@ These close gaps that no stage covered. W7.1 and W7.2 come first: without them v
 
 | Card | Pts | What it delivers | Depends on |
 |---|--:|---|---|
-| W7.1 | 3 | A default policy shipped with the binary: profiles by agent type, read from catalog data, with the risk guard unchanged, so v2 routes without configuration | Owner approves the profile table |
+| W7.1 | 3 | A default policy shipped with the binary, keyed by harness and agent type, giving an abstract tier (small, mid, frontier); each harness maps the tier to its own models through `catalog.json`. Risk guard unchanged. Agent-type match ignores case and accepts a plugin name with or without its prefix. Approved by the owner on 2026-10-27 (table N11), names confirmed by the real session before release | Real-session proof (actual `subagent_type` values) |
 | W7.2 | 2 | `downshift policy init` in `setup`: dry run first, writes `.downshift/policy.json` only after a yes | W7.1 |
 | W7.3 | 3 | Hint skill (R10) moved earlier: the parent writes the hint the decider reads | Real-session proof (where the hint arrives) |
 | W7.4 | 3 | AppSec review of the hook-path change (decider cut) before anything reaches `main` | None |
@@ -300,6 +314,8 @@ These close gaps that no stage covered. W7.1 and W7.2 come first: without them v
 | W7.6 | 2 | Release note and migration: version bump, `try` removed, NB variables ignored, new default behaviour, rollback by revert | W7.1 |
 | W7.7 | 3 | Dogfooding protocol: duration, sessions, opt-in control arm, fields measured in tokens, stop criteria from the business plan | Real-session proof |
 | W7.8 | 1 | Estimate against actual for stages 0 and 2, as the harness-core rule asks at closing | None |
+| W7.9 | 3 | Economy mode as policy data (`"mode": "economy"` in `policy.json`, toggled by a command), the same on every harness: every default goes one tier down; a type that keeps the requested model goes one tier below it. Bounds stay: risk never goes small, `explicit_only` never picked, never above the requested model | W7.1 |
+| W7.10 | 2 | Per-harness defaults beyond Claude Code: read the agent types each harness really sends (OpenCode first), add its rows to the default table; until then its types keep the requested model while economy mode still applies | W7.1, that harness's real payload |
 
 ## 9. Conflicts in the sources (fix when accepted)
 
