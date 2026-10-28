@@ -9,3 +9,8 @@
 - [x] F0.2: Comando `downshift uninstall`
 - [x] F0.3: Setup Interativo `--tui`
 - [x] F1.1: Sensor de Falha & Buffer de Dead-Ends (`internal/cascade`)
+
+### 📦 Tarefas Compactadas em 2026-10-28 01:51:01 (3 itens)
+- [x] F0.4: Descoberta Dinâmica de Tiers Relativos integrada no Setup (`session-models.json`)
+- [x] F1.2: Roteamento com Auto-Upgrade (Cascade Invisível no `PreToolUse`)
+- [x] F1.3: Detecção de Aceite via Git Commit (`used/discarded`)
