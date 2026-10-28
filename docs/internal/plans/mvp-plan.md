@@ -26,6 +26,7 @@ is a warning chip with no redirect, by its own roadmap.
 - **O5 Escalation on failure is opt-in.** Off by default. When on: one retry, one tier up, never above the requested
   model, counted against the plan budget. Plan runner only; a hook cannot retry a Claude Code subagent.
 - **O6 Setup can start before the decider.** It does not depend on it.
+- **O9 The MCP is part of the MVP (2026-10-28, owner).** The orchestrator must be able to ask Downshift, live, which models this harness offers, what the quota says and what a playbook contains, then choose. It is sliced: the information tools (`downshift.providers`, `downshift.playbook`, `downshift.status`, `downshift.apply`) and the registration in setup are MVP stage 2b (17 points); the tools that start workers (`delegate`, `steer`, `result`, `cancel`) need worktrees and acceptance, so they come with the plan runner in stage 4. The owner can move them into the MVP at the cost of the plan runner's 26 points.
 - **O7 Downshift only.** No external orchestrator, proxy or desktop app. Claude Code stays the orchestrator inside
   its sessions; Downshift routes its spawns and runs its own batch plans.
   **Reopened 2026-10-28 (owner):** an MCP delegation server is in scope, as part of Downshift itself, run by the
@@ -43,7 +44,7 @@ is a warning chip with no redirect, by its own roadmap.
 
 ```
  0 CLEAN BASE ──┬── 1 SETUP ─────────────┐
-                └── 2 RIGHT MODEL IN CC ─┴── 3 SHOW AND PROVE ══ MVP ══ 4 PLAN RUNNER ── 5 REACH
+                └── 2 RIGHT MODEL IN CC ─┴── 2b MCP (INFORMATION) ── 3 SHOW AND PROVE ══ MVP ══ 4 PLAN RUNNER ── 5 REACH
 ```
 
 | Stage | What the user gets | Points | From Alethe | From Anthropic patterns |
@@ -51,12 +52,13 @@ is a warning chip with no redirect, by its own roadmap.
 | 0 Clean base | Nothing visible; v1 experiments gone, contract and seams in place | 8 left | worst-window headroom | — |
 | 1 Setup | Install that marks what it owns, backs up, installs the skill, proves the hook fires | 8 | owned install, skills | — |
 | 2 Right model in Claude Code | The orchestrator's choice is applied; declared rules and hints bound it; no built-in table or risk floor (O8); near the limit declared rules send simple work down | 14 | tiers, declared decision | routing |
+| 2b Orchestrator tools (MCP) | The orchestrator asks live: models detected for this harness, quota, playbooks, what Downshift would apply; `setup --mcp` registers the server | 17 | MCP tool surface, strain on every result, playbooks | orchestrator asks, then chooses |
 | 3 Show and prove | Why each spawn changed or not; tokens per harness; acceptance unchanged; default on | 9 | visible quota state | evaluator |
-| **MVP** | stages 0 to 3 | **39** | | |
+| **MVP** | stages 0 to 3, including 2b | **56** | | |
 | 4 Plan runner | A batch of tasks across Claude and Codex with strategy, budget, worktrees, acceptance | 26 | strategies, budgets, worktrees, worker contract | plan big, execute small; orchestrator-workers; parallelization |
 | 5 Reach | `.claude/agents` model fields, route skill, Codex, Kiro, then OpenCode, Cursor, Antigravity | 12+ | multi-vendor workers | — |
 
-Stages 1 and 2 run in parallel (no shared files). Everything else is in order.
+Stages 1 and 2 run in parallel (no shared files). Stage 2b follows 2 (it needs the decider) and may overlap 3. Everything else is in order.
 
 ## 4. Layers that cross every stage
 

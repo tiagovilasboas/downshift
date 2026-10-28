@@ -56,12 +56,15 @@ the result with a routing note. It never chooses a model on its own.
 
 ## 2. Fronts
 
+The MCP is part of the MVP (owner decision O9, 2026-10-28), sliced: M1, M2a, M3 and M4 are stage 2b; M2b comes with the plan runner (stage 4).
+
 | Front | Points | Scope | Depends on | Gate |
 |---|--:|---|---|---|
-| M1 JSON-RPC stdio core | 3 | `internal/mcp/rpc/*`: framing, initialize, tools/list, tools/call, errors (R1, R9) | none | unit tests on framed messages; `make check` |
-| M2 Tool surface | 3 | `internal/mcp/tools/*`: the tools of R3 and R10, schemas, no prompt on disk (R6) | M1, P8 (plan runner jobs) | R3, R6, R7 tests |
-| M3 Command | 1 | `cmd/downshift/cmd_mcp.go`, `case "mcp"` in `main.go` (`serve`), help spec | M2 | e2e: initialize + tools/list over pipes |
-| M4 Setup | 1 | `setup` registers the server in the harness's MCP config (opt-in, dry-run, undo by marker) | M3, S1 | setup tests; undo leaves other servers |
+| M1 JSON-RPC stdio core (MVP, K3) | 3 | `internal/mcp/rpc/*`: framing, initialize, tools/list, tools/call, errors (R1, R9) | none | unit tests on framed messages; `make check` |
+| M2a Information tools (MVP, K4) | 3 | `internal/mcp/tools/*`: `downshift.providers` (detected models), `downshift.playbook`, `downshift.status`, `downshift.apply`; the strain block (R13) on every result | M1, K1, K2 | tool tests; no prompt on disk |
+| M2b Worker tools (stage 4) | 3 | `delegate`, `steer`, `result`, `cancel` with R10, R14 to R17, over the plan runner's jobs | M2a, P8 | R3, R6, R7, R14 tests |
+| M3 Command (MVP, K5) | 1 | `cmd/downshift/cmd_mcp.go`, `case "mcp"` in `main.go` (`serve`), help spec | M2 | e2e: initialize + tools/list over pipes |
+| M4 Setup (MVP, K6) | 2 | `setup` registers the server in the harness's MCP config (opt-in, dry-run, undo by marker) | M3, S1 | setup tests; undo leaves other servers |
 | M5 Playbook | 1 | `downshift-orchestrator` skill names the MCP tools (after M2) | M2, R2 | `TestSetupInstallsTheOrchestratorPlaybook` |
 
 Dependency direction: `internal/mcp` depends on `internal/plan` through small interfaces; nothing in `internal/routing`

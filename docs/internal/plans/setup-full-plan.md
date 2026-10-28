@@ -54,11 +54,15 @@ vertical slice with tests = 5). No front above 5. One commit per front on the si
 | M1 to M3 MCP server | 7 | `internal/mcp` core, the tools, `downshift mcp serve` (spec: `mcp-delegation-spec.md`) | SF2 for the apply core | spec gates |
 | SF5 MCP registration | 2 | `setup --mcp` registers the server in the harness's MCP config; opt-in, dry run, undo by marker; the Claude Code path is checked first (G-MCP1); same refuse-on-loss rule (A6) | M3, S1 | undo leaves other servers |
 | SF8 Doctor extras | 3 | Checks for the playbook folder (links refused), the hub lock against the links, the MCP registration and the binary path, the FORCE override | SF1, SF4a, SF5 | doctor tests |
+| SF12 Seeded agent defaults | 5 | `setup` and `policy init --detect` find the agent types on the machine (built-ins, `~/.claude/agents`, plugin agents) and propose `agent_defaults` as tiers, never model names; written only on a yes. A default applies only when the call carries no model: the adapter marks `Request.Explicit` and the decider lets an explicit choice win | SF13, decision D-S7 | decider and adapter tests; undo |
+| SF13 Detected models only (MVP, K1) | 5 | One resolver for what a spawn can use now (payload, discovery cache, session-models file; never the catalog alone); `downshift models available --harness h`; `doctor` warns on a harness with no detected list; the orchestrator skill speaks in tiers and tells the lead to read this list | none | table tests per source; no model id in Go |
 | SF10 Config write audit | 2 | Check `setup_json.go` and `setup_write.go` against the safe-write recipe: parse first, refuse JSON that carries comments, rotating backup, temp file then rename, keep the file mode; fix the gaps (survey idea A7) | none | tests for each refusal and for the mode |
 | SF11 Literal config assertions | 2 | A test reads the real shipped config (hook manifests, plugin manifest, what setup writes) and asserts each directive, including what must be absent: no bypass flag, no network listener, no credential path (survey idea A8; AppSec conditions of O8) | none | the test itself is the sensor |
 | SF9 Docs | 1 | `harness-matrix`, install guide, changelog | each front | docscheck |
 
-Total: 30 points for setup, plus 7 for the MCP server it depends on.
+Total: 40 points for setup, plus 7 for the MCP server it depends on.
+
+**MVP slice (owner decision O9, stage 2b, 17 points):** SF13, SF2, M1, M2a, M3 and SF5, in the task board as K1 to K6.
 
 ## 4. Order and parallelism
 
@@ -66,8 +70,7 @@ Wave 1 (no shared files): SF1, SF2, SF6, SF10, SF11, M1, SF4a (at most three in 
 Wave 2: SF3 (after S1, already done), SF4b (after SF4a), M2 (after M1 and SF2), SF7 (after D-S3).
 Wave 3: M3, then SF5, then SF8, with SF9 closing each front.
 
-Before release (O8 correctness and the AppSec conditions): SF1, SF6, SF7 and SF11. Everything else is post-MVP and does not
-move the MVP exit.
+Before release (O8 correctness and the AppSec conditions): SF1, SF6, SF7 and SF11. The MVP also includes the MCP slice above (stage 2b). Everything else is post-MVP.
 
 At most three fronts are in flight at once. SF1 and SF8 both touch `doctor_hooks.go`: SF8 waits.
 
@@ -81,6 +84,7 @@ At most three fronts are in flight at once. SF1 and SF8 both touch `doctor_hooks
 - **D-S4 Session policy.** Setup sets `opusplan` and plan mode on the main session when the keys are unset. This is
   Downshift choosing a model for the main session. Recommended: keep it as an opt-out default and say so in the note.
 - **D-S5 `route`.** Recommended: build it, because the MCP server and the plan runner need the same apply core.
+- **D-S7 Seeded defaults.** Whether SF12 is wanted at all, and whether a seeded default may override an inheriting spawn only (recommended) or also a declared profile.
 - **D-S6 MCP path.** Verify the Claude Code registration path before SF5 starts.
 
 ## 6. Out of scope
