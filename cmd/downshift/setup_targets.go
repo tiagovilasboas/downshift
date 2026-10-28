@@ -106,6 +106,25 @@ type setupTarget struct {
 	// Mods are sibling plugin ids ("name@marketplace") setup installs next to
 	// Plugin. They carry no routing, so a failed install is only a note.
 	Mods []string
+	// Mcp says how setup --mcp registers `downshift mcp serve` in this harness.
+	// Nil means setup does not register it (stage 5 adds the other harnesses).
+	Mcp *setupMcp
+}
+
+// Ways setup --mcp registers the server (setup_mcp.go).
+const (
+	// mcpViaCLI delegates the write to the harness CLI (`claude mcp add`); File
+	// is only read, to detect an entry without starting any server.
+	mcpViaCLI = "cli"
+	// mcpTOMLBlock edits a marked block of a TOML file as text; File is that file.
+	mcpTOMLBlock = "toml-block"
+)
+
+// setupMcp is the per-harness MCP registration fact: a way and a file
+// (relative to HOME).
+type setupMcp struct {
+	Kind string
+	File string
 }
 
 var setupTargets = []setupTarget{
@@ -183,6 +202,8 @@ var setupTargets = []setupTarget{
 		// A leftover filetree@downshift from an older install is left alone.
 		// The dock band is not installed by setup. mods/downshift-router stays out: it would route twice.
 		Mods: []string{"savvy-progress@downshift"},
+		// User scope lives in ~/.claude.json, which Claude Code rewrites itself.
+		Mcp: &setupMcp{Kind: mcpViaCLI, File: ".claude.json"},
 	},
 	{
 		Name:      "cursor",
@@ -225,6 +246,7 @@ var setupTargets = []setupTarget{
 		// Global instructions. Codex reads AGENTS.override.md first; if that file
 		// exists it wins and the managed block is not read.
 		Steering: &setupSteering{Path: ".codex/AGENTS.md", Content: compactSteering, Managed: true},
+		Mcp:      &setupMcp{Kind: mcpTOMLBlock, File: ".codex/config.toml"},
 	},
 	{
 		Name:      "antigravity",

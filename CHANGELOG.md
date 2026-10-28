@@ -32,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `downshift models available --harness ID`: the models a spawn can use right now on a harness, from the payload, the discovery cache or your session-models file (the catalog only fills in tiers, and is the last-resort stand-in on Claude Code, flagged as such). `doctor` gets an `available models` check.
 - `downshift route --harness ID`: show what would be applied for one spawn given the orchestrator's choice; the hook uses the same code.
-- The MCP server core: the tool port and the stdio transport on the official Go SDK, serving both protocol eras (the `initialize` handshake and the per-request metadata of 2026-07-28). Not reachable from a command yet.
+- `downshift mcp serve`: an MCP server on stdio, built on the official Go SDK and serving both protocol eras (the `initialize` handshake and the per-request metadata of 2026-07-28). Four information tools for the orchestrator: `providers` (the models this harness offers now), `playbook`, `status` (quota advice) and `apply` (what would be applied for a choice); every result carries a `strain` block. It never picks a model and takes no task text.
+- `downshift setup --mcp`: register the server in Claude Code (through `claude mcp add -s user`) and Codex (a marked block in `config.toml`); opt-in, dry run first, undone by `setup --undo`, other servers and comments untouched.
 - `downshift playbook` (`list`, `show`, `edit`, `add`, `remove`, `restore`, `check`): named working rules a delegated
   worker receives. General always applies; a delegation may name one more set. Shipped: General, Backend, Frontend.
 - The `downshift-orchestrator` skill, installed by `downshift setup`: how to split work and choose model and effort

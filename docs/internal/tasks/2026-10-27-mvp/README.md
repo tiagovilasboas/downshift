@@ -41,18 +41,18 @@ at most 5 points, with the gate in the MVP plan section 5.
 | C3 | Decider and routing note: precedence explicit > profile > rule > hint > keep; behind `DOWNSHIFT_ROUTING=v2` (R6) | 5 | B4–B7, C1, C2 |
 | C4 | Claude quota from the statusline into headroom; all critical warns and keeps (O3) | 3 | B5, S3 |
 
-## Stage 2b: orchestrator tools, the MCP (owner decision O9, 2026-10-28; not started)
+## Stage 2b: orchestrator tools, the MCP (owner decision O9; done 2026-10-28, pending the owner's acceptance)
 
 Spec: `docs/internal/plans/mcp-delegation-spec.md`. The tools that start workers come with stage 4.
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
-| K1 | Detected models only: one resolver (payload, then discovery cache, then the session-models file; never the catalog alone), `downshift models available --harness h` with tier, source and an "untiered" flag; `doctor` warns when a harness has no detected list | 5 | none |
-| K2 | Apply core: gather policy, floor, readings and catalog once for the hook, the CLI and the MCP; `downshift route --json` returns what would be applied | 3 | C3 |
+| K1 | **Done.** Detected models only: one resolver (payload, then discovery cache, then the session-models file; never the catalog alone), `downshift models available --harness h` with tier, source and an "untiered" flag; `doctor` warns when a harness has no detected list | 5 | none |
+| K2 | **Done.** Apply core: gather policy, floor, readings and catalog once for the hook, the CLI and the MCP; `downshift route --json` returns what would be applied | 3 | C3 |
 | K3 | MCP core: the tool port (`internal/mcp/tools`) and the stdio transport on the official Go SDK (`internal/mcp/transport`), both protocol eras. **Done 2026-10-28**; not yet reachable from a command (K5) | 3 | none |
-| K4 | MCP information tools: `providers` (K1), `playbook`, `status`, `apply` (K2); a `strain` block on every result | 3 | K1, K2, K3 |
-| K5 | `downshift mcp serve` command, help and an end-to-end test over pipes | 1 | K4 |
-| K6 | `setup --mcp`: register the server in Claude Code (through `claude mcp add -s user`) and Codex (the `[mcp_servers.downshift]` block); opt-in, dry run, backup, undo by marker, other servers untouched. Research done: `docs/internal/plans/mcp-registration.md`; the other four harnesses are stage 5 | 2 | K5, S1 |
+| K4 | **Done.** MCP information tools: `providers` (K1), `playbook`, `status`, `apply` (K2); a `strain` block on every result | 3 | K1, K2, K3 |
+| K5 | **Done.** `downshift mcp serve` command, help and end-to-end tests over pipes; a real Claude Code session called the tools (`docs/evidence/mcp-real-session-2026-10-28.md`) | 1 | K4 |
+| K6 | **Done.** `setup --mcp`: register the server in Claude Code (through `claude mcp add -s user`) and Codex (the `[mcp_servers.downshift]` block); opt-in, dry run, backup, undo by marker, other servers untouched. Research done: `docs/internal/plans/mcp-registration.md`; the other four harnesses are stage 5 | 2 | K5, S1 |
 
 ## Stage 3: show and prove (closes the MVP; not started)
 
@@ -88,7 +88,7 @@ OpenCode, Cursor and Antigravity are sized before they start, one PR each.
 
 ## Totals
 
-Stage 0: done. Stage 1: 8. Stage 2: 14, done except the real-session proof (C0). Stage 2b: 17, not started. Stage 3: 9. MVP: 56 (39 plus 17), about 26 left (stage 3: 9, stage 2b: 17) plus the C0 real-session proof. Stage 4: 26. Stage 5: 12 before the
+Stage 0: done. Stage 1: 8. Stage 2: 14, done except the real-session proof (C0). Stage 2b: 17, done. Stage 3: 9, not started. MVP: 56 (39 plus 17), about 9 left (stage 3) plus the C0 real-session proof. Stage 4: 26. Stage 5: 12 before the
 remaining harnesses.
 
 ## State of stage 2 (2026-10-27)

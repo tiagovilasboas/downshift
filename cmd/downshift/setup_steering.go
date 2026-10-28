@@ -81,12 +81,18 @@ func planSteering(o setupOptions, t setupTarget) (p setupPlan, ok bool) {
 // file without the block gets the block appended after a blank line. Text
 // outside the markers is never touched.
 func mergeSteeringBlock(before []byte, body string) []byte {
-	block := steeringBlockBegin + "\n" + strings.TrimRight(body, "\n") + "\n" + steeringBlockEnd
+	return mergeMarkedBlock(before, steeringBlockBegin, steeringBlockEnd, body)
+}
+
+// mergeMarkedBlock is mergeSteeringBlock for any pair of marker lines, so a
+// file format with another comment syntax (the Codex TOML) reuses it.
+func mergeMarkedBlock(before []byte, begin, end, body string) []byte {
+	block := begin + "\n" + strings.TrimRight(body, "\n") + "\n" + end
 	text := string(before)
-	start := strings.Index(text, steeringBlockBegin)
-	end := strings.Index(text, steeringBlockEnd)
-	if start >= 0 && end > start {
-		rest := strings.TrimPrefix(text[end+len(steeringBlockEnd):], "\n")
+	start := strings.Index(text, begin)
+	stop := strings.Index(text, end)
+	if start >= 0 && stop > start {
+		rest := strings.TrimPrefix(text[stop+len(end):], "\n")
 		out := text[:start] + block + "\n"
 		if rest != "" {
 			out += rest

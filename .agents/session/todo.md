@@ -28,7 +28,9 @@
 ## O8 (2026-10-28): o LLM escolhe, o Downshift aplica e mede
 - [x] Decisor sem tabela N11, sem cascade e sem veto de risco (`b5e4eede`); setup sem FORCE (`0c4574a2`).
 - [x] Playbook do orquestrador (skill) instalado pelo setup (`a70feea0`); `downshift playbook` com editor no CLI (`fa3a5c28`).
-- [ ] Servidor MCP `downshift mcp serve` (M1 a M5, spec em `docs/internal/plans/mcp-delegation-spec.md`) — especificado, não construído.
+- [x] Servidor MCP `downshift mcp serve`: ferramentas de informação, modelos detectados (K1), `route` (K2), `setup --mcp` (K6) — etapa 2b do MVP feita em 2026-10-28; sessão real do Claude Code registrada em `docs/evidence/mcp-real-session-2026-10-28.md`.
+- [ ] Ferramentas do MCP que lançam workers (`delegate`, `steer`, `result`, `cancel`): vêm com o runner de planos (etapa 4).
+- [ ] Etapa 3 do MVP: V1 (nota de roteamento no `report`), V2 (baseline de aceitação), V3 (sessão real, padrão ligado, nota de migração); mais a prova real C0 (Opus para Haiku).
 - [ ] Hint também para cima (hoje só desce); remover `policy economy` e sua CLI; limpar `internal/cascade` se o loop não precisar.
 - [ ] Atualizar os ativos de marca (SVGs com "No LLM in the loop") e o repositório downshift-business-plan, se o texto mudar de novo.
 

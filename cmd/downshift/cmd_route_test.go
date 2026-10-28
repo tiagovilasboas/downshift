@@ -113,7 +113,7 @@ func TestRouteFlagErrors(t *testing.T) {
 		{"missing harness", nil, "--harness is required; valid ids: "},
 		{"unknown harness", []string{"--harness=nope"}, `unknown harness "nope"`},
 		{"bad tier", []string{"--harness=claude-code", "--tier=huge"}, "unknown tier"},
-		{"bad effort", []string{"--harness=claude-code", "--effort=max"}, "unknown effort"},
+		{"bad effort", []string{"--harness=claude-code", "--effort=ludicrous"}, "unknown effort"},
 		{"no prompt flag", []string{"--harness=claude-code", "--prompt=x"}, "flag provided but not defined"},
 		{"stray argument", []string{"--harness=claude-code", "task text"}, "unexpected argument"},
 	}

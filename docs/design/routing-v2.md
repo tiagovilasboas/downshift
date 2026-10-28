@@ -221,4 +221,4 @@ with this section, this section wins.
 | Classifier | Telemetry, key of user-declared floors and DCI input; not a decider |
 
 Added by O8: playbooks (`downshift playbook`, implemented) and the `downshift-orchestrator` skill installed by
-`downshift setup` (implemented); the MCP delegation server `downshift mcp serve` (specified, not built).
+`downshift setup` (implemented); the MCP server `downshift mcp serve` (implemented: four information tools; the worker tools are specified).

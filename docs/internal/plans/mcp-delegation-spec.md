@@ -57,7 +57,7 @@ the result with a routing note. It never chooses a model on its own.
 - R7. Results carry enums, tiers, models, tokens and times, and the routing note. No task text in any note (contract).
 - R8. Budget: the same call, wall-time and token caps as the plan runner (stage 4 section 4).
 - R9. Errors are returned as tool errors, never as a crash; a malformed request is refused with a reason.
-- R13. Every tool result carries a `strain` block: the fullest window per provider and its headroom name
+- R13. Every successful tool result carries a `strain` block: the fullest window per provider and its headroom name
   (`ok`, `strained`, `critical`, or unknown). It is advice for the orchestrator, never a reroute, and it is
   computed at call time. A host cannot push to the model, so the reading rides on the answer it already reads.
   (Survey idea A1.)
@@ -75,11 +75,13 @@ the result with a routing note. It never chooses a model on its own.
 
 ## 2. Fronts
 
+Status 2026-10-28: M1, M2a, M3 and M4 (Claude Code and Codex) are implemented and reviewed (AppSec: pass with conditions; QA run). M2b (the worker tools) waits for the plan runner. A failed tool result carries no `strain` block: advice rides on successful answers only.
+
 The MCP is part of the MVP (owner decision O9, 2026-10-28), sliced: M1, M2a, M3 and M4 are stage 2b; M2b comes with the plan runner (stage 4).
 
 | Front | Points | Scope | Depends on | Gate |
 |---|--:|---|---|---|
-| M1 JSON-RPC stdio core (MVP, K3) | 3 | `internal/mcp/rpc/*`: framing, initialize, tools/list, tools/call, errors (R1, R9) | none | unit tests on framed messages; `make check` |
+| M1 JSON-RPC stdio core (MVP, K3) | 3 | `internal/mcp/transport`: the SDK adapter serving both eras (R1, R9) | none | unit tests on framed messages; `make check` |
 | M2a Information tools (MVP, K4) | 3 | `internal/mcp/tools/*`: `providers` (detected models), `playbook`, `status`, `apply`; the strain block (R13) on every result | M1, K1, K2 | tool tests; no prompt on disk |
 | M2b Worker tools (stage 4) | 3 | `delegate`, `steer`, `result`, `cancel` with R10, R14 to R17, over the plan runner's jobs | M2a, P8 | R3, R6, R7, R14 tests |
 | M3 Command (MVP, K5) | 1 | `cmd/downshift/cmd_mcp.go`, `case "mcp"` in `main.go` (`serve`), help spec | M2 | e2e: initialize + tools/list over pipes |
@@ -125,4 +127,6 @@ versioning and the message patterns; the rest is optional.
 | Streamable HTTP and OAuth | Other transport | No (O7: stdio only) |
 
 Behaviour of the library that the tests pin: a line that is not JSON ends the session, and so does a message above
-the 1 MiB cap; the protocol is stateless, so the client starts a new process.
+the 1 MiB cap; the protocol is stateless, so the client starts a new process. When the input closes while several
+requests are in flight, the answers still pending are lost (observed with 20 requests sent at once); a client that
+waits for each answer is not affected.

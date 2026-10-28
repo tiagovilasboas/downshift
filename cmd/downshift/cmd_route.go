@@ -91,8 +91,8 @@ func routeFlagError(harness, effort, tier string) string {
 	if !slices.Contains(routeHarnessIDs(), harness) {
 		return fmt.Sprintf("unknown harness %q; valid ids: %s", harness, strings.Join(routeHarnessIDs(), ", "))
 	}
-	if effort != "" && !slices.Contains([]string{"low", "medium", "high"}, effort) {
-		return fmt.Sprintf("unknown effort %q; valid: low, medium, high", effort)
+	if effort != "" && !slices.Contains(effortNames, effort) {
+		return fmt.Sprintf("unknown effort %q; valid: %s", effort, strings.Join(effortNames, ", "))
 	}
 	if tier != "" && !contract.Tier(tier).Valid() {
 		return fmt.Sprintf("unknown tier %q; valid: small, mid, frontier", tier)

@@ -131,7 +131,9 @@ your prompt cache stays intact.
   work rules a delegated worker receives (General always applies; Backend and Frontend ship).
 - **Orchestrator skill** (implemented): `downshift setup` installs `downshift-orchestrator`, guidance
   on splitting work and choosing model and effort per spawn.
-- **MCP delegation server** (specified, not built): `downshift mcp serve`, see
+- **MCP server** (`downshift mcp serve`, implemented): four information tools for the orchestrator, `providers` (the models this
+  harness offers now), `playbook`, `status` (quota advice) and `apply` (what would be applied for a choice). The tools that
+  start workers (`delegate`, `steer`, `result`, `cancel`) are specified, not built. See
   `docs/internal/plans/mcp-delegation-spec.md`.
 
 Removed on 2026-10-28 (decision O8): the built-in agent-type table, the automatic upgrade after a

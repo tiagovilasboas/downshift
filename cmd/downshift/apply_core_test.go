@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -105,5 +106,41 @@ func TestApplierNoteHoldsNoText(t *testing.T) {
 	}
 	if strings.Contains(res.Reason, "[tier=") {
 		t.Errorf("reason leaks the hint prefix: %q", res.Reason)
+	}
+}
+
+func TestApplyRefusesAnUnknownTierOrEffortWithoutEchoingIt(t *testing.T) {
+	a := spawnApplier{cat: cmdCat, now: func() time.Time { return deciderNow }}
+	for _, in := range []ApplyInput{
+		{Harness: "claude-code", TierHint: "huge"},
+		{Harness: "claude-code", Effort: "zz-secret-looking"},
+	} {
+		_, err := a.Apply(context.Background(), in)
+		var bad *ApplyInputError
+		if !errors.As(err, &bad) {
+			t.Fatalf("Apply(%+v) error = %v, want an ApplyInputError", in, err)
+		}
+		if strings.Contains(bad.Msg, "huge") || strings.Contains(bad.Msg, "zz-secret") {
+			t.Fatalf("the refusal echoed its input: %q", bad.Msg)
+		}
+	}
+	for _, e := range effortNames {
+		if _, err := a.Apply(context.Background(), ApplyInput{Harness: "claude-code", Effort: e}); err != nil {
+			t.Errorf("effort %q should be accepted: %v", e, err)
+		}
+	}
+}
+
+func TestApplyNamesAnInvalidProjectPolicyInTheReason(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, ".downshift", "policy.json"), `{not json`)
+	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
+	a := spawnApplier{cat: cmdCat, now: func() time.Time { return deciderNow }}
+	r, err := a.Apply(context.Background(), ApplyInput{Harness: "claude-code", RequestedModel: frontierID, ProjectDir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Applied || !strings.Contains(r.Reason, "policy") {
+		t.Fatalf("an invalid policy must keep the model and say so: %+v", r)
 	}
 }

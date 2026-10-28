@@ -18,6 +18,7 @@ downshift setup [harness...] [flags]
 - `--yes`, `-y` — Skip confirmation prompts
 - `--no-plugin` — Skip plugin installation (Claude Code)
 - `--no-session-policy` — Skip session policy configuration
+- `--mcp` — Also register the MCP server (`downshift mcp serve`) in Claude Code (through `claude mcp add -s user`) and Codex (a marked block in `~/.codex/config.toml`); opt-in, dry run first, `--undo` removes only what setup added
 
 **Examples:**
 ```bash
@@ -236,6 +237,34 @@ A model the harness catalog does not know, or an invalid policy file, keeps the 
 downshift route --harness=claude-code --model=<id> --tier=small
 downshift route --harness=codex --json
 ```
+
+### `downshift playbook`
+
+The working rules a delegated worker receives: named markdown sets, `General` always applying.
+
+```bash
+downshift playbook list | show <name> | edit <name> | add <name> | remove <name> | restore <name> | check
+```
+
+`edit` and `add` open the file in `$VISUAL` or `$EDITOR`. Files live in `<state dir>/playbooks/<id>.md`, with `# Name`
+on the first line; names match regardless of case and accents. `General` cannot be removed; a shipped playbook stays
+removed until `restore`. A playbook file that is a symbolic link is refused. `check` warns above 8000 characters.
+
+### `downshift mcp serve`
+
+An MCP server on standard input and output, started by the harness that registered it (see `downshift setup --mcp`).
+
+```bash
+downshift mcp serve
+```
+
+It answers both protocol eras (the `initialize` handshake of 2025-11-25 and earlier, and the per-request metadata with
+`server/discover` of 2026-07-28). Tools, named by their verb under the server name `downshift`: `providers {harness}`
+(the models this harness offers now), `playbook {name?}`, `status {}` (quota advice per harness) and
+`apply {harness, model?, effort?, tier?, agent_type?, dir?}` (what would be applied, as `downshift route` computes it).
+Every successful result is a JSON object with `data` and a `strain` block. The server never picks a model and accepts no
+task text; `dir` must be inside the directory the server was started in; string arguments are capped at 256 bytes (`dir`
+at 4096) and a result at 64 KiB. A line that is not JSON, or a message above 1 MiB, ends the session.
 
 ### `downshift models`
 

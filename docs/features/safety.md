@@ -92,9 +92,11 @@ permissions.
 
 ## Status of the MCP delegation server
 
-`downshift mcp serve` is specified, not built. When it exists it is meant to run over stdio
-only, with no listener, with the prompt held in memory, and with no permission-bypass flag.
-Do not rely on any of that yet. The review is in
+`downshift mcp serve` is implemented for the four information tools (`providers`, `playbook`, `status`, `apply`). It runs
+over stdio only, with no listener; it accepts no task text; a project directory argument must be inside the directory the
+server was started in; every argument has a length cap and every result a 64 KiB cap. The tools that start workers are
+still specified, not built, and the controls the review asks for them (argument list without a shell, a restricted
+working directory) are not code yet. The review is in
 [appsec-review-o8](../internal/appsec-review-o8.md).
 
 ## Monitoring

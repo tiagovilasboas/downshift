@@ -54,7 +54,9 @@ small. This is declared data, not inference.
   `downshift-audit`.
 - **Playbooks** (implemented): `downshift playbook list|show|edit|add|remove|restore|check`. General always
   applies; Backend and Frontend ship. Rules are instructions to an agent, never enforced.
-- **MCP delegation server** (specified, not built): `downshift mcp serve`, see
+- **MCP server** (`downshift mcp serve`, implemented): four information tools for the orchestrator, `providers` (the models this
+  harness offers now), `playbook`, `status` (quota advice) and `apply` (what would be applied for a choice). The tools that
+  start workers (`delegate`, `steer`, `result`, `cancel`) are specified, not built. See
   `docs/internal/plans/mcp-delegation-spec.md`.
 
 ## Inspecting decisions

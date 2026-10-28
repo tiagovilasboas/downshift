@@ -35,7 +35,7 @@ Downshift's code, no prompt storage** on the hot path, and every failure fails o
 > feeds telemetry, user-declared floors and DCI; it does not decide. Where the sections
 > below describe the classifier or the risk floor as the decision, they are the
 > pre-O8 pipeline. Added: playbooks (`downshift playbook`) and the `downshift-orchestrator`
-> skill (implemented); `downshift mcp serve` (specified, not built).
+> skill (implemented); `downshift mcp serve` (implemented: four information tools; the worker tools are specified).
 
 ---
 

@@ -185,6 +185,8 @@ If you are an AI assistant, coding agent, or language model reading this file:
 - `downshift stats --days=N`: Limit time window to N days.
 - `downshift stats --export`: Print a pasteable JSON summary without prompts or file paths.
 - `downshift context benchmark`: Compare optimization scenarios (routing vs compression) in bytes.
+- `downshift mcp serve`: MCP server (stdio) with four read-only tools for the orchestrator: providers (models this harness offers now), playbook, status (quota advice), apply (what would be applied). `downshift setup --mcp` registers it in Claude Code and Codex.
+- `downshift route --harness ID`: show what would be applied for one spawn; `downshift models available --harness ID`: the detected models; `downshift playbook`: the working rules a worker receives.
 - `downshift watch`: Live terminal view of subagent routing events. `downshift report` compares routed vs control in tokens per completed task.
 - `dsmon`: Live terminal monitoring widget (`cmd/dsmon`).
 

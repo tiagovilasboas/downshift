@@ -6,6 +6,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
@@ -21,12 +23,21 @@ import (
 // routing/decide, and returns the decision with its routing note. Any error
 // leaves the spawn unchanged: doubt keeps.
 func decideSpawn(req core.Request, dir string, now time.Time) (core.Decision, contract.Note) {
+	d, n, _ := decideSpawnStatus(req, dir, now)
+	return d, n
+}
+
+// decideSpawnStatus is decideSpawn plus whether the project policy could be
+// used. A policy or floor that cannot be read or validated keeps the requested
+// model, and the caller can say so.
+func decideSpawnStatus(req core.Request, dir string, now time.Time) (core.Decision, contract.Note, bool) {
 	cat, _ := req.Resolver.(decide.Catalog)
 	in, ok := gatherInput(req, cat, dir, now)
 	if !ok {
 		in = unchangedInput(req, cat)
 	}
-	return decide.Decide(in)
+	d, n := decide.Decide(in)
+	return d, n, ok
 }
 
 // gatherInput reads everything the decision needs. It reports false on a
@@ -101,6 +112,9 @@ func (a spawnApplier) Apply(ctx context.Context, in ApplyInput) (ApplyResult, er
 	if err := ctx.Err(); err != nil {
 		return ApplyResult{}, err
 	}
+	if err := validateApplyInput(in); err != nil {
+		return ApplyResult{}, err
+	}
 	req := core.Request{
 		Harness: in.Harness, CurrentModelID: in.RequestedModel,
 		AgentType: in.AgentType, Resolver: a.cat,
@@ -108,8 +122,8 @@ func (a spawnApplier) Apply(ctx context.Context, in ApplyInput) (ApplyResult, er
 	if contract.Tier(in.TierHint).Valid() {
 		req.Prompt = "[tier=" + in.TierHint + "]"
 	}
-	d, note := decideSpawn(req, in.ProjectDir, a.now())
-	return applyResult(in, d, note, a.knows(in)), nil
+	d, note, policyOK := decideSpawnStatus(req, in.ProjectDir, a.now())
+	return applyResult(in, d, note, a.knows(in), policyOK), nil
 }
 
 // knows reports whether the catalog lists the requested model for the harness.
@@ -122,7 +136,7 @@ func (a spawnApplier) knows(in ApplyInput) bool {
 	return found
 }
 
-func applyResult(in ApplyInput, d core.Decision, note contract.Note, known bool) ApplyResult {
+func applyResult(in ApplyInput, d core.Decision, note contract.Note, known, policyOK bool) ApplyResult {
 	res := ApplyResult{
 		Harness: in.Harness, RequestedModel: in.RequestedModel,
 		SelectedModel: in.RequestedModel, Effort: in.Effort,
@@ -134,12 +148,12 @@ func applyResult(in ApplyInput, d core.Decision, note contract.Note, known bool)
 	if moved {
 		res.SelectedModel, res.Effort, res.Applied = d.Model.ID, d.Effort.String(), true
 	}
-	res.Reason = applyReason(note, moved, known, in.RequestedModel != "")
+	res.Reason = applyReason(note, moved, known, in.RequestedModel != "", policyOK)
 	return res
 }
 
 // applyReason is one sentence built from enums and declared ids only.
-func applyReason(n contract.Note, moved, known, named bool) string {
+func applyReason(n contract.Note, moved, known, named, policyOK bool) string {
 	switch {
 	case moved && n.RuleID != "":
 		return "declared rule " + string(n.RuleID) + " applied to the requested model"
@@ -151,6 +165,8 @@ func applyReason(n contract.Note, moved, known, named bool) string {
 		return "declared policy applied (" + string(n.Verdict) + ")"
 	case !named:
 		return "no requested model: nothing to apply"
+	case !policyOK:
+		return "the project policy could not be read or is invalid: the requested model is kept (doubt keeps)"
 	case !known:
 		return "requested model is not in the catalog for this harness: kept (doubt keeps)"
 	case n.Reason != "":
@@ -169,4 +185,25 @@ func noteMap(n contract.Note) map[string]any {
 		_ = json.Unmarshal(raw, &m)
 	}
 	return m
+}
+
+// effortNames are the reasoning-effort names the catalog uses.
+var effortNames = []string{"low", "medium", "high", "xhigh", "max"}
+
+// ApplyInputError is a refusal of the input itself. Its message is a fixed
+// sentence that never repeats the value it refuses.
+type ApplyInputError struct{ Msg string }
+
+func (e *ApplyInputError) Error() string { return e.Msg }
+
+// validateApplyInput refuses a tier hint or effort that names no known value,
+// the same for the command and the MCP tool.
+func validateApplyInput(in ApplyInput) error {
+	if in.TierHint != "" && !contract.Tier(in.TierHint).Valid() {
+		return &ApplyInputError{Msg: "tier must be one of: small, mid, frontier"}
+	}
+	if in.Effort != "" && !slices.Contains(effortNames, in.Effort) {
+		return &ApplyInputError{Msg: "effort must be one of: " + strings.Join(effortNames, ", ")}
+	}
+	return nil
 }

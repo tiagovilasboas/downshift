@@ -241,3 +241,27 @@ conditions:
 - Playbook CLI edit flow (`cmd_playbook.go`) for editor invocation and temp files.
 - Prompt-privacy of telemetry fields end to end (existing invariant tests only).
 - Windows behaviour of file modes.
+
+## Addendum: review of the MCP information tools and `setup --mcp` (2026-10-28)
+
+Verdict: **pass with conditions**, no high finding. Run by an AppSec reviewer against a temporary HOME, with
+`govulncheck ./internal/mcp/... ./cmd/...` clean. Checked and held: `dir` containment (a symlink to outside, `..`,
+absolute paths and Windows-style separators were refused, with a message that is no existence oracle), playbook lookup
+(in memory, no path), unknown and extra fields, a panic (no leak of its message), 3000 concurrent calls, the 1 MiB
+message cap, stdout carrying protocol messages only, the `claude` CLI run by argument list without a shell, the Codex
+block with a hostile binary path (quotes and newlines escaped, markers not forgeable), backup mode 0600, and
+`~/.claude.json` never printed.
+
+| Finding | Severity | State |
+|---|---|---|
+| `apply` result not capped: a 200 KB `effort` came back echoed | medium | Fixed: every string argument capped (256 bytes, `dir` 4096) and a hard 64 KiB result cap |
+| TOML duplicate not detected (`[mcp_servers]` with `downshift = {…}`, dotted key) | medium | Fixed: all three forms outside the markers are a conflict |
+| Plain `setup --undo` removed any entry named `downshift` running `mcp serve`, whatever its command | medium-low | Fixed: setup marks its entry (`DOWNSHIFT_MANAGED=setup`); undo and "up to date" need the marker |
+| Setup diff of `config.toml` printed neighbouring lines, one an `env` value | low | Fixed: only the lines between the markers are shown |
+| Server started in `/` or the home directory made the `dir` containment meaningless | low | Fixed: only the start directory is accepted there, and a warning goes to stderr |
+| A malformed line or too-deep JSON ends the session | low | Accepted: stateless protocol, the client restarts the process |
+
+Conditions of the O8 review: the symlink refusal for playbooks (T1) is met; for T4 the containment of `dir` is code now,
+while the argument-list and restricted-`cwd` controls for the worker tools wait for `delegate` to exist; **T2, the trust
+decision for a `policy.json` that comes from a cloned repository, is still open**: through `apply`, an orchestrator can
+choose which `policy.json` under the project root is consulted.

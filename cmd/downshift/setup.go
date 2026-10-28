@@ -45,6 +45,8 @@ type setupOptions struct {
 	// installing the Downshift plugin (which carries the hooks and the
 	// cache-tax mod).
 	NoPlugin bool
+	// Mcp registers `downshift mcp serve` as an MCP server (setup_mcp.go). Opt-in.
+	Mcp bool
 	// Exec is the process boundary used to install the plugin. Its zero value
 	// runs nothing.
 	Exec setupExec
@@ -90,6 +92,8 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 			opts.YouShouldKnow = true
 		case a == "--no-plugin":
 			opts.NoPlugin = true
+		case a == "--mcp":
+			opts.Mcp = true
 		case a == "--no-policy":
 			noPolicy = true
 		case a == "--allow-unsafe-binary":
@@ -158,7 +162,7 @@ func guardHookBinary(o setupOptions, allow bool, tmp string) int {
 	return 1
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--no-policy] [--keep-binaries] [--allow-unsafe-binary]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--mcp] [--no-policy] [--keep-binaries] [--allow-unsafe-binary]
 
 Wire every Downshift hook into the harnesses found on this machine.
   --tui                run interactive terminal UI onboarding
@@ -174,6 +178,9 @@ Wire every Downshift hook into the harnesses found on this machine.
                        installing the Downshift plugin (the plugin carries the
                        same hooks plus the cache-tax mod) and skip the sibling
                        mods (savvy-progress)
+  --mcp                also register "downshift mcp serve" as the MCP server
+                       "downshift" in Claude Code (through its CLI) and Codex
+                       (a marked block in config.toml); --undo removes it
   --no-policy          do not offer .downshift/policy.json in the current
                        directory (see downshift policy init)
   --keep-binaries      do not offer to remove other downshift copies on PATH
@@ -191,7 +198,11 @@ func setupRun(o setupOptions) int {
 		return code
 	}
 	if o.Undo {
-		return setupUndo(o, targets)
+		code := setupUndo(o, targets)
+		if mcpCode := mcpUndo(o, targets); mcpCode != 0 {
+			code = mcpCode
+		}
+		return code
 	}
 
 	var plans []setupPlan
@@ -228,7 +239,11 @@ func setupRun(o setupOptions) int {
 	if p, ok := planPolicyInit(o); ok {
 		plans = append(plans, p)
 	}
+	mcpFiles, mcpSteps, mcpFailed := planMcp(o, targets)
 	failed, proceed := applyPlans(o, plans)
+	if runSetupMcp(o, mcpFiles, mcpSteps, proceed, failed) || mcpFailed {
+		failed = true
+	}
 	if !failed && !o.Undo {
 		failed = pruneBinaries(o, plans)
 	}

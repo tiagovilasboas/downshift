@@ -29,5 +29,5 @@
 
 ## Estado em 2026-10-28 (O8)
 - Decisão do dono: o LLM orquestrador escolhe agente, provedor, modelo e esforço (como o caminho MCP do Alethe e o padrão Orchestrator-Workers da Anthropic). O Downshift aplica dentro da política declarada e mede. Removidos: tabela N11, escalonamento automático após falha, veto de risco embutido, escrita de `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` no setup.
-- Novo: playbooks de regras de trabalho (`internal/playbook`, `downshift playbook`) e skill `downshift-orchestrator`. O servidor MCP (`downshift mcp serve`) está só especificado.
+- Novo: playbooks de regras de trabalho (`internal/playbook`, `downshift playbook`) e skill `downshift-orchestrator`. O servidor MCP (`downshift mcp serve`) está implementado (ferramentas de informação, SDK oficial, duas eras do protocolo) e `downshift setup --mcp` registra no Claude Code e no Codex; as ferramentas que lançam workers seguem especificadas.
 

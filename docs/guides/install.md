@@ -438,6 +438,10 @@ Claude Code rewrites an allowlisted Bash command in place, so it needs no steeri
 
 If a harness you use reads a different global file, the same block can be pasted there by hand between the two markers.
 
+## MCP server (`setup --mcp`, opt-in)
+
+`downshift setup --mcp` also registers `downshift mcp serve` as the MCP server `downshift` in Claude Code and Codex. Nothing else in setup touches an MCP configuration. **Claude Code**: setup runs `claude mcp add -s user downshift -e DOWNSHIFT_MANAGED=setup -- <this binary> mcp serve` and reads `~/.claude.json` first to see whether the entry exists (it never starts a server). The `DOWNSHIFT_MANAGED=setup` env marks the entry as setup's: "up to date" and `--undo` require the marker, the command and the arguments, and an entry named `downshift` without them is a conflict that is left as it is. **Codex**: a block between `# downshift:mcp:begin` and `# downshift:mcp:end` in `~/.codex/config.toml`, edited as text so your comments and other servers stay; any other definition of `downshift` outside the markers (table, dotted key or inline table) is a conflict. The printed diff shows only the lines inside the markers. The binary must pass the same check as the hooks (`--allow-unsafe-binary` overrides). `--dry-run` prints the command and the diff and writes nothing; `--undo` removes only the downshift entry and block. The other harnesses are not registered yet.
+
 ## Experimental harnesses
 
 > **Experimental (proof of concept).** KiroCrew runs in policy mode only (block and retry, no in-place rewrite) and Antigravity's rewrite rides an `overwrite` envelope that is not a documented vendor field; each has one observed child on one build and neither records a child end. Every feature is still computed for them (layering rule, `cmd/downshift/conformance_test.go`), and the adapters, tests and hooks stay in the repository, but treat them as proofs of concept, not as supported installs. Install them only if you accept that.

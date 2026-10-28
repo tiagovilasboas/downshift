@@ -582,6 +582,10 @@ prove safe.
 
 If the command runs as typed with the hook on, Claude Code ignores the rewrite without a decision: nothing breaks and nothing is saved, and this feature should stay documented as not working there.
 
+## MCP registration (`setup --mcp`, 2026-10-28)
+
+Only Claude Code (through `claude mcp add -s user`, detection by reading `~/.claude.json`) and Codex (marked block in `~/.codex/config.toml`) are registered; the file formats of Cursor, OpenCode, Antigravity and Kiro are in `docs/internal/plans/mcp-registration.md` and arrive in a later stage. Unverified: what `claude mcp add` does on a duplicate name (setup never adds over an existing entry), where `.claude.json` lives under `CLAUDE_CONFIG_DIR`, and whether Codex loads the server without a trust step.
+
 ## Revalidation
 
 Every TBD cell must be re-checked per harness release: hook contracts
