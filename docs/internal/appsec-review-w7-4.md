@@ -1,46 +1,38 @@
-# AppSec Review: Hook-Path Decider Cut & Release Readiness (W7.4)
+# W7.4 hook-path security: self-review draft
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-**Date:** 2026-10-28  
-**Scope:** PreToolUse hook path, Decider v2 cutover, Default Profiles (W7.1), Economy Mode (W7.9), Inter-process lock, and Loop CLI.  
-**Reviewer:** Senior Staff AppSec  
-**Result:** **PASS / APPROVED FOR RELEASE**
+**Date:** 2026-10-28
+**Status:** **Self-review draft, not a gate.** Written by the implementing
+session, not by an independent reviewer. W7.4 stays open until an independent
+AppSec review (for example, the `appsec-pr-review` skill run by a separate
+agent or person) returns PASS on the diff `origin/main...downshift/mvp-ponto-zero`.
 
----
+## Scope
 
-## 1. Threat Modeling & Scope
+PreToolUse hook path and decider v2 cut, default profile table (W7.1), economy
+mode (W7.9), `dead_ends.json` locking, `downshift loop`, setup changes
+(force env, stale-binary prune, policy init).
 
-The PreToolUse hook executes in the critical path of agent spawns. Core requirements:
-1. **Fail-Open Invariant:** Any error, panic, or malformed input must allow the spawn unchanged. No hook error may terminate or break the user's coding session.
-2. **Deterministic & Local-First:** No outbound network requests on the hook path.
-3. **No Prompt or Secret Exfiltration:** Task prompts are processed strictly in ephemeral memory and discarded. Telemetry events record only metadata (counts, hashes, verdicts, models).
-4. **Inter-Process Concurrency Safety:** Multi-process invocations (hooks in subshells, compactor, loop runner) must not corrupt state files or leave deadlocks.
+## Checked, with evidence
 
----
+| Check | Evidence | Result |
+|---|---|---|
+| Panic in a hook is recovered | `recover()` at `cmd/downshift/hookrun.go` lines 191, 374, 527 | Present |
+| No new `panic`, `os.Exit` or `log.Fatal` on the routing path | grep of the diff `959d34b7..HEAD` over `cmd/downshift/decider.go` and `internal/routing/` | None added |
+| Unusable policy does not move a spawn | `unchangedInput` drops the agent type; `TestRoutingDeciderDefaultProfile` (invalid and malformed policy cases) | Tested |
+| Risk never goes to the small tier | `TestDefaultProfilesInvariants`; economy tests with a `secret` risk signal | Tested |
+| `dead_ends.json` writes across processes | directory lock plus temp file and rename in `internal/cascade/deadends.go` | Present; no multi-process stress test |
+| Loop sensor runs without a shell | `exec.CommandContext(ctx, parts[0], parts[1:]...)` in `internal/loop/runner.go` | No shell; the argument split is a plain whitespace split |
+| No new `0644`/`0755` writes in non-test code of the diff | grep of the diff `959d34b7..HEAD`, test files excluded | None found |
 
-## 2. Findings & Verification
+## Not checked
 
-### A. Fail-Open Architecture
-- In `cmd/downshift/decider.go` and `internal/routing/decide/`:
-  - When policy loading fails or format is invalid: `unchangedInput` is returned and agent type is dropped, preserving the requested model safely.
-  - Zero `panic()`, `log.Fatal()`, or `os.Exit()` on the routing path.
-  - `recover()` handlers in `runHookAdapter` catch any unexpected exceptions and default to `Allow`.
-
-### B. Prompt Privacy & Secrets
-- `TaskPrompt` is passed to the classifier and semantic hash in-memory only.
-- `events.jsonl` does not store task prompt text, shell command arguments with potential secrets, or user tokens.
-- Git commit diffs inspected by `internal/telemetry/acceptance.go` record only line count summaries (`numstat`), avoiding secret persistence.
-
-### C. Concurrency & State Locking
-- `internal/cascade/deadends.go` implements an atomic directory lock (`paths.Join("dead_ends.lock")`) with timeout and stale lock eviction.
-- Temporary files use `os.CreateTemp` and atomic rename (`os.Rename`), preventing race conditions and incomplete writes across parallel processes.
-
-### D. File Permissions & Path Traversal
-- All created configuration and cache files use strict `0600` permissions.
-- Directory paths are generated using `filepath.Join` and sanitized against directory traversal.
-
----
-
-## 3. Verdict
-The changes conform to OWASP ASVS 5.0 principles and satisfy the security requirements of Card W7.4.
+- Prompt privacy of new telemetry fields end to end (only the existing
+  invariant tests ran).
+- Stale-binary prune (`setup_prune.go`): what it may delete when PATH holds a
+  foreign `downshift` binary, beyond its own tests.
+- `downshift loop --sensor`: the command comes from the operator; no threat
+  model for a sensor string supplied by an agent.
+- Windows behaviour of the lock (only `GOOS=windows go vet` ran, no tests).
+- ASVS mapping of each finding.
