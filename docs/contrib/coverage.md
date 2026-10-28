@@ -66,6 +66,7 @@ file or from `AGENTS.md`.
 | `internal/hookutil` | Adapters | Field helpers for hook payloads |
 | `internal/lifecycleobserver` | Telemetry | Process lifecycle events |
 | `internal/limits` | Adapters | Centralized harness limitations registry |
+| `internal/loop` | Loop | Autonomous engineering loop runner (Plan -> Implement -> Sensor -> Cascade -> Accept) |
 | `internal/models` | Routing | `models` subcommand helpers |
 | `internal/nbtier` | Routing | Naive-Bayes tier types |
 | `internal/outcome` | Quality | Offline eval runner |

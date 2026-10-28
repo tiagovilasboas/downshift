@@ -59,6 +59,26 @@ Examples:
 
 Next: downshift stats
 `,
+	"loop": `downshift loop — Run autonomous engineering loop with sensor verification and cascade auto-upgrade
+
+Usage:
+  downshift loop [--task=<desc>] [--sensor=<cmd>] [--iterations=<n>] [--timeout=<dur>] [--session=<id>] [--json] [-- <sensor-cmd>]
+
+Flags:
+  --task=<desc>      Task description or goal
+  --sensor=<cmd>     Sensor command to run for verification (or after --)
+  --iterations=<n>   Maximum iterations before tripwire stop (default: 3)
+  --timeout=<dur>    Maximum duration for the loop (default: 5m)
+  --session=<id>     Session ID for telemetry and cascade tracking
+  --json             Print result as JSON
+
+Examples:
+  downshift loop --task="Add healthcheck" -- go test ./...
+  downshift loop --task="Fix auth race" --sensor="go test -race ./..."
+  downshift loop --iterations=5 -- make check
+
+Next: downshift stats, to view session token savings and acceptance
+`,
 	"doctor": `downshift doctor — Checklist: binary, hooks per harness, state, with a fix per failure
 
 Usage:

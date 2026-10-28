@@ -120,6 +120,8 @@ func main() {
 		os.Exit(runUninstall(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "accept":
 		os.Exit(runAccept(args[1:], os.Stdout, os.Stderr))
+	case "loop":
+		os.Exit(runLoop(args[1:], os.Stdout, os.Stderr))
 	case "serve":
 		os.Exit(runServe(args[1:], os.Stdout, os.Stderr))
 	case "dashboard":
