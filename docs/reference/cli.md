@@ -18,7 +18,7 @@ downshift setup [harness...] [flags]
 - `--yes`, `-y` — Skip confirmation prompts
 - `--no-plugin` — Skip plugin installation (Claude Code)
 - `--no-session-policy` — Skip session policy configuration
-- `--mcp` — Also register the MCP server (`downshift mcp serve`) in Claude Code (through `claude mcp add -s user`) and Codex (a marked block in `~/.codex/config.toml`); opt-in, dry run first, `--undo` removes only what setup added
+- `--no-mcp` — Do not register the MCP server (`downshift mcp serve`) in Claude Code (through `claude mcp add -s user`) and Codex (a marked block in `~/.codex/config.toml`). Registration is on by default and shown in the dry run first; `--undo` removes only what setup added. `--mcp` is still accepted
 
 **Examples:**
 ```bash

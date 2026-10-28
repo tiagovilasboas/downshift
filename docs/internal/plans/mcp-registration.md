@@ -44,7 +44,7 @@ Status: **Research, 2026-10-28**, input to card K6 (`setup --mcp`) and to the sp
 ## Scope of K6 in the MVP
 
 Claude Code (through its CLI) and Codex (text block) in K6; the other four are stage 5, with the adapters above as
-their starting point. Every write is opt-in (`setup --mcp`), shows a dry run first, backs up, is marked, and is undone
+their starting point. Setup registers it by default (`--no-mcp` skips it); every write shows a dry run first, backs up, is marked, and is undone
 by `setup --undo` without touching the user's other servers.
 
 ## Unverified
