@@ -45,7 +45,8 @@ type setupOptions struct {
 	// installing the Downshift plugin (which carries the hooks and the
 	// cache-tax mod).
 	NoPlugin bool
-	// Mcp registers `downshift mcp serve` as an MCP server (setup_mcp.go). Opt-in.
+	// Mcp registers `downshift mcp serve` as an MCP server (setup_mcp.go). On by
+	// default; --no-mcp turns it off.
 	Mcp bool
 	// Exec is the process boundary used to install the plugin. Its zero value
 	// runs nothing.
@@ -74,41 +75,15 @@ type setupOptions struct {
 
 // runSetup is the CLI entry: it resolves HOME and the running binary.
 func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
-	opts := setupOptions{In: in, Out: out, Err: errw, Now: time.Now, Exec: realSetupExec()}
-	allowUnsafe, noPolicy, keepBinaries := false, false, false
-	for _, a := range args {
-		switch {
-		case a == "--dry-run":
-			opts.DryRun = true
-		case a == "--undo":
-			opts.Undo = true
-		case a == "--tui":
-			opts.TUI = true
-		case a == "--yes" || a == "-y":
-			opts.Yes = true
-		case a == "--no-session-policy":
-			opts.NoSessionPolicy = true
-		case a == "--you-should-know":
-			opts.YouShouldKnow = true
-		case a == "--no-plugin":
-			opts.NoPlugin = true
-		case a == "--mcp":
-			opts.Mcp = true
-		case a == "--no-policy":
-			noPolicy = true
-		case a == "--allow-unsafe-binary":
-			allowUnsafe = true
-		case a == "--keep-binaries":
-			keepBinaries = true
-		case a == "-h" || a == "--help":
-			fmt.Fprint(out, setupUsage)
-			return 0
-		case strings.HasPrefix(a, "-"):
-			fmt.Fprintf(errw, "setup: unknown flag %q\n%s", a, setupUsage)
-			return 2
-		default:
-			opts.Names = append(opts.Names, a)
-		}
+	opts := defaultSetupOptions(in, out, errw)
+	flags, help, bad := parseSetupArgs(args, &opts)
+	if help {
+		fmt.Fprint(out, setupUsage)
+		return 0
+	}
+	if bad != "" {
+		fmt.Fprintf(errw, "setup: unknown flag %q\n%s", bad, setupUsage)
+		return 2
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -122,16 +97,16 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 		return 1
 	}
 	opts.Binary = exe
-	if code := guardHookBinary(opts, allowUnsafe, os.TempDir()); code != 0 {
+	if code := guardHookBinary(opts, flags.allowUnsafe, os.TempDir()); code != 0 {
 		return code
 	}
 	if dir, err := paths.StateDir(); err == nil {
 		opts.StateDir = dir
 	}
-	if cwd, err := os.Getwd(); err == nil && !noPolicy {
+	if cwd, err := os.Getwd(); err == nil && !flags.noPolicy {
 		opts.ProjectDir = cwd
 	}
-	if !keepBinaries {
+	if !flags.keepBinaries {
 		opts.BinDirs = defaultBinDirs(home)
 	}
 	if !opts.DryRun && !opts.Undo {
@@ -162,7 +137,7 @@ func guardHookBinary(o setupOptions, allow bool, tmp string) int {
 	return 1
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--mcp] [--no-policy] [--keep-binaries] [--allow-unsafe-binary]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--no-mcp] [--no-policy] [--keep-binaries] [--allow-unsafe-binary]
 
 Wire every Downshift hook into the harnesses found on this machine.
   --tui                run interactive terminal UI onboarding
@@ -178,9 +153,10 @@ Wire every Downshift hook into the harnesses found on this machine.
                        installing the Downshift plugin (the plugin carries the
                        same hooks plus the cache-tax mod) and skip the sibling
                        mods (savvy-progress)
-  --mcp                also register "downshift mcp serve" as the MCP server
+  --no-mcp             do not register "downshift mcp serve" as the MCP server
                        "downshift" in Claude Code (through its CLI) and Codex
-                       (a marked block in config.toml); --undo removes it
+                       (a marked block in config.toml). Registered by default;
+                       --undo removes it. --mcp is still accepted
   --no-policy          do not offer .downshift/policy.json in the current
                        directory (see downshift policy init)
   --keep-binaries      do not offer to remove other downshift copies on PATH
@@ -239,9 +215,9 @@ func setupRun(o setupOptions) int {
 	if p, ok := planPolicyInit(o); ok {
 		plans = append(plans, p)
 	}
-	mcpFiles, mcpSteps, mcpFailed := planMcp(o, targets)
+	mcpFiles, mcpSteps := planMcp(o, targets)
 	failed, proceed := applyPlans(o, plans)
-	if runSetupMcp(o, mcpFiles, mcpSteps, proceed, failed) || mcpFailed {
+	if runSetupMcp(o, mcpFiles, mcpSteps, proceed, failed) {
 		failed = true
 	}
 	if !failed && !o.Undo {

@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,7 +71,8 @@ func (f *fakeMcpClaude) exec() setupExec {
 func (e *setupEnv) mcpRun(f *fakeMcpClaude, args ...string) (code int, out, errOut string) {
 	e.t.Helper()
 	var o, er bytes.Buffer
-	opts := setupOptions{Home: e.home, Binary: testBin, SkipDiscovery: true, NoPlugin: true,
+	// Mcp starts as the CLI default (on); --no-mcp turns it off, as in runSetup.
+	opts := setupOptions{Home: e.home, Binary: testBin, SkipDiscovery: true, NoPlugin: true, Mcp: true,
 		In: strings.NewReader(""), Out: &o, Err: &er, Exec: f.exec()}
 	opts.Now = func() time.Time {
 		e.tick++
@@ -86,6 +88,8 @@ func (e *setupEnv) mcpRun(f *fakeMcpClaude, args ...string) (code int, out, errO
 			opts.Yes = true
 		case "--mcp":
 			opts.Mcp = true
+		case "--no-mcp":
+			opts.Mcp = false
 		default:
 			opts.Names = append(opts.Names, a)
 		}
@@ -109,16 +113,22 @@ func newMcpEnv(t *testing.T) (*setupEnv, *fakeMcpClaude) {
 	return e, &fakeMcpClaude{e: e, have: true}
 }
 
-func TestSetupMcpIsOptIn(t *testing.T) {
+func TestSetupMcpIsOnByDefaultAndNoMcpSkipsIt(t *testing.T) {
 	e, f := newMcpEnv(t)
-	if code, _, errOut := e.mcpRun(f, "claude-code", "codex", "--yes"); code != 0 {
+	if code, _, errOut := e.mcpRun(f, "claude-code", "codex", "--no-mcp", "--yes"); code != 0 {
 		t.Fatalf("code %d: %s", code, errOut)
 	}
 	if len(f.calls) != 0 {
-		t.Errorf("claude ran without --mcp: %v", f.calls)
+		t.Errorf("claude ran with --no-mcp: %v", f.calls)
 	}
 	if got := e.read(".codex/config.toml"); got != codexOriginal {
-		t.Errorf("config.toml changed without --mcp:\n%s", got)
+		t.Errorf("config.toml changed with --no-mcp:\n%s", got)
+	}
+	if code, _, errOut := e.mcpRun(f, "claude-code", "codex", "--yes"); code != 0 {
+		t.Fatalf("default run: code %d: %s", code, errOut)
+	}
+	if len(f.calls) == 0 || !strings.Contains(e.read(".codex/config.toml"), "[mcp_servers.downshift]") {
+		t.Errorf("default run did not register: calls=%v", f.calls)
 	}
 }
 
@@ -168,13 +178,15 @@ func TestSetupMcpFirstRunThenIdempotent(t *testing.T) {
 	}
 }
 
-func TestSetupMcpConflictsAreRefused(t *testing.T) {
+// A conflict is a warning on every harness: setup goes on, exits 0 and leaves
+// the other entry as it is.
+func TestSetupMcpConflictsAreWarnings(t *testing.T) {
 	t.Run("claude-code", func(t *testing.T) {
 		e, f := newMcpEnv(t)
 		conflict := `{"mcpServers": {"downshift": {"type": "stdio", "command": "/elsewhere/ds", "args": ["serve"]}}}`
 		e.write(".claude.json", conflict)
-		code, _, errOut := e.mcpRun(f, "claude-code", "--mcp", "--yes")
-		if code != 1 || !strings.Contains(errOut, `"downshift"`) || len(f.calls) != 0 || e.read(".claude.json") != conflict {
+		code, _, errOut := e.mcpRun(f, "claude-code", "--yes")
+		if code != 0 || !strings.Contains(errOut, "warning:") || !strings.Contains(errOut, `"downshift"`) || len(f.calls) != 0 || e.read(".claude.json") != conflict {
 			t.Errorf("code=%d calls=%v err=%s", code, f.calls, errOut)
 		}
 	})
@@ -182,8 +194,8 @@ func TestSetupMcpConflictsAreRefused(t *testing.T) {
 		e, f := newMcpEnv(t)
 		own := codexOriginal + "\n[mcp_servers.downshift]\ncommand = \"mine\"\n"
 		e.write(".codex/config.toml", own)
-		code, _, errOut := e.mcpRun(f, "codex", "--mcp", "--yes")
-		if code != 1 || !strings.Contains(errOut, "mcp_servers.downshift") || e.read(".codex/config.toml") != own {
+		code, _, errOut := e.mcpRun(f, "codex", "--yes")
+		if code != 0 || !strings.Contains(errOut, "warning:") || !strings.Contains(errOut, "mcp_servers.downshift") || e.read(".codex/config.toml") != own {
 			t.Errorf("code=%d err=%s", code, errOut)
 		}
 	})
@@ -255,8 +267,40 @@ func TestSetupMcpRefusesUnsafeBinary(t *testing.T) {
 
 func TestSetupUsageMentionsMcp(t *testing.T) {
 	var out, errw bytes.Buffer
-	if code := runSetup([]string{"-h"}, strings.NewReader(""), &out, &errw); code != 0 || !strings.Contains(out.String(), "--mcp") {
-		t.Errorf("usage lacks --mcp: %d\n%s", code, out.String())
+	if code := runSetup([]string{"-h"}, strings.NewReader(""), &out, &errw); code != 0 || !strings.Contains(out.String(), "--no-mcp") {
+		t.Errorf("usage lacks --no-mcp: %d\n%s", code, out.String())
+	}
+}
+
+func TestSetupArgsMcpIsOnUnlessNoMcp(t *testing.T) {
+	in := strings.NewReader("")
+	for _, tc := range []struct {
+		args []string
+		want bool
+	}{
+		{nil, true},
+		{[]string{"--no-mcp"}, false},
+		{[]string{"--mcp"}, true},
+		{[]string{"--mcp", "--no-mcp"}, false},
+		{[]string{"--no-mcp", "--mcp"}, true},
+	} {
+		opts := defaultSetupOptions(in, io.Discard, io.Discard)
+		if _, _, bad := parseSetupArgs(tc.args, &opts); bad != "" {
+			t.Fatalf("%v: unexpected bad flag %q", tc.args, bad)
+		}
+		if opts.Mcp != tc.want {
+			t.Errorf("%v: Mcp = %v, want %v", tc.args, opts.Mcp, tc.want)
+		}
+	}
+}
+
+func TestSetupArgsReportsUnknownFlagAndHelp(t *testing.T) {
+	opts := defaultSetupOptions(strings.NewReader(""), io.Discard, io.Discard)
+	if _, _, bad := parseSetupArgs([]string{"--bogus"}, &opts); bad != "--bogus" {
+		t.Errorf("bad = %q, want --bogus", bad)
+	}
+	if _, help, _ := parseSetupArgs([]string{"--help"}, &opts); !help {
+		t.Error("--help not reported as help")
 	}
 }
 
@@ -282,7 +326,7 @@ func TestSetupMcpUnbalancedMarkersAreRefused(t *testing.T) {
 	broken := "a = 1\n" + mcpBlockBegin + "\n"
 	e.write(".codex/config.toml", broken)
 	code, _, errOut := e.mcpRun(&fakeMcpClaude{e: e}, "codex", "--mcp", "--yes")
-	if code != 1 || !strings.Contains(errOut, "unbalanced") || e.read(".codex/config.toml") != broken {
+	if code != 0 || !strings.Contains(errOut, "unbalanced") || e.read(".codex/config.toml") != broken {
 		t.Errorf("code=%d err=%s", code, errOut)
 	}
 }
@@ -300,7 +344,7 @@ func TestSetupMcpTomlDuplicateFormsAreConflicts(t *testing.T) {
 			e := newSetupEnv(t, ".codex")
 			e.write(".codex/config.toml", body)
 			code, _, errOut := e.mcpRun(&fakeMcpClaude{e: e}, "codex", "--mcp", "--yes")
-			if code != 1 || !strings.Contains(errOut, "already has") || e.read(".codex/config.toml") != body {
+			if code != 0 || !strings.Contains(errOut, "already has") || e.read(".codex/config.toml") != body {
 				t.Errorf("code=%d err=%s", code, errOut)
 			}
 		})
@@ -316,8 +360,8 @@ func TestSetupMcpUndoNeedsTheSetupMarker(t *testing.T) {
 		t.Errorf("code=%d calls=%v out=%s", code, f.calls, out)
 	}
 	// With the marker (and the binary setup would add) the entry is ours.
-	if code, _, errOut := e.mcpRun(f, "claude-code", "--mcp", "--yes"); code != 1 || len(f.calls) != 0 {
-		t.Errorf("an unmarked entry must be a conflict: code=%d calls=%v err=%s", code, f.calls, errOut)
+	if code, _, errOut := e.mcpRun(f, "claude-code", "--yes"); code != 0 || len(f.calls) != 0 || e.read(".claude.json") != unmarked {
+		t.Errorf("an unmarked entry must be a warning and stay: code=%d calls=%v err=%s", code, f.calls, errOut)
 	}
 }
 

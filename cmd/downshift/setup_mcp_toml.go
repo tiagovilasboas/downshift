@@ -141,8 +141,9 @@ func removeMcpBlock(text string) string {
 }
 
 // planCodexMcp plans the config.toml edit. ok is false when nothing is
-// planned; failed is true for a conflict or an unreadable file.
-func planCodexMcp(o setupOptions, t setupTarget) (p setupPlan, ok, failed bool) {
+// planned, which includes a conflict or an unreadable file: those are printed
+// as warnings and left as they are.
+func planCodexMcp(o setupOptions, t setupTarget) (p setupPlan, ok bool) {
 	path := filepath.Join(o.Home, filepath.FromSlash(t.Mcp.File))
 	shown := setupDisplay(o.Home, path)
 	p = setupPlan{target: t, path: path}
@@ -151,24 +152,24 @@ func planCodexMcp(o setupOptions, t setupTarget) (p setupPlan, ok, failed bool) 
 	case err == nil:
 		p.existed, p.before = true, raw
 	case !errors.Is(err, os.ErrNotExist):
-		fmt.Fprintf(o.Err, "%s: %s: %v\n  the MCP server was not registered\n\n", t.Name, shown, err)
-		return p, false, true
+		fmt.Fprintf(o.Err, "warning: %s: %s: %v\n  the MCP server was not registered; the file was left as it is\n\n", t.Name, shown, err)
+		return p, false
 	}
 	text := string(raw)
 	if _, _, _, err := mcpBlockBounds(text); err != nil {
-		fmt.Fprintf(o.Err, "%s: %s: %v\n  the MCP server was not registered\n\n", t.Name, shown, err)
-		return p, false, true
+		fmt.Fprintf(o.Err, "warning: %s: %s: %v\n  the MCP server was not registered; the file was left as it is\n\n", t.Name, shown, err)
+		return p, false
 	}
 	if mcpDefinedOutside(removeMcpBlock(text)) {
-		fmt.Fprintf(o.Err, "%s: %s already has a [mcp_servers.%s] table outside the downshift markers; "+
-			"it was left as it is. Delete that table and rerun setup --mcp to let Downshift manage it\n\n",
+		fmt.Fprintf(o.Err, "warning: %s: %s already has a [mcp_servers.%s] table outside the downshift markers; "+
+			"it was left as it is. Delete that table and rerun setup to let Downshift manage it\n\n",
 			t.Name, shown, mcpServerName)
-		return p, false, true
+		return p, false
 	}
 	p.after = mergeMarkedBlock(raw, mcpBlockBegin, mcpBlockEnd, mcpTOMLBody(o.Binary))
 	if !p.changed() {
 		fmt.Fprintf(o.Out, "%s: MCP server %q already up to date (%s)\n\n", t.Name, mcpServerName, shown)
-		return p, false, false
+		return p, false
 	}
 	verb := "will change"
 	if o.DryRun {
@@ -177,5 +178,5 @@ func planCodexMcp(o setupOptions, t setupTarget) (p setupPlan, ok, failed bool) 
 	fmt.Fprintf(o.Out, "%s: %s %s (only the downshift block; the rest of the file is not shown or touched)\n", t.Name, shown, verb)
 	fmt.Fprint(o.Out, mcpBlockDiff(shown, p.existed, string(p.before), string(p.after)))
 	fmt.Fprintln(o.Out)
-	return p, true, false
+	return p, true
 }

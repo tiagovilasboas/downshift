@@ -12,9 +12,9 @@ import (
 	"strings"
 )
 
-// `downshift setup --mcp` registers `downshift mcp serve` as the MCP server
-// "downshift" in the harnesses that declare setupTarget.Mcp. It is opt-in: no
-// other setup run touches an MCP configuration. Claude Code is registered by
+// `downshift setup` registers `downshift mcp serve` as the MCP server
+// "downshift" in the harnesses that declare setupTarget.Mcp. It is on by
+// default; `--no-mcp` skips it, and every write is shown first. Claude Code is registered by
 // its own CLI (setup_mcp.go); Codex by a marked TOML block (setup_mcp_toml.go);
 // `--undo` removes exactly that (setup_mcp_undo.go). Facts and the list of what
 // is unverified: docs/internal/plans/mcp-registration.md.
@@ -34,11 +34,12 @@ type mcpClaudeStep struct {
 
 // planMcp plans the MCP registration of every selected target that supports
 // it. File edits come back as plans for applyPlans; CLI calls come back as
-// steps for runMcpSteps. Conflicts and unreadable files are reported here and
-// set failed; nothing is written for them. Without --mcp it does nothing.
-func planMcp(o setupOptions, targets []setupTarget) (files []setupPlan, steps []mcpClaudeStep, failed bool) {
+// steps for runMcpSteps. A conflict or an unreadable file is a warning: it is
+// left as it is and setup goes on, because the MCP server is an extra that must
+// not block the hooks. With --no-mcp (Mcp false) it does nothing.
+func planMcp(o setupOptions, targets []setupTarget) (files []setupPlan, steps []mcpClaudeStep) {
 	if !o.Mcp {
-		return nil, nil, false
+		return nil, nil
 	}
 	for _, t := range targets {
 		if t.Mcp == nil {
@@ -46,20 +47,16 @@ func planMcp(o setupOptions, targets []setupTarget) (files []setupPlan, steps []
 		}
 		switch t.Mcp.Kind {
 		case mcpViaCLI:
-			step, ok, bad := planClaudeMcp(o, t)
-			failed = failed || bad
-			if ok {
+			if step, ok := planClaudeMcp(o, t); ok {
 				steps = append(steps, step)
 			}
 		case mcpTOMLBlock:
-			p, ok, bad := planCodexMcp(o, t)
-			failed = failed || bad
-			if ok {
+			if p, ok := planCodexMcp(o, t); ok {
 				files = append(files, p)
 			}
 		}
 	}
-	return files, steps, failed
+	return files, steps
 }
 
 // mcpEntry is what a harness file holds under the server name.
@@ -149,28 +146,28 @@ func mcpShown(parts ...string) string {
 	return strings.Join(out, " ")
 }
 
-func planClaudeMcp(o setupOptions, t setupTarget) (step mcpClaudeStep, ok, failed bool) {
+func planClaudeMcp(o setupOptions, t setupTarget) (step mcpClaudeStep, ok bool) {
 	file := filepath.Join(o.Home, filepath.FromSlash(t.Mcp.File))
 	shown := setupDisplay(o.Home, file)
 	cli, have := claudeCLI(o)
 	if !have {
-		fmt.Fprintf(o.Out, "%s: MCP server not registered: `claude` is not on PATH (skipped; install Claude Code and rerun `downshift setup --mcp`)\n\n", t.Name)
-		return step, false, false
+		fmt.Fprintf(o.Out, "%s: MCP server not registered: `claude` is not on PATH (skipped; install Claude Code and rerun `downshift setup`)\n\n", t.Name)
+		return step, false
 	}
 	entry, err := readClaudeEntry(file)
 	if err != nil {
-		fmt.Fprintf(o.Err, "%s: %s: %v\n  the MCP server was not registered\n\n", t.Name, shown, err)
-		return step, false, true
+		fmt.Fprintf(o.Err, "warning: %s: %s: %v\n  the MCP server was not registered; the file was left as it is\n\n", t.Name, shown, err)
+		return step, false
 	}
 	switch {
 	case entry.matches(o.Binary):
 		fmt.Fprintf(o.Out, "%s: MCP server %q already up to date (%s)\n\n", t.Name, mcpServerName, shown)
-		return step, false, false
+		return step, false
 	case entry.found:
-		fmt.Fprintf(o.Err, "%s: %s already has an MCP server named %q that setup did not add (other command or no setup marker); "+
-			"it was left as it is. Remove it (`claude mcp remove -s user %s`) and rerun setup --mcp to let Downshift register it\n\n",
+		fmt.Fprintf(o.Err, "warning: %s: %s already has an MCP server named %q that setup did not add (other command or no setup marker); "+
+			"it was left as it is. Remove it (`claude mcp remove -s user %s`) and rerun setup to let Downshift register it\n\n",
 			t.Name, shown, mcpServerName, mcpServerName)
-		return step, false, true
+		return step, false
 	}
 	args := append([]string{"mcp", "add", "-s", "user", mcpServerName, "-e", mcpMarkerKey + "=" + mcpMarkerValue, "--", o.Binary}, mcpServeArgs...)
 	step = mcpClaudeStep{target: t, claude: cli, args: args, shown: "claude " + mcpShown(args...)}
@@ -179,7 +176,7 @@ func planClaudeMcp(o setupOptions, t setupTarget) (step mcpClaudeStep, ok, faile
 		verb = "would run"
 	}
 	fmt.Fprintf(o.Out, "%s: %s: %s\n\n", t.Name, verb, step.shown)
-	return step, true, false
+	return step, true
 }
 
 // runSetupMcp writes the planned config edits and runs the planned CLI calls.
