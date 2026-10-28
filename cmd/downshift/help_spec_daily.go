@@ -9,7 +9,7 @@ var dailyHelp = map[string]string{
 	"setup": `downshift setup — Wire the hooks into every harness found (backup, diff, --undo)
 
 Usage:
-  downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui]
+  downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-mcp]
 
 Flags:
   --tui                  Interactive terminal UI onboarding
@@ -19,6 +19,7 @@ Flags:
   --no-session-policy    Wire the hooks only; skip the Claude Code main-session policy
   --you-should-know      Also turn on Claude Code's "You should know" mod (opt-in, billed)
   --no-plugin            Claude Code: keep hooks in settings.json instead of the plugin
+  --no-mcp               Do not register the MCP server in Claude Code and Codex (on by default)
   --allow-unsafe-binary  Accept a binary in a temporary or world-writable directory
 
 Examples:
