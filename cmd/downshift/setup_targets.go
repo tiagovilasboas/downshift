@@ -136,12 +136,8 @@ var setupTargets = []setupTarget{
 				Note: `sessions keep their "permissions.defaultMode"; set it to "plan" in ~/.claude/settings.json ` +
 					"to start every session in plan mode",
 			},
-			{
-				Parent:   "env",
-				Key:      "CLAUDE_CODE_SUBAGENT_MODEL_FORCE",
-				Value:    "1",
-				Optional: true,
-			},
+			// CLAUDE_CODE_SUBAGENT_MODEL_FORCE is not written (owner decision O8): with
+			// it set, Claude Code overrides the model the orchestrator chose per call.
 			// Claude Code's built-in "You should know" mod (off by default). The key is
 			// a sub-key of the enabledPlugins map, which the user usually already has
 			// (the Downshift plugin itself), so "only when unset" applies to the
