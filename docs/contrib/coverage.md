@@ -48,6 +48,7 @@ file or from `AGENTS.md`.
 | `internal/api` | — | Dashboard HTTP server (`downshift dashboard`) |
 | `internal/archtest` | Quality | Import-graph enforcement tests |
 | `internal/benchmark` | Quality | Offline classifier accuracy |
+| `internal/cascade` | Routing | Sensor-guided auto-upgrade and episodic failure tracking (dead-ends) |
 | `internal/catalog` | Routing | Embedded `catalog.json`, user override, Resolver, `TierView` (the tier lookup telemetry reads through `fromcore`) |
 | `internal/childend` | Telemetry | Child-end recorder |
 | `internal/classify` | Routing | Regex signals, language guard, risk floor |
