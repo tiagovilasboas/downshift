@@ -25,7 +25,7 @@ the result with a routing note. It never chooses a model on its own.
   (secondary sources say MIT for both libraries, and a pre-release of the official SDK lists several licences: not
   confirmed here), the size of the dependency graph it adds, the protocol version it speaks, and how it handles
   cancellation and errors. Whatever is chosen is imported by one transport file only; the tools are plain functions,
-  and no `routing`, `core` or `playbook` package imports it (archtest). A library goes in with its version pinned,
+  and no `routing`, `core` or `playbook` package imports it (archtest). Because every package under `internal/` is held to the standard library by `TestInternalPackagesUseOnlyTheStandardLibrary`, a library needs a reasoned entry in that test's `externalExceptions` for its transport package, which makes the choice explicit. A library goes in with its version pinned,
   `govulncheck` clean and its notice added to `NOTICE`; the reference app's code is never used (AGPL-3.0, behaviour
   only).
 - R2. Subcommand `downshift mcp serve`; no daemon, no listener, no network socket (O7 non-goal still holds: no app, no proxy).

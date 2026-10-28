@@ -136,7 +136,7 @@ See [examples/](../../examples/README.md) for sample payloads. `claude-code-pret
 
 **Status: Completed.** Rewrite observed honored, usage and child end recorded, plugin and session policy ([evidence](../evidence/claude-code-rewrite-honored-2026-10-06.md), [billing audit](../evidence/billing-gap-audit.md)).
 
-Build or install the single binary (no runtime, no dependencies):
+Build or install the single binary (nothing else to install at runtime):
 
 ```bash
 # Recommended — one-liner installer (macOS / Linux, detects arch automatically)
@@ -600,7 +600,7 @@ savings. Use `downshift stats` for those.
 `cmd/dsmon` is a separate command inside this repo — a floating terminal widget
 that shows model switches, harness, tier distribution and estimated tokens saved
 in real time. It reads `~/.downshift/events.jsonl` and refreshes every
-800 ms. Zero external dependencies; pure stdlib Go.
+800 ms. Standard library only.
 
 ```
 ╭──────────────────────────────────────────────────────╮

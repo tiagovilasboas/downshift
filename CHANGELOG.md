@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `downshift setup` no longer writes `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`: with it, Claude Code overrides the
   per-call model the orchestrator chose. A value you set yourself is left alone.
 
+- The docs no longer say "zero dependencies": the binary links a few third-party libraries through its command layer. What holds, and is now checked by a test, is that every package under `internal/` uses the Go standard library only.
+
 ### Removed (O8)
 
 - The built-in default agent-type table (N11) and the economy-mode step that read it. `downshift policy economy`

@@ -9,7 +9,7 @@
 // Run:     ./dsmon
 // Float:   ./cmd/dsmon/launch.sh   (opens a floating window)
 //
-// Zero external deps: pure stdlib, polling tail on events.jsonl.
+// Standard library only: polling tail on events.jsonl.
 package main
 
 import (
