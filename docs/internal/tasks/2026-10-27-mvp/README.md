@@ -82,7 +82,7 @@ remaining harnesses.
 
 C1, C2, C3 and C4 are done on the branch (QA PASS at `2330a3e1`). C0 is not verified: nobody has seen the hook decide in a real Claude Code session. Open gaps are in [the roadmap, section 8b](../../plans/roadmap.md).
 
-## Business plan waves (W0 to W5)
+## Business plan waves (W0 to W7)
 
 The cards from the `downshift-business-plan` alignment are in [the roadmap, section 8d](../../plans/roadmap.md). Every card is at most 5 points. Wave 4 and the orchestrator wait for the owner decisions BP1 and BP2.
 
@@ -100,5 +100,8 @@ Branch `downshift/mvp-ponto-zero`, published, no open PR, no worktree, no unpubl
 | Stage 5 and other harnesses | Not started | none |
 | Business plan waves W0 to W6 | Cards in roadmap 8d and 8c-ter | BP1 accepted; BP2 deferred; G14 to G16 resolved |
 | Dashboard | Discontinued (N9) | removal card W6.6 waits for the owner |
-| Release readiness (W7.1 to W7.8) | Cards in roadmap 8d; W7.1 and W7.2 first, because v2 routes nothing on a fresh install without them | W7.1 profile table |
+| Release readiness (W7.1 to W7.11) | Cards in roadmap 8d and 8c-quater; W7.1 and W7.2 first, because v2 routes nothing on a fresh install without them | Approved: profile table (N11) |
+| Economy mode | W7.9, one tier down on every harness, same bounds | Owner approved the idea; table approved |
+| Harness-agnostic rule | N12: tiers are abstract, harness facts are data | None |
+| Stage 4 decisions | G1, G4, G10, G12 | Owner |
 | Clean-room | Plan runner built from behaviour notes only | none |

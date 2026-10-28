@@ -37,6 +37,23 @@ Phases end at exit criteria, not dates. Where two sources disagree, section 9 na
 
 Phases 1 to 5 hold 18 cards and 51 points. Phase 6 has no cards.
 
+## 3a. Current state (2026-10-27, latest; source of truth)
+
+Sections 5 below are the 2026-10-26 plan, kept for history. Where they conflict with this block or with 8a to 8d, the later text wins.
+
+| Phase | State | What is left |
+|---|---|---|
+| 1 Clean base | Done on the branch (N1 to N3) | NB files, `internal/nbtier`, gateway files, docs citing `try` (W7 cleanup) |
+| 2 Routing core | Done on the branch: R1 to R6, R9 | R0 unverified; R0b and real-session proof (C0) not run |
+| 3 Setup and skill | Not started | R7, R8a, R10; W7.1 to W7.3 |
+| 4 Accounting and report | Partly: R9 done | R11 (routing note), R13 (docs), V1 to V3, control arm (W6.1, W7.7) |
+| 5 Other harnesses | Not started | Per-harness defaults (W7.10); effort (W7.11) |
+| 6 Later | No cards | Budget admission, flag probe, hosted evaluation |
+
+Plan runner (MVP stage 4): specification done with requirements R1 to R62, not started. Open decisions: G1, G4, G10, G12 (see the spec's gap table).
+
+Release gate (D5): nothing reaches `main` until the real-session proof, AppSec (W7.4), remote CI (W7.5) and the migration note (W7.6) are done.
+
 ## 4. Common gate (every code PR)
 
 `make check` green; golden decision tables; the acceptance suite (`outcome`, `benchmark`) at the same rigour as before, with any regression reported; `./examples/run-all.sh`; layering rule (harness facts in `HarnessCapabilities`, adapters hold no policy; see [layering](../../contrib/layering.md)); copyright headers; OS-agnostic paths; no file over 300 lines; tests isolate `HOME` and `DOWNSHIFT_STATE_DIR`; no dead package references in the docs the PR touches.
