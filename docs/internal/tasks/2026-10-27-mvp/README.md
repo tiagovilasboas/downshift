@@ -23,13 +23,13 @@ at most 5 points, with the gate in the MVP plan section 5.
 | B8 | Remove the dollar accounting (O1) | 2 | Done. The catalog price table stays as a routing signal |
 | B9 | Move the competitive analysis out of the public history | 1 | Done |
 
-## Stage 1: setup (S1 and S2 done on the branch, 2026-10-28; S3 not started)
+## Stage 1: setup (S1, S2 and S3 done on the branch, 2026-10-28)
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
 | S1 | Ownership markers on every file setup writes; `--undo` and reinstall respect them. Done for whole files (wrappers, dedicated steering); the hook JSON and shared steering blocks keep their own rules | 3 | — |
 | S2 | Install the Downshift skill into `~/.claude/skills` and `~/.codex/skills` (marker, backup, dry run; copy on Windows) | 3 | S1 |
-| S3 | `doctor` proves the hook fired: last hook time and decision; statusline quota source present | 2 | done |
+| S3 | `doctor` proves the hook fired: last hook time and decision; statusline quota source present. Done: `doctor_proof.go` | 2 | — |
 
 ## Stage 2: right model in Claude Code (done except the real-session proof)
 
