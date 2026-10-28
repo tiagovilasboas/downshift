@@ -9,14 +9,15 @@ import (
 )
 
 // rowTier is the tier a default profile row asks for, and whether it asks for
-// one at all. Standard mode keeps a row that keeps the requested model. Economy
-// mode lowers it one step (see economyTier).
-func rowTier(d policy.DefaultProfile, risky bool, requested contract.Tier, economy bool) (contract.Tier, bool) {
+// one at all. Standard mode keeps a row that keeps the requested model, unless
+// the row has a ClassTier and the classifier vouches for a routine, riskless
+// task. Economy mode lowers it one step (see economyTier).
+func rowTier(d policy.DefaultProfile, risky, routine bool, requested contract.Tier, economy bool) (contract.Tier, bool) {
 	if economy {
 		return economyTier(d, risky, requested)
 	}
 	if d.Keeps() {
-		return contract.TierUnknown, false
+		return d.TierForClass(routine, risky)
 	}
 	return d.TierFor(risky), true
 }

@@ -26,7 +26,10 @@ func TestDecideDefaultProfiles(t *testing.T) {
 		request contract.Request
 		pol     *policy.Policy
 		risk    []string
-		want    want
+		// class and confident are the classifier result the class step reads.
+		class     string
+		confident bool
+		want      want
 	}{
 		{name: "Explore on frontier goes small",
 			request: ccReq("Explore", "frontier-model"),
@@ -46,6 +49,27 @@ func TestDecideDefaultProfiles(t *testing.T) {
 		{name: "general-purpose keeps the requested model",
 			request: ccReq("general-purpose", "frontier-model"),
 			want:    want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		{name: "general-purpose on a confident routine task goes mid",
+			request: ccReq("general-purpose", "frontier-model"), class: "TRIVIAL", confident: true,
+			want: want{contract.VerdictDefault, "", "mid-model", "", "", contract.TierMid, core.VerdictDownshift}},
+		{name: "general-purpose on a confident MEDIUM task goes mid",
+			request: ccReq("general-purpose", "frontier-model"), class: "MEDIUM", confident: true,
+			want: want{contract.VerdictDefault, "", "mid-model", "", "", contract.TierMid, core.VerdictDownshift}},
+		{name: "general-purpose keeps when the classifier is unsure",
+			request: ccReq("general-purpose", "frontier-model"), class: "TRIVIAL",
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		{name: "general-purpose keeps a confident COMPLEX task",
+			request: ccReq("general-purpose", "frontier-model"), class: "COMPLEX", confident: true,
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		{name: "general-purpose keeps a routine task that touches a risk",
+			request: ccReq("general-purpose", "frontier-model"), class: "TRIVIAL", confident: true, risk: []string{"secret"},
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		{name: "general-purpose never goes small from the class step",
+			request: ccReq("general-purpose", "mid-model"), class: "TRIVIAL", confident: true,
+			want: want{contract.VerdictKept, "", "mid-model", "", "", contract.TierMid, core.VerdictOK}},
+		{name: "Plan keeps a confident routine task",
+			request: ccReq("Plan", "frontier-model"), class: "TRIVIAL", confident: true,
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
 		{name: "Plan keeps the requested model",
 			request: ccReq("Plan", "frontier-model"),
 			want:    want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
@@ -103,7 +127,7 @@ func TestDecideDefaultProfiles(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			d, n := Decide(Input{Request: c.request, Policy: c.pol, Now: now, Risk: c.risk, Catalog: newCatalog()})
+			d, n := Decide(Input{Request: c.request, Policy: c.pol, Now: now, Risk: c.risk, Catalog: newCatalog(), Class: c.class, Confident: c.confident})
 			got := want{n.Verdict, n.Reason, d.Model.ID, n.RuleID, n.Profile, n.TierTo, d.Verdict}
 			if got != c.want {
 				t.Errorf("got %+v\nwant %+v", got, c.want)

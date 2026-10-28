@@ -364,3 +364,49 @@ func TestClassify_ReadOnlyLookupShapes(t *testing.T) {
 		})
 	}
 }
+
+// readOnlyReviewBrief is a fenced review with no work keyword: it states a
+// read-only scope and an "Output (max N words)" budget, and nothing else.
+const readOnlyReviewBrief = "First read your role file: agents/senior-staff-qa.md. You are reviewing documentation of the repo. " +
+	"READ-ONLY: do not edit, create, move or delete any file; no state-changing git; no network. " +
+	"Read-only commands (grep, ls, find, a small script that only reads) are fine. " +
+	"Your scope (verifiability): docs/evidence/**, docs/spikes/**, docs/releases/**, CHANGELOG.md. " +
+	"Also check relative links: count total relative links and how many point to a file that does not exist. " +
+	"Output (max 350 words): a grade 0-10 with one sentence of justification; 4-6 findings with file:line evidence; " +
+	"top 3 fixes in priority order."
+
+// TestClassify_ReadOnlyBoundedBrief: the fence of a bounded brief is evidence
+// on its own, so a keyword-free read-only review is a confident MEDIUM, not the
+// no-signal default; a risk word in the same brief still clears confidence.
+func TestClassify_ReadOnlyBoundedBrief(t *testing.T) {
+	tests := []struct {
+		name          string
+		prompt        string
+		wantClass     Complexity
+		wantConfident bool
+	}{
+		{"keyword-free read-only review", readOnlyReviewBrief, Medium, true},
+		{"the same review touching a secret", readOnlyReviewBrief + " Also check where the API secret token is stored.", Medium, false},
+		{"a short read-only request is not a brief", "READ-ONLY: grade docs/evidence. Output (max 350 words).", Medium, false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := Classify(tc.prompt)
+			if got.Complexity != tc.wantClass || got.Confident != tc.wantConfident {
+				t.Fatalf("got %v confident=%v scores=%v; want %v confident=%v",
+					got.Complexity, got.Confident, got.Scores, tc.wantClass, tc.wantConfident)
+			}
+		})
+	}
+}
+
+// TestBoundedBrief_OutputBudget: "Output (max N words)" is a reply budget like
+// "Reply <= N words".
+func TestBoundedBrief_OutputBudget(t *testing.T) {
+	if !briefBudgetRE.MatchString("Output (max 350 words, in Portuguese): a grade") {
+		t.Fatal("an output budget is not read as a reply budget")
+	}
+	if briefBudgetRE.MatchString("the output of go test is long") {
+		t.Fatal("a plain mention of output is not a budget")
+	}
+}

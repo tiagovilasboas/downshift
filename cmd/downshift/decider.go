@@ -74,15 +74,17 @@ func (r routingDecider) input(req core.Request, cat decide.Catalog) (decide.Inpu
 		return decide.Input{}, false
 	}
 	h := hint.Parse(req.Prompt, requestedTier(req, cat))
+	class := core.Classify(req.Prompt)
 	return decide.Input{
-		Request:  contractRequest(req, h),
-		Policy:   pol,
-		Readings: quotaReadings(req.Harness, pol),
-		Now:      r.now(),
-		Risk:     core.RiskCategories(req.Prompt),
-		Catalog:  cat,
-		Floor:    floor,
-		Class:    core.Classify(req.Prompt).Complexity.String(),
+		Request:   contractRequest(req, h),
+		Policy:    pol,
+		Readings:  quotaReadings(req.Harness, pol),
+		Now:       r.now(),
+		Risk:      core.RiskCategories(req.Prompt),
+		Catalog:   cat,
+		Floor:     floor,
+		Class:     class.Complexity.String(),
+		Confident: class.Confident,
 	}, true
 }
 
