@@ -210,6 +210,14 @@ The owner changed the route for Phases 1 and 2 on 2026-10-27. These notes amend 
 
 The upstream project studied for the plan runner is AGPL-3.0-or-later; its copyright belongs to its author and contributors. A local MIT relicense commit exists only in a local clone, is unpublished, and grants nothing. The `downshift-plan` copy was deleted on 2026-10-27. Downshift uses behaviour notes and its own specification only. No upstream file, function, comment or string is copied.
 
+### 8c-ter. Business plan divergences resolved (N10, 2026-10-27)
+
+Owner decision: follow the business plan where it diverges from the plan runner spec.
+- **Concurrency (G14):** hard cap 16 workers, default 4.
+- **Worktrees (G16):** under `.downshift-worktrees/`, ephemeral branch for writes, detached for reads.
+- **Merge gate (G15):** an explicit, fail-closed command (`plan merge`, R61). Never automatic (R62).
+The plan runner estimate is now 41 points, with two new fronts (P11 events, P12 merge gate).
+
 ### 8c-bis. Dashboard decision (N9)
 
 **N9 Dashboard discontinued (owner, 2026-10-27).** The web dashboard (`dashboard/` and the embedded assets under `internal/api/dashboard`) gets no new work. It is not extended for workers, quota or diffs. Whether to remove it is a separate cleanup card (W6.6). The visual surface for multi-worker supervision, when it comes, is the terminal (see BP1), not a browser.

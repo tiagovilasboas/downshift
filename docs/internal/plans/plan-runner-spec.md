@@ -134,7 +134,8 @@ Validation reads the plan file and each `task_file`, and nothing else on disk ex
   message that says isolation needs a repository.
 - R12. Two or more workers with `mode: write` must all have `isolate: true`, in every strategy. A single writer
   may use its `cwd` directly.
-- R13. Numeric ranges of 2.1 are enforced; `concurrency` above the strategy cap is lowered to the cap with a note,
+- R13. Numeric ranges of 2.1 are enforced. Caps are bounded by the global hard cap of 16 workers, and the default
+  concurrency is 4 (business plan, orchestration spec section 4). Numeric ranges of 2.1 are enforced; `concurrency` above the strategy cap is lowered to the cap with a note,
   never an error (the plan may lower, never raise).
 - R14. Strategy rules and caps (section 3.1) and the provider rules (3.2) run inside validation, so `validate`,
   `preview` and `run` refuse the same plans with the same message.
@@ -178,8 +179,8 @@ Precedence: `--strategy` flag, then the plan's `strategy`, then `auto`. There is
 | `economy` | 1 | 1 | one worker | `small` |
 | `balanced` | 4 | 2 | any mix that passes R12 | `mid` |
 | `quality` | 1 | 1 | one worker; never inferred | `frontier` |
-| `research` | 8 | 4 | every worker `mode: read` | `mid` |
-| `parallel` | 8 | 4 | at least two writers, every writer isolated | `mid` |
+| `research` | 16 | 4 | every worker `mode: read` | `mid` |
+| `parallel` | 16 | 4 | at least two writers, every writer isolated | `mid` |
 
 - R17a. `auto` resolves in this order, first match wins: one worker, `economy`; every worker `read`, `research`;
   two or more writers all isolated, `parallel`; otherwise `balanced`. `auto` never resolves to `quality`; a
@@ -279,22 +280,25 @@ All four limits are optional; absent means unlimited. There is no money limit (O
 
 - R32. **When.** Only for an attempt with `mode: write` and `isolate: true`, created at admission (a skipped
   attempt gets none). Each attempt gets a new worktree, including an escalation retry.
-- R33. **How.** `git -C <repo> worktree add --detach <path> HEAD`: detached at `HEAD`, no branch (the contract
-  forbids commits, so a branch adds nothing to clean). The worker's `cwd` inside the worktree is its `cwd`
-  relative to the repository top level. Path: `<state dir>/wt/<run-id>/<worker-id>.<attempt>` built with
-  `filepath.Join` and `paths.StateDir()`, so nothing lands inside the user's checkout. An existing target is an
-  error (`worktree_failed`, worker failed, run continues).
+- R33. **How.** Worktrees live under `<repo root>/.downshift-worktrees/<slug>`, created with
+  `git -C <repo> worktree add`. A read attempt is detached at the base commit (`--detach`, no branch). A write
+  attempt gets an ephemeral branch `downshift/<run-id>/<slug>`, so its commits can be reviewed and merged later.
+  The directory `.downshift-worktrees/` is ignored through `.git/info/exclude` when `.gitignore` does not already
+  ignore it, so the user's `git status` stays clean. The slug follows the grammar of R54. Each attempt writes a
+  lease file `.downshift-worktrees/.leases/<slug>.json` (write-to-temp then rename). An existing target is an error
+  (`worktree_failed`, worker failed, run continues).
 - R34. **Never removed automatically.** No code path of `run`, of a failure, of a timeout or of a cancel removes a
   worktree or runs `git worktree prune`.
-- R35. **Patch.** After an isolated attempt ends (any status but `skipped`), the runner marks new files with
+- R35. **Patch.** Applying a change back is not part of `run`; it is R62. After an isolated attempt ends (any status but `skipped`), the runner marks new files with
   `git add --intent-to-add` inside the worktree and takes `git diff --binary HEAD`. With `--out`, a non-empty diff
   is written to `<out>/<worker-id>/<attempt>.patch`; an empty diff writes nothing and records `patch: null`.
   Without `--out` the patch is not written; the worktree holds the change. A patch from a failed attempt is
   marked `untrusted: true`. A non-isolated writer gets no patch (it would mix the user's own changes).
 - R36. **Explicit clean.** `downshift plan clean [--run <run-id>]` lists, from `git worktree list --porcelain` of
-  the current repository, the worktrees under `<state dir>/wt/` (optionally of one run), with dirty or clean
-  status. It removes nothing without `--yes`. With `--yes` it runs `git worktree remove` on clean ones and skips
-  dirty ones unless `--force` is also given. It never touches a worktree outside `<state dir>/wt/`.
+  the current repository, the worktrees under `.downshift-worktrees/` (optionally of one run), with dirty or clean
+  status and whether each has an ephemeral branch. It removes nothing without `--yes`. With `--yes` it removes clean
+  worktrees and their ephemeral branches; dirty ones are skipped unless `--force` is also given. It never touches a
+  path outside `.downshift-worktrees/`.
 - R37. Paths are OS-agnostic: no `/` join, no `$HOME`, Windows tested in `test-os`.
 
 ## 6. Worker contract and mechanical acceptance
@@ -410,7 +414,7 @@ binary re-executed as a fake provider (helper-process pattern) copied onto a tem
 | R17c, R39 | every descriptor template has no bypass flag; prompt on stdin; metacharacters inert; `effort` dropped where unsupported | `go test ./internal/plan/provider` |
 | R23-R31 | prompt cap refuses the whole plan; call cap skips the next attempt with no process; wall cap skips late attempts and shortens the admitted timeout to the rest (floor 1 s); reported cap per provider; missing usage never trips; running attempt not cancelled at cap; usage map with `null`, no sum | `go test ./internal/plan/budget` |
 | R29 | token sum with explicit total, without total, and without double counting an included cached field | `go test ./internal/plan/provider -run TestTokens` |
-| R32-R37 | worktree detached under the state dir; existing target fails the worker only; never removed after success, failure, timeout or cancel; patch includes new files; empty patch writes nothing; clean lists, removes only with `--yes`, skips dirty without `--force`, ignores outside paths | `go test ./internal/plan/worktree` |
+| R32-R37 | worktree under `.downshift-worktrees/`, detached for reads and on an ephemeral branch for writes; existing target fails the worker only; never removed after success, failure, timeout or cancel; patch includes new files; empty patch writes nothing; clean lists, removes only with `--yes`, skips dirty without `--force`, ignores outside paths | `go test ./internal/plan/worktree` |
 | R38, R40 | contract appended once at the end on inline, file and retry paths; the five invariants present by constant; read on a contract-only CLI recorded | `go test ./internal/plan/worker -run TestContract` |
 | R41-R43 | classification table in order; extraction order; session id recorded; raw output not on disk; timeout kills the tree; panic in one worker fails only it | `go test ./internal/plan/worker -run TestAccept` and `go test ./internal/proctree` |
 | R44-R48 | completed, partial, failed, cancelled and exit codes; state rewritten atomically per transition; non-empty `--out` refused; no file without `--out` | `go test ./internal/plan/run` |
@@ -434,7 +438,7 @@ binary re-executed as a fake provider (helper-process pattern) copied onto a tem
 | G10 | Worker-CLI facts live in a plan descriptor table, not in `core.HarnessCapabilities` (which today describes hook channels). The layering rule asks for harness facts in that struct; moving them is a core contract change. | Tiago Vilas Boas (architecture) |
 | G11 | The prompt estimate (code points / 4) is a coarse heuristic and ignores context the provider reads. | AI / FinOps lead |
 | G12 | Strategy default tiers (R20: small, mid, frontier) are this spec's choice, not an owner decision. | Tiago Vilas Boas |
-| G13 | Estimate of 33 points (section 11) exceeds the MVP plan's 26 for stage 4. Cut candidates: `scaffold` (P9, 1), escalation (P7 and its run slice, 3). | Tiago Vilas Boas |
+| G13 | Estimate of 41 points (section 11, after the business plan additions P11 and P12) exceeds the MVP plan's 26 for stage 4. Cut candidates: `scaffold` (P9, 1), escalation (P7 and its run slice, 3). | Tiago Vilas Boas |
 
 ## 11. Implementation fronts
 
@@ -461,8 +465,10 @@ wires catalog, quota and policy into `run`; `run` depends on the other plan pack
 | P6 Assign | 3 | `internal/plan/assign/*` (provider choice, model via `decide.Decide`) | P1b | R18-R22 tests |
 | P8 Run | 5 | `internal/plan/worker/launch.go`, `internal/plan/run/*` (queue, slots, states, `state.json`, cancel, escalation wiring) | P0, P3, P4, P5, P6, P7 | R41-R52 tests; race detector |
 | P9 CLI | 3 | `cmd/downshift/cmd_plan*.go`, `cmd/downshift/help_spec_plan.go`, one `case "plan"` in `cmd/downshift/main.go` | P2, P8 | R1, R15, R16 e2e; `./examples/run-all.sh` unchanged |
+| P11 Events and rework ids | 3 | `internal/plan/events/*` (R59, zero-prompt fields, rework hashes) | P8 | R59 tests; no prompt or path in any written file |
+| P12 Merge gate | 5 | `internal/plan/merge/*` (R61 and R62: dry run, verify under compact, CAS fast-forward, quarantine) | P5, P8 | R61-R62 tests on fake git and fake verify; `test-os` green |
 | P10 Docs | 1 | `docs/reference/harness-matrix.md` (plan runner row: plain command, any harness), `CHANGELOG.md` | P9 | `make check` (docscheck) |
-| **Total** | **33** | | | |
+| **Total** | **41** | | | |
 
 Waves (no two fronts in a wave share a file, a generated artifact or a pending decision):
 
@@ -470,7 +476,7 @@ Waves (no two fronts in a wave share a file, a generated artifact or a pending d
 2. P1b, P4, P7 in parallel, after P1a merges.
 3. P2, P3, P6 in parallel; P3 can start in wave 2 if a slot is free, since it needs only P1a.
 4. P8 alone: it integrates every interface and owns the only scheduler.
-5. P9, then P10.
+5. P9, then P10, P11 and P12 in parallel (P12 needs only P5 and P8).
 
 Decisions to settle before wave 3: G1 (changes P3, P8 and the schema if `accept` is added; adding a field later is
 a schema change), G12 (default tiers, P6) and G13 (scope cut). G10 can wait: moving descriptor facts into
@@ -491,7 +497,7 @@ documents. Everything is tokens and calls only (O1), and no prompt or path is ev
   `GIT_TERMINAL_PROMPT=0` and `LC_ALL=C`. Read-only diagnostics (`status`, `diff --numstat`) also set
   `GIT_OPTIONAL_LOCKS=0`, so the runner never blocks an editor watching the repository.
 - R56. **Symlink escape.** The repository root and the state directory are resolved with `filepath.EvalSymlinks`.
-  Every path the runner writes or removes must be a strict descendant of `<state dir>/wt/`; anything else is an
+  Every path the runner writes or removes must be a strict descendant of `.downshift-worktrees/`; anything else is an
   error before any write.
 - R57. **Read-only check.** After a read-only attempt, `git status --porcelain --untracked-files=all` in its
   worktree must be empty. A mutation marks the attempt `read_only_violated`, fails it, and keeps the worktree.
@@ -504,18 +510,26 @@ documents. Everything is tokens and calls only (O1), and no prompt or path is ev
   milliseconds and exit code. A scope hash is computed in memory from hashed relative paths of the diff and then
   dropped. An attempt is marked `reworked` when a later attempt names it as parent after a quarantine, or when
   its worktree is discarded and a new attempt touches the same scope hash within 15 minutes.
+- R61. **Merge gate (explicit command).** `downshift plan merge <run-id> [--worker <id>]` applies one completed
+  write attempt to the user's branch, fail-closed, in this order: the worker's diff stats are recorded; a three-way
+  dry run with `git merge-tree --write-tree` must be clean, with no conflict; the verify argv set in the plan runs
+  under `downshift compact -- <argv>` and must exit 0 within its timeout; then a compare-and-swap fast-forward of the
+  target. If the target head moved, the dry run and verify repeat, up to 2 attempts, then the attempt is quarantined.
+  The gate refuses when the user's working tree has uncommitted changes in the same files. It never forces.
+- R62. **No automatic apply.** `run` never changes the user's branch. Only R61, run by the user, does. A failed or
+  quarantined attempt is left in place for `apply`, `rework` or `discard`, decided by the user.
 - R60. **Per-harness admission.** At most 2 running workers per provider by default, on top of the strategy cap
   of section 3.1. A provider in cool-down (strain above any percentage, R22) defers the attempt to the next
   provider in plan order, or parks it until the reset time, never failing it silently.
 
-Tests for R53 to R60 are added to section 9 as rows, each on the fakes described there. The estimate grows by
-3 points: new front **P11 Events and rework ids** (R59, 3 points, after P8, files
-`internal/plan/events/*`). R53, R55 to R58 and R60 are folded into P5, P8 and P4.
+Tests for R53 to R62 are added to section 9 as rows, each on the fakes described there. The estimate grows by
+8 points: new front **P11 Events and rework ids** (R59, 3 points, after P8, files `internal/plan/events/*`) and new
+front **P12 Merge gate** (R61 and R62, 5 points, after P5 and P8). R53, R55 to R58 and R60 are folded into P5, P8 and P4.
 
 New gaps:
 
 | ID | Gap | Owner |
 |---|---|---|
-| G14 | The business plan caps workers at 16 and defaults to 4. This spec caps `parallel` at 8. Pick one cap. | Tiago Vilas Boas |
-| G15 | The business plan lets the merge gate fast-forward the user's branch after verification. This spec never applies work back (R34, R35). Pick manual apply or an opt-in gate. | Tiago Vilas Boas |
-| G16 | The business plan keeps worktrees under the repository on an ephemeral branch. This spec keeps them in the state directory, detached. Pick one location. | Tiago Vilas Boas |
+| G14 | **Resolved (owner, 2026-10-27): follow the business plan.** Hard cap 16 workers, default concurrency 4 (R13, strategy table). | Tiago Vilas Boas |
+| G15 | **Resolved (owner, 2026-10-27): follow the business plan.** The merge gate exists as an explicit, fail-closed command (R61), never automatic (R62). | Tiago Vilas Boas |
+| G16 | **Resolved (owner, 2026-10-27): follow the business plan.** Worktrees under `.downshift-worktrees/` with an ephemeral branch for writes (R33). | Tiago Vilas Boas |
