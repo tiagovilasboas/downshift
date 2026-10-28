@@ -6,6 +6,7 @@ package main
 import (
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/cascade"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/hookctx"
 	"github.com/tiagovilasboas/downshift/internal/quota"
@@ -34,6 +35,25 @@ func (r routingDecider) Decide(req core.Request) core.Decision {
 		in = unchangedInput(req, cat)
 	}
 	d, _ := decide.Decide(in)
+
+	// Sensor-guided Auto-Upgrade Cascade:
+	// If the decider would downshift to a cheaper model, but there is a recent
+	// failure recorded for this session or task fingerprint, upgrade the verdict
+	// to prevent repeating the failed execution.
+	if d.Verdict == core.VerdictDownshift {
+		if _, found := cascade.HasRecentFailure(hookctx.SessionID(), req.Prompt, 15*time.Minute); found {
+			d.Verdict = core.VerdictUpshift
+			d.SafeVerdict = core.VerdictUpshift
+			d.Tier = core.TierFrontier
+			d.Reason = "CASCADE_UPGRADE"
+			if cur, ok := req.Resolver.LookupByID(req.Harness, req.CurrentModelID); ok && cur.Tier != core.TierSmall {
+				d.Model = cur
+			} else if cat != nil {
+				d.Model = cat.ModelFor(req.Harness, core.TierFrontier)
+			}
+		}
+	}
+
 	return d
 }
 

@@ -258,6 +258,11 @@ func runHookAdapter[E any](
 		projectDir, _ = os.Getwd()
 	}
 	defer hookctx.SetProjectDir(projectDir)()
+	sessionHash := ""
+	if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
+		sessionHash = telemetry.HashSessionID(identified.SessionIdentifier())
+	}
+	defer hookctx.SetSessionID(sessionHash)()
 	out, note, decision := handle(ev)
 	fate := spawnFate{note: note}
 	// Control-group mode for before/after comparison: classify as usual
@@ -267,10 +272,6 @@ func runHookAdapter[E any](
 	// Per-session pause (`downshift session --pause`) routes like the control
 	// group: one stat, fail open, never a block. Harnesses whose payload has no
 	// session id cannot be paused per session.
-	sessionHash := ""
-	if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
-		sessionHash = telemetry.HashSessionID(identified.SessionIdentifier())
-	}
 	fate.paused = !fate.noRoute && telemetry.SessionPaused(sessionHash)
 	fate.noRoute = fate.noRoute || fate.paused
 	// Built-in control group (`downshift report`): a deterministic share of

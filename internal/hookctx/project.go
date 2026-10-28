@@ -8,7 +8,30 @@ import "sync"
 var (
 	projectMu  sync.RWMutex
 	projectDir string
+
+	sessionMu sync.RWMutex
+	sessionID string
 )
+
+// SetSessionID records the hashed session ID of the current hook invocation.
+func SetSessionID(id string) (restore func()) {
+	sessionMu.Lock()
+	prev := sessionID
+	sessionID = id
+	sessionMu.Unlock()
+	return func() {
+		sessionMu.Lock()
+		sessionID = prev
+		sessionMu.Unlock()
+	}
+}
+
+// SessionID returns the session ID set by SetSessionID, or "".
+func SessionID() string {
+	sessionMu.RLock()
+	defer sessionMu.RUnlock()
+	return sessionID
+}
 
 // SetProjectDir records the working directory of the project the current hook
 // invocation belongs to and returns a function that restores the previous
