@@ -102,3 +102,14 @@ func TestSetupSkipsTheSkillWhenThePluginIsEnabledInSettings(t *testing.T) {
 		t.Fatalf("the skill duplicates the enabled plugin: %v", err)
 	}
 }
+
+func TestSetupInstallsTheOrchestratorPlaybook(t *testing.T) {
+	e := newSetupEnv(t, ".claude")
+	if code, out, _ := e.run("--yes", "claude-code"); code != 0 {
+		t.Fatalf("setup exit %d\n%s", code, out)
+	}
+	got, err := os.ReadFile(e.path(".claude/skills/downshift-orchestrator/SKILL.md"))
+	if err != nil || !setupOwns(got) || !strings.Contains(string(got), "name: downshift-orchestrator") {
+		t.Fatalf("playbook missing, unmarked or renamed: %v\n%.200s", err, got)
+	}
+}

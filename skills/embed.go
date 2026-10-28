@@ -11,7 +11,10 @@ import "embed"
 // Audit is the read-only inspection skill; its folder name is its skill name.
 const Audit = "downshift-audit"
 
+// Orchestrator is the playbook the lead session follows when it delegates.
+const Orchestrator = "downshift-orchestrator"
+
 // FS holds every skill setup installs, one folder each.
 //
-//go:embed downshift-audit
+//go:embed downshift-audit downshift-orchestrator
 var FS embed.FS
