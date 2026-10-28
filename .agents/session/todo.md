@@ -7,3 +7,5 @@
 - [x] F1.2: Roteamento com Auto-Upgrade (Cascade Invisível no `PreToolUse`)
 - [x] F1.3: Detecção de Aceite via Git Commit (`used/discarded`)
 - [x] F1.4: Validação E2E no Claude Code (bateria dos 4 hooks)
+- [x] F1.5: Inventário de Cobertura de Pacotes (`docs/contrib/coverage.md`)
+- [x] F1.6: Loop Engineer Engine CLI (`downshift loop`) com ciclo Plan -> Implement -> Sensor -> Cascade -> Accept
