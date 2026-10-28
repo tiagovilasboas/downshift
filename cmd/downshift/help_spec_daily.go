@@ -35,7 +35,7 @@ Usage:
 Flags:
   --dry-run   Show what would be restored, write nothing
   --yes, -y   Do not prompt before restoring
-  --purge     Also remove local cache directories in ~/.downshift
+  --purge     Also remove ~/.downshift state dir and purge all backup files
 
 Examples:
   downshift uninstall --dry-run
