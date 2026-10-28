@@ -23,7 +23,7 @@ at most 5 points, with the gate in the MVP plan section 5.
 | B8 | Remove the dollar accounting (O1) | 2 | Done. The catalog price table stays as a routing signal |
 | B9 | Move the competitive analysis out of the public history | 1 | Done |
 
-## Stage 1: setup (parallel with stage 2)
+## Stage 1: setup (not started; can run in parallel with stage 2)
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
@@ -31,7 +31,7 @@ at most 5 points, with the gate in the MVP plan section 5.
 | S2 | Install the Downshift skill into `~/.claude/skills` and `~/.codex/skills` (marker, backup, dry run; copy on Windows) | 3 | S1 |
 | S3 | `doctor` proves the hook fired: last hook time and decision; statusline quota source present | 2 | — |
 
-## Stage 2: right model in Claude Code
+## Stage 2: right model in Claude Code (done except the real-session proof)
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
@@ -41,7 +41,7 @@ at most 5 points, with the gate in the MVP plan section 5.
 | C3 | Decider and routing note: precedence explicit > profile > rule > hint > keep; behind `DOWNSHIFT_ROUTING=v2` (R6) | 5 | B4–B7, C1, C2 |
 | C4 | Claude quota from the statusline into headroom; all critical warns and keeps (O3) | 3 | B5, S3 |
 
-## Stage 3: show and prove (closes the MVP)
+## Stage 3: show and prove (closes the MVP; not started)
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
@@ -49,7 +49,7 @@ at most 5 points, with the gate in the MVP plan section 5.
 | V2 | Acceptance suite baseline: v2 against the requested-model arm, regressions reported | 3 | C3 |
 | V3 | Real Claude Code session as evidence; default on in Claude Code; pause switch; release and migration note (R9, R13) | 3 | V1, V2 |
 
-## Stage 4: plan runner
+## Stage 4: plan runner (specification done, see `docs/internal/plans/plan-runner-spec.md`; implementation not started)
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
@@ -62,7 +62,7 @@ at most 5 points, with the gate in the MVP plan section 5.
 | P7 | Provider choice by headroom across Claude and Codex | 3 | P4, P6 |
 | P8 | Opt-in escalation: one retry, one tier up, within budget (O5) | 3 | P3, P6 |
 
-## Stage 5: reach
+## Stage 5: reach (not started)
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
@@ -85,3 +85,19 @@ C1, C2, C3 and C4 are done on the branch (QA PASS at `2330a3e1`). C0 is not veri
 ## Business plan waves (W0 to W5)
 
 The cards from the `downshift-business-plan` alignment are in [the roadmap, section 8d](../../plans/roadmap.md). Every card is at most 5 points. Wave 4 and the orchestrator wait for the owner decisions BP1 and BP2.
+
+## Closing state (2026-10-27)
+
+Branch `downshift/mvp-ponto-zero`, published, no open PR, no worktree, no unpublished work. The business plan repository has no remote; its last commit is local.
+
+| Item | State | Owner decision needed |
+|---|---|---|
+| Stage 0 | Done | none |
+| Stage 2, real-session proof (C0, R0b) | Authorized by the owner, not run | none; run when the owner says go |
+| Stage 1, setup | Not started | none |
+| Stage 3, report and acceptance (V1, V2, V3) | Not started | none |
+| Stage 4, plan runner | Spec done (54 requirements + R53 to R62); not started | G1 acceptance criterion; G4 CLI flags; G10 harness contract table; G12 default tiers |
+| Stage 5 and other harnesses | Not started | none |
+| Business plan waves W0 to W6 | Cards in roadmap 8d and 8c-ter | BP1 accepted; BP2 deferred; G14 to G16 resolved |
+| Dashboard | Discontinued (N9) | removal card W6.6 waits for the owner |
+| Clean-room | Plan runner built from behaviour notes only | none |
