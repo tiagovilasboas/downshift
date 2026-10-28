@@ -43,6 +43,22 @@ Examples:
 
 Next: downshift setup, if you want to reinstall
 `,
+	"accept": `downshift accept — Record developer acceptance for code delivered by subagents
+
+Usage:
+  downshift accept [--session=<id>] [--used | --discarded]
+
+Flags:
+  --session=<id>  Session hash to record acceptance for (default: most recent session)
+  --used          Mark session outputs as accepted and kept (default)
+  --discarded     Mark session outputs as reverted or rewritten
+
+Examples:
+  downshift accept --used
+  downshift accept --session=sess_123 --discarded
+
+Next: downshift stats
+`,
 	"doctor": `downshift doctor — Checklist: binary, hooks per harness, state, with a fix per failure
 
 Usage:

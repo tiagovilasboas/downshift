@@ -8,5 +8,5 @@
 ## Onda 1: MVP Funcional no Claude Code
 - [x] F1.1: Sensor de Falha & Buffer de Dead-Ends (`internal/cascade`)
 - [x] F1.2: Roteamento com Auto-Upgrade (Cascade Invisível no `PreToolUse`)
-- [ ] F1.3: Detecção de Aceite via Git Commit (`used/discarded`)
+- [x] F1.3: Detecção de Aceite via Git Commit (`used/discarded`)
 - [ ] F1.4: Validação E2E no Claude Code (bateria dos 4 hooks)

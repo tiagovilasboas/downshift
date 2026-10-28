@@ -91,6 +91,8 @@ type Event struct {
 	BaselineSource string `json:"baseline_source,omitempty"`
 	// ChildStatus is set on child_ended events (see child_outcome.go).
 	ChildStatus ChildStatus `json:"child_status,omitempty"`
+	// Acceptance records developer acceptance in git commit: "used" or "discarded".
+	Acceptance string `json:"acceptance,omitempty"`
 
 	// Optional self-correction record. Verdict keeps the classified value;
 	// SafeVerdict carries the action adapters were allowed to apply, and
