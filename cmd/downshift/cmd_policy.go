@@ -16,13 +16,16 @@ import (
 
 // runPolicy dispatches 'downshift policy'. check validates the routing policy
 // the hooks read, without routing anything; init creates the project policy
-// file after a yes.
+// file after a yes; economy turns economy mode on or off in that file.
 func runPolicy(args []string, stdout, stderr io.Writer) int {
 	if len(args) >= 1 && args[0] == "init" {
 		return runPolicyInit(args[1:], os.Stdin, stdout, stderr)
 	}
+	if len(args) >= 1 && args[0] == "economy" {
+		return runPolicyEconomy(args[1:], os.Stdin, stdout, stderr)
+	}
 	if len(args) != 1 || args[0] != "check" {
-		fmt.Fprintln(stderr, "usage: downshift policy check | downshift policy init [--dry-run] [--yes]")
+		fmt.Fprintln(stderr, "usage: downshift policy check | downshift policy init [--dry-run] [--yes] | downshift policy economy on|off [--user] [--dry-run] [--yes]")
 		return 2
 	}
 	return runPolicyCheck(stdout, stderr)

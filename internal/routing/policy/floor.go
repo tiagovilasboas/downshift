@@ -48,6 +48,10 @@ type FloorPolicy struct {
 	MinTier        string            `json:"min_tier,omitempty"`
 	MinTierByClass map[string]string `json:"min_tier_by_class,omitempty"`
 	MinTierByRisk  map[string]string `json:"min_tier_by_risk,omitempty"`
+	// Mode is the routing mode (economy or standard). The routing loader reads
+	// and validates it; it is accepted here so the strict decoder does not
+	// refuse a file that declares one.
+	Mode string `json:"mode,omitempty"`
 	// Routing is the routing policy section. internal/routing/policy reads and
 	// validates it; it is accepted here so that a routing section in the same
 	// file does not refuse the tier floor (the decoder rejects unknown keys).
@@ -142,6 +146,9 @@ func LoadFloor(path string) (*FloorPolicy, error) {
 func (p *FloorPolicy) Validate() error {
 	if p.Version != floorVersion {
 		return fmt.Errorf("policy file: version must be %d", floorVersion)
+	}
+	if p.Mode != "" && !Mode(p.Mode).Valid() {
+		return fmt.Errorf("policy file: unknown mode %q", p.Mode)
 	}
 	if p.MinTier != "" {
 		if _, ok := ParseFloorTier(p.MinTier); !ok {

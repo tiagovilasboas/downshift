@@ -19,6 +19,7 @@ func combine(project, user layer) *Policy {
 		CriticalThreshold: DefaultCriticalThreshold,
 		BothCritical:      DefaultBothCritical,
 		QuotaTTL:          DefaultQuotaTTL,
+		Mode:              ModeStandard,
 	}
 	if v := firstSet(project.threshold, user.threshold); v != nil {
 		p.CriticalThreshold = *v
@@ -28,6 +29,9 @@ func combine(project, user layer) *Policy {
 	}
 	if v := firstSet(project.ttl, user.ttl); v != nil {
 		p.QuotaTTL = *v
+	}
+	if v := firstSet(project.mode, user.mode); v != nil {
+		p.Mode = *v
 	}
 	p.Profiles = overlay(project.profiles, user.profiles, func(x Profile) string { return string(x.Name) })
 	p.Rules = overlay(project.rules, user.rules, func(x Rule) string { return string(x.ID) })

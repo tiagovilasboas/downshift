@@ -71,21 +71,23 @@ func resolve(in Input, requested contract.Tier) choice {
 }
 
 // defaultChoice reads the default profile table for the agent type. It keeps
-// when no row applies, when the row keeps, when the policy declares a profile
-// of that name (a declared profile is never replaced by the table, even one
-// refused for another harness), or when the row would raise the tier: a default
-// only moves down, and an upshift is the guard's business, not the table's.
+// when no row applies, when the row keeps (standard mode), when the policy
+// declares a profile of that name (a declared profile is never replaced by the
+// table, even one refused for another harness), or when the row would raise
+// the tier: a default only moves down, and an upshift is the guard's business,
+// not the table's. Economy mode (economy.go) changes the tier a row asks for,
+// never the precedence above.
 func defaultChoice(in Input, requested contract.Tier) choice {
 	req := in.Request
 	if _, declared := in.Policy.ProfileNamed(contract.ProfileName(req.AgentType)); declared {
 		return keep
 	}
 	d, ok := policy.DefaultFor(req.Harness, req.AgentType)
-	if !ok || d.Keeps() {
+	if !ok {
 		return keep
 	}
-	tier := d.TierFor(len(in.Risk) > 0)
-	if rank(tier) > rank(requested) {
+	tier, ok := rowTier(d, len(in.Risk) > 0, requested, in.Policy.EconomyMode())
+	if !ok || rank(tier) > rank(requested) {
 		return keep
 	}
 	return choice{verdict: contract.VerdictDefault, tier: tier}

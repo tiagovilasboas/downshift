@@ -53,6 +53,7 @@ type Policy struct {
 	CriticalThreshold float64 // percent, 0..100
 	BothCritical      BothCritical
 	QuotaTTL          time.Duration // age after which a quota reading counts as missing
+	Mode              Mode
 	Profiles          []Profile
 	Rules             []Rule
 }

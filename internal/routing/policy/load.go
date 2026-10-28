@@ -92,19 +92,25 @@ func readLayer(path string) (layer, error) {
 	return parseLayer(path, data)
 }
 
-// parseLayer reads the routing section of one file. A file without a routing
-// key holds no routing policy, and its other keys are not this package's: the
-// tier floor in internal/policyfile reads them from the same file.
+// parseLayer reads the routing section and the top-level mode of one file. A
+// file without a routing key holds no routing policy, and its other keys are
+// not this package's: the tier floor in internal/policyfile reads them from the
+// same file.
 func parseLayer(source string, data []byte) (layer, error) {
 	var doc struct {
 		Version *int            `json:"version"`
+		Mode    *string         `json:"mode"`
 		Routing json.RawMessage `json:"routing"`
 	}
 	if err := json.Unmarshal(data, &doc); err != nil {
 		return layer{}, refuse(source, "file", "not valid JSON: %v", err)
 	}
+	mode, err := parseModeKey(source, doc.Mode)
+	if err != nil {
+		return layer{}, err
+	}
 	if doc.Routing == nil {
-		return layer{source: source}, nil
+		return layer{source: source, mode: mode}, nil
 	}
 	if doc.Version == nil || *doc.Version != 1 {
 		return layer{}, refuse(source, "version", "must be 1 when routing is set")
@@ -118,5 +124,10 @@ func parseLayer(source string, data []byte) (layer, error) {
 	if err := dec.Decode(&s); err != nil {
 		return layer{}, refuse(source, "routing", "%v", err)
 	}
-	return validateSection(source, s)
+	l, err := validateSection(source, s)
+	if err != nil {
+		return layer{}, err
+	}
+	l.mode = mode
+	return l, nil
 }

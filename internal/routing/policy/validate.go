@@ -19,6 +19,7 @@ type layer struct {
 	threshold *float64
 	both      *BothCritical
 	ttl       *time.Duration
+	mode      *Mode
 	profiles  []Profile
 	rules     []Rule
 }
