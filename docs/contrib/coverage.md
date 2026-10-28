@@ -71,6 +71,7 @@ file or from `AGENTS.md`.
 | `internal/nbtier` | Routing | Naive-Bayes tier types |
 | `internal/outcome` | Quality | Offline eval runner |
 | `internal/paths` | — | Cross-platform path helpers |
+| `internal/playbook` | Delegation | Named working rules a delegated worker receives (General plus an area set): shipped markdown, the person's files under the state dir, name folding, `Block` for the MCP server. No routing, no enforcement; imports only `paths` |
 | `internal/policyfile` | Routing | Project tier floor; registers via hook |
 | `internal/quota` | Routing | File I/O for quota; registers hooks |
 | `internal/quotamodel` | Routing | Pure quota types, no I/O |

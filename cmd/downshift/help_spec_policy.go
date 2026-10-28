@@ -24,9 +24,9 @@ Flags:
 
 policy economy turns economy mode on or off by writing the top-level "mode"
 key ("economy" or "standard") to the nearest project .downshift/policy.json,
-or to the user's policy.json with --user. Economy lowers each default profile
-one tier on every harness; a risky task never goes below mid, and a declared
-profile, hint or pinned model still wins. It asks before writing; --dry-run
+or to the user's policy.json with --user. Downshift has no built-in agent-type
+table any more (the orchestrator chooses the model), so economy mode acts only
+on the policy you declared. It asks before writing; --dry-run
 shows the change; --yes skips the question.
 
 policy init creates .downshift/policy.json in the current directory with no
