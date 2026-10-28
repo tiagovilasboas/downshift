@@ -62,7 +62,7 @@ Next: downshift stats
 	"loop": `downshift loop — Run autonomous engineering loop with sensor verification and cascade auto-upgrade
 
 Usage:
-  downshift loop [--task=<desc>] [--sensor=<cmd>] [--iterations=<n>] [--timeout=<dur>] [--session=<id>] [--json] [-- <sensor-cmd>]
+  downshift loop [--task=<desc>] [--sensor=<cmd>] [--iterations=<n>] [--timeout=<dur>] [--session=<id>] [--batch=<tasks.json>] [--continue-on-error] [--json] [-- <sensor-cmd>]
 
 Flags:
   --task=<desc>      Task description or goal
@@ -70,9 +70,13 @@ Flags:
   --iterations=<n>   Maximum iterations before tripwire stop (default: 3)
   --timeout=<dur>    Maximum duration for the loop (default: 5m)
   --session=<id>     Session ID for telemetry and cascade tracking
+  --batch=<file>     Run the tasks of a JSON array [{"task","sensor","model"}] in order;
+                     stops at the first failure, the rest are reported as skipped
+  --continue-on-error  With --batch, keep going after a failed task
   --json             Print result as JSON
 
 Examples:
+  downshift loop --batch=tasks.json --continue-on-error --json
   downshift loop --task="Add healthcheck" -- go test ./...
   downshift loop --task="Fix auth race" --sensor="go test -race ./..."
   downshift loop --iterations=5 -- make check

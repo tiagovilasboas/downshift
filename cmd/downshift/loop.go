@@ -16,7 +16,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
-const loopUsage = `Usage: downshift loop [--task=<desc>] [--sensor=<cmd>] [--iterations=<n>] [--timeout=<dur>] [--session=<id>] [--json] [-- <sensor-cmd>]`
+const loopUsage = `Usage: downshift loop [--task=<desc>] [--sensor=<cmd>] [--iterations=<n>] [--timeout=<dur>] [--session=<id>] [--batch=<tasks.json>] [--continue-on-error] [--json] [-- <sensor-cmd>]`
 
 func runLoop(args []string, out, errw io.Writer) int {
 	var cfg loop.Config
@@ -24,6 +24,8 @@ func runLoop(args []string, out, errw io.Writer) int {
 	cfg.Timeout = 5 * time.Minute
 	cfg.Harness = envHarness()
 	jsonOutput := false
+	batchPath := ""
+	continueOnError := false
 
 	var sensorArgs []string
 	for i := 0; i < len(args); i++ {
@@ -49,6 +51,10 @@ func runLoop(args []string, out, errw io.Writer) int {
 			cfg.SessionID = strings.TrimPrefix(a, "--session=")
 		case strings.HasPrefix(a, "--model="):
 			cfg.Model = strings.TrimPrefix(a, "--model=")
+		case strings.HasPrefix(a, "--batch="):
+			batchPath = strings.TrimPrefix(a, "--batch=")
+		case a == "--continue-on-error":
+			continueOnError = true
 		case a == "--json":
 			jsonOutput = true
 		case a == "-h" || a == "--help":
@@ -67,6 +73,10 @@ func runLoop(args []string, out, errw io.Writer) int {
 	if len(sensorArgs) > 0 {
 		cfg.SensorCmd = strings.Join(sensorArgs, " ")
 	}
+	if batchPath != "" && cfg.Task != "" {
+		fmt.Fprintf(errw, "loop: --batch and --task cannot be combined\n%s\n", loopUsage)
+		return 2
+	}
 	if cfg.Task == "" {
 		cfg.Task = "Engineering task"
 	}
@@ -84,6 +94,10 @@ func runLoop(args []string, out, errw io.Writer) int {
 		if cfg.SessionID == "" {
 			cfg.SessionID = fmt.Sprintf("sess_loop_%d", time.Now().Unix())
 		}
+	}
+
+	if batchPath != "" {
+		return runLoopBatch(cfg, batchPath, continueOnError, jsonOutput, out, errw)
 	}
 
 	runner := loop.NewRunner(cfg)
