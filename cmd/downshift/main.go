@@ -116,6 +116,8 @@ func main() {
 		os.Exit(runLearning(args[1:], os.Stdout, os.Stderr))
 	case "setup":
 		os.Exit(runSetup(args[1:], os.Stdin, os.Stdout, os.Stderr))
+	case "uninstall":
+		os.Exit(runUninstall(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "serve":
 		os.Exit(runServe(args[1:], os.Stdout, os.Stderr))
 	case "dashboard":

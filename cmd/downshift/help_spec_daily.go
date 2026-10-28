@@ -26,6 +26,22 @@ Examples:
 
 Next: downshift doctor
 `,
+	"uninstall": `downshift uninstall — Restore harness hook configurations and remove wrappers
+
+Usage:
+  downshift uninstall [--dry-run] [--yes] [--purge]
+
+Flags:
+  --dry-run   Show what would be restored, write nothing
+  --yes, -y   Do not prompt before restoring
+  --purge     Also remove local cache directories in ~/.downshift
+
+Examples:
+  downshift uninstall --dry-run
+  downshift uninstall --yes
+
+Next: downshift setup, if you want to reinstall
+`,
 	"doctor": `downshift doctor — Checklist: binary, hooks per harness, state, with a fix per failure
 
 Usage:

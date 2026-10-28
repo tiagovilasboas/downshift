@@ -1,8 +1,8 @@
 # Todo List — Downshift MVP
 
 ## Onda 0: Fundação & Setup Unificado
-- [ ] F0.1: DX Zero-Prompt & CLI Pura (`downshift` sem argumentos)
-- [ ] F0.2: Comando `downshift uninstall`
+- [x] F0.1: DX Zero-Prompt & CLI Pura (`downshift` sem argumentos)
+- [x] F0.2: Comando `downshift uninstall`
 - [ ] F0.3: Setup Interativo `--tui`
 
 ## Onda 1: MVP Funcional no Claude Code
