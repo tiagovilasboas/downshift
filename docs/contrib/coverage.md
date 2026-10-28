@@ -71,6 +71,7 @@ file or from `AGENTS.md`.
 | `internal/nbtier` | Routing | Naive-Bayes tier types |
 | `internal/outcome` | Quality | Offline eval runner |
 | `internal/paths` | — | Cross-platform path helpers |
+| `internal/mcp` | Delegation | The MCP server. `tools`: the port, plain-function tools with no protocol knowledge. `transport`: the only package that imports the official Go SDK; edge-only, enforced by `TestInternalPackagesUseOnlyTheStandardLibrary` and `TestExternalModulesStayAtTheEdge` |
 | `internal/playbook` | Delegation | Named working rules a delegated worker receives (General plus an area set): shipped markdown, the person's files under the state dir, name folding, `Block` for the MCP server. No routing, no enforcement; imports only `paths` |
 | `internal/policyfile` | Routing | Project tier floor; registers via hook |
 | `internal/quota` | Routing | File I/O for quota; registers hooks |

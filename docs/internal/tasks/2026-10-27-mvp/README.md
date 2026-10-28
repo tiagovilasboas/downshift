@@ -49,7 +49,7 @@ Spec: `docs/internal/plans/mcp-delegation-spec.md`. The tools that start workers
 |---|---|--:|---|
 | K1 | Detected models only: one resolver (payload, then discovery cache, then the session-models file; never the catalog alone), `downshift models available --harness h` with tier, source and an "untiered" flag; `doctor` warns when a harness has no detected list | 5 | none |
 | K2 | Apply core: gather policy, floor, readings and catalog once for the hook, the CLI and the MCP; `downshift route --json` returns what would be applied | 3 | C3 |
-| K3 | MCP stdio core: JSON-RPC 2.0, initialize, tools/list, tools/call, errors. Starts with a spike on library versus our own (licence, dependency size, protocol version) | 3 | none |
+| K3 | MCP core: the tool port (`internal/mcp/tools`) and the stdio transport on the official Go SDK (`internal/mcp/transport`), both protocol eras. **Done 2026-10-28**; not yet reachable from a command (K5) | 3 | none |
 | K4 | MCP information tools: `downshift.providers` (K1), `downshift.playbook`, `downshift.status`, `downshift.apply` (K2); a `strain` block on every result | 3 | K1, K2, K3 |
 | K5 | `downshift mcp serve` command, help and an end-to-end test over pipes | 1 | K4 |
 | K6 | `setup --mcp`: register the server (opt-in, dry run, undo by marker); the Claude Code registration path is verified first | 2 | K5, S1 |

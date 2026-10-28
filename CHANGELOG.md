@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `downshift setup` no longer writes `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`: with it, Claude Code overrides the
   per-call model the orchestrator chose. A value you set yourself is left alone.
 
-- The docs no longer say "zero dependencies": the binary links a few third-party libraries through its command layer. What holds, and is now checked by a test, is that every package under `internal/` uses the Go standard library only.
+- The docs no longer say "zero dependencies": the binary links a few third-party libraries through its command layer. What holds, and is now checked by a test, is that every package under `internal/` uses the Go standard library only, except the MCP transport that wraps the official Go SDK.
 
 ### Removed (O8)
 
@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The MCP server core: the tool port and the stdio transport on the official Go SDK, serving both protocol eras (the `initialize` handshake and the per-request metadata of 2026-07-28). Not reachable from a command yet.
 - `downshift playbook` (`list`, `show`, `edit`, `add`, `remove`, `restore`, `check`): named working rules a delegated
   worker receives. General always applies; a delegation may name one more set. Shipped: General, Backend, Frontend.
 - The `downshift-orchestrator` skill, installed by `downshift setup`: how to split work and choose model and effort

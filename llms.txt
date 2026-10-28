@@ -91,7 +91,7 @@ Claude Code guide (opusplan, baseline inference, emitted vs honored vs used): do
 
 Author: Tiago Vilas Boas
 Repository: https://github.com/tiagovilasboas/downshift
-Language: Go 1.27, single static binary, nothing to install at runtime. Every package under internal/ uses the standard library only (checked by a test); the binary links a few third-party libraries through its command layer.
+Language: Go 1.27, single static binary, nothing to install at runtime. Every package under internal/ uses the standard library only, except the MCP transport that wraps the official Go SDK (checked by a test); the binary also links a few terminal libraries through its command layer.
 
 Install and harness setup (canonical for agents): docs/guides/install.md
 Claude Code plugin (hooks, /downshift, skills, example agent; binary still required):

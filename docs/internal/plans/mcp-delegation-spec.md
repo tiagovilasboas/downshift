@@ -17,17 +17,27 @@ the result with a routing note. It never chooses a model on its own.
 
 ## 1. Requirements
 
-- R1. One binary, JSON-RPC 2.0 over stdio. How it is built is decided by a spike at the start of K3, because the
-  first draft's reason for writing it by hand ("zero external dependencies") is not true of the binary: the decision
-  and hook packages import no external module, but the CLI layer already links a few Go libraries. The candidates
-  are (a) the official Go SDK of the protocol, (b) a community Go server library, (c) a minimal implementation of
-  our own (initialize, tools/list, tools/call, errors). The spike reads each candidate's LICENSE in its repository
-  (secondary sources say MIT for both libraries, and a pre-release of the official SDK lists several licences: not
-  confirmed here), the size of the dependency graph it adds, the protocol version it speaks, and how it handles
-  cancellation and errors. Whatever is chosen is imported by one transport file only; the tools are plain functions,
-  and no `routing`, `core` or `playbook` package imports it (archtest). Because every package under `internal/` is held to the standard library by `TestInternalPackagesUseOnlyTheStandardLibrary`, a library needs a reasoned entry in that test's `externalExceptions` for its transport package, which makes the choice explicit. A library goes in with its version pinned,
-  `govulncheck` clean and its notice added to `NOTICE`; the reference app's code is never used (AGPL-3.0, behaviour
-  only).
+- R1. One binary, JSON-RPC 2.0 over stdio, on the official Go SDK of the protocol, behind a port (decision of the
+  K3 spike, revised the same day). The first reading of the spike chose a server of our own on the standard library,
+  because the measured weight of the libraries was high. It had not measured protocol coverage. The protocol changed
+  in revision 2026-07-28 (see section 3): there is no `initialize` handshake any more, every request carries its
+  version and capabilities in `_meta`, `server/discover` is mandatory, results carry `resultType`, and the older
+  handshake-based revisions (2025-11-25 and earlier) must still be served. A test of the SDK showed one server
+  answering both eras, so the choice flipped: keeping up with a moving protocol is the cost we do not want to own.
+
+  | Candidate | Licence (read in the repository) | Binary | Modules in the graph | Eras served |
+  |---|---|--:|--:|---|
+  | Official SDK v1.8.0 | Apache-2.0, MIT and CC-BY-4.0 (new contributions, older contributions, docs) | 10.6 MB | 9 | both (tested here) |
+  | mark3labs/mcp-go v1.4.0 | MIT | 7.9 MB | 7 | not tested |
+  | Own server | Apache-2.0 | about +0.1 MB | 0 | would need both implemented and kept current |
+
+  How it is contained: the tools are plain functions (`internal/mcp/tools`); one package, `internal/mcp/transport`,
+  imports the SDK and adapts them; `TestInternalPackagesUseOnlyTheStandardLibrary` allows the SDK in that package and
+  nowhere else under `internal/`, and `TestExternalModulesStayAtTheEdge` keeps any other internal package from
+  importing the transport (only `cmd/` does). The version is pinned in `go.mod`, `govulncheck` reports nothing for
+  the MCP packages, and the notice is in `NOTICE`. Open: shipping the licence texts of the SDK and its modules in the
+  release archives. Because the tools sit behind the port, replacing the SDK later means rewriting one file. The
+  reference app's code is never used (AGPL-3.0, behaviour only).
 - R2. Subcommand `downshift mcp serve`; no daemon, no listener, no network socket (O7 non-goal still holds: no app, no proxy).
 - R3. Tools: `downshift.delegate` (harness, model, effort, mode `read|write`, prompt, cwd, optional `playbook`,
   optional `verify_argv`, optional `slug`; `kind` and `effort_class` are hints only), `downshift.status` (queue,
@@ -94,3 +104,25 @@ Owner decision O8 (2026-10-28) replaces that: the orchestrator passes `model` an
 reports them, and there is no built-in floor. The business plan repository should be updated to match; this file
 does not edit it. The playbook editor (`downshift playbook`) and the `playbook` parameter are not in that repository
 at all.
+
+## 3. Protocol coverage
+
+Read from the specification (revision 2026-07-28, 2026-10-28). Every implementation must support the base protocol,
+versioning and the message patterns; the rest is optional.
+
+| Part of the protocol | Required | In our server |
+|---|---|---|
+| Base protocol, JSON-RPC 2.0, error codes | Yes | Yes (the SDK) |
+| Versioning: per-request `_meta` version, `server/discover`, `UnsupportedProtocolVersion` (-32022) | Yes (modern era) | Yes (the SDK; tested) |
+| Legacy handshake (`initialize`, `notifications/initialized`) | For clients of 2025-11-25 and earlier | Yes (the SDK; tested) |
+| Tools: `tools/list`, `tools/call` | Optional feature | **Yes: the whole point** |
+| Cancellation, ping, progress | Utilities | Cancellation and ping through the SDK; progress when `delegate` needs it |
+| Resources, prompts | Optional features | No. Playbooks could be offered as resources later |
+| Logging, completion, subscriptions, multi round-trip requests | Optional | No |
+| Client features: sampling, roots, elicitation | Optional (client side) | No |
+| Extension Tasks (async long-running calls with polling) | Opt-in extension | To evaluate for `delegate`, instead of our own `seq`/`ack` of R14 |
+| Extension Skills over MCP | Opt-in extension | To evaluate for playbooks |
+| Streamable HTTP and OAuth | Other transport | No (O7: stdio only) |
+
+Behaviour of the library that the tests pin: a line that is not JSON ends the session, and so does a message above
+the 1 MiB cap; the protocol is stateless, so the client starts a new process.
