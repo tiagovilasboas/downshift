@@ -28,6 +28,16 @@ is a warning chip with no redirect, by its own roadmap.
 - **O6 Setup can start before the decider.** It does not depend on it.
 - **O7 Downshift only.** No external orchestrator, proxy or desktop app. Claude Code stays the orchestrator inside
   its sessions; Downshift routes its spawns and runs its own batch plans.
+  **Reopened 2026-10-28 (owner):** an MCP delegation server is in scope, as part of Downshift itself, run by the
+  same binary (`downshift mcp`, stdio). It is not a separate product. The LLM chooses agent, model and effort
+  through it, as Alethe does on its MCP path.
+- **O8 The LLM chooses; Downshift applies and measures (2026-10-28, owner).** The orchestrator decides the model,
+  the effort and the decomposition of the work, following the Orchestrator-Workers pattern of Anthropic's cookbook.
+  Downshift never picks a model on its own: no built-in agent-type table, no automatic upgrade after a failure, no
+  built-in risk floor. Downshift still applies what the user declares in `policy.json` (rules, profiles, floors) and
+  the tier hint the orchestrator sends, and it still refuses unknown or `explicit_only` ids. Good defaults move from
+  code into an orchestrator playbook (a skill installed by setup). Supersedes the N11 table and the risk veto of
+  routing-v2; a project that wants a risk floor declares it in its policy.
 
 ## 3. Execution order
 

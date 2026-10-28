@@ -14,24 +14,17 @@ downshift policy init
 
 This runs a dry-run preview showing the configuration and asks for confirmation before writing `.downshift/policy.json`.
 
-## Default Profiles Table (W7.1)
+## No built-in table (owner decision O8)
 
-Out of the box without any policy file, Downshift applies the following defaults for built-in Claude Code subagent types:
-
-| Agent Type | Default Tier | With Risk Signal |
-|---|---|---|
-| `Explore` | `small` (Haiku) | `mid` (Sonnet) |
-| `claude-code-guide` | `small` (Haiku) | `mid` (Sonnet) |
-| `statusline-setup` | `small` (Haiku) | `mid` (Sonnet) |
-| `general-purpose` | Keep requested | Keep requested |
-| `Plan` | Keep requested | Keep requested |
+Downshift ships no default model for any agent type. The orchestrator chooses the model and the effort of each
+subagent; the defaults that used to live in the table (`Explore`, `claude-code-guide`, `statusline-setup` on small)
+are now guidance in the `downshift-orchestrator` playbook, which `downshift setup` installs. A downshift happens only
+when your `policy.json` declares it (a rule, a profile or a tier floor), or when the orchestrator sends a tier hint.
 
 ## Economy Mode (W7.9)
 
-Economy mode lowers every agent type by one relative tier:
-- Standard types drop from `mid` to `small`.
-- Types keeping requested models drop one tier below the parent session model.
-- **Safety Bounds:** Risk signals never drop below `mid`. `explicit_only` models are never chosen automatically.
+Economy mode applies to the declared policy only. It no longer lowers built-in agent types, because there is no
+built-in table (O8). `explicit_only` models are never chosen automatically.
 
 ### Enabling Economy Mode
 

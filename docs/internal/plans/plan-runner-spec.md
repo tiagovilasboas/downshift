@@ -4,7 +4,7 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-Status: **Draft, 2026-10-27.** Stage 4 of the [MVP plan](mvp-plan.md). Clean-room: written from a behaviour
+Status: **Draft, 2026-10-27; model choice changed 2026-10-28 (O8).** Stage 4 of the [MVP plan](mvp-plan.md). Clean-room: written from a behaviour
 report on the Alethe batch runner (kept outside this repository, no code, no names from that project), the owner
 decisions O1 to O7 and the Downshift contracts that exist today. Where this file and the MVP plan disagree, the MVP
 plan wins and this file is the defect.
@@ -173,7 +173,7 @@ paths under `--out`; without `--out` the final text is inlined as `final_text` o
 
 Precedence: `--strategy` flag, then the plan's `strategy`, then `auto`. There is no saved strategy (G7).
 
-| Strategy | Max workers | Max concurrency | Rule | Default tier (R20) |
+| Strategy | Max workers | Max concurrency | Rule | Default tier (R20; the planner's model wins) |
 |---|--:|--:|---|---|
 | `auto` | 16 | 4 | resolves to one of the rows below | of the resolved row |
 | `economy` | 1 | 1 | one worker | `small` |
@@ -231,17 +231,17 @@ Exact flags must be checked against the installed CLI's `--help` by frente P3 (G
 - R17c. `effort` reaches argv only when the descriptor supports it; otherwise the worker records
   `effort_ignored`. A descriptor never emits a permission-bypass flag; a test scans every template.
 
-### 3.4 Model resolution through the routing decider
+### 3.4 Model choice: the planner decides (owner decision O8)
 
-The runner does not invent a second router. Each worker attempt is one spawn for `decide.Decide`.
+The planner chooses the model and the effort of every worker in its plan. The runner applies them and does not
+move them. There is no second router, no built-in tier table and no downgrade on the runner's side.
 
-- R20. Requested model: `model` verbatim (pinned) if set; else `catalog.ModelFor(provider, tier)` where `tier` is
-  the worker's or the strategy default of 3.1 (not pinned). If the catalog has no model for that pair, no
-  `--model` flag is passed, the CLI default runs, and the note says so.
-- R21. `decide.Decide` gets `Request{Harness: provider, RequestedModel, Pinned, Hint{Kind, Effort: effort_class,
-  Tier}}`, the policy and readings of R18, `Risk: core.RiskCategories(task)` and `Class` from `core.Classify(task)`,
-  computed in memory. The effective model is the decision's model. So risk never goes small, a pinned model is
-  kept, and the decider can only lower or keep the tier, exactly as for a Claude Code spawn.
+- R20. The worker's `model` is passed to the provider CLI verbatim when set. When it is not set, the CLI default
+  runs, and the result says so. A `tier` in a worker (small, mid, frontier) is resolved through
+  `catalog.ModelFor(provider, tier)`, and a catalog with no model for that pair refuses the plan.
+- R21. The runner calls `decide.Decide` only to record the routing note and to honour the project policy the user
+  declared. The planner's model is the request, so a rule or floor from `policy.json` may still change it, as for
+  any spawn. Nothing else moves it: no risk veto (O8), no automatic upgrade after a failure.
 - R22. The routing note is returned in `preview` and in the result, with only enums, tiers, numbers and times
   (the contract's invariant: no task text in a note).
 
