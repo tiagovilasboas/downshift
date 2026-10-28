@@ -13,10 +13,10 @@
 
 ## Onda 1.5: Setup Completo & Release Readiness (Business Plan W7 & Stage 1)
 - [x] **W7.1 (3 pts):** Default Profile Table (N11) embutida no binário — mapeamento de tipos padrão (`Explore` -> small, `claude-code-guide` -> small, `statusline-setup` -> small; `general-purpose` e `Plan` mantidos), sem risco
-- [ ] **W7.2 (2 pts):** `downshift policy init` integrado no `setup` — gera `.downshift/policy.json` com confirmação e preview
+- [x] **W7.2 (2 pts):** `downshift policy init` integrado no `setup` — gera `.downshift/policy.json` com confirmação e preview
 - [ ] **S1 (3 pts):** Ownership Markers (`.downshift-managed`) nos arquivos gerados pelo setup para suporte robusto a rollback e integridade
 - [ ] **S2 (3 pts):** Instalação automática da Skill do Downshift em `~/.claude/skills` e `~/.codex/skills` via setup
-- [ ] **W7.9 (3 pts):** Modo Economia (`economy mode` no `policy.json` ou flag `--economy`), rebaixando um tier com segurança
+- [x] **W7.9 (3 pts):** Modo Economia (`economy mode` no `policy.json` ou flag `--economy`), rebaixando um tier com segurança
 
 ## Onda 2: Cloud Software Factory & Escala Multi-Harness (W2 & Factory)
 - [ ] **F2.1 (3 pts):** Batch Loop Runner (`downshift loop --batch=tasks.json`) para orquestração sequencial/isolada de tarefas

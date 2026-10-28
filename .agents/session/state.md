@@ -3,7 +3,7 @@
 - **Branch Atual:** `downshift/mvp-ponto-zero`
 - **Fase Atual:** Onda 1.5 (Setup Completo & Release Readiness — Business Plan W7)
 - **Status:** Roadmap e Ondas alinhados com o Business Plan (`downshift-business-plan`).
-- **Próximo Objetivo:** Implementar W7.2 (`downshift policy init`).
+- **Próximo Objetivo:** Implementar S1 (ownership markers) e S2 (skill em ~/.claude/skills). Pendências: `setup --undo` não remove o policy.json criado; nit do revisor sobre o literal `claude-code` duplicado.
 - **Bloqueios:** Nenhum
 - **Commits na Branch:**
   - `7a9becc1`: feat(cli): add smart zero-prompt default entry when invoked without args (F0.1)
@@ -23,3 +23,6 @@
   - `b79162eb`: feat(setup): configure CLAUDE_CODE_SUBAGENT_MODEL_FORCE in claude-code settings env
   - `cda89de8`: test(claudecode): clear subagent model force env in session model test
   - `532bd279`: feat(routing): add default profile table for claude code built-in agent types (W7.1)
+  - `50f80a0a`: feat(setup): add policy init step with dry run and yes gate (W7.2)
+  - `fffde0a3`: fix(routing): keep declared profiles and hint tiers ahead of the default table
+  - `9c1a3e62`: feat(routing): add economy mode as policy data (W7.9)
