@@ -61,6 +61,7 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 	deps := tools.Deps{
 		Models:    mcpModels{md: md},
 		Playbooks: mcpPlaybooks{},
+		Reporter:  mcpReporter{cat: cat, now: time.Now},
 		Strain:    mcpStrain{now: time.Now},
 		Applier:   mcpApplier{inner: spawnApplier{cat: cat, now: time.Now}, root: root, broad: broad},
 		Harnesses: capsHarnessIDs,

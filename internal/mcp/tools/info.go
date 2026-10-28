@@ -91,6 +91,8 @@ type Deps struct {
 	Playbooks Playbooks
 	Strain    Strain
 	Applier   Applier
+	// Reporter stores model ids the caller reports; nil means unavailable.
+	Reporter Reporter
 	// Harnesses lists the valid harness ids, for argument errors.
 	Harnesses func() []string
 	Version   string
