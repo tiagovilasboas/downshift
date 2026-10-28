@@ -53,6 +53,10 @@ func TestDecide(t *testing.T) {
 			request: req(func(r *contract.Request) { r.AgentType = "reviewer" }),
 			pol:     testPolicy(),
 			want:    want{contract.VerdictProfile, "", "mid-model", "", "reviewer", contract.TierMid, core.VerdictDownshift}},
+		{name: "profile matched by agent type ignoring case (Explore vs explore)",
+			request: req(func(r *contract.Request) { r.AgentType = "Reviewer" }),
+			pol:     testPolicy(),
+			want:    want{contract.VerdictProfile, "", "mid-model", "", "reviewer", contract.TierMid, core.VerdictDownshift}},
 		{name: "profile beats rule and hint",
 			request: req(func(r *contract.Request) {
 				r.Profile = "reviewer"

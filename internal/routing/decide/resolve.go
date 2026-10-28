@@ -5,6 +5,7 @@ package decide
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/tiagovilasboas/downshift/internal/routing/contract"
 	"github.com/tiagovilasboas/downshift/internal/routing/policy"
@@ -50,7 +51,9 @@ func resolve(in Input, requested contract.Tier) choice {
 		return profileChoice(in.Policy, req, req.Profile, contract.VerdictProfile, "")
 	}
 	if req.AgentType != "" {
-		name := contract.ProfileName(req.AgentType)
+		// Profile names are lower case, and a harness reports its built-in types
+		// with a capital (Explore, Plan): the match ignores case.
+		name := contract.ProfileName(strings.ToLower(req.AgentType))
 		if _, ok := in.Policy.ProfileNamed(name); ok {
 			if c := profileChoice(in.Policy, req, name, contract.VerdictProfile, ""); c.verdict != contract.VerdictRefusedConfig {
 				return c

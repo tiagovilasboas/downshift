@@ -25,6 +25,12 @@ func TierOf(c Complexity) Tier {
 	}
 }
 
+// RoutingNote mirrors routing/contract.Note without its headroom fields. It
+// holds enums, tiers and declared ids only.
+type RoutingNote struct {
+	Verdict, Reason, RuleID, Profile, TierFrom, TierTo string
+}
+
 // Decision is the full routing decision for one subagent task: what the task
 // needs, what model to use on the given harness, and how it compares to the
 // model the harness would have used by default.
@@ -49,6 +55,10 @@ type Decision struct {
 	// Reason names why routing v2 held or refused a move (a
 	// routing/contract.Reason value as a string); empty when nothing was held.
 	Reason string
+	// Note is the routing note of the decision as plain strings (verdict,
+	// declared rule or profile id, tiers), so the event log can say why a spawn
+	// changed or was kept. Empty on hand-built decisions.
+	Note RoutingNote
 	// Risk lists the risk categories (risk.go) the prompt touches, whatever
 	// its complexity. Guardrail R5 holds any downshift of such a task.
 	Risk []string

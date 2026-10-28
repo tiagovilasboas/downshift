@@ -45,6 +45,15 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) telemetr
 		RoutingPolicy:    telemetry.RoutingPolicy,
 		ReasonCodes:      ReasonCodes(d),
 	}
+	if d.Note.Verdict != "" {
+		n := telemetry.RoutingNote{
+			Verdict: d.Note.Verdict, Reason: d.Note.Reason, RuleID: d.Note.RuleID,
+			Profile: d.Note.Profile, TierFrom: d.Note.TierFrom, TierTo: d.Note.TierTo,
+		}.Clean()
+		if n.Verdict != "" {
+			ev.RoutingNote = &n
+		}
+	}
 	if d.Verdict == core.VerdictUpshift {
 		from := d.Baseline.CurrentModel.InputM + d.Baseline.CurrentModel.OutputM
 		to := d.Model.InputM + d.Model.OutputM

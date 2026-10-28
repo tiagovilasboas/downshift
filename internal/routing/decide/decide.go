@@ -67,10 +67,17 @@ func Decide(in Input) (d core.Decision, note contract.Note) {
 	defer func() {
 		if recover() != nil {
 			d, note = failOpen(in)
+			d.Note = core.RoutingNote{Verdict: string(note.Verdict), Reason: string(note.Reason)}
 		}
 	}()
 	d, note = route(in)
-	return raiseToFloor(in, d, note)
+	d, note = raiseToFloor(in, d, note)
+	d.Note = core.RoutingNote{
+		Verdict: string(note.Verdict), Reason: string(note.Reason),
+		RuleID: string(note.RuleID), Profile: string(note.Profile),
+		TierFrom: string(note.TierFrom), TierTo: string(note.TierTo),
+	}
+	return d, note
 }
 
 // route is the precedence ladder, the strain gates and the guard.

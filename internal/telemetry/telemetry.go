@@ -193,6 +193,10 @@ type Event struct {
 	// Optional Code Intelligence (DCI) record. Set on OutcomeDCI events.
 	DCI *DCIRecord `json:"dci,omitempty"`
 
+	// RoutingNote is why this decision changed the spawn or kept it (see
+	// RoutingNote). Absent on events written before the note was recorded.
+	RoutingNote *RoutingNote `json:"routing_note,omitempty"`
+
 	// Confidence is reserved and never set: the router has no calibrated
 	// probability, so the key stays absent rather than carry a made-up number.
 	Confidence *float64 `json:"confidence,omitempty"`
