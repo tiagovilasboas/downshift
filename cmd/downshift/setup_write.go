@@ -76,7 +76,9 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 	}
 	var todo []restore
 	readErr := false
-	addRestore := func(t setupTarget, path string) {
+	// whole is true for a file setup generates in full: a copy that lost the
+	// ownership marker was edited by someone, so undo leaves it alone.
+	addRestore := func(t setupTarget, path string, whole bool) {
 		b, marker := latestBackup(path)
 		if b == "" {
 			fmt.Fprintf(o.Out, "%s: no backup of %s, nothing to undo\n", t.Name, setupDisplay(o.Home, path))
@@ -84,6 +86,10 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 		}
 		r := restore{t: t, path: path, backup: b, marker: marker}
 		r.cur, _ = os.ReadFile(path)
+		if whole && len(r.cur) > 0 && !setupOwns(r.cur) {
+			fmt.Fprintf(o.Out, "%s: %s was edited after setup, left as it is\n", t.Name, setupDisplay(o.Home, path))
+			return
+		}
 		if !marker {
 			data, err := os.ReadFile(b)
 			if err != nil {
@@ -97,18 +103,18 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 	}
 	for _, t := range targets {
 		if t.File != "" {
-			addRestore(t, filepath.Join(o.Home, filepath.FromSlash(t.File)))
+			addRestore(t, filepath.Join(o.Home, filepath.FromSlash(t.File)), false)
 		}
 		if t.Steering != nil {
-			addRestore(t, filepath.Join(o.Home, filepath.FromSlash(t.Steering.Path)))
+			addRestore(t, filepath.Join(o.Home, filepath.FromSlash(t.Steering.Path)), !t.Steering.Managed)
 		}
 		for _, w := range wrapperPathsFor(o, t) {
-			addRestore(t, w)
+			addRestore(t, w, true)
 		}
 		if t.Registry != "" {
 			path := filepath.Join(o.Home, filepath.FromSlash(t.Registry))
 			if b, _ := latestBackup(path); b != "" {
-				addRestore(t, path)
+				addRestore(t, path, false)
 			}
 		}
 	}

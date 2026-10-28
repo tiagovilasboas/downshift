@@ -4,7 +4,9 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,9 +63,16 @@ func planSteering(o setupOptions, t setupTarget) (p setupPlan, ok bool) {
 	}
 	if t.Steering.Managed {
 		p.after = mergeSteeringBlock(p.before, t.Steering.Content)
-	} else {
-		p.after = []byte(t.Steering.Frontmatter + t.Steering.Content)
+		return p, true
 	}
+	// A dedicated file is setup's own. Unmarked content is a file a person wrote,
+	// except the exact text an earlier setup wrote before the marker existed.
+	legacy := []byte(t.Steering.Frontmatter + t.Steering.Content)
+	if p.existed && !setupOwns(p.before) && !bytes.Equal(p.before, legacy) {
+		p.err = fmt.Errorf("%s was not written by downshift setup; move it aside and run setup again", path)
+		return p, true
+	}
+	p.after = []byte(t.Steering.Frontmatter + setupOwnedNote + t.Steering.Content)
 	return p, true
 }
 
