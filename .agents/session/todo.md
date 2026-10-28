@@ -18,4 +18,6 @@
 - [x] **F2.1 (3 pts):** Batch Loop Runner (`downshift loop --batch=tasks.json`) para orquestração sequencial/isolada de tarefas
 - [x] **F2.2 (2 pts):** Relatório Consolidado de Fábrica (`downshift loop report`) com telemetria e taxa de aceitação git
 - [ ] **F2.3 (3 pts):** Multi-Harness Universal Seeder com auto-descoberta de OpenCode, Cursor e Codex em `session-models.json`
+  - parte 1 feita: fonte `opencode models` em `internal/discovery`
+  - pendente: o seeder do `setup` ainda grava listas fixas (`defaultSessionModels`), incluindo IDs de OpenCode que `opencode models` não lista nesta máquina; trocar pela descoberta e depois remover as listas fixas
 - [ ] **F2.4 (5 pts):** Worktree isolado e hermético (`internal/worktree`, W2.1 do business plan)
