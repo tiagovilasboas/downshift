@@ -17,8 +17,17 @@ the result with a routing note. It never chooses a model on its own.
 
 ## 1. Requirements
 
-- R1. One binary, zero external dependencies: JSON-RPC 2.0 over stdio, written in Go (no MCP SDK), so the install
-  stays a single file.
+- R1. One binary, JSON-RPC 2.0 over stdio. How it is built is decided by a spike at the start of K3, because the
+  first draft's reason for writing it by hand ("zero external dependencies") is not true of the binary: the decision
+  and hook packages import no external module, but the CLI layer already links a few Go libraries. The candidates
+  are (a) the official Go SDK of the protocol, (b) a community Go server library, (c) a minimal implementation of
+  our own (initialize, tools/list, tools/call, errors). The spike reads each candidate's LICENSE in its repository
+  (secondary sources say MIT for both libraries, and a pre-release of the official SDK lists several licences: not
+  confirmed here), the size of the dependency graph it adds, the protocol version it speaks, and how it handles
+  cancellation and errors. Whatever is chosen is imported by one transport file only; the tools are plain functions,
+  and no `routing`, `core` or `playbook` package imports it (archtest). A library goes in with its version pinned,
+  `govulncheck` clean and its notice added to `NOTICE`; the reference app's code is never used (AGPL-3.0, behaviour
+  only).
 - R2. Subcommand `downshift mcp serve`; no daemon, no listener, no network socket (O7 non-goal still holds: no app, no proxy).
 - R3. Tools: `downshift.delegate` (harness, model, effort, mode `read|write`, prompt, cwd, optional `playbook`,
   optional `verify_argv`, optional `slug`; `kind` and `effort_class` are hints only), `downshift.status` (queue,
