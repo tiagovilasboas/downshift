@@ -8,20 +8,20 @@ Plan: [MVP plan](../../plans/mvp-plan.md). These cards replace the stage tables 
 [routing v2 cards](../2026-10-26-routing-v2/README.md); the R numbers stay as cross-references. Each card is one PR,
 at most 5 points, with the gate in the MVP plan section 5.
 
-## Stage 0: clean base (in review)
+## Stage 0: clean base (done on the branch, 2026-10-27)
 
 | # | Card | Pts | State |
 |---|---|--:|---|
-| B0 | Routing v2 design | — | PR #580, green |
-| B1 | Remove v1 experiments, gateway and orchestration | — | PR #581, draft, green |
-| B2 | Routing domain contract (`internal/routing/contract`) | — | PR #583, green |
-| B3 | Telemetry stops importing `core` | — | PR #584, draft, green |
-| B4 | Decision behind an interface (`core.Decider`) | — | PR #585, draft, green |
-| B5 | Headroom from quota readings (`routing/headroom`, R3) | — | branch `feat/routing-headroom`, no PR |
-| B6 | Declared policy and `policy check` (`routing/policy`, R2) | — | branch `feat/routing-policy`, no PR |
-| B7 | Wave B: delete the v1 decider per the [cutover plan](../../../design/routing-v2-core-cutover.md) | 5 | not started |
-| B8 | Remove `accounting` and price tables (O1) | 2 | not started |
-| B9 | Move the competitive analysis out of the public branch history | 1 | needs owner approval |
+| B0 | Routing v2 design | — | Done |
+| B1 | Remove v1 experiments, gateway and orchestration | — | Done |
+| B2 | Routing domain contract (`internal/routing/contract`) | — | Done |
+| B3 | Telemetry stops importing `core` | — | Done in the root package; `fromcore` still imports `core` by design |
+| B4 | Decision behind an interface (`core.Decider`) | — | Done |
+| B5 | Headroom from quota readings (`routing/headroom`) | — | Done |
+| B6 | Declared policy and `policy check` (`routing/policy`) | — | Done |
+| B7 | Delete the v1 decider | 5 | Done in the same change as C3 (no flag, no keep default). Left over: NB files, `internal/nbtier`, gateway files |
+| B8 | Remove the dollar accounting (O1) | 2 | Done. The catalog price table stays as a routing signal |
+| B9 | Move the competitive analysis out of the public history | 1 | Done |
 
 ## Stage 1: setup (parallel with stage 2)
 
@@ -75,5 +75,13 @@ OpenCode, Cursor and Antigravity are sized before they start, one PR each.
 
 ## Totals
 
-Stage 0: 8 left. Stage 1: 8. Stage 2: 14. Stage 3: 9. MVP: 39. Stage 4: 26. Stage 5: 12 before the
+Stage 0: done. Stage 1: 8. Stage 2: 14, done except the real-session proof (C0). Stage 3: 9. MVP: 39, about 17 left. Stage 4: 26. Stage 5: 12 before the
 remaining harnesses.
+
+## State of stage 2 (2026-10-27)
+
+C1, C2, C3 and C4 are done on the branch (QA PASS at `2330a3e1`). C0 is not verified: nobody has seen the hook decide in a real Claude Code session. Open gaps are in [the roadmap, section 8b](../../plans/roadmap.md).
+
+## Business plan waves (W0 to W5)
+
+The cards from the `downshift-business-plan` alignment are in [the roadmap, section 8d](../../plans/roadmap.md). Every card is at most 5 points. Wave 4 and the orchestrator wait for the owner decisions BP1 and BP2.

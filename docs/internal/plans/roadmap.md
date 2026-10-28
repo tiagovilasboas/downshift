@@ -210,6 +210,45 @@ The owner changed the route for Phases 1 and 2 on 2026-10-27. These notes amend 
 
 The upstream project studied for the plan runner is AGPL-3.0-or-later; its copyright belongs to its author and contributors. A local MIT relicense commit exists only in a local clone, is unpublished, and grants nothing. The `downshift-plan` copy was deleted on 2026-10-27. Downshift uses behaviour notes and its own specification only. No upstream file, function, comment or string is copied.
 
+### 8d. Business plan alignment (2026-10-27)
+
+**Source of truth.** The `downshift-business-plan` repository (MIT, commit `e4a3b91`) is the strategic, product and architecture reference. Read for this section: `README.md`, `roadmap/execution-waves.md`, `roadmap/evaluation-and-gates.md`, `product/capability-matrix.md` and the five files in `architecture/`. Not yet read: `business/*`, `product/multi-harness-governance.md` and `product/tui-command-center-spec.md`; they are mapped by title only. The plan rests on the public Orchestrator-Workers pattern. Nothing here copies third-party code.
+
+**Priority order from the plan.** Close the Beta-exit blockers first (wave 0), then orchestration (waves 2 to 5). Our v2 routing (MVP stage 2) is the base for both. The real-session proof stays first in our queue, because it feeds wave 5 and gates any release (D5).
+
+**Cards, each at most 5 story points**
+
+| Wave | Card | Pts | What it delivers | State |
+|---|---|--:|---|---|
+| W0 Beta exit | W0.1 | 2 | P1.6: capture which model a Cursor child ran on a paid usage-based plan | Blocked: needs a paid plan |
+| W0 | W0.2 | 1 | P2.3: publish the export template for external operators | Blocked: needs an operator |
+| W0 | W0.3 | 3 | P3.4: raise usage-linked events above 5 of 50, by binding more harness transcripts | Open |
+| W0 | W0.4 | 3 | P3.7: billing-period comparison template and check | Open |
+| W0 | W0.5 | 5 | P4: grow the blind set from 37 toward 200 tasks, next slice only | Open |
+| W1 Foundations | W1.1 | 3 | This alignment and the validator link to the plan | Done with this section |
+| W2 Worktree runner | W2.1 | 5 | `internal/worktree`: provision, slug grammar, lease file, read-only and isolated-write modes, hermetic git, symlink-escape check | Not started |
+| W2 | W2.2 | 5 | Merge gate: numstat, three-way dry run, verify under `downshift compact`, compare-and-swap | Not started, see BP3 |
+| W2 | W2.3 | 3 | `downshift worktree gc` crash recovery and the git version check in `doctor` | Not started |
+| W3 Quota shield | W3.1 | 5 | Two windows (5 hours and weekly) with thresholds as policy data | Partly done: Claude readings and headroom exist |
+| W3 | W3.2 | 5 | Cross-vendor spillover in the plan runner's provider choice | Not started |
+| W3 | W3.3 | 3 | Warning and queue behaviour at the hard ceiling, shown in `quota status` | Not started |
+| W4 TUI | W4.1 to W4.3 | 5, 5, 3 | `downshift watch` and `downshift plan` terminal views | Blocked: see BP1 and BP2 |
+| W5 Conformance | W5.1 | 5 | Cross-harness conformance using recorded real-session fixtures (our record and replay design) | Not started |
+| W5 | W5.2 | 3 | Hook latency under load, inside the 1.5 s budget | Not started |
+
+Wave totals: W0 14, W2 13, W3 13, W4 13, W5 8. The plan-runner spec (33 points) overlaps W2 and W3; it is reconciled in BP3 to BP5.
+
+**Open reconciliations (owner decisions)**
+
+- **BP1 TUI and MCP orchestrator vs O7.** The plan lists a native terminal TUI and an MCP stdio orchestrator. O7 forbids an external orchestrator, proxy or desktop app. A terminal TUI is not a desktop app, but the MCP orchestrator server is. Wave 4 and the orchestrator stay blocked until the owner decides.
+- **BP2 TUI dependency.** The plan names a Bubble Tea style library. The binary promises zero external Go dependencies on critical paths. A TUI outside the hook path may be acceptable; needs a decision.
+- **BP3 Merge gate.** The plan fast-forwards the operator's branch after verification. The plan-runner spec never applies work back automatically. Pick one.
+- **BP4 Worktree layout.** The plan puts worktrees under the repository with an ephemeral branch. The plan-runner spec puts them in the state directory, detached, with no branch.
+- **BP5 Capability matrix is wrong today.** It marks v2 routing as in production. v2 is on the branch only, not on `main`. The fix belongs in the business plan repository.
+- **BP6 Thresholds.** The plan uses 70, 85 and 95 percent. Our default critical threshold is 80. Make all of them policy data.
+- **BP7 Stale model names.** The plan names old models in examples. Models stay in `catalog.json`, never in code or specs.
+- **BP8 Package names.** The plan names `internal/orchestration` and `internal/worktree`. The plan-runner spec uses its own package names. Align them before the first card starts.
+
 ## 9. Conflicts in the sources (fix when accepted)
 
 1. README stage totals (36 and 15) do not match its cards: stage 1 cards sum to 42 points; stage 2 (R7, R8b, R8c) to 9.
