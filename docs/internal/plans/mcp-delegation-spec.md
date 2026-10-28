@@ -38,6 +38,18 @@ the result with a routing note. It never chooses a model on its own.
 - R7. Results carry enums, tiers, models, tokens and times, and the routing note. No task text in any note (contract).
 - R8. Budget: the same call, wall-time and token caps as the plan runner (stage 4 section 4).
 - R9. Errors are returned as tool errors, never as a crash; a malformed request is refused with a reason.
+- R13. Every `downshift.*` result carries a `strain` block: the fullest window per provider and its headroom name
+  (`ok`, `strained`, `critical`, or unknown). It is advice for the orchestrator, never a reroute, and it is
+  computed at call time. A host cannot push to the model, so the reading rides on the answer it already reads.
+  (Survey idea A1.)
+- R14. `downshift.result` is repeatable and acknowledged. Each delivery has a sequence number; the caller acks it
+  and may ask for the same delivery again with `repeat`. A response lost to the host's call time cap or a dropped
+  message loses nothing, and a repeat returns the same bytes. Results live in memory only (R6). (Survey idea A2.)
+- R15. An unrecognised `mode` is read-only. The bypass is never a value the tool accepts. (Survey idea A5.)
+- R16. The result and the routing note carry the playbook name used, or none, and never its text; "wrong rules or
+  ignored rules?" is answerable from the record. (Survey idea A9.)
+- R17. Dispatch obeys the plan runner's per-provider cap (plan runner spec R13a): a strained provider gets one
+  attempt at a time. (Survey idea A10.)
 - R11. Providers are started with an argument list, never through a shell, and `cwd` must be an existing directory the
   caller already has access to; a path that resolves outside the project root is refused. (AppSec review O8, T4.)
 - R12. Playbook files that are not regular files (symlinks) are refused when read (`internal/playbook`, done).

@@ -137,6 +137,10 @@ Validation reads the plan file and each `task_file`, and nothing else on disk ex
 - R13. Numeric ranges of 2.1 are enforced. Caps are bounded by the global hard cap of 16 workers, and the default
   concurrency is 4 (business plan, orchestration spec section 4). Numeric ranges of 2.1 are enforced; `concurrency` above the strategy cap is lowered to the cap with a note,
   never an error (the plan may lower, never raise).
+- R13a. Per-provider cap (survey idea A10). At most `provider_concurrency` attempts run on one provider at the same
+  time; the default is the plan's concurrency, so by default nothing changes. While a provider's strain is
+  `critical` (R18) its cap is 1, so a strained side is not flooded while the other provider keeps its slots. A cap
+  never blocks admission by itself: a free slot on another provider is used first, in plan order.
 - R14. Strategy rules and caps (section 3.1) and the provider rules (3.2) run inside validation, so `validate`,
   `preview` and `run` refuse the same plans with the same message.
 
@@ -310,6 +314,9 @@ All four limits are optional; absent means unlimited. There is no money limit (O
   unit and inside the declared scope; (2) do not delegate, spawn subagents or start another agent CLI; (3) do not
   commit, push, tag, release or open a pull request; (4) end with a short report of result, evidence, files
   changed, checks run, failures and risks; (5) the time budget in seconds, with the report written by 70% of it.
+- R38a. The first line of the prompt states the budget in one sentence (time in seconds, the report by 70% of it),
+  before the task; R38 still appends the full contract at the end. A cue at the end alone arrives too late for a
+  long task (survey idea A3). The line carries numbers only, never task text.
 - R39. The prompt reaches the process on stdin, never on argv and never through a shell. Shell metacharacters
   in a task are inert (tested).
 - R40. Compliance is **not** checked. The runner does not inspect git history or the report's sections. The only
@@ -327,6 +334,9 @@ All four limits are optional; absent means unlimited. There is no money limit (O
   6. otherwise `succeeded`.
   A spawn error (executable missing, start refused) is `failed`, `start_failed`; a worktree error is `failed`,
   `worktree_failed`. A panic while running one attempt is `failed`, `internal`, and the run continues.
+- R41a. Verification is reported in three words, never implied (survey idea A4): `passed`, `failed`, `unchecked`.
+  An attempt with no `verify_argv` is `unchecked`; a merge that changed nothing is reported `no-op`; the run totals
+  count unchecked attempts on their own line, so a green run with nothing verified never reads as verified.
 - R42. Final text extraction follows the descriptor's ordered list of fields; the session id, when present, is
   recorded (the MVP never resumes it). Raw stdout and stderr are never written to disk (they may echo the task,
   O4); they are parsed in memory and dropped.
