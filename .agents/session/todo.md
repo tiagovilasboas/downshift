@@ -5,11 +5,7 @@
 
 ## Onda 1: MVP Funcional no Claude Code & Loop Engineer (Concluída)
 > 📦 *Histórico compactado: 3 tarefas arquivadas em [completed-tasks-2026-10-28.md](archive/completed-tasks-2026-10-28.md)*
-- [x] F1.4: Validação E2E no Claude Code (bateria dos 4 hooks)
-- [x] F1.5: Inventário de Cobertura de Pacotes (`docs/contrib/coverage.md`)
-- [x] F1.6: Loop Engineer Engine CLI (`downshift loop`) com ciclo Plan -> Implement -> Sensor -> Cascade -> Accept
-- [x] Correção de concorrência multi-processo com Directory Lock atômico em `dead_ends`
-- [x] Injeção de `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` via `downshift setup`
+> 📦 *Histórico compactado: 5 tarefas concluídas arquivadas em [completed-tasks-2026-10-28.md](archive/completed-tasks-2026-10-28.md)*
 
 ## Onda 1.5: Setup Completo & Release Readiness (Business Plan W7 & Stage 1)
 - [x] **W7.1 (3 pts):** Default Profile Table (N11) embutida no binário — mapeamento de tipos padrão (`Explore` -> small, `claude-code-guide` -> small, `statusline-setup` -> small; `general-purpose` e `Plan` mantidos), sem risco
