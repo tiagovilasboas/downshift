@@ -156,6 +156,57 @@ func TestLoadDiscoveredSession(t *testing.T) {
 	}
 }
 
+func TestLoadDiscoveredSession_MCPEntryExpiresAfterOneHour(t *testing.T) {
+	now := time.Date(2026, 10, 28, 12, 0, 0, 0, time.UTC)
+	body := func(src string) string {
+		return `{"harnesses":{"claude-code":{"source":"` + src + `","fetched_at":"2026-10-28T10:30:00Z","ordered":["a","b"]}}}`
+	}
+	cases := []struct {
+		name, src string
+		ttl       time.Duration
+		want      bool
+	}{
+		{"mcp older than 1h expires", "mcp", 24 * time.Hour, false},
+		{"discover entry of same age lasts", "cli", 24 * time.Hour, true},
+		{"mcp with ttl 0 still capped", "mcp", 0, false},
+		{"mcp shorter ttl wins", "mcp", 30 * time.Minute, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			pin(t, Config{DiscoveredPath: write(t, body(tc.src)), DiscoveryTTL: tc.ttl})
+			load := LoadDiscoveredSession
+			if tc.src == "mcp" {
+				load = LoadReportedSession
+			}
+			if got := load("claude-code", now); got.Known != tc.want {
+				t.Fatalf("Known = %v, want %v", got.Known, tc.want)
+			}
+		})
+	}
+	pin(t, Config{DiscoveredPath: write(t, body("mcp")), DiscoveryTTL: 24 * time.Hour})
+	if !LoadReportedSession("claude-code", now.Add(-45*time.Minute)).Known {
+		t.Error("mcp entry inside 1h must be known to the providers hint")
+	}
+	if LoadDiscoveredSession("claude-code", now.Add(-45*time.Minute)).Known {
+		t.Error("routing must never read an mcp-reported entry")
+	}
+	pin(t, Config{DiscoveredPath: write(t, body("cli")), DiscoveryTTL: 24 * time.Hour})
+	if LoadReportedSession("claude-code", now).Known {
+		t.Error("a detected entry is not an mcp hint")
+	}
+}
+
+func TestResolveSessionForID_MCPHintNeverBeatsTheUserFile(t *testing.T) {
+	now := time.Now().UTC().Format(time.RFC3339)
+	disc := write(t, `{"harnesses":{"cursor":{"source":"mcp","fetched_at":"`+now+`","ordered":["injected"]}}}`)
+	user := write(t, `{"cursor":["operator"]}`)
+	pin(t, Config{DiscoveredPath: disc, SessionModelsPath: user, DiscoveryTTL: time.Hour})
+	s := ResolveSession("cursor")
+	if s.Contains("injected") || !s.Contains("operator") {
+		t.Errorf("operator file must win over an mcp hint: %v", s.IDs)
+	}
+}
+
 func TestResolveSessionForID_Precedence(t *testing.T) {
 	now := time.Now().UTC().Format(time.RFC3339)
 	disc := write(t, `{"harnesses":{"claude-code":{"fetched_at":"`+now+`","ordered":["discovered"]}}}`)

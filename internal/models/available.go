@@ -16,6 +16,7 @@ const (
 	SourcePayload         = "payload"
 	SourceDiscovery       = "discovery"
 	SourceFile            = "file"
+	SourceReported        = "mcp"
 	SourceCatalogFallback = "catalog-fallback"
 )
 

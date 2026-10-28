@@ -25,7 +25,8 @@ type sourceRead struct {
 	writtenAt time.Time
 }
 
-// readSource tries the payload, the discovery cache and session-models.json.
+// readSource tries the payload, the discovery cache, session-models.json and,
+// last, the hint the orchestrator reported through the MCP server.
 // It only reads local files: no network, no process.
 func readSource(harness string, opt Options) (sourceRead, bool) {
 	if opt.Payload != nil {
@@ -41,6 +42,9 @@ func readSource(harness string, opt Options) (sourceRead, bool) {
 		}
 	}
 	if s, ok := fromList(SourceFile, session.LoadUserSession(harness)); ok {
+		return s, true
+	}
+	if s, ok := fromList(SourceReported, session.LoadReportedSession(harness, opt.Now)); ok {
 		return s, true
 	}
 	return sourceRead{}, false

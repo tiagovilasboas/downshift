@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
@@ -57,6 +58,21 @@ func Read(path string) File {
 // file atomically with owner-only permissions. A harness whose discovery
 // failed must not be passed: its previous entry stays.
 func Merge(path string, updates map[string]Entry) error {
+	mergeMu.Lock()
+	defer mergeMu.Unlock()
+	unlock, err := lockCache(path)
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	return mergeLocked(path, updates)
+}
+
+// mergeMu serializes read-modify-write inside one process; lockCache does it
+// across processes, and the atomic rename keeps the file valid for readers.
+var mergeMu sync.Mutex
+
+func mergeLocked(path string, updates map[string]Entry) error {
 	f := Read(path)
 	for h, e := range updates {
 		f.Harnesses[h] = e

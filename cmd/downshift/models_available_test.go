@@ -126,21 +126,48 @@ func TestDoctorAvailableModels(t *testing.T) {
 	t.Setenv("DOWNSHIFT_DISCOVERY_TTL", "")
 	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), claudeSettings(f.bin))
 
-	// Only the catalog stand-in: warn with the discover fix.
+	// Only the catalog stand-in is the design for Claude Code: ok, no warning.
 	c := f.check(t, buildDoctorReport(f.env), "claude-code", "available models")
-	wantStatus(t, c, doctorWarn)
-	if !strings.Contains(c.Fix, "downshift models discover --harness claude-code") {
-		t.Errorf("fix = %q", c.Fix)
+	wantStatus(t, c, doctorOK)
+	if !strings.Contains(c.Detail, "catalog stand-in") || c.Fix != "" {
+		t.Errorf("detail = %q fix = %q", c.Detail, c.Fix)
 	}
 
-	// A real source: ok.
+	// An explicit list with no id carrying a native name: warn.
 	cache := `{"version":1,"harnesses":{"claude-code":{"fetched_at":"` + f.started.Format(time.RFC3339) +
 		`","ordered":["alpha-1","beta-2"]}}}`
 	writeFile(t, filepath.Join(f.home, ".downshift", "discovered.json"), cache)
 	t.Setenv(paths.EnvStateDir, filepath.Join(f.home, ".downshift"))
 	c = f.check(t, buildDoctorReport(f.env), "claude-code", "available models")
-	wantStatus(t, c, doctorOK)
-	if !strings.Contains(c.Detail, "2 from discovery") || !strings.Contains(c.Detail, "2 untiered") {
-		t.Errorf("detail = %q", c.Detail)
+	wantStatus(t, c, doctorWarn)
+	if !strings.Contains(c.Detail, "native name") || c.Fix == "" {
+		t.Errorf("detail = %q fix = %q", c.Detail, c.Fix)
+	}
+}
+
+func TestDoctorAvailableModelsNonCatalogHarness(t *testing.T) {
+	f := newDoctorFixture(t)
+	t.Setenv("DOWNSHIFT_DISCOVERY", "")
+	t.Setenv("DOWNSHIFT_DISCOVERY_TTL", "")
+	state := filepath.Join(f.home, ".downshift")
+	t.Setenv(paths.EnvStateDir, state)
+	t.Setenv("DOWNSHIFT_DISCOVERED", "")
+	t.Setenv("DOWNSHIFT_SESSION_MODELS", "")
+
+	var got []string
+	add := func(id, status, detail, fix string) { got = append(got, status+"|"+detail+"|"+fix) }
+
+	// Neither a fresh entry nor a file list: warn and name the command.
+	checkAvailableModels(add, f.env, "cursor")
+	if len(got) != 1 || !strings.HasPrefix(got[0], doctorWarn) || !strings.HasSuffix(got[0], "downshift models discover --harness cursor") {
+		t.Fatalf("no list: %v", got)
+	}
+
+	// A file list alone is enough.
+	writeFile(t, filepath.Join(state, "session-models.json"), `{"cursor":["a","b"]}`)
+	got = nil
+	checkAvailableModels(add, f.env, "cursor")
+	if len(got) != 1 || !strings.HasPrefix(got[0], doctorOK) || !strings.Contains(got[0], "2 from file") {
+		t.Fatalf("file list: %v", got)
 	}
 }

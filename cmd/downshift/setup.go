@@ -262,7 +262,7 @@ func setupRun(o setupOptions) int {
 	}
 	// Run discovery for harnesses with a source so sessions don't stay on handwritten lists.
 	setupDiscoverModels(o)
-	// Ensure detected harnesses have their relative tiers in session-models.json.
+	// Say which harnesses still lack a detected model list (read-only: nothing is written).
 	setupEnsureSessionModels(o, targets)
 
 	fmt.Fprint(o.Out, setupSummary(plans))
