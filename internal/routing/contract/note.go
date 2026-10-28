@@ -10,7 +10,7 @@ import "regexp"
 type Verdict string
 
 const (
-	// VerdictKept: nothing applied, the requested model is kept (precedence 1 or 5).
+	// VerdictKept: nothing applied, the requested model is kept (precedence 1 or 6).
 	VerdictKept Verdict = "kept"
 	// VerdictProfile: a named or agent-type profile set the tier (precedence 2).
 	VerdictProfile Verdict = "profile"
@@ -18,6 +18,9 @@ const (
 	VerdictRule Verdict = "rule"
 	// VerdictHintDown: the parent's hint moved the tier down (precedence 4).
 	VerdictHintDown Verdict = "hint_down"
+	// VerdictDefault: the default profile table shipped with the binary set the
+	// tier, because nothing declared matched (precedence 5).
+	VerdictDefault Verdict = "default"
 	// VerdictGuardFloor: the guard raised the decided tier back to a floor.
 	VerdictGuardFloor Verdict = "guard_floor"
 	// VerdictHeldUnknown: a step chose a tier but it could not be resolved to a
@@ -31,7 +34,7 @@ const (
 // Verdicts lists every Verdict in a stable order.
 func Verdicts() []Verdict {
 	return []Verdict{VerdictKept, VerdictProfile, VerdictRule, VerdictHintDown,
-		VerdictGuardFloor, VerdictHeldUnknown, VerdictRefusedConfig}
+		VerdictDefault, VerdictGuardFloor, VerdictHeldUnknown, VerdictRefusedConfig}
 }
 
 // Valid reports whether v is one of Verdicts.

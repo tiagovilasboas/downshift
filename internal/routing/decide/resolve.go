@@ -32,7 +32,8 @@ func refused(reason contract.Reason) choice {
 //  2. a profile, named by the request or matching its agent type;
 //  3. the first enabled rule whose kind, effort and quota gates admit it;
 //  4. the hint's tier, only when it is below the requested tier;
-//  5. otherwise the requested model is kept.
+//  5. the default profile table shipped with the binary, by agent type;
+//  6. otherwise the requested model is kept.
 //
 // requested is the tier of the requested model; it is unknown (empty) when the
 // catalog does not know the model, and only the hint step reads it.
@@ -61,7 +62,17 @@ func resolve(in Input, requested contract.Tier) choice {
 	if t := req.Hint.Tier; t.Valid() && requested.Valid() && rank(t) < rank(requested) {
 		return choice{verdict: contract.VerdictHintDown, tier: t}
 	}
-	return keep
+	return defaultChoice(req, len(in.Risk) > 0)
+}
+
+// defaultChoice reads the default profile table for the agent type. A type
+// with no row, or a row that keeps, leaves the requested model in place.
+func defaultChoice(req contract.Request, risky bool) choice {
+	d, ok := policy.DefaultFor(req.Harness, req.AgentType)
+	if !ok || d.Keeps() {
+		return keep
+	}
+	return choice{verdict: contract.VerdictDefault, tier: d.TierFor(risky)}
 }
 
 // profileChoice reads the tier of a profile of this harness. A profile that

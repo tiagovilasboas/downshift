@@ -21,7 +21,7 @@ func TestEnumStringsAreStable(t *testing.T) {
 		{"Kind", strs(Kinds()), []string{"research", "code", "review", "command", "scrap", "docs"}},
 		{"EffortClass", strs(EffortClasses()), []string{"light", "standard", "deep"}},
 		{"Tier", strs(Tiers()), []string{"small", "mid", "frontier"}},
-		{"Verdict", strs(Verdicts()), []string{"kept", "profile", "rule", "hint_down", "guard_floor", "held_unknown", "refused_config"}},
+		{"Verdict", strs(Verdicts()), []string{"kept", "profile", "rule", "hint_down", "default", "guard_floor", "held_unknown", "refused_config"}},
 		{"Reason", strs(Reasons()), []string{"risk_floor", "never_widen", "explicit_only", "foreign_id", "profile_override", "unknown_profile", "no_candidate", "fail_open"}},
 		{"HeadroomVerdict", strs(HeadroomVerdicts()), []string{"chosen", "ignored"}},
 		{"Channel", strs(Channels()), []string{"hook", "launch", "compile", "block_retry"}},

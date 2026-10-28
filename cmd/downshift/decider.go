@@ -58,9 +58,12 @@ func (r routingDecider) Decide(req core.Request) core.Decision {
 }
 
 // unchangedInput is a spawn with no policy, hint, floor or risk: v2 keeps the
-// requested model for it.
+// requested model for it. The agent type is dropped too: no risk scan ran, so
+// the default profile table must not move the spawn.
 func unchangedInput(req core.Request, cat decide.Catalog) decide.Input {
-	return decide.Input{Request: contractRequest(req, contract.Hint{}), Catalog: cat}
+	r := contractRequest(req, contract.Hint{})
+	r.AgentType = ""
+	return decide.Input{Request: r, Catalog: cat}
 }
 
 // input gathers everything the decision reads. It reports false on a policy or
