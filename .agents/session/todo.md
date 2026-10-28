@@ -16,6 +16,6 @@
 
 ## Onda 2: Cloud Software Factory & Escala Multi-Harness (W2 & Factory)
 - [x] **F2.1 (3 pts):** Batch Loop Runner (`downshift loop --batch=tasks.json`) para orquestração sequencial/isolada de tarefas
-- [ ] **F2.2 (2 pts):** Relatório Consolidado de Fábrica (`downshift loop report`) com telemetria e taxa de aceitação git
+- [x] **F2.2 (2 pts):** Relatório Consolidado de Fábrica (`downshift loop report`) com telemetria e taxa de aceitação git
 - [ ] **F2.3 (3 pts):** Multi-Harness Universal Seeder com auto-descoberta de OpenCode, Cursor e Codex em `session-models.json`
 - [ ] **F2.4 (5 pts):** Worktree isolado e hermético (`internal/worktree`, W2.1 do business plan)

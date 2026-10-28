@@ -73,6 +73,8 @@ Flags:
   --batch=<file>     Run the tasks of a JSON array [{"task","sensor","model"}] in order;
                      stops at the first failure, the rest are reported as skipped
   --continue-on-error  With --batch, keep going after a failed task
+  report             Acceptance summary (used / discarded) of loop and accept runs,
+                     optional --session=<id> and --json; run as: downshift loop report
   --json             Print result as JSON
 
 Examples:

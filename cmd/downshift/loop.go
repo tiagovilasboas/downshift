@@ -19,6 +19,9 @@ import (
 const loopUsage = `Usage: downshift loop [--task=<desc>] [--sensor=<cmd>] [--iterations=<n>] [--timeout=<dur>] [--session=<id>] [--batch=<tasks.json>] [--continue-on-error] [--json] [-- <sensor-cmd>]`
 
 func runLoop(args []string, out, errw io.Writer) int {
+	if len(args) > 0 && args[0] == "report" {
+		return runLoopReport(args[1:], out, errw)
+	}
 	var cfg loop.Config
 	cfg.MaxIterations = 3
 	cfg.Timeout = 5 * time.Minute

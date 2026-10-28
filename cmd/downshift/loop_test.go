@@ -106,3 +106,17 @@ func TestRunLoop_BatchJSONAndMissingFile(t *testing.T) {
 		t.Errorf("missing file rc = %d, want 2", rc)
 	}
 }
+
+func TestRunLoopReport_Empty(t *testing.T) {
+	t.Setenv("DOWNSHIFT_STATE_DIR", t.TempDir())
+	var stdout, stderr bytes.Buffer
+	if rc := runLoop([]string{"report"}, &stdout, &stderr); rc != 0 {
+		t.Fatalf("rc = %d; stderr: %s", rc, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "no run decided yet") {
+		t.Errorf("stdout = %q", stdout.String())
+	}
+	if rc := runLoop([]string{"report", "--bogus"}, &stdout, &stderr); rc != 2 {
+		t.Errorf("unknown arg rc = %d, want 2", rc)
+	}
+}
