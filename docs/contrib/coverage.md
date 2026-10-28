@@ -84,6 +84,7 @@ file or from `AGENTS.md`.
 | `internal/shellwrap` | Shell | Shell wrap domain: `RewriteAdapter`, `AdviseAdapter`, `Handle` |
 | `internal/telemetry` | Telemetry | Prompt-free JSONL; `Summarize` (the one token savings definition) |
 | `internal/telemetry/fromcore` | Telemetry | Edge from the router to the log: `FromDecision`, `ReasonCodes`, `Install` (wires `catalog.TierViewOf` and the harness list); the only telemetry package that imports `core` |
+| `internal/worktree` | Shell | Isolated git worktrees for loop runs (F2.4): slug and containment, hermetic git runner; no task text on disk |
 | `internal/testenv` | Quality | Test helpers (no test files) |
 | `internal/testrace` | Quality | Race detector helpers (no test files) |
 | `cmd/downshift` | — | CLI, `harnessRegistry`, `runHookAdapter`, setup, doctor |
