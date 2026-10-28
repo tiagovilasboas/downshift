@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/tiagovilasboas/downshift/internal/routing/policy"
 )
 
 const setupBackupInfix = ".downshift-bak-"
@@ -124,6 +126,12 @@ func setupUndo(o setupOptions, targets []setupTarget) int {
 			if b, _ := latestBackup(path); b != "" {
 				addRestore(t, path, false)
 			}
+		}
+	}
+	if o.ProjectDir != "" {
+		projPolicy := policy.ProjectPath(o.ProjectDir)
+		if b, _ := latestBackup(projPolicy); b != "" {
+			addRestore(policyInitTarget, projPolicy, false)
 		}
 	}
 	if readErr {

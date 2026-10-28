@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -165,5 +166,45 @@ func TestSetupOffersPolicyOnlyWithAProjectDirectory(t *testing.T) {
 				t.Errorf("out = %q, want it to contain %q", out.String(), tt.wantOutHas)
 			}
 		})
+	}
+}
+
+func TestSetupUndoRestoresPolicyInit(t *testing.T) {
+	home := t.TempDir()
+	projDir := t.TempDir()
+
+	opts := setupOptions{
+		Home:       home,
+		ProjectDir: projDir,
+		Yes:        true,
+		In:         strings.NewReader(""),
+		Out:        io.Discard,
+		Err:        io.Discard,
+		Now:        time.Now,
+	}
+
+	plan, ok := planPolicyInit(opts)
+	if !ok {
+		t.Fatal("planPolicyInit not ok")
+	}
+	if failed, _ := applyPlans(opts, []setupPlan{plan}); failed {
+		t.Fatal("applyPlans failed")
+	}
+
+	policyPath := policy.ProjectPath(projDir)
+	if _, err := os.Stat(policyPath); err != nil {
+		t.Fatalf("expected policy.json to exist: %v", err)
+	}
+
+	// Now undo
+	opts.Undo = true
+	var outBuf bytes.Buffer
+	opts.Out = &outBuf
+	if code := setupUndo(opts, setupTargets); code != 0 {
+		t.Fatalf("setupUndo exit %d\n%s", code, outBuf.String())
+	}
+
+	if _, err := os.Stat(policyPath); !os.IsNotExist(err) {
+		t.Fatalf("expected policy.json to be removed by undo: %v", err)
 	}
 }

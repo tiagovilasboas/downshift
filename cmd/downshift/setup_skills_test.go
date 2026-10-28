@@ -91,3 +91,14 @@ func TestSetupUndoLeavesAnEditedSkill(t *testing.T) {
 		t.Fatalf("undo removed an edited skill: %q", got)
 	}
 }
+
+func TestSetupSkipsTheSkillWhenThePluginIsEnabledInSettings(t *testing.T) {
+	e := newSetupEnv(t, ".claude")
+	writeFile(t, e.path(".claude/settings.json"), `{"enabledPlugins":{"downshift@downshift":true}}`)
+	if code, out, _ := e.run("--yes", "claude-code"); code != 0 {
+		t.Fatalf("setup exit %d\n%s", code, out)
+	}
+	if _, err := os.Stat(e.path(".claude/skills/" + auditSkill)); !os.IsNotExist(err) {
+		t.Fatalf("the skill duplicates the enabled plugin: %v", err)
+	}
+}

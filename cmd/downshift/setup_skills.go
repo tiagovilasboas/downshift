@@ -4,6 +4,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
@@ -57,6 +58,21 @@ func skillPathsFor(o setupOptions, t setupTarget) []string {
 	return out
 }
 
+func isPluginActive(o setupOptions, t setupTarget) bool {
+	if o.PluginActive != nil && o.PluginActive[t.Name] {
+		return true
+	}
+	if t.Plugin == "" || t.File == "" {
+		return false
+	}
+	raw, err := os.ReadFile(filepath.Join(o.Home, filepath.FromSlash(t.File)))
+	if err != nil {
+		return false
+	}
+	var parsed any
+	return json.Unmarshal(raw, &parsed) == nil && pluginEnabled(parsed, t.Plugin)
+}
+
 // planSkills plans every skill file for a target that declares a SkillsDir.
 // It reuses setupPlan, so the diff, the backup and --undo behave like any
 // other generated file. A skill folder that exists without our marker is a
@@ -66,7 +82,7 @@ func planSkills(o setupOptions, t setupTarget) []setupPlan {
 		return nil
 	}
 	root := filepath.Join(o.Home, filepath.FromSlash(t.SkillsDir))
-	if o.PluginActive[t.Name] {
+	if isPluginActive(o, t) {
 		return []setupPlan{{target: t, path: root, skip: "the " + t.Plugin + " plugin already carries the Downshift skills"}}
 	}
 	var plans []setupPlan
