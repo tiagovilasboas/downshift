@@ -138,7 +138,7 @@ directory or any parent (nearest file wins, at most 8 levels up). A floor only
 - Risk categories are the names in `internal/core/risk.go` (for example `secret`, `payment`, `destructive`).
 - The highest applicable rule wins.
 - Fail-open: a missing, oversized, symlinked or invalid file (unknown field, tier, class or category) is ignored and the spawn routes as if there were no file. The floor still goes through the session allowlist and quota gates, so it cannot select a model the session does not offer.
-- The hook runner takes the project directory from the payload, and falls back to the hook process's working directory when the payload has none. Offline commands such as `benchmark` and `try` have no project directory and never read a policy file. Where each harness keeps it (evidence level, 2026-10-11):
+- The hook runner takes the project directory from the payload, and falls back to the hook process's working directory when the payload has none. Offline commands such as `benchmark` have no project directory and never read a policy file. Where each harness keeps it (evidence level, 2026-10-11):
 
   | Harness | Payload field | Evidence |
   |---|---|---|

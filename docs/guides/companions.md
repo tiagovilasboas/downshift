@@ -292,7 +292,7 @@ saving them, so it is not shipped here. One use fits Downshift: when you
 correct a subagent that failed because its model was too small, the recorded
 observation is the raw material for a `misroute:` issue
 ([CONTRIBUTING.md](../../CONTRIBUTING.md)) or a reviewed `required_tier`
-label. Keep the task text out of the issue; `downshift try "<task>"` output
+label. Keep the task text out of the issue; `downshift session --why` output
 and the expected tier are enough.
 
 ## Cost and usage skills (overlap, not companions)

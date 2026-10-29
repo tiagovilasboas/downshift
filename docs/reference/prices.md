@@ -30,8 +30,8 @@ sets the policy for keeping catalog prices accurate.
 5. **List prices are routing inputs, not report output.** The catalog's dated
    prices can guide a model choice, but current `stats`, `report` and usage
    exports show token counts and no dollar estimates. A list-price calculation
-   is not an invoice. `downshift try` and the live views quote no price and no
-   percentage: `try` says whether one decision's tokens would run on a cheaper
+   is not an invoice. `downshift session` and the live views quote no price and no
+   percentage: the session view says whether one decision's tokens would run on a cheaper
    or a pricier model than requested (owner decision 2026-10-19).
 6. **You can override.** A user file at `~/.harness-downshift/catalog.json`
    is merged over the embedded catalog by harness and model id, so a negotiated

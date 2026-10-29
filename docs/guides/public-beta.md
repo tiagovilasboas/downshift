@@ -21,7 +21,7 @@ Local checks that do not spend provider credit:
 
 ```bash
 go test ./...
-go run ./cmd/downshift try "rename userId to accountId" claude-code
+go run ./cmd/downshift route --harness claude-code --model claude-opus-5-5
 go run ./cmd/downshift doctor
 ```
 
@@ -51,7 +51,7 @@ Copied from beta-exit (2026-10-15), still open after the 2026-10-17 cleanup:
 
 **Now**
 
-- Misroute issues with `downshift try` output (EN or PT).
+- Misroute issues with `downshift session --why` output (EN or PT).
 - Docs that still describe a removed flag (Graphify, `DOWNSHIFT_E5_*`, `DOWNSHIFT_MINILM_EMBED`).
 - Adapter tests that use fixtures already in `examples/`.
 

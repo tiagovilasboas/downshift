@@ -6,7 +6,7 @@ package telemetry
 import "strings"
 
 // briefWords is each shaping reason code in a few words, for one-line "why"
-// output (`downshift try`). Guardrail codes use ReasonWords instead.
+// output (the removed `downshift try` command). Guardrail codes use ReasonWords instead.
 var briefWords = map[string]string{
 	ReasonNoSignal:             "no clear signal",
 	ReasonSemanticBoost:        "raised by meaning-based matching",

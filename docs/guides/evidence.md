@@ -69,7 +69,7 @@ Source: `internal/telemetry/telemetry.go` (`Aggregate`), `export.go`, [stats-exp
   tokens (read+write) are counted apart, because cache reads are most of a child's tokens and carry the smallest price
   gap: Sonnet to Haiku saves nothing on them, so one share would overstate the value. These views carry no dollar;
   `downshift report` prints no dollar either: it shows tokens per completed task for routed and control, and states the share again in tokens (plan lens). The
-  share is a count of where tokens ran, not a reduction in tokens and not a dollar saving. `downshift try` quotes no
+  share is a count of where tokens ran, not a reduction in tokens and not a dollar saving. `downshift session --why` quotes no
   price or percentage for one decision: it says whether its tokens would run on a cheaper or a pricier model than
   requested, and only when the hook would make that rewrite.
   Per harness, what is observed and what blocks the rest: [value-per-harness.md](../reference/value-per-harness.md).
