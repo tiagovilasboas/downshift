@@ -52,7 +52,7 @@ Attach or transcribe numbers from the provider billing dashboard (Anthropic Cons
 
 | Metric | Provider Dashboard | Downshift Tracked | Variance / Notes |
 |---|---|---|---|
-| **Total Spend (USD)** | $0.00 | $0.00 | |
+| **Total Spend (USD)** | $0.00 | n/a (Downshift reports tokens only) | |
 | **Input Tokens** | 0 | 0 | |
 | **Output Tokens** | 0 | 0 | |
 | **Cached Tokens** | 0 | 0 | |
@@ -63,7 +63,7 @@ Attach or transcribe numbers from the provider billing dashboard (Anthropic Cons
 
 ## 5. Analysis & Sign-off
 
-- **Observed savings:** $X.XX (~XX% reduction on subagent spend).
+- **Observed savings (from the provider dashboard, not Downshift):** $X.XX (~XX% reduction on subagent spend).
 - **Rework / Failure rate:** (Were any tasks retried due to model capacity?)
 - **Conclusion:**
   - [ ] Confirms real provider savings consistent with downshift routing decisions.

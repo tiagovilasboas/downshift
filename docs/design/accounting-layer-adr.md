@@ -1,9 +1,14 @@
 # ADR: Isolated Accounting Layer
 
 **Date:** 2026-10-21
-**Status:** Proposed
-**Note (2026-10-29):** the savvy-progress mod this page names was removed, and the dollar account is out (owner decision O1).
+**Status:** Rejected (2026-10-29)
 **Author:** Tiago Vilas Boas
+
+> **Rejected, 2026-10-29.** Owner decision: Downshift accounting is tokens only, forever. It reports
+> tokens spent, tokens saved by routing (work moved to a smaller model) and tokens saved by the
+> compactor (output avoided). It never reports dollars or cost, not even as an estimate. The dollar
+> layer planned below is not built. The token ledger in [accounting.md](accounting.md) replaces it.
+> The savvy-progress mod this page names was also removed. The body below is kept as history.
 
 ## Context
 
