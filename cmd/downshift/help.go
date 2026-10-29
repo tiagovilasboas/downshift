@@ -30,7 +30,7 @@ Get started
   downshift doctor                 Checklist: binary, hooks per harness, state, with a fix per failure
 
 See the effect
-  downshift stats                  Decisions and estimated savings (list price, not an invoice)
+  downshift stats                  Decisions and estimated token savings (not an invoice)
   downshift report                 Measured: routed vs control group, tokens per completed task, with CI
   downshift session                This session's subagents as a tree (--why, --pause)
 

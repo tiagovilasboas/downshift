@@ -25,12 +25,12 @@ Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado d
 
 ## Pendências técnicas
 
-- [ ] Verificar `downshift session --pause --session=<id>`: o id não foi respeitado (pausa a sessão mais recente). Não reverificado em 2026-10-29.
+- [x] `downshift session --pause --session=<id>` funciona (verificado em 2026-10-29).
 - [ ] Fazer o hint `[tier=...]` subir também (hoje só desce).
 - [ ] Remover `policy economy` e sua CLI (`cmd/downshift/policy_economy.go`). O8: age só na política declarada; remoção pendente.
 - [ ] Avaliar `internal/cascade`: `loop` e `exec` ainda importam. Remover só se o loop não precisar.
-- [ ] **Dinheiro na saída (conflito com O1):** `downshift stats` diz "estimated savings (list price)" e `doctor` tem `checkPrices`. O1 proíbe contabilidade em dólar. A tabela de preços fica só como sinal de roteamento (B8).
-- [ ] **Guia de instalação desatualizado:** `docs/guides/install.md` e `docs/guides/quickstart.md` usam `downshift try`, comando já removido. Também descrevem o classificador e `claude-haiku-4-5`. Reescrever como PR próprio.
+- [ ] **Dinheiro na saída (O1):** o `stats` já mostra só tokens e percentuais; a ajuda deixou de dizer "list price". Resta `doctor` `checkPrices` (a tabela de preços serve só de sinal de roteamento, B8).
+- [ ] Guias `install.md` e `quickstart.md` já sem `downshift try`. Outros docs em `docs/` ainda citam `try`; varrer.
 - [ ] Varrer `75%` e `haiku-4-5` nos docs de produto (lista em `docs/`). Registros históricos de evidência ficam como estão.
 - [ ] Ativos de marca com "No LLM in the loop" (SVG) e o repositório `downshift-business-plan`.
 - [ ] Suíte Aider de 39 tarefas (no scratchpad, fora do repo): o exercício `counter` passa com o stub; corrigir antes de usar em V2. O repositório do benchmark não declara licença.

@@ -14,8 +14,8 @@ Canonical guide for humans and coding agents installing Downshift on a user mach
 After install:
 
 ```bash
-downshift doctor          # version, state dir (~/.downshift), catalog source
-downshift try "rename userId in auth.ts" claude-code
+downshift doctor          # version, state dir (~/.downshift), hooks per harness
+downshift models available --harness claude-code   # the models the orchestrator can choose from
 ```
 
 Optional adapter smoke (from a clone of this repo):
@@ -67,18 +67,15 @@ downshift setup             # asks first, backs up the files, then merges the ho
 
 For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) for keys you have not set; existing values are kept, and `--no-session-policy` skips both. Claude Code's built-in You should know mod (`"enabledPlugins": {"cc-plugin-you-should-know@builtin": true}`) is opt-in because each check is a billed background request to the session's model: `setup` prints a suggestion, and `downshift setup --you-should-know` writes it (`/plugin disable cc-plugin-you-should-know@builtin` turns it off) ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex, Antigravity and KiroCrew, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew (Experimental) gets a generated wrapper and a `preToolUse` entry in its existing `config.json`; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
 
-**Step 3 — Check the classifier** on your own prompts:
+**Step 3 — Check the models** your harness offers:
 ```bash
-downshift doctor                                          # checklist: binary, hooks per harness, state, scores
-downshift try "rename the userId variable" claude-code    # what would be picked, and why
+downshift doctor                                          # checklist: binary, hooks per harness, state
+downshift models available --harness claude-code          # the models, their tiers and where each came from
 ```
 
-**Step 4 — Confirm it's working.** Open a new Claude Code session and ask it to spawn a subagent for a trivial task. You'll see a line like this in stderr:
-```
-downshift: TRIVIAL task → downshift to claude-haiku-4-5
-```
+**Step 4 — Confirm it's working.** Open a new Claude Code session and ask it to spawn a subagent for a trivial task. Then run `downshift session --why`: it lists each subagent with the model it asked for, the model it got and the reason. When the orchestrator starts the spawn's prompt with `[tier=small]`, the subagent runs on the small-tier model.
 
-That line means the hook fired and emitted a rewrite before the subagent started.
+A reason in that list means the hook fired and decided before the subagent started.
 Whether the harness applied it is a separate fact; `downshift stats` separates
 `rewrite_emitted` from honored, and the matrix says what is verified per plan.
 
@@ -111,13 +108,11 @@ For child status and real usage, also add `PostToolUse` and `PostToolUseFailure`
 
 ## Testing locally before connecting the hook
 
-Before adding the hook to Claude Code, test the classifier and hook logic locally:
+Before adding the hook to Claude Code, test the hook logic locally:
 
-**Test 1 — Classifier only (terminal):**
+**Test 1 — Models and tiers (terminal):**
 ```bash
-downshift try "rename the userId variable" claude-code
-downshift try "rearchitect the payment flow" claude-code
-downshift try "implement the CSV export" claude-code
+downshift models available --harness claude-code
 ```
 
 **Test 2 — Full hook (JSON):**
@@ -488,7 +483,7 @@ pending spawn with an explicit child model and:
 Use the `kirocrew-core` MCP tool `spawn_run` with explicit `task` and `model`
 arguments. The native `use_subagent` / crew pipeline can omit the child model;
 those calls are outside routing coverage. Downshift never infers the child
-model from the parent's model or a UI title. The classifier is deterministic;
+model from the parent's model or a UI title. The decider is deterministic;
 the agent must retry a blocked spawn with the recommended model.
 
 #### Setup
@@ -697,11 +692,10 @@ reasoning_effort = "high"    # torque for the hard curves
 
 Precedence is explicit spawn override → role default → persona default → parent
 session, so these pins hold unless the agent is told otherwise.
-`downshift try "<prompt>" grok` tells you which tier a task wants; map that tier
-to a role's reasoning effort in config once.
+Choose each role's tier and reasoning effort in config once.
 
 > If a future Grok build adds `updatedInput` to `PreToolUse` (or a multi-model
-> catalog), a `downshift grok` hook adapter becomes a drop-in — the classifier
+> catalog), a `downshift grok` hook adapter becomes a drop-in — the decider
 > and policy are already harness-agnostic. Until then, config is the right and
 > documented lever.
 ## Plan compatibility — read before installing
@@ -819,15 +813,3 @@ Claude Code free runs in a sandboxed container with no network egress. Install
 the binary on your local machine first, then use the hook — the binary runs on
 your machine, not inside Claude Code's container.
 
-### Verdict shows UNKNOWN instead of DOWNSHIFT
-
-`UNKNOWN` means no current model was provided. Pass the current model as the
-third argument to `try`:
-
-```bash
-downshift try "rename the variable" claude-code claude-opus-5-5
-# → DOWNSHIFT
-```
-
-In the live hook this is handled automatically — the event carries the session
-model and the adapter reads it.
