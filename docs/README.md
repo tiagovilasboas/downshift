@@ -29,7 +29,7 @@ Docs are grouped into 5 domain layers, detailed in [domains/](domains/), plus st
 - **[Domain 2: Code Intelligence & Context Layer (DCI)](domains/code-intelligence.md)** (multi-language parsing, reverse call-graph blast radius, BM25 ranking, prompt injection delimiters)
 - **[Domain 3: Output Compaction & Context Optimization](domains/context-optimization.md)** (the Compactor, sensor, context policy)
 - **[Domain 4: Observability, Evidence & Verification](domains/observability-telemetry.md)** (telemetry, control group, verification report, capability matrix)
-- **[Domain 5: Harness Adapters & Packaging](domains/harness-adapters-packaging.md)** (Claude Code, Cursor, Codex, OpenCode, plugins, mods)
+- **[Domain 5: Harness Adapters & Packaging](domains/harness-adapters-packaging.md)** (Claude Code, Cursor, Codex, OpenCode, plugin)
 
 Markdown file names under `docs/` are lowercase kebab-case; only names a tool requires (`README.md`, `SKILL.md`, `AGENTS.md`) keep their exact casing.
 
@@ -166,7 +166,7 @@ The harness adapters and packaging domain connects Downshift's core intelligence
 
 | Doc | Type | Topic |
 |-----|------|-------|
-| [domains/harness-adapters-packaging.md](domains/harness-adapters-packaging.md) | Domain Hub | Domain specification: multi-harness adapters, 5 packaging layers, plugin & mods |
+| [domains/harness-adapters-packaging.md](domains/harness-adapters-packaging.md) | Domain Hub | Domain specification: multi-harness adapters, 5 packaging layers, plugin |
 | [guides/claude-code.md](guides/claude-code.md) | Guide | Primary harness guide: opusplan, baseline inference, plan mode, emitted vs honored vs used |
 | [guides/install.md](guides/install.md) | Guide | Installation and harness hook configuration for all supported tools |
 | [guides/when-to-use.md](guides/when-to-use.md) | Guide | When to use Downshift vs gateways and direct SDKs |
@@ -174,15 +174,13 @@ The harness adapters and packaging domain connects Downshift's core intelligence
 | [guides/probe.md](guides/probe.md) | Guide | `downshift probe`: inspecting real hook payloads and field names |
 | [reference/harness-matrix.md](reference/harness-matrix.md) | Reference | Plan compatibility matrix (harness x plan x rewrite honored status) |
 | [design/architecture.md#packaging-layers-what-an-agent-harness-loads](design/architecture.md#packaging-layers-what-an-agent-harness-loads) | Design | The 5 packaging layers (Memory, Skills, Hooks, Agents, Plugin) |
-| [design/mod-router.md](design/mod-router.md) | Design | Experimental router mod: in-process routing from `agent.spawn` |
+| [design/mod-router.md](design/mod-router.md) | Design | History: the router mod prototype, removed 2026-10-29 |
 | [contrib/layering.md](contrib/layering.md) | Contrib | Layering rule: every feature serves every harness (adapters only parse and emit) |
 | [contrib/agent-reference.md](contrib/agent-reference.md) | Contrib | On-demand architectural detail for agents |
 | [../skills/README.md](../skills/README.md) | Skills | Agent skills overview: jobs, measured context cost, delegation overhead |
 | [../skills/downshift-setup/SKILL.md](../skills/downshift-setup/SKILL.md) | Skill | Agent skill: install or repair hooks on any harness |
 | [../skills/downshift-audit/SKILL.md](../skills/downshift-audit/SKILL.md) | Skill | Agent skill: audit hook wiring, stats, and fixed context size |
 | [../.claude-plugin/plugin.json](../.claude-plugin/plugin.json) | Packaging | Claude Code plugin definition |
-| [../mods/README.md](../mods/README.md) | Packaging | Claude Code mods: savvy-progress |
-| [../mods/downshift-router/README.md](../mods/downshift-router/README.md) | Packaging | Experimental in-process routing mod |
 | [../examples/README.md](../examples/README.md) | Examples | Sample hook JSON payloads across harnesses |
 | [evidence/claude-code-rewrite-honored-2026-10-06.md](evidence/claude-code-rewrite-honored-2026-10-06.md) | Evidence | Observed rewrite honor on Claude Code |
 | [evidence/cursor-rewrite-honored-2026-10-10.md](evidence/cursor-rewrite-honored-2026-10-10.md) | Evidence | Cursor rewrite evaluation (discarded on Free/legacy Pro) |

@@ -34,7 +34,7 @@ func realSetupExec() setupExec {
 }
 
 // ensurePlugin installs the Downshift plugin through Claude Code's own CLI, so
-// the hooks and the bundled cache-tax mod arrive together ("install, it works").
+// the hooks arrive together ("install, it works").
 // It reports whether the plugin is, or in a dry run would be, active. Every
 // failure falls back to the settings hooks with a note: setup never leaves
 // Claude Code without routing because a plugin command failed.
@@ -77,7 +77,7 @@ func ensurePlugin(o setupOptions, t setupTarget) (bool, []string) {
 	addCmd := "claude plugin marketplace add " + pluginMarketplaceSource
 	installCmd := "claude plugin install " + t.Plugin
 	if o.DryRun {
-		return true, []string{"would run `" + addCmd + "` and `" + installCmd + "` (hooks and the cache-tax mod come from the plugin)"}
+		return true, []string{"would run `" + addCmd + "` and `" + installCmd + "` (the hooks come from the plugin)"}
 	}
 	if out, err := o.Exec.Run(claude, "plugin", "marketplace", "add", pluginMarketplaceSource); err != nil && !pluginAlreadyDone(out) {
 		return fallback("`" + addCmd + "` failed (" + oneLine(out, err) + ")")
@@ -85,56 +85,8 @@ func ensurePlugin(o setupOptions, t setupTarget) (bool, []string) {
 	if out, err := o.Exec.Run(claude, "plugin", "install", t.Plugin); err != nil && !pluginAlreadyDone(out) {
 		return fallback("`" + installCmd + "` failed (" + oneLine(out, err) + ")")
 	}
-	return true, []string{"installed the " + t.Plugin + " plugin with `claude plugin install`: the hooks and the cache-tax mod come from it " +
+	return true, []string{"installed the " + t.Plugin + " plugin with `claude plugin install`: the hooks come from it " +
 		"(`--no-plugin` keeps them in settings.json instead)"}
-}
-
-// ensureMods installs the sibling mods of t (Mods) through Claude Code's CLI.
-// Mods carry no routing, so they need no downshift on PATH, and a failure is
-// a note: routing is already settled by ensurePlugin. An enabled mod is left
-// alone; --no-plugin skips them with the plugin.
-func ensureMods(o setupOptions, t setupTarget) []string {
-	if len(t.Mods) == 0 || o.NoPlugin || o.Exec.Run == nil || o.Exec.LookPath == nil {
-		return nil
-	}
-	var parsed any
-	if raw, err := os.ReadFile(filepath.Join(o.Home, filepath.FromSlash(t.File))); err == nil {
-		_ = json.Unmarshal(raw, &parsed)
-	}
-	var missing []string
-	for _, id := range t.Mods {
-		if !pluginEnabled(parsed, id) {
-			missing = append(missing, id)
-		}
-	}
-	if len(missing) == 0 {
-		return nil
-	}
-	list := strings.Join(missing, ", ")
-	claude, err := o.Exec.LookPath("claude")
-	if err != nil {
-		return []string{"`claude` is not on PATH, so the mods " + list + " were not installed (`/plugin install <mod>` later)"}
-	}
-	if o.DryRun {
-		return []string{"would install the mods " + list + " with `claude plugin install`"}
-	}
-	if out, err := o.Exec.Run(claude, "plugin", "marketplace", "add", pluginMarketplaceSource); err != nil && !pluginAlreadyDone(out) {
-		return []string{"`claude plugin marketplace add " + pluginMarketplaceSource + "` failed (" + oneLine(out, err) +
-			"), so the mods " + list + " were not installed"}
-	}
-	var notes, installed []string
-	for _, id := range missing {
-		if out, err := o.Exec.Run(claude, "plugin", "install", id); err != nil && !pluginAlreadyDone(out) {
-			notes = append(notes, "mod "+id+" not installed: `claude plugin install "+id+"` failed ("+oneLine(out, err)+")")
-			continue
-		}
-		installed = append(installed, id)
-	}
-	if len(installed) > 0 {
-		notes = append([]string{"installed the mods " + strings.Join(installed, ", ") +
-			" (start a new Claude Code session to load them; `/plugin disable <mod>` turns one off)"}, notes...)
-	}
-	return notes
 }
 
 // sameFile reports whether two paths name the same file once symlinks are

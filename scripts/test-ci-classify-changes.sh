@@ -57,7 +57,6 @@ check_os os-adapters 1 "$PR" internal/adapters/claudecode/adapter.go
 check_os os-cmd 1 "$PR" cmd/downshift/setup.go
 check_os os-kirocrew-wrapper 1 "$PR" scripts/kirocrew-pre-tool-use.sh
 check_os os-hooks-json 1 "$PR" hooks/hooks.json
-check_os os-mod-hooks 1 "$PR" mods/savvy-progress/hooks/hooks.json
 check_os os-workflow 1 "$PR" .github/workflows/ci.yml
 check_os os-mixed-with-docs 1 "$PR" docs/x.md internal/paths/paths.go
 check_os os-empty-diff 1 "$PR"
@@ -67,7 +66,6 @@ check_os not-os-prefix-sibling 0 "$PR" internal/pathsx/x.go
 check_os not-os-docs 0 "$PR" docs/some-page.md
 check_os not-os-readme 0 "$PR" README.md
 check_os not-os-other-script 0 "$PR" scripts/ci-test-packages.sh
-check_os not-os-other-mod 0 "$PR" mods/savvy-progress/main.go
 check_os main-push-docs-only 1 refs/heads/main docs/some-page.md
 check_os tag-push-docs-only 1 refs/tags/v1.2.3 docs/some-page.md
 

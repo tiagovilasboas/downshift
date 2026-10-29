@@ -51,7 +51,7 @@ Downshift organizes its distribution across five modular packaging layers, allow
 | **Layer 2: Skills** | `skills/downshift-setup`, `skills/downshift-audit`, `skills/cost-reducer` | Agent skills with structured procedures and judgment logic | Harness-neutral (SKILL.md standard) |
 | **Layer 3: Hooks** | `downshift <harness>` subcommands, `PreToolUse`, `PostToolUse`, `SubagentStop` | Direct CLI entrypoints for hook interception and telemetry | Shared Go binary |
 | **Layer 4: Agents** | `agents/mechanical-worker.md` | Model-omitted subagent definition example for autonomous routing | Claude Code / Harness-neutral |
-| **Layer 5: Plugin & Mods** | `.claude-plugin/plugin.json`, `marketplace.json`, `mods/*` | Single-command installation bundle and modular extensions | Claude Code native plugin |
+| **Layer 5: Plugin & Mods** | `.claude-plugin/plugin.json`, `marketplace.json` | Single-command installation bundle | Claude Code native plugin |
 
 ---
 
@@ -63,9 +63,6 @@ For Claude Code operators, Downshift packages hooks, skills, commands, and optio
   ```bash
   /plugin install downshift --marketplace tiagovilasboas/downshift
   ```
-- **Cache-Tax Mod (`hooks/cache-tax`)**: Bundled inside the plugin. Monitors cold cache read fees on idle sessions and offers `/keepwarm` to maintain prompt cache warmth.
-- **Downshift Router Mod (`mods/downshift-router`)**: An experimental in-process routing prototype that intercepts `agent.spawn` inside the node runtime, eliminating CLI process invocation overhead.
-- **Sibling Mods (`mods/`)**: `savvy-progress` (progress bar, `/agents-info`) and `downshift-dock` (original Downshift code, kept in `mods/` but no longer in the marketplace since 2026-10-21). On Claude Code, `downshift setup` installs `savvy-progress` with `claude plugin install` (`--no-plugin` skips); setup also runs model discovery so session lists do not stay on handwritten values, and `You should know` stays opt-in (`--you-should-know`). The vendored mods are pinned in NOTICE and never edited in place, except documented local patches.
 
 ---
 
@@ -97,4 +94,3 @@ For Claude Code operators, Downshift packages hooks, skills, commands, and optio
 - [Packaging Layers Architecture](../design/architecture.md#packaging-layers-what-an-agent-harness-loads): Design rationale for Memory, Skills, Hooks, Agents, and Plugin layers.
 - [Claude Code Integration Guide](../guides/claude-code.md): Setup, opusplan configuration, and transcript usage monitoring.
 - [Installation Guide](../guides/install.md): Step-by-step hook registration across all supported harnesses.
-- [Claude Code Mods Overview](../../mods/README.md): Specifications and tests for bundled and sibling mods.

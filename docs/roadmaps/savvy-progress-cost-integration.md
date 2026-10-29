@@ -1,5 +1,7 @@
 # Roadmap: Integrar $ (custo) no painel savvy-progress
 
+> **Descontinuado em 2026-10-29.** O savvy-progress foi removido e o Downshift não mantém conta em dólar (decisão O1).
+
 > **Status:** Draft  
 > **Data:** 2026-10-22  
 > **Contexto:** O savvy-progress mostra "Tokens saved" via `downshift session --panel`, mas não usa o PriceBook/formula do accounting v1 para calcular o $ economizado.

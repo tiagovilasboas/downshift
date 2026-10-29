@@ -30,7 +30,7 @@ needs_go() {
 # hooks wiring) or whose change must be proven on Windows and macOS.
 needs_os() {
   case "$1" in
-    internal/paths/* | internal/execwrap/* | internal/contextopt/* | internal/hookctx/* | internal/adapters/* | cmd/downshift/* | scripts/kirocrew-* | hooks/hooks.json | mods/*/hooks/hooks.json | .github/workflows/*)
+    internal/paths/* | internal/execwrap/* | internal/contextopt/* | internal/hookctx/* | internal/adapters/* | cmd/downshift/* | scripts/kirocrew-* | hooks/hooks.json | .github/workflows/*)
       return 0
       ;;
   esac

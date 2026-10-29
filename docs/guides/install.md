@@ -193,16 +193,7 @@ or in two steps, `/plugin marketplace add tiagovilasboas/downshift` then
 `PostToolUse`, `PostToolUseFailure`, `SubagentStop`, and `UserPromptSubmit` (for Downshift Code Intelligence) from
 [`hooks/hooks.json`](../../hooks/hooks.json) (each entry only calls the binary),
 adds the `downshift-setup`, `downshift-audit` and `cost-reducer` skills, and the
-command below as `/downshift:status`. On Claude Code 2.1.287 or later it also
-loads the bundled [cache-tax mod](../../hooks/cache-tax/README.md): a cold send
-on a context of 50k tokens or more is dropped once with its estimated rewrite
-price (resend to pay it, `/cache-tax guard warn` to only be told), and
-`/keepwarm 90m` keeps the cache warm through a break with one small model
-request per 50 idle minutes, which costs usage. If you already installed
-`cache-tax@claude-code-mods`, uninstall one copy; `doctor` warns.
-The marketplace also offers savvy-progress, one install
-(`downshift setup` installs it on Claude Code; by hand: `/plugin install savvy-progress@downshift`;
-see [mods/README.md](../../mods/README.md)).
+command below as `/downshift:status`.
 It does not set `opusplan`, plan mode, the statusline or
 the You should know mod: those are settings, not hooks, and `downshift setup` writes them (You should know only with `--you-should-know`). Set
 `"model": "opusplan"` and `"permissions": {"defaultMode": "plan"}` in `~/.claude/settings.json` yourself

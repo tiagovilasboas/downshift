@@ -142,10 +142,6 @@ Key invariants (enforced by `go test ./internal/archtest`):
 rewrites allowlisted shell commands with no metacharacters; `"exec": false` or
 `DOWNSHIFT_EXEC=0` turns it off; a deny or ask rule stops the rewrite.
 
-Third-party mods (`hooks/cache-tax/`, `mods/savvy-progress/`): re-vendor
-per their READMEs; edit only through `downshift-local.patch`. `mods/downshift-dock/` and
-`mods/downshift-theme/` are original Downshift code.
-
 ### Reference (read on demand)
 
 [docs/contrib/agent-reference.md](docs/contrib/agent-reference.md) — compressor, telemetry,

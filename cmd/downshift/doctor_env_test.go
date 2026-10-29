@@ -149,42 +149,6 @@ func TestDoctorPluginWiring(t *testing.T) {
 	wantStatus(t, f.check(t, rep, "claude-code", "hooks wired"), doctorFail)
 }
 
-// The plugin bundles the cache-tax mod. With the upstream marketplace copy
-// enabled next to it, doctor warns that the mod runs twice and names the
-// uninstall; with the Downshift plugin off, the bundled mod does not load, so
-// the other copy is not a conflict.
-func TestDoctorPluginModConflict(t *testing.T) {
-	f := newDoctorFixture(t)
-	f.writeEvents(t, filepath.Join(f.home, ".downshift"), time.Hour, true)
-
-	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"),
-		`{"enabledPlugins":{"downshift@downshift":true,"cache-tax@claude-code-mods":true}}`)
-	rep := buildDoctorReport(f.env)
-	c := f.check(t, rep, "claude-code", "plugin mod")
-	wantStatus(t, c, doctorWarn)
-	if !strings.Contains(c.Detail, "cache-tax@claude-code-mods") || !strings.Contains(c.Fix, "/plugin uninstall cache-tax@claude-code-mods") {
-		t.Fatalf("mod conflict = %+v", c)
-	}
-
-	for _, settings := range []string{
-		`{"enabledPlugins":{"downshift@downshift":true}}`,
-		strings.TrimSuffix(claudeSettings(f.bin), "}") + `,"enabledPlugins":{"cache-tax@claude-code-mods":true}}`,
-	} {
-		writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), settings)
-		rep = buildDoctorReport(f.env)
-		for _, c := range rep.Checks {
-			if c.ID == "plugin mod" {
-				t.Fatalf("unexpected mod conflict row for %s: %+v", settings, c)
-			}
-		}
-	}
-	for _, c := range rep.Checks {
-		if c.Harness == "claude-code" && c.ID == "plugin" {
-			t.Fatal("a disabled plugin must not add a row")
-		}
-	}
-}
-
 // When the event log shows the same tool_use_hash on two decisions, doctor
 // warns that both entry points routed one spawn. Claude Code declares two
 // HookEntries; harnesses with one are not checked.

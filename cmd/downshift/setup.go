@@ -42,8 +42,7 @@ type setupOptions struct {
 	// opt-in because each check is a billed background request.
 	YouShouldKnow bool
 	// NoPlugin keeps the Claude Code hooks in settings.json instead of
-	// installing the Downshift plugin (which carries the hooks and the
-	// cache-tax mod).
+	// installing the Downshift plugin (which carries the hooks).
 	NoPlugin bool
 	// Mcp registers `downshift mcp serve` as an MCP server (setup_mcp.go). On by
 	// default; --no-mcp turns it off.
@@ -151,8 +150,7 @@ Wire every Downshift hook into the harnesses found on this machine.
                        (opt-in: each check is a billed background request)
   --no-plugin          Claude Code: keep the hooks in settings.json instead of
                        installing the Downshift plugin (the plugin carries the
-                       same hooks plus the cache-tax mod) and skip the sibling
-                       mods (savvy-progress)
+                       same hooks)
   --no-mcp             do not register "downshift mcp serve" as the MCP server
                        "downshift" in Claude Code (through its CLI) and Codex
                        (a marked block in config.toml). Registered by default;
@@ -198,7 +196,6 @@ func setupRun(o setupOptions) int {
 			o.PluginActive[t.Name] = active
 			extra[t.Name] = notes
 		}
-		extra[t.Name] = append(extra[t.Name], ensureMods(o, t)...)
 		p := planTarget(o, t)
 		p.notes = append(extra[t.Name], p.notes...)
 		plans = append(plans, p.companions...)

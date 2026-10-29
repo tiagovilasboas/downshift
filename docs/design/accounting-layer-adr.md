@@ -2,6 +2,7 @@
 
 **Date:** 2026-10-21
 **Status:** Proposed
+**Note (2026-10-29):** the savvy-progress mod this page names was removed, and the dollar account is out (owner decision O1).
 **Author:** Tiago Vilas Boas
 
 ## Context

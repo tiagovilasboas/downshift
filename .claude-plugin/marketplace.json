@@ -1,26 +1,21 @@
 {
   "name": "downshift",
   "description": "Downshift: the orchestrator chooses each subagent's model; Downshift applies that choice within your policy, compacts command output and measures the result. One plugin: hooks, /downshift:status, and the setup, audit, cost-reducer and harness-engineer skills.",
-  "owner": { "name": "Tiago Vilas Boas", "url": "https://github.com/tiagovilasboas" },
+  "owner": {
+    "name": "Tiago Vilas Boas",
+    "url": "https://github.com/tiagovilasboas"
+  },
   "plugins": [
     {
       "name": "downshift",
       "source": "./",
       "description": "Applies the orchestrator's model choice to each Claude Code subagent via PreToolUse, within your declared policy. Requires the downshift binary (install.sh or Releases).",
       "category": "productivity",
-      "tags": ["subagents", "cost", "routing"]
-    },
-    {
-      "name": "savvy-progress",
-      "source": "./mods/savvy-progress",
-      "description": "Mod: progress bar above the prompt and a live /agents-info panel of subagents (vendored, MIT).",
-      "category": "productivity"
-    },
-    {
-      "name": "downshift-theme",
-      "source": "./mods/downshift-theme",
-      "description": "Optional Claude Code themes (Downshift, Downshift Light): black first, grey text, green accent (Downshift-owned, Apache-2.0).",
-      "category": "productivity"
+      "tags": [
+        "subagents",
+        "cost",
+        "routing"
+      ]
     }
   ]
 }

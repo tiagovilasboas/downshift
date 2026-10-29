@@ -2,6 +2,8 @@
 
 # Can Downshift become a Claude Code mod?
 
+> **Removed 2026-10-29.** The prototype (`mods/downshift-router/`) is gone. This design stays as history.
+
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Date: 2026-10-17. Status: design plus an opt-in prototype (`mods/downshift-router/`, Experimental).
