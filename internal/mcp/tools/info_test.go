@@ -12,6 +12,19 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/playbook"
 )
 
+// providers stores the model ids the orchestrator passes as a hint, so it is
+// the one information tool that must not claim to be read-only.
+func TestOnlyProvidersIsNotReadOnly(t *testing.T) {
+	for _, tl := range Info(fullDeps()) {
+		if tl.Title == "" || !tl.Idempotent {
+			t.Errorf("%s: want a title and idempotent", tl.Name)
+		}
+		if want := tl.Name != "providers"; tl.ReadOnly != want {
+			t.Errorf("%s: ReadOnly = %v, want %v", tl.Name, tl.ReadOnly, want)
+		}
+	}
+}
+
 func TestInfoToolsAreValidAndNamed(t *testing.T) {
 	ts := Info(fullDeps())
 	if err := Validate(ts); err != nil {

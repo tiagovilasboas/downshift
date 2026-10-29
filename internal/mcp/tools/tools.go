@@ -38,6 +38,12 @@ type Tool struct {
 	// InputSchema is a JSON Schema object. Empty means any object.
 	InputSchema json.RawMessage
 	Handler     Handler
+	// Title, ReadOnly and Idempotent are the hints a client may use to decide
+	// whether to ask the user before calling. ReadOnly means the call changes
+	// nothing; a tool that stores anything, even a hint, must leave it false.
+	Title      string
+	ReadOnly   bool
+	Idempotent bool
 }
 
 // AnyObject is the schema of a tool that takes no arguments, or any.

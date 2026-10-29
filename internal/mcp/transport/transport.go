@@ -51,9 +51,22 @@ func New(info Info, ts []tools.Tool, log *slog.Logger) (*Server, error) {
 	s := mcp.NewServer(&mcp.Implementation{Name: info.Name, Version: info.Version},
 		&mcp.ServerOptions{Instructions: info.Instructions, Logger: log})
 	for _, t := range ts {
-		s.AddTool(&mcp.Tool{Name: t.Name, Description: t.Description, InputSchema: t.Schema()}, adapt(t, log))
+		s.AddTool(&mcp.Tool{Name: t.Name, Description: t.Description, InputSchema: t.Schema(), Annotations: annotations(t)}, adapt(t, log))
 	}
 	return &Server{srv: s}, nil
+}
+
+// annotations maps a tool's hints to the protocol's. No Downshift tool deletes
+// anything or reaches outside the machine, so those two hints are always false.
+func annotations(t tools.Tool) *mcp.ToolAnnotations {
+	no := false
+	return &mcp.ToolAnnotations{
+		Title:           t.Title,
+		ReadOnlyHint:    t.ReadOnly,
+		IdempotentHint:  t.Idempotent,
+		DestructiveHint: &no,
+		OpenWorldHint:   &no,
+	}
 }
 
 // Serve answers one client over in and out until the client closes the input

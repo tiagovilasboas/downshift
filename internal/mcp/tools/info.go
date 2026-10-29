@@ -103,7 +103,19 @@ const serverName = "downshift"
 
 // Info returns the four information tools: providers, playbook, status, apply.
 func Info(d Deps) []Tool {
-	return []Tool{d.providersTool(), d.playbookTool(), d.statusTool(), d.applyTool()}
+	return []Tool{
+		// providers is not read-only: a models list the orchestrator passes is stored as a one-hour hint.
+		d.providersTool().hinted("Models this harness offers now", false),
+		d.playbookTool().hinted("Working rules for a worker", true),
+		d.statusTool().hinted("Quota advice", true),
+		d.applyTool().hinted("What would be applied for a choice", true),
+	}
+}
+
+// hinted sets the client-facing hints. Every information tool is idempotent.
+func (t Tool) hinted(title string, readOnly bool) Tool {
+	t.Title, t.ReadOnly, t.Idempotent = title, readOnly, true
+	return t
 }
 
 // run is what a tool does once its arguments are parsed.

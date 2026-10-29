@@ -21,7 +21,8 @@ const wait = 10 * time.Second
 
 func testTools() []tools.Tool {
 	return []tools.Tool{
-		{Name: "echo", Description: "greets", InputSchema: json.RawMessage(`{"type":"object","properties":{"name":{"type":"string"}}}`),
+		{Name: "echo", Description: "greets", Title: "Greeting", ReadOnly: true, Idempotent: true,
+			InputSchema: json.RawMessage(`{"type":"object","properties":{"name":{"type":"string"}}}`),
 			Handler: func(_ context.Context, args json.RawMessage) (tools.Result, error) {
 				var a struct{ Name string }
 				if len(args) > 0 {
@@ -142,6 +143,30 @@ func TestLegacyEraHandshakeListAndCall(t *testing.T) {
 	w.send(`{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"echo","arguments":{"name":"Ana"}}}`)
 	if got := text(t, w.recv()); got != "hi Ana" {
 		t.Fatalf("echo = %q", got)
+	}
+}
+
+// A client decides whether to ask the user before a call from these hints, so a
+// read-only tool must say so and one that is not must not.
+func TestToolsListCarriesTheirHints(t *testing.T) {
+	w := start(t)
+	w.send(`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"c","version":"0"}}}`)
+	w.recv()
+	w.send(`{"jsonrpc":"2.0","method":"notifications/initialized"}`)
+	w.send(`{"jsonrpc":"2.0","id":2,"method":"tools/list"}`)
+	for _, x := range result(t, w.recv())["tools"].([]any) {
+		tool := x.(map[string]any)
+		a, _ := tool["annotations"].(map[string]any)
+		if a == nil {
+			t.Fatalf("tool %v has no annotations", tool["name"])
+		}
+		readOnly := tool["name"] == "echo"
+		if a["readOnlyHint"] != readOnly || a["destructiveHint"] != false || a["openWorldHint"] != false {
+			t.Errorf("tool %v annotations = %v, want readOnly %v, not destructive, not open world", tool["name"], a, readOnly)
+		}
+		if readOnly && (a["title"] != "Greeting" || a["idempotentHint"] != true) {
+			t.Errorf("echo annotations = %v, want its title and idempotent", a)
+		}
 	}
 }
 
