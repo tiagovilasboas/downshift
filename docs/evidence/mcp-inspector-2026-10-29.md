@@ -13,7 +13,9 @@ the MCP project's own inspector, run in its CLI mode. One machine, one run, read
 - Client: `@modelcontextprotocol/inspector`, run with `npx` from an empty temporary folder, install scripts off
   (`npm_config_ignore_scripts=true`).
 - Version: the registry lists 2.13.0 as the latest, but `npx` resolved **0.15.0** on this machine (the v1 line, which
-  npm marks deprecated and fixes for security only). The run used 0.15.0 pinned. A v2 run is open.
+  npm marks deprecated and fixes for security only). The cause is the Node version: 2.13.0 needs Node 22.19 or newer
+  and the default here was Node 20. The run used 0.15.0 pinned. The v2 run, with the worker tools, is in
+  [the worker lifecycle record](mcp-worker-lifecycle-2026-10-29.md).
 - Commands: `--cli <binary> mcp serve --method tools/list`, then `--method tools/call --tool-name <name>`.
 
 ## Result
