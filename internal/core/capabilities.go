@@ -24,6 +24,11 @@ type HarnessCapabilities struct {
 	// than Downshift's own evidence, can make the harness ignore a hook's model
 	// rewrite. Empty means none is known, which is not the same as none exists.
 	ModelOverrideEnv string
+	// ModelForceEnv names an environment variable that, when on, makes the
+	// harness run every subagent on one model, ignoring both the per-call
+	// model and a hook's rewrite (observed on Claude Code v2.1.310,
+	// 2026-10-29). Empty means none is known.
+	ModelForceEnv string
 	// NativeSessionEnv names the environment variable holding the path of the
 	// harness's native session/usage export. Empty means the harness has none.
 	NativeSessionEnv string
@@ -103,7 +108,7 @@ var (
 	// family names (haiku/sonnet/opus/fable); a full id fails schema validation.
 	// The same hook can return updatedInput.command for the Bash tool
 	// (CanRewriteShellCommand, opt-in exec wrapper).
-	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", SessionFromCatalog: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true, CanInjectPromptContext: true,
+	ClaudeCodeCaps = HarnessCapabilities{CanRewriteModel: true, CanApplyEffort: false, RewritePreservesInput: true, StrictModelName: true, ModelOverrideEnv: "CLAUDE_CODE_SUBAGENT_MODEL", ModelForceEnv: "CLAUDE_CODE_SUBAGENT_MODEL_FORCE", SessionFromCatalog: true, CanShowChildLine: true, SessionEnv: "CLAUDE_CODE_SESSION_ID", ChildEndEvent: "SubagentStop", UsageSource: UsageTranscript, HookEntries: []string{"settings-hook", "mod"}, CanRewriteShellCommand: true, CanInjectPromptContext: true,
 		// Explore is read-only search, Plan is design work (built-in types).
 		AgentTypeHints: map[string]Tier{"Explore": TierSmall, "Plan": TierMid}}
 

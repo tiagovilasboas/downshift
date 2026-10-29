@@ -23,6 +23,8 @@ Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado d
 
 ## Pendências técnicas
 
+- [x] **`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` gravado por um `setup` antigo** fazia o Claude Code ignorar a reescrita do hook e a escolha por chamada. Removido do `settings.json` do dono (backup `.bak-subagent-force-2026-10-29`) e o `doctor` agora falha quando a variável está ligada. Com ela removida, uma sessão headless reescreveu Sonnet para Haiku 5.5 e a reescrita foi respeitada.
+
 - [x] **Título do `delegate`** agora diz "Start delegated workers" (antes dizia "read-only workers" mesmo com a rota de escrita ligada). Resta decidir se `cancel` merece `destructiveHint`.
 - [ ] **Ciclo do worker em worktree:** a rota de escrita cria a worktree em `internal/workers/write.go`, não em `internal/worktree` (que tem só contenção, git e slug). Decidir se a rota passa a usar o pacote e rodar o ciclo ponta a ponta com sensor de aceite.
 - [ ] **Golden files do compactor:** o layout real é `<caso>.in` e `<caso>.golden`, com a flag `-update-failed-golden`, só para falhas do `go test` (6 casos). Expandir para as outras famílias da allowlist seguindo esse padrão.

@@ -144,6 +144,7 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 	var cmds []foundCommand
 	collectCommands(raw, nil, &cmds)
 	checkMainPolicy(add, h, raw)
+	checkModelForce(add, nc.Caps, raw, file, env.Getenv)
 	viaPlugin := w.Plugin != "" && pluginEnabled(raw, w.Plugin)
 
 	found, missing := matchWiredHooks(cmds, w.Hooks)
