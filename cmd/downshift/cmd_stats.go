@@ -4,12 +4,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/tiagovilasboas/downshift/internal/accounting"
 	"github.com/tiagovilasboas/downshift/internal/codeintel"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -57,6 +59,11 @@ func runStats(args []string) int {
 		return 0
 	}
 
+	// The token ledger comes from the shared accounting layer, over the same
+	// window as the routing figures below.
+	execEvents, _ := accounting.ReadExecEvents()
+	nums := accounting.Compute(events, execEvents, accounting.Scope{Kind: accounting.ScopeDays, Days: opts.Days})
+
 	dciEvents, _ := codeintel.ReadTelemetryEvents()
 	dciFiltered := codeintel.FilterTelemetryByDays(dciEvents, opts.Days)
 	dciSummary := codeintel.AggregateTelemetry(dciFiltered)
@@ -66,15 +73,15 @@ func runStats(args []string) int {
 		if dciSummary.TotalPrompts > 0 {
 			sum.DCISummary = &dciSummary
 		}
-		out, err := telemetry.ExportJSON(sum)
+		out, err := json.MarshalIndent(statsExport{Summary: sum, TokenLedger: nums.Ledger}, "", "  ")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error exporting summary: %v\n", err)
 			return 1
 		}
-		fmt.Println(out)
+		fmt.Println(string(out))
 		return 0
 	}
-	if len(events) == 0 && dciSummary.TotalPrompts == 0 {
+	if len(events) == 0 && dciSummary.TotalPrompts == 0 && nums.Compactor.Commands == 0 {
 		fmt.Fprintln(os.Stderr, "no events recorded yet: spawn a subagent in a new harness session, or run `downshift doctor` to check the hooks.")
 		return 0
 	}
@@ -86,6 +93,7 @@ func runStats(args []string) int {
 		codeintel.PrintDCIStats(os.Stdout, dciSummary)
 		return 0
 	}
+	fmt.Fprintln(os.Stdout, nums.Display.Ledger)
 	if len(events) > 0 {
 		telemetry.PrintStats(events, opts, os.Stdout)
 		if n := telemetry.RotatedBackupCount(); n > 0 {
@@ -100,4 +108,11 @@ func runStats(args []string) int {
 		codeintel.PrintDCIStats(os.Stdout, dciSummary)
 	}
 	return 0
+}
+
+// statsExport is the `stats --export` JSON: the telemetry summary with its
+// keys as before, plus the token ledger every surface shares.
+type statsExport struct {
+	telemetry.Summary
+	TokenLedger accounting.Ledger `json:"token_ledger"`
 }

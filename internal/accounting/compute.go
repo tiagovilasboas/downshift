@@ -59,6 +59,9 @@ type Numbers struct {
 	// TokensSavedEstimate is routing work and cache saved plus the Compactor's
 	// estimated tokens (telemetry.TokensSavedEstimate). An estimate.
 	TokensSavedEstimate int64 `json:"tokens_saved_estimate"`
+	// Ledger is the three token figures side by side: spent, saved by
+	// routing, saved by the Compactor (an estimate).
+	Ledger Ledger `json:"ledger"`
 	// Display holds the ready-to-print text of the figures above.
 	Display Display `json:"display"`
 }
@@ -82,6 +85,8 @@ type Display struct {
 	ScopeLabel string `json:"scope_label"`
 	Routing    string `json:"routing"`
 	Compactor  string `json:"compactor"`
+	// Ledger is LedgerLine(Numbers.Ledger, Scope).
+	Ledger string `json:"ledger"`
 }
 
 // Compute returns the Numbers for scope. It is pure: the caller reads the
@@ -99,6 +104,7 @@ func Compute(events []telemetry.Event, execEvents []execwrap.Event, scope Scope)
 	n.ModelSwitched, n.EffortChanged, n.Held, n.HeldGuardrail, n.UpshiftNotApplied = countSpawns(scoped)
 	n.Compactor = compactorTotals(scopeExec(execEvents, scope, time.Now()))
 	n.TokensSavedEstimate = telemetry.TokensSavedEstimate(n.Routing, n.Compactor.Tokens)
+	n.Ledger = ledgerOf(n)
 	n.Display = displayOf(n)
 	return n
 }
@@ -172,5 +178,6 @@ func displayOf(n Numbers) Display {
 		ScopeLabel:       n.Scope.Label(),
 		Routing:          n.Routing.Line(),
 		Compactor:        fmt.Sprintf("Commands: %d · Compacted: %d", n.Compactor.Commands, n.Compactor.Compacted),
+		Ledger:           LedgerLine(n.Ledger, n.Scope),
 	}
 }
