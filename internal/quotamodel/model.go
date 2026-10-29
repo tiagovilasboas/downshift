@@ -72,6 +72,13 @@ func (s Snapshot) Abandoned(now time.Time) bool {
 	return s.Validate() == nil && now.After(s.ExpiresAt.Add(StaleGrace))
 }
 
+// StaleAfterObserved reports a reading observed more than MaxTTL ago, the
+// longest lifetime any snapshot may claim. Exactly at MaxTTL is still fresh.
+// It is a freshness signal for operators; the gate keeps using ExpiresAt.
+func (s Snapshot) StaleAfterObserved(now time.Time) bool {
+	return now.Sub(s.ObservedAt) > MaxTTL
+}
+
 func validSource(source string) bool {
 	switch source {
 	case "codex-usage", "codex-transcript", "claude-statusline", "operator-normalized", "cursor-usage":

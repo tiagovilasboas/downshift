@@ -62,6 +62,26 @@ func TestAbandonedBoundary(t *testing.T) {
 	}
 }
 
+func TestStaleAfterObserved(t *testing.T) {
+	now := time.Now().UTC()
+	for _, tc := range []struct {
+		name string
+		age  time.Duration
+		want bool
+	}{
+		{"fresh", time.Minute, false},
+		{"exactly at the limit", MaxTTL, false},
+		{"just past the limit", MaxTTL + time.Second, true},
+		{"nine days", 9 * 24 * time.Hour, true},
+		{"observed in the future", -time.Minute, false},
+	} {
+		s := Snapshot{ObservedAt: now.Add(-tc.age)}
+		if got := s.StaleAfterObserved(now); got != tc.want {
+			t.Errorf("%s: StaleAfterObserved = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}
+
 func TestSourceNameKeepsKnownProvenance(t *testing.T) {
 	if SourceName("cursor-usage") != "cursor-usage" || SourceName("invented") != "" {
 		t.Fatal("source vocabulary changed")
