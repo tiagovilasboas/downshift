@@ -95,10 +95,11 @@ func humanAge(d time.Duration) string {
 }
 
 func checkHonored(add func(id, status, detail, fix string), mine []telemetry.Event) {
-	shifted, honored := telemetry.CountInferredHonored(mine)
+	t := telemetry.TallyHonored(mine)
+	shifted, honored := t.Shifted, t.Honored
 	switch {
 	case honored > 0:
-		add("rewrite honored", doctorOK, fmt.Sprintf("seen: %d of %d rewrites", honored, shifted), "")
+		add("rewrite honored", doctorOK, fmt.Sprintf("seen: %d of %d rewrites%s", honored, shifted, honorMissDetail(t)), "")
 	case shifted > 0:
 		add("rewrite honored", doctorWarn, fmt.Sprintf("0 of %d rewrites seen honored; the harness may be ignoring them", shifted),
 			"downshift stats --detail  (then see docs/reference/harness-matrix.md)")
@@ -106,6 +107,22 @@ func checkHonored(add func(id, status, detail, fix string), mine []telemetry.Eve
 		add("rewrite honored", doctorWarn, "no rewrite emitted yet, so none observed",
 			`spawn a subagent task, then run: downshift stats --detail`)
 	}
+}
+
+// honorMissDetail says why rewrites not seen honored are missing: refuted by
+// the child's resolved model, or simply never observed.
+func honorMissDetail(t telemetry.HonorTally) string {
+	var parts []string
+	if t.Refuted > 0 {
+		parts = append(parts, fmt.Sprintf("%d refuted: the child ran another model", t.Refuted))
+	}
+	if n := t.Unobserved(); n > 0 {
+		parts = append(parts, fmt.Sprintf("%d not observed: no child record", n))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " (" + strings.Join(parts, "; ") + ")"
 }
 
 // checkMainPolicy reports the main-session policy setup writes for a harness

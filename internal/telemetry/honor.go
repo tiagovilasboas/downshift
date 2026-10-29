@@ -20,6 +20,24 @@ package telemetry
 // the shift: it is never counted honored, whatever later spawns ask for. The
 // log is not rewritten.
 func CountInferredHonored(events []Event) (shifted, honored int) {
+	t := TallyHonored(events)
+	return t.Shifted, t.Honored
+}
+
+// HonorTally splits the shifts into those seen honored, those a linked
+// "resolved" record refutes (the harness ran another model), and the rest,
+// which have no evidence either way (no resolved record, no later spawn).
+type HonorTally struct {
+	Shifted, Honored, Refuted int
+}
+
+// Unobserved is the shifts with neither confirming nor refuting evidence.
+func (t HonorTally) Unobserved() int { return t.Shifted - t.Honored - t.Refuted }
+
+// TallyHonored is CountInferredHonored with the refuted shifts counted apart,
+// so a miss can be told from a rewrite nobody observed.
+func TallyHonored(events []Event) HonorTally {
+	var t HonorTally
 	// A "resolved" record is the harness reporting the model it chose for the
 	// spawn. When it matches the written model it is direct observation.
 	observed := make(map[string]bool)
@@ -48,24 +66,25 @@ func CountInferredHonored(events []Event) (shifted, honored int) {
 			if !isShift(ev) {
 				continue
 			}
-			shifted++
+			t.Shifted++
 			if refuted[DecisionKey(ev)] && !observed[DecisionKey(ev)] {
+				t.Refuted++
 				continue
 			}
 			if (ev.RewriteHonored != nil && *ev.RewriteHonored) || observed[DecisionKey(ev)] {
-				honored++
+				t.Honored++
 				continue
 			}
 			for _, laterIdx := range idxs[a+1:] {
 				later := events[laterIdx]
 				if later.FromModel == ev.ToModel && later.FromModel != "" && later.FromModel != "unknown" {
-					honored++
+					t.Honored++
 					break
 				}
 			}
 		}
 	}
-	return shifted, honored
+	return t
 }
 
 // isShift reports an applied rewrite that changed the model.
