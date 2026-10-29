@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Cancelling a worker, or running out of its time budget, now stops the programs it started as well, not only the worker itself. Each worker runs in its own process group and a stop reaches the whole group.
+- The write route keeps its worktree folder out of `git status` in your checkout, through the clone's local exclude file, and the MCP server stops running workers when it exits.
 - **The orchestrator LLM chooses the model; Downshift applies and measures it (owner decision O8, 2026-10-28).**
   The decider keeps a pinned model, then applies a declared profile, the first matching declared rule and the
   orchestrator's tier hint (down only for now); everything else keeps the requested model. The guard still refuses

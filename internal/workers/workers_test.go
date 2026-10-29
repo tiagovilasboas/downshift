@@ -284,3 +284,26 @@ func TestCapTextCutsOnACharacterBoundary(t *testing.T) {
 		t.Fatalf("short text changed: %q", short)
 	}
 }
+
+func TestCloseStopsRunningAndQueuedJobs(t *testing.T) {
+	l := newFakeLauncher()
+	q := New(l, 1, fixedNow)
+	if _, err := q.Delegate([]Spec{spec("run", time.Minute), spec("wait", time.Minute)}); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "the first job to start", func() bool { return len(l.started()) == 1 })
+	q.Close()
+	select {
+	case <-l.proc("run").killed:
+	default:
+		t.Fatal("the running worker was not killed")
+	}
+	if got := l.started(); len(got) != 1 {
+		t.Errorf("a queued job started after Close: %v", got)
+	}
+	for _, st := range q.Statuses() {
+		if st.State != Cancelled {
+			t.Errorf("%s is %s after Close, want cancelled", st.ID, st.State)
+		}
+	}
+}

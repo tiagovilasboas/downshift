@@ -11,12 +11,10 @@ Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado d
 
 ## Feito em 2026-10-29
 
-- [x] Rota de escrita (bypass), desligada por padrão, em worktree git própria. Testada com shims, não contra a CLI real.
-- [x] Registro de decisão e estado dos docs de planejamento (este arquivo, state, decisions, cards, mvp-plan, roadmap, CHANGELOG).
+> 📦 *Histórico compactado: 7 tarefas concluídas arquivadas em [completed-tasks-2026-10-29.md](archive/completed-tasks-2026-10-29.md)*
 
 ## Pendências que dependem do dono
 
-- [x] **Mesclar a branch no `main`** feito: PR #589 mesclado em `1369aa3b` (squash), depois de o CI do head passar.
 - [ ] **V2, baseline de aceitação:** suíte controlada, com gasto de modelo. Precisa de orçamento aprovado.
 - [ ] **C0 / R0b:** prova em sessão real de que o PreToolUse dispara em spawns de workflow. Não rodada.
 - [ ] **R27:** observar um worker de leitura tentando escrever e sendo bloqueado. Três execuções reais não tentaram escrever; nada foi observado.
@@ -25,10 +23,6 @@ Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado d
 
 ## Pendências técnicas
 
-- [x] **Inspector v2 e ciclo do worker** validados com `mcpdo` (Node 22) e um `claude` falso, sem gasto de tokens: leitura, escrita em worktree, `ack` e cancelamento. Ver `docs/evidence/mcp-worker-lifecycle-2026-10-29.md`. Falta o mesmo com o `claude` e o `codex` reais (R27 segue sem observação).
-- [x] **Cancelar deixava o filho do worker rodando.** O worker agora roda em grupo de processos próprio e o cancelamento atinge o grupo todo, com teste de regressão.
-- [ ] **A rota de escrita deixa `.downshift/` como arquivo não rastreado** no checkout do usuário. Excluir a pasta das worktrees (por exemplo em `.git/info/exclude`) ou criá-la fora do repositório.
-- [ ] **A fila não tem encerramento:** ao sair o servidor, workers em execução não são parados (visto no código, não observado). Adicionar um `Close` chamado ao encerrar o `mcp serve`.
 - [x] **Título do `delegate`** agora diz "Start delegated workers" (antes dizia "read-only workers" mesmo com a rota de escrita ligada). Resta decidir se `cancel` merece `destructiveHint`.
 - [ ] **Ciclo do worker em worktree:** a rota de escrita cria a worktree em `internal/workers/write.go`, não em `internal/worktree` (que tem só contenção, git e slug). Decidir se a rota passa a usar o pacote e rodar o ciclo ponta a ponta com sensor de aceite.
 - [ ] **Golden files do compactor:** o layout real é `<caso>.in` e `<caso>.golden`, com a flag `-update-failed-golden`, só para falhas do `go test` (6 casos). Expandir para as outras famílias da allowlist seguindo esse padrão.
