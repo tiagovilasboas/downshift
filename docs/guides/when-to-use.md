@@ -14,9 +14,16 @@ Every harness with an adapter gets every feature, computed in shared layers. **C
 
 - You run **agentic coding sessions** where subagents inherit the session’s most expensive model.
 - You want **declared policy** (profiles, rules, floors) bounding the orchestrator's model choices, with **no LLM call in Downshift's own code**.
-- You need **offline, keyless tier selection** for hooks: classify on CPU, pick model from your catalog, rewrite `updatedInput` before the child starts.
-- You care about **testability**: `downshift try`, [benchmark/report.md](../../benchmark/report.md).
-- You want **local telemetry** (`events.jsonl`) and explicit training labels (`--required-tier`), not a hosted analytics product.
+- You need **offline, keyless model selection** for hooks: the decider reads your declared policy and the orchestrator's tier hint, and rewrites `updatedInput` before the child starts. No classifier.
+- You care about **measurement**: `downshift report` compares routed and control spawns in tokens, and [evidence.md](evidence.md) lists what is shown and what is not.
+- You want **local, prompt-free telemetry** (`events.jsonl`), not a hosted analytics product.
+
+## When not to use it
+
+- **Your sessions rarely spawn subagents.** Delegation is the lever; without it there is little to route.
+- **The work needs judgment on the raw material.** Keep the requested model there. Our routing design records this as a limit, and the Anthropic research on multi-agent systems points the same way for tasks with few parallel parts ([true north](../true-north.md)).
+- **You need savings in money.** Downshift reports tokens per harness, never invoices.
+- **You need savings proven for everyday use.** That is not established yet; the controlled trial is the evidence we have.
 
 ## Consider something else when
 

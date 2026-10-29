@@ -401,6 +401,28 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 
 ---
 
+## When to use it, and when not
+
+Use Downshift when your sessions spawn subagents that would inherit the most expensive model, and when you
+want the policy you declared, not a router, to bound those choices. Do not expect much when you rarely spawn
+subagents, when the work needs judgment on the raw material (keep the requested model there), or when you need
+savings in money: Downshift reports tokens. Savings on everyday use are not established yet. The full list,
+with the companions that complement it, is in [when to use Downshift](docs/guides/when-to-use.md).
+
+## Safety boundaries
+
+- **Hooks fail open.** A hook that errors, times out or receives a payload over 1 MiB leaves the spawn with the
+  model the orchestrator asked for.
+- **A broken policy is refused.** `downshift policy check` names the bad field. A `policy.json` that does not load
+  applies nothing: the hook keeps the requested model rather than guessing a policy.
+- **No LLM call in Downshift's code, and telemetry holds no prompts or file paths.**
+- **Write workers are off by default.** They run only with `DOWNSHIFT_WORKERS=bypass`, each in its own git
+  worktree, and refuse to run outside a git repository. Downshift never merges their branches.
+- **No approval gate for risky actions.** Downshift does not stop a deploy, merge or secret change on its own. If
+  you need that, enforce it in your harness or your policy.
+
+---
+
 ## Privacy & Security
 
 - **Prompts never leave memory** — task text is evaluated in-process, never logged
