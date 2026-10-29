@@ -49,6 +49,31 @@ func TestDoctor_LastEventIgnoresUsageRowsAsDecision(t *testing.T) {
 	}
 }
 
+func TestDoctor_QuotaSourceStaleness(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		expiredAgo time.Duration // storeQuota observes one minute before expiry
+		want       string
+		wantFix    bool
+	}{
+		{"fresh", -time.Minute, doctorOK, false},
+		{"exactly at the limit", 14 * time.Minute, doctorOK, false},
+		{"just past the limit", 15 * time.Minute, doctorWarn, true},
+		{"nine days", 9 * 24 * time.Hour, doctorWarn, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newDoctorFixture(t)
+			writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), claudeSettings(f.bin))
+			f.storeQuota(t, tc.expiredAgo)
+			c := f.check(t, buildDoctorReport(f.env), "claude-code", "quota source")
+			wantStatus(t, c, tc.want)
+			if tc.wantFix && (!strings.Contains(c.Detail, "freshness limit") || !strings.Contains(c.Detail, "15m") || !strings.Contains(c.Fix, "statusline bridge")) {
+				t.Errorf("stale detail/fix should state age, limit and refresh path: %q / %q", c.Detail, c.Fix)
+			}
+		})
+	}
+}
+
 func TestDoctor_QuotaSource(t *testing.T) {
 	f := newDoctorFixture(t)
 	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), claudeSettings(f.bin))

@@ -81,7 +81,14 @@ func checkQuotaSource(add func(id, status, detail, fix string), env doctorEnv, h
 		if src == "" {
 			src = "unrecognised source"
 		}
-		add("quota source", doctorOK, fmt.Sprintf("%s, observed %s ago", src, humanAge(env.Now().Sub(snap.ObservedAt))), "")
+		age := humanAge(env.Now().Sub(snap.ObservedAt))
+		if snap.StaleAfterObserved(env.Now()) {
+			add("quota source", doctorWarn,
+				fmt.Sprintf("%s, observed %s ago; older than the %s freshness limit, so quota routing runs on a stale reading", src, age, humanAge(quota.MaxTTL)),
+				fmt.Sprintf("a snapshot refreshes only when the harness statusline bridge or `downshift quota import` writes a new one; run `downshift quota status --harness %s` to check", h))
+			break
+		}
+		add("quota source", doctorOK, fmt.Sprintf("%s, observed %s ago", src, age), "")
 	case found:
 		add("quota source", doctorWarn, "quota.json exists but holds no readable snapshot for "+h,
 			fmt.Sprintf("downshift quota status --harness %s", h))
