@@ -70,10 +70,16 @@ func TestClassify900KBUnder500ms(t *testing.T) {
 	prompt := strings.Repeat(filler, (900<<10)/len(filler)+1)[:900<<10]
 	// Warm regex/risk caches; the first call on a shared CI runner can be 2–3× slower.
 	_ = Classify(prompt)
-	start := time.Now()
-	_ = Classify(prompt)
-	elapsed := time.Since(start)
-	t.Logf("Classify 900KB (warm): %v", elapsed)
+	// Best of three: a package running beside others on a loaded runner can
+	// slow one call several-fold, but not all three. The minimum still shows a
+	// real slowdown.
+	elapsed := time.Duration(1<<63 - 1)
+	for range 3 {
+		start := time.Now()
+		_ = Classify(prompt)
+		elapsed = min(elapsed, time.Since(start))
+	}
+	t.Logf("Classify 900KB (warm, best of 3): %v", elapsed)
 	// 1 s warm path: order-of-magnitude guard. Full wall-clock including semantic
 	// fuse is in TestClassifyLatencyLargePrompts (900 KB, 10 s).
 	testenv.CheckBudget(t, "Classify of 900 KB", elapsed, time.Second)
