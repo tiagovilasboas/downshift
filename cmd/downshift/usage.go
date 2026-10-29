@@ -13,7 +13,6 @@ func usage(w io.Writer) {
 
 Everyday
   downshift setup [--dry-run]    Wire the hooks into every harness found (backup, diff, --undo)
-  downshift dashboard [--port=1337]  Open the Downshift dashboard in browser (sessions, agents, tokens)
   downshift enable               Print shell aliases for transparent compaction (eval in .bashrc/.zshrc)
   downshift shell-init           Deprecated alias of enable; kept for old shell rc files
   downshift compact -- <cmd>     Cut a test or build command's output to its PASS/FAIL summary

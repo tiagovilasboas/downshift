@@ -1,5 +1,7 @@
 # Roadmap Unificado: Downshift Visual Suite (Svelte)
 
+> **Discontinued 2026-10-29.** The dashboard commands were removed (N9); the dashboard code stays until W6.6. This roadmap stays as history.
+
 > **Status:** In Progress  
 > **Data:** 2026-10-22  
 > **Stack:** Svelte 5, Vite, TailwindCSS, Chart.js  

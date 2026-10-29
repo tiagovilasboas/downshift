@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The `downshift dashboard` and `downshift serve` commands are removed (owner decision N9, confirmed 2026-10-29), with the `dsmon-server` launch agent script that ran `serve`. The dashboard code (`dashboard/`, `internal/api`) stays until its removal is scheduled (roadmap W6.6). Use `downshift session --tree`, `downshift watch` and `downshift report` for the same data in the terminal.
+
 ### Changed
 
 - **The orchestrator LLM chooses the model; Downshift applies and measures it (owner decision O8, 2026-10-28).**

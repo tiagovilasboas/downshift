@@ -266,7 +266,7 @@ The plan runner estimate is now 41 points, with two new fronts (P11 events, P12 
 
 ### 8c-bis. Dashboard decision (N9)
 
-**N9 Dashboard discontinued (owner, 2026-10-27).** The web dashboard (`dashboard/` and the embedded assets under `internal/api/dashboard`) gets no new work. It is not extended for workers, quota or diffs. Whether to remove it is a separate cleanup card (W6.6). The visual surface for multi-worker supervision, when it comes, is the terminal (see BP1), not a browser.
+**N9 Dashboard discontinued (owner, 2026-10-27); its commands removed (owner confirmed, 2026-10-29).** The web dashboard (`dashboard/` and the embedded assets under `internal/api/dashboard`) gets no new work. It is not extended for workers, quota or diffs. Whether to remove it is a separate cleanup card (W6.6). The visual surface for multi-worker supervision, when it comes, is the terminal (see BP1), not a browser.
 
 ### 8d. Business plan alignment (2026-10-27)
 
@@ -331,7 +331,7 @@ Wave totals: W0 14, W2 13, W3 13, W4 13, W5 8. The plan-runner spec (33 points) 
 | W6.3 | 3 | Event schema aligned with the plan table (`route.decided`, `worker.lifecycle`, `worktree.gated`, `quota.observed`), allowed fields only | None |
 | W6.4 | 3 | Plan runner admission: 4 workers by default (cap 16), 2 per harness, defer on cool-down, in-memory output ring buffer of 256 KiB | Plan runner engine |
 | W6.5 | 3 | Cross-platform cancel: SIGINT, SIGTERM, SIGKILL on the process group, and a job object on Windows, in per-OS files | Plan runner engine |
-| W6.6 | 3 | Dashboard removal, if the owner confirms (N9): `dashboard/`, embedded assets, the API route and the docs | Owner decision |
+| W6.6 | 3 | Dashboard code removal (N9): `dashboard/`, embedded assets, `internal/api` and the docs. The commands were removed 2026-10-29 | Owner decision |
 
 W6.3 can start now. W6.4 and W6.5 are pieces of the plan-runner fronts and are merged with them, not built apart. All W6 cards use tokens only (O1).
 
