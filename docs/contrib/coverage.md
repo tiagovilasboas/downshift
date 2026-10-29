@@ -72,6 +72,7 @@ file or from `AGENTS.md`.
 | `internal/outcome` | Quality | Offline eval runner |
 | `internal/paths` | — | Cross-platform path helpers |
 | `internal/mcp` | Delegation | The MCP server. `tools`: the port, plain-function tools with no protocol knowledge. `transport`: the only package that imports the official Go SDK; edge-only, enforced by `TestInternalPackagesUseOnlyTheStandardLibrary` and `TestExternalModulesStayAtTheEdge` |
+| `internal/workers` | Delegation | The queue behind `delegate`, `collect` and `cancel`: starts workers up to a limit, a time budget per job, deliveries acknowledged by sequence. `Launcher` is the port; the default refuses every agent until a read-only launch is verified (spec R27) |
 | `internal/playbook` | Delegation | Named working rules a delegated worker receives (General plus an area set): shipped markdown, the person's files under the state dir, name folding, `Block` for the MCP server. No routing, no enforcement; imports only `paths` |
 | `internal/policyfile` | Routing | Project tier floor; registers via hook |
 | `internal/quota` | Routing | File I/O for quota; registers hooks |

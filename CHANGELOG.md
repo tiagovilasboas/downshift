@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The MCP server now tells clients how to use it: the instructions lead with the rule for when to call `providers` (before any subagent spawn) and the `[tier=small]` hint, tools carry a title and read-only, idempotent, closed-world hints (`providers` is not read-only because it stores a hint), and `providers` asks Claude Code to load it at session start.  The reasoning is in the MCP spike record of 2026-10-28 in the plans folder.
 - The `providers` result carries a `next` pointer: the `[tier=small]` hint and the `apply` dry run, since a result is the one channel that reaches the orchestrator mid-session.
 - Two real Claude Code runs (2026-10-29) show the orchestrator adds the `[tier=small]` hint on its own, and the hook honours it. The MCP tools were not called unprompted in either run. See `docs/evidence/mcp-unprompted-2026-10-29.md`.
+- The MCP server has `delegate`, `collect` and `cancel` for read-only workers. The queue (limit four, a time budget per job, deliveries acknowledged by sequence, repeats flagged) is built and tested with fake workers. No real worker can start yet: the read-only launch for Claude and Codex is not verified against the real CLIs (spec R27), so each delegation ends as a failed delivery that says so.
 
 ### Removed (O8)
 

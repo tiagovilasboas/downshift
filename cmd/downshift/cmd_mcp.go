@@ -18,7 +18,11 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/mcp/tools"
 	"github.com/tiagovilasboas/downshift/internal/mcp/transport"
 	"github.com/tiagovilasboas/downshift/internal/models"
+	"github.com/tiagovilasboas/downshift/internal/workers"
 )
+
+// defaultWorkers is how many read-only workers run at once (spec R17 and 5.3 use four).
+const defaultWorkers = 4
 
 const mcpUsage = "usage: downshift mcp serve\n"
 
@@ -30,8 +34,9 @@ const mcpUsage = "usage: downshift mcp serve\n"
 const mcpInstructions = "Before you spawn a subagent (the Agent or Task tool), call providers: it lists the models this harness offers right now, with their tiers. " +
 	"To send mechanical work to a smaller model, start the spawn's prompt with [tier=small]; a hint only moves down, and a pinned model or a declared policy wins. " +
 	"Call apply to see what would be applied for a choice, playbook for the working rules a worker should receive, and status for quota advice. " +
-	"Downshift applies the model you choose within the policy the user declared and measures the result; it never picks one for you and takes no task text. " +
-	"Every result carries a strain block with the quota headroom."
+	"Downshift applies the model you choose within the policy the user declared and measures the result; it never picks one for you. " +
+	"The information tools take no task text. delegate starts one read-only worker per task you write, and collect reads what they report; " +
+	"workers cannot write. Every result carries a strain block with the quota headroom."
 
 // runMcp is `downshift mcp`. Only `serve` exists: an MCP server on standard
 // input and output, started by the harness that registered it.
@@ -73,7 +78,9 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 		Harnesses: capsHarnessIDs,
 		Version:   buildVersion,
 	}
-	srv, err := transport.New(transport.Info{Name: "downshift", Version: buildVersion, Instructions: mcpInstructions}, tools.Info(deps), log)
+	deps.Work = workers.New(workers.Unverified(), defaultWorkers, time.Now)
+	all := append(tools.Info(deps), tools.WorkTools(deps)...)
+	srv, err := transport.New(transport.Info{Name: "downshift", Version: buildVersion, Instructions: mcpInstructions}, all, log)
 	if err != nil {
 		fmt.Fprintln(errW, "mcp serve:", err)
 		return 1

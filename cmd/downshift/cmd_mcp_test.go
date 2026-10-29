@@ -99,7 +99,7 @@ func mcpState(t *testing.T) string {
 	return root
 }
 
-func TestMcpServerListsTheFourInformationTools(t *testing.T) {
+func TestMcpServerListsItsTools(t *testing.T) {
 	s := startMcp(t, mcpState(t))
 	if _, err := io.WriteString(s.in, `{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}`+"\n"); err != nil {
 		t.Fatal(err)
@@ -109,7 +109,7 @@ func TestMcpServerListsTheFourInformationTools(t *testing.T) {
 	for _, x := range m["result"].(map[string]any)["tools"].([]any) {
 		names = append(names, x.(map[string]any)["name"].(string))
 	}
-	if strings.Join(sortedCopy(names), ",") != "apply,playbook,providers,status" {
+	if strings.Join(sortedCopy(names), ",") != "apply,cancel,collect,delegate,playbook,providers,status" {
 		t.Fatalf("tools = %v", names)
 	}
 }

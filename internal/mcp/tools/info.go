@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/playbook"
+	"github.com/tiagovilasboas/downshift/internal/workers"
 )
 
 // Model is one model detected for a harness. The JSON tags mirror what
@@ -93,6 +94,8 @@ type Deps struct {
 	Applier   Applier
 	// Reporter stores model ids the caller reports; nil means unavailable.
 	Reporter Reporter
+	// Work starts and reads read-only workers; nil means the tools say they are unavailable.
+	Work *workers.Queue
 	// Harnesses lists the valid harness ids, for argument errors.
 	Harnesses func() []string
 	Version   string
