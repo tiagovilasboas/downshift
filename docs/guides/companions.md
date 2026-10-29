@@ -44,15 +44,7 @@ supports; the Downshift side of that table is in
 - It does not bundle third-party skills, rules or agent files in `skills/`.
   Most are single-harness, they add always-loaded context to every session,
   and some carry licences (CC BY) or default telemetry that Downshift does
-  not want to ship under its own name. One exception, by owner decision
-  2026-10-17: the plugin bundles the [cache-tax mod](../../hooks/cache-tax/README.md)
-  (MIT, vendored and pinned, no always-loaded context, no telemetry, no
-  network call but its own opt-in warming ping). The NOTICE file carries its
-  licence. Mods are the exception category to the never-bundle rule (owner decision
-  2026-10-17): cache-tax inside the plugin, [savvy-progress](../../mods/savvy-progress/README.md)
-  as a sibling plugin of the marketplace (`savvy-progress@downshift`), vendored and
-  pinned with its
-  licence in NOTICE.
+  not want to ship under its own name. It bundles no mods either: the vendored ones were removed on 2026-10-29.
 - Its own native `downshift compact` wrapper (on by default since 2026-10-19;
   `"exec": false` or `DOWNSHIFT_EXEC=0` turns it off) is not a companion
   integration. On Claude Code the plugin hook may rewrite an
@@ -227,8 +219,8 @@ the last turn's edits), install the same way and are unrelated to routing.
 
 **What Downshift does with it.** Nothing, by the rule above: it does not
 install, detect or configure these recommended mods. (`downshift setup` does
-install its own plugin and the sibling mod savvy-progress, and
-turns on You should know only when you pass `--you-should-know`; see [mods/README.md](../../mods/README.md).)
+install its own plugin, and
+turns on You should know only when you pass `--you-should-know`.)
 This section is the whole integration.
 
 **Before you install any mod.** A hooks module runs inside Claude Code with

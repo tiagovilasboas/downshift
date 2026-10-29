@@ -1,9 +1,0 @@
-{
-  "name": "downshift-theme",
-  "version": "0.1.0",
-  "description": "Optional Claude Code themes (Downshift, Downshift Light): black first, grey text, green as a small accent.",
-  "author": { "name": "Tiago Vilas Boas", "url": "https://github.com/tiagovilasboas" },
-  "homepage": "https://github.com/tiagovilasboas/downshift/tree/main/mods/downshift-theme",
-  "repository": "https://github.com/tiagovilasboas/downshift",
-  "license": "Apache-2.0"
-}

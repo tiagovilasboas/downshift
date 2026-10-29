@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Every Claude Code and OpenCode mod is removed (owner decision, 2026-10-29): the vendored `savvy-progress` (progress bar and `/agents-info` panel), the vendored `cache-tax`, and the Downshift-owned `downshift-progress`, `downshift-panel`, `downshift-dock`, `downshift-router`, `downshift-theme` and `downshift-opencode`, with the `mods/` directory, the marketplace entries, the NOTICE paragraphs and the `setup` code that installed `savvy-progress`. The marketplace now offers the `downshift` plugin only. If you installed a mod, remove it with `/plugin uninstall <name>@downshift`. The OpenCode adapter in Go stays, but nothing forwards a spawn to it now.
+- The plugin description no longer says "deterministic routing": it says the plugin applies the model the orchestrator chose, deterministically and within your policy.
 - The `downshift dashboard` and `downshift serve` commands are removed (owner decision N9, confirmed 2026-10-29), with the `dsmon-server` launch agent script that ran `serve`. The dashboard code (`dashboard/`, `internal/api`) stays until its removal is scheduled (roadmap W6.6). Use `downshift session --tree`, `downshift watch` and `downshift report` for the same data in the terminal.
 
 ### Changed

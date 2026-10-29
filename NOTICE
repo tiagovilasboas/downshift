@@ -8,20 +8,6 @@ Previous public releases were distributed under the Business Source License 1.1.
 See LICENSE-BSL-1.1-ARCHIVE.md for the archived text. Effective 2026-10-06,
 new distributions use the Apache License, Version 2.0 (see LICENSE).
 
-hooks/cache-tax/ is the Claude Code mod cache-tax by Karan Bansal
-(https://github.com/karanb192/cache-tax, version 2.2.1, commit 06cac47),
-MIT License, Copyright (c) 2026 Karan Bansal, vendored unchanged except for
-the import paths of its test file and a local colour patch (documented in
-hooks/cache-tax/README.md and hooks/cache-tax/downshift-local.patch). The MIT notice is in hooks/cache-tax/LICENSE
-and is retained below.
-
-mods/savvy-progress/ is the Claude Code mod savvy-progress by johnnyvizz
-(https://github.com/JohnnyVizz/claude-kit, path plugins/savvy-progress,
-version 1.2.1, shipped as 1.2.13 with the local patch, commit c871c15), MIT License, Copyright (c) 2026 johnnyvizz,
-vendored with one local patch (colours, shown tier words, a single crab sprite, a read-only draw of Downshift's per-spawn state, one estimated tokens-saved total (routing plus Compactor), and a band that, only while Downshift is working in the session, also appears when subagents run without a registered flow, documented in
-mods/savvy-progress/README.md and mods/savvy-progress/downshift-local.patch). The MIT notice is in mods/savvy-progress/LICENSE; its text
-is the MIT text retained below, under the copyright line above.
-
 The MCP server (internal/mcp/transport) links the official Go SDK of the Model
 Context Protocol, github.com/modelcontextprotocol/go-sdk v1.8.0, which is not
 vendored: it is fetched by the Go toolchain and pinned in go.mod and go.sum. Its

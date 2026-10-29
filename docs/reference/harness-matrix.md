@@ -270,26 +270,9 @@ attribute its exec event to `kirocrew` instead of `unknown`, through
 hook-payload id it does not have. The `/downshift` slash command is Claude
 Code only. See [session-view.md](../guides/session-view.md).
 
-## Bundled and sibling mods (2026-10-17)
+## Mods
 
-The Claude Code plugin's `hooks/hooks.json` lists one mod module,
-[`hooks/cache-tax/`](../../hooks/cache-tax/README.md) (third-party, MIT,
-vendored and pinned; owner decision 2026-10-17). One more vendored mod ships in
-the same marketplace as a sibling plugin, one install, because a plugin
-loads a single hooks module and both hook `session.start`:
-[`mods/savvy-progress/`](../../mods/savvy-progress/README.md)
-(`savvy-progress@downshift`); see [`mods/README.md`](../../mods/README.md). None is a
-routing feature and nothing in the shared layers computes it: a mod is code
-Claude Code runs in its own process, so it exists only where mods load.
-
-| harness | mods | why |
-|---|---|---|
-| claude-code | cache-tax loads with the plugin on 2.1.287+; savvy-progress is a separate plugin install (CLI, Desktop Code tab, VS Code extension; hooks also run in `claude -p`, nothing is drawn there) | mods are a Claude Code plugin feature; `setup` cannot write one |
-| codex, cursor, kirocrew, antigravity, grok | not available | no mod system; the cold-cache question is the harness's own |
-
-What each does is in its README; the one fact that matters here is that the
-cache-tax warming ping spends usage and is armed by the user (or for three hours
-after a detected cold write), while the guard itself sends nothing.
+Downshift bundles no Claude Code mods: the vendored ones were removed on 2026-10-29. A mod is code Claude Code runs in its own process, so it exists only where mods load; the other harnesses have no mod system.
 
 ## Answer when nothing is rewritten (2026-10-19)
 

@@ -5,10 +5,8 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -221,77 +219,6 @@ func TestSetupAlreadyEnabledPluginMigratesOldSettingsHooks(t *testing.T) {
 	for _, c := range hookCommands(t, doc, "PreToolUse") {
 		if strings.Contains(c, "downshift") {
 			t.Fatalf("duplicate routing left behind: %q", c)
-		}
-	}
-}
-
-func TestSetupInstallsSiblingMods(t *testing.T) {
-	e, f := newClaudeEnv(t, "")
-	code, out, errOut := f.run(nil)
-	if code != 0 {
-		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
-	}
-	doc := parseDoc(t, e.read(".claude/settings.json"))
-	plugins, _ := doc["enabledPlugins"].(map[string]any)
-	for _, id := range []string{"savvy-progress@downshift"} {
-		if plugins[id] != true {
-			t.Fatalf("mod %s not enabled: %v\ncalls: %v", id, plugins, f.calls)
-		}
-	}
-	if !strings.Contains(out, "installed the mods savvy-progress@downshift") {
-		t.Fatalf("the output must name the mods:\n%s", out)
-	}
-}
-
-func TestSetupModsSurviveRoutingFallback(t *testing.T) {
-	e, f := newClaudeEnv(t, "")
-	f.onLoginPath = false // the plugin falls back to settings hooks; mods do not need downshift
-	if code, out, errOut := f.run(nil); code != 0 {
-		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
-	}
-	doc := parseDoc(t, e.read(".claude/settings.json"))
-	plugins, _ := doc["enabledPlugins"].(map[string]any)
-	if plugins["savvy-progress@downshift"] != true || plugins["downshift@downshift"] == true {
-		t.Fatalf("want mods only, got %v", plugins)
-	}
-}
-
-func TestSetupSkipsEnabledMods(t *testing.T) {
-	_, f := newClaudeEnv(t, `{"enabledPlugins": {"downshift@downshift": true, "savvy-progress@downshift": true, "filetree@downshift": true, "downshift-dock@downshift": true}}`)
-	if code, out, errOut := f.run(nil); code != 0 {
-		t.Fatalf("exit %d\n%s\n%s", code, out, errOut)
-	}
-	for _, c := range f.calls {
-		if strings.Contains(c, "plugin install") || strings.Contains(c, "marketplace add") {
-			t.Fatalf("enabled mods are not installed again: %v", f.calls)
-		}
-	}
-}
-
-// Every mod setup installs must be a plugin of the Downshift marketplace.
-func TestSetupModsAreMarketplacePlugins(t *testing.T) {
-	raw, err := os.ReadFile(filepath.Join("..", "..", ".claude-plugin", "marketplace.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var m struct {
-		Name    string `json:"name"`
-		Plugins []struct {
-			Name string `json:"name"`
-		} `json:"plugins"`
-	}
-	if err := json.Unmarshal(raw, &m); err != nil {
-		t.Fatal(err)
-	}
-	listed := map[string]bool{}
-	for _, p := range m.Plugins {
-		listed[p.Name+"@"+m.Name] = true
-	}
-	for _, st := range setupTargets {
-		for _, id := range st.Mods {
-			if !listed[id] {
-				t.Errorf("%s: mod %s is not in marketplace.json", st.Name, id)
-			}
 		}
 	}
 }

@@ -23,6 +23,9 @@ Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado d
 
 ## Pendências técnicas
 
+- [x] **Mods removidos** (2026-10-29): savvy-progress, cache-tax, downshift-progress, -panel, -dock, -router, -theme e -opencode, com `mods/`, `setup` e o `ModConflicts` do `doctor`. O adaptador Go do OpenCode ficou, mas nada mais encaminha um spawn a ele; decidir se o canal do OpenCode volta de outra forma.
+- [ ] **NOTICE cita `internal/adapt/count_predictor.go`**, arquivo já removido. Confirmar se o trecho da Berri AI ainda se aplica a algum código e, se não, tirá-lo.
+
 - [x] **`CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` gravado por um `setup` antigo** fazia o Claude Code ignorar a reescrita do hook e a escolha por chamada. Removido do `settings.json` do dono (backup `.bak-subagent-force-2026-10-29`) e o `doctor` agora falha quando a variável está ligada. Com ela removida, uma sessão headless reescreveu Sonnet para Haiku 5.5 e a reescrita foi respeitada.
 
 - [x] **Título do `delegate`** agora diz "Start delegated workers" (antes dizia "read-only workers" mesmo com a rota de escrita ligada). Resta decidir se `cancel` merece `destructiveHint`.

@@ -52,8 +52,6 @@ The suite (one sentence each; status words from docs/reference/capability-matrix
     ~1 in 10 spawns unrouted, downshift stats / report. Implemented; estimates.
   - Context policy: setup sets opusplan, plan mode, You should know for unset
     keys (Claude Code only); native compressor observes bytes. Implemented, limited.
-  - Mods: savvy-progress as a sibling plugin;
-    downshift-router opt-in prototype (Experimental). mods/README.md
   - Companions: a compression proxy (detected and recorded),
     never installed or wrapped. docs/guides/companions.md
   - Evidence ladder: rungs A-E; rung D reached once (2026-10-15), rung E not
@@ -110,10 +108,6 @@ Primary harness: Claude Code (most complete, most verified); every adapter gets 
 Harness status (four words): Completed = Claude Code; Functional = Codex, Cursor; Beta = OpenCode; Experimental (proof of concept) = KiroCrew, Antigravity.
 Cursor setup: downshift setup cursor merges preToolUse (Task, Shell), beforeShellExecution, subagentStop (end cursor), sessionStart and beforeSubmitPrompt (cursor-touch for composer baseline cache in ~/.downshift/cursor-composer-model.json). docs/guides/install.md#install-cursor
 Evidence per harness: docs/reference/harness-matrix.md
-Sibling mod of the Downshift marketplace, one install because a plugin loads one hooks
-module. `downshift setup` installs it on Claude Code (--no-plugin skips); by hand: /plugin install savvy-progress@downshift. mods/README.md
-Experimental mod downshift-router (off by default; routes from agent.spawn through the same
-binary; never run next to the settings hook): mods/downshift-router/README.md, docs/design/mod-router.md
 Companions (compression proxies, detected and recorded, never installed by Downshift;
 recommended Claude Code mods You should know (built in,
 off by default, billed checks), Token Weather, Replay Theater and reflect-mod):

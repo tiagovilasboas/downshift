@@ -7,6 +7,13 @@ tokens; no figure is converted to money.
 
 ## What changes for you
 
+### 0a. The mods are removed
+
+`savvy-progress`, `cache-tax`, `downshift-dock`, `downshift-progress`, `downshift-panel`, `downshift-router`,
+`downshift-theme` and `downshift-opencode` are gone, and `downshift setup` no longer installs any mod. If you
+installed one, remove it with `/plugin uninstall <name>@downshift`. For the same information, use
+`downshift session --tree`, `downshift watch` and `downshift report`.
+
 ### 0. The dashboard commands are removed
 
 `downshift dashboard` and `downshift serve` are gone. The web dashboard code stays in the repository until its

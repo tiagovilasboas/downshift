@@ -34,8 +34,6 @@ type doctorWiring struct {
 	Nested bool   // entry shape, see setupTarget.Nested
 	Setup  bool   // `downshift setup <harness>` can write the file
 	Plugin string // plugin id that can carry the same hooks (setupTarget.Plugin)
-	// ModConflicts: plugin ids whose mod the Plugin already bundles (setupTarget.ModConflicts).
-	ModConflicts []string
 	// Registry is an informational hook list (setupTarget.Registry). A Downshift
 	// entry there duplicates the policy hook in File.
 	Registry string
@@ -47,7 +45,7 @@ func doctorWiringFor(harness string) (doctorWiring, bool) {
 		if t.Name != harness || t.File == "" {
 			continue
 		}
-		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin, ModConflicts: t.ModConflicts, Registry: t.Registry}
+		w := doctorWiring{File: t.File, Nested: t.Nested, Setup: true, Plugin: t.Plugin, Registry: t.Registry}
 		for i, h := range t.Hooks {
 			w.Hooks = append(w.Hooks, doctorHook{Event: h.Event, Matcher: h.Matcher, Args: h.Args, Wrapper: h.Wrapper, Required: i == 0})
 		}
@@ -149,7 +147,6 @@ func checkHarness(rep *doctorReport, env doctorEnv, nc core.NamedCaps, w doctorW
 
 	found, missing := matchWiredHooks(cmds, w.Hooks)
 	reportWiring(add, h, w, file, pathBin, viaPlugin, found, missing)
-	reportModConflicts(add, w, raw, viaPlugin)
 	// With the plugin carrying the hooks, found is empty and the hook binary
 	// check has nothing to look at.
 	checkEvidence(add, env, nc, file, found, pathBin, events)
@@ -293,24 +290,6 @@ func checkDuplicateEntries(add func(id, status, detail, fix string), nc core.Nam
 	add("entry dual route", doctorWarn,
 		fmt.Sprintf("%d tool_use_hash value(s) have decisions from more than one entry: every spawn is routed twice", n),
 		"disable the second entry (settings/plugin PreToolUse or the mod) so only one path is live")
-}
-
-// reportModConflicts warns when a plugin whose mod the Downshift plugin already
-// bundles is enabled next to it: the mod's hooks and commands then run twice.
-// Nothing is reported when the Downshift plugin is off (the bundled mod does
-// not load) or no conflict is enabled.
-func reportModConflicts(add func(id, status, detail, fix string), w doctorWiring, raw any, viaPlugin bool) {
-	if !viaPlugin {
-		return
-	}
-	for _, id := range w.ModConflicts {
-		if !pluginEnabled(raw, id) {
-			continue
-		}
-		add("plugin mod", doctorWarn,
-			fmt.Sprintf("%s is enabled next to %s, which bundles the same mod: its guard and commands run twice", id, w.Plugin),
-			"/plugin uninstall "+id+"   # the Downshift plugin keeps the mod")
-	}
 }
 
 // pluginEnabled reads the documented `enabledPlugins` map of a settings file:

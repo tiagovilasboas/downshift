@@ -183,21 +183,6 @@ Each run also records two new fields (additive; absent in old rows, treated as
 - **`entry`**: `"hook"` when `--session=` was set by a harness adapter;
   `"direct"` when the agent or user ran the compactor without `--session=`.
 
-### `mods/savvy-progress`
-
-Vendored, so it is patched only through its documented local patch
-(`mods/savvy-progress/downshift-local.patch`, README section "Downshift local
-patch"; mod version 1.2.12). The patch runs `downshift session --panel` and shows
-one tile for the saving. It reads `Tokens saved` and draws `tokens_saved_estimate`
-with a `~` (an estimate); the Tokens and Time tiles stay. With an unknown session
-the figure is withheld. The mod never splits the total. The
-header and the band show one line, `Downshift · N switched · M held`, and each
-agent row shows a one-word status, ↓ and the tokens that agent moved to a smaller
-model (`work_saved` + `cache_saved`). `tokens_line`, `tokens_label`,
-`by_agent_type` and `observed_model` stay in the contract for the CLI; the mod
-does not draw them. With no binary or bad output it draws what upstream draws. No
-routing logic lives in the mod.
-
 ## What a harness cannot honor
 
 Computing the state is not conditional on the harness. What varies is only

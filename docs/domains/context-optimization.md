@@ -46,7 +46,6 @@ During `downshift setup`, Downshift inspects `~/.claude/settings.json` and confi
 - **`"model": "opusplan"`**: Directs Opus to create high-level plans while delegating execution steps to Sonnet, significantly lowering base session token burn.
 - **Plan Mode**: Enforces explicit planning milestones before broad file modifications.
 - **You Should Know Mod** (opt-in, `downshift setup --you-should-know`): Enables Claude Code's built-in `cc-plugin-you-should-know@builtin` advisory mod. Each check is a billed background request, so setup only suggests it.
-- **Cache-Tax Mod**: Bundled inside the Downshift Claude Code plugin (`hooks/cache-tax/`). Alerts when cold prompt cache read costs approach threshold limits and offers `/keepwarm` to maintain warm caches across idle intervals.
 
 ---
 
