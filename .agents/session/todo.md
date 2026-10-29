@@ -21,6 +21,7 @@ Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado d
 - [ ] **C0 / R0b:** prova em sessão real de que o PreToolUse dispara em spawns de workflow. Não rodada.
 - [ ] **R27:** observar um worker de leitura tentando escrever e sendo bloqueado. Três execuções reais não tentaram escrever; nada foi observado.
 - [ ] **Aceite** de K1 a K7 e de V1.
+- [ ] **True north (`docs/true-north.md`):** o experimento de quatro braços (seção 6) é o V2 ampliado; precisa do mesmo orçamento. Antes de citar fora do repositório, conferir a tabela do system card do Opus 4.5 no PDF (não extraído aqui) e reler as duas páginas da OpenAI (HTTP 403).
 
 ## Pendências técnicas
 

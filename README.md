@@ -79,6 +79,43 @@ bytes on compacted files (26 of 248), 23.7% overall
 
 ---
 
+## True north and the research behind it
+
+**The orchestrator LLM decides; Downshift applies the decision inside your policy, keeps the context
+small, and measures the result as cost per accepted task.** The full direction, with what each study
+shows and does not show, is in **[docs/true-north.md](docs/true-north.md)**.
+
+What the published work says, and what we take from it:
+
+| Study | What it shows | What we take from it |
+|---|---|---|
+| [Anthropic, multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (2025-06-13) | Opus 4 leading Sonnet 4 subagents beat single-agent Opus 4 by 90.2% on an internal research eval, at about 15× the tokens of a chat. Coding has fewer parallel tasks | A strong lead with cheaper workers can pay on independent work; the token price is part of the result |
+| [Claude Opus 4.5 system card](https://assets.anthropic.com/m/64823ba7485345a7/Claude-Opus-4-5-System-Card.pdf), section 2.7 | The lead model moved results more than the worker model (Opus lead over Haiku workers 87.0% against Opus alone 74.8%). *Table not yet checked against the PDF* | Look at the planning step, not only at the implementation |
+| [Anthropic, patterns and problems in multiagent systems](https://www.anthropic.com/research/multiagent-systems) (2026-08-13) | A swarm found 266 vulnerabilities on 27M tokens, independent agents 21 on 6.5M; on the same directories the cost per finding was comparable | More agents widen the search; they do not make each token more productive |
+| [Anthropic, research with 60 subagents](https://www.anthropic.com/research/riemann-zeta) (2026-08-10) | Of 60 subagents, 2 developed the key ideas and 30 produced nothing new; 13 validated | Few workers first; verification matters |
+| [Anthropic, AI organizations can be more effective but less aligned](https://alignment.anthropic.com/2026/ai-organizations/) | Groups of agents scored higher on the goal and lower on ethics than single agents, depending on the model | Gates belong around the whole flow |
+| [OpenAI, model guide for the GPT-6 family](https://openai.com/index/practical-guide-building-gpt-6/) (2026-10-02) | Pick model and reasoning effort by task; delegate independent work. *Page unreadable here; confirmed through summaries* | Let the caller choose model and effort per step |
+| [OpenAI, builder's guide to GPT-5.6](https://openai.com/index/builders-guide-to-gpt-5-6/) | Retained reasoning and compaction moved ARC-AGI-3 from 13.3% to 38.3% with about six times fewer output tokens. *Page unreadable here; confirmed through summaries* | Smaller context is a real lever. A different mechanism from ours, so not proof of our numbers |
+
+The orchestration patterns the routing design is built on are the Anthropic cookbooks
+[orchestrator-workers](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/orchestrator_workers.ipynb),
+[async multi-agent](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/async_multi_agent_orchestration.ipynb),
+[plan big, execute small](https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/CMA_plan_big_execute_small.ipynb) and
+[dynamic workflows](https://github.com/anthropics/claude-cookbooks/blob/main/claude_agent_sdk/08_Dynamic_workflows.ipynb),
+plus the [coordination patterns](https://claude.com/blog/multi-agent-coordination-patterns) article.
+
+**Value proven so far, and what is not.** Measured on Claude Code: routing mechanical delegated work to a
+smaller tier used 24.1% fewer tokens per accepted run than `opusplan` (95% interval +2.1% to +46.7%,
+acceptance 12 of 12; forced delegation, one operator, token counts, measured before the orchestrator
+chose the model) ([four-arm record](docs/evidence/four-arm-mechanical-2026-10-21.md)). The hook applies the
+orchestrator's choice on real spawns (10 of 10 honoured). **Not proven:** savings in everyday use (the
+report flips sign between a 30-day and a 7-day window), the Compactor's effect on model tokens, and that
+the orchestrator uses the MCP tools unprompted. None of these studies measures Downshift; they justify
+the experiment in [section 6 of the true-north page](docs/true-north.md#6-the-experiment-that-decides-it),
+and its answer comes from our own runs.
+
+---
+
 ## Get Started
 
 ```bash
@@ -332,6 +369,9 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 ---
 
 ## Documentation
+
+### Direction
+- [True north: the direction, the research and the proof so far](docs/true-north.md)
 
 ### Getting Started
 - [Installation Guide](docs/guides/install.md)

@@ -20,6 +20,8 @@ Numbers keep their qualifiers:
 - DCI: cold 295 ms, warm p95 5.64 ms, packs of 568 to 2801 bytes. See [the DCI record](evidence/dci-v04-blast-radius.md).
 - Reports show tokens, not dollars.
 
+Direction and the research behind it: [true north](true-north.md).
+
 Where to go next: [install](guides/install.md), [how it works](design/architecture.md), [evidence](guides/evidence.md), [capability matrix](reference/capability-matrix.md).
 
 Docs are grouped into 5 domain layers, detailed in [domains/](domains/), plus start guides and governance:

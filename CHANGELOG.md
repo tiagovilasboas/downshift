@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/true-north.md` states the direction (the orchestrator decides; Downshift applies, compacts and measures cost per accepted task), lists the published studies it rests on with what each does and does not show, marks which sources were read and which were not, and separates what our own runs prove from what they do not. The README links it and lists the sources.
 - `downshift report` shows why spawns changed or stayed (verdict and reason counts per harness) and tokens per harness in two columns that are never summed; `downshift session --panel` shows the requested model, the final model, the verdict and the reason per spawn. Tokens only, no money. Events carry a prompt-free `routing_note`.
 - The MCP `providers` tool accepts the model ids the orchestrator sees. They are stored in the discovery cache as a hint (`source: "mcp"`): a fresh detection always wins and the hint expires after one hour.
 
