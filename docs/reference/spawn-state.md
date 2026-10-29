@@ -49,7 +49,7 @@ session or agent id is stored; `session` is the first 8 hex of the hashed id.
     "session": "a1b2c3d4",
     "time": "2026-10-19T12:00:00.123Z",
     "from_model": "claude-opus-5-5",
-    "to_model": "claude-haiku-4-5",
+    "to_model": "claude-haiku-5-5",
     "from_effort": "high",
     "to_effort": "low",
     "recommended_model": "",
