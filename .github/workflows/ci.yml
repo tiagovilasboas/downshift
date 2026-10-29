@@ -45,6 +45,7 @@ permissions:
 jobs:
   changes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
       go: ${{ steps.classify.outputs.go }}
@@ -81,6 +82,7 @@ jobs:
   test:
     needs: changes
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       DOWNSHIFT_TEST_TIMING: "1" # enforce wall-clock test budgets (internal/testenv/timing.go)
     steps:
@@ -271,6 +273,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.python == '1'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -301,6 +304,7 @@ jobs:
     needs: [changes, test]
     if: startsWith(github.ref, 'refs/tags/v') && needs.changes.outputs.go == '1'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         goos: [linux, darwin, windows]
@@ -329,6 +333,7 @@ jobs:
     needs: [test, test-os, race, build-cross-platform]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
       id-token: write # keyless signing identity for the provenance attestation
@@ -367,6 +372,7 @@ jobs:
     needs: [release]
     if: always() && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
     steps:

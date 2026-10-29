@@ -21,6 +21,7 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # Least privilege, for this job only: push chore/sync-prices, open or update
     # the PR, and dispatch ci on the branch (see the last step).
     permissions:
