@@ -71,8 +71,8 @@ From [the first measurements](../evidence/subagent-routing-ab-2026-10-15.md); ea
 
 ## Limits to state in the result
 
-- Dollars are catalog list prices applied to recorded tokens, not invoice amounts, unless the
-  invoice comparison in [billing-comparison-template.md](billing-comparison-template.md) is filled.
+- Downshift reports tokens only, never dollars. A dollar figure comes from the harness's own estimate
+  or from the invoice comparison in [billing-comparison-template.md](billing-comparison-template.md).
 - Rework detection depends on the PostToolUseFailure payload, which has not been captured from a
   real session yet (GAP-CHILD-FAILURE). The guardrail may undercount.
 - The result holds for this team's workload, not for every team.

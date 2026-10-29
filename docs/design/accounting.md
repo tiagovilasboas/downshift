@@ -4,9 +4,20 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-**Status (2026-10-27):** owner decision O1 makes the accounting account tokens only. This spec
-defines the routing and compactor token figures (§1). The price formula was removed (§5). Go computes no dollar figure; the price book stays as a routing
-signal. Plan history: [`../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md`](../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md).
+**Status (2026-10-29):** the accounting is a token ledger, tokens only, forever (owner decision). It
+reports three numbers and never a dollar or cost figure, not even as an estimate:
+
+1. **Tokens spent:** observed child tokens, printed by `downshift stats` (`Observed child tokens`).
+2. **Tokens saved by routing:** child tokens that ran on a cheaper model than requested
+   (`telemetry.TokenSavings`; `Numbers.Routing`, section 1.1).
+3. **Tokens saved by the compactor:** output avoided, saved bytes divided by four. `downshift report`
+   reads them from the exec event log (`accounting.ReadExecEvents`) and passes them to `accounting.Compute`.
+
+`downshift report` and `downshift stats` show tokens only. Go computes no dollar figure; the price
+book stays as an internal routing signal (section 3). The price formula was removed (section 5), and
+the dollar accounting layer in [accounting-layer-adr.md](accounting-layer-adr.md) was rejected. Sections
+that mention prices or dollars are kept as rejected history. Plan history:
+[`../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md`](../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md).
 
 ---
 
@@ -115,7 +126,7 @@ A catalog older than 30 days should trigger a warning.
 
 ---
 
-## 5. Price formula (removed)
+## 5. Price formula (removed; rejected history)
 
 The price formula (`C_actual`, `C_baseline`, `Saved`) and its package, `internal/accounting/formula`,
 were removed in the tokens-only cut. Nothing in Downshift computes or prints a dollar figure. The token
@@ -171,7 +182,7 @@ When publishing a token figure, include:
 
 ## 10. References
 
-- ADR: `docs/design/accounting-layer-adr.md` — isolated accounting layer architecture
+- ADR: `docs/design/accounting-layer-adr.md` — isolated accounting layer architecture (rejected 2026-10-29)
 - Evidence: `docs/evidence/accounting-formula-validation-2026-10-21.md`
 - Evidence: `docs/evidence/compaction-persistence-2026-10-21.md`
 - Evidence: `docs/evidence/price-coverage-2026-10-21.md`

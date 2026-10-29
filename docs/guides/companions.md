@@ -304,7 +304,7 @@ so they overlap rather than complement. Their fixed-context advice (smaller
 `CLAUDE.md`, fewer always-loaded tools) is covered by section 3 of the
 [audit skill](../../skills/downshift-audit/SKILL.md). Their dollar figures
 are list-price estimates from transcripts; on a subscription plan there is no
-per-token invoice, the same caveat `downshift stats` prints.
+per-token invoice. Downshift prints no dollar figure: `downshift stats` reports tokens only.
 
 ## Related
 
