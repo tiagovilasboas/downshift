@@ -24,6 +24,15 @@ Each harness carries exactly one of four status words (owner decision 2026-10-17
 | opencode | Beta | First-class integration under active development (owner decision 2026-10-18): adapter, route wire v1 and shared conformance in the repository; the forwarding plugin is in development and no live spawn is observed yet. Route answers, fail-open paths and observation parsing are covered by adapter tests and the shared conformance suite. No child end recorded yet; usage seam not proven. | [adapter tests](../../internal/adapters/opencode/), [conformance](../../cmd/downshift/conformance_test.go) |
 | grok | Config only | No hook rewrite; reasoning is pinned in `config.toml`. | [install.md](../guides/install.md#grok-cli-config-not-hook) |
 
+Claude Code, 12 of 14 inferred honored (2026-10-29, counts only, no prompts):
+one miss was a genuine ignored rewrite, a Haiku rewrite whose linked `resolved`
+record, 93 ms later, reported Opus with `rewrite_honored: false`. It matches the
+`CLAUDE_CODE_SUBAGENT_MODEL_FORCE` override described in the CHANGELOG (doctor now
+fails on it); routing is unchanged. The other had no `resolved`, `child_ended` or
+later spawn in its session, so it is unobserved, not refuted. Two more shifts
+without a session id are outside the count. `doctor` now reports these apart:
+`seen: 12 of 14 rewrites (1 refuted: ...; 1 not observed: ...)`.
+
 "Rewrite honored" means the harness executor applied the hook's model
 rewrite to the child subagent, not just that downshift emitted one.
 `outcome: "rewrite_emitted"` proves emission only (docs/reference/session-models.md:17).
