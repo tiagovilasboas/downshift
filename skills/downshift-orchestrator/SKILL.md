@@ -17,10 +17,17 @@ checks it against the project policy and measures it. It does not pick a model o
 
 ## 2. Choose the model per spawn
 
-Run `downshift models available --harness <your harness>` first and read the live list: you may only
-pick a model it shows. Each line gives the tier (small, mid, frontier), the source and the efforts.
+Before any delegation, call the Downshift MCP tool `providers` for your harness and read the live list:
+you may only pick a model it shows. Each entry gives the tier (small, mid, frontier), the source and the efforts.
 A model marked untiered has no tier evidence: name it only on purpose, never through a tier hint.
-If the command is missing or prints no list, use the models the harness itself offers and say so.
+
+- `providers`: the models on offer now. Call it first, before the first spawn.
+- `apply`: previews what Downshift would apply for the model and effort you chose, under the project policy.
+- `playbook`: the working rules to hand a worker.
+- `status`: quota headroom and advice; read it before fanning out many workers.
+
+Fallback when the MCP server is absent: run `downshift models available --harness <your harness>`. If that
+is missing or prints no list, use the models the harness itself offers and say so.
 
 | Kind of work | Tier | Effort |
 |---|---|---|
@@ -39,7 +46,7 @@ If the command is missing or prints no list, use the models the harness itself o
 
 ## 3. Check the result
 
-- `downshift session --why` shows which model each spawn ran on and why.
+- `downshift session --why` (or the MCP tool `status`) shows which model each spawn ran on and why.
 - `downshift doctor` shows whether the hooks fired and the last decision.
 - If a spawn failed, decide the next model yourself. Nothing moves it up or down on its own.
 
