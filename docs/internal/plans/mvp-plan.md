@@ -8,6 +8,8 @@ Status: **Accepted, 2026-10-27.** This is the execution order. It consolidates t
 (D1 to D13), the Alethe roadmap proposal (A1 to A4, kept outside this repository) and the owner decisions of
 2026-10-27 in section 2. Where they disagree, this file wins. Cards: [2026-10-27 MVP cards](../tasks/2026-10-27-mvp/README.md).
 
+Progress on 2026-10-29: stages 0 and 1 done; stage 2 done except the real-session proof (C0); stage 2b done, pending the owner's acceptance; stage 3 has V1 built, V2 open and V3 partial; stage 4 is partly built through the MCP worker tools, and its plan file runner is not started. The state record is in the [cards, closing state (2026-10-29)](../tasks/2026-10-27-mvp/README.md).
+
 ## 1. Product thesis
 
 Every task runs on the cheapest model that can do it, and the user never runs out of usage. The thesis comes from
@@ -89,7 +91,7 @@ Apply to every card, in every stage.
 - **Layers by domain.** A diagnostic core decides and knows nothing about harnesses. Each harness has an adapter that only parses its payload and emits its response. Adapters hold no policy (the layering rule in `AGENTS.md`).
 - **Accounting apart.** Token accounting is its own layer. No feature or module reads it to decide, and every module works when accounting is absent.
 - **Each module runs on its own.** A feature must work in isolation: its tests pass without the others, and it can be switched off without breaking the rest.
-- **One branch.** All stages go on one branch, `docs/mvp-plan`, merged by stage. Work lands in small deliveries of value, one phase at a time.
+- **One branch.** All stages go on one branch, `downshift/mvp-ponto-zero` (the branch the MVP was built on; the name in this plan was `docs/mvp-plan`). Work lands in small deliveries of value, one phase at a time; merges to `main` go by stage through reviewed PRs.
 - **Tests at both levels.** Every card carries unit tests and end-to-end tests of the behaviour the user sees (hook payload in, decision and note out; plan dry-run and run with fake workers).
 
 Every code card: `make check` green; golden decision tables; layering rule; copyright headers; OS-agnostic paths

@@ -1,33 +1,18 @@
 # Session State
 
-- **Branch Atual:** `downshift/mvp-ponto-zero`
-- **Fase Atual:** Onda 1.5 (Setup Completo & Release Readiness — Business Plan W7)
-- **Status:** Roadmap e Ondas alinhados com o Business Plan (`downshift-business-plan`).
-- **Próximo Objetivo:** Implementar S1 (ownership markers) e S2 (skill em ~/.claude/skills). Pendências: `setup --undo` não remove o policy.json criado; nit do revisor sobre o literal `claude-code` duplicado.
-- **Bloqueios:** Nenhum
-- **Commits na Branch:**
-  - `7a9becc1`: feat(cli): add smart zero-prompt default entry when invoked without args (F0.1)
-  - `73fe2981`: feat(setup): add downshift uninstall command with backup restoration and cache purge (F0.2)
-  - `78b32c06`: feat(setup): add interactive terminal UI setup via --tui flag (F0.3)
-  - `b10d75d0`: feat(cascade): implement episodic failure tracker and dead-ends sensor (F1.1)
-  - `f817ac5c`: feat(routing): add sensor-guided auto-upgrade cascade to pre-tool-use decider (F1.2)
-  - `b9919bbf`: feat(telemetry): add git acceptance detection and accept command for used and discarded code (F1.3)
-  - `aa188066`: test(e2e): add end-to-end battery test for claude-code mvp lifecycle (F1.4)
-  - `7de4a14f`: docs(coverage): inventory internal/cascade package in architecture coverage matrix (F1.5)
-  - `cfb96ded`: feat(loop): implement autonomous engineering loop command with sensor check, cascade auto-upgrade and acceptance (F1.6)
-  - `dce5db45`: feat(setup): auto-discover and seed relative model tiers in session-models.json for detected harnesses (F0.4)
-  - `603725d0`: feat(uninstall): enhance --purge to completely remove ~/.downshift state dir and harness backup files
-  - `aa2a24c1`: docs(help): clarify --purge in downshift uninstall help topic
-  - `8af04fc7`: chore(session): update session tracking for uninstall purge feature
-  - `4fc254ed`: fix(cascade): add inter-process directory lock and atomic rename to dead_ends, pass active model in loop failure
-  - `b79162eb`: feat(setup): configure CLAUDE_CODE_SUBAGENT_MODEL_FORCE in claude-code settings env
-  - `cda89de8`: test(claudecode): clear subagent model force env in session model test
-  - `532bd279`: feat(routing): add default profile table for claude code built-in agent types (W7.1)
-  - `50f80a0a`: feat(setup): add policy init step with dry run and yes gate (W7.2)
-  - `fffde0a3`: fix(routing): keep declared profiles and hint tiers ahead of the default table
-  - `9c1a3e62`: feat(routing): add economy mode as policy data (W7.9)
+- **Branch atual:** `downshift/mvp-ponto-zero` (publicada em `origin`; o `main` não foi tocado).
+- **Fase atual:** MVP, etapa 3 (V1 construído, V2 aberto, V3 parcial), com a etapa 4 parcial pelo caminho MCP.
+- **Status:** docs de planejamento (todo, cards do MVP, plano do MVP, roadmap, CHANGELOG) alinhados com o estado de 2026-10-29.
+- **Próximo passo:** decisão do dono sobre mesclar a branch no `main` (chega ao plugin o hook `SessionStart`), orçamento da suíte V2 e a prova C0 em sessão real.
+- **Bloqueios:** nenhum técnico. Os itens acima aguardam aprovação ou orçamento do dono.
+- **Commits recentes na branch:**
+  - `7e2acb02`: descrição do plugin como escolha do orquestrador
+  - `066589db`: contexto de `SessionStart` pedindo `providers` ao orquestrador
+  - `c5d51973`: estado de fechamento do MVP medido, não provado
+  - `2fa8ca7c`: rota de escrita com bypass, opt-in, em worktree própria
+  - `8653a085`: leituras somente leitura para Claude e Codex atrás de uma flag
 
 ## Estado em 2026-10-28 (O8)
-- Decisão do dono: o LLM orquestrador escolhe agente, provedor, modelo e esforço (como o caminho MCP do Alethe e o padrão Orchestrator-Workers da Anthropic). O Downshift aplica dentro da política declarada e mede. Removidos: tabela N11, escalonamento automático após falha, veto de risco embutido, escrita de `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` no setup.
-- Novo: playbooks de regras de trabalho (`internal/playbook`, `downshift playbook`) e skill `downshift-orchestrator`. O servidor MCP (`downshift mcp serve`) está implementado (ferramentas de informação, SDK oficial, duas eras do protocolo) e `downshift setup --mcp` registra no Claude Code e no Codex; as ferramentas que lançam workers seguem especificadas.
 
+- Decisão do dono: o LLM orquestrador escolhe agente, provedor, modelo e esforço. O Downshift aplica dentro da política declarada e mede. Removidos: tabela N11, escalonamento automático após falha, veto de risco embutido e a escrita de `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` no setup.
+- Novos: playbooks de regras de trabalho (`internal/playbook`, `downshift playbook`), skill `downshift-orchestrator` e o servidor MCP (`downshift mcp serve`). O `setup --mcp` registra no Claude Code e no Codex.

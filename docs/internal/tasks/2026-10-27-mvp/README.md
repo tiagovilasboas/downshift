@@ -55,7 +55,7 @@ Spec: `docs/internal/plans/mcp-delegation-spec.md`. The tools that start workers
 | K6 | **Done.** `setup --mcp`: register the server in Claude Code (through `claude mcp add -s user`) and Codex (the `[mcp_servers.downshift]` block); opt-in, dry run, backup, undo by marker, other servers untouched. Research done: `docs/internal/plans/mcp-registration.md`; the other four harnesses are stage 5 | 2 | K5, S1 |
 | K7 | **Done 2026-10-28, pending the owner's acceptance.** One detected list per harness, no fixed ids: `setup` no longer writes `session-models.json` (it stays an optional manual override) and only says which `models discover` command is missing; the hook keeps reading the live discovery cache (payload, cache, file). The `providers` tool takes an optional `models` list; `discovery.MergeReported` stores it as `source: "mcp"` (a fresh detection always wins, 1 h expiry, 64 ids at most, atomic write); `doctor` stops warning forever about the Claude Code stand-in | 5 | K1, K4 |
 
-## Stage 3: show and prove (closes the MVP; V1 built, V2 and V3 not started)
+## Stage 3: show and prove (closes the MVP; V1 built, V2 open, V3 partial)
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
@@ -63,7 +63,9 @@ Spec: `docs/internal/plans/mcp-delegation-spec.md`. The tools that start workers
 | V2 | Acceptance suite baseline: v2 against the requested-model arm, regressions reported | 3 | C3 |
 | V3 | Real Claude Code session as evidence; default on in Claude Code; pause switch; release and migration note (R9, R13) | 3 | V1, V2 |
 
-## Stage 4: plan runner (specification done, see `docs/internal/plans/plan-runner-spec.md`; implementation not started)
+## Stage 4: plan runner (specification done, see `docs/internal/plans/plan-runner-spec.md`; partly built through the MCP worker tools)
+
+Built ahead of the plan file, through the MCP worker tools: a bounded queue with acknowledged deliveries, read-only launches for Claude and Codex (off unless `DOWNSHIFT_WORKERS=read`), and the write route with bypass in a git worktree (`DOWNSHIFT_WORKERS=bypass`, off by default). That covers part of P3 and P5. P1, P2 and P6 to P8 are not started.
 
 | # | Card | Pts | Depends on |
 |---|---|--:|---|
@@ -122,7 +124,7 @@ Branch `downshift/mvp-ponto-zero`, published, no open PR, no worktree, no unpubl
 
 ## Closing state (2026-10-29)
 
-Checked offline, without a model call, on the branch at `2fa8ca7c` and the installed binary.
+Checked offline, without a model call, on the branch at `7e2acb02` and the installed binary. Items below marked with a date were observed on that day.
 
 | Item | State | Evidence |
 |---|---|---|
@@ -130,9 +132,12 @@ Checked offline, without a model call, on the branch at `2fa8ca7c` and the insta
 | Compactor | Works. Smoke test on a real package passes | `compact -- go test`; 30 days: 2,491 commands, 186 compacted, about 12k tokens cut (bytes / 4) |
 | Pause and resume | Works | `session --pause` and `--resume` both answered; the pause applies to the most recent session, not to `--session=<id>` (the id was not honoured; a small fix is needed) |
 | MCP information tools | Work in a real session | `docs/evidence/mcp-real-session-2026-10-28.md`; the orchestrator did not call them unprompted in two runs (`docs/evidence/mcp-unprompted-2026-10-29.md`) |
-| Worker tools (`delegate`, `collect`, `cancel`) | Read route worked end to end with a real worker; write route with bypass is built and tested with shims, not run against the real CLI | Stage 4, outside the MVP |
+| Worker tools (`delegate`, `collect`, `cancel`) | Read route: one real Claude worker completed a delegate and collect round trip end to end (2026-10-29; not recorded in `docs/evidence/`). Not observed: a blocked write under plan mode (spec R27); the Codex read route has not run against the real CLI. Write route with bypass: built and tested with shims, not run against the real CLI | Stage 4, partly built; see above |
+| SessionStart context | Committed (`066589db`, `7e2acb02`). Active in the owner's user settings (backup `settings.json.bak-sessionstart-2026-10-29`). In the plugin only after the branch reaches `main`, which the plugin pins by commit today | `~/.claude/settings.json`; owner decision to merge |
 | V1 routing note in `report` | Built, pending the owner's acceptance | `report` and `session --panel` |
 | V2 acceptance baseline | **Not closed.** The token comparison flips with the window: 30 days gives routed 4.1M against control 4.5M per completed task; 7 days gives routed 4.3M against control 3.5M. Rework is 0.9% routed against 0.0% control | `downshift report`; the difference is not an interval |
 | V3 real-session proof, default on, release note | Default on: yes. Release note: draft in `docs/releases/unreleased-migration-notes.md`. Real-session proof: partial (observed spawns, not a controlled run) | |
+
+**Open for the owner (2026-10-29):** merge the branch to `main` so the plugin ships the SessionStart context (needs explicit approval); the V2 budget; the C0 real-session run; acceptance of K1 to K7 and V1. The user-facing guides `docs/guides/install.md` and `docs/guides/quickstart.md` still use `downshift try`, which no longer exists; they need their own change.
 
 **Consequence for the MVP.** The routing and compaction pieces work and are measured. The claim that routing saves tokens is **not proven**: the measured difference changes sign between windows, so the honest word is "measured, not established". The release note must not promise savings until V2 has a baseline. Closing V2 needs a controlled suite, which costs model tokens, and that budget is the owner's decision.

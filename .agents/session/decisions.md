@@ -6,5 +6,6 @@
 - **SRP & Arquitetura:** Máximo de ~300 linhas por arquivo (teto 500), ~10 funções por arquivo. Separação por domínio de ação.
 - **Fail-Open & Local-First:** Nenhuma falha em hooks ou discovery deve travar a execução do desenvolvedor ou expor dados sensíveis.
 - **O8 (2026-10-28, dono): o LLM escolhe, o Downshift aplica e mede.** Sem tabela de perfis padrão no binário (N11 revogada), sem escalonamento automático após falha e sem piso de risco embutido. Defaults de modelo vão para um playbook do orquestrador (skill instalada pelo setup). O Downshift aplica `policy.json` declarado e o hint do orquestrador. O MCP de delegação volta a ser escopo (O7 reaberta), parte do mesmo binário (`downshift mcp`).
-- **Subagent Force no Claude Code (a rever, O8):** o setup grava `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`, que sobrepõe o modelo escolhido pelo LLM. Pendente de remoção (R1b).
-- **Ordem de Entrega:** Fechar a Onda 1.5 / Release Readiness (W7.1, W7.2, S1, S2, W7.9) antes da automação em lote da Onda 2 (Batch Loop Runner).
+- **Subagent Force no Claude Code (resolvido, O8):** o setup deixou de gravar `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` (`0c4574a2`). Um valor definido pelo próprio usuário é preservado.
+- **Rota de workers (2026-10-29, dono):** leitura ligada por `DOWNSHIFT_WORKERS=read`; escrita (bypass) só com `DOWNSHIFT_WORKERS=bypass`, sempre em worktree git própria. Padrão desligado.
+- **Ordem de Entrega (2026-10-29):** MVP (etapas 0 a 3, com a 2b) antes do plano runner (etapa 4) e dos outros harnesses (etapa 5). O Batch Loop Runner da Onda 2 fica adiado. Ver [mvp-plan](../../docs/internal/plans/mvp-plan.md).

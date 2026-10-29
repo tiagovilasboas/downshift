@@ -37,20 +37,20 @@ Phases end at exit criteria, not dates. Where two sources disagree, section 9 na
 
 Phases 1 to 5 hold 18 cards and 51 points. Phase 6 has no cards.
 
-## 3a. Current state (2026-10-27, latest; source of truth)
+## 3a. Current state (2026-10-29, latest; source of truth for routing phases)
 
-Sections 5 below are the 2026-10-26 plan, kept for history. Where they conflict with this block or with 8a to 8d, the later text wins.
+Sections 5 below are the 2026-10-26 plan, kept for history. Where they conflict with this block or with 8a to 8d, the later text wins. For the MVP stages (setup, MCP, report, plan runner), the [MVP closing state (2026-10-29)](../tasks/2026-10-27-mvp/README.md#closing-state-2026-10-29) wins over this table.
 
 | Phase | State | What is left |
 |---|---|---|
 | 1 Clean base | Done on the branch (N1 to N3) | NB files, `internal/nbtier`, gateway files, docs citing `try` (W7 cleanup) |
 | 2 Routing core | Done on the branch: R1 to R6, R9 | R0 unverified; R0b and real-session proof (C0) not run |
-| 3 Setup and skill | Not started | R7, R8a, R10; W7.1 to W7.3 |
+| 3 Setup and skill | Partly: MVP setup cards S1 to S3 done (2026-10-28); R7 and R10 not started; R8a not started | R7, R8a, R10; W7.1 to W7.3 |
 | 4 Accounting and report | Partly: R9 done | R11 (routing note), R13 (docs), V1 to V3, control arm (W6.1, W7.7) |
 | 5 Other harnesses | Not started | Per-harness defaults (W7.10); effort (W7.11) |
 | 6 Later | No cards | Budget admission, flag probe, hosted evaluation |
 
-Plan runner (MVP stage 4): specification done with requirements R1 to R62, not started. Open decisions: G1, G4, G10, G12 (see the spec's gap table).
+Plan runner (MVP stage 4): specification done with requirements R1 to R62. Partly built through the MCP worker tools (queue, read-only launches, bypass write route in a worktree); the plan file runner is not started. Open decisions: G1, G4, G10, G12 (see the spec's gap table).
 
 Release gate (D5): nothing reaches `main` until the real-session proof, AppSec (W7.4), remote CI (W7.5) and the migration note (W7.6) are done.
 
