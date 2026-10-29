@@ -204,7 +204,7 @@ reserve capacity for the next call or guarantee zero additional charges.
 
 Claude Code shows `systemMessage` text from hooks. Downshift uses it twice:
 
-- when it rewrites a spawn: `downshift: TRIVIAL task → downshift to claude-haiku-4-5 (smaller model)`;
+- when it rewrites a spawn: `downshift: TRIVIAL task → downshift to claude-haiku-5-5 (smaller model)`;
 - when a subagent ends and its tokens are known (**SubagentStop** on Claude Code,
   after the child transcript is complete; not PostToolUse on an async launch,
   which has no tokens yet): `↳ downshift: finished on haiku · 14k tokens (work N, cache N) · saved from opus`.
