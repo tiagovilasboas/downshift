@@ -47,7 +47,7 @@ fix; validate that pair before the first run, as the A/B did for all eight of it
 | Delegation-heavy | the prompt requires 3 or more subagents | where routing can act at all | 4 |
 | Delegation does not pay | a one-file task that a parent might still delegate | expect no saving; measures coordination overhead | 4 |
 
-Label each task once (`TRIVIAL`, `SIMPLE`, `MEDIUM`, `COMPLEX`) with `downshift try "<prompt>"` for the record, then
+Label each task once (`TRIVIAL`, `SIMPLE`, `MEDIUM`, `COMPLEX`) with the `downshift session --why` reason codes for the record, then
 do not tune the classifier against the set. Three runs per task per arm is the floor the A/B used and is enough for a
 direction only; intervals need more. Runs that hit the account usage limit are rerun, not counted as failures.
 

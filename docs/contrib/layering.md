@@ -86,7 +86,7 @@ layers plug into core through a hook variable (`core.TierFloorHook`) registered 
 - [ ] The same logic does not appear in two adapters.
 - [ ] No shared tool (`doctor`, stats, evals) names a harness.
 - [ ] A test goes through `runHookAdapter` or `core.Route`, not only one adapter.
-- [ ] Offline commands (`benchmark`, `try`, evals) behave the same with and
+- [ ] Offline commands (`benchmark`, evals) behave the same with and
       without project context.
 - [ ] Missing or invalid optional input fails open.
 - [ ] The harness matrix says what each harness can and cannot honor.

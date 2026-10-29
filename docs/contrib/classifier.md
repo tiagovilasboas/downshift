@@ -55,9 +55,7 @@ baseline rules in `signals.go`. To restore baseline routing, set
 `DOWNSHIFT_DOMAIN_SIGNALS=0`.
 
 ```sh
-downshift try "Investigue o hydration mismatch no React"
 go test ./internal/classify ./internal/core
-DOWNSHIFT_DOMAIN_SIGNALS=0 downshift try "Investigue o hydration mismatch no React"
 ```
 
 The Go-native vocabulary now contains **96 rules across 12 domains**:
@@ -143,7 +141,7 @@ sourced text nor model output becomes a rule automatically.
 
 ## Tuning workflow
 
-1. Reproduce with `downshift try "<prompt>" [harness]`.
+1. Reproduce from the logged decision with `downshift session --why --session=<id>`; the task text is not stored, so rebuild the prompt from the transcript.
 2. Open a `misroute:` issue (see [CONTRIBUTING.md](../../CONTRIBUTING.md)).
 3. Add a case to `internal/core/classifier_edge_test.go` (or related edge tests).
 4. Adjust `RawSignals` in `internal/classify/signals.go`; never tune against maintainer eval-only splits (downshift-labs).
@@ -188,7 +186,7 @@ sourced text nor model output becomes a rule automatically.
 
 ## Tuning workflow
 
-1. Reproduce with `downshift try "<prompt>" [harness]`.
+1. Reproduce from the logged decision with `downshift session --why --session=<id>`; the task text is not stored, so rebuild the prompt from the transcript.
 2. Open a `misroute:` issue (see [CONTRIBUTING.md](../../CONTRIBUTING.md)).
 3. Add a case to `internal/core/classifier_edge_test.go` (or related edge tests).
 4. Adjust `RawSignals` in `internal/classify/signals.go`; never tune against maintainer eval-only splits (downshift-labs).

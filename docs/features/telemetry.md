@@ -201,7 +201,7 @@ Press `q` to quit.
 ### Why Was This Routed?
 
 ```bash
-downshift try --verbose "your task"
+downshift session --why --session=<id>
 ```
 
 Shows classification signals, tier selection, and model mapping.

@@ -184,7 +184,7 @@ its report is re-read by the parent, so a one-line edit can cost more as a spawn
 two tool calls in the main agent. The 2026-10-15 measurement supports savings only where mechanical
 work is split into bounded pieces (b5: 34% of spawns to Haiku, about 12% cheaper, 12/12 accepted in
 both arms); on natural delegation it applied 0 of 10 and 3 of 34 downshifts, and the cost gaps there
-were agent variation, not routing. `downshift try "<brief>" claude-code` shows the decision before
+were agent variation, not routing. `downshift route --harness claude-code --model <id>` shows the decision before
 you spawn; write the brief as the bounded task, not the whole context.
 
 ## 9. Known limits, dated
