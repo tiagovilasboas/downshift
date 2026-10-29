@@ -54,6 +54,8 @@ Plan runner (MVP stage 4): specification done with requirements R1 to R62. Partl
 
 Release gate (D5): nothing reaches `main` until the real-session proof, AppSec (W7.4), remote CI (W7.5) and the migration note (W7.6) are done.
 
+Approach note (2026-10-29): Universal Orchestrator, MCP conformance, and non-bespoke testing strategy are defined in [universal-orchestrator-harness-approach.md](universal-orchestrator-harness-approach.md). Standard conformance replaces custom synthetic test batteries with the official MCP Inspector, architecture fitness functions (`internal/archtest`), golden files for compaction, and SWE-bench-style external verification gates.
+
 ## 4. Common gate (every code PR)
 
 `make check` green; golden decision tables; the acceptance suite (`outcome`, `benchmark`) at the same rigour as before, with any regression reported; `./examples/run-all.sh`; layering rule (harness facts in `HarnessCapabilities`, adapters hold no policy; see [layering](../../contrib/layering.md)); copyright headers; OS-agnostic paths; no file over 300 lines; tests isolate `HOME` and `DOWNSHIFT_STATE_DIR`; no dead package references in the docs the PR touches.
