@@ -31,6 +31,8 @@ type setupOptions struct {
 	DryRun bool
 	Undo   bool
 	Yes    bool
+	// TUI triggers interactive terminal UI setup.
+	TUI bool
 	// SkipDiscovery disables automatic model discovery during setup (useful in tests).
 	SkipDiscovery bool
 	// NoSessionPolicy skips the optional main-session policy (model opusplan and
@@ -43,6 +45,9 @@ type setupOptions struct {
 	// installing the Downshift plugin (which carries the hooks and the
 	// cache-tax mod).
 	NoPlugin bool
+	// Mcp registers `downshift mcp serve` as an MCP server (setup_mcp.go). On by
+	// default; --no-mcp turns it off.
+	Mcp bool
 	// Exec is the process boundary used to install the plugin. Its zero value
 	// runs nothing.
 	Exec setupExec
@@ -59,37 +64,26 @@ type setupOptions struct {
 	// StateDir is where setup keeps what it generates (wrapper scripts).
 	// Empty means <Home>/.downshift.
 	StateDir string
+	// ProjectDir is the project whose .downshift/policy.json setup offers to
+	// create. Empty skips that step.
+	ProjectDir string
+	// BinDirs are the directories searched for other downshift executables that
+	// setup offers to remove. Nil skips the step; the CLI entry sets it, so
+	// tests that call setupRun directly never touch the real PATH.
+	BinDirs []string
 }
 
 // runSetup is the CLI entry: it resolves HOME and the running binary.
 func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
-	opts := setupOptions{In: in, Out: out, Err: errw, Now: time.Now, Exec: realSetupExec()}
-	allowUnsafe := false
-	for _, a := range args {
-		switch {
-		case a == "--dry-run":
-			opts.DryRun = true
-		case a == "--undo":
-			opts.Undo = true
-		case a == "--yes" || a == "-y":
-			opts.Yes = true
-		case a == "--no-session-policy":
-			opts.NoSessionPolicy = true
-		case a == "--you-should-know":
-			opts.YouShouldKnow = true
-		case a == "--no-plugin":
-			opts.NoPlugin = true
-		case a == "--allow-unsafe-binary":
-			allowUnsafe = true
-		case a == "-h" || a == "--help":
-			fmt.Fprint(out, setupUsage)
-			return 0
-		case strings.HasPrefix(a, "-"):
-			fmt.Fprintf(errw, "setup: unknown flag %q\n%s", a, setupUsage)
-			return 2
-		default:
-			opts.Names = append(opts.Names, a)
-		}
+	opts := defaultSetupOptions(in, out, errw)
+	flags, help, bad := parseSetupArgs(args, &opts)
+	if help {
+		fmt.Fprint(out, setupUsage)
+		return 0
+	}
+	if bad != "" {
+		fmt.Fprintf(errw, "setup: unknown flag %q\n%s", bad, setupUsage)
+		return 2
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -103,16 +97,25 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 		return 1
 	}
 	opts.Binary = exe
-	if code := guardHookBinary(opts, allowUnsafe, os.TempDir()); code != 0 {
+	if code := guardHookBinary(opts, flags.allowUnsafe, os.TempDir()); code != 0 {
 		return code
 	}
 	if dir, err := paths.StateDir(); err == nil {
 		opts.StateDir = dir
 	}
+	if cwd, err := os.Getwd(); err == nil && !flags.noPolicy {
+		opts.ProjectDir = cwd
+	}
+	if !flags.keepBinaries {
+		opts.BinDirs = defaultBinDirs(home)
+	}
 	if !opts.DryRun && !opts.Undo {
 		// Older releases created the state directory and its files with the
 		// default umask; tighten what the product owns. Best effort.
 		_ = paths.Harden()
+	}
+	if opts.TUI {
+		return setupTUI(opts)
 	}
 	return setupRun(opts)
 }
@@ -134,9 +137,10 @@ func guardHookBinary(o setupOptions, allow bool, tmp string) int {
 	return 1
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--no-session-policy] [--you-should-know] [--no-plugin] [--allow-unsafe-binary]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--no-mcp] [--no-policy] [--keep-binaries] [--allow-unsafe-binary]
 
 Wire every Downshift hook into the harnesses found on this machine.
+  --tui                run interactive terminal UI onboarding
   --dry-run            show the diff, write nothing
   --undo               restore the latest backup of each hook file
   --yes                do not ask before writing
@@ -149,6 +153,14 @@ Wire every Downshift hook into the harnesses found on this machine.
                        installing the Downshift plugin (the plugin carries the
                        same hooks plus the cache-tax mod) and skip the sibling
                        mods (savvy-progress)
+  --no-mcp             do not register "downshift mcp serve" as the MCP server
+                       "downshift" in Claude Code (through its CLI) and Codex
+                       (a marked block in config.toml). Registered by default;
+                       --undo removes it. --mcp is still accepted
+  --no-policy          do not offer .downshift/policy.json in the current
+                       directory (see downshift policy init)
+  --keep-binaries      do not offer to remove other downshift copies on PATH
+                       and in the Go and per-user bin directories
   --allow-unsafe-binary
                        write hooks that point at this binary even when it sits
                        in a temporary, Go build or world-writable directory
@@ -162,7 +174,11 @@ func setupRun(o setupOptions) int {
 		return code
 	}
 	if o.Undo {
-		return setupUndo(o, targets)
+		code := setupUndo(o, targets)
+		if mcpCode := mcpUndo(o, targets); mcpCode != 0 {
+			code = mcpCode
+		}
+		return code
 	}
 
 	var plans []setupPlan
@@ -193,73 +209,25 @@ func setupRun(o setupOptions) int {
 		if sp, ok := planSteering(o, t); ok {
 			plans = append(plans, sp)
 		}
+		plans = append(plans, planSkills(o, t)...)
 	}
 
-	failed := false
-	pending := 0
-	unwritable := map[string]bool{} // files that failed to write
-	for _, p := range plans {
-		shown := setupDisplay(o.Home, p.path)
-		switch {
-		case p.err != nil:
-			failed = true
-			fmt.Fprintf(o.Err, "%s: %s: %v\n  nothing was written for %s\n\n", p.target.Name, shown, p.err, p.target.Name)
-		case p.skip != "":
-			fmt.Fprintf(o.Out, "%s: skipped: %s\n\n", p.target.Name, p.skip)
-		case !p.changed():
-			fmt.Fprintf(o.Out, "%s: %s already up to date\n", p.target.Name, shown)
-			setupPrintNotes(o.Out, p.notes)
-			fmt.Fprintln(o.Out)
-		default:
-			pending++
-			verb := "will change"
-			if o.DryRun {
-				verb = "would change"
-			}
-			fmt.Fprintf(o.Out, "%s: %s %s\n", p.target.Name, shown, verb)
-			fmt.Fprint(o.Out, unifiedDiff(diffName(shown, p.existed, "a"), diffName(shown, true, "b"), string(p.before), string(p.after)))
-			setupPrintNotes(o.Out, p.notes)
-			fmt.Fprintln(o.Out)
-		}
+	if p, ok := planPolicyInit(o); ok {
+		plans = append(plans, p)
 	}
-
-	if pending == 0 || o.DryRun {
-		if o.DryRun && pending > 0 {
-			fmt.Fprintln(o.Out, "Dry run: nothing was written.")
-		}
+	mcpFiles, mcpSteps := planMcp(o, targets)
+	failed, proceed := applyPlans(o, plans)
+	if runSetupMcp(o, mcpFiles, mcpSteps, proceed, failed) {
+		failed = true
+	}
+	if !failed && !o.Undo {
+		failed = pruneBinaries(o, plans)
+	}
+	if !proceed {
 		if failed {
 			return 1
 		}
 		return 0
-	}
-	if !setupConfirm(o, "Write these changes? A backup of each existing file is kept. [y/N] ") {
-		fmt.Fprintln(o.Out, "Not applied. Re-run with --yes to skip this question.")
-		return 1
-	}
-	stamp := o.Now().UTC().Format("20060102T150405.000000")
-	for _, p := range plans {
-		if !p.changed() {
-			continue
-		}
-		if dep := failedCompanion(p, unwritable); dep != "" {
-			failed = true
-			unwritable[p.path] = true
-			fmt.Fprintf(o.Err, "%s: %s not written: %s could not be written, and the config would point at it\n",
-				p.target.Name, setupDisplay(o.Home, p.path), setupDisplay(o.Home, dep))
-			continue
-		}
-		bak, err := setupWrite(p, stamp)
-		if err != nil {
-			failed = true
-			unwritable[p.path] = true
-			fmt.Fprintf(o.Err, "%s: write failed: %v\n", p.target.Name, err)
-			continue
-		}
-		if bak != "" {
-			fmt.Fprintf(o.Out, "%s: written. Backup: %s\n", p.target.Name, setupDisplay(o.Home, bak))
-		} else {
-			fmt.Fprintf(o.Out, "%s: written (new file).\n", p.target.Name)
-		}
 	}
 	// Ensure native context optimization is enabled by default.
 	if optCfg, err := contextopt.LoadConfig(); err == nil {
@@ -270,6 +238,8 @@ func setupRun(o setupOptions) int {
 	}
 	// Run discovery for harnesses with a source so sessions don't stay on handwritten lists.
 	setupDiscoverModels(o)
+	// Say which harnesses still lack a detected model list (read-only: nothing is written).
+	setupEnsureSessionModels(o, targets)
 
 	fmt.Fprint(o.Out, setupSummary(plans))
 	fmt.Fprintln(o.Out, "Undo with: downshift setup --undo")

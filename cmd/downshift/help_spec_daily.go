@@ -9,15 +9,17 @@ var dailyHelp = map[string]string{
 	"setup": `downshift setup — Wire the hooks into every harness found (backup, diff, --undo)
 
 Usage:
-  downshift setup [harness...] [--dry-run] [--undo] [--yes]
+  downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-mcp]
 
 Flags:
+  --tui                  Interactive terminal UI onboarding
   --dry-run              Show the diff, write nothing
   --undo                 Restore the latest backup of each hook file
   --yes, -y              Do not ask before writing
   --no-session-policy    Wire the hooks only; skip the Claude Code main-session policy
   --you-should-know      Also turn on Claude Code's "You should know" mod (opt-in, billed)
   --no-plugin            Claude Code: keep hooks in settings.json instead of the plugin
+  --no-mcp               Do not register the MCP server in Claude Code and Codex (on by default)
   --allow-unsafe-binary  Accept a binary in a temporary or world-writable directory
 
 Examples:
@@ -25,6 +27,64 @@ Examples:
   downshift setup claude-code --yes
 
 Next: downshift doctor
+`,
+	"uninstall": `downshift uninstall — Restore harness hook configurations and remove wrappers
+
+Usage:
+  downshift uninstall [--dry-run] [--yes] [--purge]
+
+Flags:
+  --dry-run   Show what would be restored, write nothing
+  --yes, -y   Do not prompt before restoring
+  --purge     Also remove ~/.downshift state dir and purge all backup files
+
+Examples:
+  downshift uninstall --dry-run
+  downshift uninstall --yes
+
+Next: downshift setup, if you want to reinstall
+`,
+	"accept": `downshift accept — Record developer acceptance for code delivered by subagents
+
+Usage:
+  downshift accept [--session=<id>] [--used | --discarded]
+
+Flags:
+  --session=<id>  Session hash to record acceptance for (default: most recent session)
+  --used          Mark session outputs as accepted and kept (default)
+  --discarded     Mark session outputs as reverted or rewritten
+
+Examples:
+  downshift accept --used
+  downshift accept --session=sess_123 --discarded
+
+Next: downshift stats
+`,
+	"loop": `downshift loop — Run autonomous engineering loop with sensor verification and cascade auto-upgrade
+
+Usage:
+  downshift loop [--task=<desc>] [--sensor=<cmd>] [--iterations=<n>] [--timeout=<dur>] [--session=<id>] [--batch=<tasks.json>] [--continue-on-error] [--json] [-- <sensor-cmd>]
+
+Flags:
+  --task=<desc>      Task description or goal
+  --sensor=<cmd>     Sensor command to run for verification (or after --)
+  --iterations=<n>   Maximum iterations before tripwire stop (default: 3)
+  --timeout=<dur>    Maximum duration for the loop (default: 5m)
+  --session=<id>     Session ID for telemetry and cascade tracking
+  --batch=<file>     Run the tasks of a JSON array [{"task","sensor","model"}] in order;
+                     stops at the first failure, the rest are reported as skipped
+  --continue-on-error  With --batch, keep going after a failed task
+  report             Acceptance summary (used / discarded) of loop and accept runs,
+                     optional --session=<id> and --json; run as: downshift loop report
+  --json             Print result as JSON
+
+Examples:
+  downshift loop --batch=tasks.json --continue-on-error --json
+  downshift loop --task="Add healthcheck" -- go test ./...
+  downshift loop --task="Fix auth race" --sensor="go test -race ./..."
+  downshift loop --iterations=5 -- make check
+
+Next: downshift stats, to view session token savings and acceptance
 `,
 	"doctor": `downshift doctor — Checklist: binary, hooks per harness, state, with a fix per failure
 
@@ -41,23 +101,7 @@ Examples:
 
 Next: open a new harness session, then run "downshift session"
 `,
-	"try": `downshift try — What Downshift would pick for a task, without spawning anything
-
-Usage:
-  downshift try "<task>" [harness] [current-model] [--harness H] [--model M] [--detail]
-
-Flags:
-  --harness H   Harness to classify for (claude-code, cursor, codex, ...)
-  --model M     Model the parent session runs on
-  --detail      Show the reasoning behind the pick
-
-Examples:
-  downshift try "rename the variable userId"
-  downshift try "rearchitect the payment flow" cursor claude-haiku-5-5
-
-Next: downshift stats, once real subagents have run
-`,
-	"stats": `downshift stats — Decisions and estimated savings (list price, not an invoice)
+	"stats": `downshift stats — Decisions and estimated token savings
 
 Usage:
   downshift stats [--days=N] [--by-harness] [--detail | --dci | --export]
@@ -75,7 +119,7 @@ Examples:
 
 Next: downshift report, for measured savings against a control group
 `,
-	"report": `downshift report — Measured: routed vs control group, cost per completed task, with CI
+	"report": `downshift report — Measured: routed vs control group, tokens per completed task, with CI
 
 Usage:
   downshift report [--days=N] [--json]
@@ -141,51 +185,6 @@ Examples:
   downshift config --json
 
 Next: downshift doctor, if a value looks wrong
-`,
-	"feedback": `downshift feedback — Review routings and record their outcome
-
-Usage:
-  downshift feedback list [--pending]
-  downshift feedback stats
-  downshift feedback <id> <success|retry|failed> [--retry-tier=MID|FRONTIER] [--required-tier=SMALL|MID|FRONTIER]
-
-Flags:
-  --pending             With list: only routings without an outcome
-  --retry-tier=TIER     With retry: the tier that finally succeeded (MID or FRONTIER)
-  --required-tier=TIER  The tier the task really needed (SMALL, MID or FRONTIER)
-
-Examples:
-  downshift feedback list --pending
-  downshift feedback abc123 success --required-tier=SMALL
-
-Next: downshift feedback stats, for outcomes per harness
-`,
-	"feedback list": `downshift feedback list — The latest routings, newest first (50 at most)
-
-Usage:
-  downshift feedback list [--pending]
-
-Flags:
-  --pending   Only routings without an outcome yet
-
-Examples:
-  downshift feedback list
-  downshift feedback list --pending
-
-Next: downshift feedback <id> success|retry|failed
-`,
-	"feedback stats": `downshift feedback stats — Outcomes per harness: success, retry, failed, pending
-
-Usage:
-  downshift feedback stats
-
-Flags:
-  (none)
-
-Examples:
-  downshift feedback stats
-
-Next: downshift feedback list --pending
 `,
 	"enable": `downshift enable — Print shell aliases for transparent compaction (eval in .bashrc/.zshrc)
 

@@ -96,9 +96,7 @@ repository; the public repo holds aggregates and two sample tasks under `interna
 | Held-out suite (GAP-SUITE) | 6 tasks, 1 smoke run | Go tasks outside the development suite | small 2/6, mid 4/6, frontier 6/6, USD 0.14 total ([gap-tasks.md](../internal/gap-tasks.md)) | Total only, not per task |
 
 Two notes. The small-versus-frontier gap on TRIVIAL+SIMPLE labels is −20.0 points on fixed-model runs, with
-overlapping intervals; the suite's own rule is to revisit the downshift below −5. And `downshift eval-adapt` prints a
-"cost per completed task" per policy, but it is a model: reference tokens per attempt (`--ref-in`, `--ref-out`), tier
-prices you pass, escalation one tier up on failure, an optional `--fail-penalty`. It uses no observed tokens.
+overlapping intervals; the suite's own rule is to revisit the downshift below −5.
 
 ## D. Saving demonstrated on real tasks
 
@@ -135,10 +133,10 @@ failed attempt it redid (a respawn in the same session within 10 minutes of an `
 rate is reworked spawns over spawns with an observed end; the token check gives routed against control per completed task as a point percentage, with no interval printed. It needs 20 completed tasks per group
 (`MinReportTasks`); at the default `DOWNSHIFT_CONTROL_SHARE=0.10` that is roughly 200 completed tasks.
 
-What is missing to produce it: enough completed tasks in one log (the [pilot](pilot.md) at share 0.5); a captured
+What is missing for a per-task cost figure: enough completed tasks in one log (the [pilot](pilot.md) at share 0.5); a captured
 `PostToolUseFailure` payload, without which rework undercounts (GAP-CHILD-FAILURE); and a quality judgment, because
 "acceptable quality" is not in the log: `completed` means the child returned, not that its work was right.
-`downshift feedback <id> failed|retry` is the manual backstop. The 2026-10-15 A/B measured cost per run with an
+The 2026-10-15 A/B measured cost per run with an
 acceptance check, which is close to E for those tasks but is not the `report` definition and had no rework term.
 
 ## Metrics table
@@ -156,16 +154,21 @@ decisions but not usage or ends ([harness-matrix.md](../reference/harness-matrix
 | Latency, total and per step | not available | no duration field on decision, usage or end events (`latency_ms` exists only on the E5 shadow record); the A/B timed runs externally |
 | Completion rate | available | `child_status` counts in `stats` ("How children ended") and `--export`; `report` `ended` / `completed_tasks` |
 | Failure rate | available, undercounted | `child_status` `error` / `interrupted`; `PostToolUseFailure` payload never captured (GAP-CHILD-FAILURE) |
-| Retries | inferred | "Respawned after a failure" in `stats`, `↻` in the session tree (10-minute rule, a hint); explicit via `downshift feedback <id> retry` |
-| Result quality | not available | hidden tests in the A/B only; `feedback <id> success|failed` is manual |
+| Retries | inferred | "Respawned after a failure" in `stats`, `↻` in the session tree (10-minute rule, a hint) |
+| Result quality | not available | hidden tests in the A/B only |
 | Coordination and delegation cost | not available | parent turns and tokens are outside the hook; GAP-COORDINATION open |
 | Fixed-context cost | available per child, as tokens | `cached_tokens` / `cache_write_tokens` counted apart by class; parent context not seen; `context metrics` token fields unavailable |
-| Abstention rate | available | reason codes `NO_SIGNAL`, `CLASSIFIER_UNCONFIDENT` in `stats --export` `reason_codes`; `downshift benchmark` prints abstentions per split |
+| Abstention rate | available | reason codes `NO_SIGNAL`, `CLASSIFIER_UNCONFIDENT` in `stats --export` `reason_codes` |
 | Routing decisions and guardrails fired | available | `verdict`, `corrections`, `HELD_*` codes; `stats` "Guardrails held"; `session --why`; `stats --by-harness` |
 | Requested versus executed model | available / inferred | `requested_model` and `final_model` on the decision; `resolved` record with `rewrite_honored` when the harness reports the child's model; otherwise `rewrite_honored_inferred` from a later spawn |
 | Baseline comparison | available (control) / estimated (counterfactual) | `report` routed versus `CONTROL` spawns; `stats` same-token counterfactual, marked `baseline_source: inferred` when guessed |
 
 ## Three saving scenarios and what each must prove
+
+> **O8 (2026-10-28).** The orchestrator now chooses the model; Downshift applies it within the declared policy. The
+> built-in risk floor (R5 below), the automatic upgrade after a failure and the classifier-driven tier pick were
+> removed. The measured trials in this guide ran on the pre-O8 router and are kept as the record of that behaviour;
+> they do not describe the product today. Re-measure with `downshift report` before quoting a saving.
 
 The objective is one sentence: minimise cost per task completed correctly, with safety and developer experience
 preserved. It is never "pick the cheapest". The guardrails in `internal/core/selfcheck.go` (`Check`) encode that:
@@ -198,7 +201,7 @@ has named a model. "Shown by" names a test or an evidence file; a claim with nei
 
 | Claim | Against | Shown by | Status |
 |---|---|---|---|
-| Acts at delegation time, per spawn, from the task text, before the request leaves the harness | `opusplan` decides once per session mode; a gateway decides per request, after the harness chose | `PreToolUse` on `Agent\|Task` in `internal/adapters/claudecode/claudecode.go`, shared `runHookAdapter` in `cmd/downshift/hookrun.go`, `cmd/downshift/hook_e2e_test.go`; A/B b5: 19 of 56 spawns rewritten under a Sonnet session | Shown |
+| Acts at delegation time, per spawn, on the orchestrator's choice (pre-O8: from the task text), before the request leaves the harness | `opusplan` decides once per session mode; a gateway decides per request, after the harness chose | `PreToolUse` on `Agent\|Task` in `internal/adapters/claudecode/claudecode.go`, shared `runHookAdapter` in `cmd/downshift/hookrun.go`, `cmd/downshift/hook_e2e_test.go`; A/B b5: 19 of 56 spawns rewritten under a Sonnet session | Shown |
 | Harness-honest observation: emitted, honored and used are three records (`rewrite_emitted`; `resolved` with `rewrite_honored`; `usage`), and a refuted rewrite saves nothing | A gateway sees the model named in each request, not which spawn it belongs to or whether the harness applied a rewrite | [claude-code-rewrite-honored-2026-10-06.md](../evidence/claude-code-rewrite-honored-2026-10-06.md) (two spawns); [billing-gap-audit.md](../evidence/billing-gap-audit.md) (5 of 5 linked records matched); `TestAggregate_RefutedRewriteSavesNothing`, `TestCountInferredHonored_RefutedBeatsLaterSpawn` in `internal/telemetry/refuted_inferred_test.go` | Shown on Claude Code. Codex honored is inferred (2026-10-02), Cursor unconfirmed (2026-10-10); other harnesses record decisions only ([harness-matrix.md](../reference/harness-matrix.md)) |
 | Per-spawn guardrails: R1–R9, risk floor, `explicit_only`, quota gate; a held decision changes nothing | `opusplan` has none; gateway fallbacks fire on errors and quotas, not on task risk or classifier confidence | `internal/core/selfcheck_test.go`, `cost_safety_invariants_test.go`, `risk_downshift_test.go`; [hardening-audit-2026-10-15.md](../evidence/hardening-audit-2026-10-15.md) (23 regression tests fail on the base commit); A/B b6: 2 upshift and 1 downshift verdicts held | Shown |
 | Project tier floors: `.downshift/policy.json` by class and by risk, raise-only, applied by the shared runner for every harness | Neither `opusplan` nor a gateway reads a per-project floor from the repository | `internal/policyfile/policyfile_test.go`, `TestHookE2E_ProjectFloorThroughSharedRunner` (`cmd/downshift/policy_floor_e2e_test.go`), `TestRunKiroCrewHook_ProjectFloorApplies`; counted as `policy_floor` in `stats --export` | Shown by tests; no dated evidence file records a floor firing on a real project |
@@ -210,8 +213,7 @@ What Downshift does not do, by design ([when-to-use.md](when-to-use.md), [compan
 a gateway and terminates no HTTP chat or completions traffic; it holds no provider keys; it proxies no request and
 adds no markup; it never installs, launches, wraps or configures a companion (`downshift context enable headroom`
 writes one field in its own file; an earlier `init` call was removed in #71); it does not rewrite tool results
-(its compressor observes); it stores no prompt, task text or path. The only network call on the hook path is the
-optional, at-most-daily refresh of public capability scores, off with `DOWNSHIFT_SCORES=off`. A companion's saving is
+(its compressor observes); it stores no prompt, task text or path. A companion's saving is
 never counted as routing: `doctor` reports the companion so a before/after is not attributed to Downshift alone.
 
 ## Where the saving can come from

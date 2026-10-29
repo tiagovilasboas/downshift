@@ -16,29 +16,6 @@ func appliedSmallDownshift(d core.Decision) bool {
 	return d.Tier == core.TierSmall && checkWrites(d)
 }
 
-// A risk signal past the 32 KB classification cap must still keep the task off
-// the small tier. Route sees it (d.Risk uses the full prompt) but the risk floor
-// only sees the head, and R5 covers only a DOWNSHIFT verdict, so with no known
-// current model the small model is written.
-func TestRiskSafety_SignalPastClassifyCapKeepsTaskOffSmall(t *testing.T) {
-	small := catID("claude-code", core.TierSmall)
-	session := core.KnownSession([]string{small, catID("claude-code", core.TierMid), catID("claude-code", core.TierFrontier)})
-	signal := " and rotate the production database credentials"
-	control := "rename the variable foo to bar" + signal
-	long := "rename the variable foo to bar. " + strings.Repeat("lorem ipsum dolor sit amet ", 1500) + signal
-	if strings.Index(long, signal) < 32<<10 {
-		t.Fatal("precondition: signal must sit past the 32 KB cap")
-	}
-	for name, p := range map[string]string{"control": control, "past-cap": long} {
-		d := core.Route(p, "claude-code", "", cat)
-		plan := d.PlanSession(core.ClaudeCodeCaps, cat, session, "")
-		if plan.RewriteModel && plan.Model.ID == small {
-			t.Errorf("%s: wrote small model %s (tier=%v risk=%v floor=%v verdict=%v safe=%v)",
-				name, plan.Model.ID, d.Tier, d.Risk, d.Guards.RiskFloor, d.Verdict, d.SafeVerdict)
-		}
-	}
-}
-
 // "drop the users table" is destructive, but the pattern only matches "drop
 // [the] table", so a named table falls through and a rename downshifts.
 func TestRiskSafety_DropNamedTableIsDestructive(t *testing.T) {
@@ -107,10 +84,10 @@ func TestRiskSafety_EnglishVerbPortugueseRiskWord(t *testing.T) {
 		{"rename the helper de controle de acesso", "authz"},
 	}
 	for _, c := range cases {
-		d := core.Route(c.prompt, "claude-code", front, cat)
-		if appliedSmallDownshift(d) || d.UnsupportedLanguage || !slices.Contains(d.Risk, c.cat) {
+		d := classifiedRoute(c.prompt, "claude-code", front, cat)
+		if d.Tier == core.TierSmall || d.UnsupportedLanguage || !slices.Contains(d.Risk, c.cat) {
 			t.Errorf("%q: small=%v unsupported=%v risk=%v, want %s held by the risk floor",
-				c.prompt, appliedSmallDownshift(d), d.UnsupportedLanguage, d.Risk, c.cat)
+				c.prompt, d.Tier == core.TierSmall, d.UnsupportedLanguage, d.Risk, c.cat)
 		}
 	}
 }
@@ -134,8 +111,8 @@ func TestRiskSafety_ConcurrencyIsNotTrivial(t *testing.T) {
 func TestRiskSafety_MixedLongPromptInsideCapHeld(t *testing.T) {
 	pad := strings.Repeat("lorem ipsum dolor sit amet ", 200)
 	p := "rename the variable foo to bar. " + pad + " also rotate the database credentials. " + pad
-	d := core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
-	if appliedSmallDownshift(d) || !d.Guards.RiskFloor {
-		t.Errorf("mixed prompt: floor=%v risk=%v writes=%v", d.Guards.RiskFloor, d.Risk, checkWrites(d))
+	d := classifiedRoute(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
+	if d.Tier == core.TierSmall || !d.Guards.RiskFloor {
+		t.Errorf("mixed prompt: floor=%v risk=%v tier=%v", d.Guards.RiskFloor, d.Risk, d.Tier)
 	}
 }

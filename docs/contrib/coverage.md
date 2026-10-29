@@ -44,47 +44,50 @@ file or from `AGENTS.md`.
 | Package | Surface | Notes |
 |---------|---------|-------|
 | `internal/accounting` | Accounting | Exists; ADR Proposed; `cmd/downshift` does not import it |
-| `internal/adapt` | Routing | Shadow memory adapter; registers via hook |
 | `internal/adapters` | Adapters | Subdirs: `claudecode`, `cursor`, `codex`, `antigravity`, `kirocrew`, `opencode` |
 | `internal/api` | — | Dashboard HTTP server (`downshift dashboard`) |
 | `internal/archtest` | Quality | Import-graph enforcement tests |
 | `internal/benchmark` | Quality | Offline classifier accuracy |
-| `internal/catalog` | Routing | Embedded `catalog.json`, user override, Resolver |
+| `internal/cascade` | Routing | Episodic failure tracking (dead-ends) for the loop runner and `exec`. The decider no longer reads it: the automatic upgrade was removed (O8) |
+| `internal/catalog` | Routing | Embedded `catalog.json`, user override, Resolver, `TierView` (the tier lookup telemetry reads through `fromcore`) |
 | `internal/childend` | Telemetry | Child-end recorder |
-| `internal/classify` | Routing | Regex signals, language guard, risk floor |
+| `internal/classify` | Routing | Regex signals, language guard, risk categories (telemetry and declared floors; no built-in floor since O8) |
 | `internal/codeintel` | DCI | Opt-in context injection |
 | `internal/compressor` | Shell | Output compressor (families, corpus, mutation-closure tests) |
 | `internal/contextopt` | Shell | Config for compaction and headroom |
 | `internal/core` | Routing | `Route`, `Check` (R1-R9), `PlanSession`, `HarnessCapabilities` |
 | `internal/cursorbridge` | Adapters | Cursor native session bridge |
-| `internal/decisionintelligence` | Routing | Shadow decision evaluation |
 | `internal/discovery` | Routing | `models discover/list/check/pull` |
 | `internal/docscheck` | Quality | CI gates for markdown layout and package inventory |
 | `internal/execwrap` | Shell | Allowlist policy, family classification, compactor runner |
 | `internal/fuse` | Routing | Raise-only semantic boost |
-| `internal/gateway` | — | OmniRoute and OpenRouter HTTP gateway |
 | `internal/hookctx` | Adapters | Hook deadline context |
 | `internal/hookport` | Telemetry | Honor and usage ports |
 | `internal/hookutil` | Adapters | Field helpers for hook payloads |
 | `internal/lifecycleobserver` | Telemetry | Process lifecycle events |
 | `internal/limits` | Adapters | Centralized harness limitations registry |
+| `internal/loop` | Loop | Autonomous engineering loop runner (Plan -> Implement -> Sensor -> Cascade -> Accept) |
 | `internal/models` | Routing | `models` subcommand helpers |
-| `internal/nbopinion` | Routing | Naive-Bayes opinion; registers hooks |
 | `internal/nbtier` | Routing | Naive-Bayes tier types |
 | `internal/outcome` | Quality | Offline eval runner |
 | `internal/paths` | — | Cross-platform path helpers |
+| `internal/mcp` | Delegation | The MCP server. `tools`: the port, plain-function tools with no protocol knowledge. `transport`: the only package that imports the official Go SDK; edge-only, enforced by `TestInternalPackagesUseOnlyTheStandardLibrary` and `TestExternalModulesStayAtTheEdge` |
+| `internal/workers` | Delegation | The queue behind `delegate`, `collect` and `cancel`: starts workers up to a limit, a time budget per job, deliveries acknowledged by sequence. `Launcher` is the port; the default refuses every agent until a read-only launch is verified (spec R27) |
+| `internal/playbook` | Delegation | Named working rules a delegated worker receives (General plus an area set): shipped markdown, the person's files under the state dir, name folding, `Block` for the MCP server. No routing, no enforcement; imports only `paths` |
 | `internal/policyfile` | Routing | Project tier floor; registers via hook |
 | `internal/quota` | Routing | File I/O for quota; registers hooks |
 | `internal/quotamodel` | Routing | Pure quota types, no I/O |
-| `internal/replay` | Quality | Event-log replay for offline eval |
-| `internal/routeadapt` | Routing | Shadow memory; registers via hook |
-| `internal/routingv2` | Routing | Subdirs: `shadow`, `training`, `classifier`, `domain`, `policy`, `safety`, `extractor` |
-| `internal/scoreindex` | Routing | Score cache; registers via hook |
+| `internal/routing` | Routing | Routing v2 domain (`docs/design/routing-v2.md` section 7); imports only `core`, `paths`, `routing/*` (archtest) |
+| `internal/routing/contract` | Routing | v2 types only: `Request`, `Hint`, `Tier`, `Verdict`, `Reason`, `Note`, `Reading`; no logic |
+| `internal/routing/policy` | Routing | Declared policy: profiles, ordered rules, quota gates, critical threshold, both-critical enum, quota TTL. Load and validate (a bad file is refused, never partly applied); project over user; `CheckProfile`. No decision; imports only `core`, `paths`, `routing/contract` (archtest) |
+| `internal/routing/headroom` | Routing | Strain per provider from quota readings: worst fresh window, rate limited above any percentage, past TTL is unknown; pure, no I/O |
 | `internal/semantic` | Routing | Semantic boost (BM25 / embedding-free) |
 | `internal/sensor` | Telemetry | Tool-output sensor (observe-only PostToolUse) |
 | `internal/session` | Routing | `SessionList`, loaders |
 | `internal/shellwrap` | Shell | Shell wrap domain: `RewriteAdapter`, `AdviseAdapter`, `Handle` |
 | `internal/telemetry` | Telemetry | Prompt-free JSONL; `Summarize` (the one token savings definition) |
+| `internal/telemetry/fromcore` | Telemetry | Edge from the router to the log: `FromDecision`, `ReasonCodes`, `Install` (wires `catalog.TierViewOf` and the harness list); the only telemetry package that imports `core` |
+| `internal/worktree` | Shell | Isolated git worktrees for loop runs (F2.4): slug and containment, hermetic git runner; no task text on disk |
 | `internal/testenv` | Quality | Test helpers (no test files) |
 | `internal/testrace` | Quality | Race detector helpers (no test files) |
 | `cmd/downshift` | — | CLI, `harnessRegistry`, `runHookAdapter`, setup, doctor |

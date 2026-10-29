@@ -8,12 +8,12 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 // TestMain sets the token-direction catalog the way the composition root does
 // at startup, so savings tests see the same ranking behaviour as runtime.
 func TestMain(m *testing.M) {
-	telemetry.DirectionCatalog = catalog.Load()
+	fromcore.Install(catalog.Load())
 	os.Exit(m.Run())
 }

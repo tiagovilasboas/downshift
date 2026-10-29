@@ -43,7 +43,7 @@ fix; validate that pair before the first run, as the A/B did for all eight of it
 | Mechanical | rename, doc comments, named constants, mirrored tests; independent pieces | the ceiling for downshifts (b5: 34% of spawns) | 4 tasks |
 | Medium | a bounded fix with one or two files and existing tests | mid tier, mostly held | 4 |
 | Complex | a design change across packages, hidden integration test | frontier, upshift or held | 4 |
-| Security-sensitive | secrets, auth, payments, destructive SQL wording | risk floor or abstention; never small | 4 |
+| Security-sensitive | secrets, auth, payments, destructive SQL wording | measured, not gated: since O8 there is no built-in floor, so report how many ran small | 4 |
 | Delegation-heavy | the prompt requires 3 or more subagents | where routing can act at all | 4 |
 | Delegation does not pay | a one-file task that a parent might still delegate | expect no saving; measures coordination overhead | 4 |
 

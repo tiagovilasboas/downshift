@@ -87,6 +87,9 @@ type setupTarget struct {
 	// independent of hook wiring: a dedicated file (KiroCrew) or a managed block
 	// in the harness's global instructions file. A Manual target may still carry one.
 	Steering *setupSteering
+	// SkillsDir is where the harness reads user skills, relative to HOME. Setup
+	// installs the Downshift skills there; empty for a harness without one.
+	SkillsDir string
 	// Registry is an informational hook list the harness owns, relative to HOME.
 	// Setup removes a Downshift entry from it. The policy hook stays in File.
 	// Empty when the harness has no such list. Undo restores a backup only
@@ -103,12 +106,32 @@ type setupTarget struct {
 	// Mods are sibling plugin ids ("name@marketplace") setup installs next to
 	// Plugin. They carry no routing, so a failed install is only a note.
 	Mods []string
+	// Mcp says how setup --mcp registers `downshift mcp serve` in this harness.
+	// Nil means setup does not register it (stage 5 adds the other harnesses).
+	Mcp *setupMcp
+}
+
+// Ways setup --mcp registers the server (setup_mcp.go).
+const (
+	// mcpViaCLI delegates the write to the harness CLI (`claude mcp add`); File
+	// is only read, to detect an entry without starting any server.
+	mcpViaCLI = "cli"
+	// mcpTOMLBlock edits a marked block of a TOML file as text; File is that file.
+	mcpTOMLBlock = "toml-block"
+)
+
+// setupMcp is the per-harness MCP registration fact: a way and a file
+// (relative to HOME).
+type setupMcp struct {
+	Kind string
+	File string
 }
 
 var setupTargets = []setupTarget{
 	{
 		Name:      "claude-code",
 		ConfigDir: ".claude",
+		SkillsDir: ".claude/skills",
 		File:      ".claude/settings.json",
 		HooksPath: []string{"hooks"},
 		Nested:    true,
@@ -132,6 +155,8 @@ var setupTargets = []setupTarget{
 				Note: `sessions keep their "permissions.defaultMode"; set it to "plan" in ~/.claude/settings.json ` +
 					"to start every session in plan mode",
 			},
+			// CLAUDE_CODE_SUBAGENT_MODEL_FORCE is not written (owner decision O8): with
+			// it set, Claude Code overrides the model the orchestrator chose per call.
 			// Claude Code's built-in "You should know" mod (off by default). The key is
 			// a sub-key of the enabledPlugins map, which the user usually already has
 			// (the Downshift plugin itself), so "only when unset" applies to the
@@ -162,6 +187,7 @@ var setupTargets = []setupTarget{
 			// the compressor's potential, never the text).
 			{Event: "PostToolUse", Matcher: "Bash", Args: "claude-code-post-tool-use"},
 			{Event: "PostToolUseFailure", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
+			{Event: "SessionStart", Args: "claude-code-session-start"},
 			{Event: "SubagentStop", Args: "claude-code-subagent-stop"},
 			{Event: "UserPromptSubmit", Args: "dci hook claude-code"},
 		},
@@ -177,6 +203,8 @@ var setupTargets = []setupTarget{
 		// A leftover filetree@downshift from an older install is left alone.
 		// The dock band is not installed by setup. mods/downshift-router stays out: it would route twice.
 		Mods: []string{"savvy-progress@downshift"},
+		// User scope lives in ~/.claude.json, which Claude Code rewrites itself.
+		Mcp: &setupMcp{Kind: mcpViaCLI, File: ".claude.json"},
 	},
 	{
 		Name:      "cursor",
@@ -201,6 +229,7 @@ var setupTargets = []setupTarget{
 	{
 		Name:      "codex",
 		ConfigDir: ".codex",
+		SkillsDir: ".codex/skills",
 		File:      ".codex/hooks.json",
 		HooksPath: []string{"hooks"},
 		Nested:    true,
@@ -218,6 +247,7 @@ var setupTargets = []setupTarget{
 		// Global instructions. Codex reads AGENTS.override.md first; if that file
 		// exists it wins and the managed block is not read.
 		Steering: &setupSteering{Path: ".codex/AGENTS.md", Content: compactSteering, Managed: true},
+		Mcp:      &setupMcp{Kind: mcpTOMLBlock, File: ".codex/config.toml"},
 	},
 	{
 		Name:      "antigravity",

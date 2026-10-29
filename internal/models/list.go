@@ -15,7 +15,7 @@ import (
 )
 
 // List prints the effective catalog as a formatted table to w.
-// Shows harness, tier, model ID, cost per 1M tokens, effort scale, and
+// Shows harness, tier, model ID, effort scale, and
 // which source is active (embedded or user override).
 func List(cat CatalogReader, w io.Writer) {
 	// Sort a copy: the reader may hand us a live catalog shared with other
@@ -37,20 +37,18 @@ func List(cat CatalogReader, w io.Writer) {
 		return oi < oj
 	})
 
-	fmt.Fprintln(w, "HARNESS        TIER       MODEL                  IN $/1M  OUT $/1M  EFFORT SCALE")
-	fmt.Fprintln(w, "─────────────  ─────────  ─────────────────────  ───────  ────────  ────────────")
+	fmt.Fprintln(w, "HARNESS        TIER       MODEL                  EFFORT SCALE")
+	fmt.Fprintln(w, "─────────────  ─────────  ─────────────────────  ────────────")
 
 	for _, e := range entries {
 		// Skip section comment entries (id or harness is empty).
 		if e.ID == "" || e.Harness == "" {
 			continue
 		}
-		fmt.Fprintf(w, "%-13s  %-9s  %-21s  %7.2f  %8.2f  %s\n",
+		fmt.Fprintf(w, "%-13s  %-9s  %-21s  %s\n",
 			e.Harness,
 			e.Tier,
 			e.ID,
-			e.InputCostM,
-			e.OutputCostM,
 			e.EffortScale,
 		)
 	}

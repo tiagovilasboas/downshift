@@ -6,8 +6,6 @@ package telemetry
 import (
 	"sort"
 	"strings"
-
-	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // Aggregate computes Stats from a slice of events.
@@ -157,7 +155,6 @@ func (a *aggregator) countDecision(ev Event) {
 	a.s.ByComplexity[ev.Complexity]++
 	isRefuted := a.refuted[linkKey{ev.Harness, DecisionKey(ev)}]
 	a.countModelMix(ev, isRefuted)
-	a.countScoreShadow(ev)
 	a.countGatewayShadow(ev)
 	for _, code := range ev.ReasonCodes {
 		a.s.ReasonCodes[code]++
@@ -195,21 +192,6 @@ func (a *aggregator) countModelMix(ev Event, isRefuted bool) {
 	}
 }
 
-// countScoreShadow tallies the score-routing shadow observation.
-func (a *aggregator) countScoreShadow(ev Event) {
-	if ev.ScoreWould == "" {
-		return
-	}
-	a.s.ScoreObserved++
-	if ev.ScoreDiffers {
-		a.s.ScoreDiffers++
-	}
-	if ev.ScoreWouldCostRatio > 0 {
-		a.s.ScoreRatioN++
-		a.s.ScoreRatioSum += ev.ScoreWouldCostRatio
-	}
-}
-
 // countGatewayShadow tallies the OpenRouter allowlist shadow observation.
 func (a *aggregator) countGatewayShadow(ev Event) {
 	if ev.GatewayWould == "" {
@@ -224,7 +206,7 @@ func (a *aggregator) countGatewayShadow(ev Event) {
 
 // countFrontier counts frontier picks and the subset spent on doubt.
 func (a *aggregator) countFrontier(ev Event, isRefuted bool) {
-	if !strings.EqualFold(ev.Tier, core.TierFrontier.String()) {
+	if !strings.EqualFold(ev.Tier, TierFrontier) {
 		return
 	}
 	a.s.FrontierDecisions++

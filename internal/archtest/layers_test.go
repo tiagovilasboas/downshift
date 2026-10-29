@@ -51,12 +51,11 @@ func outsideAllowlist(imports, allowed []string) []string {
 	return bad
 }
 
-// TestLayerDirectImports: L3 (accounting) and L2 (formula) import only the
-// layers below them, directly.
+// TestLayerDirectImports: L3 (accounting) imports only the layers below it,
+// directly.
 func TestLayerDirectImports(t *testing.T) {
 	allowed := map[string][]string{
-		"accounting":         {"telemetry", "execwrap", "catalog", "accounting/formula"},
-		"accounting/formula": {"catalog"},
+		"accounting": {"telemetry", "execwrap", "catalog"},
 	}
 	for pkg, ok := range allowed {
 		t.Run(pkg, func(t *testing.T) {

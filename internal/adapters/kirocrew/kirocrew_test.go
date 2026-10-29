@@ -13,6 +13,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 var cat = catalog.Load()
@@ -76,6 +77,7 @@ func (s fixedResolver) IsExplicitOnly(harness, id string) bool {
 // The agent calls a spawn through its MCP server, so the hook sees the prefixed
 // name. It must be routed exactly like the plain name.
 func TestHandle_RoutesMCPPrefixedSpawn(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	for _, name := range []string{"@kirocrew-core/spawn_run", "spawn_run"} {
 		ev := spawnEvent("rename the userId variable to userIdentifier", frontierID)
@@ -101,6 +103,7 @@ func TestHandle_PassesThroughPrefixedNonSpawn(t *testing.T) {
 }
 
 func TestHandle_BlocksConfidentMismatchInSession(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	ev := spawnEvent("rename the userId variable to userIdentifier", frontierID)
 
@@ -141,8 +144,9 @@ func TestHandle_AllowsOutOfSessionTarget(t *testing.T) {
 }
 
 func TestHandle_AllowsHeldDecision(t *testing.T) {
-	// R4 foreign-model hold: same id the block test names, but recommended
-	// from another harness, so Corrections is non-empty.
+	// A held decision on the same spawn the block test names: Corrections
+	// is non-empty, so the hook allows instead of blocking.
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	res := fixedResolver{
 		Resolver: cat,
@@ -152,7 +156,7 @@ func TestHandle_AllowsHeldDecision(t *testing.T) {
 
 	out, _, decision := kirocrew.Handle(ev, res)
 	if len(decision.Corrections) == 0 {
-		t.Fatal("expected a held decision (R4), got none — test is vacuous")
+		t.Fatal("expected a held decision, got none — test is vacuous")
 	}
 	if out.Block {
 		t.Errorf("must not block a held decision (corrections=%v)", decision.Corrections)
@@ -160,6 +164,7 @@ func TestHandle_AllowsHeldDecision(t *testing.T) {
 }
 
 func TestHandle_SkipsExplicitOnlyTargetForNextSessionModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	res := fixedResolver{
 		Resolver:     cat,
@@ -199,6 +204,7 @@ func TestMain(m *testing.M) {
 // A current model marked explicit_only is the user's deliberate choice: the
 // hook must neither block it nor ask for a respawn on another model.
 func TestHandle_AllowsExplicitOnlyCurrentModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	res := fixedResolver{
 		Resolver:     cat,
@@ -219,6 +225,7 @@ func TestHandle_AllowsExplicitOnlyCurrentModel(t *testing.T) {
 // fields (an image generator, for example) is not a subagent spawn and must
 // pass through with no decision and no note, so nothing is logged or blocked.
 func TestHandle_SpawnToolGate(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{smallID, midID, frontierID})
 	const (
 		task   = "rename the userId variable to userIdentifier"

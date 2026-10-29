@@ -18,7 +18,7 @@ func cleanConfigEnv(t *testing.T) string {
 	t.Helper()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	for _, k := range []string{paths.EnvStateDir, "DOWNSHIFT_QUOTA_MODE", "DOWNSHIFT_SCORES", "DOWNSHIFT_SCORE_ROUTING",
+	for _, k := range []string{paths.EnvStateDir, "DOWNSHIFT_QUOTA_MODE",
 		"DOWNSHIFT_CONTROL_SHARE", "DOWNSHIFT_QUIET", "DOWNSHIFT_SEMANTIC_BOOST", "DOWNSHIFT_MINILM", "DOWNSHIFT_INFER_SESSION",
 		"DOWNSHIFT_SESSION_MODELS", "DOWNSHIFT_DISCOVERED", "DOWNSHIFT_CURSOR_NATIVE_FILE", "DOWNSHIFT_DISCOVERY"} {
 		t.Setenv(k, "")
@@ -52,8 +52,6 @@ func TestConfig_DefaultsNameTheirSource(t *testing.T) {
 	m := configEntries(t)
 	want := map[string][2]string{
 		"quota_mode":     {"default", cfgDefault},
-		"scores":         {"on", cfgDefault},
-		"score_routing":  {"shadow", cfgDefault},
 		"control_share":  {"0.1", cfgDefault},
 		"quiet":          {"off", cfgDefault},
 		"catalog":        {"embedded", cfgDefault},
@@ -80,8 +78,6 @@ func TestConfig_EnvAndFileSources(t *testing.T) {
 	state := t.TempDir()
 	t.Setenv(paths.EnvStateDir, state)
 	t.Setenv("DOWNSHIFT_QUOTA_MODE", "required")
-	t.Setenv("DOWNSHIFT_SCORES", "off")
-	t.Setenv("DOWNSHIFT_SCORE_ROUTING", "1")
 	t.Setenv("DOWNSHIFT_CONTROL_SHARE", "0.25")
 	t.Setenv("DOWNSHIFT_QUIET", "1")
 	t.Setenv("DOWNSHIFT_MINILM", "off")
@@ -92,8 +88,6 @@ func TestConfig_EnvAndFileSources(t *testing.T) {
 	want := map[string][2]string{
 		"state_dir":      {state, cfgEnv},
 		"quota_mode":     {"required", cfgEnv},
-		"scores":         {"off", cfgEnv},
-		"score_routing":  {"live", cfgEnv},
 		"control_share":  {"0.25", cfgEnv},
 		"quiet":          {"on", cfgEnv},
 		"semantic_boost": {"off", cfgEnv},

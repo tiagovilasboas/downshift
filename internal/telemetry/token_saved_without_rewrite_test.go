@@ -16,7 +16,7 @@ import (
 func TestTokenDirection_VerdictOKWithoutRewrite(t *testing.T) {
 	cat := catalog.Load()
 	prev := DirectionCatalog
-	DirectionCatalog = cat
+	DirectionCatalog = catalog.TierViewOf(cat)
 	defer func() { DirectionCatalog = prev }()
 	cases := []struct {
 		name, requested, ran, want string
@@ -48,7 +48,7 @@ func TestTokenDirection_VerdictOKWithoutRewrite(t *testing.T) {
 func TestTokenSavings_SavedWithoutRewriteIsCountedApart(t *testing.T) {
 	cat := catalog.Load()
 	prev := DirectionCatalog
-	DirectionCatalog = cat
+	DirectionCatalog = catalog.TierViewOf(cat)
 	defer func() { DirectionCatalog = prev }()
 	okUsage, okDecision := rankEvents(t, cat, "claude-sonnet-4-6", "claude-haiku-4-5", OutcomeAllow)
 	okDecision.CorrelationID = "ok"

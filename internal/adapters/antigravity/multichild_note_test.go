@@ -6,10 +6,21 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 const mcTrivial = "fix typo in README"
 const mcRiskTrivial = "fix typo in the auth token secret handler"
+
+// heldWhenRisky holds the child whose prompt is mcRiskTrivial and sends every
+// other child to the small tier.
+func heldWhenRisky() core.Decider {
+	return decidertest.When(
+		func(r core.Request) bool { return r.Prompt == mcRiskTrivial },
+		decidertest.Held(core.TierSmall),
+		decidertest.Tier(core.TierSmall),
+	)
+}
 
 func mcEv(args string, ids ...string) antigravity.Event {
 	ev := antigravity.Event{ToolCall: antigravity.ToolCall{Name: "invoke_subagent", Args: json.RawMessage(args)}}
@@ -25,6 +36,7 @@ func mcEv(args string, ids ...string) antigravity.Event {
 // decision (what the runner records as rewrite_emitted) must describe a child
 // that was actually rewritten, not the held one.
 func TestMultiChild_HeldLastChildIsNotReportedAsTheRewrite(t *testing.T) {
+	decidertest.Use(t, heldWhenRisky())
 	args := `{"Subagents":[{"Prompt":"` + mcTrivial + `","Model":"pro"},{"Prompt":"` + mcRiskTrivial + `","Model":"pro"}]}`
 	out, note, d := antigravity.Handle(mcEv(args), res)
 	subs := decodeOverwriteSubagents(t, out)
@@ -38,6 +50,7 @@ func TestMultiChild_HeldLastChildIsNotReportedAsTheRewrite(t *testing.T) {
 
 // One child rewritten, the last child already on the right gear (OK).
 func TestMultiChild_OKLastChildIsNotReportedAsTheRewrite(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	heavy := "rearchitect the distributed consensus protocol and multi-region database replication"
 	args := `{"Subagents":[{"Prompt":"` + mcTrivial + `","Model":"pro"},{"Prompt":"` + heavy + `","Model":"pro"}]}`
 	out, note, d := antigravity.Handle(mcEv(args), res)
@@ -52,6 +65,7 @@ func TestMultiChild_OKLastChildIsNotReportedAsTheRewrite(t *testing.T) {
 
 // The decision returned for a rewritten child must name the model written.
 func TestMultiChild_DecisionModelMatchesWrittenModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	args := `{"Subagents":[{"Prompt":"` + mcTrivial + `","Model":"pro"}]}`
 	out, _, d := antigravity.Handle(mcEv(args, "flash", "pro"), res)
 	subs := decodeOverwriteSubagents(t, out)
@@ -64,6 +78,7 @@ func TestMultiChild_DecisionModelMatchesWrittenModel(t *testing.T) {
 }
 
 func TestMultiChild_HeldFirstChildDoesNotLeak(t *testing.T) {
+	decidertest.Use(t, heldWhenRisky())
 	args := `{"Subagents":[{"Prompt":"` + mcRiskTrivial + `","Model":"pro"},{"Prompt":"` + mcTrivial + `","Model":"pro"},{"Prompt":"` + mcTrivial + `","Model":"pro"}]}`
 	out, _, _ := antigravity.Handle(mcEv(args), res)
 	subs := decodeOverwriteSubagents(t, out)
@@ -78,6 +93,7 @@ func TestMultiChild_HeldFirstChildDoesNotLeak(t *testing.T) {
 }
 
 func TestMultiChild_ExplicitChildPreserved(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	r := stubResolver{explicit: map[string]bool{"pro": true}}
 	args := `{"Subagents":[{"Prompt":"` + mcTrivial + `","Model":"pro"},{"Prompt":"` + mcTrivial + `","Model":"flash"}]}`
 	out, _, _ := antigravity.Handle(mcEv(args, "flash_lite", "flash", "pro"), r)

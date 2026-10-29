@@ -83,6 +83,10 @@ func TestInheritingAgentTypes(t *testing.T) {
 
 func TestCurrentModel_SubagentModelEnv(t *testing.T) {
 	env := core.ClaudeCodeCaps.ModelOverrideEnv
+	// The cases below are unforced. Setup writes the force variable into the
+	// developer's harness settings, so clear it to keep the test hermetic.
+	t.Setenv(subagentModelForceEnv, "")
+	os.Unsetenv(subagentModelForceEnv)
 	tr := writeTranscript(t, `{"type":"assistant","message":{"model":"m-parent"}}`+"\n")
 	cases := []struct {
 		name, envVal string

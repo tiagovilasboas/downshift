@@ -1,0 +1,143 @@
+<!-- Copyright (c) 2026 Tiago Vilas Boas. SPDX-License-Identifier: Apache-2.0 -->
+
+# MVP task cards (2026-10-27)
+
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
+
+Plan: [MVP plan](../../plans/mvp-plan.md). These cards replace the stage tables in
+[routing v2 cards](../2026-10-26-routing-v2/README.md); the R numbers stay as cross-references. Each card is one PR,
+at most 5 points, with the gate in the MVP plan section 5.
+
+## Stage 0: clean base (done on the branch, 2026-10-27)
+
+| # | Card | Pts | State |
+|---|---|--:|---|
+| B0 | Routing v2 design | — | Done |
+| B1 | Remove v1 experiments, gateway and orchestration | — | Done |
+| B2 | Routing domain contract (`internal/routing/contract`) | — | Done |
+| B3 | Telemetry stops importing `core` | — | Done in the root package; `fromcore` still imports `core` by design |
+| B4 | Decision behind an interface (`core.Decider`) | — | Done |
+| B5 | Headroom from quota readings (`routing/headroom`) | — | Done |
+| B6 | Declared policy and `policy check` (`routing/policy`) | — | Done |
+| B7 | Delete the v1 decider | 5 | Done in the same change as C3 (no flag, no keep default). Left over: NB files, `internal/nbtier`, gateway files |
+| B8 | Remove the dollar accounting (O1) | 2 | Done. The catalog price table stays as a routing signal |
+| B9 | Move the competitive analysis out of the public history | 1 | Done |
+
+## Stage 1: setup (S1, S2 and S3 done on the branch, 2026-10-28)
+
+| # | Card | Pts | Depends on |
+|---|---|--:|---|
+| S1 | Ownership markers on every file setup writes; `--undo` and reinstall respect them. Done for whole files (wrappers, dedicated steering); the hook JSON and shared steering blocks keep their own rules | 3 | — |
+| S2 | Install the Downshift skill into `~/.claude/skills` and `~/.codex/skills` (marker, backup, dry run; copy on Windows) | 3 | S1 |
+| S3 | `doctor` proves the hook fired: last hook time and decision; statusline quota source present. Done: `doctor_proof.go` | 2 | — |
+
+## Stage 2: right model in Claude Code (done except the real-session proof)
+
+| # | Card | Pts | Depends on |
+|---|---|--:|---|
+| C0 | Verify whether PreToolUse fires for workflow `agent()` spawns and which `model` it carries (R0b) | 1 | — |
+| C1 | Hint parser, enum prefix and agent type; can only move down (R4) | 2 | B2 |
+| C2 | Guard: never widen, `explicit_only`, foreign ids (R5). The risk veto was removed 2026-10-28 (O8) | 3 | B2 |
+| C3 | Decider and routing note: precedence explicit > profile > rule > hint > keep; behind `DOWNSHIFT_ROUTING=v2` (R6) | 5 | B4–B7, C1, C2 |
+| C4 | Claude quota from the statusline into headroom; all critical warns and keeps (O3) | 3 | B5, S3 |
+
+## Stage 2b: orchestrator tools, the MCP (owner decision O9; done 2026-10-28, pending the owner's acceptance)
+
+Spec: `docs/internal/plans/mcp-delegation-spec.md`. The tools that start workers come with stage 4.
+
+| # | Card | Pts | Depends on |
+|---|---|--:|---|
+| K1 | **Done.** Detected models only: one resolver (payload, then discovery cache, then the session-models file; never the catalog alone), `downshift models available --harness h` with tier, source and an "untiered" flag; `doctor` warns when a harness has no detected list | 5 | none |
+| K2 | **Done.** Apply core: gather policy, floor, readings and catalog once for the hook, the CLI and the MCP; `downshift route --json` returns what would be applied | 3 | C3 |
+| K3 | MCP core: the tool port (`internal/mcp/tools`) and the stdio transport on the official Go SDK (`internal/mcp/transport`), both protocol eras. **Done 2026-10-28**; not yet reachable from a command (K5) | 3 | none |
+| K4 | **Done.** MCP information tools: `providers` (K1), `playbook`, `status`, `apply` (K2); a `strain` block on every result | 3 | K1, K2, K3 |
+| K5 | **Done.** `downshift mcp serve` command, help and end-to-end tests over pipes; a real Claude Code session called the tools (`docs/evidence/mcp-real-session-2026-10-28.md`) | 1 | K4 |
+| K6 | **Done.** `setup --mcp`: register the server in Claude Code (through `claude mcp add -s user`) and Codex (the `[mcp_servers.downshift]` block); opt-in, dry run, backup, undo by marker, other servers untouched. Research done: `docs/internal/plans/mcp-registration.md`; the other four harnesses are stage 5 | 2 | K5, S1 |
+| K7 | **Done 2026-10-28, pending the owner's acceptance.** One detected list per harness, no fixed ids: `setup` no longer writes `session-models.json` (it stays an optional manual override) and only says which `models discover` command is missing; the hook keeps reading the live discovery cache (payload, cache, file). The `providers` tool takes an optional `models` list; `discovery.MergeReported` stores it as `source: "mcp"` (a fresh detection always wins, 1 h expiry, 64 ids at most, atomic write); `doctor` stops warning forever about the Claude Code stand-in | 5 | K1, K4 |
+
+## Stage 3: show and prove (closes the MVP; V1 built, V2 open, V3 partial)
+
+| # | Card | Pts | Depends on |
+|---|---|--:|---|
+| V1 | **Built 2026-10-28, pending the owner's acceptance.** Routing note in `report` ("Why spawns changed") and `session --panel`; tokens per harness in two columns; no money; the hook writes `routing_note` into the event and a shared-layer test proves it holds enums, ids and tiers only | 3 | C3 |
+| V2 | Acceptance suite baseline: v2 against the requested-model arm, regressions reported | 3 | C3 |
+| V3 | Real Claude Code session as evidence; default on in Claude Code; pause switch; release and migration note (R9, R13) | 3 | V1, V2 |
+
+## Stage 4: plan runner (specification done, see `docs/internal/plans/plan-runner-spec.md`; partly built through the MCP worker tools)
+
+Built ahead of the plan file, through the MCP worker tools: a bounded queue with acknowledged deliveries, read-only launches for Claude and Codex (off unless `DOWNSHIFT_WORKERS=read`), and the write route with bypass in a git worktree (`DOWNSHIFT_WORKERS=bypass`, off by default). That covers part of P3 and P5. P1, P2 and P6 to P8 are not started.
+
+| # | Card | Pts | Depends on |
+|---|---|--:|---|
+| P1 | Plan schema v1, `plan validate`, `plan strategies` | 3 | V3 |
+| P2 | `plan dry-run`: strategy, providers, tiers and budget; writes nothing | 3 | P1 |
+| P3 | `plan run` with a Claude worker: stdin prompt, fixed worker contract, mechanical acceptance | 5 | P2 |
+| P4 | Codex worker | 3 | P3 |
+| P5 | Worktrees for write workers; explicit cleanup command | 3 | P3 |
+| P6 | Budget admission: calls, wall time, tokens; a missing reading lets work through | 3 | P2 |
+| P7 | Provider choice by headroom across Claude and Codex | 3 | P4, P6 |
+| P8 | Opt-in escalation: one retry, one tier up, within budget (O5) | 3 | P3, P6 |
+
+## Stage 5: reach (not started)
+
+| # | Card | Pts | Depends on |
+|---|---|--:|---|
+| A1 | `policy apply --harness claude-code [--dry-run]` writes `model:` in `.claude/agents/*.md` (R8a) | 3 | C3 |
+| A2 | Route skill: hint convention and launch usage (R10) | 3 | C1, S2 |
+| A3 | Codex channel (R8c, Codex half) | 3 | C3 |
+| A4 | Kiro channel (R8b) | 3 | C3 |
+
+OpenCode, Cursor and Antigravity are sized before they start, one PR each.
+
+## Totals
+
+Stage 0: done. Stage 1: 8. Stage 2: 14, done except the real-session proof (C0). Stage 2b: 17, done. Stage 3: 9, not started. MVP: 56 (39 plus 17), about 9 left (stage 3) plus the C0 real-session proof. Stage 4: 26. Stage 5: 12 before the
+remaining harnesses.
+
+## State of stage 2 (2026-10-27)
+
+C1, C2, C3 and C4 are done on the branch (QA PASS at `2330a3e1`). C0 is not verified: nobody has seen the hook decide in a real Claude Code session. Open gaps are in [the roadmap, section 8b](../../plans/roadmap.md).
+
+## Business plan waves (W0 to W7)
+
+The cards from the `downshift-business-plan` alignment are in [the roadmap, section 8d](../../plans/roadmap.md). Every card is at most 5 points. Wave 4 and the orchestrator wait for the owner decisions BP1 and BP2.
+
+## Closing state (2026-10-27)
+
+Branch `downshift/mvp-ponto-zero`, published, no open PR, no worktree, no unpublished work. The business plan repository has no remote; its last commit is local.
+
+| Item | State | Owner decision needed |
+|---|---|---|
+| Stage 0 | Done | none |
+| Stage 2, real-session proof (C0, R0b) | Authorized by the owner, not run | none; run when the owner says go |
+| Stage 1, setup | Not started | none |
+| Stage 3, report and acceptance (V1, V2, V3) | V1 built; V2 needs the owner's budget approval; V3 waits for V1 and V2 | V2 budget |
+| Stage 4, plan runner | Spec done (54 requirements + R53 to R62); not started | G1 acceptance criterion; G4 CLI flags; G10 harness contract table; G12 default tiers |
+| Stage 5 and other harnesses | Not started | none |
+| Business plan waves W0 to W6 | Cards in roadmap 8d and 8c-ter | BP1 accepted; BP2 deferred; G14 to G16 resolved |
+| Dashboard | Discontinued (N9) | removal card W6.6 waits for the owner |
+| Release readiness (W7.1 to W7.11) | Cards in roadmap 8d and 8c-quater; W7.1 and W7.2 first. W7.1 (the N11 table) was delivered and then removed on 2026-10-28 (O8): its defaults moved to the orchestrator playbook | N11 approved, then superseded by O8 |
+| Economy mode | W7.9, built on the N11 table; with the table gone (O8) it acts only on declared policy and its removal is pending | Superseded by O8 |
+| Harness-agnostic rule | N12: tiers are abstract, harness facts are data | None |
+| Stage 4 decisions | G1, G4, G10, G12 | Owner |
+| Clean-room | Plan runner built from behaviour notes only | none |
+
+## Closing state (2026-10-29)
+
+Checked offline, without a model call, on the branch at `7e2acb02` and the installed binary. Items below marked with a date were observed on that day.
+
+| Item | State | Evidence |
+|---|---|---|
+| Hook routing on Claude Code | Works. Real spawns are decided and honoured | `doctor`: rewrite honoured 10 of 10; the `[tier=small]` hint moved two real spawns (2026-10-28) |
+| Compactor | Works. Smoke test on a real package passes | `compact -- go test`; 30 days: 2,491 commands, 186 compacted, about 12k tokens cut (bytes / 4) |
+| Pause and resume | Works | `session --pause` and `--resume` both answered; `--session=<id>` is honoured (checked 2026-10-29 in an isolated state dir) |
+| MCP information tools | Work in a real session | `docs/evidence/mcp-real-session-2026-10-28.md`; the orchestrator did not call them unprompted in two runs (`docs/evidence/mcp-unprompted-2026-10-29.md`) |
+| Worker tools (`delegate`, `collect`, `cancel`) | Read route: one real Claude worker completed a delegate and collect round trip end to end (2026-10-29; not recorded in `docs/evidence/`). Not observed: a blocked write under plan mode (spec R27); the Codex read route has not run against the real CLI. Write route with bypass: built and tested with shims, not run against the real CLI | Stage 4, partly built; see above |
+| SessionStart context | Committed (`066589db`, `7e2acb02`). Active in the owner's user settings (backup `settings.json.bak-sessionstart-2026-10-29`). In the plugin only after the branch reaches `main`, which the plugin pins by commit today | `~/.claude/settings.json`; owner decision to merge |
+| V1 routing note in `report` | Built, pending the owner's acceptance | `report` and `session --panel` |
+| V2 acceptance baseline | **Not closed.** The token comparison flips with the window: 30 days gives routed 4.1M against control 4.5M per completed task; 7 days gives routed 4.3M against control 3.5M. Rework is 0.9% routed against 0.0% control | `downshift report`; the difference is not an interval |
+| V3 real-session proof, default on, release note | Default on: yes. Release note: draft in `docs/releases/unreleased-migration-notes.md`. Real-session proof: partial (observed spawns, not a controlled run) | |
+
+**Open for the owner (2026-10-29):** merge the branch to `main` so the plugin ships the SessionStart context (needs explicit approval); the V2 budget; the C0 real-session run; acceptance of K1 to K7 and V1. The install and quickstart guides no longer use the removed `downshift try`; other guides under `docs/` still cite it.
+
+**Consequence for the MVP.** The routing and compaction pieces work and are measured. The claim that routing saves tokens is **not proven**: the measured difference changes sign between windows, so the honest word is "measured, not established". The release note must not promise savings until V2 has a baseline. Closing V2 needs a controlled suite, which costs model tokens, and that budget is the owner's decision.

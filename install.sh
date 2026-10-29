@@ -305,13 +305,6 @@ if [ "$session_existed" = 0 ]; then
   echo "  Cursor claude-fable-5-1-thinking-high and Codex gpt-6-astra stay explicit_only unless you pass --explicit-upshift."
 fi
 
-# Public score index: best-effort first refresh (public sources only, no user
-# data). Never fails the install. DOWNSHIFT_SCORES=off skips all network.
-if [ "${DOWNSHIFT_SCORES:-}" != "off" ]; then
-  "${INSTALL_DIR}/${BINARY}" models scores --refresh --quiet >/dev/null 2>&1 \
-    || echo "Note: score cache not refreshed; it refreshes on the first hook run or via 'downshift doctor'."
-fi
-
 # Verify
 if command -v downshift >/dev/null 2>&1; then
   downshift --help 2>/dev/null | head -3 || true

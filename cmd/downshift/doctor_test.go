@@ -31,7 +31,6 @@ func newDoctorFixture(t *testing.T) *doctorFixture {
 	for _, k := range []string{paths.EnvStateDir, "DOWNSHIFT_EVENT_LOG", "DOWNSHIFT_SESSION_MODELS", "DOWNSHIFT_DISCOVERED", "DOWNSHIFT_CURSOR_NATIVE_FILE", "CLAUDE_CODE_SUBAGENT_MODEL", "DOWNSHIFT_QUOTA_FILE", "DOWNSHIFT_QUOTA_MODE"} {
 		t.Setenv(k, "")
 	}
-	t.Setenv("DOWNSHIFT_SCORES", "off") // never start a refresh from a test
 	bin := filepath.Join(home, "bin", "downshift")
 	writeFile(t, bin, "#!/bin/sh\n")
 	if err := os.Chmod(bin, 0o755); err != nil {
@@ -66,9 +65,10 @@ func claudeSettings(prefix string) string {
 		return fmt.Sprintf(`[{"matcher":"Agent|Task","hooks":[{"type":"command","command":"%s %s"}]}]`, prefix, sub)
 	}
 	return fmt.Sprintf(`{"hooks":{"PreToolUse":%s,"PostToolUse":%s,"PostToolUseFailure":%s,
+"SessionStart":[{"hooks":[{"type":"command","command":"%s claude-code-session-start"}]}],
 "SubagentStop":[{"hooks":[{"type":"command","command":"%s claude-code-subagent-stop"}]}],
 "UserPromptSubmit":[{"hooks":[{"type":"command","command":"%s dci hook claude-code"}]}]}}`,
-		hook("claude-code"), hook("claude-code-post-tool-use"), hook("claude-code-post-tool-use"), prefix, prefix)
+		hook("claude-code"), hook("claude-code-post-tool-use"), hook("claude-code-post-tool-use"), prefix, prefix, prefix)
 }
 
 // eventLines writes a fresh claude-code shift that a later spawn confirms.
@@ -132,6 +132,19 @@ func TestDoctor_AllGood(t *testing.T) {
 	f.env.Verbose = true
 	if v := buildDoctorReport(f.env); len(v.EffortUnknownModels) != v.EffortUnknownCount {
 		t.Errorf("--verbose lists every model: %d of %d", len(v.EffortUnknownModels), v.EffortUnknownCount)
+	}
+}
+
+// Claude Code on a subscription cannot be listed, but the catalog stand-in is
+// the design and the hook still rewrites, so a missing cache is not a warning.
+func TestDoctor_ClaudeCodeStandInIsNotAWarning(t *testing.T) {
+	f := newDoctorFixture(t)
+	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), claudeSettings(f.bin))
+
+	c := f.check(t, buildDoctorReport(f.env), "claude-code", "session list")
+	wantStatus(t, c, doctorOK)
+	if !strings.Contains(c.Detail, "catalog stand-in") {
+		t.Errorf("detail %q should say the catalog stand-in is used", c.Detail)
 	}
 }
 

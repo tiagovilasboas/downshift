@@ -14,9 +14,9 @@ https://github.com/tiagovilasboas/downshift
 
 ## Product vision
 
-**Downshift** is an open-source **model router**: classify workload complexity,
-apply catalog policy, and select model tier **before execution**, without an LLM
-in the routing loop.
+**Downshift** is an open-source **model control layer**: the orchestrator chooses
+the model of each subagent, and Downshift applies that choice within your declared
+policy **before execution** and measures the result. It adds no LLM call of its own.
 
 Today the primary integration is **coding harness hooks** (Claude Code, Cursor,
 Codex, and others). The core is intentionally **gateway-shaped** for a future
@@ -57,7 +57,7 @@ pillars P2 (multi-user exports) and P3 (billing evidence).
 |----------|------|
 | P0 | ~~Rename to **Downshift**~~ — done ([rename.md](docs/brand/rename.md)) |
 | P0 | ~~State directory `~/.downshift`~~ — done ([config.md](docs/guides/config.md)) |
-| P1 | ~~Condensed docs~~ — [WHEN-TO-USE](docs/guides/when-to-use.md), trimmed [CAPABILITY-ROUTER-V2](docs/design/capability-router-v2.md) |
+| P1 | ~~Condensed docs~~ — [WHEN-TO-USE](docs/guides/when-to-use.md), trimmed [ROUTING-V2](docs/design/routing-v2.md) |
 | ~~P0~~ | ~~Opt-in `downshift exec`~~ — superseded: the native compactor (`downshift compact`) is on by default with the plugin, `"exec": false` turns it off. Families: go test, git status, pytest, vitest, jest, tsc, cargo test, playwright, phpunit, next build, Gradle, Maven, Flutter/Dart. The conformance suite gates every family. |
 | P1 | Child-token payloads for Cursor, Codex, OpenCode, KiroCrew and Antigravity so tokens-first views cover them (today `stats` shows all five as unobserved); Codex tier order decision |
 | P1 | More harness matrix rows (Cursor paid plans, etc.) |

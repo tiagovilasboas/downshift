@@ -3,20 +3,20 @@
 
 package main
 
-// modelsHelp covers the model catalog, the quota evidence, and the offline
-// replay and learning views.
+// modelsHelp covers the model catalog, the quota evidence, and the probe and
+// learning views.
 var modelsHelp = map[string]string{
-	"models": `downshift models — Inspect and refresh the model catalog and capability scores
+	"models": `downshift models — Inspect and refresh the model catalog
 
 Usage:
-  downshift models <list|check|pull|discover|scores> [flags]
+  downshift models <list|check|pull|discover|available> [flags]
 
 Subcommands:
   list       Show the effective catalog (embedded, or the user override)
   check      Query provider APIs and report new or untiered models
   pull       Write the user catalog.json under the state dir
   discover   Ask each harness which models the account can use
-  scores     Show or refresh the public capability scores cache
+  available  Show the models a spawn can use now on one harness, and their source
 
 Flags:
   (see each subcommand: downshift models <name> --help)
@@ -25,7 +25,7 @@ Examples:
   downshift models list
   downshift models discover --dry-run
 
-Next: downshift models scores --status
+Next: downshift models list
 `,
 	"models list": `downshift models list — Show the effective model catalog
 
@@ -82,22 +82,20 @@ Examples:
 
 Next: downshift doctor, to check the discovered models are in use
 `,
-	"models scores": `downshift models scores — Show or refresh the public capability scores cache
+	"models available": `downshift models available — Models a spawn can use now on one harness
 
 Usage:
-  downshift models scores [--refresh | --status] [--quiet] [--json]
+  downshift models available --harness=ID [--json]
 
 Flags:
-  --refresh   Fetch the public sources now and rewrite scores.json
-  --status    Print cache age, selected source and per-harness coverage (default)
-  --quiet     No output on success (the background refresh uses this)
-  --json      Print the status as JSON
+  --harness=ID   Harness id (required): claude-code, cursor, codex, kirocrew, antigravity, opencode
+  --json         Print a stable JSON object: harness, models[], fallback, cache_written_at
 
 Examples:
-  downshift models scores --status
-  downshift models scores --refresh
+  downshift models available --harness=claude-code
+  downshift models available --harness=codex --json
 
-Next: downshift doctor, to see whether the scores are stale
+Next: downshift models discover --harness=ID, when no detected list exists
 `,
 	"quota": `downshift quota — Budget evidence for a harness (status, import, collect)
 
@@ -119,24 +117,6 @@ Examples:
   downshift quota collect --harness=codex --transcript=/path/to/rollout.jsonl
 
 Next: downshift quota status --harness=ID, to confirm the evidence is fresh
-`,
-	"replay": `downshift replay — Re-decide recorded Claude Code spawns under each policy (offline)
-
-Usage:
-  downshift replay [--projects=DIR] [--policies=LIST]
-
-Flags:
-  --projects=DIR    Claude Code projects directory (default ~/.claude/projects)
-  --policies=LIST   Comma-separated: current, nb_downshift, explicit_upshift,
-                    nb_downshift+explicit_upshift, or economy (default current,nb_downshift)
-
-No model call, no network, and no prompt is printed or written.
-
-Examples:
-  downshift replay
-  downshift replay --policies=current,economy
-
-Next: downshift report, for the measured numbers from real runs
 `,
 	"probe": `downshift probe — Maintainer tool: record a hook payload's field names (never prompts or paths)
 

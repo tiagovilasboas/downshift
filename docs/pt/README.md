@@ -98,12 +98,6 @@ de uma lista nativa de disponibilidade não prova capacidade. Metadados inválid
 rejeitam aquele ID, e preço ausente continua desconhecido.
 [Contrato de sessão (EN)](../reference/session-models.md).
 
-**Verificação observada:** `downshift verification-report` agrupa o último teste,
-lint ou type-check reconhecido no transcript do filho e seu custo estimado por
-tier. Hoje esse sensor é do Claude Code. `passed` não prova que a tarefa está
-correta; `none` pode significar comando não reconhecido ou transcript indisponível;
-`unrecorded` indica ausência do campo. [Guia e limites (EN)](../guides/verification.md).
-
 Código, responsáveis por cada etapa e mapa de guia/sensor:
 [arquitetura (EN)](../design/architecture.md#guide-and-sensor-map).
 
@@ -172,7 +166,6 @@ A estrutura abaixo detalha cada etapa do ciclo de vida da requisição, combinan
 | [07 · Boost semântico por hash](07-minilm.md) | Classificação | FNV em processo, centróides, condições de subida e privacidade; o nome do arquivo é histórico |
 | [08 · Telemetria e Métricas](08-telemetria.md) | Observabilidade | Estrutura do `events.jsonl`, métricas normalizadas e auditoria sem vazamento de prompt |
 | [09 · Decisões Técnicas e Trade-offs](09-decisoes.md) | Engenharia | Racional de arquitetura, compensações técnicas e próximos passos do projeto |
-| [10 · Candidato em shadow](10-candidato-shadow.md) | Avaliação | Observar um candidato softmax sem trocar o roteamento de produção |
 | [11 · Compressor Nativo de Contexto](../design/context-optimization.md) | Otimização | Compressor determinístico em Go e sensor de telemetria passiva |
 | [12 · Code Intelligence DCI (EN)](../design/code-intelligence.md) | Otimização | Índice invertido, call-graph multi-linguagem, blast radius e injeção estrutural |
 | [13 · Plugin, skills e agente (EN)](../design/architecture.md#packaging-layers-what-an-agent-harness-loads) | Empacotamento | As cinco camadas que um harness carrega: memória (`AGENTS.md`), skills (`skills/`), hooks (binário; `hooks/hooks.json` no plugin), agente de exemplo (`agents/`) e o plugin do Claude Code (`/plugin install downshift --marketplace tiagovilasboas/downshift`) |
@@ -207,9 +200,6 @@ downshift dci inspect --json "Qual função processa pagamentos PIX?"
 # Diagnóstico de saúde e benchmark local do DCI
 downshift dci doctor
 downshift dci benchmark
-
-# Verificações observadas e custo estimado por tier (Claude Code)
-downshift verification-report
 
 # Visão ao vivo da sessão no terminal (tokens por tarefa: downshift report)
 downshift watch

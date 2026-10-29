@@ -19,7 +19,6 @@ GO1="docs_only=0 go=1"
 GO0="docs_only=1 go=0"
 
 check catalog-json "$GO1" internal/catalog/catalog.json
-check routing-weights "$GO1" internal/routingv2/classifier/weights/default.json
 check nbtier-train "$GO1" internal/nbtier/train.json
 check corpus-json "$GO1" internal/core/testdata/corpus/a.json
 check goreleaser "$GO1" .goreleaser.yml

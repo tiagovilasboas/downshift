@@ -31,7 +31,7 @@ it comes from. It is read-only: it reads what the hooks read and writes nothing.
 
 Settings shown: `state_dir`; `session_models` per harness (native export, discovery
 cache, `session-models.json`, inferred from the current model, or none); `quota_mode`;
-`scores` on/off and `score_routing` (shadow or live); `control_share`; `quiet`;
+`control_share`; `quiet`;
 `catalog` (embedded or user override); `semantic_boost` and `semantic_embedder`;
 `infer_session`. The session lists reflect the files on this machine; a list in a
 hook payload overrides them at spawn time.
@@ -48,25 +48,22 @@ hook payload overrides them at spawn time.
 | `cursor-composer-model.json` | Cursor only: last seen composer slug per `session_id` (written by `cursor-touch` and `end cursor`; read for Task baseline when `preToolUse` omits `model`) |
 | `loop-events.jsonl` | Routing v2 training events |
 | `weights.json` | Classifier weight override |
-| `scores.json` | Public capability score cache (sources, selected source, rows); see [scores.md](../reference/scores.md) |
 
 Override paths:
 
 - `DOWNSHIFT_EVENT_LOG` — telemetry JSONL (advanced)
 - `DOWNSHIFT_SESSION_MODELS` — session allowlist file
 - `DOWNSHIFT_INFER_SESSION=off` — disable the inferred session (Claude Code); an unknown session then never rewrites
-- `DOWNSHIFT_SCORES=off` — no network for public capability scores: no hook, install or doctor refresh, and the router ignores `scores.json`. Details: [scores.md](../reference/scores.md)
-- `DOWNSHIFT_SCORE_ROUTING=1` — let the public-score pick change the routed model (default: shadow only, recorded in telemetry as `score_would`). Details: [scores.md](../reference/scores.md#capability-selection)
 
 Every variable the routing core reads, with its default, is listed in one place: the doc comment of `internal/core/env.go`. The ones not covered above:
 
 - `DOWNSHIFT_QUOTA_MODE=required` — the quota gate needs fresh evidence and keeps abandoned snapshots holding ([quota.md](quota.md))
 - `DOWNSHIFT_EXPLICIT_UPSHIFT=1` — an upshift may pick `explicit_only` ids ([session-models.md](../reference/session-models.md#explicit_upshift))
 - `DOWNSHIFT_DISCOVERY=off`, `DOWNSHIFT_DISCOVERED=<path>`, `DOWNSHIFT_DISCOVERY_TTL=<duration>` — the discovered-models layer, its cache and its freshness (default 24h) ([session-discovery.md](../reference/session-discovery.md))
-- `DOWNSHIFT_NB_UPSHIFT=1`, `DOWNSHIFT_NB_DOWNSHIFT=1` — apply the naive-Bayes second opinion instead of recording it (default: shadow; R1 still holds an unconfident downshift)
+- `DOWNSHIFT_NB_UPSHIFT` and `DOWNSHIFT_NB_DOWNSHIFT` — removed with the naive-Bayes opinion hooks. No hook is registered, so they have no effect on a spawn
 - `DOWNSHIFT_CURSOR_NATIVE_FILE=<path>` — Cursor's native session export (each harness that has one declares it in `HarnessCapabilities.NativeSessionEnv`)
 
-Outside the core: `DOWNSHIFT_EXEC=0` (kill switch for the `downshift compact` shell wrapper, on by default: the hook leaves commands unchanged and `downshift compact` stops compacting; the file switch is `"exec": false` in the context config, with no CLI off switch), `DOWNSHIFT_NO_ROUTE=1` (control baseline), `DOWNSHIFT_CONTROL_SHARE` (built-in control group), `DOWNSHIFT_QUIET`, `DOWNSHIFT_MINILM` (hash semantic boost; `0` opts out), `DOWNSHIFT_LOG_MAX_MB` / `DOWNSHIFT_LOG_BACKUPS`. `downshift config` prints the effective value and source of most of them. Graphify, `DOWNSHIFT_MINILM_EMBED`, and `DOWNSHIFT_E5_*` were removed on 2026-10-17 and are ignored. `DOWNSHIFT_EXPLICIT_UPSHIFT`, `DOWNSHIFT_DISCOVERY`, `DOWNSHIFT_DISCOVERY_TTL` and the two `NB_*` switches are not reported by `config` yet.
+Outside the core: `DOWNSHIFT_EXEC=0` (kill switch for the `downshift compact` shell wrapper, on by default: the hook leaves commands unchanged and `downshift compact` stops compacting; the file switch is `"exec": false` in the context config, with no CLI off switch), `DOWNSHIFT_NO_ROUTE=1` (control baseline), `DOWNSHIFT_CONTROL_SHARE` (built-in control group), `DOWNSHIFT_QUIET`, `DOWNSHIFT_MINILM` (hash semantic boost; `0` opts out), `DOWNSHIFT_LOG_MAX_MB` / `DOWNSHIFT_LOG_MAX_BACKUPS`. `downshift config` prints the effective value and source of most of them. Graphify, `DOWNSHIFT_MINILM_EMBED`, and `DOWNSHIFT_E5_*` were removed on 2026-10-17 and are ignored. `DOWNSHIFT_EXPLICIT_UPSHIFT`, `DOWNSHIFT_DISCOVERY`, `DOWNSHIFT_DISCOVERY_TTL` are not reported by `config` yet.
 
 ## OpenRouter allowlist (optional)
 

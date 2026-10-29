@@ -9,6 +9,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/accounting"
 	"github.com/tiagovilasboas/downshift/internal/codeintel"
@@ -57,10 +58,14 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	rep.TokensSaved = nums.Routing
 	rep.SetCompactor(nums.Compactor.SavedBytes, nums.Compactor.Tokens)
 	currentHarness, segments := telemetry.SegmentReports(events, days)
+	scope := accounting.Scope{Kind: accounting.ScopeDays, Days: days}
+	why := accounting.BuildRoutingWhy(events, scope)
+	perHarness := accounting.TokensByHarness(events, execEvents, scope, quotaByHarness(time.Now()))
 
 	if asJSON {
 		out, err := json.MarshalIndent(reportOut{
 			Report: rep, Numbers: nums, CurrentHarness: currentHarness, ByHarness: segments,
+			WhySpawnsChanged: why, TokensByHarness: perHarness,
 		}, "", "  ")
 		if err != nil {
 			fmt.Fprintf(stderr, "error encoding report: %v\n", err)
@@ -93,6 +98,11 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 			dciSummary.LatencyP50Ms, dciSummary.LatencyP95Ms)
 	}
 
+	// The routing note and the tokens per harness: added sections, built from
+	// the same events and window, with no money in either.
+	printRoutingWhy(stdout, why)
+	printTokensByHarness(stdout, perHarness, scope)
+
 	// The one final figure, in the same window as the parts above; the parts
 	// are in `--json`.
 	fmt.Fprintf(stdout, "\n%s\n", nums.Display.TokensSaved)
@@ -107,4 +117,8 @@ type reportOut struct {
 	Numbers        accounting.Numbers        `json:"numbers"`
 	CurrentHarness string                    `json:"current_harness,omitempty"`
 	ByHarness      []telemetry.HarnessReport `json:"by_harness,omitempty"`
+	// WhySpawnsChanged is the routing note per harness; TokensByHarness has
+	// two token columns that are never summed, then the quota used.
+	WhySpawnsChanged accounting.RoutingWhy      `json:"why_spawns_changed"`
+	TokensByHarness  []accounting.HarnessTokens `json:"tokens_by_harness"`
 }

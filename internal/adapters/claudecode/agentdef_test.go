@@ -12,7 +12,9 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 const mechanicalBrief = "rename the userId variable to userIdentifier in user.go"
@@ -61,6 +63,13 @@ func TestHandle_AgentDefinitionDecidesBaseline(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.wantRewrite || tc.wantPinned {
+				// A pinned agent is kept by the adapter, not by a hold.
+				decidertest.Use(t, decidertest.Tier(core.TierSmall))
+			} else {
+				// The risky brief: the small pick is held.
+				decidertest.Use(t, decidertest.Held(core.TierSmall))
+			}
 			home, cwd, user := t.TempDir(), t.TempDir(), t.TempDir()
 			t.Setenv("HOME", home)
 			t.Setenv("CLAUDE_CONFIG_DIR", user)
@@ -97,7 +106,7 @@ func TestHandle_AgentDefinitionDecidesBaseline(t *testing.T) {
 			if got := decodeUpdated(t, out) != nil; got != tc.wantRewrite {
 				t.Errorf("rewrite written = %v, want %v (verdict %v, tier %v, note %q)", got, tc.wantRewrite, d.Verdict, d.Tier, note)
 			}
-			if got := slices.Contains(telemetry.ReasonCodes(d), telemetry.ReasonAgentPinsModel); got != tc.wantPinned {
+			if got := slices.Contains(fromcore.ReasonCodes(d), telemetry.ReasonAgentPinsModel); got != tc.wantPinned {
 				t.Errorf("AGENT_PINS_MODEL reason = %v, want %v", got, tc.wantPinned)
 			}
 		})

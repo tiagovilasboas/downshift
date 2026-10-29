@@ -122,8 +122,6 @@ func TestTokenUsageFromPayload_Defensive(t *testing.T) {
 func TestPrintStats_ShowsUsageLinked(t *testing.T) {
 	usage := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.8)
 	usage.Outcome = telemetry.OutcomeUsage
-	usage.ActualCostUSD = float64Ptr(1.0)
-	usage.BaselineCostUSD = float64Ptr(2.0)
 	var buf strings.Builder
 	telemetry.PrintStats([]telemetry.Event{usage}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
 	if !strings.Contains(buf.String(), "Usage linked") {

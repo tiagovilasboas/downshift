@@ -15,7 +15,7 @@ Code: `cmd/downshift/setup_targets.go` (`Defaults` of the `claude-code` target).
 `opusplan` is a native Claude Code value for the `model` setting: Opus while plan mode is on, Sonnet
 once you approve the plan and execute. It governs the **main session**. Downshift never replaces it
 and never touches the main session's model at runtime: its PreToolUse hook sees only `Agent`/`Task`
-spawns and right-sizes **subagents** from the task text. The two layers compose: a subagent spawned
+spawns and applies the orchestrator's model choice to **subagents**, within your declared policy. The two layers compose: a subagent spawned
 during plan mode would inherit Opus, the adapter reads that resolved model from the transcript and
 routes the spawn as usual. That composition follows from the code path; a live plan-mode spawn has
 not been observed yet (session-models.md, "Main session policy").

@@ -12,6 +12,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // TestHookE2E_ProjectFloorThroughSharedRunner proves the floor arrives through
@@ -19,6 +20,7 @@ import (
 // adapter-specific code: a Cursor payload with a cwd holding a policy file is
 // routed to the floor tier instead of the small tier.
 func TestHookE2E_ProjectFloorThroughSharedRunner(t *testing.T) {
+	decidertest.Use(t, decidertest.Floor(decidertest.Tier(core.TierSmall)))
 	t.Setenv("HOME", t.TempDir())
 	eventLog := filepath.Join(t.TempDir(), "events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)

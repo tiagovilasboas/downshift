@@ -454,7 +454,7 @@ func TestSemAdvRiskFloorAfterFusion(t *testing.T) {
 					t.Fatalf("risk prompt classified %s after fusion", sem.Complexity)
 				}
 				for _, cur := range []string{"", "claude-haiku-4-5", "claude-opus-5-5"} {
-					d := core.Route(tc.prompt, "claude-code", cur, cat)
+					d := classifiedRoute(tc.prompt, "claude-code", cur, cat)
 					if d.Tier < core.TierMid {
 						t.Fatalf("current=%q: risk prompt routed to tier %s", cur, d.Tier)
 					}
@@ -510,7 +510,7 @@ func TestSemAdvSteeringText(t *testing.T) {
 				if sem.Complexity != core.Medium {
 					t.Fatalf("steering text classified %s, want MEDIUM default", sem.Complexity)
 				}
-				d := core.Route(s, "claude-code", "", cat)
+				d := classifiedRoute(s, "claude-code", "", cat)
 				if d.Tier != core.TierMid {
 					t.Fatalf("steering text routed to tier %s, want mid", d.Tier)
 				}
@@ -597,7 +597,7 @@ func TestSemAdvSteeringText(t *testing.T) {
 						t.Fatalf("downward steering lowered %s -> %s", plain, got)
 					}
 					for _, cur := range []string{"", "claude-opus-5-5"} {
-						d := core.Route(p, "claude-code", cur, cat)
+						d := classifiedRoute(p, "claude-code", cur, cat)
 						if d.Tier < core.TierMid {
 							t.Fatalf("current=%q: downward steering routed to %s", cur, d.Tier)
 						}
@@ -618,7 +618,7 @@ func TestSemAdvRouteNoSignalNeverFrontier(t *testing.T) {
 		}
 		t.Run(tc.name, func(t *testing.T) {
 			for _, cur := range []string{"", "claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"} {
-				d := core.Route(tc.prompt, "claude-code", cur, cat)
+				d := classifiedRoute(tc.prompt, "claude-code", cur, cat)
 				if d.Tier == core.TierFrontier {
 					t.Fatalf("current=%q: no-signal prompt routed to frontier (complexity %s, model %s)", cur, d.Complexity, d.Model.ID)
 				}

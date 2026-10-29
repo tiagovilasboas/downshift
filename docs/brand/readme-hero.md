@@ -84,7 +84,7 @@ downshift try "diagnose the race condition in the webhook handler" claude-code
 When routing fires, stderr shows the decision (and a feedback id), for example:
 
 ```text
-downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper than opus at list price)
+downshift: TRIVIAL task → downshift to claude-haiku-4-5 (smaller model)
 ```
 
 **Keywords:** model routing · LLM cost optimization · agent hooks · Claude Code · Cursor · Codex · deterministic router

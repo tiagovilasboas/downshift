@@ -1,3 +1,5 @@
+Superseded in part by O8 (2026-10-28): see docs/internal/plans/mvp-plan.md
+
 # Compressor Pipeline
 
 The compressor transforms verbose command output into compact summaries while

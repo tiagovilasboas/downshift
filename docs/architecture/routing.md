@@ -1,3 +1,5 @@
+Superseded in part by O8 (2026-10-28): see docs/internal/plans/mvp-plan.md
+
 > **Historical — 2026-10-22.** This document describes an earlier design.
 > The live reference is [`docs/design/architecture.md`](../design/architecture.md).
 
@@ -78,8 +80,6 @@ Outcomes feed back into routing:
 Task fails on SMALL → Memory: key needs MID
 Similar task arrives → Route to MID
 ```
-
-See [Adaptive Memory](../advanced/adaptive-memory.md).
 
 ## See Also
 

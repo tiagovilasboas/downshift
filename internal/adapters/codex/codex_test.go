@@ -12,6 +12,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 var cat = catalog.Load()
@@ -27,6 +28,7 @@ func TestEventTaskText(t *testing.T) {
 }
 
 func TestHandle_UsesSessionScopedAllowlist(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "session-models.json"))
 	path := os.Getenv("DOWNSHIFT_SESSION_MODELS")
 	data := []byte(`{"codex":["gpt-5.6-sol"],"sessions":{"codex":{"session-123":["gpt-6-luna","gpt-6-sol"]}}}`)
@@ -104,6 +106,7 @@ func TestHandle_IgnoresNonSpawnTools(t *testing.T) {
 }
 
 func TestHandle_MatchesFlattenedNamespacedToolName(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := codex.Event{
 		ToolName:  "collaborationspawn_agent",
@@ -156,6 +159,7 @@ func TestHandle_TaskNameAddsSignal(t *testing.T) {
 }
 
 func TestHandle_FallsBackToEventModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := codex.Event{
 		ToolName:  "spawn_agent",
@@ -174,6 +178,7 @@ func TestHandle_FallsBackToEventModel(t *testing.T) {
 }
 
 func TestHandle_UnknownCurrentModelStillRoutes(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	ev := codex.Event{ToolName: "spawn_agent", ToolInput: json.RawMessage(`{"message":"do a code review"}`)}
 	out, note, _ := codex.Handle(withCatalogSession(ev), cat)
 	if note == "" {
@@ -245,6 +250,7 @@ func TestMain(m *testing.M) {
 // A spawn without a model and an unconfident small-tier classification must
 // leave both the model and the effort untouched (guardrail R6).
 func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	session := []string{"gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"}
 	ev := codex.Event{
 		ToolName:      "spawn_agent",
@@ -263,6 +269,7 @@ func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
 // A downshift held by guardrail R1 must not lower the requested effort on
 // the kept model, and the decision must record the model actually kept.
 func TestHandle_HeldDownshiftKeepsRequestedEffort(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := withCatalogSession(codex.Event{
 		ToolName:  "spawn_agent",
@@ -279,6 +286,7 @@ func TestHandle_HeldDownshiftKeepsRequestedEffort(t *testing.T) {
 
 // An unconfident same-tier decision must not lower an explicit effort.
 func TestHandle_UnconfidentOKDoesNotLowerEffort(t *testing.T) {
+	decidertest.Use(t, decidertest.Unconfident(core.TierMid))
 	midID := catID(core.TierMid)
 	ev := withCatalogSession(codex.Event{
 		ToolName:  "spawn_agent",
@@ -295,6 +303,7 @@ func TestHandle_UnconfidentOKDoesNotLowerEffort(t *testing.T) {
 
 // A confident decision may still set effort (unchanged behaviour).
 func TestHandle_ConfidentDownshiftSetsLowEffort(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := withCatalogSession(codex.Event{
 		ToolName:  "spawn_agent",

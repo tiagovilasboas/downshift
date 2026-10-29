@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -114,6 +115,7 @@ func cursorSpawn(t *testing.T, usage *quota.Snapshot) (string, []telemetry.Event
 // "spawn <state>" line and updates live.json, whatever the harness. Cursor is
 // only the fixture; the code under test is runHookAdapter.
 func TestSpawnStateIsVisible(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	used := 20.0
 	exhausted := 100.0
 	now := time.Now().UTC()
@@ -145,6 +147,7 @@ func TestSpawnStateIsVisible(t *testing.T) {
 }
 
 func TestSpawnStateLineRespectsQuiet(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	used := 20.0
 	t.Setenv("DOWNSHIFT_QUIET", "1")
 	stderr, _ := cursorSpawn(t, cursorQuota(time.Now().UTC(), &used))

@@ -73,9 +73,6 @@ func TestRecord_ResumedChildRecordsOnlyGrowth(t *testing.T) {
 	if records != 2 || in != 1600 || out != 500 || cached != 9000 {
 		t.Fatalf("usage records = %d with %d/%d/%d tokens, want 2 records summing to the final transcript 1600/500/9000", records, in, out, cached)
 	}
-	if ev := events[len(events)-1]; ev.ActualCostUSD != nil || ev.BaselineCostUSD != nil {
-		t.Errorf("a usage record writes no dollar figure: %+v", ev)
-	}
 
 	// A count that is not cumulative (one turn's usage) keeps the old once-only rule.
 	once := childend.Record(hookport.ChildEnd{

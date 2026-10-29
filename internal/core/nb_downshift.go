@@ -17,8 +17,8 @@ type NBDownshift struct {
 }
 
 // NBTrivialHook reports whether the prompt is a TRIVIAL downshift candidate
-// and the small-vs-rest margin. internal/nbopinion registers it in init.
-// A nil hook is no opinion. The risk-floor and no-signal guards stay here.
+// and the small-vs-rest margin. No package in this binary registers it, so a
+// nil hook is no opinion. The risk-floor and no-signal guards stay here.
 var NBTrivialHook func(prompt string) (ok bool, margin float64)
 
 // NBDownshiftEnabled reports whether DOWNSHIFT_NB_DOWNSHIFT=1.

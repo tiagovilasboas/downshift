@@ -17,7 +17,7 @@ session · N subagents · N switched, N held · saved N% of work · N% of cache
 ├─ subagent 1  haiku   ✓  N tokens  MEDIUM, confident
 ├─ subagent 2  haiku   ↻  N tokens  SIMPLE, unsure, held
 │  └─ subagent 3  sonnet  ✓  N tokens  MEDIUM, confident
-├─ subagent 4  opus    ✓  N tokens  COMPLEX, unsure, risk floor
+├─ subagent 4  opus    ✓  N tokens  COMPLEX, unsure, kept
 └─ subagent 5  sonnet  …  -  MEDIUM, confident
 by type: general-purpose: N% work · N% cache
 ```

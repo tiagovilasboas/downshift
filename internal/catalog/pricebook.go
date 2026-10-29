@@ -21,7 +21,7 @@ const (
 	// QualityInferred means a slug was mapped to its family member.
 	QualityInferred Quality = "inferred"
 
-	// QualityUnpriced means no resolvable id; excluded from Saved calculations.
+	// QualityUnpriced means no resolvable id; the catalog has no price for it.
 	QualityUnpriced Quality = "unpriced"
 )
 
@@ -154,21 +154,12 @@ func (pb *PriceBook) entryToResult(modelID string, e Entry, inferredFrom string,
 	}
 }
 
-// ComputeCost calculates the cost in USD for given token counts using this price.
-func (pr PriceResult) ComputeCost(input, output, cacheRead, cacheWrite int64) float64 {
-	const perM = 1_000_000.0
-	return float64(input)*pr.InputCostM/perM +
-		float64(output)*pr.OutputCostM/perM +
-		float64(cacheRead)*pr.CacheReadCostM/perM +
-		float64(cacheWrite)*pr.CacheWriteCostM/perM
-}
-
 // IsExact returns true if this price has full confidence.
 func (pr PriceResult) IsExact() bool {
 	return pr.Quality == QualityExact
 }
 
-// IsPriced returns true if this price can be used in Saved calculations.
+// IsPriced returns true if the catalog has a price for this model.
 func (pr PriceResult) IsPriced() bool {
 	return pr.Quality != QualityUnpriced
 }

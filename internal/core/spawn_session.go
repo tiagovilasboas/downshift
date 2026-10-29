@@ -35,8 +35,6 @@ func (d *Decision) PlanSession(caps HarnessCapabilities, res Resolver, session S
 	if plan.RewriteModel {
 		d.Session.QuotaStatus = string(session.QuotaStatus(d.Harness, plan.Model.ID))
 	}
-	d.RecordScoreWould(res, plan.Session)
 	d.RecordGatewayWould(res)
-	d.Shadow.ScoreApplied = ScoreRoutingEnabled() && plan.RewriteModel && d.Shadow.ScoreWould != "" && plan.Model.ID == d.Shadow.ScoreWould
 	return plan
 }

@@ -44,14 +44,6 @@ export interface Compactor {
   token_estimate: string;
 }
 
-export interface CostSaved {
-  actual_cost_usd: number;
-  baseline_cost_usd: number;
-  saved_usd: number;
-  saved_percent: number;
-  quality: 'exact' | 'mixed' | 'partial' | 'unpriced';
-}
-
 export interface PanelView {
   session: string;
   switched: number;
@@ -70,7 +62,6 @@ export interface PanelView {
 export interface PanelOut extends PanelView {
   compactor?: Compactor;
   tokens_saved_estimate: number;
-  cost_saved?: CostSaved;
 }
 
 // Session listing types

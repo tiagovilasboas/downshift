@@ -30,7 +30,7 @@ rewrite to the child subagent, not just that downshift emitted one.
 
 | harness | plan / build | rewrite honored? | evidence / limit |
 |---|---|---|---|
-| claude-code | paid: Pro / Max / Teams / API | Yes, 2026-10-06 (two spawns; API-reported model in the child transcript) | `updatedInput.model` must be a family name (`haiku`/`sonnet`/`opus`/`fable`); a full id is rejected and blocks the spawn. The catalog `native_name` supplies it. Write-up: `docs/evidence/claude-code-rewrite-honored-2026-10-06.md`. The payload carries no session list; without one (payload, discovery or `session-models.json`) the catalog `session_candidates` below the current model stand in for it (`SessionFromCatalog`, downshift only, never above the current model); a list is needed only to allow upshifts. |
+| claude-code | paid: Pro / Max / Teams / API | Yes, 2026-10-06 (two spawns; API-reported model in the child transcript) | `updatedInput.model` must be a family name (`haiku`/`sonnet`/`opus`/`fable`); a full id is rejected and blocks the spawn. The catalog `native_name` supplies it. Write-up: `docs/evidence/claude-code-rewrite-honored-2026-10-06.md`. There is no built-in agent-type table (owner decision O8): the orchestrator chooses the model per subagent, and the `downshift-orchestrator` playbook carries the defaults. Setup does not write `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`, so a per-call model from the orchestrator is honoured. Economy mode (`downshift policy economy on`) applies to the declared policy only. The payload carries no session list; without one (payload, discovery or `session-models.json`) the catalog `session_candidates` below the current model stand in for it (`SessionFromCatalog`, downshift only, never above the current model); a list is needed only to allow upshifts. |
 | claude-code | Free | No: no real subagents | Sandboxed, no egress; subagents need paid (README.md:728) |
 | cursor | Free | No: silently discarded | `updated_input.model` ignored, known issue (README.md:734) |
 | cursor | Pro legacy (request-based) | No: silently dropped | Task model takes only `"fast"` (README.md:735) |
@@ -45,7 +45,12 @@ Packaging note: the plugin (`.claude-plugin/`, `hooks/hooks.json`, `agents/`)
 loads only on Claude Code. Every other harness gets the same hooks through
 `downshift setup` or the manual sections of
 [install.md](../guides/install.md); the skills under `skills/` are plain
-SKILL.md files any harness can read.
+SKILL.md files any harness can read. `downshift setup` also copies the
+read-only `downshift-audit` skill into `~/.claude/skills` and `~/.codex/skills`
+(the `SkillsDir` field of the setup target); a harness without that field gets
+no skill from setup and can read `skills/` directly. Setup skips the copy when
+the plugin is active, and `--undo` removes only files that still carry the
+ownership phrase.
 
 "Inferred" means a later spawn in the same session asked for the model the
 hook had written (`rewrite_honored_inferred` in `stats --export`). It is
@@ -264,25 +269,6 @@ attribute its exec event to `kirocrew` instead of `unknown`, through
 `envHarness()` reading `KIRO_SESSION_ID`; the tree grouping still needs a
 hook-payload id it does not have. The `/downshift` slash command is Claude
 Code only. See [session-view.md](../guides/session-view.md).
-
-## Public score coverage (capability path)
-
-Mapped means an entry in `internal/scoreindex/idmap.json` names the session id.
-Whether a score row exists at runtime also depends on the public source listing
-that model at the last refresh; that is not checked here. Live state:
-`downshift models scores --status`. Method: [scores.md](scores.md#the-id-map).
-
-| harness | session ids with an id-map entry | not mapped (reported `uncovered`) |
-|---|---|---|
-| claude-code | `claude-haiku-4-5`, `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5`, `claude-fable-5-1`, `grok-4.6` | any other id |
-| cursor | `claude-sonnet-5-5-high`, `claude-opus-5-5-medium`, `claude-fable-5-1-thinking-high`, `claude-opus-5-thinking-high`, `claude-4.5-haiku-thinking`, `claude-4.5-sonnet-thinking`, `claude-4.5-opus-high-thinking`, `cursor-grok-4.6-medium`, `grok-4.7-xhigh`, `gpt-5.6-sol-high`, `gemini-3.8-flash-high`, `glm-5.2-high`, `muse-spark-1.3-max` | any other id, including `composer-2.5` |
-| kirocrew | `claude-sonnet-5-5`, `claude-opus-5-5`, `claude-haiku-4-5` | any other id |
-| codex | `gpt-6-luna`, `gpt-6-sol`, `gpt-6-astra`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` | any other id |
-| antigravity | `flash` | `flash_lite`, `pro` (no entry) |
-
-`composer-2.5`, `flash_lite` and `pro` have no entry anywhere in `idmap.json`, so
-they are reported uncovered rather than guessed. An uncovered candidate makes the
-capability path abstain for that decision (see [scores.md](scores.md#when-it-abstains)).
 
 ## Bundled and sibling mods (2026-10-17)
 
@@ -595,6 +581,10 @@ prove safe.
 4. Run `downshift context metrics`: `exec_metrics.commands` must have grown. With `DOWNSHIFT_EXEC=0` in the environment the command must run as typed.
 
 If the command runs as typed with the hook on, Claude Code ignores the rewrite without a decision: nothing breaks and nothing is saved, and this feature should stay documented as not working there.
+
+## MCP registration (`setup`, on by default; `--no-mcp` skips it, 2026-10-28)
+
+Only Claude Code (through `claude mcp add -s user`, detection by reading `~/.claude.json`) and Codex (marked block in `~/.codex/config.toml`) are registered; the file formats of Cursor, OpenCode, Antigravity and Kiro are in `docs/internal/plans/mcp-registration.md` and arrive in a later stage. Unverified: what `claude mcp add` does on a duplicate name (setup never adds over an existing entry), where `.claude.json` lives under `CLAUDE_CONFIG_DIR`, and whether Codex loads the server without a trust step.
 
 ## Revalidation
 

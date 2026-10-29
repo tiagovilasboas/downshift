@@ -8,10 +8,13 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // The block message names the tier of the model it asks for, not the decision tier.
 func TestHandle_BlockMessageTierMatchesTarget(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	writeSessionFile(t, []string{midID, frontierID})
 	out, _, d := kirocrew.Handle(spawnEvent("rename the userId variable to userIdentifier", frontierID), cat)
 	if !out.Block {

@@ -49,6 +49,9 @@ func smallestRow(rows []Model, match func(Model) bool) (best Model, ok bool) {
 	return best, ok
 }
 
+// price is the catalog list price (input plus output per 1M); 0 means unknown.
+func price(m Model) float64 { return m.InputM + m.OutputM }
+
 // smallerGateway orders gateway rows: priced before unpriced, then by price,
 // then by id.
 func smallerGateway(a, b Model) bool {

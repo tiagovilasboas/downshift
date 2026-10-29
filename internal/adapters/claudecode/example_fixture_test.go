@@ -11,6 +11,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // The checked-in examples are the public PreToolUse shapes. Handle must accept
@@ -18,6 +19,7 @@ import (
 // the task fixture has no session list, so Claude Code infers one from the
 // current model; the session fixture already carries that list.
 func TestHandle_ExampleFixtures(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	for _, name := range []string{
 		"claude-code-pretooluse-task.json",
 		"claude-code-pretooluse-session.json",

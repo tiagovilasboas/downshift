@@ -24,11 +24,13 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 func TestHookE2E_RewriteEventStats(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	// Keep the test hermetic: isolate HOME (training loop log root) and point
 	// the telemetry event log at a temp file.
 	t.Setenv("HOME", t.TempDir())

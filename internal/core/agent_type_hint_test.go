@@ -17,47 +17,6 @@ const (
 	hintHarness = "claude-code"
 )
 
-func TestRouteAgent_TypeHint(t *testing.T) {
-	opus := catID(hintHarness, core.TierFrontier)
-	haiku := catID(hintHarness, core.TierSmall)
-	cases := []struct {
-		name      string
-		prompt    string
-		agentType string
-		current   string
-		wantTier  core.Tier
-		wantHint  bool
-		wantWrite bool
-	}{
-		{"Explore + unsure text -> small, confident, written", unsureText, "Explore", opus, core.TierSmall, true, true},
-		{"Plan + unsure text -> mid", unsureText, "Plan", opus, core.TierMid, true, true},
-		{"Explore + confident COMPLEX text -> classifier wins", complexText, "Explore", opus, core.TierFrontier, false, false},
-		{"Plan on a small session -> capped at session, no upshift", unsureText, "Plan", haiku, core.TierSmall, true, false},
-		{"Explore + risk text -> risk floor holds, no hint", riskyText, "Explore", opus, core.TierMid, false, false},
-		{"unknown type -> unchanged", unsureText, "my-custom-agent", opus, core.TierMid, false, false},
-		{"empty type -> unchanged", unsureText, "", opus, core.TierMid, false, false},
-		{"pinned built-in has no hint", unsureText, "claude-code-guide", opus, core.TierMid, false, false},
-		{"unknown current model -> hint not applied", unsureText, "Explore", "", core.TierMid, false, false},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			d := core.RouteAgent(c.prompt, hintHarness, c.agentType, c.current, cat)
-			if d.Tier != c.wantTier || d.Guards.AgentTypeHint != c.wantHint {
-				t.Fatalf("tier=%v hint=%v, want tier=%v hint=%v", d.Tier, d.Guards.AgentTypeHint, c.wantTier, c.wantHint)
-			}
-			if c.wantHint && !d.Confident {
-				t.Error("a hinted decision is confident")
-			}
-			if got := d.Verdict == core.VerdictUpshift; got {
-				t.Error("the hint must never produce an upshift")
-			}
-			if got := checkWrites(d); got != c.wantWrite {
-				t.Errorf("writes=%v, want %v (verdict=%v corrections=%v)", got, c.wantWrite, d.Verdict, d.Corrections)
-			}
-		})
-	}
-}
-
 // Without a type, RouteAgent is Route: untyped routing (and so the labelled
 // benchmark, which classifies text only) cannot change.
 func TestRouteAgent_UntypedEqualsRoute(t *testing.T) {

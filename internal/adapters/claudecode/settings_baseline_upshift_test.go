@@ -11,9 +11,11 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 func TestHandle_SettingsBaselineUpshiftLiftsToNeededTier(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "absent.json"))
 	t.Setenv("HOME", t.TempDir())

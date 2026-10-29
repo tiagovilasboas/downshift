@@ -1,12 +1,12 @@
 {
   "name": "downshift",
-  "description": "Downshift: deterministic subagent model router. One plugin: hooks, /downshift:status, and the setup, audit, cost-reducer and harness-engineer skills.",
+  "description": "Downshift: the orchestrator chooses each subagent's model; Downshift applies that choice within your policy, compacts command output and measures the result. One plugin: hooks, /downshift:status, and the setup, audit, cost-reducer and harness-engineer skills.",
   "owner": { "name": "Tiago Vilas Boas", "url": "https://github.com/tiagovilasboas" },
   "plugins": [
     {
       "name": "downshift",
       "source": "./",
-      "description": "Routes each Claude Code subagent to a right-sized model via PreToolUse. Requires the downshift binary (install.sh or Releases).",
+      "description": "Applies the orchestrator's model choice to each Claude Code subagent via PreToolUse, within your declared policy. Requires the downshift binary (install.sh or Releases).",
       "category": "productivity",
       "tags": ["subagents", "cost", "routing"]
     },

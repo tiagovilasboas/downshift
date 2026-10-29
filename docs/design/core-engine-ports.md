@@ -15,11 +15,10 @@ from `init()` (blank imports in `cmd/downshift/main.go`):
 
 | Hook (in `internal/core`) | Set by | Effect when unset |
 |---|---|---|
-| `NBSuggestHook`, `NBTrivialHook` | `nbopinion` | no naive-Bayes opinion |
+| `NBSuggestHook`, `NBTrivialHook` | none (`nbopinion` removed in wave A) | no naive-Bayes opinion |
 | `TierFloorHook` | `policyfile` | no project tier floor |
-| `MemoryAdjustHook` | `routeadapt` | no adapt-memory adjustment |
+| `MemoryAdjustHook` | none (`routeadapt` removed in wave A) | no adapt-memory adjustment |
 | `LoadQuotaHook`, `LoadNativeQuotaHook`, `ParseNativeQuotaHook`, `RegisterNativeQuotaHook` | `quota` | quota unknown |
-| `ScoreHook` | `scoreindex` | no score selection |
 
 Consequences, all observed in the code and tests:
 
@@ -57,7 +56,6 @@ type Ports struct {
     TierFloor      func(d *Decision, currentModelID string, r Resolver)
     MemoryAdjust   func(prompt string, d *Decision, res Resolver)
     Quota          QuotaPort   // Load, LoadNative, ParseNative, RegisterNative
-    Score          func(harness, id string) (float64, bool)
 }
 
 type Engine struct { ports Ports; cfg Config }

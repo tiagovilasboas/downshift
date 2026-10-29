@@ -26,12 +26,14 @@ type panelOptions struct {
 // full logs are read only when the report is wanted.
 func writePanel(events []telemetry.Event, hash string, opt panelOptions, stdout, stderr io.Writer) int {
 	view := telemetry.BuildPanel(events, hash)
-	var out any = view
+	why := accounting.BuildSpawnWhy(events, hash)
+	var out any = panelNoReport{PanelView: view, Why: why}
 	if !opt.NoReport {
 		// The report's window reads the whole logs; the per-session view is from the tail.
 		allEvents, _ := telemetry.ReadEvents()
 		execEvents, _ := accounting.ReadExecEvents()
 		full := panelWithReport(view, allEvents, execEvents)
+		full.Why = why
 		out = full
 		if opt.Brief {
 			out = briefWithTokens(view, full.TokensSavedEstimate)
@@ -46,6 +48,13 @@ func writePanel(events []telemetry.Event, hash string, opt panelOptions, stdout,
 	}
 	fmt.Fprintln(stdout, string(raw))
 	return 0
+}
+
+// panelNoReport is the panel without the report: the session view plus, per
+// spawn, why it changed or not (the routing note as one short cell).
+type panelNoReport struct {
+	telemetry.PanelView
+	Why []accounting.SpawnWhy `json:"routing_why"`
 }
 
 // compactorTokenEstimate names how Compactor tokens are estimated; it is the
@@ -75,6 +84,9 @@ type panelOut struct {
 	Report              accounting.Numbers `json:"report"`
 	Compactor           *compactorPanel    `json:"compactor,omitempty"`
 	TokensSavedEstimate int64              `json:"tokens_saved_estimate"`
+	// Why is one entry per spawn: requested model, final model, verdict and
+	// reason in one cell. Enums and declared ids only.
+	Why []accounting.SpawnWhy `json:"routing_why"`
 }
 
 // panelWithReport builds the panel from the session view and the full logs.

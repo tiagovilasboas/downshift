@@ -1,14 +1,14 @@
-# Domain: Deterministic Subagent Routing
+# Domain: Subagent Model Delegation
 
-Deterministic, fail-open routing for delegated subagent tasks in coding harnesses.
+Fail-open, deterministic application of the orchestrator's model choice for delegated subagent tasks in coding harnesses. Owner decision O8 (2026-10-28): the orchestrator LLM chooses agent, model and effort; Downshift applies the choice, enforces the user's `policy.json` and measures. Downshift never picks a model on its own.
 
-Downshift optimizes agent costs where coding harnesses spend the most: delegated execution. When an orchestrator or main session spawns a subagent (`Task`, `Agent`, `spawn_agent`, or `subagent`), Downshift intercepts the hook, evaluates task complexity and risk factors, and right-sizes the subagent's model tier without human intervention or LLM round-trips.
+Downshift optimizes agent costs where coding harnesses spend the most: delegated execution. When an orchestrator or main session spawns a subagent (`Task`, `Agent`, `spawn_agent`, or `subagent`), Downshift intercepts the hook and applies the orchestrator's choice (pinned model kept, then declared profile, first matching declared rule, the orchestrator's tier hint down only for now, else the requested model is kept), bounded by the user's declared policy. Its own code makes no LLM call. Complexity and risk are still classified, as telemetry and as the key of user-declared floors, not as a decision.
 
 ---
 
 ## 1. Core Principles & Philosophy
 
-1. **Deterministic & Fast**: Sub-millisecond routing execution on the hot path. No remote LLM call, no network dependency, and no heavy runtime in the loop.
+1. **Deterministic & Fast**: Sub-millisecond execution on the hot path. Downshift's code makes no LLM call, no network call and runs no heavy runtime; the orchestrator's choice is applied deterministically.
 2. **Fail-Open by Design**: Any unexpected error, unhandled exception, syntax issue, or ambiguity results in an immediate pass-through (the harness executes the model it originally requested).
 3. **Conservative Under Doubt**: Doubt never spends money. Unconfident upshifts and unconfident frontier model choices are held.
 4. **Session-First Candidate Set**: The session defines what models exist. Exact session metadata wins, and the internal catalog serves only as a fallback.
@@ -25,15 +25,15 @@ Downshift optimizes agent costs where coding harnesses spend the most: delegated
 [1. Intercept] ──(reads task text in-memory only)
        │
        ▼
-[2. Classify] ──(deterministic signals + word-hash semantic boost)
+[2. Classify] ──(telemetry only since O8: deterministic signals + word-hash boost)
        │         └── maps to TRIVIAL, SIMPLE, MEDIUM, or COMPLEX
        │         └── evaluates Language Guard (EN & PT-BR) & Risk Categories
        ▼
 [3. Guardrails] ──(R1..R9 invariants: doubt never spends money)
        │          └── enforces project tier floor (.downshift/policy.json)
-       │          └── checks quota snapshot & risk floors
+       │          └── checks quota snapshot & user-declared floors (no built-in risk floor since O8)
        ▼
-[4. Choose] ──(selects small, mid, or frontier from session models)
+[4. Apply] ──(applies the orchestrator's choice and declared policy; else keeps the request)
        │
        ▼
 [5. Emit / Pass-through]
@@ -45,7 +45,7 @@ Downshift optimizes agent costs where coding harnesses spend the most: delegated
 - **Deterministic Regex Signals**: Evaluates weighted pattern matches across English and Portuguese vocabularies (`internal/classify/signals.go`).
 - **In-Process Semantic Boost**: An FNV word-hash embedder checks prompt similarity against known centroids. It can raise an uncertain tier but can never lower a tier, never boost a prompt with no signals, and never elevate to COMPLEX alone (`DOWNSHIFT_MINILM=0` disables).
 - **Language Guard**: Heuristic detector for unsupported languages and mixed-language inputs. Drops confidence when outside covered vocabularies, ensuring uncertain spawns are held.
-- **Risk Abstention & Floors**: Tasks touching secrets, payment processing, authentication, data loss, or destructive operations immediately enforce safety floors.
+- **Risk categories**: Tasks touching secrets, payment processing, authentication, data loss, or destructive operations are recorded as telemetry. The built-in risk floor and veto were removed on 2026-10-28 (O8): the protection is the orchestrator's judgment, guided by the `downshift-orchestrator` playbook, and floors the user declares in `policy.json`.
 
 ---
 
@@ -65,7 +65,7 @@ BDI serves as an architectural lens for reasoning about Downshift's deterministi
 
 ---
 
-## 4. Guardrails & Safety Floors
+## 4. Guardrails & Declared Floors
 
 - **R1–R9 Invariant Rules**: Enforced by automated invariant suites (`cost_safety_invariants_test.go`). Unconfident downshifts, unconfident upshifts, and unconfident frontier selections are held at baseline.
 - **Project Tier Floor**: Repositories can define `.downshift/policy.json` to enforce minimum model tiers per task class or risk profile. A project floor can only raise a tier, never lower one.

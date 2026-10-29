@@ -4,8 +4,6 @@
 package telemetry
 
 import (
-	"github.com/tiagovilasboas/downshift/internal/catalog"
-	"github.com/tiagovilasboas/downshift/internal/core"
 	"strings"
 	"testing"
 	"time"
@@ -15,11 +13,9 @@ func TestReasonWords_EveryCodeHasWords(t *testing.T) {
 	codes := []string{
 		ReasonClassifierConfident, ReasonClassifierUnconfident, ReasonNoSignal, ReasonSemanticBoost, ReasonTaskFocus, ReasonUnsupportedLanguage,
 		ReasonRiskCategory, ReasonRiskFloor, ReasonNBUpshiftApplied,
-		ReasonNBDownshiftApplied, ReasonTierFloor, ReasonCreditHeld, ReasonGuessHeld, ReasonPaused, ReasonScoreRouted, ReasonBaselineFromSettings, ReasonAgentPinsModel, ReasonAgentTypeHint, ReasonHeldUnmapped,
+		ReasonNBDownshiftApplied, ReasonTierFloor, ReasonCreditHeld, ReasonGuessHeld, ReasonPaused, ReasonBaselineFromSettings, ReasonAgentPinsModel, ReasonAgentTypeHint, ReasonHeldUnmapped,
 	}
-	for _, c := range heldReason {
-		codes = append(codes, c)
-	}
+	codes = append(codes, ReasonHeldUnconfidentDownshift, ReasonHeldComplexDownshift, ReasonHeldForeignModel, ReasonHeldRiskDownshift, ReasonHeldUnconfidentUnknownSmall, ReasonHeldUnconfidentUnknownFrontier, ReasonHeldUnconfidentUpshift, ReasonHeldUnconfidentUnknownMid)
 	for _, c := range codes {
 		if _, ok := reasonWords[c]; !ok {
 			t.Errorf("reason code %s has no plain-words entry", c)
@@ -77,16 +73,5 @@ func TestWhy_OldEventsAndNoDecisions(t *testing.T) {
 	}
 	if out := Why(nil, sessA); !strings.Contains(out, "no subagent decision") {
 		t.Fatalf("empty:\n%s", out)
-	}
-}
-
-func TestReasonCodes_AgentTypeHint(t *testing.T) {
-	d := core.RouteAgent("look around the repo and tell me how the router is wired", "claude-code", "Explore", "claude-opus-5-5", catalog.Load())
-	found := false
-	for _, c := range ReasonCodes(d) {
-		found = found || c == ReasonAgentTypeHint
-	}
-	if !found {
-		t.Fatalf("codes %v lack %s", ReasonCodes(d), ReasonAgentTypeHint)
 	}
 }

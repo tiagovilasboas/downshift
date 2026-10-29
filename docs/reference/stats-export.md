@@ -18,8 +18,7 @@ text, no file paths from your machine. Redact `state_dir` if your paste includes
 > the downshift `events.jsonl` schema; do not look for a `type` field here.
 
 Reason codes `E5_BOOST`, `E5_ABSTAIN`, and `GRAPH_ESCALATION` can appear on logs
-written before 2026-10-17. Current builds do not emit them. `shadow-report`
-summarises routing-v2 candidate observations, not an E5 fuse.
+written before 2026-10-17. Current builds do not emit them.
 
 Fields useful for graduation tracking:
 
@@ -113,6 +112,23 @@ Token classes, per bucket: `input`, `output`, `cache_read` (cached minus cache w
 when no priced usage exists; `--detail` adds the per-harness and per-pair table. Records without
 a price are not in these figures; `observed_child_tokens` still counts them.
 
+## Routing note and tokens per harness (`downshift report`)
+
+`downshift report` (text and `--json`) carries two sections with no money in them, built from the
+same events and window as the rest of the report.
+
+- `why_spawns_changed`: per harness, `decisions`, `recorded`, `not_recorded`, `by_verdict` and
+  `top_reasons` (at most five). Keys are enums, tiers and declared rule or profile ids; any value that
+  is not an identifier is dropped when read, so prose, a path or a prompt cannot reach it. The source
+  is the optional `routing_note` object on a decision event (`verdict`, `reason`, `rule_id`,
+  `profile`, `tier_from`, `tier_to`). Events written before it, or by a path that does not record it,
+  count under `not_recorded`.
+- `tokens_by_harness`: per harness `compactor_tokens_avoided` (estimated, saved bytes / 4),
+  `moved_observed` with `tokens_moved_to_smaller_model` (child tokens, work plus cache, whose honored
+  model is a smaller tier than requested; meaningful only when `moved_observed` is true), and
+  `quota_used` (`status` `native` or `unknown`, `five_hour_pct`, `week_pct`, `observed_at`, `stale`).
+  The two token columns are never added.
+
 ## Before you paste
 
 - Redact `generated_at` if you prefer (optional).
@@ -150,8 +166,7 @@ link in that window. Token totals still include usage without a link;
 linkage alone does not prove the requested baseline is known or a bill changed.
 
 Unknown requested models get no tier comparison: their tokens are `unattributed`. New usage events write no dollar
-figure at all. Older lines keep the `actual_cost_usd` and `baseline_cost_usd` they were written with; they are read but
-no longer exported.
+figure at all. Older lines may still carry `actual_cost_usd` and `baseline_cost_usd`; the reader ignores them and they are never exported.
 
 Tokens are the harness-reported counts. The tier comparison is a counterfactual, not a second measured execution, and
 nothing in the export is a provider invoice.
@@ -165,7 +180,6 @@ observed.
 
 `reason_codes` counts decisions per reason code (absent when no event in the window carries codes). Each decision event records `routing_policy` (currently `deterministic-v1`) and `reason_codes`, a sorted list of stable codes derived from the decision: `CLASSIFIER_CONFIDENT` or `CLASSIFIER_UNCONFIDENT`, `NO_SIGNAL`, `SEMANTIC_BOOST` (the in-process hash boost raised the complexity), `TASK_FOCUS` (a long brief was read by its stated task, with the rest weighed as context; see [complexity-weights.md](complexity-weights.md)), `RISK_CATEGORY`, `RISK_FLOOR`, `NB_UPSHIFT_APPLIED`, `NB_DOWNSHIFT_APPLIED`, `TIER_FLOOR`, `CREDIT_HELD`, `PAUSED` (routing paused for the session), `SCORE_ROUTED` (the opt-in score path picked the model), `HELD_GUESSED_BASELINE` (a downshift held because its baseline was guessed, Claude Code settings or Cursor's parent `model_id`, and the target was not the small tier), `BASELINE_FROM_SETTINGS` (Claude Code: the baseline model was inferred from the configured model because the transcript had none), and one `HELD_*` code per guardrail in `corrections` (for example `HELD_UNCONFIDENT_UNKNOWN_MID` for R9; `HELD_UNMAPPED_RULE` for a guardrail this version cannot name). Codes never carry prompt text, matched words, risk category names or paths. Two optional objects sit beside the codes when their flag is on: `e5_shadow` (`DOWNSHIFT_E5_SHADOW=1`: the parallel observation, never a routing change) and `e5_fuse` (`DOWNSHIFT_E5_FUSE=1`: `model_id`, `nearest_label`, `similarity`, `action` of `none`, `abstain` or `raise`, `latency_ms`, `error_code`), both prompt-free and absent otherwise. There is no top-level `confidence`: the router has no calibrated probability. Events written before the trace have neither key and are counted as before.
 
-`downshift shadow-report` (maintainer command; `--telemetry=<events.jsonl>` to point at a log, `--text` for a readable form) summarises those two objects from decision events, so E5 can be judged in shadow mode on a real log before any enable decision. The JSON carries `e5_shadow` and `e5_fuse` only when at least one event has the object, and the text output prints the headings "E5 shadow" and "E5 fuse" under the same rule, so a log without E5 reads exactly as before. `e5_shadow` gives `observed`, the `error_codes` histogram, `scored` (helper answered: the denominator of every rate), `would_lift` and `would_lift_rate` overall and `by_regex_label`, the `nearest_labels` histogram, `abstain` and `abstain_share` (nearest `ABSTAIN` or `FOREIGN`), `risk_decisions` (reason code `RISK_CATEGORY` or `RISK_FLOOR`) and `false_downgrade_proxy`: risk decisions where `would_lift` is false and the nearest label ranks below `regex_label` on TRIVIAL < SIMPLE < MEDIUM < COMPLEX. That last number is a proxy, not a measured error: the shadow changed no route and no reviewer labelled the task; it flags the pattern that would matter with the fuse on. `latency_ms` is nearest-rank p50, p95 and max over scored observations (a timeout shows in `error_codes`, not in the median). `e5_fuse` gives `observed`, the `actions` histogram (`none`, `abstain`, `raise`), `errors` with `error_codes`, and the same latency fields over answered observations. Both summaries are built from those closed field sets alone; no prompt, path or helper output exists in the input.
 
 `baseline_source` on cost events is `requested` when the baseline is the model the harness asked for, and `inferred` when it was guessed from the configured model because the harness named none (`BASELINE_FROM_SETTINGS`). Records written before this distinction say `requested` for both; `stats` also checks the linked decision's reason codes. A rewrite that a linked `resolved` record refutes (`rewrite_honored: false`) is counted as not applied: no saving, and never inferred as honored.
 

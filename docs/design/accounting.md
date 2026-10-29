@@ -4,88 +4,77 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-**Status (checked 2026-10-23):** T0 to T3 merged; the formula and `AggregateByHarness` exist but no surface calls them yet (T4a to T12 not started). Today `report`, `session --panel`, `stats` and the dashboard API still use the older telemetry sums. Plan: [`../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md`](../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md).
+**Status (2026-10-27):** owner decision O1 makes the accounting account tokens only. This spec
+defines the routing and compactor token figures (§1). The price formula was removed (§5). Go computes no dollar figure; the price book stays as a routing
+signal. Plan history: [`../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md`](../internal/tasks/2026-10-23-spike-progress-kiro-accounting/README.md).
 
 ---
 
 ## 1. Definitions
 
-### 1.1 The Saved formula
+### 1.1 Token account
 
-```
-C_actual   = Σ price(model_i, tokens_i)           # actual models and tokens
-C_baseline = price(requested_model, Σ tokens_i)  # all tokens at session model
-Saved      = C_baseline − C_actual
+```text
+Routing tokens   = Σ (work + cache) tokens of child spawns with a cheaper model than requested
+Compactor tokens = Σ max(raw_bytes − emitted_bytes, 0) / 4        # estimate
+Tokens saved     = routing tokens + compactor tokens               # TokensSavedEstimate
 ```
 
-Where:
-- `model_i` is the model that actually executed token bucket `i`
-- `tokens_i` is the token count (input/output/cache_read/cache_write) for that bucket
-- `requested_model` is the session's requested model (the model the user asked for)
-- `price(model, tokens)` applies the catalog rates to compute cost
+- Work tokens: a child's input and output tokens. Cache tokens: cache read and cache write tokens.
+- Direction: `telemetry.TokenSavings` compares the requested model with the model that ran. Only a
+  cheaper child adds to routing savings.
+- `accounting.Compute` returns the account for one scope: `ScopeDays`, `ScopeSession` or `ScopeAll`.
 
 ### 1.2 Scope
 
-The formula measures **routing saving only**: the cost avoided by running some
-work on a cheaper model than requested. It does not include:
-- Compactor saving (bytes → tokens, additive, computed separately)
-- Quota/overage saving (prevented overage billing, not measured here)
-- Quality/capability trade-offs (not a cost; user policy, not accounting)
+The account measures **routing and compaction tokens only**. It does not include:
+- Any money figure (no price, cost or saving in currency)
+- Quota/overage (not measured here)
+- Quality/capability trade-offs (user policy, not accounting)
+- Turn-count differences (see §2.1)
 
 ---
 
 ## 2. Known limitations
 
-### 2.1 Positive bias on downshifted runs (~15%)
+### 2.1 No counterfactual for extra turns
 
-**Root cause:** When a child runs on a cheaper model (e.g., haiku instead of
-sonnet), it often generates more tokens (more turns, more cache reads). The
-formula prices those extra tokens at the baseline model rate, making `C_baseline`
-larger than the true counterfactual.
+**Root cause:** a cheaper child often takes more turns (more tokens, more cache reads). The account
+counts its whole token count as moved and does not model what the requested model would have spent.
 
-**Measured bias:** +15% mean, ±7% std dev (n=9 runs with actual downshifts in
-four-arm battery part 1). See `docs/evidence/accounting-formula-validation-2026-10-21.md`.
+**Consequence:** routing tokens measure tokens moved to a cheaper model, not tokens avoided against
+the requested model. Do not publish them as a saving against the requested model without the caveat
+in §7.
 
-**Mitigation:** Every published `Saved` figure must carry the caveat:
-> (estimate, may overstate by ~15% when routing to cheaper models)
+A future version could model the counterfactual turn structure, but that requires speculative
+modeling and is out of scope for v1.
 
-This is a D4 design decision (inferred baselines included and labelled), not a
-bug. A future v2 formula could adjust for turn-count differences, but that
-requires modeling the counterfactual turn structure, which is speculative.
+### 2.2 Compactor tokens are an estimate
 
-### 2.2 Compaction priced once as input (conservative)
+Compactor tokens are bytes saved divided by four (`execwrap.BytesPerToken`). Bytes are measured;
+the token count is an approximation.
 
-Compacted output blocks are priced at input cost once, when injected into the
-context. If the block stays in cache across multiple turns, the actual cost is
-lower (cache read rate vs. input rate).
+### 2.3 Gateway slugs may be unknown
 
-**Measured impact:** <$0.001 per run — below the S0 noise floor. See
-`docs/evidence/compaction-persistence-2026-10-21.md`.
-
-**Assumption to print:**
-> Compactor saving is priced at input cost, once per compacted block; actual
-> cost may be lower if the block stays in cache across multiple turns.
-
-### 2.3 Gateway slugs may be unpriced
-
-Some harnesses (e.g., KiroCrew gateway) report model slugs (`haiku`, `sonnet`,
-`unknown`) instead of canonical ids (`claude-haiku-5-5`). These affect exec
-event attribution but not the formula itself (which uses child `modelUsage`).
+Some harnesses (e.g., KiroCrew gateway) report model slugs (`haiku`, `sonnet`, `unknown`) instead of
+canonical ids (`claude-haiku-5-5`). A gateway child whose slug the catalog does not recognise is
+counted as gateway-unattributed (`GatewayUnattributed`) and adds nothing to routing savings.
 
 See `docs/evidence/price-coverage-2026-10-21.md` for coverage analysis.
 
 ---
 
-## 3. Price quality vocabulary
+## 3. Price book (internal routing signal)
 
-The `PriceFor(model)` function (T2) returns a `Quality` value alongside the price:
+The catalog (`internal/catalog/catalog.json`) keeps model prices as an internal routing signal.
+Prices are not reported. `catalog.PriceBook.PriceFor(model)` returns a price and a `Quality`:
 
-| Quality | Meaning | Formula treatment |
-|---------|---------|-------------------|
-| `exact` | All four price fields (input, output, cache_read, cache_write) present | Used directly |
-| `upper_bound` | Partial data; cache prices assumed zero or max | Used with caveat |
-| `inferred` | Slug mapped to family member | Used with caveat |
-| `unpriced` | No resolvable id | Excluded from Saved; counted separately |
+| Quality | Meaning |
+|---------|---------|
+| `exact` | All four price fields (input, output, cache_read, cache_write) present |
+| `upper_bound` | Partial data; cache prices assumed zero or max |
+| `inferred` | Slug mapped to family member |
+| `unpriced` | No resolvable id |
 
 **Inference rules:**
 - `haiku` → `claude-haiku-5-5` (current default family member)
@@ -116,68 +105,29 @@ The catalog (`internal/catalog/catalog.json`) must provide:
 ### 4.1 Tier thresholds
 
 Some models have tier pricing (e.g., haiku-5-5 above 100k input, grok above 200k).
-The current formula uses the base tier price. Future versions may track per-request
-token counts and apply the correct tier, but this is out of scope for v1.
+The price book uses the base tier price. Future versions may track per-request token counts and
+apply the correct tier, but this is out of scope for v1.
 
 ### 4.2 Staleness
 
-The `prices_as_of` field is the last date the catalog was verified against
-provider pricing pages. A catalog older than 30 days should trigger a warning.
+The `prices_as_of` field is the last date the catalog was verified against provider pricing pages.
+A catalog older than 30 days should trigger a warning.
 
 ---
 
-## 5. Formula package (T3 implementation)
+## 5. Price formula (removed)
 
-Location: `internal/accounting/formula.go`
-
-```go
-// PriceResult contains the cost and quality for a priced model.
-type PriceResult struct {
-    InputCost      float64 // cost for input tokens
-    OutputCost     float64 // cost for output tokens
-    CacheReadCost  float64 // cost for cache read tokens
-    CacheWriteCost float64 // cost for cache write tokens
-    Total          float64 // sum of above
-    Quality        Quality // exact, upper_bound, inferred, unpriced
-}
-
-// Quality indicates the confidence level of the price.
-type Quality string
-
-const (
-    QualityExact      Quality = "exact"
-    QualityUpperBound Quality = "upper_bound"
-    QualityInferred   Quality = "inferred"
-    QualityUnpriced   Quality = "unpriced"
-)
-
-// TokenBucket represents one unit of token usage.
-type TokenBucket struct {
-    Model           string // model id or slug
-    InputTokens     int64
-    OutputTokens    int64
-    CacheReadTokens int64
-    CacheWriteTokens int64
-}
-
-// Saved computes the routing saving for a set of token buckets.
-// Returns (actual_cost, baseline_cost, saved, quality_notes).
-func Saved(requestedModel string, buckets []TokenBucket, catalog *Catalog) SavedResult
-```
-
-### 5.1 Testing
-
-- Golden tests with known inputs → expected outputs
-- Fuzz testing on token counts and model combinations
-- Property: `Saved >= 0` when all buckets used the requested model
-- Property: `Saved >= 0` when all buckets used cheaper or equal models
+The price formula (`C_actual`, `C_baseline`, `Saved`) and its package, `internal/accounting/formula`,
+were removed in the tokens-only cut. Nothing in Downshift computes or prints a dollar figure. The token
+account in section 1.1 is the only saving measure; the price book in section 3 stays as a routing signal.
+The formula's positive bias on extra turns went with it; section 2.1 names the token-side equivalent.
 
 ---
 
 ## 6. Exec event attribution (T1 done)
 
-Exec events now carry `harness` and `entry` fields (PR #433, merged). This
-enables per-harness aggregation in future reporting (T4b). The fields are:
+Exec events now carry `harness` and `entry` fields (PR #433, merged). This enables per-harness
+aggregation (`accounting.AggregateByHarness`). The fields are:
 
 | Field | Values | Source |
 |-------|--------|--------|
@@ -186,14 +136,13 @@ enables per-harness aggregation in future reporting (T4b). The fields are:
 
 ---
 
-## 7. Assumptions summary (for README 1.1 rule 6)
+## 7. Assumptions summary
 
-When publishing any `Saved` figure, include:
+When publishing a token figure, include:
 
-1. **Bias caveat:** "(estimate, may overstate by ~15% when routing to cheaper models)"
-2. **Compaction caveat:** "Compactor saving priced at input cost once per block"
-3. **Scope caveat:** "Routing saving only; excludes quota/overage and quality trade-offs"
-4. **Catalog date:** "Prices as of YYYY-MM-DD"
+1. **Compactor caveat:** "Compactor tokens are an estimate: bytes saved divided by four."
+2. **Routing caveat:** "Routing tokens are tokens that ran on a cheaper model. They count the whole child, without modelling its extra turns."
+3. **Scope caveat:** "Tokens only, no money. Excludes quota, overage and quality trade-offs."
 
 ---
 
@@ -201,7 +150,7 @@ When publishing any `Saved` figure, include:
 
 | Spike | File | Verdict |
 |-------|------|---------|
-| S0: Formula validation | `evidence/accounting-formula-validation-2026-10-21.md` | GO with +15% bias caveat |
+| S0: Formula validation | `evidence/accounting-formula-validation-2026-10-21.md` | GO with +15% bias caveat (measured the price formula, retired from reporting) |
 | S1: Compaction persistence | `evidence/compaction-persistence-2026-10-21.md` | D2 confirmed (v1 pricing) |
 | S2: Price coverage | `evidence/price-coverage-2026-10-21.md` | 100% battery coverage |
 
@@ -214,7 +163,7 @@ When publishing any `Saved` figure, include:
 | T0 | ✅ done | This spec |
 | T1 | ✅ merged | Exec event `harness` and `entry` fields (PR #433) |
 | T2 | ✅ merged | `catalog.PriceBook{Version, AsOf}` and `PriceFor(model)` (PR #437) |
-| T3 | ✅ merged | `internal/accounting/formula` with pure functions (PR #437) |
+| T3 | ✅ merged, removed | `internal/accounting/formula` with pure functions (PR #437); removed in the tokens-only cut (section 5) |
 | T4a | ✅ merged | Golden tests JSON fixtures for regression testing (PR #439) |
 | T4b | ✅ merged | Per-harness aggregation using T1 fields (PR #439) |
 

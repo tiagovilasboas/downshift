@@ -3,21 +3,17 @@
 
 package telemetry
 
-import (
-	"fmt"
-
-	"github.com/tiagovilasboas/downshift/internal/core"
-)
+import "fmt"
 
 // HarnessCompletion says whether the end of a child spawn is measurable for one
 // harness: the harness declares an end event and at least one end record has
-// been seen. Without that, "completed" and cost per completed task cannot be
+// been seen. Without that, "completed" and tokens per completed task cannot be
 // computed for the harness, and the report says so instead of showing zeros.
 type HarnessCompletion struct {
 	Harness string `json:"harness"`
-	// EndEvent is HarnessCapabilities.ChildEndEvent; empty when none is known.
+	// EndEvent is HarnessSeam.ChildEndEvent; empty when none is known.
 	EndEvent string `json:"end_event,omitempty"`
-	// UsageSource is HarnessCapabilities.UsageSource: payload, transcript or none.
+	// UsageSource is HarnessSeam.UsageSource: payload, transcript or none.
 	UsageSource string `json:"usage_source"`
 	// EndRecords counts the end records seen for the harness (see IsEndRecord).
 	EndRecords int  `json:"end_records"`
@@ -37,7 +33,24 @@ func IsEndRecord(ev Event) bool {
 	return false
 }
 
-// CompletionByHarness lists, in the stable harness order of core.AllHarnessCaps,
+// HarnessSeam is what telemetry knows about one declared harness: the hook
+// event that ends a child and where the child's token usage comes from
+// (payload, transcript or UsageNone; empty reads as UsageNone).
+type HarnessSeam struct {
+	Harness       string
+	ChildEndEvent string
+	UsageSource   string
+}
+
+// UsageNone is the usage source of a harness with no token seam.
+const UsageNone = "none"
+
+// DeclaredHarnesses lists every declared harness in a stable order. The
+// composition root sets it from the harness capabilities
+// (internal/telemetry/fromcore); with nil no harness is declared.
+var DeclaredHarnesses []HarnessSeam
+
+// CompletionByHarness lists, in the stable order of DeclaredHarnesses,
 // whether completion is measurable for each harness in events.
 func CompletionByHarness(events []Event) []HarnessCompletion {
 	ends := map[string]int{}
@@ -47,12 +60,12 @@ func CompletionByHarness(events []Event) []HarnessCompletion {
 		}
 	}
 	var out []HarnessCompletion
-	for _, n := range core.AllHarnessCaps() {
-		src := n.Caps.UsageSource
+	for _, n := range DeclaredHarnesses {
+		src := n.UsageSource
 		if src == "" {
-			src = core.UsageNone
+			src = UsageNone
 		}
-		c := HarnessCompletion{Harness: n.Harness, EndEvent: n.Caps.ChildEndEvent, UsageSource: src, EndRecords: ends[n.Harness]}
+		c := HarnessCompletion{Harness: n.Harness, EndEvent: n.ChildEndEvent, UsageSource: src, EndRecords: ends[n.Harness]}
 		c.Measurable = c.EndEvent != "" && c.EndRecords > 0
 		out = append(out, c)
 	}

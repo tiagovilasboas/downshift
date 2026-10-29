@@ -39,10 +39,10 @@ Run a command through the compactor:
 downshift compactor -- go test ./...
 ```
 
-Or test classification:
+Or see which models your harness offers:
 
 ```bash
-downshift try "rename userId to userID"
+downshift models available --harness claude-code
 ```
 
 ## Next Steps

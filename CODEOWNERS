@@ -5,7 +5,6 @@
 
 # Core routing logic — requires review by maintainer
 /internal/core/ @tiagovilasboas
-/internal/routingv2/ @tiagovilasboas
 
 # Harness adapters — requires review by maintainer
 /internal/adapters/ @tiagovilasboas

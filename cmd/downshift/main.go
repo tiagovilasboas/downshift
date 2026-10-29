@@ -8,10 +8,6 @@
 // Usage as a Claude Code PreToolUse hook:
 //
 //	{ "type": "command", "command": "downshift claude-code" }
-//
-// It also has a `try` subcommand to test classification from the terminal:
-//
-//	downshift try "rename the variable userId"
 package main
 
 import (
@@ -21,13 +17,10 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	_ "github.com/tiagovilasboas/downshift/internal/compressor/learning"
-	"github.com/tiagovilasboas/downshift/internal/gateway"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
-	_ "github.com/tiagovilasboas/downshift/internal/nbopinion"
 	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 	_ "github.com/tiagovilasboas/downshift/internal/quota"
-	_ "github.com/tiagovilasboas/downshift/internal/routeadapt"
-	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 // buildVersion, buildCommit and buildDate are set by release builds with
@@ -42,18 +35,14 @@ var (
 func main() {
 	args := os.Args[1:]
 	if len(args) == 0 {
-		usageShort(os.Stderr)
-		os.Exit(2)
+		cat := catalog.Load()
+		fromcore.Install(cat)
+		os.Exit(runDefaultEntry(os.Stdin, os.Stdout, os.Stderr, cat))
 	}
 	// Help is answered before anything loads: no catalog, no stdin, no telemetry.
 	if code, handled := commandHelpRequest(args, os.Stdout, os.Stderr); handled {
 		os.Exit(code)
 	}
-	// Set before the hooks: a usage record written by a hook prices its gateway
-	// run from the same snapshot the reports read.
-	registerGateways()
-	telemetry.GatewayPriceLookup = gateway.PriceOf
-
 	// A hook must never block a spawn (a Go panic exits 2, which every harness
 	// reads as "deny"), so its catalog load runs under a recover and a failure
 	// allows the spawn unchanged.
@@ -62,7 +51,7 @@ func main() {
 		if !loaded {
 			os.Exit(0)
 		}
-		telemetry.DirectionCatalog = cat
+		fromcore.Install(cat)
 		os.Exit(h.Hook(os.Stdin, cat))
 	}
 	// compact wraps a shell command; it needs no catalog, so it skips the load.
@@ -76,7 +65,7 @@ func main() {
 	// user override at ~/.harness-downshift/catalog.json. Fail-open: if the
 	// user file is invalid, the embedded catalog is used automatically.
 	catalog := catalog.Load()
-	telemetry.DirectionCatalog = catalog
+	fromcore.Install(catalog)
 
 	switch args[0] {
 	case "honor":
@@ -101,16 +90,14 @@ func main() {
 		os.Exit(runHonor(os.Stdin, portFor("claude-code"), catalog))
 	case "claude-code-subagent-stop":
 		os.Exit(runUsage(os.Stdin, portFor("claude-code"), catalog))
-	case "try":
-		os.Exit(runTry(catalog, args[1:]))
+	case "claude-code-session-start":
+		os.Exit(runClaudeCodeSessionStart(os.Stdout))
 	case "models":
 		os.Exit(runModels(catalog, args[1:]))
 	case "quota":
 		os.Exit(runQuota(args[1:], os.Stdin, os.Stdout, os.Stderr))
 	case "stats":
 		os.Exit(runStats(args[1:]))
-	case "replay":
-		os.Exit(runReplay(args[1:], os.Stdout, os.Stderr))
 	case "report":
 		os.Exit(runReport(args[1:], os.Stdout, os.Stderr))
 	case "probe":
@@ -121,20 +108,8 @@ func main() {
 		os.Exit(runSession(args[1:], os.Stdout, os.Stderr, catalog))
 	case "watch":
 		os.Exit(runWatch(args[1:], os.Stdout, os.Stderr, catalog))
-	case "benchmark":
-		os.Exit(runBenchmark(args[1:]))
 	case "eval-outcome":
 		os.Exit(runEvalOutcome(args[1:], os.Stdout, os.Stderr))
-	case "eval-adapt":
-		os.Exit(runEvalAdapt(args[1:], os.Stdout, os.Stderr))
-	case "shadow-report":
-		os.Exit(runShadowReport(args[1:]))
-	case "verification-report":
-		os.Exit(runVerificationReport(args[1:], os.Stdout, os.Stderr))
-	case "train":
-		os.Exit(runTrain(args[1:]))
-	case "feedback":
-		os.Exit(runFeedback(args[1:]))
 	case "context":
 		os.Exit(runContext(args[1:], os.Stdout, os.Stderr))
 	case "dci":
@@ -143,6 +118,12 @@ func main() {
 		os.Exit(runLearning(args[1:], os.Stdout, os.Stderr))
 	case "setup":
 		os.Exit(runSetup(args[1:], os.Stdin, os.Stdout, os.Stderr))
+	case "uninstall":
+		os.Exit(runUninstall(args[1:], os.Stdin, os.Stdout, os.Stderr))
+	case "accept":
+		os.Exit(runAccept(args[1:], os.Stdout, os.Stderr))
+	case "loop":
+		os.Exit(runLoop(args[1:], os.Stdout, os.Stderr))
 	case "serve":
 		os.Exit(runServe(args[1:], os.Stdout, os.Stderr))
 	case "dashboard":
@@ -152,6 +133,14 @@ func main() {
 	case "enable", "shell-init":
 		// enable is the canonical name; shell-init is kept as a legacy alias.
 		os.Exit(runShellInit(args[1:], os.Stdout, os.Stderr))
+	case "policy":
+		os.Exit(runPolicy(args[1:], os.Stdout, os.Stderr))
+	case "playbook":
+		os.Exit(runPlaybook(args[1:], os.Stdout, os.Stderr))
+	case "route":
+		os.Exit(runRoute(args[1:], os.Stdout, os.Stderr))
+	case "mcp":
+		os.Exit(runMcp(args[1:], catalog, os.Stdout, os.Stderr))
 	case "config":
 		os.Exit(runConfig(args[1:], os.Stdout, os.Stderr, catalog))
 	case "version", "--version":

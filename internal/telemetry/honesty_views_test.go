@@ -10,9 +10,8 @@ import (
 	"testing"
 )
 
-func hvBool(b bool) *bool      { return &b }
-func hvUSD(v float64) *float64 { return &v }
-func hvTok(v int64) *int64     { return &v }
+func hvBool(b bool) *bool  { return &b }
+func hvTok(v int64) *int64 { return &v }
 
 const hvSess = "abcdef0123456789"
 
@@ -69,8 +68,7 @@ func TestHonesty_StatuslineTopModelUsesRefutedTarget(t *testing.T) {
 func TestHonesty_SessionTreeRowModelPrefersRefutedUsageModel(t *testing.T) {
 	evs := append(hvRefuted(), Event{CorrelationID: "u1", Timestamp: "2026-10-15T10:02:00Z",
 		Harness: "claude-code", SessionID: hvSess, Outcome: OutcomeUsage, LinkedDecision: "d1",
-		FromModel: "claude-opus-5-5", ToModel: "claude-haiku-5-5", InputTokens: hvTok(1000),
-		ActualCostUSD: hvUSD(0.01), BaselineCostUSD: hvUSD(0.05), BaselineSource: BaselineRequested})
+		FromModel: "claude-opus-5-5", ToModel: "claude-haiku-5-5", InputTokens: hvTok(1000), BaselineSource: BaselineRequested})
 	v := BuildSessionTree(evs, hvSess, TreeOptions{})
 	if v.Rows[0].Model != "opus" {
 		t.Fatalf("tree row model = %q, saved %d work tokens; resolved record says opus ran", v.Rows[0].Model, v.Tokens.WorkSaved)
@@ -86,7 +84,7 @@ func TestHonesty_SessionTreeHidesInferredBaseline(t *testing.T) {
 			ReasonCodes: []string{ReasonBaselineFromSettings}},
 		{CorrelationID: "u3", Timestamp: "2026-10-15T10:02:00Z", Harness: "claude-code", SessionID: hvSess,
 			Outcome: OutcomeUsage, LinkedDecision: "d3", FromModel: "claude-opus-5-5", ToModel: "claude-haiku-5-5",
-			InputTokens: hvTok(1000), ActualCostUSD: hvUSD(0.01), BaselineCostUSD: hvUSD(0.05), BaselineSource: BaselineInferred},
+			InputTokens: hvTok(1000), BaselineSource: BaselineInferred},
 	}
 	out := SessionTree(evs, hvSess, TreeOptions{})
 	if !strings.Contains(out, "saved") {

@@ -52,7 +52,7 @@ while IFS= read -r f; do
     os_sensitive=1
   fi
   case "$f" in
-    orchestration/* | tests/ds04_observer_contract/* | scripts/sync_catalog_prices.py | scripts/test_sync_catalog_prices.py)
+    tests/ds04_observer_contract/* | scripts/sync_catalog_prices.py | scripts/test_sync_catalog_prices.py)
       python=1
       ;;
   esac

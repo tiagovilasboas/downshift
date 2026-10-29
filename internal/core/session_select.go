@@ -108,20 +108,10 @@ func selectSessionTarget(d Decision, res Resolver, session SessionList) (string,
 	if d.Checked && d.SafeVerdict == VerdictOK {
 		return "", Model{}, false, false
 	}
-	// Capability path (live only). It sits behind the SafeVerdict gate above,
-	// so every guardrail hold still stops it, and it abstains by itself on
-	// risk, COMPLEX and deterministic lifts.
-	if ScoreRoutingEnabled() {
-		if id, m, ok := scoreSelect(d, res, session); ok {
-			return id, m, true, false
-		}
-	}
 	return catalogSessionTarget(d, res, session)
 }
 
-// catalogSessionTarget is the catalog-tier path: what selectSessionTarget
-// chose before the capability path existed, and what it still chooses when
-// that path is off or abstains.
+// catalogSessionTarget is the catalog-tier path that chooses the session model.
 func catalogSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool, bool) {
 	if session.NativeAvailability || session.Unordered {
 		return nativeSessionTarget(d, res, session)

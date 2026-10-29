@@ -8,6 +8,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // explicitOnlyRes marks one model explicit_only on top of the embedded
@@ -47,8 +48,8 @@ func TestCatalogSessionCandidates(t *testing.T) {
 	}{
 		{name: "no list, opus, trivial -> smallest family", harness: "claude-code", caps: core.ClaudeCodeCaps, res: cat,
 			session: core.UnknownSession(), current: "opus", task: holdTask, rewrite: true, write: small.Native, fromCat: true},
-		{name: "no list, opus, risky -> never the smallest family", harness: "claude-code", caps: core.ClaudeCodeCaps, res: cat,
-			session: core.UnknownSession(), current: "opus", task: riskyCandidateTask, minTier: core.TierMid, fromCat: true, forbidden: small.ID},
+		{name: "no list, opus, mid decision -> mid family, never the smallest", harness: "claude-code", caps: core.ClaudeCodeCaps, res: cat,
+			session: core.UnknownSession(), current: "opus", task: riskyCandidateTask, rewrite: true, write: "sonnet", minTier: core.TierMid, fromCat: true, forbidden: small.ID},
 		{name: "unknown current model -> unknown session, hold", harness: "claude-code", caps: core.ClaudeCodeCaps, res: cat,
 			session: core.UnknownSession(), current: "no-such-model", task: holdTask, unknown: true},
 		{name: "empty current model -> unknown session, hold", harness: "claude-code", caps: core.ClaudeCodeCaps, res: cat,
@@ -68,6 +69,7 @@ func TestCatalogSessionCandidates(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
+			decidertest.Use(t, decidertest.Tier(candidateTier(c.task)))
 			d := core.Route(c.task, c.harness, c.current, c.res)
 			d.Baseline.RequestedID = c.current
 			plan := d.PlanSession(c.caps, c.res, c.session, c.current)
@@ -111,4 +113,16 @@ func TestEmbeddedSessionCandidatesResolve(t *testing.T) {
 			t.Errorf("candidate %q: resolved=%v native=%q explicit_only=%v", n, ok, m.Native, cat.IsExplicitOnly("claude-code", m.ID))
 		}
 	}
+}
+
+// candidateTier is the tier the stub decider picks for each task of the table:
+// the planning under test is the same whatever policy chose the tier.
+func candidateTier(task string) core.Tier {
+	switch task {
+	case holdTask:
+		return core.TierSmall
+	case riskyCandidateTask:
+		return core.TierMid
+	}
+	return core.TierFrontier
 }

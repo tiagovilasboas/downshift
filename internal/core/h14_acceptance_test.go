@@ -32,17 +32,14 @@ func TestH14Acceptance_MixedWithRisk_LosesConfidenceOrLiftsTier(t *testing.T) {
 
 // (2) Pure English trivial prompts keep confident classification and may downshift.
 func TestH14Acceptance_PureEnglishTrivial_Unchanged(t *testing.T) {
-	frontier := catID("claude-code", core.TierFrontier)
 	for _, p := range h14PureEnglishTrivialPrompts() {
 		cls := core.Classify(p)
 		if !cls.Confident || cls.UnsupportedLanguage || cls.Complexity != core.Trivial {
 			t.Errorf("Classify(%q): want confident TRIVIAL, got cx=%s conf=%v unsupported=%v",
 				p, cls.Complexity, cls.Confident, cls.UnsupportedLanguage)
 		}
-		d := core.Route(p, "claude-code", frontier, cat)
-		if d.Tier != core.TierSmall || !checkWrites(d) {
-			t.Errorf("Route(%q): want confident trivial downshift to small, got tier=%s writes=%v",
-				p, d.Tier, checkWrites(d))
+		if d := classifiedRoute(p, "claude-code", ""); d.Tier != core.TierSmall {
+			t.Errorf("%q: want the small tier, got %s", p, d.Tier)
 		}
 	}
 }
@@ -70,19 +67,6 @@ func assertH14NoUnsafeConfidentFromFrontier(t *testing.T, harness string, caps c
 		plan := d.PlanForSession(caps, cat, session)
 		if plan.RewriteModel && d.Confident && d.Tier < core.TierFrontier {
 			t.Errorf("plan rewrites below frontier while confident: harness=%s prompt=%.50q plan=%+v", harness, p, plan)
-		}
-	}
-}
-
-// (3) Route tier invariant on H14 prompts (Check matches SafeVerdict/Corrections).
-func TestH14Acceptance_RouteFinalDecisionInvariant(t *testing.T) {
-	prompts := append(h14UnsafeBucketPrompts(), h14PureEnglishTrivialPrompts()...)
-	for _, p := range prompts {
-		for _, cur := range finalInvariantCurrents {
-			d := core.Route(p, "claude-code", cur, cat)
-			if err := finalDecisionError(d); err != nil {
-				t.Errorf("prompt=%.60q current=%q: %v", p, cur, err)
-			}
 		}
 	}
 }

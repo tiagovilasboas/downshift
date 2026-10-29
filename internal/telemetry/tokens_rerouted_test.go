@@ -41,11 +41,10 @@ func tokDecision(id, outcome, verdict, from, to string, mods ...func(*telemetry.
 func tokUsage(link, harness, from, ran string, u tokUse, actual, baseline float64) telemetry.Event {
 	ev := telemetry.Event{
 		CorrelationID: "u-" + link + "-" + harness, Harness: harness, SessionID: "s1", Outcome: telemetry.OutcomeUsage,
-		LinkedDecision: link, FromModel: from, ToModel: ran, ActualCostUSD: &actual,
+		LinkedDecision: link, FromModel: from, ToModel: ran,
 		InputTokens: &u.in, OutputTokens: &u.out, CachedTokens: &u.cached, CacheWriteTokens: &u.write,
 	}
 	if baseline >= 0 {
-		ev.BaselineCostUSD = &baseline
 		ev.BaselineSource = telemetry.BaselineRequested
 	}
 	return ev

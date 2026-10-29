@@ -9,7 +9,7 @@
 // Run:     ./dsmon
 // Float:   ./cmd/dsmon/launch.sh   (opens a floating window)
 //
-// Zero external deps: pure stdlib, polling tail on events.jsonl.
+// Standard library only: polling tail on events.jsonl.
 package main
 
 import (
@@ -27,6 +27,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 // ── config ────────────────────────────────────────────────────────────────────
@@ -539,7 +540,7 @@ func render(s *state) {
 // ── main ──────────────────────────────────────────────────────────────────────
 
 func main() {
-	telemetry.DirectionCatalog = catalog.Load()
+	fromcore.Install(catalog.Load())
 	home, _ := os.UserHomeDir()
 	path, err := paths.EventsPath()
 	if err != nil {

@@ -11,12 +11,14 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // A baseline read from settings is a guess: the session may have been started
 // with --model haiku. A downshift from it to the mid tier could then be an
 // upshift nobody sees, so it is held; only the small tier is written.
 func TestHandle_SettingsBaselineHoldsMidTierDownshift(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("CLAUDE_CONFIG_DIR", t.TempDir())
 	t.Setenv("ANTHROPIC_MODEL", "opus")
@@ -43,6 +45,7 @@ func TestHandle_SettingsBaselineHoldsMidTierDownshift(t *testing.T) {
 }
 
 func TestHandle_SettingsBaselineStillWritesSmallTier(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("CLAUDE_CONFIG_DIR", t.TempDir())
 	t.Setenv("ANTHROPIC_MODEL", "opus")

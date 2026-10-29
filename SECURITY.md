@@ -76,7 +76,7 @@ go mod graph
 # Output: empty (no external modules)
 ```
 
-Python tooling (LangGraph orchestration, test helpers) may have dependencies—see `orchestration/pyproject.toml` and `tests/requirements.txt`.
+Python test helpers may have dependencies—see `tests/requirements.txt`.
 
 ## License implications
 

@@ -20,6 +20,8 @@ Numbers keep their qualifiers:
 - DCI: cold 295 ms, warm p95 5.64 ms, packs of 568 to 2801 bytes. See [the DCI record](evidence/dci-v04-blast-radius.md).
 - Reports show tokens, not dollars.
 
+Direction and the research behind it: [true north](true-north.md).
+
 Where to go next: [install](guides/install.md), [how it works](design/architecture.md), [evidence](guides/evidence.md), [capability matrix](reference/capability-matrix.md).
 
 Docs are grouped into 5 domain layers, detailed in [domains/](domains/), plus start guides and governance:
@@ -71,7 +73,7 @@ Markdown file names under `docs/` are lowercase kebab-case; only names a tool re
 
 ## Domain 1: Subagent Model Routing & Guardrails
 
-The subagent routing domain provides deterministic model selection for delegated tasks. When a coding agent delegates to a subagent (`Agent`, `Task`, `spawn_agent`, `invoke_subagent`), Downshift evaluates task signals, applies a monotonic semantic boost, enforces safety guardrails (R1–R9: holding unconfident downshifts, maintaining risk floors), validates session model allowlists and quota availability, and emits updated tool inputs (`model` and `reasoning_effort`). The hot path runs in-process with zero network, zero LLMs, and zero prompt storage, failing open on any timeout.
+The subagent routing domain applies the orchestrator's model choice to delegated tasks (owner decision O8, 2026-10-28). When a coding agent delegates to a subagent (`Agent`, `Task`, `spawn_agent`, `invoke_subagent`), the orchestrator has already chosen the model and effort. Downshift keeps a pinned model, applies a declared profile, the first matching declared rule or the orchestrator's tier hint (down only for now), refuses ids the catalog does not know and `explicit_only` models, and emits the updated tool input (`model` and `reasoning_effort`). It keeps the requested model on doubt. There is no built-in risk floor or default table any more. The hot path runs in-process with no network, no LLM call of Downshift's own and no prompt storage, failing open on any timeout.
 
 | Doc | Type | Topic |
 |-----|------|-------|
@@ -85,15 +87,11 @@ The subagent routing domain provides deterministic model selection for delegated
 | [reference/session-models.md](reference/session-models.md) | Reference | Session candidate allowlists, Claude usage hooks, fallback resolution |
 | [reference/session-discovery.md](reference/session-discovery.md) | Reference | `models discover`: harness-native model discovery and ranking |
 | [reference/complexity-weights.md](reference/complexity-weights.md) | Reference | Signal weights, tier thresholds, and per-harness model mapping |
-| [reference/scores.md](reference/scores.md) | Reference | Public capability scores: sources, cache, refresh, shadow selection |
 | [examples/session-models.example.json](examples/session-models.example.json) | Example | Sample session model configurations across harnesses |
 | [../README.md#the-llms-it-knows](../README.md#the-llms-it-knows) | Reference | Embedded catalog, families per harness, `explicit_only` handling |
 | [design/minilm-semantic.md](design/minilm-semantic.md) | Design | Semantic boost: in-process word-hash embedder (raise-only gate) |
-| [design/classifier-shadow.md](design/classifier-shadow.md) | Design | Shadow classifier candidate evaluation without affecting live routing |
 | [design/router-generalization.md](design/router-generalization.md) | Design | Eval methodology and holdout discipline |
-| [design/capability-router-v2.md](design/capability-router-v2.md) | Design | Router v2 architecture (experimental) |
-| [design/decision-intelligence.md](design/decision-intelligence.md) | Design | Advisory decision intelligence layer |
-| [design/langgraph-orchestration.md](design/langgraph-orchestration.md) | Design | Optional orchestration planner |
+| [design/routing-v2.md](design/routing-v2.md) | Design | Router v2 architecture (experimental) |
 | [img/downshift-bdi.svg](img/downshift-bdi.svg) | Diagram | Editable BDI decision lens map (beliefs, desires, intentions) |
 | [img/downshift-execution.svg](img/downshift-execution.svg) | Diagram | Complete numbered execution flow with ownership boundaries |
 | [contrib/classifier.md](contrib/classifier.md) | Contrib | Classifier tuning: signal weights, margin thresholds, shadow testing |
@@ -142,7 +140,7 @@ The observability and verification domain delivers empirical proof of routing be
 | [reference/stats-export.md](reference/stats-export.md) | Reference | Sanitized telemetry export format for safe sharing |
 | [reference/beta-exit.md](reference/beta-exit.md) | Reference | Beta graduation criteria and open blockers |
 | [guides/report.md](guides/report.md) | Guide | `downshift report`: routed vs control group, tokens per completed task, rework, token check |
-| [guides/verification.md](guides/verification.md) | Guide | `verification-report`: observed child checks and estimated cost by tier, sensor limits |
+| [guides/verification.md](guides/verification.md) | Guide | Observed child checks and estimated cost by tier, sensor limits |
 | [guides/evidence.md](guides/evidence.md) | Guide | Evidence ladder: list price, telemetry estimate, controlled benchmark, real tasks, cost per task |
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Guide | Protocol for reproducible three-arm comparison (Opus vs opusplan vs opusplan+Downshift) |
 | [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Guide | Protocol, not yet run: routing and output cutting, cut criterion |

@@ -9,11 +9,13 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/codex"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // Counterpart of TestHandle_HeldDownshiftKeepsRequestedEffort: an upshift held by
 // R8 (unconfident) must leave the spawn unchanged, effort included.
 func TestHandle_HeldUpshiftLeavesSpawnUnchanged(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierMid))
 	smallID := catID(core.TierSmall)
 	ev := withCatalogSession(codex.Event{
 		ToolName:  "spawn_agent",

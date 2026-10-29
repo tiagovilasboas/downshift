@@ -15,12 +15,11 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/decisionintelligence"
 	"github.com/tiagovilasboas/downshift/internal/hookctx"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 var hookReadTimeout = 2 * time.Second
@@ -172,8 +171,7 @@ func runHookAdapter[E any](
 	taskText ...func(E) string,
 ) (rc int) {
 	// Registered first so it runs last: after the response is written and
-	// after the panic recovery below. Fail-open, never waits (scorerefresh.go).
-	defer maybeRefreshScores()
+	// after the panic recovery below. Fail-open, never waits.
 	// Same rule for every harness: a stale model list starts a detached refresh.
 	defer maybeRefreshDiscovery(harness)
 	correlationID := telemetry.NewCorrelationID()
@@ -260,6 +258,11 @@ func runHookAdapter[E any](
 		projectDir, _ = os.Getwd()
 	}
 	defer hookctx.SetProjectDir(projectDir)()
+	sessionHash := ""
+	if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
+		sessionHash = telemetry.HashSessionID(identified.SessionIdentifier())
+	}
+	defer hookctx.SetSessionID(sessionHash)()
 	out, note, decision := handle(ev)
 	fate := spawnFate{note: note}
 	// Control-group mode for before/after comparison: classify as usual
@@ -269,10 +272,6 @@ func runHookAdapter[E any](
 	// Per-session pause (`downshift session --pause`) routes like the control
 	// group: one stat, fail open, never a block. Harnesses whose payload has no
 	// session id cannot be paused per session.
-	sessionHash := ""
-	if identified, ok := any(ev).(interface{ SessionIdentifier() string }); ok {
-		sessionHash = telemetry.HashSessionID(identified.SessionIdentifier())
-	}
 	fate.paused = !fate.noRoute && telemetry.SessionPaused(sessionHash)
 	fate.noRoute = fate.noRoute || fate.paused
 	// Built-in control group (`downshift report`): a deterministic share of
@@ -306,17 +305,8 @@ func runHookAdapter[E any](
 		// Spawn-time surface. Honor and usage stay unobserved until that
 		// harness's own post-spawn port records them. One line, spawn events only.
 		fmt.Fprintf(os.Stderr, "downshift: honor=unobserved quota=%s usage=unobserved\n", telemetry.ProjectQuota(decision.Session.QuotaStatus, decision.Session.CreditHeld))
-		event := telemetry.FromDecision(decision, correlationID, buildVersion)
+		event := fromcore.FromDecision(decision, correlationID, buildVersion)
 		fate.recordOutcome(&event)
-		shadow := decisionintelligence.Evaluate(decisionintelligence.SignalsFromDecision(decision))
-		event.DecisionIntelligence = &telemetry.ShadowRecommendation{
-			Tier:              shadow.Tier.String(),
-			Confidence:        shadow.Confidence,
-			Reasons:           shadow.Reasons,
-			RequiresReview:    shadow.RequiresReview,
-			BudgetConstrained: shadow.BudgetConstrained,
-			Apply:             shadow.Apply,
-		}
 		// Provenance is stricter than routing: never replace an absent or
 		// unrecognised requested model with the policy recommendation in the
 		// evidence record. A catalog lookup is the local allowlist.
@@ -363,12 +353,6 @@ func runHookAdapter[E any](
 			fmt.Fprintf(os.Stderr, "downshift: spawn %s\n", spawn.Line())
 		}
 		_ = telemetry.WriteLive(spawn)
-		// A batch carries no top-level task text, so it gets no feedback id.
-		if len(taskText) > 0 && taskText[0](ev) != "" {
-			if id, err := training.RecordRoutedDecision(taskText[0](ev), decision); err == nil && id != "" {
-				fmt.Fprintf(os.Stderr, "downshift: feedback id %s (run `downshift feedback %s success|retry|failed` after review)\n", id, id)
-			}
-		}
 	}
 	return rc
 }
