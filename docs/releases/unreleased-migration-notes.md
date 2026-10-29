@@ -7,6 +7,19 @@ tokens; no figure is converted to money.
 
 ## What changes for you
 
+### 0. The dashboard commands are removed
+
+`downshift dashboard` and `downshift serve` are gone. The web dashboard code stays in the repository until its
+removal is scheduled (roadmap W6.6). For the same data in the terminal, use `downshift session --tree`,
+`downshift watch` and `downshift report`. Savings are reported in tokens only.
+
+If you installed the `dsmon-server` launch agent, it ran `downshift serve`. Stop it with:
+
+```bash
+launchctl bootout gui/$(id -u)/com.tiagovilasboas.dsmon-server
+```
+
+
 ### 1. The orchestrator chooses the model, Downshift applies it (decision O8)
 
 Downshift never picks a model on its own. In order, the first match wins: a pinned model is kept; a

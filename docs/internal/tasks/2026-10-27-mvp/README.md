@@ -115,7 +115,7 @@ Branch `downshift/mvp-ponto-zero`, published, no open PR, no worktree, no unpubl
 | Stage 4, plan runner | Spec done (54 requirements + R53 to R62); not started | G1 acceptance criterion; G4 CLI flags; G10 harness contract table; G12 default tiers |
 | Stage 5 and other harnesses | Not started | none |
 | Business plan waves W0 to W6 | Cards in roadmap 8d and 8c-ter | BP1 accepted; BP2 deferred; G14 to G16 resolved |
-| Dashboard | Discontinued (N9) | removal card W6.6 waits for the owner |
+| Dashboard | Commands removed 2026-10-29 (N9, owner confirmed); code kept | code removal, card W6.6, waits for the owner |
 | Release readiness (W7.1 to W7.11) | Cards in roadmap 8d and 8c-quater; W7.1 and W7.2 first. W7.1 (the N11 table) was delivered and then removed on 2026-10-28 (O8): its defaults moved to the orchestrator playbook | N11 approved, then superseded by O8 |
 | Economy mode | W7.9, built on the N11 table; with the table gone (O8) it acts only on declared policy and its removal is pending | Superseded by O8 |
 | Harness-agnostic rule | N12: tiers are abstract, harness facts are data | None |

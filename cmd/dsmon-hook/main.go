@@ -84,7 +84,7 @@ func readPayload(in io.Reader, timeout time.Duration) ([]byte, bool) {
 
 // buildEvent maps a hook payload to the agents.jsonl record. Untrusted
 // fields (model, harness) are bounded before they reach durable storage;
-// the dashboard renders this file.
+// the monitors read this file.
 func buildEvent(raw []byte) (agentEvent, bool) {
 	var ev hookEvent
 	if len(strings.TrimSpace(string(raw))) == 0 {

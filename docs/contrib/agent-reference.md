@@ -30,7 +30,6 @@ Commands for agents and operators to audit savings, costs, and optimization:
 - `downshift stats`: display decision counts and estimated token savings (default: 30 days).
 - `downshift stats --days=N`: filter metrics window to the last N days.
 - `downshift stats --export`: generate sanitized, prompt-free JSON summary for audits and issues. See [docs/reference/stats-export.md](../reference/stats-export.md).
-- `downshift serve`: start local web dashboard at `http://localhost:7474` (serves `web/`).
 - `dsmon`: standalone terminal dashboard widget (`cmd/dsmon/launch.sh`).
 
 ---

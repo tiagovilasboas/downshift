@@ -247,35 +247,4 @@ Examples:
 
 Next: downshift setup, if hooks are not installed yet
 `,
-	"dashboard": `downshift dashboard — Open the Downshift dashboard in the browser (sessions, agents, tokens)
-
-Usage:
-  downshift dashboard [--port=PORT] [--open=false] [-q]
-
-Flags:
-  --port=PORT    Port to listen on (default 1337)
-  --open=false   Do not open the browser automatically
-  -q             Suppress the startup message (one dash: the flag is named q)
-
-Examples:
-  downshift dashboard
-  downshift dashboard --port=1400 --open=false
-
-Next: downshift session, for the same data in the terminal
-`,
-	"serve": `downshift serve — Run only the dashboard's API server, without opening a browser
-
-Usage:
-  downshift serve [--port=PORT] [-q]
-
-Flags:
-  --port=PORT   Port to listen on (default 8787; 0 picks a free port)
-  -q            Suppress the startup message (one dash: the flag is named q)
-
-Examples:
-  downshift serve
-  downshift serve --port=0
-
-Next: downshift dashboard, to open the UI on the same API
-`,
 }
