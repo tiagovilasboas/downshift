@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `downshift setup` no longer writes `session-models.json`. Models are always the ones the harness reports; the file is only an optional manual override, and setup names the `downshift models discover` command when a harness has no detected list yet. `doctor` no longer warns forever for Claude Code, which uses the catalog stand-in.
 - The Claude Code small target is the newest Haiku, `claude-haiku-5-5`, written as the native `haiku` alias (observed 2026-10-28; it was `claude-haiku-4-5`). The quality comparison against the old target has not been run yet.
 - The MCP server now tells clients how to use it: the instructions lead with the rule for when to call `providers` (before any subagent spawn) and the `[tier=small]` hint, tools carry a title and read-only, idempotent, closed-world hints (`providers` is not read-only because it stores a hint), and `providers` asks Claude Code to load it at session start.  The reasoning is in the MCP spike record of 2026-10-28 in the plans folder.
+- The `providers` result carries a `next` pointer: the `[tier=small]` hint and the `apply` dry run, since a result is the one channel that reaches the orchestrator mid-session.
 
 ### Removed (O8)
 

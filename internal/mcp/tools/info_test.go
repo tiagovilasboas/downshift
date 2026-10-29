@@ -137,6 +137,15 @@ func TestProvidersData(t *testing.T) {
 	if err := json.Unmarshal(env["data"], &l); err != nil || len(l.Models) != 2 || !l.Fallback || !l.Models[1].Untiered {
 		t.Fatalf("data = %s", env["data"])
 	}
+	// A result is the one channel that reaches the orchestrator mid-session, so
+	// providers says what to do with the list; the other tools add nothing.
+	var next string
+	if err := json.Unmarshal(env["next"], &next); err != nil || !strings.Contains(next, "[tier=small]") {
+		t.Fatalf("next = %s, want the tier hint", env["next"])
+	}
+	if env, _ := call(t, fullDeps(), "status", `{}`); env["next"] != nil {
+		t.Errorf("status should carry no next pointer, got %s", env["next"])
+	}
 }
 
 func TestPlaybookData(t *testing.T) {

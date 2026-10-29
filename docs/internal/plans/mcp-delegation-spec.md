@@ -130,3 +130,44 @@ Behaviour of the library that the tests pin: a line that is not JSON ends the se
 the 1 MiB cap; the protocol is stateless, so the client starts a new process. When the input closes while several
 requests are in flight, the answers still pending are lost (observed with 20 requests sent at once); a client that
 waits for each answer is not affected.
+
+## 5. Lessons for the worker tools (clean-room behaviour analysis, 2026-10-28)
+
+Source: a behavioural analysis of a third-party orchestrator's MCP path, written by one reader and kept in the
+private `downshift-labs` repository. It holds no code, prompt text or identifiers, and the implementer never reads
+the source it describes. The points below are requirements of ours that the analysis made obvious. They apply when
+`delegate` and its siblings are built (stage 4, M2b); none of them changes the information tools.
+
+- R18. Where the timing guidance lives. A tool description is read only after the model has chosen a tool, so the
+  rule for *when* to call goes in the server instructions (done: short, first sentence) and in what each result says
+  next (done for `providers`: the `next` field). Both are the only channels that reach the orchestrator mid-session.
+- R19. Deliveries and acknowledgements are keyed by the calling session, never global, so two orchestrators on one
+  server cannot swallow each other's results.
+- R20. The delivery sequence carries a per-boot epoch (or is persisted), so an acknowledgement held across a restart
+  cannot drop new results.
+- R21. A delivery has a size cap and a way to page; the status view trims every field. A result above the client's
+  tool-result limit fails the whole call, and the information tools already cap at 64 KiB.
+- R22. `result` waits at most 45 seconds and is called again; a client drops a call that blocks much longer. The
+  tools must not serialize behind a waiting call: `cancel` has to work while `result` waits.
+- R23. A worker waiting on a person is reported as its own state in `result`, not only in `status`, and releases its
+  concurrency slot accounting exactly once on every ending (finish, cancel, release, timeout, lost output).
+- R24. A worker with no output for a bounded time is stopped (idle limit), and a budget of zero is not accepted,
+  so a hung process cannot hold a slot forever. The wall-time budget is per turn, not per process.
+- R25. The tail of a worker's standard error (bounded) goes into the failure result; "spawn failed" alone is not
+  enough to act on.
+- R26. A worker must not be able to call Downshift's own delegation tools (recursion). The worker contract and the
+  environment both say so, and the information tools stay available.
+- R27. Read-only is never silently dropped: a mode a provider cannot honour is refused with the reason, as R15
+  already requires. Which Claude permission mode really blocks writes with the long-lived stream is unverified
+  and must be tested before `mode: read` is offered for Claude.
+- R28. Quota readings come from what the provider's own CLI reports or from snapshots the user imports (the
+  decision already taken); stored login tokens of other tools are not read. A reading that stops refreshing expires
+  (R13 already treats a missing reading as "let work through").
+- R29. Results of interrupted or lost workers can be recovered: the session id is stored, the result text is not.
+- R30. A worktree is created per write worker and is never removed implicitly; the cleanup command lists and
+  removes only the ones Downshift made, by marker. Uncommitted changes of the main checkout do not reach the
+  worktree, and the result says so.
+
+What the analysis says a lean server can skip, and ours does: terminals, a rules engine with quota gates and role
+fallback chains, an approval round trip, supersession, run labels, a second runner with more providers, and
+reading other tools' credentials.

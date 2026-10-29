@@ -33,6 +33,9 @@ type providersData struct {
 	Reported any `json:"reported,omitempty"`
 }
 
+// providersNext is the step after choosing: the hint the spawn hook reads, and the dry run.
+const providersNext = "To send mechanical work to a smaller model, start the spawn's prompt with [tier=small]; call apply to check a choice first."
+
 func (d Deps) providersTool() Tool {
 	fields := []string{"harness", "models"}
 	t := d.build("providers", providersDesc, providersSchema, []string{"harness"}, nil)
@@ -72,7 +75,7 @@ func (d Deps) providers(ctx context.Context, harness string, ids []string) (outc
 	if list.Models == nil {
 		list.Models = []Model{}
 	}
-	return outcome{data: providersData{ModelList: list, Reported: reported}, harnesses: []string{harness}, shrink: shrinkModels}, nil
+	return outcome{data: providersData{ModelList: list, Reported: reported}, harnesses: []string{harness}, shrink: shrinkModels, next: providersNext}, nil
 }
 
 // report hands the ids to the Reporter; it never fails the call.

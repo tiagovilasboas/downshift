@@ -130,6 +130,7 @@ type outcome struct {
 	data      any
 	harnesses []string
 	shrink    shrinkFunc
+	next      string
 }
 
 // build wraps run with argument parsing, the strain block and the envelope.

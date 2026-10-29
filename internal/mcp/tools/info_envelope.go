@@ -23,12 +23,15 @@ type envelopeJSON struct {
 	Strain            []StrainEntry `json:"strain"`
 	StrainUnavailable bool          `json:"strain_unavailable,omitempty"`
 	Truncated         bool          `json:"truncated,omitempty"`
+	// Next is the one pointer a result may carry for the step after it. A
+	// result is the only channel that reaches the orchestrator mid-session.
+	Next string `json:"next,omitempty"`
 }
 
 // envelope reads the strain advice and encodes the result, cutting the data
 // until it fits maxResultBytes. A strain failure never fails the call.
 func (d Deps) envelope(ctx context.Context, out outcome) (Result, error) {
-	e := envelopeJSON{Data: out.data, Strain: []StrainEntry{}}
+	e := envelopeJSON{Data: out.data, Strain: []StrainEntry{}, Next: out.next}
 	if d.Strain == nil {
 		e.StrainUnavailable = true
 	} else if entries, err := d.Strain.Strain(ctx, out.harnesses); err != nil {
