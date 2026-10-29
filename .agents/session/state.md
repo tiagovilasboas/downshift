@@ -1,9 +1,9 @@
 # Session State
 
-- **Branch atual:** `downshift/mvp-ponto-zero` (publicada em `origin`; o `main` não foi tocado).
+- **Branch atual:** `main` em `1369aa3b`, com o MVP mesclado pelo PR #589 (squash).
 - **Fase atual:** MVP, etapa 3 (V1 construído, V2 aberto, V3 parcial), com a etapa 4 parcial pelo caminho MCP.
 - **Status:** docs de planejamento (todo, cards do MVP, plano do MVP, roadmap, CHANGELOG) alinhados com o estado de 2026-10-29.
-- **Próximo passo:** decisão do dono sobre mesclar a branch no `main` (chega ao plugin o hook `SessionStart`), orçamento da suíte V2 e a prova C0 em sessão real.
+- **Próximo passo:** orçamento da suíte V2, prova C0 em sessão real, e a correção do EOF do `mcp serve`.
 - **Bloqueios:** nenhum técnico. Os itens acima aguardam aprovação ou orçamento do dono.
 - **Commits recentes na branch:**
   - `7e2acb02`: descrição do plugin como escolha do orquestrador
