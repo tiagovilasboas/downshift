@@ -21,3 +21,20 @@ func TestWantsWriteRefusesWriteUnlessTheOwnerEnablesIt(t *testing.T) {
 		t.Fatal("an unknown mode must be refused")
 	}
 }
+
+func TestWorkToolsAreValidAndNamed(t *testing.T) {
+	ts := WorkTools(Deps{})
+	if err := Validate(ts); err != nil {
+		t.Fatal(err)
+	}
+	titles := map[string]string{
+		"delegate": "Start delegated workers",
+		"collect":  "Read worker results",
+		"cancel":   "Stop workers",
+	}
+	for _, tl := range ts {
+		if want, ok := titles[tl.Name]; !ok || tl.Title != want {
+			t.Errorf("%s: Title = %q, want %q", tl.Name, tl.Title, want)
+		}
+	}
+}

@@ -35,7 +35,7 @@ const cancelSchema = `{"type":"object","properties":{"job_ids":{"type":"array","
 // the tools answer with an error that says so.
 func WorkTools(d Deps) []Tool {
 	return []Tool{
-		{Name: "delegate", Title: "Start read-only workers", Description: delegateDesc, InputSchema: json.RawMessage(delegateSchema), Handler: d.delegate},
+		{Name: "delegate", Title: "Start delegated workers", Description: delegateDesc, InputSchema: json.RawMessage(delegateSchema), Handler: d.delegate},
 		{Name: "collect", Title: "Read worker results", Description: collectDesc, InputSchema: json.RawMessage(collectSchema), Handler: d.collect, Idempotent: true},
 		{Name: "cancel", Title: "Stop workers", Description: cancelDesc, InputSchema: json.RawMessage(cancelSchema), Handler: d.cancel, Idempotent: true},
 	}
