@@ -38,6 +38,18 @@ against the requested model.
 `ScopeSession` (one hashed session id) or `ScopeAll`. The result carries the routing
 tokens, the compactor totals and `TokensSavedEstimate`, the sum of both token parts.
 
+## Worker tokens
+
+`Ledger.Workers` (JSON `workers`, under `token_ledger` in `stats --export` and
+`numbers.ledger` in `report --json`) lists what the MCP delegate workers spent per CLI
+(`claude`, `codex`): `workers`, `input`, `output`, `cache_read`, `cache_write`,
+`total`. It comes from the `worker_ended` events over the ledger window, and
+`downshift stats` prints it as `Workers (additional to spent): ...`. These tokens are
+**additional to** `spent`, not included: `spent` sums routed-spawn usage events, and
+worker events are skipped by that sum, so nothing is counted twice. The key is absent
+when no worker ended in the window; a session scope has none (worker events carry no
+session). It only measures: the worker token budget stays opt-in and off.
+
 ## Per-harness aggregation
 
 Exec events carry `harness` and `entry` (hook or direct). `accounting.AggregateByHarness`

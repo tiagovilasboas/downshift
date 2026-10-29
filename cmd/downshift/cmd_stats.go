@@ -94,6 +94,9 @@ func runStats(args []string) int {
 		return 0
 	}
 	fmt.Fprintln(os.Stdout, nums.Display.Ledger)
+	if line := accounting.WorkersLine(nums.Ledger.Workers); line != "" {
+		fmt.Fprintln(os.Stdout, line)
+	}
 	if len(events) > 0 {
 		telemetry.PrintStats(events, opts, os.Stdout)
 		if n := telemetry.RotatedBackupCount(); n > 0 {

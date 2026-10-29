@@ -62,6 +62,8 @@ type Numbers struct {
 	// Ledger is the three token figures side by side: spent, saved by
 	// routing, saved by the Compactor (an estimate).
 	Ledger Ledger `json:"ledger"`
+	// workers feeds Ledger.Workers; it is not part of the JSON itself.
+	workers []WorkerTokens
 	// Display holds the ready-to-print text of the figures above.
 	Display Display `json:"display"`
 }
@@ -104,6 +106,7 @@ func Compute(events []telemetry.Event, execEvents []execwrap.Event, scope Scope)
 	n.ModelSwitched, n.EffortChanged, n.Held, n.HeldGuardrail, n.UpshiftNotApplied = countSpawns(scoped)
 	n.Compactor = compactorTotals(scopeExec(execEvents, scope, time.Now()))
 	n.TokensSavedEstimate = telemetry.TokensSavedEstimate(n.Routing, n.Compactor.Tokens)
+	n.workers = workerTokensOf(scoped)
 	n.Ledger = ledgerOf(n)
 	n.Display = displayOf(n)
 	return n

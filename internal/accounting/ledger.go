@@ -25,6 +25,11 @@ type Ledger struct {
 	CompactorSaved int64 `json:"compactor_saved"`
 	// CompactorEstimate names how CompactorSaved was derived.
 	CompactorEstimate string `json:"compactor_estimate"`
+	// Workers is the tokens the MCP delegate workers spent, per CLI. They are
+	// additional to Spent, never part of it (see WorkerTokens). Absent when no
+	// worker ended in the scope; worker events carry no session, so a session
+	// scope has none.
+	Workers []WorkerTokens `json:"workers,omitempty"`
 }
 
 // compactorEstimateNote is the method behind Ledger.CompactorSaved.
@@ -40,6 +45,7 @@ func ledgerOf(n Numbers) Ledger {
 		RoutingSaved:      telemetry.TokensSavedEstimate(n.Routing, 0),
 		CompactorSaved:    n.Compactor.Tokens,
 		CompactorEstimate: compactorEstimateNote,
+		Workers:           n.workers,
 	}
 }
 

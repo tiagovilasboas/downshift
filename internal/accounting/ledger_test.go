@@ -4,6 +4,7 @@
 package accounting
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -43,7 +44,7 @@ func TestCompute_Ledger(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			got := Compute(tc.events, tc.execs, tc.scope).Ledger
-			if got != tc.want {
+			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("ledger = %+v, want %+v", got, tc.want)
 			}
 		})
