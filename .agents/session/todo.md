@@ -25,6 +25,11 @@ Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado d
 
 ## Pendências técnicas
 
+- [ ] **Inspector v2:** a evidência de 2026-10-29 usou o inspector 0.15.0 (o `npx` não resolveu a 2.13.0). Repetir com a v2 e chamar `delegate`, `collect` e `cancel` contra um repositório descartável. Ver `docs/evidence/mcp-inspector-2026-10-29.md`.
+- [ ] **Título do `delegate`** diz "read-only workers", mas com `DOWNSHIFT_WORKERS=bypass` inicia workers de escrita. Decidir também se `cancel` merece `destructiveHint`.
+- [ ] **Ciclo do worker em worktree:** a rota de escrita cria a worktree em `internal/workers/write.go`, não em `internal/worktree` (que tem só contenção, git e slug). Decidir se a rota passa a usar o pacote e rodar o ciclo ponta a ponta com sensor de aceite.
+- [ ] **Golden files do compactor:** o layout real é `<caso>.in` e `<caso>.golden`, com a flag `-update-failed-golden`, só para falhas do `go test` (6 casos). Expandir para as outras famílias da allowlist seguindo esse padrão.
+
 - [ ] **`downshift mcp serve` perde respostas se o stdin fecha logo depois das requisições.** Com o stdin aberto, as 7 ferramentas são listadas. Clientes reais mantêm o stdin aberto; scripts e testes que fecham a entrada cedo não recebem nada. Causa no EOF do SDK oficial, não corrigida (exige mexer no transporte).
 
 - [x] `downshift session --pause --session=<id>` funciona (verificado em 2026-10-29).
