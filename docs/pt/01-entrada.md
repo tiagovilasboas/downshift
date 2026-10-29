@@ -26,7 +26,7 @@ O harness cliente invoca o binário localmente via `stdin`:
 
 ### Limites e Proteções Operacionais
 * **Teto de Carga (Max Payload):** Payloads via `stdin` com tamanho superior a 1 MB são rejeitados com `PAYLOAD_TOO_LARGE` e não passam por classificação. Em clientes como o Codex, quando a interface tenta enviar a árvore inteira da conversa, essa barreira impede o consumo excessivo de memória do processo.
-* **Execução Rápida:** O comando de terminal `downshift try` executa o mesmo pipeline de `core.Route` sem o overhead de payload do harness.
+* **Execução Rápida:** O comando de terminal `downshift route` executa o mesmo pipeline de `core.Route` sem o overhead de payload do harness.
 
 ---
 

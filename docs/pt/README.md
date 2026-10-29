@@ -210,11 +210,11 @@ downshift watch
 Você pode simular e inspecionar qualquer decisão diretamente pela linha de comando, sem precisar abrir uma sessão de agente:
 
 ```bash
-# Simular uma tarefa trivial no Codex partindo de um modelo de fronteira
-downshift try "renomeie a variável userId em auth.go" codex gpt-6-sol
+# Ver o que aconteceria com um spawn pedido como Opus no Claude Code
+downshift route --harness claude-code --model claude-opus-5-5
 
-# Simular uma tarefa complexa de arquitetura no Claude Code
-downshift try "rearchitect auth module to support multi-tenant" claude-code claude-haiku-4-5
+# Ver o mesmo spawn com a dica de tarefa mecânica [tier=small]
+downshift route --harness claude-code --model claude-opus-5-5 --tier small
 ```
 
-A saída exibe a complexidade detectada, o tier recomendado, se os tokens da tarefa rodariam num modelo mais barato ou mais caro que o pedido (sem preço nem porcentagem) e a confirmação se o modelo seria reescrito pelo hook. Para o guia completo de instalação e configuração nos clientes, consulte o [README principal da raiz](../../README.md).
+A saída exibe o modelo pedido, o modelo selecionado, o tier, o veredito (`kept`, `hint_down` etc.) e se o hook reescreveria o spawn (`applied`), sem preço nem porcentagem. Para o guia completo de instalação e configuração nos clientes, consulte o [README principal da raiz](../../README.md).
