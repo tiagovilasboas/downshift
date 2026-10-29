@@ -43,6 +43,18 @@ If the command is missing or prints no list, use the models the harness itself o
 - `downshift doctor` shows whether the hooks fired and the last decision.
 - If a spawn failed, decide the next model yourself. Nothing moves it up or down on its own.
 
+## 4. Delegate with an envelope
+
+A worker sees only the task text and its directory, so write the whole brief into each delegated task:
+
+- **Goal:** one sentence, unambiguous.
+- **Allowed files:** the exact paths the worker may edit.
+- **Verification:** the exact command that must exit 0, run as `downshift compactor -- <command>`.
+- **Tier hint:** `[tier=small]` at the start of the prompt for mechanical work: rename, format, boilerplate, a one-file change.
+
+Accept a result only when the verification exits 0 and the diff stays inside the allowed files. You keep the
+decomposition and the design. A worker does not split work or choose the architecture.
+
 ## What Downshift still enforces
 
 - The project `.downshift/policy.json`: rules, profiles and tier floors you declared.
