@@ -38,6 +38,15 @@ const mcpInstructions = "Before you spawn a subagent (the Agent or Task tool), c
 	"The information tools take no task text. delegate starts one read-only worker per task you write, and collect reads what they report; " +
 	"workers cannot write. Every result carries a strain block with the quota headroom."
 
+// workerLauncher is off unless DOWNSHIFT_WORKERS=read is set: a worker is a paid
+// model call, and the read-only launches have not been observed on a real run yet.
+func workerLauncher() workers.Launcher {
+	if os.Getenv("DOWNSHIFT_WORKERS") == "read" {
+		return workers.ByAgent(workers.ReadOnlyLaunchers())
+	}
+	return workers.Unverified()
+}
+
 // runMcp is `downshift mcp`. Only `serve` exists: an MCP server on standard
 // input and output, started by the harness that registered it.
 func runMcp(args []string, cat *catalog.Catalog, stdout, stderr io.Writer) int {
@@ -78,7 +87,7 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 		Harnesses: capsHarnessIDs,
 		Version:   buildVersion,
 	}
-	deps.Work = workers.New(workers.Unverified(), defaultWorkers, time.Now)
+	deps.Work = workers.New(workerLauncher(), defaultWorkers, time.Now)
 	all := append(tools.Info(deps), tools.WorkTools(deps)...)
 	srv, err := transport.New(transport.Info{Name: "downshift", Version: buildVersion, Instructions: mcpInstructions}, all, log)
 	if err != nil {

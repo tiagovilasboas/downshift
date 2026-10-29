@@ -171,3 +171,13 @@ the source it describes. The points below are requirements of ours that the anal
 What the analysis says a lean server can skip, and ours does: terminals, a rules engine with quota gates and role
 fallback chains, an approval round trip, supersession, run labels, a second runner with more providers, and
 reading other tools' credentials.
+
+## 6. R27 status (2026-10-29)
+
+- Claude: the read-only launch is print mode with the planning permission mode and the prompt on standard input.
+  The recipe follows the public behaviour of another orchestrator's secondary route; its own authors did not
+  test that the planning mode blocks writes. The vendor docs say permission rules are enforced by Claude Code, not
+  by the model, and that a write in plan mode goes through the normal permission flow. Not observed: in three
+  real runs the model chose not to attempt a write, so no denial was seen.
+- Codex: exec with the read-only sandbox, which the Codex help lists as a sandbox mode. Not observed on a real run.
+- Both launches are off by default. `DOWNSHIFT_WORKERS=read` turns them on. The first real run decides R27.
