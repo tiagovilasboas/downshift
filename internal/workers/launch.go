@@ -65,6 +65,7 @@ func (l cliLauncher) Launch(spec Spec) (Process, error) {
 	errTail := NewTail(4096)
 	cmd.Stdout = out
 	cmd.Stderr = errTail
+	ownProcessGroup(cmd)
 	if err := cmd.Start(); err != nil {
 		if a.cleanup != nil {
 			a.cleanup()
@@ -117,12 +118,9 @@ func (p *cliProcess) Wait() error {
 	return rerr
 }
 
-// Kill stops the worker process.
+// Kill stops the worker and the programs it started.
 func (p *cliProcess) Kill() error {
-	if p.cmd.Process == nil {
-		return nil
-	}
-	err := p.cmd.Process.Kill()
+	err := killGroup(p.cmd)
 	if errors.Is(err, os.ErrProcessDone) {
 		return nil
 	}
