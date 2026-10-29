@@ -416,6 +416,9 @@ with the companions that complement it, is in [when to use Downshift](docs/guide
 - **No LLM call in Downshift's code, and telemetry holds no prompts or file paths.**
 - **Write workers are off by default.** They run only with `DOWNSHIFT_WORKERS=bypass`, each in its own git
   worktree, and refuse to run outside a git repository. Downshift never merges their branches.
+- **Worker tokens are counted, not priced.** Each `collect` delivery carries the `tokens` its CLI reported, and
+  `DOWNSHIFT_WORKER_TOKEN_BUDGET` (off by default) refuses new `delegate` calls for a CLI once its finished workers
+  in the session have spent that many tokens. A worker killed before it reports usage is not counted.
 - **No approval gate for risky actions.** Downshift does not stop a deploy, merge or secret change on its own. If
   you need that, enforce it in your harness or your policy.
 

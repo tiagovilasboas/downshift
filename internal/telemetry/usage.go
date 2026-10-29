@@ -68,7 +68,8 @@ func IsCostOnlyOutcome(outcome string) bool {
 // baseline: a control-group or no-route spawn is a decision that ran unchanged,
 // and its end must link to it like any routed spawn's.
 func IsObservationOutcome(outcome string) bool {
-	return outcome == OutcomeUsage || outcome == OutcomeResolved || outcome == OutcomeChildEnded || outcome == OutcomeDCI
+	return outcome == OutcomeUsage || outcome == OutcomeResolved || outcome == OutcomeChildEnded || outcome == OutcomeDCI ||
+		outcome == OutcomeWorkerEnded
 }
 
 // DecisionKey identifies a decision event for post-hoc linkage: its

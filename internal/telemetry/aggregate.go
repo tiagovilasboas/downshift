@@ -20,6 +20,9 @@ func Aggregate(events []Event) Stats {
 		if a.countChildEnd(ev) {
 			continue // how a child ended: an observation, not a decision or cost
 		}
+		if ev.Outcome == OutcomeWorkerEnded {
+			continue // a delegated worker's end: tokens for the worker budget, not a routed spawn
+		}
 		if ev.Outcome == OutcomeResolved {
 			continue // an observation about an earlier decision, not a cost or a decision
 		}

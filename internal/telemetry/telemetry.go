@@ -93,6 +93,9 @@ type Event struct {
 	ChildStatus ChildStatus `json:"child_status,omitempty"`
 	// Acceptance records developer acceptance in git commit: "used" or "discarded".
 	Acceptance string `json:"acceptance,omitempty"`
+	// WorkerOutcome is how a delegated worker ended, on worker_ended records:
+	// done, failed, timeout or cancelled (see worker_ended.go).
+	WorkerOutcome string `json:"worker_outcome,omitempty"`
 
 	// Optional self-correction record. Verdict keeps the classified value;
 	// SafeVerdict carries the action adapters were allowed to apply, and
