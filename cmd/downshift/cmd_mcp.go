@@ -36,15 +36,20 @@ const mcpInstructions = "Before you spawn a subagent (the Agent or Task tool), c
 	"Call apply to see what would be applied for a choice, playbook for the working rules a worker should receive, and status for quota advice. " +
 	"Downshift applies the model you choose within the policy the user declared and measures the result; it never picks one for you. " +
 	"The information tools take no task text. delegate starts one read-only worker per task you write, and collect reads what they report; " +
-	"workers cannot write. Every result carries a strain block with the quota headroom."
+	"workers are read-only unless the owner turned on write mode; write workers run in their own git worktree. Every result carries a strain block with the quota headroom."
 
-// workerLauncher is off unless DOWNSHIFT_WORKERS=read is set: a worker is a paid
-// model call, and the read-only launches have not been observed on a real run yet.
-func workerLauncher() workers.Launcher {
-	if os.Getenv("DOWNSHIFT_WORKERS") == "read" {
-		return workers.ByAgent(workers.ReadOnlyLaunchers())
+// workerLaunchers chooses the worker routes from DOWNSHIFT_WORKERS. Unset means
+// off. read turns on the read-only route. bypass turns on the write route too:
+// a bypass worker runs in its own git worktree (spec section 7). It is the
+// owner's switch, and it is never the default.
+func workerLaunchers() (workers.Launcher, bool) {
+	switch os.Getenv("DOWNSHIFT_WORKERS") {
+	case "read":
+		return workers.Routes(workers.ByAgent(workers.ReadOnlyLaunchers()), nil), false
+	case "bypass":
+		return workers.Routes(workers.ByAgent(workers.ReadOnlyLaunchers()), workers.ByAgent(workers.WriteLaunchers())), true
 	}
-	return workers.Unverified()
+	return workers.Routes(workers.Unverified(), nil), false
 }
 
 // runMcp is `downshift mcp`. Only `serve` exists: an MCP server on standard
@@ -87,7 +92,9 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 		Harnesses: capsHarnessIDs,
 		Version:   buildVersion,
 	}
-	deps.Work = workers.New(workerLauncher(), defaultWorkers, time.Now)
+	launcher, writeOn := workerLaunchers()
+	deps.WriteEnabled = writeOn
+	deps.Work = workers.New(launcher, defaultWorkers, time.Now)
 	all := append(tools.Info(deps), tools.WorkTools(deps)...)
 	srv, err := transport.New(transport.Info{Name: "downshift", Version: buildVersion, Instructions: mcpInstructions}, all, log)
 	if err != nil {

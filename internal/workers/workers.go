@@ -33,6 +33,10 @@ func (s State) Finished() bool { return s != Queued && s != Running }
 // Spec is what one job asks for. Task is the prompt: it is held in memory for
 // the life of the job and never written to disk (spec R6).
 type Spec struct {
+	// ID is the job id; the queue sets it. A write job's worktree is named after it.
+	ID string
+	// Write asks for the write route (a bypass in its own worktree); false is read-only.
+	Write  bool
 	Agent  string
 	Model  string
 	Effort string

@@ -86,3 +86,31 @@ func codexReadOnly(spec Spec) (argv, error) {
 	}
 	return argv{name: "codex", args: args, report: report, cleanup: func() { _ = os.Remove(path) }}, nil
 }
+
+// claudeWrite is the write recipe: the bypass permission mode, inside a worktree
+// that writeIsolated prepared.
+func claudeWrite(spec Spec) (argv, error) {
+	args := []string{"-p", "--output-format", "json", "--permission-mode", "bypassPermissions", "--no-session-persistence"}
+	if spec.Model != "" {
+		args = append(args, "--model", spec.Model)
+	}
+	if spec.Effort != "" {
+		args = append(args, "--effort", spec.Effort)
+	}
+	return argv{name: "claude", args: args, report: claudeReport}, nil
+}
+
+// codexWrite is the write recipe: workspace-write sandbox, approval never.
+func codexWrite(spec Spec) (argv, error) {
+	a, err := codexReadOnly(spec)
+	if err != nil {
+		return argv{}, err
+	}
+	for i, arg := range a.args {
+		if arg == "read-only" {
+			a.args[i] = "workspace-write"
+		}
+	}
+	a.args = append([]string{"exec", "-a", "never"}, a.args[1:]...)
+	return a, nil
+}

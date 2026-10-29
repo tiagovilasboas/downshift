@@ -60,6 +60,7 @@ func (q *Queue) Delegate(specs []Spec) ([]string, error) {
 	for _, s := range specs {
 		q.nextID++
 		id := fmt.Sprintf("w%03d", q.nextID)
+		s.ID = id
 		q.jobs[id] = &job{id: id, spec: s, state: Queued}
 		q.waiting = append(q.waiting, id)
 		ids = append(ids, id)

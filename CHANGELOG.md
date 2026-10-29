@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Two real Claude Code runs (2026-10-29) show the orchestrator adds the `[tier=small]` hint on its own, and the hook honours it. The MCP tools were not called unprompted in either run. See `docs/evidence/mcp-unprompted-2026-10-29.md`.
 - The MCP server has `delegate`, `collect` and `cancel` for read-only workers. The queue (limit four, a time budget per job, deliveries acknowledged by sequence, repeats flagged) is built and tested with fake workers. No real worker can start yet: the read-only launch for Claude and Codex is not verified against the real CLIs (spec R27), so each delegation ends as a failed delivery that says so.
 - Read-only launches for Claude (print mode, planning permission) and Codex (read-only sandbox) are written and tested with shell shims. They are off unless `DOWNSHIFT_WORKERS=read` is set, and neither has been run against the real CLI yet (spec R27).
+- Write route with bypass, opt-in only: `DOWNSHIFT_WORKERS=bypass`. Each write job runs in its own git worktree on a new branch under `.downshift/worktrees/`; the report names the worktree and branch, and Downshift never merges. Refused outside a git repository. Tested with shims and a real git repository; the bypass has not been run against the real CLI yet (spec section 7).
 
 ### Removed (O8)
 

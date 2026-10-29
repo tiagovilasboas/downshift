@@ -181,3 +181,18 @@ reading other tools' credentials.
   real runs the model chose not to attempt a write, so no denial was seen.
 - Codex: exec with the read-only sandbox, which the Codex help lists as a sandbox mode. Not observed on a real run.
 - Both launches are off by default. `DOWNSHIFT_WORKERS=read` turns them on. The first real run decides R27.
+
+## 7. Owner decision: write route with bypass (2026-10-29)
+
+The owner accepted, in writing in the session of 2026-10-29, a write route that runs the worker with a permission
+bypass, on these conditions. R5 is amended for that route only:
+
+- It is opt-in: `DOWNSHIFT_WORKERS=bypass`. The default stays the read-only route, and the read-only route stays
+  the default when the variable is `read`.
+- Every write job runs in its own git worktree on a new branch from HEAD, under `.downshift/worktrees/<job id>`
+  (R30). Its working directory is that worktree. Uncommitted changes of the checkout are not carried over.
+- A write job outside a git repository is refused, and so is a write request when the write route is off.
+- Claude: print mode with the bypass permission mode. Codex: exec with the workspace-write sandbox and approval
+  policy `never`, both inside the worktree only.
+- The delivery names the worktree and the branch. Review the diff with git before merging; Downshift never merges.
+- Not observed: whether either bypass run stays inside its worktree. Test before relying on it.
