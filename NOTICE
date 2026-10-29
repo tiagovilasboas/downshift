@@ -18,7 +18,7 @@ github.com/segmentio/encoding and golang.org/x/oauth2) carry their own licences,
 listed by `go list -m all`. Shipping their licence texts with the release
 archives is open work (docs/internal/plans/mcp-delegation-spec.md, R1).
 
-Portions of internal/adapt/count_predictor.go are adapted from
+Portions of internal/telemetry/respawn.go are adapted from
 litellm/router_strategy/complexity_router/tier_predictor.py in BerriAI/litellm
 (commit 4b8a846), MIT License, Copyright (c) 2023 Berri AI. The MIT notice is
 retained below.
