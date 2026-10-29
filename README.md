@@ -36,29 +36,46 @@ and token optimization guides keep circling back to. Every byte of tool output i
 pay for at API rates, on every turn:
 
 ```
-$ go test ./...
-ok      github.com/example/pkg1    0.003s
-ok      github.com/example/pkg2    0.012s
-ok      github.com/example/pkg3    0.008s
-ok      github.com/example/pkg4    0.005s
-... 50 more lines ...
-PASS
+$ go test -count=1 ./internal/...
+ok      github.com/tiagovilasboas/downshift/internal/accounting    0.331s
+ok      github.com/tiagovilasboas/downshift/internal/adapters/antigravity    0.595s
+ok      github.com/tiagovilasboas/downshift/internal/adapters/claudecode    4.204s
+... 53 more lines ...
+ok      github.com/tiagovilasboas/downshift/internal/worktree    2.596s
 ```
 
-That's about **2KB of output** saying "all tests passed". Your agent's context window holds every byte.
+That run prints **3,957 bytes** to say that everything passed. Your agent's context window holds every byte.
 
 ## The Solution
 
-Downshift compacts that to:
+Downshift compacts that run to its header and one line per package:
 
 ```
-✓ PASS · 54 packages · 0.156s
+Go test: PASS (53 packages ok, 4 without tests) under github.com/tiagovilasboas/downshift/internal/
+ok accounting
+ok adapters/antigravity
+...
 ```
 
-**~50 bytes.** Same information. This example is an illustration of the shape of the output, not a
-measurement. Measured in bytes on a synthetic test corpus: 82.3% fewer bytes on compacted files
-(26 of 248), 23.7% overall
+**3,956 → 998 bytes** for that run, as the compactor reports it, with the PASS/FAIL status and the
+exit code kept. One run on this repository, not a benchmark. On a synthetic test corpus: 82.3% fewer
+bytes on compacted files (26 of 248), 23.7% overall
 ([evidence](docs/evidence/compaction-corpus-2026-10-21.md)). Bytes, not LLM tokens.
+
+---
+
+## Why
+
+- **Mechanical subagent work runs on a smaller model.** The orchestrator picks the agent, model and
+  effort; Downshift applies that choice within your `policy.json`, and `downshift report` measures
+  the tokens it moved. On Claude Code the small tier is the newest Haiku, run through its native
+  alias (observed 2026-10-28). [Evidence](docs/guides/evidence.md)
+- **Doubt keeps the requested model.** An unconfident routing decision leaves the spawn unchanged.
+  A wrong choice by the orchestrator is not caught by a built-in floor: declare one in `policy.json`
+  if a task must never go to a small model. [Architecture](docs/design/architecture.md)
+- **No LLM call in Downshift's code, no prompts in telemetry.** Routing is deterministic code.
+  Telemetry keeps counts, hashes and timings in `~/.downshift/events.jsonl`. See
+  [Privacy & Security](#privacy--security).
 
 ---
 
@@ -80,6 +97,9 @@ downshift doctor
 That's it. On Claude Code, Downshift now rewrites allowlisted commands and applies the orchestrator's subagent model choices
 within your policy. Other harnesses differ; see [Harness Support](#harness-support-claude-code-cursor-codex-and-more).
 
+Prefer to check the download first? Get the archive from [Releases](https://github.com/tiagovilasboas/downshift/releases)
+and verify it with `checksums.txt`; each release carries a build-provenance attestation.
+
 <details>
 <summary>Manual installation</summary>
 
@@ -98,10 +118,10 @@ Wraps allowlisted commands to compress verbose output while preserving exit code
 and failure details.
 
 ```bash
-downshift compactor -- go test ./...
-downshift compactor -- cargo build --release
-downshift compactor -- pnpm test
-downshift compactor -- git status
+downshift compact -- go test ./...
+downshift compact -- cargo build --release
+downshift compact -- pnpm test
+downshift compact -- git status
 ```
 
 **Compresses** (output is strictly shorter): `go test`, `go test -v`, `git diff/show`,
@@ -226,7 +246,7 @@ We show byte counts and percentages, not dollar figures.
 ```bash
 downshift session              # Current session savings
 downshift stats                # Global statistics
-downshift report --period=7d   # Savings over time
+downshift report --days=7      # Savings over time
 downshift doctor               # Health check
 ```
 
@@ -298,6 +318,17 @@ harness the compact command works when the agent runs it directly.
 
 Run `downshift setup` to auto-detect and configure all installed harnesses.
 
+### Inside your harness
+
+- **Skills:** four ship with Downshift: `downshift-setup`, `downshift-audit`, `harness-engineer` and
+  `cost-reducer`. The Claude Code plugin exposes them as `/downshift:<name>`, and `/downshift:status`
+  shows the session's subagent tree and routing reasons. See [skills](skills/README.md).
+- **Mods:** on Claude Code, `downshift setup` installs `savvy-progress` (skip it with `--no-plugin`).
+  `downshift-theme` is optional and setup does not install it. See [mods](mods/README.md).
+- **MCP server:** `downshift setup` registers `downshift mcp serve` in Claude Code and Codex (skip it
+  with `--no-mcp`). The orchestrator can then ask which models the harness offers now and what would
+  be applied for a choice.
+
 ---
 
 ## Documentation
@@ -320,9 +351,8 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 - [Configuration Options](docs/reference/config-options.md)
 
 ### Architecture
-- [System Design](docs/architecture/design.md)
-- [Compressor Pipeline](docs/architecture/compressor.md)
-- [Routing Engine](docs/architecture/routing.md)
+- [Architecture: import graph, domains, known gaps](docs/design/architecture.md)
+- [Domains and their boundaries](docs/domains/README.md)
 
 ### Contributing
 - [Contributing Guide](CONTRIBUTING.md)
