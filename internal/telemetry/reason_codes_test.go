@@ -18,6 +18,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 var traceCat = catalog.Load()
@@ -34,50 +35,52 @@ func routeTrace(t *testing.T, prompt string, current core.Tier, known bool) tele
 		currentID = traceCat.ModelFor("claude-code", current).ID
 	}
 	d := core.Route(prompt, "claude-code", currentID, traceCat)
-	return telemetry.FromDecision(d, "0123456789abcdef", "test")
+	return fromcore.FromDecision(d, "0123456789abcdef", "test")
 }
 
-func TestReasonCodes_FromRoutedDecisions(t *testing.T) {
+// trace is the event the shared runner records for a decision.
+func trace(d core.Decision) telemetry.Event {
+	return fromcore.FromDecision(d, "0123456789abcdef", "test")
+}
+
+// Decisions with the facts a routing decision carries; the reason codes read
+// these facts, whichever policy produced them.
+var (
+	heldRiskDownshift = core.Decision{
+		Harness: "claude-code", Tier: core.TierFrontier, Risk: []string{"authz"},
+		Guards:      core.Guards{RiskFloor: true},
+		Corrections: []string{core.RuleRiskDowngrade, core.RuleUnconfidentDowngrade},
+	}
+	heldUnknownMid = core.Decision{
+		Harness: "claude-code", Tier: core.TierMid, NoSignal: true,
+		Corrections: []string{core.RuleUnconfidentUnknownMid},
+	}
+	heldLanguage = core.Decision{
+		Harness: "claude-code", Tier: core.TierFrontier, UnsupportedLanguage: true,
+		Corrections: []string{core.RuleUnconfidentDowngrade},
+	}
+	confidentDownshift = core.Decision{Harness: "claude-code", Tier: core.TierSmall, Confident: true}
+	noSignalOnMid      = core.Decision{Harness: "claude-code", Tier: core.TierMid, NoSignal: true}
+)
+
+func TestReasonCodes_FromDecisions(t *testing.T) {
 	cases := []struct {
-		name    string
-		prompt  string
-		current core.Tier
-		known   bool
-		want    []string
+		name string
+		d    core.Decision
+		want []string
 	}{
-		{
-			name:    "risk floor held downshift",
-			prompt:  "rename the token validation function and make it accept unsigned JWTs",
-			current: core.TierFrontier, known: true,
-			want: []string{"CLASSIFIER_UNCONFIDENT", "HELD_RISK_DOWNSHIFT", "HELD_UNCONFIDENT_DOWNSHIFT", "RISK_CATEGORY", "RISK_FLOOR"},
-		},
-		{
-			name:   "R9 hold on unknown current model",
-			prompt: "look at the logs folder and tell me what you see",
-			want:   []string{"CLASSIFIER_UNCONFIDENT", "HELD_UNCONFIDENT_UNKNOWN_MID", "NO_SIGNAL"},
-		},
-		{
-			name:    "unsupported language held",
-			prompt:  "rename el campo que guarda las contraseñas de los usuarios",
-			current: core.TierFrontier, known: true,
-			want: []string{"CLASSIFIER_UNCONFIDENT", "HELD_UNCONFIDENT_DOWNSHIFT", "UNSUPPORTED_LANGUAGE"},
-		},
-		{
-			name:    "plain confident downshift",
-			prompt:  "rename the userId variable to userIdentifier",
-			current: core.TierFrontier, known: true,
-			want: []string{"CLASSIFIER_CONFIDENT"},
-		},
-		{
-			name:    "no signal, current model already mid",
-			prompt:  "look at the logs folder and tell me what you see",
-			current: core.TierMid, known: true,
-			want: []string{"CLASSIFIER_UNCONFIDENT", "NO_SIGNAL"},
-		},
+		{"risk floor held downshift", heldRiskDownshift,
+			[]string{"CLASSIFIER_UNCONFIDENT", "HELD_RISK_DOWNSHIFT", "HELD_UNCONFIDENT_DOWNSHIFT", "RISK_CATEGORY", "RISK_FLOOR"}},
+		{"R9 hold on unknown current model", heldUnknownMid,
+			[]string{"CLASSIFIER_UNCONFIDENT", "HELD_UNCONFIDENT_UNKNOWN_MID", "NO_SIGNAL"}},
+		{"unsupported language held", heldLanguage,
+			[]string{"CLASSIFIER_UNCONFIDENT", "HELD_UNCONFIDENT_DOWNSHIFT", "UNSUPPORTED_LANGUAGE"}},
+		{"plain confident downshift", confidentDownshift, []string{"CLASSIFIER_CONFIDENT"}},
+		{"no signal, current model already mid", noSignalOnMid, []string{"CLASSIFIER_UNCONFIDENT", "NO_SIGNAL"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			ev := routeTrace(t, tc.prompt, tc.current, tc.known)
+			ev := trace(tc.d)
 			if ev.RoutingPolicy != telemetry.RoutingPolicy {
 				t.Errorf("routing_policy = %q, want %q", ev.RoutingPolicy, telemetry.RoutingPolicy)
 			}
@@ -95,7 +98,7 @@ func TestReasonCodes_FromRoutedDecisions(t *testing.T) {
 }
 
 func TestUnsupportedLanguage_VisibleInStatsAndWhy(t *testing.T) {
-	ev := routeTrace(t, "rename el campo que guarda las contraseñas de los usuarios", core.TierFrontier, true)
+	ev := trace(heldLanguage)
 	ev.Outcome = telemetry.OutcomeAllow
 	ev.SessionID = "language-session"
 	var stats bytes.Buffer
@@ -120,16 +123,16 @@ func TestReasonCodes_EveryRuleHasACode(t *testing.T) {
 		core.RuleUnconfidentUpshift, core.RuleUnconfidentUnknownMid,
 	}
 	for _, r := range rules {
-		codes := telemetry.ReasonCodes(core.Decision{Confident: true, Corrections: []string{r}})
+		codes := fromcore.ReasonCodes(core.Decision{Confident: true, Corrections: []string{r}})
 		if len(codes) != 2 || !strings.HasPrefix(codes[1], "HELD_") || codes[1] == telemetry.ReasonHeldUnmapped {
 			t.Errorf("rule %s -> %v, want CLASSIFIER_CONFIDENT plus one specific HELD_ code", r, codes)
 		}
 	}
-	codes := telemetry.ReasonCodes(core.Decision{Confident: true, Corrections: []string{"R99_FUTURE"}})
+	codes := fromcore.ReasonCodes(core.Decision{Confident: true, Corrections: []string{"R99_FUTURE"}})
 	if !slices.Contains(codes, telemetry.ReasonHeldUnmapped) {
 		t.Errorf("unknown rule must still leave a hold code, got %v", codes)
 	}
-	lifts := telemetry.ReasonCodes(core.Decision{
+	lifts := fromcore.ReasonCodes(core.Decision{
 		Session: core.Session{
 			CreditHeld: true,
 		},
@@ -243,8 +246,8 @@ func TestReasonCodes_OldEventsParseUnchanged(t *testing.T) {
 }
 
 func TestReasonCodes_CountedInExport(t *testing.T) {
-	a := routeTrace(t, "rename the userId variable to userIdentifier", core.TierFrontier, true)
-	b := routeTrace(t, "look at the logs folder and tell me what you see", 0, false)
+	a := trace(confidentDownshift)
+	b := trace(heldUnknownMid)
 	exp := telemetry.ExportSummary([]telemetry.Event{a, b}, 0, time.Now())
 	if exp.ReasonCodes["CLASSIFIER_CONFIDENT"] != 1 || exp.ReasonCodes["HELD_UNCONFIDENT_UNKNOWN_MID"] != 1 || exp.ReasonCodes["NO_SIGNAL"] != 1 {
 		t.Fatalf("export reason_codes = %v", exp.ReasonCodes)

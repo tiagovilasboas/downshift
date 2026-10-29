@@ -62,8 +62,8 @@ release:
   header: |
     ## Downshift {{ .Tag }}
 
-    Deterministic model router for coding harnesses (Claude Code, Cursor, Codex, and more).
-    Routes each subagent to the right-sized model by task complexity — no LLM in the routing loop.
+    Model control layer for coding harnesses (Claude Code, Cursor, Codex, and more).
+    The orchestrator chooses each subagent's model; Downshift applies it within your policy and measures the result. It adds no LLM call of its own.
 
     **⚠️ Beta release** — functional and tested, but APIs and catalog format may still change before v1.0.
 

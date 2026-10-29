@@ -10,14 +10,3 @@ updates:
     commit-message:
       prefix: "chore(ci)"
       include: "scope"
-
-  # Python: the LangGraph reference planner, locked by uv.lock
-  - package-ecosystem: "uv"
-    directory: "/orchestration"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "03:00"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"

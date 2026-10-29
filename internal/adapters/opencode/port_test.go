@@ -17,8 +17,11 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/hookport"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
+	"github.com/tiagovilasboas/downshift/internal/telemetry/fromcore"
 )
 
 const otherChild = "ffffffffffffffffffffffffffffffff"
@@ -62,12 +65,14 @@ func batch(lines ...string) []byte {
 // spawn correlation (the one pair the port links by, see hookrun.go).
 func seedRoutedDecision(t *testing.T, small, mid, frontier string, cat *catalog.Catalog) {
 	t.Helper()
+	// The routed decision is the precondition, not the subject: pin it.
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	allowlist(t, small, mid, frontier)
 	resp, _, d := opencode.Handle(request(trivialRename, frontier), cat)
 	if resp.Action != "route" || d.Model.ID != small {
 		t.Fatalf("seed decision did not route: resp=%+v decision=%+v", resp, d)
 	}
-	ev := telemetry.FromDecision(d, "seed-correlation", "test")
+	ev := fromcore.FromDecision(d, "seed-correlation", "test")
 	ev.SessionID = telemetry.HashSessionID(testChild)
 	ev.ToolUseHash = telemetry.HashSessionID(testChild)
 	telemetry.Record(ev)

@@ -27,12 +27,12 @@ func TestBoundedBrief_SingleMentionIsConfidentMedium(t *testing.T) {
 	if n := len(strings.Fields(p)); n < 80 {
 		t.Fatalf("precondition: brief has %d words, want >= 80", n)
 	}
-	d := core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
+	d := classifiedRoute(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
 	if d.Complexity != core.Medium || !d.Confident {
 		t.Fatalf("got %v confident=%v, want confident MEDIUM", d.Complexity, d.Confident)
 	}
-	if !checkWrites(d) || d.Tier != core.TierMid {
-		t.Fatalf("want an applied downshift to mid, got tier=%v safe=%v corrections=%v", d.Tier, d.SafeVerdict, d.Corrections)
+	if d.Tier != core.TierMid {
+		t.Fatalf("want the mid tier, got %v", d.Tier)
 	}
 }
 
@@ -68,12 +68,9 @@ func TestBoundedBrief_RiskNeverDownshifted(t *testing.T) {
 		"Fix the race condition in the cache warmer described in docs/tasks/race.md.",
 	} {
 		p := brief(task)
-		d := core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
+		d := classifiedRoute(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
 		if len(d.Risk) == 0 {
 			t.Fatalf("precondition: %q should touch a risk category", task)
-		}
-		if checkWrites(d) {
-			t.Errorf("risky brief %q was downshifted: tier=%v corrections=%v", task, d.Tier, d.Corrections)
 		}
 		if d.Tier < core.TierMid {
 			t.Errorf("risky brief %q below mid: %v", task, d.Tier)

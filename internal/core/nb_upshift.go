@@ -16,34 +16,9 @@ type NBUpshift struct {
 }
 
 // NBSuggestHook is that opinion: upshift, destination tier, and margin.
-// internal/nbopinion registers it in init. A nil hook is no opinion.
+// No package in this binary registers it (internal/nbopinion was removed), so
+// a nil hook is no opinion.
 var NBSuggestHook func(prompt string, prodTier int) (upshift bool, to int, margin float64)
 
 // NBUpshiftEnabled reports whether DOWNSHIFT_NB_UPSHIFT=1.
 func NBUpshiftEnabled() bool { return nbUpshiftEnv() }
-
-func nbSecondOpinion(prompt string, tier Tier) NBUpshift {
-	out := NBUpshift{From: tier, To: tier}
-	if NBSuggestHook == nil {
-		return out
-	}
-	upshift, to, margin := NBSuggestHook(prompt, int(tier))
-	out.Margin = margin
-	if upshift && Tier(to) > tier {
-		out.Would = true
-		out.To = Tier(to)
-		out.Applied = NBUpshiftEnabled()
-	}
-	return out
-}
-
-func complexityForTier(t Tier) Complexity {
-	switch t {
-	case TierFrontier:
-		return Complex
-	case TierMid:
-		return Medium
-	default:
-		return Simple
-	}
-}

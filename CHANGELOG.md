@@ -9,7 +9,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The orchestrator LLM chooses the model; Downshift applies and measures it (owner decision O8, 2026-10-28).**
+  The decider keeps a pinned model, then applies a declared profile, the first matching declared rule and the
+  orchestrator's tier hint (down only for now); everything else keeps the requested model. The guard still refuses
+  foreign ids and `explicit_only` models and keeps on doubt. Downshift's own code still calls no LLM.
+- `downshift setup` no longer writes `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`: with it, Claude Code overrides the
+  per-call model the orchestrator chose. A value you set yourself is left alone.
+
+- The docs no longer say "zero dependencies": the binary links a few third-party libraries through its command layer. What holds, and is now checked by a test, is that every package under `internal/` uses the Go standard library only, except the MCP transport that wraps the official Go SDK.
+
 ### Added
+
+- `docs/true-north.md` states the direction (the orchestrator decides; Downshift applies, compacts and measures cost per accepted task), lists the published studies it rests on with what each does and does not show, marks which sources were read and which were not, and separates what our own runs prove from what they do not. The README links it and lists the sources.
+- `downshift report` shows why spawns changed or stayed (verdict and reason counts per harness) and tokens per harness in two columns that are never summed; `downshift session --panel` shows the requested model, the final model, the verdict and the reason per spawn. Tokens only, no money. Events carry a prompt-free `routing_note`.
+- The MCP `providers` tool accepts the model ids the orchestrator sees. They are stored in the discovery cache as a hint (`source: "mcp"`): a fresh detection always wins and the hint expires after one hour.
+
+### Changed (models)
+
+- `downshift setup` no longer writes `session-models.json`. Models are always the ones the harness reports; the file is only an optional manual override, and setup names the `downshift models discover` command when a harness has no detected list yet. `doctor` no longer warns forever for Claude Code, which uses the catalog stand-in.
+- The Claude Code small target is the newest Haiku, `claude-haiku-5-5`, written as the native `haiku` alias (observed 2026-10-28; it was `claude-haiku-4-5`). The quality comparison against the old target has not been run yet.
+- The MCP server now tells clients how to use it: the instructions lead with the rule for when to call `providers` (before any subagent spawn) and the `[tier=small]` hint, tools carry a title and read-only, idempotent, closed-world hints (`providers` is not read-only because it stores a hint), and `providers` asks Claude Code to load it at session start.  The reasoning is in the MCP spike record of 2026-10-28 in the plans folder.
+- The `providers` result carries a `next` pointer: the `[tier=small]` hint and the `apply` dry run, since a result is the one channel that reaches the orchestrator mid-session.
+- Two real Claude Code runs (2026-10-29) show the orchestrator adds the `[tier=small]` hint on its own, and the hook honours it. The MCP tools were not called unprompted in either run. See `docs/evidence/mcp-unprompted-2026-10-29.md`.
+- The MCP server has `delegate`, `collect` and `cancel` for read-only workers. The queue (limit four, a time budget per job, deliveries acknowledged by sequence, repeats flagged) is built and tested with fake workers. One real read-only Claude worker completed a delegate and collect round trip (2026-10-29). Nothing has yet shown a write refused under plan mode (spec R27), and the Codex read-only launch has not run against the real CLI.
+- The Claude Code session starts with a short context line from a `SessionStart` hook (`downshift claude-code-session-start`): before a subagent spawn, call the `providers` tool; start the prompt of mechanical work with `[tier=small]`. `setup` wires it, and `hooks/hooks.json` ships it through the plugin once the change reaches `main`.
+- Read-only launches for Claude (print mode, planning permission) and Codex (read-only sandbox) are written and tested with shell shims. They are off unless `DOWNSHIFT_WORKERS=read` is set. The Claude launch has completed a real run; the Codex launch has not run against the real CLI yet (spec R27).
+- Write route with bypass, opt-in only: `DOWNSHIFT_WORKERS=bypass`. Each write job runs in its own git worktree on a new branch under `.downshift/worktrees/`; the report names the worktree and branch, and Downshift never merges. Refused outside a git repository. Tested with shims and a real git repository; the bypass has not been run against the real CLI yet (spec section 7).
+
+### Removed (O8)
+
+- The built-in default agent-type table (N11) and the economy-mode step that read it. `downshift policy economy`
+  still exists and now acts only on declared policy; its removal is pending.
+- The automatic upgrade after a recorded failure (`CASCADE_UPGRADE`).
+- The built-in risk veto in the guard. Protection is now the orchestrator's judgment, guided by the playbook, and
+  tier floors you declare in `policy.json`.
+
+### Added
+
+- `downshift models available --harness ID`: the models a spawn can use right now on a harness, from the payload, the discovery cache or your session-models file (the catalog only fills in tiers, and is the last-resort stand-in on Claude Code, flagged as such). `doctor` gets an `available models` check.
+- `downshift route --harness ID`: show what would be applied for one spawn given the orchestrator's choice; the hook uses the same code.
+- `downshift mcp serve`: an MCP server on stdio, built on the official Go SDK and serving both protocol eras (the `initialize` handshake and the per-request metadata of 2026-07-28). Four information tools for the orchestrator: `providers` (the models this harness offers now), `playbook`, `status` (quota advice) and `apply` (what would be applied for a choice); every result carries a `strain` block. It never picks a model and takes no task text.
+- `downshift setup` registers the server in Claude Code (through `claude mcp add -s user`) and Codex (a marked block in `config.toml`) by default; `--no-mcp` skips it, the dry run shows it first, `setup --undo` removes it, and other servers and comments stay untouched.
+- `downshift playbook` (`list`, `show`, `edit`, `add`, `remove`, `restore`, `check`): named working rules a delegated
+  worker receives. General always applies; a delegation may name one more set. Shipped: General, Backend, Frontend.
+- The `downshift-orchestrator` skill, installed by `downshift setup`: how to split work and choose model and effort
+  per spawn (it carries the defaults the removed table used to hold).
+- **Default profile table (W7.1):** (removed again by O8, see above) built-in agent type mapping for Claude Code (`Explore` -> small/Haiku, `claude-code-guide` -> small/Haiku, `statusline-setup` -> small/Haiku; `general-purpose` and `Plan` keep requested model). Table runs as default precedence (level 5), preserved behind explicit project policies and hints, with automatic elevation to mid (Sonnet) when risk signals are detected.
+- **Policy init command (W7.2):** `downshift policy init` generates `.downshift/policy.json` with dry-run preview and interactive confirmation gate, exposing the full profile and rule configuration schema.
+- **Economy mode (W7.9):** `"mode": "economy"` in `policy.json` and `downshift policy economy [on|off]` command to shift all agent profiles down one tier within safety boundaries (risk never drops to small, explicit_only preserved).
+- **Autonomous engineering loop (F1.6):** `downshift loop` command running an autonomous BDI loop (`Plan -> Implement -> Sensor -> Cascade -> Accept`) with sensor verification via compactor and automatic failure registration.
+- **Episodic failure cascade & inter-process dead-ends sensor (F1.1, F1.2):** cross-process directory lock (`dead_ends.lock`) and atomic JSON state tracking to automatically auto-upgrade subagent tiers on repeated task failures.
+- **Zero-prompt CLI entry (F0.1):** running `downshift` without arguments now launches an intelligent status and telemetry summary view.
+- **Interactive TUI setup (F0.3):** `downshift setup --tui` providing interactive terminal interface for harness configuration and dry-run preview.
+- **Uninstall and purge (F0.2):** `downshift uninstall` with `--purge` flag completely removing state directory and restoring all harness backups.
+- **Dynamic model tier discovery (F0.4):** auto-seeding relative tiers (`cheap`, `standard`, `frontier`) in `session-models.json` on `downshift setup`.
 
 - **KiroCrew harness detection:** `SessionEnv: "KIRO_SESSION_ID"` in `KiroCrewCaps` enables
   `envHarness()` to attribute exec-events to `kirocrew` instead of `unknown`. The `Model` field
@@ -478,7 +533,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CI); [BETA-EXIT](docs/reference/beta-exit.md) P4.5 note; `Makefile report` no longer
   overwrites README ([#58](https://github.com/tiagovilasboas/downshift/pull/58) hygiene).
 - **Docs:** Maintainer shadow/engineering/v2 long form stubbed in OSS; full copies
-  in downshift-labs. [classifier-shadow.md](docs/design/classifier-shadow.md) shortened.
+  in downshift-labs. classifier-shadow.md shortened (file since removed).
 - **CI:** Public `ci` / `ci-full` run `go test` and adapter smoke only (sample
   fixture). Removed obsolete outcome-scope scripts.
 
@@ -501,7 +556,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Docs:** [publishing-boundaries.md](docs/reference/publishing-boundaries.md) (public vs
   `docs/internal/` vs private). Launch waves and test coverage moved under
   `docs/internal/` with stubs at old paths.
-- **Docs (wave 2):** Public [capability-router-v2.md](docs/design/capability-router-v2.md) condensed;
+- **Docs (wave 2):** Public capability-router-v2.md condensed (file since removed);
   full design moved to [docs/internal/capability-router-v2-full.md](docs/internal/capability-router-v2-full.md).
   Contributor classifier guide: [docs/contrib/classifier.md](docs/contrib/classifier.md).
   ROADMAP and CONTRIBUTING aligned with Downshift branding.

@@ -41,7 +41,6 @@ func TestExportSummary_UsageLinkOutsideWindowIsNotLinked(t *testing.T) {
 func TestPrintStats_UnknownBaselineDoesNotClaimUsageMissing(t *testing.T) {
 	usage := exportEvent(exportNow, "TRIVIAL", "UNKNOWN", 0)
 	usage.Outcome = telemetry.OutcomeUsage
-	usage.ActualCostUSD = exportFloat64Ptr(0.25)
 	usage.InputTokens = exportInt64Ptr(1000)
 	var out strings.Builder
 	telemetry.PrintStats([]telemetry.Event{usage}, telemetry.StatsOptions{Detail: true}, &out)

@@ -10,12 +10,14 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // KiroCrew runs through the shared runner, so it gets its project-context
 // seam: a .downshift/policy.json floor in the payload's cwd keeps a trivial
 // spawn at the frontier tier, so policy mode allows instead of blocks.
 func TestRunKiroCrewHook_ProjectFloorApplies(t *testing.T) {
+	decidertest.Use(t, decidertest.Floor(decidertest.Tier(core.TierSmall)))
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("DOWNSHIFT_EVENT_LOG", filepath.Join(t.TempDir(), "events.jsonl"))
 	frontierID := cmdCat.ModelFor("kirocrew", core.TierFrontier).ID

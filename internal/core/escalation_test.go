@@ -21,50 +21,6 @@ func TestRoute_TrivialPrompt_TrivialIntent(t *testing.T) {
 	}
 }
 
-func TestRoute_ImplementationPrompt_NormalIntent(t *testing.T) {
-	d := core.Route("implement the CSV export feature", "claude-code", "", escalCat)
-	if d.Intent != core.NormalIntent {
-		t.Errorf("implementation prompt intent = %s, want normal", d.Intent)
-	}
-}
-
-func TestRoute_RefactorPrompt_NormalIntent(t *testing.T) {
-	// Refactor is complex construction, not deep analysis — NormalIntent.
-	d := core.Route("rearchitect the payment flow across services", "claude-code", "", escalCat)
-	if d.Intent != core.NormalIntent {
-		t.Errorf("rearchitect prompt intent = %s, want normal (construction)", d.Intent)
-	}
-}
-
-func TestRoute_CodeReviewPrompt_ReviewIntent(t *testing.T) {
-	d := core.Route("do a code review of the auth module", "claude-code", "", escalCat)
-	if d.Intent != core.ReviewIntent {
-		t.Errorf("code review prompt intent = %s, want review", d.Intent)
-	}
-}
-
-func TestRoute_SecurityAuditPrompt_ReviewIntent(t *testing.T) {
-	d := core.Route("do a security audit of the payment service", "claude-code", "", escalCat)
-	if d.Intent != core.ReviewIntent {
-		t.Errorf("security audit prompt intent = %s, want review", d.Intent)
-	}
-}
-
-func TestRoute_RFCPrompt_ReviewIntent(t *testing.T) {
-	d := core.Route("write an RFC for the new webhook architecture", "claude-code", "", escalCat)
-	if d.Intent != core.ReviewIntent {
-		t.Errorf("RFC prompt intent = %s, want review", d.Intent)
-	}
-}
-
-func TestRoute_ExplicitAstra_PreservedIntent(t *testing.T) {
-	// gpt-6-astra is explicit_only in the embedded catalog.
-	d := core.Route("rename the variable", "codex", "gpt-6-astra", escalCat)
-	if d.Intent != core.PreservedIntent {
-		t.Errorf("explicit astra intent = %s, want preserved", d.Intent)
-	}
-}
-
 func TestRoute_NormalModelNotPreserved(t *testing.T) {
 	frontierID := escalCat.ModelFor("codex", core.TierFrontier).ID
 	d := core.Route("rename the variable", "codex", frontierID, escalCat)

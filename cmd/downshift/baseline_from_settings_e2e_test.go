@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // runClaudeCodeHook sends one PreToolUse payload through the real runner and
@@ -52,6 +53,7 @@ func hasCode(ev map[string]any, code string) bool {
 // empty at the hook. The configured model then supplies the baseline: the spawn
 // whose baseline was unknown is routed as a downshift, and the event says the baseline was inferred.
 func TestHookE2E_ClaudeCodeBaselineFromSettings(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("CLAUDE_CONFIG_DIR", t.TempDir())
 	t.Setenv("ANTHROPIC_MODEL", "")

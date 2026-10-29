@@ -20,10 +20,6 @@ func exportInt64Ptr(value int64) *int64 {
 	return &value
 }
 
-func exportFloat64Ptr(value float64) *float64 {
-	return &value
-}
-
 // exportEvent builds a minimal Event with an explicit timestamp.
 func exportEvent(stamp time.Time, complexity string, verdict string, savings float64) telemetry.Event {
 	return telemetry.Event{
@@ -149,7 +145,6 @@ func TestExportJSON_OmitsAllCostUSD_SchemaV2(t *testing.T) {
 			events: func() []telemetry.Event {
 				u := exportEvent(exportNow, "TRIVIAL", "UNKNOWN", 0)
 				u.Outcome = telemetry.OutcomeUsage
-				u.ActualCostUSD = exportFloat64Ptr(0.25)
 				u.InputTokens = exportInt64Ptr(1000)
 				return []telemetry.Event{u}
 			}(),
@@ -158,8 +153,6 @@ func TestExportJSON_OmitsAllCostUSD_SchemaV2(t *testing.T) {
 			name: "measured zero savings",
 			events: func() []telemetry.Event {
 				ev := exportEvent(exportNow, "COMPLEX", "UPSHIFT", 0)
-				ev.ActualCostUSD = exportFloat64Ptr(6.0)
-				ev.BaselineCostUSD = exportFloat64Ptr(2.0)
 				return []telemetry.Event{ev}
 			}(),
 		},

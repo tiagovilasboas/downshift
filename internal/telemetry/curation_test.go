@@ -9,16 +9,14 @@ import (
 	"testing"
 )
 
-func i64(n int64) *int64     { return &n }
-func f64(n float64) *float64 { return &n }
-
+func i64(n int64) *int64 { return &n }
 func TestBuildCuration_GroupsAndLinksUsage(t *testing.T) {
 	ev := []Event{
 		{CorrelationID: "d1", Harness: "claude-code", Tier: "SMALL", FinalEffort: "low", Outcome: OutcomeRewriteEmitted, Verdict: "DOWNSHIFT"},
 		{CorrelationID: "d2", Harness: "claude-code", Tier: "small", FinalEffort: "low", Outcome: OutcomeRewriteEmitted, Verdict: "UNKNOWN"},
 		{CorrelationID: "d3", Harness: "claude-code", Tier: "mid", FinalEffort: "medium", Outcome: OutcomeAllow, Verdict: "UNKNOWN", Corrections: []string{"R9_UNCONFIDENT_UNKNOWN_MID"}},
 		{CorrelationID: "d4", Harness: "codex", Tier: "frontier", FinalEffort: "high", Outcome: OutcomeRewriteEmitted, Verdict: "UPSHIFT"},
-		{Harness: "claude-code", Outcome: OutcomeUsage, LinkedDecision: "d1", AgentHash: "a1", InputTokens: i64(100), OutputTokens: i64(40), CachedTokens: i64(10), ActualCostUSD: f64(0.5)},
+		{Harness: "claude-code", Outcome: OutcomeUsage, LinkedDecision: "d1", AgentHash: "a1", InputTokens: i64(100), OutputTokens: i64(40), CachedTokens: i64(10)},
 		{Harness: "claude-code", Outcome: OutcomeUsage, LinkedDecision: "d1", AgentHash: "a1", InputTokens: i64(100), OutputTokens: i64(40)}, // same agent: counted once
 		{Harness: "claude-code", Outcome: OutcomeUsage, LinkedDecision: "gone", AgentHash: "a2", InputTokens: i64(7)},
 		{Harness: "claude-code", Outcome: OutcomeChildEnded, ChildStatus: ChildCompleted}, // not a decision

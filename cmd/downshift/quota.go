@@ -13,6 +13,9 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/quota"
+	"github.com/tiagovilasboas/downshift/internal/routing/contract"
+	"github.com/tiagovilasboas/downshift/internal/routing/headroom"
+	"github.com/tiagovilasboas/downshift/internal/routing/policy"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -43,17 +46,22 @@ func runQuota(args []string, in io.Reader, out, errOut io.Writer) int {
 	}
 	if args[0] == "status" {
 		s, present := quota.Load(*h)
+		now := time.Now()
 		status := quota.Unknown
+		var readings []contract.Reading
 		if s != nil {
-			status = s.Evaluate(*h, *model, time.Now())
+			status = s.Evaluate(*h, *model, now)
+			readings = quota.Readings(*s, policy.DefaultQuotaTTL)
 		}
+		verdicts := headroom.Assess([]contract.HarnessID{contract.HarnessID(*h)}, readings, now, headroom.DefaultCriticalThreshold)
 		_ = json.NewEncoder(out).Encode(struct {
-			Harness  string          `json:"harness"`
-			Model    string          `json:"model,omitempty"`
-			Status   quota.Status    `json:"status"`
-			Present  bool            `json:"present"`
-			Snapshot *quota.Snapshot `json:"snapshot,omitempty"`
-		}{*h, *model, status, present, s})
+			Harness  string           `json:"harness"`
+			Model    string           `json:"model,omitempty"`
+			Status   quota.Status     `json:"status"`
+			Present  bool             `json:"present"`
+			Snapshot *quota.Snapshot  `json:"snapshot,omitempty"`
+			Headroom headroom.Verdict `json:"headroom"`
+		}{*h, *model, status, present, s, verdicts[0]})
 		return 0
 	}
 	if *ttl <= 0 || *ttl > quota.MaxTTL {

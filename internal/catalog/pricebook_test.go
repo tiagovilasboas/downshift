@@ -101,39 +101,6 @@ func TestPriceBook_SlugInference(t *testing.T) {
 	}
 }
 
-func TestPriceResult_ComputeCost(t *testing.T) {
-	// Using typical Sonnet 5.5 prices: input $2/M, output $8/M, cache_read $0.10/M, cache_write $2.50/M
-	pr := PriceResult{
-		ModelID:         "claude-sonnet-5-5",
-		Quality:         QualityExact,
-		InputCostM:      2.0,
-		OutputCostM:     8.0,
-		CacheReadCostM:  0.10,
-		CacheWriteCostM: 2.50,
-	}
-
-	// 1M input + 500k output + 200k cache_read + 100k cache_write
-	// = $2.00 + $4.00 + $0.02 + $0.25 = $6.27
-	cost := pr.ComputeCost(1_000_000, 500_000, 200_000, 100_000)
-	want := 6.27
-	if cost < want-0.01 || cost > want+0.01 {
-		t.Errorf("ComputeCost = %.2f, want ~%.2f", cost, want)
-	}
-}
-
-func TestPriceResult_ComputeCost_ZeroTokens(t *testing.T) {
-	pr := PriceResult{
-		Quality:     QualityExact,
-		InputCostM:  2.0,
-		OutputCostM: 8.0,
-	}
-
-	cost := pr.ComputeCost(0, 0, 0, 0)
-	if cost != 0 {
-		t.Errorf("ComputeCost(0,0,0,0) = %f, want 0", cost)
-	}
-}
-
 func TestPriceResult_Predicates(t *testing.T) {
 	exact := PriceResult{Quality: QualityExact}
 	inferred := PriceResult{Quality: QualityInferred}

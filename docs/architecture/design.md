@@ -1,3 +1,5 @@
+Superseded in part by O8 (2026-10-28): see docs/internal/plans/mvp-plan.md
+
 # System Design
 
 Downshift is a token-saving layer for AI coding agents. It sits between the

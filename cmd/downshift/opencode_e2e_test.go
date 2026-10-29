@@ -18,6 +18,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -106,6 +107,7 @@ func openCodeTierIDs(t *testing.T) (small, mid, frontier string) {
 }
 
 func TestOpenCodeE2E_RouteEnvelopeCarriesOnlyAllowListedKeys(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	log := openCodeEnv(t)
 	small, mid, frontier := openCodeTierIDs(t)
 	setSessionAllowlist(t, "opencode", []string{small, mid, frontier})
@@ -238,6 +240,7 @@ func TestOpenCodeE2E_NoRouteAnswersTheCacheableEnvelope(t *testing.T) {
 }
 
 func TestOpenCodeE2E_HonorObservationLinksTheRoutedDecision(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	log := openCodeEnv(t)
 	small, mid, frontier := openCodeTierIDs(t)
 	setSessionAllowlist(t, "opencode", []string{small, mid, frontier})

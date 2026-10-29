@@ -14,6 +14,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/quota"
 )
 
@@ -61,6 +62,7 @@ func TestHandle_IgnoresNonTaskTools(t *testing.T) {
 }
 
 func TestHandle_FallsBackToPromptField(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := cursor.Event{
 		ToolName: "Task",
@@ -82,6 +84,7 @@ func TestHandle_FallsBackToPromptField(t *testing.T) {
 }
 
 func TestHandle_FallsBackToEventModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := cursor.Event{
 		ToolName:  "Task",
@@ -101,6 +104,7 @@ func TestHandle_FallsBackToEventModel(t *testing.T) {
 
 // Session candidates, not catalog family aliases, determine every harness target.
 func TestHandle_UsesSessionTierForModelFamily(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	// Current opus high, MEDIUM task → midpoint of the ordered session list.
 	ev := cursor.Event{
 		ToolName: "Task",
@@ -135,6 +139,7 @@ func TestHandle_DoesNotSwitchModelForCatalogFamilyEffort(t *testing.T) {
 }
 
 func TestHandle_FamilyWithoutVariantFallsBackToTierDefault(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	// Grok has no effort-tagged variants: a confidently trivial task falls
 	// back to the tier-default small model, exactly like the legacy path.
 	ev := cursor.Event{
@@ -169,6 +174,7 @@ func TestHandle_UnknownIDIsNotRewritten(t *testing.T) {
 }
 
 func TestHandle_CursorUpshiftDoesNotEmitRejectedMuseSpark(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	const rejected = "muse-spark-1.3-high"
 	muse, ok := cat.LookupByID("cursor", "muse-spark")
 	if !ok {
@@ -279,6 +285,7 @@ func TestHandle_CursorUpshiftDoesNotEmitRejectedMuseSpark(t *testing.T) {
 }
 
 func TestHandle_UnlabeledSessionIDIsEligible(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	session := []string{"composer-2.5"}
 	ev := cursor.Event{
@@ -325,10 +332,11 @@ func (s foreignFamilyResolver) FamilyModelFor(harness, family string, effort cor
 }
 
 func TestHandle_HeldDecisionDoesNotRewriteViaFamilyPath(t *testing.T) {
-	// Current opus high, COMPLEX task: tiers match (OK gear), but the
-	// recommended model is foreign-harness, so the decision is held (R4)
-	// and the session plan says "do not rewrite". Before the hold gate,
-	// the in-family medium variant rewrote anyway.
+	// Current opus high, frontier decision: tiers match (OK gear), but the
+	// recommended model is foreign-harness and the decision is held, so the
+	// session plan says "do not rewrite". Before the hold gate, the
+	// in-family medium variant rewrote anyway.
+	decidertest.Use(t, decidertest.Held(core.TierFrontier))
 	familyTarget, ok := cat.LookupByID("cursor", "claude-opus-5.5-medium")
 	if !ok {
 		t.Fatal("catalog missing claude-opus-5.5-medium")
@@ -347,7 +355,7 @@ func TestHandle_HeldDecisionDoesNotRewriteViaFamilyPath(t *testing.T) {
 	}
 	out, note, decision := cursor.Handle(withCatalogSession(ev), res)
 	if len(decision.Corrections) == 0 {
-		t.Fatal("expected a held decision (R4), got none — test is vacuous")
+		t.Fatal("expected a held decision, got none — test is vacuous")
 	}
 	if out.UpdatedInput != nil {
 		m := decodeUpdated(t, out)

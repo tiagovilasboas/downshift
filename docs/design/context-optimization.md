@@ -1,6 +1,6 @@
 # Native Context Compressor & Context Sensor
 
-Downshift includes an in-process, zero-dependency **Native Context Compressor** (`internal/compressor`) and event-driven **Context Sensor** (`internal/sensor`) to govern token consumption without altering critical diagnostics or introducing external runtimes.
+Downshift includes an in-process **Native Context Compressor** (standard library only) (`internal/compressor`) and event-driven **Context Sensor** (`internal/sensor`) to govern token consumption without altering critical diagnostics or introducing external runtimes.
 
 ---
 
@@ -10,7 +10,7 @@ Downshift includes an in-process, zero-dependency **Native Context Compressor** 
 2. **Fowler Harness Taxonomy (Guia vs. Sensor)**:
    - **Guia (Execution / Transformation)**: Canal ativo de reescrita e execução nativo, ligado por padrão (`"exec": false` ou `DOWNSHIFT_EXEC=0` desliga) (`downshift compact`, `internal/execwrap`). Intervém apenas em comandos estritamente allowlistados (`go test`, `pytest`, `vitest`, `jest`, `playwright`, `cypress run`, `next build`, `phpunit`, `gradle`, `./gradlew`, `cargo test`, `tsc`, `git status`) a menos que o usuário o desligue.
    - **Sensor (Observability)**: Canal puramente passivo (`internal/sensor`, `PostToolUse`). Registra apenas agregados de bytes, classificações de formato e contadores de execução. Nunca altera a saída e nunca persiste comandos.
-3. **Clean Code, SRP & Dependency Rule**: O `internal/compressor` é uma biblioteca pura (leaf package) sem dependências externas ou conhecimento de harnesses. O `sensor` observa métricas sem executar comandos; o `execwrap` orquestra subprocessos e gates de buffer sem alterar regras de negócio de harnesses.
+3. **Clean Code, SRP & Dependency Rule**: O `internal/compressor` é uma biblioteca pura (leaf package) sem módulos externos ou conhecimento de harnesses. O `sensor` observa métricas sem executar comandos; o `execwrap` orquestra subprocessos e gates de buffer sem alterar regras de negócio de harnesses.
 4. **Deterministic & Fail-Open**: Compacta sucesso repetido só com exit code 0. **Preserva erro, stack trace, exit diferente de zero, linha que não seja `ok`/`passed`, busca, lista de arquivos e `git log`.**
 5. **Observability vs. Transformability**: Distinguishes observational telemetry (e.g. `PostToolUse` telemetry) from transformational filters (command pipes or tool proxies).
 6. **Epistemic Precision**: Metrics clearly distinguish **Observed** counts from **Estimated** heuristics and **Unavailable** harness channels.
@@ -198,7 +198,7 @@ Para suportar suítes modernas como `pytest`, `vitest`, `playwright`, `cargo tes
 - **Contrato de Saída Idêntica sob Erro**: Se o compressor estourar limite de memória (`2 MiB`), encontrar caracteres de controle inválidos ou receber bytes no stderr antes do término, o gate imediatamente desiste e faz streaming raw byte a byte.
 
 ### Fullstack (Experiência do Desenvolvedor e Integração)
-- **Zero-Dependency Runtime**: Executado inteiramente no binário compilado em Go, sem exigir bibliotecas Python (`pytest-json-report`), pacotes npm (`vitest-custom-reporter`, reporters customizados do Playwright) ou crates adicionais do Rust.
+- **Nada a instalar**: Executado inteiramente no binário compilado em Go, sem exigir bibliotecas Python (`pytest-json-report`), pacotes npm (`vitest-custom-reporter`, reporters customizados do Playwright) ou crates adicionais do Rust.
 - **Transparência de Compactação**: Adição padronizada do marcador `[downshift compact: compacted N to M bytes]` ao final da saída, permitindo ao desenvolvedor e ao LLM saberem exatamente que a visualização foi resumida de forma segura.
 - **Kill-Switch Imediato**: Suporte a desligamento sem reinicialização de daemon via flag `--no-compact` ou variável de ambiente `DOWNSHIFT_EXEC=0`.
 

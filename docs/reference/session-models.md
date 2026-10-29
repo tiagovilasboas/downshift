@@ -2,9 +2,28 @@
 
 Downshift may write only a model id that exists in the current harness session. The session list is the complete candidate set for every harness; the catalog never adds candidate IDs. Metadata is optional for capability-ordered hook/operator lists. An unordered native Cursor export requires resolver tier metadata before its exact IDs become routing targets.
 
-Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. A confident upshift picks the least eligible model at the tier the task needs (later list position first within a tier) and never goes below the current model's tier; when the baseline is guessed (Claude Code settings, Cursor parent `model_id`) or `explicit_upshift` is on, it keeps the strongest eligible tier; a list the catalog cannot rank falls back to the position mapping. Leaving an expensive frontier model off the list is the install-time opt-out. Claude Code accepts `fable`; the default example omits `claude-fable-5-1` so that upshift stops at Opus unless you append it. That Claude Code id is opt-in by listing it. It is not `explicit_only`. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier) inside the filtered session order, skips exhausted ids, and never parses model names. On the catalog-tier path prices do not pick a target; the optional capability path (below) uses catalog prices only to choose the cheapest candidate that already passes its score. A non-empty credit set for this harness is closed: ranking stays inside it, in session order, with no fallback to an id outside the set. When no tier is known, upshift picks the last remaining id. Catalog `explicit_only` ids are skipped unless `explicit_upshift` is on, and then only for upshift. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
+Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. A confident upshift picks the least eligible model at the tier the task needs (later list position first within a tier) and never goes below the current model's tier; when the baseline is guessed (Claude Code settings, Cursor parent `model_id`) or `explicit_upshift` is on, it keeps the strongest eligible tier; a list the catalog cannot rank falls back to the position mapping. Leaving an expensive frontier model off the list is the install-time opt-out. Claude Code accepts `fable`; the default example omits `claude-fable-5-1` so that upshift stops at Opus unless you append it. That Claude Code id is opt-in by listing it. It is not `explicit_only`. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier) inside the filtered session order, skips exhausted ids, and never parses model names. On the catalog-tier path prices do not pick a target. A non-empty credit set for this harness is closed: ranking stays inside it, in session order, with no fallback to an id outside the set. When no tier is known, upshift picks the last remaining id. Catalog `explicit_only` ids are skipped unless `explicit_upshift` is on, and then only for upshift. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
 
 If the session list cannot be determined, the hook does not rewrite the model.
+
+## Detected models only (`downshift models available`)
+
+No model is fixed in Downshift: the models a spawn can use come from what the harness offers. `models.Resolve`
+(`internal/models`) joins the pieces in one shared answer, used by `downshift models available --harness <id>` and by the
+`available models` doctor check. It tries the sources in this order and the first one that lists models wins:
+
+| Source | Where it comes from |
+|---|---|
+| `payload` | the list a hook payload carried (a non-nil list is authoritative, even when empty) |
+| `discovery` | the cache written by `downshift models discover` (expires after the discovery TTL) |
+| `file` | `session-models.json` |
+| `catalog-fallback` | the catalog `session_candidates`, only for a harness that declares `SessionFromCatalog` (Claude Code) and has no other source |
+
+The catalog supplies tier and effort data for an id a real source listed, and never adds an id. Metadata a source
+carries (`model_metadata`) wins over the catalog. An id with no tier evidence is listed with tier `unknown` and
+`untiered: true`; discovery ids the catalog could not rank are listed this way too. A fallback list is flagged
+(`fallback: true`) so the orchestrator knows it is a stand-in; `doctor` reports it as ok for a harness that sends no list (Claude Code) and warns for any other harness. With no source the list is empty and
+routing holds.
 
 ## Session metadata before catalog fallback
 
@@ -41,6 +60,10 @@ checks (computacional, architecture fitness / behaviour).
 
 Claude Code often spawns a Task without `tool_input.model`; the child then inherits the harness default (usually the parent's model). The router has no current model to compare against (`verdict: UNKNOWN`), so it applies guardrails **R6** (`R6_UNCONFIDENT_UNKNOWN_SMALL`), **R9** (`R9_UNCONFIDENT_UNKNOWN_MID`) and **R7** (`R7_UNCONFIDENT_UNKNOWN_FRONTIER`):
 
+> **O8 (2026-10-28).** The rules R1 to R9 below belong to the earlier router. The routing decider no longer passes
+> its decisions through them; they run only in the older operator tier-floor path (`RaiseTier`). The built-in risk
+> floor named here was removed. The text is kept as the record of that behaviour.
+
 - confident classification → the recommended model is written (any tier);
 - unconfident classification with a **mid** recommendation → not written (R9), unless a deterministic rule lifted it (risk floor, an opted-in NB upshift, an operator tier floor). A prompt with no recognised signal falls to MEDIUM by default, so writing mid over the harness default could move a task up for no reason;
 - unconfident classification with a **small** recommendation → not written (R6); the event records `safe_verdict: OK` and `corrections: ["R6_UNCONFIDENT_UNKNOWN_SMALL"]`;
@@ -62,7 +85,7 @@ Checked against the adapter structs and local telemetry on 2026-10-17. No secret
 | Claude Code | `hook_event_name`, `tool_name`, `tool_input`, `model`, `prompt`, optional `session_id`, `cwd`, `transcript_path`, `permission_mode`, `tool_use_id`, `correlation_id`, `parent_model`, `entry` | No. Current model only unless extension fields are sent. |
 | Codex | `hook_event_name`, `session_id`, `tool_name`, `tool_input`, `model`, optional `cwd`, `transcript_path`, `tool_use_id`, `correlation_id` | No. Current model and session id only unless extension fields are sent. |
 
-`~/.downshift/events.jsonl` (legacy `~/.harness-downshift/`) stores routing outcomes: `complexity`, `estimated_savings`, `requested_model`, `final_model`, `harness`, optional hashed `session_id`, `timestamp`, `verdict`, and `outcome`. Usage records can include token fields such as `input_tokens`, `output_tokens` and `cached_tokens`. Older event logs may also contain `actual_cost_usd` and `baseline_cost_usd`; current builds do not write those dollar fields, while the reader retains compatibility with older records (`internal/telemetry/cost.go`). On Claude Code, usage comes from **SubagentStop** reading the child transcript, not PostToolUse on an async Agent launch, which carries no tokens; see [beta-exit.md](beta-exit.md) P3 and [Claude Code real usage](#claude-code-real-usage). A raw Codex session ID is validated and hashed before it can be recorded. `requested_model` is `unknown` unless the original hook value is catalog-allowlisted; it is never filled with a policy recommendation. `outcome: "rewrite_emitted"` proves only that Downshift emitted a compatible rewrite, not that a child executor honored it. On Claude Code the PostToolUse hook also appends an `outcome: "resolved"` record that links to the decision (`linked_decision`) and carries the model the harness reports it chose for the child at launch (`tool_response.resolvedModel`), with `rewrite_honored` true or false when the catalog can compare it to the written model — still not token usage. `downshift stats` counts a matching record as honored; a mismatch stays visible in the log.
+`~/.downshift/events.jsonl` (legacy `~/.harness-downshift/`) stores routing outcomes: `complexity`, `estimated_savings`, `requested_model`, `final_model`, `harness`, optional hashed `session_id`, `timestamp`, `verdict`, and `outcome`. Usage records can include token fields such as `input_tokens`, `output_tokens` and `cached_tokens`. Older event logs may also contain `actual_cost_usd` and `baseline_cost_usd`; current builds do not write those dollar fields, while the reader ignores those keys in older records. On Claude Code, usage comes from **SubagentStop** reading the child transcript, not PostToolUse on an async Agent launch, which carries no tokens; see [beta-exit.md](beta-exit.md) P3 and [Claude Code real usage](#claude-code-real-usage). A raw Codex session ID is validated and hashed before it can be recorded. `requested_model` is `unknown` unless the original hook value is catalog-allowlisted; it is never filled with a policy recommendation. `outcome: "rewrite_emitted"` proves only that Downshift emitted a compatible rewrite, not that a child executor honored it. On Claude Code the PostToolUse hook also appends an `outcome: "resolved"` record that links to the decision (`linked_decision`) and carries the model the harness reports it chose for the child at launch (`tool_response.resolvedModel`), with `rewrite_honored` true or false when the catalog can compare it to the written model — still not token usage. `downshift stats` counts a matching record as honored; a mismatch stays visible in the log.
 
 ## Claude Code real usage
 
@@ -112,6 +135,8 @@ Same order for every harness:
 2. For Cursor, a configured native export with complete fresh availability. A stale or invalid configured export holds routing. Its provider order is not a capability ranking: resolver tier metadata is required and unknown capability stays ineligible.
 3. Otherwise the models recovered for that harness by `downshift models discover` (`discovered.json`). See [session-discovery.md](session-discovery.md). A recovered list beats a handwritten allowlist.
 4. Otherwise `~/.downshift/session-models.json` (legacy `~/.harness-downshift/`) (override the path with `DOWNSHIFT_SESSION_MODELS`). An exact `sessions.<harness>.<session_id>` list wins when present; otherwise the top-level harness key is the fallback. This file is not a credit report. `quota` in it is ignored.
+
+`downshift setup` never writes `session-models.json`. The detected list lives in the discovery cache, which the hook reads before the file, so a copy in the file would only go stale. The file is an optional manual override you write yourself. When a target harness has no fresh discovery entry and no file list, `setup` prints `models: no detected list for <harness>; run \`downshift models discover --harness <harness>\``, and `doctor` says the same through its `available models` check (it also warns when an explicit list for Claude Code has no id with a native name the hook can write).
 
 The file is operator-curated. For Codex, `model` identifies the active model in that event and `session_id` identifies its session. Downshift does not call a picker API, discover account entitlements, or assume every catalog entry is selectable. Verify the session's actual choices before adding them to the allowlist.
 
@@ -179,7 +204,7 @@ reserve capacity for the next call or guarantee zero additional charges.
 
 Claude Code shows `systemMessage` text from hooks. Downshift uses it twice:
 
-- when it rewrites a spawn: `downshift: TRIVIAL task → downshift to claude-haiku-4-5 (~75% cheaper than opus)`;
+- when it rewrites a spawn: `downshift: TRIVIAL task → downshift to claude-haiku-4-5 (smaller model)`;
 - when a subagent ends and its tokens are known (**SubagentStop** on Claude Code,
   after the child transcript is complete; not PostToolUse on an async launch,
   which has no tokens yet): `↳ downshift: finished on haiku · 14k tokens (work N, cache N) · saved from opus`.
@@ -196,22 +221,6 @@ for every harness. Not yet verified: that a given Claude Code release displays
 `systemMessage` from PostToolUse and SubagentStop (documented as a common hook
 output field, not observed on a live session).
 
-## Capability path (public scores)
-
-An optional second way to pick a model from the same session list. It chooses
-the cheapest candidate whose public capability score reaches the level the task
-tier needs, measured across the session's own range. It never adds a candidate
-id, it sits behind the same guardrails and quota gates, and it abstains on
-COMPLEX work, any risk signal, any deterministic lift, and when any candidate
-lacks a score. Full rules, sources and privacy: [scores.md](scores.md).
-
-- Default: shadow. The pick is recorded (`score_would`, `score_differs`,
-  `score_would_cost_ratio`) and the routed model does not change.
-- `DOWNSHIFT_SCORE_ROUTING=1`: the pick is applied when the plan rewrites the
-  model, with reason code `SCORE_ROUTED`.
-- `DOWNSHIFT_SCORES=off`: no scores are read, so the capability path never picks.
-- Which session ids have a score today: [harness-matrix.md](harness-matrix.md#public-score-coverage-capability-path).
-
 ## explicit_upshift
 
 Default off. Without it, `explicit_only` models do not participate in upshift. With it, upshift (`VerdictUpshift` only) may select them. The last remaining id in the filtered session order wins. Downshift and ordinary tier mapping still skip `explicit_only`. If the current model is already `explicit_only`, it stays; the flag does not replace it.
@@ -227,3 +236,13 @@ Turn the flag on with any of:
 Cursor `claude-fable-5-1-thinking-high` and Codex `gpt-6-astra` are `explicit_only`. Claude Code `claude-fable-5-1` is not: list that id in the session when you want upshift to reach it. Do not alias another harness's canonical id.
 
 For example, a list `["session-small", "session-mid", "session-frontier"]` makes those three positions available to all routing decisions without requiring any of the IDs or their prices in Downshift's catalog. If the session list is missing, the active model stays.
+
+## Reported by the MCP server
+
+The orchestrator may report the model ids it can see through the MCP `providers` tool. Downshift stores them in `discovered.json` as an entry with `"source": "mcp"`, ranked by the catalog like any other entry (the catalog never adds an id). This data is a hint for `providers` only. Routing never reads it (the hook ignores `mcp` entries), it ranks below `session-models.json`, and it never overrides a real detection:
+
+- A fresh entry from `models discover` (inside the discovery TTL) wins. The report is not written, and ids it lacks are not added.
+- A stale or absent detection is replaced by the report.
+- `models discover` always replaces an `mcp` entry.
+- An `mcp` entry expires at read time after the shorter of the configured TTL and one hour; an expired entry is an unknown list.
+- Ids must match the discovery id pattern; invalid and duplicate ids are dropped and at most 64 are kept.

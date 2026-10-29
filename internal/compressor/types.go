@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Tiago Vilas Boas.
 // SPDX-License-Identifier: Apache-2.0
 
-// Package compressor provides a deterministic, zero-dependency Go compressor
+// Package compressor provides a deterministic Go compressor on the standard library only
 // for recognized tool outputs (git, tests, searches, file listings, logs).
 // It never relies on an LLM, requires no network or Python, and guarantees
 // complete preservation of errors, panics, and stack traces.

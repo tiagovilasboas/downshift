@@ -75,13 +75,12 @@ Companion to [content-classification.md](../reference/content-classification.md)
 | `engineering-loop.md` (short) | No |
 | `capability-router-v2.md` (short) | Mild — offline pipeline overview |
 | `decision-intelligence.md` | **OK-B** — advisory contract |
-| `langgraph-orchestration.md` | No |
+| `langgraph-orchestration.md` (removed) | No |
 | `graphify-integration.md` | Mild — god-node / escalation **library** detail |
 | `ds-04-codex-observer-contract.md` | No |
 | `design/router-generalization.md` | **MOAT** — full split metrics, NB baseline, heldout2 study — **OK-B for eval culture**; consider executive summary in public + move raw tables to `downshift-labs` if you want less competitive teaching |
 | `pt/09-decisoes.md` | **OK-B** — decision matrix |
 | `pt/02-classificador.md` | No — points to `contrib/classifier.md` for engineering |
-| `pt/10-candidato-shadow.md` | No |
 
 ### INSIDE + MOAT (teaches differentiation)
 

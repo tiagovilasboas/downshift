@@ -83,7 +83,7 @@ func (p *Provider) SupportedHarnesses() []contextopt.HarnessSupport {
 }
 
 func (p *Provider) Detect(ctx context.Context) (bool, string, string, error) {
-	// Built-in in-process Go engine: always installed, zero external dependencies.
+	// Built-in in-process Go engine: always installed, standard library only.
 	return true, "built-in", "in-process", nil
 }
 

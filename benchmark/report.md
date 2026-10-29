@@ -1,5 +1,7 @@
 # Published classifier & outcome metrics
 
+> Historical record. The commands below ran the v1 CLI (`benchmark`, `eval-adapt`), removed on 2026-10-26 in wave A of the true-north cleanup. Reproduce the run from commit `5a888e7`; see [routing v2](../docs/design/routing-v2.md).
+
 Maintainer-curated **final numbers** for the public Downshift repo. Raw
 prompts, splits, and executable outcome tasks live in **downshift-labs**
 (private). Re-run benchmarks there after router changes; update this file when

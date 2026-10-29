@@ -12,7 +12,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -22,9 +21,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/cursor"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
-	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/classifier"
-	"github.com/tiagovilasboas/downshift/internal/routingv2/training"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -63,213 +60,7 @@ func setSessionAllowlist(t *testing.T, harness string, ids []string) {
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", path)
 }
 
-func TestLegacyTasksForComparisonMapsV2Tiers(t *testing.T) {
-	tasks, err := legacyTasksForComparison([]training.Example{
-		{Prompt: "rename a variable", Label: "small"},
-		{Prompt: "add a field", Label: "MID"},
-		{Prompt: "rearchitect payments", Label: "FRONTIER"},
-	})
-	if err != nil {
-		t.Fatalf("legacyTasksForComparison() error = %v", err)
-	}
-	want := []string{"TRIVIAL", "MEDIUM", "COMPLEX"}
-	if len(tasks) != len(want) {
-		t.Fatalf("got %d tasks, want %d", len(tasks), len(want))
-	}
-	for i := range want {
-		if tasks[i].Label != want[i] {
-			t.Errorf("task %d label = %q, want %q", i, tasks[i].Label, want[i])
-		}
-	}
-}
-
-func TestLegacyTasksForComparisonRejectsUnknownTier(t *testing.T) {
-	_, err := legacyTasksForComparison([]training.Example{{Prompt: "task", Label: "UNKNOWN"}})
-	if err == nil {
-		t.Fatal("legacyTasksForComparison() expected an error for an unsupported tier")
-	}
-}
-
-// claudeCodeFrontierID returns the current frontier model ID for claude-code.
 func claudeCodeFrontierID() string { return cmdCat.ModelFor("claude-code", core.TierFrontier).ID }
-
-// --- runTry ---
-
-func TestRunTry_NoArgs(t *testing.T) {
-	if rc := runTry(cmdCat, nil); rc != 2 {
-		t.Errorf("no args rc = %d, want 2", rc)
-	}
-}
-
-func TestRunTry_RejectsEmptyPrompt(t *testing.T) {
-	stderr := captureStderr(func() {
-		if rc := runTry(cmdCat, []string{"   "}); rc != 2 {
-			t.Errorf("empty prompt rc = %d, want 2", rc)
-		}
-	})
-	if !strings.Contains(stderr, "usage: downshift try") {
-		t.Fatalf("empty prompt stderr missing usage:\n%s", stderr)
-	}
-}
-
-func TestRunTry_RejectsUnknownHarness(t *testing.T) {
-	stderr := captureStderr(func() {
-		if rc := runTry(cmdCat, []string{"rename the userId variable", "Cursor"}); rc != 2 {
-			t.Errorf("unknown harness rc = %d, want 2", rc)
-		}
-	})
-	for _, want := range []string{`unknown harness "Cursor"`, "antigravity", "claude-code", "codex", "cursor", "grok", "kirocrew"} {
-		if !strings.Contains(stderr, want) {
-			t.Fatalf("unknown harness stderr missing %q:\n%s", want, stderr)
-		}
-	}
-}
-
-func TestRunTry_TrivialTask(t *testing.T) {
-	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
-	out := captureStdout(func() {
-		if rc := runTry(cmdCat, []string{"rename the userId variable", "claude-code"}); rc != 0 {
-			t.Errorf("rc = %d, want 0", rc)
-		}
-	})
-	lines := strings.Split(out, "\n")
-	if !strings.HasPrefix(lines[0], "assumed current: "+claudeCodeFrontierID()+" (harness default)") {
-		t.Errorf("first line must name the assumed harness default; got:\n%s", out)
-	}
-	if !strings.Contains(lines[1], "→ small:") || !strings.Contains(lines[1], "its tokens would run on a cheaper model than requested") {
-		t.Errorf("second line must be the tier, the move and where its tokens run; got:\n%s", out)
-	}
-	// Tokens, never dollars, for one decision (owner decision 2026-10-19):
-	// no list-price ratio and no price.
-	if strings.Contains(out, "%") || strings.Contains(out, "$") || strings.Contains(out, "list prices") {
-		t.Errorf("try must not quote a price or a percentage; got:\n%s", out)
-	}
-	if !strings.HasPrefix(lines[2], "why: trivial task") {
-		t.Errorf("third line must be the why line; got:\n%s", out)
-	}
-	for _, jargon := range []string{"Complexity:", "Intent:", "Verdict:", "Confident:", "Rewrite:"} {
-		if strings.Contains(out, jargon) {
-			t.Errorf("%q belongs under --detail; got:\n%s", jargon, out)
-		}
-	}
-}
-
-func TestRunTry_TrivialTask_Detail(t *testing.T) {
-	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rename the userId variable", "claude-code", "--detail"})
-	})
-	for _, want := range []string{"→ small:", "Complexity: TRIVIAL", "Intent:     trivial", "Needs tier: small", "Verdict:    DOWNSHIFT", "Confident:  true", "Rewrite:",
-		"downshift to " + cmdCat.ModelFor("claude-code", core.TierSmall).ID + " (its tokens would run on a cheaper model than requested)"} {
-		if !strings.Contains(out, want) {
-			t.Errorf("expected %q with --detail; got:\n%s", want, out)
-		}
-	}
-	if strings.Contains(out, "%") || strings.Contains(out, "$") {
-		t.Errorf("--detail must not quote a price or a percentage; got:\n%s", out)
-	}
-}
-
-func TestRunTry_ExplicitCurrentModel_NoAssumption(t *testing.T) {
-	useSessionList(t, "claude-code", "claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-5")
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rename the userId variable", "claude-code", claudeCodeFrontierID()})
-	})
-	if strings.Contains(out, "assumed current") {
-		t.Errorf("a given current model must not be called assumed; got:\n%s", out)
-	}
-	if !strings.Contains(out, "→ small:") || !strings.Contains(out, "cheaper") {
-		t.Errorf("expected the move line; got:\n%s", out)
-	}
-}
-
-func TestRunTry_CurrentAlreadyRight_StaysOn(t *testing.T) {
-	small := cmdCat.ModelFor("claude-code", core.TierSmall).ID
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rename the userId variable", "claude-code", small})
-	})
-	if !strings.Contains(out, "stays on") {
-		t.Errorf("expected 'stays on'; got:\n%s", out)
-	}
-}
-
-func TestRunTry_ComplexTask(t *testing.T) {
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code"})
-	})
-	if !strings.Contains(out, "why: complex task") {
-		t.Errorf("expected a complex why line; got:\n%s", out)
-	}
-	if !strings.Contains(out, "stays on") {
-		t.Errorf("complex work against the frontier default stays on it; got:\n%s", out)
-	}
-}
-
-func TestRunTry_ComplexTask_Detail(t *testing.T) {
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rearchitect the payment flow across services", "claude-code", "--detail"})
-	})
-	if !strings.Contains(out, "Complexity: COMPLEX") {
-		t.Errorf("expected COMPLEX with --detail; got:\n%s", out)
-	}
-	if !strings.Contains(out, "Intent:     normal") {
-		t.Errorf("expected 'normal' intent (construction, not review); got:\n%s", out)
-	}
-}
-
-func TestRunTry_CodeReviewIntent(t *testing.T) {
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"do a code review of the auth module", "claude-code", "--detail"})
-	})
-	if !strings.Contains(out, "Intent:     review") {
-		t.Errorf("expected 'review' intent; got:\n%s", out)
-	}
-}
-
-func TestRunTry_WithCurrentModel_ShowsVerdict(t *testing.T) {
-	frontierID := claudeCodeFrontierID()
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rename the userId variable", "claude-code", frontierID, "--detail"})
-	})
-	if !strings.Contains(out, "DOWNSHIFT") {
-		t.Errorf("expected DOWNSHIFT verdict; got:\n%s", out)
-	}
-	if !strings.Contains(out, "Current:") {
-		t.Errorf("expected Current: line in output; got:\n%s", out)
-	}
-}
-
-func TestRunTry_Grok_TrivialEffort(t *testing.T) {
-	out := captureStdout(func() {
-		if rc := runTry(cmdCat, []string{"rename the userId variable", "grok"}); rc != 0 {
-			t.Errorf("rc = %d, want 0", rc)
-		}
-	})
-	if !strings.Contains(out, "grok-4.6") {
-		t.Errorf("expected grok-4.6 model; got:\n%s", out)
-	}
-	if !strings.Contains(out, "low") {
-		t.Errorf("expected 'low' effort for trivial grok task; got:\n%s", out)
-	}
-}
-
-func TestRunTry_Grok_ComplexEffort(t *testing.T) {
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rearchitect the auth system across services", "grok"})
-	})
-	if !strings.Contains(out, "high") {
-		t.Errorf("expected 'high' effort for complex grok task; got:\n%s", out)
-	}
-}
-
-func TestRunTry_Grok_ReviewEffort(t *testing.T) {
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"do a security audit of the payment service", "grok"})
-	})
-	if !strings.Contains(out, "high") {
-		t.Errorf("expected 'high' effort for review grok task; got:\n%s", out)
-	}
-}
 
 // --- runModels ---
 
@@ -333,6 +124,7 @@ func hookEvent(toolName, modelID, prompt string) []byte {
 }
 
 func TestRunHookAdapter_ClaudeCode_Downshift(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := claudeCodeFrontierID()
 	setSessionAllowlist(t, "claude-code", []string{
 		cmdCat.ModelFor("claude-code", core.TierSmall).ID,
@@ -410,61 +202,6 @@ func TestRunHookAdapter_Codex_Downshift(t *testing.T) {
 	}
 }
 
-func TestHookDecisionRecordsFeedbackWithoutPrompt(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	t.Setenv("DOWNSHIFT_EVENT_LOG", "")
-	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
-	setSessionAllowlist(t, "codex", []string{
-		cmdCat.ModelFor("codex", core.TierSmall).ID,
-		cmdCat.ModelFor("codex", core.TierMid).ID,
-		frontierID,
-	})
-	privatePrompt := "review private incident token abc123"
-	event := []byte(`{"hook_event_name":"PreToolUse","session_id":"codex-session-privacy-test","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"` + privatePrompt + `"}}`)
-	captureStdout(func() {
-		runHookAdapter(
-			"codex",
-			bytes.NewReader(event),
-			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
-			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-			printAllow,
-			func(e codex.Event) string { return e.TaskText() },
-		)
-	})
-	data, err := os.ReadFile(training.DefaultEventsPath())
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(data), privatePrompt) || strings.Contains(string(data), "abc123") {
-		t.Fatal("hook feedback log persisted raw prompt content")
-	}
-	eventPath, err := paths.EventsPath()
-	if err != nil {
-		t.Fatal(err)
-	}
-	eventData, err := os.ReadFile(eventPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var eventRecord map[string]any
-	if err := json.Unmarshal(bytes.TrimSpace(eventData), &eventRecord); err != nil {
-		t.Fatalf("decode telemetry event: %v", err)
-	}
-	if eventRecord["session_id"] != telemetry.HashSessionID("codex-session-privacy-test") {
-		t.Fatalf("session_id = %v, want hashed Codex session identifier", eventRecord["session_id"])
-	}
-	events, err := training.NewEventStore(training.DefaultEventsPath()).Load()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(events) != 1 || events[0].ID == "" || events[0].Harness != "codex" {
-		t.Fatalf("expected a routed codex event with feedback ID, got %#v", events)
-	}
-}
-
-// TestHookTelemetryEndToEnd proves that a realistic Codex PreToolUse payload
-// reaches the JSONL sensor with a correlation ID and routing metadata, while
-// its private task content remains outside the event.
 func TestHookTelemetryEndToEnd(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "hook-events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
@@ -508,18 +245,13 @@ func TestHookTelemetryEndToEnd(t *testing.T) {
 	if recorded.RequestedEffort != "high" || recorded.FinalEffort == "" || recorded.Tier == "" || recorded.Verdict == "" || recorded.PolicyVersion == "" || recorded.BinaryVersion == "" || recorded.Outcome != "allow" || recorded.ToModel != recorded.FromModel {
 		t.Fatalf("missing routing decision telemetry: %#v", recorded)
 	}
-	// The prompt names a secret: the routing risk category reaches the shadow
-	// recommendation, which stays advisory.
-	shadow := recorded.DecisionIntelligence
-	if shadow == nil || shadow.Apply || shadow.Tier != core.TierFrontier.String() || !shadow.RequiresReview || !slices.Contains(shadow.Reasons, "high_risk") {
-		t.Fatalf("shadow recommendation must carry the risk signal and stay advisory: %#v", shadow)
-	}
 }
 
 // Requested model provenance must remain unknown when the hook did not supply
 // a catalog-allowlisted original value. The policy recommendation is not an
 // observation and must never fill this field.
 func TestHookTelemetryDoesNotBackfillRequestedModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	path := filepath.Join(t.TempDir(), "hook-events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
 	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
@@ -613,125 +345,5 @@ func TestRunHookAdapter_OversizedPayload_FailOpen(t *testing.T) {
 	})
 	if strings.TrimSpace(out) != `{}` {
 		t.Errorf("oversized payload must print a neutral {}; got:\n%s", out)
-	}
-}
-
-func TestRunFeedbackRecordsHarnessAgnosticOutcome(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	store := training.NewEventStore(training.DefaultEventsPath())
-	if err := store.Record(training.Event{ID: "route-test", Harness: "cursor", SelectedTier: core.TierSmall}); err != nil {
-		t.Fatal(err)
-	}
-	if rc := runFeedback([]string{"route-test", "success", "--required-tier=SMALL"}); rc != 0 {
-		t.Fatalf("runFeedback() = %d, want 0", rc)
-	}
-	events, err := training.NewEventStore(training.DefaultEventsPath()).Load()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(events) != 1 || events[0].Outcome == nil || !events[0].Outcome.Success || events[0].Outcome.RequiredTier == nil || *events[0].Outcome.RequiredTier != core.TierSmall {
-		t.Fatalf("feedback event = %#v", events)
-	}
-	stats := captureStdout(func() {
-		if rc := runFeedback([]string{"stats"}); rc != 0 {
-			t.Fatalf("feedback stats rc = %d", rc)
-		}
-	})
-	if !strings.Contains(stats, "cursor") || !strings.Contains(stats, "Success") {
-		t.Fatalf("feedback stats missing harness outcome: %s", stats)
-	}
-}
-
-func TestRunFeedbackRejectsInvalidRetry(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	store := training.NewEventStore(training.DefaultEventsPath())
-	if err := store.Record(training.Event{ID: "route-mid", Harness: "codex", SelectedTier: core.TierMid}); err != nil {
-		t.Fatal(err)
-	}
-	if rc := runFeedback([]string{"route-mid", "retry", "--retry-tier=MID"}); rc == 0 {
-		t.Fatal("retry at the same tier should be rejected")
-	}
-}
-
-func TestFeedbackEventStoreUsesSeparateLoopLog(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	if filepath.Base(training.DefaultEventsPath()) != "loop-events.jsonl" {
-		t.Fatalf("loop event file is not isolated from routing stats: %s", training.DefaultEventsPath())
-	}
-}
-
-func TestEngineeringLoopEndToEnd(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	frontierID := cmdCat.ModelFor("codex", core.TierFrontier).ID
-	event := []byte(`{"hook_event_name":"PreToolUse","tool_name":"spawn_agent","model":"` + frontierID + `","tool_input":{"message":"rename the userId variable"}}`)
-	captureStdout(func() {
-		if rc := runHookAdapter(
-			"codex",
-			bytes.NewReader(event),
-			func(b []byte) (codex.Event, error) { var e codex.Event; return e, json.Unmarshal(b, &e) },
-			func(e codex.Event) (any, string, core.Decision) { return codex.Handle(e, cmdCat) },
-			printAllow,
-			func(e codex.Event) string { return e.TaskText() },
-		); rc != 0 {
-			t.Fatalf("hook rc = %d", rc)
-		}
-	})
-	events, err := training.NewEventStore(training.DefaultEventsPath()).Load()
-	if err != nil || len(events) != 1 {
-		t.Fatalf("events = %d, err = %v", len(events), err)
-	}
-	if rc := runFeedback([]string{events[0].ID, "success", "--required-tier=SMALL"}); rc != 0 {
-		t.Fatalf("feedback rc = %d", rc)
-	}
-
-	candidate := filepath.Join(t.TempDir(), "candidate.json")
-	result, err := training.TrainFromEvents(training.DefaultEventsPath(), training.DefaultTrainConfig())
-	if err != nil || result.Weights == nil {
-		t.Fatalf("TrainFromEvents result=%+v err=%v", result, err)
-	}
-	if err := classifier.SaveWeights(result.Weights, candidate); err != nil {
-		t.Fatal(err)
-	}
-	dataset := filepath.Join(t.TempDir(), "holdout.json")
-	contents := `[{"prompt":"rename a local variable","label":"SMALL"},{"prompt":"implement a CSV export feature","label":"MID"},{"prompt":"rearchitect authentication across services","label":"FRONTIER"}]`
-	if err := os.WriteFile(dataset, []byte(contents), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	output := captureStdout(func() {
-		if rc := runBenchmark([]string{dataset, "--compare", "--candidate-weights=" + candidate}); rc != 0 {
-			t.Fatalf("benchmark rc = %d", rc)
-		}
-	})
-	if !strings.Contains(output, "Candidate weights:") {
-		t.Fatalf("candidate was not evaluated: %s", output)
-	}
-}
-
-// A move is only claimed when the hook would apply it. With an allowlist that
-// lists nothing cheaper, try says "not applied", that the tokens stay on the
-// current model, and claims no cheaper model.
-func TestRunTry_NoSavingClaimedWhenTheMoveIsNotApplied(t *testing.T) {
-	setSessionAllowlist(t, "cursor", []string{cmdCat.ModelFor("cursor", core.TierFrontier).ID})
-	out := captureStdout(func() {
-		runTry(cmdCat, []string{"rename the userId variable", "cursor", cmdCat.ModelFor("cursor", core.TierFrontier).ID})
-	})
-	lines := strings.Split(out, "\n")
-	if strings.Contains(lines[0], "cheaper") || strings.Contains(lines[0], "%") || !strings.Contains(lines[0], "not applied, tokens stay on") {
-		t.Errorf("headline must not claim a move the hook will not make; got:\n%s", out)
-	}
-	if !strings.Contains(out, "note: not rewritten") {
-		t.Errorf("the note explaining why is missing; got:\n%s", out)
-	}
-
-	// --detail repeated the claim in its last line.
-	detail := captureStdout(func() {
-		runTry(cmdCat, []string{"rename the userId variable", "cursor", cmdCat.ModelFor("cursor", core.TierFrontier).ID, "--detail"})
-	})
-	if strings.Contains(detail, "cheaper") || strings.Contains(detail, "~") && strings.Contains(detail, "%") {
-		t.Errorf("--detail quotes a saving next to a move that is not applied:\n%s", detail)
-	}
-	if !strings.Contains(detail, "Rewrite:") || !strings.Contains(detail, "not applied") {
-		t.Errorf("--detail lost its rewrite line or the not-applied summary:\n%s", detail)
 	}
 }

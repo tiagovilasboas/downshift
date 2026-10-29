@@ -1,27 +1,11 @@
-# Architectural Decisions — Downshift Code Intelligence (DCI) MVP v0.1
+# Architectural Decisions
 
-## ADR-001: Strict Domain Isolation
-- `internal/codeintel` is completely decoupled from `internal/core`, `internal/classify`, and adapters.
-- Code Intelligence (context optimization) and Model Routing are orthogonal concerns.
-- DCI does NOT alter routing decisions, does not run in `PreToolUse`, and does not alter subagent models.
-- Neither package imports the other.
-
-## ADR-002: Zero External Runtimes & Determinism
-- Pure Go standard library: `go/parser`, `go/ast`, `go/token`, `crypto/sha256`, `os/exec`.
-- No embeddings, vector databases, tree-sitter, LSP daemons, or LLM calls.
-- Deterministic tokenization (camelCase, PascalCase, snake_case, acronyms, path separators).
-- Deterministic BM25 ranking (k1=1.2, b=0.75, tie-breaking by Score DESC, Path ASC, StartLine ASC).
-
-## ADR-003: Privacy, Security & Fail-Open
-- Read-only execution against validated repository root.
-- No network, no shell interpolation, no symlink traversal.
-- Zero persistence of user prompts, source code snippets, or generated context.
-- Index cache contains only relative paths, SHA-256 hashes, term frequencies, and symbol positions (mode 0600/0700).
-- Any error, timeout, or lack of relevance immediately fails open (exit 0, empty injection).
-- Injected context is clearly delimited as untrusted repository data with prompt injection disclaimers.
-
-## ADR-004: Claude Code Auto-Injection Protocol
-- Hook: `UserPromptSubmit` via `downshift dci hook claude-code`.
-- Schema: JSON on stdin with `hook_event_name`, `cwd`, `session_id`, `prompt`.
-- Response: `{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"..."}}`.
-- Modes: `off` (default), `observe` (metrics only), `active` (injects when eligible).
+- **Branch Exclusiva:** `downshift/mvp-ponto-zero`. Sem PRs paralelos ou branches temporárias.
+- **Autoria:** Estritamente `Tiago Vilas Boas`. Sem menções a IA ou `Co-Authored-By`.
+- **Dogfooding:** Todo comando allowlisted executado via `downshift compactor -- <cmd>`.
+- **SRP & Arquitetura:** Máximo de ~300 linhas por arquivo (teto 500), ~10 funções por arquivo. Separação por domínio de ação.
+- **Fail-Open & Local-First:** Nenhuma falha em hooks ou discovery deve travar a execução do desenvolvedor ou expor dados sensíveis.
+- **O8 (2026-10-28, dono): o LLM escolhe, o Downshift aplica e mede.** Sem tabela de perfis padrão no binário (N11 revogada), sem escalonamento automático após falha e sem piso de risco embutido. Defaults de modelo vão para um playbook do orquestrador (skill instalada pelo setup). O Downshift aplica `policy.json` declarado e o hint do orquestrador. O MCP de delegação volta a ser escopo (O7 reaberta), parte do mesmo binário (`downshift mcp`).
+- **Subagent Force no Claude Code (resolvido, O8):** o setup deixou de gravar `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` (`0c4574a2`). Um valor definido pelo próprio usuário é preservado.
+- **Rota de workers (2026-10-29, dono):** leitura ligada por `DOWNSHIFT_WORKERS=read`; escrita (bypass) só com `DOWNSHIFT_WORKERS=bypass`, sempre em worktree git própria. Padrão desligado.
+- **Ordem de Entrega (2026-10-29):** MVP (etapas 0 a 3, com a 2b) antes do plano runner (etapa 4) e dos outros harnesses (etapa 5). O Batch Loop Runner da Onda 2 fica adiado. Ver [mvp-plan](../../docs/internal/plans/mvp-plan.md).

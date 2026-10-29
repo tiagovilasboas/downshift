@@ -28,12 +28,12 @@ func TestRoute_TaskFocusDownshiftsMechanicalTask(t *testing.T) {
 	if n := len(strings.Fields(p)); n < 80 {
 		t.Fatalf("precondition: %d words", n)
 	}
-	d := core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
+	d := classifiedRoute(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
 	if d.Complexity != core.Trivial || !d.Confident || !d.Guards.TaskFocus {
 		t.Fatalf("got %v confident=%v focus=%v, want confident TRIVIAL by task focus", d.Complexity, d.Confident, d.Guards.TaskFocus)
 	}
-	if !checkWrites(d) || d.Tier != core.TierSmall {
-		t.Fatalf("want an applied downshift to small, got tier=%v safe=%v corrections=%v", d.Tier, d.SafeVerdict, d.Corrections)
+	if d.Tier != core.TierSmall {
+		t.Fatalf("want the small tier, got %v", d.Tier)
 	}
 }
 
@@ -48,12 +48,12 @@ func TestRoute_TaskFocusKeepsRiskFloor(t *testing.T) {
 		if n := len(strings.Fields(p)); n < 80 {
 			t.Fatalf("precondition: %d words", n)
 		}
-		d := core.Route(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
+		d := classifiedRoute(p, "claude-code", catID("claude-code", core.TierFrontier), cat)
 		if len(d.Risk) == 0 || !d.Guards.RiskFloor {
 			t.Fatalf("precondition: %q should floor on risk, got risk=%v floor=%v", bg, d.Risk, d.Guards.RiskFloor)
 		}
-		if d.Tier < core.TierMid || (checkWrites(d) && d.Tier != core.TierFrontier) {
-			t.Errorf("risky brief %q: tier=%v writes=%v corrections=%v; want no write below the requested model", bg, d.Tier, checkWrites(d), d.Corrections)
+		if d.Tier < core.TierMid {
+			t.Errorf("risky brief %q: tier=%v, want mid or above", bg, d.Tier)
 		}
 	}
 }
@@ -66,14 +66,7 @@ func TestRoute_TaskFocusHoldsOnDoubt(t *testing.T) {
 	if n := len(strings.Fields(p)); n < 80 {
 		t.Fatalf("precondition: %d words", n)
 	}
-	for _, tier := range []core.Tier{core.TierSmall, core.TierMid, core.TierFrontier} {
-		current := catID("claude-code", tier)
-		d := core.Route(p, "claude-code", current, cat)
-		if d.Confident {
-			t.Fatalf("got confident %v, want an unconfident read", d.Complexity)
-		}
-		if checkWrites(d) && d.Model.ID != current {
-			t.Errorf("current %v: model rewritten to %s on doubt (corrections=%v)", tier, d.Model.ID, d.Corrections)
-		}
+	if d := classifiedRoute(p, "claude-code", ""); d.Confident {
+		t.Fatalf("got confident %v, want an unconfident read", d.Complexity)
 	}
 }

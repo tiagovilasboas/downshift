@@ -11,6 +11,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/antigravity"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // stubResolver is a minimal core.Resolver modeling an Antigravity-native
@@ -164,6 +165,7 @@ func TestHandle_EmptySubagentsIgnored(t *testing.T) {
 }
 
 func TestHandle_DownshiftsTrivialToFlashLite(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",
@@ -205,6 +207,7 @@ func TestHandle_DownshiftsTrivialToFlashLite(t *testing.T) {
 }
 
 func TestHandle_MidTaskToFlash(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",
@@ -234,6 +237,7 @@ func TestHandle_MidTaskToFlash(t *testing.T) {
 }
 
 func TestHandle_FrontierTaskToPro(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",
@@ -293,6 +297,7 @@ func TestHandle_UnknownSessionDoesNotRewrite(t *testing.T) {
 }
 
 func TestHandle_HeldDecisionDoesNotRewrite(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",
@@ -308,8 +313,7 @@ func TestHandle_HeldDecisionDoesNotRewrite(t *testing.T) {
 			}`),
 		},
 	}
-	// The foreign resolver recommends a model from another harness, so the
-	// guardrail holds the decision (R4_FOREIGN_MODEL) even though the plan
+	// The stub holds the decision (Corrections set) even though the plan
 	// names a session target.
 	out, note, d := antigravity.Handle(withWireSession(ev), stubResolver{foreign: true})
 	if len(d.Corrections) == 0 {
@@ -324,6 +328,7 @@ func TestHandle_HeldDecisionDoesNotRewrite(t *testing.T) {
 }
 
 func TestHandle_ExplicitOnlyTargetIsSkippedForNextSessionModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	ev := antigravity.Event{
 		ToolCall: antigravity.ToolCall{
 			Name: "invoke_subagent",

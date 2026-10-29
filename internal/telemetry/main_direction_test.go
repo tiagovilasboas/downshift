@@ -8,10 +8,14 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // The composition root sets DirectionCatalog; tests stand in for it.
 func TestMain(m *testing.M) {
-	DirectionCatalog = catalog.Load()
+	DirectionCatalog = catalog.TierViewOf(catalog.Load())
+	for _, n := range core.AllHarnessCaps() {
+		DeclaredHarnesses = append(DeclaredHarnesses, HarnessSeam{Harness: n.Harness, ChildEndEvent: n.Caps.ChildEndEvent, UsageSource: n.Caps.UsageSource})
+	}
 	os.Exit(m.Run())
 }

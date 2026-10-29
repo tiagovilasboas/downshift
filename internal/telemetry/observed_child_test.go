@@ -24,18 +24,13 @@ func TestObservedChildTokens_UsageWithoutTokens(t *testing.T) {
 	}
 }
 
-func TestObservedChildTokens_CatalogCostOnlyExcluded(t *testing.T) {
-	// Whole dollars so an int64 cast of USD cannot hide inside a zero sum.
-	actual := 12.5
-	baseline := 40.0
+func TestObservedChildTokens_UsageWithoutTokensExcluded(t *testing.T) {
 	ev := telemetry.Event{
-		Outcome:         telemetry.OutcomeUsage,
-		ActualCostUSD:   &actual,
-		BaselineCostUSD: &baseline,
+		Outcome: telemetry.OutcomeUsage,
 	}
 	sum, rec := telemetry.ObservedChildTokens([]telemetry.Event{ev})
 	if sum != 0 || rec != 0 {
-		t.Fatalf("sum=%d rec=%d, want 0/0 for cost-only usage", sum, rec)
+		t.Fatalf("sum=%d rec=%d, want 0/0 for usage without tokens", sum, rec)
 	}
 
 	withTokens := ev
@@ -44,7 +39,7 @@ func TestObservedChildTokens_CatalogCostOnlyExcluded(t *testing.T) {
 	withTokens.CachedTokens = i64Ptr(10)
 	sum, rec = telemetry.ObservedChildTokens([]telemetry.Event{withTokens})
 	if rec != 1 || sum != 150 {
-		t.Fatalf("sum=%d rec=%d, want 150/1; catalog USD must not enter the token sum", sum, rec)
+		t.Fatalf("sum=%d rec=%d, want 150/1", sum, rec)
 	}
 }
 
@@ -102,10 +97,9 @@ func TestObservedChildTokens_MixedHarnessesFilterByCaller(t *testing.T) {
 }
 
 func TestObservedChildTokens_NonUsageAndCostOnlyDoNotAdd(t *testing.T) {
-	actual := 5.0
 	events := []telemetry.Event{
 		{Outcome: telemetry.OutcomeRewriteEmitted, InputTokens: i64Ptr(999)},
-		{Outcome: telemetry.OutcomeUsage, ActualCostUSD: &actual},
+		{Outcome: telemetry.OutcomeUsage},
 		{
 			Outcome:      telemetry.OutcomeUsage,
 			InputTokens:  i64Ptr(10),
@@ -121,7 +115,7 @@ func TestObservedChildTokens_NonUsageAndCostOnlyDoNotAdd(t *testing.T) {
 func TestAggregate_ObservedChildFields(t *testing.T) {
 	events := []telemetry.Event{
 		{Outcome: telemetry.OutcomeUsage, InputTokens: i64Ptr(100)},
-		{Outcome: telemetry.OutcomeUsage, ActualCostUSD: func() *float64 { v := 0.05; return &v }()},
+		{Outcome: telemetry.OutcomeUsage},
 	}
 	stats := telemetry.Aggregate(events)
 	if stats.ObservedChildUsage != 1 || stats.ObservedChildTokens != 100 {

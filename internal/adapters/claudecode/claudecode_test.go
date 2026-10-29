@@ -12,6 +12,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/hookctx"
 	_ "github.com/tiagovilasboas/downshift/internal/policyfile"
 )
@@ -68,6 +69,7 @@ func TestHandle_IgnoresNonTaskTools(t *testing.T) {
 }
 
 func TestHandle_FallsBackToSessionModel(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := claudecode.Event{
 		ToolName:  "Task",
@@ -98,6 +100,7 @@ func TestHandle_CursorSlugIsNotRewritten(t *testing.T) {
 }
 
 func TestHandle_AgentToolAlias(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := claudecode.Event{
 		ToolName:  "Agent",
@@ -146,6 +149,7 @@ func TestMain(m *testing.M) {
 // A Task payload without a model field and an unconfident small-tier
 // classification must not be rewritten: the child keeps the harness default.
 func TestHandle_NoModelUnconfidentSmallDoesNotRewrite(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	ev := withCatalogSession(claudecode.Event{
 		ToolName:  "Task",
 		ToolInput: json.RawMessage(`{"prompt": "write a function to parse dates"}`),
@@ -293,6 +297,7 @@ func TestHandle_SessionQuotaRespected(t *testing.T) {
 // A full catalog id fails validation and blocks the spawn, so the adapter must
 // write the alias.
 func TestHandle_WritesNativeAliasNotCatalogID(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := claudecode.Event{
 		ToolName: "Task",
@@ -352,6 +357,7 @@ func (r *noNativeResolver) LookupByID(h, id string) (core.Model, bool) {
 // every explicit-model request arrives as the native name. It must be routed
 // like the full id, not held as a foreign model.
 func TestHandle_NativeNameRequestIsRouted(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	requested := nativeOf(core.TierFrontier)
 	if requested == "" {
 		t.Fatal("catalog has no native name for the frontier tier")
@@ -401,6 +407,7 @@ func writePolicy(t *testing.T, dir, body string) {
 }
 
 func TestHandle_PolicyFloorFailsOpen(t *testing.T) {
+	decidertest.Use(t, decidertest.Floor(decidertest.Tier(core.TierSmall)))
 	for name, body := range map[string]string{
 		"invalid": `{"version":1,"min_tier":"huge"}`,
 		"garbage": `not json`,
@@ -423,6 +430,7 @@ func TestHandle_PolicyFloorFailsOpen(t *testing.T) {
 // the current model stand in for it, so a trivial task on a frontier parent is
 // written to the small family name.
 func TestHandle_MissingSessionUsesCatalogCandidates(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	frontierID := catID(core.TierFrontier)
 	ev := claudecode.Event{
 		ToolName: "Task",

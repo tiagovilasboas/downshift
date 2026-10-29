@@ -19,20 +19,10 @@ Flags:
   Fails open: on any error the subagent runs unchanged.
 
 Examples:
-  downshift try "rename the variable userId" %s
+  downshift %s < event.json
 
 Next: downshift doctor, to check the hook is wired
-`, name, purpose, name, harnessFor(name))
-}
-
-// harnessFor names the harness a hook command belongs to, for the example line.
-func harnessFor(name string) string {
-	switch name {
-	case "claude-code", "claude-code-post-tool-use", "claude-code-subagent-stop":
-		return "claude-code"
-	default:
-		return name
-	}
+`, name, purpose, name, name)
 }
 
 // hookHelpTopics covers the harness hooks and the observation commands the
@@ -47,6 +37,7 @@ var hookHelpTopics = map[string]string{
 	"opencode":                  hookHelp("opencode", "OpenCode subagent_spawn_intent route hook (wire v1)"),
 	"claude-code-post-tool-use": hookHelp("claude-code-post-tool-use", "Claude Code post-spawn observation: records what the subagent did"),
 	"claude-code-subagent-stop": hookHelp("claude-code-subagent-stop", "Claude Code SubagentStop observation: records usage and verification"),
+	"claude-code-session-start": hookHelp("claude-code-session-start", "Claude Code SessionStart: adds one context line that points the orchestrator at the MCP providers tool"),
 	"honor": `downshift honor — Post-spawn observation for a harness: records whether the routing was honored
 
 Usage:
@@ -61,7 +52,7 @@ Examples:
 
 Next: downshift session, to see the recorded decisions
 `,
-	"usage": `downshift usage — Post-spawn usage observation for a harness: records tokens and cost
+	"usage": `downshift usage — Post-spawn usage observation for a harness: records tokens
 
 Usage:
   downshift usage <harness>

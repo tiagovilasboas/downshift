@@ -19,7 +19,7 @@ Read-only. Never edit settings, hooks or context files without the user's approv
 - `downshift quota status --harness <harness>`: only when quota evidence is in use.
 - `downshift doctor` also lists model-override variables that are set (for any harness that declares one).
 - Project floor: if `.downshift/policy.json` exists in the project, read it; an invalid file is ignored (fail-open), so validate its tiers and risk names by eye.
-- `downshift try "<task>" <harness>`: reproduce one decision.
+- `downshift session --why`: why each spawn of this session got its model.
 
 ## 3. Fixed context cost
 

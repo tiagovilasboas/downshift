@@ -346,13 +346,13 @@ func TestEmbeddedClaudeCodeSavingsMatchesREADME(t *testing.T) {
 	}
 	frontier := c.ModelFor("claude-code", core.TierFrontier)
 	small := c.ModelFor("claude-code", core.TierSmall)
-	if frontier.ID != "claude-opus-5-5" || small.ID != "claude-haiku-4-5" {
-		t.Fatalf("claude-code frontier/small = %s/%s, want claude-opus-5-5/claude-haiku-4-5", frontier.ID, small.ID)
+	if frontier.ID != "claude-opus-5-5" || small.ID != "claude-haiku-5-5" {
+		t.Fatalf("claude-code frontier/small = %s/%s, want claude-opus-5-5/claude-haiku-5-5", frontier.ID, small.ID)
 	}
-	// (4+20 - (1.00+5.00)) / (4+20) = 0.75: the small target is the model the
-	// native 'haiku' alias runs (Haiku 4.5, observed 2026-10-15), not Haiku 5.5.
-	if got := c.SavingsRatio(frontier, small); got < 0.7499 || got > 0.7501 {
-		t.Errorf("SavingsRatio(frontier→small) = %.4f, want 0.75 (docs say ~75%%)", got)
+	// (4+20 - (0.10+0.50)) / (4+20) = 0.975: the small target is the newest
+	// haiku, which the native 'haiku' alias runs (observed 2026-10-28).
+	if got := c.SavingsRatio(frontier, small); got < 0.9749 || got > 0.9751 {
+		t.Errorf("SavingsRatio(frontier→small) = %.4f, want 0.975 (README must be recomputed)", got)
 	}
 }
 
@@ -381,33 +381,34 @@ func TestEmbeddedCatalogNeverEmitsNonexistentHaikuID(t *testing.T) {
 			t.Errorf("harness %q emits nonexistent model id %q; use claude-haiku-4-5", e.Harness, e.ID)
 		}
 	}
-	if small := c.ModelFor("claude-code", core.TierSmall); small.ID != "claude-haiku-4-5" {
-		t.Errorf("claude-code small = %q, want claude-haiku-4-5", small.ID)
+	if small := c.ModelFor("claude-code", core.TierSmall); small.ID != "claude-haiku-5-5" {
+		t.Errorf("claude-code small = %q, want claude-haiku-5-5 (the newest haiku)", small.ID)
 	}
 }
 
-// The native 'haiku' alias runs Haiku 4.5 (Claude Code 2.1.289, observed
-// 2026-10-15). Haiku 5.5 must keep its own price on its exact id, must never
-// be the native small target, and must not own the 'claude-haiku' alias.
-func TestEmbeddedClaudeCodeHaiku55IsNotTheNativeTarget(t *testing.T) {
+// The native 'haiku' alias runs the newest haiku (Haiku 5.5, observed
+// 2026-10-28; it ran Haiku 4.5 on 2026-10-15). Haiku 5.5 is the small target
+// and owns the 'claude-haiku' family; Haiku 4.5 keeps its own exact id and
+// price and is not written by name.
+func TestEmbeddedClaudeCodeHaiku55IsTheNativeTarget(t *testing.T) {
 	c, err := parse(embeddedJSON)
 	if err != nil {
 		t.Fatal(err)
 	}
 	small := c.ModelFor("claude-code", core.TierSmall)
-	if small.Native != "haiku" || small.ID != "claude-haiku-4-5" || small.InputM != 1.00 || small.OutputM != 5.00 {
-		t.Fatalf("claude-code small = %+v, want native haiku on claude-haiku-4-5 at $1/$5", small)
+	if small.Native != "haiku" || small.ID != "claude-haiku-5-5" || small.InputM != 0.10 || small.OutputM != 0.50 {
+		t.Fatalf("claude-code small = %+v, want native haiku on claude-haiku-5-5 at $0.10/$0.50", small)
 	}
-	if small.CacheWriteM != 1.25 || small.CacheReadM != 0.10 {
-		t.Errorf("claude-haiku-4-5 cache = read %v / write %v, want 0.10 / 1.25", small.CacheReadM, small.CacheWriteM)
+	if small.CacheWriteM != 0.125 || small.CacheReadM != 0.01 {
+		t.Errorf("claude-haiku-5-5 cache = read %v / write %v, want 0.01 / 0.125", small.CacheReadM, small.CacheWriteM)
 	}
-	m55, ok := c.LookupByID("claude-code", "claude-haiku-5-5")
-	if !ok || m55.ID != "claude-haiku-5-5" || m55.Native != "" || m55.InputM != 0.10 || m55.OutputM != 0.50 {
-		t.Errorf("claude-haiku-5-5 = %+v (ok %v), want its own entry with no native name at $0.10/$0.50", m55, ok)
+	m45, ok := c.LookupByID("claude-code", "claude-haiku-4-5")
+	if !ok || m45.ID != "claude-haiku-4-5" || m45.Native != "" || m45.InputM != 1.00 || m45.OutputM != 5.00 {
+		t.Errorf("claude-haiku-4-5 = %+v (ok %v), want its own entry with no native name at $1/$5", m45, ok)
 	}
-	for _, id := range []string{"claude-haiku", "claude-haiku-4-5-20251001", "claude-haiku-4-5"} {
-		if m, ok := c.LookupByID("claude-code", id); !ok || m.ID != "claude-haiku-4-5" {
-			t.Errorf("LookupByID(%q) = %s, want claude-haiku-4-5", id, m.ID)
+	for _, id := range []string{"claude-haiku", "claude-haiku-5-5"} {
+		if m, ok := c.LookupByID("claude-code", id); !ok || m.ID != "claude-haiku-5-5" {
+			t.Errorf("LookupByID(%q) = %s, want claude-haiku-5-5", id, m.ID)
 		}
 	}
 }

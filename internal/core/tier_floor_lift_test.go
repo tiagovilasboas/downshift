@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // An operator tier floor is a deterministic lift: R7 and R8 must not hold it,
@@ -35,6 +36,7 @@ func TestTierFloor_UnconfidentPromptStillRewrites(t *testing.T) {
 		{"unknown parent, known ladder", "", ladder},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			decidertest.Use(t, decidertest.Floor(decidertest.Unconfident(core.TierSmall)))
 			d := core.Route("help", ccHarness, tc.current, cat)
 			if d.Confident || !d.Guards.PolicyFloor || d.Tier != core.TierFrontier {
 				t.Fatalf("precondition: confident=%v floor=%v tier=%v", d.Confident, d.Guards.PolicyFloor, d.Tier)

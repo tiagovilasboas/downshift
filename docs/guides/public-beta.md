@@ -75,7 +75,7 @@ Open these only if a search shows no duplicate:
 
 ## LinkedIn draft (do not post until the maintainer says so)
 
-Downshift is a local hook that picks a smaller model for a coding-agent subtask using deterministic rules (English and Portuguese) and an in-process hash, not an LLM in the loop. It is still **beta**: Claude Code is the path with honor evidence; Cursor honor and real billing comparisons are open. If you run it for a week, `downshift stats --export` (counts only, no prompts) is the most useful thing you can send. Apache-2.0. https://github.com/tiagovilasboas/downshift
+Downshift is a local hook that applies the orchestrator's model choice for a coding-agent subtask within your declared policy, with no LLM call in its own code. (Since O8, 2026-10-28, it no longer picks a model with classifier rules.) It is still **beta**: Claude Code is the path with honor evidence; Cursor honor and real billing comparisons are open. If you run it for a week, `downshift stats --export` (counts only, no prompts) is the most useful thing you can send. Apache-2.0. https://github.com/tiagovilasboas/downshift
 
 ## Cost of this readiness pass
 

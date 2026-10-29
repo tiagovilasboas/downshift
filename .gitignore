@@ -1,5 +1,6 @@
 # Binaries (compiled output at repo root or /tmp), not the cmd/downshift source
 /downshift
+/cmd/downshift/downshift
 downshift-bin
 *.exe
 *.dll

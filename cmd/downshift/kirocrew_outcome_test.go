@@ -9,13 +9,15 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
 // KiroCrew never rewrites: its events are "blocked" (exit 2) or "allow"
-// (exit 0), never "rewrite_emitted". Runs the registered hook, which is the
-// shared runner in policy mode.
-func TestRunKiroCrewHook_RecordsAllowAndBlocked(t *testing.T) {
+// (exit 0), never "rewrite_emitted". Each case's decider stub picks the tier,
+// so the prompt only labels the case and the outcome follows the decision. Runs
+// the registered hook, which is the shared runner in policy mode.
+func TestRunKiroCrewHook_OutcomeFollowsTheDecision(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	path := filepath.Join(t.TempDir(), "events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", path)
@@ -28,15 +30,20 @@ func TestRunKiroCrewHook_RecordsAllowAndBlocked(t *testing.T) {
 	cases := []struct {
 		task, wantOutcome string
 		wantRC            int
+		decider           core.Decider
 	}{
-		{"rename the userId variable to userIdentifier", telemetry.OutcomeBlocked, 2},
-		{"look at the logs folder and tell me what you see", telemetry.OutcomeAllow, 0},
-		{"rearchitect the payment system across services", telemetry.OutcomeAllow, 0},
+		{"rename the userId variable to userIdentifier", telemetry.OutcomeBlocked, 2, decidertest.Tier(core.TierSmall)},
+		{"look at the logs folder and tell me what you see", telemetry.OutcomeAllow, 0, decidertest.Keep()},
+		{"rearchitect the payment system across services", telemetry.OutcomeAllow, 0, decidertest.Tier(core.TierFrontier)},
 	}
 	for _, tc := range cases {
 		stdin := `{"tool_name":"spawn_run","tool_input":{"task":"` + tc.task + `","model":"` + frontierID + `"}}`
 		var rc int
-		captureStderr(func() { rc = harnessRegistry["kirocrew"].Hook(strings.NewReader(stdin), cmdCat) })
+		func() {
+			restore := core.SetDecider(tc.decider)
+			defer restore()
+			captureStderr(func() { rc = harnessRegistry["kirocrew"].Hook(strings.NewReader(stdin), cmdCat) })
+		}()
 		if rc != tc.wantRC {
 			t.Fatalf("%q: rc=%d, want %d", tc.task, rc, tc.wantRC)
 		}

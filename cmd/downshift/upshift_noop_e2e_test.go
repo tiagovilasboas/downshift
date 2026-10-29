@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 // An UPSHIFT whose only reachable target is the requested model is not a
@@ -21,6 +22,7 @@ import (
 // while the child ran on the requested model. The spawn must go out unchanged,
 // be recorded as allow, and final_model must be what the hook emitted.
 func TestHookE2E_ClaudeCodeUpshiftToRequestedModelIsNotRewritten(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierFrontier))
 	t.Setenv("HOME", t.TempDir())
 	eventLog := filepath.Join(t.TempDir(), "events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)

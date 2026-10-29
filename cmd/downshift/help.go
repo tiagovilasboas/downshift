@@ -28,11 +28,10 @@ func usageShort(w io.Writer) {
 Get started
   downshift setup [--dry-run]      Wire the hooks into every harness found (backup, diff, --undo)
   downshift doctor                 Checklist: binary, hooks per harness, state, with a fix per failure
-  downshift try "<task>"           What Downshift would pick for a task, without spawning anything
 
 See the effect
-  downshift stats                  Decisions and estimated savings (list price, not an invoice)
-  downshift report                 Measured: routed vs control group, cost per completed task, with CI
+  downshift stats                  Decisions and estimated token savings (not an invoice)
+  downshift report                 Measured: routed vs control group, tokens per completed task, with CI
   downshift session                This session's subagents as a tree (--why, --pause)
 
 Save context
@@ -40,17 +39,16 @@ Save context
 
 Fix things
   downshift config                 Every effective setting with its value and source
-  downshift feedback list          Routing ids waiting for your review
 
 Hooks (your harness calls these, you do not)
   downshift claude-code | cursor | codex | antigravity | kirocrew | opencode
 
 More
-  downshift help --all             Every command: watch, models, quota, context, benchmark and the rest
+  downshift help --all             Every command: watch, models, quota, context, dci and the rest
   downshift version                Print the binary version
 
 Examples
-  downshift try "rename the variable userId"
-  downshift try "rearchitect the payment flow" cursor claude-haiku-5-5
+  downshift stats --days=7
+  downshift session --why
 `)
 }

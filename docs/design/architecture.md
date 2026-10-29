@@ -11,17 +11,31 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 A **single Go binary** (`downshift`) that runs as a **harness hook** (JSON on
 stdin, JSON on stdout) and as an offline CLI over its own event log. On the hook
-path it classifies the task a main agent delegates, applies policy, catalog and
-session rules, and returns an **updated tool input** with `model` (and, where
-the harness takes it, `reasoning_effort`) rewritten. Around that one decision
+path it reads the delegation a main agent makes, applies the orchestrator's model
+choice within the user's declared policy, catalog and session rules, and returns
+an **updated tool input** with `model` (and, where the harness takes it,
+`reasoning_effort`) rewritten, or the request unchanged. Around that one decision
 it keeps the evidence needed to say whether the rewrite was honored, what the
 child used, and whether routing beat a measured baseline.
 
 Read it as an **optimization layer for agent execution**, not only a router:
-one deterministic decision per delegation, guardrails that hold under doubt,
+the orchestrator's choice applied deterministically per delegation, guardrails that hold under doubt,
 observation of what the harness then did, and offline evaluation that feeds
-the next policy change. The hook itself stays small: **no network, no LLM, no
-prompt storage** on the hot path, and every failure fails open.
+the next policy change. The hook itself stays small: **no network, no LLM call by
+Downshift's code, no prompt storage** on the hot path, and every failure fails open.
+
+> **Status under O8 (2026-10-28).** The orchestrator LLM chooses agent, model and
+> effort; Downshift applies the choice, enforces `policy.json` and measures. The
+> decider (`internal/routing/decide`) resolves: a pinned model is kept, then a declared
+> profile, then the first matching declared rule, then the orchestrator's tier hint
+> (down only for now), else the requested model is kept. The guard refuses only a
+> foreign id or an `explicit_only` model and keeps on doubt. Removed on 2026-10-28: the
+> built-in agent-type table (N11), the automatic upgrade after a failure, the built-in
+> risk floor and veto, and the economy effect on built-in types. The classifier now
+> feeds telemetry, user-declared floors and DCI; it does not decide. Where the sections
+> below describe the classifier or the risk floor as the decision, they are the
+> pre-O8 pipeline. Added: playbooks (`downshift playbook`) and the `downshift-orchestrator`
+> skill (implemented); `downshift mcp serve` (implemented: four information tools; the worker tools are specified).
 
 ---
 
@@ -45,11 +59,11 @@ external tool. Dotted boxes are opt-in or shadow and never change the route.
    native exports (never fetched during a hook)
              ▼
  classify + risk [D]  Classify (signals) → hash semantic boost → risk floor /
-   abstain → NB second opinion (shadow unless opted in) ┆ adapt / score (shadow) ┆
+   abstain → NB second opinion (shadow unless opted in) ┆ adapt ┆
              ▼
  Route + Check [D]  tier → effort → session-resolved model → verdict vs current →
    R1 R2 R4 R5 R6 R7 R8 R9 (any hit ⇒ OK, keep current) → project floor
-   (.downshift/policy.json, re-checked) ┆ adapt memory, score path (shadow/opt-in) ┆
+   (.downshift/policy.json, re-checked) ┆ adapt memory ┆
              ▼
  PlanSession [D]  foreign id → hold · explicit_only → preserve · unknown
    session → keep · pick the session model at the tier (exhausted quota never
@@ -58,7 +72,7 @@ external tool. Dotted boxes are opt-in or shadow and never change the route.
  fate [D]  control group (10%) / per-session pause / DOWNSHIFT_NO_ROUTE ⇒ allow
    unchanged, logged as baseline; else emit updatedInput (model, effort) or,
    for kirocrew, exit 2 + stderr policy
-             │  stderr: correlation id, decision summary, feedback id
+             │  stderr: correlation id, decision summary
              ▼
  harness spawns the subagent [H]  (may honor, drop or reject the rewrite:
    docs/reference/harness-matrix.md)
@@ -68,15 +82,13 @@ external tool. Dotted boxes are opt-in or shadow and never change the route.
    `downshift end <harness>` is the same recorder; Cursor/Codex ends unverified
              ▼
  event log [D]  ~/.downshift/events.jsonl, prompt-free · loop-events.jsonl
-   (features + tier, for feedback) · sensor: tool output bytes (observe only)
+   (features + tier) · sensor: tool output bytes (observe only)
              ▼
  read-outs [D]  stats (tokens saved) · report (routed vs control, tokens per
    completed task, rework, token check) · session / watch (live views over
    the log) · doctor and skills (diagnosis)
              ▼
- tuning [D, offline]  benchmark (classifier KPIs on labelled fixtures) ·
-   eval-outcome · feedback → reviewed required_tier labels → train ·
-   shadow-report · classifier tests
+ tuning [D, offline]  eval-outcome · classifier tests
 ```
 
 ### Read the decision, then the execution
@@ -142,8 +154,7 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    Only a deterministic lift (risk, opted-in NB upshift, operator floor)
    may move up. The project floor (`internal/policyfile`, `TierFloorHook`) runs
    after `Check` and re-checks. Adapt memory records a would-be tier and does
-   not change it; the capability score path runs only with
-   `DOWNSHIFT_SCORE_ROUTING=1` and behind the same safe-verdict gate.
+   not change it.
 6. **Session plan and fate** `[D]`. `PlanSession` holds foreign ids, preserves
    `explicit_only` models, keeps the model when the session is unknown, and
    selects the session model at the needed tier, skipping exhausted quota. The
@@ -175,16 +186,12 @@ Editable sources: [BDI SVG](../img/downshift-bdi.svg) and
    them shows a dollar, and neither does `report`.
    `report` compares routed spawns with the control group, counting "completed"
    only for harnesses that declare an end event and have end records;
-   `verification-report` groups observed checks and token-call counts by tier;
    `session` and `watch` read the same log.
-10. **Benchmarks and tuning** `[D]`, offline. `benchmark` scores the classifier
-    on labelled fixtures (tier accuracy, unsafe downgrade, over-routing);
-    `eval-outcome` runs the outcome suite (minimal fixtures in OSS, full suite
+10. **Benchmarks and tuning** `[D]`, offline. `eval-outcome` runs the outcome suite (minimal fixtures in OSS, full suite
     in downshift-labs; it compiles and runs task and model-written Go code and
     runs the `--solver` string through `sh -c`, with no sandbox, so it is for
-    maintainers on task sets they trust); `feedback` attaches success/retry/failed to a routing
-    id, and only reviewed `required_tier` labels enter `train`; `shadow-report`
-    compares candidate classifiers that never touched a route.
+    maintainers on task sets they trust).
+    The classifier benchmark, feedback, training and shadow comparison were removed in wave A (2026-10-26); see [routing v2](../design/routing-v2.md).
 
 ---
 
@@ -198,7 +205,7 @@ points down or sideways to an inner package, and `core` never points back out.
         │
  ┌──────▼───────────────────────────────────────────────────────────────┐
  │ cmd/downshift   harnessRegistry · runHookAdapter · setup · doctor    │
- │   blank-imports: nbopinion policyfile quota routeadapt (init → hooks)│
+ │   blank-imports: policyfile quota                      (init → hooks)│
  └──────┬───────────────────────────────────────────────────────────────┘
         ▼
  ┌─────────────────────────────────────────────────────────────────────┐
@@ -211,7 +218,7 @@ points down or sideways to an inner package, and `core` never points back out.
  ┌─────────────────────────────────────────────────────────────────────┐
  │ internal/core  Route · Check R1-R9 · PlanSession · Resolver · Caps   │
  │   imports only: classify fuse quotamodel session                     │
- │   hook vars (ports): MemoryAdjustHook TierFloorHook ScoreHook        │
+ │   hook vars (ports): MemoryAdjustHook TierFloorHook                  │
  │   NBSuggestHook NBTrivialHook LoadQuotaHook LoadNativeQuotaHook      │
  │   ParseNativeQuotaHook RegisterNativeQuotaHook                       │
  └──▲───────────────────────────────▲──────────────────────────────────┘
@@ -220,10 +227,10 @@ points down or sideways to an inner package, and `core` never points back out.
  │ hook providers            │   │ services over core                    │
  │ quota → LoadQuota*        │   │ catalog (Resolver) · discovery · models│
  │ policyfile → TierFloor    │   │ telemetry · hookport · childend       │
- │ adapt/routeadapt → Memory │   │ contextopt · sensor · server          │
- │ scoreindex → ScoreHook    │   │ benchmark · outcome · routingv2/*     │
- │ nbopinion (+nbtier) → NB  │   │ decisionintelligence · accounting     │
- │                           │   │ api · gateway · cursorbridge · replay │
+ │                           │   │ contextopt · sensor · server          │
+ │                           │   │ outcome                               │
+ │                           │   │ accounting                            │
+ │                           │   │ api · cursorbridge                    │
  │                           │   │ shellwrap · execwrap (compressor)     │
  └───────────────────────────┘   └───────────────────────────────────────┘
  leaf packages used by the layers above: classify semantic quotamodel paths
@@ -241,7 +248,6 @@ Edges worth knowing, all read from the code:
 - `catalog` → `core`, `paths`. `discovery` → `catalog`, `core`, `paths`.
   `models` → `catalog`, `core`, `paths`.
 - `policyfile` → `core`, `hookctx`. `quota` → `core`, `paths`, `quotamodel`.
-  `nbopinion` → `core`, `nbtier`. `routeadapt` → `adapt`, `core`.
 - `hookutil` → `core` (shared payload helpers; it is not a leaf).
 - Removed on 2026-10-19 because no production package imported them:
   `internal/routecache`, `internal/orchestration`, `internal/routingv2/router`
@@ -251,11 +257,11 @@ Invariant checks run for this refresh (all from the repository root):
 
 | Invariant | Command | Result |
 |---|---|---|
-| Core production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter | `go list -deps ./internal/core \| grep -E 'internal/(quota\|nbtier\|nbopinion\|catalog\|telemetry\|adapt\|policyfile\|scoreindex\|adapters)(/\|$)'` | holds (no match) |
+| Core production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile` or an adapter | `go list -deps ./internal/core \| grep -E 'internal/(quota\|nbtier\|nbopinion\|catalog\|telemetry\|adapt\|policyfile\|adapters)(/\|$)'` | holds (no match) |
 | `session` does not import `core` | `go list -deps ./internal/session \| grep 'internal/core$'` | holds |
 | `fuse` does not import `core` | `go list -deps ./internal/fuse \| grep 'internal/core$'` | holds |
 | `codeintel` does not import `core` or `classify` | `go list -deps ./internal/codeintel \| grep -E 'internal/(core\|classify)$'` | holds |
-| `core` test files import `catalog`, `nbopinion`, `nbtier`, `quota` | `go list -f '{{join .TestImports "\n"}}' ./internal/core` | true; not in the binary, but those tests run with the registered hooks |
+| `core` test files import `catalog`, `nbtier`, `quota` | `go list -f '{{join .TestImports "\n"}}' ./internal/core` | true; not in the binary, but those tests run with the registered hooks |
 
 No test or CI step enforces these checks; they are manual (see Known gaps).
 
@@ -300,13 +306,12 @@ All under `~/.downshift/` (override `DOWNSHIFT_STATE_DIR`; legacy
 
 | File | Written by | Mode |
 |---|---|---|
-| `events.jsonl` (+ rotated backups) | hook, `end`, `feedback` | `0600`, no fsync |
+| `events.jsonl` (+ rotated backups) | hook, `end` | `0600`, no fsync |
 | `loop-events.jsonl`, `dci-events.jsonl`, `probe.jsonl` | hook, DCI hook, `probe` | `0600` |
 | `quota.json` | `quota` (temp file, atomic rename; lock dir) | `0600` temp file |
 | `session-models.json` (operator), `discovered.json` (24 h TTL cache) | operator; `setup` and `models discover` | operator-owned; temp file `0600` |
 | `catalog.json` (user override), `weights.json`, `adapt-memory.json` | operator, offline tools | operator-owned; `adapt-memory.json` `0600` |
 | `paused/<session hash>` | `downshift session --pause` | `0600` |
-| score cache and refresh stamp | `scoreindex`, `scorerefresh` | `0600` |
 | `context-optimization.json` | `context enable` | `0644` (no secret inside) |
 | DCI index cache | `codeintel` | dir `0700`, file `0600` |
 
@@ -355,7 +360,7 @@ sensor coverage depends on the harness, not just on emitted JSON.
 |---|---|---|---|
 | Routing safety / behaviour | Session metadata and project policy contract (inferencial); shared guards and tier floors (computacional) | Resolver, guardrail and all-adapter conformance tests (computacional) | Shared core; a passing test does not prove native rewrite honor |
 | Cross-harness architecture / architecture fitness | Adapters parse/emit; policy stays in shared code (inferencial, `AGENTS.md`) | Conformance tests and code review against that boundary (computacional + inferencial) | Repository / PR / CI |
-| Cost and outcome / behaviour | Control-group and evidence protocol (inferencial) | Honor, child-end and usage records; `report` and `verification-report` (computacional) | Claude Code has the most complete records; absent evidence stays unknown |
+| Cost and outcome / behaviour | Control-group and evidence protocol (inferencial) | Honor, child-end and usage records; `report` (computacional) | Claude Code has the most complete records; absent evidence stays unknown |
 | Privacy and upkeep / maintainability | Prompt-free telemetry and bounded hook I/O contracts (inferencial) | Existing privacy, payload and documentation checks (computacional) | Repository checks; metadata rather than raw task text is persisted |
 
 Human review decides whether offline findings justify a policy change. The
@@ -372,18 +377,14 @@ tests, a security review or a production signal.
 | Code Intelligence (DCI) | Independent subsystem: discovers repository code via Git (`discover.go`), extracts Go AST and multi-language structural symbols & calls (`parse.go`, `parse_lang.go`), builds incremental inverted index with reverse call graph (`index.go`), scores via BM25 with Production-First weighting & Call-Graph Co-Reference boost (`rank.go`), abstains on conversational chatter (`abstain.go`), packages structural sketches with downstream blast radius and prompt-injection defense within configurable budget (`pack.go`), and auto-injects via multi-harness hooks (`UserPromptSubmit`). CLI queries via `downshift dci impact` and `inspect`. Strictly decoupled from model routing. | D | `internal/codeintel/` |
 | Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `probe` (maintainer). Catalog list prices (`prices_as_of`, refreshed by the weekly `sync-prices` PR, [prices.md](../reference/prices.md)) inform routing; current reports expose token counts and no dollar amounts. | D | `internal/telemetry`, `internal/childend`, `.github/workflows/sync-prices.yml` |
 | Diagnosis and recommendations | `doctor` (binary, state dir, catalog, hooks per harness, model override, quota, policy, context optimization, companion, semantic boost) with a `fix` per failed check; skills `downshift-setup`, `downshift-audit`, `cost-reducer` write nothing without a yes. | D | `cmd/downshift/doctor*.go`, `skills/` |
-| Benchmark and economic evaluation | Classifier KPIs, outcome evals, control-group report with its token check, feedback and offline training. Public `benchmark/` holds the published report; datasets stay in downshift-labs. | D | `internal/benchmark`, `internal/outcome`, `internal/routingv2/training` |
+| Benchmark and economic evaluation | Outcome evals and control-group report with its token check. Public `benchmark/` holds the published report; datasets stay in downshift-labs. | D | `internal/outcome` |
 
 ### Shadow and opt-in paths
 
 | Path | Status | Switch |
 |---|---|---|
-| adapt memory (`internal/adapt`) | records a would-be tier; a present file does not change `Tier` | file under the state dir |
-| capability score routing | live only when enabled, behind the safe-verdict gate | `DOWNSHIFT_SCORE_ROUTING=1` |
 | NB upshift | opinion always logged; applied only when enabled | `DOWNSHIFT_NB_UPSHIFT=1` |
-| candidate classifier (`routingv2/shadow`) | observe; `shadow-report` compares | `DOWNSHIFT_SHADOW_WEIGHTS` |
-| `decisionintelligence` | advisory record on every event, `Apply: false` | none |
-| lifecycle observer, LangGraph `orchestration/` | disabled by default; pick no models | config |
+| lifecycle observer | disabled by default; pick no models | config |
 
 ---
 
@@ -396,7 +397,7 @@ tests, a security review or a production signal.
   (plus an optional status line); context compression is observe-only unless
   the user pipes output through `downshift context compress` themselves.
 - **Does not store prompts.** Task text stays in memory for feature extraction;
-  the event log, feedback store, probe and telemetry carry metadata only.
+  the event log, probe and telemetry carry metadata only.
 - **Does not run the subagent or guarantee the rewrite.** The harness executes
   and may ignore `updatedInput`; the matrix records what each one honors.
 
@@ -406,7 +407,7 @@ Downshift's codebase and documentation are structured strictly according to Clea
 
 | Domain Layer | Clean Architecture Role | Responsibilities & Invariants | Core Packages | Key Documents |
 |---|---|---|---|---|
-| **Domain 1: Subagent Model Routing & Guardrails** | Core Domain / Business Logic | Deterministic subagent routing, regex signal scoring, monotonic hash semantic boost, R1-R9 guardrails (holding unconfident moves under doubt), project tier floor (`.downshift/policy.json`), session candidate allowlists, and quota gating. Invariants: bounded reads (1 MiB), fail-open on timeout or error, zero network/LLM on hot path, zero prompt storage. | `internal/core`, `internal/classify`, `internal/fuse`, `internal/session`, `internal/quotamodel`, `internal/catalog`, `internal/semantic`, `internal/nbopinion`, `internal/policyfile` | [../domains/subagent-routing.md](../domains/subagent-routing.md), [architecture.md](architecture.md), [router-generalization.md](router-generalization.md), [../reference/complexity-weights.md](../reference/complexity-weights.md), [../reference/session-models.md](../reference/session-models.md) |
+| **Domain 1: Subagent Model Routing & Guardrails** | Core Domain / Business Logic | Deterministic subagent routing, regex signal scoring, monotonic hash semantic boost, R1-R9 guardrails (holding unconfident moves under doubt), project tier floor (`.downshift/policy.json`), session candidate allowlists, and quota gating. Invariants: bounded reads (1 MiB), fail-open on timeout or error, zero network/LLM on hot path, zero prompt storage. | `internal/core`, `internal/classify`, `internal/fuse`, `internal/session`, `internal/quotamodel`, `internal/catalog`, `internal/semantic`, `internal/policyfile` | [../domains/subagent-routing.md](../domains/subagent-routing.md), [architecture.md](architecture.md), [router-generalization.md](router-generalization.md), [../reference/complexity-weights.md](../reference/complexity-weights.md), [../reference/session-models.md](../reference/session-models.md) |
 | **Domain 2: Code Intelligence & Context Layer (DCI)** | Autonomous Domain Subsystem | Zero-runtime AST structural symbol and call extraction (Go, TS/JS, Python, Rust, PHP, Java, C#), incremental inverted index, reverse call-graph blast radius analysis (`InvertedIndex.Callers`), BM25 ranking with Production-First weighting & call-graph co-reference boosting, conversational abstention, and structural context packaging with prompt-injection delimiters (`<downshift-code-context>`). Invariants: strict domain isolation (zero imports between `internal/codeintel` and `core`/`classify`), strict latency budgets (cold <= 2500ms, warm p95 <= 300ms), fail-open (timeouts/errors exit 0), epistemic honesty (records only observed counts and byte sizes, never synthetic dollar savings). | `internal/codeintel` | [../domains/code-intelligence.md](../domains/code-intelligence.md), [code-intelligence.md](code-intelligence.md), [../evidence/dci-v04-blast-radius.md](../evidence/dci-v04-blast-radius.md), [../evidence/dci-mvp-v01.md](../evidence/dci-mvp-v01.md) |
 | **Domain 3: Output Compaction & Context Optimization** | Supporting Domain / Optimization | Native AST/JSON context compressor (`safe` mode CLI compaction), observe-only tool output sensor (PostToolUse byte measurement and hypothetical token reduction), Headroom companion detection & telemetry (`context enable headroom`), and initial session context policy (`opusplan`, plan mode). Invariants: PostToolUse hook never alters live output seen by the model (observe-only); companion tools are detected and recorded, never installed, wrapped, or launched. | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` | [../domains/context-optimization.md](../domains/context-optimization.md), [context-optimization.md](context-optimization.md), [../guides/companions.md](../guides/companions.md), [../../skills/cost-reducer/SKILL.md](../../skills/cost-reducer/SKILL.md) |
 | **Domain 4: Observability, Evidence & Verification** | Telemetry, Auditing & Evaluation | Prompt-free event logging (`events.jsonl`), 10% unrouted control group A/B baseline, token savings reports (`stats`, `report`; one definition in `telemetry.Summarize`), verification reports (`verification: passed|failed|none`), capability matrix, and evidence ladder (rungs A-E). Invariants: telemetry persists metadata only; child-end tokens are stored as observed counts, and no dollar is written; unobserved ports remain absent, never inferred. | `internal/telemetry`, `internal/childend`, `internal/hookport`, `internal/server`, `internal/benchmark`, `internal/outcome` | [../domains/observability-telemetry.md](../domains/observability-telemetry.md), [engineering-loop.md](engineering-loop.md), [../reference/capability-matrix.md](../reference/capability-matrix.md), [../guides/report.md](../guides/report.md), [../guides/verification.md](../guides/verification.md), [../guides/evidence.md](../guides/evidence.md) |
@@ -419,29 +420,28 @@ Downshift's codebase and documentation are structured strictly according to Clea
 | Package | Responsibility |
 |---------|----------------|
 | `internal/classify` | Regex classifier, `signals.go`, language guard, risk floor. No tier, no harness, no catalog |
-| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify`, `fuse`, `quotamodel` and `session` (checked 2026-10-19: `go list -deps ./internal/core` lists only those plus `semantic` and `paths`). Production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile`, `scoreindex` or an adapter. Core test files do import `catalog`, `nbopinion`, `nbtier` and `quota`; they are not in the binary. Optional layers plug in through hook variables set in their `init` (see Known gaps). Score selection stays here on purpose (`ScoreHook`); do not merge it with the naive-Bayes opinion. `NBUpshift` and `NBDownshift` stay on `Decision`. Env stays a typed snapshot set at the edge (`SetConfig`) |
+| `internal/core` | Route policy: `TierOf`, `Route`, guardrails, session routing (`PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent`, `CanWriteSessionID`), escalation, self-check, `HarnessCapabilities`. Imports `classify`, `fuse`, `quotamodel` and `session` (checked 2026-10-19: `go list -deps ./internal/core` lists only those plus `semantic` and `paths`). Production sources do not import `quota`, `nbtier`, `nbopinion`, `catalog`, `telemetry`, `adapt`, `policyfile` or an adapter. Core test files do import `catalog`, `nbtier` and `quota`; they are not in the binary. Optional layers plug in through hook variables set in their `init` (see Known gaps). `NBUpshift` and `NBDownshift` stay on `Decision`. Env stays a typed snapshot set at the edge (`SetConfig`) |
 | `internal/quotamodel` | Pure quota evidence types: `Status`, `Window`, `Snapshot`, `Validate`, `Evaluate`, `Abandoned`, `SourceName`. No file I/O. Landed: `core` imports this package; file reads and native parsing enter through `LoadQuotaHook`, `LoadNativeQuotaHook`, `ParseNativeQuotaHook` and `RegisterNativeQuotaHook`, registered by `quota`, the same pattern as `MemoryAdjustHook` |
 | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed (`5f94e07`): `core` imports this package; this package must not import `core`. `PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent` and `CanWriteSessionID` stay in `core` |
 | `internal/fuse` | Landed (`110ef31`). Semantic boost policy: raise-only, no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper. Stays in-process and does not exec |
-| `internal/nbopinion` | Landed (`4d3e857`, PR 156). Hook funcs that call `nbtier.Suggest` and `nbtier.Trivial`, registered in `init`. May import `core` and `nbtier`. Core production sources do not import this package or `nbtier`. `NBUpshift` and `NBDownshift` stay on `Decision` in `core`. `cmd` blank-imports this package so `init` runs. Stays in-process and does not exec. Env stays a typed snapshot set at the edge (`SetConfig`) |
 | `internal/classify` | Regex classifier, `signals.go`, language guard, risk floor (concurrent category scan from 64 KiB). No tier, no harness, no catalog |
 | `internal/catalog` | Embedded `catalog.json` (with `prices_as_of`), user override merge (recovers into the embedded data on a panic), `Resolver` |
 | `internal/discovery`, `internal/models` | Session model discovery (sources, order, `discovered.json` cache; run by `setup` and `models discover`) and `models list/check/pull`. Both import `catalog` and `core` |
 | `internal/adapters/*` | Harness-specific I/O only. Adapters do not choose the tier; they call `core.Route`, then apply the plan core returns |
-| `internal/policyfile`, `internal/adapt`, `internal/routeadapt`, `internal/scoreindex` | Project tier floor (`TierFloorHook`), shadow tier memory (`MemoryAdjustHook`) and the score cache (`ScoreHook`), plugged into core at `init`. `cmd` blank-imports the first three kinds and imports `scoreindex` directly |
+| `internal/policyfile` | Project tier floor (`TierFloorHook`), plugged into core at `init`. `cmd` blank-imports `policyfile` |
 | `internal/quota`, `internal/hookctx`, `internal/hookutil` | Offline budget evidence (file I/O); per-hook deadline and project dir; shared field helpers. `quota` keeps `Load`, `Store`, `ParseNative` and native registration, aliases the `quotamodel` types so adapters can keep saying `quota.Snapshot`, and registers `LoadQuotaHook` and the native quota hooks. Core production sources do not import `quota` |
 | `internal/hookport`, `internal/childend` | Honor, usage and child-end contract; one shared recorder for every harness |
 | `internal/telemetry` | Append-only local JSONL (no per-spawn fsync); prompt-free events; `Summarize` (single savings definition), stats, report, control group, session tree. Imports `core` (tiers, prices) and `codeintel` (DCI summary type in the export) |
 | `internal/contextopt`, `internal/compressor`, `internal/sensor` | Context optimization registry, native compressor (observe/safe), tool-output sensor |
 | `internal/codeintel` | Downshift Code Intelligence (DCI): pure Go symbol extraction, incremental inverted index, BM25 ranking, abstention, and structural context packager. Isolated from routing: imports only `paths`; `core` and `classify` do not import it (`telemetry` imports it for the stats export type). |
-| `internal/semantic`, `internal/nbtier` | In-process hash embedder (`semantic`) and naive-Bayes opinion (`nbtier`). The raise-only boost policy lives in `internal/fuse`. `nbopinion` calls `nbtier.Suggest` and `nbtier.Trivial`. Core production sources do not import `nbtier`. The semantic boost and the naive-Bayes opinion stay in-process and do not exec |
-| `internal/routingv2/*`, `internal/decisionintelligence`, `internal/outcome`, `internal/benchmark` | Shadow classifiers and training, advisory recommendation, outcome evals, classifier KPIs. the `routingv2/router` and `matcher` packages and `internal/routecache` were removed on 2026-10-19 (no production importer) |
-| `cmd/downshift` | CLI, `harnessRegistry`, `runHookAdapter`, `runEnd`, setup, doctor. Blank-imports `nbopinion`, `policyfile`, `quota`, `routeadapt` |
+| `internal/semantic`, `internal/nbtier` | In-process hash embedder (`semantic`) and naive-Bayes opinion (`nbtier`). The raise-only boost policy lives in `internal/fuse`. Core production sources do not import `nbtier`. The semantic boost and the naive-Bayes opinion stay in-process and do not exec |
+| `internal/outcome`, `internal/benchmark` | Outcome evals and classifier KPIs. Shadow classifiers (`internal/routingv2/*`), training and decision intelligence were removed in wave A (2026-10-26); see [routing v2](../design/routing-v2.md). `internal/routecache`, `routingv2/router` and `matcher` were removed on 2026-10-19 (no production importer) |
+| `cmd/downshift` | CLI, `harnessRegistry`, `runHookAdapter`, `runEnd`, setup, doctor. Blank-imports `policyfile`, `quota` |
 
 **Invariants:** adapters embed no routing rules; adding a harness is one
 `harnessRegistry` entry plus its adapter package, with a port entry only when
 that harness's own hook sends honor or usage fields; a nil port is unobserved,
-never inferred. Dependency check: `internal/archtest` (`TestImportGraph`, run by `go test ./...` in the `test` job) fails when the production closure of `core` reaches quota, nbtier, nbopinion, catalog, telemetry, adapt, policyfile, scoreindex or an adapter, when `session` or `fuse` reach `core`, or when `codeintel` reaches `core` or `classify`; a negative test proves the matcher detects a violation. Rules not listed there (for example adapters importing policy) are still manual: `go list -deps ./internal/<pkg>`.
+never inferred. Dependency check: `internal/archtest` (`TestImportGraph`, run by `go test ./...` in the `test` job) fails when the production closure of `core` reaches quota, nbtier, nbopinion, catalog, telemetry, adapt, policyfile or an adapter, when `session` or `fuse` reach `core`, or when `codeintel` reaches `core` or `classify`; a negative test proves the matcher detects a violation. Rules not listed there (for example adapters importing policy) are still manual: `go list -deps ./internal/<pkg>`.
 
 ---
 
@@ -487,11 +487,10 @@ These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
    not done.
 2. **`init`-registered hooks in `core` (Fullstack P1-1).** The result of
    `core.Route` depends on which packages were blank-imported: the tier floor
-   (`policyfile`), shadow memory (`routeadapt`), naive-Bayes (`nbopinion`) and
+   (`policyfile`) and
    the quota loaders (`quota`) exist only if `cmd/downshift` imported them.
    Adapter tests link `quota` (adapters import it) but not `policyfile`,
-   `nbopinion` or `routeadapt`, so they run without the tier floor and the
-   opinion. Behaviour is covered at `runHookAdapter` and `core.Route` tests, but
+   so they run without the tier floor. Behaviour is covered at `runHookAdapter` and `core.Route` tests, but
    an adapter test alone does not prove production routing.
 3. **Import-graph sensor is automated.** `internal/archtest/imports_test.go`
    (`TestImportGraph`, run by `go test ./...`) fails on the forbidden imports
@@ -531,7 +530,7 @@ These are real and open on 2026-10-19. Nothing here is hidden elsewhere.
 | [harness-matrix.md](../reference/harness-matrix.md) | What each harness honors |
 | [session-models.md](../reference/session-models.md) | Operators |
 | [layering.md](../contrib/layering.md) | Contributors |
-| [engineering-loop.md](engineering-loop.md), [classifier-shadow.md](classifier-shadow.md) | Feedback and shadow mode |
+| [engineering-loop.md](engineering-loop.md) | Feedback loop |
 | [context-optimization.md](context-optimization.md), [companions.md](../guides/companions.md) | Context layer |
 | [report.md](../guides/report.md), [benchmark/README.md](../../benchmark/README.md) | Measurement discipline |
 | [router-generalization.md](router-generalization.md) | Evaluation honesty |

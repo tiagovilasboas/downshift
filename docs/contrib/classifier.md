@@ -1,9 +1,13 @@
 # Classifier (v1 production path)
 
-Contributor reference for the deterministic classifier that powers **hook routing**.
+Contributor reference for the deterministic classifier. Since O8 (2026-10-28) it **no longer decides the model**: the
+orchestrator does, and Downshift applies that choice (see [routing](../features/routing.md)). The classifier remains as
+telemetry, as the key of floors the user declares in `policy.json`, and in DCI. The built-in risk floor and veto
+were removed on 2026-10-28; step 7 below, and any text calling the class a routing decision, describe the pre-O8
+behaviour.
 User-facing Portuguese overview: [pt/02-classificador.md](../pt/02-classificador.md).
 
-Experimental v2 is documented in [capability-router-v2.md](../design/capability-router-v2.md).
+Experimental v2 is documented in [routing-v2.md](../design/routing-v2.md).
 
 ---
 
@@ -35,7 +39,7 @@ the tier into a model id are in [complexity-weights.md](../reference/complexity-
    complexity when regex is hesitant; it **never lowers** a class. It is ignored for no-signal prompts and cannot create COMPLEX without regex evidence. A lift is recorded as `SEMANTIC_BOOST`. `DOWNSHIFT_MINILM=0` disables. Graphify and external MiniLM commands were removed on 2026-10-17.
 6. **Language guard** — `internal/classify/lang_guard.go`: unsupported or mixed-helper-brief foreign cues set
    `UnsupportedLanguage` and clear confidence (M3 mixed bucket).
-7. **Risk floor and abstention** — `internal/classify/risk.go`: Trivial/Simple + risk → Medium with `RiskFloor`.
+7. **Risk floor and abstention** (pre-O8; the veto was removed on 2026-10-28, the risk categories are still recorded) — `internal/classify/risk.go`: Trivial/Simple + risk → Medium with `RiskFloor`.
    Confident Medium/Simple + risk on bounded delegation briefs or narrow high-stakes patterns
    → `RiskAbstain` (confidence cleared, tier unchanged); counts as `deterministicLift` for R7/R9.
 
@@ -150,7 +154,7 @@ sourced text nor model output becomes a rule automatically.
 
 `DOWNSHIFT_SHADOW_WEIGHTS` records a v2 candidate next to the production decision.
 It does **not** change hook JSON. Labels for supervised training require explicit
-`--required-tier` on feedback. See [classifier-shadow.md](../design/classifier-shadow.md).
+See [routing-v2.md](../design/routing-v2.md).
 
 ---
 
@@ -195,7 +199,7 @@ sourced text nor model output becomes a rule automatically.
 
 `DOWNSHIFT_SHADOW_WEIGHTS` records a v2 candidate next to the production decision.
 It does **not** change hook JSON. Labels for supervised training require explicit
-`--required-tier` on feedback. See [classifier-shadow.md](../design/classifier-shadow.md).
+See [routing-v2.md](../design/routing-v2.md).
 
 ---
 

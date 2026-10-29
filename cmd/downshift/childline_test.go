@@ -13,6 +13,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -141,6 +142,7 @@ func TestChildLine_PartialDataOmitsWhatIsUnknown(t *testing.T) {
 }
 
 func TestChildLine_QuietSilencesChildAndSpawnMessage(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	_, small, frontier := childLineEnv(t)
 	loud := spawn(t, small, frontier)
 	if !strings.Contains(loud, "systemMessage") {

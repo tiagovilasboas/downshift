@@ -5,10 +5,11 @@
   <img src="docs/brand/downshift-logo-light.svg" alt="Downshift — token optimization and model routing for AI coding agents" width="320">
 </picture>
 
-### Compact verbose output. Route subagents to right-sized models. Cut AI coding agent costs.
+### Compact verbose output. Let the orchestrator pick each subagent's model. Cut AI coding agent token use.
 
-Downshift compacts verbose command output, routes subagents to right-sized models,
-and learns which commands need new compressors — all without an LLM in the loop.
+Downshift compacts verbose command output, applies the model the orchestrator chose for each
+subagent (bounded by your policy), and learns which commands need new compressors. Its own code
+never calls an LLM.
 
 [![Build](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml/badge.svg)](https://github.com/tiagovilasboas/downshift/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-868A90.svg?labelColor=0A0A0A)](LICENSE)
@@ -17,11 +18,11 @@ and learns which commands need new compressors — all without an LLM in the loo
 
 [Get Started](#get-started) · [Features](#features) · [Token Savings](#token-savings) · [Documentation](#documentation)
 
-**Reduce AI coding agent costs without an LLM in the loop.** Downshift is a token optimization
-and model routing tool for AI coding agents — Claude Code, Cursor, Codex, OpenCode,
+**Reduce AI coding agent token use, with no LLM call in Downshift's own code.** Downshift is a token
+optimization and model delegation tool for AI coding agents — Claude Code, Cursor, Codex, OpenCode,
 Antigravity, and KiroCrew. It compacts verbose command output before it fills the context
-window, routes subagent spawns to right-sized models, and accounts for the LLM API cost you
-actually saved.
+window, applies the orchestrator's model choice for each subagent within the bounds you declare,
+and counts the tokens it saved, per harness.
 
 </div>
 
@@ -35,29 +36,83 @@ and token optimization guides keep circling back to. Every byte of tool output i
 pay for at API rates, on every turn:
 
 ```
-$ go test ./...
-ok      github.com/example/pkg1    0.003s
-ok      github.com/example/pkg2    0.012s
-ok      github.com/example/pkg3    0.008s
-ok      github.com/example/pkg4    0.005s
-... 50 more lines ...
-PASS
+$ go test -count=1 ./internal/...
+ok      github.com/tiagovilasboas/downshift/internal/accounting    0.331s
+ok      github.com/tiagovilasboas/downshift/internal/adapters/antigravity    0.595s
+ok      github.com/tiagovilasboas/downshift/internal/adapters/claudecode    4.204s
+... 53 more lines ...
+ok      github.com/tiagovilasboas/downshift/internal/worktree    2.596s
 ```
 
-That's about **2KB of output** saying "all tests passed". Your agent's context window holds every byte.
+That run prints **3,957 bytes** to say that everything passed. Your agent's context window holds every byte.
 
 ## The Solution
 
-Downshift compacts that to:
+Downshift compacts that run to its header and one line per package:
 
 ```
-✓ PASS · 54 packages · 0.156s
+Go test: PASS (53 packages ok, 4 without tests) under github.com/tiagovilasboas/downshift/internal/
+ok accounting
+ok adapters/antigravity
+...
 ```
 
-**~50 bytes.** Same information. This example is an illustration of the shape of the output, not a
-measurement. Measured in bytes on a synthetic test corpus: 82.3% fewer bytes on compacted files
-(26 of 248), 23.7% overall
+**3,956 → 998 bytes** for that run, as the compactor reports it, with the PASS/FAIL status and the
+exit code kept. One run on this repository, not a benchmark. On a synthetic test corpus: 82.3% fewer
+bytes on compacted files (26 of 248), 23.7% overall
 ([evidence](docs/evidence/compaction-corpus-2026-10-21.md)). Bytes, not LLM tokens.
+
+---
+
+## Why
+
+- **Mechanical subagent work runs on a smaller model.** The orchestrator picks the agent, model and
+  effort; Downshift applies that choice within your `policy.json`, and `downshift report` measures
+  the tokens it moved. On Claude Code the small tier is the newest Haiku, run through its native
+  alias (observed 2026-10-28). [Evidence](docs/guides/evidence.md)
+- **Doubt keeps the requested model.** An unconfident routing decision leaves the spawn unchanged.
+  A wrong choice by the orchestrator is not caught by a built-in floor: declare one in `policy.json`
+  if a task must never go to a small model. [Architecture](docs/design/architecture.md)
+- **No LLM call in Downshift's code, no prompts in telemetry.** Routing is deterministic code.
+  Telemetry keeps counts, hashes and timings in `~/.downshift/events.jsonl`. See
+  [Privacy & Security](#privacy--security).
+
+---
+
+## True north and the research behind it
+
+**The orchestrator LLM decides; Downshift applies the decision inside your policy, keeps the context
+small, and measures the result as cost per accepted task.** The full direction, with what each study
+shows and does not show, is in **[docs/true-north.md](docs/true-north.md)**.
+
+What the published work says, and what we take from it:
+
+| Study | What it shows | What we take from it |
+|---|---|---|
+| [Anthropic, multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (2025-06-13) | Opus 4 leading Sonnet 4 subagents beat single-agent Opus 4 by 90.2% on an internal research eval, at about 15× the tokens of a chat. Coding has fewer parallel tasks | A strong lead with cheaper workers can pay on independent work; the token price is part of the result |
+| [Claude Opus 4.5 system card](https://assets.anthropic.com/m/64823ba7485345a7/Claude-Opus-4-5-System-Card.pdf), section 2.7 | The lead model moved results more than the worker model (Opus lead over Haiku workers 87.0% against Opus alone 74.8%). *Table not yet checked against the PDF* | Look at the planning step, not only at the implementation |
+| [Anthropic, patterns and problems in multiagent systems](https://www.anthropic.com/research/multiagent-systems) (2026-08-13) | A swarm found 266 vulnerabilities on 27M tokens, independent agents 21 on 6.5M; on the same directories the cost per finding was comparable | More agents widen the search; they do not make each token more productive |
+| [Anthropic, research with 60 subagents](https://www.anthropic.com/research/riemann-zeta) (2026-08-10) | Of 60 subagents, 2 developed the key ideas and 30 produced nothing new; 13 validated | Few workers first; verification matters |
+| [Anthropic, AI organizations can be more effective but less aligned](https://alignment.anthropic.com/2026/ai-organizations/) | Groups of agents scored higher on the goal and lower on ethics than single agents, depending on the model | Gates belong around the whole flow |
+| [OpenAI, model guide for the GPT-6 family](https://openai.com/index/practical-guide-building-gpt-6/) (2026-10-02) | Pick model and reasoning effort by task; delegate independent work. *Page unreadable here; confirmed through summaries* | Let the caller choose model and effort per step |
+| [OpenAI, builder's guide to GPT-5.6](https://openai.com/index/builders-guide-to-gpt-5-6/) | Retained reasoning and compaction moved ARC-AGI-3 from 13.3% to 38.3% with about six times fewer output tokens. *Page unreadable here; confirmed through summaries* | Smaller context is a real lever. A different mechanism from ours, so not proof of our numbers |
+
+The orchestration patterns the routing design is built on are the Anthropic cookbooks
+[orchestrator-workers](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/orchestrator_workers.ipynb),
+[async multi-agent](https://github.com/anthropics/claude-cookbooks/blob/main/patterns/agents/async_multi_agent_orchestration.ipynb),
+[plan big, execute small](https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/CMA_plan_big_execute_small.ipynb) and
+[dynamic workflows](https://github.com/anthropics/claude-cookbooks/blob/main/claude_agent_sdk/08_Dynamic_workflows.ipynb),
+plus the [coordination patterns](https://claude.com/blog/multi-agent-coordination-patterns) article.
+
+**Value proven so far, and what is not.** Measured on Claude Code: routing mechanical delegated work to a
+smaller tier used 24.1% fewer tokens per accepted run than `opusplan` (95% interval +2.1% to +46.7%,
+acceptance 12 of 12; forced delegation, one operator, token counts, measured before the orchestrator
+chose the model) ([four-arm record](docs/evidence/four-arm-mechanical-2026-10-21.md)). The hook applies the
+orchestrator's choice on real spawns (10 of 10 honoured). **Not proven:** savings in everyday use (the
+report flips sign between a 30-day and a 7-day window), the Compactor's effect on model tokens, and that
+the orchestrator uses the MCP tools unprompted. None of these studies measures Downshift; they justify
+the experiment in [section 6 of the true-north page](docs/true-north.md#6-the-experiment-that-decides-it),
+and its answer comes from our own runs.
 
 ---
 
@@ -76,8 +131,11 @@ downshift setup
 downshift doctor
 ```
 
-That's it. On Claude Code, Downshift now rewrites allowlisted commands and routes subagents
-automatically. Other harnesses differ; see [Harness Support](#harness-support-claude-code-cursor-codex-and-more).
+That's it. On Claude Code, Downshift now rewrites allowlisted commands and applies the orchestrator's subagent model choices
+within your policy. Other harnesses differ; see [Harness Support](#harness-support-claude-code-cursor-codex-and-more).
+
+Prefer to check the download first? Get the archive from [Releases](https://github.com/tiagovilasboas/downshift/releases)
+and verify it with `checksums.txt`; each release carries a build-provenance attestation.
 
 <details>
 <summary>Manual installation</summary>
@@ -97,10 +155,10 @@ Wraps allowlisted commands to compress verbose output while preserving exit code
 and failure details.
 
 ```bash
-downshift compactor -- go test ./...
-downshift compactor -- cargo build --release
-downshift compactor -- pnpm test
-downshift compactor -- git status
+downshift compact -- go test ./...
+downshift compact -- cargo build --release
+downshift compact -- pnpm test
+downshift compact -- git status
 ```
 
 **Compresses** (output is strictly shorter): `go test`, `go test -v`, `git diff/show`,
@@ -112,21 +170,35 @@ and more — see [harness matrix](docs/reference/harness-matrix.md) for the full
 Node.js (npm, pnpm, yarn, bun) · PHP (composer, phpunit, pest) · Git · Docker ·
 Kubernetes · Terraform · AWS CLI · and [70+ more](docs/reference/supported-tools.md)
 
-### 2. Subagent Model Routing (zero LLM)
+### 2. Subagent Model Delegation (the orchestrator chooses)
 
-Intelligent model routing for subagent spawns: routes each subagent task to the
-right-sized model — Haiku for renames, Opus for architecture — without calling an LLM to
-decide, and without touching your main session's model mid-turn (so your prompt cache
-stays intact).
+**The orchestrator chooses, Downshift applies, your policy bounds it, and Downshift measures.**
+The lead session picks agent, model and effort for every delegation (the Orchestrator-Workers
+pattern). Downshift never picks a model on its own: it applies that choice deterministically,
+enforces what you declared in `policy.json` (profiles, ordered rules, quota gates, tier floors),
+and reports the tokens, per harness. Your main session's model is never touched mid-turn, so
+your prompt cache stays intact.
 
-```
-$ downshift try "rename the userId variable"
-→ small: opus → haiku
-why: trivial task, no risk, confident
-```
+- **Precedence** (first match wins): a pinned model is kept; a declared profile; the first
+  matching declared rule; the orchestrator's tier hint, which can only move down for now; else the
+  requested model is kept. Doubt keeps the requested model (fail-open).
+- **Refusals:** a model id the harness catalog does not know, and an `explicit_only` model, are
+  never written.
+- **Playbooks** (implemented): `downshift playbook list|show|edit|add|remove|restore|check` edits the
+  work rules a delegated worker receives (General always applies; Backend and Frontend ship).
+- **Orchestrator skill** (implemented): `downshift setup` installs `downshift-orchestrator`, guidance
+  on splitting work and choosing model and effort per spawn.
+- **MCP server** (`downshift mcp serve`, implemented): four information tools for the orchestrator, `providers` (the models this
+  harness offers now), `playbook`, `status` (quota advice) and `apply` (what would be applied for a choice). The tools that
+  start workers (`delegate`, `steer`, `result`, `cancel`) are specified, not built. See
+  `docs/internal/plans/mcp-delegation-spec.md`.
 
-**How it works:** Strict heuristics + FNV word-hash scoring. Local, deterministic,
-no model call on the routing path. When unsure, keeps the requested model — doubt never spends money.
+Removed on 2026-10-28 (decision O8): the built-in agent-type table, the automatic upgrade after a
+failure and the built-in risk floor. The protection against a risky task going to a small model is
+now the orchestrator's judgment, guided by the playbook, plus floors you declare in `policy.json`.
+A project that wants a hard floor must declare one; without it nothing stops a wrong choice.
+
+Downshift's own code makes no LLM call, adds no token cost to the hot path and fails open.
 
 ### 3. Compressor Learning (auto-discovery)
 
@@ -155,20 +227,20 @@ downshift dci enable
 downshift dci impact MyFunction  # Who calls this?
 ```
 
-### 5. Cost Accounting (v1)
+### 5. Token Accounting (v1)
 
-Local LLM cost tracking: measures what routing actually saves — the difference between
-what you would have paid if every token ran on the requested model and what you actually
-paid. Counts and prices stay on your machine.
+Local token accounting: counts the tokens that ran on a cheaper model than the one requested,
+and the tokens compaction removed from command output. Counts stay on your machine, and no
+figure is converted to money.
 
-```go
-// Saved = C_baseline − C_actual
-// C_actual   = Σ price(model_i, tokens_i)
-// C_baseline = price(requested_model, Σ tokens_i)
+```text
+Routing tokens   = work + cache tokens of child spawns that ran on a cheaper model than requested
+Compactor tokens = (raw bytes − emitted bytes) / 4        (estimate)
+Tokens saved     = routing tokens + compactor tokens
 ```
 
-**Caveats documented:** +15% positive bias when routing to cheaper models (more
-turns inflate the baseline), compaction priced conservatively at input cost once.
+**Caveats documented:** a cheaper child's whole token count counts as saved, with no
+counterfactual for the extra turns it may need; compactor tokens are a bytes-per-4 estimate.
 See [docs/reference/accounting.md](docs/reference/accounting.md).
 
 ---
@@ -211,7 +283,7 @@ We show byte counts and percentages, not dollar figures.
 ```bash
 downshift session              # Current session savings
 downshift stats                # Global statistics
-downshift report --period=7d   # Savings over time
+downshift report --days=7      # Savings over time
 downshift doctor               # Health check
 ```
 
@@ -227,7 +299,7 @@ downshift learning clear       # Reset
 ### Inspection
 
 ```bash
-downshift try "<task>"         # Preview routing decision
+downshift session --why        # Why each spawn changed or was kept
 downshift watch                # Live dashboard
 downshift models check         # Verify catalog pricing
 ```
@@ -283,9 +355,23 @@ harness the compact command works when the agent runs it directly.
 
 Run `downshift setup` to auto-detect and configure all installed harnesses.
 
+### Inside your harness
+
+- **Skills:** four ship with Downshift: `downshift-setup`, `downshift-audit`, `harness-engineer` and
+  `cost-reducer`. The Claude Code plugin exposes them as `/downshift:<name>`, and `/downshift:status`
+  shows the session's subagent tree and routing reasons. See [skills](skills/README.md).
+- **Mods:** on Claude Code, `downshift setup` installs `savvy-progress` (skip it with `--no-plugin`).
+  `downshift-theme` is optional and setup does not install it. See [mods](mods/README.md).
+- **MCP server:** `downshift setup` registers `downshift mcp serve` in Claude Code and Codex (skip it
+  with `--no-mcp`). The orchestrator can then ask which models the harness offers now and what would
+  be applied for a choice.
+
 ---
 
 ## Documentation
+
+### Direction
+- [True north: the direction, the research and the proof so far](docs/true-north.md)
 
 ### Getting Started
 - [Installation Guide](docs/guides/install.md)
@@ -305,9 +391,8 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 - [Configuration Options](docs/reference/config-options.md)
 
 ### Architecture
-- [System Design](docs/architecture/design.md)
-- [Compressor Pipeline](docs/architecture/compressor.md)
-- [Routing Engine](docs/architecture/routing.md)
+- [Architecture: import graph, domains, known gaps](docs/design/architecture.md)
+- [Domains and their boundaries](docs/domains/README.md)
 
 ### Contributing
 - [Contributing Guide](CONTRIBUTING.md)
@@ -316,28 +401,49 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 
 ---
 
+## When to use it, and when not
+
+Use Downshift when your sessions spawn subagents that would inherit the most expensive model, and when you
+want the policy you declared, not a router, to bound those choices. Do not expect much when you rarely spawn
+subagents, when the work needs judgment on the raw material (keep the requested model there), or when you need
+savings in money: Downshift reports tokens. Savings on everyday use are not established yet. The full list,
+with the companions that complement it, is in [when to use Downshift](docs/guides/when-to-use.md).
+
+## Safety boundaries
+
+- **Hooks fail open.** A hook that errors, times out or receives a payload over 1 MiB leaves the spawn with the
+  model the orchestrator asked for.
+- **A broken policy is refused.** `downshift policy check` names the bad field. A `policy.json` that does not load
+  applies nothing: the hook keeps the requested model rather than guessing a policy.
+- **No LLM call in Downshift's code, and telemetry holds no prompts or file paths.**
+- **Write workers are off by default.** They run only with `DOWNSHIFT_WORKERS=bypass`, each in its own git
+  worktree, and refuse to run outside a git repository. Downshift never merges their branches.
+- **No approval gate for risky actions.** Downshift does not stop a deploy, merge or secret change on its own. If
+  you need that, enforce it in your harness or your policy.
+
+---
+
 ## Privacy & Security
 
 - **Prompts never leave memory** — task text is evaluated in-process, never logged
 - **Local telemetry only** — counts, hashes, timings in `~/.downshift/events.jsonl`
-- **No LLM in the routing loop** — routing decisions are local and deterministic
+- **No LLM call in Downshift's code** — the orchestrator's model choice is applied locally and deterministically
 - **Fail-open** — any error leaves the command/spawn unchanged
 
 ---
 
 ## FAQ
 
-### How do I reduce token usage and cost in Claude Code, Cursor, or Codex?
+### How do I reduce token usage in Claude Code, Cursor, or Codex?
 
 Install Downshift, run `downshift setup`, and it hooks into your harness. Verbose command
-output is compacted before it reaches the context window, and subagents are routed to
-right-sized models. On Claude Code the rewrite is automatic; on other harnesses the agent
+output is compacted before it reaches the context window, and each subagent runs on the model the orchestrator chose, bounded by your policy. On Claude Code the rewrite is automatic; on other harnesses the agent
 runs `downshift compact -- <command>` directly. Check your own numbers with
 `downshift session` and `downshift report`.
 
 ### Does subagent model routing break prompt caching?
 
-No. Downshift routes whole subagent spawns, not individual turns of your main session. Your
+No. Downshift applies the model choice to whole subagent spawns, not individual turns of your main session. Your
 main session keeps the same model for the entire conversation, so its cached prefix is never
 invalidated by a mid-session model switch.
 

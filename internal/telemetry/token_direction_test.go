@@ -72,7 +72,7 @@ func TestTokenDirection_Gates(t *testing.T) {
 func TestTokenSavings_SameModelEffortChangeIsNotSaved(t *testing.T) {
 	cat := catalog.Load()
 	prev := DirectionCatalog
-	DirectionCatalog = cat
+	DirectionCatalog = catalog.TierViewOf(cat)
 	defer func() { DirectionCatalog = prev }()
 	for _, pair := range [][2]string{
 		{"claude-haiku-4-5", "claude-haiku-4-5"},

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 const (
@@ -20,9 +21,13 @@ const (
 // A confident MEDIUM task on an opus parent must land on the mid-tier model
 // whenever the catalog says one is mid, wherever it sits in the list.
 func TestPlanForSession_MidTaskPicksCatalogMidNotListPosition(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierMid))
 	d := core.Route("implement the feature flag integration in the billing module", "claude-code", tOpus, cat)
-	if d.Tier != core.TierMid {
-		t.Fatalf("precondition: tier=%s complexity=%s", d.Tier, d.Complexity)
+	// The state the cases below need: a checked mid-tier downshift from the opus
+	// parent. The stub sets the tier, so this confirms the stub reached the
+	// decision with that baseline.
+	if d.Tier != core.TierMid || d.Verdict != core.VerdictDownshift || !d.Checked || d.Baseline.CurrentModel.ID != tOpus {
+		t.Fatalf("precondition: tier=%s verdict=%s checked=%v baseline=%q, want a checked mid downshift from %s", d.Tier, d.Verdict, d.Checked, d.Baseline.CurrentModel.ID, tOpus)
 	}
 	cases := []struct {
 		name    string
@@ -58,10 +63,10 @@ func TestSessionSelect_ByCatalogTier(t *testing.T) {
 		session []string
 		want    string // "" means no rewrite
 	}{
-		{"small, four models", core.TierSmall, []string{tHaiku, tSonnet, tOpus, tFable}, tHaiku},
+		{"small, four models", core.TierSmall, []string{tHaiku5, tSonnet, tOpus, tFable}, tHaiku5},
 		// The selector picks the lowest tier at or above the floor, regardless
 		// of list order (KiroCrew may list opus before haiku).
-		{"small, opus+haiku order: picks lowest tier at or above floor", core.TierSmall, []string{tOpus, tHaiku}, tHaiku},
+		{"small, opus+haiku order: picks lowest tier at or above floor", core.TierSmall, []string{tOpus, tHaiku5}, tHaiku5},
 		{"mid, four models", core.TierMid, []string{tHaiku, tSonnet, tOpus, tFable}, tSonnet},
 		{"mid, haiku+opus", core.TierMid, []string{tHaiku, tOpus}, tOpus},
 		{"mid, sonnet+opus", core.TierMid, []string{tSonnet, tOpus}, tSonnet},
@@ -69,7 +74,8 @@ func TestSessionSelect_ByCatalogTier(t *testing.T) {
 		{"frontier, four models", core.TierFrontier, []string{tHaiku, tSonnet, tOpus, tFable}, tOpus},
 		{"frontier, sonnet only: hold, never below the floor", core.TierFrontier, []string{tHaiku, tSonnet}, ""},
 		{"mid, haiku only: hold, never below the floor", core.TierMid, []string{tHaiku}, ""},
-		{"small, only haiku 5.5 listed: hold, the native haiku alias is 4.5 and may not be listed", core.TierSmall, []string{tHaiku5, tSonnet}, ""},
+		{"small, haiku 5.5 listed: the newest haiku is written by its native alias", core.TierSmall, []string{tHaiku5, tSonnet}, tHaiku5},
+		{"small, only haiku 4.5 listed: hold, it has no native name", core.TierSmall, []string{tHaiku, tSonnet}, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

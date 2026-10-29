@@ -6,16 +6,7 @@ Cost alone cannot show whether a cheaper subagent checked its work. On Claude
 Code, `SubagentStop` reads the child's transcript and records the last recognized
 test, lint or type-check command's result alongside its usage event.
 
-```bash
-downshift verification-report
-# Read a specific prompt-free event export instead of the default log:
-downshift verification-report --events=/path/to/events.jsonl
-```
-
-The command emits JSON grouped by tier, with usage-event counts, verification
-coverage and the number of events carrying token counts. It reads the event
-log; it does not run checks or change routing. The report includes no prices or
-dollar amounts.
+The `verification-report` command was removed (2026-10-26). The values below describe the field on usage events; the direction is in [routing v2](../design/routing-v2.md).
 
 | Value | What the sensor observed |
 |---|---|
@@ -39,9 +30,8 @@ or billing measure. Other harnesses have no equivalent validated child-usage
 sensor today.
 
 Guia: interpret these values using this contract (inferencial, behaviour).
-Sensor: transcript matching and report counters (computacional, behaviour).
-Code: `internal/adapters/claudecode/verification.go`, `internal/childend/record.go`
-and `cmd/downshift/verification.go`.
+Sensor: transcript matching (computacional, behaviour).
+Code: `internal/adapters/claudecode/verification.go`, `internal/childend/record.go`.
 
 For actual delivery quality and routed-versus-control comparisons, follow the
 [evidence ladder](evidence.md) and [benchmark protocol](benchmark-protocol.md).

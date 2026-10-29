@@ -16,7 +16,6 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/paths"
-	"github.com/tiagovilasboas/downshift/internal/scoreindex"
 	"github.com/tiagovilasboas/downshift/internal/semantic"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
@@ -132,18 +131,6 @@ func buildConfigReport(getenv func(string) string, now time.Time, cat *catalog.C
 	} else {
 		add(configEntry{Key: "quota_mode", Value: "default", Source: cfgDefault, Env: "DOWNSHIFT_QUOTA_MODE",
 			Note: "no snapshot: rewrites allowed; an expired snapshot holds for 1 h, then is ignored"})
-	}
-
-	// Public capability scores.
-	if scoreindex.Disabled() {
-		add(configEntry{Key: "scores", Value: "off", Source: cfgEnv, Env: scoreindex.EnvSwitch, Note: "no network, router ignores scores.json"})
-	} else {
-		add(configEntry{Key: "scores", Value: "on", Source: cfgDefault, Env: scoreindex.EnvSwitch})
-	}
-	if core.ScoreRoutingEnabled() {
-		add(configEntry{Key: "score_routing", Value: "live", Source: cfgEnv, Env: core.ScoreRoutingEnv, Note: "the score pick changes the routed model"})
-	} else {
-		add(configEntry{Key: "score_routing", Value: "shadow", Source: cfgDefault, Env: core.ScoreRoutingEnv, Note: "recorded as score_would, never applied"})
 	}
 
 	// Control group.

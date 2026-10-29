@@ -14,8 +14,8 @@ Canonical guide for humans and coding agents installing Downshift on a user mach
 After install:
 
 ```bash
-downshift doctor          # version, state dir (~/.downshift), catalog source
-downshift try "rename userId in auth.ts" claude-code
+downshift doctor          # version, state dir (~/.downshift), hooks per harness
+downshift models available --harness claude-code   # the models the orchestrator can choose from
 ```
 
 Optional adapter smoke (from a clone of this repo):
@@ -67,18 +67,15 @@ downshift setup             # asks first, backs up the files, then merges the ho
 
 For Claude Code, `setup` wires `PreToolUse` (matcher `Agent|Task`), `PostToolUse`, `PostToolUseFailure` and `SubagentStop`, sets the statusline when none exists, and sets `"model": "opusplan"` (Opus in plan mode, Sonnet for execution), `"permissions": {"defaultMode": "plan"}` (sessions start in plan mode) for keys you have not set; existing values are kept, and `--no-session-policy` skips both. Claude Code's built-in You should know mod (`"enabledPlugins": {"cc-plugin-you-should-know@builtin": true}`) is opt-in because each check is a billed background request to the session's model: `setup` prints a suggestion, and `downshift setup --you-should-know` writes it (`/plugin disable cc-plugin-you-should-know@builtin` turns it off) ([main session policy](../reference/session-models.md#main-session-policy-plan-mode-and-opusplan-claude-code)). It also finds Cursor, Codex, Antigravity and KiroCrew, keeps unrelated keys and existing hooks, and is idempotent. `downshift setup --undo` restores the latest backup. KiroCrew (Experimental) gets a generated wrapper and a `preToolUse` entry in its existing `config.json`; see [KiroCrew](#kirocrew-policy-mode-through-the-native-kiro-cli-hook). The manual JSON is in [Manual setup](#manual-setup-claude-code) below.
 
-**Step 3 — Check the classifier** on your own prompts:
+**Step 3 — Check the models** your harness offers:
 ```bash
-downshift doctor                                          # checklist: binary, hooks per harness, state, scores
-downshift try "rename the userId variable" claude-code    # what would be picked, and why
+downshift doctor                                          # checklist: binary, hooks per harness, state
+downshift models available --harness claude-code          # the models, their tiers and where each came from
 ```
 
-**Step 4 — Confirm it's working.** Open a new Claude Code session and ask it to spawn a subagent for a trivial task. You'll see a line like this in stderr:
-```
-downshift: TRIVIAL task → downshift to claude-haiku-4-5
-```
+**Step 4 — Confirm it's working.** Open a new Claude Code session and ask it to spawn a subagent for a trivial task. Then run `downshift session --why`: it lists each subagent with the model it asked for, the model it got and the reason. When the orchestrator starts the spawn's prompt with `[tier=small]`, the subagent runs on the small-tier model.
 
-That line means the hook fired and emitted a rewrite before the subagent started.
+A reason in that list means the hook fired and decided before the subagent started.
 Whether the harness applied it is a separate fact; `downshift stats` separates
 `rewrite_emitted` from honored, and the matrix says what is verified per plan.
 
@@ -111,13 +108,11 @@ For child status and real usage, also add `PostToolUse` and `PostToolUseFailure`
 
 ## Testing locally before connecting the hook
 
-Before adding the hook to Claude Code, test the classifier and hook logic locally:
+Before adding the hook to Claude Code, test the hook logic locally:
 
-**Test 1 — Classifier only (terminal):**
+**Test 1 — Models and tiers (terminal):**
 ```bash
-downshift try "rename the userId variable" claude-code
-downshift try "rearchitect the payment flow" claude-code
-downshift try "implement the CSV export" claude-code
+downshift models available --harness claude-code
 ```
 
 **Test 2 — Full hook (JSON):**
@@ -136,7 +131,7 @@ See [examples/](../../examples/README.md) for sample payloads. `claude-code-pret
 
 **Status: Completed.** Rewrite observed honored, usage and child end recorded, plugin and session policy ([evidence](../evidence/claude-code-rewrite-honored-2026-10-06.md), [billing audit](../evidence/billing-gap-audit.md)).
 
-Build or install the single binary (no runtime, no dependencies):
+Build or install the single binary (nothing else to install at runtime):
 
 ```bash
 # Recommended — one-liner installer (macOS / Linux, detects arch automatically)
@@ -438,6 +433,10 @@ Claude Code rewrites an allowlisted Bash command in place, so it needs no steeri
 
 If a harness you use reads a different global file, the same block can be pasted there by hand between the two markers.
 
+## MCP server (`setup`, on by default; `--no-mcp` skips it)
+
+`downshift setup` also registers `downshift mcp serve` as the MCP server `downshift` in Claude Code and Codex. The dry run shows it like any other change; `--no-mcp` leaves both configurations alone. **Claude Code**: setup runs `claude mcp add -s user downshift -e DOWNSHIFT_MANAGED=setup -- <this binary> mcp serve` and reads `~/.claude.json` first to see whether the entry exists (it never starts a server). The `DOWNSHIFT_MANAGED=setup` env marks the entry as setup's: "up to date" and `--undo` require the marker, the command and the arguments, and an entry named `downshift` without them is reported as a warning and left as it is; setup still succeeds. **Codex**: a block between `# downshift:mcp:begin` and `# downshift:mcp:end` in `~/.codex/config.toml`, edited as text so your comments and other servers stay; any other definition of `downshift` outside the markers (table, dotted key or inline table) is a warning, the file is left as it is, and setup still succeeds. The printed diff shows only the lines inside the markers. The binary must pass the same check as the hooks (`--allow-unsafe-binary` overrides). `--dry-run` prints the command and the diff and writes nothing; `--undo` removes only the downshift entry and block. The other harnesses are not registered yet.
+
 ## Experimental harnesses
 
 > **Experimental (proof of concept).** KiroCrew runs in policy mode only (block and retry, no in-place rewrite) and Antigravity's rewrite rides an `overwrite` envelope that is not a documented vendor field; each has one observed child on one build and neither records a child end. Every feature is still computed for them (layering rule, `cmd/downshift/conformance_test.go`), and the adapters, tests and hooks stay in the repository, but treat them as proofs of concept, not as supported installs. Install them only if you accept that.
@@ -461,7 +460,7 @@ Register the hook in `~/.gemini/config/hooks.json`:
 }
 ```
 
-When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, classifies the **last** entry in `Subagents` that has a non-empty `Prompt` (not necessarily `Subagents[0]`; trailing rows without `Prompt` are skipped), and rewrites **that** subagent's `Model` (`flash_lite` for mechanical tasks, `flash` for the mid tier) through an `overwrite` envelope that is not a documented vendor field, logging the routing event to `~/.downshift/events.jsonl`.
+When Antigravity attempts to spawn a subagent (e.g. inheriting the parent model or requesting `pro`), `downshift antigravity` intercepts the tool call, evaluates the **last** entry in `Subagents` that has a non-empty `Prompt` (not necessarily `Subagents[0]`; trailing rows without `Prompt` are skipped), and rewrites **that** subagent's `Model` (`flash_lite` for mechanical tasks, `flash` for the mid tier) through an `overwrite` envelope that is not a documented vendor field, logging the routing event to `~/.downshift/events.jsonl`.
 
 ### KiroCrew (policy mode through the native Kiro CLI hook)
 
@@ -471,7 +470,7 @@ For Kiro CLI 2.29, register Downshift through KiroCrew's persistent
 `agent.kiro_hooks` configuration. KiroCrew generates the agent spec consumed
 by Kiro CLI, whose native `preToolUse` hook runs before the tool: `exit 0`
 allows it; `exit 2` blocks it and returns stderr to the agent. There is no
-`updated_input` channel, so the adapter uses **policy mode**. It classifies a
+`updated_input` channel, so the adapter uses **policy mode**. It evaluates a
 pending spawn with an explicit child model and:
 
 - **right tier already** → `exit 0`, allow silently;
@@ -484,7 +483,7 @@ pending spawn with an explicit child model and:
 Use the `kirocrew-core` MCP tool `spawn_run` with explicit `task` and `model`
 arguments. The native `use_subagent` / crew pipeline can omit the child model;
 those calls are outside routing coverage. Downshift never infers the child
-model from the parent's model or a UI title. The classifier is deterministic;
+model from the parent's model or a UI title. The decider is deterministic;
 the agent must retry a blocked spawn with the recommended model.
 
 #### Setup
@@ -600,7 +599,7 @@ savings. Use `downshift stats` for those.
 `cmd/dsmon` is a separate command inside this repo — a floating terminal widget
 that shows model switches, harness, tier distribution and estimated tokens saved
 in real time. It reads `~/.downshift/events.jsonl` and refreshes every
-800 ms. Zero external dependencies; pure stdlib Go.
+800 ms. Standard library only.
 
 ```
 ╭──────────────────────────────────────────────────────╮
@@ -693,11 +692,10 @@ reasoning_effort = "high"    # torque for the hard curves
 
 Precedence is explicit spawn override → role default → persona default → parent
 session, so these pins hold unless the agent is told otherwise.
-`downshift try "<prompt>" grok` tells you which tier a task wants; map that tier
-to a role's reasoning effort in config once.
+Choose each role's tier and reasoning effort in config once.
 
 > If a future Grok build adds `updatedInput` to `PreToolUse` (or a multi-model
-> catalog), a `downshift grok` hook adapter becomes a drop-in — the classifier
+> catalog), a `downshift grok` hook adapter becomes a drop-in — the decider
 > and policy are already harness-agnostic. Until then, config is the right and
 > documented lever.
 ## Plan compatibility — read before installing
@@ -815,15 +813,3 @@ Claude Code free runs in a sandboxed container with no network egress. Install
 the binary on your local machine first, then use the hook — the binary runs on
 your machine, not inside Claude Code's container.
 
-### Verdict shows UNKNOWN instead of DOWNSHIFT
-
-`UNKNOWN` means no current model was provided. Pass the current model as the
-third argument to `try`:
-
-```bash
-downshift try "rename the variable" claude-code claude-opus-5-5
-# → DOWNSHIFT
-```
-
-In the live hook this is handled automatically — the event carries the session
-model and the adapter reads it.

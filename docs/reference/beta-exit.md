@@ -86,7 +86,7 @@ Historical P3.4 finding (2026-10-06; superseded counts and current provenance in
 | P4.3 | Graphify library | eng | [x] removed from the product 2026-10-17 |
 | P4.4 | Grow to **200** tasks (real prompts, rubric in `benchmark/README.md`) | curation | [x] |
 | P4.5 | 500-task seed+holdout net existed (200+300); datasets moved to **downshift-labs** since v0.1.0-beta.7; public [benchmark/report.md](../../benchmark/report.md). | curation | [x] |
-| P4.6 | `downshift benchmark --report` + `--gate` exist and can pass on the in-tree files. They gate the burned net, not unseen traffic. | eng | [x] |
+| P4.6 | `downshift benchmark --report` + `--gate` (command removed 2026-10-26). They gated the burned net, not unseen traffic. | eng | [x] |
 | P4.7 | Confidence intervals / bootstrap on holdout (document in benchmark README) | eng | [x] |
 | P4.8 | ~~Graphify MCP fetcher~~ | eng | [x] removed 2026-10-17 (out of product scope) |
 | P4.9 | **Hash semantic boost on by default** (`DOWNSHIFT_MINILM=0` opts out — `docs/design/minilm-semantic.md`) | eng | [x] |
@@ -117,8 +117,8 @@ P4.3 Graphify was removed from the product on 2026-10-17 to keep the hook lean (
 
 ## Adapt tier memory (2026-10-10)
 
-Local `adapt-memory.json` and `AdjustTier` ship on `main` (`internal/adapt`,
-wired by `internal/routeadapt`). Offline efficacy on the maintainer 40-task suite
+Local `adapt-memory.json` and `AdjustTier` shipped on `main` (`internal/adapt`,
+wired by `internal/routeadapt`); both were removed in wave A (2026-10-26), see [routing v2](../design/routing-v2.md). Offline efficacy on the maintainer 40-task suite
 is in [benchmark/report.md](../../benchmark/report.md) (sections A/B, runs
 2026-10-03). Shared-shape aggregation **underperforms** the classifier on that
 suite; per-task contrafactual is an upper bound only.

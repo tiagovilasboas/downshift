@@ -27,10 +27,10 @@ func (r allowlistResolver) ShadowGateways() []core.Model { return r.rows }
 func withAllowlist(t *testing.T) {
 	t.Helper()
 	prev := DirectionCatalog
-	DirectionCatalog = allowlistResolver{Resolver: catalog.Load(), rows: []core.Model{
+	DirectionCatalog = catalog.TierViewOf(allowlistResolver{Resolver: catalog.Load(), rows: []core.Model{
 		{ID: allowlistSmallID, Tier: core.TierSmall, Harness: "opencode"},
 		{ID: allowlistMidID, Tier: core.TierMid, Harness: "opencode"},
-	}}
+	}})
 	t.Cleanup(func() { DirectionCatalog = prev })
 }
 
@@ -112,9 +112,9 @@ func (r liveResolver) LiveGateways() []core.Model { return r.rows }
 func TestTokenDirection_VendorPrefixedRequestedWithLiveRowIsCheaper(t *testing.T) {
 	const liveSmall = "deepseek/deepseek-v4.1-flash-1017"
 	prev := DirectionCatalog
-	DirectionCatalog = liveResolver{Resolver: catalog.Load(), rows: []core.Model{
+	DirectionCatalog = catalog.TierViewOf(liveResolver{Resolver: catalog.Load(), rows: []core.Model{
 		{ID: liveSmall, Tier: core.TierSmall, Harness: rankHarness, Gateway: "openrouter"},
-	}}
+	}})
 	t.Cleanup(func() { DirectionCatalog = prev })
 
 	usage, decision := gatewayEvents("anthropic/claude-opus-4.6", liveSmall)

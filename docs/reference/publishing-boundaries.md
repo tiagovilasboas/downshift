@@ -34,7 +34,7 @@ belong in git; use a private repository.
 | Contribute | [CONTRIBUTING.md](../../CONTRIBUTING.md), [contrib/classifier.md](../contrib/classifier.md) | Community quality |
 | Published metrics | [benchmark/report.md](../../benchmark/report.md) | Final numbers only (raw eval in `downshift-labs`) |
 | Licence & trust | [LICENSE](../../LICENSE), [relicense.md](relicense.md), [COMMERCIAL.md](../../COMMERCIAL.md), [MONETIZATION.md](../../MONETIZATION.md) | Apache 2.0 transparency (not a sales deck) |
-| Experimental (short) | [capability-router-v2.md](../design/capability-router-v2.md), [classifier-shadow.md](../design/classifier-shadow.md) | Set expectations: v2 ≠ production hook |
+| Experimental (short) | [routing-v2.md](../design/routing-v2.md) | Set expectations: v2 ≠ production hook |
 | Direction | [ROADMAP.md](../../ROADMAP.md), [GOVERNANCE.md](../../GOVERNANCE.md) | OSS expectations |
 
 **Moat (public framing):** harness integrations + eval discipline + release

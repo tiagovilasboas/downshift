@@ -12,6 +12,7 @@ import (
 
 	"github.com/tiagovilasboas/downshift/internal/adapters/claudecode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
@@ -20,6 +21,7 @@ import (
 // tool_use_id must attach the launch and the final cost to the first
 // decision, not to the latest sibling.
 func TestHookE2E_ParallelSpawnsLinkByToolUseID(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	t.Setenv("HOME", t.TempDir())
 	eventLog := filepath.Join(t.TempDir(), "events.jsonl")
 	t.Setenv("DOWNSHIFT_EVENT_LOG", eventLog)

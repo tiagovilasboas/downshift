@@ -8,9 +8,10 @@ AI call. It runs locally as a single Go binary (CLI: downshift) through hooks in
 the coding harness. Prompts are never stored, nothing goes over the network,
 and every hook fails open. Three pillars, in this order:
 
-1. Model routing per subagent. A PreToolUse hook picks tier, model and effort
-   for each spawn from scored signals and catalog policy (no LLM in the loop);
-   when unsure, the session's own model stays. About 1 in 10 spawns stay
+1. Model choice per subagent. The orchestrator (the session's LLM) chooses the
+   model and effort of each spawn; a PreToolUse hook applies that choice within
+   your declared policy.json and measures the result. Downshift adds no LLM
+   call of its own; when it cannot read the request, the session's model stays. About 1 in 10 spawns stay
    unrouted as a control group. Implemented. Harness status: Claude Code
    Completed (rewrite observed honored), Codex and Cursor Functional, OpenCode
    Beta, Antigravity and KiroCrew Experimental (docs/reference/harness-matrix.md).
@@ -37,8 +38,8 @@ docs/design/architecture.md; evidence docs/guides/evidence.md; status of every
 capability docs/reference/capability-matrix.md.
 
 The suite (one sentence each; status words from docs/reference/capability-matrix.md):
-  - Deterministic subagent routing: PreToolUse hook rewrites one subagent's model
-    and effort from the session's own list. Implemented; honored on Claude Code.
+  - Applying the orchestrator's choice: a PreToolUse hook sets one subagent's model
+    and effort as chosen, within your declared policy. Implemented; honored on Claude Code.
   - Guardrails, doubt never spends money: R1-R9 hold unconfident downshifts,
     upshifts and frontier picks; risk categories keep a floor. Implemented.
   - Project tier floor: .downshift/policy.json raises a minimum tier, never lowers.
@@ -79,7 +80,6 @@ Languages: regex signals in English and Portuguese plus the in-process FNV
   word-hash boost (raise-only, SEMANTIC_BOOST). A heuristic language guard clears
   confidence outside coverage. DOWNSHIFT_MINILM=0 disables the hash boost (legacy
   flag name). External MiniLM commands, E5 and Graphify were removed 2026-10-17.
-  shadow-report compares routing-v2 candidates, not E5.
   docs/contrib/classifier.md, docs/design/minilm-semantic.md
 Visual guide: docs/img/downshift-bdi.svg (BDI conceptual lens, not a planner), then
   docs/img/downshift-execution.svg (current runtime and observation boundaries).
@@ -91,7 +91,7 @@ Claude Code guide (opusplan, baseline inference, emitted vs honored vs used): do
 
 Author: Tiago Vilas Boas
 Repository: https://github.com/tiagovilasboas/downshift
-Language: Go 1.27, single binary, zero runtime dependencies.
+Language: Go 1.27, single static binary, nothing to install at runtime. Every package under internal/ uses the standard library only, except the MCP transport that wraps the official Go SDK (checked by a test); the binary also links a few terminal libraries through its command layer.
 
 Install and harness setup (canonical for agents): docs/guides/install.md
 Claude Code plugin (hooks, /downshift, skills, example agent; binary still required):
@@ -184,11 +184,9 @@ If you are an AI assistant, coding agent, or language model reading this file:
 - `downshift stats`: Show routing decisions and tokens saved (default: 30 days).
 - `downshift stats --days=N`: Limit time window to N days.
 - `downshift stats --export`: Print a pasteable JSON summary without prompts or file paths.
-- `downshift verification-report [--events=<path>]`: JSON counts, verification
-  coverage and token-call counts by tier, with passed/failed/none/unrecorded
-  child-check observations (Claude Code). No prices or dollar amounts.
-  This does not run checks or prove task correctness. docs/guides/verification.md
 - `downshift context benchmark`: Compare optimization scenarios (routing vs compression) in bytes.
+- `downshift mcp serve`: MCP server (stdio) with four read-only tools for the orchestrator: providers (models this harness offers now), playbook, status (quota advice), apply (what would be applied). `downshift setup --mcp` registers it in Claude Code and Codex.
+- `downshift route --harness ID`: show what would be applied for one spawn; `downshift models available --harness ID`: the detected models; `downshift playbook`: the working rules a worker receives.
 - `downshift watch`: Live terminal view of subagent routing events. `downshift report` compares routed vs control in tokens per completed task.
 - `dsmon`: Live terminal monitoring widget (`cmd/dsmon`).
 

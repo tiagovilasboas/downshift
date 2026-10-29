@@ -19,6 +19,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 )
 
 const (
@@ -188,6 +189,7 @@ func TestHandle_InvalidRequestFailsOpen(t *testing.T) {
 }
 
 func TestHandle_RoutesTrivialTaskToTheSessionSmall(t *testing.T) {
+	decidertest.Use(t, decidertest.Tier(core.TierSmall))
 	small, mid, frontier, cat := tierIDs(t)
 	allowlist(t, small, mid, frontier)
 	resp, note, d := opencode.Handle(request(trivialRename, frontier), cat)
@@ -219,6 +221,7 @@ func TestHandle_KeepsRightSizedTask(t *testing.T) {
 }
 
 func TestHandle_HeldDecisionAllowsUnchanged(t *testing.T) {
+	decidertest.Use(t, decidertest.Held(core.TierSmall))
 	small, mid, frontier, cat := tierIDs(t)
 	allowlist(t, small, mid, frontier)
 	resp, note, d := opencode.Handle(request(foreignLanguage, frontier), cat)

@@ -27,7 +27,7 @@ Pontuação por regex, margem de confiança, boost por hash em processo e fluxo 
 
 **[contrib/classifier.md](../contrib/classifier.md)**
 
-O candidato estatístico da v2 **não** substitui este caminho nos hooks. Ele só observa com `DOWNSHIFT_SHADOW_WEIGHTS`; relatório: `downshift shadow-report`. Ver [10 · Candidato em shadow](10-candidato-shadow.md).
+O candidato estatístico da v2 **não** substitui este caminho nos hooks; o pacote de shadow foi removido (2026-10-26). A direção atual está em [routing v2](../design/routing-v2.md).
 
 **Multilíngue e risco:** o guard de idioma (`lang_guard.go`) e o piso de risco (`risk.go`) podem **abster** (`Confident=false`, `RiskAbstain`) em briefs de delegação ou padrões de alto risco, sem baixar o tier. A cobertura de regras é inglês e português. E5 e Graphify não fazem parte do binário. Detalhes em [complexity-weights.md](../reference/complexity-weights.md#language-coverage).
 

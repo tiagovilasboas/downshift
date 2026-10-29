@@ -34,7 +34,7 @@ func upshift(id, sess string, d time.Duration) Event {
 func tuse(link, sess string, d time.Duration, model string, cost, base float64) Event {
 	return Event{
 		CorrelationID: "u-" + link, Timestamp: at(d), SessionID: sess, Harness: "claude-code", Outcome: OutcomeUsage,
-		LinkedDecision: link, ToModel: model, ActualCostUSD: f64(cost), BaselineCostUSD: f64(base),
+		LinkedDecision: link, ToModel: model,
 		InputTokens: i64(600), OutputTokens: i64(400), CachedTokens: i64(9000),
 	}
 }

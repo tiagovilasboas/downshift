@@ -40,13 +40,12 @@ func (f *reportFixture) spawn(group string, cost float64, status ChildStatus, se
 	}
 	f.events = append(f.events, d)
 	if cost >= 0 {
-		c := cost
 		// Tokens scale with the cost: 1 dollar here is 10,000 input tokens,
 		// so every figure the report prints is tokens.
 		in := int64(math.Round(cost * 1e4))
 		f.events = append(f.events, Event{
 			CorrelationID: fmt.Sprintf("u%031x", f.n), Timestamp: f.at.Add(10 * time.Second).Format(time.RFC3339Nano),
-			Harness: "claude-code", SessionID: session, Outcome: OutcomeUsage, LinkedDecision: id, ActualCostUSD: &c,
+			Harness: "claude-code", SessionID: session, Outcome: OutcomeUsage, LinkedDecision: id,
 			InputTokens: &in,
 		})
 	}
@@ -191,10 +190,9 @@ func TestBuildReport_ExcludesNoRouteAndUnpriced(t *testing.T) {
 func TestBuildTasks_UsageMarksBackgroundChildCompleted(t *testing.T) {
 	dec := Event{Timestamp: "2026-10-13T10:00:00Z", Harness: "claude-code", SessionID: "s", Outcome: OutcomeRewriteEmitted, Verdict: "DOWNSHIFT", Tier: "small"}
 	key := DecisionKey(dec)
-	cost := 0.02
 	launched := Event{Timestamp: "2026-10-13T10:00:01Z", Harness: "claude-code", SessionID: "s", Outcome: OutcomeChildEnded, ChildStatus: ChildLaunched, LinkedDecision: key}
 	in := int64(1000)
-	usage := Event{Timestamp: "2026-10-13T10:01:00Z", Harness: "claude-code", SessionID: "s", Outcome: OutcomeUsage, ActualCostUSD: &cost, LinkedDecision: key, InputTokens: &in}
+	usage := Event{Timestamp: "2026-10-13T10:01:00Z", Harness: "claude-code", SessionID: "s", Outcome: OutcomeUsage, LinkedDecision: key, InputTokens: &in}
 	for _, order := range [][]Event{{dec, launched, usage}, {dec, usage, launched}} {
 		tasks := BuildTasks(order)
 		if len(tasks) != 1 || !tasks[0].Completed() || !tasks[0].Priced {

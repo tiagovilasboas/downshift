@@ -39,8 +39,7 @@ import (
 //
 // CachedTokens is the sum of cache_creation_input_tokens and
 // cache_read_input_tokens; CacheWriteTokens is the creation part alone, so
-// CostUSD bills writes at the cache-write price and reads at the cache-read
-// price (the TokenUsage contract in cost.go).
+// the reports count writes and reads as separate token classes.
 
 // Outcome values written by post-hoc cost linkage (v1: PostToolUse hook).
 // The "baseline" value is reserved for a future symmetric hook that records

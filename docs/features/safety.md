@@ -1,211 +1,129 @@
 # Safety & Guardrails
 
-Downshift exists to save money, but never at the cost of task success. Multiple
-safety layers ensure routing decisions are conservative when uncertain.
+Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-## Core Invariants
+Downshift saves tokens, and it must not cost task success. Since decision O8
+(2026-10-28) the orchestrator LLM chooses the model for every delegation, and Downshift
+applies that choice, enforces what you declared, and measures the result. Downshift never
+picks a model on its own. This page says what still protects you and what no longer does.
 
-### 1. Complex Work Never Downgrades
+"Zero LLM" means Downshift's own code never calls an LLM and adds no request or token cost to
+the hot path. It does not mean "no LLM decides": the orchestrator's choice is applied
+deterministically.
 
-A task classified as COMPLEX always runs on the FRONTIER tier:
+## What changed on 2026-10-28
 
-```
-COMPLEX task → FRONTIER tier (always)
-                 ↓
-          Never routed to MID or SMALL
-```
+Removed from the product:
 
-Complex work includes security reviews, architecture decisions, cross-system
-debugging, and anything involving money or data migrations.
+- The built-in risk floor and risk veto. Before O8 the guard refused to move a task that
+  touched a risk category (secret, authz, crypto, payment, vuln, pii, destructive,
+  concurrency, prompt-injection) to a cheaper tier. That rule is gone.
+- The built-in default agent-type table (Explore and similar agents on the small tier). Its
+  content is now guidance in the `downshift-orchestrator` skill that `downshift setup`
+  installs.
+- The automatic upgrade after a recorded failure. The orchestrator decides the next model.
+- `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1` is no longer written by setup, because it overrides the
+  model the orchestrator chose per call.
+- The old claims that "complex work never downgrades" and "risk keywords force COMPLEX" as
+  Downshift guarantees. The classifier still computes a class and risk categories, but only as
+  telemetry and as the key of floors you declare. It does not decide routing.
 
-### 2. Uncertain Classification Never Costs
+## The residual risk, stated plainly
 
-When the classifier isn't confident, it routes conservatively:
+A small model can now receive a secret, authentication, payment, cryptography or destructive
+task if the orchestrator sends it there, or if a rule or profile you declared does. Downshift
+will not stop that unless you declared a floor. The effect is on the quality of the work, not
+on permissions: the harness grants the same tool permissions at every tier.
 
-```
-Low confidence → Higher tier (safe)
-                    ↓
-          Never saves money on uncertain work
-```
+Who owns the risk now: first the orchestrator, guided by the playbook skill (guidance, never
+enforced); second you, through floors in `policy.json`. Downshift owns the refusals below and
+the measurement.
 
-An uncertain classification might waste tokens (higher tier than needed),
-but it never risks task failure (lower tier than needed).
+## What still protects you
 
-### 3. Risk Keywords Force COMPLEX
+| Control | What it does |
+|---|---|
+| Declared floors | `min_tier`, `min_tier_by_class` and `min_tier_by_risk` in `policy.json` raise a decision to at least that tier. They only raise. |
+| Unknown model refused | A model id the harness catalog does not know is never written. |
+| `explicit_only` refused | A model marked `explicit_only` is never chosen automatically. |
+| Doubt keeps | If Downshift cannot read the request, the requested model is kept. |
+| Fail-open | 1 MiB input cap, 2 s read, 1.5 s deadline; a panic or an invalid policy leaves the spawn unchanged. |
+| Prompt-free telemetry | Telemetry stores enums, tiers, models, tokens and times. Task text stays in memory and never reaches disk. |
+| Tokens only | Savings are reported in tokens, never in dollars. |
 
-Certain domains automatically elevate to COMPLEX regardless of task wording:
+## Declare a floor for sensitive work
 
-| Domain | Keywords |
-|--------|----------|
-| Security | auth, permission, credential, secret, CVE, vulnerability |
-| Data | migration, schema, database alter, DROP, TRUNCATE |
-| Money | payment, billing, subscription, refund, charge |
-| Critical | production, deploy, rollback, incident |
+Put this in `.downshift/policy.json` (project) or your user policy file:
 
-These "risk floor" keywords bypass normal classification.
-
-## Guardrail Implementation
-
-### Risk Floor
-
-```go
-// internal/core/selfcheck.go
-func riskFloor(prompt string) bool {
-    // Security keywords
-    if matches(prompt, securityPatterns) {
-        return true  // Force COMPLEX
-    }
-    // Data keywords
-    if matches(prompt, dataPatterns) {
-        return true
-    }
-    // ... etc
+```json
+{
+  "version": 1,
+  "min_tier": "small",
+  "min_tier_by_class": { "COMPLEX": "frontier" },
+  "min_tier_by_risk": {
+    "secret": "frontier",
+    "authz": "frontier",
+    "payment": "frontier",
+    "crypto": "frontier"
+  }
 }
 ```
 
-### Confidence Threshold
+Unknown tiers, classes and risk categories are rejected when the file is read, so a typo cannot
+silently disable a floor. Know the limits:
 
-```go
-// internal/routingv2/policy/policy.go
-const LowConfidenceThreshold = 0.6
+- `min_tier_by_risk` is keyed on a text scan of the prompt. A prompt that avoids the keywords
+  is not floored. Only `min_tier` applies to every spawn.
+- The floor needs a model the catalog knows. A spawn that names an unknown model may escape it.
+- An unreadable or invalid file means no floor (fail-open), not a block.
+- A harness that cannot rewrite the model gets the decision computed and recorded, not applied.
+  See [harness-matrix](../reference/harness-matrix.md).
+- A `policy.json` inside a cloned repository is read like yours. Read a new project's
+  `.downshift/policy.json` before trusting it; rules in it can lower a tier.
 
-func Decide(probs TierProbabilities, safety Constraint) Tier {
-    if probs.Confidence() < LowConfidenceThreshold {
-        return conservativeTier(probs)  // Route up, not down
-    }
-    return probs.Best()
-}
-```
+## Playbooks and prompt injection
 
-### Safe Verdict
+Playbook text (`downshift playbook`) is prefixed to a worker's first message, so a shared or
+edited playbook file is an instruction channel. Keep playbooks to your own text, and review a
+set you copy from someone else before using it. The files live under the state directory
+(`playbooks/`, folder mode `0700`, files `0600`). The repository's own `CLAUDE.md` or
+`AGENTS.md` wins over a playbook on conflict. Playbooks are never enforced and cannot grant
+permissions.
 
-Every routing decision carries a `SafeVerdict` that adapters must respect:
+## Status of the MCP delegation server
 
-```go
-type SafeVerdict struct {
-    AllowDownshift bool  // Can we route to a cheaper tier?
-    AllowUpshift   bool  // Can we route to a more capable tier?
-    Reason         string
-}
-```
+`downshift mcp serve` is implemented for the four information tools (`providers`, `playbook`, `status`, `apply`). It runs
+over stdio only, with no listener; it accepts no task text; a project directory argument must be inside the directory the
+server was started in; every argument has a length cap and every result a 64 KiB cap. The tools that start workers are
+still specified, not built, and the controls the review asks for them (argument list without a shell, a restricted
+working directory) are not code yet. The review is in
+[appsec-review-o8](../internal/appsec-review-o8.md).
 
-An adapter that ignores `SafeVerdict` is a bug.
-
-## What Gets Blocked
-
-### Never Downshift
-
-- COMPLEX tasks (always FRONTIER)
-- Tasks with risk floor keywords
-- Low-confidence classifications
-- Tasks in projects with a floor policy
-
-### Never Route
-
-- Foreign models (not in the catalog)
-- Models with no tier metadata
-- Spawns with explicit model override
-
-## Testing Safety
-
-### Cost Safety Invariants Test
-
-```bash
-go test ./internal/core -run TestCostSafetyInvariants
-```
-
-This test ensures:
-1. COMPLEX → FRONTIER (always)
-2. Low confidence → no downshift
-3. Risk keywords → COMPLEX
-4. Unknown baseline → no routing
-
-### Adversarial Tests
-
-```bash
-go test ./internal/core -run TestAdversarial
-```
-
-Tests prompt injection and edge cases that might trick the classifier.
-
-## Monitoring Safety
-
-### Under-Tier Events
-
-The telemetry tracks when a task might have been under-powered:
+## Monitoring
 
 ```bash
 downshift stats --under-tier
 ```
 
-An under-tier event means a task was routed to a lower tier and:
-- Took multiple retries
-- Resulted in user correction
-- Had poor outcome signal
+An under-tier event means a task ran on a lower tier and showed retries, a user correction or
+a poor outcome signal. With O8 this is how a bad choice by the orchestrator becomes visible. It
+is a measurement, not a block.
 
-### Verification Report
-
-```bash
-downshift verification-report --period=7d
-```
-
-Shows tasks where the model might have been insufficient based on
-post-hoc signals.
-
-## Configuration
-
-### Project Floor
-
-Set a minimum tier for a project in `.downshift/policy.json`:
-
-```json
-{
-  "floor": "MID"
-}
-```
-
-Every task in this project gets at least MID tier.
-
-### Disable Routing
-
-For critical work, disable routing entirely:
+## Disable routing
 
 ```bash
 DOWNSHIFT_ROUTE=0 downshift claude-code
 ```
 
-Or in your shell profile for specific projects.
-
 ## Recovery
 
-### What If Routing Was Wrong?
+If a task fails because the model was too small, choose a larger model in the next delegation
+(Downshift does not upgrade for you). To undo a policy change, edit or remove the
+`policy.json` entry; routing reads it on every call.
 
-If a task fails due to insufficient model:
+## Audit trail
 
-1. **Retry** — The harness will retry, and the next spawn may route higher
-2. **Feedback** — `downshift feedback --task=<id> --outcome=failed`
-3. **Adapt** — The adaptive memory learns from failures
-
-### Rollback
-
-If a policy change causes problems:
-
-```bash
-downshift config rollback  # Restore previous config
-```
-
-## Audit Trail
-
-Every routing decision is logged with:
-
-- Classification signals
-- Confidence score
-- Risk floor evaluation
-- Final tier and model
-- SafeVerdict
-
-For compliance or debugging:
-
-```bash
-downshift replay --verbose --period=24h
-```
+A routing note records the verdict, the reason, the tier from and to, and the rule or profile
+that applied. It never records task text. The `replay` command was removed (2026-10-26). The
+routing direction is in [routing v2](../design/routing-v2.md); decision O8 supersedes the parts
+of it that describe a built-in risk veto or default table.

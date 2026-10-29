@@ -25,6 +25,12 @@ func TierOf(c Complexity) Tier {
 	}
 }
 
+// RoutingNote mirrors routing/contract.Note without its headroom fields. It
+// holds enums, tiers and declared ids only.
+type RoutingNote struct {
+	Verdict, Reason, RuleID, Profile, TierFrom, TierTo string
+}
+
 // Decision is the full routing decision for one subagent task: what the task
 // needs, what model to use on the given harness, and how it compares to the
 // model the harness would have used by default.
@@ -46,6 +52,13 @@ type Decision struct {
 	SafeVerdict Verdict
 	Corrections []string // guardrail rule IDs that held this decision, empty when clean
 	Checked     bool
+	// Reason names why routing v2 held or refused a move (a
+	// routing/contract.Reason value as a string); empty when nothing was held.
+	Reason string
+	// Note is the routing note of the decision as plain strings (verdict,
+	// declared rule or profile id, tiers), so the event log can say why a spawn
+	// changed or was kept. Empty on hand-built decisions.
+	Note RoutingNote
 	// Risk lists the risk categories (risk.go) the prompt touches, whatever
 	// its complexity. Guardrail R5 holds any downshift of such a task.
 	Risk []string
@@ -151,18 +164,6 @@ type Shadow struct {
 	// AdaptWouldSet is false when memory is absent or agrees with Tier.
 	AdaptWould    Tier
 	AdaptWouldSet bool
-	// ScoreWould is the session model id the public-score capability path
-	// (score_select.go) would pick for this task, or empty when it abstained.
-	// Shadow by default: it changes the routing only when ScoreApplied is set.
-	// ScoreWouldCostRatio is the list price of that pick over the price of the
-	// model the catalog-tier path leaves the child on (0 when either price is
-	// unknown). ScoreDiffers is true when the pick is a different model.
-	ScoreWould          string
-	ScoreDiffers        bool
-	ScoreWouldCostRatio float64
-	// ScoreApplied is true when DOWNSHIFT_SCORE_ROUTING=1 and the plan
-	// rewrote the model to ScoreWould.
-	ScoreApplied bool
 	// GatewayWould is the id of the allowlisted gateway row that would
 	// serve this decision's tier, or empty when there is no allowlist or no
 	// row of that tier. Shadow only: it never changes the routed model.
@@ -197,79 +198,6 @@ func (v Verdict) String() string {
 	}
 }
 
-// Route is the main entry point: given a task prompt, a harness, the current
-// model id (may be empty), and an optional Resolver, produce a routing Decision.
-//
-// Without a Resolver the decision carries tiers but no model ids: resolveModel
-// returns a zero Model and the verdict stays Unknown, so the caller fails open.
-// Hooks always pass the catalog; offline commands may not.
-func Route(prompt, harness, currentModelID string, r ...Resolver) Decision {
-	return RouteAgent(prompt, harness, "", currentModelID, r...)
-}
-
-// RouteAgent is Route with the spawn's subagent type, when the harness sent
-// one. The type is a classifier signal only: see applyAgentTypeHint. An empty
-// or unmapped type routes exactly as Route does.
-func RouteAgent(prompt, harness, agentType, currentModelID string, r ...Resolver) Decision {
-	var res Resolver
-	if len(r) > 0 && r[0] != nil {
-		res = r[0]
-	}
-
-	tier, cls, nbUp, nbDown := classifyTask(prompt)
-	if economyEnv() && cls.Confident && !cls.RiskFloor && len(RiskCategories(prompt)) == 0 && tier > TierSmall {
-		tier--
-		cls.Complexity = complexityForTier(tier)
-	}
-	hinted := false
-	if t, ok := agentTypeHintTier(harness, agentType, prompt, tier, cls, nbUp, currentModelID, res); ok {
-		tier, hinted = t, true
-		cls.Complexity, cls.Confident = complexityForTier(t), true
-		nbDown.Applied = false
-	}
-	effort := EffortFor(tier)
-	recommended := resolveModel(harness, tier, res)
-	verdict, savings, current := compareToCurrentModel(harness, currentModelID, recommended, res)
-
-	d := Decision{
-		Complexity:          cls.Complexity,
-		Tier:                tier,
-		Effort:              effort,
-		Harness:             harness,
-		Model:               recommended,
-		Verdict:             verdict,
-		Savings:             savings,
-		Confident:           cls.Confident,
-		Risk:                RiskCategories(prompt),
-		NoSignal:            cls.NoSignal,
-		UnsupportedLanguage: cls.UnsupportedLanguage,
-		Baseline: Baseline{
-			CurrentModel: current,
-		},
-		Guards: Guards{
-			RiskFloor:     cls.RiskFloor,
-			RiskAbstain:   cls.RiskAbstain,
-			SemanticLift:  cls.SemanticLift,
-			TaskFocus:     cls.TaskFocus,
-			AgentTypeHint: hinted,
-		},
-		Shadow: Shadow{
-			NBUpshift:   nbUp,
-			NBDownshift: nbDown,
-		},
-	}
-	d.Intent = IntentFor(prompt, cls, d, res)
-	// Self-correction validates the decision against the guardrails before
-	// any adapter acts. The classified verdict is preserved for telemetry;
-	// the safe action is exposed separately.
-	d.recheck()
-	// The operator floor runs before adapt memory so the shadow comparison
-	// sees the final tier.
-	applyTierFloor(&d, currentModelID, res)
-	applyAdaptMemory(prompt, &d, res)
-	return d
-}
-
 // RaiseTier lifts the decision to at least tier t and recomputes everything
 // derived from the tier: effort, recommended model, verdict against the current
 // model, and the self-correction check. It never lowers a tier and reports
@@ -302,26 +230,6 @@ func (d *Decision) recheck() {
 	for _, v := range report.Violations {
 		d.Corrections = append(d.Corrections, v.Rule)
 	}
-}
-
-// classifyTask classifies the prompt once (regex, semantic boost, risk floor)
-// and returns the target tier and the final classification. Route uses this
-// single result for complexity, confidence and intent so they never disagree.
-// The naive-Bayes second opinion runs last, on the final tier.
-func classifyTask(prompt string) (Tier, Classification, NBUpshift, NBDownshift) {
-	cls := ClassifyWithSemantic(prompt)
-
-	nbDown := nbTrivialOpinion(prompt, cls)
-	if nbDown.Applied {
-		cls.Complexity = Trivial
-		cls.Confident = false
-	}
-	nbUp := nbSecondOpinion(prompt, TierOf(cls.Complexity))
-	if nbUp.Applied {
-		cls.Complexity = complexityForTier(nbUp.To)
-		cls.Confident = false
-	}
-	return TierOf(cls.Complexity), cls, nbUp, nbDown
 }
 
 // resolveModel returns the catalog model for the given harness and tier.
@@ -370,8 +278,8 @@ func (d Decision) Summary() string {
 
 	switch d.Verdict {
 	case VerdictDownshift:
-		return fmt.Sprintf("%s task%s → downshift to %s (~%.0f%% cheaper)",
-			d.Complexity, intentSuffix, d.Model.ID, d.Savings*100)
+		return fmt.Sprintf("%s task%s → downshift to %s (smaller model)",
+			d.Complexity, intentSuffix, d.Model.ID)
 	case VerdictUpshift:
 		return fmt.Sprintf("%s task%s → upshift to %s (needs more torque)",
 			d.Complexity, intentSuffix, d.Model.ID)

@@ -23,7 +23,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -31,7 +30,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 )
 
@@ -43,27 +41,26 @@ import (
 // transcript format (e.g. Claude Code JSON lines with {"type":"assistant",...})
 // is a distinct schema and is never the downshift events.jsonl schema.
 type Event struct {
-	CorrelationID        string                `json:"correlation_id"`             // opaque ID generated per hook invocation
-	Timestamp            string                `json:"timestamp"`                  // RFC3339Nano
-	Source               string                `json:"source"`                     // hook|cli
-	Agent                string                `json:"agent"`                      // subagent, never task text
-	Harness              string                `json:"harness"`                    // e.g. "claude-code"
-	SessionID            string                `json:"session_id,omitempty"`       // Codex session identifier, when provided
-	Complexity           string                `json:"complexity"`                 // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
-	FromModel            string                `json:"requested_model"`            // model supplied by the harness
-	ToModel              string                `json:"final_model"`                // selected model after policy
-	RequestedEffort      string                `json:"requested_reasoning_effort"` // level, "inherit" or "unobserved"
-	FinalEffort          string                `json:"final_reasoning_effort"`     // policy recommendation
-	Verdict              string                `json:"verdict"`                    // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
-	Tier                 string                `json:"tier"`                       // SMALL|MID|FRONTIER
-	PolicyVersion        string                `json:"policy_version"`
-	BinaryVersion        string                `json:"binary_version"`
-	Outcome              string                `json:"outcome"` // rewrite_emitted|allow|blocked|error|usage|baseline
-	ErrorCode            string                `json:"error_code,omitempty"`
-	DecisionIntelligence *ShadowRecommendation `json:"decision_intelligence,omitempty"`
-	EstimatedSavings     float64               `json:"estimated_savings"` // normalised fraction 0–1
-	QuotaStatus          string                `json:"quota_status,omitempty"`
-	QuotaSource          string                `json:"quota_source,omitempty"`
+	CorrelationID    string  `json:"correlation_id"`             // opaque ID generated per hook invocation
+	Timestamp        string  `json:"timestamp"`                  // RFC3339Nano
+	Source           string  `json:"source"`                     // hook|cli
+	Agent            string  `json:"agent"`                      // subagent, never task text
+	Harness          string  `json:"harness"`                    // e.g. "claude-code"
+	SessionID        string  `json:"session_id,omitempty"`       // Codex session identifier, when provided
+	Complexity       string  `json:"complexity"`                 // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
+	FromModel        string  `json:"requested_model"`            // model supplied by the harness
+	ToModel          string  `json:"final_model"`                // selected model after policy
+	RequestedEffort  string  `json:"requested_reasoning_effort"` // level, "inherit" or "unobserved"
+	FinalEffort      string  `json:"final_reasoning_effort"`     // policy recommendation
+	Verdict          string  `json:"verdict"`                    // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
+	Tier             string  `json:"tier"`                       // SMALL|MID|FRONTIER
+	PolicyVersion    string  `json:"policy_version"`
+	BinaryVersion    string  `json:"binary_version"`
+	Outcome          string  `json:"outcome"` // rewrite_emitted|allow|blocked|error|usage|baseline
+	ErrorCode        string  `json:"error_code,omitempty"`
+	EstimatedSavings float64 `json:"estimated_savings"` // normalised fraction 0–1
+	QuotaStatus      string  `json:"quota_status,omitempty"`
+	QuotaSource      string  `json:"quota_source,omitempty"`
 	// CreditHeld records that the credit gate refused this rewrite. It is
 	// not a guardrail correction. Exhausted and stale status are holds
 	// without this flag.
@@ -88,16 +85,14 @@ type Event struct {
 	OutputTokens     *int64 `json:"output_tokens,omitempty"`      // provider-reported output tokens
 	CachedTokens     *int64 `json:"cached_tokens,omitempty"`      // provider-reported cached input tokens
 	CacheWriteTokens *int64 `json:"cache_write_tokens,omitempty"` // cache-creation part of cached_tokens, billed at the cache-write price
-	// ActualCostUSD and BaselineCostUSD are read from lines written before the
-	// tokens-only change; nothing writes them now.
-	ActualCostUSD   *float64 `json:"actual_cost_usd,omitempty"`
-	BaselineCostUSD *float64 `json:"baseline_cost_usd,omitempty"`
 	// BaselineSource says where the baseline model came from: "requested" (the
 	// model the harness asked for) or "inferred" (the configured model, used
 	// when the harness named none). Absent when no baseline was computed.
 	BaselineSource string `json:"baseline_source,omitempty"`
 	// ChildStatus is set on child_ended events (see child_outcome.go).
 	ChildStatus ChildStatus `json:"child_status,omitempty"`
+	// Acceptance records developer acceptance in git commit: "used" or "discarded".
+	Acceptance string `json:"acceptance,omitempty"`
 
 	// Optional self-correction record. Verdict keeps the classified value;
 	// SafeVerdict carries the action adapters were allowed to apply, and
@@ -185,16 +180,6 @@ type Event struct {
 	// known and whose target costs more. It lets stats charge the extra cost.
 	// Absent on old logs and when either price is unknown (then neutral).
 	UpshiftCostRatio float64 `json:"upshift_cost_ratio,omitempty"`
-	// ScoreWould is the session model id the public-score capability path
-	// would pick (shadow unless DOWNSHIFT_SCORE_ROUTING=1). Model id only: no
-	// prompt, no score value, not a reason code. Absent when the path
-	// abstained or no score index is linked.
-	ScoreWould string `json:"score_would,omitempty"`
-	// ScoreDiffers is true when ScoreWould is not the model the catalog-tier
-	// path leaves the child on. ScoreWouldCostRatio is the pick's catalog list
-	// price over that model's (input plus output per 1M); absent when unknown.
-	ScoreDiffers        bool    `json:"score_differs,omitempty"`
-	ScoreWouldCostRatio float64 `json:"score_would_cost_ratio,omitempty"`
 	// GatewayWould is the slug of the allowlisted OpenRouter row that would
 	// serve this tier (shadow only; the routed model is unchanged), and
 	// GatewayWouldTier that tier. Slug and tier only: no prompt, no task text.
@@ -207,6 +192,10 @@ type Event struct {
 	GatewayPrice string `json:"gateway_price,omitempty"`
 	// Optional Code Intelligence (DCI) record. Set on OutcomeDCI events.
 	DCI *DCIRecord `json:"dci,omitempty"`
+
+	// RoutingNote is why this decision changed the spawn or kept it (see
+	// RoutingNote). Absent on events written before the note was recorded.
+	RoutingNote *RoutingNote `json:"routing_note,omitempty"`
 
 	// Confidence is reserved and never set: the router has no calibrated
 	// probability, so the key stays absent rather than carry a made-up number.
@@ -286,17 +275,6 @@ func (e Event) TokenUsageOrZero() TokenUsage {
 		u.CacheWriteTokens = *e.CacheWriteTokens
 	}
 	return u
-}
-
-// ShadowRecommendation is advisory metadata emitted beside, never into, the
-// deterministic hook rewrite. It contains no task text or provider selection.
-type ShadowRecommendation struct {
-	Tier              string   `json:"tier"`
-	Confidence        float64  `json:"confidence"`
-	Reasons           []string `json:"reasons"`
-	RequiresReview    bool     `json:"requires_review"`
-	BudgetConstrained bool     `json:"budget_constrained"`
-	Apply             bool     `json:"apply"`
 }
 
 const PolicyVersion = "core-route-v1"
@@ -446,78 +424,6 @@ func MarkUnchanged(ev *Event) {
 	}
 	ev.ToModel = ev.FromModel
 	ev.FinalEffort = ev.RequestedEffort
-}
-
-// FromDecision builds an Event from a core.Decision and hook runtime context.
-// It assumes a rewrite was emitted; callers set OutcomeAllow when the adapter
-// returned the spawn unchanged.
-// Self-correction fields are recorded only for held decisions, keeping clean
-// events compact and old log readers unaffected.
-func FromDecision(d core.Decision, correlationID, binaryVersion string) Event {
-	ev := Event{
-		CorrelationID:    correlationID,
-		Timestamp:        time.Now().UTC().Format(time.RFC3339Nano),
-		Source:           "hook",
-		Agent:            "subagent",
-		Harness:          d.Harness,
-		Complexity:       d.Complexity.String(),
-		FromModel:        ModelOrUnknown(d.Baseline.CurrentModel.ID),
-		ToModel:          ModelOrUnknown(d.Model.ID),
-		RequestedEffort:  EffortUnobserved,
-		FinalEffort:      EffortOrUnknown(d.Effort.String()),
-		Verdict:          d.Verdict.String(),
-		Tier:             d.Tier.String(),
-		PolicyVersion:    PolicyVersion,
-		BinaryVersion:    binaryVersion,
-		Outcome:          OutcomeRewriteEmitted,
-		EstimatedSavings: d.Savings,
-		QuotaStatus:      d.Session.QuotaStatus,
-		QuotaSource:      d.Session.QuotaSource,
-		CreditHeld:       d.Session.CreditHeld,
-		PolicyFloor:      d.Guards.PolicyFloor,
-		RoutingPolicy:    RoutingPolicy,
-		ReasonCodes:      ReasonCodes(d),
-	}
-	if d.Verdict == core.VerdictUpshift {
-		from := d.Baseline.CurrentModel.InputM + d.Baseline.CurrentModel.OutputM
-		to := d.Model.InputM + d.Model.OutputM
-		if from > 0 && to > from {
-			ev.UpshiftCostRatio = to / from
-		}
-	}
-	if d.Shadow.ScoreWould != "" {
-		ev.ScoreWould = ModelOrUnknown(d.Shadow.ScoreWould)
-		ev.ScoreDiffers = d.Shadow.ScoreDiffers
-		if r := d.Shadow.ScoreWouldCostRatio; r > 0 && !math.IsInf(r, 0) && !math.IsNaN(r) {
-			ev.ScoreWouldCostRatio = math.Round(r*1e4) / 1e4
-		}
-	}
-	if d.Shadow.GatewayWould != "" {
-		ev.GatewayWould = ModelOrUnknown(d.Shadow.GatewayWould)
-		ev.GatewayWouldTier = d.Tier.String()
-	}
-	if len(d.Corrections) > 0 {
-		ev.SafeVerdict = d.SafeVerdict.String()
-		ev.Corrections = d.Corrections
-	}
-	if d.Shadow.NBUpshift.Would {
-		ev.NBUpshift = &NBUpshiftRecord{
-			FromTier: d.Shadow.NBUpshift.From.String(),
-			ToTier:   d.Shadow.NBUpshift.To.String(),
-			Margin:   math.Round(d.Shadow.NBUpshift.Margin*1e4) / 1e4,
-			Applied:  d.Shadow.NBUpshift.Applied,
-		}
-	}
-	if d.Shadow.NBDownshift.Would {
-		// The opinion only exists for the Medium default, so it is mid -> small.
-		ev.NBDownshift = &NBUpshiftRecord{
-			FromTier: core.TierMid.String(),
-			ToTier:   core.TierSmall.String(),
-			Margin:   math.Round(d.Shadow.NBDownshift.Margin*1e4) / 1e4,
-			Applied:  d.Shadow.NBDownshift.Applied,
-		}
-	}
-	return ev
 }
 
 // Failure records a hook fail-open path without accepting raw input or errors
@@ -680,14 +586,6 @@ type Stats struct {
 	// DuplicateToolUse counts distinct tool_use_hash values that appear on
 	// more than one decision (both entry points live on the same spawn).
 	DuplicateToolUse int
-	// ScoreObserved counts decisions the capability path produced a pick for;
-	// ScoreDiffers those where the pick is another model than the catalog
-	// path leaves; ScoreRatioN and ScoreRatioSum average the pick's list price
-	// over that model's price (events where both are known).
-	ScoreObserved int
-	ScoreDiffers  int
-	ScoreRatioN   int
-	ScoreRatioSum float64
 	// GatewayObserved counts decisions an allowlisted OpenRouter row would
 	// have served; GatewaySlugs counts them per slug. Shadow only.
 	GatewayObserved int
@@ -895,7 +793,7 @@ func tallySpawnSurface(events []Event, s *Stats) {
 // guardrail held, or one that left the spawn unchanged, spent nothing and is not
 // counted: the alarm must only fire for money that was really spent.
 func spentOnDoubt(ev Event) bool {
-	return strings.EqualFold(ev.Tier, core.TierFrontier.String()) &&
+	return strings.EqualFold(ev.Tier, TierFrontier) &&
 		ev.Outcome == OutcomeRewriteEmitted && AppliedRewrite(ev.Outcome, ev.Corrections) &&
 		frontierOnDoubt(ev.ReasonCodes)
 }

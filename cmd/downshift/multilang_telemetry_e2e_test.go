@@ -23,10 +23,23 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/adapters/kirocrew"
 	"github.com/tiagovilasboas/downshift/internal/adapters/opencode"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
 )
 
+// guardedLanguageStub pins the language guard's decision: the unsupported
+// prompt is held with UnsupportedLanguage set (the active model stays), any
+// other prompt goes to the small tier.
+func guardedLanguageStub() core.Decider {
+	return decidertest.When(
+		func(r core.Request) bool { return strings.Contains(r.Prompt, "contraseñas") },
+		decidertest.Mark(decidertest.Held(core.TierSmall), func(d *core.Decision) { d.UnsupportedLanguage = true }),
+		decidertest.Tier(core.TierSmall),
+	)
+}
+
 func TestHookE2E_MultilangGuardAcrossHarnesses(t *testing.T) {
+	decidertest.Use(t, guardedLanguageStub())
 	t.Setenv("HOME", t.TempDir())
 	const unsupported = "rename el campo que contiene las contraseñas de clientes"
 	const supported = "rename the userId variable to userIdentifier"

@@ -83,7 +83,7 @@ func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result 
 	priced := false // a later stop of an agent already priced (Cumulative)
 	// A harness whose usage source is not proven (UsageNone or empty) records
 	// the end and the status but never a cost: unverified tokens could belong
-	// to the parent thread and would corrupt cost per completed task.
+	// to the parent thread and would corrupt tokens per completed task.
 	if caps, ok := core.CapsFor(ce.Harness); ok && caps.UsageSource != "" && caps.UsageSource != core.UsageNone && ce.Usage != nil {
 		usage = *ce.Usage
 	}

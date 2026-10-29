@@ -25,8 +25,7 @@ func TestEnvAccessorsReadTheSeam(t *testing.T) {
 	if sessionModelsEnv() != "" || quotaModeRequired() || explicitUpshiftEnv() ||
 		discoveryOff() || discoveredEnv() != "" ||
 		ttl != defaultDiscoveryTTL || invalid || nbUpshiftEnv() || nbDownshiftEnv() ||
-		scoreRoutingEnv() || NBUpshiftEnabled() || NBDownshiftEnabled() ||
-		ScoreRoutingEnabled() ||
+		NBUpshiftEnabled() || NBDownshiftEnabled() ||
 		nativeSessionPathEnv("DOWNSHIFT_CURSOR_NATIVE_FILE") != "" {
 		t.Fatal("defaults must be empty/false with an empty environment")
 	}
@@ -49,7 +48,6 @@ func TestEnvAccessorsReadTheSeam(t *testing.T) {
 		{"discovery ttl negative", EnvDiscoveryTTL, "-1h", func() any { _, inv := discoveryTTL(); return inv }, true},
 		{"nb upshift", NBUpshiftEnv, "1", func() any { return NBUpshiftEnabled() }, true},
 		{"nb downshift", NBDownshiftEnv, "1", func() any { return NBDownshiftEnabled() }, true},
-		{"score routing", ScoreRoutingEnv, "1", func() any { return ScoreRoutingEnabled() }, true},
 		{"native session", "DOWNSHIFT_CURSOR_NATIVE_FILE", "/x/n.json", func() any { return nativeSessionPathEnv("DOWNSHIFT_CURSOR_NATIVE_FILE") }, "/x/n.json"},
 	}
 	for _, c := range cases {
@@ -69,10 +67,9 @@ func TestEnvAccessorsKeepExactMatching(t *testing.T) {
 		EnvDiscovery:       "0",
 		NBUpshiftEnv:       "yes",
 		NBDownshiftEnv:     "on",
-		ScoreRoutingEnv:    "true",
 	})
 	if quotaModeRequired() || explicitUpshiftEnv() || discoveryOff() ||
-		NBUpshiftEnabled() || NBDownshiftEnabled() || ScoreRoutingEnabled() {
+		NBUpshiftEnabled() || NBDownshiftEnabled() {
 		t.Fatal("only the documented literal values may switch a variable")
 	}
 }
@@ -84,14 +81,14 @@ func TestSetConfigPinsTheSnapshot(t *testing.T) {
 	if !NBUpshiftEnabled() || sessionModelsEnv() != "/env/sm.json" {
 		t.Fatal("precondition: live environment is read when no Config is set")
 	}
-	restore := SetConfig(Config{SessionModelsPath: "/pinned/sm.json", ScoreRouting: true,
+	restore := SetConfig(Config{SessionModelsPath: "/pinned/sm.json",
 		NativeSessionPaths: map[string]string{"DOWNSHIFT_CURSOR_NATIVE_FILE": "/pinned/n.json"}})
-	if NBUpshiftEnabled() || !ScoreRoutingEnabled() || sessionModelsEnv() != "/pinned/sm.json" ||
+	if NBUpshiftEnabled() || sessionModelsEnv() != "/pinned/sm.json" ||
 		nativeSessionPathEnv("DOWNSHIFT_CURSOR_NATIVE_FILE") != "/pinned/n.json" {
 		t.Fatal("accessors must read the pinned Config, not the environment")
 	}
 	restore()
-	if !NBUpshiftEnabled() || ScoreRoutingEnabled() || sessionModelsEnv() != "/env/sm.json" {
+	if !NBUpshiftEnabled() || sessionModelsEnv() != "/env/sm.json" {
 		t.Fatal("restore must return to the live environment")
 	}
 }
@@ -103,7 +100,7 @@ func TestConfigFromEnvMatchesAccessors(t *testing.T) {
 	m := map[string]string{
 		EnvSessionModels: "/x/sm.json", EnvQuotaMode: "required", EnvExplicitUpshift: "1",
 		EnvDiscovery: "off", EnvDiscovered: "/x/d.json",
-		EnvDiscoveryTTL: "90m", NBUpshiftEnv: "1", NBDownshiftEnv: "1", ScoreRoutingEnv: "1",
+		EnvDiscoveryTTL: "90m", NBUpshiftEnv: "1", NBDownshiftEnv: "1",
 	}
 	for _, n := range AllHarnessCaps() {
 		if n.Caps.NativeSessionEnv != "" {
@@ -114,7 +111,7 @@ func TestConfigFromEnvMatchesAccessors(t *testing.T) {
 	want := Config{
 		SessionModelsPath: "/x/sm.json", QuotaRequired: true, ExplicitUpshift: true,
 		DiscoveryOff: true, DiscoveredPath: "/x/d.json",
-		DiscoveryTTL: 90 * time.Minute, NBUpshift: true, NBDownshift: true, ScoreRouting: true,
+		DiscoveryTTL: 90 * time.Minute, NBUpshift: true, NBDownshift: true,
 	}
 	paths := got.NativeSessionPaths
 	got.NativeSessionPaths = nil

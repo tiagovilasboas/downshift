@@ -25,7 +25,6 @@ var reasonWords = map[string]string{
 	ReasonCreditHeld:            "the credit gate refused the rewrite (quota exhausted, stale or unknown)",
 	ReasonGuessHeld:             "the baseline was guessed (settings or the parent model), so only a small-tier downshift is written",
 	ReasonPaused:                "routing was paused for this session: classified and logged, the spawn ran unchanged",
-	ReasonScoreRouted:           "public capability scores picked the model",
 	ReasonBaselineFromSettings:  "the session model was inferred from the configured model (env or settings), not seen in the transcript",
 	ReasonAgentPinsModel:        "the agent definition pins its model, an explicit choice, so the spawn was left unchanged",
 	ReasonAgentTypeHint:         "the task text was unsure, so the subagent type (for example Explore or Plan) set the tier",

@@ -10,9 +10,10 @@ throughout the session.
 - **Name:** Downshift
 - **Author:** Tiago Vilas Boas
 - **Repository:** https://github.com/tiagovilasboas/downshift
-- **Purpose:** Deterministic subagent model router. Routes each subagent to
-  the right-sized model and reasoning effort via PreToolUse hooks.
-  Zero LLM in the routing loop.
+- **Purpose:** Applies the orchestrator's model choice to each subagent via
+  PreToolUse hooks (owner decision O8): the orchestrator LLM chooses model and
+  effort, Downshift applies it within the user's declared policy and measures
+  the result. Downshift's own code never calls an LLM.
 
 ---
 
@@ -31,7 +32,7 @@ allowed under the licence terms. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
 
 Owner decision, 2026-10-11. Never build a feature for one harness.
 
-1. Behaviour lives in shared layers: `internal/core`, shared packages (`policyfile`, `adapt`, `quota`, `telemetry`) and the shared hook runner (`runHookAdapter`). Adapters hold no policy.
+1. Behaviour lives in shared layers: `internal/core`, shared packages (`policyfile`, `quota`, `telemetry`) and the shared hook runner (`runHookAdapter`). Adapters hold no policy.
 2. Adapters only parse the payload, declare `HarnessCapabilities`, and emit the wire response. Shared code needs something from a payload? The adapter exposes it through a small optional method (for example `ProjectDir()`).
 3. Harness facts are data in `HarnessCapabilities` (read via `core.AllHarnessCaps()`), never branches in shared tools.
 4. Test at the shared layer (`runHookAdapter` or `core.Route`). Logic that appears in more than one adapter is a defect.
@@ -185,7 +186,7 @@ Windows path. The `test-os` CI job runs the OS-sensitive packages on
   Linux and macOS. Build paths with `filepath.Join` / `filepath.FromSlash`
   (store `/`-separated, convert per-OS), resolve HOME with `os.UserHomeDir()`
   (never `os.Getenv("HOME")`), and put any OS-specific behavior behind a build
-  tag (`_windows.go` / `_unix.go`), as `scorerefresh_*.go`, `procgroup_*.go`
+  tag (`_windows.go` / `_unix.go`), as `detach_*.go`, `procgroup_*.go`
   and `internal/paths/owned_*.go` already do. A `/bin/sh` wrapper is POSIX-only:
   a harness install that must run on Windows needs a `.cmd`/`.ps1` sibling or a
   no-wrapper path. Setup must not auto-write a symlinked target (e.g.

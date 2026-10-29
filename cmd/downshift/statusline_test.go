@@ -45,7 +45,7 @@ func seedSession(t *testing.T, log, session string) {
 	for i, ev := range []telemetry.Event{
 		{CorrelationID: "d1", Harness: "claude-code", SessionID: h, Outcome: telemetry.OutcomeRewriteEmitted, Verdict: "DOWNSHIFT", FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5", Tier: "small"},
 		{CorrelationID: "d2", Harness: "claude-code", SessionID: h, Outcome: telemetry.OutcomeRewriteEmitted, Verdict: "DOWNSHIFT", FromModel: "claude-opus-4-7", ToModel: "claude-haiku-4-5", Tier: "small"},
-		{Harness: "claude-code", SessionID: h, Outcome: telemetry.OutcomeUsage, LinkedDecision: "d1", ActualCostUSD: ptr(0.10), BaselineCostUSD: ptr(0.52), InputTokens: iptr(600), OutputTokens: iptr(400), CachedTokens: iptr(9000)},
+		{Harness: "claude-code", SessionID: h, Outcome: telemetry.OutcomeUsage, LinkedDecision: "d1", InputTokens: iptr(600), OutputTokens: iptr(400), CachedTokens: iptr(9000)},
 		{CorrelationID: "other", Harness: "claude-code", SessionID: telemetry.HashSessionID("another"), Outcome: telemetry.OutcomeAllow, FromModel: "claude-opus-4-7", ToModel: "claude-opus-4-7", Tier: "frontier"},
 	} {
 		if err := telemetry.AppendTo(log, ev); err != nil {
@@ -54,8 +54,7 @@ func seedSession(t *testing.T, log, session string) {
 	}
 }
 
-func ptr(v float64) *float64 { return &v }
-func iptr(v int64) *int64    { return &v }
+func iptr(v int64) *int64 { return &v }
 
 func TestStatusline_RoutingSummaryForTheCurrentSession(t *testing.T) {
 	t.Setenv("DOWNSHIFT_QUOTA_FILE", filepath.Join(t.TempDir(), "quota.json"))
