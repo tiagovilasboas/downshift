@@ -6,7 +6,7 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Status: **Draft, 2026-10-28.** Reopens owner decision O7 for one part: the MCP server is Downshift's own, run by the
 same binary, not a separate product. Names follow the business plan repository (`architecture/multi-vendor-orchestration-spec.md`, section 2): `downshift mcp serve` and tools named by their verb, under the server name `downshift` (the model sees `mcp__downshift__<verb>`). Decision O8 (the LLM chooses the model) is the premise. Clean-room: the behaviour
-of the Alethe MCP path (kept outside this repository, no code copied) informs the shape; the choices below are ours.
+of an external orchestrator's MCP path (kept outside this repository, no code copied) informed the shape; the choices below are ours.
 
 ## 0. What it is
 

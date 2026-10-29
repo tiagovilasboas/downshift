@@ -5,7 +5,7 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 Status: **Proposed** (owner review); **superseded in part by O8 (2026-10-28)**, see the section at the end. Date: 2026-10-26. Roadmap and task cards:
 [`../internal/tasks/2026-10-26-routing-v2/README.md`](../internal/tasks/2026-10-26-routing-v2/README.md).
 Inputs: a read-only diagnosis of today's routing (`origin/main` 800a8e4e) and a clean-room behavioural
-analysis of the Alethe orchestrator (AGPL-3.0, read only; no code, prompt or schema copied).
+analysis of an external orchestrator (AGPL-3.0, read only; no code, prompt or schema copied).
 Scope: **model routing only**. The Compactor (`execwrap`, `compressor`) and DCI (`codeintel`) are kept as they are.
 
 ## 1. Why change
@@ -29,7 +29,7 @@ so the guardrails correctly hold most of what it proposes. **The decision that a
 already declared**: the parent agent picks haiku or sonnet for most work. Per-harness payload inference is
 also the part that costs most to keep across six harnesses with uneven contracts.
 
-The Alethe orchestrator (studied clean-room) points the other way: its core never reads the task text; the
+The external orchestrator (studied clean-room) points the other way: its core never reads the task text; the
 decision comes from **declared inputs** (a role, a kind and effort class reported by the planner, user rules
 with quota gates) and the core only bounds, applies and annotates. That shape is harness-agnostic by
 construction. Its weak points (an LLM choosing by default, advisory-only quota, no freshness bound, task text

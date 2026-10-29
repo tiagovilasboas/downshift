@@ -5,7 +5,7 @@
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Status: **Accepted, 2026-10-27.** This is the execution order. It consolidates the [routing v2 roadmap](roadmap.md)
-(D1 to D13), the Alethe roadmap proposal (A1 to A4, kept outside this repository) and the owner decisions of
+(D1 to D13), the external roadmap proposal (A1 to A4, kept outside this repository) and the owner decisions of
 2026-10-27 in section 2. Where they disagree, this file wins. Cards: [2026-10-27 MVP cards](../tasks/2026-10-27-mvp/README.md).
 
 Progress on 2026-10-29: stages 0 and 1 done; stage 2 done except the real-session proof (C0); stage 2b done, pending the owner's acceptance; stage 3 has V1 built, V2 open and V3 partial; stage 4 is partly built through the MCP worker tools, and its plan file runner is not started. The state record is in the [cards, closing state (2026-10-29)](../tasks/2026-10-27-mvp/README.md).
@@ -13,8 +13,7 @@ Progress on 2026-10-29: stages 0 and 1 done; stage 2 done except the real-sessio
 ## 1. Product thesis
 
 Every task runs on the cheapest model that can do it, and the user never runs out of usage. The thesis comes from
-the Alethe analysis (clean-room, no code copied). Downshift acts on it where Alethe only warns: its quota awareness
-is a warning chip with no redirect, by its own roadmap.
+the external-orchestrator analysis (clean-room, no code copied). Downshift acts on quota state, which that product only warns about with no redirect.
 
 ## 2. Owner decisions, 2026-10-27
 
@@ -33,7 +32,7 @@ is a warning chip with no redirect, by its own roadmap.
   its sessions; Downshift routes its spawns and runs its own batch plans.
   **Reopened 2026-10-28 (owner):** an MCP delegation server is in scope, as part of Downshift itself, run by the
   same binary (`downshift mcp`, stdio). It is not a separate product. The LLM chooses agent, model and effort
-  through it, as Alethe does on its MCP path.
+  through it.
 - **O8 The LLM chooses; Downshift applies and measures (2026-10-28, owner).** The orchestrator decides the model,
   the effort and the decomposition of the work, following the Orchestrator-Workers pattern of Anthropic's cookbook.
   Downshift never picks a model on its own: no built-in agent-type table, no automatic upgrade after a failure, no
@@ -49,7 +48,7 @@ is a warning chip with no redirect, by its own roadmap.
                 └── 2 RIGHT MODEL IN CC ─┴── 2b MCP (INFORMATION) ── 3 SHOW AND PROVE ══ MVP ══ 4 PLAN RUNNER ── 5 REACH
 ```
 
-| Stage | What the user gets | Points | From Alethe | From Anthropic patterns |
+| Stage | What the user gets | Points | Origin in the study | From Anthropic patterns |
 |---|---|--:|---|---|
 | 0 Clean base | Nothing visible; v1 experiments gone, contract and seams in place | 8 left | worst-window headroom | — |
 | 1 Setup | Install that marks what it owns, backs up, installs the skill, proves the hook fires | 8 | owned install, skills | — |

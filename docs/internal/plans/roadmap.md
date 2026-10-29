@@ -6,15 +6,15 @@ Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Status: Accepted 2026-10-26 (D1 to D13); sequencing superseded 2026-10-27 by the [MVP plan](mvp-plan.md), which wins where they differ. Scope: model routing and its channels. The Compactor (`execwrap`, `compressor`, `shellwrap`) and DCI (`codeintel`) do not change.
 
-Sources: [routing-v2 design](../../design/routing-v2.md), [cards](../tasks/2026-10-26-routing-v2/README.md), [true-north cleanup](../tasks/2026-10-26-routing-v2/true-north-cleanup.md). The Alethe analysis (REA) is kept outside this repository and is cited by name only.
+Sources: [routing-v2 design](../../design/routing-v2.md), [cards](../tasks/2026-10-26-routing-v2/README.md), [true-north cleanup](../tasks/2026-10-26-routing-v2/true-north-cleanup.md). The external-orchestrator behaviour report is kept outside this repository and is not reproduced here.
 
 Phases end at exit criteria, not dates. Where two sources disagree, section 9 names the conflict and this roadmap states which side it follows.
 
 ## 1. Premises (2026-10-26)
 
-- **P1 Clean-room base.** The REA is the only input from Alethe. No Alethe source, prompt or schema is used (AGPL-3.0).
+- **P1 Clean-room base.** The external-orchestrator behaviour report is the only input from that project. No source, prompt or schema from it is used (AGPL-3.0).
 - **P2 Tokens only.** Savings are tokens per harness; no dollar account (owner decision O1, 2026-10-27, in the [MVP plan](mvp-plan.md)).
-- **P3 Setup in the Alethe shape.** Declared configuration, validated at load, applied by an explicit step that runs a dry run and a diff, and makes a backup first. This is my reading of the brief's wording.
+- **P3 Declared setup.** Declared configuration, validated at load, applied by an explicit step that runs a dry run and a diff, and makes a backup first. This is my reading of the brief's wording.
 - **P4 No frills.** A card ships only what a decision or a measurement needs.
 
 ## 2. Starting point (branch `downshift/true-north`, commit 8c1afdfa)
@@ -322,7 +322,7 @@ Wave totals: W0 14, W2 13, W3 13, W4 13, W5 8. The plan-runner spec (33 points) 
 - **Plan-runner spec decisions** are open: the acceptance criterion (G1), the estimate of 33 points against 26 (G13), the harness contract table (G10), default tiers (G12) and the CLI flags (G4).
 - **Product decisions** are open: preserving an explicit-only requested model, and a field for the all-critical warning.
 - **Business plan files not read yet:** `business/*`, `product/multi-harness-governance.md`, `product/tui-command-center-spec.md` was read; the first two sets were not.
-- **Cleanup:** NB files, `internal/nbtier`, gateway files. The upstream study clone at `~/Github/alethe-agents` should be deleted once the behaviour notes are final.
+- **Cleanup:** NB files, `internal/nbtier`, gateway files.
 
 **Absorbed design cards (W6), each at most 5 points**
 
