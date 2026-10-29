@@ -47,9 +47,9 @@ type GroupSummary struct {
 // with a fixed seed, so the same log always prints the same numbers. Tokens
 // only: no price enters the report.
 type Savings struct {
-	PerTaskTokens     float64 `json:"-"`
-	PerTaskTokensLow  float64 `json:"-"`
-	PerTaskTokensHigh float64 `json:"-"`
+	PerTaskTokens     float64 `json:"per_task_tokens"`
+	PerTaskTokensLow  float64 `json:"per_task_tokens_low"`
+	PerTaskTokensHigh float64 `json:"per_task_tokens_high"`
 	Resamples         int     `json:"resamples"`
 }
 
@@ -64,7 +64,7 @@ type Report struct {
 	MinTasks        int          `json:"min_tasks_per_group"`
 	Enough          bool         `json:"enough_data"`
 	Message         string       `json:"message,omitempty"`
-	Savings         *Savings     `json:"-"`
+	Savings         *Savings     `json:"tokens_interval,omitempty"`
 	// Completion says, per harness, whether the end of a child is measurable.
 	Completion []HarnessCompletion `json:"completion"`
 	// TokensSaved is the plan lens: tokens saved from the requested model in
@@ -271,8 +271,9 @@ func printTokenCheck(w io.Writer, r Report) {
 		return
 	}
 	change := (d - c) / c * 100
-	fmt.Fprintf(w, "Tokens per completed task   routed %s vs control %s  (%+.1f%%; not an interval)\n",
+	fmt.Fprintf(w, "Tokens per completed task   routed %s vs control %s  (%+.1f%%)\n",
 		formatTokens(int64(d+0.5)), formatTokens(int64(c+0.5)), change)
+	fmt.Fprintln(w, "  "+savingsIntervalLine(r.Savings))
 }
 
 // CountGatewayPriceSources counts the gateway usage records by their price
