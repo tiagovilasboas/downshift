@@ -14,9 +14,9 @@ import (
 // only channel that reaches the model before it decides how to delegate
 // (docs/internal/plans/mcp-spike-2026-10-28.md).
 const sessionStartContext = "Downshift is installed. Before you spawn a subagent with the Agent or Task tool, call the " +
-	"downshift MCP tool providers for this harness to see the models it offers now. Choose the model and effort yourself. " +
-	"For mechanical work, start the spawn's prompt with [tier=small]; that hint only moves down. Workers from the MCP are read-only " +
-	"unless the owner turned on write mode."
+	"downshift MCP tool providers first to see the models this harness offers now, then apply to preview your choice of model and effort. " +
+	"Choose the model and effort yourself. For mechanical work, start the spawn's prompt with [tier=small]; that hint only moves down. " +
+	"Workers from the MCP are read-only unless the owner turned on write mode."
 
 // runClaudeCodeSessionStart answers the SessionStart hook with the context line.
 // It reads nothing from its input and fails open: any write error is ignored,
