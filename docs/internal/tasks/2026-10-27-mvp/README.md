@@ -119,3 +119,20 @@ Branch `downshift/mvp-ponto-zero`, published, no open PR, no worktree, no unpubl
 | Harness-agnostic rule | N12: tiers are abstract, harness facts are data | None |
 | Stage 4 decisions | G1, G4, G10, G12 | Owner |
 | Clean-room | Plan runner built from behaviour notes only | none |
+
+## Closing state (2026-10-29)
+
+Checked offline, without a model call, on the branch at `2fa8ca7c` and the installed binary.
+
+| Item | State | Evidence |
+|---|---|---|
+| Hook routing on Claude Code | Works. Real spawns are decided and honoured | `doctor`: rewrite honoured 10 of 10; the `[tier=small]` hint moved two real spawns (2026-10-28) |
+| Compactor | Works. Smoke test on a real package passes | `compact -- go test`; 30 days: 2,491 commands, 186 compacted, about 12k tokens cut (bytes / 4) |
+| Pause and resume | Works | `session --pause` and `--resume` both answered; the pause applies to the most recent session, not to `--session=<id>` (the id was not honoured; a small fix is needed) |
+| MCP information tools | Work in a real session | `docs/evidence/mcp-real-session-2026-10-28.md`; the orchestrator did not call them unprompted in two runs (`docs/evidence/mcp-unprompted-2026-10-29.md`) |
+| Worker tools (`delegate`, `collect`, `cancel`) | Read route worked end to end with a real worker; write route with bypass is built and tested with shims, not run against the real CLI | Stage 4, outside the MVP |
+| V1 routing note in `report` | Built, pending the owner's acceptance | `report` and `session --panel` |
+| V2 acceptance baseline | **Not closed.** The token comparison flips with the window: 30 days gives routed 4.1M against control 4.5M per completed task; 7 days gives routed 4.3M against control 3.5M. Rework is 0.9% routed against 0.0% control | `downshift report`; the difference is not an interval |
+| V3 real-session proof, default on, release note | Default on: yes. Release note: draft in `docs/releases/unreleased-migration-notes.md`. Real-session proof: partial (observed spawns, not a controlled run) | |
+
+**Consequence for the MVP.** The routing and compaction pieces work and are measured. The claim that routing saves tokens is **not proven**: the measured difference changes sign between windows, so the honest word is "measured, not established". The release note must not promise savings until V2 has a baseline. Closing V2 needs a controlled suite, which costs model tokens, and that budget is the owner's decision.
