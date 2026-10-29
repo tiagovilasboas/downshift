@@ -93,6 +93,7 @@ Apply to every card, in every stage.
 - **Each module runs on its own.** A feature must work in isolation: its tests pass without the others, and it can be switched off without breaking the rest.
 - **One branch.** All stages go on one branch, `downshift/mvp-ponto-zero` (the branch the MVP was built on; the name in this plan was `docs/mvp-plan`). Work lands in small deliveries of value, one phase at a time; merges to `main` go by stage through reviewed PRs.
 - **Tests at both levels.** Every card carries unit tests and end-to-end tests of the behaviour the user sees (hook payload in, decision and note out; plan dry-run and run with fake workers).
+- **Standard conformance over custom test batteries.** Use official MCP Inspector for tool/transport testing, golden files for the compactor, and architectural fitness functions (`internal/archtest`) rather than synthetic multi-agent test frameworks. See [universal-orchestrator-harness-approach.md](universal-orchestrator-harness-approach.md).
 
 Every code card: `make check` green; golden decision tables; layering rule; copyright headers; OS-agnostic paths
 (Windows from day one for setup and worktrees); no file over 300 lines; tests isolate `HOME` and

@@ -1,9 +1,9 @@
 # Session State
 
-- **Branch atual:** `main` em `1369aa3b`, com o MVP mesclado pelo PR #589 (squash).
-- **Fase atual:** MVP, etapa 3 (V1 construído, V2 aberto, V3 parcial), com a etapa 4 parcial pelo caminho MCP.
-- **Status:** docs de planejamento (todo, cards do MVP, plano do MVP, roadmap, CHANGELOG) alinhados com o estado de 2026-10-29.
-- **Próximo passo:** orçamento da suíte V2, prova C0 em sessão real, e a correção do EOF do `mcp serve`.
+- **Branch atual:** `docs/universal-harness-roadmap` baseada em `origin/main` (após MVP mesclado no PR #589).
+- **Fase atual:** Documentação de governança, estratégia de testes e abordagem do Orquestrador Universal / MCP / Harness Engineering.
+- **Status:** Criado `docs/internal/plans/universal-orchestrator-harness-approach.md`, atualizados `docs/internal/plans/roadmap.md` e `mvp-plan.md`. `docscheck` verde.
+- **Próximo passo:** Finalizar validação de `make check`, preparar commit em inglês e orientar o uso do Haiku 5.5 mecânico com os prompts operacionais.
 - **Bloqueios:** nenhum técnico. Os itens acima aguardam aprovação ou orçamento do dono.
 - **Commits recentes na branch:**
   - `7e2acb02`: descrição do plugin como escolha do orquestrador
