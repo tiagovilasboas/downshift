@@ -5,7 +5,7 @@
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
 Status: **Draft, 2026-10-27; model choice changed 2026-10-28 (O8).** Stage 4 of the [MVP plan](mvp-plan.md). Clean-room: written from a behaviour
-report on the Alethe batch runner (kept outside this repository, no code, no names from that project), the owner
+report on an external batch runner (kept outside this repository, no code, no names from that project), the owner
 decisions O1 to O7 and the Downshift contracts that exist today. Where this file and the MVP plan disagree, the MVP
 plan wins and this file is the defect.
 

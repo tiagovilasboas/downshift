@@ -8,7 +8,7 @@ Superseded for sequencing on 2026-10-27 by the [MVP cards](../2026-10-27-mvp/REA
 cross-references.
 
 Design: [`../../../design/routing-v2.md`](../../../design/routing-v2.md) (Proposed). Owner decisions of
-2026-10-26: stop experiments; rebuild model routing on the Alethe-orchestrator idea (declared decision,
+2026-10-26: stop experiments; rebuild model routing on the declared-decision idea of an external orchestrator study (declared decision,
 rules, headroom), clean-room; keep the Compactor and DCI as they are; screaming architecture with one
 responsibility per domain package; harness-agnostic; skills through the shared `.agents/skills` store; Kiro
 covered through native agent config and launch flags.
