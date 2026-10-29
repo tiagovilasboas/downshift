@@ -5,7 +5,6 @@ description: >
   that touches the Downshift binary. Triggers on: roadmap, architecture, BDI,
   accounting, compaction, "the whole thing", or any plan with multiple phases.
   Only applies when the workspace is the Downshift repository.
-inclusion: manual
 ---
 
 # Architecture coverage — procedure

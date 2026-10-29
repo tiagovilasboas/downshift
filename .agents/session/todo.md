@@ -1,4 +1,4 @@
-# Todo — Downshift MVP (atualizado em 2026-10-29)
+# Todo — Downshift MVP (atualizado em 2026-10-29, após o merge do MVP)
 
 Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado detalhado e prova de cada item: [cards do MVP, seção "Closing state (2026-10-29)"](../../docs/internal/tasks/2026-10-27-mvp/README.md).
 
@@ -16,7 +16,7 @@ Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado d
 
 ## Pendências que dependem do dono
 
-- [ ] **Mesclar a branch no `main`** para o hook `SessionStart` chegar ao plugin. Hoje o plugin está fixado em `3f37b9d5`. Exige aprovação explícita; o `main` já andou à frente.
+- [x] **Mesclar a branch no `main`** feito: PR #589 mesclado em `1369aa3b` (squash), depois de o CI do head passar.
 - [ ] **V2, baseline de aceitação:** suíte controlada, com gasto de modelo. Precisa de orçamento aprovado.
 - [ ] **C0 / R0b:** prova em sessão real de que o PreToolUse dispara em spawns de workflow. Não rodada.
 - [ ] **R27:** observar um worker de leitura tentando escrever e sendo bloqueado. Três execuções reais não tentaram escrever; nada foi observado.
@@ -24,6 +24,8 @@ Plano de execução: [mvp-plan](../../docs/internal/plans/mvp-plan.md). Estado d
 - [ ] **True north (`docs/true-north.md`):** o experimento de quatro braços (seção 6) é o V2 ampliado; precisa do mesmo orçamento. Antes de citar fora do repositório, conferir a tabela do system card do Opus 4.5 no PDF (não extraído aqui) e reler as duas páginas da OpenAI (HTTP 403).
 
 ## Pendências técnicas
+
+- [ ] **`downshift mcp serve` perde respostas se o stdin fecha logo depois das requisições.** Com o stdin aberto, as 7 ferramentas são listadas. Clientes reais mantêm o stdin aberto; scripts e testes que fecham a entrada cedo não recebem nada. Causa no EOF do SDK oficial, não corrigida (exige mexer no transporte).
 
 - [x] `downshift session --pause --session=<id>` funciona (verificado em 2026-10-29).
 - [ ] Fazer o hint `[tier=...]` subir também (hoje só desce).
