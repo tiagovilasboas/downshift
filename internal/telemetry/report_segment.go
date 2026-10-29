@@ -35,7 +35,7 @@ func SegmentReports(events []Event, days int) (current string, segments []Harnes
 	segments = append(segments, HarnessReport{
 		Harness: current,
 		Current: true,
-		Report:  BuildReport(filterHarness(windowed, current), 0),
+		Report:  BuildReport(filterHarness(windowed, current), days),
 	})
 	var others []string
 	for _, name := range names {
@@ -47,7 +47,7 @@ func SegmentReports(events []Event, days int) (current string, segments []Harnes
 	for _, name := range others {
 		segments = append(segments, HarnessReport{
 			Harness: name,
-			Report:  BuildReport(filterHarness(windowed, name), 0),
+			Report:  BuildReport(filterHarness(windowed, name), days),
 		})
 	}
 	return current, segments

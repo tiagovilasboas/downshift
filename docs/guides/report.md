@@ -119,8 +119,8 @@ tasks before the first estimate.
 harness. When permission-mode data exists, it also includes the optional `decisions_by_permission_mode`
 map. Only built-in Claude Code mode names are stored (`default`, `acceptEdits`, `bypassPermissions`,
 `plan`, `auto`, `dontAsk`); an unrecognized value is recorded as `other`, and a missing value is omitted.
-This count is informational and does not affect routing or comparisons. The report has no dollar key and no
-interval. `downshift stats --export` has no dollar key either (schema 3; see
+This count is informational and does not affect routing or comparisons. The report has no dollar key. Once there is enough data it
+also carries `tokens_interval`: the 95% bootstrap interval of tokens saved per task (control minus routed). `downshift stats --export` has no dollar key either (schema 3; see
 [stats-export.md](../reference/stats-export.md)).
 
 ## Limits
