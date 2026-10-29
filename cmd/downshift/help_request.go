@@ -23,6 +23,7 @@ var legacyNames = map[string]string{
 	"shell-init":                "enable",
 	"claude-code-post-tool-use": "",
 	"claude-code-subagent-stop": "",
+	"claude-code-session-start": "",
 }
 
 // commandHelpRequest answers `downshift <command> [subcommand] --help|-h` and

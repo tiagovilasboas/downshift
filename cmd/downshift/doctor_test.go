@@ -65,9 +65,10 @@ func claudeSettings(prefix string) string {
 		return fmt.Sprintf(`[{"matcher":"Agent|Task","hooks":[{"type":"command","command":"%s %s"}]}]`, prefix, sub)
 	}
 	return fmt.Sprintf(`{"hooks":{"PreToolUse":%s,"PostToolUse":%s,"PostToolUseFailure":%s,
+"SessionStart":[{"hooks":[{"type":"command","command":"%s claude-code-session-start"}]}],
 "SubagentStop":[{"hooks":[{"type":"command","command":"%s claude-code-subagent-stop"}]}],
 "UserPromptSubmit":[{"hooks":[{"type":"command","command":"%s dci hook claude-code"}]}]}}`,
-		hook("claude-code"), hook("claude-code-post-tool-use"), hook("claude-code-post-tool-use"), prefix, prefix)
+		hook("claude-code"), hook("claude-code-post-tool-use"), hook("claude-code-post-tool-use"), prefix, prefix, prefix)
 }
 
 // eventLines writes a fresh claude-code shift that a later spawn confirms.

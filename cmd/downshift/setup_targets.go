@@ -187,6 +187,7 @@ var setupTargets = []setupTarget{
 			// the compressor's potential, never the text).
 			{Event: "PostToolUse", Matcher: "Bash", Args: "claude-code-post-tool-use"},
 			{Event: "PostToolUseFailure", Matcher: "Agent|Task", Args: "claude-code-post-tool-use"},
+			{Event: "SessionStart", Args: "claude-code-session-start"},
 			{Event: "SubagentStop", Args: "claude-code-subagent-stop"},
 			{Event: "UserPromptSubmit", Args: "dci hook claude-code"},
 		},

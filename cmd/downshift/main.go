@@ -90,6 +90,8 @@ func main() {
 		os.Exit(runHonor(os.Stdin, portFor("claude-code"), catalog))
 	case "claude-code-subagent-stop":
 		os.Exit(runUsage(os.Stdin, portFor("claude-code"), catalog))
+	case "claude-code-session-start":
+		os.Exit(runClaudeCodeSessionStart(os.Stdout))
 	case "models":
 		os.Exit(runModels(catalog, args[1:]))
 	case "quota":
