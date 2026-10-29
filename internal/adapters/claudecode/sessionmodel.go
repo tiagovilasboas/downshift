@@ -29,7 +29,7 @@ var envDefaultOnlyAgentTypes = map[string]bool{"Explore": true, "Plan": true}
 
 // subagentModelForceEnv is the variable that makes subagentModelFromEnv win over
 // every definition and per-call choice (Claude Code v2.1.257 and later).
-const subagentModelForceEnv = "CLAUDE_CODE_SUBAGENT_MODEL_FORCE"
+var subagentModelForceEnv = core.ClaudeCodeCaps.ModelForceEnv
 
 // subagentModelFromEnv returns the model the harness override variable pins for
 // subagents (name declared in core.ClaudeCodeCaps.ModelOverrideEnv). Claude
