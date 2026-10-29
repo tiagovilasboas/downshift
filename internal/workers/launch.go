@@ -15,8 +15,9 @@ import (
 // The read-only launches. The recipe follows the public behaviour of other
 // orchestrators (a print-mode run with the prompt on standard input, a planning
 // permission mode for Claude, a read-only sandbox for Codex) and the flags
-// shown by each CLI's own help. Neither recipe has been observed on a real run
-// yet; the spec's R27 is open until one is (docs/internal/plans/mcp-delegation-spec.md).
+// shown by each CLI's own help. The Claude recipe has completed one real read
+// run; the Codex recipe has not run against its CLI yet. The spec's R27 stays
+// open until a write is seen refused under plan mode (docs/internal/plans/mcp-delegation-spec.md).
 
 var (
 	modelPattern  = regexp.MustCompile(`^[A-Za-z0-9._:/][A-Za-z0-9._:/-]{0,127}$`)
