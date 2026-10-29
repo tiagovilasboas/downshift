@@ -45,7 +45,7 @@ file or from `AGENTS.md`.
 |---------|---------|-------|
 | `internal/accounting` | Accounting | Exists; ADR Proposed; `cmd/downshift` does not import it |
 | `internal/adapters` | Adapters | Subdirs: `claudecode`, `cursor`, `codex`, `antigravity`, `kirocrew`, `opencode` |
-| `internal/api` | — | Dashboard HTTP server (`downshift dashboard`) |
+| `internal/api` | — | Dashboard HTTP API (no command serves it since the dashboard commands were removed) |
 | `internal/archtest` | Quality | Import-graph enforcement tests |
 | `internal/benchmark` | Quality | Offline classifier accuracy |
 | `internal/cascade` | Routing | Episodic failure tracking (dead-ends) for the loop runner and `exec`. The decider no longer reads it: the automatic upgrade was removed (O8) |

@@ -9,7 +9,7 @@ local hook applies the orchestrator's model choice for each subagent spawn (boun
 your declared policy) and rewrites that child's model and effort from the session list. Around the router sit guardrails (doubt never
 spends money), a project tier floor, a quota and credit gate, session view
 and statusline, telemetry and token reports with a control group, context
-policy from `setup`, vendored mods and documented companions; one sentence
+policy from `setup` and documented companions; one sentence
 and a status word for each is in the
 [README](../../README.md#the-suite-at-a-glance) and the
 [docs index](../README.md#the-suite-in-one-table).
