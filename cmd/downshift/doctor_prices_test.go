@@ -35,7 +35,8 @@ func TestDoctorPricesFreshIsOK(t *testing.T) {
 
 func TestDoctorPricesOlderThan30DaysWarns(t *testing.T) {
 	c := pricesCheck(t, 31)
-	if c.Status != doctorWarn || c.Fix == "" || !strings.Contains(c.Detail, "31 days old") {
+	if c.Status != doctorWarn || c.Fix == "" || !strings.Contains(c.Detail, "31 days old") ||
+		strings.Contains(c.Detail, "estimate") || !strings.Contains(c.Detail, "routing") {
 		t.Errorf("stale prices: %+v", c)
 	}
 }

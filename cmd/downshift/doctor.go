@@ -318,8 +318,13 @@ func checkCatalog(rep *doctorReport, env doctorEnv) {
 }
 
 // pricesMaxAgeDays is how old the embedded list prices may get before doctor
-// warns that savings estimates may be off.
+// warns that the price table is old. Prices only order models inside a tier
+// for routing; savings are counted in tokens, never from prices.
 const pricesMaxAgeDays = 30
+
+// pricesRoleNote says what an old price table affects: only the price order
+// used to pick between models of the same tier. Savings are tokens.
+const pricesRoleNote = "it only affects the same-tier price order used in routing, not token savings"
 
 // checkPrices warns when the embedded list prices were verified long ago (or
 // carry no date). Prices only age between downshift releases; the weekly
@@ -334,12 +339,12 @@ func checkPrices(rep *doctorReport, env doctorEnv) {
 	switch {
 	case !ok:
 		rep.add(doctorCheck{ID: "prices", Status: doctorWarn,
-			Detail: "catalog has no valid prices_as_of date; savings estimates may use outdated list prices",
-			Fix:    "upgrade downshift to the latest release (docs/reference/prices.md)"})
+			Detail: "catalog has no valid prices_as_of date; " + pricesRoleNote,
+			Fix:    "upgrade downshift to the latest release to refresh the price table (docs/reference/prices.md)"})
 	case days > pricesMaxAgeDays:
 		rep.add(doctorCheck{ID: "prices", Status: doctorWarn,
-			Detail: fmt.Sprintf("list prices are from %s (%d days old, limit %d); savings estimates may be off", asOf, days, pricesMaxAgeDays),
-			Fix:    "upgrade downshift to the latest release, or set prices with 'downshift models pull' (docs/reference/prices.md)"})
+			Detail: fmt.Sprintf("price table is from %s (%d days old, limit %d); %s", asOf, days, pricesMaxAgeDays, pricesRoleNote),
+			Fix:    "upgrade downshift to the latest release, or refresh the price table with 'downshift models pull' (docs/reference/prices.md)"})
 	default:
 		rep.add(doctorCheck{ID: "prices", Status: doctorOK, Detail: "list prices as of " + asOf})
 	}
