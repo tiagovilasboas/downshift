@@ -22,6 +22,10 @@ func TestOnlyProvidersIsNotReadOnly(t *testing.T) {
 		if want := tl.Name != "providers"; tl.ReadOnly != want {
 			t.Errorf("%s: ReadOnly = %v, want %v", tl.Name, tl.ReadOnly, want)
 		}
+		// providers is the entry point the instructions name; no other tool is loaded up front.
+		if want := tl.Name == "providers"; tl.AlwaysLoad != want {
+			t.Errorf("%s: AlwaysLoad = %v, want %v", tl.Name, tl.AlwaysLoad, want)
+		}
 	}
 }
 

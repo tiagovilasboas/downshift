@@ -21,7 +21,7 @@ const wait = 10 * time.Second
 
 func testTools() []tools.Tool {
 	return []tools.Tool{
-		{Name: "echo", Description: "greets", Title: "Greeting", ReadOnly: true, Idempotent: true,
+		{Name: "echo", Description: "greets", Title: "Greeting", ReadOnly: true, Idempotent: true, AlwaysLoad: true,
 			InputSchema: json.RawMessage(`{"type":"object","properties":{"name":{"type":"string"}}}`),
 			Handler: func(_ context.Context, args json.RawMessage) (tools.Result, error) {
 				var a struct{ Name string }
@@ -166,6 +166,10 @@ func TestToolsListCarriesTheirHints(t *testing.T) {
 		}
 		if readOnly && (a["title"] != "Greeting" || a["idempotentHint"] != true) {
 			t.Errorf("echo annotations = %v, want its title and idempotent", a)
+		}
+		m, _ := tool["_meta"].(map[string]any)
+		if got := m["anthropic/alwaysLoad"] == true; got != readOnly {
+			t.Errorf("tool %v alwaysLoad = %v, want %v (only echo asks for it)", tool["name"], got, readOnly)
 		}
 	}
 }

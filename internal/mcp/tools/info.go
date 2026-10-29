@@ -105,12 +105,15 @@ const serverName = "downshift"
 func Info(d Deps) []Tool {
 	return []Tool{
 		// providers is not read-only: a models list the orchestrator passes is stored as a one-hour hint.
-		d.providersTool().hinted("Models this harness offers now", false),
+		// providers is the entry point the instructions name, so it is the one tool a deferring client loads up front.
+		d.providersTool().hinted("Models this harness offers now", false).alwaysLoaded(),
 		d.playbookTool().hinted("Working rules for a worker", true),
 		d.statusTool().hinted("Quota advice", true),
 		d.applyTool().hinted("What would be applied for a choice", true),
 	}
 }
+
+func (t Tool) alwaysLoaded() Tool { t.AlwaysLoad = true; return t }
 
 // hinted sets the client-facing hints. Every information tool is idempotent.
 func (t Tool) hinted(title string, readOnly bool) Tool {

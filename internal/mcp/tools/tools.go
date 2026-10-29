@@ -44,6 +44,9 @@ type Tool struct {
 	Title      string
 	ReadOnly   bool
 	Idempotent bool
+	// AlwaysLoad asks a client that defers tool definitions until they are
+	// searched for (Claude Code's tool search) to load this one at session start.
+	AlwaysLoad bool
 }
 
 // AnyObject is the schema of a tool that takes no arguments, or any.

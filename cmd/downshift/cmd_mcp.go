@@ -23,9 +23,15 @@ import (
 const mcpUsage = "usage: downshift mcp serve\n"
 
 // mcpInstructions is what a client shows its model about the server.
-const mcpInstructions = "Downshift applies the model you choose for a subagent, within the policy the user declared, and measures the result; " +
-	"it never picks a model for you. Call providers to see which models this harness offers right now, playbook for the working rules a worker should receive, " +
-	"apply to see what would be applied for a choice, and status for the quota advice. Every result carries a strain block with the quota headroom."
+//
+// Claude Code puts these instructions in context at session start and cuts them
+// at 4096 characters, so the rule for when to call comes first and the whole
+// text stays short (code.claude.com/docs/en/mcp, read 2026-10-28).
+const mcpInstructions = "Before you spawn a subagent (the Agent or Task tool), call providers: it lists the models this harness offers right now, with their tiers. " +
+	"To send mechanical work to a smaller model, start the spawn's prompt with [tier=small]; a hint only moves down, and a pinned model or a declared policy wins. " +
+	"Call apply to see what would be applied for a choice, playbook for the working rules a worker should receive, and status for quota advice. " +
+	"Downshift applies the model you choose within the policy the user declared and measures the result; it never picks one for you and takes no task text. " +
+	"Every result carries a strain block with the quota headroom."
 
 // runMcp is `downshift mcp`. Only `serve` exists: an MCP server on standard
 // input and output, started by the harness that registered it.

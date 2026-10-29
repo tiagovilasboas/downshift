@@ -51,7 +51,7 @@ func New(info Info, ts []tools.Tool, log *slog.Logger) (*Server, error) {
 	s := mcp.NewServer(&mcp.Implementation{Name: info.Name, Version: info.Version},
 		&mcp.ServerOptions{Instructions: info.Instructions, Logger: log})
 	for _, t := range ts {
-		s.AddTool(&mcp.Tool{Name: t.Name, Description: t.Description, InputSchema: t.Schema(), Annotations: annotations(t)}, adapt(t, log))
+		s.AddTool(&mcp.Tool{Name: t.Name, Description: t.Description, InputSchema: t.Schema(), Annotations: annotations(t), Meta: meta(t)}, adapt(t, log))
 	}
 	return &Server{srv: s}, nil
 }
@@ -67,6 +67,15 @@ func annotations(t tools.Tool) *mcp.ToolAnnotations {
 		DestructiveHint: &no,
 		OpenWorldHint:   &no,
 	}
+}
+
+// meta carries the Claude Code extension that keeps a tool out of tool search's
+// deferral; nil for every other tool (code.claude.com/docs/en/mcp).
+func meta(t tools.Tool) mcp.Meta {
+	if !t.AlwaysLoad {
+		return nil
+	}
+	return mcp.Meta{"anthropic/alwaysLoad": true}
 }
 
 // Serve answers one client over in and out until the client closes the input
