@@ -40,12 +40,15 @@ One machine, one run.
    running. With a real CLI, the test runs and builds a worker starts would outlive a cancel or a budget expiry. The
    worker's `Wait` also stayed blocked while that child held the output pipes. Fixed in the branch that adds this page:
    the worker now starts in its own process group and a stop reaches the whole group, with a regression test that
-   failed before the change.
+   failed before the change. Checked again through the client after the change: the child is gone after a cancel.
 2. **The write route leaves `.downshift/` untracked in the user's checkout.** `git status` in the target repository
    showed `?? .downshift/` after the write job, because the worktrees live under it. A careless `git add -A` would pick
-   it up. Open.
+   it up. Fixed afterwards: the job adds `/.downshift/worktrees/` to the repository's local exclude
+   file, and `git status` is empty after a write job (checked again through the client).
 3. **The queue has no shutdown.** By reading the code, `Queue` has no method that stops running workers when the
-   server exits. Not observed in this run. Open.
+   server exits. Not observed in this run. Fixed afterwards: the server calls `Queue.Close` when it
+   exits, and with a slow worker running, disconnecting the client left no worker and no child behind (checked
+   through the client).
 
 ## What this supports
 

@@ -71,6 +71,11 @@ func TestWriteJobRunsInItsOwnWorktreeAndKeepsTheCheckoutClean(t *testing.T) {
 	if !strings.Contains(args, "bypassPermissions") {
 		t.Errorf("write route must use the bypass permission mode: %s", args)
 	}
+	status := exec.Command("git", "-C", repo, "status", "--porcelain")
+	status.Env = GitEnv(os.Environ())
+	if out, _ := status.Output(); strings.TrimSpace(string(out)) != "" {
+		t.Errorf("the checkout is not clean after a write job:\n%s", out)
+	}
 }
 
 func TestWriteOutsideAGitRepositoryIsRefused(t *testing.T) {

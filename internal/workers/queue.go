@@ -94,6 +94,21 @@ func (q *Queue) Cancel(ids []string) []string {
 	return acted
 }
 
+// Close stops every job that has not ended: a running worker is killed and a
+// queued one never starts. The server calls it when it exits, so no worker
+// outlives the session that started it.
+func (q *Queue) Close() {
+	q.mu.Lock()
+	ids := make([]string, 0, len(q.jobs))
+	for id, j := range q.jobs {
+		if !j.state.Finished() {
+			ids = append(ids, id)
+		}
+	}
+	q.mu.Unlock()
+	q.Cancel(ids)
+}
+
 // Statuses returns every known job in start order, without prompts.
 func (q *Queue) Statuses() []Status {
 	q.mu.Lock()

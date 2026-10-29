@@ -95,6 +95,7 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 	launcher, writeOn := workerLaunchers()
 	deps.WriteEnabled = writeOn
 	deps.Work = workers.New(launcher, defaultWorkers, time.Now)
+	defer deps.Work.Close()
 	all := append(tools.Info(deps), tools.WorkTools(deps)...)
 	srv, err := transport.New(transport.Info{Name: "downshift", Version: buildVersion, Instructions: mcpInstructions}, all, log)
 	if err != nil {
