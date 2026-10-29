@@ -25,7 +25,7 @@ trap 'rm -rf "$SMOKE_HOME"' EXIT
 mkdir -p "$SMOKE_STATE"
 cat > "$SMOKE_STATE/session-models.json" <<'JSON'
 {
-  "claude-code": ["claude-haiku-4-5", "claude-sonnet-5-5", "claude-opus-5-5"],
+  "claude-code": ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"],
   "codex": ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"],
   "cursor": ["composer-2.5", "claude-4.5-sonnet-thinking", "claude-4.5-opus-high-thinking"],
   "antigravity": ["flash_lite", "flash", "pro"]
@@ -44,11 +44,11 @@ cc_res=$(echo '{"tool_name":"Task","tool_input":{"prompt":"[tier=small] rename t
 expect "claude-code rewrite" "$cc_res" '"updatedInput":{'
 # Claude Code accepts the catalog native_name (haiku|sonnet|opus|fable), not the full id.
 expect "claude-code rewrite" "$cc_res" '"model":"haiku"'
-expect "claude-code rewrite" "$cc_res" 'claude-haiku-4-5'
+expect "claude-code rewrite" "$cc_res" 'claude-haiku-5-5'
 echo "OK: claude-code rewrites updatedInput.model"
 
 # Claude Code with a session list in the payload: the payload list is used.
-cc_pl=$(echo '{"session_models":["claude-haiku-4-5","claude-sonnet-4-5","claude-opus-4-8"],"tool_name":"Task","tool_input":{"prompt":"[tier=small] rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
+cc_pl=$(echo '{"session_models":["claude-haiku-5-5","claude-sonnet-4-5","claude-opus-4-8"],"tool_name":"Task","tool_input":{"prompt":"[tier=small] rename the userId variable to userIdentifier","model":"claude-opus-4-8"}}' | HOME="$(mktemp -d)" "$BIN" claude-code 2>/dev/null)
 expect "claude-code payload session list" "$cc_pl" '"updatedInput":{'
 expect "claude-code payload session list" "$cc_pl" '"model":"haiku"'
 echo "OK: claude-code uses the payload session list"

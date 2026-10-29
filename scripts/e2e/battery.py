@@ -14,7 +14,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 # DOWNSHIFT_BIN picks the binary under test; default is ./downshift at the repo root (make build).
 BIN = os.path.abspath(os.environ.get("DOWNSHIFT_BIN", os.path.join(REPO, "downshift")))
 # The session list a Claude Code payload reports. Downshift never ships one.
-CLAUDE_SESSION = ["claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-5-5"]
+CLAUDE_SESSION = ["claude-haiku-5-5", "claude-sonnet-4-5", "claude-opus-5-5"]
 results = []
 
 
@@ -86,8 +86,9 @@ def main():
         st = os.path.join(base, "routing"); os.makedirs(st)
         sid = "battery-" + uuid.uuid4().hex[:8]
         cases = [
-            ("trivial on opus moves down", "rename the userId variable to userIdentifier", "claude-opus-5-5", lambda m: m in ("haiku", "claude-haiku-4-5")),
-            ("trivial on sonnet moves down", "fix a typo in the README title", "claude-sonnet-5-5", lambda m: m in ("haiku", "claude-haiku-4-5")),
+            ("hint [tier=small] moves opus down", "[tier=small] rename the userId variable to userIdentifier", "claude-opus-5-5", lambda m: m in ("haiku", "claude-haiku-5-5")),
+            ("hint [tier=small] moves sonnet down", "[tier=small] fix a typo in the README title", "claude-sonnet-5-5", lambda m: m in ("haiku", "claude-haiku-5-5")),
+            ("no hint keeps the requested model (O8)", "rename the userId variable to userIdentifier", "claude-opus-5-5", lambda m: m is None),
             ("trivial on haiku stays (floor)", "rename the userId variable to userIdentifier", "haiku", lambda m: m in (None, "haiku")),
             ("risky on opus is held", "rotate the production API secrets and update the payment webhook", "claude-opus-5-5", lambda m: m is None),
             ("auth change on opus is held", "change the login session token validation in the auth middleware", "claude-opus-5-5", lambda m: m is None),
@@ -100,9 +101,9 @@ def main():
         # ---------- 2. Full spawn lifecycle: rewrite -> resolved -> usage -> panel ----------
         st = os.path.join(base, "lifecycle"); os.makedirs(st)
         sid = "battery-" + uuid.uuid4().hex[:8]
-        got, _ = pre(st, sid, "rename the userId variable to userIdentifier", "claude-opus-5-5", "toolu_l1")
-        post(st, sid, "toolu_l1", "agent-l1", "claude-haiku-4-5-20251001")
-        stop(st, sid, "agent-l1", "claude-haiku-4-5-20251001",
+        got, _ = pre(st, sid, "[tier=small] rename the userId variable to userIdentifier", "claude-opus-5-5", "toolu_l1")
+        post(st, sid, "toolu_l1", "agent-l1", "claude-haiku-5-5")
+        stop(st, sid, "agent-l1", "claude-haiku-5-5",
              {"input_tokens": 1200, "output_tokens": 300, "cache_read_input_tokens": 5000, "cache_creation_input_tokens": 0})
         ev = events(st)
         outs = [e.get("outcome") for e in ev]
@@ -126,7 +127,7 @@ def main():
         # haiku is the smallest model in the session list, so it can only stay or move up.
         # The panel counts any model switch in one number, so an upshift shows there too.
         check("panel: a haiku request is never moved below haiku",
-              got not in ("haiku", "claude-haiku-4-5"), f"requested haiku -> {got or 'unchanged'}; model_switched={pj.get('model_switched')}")
+              got not in ("haiku", "claude-haiku-5-5"), f"requested haiku -> {got or 'unchanged'}; model_switched={pj.get('model_switched')}")
 
         # ---------- 4. Compactor on real commands ----------
         st = os.path.join(base, "compact"); os.makedirs(st)
@@ -179,15 +180,15 @@ def main():
             {"id": "deepseek/deepseek-v4.1-flash-1017", "tier": "small", "max_effort": "medium", "zdr": False}]}
         open(os.path.join(st, "openrouter.json"), "w").write(json.dumps(allow))
         sid = "battery-" + uuid.uuid4().hex[:8]
-        got, _ = pre(st, sid, "rename the userId variable to userIdentifier", "claude-opus-5-5", "toolu_g1")
+        got, _ = pre(st, sid, "[tier=small] rename the userId variable to userIdentifier", "claude-opus-5-5", "toolu_g1")
         ev = events(st)
         gw = [e.get("gateway_would") for e in ev if e.get("gateway_would")]
         check("gateway: a shadow row is recorded as would-route", "deepseek/deepseek-v4.1-flash-1017" in gw, f"gateway_would={gw}")
-        check("gateway: a shadow row never changes the live model", got in ("haiku", "claude-haiku-4-5"), f"live -> {got}")
+        check("gateway: a shadow row never changes the live model", got in ("haiku", "claude-haiku-5-5"), f"live -> {got}")
         bad = dict(allow); bad["models"] = [{"id": "no-slash", "tier": "small", "max_effort": "medium", "zdr": False}]
         open(os.path.join(st, "openrouter.json"), "w").write(json.dumps(bad))
-        got2, p2 = pre(st, sid, "rename the userId variable to userIdentifier", "claude-opus-5-5", "toolu_g2")
-        check("gateway: a bad allowlist never blocks a spawn", p2.returncode == 0 and got2 in ("haiku", "claude-haiku-4-5"), f"exit {p2.returncode}, live -> {got2}")
+        got2, p2 = pre(st, sid, "[tier=small] rename the userId variable to userIdentifier", "claude-opus-5-5", "toolu_g2")
+        check("gateway: a bad allowlist never blocks a spawn", p2.returncode == 0 and got2 in ("haiku", "claude-haiku-5-5"), f"exit {p2.returncode}, live -> {got2}")
 
         # ---------- 7. Fail-open ----------
         st = os.path.join(base, "failopen"); os.makedirs(st)
