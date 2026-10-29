@@ -134,6 +134,19 @@ func TestDoctor_AllGood(t *testing.T) {
 	}
 }
 
+// Claude Code on a subscription cannot be listed, but the catalog stand-in is
+// the design and the hook still rewrites, so a missing cache is not a warning.
+func TestDoctor_ClaudeCodeStandInIsNotAWarning(t *testing.T) {
+	f := newDoctorFixture(t)
+	writeFile(t, filepath.Join(f.home, ".claude", "settings.json"), claudeSettings(f.bin))
+
+	c := f.check(t, buildDoctorReport(f.env), "claude-code", "session list")
+	wantStatus(t, c, doctorOK)
+	if !strings.Contains(c.Detail, "catalog stand-in") {
+		t.Errorf("detail %q should say the catalog stand-in is used", c.Detail)
+	}
+}
+
 func TestDoctor_HookMissing(t *testing.T) {
 	f := newDoctorFixture(t)
 	// PreToolUse only: the observation hooks are missing, and no routing hook

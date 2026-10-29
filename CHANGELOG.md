@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (models)
 
 - `downshift setup` no longer writes `session-models.json`. Models are always the ones the harness reports; the file is only an optional manual override, and setup names the `downshift models discover` command when a harness has no detected list yet. `doctor` no longer warns forever for Claude Code, which uses the catalog stand-in.
+- The Claude Code small target is the newest Haiku, `claude-haiku-5-5`, written as the native `haiku` alias (observed 2026-10-28; it was `claude-haiku-4-5`). The quality comparison against the old target has not been run yet.
 
 ### Removed (O8)
 
@@ -56,7 +57,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Interactive TUI setup (F0.3):** `downshift setup --tui` providing interactive terminal interface for harness configuration and dry-run preview.
 - **Uninstall and purge (F0.2):** `downshift uninstall` with `--purge` flag completely removing state directory and restoring all harness backups.
 - **Dynamic model tier discovery (F0.4):** auto-seeding relative tiers (`cheap`, `standard`, `frontier`) in `session-models.json` on `downshift setup`.
-- **Subagent model force configuration:** setup configures `"CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"` in Claude Code's `settings.json`, ensuring subagent rewrites by Downshift are honored across built-in agent types.
 
 - **KiroCrew harness detection:** `SessionEnv: "KIRO_SESSION_ID"` in `KiroCrewCaps` enables
   `envHarness()` to attribute exec-events to `kirocrew` instead of `unknown`. The `Model` field

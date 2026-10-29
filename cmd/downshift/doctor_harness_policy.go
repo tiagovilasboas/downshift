@@ -36,6 +36,12 @@ func checkSessionList(add func(id, status, detail, fix string), env doctorEnv, n
 		add("session list", doctorOK, fmt.Sprintf("file (%d models)", len(s.IDs)), "")
 		return
 	}
+	// A harness that accepts the catalog stand-in (Claude Code on a
+	// subscription cannot be listed) still rewrites; discovery only upgrades it.
+	if nc.Caps.SessionFromCatalog {
+		add("session list", doctorOK, "none cached: the catalog stand-in is used; `models discover` gives a detected list", "")
+		return
+	}
 	// No fixed list is ever configured: a harness with a listing source is
 	// discovered; one without gets its list from the session payload only.
 	for _, src := range discovery.Defaults() {

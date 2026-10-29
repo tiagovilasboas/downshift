@@ -2,64 +2,75 @@
 
 Downshift by Tiago Vilas Boas · https://github.com/tiagovilasboas/downshift
 
-Notes for the next release. Status: draft on `downshift/mvp-ponto-zero`.
+Notes for the next release. Status: draft on `downshift/mvp-ponto-zero`. Everything here is measured in
+tokens; no figure is converted to money.
 
-## Highlights
+## What changes for you
 
-### 1. Default subagent profile table (W7.1)
-Without a project `policy.json`, built-in Claude Code subagent types map to
-tiers automatically:
-- `Explore`, `claude-code-guide`, `statusline-setup` ➔ `small` (Haiku)
-- `general-purpose`, `Plan` ➔ keep requested model
-- A risk signal in the prompt elevates the tier to `mid` (Sonnet).
-- An explicit profile in `policy.json` wins over the table.
+### 1. The orchestrator chooses the model, Downshift applies it (decision O8)
 
-### 2. Economy mode (W7.9)
-```bash
-downshift policy economy on
-```
-Shifts every profile down one relative tier within safety boundaries (risk
-signals never go to `small`).
+Downshift never picks a model on its own. In order, the first match wins: a pinned model is kept; a
+declared profile; the first matching declared rule; the orchestrator's tier hint (it can only move
+down); otherwise the requested model is kept. Doubt keeps the requested model.
 
-### 3. Policy initialization (W7.2)
-```bash
-downshift policy init
-```
-Shows a dry run of the starting `.downshift/policy.json` and writes it only
-after confirmation.
+If you relied on the old built-in table (`Explore` to small, and so on), it is gone. Without a
+`policy.json` and without a hint, nothing changes. To get the same effect, declare profiles in
+`.downshift/policy.json` (`downshift policy init` shows a starting file and writes it only after a
+yes) or let the orchestrator put `[tier=small]` at the start of the spawn prompt. The
+`downshift-orchestrator` skill, installed by `setup`, carries the guidance. Check a file with
+`downshift policy check`.
 
-### 4. Claude Code subagent force
-`downshift setup` adds `"CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"` to
-`~/.claude/settings.json`, so Claude Code honors subagent rewrites on built-in
-types.
+### 2. The MCP server is registered by default
 
-### 5. Loop command
-`downshift loop --task="..." --sensor="..."` runs a sensor retry loop that feeds
-the episodic failure tracker on failure and records acceptance on success.
+`downshift setup` registers `downshift mcp serve` in Claude Code (through `claude mcp add -s user`)
+and in Codex (a marked block in `config.toml`). The dry run shows it first, `--no-mcp` skips it and
+`setup --undo` removes it. Other servers in those files are left alone. A conflicting entry that is
+not Downshift's is reported as a warning and left as it is.
 
----
+The server has four information tools: `providers`, `playbook`, `status` and `apply`. It never picks
+a model and takes no task text.
 
-## Breaking changes
+### 3. On Claude Code, small now means the newest Haiku
 
-1. **V1 routing and `try` removed:** Decider v2 is the only routing engine; the
-   `downshift try` command was deleted. Inspect decisions with `downshift session`
-   or `downshift stats`.
-2. **Naive Bayes variables ignored:** `DOWNSHIFT_NB_*` environment variables are
-   no longer read.
-3. **State directory:** default is `~/.downshift`. An existing `~/.harness-downshift`
-   is used as fallback if `~/.downshift` does not exist; if both exist,
-   `~/.downshift` is used and `doctor` reports the legacy directory. No
-   automatic data migration occurs between the two.
+The catalog's small target for Claude Code is `claude-haiku-5-5`, written as the native `haiku` alias
+(observed on 2026-10-28: the alias runs the newest Haiku). Before, the small target was
+`claude-haiku-4-5`. Your policy and tier floors still bound it. The quality comparison of the newest
+Haiku against the old one has not been run yet, so treat the change as unproven on quality.
 
----
+### 4. Setup writes less
+
+- It no longer writes `CLAUDE_CODE_SUBAGENT_MODEL_FORCE=1`, because that makes Claude Code override the
+  model the orchestrator chose. A value you set yourself is left alone.
+- It no longer writes `session-models.json`. Models are the ones the harness reports; the file is an
+  optional manual override. On Claude Code, with no detected list, the catalog stand-in is used and
+  `doctor` says so instead of warning.
+
+## Removed
+
+- The built-in agent-type table and the automatic upgrade after a recorded failure.
+- The built-in risk veto in the guard. Protection is the orchestrator's judgment plus tier floors you
+  declare.
+- Dollar accounting. Reports show tokens per harness.
+- `downshift try`. Inspect decisions with `downshift session --why` or `downshift stats`.
+- `DOWNSHIFT_NB_*` variables are no longer read.
+
+`downshift policy economy` still exists and now acts only on declared policy; its removal is pending.
+
+## State directory
+
+The default is `~/.downshift`. An existing `~/.harness-downshift` is used as a fallback if
+`~/.downshift` does not exist; if both exist, `~/.downshift` is used and `doctor` reports the legacy
+directory. No automatic data migration happens between the two.
 
 ## Rollback
 
 ```bash
-git checkout main
-make install
+downshift setup --undo        # restores the hook files and removes the MCP registration
+git checkout main && make install
 ```
-Or remove hooks and state:
+
+Or remove hooks and state entirely:
+
 ```bash
 downshift uninstall --purge
 ```
