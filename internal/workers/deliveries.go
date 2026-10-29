@@ -17,6 +17,9 @@ type Delivery struct {
 	Outcome string `json:"outcome"`
 	Text    string `json:"text"`
 	Repeat  bool   `json:"repeat"`
+	// Tokens is what the worker reported spending; absent when its CLI wrote no
+	// usage (a killed or timed-out worker, or a launch that never started).
+	Tokens *Tokens `json:"tokens,omitempty"`
 }
 
 // Collection is what Collect hands back.
@@ -46,9 +49,9 @@ func newDeliveries(start time.Time) deliveries {
 	return deliveries{seq: uint64(start.UnixMilli())}
 }
 
-func (x *deliveries) add(job, outcome, text string) {
+func (x *deliveries) add(job, outcome, text string, tokens *Tokens) {
 	x.seq++
-	x.pending = append(x.pending, entry{d: Delivery{Seq: x.seq, Job: job, Outcome: outcome, Text: capText(text)}})
+	x.pending = append(x.pending, entry{d: Delivery{Seq: x.seq, Job: job, Outcome: outcome, Text: capText(text), Tokens: tokens}})
 }
 
 // ack drops every delivery with a sequence at or below upTo.

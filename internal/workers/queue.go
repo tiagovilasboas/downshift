@@ -29,6 +29,8 @@ type Queue struct {
 	// cancelling holds pump back while Cancel settles a batch, so a job that is
 	// about to be cancelled is never started on the way.
 	cancelling bool
+	// spend is the per-agent token ledger and budget (budget.go).
+	spend spend
 }
 
 // New returns a queue that runs at most limit workers at once (at least one).
@@ -41,6 +43,7 @@ func New(launcher Launcher, limit int, now func() time.Time) *Queue {
 		limit:    limit,
 		now:      now,
 		jobs:     map[string]*job{},
+		spend:    spend{used: map[string]int64{}},
 		deliv:    newDeliveries(now()),
 		changed:  make(chan struct{}),
 	}
@@ -56,6 +59,11 @@ func (q *Queue) Delegate(specs []Spec) ([]string, error) {
 	}
 	q.mu.Lock()
 	defer q.mu.Unlock()
+	for _, s := range specs {
+		if err := q.spend.check(s.Agent); err != nil {
+			return nil, err
+		}
+	}
 	ids := make([]string, 0, len(specs))
 	for _, s := range specs {
 		q.nextID++
@@ -204,7 +212,12 @@ func (q *Queue) finishLocked(j *job, s State, text string) {
 		j.timer.Stop()
 	}
 	j.state = s
-	q.deliv.add(j.id, string(s), text)
+	var tokens *Tokens
+	if j.proc != nil {
+		tokens = j.proc.Tokens()
+	}
+	q.spend.record(j.spec.Agent, s, tokens)
+	q.deliv.add(j.id, string(s), text, tokens)
 	q.pump()
 	q.notify()
 }

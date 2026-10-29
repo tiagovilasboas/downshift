@@ -17,6 +17,7 @@ import (
 type fakeProc struct {
 	report string
 	stderr string
+	tokens *Tokens
 	done   chan error
 	killed chan struct{}
 	once   sync.Once
@@ -40,8 +41,9 @@ func (p *fakeProc) Kill() error {
 	return nil
 }
 
-func (p *fakeProc) Report() string { return p.report }
-func (p *fakeProc) Stderr() string { return p.stderr }
+func (p *fakeProc) Report() string  { return p.report }
+func (p *fakeProc) Stderr() string  { return p.stderr }
+func (p *fakeProc) Tokens() *Tokens { return p.tokens }
 
 // finish ends the worker with the given report and error.
 func (p *fakeProc) finish(report string, err error) {

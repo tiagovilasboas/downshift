@@ -12,7 +12,9 @@ import (
 
 // ReadOnlyLaunchers returns the launcher of each agent that has a read-only
 // recipe. Claude runs in print mode under the planning permission mode; Codex
-// runs in exec mode under the read-only sandbox.
+// runs in exec mode under the read-only sandbox. Both write machine-readable
+// output so the job can read its token usage: Claude's --output-format json
+// result object, Codex's --json event lines (its report still comes from -o).
 func ReadOnlyLaunchers() map[string]Launcher {
 	return map[string]Launcher{
 		"claude": cliLauncher{plan: claudeReadOnly},
@@ -42,7 +44,7 @@ func claudeReadOnly(spec Spec) (argv, error) {
 	if spec.Effort != "" {
 		args = append(args, "--effort", spec.Effort)
 	}
-	return argv{name: "claude", args: args, report: claudeReport}, nil
+	return argv{name: "claude", args: args, report: claudeReport, tokens: claudeTokens}, nil
 }
 
 // claudeReport reads the single JSON object print mode writes: its result text,
@@ -69,7 +71,7 @@ func codexReadOnly(spec Spec) (argv, error) {
 	}
 	path := f.Name()
 	_ = f.Close()
-	args := []string{"exec", "--sandbox", "read-only", "--skip-git-repo-check", "--ephemeral", "-C", spec.Dir, "-o", path}
+	args := []string{"exec", "--sandbox", "read-only", "--skip-git-repo-check", "--ephemeral", "--json", "-C", spec.Dir, "-o", path}
 	if spec.Model != "" {
 		args = append(args, "--model", spec.Model)
 	}
@@ -84,7 +86,7 @@ func codexReadOnly(spec Spec) (argv, error) {
 		}
 		return string(b), nil
 	}
-	return argv{name: "codex", args: args, report: report, cleanup: func() { _ = os.Remove(path) }}, nil
+	return argv{name: "codex", args: args, report: report, tokens: codexTokens, cleanup: func() { _ = os.Remove(path) }}, nil
 }
 
 // claudeWrite is the write recipe: the bypass permission mode, inside a worktree
@@ -97,7 +99,7 @@ func claudeWrite(spec Spec) (argv, error) {
 	if spec.Effort != "" {
 		args = append(args, "--effort", spec.Effort)
 	}
-	return argv{name: "claude", args: args, report: claudeReport}, nil
+	return argv{name: "claude", args: args, report: claudeReport, tokens: claudeTokens}, nil
 }
 
 // codexWrite is the write recipe: workspace-write sandbox, approval never.

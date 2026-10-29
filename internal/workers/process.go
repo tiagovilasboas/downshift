@@ -23,6 +23,8 @@ type Process interface {
 	Report() string
 	// Stderr is the bounded tail of the worker's standard error.
 	Stderr() string
+	// Tokens is the usage the worker reported once it exited; nil when unknown.
+	Tokens() *Tokens
 }
 
 // Launcher starts a worker for a spec.
