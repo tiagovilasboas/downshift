@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"sync/atomic"
 )
 
 // The read-only launches. The recipe follows the public behaviour of other
@@ -25,11 +26,12 @@ var (
 )
 
 // argv is what a launch runs: the program, its arguments, how to read the
-// report from its output, and what to remove afterwards.
+// report and the token usage from its output, and what to remove afterwards.
 type argv struct {
 	name    string
 	args    []string
 	report  func(stdout []byte) (string, error)
+	tokens  func(stdout []byte) *Tokens
 	cleanup func()
 }
 
@@ -101,6 +103,9 @@ type cliProcess struct {
 	errTail *Tail
 	argv    argv
 	report  string
+	// tokens is set by Wait and read by the queue under its own lock, from
+	// another goroutine, so it is atomic.
+	tokens atomic.Pointer[Tokens]
 }
 
 // Wait blocks until the worker exits, then reads its report. Its cleanup runs
@@ -110,8 +115,12 @@ func (p *cliProcess) Wait() error {
 	if p.argv.cleanup != nil {
 		defer p.argv.cleanup()
 	}
-	report, rerr := p.argv.report([]byte(p.out.String()))
+	stdout := []byte(p.out.String())
+	report, rerr := p.argv.report(stdout)
 	p.report = report
+	if p.argv.tokens != nil {
+		p.tokens.Store(p.argv.tokens(stdout))
+	}
 	if err != nil {
 		return err
 	}
@@ -137,3 +146,7 @@ func (p *cliProcess) Report() string {
 
 // Stderr is the tail of the worker's standard error.
 func (p *cliProcess) Stderr() string { return p.errTail.String() }
+
+// Tokens is what the worker reported spending, nil before it exits or when its
+// output carried no usage.
+func (p *cliProcess) Tokens() *Tokens { return p.tokens.Load() }
