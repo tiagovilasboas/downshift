@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Routing events now carry an optional `client` field naming which Claude Code client fired the hook, read from `CLAUDE_CODE_ENTRYPOINT` by the Claude Code adapter (values seen include `cli` and `claude-desktop`, so a Claude Desktop event can be told apart from a CLI one). The value is sanitized (lower-case, at most 32 chars, `[a-z0-9._-]`, else dropped), never used for policy, and absent on events that predate it or on harnesses that do not report it.
+
 ### Removed
 
 - Every Claude Code and OpenCode mod is removed (owner decision, 2026-10-29): the vendored `savvy-progress` (progress bar and `/agents-info` panel), the vendored `cache-tax`, and the Downshift-owned `downshift-progress`, `downshift-panel`, `downshift-dock`, `downshift-router`, `downshift-theme` and `downshift-opencode`, with the `mods/` directory, the marketplace entries, the NOTICE paragraphs and the `setup` code that installed `savvy-progress`. The marketplace now offers the `downshift` plugin only. If you installed a mod, remove it with `/plugin uninstall <name>@downshift`. The OpenCode adapter in Go stays, but nothing forwards a spawn to it now.

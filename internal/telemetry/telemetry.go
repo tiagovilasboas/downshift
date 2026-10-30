@@ -203,6 +203,14 @@ type Event struct {
 	// Confidence is reserved and never set: the router has no calibrated
 	// probability, so the key stays absent rather than carry a made-up number.
 	Confidence *float64 `json:"confidence,omitempty"`
+
+	// Client names the harness client that fired the hook, when the harness
+	// exposes it: for Claude Code, CLAUDE_CODE_ENTRYPOINT (values seen in the
+	// wild include "cli" and "claude-desktop"). It tells a Claude Desktop event
+	// apart from a CLI one. The value is opaque and untrusted: sanitized by
+	// ClientOrDrop and never used for policy. Absent on events written before
+	// the field and on harnesses that do not report it.
+	Client string `json:"client,omitempty"`
 }
 
 // DCIRecord captures prompt-time code intelligence evaluation metrics.
@@ -327,6 +335,21 @@ func RawModelOrInvalid(candidate string) string {
 		return candidate
 	}
 	return "invalid"
+}
+
+// clientPattern bounds the harness client label: a short, lower-case token.
+// CLAUDE_CODE_ENTRYPOINT is untrusted, so anything with other characters or
+// over the length cap is dropped rather than stored.
+var clientPattern = regexp.MustCompile(`^[a-z0-9._-]{1,32}$`)
+
+// ClientOrDrop returns candidate when it is a short lower-case token
+// (at most 32 chars, [a-z0-9._-]), and "" otherwise so the field is dropped.
+// It never trusts the value for policy; it only labels the event.
+func ClientOrDrop(candidate string) string {
+	if clientPattern.MatchString(candidate) {
+		return candidate
+	}
+	return ""
 }
 
 // Reasons recorded in place of a reasoning effort level.
