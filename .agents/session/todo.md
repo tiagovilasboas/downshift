@@ -4,12 +4,8 @@ Plano de execução: Seção 3b em [roadmap.md](../../docs/internal/plans/roadma
 
 ## Setup Evolution Waves (Cards S-W1 a S-W5) — Concluído ✅
 
-- [x] **S-W3 (3 SP): Catálogo dos 6 Playbooks de Engenharia & Universal Skill (Merged PR #622)**
-- [x] **S-W1 (2 SP): Interactive TTY Detection & Silent Fallback (Merged PR #623)**
-- [x] **S-W2 (3 SP): First-Run Interview State Machine (Lipgloss TUI) (Merged PR #623)**
-- [x] **S-W4 (3 SP): Live Adapter Proof & Smoke Check (Merged PR #624)**
+> 📦 *Histórico compactado: 5 tarefas concluídas arquivadas em [completed-tasks-2026-10-30.md](archive/completed-tasks-2026-10-30.md)*
 
-- [x] **S-W5 (2 SP): Aha! Moment Summary & Verification Gate**
   - [x] Card de encerramento visual com quota, tips e primeiro comando a rodar
   - [x] Atualização de documentação canônica (`README.md`, `install.md`)
   - [x] Validação integral dos sensores (`make check`, `docscheck`, `archtest`) 100% verde

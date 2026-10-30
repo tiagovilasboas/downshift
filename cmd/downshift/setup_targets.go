@@ -111,6 +111,8 @@ const (
 	mcpViaCLI = "cli"
 	// mcpTOMLBlock edits a marked block of a TOML file as text; File is that file.
 	mcpTOMLBlock = "toml-block"
+	// mcpJSONMap edits an mcpServers object in a JSON file; File is that file.
+	mcpJSONMap = "json-map"
 )
 
 // setupMcp is the per-harness MCP registration fact: a way and a file
@@ -211,6 +213,7 @@ var setupTargets = []setupTarget{
 			// Child end (N5). Unverified: needs a real payload (docs/reference/harness-matrix.md).
 			{Event: "subagentStop", Args: "end cursor"},
 		},
+		Mcp: &setupMcp{Kind: mcpJSONMap, File: ".cursor/mcp.json"},
 	},
 	{
 		Name:      "opencode",
@@ -256,6 +259,7 @@ var setupTargets = []setupTarget{
 			{Event: "PreToolUse", Matcher: "invoke_subagent", Args: "antigravity"},
 		},
 		Steering: &setupSteering{Path: ".gemini/AGENTS.md", Content: compactSteering, Managed: true},
+		Mcp:      &setupMcp{Kind: mcpJSONMap, File: ".gemini/config/mcp_config.json"},
 	},
 	{
 		Name:      "kirocrew",
@@ -285,5 +289,6 @@ var setupTargets = []setupTarget{
 		// Downshift row duplicates agent.kiro_hooks (often still pointing at a
 		// checkout). Setup drops that row; other hooks in the file stay.
 		Registry: ".kiro/crew/hooks.json",
+		Mcp:      &setupMcp{Kind: mcpJSONMap, File: ".kiro/settings/mcp.json"},
 	},
 }

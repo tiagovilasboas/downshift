@@ -337,9 +337,16 @@ func setupConfirm(o setupOptions, prompt string) bool {
 	if o.Yes {
 		return true
 	}
-	fmt.Fprint(o.Out, prompt)
+	if o.Out != nil {
+		fmt.Fprint(o.Out, prompt)
+	}
+	if o.In == nil {
+		return false
+	}
 	line, _ := bufio.NewReader(o.In).ReadString('\n')
-	fmt.Fprintln(o.Out)
+	if o.Out != nil {
+		fmt.Fprintln(o.Out)
+	}
 	switch strings.ToLower(strings.TrimSpace(line)) {
 	case "y", "yes":
 		return true
