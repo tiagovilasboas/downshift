@@ -115,6 +115,20 @@ every session, the cost the [audit skill](../../skills/downshift-audit/SKILL.md)
 measures. Prefer the binary; if you use the skill, keep it in one project and
 measure.
 
+## Gateway routers: 9router and OmniRoute (optional companions)
+
+Gateway routers are self-hosted or local proxies that balance requests across multiple AI providers (Anthropic, DeepSeek, OpenAI, Groq, local models) with automatic failover on rate-limits (HTTP 429).
+
+- **[9router](https://github.com/decolua/9router):** A lightweight proxy that distributes traffic across multiple accounts and providers with automatic fallback. Default local port is `http://localhost:3000`.
+- **[OmniRoute](https://github.com/diegosouzapw/OmniRoute):** A self-hosted OpenAI-compatible AI gateway that runs on `http://localhost:20128/v1` with route-prefixed model IDs (e.g. `cc/claude-3-5-sonnet`, `auto/coding`).
+
+**How they fit next to Downshift.** Downshift operates at the **orchestrator and tool layer** (PreToolUse hooks, model/effort routing, Compactor cutting CLI verbosity, and MCP worker isolation). The gateway router operates at the **transport and network layer** (HTTP request forwarding, API key failover, multi-provider load balancing).
+
+Downshift integrates with them cleanly:
+1. `downshift doctor` detects active local instances of OmniRoute and 9router and reports their health.
+2. The model decider and catalog recognise gateway-prefixed models (e.g. `cc/*`, `omniroute/*`, `9router/*`, `auto/*`) so routing decisions remain sound without "unknown model" rejections.
+3. Workers delegated through `downshift mcp serve` can target the gateway base URL.
+
 ## Claude Code mods Downshift recommends
 
 Claude Code **mods** (released 2026-10-01 with Claude Code 2.1.287) are

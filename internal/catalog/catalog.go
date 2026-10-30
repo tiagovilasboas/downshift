@@ -33,13 +33,10 @@ import (
 //go:embed catalog.json
 var embeddedJSON []byte
 
-// isGatewayProvider reports whether a catalog row's provider is the user
-// allowlist gateway (AllowlistProvider). Such a row is reachable only by its
-// full "vendor/model" slug and defaults to routing "explicit_only" unless the
-// row says otherwise. No gateway registry remains: the allowlist name is the
-// only gateway the catalog recognises.
+// isGatewayProvider reports whether a catalog row's provider is a recognized
+// gateway (OpenRouter, OmniRoute, or 9router).
 func isGatewayProvider(provider string) bool {
-	return provider != "" && provider == AllowlistProvider
+	return provider != "" && (provider == AllowlistProvider || provider == "omniroute" || provider == "9router")
 }
 
 // gatewaySlug splits the OpenCode form of a gateway model,

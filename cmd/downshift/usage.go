@@ -35,6 +35,7 @@ Models and quota
   downshift playbook list|show|edit|add|remove|restore|check   The working rules a delegated worker receives
   downshift models discover      Ask each harness which models the account can use; hooks read the result
   downshift quota status         Inspect budget evidence and freshness for a harness/model
+  downshift gateway [status]     Check local companion routers (OmniRoute, 9router)
 
 Plumbing (your harness or statusline calls these, you do not)
   downshift claude-code          Run as a Claude Code PreToolUse hook (reads stdin)

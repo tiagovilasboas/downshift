@@ -19,6 +19,7 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/core"
+	"github.com/tiagovilasboas/downshift/internal/gateway"
 	"github.com/tiagovilasboas/downshift/internal/paths"
 	"github.com/tiagovilasboas/downshift/internal/semantic"
 	"github.com/tiagovilasboas/downshift/internal/telemetry"
@@ -35,10 +36,12 @@ type doctorEnv struct {
 	// Companions lists the external companions to probe (the registry's by
 	// default); tests inject fakes. Nil skips the companion row.
 	Companions func() []contextopt.Provider
-	Now        func() time.Time
-	Getenv     func(string) string
-	Cat        *catalog.Catalog
-	Verbose    bool
+	// Gateways lists local router gateways to probe. Nil skips the gateway check.
+	Gateways func() []gateway.Gateway
+	Now      func() time.Time
+	Getenv   func(string) string
+	Cat      *catalog.Catalog
+	Verbose  bool
 }
 
 func defaultDoctorEnv(cat *catalog.Catalog) doctorEnv {
@@ -46,6 +49,7 @@ func defaultDoctorEnv(cat *catalog.Catalog) doctorEnv {
 	return doctorEnv{Home: home, Executable: os.Executable, LookPath: exec.LookPath,
 		BuildInfo:  debug.ReadBuildInfo,
 		Companions: func() []contextopt.Provider { return companions(contextRegistry()) },
+		Gateways:   defaultDoctorGateways,
 		Now:        time.Now, Getenv: os.Getenv, Cat: cat}
 }
 
@@ -161,6 +165,7 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 	checkCatalog(rep, env)
 	checkPrices(rep, env)
 	checkContext(rep, env)
+	checkGateways(rep, env)
 	for _, note := range modelOverrideNotes(core.AllHarnessCaps(), env.Getenv) {
 		name := strings.TrimPrefix(note, "model_override_env: ")
 		if i := strings.Index(name, "="); i > 0 {

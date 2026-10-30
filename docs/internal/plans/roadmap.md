@@ -56,6 +56,8 @@ Release gate (D5): nothing reaches `main` until the real-session proof, AppSec (
 
 Approach note (2026-10-29): Universal Orchestrator, MCP conformance, and non-bespoke testing strategy are defined in [universal-orchestrator-harness-approach.md](universal-orchestrator-harness-approach.md). Standard conformance replaces custom synthetic test batteries with the official MCP Inspector, architecture fitness functions (`internal/archtest`), golden files for compaction, and SWE-bench-style external verification gates.
 
+Gateway Routers note (2026-10-29): Multi-provider proxy routers (9router and OmniRoute) operate at the transport layer (failover, multi-key load balancing across Anthropic, DeepSeek, OpenAI, Groq), while Downshift operates at the orchestration and compaction layer. Downshift connects with them as first-class companions: detecting them in `doctor`, normalising gateway model prefixes (e.g. `cc/*`, `auto/*`), and wiring harness base URLs without bloating Downshift with a bespoke GUI or embedded proxy.
+
 ## 4. Common gate (every code PR)
 
 `make check` green; golden decision tables; the acceptance suite (`outcome`, `benchmark`) at the same rigour as before, with any regression reported; `./examples/run-all.sh`; layering rule (harness facts in `HarnessCapabilities`, adapters hold no policy; see [layering](../../contrib/layering.md)); copyright headers; OS-agnostic paths; no file over 300 lines; tests isolate `HOME` and `DOWNSHIFT_STATE_DIR`; no dead package references in the docs the PR touches.
