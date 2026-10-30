@@ -50,7 +50,18 @@ func (s Set) Chars() int { return len([]rune(s.Text)) }
 
 // shipped reads the default sets from the embedded assets, in display order.
 func shipped() []Set {
-	order := []string{"general", "backend", "frontend"}
+	order := []string{
+		"general",
+		"backend",
+		"frontend",
+		"research",
+		"implementation",
+		"review",
+		"tdd-verification",
+		"docs",
+		"incident-rescue",
+		"universal-skill",
+	}
 	out := make([]Set, 0, len(order))
 	for _, id := range order {
 		b, err := assets.ReadFile("assets/" + id + ".md")
