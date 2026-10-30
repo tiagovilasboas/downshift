@@ -256,8 +256,8 @@ var registry = map[string]HarnessLimits{
 			},
 			{
 				Feature: "mcp",
-				Status:  "none",
-				Reason:  "MCP reachability from the guest VM is unverified (F3-cowork-vm, 2026-10-30)",
+				Status:  "unverified",
+				Reason:  "no log shows an MCP server entering the guest VM, and none was seen failing either (F3-cowork-vm, 2026-10-30)",
 			},
 		},
 	},

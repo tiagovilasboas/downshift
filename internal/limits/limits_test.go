@@ -156,15 +156,20 @@ func TestClaudeDesktopSurfaces(t *testing.T) {
 		t.Errorf("claude-desktop-chat mcp = %v; want %q", mcp, StatusPartial)
 	}
 
-	// Cowork: everything is none because the binary and hooks never reach the
-	// guest VM; MCP reachability is unverified, so it is none too.
+	// Cowork: every hook-driven feature is none because the binary and hooks
+	// never reach the guest VM. MCP was neither seen working nor failing, so it
+	// is unverified, not none: declaring none would claim evidence we lack.
 	cowork := ForHarness("claude-desktop-cowork")
 	if cowork == nil {
 		t.Fatal("ForHarness(claude-desktop-cowork) = nil; want non-nil")
 	}
 	for _, lim := range cowork.Limitations {
-		if lim.Status != StatusNone {
-			t.Errorf("claude-desktop-cowork %s = %q; want all %q", lim.Feature, lim.Status, StatusNone)
+		want := StatusNone
+		if lim.Feature == FeatureMCP {
+			want = StatusUnverified
+		}
+		if lim.Status != want {
+			t.Errorf("claude-desktop-cowork %s = %q; want %q", lim.Feature, lim.Status, want)
 		}
 		if lim.Reason == "" {
 			t.Errorf("claude-desktop-cowork %s has an empty reason", lim.Feature)

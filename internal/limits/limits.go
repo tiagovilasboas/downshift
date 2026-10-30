@@ -24,13 +24,17 @@ const (
 	StatusPartial = "partial" // Works in some conditions
 	StatusNone    = "none"    // Not supported
 	StatusManual  = "manual"  // Requires manual invocation
+	// StatusUnverified marks a feature nobody has observed working or failing.
+	// It is not a support level: it says the evidence is missing.
+	StatusUnverified = "unverified"
 )
 
 // Limitation describes a specific capability limitation of a harness.
 type Limitation struct {
 	// Feature is the capability name (e.g., "model_rewrite", "token_counts").
 	Feature string
-	// Status is the support level: "full", "partial", "none", "manual".
+	// Status is the support level: "full", "partial", "none", "manual",
+	// or "unverified" when no evidence exists either way.
 	Status string
 	// Reason explains why the limitation exists.
 	Reason string

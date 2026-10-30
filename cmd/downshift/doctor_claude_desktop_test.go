@@ -80,7 +80,7 @@ func TestCheckClaudeDesktopSurfaces(t *testing.T) {
 	if !strings.Contains(got["claude-desktop-chat"], "mcp:partial") {
 		t.Errorf("chat detail = %q; want mcp:partial", got["claude-desktop-chat"])
 	}
-	if !strings.Contains(got["claude-desktop-cowork"], "mcp:none") {
-		t.Errorf("cowork detail = %q; want mcp:none", got["claude-desktop-cowork"])
+	if !strings.Contains(got["claude-desktop-cowork"], "mcp:unverified") {
+		t.Errorf("cowork detail = %q; want mcp:unverified", got["claude-desktop-cowork"])
 	}
 }
