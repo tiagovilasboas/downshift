@@ -65,7 +65,7 @@ func TestPlaybookRemovedShowsInTheListing(t *testing.T) {
 func TestPlaybookShowUnknownNameListsTheValidOnes(t *testing.T) {
 	playbookEnv(t)
 	code, _, errs := runPB(t, "show", "Mobile")
-	if code == 0 || !strings.Contains(errs, "Available: General, Backend, Frontend, Research, Implementation, Review, TDD Verification, Documentation, Incident Rescue, Universal Skill") {
+	if code == 0 || !strings.Contains(errs, "Available: General, Backend, Frontend, Research, Implementation, Review, TDD Verification, Documentation, Incident Rescue") {
 		t.Fatalf("exit %d, stderr %q", code, errs)
 	}
 }

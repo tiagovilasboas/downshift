@@ -60,7 +60,6 @@ func shipped() []Set {
 		"tdd-verification",
 		"docs",
 		"incident-rescue",
-		"universal-skill",
 	}
 	out := make([]Set, 0, len(order))
 	for _, id := range order {
