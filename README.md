@@ -333,7 +333,7 @@ harness the compact command works when the agent runs it directly.
 ### How Each Harness Works
 
 - **Claude Code** — Native PreToolUse/PostToolUse hooks. Downshift rewrites shell commands
-  automatically via plugin. Model routing via spawn interception. *This is the reference implementation.*
+  automatically via plugin. Model routing via spawn interception. Recommended defaults: opusplan, plan mode and Claude Effort Optimizer. *This is the reference implementation.*
 
 - **Codex** — PreToolUse hook rewrites the spawn model. The next spawn is the only signal that
   it was honored (inferred, not observed). Compaction is `downshift compact`, run by the agent.

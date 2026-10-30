@@ -1,15 +1,15 @@
 # Session State
 
 ## Objetivo Atual
-- Implementar o registro declarativo do MCP server `downshift` em formato JSON (`mcpServers`) para Cursor, Google Antigravity e Kiro, com suporte a merge atômico, nil-safety e rollback idempotente (`--undo`).
+- Implementação do Incremento 1 (Opção A - 2 SP): Claude Effort Optimizer como mod ativo por padrão no setup do Downshift para Claude Code.
+- Branch de trabalho: `feat/claude-effort-optimizer-default`.
 
 ## Status em Tempo Real
-- **Fase Atual:** Implementação conduzida pela equipe Senior Staff (AI FinOps, Fullstack e QA) com veredito PASS. Branch `feat/mcp-registration-json` pronta para commit e PR.
-- **Branch atual:** `feat/mcp-registration-json`
+- **Fase Atual:** Implementação, testes e documentação concluídos. Validação com `make check` 100% verde.
+- **Branch atual:** `feat/claude-effort-optimizer-default`
 - **Bloqueios:** Nenhum.
 
-## Decisões Recentes
-- Targets MCP JSON: Cursor (`~/.cursor/mcp.json`), Antigravity (`~/.gemini/config/mcp_config.json`) e Kiro (`~/.kiro/settings/mcp.json`).
-- Isolamento com marcador de segurança: `env.DOWNSHIFT_MANAGED = "setup"`.
-- Resolução e preservação de symlinks via `filepath.EvalSymlinks`.
-- Nil-safety rigorosa em todos os streams de I/O (`o.In`, `o.Out`, `o.Err`).
+## Entregas Recentes Concluídas
+- **Incremento 1 (Opção A - 2 SP):** Claude Effort Optimizer (`cc-plugin-effort-optimizer@builtin`) adicionado como default recomendado ativo por padrão para Claude Code no `downshift setup`, com suporte a `--no-session-policy`, preservação de configurações prévias do usuário, exibição no wizard TUI e nos relatórios do `doctor`.
+- **PR #626:** Registro declarativo JSON para Cursor (`~/.cursor/mcp.json`), Antigravity (`~/.gemini/config/mcp_config.json`) e Kiro (`~/.kiro/settings/mcp.json`). Preservação de symlinks, nil-safety total e reversão limpa com `--undo`.
+- **Setup Evolution Waves (S-W1 a S-W5):** Wizard TUI interativo, Live Smoke Test (<50ms), 6 Playbooks canônicos + Universal Skill em assets embarcados.

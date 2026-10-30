@@ -14,13 +14,13 @@ func TestCheckMainPolicy(t *testing.T) {
 		doc  map[string]any
 		want []string // one substring per reported line, in order
 	}{
-		{"all set", map[string]any{"model": "opusplan", "permissions": map[string]any{"defaultMode": "plan"}, "enabledPlugins": map[string]any{"cc-plugin-you-should-know@builtin": true}},
-			[]string{"model opusplan", "permissions.defaultMode plan", "you-should-know on (built-in Claude Code mod; each check is a billed request; /plugin disable cc-plugin-you-should-know@builtin to turn off)"}},
-		{"pinned by the user", map[string]any{"model": "claude-sonnet-5-5", "permissions": map[string]any{"defaultMode": "acceptEdits"}, "enabledPlugins": map[string]any{"downshift@downshift": true, "cc-plugin-you-should-know@builtin": false}},
-			[]string{"claude-sonnet-5-5 (set by you)", "acceptEdits (set by you)", "you-should-know false (set by you)"}},
-		{"nothing set", map[string]any{}, []string{"no model set", "no permissions.defaultMode set", "no you-should-know set"}},
+		{"all set", map[string]any{"model": "opusplan", "permissions": map[string]any{"defaultMode": "plan"}, "enabledPlugins": map[string]any{"cc-plugin-effort-optimizer@builtin": true, "cc-plugin-you-should-know@builtin": true}},
+			[]string{"model opusplan", "permissions.defaultMode plan", "effort-optimizer on (built-in Claude Code mod; optimizes reasoning effort per task; /plugin disable cc-plugin-effort-optimizer@builtin to turn off)", "you-should-know on (built-in Claude Code mod; each check is a billed request; /plugin disable cc-plugin-you-should-know@builtin to turn off)"}},
+		{"pinned by the user", map[string]any{"model": "claude-sonnet-5-5", "permissions": map[string]any{"defaultMode": "acceptEdits"}, "enabledPlugins": map[string]any{"downshift@downshift": true, "cc-plugin-effort-optimizer@builtin": false, "cc-plugin-you-should-know@builtin": false}},
+			[]string{"claude-sonnet-5-5 (set by you)", "acceptEdits (set by you)", "effort-optimizer false (set by you)", "you-should-know false (set by you)"}},
+		{"nothing set", map[string]any{}, []string{"no model set", "no permissions.defaultMode set", "no effort-optimizer set", "no you-should-know set"}},
 		{"permissions without a mode", map[string]any{"permissions": map[string]any{"allow": []any{}}},
-			[]string{"no model set", "no permissions.defaultMode set", "no you-should-know set"}},
+			[]string{"no model set", "no permissions.defaultMode set", "no effort-optimizer set", "no you-should-know set"}},
 	} {
 		var got []string
 		checkMainPolicy(func(id, status, detail, _ string) {
