@@ -289,6 +289,9 @@ func runHookAdapter[E any](
 		if typed, ok := any(ev).(interface{ PermissionModeIdentifier() string }); ok {
 			event.PermissionMode = telemetry.PermissionModeLabel(typed.PermissionModeIdentifier())
 		}
+		if typed, ok := any(ev).(interface{ ClientIdentifier() string }); ok {
+			event.Client = telemetry.ClientOrDrop(typed.ClientIdentifier())
+		}
 		if requested, ok := any(ev).(interface{ RequestedReasoningEffort() string }); ok {
 			event.RequestedEffort = telemetry.EffortOrUnknown(requested.RequestedReasoningEffort())
 		}
