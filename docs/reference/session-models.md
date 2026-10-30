@@ -109,20 +109,19 @@ Native config is not a session allowlist either:
 
 ## Main session policy: plan mode and opusplan (Claude Code)
 
-Downshift routes subagents; the main session is the harness's. For Claude Code, `downshift setup` also sets four keys in `~/.claude/settings.json`, each only when it is not already set:
+Downshift routes subagents; the main session is the harness's. For Claude Code, `downshift setup` also sets three keys in `~/.claude/settings.json`, each only when it is not already set:
 
 | Key | Value | Effect |
 |---|---|---|
 | `model` | `opusplan` | Opus while plan mode is on, Sonnet for execution ([model config](https://code.claude.com/docs/en/model-config)) |
 | `permissions.defaultMode` | `plan` | Every terminal session starts in plan mode: Claude reads and plans, and edits stay blocked until you approve the plan ([permission modes](https://code.claude.com/docs/en/permission-modes)) |
-| `enabledPlugins["cc-plugin-effort-optimizer@builtin"]` | `true`, default | Turns on Claude Code's built-in "Claude Effort Optimizer" mod: optimizes reasoning effort per task. `/plugin disable cc-plugin-effort-optimizer@builtin` turns it off. |
 | `enabledPlugins["cc-plugin-you-should-know@builtin"]` | `true`, only with `setup --you-should-know` | Turns on Claude Code's built-in "You should know" mod (off by default, Claude Code 2.1.287+): a side agent rereads the conversation from time to time and shows one note above the prompt when it finds something you might have missed ([interactive mode](https://code.claude.com/docs/en/interactive-mode#you-should-know-suggestions)). It spends usage: each check is a billed background request to the session's model, and the mod's instructions and the reply are billed in full every time. `/plugin disable cc-plugin-you-should-know@builtin` turns it off. |
 
 The check is on the sub-key, not on `enabledPlugins`: the map usually already holds other plugins (the Downshift plugin itself), and they are kept. A `false` you set is respected and reported by `doctor` as `you-should-know false (set by you)`. The settings key is the one `/plugin enable` is expected to persist; Claude Code's docs name the command, not the key, so confirm it on a live session. `setup` does not write `autoCompactWindow`: it is not part of the policy. Users who want auto-compact earlier on 1M-context models set it themselves (a plain integer such as `400000`; Claude Code caps it at the model window, so it is a no-op on 200k models, and `400k` would be read as 400). Per-subagent windows are a separate setting (`autoCompactWindow` in the agent's frontmatter, Claude Code 2.1.296+) and Downshift does not set them.
 
-Together the four make the plan/execute split, effort optimization and the background checks happen in every session. A value you already set is never replaced; setup prints how to switch, and `downshift doctor` shows all four as `main session`. A new `defaultMode` replaces Claude Code's built-in starting mode (auto mode on recent versions), so a session now starts by planning instead of acting. Approving a plan leaves plan mode for the mode you pick in that prompt; `Shift+Tab` or `/plan` plans again.
+Together the three make the plan/execute split and the background checks happen in every session. A value you already set is never replaced; setup prints how to switch, and `downshift doctor` shows all three as `main session`. A new `defaultMode` replaces Claude Code's built-in starting mode (auto mode on recent versions), so a session now starts by planning instead of acting. Approving a plan leaves plan mode for the mode you pick in that prompt; `Shift+Tab` or `/plan` plans again.
 
-`downshift setup --no-session-policy` wires the hooks and leaves the session policy keys alone. To undo it later, delete the keys or run `downshift setup --undo` to restore the last backup. To keep one without the other, set the one you want yourself first: setup keeps it.
+`downshift setup --no-session-policy` wires the hooks and leaves the three keys alone. To undo it later, delete the keys or run `downshift setup --undo` to restore the last backup. To keep one without the other, set the one you want yourself first: setup keeps it.
 
 The two layers fit together. Claude Code resolves an inheriting subagent's model when it starts it, so a subagent spawned during plan mode would run on Opus. The adapter reads the parent model from the last assistant message in the transcript, which is the resolved model (Opus or Sonnet), not the alias, so the baseline stays known and the subagent is right-sized as usual. This follows from the code path; it has not yet been observed in a live plan-mode spawn.
 

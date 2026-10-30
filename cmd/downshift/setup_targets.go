@@ -150,16 +150,6 @@ var setupTargets = []setupTarget{
 				Note: `sessions keep their "permissions.defaultMode"; set it to "plan" in ~/.claude/settings.json ` +
 					"to start every session in plan mode",
 			},
-			{
-				Parent:   "enabledPlugins",
-				Key:      "cc-plugin-effort-optimizer@builtin",
-				Value:    true,
-				Optional: true,
-				Label:    "effort-optimizer",
-				Info:     "on (built-in Claude Code mod; optimizes reasoning effort per task; /plugin disable cc-plugin-effort-optimizer@builtin to turn off)",
-				Note: `"cc-plugin-effort-optimizer@builtin" is not true in enabledPlugins; set it to true in ~/.claude/settings.json ` +
-					"(or run /plugin enable cc-plugin-effort-optimizer@builtin) to turn on Claude Effort Optimizer",
-			},
 			// CLAUDE_CODE_SUBAGENT_MODEL_FORCE is not written (owner decision O8): with
 			// it set, Claude Code overrides the model the orchestrator chose per call.
 			// Claude Code's built-in "You should know" mod (off by default). The key is

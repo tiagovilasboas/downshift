@@ -288,9 +288,6 @@ func setupSummary(plans []setupPlan) string {
 		}
 		if ep, ok := doc.get("enabledPlugins"); ok {
 			if po, isObj := asObj(ep); isObj {
-				if on, _ := po.get("cc-plugin-effort-optimizer@builtin"); on == true {
-					policy = append(policy, "Claude Effort Optimizer is on (/plugin disable cc-plugin-effort-optimizer@builtin to turn off)")
-				}
 				if on, _ := po.get("cc-plugin-you-should-know@builtin"); on == true {
 					policy = append(policy, "You should know is on: each check is a billed background request to the session's model (/plugin disable cc-plugin-you-should-know@builtin to turn off)")
 				}
