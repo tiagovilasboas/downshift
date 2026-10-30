@@ -78,7 +78,7 @@ func TestValidFileLoadsEverySetting(t *testing.T) {
 	path := projectFile(t, `{"version":1,"routing":{
 	  "critical_threshold":0,"both_critical":"run-cheapest","quota_ttl_seconds":120,
 	  "profiles":[
-	    {"name":"reviewer","tier":"frontier","harness":"claude-code","fallback":"careful"},
+	    {"name":"reviewer","tier":"frontier","harness":"claude-code","fallback":"careful","description":"Reviews a diff"},
 	    {"name":"careful","tier":"mid","harness":"claude-code"}],
 	  "rules":[
 	    {"id":"docs","kinds":["docs"],"efforts":["light"],"profile":"careful",
@@ -94,6 +94,9 @@ func TestValidFileLoadsEverySetting(t *testing.T) {
 	}
 	if len(p.Profiles) != 2 || p.Profiles[0].Name != "reviewer" || p.Profiles[1].Fallback != "" {
 		t.Errorf("profiles = %+v", p.Profiles)
+	}
+	if p.Profiles[0].Description != "Reviews a diff" || p.Profiles[1].Description != "" {
+		t.Errorf("descriptions = %q, %q", p.Profiles[0].Description, p.Profiles[1].Description)
 	}
 	docs := p.Rules[0]
 	if docs.ID != "docs" || !docs.Enabled || docs.Profile != "careful" || docs.Tier != contract.TierUnknown {
