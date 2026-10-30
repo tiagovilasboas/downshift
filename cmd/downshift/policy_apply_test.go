@@ -5,8 +5,10 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -15,265 +17,175 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
+// profileJSON renders one routing.profiles entry for claude-code. An empty
+// description leaves the key out.
+func profileJSON(name, tier, description string) string {
+	m := map[string]string{"name": name, "tier": tier, "harness": "claude-code"}
+	if description != "" {
+		m["description"] = description
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}
+
+// routingPolicy wraps profile entries in the canonical policy shape.
+func routingPolicy(profiles ...string) string {
+	return `{"version":1,"routing":{"profiles":[` + strings.Join(profiles, ",") + `]}}`
+}
+
+// setupPolicyApplyEnv writes the project policy under a fresh project dir and
+// returns it with an empty HOME.
 func setupPolicyApplyEnv(t *testing.T, policyJSON string) (dir, home string) {
 	t.Helper()
 	dir = t.TempDir()
 	home = t.TempDir()
-	pDir := filepath.Join(dir, ".downshift")
-	if err := os.MkdirAll(pDir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(pDir, "policy.json"), []byte(policyJSON), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeTestFile(t, filepath.Join(dir, ".downshift", "policy.json"), policyJSON, 0o644)
 	return dir, home
 }
 
-func TestPolicyApply_CompilationCreatesNewAgent(t *testing.T) {
-	policyJSON := `{
-  "version": 1,
-  "profiles": [
-    {"name": "researcher", "tier": "small", "harness": "claude-code"},
-    {"name": "coder", "tier": "mid"}
-  ]
-}`
-	dir, home := setupPolicyApplyEnv(t, policyJSON)
+func writeTestFile(t *testing.T, path, body string, mode os.FileMode) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(body), mode); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(path, mode); err != nil { // WriteFile applies the umask
+		t.Fatal(err)
+	}
+}
+
+func readTestFile(t *testing.T, path string) string {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return string(raw)
+}
+
+func missing(t *testing.T, path string) bool {
+	t.Helper()
+	_, err := os.Lstat(path)
+	return os.IsNotExist(err)
+}
+
+// runApply runs policy apply for claude-code with --yes unless mod changes it.
+func runApply(t *testing.T, dir, home string, mod ...func(*policyApplyOptions)) (code int, stdout, stderr string) {
+	t.Helper()
 	var out, errOut bytes.Buffer
-	opts := policyApplyOptions{
-		Harness: "claude-code",
-		Yes:     true,
-		Dir:     dir,
-		Home:    home,
-		Out:     &out,
-		Err:     &errOut,
-		Now:     time.Now,
+	opts := policyApplyOptions{Harness: "claude-code", Yes: true, Dir: dir, Home: home, Out: &out, Err: &errOut, Now: time.Now}
+	for _, m := range mod {
+		m(&opts)
 	}
+	return executePolicyApply(opts), out.String(), errOut.String()
+}
 
-	code := executePolicyApply(opts)
-	if code != 0 {
-		t.Fatalf("executePolicyApply exit %d; stderr: %s", code, errOut.String())
-	}
+func tierModel(tier core.Tier) string {
+	return catalog.Load().ModelFor("claude-code", tier).ID
+}
 
-	cat := catalog.Load()
-	smallModel := cat.ModelFor("claude-code", core.TierSmall).ID
-	midModel := cat.ModelFor("claude-code", core.TierMid).ID
-
-	resPath := filepath.Join(dir, ".claude", "agents", "researcher.md")
-	raw, err := os.ReadFile(resPath)
-	if err != nil {
-		t.Fatalf("ReadFile researcher.md: %v", err)
+func TestPolicyApply_CompilationCreatesNewAgent(t *testing.T) {
+	dir, home := setupPolicyApplyEnv(t, routingPolicy(
+		profileJSON("researcher", "small", "Reads code and reports"),
+		profileJSON("coder", "mid", "Writes the change"),
+	))
+	if code, _, stderr := runApply(t, dir, home); code != 0 {
+		t.Fatalf("exit %d; stderr: %s", code, stderr)
 	}
-	body := string(raw)
-	if !strings.Contains(body, "name: researcher") || !strings.Contains(body, "model: "+smallModel) {
-		t.Errorf("researcher.md missing expected frontmatter:\n%s", body)
+	for name, tier := range map[string]core.Tier{"researcher": core.TierSmall, "coder": core.TierMid} {
+		body := readTestFile(t, filepath.Join(dir, ".claude", "agents", name+".md"))
+		for _, want := range []string{"name: " + name + "\n", "model: " + tierModel(tier) + "\n", "description: "} {
+			if !strings.Contains(body, want) {
+				t.Errorf("%s.md missing %q:\n%s", name, want, body)
+			}
+		}
 	}
-
-	coderPath := filepath.Join(dir, ".claude", "agents", "coder.md")
-	rawCoder, err := os.ReadFile(coderPath)
-	if err != nil {
-		t.Fatalf("ReadFile coder.md: %v", err)
-	}
-	if !strings.Contains(string(rawCoder), "model: "+midModel) {
-		t.Errorf("coder.md missing midModel:\n%s", string(rawCoder))
+	if runtime.GOOS != "windows" {
+		fi, err := os.Stat(filepath.Join(dir, ".claude", "agents", "coder.md"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if fi.Mode().Perm() != 0o644 {
+			t.Errorf("new agent mode = %v, want 0644", fi.Mode().Perm())
+		}
 	}
 }
 
 func TestPolicyApply_DryRunDoesNotTouchFiles(t *testing.T) {
-	policyJSON := `{"version": 1, "profiles": [{"name": "scout", "tier": "small"}]}`
-	dir, home := setupPolicyApplyEnv(t, policyJSON)
-	var out, errOut bytes.Buffer
-	opts := policyApplyOptions{
-		Harness: "claude-code",
-		DryRun:  true,
-		Dir:     dir,
-		Home:    home,
-		Out:     &out,
-		Err:     &errOut,
-	}
-
-	code := executePolicyApply(opts)
+	dir, home := setupPolicyApplyEnv(t, routingPolicy(profileJSON("scout", "small", "Scouts")))
+	code, stdout, stderr := runApply(t, dir, home, func(o *policyApplyOptions) { o.DryRun, o.Yes = true, false })
 	if code != 0 {
-		t.Fatalf("dry run exit %d: %s", code, errOut.String())
+		t.Fatalf("dry run exit %d: %s", code, stderr)
 	}
-	if _, err := os.Stat(filepath.Join(dir, ".claude", "agents", "scout.md")); err == nil {
-		t.Error("file created during dry run")
+	if !missing(t, filepath.Join(dir, ".claude")) {
+		t.Error("files created during dry run")
 	}
-	if !strings.Contains(out.String(), "Dry run: nothing was written") {
-		t.Errorf("dry run notice missing:\n%s", out.String())
+	if !strings.Contains(stdout, "Dry run: nothing was written") || !strings.Contains(stdout, "+description:") {
+		t.Errorf("dry run output lacks the notice or the diff:\n%s", stdout)
 	}
 }
 
 func TestPolicyApply_UpdatesExistingAgentPreservingBodyAndKeys(t *testing.T) {
-	policyJSON := `{"version": 1, "profiles": [{"name": "tester", "tier": "small"}]}`
-	dir, home := setupPolicyApplyEnv(t, policyJSON)
-	agentDir := filepath.Join(dir, ".claude", "agents")
-	_ = os.MkdirAll(agentDir, 0o755)
-	existing := `---
-name: tester
-model: claude-opus-old
-tools: [Bash, Read]
----
+	dir, home := setupPolicyApplyEnv(t, routingPolicy(profileJSON("tester", "small", "")))
+	existing := "---\nname: tester\nmodel: claude-opus-old\ntools: [Bash, Read]\n---\n\n# Test instructions\nExecute unit tests thoroughly.\n"
+	path := filepath.Join(dir, ".claude", "agents", "tester.md")
+	writeTestFile(t, path, existing, 0o644)
 
-# Test instructions
-Execute unit tests thoroughly.
-`
-	filePath := filepath.Join(agentDir, "tester.md")
-	_ = os.WriteFile(filePath, []byte(existing), 0o644)
-
-	var out, errOut bytes.Buffer
-	opts := policyApplyOptions{
-		Harness: "claude-code",
-		Yes:     true,
-		Dir:     dir,
-		Home:    home,
-		Out:     &out,
-		Err:     &errOut,
-		Now:     time.Now,
+	if code, _, stderr := runApply(t, dir, home); code != 0 {
+		t.Fatalf("exit %d: %s", code, stderr)
 	}
-
-	if code := executePolicyApply(opts); code != 0 {
-		t.Fatalf("exit %d: %s", code, errOut.String())
-	}
-
-	smallModel := catalog.Load().ModelFor("claude-code", core.TierSmall).ID
-	updated, err := os.ReadFile(filePath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	uText := string(updated)
-	if !strings.Contains(uText, "model: "+smallModel) {
-		t.Errorf("expected model %s, got:\n%s", smallModel, uText)
-	}
-	if !strings.Contains(uText, "tools: [Bash, Read]") {
-		t.Errorf("tools field lost:\n%s", uText)
-	}
-	if !strings.Contains(uText, "Execute unit tests thoroughly.") {
-		t.Errorf("body text lost:\n%s", uText)
+	got := readTestFile(t, path)
+	want := strings.Replace(existing, "claude-opus-old", tierModel(core.TierSmall), 1)
+	if got != want {
+		t.Errorf("only the model line may change:\n got: %q\nwant: %q", got, want)
 	}
 }
 
 func TestPolicyApply_Idempotent(t *testing.T) {
-	policyJSON := `{"version": 1, "profiles": [{"name": "worker", "tier": "small"}]}`
-	dir, home := setupPolicyApplyEnv(t, policyJSON)
-	var out bytes.Buffer
-	opts := policyApplyOptions{
-		Harness: "claude-code",
-		Yes:     true,
-		Dir:     dir,
-		Home:    home,
-		Out:     &out,
-		Now:     time.Now,
-	}
-
-	if code := executePolicyApply(opts); code != 0 {
+	dir, home := setupPolicyApplyEnv(t, routingPolicy(profileJSON("worker", "small", "Works")))
+	if code, _, _ := runApply(t, dir, home); code != 0 {
 		t.Fatalf("first apply exit %d", code)
 	}
-
-	out.Reset()
-	if code := executePolicyApply(opts); code != 0 {
-		t.Fatalf("second apply exit %d", code)
-	}
-	if !strings.Contains(out.String(), "already up to date") {
-		t.Errorf("second apply not reported as up to date:\n%s", out.String())
+	code, stdout, _ := runApply(t, dir, home)
+	if code != 0 || !strings.Contains(stdout, "already up to date") {
+		t.Errorf("second apply exit %d, not reported as up to date:\n%s", code, stdout)
 	}
 }
 
 func TestPolicyApply_CreatesBackupBeforeModification(t *testing.T) {
-	policyJSON := `{"version": 1, "profiles": [{"name": "writer", "tier": "mid"}]}`
-	dir, home := setupPolicyApplyEnv(t, policyJSON)
+	dir, home := setupPolicyApplyEnv(t, routingPolicy(profileJSON("writer", "mid", "")))
 	agentDir := filepath.Join(dir, ".claude", "agents")
-	_ = os.MkdirAll(agentDir, 0o755)
 	orig := "---\nname: writer\nmodel: old\n---\nBody\n"
-	agentFile := filepath.Join(agentDir, "writer.md")
-	_ = os.WriteFile(agentFile, []byte(orig), 0o644)
+	writeTestFile(t, filepath.Join(agentDir, "writer.md"), orig, 0o644)
 
-	opts := policyApplyOptions{
-		Harness: "claude-code",
-		Yes:     true,
-		Dir:     dir,
-		Home:    home,
-		Now:     time.Now,
+	if code, _, stderr := runApply(t, dir, home); code != 0 {
+		t.Fatalf("apply exit %d: %s", code, stderr)
 	}
-	if code := executePolicyApply(opts); code != 0 {
-		t.Fatalf("apply exit %d", code)
-	}
-
 	matches, _ := filepath.Glob(filepath.Join(agentDir, "writer.md.downshift-bak-*"))
 	if len(matches) != 1 {
 		t.Fatalf("expected 1 backup, found %d", len(matches))
 	}
-	bakData, _ := os.ReadFile(matches[0])
-	if string(bakData) != orig {
-		t.Errorf("backup content mismatch: got %q, want %q", string(bakData), orig)
+	if got := readTestFile(t, matches[0]); got != orig {
+		t.Errorf("backup content mismatch: got %q, want %q", got, orig)
 	}
 }
 
-func TestPolicyApply_RejectsPathTraversalProfiles(t *testing.T) {
-	policyJSON := `{
-  "version": 1,
-  "profiles": [
-    {"name": "../evil", "tier": "small"},
-    {"name": "sub/agent", "tier": "small"},
-    {"name": "valid-agent", "tier": "small"}
-  ]
-}`
-	dir, home := setupPolicyApplyEnv(t, policyJSON)
-	var errOut bytes.Buffer
-	opts := policyApplyOptions{
-		Harness: "claude-code",
-		Yes:     true,
-		Dir:     dir,
-		Home:    home,
-		Err:     &errOut,
-		Now:     time.Now,
+func TestPolicyApply_IgnoresProfilesOfOtherHarnesses(t *testing.T) {
+	other := `{"name":"elsewhere","tier":"small","harness":"codex","description":"Not for Claude Code"}`
+	dir, home := setupPolicyApplyEnv(t, routingPolicy(other, profileJSON("here", "small", "For Claude Code")))
+	if code, _, stderr := runApply(t, dir, home); code != 0 {
+		t.Fatalf("exit %d: %s", code, stderr)
 	}
-
-	if code := executePolicyApply(opts); code != 0 {
-		t.Fatalf("exit %d: %s", code, errOut.String())
+	if !missing(t, filepath.Join(dir, ".claude", "agents", "elsewhere.md")) {
+		t.Error("a codex profile was written as a Claude Code agent")
 	}
-	if !strings.Contains(errOut.String(), "skipping profile") {
-		t.Errorf("expected warning for traversal names, got:\n%s", errOut.String())
-	}
-	if _, err := os.Stat(filepath.Join(dir, ".claude", "agents", "valid-agent.md")); err != nil {
-		t.Errorf("valid agent was not created: %v", err)
-	}
-}
-
-func TestPolicyApply_ResolvesSymlinks(t *testing.T) {
-	policyJSON := `{"version": 1, "profiles": [{"name": "symagent", "tier": "small"}]}`
-	dir, home := setupPolicyApplyEnv(t, policyJSON)
-	realDir := filepath.Join(dir, "shared_agents")
-	agentDir := filepath.Join(dir, ".claude", "agents")
-	_ = os.MkdirAll(realDir, 0o755)
-	_ = os.MkdirAll(agentDir, 0o755)
-
-	realFile := filepath.Join(realDir, "symagent.md")
-	_ = os.WriteFile(realFile, []byte("---\nname: symagent\nmodel: old\n---\nPrompt"), 0o644)
-
-	symlinkFile := filepath.Join(agentDir, "symagent.md")
-	if err := os.Symlink(realFile, symlinkFile); err != nil {
-		t.Skipf("symlink not supported: %v", err)
-	}
-
-	opts := policyApplyOptions{
-		Harness: "claude-code",
-		Yes:     true,
-		Dir:     dir,
-		Home:    home,
-		Now:     time.Now,
-	}
-	if code := executePolicyApply(opts); code != 0 {
-		t.Fatalf("exit %d", code)
-	}
-
-	fi, err := os.Lstat(symlinkFile)
-	if err != nil || fi.Mode()&os.ModeSymlink == 0 {
-		t.Errorf("symlink was destroyed: %v", err)
-	}
-	raw, _ := os.ReadFile(realFile)
-	smallModel := catalog.Load().ModelFor("claude-code", core.TierSmall).ID
-	if !strings.Contains(string(raw), "model: "+smallModel) {
-		t.Errorf("target of symlink not updated:\n%s", string(raw))
+	if missing(t, filepath.Join(dir, ".claude", "agents", "here.md")) {
+		t.Error("the claude-code profile was not written")
 	}
 }
 

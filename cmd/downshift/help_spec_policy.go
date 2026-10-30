@@ -35,11 +35,17 @@ routing policy. It asks before writing; --dry-run shows the file and writes
 nothing; --yes skips the question. An existing file is left untouched.
 downshift setup offers the same file, unless --no-policy is passed.
 
-policy apply compiles profiles declared in policy.json into harness-native agent
-definitions. For --harness claude-code, it writes or updates .claude/agents/<name>.md
-with YAML frontmatter setting model to the tier resolved from the catalog. It asks
-before writing; --dry-run shows the change; --yes skips the question. An automatic
-backup is created before modifying existing files.
+policy apply compiles routing.profiles declared in policy.json into harness-native
+agent definitions. For --harness claude-code, it writes or updates
+<project>/.claude/agents/<name>.md, where <project> is the directory that holds the
+nearest .downshift/policy.json (not the directory you ran it from). An existing file
+keeps its mode and everything but its model line. A new file gets name, description
+and model in its frontmatter, and a body: the description comes from the profile's
+"description" and is never invented, so a profile without one cannot be created.
+A policy that does not load is not applied, and a symlinked target is never written.
+Either every file is written or none is. It asks before writing; --dry-run shows the
+change; --yes skips the question. An automatic backup is created before modifying
+existing files.
 
 Examples:
   downshift policy check

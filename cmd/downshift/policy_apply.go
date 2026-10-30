@@ -4,33 +4,31 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/policyfile"
-	"github.com/tiagovilasboas/downshift/internal/routing/contract"
 	"github.com/tiagovilasboas/downshift/internal/routing/policy"
 )
 
 const policyApplyUsage = `usage: downshift policy apply --harness claude-code [--dry-run] [--yes]
 
-Compile routing policy profiles into harness-native agent configurations.
-Currently supported harnesses: claude-code (writes .claude/agents/<name>.md).
+Compile routing.profiles from the policy into harness-native agent files.
+Currently supported harnesses: claude-code (writes <project>/.claude/agents/<name>.md,
+where <project> is the directory that holds the .downshift/policy.json found from here).
   --harness   target harness (required: claude-code)
   --dry-run   show what would be written, write nothing
   --yes       do not ask before writing
-`
 
-var profileNameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$`)
+A new agent file takes its description from the profile's "description"; a profile
+without one cannot be created. A symlinked target is never written, and either every
+file is written or none is.
+`
 
 type policyApplyOptions struct {
 	Harness, Dir, Home string
@@ -40,10 +38,16 @@ type policyApplyOptions struct {
 	Now                func() time.Time
 }
 
-type agentPlan struct {
-	name, path, shown, after, modelID string
-	before                            []byte
-	existed                           bool
+func (o policyApplyOptions) outf(format string, a ...any) {
+	if o.Out != nil {
+		fmt.Fprintf(o.Out, format, a...)
+	}
+}
+
+func (o policyApplyOptions) errf(format string, a ...any) {
+	if o.Err != nil {
+		fmt.Fprintf(o.Err, format, a...)
+	}
 }
 
 func runPolicyApply(args []string, in io.Reader, stdout, stderr io.Writer) int {
@@ -88,16 +92,26 @@ func runPolicyApply(args []string, in io.Reader, stdout, stderr io.Writer) int {
 	return executePolicyApply(opts)
 }
 
-func executePolicyApply(opts policyApplyOptions) int {
-	errf := func(format string, a ...any) {
-		if opts.Err != nil {
-			fmt.Fprintf(opts.Err, format, a...)
-		}
-	}
-	project, _, err := policyfile.Find(opts.Dir)
+// applyScope is what one run works on: the project root every agent path hangs
+// from, and the profiles the merged policy declares for the harness.
+type applyScope struct {
+	root       string
+	policyPath string
+	profiles   []policy.Profile
+}
+
+// resolveApplyScope finds the nearest project policy and loads it together with
+// the user's. The root is the directory that holds .downshift/policy.json, not
+// the directory the command was started from. A policy that cannot be loaded is
+// an error: nothing is read from a file that did not validate.
+func resolveApplyScope(opts policyApplyOptions) (applyScope, error) {
+	path, found, err := policyfile.Find(opts.Dir)
 	if err != nil {
-		errf("policy apply: %v\n", err)
-		return 1
+		return applyScope{}, err
+	}
+	if !found {
+		return applyScope{}, fmt.Errorf("no %s found at or above %s; run `downshift policy init` in the project first",
+			policyfile.RelPath, opts.Dir)
 	}
 	user := ""
 	if opts.Home != "" {
@@ -105,67 +119,57 @@ func executePolicyApply(opts policyApplyOptions) int {
 	} else if u, err := policy.UserPath(); err == nil {
 		user = u
 	}
-	profiles := loadApplyProfiles(project, user)
+	loaded, err := policy.Load(policy.Locations{Project: path, User: user})
+	if err != nil {
+		return applyScope{}, err
+	}
+	scope := applyScope{root: projectRootOf(path), policyPath: path}
+	for _, pr := range loaded.Profiles {
+		if string(pr.Harness) == opts.Harness {
+			scope.profiles = append(scope.profiles, pr)
+		}
+	}
+	return scope, nil
+}
+
+// projectRootOf maps <root>/.downshift/policy.json back to <root>.
+func projectRootOf(policyPath string) string {
+	return filepath.Dir(filepath.Dir(policyPath))
+}
+
+func executePolicyApply(opts policyApplyOptions) int {
+	scope, err := resolveApplyScope(opts)
+	if err != nil {
+		opts.errf("policy apply: %v\n", err)
+		return 1
+	}
+	if len(scope.profiles) == 0 {
+		opts.outf("policy apply: no routing.profiles entry for %s in %s; nothing to apply (profiles belong under the \"routing\" key)\n",
+			opts.Harness, scope.policyPath)
+		return 0
+	}
 
 	cat := catalog.Load()
 	var plans []agentPlan
-
-	for _, profile := range profiles {
-		pName := profile.Name
-		if profile.Harness != "" && profile.Harness != opts.Harness {
-			continue
+	var problems []error
+	for _, pr := range scope.profiles {
+		plan, err := planAgent(opts, scope.root, cat, pr)
+		switch {
+		case err != nil:
+			problems = append(problems, err)
+		case plan.unchanged():
+			opts.outf("%s: already up to date (%s)\n", plan.name, plan.shown)
+		default:
+			plans = append(plans, plan)
 		}
-		if !profileNameRegex.MatchString(pName) || strings.Contains(pName, "..") || strings.ContainsAny(pName, "/\\") {
-			errf("policy apply: skipping profile %q: invalid name\n", pName)
-			continue
-		}
-		coreTier, ok := profile.Tier.Core()
-		if !ok {
-			errf("policy apply: profile %q: unknown tier %q\n", pName, profile.Tier)
-			continue
-		}
-		m := cat.ModelFor(opts.Harness, coreTier)
-		if m.ID == "" {
-			errf("policy apply: profile %q: unknown tier %q\n", pName, profile.Tier)
-			continue
-		}
-
-		targetPath := filepath.Join(opts.Dir, ".claude", "agents", pName+".md")
-		if userPath := filepath.Join(opts.Home, ".claude", "agents", pName+".md"); !exists(targetPath) && exists(userPath) {
-			targetPath = userPath
-		}
-		if real, err := filepath.EvalSymlinks(targetPath); err == nil {
-			targetPath = real
-		} else if parentReal, err := filepath.EvalSymlinks(filepath.Dir(targetPath)); err == nil {
-			targetPath = filepath.Join(parentReal, filepath.Base(targetPath))
-		}
-
-		raw, err := os.ReadFile(targetPath)
-		existed := !errors.Is(err, fs.ErrNotExist)
-		if existed && err != nil {
-			errf("policy apply: cannot read %s: %v\n", targetPath, err)
-			return 1
-		}
-
-		updated := updateFrontmatter(string(raw), pName, m.ID)
-		shown := setupDisplay(opts.Home, targetPath)
-		if rel, err := filepath.Rel(opts.Dir, targetPath); err == nil && !strings.HasPrefix(rel, "..") {
-			shown = filepath.ToSlash(rel)
-		}
-
-		if existed && string(raw) == updated {
-			if opts.Out != nil {
-				fmt.Fprintf(opts.Out, "%s: already up to date (%s)\n", pName, shown)
-			}
-			continue
-		}
-
-		plans = append(plans, agentPlan{
-			name: pName, path: targetPath, shown: shown,
-			before: raw, after: updated, existed: existed, modelID: m.ID,
-		})
 	}
-
+	if len(problems) > 0 {
+		for _, p := range problems {
+			opts.errf("policy apply: %v\n", p)
+		}
+		opts.errf("policy apply: nothing was written\n")
+		return 1
+	}
 	if len(plans) == 0 {
 		return 0
 	}
@@ -175,23 +179,16 @@ func executePolicyApply(opts policyApplyOptions) int {
 		verb = "would update"
 	}
 	for _, plan := range plans {
-		if opts.Out != nil {
-			fmt.Fprintf(opts.Out, "%s: %s %s (model: %s)\n", plan.name, verb, plan.shown, plan.modelID)
-			fmt.Fprint(opts.Out, unifiedDiff("a/"+plan.shown, "b/"+plan.shown, string(plan.before), plan.after))
-			fmt.Fprintln(opts.Out)
-		}
+		opts.outf("%s: %s %s (model: %s)\n", plan.name, verb, plan.shown, plan.modelID)
+		opts.outf("%s\n", unifiedDiff("a/"+plan.shown, "b/"+plan.shown, string(plan.before), plan.after))
 	}
 	if opts.DryRun {
-		if opts.Out != nil {
-			fmt.Fprintln(opts.Out, "Dry run: nothing was written.")
-		}
+		opts.outf("Dry run: nothing was written.\n")
 		return 0
 	}
 
 	if !setupConfirm(setupOptions{In: opts.In, Out: opts.Out, Yes: opts.Yes}, "Apply changes? [y/N] ") {
-		if opts.Out != nil {
-			fmt.Fprintln(opts.Out, "Not applied. Re-run with --yes to skip this question.")
-		}
+		opts.outf("Not applied. Re-run with --yes to skip this question.\n")
 		return 1
 	}
 
@@ -199,95 +196,12 @@ func executePolicyApply(opts policyApplyOptions) int {
 	if now == nil {
 		now = time.Now
 	}
-	stamp := now().UTC().Format("20060102T150405.000000")
-
+	if err := commitPlans(plans, now().UTC().Format("20060102T150405.000000")); err != nil {
+		opts.errf("policy apply: %v\n", err)
+		return 1
+	}
 	for _, plan := range plans {
-		if plan.existed {
-			bak := plan.path + setupBackupInfix + stamp
-			if err := os.WriteFile(bak, plan.before, 0o600); err != nil {
-				errf("%s: backup failed: %v\n", plan.name, err)
-				return 1
-			}
-		}
-		if err := os.MkdirAll(filepath.Dir(plan.path), 0o755); err != nil {
-			errf("%s: cannot create directory: %v\n", plan.name, err)
-			return 1
-		}
-		if err := atomicWriteFile(plan.path, []byte(plan.after), 0o644); err != nil {
-			errf("%s: write failed: %v\n", plan.name, err)
-			return 1
-		}
-		if opts.Out != nil {
-			fmt.Fprintf(opts.Out, "%s: applied to %s (model: %s)\n", plan.name, plan.shown, plan.modelID)
-		}
+		opts.outf("%s: applied to %s (model: %s)\n", plan.name, plan.shown, plan.modelID)
 	}
 	return 0
-}
-
-func updateFrontmatter(content, name, modelID string) string {
-	lines := strings.Split(content, "\n")
-	if len(lines) > 0 && strings.TrimSpace(lines[0]) == "---" {
-		for i := 1; i < len(lines); i++ {
-			if strings.TrimSpace(lines[i]) == "---" {
-				modelIdx := -1
-				for j := 1; j < i; j++ {
-					if strings.HasPrefix(strings.TrimSpace(lines[j]), "model:") {
-						modelIdx = j
-						break
-					}
-				}
-				if modelIdx >= 0 {
-					lines[modelIdx] = "model: " + modelID
-				} else {
-					lines = append(lines[:i], append([]string{"model: " + modelID}, lines[i:]...)...)
-				}
-				return strings.Join(lines, "\n")
-			}
-		}
-	}
-	var sb strings.Builder
-	sb.WriteString("---\nname: " + name + "\nmodel: " + modelID + "\n---\n")
-	if t := strings.TrimSpace(content); t != "" {
-		sb.WriteString("\n" + t + "\n")
-	}
-	return sb.String()
-}
-
-type applyProfile struct {
-	Name, Harness string
-	Tier          contract.Tier
-}
-
-func loadApplyProfiles(project, user string) []applyProfile {
-	var out []applyProfile
-	if p, err := policy.Load(policy.Locations{Project: project, User: user}); err == nil && len(p.Profiles) > 0 {
-		for _, pr := range p.Profiles {
-			out = append(out, applyProfile{Name: string(pr.Name), Tier: pr.Tier, Harness: string(pr.Harness)})
-		}
-		return out
-	}
-	type rawDoc struct {
-		Name, Tier, Harness string
-	}
-	for _, path := range []string{project, user} {
-		if path == "" {
-			continue
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			continue
-		}
-		var doc struct {
-			Profiles []rawDoc `json:"profiles"`
-			Routing  struct {
-				Profiles []rawDoc `json:"profiles"`
-			} `json:"routing"`
-		}
-		if err := json.Unmarshal(data, &doc); err == nil {
-			for _, p := range append(doc.Profiles, doc.Routing.Profiles...) {
-				out = append(out, applyProfile{Name: p.Name, Tier: contract.Tier(p.Tier), Harness: p.Harness})
-			}
-		}
-	}
-	return out
 }
