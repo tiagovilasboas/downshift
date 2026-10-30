@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mattn/go-isatty"
 	"github.com/tiagovilasboas/downshift/internal/catalog"
 	"github.com/tiagovilasboas/downshift/internal/contextopt"
 	"github.com/tiagovilasboas/downshift/internal/discovery"
@@ -33,6 +34,8 @@ type setupOptions struct {
 	Yes    bool
 	// TUI triggers interactive terminal UI setup.
 	TUI bool
+	// NoTUI disables automatic interactive terminal UI setup.
+	NoTUI bool
 	// SkipDiscovery disables automatic model discovery during setup (useful in tests).
 	SkipDiscovery bool
 	// NoSessionPolicy skips the optional main-session policy (model opusplan and
@@ -113,10 +116,18 @@ func runSetup(args []string, in io.Reader, out, errw io.Writer) int {
 		// default umask; tighten what the product owns. Best effort.
 		_ = paths.Harden()
 	}
-	if opts.TUI {
+	if (opts.TUI || isInteractiveTerminal(opts.In)) && !opts.NoTUI && !opts.Yes && !opts.DryRun && !opts.Undo && len(opts.Names) == 0 {
 		return setupTUI(opts)
 	}
 	return setupRun(opts)
+}
+
+func isInteractiveTerminal(in io.Reader) bool {
+	f, ok := in.(*os.File)
+	if !ok || f == nil {
+		return false
+	}
+	return isatty.IsTerminal(f.Fd()) || isatty.IsCygwinTerminal(f.Fd())
 }
 
 // guardHookBinary refuses to write hooks that point at a binary which will
@@ -136,10 +147,11 @@ func guardHookBinary(o setupOptions, allow bool, tmp string) int {
 	return 1
 }
 
-const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--no-mcp] [--no-policy] [--keep-binaries] [--allow-unsafe-binary]
+const setupUsage = `usage: downshift setup [harness...] [--dry-run] [--undo] [--yes] [--tui] [--no-tui] [--no-session-policy] [--you-should-know] [--no-plugin] [--no-mcp] [--no-policy] [--keep-binaries] [--allow-unsafe-binary]
 
 Wire every Downshift hook into the harnesses found on this machine.
   --tui                run interactive terminal UI onboarding
+  --no-tui             disable interactive onboarding even in a terminal
   --dry-run            show the diff, write nothing
   --undo               restore the latest backup of each hook file
   --yes                do not ask before writing

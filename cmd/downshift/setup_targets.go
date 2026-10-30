@@ -213,6 +213,19 @@ var setupTargets = []setupTarget{
 		},
 	},
 	{
+		Name:      "opencode",
+		ConfigDir: ".config/opencode",
+		Manual: "opencode is wired by its own plugin (phase 2), which forwards subagent_spawn_intent to " +
+			"`downshift opencode` and the child_done observation to `downshift end opencode`; there is no hook file " +
+			"to write yet.",
+		Hooks: []setupHook{
+			// The observation envelope the plugin forwards when a child ends
+			// (F1 parses the child_done JSON envelope; see internal/adapters/opencode).
+			{Event: "child_done", Args: "end opencode"},
+		},
+		Steering: &setupSteering{Path: ".config/opencode/AGENTS.md", Content: compactSteering, Managed: true},
+	},
+	{
 		Name:      "codex",
 		ConfigDir: ".codex",
 		SkillsDir: ".codex/skills",
@@ -272,18 +285,5 @@ var setupTargets = []setupTarget{
 		// Downshift row duplicates agent.kiro_hooks (often still pointing at a
 		// checkout). Setup drops that row; other hooks in the file stay.
 		Registry: ".kiro/crew/hooks.json",
-	},
-	{
-		Name:      "opencode",
-		ConfigDir: ".config/opencode",
-		Manual: "opencode is wired by its own plugin (phase 2), which forwards subagent_spawn_intent to " +
-			"`downshift opencode` and the child_done observation to `downshift end opencode`; there is no hook file " +
-			"to write yet.",
-		Hooks: []setupHook{
-			// The observation envelope the plugin forwards when a child ends
-			// (F1 parses the child_done JSON envelope; see internal/adapters/opencode).
-			{Event: "child_done", Args: "end opencode"},
-		},
-		Steering: &setupSteering{Path: ".config/opencode/AGENTS.md", Content: compactSteering, Managed: true},
 	},
 }
