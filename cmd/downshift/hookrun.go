@@ -35,9 +35,10 @@ var hookGetenv = os.Getenv
 // harnesses.go. The runner itself holds no harness branch.
 type hookWire interface {
 	// failOpen writes the "allow unchanged" response. cause is the failure
-	// code on runner errors (recorded by wires that log fail-open) or
+	// code on runner errors (recorded by wires that log fail-open),
 	// wireFailOpenNoRoute in the control group, when paused and under
-	// DOWNSHIFT_NO_ROUTE. Never called more than once per run.
+	// DOWNSHIFT_NO_ROUTE, or wireFailOpenCircuit while the routing circuit is
+	// open (same response, nothing recorded). Never called more than once per run.
 	failOpen(cause, correlationID string)
 	// emit writes the routed response and returns the hook's exit code. A
 	// non-zero code denies the spawn: every supported harness reads exit 2
@@ -176,10 +177,18 @@ func runHookAdapter[E any](
 	defer maybeRefreshDiscovery(harness)
 	correlationID := telemetry.NewCorrelationID()
 	responded := false
+	// After repeated identical failures the circuit opens (hook_circuit.go):
+	// routing stops for this harness and no further failure is recorded.
+	breaker := &hookCircuit{harness: harness}
 	fail := func(code string) int {
-		telemetry.Record(telemetry.Failure(correlationID, buildVersion, harness, code))
+		cause := code
+		if breaker.hold(correlationID) {
+			cause = wireFailOpenCircuit
+		} else {
+			telemetry.Record(telemetry.Failure(correlationID, buildVersion, harness, code))
+		}
 		if !responded {
-			wire.failOpen(code, correlationID)
+			wire.failOpen(cause, correlationID)
 			responded = true
 		}
 		return 0
@@ -263,6 +272,11 @@ func runHookAdapter[E any](
 		sessionHash = telemetry.HashSessionID(identified.SessionIdentifier())
 	}
 	defer hookctx.SetSessionID(sessionHash)()
+	if breaker.hold(correlationID) {
+		wire.failOpen(wireFailOpenCircuit, correlationID)
+		responded = true
+		return 0
+	}
 	out, note, decision := handle(ev)
 	fate := spawnFate{note: note}
 	// Control-group mode for before/after comparison: classify as usual
@@ -498,7 +512,9 @@ func (openCodeWire) failOpen(cause, correlationID string) {
 		fmt.Printf("{\"v\":1,\"action\":\"allow\",\"reasonCode\":%q,\"ttlMs\":15000}\n", wireFailOpenNoRoute)
 		return
 	}
-	telemetry.Record(telemetry.FailOpen(correlationID, buildVersion, "opencode", cause))
+	if cause != wireFailOpenCircuit {
+		telemetry.Record(telemetry.FailOpen(correlationID, buildVersion, "opencode", cause))
+	}
 	fmt.Printf("{\"v\":1,\"action\":\"allow\",\"reasonCode\":%q}\n", opencode.ReasonFailOpen)
 }
 
