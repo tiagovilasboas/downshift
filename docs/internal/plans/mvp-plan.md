@@ -70,6 +70,7 @@ Stages 1 and 2 run in parallel (no shared files). Stage 2b follows 2 (it needs t
 | **Compactor** | shipped (`execwrap`, `compressor`, `shellwrap`) | 1 (installed with setup), 4 (workers run with it) |
 | **Code intelligence** | shipped, opt-in (`codeintel`) | 4 (optional worker context) |
 | **Quality** | acceptance suite (`outcome`, `benchmark`) | 3 (gate before default on), 4 (worker acceptance) |
+| **Gateway routers (9router, OmniRoute)** | companion detection & prefix routing (`gateway`) | 5 (multi-vendor reach, local proxies) |
 
 Report shape, one line per harness, never summed:
 

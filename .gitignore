@@ -56,3 +56,4 @@ __pycache__/
 .downshift/
 
 dashboard/node_modules/
+.agents/

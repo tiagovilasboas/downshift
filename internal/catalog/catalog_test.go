@@ -290,6 +290,17 @@ func TestLookupByID_OpenRouterTrulyUnknown(t *testing.T) {
 	}
 }
 
+func TestLookupByID_GatewaySlugs(t *testing.T) {
+	// Both omniroute and 9router are recognized gateway prefixes
+	for _, gw := range []string{"omniroute", "9router"} {
+		id := gw + "/anthropic/claude-haiku-5"
+		slug, isGw := gatewaySlug(id)
+		if !isGw || slug != "anthropic/claude-haiku-5" {
+			t.Errorf("gatewaySlug(%q) = %q, %v, want slug 'anthropic/claude-haiku-5', true", id, slug, isGw)
+		}
+	}
+}
+
 // --- Grok installed in non-native harness ---
 
 func TestLookupByID_GrokInCursor(t *testing.T) {
