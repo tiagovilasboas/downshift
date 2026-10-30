@@ -5,6 +5,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -168,6 +170,12 @@ func checkMainPolicy(add func(id, status, detail, fix string), harness string, r
 // know what features may not work as expected. This makes the doctor output
 // frank about capabilities instead of silently degrading.
 func checkHarnessLimitations(add func(id, status, detail, fix string), harness string) {
+	// Claude Desktop Chat and Cowork are not hooked harnesses, so they never
+	// run the rest of this check on their own id. They are reported here,
+	// during the claude-code check, because the Code tab is claude-code and
+	// claude-code has full support (no limitations line of its own).
+	checkClaudeDesktopSurfaces(add, harness)
+
 	lims := limits.ForHarness(harness)
 	if lims == nil {
 		return
@@ -185,4 +193,44 @@ func checkHarnessLimitations(add func(id, status, detail, fix string), harness s
 	// No command explains harness limitations: `help <harness>` prints hook
 	// usage only. The evidence is in docs/reference/harness-matrix.md.
 	add("limitations", doctorWarn, detail, "see docs/reference/harness-matrix.md for the evidence")
+}
+
+// claudeDesktopSurfaces are the two Claude Desktop surfaces that are not hooked
+// harnesses, so they have no hook wiring of their own. doctor reports them
+// alongside the claude-code check (the Code tab is the claude-code harness).
+var claudeDesktopSurfaces = []string{"claude-desktop-chat", "claude-desktop-cowork"}
+
+// checkClaudeDesktopSurfaces reports, during the claude-code check, what the
+// Claude Desktop Chat and Cowork surfaces cannot run. These surfaces have no
+// hook of their own, so this is the only place they surface. It runs only when
+// Claude Desktop is installed, detected by its app config directory.
+func checkClaudeDesktopSurfaces(add func(id, status, detail, fix string), harness string) {
+	if harness != "claude-code" || !claudeDesktopInstalled() {
+		return
+	}
+	for _, id := range claudeDesktopSurfaces {
+		lims := limits.ForHarness(id)
+		if lims == nil {
+			continue
+		}
+		var parts []string
+		for _, lim := range lims.Limitations {
+			parts = append(parts, lim.Feature+":"+lim.Status)
+		}
+		add(id, doctorWarn, strings.Join(parts, ", "),
+			"see docs/reference/harness-matrix.md for the evidence")
+	}
+}
+
+// claudeDesktopInstalled reports whether the Claude Desktop app config
+// directory is present. OS-agnostic via os.UserConfigDir: on macOS that is
+// ~/Library/Application Support/Claude. On an OS where the directory cannot be
+// resolved, it reports false (the surfaces are skipped).
+func claudeDesktopInstalled() bool {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return false
+	}
+	info, err := os.Stat(filepath.Join(dir, "Claude"))
+	return err == nil && info.IsDir()
 }
