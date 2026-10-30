@@ -141,17 +141,36 @@ During `downshift setup`, Downshift inspects detected harnesses in order of comm
 | 3 | **OpenCode** | `~/.config/opencode/skills/` | Open-source agent skills & `AGENTS.md` |
 | 4 | **OpenAI Codex** | `~/.codex/skills/` or `.codex/rules/` | Native instructions & skills |
 | 5 | **Google Antigravity** | `~/.gemini/antigravity/skills/` | Antigravity skill bundles |
-| 6 | **KiroCrew** | `~/.kiro/steering/` | Kiro steering files |
+| 6 | **Kiro** | `~/.kiro/steering/` | Kiro standalone steering files & playbooks |
+| 7 | **KiroCrew** | `~/.kiro/crew/` | KiroCrew multi-agent hooks & config |
 
 ### B. Core Shipped Skills (`.md`)
-1. **`downshift-orchestrator.md`**: Guides the session's Lead LLM on how to decompose complex tasks, check quota headroom before delegating, and communicate via Downshift's MCP tools (`downshift mcp serve`).
+1. **`downshift-orchestrator.md`**: Guides the session's Lead LLM on how to decompose complex tasks, check quota headroom before delegating, enforce worker concurrency limits, and communicate via Downshift's MCP tools (`downshift mcp serve`).
 2. **`downshift-delegate.md`**: Provides the standard Task Envelope template for subagents, injecting explicit file boundaries, small-tier model hints, and verification commands.
 3. **`downshift-rules.md`**: Inviolable operational rules for workers (no unverified code changes, strict minimal diffs, mandatory compactor command wrapping).
 
 ### C. Standard Engineering Playbooks (`.md`)
-1. **`clean-code.md`**: Single Responsibility Principle (SRP), KISS, YAGNI, file length limits (< 300 lines), descriptive naming conventions.
-2. **`tdd-verification.md`**: Test-driven development discipline, unit test coverage expectations, regression avoidance.
-3. **`security-boundaries.md`**: OWASP ASVS rules, credential hygiene (zero secrets in code, args or logs), sandbox compliance.
+Downshift provides a comprehensive catalog of domain playbooks injected as context into subagents based on the work kind:
+1. **`research.md` (Strict Read-Only):** Prohibits all writes and git modifications. Instructs workers to map symbols, trace flows, read files surgically, and report findings with exact line references (`file#L10-L25`).
+2. **`implementation.md` (Clean Slice):** Single Responsibility Principle (SRP), KISS, YAGNI, strict file line caps (< 300 lines), no premature refactoring outside task boundaries.
+3. **`review.md` (AppSec & Quality Sensor):** Review diffs against OWASP ASVS standards, prompt injection risks, and architectural boundaries without modifying production source.
+4. **`tdd-verification.md` (Test Discipline):** Enforces test-first or test-alongside development, running verification gates exclusively via `downshift compactor -- <test-cmd>`.
+5. **`docs.md` (Technical Documentation):** Surgical updates to READMEs, architecture cards, and APIs, ensuring docstrings stay updated and author public identity is preserved.
+6. **`incident-rescue.md` (Emergency Debugging):** Root cause analysis, minimal reproduction test fixture, and surgical bugfix with zero collateral changes.
+
+### D. The Universal Skill: Strategy & Token Hygiene
+The universal `downshift` skill installs into the harness to govern delegation strategy and token economy:
+- **Execution Strategies:**
+  - `economy`: Single small-tier worker at a time; holds budget tight.
+  - `balanced` (Default): Up to 4 parallel workers divided by clean domain boundaries.
+  - `parallel`: Up to 8 workers across hermetic Git worktrees for large independent features.
+  - `research`: Zero-write investigation workers running concurrently.
+  - `rescue`: Focused single-turn root-cause reproduction.
+- **Token Hygiene Discipline:**
+  - Never forward complete session transcripts to subagents; pass only the explicit bounded context.
+  - Inspect structured final reports and git diffs rather than streaming raw command scrollback.
+  - Reuse session threads for follow-ups instead of re-spawning cold contexts.
+
 
 By placing these capabilities into human-readable Markdown files controlled by the user's own harness, the orchestration remains fully auditable, easily customizable, and completely free of proprietary runtime lock-in.
 
