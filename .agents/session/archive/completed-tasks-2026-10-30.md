@@ -13,3 +13,10 @@
 - [x] Adicionar `cc-plugin-effort-optimizer@builtin` como default ativo no target `claude-code` (`setup_targets.go`)
 - [x] Detectar mod em `summaryPolicy` (`setup.go`)
 - [x] Evidenciar em `setup_tui.go` (`renderTUIHarnesses` e `renderTUISuccess`)
+
+### 📦 Tarefas Compactadas em 2026-10-30 02:05:17 (5 itens)
+- [x] Dispatcher CLI `downshift policy apply` em `cmd/downshift/cmd_policy.go`
+- [x] Implementação de `cmd/downshift/policy_apply.go` (< 300 linhas)
+- [x] Sanitização de caminhos contra path traversal, symlink handling e backups `0600`
+- [x] Suíte de testes unitários em `cmd/downshift/policy_apply_test.go` (< 300 linhas)
+- [x] Validação integral dos sensores (`make check`, `archtest`) e aprovação formal QA (PASS)
