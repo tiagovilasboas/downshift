@@ -34,6 +34,8 @@ func parseSetupArgs(args []string, opts *setupOptions) (flags setupArgFlags, hel
 			opts.Undo = true
 		case a == "--tui":
 			opts.TUI = true
+		case a == "--no-tui":
+			opts.NoTUI = true
 		case a == "--yes" || a == "-y":
 			opts.Yes = true
 		case a == "--no-session-policy":
