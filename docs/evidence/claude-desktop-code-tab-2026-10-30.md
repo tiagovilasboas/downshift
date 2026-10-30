@@ -51,10 +51,27 @@ So the Bash rewrite is applied in the Code tab, but no Desktop command here was 
 Exec events carry no session id, so a compacted event cannot be tied to Desktop by hash; the two rows above are
 matched by time and command only.
 
+### Byte reduction with the embedded build (2026-10-30T22:09Z)
+
+The Desktop window exposes no accessibility tree to the automation tool (AX error -25211), so the reduction was
+shown by running the Claude Code binary bundled with Claude Desktop
+(`~/Library/Application Support/Claude/claude-code/2.1.309/.../claude`, version 2.1.309) headless with `-p`, in
+`/Users/tiago.boas/Github/downshift`, with the same `~/.claude` settings and plugin:
+
+| Session | Command the model ran | Exec event |
+|---|---|---|
+| `9a723105...` | `downshift compactor -- go test -count=1 ./internal/limits/` | 22:08:58Z, `go-test`, 64 bytes, passthrough `small_output` |
+| `96a11e6b...` | `downshift compactor -- go test -count=1 -v ./internal/limits/` | 22:09:32Z, `go-test`, `compacted: true`, 2,373 to 218 bytes, exit zero |
+
+Two limits on this row: the transcripts carry `entrypoint: sdk-cli`, not `claude-desktop`, because the binary ran
+headless and not inside the Desktop app; and the model wrapped the command itself, following the repository's
+instructions, so it shows the compactor working in that build rather than the hook rewriting a plain command. The
+hook rewriting a plain command in a real Desktop session is the `make install` row above.
+
 ## What this does not show
 
-- A compacted Desktop command with fewer bytes out than in. One `go test` on a small package run alone from the
-  Code tab would show it.
+- A compacted command with a byte reduction inside a session started from the Desktop window itself
+  (`entrypoint: claude-desktop`). The reduction above comes from the same build run headless.
 - Anything about the Chat and Cowork surfaces: see `downshift-labs/reverse/claude-desktop/findings/F2-chat-mcp.md`
   and `F3-cowork-vm.md`.
 - A second machine or another Desktop version.
