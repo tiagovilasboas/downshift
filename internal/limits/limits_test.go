@@ -133,3 +133,57 @@ func TestAll(t *testing.T) {
 		}
 	}
 }
+
+func TestClaudeDesktopSurfaces(t *testing.T) {
+	// Chat: three features are none because there is no model-carrying spawn
+	// and no shell tool; MCP is partial because the read-only tools answer.
+	chat := ForHarness("claude-desktop-chat")
+	if chat == nil {
+		t.Fatal("ForHarness(claude-desktop-chat) = nil; want non-nil")
+	}
+	for _, feature := range []string{FeatureModelRewrite, FeatureCompaction, FeatureMidSessionRouting} {
+		lim := chat.GetLimitation(feature)
+		if lim == nil {
+			t.Errorf("claude-desktop-chat has no %s limitation", feature)
+			continue
+		}
+		if lim.Status != StatusNone {
+			t.Errorf("claude-desktop-chat %s = %q; want %q", feature, lim.Status, StatusNone)
+		}
+	}
+	mcp := chat.GetLimitation(FeatureMCP)
+	if mcp == nil || mcp.Status != StatusPartial {
+		t.Errorf("claude-desktop-chat mcp = %v; want %q", mcp, StatusPartial)
+	}
+
+	// Cowork: every hook-driven feature is none because the binary and hooks
+	// never reach the guest VM. MCP was neither seen working nor failing, so it
+	// is unverified, not none: declaring none would claim evidence we lack.
+	cowork := ForHarness("claude-desktop-cowork")
+	if cowork == nil {
+		t.Fatal("ForHarness(claude-desktop-cowork) = nil; want non-nil")
+	}
+	for _, lim := range cowork.Limitations {
+		want := StatusNone
+		if lim.Feature == FeatureMCP {
+			want = StatusUnverified
+		}
+		if lim.Status != want {
+			t.Errorf("claude-desktop-cowork %s = %q; want %q", lim.Feature, lim.Status, want)
+		}
+		if lim.Reason == "" {
+			t.Errorf("claude-desktop-cowork %s has an empty reason", lim.Feature)
+		}
+	}
+	if cowork.GetLimitation(FeatureMCP) == nil {
+		t.Error("claude-desktop-cowork has no mcp limitation")
+	}
+
+	// Both surfaces are in All(), which the matrix parity test requires.
+	all := All()
+	for _, id := range []string{"claude-desktop-chat", "claude-desktop-cowork"} {
+		if _, ok := all[id]; !ok {
+			t.Errorf("All() missing surface %q", id)
+		}
+	}
+}
