@@ -12,7 +12,8 @@ import (
 )
 
 // planMcpJSON plans the registration of downshift mcp serve inside a JSON file
-// holding an "mcpServers" map (Cursor, Antigravity, Kiro).
+// holding an "mcpServers" map (Cursor, Antigravity, Kiro). Only the downshift
+// entry changes: every other member keeps its text and order.
 func planMcpJSON(o setupOptions, t setupTarget) (setupPlan, bool) {
 	relFile := filepath.FromSlash(t.Mcp.File)
 	targetPath := filepath.Join(o.Home, relFile)
@@ -32,62 +33,50 @@ func planMcpJSON(o setupOptions, t setupTarget) (setupPlan, bool) {
 		return setupPlan{}, false
 	}
 
-	doc := map[string]any{}
+	doc := []jsonMember{}
 	if existed {
-		if err := json.Unmarshal(raw, &doc); err != nil {
+		var perr error
+		if doc, perr = parseJSONObject(raw); perr != nil {
 			if o.Err != nil {
-				fmt.Fprintf(o.Err, "warning: %s: %s: not valid JSON, left untouched\n\n", t.Name, shown)
+				fmt.Fprintf(o.Err, "warning: %s: %s: not a valid JSON object, left untouched\n\n", t.Name, shown)
 			}
 			return setupPlan{}, false
 		}
 	}
 
-	serversAny, ok := doc["mcpServers"]
-	var servers map[string]any
-	if !ok || serversAny == nil {
-		servers = map[string]any{}
-		doc["mcpServers"] = servers
-	} else if sm, ok := serversAny.(map[string]any); ok {
-		servers = sm
-	} else {
-		if o.Err != nil {
-			fmt.Fprintf(o.Err, "warning: %s: %s: `mcpServers` is not an object, left untouched\n\n", t.Name, shown)
+	servers := []jsonMember{}
+	if i := jsonMemberIndex(doc, "mcpServers"); i >= 0 && string(doc[i].val) != "null" {
+		var perr error
+		if servers, perr = parseJSONObject(doc[i].val); perr != nil {
+			if o.Err != nil {
+				fmt.Fprintf(o.Err, "warning: %s: %s: `mcpServers` is not an object, left untouched\n\n", t.Name, shown)
+			}
+			return setupPlan{}, false
 		}
+	}
+
+	desired, err := marshalJSONValue(struct {
+		Command string            `json:"command"`
+		Args    []string          `json:"args"`
+		Env     map[string]string `json:"env"`
+	}{o.Binary, mcpServeArgs, map[string]string{mcpMarkerKey: mcpMarkerValue}})
+	if err != nil {
 		return setupPlan{}, false
 	}
 
-	desiredEntry := map[string]any{
-		"command": o.Binary,
-		"args":    mcpServeArgs,
-		"env": map[string]any{
-			mcpMarkerKey: mcpMarkerValue,
-		},
-	}
-
-	if existingAny, exists := servers[mcpServerName]; exists {
-		if em, ok := existingAny.(map[string]any); ok {
-			cmdMatch := em["command"] == o.Binary
-			envMatch := false
-			if envMap, ok := em["env"].(map[string]any); ok {
-				envMatch = envMap[mcpMarkerKey] == mcpMarkerValue
-			}
-			argsMatch := false
-			if argsList, ok := em["args"].([]any); ok {
-				strArgs := make([]string, len(argsList))
-				for i, a := range argsList {
-					if s, ok := a.(string); ok {
-						strArgs[i] = s
+	var oldSummary string
+	if i := jsonMemberIndex(servers, mcpServerName); i >= 0 {
+		var em map[string]any
+		if json.Unmarshal(servers[i].val, &em) == nil {
+			if mcpJSONEntryManaged(em) {
+				if mcpJSONEntryCurrent(em, o.Binary) {
+					if o.Out != nil {
+						fmt.Fprintf(o.Out, "%s: MCP server %q already up to date (%s)\n\n", t.Name, mcpServerName, shown)
 					}
+					return setupPlan{}, false
 				}
-				argsMatch = mcpSameArgs(strArgs, mcpServeArgs)
-			}
-			if cmdMatch && envMatch && argsMatch {
-				if o.Out != nil {
-					fmt.Fprintf(o.Out, "%s: MCP server %q already up to date (%s)\n\n", t.Name, mcpServerName, shown)
-				}
-				return setupPlan{}, false
-			}
-			if !envMatch {
+				oldSummary = mcpEntrySummary(em)
+			} else {
 				if o.Err != nil {
 					fmt.Fprintf(o.Err, "warning: %s: %s already has an MCP server named %q that setup did not add; left untouched\n\n", t.Name, shown, mcpServerName)
 				}
@@ -96,36 +85,60 @@ func planMcpJSON(o setupOptions, t setupTarget) (setupPlan, bool) {
 		}
 	}
 
-	servers[mcpServerName] = desiredEntry
-
-	after, err := json.MarshalIndent(doc, "", "  ")
+	servers = setJSONMember(servers, mcpServerName, desired)
+	after, err := withMcpServers(doc, servers)
 	if err != nil {
 		if o.Err != nil {
-			fmt.Fprintf(o.Err, "warning: %s: %s: marshal failed: %v\n\n", t.Name, shown, err)
+			fmt.Fprintf(o.Err, "warning: %s: %s: could not build the new file: %v\n\n", t.Name, shown, err)
 		}
 		return setupPlan{}, false
 	}
-	after = append(after, '\n')
 
 	if o.Out != nil {
-		fmt.Fprintf(o.Out, "%s: will register MCP server %q in %s\n\n", t.Name, mcpServerName, shown)
-	}
-
-	mode := os.FileMode(0600)
-	if existed {
-		if st, err := os.Stat(targetPath); err == nil {
-			mode = st.Mode().Perm()
+		var nm map[string]any
+		_ = json.Unmarshal(desired, &nm)
+		verb := "will change"
+		if o.DryRun {
+			verb = "would change"
 		}
+		fmt.Fprintf(o.Out, "%s: %s %s (only the %q entry; other servers keep their text and order)\n", t.Name, shown, verb, mcpServerName)
+		fmt.Fprint(o.Out, unifiedDiff(diffName(shown, oldSummary != "", "a"), diffName(shown, true, "b"), oldSummary, mcpEntrySummary(nm)))
+		fmt.Fprintln(o.Out)
 	}
 
+	// Mode 0 keeps the file's own permission (0600 when new) and leaves the
+	// containing directory alone: it belongs to the harness, not to setup.
 	return setupPlan{
 		target:  t,
 		path:    targetPath,
 		before:  raw,
 		existed: existed,
 		after:   after,
-		mode:    mode,
 	}, true
+}
+
+// mcpJSONEntryManaged is true when the entry carries the marker setup adds.
+func mcpJSONEntryManaged(em map[string]any) bool {
+	env, ok := em["env"].(map[string]any)
+	return ok && env[mcpMarkerKey] == mcpMarkerValue
+}
+
+// mcpJSONEntryCurrent is true when the entry already runs bin with the serve args.
+func mcpJSONEntryCurrent(em map[string]any, bin string) bool {
+	if em["command"] != bin {
+		return false
+	}
+	list, ok := em["args"].([]any)
+	if !ok {
+		return false
+	}
+	args := make([]string, len(list))
+	for i, a := range list {
+		if s, ok := a.(string); ok {
+			args[i] = s
+		}
+	}
+	return mcpSameArgs(args, mcpServeArgs)
 }
 
 func planMcpJSONUndo(o setupOptions, t setupTarget) (setupPlan, bool, bool) {
@@ -149,46 +162,30 @@ func planMcpJSONUndo(o setupOptions, t setupTarget) (setupPlan, bool, bool) {
 		return setupPlan{}, false, true
 	}
 
-	doc := map[string]any{}
-	if err := json.Unmarshal(raw, &doc); err != nil {
+	doc, err := parseJSONObject(raw)
+	if err != nil {
 		return setupPlan{}, false, false
+	}
+	si := jsonMemberIndex(doc, "mcpServers")
+	if si < 0 {
+		return setupPlan{}, false, false
+	}
+	servers, err := parseJSONObject(doc[si].val)
+	if err != nil {
+		return setupPlan{}, false, false
+	}
+	ei := jsonMemberIndex(servers, mcpServerName)
+	if ei < 0 {
+		return setupPlan{}, false, false
+	}
+	var em map[string]any
+	if json.Unmarshal(servers[ei].val, &em) != nil || !mcpJSONEntryManaged(em) {
+		return setupPlan{}, false, false // not added by setup
 	}
 
-	serversAny, ok := doc["mcpServers"]
-	if !ok || serversAny == nil {
-		return setupPlan{}, false, false
-	}
-	servers, ok := serversAny.(map[string]any)
-	if !ok {
-		return setupPlan{}, false, false
-	}
-
-	existingAny, exists := servers[mcpServerName]
-	if !exists {
-		return setupPlan{}, false, false
-	}
-
-	em, ok := existingAny.(map[string]any)
-	if !ok {
-		return setupPlan{}, false, false
-	}
-	envMap, ok := em["env"].(map[string]any)
-	if !ok || envMap[mcpMarkerKey] != mcpMarkerValue {
-		// Not added by setup
-		return setupPlan{}, false, false
-	}
-
-	delete(servers, mcpServerName)
-
-	after, err := json.MarshalIndent(doc, "", "  ")
+	after, err := withMcpServers(doc, deleteJSONMember(servers, mcpServerName))
 	if err != nil {
 		return setupPlan{}, false, true
-	}
-	after = append(after, '\n')
-
-	mode := os.FileMode(0600)
-	if st, err := os.Stat(targetPath); err == nil {
-		mode = st.Mode().Perm()
 	}
 
 	return setupPlan{
@@ -197,6 +194,5 @@ func planMcpJSONUndo(o setupOptions, t setupTarget) (setupPlan, bool, bool) {
 		before:  raw,
 		existed: true,
 		after:   after,
-		mode:    mode,
 	}, true, false
 }
