@@ -25,7 +25,7 @@ func TestLoadShipsDefaultsInOrder(t *testing.T) {
 	for _, s := range sets {
 		got = append(got, s.ID+"="+s.Source.String())
 	}
-	want := "general=default backend=default frontend=default"
+	want := "general=default backend=default frontend=default research=default implementation=default review=default tdd-verification=default docs=default incident-rescue=default universal-skill=default"
 	if strings.Join(got, " ") != want {
 		t.Fatalf("defaults = %v, want %s", got, want)
 	}
@@ -166,7 +166,7 @@ func TestBlockNamedGeneralIsNotDuplicated(t *testing.T) {
 
 func TestBlockRefusesUnknownNameWithTheValidOnes(t *testing.T) {
 	_, err := Block(mustLoad(t, t.TempDir()), "Mobile")
-	if err == nil || !strings.Contains(err.Error(), "Available: General, Backend, Frontend") {
+	if err == nil || !strings.Contains(err.Error(), "Available: General, Backend, Frontend, Research, Implementation, Review, TDD Verification, Documentation, Incident Rescue, Universal Skill") {
 		t.Fatalf("err = %v", err)
 	}
 }
