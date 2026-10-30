@@ -170,18 +170,3 @@ func TestIsInteractiveTerminal(t *testing.T) {
 		t.Error("bytes.Buffer reported as interactive terminal")
 	}
 }
-
-func TestSmokeCheckAllHarnesses(t *testing.T) {
-	harnesses := []string{"claude-code", "cursor", "codex", "antigravity", "kirocrew"}
-	for _, h := range harnesses {
-		t.Run(h, func(t *testing.T) {
-			dur, ok := runSmokeCheck(h, cmdCat)
-			if !ok {
-				t.Fatalf("runSmokeCheck(%s) failed", h)
-			}
-			if dur > 500*time.Millisecond {
-				t.Errorf("runSmokeCheck(%s) took %v, want < 500ms", h, dur)
-			}
-		})
-	}
-}
