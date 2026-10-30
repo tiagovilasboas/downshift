@@ -141,8 +141,7 @@ During `downshift setup`, Downshift inspects detected harnesses in order of comm
 | 3 | **OpenCode** | `~/.config/opencode/skills/` | Open-source agent skills & `AGENTS.md` |
 | 4 | **OpenAI Codex** | `~/.codex/skills/` or `.codex/rules/` | Native instructions & skills |
 | 5 | **Google Antigravity** | `~/.gemini/antigravity/skills/` | Antigravity skill bundles |
-| 6 | **Kiro** | `~/.kiro/steering/` | Kiro standalone steering files & playbooks |
-| 7 | **KiroCrew** | `~/.kiro/crew/` | KiroCrew multi-agent hooks & config |
+| 6 | **KiroCrew** (Experimental) | `~/.kiro/crew/workspace/.kiro/steering/` | KiroCrew steering file; model routing in policy mode only |
 
 ### B. Core Shipped Skills (`.md`)
 1. **`downshift-orchestrator.md`**: Guides the session's Lead LLM on how to decompose complex tasks, check quota headroom before delegating, enforce worker concurrency limits, and communicate via Downshift's MCP tools (`downshift mcp serve`).

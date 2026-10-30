@@ -17,10 +17,11 @@ type section struct {
 }
 
 type profileDoc struct {
-	Name     string `json:"name"`
-	Tier     string `json:"tier"`
-	Harness  string `json:"harness"`
-	Fallback string `json:"fallback"`
+	Name        string `json:"name"`
+	Tier        string `json:"tier"`
+	Harness     string `json:"harness"`
+	Fallback    string `json:"fallback"`
+	Description string `json:"description"`
 }
 
 type ruleDoc struct {

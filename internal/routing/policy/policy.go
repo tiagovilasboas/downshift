@@ -61,13 +61,17 @@ type Policy struct {
 // Profile is a named tier on one harness. It is the only source of what it
 // defines (REA section 2): a request that names it cannot also override its
 // tier or model (see CheckProfile). Fallback names one other profile, used
-// only at the same or a lower tier, with no chain.
+// only at the same or a lower tier, with no chain. Description is the user's own
+// words for what the profile is for. It is optional and routing ignores it;
+// `policy apply` copies it into the agent file it creates, because a harness
+// needs one to load an agent.
 type Profile struct {
-	Name     contract.ProfileName
-	Tier     contract.Tier
-	Harness  contract.HarnessID
-	Fallback contract.ProfileName
-	source   string
+	Name        contract.ProfileName
+	Tier        contract.Tier
+	Harness     contract.HarnessID
+	Fallback    contract.ProfileName
+	Description string
+	source      string
 }
 
 // Rule maps the kinds and efforts it admits, plus quota gates, to a profile or

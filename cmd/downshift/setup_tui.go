@@ -30,7 +30,7 @@ func setupTUI(o setupOptions) int {
 	}
 	if len(targets) == 0 {
 		fmt.Fprintln(o.Out, "No supported AI harnesses detected on this machine.")
-		fmt.Fprintln(o.Out, "Supported harnesses: Claude Code, Cursor, OpenCode, OpenAI Codex, Google Antigravity, Kiro, KiroCrew.")
+		fmt.Fprintln(o.Out, "Supported harnesses: Claude Code, Cursor, OpenCode, OpenAI Codex, Google Antigravity, KiroCrew (Experimental).")
 		return 0
 	}
 
@@ -44,7 +44,7 @@ func setupTUI(o setupOptions) int {
 	reader := bufio.NewReader(o.In)
 
 	// Step 1: Configure with the recommended defaults.
-	fmt.Fprint(o.Out, "Etapa [1/2] • Configurar os ambientes detectados com os defaults recomendados? [S/n] (S=Sim, n=Sair) ")
+	fmt.Fprint(o.Out, "Step [1/2] • Configure the detected harnesses with the recommended defaults? [Y/n] (Y=yes, n=quit) ")
 	ans, _ := reader.ReadString('\n')
 	if isNo(ans) {
 		fmt.Fprintln(o.Out, "Setup aborted by user. Nothing was written.")
@@ -63,7 +63,7 @@ func setupTUI(o setupOptions) int {
 	if o.DryRun {
 		return 0
 	}
-	fmt.Fprint(o.Out, "Etapa [2/2] • Aplicar as mudanças acima com backup automático? [s/N] ")
+	fmt.Fprint(o.Out, "Step [2/2] • Apply the changes above with an automatic backup? [y/N] ")
 	confirm, _ := reader.ReadString('\n')
 	if !isYes(confirm) {
 		fmt.Fprintln(o.Out, "\nSetup aborted. Nothing was written.")
@@ -120,11 +120,11 @@ func renderTUIHarnesses(out io.Writer, targets []setupTarget) {
 		Foreground(lipgloss.Color("241"))
 
 	var sb strings.Builder
-	sb.WriteString("Ambientes de IA detectados nesta máquina (ordenados por relevância):\n\n")
+	sb.WriteString("AI harnesses detected on this machine (ordered by relevance):\n\n")
 	for i, t := range targets {
 		sb.WriteString(fmt.Sprintf("  [%d] %-14s ~/%s\n", i+1, highlightStyle.Render(t.Name), t.ConfigDir))
 	}
-	sb.WriteString("\n" + subtleStyle.Render("Downshift aplicará governança de modelos, preservação de tokens e compactor shell."))
+	sb.WriteString("\n" + subtleStyle.Render("Downshift will apply model governance, token preservation and the shell compactor."))
 	fmt.Fprintln(out, cardStyle.Render(sb.String()))
 }
 
@@ -147,15 +147,15 @@ func probeAndRenderGateways(out io.Writer) {
 	}
 
 	if len(detected) > 0 {
-		fmt.Fprintf(out, "✔ Gateways companheiros ativos detectados: %s\n", strings.Join(detected, ", "))
+		fmt.Fprintf(out, "✔ Active companion gateways detected: %s\n", strings.Join(detected, ", "))
 	} else {
-		fmt.Fprintln(out, "• Nenhum gateway companheiro local ativo (OmniRoute/9router) detectado. Prosseguindo.")
+		fmt.Fprintln(out, "• No active local companion gateway (OmniRoute/9router) detected. Continuing.")
 	}
 	fmt.Fprintln(out)
 }
 
 func renderTUISmokeCheck(out io.Writer, targets []setupTarget) {
-	fmt.Fprintln(out, "Validação ao vivo dos adapters registrados (<50ms smoke check):")
+	fmt.Fprintln(out, "Live validation of the registered adapters (<50ms smoke check):")
 	cat := catalog.Load()
 	for _, t := range targets {
 		dur, ok := runSmokeCheck(t.Name, cat)
@@ -231,11 +231,11 @@ func renderTUISuccess(out io.Writer) {
 
 	boldStyle := lipgloss.NewStyle().Bold(true)
 	msg := fmt.Sprintf("%s\n\n%s\n  • %s\n  • %s\n  • %s",
-		boldStyle.Render("🎉 Configuração concluída com sucesso!"),
-		"Próximos passos:",
-		"Abra uma nova janela ou sessão do seu harness (Claude Code, Cursor, OpenCode, Codex, Antigravity, Kiro).",
-		"Execute 'downshift doctor' a qualquer momento para verificar a saúde das conexões.",
-		"Execute 'downshift stats' para acompanhar sua economia de tokens em tempo real.",
+		boldStyle.Render("🎉 Setup completed successfully!"),
+		"Next steps:",
+		"Open a new window or session of your harness (Claude Code, Cursor, OpenCode, Codex, Antigravity, KiroCrew (Experimental)).",
+		"Run 'downshift doctor' at any time to check the health of the connections.",
+		"Run 'downshift stats' to follow your token savings in real time.",
 	)
 	fmt.Fprintln(out, cardStyle.Render(msg))
 }

@@ -20,7 +20,7 @@ never calls an LLM.
 
 **Reduce AI coding agent token use, with no LLM call in Downshift's own code.** Downshift is a token
 optimization and model delegation tool for AI coding agents — Claude Code, Cursor, Codex, OpenCode,
-Antigravity, and KiroCrew. It compacts verbose command output before it fills the context
+Antigravity, and KiroCrew (Experimental). It compacts verbose command output before it fills the context
 window, applies the orchestrator's model choice for each subagent within the bounds you declare,
 and counts the tokens it saved, per harness.
 
@@ -30,7 +30,7 @@ and counts the tokens it saved, per harness.
 
 ## The Problem
 
-AI coding agents (Claude Code, Cursor, Codex, KiroCrew, and others) spend most of their context
+AI coding agents (Claude Code, Cursor, Codex, KiroCrew (Experimental), and others) spend most of their context
 window on verbose command output that carries little signal — a problem that context engineering
 and token optimization guides keep circling back to. Every byte of tool output is a token you
 pay for at API rates, on every turn:
@@ -124,7 +124,7 @@ curl -fsSL https://raw.githubusercontent.com/tiagovilasboas/downshift/main/insta
 # "has no <os>/<arch> archive yet"? Pick a tag from https://github.com/tiagovilasboas/downshift/releases
 # (sh -s <tag>) or run: go install github.com/tiagovilasboas/downshift/cmd/downshift@<tag>
 
-# Configure your harness (Claude Code, Cursor, Codex, KiroCrew, ...)
+# Configure your harness (Claude Code, Cursor, Codex, KiroCrew (Experimental), ...)
 downshift setup
 
 # Verify
@@ -320,7 +320,7 @@ harness, per the [Harness Matrix](docs/reference/harness-matrix.md):
 | **Cursor** | `downshift compact` run by the agent | Rewrite emitted, honored unconfirmed | Functional | `downshift setup cursor` |
 | **OpenCode** | `downshift compact` run by the agent | Adapter and conformance tests; no live spawn yet | Beta | Plugin in development |
 | **Antigravity** | `downshift compact` run by the agent | One observed child on one build | Experimental | `downshift setup antigravity` |
-| **KiroCrew** | `downshift compact` run by the agent | Policy mode (allow/block, no rewrite) | Functional | `downshift setup kirocrew` |
+| **KiroCrew** | `downshift compact` run by the agent | Policy mode (allow/block, no rewrite) | Experimental | `downshift setup kirocrew` |
 
 **KiroCrew note:** KiroCrew's preToolUse hook only supports allow/block decisions (no `updated_input`),
 so model routing works in policy mode — blocking a spawn with a message telling the agent to respawn

@@ -108,7 +108,7 @@ func validateProfiles(source string, docs []profileDoc) ([]Profile, error) {
 		if d.Fallback != "" && !fallback.Valid() {
 			return nil, refuse(source, field+".fallback", "%q is not a valid profile name", d.Fallback)
 		}
-		out = append(out, Profile{Name: name, Tier: tier, Harness: harness, Fallback: fallback, source: source})
+		out = append(out, Profile{Name: name, Tier: tier, Harness: harness, Fallback: fallback, Description: d.Description, source: source})
 	}
 	return out, nil
 }
