@@ -11,6 +11,7 @@ Usage:
   downshift policy check
   downshift policy init [--dry-run] [--yes]
   downshift policy economy on|off [--user] [--dry-run] [--yes]
+  downshift policy apply --harness claude-code [--dry-run] [--yes]
 
 Reads the nearest project .downshift/policy.json (searched upward from the
 current directory) and the user's policy.json in the state directory, and
@@ -34,10 +35,17 @@ routing policy. It asks before writing; --dry-run shows the file and writes
 nothing; --yes skips the question. An existing file is left untouched.
 downshift setup offers the same file, unless --no-policy is passed.
 
+policy apply compiles profiles declared in policy.json into harness-native agent
+definitions. For --harness claude-code, it writes or updates .claude/agents/<name>.md
+with YAML frontmatter setting model to the tier resolved from the catalog. It asks
+before writing; --dry-run shows the change; --yes skips the question. An automatic
+backup is created before modifying existing files.
+
 Examples:
   downshift policy check
   downshift policy init --dry-run
   downshift policy economy on --dry-run
+  downshift policy apply --harness claude-code --dry-run
 
 Next: downshift config, to see every effective setting and where it comes from
 `,

@@ -24,8 +24,11 @@ func runPolicy(args []string, stdout, stderr io.Writer) int {
 	if len(args) >= 1 && args[0] == "economy" {
 		return runPolicyEconomy(args[1:], os.Stdin, stdout, stderr)
 	}
+	if len(args) >= 1 && args[0] == "apply" {
+		return runPolicyApply(args[1:], os.Stdin, stdout, stderr)
+	}
 	if len(args) != 1 || args[0] != "check" {
-		fmt.Fprintln(stderr, "usage: downshift policy check | downshift policy init [--dry-run] [--yes] | downshift policy economy on|off [--user] [--dry-run] [--yes]")
+		fmt.Fprintln(stderr, "usage: downshift policy check | downshift policy init [--dry-run] [--yes] | downshift policy economy on|off [--user] [--dry-run] [--yes] | downshift policy apply --harness claude-code [--dry-run] [--yes]")
 		return 2
 	}
 	return runPolicyCheck(stdout, stderr)
