@@ -14,7 +14,10 @@ const Audit = "downshift-audit"
 // Orchestrator is the playbook the lead session follows when it delegates.
 const Orchestrator = "downshift-orchestrator"
 
+// Effort is the advice that matches reasoning and verification effort to stakes.
+const Effort = "downshift-effort"
+
 // FS holds every skill setup installs, one folder each.
 //
-//go:embed downshift-audit downshift-orchestrator
+//go:embed downshift-audit downshift-effort downshift-orchestrator
 var FS embed.FS

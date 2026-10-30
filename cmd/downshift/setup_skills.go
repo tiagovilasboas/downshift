@@ -15,7 +15,7 @@ import (
 )
 
 // installedSkills lists the skills setup installs, by folder name in skills.FS.
-var installedSkills = []string{skills.Audit, skills.Orchestrator}
+var installedSkills = []string{skills.Audit, skills.Orchestrator, skills.Effort}
 
 // skillFiles returns the files of one embedded skill, as paths relative to the
 // skills directory ("downshift-audit/SKILL.md").
