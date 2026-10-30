@@ -5,3 +5,11 @@
 - [x] **S-W2 (3 SP): First-Run Interview State Machine (Lipgloss TUI) (Merged PR #623)**
 - [x] **S-W4 (3 SP): Live Adapter Proof & Smoke Check (Merged PR #624)**
 - [x] **S-W5 (2 SP): Aha! Moment Summary & Verification Gate**
+
+### 📦 Tarefas Compactadas em 2026-10-30 01:32:36 (6 itens)
+  - [x] Card de encerramento visual com quota, tips e primeiro comando a rodar
+  - [x] Atualização de documentação canônica (`README.md`, `install.md`)
+  - [x] Validação integral dos sensores (`make check`, `docscheck`, `archtest`) 100% verde
+- [x] Adicionar `cc-plugin-effort-optimizer@builtin` como default ativo no target `claude-code` (`setup_targets.go`)
+- [x] Detectar mod em `summaryPolicy` (`setup.go`)
+- [x] Evidenciar em `setup_tui.go` (`renderTUIHarnesses` e `renderTUISuccess`)

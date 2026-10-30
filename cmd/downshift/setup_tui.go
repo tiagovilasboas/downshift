@@ -103,7 +103,11 @@ func renderTUIHarnesses(out io.Writer, targets []setupTarget) {
 	var sb strings.Builder
 	sb.WriteString("Ambientes de IA detectados nesta máquina (ordenados por relevância):\n\n")
 	for i, t := range targets {
-		sb.WriteString(fmt.Sprintf("  [%d] %-14s ~/%s\n", i+1, highlightStyle.Render(t.Name), t.ConfigDir))
+		note := ""
+		if t.Name == "claude-code" {
+			note = subtleStyle.Render(" (recomendados: opusplan, plan mode, Claude Effort Optimizer)")
+		}
+		sb.WriteString(fmt.Sprintf("  [%d] %-14s ~/%s%s\n", i+1, highlightStyle.Render(t.Name), t.ConfigDir, note))
 	}
 	sb.WriteString("\n" + subtleStyle.Render("Downshift aplicará governança de modelos, preservação de tokens e compactor shell."))
 	fmt.Fprintln(out, cardStyle.Render(sb.String()))
@@ -230,9 +234,10 @@ func renderTUISuccess(out io.Writer) {
 		MarginTop(1)
 
 	boldStyle := lipgloss.NewStyle().Bold(true)
-	msg := fmt.Sprintf("%s\n\n%s\n  • %s\n  • %s\n  • %s",
+	msg := fmt.Sprintf("%s\n\n%s\n  • %s\n  • %s\n  • %s\n  • %s",
 		boldStyle.Render("🎉 Configuração concluída com sucesso!"),
 		"Próximos passos:",
+		"Claude Code configurado com defaults recomendados (opusplan, plan mode, Claude Effort Optimizer).",
 		"Abra uma nova janela ou sessão do seu harness (Claude Code, Cursor, OpenCode, Codex, Antigravity, Kiro).",
 		"Execute 'downshift doctor' a qualquer momento para verificar a saúde das conexões.",
 		"Execute 'downshift stats' para acompanhar sua economia de tokens em tempo real.",

@@ -376,33 +376,37 @@ func TestSetupDetectionAndNames(t *testing.T) {
 // Claude Code starts in plan mode with opusplan only for keys the user has not
 // set; anything already set is kept and setup says how to switch.
 func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
-	policy := func(e *setupEnv) (model any, mode any) {
+	policy := func(e *setupEnv) (model any, mode any, effortOpt any) {
 		doc := parseDoc(t, e.read(".claude/settings.json"))
 		perms, _ := doc["permissions"].(map[string]any)
-		return doc["model"], perms["defaultMode"]
+		ep, _ := doc["enabledPlugins"].(map[string]any)
+		if ep != nil {
+			effortOpt = ep["cc-plugin-effort-optimizer@builtin"]
+		}
+		return doc["model"], perms["defaultMode"], effortOpt
 	}
 
 	fresh := newSetupEnv(t, ".claude")
 	if code, out, _ := fresh.run("claude-code", "--yes"); code != 0 {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
-	if m, d := policy(fresh); m != "opusplan" || d != "plan" {
-		t.Errorf("fresh = model %v, defaultMode %v; want opusplan, plan", m, d)
+	if m, d, opt := policy(fresh); m != "opusplan" || d != "plan" || opt != true {
+		t.Errorf("fresh = model %v, defaultMode %v, effortOpt %v; want opusplan, plan, true", m, d, opt)
 	}
 	if _, ok := parseDoc(t, fresh.read(".claude/settings.json"))["autoCompactWindow"]; ok {
 		t.Error("setup wrote autoCompactWindow; the owner keeps it outside setup")
 	}
 
 	pinned := newSetupEnv(t, ".claude")
-	pinned.write(".claude/settings.json", `{"model":"claude-sonnet-5-5","autoCompactWindow":250000,"enabledPlugins":{"cc-plugin-you-should-know@builtin":false},"permissions":{"allow":["Bash(ls:*)"],"defaultMode":"acceptEdits"}}`)
+	pinned.write(".claude/settings.json", `{"model":"claude-sonnet-5-5","autoCompactWindow":250000,"enabledPlugins":{"cc-plugin-you-should-know@builtin":false,"cc-plugin-effort-optimizer@builtin":false},"permissions":{"allow":["Bash(ls:*)"],"defaultMode":"acceptEdits"}}`)
 	code, out, _ := pinned.run("claude-code", "--yes", "--you-should-know")
 	if code != 0 {
 		t.Fatalf("exit %d\n%s", code, out)
 	}
-	if m, d := policy(pinned); m != "claude-sonnet-5-5" || d != "acceptEdits" {
-		t.Errorf("pinned = model %v, defaultMode %v; want both kept", m, d)
+	if m, d, opt := policy(pinned); m != "claude-sonnet-5-5" || d != "acceptEdits" || opt != false {
+		t.Errorf("pinned = model %v, defaultMode %v, effortOpt %v; want all kept", m, d, opt)
 	}
-	if !strings.Contains(out, `"model": "opusplan"`) || !strings.Contains(out, "permissions.defaultMode") || !strings.Contains(out, "cc-plugin-you-should-know@builtin") {
+	if !strings.Contains(out, `"model": "opusplan"`) || !strings.Contains(out, "permissions.defaultMode") || !strings.Contains(out, "cc-plugin-you-should-know@builtin") || !strings.Contains(out, "cc-plugin-effort-optimizer@builtin") {
 		t.Errorf("no notes for the kept values:\n%s", out)
 	}
 	if w := parseDoc(t, pinned.read(".claude/settings.json"))["autoCompactWindow"]; w != float64(250000) {
@@ -413,9 +417,24 @@ func TestSetupClaudeCodeMainSessionPolicy(t *testing.T) {
 	}
 
 	already := newSetupEnv(t, ".claude")
-	already.write(".claude/settings.json", `{"model":"opusplan","enabledPlugins":{"cc-plugin-you-should-know@builtin":true},"permissions":{"defaultMode":"plan"}}`)
-	if _, out, _ := already.run("claude-code", "--yes"); strings.Contains(out, "keeps its pinned") || strings.Contains(out, "keep their") {
+	already.write(".claude/settings.json", `{"model":"opusplan","enabledPlugins":{"cc-plugin-you-should-know@builtin":true,"cc-plugin-effort-optimizer@builtin":true},"permissions":{"defaultMode":"plan"}}`)
+	if _, out, _ := already.run("claude-code", "--yes"); strings.Contains(out, "keeps its pinned") || strings.Contains(out, "keep their") || strings.Contains(out, "is not true in enabledPlugins") {
 		t.Errorf("note printed although the policy is already set:\n%s", out)
+	}
+
+	noPolicy := newSetupEnv(t, ".claude")
+	if code, out, _ := noPolicy.run("claude-code", "--yes", "--no-session-policy"); code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	doc := parseDoc(t, noPolicy.read(".claude/settings.json"))
+	if _, ok := doc["model"]; ok {
+		t.Errorf("model written with --no-session-policy: %v", doc["model"])
+	}
+	if perms, ok := doc["permissions"].(map[string]any); ok && perms["defaultMode"] != nil {
+		t.Errorf("defaultMode written with --no-session-policy: %v", perms["defaultMode"])
+	}
+	if ep, ok := doc["enabledPlugins"].(map[string]any); ok && ep["cc-plugin-effort-optimizer@builtin"] != nil {
+		t.Errorf("effort-optimizer written with --no-session-policy: %v", ep["cc-plugin-effort-optimizer@builtin"])
 	}
 
 	notObject := newSetupEnv(t, ".claude")
@@ -435,21 +454,24 @@ func TestSetupSummaryStatesWhatChanges(t *testing.T) {
 	t.Setenv("DOWNSHIFT_CONTROL_SHARE", "")
 	e := newSetupEnv(t, ".claude")
 	_, out, _ := e.run("claude-code", "--yes", "--you-should-know")
-	for _, want := range []string{"What changes for you", "1 in 10", "downshift report", "plan mode", "opusplan", "You should know is on", "billed", "--no-session-policy", "downshift setup --undo"} {
+	for _, want := range []string{"What changes for you", "1 in 10", "downshift report", "plan mode", "opusplan", "Claude Effort Optimizer is on", "You should know is on", "billed", "--no-session-policy", "downshift setup --undo"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("summary is missing %q:\n%s", want, out)
 		}
 	}
 
-	// Without the flag the summary must not claim the mod is on.
+	// Without the flag the summary must still have Claude Effort Optimizer, but not You should know.
 	_, out, _ = newSetupEnv(t, ".claude").run("claude-code", "--yes")
 	if strings.Contains(out, "You should know is on") {
 		t.Errorf("summary claims You should know is on without --you-should-know:\n%s", out)
 	}
+	if !strings.Contains(out, "Claude Effort Optimizer is on") {
+		t.Errorf("summary missing Claude Effort Optimizer in default setup:\n%s", out)
+	}
 
 	skipped := newSetupEnv(t, ".claude")
 	_, out, _ = skipped.run("claude-code", "--yes", "--no-session-policy")
-	if strings.Contains(out, "plan mode") || strings.Contains(out, "opusplan") || strings.Contains(out, "You should know") {
+	if strings.Contains(out, "plan mode") || strings.Contains(out, "opusplan") || strings.Contains(out, "You should know") || strings.Contains(out, "Claude Effort Optimizer") {
 		t.Errorf("summary claims a session policy that was not written:\n%s", out)
 	}
 	if !strings.Contains(out, "1 in 10") {
