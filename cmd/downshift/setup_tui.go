@@ -40,7 +40,7 @@ func setupTUI(o setupOptions) int {
 	}
 	if len(targets) == 0 {
 		fmt.Fprintln(o.Out, "No supported AI harnesses detected on this machine.")
-		fmt.Fprintln(o.Out, "Supported harnesses: Claude Code, Cursor, OpenCode, OpenAI Codex, Google Antigravity, KiroCrew.")
+		fmt.Fprintln(o.Out, "Supported harnesses: Claude Code, Cursor, OpenCode, OpenAI Codex, Google Antigravity, Kiro, KiroCrew.")
 		return 0
 	}
 

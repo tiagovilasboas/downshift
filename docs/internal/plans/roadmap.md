@@ -63,16 +63,22 @@ Gateway Routers note (2026-10-29): Multi-provider proxy routers (9router and Omn
 Following clean-room competitive analysis of external orchestrator tools (such as Alethe, commit `17acb090` / research `2026-10-28`), Downshift incorporates the highest-value onboarding and orchestration paradigms while **strictly avoiding the heavy monolithic anti-patterns** (400MB Electron app, PTY scrapers, credential interception, local HTTP shared-secret servers, AGPL licensing):
 
 1. **Native Markdown Skills over Bespoke Runtimes:**
-   Rather than building an embedded multi-process orchestration runtime in Go, Downshift treats the user's native AI harness (Claude Code, Cursor, OpenCode, OpenAI Codex, Google Antigravity, KiroCrew — ordered by community adoption) as the orchestrator. Downshift installs portable, zero-overhead `.md` skills directly into the harness configuration directories (`~/.claude/skills/`, `~/.cursor/rules/`, `~/.config/opencode/skills/`, etc.):
+   Rather than building an embedded multi-process orchestration runtime in Go, Downshift treats the user's native AI harness (Claude Code, Cursor, OpenCode, OpenAI Codex, Google Antigravity, Kiro, KiroCrew — ordered by community adoption) as the orchestrator. Downshift installs portable, zero-overhead `.md` skills directly into the harness configuration directories (`~/.claude/skills/`, `~/.cursor/rules/`, `~/.config/opencode/skills/`, `~/.kiro/steering/`, etc.):
    - `downshift-orchestrator.md`: Teaches the Lead LLM to plan, decompose, respect worker concurrency caps, and query Downshift's MCP tools (`providers`, `status`, `apply`).
    - `downshift-delegate.md`: Enforces structured Task Envelopes (one-sentence goal, bounded file paths, verification gate, `[tier=small]` hints).
    - `downshift-rules.md`: Inviolable engineering guardrails (never commit without test passing, strict scope boundaries, structured handoff).
 
 2. **Pre-installed Engineering Playbooks as Native Markdown:**
    Modular, opt-in engineering standards delivered as plain Markdown rules:
-   - `clean-code.md`: SRP, YAGNI, KISS, files under 300 lines, descriptive naming.
+   - `research.md`: Strict read-only exploration and symbol mapping with exact line citations.
+   - `implementation.md`: Clean code, SRP, KISS, files under 300 lines, no premature abstractions.
+   - `review.md`: AppSec and architectural fitness reviews (OWASP ASVS standards) without editing source.
    - `tdd-verification.md`: Test-driven discipline, wrapping commands with `downshift compactor -- <test-cmd>`.
-   - `security-boundaries.md`: OWASP ASVS rules, zero secrets in code/logs, strict sandbox compliance.
+   - `docs.md`: Technical documentation hygiene and author privacy preservation.
+   - `incident-rescue.md`: Emergency debugging, root-cause isolation, and surgical bugfixes.
+
+3. **The Universal Skill (Strategies & Token Hygiene):**
+   A dedicated `downshift` skill managing execution modes (`economy`, `balanced`, `parallel`, `research`, `rescue`) and strict token hygiene (passing bounded file subsets instead of full transcripts, reading diffs instead of command scrollback).
 
 3. **First-Run Interview in `downshift setup`:**
    Interactive terminal wizard asking three strategic questions on first run:
