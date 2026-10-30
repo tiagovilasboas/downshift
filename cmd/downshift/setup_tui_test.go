@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,86 +36,125 @@ func TestSetupTUI_NoHarnessesDetected(t *testing.T) {
 	}
 }
 
-func TestSetupTUI_DetectedHarnessAndAbort(t *testing.T) {
-	tempHome := t.TempDir()
-	claudeDir := filepath.Join(tempHome, ".claude")
-	_ = os.MkdirAll(claudeDir, 0o755)
-
-	var stdout, stderr bytes.Buffer
-	opts := setupOptions{
-		Home:   tempHome,
-		In:     strings.NewReader("n\n"),
-		Out:    &stdout,
-		Err:    &stderr,
-		Now:    time.Now,
-		TUI:    true,
-		DryRun: true,
+func tuiOpts(t *testing.T, in io.Reader, out, errw *bytes.Buffer) setupOptions {
+	t.Helper()
+	home := t.TempDir()
+	// Keep shared state (context optimizer config) out of the real home.
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	if err := os.MkdirAll(filepath.Join(home, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
 	}
-
-	rc := setupTUI(opts)
-	if rc != 0 {
-		t.Fatalf("setupTUI() with 'n' = %d, want 0", rc)
-	}
-	out := stdout.String()
-	if !strings.Contains(out, "Setup aborted by user") {
-		t.Errorf("setupTUI() output = %q; want 'Setup aborted by user'", out)
+	return setupOptions{
+		Home: home, Binary: "/usr/local/bin/downshift", StateDir: filepath.Join(home, ".downshift"),
+		In: in, Out: out, Err: errw, Now: time.Now, TUI: true,
+		NoPlugin: true, SkipDiscovery: true,
 	}
 }
 
-func TestSetupTUI_CustomizePresetAndAbortAtConfirm(t *testing.T) {
-	tempHome := t.TempDir()
-	claudeDir := filepath.Join(tempHome, ".claude")
-	_ = os.MkdirAll(claudeDir, 0o755)
+func settingsWritten(o setupOptions) bool {
+	_, err := os.Stat(filepath.Join(o.Home, ".claude", "settings.json"))
+	return err == nil
+}
 
-	var stdout, stderr bytes.Buffer
-	// Input: 'c' to customize, '2' for Aggressive, 'n' to abort at final confirmation
-	opts := setupOptions{
-		Home:   tempHome,
-		In:     strings.NewReader("c\n2\nn\n"),
-		Out:    &stdout,
-		Err:    &stderr,
-		Now:    time.Now,
-		TUI:    true,
-		DryRun: true,
+func TestSetupTUI_FirstStepAbort(t *testing.T) {
+	var out, errw bytes.Buffer
+	o := tuiOpts(t, strings.NewReader("n\n"), &out, &errw)
+	if rc := setupTUI(o); rc != 0 {
+		t.Fatalf("rc = %d, want 0", rc)
 	}
-
-	rc := setupTUI(opts)
-	if rc != 0 {
-		t.Fatalf("setupTUI() customize with 'n' = %d, want 0", rc)
-	}
-	out := stdout.String()
-	if !strings.Contains(out, "Preset selecionado: Economia Máxima (Aggressive)") {
-		t.Errorf("setupTUI() did not record aggressive preset:\n%s", out)
-	}
-	if !strings.Contains(out, "Setup aborted by user") {
-		t.Errorf("setupTUI() output = %q; want 'Setup aborted by user'", out)
+	if !strings.Contains(out.String(), "Setup aborted by user") || settingsWritten(o) {
+		t.Errorf("want abort and no write:\n%s", out.String())
 	}
 }
 
-func TestSetupTUI_ConfirmAndExecuteDryRun(t *testing.T) {
-	tempHome := t.TempDir()
-	claudeDir := filepath.Join(tempHome, ".claude")
-	_ = os.MkdirAll(claudeDir, 0o755)
-
-	var stdout, stderr bytes.Buffer
-	// Input: 's' for standard config, 's' for apply
-	opts := setupOptions{
-		Home:   tempHome,
-		In:     strings.NewReader("s\ns\n"),
-		Out:    &stdout,
-		Err:    &stderr,
-		Now:    time.Now,
-		TUI:    true,
-		DryRun: true,
+func TestSetupTUI_ConfirmDefaultIsNo(t *testing.T) {
+	cases := []struct {
+		name      string
+		input     string
+		wantWrite bool
+	}{
+		{"empty answer aborts", "\n\n", false},
+		{"EOF at confirm aborts", "\n", false},
+		{"EOF everywhere aborts", "", false},
+		{"unknown answer aborts", "\nquem sabe\n", false},
+		{"explicit n aborts", "\nn\n", false},
+		{"s applies", "\ns\n", true},
+		{"sim applies", "\nSim\n", true},
+		{"yes applies", "\nyes\n", true},
 	}
-
-	rc := setupTUI(opts)
-	if rc != 0 {
-		t.Fatalf("setupTUI() dry-run confirmed = %d, want 0 (stderr: %s)", rc, stderr.String())
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var out, errw bytes.Buffer
+			o := tuiOpts(t, strings.NewReader(tc.input), &out, &errw)
+			if rc := setupTUI(o); rc != 0 {
+				t.Fatalf("rc = %d, want 0 (stderr: %s)", rc, errw.String())
+			}
+			if got := settingsWritten(o); got != tc.wantWrite {
+				t.Errorf("settings written = %v, want %v\n%s", got, tc.wantWrite, out.String())
+			}
+			if !tc.wantWrite && !strings.Contains(out.String(), "Nothing was written") {
+				t.Errorf("abort must say nothing was written:\n%s", out.String())
+			}
+		})
 	}
-	out := stdout.String()
-	if !strings.Contains(out, "⚡ Downshift Setup Wizard") {
-		t.Errorf("setupTUI() missing header:\n%s", out)
+}
+
+func TestSetupTUI_DiffShownBeforeQuestion(t *testing.T) {
+	var out, errw bytes.Buffer
+	o := tuiOpts(t, strings.NewReader("\n\n"), &out, &errw)
+	if rc := setupTUI(o); rc != 0 {
+		t.Fatalf("rc = %d", rc)
+	}
+	s := out.String()
+	diff := strings.Index(s, "would change")
+	ask := strings.Index(s, "[s/N]")
+	if diff < 0 || ask < 0 || diff > ask {
+		t.Errorf("diff (%d) must print before the confirm question (%d):\n%s", diff, ask, s)
+	}
+	if !strings.Contains(s, "+++") {
+		t.Errorf("exact diff missing:\n%s", s)
+	}
+}
+
+func TestSetupTUI_DryRunNeverAsksToApply(t *testing.T) {
+	var out, errw bytes.Buffer
+	o := tuiOpts(t, strings.NewReader("\ns\n"), &out, &errw)
+	o.DryRun = true
+	if rc := setupTUI(o); rc != 0 {
+		t.Fatalf("rc = %d", rc)
+	}
+	if strings.Contains(out.String(), "[s/N]") || settingsWritten(o) {
+		t.Errorf("dry run must not ask or write:\n%s", out.String())
+	}
+}
+
+func TestSetupTUI_NonInteractiveNeverPrompts(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		mut  func(*setupOptions)
+	}{
+		{"nil input (pipe closed)", func(o *setupOptions) { o.In = nil }},
+		{"--yes through setupRun", func(o *setupOptions) { o.Yes = true; o.TUI = false }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var out, errw bytes.Buffer
+			o := tuiOpts(t, strings.NewReader(""), &out, &errw)
+			tc.mut(&o)
+			run := setupTUI
+			if o.Yes {
+				run = setupRun
+			}
+			if rc := run(o); rc != 0 {
+				t.Fatalf("rc = %d (stderr: %s)", rc, errw.String())
+			}
+			if strings.Contains(out.String(), "[s/N]") || strings.Contains(out.String(), "[S/n]") {
+				t.Errorf("must not prompt:\n%s", out.String())
+			}
+			if !settingsWritten(o) {
+				t.Errorf("expected settings written:\n%s", out.String())
+			}
+		})
 	}
 }
 

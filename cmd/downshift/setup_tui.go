@@ -43,39 +43,58 @@ func setupTUI(o setupOptions) int {
 
 	reader := bufio.NewReader(o.In)
 
-	// Step 1: Configure or customize
-	fmt.Fprint(o.Out, "Etapa [1/3] • Configurar os ambientes detectados com os defaults recomendados? [S/n/c] (S=Sim, n=Sair, c=Customizar) ")
+	// Step 1: Configure with the recommended defaults.
+	fmt.Fprint(o.Out, "Etapa [1/2] • Configurar os ambientes detectados com os defaults recomendados? [S/n] (S=Sim, n=Sair) ")
 	ans, _ := reader.ReadString('\n')
-	ans = strings.TrimSpace(strings.ToLower(ans))
-
-	if ans == "n" || ans == "nao" || ans == "não" || ans == "no" {
-		fmt.Fprintln(o.Out, "Setup aborted by user.")
+	if isNo(ans) {
+		fmt.Fprintln(o.Out, "Setup aborted by user. Nothing was written.")
 		return 0
 	}
 
-	if ans == "c" || ans == "customizar" {
-		promptPreset(o.Out, reader, &o)
-	}
-
-	// Step 2: Gateway Companions
 	probeAndRenderGateways(o.Out)
 
-	// Step 3: Confirmation
-	fmt.Fprint(o.Out, "Etapa [3/3] • Aplicar configurações agora com backup automático? [S/n] ")
+	// Step 2: show the exact diff first (dry run), then ask. Default is No.
+	preview := o
+	preview.DryRun = true
+	preview.Yes = false
+	if code := setupRun(preview); code != 0 {
+		return code
+	}
+	if o.DryRun {
+		return 0
+	}
+	fmt.Fprint(o.Out, "Etapa [2/2] • Aplicar as mudanças acima com backup automático? [s/N] ")
 	confirm, _ := reader.ReadString('\n')
-	confirm = strings.TrimSpace(strings.ToLower(confirm))
-	if confirm != "" && confirm != "s" && confirm != "sim" && confirm != "y" && confirm != "yes" {
-		fmt.Fprintln(o.Out, "Setup aborted by user.")
+	if !isYes(confirm) {
+		fmt.Fprintln(o.Out, "\nSetup aborted. Nothing was written.")
 		return 0
 	}
 
 	o.Yes = true
 	runCode := setupRun(o)
-	if runCode == 0 && !o.DryRun {
+	if runCode == 0 {
 		renderTUISmokeCheck(o.Out, targets)
 		renderTUISuccess(o.Out)
 	}
 	return runCode
+}
+
+// isYes reports an explicit affirmative answer; empty or unknown is not one.
+func isYes(ans string) bool {
+	switch strings.ToLower(strings.TrimSpace(ans)) {
+	case "s", "sim", "y", "yes":
+		return true
+	}
+	return false
+}
+
+// isNo reports an explicit refusal.
+func isNo(ans string) bool {
+	switch strings.ToLower(strings.TrimSpace(ans)) {
+	case "n", "nao", "não", "no":
+		return true
+	}
+	return false
 }
 
 func renderTUIHeader(out io.Writer) {
@@ -107,25 +126,6 @@ func renderTUIHarnesses(out io.Writer, targets []setupTarget) {
 	}
 	sb.WriteString("\n" + subtleStyle.Render("Downshift aplicará governança de modelos, preservação de tokens e compactor shell."))
 	fmt.Fprintln(out, cardStyle.Render(sb.String()))
-}
-
-func promptPreset(out io.Writer, reader *bufio.Reader, o *setupOptions) {
-	fmt.Fprintln(out, "\nEtapa [2/3] • Escolha a postura de governança (Policy Preset):")
-	fmt.Fprintln(out, "  [1] Equilibrado (Recomendado) — Trivial downshifts to small/flash; complex retains frontier.")
-	fmt.Fprintln(out, "  [2] Economia Máxima (Aggressive) — Maximize cost reductions across subagent runs.")
-	fmt.Fprintln(out, "  [3] Conservador (Safe) — Hold requested models whenever doubt exists.")
-	fmt.Fprint(out, "Selecione o preset [1-3] (padrão: 1): ")
-	p, _ := reader.ReadString('\n')
-	p = strings.TrimSpace(p)
-	switch p {
-	case "2":
-		fmt.Fprintln(out, "Preset selecionado: Economia Máxima (Aggressive)")
-	case "3":
-		fmt.Fprintln(out, "Preset selecionado: Conservador (Safe)")
-	default:
-		fmt.Fprintln(out, "Preset selecionado: Equilibrado (Balanced)")
-	}
-	fmt.Fprintln(out)
 }
 
 func probeAndRenderGateways(out io.Writer) {
