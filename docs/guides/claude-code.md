@@ -145,9 +145,7 @@ keeps a backup, and prints a diff (`--dry-run` first):
   `downshift claude-code-post-tool-use`), `PostToolUseFailure` (same runner), `SubagentStop`
   (`downshift claude-code-subagent-stop`).
 - Main-session policy, each key **only when unset**: `model: "opusplan"`,
-  `permissions.defaultMode: "plan"`, and Claude Effort Optimizer mod
-  (`enabledPlugins["cc-plugin-effort-optimizer@builtin"]: true`, active by default; `/plugin disable cc-plugin-effort-optimizer@builtin` to turn off).
-  `--no-session-policy` skips these defaults. Claude Code's built-in
+  and `permissions.defaultMode: "plan"`. `--no-session-policy` skips these two. Claude Code's built-in
   You should know mod (`enabledPlugins["cc-plugin-you-should-know@builtin"]: true`) is **opt-in**:
   each check is a billed background request to the session's model, so `setup` only prints the
   suggestion and writes it with `downshift setup --you-should-know`. An existing value, `false` included, is
@@ -159,7 +157,7 @@ keeps a backup, and prints a diff (`--dry-run` first):
 
 The plugin (`/plugin install downshift@downshift`, Claude Code 2.1.275+) carries the **same four
 hooks** from `hooks/hooks.json`, the `/downshift:status` command and the skills. It writes **no
-settings**: no `opusplan`, no plan mode, no Claude Effort Optimizer, no You should know, no statusline. Use one channel: a
+settings**: no `opusplan`, no plan mode, no You should know, no statusline. Use one channel: a
 plugin hook and a settings hook with the same command both run, so every spawn would be routed
 twice. `setup` skips the hooks when `enabledPlugins["downshift@downshift"]` is true in the user
 settings file (policy and statusline still apply); `doctor` warns `plugin … every spawn is routed
