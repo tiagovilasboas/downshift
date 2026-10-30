@@ -18,6 +18,16 @@ judged on.
   `go test ./internal/core -run TestClassifierStability -update-stability`; review the diff
   next to the before/after evidence. It replaces the old check that read a private
   directory outside the repository.
+- `internal/core/testdata/quality/baseline.json` — the recorded floor for offline routing
+  quality: tier agreement and under-routed count of the classifier on this corpus and on the
+  90-prompt domain precision set, with the commit and command that measured them, a
+  tolerance in percentage points and a digest of the prompts and labels.
+  `TestRoutingQualityBaseline` fails when agreement falls, or under-routing rises, by more
+  than the tolerance, or when a prompt or label changed. Regenerating the stability golden
+  does not move it. Raising the values after an improvement, or accepting a loss, is a
+  reviewed edit of that file with the evidence; never edit labels to raise a score. It gates
+  label agreement, not task success; live routed-versus-control quality is measured in
+  downshift-labs and is not gated here.
 - `downshift-labs/research/prompts-1000/` — 1000 synthetic developer prompts with the
   generator's own `dev_difficulty`. That label is a guess, not ground truth; the set
   is for finding error families, not for measuring accuracy.
