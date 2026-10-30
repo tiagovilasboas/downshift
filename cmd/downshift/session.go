@@ -172,6 +172,23 @@ func envModel(harness string) string {
 	}
 }
 
+// claudeClientEnv is the Claude Code environment variable that names the client
+// that started the session (values such as claude-desktop, cli, sdk-cli,
+// sdk-ts). Claude Code exports it to the child shell, so the compactor, which
+// runs inside that shell, inherits it. The claudecode adapter reads the same
+// variable for decision events; exec events do not pass through the adapter, so
+// the exec call site reads it here and sanitizes it the same way.
+const claudeClientEnv = "CLAUDE_CODE_ENTRYPOINT"
+
+// envClient returns the sanitized harness client label for an exec event, read
+// from the current process environment. It reuses telemetry.ClientOrDrop so an
+// untrusted value is dropped rather than stored, and returns "" when the
+// harness exposes no client. Only Claude Code exposes a client variable today;
+// other harnesses leave it empty.
+func envClient() string {
+	return telemetry.ClientOrDrop(os.Getenv(claudeClientEnv))
+}
+
 func sessionFromID(v string, events []telemetry.Event) (string, error) {
 	if telemetry.ValidSessionHash(v) {
 		return v, nil

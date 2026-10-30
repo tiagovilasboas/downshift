@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Routing events now carry an optional `client` field naming which Claude Code client fired the hook, read from `CLAUDE_CODE_ENTRYPOINT` by the Claude Code adapter (values seen include `cli` and `claude-desktop`, so a Claude Desktop event can be told apart from a CLI one). The value is sanitized (lower-case, at most 32 chars, `[a-z0-9._-]`, else dropped), never used for policy, and absent on events that predate it or on harnesses that do not report it.
+- Exec (compaction) events now carry the same optional `client` field, read from `CLAUDE_CODE_ENTRYPOINT` in the shell the compactor inherits and sanitized through the same rule, so a compacted command can be tied to its Claude Code client (for example `claude-desktop`) instead of being matched to a routing event by time. Absent on events that predate it or when the harness reports no client.
 
 ### Removed
 

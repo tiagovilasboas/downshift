@@ -69,6 +69,15 @@ type Event struct {
 	// harness's session data (e.g. KiroCrew's session files). Empty when the
 	// harness does not expose model information or when detection fails.
 	Model string `json:"model,omitempty"`
+	// Client names the harness client that produced this command, when the
+	// harness exposes it to the child shell: for Claude Code,
+	// CLAUDE_CODE_ENTRYPOINT (values such as claude-desktop, cli, sdk-cli,
+	// sdk-ts). The caller fills it from the harness environment through
+	// telemetry.ClientOrDrop, so a compacted command can be tied to its client
+	// instead of being matched by time. Empty when the harness exposes no
+	// client or the value is dropped by the sanitizer; absent on rows written
+	// before this field was added.
+	Client string `json:"client,omitempty"`
 }
 
 // EventFrom builds the log record for a Result.

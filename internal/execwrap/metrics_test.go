@@ -85,3 +85,42 @@ func TestMetrics_MissingFileIsEmpty(t *testing.T) {
 		t.Fatalf("s=%+v err=%v", s, err)
 	}
 }
+
+// The optional client field rides the event to the log when set, and stays
+// absent (no "client" key) when empty, thanks to omitempty. The caller fills it
+// from the harness environment; here we set it directly to check the wire form.
+func TestMetrics_ClientOmitempty(t *testing.T) {
+	t.Run("present", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), EventsFileName)
+		ev := EventFrom(Result{Family: FamilyGoTest, ExitClass: ExitClassZero}, time.Now())
+		ev.Client = "claude-desktop"
+		if err := Append(path, ev); err != nil {
+			t.Fatal(err)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(data), `"client":"claude-desktop"`) {
+			t.Fatalf("line missing client key: %s", data)
+		}
+		evs, err := ReadEvents(path)
+		if err != nil || len(evs) != 1 || evs[0].Client != "claude-desktop" {
+			t.Fatalf("read back client = %+v, err = %v", evs, err)
+		}
+	})
+
+	t.Run("absent when empty", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), EventsFileName)
+		if err := Append(path, EventFrom(Result{Family: FamilyGoTest, ExitClass: ExitClassZero}, time.Now())); err != nil {
+			t.Fatal(err)
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(data), `"client"`) {
+			t.Fatalf("empty client must be omitted, got: %s", data)
+		}
+	})
+}
