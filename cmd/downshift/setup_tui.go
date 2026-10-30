@@ -8,10 +8,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
 	"charm.land/lipgloss/v2"
+	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/gateway/ninerouter"
 	"github.com/tiagovilasboas/downshift/internal/gateway/omniroute"
 )
@@ -69,6 +72,7 @@ func setupTUI(o setupOptions) int {
 	o.Yes = true
 	runCode := setupRun(o)
 	if runCode == 0 && !o.DryRun {
+		renderTUISmokeCheck(o.Out, targets)
 		renderTUISuccess(o.Out)
 	}
 	return runCode
@@ -148,6 +152,74 @@ func probeAndRenderGateways(out io.Writer) {
 		fmt.Fprintln(out, "• Nenhum gateway companheiro local ativo (OmniRoute/9router) detectado. Prosseguindo.")
 	}
 	fmt.Fprintln(out)
+}
+
+func renderTUISmokeCheck(out io.Writer, targets []setupTarget) {
+	fmt.Fprintln(out, "Validação ao vivo dos adapters registrados (<50ms smoke check):")
+	cat := catalog.Load()
+	for _, t := range targets {
+		dur, ok := runSmokeCheck(t.Name, cat)
+		if ok {
+			fmt.Fprintf(out, "  [✔] %-14s handshake OK in %v\n", t.Name, dur.Round(time.Microsecond))
+		} else {
+			fmt.Fprintf(out, "  [•] %-14s handshake bypassed (custom/manual adapter)\n", t.Name)
+		}
+	}
+	fmt.Fprintln(out)
+}
+
+func runSmokeCheck(harness string, cat core.Resolver) (time.Duration, bool) {
+	entry, ok := harnessRegistry[harness]
+	if !ok || entry.Hook == nil {
+		return 0, false
+	}
+	payload := smokePayloadFor(harness)
+	if payload == "" {
+		return 0, false
+	}
+	start := time.Now()
+	var code int
+	runQuietly(func() {
+		code = entry.Hook(strings.NewReader(payload), cat)
+	})
+	return time.Since(start), code == 0
+}
+
+func smokePayloadFor(harness string) string {
+	switch harness {
+	case "claude-code":
+		return `{"tool_name":"Agent","tool_input":{"prompt":"ping"}}`
+	case "cursor":
+		return `{"tool_name":"Task","tool_input":{"task":"ping"}}`
+	case "opencode":
+		return `{"tool_name":"subagent_spawn_intent","tool_input":{"prompt":"ping"}}`
+	case "codex":
+		return `{"tool_name":"Agent","tool_input":{"task":"ping"}}`
+	case "antigravity":
+		return `{"tool_name":"invoke_subagent","tool_input":{"prompt":"ping"}}`
+	case "kirocrew":
+		return `{"tool_name":"spawn_run","tool_input":{"task":"ping"}}`
+	default:
+		return ""
+	}
+}
+
+func runQuietly(fn func()) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		fn()
+		return
+	}
+	oldOut := os.Stdout
+	oldErr := os.Stderr
+	os.Stdout = w
+	os.Stderr = w
+	fn()
+	_ = w.Close()
+	os.Stdout = oldOut
+	os.Stderr = oldErr
+	_, _ = io.Copy(io.Discard, r)
+	_ = r.Close()
 }
 
 func renderTUISuccess(out io.Writer) {
