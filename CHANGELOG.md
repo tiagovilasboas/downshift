@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The setup target table is split from its types (`setup_target_types.go`), so `setup_targets.go` is 202 lines instead of 312. No behaviour change. A new test, `TestProductionFileSize` in `internal/archtest`, enforces the 300-line limit on production Go files: a new file over it fails, and the 34 files already over it are frozen at their current size and may only shrink.
 - The shared hook runner is split by what each part does (#641): the harness wire responses move to `hook_wire.go` and the honor and usage runners to `hook_postspawn.go`, so `hookrun.go` is 390 lines instead of 587. No behaviour change.
 - `downshift doctor` now fails when `CLAUDE_CODE_SUBAGENT_MODEL_FORCE` is on, in the harness settings `env` block or in the environment. With it on, Claude Code runs every subagent on one model and ignores both the per-call model and a Downshift rewrite (observed on Claude Code 2.1.310, 2026-10-29: a rewrite to Haiku ran on Opus). Older versions of `setup` wrote this variable and the current one leaves an existing value alone, so it can still be there.
 - Cancelling a worker, or running out of its time budget, now stops the programs it started as well, not only the worker itself. Each worker runs in its own process group and a stop reaches the whole group.
