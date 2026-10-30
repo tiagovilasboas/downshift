@@ -212,10 +212,16 @@ func runSetupMcp(o setupOptions, files []setupPlan, steps []mcpClaudeStep, confi
 		case err != nil:
 			fmt.Fprintf(o.Err, "%s: write failed: %v\n", p.target.Name, err)
 			bad = true
+			continue
 		case bak != "":
 			fmt.Fprintf(o.Out, "%s: written. Backup: %s\n", p.target.Name, setupDisplay(o.Home, bak))
 		default:
 			fmt.Fprintf(o.Out, "%s: written (new file).\n", p.target.Name)
+		}
+		// A JSON MCP-only target (Claude Desktop) carries its after-write notes
+		// here: the hook/skills flow that normally prints Notes never runs for it.
+		if p.target.File == "" {
+			setupPrintNotes(o.Out, p.target.Notes)
 		}
 	}
 	for _, s := range steps {
