@@ -42,8 +42,11 @@ func ownedMarkdown(body string) string {
 	return setupOwnedNote + body
 }
 
-// skillPathsFor lists the skill files setup keeps for t, so --undo can remove
-// them. It is empty for a harness without a skills directory.
+// skillPathsFor lists the skill files setup wrote for t, so --undo can remove
+// them. "Wrote" is read from the disk: every file setup writes leaves a backup
+// (or a "did not exist" marker), so a file without one was never ours. This does
+// not depend on what the plugin carries today, which can differ from what it
+// carried when setup ran. It is empty for a harness without a skills directory.
 func skillPathsFor(o setupOptions, t setupTarget) []string {
 	if t.SkillsDir == "" {
 		return nil
@@ -52,7 +55,10 @@ func skillPathsFor(o setupOptions, t setupTarget) []string {
 	for _, name := range installedSkills {
 		files, _ := skillFiles(name)
 		for _, f := range files {
-			out = append(out, filepath.Join(o.Home, filepath.FromSlash(t.SkillsDir), filepath.FromSlash(f)))
+			p := filepath.Join(o.Home, filepath.FromSlash(t.SkillsDir), filepath.FromSlash(f))
+			if b, _ := latestBackup(p); b != "" {
+				out = append(out, p)
+			}
 		}
 	}
 	return out
@@ -77,37 +83,71 @@ func isPluginActive(o setupOptions, t setupTarget) bool {
 // It reuses setupPlan, so the diff, the backup and --undo behave like any
 // other generated file. A skill folder that exists without our marker is a
 // conflict: nothing is written into it.
+//
+// With the target's plugin active, only the skills the plugin lacks are planned:
+// the plugin is pinned to the commit it was installed from and can be older
+// than this binary. When the plugin's files cannot be read, nothing is planned
+// (setup_skills_plugin.go).
 func planSkills(o setupOptions, t setupTarget) []setupPlan {
 	if t.SkillsDir == "" {
 		return nil
 	}
 	root := filepath.Join(o.Home, filepath.FromSlash(t.SkillsDir))
+	var carried map[string]bool
 	if isPluginActive(o, t) {
-		return []setupPlan{{target: t, path: root, skip: "the " + t.Plugin + " plugin already carries the Downshift skills"}}
+		var unknown string
+		if carried, unknown = pluginCarriedSkills(o, t); unknown != "" {
+			return []setupPlan{{target: t, path: root, skip: unknown}}
+		}
 	}
 	var plans []setupPlan
+	var provided []string
 	for _, name := range installedSkills {
+		if carried[name] {
+			provided = append(provided, name)
+			continue
+		}
 		files, err := skillFiles(name)
 		if err != nil {
 			return []setupPlan{{target: t, path: filepath.Join(root, name), err: err}}
 		}
-		conflict := skillFolderConflict(filepath.Join(root, name))
-		for _, f := range files {
-			body, err := skills.FS.ReadFile(f)
-			p := setupPlan{target: t, path: filepath.Join(root, filepath.FromSlash(f))}
-			switch {
-			case err != nil:
-				p.err = err
-			case conflict != "":
-				p.err = fmt.Errorf("%s", conflict)
-			default:
-				if cur, rerr := os.ReadFile(p.path); rerr == nil {
-					p.before, p.existed = cur, true
-				}
-				p.after = []byte(ownedMarkdown(string(body)))
+		plans = append(plans, planSkillFiles(t, root, name, files)...)
+	}
+	if len(provided) > 0 {
+		skip := setupPlan{target: t, path: root, skip: carriedReason(t, provided)}
+		plans = append([]setupPlan{skip}, plans...)
+	}
+	return plans
+}
+
+// carriedReason says which skills setup leaves to the plugin.
+func carriedReason(t setupTarget, provided []string) string {
+	if len(provided) == len(installedSkills) {
+		return "the " + t.Plugin + " plugin already carries the Downshift skills"
+	}
+	return "the " + t.Plugin + " plugin already carries " + strings.Join(provided, ", ") +
+		"; the other Downshift skills are installed here because the plugin lacks them"
+}
+
+// planSkillFiles plans the files of one skill folder.
+func planSkillFiles(t setupTarget, root, name string, files []string) []setupPlan {
+	var plans []setupPlan
+	conflict := skillFolderConflict(filepath.Join(root, name))
+	for _, f := range files {
+		body, err := skills.FS.ReadFile(f)
+		p := setupPlan{target: t, path: filepath.Join(root, filepath.FromSlash(f))}
+		switch {
+		case err != nil:
+			p.err = err
+		case conflict != "":
+			p.err = fmt.Errorf("%s", conflict)
+		default:
+			if cur, rerr := os.ReadFile(p.path); rerr == nil {
+				p.before, p.existed = cur, true
 			}
-			plans = append(plans, p)
+			p.after = []byte(ownedMarkdown(string(body)))
 		}
+		plans = append(plans, p)
 	}
 	return plans
 }
