@@ -131,16 +131,17 @@ Rules:
 
 Unlike heavy orchestrators that enforce state machines and rules inside closed binaries or desktop apps, Downshift adopts an open, transparent **Harness-Native Markdown Architecture**.
 
-### A. Harness Target Directories
-During `downshift setup`, Downshift inspects detected harnesses and creates/links native `.md` skill files:
+### A. Harness Target Directories (Ordered by Community Adoption)
+During `downshift setup`, Downshift inspects detected harnesses in order of community adoption and creates/links native `.md` skill files:
 
-| Harness | Target Directory | Mechanism |
-|---|---|---|
-| **Claude Code** | `~/.claude/skills/` | Native Claude Code skills |
-| **Cursor** | `~/.cursor/rules/` | Cursor rule files (`.mdc` / `.md`) |
-| **OpenAI Codex** | `~/.codex/skills/` or `.codex/rules/` | Native instructions & skills |
-| **Google Antigravity** | `~/.gemini/antigravity/skills/` | Antigravity skill bundles |
-| **KiroCrew** | `~/.kiro/steering/` | Kiro steering files |
+| Rank | Harness | Target Directory | Mechanism |
+|:---:|---|---|---|
+| 1 | **Claude Code** | `~/.claude/skills/` | Native Claude Code skills |
+| 2 | **Cursor** | `~/.cursor/rules/` | Cursor rule files (`.mdc` / `.md`) |
+| 3 | **OpenCode** | `~/.config/opencode/skills/` | Open-source agent skills & `AGENTS.md` |
+| 4 | **OpenAI Codex** | `~/.codex/skills/` or `.codex/rules/` | Native instructions & skills |
+| 5 | **Google Antigravity** | `~/.gemini/antigravity/skills/` | Antigravity skill bundles |
+| 6 | **KiroCrew** | `~/.kiro/steering/` | Kiro steering files |
 
 ### B. Core Shipped Skills (`.md`)
 1. **`downshift-orchestrator.md`**: Guides the session's Lead LLM on how to decompose complex tasks, check quota headroom before delegating, and communicate via Downshift's MCP tools (`downshift mcp serve`).
