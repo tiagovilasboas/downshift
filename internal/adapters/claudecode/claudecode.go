@@ -72,6 +72,17 @@ func (ev Event) EntryIdentifier() string { return ev.Entry }
 // The runner keeps only a known label (telemetry.PermissionModeLabel).
 func (ev Event) PermissionModeIdentifier() string { return ev.PermissionMode }
 
+// clientEntrypointEnv is the variable Claude Code sets in the environment of
+// the processes it starts, naming which client launched it (for example "cli"
+// or "claude-desktop"). Claude Desktop's Code tab runs an embedded Claude Code.
+const clientEntrypointEnv = "CLAUDE_CODE_ENTRYPOINT"
+
+// ClientIdentifier returns the Claude Code client that fired the hook, read
+// from CLAUDE_CODE_ENTRYPOINT in the environment. This is a Claude Code harness
+// fact, so it lives in the adapter; the runner stores only the sanitized label
+// (telemetry.ClientOrDrop). The value is opaque and never used for policy.
+func (ev Event) ClientIdentifier() string { return os.Getenv(clientEntrypointEnv) }
+
 // ToolUseIdentifier returns the harness id of this tool call, if any.
 func (ev Event) ToolUseIdentifier() string { return ev.ToolUseID }
 
