@@ -325,6 +325,7 @@ backup, and only for keys that are unset.
 |---|---|
 | Harness → hook stdin | Untrusted JSON. 1 MiB cap (`+1` byte detects overflow), 2 s read timeout (`hookReadTimeout`), strict parse; any failure is a logged fail-open allow |
 | Hook runtime | 1.5 s `HookBudget` for helper commands, panic recovery, catalog loaded under `recover`; a failure never exits 2 (deny) and an unchanged Claude Code or Codex spawn answers `{}`, not an explicit `allow`, so the user's ask rules still apply (Cursor's wire requires `{"permission":"allow"}`) |
+| Repeated hook failures | Routing circuit breaker (`cmd/downshift/hook_circuit.go`), state read from the event log tail (128 KiB), no state file: when a harness's last 3 hook events are failures with one error code, the hook allows its spawns unchanged without routing and records no more failures; a routed decision closes it, and the hook routes again 5 minutes after the last failure. `downshift doctor` fails with one line per open circuit |
 | Hook → network | None. No provider call, no LLM, no price fetch. Quota and prices come from files |
 | State directory | Single-user local files; `0700` dirs, `0600` logs; the DCI telemetry log refuses symlinks and non-regular files |
 | Vendored mods | Third-party code pinned in NOTICE, read-only, no routing logic; `setup` installs them through `claude plugin install` |

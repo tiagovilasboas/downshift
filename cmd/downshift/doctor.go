@@ -166,6 +166,7 @@ func buildDoctorReport(env doctorEnv) *doctorReport {
 	checkPrices(rep, env)
 	checkContext(rep, env)
 	checkGateways(rep, env)
+	checkCircuits(rep, events)
 	for _, note := range modelOverrideNotes(core.AllHarnessCaps(), env.Getenv) {
 		name := strings.TrimPrefix(note, "model_override_env: ")
 		if i := strings.Index(name, "="); i > 0 {
