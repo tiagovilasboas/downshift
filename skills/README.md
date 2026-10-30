@@ -10,6 +10,11 @@ harness can read; the Claude Code plugin ships them as `/downshift:<name>`.
 | `harness-engineer` | six steps: restate, split by story points, parallelize, keep small work local, leave mechanical spawns unpinned, check with `session --why` and `report` | never | keep while you delegate work |
 | `cost-reducer` | the one entry point for "we spend too much": fixed diagnosis order, biggest lever first, one change at a time | only after a yes | keep; it defers to setup when nothing is wired |
 
+`downshift-effort` is a fifth, advisory skill: it tells the orchestrator how much
+reasoning and verification a task's stakes deserve (mechanical, ordinary, high) and
+never sets an effort value itself. Setup installs it next to `downshift-orchestrator`.
+Inspired by an MIT-licensed skill, github.com/mmc7676/skills.
+
 ## What they cost
 
 A skill is not free: its `description` is loaded into every session, and its
