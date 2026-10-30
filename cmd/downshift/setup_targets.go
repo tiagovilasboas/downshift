@@ -291,4 +291,22 @@ var setupTargets = []setupTarget{
 		Registry: ".kiro/crew/hooks.json",
 		Mcp:      &setupMcp{Kind: mcpJSONMap, File: ".kiro/settings/mcp.json"},
 	},
+	{
+		// Claude Desktop Chat is an MCP host, not a hook harness: it has no hook
+		// file, no skills and no steering, so this target only registers the MCP
+		// server. File is empty on purpose; setup reports it as detected-not-wired
+		// and the server is added through the shared JSON-map writer. Chat reads
+		// <UserConfigDir>/Claude/claude_desktop_config.json; on macOS that is
+		// ~/Library/Application Support/Claude (what os.UserConfigDir resolves to).
+		// ConfigDir gates the write: setup never creates the file when the Claude
+		// directory is absent. Chat must be restarted to pick the server up, and
+		// only providers/status/playbook/apply work from Chat (no spawn tools).
+		Name:      "claude-desktop",
+		ConfigDir: "Library/Application Support/Claude",
+		Manual:    "Claude Desktop Chat is an MCP host with no hooks, skills or steering, so setup only registers the MCP server there.",
+		Notes: []string{
+			"Restart Claude Desktop to pick up the MCP server; only providers/status/playbook/apply work from Chat.",
+		},
+		Mcp: &setupMcp{Kind: mcpJSONMap, File: "Library/Application Support/Claude/claude_desktop_config.json"},
+	},
 }
