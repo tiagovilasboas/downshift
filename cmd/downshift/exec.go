@@ -65,6 +65,7 @@ func runExec(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 			ev.Harness = envHarness()
 			ev.Model = envModel(ev.Harness)
 			ev.Entry = entry
+			ev.Client = envClient()
 			_ = execwrap.Append(path, ev)
 		}
 		if res.ExitCode != 0 {
