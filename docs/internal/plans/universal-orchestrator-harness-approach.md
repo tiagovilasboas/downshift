@@ -124,3 +124,33 @@ Rules:
    `{{VERIFICATION_COMMAND}}`
 5. Report completion with the exact verification output and exit code. Do not provide conversational filler.
 ```
+
+---
+
+## 6. Native Markdown Skills & Engineering Playbooks Deployment
+
+Unlike heavy orchestrators that enforce state machines and rules inside closed binaries or desktop apps, Downshift adopts an open, transparent **Harness-Native Markdown Architecture**.
+
+### A. Harness Target Directories
+During `downshift setup`, Downshift inspects detected harnesses and creates/links native `.md` skill files:
+
+| Harness | Target Directory | Mechanism |
+|---|---|---|
+| **Claude Code** | `~/.claude/skills/` | Native Claude Code skills |
+| **Cursor** | `~/.cursor/rules/` | Cursor rule files (`.mdc` / `.md`) |
+| **OpenAI Codex** | `~/.codex/skills/` or `.codex/rules/` | Native instructions & skills |
+| **Google Antigravity** | `~/.gemini/antigravity/skills/` | Antigravity skill bundles |
+| **KiroCrew** | `~/.kiro/steering/` | Kiro steering files |
+
+### B. Core Shipped Skills (`.md`)
+1. **`downshift-orchestrator.md`**: Guides the session's Lead LLM on how to decompose complex tasks, check quota headroom before delegating, and communicate via Downshift's MCP tools (`downshift mcp serve`).
+2. **`downshift-delegate.md`**: Provides the standard Task Envelope template for subagents, injecting explicit file boundaries, small-tier model hints, and verification commands.
+3. **`downshift-rules.md`**: Inviolable operational rules for workers (no unverified code changes, strict minimal diffs, mandatory compactor command wrapping).
+
+### C. Standard Engineering Playbooks (`.md`)
+1. **`clean-code.md`**: Single Responsibility Principle (SRP), KISS, YAGNI, file length limits (< 300 lines), descriptive naming conventions.
+2. **`tdd-verification.md`**: Test-driven development discipline, unit test coverage expectations, regression avoidance.
+3. **`security-boundaries.md`**: OWASP ASVS rules, credential hygiene (zero secrets in code, args or logs), sandbox compliance.
+
+By placing these capabilities into human-readable Markdown files controlled by the user's own harness, the orchestration remains fully auditable, easily customizable, and completely free of proprietary runtime lock-in.
+

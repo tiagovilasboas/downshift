@@ -58,6 +58,46 @@ Approach note (2026-10-29): Universal Orchestrator, MCP conformance, and non-bes
 
 Gateway Routers note (2026-10-29): Multi-provider proxy routers (9router and OmniRoute) operate at the transport layer (failover, multi-key load balancing across Anthropic, DeepSeek, OpenAI, Groq), while Downshift operates at the orchestration and compaction layer. Downshift connects with them as first-class companions: detecting them in `doctor`, normalising gateway model prefixes (e.g. `cc/*`, `auto/*`), and wiring harness base URLs without bloating Downshift with a bespoke GUI or embedded proxy.
 
+## 3b. Setup Evolution, Universal Orchestrator & Native Markdown Skills (2026-10-29)
+
+Following clean-room competitive analysis of external orchestrator tools (such as Alethe, commit `17acb090` / research `2026-10-28`), Downshift incorporates the highest-value onboarding and orchestration paradigms while **strictly avoiding the heavy monolithic anti-patterns** (400MB Electron app, PTY scrapers, credential interception, local HTTP shared-secret servers, AGPL licensing):
+
+1. **Native Markdown Skills over Bespoke Runtimes:**
+   Rather than building an embedded multi-process orchestration runtime in Go, Downshift treats the user's native AI harness (Claude Code, Cursor, Codex, Antigravity, KiroCrew) as the orchestrator. Downshift installs portable, zero-overhead `.md` skills directly into the harness configuration directories (`~/.claude/skills/`, `~/.cursor/rules/`, `.agents/skills/`):
+   - `downshift-orchestrator.md`: Teaches the Lead LLM to plan, decompose, respect worker concurrency caps, and query Downshift's MCP tools (`providers`, `status`, `apply`).
+   - `downshift-delegate.md`: Enforces structured Task Envelopes (one-sentence goal, bounded file paths, verification gate, `[tier=small]` hints).
+   - `downshift-rules.md`: Inviolable engineering guardrails (never commit without test passing, strict scope boundaries, structured handoff).
+
+2. **Pre-installed Engineering Playbooks as Native Markdown:**
+   Modular, opt-in engineering standards delivered as plain Markdown rules:
+   - `clean-code.md`: SRP, YAGNI, KISS, files under 300 lines, descriptive naming.
+   - `tdd-verification.md`: Test-driven discipline, wrapping commands with `downshift compactor -- <test-cmd>`.
+   - `security-boundaries.md`: OWASP ASVS rules, zero secrets in code/logs, strict sandbox compliance.
+
+3. **First-Run Interview in `downshift setup`:**
+   Interactive terminal wizard asking three strategic questions on first run:
+   - *Routing & Cost Posture:* Balanced (Recommended), Aggressive Economy, or Conservative.
+   - *Worker Concurrency Cap:* Maximum simultaneous background subagents (1 to 8, default 4).
+   - *Default Time Budget:* Maximum duration per subagent task (default 900s).
+
+4. **Live Adapter Proof & Smoke Verification in Onboarding:**
+   Real-time handshake with installed harness CLIs during setup (firing in-process test payload in < 50ms) to verify permissions and paths before concluding.
+
+5. **Closing "Aha! Moment":**
+   Clean terminal summary displaying detected provider quotas side by side, active routing tiers, and the immediate command to verify in the user's preferred harness.
+
+### Setup Evolution Waves (Cards & Points)
+
+| Card | Scope | Points | Deliverable |
+|---|---|---|---|
+| **S-W1** | **Interactive TTY Detection & Silent Fallback** | 2 | `downshift setup` auto-detects interactive terminal vs script/pipe (`--yes`, `--dry-run` unaffected) |
+| **S-W2** | **First-Run Interview State Machine** | 3 | Lipgloss-driven wizard collecting policy preset, concurrency cap, and companion gateways |
+| **S-W3** | **Native Markdown Skills & Playbooks Generator** | 3 | Automated generation and linking of `.md` skills and engineering playbooks into target harness folders |
+| **S-W4** | **Live Adapter Proof & Smoke Check** | 3 | Real-time payload handshake during setup with latency measurement (< 50ms) and instant fix hints |
+| **S-W5** | **Aha! Moment Summary & Verification Gate** | 2 | Final visual status card, `doctor` parity, updated `install.md`, `README.md`, and `make check` pass |
+
+Total: 5 cards, 13 Story Points. Fully modular and incremental (each ≤ 3 SP).
+
 ## 4. Common gate (every code PR)
 
 `make check` green; golden decision tables; the acceptance suite (`outcome`, `benchmark`) at the same rigour as before, with any regression reported; `./examples/run-all.sh`; layering rule (harness facts in `HarnessCapabilities`, adapters hold no policy; see [layering](../../contrib/layering.md)); copyright headers; OS-agnostic paths; no file over 300 lines; tests isolate `HOME` and `DOWNSHIFT_STATE_DIR`; no dead package references in the docs the PR touches.
