@@ -99,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **setup installs the skills an active plugin lacks:** with the Downshift plugin active, `setup` skipped every skill. The plugin is pinned to the commit it was installed from, so a newer skill (`downshift-effort`) never arrived. `setup` now reads the plugin's install directory from `plugins/installed_plugins.json`, skips only the skills the plugin carries, and installs the rest with the usual diff, backup and `--undo`. When that directory cannot be read it installs none and says why. `--undo` lists only the skill files setup wrote.
 - **Claude Code session list:** PR #570 removed the session inferred from the current
   model, but Claude Code sends no session list in the hook payload, so every spawn had an
   unknown session and kept its model: no rewrite reached a subscriber. Tests and the smoke
