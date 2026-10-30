@@ -185,7 +185,9 @@ your prompt cache stays intact.
 - **Refusals:** a model id the harness catalog does not know, and an `explicit_only` model, are
   never written.
 - **Playbooks** (implemented): `downshift playbook list|show|edit|add|remove|restore|check` edits the
-  work rules a delegated worker receives (General always applies; Backend and Frontend ship).
+  work rules a delegated worker receives (General, Backend, Frontend, plus the 6 canonical engineering
+  playbooks with Mermaid state-machine loops: Research, Implementation, Review, TDD Verification,
+  Documentation, Incident Rescue, and the Universal Skill).
 - **Orchestrator skill** (implemented): `downshift setup` installs `downshift-orchestrator`, guidance
   on splitting work and choosing model and effort per spawn.
 - **MCP server** (`downshift mcp serve`, implemented): four information tools for the orchestrator, `providers` (the models this
