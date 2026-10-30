@@ -54,6 +54,10 @@ func planMcp(o setupOptions, targets []setupTarget) (files []setupPlan, steps []
 			if p, ok := planCodexMcp(o, t); ok {
 				files = append(files, p)
 			}
+		case mcpJSONMap:
+			if p, ok := planMcpJSON(o, t); ok {
+				files = append(files, p)
+			}
 		}
 	}
 	return files, steps
