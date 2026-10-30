@@ -27,6 +27,11 @@ surface, and say plainly where they cannot. Spike and surface map: `downshift-la
 
 Total: 15 points, no card over 3.
 
+State (2026-10-30, evidence in `docs/evidence/claude-desktop-code-tab-2026-10-30.md`): CD-1 routing proven (rewrite
+honored on a real Desktop child); CD-3 MCP proven; CD-2 partial (the Bash rewrite runs in the Code tab, no byte
+reduction observed yet); CD-4 and CD-5 done in the labs findings; CD-6 in PRs #643 (merged), #644 and #645.
+New gap: exec events carry no session id or client, so compaction cannot be attributed to a client by hash.
+
 ## Pass criteria
 
 - A surface is "works" only with an event log line, the matching session id and the observed result (child model,
