@@ -77,8 +77,9 @@ func TestSetupTUI_ConfirmDefaultIsNo(t *testing.T) {
 		{"empty answer aborts", "\n\n", false},
 		{"EOF at confirm aborts", "\n", false},
 		{"EOF everywhere aborts", "", false},
-		{"unknown answer aborts", "\nquem sabe\n", false},
+		{"unknown answer aborts", "\nmaybe\n", false},
 		{"explicit n aborts", "\nn\n", false},
+		{"y applies", "\ny\n", true},
 		{"s applies", "\ns\n", true},
 		{"sim applies", "\nSim\n", true},
 		{"yes applies", "\nyes\n", true},
@@ -108,7 +109,7 @@ func TestSetupTUI_DiffShownBeforeQuestion(t *testing.T) {
 	}
 	s := out.String()
 	diff := strings.Index(s, "would change")
-	ask := strings.Index(s, "[s/N]")
+	ask := strings.Index(s, "[y/N]")
 	if diff < 0 || ask < 0 || diff > ask {
 		t.Errorf("diff (%d) must print before the confirm question (%d):\n%s", diff, ask, s)
 	}
@@ -124,7 +125,7 @@ func TestSetupTUI_DryRunNeverAsksToApply(t *testing.T) {
 	if rc := setupTUI(o); rc != 0 {
 		t.Fatalf("rc = %d", rc)
 	}
-	if strings.Contains(out.String(), "[s/N]") || settingsWritten(o) {
+	if strings.Contains(out.String(), "[y/N]") || settingsWritten(o) {
 		t.Errorf("dry run must not ask or write:\n%s", out.String())
 	}
 }
@@ -148,7 +149,7 @@ func TestSetupTUI_NonInteractiveNeverPrompts(t *testing.T) {
 			if rc := run(o); rc != 0 {
 				t.Fatalf("rc = %d (stderr: %s)", rc, errw.String())
 			}
-			if strings.Contains(out.String(), "[s/N]") || strings.Contains(out.String(), "[S/n]") {
+			if strings.Contains(out.String(), "[y/N]") || strings.Contains(out.String(), "[Y/n]") {
 				t.Errorf("must not prompt:\n%s", out.String())
 			}
 			if !settingsWritten(o) {

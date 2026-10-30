@@ -60,10 +60,10 @@ Gateway Routers note (2026-10-29): Multi-provider proxy routers (9router and Omn
 
 ## 3b. Setup Evolution, Universal Orchestrator & Native Markdown Skills (2026-10-29)
 
-Following clean-room competitive analysis of external orchestrator tools (such as Alethe, commit `17acb090` / research `2026-10-28`), Downshift incorporates the highest-value onboarding and orchestration paradigms while **strictly avoiding the heavy monolithic anti-patterns** (400MB Electron app, PTY scrapers, credential interception, local HTTP shared-secret servers, AGPL licensing):
+Downshift takes the highest-value onboarding and orchestration paradigms and keeps the runtime light by design: **no embedded orchestration runtime, no PTY scrapers, no credential interception, and no local HTTP shared-secret servers**. The user's own harness is the orchestrator, and Downshift adds portable Markdown and policy around it:
 
 1. **Native Markdown Skills over Bespoke Runtimes:**
-   Rather than building an embedded multi-process orchestration runtime in Go, Downshift treats the user's native AI harness (Claude Code, Cursor, OpenCode, OpenAI Codex, Google Antigravity, Kiro, KiroCrew — ordered by community adoption) as the orchestrator. Downshift installs portable, zero-overhead `.md` skills directly into the harness configuration directories (`~/.claude/skills/`, `~/.cursor/rules/`, `~/.config/opencode/skills/`, `~/.kiro/steering/`, etc.):
+   Rather than building an embedded multi-process orchestration runtime in Go, Downshift treats the user's native AI harness (Claude Code, Cursor, OpenCode, OpenAI Codex, Google Antigravity, KiroCrew (Experimental) — ordered by community adoption) as the orchestrator. Downshift installs portable, zero-overhead `.md` skills directly into the harness configuration directories (`~/.claude/skills/`, `~/.cursor/rules/`, `~/.config/opencode/skills/`, `~/.kiro/crew/workspace/.kiro/steering/`, etc.):
    - `downshift-orchestrator.md`: Teaches the Lead LLM to plan, decompose, respect worker concurrency caps, and query Downshift's MCP tools (`providers`, `status`, `apply`).
    - `downshift-delegate.md`: Enforces structured Task Envelopes (one-sentence goal, bounded file paths, verification gate, `[tier=small]` hints).
    - `downshift-rules.md`: Inviolable engineering guardrails (never commit without test passing, strict scope boundaries, structured handoff).
