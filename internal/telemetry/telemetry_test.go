@@ -275,49 +275,16 @@ func TestAggregate_CountsVerdicts(t *testing.T) {
 	}
 }
 
-func TestAggregate_NormSavings_WithDownshift(t *testing.T) {
-	// One event with 50% savings: routed cost = 0.5, baseline = 1.0.
-	ev := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.5)
-	ev.QuotaStatus = "available"
-	events := []telemetry.Event{ev}
-	s := telemetry.Aggregate(events)
-	saved, frac := s.NormSaved()
-	if math.Abs(saved-0.5) > 1e-9 {
-		t.Errorf("saved = %f, want 0.5", saved)
-	}
-	if math.Abs(frac-0.5) > 1e-9 {
-		t.Errorf("frac = %f, want 0.5", frac)
-	}
-}
-
-func TestAggregate_NormSavings_NoDownshift(t *testing.T) {
-	events := []telemetry.Event{
-		makeEvent("cc", "COMPLEX", "OK", 0),
-	}
-	s := telemetry.Aggregate(events)
-	saved, frac := s.NormSaved()
-	if saved != 0 {
-		t.Errorf("saved = %f, want 0 (no downshift)", saved)
-	}
-	if frac != 0 {
-		t.Errorf("frac = %f, want 0 (no downshift)", frac)
-	}
-}
-
 func TestAggregate_EmptySlice(t *testing.T) {
 	s := telemetry.Aggregate(nil)
 	if s.Total != 0 {
 		t.Errorf("Total = %d, want 0", s.Total)
 	}
-	saved, frac := s.NormSaved()
-	if saved != 0 || frac != 0 {
-		t.Errorf("empty aggregate should have zero savings, got %f %f", saved, frac)
-	}
 }
 
 // --- PrintStats ---
 
-func TestPrintStats_UnitMode_NoUSDClaim(t *testing.T) {
+func TestPrintStats_Detail_NoMoneyOrPriceLens(t *testing.T) {
 	events := []telemetry.Event{
 		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8),
 	}
@@ -326,13 +293,13 @@ func TestPrintStats_UnitMode_NoUSDClaim(t *testing.T) {
 	out := buf.String()
 
 	if strings.Contains(out, "$") {
-		t.Error("unit mode must not show dollar signs")
+		t.Error("stats must not show dollar signs")
 	}
-	if !strings.Contains(out, "Normalised") {
-		t.Error("unit mode should label savings as 'Normalised'")
+	if strings.Contains(out, "Normalised") {
+		t.Error("the normalised cost lens is gone; savings are tokens, not units")
 	}
-	if !strings.Contains(out, "A count, not money") {
-		t.Error("unit mode should say the units are a count, not money")
+	if strings.Contains(out, "money") {
+		t.Error("stats must not mention money")
 	}
 }
 

@@ -12,8 +12,8 @@ import (
 // StatsOptions controls PrintStats output.
 type StatsOptions struct {
 	Days int // time window; <= 0 means all time
-	// Detail adds the full report (normalised units, honor, quota, usage, child
-	// status, per-session cost, complexity breakdown) after the 3-line headline.
+	// Detail adds the full report (honor, quota, usage, child status,
+	// complexity breakdown) after the 3-line headline.
 	Detail bool
 	// ShowDCI displays the Code Intelligence (DCI) metrics section.
 	ShowDCI bool
@@ -23,7 +23,6 @@ type StatsOptions struct {
 func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	filtered := FilterByDays(events, opts.Days)
 	s := Aggregate(filtered)
-	normSaved, _ := s.NormSaved()
 
 	label := fmt.Sprintf("Last %d days", opts.Days)
 	if opts.Days <= 0 {
@@ -65,14 +64,6 @@ func PrintStats(events []Event, opts StatsOptions, w io.Writer) {
 	}
 	fmt.Fprintf(w, "\n")
 
-	if s.Total > 0 {
-		// Normalised units: a dimensionless proxy of routed against unrouted events.
-		fmt.Fprintf(w, "Normalised baseline   %8.1f units\n", s.NormBaseline)
-		fmt.Fprintf(w, "Normalised routed     %8.1f units\n", s.NormRouted)
-		fmt.Fprintf(w, "Normalised savings    %8.1f units\n", normSaved)
-		fmt.Fprintf(w, "\n")
-		fmt.Fprintf(w, "Note: 1 unit = cost of one unrouted event. A count, not money.\n")
-	}
 	if s.Corrected > 0 {
 		fmt.Fprintf(w, "Safety-held           %8d  (guardrail applied, see corrections)\n", s.Corrected)
 	}

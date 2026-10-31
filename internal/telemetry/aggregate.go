@@ -165,7 +165,6 @@ func (a *aggregator) countDecision(ev Event) {
 	a.countFrontier(ev, isRefuted)
 	applied := AppliedRouting(ev) && !isRefuted
 	a.countVerdict(ev, applied)
-	a.sumNormalisedCost(ev, applied)
 	// Self-correction: the verdict stands, the safe action applied.
 	if len(ev.Corrections) > 0 {
 		a.s.Corrected++
@@ -230,23 +229,6 @@ func (a *aggregator) countVerdict(ev Event, applied bool) {
 		a.s.OK++
 	default:
 		a.s.Unknown++
-	}
-}
-
-// sumNormalisedCost: baseline = 1.0 per event; routed = 1 - savings. Only an
-// applied downshift whose quota surface is available saves anything. unknown
-// and held are not credited routes. This is a dimensionless proxy. Multiply by
-// --cost-per-unit to get dollars.
-func (a *aggregator) sumNormalisedCost(ev Event, applied bool) {
-	a.s.NormBaseline += 1.0
-	if ev.Verdict == "DOWNSHIFT" && applied && SavingsCredit(ev) && ev.EstimatedSavings > 0 && ev.EstimatedSavings < 1 {
-		a.s.NormRouted += 1 - ev.EstimatedSavings
-	} else if ev.Verdict == "UPSHIFT" && applied && ev.UpshiftCostRatio > 1 {
-		// An applied upshift costs more than the baseline. Charge the
-		// known price ratio; an unknown ratio stays neutral (1.0).
-		a.s.NormRouted += ev.UpshiftCostRatio
-	} else {
-		a.s.NormRouted += 1.0
 	}
 }
 

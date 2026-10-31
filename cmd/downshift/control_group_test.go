@@ -178,7 +178,7 @@ func TestControlGroup_EndRecordLinksThroughSharedRunners(t *testing.T) {
 				t.Fatal(err)
 			}
 			tasks := telemetry.BuildTasks(events)
-			if len(tasks) != 1 || tasks[0].Group != tc.group || !tasks[0].Completed() || !tasks[0].Priced {
+			if len(tasks) != 1 || tasks[0].Group != tc.group || !tasks[0].Completed() || !tasks[0].Observed {
 				t.Fatalf("tasks = %+v, want one completed, priced %s task", tasks, tc.group)
 			}
 			rep := telemetry.BuildReport(events, 1)

@@ -131,14 +131,9 @@ func TestHookE2E_RewriteEventStats(t *testing.T) {
 		t.Errorf("requested_model = %q, want %s", ev.FromModel, frontierID)
 	}
 
-	// Stats aggregation over the file must count the downshift with positive
-	// normalised savings (saved units and fraction both make sense: > 0).
+	// Stats aggregation over the file must count the downshift.
 	stats := telemetry.Aggregate(events)
 	if stats.Total != 1 || stats.Downshifted != 1 {
 		t.Fatalf("stats = %+v, want Total=1 Downshifted=1", stats)
-	}
-	saved, frac := stats.NormSaved()
-	if saved <= 0 || frac <= 0 || frac > 1 {
-		t.Fatalf("NormSaved() = (%v, %v), want positive units and a fraction in (0,1]", saved, frac)
 	}
 }

@@ -75,7 +75,7 @@ func TestPrintStats_DetailKeepsEverythingAfterHeadline(t *testing.T) {
 	d := headlineEvent("claude-opus-5-5", "claude-haiku-5-5", "SMALL", nil, nil)
 	var b bytes.Buffer
 	telemetry.PrintStats([]telemetry.Event{d, usageFor(d, 600, 400, 9000)}, telemetry.StatsOptions{Days: 7, Detail: true}, &b)
-	for _, want := range []string{"Last 7 days · 1 subagents", "Subagent decisions", "By complexity", "Normalised baseline", "Honor", "Quota", "Tokens rerouted, by harness"} {
+	for _, want := range []string{"Last 7 days · 1 subagents", "Subagent decisions", "By complexity", "Honor", "Quota", "Tokens rerouted, by harness"} {
 		if !strings.Contains(b.String(), want) {
 			t.Errorf("--detail must keep %q:\n%s", want, b.String())
 		}

@@ -5,7 +5,6 @@ package telemetry_test
 
 import (
 	"bytes"
-	"math"
 	"strings"
 	"testing"
 
@@ -57,10 +56,6 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 		stats := telemetry.Aggregate(events)
 		if stats.HonorObserved != 1 || stats.UsageObserved != 1 {
 			t.Fatalf("aggregate honor=%d usage=%d, want 1 and 1", stats.HonorObserved, stats.UsageObserved)
-		}
-		saved, _ := stats.NormSaved()
-		if math.Abs(saved-0.4) > 1e-9 {
-			t.Fatalf("NormSaved() = %v, want 0.4", saved)
 		}
 	})
 
@@ -140,10 +135,6 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 		stats := telemetry.Aggregate(events)
 		if stats.HonorObserved != 0 || stats.UsageObserved != 0 {
 			t.Fatalf("nil harness aggregate honor=%d usage=%d, want 0 and 0", stats.HonorObserved, stats.UsageObserved)
-		}
-		saved, _ := stats.NormSaved()
-		if saved != 0 {
-			t.Fatalf("nil harness NormSaved() = %v, want 0", saved)
 		}
 
 		var report bytes.Buffer
