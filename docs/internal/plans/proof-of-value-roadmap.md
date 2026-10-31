@@ -143,6 +143,6 @@ read-only/bypass recipes have no approval channel to answer). `diff` and worker
 
 ## Out of scope for these three weeks
 
-- New harness adapters. (The alethe-style worker-continuation tools `send`, `steer` and `release` are now in scope under P6 by owner decision 2026-10-31; `answer`, `diff` and worker `status` remain out.)
+- New harness adapters. (The alethe-style worker-continuation tools `send`, `steer` and `release` are now in scope under P6 by owner decision 2026-10-31; the `diff` tool and worker `status` also came in by owner decision 2026-10-31, so only `answer` remains out.)
 - Price or dollar figures.
 - Hosted or team features.
