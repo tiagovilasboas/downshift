@@ -29,6 +29,7 @@ type ruleDoc struct {
 	Enabled *bool     `json:"enabled"`
 	Kinds   []string  `json:"kinds"`
 	Efforts []string  `json:"efforts"`
+	Classes []string  `json:"classes"`
 	Gates   []gateDoc `json:"gates"`
 	Profile string    `json:"profile"`
 	Tier    string    `json:"tier"`

@@ -74,17 +74,36 @@ type Profile struct {
 	source      string
 }
 
-// Rule maps the kinds and efforts it admits, plus quota gates, to a profile or
-// a tier. Exactly one of Profile and Tier is set.
+// Rule maps the kinds, efforts and classifier classes it admits, plus quota
+// gates, to a profile or a tier. Exactly one of Profile and Tier is set.
 type Rule struct {
 	ID      contract.RuleID
 	Enabled bool
 	Kinds   []contract.Kind        // empty admits any kind
 	Efforts []contract.EffortClass // empty admits any effort
-	Gates   []Gate                 // declared, not evaluated yet: all must pass; a gate with no reading passes
+	// Classes is the classifier class gate (owner decision O8). Empty admits
+	// any class, so a class-free rule behaves exactly as before. A non-empty
+	// list admits a call only when all three hold: the classifier's class is in
+	// the set, the classification is confident, and the task carries no risk
+	// category. This is the one way to send a TRIVIAL/SIMPLE task down to a
+	// smaller tier, since the project floor only ever raises the tier.
+	Classes []contract.Complexity
+	Gates   []Gate // declared, not evaluated yet: all must pass; a gate with no reading passes
 	Profile contract.ProfileName
 	Tier    contract.Tier
 	source  string
+}
+
+// MatchContext is what a rule is matched against: the declared kind and effort
+// (from the hint) and the classifier's reading of the task. Class is the class
+// string ("TRIVIAL".."COMPLEX"); Confident and HasRisk come straight from the
+// classifier. A rule with no Classes ignores all three class fields.
+type MatchContext struct {
+	Kind      contract.Kind
+	Effort    contract.EffortClass
+	Class     contract.Complexity
+	Confident bool
+	HasRisk   bool
 }
 
 // Gate passes while the named window of the harness is below Below percent.
@@ -107,13 +126,14 @@ func (p *Policy) ProfileNamed(name contract.ProfileName) (Profile, bool) {
 	return Profile{}, false
 }
 
-// Match returns the first enabled rule that admits the kind and effort, in
-// declaration order. It ignores Gates: no code evaluates them yet, and
-// headroom.Assess returns only the strain of each provider. A rule with a
-// non-empty list admits only a call that declares a value in it, so a call
-// with no declared kind or effort matches only rules open on that dimension.
+// Match returns the first enabled rule that admits the context, in declaration
+// order. It ignores Gates: no code evaluates them here, and headroom.Assess
+// returns only the strain of each provider. A rule with a non-empty Kinds or
+// Efforts list admits only a call that declares a value in it, so a call with
+// no declared kind or effort matches only rules open on that dimension. A rule
+// with a non-empty Classes list admits the call only when admitsClass holds.
 // Nil-safe.
-func (p *Policy) Match(kind contract.Kind, effort contract.EffortClass) (Rule, bool) {
+func (p *Policy) Match(ctx MatchContext) (Rule, bool) {
 	if p == nil {
 		return Rule{}, false
 	}
@@ -121,15 +141,33 @@ func (p *Policy) Match(kind contract.Kind, effort contract.EffortClass) (Rule, b
 		if !r.Enabled {
 			continue
 		}
-		if len(r.Kinds) > 0 && !contains(r.Kinds, kind) {
+		if len(r.Kinds) > 0 && !contains(r.Kinds, ctx.Kind) {
 			continue
 		}
-		if len(r.Efforts) > 0 && !contains(r.Efforts, effort) {
+		if len(r.Efforts) > 0 && !contains(r.Efforts, ctx.Effort) {
+			continue
+		}
+		if !admitsClass(r.Classes, ctx) {
 			continue
 		}
 		return r, true
 	}
 	return Rule{}, false
+}
+
+// admitsClass reports whether a rule's class gate admits the context. An empty
+// gate admits anything (the pre-O8 behaviour). A non-empty gate admits only a
+// confident, risk-free classification whose class is in the set: doubt keeps,
+// and any risk category keeps, so a class rule can never send a risky or
+// uncertain task down.
+func admitsClass(classes []contract.Complexity, ctx MatchContext) bool {
+	if len(classes) == 0 {
+		return true
+	}
+	if !ctx.Confident || ctx.HasRisk {
+		return false
+	}
+	return contains(classes, ctx.Class)
 }
 
 func contains[T comparable](set []T, v T) bool {

@@ -150,6 +150,32 @@ directory or any parent (nearest file wins, at most 8 levels up). A floor only
 
   Only Claude Code is confirmed. For the others, capture a real payload under `docs/evidence/` before relying on the floor; if the field is absent the floor is looked up from the process directory, so run the hook from the project directory.
 - A floor changes nothing when the current model already sits at that tier. Where a harness does not honor model rewrites (see the harness matrix), the floor stops a downshift from being attempted but cannot force the model.
+- The floor only **raises** a tier. To send an easy task *down* to a smaller tier, declare a routing rule with a `classes` gate (next section). The floor cannot do it.
+
+## Routing rules by classifier class (optional)
+
+The `routing` section of the same `.downshift/policy.json` holds ordered rules
+(first match wins). A rule can match on the orchestrator's hint (`kinds`,
+`efforts`) and, optionally, on the classifier's own reading of the task with a
+`classes` gate. This is the one way to send a task *down* to a smaller tier: the
+tier floor above only ever raises.
+
+```json
+{
+  "version": 1,
+  "routing": {
+    "rules": [
+      { "id": "easy-runs-small", "classes": ["TRIVIAL", "SIMPLE"], "tier": "small" }
+    ]
+  }
+}
+```
+
+- Classes: `TRIVIAL`, `SIMPLE`, `MEDIUM`, `COMPLEX`. An unknown class in the file is refused like any other invalid field.
+- A rule with a `classes` gate matches a spawn only when **all three** hold: the classifier's class is in the set, the classification is **confident**, and the task carries **no risk category**. Doubt keeps the requested model, and any risk (for example `secret`, `payment`) keeps it too.
+- A rule **without** `classes` behaves exactly as before: the class gate is off and nothing about class routing changes. A file with no `routing` section is unaffected.
+- Precedence is unchanged: a model the user pinned wins over every rule, and the guard's **never-widen** rule still holds, so a class rule can only move the tier down or keep it, never up past the requested model. The session allowlist and quota gates still filter the result.
+- The decision is recorded with verdict `rule` and the rule's `id`, so `downshift report` can count how often a class rule fired.
 
 ## Gateway profile for Claude Code (alias workaround)
 

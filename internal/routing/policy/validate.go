@@ -137,6 +137,9 @@ func validateRules(source string, docs []ruleDoc) ([]Rule, error) {
 		if r.Efforts, err = validateEfforts(source, field, d.Efforts); err != nil {
 			return nil, err
 		}
+		if r.Classes, err = validateClasses(source, field, d.Classes); err != nil {
+			return nil, err
+		}
 		if r.Gates, err = validateGates(source, field, d.Gates); err != nil {
 			return nil, err
 		}
@@ -168,6 +171,18 @@ func validateEfforts(source, field string, values []string) ([]contract.EffortCl
 			return nil, refuse(source, fmt.Sprintf("%s.efforts[%d]", field, j), "unknown effort class %q", v)
 		}
 		out = append(out, e)
+	}
+	return out, nil
+}
+
+func validateClasses(source, field string, values []string) ([]contract.Complexity, error) {
+	var out []contract.Complexity
+	for j, v := range values {
+		c := contract.Complexity(v)
+		if !c.Valid() {
+			return nil, refuse(source, fmt.Sprintf("%s.classes[%d]", field, j), "unknown class %q (want TRIVIAL, SIMPLE, MEDIUM or COMPLEX)", v)
+		}
+		out = append(out, c)
 	}
 	return out, nil
 }
