@@ -157,9 +157,9 @@ func unconfidentUnknownBelowMid(d Decision) bool {
 }
 
 // deterministicLift reports whether a deterministic rule, not the classifier's
-// doubtful read, put the decision at its tier: the risk floor, an opted-in
-// NB upshift or an operator tier floor. R7, R8 and R9
-// all exempt such a decision, so the set lives here and only here.
+// doubtful read, put the decision at its tier: the risk floor or an operator
+// tier floor. R7, R8 and R9 all exempt such a decision, so the set lives here
+// and only here.
 //
 // A risk abstention clears confidence without moving the tier, so it counts
 // only while the tier is still the regex read. Once the semantic boost has
@@ -167,7 +167,7 @@ func unconfidentUnknownBelowMid(d Decision) bool {
 // must not launder it past R7, R8 or R9.
 func deterministicLift(d Decision) bool {
 	riskAbstain := d.Guards.RiskAbstain && !d.Guards.SemanticLift
-	return d.Guards.RiskFloor || riskAbstain || d.Shadow.NBUpshift.Applied || d.Guards.PolicyFloor
+	return d.Guards.RiskFloor || riskAbstain || d.Guards.PolicyFloor
 }
 
 // unconfidentUnknownFrontier reports the R7 condition: no comparable current

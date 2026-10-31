@@ -28,7 +28,6 @@ func semAdvEnv(t *testing.T) {
 	t.Helper()
 	t.Setenv("DOWNSHIFT_MINILM", "1")
 	t.Setenv(core.NBDownshiftEnv, "")
-	t.Setenv(core.NBUpshiftEnv, "")
 }
 
 type semAdvCase struct {

@@ -33,18 +33,18 @@ func write(t *testing.T, body string) string {
 
 func TestConfigFromEnv_OnlyDocumentedLiterals(t *testing.T) {
 	env := map[string]string{
-		EnvQuotaMode: "Required", EnvExplicitUpshift: "true", EnvDiscovery: "OFF",
+		EnvQuotaMode: "Required", EnvDiscovery: "OFF",
 	}
 	c := ConfigFromEnv(func(k string) string { return env[k] })
-	if c.QuotaRequired || c.ExplicitUpshift || c.DiscoveryOff {
+	if c.QuotaRequired || c.DiscoveryOff {
 		t.Fatalf("non-literal values switched a flag: %+v", c)
 	}
 	if c.DiscoveryTTL != DefaultDiscoveryTTL || c.DiscoveryTTLInvalid {
 		t.Fatalf("unset TTL: %+v", c)
 	}
-	env = map[string]string{EnvQuotaMode: "required", EnvExplicitUpshift: "1", EnvDiscovery: "off", EnvDiscoveryTTL: "0"}
+	env = map[string]string{EnvQuotaMode: "required", EnvDiscovery: "off", EnvDiscoveryTTL: "0"}
 	c = ConfigFromEnv(func(k string) string { return env[k] })
-	if !c.QuotaRequired || !c.ExplicitUpshift || !c.DiscoveryOff || c.DiscoveryTTL != 0 || c.DiscoveryTTLInvalid {
+	if !c.QuotaRequired || !c.DiscoveryOff || c.DiscoveryTTL != 0 || c.DiscoveryTTLInvalid {
 		t.Fatalf("literal values: %+v", c)
 	}
 	for _, bad := range []string{"-1h", "soon"} {
@@ -62,21 +62,21 @@ func TestConfigFromEnv_OnlyDocumentedLiterals(t *testing.T) {
 
 func TestSetConfig_RestoresAndFallsBackToLookup(t *testing.T) {
 	SetLookup(func(k string) string {
-		if k == EnvExplicitUpshift {
-			return "1"
+		if k == EnvQuotaMode {
+			return "required"
 		}
 		return ""
 	})
 	t.Cleanup(func() { SetLookup(nil) })
-	if !explicitUpshiftEnv() {
+	if !quotaModeRequired() {
 		t.Fatal("lookup not used without a pinned config")
 	}
 	restore := SetConfig(Config{})
-	if explicitUpshiftEnv() {
+	if quotaModeRequired() {
 		t.Fatal("pinned config ignored")
 	}
 	restore()
-	if !explicitUpshiftEnv() {
+	if !quotaModeRequired() {
 		t.Fatal("restore did not bring back the lookup")
 	}
 }
@@ -228,21 +228,6 @@ func TestResolveSessionForID_Precedence(t *testing.T) {
 	pin(t, Config{DiscoveryOff: true, SessionModelsPath: user})
 	if s := ResolveSession("claude-code"); !s.Contains("user") {
 		t.Errorf("user file last: %v", s.IDs)
-	}
-}
-
-func TestExplicitUpshiftEnabled(t *testing.T) {
-	pin(t, Config{SessionModelsPath: write(t, `{"explicit_upshift": true}`)})
-	if !ExplicitUpshiftEnabled() {
-		t.Error("file flag ignored")
-	}
-	pin(t, Config{SessionModelsPath: write(t, `{}`)})
-	if ExplicitUpshiftEnabled() {
-		t.Error("default must be off")
-	}
-	pin(t, Config{ExplicitUpshift: true, SessionModelsPath: filepath.Join(t.TempDir(), "none")})
-	if !ExplicitUpshiftEnabled() {
-		t.Error("env flag ignored")
 	}
 }
 

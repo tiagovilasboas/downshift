@@ -25,17 +25,12 @@ import (
 //	DOWNSHIFT_SESSION_MODELS    unset        Path of the operator session
 //	                                         allowlist (session-models.json).
 //	                                         Unset or empty: the default path
-//	                                         from DefaultSessionModelsPath. Also
-//	                                         the file read for the
-//	                                         "explicit_upshift" flag.
+//	                                         from DefaultSessionModelsPath.
 //	DOWNSHIFT_QUOTA_MODE        unset        "required" makes a usage snapshot
 //	                                         mandatory (the quota gate stays
 //	                                         closed without evidence and
 //	                                         abandoned snapshots still hold).
 //	                                         Anything else is legacy mode.
-//	DOWNSHIFT_EXPLICIT_UPSHIFT  unset        "1" lets upshift select catalog
-//	                                         explicit_only ids. The same flag
-//	                                         in session-models.json is enough.
 //	DOWNSHIFT_INFER_SESSION     on           "off" disables the inferred
 //	                                         session layer.
 //	DOWNSHIFT_DISCOVERY         on           "off" disables the
@@ -46,10 +41,6 @@ import (
 //	                                         entry; "0" keeps it forever. An
 //	                                         invalid or negative value makes
 //	                                         the entry an unknown session.
-//	DOWNSHIFT_NB_UPSHIFT        off          "1" applies the naive-Bayes
-//	                                         upshift. Off: the opinion is
-//	                                         computed and recorded (shadow)
-//	                                         but the tier is unchanged.
 //	DOWNSHIFT_NB_DOWNSHIFT      off          "1" applies the naive-Bayes
 //	                                         TRIVIAL downshift. Off: shadow
 //	                                         only. Guardrail R1 still holds
@@ -66,18 +57,12 @@ const (
 	EnvSessionModels = session.EnvSessionModels
 	// EnvQuotaMode set to "required" makes quota evidence mandatory.
 	EnvQuotaMode = session.EnvQuotaMode
-	// EnvExplicitUpshift set to "1" lets upshift pick explicit_only ids.
-	EnvExplicitUpshift = session.EnvExplicitUpshift
 	// EnvDiscovery set to "off" disables the discovered-models layer.
 	EnvDiscovery = session.EnvDiscovery
 	// EnvDiscoveryTTL is a Go duration; "0" keeps a cache entry forever.
 	EnvDiscoveryTTL = session.EnvDiscoveryTTL
 	// EnvDiscovered overrides the cache path.
 	EnvDiscovered = session.EnvDiscovered
-	// NBUpshiftEnv turns the naive-Bayes upshift on. Default OFF: the opinion
-	// is still computed and recorded (shadow mode) but the routing tier is
-	// unchanged.
-	NBUpshiftEnv = "DOWNSHIFT_NB_UPSHIFT"
 	// NBDownshiftEnv turns the naive-Bayes TRIVIAL downshift on. Default OFF:
 	// the opinion is still computed and recorded (shadow mode) but routing is
 	// unchanged.
@@ -99,8 +84,6 @@ type Config struct {
 	SessionModelsPath string
 	// QuotaRequired is DOWNSHIFT_QUOTA_MODE == "required".
 	QuotaRequired bool
-	// ExplicitUpshift is DOWNSHIFT_EXPLICIT_UPSHIFT == "1".
-	ExplicitUpshift bool
 	// DiscoveryOff is DOWNSHIFT_DISCOVERY == "off".
 	DiscoveryOff bool
 	// DiscoveredPath is DOWNSHIFT_DISCOVERED; "" means the state dir.
@@ -112,8 +95,6 @@ type Config struct {
 	// not a non-negative Go duration. A discovered entry is then an unknown
 	// session (same behaviour as before the value was typed).
 	DiscoveryTTLInvalid bool
-	// NBUpshift is DOWNSHIFT_NB_UPSHIFT == "1".
-	NBUpshift bool
 	// NBDownshift is DOWNSHIFT_NB_DOWNSHIFT == "1".
 	NBDownshift bool
 	// Economy is DOWNSHIFT_MODE == "economy": lower the tier of a confident,
@@ -132,12 +113,10 @@ func ConfigFromEnv(getenv func(string) string) Config {
 	c := Config{
 		SessionModelsPath:   sc.SessionModelsPath,
 		QuotaRequired:       sc.QuotaRequired,
-		ExplicitUpshift:     sc.ExplicitUpshift,
 		DiscoveryOff:        sc.DiscoveryOff,
 		DiscoveredPath:      sc.DiscoveredPath,
 		DiscoveryTTL:        sc.DiscoveryTTL,
 		DiscoveryTTLInvalid: sc.DiscoveryTTLInvalid,
-		NBUpshift:           getenv(NBUpshiftEnv) == "1",
 		NBDownshift:         getenv(NBDownshiftEnv) == "1",
 		Economy:             economyFrom(getenv),
 	}
@@ -173,7 +152,6 @@ func SetConfig(c Config) (restore func()) {
 	restoreSession := session.SetConfig(session.Config{
 		SessionModelsPath:   c.SessionModelsPath,
 		QuotaRequired:       c.QuotaRequired,
-		ExplicitUpshift:     c.ExplicitUpshift,
 		DiscoveryOff:        c.DiscoveryOff,
 		DiscoveredPath:      c.DiscoveredPath,
 		DiscoveryTTL:        c.DiscoveryTTL,
@@ -205,10 +183,8 @@ var lookupEnv = os.Getenv
 
 func sessionModelsEnv() string { return config().SessionModelsPath }
 func quotaModeRequired() bool  { return config().QuotaRequired }
-func explicitUpshiftEnv() bool { return config().ExplicitUpshift }
 func discoveryOff() bool       { return config().DiscoveryOff }
 func discoveredEnv() string    { return config().DiscoveredPath }
-func nbUpshiftEnv() bool       { return config().NBUpshift }
 func nbDownshiftEnv() bool     { return config().NBDownshift }
 
 // nativeSessionPathEnv returns the path held by the named native-export

@@ -8,7 +8,6 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -335,41 +334,13 @@ func TestInstallScriptShellcheck(t *testing.T) {
 	}
 }
 
-func TestInstallExplicitUpshiftPersistsFlag(t *testing.T) {
+// An unknown flag is refused so a typo is not installed as a version tag.
+// The legacy --explicit-upshift flag was removed: Downshift never raises a
+// tier on its own, so there is nothing to opt into.
+func TestInstallRejectsRemovedExplicitUpshiftFlag(t *testing.T) {
 	r := runInstall(t, "v1.0.0", "", "--explicit-upshift")
-	assertInstalled(t, r)
-	body, err := os.ReadFile(filepath.Join(r.home, ".downshift", "session-models.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var doc map[string]any
-	if err := json.Unmarshal(body, &doc); err != nil {
-		t.Fatalf("session file %s: %v", body, err)
-	}
-	if doc["explicit_upshift"] != true {
-		t.Fatalf("explicit_upshift = %#v, want true", doc["explicit_upshift"])
-	}
-}
-
-func TestInstallExplicitUpshiftMergesExistingFile(t *testing.T) {
-	r := runInstallEnv(t, "", "", []string{`SEED_SESSION={"codex":["gpt-6-luna","gpt-6-sol"]}`}, "v0.1.0-beta.1", "--explicit-upshift")
-	assertInstalled(t, r)
-	body, err := os.ReadFile(filepath.Join(r.home, ".downshift", "session-models.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var doc struct {
-		ExplicitUpshift bool     `json:"explicit_upshift"`
-		Codex           []string `json:"codex"`
-	}
-	if err := json.Unmarshal(body, &doc); err != nil {
-		t.Fatalf("session file %s: %v", body, err)
-	}
-	if !doc.ExplicitUpshift {
-		t.Fatalf("explicit_upshift missing in %s", body)
-	}
-	if len(doc.Codex) != 2 || doc.Codex[0] != "gpt-6-luna" || doc.Codex[1] != "gpt-6-sol" {
-		t.Fatalf("codex list = %#v", doc.Codex)
+	if r.code == 0 {
+		t.Fatalf("installer accepted the removed --explicit-upshift flag:\n%s", r.output)
 	}
 }
 

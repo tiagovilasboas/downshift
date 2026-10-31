@@ -54,9 +54,9 @@ func ReasonCodes(d core.Decision) []string {
 	if d.Guards.RiskFloor {
 		set[telemetry.ReasonRiskFloor] = true
 	}
-	if d.Shadow.NBUpshift.Applied {
-		set[telemetry.ReasonNBUpshiftApplied] = true
-	}
+	// The NB upshift opinion was removed: a live decision never applies one, so
+	// ReasonNBUpshiftApplied is no longer emitted. It stays defined in telemetry
+	// so old events that carry it still read.
 	if d.Shadow.NBDownshift.Applied {
 		set[telemetry.ReasonNBDownshiftApplied] = true
 	}
