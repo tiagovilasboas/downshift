@@ -17,7 +17,7 @@ binaries `v0.2.0-75-gb2bc0d20` to `v0.2.0-78-g22899752`. Plan and cards:
 | M3 | `providers`, `playbook`, `status` and `apply` each answered in one `claude -p` session; `apply` refused a `prompt` field by design; over stdio, `apply` with `tier: small` moved `claude-opus-5-5` to `claude-haiku-5-5` (`hint_down`) | session `0f61c4fc...`, transcript tool results |
 | M4 | Read workers: `delegate` + `collect` round trip (worker replied `ok`); a write request under the read route was refused by plan mode and the file never appeared (spec R27); `cancel` stopped a queued job and, over stdio, a running one (`active: 1` then `outcome: cancelled`, no process left) | sessions `dfd322bb...`, `a119f445...`, `pgrep` |
 | M5 | Bypass write route (`DOWNSHIFT_WORKERS=bypass`, owner-authorized) in a throwaway repository: the worker wrote `HELLO.md` in `.downshift/worktrees/w001` on branch `downshift/w001`, untracked; `main` kept only its first commit and a clean `git status`; nothing was merged | `git worktree list`, `git log main` |
-| M6 | Unprompted use: 61 of 302 Agent spawns since 2026-10-25 were preceded by a `providers` call in the same session (20.2%), all in Claude Desktop sessions | transcripts, assistant records only |
+| M6 | Unprompted use: 61 of 196 Agent spawns in Claude Desktop sessions from 2026-10-25 to the guidance change (#654, 2026-10-31T04:57Z) were preceded by a `providers` call in the same session (31.1%); 71 of 206 across all entrypoints (34.5%). See the correction below | transcripts, assistant records only |
 
 ## Fixed on the way
 
@@ -28,7 +28,7 @@ binaries `v0.2.0-75-gb2bc0d20` to `v0.2.0-78-g22899752`. Plan and cards:
 
 ## What this does not show
 
-- The orchestrator calling the tools often on its own: 20.2% of spawns consult `providers` first. Raising that is
+- The orchestrator calling the tools often on its own: 31.1% of Claude Desktop spawns consult `providers` first. Raising that is
   instruction work (session hint, skill), tracked separately.
 - A second machine, or Claude Code versions other than the two above.
 - MCP in any harness other than Claude Code.
@@ -37,3 +37,11 @@ binaries `v0.2.0-75-gb2bc0d20` to `v0.2.0-78-g22899752`. Plan and cards:
 
 The roadmap baseline first counted 345 `providers` calls. Claude Code transcripts mirror each tool call in an
 `api-request-blob` record, so the count was inflated; counting assistant records only gives 7 calls in 6 sessions.
+
+### Correction to the M6 share (2026-10-31)
+
+The first version of this record gave 61 of 302 spawns (20.2%). A re-count with the same method on the transcripts on
+disk later the same day found the same 61 spawns preceded by `providers`, but 196 Agent spawns in Claude Desktop
+sessions over the window, not 302. The 302 could not be reproduced and is withdrawn; 61 of 196 (31.1%) is the
+figure the method gives. The after-change share is not measured yet: no Agent spawn happened between the guidance
+change (#654) and the re-count. Re-measure once about 30 unprompted Claude Desktop spawns exist after it.
