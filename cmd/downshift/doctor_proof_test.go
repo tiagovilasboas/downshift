@@ -67,8 +67,8 @@ func TestDoctor_QuotaSourceStaleness(t *testing.T) {
 			f.storeQuota(t, tc.expiredAgo)
 			c := f.check(t, buildDoctorReport(f.env), "claude-code", "quota source")
 			wantStatus(t, c, tc.want)
-			if tc.wantFix && (!strings.Contains(c.Detail, "freshness limit") || !strings.Contains(c.Detail, "15m") || !strings.Contains(c.Fix, "statusline bridge")) {
-				t.Errorf("stale detail/fix should state age, limit and refresh path: %q / %q", c.Detail, c.Fix)
+			if tc.wantFix && (!strings.Contains(c.Detail, "freshness limit") || !strings.Contains(c.Detail, "15m") || !strings.Contains(c.Fix, "interactive terminal") || !strings.Contains(c.Fix, "claude -p")) {
+				t.Errorf("stale detail/fix should state age, limit and why the statusline never refreshed: %q / %q", c.Detail, c.Fix)
 			}
 		})
 	}
