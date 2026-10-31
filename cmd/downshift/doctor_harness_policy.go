@@ -175,6 +175,10 @@ func checkHarnessLimitations(add func(id, status, detail, fix string), harness s
 	// during the claude-code check, because the Code tab is claude-code and
 	// claude-code has full support (no limitations line of its own).
 	checkClaudeDesktopSurfaces(add, harness)
+	// The Downshift MCP server is registered for Claude Code only, so its
+	// check belongs to the claude-code section too (doctor_mcp.go). Called
+	// through the doctorMcpCheck seam so tests can inject a controlled check.
+	doctorMcpCheck(add, harness)
 
 	lims := limits.ForHarness(harness)
 	if lims == nil {
