@@ -164,20 +164,6 @@ func (r *sessionResolver) ModelFor(harness string, tier Tier) Model {
 	return Model{Harness: harness, Tier: tier}
 }
 
-func (r *sessionResolver) SavingsRatio(from, to Model) float64 {
-	if from.InputM <= 0 || from.OutputM <= 0 || to.InputM <= 0 || to.OutputM <= 0 {
-		return 0
-	}
-	if r.fallback != nil {
-		return r.fallback.SavingsRatio(from, to)
-	}
-	before, after := from.InputM+from.OutputM, to.InputM+to.OutputM
-	if before > 0 && after > 0 && after < before {
-		return 1 - after/before
-	}
-	return 0
-}
-
 func (r *sessionResolver) EffortFor(harness, id string, effort Effort) string {
 	if _, ok := r.efforts[id]; ok && harness == r.harness {
 		return effort.String()

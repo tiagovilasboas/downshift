@@ -51,7 +51,6 @@ func Tier(t core.Tier) core.Decider {
 				d.Verdict = core.VerdictOK
 			case cur.Tier > t:
 				d.Verdict = core.VerdictDownshift
-				d.Savings = req.Resolver.SavingsRatio(cur, d.Model)
 			default:
 				d.Verdict = core.VerdictUpshift
 			}

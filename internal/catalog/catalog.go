@@ -22,7 +22,6 @@ import (
 	"os"
 	"slices"
 	"strings"
-	"time"
 
 	_ "embed"
 
@@ -634,16 +633,6 @@ func uniqueStrings(a, b string) []string {
 	return []string{a, b}
 }
 
-// SavingsRatio returns how much cheaper `to` is versus `from` as a fraction.
-func (c *Catalog) SavingsRatio(from, to core.Model) float64 {
-	fromCost := from.InputM + from.OutputM
-	toCost := to.InputM + to.OutputM
-	if from.InputM <= 0 || from.OutputM <= 0 || to.InputM <= 0 || to.OutputM <= 0 || toCost >= fromCost {
-		return 0
-	}
-	return (fromCost - toCost) / fromCost
-}
-
 // --- Accessors for commands (models list / check / pull) ---
 
 // PricesAsOf returns the date (YYYY-MM-DD) the list prices were last verified,
@@ -653,16 +642,6 @@ func (c *Catalog) PricesAsOf() string {
 		return ""
 	}
 	return c.pricesAsOf
-}
-
-// PricesAge returns how many whole days old the list prices are at now. ok is
-// false when prices_as_of is missing or not a YYYY-MM-DD date.
-func (c *Catalog) PricesAge(now time.Time) (days int, ok bool) {
-	d, err := time.Parse("2006-01-02", c.PricesAsOf())
-	if err != nil {
-		return 0, false
-	}
-	return int(now.UTC().Sub(d).Hours() / 24), true
 }
 
 // Entries returns all raw catalog entries (including unknown-tier ones).

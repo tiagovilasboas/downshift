@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Routing no longer computes a price saving (owner decision 2026-10-31: the Downshift product uses no price). The `SavingsRatio` method is gone from the `Resolver` interface and from the catalog and session-resolver implementations; `compareToCurrentModel` returns only the verdict and the current model. `Decision.Savings` now stays 0 and is still carried to the `estimated_savings` field of `events.jsonl`; that field, and the `Savings` struct field, are removed with the event-contract change. Also removed: the unused `catalog.PriceBook` type and its `PriceFor`/`AsOf` lookups, the unused `catalog.PricesAge`, and the unused `discovery.SnapshotPrice`. Catalog price data (`input_cost_per_1m` and the rest) and the discovery price fields are removed separately.
+
 ### Security
 
 - Claude workers started by the MCP `delegate` tool no longer load the user's MCP servers (`--strict-mcp-config`). Before, a worker inherited every registered server, claude.ai connectors such as mail, GitHub and documents included, and on the bypass write route those tools ran without approval. Measured on one machine (2026-10-31): a print-mode Claude session loaded 31 servers and 323 tools without the flag and none and 29 with it; a one-word answer cost 27,306 cache-creation tokens without it and 15,958 with it.
