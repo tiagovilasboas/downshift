@@ -32,7 +32,7 @@ const mcpUsage = "usage: downshift mcp serve\n"
 // at 4096 characters, so the rule for when to call comes first and the whole
 // text stays short (code.claude.com/docs/en/mcp, read 2026-10-28).
 const mcpInstructions = "Before you spawn a subagent (the Agent or Task tool), always call providers first: it lists the models this harness offers right now, with their tiers, and it is the step to run every time before a spawn, not once per session. " +
-	"To send mechanical work to a smaller model, start the spawn's prompt with [tier=small]; a hint only moves down, and a pinned model or a declared policy wins. " +
+	"Mechanical work is a search, a read, a rename, running one command and reporting it, or a small well-specified edit: start its prompt with [tier=small] to send it to a smaller tier. A hint only moves down, never up, and a pinned model or a declared policy wins. Choose by tier, never by model name. " +
 	"Call apply to see what would be applied for a choice, playbook for the working rules a worker should receive, and status for quota advice. " +
 	"Downshift applies the model you choose within the policy the user declared and measures the result; it never picks one for you. " +
 	"The information tools take no task text. Every result carries a strain block with the quota headroom."
