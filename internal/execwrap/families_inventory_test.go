@@ -5,7 +5,7 @@ package execwrap
 
 // Doc-vs-code check: the family inventory in docs/reference/harness-matrix.md
 // must list exactly the Family constants the policy files declare, and each
-// row's behaviour must match expectedFormat (compresses) or its absence
+// row's behaviour must match expectedFormats (compresses) or its absence
 // (passes through). Adding a family without a doc row, or a row for a family
 // that does not exist, fails here.
 
@@ -94,7 +94,7 @@ func TestFamilyInventoryMatchesFamilyOf(t *testing.T) {
 
 func TestFamilyInventoryBehaviourMatchesExpectedFormat(t *testing.T) {
 	for _, row := range parseFamilyInventory(t) {
-		_, compresses := expectedFormat[Family(row.family)]
+		compresses := compactibleFamily(Family(row.family))
 		switch {
 		case compresses && row.behavior != "compresses":
 			t.Errorf("%q has an expectedFormat entry but the inventory says %q", row.family, row.behavior)

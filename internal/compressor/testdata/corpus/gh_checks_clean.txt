@@ -1,0 +1,6 @@
+build	pass	1m12s	https://github.com/tiagovilasboas/downshift/actions/runs/1/job/1
+test	pass	3m40s	https://github.com/tiagovilasboas/downshift/actions/runs/1/job/2
+lint	pass	0m48s	https://github.com/tiagovilasboas/downshift/actions/runs/1/job/3
+vet	pass	0m22s	https://github.com/tiagovilasboas/downshift/actions/runs/1/job/4
+staticcheck	pass	0m31s	https://github.com/tiagovilasboas/downshift/actions/runs/1/job/5
+coverage	pass	0m19s	https://github.com/tiagovilasboas/downshift/actions/runs/1/job/6

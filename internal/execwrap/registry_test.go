@@ -5,7 +5,7 @@ package execwrap
 
 // Registry check: a new family is complete only when every shared list names
 // it. Family constants are read from every policy*.go file (the router plus
-// each action domain), so adding one in any domain without an expectedFormat
+// each action domain), so adding one in any domain without an expectedFormats
 // entry or corpus fixtures fails here with the missing piece.
 
 import (
@@ -89,25 +89,29 @@ func manifestKinds(t *testing.T) map[string]map[string]int {
 	return out
 }
 
-// A family with no expectedFormat entry is a pass-through: it is never
+// A family with no expectedFormats entry is a pass-through: it is never
 // compacted, so it has no clean fixture (the suite requires clean output to
 // compact) and keeps at least one preserve fixture keyed by its family name.
+// A family that compacts lists one or more formats, and each listed format
+// needs both a clean and a preserve fixture keyed by that format name.
 func TestRegistryEveryFamilyHasFormatAndCorpus(t *testing.T) {
 	kinds := manifestKinds(t)
 	for name, fam := range familyConstants(t) {
-		format, ok := expectedFormat[fam]
-		if !ok {
+		formats := expectedFormats[fam]
+		if len(formats) == 0 {
 			if kinds[string(fam)]["preserve"] == 0 {
 				t.Errorf("%s (%q) is a pass-through with no preserve fixture keyed %q in compressor/testdata/corpus/MANIFEST", name, fam, fam)
 			}
 			if kinds[string(fam)]["clean"] != 0 {
-				t.Errorf("%s (%q) is a pass-through but has a clean fixture; give it an expectedFormat entry instead", name, fam)
+				t.Errorf("%s (%q) is a pass-through but has a clean fixture; give it an expectedFormats entry instead", name, fam)
 			}
 			continue
 		}
-		for _, kind := range []string{"clean", "preserve"} {
-			if kinds[string(format)][kind] == 0 {
-				t.Errorf("%s: format %q has no %s fixture in compressor/testdata/corpus/MANIFEST", name, format, kind)
+		for _, format := range formats {
+			for _, kind := range []string{"clean", "preserve"} {
+				if kinds[string(format)][kind] == 0 {
+					t.Errorf("%s: format %q has no %s fixture in compressor/testdata/corpus/MANIFEST", name, format, kind)
+				}
 			}
 		}
 	}
@@ -118,9 +122,9 @@ func TestRegistryExpectedFormatNamesAFamily(t *testing.T) {
 	for _, fam := range familyConstants(t) {
 		known[fam] = true
 	}
-	for fam := range expectedFormat {
+	for fam := range expectedFormats {
 		if !known[fam] {
-			t.Errorf("expectedFormat has an entry for %q, which is not a Family constant in policy.go", fam)
+			t.Errorf("expectedFormats has an entry for %q, which is not a Family constant in policy.go", fam)
 		}
 	}
 }

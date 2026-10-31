@@ -210,9 +210,15 @@ preserve  sail-test      sail_test_output.txt
 preserve  sail-artisan   sail_artisan_output.txt
 preserve  rector         rector_output.txt
 
-# GitHub CLI (pass-through)
-preserve  gh-pr      gh_pr_output.txt
-preserve  gh-run     gh_run_output.txt
+# GitHub CLI (compacted) — gh-pr covers pr view/checks, gh-run covers run list/log
+clean     gh_pr        gh_pr_view_clean.txt
+preserve  gh_pr        gh_pr_view_no_state.txt
+clean     gh_checks    gh_checks_clean.txt
+preserve  gh_checks    gh_checks_extra_line.txt
+clean     gh_run_list  gh_run_list_clean.txt
+preserve  gh_run_list  gh_run_list_extra_line.txt
+clean     gh_run_log   gh_run_log_clean.txt
+preserve  gh_run_log   gh_run_log_danger.txt
 
 # Go toolchain (pass-through)
 preserve  go-build     go_build_output.txt

@@ -11,16 +11,12 @@ import (
 
 // gh run view --log compressor.
 //
-// The log output is extremely verbose (100KB-500KB typical, can reach several MB)
-// because it includes every setup step, cache operations, environment variables,
-// and verbose action output. An agent only needs:
-//   - Which jobs ran and their status
-//   - Errors and warnings (##[error], ##[warning])
-//   - Test failures or build errors
-//   - A summary of what happened
-//
-// Format: each line is tab-separated: JOB\tSTEP\tTIMESTAMP MESSAGE
-// The timestamp is ISO8601 with a BOM marker on some lines.
+// The log output is extremely verbose (100KB-500KB typical, several MB at the
+// tail): every setup step, cache operation, environment dump and verbose
+// action line. An agent only needs which jobs ran and their status, the
+// errors and warnings (##[error], ##[warning]), and the test or build
+// failures. Format: each line is tab-separated JOB\tSTEP\tTIMESTAMP MESSAGE;
+// the timestamp is ISO8601 with a BOM marker on some lines.
 
 var (
 	// Matches the job/step/message format of gh run view --log
@@ -29,11 +25,11 @@ var (
 	// GitHub Actions annotations that indicate problems
 	reGhAnnotation = regexp.MustCompile(`##\[(error|warning|notice)\](.*)`)
 
-	// Test failure patterns (Go, Jest, pytest, etc.)
-	// Must be careful to not match "PASS" lines or test output that mentions "fail" as part of the test name
+	// Test failure patterns (Go, Jest, pytest): anchored so "PASS" and test
+	// names containing "fail" do not match.
 	reTestFailure = regexp.MustCompile(`(?m)^(?:FAIL\s|--- FAIL:|panic:|=== FAIL)`)
 
-	// Build failure patterns - be specific to avoid false positives
+	// Build failure patterns, specific to avoid false positives.
 	reBuildError = regexp.MustCompile(`(?i)^(?:error\[|error:|fatal:|cannot find module|undefined reference|compilation failed|build failed)`)
 
 	// Skip these noisy setup steps
@@ -113,6 +109,8 @@ func compressGhRunLog(input []byte) ([]byte, bool, string) {
 			jobOrder = append(jobOrder, jobName)
 		}
 		job.lineCount++
+
+		keepDangerLine(&job.important, stripTimestamp(message)) // keep danger lines even in dropped steps
 
 		// Skip noisy setup steps
 		if ghRunLogSkipSteps[stepName] {
@@ -246,7 +244,9 @@ func compressGhRunLog(input []byte) ([]byte, bool, string) {
 	if len(out) >= len(input) {
 		return input, false, "no_compression_gain"
 	}
-
+	if hasUnparsedDangerLine(input) { // fail open; see gh_run_log_safety.go
+		return input, false, "gh_run_log_danger_line_preserved"
+	}
 	ratio := float64(len(out)) / float64(len(input)) * 100
 	return []byte(out), true, fmt.Sprintf("compressed gh run log (%.1f%% of original, %d jobs, %d errors)", ratio, len(jobs), totalErrors)
 }

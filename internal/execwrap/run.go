@@ -77,37 +77,9 @@ type Result struct {
 // must not fail the command.
 var ObserveUncompactedHook func(argv []string, sample []byte, family Family)
 
-// expectedFormat is the compressor format each family may be compacted as.
-// Any other detected format (a repetitive-log match, a search match) keeps the
-// raw output. A family with no entry here is a pass-through: it runs and its
-// output is never compacted (the git families other than git-status, whose
-// clean success has no output worth compacting over the marker line).
-var expectedFormat = map[Family]compressor.Format{
-	FamilyGoTest:       compressor.FormatGoTest,
-	FamilyGitStatus:    compressor.FormatGitStatus,
-	FamilyGitDiff:      compressor.FormatGitDiff,
-	FamilyGitShow:      compressor.FormatGitShow,
-	FamilyPytest:       compressor.FormatPytest,
-	FamilyVitest:       compressor.FormatVitest,
-	FamilyPlaywright:   compressor.FormatPlaywright,
-	FamilyCargoTest:    compressor.FormatCargoTest,
-	FamilyTSC:          compressor.FormatTSC,
-	FamilyJest:         compressor.FormatJest,
-	FamilyCypress:      compressor.FormatCypress,
-	FamilyNextBuild:    compressor.FormatNextBuild,
-	FamilyPHPUnit:      compressor.FormatPHPUnit,
-	FamilyFlutterTest:  compressor.FormatFlutterTest,
-	FamilyDartTest:     compressor.FormatFlutterTest,
-	FamilyGradle:       compressor.FormatGradle,
-	FamilyMaven:        compressor.FormatMaven,
-	FamilyESLint:       compressor.FormatEslint,
-	FamilyRuff:         compressor.FormatRuff,
-	FamilyMypy:         compressor.FormatMypy,
-	FamilyGolangciLint: compressor.FormatGolangciLint,
-	FamilyGoBuild:      compressor.FormatGoBuild,
-	FamilyCargoBuild:   compressor.FormatCargoBuild,
-	FamilyDotnetBuild:  compressor.FormatDotnetBuild,
-}
+// The set of compressor formats each family may be compacted as lives in
+// expected_format.go (expectedFormats). A family with no entry there is a
+// pass-through: its output is never compacted.
 
 // stderrIsReport lists the families whose own reporter writes its progress and
 // final summary to stderr by design (Jest's reporters use process.stderr, so a
@@ -181,7 +153,7 @@ func Run(argv []string, o Options) (res Result) {
 
 	res.ExitCode, res.ExitClass = exitStatus(cmd.Wait())
 	release()
-	res.RawBytes, res.EmittedBytes, res.Compacted, res.Passthrough = g.finish(res.ExitCode, expectedFormat[res.Family])
+	res.RawBytes, res.EmittedBytes, res.Compacted, res.Passthrough = g.finish(res.ExitCode, res.Family)
 	return res
 }
 
@@ -339,7 +311,7 @@ func (w stderrWriter) Write(p []byte) (int, error) {
 // raw otherwise. It returns the raw and emitted byte counts and, when the
 // output was not compacted, the Passthrough reason. Output that streamed
 // before the gate decided has no reason beyond a non-zero exit.
-func (g *gate) finish(exitCode int, want compressor.Format) (raw, emitted int64, compacted bool, passthrough string) {
+func (g *gate) finish(exitCode int, family Family) (raw, emitted int64, compacted bool, passthrough string) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	raw = g.nOut + g.nErr
@@ -356,7 +328,7 @@ func (g *gate) finish(exitCode int, want compressor.Format) (raw, emitted int64,
 	g.streaming = true // a timer that fires after finish finds nothing to flush
 	g.buf = bytes.Buffer{}
 	var out []byte
-	out, passthrough = compactOutput(exitCode, data, want)
+	out, passthrough = compactOutput(exitCode, data, family)
 	compacted = passthrough == ""
 	if compacted {
 		_, _ = g.out.Write(out)
@@ -400,14 +372,14 @@ func observeUncompacted(hook func([]string, []byte, Family), argv []string, data
 // failed run goes through the family's failure compressor (CompressFailed):
 // every failure line is kept and only passing noise is cut; when that is not
 // possible the run passes through whole, reason non-zero exit.
-func compactOutput(exitCode int, data []byte, want compressor.Format) ([]byte, string) {
+func compactOutput(exitCode int, data []byte, family Family) ([]byte, string) {
 	switch {
 	case len(data) == 0:
 		return data, PassthroughSmallOutput
-	case want == "":
+	case !compactibleFamily(family):
 		return data, PassthroughUnrecognized
 	}
-	out, reason := compactSafely(data, want, exitCode)
+	out, reason := compactSafely(data, family, exitCode)
 	if reason != "" {
 		if exitCode != 0 {
 			reason = PassthroughNonZeroExit
@@ -424,8 +396,12 @@ const noGainReason = "no_compression_gain"
 
 // compactSafely runs the compressor under recover: a compressor bug prints
 // the raw output instead. It returns the summary and marker, or the reason
-// the output stays raw. A non-zero exit uses the failure compressor.
-func compactSafely(data []byte, want compressor.Format, exitCode int) (out []byte, reason string) {
+// the output stays raw. The compressor detects the format; the output is kept
+// only when that format is one the family is allowed to compact as (a gh pr
+// command, for instance, accepts gh_pr and gh_checks but nothing else). A
+// non-zero exit uses the failure compressor, which today only summarises a
+// failed go test run and returns every other family's output unchanged.
+func compactSafely(data []byte, family Family, exitCode int) (out []byte, reason string) {
 	defer func() {
 		if recover() != nil {
 			out, reason = nil, PassthroughUnrecognized
@@ -433,9 +409,9 @@ func compactSafely(data []byte, want compressor.Format, exitCode int) (out []byt
 	}()
 	r := compressor.CompressExit(data, compressor.ModeSafe, 0)
 	if exitCode != 0 {
-		r = compressor.CompressFailed(data, want)
+		r = compressor.CompressFailed(data, failedFormat(family))
 	}
-	if r.Format != want {
+	if !formatAccepted(family, r.Format) {
 		return nil, PassthroughUnrecognized
 	}
 	if !r.Applied {
