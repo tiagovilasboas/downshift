@@ -47,6 +47,12 @@ func (r routes) Launch(spec Spec) (Process, error) {
 	return r.write.Launch(spec)
 }
 
+// WorktreeLauncher wraps inner so a job runs in its own git worktree: it
+// creates the worktree, records the base commit, launches inner inside it and
+// reports the worktree to the queue (for Diff). It is the composition the write
+// route uses, exposed so a caller can wrap any inner launcher the same way.
+func WorktreeLauncher(inner Launcher) Launcher { return writeIsolated{inner: inner} }
+
 // writeIsolated gives a write job its own worktree and then launches the inner
 // recipe inside it.
 type writeIsolated struct {
@@ -59,6 +65,13 @@ func (w writeIsolated) Launch(spec Spec) (Process, error) {
 		return nil, errNotRepo
 	}
 	root = strings.TrimSpace(root)
+	// Resolve HEAD to a commit before the worktree is made, so the diff reads
+	// against a fixed base even if the worker commits and moves the branch.
+	base, err := gitOut(root, "rev-parse", "HEAD")
+	if err != nil {
+		return nil, errNotRepo
+	}
+	base = strings.TrimSpace(base)
 	excludeWorktrees(root)
 	path := filepath.Join(root, ".downshift", "worktrees", spec.ID)
 	branch := "downshift/" + spec.ID
@@ -70,7 +83,8 @@ func (w writeIsolated) Launch(spec Spec) (Process, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &noted{Process: proc, note: fmt.Sprintf("worktree: %s (branch %s). Review the diff with git before you merge; Downshift does not merge.", path, branch)}, nil
+	note := fmt.Sprintf("worktree: %s (branch %s). Review the diff with git before you merge; Downshift does not merge.", path, branch)
+	return &noted{Process: proc, note: note, path: path, base: base}, nil
 }
 
 // worktreesIgnore is the line that keeps the worktree folder out of git status.
@@ -110,13 +124,21 @@ func excludeWorktrees(root string) {
 	_, _ = f.WriteString(prefix + worktreesIgnore + "\n")
 }
 
-// noted appends the worktree note to the report, whatever the outcome.
+// noted appends the worktree note to the report, whatever the outcome, and
+// reports the worktree path and base commit to the queue so Diff can read the
+// work without a path from the caller.
 type noted struct {
 	Process
 	note string
+	path string
+	base string
 }
 
 func (n *noted) Report() string { return n.Process.Report() + "\n\n" + n.note }
+
+// worktreeInfo satisfies worktreeReporter: the queue records these when the job
+// starts, and Diff reads them.
+func (n *noted) worktreeInfo() (string, string) { return n.path, n.base }
 
 // gitOut runs git in dir and returns its standard output. GitEnv keeps a hook's
 // own GIT_DIR or GIT_INDEX_FILE from pointing git at another repository.

@@ -60,4 +60,18 @@ type job struct {
 	state State
 	proc  Process
 	timer *time.Timer
+	// worktree and base are set when a write worker is launched in its own git
+	// worktree: worktree is that directory, base is the commit it was created
+	// from. Both empty for a read-only worker. They let Diff read the work so
+	// far without a path from the caller.
+	worktree string
+	base     string
+}
+
+// worktreeReporter is the optional contract a launched Process satisfies when
+// it ran a worker in its own git worktree. The write route implements it so the
+// queue can record where the worktree is and the commit it started from, which
+// Diff reads later.
+type worktreeReporter interface {
+	worktreeInfo() (path, base string)
 }

@@ -164,6 +164,9 @@ func (q *Queue) start(j *job) {
 		return
 	}
 	j.state, j.proc = Running, proc
+	if wr, ok := proc.(worktreeReporter); ok {
+		j.worktree, j.base = wr.worktreeInfo()
+	}
 	q.running++
 	j.timer = time.AfterFunc(j.spec.Budget, func() { q.expire(j.id) })
 	go q.wait(j.id, proc)
