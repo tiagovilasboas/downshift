@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `downshift doctor` now checks the Downshift MCP server in Claude Code, in the claude-code section, with three rows: whether `mcpServers.downshift` is registered in `~/.claude.json` (read only, the `claude` CLI is never started), whether the registered command resolves to the running binary, and whether the server answers a stdio handshake and lists its tools within a 2 s timeout. Each failure is a warning (the server is an extra on top of the routing hooks) with the fix `downshift setup --mcp`; the probe always kills the child it spawns.
 - Routing events now carry an optional `client` field naming which Claude Code client fired the hook, read from `CLAUDE_CODE_ENTRYPOINT` by the Claude Code adapter (values seen include `cli` and `claude-desktop`, so a Claude Desktop event can be told apart from a CLI one). The value is sanitized (lower-case, at most 32 chars, `[a-z0-9._-]`, else dropped), never used for policy, and absent on events that predate it or on harnesses that do not report it.
 - Exec (compaction) events now carry the same optional `client` field, read from `CLAUDE_CODE_ENTRYPOINT` in the shell the compactor inherits and sanitized through the same rule, so a compacted command can be tied to its Claude Code client (for example `claude-desktop`) instead of being matched to a routing event by time. Absent on events that predate it or when the harness reports no client.
 

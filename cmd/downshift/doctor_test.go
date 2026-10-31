@@ -36,6 +36,10 @@ func newDoctorFixture(t *testing.T) *doctorFixture {
 	if err := os.Chmod(bin, 0o755); err != nil {
 		t.Fatal(err)
 	}
+	// The MCP check reads the real ~/.claude.json and spawns a server, which a
+	// buildDoctorReport fixture does not control; stub it off here. The MCP
+	// check has its own tests (doctor_mcp_test.go) and a wiring test below.
+	stubDoctorMcpCheck(t)
 	f := &doctorFixture{home: home, bin: bin, started: time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)}
 	f.env = doctorEnv{
 		Home:       home,
