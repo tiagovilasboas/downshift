@@ -1,0 +1,24 @@
+title:	feat: wire gh-run and gh-pr compaction
+state:	OPEN
+author:	tiagovilasboas
+labels:	enhancement, compressor
+assignees:
+reviewers:
+projects:
+milestone:
+number:	701
+url:	https://github.com/tiagovilasboas/downshift/pull/701
+additions:	412
+deletions:	18
+auto-merge:	disabled
+--
+This pull request wires the gh-run and gh-pr families into the compactor.
+
+It moves the expectedFormat map into its own file, accepts a set of formats
+per family, and flips the two inventory rows to "compresses".
+
+The body is long on purpose: it describes the motivation, the design, the
+tests, and the measured before/after so a reviewer has the full picture
+without opening every file. An agent reading this through the wrapper only
+needs the title, state, number and author to decide what to do next, so the
+body and the rest of the header are dropped.

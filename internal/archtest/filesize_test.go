@@ -48,7 +48,7 @@ var oversizedBaseline = map[string]int{
 	"internal/core/session_select.go":            337,
 	"internal/discovery/sources.go":              342,
 	"internal/execwrap/policy_tooling.go":        851,
-	"internal/execwrap/run.go":                   460,
+	"internal/execwrap/run.go":                   436,
 	"internal/quota/native.go":                   368,
 	"internal/telemetry/aggregate.go":            302,
 	"internal/telemetry/report.go":               305,

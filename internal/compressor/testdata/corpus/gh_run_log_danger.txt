@@ -1,0 +1,11 @@
+test	Set up job	2026-10-30T12:00:01.1000000Z Current runner version: '2.320.0'
+test	Run actions/checkout@v4	2026-10-30T12:00:02.1000000Z Syncing repository
+test	Run actions/setup-go@v5	2026-10-30T12:00:03.1000000Z Setup go version spec 1.23
+test	Run actions/cache@v4	2026-10-30T12:00:04.1000000Z Cache restored successfully
+test	go test	2026-10-30T12:00:05.1000000Z go test ./...
+test	go test	2026-10-30T12:00:30.1000000Z ok  github.com/tiagovilasboas/downshift/internal/compressor 0.812s
+a bare fatal line the row parser cannot attribute to a job
+test	go vet	2026-10-30T12:00:40.1000000Z go vet ./...
+test	Post Run actions/cache@v4	2026-10-30T12:00:41.1000000Z Cache saved successfully
+test	Post Run actions/setup-go@v5	2026-10-30T12:00:42.1000000Z Post job cleanup
+test	Complete job	2026-10-30T12:00:44.1000000Z Cleaning up orphan processes

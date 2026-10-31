@@ -422,8 +422,8 @@ written. The family name is the only command fact telemetry keeps.
 | `git-tag` | `git tag` | passes through |
 | `git-config-read` | `git config --get`, `--get-all`, `--get-regexp`, `--list` (read flags only) | passes through |
 | `git-other` | any other `git <subcommand>` not listed above | passes through |
-| `gh-pr` | `gh pr` | passes through |
-| `gh-run` | `gh run` | passes through |
+| `gh-pr` | `gh pr view`, `gh pr checks` | compresses |
+| `gh-run` | `gh run list`, `gh run view --log` | compresses |
 | `gh-api` | `gh api` | passes through |
 | `gh-issue` | `gh issue` | passes through |
 | `gh-repo` | `gh repo` | passes through |

@@ -80,6 +80,14 @@ func compressGhPrView(input []byte) ([]byte, bool, string) {
 	if len(out) >= len(input) {
 		return input, false, "no_compression_gain"
 	}
+	// Fail-open safety: the body and the dropped header fields may carry a
+	// danger word (a failing-check mention, an "error" in the description).
+	// gh pr view exits zero even when the PR's checks fail, so the exit code
+	// alone does not protect those lines. When any danger line of the input is
+	// absent from the kept summary, keep the whole output raw.
+	if ghDroppedDangerLine(input, []byte(out)) {
+		return input, false, "gh_pr_view_danger_line_preserved"
+	}
 	return []byte(out), true, fmt.Sprintf("compressed gh pr view (state %s)", fields["state"])
 }
 
@@ -155,6 +163,9 @@ func compressGhPrChecks(input []byte) ([]byte, bool, string) {
 	out := b.String()
 	if len(out) >= len(input) {
 		return input, false, "no_compression_gain"
+	}
+	if ghDroppedDangerLine(input, []byte(out)) {
+		return input, false, "gh_pr_checks_danger_line_preserved"
 	}
 	reason := fmt.Sprintf("compressed gh pr checks (%d checks, %d failing)", len(checks), failures)
 	return []byte(out), true, reason
@@ -239,6 +250,9 @@ func compressGhRunList(input []byte) ([]byte, bool, string) {
 	if len(out) >= len(input) {
 		return input, false, "no_compression_gain"
 	}
+	if ghDroppedDangerLine(input, []byte(out)) {
+		return input, false, "gh_run_list_danger_line_preserved"
+	}
 	return []byte(out), true, fmt.Sprintf("compressed gh run list (%d runs, %d failing)", len(runs), failures)
 }
 
@@ -250,4 +264,22 @@ func stripGhDecoration(s string) string {
 		return s
 	}
 	return reGhBoxChars.ReplaceAllString(s, "")
+}
+
+// ghDroppedDangerLine reports whether any danger-word line of input is missing
+// from out. The gh compressors keep the facts an agent decides on (title,
+// state, check names) but drop presentation (body, URLs, elapsed times); when
+// a dropped line carries a danger word the summary does not reflect, the
+// compressor must fail open and keep the raw output so no warning or failure
+// is ever summarised away.
+func ghDroppedDangerLine(input, out []byte) bool {
+	for _, line := range strings.Split(string(input), "\n") {
+		if line == "" || !reDangerWord.MatchString(line) {
+			continue
+		}
+		if !strings.Contains(string(out), line) {
+			return true
+		}
+	}
+	return false
 }
