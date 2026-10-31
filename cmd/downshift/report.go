@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -24,6 +25,9 @@ const defaultReportDays = 30
 // completed task (API lens, priced now), tokens saved (plan lens), rework rate
 // and savings with a bootstrap interval. It only reads the event log.
 func runReport(args []string, stdout, stderr io.Writer) int {
+	if len(args) > 0 && args[0] == "clear" {
+		return runReportClear(args[1:], os.Stdin, stdout, stderr, time.Now())
+	}
 	days := defaultReportDays
 	asJSON := false
 	for _, arg := range args {

@@ -123,14 +123,22 @@ Next: downshift report, for measured savings against a control group
 
 Usage:
   downshift report [--days=N] [--json]
+  downshift report clear [--dry-run] [--yes]
 
 Flags:
   --days=N   Look back N days (default 30)
   --json     Machine-readable output
 
+clear moves every measurement log (routing, child-end, compaction, context and
+compressor learning) to backups/report-clear-<time> in the state directory, so
+the report starts again from zero. Config, policy, session models, model
+discovery and quota are kept. It asks first; --yes skips the question and
+--dry-run lists the files without moving them.
+
 Examples:
   downshift report
   downshift report --days=14 --json
+  downshift report clear --dry-run
 
 Next: downshift session, to see one run as a tree
 `,
