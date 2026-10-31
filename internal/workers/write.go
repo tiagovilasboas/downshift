@@ -140,6 +140,17 @@ func (n *noted) Report() string { return n.Process.Report() + "\n\n" + n.note }
 // starts, and Diff reads them.
 func (n *noted) worktreeInfo() (string, string) { return n.path, n.base }
 
+// SessionID forwards the inner process's captured session id, so a write worker
+// in a worktree is resumable too. noted embeds the Process interface, which
+// does not declare SessionID, so this forward is explicit: without it the
+// queue's sessionReporter check would miss a write worker's id.
+func (n *noted) SessionID() string {
+	if sr, ok := n.Process.(sessionReporter); ok {
+		return sr.SessionID()
+	}
+	return ""
+}
+
 // gitOut runs git in dir and returns its standard output. GitEnv keeps a hook's
 // own GIT_DIR or GIT_INDEX_FILE from pointing git at another repository.
 func gitOut(dir string, args ...string) (string, error) {

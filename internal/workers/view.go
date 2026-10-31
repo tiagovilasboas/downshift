@@ -39,6 +39,11 @@ type WorkerView struct {
 	// Summary is a short, trimmed copy of the result or error once the worker
 	// ends; empty while it runs. The full text comes through collect.
 	Summary string
+	// SessionID is the opaque id the worker's CLI wrote, so a later turn can
+	// resume the same conversation; empty while it runs and empty when the CLI
+	// wrote none. The status view shows it so a caller can see which workers are
+	// resumable without calling collect.
+	SessionID string
 }
 
 // Workers returns a view of every known job in start order, holding the lock
@@ -63,14 +68,15 @@ func (q *Queue) Workers() []WorkerView {
 // viewOf copies one job into a view. The caller holds the lock.
 func (q *Queue) viewOf(j *job) WorkerView {
 	return WorkerView{
-		ID:      j.id,
-		State:   j.state,
-		Agent:   j.spec.Agent,
-		Harness: harnessFor(j.spec.Agent),
-		Write:   j.spec.Write,
-		Elapsed: q.elapsed(j),
-		Tokens:  j.tokens,
-		Summary: j.summary,
+		ID:        j.id,
+		State:     j.state,
+		Agent:     j.spec.Agent,
+		Harness:   harnessFor(j.spec.Agent),
+		Write:     j.spec.Write,
+		Elapsed:   q.elapsed(j),
+		Tokens:    j.tokens,
+		Summary:   j.summary,
+		SessionID: j.sessionID,
 	}
 }
 

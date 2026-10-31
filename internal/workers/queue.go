@@ -223,13 +223,20 @@ func (q *Queue) finishLocked(j *job, s State, text string) {
 	var tokens *Tokens
 	if j.proc != nil {
 		tokens = j.proc.Tokens()
+		// Capture the opaque session id when the process reports one, so a later
+		// turn can resume this conversation. Read through the optional interface,
+		// the same way the worktree info is read: a Process that does not report a
+		// session is simply not resumable.
+		if sr, ok := j.proc.(sessionReporter); ok {
+			j.sessionID = sr.SessionID()
+		}
 	}
 	// Keep a trimmed copy for the status view, which outlives the delivery: the
 	// full text goes out through collect and is dropped on acknowledgement.
 	j.tokens = tokens
 	j.summary = trimSummary(text)
 	q.spend.record(j.spec.Agent, s, tokens)
-	q.deliv.add(j.id, string(s), text, tokens)
+	q.deliv.add(j.id, string(s), text, tokens, j.sessionID)
 	q.pump()
 	q.notify()
 }

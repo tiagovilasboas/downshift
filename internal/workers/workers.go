@@ -77,6 +77,12 @@ type job struct {
 	// tokens is the usage recorded at finish; nil while running or when the CLI
 	// reported none. The status view reads this copy, never the live process.
 	tokens *Tokens
+	// sessionID is the opaque id the worker's CLI wrote, captured at finish so a
+	// later turn can resume the same conversation. Empty while running, and
+	// empty when the CLI wrote none (an older CLI, an error, or a recipe that
+	// does not persist a session). The queue never reads what agent it belongs
+	// to; resuming it is a later task.
+	sessionID string
 }
 
 // worktreeReporter is the optional contract a launched Process satisfies when
@@ -85,4 +91,13 @@ type job struct {
 // Diff reads later.
 type worktreeReporter interface {
 	worktreeInfo() (path, base string)
+}
+
+// sessionReporter is the optional contract a launched Process satisfies when
+// its CLI wrote a session id that a later turn can resume. The queue reads it
+// after the worker exits and stores only the opaque id on the job: it never
+// learns which agent produced the id or how to resume it (the launcher owns
+// that). A Process that does not implement it is simply not resumable.
+type sessionReporter interface {
+	SessionID() string
 }

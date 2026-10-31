@@ -35,8 +35,10 @@ func makeRepo(t *testing.T) string {
 	return dir
 }
 
-// writeShim is a fake claude whose work is to record its directory and create a file.
-const writeShim = `pwd > cwd.txt; echo changed > new.txt; echo '{"subtype":"success","is_error":false,"result":"wrote"}'`
+// writeShim is a fake claude whose work is to record its directory and create a
+// file. It writes a session id so the test can check a write worker is
+// resumable too and that its session is keyed by the worktree it ran in.
+const writeShim = `pwd > cwd.txt; echo changed > new.txt; echo '{"subtype":"success","is_error":false,"result":"wrote","session_id":"wt-session-1"}'`
 
 func TestWriteJobRunsInItsOwnWorktreeAndKeepsTheCheckoutClean(t *testing.T) {
 	if runtime.GOOS == "windows" {
@@ -61,6 +63,17 @@ func TestWriteJobRunsInItsOwnWorktreeAndKeepsTheCheckoutClean(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(repo, "new.txt")); !os.IsNotExist(err) {
 		t.Errorf("the write leaked into the checkout: %v", err)
+	}
+	// The worker ran in the worktree, not the user's checkout: its persisted
+	// claude session is keyed by that directory, so it does not show in the
+	// user's /resume in their own project dir. cwd.txt records where it ran.
+	ran := strings.TrimSpace(readFile(t, filepath.Join(wt, "cwd.txt")))
+	if evalWt, _ := filepath.EvalSymlinks(wt); ran != wt && ran != evalWt {
+		t.Errorf("the write worker ran in %q, not the worktree %q", ran, wt)
+	}
+	// A write worker is resumable too: its session id reaches the delivery.
+	if c.Deliveries[0].SessionID != "wt-session-1" {
+		t.Errorf("write worker session id = %q, want wt-session-1", c.Deliveries[0].SessionID)
 	}
 	list := exec.Command("git", "-C", repo, "branch", "--list", "downshift/w001")
 	list.Env = GitEnv(os.Environ())

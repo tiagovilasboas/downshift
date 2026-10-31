@@ -20,6 +20,11 @@ type Delivery struct {
 	// Tokens is what the worker reported spending; absent when its CLI wrote no
 	// usage (a killed or timed-out worker, or a launch that never started).
 	Tokens *Tokens `json:"tokens,omitempty"`
+	// SessionID is the opaque id the worker's CLI wrote, so a later turn can
+	// resume the same conversation. Absent when the CLI wrote none (an older
+	// CLI, an error, or a recipe that does not persist a session): the job
+	// works as before, it is simply not resumable.
+	SessionID string `json:"session_id,omitempty"`
 }
 
 // Collection is what Collect hands back.
@@ -49,9 +54,9 @@ func newDeliveries(start time.Time) deliveries {
 	return deliveries{seq: uint64(start.UnixMilli())}
 }
 
-func (x *deliveries) add(job, outcome, text string, tokens *Tokens) {
+func (x *deliveries) add(job, outcome, text string, tokens *Tokens, sessionID string) {
 	x.seq++
-	x.pending = append(x.pending, entry{d: Delivery{Seq: x.seq, Job: job, Outcome: outcome, Text: capText(text), Tokens: tokens}})
+	x.pending = append(x.pending, entry{d: Delivery{Seq: x.seq, Job: job, Outcome: outcome, Text: capText(text), Tokens: tokens, SessionID: sessionID}})
 }
 
 // ack drops every delivery with a sequence at or below upTo.
