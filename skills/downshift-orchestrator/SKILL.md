@@ -17,11 +17,11 @@ checks it against the project policy and measures it. It does not pick a model o
 
 ## 2. Choose the model per spawn
 
-Before any delegation, call the Downshift MCP tool `providers` for your harness and read the live list:
+Before every spawn, not once per session, call the Downshift MCP tool `providers` for your harness and read the live list:
 you may only pick a model it shows. Each entry gives the tier (small, mid, frontier), the source and the efforts.
 A model marked untiered has no tier evidence: name it only on purpose, never through a tier hint.
 
-- `providers`: the models on offer now. Call it first, before the first spawn.
+- `providers`: the models on offer now. Call it first, before each spawn.
 - `apply`: previews what Downshift would apply for the model and effort you chose, under the project policy.
 - `playbook`: the working rules to hand a worker.
 - `status`: quota headroom and advice; read it before fanning out many workers.
