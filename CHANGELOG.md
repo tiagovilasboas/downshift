@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Every `child_ended` event for Claude Code recorded `final_model: unknown`, because the launch observation named no model. It now records the model the child actually ran on, read from the child's own transcript (the first assistant message's model, normalized to the catalog id, the same transcript the usage path already reads), falling back to the model the harness reported at launch and keeping `unknown` only when neither is known. Pricing is unchanged; this only fills in the model on the `child_ended` observation so a completed subagent can be told which model it ran.
 - The MCP `delegate` tool no longer fails when the caller sends no `dir`: it defaults to the project directory the server was started in (the same root the `apply` tool uses), and its schema now describes the field. When the server was started in a broad directory (the filesystem root or the user's home), a missing `dir` is still refused rather than defaulted, so a worker never starts where a containment check protects nothing, and write mode keeps refusing exactly as before.
 - The MCP `collect` tool's `timeout_seconds` cap of 45 is now stated in both the schema (`maximum`) and the tool description, so a client that asks for more knows the value is clamped instead of discovering it at runtime.
 

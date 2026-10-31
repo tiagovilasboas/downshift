@@ -100,6 +100,49 @@ func readSubagentUsage(path string) (subagentUsage, bool) {
 	return subagentUsage{Model: model, Effort: effort, Usage: total}, true
 }
 
+// firstAssistantModel reads a Claude Code subagent transcript (JSONL) and
+// returns the model of its first assistant message: the model the child
+// actually ran on, as its own transcript reports it. It is the same read the
+// usage path makes (readSubagentUsage), bounded the same way, but it stops at
+// the first assistant line so a child_ended observation can name the served
+// model cheaply. "" when the path is not a readable transcript or names no
+// model.
+func firstAssistantModel(path string) string {
+	if path == "" || filepath.Ext(path) != ".jsonl" {
+		return ""
+	}
+	// Lstat first: opening a FIFO or device blocks until a writer appears.
+	if fi, err := os.Lstat(path); err != nil || !fi.Mode().IsRegular() {
+		return ""
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+	if fi, err := f.Stat(); err != nil || !fi.Mode().IsRegular() || fi.Size() > maxTranscriptBytes {
+		return ""
+	}
+	rd := bufio.NewReaderSize(io.LimitReader(f, maxTranscriptBytes), 1<<20)
+	for {
+		line, err := rd.ReadBytes('\n')
+		if len(line) > 0 {
+			var row struct {
+				Type    string `json:"type"`
+				Message struct {
+					Model string `json:"model"`
+				} `json:"message"`
+			}
+			if json.Unmarshal(line, &row) == nil && row.Type == "assistant" && row.Message.Model != "" {
+				return row.Message.Model
+			}
+		}
+		if err != nil {
+			return ""
+		}
+	}
+}
+
 // parseSubagentStop turns a SubagentStop payload into a ChildEnd: the agent id
 // (hashed by the recorder) joins the usage to the "resolved" observation made at
 // launch, and through it to the routing decision.

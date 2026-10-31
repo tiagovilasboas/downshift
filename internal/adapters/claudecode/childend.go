@@ -52,6 +52,7 @@ func parsePostToolUse(payload map[string]any) (hookport.ChildEnd, bool) {
 		SessionID:     stringFieldAny(payload, "session_id", "sessionId", "sessionID"),
 		Model:         model,
 		ResolvedModel: resolved,
+		ServedModel:   firstAssistantModel(stringFieldAny(payload, "agent_transcript_path")),
 		Source:        hookport.SourcePayload,
 		IsChild:       agent,
 	}
