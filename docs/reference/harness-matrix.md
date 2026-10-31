@@ -118,10 +118,11 @@ Observed on claude-code 2026-10-12: the PreToolUse payload carries
   `model`) is the baseline, and a downshift on it is written only to the small
   tier: a child can run on Composer or a fast variant, so a mid target could be
   an upshift. Without `model_id`, `inherit` logs as `unknown`.
-- **Upshift ranking, all harnesses.** An upshift ranks the session ids by catalog tier, not list position, and never goes below the
-  current model's tier. A confident upshift lands on the least model at the needed tier; a guessed baseline (Claude Code settings, Cursor
-  parent `model_id`) or `explicit_upshift` keeps the strongest tier. Codex, Antigravity and KiroCrew never guess a baseline, so they always
-  take the needed-tier pick. The rule and its fallback are in [session-models.md](session-models.md).
+- **Upshift ranking, all harnesses.** Downshift never raises a tier on its own: the only `UPSHIFT` verdict is an operator tier-floor lift.
+  Serving it, Downshift ranks the session ids by catalog tier, not list position, never goes below the current model's tier, and lands on
+  the least model at the floored tier; when nothing reaches the floored tier it takes the strongest id at or above the current model's tier,
+  still never below the floor. The legacy `explicit_upshift` opt-in that once let a lift reach an `explicit_only` model was removed 2026-10-31;
+  an `explicit_only` id is never selected in any direction. The rule and its fallback are in [session-models.md](session-models.md).
 - **Cost linkage.** Every decision records `tool_use_hash`. PostToolUse
   repeats the id, so `resolved`, `child_ended` and, through the agent id,
   `usage` attach to the exact decision even with parallel spawns, including

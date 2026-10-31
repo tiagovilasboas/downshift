@@ -57,7 +57,7 @@ any outcome other than "verified" an error that installs nothing;
 `DOWNSHIFT_SKIP_ATTESTATION=1` skips the check. The installer ends by saying what was proven: "sha256 and GitHub build provenance" or "sha256 only" (an intact download, not proof of who published it). It accepts only a strict `vMAJOR.MINOR.PATCH[-prerelease]` version, downloads with `curl --proto '=https' --tlsv1.2`, and installs through a temporary name plus a rename. By hand:
 `gh attestation verify downshift_<ver>_<os>_<arch>.tar.gz --repo tiagovilasboas/downshift`.
 
-`install.sh` still treats a non-flag argument as the release version. `--explicit-upshift` may come before or after that version. It writes `"explicit_upshift": true` into `session-models.json` without dropping harness lists that are already there. The same switch at runtime is `DOWNSHIFT_EXPLICIT_UPSHIFT=1`. Default is off. See [session-models.md](../reference/session-models.md#explicit_upshift).
+`install.sh` treats a non-flag argument as the release version and refuses an unknown flag. (The `--explicit-upshift` flag and the `DOWNSHIFT_EXPLICIT_UPSHIFT` runtime switch were removed 2026-10-31: Downshift never raises a tier on its own, so there was nothing to opt into. The installer now rejects the removed flag. See [session-models.md](../reference/session-models.md#explicit_only-models).)
 
 **Step 2 — Preview, then wire the hooks:**
 ```bash
@@ -382,16 +382,16 @@ allowlist and Codex accepting the rewritten input.
 Downshift applies the selected reasoning effort, except when a guardrail holds the decision (the spawn keeps its requested effort) or when the decision is unconfident and does not rewrite the model. A code review is a
 frontier task, so a `gpt-5.6-terra` session routes its subagent to
 `gpt-5.6-sol` at high effort. `gpt-6-astra` is marked `routing: "explicit_only"`
-in the catalog. With the default `explicit_upshift` off, downshift does not
-select it. If the current subagent is already running on Astra, the model is
-preserved unchanged. Set `"explicit_upshift": true` in `session-models.json`,
-export `DOWNSHIFT_EXPLICIT_UPSHIFT=1`, or run `install.sh --explicit-upshift`
-to let upshift select it when it is inside this harness's credit set (or when
-this harness reported no credit set). Cursor `claude-fable-5-1-thinking-high`
-is the same kind of opt-in. Claude Code `claude-fable-5-1` is not
-`explicit_only`; append that id to the session list to opt in. To mark any
-other model as explicit-only, add `"routing": "explicit_only"` to its entry
-in `~/.downshift/catalog.json` (the state dir; `~/.harness-downshift/` is read only when it is the legacy dir in use).
+in the catalog. Routing never selects an `explicit_only` model in any
+direction: it is the owner's deliberate choice. If the current subagent is
+already running on Astra, the model is preserved unchanged. Cursor
+`claude-fable-5-1-thinking-high` is the same kind of `explicit_only` model.
+Claude Code `claude-fable-5-1` is not `explicit_only`; append that id to the
+session list so an operator floor lift can reach it. (The `explicit_upshift`
+opt-in that once let an upshift select an `explicit_only` model was removed
+2026-10-31.) To mark any other model as explicit-only, add
+`"routing": "explicit_only"` to its entry in `~/.downshift/catalog.json` (the
+state dir; `~/.harness-downshift/` is read only when it is the legacy dir in use).
 
 A purely mechanical prompt such as `Use a subagent to only list the .go files`
 is routed to `gpt-6-luna` at low effort when that exact id is in the session

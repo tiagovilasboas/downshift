@@ -58,12 +58,12 @@ Override paths:
 Every variable the routing core reads, with its default, is listed in one place: the doc comment of `internal/core/env.go`. The ones not covered above:
 
 - `DOWNSHIFT_QUOTA_MODE=required` — the quota gate needs fresh evidence and keeps abandoned snapshots holding ([quota.md](quota.md))
-- `DOWNSHIFT_EXPLICIT_UPSHIFT=1` — an upshift may pick `explicit_only` ids ([session-models.md](../reference/session-models.md#explicit_upshift))
 - `DOWNSHIFT_DISCOVERY=off`, `DOWNSHIFT_DISCOVERED=<path>`, `DOWNSHIFT_DISCOVERY_TTL=<duration>` — the discovered-models layer, its cache and its freshness (default 24h) ([session-discovery.md](../reference/session-discovery.md))
-- `DOWNSHIFT_NB_UPSHIFT` and `DOWNSHIFT_NB_DOWNSHIFT` — removed with the naive-Bayes opinion hooks. No hook is registered, so they have no effect on a spawn
+- `DOWNSHIFT_NB_DOWNSHIFT` — the opt-in naive-Bayes TRIVIAL downshift. No hook is registered in production, so it has no effect on a spawn
+- `DOWNSHIFT_EXPLICIT_UPSHIFT` and `DOWNSHIFT_NB_UPSHIFT` were removed on 2026-10-31 with the legacy upshift path (Downshift never raises a tier on its own). They no longer have any effect
 - `DOWNSHIFT_CURSOR_NATIVE_FILE=<path>` — Cursor's native session export (each harness that has one declares it in `HarnessCapabilities.NativeSessionEnv`)
 
-Outside the core: `DOWNSHIFT_EXEC=0` (kill switch for the `downshift compact` shell wrapper, on by default: the hook leaves commands unchanged and `downshift compact` stops compacting; the file switch is `"exec": false` in the context config, with no CLI off switch), `DOWNSHIFT_NO_ROUTE=1` (control baseline), `DOWNSHIFT_CONTROL_SHARE` (built-in control group), `DOWNSHIFT_QUIET`, `DOWNSHIFT_MINILM` (hash semantic boost; `0` opts out), `DOWNSHIFT_LOG_MAX_MB` / `DOWNSHIFT_LOG_MAX_BACKUPS`. `downshift config` prints the effective value and source of most of them. Graphify, `DOWNSHIFT_MINILM_EMBED`, and `DOWNSHIFT_E5_*` were removed on 2026-10-17 and are ignored. `DOWNSHIFT_EXPLICIT_UPSHIFT`, `DOWNSHIFT_DISCOVERY`, `DOWNSHIFT_DISCOVERY_TTL` are not reported by `config` yet.
+Outside the core: `DOWNSHIFT_EXEC=0` (kill switch for the `downshift compact` shell wrapper, on by default: the hook leaves commands unchanged and `downshift compact` stops compacting; the file switch is `"exec": false` in the context config, with no CLI off switch), `DOWNSHIFT_NO_ROUTE=1` (control baseline), `DOWNSHIFT_CONTROL_SHARE` (built-in control group), `DOWNSHIFT_QUIET`, `DOWNSHIFT_MINILM` (hash semantic boost; `0` opts out), `DOWNSHIFT_LOG_MAX_MB` / `DOWNSHIFT_LOG_MAX_BACKUPS`. `downshift config` prints the effective value and source of most of them. Graphify, `DOWNSHIFT_MINILM_EMBED`, and `DOWNSHIFT_E5_*` were removed on 2026-10-17 and are ignored; `DOWNSHIFT_EXPLICIT_UPSHIFT` and `DOWNSHIFT_NB_UPSHIFT` were removed on 2026-10-31 and are ignored. `DOWNSHIFT_DISCOVERY`, `DOWNSHIFT_DISCOVERY_TTL` are not reported by `config` yet.
 
 ## OpenRouter allowlist (optional)
 
