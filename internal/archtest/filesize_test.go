@@ -44,7 +44,7 @@ var oversizedBaseline = map[string]int{
 	"internal/compressor/compressor.go":          1099,
 	"internal/compressor/git_diff.go":            339,
 	"internal/core/policy.go":                    302,
-	"internal/core/session_select.go":            333,
+	"internal/core/session_select.go":            332,
 	"internal/discovery/sources.go":              342,
 	"internal/execwrap/policy_tooling.go":        851,
 	"internal/execwrap/run.go":                   436,
