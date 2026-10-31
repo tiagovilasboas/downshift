@@ -32,6 +32,11 @@ var (
 	// Build failure patterns, specific to avoid false positives.
 	reBuildError = regexp.MustCompile(`(?i)^(?:error\[|error:|fatal:|cannot find module|undefined reference|compilation failed|build failed)`)
 
+	// A GitHub Actions step that exits non-zero prints this line. It is the
+	// canonical failure signal for a step whose tool emits no ##[error]
+	// annotation. Exit code 0 is a success line and must not mark a failure.
+	reStepExitCode = regexp.MustCompile(`^Process completed with exit code (\d+)\.?$`)
+
 	// Skip these noisy setup steps
 	ghRunLogSkipSteps = map[string]bool{
 		"Set up job":                    true,
@@ -84,7 +89,8 @@ func compressGhRunLog(input []byte) ([]byte, bool, string) {
 		steps     []string
 		errors    []string
 		warnings  []string
-		important []string // test failures, build errors
+		important []string // real failures: test failures, build errors, non-zero step exit
+		notes     []string // danger-word lines that are not a failure signal, kept verbatim
 		lineCount int
 	}
 
@@ -110,7 +116,10 @@ func compressGhRunLog(input []byte) ([]byte, bool, string) {
 		}
 		job.lineCount++
 
-		keepDangerLine(&job.important, stripTimestamp(message)) // keep danger lines even in dropped steps
+		// Keep danger-word lines even inside dropped steps so a warning or
+		// error survives the summary (safety invariant). A kept line is a
+		// NOTE, not a failure: it must not, on its own, mark the job failed.
+		keepDangerLine(&job.notes, stripTimestamp(message))
 
 		// Skip noisy setup steps
 		if ghRunLogSkipSteps[stepName] {
@@ -159,6 +168,16 @@ func compressGhRunLog(input []byte) ([]byte, bool, string) {
 			continue
 		}
 
+		// A non-zero step exit is a real failure even when the tool emitted
+		// no ##[error] annotation. Exit code 0 is a success line and is left
+		// to the notes path (it carries no danger word, so it is dropped).
+		if em := reStepExitCode.FindStringSubmatch(msg); em != nil {
+			if em[1] != "0" && !containsString(job.important, msg) {
+				job.important = append(job.important, msg)
+			}
+			continue
+		}
+
 		// Check for test/build failures in the message content
 		if reTestFailure.MatchString(msg) || reBuildError.MatchString(msg) {
 			// Truncate long error messages
@@ -187,7 +206,10 @@ func compressGhRunLog(input []byte) ([]byte, bool, string) {
 		totalErrors += len(job.errors)
 		totalWarnings += len(job.warnings)
 
-		// Job header with step count
+		// Job header with step count. Only a real failure signal marks the
+		// job failed: a ##[error] annotation or a captured test/build/exit
+		// failure. A benign danger word (a "warning" in a git hint, a tar
+		// flag, a file name) stays in notes and does not flip the glyph.
 		status := "✓"
 		if len(job.errors) > 0 || len(job.important) > 0 {
 			status = "✗"
@@ -211,9 +233,19 @@ func compressGhRunLog(input []byte) ([]byte, bool, string) {
 			fmt.Fprintf(&b, "  ERROR: %s\n", err)
 		}
 
-		// Important messages (test failures, build errors)
+		// Important messages (test failures, build errors, non-zero exit)
 		for _, msg := range job.important {
 			fmt.Fprintf(&b, "  ISSUE: %s\n", msg)
+		}
+
+		// Notes: danger-word lines kept for safety that are not a failure.
+		// They are shown verbatim so no warning is summarised away, under an
+		// honest label. Skip any that were already emitted as ERROR or ISSUE.
+		for _, note := range job.notes {
+			if containsString(job.errors, note) || containsString(job.important, note) {
+				continue
+			}
+			fmt.Fprintf(&b, "  NOTE: %s\n", note)
 		}
 
 		// Warnings (limit to avoid noise)
@@ -249,57 +281,4 @@ func compressGhRunLog(input []byte) ([]byte, bool, string) {
 	}
 	ratio := float64(len(out)) / float64(len(input)) * 100
 	return []byte(out), true, fmt.Sprintf("compressed gh run log (%.1f%% of original, %d jobs, %d errors)", ratio, len(jobs), totalErrors)
-}
-
-// stripTimestamp removes the ISO8601 timestamp prefix from a log message.
-// Format: 2026-10-24T12:54:19.3944192Z <message>
-// Some lines have a BOM marker (U+FEFF) before the timestamp.
-func stripTimestamp(s string) string {
-	s = strings.TrimPrefix(s, "\ufeff") // Remove BOM
-	s = strings.TrimSpace(s)
-
-	// Match ISO8601 timestamp at start
-	if len(s) > 28 && s[4] == '-' && s[7] == '-' && s[10] == 'T' {
-		// Find the end of timestamp (after the Z)
-		if idx := strings.Index(s, "Z "); idx > 0 && idx < 30 {
-			return strings.TrimSpace(s[idx+2:])
-		}
-		if idx := strings.Index(s, "Z"); idx > 0 && idx < 30 && idx == len(s)-1 {
-			return "" // Just a timestamp, no message
-		}
-	}
-	return s
-}
-
-// isNoiseWarning returns true for common warnings that don't need agent attention.
-func isNoiseWarning(msg string) bool {
-	noise := []string{
-		"ubuntu-latest label will migrate",
-		"Node.js 16 actions are deprecated",
-		"set-output command is deprecated",
-		"save-state command is deprecated",
-		"group command is deprecated",
-	}
-	for _, n := range noise {
-		if strings.Contains(strings.ToLower(msg), strings.ToLower(n)) {
-			return true
-		}
-	}
-	return false
-}
-
-func containsString(slice []string, s string) bool {
-	for _, item := range slice {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}
-
-func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
 }
