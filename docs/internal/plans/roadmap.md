@@ -396,7 +396,7 @@ These close gaps that no stage covered. W7.1 and W7.2 come first: without them v
 | W7.3 | 3 | Hint skill (R10) moved earlier: the parent writes the hint the decider reads | Real-session proof | Open |
 | W7.4 | 3 | AppSec review of the hook-path change (decider cut) before anything reaches `main` | None | Self-review draft (`docs/internal/appsec-review-w7-4.md`), independent review pending |
 | W7.5 | 2 | Remote CI on the branch, including the Windows and macOS job | None | Verified locally (`make check` cross-vet); remote PR CI pending |
-| W7.6 | 2 | Release note and migration: version bump, `try` removed, NB variables ignored, new default behaviour, rollback by revert | W7.1 | Draft (`docs/releases/unreleased-migration-notes.md`) |
+| W7.6 | 2 | Release note and migration: version bump, `try` removed, NB variables ignored, new default behaviour, rollback by revert | W7.1 | Done (`docs/releases/v0.3.0.md`) |
 | W7.7 | 3 | Dogfooding protocol: duration, sessions, opt-in control arm, fields measured in tokens, stop criteria from the business plan | Real-session proof | Open |
 | W7.8 | 1 | Estimate against actual for stages 0 and 2, as the harness-core rule asks at closing | None | Partial (`docs/internal/estimate-vs-actual-w7-8.md`: estimates mapped, actual effort tracking pending) |
 | W7.9 | 3 | Economy mode as policy data (`"mode": "economy"` in `policy.json`, toggled by a command), the same on every harness: every default goes one tier down; a type that keeps the requested model goes one tier below it. Bounds stay: risk never goes small, `explicit_only` never picked, never above the requested model | W7.1 | Superseded by O8: acts only on declared policy; removal pending |
