@@ -251,8 +251,9 @@ reproduced here. The protocol and its pre-registered cut criterion are in
 Catalog prices are public list prices from a dated snapshot. An invoice differs by plan (Pro, Max and Team have no
 per-token line at all), negotiated or batch discounts, cache pricing the catalog may lack (then cached tokens are
 billed at the input rate, an upper bound), provider-side retries and the parent session's own tokens, which no hook
-sees. The only invoice-grade comparison is the [billing comparison template](billing-comparison-template.md), still
-unfilled; see [pilot.md](pilot.md) for the protocol that feeds it.
+sees. Downshift does not measure money: it reports tokens, and the production comparison is the real seven-day
+routed-versus-control comparison in tokens (effect, tokens per completed task, rework), tracked in issue #103 and
+[beta-exit.md](../reference/beta-exit.md) P3.7; see [pilot.md](pilot.md) for the protocol that feeds it.
 
 ## Why fewer tokens can cost more
 

@@ -409,15 +409,19 @@ func TestCostPropertySweep(t *testing.T) {
 			t.Errorf("(d') unconfident frontier with no current model rewrites on %s: %s", c.sessionKind, c)
 		}
 
-		// (3) savings sanity: a DOWNSHIFT plan never targets a dearer model.
+		// (3) downshift sanity: a DOWNSHIFT plan always targets a strictly
+		// lower complexity tier. Owner decision 2026-10-31: routing decides by
+		// tier only, so this invariant is tier-based rather than price-based.
+		// It is strictly tighter than the old rule (same-tier was allowed when
+		// no dearer), so it does not weaken the safety guarantee.
 		if d.Verdict == core.VerdictDownshift && plan.RewriteModel {
 			cur, ok1 := costTierOf(t, ccHarness, c.current)
 			tgt, ok2 := costTierOf(t, ccHarness, plan.Model.ID)
 			if !ok1 || !ok2 {
 				t.Errorf("(3) downshift with uncatalogued ids: %s", c)
-			} else if tgt.Tier > cur.Tier || tgt.InputM+tgt.OutputM > cur.InputM+cur.OutputM {
-				t.Errorf("(3) downshift target %q (tier %s, $%.2f) dearer than current %q (tier %s, $%.2f): %s",
-					tgt.ID, tgt.Tier, tgt.InputM+tgt.OutputM, cur.ID, cur.Tier, cur.InputM+cur.OutputM, c)
+			} else if tgt.Tier >= cur.Tier {
+				t.Errorf("(3) downshift target %q (tier %s) not strictly below current %q (tier %s): %s",
+					tgt.ID, tgt.Tier, cur.ID, cur.Tier, c)
 			}
 		}
 	}

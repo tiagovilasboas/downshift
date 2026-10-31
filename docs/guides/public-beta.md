@@ -36,7 +36,7 @@ Copied from beta-exit (2026-10-15), still open after the 2026-10-17 cleanup:
 | P1.6 | Cursor rewrite honored | Needs a paid Cursor session and a matrix row. Not run here. |
 | P2.3–P2.4 | Two or more non-maintainer `stats --export` | Needs other operators for a week. |
 | P3.4 | ≥50 `usage` events linked to PreToolUse | Needs real Claude Code SubagentStop traffic. Fixtures are not that count. |
-| P3.7 | One calendar week vs the provider dashboard | Needs the [billing comparison template](billing-comparison-template.md) filled by the operator. |
+| P3.7 | A real seven-day routed-versus-control comparison in tokens (effect, tokens per completed task, rework) | Tracked in [issue #103](https://github.com/tiagovilasboas/downshift/issues/103) and [beta-exit.md](../reference/beta-exit.md) P3.7; no money is measured. |
 | P4 | Blind set ≥200 tasks never used to tune signals | Public `benchmark/report.md` splits are not that set. Do not tune on them. |
 | P5.3–P5.4 | Quarterly Cursor and Codex revalidation | Dogfood, not a code change. |
 

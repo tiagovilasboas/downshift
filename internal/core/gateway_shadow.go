@@ -11,8 +11,8 @@ type GatewayShadowResolver interface {
 	ShadowGateways() []Model
 }
 
-// RecordGatewayWould stamps Shadow.GatewayWould: the smallest allowlisted row
-// whose tier equals the decision tier. It never changes Model, Tier, Verdict
+// RecordGatewayWould stamps Shadow.GatewayWould: the allowlisted row whose tier
+// equals the decision tier, chosen by id. It never changes Model, Tier, Verdict
 // or the rewrite plan. The choice is the same for every harness, because the
 // allowlist is a user fact and not a harness fact.
 func (d *Decision) RecordGatewayWould(res Resolver) {
@@ -24,9 +24,9 @@ func (d *Decision) RecordGatewayWould(res Resolver) {
 	d.Shadow.GatewayWould = gatewayWouldFor(d.Tier, gr.ShadowGateways())
 }
 
-// gatewayWouldFor returns the id of the smallest row of the given tier, or
-// empty. Smallest means the lowest known list price; rows with no price rank
-// after priced rows, and ties break on id so the result is deterministic.
+// gatewayWouldFor returns the id of the row of the given tier with the lowest
+// id, or empty. Price is not read (owner decision 2026-10-31: routing and its
+// shadow decide by tier only); the id tiebreak keeps the result deterministic.
 func gatewayWouldFor(tier Tier, rows []Model) string {
 	best, ok := smallestRow(rows, func(m Model) bool { return m.Tier == tier })
 	if !ok {
@@ -35,32 +35,16 @@ func gatewayWouldFor(tier Tier, rows []Model) string {
 	return best.ID
 }
 
-// smallestRow returns the smallest gateway row that match accepts, using
-// smallerGateway. ok is false when no row matches.
+// smallestRow returns the gateway row that match accepts with the lowest id.
+// ok is false when no row matches.
 func smallestRow(rows []Model, match func(Model) bool) (best Model, ok bool) {
 	for _, m := range rows {
 		if m.ID == "" || !match(m) {
 			continue
 		}
-		if !ok || smallerGateway(m, best) {
+		if !ok || m.ID < best.ID {
 			best, ok = m, true
 		}
 	}
 	return best, ok
-}
-
-// price is the catalog list price (input plus output per 1M); 0 means unknown.
-func price(m Model) float64 { return m.InputM + m.OutputM }
-
-// smallerGateway orders gateway rows: priced before unpriced, then by price,
-// then by id.
-func smallerGateway(a, b Model) bool {
-	pa, pb := price(a), price(b)
-	if (pa > 0) != (pb > 0) {
-		return pa > 0
-	}
-	if pa != pb {
-		return pa < pb
-	}
-	return a.ID < b.ID
 }
