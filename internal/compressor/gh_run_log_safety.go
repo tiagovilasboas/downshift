@@ -5,13 +5,16 @@ package compressor
 
 import "strings"
 
-// keepDangerLine appends msg to important when it carries a danger word, so a
-// failure, error or warning survives the gh run log summary wherever it
-// appears, including inside a setup step the summary otherwise drops. The
-// annotation lines (##[error], ##[warning]) are captured separately with their
-// own de-duplication, so they are left to that path. Lines are de-duplicated
-// and overlong ones truncated, matching the test/build-failure capture.
-func keepDangerLine(important *[]string, msg string) {
+// keepDangerLine appends msg to notes when it carries a danger word, so a
+// warning, error or failure survives the gh run log summary wherever it
+// appears, including inside a setup step the summary otherwise drops. These
+// kept lines are notes, not a failure signal: a benign danger word (a git
+// hint, a tar flag, a file name) must not flip a green job to failed. Real
+// failures are captured separately (##[error] annotations, test/build
+// failures, a non-zero step exit) and those drive the job status. The
+// annotation lines (##[error], ##[warning]) are captured by their own path.
+// Lines are de-duplicated and overlong ones truncated.
+func keepDangerLine(notes *[]string, msg string) {
 	msg = strings.TrimSpace(msg)
 	if msg == "" || strings.HasPrefix(msg, "##[") || !reDangerWord.MatchString(msg) {
 		return
@@ -19,12 +22,12 @@ func keepDangerLine(important *[]string, msg string) {
 	if len(msg) > 200 {
 		msg = msg[:200] + "..."
 	}
-	for _, kept := range *important {
+	for _, kept := range *notes {
 		if kept == msg {
 			return
 		}
 	}
-	*important = append(*important, msg)
+	*notes = append(*notes, msg)
 }
 
 // hasUnparsedDangerLine reports whether input has a danger-word line that is
