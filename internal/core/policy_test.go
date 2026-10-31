@@ -28,9 +28,6 @@ func TestRoute_OK(t *testing.T) {
 	if d.Verdict != core.VerdictOK {
 		t.Fatalf("verdict = %s, want OK", d.Verdict)
 	}
-	if d.Savings != 0 {
-		t.Errorf("savings = %.2f, want 0 for OK", d.Savings)
-	}
 }
 
 func TestRoute_UnknownCurrentModel(t *testing.T) {

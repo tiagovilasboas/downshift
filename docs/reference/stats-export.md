@@ -193,4 +193,11 @@ no-signal abstention can instead carry `NO_SIGNAL` without this code. See
 
 `child_ended` events record how a Claude Code Agent/Task child ended. Their `child_status` is one of `completed`, `launched`, `interrupted`, `error`, `stopped` or `unknown`. They are observations, not decisions: they never change `total`, the verdict counts or savings. The error text is never stored. Recording them requires `claude-code-post-tool-use` registered under `PostToolUseFailure` as well as `PostToolUse`; the failure payload was documented but not captured from a real session, so the field names should be checked against one before relying on them.
 
-The normalised units (`norm_baseline`, `norm_routed`) charge an applied UPSHIFT its extra catalog list-price cost (the `upshift_cost_ratio` recorded on the decision event, routed over requested price). When either price is unknown the upshift stays neutral at 1.0, so `norm_routed` can exceed `norm_baseline` and the normalised savings can be negative.
+> [!NOTE]
+> **Removed from the event format on 2026-10-31 (owner decision: the Downshift product uses no price).**
+> The `events.jsonl` input records no longer carry `estimated_savings`, `gateway_price` or
+> `upshift_cost_ratio`; the catalog list-price `norm_baseline`/`norm_routed` lens that read
+> `upshift_cost_ratio` is gone with them. Old event lines that still carry these keys stay
+> readable: the event decoder ignores unknown keys, so those lines still enter every report.
+> The export summary schema is unchanged by this: none of the three were export keys, so
+> `schema_version` stays `3`.

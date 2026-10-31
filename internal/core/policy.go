@@ -42,7 +42,6 @@ type Decision struct {
 	Harness    string
 	Model      Model // the model we recommend for this task
 	Verdict    Verdict
-	Savings    float64 // always 0: routing does not compute a price saving. Carried to the events.jsonl estimated_savings field, removed with that field in a later change.
 	Confident  bool
 	// Self-correction outcome, computed by Check inside Route. Verdict
 	// keeps the classified value for diagnostics; SafeVerdict carries the

@@ -12,7 +12,7 @@ import (
 )
 
 func TestAggregate_UsageLinkageWithoutAgentUsesEventIdentity(t *testing.T) {
-	decision := exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT", 0.8)
+	decision := exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT")
 	decision.CorrelationID = "decision-one"
 	usage := decision
 	usage.Outcome = telemetry.OutcomeUsage
@@ -27,9 +27,9 @@ func TestAggregate_UsageLinkageWithoutAgentUsesEventIdentity(t *testing.T) {
 }
 
 func TestExportSummary_UsageLinkOutsideWindowIsNotLinked(t *testing.T) {
-	decision := exportEvent(exportNow.Add(-48*time.Hour), "TRIVIAL", "DOWNSHIFT", 0.8)
+	decision := exportEvent(exportNow.Add(-48*time.Hour), "TRIVIAL", "DOWNSHIFT")
 	decision.CorrelationID = "old-decision"
-	usage := exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT", 0.8)
+	usage := exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT")
 	usage.Outcome = telemetry.OutcomeUsage
 	usage.LinkedDecision = decision.CorrelationID
 	got := telemetry.ExportSummary([]telemetry.Event{decision, usage}, 1, exportNow)
@@ -39,7 +39,7 @@ func TestExportSummary_UsageLinkOutsideWindowIsNotLinked(t *testing.T) {
 }
 
 func TestPrintStats_UnknownBaselineDoesNotClaimUsageMissing(t *testing.T) {
-	usage := exportEvent(exportNow, "TRIVIAL", "UNKNOWN", 0)
+	usage := exportEvent(exportNow, "TRIVIAL", "UNKNOWN")
 	usage.Outcome = telemetry.OutcomeUsage
 	usage.InputTokens = exportInt64Ptr(1000)
 	var out strings.Builder

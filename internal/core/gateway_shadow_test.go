@@ -69,7 +69,7 @@ func TestGatewayShadow_AllowlistNeverChangesRoute(t *testing.T) {
 			want := core.Route(prompt, "opencode", current, bare)
 			got := core.Route(prompt, "opencode", current, withList)
 			if got.Model.ID != want.Model.ID || got.Tier != want.Tier || got.Verdict != want.Verdict ||
-				got.Effort != want.Effort || got.Savings != want.Savings {
+				got.Effort != want.Effort {
 				t.Errorf("Route(%q, current %q) changed with the allowlist: got %s/%v/%v, want %s/%v/%v",
 					prompt, current, got.Model.ID, got.Tier, got.Verdict, want.Model.ID, want.Tier, want.Verdict)
 			}

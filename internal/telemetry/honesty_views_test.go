@@ -21,7 +21,7 @@ func hvRefuted() []Event {
 	return []Event{
 		{CorrelationID: "d1", Timestamp: "2026-10-15T10:00:00Z", Harness: "claude-code", SessionID: hvSess,
 			Outcome: OutcomeRewriteEmitted, Verdict: "DOWNSHIFT", Complexity: "SIMPLE",
-			FromModel: "claude-opus-5-5", ToModel: "claude-haiku-5-5", QuotaStatus: QuotaAvailable, EstimatedSavings: 0.8},
+			FromModel: "claude-opus-5-5", ToModel: "claude-haiku-5-5", QuotaStatus: QuotaAvailable},
 		{CorrelationID: "r1", Timestamp: "2026-10-15T10:01:00Z", Harness: "claude-code", SessionID: hvSess,
 			Outcome: OutcomeResolved, LinkedDecision: "d1", FromModel: "claude-haiku-5-5", ToModel: "claude-opus-5-5",
 			RewriteHonored: hvBool(false)},

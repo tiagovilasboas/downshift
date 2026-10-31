@@ -25,7 +25,6 @@ Each routing event captures:
   "from_model": "claude-sonnet-4",
   "to_model": "claude-haiku-4",
   "outcome": "rewrite_emitted",
-  "estimated_savings": 0.85,
   "input_tokens": 1200,
   "output_tokens": 450
 }

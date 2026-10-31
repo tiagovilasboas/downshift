@@ -21,15 +21,14 @@ func exportInt64Ptr(value int64) *int64 {
 }
 
 // exportEvent builds a minimal Event with an explicit timestamp.
-func exportEvent(stamp time.Time, complexity string, verdict string, savings float64) telemetry.Event {
+func exportEvent(stamp time.Time, complexity string, verdict string) telemetry.Event {
 	return telemetry.Event{
-		Timestamp:        stamp.Format(time.RFC3339Nano),
-		Harness:          "claude-code",
-		Complexity:       complexity,
-		FromModel:        "model-frontier",
-		ToModel:          "claude-haiku-4-5",
-		Verdict:          verdict,
-		EstimatedSavings: savings,
+		Timestamp:  stamp.Format(time.RFC3339Nano),
+		Harness:    "claude-code",
+		Complexity: complexity,
+		FromModel:  "model-frontier",
+		ToModel:    "claude-haiku-4-5",
+		Verdict:    verdict,
 	}
 }
 
@@ -50,7 +49,7 @@ func TestExportSummary_UnknownCaution(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			events := make([]telemetry.Event, 0, len(tt.verdicts))
 			for _, verdict := range tt.verdicts {
-				events = append(events, exportEvent(exportNow, "TRIVIAL", verdict, 0))
+				events = append(events, exportEvent(exportNow, "TRIVIAL", verdict))
 			}
 			got := telemetry.ExportSummary(events, 30, exportNow)
 			hasCaution := strings.Contains(got.Note, "Caution: unknown_rate=")
@@ -68,9 +67,9 @@ func TestExportSummary_UnknownCaution(t *testing.T) {
 }
 
 func TestExportSummary_WindowFiltering(t *testing.T) {
-	recent := exportEvent(exportNow.Add(-1*time.Hour), "TRIVIAL", "DOWNSHIFT", 0.8)
-	old := exportEvent(exportNow.Add(-48*time.Hour), "TRIVIAL", "DOWNSHIFT", 0.8)
-	bad := exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT", 0.8)
+	recent := exportEvent(exportNow.Add(-1*time.Hour), "TRIVIAL", "DOWNSHIFT")
+	old := exportEvent(exportNow.Add(-48*time.Hour), "TRIVIAL", "DOWNSHIFT")
+	bad := exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT")
 	bad.Timestamp = "not-a-timestamp"
 
 	gotWindow := telemetry.ExportSummary([]telemetry.Event{recent, old, bad}, 1, exportNow)
@@ -86,8 +85,8 @@ func TestExportSummary_WindowFiltering(t *testing.T) {
 
 func TestExportJSON_RoundTrip(t *testing.T) {
 	events := []telemetry.Event{
-		exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT", 0.8),
-		exportEvent(exportNow, "COMPLEX", "OK", 0),
+		exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT"),
+		exportEvent(exportNow, "COMPLEX", "OK"),
 	}
 	summary := telemetry.ExportSummary(events, 7, exportNow)
 
@@ -137,13 +136,13 @@ func TestExportJSON_OmitsAllCostUSD_SchemaV2(t *testing.T) {
 		{
 			name: "routing only",
 			events: []telemetry.Event{
-				exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT", 0.8),
+				exportEvent(exportNow, "TRIVIAL", "DOWNSHIFT"),
 			},
 		},
 		{
 			name: "observed spend without baseline comparison",
 			events: func() []telemetry.Event {
-				u := exportEvent(exportNow, "TRIVIAL", "UNKNOWN", 0)
+				u := exportEvent(exportNow, "TRIVIAL", "UNKNOWN")
 				u.Outcome = telemetry.OutcomeUsage
 				u.InputTokens = exportInt64Ptr(1000)
 				return []telemetry.Event{u}
@@ -152,7 +151,7 @@ func TestExportJSON_OmitsAllCostUSD_SchemaV2(t *testing.T) {
 		{
 			name: "measured zero savings",
 			events: func() []telemetry.Event {
-				ev := exportEvent(exportNow, "COMPLEX", "UPSHIFT", 0)
+				ev := exportEvent(exportNow, "COMPLEX", "UPSHIFT")
 				return []telemetry.Event{ev}
 			}(),
 		},

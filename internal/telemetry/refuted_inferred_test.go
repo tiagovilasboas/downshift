@@ -11,7 +11,7 @@ func refBool(b bool) *bool { return &b }
 func refShift(id, session string) Event {
 	return Event{CorrelationID: id, Timestamp: "2026-10-15T10:00:00Z", Harness: "claude-code", SessionID: session,
 		Verdict: "DOWNSHIFT", Outcome: OutcomeRewriteEmitted, FromModel: "claude-opus-5-5", ToModel: "claude-haiku-5-5",
-		Tier: "SMALL", Complexity: "TRIVIAL", EstimatedSavings: 0.8, QuotaStatus: QuotaAvailable}
+		Tier: "SMALL", Complexity: "TRIVIAL", QuotaStatus: QuotaAvailable}
 }
 
 // a rewrite the harness refused (resolved model != rewrite) must not be a saving.

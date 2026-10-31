@@ -49,7 +49,7 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 			t.Fatal("Usage func ran but ObserveUsage reported unobserved")
 		}
 
-		decision := appliedDownshift("claude-code", decisionID, "available", false, 0.4)
+		decision := appliedDownshift("claude-code", decisionID, "available", false)
 		events := append([]telemetry.Event{decision}, recorded...)
 		assertSurface(t, events, decision, telemetry.HonorObserved, telemetry.QuotaAvailable, telemetry.UsageObserved)
 
@@ -75,7 +75,7 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 			sessionID  = "sess-cursor"
 			written    = "claude-haiku-4-5"
 		)
-		decision := appliedDownshift("cursor", decisionID, "unknown", false, 0.55)
+		decision := appliedDownshift("cursor", decisionID, "unknown", false)
 		decision.SessionID = sessionID
 		decision.FromModel = "model-frontier"
 		decision.ToModel = written
@@ -92,23 +92,21 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 		}
 		// rewrite_emitted is not honor, even with rewrite_honored set.
 		emitted := telemetry.Event{
-			CorrelationID:    "emit-cursor",
-			Harness:          "cursor",
-			Outcome:          telemetry.OutcomeRewriteEmitted,
-			Verdict:          "DOWNSHIFT",
-			LinkedDecision:   decisionID,
-			RewriteHonored:   boolPtr(true),
-			EstimatedSavings: 0.25,
-			QuotaStatus:      "unknown",
-			FromModel:        "model-frontier",
-			ToModel:          written,
+			CorrelationID:  "emit-cursor",
+			Harness:        "cursor",
+			Outcome:        telemetry.OutcomeRewriteEmitted,
+			Verdict:        "DOWNSHIFT",
+			LinkedDecision: decisionID,
+			RewriteHonored: boolPtr(true),
+			QuotaStatus:    "unknown",
+			FromModel:      "model-frontier",
+			ToModel:        written,
 		}
-		// Catalog estimated_savings without token counts is not usage.
+		// A usage record without token counts is not usage.
 		catalog := telemetry.Event{
-			Harness:          "cursor",
-			Outcome:          telemetry.OutcomeUsage,
-			LinkedDecision:   decisionID,
-			EstimatedSavings: 0.9,
+			Harness:        "cursor",
+			Outcome:        telemetry.OutcomeUsage,
+			LinkedDecision: decisionID,
 		}
 		resolvedFalse := telemetry.Event{
 			Harness:        "cursor",
@@ -116,7 +114,7 @@ func TestSpawnSurfaceHarnessFixtures(t *testing.T) {
 			LinkedDecision: decisionID,
 			RewriteHonored: boolPtr(false),
 		}
-		held := appliedDownshift("cursor", "held-cursor", "available", true, 0.7)
+		held := appliedDownshift("cursor", "held-cursor", "available", true)
 
 		events := []telemetry.Event{decision, later, emitted, catalog, resolvedFalse, held}
 		assertSurface(t, events, decision, telemetry.HonorUnobserved, telemetry.QuotaUnknown, telemetry.UsageUnobserved)
@@ -165,7 +163,7 @@ func TestProjectQuotaAndSavingsCredit(t *testing.T) {
 			if got := telemetry.ProjectQuota(tc.status, tc.creditHeld); got != tc.wantQuota {
 				t.Fatalf("ProjectQuota(%q, %v) = %q, want %q", tc.status, tc.creditHeld, got, tc.wantQuota)
 			}
-			ev := appliedDownshift("cursor", "credit-"+tc.name, tc.status, tc.creditHeld, 0.5)
+			ev := appliedDownshift("cursor", "credit-"+tc.name, tc.status, tc.creditHeld)
 			if got := telemetry.SavingsCredit(ev); got != tc.wantCredit {
 				t.Fatalf("SavingsCredit() = %v, want %v", got, tc.wantCredit)
 			}
@@ -173,17 +171,16 @@ func TestProjectQuotaAndSavingsCredit(t *testing.T) {
 	}
 }
 
-func appliedDownshift(harness, id, quota string, creditHeld bool, savings float64) telemetry.Event {
+func appliedDownshift(harness, id, quota string, creditHeld bool) telemetry.Event {
 	return telemetry.Event{
-		CorrelationID:    id,
-		Harness:          harness,
-		Verdict:          "DOWNSHIFT",
-		Outcome:          telemetry.OutcomeRewriteEmitted,
-		EstimatedSavings: savings,
-		QuotaStatus:      quota,
-		CreditHeld:       creditHeld,
-		FromModel:        "model-frontier",
-		ToModel:          "claude-haiku-4-5",
+		CorrelationID: id,
+		Harness:       harness,
+		Verdict:       "DOWNSHIFT",
+		Outcome:       telemetry.OutcomeRewriteEmitted,
+		QuotaStatus:   quota,
+		CreditHeld:    creditHeld,
+		FromModel:     "model-frontier",
+		ToModel:       "claude-haiku-4-5",
 	}
 }
 

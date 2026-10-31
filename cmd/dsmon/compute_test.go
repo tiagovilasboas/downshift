@@ -21,9 +21,9 @@ func ev(e telemetry.Event) event { return event{Event: e} }
 func TestCompute_CountsOnlyAppliedRewrites(t *testing.T) {
 	ts := time.Now().UTC().Format(time.RFC3339Nano)
 	all := []event{
-		ev(telemetry.Event{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", EstimatedSavings: 0.8, Outcome: "rewrite_emitted", QuotaStatus: "available"}),
-		ev(telemetry.Event{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", EstimatedSavings: 0.4, Outcome: "allow"}),
-		ev(telemetry.Event{Timestamp: ts, Harness: "codex", Verdict: "DOWNSHIFT", EstimatedSavings: 0.5, Outcome: "rewrite_emitted", Corrections: []string{"R1_UNCONFIDENT_DOWNSHIFT"}}),
+		ev(telemetry.Event{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", Outcome: "rewrite_emitted", QuotaStatus: "available"}),
+		ev(telemetry.Event{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", Outcome: "allow"}),
+		ev(telemetry.Event{Timestamp: ts, Harness: "codex", Verdict: "DOWNSHIFT", Outcome: "rewrite_emitted", Corrections: []string{"R1_UNCONFIDENT_DOWNSHIFT"}}),
 		ev(telemetry.Event{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", Outcome: "usage"}),
 	}
 	st, recent := compute(all)

@@ -15,8 +15,7 @@
 //   - the guard has the last word: a move happens only when guard.Check allows
 //     it, so risk never goes down, a target above the request is refused,
 //     explicit_only and foreign ids are never written;
-//   - price is not used: the catalog supplies ids and tiers, never dollars, so
-//     Decision.Savings stays zero;
+//   - price is not used: the catalog supplies ids and tiers, never dollars;
 //   - the decision is per spawn: it reads no session list.
 //
 // Strain (gates.go): a rule whose quota gate fails is dropped; when every

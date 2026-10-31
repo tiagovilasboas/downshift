@@ -43,13 +43,13 @@ var oversizedBaseline = map[string]int{
 	"internal/codeintel/telemetry.go":            325,
 	"internal/compressor/compressor.go":          1099,
 	"internal/compressor/git_diff.go":            339,
-	"internal/core/policy.go":                    307,
+	"internal/core/policy.go":                    306,
 	"internal/core/session_select.go":            337,
 	"internal/discovery/sources.go":              342,
 	"internal/execwrap/policy_tooling.go":        851,
 	"internal/execwrap/run.go":                   436,
 	"internal/quota/native.go":                   368,
-	"internal/telemetry/telemetry.go":            826,
+	"internal/telemetry/telemetry.go":            815,
 	"internal/telemetry/tokens_rerouted.go":      322,
 }
 

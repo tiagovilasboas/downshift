@@ -5,7 +5,6 @@ package telemetry_test
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,15 +23,14 @@ func tmpLog(t *testing.T) string {
 }
 
 // makeEvent constructs a minimal Event for testing.
-func makeEvent(harness, complexity, verdict string, savings float64) telemetry.Event {
+func makeEvent(harness, complexity, verdict string) telemetry.Event {
 	return telemetry.Event{
-		Timestamp:        time.Now().UTC().Format(time.RFC3339),
-		Harness:          harness,
-		Complexity:       complexity,
-		FromModel:        "model-frontier",
-		ToModel:          "claude-haiku-4-5",
-		Verdict:          verdict,
-		EstimatedSavings: savings,
+		Timestamp:  time.Now().UTC().Format(time.RFC3339),
+		Harness:    harness,
+		Complexity: complexity,
+		FromModel:  "model-frontier",
+		ToModel:    "claude-haiku-4-5",
+		Verdict:    verdict,
 	}
 }
 
@@ -40,7 +38,7 @@ func makeEvent(harness, complexity, verdict string, savings float64) telemetry.E
 
 func TestAppendAndRead_RoundTrip(t *testing.T) {
 	path := tmpLog(t)
-	ev := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.85)
+	ev := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")
 
 	if err := telemetry.AppendTo(path, ev); err != nil {
 		t.Fatalf("AppendTo: %v", err)
@@ -61,8 +59,35 @@ func TestAppendAndRead_RoundTrip(t *testing.T) {
 	if got[0].Verdict != ev.Verdict {
 		t.Errorf("Verdict = %q, want %q", got[0].Verdict, ev.Verdict)
 	}
-	if math.Abs(got[0].EstimatedSavings-ev.EstimatedSavings) > 1e-9 {
-		t.Errorf("EstimatedSavings = %f, want %f", got[0].EstimatedSavings, ev.EstimatedSavings)
+}
+
+// TestReadLegacyPriceFieldsStillParses proves the event decoder is not strict:
+// a real old events.jsonl line carries the removed price fields
+// (estimated_savings, gateway_price, upshift_cost_ratio), and the reader must
+// ignore those unknown keys, decode the line, and let it enter the report. The
+// owner removed those fields from the event format on 2026-10-31; the millions
+// of lines already on disk must keep being read.
+func TestReadLegacyPriceFieldsStillParses(t *testing.T) {
+	path := tmpLog(t)
+	legacy := `{"timestamp":"2026-10-15T10:00:00Z","harness":"claude-code","complexity":"TRIVIAL","verdict":"DOWNSHIFT","tier":"SMALL","requested_model":"claude-opus-5-5","final_model":"claude-haiku-4-5","outcome":"rewrite_emitted","estimated_savings":0.85,"gateway_price":"snapshot","upshift_cost_ratio":1.4}` + "\n"
+	if err := os.WriteFile(path, []byte(legacy), 0o600); err != nil {
+		t.Fatalf("write legacy log: %v", err)
+	}
+
+	got, err := telemetry.ReadEventsFrom(path)
+	if err != nil {
+		t.Fatalf("ReadEventsFrom on legacy line: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len(events) = %d, want 1 (unknown price keys must not drop the line)", len(got))
+	}
+	if got[0].Verdict != "DOWNSHIFT" || got[0].Outcome != telemetry.OutcomeRewriteEmitted {
+		t.Errorf("legacy line decoded wrong: %+v", got[0])
+	}
+
+	// The decoded legacy decision still enters the report.
+	if stats := telemetry.Aggregate(got); stats.Total != 1 || stats.Downshifted != 1 {
+		t.Errorf("legacy line not in report: Total=%d Downshifted=%d, want 1 and 1", stats.Total, stats.Downshifted)
 	}
 }
 
@@ -91,7 +116,7 @@ func TestUntrustedIdentifiersAreBoundedBeforePersistence(t *testing.T) {
 
 func TestAppendTo_UsesPrivateFilePermissions(t *testing.T) {
 	path := tmpLog(t)
-	if err := telemetry.AppendTo(path, makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.8)); err != nil {
+	if err := telemetry.AppendTo(path, makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")); err != nil {
 		t.Fatal(err)
 	}
 	info, err := os.Stat(path)
@@ -106,7 +131,7 @@ func TestAppendTo_UsesPrivateFilePermissions(t *testing.T) {
 func TestAppendMultiple_AllPresent(t *testing.T) {
 	path := tmpLog(t)
 	for i := 0; i < 5; i++ {
-		ev := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.8)
+		ev := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")
 		if err := telemetry.AppendTo(path, ev); err != nil {
 			t.Fatalf("AppendTo[%d]: %v", i, err)
 		}
@@ -138,7 +163,7 @@ func TestReadEventsFrom_MissingFile_ReturnsEmpty(t *testing.T) {
 func TestReadEventsFrom_CorruptedLines_SkippedGracefully(t *testing.T) {
 	path := tmpLog(t)
 
-	good := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.8)
+	good := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")
 	if err := telemetry.AppendTo(path, good); err != nil {
 		t.Fatal(err)
 	}
@@ -168,8 +193,8 @@ func TestReadEventsFrom_CorruptedLines_SkippedGracefully(t *testing.T) {
 
 func TestFilterByDays_ZeroReturnsAll(t *testing.T) {
 	events := []telemetry.Event{
-		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8),
-		makeEvent("cc", "COMPLEX", "OK", 0),
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
+		makeEvent("cc", "COMPLEX", "OK"),
 	}
 	got := telemetry.FilterByDays(events, 0)
 	if len(got) != 2 {
@@ -184,7 +209,7 @@ func TestFilterByDays_FiltersOldEvents(t *testing.T) {
 		Complexity: "TRIVIAL",
 		Verdict:    "DOWNSHIFT",
 	}
-	recent := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8)
+	recent := makeEvent("cc", "TRIVIAL", "DOWNSHIFT")
 
 	got := telemetry.FilterByDays([]telemetry.Event{old, recent}, 1)
 	if len(got) != 1 {
@@ -194,7 +219,7 @@ func TestFilterByDays_FiltersOldEvents(t *testing.T) {
 
 func TestFilterByDays_NegativeReturnsAll(t *testing.T) {
 	events := []telemetry.Event{
-		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8),
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
 	}
 	got := telemetry.FilterByDays(events, -7)
 	if len(got) != 1 {
@@ -251,11 +276,11 @@ func TestFilterByDays_TimestampFormats(t *testing.T) {
 
 func TestAggregate_CountsVerdicts(t *testing.T) {
 	events := []telemetry.Event{
-		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8),
-		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8),
-		makeEvent("cc", "COMPLEX", "UPSHIFT", 0),
-		makeEvent("cc", "MEDIUM", "OK", 0),
-		makeEvent("cc", "MEDIUM", "UNKNOWN", 0),
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
+		makeEvent("cc", "COMPLEX", "UPSHIFT"),
+		makeEvent("cc", "MEDIUM", "OK"),
+		makeEvent("cc", "MEDIUM", "UNKNOWN"),
 	}
 	s := telemetry.Aggregate(events)
 	if s.Total != 5 {
@@ -286,7 +311,7 @@ func TestAggregate_EmptySlice(t *testing.T) {
 
 func TestPrintStats_Detail_NoMoneyOrPriceLens(t *testing.T) {
 	events := []telemetry.Event{
-		makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8),
+		makeEvent("cc", "TRIVIAL", "DOWNSHIFT"),
 	}
 	var buf strings.Builder
 	telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true, Days: 30}, &buf)
@@ -304,7 +329,7 @@ func TestPrintStats_Detail_NoMoneyOrPriceLens(t *testing.T) {
 }
 
 func TestPrintStats_AllTimeLabel(t *testing.T) {
-	events := []telemetry.Event{makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.5)}
+	events := []telemetry.Event{makeEvent("cc", "TRIVIAL", "DOWNSHIFT")}
 	var buf strings.Builder
 	telemetry.PrintStats(events, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
 	if !strings.Contains(buf.String(), "All time") {
@@ -325,7 +350,7 @@ func TestAppendTo_ConcurrentWrites_NoDataLoss(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for i := 0; i < eventsEach; i++ {
-				ev := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8)
+				ev := makeEvent("cc", "TRIVIAL", "DOWNSHIFT")
 				if err := telemetry.AppendTo(path, ev); err != nil {
 					t.Errorf("AppendTo: %v", err)
 				}
@@ -347,7 +372,7 @@ func TestAppendTo_ConcurrentWrites_NoDataLoss(t *testing.T) {
 func TestAppendAndRead_RewriteHonored(t *testing.T) {
 	path := tmpLog(t)
 	honored := true
-	ev := makeEvent("antigravity", "TRIVIAL", "DOWNSHIFT", 0.90)
+	ev := makeEvent("antigravity", "TRIVIAL", "DOWNSHIFT")
 	ev.RewriteHonored = &honored
 
 	if err := telemetry.AppendTo(path, ev); err != nil {

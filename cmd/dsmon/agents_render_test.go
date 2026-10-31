@@ -162,7 +162,7 @@ func TestShortModelAndSwitchLine(t *testing.T) {
 	mk := func(verdict string) string {
 		return stripANSI(switchLine(event{Event: telemetry.Event{
 			Timestamp: now, Verdict: verdict, FromModel: "claude-opus-5-5", ToModel: "claude-haiku-4-5",
-			Complexity: "TRIVIAL-LONG-NAME", EstimatedSavings: 0.75,
+			Complexity: "TRIVIAL-LONG-NAME",
 		}}))
 	}
 	if got := mk("DOWNSHIFT"); !strings.Contains(got, "opus") || !strings.Contains(got, "haiku") || !strings.Contains(got, "↓") {
@@ -185,7 +185,7 @@ func TestRender_BoxStaysAlignedWithAndWithoutData(t *testing.T) {
 	ts := time.Now().UTC().Format(time.RFC3339Nano)
 	full := &state{lastEvent: time.Now().Add(-90 * time.Second), tick: 3}
 	full.all = []event{
-		ev(telemetry.Event{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", EstimatedSavings: 0.8, Outcome: "rewrite_emitted", FromModel: "opus", ToModel: "haiku"}),
+		ev(telemetry.Event{Timestamp: ts, Harness: "claude-code", Verdict: "DOWNSHIFT", Outcome: "rewrite_emitted", FromModel: "opus", ToModel: "haiku"}),
 		ev(telemetry.Event{Timestamp: ts, Harness: "codex", Verdict: "OK", Outcome: "allow"}),
 	}
 	full.agents = []agentEvent{{Timestamp: ts, Tool: "Task", Task: "rename", Model: "haiku"}}
