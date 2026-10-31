@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Routing events now carry an optional `client` field naming which Claude Code client fired the hook, read from `CLAUDE_CODE_ENTRYPOINT` by the Claude Code adapter (values seen include `cli` and `claude-desktop`, so a Claude Desktop event can be told apart from a CLI one). The value is sanitized (lower-case, at most 32 chars, `[a-z0-9._-]`, else dropped), never used for policy, and absent on events that predate it or on harnesses that do not report it.
 - Exec (compaction) events now carry the same optional `client` field, read from `CLAUDE_CODE_ENTRYPOINT` in the shell the compactor inherits and sanitized through the same rule, so a compacted command can be tied to its Claude Code client (for example `claude-desktop`) instead of being matched to a routing event by time. Absent on events that predate it or when the harness reports no client.
 
+### Fixed
+
+- The MCP `delegate` tool no longer fails when the caller sends no `dir`: it defaults to the project directory the server was started in (the same root the `apply` tool uses), and its schema now describes the field. When the server was started in a broad directory (the filesystem root or the user's home), a missing `dir` is still refused rather than defaulted, so a worker never starts where a containment check protects nothing, and write mode keeps refusing exactly as before.
+- The MCP `collect` tool's `timeout_seconds` cap of 45 is now stated in both the schema (`maximum`) and the tool description, so a client that asks for more knows the value is clamped instead of discovering it at runtime.
+
 ### Removed
 
 - Every Claude Code and OpenCode mod is removed (owner decision, 2026-10-29): the vendored `savvy-progress` (progress bar and `/agents-info` panel), the vendored `cache-tax`, and the Downshift-owned `downshift-progress`, `downshift-panel`, `downshift-dock`, `downshift-router`, `downshift-theme` and `downshift-opencode`, with the `mods/` directory, the marketplace entries, the NOTICE paragraphs and the `setup` code that installed `savvy-progress`. The marketplace now offers the `downshift` plugin only. If you installed a mod, remove it with `/plugin uninstall <name>@downshift`. The OpenCode adapter in Go stays, but nothing forwards a spawn to it now.

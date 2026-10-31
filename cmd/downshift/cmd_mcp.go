@@ -94,6 +94,8 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 	}
 	launcher, writeOn := workerLaunchers()
 	deps.WriteEnabled = writeOn
+	deps.Root = root
+	deps.Broad = broad
 	deps.Work = workers.New(launcher, defaultWorkers, time.Now)
 	defer deps.Work.Close()
 	wireWorkerTokens(deps.Work, os.Getenv, errW)
