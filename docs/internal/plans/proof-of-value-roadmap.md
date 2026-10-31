@@ -110,6 +110,30 @@ All routing value rests on one channel: `updatedInput.model` in Claude Code's Pr
 (`CLAUDE_CODE_SUBAGENT_MODEL_FORCE`). Keep `doctor` failing loudly on that case, and keep the worker route
 (`delegate` with `--effort` and a model) as the second channel, which the hook cannot replace for effort.
 
+### P6: worker continuation (owner approved breaking the freeze, 2026-10-31)
+
+The owner approved breaking the feature freeze on 2026-10-31 to add worker
+continuation to the MCP: `send` (more work to an existing worker on the same
+conversation; enqueue if busy), `steer` (correct a worker mid-turn without
+killing it), and `release` (let go of settled workers). Learned behaviour from
+alethe (AGPL, read-only study, no code copied). A live spike proved claude
+`--resume` continues a session and serves history from cache, and that
+stream-json enqueues a follow-up as the next turn. Full design, spike evidence
+and the task table: `docs/internal/plans/mcp-worker-continuation.md`.
+
+| Card | What | Points | Depends on |
+|---|---|---|---|
+| P6.1 | Resumable launch recipe + session-id capture, isolation unchanged | 5 | |
+| P6.2 | Queue state: `session_id`, `inbox`, `blocked`, resume-vs-live | 5 | P6.1 |
+| P6.3 | `send` tool and handler | 3 | P6.2 |
+| P6.4 | `steer` tool and handler (codex native; claude interrupt + re-deliver) | 5 | P6.2 |
+| P6.5 | `release` tool + transcript deletion on release/cancel/close | 3 | P6.2 |
+| P6.6 | Spec and tool-description docs for the three tools; `answer` deferred | 2 | P6.3, P6.4, P6.5 |
+
+`answer` and a write-with-approval worker mode are deferred (the current
+read-only/bypass recipes have no approval channel to answer). `diff` and worker
+`status` are separate streams, not part of P6.
+
 ## What success looks like on 2026-11-21
 
 - #103 closed with a published real seven-day number, positive, null or negative.
@@ -119,6 +143,6 @@ All routing value rests on one channel: `updatedInput.model` in Claude Code's Pr
 
 ## Out of scope for these three weeks
 
-- New harness adapters and new MCP tools (the alethe-style `send`, `steer` and worker status).
+- New harness adapters. (The alethe-style worker-continuation tools `send`, `steer` and `release` are now in scope under P6 by owner decision 2026-10-31; `answer`, `diff` and worker `status` remain out.)
 - Price or dollar figures.
 - Hosted or team features.
