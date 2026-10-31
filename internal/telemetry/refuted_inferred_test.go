@@ -22,9 +22,8 @@ func TestAggregate_RefutedRewriteSavesNothing(t *testing.T) {
 			Timestamp: "2026-10-15T10:00:01Z", ToModel: "claude-opus-5-5", RewriteHonored: refBool(false)},
 	}
 	s := Aggregate(events)
-	saved, _ := s.NormSaved()
-	if s.Downshifted != 0 || saved != 0 {
-		t.Fatalf("refuted rewrite counted: Downshifted=%d normalised saved=%.2f units", s.Downshifted, saved)
+	if s.Downshifted != 0 {
+		t.Fatalf("refuted rewrite counted: Downshifted=%d", s.Downshifted)
 	}
 }
 

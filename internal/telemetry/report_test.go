@@ -195,7 +195,7 @@ func TestBuildTasks_UsageMarksBackgroundChildCompleted(t *testing.T) {
 	usage := Event{Timestamp: "2026-10-13T10:01:00Z", Harness: "claude-code", SessionID: "s", Outcome: OutcomeUsage, LinkedDecision: key, InputTokens: &in}
 	for _, order := range [][]Event{{dec, launched, usage}, {dec, usage, launched}} {
 		tasks := BuildTasks(order)
-		if len(tasks) != 1 || !tasks[0].Completed() || !tasks[0].Priced {
+		if len(tasks) != 1 || !tasks[0].Completed() || !tasks[0].Observed {
 			t.Fatalf("background child with usage must be completed and priced: %+v", tasks)
 		}
 	}

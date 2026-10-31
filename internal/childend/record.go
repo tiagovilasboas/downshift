@@ -5,8 +5,8 @@
 // every harness. An adapter parses its own payload into hookport.ChildEnd; this
 // package writes the telemetry: a "resolved" observation (the model the harness
 // says the child ran on), a "child_ended" observation (how it ended) and a
-// "usage" record (priced tokens), each linked to the routing decision made for
-// that spawn, plus the one-line child-end text. It holds no harness name and
+// "usage" record (observed tokens), each linked to the routing decision made
+// for that spawn, plus the one-line child-end text. It holds no harness name and
 // reads no prompt text.
 //
 // Linkage rule (approximation — limits below): a record attaches to the most
@@ -17,8 +17,8 @@
 // tool-call id, the decision recorded for that same call wins outright and
 // decisions recorded for other calls are never candidates.
 //
-// Pricing follows what actually ran. Only a decision whose rewrite was applied
-// (outcome rewrite_emitted, no guardrail correction) is priced as
+// Attribution follows what actually ran. Only a decision whose rewrite was
+// applied (outcome rewrite_emitted, no guardrail correction) counts as
 // routed-vs-requested. An allow, held or blocked decision left the spawn on its
 // requested model, so routed = baseline = requested and real savings are zero.
 // A model reported by the harness always wins as routed.
@@ -29,7 +29,7 @@
 //     latest decision, which may be the wrong sibling.
 //   - A harness that sends neither session nor tool-call id links nothing
 //     (resolved and child_ended need one of them); its usage is still recorded,
-//     unlinked, priced as unrouted.
+//     unlinked, counted as unrouted.
 package childend
 
 import (
@@ -62,7 +62,7 @@ type Result struct {
 
 // Record writes the telemetry for one child end. It is fail-open: any lookup
 // or write problem records less and never returns an error. The same child is
-// priced once: a transcript read and a repeated tool-call id both dedupe.
+// counted once: a transcript read and a repeated tool-call id both dedupe.
 func Record(ce hookport.ChildEnd, binaryVersion string, r core.Resolver) Result {
 	var res Result
 	if ce.Harness == "" {
@@ -339,11 +339,13 @@ func buildUsageEvent(harness string, usage telemetry.TokenUsage, payloadModel, s
 		ev.CacheWriteTokens = &v
 	}
 
-	// Price only real spend against a catalog-resolved routed model.
+	// Set the requested baseline only against a catalog-resolved routed model.
+	// The token counts above are already on the record; this only decides
+	// whether a baseline can be attributed. No price is read.
 	routedID := payloadModel
 	if routedID == "" && target != nil {
 		// With no observed model and no known requested model, a control
-		// spawn cannot be priced; pricing the routed one on its rewrite
+		// spawn has no baseline; attributing the routed one on its rewrite
 		// target would keep it in one report arm only.
 		if target.FromModel == "" || target.FromModel == "unknown" {
 			return ev
@@ -351,7 +353,7 @@ func buildUsageEvent(harness string, usage telemetry.TokenUsage, payloadModel, s
 		routedID = ranModel(*target)
 	}
 	if r == nil || routedID == "" || routedID == "unknown" {
-		return ev // tokens without prices: counted as neither real nor fake
+		return ev // no resolved model: the tokens are recorded, the baseline is not
 	}
 	if _, ok := r.LookupByID(harness, routedID); !ok {
 		return ev
@@ -390,13 +392,11 @@ func gatewayRanModel(resolved *telemetry.Event, ce hookport.ChildEnd) string {
 	return ""
 }
 
-// markGatewayRun names the model an OpenRouter route ran and the price source
-// for it, so the record is priced from what ran and not from the requested tier.
+// markGatewayRun names the model an OpenRouter route ran, so the record is
+// placed by what ran and not by the requested tier. No price is recorded.
 func markGatewayRun(ev *telemetry.Event, slug string) {
 	// The slug comes from the harness payload: bound it like the native path.
-	bounded := telemetry.ModelOrUnknown(slug)
-	ev.ToModel = bounded
-	ev.GatewayPrice = telemetry.GatewayPriceStatus(bounded)
+	ev.ToModel = telemetry.ModelOrUnknown(slug)
 }
 
 // recordResolved appends a "resolved" observation for the decision this spawn

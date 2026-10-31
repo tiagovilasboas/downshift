@@ -22,7 +22,7 @@ const maxFileLines = 300
 var oversizedBaseline = map[string]int{
 	"cmd/downshift/context.go":                   464,
 	"cmd/downshift/dci.go":                       590,
-	"cmd/downshift/doctor.go":                    436,
+	"cmd/downshift/doctor.go":                    402,
 	"cmd/downshift/doctor_hooks.go":              358,
 	"cmd/downshift/hookrun.go":                   393,
 	"cmd/downshift/setup.go":                     388,
@@ -49,9 +49,7 @@ var oversizedBaseline = map[string]int{
 	"internal/execwrap/policy_tooling.go":        851,
 	"internal/execwrap/run.go":                   436,
 	"internal/quota/native.go":                   368,
-	"internal/telemetry/aggregate.go":            302,
-	"internal/telemetry/report.go":               305,
-	"internal/telemetry/telemetry.go":            840,
+	"internal/telemetry/telemetry.go":            826,
 	"internal/telemetry/tokens_rerouted.go":      322,
 }
 

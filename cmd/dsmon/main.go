@@ -404,9 +404,9 @@ func switchLine(e event) string {
 	comp = comp + strings.Repeat(" ", 7-len(comp))
 	switch e.Verdict {
 	case "DOWNSHIFT":
-		return fmt.Sprintf("  %s  %s%s%s→%s%s%s  %s%s%s  %s-%d%%%s",
+		return fmt.Sprintf("  %s  %s%s%s→%s%s%s  %s%s%s  %s↓%s",
 			e.localTime(), dim, from, rst, grn, to, rst,
-			dim, comp, rst, grn, int(e.EstimatedSavings*100), rst)
+			dim, comp, rst, grn, rst)
 	case "UPSHIFT":
 		return fmt.Sprintf("  %s  %s%s%s→%s%s%s  %s%s%s  %s↑%s",
 			e.localTime(), dim, from, rst, ylw, to, rst,

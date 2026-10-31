@@ -19,7 +19,7 @@ const (
 	GroupOther   = "other"
 )
 
-// TaskRecord joins, for one spawn, the routing decision, the priced usage and
+// TaskRecord joins, for one spawn, the routing decision, the observed usage and
 // how the child ended. Ids and numbers only: no prompt, task text or path.
 type TaskRecord struct {
 	Key     string
@@ -29,9 +29,10 @@ type TaskRecord struct {
 	Time    time.Time
 	// Status is how the child ended, or "" when no end was observed.
 	Status ChildStatus
-	// Priced is true when a usage record carried token counts for this spawn.
-	Priced bool
-	// Tokens is the token count of the priced usage records of this spawn alone.
+	// Observed is true when a usage record carried token counts for this spawn.
+	// A known catalog tier, not a price, is all it needs.
+	Observed bool
+	// Tokens is the token count of the observed usage records of this spawn alone.
 	Tokens TokenClasses
 	// Redo lists the failed spawns this one redid (a respawn in the same
 	// session within the respawn window after an error or interrupt).
@@ -130,7 +131,7 @@ func BuildTasks(events []Event) []TaskRecord {
 		switch ev.Outcome {
 		case OutcomeUsage:
 			if ev.HasTokenUsage() {
-				tasks[i].Priced = true
+				tasks[i].Observed = true
 				tasks[i].Tokens.add(classesOf(ev.TokenUsageOrZero()))
 			}
 			// Background children report only "launched" at spawn time; the

@@ -587,11 +587,6 @@ type Stats struct {
 	OK          int
 	Unknown     int
 
-	// NormBaseline and NormRouted are normalised cost units (1 unit = 1 baseline event).
-	// They do not represent real dollars. Multiply by CostPerUnit to convert.
-	NormBaseline float64
-	NormRouted   float64
-
 	// UsageRecords counts all post-hoc usage records, including unmatched ones.
 	// UsageLinked counts distinct usage records whose references resolve to
 	// decisions in the same harness and compatible session. Records are deduped
@@ -639,7 +634,7 @@ type Stats struct {
 
 	// NotApplied counts DOWNSHIFT/UPSHIFT decisions the hook did not apply
 	// (outcome allow, blocked, or held by a guardrail). They are excluded
-	// from Downshifted/Upshifted and from normalised savings.
+	// from Downshifted/Upshifted.
 	NotApplied int
 
 	// ByComplexity counts decisions per complexity class.
@@ -694,15 +689,6 @@ type DCIStats struct {
 	LatencyP95Ms        float64        `json:"latency_p95_ms,omitempty"`
 	Errors              int            `json:"errors,omitempty"`
 	ErrorsByCode        map[string]int `json:"errors_by_code,omitempty"`
-}
-
-// NormSaved returns normalised savings: absolute units saved and fraction.
-func (s Stats) NormSaved() (float64, float64) {
-	saved := s.NormBaseline - s.NormRouted
-	if s.NormBaseline <= 0 {
-		return 0, 0
-	}
-	return saved, saved / s.NormBaseline
 }
 
 // ReadEvents reads all events from the default event log. Returns an empty

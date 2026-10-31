@@ -55,9 +55,6 @@ func TestAggregate_CountsCorrected(t *testing.T) {
 	if s.NotApplied != 1 {
 		t.Errorf("NotApplied = %d, want 1", s.NotApplied)
 	}
-	if s.NormRouted < 1.19 || s.NormRouted > 1.21 {
-		t.Errorf("NormRouted = %.3f, want 1.2 (only the applied downshift saves)", s.NormRouted)
-	}
 }
 
 func TestAggregate_AllowOutcomeIsNotSavings(t *testing.T) {
@@ -66,9 +63,6 @@ func TestAggregate_AllowOutcomeIsNotSavings(t *testing.T) {
 	s := telemetry.Aggregate([]telemetry.Event{allowed})
 	if s.Downshifted != 0 || s.NotApplied != 1 {
 		t.Fatalf("Downshifted=%d NotApplied=%d, want 0/1", s.Downshifted, s.NotApplied)
-	}
-	if saved, _ := s.NormSaved(); saved != 0 {
-		t.Fatalf("allow event must not save units, got %.3f", saved)
 	}
 	sum := telemetry.ExportSummary([]telemetry.Event{allowed}, 0, time.Now())
 	if sum.DownshiftRate != 0 || sum.NotApplied != 1 {

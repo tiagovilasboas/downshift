@@ -40,8 +40,6 @@ type Summary struct {
 	Baseline            int                       `json:"baseline_no_route"`
 	RewriteShifted      int                       `json:"rewrite_shifted"`
 	RewriteHonored      int                       `json:"rewrite_honored_inferred"`
-	NormBaseline        float64                   `json:"norm_baseline"`
-	NormRouted          float64                   `json:"norm_routed"`
 	ByComplexity        map[string]int            `json:"by_complexity"`
 	DownshiftRate       float64                   `json:"downshift_rate"`
 	ObservedChildTokens int64                     `json:"observed_child_tokens"`
@@ -106,8 +104,6 @@ func ExportSummary(events []Event, days int, now time.Time) Summary {
 		Baseline:            stats.Baseline,
 		RewriteShifted:      stats.RewriteShifted,
 		RewriteHonored:      stats.RewriteHonored,
-		NormBaseline:        stats.NormBaseline,
-		NormRouted:          stats.NormRouted,
 		ByComplexity:        byComplexity,
 		DownshiftRate:       downshiftRate,
 		ObservedChildTokens: stats.ObservedChildTokens,

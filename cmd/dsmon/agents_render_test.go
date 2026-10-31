@@ -165,7 +165,7 @@ func TestShortModelAndSwitchLine(t *testing.T) {
 			Complexity: "TRIVIAL-LONG-NAME", EstimatedSavings: 0.75,
 		}}))
 	}
-	if got := mk("DOWNSHIFT"); !strings.Contains(got, "opus") || !strings.Contains(got, "haiku") || !strings.Contains(got, "-75%") {
+	if got := mk("DOWNSHIFT"); !strings.Contains(got, "opus") || !strings.Contains(got, "haiku") || !strings.Contains(got, "↓") {
 		t.Errorf("downshift line = %q", got)
 	}
 	if got := mk("UPSHIFT"); !strings.Contains(got, "↑") {

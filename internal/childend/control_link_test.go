@@ -84,7 +84,7 @@ func TestRecord_ControlSpawnLinksLikeRoutedSpawn(t *testing.T) {
 				t.Fatalf("tasks = %d, want 1", len(tasks))
 			}
 			got := tasks[0]
-			if got.Group != tc.group || !got.Completed() || !got.Priced {
+			if got.Group != tc.group || !got.Completed() || !got.Observed {
 				t.Fatalf("task = %+v, want group %s, completed and priced", got, tc.group)
 			}
 			rep := telemetry.BuildReport(events, 1)
