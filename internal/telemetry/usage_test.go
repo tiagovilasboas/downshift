@@ -120,7 +120,7 @@ func TestTokenUsageFromPayload_Defensive(t *testing.T) {
 // --- Aggregate: usage/baseline outcomes excluded from decision counts ---
 
 func TestPrintStats_ShowsUsageLinked(t *testing.T) {
-	usage := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.8)
+	usage := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")
 	usage.Outcome = telemetry.OutcomeUsage
 	var buf strings.Builder
 	telemetry.PrintStats([]telemetry.Event{usage}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)
@@ -139,7 +139,7 @@ func usageTestCatalog(t *testing.T) *catalog.Catalog {
 
 func seedDecision(t *testing.T, path, sessionHash, fromID, toID string) {
 	t.Helper()
-	ev := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT", 0.8)
+	ev := makeEvent("claude-code", "TRIVIAL", "DOWNSHIFT")
 	ev.Timestamp = time.Now().UTC().Format(time.RFC3339Nano)
 	ev.Outcome = "rewrite_emitted"
 	ev.FromModel = fromID
@@ -175,7 +175,7 @@ func TestHandlePostToolUse_FailOpen(t *testing.T) {
 }
 
 func TestPrintStats_ShowsBaseline(t *testing.T) {
-	base := makeEvent("claude-code", "SIMPLE", "OK", 0)
+	base := makeEvent("claude-code", "SIMPLE", "OK")
 	base.Outcome = telemetry.OutcomeBaseline
 	var buf strings.Builder
 	telemetry.PrintStats([]telemetry.Event{base}, telemetry.StatsOptions{Detail: true, Days: 0}, &buf)

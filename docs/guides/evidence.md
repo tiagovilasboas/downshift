@@ -37,9 +37,6 @@ to E test.
 
 Source: `internal/telemetry/telemetry.go` (`Aggregate`), `export.go`, [stats-export.md](../reference/stats-export.md).
 
-- **Normalised units** (`norm_baseline`, `norm_routed`): every decision is 1.0 baseline unit; an applied downshift is
-  charged `1 - estimated_savings` (a list-price ratio), an applied upshift `upshift_cost_ratio`, everything else 1.0.
-  A count, not money: no tokens are involved and no price is applied.
 - **Tokens by tier** (`tokens_rerouted`, `tokens_saved`): the child's recorded tokens, placed by the catalog tier of the
   model that ran against the one requested (cheaper, pricier, unchanged). The counterfactual is the same token count on
   the requested model, not a second run. Tokens come from the child transcript on `SubagentStop` (Claude Code only).

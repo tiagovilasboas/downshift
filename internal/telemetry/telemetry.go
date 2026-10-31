@@ -41,26 +41,25 @@ import (
 // transcript format (e.g. Claude Code JSON lines with {"type":"assistant",...})
 // is a distinct schema and is never the downshift events.jsonl schema.
 type Event struct {
-	CorrelationID    string  `json:"correlation_id"`             // opaque ID generated per hook invocation
-	Timestamp        string  `json:"timestamp"`                  // RFC3339Nano
-	Source           string  `json:"source"`                     // hook|cli
-	Agent            string  `json:"agent"`                      // subagent, never task text
-	Harness          string  `json:"harness"`                    // e.g. "claude-code"
-	SessionID        string  `json:"session_id,omitempty"`       // Codex session identifier, when provided
-	Complexity       string  `json:"complexity"`                 // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
-	FromModel        string  `json:"requested_model"`            // model supplied by the harness
-	ToModel          string  `json:"final_model"`                // selected model after policy
-	RequestedEffort  string  `json:"requested_reasoning_effort"` // level, "inherit" or "unobserved"
-	FinalEffort      string  `json:"final_reasoning_effort"`     // policy recommendation
-	Verdict          string  `json:"verdict"`                    // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
-	Tier             string  `json:"tier"`                       // SMALL|MID|FRONTIER
-	PolicyVersion    string  `json:"policy_version"`
-	BinaryVersion    string  `json:"binary_version"`
-	Outcome          string  `json:"outcome"` // rewrite_emitted|allow|blocked|error|usage|baseline
-	ErrorCode        string  `json:"error_code,omitempty"`
-	EstimatedSavings float64 `json:"estimated_savings"` // normalised fraction 0–1
-	QuotaStatus      string  `json:"quota_status,omitempty"`
-	QuotaSource      string  `json:"quota_source,omitempty"`
+	CorrelationID   string `json:"correlation_id"`             // opaque ID generated per hook invocation
+	Timestamp       string `json:"timestamp"`                  // RFC3339Nano
+	Source          string `json:"source"`                     // hook|cli
+	Agent           string `json:"agent"`                      // subagent, never task text
+	Harness         string `json:"harness"`                    // e.g. "claude-code"
+	SessionID       string `json:"session_id,omitempty"`       // Codex session identifier, when provided
+	Complexity      string `json:"complexity"`                 // TRIVIAL|SIMPLE|MEDIUM|COMPLEX
+	FromModel       string `json:"requested_model"`            // model supplied by the harness
+	ToModel         string `json:"final_model"`                // selected model after policy
+	RequestedEffort string `json:"requested_reasoning_effort"` // level, "inherit" or "unobserved"
+	FinalEffort     string `json:"final_reasoning_effort"`     // policy recommendation
+	Verdict         string `json:"verdict"`                    // DOWNSHIFT|UPSHIFT|OK|UNKNOWN
+	Tier            string `json:"tier"`                       // SMALL|MID|FRONTIER
+	PolicyVersion   string `json:"policy_version"`
+	BinaryVersion   string `json:"binary_version"`
+	Outcome         string `json:"outcome"` // rewrite_emitted|allow|blocked|error|usage|baseline
+	ErrorCode       string `json:"error_code,omitempty"`
+	QuotaStatus     string `json:"quota_status,omitempty"`
+	QuotaSource     string `json:"quota_source,omitempty"`
 	// CreditHeld records that the credit gate refused this rewrite. It is
 	// not a guardrail correction. Exhausted and stale status are holds
 	// without this flag.
@@ -178,21 +177,11 @@ type Event struct {
 	// events written before the trace existed and on non-decision records.
 	RoutingPolicy string   `json:"routing_policy,omitempty"`
 	ReasonCodes   []string `json:"reason_codes,omitempty"`
-	// UpshiftCostRatio was the catalog list-price ratio recorded on an UPSHIFT.
-	// The product no longer uses a price, so nothing writes it now; it stays 0
-	// and absent (omitempty), and the field is removed with the other price
-	// event fields. Old logs may still carry a value.
-	UpshiftCostRatio float64 `json:"upshift_cost_ratio,omitempty"`
 	// GatewayWould is the slug of the allowlisted OpenRouter row that would
 	// serve this tier (shadow only; the routed model is unchanged), and
 	// GatewayWouldTier that tier. Slug and tier only: no prompt, no task text.
 	GatewayWould     string `json:"gateway_would,omitempty"`
 	GatewayWouldTier string `json:"gateway_would_tier,omitempty"`
-	// GatewayPrice is set on a usage record whose child ran on an OpenRouter
-	// model (ToModel is its vendor/model slug): "snapshot" when the price came
-	// from the OpenRouter list snapshot, "unknown" when none was found. See
-	// gateway_price.go. Absent on every other record.
-	GatewayPrice string `json:"gateway_price,omitempty"`
 	// Optional Code Intelligence (DCI) record. Set on OutcomeDCI events.
 	DCI *DCIRecord `json:"dci,omitempty"`
 

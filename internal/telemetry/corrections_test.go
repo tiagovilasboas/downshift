@@ -38,9 +38,9 @@ func TestFromDecision_RecordsHeldDecision(t *testing.T) {
 }
 
 func TestAggregate_CountsCorrected(t *testing.T) {
-	clean := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8)
+	clean := makeEvent("cc", "TRIVIAL", "DOWNSHIFT")
 	clean.QuotaStatus = "available"
-	held := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8)
+	held := makeEvent("cc", "TRIVIAL", "DOWNSHIFT")
 	held.Corrections = []string{core.RuleUnconfidentDowngrade}
 	held.SafeVerdict = "OK"
 	s := telemetry.Aggregate([]telemetry.Event{clean, held})
@@ -58,7 +58,7 @@ func TestAggregate_CountsCorrected(t *testing.T) {
 }
 
 func TestAggregate_AllowOutcomeIsNotSavings(t *testing.T) {
-	allowed := makeEvent("cc", "MEDIUM", "DOWNSHIFT", 0.4)
+	allowed := makeEvent("cc", "MEDIUM", "DOWNSHIFT")
 	allowed.Outcome = telemetry.OutcomeAllow
 	s := telemetry.Aggregate([]telemetry.Event{allowed})
 	if s.Downshifted != 0 || s.NotApplied != 1 {
@@ -71,7 +71,7 @@ func TestAggregate_AllowOutcomeIsNotSavings(t *testing.T) {
 }
 
 func TestPrintStats_ShowsSafetyHeld(t *testing.T) {
-	held := makeEvent("cc", "TRIVIAL", "DOWNSHIFT", 0.8)
+	held := makeEvent("cc", "TRIVIAL", "DOWNSHIFT")
 	held.Corrections = []string{core.RuleUnconfidentDowngrade}
 	var sb strings.Builder
 	telemetry.PrintStats([]telemetry.Event{held}, telemetry.StatsOptions{Detail: true}, &sb)

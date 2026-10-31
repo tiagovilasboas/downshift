@@ -208,9 +208,6 @@ func TestDecide(t *testing.T) {
 			if d.Reason != string(n.Reason) {
 				t.Errorf("Decision.Reason = %q, note reason = %q", d.Reason, n.Reason)
 			}
-			if d.Savings != 0 {
-				t.Errorf("Savings = %v; price is not used here", d.Savings)
-			}
 			if n.Harness != h {
 				t.Errorf("note harness = %q, want %q", n.Harness, h)
 			}

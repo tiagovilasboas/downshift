@@ -30,11 +30,11 @@ func TestFromDecisionRecordsPolicyFloor(t *testing.T) {
 }
 
 func TestAggregateCountsPolicyFloorAcrossHarnesses(t *testing.T) {
-	a := makeEvent("cursor", "TRIVIAL", "OK", 0)
+	a := makeEvent("cursor", "TRIVIAL", "OK")
 	a.PolicyFloor = true
-	b := makeEvent("codex", "SIMPLE", "OK", 0)
+	b := makeEvent("codex", "SIMPLE", "OK")
 	b.PolicyFloor = true
-	c := makeEvent("claude-code", "SIMPLE", "OK", 0)
+	c := makeEvent("claude-code", "SIMPLE", "OK")
 	s := telemetry.Aggregate([]telemetry.Event{a, b, c})
 	if s.PolicyFloor != 2 || s.Total != 3 {
 		t.Fatalf("PolicyFloor = %d of %d, want 2 of 3", s.PolicyFloor, s.Total)

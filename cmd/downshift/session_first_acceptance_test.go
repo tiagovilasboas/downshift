@@ -76,9 +76,6 @@ func TestHookE2E_SessionFirstNewIDsAcrossHarnesses(t *testing.T) {
 						t.Errorf("language guard must hold exact active model: %+v", ev)
 					}
 				}
-				if ev.EstimatedSavings != 0 {
-					t.Errorf("synthetic unknown prices generated savings: %+v", ev)
-				}
 			}
 		})
 	}

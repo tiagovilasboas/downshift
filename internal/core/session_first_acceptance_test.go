@@ -29,9 +29,6 @@ func TestSessionFirstAcceptance_NewOrderedModelsAcrossHarnesses(t *testing.T) {
 			if d.Tier != core.TierSmall || d.Model.ID != "qa-new-small" {
 				t.Errorf("session route not selected: %+v", d)
 			}
-			if d.Savings != 0 {
-				t.Errorf("session route invented a saving: %+v", d)
-			}
 		})
 	}
 }

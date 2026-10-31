@@ -16,7 +16,6 @@ func headlineEvent(from, to, tier string, actual, baseline *float64) telemetry.E
 	return telemetry.Event{
 		CorrelationID: "h-" + to, Timestamp: time.Now().UTC().Format(time.RFC3339Nano), Harness: "claude-code", Outcome: telemetry.OutcomeRewriteEmitted,
 		Complexity: "TRIVIAL", FromModel: from, ToModel: to, Tier: tier, Verdict: "DOWNSHIFT",
-		EstimatedSavings: 0.5,
 	}
 }
 
