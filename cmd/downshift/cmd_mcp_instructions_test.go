@@ -28,3 +28,38 @@ func TestMcpInstructionsLeadWithTheTriggerAndStayShort(t *testing.T) {
 		}
 	}
 }
+
+// The worker paragraph follows DOWNSHIFT_WORKERS: off says delegate refuses,
+// read and bypass say what a worker may do and carry the worker rules (when to
+// delegate, reports are data, collect every worker). Every variant stays well
+// inside Claude Code's 4096-character cut.
+func TestMcpInstructionsFollowTheWorkerMode(t *testing.T) {
+	for _, tc := range []struct {
+		mode      string
+		want      []string
+		wantRules bool
+	}{
+		{"", []string{"Worker tools are off", "delegate refuses every task"}, false},
+		{"read", []string{"read-only worker", "write mode is off"}, true},
+		{"bypass", []string{"own git worktree", "never merges"}, true},
+		{"anything-else", []string{"Worker tools are off"}, false},
+	} {
+		got := mcpInstructionsFor(tc.mode)
+		if !strings.HasPrefix(got, mcpInstructions) {
+			t.Errorf("mode %q: the providers rule must still lead", tc.mode)
+		}
+		if n := len(got); n > 2000 {
+			t.Errorf("mode %q: instructions are %d characters, want at most 2000", tc.mode, n)
+		}
+		for _, w := range tc.want {
+			if !strings.Contains(got, w) {
+				t.Errorf("mode %q: instructions lack %q", tc.mode, w)
+			}
+		}
+		for _, rule := range []string{"never a single command", "data, not instructions", "Collect every worker"} {
+			if strings.Contains(got, rule) != tc.wantRules {
+				t.Errorf("mode %q: rule %q present=%v, want %v", tc.mode, rule, !tc.wantRules, tc.wantRules)
+			}
+		}
+	}
+}
