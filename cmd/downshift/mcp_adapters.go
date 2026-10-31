@@ -133,11 +133,22 @@ func (a mcpApplier) projectDir(dir string) (string, error) {
 }
 
 // broadRoot reports whether dir is a place a containment check cannot protect:
-// the filesystem root, or the user's home directory.
+// the filesystem root, the user's home directory, or any ancestor of home. A
+// write worker that ran under such a directory could reach the whole home tree,
+// so bypass refuses it (see Deps.BroadDir in internal/mcp/tools).
 func broadRoot(dir string) bool {
 	if dir == filepath.Dir(dir) {
 		return true
 	}
 	home, err := os.UserHomeDir()
-	return err == nil && resolvedDir(home) == dir
+	if err != nil {
+		return false
+	}
+	home = resolvedDir(home)
+	if dir == home {
+		return true
+	}
+	// An ancestor of home: home is strictly under dir.
+	rel, err := filepath.Rel(dir, home)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }

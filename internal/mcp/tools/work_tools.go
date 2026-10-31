@@ -82,7 +82,7 @@ func (d Deps) delegate(ctx context.Context, raw json.RawMessage) (Result, error)
 	if len(a.Tasks) == 0 || len(a.Tasks) > maxTasksPerCall {
 		return Result{}, fmt.Errorf("tasks must hold between 1 and %d entries", maxTasksPerCall)
 	}
-	dir, err := d.workerDir(a.Dir)
+	dir, err := d.workerDir(a.Dir, write)
 	if err != nil {
 		return Result{}, err
 	}
@@ -156,14 +156,27 @@ func (d Deps) cancel(ctx context.Context, raw json.RawMessage) (Result, error) {
 	return d.envelope(ctx, outcome{data: map[string]any{"cancelled": acted}, harnesses: []string{"claude-code", "codex"}})
 }
 
+// broadFix names the reason and the two ways out, shared by the write refusals.
+const broadFix = "start the server inside the project directory, or pass a project dir to this call"
+
 // workerDir resolves the directory a worker runs in. An empty dir defaults to
 // the project directory the server was started in, the same root the apply tool
-// uses. When that root is broad (the filesystem root or the user's home) a
-// containment check protects nothing, so a missing dir is refused rather than
-// defaulted: a worker never starts in a broad directory. The launcher still
-// checks that the directory exists.
-func (d Deps) workerDir(dir string) (string, error) {
-	if strings.TrimSpace(dir) != "" {
+// uses. When that root is broad (the filesystem root, the user's home, or an
+// ancestor of home) a containment check protects nothing, so a missing dir is
+// refused rather than defaulted: a worker never starts in a broad directory.
+//
+// A write job carries more risk than a read job, so under write two further
+// refusals apply: the server root must not be broad at all (an explicit dir
+// cannot opt out of it), and an explicit dir must not itself be broad. Read
+// jobs are unchanged. The launcher still checks that the directory exists.
+func (d Deps) workerDir(dir string, write bool) (string, error) {
+	if explicit := strings.TrimSpace(dir); explicit != "" {
+		if write && d.Broad {
+			return "", errors.New("write is refused: the server was started in a broad directory; " + broadFix)
+		}
+		if write && d.BroadDir != nil && d.BroadDir(explicit) {
+			return "", errors.New("write is refused: dir is a broad directory (the filesystem root, your home, or an ancestor of it); " + broadFix)
+		}
 		return dir, nil
 	}
 	if d.Broad {

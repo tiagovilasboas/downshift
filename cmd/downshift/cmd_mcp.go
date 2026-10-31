@@ -96,6 +96,9 @@ func serveMcp(ctx context.Context, cat *catalog.Catalog, root string, in io.Read
 	deps.WriteEnabled = writeOn
 	deps.Root = root
 	deps.Broad = broad
+	// BroadDir reuses broadRoot for an explicit dir a write job names, resolving
+	// it the same way the root was resolved before the check.
+	deps.BroadDir = func(dir string) bool { return broadRoot(resolvedDir(dir)) }
 	deps.Work = workers.New(launcher, defaultWorkers, time.Now)
 	defer deps.Work.Close()
 	wireWorkerTokens(deps.Work, os.Getenv, errW)

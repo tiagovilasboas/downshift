@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The MCP `delegate` tool no longer fails when the caller sends no `dir`: it defaults to the project directory the server was started in (the same root the `apply` tool uses), and its schema now describes the field. When the server was started in a broad directory (the filesystem root or the user's home), a missing `dir` is still refused rather than defaulted, so a worker never starts where a containment check protects nothing, and write mode keeps refusing exactly as before.
+- Security: under `DOWNSHIFT_WORKERS=bypass`, a write `delegate` job is now refused whenever the server root is broad, even if the call names an explicit `dir`, and whenever the explicit `dir` is itself broad (the filesystem root, your home, or an ancestor of your home); the refusal names the reason and the fix (start the server inside the project directory, or pass a project dir). The broad-root predicate is unchanged in shape and now also treats an ancestor of home as broad, so a write worker can never run where a containment check protects nothing. Read jobs and the default `read` route are unchanged.
 - The MCP `collect` tool's `timeout_seconds` cap of 45 is now stated in both the schema (`maximum`) and the tool description, so a client that asks for more knows the value is clamped instead of discovering it at runtime.
 
 ### Removed
