@@ -8,7 +8,7 @@ to be built. The result is one evidence page that answers a single question: doe
 the tokens per completed task without raising rework?
 
 What a pilot closes in [beta-exit.md](../reference/beta-exit.md): P2.3 (non-maintainer exports), P3.4 (linked
-usage events) and P3.7 (period comparison), if the numbers are there.
+usage events) and P3.7 (the routed-versus-control token comparison), if the numbers are there.
 
 ## Design
 
@@ -38,9 +38,8 @@ usage events) and P3.7 (period comparison), if the numbers are there.
    measurable for claude-code.
 5. Run `downshift stats --detail` and check that the requested model of that spawn is known. With
    an unknown requested model, savings are zero by construction and the pilot measures nothing.
-6. Write down the account plan. With an API key, the provider invoice can be compared. With a
-   subscription (Pro, Max, Team), there is no per-token invoice: report tokens and quota headroom,
-   and say so in the result.
+6. Write down the account plan. The pilot measures tokens, not money: report tokens and quota
+   headroom regardless of plan, and say which plan it was in the result.
 
 ## During the pilot
 
@@ -71,12 +70,12 @@ From [the first measurements](../evidence/subagent-routing-ab-2026-10-15.md); ea
 
 ## Limits to state in the result
 
-- Downshift reports tokens only, never dollars. A dollar figure comes from the harness's own estimate
-  or from the invoice comparison in [billing-comparison-template.md](billing-comparison-template.md).
+- Downshift reports tokens only, never dollars. Downshift does not control cost and the pilot does
+  not measure money; the comparison is routed versus control in tokens.
 - Rework detection depends on the PostToolUseFailure payload, which has not been captured from a
   real session yet (GAP-CHILD-FAILURE). The guardrail may undercount.
 - The result holds for this team's workload, not for every team.
-- The control group costs money by design, roughly the control share times the saving.
+- The control group spends tokens by design, roughly the control share times the saving.
 
 ## Output
 

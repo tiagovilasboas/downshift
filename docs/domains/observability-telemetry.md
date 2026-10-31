@@ -71,7 +71,7 @@ Downshift categorizes claims according to a rigorous 5-rung evidence ladder:
 | **Rung B: Telemetry Estimates** | Counterfactual share of observed child tokens that ran on a cheaper model than requested | Implemented (`downshift stats`, tokens only) |
 | **Rung C: Controlled Benchmarks** | Fixed task suites evaluated under isolated test conditions | Implemented (`benchmark-protocol.md`) |
 | **Rung D: Real-Task A/B** | Side-by-side comparison of real tasks judged by objective test suites | Verified on Claude Code (2026-10-15 A/B trial: -12% on mechanical pieces) |
-| **Rung E: Team Cost per Task** | Longitudinal multi-week provider invoice reductions across multiple operators | In progress (tracked under [beta exit criteria](../reference/beta-exit.md)) |
+| **Rung E: Team Tokens per Task** | Longitudinal multi-week routed-versus-control comparison in tokens (effect, tokens per completed task, rework) across multiple operators; no money measured (changed 2026-10-31, owner decision) | In progress (tracked under [beta exit criteria](../reference/beta-exit.md)) |
 
 ---
 
