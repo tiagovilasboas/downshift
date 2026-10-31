@@ -87,7 +87,9 @@ func TestGatewayShadow_AllowlistNeverChangesRoute(t *testing.T) {
 	}
 }
 
-// The would_route pick is the smallest allowlisted row of the decision tier.
+// The would_route pick is the allowlisted row of the decision tier with the
+// lowest id. Owner decision 2026-10-31: the shadow decides by tier only and
+// never reads list price, so the tiebreak is purely the id.
 func TestGatewayShadow_PicksSmallestRowOfTheTier(t *testing.T) {
 	cases := []struct {
 		name string
@@ -95,21 +97,28 @@ func TestGatewayShadow_PicksSmallestRowOfTheTier(t *testing.T) {
 		rows []core.Model
 		want string
 	}{
-		{"priced row beats unpriced", core.TierMid, []core.Model{
+		// UNHAPPY 1: a higher list price on the lower id must not lose. The old
+		// rule preferred priced rows and the lower price; now id alone decides,
+		// so the dearer "a/dear" wins over the cheaper "b/cheap".
+		{"price is ignored, lowest id wins", core.TierMid, []core.Model{
+			{ID: "b/cheap", Tier: core.TierMid, InputM: 0.1, OutputM: 0.2},
+			{ID: "a/dear", Tier: core.TierMid, InputM: 1, OutputM: 2},
+		}, "a/dear"},
+		// UNHAPPY 2: an unpriced row must not rank after a priced one. With
+		// price gone, the unpriced "a/unpriced" (lower id) wins over "z/priced".
+		{"unpriced row is not penalized", core.TierMid, []core.Model{
 			{ID: "a/unpriced", Tier: core.TierMid},
 			{ID: "z/priced", Tier: core.TierMid, InputM: 0.1, OutputM: 0.2},
-		}, "z/priced"},
-		{"lower price wins", core.TierMid, []core.Model{
-			{ID: "a/dear", Tier: core.TierMid, InputM: 1, OutputM: 2},
-			{ID: "b/cheap", Tier: core.TierMid, InputM: 0.1, OutputM: 0.2},
-		}, "b/cheap"},
-		{"unpriced ties break on id", core.TierSmall, []core.Model{
-			{ID: "y/two", Tier: core.TierSmall},
-			{ID: "x/one", Tier: core.TierSmall},
-		}, "x/one"},
+		}, "a/unpriced"},
+		// UNHAPPY 3: a cheaper row of another tier must stay out of this tier's
+		// pick entirely.
 		{"other tiers are ignored", core.TierFrontier, []core.Model{
 			{ID: "a/small", Tier: core.TierSmall, InputM: 0.01},
 		}, ""},
+		{"ties break on id", core.TierSmall, []core.Model{
+			{ID: "y/two", Tier: core.TierSmall},
+			{ID: "x/one", Tier: core.TierSmall},
+		}, "x/one"},
 		{"no rows", core.TierMid, nil, ""},
 	}
 	for _, tc := range cases {

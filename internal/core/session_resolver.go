@@ -3,11 +3,6 @@
 
 package core
 
-import (
-	"math"
-	"regexp"
-)
-
 type sessionResolver struct {
 	harness  string
 	session  SessionList
@@ -34,7 +29,7 @@ func ResolveSessionModels(harness string, session SessionList, fallback Resolver
 		if !session.Contains(descriptor.ID) {
 			continue
 		}
-		if counts[descriptor.ID] != 1 || (descriptor.Harness != "" && descriptor.Harness != harness) || !validSessionPrice(descriptor.InputM) || !validSessionPrice(descriptor.OutputM) || !validSessionEfforts(descriptor.Efforts) {
+		if counts[descriptor.ID] != 1 || (descriptor.Harness != "" && descriptor.Harness != harness) || !validSessionEfforts(descriptor.Efforts) {
 			r.rejected[descriptor.ID] = true
 			continue
 		}
@@ -61,11 +56,13 @@ func ResolveSessionModels(harness string, session SessionList, fallback Resolver
 			if m.Native == "" {
 				m.Native = descriptor.ID
 			}
+			// Price no longer gates acceptance (owner decision 2026-10-31:
+			// routing decides by tier only); a bad price is stored as unknown.
 			if descriptor.InputM != nil {
-				m.InputM = *descriptor.InputM
+				m.InputM = sanitizePrice(*descriptor.InputM)
 			}
 			if descriptor.OutputM != nil {
-				m.OutputM = *descriptor.OutputM
+				m.OutputM = sanitizePrice(*descriptor.OutputM)
 			}
 			r.models[m.ID] = m
 		}
@@ -106,33 +103,6 @@ func ResolveSessionModels(harness string, session SessionList, fallback Resolver
 		}
 	}
 	return r
-}
-
-func sessionTier(value string) (Tier, bool) {
-	switch value {
-	case "small":
-		return TierSmall, true
-	case "mid":
-		return TierMid, true
-	case "frontier":
-		return TierFrontier, true
-	}
-	return TierSmall, false
-}
-
-func validSessionPrice(value *float64) bool {
-	return value == nil || (!math.IsNaN(*value) && !math.IsInf(*value, 0) && *value >= 0)
-}
-
-var sessionEffortToken = regexp.MustCompile(`^[a-z][a-z0-9_-]{0,31}$`)
-
-func validSessionEfforts(efforts []string) bool {
-	for _, effort := range efforts {
-		if !sessionEffortToken.MatchString(effort) {
-			return false
-		}
-	}
-	return true
 }
 
 // RouteForSession resolves model capabilities before classification and guards.
