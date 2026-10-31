@@ -22,7 +22,7 @@ func TestMcpInstructionsLeadWithTheTriggerAndStayShort(t *testing.T) {
 	if !strings.Contains(lead, "Before you spawn a subagent") || !strings.Contains(lead, "providers") {
 		t.Errorf("the first 160 characters should say when to call providers, got %q", lead)
 	}
-	for _, want := range []string{"[tier=small]", "apply", "playbook", "status", "never picks one for you"} {
+	for _, want := range []string{"[tier=small]", "apply", "playbook", "status", "never picks one for you", "always call providers first", "every time before a spawn"} {
 		if !strings.Contains(mcpInstructions, want) {
 			t.Errorf("instructions lack %q", want)
 		}

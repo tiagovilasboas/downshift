@@ -11,7 +11,7 @@ import (
 
 const providersSchema = `{"type":"object","properties":{"harness":{"type":"string","description":"Harness id, for example the one running you."},"models":{"type":"array","items":{"type":"string","maxLength":128},"maxItems":64,"description":"Optional: the model ids your own harness shows. Stored only as a hint; detection wins."}},"required":["harness"],"additionalProperties":false}`
 
-const providersDesc = "Lists the models detected for the given harness right now, each with its tier, reasoning efforts, where Downshift learned it and an untiered flag. Call it before choosing a model for a delegation; fallback is true when only the catalog stand-in is known. You MAY pass the model ids your own harness shows in models: they are stored only as a hint and never override detection."
+const providersDesc = "Lists the models detected for the given harness right now, each with its tier, reasoning efforts, where Downshift learned it and an untiered flag. Call it before every subagent spawn (the Agent or Task tool), not once per session: it is the only step that shows the live models before you choose one. Fallback is true when only the catalog stand-in is known. You MAY pass the model ids your own harness shows in models: they are stored only as a hint and never override detection."
 
 // ReportOutcome is what the store did with the ids the caller reported.
 type ReportOutcome struct {
