@@ -44,7 +44,8 @@ Total: 17 points, no card over 3.
 
 State (2026-10-31): M0 to M7 done. Evidence: `docs/evidence/mcp-claude-code-2026-10-31.md`. Fixes found on the
 way landed in #651 (doctor MCP check) and #652 (`delegate` dir default, `collect` cap). Open beyond this plan: the
-orchestrator consults `providers` before only 20.2% of spawns on its own.
+orchestrator consults `providers` before only 31.1% of Claude Desktop spawns on its own (61 of 196; the first count of
+302 spawns was not reproducible, see the evidence record).
 
 ## Out of scope
 
