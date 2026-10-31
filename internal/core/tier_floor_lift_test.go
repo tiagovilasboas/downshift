@@ -62,7 +62,6 @@ func TestTierFloor_UnconfidentPromptStillRewrites(t *testing.T) {
 func TestDeterministicLift_ExemptsEveryRule(t *testing.T) {
 	lifts := map[string]func(*core.Decision){
 		"risk":  func(d *core.Decision) { d.Guards.RiskFloor = true },
-		"nb":    func(d *core.Decision) { d.Shadow.NBUpshift.Applied = true },
 		"floor": func(d *core.Decision) { d.Guards.PolicyFloor = true },
 	}
 	cases := []struct {

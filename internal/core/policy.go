@@ -150,10 +150,6 @@ type Guards struct {
 
 // Shadow collects the observe-only opinions computed beside the routing.
 type Shadow struct {
-	// NBUpshift records the naive-Bayes upshift-only second opinion. It is
-	// always computed (shadow mode); it changes the tier only when
-	// DOWNSHIFT_NB_UPSHIFT=1, and then only upward.
-	NBUpshift NBUpshift
 	// NBDownshift records the naive-Bayes TRIVIAL downshift opinion for
 	// no-signal prompts. Always computed (shadow mode); it lowers the tier
 	// only when DOWNSHIFT_NB_DOWNSHIFT=1.

@@ -18,18 +18,18 @@ import (
 func TestHookRunnerReadsConfigOnce(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("DOWNSHIFT_EVENT_LOG", filepath.Join(t.TempDir(), "events.jsonl"))
-	t.Setenv(core.NBUpshiftEnv, "")
+	t.Setenv(core.NBDownshiftEnv, "")
 	prev := hookGetenv
 	hookGetenv = func(k string) string {
-		if k == core.NBUpshiftEnv {
+		if k == core.NBDownshiftEnv {
 			return "1"
 		}
 		return ""
 	}
 	t.Cleanup(func() { hookGetenv = prev })
 
-	if core.NBUpshiftEnabled() {
-		t.Fatal("precondition: the process environment leaves NB upshift off")
+	if core.NBDownshiftEnabled() {
+		t.Fatal("precondition: the process environment leaves NB downshift off")
 	}
 	seen := false
 	captureStdout(func() {
@@ -38,7 +38,7 @@ func TestHookRunnerReadsConfigOnce(t *testing.T) {
 			bytes.NewReader([]byte(`{}`)),
 			func([]byte) (struct{}, error) { return struct{}{}, nil },
 			func(struct{}) (any, string, core.Decision) {
-				seen = core.NBUpshiftEnabled()
+				seen = core.NBDownshiftEnabled()
 				return nil, "", core.Decision{}
 			},
 			printAllow,
@@ -47,7 +47,7 @@ func TestHookRunnerReadsConfigOnce(t *testing.T) {
 	if !seen {
 		t.Fatal("inside the runner core must read the runner's configuration snapshot")
 	}
-	if core.NBUpshiftEnabled() {
+	if core.NBDownshiftEnabled() {
 		t.Fatal("the runner must restore the configuration on return")
 	}
 }

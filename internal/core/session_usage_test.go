@@ -209,7 +209,11 @@ func TestNativeDownshiftRequiresLowerTier(t *testing.T) {
 	}
 }
 
-func TestNativeUpshiftExplicitFlagKeepsOrdinaryFundedFallback(t *testing.T) {
+// A native upshift (operator floor) never selects an explicit_only id, even
+// when it is funded and the strongest in the session. It takes the ordinary
+// funded model at or above the needed tier. The legacy explicit-upshift opt-in
+// that once let it was removed.
+func TestNativeUpshiftNeverSelectsExplicitOnly(t *testing.T) {
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "absent.json"))
 	cheap := Model{ID: "qa-cheap", Harness: "cursor", Tier: TierSmall}
 	middle := Model{ID: "qa-middle", Harness: "cursor", Tier: TierMid}
@@ -218,26 +222,16 @@ func TestNativeUpshiftExplicitFlagKeepsOrdinaryFundedFallback(t *testing.T) {
 		models:   map[string]Model{cheap.ID: cheap, middle.ID: middle, explicit.ID: explicit},
 		explicit: map[string]bool{explicit.ID: true},
 	}
-	for _, tc := range []struct {
-		name, flag, want string
-	}{
-		{"off selects ordinary funded mid", "", middle.ID},
-		{"on allows explicit funded frontier", "1", explicit.ID},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", tc.flag)
-			now := time.Now().UTC()
-			session := KnownSession([]string{explicit.ID, middle.ID, cheap.ID}).WithUsageQuota("cursor", &quotamodel.Snapshot{
-				Version: 1, Harness: "cursor", Source: "cursor-usage", ObservedAt: now.Add(-time.Second), ExpiresAt: now.Add(time.Minute),
-				Windows: []quotamodel.Window{{ID: "shared", Scope: "harness", UsedPercent: quotaNumber(20), ResetsAt: now.Add(time.Hour)}},
-			})
-			session.NativeAvailability = true
-			decision := Decision{Harness: "cursor", Tier: TierMid, Verdict: VerdictUpshift, Baseline: Baseline{CurrentModel: cheap, RequestedID: cheap.ID}}
-			plan := decision.PlanForSession(CursorCaps, resolver, session)
-			if !plan.RewriteModel || plan.Model.ID != tc.want {
-				t.Fatalf("explicit flag=%q plan=%+v, want funded rewrite to %s", tc.flag, plan, tc.want)
-			}
-		})
+	now := time.Now().UTC()
+	session := KnownSession([]string{explicit.ID, middle.ID, cheap.ID}).WithUsageQuota("cursor", &quotamodel.Snapshot{
+		Version: 1, Harness: "cursor", Source: "cursor-usage", ObservedAt: now.Add(-time.Second), ExpiresAt: now.Add(time.Minute),
+		Windows: []quotamodel.Window{{ID: "shared", Scope: "harness", UsedPercent: quotaNumber(20), ResetsAt: now.Add(time.Hour)}},
+	})
+	session.NativeAvailability = true
+	decision := Decision{Harness: "cursor", Tier: TierMid, Verdict: VerdictUpshift, Baseline: Baseline{CurrentModel: cheap, RequestedID: cheap.ID}}
+	plan := decision.PlanForSession(CursorCaps, resolver, session)
+	if !plan.RewriteModel || plan.Model.ID != middle.ID {
+		t.Fatalf("plan=%+v, want funded rewrite to the ordinary mid model %s, never the explicit_only frontier", plan, middle.ID)
 	}
 }
 

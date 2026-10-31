@@ -17,8 +17,6 @@ const (
 	EnvSessionModels = "DOWNSHIFT_SESSION_MODELS"
 	// EnvQuotaMode set to "required" makes quota evidence mandatory.
 	EnvQuotaMode = "DOWNSHIFT_QUOTA_MODE"
-	// EnvExplicitUpshift set to "1" lets upshift pick explicit_only ids.
-	EnvExplicitUpshift = "DOWNSHIFT_EXPLICIT_UPSHIFT"
 	// EnvDiscovery set to "off" disables the discovered-models layer.
 	EnvDiscovery = "DOWNSHIFT_DISCOVERY"
 	// EnvDiscoveryTTL is a Go duration; "0" keeps a cache entry forever.
@@ -36,8 +34,6 @@ type Config struct {
 	SessionModelsPath string
 	// QuotaRequired is DOWNSHIFT_QUOTA_MODE == "required".
 	QuotaRequired bool
-	// ExplicitUpshift is DOWNSHIFT_EXPLICIT_UPSHIFT == "1".
-	ExplicitUpshift bool
 	// DiscoveryOff is DOWNSHIFT_DISCOVERY == "off".
 	DiscoveryOff bool
 	// DiscoveredPath is DOWNSHIFT_DISCOVERED; "" means the state dir.
@@ -61,7 +57,6 @@ func ConfigFromEnv(getenv func(string) string) Config {
 	c := Config{
 		SessionModelsPath: getenv(EnvSessionModels),
 		QuotaRequired:     getenv(EnvQuotaMode) == "required",
-		ExplicitUpshift:   getenv(EnvExplicitUpshift) == "1",
 		DiscoveryOff:      getenv(EnvDiscovery) == "off",
 		DiscoveredPath:    getenv(EnvDiscovered),
 		DiscoveryTTL:      DefaultDiscoveryTTL,
@@ -128,7 +123,6 @@ func config() Config {
 
 func sessionModelsEnv() string { return config().SessionModelsPath }
 func quotaModeRequired() bool  { return config().QuotaRequired }
-func explicitUpshiftEnv() bool { return config().ExplicitUpshift }
 func discoveryOff() bool       { return config().DiscoveryOff }
 func discoveredEnv() string    { return config().DiscoveredPath }
 

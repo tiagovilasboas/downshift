@@ -86,8 +86,6 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 	if res == nil || (d.Verdict == VerdictOK && !session.Blocks(d.Baseline.CurrentModel.ID) && !session.Blocks(d.Baseline.RequestedID)) {
 		return "", Model{}, false, false
 	}
-	upshift := d.Verdict == VerdictUpshift
-	strongest := upshift && ExplicitUpshiftEnabled()
 	var current Model
 	if d.Verdict == VerdictDownshift {
 		currentID := d.Baseline.RequestedID
@@ -111,8 +109,9 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 		if !allowed {
 			check.QuotaRequired = false
 		}
-		if !CanWriteSessionID(d.Harness, id, check, res) ||
-			(res.IsExplicitOnly(d.Harness, id) && !upshift) {
+		// CanWriteSessionID already refuses explicit_only ids: routing never
+		// selects the owner's deliberate choice, up or down.
+		if !CanWriteSessionID(d.Harness, id, check, res) {
 			continue
 		}
 		m, ok := res.LookupByID(d.Harness, id)
@@ -130,10 +129,11 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 			continue
 		}
 		m.ID, m.Harness, m.Native = id, d.Harness, ""
-		// Pick by tier only. Within one tier the first id in session order
-		// wins; the provider's order is not a quality or cost signal.
-		better := !found || (!strongest && m.Tier < best.Tier) || (strongest && m.Tier > best.Tier)
-		if better {
+		// Pick the least-capable id that meets the needed tier. Within one
+		// tier the first id in session order wins; the provider's order is not
+		// a quality or cost signal. An UPSHIFT verdict from the operator floor
+		// takes the same least-sufficient target, never the strongest.
+		if !found || m.Tier < best.Tier {
 			best, found = m, true
 		}
 	}

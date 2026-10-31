@@ -152,35 +152,3 @@ func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) Sess
 	}
 	return LoadUserSessionForID(harness, sessionID)
 }
-
-// ExplicitUpshiftEnabled reports whether upshift may select catalog
-// explicit_only ids. The default is off. DOWNSHIFT_EXPLICIT_UPSHIFT=1 or
-// "explicit_upshift": true in session-models.json turns it on. Either source
-// is enough. The flag does not replace a current explicit_only model.
-func ExplicitUpshiftEnabled() bool {
-	if explicitUpshiftEnv() {
-		return true
-	}
-	return explicitUpshiftFromFile()
-}
-
-func explicitUpshiftFromFile() bool {
-	path := sessionModelsEnv()
-	if path == "" {
-		path = DefaultSessionModelsPath()
-	}
-	if path == "" {
-		return false
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return false
-	}
-	var raw struct {
-		ExplicitUpshift bool `json:"explicit_upshift"`
-	}
-	if json.Unmarshal(data, &raw) != nil {
-		return false
-	}
-	return raw.ExplicitUpshift
-}

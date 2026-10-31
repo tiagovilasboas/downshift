@@ -61,14 +61,10 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) telemetr
 		ev.SafeVerdict = d.SafeVerdict.String()
 		ev.Corrections = d.Corrections
 	}
-	if d.Shadow.NBUpshift.Would {
-		ev.NBUpshift = &telemetry.NBUpshiftRecord{
-			FromTier: d.Shadow.NBUpshift.From.String(),
-			ToTier:   d.Shadow.NBUpshift.To.String(),
-			Margin:   math.Round(d.Shadow.NBUpshift.Margin*1e4) / 1e4,
-			Applied:  d.Shadow.NBUpshift.Applied,
-		}
-	}
+	// The NB upshift second opinion was removed: Downshift never raises a tier
+	// on its own. A live decision no longer carries one, so none is emitted.
+	// The telemetry.Event.NBUpshift field stays so old events that recorded one
+	// still decode (see the report/stats reader).
 	if d.Shadow.NBDownshift.Would {
 		// The opinion only exists for the Medium default, so it is mid -> small.
 		ev.NBDownshift = &telemetry.NBUpshiftRecord{
