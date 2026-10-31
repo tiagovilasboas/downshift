@@ -27,8 +27,21 @@ func TestMcpReporterStoresReportedIDsInTheDiscoveryCache(t *testing.T) {
 	if err != nil || !out.Written || out.Accepted != 1 {
 		t.Fatalf("outcome %+v err %v", out, err)
 	}
-	if e := discovery.Read(cache).Harnesses[h]; e.Source != "mcp" || len(e.Models) != 1 {
+	// h is SessionFromCatalog (claude-code): the reported id is added to the
+	// catalog stand-in the router already saw, so a one-id report never
+	// narrows the list. The stand-in has 4 models; id is one of them.
+	e := discovery.Read(cache).Harnesses[h]
+	if e.Source != "mcp" || len(e.Models) != 4 {
 		t.Fatalf("entry %+v", e)
+	}
+	found := false
+	for _, m := range e.Models {
+		if m.ID == id {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("reported id %q missing from the stored union: %+v", id, e.Models)
 	}
 }
 

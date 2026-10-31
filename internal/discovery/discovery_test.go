@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/tiagovilasboas/downshift/internal/catalog"
+	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
 // fakeCat resolves exact ids and family prefixes like the real catalog.
@@ -42,6 +43,12 @@ func (f fakeCat) IsExactID(h, id string) bool {
 	}
 	return false
 }
+
+// The stand-in methods complete the Catalog interface. Order never calls them,
+// so the Order tests leave them empty; the union tests use the real catalog.
+func (f fakeCat) SessionCandidates(string) []string            { return nil }
+func (f fakeCat) LookupByID(string, string) (core.Model, bool) { return core.Model{}, false }
+func (f fakeCat) IsExplicitOnly(string, string) bool           { return false }
 
 func contains(l []string, s string) bool {
 	for _, x := range l {
