@@ -13,8 +13,9 @@ import (
 // start. It is a short, factual pointer to the orchestrator's own choice, the
 // only channel that reaches the model before it decides how to delegate
 // (docs/internal/plans/mcp-spike-2026-10-28.md).
-const sessionStartContext = "Downshift is installed. Before you spawn a subagent with the Agent or Task tool, call the " +
-	"downshift MCP tool providers first to see the models this harness offers now, then apply to preview your choice of model and effort. " +
+const sessionStartContext = "Downshift is installed. Every time you are about to spawn a subagent with the Agent or Task tool, " +
+	"call the downshift MCP tool providers first: it is the one step that shows the models this harness offers right now, so make it a habit before the spawn, not an afterthought. " +
+	"Then call apply to preview your choice of model and effort. " +
 	"Choose the model and effort yourself. For mechanical work, start the spawn's prompt with [tier=small]; that hint only moves down. " +
 	"Workers from the MCP are read-only unless the owner turned on write mode."
 

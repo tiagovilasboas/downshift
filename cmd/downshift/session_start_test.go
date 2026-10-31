@@ -30,7 +30,7 @@ func TestSessionStartAnswersWithContextAndTheToolsToCall(t *testing.T) {
 		t.Errorf("event = %q", got.HookSpecificOutput.HookEventName)
 	}
 	ctx := got.HookSpecificOutput.AdditionalContext
-	for _, want := range []string{"providers", "apply", "[tier=small]", "read-only"} {
+	for _, want := range []string{"providers", "apply", "[tier=small]", "read-only", "Every time you are about to spawn"} {
 		if !strings.Contains(ctx, want) {
 			t.Errorf("context lacks %q: %s", want, ctx)
 		}
