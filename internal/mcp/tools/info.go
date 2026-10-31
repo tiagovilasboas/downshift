@@ -98,6 +98,13 @@ type Deps struct {
 	Work *workers.Queue
 	// WriteEnabled is the owner's switch for mode write; off refuses it before anything starts.
 	WriteEnabled bool
+	// Root is the resolved project directory the server was started in. delegate
+	// uses it as the default dir when the caller sends none.
+	Root string
+	// Broad is true when Root is a place a containment check cannot protect (the
+	// filesystem root or the user's home). delegate refuses a missing dir then,
+	// so a worker never defaults into a broad directory.
+	Broad bool
 	// Harnesses lists the valid harness ids, for argument errors.
 	Harnesses func() []string
 	Version   string
