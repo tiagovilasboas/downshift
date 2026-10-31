@@ -145,7 +145,6 @@ The observability and verification domain delivers empirical proof of routing be
 | [guides/benchmark-protocol.md](guides/benchmark-protocol.md) | Guide | Protocol for reproducible three-arm comparison (Opus vs opusplan vs opusplan+Downshift) |
 | [guides/benchmark-output-cutting.md](guides/benchmark-output-cutting.md) | Guide | Protocol, not yet run: routing and output cutting, cut criterion |
 | [guides/pilot.md](guides/pilot.md) | Guide | Two-week team pilot methodology: routed vs control |
-| [guides/billing-comparison-template.md](guides/billing-comparison-template.md) | Guide | Template to compare provider billing with `downshift stats --export` |
 | [design/engineering-loop.md](design/engineering-loop.md) | Design | Feedback loop: telemetry, outcome evals, reviewed feedback, and offline tuning |
 | [evidence/subagent-routing-ab-2026-10-15.md](evidence/subagent-routing-ab-2026-10-15.md) | Evidence | Controlled A/B experiment on Claude Code: routed vs control arm |
 | [evidence/baseline-freeze-2026-10-17.md](evidence/baseline-freeze-2026-10-17.md) | Evidence | Baseline freeze manifest: frozen eval sets, sha256, reference numbers |

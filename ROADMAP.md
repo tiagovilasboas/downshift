@@ -47,7 +47,7 @@ product priorities, not a claim of equal release readiness across the three.
 | Code intelligence | DCI v0.1–v0.4: multi-language call-graph (Go AST, TS, Python, Rust, PHP, Java, C#), reverse call-graph (blast radius / impact analysis), production-first ranking, incremental BM25 index, abstention and auto-injection on Claude Code UserPromptSubmit ([docs](docs/design/code-intelligence.md)) |
 
 **Beta exit blockers (community / dogfood):** see [beta-exit.md](docs/reference/beta-exit.md)
-pillars P2 (multi-user exports) and P3 (billing evidence).
+pillars P2 (multi-user exports) and P3 (routed-versus-control token comparison).
 
 ---
 

@@ -54,9 +54,27 @@ Graduation needs independent operators, not only one `events.jsonl`.
 
 ---
 
-## Pillar 3 — Billing before/after (real dollars)
+## Pillar 3 — Routed-versus-control comparison (tokens only)
 
-Replace directional normalised units with provider-grounded savings.
+**Changed 2026-10-31 (owner decision):** this pillar was "Billing before/after
+(real dollars)". Downshift does not control cost and does not measure money, and
+routing does not use price, only tier/complexity and the LLM choice. The pillar
+now requires a real seven-day routed-versus-control comparison in tokens on
+three metrics, not a provider-invoice comparison. The earlier dollar/invoice
+criteria are kept below as struck-through history, not deleted.
+
+Prove routing's value in production on three metrics, with no money:
+
+- **Effect:** share of the routed group's billable tokens (input + output +
+  cache written) that ran on a tier lower than the one requested; 0 in the
+  control group by construction. Cache reads are excluded.
+- **Guard 1:** billable tokens per completed task, routed against control, 95%
+  bootstrap interval, minimum 20 completed tasks per group. Cache reads excluded.
+- **Guard 2:** rework rate (respawn in the same session within 10 minutes),
+  routed against control.
+
+Routing is worth it when the effect goes up and neither guard gets worse.
+Replaces directional normalised units with a production comparison in tokens.
 
 | ID | Task | Owner | Done |
 |----|------|-------|------|
@@ -66,12 +84,12 @@ Replace directional normalised units with provider-grounded savings.
 | P3.4 | **≥50** `outcome: "usage"` events linked to prior PreToolUse decisions | dogfood | [ ] |
 | P3.5 | Non-zero token-derived savings, known baseline and native provenance: [2026-10-09 audit](../evidence/billing-gap-audit.md), QA PASS; not an invoice or controlled-period comparison | dogfood | [x] |
 | P3.6 | **Control group**: `DOWNSHIFT_NO_ROUTE=1` / `--no-route` baseline events | eng | [x] |
-| P3.7 | Report template: same calendar week, Anthropic/OpenAI dashboard vs `stats --export` (`docs/guides/billing-comparison-template.md`) | docs | [x] |
+| P3.7 | ~~Report template: same calendar week, Anthropic/OpenAI dashboard vs `stats --export`~~ **(2026-10-31, owner decision)** Real seven-day routed-versus-control comparison in tokens: effect, Guard 1, Guard 2, published at `docs/evidence/real-seven-day-<date>.md` (issue #103) | docs | [ ] |
 | P3.8 | PostToolUse for Codex/Cursor when harness exposes usage (track upstream) | eng | — |
 
-**Exit:** P3.4 + P3.5 + P3.7 filled for **one** billing period (maintainer sign-off). Still open: 5/50 linked agents and no real control-period comparison. P3.5 alone does not close the pillar.
+**Exit:** P3.4 + P3.5 + P3.7 filled for **one** seven-day window (maintainer sign-off). Still open: 5/50 linked agents and no completed seven-day routed-versus-control comparison. P3.5 alone does not close the pillar. ~~Earlier exit required one filled billing period against the provider dashboard (changed 2026-10-31, owner decision).~~
 
-**P3 status (2026-10-15; current report behavior clarified 2026-10-20):** open. The control group is on by default (10%). `downshift report` compares routed and control tokens per completed task and rework; it prints no dollar values, and its token comparison is a point percentage without a printed interval. This is not a provider-billing comparison. P3.7 remains open until a same-period comparison with the provider dashboard is completed using the [billing comparison template](../guides/billing-comparison-template.md); the [pilot protocol](../guides/pilot.md) helps collect that evidence. The controlled routed-versus-control run at list prices (one operator, 2026-10-15) is in [evidence/subagent-routing-ab-2026-10-15.md](../evidence/subagent-routing-ab-2026-10-15.md): its dollar figures are historical estimates, not a billing period, and do not close P3.7.
+**P3 status (2026-10-31; owner decision):** open. The pillar no longer measures money; Downshift does not control cost and routing does not use price. The control group is on by default (`DOWNSHIFT_CONTROL_SHARE`, default 0.10). `downshift report` compares routed and control tokens per completed task and rework. P3.7 is now a real seven-day routed-versus-control comparison in tokens on three metrics (effect, Guard 1 tokens per completed task with a 95% bootstrap interval and a 20-per-group floor, Guard 2 rework rate), published at `docs/evidence/real-seven-day-<date>.md` and tracked in issue #103. It is not a provider-billing comparison. The controlled routed-versus-control run at list prices (one operator, 2026-10-15) in [evidence/subagent-routing-ab-2026-10-15.md](../evidence/subagent-routing-ab-2026-10-15.md) is historical and does not close P3.7. ~~Earlier status (2026-10-15/2026-10-20): P3.7 required a same-period comparison with the provider dashboard using the billing comparison template; that criterion was retired on 2026-10-31.~~
 
 Historical P3.4 finding (2026-10-06; superseded counts and current provenance in the [2026-10-09 audit](../evidence/billing-gap-audit.md)): the Claude Code PostToolUse payload for an async `Agent` launch carries no token usage (`tool_response` is launch metadata only, `duration_ms` is a few ms), which is why the log has no `usage` events. The subagent transcript at `tool_response.outputFile` does carry per-message `message.model` and `message.usage` (input, output, cache creation/read; the same message id repeats while streaming, so take the last per id). It is not complete at launch time, so usage is read when the subagent stops: the SubagentStop hook (`downshift claude-code-subagent-stop`, payload `agent_id` + `agent_transcript_path`) prices it from that transcript and links it to the decision through the hashed agent id. Verified 2026-10-06 against a real transcript (18 input, 311 output, 82,900 cache tokens). It is not enabled in the maintainer `settings.json` yet, and savings stay zero while the decision's `requested_model` is `unknown`. The launch payload does carry `resolvedModel`, now recorded as an `outcome: "resolved"` honor observation (P1.7).
 

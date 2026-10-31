@@ -51,14 +51,28 @@ answers it or removes something that does not help answer it.
 
 ### P1: the real seven-day comparison (issue #103, weeks 1 to 2)
 
+The comparison is routed against control in tokens only, on three metrics, with
+no money. Downshift does not control cost, and routing does not use price, only
+tier/complexity and the LLM choice.
+
+- **Effect:** share of the routed group's billable tokens (input + output +
+  cache written) that ran on a tier lower than the one requested; 0 in the
+  control group by construction. Cache reads are excluded.
+- **Guard 1:** billable tokens per completed task, routed against control, 95%
+  bootstrap interval, minimum 20 completed tasks per group. Cache reads excluded.
+- **Guard 2:** rework rate (respawn in the same session within 10 minutes),
+  routed against control.
+
+Routing is worth it when the effect goes up and neither guard gets worse.
+
 | Card | What | Points | Depends on |
 |---|---|---|---|
 | P1.1 | Pick the one lever P0.1 says moves the most and ship it. **Chosen lever: a user-declared `classes` gate on routing rules** (owner-approved), so a confident, risk-free TRIVIAL/SIMPLE spawn can be routed down a tier. P0.1 (`downshift-labs research/routing-real-usage-why-null-2026-10-31.md`) found 54 `allow` spawns above the floor, TRIVIAL/SIMPLE and risk-free, that no existing policy could move: the floor only raises, and `kinds`/`efforts` rules need a hint the orchestrator rarely sends. The gate is off by default (no `classes` means no change), so it ships without a separate flag. | 3 | P0.1 |
-| P1.2 | Fix the measurement window and the minimum sample before it starts: at least 20 completed tasks per group (the report's own floor), seven calendar days, no binary change during the window | 1 | P1.1 |
+| P1.2 | Fix the protocol before the window starts: seven calendar days, a fixed binary for the whole window, `downshift report clear` first, the control slice recorded (`DOWNSHIFT_CONTROL_SHARE`, default 0.10), days with roughly zero control excluded, and at least 20 completed tasks per group (the report's own floor) | 1 | P1.1 |
 | P1.3 | Run the window on the owner's normal work | 0 (time) | P1.2 |
-| P1.4 | Publish `docs/evidence/real-seven-day-<date>.md` with routed against control, tokens per completed task, the interval, rework, and what it does not show; close #103 | 2 | P1.3 |
+| P1.4 | Publish `docs/evidence/real-seven-day-<date>.md` with the effect, Guard 1 and Guard 2 above, routed against control, the 95% bootstrap intervals, rework, the control share, and what the window does not show; close #103 | 2 | P1.3 |
 
-Exit: #103 closed with a published number.
+Exit: #103 closed with a published number (effect and both guards, tokens only).
 
 ### P2: the compactor as the lead (weeks 2 to 3)
 

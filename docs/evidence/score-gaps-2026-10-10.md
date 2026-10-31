@@ -32,7 +32,7 @@ Directional dogfood only; not a billing control week.
 
 ## Issue #103 — Billing comparison template (P3.7)
 
-[docs/guides/billing-comparison-template.md](../guides/billing-comparison-template.md) still has empty placeholders (operator, dates, dashboard table at zero). No filled control-week report exists in-repo; the comparison run was **not** executed.
+`docs/guides/billing-comparison-template.md` (removed 2026-10-31, owner decision) still had empty placeholders (operator, dates, dashboard table at zero). No filled control-week report exists in-repo; the comparison run was **not** executed.
 
 ## Issue #104 — External operator exports (P2.3)
 
