@@ -218,6 +218,71 @@ func TestDecide(t *testing.T) {
 	}
 }
 
+// A rule with a classes gate is the one way to send a confident, risk-free
+// TRIVIAL/SIMPLE task down to a smaller tier (owner decision O8: the project
+// floor only raises). The guard keeps never-widen: a class rule can only move
+// the tier down or keep it. The decision carries verdict rule and the rule id
+// so the report can count it.
+func TestDecideClassRule(t *testing.T) {
+	// A single rule: a confident, risk-free TRIVIAL or SIMPLE task runs small.
+	classPolicy := func() *policy.Policy {
+		return &policy.Policy{Rules: []policy.Rule{
+			{ID: "small-when-easy", Enabled: true,
+				Classes: []contract.Complexity{contract.ComplexityTrivial, contract.ComplexitySimple},
+				Tier:    contract.TierSmall},
+		}}
+	}
+	cases := []struct {
+		name      string
+		request   contract.Request
+		class     string
+		confident bool
+		risk      []string
+		pol       *policy.Policy
+		want      want
+	}{
+		{name: "confident TRIVIAL with no risk goes to small",
+			request: req(nil), class: "TRIVIAL", confident: true, pol: classPolicy(),
+			want: want{contract.VerdictRule, "", "small-model", "small-when-easy", "", contract.TierSmall, core.VerdictDownshift}},
+		{name: "TRIVIAL with a risk category stays",
+			request: req(nil), class: "TRIVIAL", confident: true, risk: []string{"payment"}, pol: classPolicy(),
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		{name: "unconfident TRIVIAL stays (doubt keeps)",
+			request: req(nil), class: "TRIVIAL", confident: false, pol: classPolicy(),
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		{name: "MEDIUM is outside the set and stays",
+			request: req(nil), class: "MEDIUM", confident: true, pol: classPolicy(),
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		{name: "a pinned model wins over a class rule",
+			request: req(func(r *contract.Request) { r.Pinned = true }), class: "TRIVIAL", confident: true, pol: classPolicy(),
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+		// never widen: the guard refuses a class rule that would raise the tier
+		// above the requested model. The note still names the rule that was
+		// tried, so telemetry shows why the move was held.
+		{name: "never widen: a class rule to mid cannot raise a small request",
+			request: req(func(r *contract.Request) { r.RequestedModel = "small-model" }),
+			class:   "TRIVIAL", confident: true,
+			pol: &policy.Policy{Rules: []policy.Rule{
+				{ID: "mid-when-easy", Enabled: true,
+					Classes: []contract.Complexity{contract.ComplexityTrivial}, Tier: contract.TierMid},
+			}},
+			want: want{contract.VerdictHeldUnknown, contract.ReasonNeverWiden, "small-model", "mid-when-easy", "", contract.TierSmall, core.VerdictOK}},
+		{name: "a policy with no classes behaves as before (confident TRIVIAL does not move)",
+			request: req(nil), class: "TRIVIAL", confident: true, pol: testPolicy(),
+			want: want{contract.VerdictKept, "", "frontier-model", "", "", contract.TierFrontier, core.VerdictOK}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			d, n := Decide(Input{Request: tc.request, Policy: tc.pol, Now: now, Catalog: newCatalog(),
+				Class: tc.class, Confident: tc.confident, Risk: tc.risk})
+			got := want{n.Verdict, n.Reason, d.Model.ID, n.RuleID, n.Profile, n.TierTo, d.Verdict}
+			if got != tc.want {
+				t.Fatalf("got  %+v\nwant %+v", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestDecideNilCatalogKeeps(t *testing.T) {
 	d, n := Decide(Input{Request: req(func(r *contract.Request) { r.Profile = "cheap" }), Policy: testPolicy(), Now: now})
 	if n.Verdict != contract.VerdictKept || d.Verdict != core.VerdictUnknown || d.Model.ID != "" {

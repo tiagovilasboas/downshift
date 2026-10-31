@@ -30,19 +30,65 @@ func TestFirstMatchWinsInDeclarationOrder(t *testing.T) {
 		{contract.KindCode, contract.EffortNone, "code-small"},
 	}
 	for _, c := range cases {
-		r, ok := p.Match(c.kind, c.effort)
+		r, ok := p.Match(MatchContext{Kind: c.kind, Effort: c.effort})
 		if !ok || r.ID != c.want {
 			t.Errorf("Match(%q,%q) = %q,%v; want %q", c.kind, c.effort, r.ID, ok, c.want)
 		}
 	}
 
 	p.Rules[0].Enabled = false
-	if r, _ := p.Match(contract.KindCode, contract.EffortDeep); r.ID != "deep-frontier" {
+	if r, _ := p.Match(MatchContext{Kind: contract.KindCode, Effort: contract.EffortDeep}); r.ID != "deep-frontier" {
 		t.Errorf("with code-small disabled, Match = %q, want deep-frontier", r.ID)
 	}
 	p.Rules = p.Rules[1:2]
-	if _, ok := p.Match(contract.KindNone, contract.EffortNone); ok {
+	if _, ok := p.Match(MatchContext{Kind: contract.KindNone, Effort: contract.EffortNone}); ok {
 		t.Error("an effort-only rule matched a call with no declared effort")
+	}
+}
+
+// A rule with a classes gate admits a call only when the classifier's class is
+// in the set, the classification is confident, and the task has no risk. A
+// rule without a classes gate ignores all three, so earlier policies behave
+// exactly as before.
+func TestClassGateMatchesOnlyConfidentRiskFree(t *testing.T) {
+	p := &Policy{Rules: []Rule{
+		{ID: "small-when-easy", Enabled: true, Classes: []contract.Complexity{contract.ComplexityTrivial, contract.ComplexitySimple}, Tier: contract.TierSmall},
+		{ID: "open", Enabled: true, Tier: contract.TierMid},
+	}}
+	cases := []struct {
+		name string
+		ctx  MatchContext
+		want contract.RuleID
+	}{
+		// Happy path: a confident, risk-free class in the set takes the class rule.
+		{"confident TRIVIAL no risk goes to the class rule",
+			MatchContext{Class: contract.ComplexityTrivial, Confident: true}, "small-when-easy"},
+		{"confident SIMPLE no risk goes to the class rule",
+			MatchContext{Class: contract.ComplexitySimple, Confident: true}, "small-when-easy"},
+		// Unhappy paths: each one falls through to the open rule.
+		{"TRIVIAL with risk falls through",
+			MatchContext{Class: contract.ComplexityTrivial, Confident: true, HasRisk: true}, "open"},
+		{"TRIVIAL not confident falls through",
+			MatchContext{Class: contract.ComplexityTrivial, Confident: false}, "open"},
+		{"MEDIUM is not in the set and falls through",
+			MatchContext{Class: contract.ComplexityMedium, Confident: true}, "open"},
+		{"an unknown class falls through",
+			MatchContext{Class: contract.ComplexityUnknown, Confident: true}, "open"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			r, ok := p.Match(c.ctx)
+			if !ok || r.ID != c.want {
+				t.Fatalf("Match(%+v) = %q,%v; want %q", c.ctx, r.ID, ok, c.want)
+			}
+		})
+	}
+
+	// With only the class rule, an unconfident call matches nothing: the
+	// requested model is kept.
+	p.Rules = p.Rules[:1]
+	if _, ok := p.Match(MatchContext{Class: contract.ComplexityTrivial, Confident: false}); ok {
+		t.Error("an unconfident class matched a class rule; doubt must keep")
 	}
 }
 

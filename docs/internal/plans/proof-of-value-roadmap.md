@@ -53,7 +53,7 @@ answers it or removes something that does not help answer it.
 
 | Card | What | Points | Depends on |
 |---|---|---|---|
-| P1.1 | Pick the one lever P0.1 says moves the most (a declared policy default, orchestrator guidance, or a decider rule the owner approves) and ship it behind a flag | 3 | P0.1 |
+| P1.1 | Pick the one lever P0.1 says moves the most and ship it. **Chosen lever: a user-declared `classes` gate on routing rules** (owner-approved), so a confident, risk-free TRIVIAL/SIMPLE spawn can be routed down a tier. P0.1 (`downshift-labs research/routing-real-usage-why-null-2026-10-31.md`) found 54 `allow` spawns above the floor, TRIVIAL/SIMPLE and risk-free, that no existing policy could move: the floor only raises, and `kinds`/`efforts` rules need a hint the orchestrator rarely sends. The gate is off by default (no `classes` means no change), so it ships without a separate flag. | 3 | P0.1 |
 | P1.2 | Fix the measurement window and the minimum sample before it starts: at least 20 completed tasks per group (the report's own floor), seven calendar days, no binary change during the window | 1 | P1.1 |
 | P1.3 | Run the window on the owner's normal work | 0 (time) | P1.2 |
 | P1.4 | Publish `docs/evidence/real-seven-day-<date>.md` with routed against control, tokens per completed task, the interval, rework, and what it does not show; close #103 | 2 | P1.3 |

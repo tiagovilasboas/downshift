@@ -90,7 +90,13 @@ func ruleChoice(in Input) (choice, bool) {
 	open.Rules = slices.DeleteFunc(slices.Clone(in.Policy.Rules), func(r policy.Rule) bool {
 		return !gatesPass(r.Gates, in.Readings, in.Now)
 	})
-	rule, ok := open.Match(in.Request.Hint.Kind, in.Request.Hint.Effort)
+	rule, ok := open.Match(policy.MatchContext{
+		Kind:      in.Request.Hint.Kind,
+		Effort:    in.Request.Hint.Effort,
+		Class:     contract.Complexity(in.Class),
+		Confident: in.Confident,
+		HasRisk:   len(in.Risk) > 0,
+	})
 	if !ok {
 		return choice{}, false
 	}

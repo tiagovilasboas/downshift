@@ -20,6 +20,7 @@ func TestEnumStringsAreStable(t *testing.T) {
 	}{
 		{"Kind", strs(Kinds()), []string{"research", "code", "review", "command", "scrap", "docs"}},
 		{"EffortClass", strs(EffortClasses()), []string{"light", "standard", "deep"}},
+		{"Complexity", strs(Complexities()), []string{"TRIVIAL", "SIMPLE", "MEDIUM", "COMPLEX"}},
 		{"Tier", strs(Tiers()), []string{"small", "mid", "frontier"}},
 		{"Verdict", strs(Verdicts()), []string{"kept", "profile", "rule", "hint_down", "default", "guard_floor", "held_unknown", "refused_config"}},
 		{"Reason", strs(Reasons()), []string{"risk_floor", "never_widen", "explicit_only", "foreign_id", "profile_override", "unknown_profile", "no_candidate", "fail_open"}},
@@ -49,6 +50,7 @@ func TestValidAcceptsOnlyDeclaredValues(t *testing.T) {
 	bad := []bool{
 		KindNone.Valid(), Kind("mechanical").Valid(), Kind("Code").Valid(),
 		EffortNone.Valid(), EffortClass("max").Valid(),
+		ComplexityUnknown.Valid(), Complexity("trivial").Valid(), Complexity("HUGE").Valid(),
 		TierUnknown.Valid(), Tier("strong").Valid(),
 		Verdict("").Valid(), Verdict("chosen").Valid(),
 		ReasonNone.Valid(), HeadroomUnknown.Valid(), ChannelUnknown.Valid(), WindowUnknown.Valid(),
