@@ -239,8 +239,6 @@ else
 fi
 echo ""
 
-# set_explicit_upshift writes the operator flag. A missing file is created.
-# An existing JSON object is updated in place so harness lists stay.
 # Session allowlist: the hook only writes model ids listed here. Without the
 # file it never rewrites anything, so say so instead of installing a silent
 # no-op. The list is operator-curated (it depends on your plan), so it is not
