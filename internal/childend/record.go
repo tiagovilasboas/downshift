@@ -524,7 +524,7 @@ func recordChildEnd(ce hookport.ChildEnd, sessionHash, callHash, agentHash, bina
 		BinaryVersion:  binaryVersion,
 		Verdict:        "UNKNOWN",
 		FromModel:      ranModel(*target),
-		ToModel:        telemetry.ModelOrUnknown(""),
+		ToModel:        childEndModel(ce),
 		SessionID:      target.SessionID,
 		LinkedDecision: decisionKey(*target),
 		AgentHash:      agentHash,

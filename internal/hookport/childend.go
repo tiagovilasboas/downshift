@@ -44,6 +44,12 @@ type ChildEnd struct {
 	// was a rewrite, the honored/refuted comparison). Empty when the event does
 	// not report one.
 	ResolvedModel string
+	// ServedModel is the model the child actually ran on, read from its own
+	// transcript (the first assistant message's model, normalized to a catalog
+	// id). It is the model the child_ended observation records. Empty when no
+	// transcript was available or it named no model; the recorder then falls
+	// back to ResolvedModel and keeps "unknown" only when neither is known.
+	ServedModel string
 	// Status is how the child ended; "" or ChildUnknown when the payload does
 	// not say.
 	Status telemetry.ChildStatus
