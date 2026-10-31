@@ -154,12 +154,13 @@ func modelForSessionID(harness, id string, res Resolver) Model {
 }
 
 // selectableSessionIDs keeps this harness's session order. It drops empty
-// ids, inherit, and exhausted ids. explicit_only ids stay only when
-// allowExplicit is set. A non-empty Included set is closed: ids outside it
-// are dropped, and an empty intersection is an empty result (no fallback).
-// An empty Included set does not invent credits and does not consult another
-// harness. The selector never adds an id the credit set omitted.
-func selectableSessionIDs(harness string, session SessionList, res Resolver, allowExplicit bool) []string {
+// ids, inherit, and exhausted ids. explicit_only ids are always dropped:
+// routing never selects the owner's deliberate choice. A non-empty Included
+// set is closed: ids outside it are dropped, and an empty intersection is an
+// empty result (no fallback). An empty Included set does not invent credits
+// and does not consult another harness. The selector never adds an id the
+// credit set omitted.
+func selectableSessionIDs(harness string, session SessionList, res Resolver) []string {
 	if !session.Known {
 		return nil
 	}
@@ -170,12 +171,10 @@ func selectableSessionIDs(harness string, session SessionList, res Resolver, all
 			continue
 		}
 		if shadowSessionModel(harness, id, res) {
-			// An allowlist shadow row is never a selection, not even with
-			// DOWNSHIFT_EXPLICIT_UPSHIFT on.
+			// An allowlist shadow row is never a selection.
 			continue
 		}
-		explicit := res != nil && res.IsExplicitOnly(harness, id)
-		if explicit && !allowExplicit {
+		if res != nil && res.IsExplicitOnly(harness, id) {
 			continue
 		}
 		if creditClosed && !session.IsIncluded(id) {
@@ -211,7 +210,7 @@ func rejectedSessionModel(harness, id string, res Resolver) bool {
 // floor before the quota filter, so an exhausted id never lowers the floor.
 // It does not consult names or prices.
 func leastSessionModelAtOrAbove(harness string, session SessionList, res Resolver, minTier Tier) (string, Model, bool, bool) {
-	ids := selectableSessionIDs(harness, session, res, false)
+	ids := selectableSessionIDs(harness, session, res)
 	if len(ids) == 0 {
 		return "", Model{}, false, false
 	}
@@ -285,7 +284,7 @@ func catalogTiers(harness string, ids []string, res Resolver) ([]Tier, bool) {
 // explicit_only id. When the catalog cannot rank the list, the position
 // mapping applies, as leastSessionModelAtOrAbove does.
 func upshiftSessionModel(harness string, session SessionList, res Resolver, minTier, floor Tier) (string, Model, bool, bool) {
-	ids := selectableSessionIDs(harness, session, res, false)
+	ids := selectableSessionIDs(harness, session, res)
 	if len(ids) == 0 {
 		return "", Model{}, false, false
 	}
