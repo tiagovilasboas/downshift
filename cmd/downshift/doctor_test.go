@@ -119,10 +119,12 @@ func TestDoctor_AllGood(t *testing.T) {
 	}
 
 	rep := buildDoctorReport(f.env)
-	if rep.Failed != 0 || rep.Warnings != 0 {
+	// The one expected warning is the declared Claude Code limit (effort cannot
+	// be set per spawn); anything else is a real problem.
+	if lim := f.check(t, rep, "claude-code", "limitations"); rep.Failed != 0 || rep.Warnings != 1 || lim.Detail != "effort:none" {
 		var b bytes.Buffer
 		rep.writeText(&b, false, false)
-		t.Fatalf("want a clean report:\n%s", b.String())
+		t.Fatalf("want a clean report apart from the declared effort limit:\n%s", b.String())
 	}
 	for _, id := range []string{"hooks wired", "hook binary", "session list", "last hook event", "rewrite honored"} {
 		wantStatus(t, f.check(t, rep, "claude-code", id), doctorOK)
