@@ -1,7 +1,7 @@
 # Misroute triage
 
 A misroute is a decision the user would not have made: a child that failed because its
-model was too small, or a trivial task that kept the frontier model. Fixing them is how
+tier was too small, or a trivial task that kept the frontier tier. Fixing them is how
 the deterministic classifier improves; nothing is learned from raw usage.
 
 ## Collect, without the prompt leaving the machine
@@ -9,8 +9,8 @@ the deterministic classifier improves; nothing is learned from raw usage.
 1. `downshift session --why` (or `/downshift --why`): the tier, the reason codes and the
    guardrail that held or moved the spawn.
 2. `downshift doctor`: the last hook decision and whether the hook fires at all.
-3. `downshift report`: rework and cost per completed task for the period, to check whether
-   the misroute repeats. Nothing here creates a tier label.
+3. `downshift report`: rework and tokens per completed task for the period, to check
+   whether the misroute repeats. Nothing here creates a tier label.
 
 ## Report
 
