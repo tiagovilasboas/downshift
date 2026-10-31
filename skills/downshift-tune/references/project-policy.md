@@ -17,9 +17,10 @@ inherits it.
   Risk names are those in `internal/core/risk.go` (`secret`, `payment`, `destructive`, ...).
 - Invalid or oversized files are ignored (fail open), so validate by eye and with
   `downshift policy check` run from the project directory.
-- Use it to stop rework, not to save money: a floor costs tokens. Propose one when
-  `downshift stats` shows failed or respawned children on a risky repository, or when a
-  low-risk repository needs no floor at all and the user can remove one.
+- Use it to stop rework, not to shave tokens: a floor only spends more, never less.
+  Propose one when `downshift stats` shows failed or respawned children on a risky
+  repository, or when a low-risk repository needs no floor at all and the user can
+  remove one.
 - The floor passes through the session allowlist; it cannot pick a model the session does
   not offer, and it cannot force a model on a harness that does not honor rewrites
   (`docs/reference/harness-matrix.md`).

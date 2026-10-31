@@ -8,14 +8,14 @@ harness can read; the Claude Code plugin ships them as `/downshift:<name>`.
 | `downshift-setup` | install, repair and first validation of the hooks; dry-run before any write, backups and `--undo` | yes, after a yes | once `downshift doctor` is clean; a hand-copied install can delete it |
 | `downshift-audit` | independent, read-only inspection: is it wired, what did it do, what loads every session | never | keep; it is the second opinion |
 | `harness-engineer` | six steps: restate, split by story points, parallelize, keep small work local, leave mechanical spawns unpinned, check with `session --why` and `report` | never | keep while you delegate work |
-| `cost-reducer` | the one entry point for "we spend too much": fixed diagnosis order, biggest lever first, one change at a time | only after a yes | keep; it defers to setup when nothing is wired |
+| `downshift-tune` | the one entry point for "we spend too many tokens": fixed diagnosis order, biggest lever first, one change at a time | only after a yes | keep; it defers to setup when nothing is wired |
 
 `downshift-effort` is a fifth, advisory skill: it tells the orchestrator how much
 reasoning and verification a task's stakes deserve (mechanical, ordinary, high) and
 never sets an effort value itself. Setup installs it next to `downshift-orchestrator`.
 Inspired by an MIT-licensed skill, github.com/mmc7676/skills.
 
-## What they cost
+## What they spend in tokens
 
 A skill is not free: its `description` is loaded into every session, and its
 body when it triggers. Measured on 2026-10-17 as bytes / 4 (an estimate, not a
@@ -23,7 +23,7 @@ tokenizer):
 
 | File | Description, always loaded | Body, loaded on use |
 |---|---|---|
-| `cost-reducer/SKILL.md` | ~86 tokens | ~750 tokens, plus the one reference file it opens (~400 each) |
+| `downshift-tune/SKILL.md` | ~86 tokens | ~750 tokens, plus the one reference file it opens (~400 each) |
 | `downshift-audit/SKILL.md` | ~70 tokens | ~890 tokens |
 | `downshift-setup/SKILL.md` | ~66 tokens | ~730 tokens |
 | `harness-engineer/SKILL.md` (2026-10-21) | ~50 tokens | ~170 tokens |
@@ -31,10 +31,10 @@ tokenizer):
 | `commands/status.md` | ~16 tokens | ~90 tokens |
 
 About 340 tokens per session for the whole set when installed through the
-plugin. A skill does not save anything by recommending savings; it pays off
+plugin. A skill reduces nothing just by recommending a reduction; it pays off
 only when its advice is applied. Descriptions therefore trigger only when the
-user names Downshift or asks about its hooks and cost, not on any mention of
-`CLAUDE.md` or billing.
+user names Downshift or asks about its hooks and token use, not on any mention
+of `CLAUDE.md`.
 
 ## Delegation is not free either
 

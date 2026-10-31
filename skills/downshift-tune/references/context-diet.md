@@ -1,6 +1,6 @@
 # Context diet
 
-What every session pays before the first message.
+What every session loads, and spends tokens on, before the first message.
 
 ## Measure
 

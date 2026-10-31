@@ -362,7 +362,7 @@ Run `downshift setup` to auto-detect and configure all installed harnesses.
 ### Inside your harness
 
 - **Skills:** four ship with Downshift: `downshift-setup`, `downshift-audit`, `harness-engineer` and
-  `cost-reducer`. The Claude Code plugin exposes them as `/downshift:<name>`, and `/downshift:status`
+  `downshift-tune`. The Claude Code plugin exposes them as `/downshift:<name>`, and `/downshift:status`
   shows the session's subagent tree and routing reasons. See [skills](skills/README.md).
 - **MCP server:** `downshift setup` registers `downshift mcp serve` in Claude Code and Codex (skip it
   with `--no-mcp`). The orchestrator can then ask which models the harness offers now and what would
