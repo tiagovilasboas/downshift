@@ -71,6 +71,11 @@ func TestWriteJobRunsInItsOwnWorktreeAndKeepsTheCheckoutClean(t *testing.T) {
 	if !strings.Contains(args, "bypassPermissions") {
 		t.Errorf("write route must use the bypass permission mode: %s", args)
 	}
+	// A bypass worker must not inherit the user's MCP servers: their tools would
+	// run without approval.
+	if !strings.Contains(args, "--strict-mcp-config") {
+		t.Errorf("write route must not load the user's MCP servers: %s", args)
+	}
 	status := exec.Command("git", "-C", repo, "status", "--porcelain")
 	status.Env = GitEnv(os.Environ())
 	if out, _ := status.Output(); strings.TrimSpace(string(out)) != "" {

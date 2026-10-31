@@ -50,7 +50,7 @@ func TestClaudeRunsInPlanModeWithThePromptOnStdin(t *testing.T) {
 		t.Fatalf("wait: %v", err)
 	}
 	args := readFile(t, filepath.Join(dir, "claude.args"))
-	for _, want := range []string{"-p", "json", "plan", "--no-session-persistence", "claude-haiku-5-5"} {
+	for _, want := range []string{"-p", "json", "plan", "--no-session-persistence", "--strict-mcp-config", "claude-haiku-5-5"} {
 		if !strings.Contains(args, want) {
 			t.Errorf("args lack %q: %s", want, args)
 		}
