@@ -56,7 +56,7 @@ func TestAbsentFilesGiveDefaults(t *testing.T) {
 		if len(p.Profiles) != 0 || len(p.Rules) != 0 {
 			t.Errorf("absent files declared %d profiles, %d rules; want none", len(p.Profiles), len(p.Rules))
 		}
-		if _, ok := p.Match(MatchContext{Kind: contract.KindCode, Effort: contract.EffortDeep}); ok {
+		if _, ok := p.Match(contract.KindCode, contract.EffortDeep); ok {
 			t.Error("empty policy matched a rule; no rule must mean the requested model is kept")
 		}
 	}

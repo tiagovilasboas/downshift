@@ -56,14 +56,9 @@ type Input struct {
 	Risk     []string
 	Catalog  Catalog
 	// Floor is the project tier floor, loaded by the caller; nil applies none.
-	// Class is the classifier class (TRIVIAL..COMPLEX) the floor keys on and
-	// that a rule's optional classes gate matches against. Confident is the
-	// classifier's confidence in that class; a class rule admits a call only
-	// when it is true (doubt keeps). Risk already carries the risk categories,
-	// and a class rule admits a call only when Risk is empty.
-	Floor     *policy.FloorPolicy
-	Class     string
-	Confident bool
+	// Class is the classifier class (TRIVIAL..COMPLEX) the floor keys on.
+	Floor *policy.FloorPolicy
+	Class string
 }
 
 // Decide returns the decision and its routing note. The note's Channel is left

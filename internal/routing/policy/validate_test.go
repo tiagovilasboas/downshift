@@ -34,6 +34,7 @@ func TestConfigErrorsAreRefusedWithField(t *testing.T) {
 		{"ttl overflows", wrap(`{"quota_ttl_seconds":10000000000}`), "routing.quota_ttl_seconds", "too large"},
 		{"both critical unknown", wrap(`{"both_critical":"wait"}`), "routing.both_critical", "ask, run-cheapest or block"},
 		{"unknown routing key", wrap(`{"critical":80}`), "routing", "unknown field"},
+		{"rule classes gate removed", wrap(`{"rules":[{"id":"x","classes":["TRIVIAL","SIMPLE"],"tier":"small"}]}`), "routing", `unknown field "classes"`},
 		{"routing not an object", `{"version":1,"routing":3}`, "routing", "cannot unmarshal"},
 		{"routing null", `{"version":1,"routing":null}`, "routing", "must be an object"},
 		{"routing without version", `{"routing":{}}`, "version", "must be 1"},
@@ -49,8 +50,6 @@ func TestConfigErrorsAreRefusedWithField(t *testing.T) {
 		{"rule id duplicated", wrap(`{"rules":[{"id":"x","tier":"mid"},{"id":"x","tier":"small"}]}`), "routing.rules[1].id", "duplicate rule"},
 		{"rule kind unknown", wrap(`{"rules":[{"id":"x","kinds":["mechanical"],"tier":"mid"}]}`), "routing.rules[0].kinds[0]", "unknown kind"},
 		{"rule effort unknown", wrap(`{"rules":[{"id":"x","efforts":["max"],"tier":"mid"}]}`), "routing.rules[0].efforts[0]", "unknown effort class"},
-		{"rule class unknown", wrap(`{"rules":[{"id":"x","classes":["HUGE"],"tier":"small"}]}`), "routing.rules[0].classes[0]", "unknown class"},
-		{"rule class wrong case", wrap(`{"rules":[{"id":"x","classes":["trivial"],"tier":"small"}]}`), "routing.rules[0].classes[0]", "unknown class"},
 		{"rule tier unknown", wrap(`{"rules":[{"id":"x","tier":"huge"}]}`), "routing.rules[0].tier", "small, mid or frontier"},
 		{"rule names profile and tier", wrap(`{"profiles":[` + oneProfile + `],"rules":[{"id":"x","profile":"reviewer","tier":"small"}]}`), "routing.rules[0]", "not both"},
 		{"rule names neither", wrap(`{"rules":[{"id":"x"}]}`), "routing.rules[0]", "set one of profile or tier"},
@@ -98,25 +97,6 @@ func TestUnknownProfileCarriesReason(t *testing.T) {
 	var ce *ConfigError
 	if !errors.As(err, &ce) || ce.Reason != contract.ReasonUnknownProfile {
 		t.Fatalf("reason = %+v, want unknown_profile", err)
-	}
-}
-
-// A rule may declare a classes gate; every declared class is kept in order and
-// a rule without one leaves Classes empty (the pre-O8 behaviour).
-func TestClassesGateIsLoaded(t *testing.T) {
-	path := projectFile(t, wrap(`{"rules":[`+
-		`{"id":"small-when-easy","classes":["TRIVIAL","SIMPLE"],"tier":"small"},`+
-		`{"id":"open","tier":"mid"}]}`))
-	p, err := Load(Locations{Project: path})
-	if err != nil {
-		t.Fatalf("classes gate refused: %v", err)
-	}
-	got := p.Rules[0].Classes
-	if len(got) != 2 || got[0] != contract.ComplexityTrivial || got[1] != contract.ComplexitySimple {
-		t.Fatalf("classes = %v, want [TRIVIAL SIMPLE]", got)
-	}
-	if len(p.Rules[1].Classes) != 0 {
-		t.Fatalf("a rule without classes got %v, want empty", p.Rules[1].Classes)
 	}
 }
 
