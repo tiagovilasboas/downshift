@@ -288,7 +288,9 @@ downshift mcp serve
 
 It answers both protocol eras (the `initialize` handshake of 2025-11-25 and earlier, and the per-request metadata with
 `server/discover` of 2026-07-28). Tools, named by their verb under the server name `downshift`: `providers {harness}`
-(the models this harness offers now), `playbook {name?}`, `status {}` (quota advice per harness) and
+(the models this harness offers now), `playbook {name?}`, `status {}` (quota advice per harness, plus the workers this
+session delegated: id, state, agent and harness, read or write, elapsed, tokens once known, and a short summary; the
+active ones and the most recent finished ones, with a count of any left out) and
 `apply {harness, model?, effort?, tier?, agent_type?, dir?}` (what would be applied, as `downshift route` computes it).
 Every successful result is a JSON object with `data` and a `strain` block. The server never picks a model and accepts no
 task text; `dir` must be inside the directory the server was started in; string arguments are capped at 256 bytes (`dir`
