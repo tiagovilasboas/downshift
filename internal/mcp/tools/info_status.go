@@ -45,14 +45,15 @@ type workersBlock struct {
 // names the harness from the agent and never a model (owner decision: no model
 // cravado unless the job records what it ran).
 type workerLine struct {
-	ID       string          `json:"id"`
-	State    string          `json:"state"`
-	Agent    string          `json:"agent"`
-	Harness  string          `json:"harness"`
-	Mode     string          `json:"mode"`
-	ElapsedS int             `json:"elapsed_seconds"`
-	Tokens   *workers.Tokens `json:"tokens,omitempty"`
-	Summary  string          `json:"summary,omitempty"`
+	ID        string          `json:"id"`
+	State     string          `json:"state"`
+	Agent     string          `json:"agent"`
+	Harness   string          `json:"harness"`
+	Mode      string          `json:"mode"`
+	ElapsedS  int             `json:"elapsed_seconds"`
+	Tokens    *workers.Tokens `json:"tokens,omitempty"`
+	Summary   string          `json:"summary,omitempty"`
+	SessionID string          `json:"session_id,omitempty"`
 }
 
 func (d Deps) statusTool() Tool {
@@ -118,13 +119,14 @@ func lineOf(v workers.WorkerView) workerLine {
 		mode = "write"
 	}
 	return workerLine{
-		ID:       v.ID,
-		State:    string(v.State),
-		Agent:    v.Agent,
-		Harness:  v.Harness,
-		Mode:     mode,
-		ElapsedS: int(v.Elapsed / time.Second),
-		Tokens:   v.Tokens,
-		Summary:  v.Summary,
+		ID:        v.ID,
+		State:     string(v.State),
+		Agent:     v.Agent,
+		Harness:   v.Harness,
+		Mode:      mode,
+		ElapsedS:  int(v.Elapsed / time.Second),
+		Tokens:    v.Tokens,
+		Summary:   v.Summary,
+		SessionID: v.SessionID,
 	}
 }

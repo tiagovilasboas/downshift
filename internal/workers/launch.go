@@ -26,12 +26,23 @@ var (
 )
 
 // argv is what a launch runs: the program, its arguments, how to read the
-// report and the token usage from its output, and what to remove afterwards.
+// report, the token usage and the session id from its output, how to build the
+// args that resume that session, and what to remove afterwards. session and
+// resume are per-CLI, so the queue only ever holds the opaque id and never
+// learns which agent produced it.
 type argv struct {
-	name    string
-	args    []string
-	report  func(stdout []byte) (string, error)
-	tokens  func(stdout []byte) *Tokens
+	name   string
+	args   []string
+	report func(stdout []byte) (string, error)
+	tokens func(stdout []byte) *Tokens
+	// session reads the session id the CLI wrote, or "" when the output carried
+	// none (an older CLI, an error, or a malformed line). nil means the recipe
+	// does not persist a session.
+	session func(stdout []byte) string
+	// resume builds the args that continue a stored session with a new turn.
+	// T1 captures the id and keeps this builder next to the launcher; the tool
+	// that calls resume is a later task. nil means the recipe cannot resume.
+	resume  func(sessionID string) []string
 	cleanup func()
 }
 
@@ -103,9 +114,11 @@ type cliProcess struct {
 	errTail *Tail
 	argv    argv
 	report  string
-	// tokens is set by Wait and read by the queue under its own lock, from
-	// another goroutine, so it is atomic.
-	tokens atomic.Pointer[Tokens]
+	// tokens and session are set by Wait and read by the queue under its own
+	// lock, from another goroutine, so they are atomic. session holds the id the
+	// CLI wrote, empty when it wrote none.
+	tokens  atomic.Pointer[Tokens]
+	session atomic.Pointer[string]
 }
 
 // Wait blocks until the worker exits, then reads its report. Its cleanup runs
@@ -120,6 +133,11 @@ func (p *cliProcess) Wait() error {
 	p.report = report
 	if p.argv.tokens != nil {
 		p.tokens.Store(p.argv.tokens(stdout))
+	}
+	if p.argv.session != nil {
+		if id := p.argv.session(stdout); id != "" {
+			p.session.Store(&id)
+		}
 	}
 	if err != nil {
 		return err
@@ -150,3 +168,26 @@ func (p *cliProcess) Stderr() string { return p.errTail.String() }
 // Tokens is what the worker reported spending, nil before it exits or when its
 // output carried no usage.
 func (p *cliProcess) Tokens() *Tokens { return p.tokens.Load() }
+
+// SessionID is the id the worker's CLI wrote, so a later turn can resume the
+// same conversation. It is empty before the worker exits, and stays empty when
+// the CLI wrote no id (an older CLI, an error, or a recipe that does not
+// persist a session).
+func (p *cliProcess) SessionID() string {
+	if id := p.session.Load(); id != nil {
+		return *id
+	}
+	return ""
+}
+
+// ResumeArgs builds the args that continue this worker's stored session with a
+// new turn, or nil when the recipe cannot resume. The permission mode, model
+// and effort a resume needs are added by the caller from the original spec, so
+// a resumed turn never climbs a tier or widens a mode. T1 keeps this builder
+// next to the launcher; the tool that calls resume is a later task.
+func (p *cliProcess) ResumeArgs(sessionID string) []string {
+	if p.argv.resume == nil {
+		return nil
+	}
+	return p.argv.resume(sessionID)
+}

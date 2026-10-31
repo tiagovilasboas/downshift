@@ -50,10 +50,16 @@ func TestClaudeRunsInPlanModeWithThePromptOnStdin(t *testing.T) {
 		t.Fatalf("wait: %v", err)
 	}
 	args := readFile(t, filepath.Join(dir, "claude.args"))
-	for _, want := range []string{"-p", "json", "plan", "--no-session-persistence", "--strict-mcp-config", "claude-haiku-5-5"} {
+	for _, want := range []string{"-p", "json", "plan", "--strict-mcp-config", "claude-haiku-5-5"} {
 		if !strings.Contains(args, want) {
 			t.Errorf("args lack %q: %s", want, args)
 		}
+	}
+	// The session is now persisted so a later turn can resume it, so the recipe
+	// no longer disables persistence. Isolation is unchanged: --strict-mcp-config
+	// stays and no write-capable mode leaks in.
+	if strings.Contains(args, "--no-session-persistence") {
+		t.Errorf("the read-only launch must persist the session for resume: %s", args)
 	}
 	if strings.Contains(args, "bypassPermissions") || strings.Contains(args, "acceptEdits") {
 		t.Errorf("a write-capable mode reached the read-only launch: %s", args)
@@ -88,10 +94,15 @@ func TestCodexRunsInTheReadOnlySandboxAndReadsItsLastMessage(t *testing.T) {
 		t.Fatalf("wait: %v", err)
 	}
 	args := readFile(t, filepath.Join(dir, "codex.args"))
-	for _, want := range []string{"exec", "read-only", "--ephemeral", "model_reasoning_effort=high"} {
+	for _, want := range []string{"exec", "read-only", "--json", "model_reasoning_effort=high"} {
 		if !strings.Contains(args, want) {
 			t.Errorf("args lack %q: %s", want, args)
 		}
+	}
+	// The session is now persisted so a later turn can resume it, so the recipe
+	// no longer passes --ephemeral. The read-only sandbox is unchanged.
+	if strings.Contains(args, "--ephemeral") {
+		t.Errorf("the read-only launch must persist the session for resume: %s", args)
 	}
 	if strings.Contains(args, "workspace-write") || strings.Contains(args, "danger-full-access") {
 		t.Errorf("a writable sandbox reached the launch: %s", args)
