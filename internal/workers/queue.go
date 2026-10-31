@@ -67,7 +67,7 @@ func (q *Queue) Delegate(specs []Spec) ([]string, error) {
 	ids := make([]string, 0, len(specs))
 	for _, s := range specs {
 		q.nextID++
-		id := fmt.Sprintf("w%03d", q.nextID)
+		id := jobID(q.nextID)
 		s.ID = id
 		q.jobs[id] = &job{id: id, spec: s, state: Queued}
 		q.waiting = append(q.waiting, id)
@@ -123,13 +123,16 @@ func (q *Queue) Statuses() []Status {
 	defer q.mu.Unlock()
 	out := make([]Status, 0, len(q.jobs))
 	for i := 1; i <= q.nextID; i++ {
-		id := fmt.Sprintf("w%03d", i)
+		id := jobID(i)
 		if j, ok := q.jobs[id]; ok {
 			out = append(out, Status{ID: j.id, Agent: j.spec.Agent, State: j.state})
 		}
 	}
 	return out
 }
+
+// jobID is the stable id of the nth job (1-based): w001, w002, ...
+func jobID(n int) string { return fmt.Sprintf("w%03d", n) }
 
 // active counts jobs that have not ended. The caller holds the lock.
 func (q *Queue) active() int {
@@ -167,6 +170,7 @@ func (q *Queue) start(j *job) {
 	if wr, ok := proc.(worktreeReporter); ok {
 		j.worktree, j.base = wr.worktreeInfo()
 	}
+	j.started = q.now()
 	q.running++
 	j.timer = time.AfterFunc(j.spec.Budget, func() { q.expire(j.id) })
 	go q.wait(j.id, proc)
@@ -215,10 +219,15 @@ func (q *Queue) finishLocked(j *job, s State, text string) {
 		j.timer.Stop()
 	}
 	j.state = s
+	j.ended = q.now()
 	var tokens *Tokens
 	if j.proc != nil {
 		tokens = j.proc.Tokens()
 	}
+	// Keep a trimmed copy for the status view, which outlives the delivery: the
+	// full text goes out through collect and is dropped on acknowledgement.
+	j.tokens = tokens
+	j.summary = trimSummary(text)
 	q.spend.record(j.spec.Agent, s, tokens)
 	q.deliv.add(j.id, string(s), text, tokens)
 	q.pump()
