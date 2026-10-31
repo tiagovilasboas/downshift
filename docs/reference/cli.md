@@ -83,6 +83,7 @@ Generate a savings report.
 
 ```bash
 downshift report [--days=N] [--json]
+downshift report clear [--dry-run] [--yes]
 ```
 
 **Flags:**
@@ -90,6 +91,12 @@ downshift report [--days=N] [--json]
 - `--json` — Output JSON instead of text
 
 Any other flag exits 2 with the usage line.
+
+`downshift report clear` starts the measurement from zero. It moves every measurement log (routing and child-end
+events, exec and compaction records, context sensor, loop, DCI and probe logs, compressor learning) to
+`backups/report-clear-<time>` in the state directory; nothing is deleted, so moving the files back undoes it.
+Config, policy, session models, model discovery and quota are kept. It asks first (default No) and refuses
+without a terminal unless `--yes` is passed; `--dry-run` lists the files without moving them.
 
 **Examples:**
 ```bash
