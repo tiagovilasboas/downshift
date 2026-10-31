@@ -78,8 +78,10 @@ func loadNativeSession(caps HarnessCapabilities, now time.Time) (SessionList, bo
 
 // nativeSessionTarget uses catalog metadata through Resolver, never provider
 // list position, name spelling, or pool membership as a capability estimate.
-// Unknown metadata cannot become a routing target. Equal-tier price ties retain
-// the provider's order without treating that order as a quality signal.
+// Unknown metadata cannot become a routing target. A downshift targets a
+// strictly lower tier than the current model; same tier is never a downshift.
+// Within the chosen tier the provider's order is kept (first match wins)
+// without treating that order as a quality signal.
 func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string, Model, bool, bool) {
 	if res == nil || (d.Verdict == VerdictOK && !session.Blocks(d.Baseline.CurrentModel.ID) && !session.Blocks(d.Baseline.RequestedID)) {
 		return "", Model{}, false, false
@@ -117,9 +119,10 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 		if !ok || m.ID == "" || m.Tier < d.Tier || m.Tier > TierFrontier {
 			continue
 		}
-		// Exhausting a cheaper pool must not turn a downshift into an upgrade.
-		if d.Verdict == VerdictDownshift && (m.Tier > current.Tier ||
-			(m.Tier == current.Tier && (m.InputM <= 0 || m.OutputM <= 0 || current.InputM <= 0 || current.OutputM <= 0 || m.OutputM > current.OutputM))) {
+		// A downshift moves to a strictly lower tier by complexity. Same or
+		// higher tier is not a downshift, so exhausting a smaller pool cannot
+		// turn a downshift into a same-tier swap or an upgrade.
+		if d.Verdict == VerdictDownshift && m.Tier >= current.Tier {
 			continue
 		}
 		if !allowed {
@@ -127,10 +130,9 @@ func nativeSessionTarget(d Decision, res Resolver, session SessionList) (string,
 			continue
 		}
 		m.ID, m.Harness, m.Native = id, d.Harness, ""
+		// Pick by tier only. Within one tier the first id in session order
+		// wins; the provider's order is not a quality or cost signal.
 		better := !found || (!strongest && m.Tier < best.Tier) || (strongest && m.Tier > best.Tier)
-		if found && m.Tier == best.Tier && m.InputM > 0 && m.OutputM > 0 && best.InputM > 0 && best.OutputM > 0 && m.OutputM < best.OutputM {
-			better = true
-		}
 		if better {
 			best, found = m, true
 		}

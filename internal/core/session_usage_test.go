@@ -165,7 +165,12 @@ func TestUsageQuotaSourcePrecedenceDoesNotReopenCredit(t *testing.T) {
 
 func quotaNumber(v float64) *float64 { return &v }
 
-func TestNativeDownshiftDoesNotBecomeCapabilityOrPriceUpshift(t *testing.T) {
+// TestNativeDownshiftRequiresLowerTier replaces the former price-based variant
+// (owner decision 2026-10-31: routing decides by complexity tier only). A
+// downshift must move to a strictly lower tier; a same-tier model is never a
+// downshift regardless of its list price, and a higher tier is never one
+// either. Only a funded lower-tier model is a valid target.
+func TestNativeDownshiftRequiresLowerTier(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		targetTier Tier
@@ -173,8 +178,11 @@ func TestNativeDownshiftDoesNotBecomeCapabilityOrPriceUpshift(t *testing.T) {
 		wantWrite  bool
 	}{
 		{"only frontier funded", TierFrontier, 3, false},
+		// Same tier is no longer a downshift, cheap or dear: both must hold.
 		{"same tier more expensive", TierMid, 4, false},
-		{"same tier cheaper", TierMid, 1, true},
+		{"same tier cheaper", TierMid, 1, false},
+		// A strictly lower tier is the only valid downshift target.
+		{"lower tier funded", TierSmall, 9, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			now := time.Now().UTC()
@@ -195,7 +203,7 @@ func TestNativeDownshiftDoesNotBecomeCapabilityOrPriceUpshift(t *testing.T) {
 				t.Fatalf("downshift plan=%+v, want rewrite=%v", plan, tc.wantWrite)
 			}
 			if tc.wantWrite && plan.Model.ID != candidate.ID {
-				t.Fatalf("funded cheaper target not selected: %+v", plan)
+				t.Fatalf("funded lower-tier target not selected: %+v", plan)
 			}
 		})
 	}

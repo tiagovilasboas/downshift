@@ -182,3 +182,69 @@ func TestNativeSelectionUsesRealTierAndQuotaNotProviderOrder(t *testing.T) {
 		t.Fatal("native selection enabled explicit-only upshift by default")
 	}
 }
+
+// TestDownshiftRequiresStrictlyLowerTier covers the owner decision (2026-10-31)
+// that routing decides by complexity tier only. A downshift must move to a
+// strictly lower tier: a same-tier model is never a downshift even if its
+// list price is lower, and the same-tier tiebreak no longer reads price.
+func TestDownshiftRequiresStrictlyLowerTier(t *testing.T) {
+	now := time.Now().UTC()
+	p := nativeFixture(now)
+	// Clear the quota pressure so every listed id is spendable; this test is
+	// about tier, not about a closed gate.
+	p["plan_usage"] = map[string]any{"auto_percent_used": 10, "api_percent_used": 10}
+	t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", writeNativeFixture(t, p))
+	s, _ := LoadNativeSession("cursor", now)
+
+	// Two mid-tier models. "cheap" has a lower list price than "middle" but it
+	// lists second; price must not pull it ahead of first-found order.
+	r := nativeResolver{models: map[string]Model{
+		"strong":  {ID: "strong", Tier: TierFrontier, OutputM: 9},
+		"middle":  {ID: "middle", Tier: TierMid, OutputM: 5},
+		"cheap":   {ID: "cheap", Tier: TierMid, OutputM: 1},
+		"unknown": {ID: "unknown", Tier: TierMid, OutputM: 2},
+	}}
+
+	// UNHAPPY 1: a same-tier, strictly cheaper model is NOT a downshift target.
+	// Current is a mid model; the session also lists a cheaper mid model. The
+	// old price rule would have switched to it; the tier rule must hold.
+	s.IDs = []string{"cheap"}
+	d := Decision{Harness: "cursor", Tier: TierMid, Verdict: VerdictDownshift}
+	d.Baseline.CurrentModel = Model{ID: "middle", Tier: TierMid, OutputM: 5}
+	d.Baseline.RequestedID = "middle"
+	if plan := d.PlanForSession(CursorCaps, r, s); plan.RewriteModel {
+		t.Fatalf("same-tier cheaper model accepted as a downshift: %+v", plan)
+	}
+
+	// UNHAPPY 2: a higher-tier model is never a downshift target either.
+	s.IDs = []string{"strong"}
+	d.Baseline.CurrentModel = Model{ID: "middle", Tier: TierMid, OutputM: 5}
+	d.Baseline.RequestedID = "middle"
+	if plan := d.PlanForSession(CursorCaps, r, s); plan.RewriteModel {
+		t.Fatalf("higher-tier model accepted as a downshift: %+v", plan)
+	}
+
+	// UNHAPPY 3: a closed quota gate still holds even when a lower tier exists.
+	hp := nativeFixture(now)
+	hp["plan_usage"] = map[string]any{"auto_percent_used": 100, "api_percent_used": 100}
+	t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", writeNativeFixture(t, hp))
+	closed, _ := LoadNativeSession("cursor", now)
+	closed.IDs = []string{"cheap"}
+	d.Baseline.CurrentModel = Model{ID: "strong", Tier: TierFrontier, OutputM: 9}
+	d.Baseline.RequestedID = "strong"
+	d.Tier = TierMid
+	if plan := d.PlanForSession(CursorCaps, r, closed); plan.RewriteModel {
+		t.Fatalf("closed quota did not hold the rewrite: %+v", plan)
+	}
+
+	// HAPPY: a strictly lower tier is still accepted, and within a tie the
+	// first id in session order wins regardless of price. "middle" lists
+	// before "cheap", so "middle" must be chosen even though "cheap" is cheaper.
+	s.IDs = []string{"middle", "cheap"}
+	d = Decision{Harness: "cursor", Tier: TierMid, Verdict: VerdictDownshift}
+	d.Baseline.CurrentModel = Model{ID: "strong", Tier: TierFrontier, OutputM: 9}
+	d.Baseline.RequestedID = "strong"
+	if plan := d.PlanForSession(CursorCaps, r, s); !plan.RewriteModel || plan.Model.ID != "middle" {
+		t.Fatalf("lower tier not accepted, or price overrode session order: %+v", plan)
+	}
+}
