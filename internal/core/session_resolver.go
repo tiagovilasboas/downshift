@@ -43,8 +43,7 @@ func ResolveSessionModels(harness string, session SessionList, fallback Resolver
 			m, known = fallback.LookupByID(harness, descriptor.ID)
 			if known && m.ID != descriptor.ID {
 				// Family matching can supply a capability fallback, but the
-				// session did not report that older generation's price or alias.
-				m.InputM, m.OutputM, m.CacheReadM, m.CacheWriteM = 0, 0, 0, 0
+				// session did not report that older generation's alias.
 				m.Native = descriptor.ID
 			}
 		}
@@ -55,14 +54,6 @@ func ResolveSessionModels(harness string, session SessionList, fallback Resolver
 			m.ID, m.Harness = descriptor.ID, harness
 			if m.Native == "" {
 				m.Native = descriptor.ID
-			}
-			// Price no longer gates acceptance (owner decision 2026-10-31:
-			// routing decides by tier only); a bad price is stored as unknown.
-			if descriptor.InputM != nil {
-				m.InputM = sanitizePrice(*descriptor.InputM)
-			}
-			if descriptor.OutputM != nil {
-				m.OutputM = sanitizePrice(*descriptor.OutputM)
 			}
 			r.models[m.ID] = m
 		}
@@ -125,7 +116,6 @@ func (r *sessionResolver) LookupByID(harness, id string) (Model, bool) {
 			exact, isExactResolver := r.fallback.(ExactIDResolver)
 			if !isExactResolver || !exact.IsExactID(harness, id) {
 				model.ID, model.Native = id, id
-				model.InputM, model.OutputM, model.CacheReadM, model.CacheWriteM = 0, 0, 0, 0
 			}
 		}
 		return model, known

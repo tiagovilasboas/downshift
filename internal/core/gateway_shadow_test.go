@@ -101,19 +101,19 @@ func TestGatewayShadow_PicksSmallestRowOfTheTier(t *testing.T) {
 		// rule preferred priced rows and the lower price; now id alone decides,
 		// so the dearer "a/dear" wins over the cheaper "b/cheap".
 		{"price is ignored, lowest id wins", core.TierMid, []core.Model{
-			{ID: "b/cheap", Tier: core.TierMid, InputM: 0.1, OutputM: 0.2},
-			{ID: "a/dear", Tier: core.TierMid, InputM: 1, OutputM: 2},
+			{ID: "b/cheap", Tier: core.TierMid},
+			{ID: "a/dear", Tier: core.TierMid},
 		}, "a/dear"},
 		// UNHAPPY 2: an unpriced row must not rank after a priced one. With
 		// price gone, the unpriced "a/unpriced" (lower id) wins over "z/priced".
 		{"unpriced row is not penalized", core.TierMid, []core.Model{
 			{ID: "a/unpriced", Tier: core.TierMid},
-			{ID: "z/priced", Tier: core.TierMid, InputM: 0.1, OutputM: 0.2},
+			{ID: "z/priced", Tier: core.TierMid},
 		}, "a/unpriced"},
 		// UNHAPPY 3: a cheaper row of another tier must stay out of this tier's
 		// pick entirely.
 		{"other tiers are ignored", core.TierFrontier, []core.Model{
-			{ID: "a/small", Tier: core.TierSmall, InputM: 0.01},
+			{ID: "a/small", Tier: core.TierSmall},
 		}, ""},
 		{"ties break on id", core.TierSmall, []core.Model{
 			{ID: "y/two", Tier: core.TierSmall},

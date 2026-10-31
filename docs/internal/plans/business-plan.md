@@ -89,7 +89,7 @@ That product is broader: a desktop orchestrator with worktrees, approvals and lo
 ## 6. Costs and constraints
 
 - **One maintainer.** [GOVERNANCE.md](../../../GOVERNANCE.md) sets a solo-maintainer rule: no self-approval. Bus factor is one.
-- **CI.** `.github/workflows/ci.yml` has `test` (Linux, the required gate), `test-os` (windows-latest and macos-latest; runs when OS-sensitive paths change or on tags), `race`, `python`, `build-cross-platform`, `release` and `verify-release`. `e2e` is informational, not required. `sync-prices.yml` runs weekly and opens a PR for the price catalog; Cursor rows are entered by hand ([prices](../../reference/prices.md)).
+- **CI.** `.github/workflows/ci.yml` has `test` (Linux, the required gate), `test-os` (windows-latest and macos-latest; runs when OS-sensitive paths change or on tags), `race`, `python`, `build-cross-platform`, `release` and `verify-release`. `e2e` is informational, not required.
 - **Gate per routing card.** `make check`, `./examples/run-all.sh`, golden decision tables, copyright headers, no file over 300 lines, tests that isolate `HOME` and `DOWNSHIFT_STATE_DIR` (routing-v2 README).
 - **Clean-room cost.** P1 limits how routing v2 is written. The analysis sits in a scratch location, which is not a durable home (D6).
 - **Harness drift cost.** Each harness has its own hook payload and version. One upstream change (#570) removed every Claude Code rewrite for subscription users.

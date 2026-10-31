@@ -15,9 +15,7 @@
       "harness": "claude-code",
       "tier": "small",
       "effort_scale": "thinking_budget",
-      "effort_map": { "low": "0", "medium": "5000", "high": "10000" },
-      "input_cost_per_1m": 0.00,
-      "output_cost_per_1m": 0.00
+      "effort_map": { "low": "0", "medium": "5000", "high": "10000" }
     },
     {
       "id": "YOUR_SONNET_ID",
@@ -27,9 +25,7 @@
       "harness": "claude-code",
       "tier": "mid",
       "effort_scale": "thinking_budget",
-      "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
-      "input_cost_per_1m": 0.00,
-      "output_cost_per_1m": 0.00
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" }
     },
     {
       "id": "YOUR_OPUS_ID",
@@ -39,9 +35,7 @@
       "harness": "claude-code",
       "tier": "frontier",
       "effort_scale": "thinking_budget",
-      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
-      "input_cost_per_1m": 0.00,
-      "output_cost_per_1m": 0.00
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
     },
 
     { "_section": "codex — OpenAI models (multi_agent_v2)" },
@@ -54,9 +48,7 @@
       "harness": "codex",
       "tier": "small",
       "effort_scale": "reasoning_effort",
-      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 0.00,
-      "output_cost_per_1m": 0.00
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
     },
     {
       "id": "YOUR_CODEX_FRONTIER_ID",
@@ -66,9 +58,7 @@
       "harness": "codex",
       "tier": "frontier",
       "effort_scale": "reasoning_effort",
-      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 0.00,
-      "output_cost_per_1m": 0.00
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
     },
     {
       "id": "YOUR_CODEX_SMALL_ID",
@@ -78,9 +68,7 @@
       "harness": "codex",
       "tier": "small",
       "effort_scale": "reasoning_effort",
-      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 0.00,
-      "output_cost_per_1m": 0.00
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
     },
     {
       "id": "YOUR_CODEX_FRONTIER_ID",
@@ -90,9 +78,7 @@
       "harness": "codex",
       "tier": "frontier",
       "effort_scale": "reasoning_effort",
-      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 0.00,
-      "output_cost_per_1m": 0.00
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
     },
 
     { "_section": "codex — explicit_only models (never chosen automatically)" },
@@ -106,9 +92,7 @@
       "tier": "frontier",
       "routing": "explicit_only",
       "effort_scale": "reasoning_effort",
-      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 0.00,
-      "output_cost_per_1m": 0.00
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
     },
 
     { "_section": "cursor — Anthropic native models" },
@@ -121,9 +105,7 @@
       "harness": "cursor",
       "tier": "small",
       "effort_scale": "thinking_budget",
-      "effort_map": { "low": "0", "medium": "5000", "high": "10000" },
-      "input_cost_per_1m": 0.00,
-      "output_cost_per_1m": 0.00
+      "effort_map": { "low": "0", "medium": "5000", "high": "10000" }
     },
 
     { "_section": "cursor — xAI Grok (installed via model picker)" },
@@ -136,9 +118,7 @@
       "harness": "cursor",
       "tier": "frontier",
       "effort_scale": "reasoning_effort",
-      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
-      "input_cost_per_1m": 2.00,
-      "output_cost_per_1m": 6.00
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
     }
   ]
 }

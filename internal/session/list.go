@@ -13,14 +13,14 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/quotamodel"
 )
 
-// SessionModel describes one exact selectable ID. Absent tier and prices mean
-// unknown; omission must never imply small capability or free inference.
+// SessionModel describes one exact selectable ID. An absent tier means
+// unknown; omission must never imply small capability. A per-model list price
+// the payload may still carry (input_per_million / output_per_million) is
+// ignored: the product uses no price.
 type SessionModel struct {
 	ID      string   `json:"id"`
 	Tier    string   `json:"tier,omitempty"`
 	Efforts []string `json:"efforts,omitempty"`
-	InputM  *float64 `json:"input_per_million,omitempty"`
-	OutputM *float64 `json:"output_per_million,omitempty"`
 	Harness string   `json:"harness,omitempty"`
 }
 

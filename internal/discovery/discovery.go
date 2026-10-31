@@ -29,8 +29,6 @@ type Model struct {
 	// Optional provider capability evidence, never inferred from picker order.
 	Tier    string   `json:"tier,omitempty"`
 	Efforts []string `json:"efforts,omitempty"`
-	InputM  *float64 `json:"input_per_million,omitempty"`
-	OutputM *float64 `json:"output_per_million,omitempty"`
 	// Gateway marks an id from a gateway listing ("vendor/model", not a
 	// harness id). It is ranked only through an allowlist row, never by
 	// stripping the vendor prefix.

@@ -5,7 +5,6 @@ package discovery
 
 import (
 	"context"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -44,10 +43,6 @@ func findModel(t *testing.T, ms []Model, id string) Model {
 	return Model{}
 }
 
-func near(a *float64, want float64) bool {
-	return a != nil && math.Abs(*a-want) < 1e-9
-}
-
 func TestOpenRouterParsesFixture(t *testing.T) {
 	var gotUA string
 	srv := tlsServer(t, func(w http.ResponseWriter, r *http.Request) {
@@ -77,49 +72,6 @@ func TestOpenRouterParsesFixture(t *testing.T) {
 	}
 	if src.Harness() != "opencode" || src.Name() == "" {
 		t.Errorf("harness = %q", src.Harness())
-	}
-}
-
-func TestOpenRouterConvertsPerTokenToPerMillion(t *testing.T) {
-	srv := tlsServer(t, func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write(fixture) })
-	ms, err := OpenRouterAPI{URL: srv.URL, Client: srv.Client()}.Discover(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	haiku := findModel(t, ms, "anthropic/claude-haiku-5.5")
-	if !near(haiku.InputM, 1.0) || !near(haiku.OutputM, 5.0) {
-		t.Errorf("haiku prices = %v / %v, want 1.0 / 5.0 per million", haiku.InputM, haiku.OutputM)
-	}
-	ds := findModel(t, ms, "deepseek/deepseek-v4.1-flash")
-	if !near(ds.InputM, 0.14) || !near(ds.OutputM, 0.28) {
-		t.Errorf("deepseek prices = %v / %v", ds.InputM, ds.OutputM)
-	}
-	free := findModel(t, ms, "qwen/qwen3-free-preview")
-	if free.InputM == nil || *free.InputM != 0 || free.OutputM == nil || *free.OutputM != 0 {
-		t.Errorf("a price of 0 is a real free price, got %v / %v", free.InputM, free.OutputM)
-	}
-}
-
-func TestOpenRouterMissingNegativeOrNonNumericPriceIsNil(t *testing.T) {
-	srv := tlsServer(t, func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write(fixture) })
-	ms, err := OpenRouterAPI{URL: srv.URL, Client: srv.Client()}.Discover(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
-	auto := findModel(t, ms, "openrouter/auto")
-	if auto.InputM != nil || auto.OutputM != nil {
-		t.Errorf("dynamic price -1 must be unknown, got %v / %v", auto.InputM, auto.OutputM)
-	}
-	none := findModel(t, ms, "moonshotai/kimi-test-no-pricing")
-	if none.InputM != nil || none.OutputM != nil {
-		t.Errorf("missing pricing must be unknown, got %v / %v", none.InputM, none.OutputM)
-	}
-	bad := findModel(t, ms, "meta-llama/test-non-numeric-price")
-	if bad.InputM != nil {
-		t.Errorf("non-numeric prompt price must be unknown, got %v", *bad.InputM)
-	}
-	if !near(bad.OutputM, 2.0) {
-		t.Errorf("the valid completion price must still be kept, got %v", bad.OutputM)
 	}
 }
 

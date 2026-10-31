@@ -9,11 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -104,18 +102,14 @@ func fetchOpenRouterList(ctx context.Context, rawURL string, client *http.Client
 	return parseOpenRouterList(body)
 }
 
-// parseOpenRouterList reads {"data":[{id,name,created,pricing{prompt,completion}}]}.
-// Prices are strings of USD per token; they become USD per million tokens.
+// parseOpenRouterList reads {"data":[{id,name,created}]}. The product uses no
+// price, so the per-token pricing block is not read.
 func parseOpenRouterList(data []byte) ([]Model, error) {
 	var env struct {
 		Data []struct {
 			ID      string `json:"id"`
 			Name    string `json:"name"`
 			Created int64  `json:"created"`
-			Pricing struct {
-				Prompt     string `json:"prompt"`
-				Completion string `json:"completion"`
-			} `json:"pricing"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(data, &env); err != nil {
@@ -129,8 +123,6 @@ func parseOpenRouterList(data []byte) ([]Model, error) {
 		model := Model{
 			ID:      m.ID,
 			Display: m.Name,
-			InputM:  openRouterPerMillion(m.Pricing.Prompt),
-			OutputM: openRouterPerMillion(m.Pricing.Completion),
 			Gateway: true,
 		}
 		if m.Created > 0 {
@@ -142,23 +134,4 @@ func parseOpenRouterList(data []byte) ([]Model, error) {
 		return nil, errors.New("openrouter list: no models")
 	}
 	return out, nil
-}
-
-// openRouterPerMillion converts a per-token USD price string to USD per million
-// tokens. A missing, negative (OpenRouter's "dynamic" marker), non-numeric or
-// non-finite price is unknown and returns nil.
-func openRouterPerMillion(s string) *float64 {
-	if s == "" {
-		return nil
-	}
-	v, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		return nil
-	}
-	// Scale first: a finite price near the float limit overflows to +Inf here.
-	m := v * 1e6
-	if math.IsNaN(m) || math.IsInf(m, 0) || m < 0 {
-		return nil
-	}
-	return &m
 }

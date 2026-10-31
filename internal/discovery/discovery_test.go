@@ -60,9 +60,9 @@ func contains(l []string, s string) bool {
 }
 
 var claudeCat = fakeCat{entries: []catalog.Entry{
-	{ID: "claude-haiku-5-5", Family: "claude-haiku", Harness: "claude-code", Tier: "small", OutputCostM: 0.5},
-	{ID: "claude-sonnet-5-5", Family: "claude-sonnet", Harness: "claude-code", Tier: "mid", OutputCostM: 10},
-	{ID: "claude-opus-5-5", Family: "claude-opus", Harness: "claude-code", Tier: "frontier", OutputCostM: 20},
+	{ID: "claude-haiku-5-5", Family: "claude-haiku", Harness: "claude-code", Tier: "small"},
+	{ID: "claude-sonnet-5-5", Family: "claude-sonnet", Harness: "claude-code", Tier: "mid"},
+	{ID: "claude-opus-5-5", Family: "claude-opus", Harness: "claude-code", Tier: "frontier"},
 }}
 
 func TestOrderPicksNewestPerFamilyAndRanksByTier(t *testing.T) {

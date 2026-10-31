@@ -69,9 +69,9 @@ func TestList_EmptyCatalog(t *testing.T) {
 // conformance suite is one) must not observe a reordering after List.
 func TestList_DoesNotReorderTheCallersCatalog(t *testing.T) {
 	reader := &fixedReader{entries: []catalog.Entry{
-		{Harness: "zeta", Tier: "small", ID: "z-small", InputCostM: 1, OutputCostM: 2},
-		{Harness: "alpha", Tier: "frontier", ID: "a-frontier", InputCostM: 3, OutputCostM: 6},
-		{Harness: "alpha", Tier: "small", ID: "a-small", InputCostM: 1, OutputCostM: 1},
+		{Harness: "zeta", Tier: "small", ID: "z-small"},
+		{Harness: "alpha", Tier: "frontier", ID: "a-frontier"},
+		{Harness: "alpha", Tier: "small", ID: "a-small"},
 	}}
 	before := append([]catalog.Entry(nil), reader.entries...)
 	models.List(reader, &bytes.Buffer{})
