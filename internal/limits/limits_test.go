@@ -82,11 +82,12 @@ func TestUnsupportedFeatures(t *testing.T) {
 		t.Error("KiroCrew missing token_counts limitation")
 	}
 
-	// Claude Code should have full support (no unsupported)
+	// Claude Code: every feature is full except effort, which the Agent tool
+	// cannot take per call (evidence 2026-10-31).
 	cc := ForHarness("claude-code")
 	ccUnsupported := cc.UnsupportedFeatures()
-	if len(ccUnsupported) != 0 {
-		t.Errorf("Claude Code has %d unsupported features; want 0", len(ccUnsupported))
+	if len(ccUnsupported) != 1 || ccUnsupported[0].Feature != FeatureEffort || ccUnsupported[0].Status != StatusNone {
+		t.Errorf("Claude Code unsupported = %v; want only effort:none", ccUnsupported)
 	}
 }
 
@@ -116,8 +117,8 @@ func TestSummaryLine(t *testing.T) {
 
 	cc := ForHarness("claude-code")
 	ccSummary := cc.SummaryLine()
-	if ccSummary != "full support" {
-		t.Errorf("Claude Code summary = %q; want 'full support'", ccSummary)
+	if ccSummary != "effort:none" {
+		t.Errorf("Claude Code summary = %q; want 'effort:none'", ccSummary)
 	}
 }
 

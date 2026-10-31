@@ -83,9 +83,13 @@ func checkQuotaSource(add func(id, status, detail, fix string), env doctorEnv, h
 		}
 		age := humanAge(env.Now().Sub(snap.ObservedAt))
 		if snap.StaleAfterObserved(env.Now()) {
+			fix := fmt.Sprintf("a snapshot refreshes only when the harness statusline bridge or `downshift quota import` writes a new one; run `downshift quota status --harness %s` to check", h)
+			if src == "claude-statusline" {
+				fix = "Claude Code runs the statusline only in an interactive terminal session, so the Claude Desktop Code tab and `claude -p` never refresh it; open an interactive `claude` session to refresh the reading"
+			}
 			add("quota source", doctorWarn,
 				fmt.Sprintf("%s, observed %s ago; older than the %s freshness limit, so quota routing runs on a stale reading", src, age, humanAge(quota.MaxTTL)),
-				fmt.Sprintf("a snapshot refreshes only when the harness statusline bridge or `downshift quota import` writes a new one; run `downshift quota status --harness %s` to check", h))
+				fix)
 			break
 		}
 		add("quota source", doctorOK, fmt.Sprintf("%s, observed %s ago", src, age), "")

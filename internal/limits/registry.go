@@ -71,6 +71,11 @@ var registry = map[string]HarnessLimits{
 				Status:  "full",
 				Reason:  "all 7 tools answered in real Claude Code sessions, read and bypass workers included (docs/evidence/mcp-claude-code-2026-10-31.md)",
 			},
+			{
+				Feature: "effort",
+				Status:  "none",
+				Reason:  "the Agent tool input has no per-call effort field and the settings hook ignores updatedInput.reasoning_effort; the child runs on its session or model default (CanApplyEffort false, 2026-10-31)",
+			},
 		},
 	},
 	"cursor": {

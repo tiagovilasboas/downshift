@@ -109,6 +109,7 @@ func HandlePostToolUse(raw []byte, binaryVersion string, r core.Resolver) (Outpu
 	if !ok {
 		return neutral, "", false
 	}
+	ce.ServedModel = normalizeServedModel(ce.ServedModel, r)
 	res := childend.Record(ce, binaryVersion, r)
 	if res.Line != "" && telemetry.ChildLineEnabled(core.ClaudeCodeCaps.CanShowChildLine) {
 		neutral.SystemMessage = res.Line
@@ -129,6 +130,21 @@ func agentID(payload map[string]any) string {
 func resolvedModel(payload map[string]any) string {
 	resp, _ := payload["tool_response"].(map[string]any)
 	return stringFieldAny(resp, "resolvedModel", "resolved_model")
+}
+
+// normalizeServedModel maps a served model read from a child transcript to its
+// catalog id (a dated id such as claude-haiku-5-5-20251001 to claude-haiku-5-5)
+// so the child_ended observation names the same id the hook wrote. It returns
+// the raw value unchanged when there is no resolver or the catalog does not
+// know the model, and "" unchanged; the shared recorder still bounds it.
+func normalizeServedModel(raw string, r core.Resolver) string {
+	if raw == "" || r == nil {
+		return raw
+	}
+	if m, ok := r.LookupByID(harnessID, raw); ok {
+		return m.ID
+	}
+	return raw
 }
 
 func recordSensorToolObservation(payload map[string]any, sessionHash string) {

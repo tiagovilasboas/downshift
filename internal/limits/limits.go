@@ -16,6 +16,7 @@ const (
 	FeatureMidSessionRouting = "mid_session_routing" // Can model be changed during session?
 	FeatureSavingsEstimation = "savings_estimation"  // Based on real tokens or proxy?
 	FeatureMCP               = "mcp"                 // Do the read-only MCP tools answer in this surface?
+	FeatureEffort            = "effort"              // Can a hook set the subagent's reasoning effort?
 )
 
 // Standard status values.
