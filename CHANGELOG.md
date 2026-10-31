@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Claude workers started by the MCP `delegate` tool no longer load the user's MCP servers (`--strict-mcp-config`). Before, a worker inherited every registered server, claude.ai connectors such as mail, GitHub and documents included, and on the bypass write route those tools ran without approval. Measured on one machine (2026-10-31): a print-mode Claude session loaded 31 servers and 323 tools without the flag and none and 29 with it; a one-word answer cost 27,306 cache-creation tokens without it and 15,958 with it.
+
 ### Added
 
 - `internal/limits` declares `effort: none` for Claude Code, so `downshift doctor` says it: the Agent tool takes no per-call effort and the settings hook ignores `updatedInput.reasoning_effort`, so a subagent runs on its session or model default whatever effort Downshift decides (observed 2026-10-31; the child transcript records the effort it ran with, `output_config.effort`). The doctor's stale-quota fix for Claude Code now names the cause: the statusline runs only in an interactive terminal, so the Claude Desktop Code tab and `claude -p` never refresh the reading.

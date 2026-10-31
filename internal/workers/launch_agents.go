@@ -36,8 +36,16 @@ func (m byAgent) Launch(spec Spec) (Process, error) {
 	return l.Launch(spec)
 }
 
+// claudeIsolation keeps a worker from loading the user's MCP servers. Without
+// it a worker inherits every server the user registered, claude.ai connectors
+// (mail, GitHub, documents) and Downshift itself included: under
+// bypassPermissions those tools run without approval, and their definitions
+// cost context on every call (measured 2026-10-31: 31 servers and 323 tools
+// inherited, none with the flag).
+var claudeIsolation = []string{"--strict-mcp-config"}
+
 func claudeReadOnly(spec Spec) (argv, error) {
-	args := []string{"-p", "--output-format", "json", "--permission-mode", "plan", "--no-session-persistence"}
+	args := append([]string{"-p", "--output-format", "json", "--permission-mode", "plan", "--no-session-persistence"}, claudeIsolation...)
 	if spec.Model != "" {
 		args = append(args, "--model", spec.Model)
 	}
@@ -92,7 +100,7 @@ func codexReadOnly(spec Spec) (argv, error) {
 // claudeWrite is the write recipe: the bypass permission mode, inside a worktree
 // that writeIsolated prepared.
 func claudeWrite(spec Spec) (argv, error) {
-	args := []string{"-p", "--output-format", "json", "--permission-mode", "bypassPermissions", "--no-session-persistence"}
+	args := append([]string{"-p", "--output-format", "json", "--permission-mode", "bypassPermissions", "--no-session-persistence"}, claudeIsolation...)
 	if spec.Model != "" {
 		args = append(args, "--model", spec.Model)
 	}
