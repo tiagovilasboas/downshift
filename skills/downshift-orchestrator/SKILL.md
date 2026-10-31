@@ -57,7 +57,9 @@ A worker sees only the task text and its directory, so write the whole brief int
 - **Goal:** one sentence, unambiguous.
 - **Allowed files:** the exact paths the worker may edit.
 - **Verification:** the exact command that must exit 0, run as `downshift compactor -- <command>`.
-- **Tier hint:** `[tier=small]` at the start of the prompt for mechanical work: rename, format, boilerplate, a one-file change.
+- **Tier hint:** `[tier=small]` at the start of the prompt for mechanical work: a search, a read, a rename,
+  running one command and reporting it, or a small well-specified edit. The hint only moves down, never up,
+  and a pinned model or a declared policy wins. Choose by tier, never by model name.
 
 Accept a result only when the verification exits 0 and the diff stays inside the allowed files. You keep the
 decomposition and the design. A worker does not split work or choose the architecture.
