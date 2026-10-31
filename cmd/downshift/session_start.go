@@ -16,7 +16,9 @@ import (
 const sessionStartContext = "Downshift is installed. Every time you are about to spawn a subagent with the Agent or Task tool, " +
 	"call the downshift MCP tool providers first: it is the one step that shows the models this harness offers right now, so make it a habit before the spawn, not an afterthought. " +
 	"Then call apply to preview your choice of model and effort. " +
-	"Choose the model and effort yourself. For mechanical work, start the spawn's prompt with [tier=small]; that hint only moves down. " +
+	"Choose the model and effort yourself, by tier (small, mid, frontier), never by model name. " +
+	"Mechanical work is a search, a read, a rename, running one command and reporting it, or a small well-specified edit: start its prompt with [tier=small]. " +
+	"A tier hint only moves down, never up, and a pinned model or a declared policy wins. " +
 	"Workers from the MCP are read-only unless the owner turned on write mode."
 
 // runClaudeCodeSessionStart answers the SessionStart hook with the context line.

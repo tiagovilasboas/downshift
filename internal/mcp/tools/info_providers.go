@@ -34,7 +34,7 @@ type providersData struct {
 }
 
 // providersNext is the step after choosing: the hint the spawn hook reads, and the dry run.
-const providersNext = "To send mechanical work to a smaller model, start the spawn's prompt with [tier=small]; call apply to check a choice first."
+const providersNext = "For mechanical work (a search, a read, a rename, running one command and reporting it, or a small well-specified edit), start the spawn's prompt with [tier=small]; the hint only moves down, a pinned model or a declared policy wins, and you choose by tier, not by name. Call apply to check a choice first."
 
 func (d Deps) providersTool() Tool {
 	fields := []string{"harness", "models"}

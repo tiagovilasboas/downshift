@@ -15,6 +15,7 @@ Rules:
 - Report: what you changed (file and line), what you ran and its exit status, and
   anything you left undone. No prose beyond that.
 
-This agent pins no `model`, on purpose: it inherits the session model, so Downshift's
-PreToolUse hook can route each spawn to a right-sized model from the task text. See
-docs/guides/subagents.md.
+This agent pins no `model`, on purpose: it inherits the session model. The session
+that dispatches it chooses the tier, and for mechanical work it starts the prompt with
+`[tier=small]`. Downshift never reads the task text to pick a model; it only applies the
+tier hint the dispatcher sends, and only downward. See docs/guides/subagents.md.

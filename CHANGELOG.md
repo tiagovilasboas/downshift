@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The tier-hint guidance (SessionStart, MCP server instructions, the `providers` tool's next step, the orchestrator skill and the `mechanical-worker` agent) is now consistent: it defines mechanical work (a search, a read, a rename, running one command and reporting it, or a small well-specified edit), says the hint only moves down and a pinned model or a declared policy wins, speaks in tiers rather than model names, and drops the stale claim that the hook picks a model from the task text.
 - Routing no longer computes a price saving (owner decision 2026-10-31: the Downshift product uses no price). The `SavingsRatio` method is gone from the `Resolver` interface and from the catalog and session-resolver implementations; `compareToCurrentModel` returns only the verdict and the current model. `Decision.Savings` now stays 0 and is still carried to the `estimated_savings` field of `events.jsonl`; that field, and the `Savings` struct field, are removed with the event-contract change. Also removed: the unused `catalog.PriceBook` type and its `PriceFor`/`AsOf` lookups, the unused `catalog.PricesAge`, and the unused `discovery.SnapshotPrice`. Catalog price data (`input_cost_per_1m` and the rest) and the discovery price fields are removed separately.
 
 ### Security
