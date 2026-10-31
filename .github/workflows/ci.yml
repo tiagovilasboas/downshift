@@ -79,7 +79,20 @@ jobs:
           echo "python=$python" >> "$GITHUB_OUTPUT"
           echo "os_sensitive=$os_sensitive" >> "$GITHUB_OUTPUT"
 
-  test:
+  # The required `test` check, split into parallel jobs so the go test wall no
+  # longer runs behind vet/staticcheck/format on one runner. Three jobs:
+  #   test-checks  build + vet + staticcheck + format + smoke + node decoder,
+  #                run ONCE (not per shard).
+  #   test-shard   go test, fanned out across a deterministic, complete package
+  #                partition (scripts/ci-shard-packages.sh). Shard 0 is
+  #                cmd/downshift alone (the ~63 s floor of the suite); shard 1 is
+  #                every other package (~30-40 s). They run on separate runners.
+  #   test         aggregator; the branch-protection required check. It depends
+  #                on both and, with `if: always()`, fails unless every shard and
+  #                the checks job succeeded (or were skipped on a docs-only diff).
+  #                Protection keeps meaning exactly what it did: `test` is green
+  #                only when the whole Go gate passed.
+  test-checks:
     needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -127,19 +140,6 @@ jobs:
             exit 1
           fi
 
-      - name: Test
-        if: needs.changes.outputs.go == '1'
-        env:
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
-          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
-        run: |
-          # Pull requests test the changed packages and their dependents; pushes
-          # to main, and any change outside Go package directories, test ./...
-          pkgs=$(bash scripts/ci-test-packages.sh)
-          echo "Testing $(echo "$pkgs" | wc -l | tr -d ' ') package line(s)"
-          go test $pkgs
-
       - name: Adapter smoke tests
         if: needs.changes.outputs.go == '1'
         run: ./scripts/smoke-test.sh
@@ -152,6 +152,79 @@ jobs:
       - name: Test Cursor quota decoder
         if: needs.changes.outputs.docs_only != '1'
         run: node --test internal/cursorbridge/extension/decoder.test.cjs
+
+  test-shard:
+    needs: changes
+    if: needs.changes.outputs.go == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Two shards: 0 = cmd/downshift (the suite's wall-clock floor), 1 = the
+        # rest. scripts/ci-shard-packages.sh owns the deterministic split.
+        shard: [0, 1]
+    env:
+      DOWNSHIFT_TEST_TIMING: "1" # enforce wall-clock test budgets (internal/testenv/timing.go)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Test (shard ${{ matrix.shard }})
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_TOTAL: "2"
+        run: |
+          # Pull requests test the changed packages and their dependents; pushes
+          # to main, and any change outside Go package directories, test ./...
+          # ci-shard-packages.sh re-uses ci-test-packages.sh, then keeps only the
+          # packages assigned to this shard. Every package lands in exactly one
+          # shard, and the union over shards equals the full list.
+          pkgs=$(bash scripts/ci-shard-packages.sh)
+          if [ -z "$pkgs" ]; then
+            echo "No packages assigned to shard $SHARD_INDEX."
+            exit 0
+          fi
+          echo "Shard $SHARD_INDEX testing $(echo "$pkgs" | wc -l | tr -d ' ') package line(s):"
+          echo "$pkgs"
+          go test $pkgs
+
+  # Branch-protection required check. Stays named exactly `test` and stays green
+  # only when the checks job and both test shards succeeded, so protection means
+  # the same thing it did when `test` was a single job.
+  test:
+    needs: [changes, test-checks, test-shard]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every test job to have succeeded
+        env:
+          CHECKS_RESULT: ${{ needs.test-checks.result }}
+          SHARD_RESULT: ${{ needs.test-shard.result }}
+        run: |
+          set -eu
+          echo "test-checks: $CHECKS_RESULT"
+          echo "test-shard:  $SHARD_RESULT"
+          # A docs-only / no-Go diff skips the shards (if: go == '1'); that is a
+          # pass, as it was when the single job ran only the skip echo steps.
+          fail=0
+          case "$CHECKS_RESULT" in success) ;; *) echo "::error::test-checks did not succeed ($CHECKS_RESULT)"; fail=1 ;; esac
+          case "$SHARD_RESULT" in
+            success|skipped) ;;
+            *) echo "::error::test-shard did not succeed ($SHARD_RESULT)"; fail=1 ;;
+          esac
+          exit "$fail"
+
 
   # Cross-OS behavior check (GAP-OS-1). CI already cross-COMPILES for windows
   # and darwin; this job also RUNS the OS-sensitive packages on those runners so
