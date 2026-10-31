@@ -2,7 +2,7 @@
 
 Downshift may write only a model id that exists in the current harness session. The session list is the complete candidate set for every harness; the catalog never adds candidate IDs. Metadata is optional for capability-ordered hook/operator lists. An unordered native Cursor export requires resolver tier metadata before its exact IDs become routing targets.
 
-Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. A confident upshift picks the least eligible model at the tier the task needs (later list position first within a tier) and never goes below the current model's tier; when the baseline is guessed (Claude Code settings, Cursor parent `model_id`) or `explicit_upshift` is on, it keeps the strongest eligible tier; a list the catalog cannot rank falls back to the position mapping. Leaving an expensive frontier model off the list is the install-time opt-out. Claude Code accepts `fable`; the default example omits `claude-fable-5-1` so that upshift stops at Opus unless you append it. That Claude Code id is opt-in by listing it. It is not `explicit_only`. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier) inside the filtered session order, skips exhausted ids, and never parses model names. On the catalog-tier path prices do not pick a target. A non-empty credit set for this harness is closed: ranking stays inside it, in session order, with no fallback to an id outside the set. When no tier is known, upshift picks the last remaining id. Catalog `explicit_only` ids are skipped unless `explicit_upshift` is on, and then only for upshift. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
+Order every list from **least to most capable**. This ordering is the model-agnostic ranking contract and must reflect the actual picker choices for that session. Downshift never raises a tier on its own: the only lift is the operator tier floor (`policy.json`), which produces an `UPSHIFT` verdict when it raises the tier above a weaker current model. Serving that lift, Downshift picks the least eligible model at the floored tier (later list position first within a tier) and never goes below the current model's tier; when nothing reaches the floored tier it takes the strongest eligible model at or above the current model's tier, still never below the floor; a list the catalog cannot rank falls back to the position mapping. Leaving an expensive frontier model off the list is the install-time opt-out. Claude Code accepts `fable`; the default example omits `claude-fable-5-1` so a floor lift stops at Opus unless you append it. That Claude Code id is opt-in by listing it. It is not `explicit_only`. Downshift maps abstract task tiers onto list positions (first for small, midpoint for mid, last for frontier) inside the filtered session order, skips exhausted ids, and never parses model names. On the catalog-tier path prices do not pick a target. A non-empty credit set for this harness is closed: ranking stays inside it, in session order, with no fallback to an id outside the set. When no tier is known, a floor lift picks the last remaining id. Catalog `explicit_only` ids are never selected by routing in any direction. A single listed model can serve every tier. If capability ordering is unknown, correct the list rather than relying on the catalog to infer it.
 
 If the session list cannot be determined, the hook does not rewrite the model.
 
@@ -65,11 +65,13 @@ Claude Code often spawns a Task without `tool_input.model`; the child then inher
 > floor named here was removed. The text is kept as the record of that behaviour.
 
 - confident classification → the recommended model is written (any tier);
-- unconfident classification with a **mid** recommendation → not written (R9), unless a deterministic rule lifted it (risk floor, an opted-in NB upshift, an operator tier floor). A prompt with no recognised signal falls to MEDIUM by default, so writing mid over the harness default could move a task up for no reason;
+- unconfident classification with a **mid** recommendation → not written (R9), unless a deterministic rule lifted it (risk floor or an operator tier floor). A prompt with no recognised signal falls to MEDIUM by default, so writing mid over the harness default could move a task up for no reason;
 - unconfident classification with a **small** recommendation → not written (R6); the event records `safe_verdict: OK` and `corrections: ["R6_UNCONFIDENT_UNKNOWN_SMALL"]`;
-- unconfident classification with a **frontier** recommendation → not written (R7), unless a deterministic rule lifted it (risk floor, an opted-in NB upshift, an operator tier floor). The child would otherwise inherit the default, so writing the dearest tier on doubt is an unconfident upshift in disguise.
+- unconfident classification with a **frontier** recommendation → not written (R7), unless a deterministic rule lifted it (risk floor or an operator tier floor). The child would otherwise inherit the default, so writing the dearest tier on doubt is an unconfident upshift in disguise.
 
-With a known current model, **R8** (`R8_UNCONFIDENT_UPSHIFT`) is the mirror of R1: an upshift on an unconfident classification is held. Uncertain calls therefore never spend money, or save it, in either direction, with or without a current model. The semantic boost cannot create a COMPLEX classification on its own: Complex needs regex evidence or an applicable deterministic safety lift. Graph escalation was removed in 2026-10-17.
+> The opted-in naive-Bayes upshift was removed on 2026-10-31 with the rest of the legacy upshift path; only the risk floor and the operator tier floor remain as deterministic lifts.
+
+With a known current model, **R8** (`R8_UNCONFIDENT_UPSHIFT`) is the mirror of R1: the verdict `UPSHIFT` (the operator floor raised the tier above a weaker current model) is held when the classification is unconfident and no deterministic rule lifted it. Downshift never raises a tier on its own, so an uncertain call never moves a task up. The semantic boost cannot create a COMPLEX classification on its own: Complex needs regex evidence or an applicable deterministic safety lift. Graph escalation was removed in 2026-10-17.
 
 ### Baseline model when the call has no `model` (Claude Code)
 
@@ -166,16 +168,16 @@ The session list determines which ids are candidates and their order (least to m
 - Downshift or unknown verdict, catalog path: when every id left after filtering resolves in the catalog (`LookupByID`, which includes family-prefix matches), choose the first id in list order whose catalog tier is at or above the tier the task needs. The position in the list does not matter, so adding a frontier model at the end does not stop a mid task from landing on the mid model. If no id reaches the needed tier, nothing is rewritten; the selector never goes below the floor.
 - Downshift or unknown verdict, fallback path: if any id has no catalog tier (an operator id the catalog does not know), the tier cannot rank the list and the position mapping applies on the filtered order: first for small, midpoint for mid, last for frontier.
 - The quality floor is set before the quota filter. An exhausted id is skipped, but it never lowers the floor: the next id at or above the needed tier wins, and if every such id is exhausted nothing is rewritten.
-- Upshift, catalog path: when every remaining id has a catalog tier, choose the highest tier at or above the current model's tier (later list position first within a tier), skipping ids the quota refuses. If none qualifies, nothing is rewritten. When the catalog cannot rank the list, the position mapping applies: the last quota-allowed id, not earlier than the list midpoint for a mid target. Choosing the cheapest model at the needed tier is an open question (see the [hardening audit](../evidence/hardening-audit-2026-10-15.md)).
+- Upshift, catalog path: an `UPSHIFT` verdict comes only from the operator tier floor (Downshift never raises a tier on its own). When every remaining id has a catalog tier, choose the least tier at or above the floored tier (later list position first within a tier), skipping ids the quota refuses; when nothing reaches the floored tier, take the strongest quota-allowed id at or above the current model's tier, never below the floor. If none qualifies, nothing is rewritten. When the catalog cannot rank the list, the position mapping applies: the last quota-allowed id, not earlier than the list midpoint for a mid target.
 - Guessed baselines: when the baseline is inferred rather than requested (Claude Code settings, `BASELINE_FROM_SETTINGS`; Cursor's parent `model_id`), a downshift is written only to the small tier, and a mid target is held. Details in [harness-matrix.md](harness-matrix.md).
 - Guardrail hold (`Checked` and `SafeVerdict == OK`): do not rewrite.
 - Unknown session (still unknown after step 5, the Claude Code inference from the current model): no rewrite.
-- Any exact session ID inside the filtered set can be written, even when the catalog does not know it. `inherit` and exhausted IDs cannot be selected. A catalog `explicit_only` ID can be written only when `explicit_upshift` is on.
+- Any exact session ID inside the filtered set can be written, even when the catalog does not know it. `inherit` and exhausted IDs cannot be selected. A catalog `explicit_only` ID is never selected by routing in any direction: it is the owner's deliberate choice, left in place.
 - `inherit` may sit in the session list so the payload is recognised. It is never selected as the target.
 - Hook credit marks come from this call's `included_models` and `unavailable_models`. Native usage observations are separate, with source, scope and expiry; see [quota.md](../guides/quota.md). There is no compiled-in credit list, and `quota` in `session-models.json` is not read.
 - An exhausted id from that hook report is never selected, on any harness.
-- When the hook reports `included_models`, downshift and upshift rank only inside that set, in session order, for that harness alone. There is no fallback to a session id outside the set. An empty intersection does not rewrite.
-- When the hook did not report credits, ranking stays the session order minus exhausted ids, `inherit`, and `explicit_only` (unless explicit upshift is on). Downshift does not invent a credit denial.
+- When the hook reports `included_models`, a downshift and a floor lift rank only inside that set, in session order, for that harness alone. There is no fallback to a session id outside the set. An empty intersection does not rewrite.
+- When the hook did not report credits, ranking stays the session order minus exhausted ids, `inherit`, and `explicit_only`. Downshift does not invent a credit denial.
 
 ## Observed usage quota
 
@@ -223,21 +225,15 @@ for every harness. Not yet verified: that a given Claude Code release displays
 `systemMessage` from PostToolUse and SubagentStop (documented as a common hook
 output field, not observed on a live session).
 
-## explicit_upshift
+## explicit_only models
 
-Default off. Without it, `explicit_only` models do not participate in upshift. With it, upshift (`VerdictUpshift` only) may select them. The last remaining id in the filtered session order wins. Downshift and ordinary tier mapping still skip `explicit_only`. If the current model is already `explicit_only`, it stays; the flag does not replace it.
+A catalog `explicit_only` model (Cursor `claude-fable-5-1-thinking-high`, Codex `gpt-6-astra`) is the owner's deliberate choice. Routing never selects it, in any direction: `CanWriteSessionID` refuses the write and ordinary tier mapping skips it. If the current model is already `explicit_only`, it stays; routing does not replace it.
 
-An `explicit_only` id is selectable for upshift only when the flag is on and, if a credit set exists, the id is inside that set. `CanWriteSessionID` refuses the write otherwise, so the hook does not emit the upshift.
+Claude Code `claude-fable-5-1` is **not** `explicit_only`. List that id in the session when you want a floor lift to reach it. Do not alias another harness's canonical id.
 
-Turn the flag on with any of:
+> **Removed 2026-10-31.** The legacy `explicit_upshift` opt-in (the `"explicit_upshift"` key in `session-models.json`, `DOWNSHIFT_EXPLICIT_UPSHIFT=1`, and `install.sh --explicit-upshift`) let an upshift select `explicit_only` models. It is gone: Downshift never raises a tier on its own, so there is nothing to opt into, and the flag, env var and installer switch no longer have any effect.
 
-- `"explicit_upshift": true` in `session-models.json`
-- `DOWNSHIFT_EXPLICIT_UPSHIFT=1`
-- `install.sh --explicit-upshift` (the version argument still works before or after the flag)
-
-Cursor `claude-fable-5-1-thinking-high` and Codex `gpt-6-astra` are `explicit_only`. Claude Code `claude-fable-5-1` is not: list that id in the session when you want upshift to reach it. Do not alias another harness's canonical id.
-
-For example, a list `["session-small", "session-mid", "session-frontier"]` makes those three positions available to all routing decisions without requiring any of the IDs or their prices in Downshift's catalog. If the session list is missing, the active model stays.
+For example, a list `["session-small", "session-mid", "session-frontier"]` makes those three positions available to all routing decisions without requiring any of the IDs in Downshift's catalog. If the session list is missing, the active model stays.
 
 ## Reported by the MCP server
 

@@ -171,8 +171,9 @@ The objective is one sentence: minimise cost per task completed correctly, with 
 preserved. It is never "pick the cheapest". The guardrails in `internal/core/selfcheck.go` (`Check`) encode that:
 R1 holds an unconfident downshift, R2 any downshift of a COMPLEX task, R5 any downshift of a task that touches a risk
 category (the risk floor, `Guards.RiskFloor`), R8 an unconfident upshift, R7 an unconfident frontier pick with no
-known current model, R9 the same for mid. Only a deterministic lift (`deterministicLift`: risk floor, risk
-abstention, graph escalation, an opted-in NB upshift, an operator tier floor) may move a task up. Doubt never spends
+known current model, R9 the same for mid. Downshift never raises a tier on its own; the only lift that may move a task
+up is a deterministic rule (`deterministicLift`: the risk floor, a risk abstention, or an operator tier floor). The
+opted-in NB upshift that once sat in this set was removed 2026-10-31. Doubt never spends
 money, in either direction (`TestCostTruthTable`, `TestCostUnconfidentUpshiftNeverRewritesAbove` in
 `internal/core/cost_safety_invariants_test.go`). A scenario below counts as proven only when its metric is measured
 with those guardrails on; a saving bought by removing them is a different product.

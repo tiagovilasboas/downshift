@@ -74,8 +74,9 @@ Code: `internal/core/selfcheck.go` (R6/R7/R9), `claudecode.go` (`Decision.Baseli
 - **Guessed** (`BASELINE_FROM_SETTINGS`): the session may really be on another model (`--model`,
   `/model`). A downshift is written only when the target is the **small** tier, the one cheaper than
   anything the session can run. A downshift to mid is held with `Decision.Baseline.GuessHeld`, reason code
-  `HELD_GUESSED_BASELINE`. An upshift on a guessed baseline keeps the strongest eligible tier
-  (`core/session_select.go`, `Decision.Baseline.Guessed`).
+  `HELD_GUESSED_BASELINE`. The only `UPSHIFT` verdict is an operator tier-floor lift (Downshift never
+  raises a tier on its own); on a guessed baseline it lifts only to the floored tier, never to the
+  strongest available (`core/session_select.go`, `Decision.Baseline.Guessed`; legacy upshift removed 2026-10-31).
 - `Explore` under Fable stays unknown even with a settings hit (point 6 above).
 
 The cost record follows the same honesty: a `usage` row whose decision was `BASELINE_FROM_SETTINGS` is

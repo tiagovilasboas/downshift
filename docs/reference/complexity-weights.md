@@ -17,8 +17,10 @@ or COMPLEX. The class with the highest sum wins. A tie goes to the higher
 class, so the task is not under-powered.
 
 Confidence is a margin, not a fifth class. The winner is confident only when
-it leads the runner-up by **2 or more**. Below that, a downshift or a weak
-upshift is not applied. The spawn stays on the model it already had.
+it leads the runner-up by **2 or more**. Below that, a downshift is not
+applied, and an operator floor lift (the only `UPSHIFT` verdict; Downshift
+never raises a tier on its own) is held by R8. The spawn stays on the model it
+already had.
 
 No pattern at all scores **MEDIUM**, and that result is not confident.
 

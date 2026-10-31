@@ -35,7 +35,7 @@ Without a usage source (or, outside required mode, with one that expired more th
 1 hour ago), routing retains its existing behaviour and records quota as `unknown`. Set `DOWNSHIFT_QUOTA_MODE=required` to hold rewrites in that case too.
 This setting never invents credit. Hook `included_models` and
 `unavailable_models` marks are intersected with quota evidence and the session
-availability list. `explicit_upshift` stays off by default.
+availability list.
 
 Snapshots have an observation time and expiry, with a maximum lifetime of 15
 minutes. The CLI defaults to 5 minutes. Future observations, elapsed reset times,
