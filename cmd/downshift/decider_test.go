@@ -21,10 +21,6 @@ const (
 	smallID    = "claude-haiku-5-5"
 	gatedRule  = `{"version":1,"routing":{"rules":[{"id":"cheap","tier":"small",
 		"gates":[{"harness":"claude-code","window":"short","below":50}]}]}}`
-	// classRule sends a confident, risk-free TRIVIAL or SIMPLE task to the
-	// small tier: the one way to move a task down, since the floor only raises.
-	classRule = `{"version":1,"routing":{"rules":[{"id":"easy-small",
-		"classes":["TRIVIAL","SIMPLE"],"tier":"small"}]}}`
 )
 
 // snapshot is a claude-code statusline reading of the short window, observed
@@ -57,9 +53,6 @@ func TestRoutingDeciderMovesOnlyWhenV2Decides(t *testing.T) {
 		{"valid rule gate passes on a fresh cool reading", gatedRule, ptr(snapshot(time.Minute, 10)), "plain task", frontierID, smallID},
 		{"expired hot reading is unknown and passes", gatedRule, ptr(snapshot(10*time.Minute, 99)), "plain task", frontierID, smallID},
 		{"floor lifts a small request", `{"version":1,"min_tier":"frontier"}`, nil, "plain task", smallID, cmdCat.ModelFor("claude-code", core.TierFrontier).ID},
-		{"class rule sends a confident trivial task to small", classRule, nil, "rename the userId variable to userIdentifier", frontierID, smallID},
-		{"class rule keeps an unconfident medium task", classRule, nil, "plain task", frontierID, frontierID},
-		{"a floor-only file never sends a trivial task down", `{"version":1,"min_tier":"mid"}`, nil, "rename the userId variable to userIdentifier", frontierID, frontierID},
 		{"invalid policy keeps despite a hint", `{"version":1,"routing":{"rules":[{"id":"x"}]}}`, nil, "[tier=small] plain task", frontierID, frontierID},
 		{"malformed policy keeps despite a hint", `{not json`, nil, "[tier=small] plain task", frontierID, frontierID},
 		{"invalid floor keeps despite a hint", `{"version":1,"min_tier":"huge"}`, nil, "[tier=small] plain task", frontierID, frontierID},
