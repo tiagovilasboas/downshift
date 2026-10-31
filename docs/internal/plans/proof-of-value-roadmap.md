@@ -67,8 +67,8 @@ Routing is worth it when the effect goes up and neither guard gets worse.
 
 | Card | What | Points | Depends on |
 |---|---|---|---|
-| P1.1 | Pick the one lever P0.1 says moves the most and ship it. **Chosen lever: a user-declared `classes` gate on routing rules** (owner-approved), so a confident, risk-free TRIVIAL/SIMPLE spawn can be routed down a tier. P0.1 (`downshift-labs research/routing-real-usage-why-null-2026-10-31.md`) found 54 `allow` spawns above the floor, TRIVIAL/SIMPLE and risk-free, that no existing policy could move: the floor only raises, and `kinds`/`efforts` rules need a hint the orchestrator rarely sends. The gate is off by default (no `classes` means no change), so it ships without a separate flag. | 3 | P0.1 |
-| P1.2 | Fix the protocol before the window starts: seven calendar days, a fixed binary for the whole window, `downshift report clear` first, the control slice recorded (`DOWNSHIFT_CONTROL_SHARE`, default 0.10), days with roughly zero control excluded, and at least 20 completed tasks per group (the report's own floor) | 1 | P1.1 |
+| P1.1 | Pick the one lever P0.1 says moves the most and ship it. **Chosen lever: the `[tier=small]` guidance for the LLM** so the orchestrator sends a confident, risk-free TRIVIAL/SIMPLE spawn down a tier by its own choice. A user-declared `classes` gate on routing rules was shipped (#667, 2026-10-31) and removed the same day by owner decision: Downshift must stay simple and model-agnostic, so it may not override the LLM's model choice by classifier class. It never reached a release. | 3 | P0.1 |
+| P1.2 | Fix the measurement window and the minimum sample before it starts: at least 20 completed tasks per group (the report's own floor), seven calendar days, no binary change during the window | 1 | P1.1 |
 | P1.3 | Run the window on the owner's normal work | 0 (time) | P1.2 |
 | P1.4 | Publish `docs/evidence/real-seven-day-<date>.md` with the effect, Guard 1 and Guard 2 above, routed against control, the 95% bootstrap intervals, rework, the control share, and what the window does not show; close #103 | 2 | P1.3 |
 

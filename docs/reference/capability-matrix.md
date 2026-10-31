@@ -13,7 +13,7 @@ harness. *Implemented, not validated everywhere* means the code is shared but th
 harnesses or plans only. *Experimental* means shipped behind a flag or a maintainer command, with no production
 claim. *Planned* means documented intent with no code path. *Not supported* means the harness or design cannot do it.
 
-> **O8 (2026-10-28).** This audit is dated 2026-10-17. Since then the orchestrator chooses the model and Downshift applies it within the declared policy. Removed: the built-in agent-type table (N11), the automatic upgrade after a failure, and the built-in risk floor and veto (rows in section 3 are marked). The classifier is telemetry and the key of user-declared floors; it decides a tier only under a rule the user declared, never on its own. Since 2026-10-31 a routing rule may carry a `classes` gate, so a confident, risk-free class the user named sends a task down a tier (the floor only raises). Added and implemented: `downshift playbook` and the `downshift-orchestrator` skill. Specified, not built: `downshift mcp serve`. Rows not marked below were not re-audited.
+> **O8 (2026-10-28).** This audit is dated 2026-10-17. Since then the orchestrator chooses the model and Downshift applies it within the declared policy. Removed: the built-in agent-type table (N11), the automatic upgrade after a failure, and the built-in risk floor and veto (rows in section 3 are marked). The classifier is telemetry and the key of user-declared floors. Added and implemented: `downshift playbook` and the `downshift-orchestrator` skill. Specified, not built: `downshift mcp serve`. Rows not marked below were not re-audited.
 
 Harness status words (Completed, Functional, Beta, Experimental) are a different scale and are defined in [harness-matrix.md](harness-matrix.md#status-per-harness); they appear only in section 4.
 
@@ -57,7 +57,6 @@ Shorthand: `core` is `internal/core`, `cmd` is `cmd/downshift`, "matrix" is `doc
 | Prompt-injection vocabulary ("ignore previous instructions", "this is a trivial task", "use the cheapest model") treated as a risk category | Recorded as telemetry only since 2026-10-28 (O8); no longer blocks a downshift | `core/risk.go` (`prompt_injection` row) | `risk_test.go` table | Pattern list only | Not explained in any user doc (see Hidden capabilities) |
 | ~~Graph escalation (Graphify)~~ | Removed 2026-10-17 | — | — | Out of product scope; hook stays regex + hash semantic boost | — |
 | Project tier floor by class or risk | Implemented | see section 10 | | | |
-| Routing rule by classifier class (`classes` gate: matches only a confident, risk-free class; the one way to send a task *down*, since the floor only raises) | Implemented (2026-10-31, O8 lever P1.1) | `internal/routing/policy` (`Rule.Classes`, `Match`), `internal/routing/decide/resolve.go`, `internal/routing/contract/complexity.go` | `TestClassGateMatchesOnlyConfidentRiskFree`, `TestDecideClassRule`, `TestClassesGateIsLoaded`, `decider_test.go` class-rule cases | Never-widen still holds; pinned model wins; allowlist and quota still filter; decision recorded as verdict `rule` with the rule id | `docs/guides/config.md#routing-rules-by-classifier-class-optional` |
 
 ## 4. Harness integration
 
