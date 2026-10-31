@@ -104,9 +104,9 @@ model keeps it, as for any explicit-only model.
 
 For every decision Downshift records `gateway_would` (the slug) and `gateway_would_tier`
 (the decision tier) in the telemetry event, but only when a listed row of that tier exists.
-The row is the smallest listed row of the tier: the lowest known list price, and listed rows
-have no price, so ties break on the slug in alphabetical order. The event carries no prompt,
-task text or path, and no token or dollar figure is computed for the row.
+The row of that tier is chosen by the slug in alphabetical order (the product uses no price).
+The event carries no prompt, task text or path, and no token or dollar figure is computed for
+the row.
 
 `downshift stats --detail` prints one line, and only when at least one decision would have
 been served by a listed row:

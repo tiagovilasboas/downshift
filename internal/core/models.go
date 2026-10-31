@@ -39,17 +39,11 @@ func (t Tier) String() string {
 // Model IDs and costs live in the catalog package (internal/catalog/catalog.json),
 // not in Go source. This struct is the value type shared between core and catalog.
 type Model struct {
-	ID      string  // canonical model id used by the harness
-	Family  string  // stable family prefix (version-agnostic); empty when unknown
-	Native  string  // name the harness's own schema accepts for this model (e.g. a family alias); empty when the id itself is accepted
-	Tier    Tier    // capability/cost bucket
-	InputM  float64 // USD per 1M input tokens (approximate)
-	OutputM float64 // USD per 1M output tokens (approximate)
-	// CacheReadM / CacheWriteM: USD per 1M cached-input tokens read / written.
-	// Zero means the catalog has no cache price (unknown, not free).
-	CacheReadM  float64
-	CacheWriteM float64
-	Harness     string // which harness this model id belongs to
+	ID      string // canonical model id used by the harness
+	Family  string // stable family prefix (version-agnostic); empty when unknown
+	Native  string // name the harness's own schema accepts for this model (e.g. a family alias); empty when the id itself is accepted
+	Tier    Tier   // capability/cost bucket
+	Harness string // which harness this model id belongs to
 	// Gateway names the model gateway that serves the id, so the harness can
 	// address it as provider/model. Empty for a harness-native model.
 	Gateway string

@@ -107,9 +107,8 @@ The inversions above appear only through non-default session models (1 to 3) or 
    by the layering rule and removes the overspend for anomalies 1 to 3 whatever the data later contains. It needs a
    regression test on the codex pair. This is a Go change owned by the fullstack front, so it is only proposed here.
 2. **A catalog coherence test per harness**: for each harness, automatic small, mid and frontier targets must be
-   non-decreasing in input plus output price, and a documented exception list for the rest. `go test
-   ./internal/catalog` already checks cache multipliers and missing prices (`docs/reference/prices.md`); tier order is
-   not checked.
+   ordered by tier, with a documented exception list for the rest. This note predates the owner decision
+   (2026-10-31) to drop price from the product; the price-based parts of it no longer apply.
 3. **Re-verify the codex row**: done 2026-10-19. The OpenAI page lists `gpt-6-sol` at 2/10 and `gpt-5.6-terra` at 2/12, so
    the data is right: the codex mid tier is not a cost tier, and `gpt-6-luna` is the only real downshift target on that
    harness until the tiers change.

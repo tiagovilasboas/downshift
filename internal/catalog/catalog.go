@@ -73,27 +73,20 @@ type Entry struct {
 	EffortScale string            `json:"effort_scale"`
 	EffortMap   map[string]string `json:"effort_map"` // "low"|"medium"|"high" → native string
 	Efforts     []string          `json:"efforts"`    // optional: effort levels the model accepts; absent = unknown, no restriction
-	InputCostM  float64           `json:"input_cost_per_1m"`
-	OutputCostM float64           `json:"output_cost_per_1m"`
-	// CacheReadCostM / CacheWriteCostM are optional list prices for cached
-	// input tokens (USD per 1M). Zero means "not in the catalog": never a
-	// real free price. Filled by scripts/sync_catalog_prices.py from a snapshot.
-	CacheReadCostM  float64 `json:"cache_read_cost_per_1m"`
-	CacheWriteCostM float64 `json:"cache_write_cost_per_1m"`
 	// ZDR marks a gateway row whose user allowlist says the provider keeps no
 	// data. Carried only; refusing a non-ZDR row for a risky task is not done yet.
 	ZDR bool `json:"zdr"`
+	// Old catalogs (embedded and user overrides) carried per-1M list prices
+	// (input_cost_per_1m and the rest) and a top-level prices_as_of. The
+	// product no longer uses a price; the decoder is not strict, so a user
+	// catalog that still has those keys loads and they are ignored.
 }
 
 // catalogFile is the structure of the JSON file on disk.
 type catalogFile struct {
-	Version string `json:"version"`
-	Updated string `json:"updated"`
-	// PricesAsOf (YYYY-MM-DD) is when the list prices were last verified
-	// against a public source. Only the embedded catalog's value is trusted:
-	// a user override merges entries, not freshness.
-	PricesAsOf string  `json:"prices_as_of"`
-	Entries    []Entry `json:"entries"`
+	Version string  `json:"version"`
+	Updated string  `json:"updated"`
+	Entries []Entry `json:"entries"`
 	// SessionCandidates maps a harness to the model names it accepts in any
 	// session, least to most capable (see core.CatalogSessionFromCurrent).
 	SessionCandidates map[string][]string `json:"session_candidates"`
@@ -123,8 +116,6 @@ type Catalog struct {
 	byFamEff map[string]map[string]map[string]core.Model
 	// entries: all raw entries (for list/check/pull commands)
 	entries []Entry
-	// pricesAsOf: catalogFile.PricesAsOf, empty when absent.
-	pricesAsOf string
 	// sessionCandidates: catalogFile.SessionCandidates.
 	sessionCandidates map[string][]string
 }
@@ -324,7 +315,6 @@ func build(f catalogFile) *Catalog {
 		byFamEff:      make(map[string]map[string]map[string]core.Model),
 		entries:       f.Entries,
 
-		pricesAsOf:        f.PricesAsOf,
 		sessionCandidates: f.SessionCandidates,
 	}
 
@@ -337,15 +327,11 @@ func build(f catalogFile) *Catalog {
 			continue
 		}
 		m := core.Model{
-			ID:          e.ID,
-			Family:      e.Family,
-			Native:      e.NativeName,
-			Tier:        tier,
-			InputM:      e.InputCostM,
-			OutputM:     e.OutputCostM,
-			CacheReadM:  e.CacheReadCostM,
-			CacheWriteM: e.CacheWriteCostM,
-			Harness:     e.Harness,
+			ID:      e.ID,
+			Family:  e.Family,
+			Native:  e.NativeName,
+			Tier:    tier,
+			Harness: e.Harness,
 		}
 
 		if c.index[e.Harness] == nil {
@@ -635,15 +621,6 @@ func uniqueStrings(a, b string) []string {
 
 // --- Accessors for commands (models list / check / pull) ---
 
-// PricesAsOf returns the date (YYYY-MM-DD) the list prices were last verified,
-// or "" when the catalog carries none.
-func (c *Catalog) PricesAsOf() string {
-	if c == nil {
-		return ""
-	}
-	return c.pricesAsOf
-}
-
 // Entries returns all raw catalog entries (including unknown-tier ones).
 func (c *Catalog) Entries() []Entry {
 	return c.entries
@@ -782,7 +759,7 @@ func (c *Catalog) gatewayRows(routing string) []core.Model {
 		if !ok {
 			continue
 		}
-		out = append(out, core.Model{ID: e.ID, Tier: tier, InputM: e.InputCostM, OutputM: e.OutputCostM, Harness: e.Harness, Gateway: e.Provider})
+		out = append(out, core.Model{ID: e.ID, Tier: tier, Harness: e.Harness, Gateway: e.Provider})
 	}
 	return out
 }

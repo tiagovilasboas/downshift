@@ -54,13 +54,6 @@ func FromDecision(d core.Decision, correlationID, binaryVersion string) telemetr
 			ev.RoutingNote = &n
 		}
 	}
-	if d.Verdict == core.VerdictUpshift {
-		from := d.Baseline.CurrentModel.InputM + d.Baseline.CurrentModel.OutputM
-		to := d.Model.InputM + d.Model.OutputM
-		if from > 0 && to > from {
-			ev.UpshiftCostRatio = to / from
-		}
-	}
 	if d.Shadow.GatewayWould != "" {
 		ev.GatewayWould = telemetry.ModelOrUnknown(d.Shadow.GatewayWould)
 		ev.GatewayWouldTier = d.Tier.String()

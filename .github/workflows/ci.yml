@@ -28,8 +28,6 @@ on:
   # Merge queue runs: the same gates on the queued merge result, so `test`
   # reports on the queue branch and the queue can merge without a rebase.
   merge_group:
-  # Also started by sync-prices on chore/sync-prices, whose PR (opened with
-  # GITHUB_TOKEN) cannot trigger pull_request runs.
   workflow_dispatch:
 
 # Pull requests cancel their superseded runs. Pushes to main do not: with
@@ -358,9 +356,6 @@ jobs:
 
       - name: Test DS-04 observer privacy contract
         run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/ds04_observer_contract -v
-
-      - name: Test catalog price sync validation
-        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_sync_catalog_prices.py' -v
 
   # Cross-compiles on tags only. Main and PRs skip it: the linux build is already
   # covered by `test`, which builds ./cmd/downshift.

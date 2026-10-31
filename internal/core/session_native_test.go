@@ -135,9 +135,9 @@ func TestNativeSelectionUsesRealTierAndQuotaNotProviderOrder(t *testing.T) {
 	t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", writeNativeFixture(t, p))
 	s, _ := LoadNativeSession("cursor", now)
 	r := nativeResolver{models: map[string]Model{
-		"cheap":  {ID: "cheap", Tier: TierSmall, OutputM: 1},
-		"middle": {ID: "middle", Tier: TierMid, OutputM: 2},
-		"strong": {ID: "strong", Tier: TierFrontier, OutputM: 3},
+		"cheap":  {ID: "cheap", Tier: TierSmall},
+		"middle": {ID: "middle", Tier: TierMid},
+		"strong": {ID: "strong", Tier: TierFrontier},
 	}}
 	for _, tier := range []Tier{TierMid, TierFrontier} {
 		d := Decision{Harness: "cursor", Tier: tier, Verdict: VerdictUnknown}
@@ -199,10 +199,10 @@ func TestDownshiftRequiresStrictlyLowerTier(t *testing.T) {
 	// Two mid-tier models. "cheap" has a lower list price than "middle" but it
 	// lists second; price must not pull it ahead of first-found order.
 	r := nativeResolver{models: map[string]Model{
-		"strong":  {ID: "strong", Tier: TierFrontier, OutputM: 9},
-		"middle":  {ID: "middle", Tier: TierMid, OutputM: 5},
-		"cheap":   {ID: "cheap", Tier: TierMid, OutputM: 1},
-		"unknown": {ID: "unknown", Tier: TierMid, OutputM: 2},
+		"strong":  {ID: "strong", Tier: TierFrontier},
+		"middle":  {ID: "middle", Tier: TierMid},
+		"cheap":   {ID: "cheap", Tier: TierMid},
+		"unknown": {ID: "unknown", Tier: TierMid},
 	}}
 
 	// UNHAPPY 1: a same-tier, strictly cheaper model is NOT a downshift target.
@@ -210,7 +210,7 @@ func TestDownshiftRequiresStrictlyLowerTier(t *testing.T) {
 	// old price rule would have switched to it; the tier rule must hold.
 	s.IDs = []string{"cheap"}
 	d := Decision{Harness: "cursor", Tier: TierMid, Verdict: VerdictDownshift}
-	d.Baseline.CurrentModel = Model{ID: "middle", Tier: TierMid, OutputM: 5}
+	d.Baseline.CurrentModel = Model{ID: "middle", Tier: TierMid}
 	d.Baseline.RequestedID = "middle"
 	if plan := d.PlanForSession(CursorCaps, r, s); plan.RewriteModel {
 		t.Fatalf("same-tier cheaper model accepted as a downshift: %+v", plan)
@@ -218,7 +218,7 @@ func TestDownshiftRequiresStrictlyLowerTier(t *testing.T) {
 
 	// UNHAPPY 2: a higher-tier model is never a downshift target either.
 	s.IDs = []string{"strong"}
-	d.Baseline.CurrentModel = Model{ID: "middle", Tier: TierMid, OutputM: 5}
+	d.Baseline.CurrentModel = Model{ID: "middle", Tier: TierMid}
 	d.Baseline.RequestedID = "middle"
 	if plan := d.PlanForSession(CursorCaps, r, s); plan.RewriteModel {
 		t.Fatalf("higher-tier model accepted as a downshift: %+v", plan)
@@ -230,7 +230,7 @@ func TestDownshiftRequiresStrictlyLowerTier(t *testing.T) {
 	t.Setenv("DOWNSHIFT_CURSOR_NATIVE_FILE", writeNativeFixture(t, hp))
 	closed, _ := LoadNativeSession("cursor", now)
 	closed.IDs = []string{"cheap"}
-	d.Baseline.CurrentModel = Model{ID: "strong", Tier: TierFrontier, OutputM: 9}
+	d.Baseline.CurrentModel = Model{ID: "strong", Tier: TierFrontier}
 	d.Baseline.RequestedID = "strong"
 	d.Tier = TierMid
 	if plan := d.PlanForSession(CursorCaps, r, closed); plan.RewriteModel {
@@ -242,7 +242,7 @@ func TestDownshiftRequiresStrictlyLowerTier(t *testing.T) {
 	// before "cheap", so "middle" must be chosen even though "cheap" is cheaper.
 	s.IDs = []string{"middle", "cheap"}
 	d = Decision{Harness: "cursor", Tier: TierMid, Verdict: VerdictDownshift}
-	d.Baseline.CurrentModel = Model{ID: "strong", Tier: TierFrontier, OutputM: 9}
+	d.Baseline.CurrentModel = Model{ID: "strong", Tier: TierFrontier}
 	d.Baseline.RequestedID = "strong"
 	if plan := d.PlanForSession(CursorCaps, r, s); !plan.RewriteModel || plan.Model.ID != "middle" {
 		t.Fatalf("lower tier not accepted, or price overrode session order: %+v", plan)

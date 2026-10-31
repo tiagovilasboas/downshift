@@ -41,7 +41,7 @@ type tieredResolver struct {
 func (r tieredResolver) ModelFor(h string, t core.Tier) core.Model {
 	for id, tt := range r.tier {
 		if tt == t {
-			return core.Model{ID: id, Harness: h, Tier: t, InputM: r.price[id], OutputM: r.price[id], Native: id}
+			return core.Model{ID: id, Harness: h, Tier: t, Native: id}
 		}
 	}
 	return core.Model{Harness: h, Tier: t}
@@ -51,7 +51,7 @@ func (r tieredResolver) LookupByID(h, id string) (core.Model, bool) {
 	if !ok {
 		return core.Model{}, false
 	}
-	return core.Model{ID: id, Harness: h, Tier: t, InputM: r.price[id], OutputM: r.price[id], Native: id}, true
+	return core.Model{ID: id, Harness: h, Tier: t, Native: id}, true
 }
 func (r tieredResolver) EffortFor(_, _ string, e core.Effort) string { return e.String() }
 func (r tieredResolver) IsExplicitOnly(_, _ string) bool             { return false }

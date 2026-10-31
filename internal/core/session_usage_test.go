@@ -186,8 +186,8 @@ func TestNativeDownshiftRequiresLowerTier(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			now := time.Now().UTC()
-			current := Model{ID: "qa-current", Harness: "cursor", Tier: TierMid, InputM: 1, OutputM: 2}
-			candidate := Model{ID: "qa-candidate", Harness: "cursor", Tier: tc.targetTier, InputM: 1, OutputM: tc.targetCost}
+			current := Model{ID: "qa-current", Harness: "cursor", Tier: TierMid}
+			candidate := Model{ID: "qa-candidate", Harness: "cursor", Tier: tc.targetTier}
 			resolver := nativeResolver{models: map[string]Model{current.ID: current, candidate.ID: candidate}}
 			session := KnownSession([]string{candidate.ID, current.ID}).WithUsageQuota("cursor", &quotamodel.Snapshot{
 				Version: 1, Harness: "cursor", Source: "cursor-usage", ObservedAt: now.Add(-time.Second), ExpiresAt: now.Add(time.Minute),
@@ -211,9 +211,9 @@ func TestNativeDownshiftRequiresLowerTier(t *testing.T) {
 
 func TestNativeUpshiftExplicitFlagKeepsOrdinaryFundedFallback(t *testing.T) {
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "absent.json"))
-	cheap := Model{ID: "qa-cheap", Harness: "cursor", Tier: TierSmall, InputM: 1, OutputM: 1}
-	middle := Model{ID: "qa-middle", Harness: "cursor", Tier: TierMid, InputM: 1, OutputM: 2}
-	explicit := Model{ID: "qa-explicit", Harness: "cursor", Tier: TierFrontier, InputM: 1, OutputM: 3}
+	cheap := Model{ID: "qa-cheap", Harness: "cursor", Tier: TierSmall}
+	middle := Model{ID: "qa-middle", Harness: "cursor", Tier: TierMid}
+	explicit := Model{ID: "qa-explicit", Harness: "cursor", Tier: TierFrontier}
 	resolver := nativeResolver{
 		models:   map[string]Model{cheap.ID: cheap, middle.ID: middle, explicit.ID: explicit},
 		explicit: map[string]bool{explicit.ID: true},

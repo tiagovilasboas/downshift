@@ -295,9 +295,7 @@ context compress` or `downshift compactor --`. Packages: `internal/shellwrap`,
 **Telemetry and stats.** appenders (`telemetry`, `childend`, `hookport`) write
 JSONL; `stats`, `report`, `session`, `watch` and `dsmon` read it.
 `telemetry.Summarize` reports gross, pricier-tier and net token counts from
-observed usage; no prices enter this summary. `stats` also shows dimensionless
-normalised units. `prices_as_of` dates the catalog snapshot used for routing and
-price analysis, not a dollar figure in current reports.
+observed usage; no prices enter this summary. The product uses no price.
 
 ## Where state lives
 
@@ -343,10 +341,6 @@ backup, and only for keys that are unset.
   left `main` unverified.
 - `ci-full` (weekdays) runs `go test -race -cover ./...` and `govulncheck`;
   the per-PR job does not run the race detector.
-- `sync-prices` (Mondays, `workflow_dispatch`) refreshes the embedded list
-  prices and `prices_as_of`, runs the catalog tests and opens a PR; a person
-  merges it. It dispatches `ci` on its branch because a PR opened with
-  `GITHUB_TOKEN` cannot trigger `pull_request` runs.
 - Release: `goreleaser` at an exact version, then `attest-build-provenance`.
 
 ---
@@ -376,7 +370,7 @@ tests, a security review or a production signal.
 | Subagent routing | The flow above: one decision per spawn, rewrite or allow, fail open. | D decides, H applies | `internal/core`, adapters, `runHookAdapter` |
 | Context optimization | Native provider is **observe-only**: PostToolUse records tool output bytes and the reduction `safe` mode would reach; the hook never replaces the tool result the model sees. `downshift context compress` compacts piped output in `safe` mode as an explicit CLI step. Headroom is a companion: detected on PATH, recorded with `context enable headroom`, never installed, launched or wrapped. | D observes; X compresses | `internal/contextopt`, `internal/compressor`, `internal/sensor`, `providers/headroom` |
 | Code Intelligence (DCI) | Independent subsystem: discovers repository code via Git (`discover.go`), extracts Go AST and multi-language structural symbols & calls (`parse.go`, `parse_lang.go`), builds incremental inverted index with reverse call graph (`index.go`), scores via BM25 with Production-First weighting & Call-Graph Co-Reference boost (`rank.go`), abstains on conversational chatter (`abstain.go`), packages structural sketches with downstream blast radius and prompt-injection defense within configurable budget (`pack.go`), and auto-injects via multi-harness hooks (`UserPromptSubmit`). CLI queries via `downshift dci impact` and `inspect`. Strictly decoupled from model routing. | D | `internal/codeintel/` |
-| Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `probe` (maintainer). Catalog list prices (`prices_as_of`, refreshed by the weekly `sync-prices` PR, [prices.md](../reference/prices.md)) inform routing; current reports expose token counts and no dollar amounts. | D | `internal/telemetry`, `internal/childend`, `.github/workflows/sync-prices.yml` |
+| Observability | Prompt-free `events.jsonl`; honor, resolved, child_ended and usage records; `stats`, `report`, `session`, `watch`, `probe` (maintainer). Reports expose token counts and no dollar amounts; the product uses no price. | D | `internal/telemetry`, `internal/childend` |
 | Diagnosis and recommendations | `doctor` (binary, state dir, catalog, hooks per harness, model override, quota, policy, context optimization, companion, semantic boost) with a `fix` per failed check; skills `downshift-setup`, `downshift-audit`, `cost-reducer` write nothing without a yes. | D | `cmd/downshift/doctor*.go`, `skills/` |
 | Benchmark and economic evaluation | Outcome evals and control-group report with its token check. Public `benchmark/` holds the published report; datasets stay in downshift-labs. | D | `internal/outcome` |
 
@@ -426,7 +420,7 @@ Downshift's codebase and documentation are structured strictly according to Clea
 | `internal/session` | `SessionList` and the loaders that do not need `Decision` or `Resolver`: file, hook marks, discovered file, quota snapshot attachment. Landed (`5f94e07`): `core` imports this package; this package must not import `core`. `PlanForSession`, `RouteForSession`, `CatalogSessionFromCurrent` and `CanWriteSessionID` stay in `core` |
 | `internal/fuse` | Landed (`110ef31`). Semantic boost policy: raise-only, no-signal skip. Imports `classify` and `semantic`. Does not import `core`. `core` keeps `ClassifyWithSemantic` as a wrapper. Stays in-process and does not exec |
 | `internal/classify` | Regex classifier, `signals.go`, language guard, risk floor (concurrent category scan from 64 KiB). No tier, no harness, no catalog |
-| `internal/catalog` | Embedded `catalog.json` (with `prices_as_of`), user override merge (recovers into the embedded data on a panic), `Resolver` |
+| `internal/catalog` | Embedded `catalog.json`, user override merge (recovers into the embedded data on a panic), `Resolver` |
 | `internal/discovery`, `internal/models` | Session model discovery (sources, order, `discovered.json` cache; run by `setup` and `models discover`) and `models list/check/pull`. Both import `catalog` and `core` |
 | `internal/adapters/*` | Harness-specific I/O only. Adapters do not choose the tier; they call `core.Route`, then apply the plan core returns |
 | `internal/policyfile` | Project tier floor (`TierFloorHook`), plugged into core at `init`. `cmd` blank-imports `policyfile` |

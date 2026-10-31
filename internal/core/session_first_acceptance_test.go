@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"github.com/tiagovilasboas/downshift/internal/core"
 	"github.com/tiagovilasboas/downshift/internal/core/decidertest"
-	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -30,8 +29,8 @@ func TestSessionFirstAcceptance_NewOrderedModelsAcrossHarnesses(t *testing.T) {
 			if d.Tier != core.TierSmall || d.Model.ID != "qa-new-small" {
 				t.Errorf("session route not selected: %+v", d)
 			}
-			if d.Baseline.CurrentModel.InputM != 0 || d.Baseline.CurrentModel.OutputM != 0 || d.Model.InputM != 0 || d.Model.OutputM != 0 || d.Savings != 0 {
-				t.Errorf("unknown session prices invented: %+v", d)
+			if d.Savings != 0 {
+				t.Errorf("session route invented a saving: %+v", d)
 			}
 		})
 	}
@@ -98,7 +97,7 @@ func TestSessionFirstAcceptance_DiscoveredMetadataRoundtrip(t *testing.T) {
 			}
 			r := core.ResolveSessionModels(h.Harness, session, cat)
 			model, ok := r.LookupByID(h.Harness, "qa-opaque")
-			if !ok || model.Tier != core.TierFrontier || model.InputM != 0 || model.OutputM != 0 {
+			if !ok || model.Tier != core.TierFrontier {
 				t.Fatalf("cached native capability lost: %+v ok=%v", model, ok)
 			}
 		})
@@ -106,11 +105,10 @@ func TestSessionFirstAcceptance_DiscoveredMetadataRoundtrip(t *testing.T) {
 }
 
 func TestSessionFirstAcceptance_MalformedMetadataIsRejected(t *testing.T) {
-	// Owner decision 2026-10-31: routing decides by tier only, so a malformed
-	// or absent list price no longer rejects a descriptor (that behavior is
-	// covered by TestSessionFirstAcceptance_MalformedPriceIsAccepted). The
-	// non-price rejections (duplicate id, foreign harness, invalid effort)
-	// still protect capability from a malformed source.
+	// Owner decision 2026-10-31: routing decides by tier only and a descriptor
+	// no longer carries a price. The non-price rejections (duplicate id,
+	// foreign harness, invalid effort) still protect capability from a
+	// malformed source.
 	for _, h := range core.AllHarnessCaps() {
 		id := catID(h.Harness, core.TierMid)
 		cases := map[string][]core.SessionModel{
@@ -131,40 +129,21 @@ func TestSessionFirstAcceptance_MalformedMetadataIsRejected(t *testing.T) {
 	}
 }
 
-// TestSessionFirstAcceptance_MalformedPriceIsAccepted asserts the owner
-// decision (2026-10-31): a session descriptor is accepted on its tier and
-// efforts even when the list price is negative, NaN, infinite, or absent.
-// Price no longer gates routing, so a bad price is stored as unknown (0)
-// instead of rejecting a model whose capability is well-formed.
-func TestSessionFirstAcceptance_MalformedPriceIsAccepted(t *testing.T) {
-	negative, nan, inf := -1.0, math.NaN(), math.Inf(1)
+// A session descriptor is accepted on its tier and efforts alone; it carries
+// no price. The "absent price" case that this once covered is now the only
+// shape, so a well-formed tier/effort descriptor always resolves.
+func TestSessionFirstAcceptance_TierOnlyDescriptorIsAccepted(t *testing.T) {
 	for _, h := range core.AllHarnessCaps() {
 		id := catID(h.Harness, core.TierMid)
-		cases := map[string][]core.SessionModel{
-			"negative price": {{ID: id, Tier: "mid", InputM: &negative}},
-			"nan price":      {{ID: id, Tier: "mid", OutputM: &nan}},
-			"infinite price": {{ID: id, Tier: "mid", OutputM: &inf}},
-			"absent price":   {{ID: id, Tier: "mid"}},
+		s := core.KnownSession([]string{"qa-new-small", id, "qa-new-frontier"})
+		s.Metadata = []core.SessionModel{{ID: id, Tier: "mid"}}
+		r := core.ResolveSessionModels(h.Harness, s, cat)
+		model, ok := r.LookupByID(h.Harness, id)
+		if !ok {
+			t.Fatalf("%s: well-formed tier/effort descriptor rejected", h.Harness)
 		}
-		for name, metadata := range cases {
-			t.Run(h.Harness+"/"+name, func(t *testing.T) {
-				s := core.KnownSession([]string{"qa-new-small", id, "qa-new-frontier"})
-				s.Metadata = metadata
-				r := core.ResolveSessionModels(h.Harness, s, cat)
-				model, ok := r.LookupByID(h.Harness, id)
-				if !ok {
-					t.Fatalf("valid tier/effort descriptor rejected for %q price", name)
-				}
-				if model.Tier != core.TierMid {
-					t.Errorf("tier lost: got %v want mid", model.Tier)
-				}
-				// A malformed stored price must never leak NaN/Inf/negative to
-				// a reader; it is kept as unknown (0).
-				if math.IsNaN(model.InputM) || math.IsInf(model.InputM, 0) || model.InputM < 0 ||
-					math.IsNaN(model.OutputM) || math.IsInf(model.OutputM, 0) || model.OutputM < 0 {
-					t.Errorf("malformed price stored on model: in=%v out=%v", model.InputM, model.OutputM)
-				}
-			})
+		if model.Tier != core.TierMid {
+			t.Errorf("%s: tier lost: got %v want mid", h.Harness, model.Tier)
 		}
 	}
 }

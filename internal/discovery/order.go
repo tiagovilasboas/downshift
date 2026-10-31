@@ -59,15 +59,15 @@ type candidate struct {
 }
 
 // Order ranks discovered models with catalog metadata. It never parses a
-// model name to decide capability: tier and price come from the catalog, and
-// "newest" comes from the provider's created_at, falling back to comparing the
-// numbers inside the ids only to break a tie within one family.
+// model name to decide capability: tier comes from the catalog, and "newest"
+// comes from the provider's created_at, falling back to comparing the numbers
+// inside the ids only to break a tie within one family.
 func Order(harness string, models []Model, cat Catalog) Ranked {
 	var r Ranked
 	groups := map[string][]candidate{}
 	var groupOrder []string
 	for _, m := range models {
-		r.Metadata = append(r.Metadata, core.SessionModel{ID: m.ID, Tier: m.Tier, Efforts: m.Efforts, InputM: m.InputM, OutputM: m.OutputM, Harness: harness})
+		r.Metadata = append(r.Metadata, core.SessionModel{ID: m.ID, Tier: m.Tier, Efforts: m.Efforts, Harness: harness})
 		e, ok := rankEntry(harness, m, cat)
 		if !ok {
 			r.Unranked = append(r.Unranked, m.ID)
@@ -112,9 +112,8 @@ func Order(harness string, models []Model, cat Catalog) Ranked {
 		if ra, rb := tierRank[strings.ToLower(a.e.Tier)], tierRank[strings.ToLower(b.e.Tier)]; ra != rb {
 			return ra < rb
 		}
-		if a.e.OutputCostM != b.e.OutputCostM {
-			return a.e.OutputCostM < b.e.OutputCostM
-		}
+		// Within a tier the order is the model id (owner decision 2026-10-31:
+		// the product uses no price, so a cheaper-first tiebreak is gone).
 		return a.m.ID < b.m.ID
 	})
 	for _, w := range winners {
@@ -141,9 +140,6 @@ func rankEntry(harness string, m Model, cat Catalog) (catalog.Entry, bool) {
 		// A provider descriptor outranks the fallback catalog. Keep native
 		// IDs separate instead of deduplicating them using catalog families.
 		e = catalog.Entry{ID: m.ID, Harness: harness, Tier: nativeTier}
-		if m.OutputM != nil {
-			e.OutputCostM = *m.OutputM
-		}
 		ok = true
 	} else if m.Tier != "" {
 		// Explicit malformed capability evidence cannot silently fall back.

@@ -138,8 +138,8 @@ func TestOpenRouterAllowlist_ValidFileIsShadowOnly(t *testing.T) {
 		t.Errorf("ShadowGateways = %+v, want the allowlisted row", shadow)
 	}
 	e, ok := c.EntryFor("opencode", "x-ai/grok-x")
-	if !ok || !e.ZDR || e.InputCostM != 0 || e.OutputCostM != 0 {
-		t.Errorf("entry = %+v ok=%v, want ZDR and no invented price", e, ok)
+	if !ok || !e.ZDR {
+		t.Errorf("entry = %+v ok=%v, want ZDR", e, ok)
 	}
 }
 
@@ -250,5 +250,37 @@ func TestEmbeddedCatalog_HasNoGatewayRows(t *testing.T) {
 		if e.Provider == "openrouter" {
 			t.Errorf("embedded catalog ships gateway row %q; gateway rows come from the user allowlist", e.ID)
 		}
+	}
+}
+
+// A user override written before prices were dropped still carries the old
+// price keys (input_cost_per_1m and the rest) and a top-level prices_as_of.
+// The decoder is not strict, so those keys are ignored and the override still
+// loads and routes: a user is never broken by the field removal.
+func TestLoad_OldUserCatalogWithPriceKeysStillLoads(t *testing.T) {
+	useStateDir(t)
+	writeStateFile(t, paths.CatalogPath, `{
+		"prices_as_of": "2026-10-01",
+		"entries": [
+			{
+				"id": "claude-opus-5-5",
+				"harness": "claude-code",
+				"tier": "frontier",
+				"input_cost_per_1m": 4.0,
+				"output_cost_per_1m": 20.0,
+				"cache_read_cost_per_1m": 0.2,
+				"cache_write_cost_per_1m": 5.0
+			}
+		]
+	}`)
+
+	var warn strings.Builder
+	c := load(&warn)
+	if warn.Len() != 0 {
+		t.Fatalf("an old-format override must load without a warning, got %q", warn.String())
+	}
+	m, ok := c.LookupByID("claude-code", "claude-opus-5-5")
+	if !ok || m.ID != "claude-opus-5-5" || m.Tier != core.TierFrontier {
+		t.Fatalf("override entry = %+v ok=%v, want claude-opus-5-5 at the frontier tier", m, ok)
 	}
 }

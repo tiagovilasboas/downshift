@@ -178,10 +178,10 @@ type Event struct {
 	// events written before the trace existed and on non-decision records.
 	RoutingPolicy string   `json:"routing_policy,omitempty"`
 	ReasonCodes   []string `json:"reason_codes,omitempty"`
-	// UpshiftCostRatio is the catalog list-price ratio (routed over requested,
-	// input plus output per 1M) recorded on an UPSHIFT whose two prices are both
-	// known and whose target costs more. It lets stats charge the extra cost.
-	// Absent on old logs and when either price is unknown (then neutral).
+	// UpshiftCostRatio was the catalog list-price ratio recorded on an UPSHIFT.
+	// The product no longer uses a price, so nothing writes it now; it stays 0
+	// and absent (omitempty), and the field is removed with the other price
+	// event fields. Old logs may still carry a value.
 	UpshiftCostRatio float64 `json:"upshift_cost_ratio,omitempty"`
 	// GatewayWould is the slug of the allowlisted OpenRouter row that would
 	// serve this tier (shadow only; the routed model is unchanged), and

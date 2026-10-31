@@ -74,8 +74,8 @@ func handBuiltDecisions() []core.Decision {
 		{Harness: "cursor", Guards: core.Guards{PolicyFloor: true, RiskFloor: true, SemanticLift: true, TaskFocus: true, AgentTypeHint: true}},
 		{
 			Harness: "claude-code", Complexity: core.Complex, Tier: core.TierFrontier, Verdict: core.VerdictUpshift, Confident: true,
-			Model:    core.Model{ID: "big", InputM: 15, OutputM: 75},
-			Baseline: core.Baseline{CurrentModel: core.Model{ID: "mid", InputM: 3, OutputM: 15}, FromSettings: true, GuessHeld: true, Pinned: true},
+			Model:    core.Model{ID: "big"},
+			Baseline: core.Baseline{CurrentModel: core.Model{ID: "mid"}, FromSettings: true, GuessHeld: true, Pinned: true},
 			Session:  core.Session{QuotaStatus: "ok", QuotaSource: "payload", CreditHeld: true},
 		},
 		{

@@ -28,11 +28,6 @@ func TestSessionMetadataAcceptance_OpaqueNativeIDsWithoutCatalog(t *testing.T) {
 		if len(ranked.Metadata) != 4 || !reflect.DeepEqual(ranked.Metadata[2].Efforts, []string{"low", "high"}) {
 			t.Errorf("%s native metadata discarded: %+v", h.Harness, ranked.Metadata)
 		}
-		for _, m := range ranked.Metadata {
-			if m.InputM != nil || m.OutputM != nil {
-				t.Errorf("%s price fabricated: %+v", h.Harness, m)
-			}
-		}
 	}
 }
 

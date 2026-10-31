@@ -26,15 +26,15 @@ type stubResolver struct {
 }
 
 var stubModels = []core.Model{
-	{ID: "flash_lite", Harness: "antigravity", Tier: core.TierSmall, InputM: 1, OutputM: 5},
-	{ID: "flash", Harness: "antigravity", Tier: core.TierMid, InputM: 3, OutputM: 15},
-	{ID: "pro", Harness: "antigravity", Tier: core.TierFrontier, InputM: 5, OutputM: 25},
-	{ID: "inherit", Harness: "antigravity", Tier: core.TierMid, InputM: 3, OutputM: 15},
+	{ID: "flash_lite", Harness: "antigravity", Tier: core.TierSmall},
+	{ID: "flash", Harness: "antigravity", Tier: core.TierMid},
+	{ID: "pro", Harness: "antigravity", Tier: core.TierFrontier},
+	{ID: "inherit", Harness: "antigravity", Tier: core.TierMid},
 }
 
 func (s stubResolver) ModelFor(harness string, t core.Tier) core.Model {
 	if s.foreign {
-		return core.Model{ID: "claude-opus-5-5", Harness: "claude-code", Tier: t, InputM: 5, OutputM: 25}
+		return core.Model{ID: "claude-opus-5-5", Harness: "claude-code", Tier: t}
 	}
 	for _, m := range stubModels {
 		if m.Tier == t {
