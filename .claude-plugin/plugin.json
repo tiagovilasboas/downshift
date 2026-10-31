@@ -1,7 +1,7 @@
 {
   "name": "downshift",
   "displayName": "Downshift",
-  "description": "Applies the model the orchestrator chose to each subagent, deterministically and within your policy: a PreToolUse hook, the session tree (/downshift:status), setup, audit, cost-reducer and harness-engineer skills, and the shell exec wrapper (downshift compact). Needs the downshift binary on PATH.",
+  "description": "Applies the model the orchestrator chose to each subagent, deterministically and within your policy: a PreToolUse hook, the session tree (/downshift:status), setup, audit, downshift-tune and harness-engineer skills, and the shell exec wrapper (downshift compact). Needs the downshift binary on PATH.",
   "author": {
     "name": "Tiago Vilas Boas",
     "url": "https://github.com/tiagovilasboas"

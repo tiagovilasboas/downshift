@@ -196,7 +196,7 @@ or in two steps, `/plugin marketplace add tiagovilasboas/downshift` then
 `/plugin install downshift@downshift`. The plugin wires `PreToolUse`,
 `PostToolUse`, `PostToolUseFailure`, `SubagentStop`, and `UserPromptSubmit` (for Downshift Code Intelligence) from
 [`hooks/hooks.json`](../../hooks/hooks.json) (each entry only calls the binary),
-adds the `downshift-setup`, `downshift-audit` and `cost-reducer` skills, and the
+adds the `downshift-setup`, `downshift-audit` and `downshift-tune` skills, and the
 command below as `/downshift:status`.
 It does not set `opusplan`, plan mode, the statusline or
 the You should know mod: those are settings, not hooks, and `downshift setup` writes them (You should know only with `--you-should-know`). Set

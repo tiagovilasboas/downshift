@@ -1,6 +1,6 @@
 {
   "name": "downshift",
-  "description": "Downshift: the orchestrator chooses each subagent's model; Downshift applies that choice within your policy, compacts command output and measures the result. One plugin: hooks, /downshift:status, and the setup, audit, cost-reducer and harness-engineer skills.",
+  "description": "Downshift: the orchestrator chooses each subagent's model; Downshift applies that choice within your policy, compacts command output and measures the result. One plugin: hooks, /downshift:status, and the setup, audit, downshift-tune and harness-engineer skills.",
   "owner": {
     "name": "Tiago Vilas Boas",
     "url": "https://github.com/tiagovilasboas"

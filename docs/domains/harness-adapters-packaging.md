@@ -48,7 +48,7 @@ Downshift organizes its distribution across five modular packaging layers, allow
 | Layer | Artifact Path | Clean Architecture Role | Harness Scope |
 |---|---|---|---|
 | **Layer 1: Memory** | `AGENTS.md` (and `CLAUDE.md`) | Always-loaded operational rules and instructions (under 200 lines) | Harness-neutral |
-| **Layer 2: Skills** | `skills/downshift-setup`, `skills/downshift-audit`, `skills/cost-reducer` | Agent skills with structured procedures and judgment logic | Harness-neutral (SKILL.md standard) |
+| **Layer 2: Skills** | `skills/downshift-setup`, `skills/downshift-audit`, `skills/downshift-tune` | Agent skills with structured procedures and judgment logic | Harness-neutral (SKILL.md standard) |
 | **Layer 3: Hooks** | `downshift <harness>` subcommands, `PreToolUse`, `PostToolUse`, `SubagentStop` | Direct CLI entrypoints for hook interception and telemetry | Shared Go binary |
 | **Layer 4: Agents** | `agents/mechanical-worker.md` | Model-omitted subagent definition example for autonomous routing | Claude Code / Harness-neutral |
 | **Layer 5: Plugin & Mods** | `.claude-plugin/plugin.json`, `marketplace.json` | Single-command installation bundle | Claude Code native plugin |

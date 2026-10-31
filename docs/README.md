@@ -122,7 +122,7 @@ The context optimization domain manages context window consumption without inter
 | [domains/context-optimization.md](domains/context-optimization.md) | Domain Hub | Domain specification: native compressor, observe-only sensor, companion integration |
 | [design/context-optimization.md](design/context-optimization.md) | Design | Native context compressor, observe-only tool output sensor, companion contracts, and failure handling |
 | [guides/companions.md](guides/companions.md) | Guide | Companions: proxy detection, recommended Claude Code mods (You should know, Token Weather, Replay Theater, reflect-mod) |
-| [../skills/cost-reducer/SKILL.md](../skills/cost-reducer/SKILL.md) | Skill | Agent skill: cut session tokens in fixed order (routing, fixed context, tool output, policy, misroutes) |
+| [../skills/downshift-tune/SKILL.md](../skills/downshift-tune/SKILL.md) | Skill | Agent skill: cut session tokens in fixed order (routing, fixed context, tool output, policy, misroutes) |
 | [evidence/report-e2e/status-compaction.json](evidence/report-e2e/status-compaction.json) | Evidence | Context compaction status telemetry record |
 | [evidence/report-e2e/compaction-block.png](evidence/report-e2e/compaction-block.png) | Evidence | Visual evidence of compaction blocks |
 
