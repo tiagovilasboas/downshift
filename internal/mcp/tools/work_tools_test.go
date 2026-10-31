@@ -220,6 +220,7 @@ func TestWorkToolsAreValidAndNamed(t *testing.T) {
 		"delegate": "Start delegated workers",
 		"collect":  "Read worker results",
 		"cancel":   "Stop workers",
+		"diff":     "Read a worker's diff",
 	}
 	for _, tl := range ts {
 		if want, ok := titles[tl.Name]; !ok || tl.Title != want {

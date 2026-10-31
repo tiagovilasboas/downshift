@@ -109,7 +109,7 @@ func TestMcpServerListsItsTools(t *testing.T) {
 	for _, x := range m["result"].(map[string]any)["tools"].([]any) {
 		names = append(names, x.(map[string]any)["name"].(string))
 	}
-	if strings.Join(sortedCopy(names), ",") != "apply,cancel,collect,delegate,playbook,providers,status" {
+	if strings.Join(sortedCopy(names), ",") != "apply,cancel,collect,delegate,diff,playbook,providers,status" {
 		t.Fatalf("tools = %v", names)
 	}
 }

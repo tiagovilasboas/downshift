@@ -134,7 +134,7 @@ func TestCheckClaudeCodeMcpMatchAndAnswers(t *testing.T) {
 		if command != exe {
 			t.Errorf("probe got command %q, want %q", command, exe)
 		}
-		return 7, nil
+		return 8, nil
 	}))
 	if r := got["mcp registered"]; r.status != doctorOK {
 		t.Errorf("registered = %+v", r)
@@ -143,7 +143,7 @@ func TestCheckClaudeCodeMcpMatchAndAnswers(t *testing.T) {
 		t.Errorf("command = %+v", r)
 	}
 	ans := got["mcp answers"]
-	if ans.status != doctorOK || !strings.Contains(ans.detail, "7 tools") {
+	if ans.status != doctorOK || !strings.Contains(ans.detail, "8 tools") {
 		t.Errorf("answers = %+v", ans)
 	}
 }
