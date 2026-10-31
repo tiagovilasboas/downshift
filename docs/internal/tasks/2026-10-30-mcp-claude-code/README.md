@@ -12,7 +12,7 @@ harnesses are out of scope here.
 |---|---|
 | `downshift` is registered at user scope as `downshift mcp serve` (stdio, `DOWNSHIFT_MANAGED=setup`) and Claude Code reports it connected | `claude mcp list`, `claude mcp get downshift` |
 | The server answers `initialize` and `tools/list` with 7 tools: `providers`, `playbook`, `status`, `apply`, `delegate`, `collect`, `cancel` | stdio exchange, 2026-10-30 |
-| Calls in Claude Code transcripts since 2026-10-25: `providers` 345, `status` 2, `apply` 2; `playbook`, `delegate`, `collect` and `cancel` none | `~/.claude/projects/**/*.jsonl` |
+| Calls in Claude Code transcripts since 2026-10-25: `providers` 7 (in 6 sessions; a first count of 345 included the `api-request-blob` mirror records), `status` and `apply` a handful; `playbook`, `delegate`, `collect` and `cancel` none | `~/.claude/projects/**/*.jsonl`, assistant records only |
 | `downshift doctor` has no MCP check: it never says whether the server is registered, which binary it points at, or whether it answers | `cmd/downshift/doctor*.go` |
 | The registered binary had been built from an older commit than `main` until it was reinstalled | `downshift version` |
 | Worker tools: one real read-only Claude worker completed `delegate` and `collect` (2026-10-29); a write refused under plan mode (spec R27) is not shown; the bypass write route has not run against the real CLI | CHANGELOG `[Unreleased]` |
@@ -41,6 +41,10 @@ harnesses are out of scope here.
 | M7 | Evidence doc, `limits` row `mcp` for claude-code, README/capability matrix | 1 | M1 to M6 | no |
 
 Total: 17 points, no card over 3.
+
+State (2026-10-31): M0 to M7 done. Evidence: `docs/evidence/mcp-claude-code-2026-10-31.md`. Fixes found on the
+way landed in #651 (doctor MCP check) and #652 (`delegate` dir default, `collect` cap). Open beyond this plan: the
+orchestrator consults `providers` before only 20.2% of spawns on its own.
 
 ## Out of scope
 

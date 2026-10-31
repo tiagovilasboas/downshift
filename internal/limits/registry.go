@@ -66,6 +66,11 @@ var registry = map[string]HarnessLimits{
 				Status:  "full",
 				Reason:  "based on actual token usage from the child transcript",
 			},
+			{
+				Feature: "mcp",
+				Status:  "full",
+				Reason:  "all 7 tools answered in real Claude Code sessions, read and bypass workers included (docs/evidence/mcp-claude-code-2026-10-31.md)",
+			},
 		},
 	},
 	"cursor": {
