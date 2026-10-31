@@ -13,11 +13,17 @@ import (
 	"github.com/tiagovilasboas/downshift/internal/core"
 )
 
-// Catalog is what Order needs from the catalog: metadata for an id.
-// *catalog.Catalog satisfies it.
+// Catalog is what discovery needs from the catalog: metadata for an id (Order)
+// and the session stand-in (MergeReported's union). *catalog.Catalog satisfies
+// it. SessionCandidates, LookupByID and IsExplicitOnly serve the same stand-in
+// the model-availability surfaces show; the catalog ranks ids, it never adds
+// one beyond that stand-in.
 type Catalog interface {
 	EntryFor(harness, modelID string) (catalog.Entry, bool)
 	IsExactID(harness, id string) bool
+	SessionCandidates(harness string) []string
+	LookupByID(harness, modelID string) (core.Model, bool)
+	IsExplicitOnly(harness, modelID string) bool
 }
 
 // Ranked is the routing view of a discovery result.
