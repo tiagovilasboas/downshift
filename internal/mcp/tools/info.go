@@ -102,9 +102,14 @@ type Deps struct {
 	// uses it as the default dir when the caller sends none.
 	Root string
 	// Broad is true when Root is a place a containment check cannot protect (the
-	// filesystem root or the user's home). delegate refuses a missing dir then,
-	// so a worker never defaults into a broad directory.
+	// filesystem root, the user's home, or an ancestor of home). delegate refuses
+	// a missing dir then, so a worker never defaults into a broad directory, and
+	// a write job is refused outright (see workerDir).
 	Broad bool
+	// BroadDir reports whether an explicit dir is itself broad, reusing the same
+	// predicate that set Broad for the root. A write job with a broad explicit
+	// dir is refused. nil means no explicit dir is treated as broad.
+	BroadDir func(string) bool
 	// Harnesses lists the valid harness ids, for argument errors.
 	Harnesses func() []string
 	Version   string
