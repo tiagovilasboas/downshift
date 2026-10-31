@@ -42,7 +42,6 @@ var oversizedBaseline = map[string]int{
 	"internal/codeintel/security.go":             682,
 	"internal/codeintel/telemetry.go":            325,
 	"internal/compressor/compressor.go":          1099,
-	"internal/compressor/gh_run_log.go":          305,
 	"internal/compressor/git_diff.go":            339,
 	"internal/core/policy.go":                    307,
 	"internal/core/session_select.go":            337,

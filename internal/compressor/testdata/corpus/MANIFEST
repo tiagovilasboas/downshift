@@ -218,6 +218,7 @@ preserve  gh_checks    gh_checks_extra_line.txt
 clean     gh_run_list  gh_run_list_clean.txt
 preserve  gh_run_list  gh_run_list_extra_line.txt
 clean     gh_run_log   gh_run_log_clean.txt
+clean     gh_run_log   gh_run_log_benign_warning.txt
 preserve  gh_run_log   gh_run_log_danger.txt
 
 # Go toolchain (pass-through)
