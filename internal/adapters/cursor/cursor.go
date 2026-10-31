@@ -290,7 +290,7 @@ func cursorMuseSparkHold(decision core.Decision, plan core.RewritePlan, session 
 	ids := make([]string, 0, 4)
 	strongestMuse := false
 	if decision.Verdict == core.VerdictUpshift {
-		if id := strongestSessionID(session, res); id != "" {
+		if id := lastSessionID(session, res); id != "" {
 			if m, ok := cursorMuseSpark(id, res); ok {
 				strongestMuse = true
 				ids = append(ids, id, m.ID)
@@ -364,17 +364,17 @@ func musePoolPositive(session core.SessionList, ids []string) bool {
 	return false
 }
 
-func strongestSessionID(session core.SessionList, res core.Resolver) string {
+// lastSessionID returns the last non-inherit, non-explicit_only session id.
+func lastSessionID(session core.SessionList, res core.Resolver) string {
 	if !session.Known {
 		return ""
 	}
-	allowExplicit := core.ExplicitUpshiftEnabled()
 	last := ""
 	for _, id := range session.IDs {
 		if id == "" || id == "inherit" {
 			continue
 		}
-		if res != nil && res.IsExplicitOnly(harnessID, id) && !allowExplicit {
+		if res != nil && res.IsExplicitOnly(harnessID, id) {
 			continue
 		}
 		last = id

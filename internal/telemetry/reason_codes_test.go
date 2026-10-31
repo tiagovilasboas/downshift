@@ -27,7 +27,6 @@ var traceCat = catalog.Load()
 // optional layers) and returns the event the shared runner would record.
 func routeTrace(t *testing.T, prompt string, current core.Tier, known bool) telemetry.Event {
 	t.Helper()
-	t.Setenv(core.NBUpshiftEnv, "")
 	t.Setenv(core.NBDownshiftEnv, "")
 	t.Setenv("DOWNSHIFT_GRAPHIFY_CMD", "")
 	currentID := ""
@@ -141,11 +140,10 @@ func TestReasonCodes_EveryRuleHasACode(t *testing.T) {
 			PolicyFloor: true,
 		},
 		Shadow: core.Shadow{
-			NBUpshift:   core.NBUpshift{Would: true, Applied: true},
 			NBDownshift: core.NBDownshift{Would: true, Applied: false},
 		},
 	})
-	want := []string{"CLASSIFIER_UNCONFIDENT", "CREDIT_HELD", "NB_UPSHIFT_APPLIED", "RISK_FLOOR", "TIER_FLOOR"}
+	want := []string{"CLASSIFIER_UNCONFIDENT", "CREDIT_HELD", "RISK_FLOOR", "TIER_FLOOR"}
 	if !reflect.DeepEqual(lifts, want) {
 		t.Errorf("lift codes = %v, want %v (a shadow-only NB opinion is not a reason)", lifts, want)
 	}

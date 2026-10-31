@@ -88,10 +88,6 @@ func ResolveSessionForID(harness, sessionID string, hookLists ...*[]string) Sess
 	return session.ResolveSessionForID(harness, sessionID, hookLists...)
 }
 
-// ExplicitUpshiftEnabled reports whether upshift may select catalog
-// explicit_only ids. The default is off.
-func ExplicitUpshiftEnabled() bool { return session.ExplicitUpshiftEnabled() }
-
 // LoadDiscoveredSession reads the models `downshift models discover` found for
 // harness. An absent, invalid, empty or expired entry is an unknown session.
 func LoadDiscoveredSession(harness string, now time.Time) SessionList {

@@ -188,7 +188,6 @@ func TestLoadSessionFile_Quota(t *testing.T) {
 }
 
 func TestCursorFileQuota_UpshiftSkipsUnknownMuse(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	dir := t.TempDir()
 	path := filepath.Join(dir, "session-models.json")
 	body := []byte(`{
@@ -217,7 +216,6 @@ func TestCursorFileQuota_UpshiftSkipsUnknownMuse(t *testing.T) {
 }
 
 func TestCodexFileQuota_SelectsOnlyIncluded(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	dir := t.TempDir()
 	path := filepath.Join(dir, "session-models.json")
 	body := []byte(`{
@@ -266,7 +264,6 @@ func TestFileQuota_SnapshotStaysAuthoritative(t *testing.T) {
 }
 
 func TestUpshift_UncreditedGrokIsNotSelected(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	// The live session list can name grok-4.7-xhigh. The hook credit set does not.
 	session := core.KnownSession([]string{"composer-2.5-fast", "composer-2.5", "grok-4.7-xhigh"})
 	session.CreditsReported = true
@@ -281,7 +278,6 @@ func TestUpshift_UncreditedGrokIsNotSelected(t *testing.T) {
 }
 
 func TestUpshift_CreditSetsDoNotCrossHarnesses(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	cursorIncluded := []string{"composer-2.5-fast", "composer-2.5"}
 	cursor := core.KnownSession([]string{"composer-2.5-fast", "composer-2.5", "gpt-5.6-sol", "grok-4.7-xhigh"}).WithHookQuota(&cursorIncluded, nil)
 	cursorPlan := upshiftPlan("cursor", "composer-2.5-fast", core.CursorCaps, cursor)
@@ -324,7 +320,6 @@ func TestUpshift_EmptyCreditIntersectionDoesNotRewrite(t *testing.T) {
 }
 
 func TestUpshift_MissingCreditReportUsesSessionMinusExhausted(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	dir := t.TempDir()
 	path := filepath.Join(dir, "session-models.json")
 	body := []byte(`{
@@ -378,40 +373,24 @@ func TestExhaustedIDIsNeverSelected(t *testing.T) {
 	}
 }
 
-func TestExplicitUpshift_DefaultsOff(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
+// An explicit_only id is never an upshift target: routing (up or down) never
+// selects the owner's deliberate choice. The legacy opt-in that let it was
+// removed, so this is the only behaviour.
+func TestExplicitOnly_NeverAnUpshiftTarget(t *testing.T) {
 	session := core.KnownSession([]string{"composer-2.5", "claude-fable-5-1-thinking-high"})
 	plan := upshiftPlan("cursor", "composer-2.5", core.CursorCaps, session)
 	if plan.RewriteModel || plan.Model.ID == "claude-fable-5-1-thinking-high" {
-		t.Fatalf("plan = %+v, explicit_only must not be an upshift target by default", plan)
+		t.Fatalf("plan = %+v, explicit_only must never be an upshift target", plan)
 	}
 	if core.CanWriteSessionID("cursor", "claude-fable-5-1-thinking-high", session, cat) {
-		t.Fatal("explicit_only id must not be writable while the flag is off")
+		t.Fatal("explicit_only id must never be writable")
 	}
 	if core.CanWriteSessionID("codex", "gpt-6-astra", core.KnownSession([]string{"gpt-5.6-sol", "gpt-6-astra"}), cat) {
-		t.Fatal("gpt-6-astra must not be writable while the flag is off")
+		t.Fatal("gpt-6-astra must never be writable")
 	}
-}
-
-func TestExplicitUpshift_EnvAndFileLetLastIDWin(t *testing.T) {
-	t.Run("env", func(t *testing.T) {
-		t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "1")
-		assertExplicitUpshiftSelectsLast(t)
-	})
-	t.Run("file", func(t *testing.T) {
-		t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
-		dir := t.TempDir()
-		path := filepath.Join(dir, "session-models.json")
-		if err := os.WriteFile(path, []byte(`{"explicit_upshift": true, "cursor": ["composer-2.5"]}`), 0o600); err != nil {
-			t.Fatal(err)
-		}
-		t.Setenv("DOWNSHIFT_SESSION_MODELS", path)
-		assertExplicitUpshiftSelectsLast(t)
-	})
 }
 
 func TestExplicitUpshift_DownshiftAndCurrentModelStayPut(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "1")
 	session := core.KnownSession([]string{"composer-2.5", "claude-opus-5-thinking-high", "claude-fable-5-1-thinking-high"})
 	down := core.Decision{
 		Harness:   "cursor",
@@ -446,7 +425,6 @@ func TestExplicitUpshift_DownshiftAndCurrentModelStayPut(t *testing.T) {
 }
 
 func TestExplicitUpshift_OutsideCreditSetIsNotSelected(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "1")
 	session := core.KnownSession([]string{"composer-2.5", "claude-fable-5-1-thinking-high"})
 	session.CreditsReported = true
 	session.Included = []string{"composer-2.5"}
@@ -455,12 +433,11 @@ func TestExplicitUpshift_OutsideCreditSetIsNotSelected(t *testing.T) {
 		t.Fatalf("plan = %+v, explicit_only outside the credit set must not be selected", plan)
 	}
 	if core.CanWriteSessionID("cursor", "claude-fable-5-1-thinking-high", session, cat) {
-		t.Fatal("credit set is closed even when explicit upshift is on")
+		t.Fatal("explicit_only is never writable")
 	}
 }
 
 func TestClaudeCodeFableIsSelectableWithoutExplicitUpshift(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	if cat.IsExplicitOnly("claude-code", "claude-fable-5-1") {
 		t.Fatal("claude-code claude-fable-5-1 is not explicit_only")
 	}
@@ -493,24 +470,4 @@ func upshiftPlan(harness, current string, caps core.HarnessCapabilities, session
 		},
 	}
 	return d.PlanForSession(caps, cat, session)
-}
-
-func assertExplicitUpshiftSelectsLast(t *testing.T) {
-	t.Helper()
-	cursor := core.KnownSession([]string{"composer-2.5", "claude-fable-5-1-thinking-high"})
-	plan := upshiftPlan("cursor", "composer-2.5", core.CursorCaps, cursor)
-	if !plan.RewriteModel || plan.Model.ID != "claude-fable-5-1-thinking-high" {
-		t.Fatalf("cursor plan = %+v, want the last explicit_only id", plan)
-	}
-	if !core.CanWriteSessionID("cursor", "claude-fable-5-1-thinking-high", cursor, cat) {
-		t.Fatal("flag on must allow writing the cursor explicit_only id")
-	}
-	codex := core.KnownSession([]string{"gpt-5.6-sol", "gpt-6-astra"})
-	codexPlan := upshiftPlan("codex", "gpt-5.6-sol", core.CodexCaps, codex)
-	if !codexPlan.RewriteModel || codexPlan.Model.ID != "gpt-6-astra" {
-		t.Fatalf("codex plan = %+v, want gpt-6-astra", codexPlan)
-	}
-	if !core.CanWriteSessionID("codex", "gpt-6-astra", codex, cat) {
-		t.Fatal("flag on must allow writing gpt-6-astra")
-	}
 }

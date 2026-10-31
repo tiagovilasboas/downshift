@@ -252,7 +252,6 @@ var corpusKnownGaps = []corpusCase{}
 func corpusEnv(t *testing.T, minilm string) {
 	t.Helper()
 	t.Setenv("DOWNSHIFT_MINILM", minilm)
-	t.Setenv(core.NBUpshiftEnv, "")
 	t.Setenv(core.NBDownshiftEnv, "")
 }
 

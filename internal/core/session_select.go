@@ -11,8 +11,8 @@ const inheritID = "inherit"
 // membership is authoritative; catalog metadata is optional and never gates
 // a session-provided ID. An exhausted id is always refused. A non-empty
 // Included set is closed: an id outside it is refused. An empty Included
-// set is not a credit denial. An explicit_only id is writable only when
-// explicit upshift is on.
+// set is not a credit denial. An explicit_only id is never written by
+// routing: it is the owner's deliberate choice, left in place.
 func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bool {
 	if rejectedSessionModel(harness, id, res) || shadowSessionModel(harness, id, res) {
 		return false
@@ -32,7 +32,7 @@ func CanWriteSessionID(harness, id string, session SessionList, res Resolver) bo
 	if session.CreditsReported && len(session.Included) > 0 && !session.IsIncluded(id) {
 		return false
 	}
-	if res != nil && res.IsExplicitOnly(harness, id) && !ExplicitUpshiftEnabled() {
+	if res != nil && res.IsExplicitOnly(harness, id) {
 		return false
 	}
 	return true
@@ -121,12 +121,13 @@ func catalogSessionTarget(d Decision, res Resolver, session SessionList) (string
 	}
 	switch d.Verdict {
 	case VerdictUpshift:
+		// An UPSHIFT verdict only reaches here from the operator tier floor,
+		// which raised the tier above a weaker current model. Downshift never
+		// raises a tier on its own, so the target is the least-capable session
+		// model that meets the floored tier, never the strongest available.
 		floor := TierSmall
 		if d.Baseline.CurrentModel.ID != "" {
 			floor = d.Baseline.CurrentModel.Tier
-		}
-		if ExplicitUpshiftEnabled() {
-			return strongestSessionModel(d.Harness, session, res, d.Tier, floor)
 		}
 		return upshiftSessionModel(d.Harness, session, res, d.Tier, floor)
 	case VerdictDownshift, VerdictUnknown:
@@ -273,14 +274,24 @@ func catalogTiers(harness string, ids []string, res Resolver) ([]Tier, bool) {
 	return tiers, true
 }
 
-// upshiftSessionModel picks the least tier at or above both the needed tier
-// and the current model's tier (later session position first within a tier),
-// so an upshift lands where a downshift of the same task would. When no
-// quota-allowed id reaches the needed tier, it defers to strongestSessionModel.
+// upshiftSessionModel serves an UPSHIFT verdict, which only ever comes from
+// the operator tier floor: the floor raised the tier above a weaker current
+// model. Downshift never raises a tier on its own, so the floor's needed tier
+// is the target. The floor is a minimum, so the least tier at or above it that
+// a quota-allowed, non-explicit id reaches wins (later session position first
+// within a tier). When no id reaches the floor, the strongest available id at
+// or above the current model's tier satisfies as much of the operator minimum
+// as the session allows, never dropping below it and never selecting an
+// explicit_only id. When the catalog cannot rank the list, the position
+// mapping applies, as leastSessionModelAtOrAbove does.
 func upshiftSessionModel(harness string, session SessionList, res Resolver, minTier, floor Tier) (string, Model, bool, bool) {
-	ids := selectableSessionIDs(harness, session, res, ExplicitUpshiftEnabled())
-	if tiers, ok := catalogTiers(harness, ids, res); ok && len(ids) > 0 {
-		need := max(minTier, floor)
+	ids := selectableSessionIDs(harness, session, res, false)
+	if len(ids) == 0 {
+		return "", Model{}, false, false
+	}
+	need := max(minTier, floor)
+	if tiers, ok := catalogTiers(harness, ids, res); ok {
+		// First choice: the least tier at or above the needed tier.
 		for tier := need; tier <= TierFrontier; tier++ {
 			for i := len(ids) - 1; i >= 0; i-- {
 				if tiers[i] == tier && session.QuotaAllows(harness, ids[i]) {
@@ -288,23 +299,8 @@ func upshiftSessionModel(harness string, session SessionList, res Resolver, minT
 				}
 			}
 		}
-	}
-	return strongestSessionModel(harness, session, res, minTier, floor)
-}
-
-// strongestSessionModel picks the most capable id for an upshift. When every
-// id has a catalog tier, it ranks by tier (highest first, later session
-// position first within a tier) and never returns an id whose tier is below
-// floor, the current model's tier: a session list is not guaranteed to be
-// ordered, and position alone once wrote a small model over a mid one for a
-// COMPLEX task. Otherwise it falls back to the position mapping, as
-// leastSessionModelAtOrAbove does.
-func strongestSessionModel(harness string, session SessionList, res Resolver, minTier, floor Tier) (string, Model, bool, bool) {
-	ids := selectableSessionIDs(harness, session, res, ExplicitUpshiftEnabled())
-	if len(ids) == 0 {
-		return "", Model{}, false, false
-	}
-	if tiers, ok := catalogTiers(harness, ids, res); ok {
+		// Nothing reaches the needed tier: take the strongest id the session
+		// allows at or above the current model's tier, never below the floor.
 		found := false
 		for tier := TierFrontier; tier >= floor && tier >= TierSmall; tier-- {
 			for i := len(ids) - 1; i >= 0; i-- {

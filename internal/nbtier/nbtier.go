@@ -4,8 +4,8 @@
 // Package nbtier is a Go port of tools/baseline/nb_tier.py: a multinomial
 // naive Bayes over lowercase word unigrams and bigrams (Laplace alpha 1,
 // uniform prior), trained on an embedded copy of the maintainer seed set (refresh via downshift-labs).
-// It is only ever used as an upshift-only second opinion (see
-// docs/design/router-generalization.md); it never lowers a tier.
+// It is only ever used as the TRIVIAL downshift second opinion (see
+// docs/design/router-generalization.md); it never raises a tier.
 package nbtier
 
 import (
@@ -16,10 +16,6 @@ import (
 	"strings"
 	"sync"
 )
-
-// Margin is the upshift threshold frozen on seed + holdout on 2026-10-03
-// (docs/design/router-generalization.md). Do not tune it on eval-only splits.
-const Margin = 0.10
 
 // Tiers: 0 small, 1 mid, 2 frontier.
 const (
@@ -32,8 +28,6 @@ const (
 var trainJSON []byte
 
 var labels = []string{"TRIVIAL", "SIMPLE", "MEDIUM", "COMPLEX"}
-
-var labelTier = map[string]int{"TRIVIAL": Small, "SIMPLE": Small, "MEDIUM": Mid, "COMPLEX": Frontier}
 
 var wordRe = regexp.MustCompile(`[a-z0-9]+`)
 
@@ -135,38 +129,6 @@ func Predict(prompt string) string {
 		}
 	}
 	return labels[best]
-}
-
-// Suggestion is NB's upshift opinion for one prompt.
-type Suggestion struct {
-	From, To int     // production tier and NB tier
-	Margin   float64 // per-feature log-likelihood gap between the two tiers
-	Upshift  bool    // To > From and Margin >= the frozen threshold
-}
-
-// Suggest compares NB with the production tier. It never suggests a lower tier.
-func Suggest(prompt string, prodTier int) Suggestion {
-	s := Suggestion{From: prodTier, To: prodTier}
-	nbTier := labelTier[Predict(prompt)]
-	if nbTier <= prodTier {
-		return s
-	}
-	ll, n := scores(prompt)
-	best := func(t int) float64 {
-		b := math.Inf(-1)
-		for li, l := range labels {
-			if labelTier[l] == t && ll[li] > b {
-				b = ll[li]
-			}
-		}
-		return b
-	}
-	s.To = nbTier
-	if n > 0 { // no known feature: NB fell back to MEDIUM with margin 0
-		s.Margin = (best(nbTier) - best(prodTier)) / float64(n)
-	}
-	s.Upshift = s.Margin >= Margin
-	return s
 }
 
 // DownshiftMargin is the small-vs-rest margin a TRIVIAL opinion needs before

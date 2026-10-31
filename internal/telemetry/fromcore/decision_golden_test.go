@@ -87,7 +87,6 @@ func handBuiltDecisions() []core.Decision {
 			Harness: "opencode", Tier: core.TierMid, Verdict: core.VerdictOK, Model: core.Model{ID: "m-70"},
 			Shadow: core.Shadow{
 				GatewayWould: "deepseek/deepseek-v4.1-flash",
-				NBUpshift:    core.NBUpshift{Would: true, From: core.TierMid, To: core.TierFrontier, Margin: 0.123456, Applied: true},
 				NBDownshift:  core.NBDownshift{Would: true, Margin: 0.31234, Applied: true},
 			},
 		},

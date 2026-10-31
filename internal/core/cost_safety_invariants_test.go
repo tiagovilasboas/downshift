@@ -39,7 +39,7 @@ func costTierComplexity(t core.Tier) core.Complexity {
 // rule comments in selfcheck.go (Risk and NBDownshift are left empty, and the
 // model always belongs to the decision's harness, so R4 never fires here).
 func costExpectedRules(d core.Decision) []string {
-	override := d.Guards.RiskFloor || d.Shadow.NBUpshift.Applied || d.Guards.PolicyFloor
+	override := d.Guards.RiskFloor || d.Guards.PolicyFloor
 	var rules []string
 	if d.Verdict == core.VerdictDownshift && !d.Confident {
 		rules = append(rules, core.RuleUnconfidentDowngrade) // R1
@@ -130,7 +130,7 @@ func TestCostTruthTable(t *testing.T) {
 		for _, conf := range bools {
 			for _, tier := range tiers {
 				for _, rf := range bools {
-					for _, nb := range bools {
+					{
 						for _, pf := range bools {
 							n++
 							d := core.Decision{
@@ -144,15 +144,12 @@ func TestCostTruthTable(t *testing.T) {
 									RiskFloor:   rf,
 									PolicyFloor: pf,
 								},
-								Shadow: core.Shadow{
-									NBUpshift: core.NBUpshift{Applied: nb},
-								},
 							}
 							rep := core.Check(d)
 							d.SafeVerdict = rep.Safe
 							d.Checked = true
-							name := fmt.Sprintf("%s/conf=%v/%s/rf=%v/nb=%v/pf=%v", v, conf, tier, rf, nb, pf)
-							override := rf || nb || pf
+							name := fmt.Sprintf("%s/conf=%v/%s/rf=%v/pf=%v", v, conf, tier, rf, pf)
+							override := rf || pf
 
 							var gotRules []string
 							for _, x := range rep.Violations {
@@ -196,8 +193,8 @@ func TestCostTruthTable(t *testing.T) {
 			}
 		}
 	}
-	if n != 192 {
-		t.Fatalf("truth table size %d, want 192", n)
+	if n != 96 {
+		t.Fatalf("truth table size %d, want 96", n)
 	}
 	t.Logf("truth table: %d decisions", n)
 }
@@ -292,13 +289,13 @@ type costCase struct {
 }
 
 func (c costCase) String() string {
-	return fmt.Sprintf("prompt=%q current=%q session=%s verdict=%s safe=%s tier=%s conf=%v rf=%v nb=%v -> rewrite=%v target=%q",
+	return fmt.Sprintf("prompt=%q current=%q session=%s verdict=%s safe=%s tier=%s conf=%v rf=%v -> rewrite=%v target=%q",
 		c.prompt, c.current, c.sessionKind, c.d.Verdict, c.d.SafeVerdict, c.d.Tier, c.d.Confident,
-		c.d.Guards.RiskFloor, c.d.Shadow.NBUpshift.Applied, c.plan.RewriteModel, c.plan.Model.ID)
+		c.d.Guards.RiskFloor, c.plan.RewriteModel, c.plan.Model.ID)
 }
 
 func costDeterministicLift(d core.Decision) bool {
-	return d.Guards.RiskFloor || d.Shadow.NBUpshift.Applied || d.Guards.PolicyFloor
+	return d.Guards.RiskFloor || d.Guards.PolicyFloor
 }
 
 func costTierOf(t *testing.T, harness, id string) (core.Model, bool) {

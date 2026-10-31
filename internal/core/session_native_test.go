@@ -176,7 +176,6 @@ func TestNativeSelectionUsesRealTierAndQuotaNotProviderOrder(t *testing.T) {
 		t.Fatalf("upshift did not choose least model at needed mid tier: %+v", plan)
 	}
 	r.explicit = map[string]bool{"strong": true}
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", filepath.Join(t.TempDir(), "absent"))
 	if plan := d.PlanForSession(CursorCaps, r, s); plan.Model.ID == "strong" {
 		t.Fatal("native selection enabled explicit-only upshift by default")

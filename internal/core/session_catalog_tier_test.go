@@ -152,7 +152,6 @@ func TestSessionSelect_ExhaustedDoesNotLowerFloor(t *testing.T) {
 
 // explicit_only ids are skipped by ordinary tier selection (cursor catalog).
 func TestSessionSelect_ExplicitOnlySkipped(t *testing.T) {
-	t.Setenv("DOWNSHIFT_EXPLICIT_UPSHIFT", "")
 	t.Setenv("DOWNSHIFT_SESSION_MODELS", "")
 	const explicit = "claude-fable-5-1-thinking-high"
 	if !cat.IsExplicitOnly("cursor", explicit) {
