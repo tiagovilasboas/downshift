@@ -337,36 +337,6 @@ func TestLookupByID_GrokInClaudeCode(t *testing.T) {
 	}
 }
 
-func TestSavingsRatio_CheaperTarget(t *testing.T) {
-	c := Load()
-	frontier := c.ModelFor("claude-code", core.TierFrontier)
-	small := c.ModelFor("claude-code", core.TierSmall)
-	ratio := c.SavingsRatio(frontier, small)
-	if ratio <= 0 || ratio >= 1 {
-		t.Errorf("SavingsRatio(frontier→small) = %.4f, want in (0,1)", ratio)
-	}
-}
-
-// The README cost claims (the "~75% cheaper" lines in the docs) are computed
-// from these embedded entries. If a price changes, this test fails so the
-// README numbers are recomputed in the same change.
-func TestEmbeddedClaudeCodeSavingsMatchesREADME(t *testing.T) {
-	c, err := parse(embeddedJSON)
-	if err != nil {
-		t.Fatal(err)
-	}
-	frontier := c.ModelFor("claude-code", core.TierFrontier)
-	small := c.ModelFor("claude-code", core.TierSmall)
-	if frontier.ID != "claude-opus-5-5" || small.ID != "claude-haiku-5-5" {
-		t.Fatalf("claude-code frontier/small = %s/%s, want claude-opus-5-5/claude-haiku-5-5", frontier.ID, small.ID)
-	}
-	// (4+20 - (0.10+0.50)) / (4+20) = 0.975: the small target is the newest
-	// haiku, which the native 'haiku' alias runs (observed 2026-10-28).
-	if got := c.SavingsRatio(frontier, small); got < 0.9749 || got > 0.9751 {
-		t.Errorf("SavingsRatio(frontier→small) = %.4f, want 0.975 (README must be recomputed)", got)
-	}
-}
-
 // v0.1.0-beta.1 shipped "claude-haiku-4" as the small-tier id, and the release
 // binary prints it. Anthropic has no such model: the Claude API ID is
 // claude-haiku-4-5-20251001 with the alias claude-haiku-4-5
@@ -421,15 +391,6 @@ func TestEmbeddedClaudeCodeHaiku55IsTheNativeTarget(t *testing.T) {
 		if m, ok := c.LookupByID("claude-code", id); !ok || m.ID != "claude-haiku-5-5" {
 			t.Errorf("LookupByID(%q) = %s, want claude-haiku-5-5", id, m.ID)
 		}
-	}
-}
-
-func TestSavingsRatio_MoreExpensiveTarget(t *testing.T) {
-	c := Load()
-	small := c.ModelFor("claude-code", core.TierSmall)
-	frontier := c.ModelFor("claude-code", core.TierFrontier)
-	if r := c.SavingsRatio(small, frontier); r != 0 {
-		t.Errorf("SavingsRatio(small→frontier) = %.4f, want 0", r)
 	}
 }
 
@@ -898,19 +859,6 @@ func TestCatalog_Sonnet55AndOpus55CacheReadsFollowTheVendorTable(t *testing.T) {
 		m, ok := c.LookupByID("claude-code", tc.id)
 		if !ok || m.InputM != tc.input || m.CacheReadM != tc.read || m.CacheReadM != 0.05*m.InputM {
 			t.Errorf("%s: input %v cache read %v (ok=%v), want %v and %v (0.05x input)", tc.id, m.InputM, m.CacheReadM, ok, tc.input, tc.read)
-		}
-	}
-}
-
-func TestSavingsRatio_MissingPricesStayUnknown(t *testing.T) {
-	c := Load()
-	known := core.Model{InputM: 2, OutputM: 10}
-	for _, missing := range []core.Model{{}, {InputM: 2}, {OutputM: 10}} {
-		if got := c.SavingsRatio(known, missing); got != 0 {
-			t.Errorf("unpriced target saved %v, want unknown (0)", got)
-		}
-		if got := c.SavingsRatio(missing, known); got != 0 {
-			t.Errorf("unpriced baseline saved %v, want unknown (0)", got)
 		}
 	}
 }

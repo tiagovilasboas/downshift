@@ -55,25 +55,6 @@ func TestRoute_UnknownHarness(t *testing.T) {
 
 // --- Effort field tests ---
 
-// --- SavingsRatio contract tests ---
-
-func TestSavingsRatio_CheaperTarget(t *testing.T) {
-	frontier := cat.ModelFor("claude-code", core.TierFrontier)
-	small := cat.ModelFor("claude-code", core.TierSmall)
-	got := cat.SavingsRatio(frontier, small)
-	if got <= 0 || got >= 1 {
-		t.Errorf("SavingsRatio(frontier→small) = %.4f, want in (0,1)", got)
-	}
-}
-
-func TestSavingsRatio_MoreExpensiveTarget(t *testing.T) {
-	small := cat.ModelFor("claude-code", core.TierSmall)
-	frontier := cat.ModelFor("claude-code", core.TierFrontier)
-	if r := cat.SavingsRatio(small, frontier); r != 0 {
-		t.Errorf("SavingsRatio(small→frontier) = %.4f, want 0", r)
-	}
-}
-
 // --- Summary contract tests ---
 
 func TestDecisionSummary_Downshift(t *testing.T) {

@@ -42,7 +42,7 @@ type Decision struct {
 	Harness    string
 	Model      Model // the model we recommend for this task
 	Verdict    Verdict
-	Savings    float64 // fraction cheaper vs current (0 if not cheaper / unknown)
+	Savings    float64 // always 0: routing does not compute a price saving. Carried to the events.jsonl estimated_savings field, removed with that field in a later change.
 	Confident  bool
 	// Self-correction outcome, computed by Check inside Route. Verdict
 	// keeps the classified value for diagnostics; SafeVerdict carries the
@@ -210,7 +210,7 @@ func (d *Decision) RaiseTier(t Tier, currentModelID string, r Resolver) bool {
 	d.Tier = t
 	d.Effort = EffortFor(t)
 	d.Model = resolveModel(d.Harness, t, r)
-	d.Verdict, d.Savings, d.Baseline.CurrentModel = compareToCurrentModel(d.Harness, currentModelID, d.Model, r)
+	d.Verdict, d.Baseline.CurrentModel = compareToCurrentModel(d.Harness, currentModelID, d.Model, r)
 	d.Guards.PolicyFloor = true
 	// A raised tier means any applied naive-Bayes downshift did not take effect.
 	// Keep the opinion (Would) for telemetry, but do not claim it was applied.
@@ -243,23 +243,23 @@ func resolveModel(harness string, tier Tier, r Resolver) Model {
 }
 
 // compareToCurrentModel looks up the current model and determines the verdict.
-func compareToCurrentModel(harness, currentModelID string, recommended Model, r Resolver) (Verdict, float64, Model) {
+func compareToCurrentModel(harness, currentModelID string, recommended Model, r Resolver) (Verdict, Model) {
 	if r == nil || currentModelID == "" {
-		return VerdictUnknown, 0, Model{}
+		return VerdictUnknown, Model{}
 	}
 
 	current, known := r.LookupByID(harness, currentModelID)
 	if !known {
-		return VerdictUnknown, 0, Model{}
+		return VerdictUnknown, Model{}
 	}
 
 	switch {
 	case current.Tier == recommended.Tier:
-		return VerdictOK, 0, current
+		return VerdictOK, current
 	case current.Tier > recommended.Tier:
-		return VerdictDownshift, r.SavingsRatio(current, recommended), current
+		return VerdictDownshift, current
 	default:
-		return VerdictUpshift, 0, current
+		return VerdictUpshift, current
 	}
 }
 

@@ -77,7 +77,6 @@ func handBuiltDecisions() []core.Decision {
 			Model:    core.Model{ID: "big", InputM: 15, OutputM: 75},
 			Baseline: core.Baseline{CurrentModel: core.Model{ID: "mid", InputM: 3, OutputM: 15}, FromSettings: true, GuessHeld: true, Pinned: true},
 			Session:  core.Session{QuotaStatus: "ok", QuotaSource: "payload", CreditHeld: true},
-			Savings:  -0.25,
 		},
 		{
 			Harness: "codex", Complexity: core.Medium, Tier: core.TierMid, Verdict: core.VerdictDownshift, SafeVerdict: core.VerdictOK,

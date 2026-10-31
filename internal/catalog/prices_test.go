@@ -49,18 +49,6 @@ func TestPricesAsOf_ParsesAndIsNotInTheFuture(t *testing.T) {
 	}
 }
 
-func TestPricesAge(t *testing.T) {
-	c := &Catalog{pricesAsOf: "2026-10-01"}
-	if days, ok := c.PricesAge(time.Date(2026, 10, 31, 12, 0, 0, 0, time.UTC)); !ok || days != 30 {
-		t.Errorf("age = %d, %v; want 30, true", days, ok)
-	}
-	for _, bad := range []string{"", "yesterday", "2026-13-40"} {
-		if _, ok := (&Catalog{pricesAsOf: bad}).PricesAge(time.Now()); ok {
-			t.Errorf("prices_as_of %q must report ok=false", bad)
-		}
-	}
-}
-
 // Every routable entry needs both prices; a zero silently turns a saving into
 // nothing (or an overspend into a saving). opencode zen models are the one
 // documented exception: they have no published list price.

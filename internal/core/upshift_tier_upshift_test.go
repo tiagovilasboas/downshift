@@ -53,7 +53,6 @@ func (r tieredResolver) LookupByID(h, id string) (core.Model, bool) {
 	}
 	return core.Model{ID: id, Harness: h, Tier: t, InputM: r.price[id], OutputM: r.price[id], Native: id}, true
 }
-func (r tieredResolver) SavingsRatio(_, _ core.Model) float64        { return 0.5 }
 func (r tieredResolver) EffortFor(_, _ string, e core.Effort) string { return e.String() }
 func (r tieredResolver) IsExplicitOnly(_, _ string) bool             { return false }
 func (r tieredResolver) IsExactID(_, id string) bool                 { _, ok := r.tier[id]; return ok }

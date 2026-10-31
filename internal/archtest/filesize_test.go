@@ -32,7 +32,7 @@ var oversizedBaseline = map[string]int{
 	"internal/adapters/cursor/cursor.go":         396,
 	"internal/adapters/opencode/port.go":         313,
 	"internal/benchmark/benchmark.go":            594,
-	"internal/catalog/catalog.go":                869,
+	"internal/catalog/catalog.go":                848,
 	"internal/childend/record.go":                555,
 	"internal/classify/classifier.go":            515,
 	"internal/classify/risk.go":                  319,

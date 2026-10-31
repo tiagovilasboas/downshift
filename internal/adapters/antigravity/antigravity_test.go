@@ -53,13 +53,6 @@ func (s stubResolver) LookupByID(harness, id string) (core.Model, bool) {
 	return core.Model{}, false
 }
 
-func (s stubResolver) SavingsRatio(from, to core.Model) float64 {
-	if from.Tier <= to.Tier {
-		return 0
-	}
-	return 0.5
-}
-
 func (s stubResolver) EffortFor(harness, id string, e core.Effort) string {
 	return e.String()
 }
