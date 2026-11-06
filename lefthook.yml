@@ -1,0 +1,39 @@
+# Git hooks for Downshift, run by lefthook (pinned in go.mod as a tool).
+# Install once: make hooks. Skip one run: LEFTHOOK=0 before the git command.
+# The hooks and `make check` check only what a change touches; `make check-full` runs everything.
+#   pre-commit: format, then vet, staticcheck and tests of the staged Go packages.
+#   pre-push:   gofmt, vet and tests of the packages changed since origin/main and
+#               their dependents (scripts/ci-test-packages.sh, the selection CI
+#               uses), and the mod's tests when mods/ changed.
+# Commands mirror the CI gates in .github/workflows/ci.yml; keep them in step.
+
+pre-commit:
+  parallel: true
+  commands:
+    gofmt:
+      glob: "*.go"
+      run: gofmt -w {staged_files}
+      stage_fixed: true
+    vet:
+      glob: "*.go"
+      run: make -s vet-staged
+    staticcheck:
+      glob: "*.go"
+      run: make -s staticcheck-staged
+    tests:
+      glob: "*.go"
+      run: make test-staged
+
+pre-push:
+  piped: true # stop at the first failure: no test run when check-changed already failed
+  commands:
+    check-changed:
+      run: make check-changed
+    test-changed:
+      run: make test-changed
+    test-mods:
+      run: make test-mods
+
+# Installing the hooks is explicit (make hooks); a run must not write into .git/hooks,
+# which is shared by every worktree of the clone.
+no_auto_install: true
