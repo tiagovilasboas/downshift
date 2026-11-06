@@ -1,0 +1,8 @@
+Apply these changes?
+
+  write ~/.claude/settings.json
+  remove the old downshift hook entry from the shared config
+
+› Yes    No 
+
+←/→ switch  y/n answer  enter confirm  esc no
