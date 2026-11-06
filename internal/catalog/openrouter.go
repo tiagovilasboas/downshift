@@ -1,0 +1,132 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+package catalog
+
+import (
+	"encoding/json"
+	"fmt"
+	"regexp"
+	"strings"
+)
+
+// AllowlistProvider is the gateway the user allowlist file belongs to. Its rows
+// carry this provider, so the registry must hold a gateway of this name.
+const AllowlistProvider = "openrouter"
+
+// openRouterAllowlistHarness is the only harness the allowlist may target.
+const openRouterAllowlistHarness = "opencode"
+
+// openRouterAllowlistFile is the schema of the user's openrouter.json:
+//
+//	{"version":1,"harness":"opencode","models":[
+//	  {"id":"vendor/model","tier":"small|mid|frontier","max_effort":"low|medium|high","zdr":true}]}
+type openRouterAllowlistFile struct {
+	Version int                      `json:"version"`
+	Harness string                   `json:"harness"`
+	Models  []openRouterAllowlistRow `json:"models"`
+}
+
+type openRouterAllowlistRow struct {
+	ID        string `json:"id"`
+	Tier      string `json:"tier"`
+	MaxEffort string `json:"max_effort"`
+	ZDR       bool   `json:"zdr"`
+	// Route is "shadow" (the default when absent) or "live". Only the owner's
+	// file sets live; a live row is the rewrite target for its tier.
+	Route string `json:"route"`
+}
+
+// parseOpenRouterAllowlist validates the whole file and returns one shadow
+// gateway row per listed model. Any violation rejects the file: no row is
+// returned, so nothing is applied partially. The rows carry no price; the
+// catalog never invents one for a gateway model.
+func parseOpenRouterAllowlist(data []byte) ([]Entry, error) {
+	var f openRouterAllowlistFile
+	if err := json.Unmarshal(data, &f); err != nil {
+		return nil, fmt.Errorf("invalid JSON: %w", err)
+	}
+	if f.Version != 1 {
+		return nil, fmt.Errorf("version must be 1, got %d", f.Version)
+	}
+	if f.Harness != openRouterAllowlistHarness {
+		return nil, fmt.Errorf("harness must be %q, got %q", openRouterAllowlistHarness, f.Harness)
+	}
+
+	seen := make(map[string]bool, len(f.Models))
+	rows := make([]Entry, 0, len(f.Models))
+	for _, m := range f.Models {
+		if !isFullSlug(m.ID) {
+			return nil, fmt.Errorf("model id %q must be the full vendor/model slug", m.ID)
+		}
+		key := strings.ToLower(m.ID)
+		if seen[key] {
+			return nil, fmt.Errorf("duplicate model id %q", m.ID)
+		}
+		seen[key] = true
+
+		if _, ok := parseTier(m.Tier); !ok {
+			return nil, fmt.Errorf("model %q: unknown tier %q (want small, mid or frontier)", m.ID, m.Tier)
+		}
+		efforts, ok := effortsUpTo(m.MaxEffort)
+		if !ok {
+			return nil, fmt.Errorf("model %q: unknown max_effort %q (want low, medium or high)", m.ID, m.MaxEffort)
+		}
+
+		routing, ok := allowlistRouting(m.Route)
+		if !ok {
+			return nil, fmt.Errorf("model %q: unknown route %q (want shadow or live)", m.ID, m.Route)
+		}
+
+		rows = append(rows, Entry{
+			ID:       m.ID,
+			Provider: AllowlistProvider,
+			Harness:  openRouterAllowlistHarness,
+			Tier:     strings.ToLower(m.Tier),
+			Routing:  routing,
+			Efforts:  efforts,
+			ZDR:      m.ZDR,
+		})
+	}
+	return rows, nil
+}
+
+// allowlistRouting maps the route field to a routing value. An absent route is
+// shadow, so a row stays observation-only unless the file says live.
+func allowlistRouting(route string) (string, bool) {
+	switch route {
+	case "", RoutingShadow:
+		return RoutingShadow, true
+	case RoutingLive:
+		return RoutingLive, true
+	default:
+		return "", false
+	}
+}
+
+// slugPattern is the closed character set of an allowlisted id. The vendor
+// part takes letters, digits, '.', '-' and '_'; the model part also takes ':'
+// for a variant suffix such as ":free". Nothing else passes: no whitespace,
+// control characters, quotes, '~' or shell metacharacters. The id is written
+// into the harness wire and later into logs, so it stays inside this set.
+var slugPattern = regexp.MustCompile(`^[A-Za-z0-9._-]+/[A-Za-z0-9._:-]+$`)
+
+// isFullSlug reports a "vendor/model" id drawn only from slugPattern.
+func isFullSlug(id string) bool {
+	return slugPattern.MatchString(id)
+}
+
+// effortsUpTo turns a max_effort cap into the list of effort levels the model
+// accepts: the cap and every level below it.
+func effortsUpTo(maxEffort string) ([]string, bool) {
+	switch normalizeEffort(maxEffort) {
+	case "low":
+		return []string{"low"}, true
+	case "medium":
+		return []string{"low", "medium"}, true
+	case "high":
+		return []string{"low", "medium", "high"}, true
+	default:
+		return nil, false
+	}
+}

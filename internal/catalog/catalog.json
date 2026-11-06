@@ -1,0 +1,560 @@
+{
+  "_doc": "harness-downshift embedded catalog — model data lives here, not in Go source.",
+  "_doc2": "Override at ~/.harness-downshift/catalog.json. Run 'downshift models pull' to refresh.",
+  "_doc3": "'family' is the stable prefix for version-agnostic matching. A model whose ID starts with the family string matches this entry's tier even if the exact version is unknown.",
+  "_doc4": "OpenRouter model IDs arrive as 'provider/model-id' (e.g. 'anthropic/claude-opus-5-5'). The router normalises these before lookup, so family matching works transparently.",
+  "_doc7": "Optional 'efforts': allowed effort values for the model, listed ONLY where verified against vendor docs on 2026-10-12. Absent means unknown: no restriction is applied and nothing is assumed.",
+  "_doc6": "Claude Code's native alias 'haiku' resolved to claude-haiku-4-5-20251001 when observed on 2026-10-15 (Claude Code 2.1.289, eval run b5/mech-rename/claude-routed-force-r1). On 2026-10-28 the same alias ran claude-haiku-5-5 (claude -p --model haiku, Claude Code's own modelUsage), while the exact id claude-haiku-4-5 ran claude-haiku-4-5; a routed spawn written as the alias therefore ran a different model than the decision recorded. The claude-code small entry is still claude-haiku-4-5, pending the owner's choice of target (exact id or alias; see docs/internal/plans/roadmap.md). claude-haiku-5-5 is its own claude-code entry with no native name and no family, and is never the automatic small target. Older claude-haiku-4-5 ids match through the claude-haiku family; they are not an alias of 5-5 because KiroCrew owns that canonical id.",
+  "version": "2",
+  "updated": "2026-10-26",
+  "_doc11": "session_candidates: per harness, the native model names every session accepts, least to most capable. Used only when the harness declares SessionFromCatalog and its payload carries no session list (Claude Code sends none): the list keeps one candidate per tier below the current model and ends at the current model, so it never upshifts past it. explicit_only rows are never added. A list from the payload or discovery always wins.",
+  "session_candidates": {
+    "claude-code": ["haiku", "sonnet", "opus", "fable"]
+  },
+  "entries": [
+
+    { "_section": "claude-code — native Anthropic models" },
+
+    {
+      "id": "claude-haiku-5-5",
+      "aliases": ["claude-haiku-5.5"],
+      "family": "claude-haiku",
+      "native_name": "haiku",
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "small",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "5000", "high": "10000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"]
+    },
+    {
+      "id": "claude-haiku-4-5",
+      "aliases": ["claude-haiku-4-5-20251001", "claude-haiku-4.5"],
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "small",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "5000", "high": "10000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"]
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "aliases": ["claude-sonnet", "claude-sonnet-5.5"],
+      "family": "claude-sonnet",
+      "native_name": "sonnet",
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"]
+    },
+    {
+      "id": "claude-opus-5-5",
+      "aliases": ["claude-opus", "claude-opus-5.5"],
+      "family": "claude-opus",
+      "native_name": "opus",
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"]
+    },
+    {
+      "id": "claude-fable-5-1",
+      "aliases": ["claude-fable", "claude-fable-5.1"],
+      "family": "claude-fable",
+      "native_name": "fable",
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" },
+      "efforts": ["low", "medium", "high", "xhigh", "max"]
+    },
+
+    {
+      "id": "claude-sonnet-4-6",
+      "aliases": ["claude-sonnet-4.6"],
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" }
+    },
+    {
+      "id": "claude-opus-4-8",
+      "aliases": ["claude-opus-4.8"],
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    {
+      "id": "claude-fable-5",
+      "aliases": [],
+      "provider": "anthropic",
+      "harness": "claude-code",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    { "_section": "claude-code — xAI Grok (installed via custom model config)" },
+
+    {
+      "id": "grok-4.6",
+      "aliases": ["grok-4", "grok"],
+      "family": "grok",
+      "provider": "xai",
+      "harness": "claude-code",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+
+    { "_section": "cursor — native Anthropic models" },
+
+    {
+      "id": "claude-4.5-haiku-thinking",
+      "aliases": ["claude-haiku-4", "claude-haiku"],
+      "family": "claude-4.5-haiku",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "small",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "5000", "high": "10000" }
+    },
+    {
+      "id": "claude-4.5-sonnet-thinking",
+      "aliases": ["claude-sonnet-4.6", "claude-sonnet"],
+      "family": "claude-4.5-sonnet",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" }
+    },
+    {
+      "id": "claude-opus-5-thinking-high",
+      "aliases": ["claude-opus-4.8", "claude-opus"],
+      "family": "claude-opus",
+      "effort": "high",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+
+    { "_section": "cursor — xAI Grok (installed via model picker)" },
+
+    {
+      "id": "grok-4.7-xhigh",
+      "aliases": ["grok-4.7-high", "grok-4", "grok", "cursor-grok-4.6-high"],
+      "family": "grok",
+      "provider": "xai",
+      "harness": "cursor",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+
+    {
+      "id": "grok-4.7-high-fast",
+      "aliases": [],
+      "provider": "xai",
+      "harness": "cursor",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+
+    { "_section": "cursor — session slugs observed 2026-10-04; prices verified 2026-10-19 against https://cursor.com/docs/models (see _doc10)" },
+
+    {
+      "id": "composer-2.5-fast",
+      "aliases": [],
+      "family": "composer-fast",
+      "provider": "cursor",
+      "harness": "cursor",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "composer-2.5",
+      "aliases": [],
+      "family": "composer-std",
+      "provider": "cursor",
+      "harness": "cursor",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "claude-4.5-opus-high-thinking",
+      "aliases": [],
+      "family": "claude-4.5-opus",
+      "effort": "high",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    {
+      "id": "claude-sonnet-5-5-high",
+      "aliases": [],
+      "family": "claude-sonnet-5",
+      "effort": "high",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" }
+    },
+    {
+      "id": "cursor-grok-4.6-medium",
+      "aliases": [],
+      "family": "cursor-grok",
+      "effort": "medium",
+      "provider": "xai",
+      "harness": "cursor",
+      "tier": "mid",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "glm-5.2-high",
+      "aliases": [],
+      "family": "glm",
+      "effort": "high",
+      "provider": "zhipu",
+      "harness": "cursor",
+      "tier": "mid",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+
+    { "_section": "cursor — Option A: family + effort variants (effort-tagged, no per-harness versioning)" },
+
+    {
+      "id": "gemini-3.8-flash-high",
+      "aliases": ["gemini-3.8-flash"],
+      "family": "gemini",
+      "effort": "high",
+      "provider": "google",
+      "harness": "cursor",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" },
+      "efforts": ["low", "medium", "high"]
+    },
+    {
+      "id": "muse-spark-1.3-max",
+      "aliases": ["muse-spark", "muse-spark-1.3-high"],
+      "family": "muse-spark",
+      "pool_gated": true,
+      "rejected_name": "muse-spark-1.3-high",
+      "effort": "high",
+      "provider": "cursor",
+      "harness": "cursor",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "claude-opus-5-5-medium",
+      "aliases": ["claude-opus-5.5-medium", "claude-opus-5.5"],
+      "family": "claude-opus",
+      "effort": "medium",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    {
+      "id": "gpt-5.6-sol-high",
+      "aliases": ["gpt-5.6-sol-medium", "gpt-sol-medium"],
+      "family": "gpt-5.6-sol",
+      "effort": "medium",
+      "provider": "openai",
+      "harness": "cursor",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "claude-fable-5-1-thinking-high",
+      "aliases": ["claude-fable-5.1-high", "claude-fable"],
+      "family": "claude-fable",
+      "effort": "high",
+      "provider": "anthropic",
+      "harness": "cursor",
+      "tier": "frontier",
+      "routing": "explicit_only",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+
+    { "_section": "codex — native OpenAI models" },
+
+    {
+      "id": "gpt-6-luna",
+      "aliases": ["luna"],
+      "family": "gpt-6-luna",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "gpt-6-sol",
+      "aliases": [],
+      "family": "gpt-6-sol",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "aliases": [],
+      "family": "gpt-6.1-sol",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "gpt-5.6-luna",
+      "aliases": [],
+      "family": "gpt-5.6-luna",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "gpt-5.6-terra",
+      "aliases": [],
+      "family": "gpt-5.6-terra",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "mid",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "gpt-5.6-sol",
+      "aliases": ["sol"],
+      "family": "gpt-5.6-sol",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "gpt-6-astra",
+      "aliases": ["astra"],
+      "family": "gpt-6-astra",
+      "provider": "openai",
+      "harness": "codex",
+      "tier": "frontier",
+      "routing": "explicit_only",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+
+    { "_section": "antigravity — Google Gemini models (native Antigravity spawn_agent / invoke_subagent)" },
+
+    {
+      "id": "flash_lite",
+      "aliases": ["gemini-3.8-flash-lite", "gemini-flash-lite"],
+      "family": "gemini-lite",
+      "provider": "google",
+      "harness": "antigravity",
+      "tier": "small",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "flash",
+      "aliases": ["gemini-3.8-flash", "gemini-flash"],
+      "family": "gemini-mid",
+      "provider": "google",
+      "harness": "antigravity",
+      "tier": "mid",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+    {
+      "id": "pro",
+      "aliases": ["gemini-3.8-pro", "gemini-pro"],
+      "family": "gemini-premium",
+      "provider": "google",
+      "harness": "antigravity",
+      "tier": "frontier",
+      "effort_scale": "reasoning_effort",
+      "effort_map": { "low": "low", "medium": "medium", "high": "high" }
+    },
+
+    { "_section": "kirocrew — spawn_run models (Anthropic families; Crew accepts canonical key or provider id). Exact rows for every Anthropic id kiro-cli chat --list-models --format json listed on 2026-10-23, so an older version is not priced as its family's 5.5 row. Prices from the OpenRouter model list, 2026-10-24." },
+
+    {
+      "id": "claude-haiku-4-5",
+      "aliases": ["haiku", "claude-haiku-4.5", "claude-haiku"],
+      "family": "claude-haiku",
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "small",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "5000", "high": "10000" }
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "aliases": ["sonnet", "claude-sonnet-5.5", "claude-sonnet"],
+      "family": "claude-sonnet",
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" }
+    },
+    {
+      "id": "claude-opus-5-5",
+      "aliases": ["opus", "claude-opus-5.5", "claude-opus"],
+      "family": "claude-opus",
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    {
+      "id": "claude-sonnet-4-6",
+      "aliases": ["claude-sonnet-4.6"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" }
+    },
+    {
+      "id": "claude-opus-4-8",
+      "aliases": ["claude-opus-4.8"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    {
+      "id": "claude-opus-5",
+      "aliases": [],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    {
+      "id": "claude-opus-4-7",
+      "aliases": ["claude-opus-4.7"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    {
+      "id": "claude-opus-4-6",
+      "aliases": ["claude-opus-4.6"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    {
+      "id": "claude-opus-4-5",
+      "aliases": ["claude-opus-4.5"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "frontier",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "10000", "high": "20000" }
+    },
+    {
+      "id": "claude-sonnet-5",
+      "aliases": [],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" }
+    },
+    {
+      "id": "claude-sonnet-4-5",
+      "aliases": ["claude-sonnet-4.5"],
+      "provider": "anthropic",
+      "harness": "kirocrew",
+      "tier": "mid",
+      "effort_scale": "thinking_budget",
+      "effort_map": { "low": "0", "medium": "8000", "high": "16000" }
+    },
+
+    { "_section": "opencode — zen model IDs (no published list price: zero cost fields mean not in the catalog, never a real $0)" },
+
+    {
+      "id": "deepseek-v4.1-flash-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "small"
+    },
+    {
+      "id": "mimo-v2.6-flash-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "small"
+    },
+    {
+      "id": "glm-5.3-flash-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "mid"
+    },
+    {
+      "id": "big-pickle",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "frontier"
+    },
+    {
+      "id": "beam-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "small"
+    },
+    {
+      "id": "longcat-2.5-preview-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "mid"
+    },
+    {
+      "id": "nemotron-3-ultra-free",
+      "provider": "opencode",
+      "harness": "opencode",
+      "tier": "frontier"
+    }
+  ]
+}
