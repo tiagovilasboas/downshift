@@ -10,6 +10,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/mattn/go-isatty v0.0.24
 	github.com/modelcontextprotocol/go-sdk v1.8.0
+	github.com/pelletier/go-toml/v2 v2.4.3
 )
 
 require (
@@ -49,7 +50,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
-	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/schollz/progressbar/v3 v3.19.1 // indirect
 	github.com/segmentio/asm v1.1.3 // indirect
