@@ -1,0 +1,63 @@
+// Copyright (c) 2026 Tiago Vilas Boas.
+// SPDX-License-Identifier: Apache-2.0
+
+// Package hookctx carries per-hook facts that code deep inside a decision
+// needs without threading them through every call: the project directory and
+// the hashed session id of the hook being served.
+package hookctx
+
+import "sync"
+
+var (
+	projectMu  sync.RWMutex
+	projectDir string
+
+	sessionMu sync.RWMutex
+	sessionID string
+)
+
+// SetSessionID records the hashed session ID of the current hook invocation.
+func SetSessionID(id string) (restore func()) {
+	sessionMu.Lock()
+	prev := sessionID
+	sessionID = id
+	sessionMu.Unlock()
+	return func() {
+		sessionMu.Lock()
+		sessionID = prev
+		sessionMu.Unlock()
+	}
+}
+
+// SessionID returns the session ID set by SetSessionID, or "".
+func SessionID() string {
+	sessionMu.RLock()
+	defer sessionMu.RUnlock()
+	return sessionID
+}
+
+// SetProjectDir records the working directory of the project the current hook
+// invocation belongs to and returns a function that restores the previous
+// value. The shared hook runner sets it once per invocation, so layers below
+// (for example the tier floor) never parse harness payloads themselves.
+func SetProjectDir(dir string) (restore func()) {
+	projectMu.Lock()
+	prev := projectDir
+	projectDir = dir
+	projectMu.Unlock()
+	return func() {
+		projectMu.Lock()
+		projectDir = prev
+		projectMu.Unlock()
+	}
+}
+
+// ProjectDir returns the directory set by SetProjectDir, or "" outside a hook
+// invocation. An empty value means "no project context": callers must not fall
+// back to the process directory, or offline tools such as benchmarks would pick
+// up a project policy they should ignore.
+func ProjectDir() string {
+	projectMu.RLock()
+	defer projectMu.RUnlock()
+	return projectDir
+}
