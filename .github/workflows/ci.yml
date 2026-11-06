@@ -1,0 +1,715 @@
+# Three events, three jobs of the same pipeline. Heavy jobs must not move back
+# onto the main push path without an owner decision.
+#
+#   pull_request  CI gates: `changes`, `test` (the required check), `race` on the
+#                 changed packages, `test-os` when os_sensitive=1, `python` when
+#                 python=1, `e2e` when go=1 (informational, not required).
+#   push to main  Fast sanity: `changes`, `test` (same required check, so main
+#                 keeps the gate the PR passed), `python` when python=1, `e2e`
+#                 (informational, not required). Nothing else.
+#   tag v*        CD path with full verification: `test`, `test-os`, full `race`,
+#                 `build-cross-platform`, then `release` (goreleaser and
+#                 attestation) only after all four pass.
+#   nightly       ci-full.yml runs the full race suite and cross-OS tests, so a
+#                 Windows or macOS regression surfaces the same night.
+#
+# The classifier (scripts/ci-classify-changes.sh) still forces os_sensitive=1
+# and go=1 on main and tags; the job conditions below decide what runs.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  pull_request:
+    branches: [main]
+  # Merge queue runs: the same gates on the queued merge result, so `test`
+  # reports on the queue branch and the queue can merge without a rebase.
+  merge_group:
+  workflow_dispatch:
+
+# Pull requests cancel their superseded runs. Pushes to main do not: with
+# cancellation, a docs-only push right after a code push cancelled the code
+# run and then skipped the Go job itself, leaving main unverified.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+      go: ${{ steps.classify.outputs.go }}
+      python: ${{ steps.classify.outputs.python }}
+      os_sensitive: ${{ steps.classify.outputs.os_sensitive }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Test the path classifier
+        run: bash scripts/test-ci-classify-changes.sh
+
+      - name: Test the race package filter
+        run: bash scripts/test-ci-race-packages.sh
+
+      - name: Classify changed paths
+        id: classify
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+        run: |
+          eval "$(bash scripts/ci-classify-changes.sh)"
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+          echo "python=$python" >> "$GITHUB_OUTPUT"
+          echo "os_sensitive=$os_sensitive" >> "$GITHUB_OUTPUT"
+
+  # The required `test` check, split into parallel jobs so the go test wall no
+  # longer runs behind vet/staticcheck/format on one runner. Three jobs:
+  #   test-checks  build + vet + staticcheck + format + smoke + node decoder,
+  #                run ONCE (not per shard).
+  #   test-shard   go test, fanned out across a deterministic, complete package
+  #                partition (scripts/ci-shard-packages.sh). Shard 0 is
+  #                cmd/downshift alone (the ~63 s floor of the suite); shard 1 is
+  #                every other package (~30-40 s). They run on separate runners.
+  #   test         aggregator; the branch-protection required check. It depends
+  #                on both and, with `if: always()`, fails unless every shard and
+  #                the checks job succeeded (or were skipped on a docs-only diff).
+  #                Protection keeps meaning exactly what it did: `test` is green
+  #                only when the whole Go gate passed.
+  test-checks:
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DOWNSHIFT_TEST_TIMING: "1" # enforce wall-clock test budgets (internal/testenv/timing.go)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Docs-only skip
+        if: needs.changes.outputs.docs_only == '1'
+        run: echo "Docs-only diff; Go CI skipped."
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        if: needs.changes.outputs.go == '1'
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: No Go changes
+        if: needs.changes.outputs.go != '1'
+        run: echo "No Go changes in diff."
+
+      - name: Build downshift CLI
+        if: needs.changes.outputs.go == '1'
+        run: go build -ldflags "-s -w" -o downshift ./cmd/downshift
+
+      - name: Vet
+        if: needs.changes.outputs.go == '1'
+        run: go vet ./...
+
+      - name: Test the Go package selection
+        if: needs.changes.outputs.go == '1'
+        run: bash scripts/test-ci-test-packages.sh
+
+      - name: Staticcheck
+        if: needs.changes.outputs.go == '1'
+        # Pinned release; checks are in staticcheck.conf. Build it with the
+        # module's toolchain (go.mod), or it rejects the go1.27 packages.
+        run: GOTOOLCHAIN="$(go env GOVERSION)" go run honnef.co/go/tools/cmd/staticcheck@2026.2.2 ./...
+
+      - name: Format check
+        if: needs.changes.outputs.go == '1'
+        run: |
+          if gofmt -l . | grep -q .; then
+            echo "The following files need gofmt:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Adapter smoke tests
+        if: needs.changes.outputs.go == '1'
+        run: ./scripts/smoke-test.sh
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: needs.changes.outputs.docs_only != '1'
+        with:
+          node-version: "22"
+
+      - name: Test Cursor quota decoder
+        if: needs.changes.outputs.docs_only != '1'
+        run: node --test internal/cursorbridge/extension/decoder.test.cjs
+
+  test-shard:
+    needs: changes
+    if: needs.changes.outputs.go == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Two shards: 0 = cmd/downshift (the suite's wall-clock floor), 1 = the
+        # rest. scripts/ci-shard-packages.sh owns the deterministic split.
+        shard: [0, 1]
+    env:
+      DOWNSHIFT_TEST_TIMING: "1" # enforce wall-clock test budgets (internal/testenv/timing.go)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Test (shard ${{ matrix.shard }})
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_TOTAL: "2"
+        run: |
+          # Pull requests test the changed packages and their dependents; pushes
+          # to main, and any change outside Go package directories, test ./...
+          # ci-shard-packages.sh re-uses ci-test-packages.sh, then keeps only the
+          # packages assigned to this shard. Every package lands in exactly one
+          # shard, and the union over shards equals the full list.
+          pkgs=$(bash scripts/ci-shard-packages.sh)
+          if [ -z "$pkgs" ]; then
+            echo "No packages assigned to shard $SHARD_INDEX."
+            exit 0
+          fi
+          echo "Shard $SHARD_INDEX testing $(echo "$pkgs" | wc -l | tr -d ' ') package line(s):"
+          echo "$pkgs"
+          go test $pkgs
+
+  # Branch-protection required check. Stays named exactly `test` and stays green
+  # only when the checks job, both test shards and the e2e battery succeeded, so
+  # a red e2e run can no longer reach main (#740).
+  test:
+    needs: [changes, test-checks, test-shard, e2e, test-os, race, opencode-bun]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every test job to have succeeded
+        env:
+          CHECKS_RESULT: ${{ needs.test-checks.result }}
+          SHARD_RESULT: ${{ needs.test-shard.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+          TEST_OS_RESULT: ${{ needs.test-os.result }}
+          RACE_RESULT: ${{ needs.race.result }}
+          BUN_RESULT: ${{ needs.opencode-bun.result }}
+        run: |
+          set -eu
+          echo "test-checks: $CHECKS_RESULT"
+          echo "test-shard:  $SHARD_RESULT"
+          echo "e2e:         $E2E_RESULT"
+          # A docs-only / no-Go diff skips the shards and e2e (if: go == '1');
+          # that is a pass, as it was when the single job ran only the skip echo steps.
+          fail=0
+          case "$CHECKS_RESULT" in success) ;; *) echo "::error::test-checks did not succeed ($CHECKS_RESULT)"; fail=1 ;; esac
+          case "$SHARD_RESULT" in
+            success|skipped) ;;
+            *) echo "::error::test-shard did not succeed ($SHARD_RESULT)"; fail=1 ;;
+          esac
+          case "$E2E_RESULT" in
+            success|skipped) ;;
+            *) echo "::error::e2e did not succeed ($E2E_RESULT)"; fail=1 ;;
+          esac
+          # test-os, race and opencode-bun are conditional (event, changed paths);
+          # skipped is a pass, failure or cancellation is not.
+          for pair in "test-os:$TEST_OS_RESULT" "race:$RACE_RESULT" "opencode-bun:$BUN_RESULT"; do
+            case "${pair#*:}" in
+              success|skipped) ;;
+              *) echo "::error::${pair%%:*} did not succeed (${pair#*:})"; fail=1 ;;
+            esac
+          done
+          exit "$fail"
+
+
+  # OpenCode plugin tests: hooks/opencode_plugin_test.go skips without bun, so
+  # this job installs bun and runs them for real. mods/downshift-agents is left
+  # out: its bun test and tsc need the Claude Code plugin runtime
+  # (claude-code/testing, Shaped), absent from a plain checkout; hooks/opencode
+  # has no package.json or tsconfig.
+  opencode-bun:
+    needs: changes
+    if: needs.changes.outputs.go == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: OpenCode plugin tests (need bun)
+        run: go test -count=1 ./hooks/...
+
+  # Cross-OS behavior check (GAP-OS-1). CI already cross-COMPILES for windows
+  # and darwin; this job also RUNS the OS-sensitive packages on those runners so
+  # path joining, HOME resolution, the setup writer and the exec wrapper are
+  # verified, not just compiled. Scoped to the packages whose behavior differs
+  # by OS to keep the matrix cheap; it uses `go test` directly (no bash CI
+  # scripts, which are POSIX-only).
+  test-os:
+    needs: changes
+    if: >-
+      ((github.event_name == 'pull_request' || github.event_name == 'merge_group') && needs.changes.outputs.os_sensitive == '1')
+      || startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      DOWNSHIFT_TEST_TIMING: "1" # enforce wall-clock test budgets (internal/testenv/timing.go)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build downshift CLI
+        run: go build -o downshift ./cmd/downshift
+      - name: Test OS-sensitive packages (all)
+        # These internal packages are OS-portable and run in full on every OS.
+        run: go test -timeout 15m ./internal/paths/ ./internal/execwrap/ ./internal/contextopt/ ./internal/hookctx/ ./internal/workers/
+      - name: Compactor guards (bench floor, lossless, raw corpus)
+        run: go test -timeout 5m ./internal/compressor/ -run 'BenchGuard|Lossless|CorpusRaw'
+      - name: Test cmd/downshift (macOS only)
+        # macOS runs the scoped setup/path tests; Windows runs the setup, path
+        # and linked-path subset below; the full suite runs on Linux in `test`.
+        if: matrix.os == 'macos-latest'
+        run: go test -timeout 15m -run 'Setup|Steering|Wrapper|Config|Session|Display|Path|Project' ./cmd/downshift/ ./internal/setup/...
+      - name: Test cmd/downshift setup and path tests (Windows)
+        # The suite now sets HOME through testenv.SetHome (USERPROFILE too), so
+        # the setup, path and linked-path tests run here; the Windows junction
+        # test (internal/setup/linked_path_windows_test.go) runs nowhere else.
+        if: matrix.os == 'windows-latest'
+        run: go test -timeout 15m -run 'Setup|Path|Linked' ./cmd/downshift/ ./internal/setup/...
+
+  # Race detector. Pull requests run it on the changed packages and their
+  # dependents (the same selection as `test`); internal/core, whose -race run
+  # takes ~5 minutes, is kept only when a file under internal/core/ changed
+  # (scripts/ci-race-packages.sh). Tags run every package except internal/core
+  # (the nightly ci-full covers it). Not on push to main, and not the required
+  # `test` check. Three parallel runners (RACE_SHARD): internal/core alone,
+  # cmd/downshift alone, and the rest, so the slow packages do not add up.
+  race:
+    needs: changes
+    if: >-
+      needs.changes.outputs.go == '1'
+      && (github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [core, cmd, rest]
+    env:
+      DOWNSHIFT_TEST_TIMING: "1" # enforce wall-clock test budgets (internal/testenv/timing.go)
+      RACE_SHARD: ${{ matrix.shard }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # ci-test-packages.sh diffs against the PR base commit, which a
+          # shallow checkout does not contain.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Race detector on changed packages (pull request)
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
+        run: |
+          pkgs=$(bash scripts/ci-test-packages.sh)
+          if [ "$pkgs" = "./..." ]; then
+            pkgs=$(go list ./...)
+          fi
+          pkgs=$(printf '%s\n' "$pkgs" | bash scripts/ci-race-packages.sh)
+          if [ -z "$pkgs" ]; then
+            echo "No Go packages to race-test in shard $RACE_SHARD."
+            exit 0
+          fi
+          echo "Race-testing $(echo "$pkgs" | wc -l | tr -d ' ') package(s) in shard $RACE_SHARD"
+          go test -race -timeout 15m $pkgs
+
+      - name: Test with the race detector (all but internal/core)
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          # No changed files, so the filter drops internal/core; the core shard is empty.
+          pkgs=$(go list ./... | CI_CHANGED_FILES="" bash scripts/ci-race-packages.sh)
+          if [ -z "$pkgs" ]; then
+            echo "No Go packages to race-test in shard $RACE_SHARD."
+            exit 0
+          fi
+          go test -race -timeout 15m $pkgs
+
+  # End-to-end battery (`make e2e`: builds ./downshift, then runs
+  # scripts/e2e/battery.py against a temp state dir). `test` needs it, so a red
+  # battery fails the required check. Runs on pull requests that change Go code
+  # and on push to main (the classifier forces go=1 there). It also runs on
+  # release tags: `build-cross-platform` and `release` sit downstream of
+  # `test`, and a skipped e2e upstream skipped both, so v0.5.0 got no release.
+  e2e:
+    needs: changes
+    if: >-
+      (github.event_name == 'pull_request' && needs.changes.outputs.go == '1')
+      || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: End-to-end battery
+        run: make e2e
+
+  python:
+    needs: changes
+    if: needs.changes.outputs.python == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Test DS-04 observer privacy contract
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/ds04_observer_contract -v
+
+  # Cross-compiles on tags only. Main and PRs skip it: the linux build is already
+  # covered by `test`, which builds ./cmd/downshift.
+  build-cross-platform:
+    needs: [changes, test]
+    if: startsWith(github.ref, 'refs/tags/v') && needs.changes.outputs.go == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build downshift for ${{ matrix.goos }}/${{ matrix.goarch }}
+        run: |
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
+          go build -o downshift-${{ matrix.goos }}-${{ matrix.goarch }} \
+          -ldflags="-s -w" ./cmd/downshift
+
+  # CD: builds a DRAFT release. `publish-release` makes it public only after
+  # `verify-release` downloaded the draft's assets and checked them.
+  release:
+    needs: [test, test-os, race, build-cross-platform]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write # keyless signing identity for the provenance attestation
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false # the job that signs and attests must not restore a cache written by other runs
+
+      # goreleaser's before.hooks run `go mod tidy` and `go generate ./...`
+      # during the build. If either rewrites a tracked file, the release binary
+      # is stamped vcs.modified=true (a dirty-tree build, which `downshift
+      # doctor` flags). Run the same hooks here first and fail if the tree is
+      # not clean, so a release never ships from a dirty checkout.
+      - name: Release tree must be clean after generate hooks
+        run: |
+          set -eu
+          go mod tidy
+          go generate ./...
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::goreleaser before.hooks dirty the tree; commit the generated changes before tagging a release:"
+            git status --porcelain
+            git diff
+            exit 1
+          fi
+
+      - name: Run goreleaser
+        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
+        with:
+          distribution: goreleaser
+          # Exact version: a release must not change because goreleaser did.
+          version: v2.18.3
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build provenance for every archive listed in checksums.txt. Verify a
+      # download with: gh attestation verify <file> --repo tiagovilasboas/downshift
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: dist/checksums.txt
+
+      - name: Generate SBOM (SPDX) for the module
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          path: .
+          format: spdx-json
+          output-file: downshift_sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
+      # Keyless: the certificate binds the signature to this workflow's identity.
+      - name: Sign checksums.txt (keyless)
+        run: |
+          set -eu
+          cosign sign-blob --yes \
+            --output-signature dist/checksums.txt.sig \
+            --output-certificate dist/checksums.txt.pem \
+            dist/checksums.txt
+
+      - name: Upload signature and SBOM to the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release upload "$TAG" dist/checksums.txt.sig dist/checksums.txt.pem \
+            downshift_sbom.spdx.json --clobber --repo "$GITHUB_REPOSITORY"
+
+  # Downloads every asset of the DRAFT release once (the only job that needs a
+  # write token to see a draft) and hands them to the verify legs as an artifact.
+  fetch-draft:
+    needs: [release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # a draft release is only visible to tokens that can write
+    steps:
+      - name: Download every asset of the draft by release id
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          # shellcheck disable=SC2016 # $ENV is jq, not shell
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq '.[] | select(.draft) | select(.tag_name == $ENV.TAG) | .id')
+          if [ "$(printf '%s\n' "$ids" | grep -c .)" -ne 1 ]; then
+            echo "::error::expected exactly one draft for $TAG, found: $ids"
+            exit 1
+          fi
+          mkdir assets
+          gh api "repos/$GITHUB_REPOSITORY/releases/$ids/assets" --paginate --jq '.[] | "\(.id) \(.name)"' > assets.lst
+          while read -r aid name; do
+            gh api -H 'Accept: application/octet-stream' "repos/$GITHUB_REPOSITORY/releases/assets/$aid" > "assets/$name"
+          done < assets.lst
+
+      - name: Hand the assets to the verify legs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-assets
+          path: assets
+          retention-days: 1
+          if-no-files-found: error
+
+  # Checks the draft's assets on each OS: cosign signature, sha256, provenance
+  # attestation, and the binary's own version. A failure leaves the draft unpublished.
+  verify-release:
+    needs: [fetch-draft]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      attestations: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {runner: ubuntu-latest, os: linux, arch: amd64, ext: tar.gz, exe: downshift}
+          - {runner: macos-latest, os: darwin, arch: arm64, ext: tar.gz, exe: downshift}
+          - {runner: windows-latest, os: windows, arch: amd64, ext: zip, exe: downshift.exe}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Fetch the assets
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-assets
+          path: assets
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
+      - name: Verify the checksums.txt signature
+        run: |
+          set -eu
+          cd assets
+          cosign verify-blob \
+            --certificate checksums.txt.pem \
+            --signature checksums.txt.sig \
+            --certificate-identity-regexp '^https://github\.com/tiagovilasboas/downshift/\.github/workflows/ci\.yml@refs/tags/v[0-9]' \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            checksums.txt
+
+      - name: Check required assets and sha256 against checksums.txt
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          ver="${TAG#v}"
+          for want in checksums.txt checksums.txt.sig checksums.txt.pem downshift_sbom.spdx.json docs-manifest.json \
+            "downshift_${ver}_linux_amd64.tar.gz" "downshift_${ver}_linux_arm64.tar.gz" \
+            "downshift_${ver}_darwin_amd64.tar.gz" "downshift_${ver}_darwin_arm64.tar.gz" \
+            "downshift_${ver}_windows_amd64.zip"; do
+            if [ ! -s "assets/$want" ]; then
+              echo "::error::draft $TAG is missing or has an empty asset $want"
+              exit 1
+            fi
+          done
+          for want in "downshift_${ver}_linux_amd64.tar.gz" "downshift_${ver}_linux_arm64.tar.gz" \
+            "downshift_${ver}_darwin_amd64.tar.gz" "downshift_${ver}_darwin_arm64.tar.gz" \
+            "downshift_${ver}_windows_amd64.zip"; do
+            if ! grep -q " \*\?$want\$" assets/checksums.txt; then
+              echo "::error::checksums.txt does not list $want"
+              exit 1
+            fi
+          done
+          while read -r want name || [ -n "$want" ]; do
+            name=$(printf '%s' "$name" | tr -d '*')
+            got=$(sha256sum "assets/$name" | cut -d" " -f1)
+            if [ "$got" != "$want" ]; then
+              echo "::error::sha256 mismatch for $name: expected $want, got $got"
+              exit 1
+            fi
+          done < assets/checksums.txt
+
+      - name: Verify the build-provenance attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
+          EXT: ${{ matrix.ext }}
+        run: gh attestation verify "assets/downshift_${TAG#v}_${OS}_${ARCH}.${EXT}" --repo "$GITHUB_REPOSITORY"
+
+      - name: Run the downloaded binary and check the version
+        env:
+          TAG: ${{ github.ref_name }}
+          OS: ${{ matrix.os }}
+          ARCH: ${{ matrix.arch }}
+          EXT: ${{ matrix.ext }}
+          EXE: ${{ matrix.exe }}
+        run: |
+          set -eu
+          ver="${TAG#v}"
+          mkdir run
+          archive="assets/downshift_${ver}_${OS}_${ARCH}.${EXT}"
+          if [ "$EXT" = zip ]; then 7z x -y "$archive" -orun; else tar -xzf "$archive" -C run; fi
+          out=$(./run/"$EXE" version)
+          echo "$out"
+          case "$out" in
+            *"$ver"*) ;;
+            *) echo "::error::'downshift version' does not mention $ver"; exit 1 ;;
+          esac
+
+  # The only step that makes the release public. Needs every verify leg green.
+  publish-release:
+    needs: [release, fetch-draft, verify-release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Publish the verified draft by release id
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -eu
+          # shellcheck disable=SC2016 # $ENV is jq, not shell
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq '.[] | select(.draft) | select(.tag_name == $ENV.TAG) | .id')
+          if [ "$(printf '%s\n' "$ids" | grep -c .)" -ne 1 ]; then
+            echo "::error::expected exactly one draft for $TAG, found: $ids"
+            exit 1
+          fi
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$ids" -F draft=false
+
+  # A failed release must not leave a silent draft behind.
+  release-failed:
+    needs: [release, fetch-draft, verify-release, publish-release]
+    if: failure() && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Report the unpublished draft
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          echo "::error::tag $TAG has an unpublished draft; re-run the workflow or delete the draft"
+          exit 1
