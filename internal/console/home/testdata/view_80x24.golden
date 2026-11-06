@@ -1,0 +1,10 @@
+
+ This session
+ model sonnet  spawns 3
+ saved 1200 tokens in this session so far today
+
+ Health
+ ✓ 1 ok   ! 1 warnings   ✗ 1 failed
+ ✗ hooks: hook for Claude Code is missing from settings.json and cannot route
+   fix: run downshift setup --yes to install the hooks
+ ! café: ünïcödé ünïcödé ünïcödé ünïcödé ünïcödé ünïcödé ünïcödé ünïcödé ünïc…
